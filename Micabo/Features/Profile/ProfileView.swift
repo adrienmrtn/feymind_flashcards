@@ -316,6 +316,15 @@ struct ProfileView: View {
     /// Les réglages reculent dans une pastille à filet. C'était une tuile pastel de
     /// quarante-quatre points, c'est-à-dire la même forme qu'un deck : elle attirait autant
     /// l'œil qu'une matière.
+    /// **La rangée ouvre le deck.** Elle envoyait vers l'onglet des decks — la liste, pas le
+    /// deck sur lequel on venait d'appuyer — et il fallait le retrouver dans la grille. La
+    /// pile du profil connaît déjà `DeckView` ; il ne manquait que l'objet.
+    private func open(deckID: UUID) {
+        let descriptor = FetchDescriptor<Course>(predicate: #Predicate { $0.id == deckID })
+        guard let course = try? modelContext.fetch(descriptor).first else { return }
+        path.append(course)
+    }
+
     private var header: some View {
         MicaboPageHeading(title: i18n.t("ios.profile.title"), subtitle: identityLabel) {
             Button {
@@ -487,7 +496,7 @@ struct ProfileView: View {
                             title: deck.title,
                             percent: deck.percent
                         ) {
-                            router?.selection = .decks
+                            open(deckID: deck.id)
                         }
 
                         if index < min(5, metrics.byCourse.count) - 1 {

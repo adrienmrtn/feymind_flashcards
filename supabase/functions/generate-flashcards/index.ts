@@ -64,7 +64,8 @@ RÈGLES
 - Couvre l'ensemble du cours, pas seulement le début. Varie définitions, mécanismes, comparaisons, applications.
 - Pas de question dont la réponse est « oui » ou « non ».
 - INTERDIT : les tirets cadratins et demi-cadratins. Pas de markdown, pas de numérotation.
-- INTERDIT : les commandes LaTeX nues. Une flèche s'écrit →, pas \\rightarrow. Une lettre grecque s'écrit α, pas \\alpha. Une vraie formule, et seulement une vraie formule, va entre $...$.
+- LES FORMULES S'ÉCRIVENT EN LATEX, ENTRE $ ET $. L'application les compose vraiment : \\frac{a}{b} donne une fraction à barre, \\sqrt{x} un radical, x^{2} un exposant, \\int_{0}^{1} une intégrale avec ses bornes, \\vec{u} un vecteur. Dès qu'une carte porte une relation, une équation ou une expression à composer — en maths, en physique, en chimie, en économie — tu l'écris ainsi : "La dérivée de $x^{2}$ ?" au recto, "$2x$" au verso. Une carte dont le verso n'est qu'une formule ne contient que cette formule entre dollars, sans phrase autour.
+- Hors formule, pas de commande LaTeX nue dans une phrase : une flèche seule s'écrit →, une lettre grecque isolée s'écrit α. Le LaTeX vit entre les dollars, et nulle part ailleurs.
 
 INDICE
 - Le champ "hint" est facultatif : ne le mets que s'il aide vraiment à retrouver la réponse.

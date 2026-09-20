@@ -260,19 +260,30 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                 )
                 .frame(height: 4)
 
-                Button {
-                    model.goBack()
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 19, weight: .semibold))
-                        .foregroundStyle(surface.isDark ? MicaboColor.onInkMuted : MicaboColor.inkSecondary)
-                        .frame(width: 40, height: 40, alignment: .leading)
+                HStack(alignment: .center, spacing: 0) {
+                    Button {
+                        model.goBack()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 19, weight: .semibold))
+                            .foregroundStyle(surface.isDark ? MicaboColor.onInkMuted : MicaboColor.inkSecondary)
+                            .frame(width: 40, height: 40, alignment: .leading)
+                    }
+                    .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
+                    .opacity(model.canGoBack ? 1 : 0)
+                    .disabled(!model.canGoBack)
+                    .accessibilityLabel(L10n.t("app.common.back", locale: .resolved()))
+
+                    Spacer(minLength: 0)
+
+                    // **La mascotte est sur chaque écran de question**, petite, à droite
+                    // du retour — là où Gizmo met la sienne. Elle cligne des yeux, elle
+                    // respire, et c'est ce qui fait qu'une question posée en gras ne se
+                    // lit pas comme un champ de formulaire : quelqu'un la pose.
+                    MicaboMascot(mood: .happy, size: 30)
+                        .frame(width: 46, height: 40)
                 }
-                .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
-                .opacity(model.canGoBack ? 1 : 0)
-                .disabled(!model.canGoBack)
                 .padding(.top, 16)
-                .accessibilityLabel(L10n.t("app.common.back", locale: .resolved()))
             }
             .padding(.horizontal, MicaboSpacing.screen)
             .padding(.top, MicaboSpacing.xs)

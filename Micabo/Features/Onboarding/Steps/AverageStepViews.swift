@@ -37,6 +37,11 @@ struct CurrentAverageStepView: View {
         OnboardingScaffold(
             title: i18n.t("ios.averageTitle"),
             titleSize: 26,
+            // **Sans défilement, sinon la roue n'a pas de hauteur.** `expandsContent` ne
+            // donne la hauteur restante au contenu que hors d'un `ScrollView` ; dedans, un
+            // `GeometryReader` se voit proposer dix points, et la roue s'écrasait en une
+            // bande de vingt points avec un chiffre coupé. C'est ce que montrait la capture.
+            scrolls: false,
             animatesTitle: true,
             expandsContent: true
         ) {
@@ -87,6 +92,7 @@ struct TargetAverageStepView: View {
             // barème, elle, n'explique pas — elle remplace la roue.
             subtitle: isAtTop ? i18n.t("ios.targetAtTop") : nil,
             titleSize: 26,
+            scrolls: false,
             animatesTitle: true,
             expandsContent: true
         ) {
@@ -166,15 +172,11 @@ struct TogetherStepView: View {
             title: i18n.t("ios.togetherTitle"),
             titleSize: 26
         ) {
-            VStack(spacing: 14) {
-                GradeJourney(
-                    from: label(for: model.currentScore) ?? i18n.t("ios.averageBelowShort"),
-                    to: label(for: model.targetScore) ?? scale.max,
-                    deadline: deadlineLabel
-                )
-
-                GradeEvidence()
-            }
+            GradeJourney(
+                from: label(for: model.currentScore) ?? i18n.t("ios.averageBelowShort"),
+                to: label(for: model.targetScore) ?? scale.max,
+                deadline: deadlineLabel
+            )
         } footer: {
             OnboardingContinueButton(title: i18n.t("ios.journey.commit")) {
                 model.advance()
@@ -483,42 +485,3 @@ private struct GradeJourney: View {
     }
 }
 
-/// **La preuve, sous le graphe.**
-///
-/// Une phrase, un chiffre en gras, et sa source nommée. C'est le seul endroit du parcours qui
-/// cite une étude, et elle est citée parce qu'elle justifie la seule chose que l'app demande
-/// vraiment : se tester plutôt que relire. Sans référence, ce serait un argument de brochure.
-private struct GradeEvidence: View {
-    var body: some View {
-        HStack(alignment: .top, spacing: 13) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 13, style: .continuous)
-                    .fill(MicaboColor.positiveWash)
-                Image(systemName: "chart.line.uptrend.xyaxis")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(MicaboColor.positiveInk)
-            }
-            .frame(width: 40, height: 40)
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text.micaboMarkup(L10n.t("ios.journey.evidence", locale: .resolved()))
-                    .font(MicaboFont.ui(14.5, weight: .semibold))
-                    .foregroundStyle(MicaboColor.ink)
-                    .lineSpacing(2)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Text(L10n.t("ios.journey.source", locale: .resolved()))
-                    .font(MicaboFont.ui(12, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 15)
-        .background(MicaboColor.canvas, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-        }
-    }
-}

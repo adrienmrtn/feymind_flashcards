@@ -61,23 +61,34 @@ struct DeckView: View {
 
     private var safeTop: CGFloat { MicaboScreen.safeTop }
 
+    private var pastel: Color { MicaboColor.pastel(for: course.id) }
+
     var body: some View {
         ScrollView {
-            // **Le bandeau est ancré, et c'est le contenu qui passe dessous.**
+            // **Le bandeau défile avec le contenu ; la barre repliée apparaît par-dessus.**
             //
-            // L'autre montage — un bandeau qui défile avec le contenu, doublé d'une barre
-            // posée par-dessus — demandait deux exemplaires du même objet en fondu l'un sur
-            // l'autre, et la maquette n'en décrit qu'un : sur `DeckScroll`, la barre repliée
-            // coupe la première rangée de chapitres au milieu. C'est exactement ce que fait
-            // un bandeau fixe au-dessus d'un contenu qui remonte.
-            VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
-                identity
-                statusCard
-                DeckChaptersView(course: course)
+            // C'est le `ScrollView` qui emporte le bandeau, pas un calcul : il s'en va parce
+            // qu'il est dans le contenu, exactement comme la première rangée de chapitres.
+            // La sonde de défilement ne décide plus que d'une chose, le fondu de la barre —
+            // et si elle se trompait, le bandeau partirait quand même.
+            VStack(alignment: .leading, spacing: 0) {
+                MicaboDeckBanner(
+                    emoji: course.emoji,
+                    pastel: pastel,
+                    safeTop: safeTop,
+                    onBack: { dismiss() },
+                    onMenu: { showMenu = true }
+                )
+
+                VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
+                    identity
+                    statusCard
+                    DeckChaptersView(course: course)
+                }
+                .padding(.horizontal, MicaboSpacing.screen)
+                .padding(.top, 22)
+                .padding(.bottom, MicaboLayout.bottomBarClearance)
             }
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.top, MicaboDeckBanner.expandedHeight(safeTop: safeTop) + 22)
-            .padding(.bottom, MicaboLayout.bottomBarClearance)
             .frame(maxWidth: .infinity, alignment: .leading)
             .micaboScrollProbe(space: Self.scrollSpace)
         }
@@ -87,7 +98,15 @@ struct DeckView: View {
             collapse = min(1, max(0, -top / MicaboDeckBanner.travel))
         }
         .overlay(alignment: .top) {
-            banner(safeTop: safeTop)
+            MicaboDeckBar(
+                emoji: course.emoji,
+                pastel: pastel,
+                title: course.title,
+                safeTop: safeTop,
+                visible: collapse,
+                onBack: { dismiss() },
+                onMenu: { showMenu = true }
+            )
         }
         // **Après la superposition, pas avant.** Posé avant, il n'étend que le défilement :
         // le bandeau reste aligné sur le haut de la zone sûre, une bande blanche subsiste
@@ -167,25 +186,6 @@ struct DeckView: View {
     }
 
     // MARK: - En-tête
-
-    /// **Le bandeau pleine largeur, dans le pastel de la matière.**
-    ///
-    /// C'est le seul endroit de l'app où une couleur occupe toute la largeur, et c'est
-    /// délibéré : elle dit de quel deck il s'agit avant qu'on ait lu le titre, et elle fait
-    /// le lien avec la tuile de la grille sur laquelle on vient d'appuyer. Les deux boutons
-    /// sont posés dessus en pastilles translucides plutôt qu'au-dessus : une barre blanche
-    /// par-dessus la couleur couperait le bandeau en deux.
-    private func banner(safeTop: CGFloat) -> some View {
-        MicaboDeckBanner(
-            emoji: course.emoji,
-            pastel: MicaboColor.pastel(for: course.id),
-            title: course.title,
-            collapse: collapse,
-            safeTop: safeTop,
-            onBack: { dismiss() },
-            onMenu: { showMenu = true }
-        )
-    }
 
     /// Le titre et sa ligne de faits, sous le bandeau.
     ///

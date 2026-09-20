@@ -36,9 +36,12 @@ struct SignInStepView: View {
         SignInScreen(
             placement: .page,
             titleKey: "onboarding.compteTitle",
-            subtitleKey: "onboarding.compteSubtitle",
+            // Pas de sous-titre : « pour retrouver tes decks sur tous tes appareils »
+            // expliquait ce qu'un compte fait, à quelqu'un qui sait ce qu'est un compte.
+            showsSubtitle: false,
             showsLanguageSwitcher: false,
-            onSkip: skip
+            onSkip: skip,
+            showsMascot: true
         )
         // La connexion se termine dans le contrôleur, pas dans le bouton : c'est le passage à
         // l'état « connecté » qui fait avancer, quel que soit le fournisseur emprunté.

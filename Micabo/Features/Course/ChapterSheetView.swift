@@ -90,14 +90,25 @@ struct ChapterSheetView: View {
     var body: some View {
         GeometryReader { page in
             ScrollView {
-                // Le bandeau est ancré : c'est le texte qui remonte dessous, et la barre
-                // repliée coupe la ligne en cours, comme sur `ChapitreScroll`.
-                reading
-                    .padding(.horizontal, Self.margin)
-                    .padding(.top, MicaboChapterBanner.expandedHeight(safeTop: safeTop) + 20)
-                    .padding(.bottom, MicaboLayout.bottomBarClearance)
-                    .background(contentProbe)
-                    .micaboScrollProbe(space: Self.scrollSpace)
+                // Le bandeau défile avec le texte ; la barre repliée apparaît par-dessus et
+                // coupe la ligne en cours, comme sur `ChapitreScroll`. Voir `MicaboDeckBar`.
+                VStack(alignment: .leading, spacing: 0) {
+                    MicaboChapterBanner(
+                        emoji: chapter.course?.emoji ?? "📘",
+                        pastel: pastel,
+                        safeTop: safeTop,
+                        onBack: { dismiss() },
+                        onTextSize: { showTextSize = true }
+                    )
+
+                    reading
+                        .padding(.horizontal, Self.margin)
+                        .padding(.top, 20)
+                        .padding(.bottom, MicaboLayout.bottomBarClearance)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(contentProbe)
+                .micaboScrollProbe(space: Self.scrollSpace)
             }
             .coordinateSpace(name: Self.scrollSpace)
             .scrollIndicators(.hidden)
@@ -109,7 +120,16 @@ struct ChapterSheetView: View {
                 viewportHeight = page.size.height
             }
             .overlay(alignment: .top) {
-                banner(safeTop: safeTop)
+                MicaboChapterBar(
+                    emoji: chapter.course?.emoji ?? "📘",
+                    pastel: pastel,
+                    title: chapter.title,
+                    safeTop: safeTop,
+                    visible: collapse,
+                    readingProgress: readingProgress,
+                    onBack: { dismiss() },
+                    onTextSize: { showTextSize = true }
+                )
             }
         }
         // Sur le `GeometryReader` lui-même : il couvre alors l'écran entier, `page.size`
@@ -165,21 +185,6 @@ struct ChapterSheetView: View {
             Button(i18n.t("app.common.cancel"), role: .cancel) {}
         }
         .micaboPaywall($paywall)
-    }
-
-    // MARK: - Le bandeau
-
-    private func banner(safeTop: CGFloat) -> some View {
-        MicaboChapterBanner(
-            emoji: chapter.course?.emoji ?? "📘",
-            pastel: pastel,
-            title: chapter.title,
-            collapse: collapse,
-            readingProgress: readingProgress,
-            safeTop: safeTop,
-            onBack: { dismiss() },
-            onTextSize: { showTextSize = true }
-        )
     }
 
     // MARK: - La lecture

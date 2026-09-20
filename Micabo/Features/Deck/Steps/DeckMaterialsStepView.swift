@@ -62,8 +62,6 @@ struct DeckMaterialsStepView: View {
                         }
                     }
                 }
-
-                formatsNote
             }
             .onAppear(perform: seedSlots)
         } footer: {
@@ -150,20 +148,6 @@ struct DeckMaterialsStepView: View {
         case .video: showLinkSheet = true
         case .text: showTextSheet = true
         }
-    }
-
-    private var formatsNote: some View {
-        HStack(spacing: MicaboSpacing.sm) {
-            ForEach(["doc.fill", "photo.on.rectangle.angled", "doc.richtext", "text.alignleft"], id: \.self) { symbol in
-                Image(systemName: symbol)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-            }
-            Text(i18n.t("ios.deckSetup.materials.formats"))
-                .font(MicaboFont.ui(12, weight: .regular))
-                .foregroundStyle(MicaboColor.inkTertiary)
-        }
-        .padding(.horizontal, MicaboSpacing.xxs)
     }
 
     // MARK: - Les cases

@@ -57,6 +57,9 @@ struct DeckGradeStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.deckSetup.grade"),
+            // Hors défilement : voir `CurrentAverageStepView`, la roue n'a pas de hauteur
+            // dans un `ScrollView`.
+            scrolls: false,
             animatesTitle: true,
             expandsContent: true
         ) {
@@ -143,26 +146,17 @@ struct DeckDeadlineStepView: View {
         }
     }
 
-    /// Ce que la date change, écrit pendant qu'on la choisit.
+    /// Ce que la date change, écrit pendant qu'on la choisit : le chiffre, et rien sous le
+    /// chiffre. La ligne qui expliquait s'il était serré ou confortable disait ce que le
+    /// chiffre dit déjà.
     private var paceNote: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                Image(systemName: "bolt.fill")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(MicaboColor.accent)
-                Text(i18n.t("ios.deckSetup.pace", ["count": "\(readout.perDay)"]))
-                    .font(MicaboFont.ui(15, weight: .semibold))
-                    .foregroundStyle(MicaboColor.ink)
-            }
-
-            Text(
-                readout.isCrunch
-                    ? i18n.t("ios.deckSetup.pace.crunch")
-                    : i18n.t("ios.deckSetup.pace.quiet")
-            )
-            .font(MicaboFont.ui(12.5, weight: .regular))
-            .foregroundStyle(MicaboColor.inkSecondary)
-            .fixedSize(horizontal: false, vertical: true)
+        HStack(spacing: 8) {
+            Image(systemName: "bolt.fill")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(MicaboColor.accent)
+            Text(i18n.t("ios.deckSetup.pace", ["count": "\(readout.perDay)"]))
+                .font(MicaboFont.ui(15, weight: .semibold))
+                .foregroundStyle(MicaboColor.ink)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
