@@ -151,25 +151,26 @@ struct SignInScreen: View {
     /// - **le sélecteur d'apparence s'en va.** Choisir entre le jour et la nuit avant même
     ///   d'avoir un compte est un réglage qui arrive trop tôt, et il vit déjà dans les
     ///   Réglages. La langue reste : elle change la page qu'on est en train de lire.
+    ///
+    /// **Puis la carte à filet est partie, et le formulaire avec elle.** Trois portes dans
+    /// un cadre blanc, un séparateur « ou », un champ avec sa flèche et sa note : ça se
+    /// lisait encore comme un formulaire. Les applications de référence posent trois
+    /// boutons de la même taille, à même la page — Apple, Google, le courriel — et le
+    /// champ n'apparaît que si l'on choisit le courriel. Voir `SignInProviderButtons`.
     private var content: some View {
         VStack(spacing: 0) {
             toolbar
             if showsMascot {
-                MicaboMascot(mood: .celebrating, size: 104)
+                SignInStage()
+                    .padding(.top, 4)
             } else if showsBrand {
                 MicaboBrandMark(size: 64)
                     .padding(.top, 18)
             }
             titleBlock
-                .padding(.top, showsMascot ? 4 : (showsBrand ? 16 : 24))
-            if showsMascot {
-                SignInProviderButtons()
-                    .padding(.top, 26)
-            } else {
-                SignInProviderButtons()
-                    .micaboCard(padding: 18, radius: MicaboRadius.card)
-                    .padding(.top, 26)
-            }
+                .padding(.top, showsMascot ? 24 : (showsBrand ? 16 : 24))
+            SignInProviderButtons()
+                .padding(.top, 26)
             SignInFailureNote(includeSent: false, includeError: true)
                 .padding(.top, MicaboSpacing.sm)
             legalLine
@@ -278,11 +279,64 @@ struct SignInScreen: View {
     }
 }
 
+/// **La mascotte sur une scène pastel, avec deux decks qui flottent.**
+///
+/// C'est la fin du parcours d'accueil : quelqu'un vient de répondre à quinze questions
+/// posées par un personnage, et l'écran qui lui demande un compte lui montrait la même
+/// mascotte, seule sur du blanc, au-dessus de trois boutons. Ici elle se réjouit sur un
+/// panneau bleu pastel — pas violet, le violet sur violet la faisait disparaître — avec
+/// deux des tuiles qu'on vient de voir sur l'accroche. C'est la même conversation, et le
+/// compte est ce qui la garde.
+private struct SignInStage: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var drift = false
+
+    var body: some View {
+        let lift: CGFloat = drift ? -5 : 5
+        let leftTurn: Double = drift ? -7 : 7
+        let rightTurn: Double = drift ? 6 : -6
+
+        return ZStack {
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .fill(MicaboColor.pastel(at: 3))
+
+            tile("🏛️", pastel: 0)
+                .rotationEffect(.degrees(leftTurn))
+                .offset(x: -112, y: -34 + lift)
+
+            tile("🧬", pastel: 1)
+                .rotationEffect(.degrees(rightTurn))
+                .offset(x: 116, y: 30 - lift)
+
+            MicaboMascot(mood: .celebrating, size: 112)
+        }
+        .frame(height: 188)
+        .frame(maxWidth: .infinity)
+        .animation(.easeInOut(duration: 2.8).repeatForever(autoreverses: true), value: drift)
+        .accessibilityHidden(true)
+        .onAppear {
+            guard !reduceMotion else { return }
+            drift = true
+        }
+    }
+
+    private func tile(_ emoji: String, pastel: Int) -> some View {
+        Text(emoji)
+            .font(.system(size: 22))
+            .frame(width: 46, height: 46)
+            .background(MicaboColor.pastel(at: pastel), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+    }
+}
+
 /// Apple, Google, puis le courriel — le même ordre que sur le web.
 ///
 /// Ils ne sont pas conditionnés à ce que le projet Supabase annonce activé. Un fournisseur
 /// éteint côté serveur le dit clairement dans son message d'erreur, ce qui est plus utile
 /// qu'un bouton absent dont personne ne peut deviner la cause.
+///
+/// **Trois boutons de la même taille, et le courriel est le troisième.** Le champ ne se
+/// montre que quand on l'a choisi : il prend alors la place du bouton, s'ouvre avec le
+/// clavier, et l'écran garde jusque-là la forme d'un choix, pas d'un formulaire.
 struct SignInProviderButtons: View {
     @Environment(AuthController.self) private var auth
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -291,6 +345,9 @@ struct SignInProviderButtons: View {
     /// vérifié.
     @State private var appleNonce = AppleNonce()
     @State private var email = ""
+    /// Vrai une fois qu'on a choisi le courriel : le bouton devient le champ.
+    @State private var showsEmail = false
+    @FocusState private var emailFocused: Bool
 
     private var t: (String) -> String {
         { key in i18n.t(key) }
@@ -315,17 +372,51 @@ struct SignInProviderButtons: View {
                 SignInFailureNote(includeSent: true, includeError: false)
                     .padding(.top, 14)
                     .frame(maxWidth: .infinity, alignment: .leading)
-            } else {
-                orDivider
-                    .padding(.vertical, 10)
+            } else if showsEmail {
                 emailForm
+                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 if let suggestion {
                     suggestionNote(typed: suggestion.typed, corrected: suggestion.corrected)
                 }
+            } else {
+                emailButton
+                    .transition(.opacity)
             }
         }
         .animation(.easeOut(duration: 0.2), value: auth.isWorking)
         .animation(.easeOut(duration: 0.2), value: auth.message)
+        .animation(.timingCurve(0.25, 0.8, 0.25, 1, duration: 0.36), value: showsEmail)
+    }
+
+    /// Le troisième bouton, de la même forme que celui de Google : une enveloppe, et le
+    /// même verbe que les deux autres.
+    private var emailButton: some View {
+        Button {
+            showsEmail = true
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "envelope.fill")
+                    .font(.system(size: 17, weight: .medium))
+                    .foregroundStyle(MicaboColor.ink)
+
+                Text(t("ios.signIn.email"))
+                    .font(MicaboFont.cardTitle)
+                    .foregroundStyle(MicaboColor.ink)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .background(
+                MicaboColor.surface,
+                in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
+                    .strokeBorder(MicaboColor.strokeStrong, lineWidth: 1)
+            }
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .medium))
+        .disabled(auth.isWorking)
+        .opacity(auth.isWorking ? 0.5 : 1)
     }
 
     /// « Tu voulais dire … ? », et les deux réponses partent.
@@ -437,21 +528,6 @@ struct SignInProviderButtons: View {
         .accessibilityLabel(t("onboarding.continueGoogle"))
     }
 
-    private var orDivider: some View {
-        HStack(spacing: 12) {
-            Rectangle()
-                .fill(MicaboColor.hairline)
-                .frame(height: 1)
-            Text(t("onboarding.or"))
-                .font(MicaboFont.ui(12, weight: .medium))
-                .foregroundStyle(MicaboColor.inkTertiary)
-            Rectangle()
-                .fill(MicaboColor.hairline)
-                .frame(height: 1)
-        }
-        .accessibilityHidden(true)
-    }
-
     /// **Le champ a avalé son bouton.**
     ///
     /// Le courriel était un champ de cinquante-six points surmontant un bouton de
@@ -468,6 +544,7 @@ struct SignInProviderButtons: View {
                     .font(MicaboFont.ui(15.5, weight: .medium))
                     .foregroundStyle(MicaboColor.ink)
                     .tint(MicaboColor.accent)
+                    .focused($emailFocused)
                     .keyboardType(.emailAddress)
                     .textContentType(.username)
                     .textInputAutocapitalization(.never)
@@ -501,9 +578,15 @@ struct SignInProviderButtons: View {
             .padding(.trailing, 7)
             .frame(minHeight: 56)
             .background(
-                MicaboColor.canvas,
+                MicaboColor.surface,
                 in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
             )
+            .overlay {
+                RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
+                    .strokeBorder(MicaboColor.accent, lineWidth: 1.5)
+            }
+            // Le champ vient de prendre la place du bouton : le clavier arrive avec lui.
+            .onAppear { emailFocused = true }
 
             // Ce que fait le bouton, puisque rien dans une flèche ne dit qu'il n'y aura pas
             // de mot de passe à choisir derrière.

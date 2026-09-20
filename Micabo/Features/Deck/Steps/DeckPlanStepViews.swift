@@ -57,17 +57,22 @@ struct DeckGradeStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.deckSetup.grade"),
-            // Hors défilement : voir `CurrentAverageStepView`, la roue n'a pas de hauteur
-            // dans un `ScrollView`.
+            // Hors défilement : voir `CurrentAverageStepView`, les ressorts qui centrent la
+            // roue n'ont pas de hauteur dans un `ScrollView`.
             scrolls: false,
             animatesTitle: true,
             expandsContent: true
         ) {
-            VerticalGradePicker(
-                ticks: choices,
-                score: $setup.targetScore
-            )
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // La roue a sa hauteur à elle, et c'est l'espace autour qui se partage : elle
+            // se pose au milieu de ce qui reste, quelle que soit la note choisie.
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+                VerticalGradePicker(
+                    ticks: choices,
+                    score: $setup.targetScore
+                )
+                Spacer(minLength: 0)
+            }
         } footer: {
             OnboardingContinueButton(action: onNext)
         }
@@ -196,6 +201,17 @@ struct DeckConfidenceStepView: View {
         ("ios.deckSetup.confidence.all", 1),
     ]
 
+    /// L'humeur de la mascotte à chaque cran, du doute à la fête.
+    private static func mood(at index: Int) -> MicaboMascot.Mood {
+        switch index {
+        case 0: .unsure
+        case 1: .curious
+        case 2: .happy
+        case 3: .proud
+        default: .celebrating
+        }
+    }
+
     /// Le cran le plus proche de la valeur enregistrée.
     ///
     /// Une boucle plutôt qu'un `min` à fermeture sur `enumerated()` : la version courte
@@ -223,6 +239,13 @@ struct DeckConfidenceStepView: View {
         ) {
             VStack(spacing: MicaboSpacing.xl) {
                 Spacer(minLength: 0)
+
+                // **La mascotte répond au curseur.** Elle s'inquiète quand on part de zéro,
+                // se réjouit quand on connaît déjà le cours : la réponse se lit sur elle
+                // avant même de lire la phrase, et c'est ce qui fait bouger un écran qui
+                // n'avait qu'un curseur.
+                MicaboMascot(mood: Self.mood(at: index), size: 116)
+                    .mascotHop(on: index)
 
                 Text(i18n.t(Self.steps[index].key))
                     .font(MicaboFont.ui(26, weight: .bold))
@@ -299,6 +322,21 @@ struct VerticalGradePicker: View {
     /// pas la rangée.
     private static let rowHeight: CGFloat = 52
 
+    /// **Cinq rangées visibles, et pas toute la hauteur de l'écran.**
+    ///
+    /// La roue prenait tout ce qui restait entre le titre et le bouton, et centrait la note
+    /// choisie au milieu de cette hauteur : quand on visait la deuxième note du barème, il
+    /// n'y avait qu'une rangée à montrer au-dessus, et la moitié haute de l'écran restait
+    /// vide pendant que le barème s'entassait en bas. C'est ce que montrait la capture — une
+    /// roue « décalée ». À hauteur fixe, c'est le bloc qui se centre dans l'écran, et le
+    /// vide au-dessus de la première note ne dépasse jamais deux rangées.
+    private static let visibleRows = 5
+    /// La hauteur de la roue, la même sur tous les écrans qui la posent.
+    static let height: CGFloat = rowHeight * CGFloat(visibleRows)
+    /// Le rembourrage qui met la première et la dernière note au centre : sans lui, la roue
+    /// s'arrête en butée avant d'avoir centré les bouts du barème.
+    private static let inset: CGFloat = (height - rowHeight) / 2
+
     /// La note au centre du rouleau, telle que le défilement la rapporte.
     ///
     /// Elle est distincte de `score` parce qu'elle appartient au `ScrollView` : c'est lui qui
@@ -329,38 +367,49 @@ struct VerticalGradePicker: View {
     }
 
     var body: some View {
-        GeometryReader { proxy in
-            // Le rembourrage qui met la première et la dernière note au centre : sans lui, le
-            // barème ne peut pas se placer au milieu de l'écran et la roue s'arrête en butée.
-            let inset = max(0, (proxy.size.height - Self.rowHeight) / 2)
-
-            ScrollView(.vertical) {
-                LazyVStack(spacing: 0) {
-                    ForEach(ordered) { tick in
-                        row(tick)
-                            .frame(height: Self.rowHeight)
-                    }
+        ScrollView(.vertical) {
+            LazyVStack(spacing: 0) {
+                ForEach(ordered) { tick in
+                    row(tick)
+                        .frame(height: Self.rowHeight)
                 }
-                .scrollTargetLayout()
             }
-            .scrollIndicators(.hidden)
-            .safeAreaPadding(.vertical, inset)
-            .scrollTargetBehavior(.viewAligned)
-            .scrollPosition(id: $centred, anchor: .center)
-            .onAppear { centred = score }
-            .onChange(of: centred) { _, value in
-                guard let value, value != score else { return }
-                Haptics.selection()
-                score = value
-            }
-            .onChange(of: score) { _, value in
-                // La réponse a changé ailleurs — on repositionne la roue sans la faire
-                // réécrire la réponse : `centred` vaut déjà `value` quand c'est elle qui
-                // vient de l'écrire, et la garde du dessus s'arrête là.
-                if centred != value { centred = value }
-            }
-            .frame(maxWidth: .infinity)
+            .scrollTargetLayout()
         }
+        .scrollIndicators(.hidden)
+        .safeAreaPadding(.vertical, Self.inset)
+        .scrollTargetBehavior(.viewAligned)
+        .scrollPosition(id: $centred, anchor: .center)
+        .frame(maxWidth: .infinity)
+        .frame(height: Self.height)
+        // Les bouts s'éteignent : c'est ce qui fait lire une roue plutôt qu'une liste coupée
+        // net par le bord de son cadre.
+        .mask(edgeFade)
+        .onAppear { centred = score }
+        .onChange(of: centred) { _, value in
+            guard let value, value != score else { return }
+            Haptics.selection()
+            score = value
+        }
+        .onChange(of: score) { _, value in
+            // La réponse a changé ailleurs — on repositionne la roue sans la faire
+            // réécrire la réponse : `centred` vaut déjà `value` quand c'est elle qui
+            // vient de l'écrire, et la garde du dessus s'arrête là.
+            if centred != value { centred = value }
+        }
+    }
+
+    private var edgeFade: some View {
+        LinearGradient(
+            stops: [
+                .init(color: .clear, location: 0),
+                .init(color: .black, location: 0.2),
+                .init(color: .black, location: 0.8),
+                .init(color: .clear, location: 1),
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
     }
 
     private func row(_ tick: GradeTick) -> some View {

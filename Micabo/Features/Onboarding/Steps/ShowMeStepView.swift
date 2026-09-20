@@ -16,7 +16,8 @@ struct ShowMeStepView: View {
             Spacer(minLength: 0)
 
             VStack(spacing: 26) {
-                MicaboMascot(mood: .happy, size: 132)
+                // Elle salue : c'est elle qui se présente.
+                MicaboMascot(mood: .waving, size: 132)
                     .onboardingAppear(index: 0, stagger: 0.12)
 
                 MicaboSpeechBubble(text: i18n.t("ios.intro.showMe"), tail: .top)

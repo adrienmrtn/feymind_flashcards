@@ -120,9 +120,28 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// elle vient de ce qu'il y a à regarder.
     var surface: OnboardingSurface {
         switch self {
-        case .howItWorks: .sage
+        // L'accroche est sur blanc : la mascotte et ses tuiles pastel y ont toute la place,
+        // et le crème teinté de vert se battait avec la tuile verte.
         case .yourTurn: .ink
         default: .canvas
+        }
+    }
+
+    /// **L'humeur de la mascotte, écran par écran.**
+    ///
+    /// C'est la réaction du personnage à ce qu'il est en train de demander : il salue quand
+    /// il demande un prénom, penche la tête quand il demande où l'on étudie, réfléchit
+    /// devant la moyenne, lit quand on choisit ses matières, se redresse quand c'est fait.
+    /// Une même tête sur vingt écrans n'est pas un personnage, c'est une icône.
+    var mascotMood: MicaboMascot.Mood {
+        switch self {
+        case .name: .waving
+        case .greeting, .together, .socialProof, .yourTurn: .proud
+        case .country, .schoolType, .goal, .targetAverage: .curious
+        case .currentAverage, .personalizing: .thinking
+        case .subjects: .reading
+        case .trialOffer, .trialReminder, .paywall: .celebrating
+        default: .happy
         }
     }
 

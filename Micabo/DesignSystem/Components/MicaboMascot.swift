@@ -11,8 +11,14 @@ import SwiftUI
 ///
 /// Elle est dessinée en SwiftUI pur, pas en image : elle **bouge**. Elle respire (un
 /// balancement lent), elle cligne des yeux à intervalles irréguliers, son regard suit une
-/// direction, et son humeur change la bouche et ce qui flotte autour. Une image aurait
-/// donné un autocollant.
+/// direction, et son humeur change les sourcils, la bouche, les mains et ce qui flotte
+/// autour. Une image aurait donné un autocollant.
+///
+/// **Huit humeurs, pas trois.** Avec trois humeurs, la mascotte faisait la même tête sur
+/// quinze écrans de suite, et un personnage qui ne réagit à rien cesse d'être un
+/// personnage. Elle salue quand on lui donne son prénom, penche la tête quand elle demande
+/// où l'on étudie, lit quand on choisit ses matières, s'inquiète quand on part de zéro, et
+/// se redresse quand on a fini. Ce sont des réactions, pas des poses.
 ///
 /// Sa forme est une carte de révision — un rectangle arrondi, un peu plus haut que large —
 /// parce que c'est l'objet de l'app. Le violet est celui de l'accent : elle porte la
@@ -23,13 +29,23 @@ import SwiftUI
 /// une inconnue de plus pour l'inférence ; trente de suite, et le compilateur renonce —
 /// c'est ce qui a cassé la scène d'import de la veille.
 struct MicaboMascot: View {
-    enum Mood {
+    enum Mood: Equatable {
         /// Le regard droit, le sourire tranquille : elle écoute.
         case happy
         /// Les yeux vers le haut, la bouche plate, trois points qui flottent : elle travaille.
         case thinking
-        /// Grand sourire, yeux plissés, des étincelles : c'est fait.
+        /// Grand sourire, yeux plissés, les deux mains en l'air, des étincelles : c'est fait.
         case celebrating
+        /// Une main qui salue, les joues qui rosissent : bonjour.
+        case waving
+        /// La tête penchée, un sourcil levé, la bouche en « o » : elle demande.
+        case curious
+        /// Les yeux qui balaient une ligne, les sourcils froncés : elle lit.
+        case reading
+        /// Les sourcils inquiets, le regard en bas, une goutte : elle n'est pas sûre.
+        case unsure
+        /// Le sourire large, les yeux mi-clos, les mains sur les hanches : elle est fière.
+        case proud
     }
 
     var mood: Mood = .happy
@@ -40,6 +56,10 @@ struct MicaboMascot: View {
     @State private var breathe = false
     @State private var blink = false
     @State private var sparkle = false
+    /// Le va-et-vient de la main qui salue et des mains levées.
+    @State private var wave = false
+    /// Le balayage du regard quand elle lit.
+    @State private var scan = false
 
     /// Les mesures, toutes dérivées de `size`, toutes en `CGFloat`, toutes nommées.
     private struct Metrics {
@@ -63,6 +83,10 @@ struct MicaboMascot: View {
         let faceDY: CGFloat
         let faceGap: CGFloat
         let breatheDY: CGFloat
+        let browWidth: CGFloat
+        let browLine: CGFloat
+        let browRise: CGFloat
+        let browLift: CGFloat
         let dotGap: CGFloat
         let dotBase: CGFloat
         let dotStep: CGFloat
@@ -77,9 +101,18 @@ struct MicaboMascot: View {
         let grinLine: CGFloat
         let flatWidth: CGFloat
         let flatHeight: CGFloat
+        let oWidth: CGFloat
         let cheekGap: CGFloat
         let cheek: CGFloat
         let cheekRise: CGFloat
+        let hand: CGFloat
+        let handSide: CGFloat
+        let handUp: CGFloat
+        let handHip: CGFloat
+        let handWaveDY: CGFloat
+        let dropX: CGFloat
+        let dropY: CGFloat
+        let dropSize: CGFloat
 
         init(size: CGFloat) {
             frameWidth = size * 1.5
@@ -102,6 +135,10 @@ struct MicaboMascot: View {
             faceDY = size * 0.02
             faceGap = size * 0.08
             breatheDY = size * 0.03
+            browWidth = size * 0.15
+            browLine = size * 0.032
+            browRise = size * -0.075
+            browLift = size * 0.03
             dotGap = size * 0.05
             dotBase = size * 0.07
             dotStep = size * 0.015
@@ -116,15 +153,25 @@ struct MicaboMascot: View {
             grinLine = size * 0.04
             flatWidth = size * 0.14
             flatHeight = size * 0.035
+            oWidth = size * 0.1
             cheekGap = size * 0.44
             cheek = size * 0.09
             cheekRise = size * -0.06
+            hand = size * 0.17
+            handSide = size * 0.5
+            handUp = size * -0.3
+            handHip = size * 0.2
+            handWaveDY = size * 0.04
+            dropX = size * 0.46
+            dropY = size * -0.4
+            dropSize = size * 0.15
         }
     }
 
     var body: some View {
         let metrics = Metrics(size: size)
-        let tilt: Double = breathe ? 2.5 : -2.5
+        let sway: Double = breathe ? 2.5 : -2.5
+        let tilt: Double = sway + headTilt
         let lift: CGFloat = breathe ? -metrics.breatheDY : metrics.breatheDY
 
         return ZStack {
@@ -139,8 +186,15 @@ struct MicaboMascot: View {
             if mood == .thinking {
                 thoughtDots(metrics)
             }
+
+            if mood == .unsure {
+                drop(metrics)
+            }
         }
         .frame(width: metrics.frameWidth, height: metrics.frameHeight)
+        // Une humeur qui change sous les yeux se fond dans la suivante : la bouche et les
+        // sourcils ne sautent pas d'une forme à l'autre.
+        .animation(.easeOut(duration: 0.22), value: mood)
         .accessibilityHidden(true)
         .onAppear(perform: start)
         // **Dans `.task`, pas dans un `Task {}` lancé à l'apparition** : la mascotte est sur
@@ -149,10 +203,21 @@ struct MicaboMascot: View {
         .task { await blinkLoop() }
     }
 
+    /// La tête penchée : c'est la curiosité, ou le doute.
+    private var headTilt: Double {
+        switch mood {
+        case .curious: -7
+        case .unsure: 4
+        default: 0
+        }
+    }
+
     // MARK: - Le corps
 
     private func figure(_ metrics: Metrics) -> some View {
         ZStack {
+            hands(metrics)
+
             RoundedRectangle(cornerRadius: metrics.corner, style: .continuous)
                 .fill(bodyGradient)
                 .frame(width: metrics.bodyWidth, height: metrics.bodyHeight)
@@ -187,6 +252,53 @@ struct MicaboMascot: View {
         }
     }
 
+    // MARK: - Les mains
+
+    /// Deux petites mains rondes, un ton plus sombre que le corps. Elles ne sont là que
+    /// quand elles font quelque chose : saluer, se lever, se poser sur les hanches. Le reste
+    /// du temps la carte garde sa silhouette.
+    @ViewBuilder
+    private func hands(_ metrics: Metrics) -> some View {
+        switch mood {
+        case .waving:
+            hand(metrics, x: -metrics.handSide, y: metrics.handHip)
+            wavingHand(metrics)
+        case .celebrating:
+            let bounce: CGFloat = wave ? -metrics.handWaveDY : metrics.handWaveDY
+            hand(metrics, x: -metrics.handSide, y: metrics.handUp + bounce)
+            hand(metrics, x: metrics.handSide, y: metrics.handUp - bounce)
+        case .proud:
+            hand(metrics, x: -metrics.handSide, y: metrics.handHip)
+            hand(metrics, x: metrics.handSide, y: metrics.handHip)
+        default:
+            EmptyView()
+        }
+    }
+
+    private func hand(_ metrics: Metrics, x: CGFloat, y: CGFloat) -> some View {
+        Circle()
+            .fill(Self.handInk)
+            .frame(width: metrics.hand, height: metrics.hand)
+            .offset(x: x, y: y)
+            .animation(.easeInOut(duration: 0.42).repeatForever(autoreverses: true), value: wave)
+    }
+
+    /// La main droite, levée à côté de la tête, qui pivote autour du poignet.
+    private func wavingHand(_ metrics: Metrics) -> some View {
+        let swing: Double = wave ? 22 : -22
+        let reach: CGFloat = metrics.handSide + metrics.hand * 0.3
+
+        return Circle()
+            .fill(Self.handInk)
+            .frame(width: metrics.hand, height: metrics.hand)
+            .offset(x: reach, y: metrics.handUp)
+            .rotationEffect(.degrees(swing), anchor: .bottom)
+            .animation(.easeInOut(duration: 0.42).repeatForever(autoreverses: true), value: wave)
+    }
+
+    /// Le violet d'appui de la maquette : la couleur des liens survolés, un ton sous l'accent.
+    private static let handInk = Color(hex: 0x4E2FCB)
+
     // MARK: - Le visage
 
     private func face(_ metrics: Metrics) -> some View {
@@ -195,17 +307,21 @@ struct MicaboMascot: View {
                 eye(metrics)
                 eye(metrics)
             }
+            .overlay(alignment: .top) {
+                brows(metrics)
+            }
+
             mouth(metrics)
         }
         .offset(y: metrics.faceDY)
     }
 
     private func eye(_ metrics: Metrics) -> some View {
-        let pupilX: CGFloat = gaze.x * size
+        let pupilX: CGFloat = gazeX * size
         let pupilY: CGFloat = gaze.y * size
         let glintX: CGFloat = pupilX + metrics.glintDX
         let glintY: CGFloat = pupilY + metrics.glintDY
-        let squint: CGFloat = (blink || mood == .celebrating) ? 0.12 : 1
+        let squint: CGFloat = blink ? 0.12 : lidLevel
 
         return ZStack {
             Ellipse()
@@ -225,29 +341,100 @@ struct MicaboMascot: View {
         }
         .scaleEffect(x: 1, y: squint, anchor: .center)
         .animation(.easeInOut(duration: 0.09), value: blink)
+        .animation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true), value: scan)
+    }
+
+    /// À quel point les paupières sont ouvertes : grand ouvertes, mi-closes de fierté,
+    /// plissées de joie.
+    private var lidLevel: CGFloat {
+        switch mood {
+        case .celebrating: 0.12
+        case .proud: 0.55
+        default: 1
+        }
     }
 
     /// Où regardent les pupilles, en fraction de la taille.
     private var gaze: CGPoint {
         switch mood {
-        case .happy: CGPoint(x: 0.012, y: 0.01)
+        case .happy, .waving: CGPoint(x: 0.012, y: 0.01)
         case .thinking: CGPoint(x: 0.03, y: -0.03)
-        case .celebrating: .zero
+        case .curious: CGPoint(x: 0.03, y: -0.02)
+        case .unsure: CGPoint(x: -0.025, y: 0.03)
+        case .reading: CGPoint(x: 0, y: 0.02)
+        case .celebrating, .proud: .zero
         }
     }
+
+    /// Le regard qui balaie une ligne quand elle lit ; fixe sinon.
+    private var gazeX: CGFloat {
+        guard mood == .reading else { return gaze.x }
+        return scan ? 0.035 : -0.035
+    }
+
+    // MARK: - Les sourcils
+
+    /// Deux traits au-dessus des yeux, et c'est ce qui donne une humeur à un regard. Le
+    /// blanc en est atténué : des sourcils aussi francs que les yeux feraient une grimace.
+    private func brows(_ metrics: Metrics) -> some View {
+        let pose = browPose
+        let gap: CGFloat = metrics.eyeGap + metrics.eyeWidth - metrics.browWidth
+        let lift: CGFloat = metrics.browRise - metrics.browLift * pose.lift
+
+        return HStack(spacing: gap) {
+            brow(metrics, angle: pose.left)
+            brow(metrics, angle: pose.right)
+        }
+        .offset(y: lift)
+    }
+
+    private func brow(_ metrics: Metrics, angle: Double) -> some View {
+        Capsule()
+            .fill(Color.white.opacity(0.7))
+            .frame(width: metrics.browWidth, height: metrics.browLine)
+            .rotationEffect(.degrees(angle))
+    }
+
+    /// L'angle de chaque sourcil et sa hauteur, par humeur. Pour le sourcil droit, un angle
+    /// négatif lève le bout extérieur ; pour le gauche, c'est un angle positif.
+    private var browPose: (left: Double, right: Double, lift: CGFloat) {
+        switch mood {
+        case .happy: (-5, 5, 0)
+        case .thinking: (0, -12, 0.6)
+        case .curious: (3, -14, 0.9)
+        case .reading: (6, -6, -0.3)
+        case .unsure: (-14, 14, 0.5)
+        case .celebrating, .waving, .proud: (7, -7, 0.8)
+        }
+    }
+
+    // MARK: - La bouche
 
     @ViewBuilder
     private func mouth(_ metrics: Metrics) -> some View {
         switch mood {
-        case .happy:
-            Smile(depth: metrics.smileDepth)
-                .stroke(Color.white, style: StrokeStyle(lineWidth: metrics.smileLine, lineCap: .round))
-                .frame(width: metrics.smileWidth, height: metrics.smileDepth)
+        case .happy, .reading:
+            smile(metrics)
         case .thinking:
             Capsule()
                 .fill(Color.white)
                 .frame(width: metrics.flatWidth, height: metrics.flatHeight)
-        case .celebrating:
+        case .unsure:
+            // Une bouche plate qui penche : l'hésitation, sans aller jusqu'à la moue.
+            Capsule()
+                .fill(Color.white)
+                .frame(width: metrics.flatWidth, height: metrics.flatHeight)
+                .rotationEffect(.degrees(-9))
+        case .curious:
+            Circle()
+                .stroke(Color.white, lineWidth: metrics.smileLine)
+                .frame(width: metrics.oWidth, height: metrics.oWidth)
+        case .waving:
+            ZStack {
+                smile(metrics)
+                cheeks(metrics)
+            }
+        case .celebrating, .proud:
             ZStack {
                 Smile(depth: metrics.grinDepth)
                     .stroke(Color.white, style: StrokeStyle(lineWidth: metrics.grinLine, lineCap: .round))
@@ -255,6 +442,12 @@ struct MicaboMascot: View {
                 cheeks(metrics)
             }
         }
+    }
+
+    private func smile(_ metrics: Metrics) -> some View {
+        Smile(depth: metrics.smileDepth)
+            .stroke(Color.white, style: StrokeStyle(lineWidth: metrics.smileLine, lineCap: .round))
+            .frame(width: metrics.smileWidth, height: metrics.smileDepth)
     }
 
     /// Les joues : seulement quand elle est contente, sinon elle a l'air malade.
@@ -305,6 +498,17 @@ struct MicaboMascot: View {
             .animation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true).delay(delay), value: breathe)
     }
 
+    /// Une goutte à la tempe : le doute, dit comme dans une bande dessinée.
+    private func drop(_ metrics: Metrics) -> some View {
+        let bob: CGFloat = breathe ? -metrics.breatheDY : metrics.breatheDY
+
+        return Image(systemName: "drop.fill")
+            .font(.system(size: metrics.dropSize, weight: .bold))
+            .foregroundStyle(MicaboColor.info)
+            .offset(x: metrics.dropX, y: metrics.dropY + bob)
+            .animation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true), value: breathe)
+    }
+
     /// Des étincelles qui battent : la fête, sans confettis.
     private var sparkles: some View {
         ZStack {
@@ -333,6 +537,8 @@ struct MicaboMascot: View {
 
     // MARK: - La vie
 
+    /// Tout ce qui bat est lancé à l'apparition, quelle que soit l'humeur : une humeur qui
+    /// change en cours de route trouve ses mouvements déjà en marche.
     private func start() {
         guard !reduceMotion else { return }
 
@@ -340,6 +546,8 @@ struct MicaboMascot: View {
             breathe = true
         }
         sparkle = true
+        wave = true
+        scan = true
     }
 
     /// Le clignement n'est pas au métronome : deux clignements à intervalle égal se
@@ -355,6 +563,45 @@ struct MicaboMascot: View {
             try? await Task.sleep(for: .milliseconds(110))
             blink = false
         }
+    }
+}
+
+// MARK: - Le petit saut
+
+/// **La mascotte sursaute quand quelque chose change.**
+///
+/// Un nouvel écran, une réponse donnée : elle se soulève d'un rien et retombe. C'est la
+/// réaction qui manquait — une mascotte posée dans un coin qui ne bronche pas quand on lui
+/// répond n'écoute pas.
+private struct MascotHop<Trigger: Equatable>: ViewModifier {
+    let trigger: Trigger
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var lifted = false
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(lifted ? 1.16 : 1)
+            .offset(y: lifted ? -4 : 0)
+            .onChange(of: trigger) { _, _ in
+                guard !reduceMotion else { return }
+                withAnimation(.spring(response: 0.26, dampingFraction: 0.55)) {
+                    lifted = true
+                }
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(180))
+                    withAnimation(.spring(response: 0.34, dampingFraction: 0.62)) {
+                        lifted = false
+                    }
+                }
+            }
+    }
+}
+
+extension View {
+    /// Fait sursauter la mascotte à chaque changement de `trigger`.
+    func mascotHop<Trigger: Equatable>(on trigger: Trigger) -> some View {
+        modifier(MascotHop(trigger: trigger))
     }
 }
 

@@ -54,8 +54,8 @@ struct DeckMaterialsStepView: View {
                     columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)],
                     spacing: 10
                 ) {
-                    ForEach(slots) { material in
-                        DeckMaterialSlot(material: material) {
+                    ForEach(Array(slots.enumerated()), id: \.element.id) { rank, material in
+                        DeckMaterialSlot(material: material, rank: rank) {
                             open(material)
                         } onRemove: {
                             remove(material)
@@ -317,12 +317,33 @@ struct DeckMaterialsStepView: View {
 /// Une case : vide, en train de lire, remplie, ou en panne.
 private struct DeckMaterialSlot: View {
     @Bindable var material: DeckMaterial
+    /// Le rang dans la grille : règle l'entrée en cascade.
+    var rank: Int = 0
     var onTap: () -> Void
     var onRemove: () -> Void
 
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
+    /// La case qui vient d'être remplie se soulève et retombe : c'est ce qui dit « reçu »
+    /// avant même qu'on ait lu le nom du fichier.
+    @State private var pop = false
+
     var body: some View {
+        slot
+            .scaleEffect(pop ? 1.06 : 1)
+            .onboardingAppear(index: 4 + rank, stagger: OnboardingMotion.rowStagger)
+            .onChange(of: material.isReady) { _, ready in
+                guard ready else { return }
+                Haptics.success()
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.55)) { pop = true }
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(200))
+                    withAnimation(.spring(response: 0.36, dampingFraction: 0.65)) { pop = false }
+                }
+            }
+    }
+
+    private var slot: some View {
         Button(action: onTap) {
             VStack(spacing: 8) {
                 glyph

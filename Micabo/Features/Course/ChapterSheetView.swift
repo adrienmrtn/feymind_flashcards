@@ -47,16 +47,8 @@ struct ChapterSheetView: View {
     @State private var formulaTarget: SheetFormulaTarget?
     @State private var paywall: PaywallTrigger?
 
-    /// Entre 0 (bandeau déplié) et 1 (réduit en barre), et la part de page déjà passée.
-    @State private var collapse: Double = 0
-    @State private var readingProgress: Double = 0
-    /// La hauteur du texte, mesurée pour que la progression de lecture ait un dénominateur.
-    @State private var contentHeight: CGFloat = 1
-    @State private var viewportHeight: CGFloat = 1
-
     @StateObject private var editorState = SheetEditorState()
 
-    private static let scrollSpace = "micabo.chapter"
     /// La marge d'une page de lecture : deux points de plus que partout ailleurs. Une ligne
     /// de seize points se lit mieux un peu plus courte.
     private static let margin: CGFloat = 22
@@ -88,54 +80,30 @@ struct ChapterSheetView: View {
     private var safeTop: CGFloat { MicaboScreen.safeTop }
 
     var body: some View {
-        GeometryReader { page in
-            ScrollView {
-                // Le bandeau défile avec le texte ; la barre repliée apparaît par-dessus et
-                // coupe la ligne en cours, comme sur `ChapitreScroll`. Voir `MicaboDeckBar`.
-                VStack(alignment: .leading, spacing: 0) {
-                    MicaboChapterBanner(
-                        emoji: chapter.course?.emoji ?? "📘",
-                        pastel: pastel,
-                        safeTop: safeTop,
-                        onBack: { dismiss() },
-                        onTextSize: { showTextSize = true }
-                    )
-
-                    reading
-                        .padding(.horizontal, Self.margin)
-                        .padding(.top, 20)
-                        .padding(.bottom, MicaboLayout.bottomBarClearance)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(contentProbe)
-                .micaboScrollProbe(space: Self.scrollSpace)
+        // **Le bandeau se replie en place** et, replié, porte la progression de lecture.
+        // Le texte lui laisse sa hauteur dépliée puis remonte dessous, coupé par la barre,
+        // comme sur `ChapitreScroll`. Voir `MicaboCollapsingScreen`.
+        MicaboCollapsingScreen(expandedHeight: safeTop + MicaboHeaderBand.chapter) { scroll in
+            MicaboCollapsingHeader(
+                emoji: chapter.course?.emoji ?? "📘",
+                pastel: pastel,
+                title: chapter.title,
+                band: MicaboHeaderBand.chapter,
+                safeTop: safeTop,
+                offset: scroll.offset,
+                readingProgress: scroll.progress,
+                onBack: { dismiss() },
+                onTrailing: { showTextSize = true }
+            ) {
+                Text("Aa")
+                    .font(MicaboFont.ui(15, weight: .bold))
             }
-            .coordinateSpace(name: Self.scrollSpace)
-            .scrollIndicators(.hidden)
-            .onPreferenceChange(MicaboScrollOffsetKey.self) { top in
-                readScroll(top, viewport: page.size.height)
-            }
-            .onPreferenceChange(MicaboContentHeightKey.self) { height in
-                contentHeight = max(1, height)
-                viewportHeight = page.size.height
-            }
-            .overlay(alignment: .top) {
-                MicaboChapterBar(
-                    emoji: chapter.course?.emoji ?? "📘",
-                    pastel: pastel,
-                    title: chapter.title,
-                    safeTop: safeTop,
-                    visible: collapse,
-                    readingProgress: readingProgress,
-                    onBack: { dismiss() },
-                    onTextSize: { showTextSize = true }
-                )
-            }
+        } content: {
+            reading
+                .padding(.horizontal, Self.margin)
+                .padding(.top, 20)
+                .padding(.bottom, MicaboLayout.bottomBarClearance)
         }
-        // Sur le `GeometryReader` lui-même : il couvre alors l'écran entier, `page.size`
-        // mesure la vraie hauteur visible — dont dépend la barre de lecture — et la
-        // superposition du bandeau s'aligne sur le bord de l'écran, pas sur la zone sûre.
-        .ignoresSafeArea(edges: .top)
         .micaboScreenBackground()
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
@@ -271,30 +239,6 @@ struct ChapterSheetView: View {
         }
     }
 
-    // MARK: - Le défilement
-
-    /// Ce que le défilement rapporte : de quoi replier le bandeau, et de quoi remplir la
-    /// barre de lecture.
-    ///
-    /// **La progression est celle du défilement**, du premier pixel au dernier : zéro quand
-    /// rien n'a bougé, un quand le pouce ne peut plus descendre. Le calcul précédent
-    /// retranchait le bandeau et la marge du bas pour ne compter que le texte ; il dépendait
-    /// donc de hauteurs de bandeau qui varient maintenant d'un téléphone à l'autre, et il
-    /// n'atteignait jamais tout à fait cent. Une barre de lecture qui s'arrête à
-    /// quatre-vingt-seize en bas de page est un bug qu'on regarde tous les jours.
-    private func readScroll(_ top: CGFloat, viewport: CGFloat) {
-        collapse = min(1, max(0, -top / MicaboChapterBanner.travel))
-
-        let maxScroll = max(1, contentHeight - viewport)
-        readingProgress = min(1, max(0, -top / maxScroll))
-    }
-
-    private var contentProbe: some View {
-        GeometryReader { proxy in
-            Color.clear.preference(key: MicaboContentHeightKey.self, value: proxy.size.height)
-        }
-    }
-
     // MARK: - Lire, écrire
 
     private func reload() {
@@ -358,15 +302,6 @@ struct ChapterSheetView: View {
     private func explain(_ text: String) {
         guard let clean = text.nilIfBlank else { return }
         explaining = ExplainedPassage(text: clean)
-    }
-}
-
-/// La hauteur du texte d'un chapitre, pour que la barre de lecture ait un dénominateur.
-struct MicaboContentHeightKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = max(value, nextValue())
     }
 }
 

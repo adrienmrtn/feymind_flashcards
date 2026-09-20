@@ -60,6 +60,18 @@ enum DeckSetupStep: Hashable {
     }
 
     var analyticsName: String { String(describing: self) }
+
+    /// **L'humeur de la mascotte, écran par écran** — la même grammaire que le parcours
+    /// d'accueil : elle demande, elle lit ce qu'on dépose, elle réfléchit devant la note.
+    /// L'écran de l'auto-évaluation la fait réagir lui-même, cran par cran.
+    var mascotMood: MicaboMascot.Mood {
+        switch self {
+        case .subject, .source, .purpose: .curious
+        case .materials, .topic: .reading
+        case .grade, .building: .thinking
+        case .name, .deadline, .confidence: .happy
+        }
+    }
 }
 
 /// **La création d'un deck, du choix de la matière au plan construit.**
@@ -140,21 +152,17 @@ struct DeckSetupFlowView: View {
     /// empilées dont une ne bougera plus. La première ne mesure plus rien à ce moment-là —
     /// il n'y a plus de questions derrière — et sa seule action possible vient d'être
     /// retirée. Un en-tête sans information ni action n'est plus un en-tête.
+    ///
+    /// **Le même chrome que le parcours d'accueil.** La jauge sur toute la largeur, puis
+    /// une rangée : le retour à gauche, la mascotte à droite — qui change de tête d'un
+    /// écran à l'autre et sursaute quand on passe au suivant — et la croix. Le parcours
+    /// d'import posait ses trois commandes sur une seule ligne, sans personnage : neuf
+    /// questions d'affilée posées par personne, c'était le seul endroit de l'app où l'on
+    /// remplissait un formulaire.
     @ViewBuilder
     private var header: some View {
         if step != .building {
-            HStack(spacing: MicaboSpacing.sm) {
-                Button(action: goBack) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                        .frame(width: 28, height: 28)
-                }
-                .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
-                .opacity(history.isEmpty ? 0 : 1)
-                .disabled(history.isEmpty)
-                .accessibilityLabel(i18n.t("app.common.back"))
-
+            VStack(alignment: .leading, spacing: 0) {
                 MicaboProgressBar(
                     progress: step.progress,
                     tint: MicaboColor.accent,
@@ -162,18 +170,38 @@ struct DeckSetupFlowView: View {
                 )
                 .frame(height: 4)
 
-                Button(action: onCancel) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(MicaboColor.inkTertiary)
-                        .frame(width: 28, height: 28)
-                        .background(MicaboColor.surfaceMuted, in: Circle())
+                HStack(alignment: .center, spacing: 10) {
+                    Button(action: goBack) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 19, weight: .semibold))
+                            .foregroundStyle(MicaboColor.inkSecondary)
+                            .frame(width: 40, height: 40, alignment: .leading)
+                    }
+                    .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
+                    .opacity(history.isEmpty ? 0 : 1)
+                    .disabled(history.isEmpty)
+                    .accessibilityLabel(i18n.t("app.common.back"))
+
+                    Spacer(minLength: 0)
+
+                    MicaboMascot(mood: step.mascotMood, size: 30)
+                        .frame(width: 46, height: 40)
+                        .mascotHop(on: step)
+
+                    Button(action: onCancel) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(MicaboColor.inkTertiary)
+                            .frame(width: 30, height: 30)
+                            .background(MicaboColor.surfaceMuted, in: Circle())
+                    }
+                    .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
+                    .accessibilityLabel(i18n.t("app.a11y.close"))
                 }
-                .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-                .accessibilityLabel(i18n.t("app.a11y.close"))
+                .padding(.top, 12)
             }
             .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.vertical, MicaboSpacing.xs)
+            .padding(.top, MicaboSpacing.xs)
             .animation(.easeInOut(duration: 0.38), value: step)
         }
     }
