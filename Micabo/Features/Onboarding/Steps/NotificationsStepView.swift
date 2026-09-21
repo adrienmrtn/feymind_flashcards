@@ -125,7 +125,7 @@ struct NotificationsStepView: View {
                 .foregroundStyle(isChecked ? MicaboColor.ink : MicaboColor.inkTertiary)
         }
         .frame(maxWidth: .infinity)
-        .animation(.spring(response: 0.34, dampingFraction: 0.6), value: isChecked)
+        .animation(OnboardingMotion.select, value: isChecked)
     }
 
     /// La flamme et le compte, qui grandissent avec la semaine.
@@ -142,7 +142,7 @@ struct NotificationsStepView: View {
         .padding(.vertical, 8)
         .padding(.horizontal, 13)
         .background(MicaboColor.flameSoft, in: Capsule())
-        .animation(.spring(response: 0.34, dampingFraction: 0.7), value: checked)
+        .animation(OnboardingMotion.select, value: checked)
     }
 
     // MARK: - La notification
@@ -188,7 +188,7 @@ struct NotificationsStepView: View {
         .offset(y: hasLanded ? 0 : -40)
         .opacity(hasLanded ? 1 : 0)
         .scaleEffect(hasLanded ? 1 : 0.94)
-        .animation(.spring(response: 0.55, dampingFraction: 0.72), value: hasLanded)
+        .animation(OnboardingMotion.enter, value: hasLanded)
         .accessibilityElement(children: .combine)
     }
 

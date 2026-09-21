@@ -163,16 +163,16 @@ struct MicaboMascot: View {
             cheek = size * 0.10
             cheekX = size * 0.235
             cheekY = size * 0.10
-            breatheX = 0.015
-            breatheY = 0.02
+            breatheX = 0.01
+            breatheY = 0.013
             dotBase = size * 0.07
             dotStep = size * 0.016
             dotGap = size * 0.05
             dotRise = size * 0.04
             dotsX = size * 0.58
             dotsY = size * -0.5
-            dropWidth = size * 0.13
-            dropHeight = size * 0.17
+            dropWidth = size * 0.1
+            dropHeight = size * 0.14
             dropX = size * 0.46
             dropY = size * -0.42
             driftScale = size
@@ -214,17 +214,17 @@ struct MicaboMascot: View {
             case .thinking:
                 Expression(lid: 0.1, squint: 0, browLeft: 0, browRight: -12, browLift: 0.6, gazeX: 0.03, gazeY: -0.03, pupil: 0.95, curve: 0.05, open: 0, mouthWidth: 0.7, cheeks: 0, armLeft: 14, armRight: 118, tilt: 0, waves: false)
             case .celebrating:
-                Expression(lid: 0, squint: 0.85, browLeft: 7, browRight: -7, browLift: 0.8, gazeX: 0, gazeY: 0, pupil: 1, curve: 1, open: 0.9, mouthWidth: 1.15, cheeks: 0.9, armLeft: 150, armRight: 150, tilt: 0, waves: false)
+                Expression(lid: 0, squint: 0.7, browLeft: 6, browRight: -6, browLift: 0.7, gazeX: 0, gazeY: 0, pupil: 1, curve: 0.9, open: 0.55, mouthWidth: 1.05, cheeks: 0.5, armLeft: 140, armRight: 140, tilt: 0, waves: false)
             case .waving:
-                Expression(lid: 0, squint: 0.4, browLeft: 7, browRight: -7, browLift: 0.8, gazeX: 0.012, gazeY: 0.01, pupil: 1, curve: 0.75, open: 0.25, mouthWidth: 1, cheeks: 0.8, armLeft: 18, armRight: 140, tilt: 0, waves: true)
+                Expression(lid: 0, squint: 0.3, browLeft: 6, browRight: -6, browLift: 0.7, gazeX: 0.012, gazeY: 0.01, pupil: 1, curve: 0.7, open: 0.15, mouthWidth: 1, cheeks: 0.5, armLeft: 18, armRight: 132, tilt: 0, waves: true)
             case .curious:
-                Expression(lid: 0, squint: 0, browLeft: 3, browRight: -14, browLift: 0.9, gazeX: 0.03, gazeY: -0.02, pupil: 1.15, curve: 0.15, open: 0.55, mouthWidth: 0.45, cheeks: 0, armLeft: 26, armRight: 26, tilt: -7, waves: false)
+                Expression(lid: 0, squint: 0, browLeft: 3, browRight: -12, browLift: 0.8, gazeX: 0.03, gazeY: -0.02, pupil: 1.1, curve: 0.15, open: 0.35, mouthWidth: 0.5, cheeks: 0, armLeft: 26, armRight: 26, tilt: -5, waves: false)
             case .reading:
                 Expression(lid: 0.28, squint: 0, browLeft: 6, browRight: -6, browLift: -0.3, gazeX: 0, gazeY: 0.02, pupil: 1, curve: 0.35, open: 0, mouthWidth: 0.9, cheeks: 0, armLeft: 42, armRight: 42, tilt: 0, waves: false)
             case .unsure:
                 Expression(lid: 0.12, squint: 0, browLeft: -14, browRight: 14, browLift: 0.5, gazeX: -0.025, gazeY: 0.03, pupil: 0.9, curve: -0.35, open: 0, mouthWidth: 0.75, cheeks: 0, armLeft: 8, armRight: 8, tilt: 4, waves: false)
             case .proud:
-                Expression(lid: 0.32, squint: 0.45, browLeft: 7, browRight: -7, browLift: 0.6, gazeX: 0, gazeY: 0, pupil: 1, curve: 0.8, open: 0.3, mouthWidth: 1.05, cheeks: 0.7, armLeft: 58, armRight: 58, tilt: 0, waves: false)
+                Expression(lid: 0.32, squint: 0.4, browLeft: 6, browRight: -6, browLift: 0.6, gazeX: 0, gazeY: 0, pupil: 1, curve: 0.75, open: 0.2, mouthWidth: 1.05, cheeks: 0.45, armLeft: 58, armRight: 58, tilt: 0, waves: false)
             }
         }
     }
@@ -235,7 +235,6 @@ struct MicaboMascot: View {
     private static let bodyDeep = Color(hex: 0x4E2FCB)
     private static let mouthInside = Color(hex: 0x2B1B6B)
     private static let blush = Color(hex: 0xFFB3C7)
-    private static let tongue = Color(hex: 0xFF7A9B)
     private static let sparkGold = Color(hex: 0xF5B400)
 
     // MARK: - Le corps de la vue
@@ -266,7 +265,7 @@ struct MicaboMascot: View {
         .frame(width: metrics.frameWidth, height: metrics.frameHeight)
         // C'est ici que les humeurs se fondent l'une dans l'autre : chaque nombre de
         // l'expression est interpolé, et la mascotte fait sa nouvelle tête sous les yeux.
-        .animation(.spring(response: 0.42, dampingFraction: 0.78), value: mood)
+        .animation(.timingCurve(0.2, 0.8, 0.2, 1, duration: 0.42), value: mood)
         .animation(.easeInOut(duration: 0.28), value: drift)
         .accessibilityHidden(true)
         .onAppear(perform: start)
@@ -355,8 +354,8 @@ struct MicaboMascot: View {
     /// vers l'extérieur. Ils sont derrière le corps : l'attache ne se voit pas.
     private func arms(_ metrics: Metrics, _ expression: Expression) -> some View {
         let sway: Double = breathe ? 3 : -3
-        let swing: Double = wave ? 18 : -18
-        let liftBounce: Double = wave ? 6 : -6
+        let swing: Double = wave ? 10 : -10
+        let liftBounce: Double = wave ? 3 : -3
         let rightExtra: Double = expression.waves ? swing : (mood == .celebrating ? liftBounce : 0)
         let leftExtra: Double = mood == .celebrating ? -liftBounce : 0
         let leftAngle: Double = expression.armLeft + sway + leftExtra
@@ -378,7 +377,7 @@ struct MicaboMascot: View {
             .frame(width: metrics.armWidth, height: metrics.armLength)
             .rotationEffect(.degrees(turn), anchor: .top)
             .offset(x: x, y: y)
-            .animation(.easeInOut(duration: 0.45).repeatForever(autoreverses: true), value: wave)
+            .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: wave)
             .animation(.easeInOut(duration: 2.6).repeatForever(autoreverses: true), value: breathe)
     }
 
@@ -483,22 +482,11 @@ struct MicaboMascot: View {
         // Le cadre est centré plus bas que la ligne des lèvres : il doit laisser la place
         // à une bouche qui tombe (au-dessus) comme à une bouche qui s'ouvre (en dessous).
         let y: CGFloat = metrics.mouthY + height / 2 - metrics.mouthDepth
-        let tongueAlpha: Double = Double(max(0, min(1, (expression.open - 0.3) * 4)))
-        let tongueSize: CGFloat = width * 0.64
-        let tongueY: CGFloat = metrics.mouthDepth + (metrics.mouthDepth * expression.curve + metrics.mouthOpen * expression.open) * 0.72
         let lowerLipAlpha: Double = Double(max(0, min(1, expression.open * 6)))
 
         return ZStack {
             MascotMouthShape(curve: expression.curve, open: expression.open, depth: metrics.mouthDepth, reach: metrics.mouthOpen)
                 .fill(Self.mouthInside)
-                .overlay {
-                    Circle()
-                        .fill(Self.tongue)
-                        .frame(width: tongueSize, height: tongueSize)
-                        .position(x: width / 2, y: tongueY)
-                        .opacity(tongueAlpha)
-                }
-                .clipShape(MascotMouthShape(curve: expression.curve, open: expression.open, depth: metrics.mouthDepth, reach: metrics.mouthOpen))
 
             MascotLipShape(curve: expression.curve, depth: metrics.mouthDepth, lower: false, open: expression.open, reach: metrics.mouthOpen)
                 .stroke(Color.white, style: StrokeStyle(lineWidth: metrics.lip, lineCap: .round))
@@ -549,10 +537,9 @@ struct MicaboMascot: View {
     /// Des étincelles à quatre branches qui battent : la fête, sans confettis.
     private var sparkles: some View {
         ZStack {
-            spark(x: -0.58, y: -0.42, share: 0.26, delay: 0)
-            spark(x: 0.6, y: -0.3, share: 0.2, delay: 0.25)
-            spark(x: -0.5, y: 0.34, share: 0.16, delay: 0.5)
-            spark(x: 0.55, y: 0.4, share: 0.22, delay: 0.7)
+            spark(x: -0.56, y: -0.4, share: 0.18, delay: 0)
+            spark(x: 0.58, y: -0.28, share: 0.14, delay: 0.3)
+            spark(x: 0.5, y: 0.38, share: 0.15, delay: 0.6)
         }
     }
 
@@ -560,18 +547,16 @@ struct MicaboMascot: View {
         let side: CGFloat = size * share
         let dx: CGFloat = x * size
         let dy: CGFloat = y * size
-        let scale: CGFloat = sparkle ? 1.2 : 0.7
-        let alpha: Double = sparkle ? 1 : 0.35
-        let turn: Double = sparkle ? 20 : -20
+        let scale: CGFloat = sparkle ? 1.1 : 0.85
+        let alpha: Double = sparkle ? 1 : 0.5
 
         return MascotSparkShape()
             .fill(Self.sparkGold)
             .frame(width: side, height: side)
-            .rotationEffect(.degrees(turn))
             .scaleEffect(scale)
             .opacity(alpha)
             .offset(x: dx, y: dy)
-            .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true).delay(delay), value: sparkle)
+            .animation(.easeInOut(duration: 1.3).repeatForever(autoreverses: true).delay(delay), value: sparkle)
     }
 
     // MARK: - La vie
@@ -769,10 +754,10 @@ private struct MascotDropShape: Shape {
 
 /// **La mascotte sursaute quand quelque chose change.**
 ///
-/// Un nouvel écran, une réponse donnée : elle s'accroupit, saute, retombe et rebondit.
-/// C'est une compression puis un étirement, comme un corps mou — pas un simple
-/// agrandissement. Une mascotte posée dans un coin qui ne bronche pas quand on lui répond
-/// n'écoute pas.
+/// Un nouvel écran, une réponse donnée : elle s'accroupit d'un rien, se lève, se repose.
+/// Une compression puis un étirement, comme un corps mou — pas un simple agrandissement,
+/// et pas un rebond non plus. Une mascotte posée dans un coin qui ne bronche pas quand on
+/// lui répond n'écoute pas ; une qui sautille à chaque fois est un jouet.
 private struct MascotHop<Trigger: Equatable>: ViewModifier {
     let trigger: Trigger
 
@@ -782,39 +767,38 @@ private struct MascotHop<Trigger: Equatable>: ViewModifier {
         case rest
         case crouch
         case jump
-        case land
 
         var scaleX: CGFloat {
             switch self {
             case .rest: 1
-            case .crouch: 1.08
-            case .jump: 0.94
-            case .land: 1.06
+            case .crouch: 1.03
+            case .jump: 0.985
             }
         }
 
         var scaleY: CGFloat {
             switch self {
             case .rest: 1
-            case .crouch: 0.88
-            case .jump: 1.1
-            case .land: 0.93
+            case .crouch: 0.95
+            case .jump: 1.03
             }
         }
 
         var lift: CGFloat {
             switch self {
-            case .rest, .crouch, .land: 0
-            case .jump: -12
+            case .rest, .crouch: 0
+            case .jump: -7
             }
         }
 
+        /// Trois courbes monotones : elle s'accroupit, se lève, se repose. Le rebond à
+        /// l'atterrissage est parti — un personnage qui rebondit à chaque écran finit par
+        /// avoir l'air d'un jouet.
         var animation: Animation {
             switch self {
-            case .crouch: .easeIn(duration: 0.09)
-            case .jump: .spring(response: 0.24, dampingFraction: 0.7)
-            case .land: .easeOut(duration: 0.1)
-            case .rest: .spring(response: 0.32, dampingFraction: 0.55)
+            case .crouch: .easeIn(duration: 0.1)
+            case .jump: .easeOut(duration: 0.18)
+            case .rest: .easeInOut(duration: 0.24)
             }
         }
     }

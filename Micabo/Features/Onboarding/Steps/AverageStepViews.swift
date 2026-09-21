@@ -373,7 +373,7 @@ private struct GradeJourney: View {
                 drawn = 1
             }
             try? await Task.sleep(for: .milliseconds(1_320))
-            withAnimation(.spring(response: 0.42, dampingFraction: 0.6)) { arrived = true }
+            withAnimation(OnboardingMotion.select) { arrived = true }
             Haptics.success()
         }
     }

@@ -197,7 +197,7 @@ private struct WelcomeScene: View {
             MicaboMascot(mood: .waving, size: 150)
                 .scaleEffect(mascotScale)
                 .opacity(mascotAlpha)
-                .animation(.spring(response: 0.62, dampingFraction: 0.72).delay(0.32), value: shown)
+                .animation(OnboardingMotion.enter.delay(0.32), value: shown)
         }
         .frame(height: 300)
         .frame(maxWidth: .infinity)
@@ -244,7 +244,7 @@ private struct WelcomeScene: View {
             .animation(.easeInOut(duration: 2.8).repeatForever(autoreverses: true).delay(orbit.delay), value: drift)
             .scaleEffect(scale)
             .opacity(alpha)
-            .animation(.spring(response: 0.58, dampingFraction: 0.7).delay(arrival), value: shown)
+            .animation(OnboardingMotion.enter.delay(arrival), value: shown)
     }
 
     private func start() {
