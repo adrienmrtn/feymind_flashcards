@@ -42,7 +42,6 @@ struct DeckView: View {
     @State private var paywall: PaywallTrigger?
     /// Le cadeau du premier deck. Il se présente ici, sur le plan qu'on vient d'obtenir :
     /// une offre posée avant qu'on ait vu le produit tourner n'a rien à récompenser.
-    @State private var giftOffer: DiscountPresentation?
 
     /// Les faits du deck, relus après chaque session. Ils coûtent un parcours de toutes les
     /// cartes et une lecture des journaux : les recalculer dans le corps de la vue les
@@ -114,7 +113,6 @@ struct DeckView: View {
                 "source": .text(course.source.rawValue),
                 "chapters": .number(Double(course.orderedChapters.count)),
             ])
-            await presentGiftIfEarned()
         }
         .sheet(item: $editingExam) { exam in
             ExamEditorSheet(exam: exam, suggestedDate: exam.date) { _ in reload() }
@@ -122,7 +120,6 @@ struct DeckView: View {
                 .presentationCornerRadius(MicaboRadius.sheet)
         }
         .micaboPaywall($paywall)
-        .micaboDiscountOffer($giftOffer)
         .confirmationDialog(course.title, isPresented: $showMenu, titleVisibility: .visible) {
             Button(i18n.t("ios.deck.rename")) {
                 draftTitle = course.title
@@ -331,31 +328,6 @@ struct DeckView: View {
         course.title = clean
         course.updatedAt = Date()
         try? modelContext.save()
-    }
-
-    // MARK: - Le cadeau du premier deck
-
-    /// Pose le cadeau, une fois, sur le plan du premier deck.
-    ///
-    /// L'attente n'est pas décorative : on arrive ici par une poussée de navigation, et un
-    /// pop-up ouvert pendant que la page glisse encore donne deux animations concurrentes.
-    /// Le temps que l'écran se pose, on a aussi eu le temps de voir son deck.
-    @MainActor
-    private func presentGiftIfEarned() async {
-        guard
-            DiscountOffer.shouldPresentGift(
-                isPro: pro?.isPro ?? true,
-                courseCount: (try? modelContext.fetchCount(FetchDescriptor<Course>(
-                    predicate: #Predicate { !$0.isFromLibrary }
-                ))) ?? 0,
-                seen: DiscountOffer.isSeen(),
-                startedAt: DiscountOffer.start()
-            )
-        else { return }
-
-        try? await Task.sleep(for: .milliseconds(900))
-        guard !Task.isCancelled, giftOffer == nil, paywall == nil else { return }
-        giftOffer = .gift
     }
 
     // MARK: - Les faits
