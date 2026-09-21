@@ -169,8 +169,9 @@ struct SmartFeaturesStepView: View {
 /// page, avec une formule composée en vraie notation et la courbe de la suite qui se
 /// dessine. Le premier dit « ça lit ton cours », le second dit « même en maths ».
 ///
-/// Les blocs arrivent l'un après l'autre, comme une page qu'on écrit, puis la page tient
-/// quelques secondes, s'efface, et la suivante commence. Sans mouvement réduit, tout est
+/// Les blocs arrivent l'un après l'autre, vite — cinq blocs en une seconde, comme une
+/// page qui s'écrit sous les yeux —, puis la page tient deux secondes, s'efface, et la
+/// suivante commence. Sans mouvement réduit, tout est
 /// posé d'un coup.
 private struct IntroSheetPreview: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -336,7 +337,7 @@ private struct IntroSheetPreview: View {
                     Capsule()
                         .fill(MicaboColor.accent)
                         .frame(width: drawn, height: 3)
-                        .animation(.easeOut(duration: 1.1), value: isDrawn)
+                        .animation(.easeOut(duration: 0.7), value: isDrawn)
 
                     ForEach(Array(Self.landmarks.enumerated()), id: \.offset) { index, landmark in
                         landmarkMark(landmark, index: index, x: landmark.position * width)
@@ -350,7 +351,7 @@ private struct IntroSheetPreview: View {
     }
 
     private func landmarkMark(_ landmark: Landmark, index: Int, x: CGFloat) -> some View {
-        let delay: Double = 0.15 + Double(landmark.position) * 1.0
+        let delay: Double = 0.1 + Double(landmark.position) * 0.6
         let scale: CGFloat = isDrawn ? 1 : 0.2
         let alpha: Double = isDrawn ? 1 : 0
 
@@ -399,7 +400,7 @@ private struct IntroSheetPreview: View {
                     IntroCurveShape(points: points)
                         .trim(from: 0, to: trim)
                         .stroke(MicaboColor.accent, style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
-                        .animation(.easeInOut(duration: 1.2), value: isDrawn)
+                        .animation(.easeInOut(duration: 0.8), value: isDrawn)
 
                     ForEach(Array(points.enumerated()), id: \.offset) { index, point in
                         curveDot(index: index, at: point)
@@ -411,7 +412,7 @@ private struct IntroSheetPreview: View {
     }
 
     private func curveDot(index: Int, at point: CGPoint) -> some View {
-        let delay: Double = 0.1 + Double(index) / Double(Self.terms - 1) * 1.1
+        let delay: Double = 0.08 + Double(index) / Double(Self.terms - 1) * 0.7
         let scale: CGFloat = isDrawn ? 1 : 0.2
         let alpha: Double = isDrawn ? 1 : 0
 
@@ -451,19 +452,19 @@ private struct IntroSheetPreview: View {
             revealed = Self.blockCount
             return
         }
-        try? await Task.sleep(for: .milliseconds(350))
+        try? await Task.sleep(for: .milliseconds(240))
         while !Task.isCancelled {
             for step in 1...Self.blockCount {
                 withAnimation(OnboardingMotion.enter) { revealed = step }
-                try? await Task.sleep(for: .milliseconds(360))
+                try? await Task.sleep(for: .milliseconds(190))
                 guard !Task.isCancelled else { return }
             }
-            try? await Task.sleep(for: .milliseconds(3800))
+            try? await Task.sleep(for: .milliseconds(2400))
             guard !Task.isCancelled else { return }
-            withAnimation(.easeOut(duration: 0.3)) { revealed = 0 }
-            try? await Task.sleep(for: .milliseconds(320))
+            withAnimation(.easeOut(duration: 0.25)) { revealed = 0 }
+            try? await Task.sleep(for: .milliseconds(230))
             example = (example + 1) % 2
-            try? await Task.sleep(for: .milliseconds(380))
+            try? await Task.sleep(for: .milliseconds(260))
         }
     }
 }

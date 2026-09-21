@@ -171,6 +171,23 @@ struct CoursesListView: View {
             .task(id: censusTaskID, refreshCensusIfVisible)
             .onChange(of: path.count, handlePathDepth)
             .onChange(of: router?.courseImportRequests ?? 0, handleImportRequest)
+            .task(openFirstImportIfPending)
+    }
+
+    /// **Le premier deck se demande tout seul.** Quelqu'un qui arrive du parcours n'a
+    /// rien à voir ici : l'écran qui l'attend est la question « tu révises quelle
+    /// matière ? », pas une liste vide. Le drapeau est consommé tout de suite : annuler
+    /// l'import rend la liste vide, avec son « + », et ne redemande rien au lancement
+    /// suivant.
+    @MainActor
+    private func openFirstImportIfPending() async {
+        guard OnboardingPreferences.pendingFirstImport else { return }
+        OnboardingPreferences.pendingFirstImport = false
+        // Le temps que l'app se pose : une couverture ouverte pendant que la racine
+        // apparaît encore donne deux animations concurrentes.
+        try? await Task.sleep(for: .milliseconds(650))
+        guard !Task.isCancelled else { return }
+        requestImport()
     }
 
     private var dialogs: some View {

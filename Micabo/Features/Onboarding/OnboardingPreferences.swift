@@ -334,6 +334,9 @@ enum OnboardingPreferences {
         /// chaque passage sur la preuve sociale, et le quota serait dépensé en silence
         /// avant le premier vrai moment de satisfaction.
         static let ratingAsked = "micabo.onboarding.ratingAsked"
+        /// Posée à la fin du parcours, levée par l'onglet Decks : le premier import s'ouvre
+        /// tout seul à l'arrivée dans l'app. Voir `pendingFirstImport`.
+        static let pendingFirstImport = "micabo.onboarding.pendingFirstImport"
         /// Écrite par l'ancien écran des rappels. **Elle reste retirée alors même que
         /// l'écran est revenu** : le nouveau ne note aucune intention, il ouvre la boîte du
         /// système, qui est seul à savoir ce qui a été répondu. Une préférence locale à
@@ -357,7 +360,7 @@ enum OnboardingPreferences {
             completed, level, stage, tier, country, customCountryCode,
             goal, goals, forgetting, forgetsOften, subjects,
             institutionId, institutionName,
-            dailyMinutes, weeklyMinutes, ratingAsked, retiredNotificationsOptIn, completedAt,
+            dailyMinutes, weeklyMinutes, ratingAsked, pendingFirstImport, retiredNotificationsOptIn, completedAt,
             sheetLanguage, schoolTrack, schoolYear, displayName
         ]
     }
@@ -655,6 +658,18 @@ enum OnboardingPreferences {
     static var ratingAsked: Bool {
         get { defaults.bool(forKey: Key.ratingAsked) }
         set { defaults.set(newValue, forKey: Key.ratingAsked) }
+    }
+
+    /// **L'app s'ouvre sur l'import du premier deck.**
+    ///
+    /// Vrai entre la fin du parcours et le premier passage sur l'onglet Decks. Quelqu'un
+    /// qui vient de répondre à vingt questions et de voir le paywall — qu'il ait payé ou
+    /// non — n'a pas de deck : l'écran qui l'attend n'est pas une liste vide avec un « + »
+    /// en bas à droite, c'est la question « tu révises quelle matière ? ». Le drapeau est
+    /// consommé à l'ouverture, donc il ne revient pas si l'on annule l'import.
+    static var pendingFirstImport: Bool {
+        get { defaults.bool(forKey: Key.pendingFirstImport) }
+        set { defaults.set(newValue, forKey: Key.pendingFirstImport) }
     }
 
     static func markCompleted() {
