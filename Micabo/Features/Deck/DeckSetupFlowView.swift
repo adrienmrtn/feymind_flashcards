@@ -136,6 +136,11 @@ struct DeckSetupFlowView: View {
         }
         .onChange(of: step) { _, value in
             Analytics.track(.deckSetupStep, ["step": .text(value.analyticsName)])
+            // La page qui se pose se sent — à l'atterrissage, comme sur le parcours
+            // d'accueil. Voir `OnboardingFlowView`.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.26) {
+                Haptics.tick()
+            }
         }
     }
 

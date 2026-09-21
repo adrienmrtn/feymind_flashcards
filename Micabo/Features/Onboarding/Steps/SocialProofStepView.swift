@@ -119,7 +119,12 @@ struct SocialProofStepView: View {
         .frame(height: Self.cardHeight + 32)
         .padding(.horizontal, MicaboSpacing.xs)
         .contentShape(Rectangle())
-        .onTapGesture(perform: advance)
+        .onTapGesture {
+            // Un appui vibre ; le défilement automatique, non — une carte qui passe toute
+            // seule toutes les trois secondes ne doit pas faire trembler la main.
+            Haptics.tick()
+            advance()
+        }
     }
 
     private func depth(of review: Review) -> Int {
@@ -214,6 +219,5 @@ struct SocialProofStepView: View {
 
     private func advance() {
         top = (top + 1) % reviews.count
-        Haptics.tick()
     }
 }

@@ -1,50 +1,50 @@
 import SwiftUI
 
-/// **La mascotte de Micabo : une carte qui a un visage.**
+/// **La mascotte de Micabo : un petit personnage violet, rond, qui a un visage.**
 ///
 /// Les parcours d'accueil qui marchent — Gizmo, Ahead, Hablo — ont tous la même chose que
 /// le nôtre n'avait pas : quelqu'un qui parle. Un personnage sur chaque écran, qui pose la
 /// question dans une bulle, qui cligne des yeux pendant qu'on hésite, qui se réjouit quand
 /// on a fini. Sans lui, un parcours de vingt écrans est un formulaire ; avec lui, c'est une
-/// conversation. Ce n'est pas de la décoration : c'est ce qui fait qu'on lit la question
-/// comme une question et non comme un champ.
+/// conversation.
 ///
-/// Elle est dessinée en SwiftUI pur, pas en image : elle **bouge**. Elle respire (un
-/// balancement lent), elle cligne des yeux à intervalles irréguliers, son regard suit une
-/// direction, et son humeur change les sourcils, la bouche, les mains et ce qui flotte
-/// autour. Une image aurait donné un autocollant.
+/// **Ce n'est plus un rectangle avec deux ellipses dessus.** La version précédente
+/// superposait des formes géométriques — un rectangle arrondi, deux ellipses, deux ronds —
+/// et ça se voyait : un autocollant plat, sans volume, qui faisait la même tête partout.
+/// Celle-ci a un corps en haricot dessiné à la main, un dégradé qui lui donne du volume,
+/// un reflet sur l'épaule, une ombre sous le ventre, une ombre au sol, deux pieds, deux
+/// bras qui bougent, des yeux avec des paupières et des reflets, une bouche qui s'ouvre.
 ///
-/// **Huit humeurs, pas trois.** Avec trois humeurs, la mascotte faisait la même tête sur
-/// quinze écrans de suite, et un personnage qui ne réagit à rien cesse d'être un
-/// personnage. Elle salue quand on lui donne son prénom, penche la tête quand elle demande
-/// où l'on étudie, lit quand on choisit ses matières, s'inquiète quand on part de zéro, et
-/// se redresse quand on a fini. Ce sont des réactions, pas des poses.
+/// **Tout ce qui fait une expression est un nombre.** Une humeur n'est pas un dessin à
+/// part : c'est un jeu de valeurs — hauteur des paupières, angle des sourcils, courbure et
+/// ouverture de la bouche, angle des bras, rougeur des joues — et passer d'une humeur à
+/// l'autre les interpole. La mascotte ne change pas de tête : elle **fait** une autre
+/// tête, sous les yeux. C'est ce qui rend les changements crédibles.
 ///
-/// Sa forme est une carte de révision — un rectangle arrondi, un peu plus haut que large —
-/// parce que c'est l'objet de l'app. Le violet est celui de l'accent : elle porte la
-/// couleur de ce qui agit.
+/// Elle vit aussi quand rien ne se passe : elle respire (une compression lente, comme
+/// quelque chose de mou), cligne des yeux à intervalles irréguliers, regarde ailleurs de
+/// temps en temps, et ses bras se balancent. Elle sursaute quand on passe à l'écran suivant.
 ///
 /// **Toutes les mesures sont nommées dans `Metrics`**, jamais calculées dans une chaîne de
-/// modificateurs. Un `size * 0.025` posé dans un `offset` au milieu de six maillons est
-/// une inconnue de plus pour l'inférence ; trente de suite, et le compilateur renonce —
-/// c'est ce qui a cassé la scène d'import de la veille.
+/// modificateurs : trente calculs inline de suite, et le compilateur renonce. Le dessin a
+/// été mis au point sur un canevas HTML aux mêmes proportions avant d'être porté ici.
 struct MicaboMascot: View {
     enum Mood: Equatable {
         /// Le regard droit, le sourire tranquille : elle écoute.
         case happy
-        /// Les yeux vers le haut, la bouche plate, trois points qui flottent : elle travaille.
+        /// Les yeux vers le haut, la bouche plate, un bras levé, trois points : elle travaille.
         case thinking
-        /// Grand sourire, yeux plissés, les deux mains en l'air, des étincelles : c'est fait.
+        /// Yeux plissés de joie, grand sourire ouvert, les deux bras en l'air, des étincelles.
         case celebrating
-        /// Une main qui salue, les joues qui rosissent : bonjour.
+        /// Une main levée qui salue, les joues qui rosissent : bonjour.
         case waving
         /// La tête penchée, un sourcil levé, la bouche en « o » : elle demande.
         case curious
-        /// Les yeux qui balaient une ligne, les sourcils froncés : elle lit.
+        /// Les paupières à mi-hauteur, le regard qui balaie une ligne : elle lit.
         case reading
-        /// Les sourcils inquiets, le regard en bas, une goutte : elle n'est pas sûre.
+        /// Les sourcils inquiets, le regard en bas, la bouche qui tombe, une goutte.
         case unsure
-        /// Le sourire large, les yeux mi-clos, les mains sur les hanches : elle est fière.
+        /// Les yeux mi-clos, le sourire large, les mains sur les hanches : elle est fière.
         case proud
     }
 
@@ -56,429 +56,466 @@ struct MicaboMascot: View {
     @State private var breathe = false
     @State private var blink = false
     @State private var sparkle = false
-    /// Le va-et-vient de la main qui salue et des mains levées.
+    /// Le va-et-vient de la main qui salue et des bras levés.
     @State private var wave = false
     /// Le balayage du regard quand elle lit.
     @State private var scan = false
+    /// Où elle regarde quand elle regarde ailleurs, en fraction de la taille.
+    @State private var drift = CGPoint.zero
 
-    /// Les mesures, toutes dérivées de `size`, toutes en `CGFloat`, toutes nommées.
+    // MARK: - Les mesures
+
+    /// Toutes dérivées de `size`, toutes en `CGFloat`, toutes nommées. Les mêmes fractions
+    /// que le canevas de mise au point.
     private struct Metrics {
         let frameWidth: CGFloat
         let frameHeight: CGFloat
         let bodyWidth: CGFloat
         let bodyHeight: CGFloat
-        let corner: CGFloat
-        let shadowRadius: CGFloat
+        let footWidth: CGFloat
+        let footHeight: CGFloat
+        let footX: CGFloat
+        let footY: CGFloat
+        let shadowWidth: CGFloat
+        let shadowHeight: CGFloat
         let shadowY: CGFloat
-        let fold: CGFloat
-        let foldX: CGFloat
-        let foldY: CGFloat
-        let eyeGap: CGFloat
+        let armWidth: CGFloat
+        let armLength: CGFloat
+        let armX: CGFloat
+        let armY: CGFloat
         let eyeWidth: CGFloat
         let eyeHeight: CGFloat
-        let pupil: CGFloat
+        let eyeX: CGFloat
+        let eyeY: CGFloat
+        let iris: CGFloat
         let glint: CGFloat
         let glintDX: CGFloat
         let glintDY: CGFloat
-        let faceDY: CGFloat
-        let faceGap: CGFloat
-        let breatheDY: CGFloat
+        let glintSmall: CGFloat
+        let glintSmallDX: CGFloat
+        let glintSmallDY: CGFloat
+        let lidWidth: CGFloat
+        let lidHeight: CGFloat
         let browWidth: CGFloat
-        let browLine: CGFloat
-        let browRise: CGFloat
+        let browThickness: CGFloat
+        let browY: CGFloat
         let browLift: CGFloat
-        let dotGap: CGFloat
+        let mouthWidth: CGFloat
+        let mouthDepth: CGFloat
+        let mouthOpen: CGFloat
+        let mouthY: CGFloat
+        let lip: CGFloat
+        let cheek: CGFloat
+        let cheekX: CGFloat
+        let cheekY: CGFloat
+        let breatheX: CGFloat
+        let breatheY: CGFloat
         let dotBase: CGFloat
         let dotStep: CGFloat
+        let dotGap: CGFloat
         let dotRise: CGFloat
         let dotsX: CGFloat
         let dotsY: CGFloat
-        let smileWidth: CGFloat
-        let smileDepth: CGFloat
-        let smileLine: CGFloat
-        let grinWidth: CGFloat
-        let grinDepth: CGFloat
-        let grinLine: CGFloat
-        let flatWidth: CGFloat
-        let flatHeight: CGFloat
-        let oWidth: CGFloat
-        let cheekGap: CGFloat
-        let cheek: CGFloat
-        let cheekRise: CGFloat
-        let hand: CGFloat
-        let handSide: CGFloat
-        let handUp: CGFloat
-        let handHip: CGFloat
-        let handWaveDY: CGFloat
+        let dropWidth: CGFloat
+        let dropHeight: CGFloat
         let dropX: CGFloat
         let dropY: CGFloat
-        let dropSize: CGFloat
+        let driftScale: CGFloat
 
         init(size: CGFloat) {
             frameWidth = size * 1.5
             frameHeight = size * 1.35
             bodyWidth = size * 0.86
             bodyHeight = size
-            corner = size * 0.3
-            shadowRadius = size * 0.16
-            shadowY = size * 0.08
-            fold = size * 0.2
-            foldX = size * 0.33
-            foldY = size * -0.4
-            eyeGap = size * 0.13
-            eyeWidth = size * 0.2
-            eyeHeight = size * 0.24
-            pupil = size * 0.1
-            glint = size * 0.035
-            glintDX = size * 0.025
-            glintDY = size * -0.028
-            faceDY = size * 0.02
-            faceGap = size * 0.08
-            breatheDY = size * 0.03
+            footWidth = size * 0.22
+            footHeight = size * 0.10
+            footX = size * 0.19
+            footY = size * 0.47
+            shadowWidth = size * 0.66
+            shadowHeight = size * 0.085
+            shadowY = size * 0.55
+            armWidth = size * 0.115
+            armLength = size * 0.30
+            armX = size * 0.36
+            armY = size * 0.10
+            eyeWidth = size * 0.23
+            eyeHeight = size * 0.27
+            eyeX = size * 0.17
+            eyeY = size * -0.09
+            iris = size * 0.125
+            glint = size * 0.05
+            glintDX = size * 0.028
+            glintDY = size * -0.03
+            glintSmall = size * 0.022
+            glintSmallDX = size * -0.02
+            glintSmallDY = size * 0.035
+            lidWidth = size * 0.345
+            lidHeight = size * 0.335
             browWidth = size * 0.15
-            browLine = size * 0.032
-            browRise = size * -0.075
+            browThickness = size * 0.032
+            browY = size * -0.16
             browLift = size * 0.03
-            dotGap = size * 0.05
+            mouthWidth = size * 0.24
+            mouthDepth = size * 0.075
+            mouthOpen = size * 0.14
+            mouthY = size * 0.13
+            lip = size * 0.032
+            cheek = size * 0.10
+            cheekX = size * 0.235
+            cheekY = size * 0.10
+            breatheX = 0.015
+            breatheY = 0.02
             dotBase = size * 0.07
-            dotStep = size * 0.015
+            dotStep = size * 0.016
+            dotGap = size * 0.05
             dotRise = size * 0.04
-            dotsX = size * 0.5
-            dotsY = size * -0.46
-            smileWidth = size * 0.22
-            smileDepth = size * 0.09
-            smileLine = size * 0.035
-            grinWidth = size * 0.3
-            grinDepth = size * 0.14
-            grinLine = size * 0.04
-            flatWidth = size * 0.14
-            flatHeight = size * 0.035
-            oWidth = size * 0.1
-            cheekGap = size * 0.44
-            cheek = size * 0.09
-            cheekRise = size * -0.06
-            hand = size * 0.17
-            handSide = size * 0.5
-            handUp = size * -0.3
-            handHip = size * 0.2
-            handWaveDY = size * 0.04
+            dotsX = size * 0.58
+            dotsY = size * -0.5
+            dropWidth = size * 0.13
+            dropHeight = size * 0.17
             dropX = size * 0.46
-            dropY = size * -0.4
-            dropSize = size * 0.15
+            dropY = size * -0.42
+            driftScale = size
         }
     }
 
+    // MARK: - L'expression
+
+    /// **Ce qu'une humeur vaut, en nombres.** C'est ce que l'animation interpole quand
+    /// l'humeur change : rien ici n'est un dessin, tout est une quantité.
+    private struct Expression {
+        /// La paupière supérieure, de 0 (ouverte) à 1 (fermée).
+        var lid: CGFloat
+        /// La paupière inférieure qui remonte en arc : les yeux qui rient.
+        var squint: CGFloat
+        var browLeft: Double
+        var browRight: Double
+        var browLift: CGFloat
+        var gazeX: CGFloat
+        var gazeY: CGFloat
+        var pupil: CGFloat
+        /// La courbure de la bouche, de −1 (tombe) à 1 (sourit).
+        var curve: CGFloat
+        /// L'ouverture de la bouche, de 0 à 1.
+        var open: CGFloat
+        var mouthWidth: CGFloat
+        var cheeks: Double
+        /// L'angle des bras, vers l'extérieur, en degrés depuis « le long du corps ».
+        var armLeft: Double
+        var armRight: Double
+        var tilt: Double
+        /// Vrai quand la main droite salue.
+        var waves: Bool
+
+        static func of(_ mood: Mood) -> Expression {
+            switch mood {
+            case .happy:
+                Expression(lid: 0, squint: 0.15, browLeft: -5, browRight: 5, browLift: 0, gazeX: 0.012, gazeY: 0.01, pupil: 1, curve: 0.6, open: 0, mouthWidth: 1, cheeks: 0, armLeft: 18, armRight: 18, tilt: 0, waves: false)
+            case .thinking:
+                Expression(lid: 0.1, squint: 0, browLeft: 0, browRight: -12, browLift: 0.6, gazeX: 0.03, gazeY: -0.03, pupil: 0.95, curve: 0.05, open: 0, mouthWidth: 0.7, cheeks: 0, armLeft: 14, armRight: 118, tilt: 0, waves: false)
+            case .celebrating:
+                Expression(lid: 0, squint: 0.85, browLeft: 7, browRight: -7, browLift: 0.8, gazeX: 0, gazeY: 0, pupil: 1, curve: 1, open: 0.9, mouthWidth: 1.15, cheeks: 0.9, armLeft: 150, armRight: 150, tilt: 0, waves: false)
+            case .waving:
+                Expression(lid: 0, squint: 0.4, browLeft: 7, browRight: -7, browLift: 0.8, gazeX: 0.012, gazeY: 0.01, pupil: 1, curve: 0.75, open: 0.25, mouthWidth: 1, cheeks: 0.8, armLeft: 18, armRight: 140, tilt: 0, waves: true)
+            case .curious:
+                Expression(lid: 0, squint: 0, browLeft: 3, browRight: -14, browLift: 0.9, gazeX: 0.03, gazeY: -0.02, pupil: 1.15, curve: 0.15, open: 0.55, mouthWidth: 0.45, cheeks: 0, armLeft: 26, armRight: 26, tilt: -7, waves: false)
+            case .reading:
+                Expression(lid: 0.28, squint: 0, browLeft: 6, browRight: -6, browLift: -0.3, gazeX: 0, gazeY: 0.02, pupil: 1, curve: 0.35, open: 0, mouthWidth: 0.9, cheeks: 0, armLeft: 42, armRight: 42, tilt: 0, waves: false)
+            case .unsure:
+                Expression(lid: 0.12, squint: 0, browLeft: -14, browRight: 14, browLift: 0.5, gazeX: -0.025, gazeY: 0.03, pupil: 0.9, curve: -0.35, open: 0, mouthWidth: 0.75, cheeks: 0, armLeft: 8, armRight: 8, tilt: 4, waves: false)
+            case .proud:
+                Expression(lid: 0.32, squint: 0.45, browLeft: 7, browRight: -7, browLift: 0.6, gazeX: 0, gazeY: 0, pupil: 1, curve: 0.8, open: 0.3, mouthWidth: 1.05, cheeks: 0.7, armLeft: 58, armRight: 58, tilt: 0, waves: false)
+            }
+        }
+    }
+
+    // MARK: - Les couleurs
+
+    private static let bodyLight = Color(hex: 0x8A6FF5)
+    private static let bodyDeep = Color(hex: 0x4E2FCB)
+    private static let mouthInside = Color(hex: 0x2B1B6B)
+    private static let blush = Color(hex: 0xFFB3C7)
+    private static let tongue = Color(hex: 0xFF7A9B)
+    private static let sparkGold = Color(hex: 0xF5B400)
+
+    // MARK: - Le corps de la vue
+
     var body: some View {
         let metrics = Metrics(size: size)
-        let sway: Double = breathe ? 2.5 : -2.5
-        let tilt: Double = sway + headTilt
-        let lift: CGFloat = breathe ? -metrics.breatheDY : metrics.breatheDY
+        let expression = Expression.of(mood)
+        let squashX: CGFloat = breathe ? 1 + metrics.breatheX : 1 - metrics.breatheX
+        let squashY: CGFloat = breathe ? 1 - metrics.breatheY : 1 + metrics.breatheY
 
         return ZStack {
+            groundShadow(metrics)
+
+            figure(metrics, expression)
+                .scaleEffect(x: squashX, y: squashY, anchor: .bottom)
+                .rotationEffect(.degrees(expression.tilt), anchor: .bottom)
+
             if mood == .celebrating {
                 sparkles
             }
-
-            figure(metrics)
-                .rotationEffect(.degrees(tilt))
-                .offset(y: lift)
-
             if mood == .thinking {
                 thoughtDots(metrics)
             }
-
             if mood == .unsure {
                 drop(metrics)
             }
         }
         .frame(width: metrics.frameWidth, height: metrics.frameHeight)
-        // Une humeur qui change sous les yeux se fond dans la suivante : la bouche et les
-        // sourcils ne sautent pas d'une forme à l'autre.
-        .animation(.easeOut(duration: 0.22), value: mood)
+        // C'est ici que les humeurs se fondent l'une dans l'autre : chaque nombre de
+        // l'expression est interpolé, et la mascotte fait sa nouvelle tête sous les yeux.
+        .animation(.spring(response: 0.42, dampingFraction: 0.78), value: mood)
+        .animation(.easeInOut(duration: 0.28), value: drift)
         .accessibilityHidden(true)
         .onAppear(perform: start)
         // **Dans `.task`, pas dans un `Task {}` lancé à l'apparition** : la mascotte est sur
         // quinze écrans, et une boucle qui survit à sa vue en laisserait quinze tourner à
         // vide en fin de parcours. `.task` est annulé quand la vue disparaît.
         .task { await blinkLoop() }
+        .task { await glanceLoop() }
     }
 
-    /// La tête penchée : c'est la curiosité, ou le doute.
-    private var headTilt: Double {
-        switch mood {
-        case .curious: -7
-        case .unsure: 4
-        default: 0
-        }
-    }
+    // MARK: - Le personnage
 
-    // MARK: - Le corps
-
-    private func figure(_ metrics: Metrics) -> some View {
+    private func figure(_ metrics: Metrics, _ expression: Expression) -> some View {
         ZStack {
-            hands(metrics)
-
-            RoundedRectangle(cornerRadius: metrics.corner, style: .continuous)
-                .fill(bodyGradient)
-                .frame(width: metrics.bodyWidth, height: metrics.bodyHeight)
-                .shadow(color: MicaboColor.accent.opacity(0.28), radius: metrics.shadowRadius, y: metrics.shadowY)
-
-            // Le coin replié d'une fiche : ce qui dit « carte » sans un mot.
-            FoldShape()
-                .fill(Color.white.opacity(0.22))
-                .frame(width: metrics.fold, height: metrics.fold)
-                .offset(x: metrics.foldX, y: metrics.foldY)
-
-            face(metrics)
+            feet(metrics)
+            arms(metrics, expression)
+            torso(metrics)
+            face(metrics, expression)
         }
+    }
+
+    /// L'ombre au sol : ce qui pose le personnage sur quelque chose.
+    private func groundShadow(_ metrics: Metrics) -> some View {
+        Ellipse()
+            .fill(MicaboColor.ink.opacity(0.11))
+            .frame(width: metrics.shadowWidth, height: metrics.shadowHeight)
+            .offset(y: metrics.shadowY)
+    }
+
+    private func feet(_ metrics: Metrics) -> some View {
+        HStack(spacing: metrics.footX * 2 - metrics.footWidth) {
+            Ellipse().fill(Self.bodyDeep)
+            Ellipse().fill(Self.bodyDeep)
+        }
+        .frame(height: metrics.footHeight)
+        .frame(width: metrics.footX * 2 + metrics.footWidth)
+        .offset(y: metrics.footY)
+    }
+
+    /// Le corps : le haricot, son dégradé, l'ombre sous le ventre et le reflet sur l'épaule.
+    private func torso(_ metrics: Metrics) -> some View {
+        MascotBodyShape()
+            .fill(bodyGradient)
+            .overlay { bellyShadow }
+            .overlay { shoulderHighlight }
+            .clipShape(MascotBodyShape())
+            .frame(width: metrics.bodyWidth, height: metrics.bodyHeight)
+            .shadow(color: MicaboColor.accent.opacity(0.22), radius: size * 0.12, y: size * 0.06)
     }
 
     private var bodyGradient: LinearGradient {
         LinearGradient(
-            colors: [MicaboColor.accent.lightened(by: 0.12), MicaboColor.accent],
+            stops: [
+                .init(color: Self.bodyLight, location: 0),
+                .init(color: MicaboColor.accent, location: 0.55),
+                .init(color: Self.bodyDeep, location: 1),
+            ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
     }
 
-    private struct FoldShape: Shape {
-        func path(in rect: CGRect) -> Path {
-            Path { path in
-                path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-                path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-                path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-                path.closeSubpath()
-            }
+    private var bellyShadow: some View {
+        LinearGradient(
+            stops: [
+                .init(color: .clear, location: 0.55),
+                .init(color: Color(hex: 0x140046).opacity(0.22), location: 1),
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+
+    private var shoulderHighlight: some View {
+        RadialGradient(
+            colors: [Color.white.opacity(0.28), Color.white.opacity(0)],
+            center: UnitPoint(x: 0.32, y: 0.16),
+            startRadius: 0,
+            endRadius: size * 0.39
+        )
+    }
+
+    // MARK: - Les bras
+
+    /// Deux bras courts, un ton plus sombre que le corps, attachés à l'épaule et tournés
+    /// vers l'extérieur. Ils sont derrière le corps : l'attache ne se voit pas.
+    private func arms(_ metrics: Metrics, _ expression: Expression) -> some View {
+        let sway: Double = breathe ? 3 : -3
+        let swing: Double = wave ? 18 : -18
+        let liftBounce: Double = wave ? 6 : -6
+        let rightExtra: Double = expression.waves ? swing : (mood == .celebrating ? liftBounce : 0)
+        let leftExtra: Double = mood == .celebrating ? -liftBounce : 0
+        let leftAngle: Double = expression.armLeft + sway + leftExtra
+        let rightAngle: Double = expression.armRight + sway + rightExtra
+
+        return ZStack {
+            arm(metrics, side: -1, angle: leftAngle)
+            arm(metrics, side: 1, angle: rightAngle)
         }
     }
 
-    // MARK: - Les mains
+    private func arm(_ metrics: Metrics, side: CGFloat, angle: Double) -> some View {
+        let turn: Double = -Double(side) * angle
+        let x: CGFloat = side * metrics.armX
+        let y: CGFloat = metrics.armY + metrics.armLength / 2
 
-    /// Deux petites mains rondes, un ton plus sombre que le corps. Elles ne sont là que
-    /// quand elles font quelque chose : saluer, se lever, se poser sur les hanches. Le reste
-    /// du temps la carte garde sa silhouette.
-    @ViewBuilder
-    private func hands(_ metrics: Metrics) -> some View {
-        switch mood {
-        case .waving:
-            hand(metrics, x: -metrics.handSide, y: metrics.handHip)
-            wavingHand(metrics)
-        case .celebrating:
-            let bounce: CGFloat = wave ? -metrics.handWaveDY : metrics.handWaveDY
-            hand(metrics, x: -metrics.handSide, y: metrics.handUp + bounce)
-            hand(metrics, x: metrics.handSide, y: metrics.handUp - bounce)
-        case .proud:
-            hand(metrics, x: -metrics.handSide, y: metrics.handHip)
-            hand(metrics, x: metrics.handSide, y: metrics.handHip)
-        default:
-            EmptyView()
-        }
-    }
-
-    private func hand(_ metrics: Metrics, x: CGFloat, y: CGFloat) -> some View {
-        Circle()
-            .fill(Self.handInk)
-            .frame(width: metrics.hand, height: metrics.hand)
+        return Capsule()
+            .fill(Self.bodyDeep)
+            .frame(width: metrics.armWidth, height: metrics.armLength)
+            .rotationEffect(.degrees(turn), anchor: .top)
             .offset(x: x, y: y)
-            .animation(.easeInOut(duration: 0.42).repeatForever(autoreverses: true), value: wave)
+            .animation(.easeInOut(duration: 0.45).repeatForever(autoreverses: true), value: wave)
+            .animation(.easeInOut(duration: 2.6).repeatForever(autoreverses: true), value: breathe)
     }
-
-    /// La main droite, levée à côté de la tête, qui pivote autour du poignet.
-    private func wavingHand(_ metrics: Metrics) -> some View {
-        let swing: Double = wave ? 22 : -22
-        let reach: CGFloat = metrics.handSide + metrics.hand * 0.3
-
-        return Circle()
-            .fill(Self.handInk)
-            .frame(width: metrics.hand, height: metrics.hand)
-            .offset(x: reach, y: metrics.handUp)
-            .rotationEffect(.degrees(swing), anchor: .bottom)
-            .animation(.easeInOut(duration: 0.42).repeatForever(autoreverses: true), value: wave)
-    }
-
-    /// Le violet d'appui de la maquette : la couleur des liens survolés, un ton sous l'accent.
-    private static let handInk = Color(hex: 0x4E2FCB)
 
     // MARK: - Le visage
 
-    private func face(_ metrics: Metrics) -> some View {
-        VStack(spacing: metrics.faceGap) {
-            HStack(spacing: metrics.eyeGap) {
-                eye(metrics)
-                eye(metrics)
-            }
-            .overlay(alignment: .top) {
-                brows(metrics)
-            }
-
-            mouth(metrics)
+    private func face(_ metrics: Metrics, _ expression: Expression) -> some View {
+        ZStack {
+            cheeks(metrics, expression)
+            eye(metrics, expression, side: -1)
+            eye(metrics, expression, side: 1)
+            brow(metrics, side: -1, angle: expression.browLeft, lift: expression.browLift)
+            brow(metrics, side: 1, angle: expression.browRight, lift: expression.browLift)
+            mouth(metrics, expression)
         }
-        .offset(y: metrics.faceDY)
     }
 
-    private func eye(_ metrics: Metrics) -> some View {
-        let pupilX: CGFloat = gazeX * size
-        let pupilY: CGFloat = gaze.y * size
-        let glintX: CGFloat = pupilX + metrics.glintDX
-        let glintY: CGFloat = pupilY + metrics.glintDY
-        let squint: CGFloat = blink ? 0.12 : lidLevel
+    /// Les joues : deux ronds roses dont seule l'opacité change, pour qu'elles montent
+    /// et s'effacent avec l'humeur au lieu d'apparaître d'un coup.
+    private func cheeks(_ metrics: Metrics, _ expression: Expression) -> some View {
+        HStack(spacing: metrics.cheekX * 2 - metrics.cheek) {
+            Circle().fill(Self.blush)
+            Circle().fill(Self.blush)
+        }
+        .frame(width: metrics.cheekX * 2 + metrics.cheek, height: metrics.cheek)
+        .offset(y: metrics.cheekY)
+        .opacity(expression.cheeks)
+    }
+
+    /// Un œil : le blanc, l'ombre de l'arcade, l'iris et ses reflets, puis deux paupières
+    /// de la couleur du corps — celle du haut qui descend (lire, cligner), celle du bas
+    /// qui remonte en arc (rire). Tout est découpé à l'ellipse de l'œil.
+    private func eye(_ metrics: Metrics, _ expression: Expression, side: CGFloat) -> some View {
+        let lid: CGFloat = blink ? 1 : expression.lid
+        let scanX: CGFloat = scan ? 0.03 : -0.03
+        let lookX: CGFloat = (mood == .reading ? scanX : expression.gazeX) + drift.x
+        let lookY: CGFloat = expression.gazeY + drift.y
+        let pupilX: CGFloat = lookX * metrics.driftScale
+        let pupilY: CGFloat = lookY * metrics.driftScale
+        let irisSize: CGFloat = metrics.iris * expression.pupil
+        let upperLidY: CGFloat = -metrics.eyeHeight * 1.12 + metrics.eyeHeight * lid * 1.05
+        let lowerLidY: CGFloat = metrics.eyeHeight * (1.12 - 0.62 * expression.squint)
 
         return ZStack {
-            Ellipse()
-                .fill(Color.white)
-                .frame(width: metrics.eyeWidth, height: metrics.eyeHeight)
+            Ellipse().fill(Color.white)
+
+            LinearGradient(
+                colors: [MicaboColor.ink.opacity(0.16), MicaboColor.ink.opacity(0)],
+                startPoint: .top,
+                endPoint: UnitPoint(x: 0.5, y: 0.5)
+            )
 
             Circle()
                 .fill(MicaboColor.ink)
-                .frame(width: metrics.pupil, height: metrics.pupil)
+                .frame(width: irisSize, height: irisSize)
                 .offset(x: pupilX, y: pupilY)
 
-            // Le reflet : c'est lui qui rend le regard vivant.
+            // Les reflets : c'est eux qui rendent le regard vivant.
             Circle()
                 .fill(Color.white)
                 .frame(width: metrics.glint, height: metrics.glint)
-                .offset(x: glintX, y: glintY)
+                .offset(x: pupilX + metrics.glintDX, y: pupilY + metrics.glintDY)
+
+            Circle()
+                .fill(Color.white.opacity(0.8))
+                .frame(width: metrics.glintSmall, height: metrics.glintSmall)
+                .offset(x: pupilX + metrics.glintSmallDX, y: pupilY + metrics.glintSmallDY)
+
+            Ellipse()
+                .fill(MicaboColor.accent)
+                .frame(width: metrics.lidWidth, height: metrics.lidHeight)
+                .offset(y: upperLidY)
+
+            Ellipse()
+                .fill(MicaboColor.accent)
+                .frame(width: metrics.lidWidth, height: metrics.lidHeight)
+                .offset(y: lowerLidY)
         }
-        .scaleEffect(x: 1, y: squint, anchor: .center)
-        .animation(.easeInOut(duration: 0.09), value: blink)
+        .frame(width: metrics.eyeWidth, height: metrics.eyeHeight)
+        .clipShape(Ellipse())
+        .offset(x: side * metrics.eyeX, y: metrics.eyeY)
+        .animation(.easeInOut(duration: 0.08), value: blink)
         .animation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true), value: scan)
     }
 
-    /// À quel point les paupières sont ouvertes : grand ouvertes, mi-closes de fierté,
-    /// plissées de joie.
-    private var lidLevel: CGFloat {
-        switch mood {
-        case .celebrating: 0.12
-        case .proud: 0.55
-        default: 1
-        }
-    }
+    /// Un sourcil : un trait blanc atténué, dont l'angle et la hauteur font l'humeur.
+    private func brow(_ metrics: Metrics, side: CGFloat, angle: Double, lift: CGFloat) -> some View {
+        let y: CGFloat = metrics.eyeY + metrics.browY - metrics.browLift * lift
 
-    /// Où regardent les pupilles, en fraction de la taille.
-    private var gaze: CGPoint {
-        switch mood {
-        case .happy, .waving: CGPoint(x: 0.012, y: 0.01)
-        case .thinking: CGPoint(x: 0.03, y: -0.03)
-        case .curious: CGPoint(x: 0.03, y: -0.02)
-        case .unsure: CGPoint(x: -0.025, y: 0.03)
-        case .reading: CGPoint(x: 0, y: 0.02)
-        case .celebrating, .proud: .zero
-        }
-    }
-
-    /// Le regard qui balaie une ligne quand elle lit ; fixe sinon.
-    private var gazeX: CGFloat {
-        guard mood == .reading else { return gaze.x }
-        return scan ? 0.035 : -0.035
-    }
-
-    // MARK: - Les sourcils
-
-    /// Deux traits au-dessus des yeux, et c'est ce qui donne une humeur à un regard. Le
-    /// blanc en est atténué : des sourcils aussi francs que les yeux feraient une grimace.
-    private func brows(_ metrics: Metrics) -> some View {
-        let pose = browPose
-        let gap: CGFloat = metrics.eyeGap + metrics.eyeWidth - metrics.browWidth
-        let lift: CGFloat = metrics.browRise - metrics.browLift * pose.lift
-
-        return HStack(spacing: gap) {
-            brow(metrics, angle: pose.left)
-            brow(metrics, angle: pose.right)
-        }
-        .offset(y: lift)
-    }
-
-    private func brow(_ metrics: Metrics, angle: Double) -> some View {
-        Capsule()
-            .fill(Color.white.opacity(0.7))
-            .frame(width: metrics.browWidth, height: metrics.browLine)
+        return Capsule()
+            .fill(Color.white.opacity(0.75))
+            .frame(width: metrics.browWidth, height: metrics.browThickness)
             .rotationEffect(.degrees(angle))
+            .offset(x: side * metrics.eyeX, y: y)
     }
 
-    /// L'angle de chaque sourcil et sa hauteur, par humeur. Pour le sourcil droit, un angle
-    /// négatif lève le bout extérieur ; pour le gauche, c'est un angle positif.
-    private var browPose: (left: Double, right: Double, lift: CGFloat) {
-        switch mood {
-        case .happy: (-5, 5, 0)
-        case .thinking: (0, -12, 0.6)
-        case .curious: (3, -14, 0.9)
-        case .reading: (6, -6, -0.3)
-        case .unsure: (-14, 14, 0.5)
-        case .celebrating, .waving, .proud: (7, -7, 0.8)
+    /// La bouche : une seule forme pour toutes les humeurs, dont la courbure et
+    /// l'ouverture sont des nombres. L'intérieur sombre, la langue quand elle s'ouvre
+    /// assez, et la lèvre blanche par-dessus.
+    private func mouth(_ metrics: Metrics, _ expression: Expression) -> some View {
+        let width: CGFloat = metrics.mouthWidth * expression.mouthWidth
+        let height: CGFloat = metrics.mouthDepth * 2 + metrics.mouthOpen + metrics.lip
+        // Le cadre est centré plus bas que la ligne des lèvres : il doit laisser la place
+        // à une bouche qui tombe (au-dessus) comme à une bouche qui s'ouvre (en dessous).
+        let y: CGFloat = metrics.mouthY + height / 2 - metrics.mouthDepth
+        let tongueAlpha: Double = Double(max(0, min(1, (expression.open - 0.3) * 4)))
+        let tongueSize: CGFloat = width * 0.64
+        let tongueY: CGFloat = metrics.mouthDepth + (metrics.mouthDepth * expression.curve + metrics.mouthOpen * expression.open) * 0.72
+        let lowerLipAlpha: Double = Double(max(0, min(1, expression.open * 6)))
+
+        return ZStack {
+            MascotMouthShape(curve: expression.curve, open: expression.open, depth: metrics.mouthDepth, reach: metrics.mouthOpen)
+                .fill(Self.mouthInside)
+                .overlay {
+                    Circle()
+                        .fill(Self.tongue)
+                        .frame(width: tongueSize, height: tongueSize)
+                        .position(x: width / 2, y: tongueY)
+                        .opacity(tongueAlpha)
+                }
+                .clipShape(MascotMouthShape(curve: expression.curve, open: expression.open, depth: metrics.mouthDepth, reach: metrics.mouthOpen))
+
+            MascotLipShape(curve: expression.curve, depth: metrics.mouthDepth, lower: false, open: expression.open, reach: metrics.mouthOpen)
+                .stroke(Color.white, style: StrokeStyle(lineWidth: metrics.lip, lineCap: .round))
+
+            MascotLipShape(curve: expression.curve, depth: metrics.mouthDepth, lower: true, open: expression.open, reach: metrics.mouthOpen)
+                .stroke(Color.white, style: StrokeStyle(lineWidth: metrics.lip * 0.8, lineCap: .round))
+                .opacity(lowerLipAlpha)
         }
-    }
-
-    // MARK: - La bouche
-
-    @ViewBuilder
-    private func mouth(_ metrics: Metrics) -> some View {
-        switch mood {
-        case .happy, .reading:
-            smile(metrics)
-        case .thinking:
-            Capsule()
-                .fill(Color.white)
-                .frame(width: metrics.flatWidth, height: metrics.flatHeight)
-        case .unsure:
-            // Une bouche plate qui penche : l'hésitation, sans aller jusqu'à la moue.
-            Capsule()
-                .fill(Color.white)
-                .frame(width: metrics.flatWidth, height: metrics.flatHeight)
-                .rotationEffect(.degrees(-9))
-        case .curious:
-            Circle()
-                .stroke(Color.white, lineWidth: metrics.smileLine)
-                .frame(width: metrics.oWidth, height: metrics.oWidth)
-        case .waving:
-            ZStack {
-                smile(metrics)
-                cheeks(metrics)
-            }
-        case .celebrating, .proud:
-            ZStack {
-                Smile(depth: metrics.grinDepth)
-                    .stroke(Color.white, style: StrokeStyle(lineWidth: metrics.grinLine, lineCap: .round))
-                    .frame(width: metrics.grinWidth, height: metrics.grinDepth)
-                cheeks(metrics)
-            }
-        }
-    }
-
-    private func smile(_ metrics: Metrics) -> some View {
-        Smile(depth: metrics.smileDepth)
-            .stroke(Color.white, style: StrokeStyle(lineWidth: metrics.smileLine, lineCap: .round))
-            .frame(width: metrics.smileWidth, height: metrics.smileDepth)
-    }
-
-    /// Les joues : seulement quand elle est contente, sinon elle a l'air malade.
-    private func cheeks(_ metrics: Metrics) -> some View {
-        HStack(spacing: metrics.cheekGap) {
-            Circle().fill(MicaboColor.flameSoft.opacity(0.9))
-            Circle().fill(MicaboColor.flameSoft.opacity(0.9))
-        }
-        .frame(height: metrics.cheek)
-        .offset(y: metrics.cheekRise)
-    }
-
-    private struct Smile: Shape {
-        let depth: CGFloat
-
-        func path(in rect: CGRect) -> Path {
-            Path { path in
-                path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-                path.addQuadCurve(
-                    to: CGPoint(x: rect.maxX, y: rect.minY),
-                    control: CGPoint(x: rect.midX, y: rect.minY + depth * 2)
-                )
-            }
-        }
+        .frame(width: width, height: height)
+        .offset(y: y)
     }
 
     // MARK: - Autour
 
     /// Trois points qui montent l'un après l'autre : elle réfléchit.
     private func thoughtDots(_ metrics: Metrics) -> some View {
-        HStack(spacing: metrics.dotGap) {
+        HStack(alignment: .bottom, spacing: metrics.dotGap) {
             ForEach(0..<3, id: \.self) { index in
                 thoughtDot(index, metrics)
             }
@@ -500,35 +537,37 @@ struct MicaboMascot: View {
 
     /// Une goutte à la tempe : le doute, dit comme dans une bande dessinée.
     private func drop(_ metrics: Metrics) -> some View {
-        let bob: CGFloat = breathe ? -metrics.breatheDY : metrics.breatheDY
+        let bob: CGFloat = breathe ? -metrics.breatheY * size : metrics.breatheY * size
 
-        return Image(systemName: "drop.fill")
-            .font(.system(size: metrics.dropSize, weight: .bold))
-            .foregroundStyle(MicaboColor.info)
+        return MascotDropShape()
+            .fill(MicaboColor.info)
+            .frame(width: metrics.dropWidth, height: metrics.dropHeight)
             .offset(x: metrics.dropX, y: metrics.dropY + bob)
-            .animation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true), value: breathe)
+            .animation(.easeInOut(duration: 2.6).repeatForever(autoreverses: true), value: breathe)
     }
 
-    /// Des étincelles qui battent : la fête, sans confettis.
+    /// Des étincelles à quatre branches qui battent : la fête, sans confettis.
     private var sparkles: some View {
         ZStack {
-            spark(x: -0.58, y: -0.42, share: 0.13, delay: 0)
-            spark(x: 0.6, y: -0.3, share: 0.1, delay: 0.25)
-            spark(x: -0.5, y: 0.34, share: 0.08, delay: 0.5)
-            spark(x: 0.55, y: 0.4, share: 0.11, delay: 0.7)
+            spark(x: -0.58, y: -0.42, share: 0.26, delay: 0)
+            spark(x: 0.6, y: -0.3, share: 0.2, delay: 0.25)
+            spark(x: -0.5, y: 0.34, share: 0.16, delay: 0.5)
+            spark(x: 0.55, y: 0.4, share: 0.22, delay: 0.7)
         }
     }
 
     private func spark(x: CGFloat, y: CGFloat, share: CGFloat, delay: Double) -> some View {
-        let fontSize: CGFloat = size * share
+        let side: CGFloat = size * share
         let dx: CGFloat = x * size
         let dy: CGFloat = y * size
-        let scale: CGFloat = sparkle ? 1.25 : 0.7
+        let scale: CGFloat = sparkle ? 1.2 : 0.7
         let alpha: Double = sparkle ? 1 : 0.35
+        let turn: Double = sparkle ? 20 : -20
 
-        return Image(systemName: "sparkle")
-            .font(.system(size: fontSize, weight: .bold))
-            .foregroundStyle(MicaboColor.caution)
+        return MascotSparkShape()
+            .fill(Self.sparkGold)
+            .frame(width: side, height: side)
+            .rotationEffect(.degrees(turn))
             .scaleEffect(scale)
             .opacity(alpha)
             .offset(x: dx, y: dy)
@@ -542,7 +581,7 @@ struct MicaboMascot: View {
     private func start() {
         guard !reduceMotion else { return }
 
-        withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) {
+        withAnimation(.easeInOut(duration: 2.6).repeatForever(autoreverses: true)) {
             breathe = true
         }
         sparkle = true
@@ -551,18 +590,178 @@ struct MicaboMascot: View {
     }
 
     /// Le clignement n'est pas au métronome : deux clignements à intervalle égal se
-    /// remarquent, et on cesse d'y croire. Entre deux secondes et demie et quatre.
+    /// remarquent, et on cesse d'y croire. Entre deux secondes et demie et quatre, et un
+    /// clignement sur cinq est double.
     @MainActor
     private func blinkLoop() async {
         guard !reduceMotion else { return }
         while !Task.isCancelled {
-            let pause = Double.random(in: 2.5...4.0)
+            let pause = Double.random(in: 2.5...4.2)
             try? await Task.sleep(for: .milliseconds(Int(pause * 1000)))
             guard !Task.isCancelled else { return }
             blink = true
             try? await Task.sleep(for: .milliseconds(110))
             blink = false
+            if Int.random(in: 0..<5) == 0 {
+                try? await Task.sleep(for: .milliseconds(160))
+                guard !Task.isCancelled else { return }
+                blink = true
+                try? await Task.sleep(for: .milliseconds(100))
+                blink = false
+            }
         }
+    }
+
+    /// De temps en temps, elle regarde ailleurs — un peu, une seconde — puis revient.
+    /// C'est ce qui fait qu'elle attend plutôt qu'elle ne fixe.
+    @MainActor
+    private func glanceLoop() async {
+        guard !reduceMotion else { return }
+        while !Task.isCancelled {
+            let pause = Double.random(in: 3.0...5.5)
+            try? await Task.sleep(for: .milliseconds(Int(pause * 1000)))
+            guard !Task.isCancelled, mood != .reading else { continue }
+            drift = CGPoint(x: CGFloat.random(in: -0.028...0.028), y: CGFloat.random(in: -0.015...0.02))
+            try? await Task.sleep(for: .milliseconds(Int.random(in: 700...1100)))
+            drift = .zero
+        }
+    }
+}
+
+// MARK: - Les formes
+
+/// Le corps : un haricot doux, un peu plus large en bas, aux épaules rondes. Cinq courbes,
+/// les mêmes que sur le canevas de mise au point.
+private struct MascotBodyShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width
+        let h = rect.height
+        func point(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
+            CGPoint(x: rect.minX + x * w, y: rect.minY + y * h)
+        }
+
+        var path = Path()
+        path.move(to: point(0.5, 0))
+        // L'épaule droite.
+        path.addCurve(to: point(0.965, 0.32), control1: point(0.80, 0), control2: point(0.965, 0.10))
+        // Le flanc droit, qui s'évase.
+        path.addCurve(to: point(0.86, 0.94), control1: point(0.965, 0.52), control2: point(1.0, 0.78))
+        // Le bas.
+        path.addCurve(to: point(0.14, 0.94), control1: point(0.76, 1.0), control2: point(0.24, 1.0))
+        // Le flanc gauche.
+        path.addCurve(to: point(0.035, 0.32), control1: point(0, 0.78), control2: point(0.035, 0.52))
+        // L'épaule gauche.
+        path.addCurve(to: point(0.5, 0), control1: point(0.035, 0.10), control2: point(0.20, 0))
+        path.closeSubpath()
+        return path
+    }
+}
+
+/// L'intérieur de la bouche : la lèvre haute et la lèvre basse, refermées. `curve` et
+/// `open` sont animables — c'est ce qui fait passer un sourire fermé à un rire ouvert sans
+/// changer de forme.
+private struct MascotMouthShape: Shape {
+    var curve: CGFloat
+    var open: CGFloat
+    let depth: CGFloat
+    let reach: CGFloat
+
+    var animatableData: AnimatablePair<CGFloat, CGFloat> {
+        get { AnimatablePair(curve, open) }
+        set {
+            curve = newValue.first
+            open = newValue.second
+        }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        let baseline = rect.minY + depth
+        let upperControl = baseline + curve * depth * 2
+        let lowerControl = upperControl + open * reach * 2
+        let left = CGPoint(x: rect.minX, y: baseline)
+        let right = CGPoint(x: rect.maxX, y: baseline)
+
+        var path = Path()
+        path.move(to: left)
+        path.addQuadCurve(to: right, control: CGPoint(x: rect.midX, y: upperControl))
+        path.addQuadCurve(to: left, control: CGPoint(x: rect.midX, y: lowerControl))
+        path.closeSubpath()
+        return path
+    }
+}
+
+/// Une lèvre seule, pour le trait blanc : la haute, ou la basse quand la bouche est ouverte.
+private struct MascotLipShape: Shape {
+    var curve: CGFloat
+    let depth: CGFloat
+    let lower: Bool
+    var open: CGFloat
+    let reach: CGFloat
+
+    var animatableData: AnimatablePair<CGFloat, CGFloat> {
+        get { AnimatablePair(curve, open) }
+        set {
+            curve = newValue.first
+            open = newValue.second
+        }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        let baseline = rect.minY + depth
+        let upperControl = baseline + curve * depth * 2
+        let control = lower ? upperControl + open * reach * 2 : upperControl
+
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: baseline))
+        path.addQuadCurve(to: CGPoint(x: rect.maxX, y: baseline), control: CGPoint(x: rect.midX, y: control))
+        return path
+    }
+}
+
+/// Une étincelle à quatre branches, aux flancs creusés.
+private struct MascotSparkShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let radius = min(rect.width, rect.height) / 2
+        let tips: [CGPoint] = [
+            CGPoint(x: center.x, y: center.y - radius),
+            CGPoint(x: center.x + radius, y: center.y),
+            CGPoint(x: center.x, y: center.y + radius),
+            CGPoint(x: center.x - radius, y: center.y),
+        ]
+
+        var path = Path()
+        path.move(to: tips[0])
+        for index in 0..<4 {
+            let next = tips[(index + 1) % 4]
+            path.addQuadCurve(to: next, control: center)
+        }
+        path.closeSubpath()
+        return path
+    }
+}
+
+/// Une goutte : pointue en haut, ronde en bas.
+private struct MascotDropShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        let top = CGPoint(x: rect.midX, y: rect.minY)
+        let bottom = CGPoint(x: rect.midX, y: rect.maxY)
+        let w = rect.width
+
+        var path = Path()
+        path.move(to: top)
+        path.addCurve(
+            to: bottom,
+            control1: CGPoint(x: rect.midX + w * 0.55, y: rect.minY + rect.height * 0.55),
+            control2: CGPoint(x: rect.midX + w * 0.5, y: rect.maxY)
+        )
+        path.addCurve(
+            to: top,
+            control1: CGPoint(x: rect.midX - w * 0.5, y: rect.maxY),
+            control2: CGPoint(x: rect.midX - w * 0.55, y: rect.minY + rect.height * 0.55)
+        )
+        path.closeSubpath()
+        return path
     }
 }
 
@@ -570,31 +769,68 @@ struct MicaboMascot: View {
 
 /// **La mascotte sursaute quand quelque chose change.**
 ///
-/// Un nouvel écran, une réponse donnée : elle se soulève d'un rien et retombe. C'est la
-/// réaction qui manquait — une mascotte posée dans un coin qui ne bronche pas quand on lui
-/// répond n'écoute pas.
+/// Un nouvel écran, une réponse donnée : elle s'accroupit, saute, retombe et rebondit.
+/// C'est une compression puis un étirement, comme un corps mou — pas un simple
+/// agrandissement. Une mascotte posée dans un coin qui ne bronche pas quand on lui répond
+/// n'écoute pas.
 private struct MascotHop<Trigger: Equatable>: ViewModifier {
     let trigger: Trigger
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var lifted = false
+
+    private enum Phase: CaseIterable {
+        case rest
+        case crouch
+        case jump
+        case land
+
+        var scaleX: CGFloat {
+            switch self {
+            case .rest: 1
+            case .crouch: 1.08
+            case .jump: 0.94
+            case .land: 1.06
+            }
+        }
+
+        var scaleY: CGFloat {
+            switch self {
+            case .rest: 1
+            case .crouch: 0.88
+            case .jump: 1.1
+            case .land: 0.93
+            }
+        }
+
+        var lift: CGFloat {
+            switch self {
+            case .rest, .crouch, .land: 0
+            case .jump: -12
+            }
+        }
+
+        var animation: Animation {
+            switch self {
+            case .crouch: .easeIn(duration: 0.09)
+            case .jump: .spring(response: 0.24, dampingFraction: 0.7)
+            case .land: .easeOut(duration: 0.1)
+            case .rest: .spring(response: 0.32, dampingFraction: 0.55)
+            }
+        }
+    }
 
     func body(content: Content) -> some View {
-        content
-            .scaleEffect(lifted ? 1.16 : 1)
-            .offset(y: lifted ? -4 : 0)
-            .onChange(of: trigger) { _, _ in
-                guard !reduceMotion else { return }
-                withAnimation(.spring(response: 0.26, dampingFraction: 0.55)) {
-                    lifted = true
-                }
-                Task { @MainActor in
-                    try? await Task.sleep(for: .milliseconds(180))
-                    withAnimation(.spring(response: 0.34, dampingFraction: 0.62)) {
-                        lifted = false
-                    }
-                }
+        if reduceMotion {
+            content
+        } else {
+            content.phaseAnimator(Phase.allCases, trigger: trigger) { view, phase in
+                view
+                    .scaleEffect(x: phase.scaleX, y: phase.scaleY, anchor: .bottom)
+                    .offset(y: phase.lift)
+            } animation: { phase in
+                phase.animation
             }
+        }
     }
 }
 

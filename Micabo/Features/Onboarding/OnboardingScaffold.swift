@@ -100,11 +100,21 @@ enum OnboardingMotion {
     /// réglage précédent était si discret qu'on ne voyait rien arriver : à huit points et
     /// quatre dixièmes, l'œil lit un écran déjà posé, et le parcours entier passait pour une
     /// succession de pages immobiles.
-    static let enter = Animation.timingCurve(0.2, 0.7, 0.2, 1, duration: 0.52)
+    ///
+    /// La courbe est une exponentielle décroissante : l'élément couvre les trois quarts de
+    /// sa course dans le premier tiers du temps, puis vient se poser. C'est la courbe des
+    /// transitions du système, et celle qu'on lit comme « ça arrive » plutôt que « ça
+    /// glisse ».
+    static let enter = Animation.timingCurve(0.16, 1, 0.3, 1, duration: 0.56)
     /// La course d'un élément qui entre.
     static let rise: CGFloat = 14
     /// Réaction à un appui : elle doit être finie avant qu'on ait relevé le doigt.
     static let tap = Animation.timingCurve(0.3, 0, 0.2, 1, duration: 0.2)
+    /// **Une réponse qu'on choisit se soulève d'un rien** — la seconde exception à la règle
+    /// du non-rebond, avec le bouton qui brille. Un ressort presque amorti : il dépasse sa
+    /// cible d'un demi-pour cent et revient, ce qui se lit comme un objet qu'on a pris en
+    /// main, pas comme un tremblement.
+    static let select = Animation.spring(response: 0.32, dampingFraction: 0.78)
     /// Un élément qui se déplace ou change de forme sous les yeux.
     static let shift = Animation.timingCurve(0.25, 0.8, 0.25, 1, duration: 0.48)
     /// Passage d'un écran au suivant.
@@ -453,6 +463,9 @@ private struct OnboardingAppear: ViewModifier {
     func body(content: Content) -> some View {
         content
             .opacity(isVisible ? 1 : 0)
+            // Deux pour cent d'échelle en plus de la montée : l'élément arrive **vers**
+            // l'écran, pas seulement du bas. C'est invisible à l'œil et lisible au regard.
+            .scaleEffect(isVisible ? 1 : 0.98)
             .offset(y: isVisible ? 0 : OnboardingMotion.rise)
             .onAppear {
                 withAnimation(OnboardingMotion.enter.delay(0.04 + Double(index) * stagger)) {
@@ -605,6 +618,8 @@ struct OnboardingContinueButton: View {
 
     @State private var shinePhase: CGFloat = 0
     @State private var isBouncing = false
+    /// Vrai le temps du sursaut qui accompagne l'activation. Voir `arm()`.
+    @State private var isArming = false
 
     private var isLively: Bool { isShiny && isEnabled && !isLoading }
 
@@ -647,8 +662,26 @@ struct OnboardingContinueButton: View {
         // d'activation qui s'appliquerait à la respiration lui mangerait sa répétition.
         .overlay { if isLively { shine } }
         .scaleEffect(isBouncing ? 1.028 : 1)
+        .scaleEffect(isArming ? 1.035 : 1)
         .onAppear(perform: startLiveliness)
         .onChange(of: isLively) { _, _ in startLiveliness() }
+        .onChange(of: isEnabled) { wasEnabled, isEnabled in
+            guard isEnabled, !wasEnabled else { return }
+            arm()
+        }
+    }
+
+    /// **Le bouton se soulève quand il s'allume.**
+    ///
+    /// Il passait du gris au violet, et c'est tout : l'œil, occupé par la réponse qu'on
+    /// vient de choisir, ne le voyait pas changer. Un sursaut de trois pour cent et une
+    /// petite vibration disent « tu peux continuer » sans qu'on ait à regarder en bas.
+    private func arm() {
+        Haptics.tick()
+        withAnimation(OnboardingMotion.select) { isArming = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
+            withAnimation(OnboardingMotion.select) { isArming = false }
+        }
     }
 
     /// Bande claire inclinée qui traverse le bouton, découpée à sa forme pour qu'elle
@@ -752,8 +785,12 @@ struct OnboardingChoiceRow: View {
         Button(action: action) {
             HStack(spacing: 13) {
                 if let emoji {
+                    // L'emoji de la réponse choisie grandit d'un cinquième : c'est lui
+                    // qui « répond », avant la coche.
                     Text(emoji)
                         .font(.system(size: 21))
+                        .scaleEffect(isSelected ? 1.18 : 1)
+                        .animation(OnboardingMotion.select, value: isSelected)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -812,7 +849,10 @@ struct OnboardingChoiceRow: View {
             }
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-        .animation(OnboardingMotion.tap, value: isSelected)
+        // La rangée choisie se soulève d'un rien et le reste de la liste ne bouge pas :
+        // c'est la réponse qu'on a prise en main.
+        .scaleEffect(isSelected ? 1.015 : 1)
+        .animation(OnboardingMotion.select, value: isSelected)
         .modifier(OnboardingRowAppear(rank: rank))
     }
 }
@@ -884,7 +924,8 @@ struct OnboardingChoiceTile: View {
             }
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-        .animation(OnboardingMotion.tap, value: isSelected)
+        .scaleEffect(isSelected ? 1.02 : 1)
+        .animation(OnboardingMotion.select, value: isSelected)
     }
 }
 
@@ -918,7 +959,7 @@ struct OnboardingChoiceChip: View {
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
         // La puce choisie grandit d'un rien : c'est la réponse qui se détache de la grille.
         .scaleEffect(isSelected ? 1.05 : 1)
-        .animation(OnboardingMotion.tap, value: isSelected)
+        .animation(OnboardingMotion.select, value: isSelected)
     }
 }
 
