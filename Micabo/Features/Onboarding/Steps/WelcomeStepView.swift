@@ -203,6 +203,24 @@ private struct WelcomeScene: View {
         .frame(maxWidth: .infinity)
         .accessibilityHidden(true)
         .onAppear(perform: start)
+        .task { await feel() }
+    }
+
+    /// **La scène se sent arriver.** Un petit coup par tuile, au rythme où elles se
+    /// posent, puis un plus doux quand la mascotte atterrit : le premier écran de l'app
+    /// répond au doigt avant même qu'on l'ait touché.
+    @MainActor
+    private func feel() async {
+        guard !reduceMotion else { return }
+        try? await Task.sleep(for: .milliseconds(320))
+        for _ in Self.orbits {
+            guard !Task.isCancelled else { return }
+            Haptics.tick()
+            try? await Task.sleep(for: .milliseconds(90))
+        }
+        try? await Task.sleep(for: .milliseconds(180))
+        guard !Task.isCancelled else { return }
+        Haptics.soft()
     }
 
     private func tile(_ orbit: Orbit, index: Int) -> some View {
