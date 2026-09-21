@@ -165,7 +165,7 @@ struct OnboardingCalendarScene: View {
             drawn = true
             return
         }
-        withAnimation(.spring(response: 0.7, dampingFraction: 0.7).delay(0.5)) {
+        withAnimation(OnboardingMotion.enter.delay(0.5)) {
             drawn = true
         }
         withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true).delay(1.2)) {

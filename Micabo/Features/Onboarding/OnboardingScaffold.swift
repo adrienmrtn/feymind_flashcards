@@ -110,11 +110,10 @@ enum OnboardingMotion {
     static let rise: CGFloat = 14
     /// Réaction à un appui : elle doit être finie avant qu'on ait relevé le doigt.
     static let tap = Animation.timingCurve(0.3, 0, 0.2, 1, duration: 0.2)
-    /// **Une réponse qu'on choisit se soulève d'un rien** — la seconde exception à la règle
-    /// du non-rebond, avec le bouton qui brille. Un ressort presque amorti : il dépasse sa
-    /// cible d'un demi-pour cent et revient, ce qui se lit comme un objet qu'on a pris en
-    /// main, pas comme un tremblement.
-    static let select = Animation.spring(response: 0.32, dampingFraction: 0.78)
+    /// La réaction d'une réponse qu'on choisit : l'emoji qui grandit, la coche qui arrive.
+    /// Une courbe monotone comme les autres — un ressort ici, même amorti, faisait
+    /// trembler la liste à chaque choix.
+    static let select = Animation.timingCurve(0.2, 0.8, 0.2, 1, duration: 0.26)
     /// Un élément qui se déplace ou change de forme sous les yeux.
     static let shift = Animation.timingCurve(0.25, 0.8, 0.25, 1, duration: 0.48)
     /// Passage d'un écran au suivant.
@@ -604,7 +603,7 @@ struct OnboardingContinueButton: View {
     var isEnabled: Bool = true
     var isLoading: Bool = false
     var loadingTitle: String?
-    /// Reflet qui balaie le bouton, et respiration qui le fait rebondir sur place.
+    /// Reflet qui balaie le bouton.
     ///
     /// Réservé au bouton qui clôt une animation qu'on vient de regarder sans rien faire :
     /// après dix secondes de démonstration, la main est immobile, et il faut lui dire
@@ -617,7 +616,6 @@ struct OnboardingContinueButton: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @State private var shinePhase: CGFloat = 0
-    @State private var isBouncing = false
     /// Vrai le temps du sursaut qui accompagne l'activation. Voir `arm()`.
     @State private var isArming = false
 
@@ -661,8 +659,7 @@ struct OnboardingContinueButton: View {
         // dedans : le bouton s'active à l'instant où il se met à respirer, et une courbe
         // d'activation qui s'appliquerait à la respiration lui mangerait sa répétition.
         .overlay { if isLively { shine } }
-        .scaleEffect(isBouncing ? 1.028 : 1)
-        .scaleEffect(isArming ? 1.035 : 1)
+        .scaleEffect(isArming ? 1.03 : 1)
         .onAppear(perform: startLiveliness)
         .onChange(of: isLively) { _, _ in startLiveliness() }
         .onChange(of: isEnabled) { wasEnabled, isEnabled in
@@ -712,18 +709,16 @@ struct OnboardingContinueButton: View {
         .allowsHitTesting(false)
     }
 
+    /// **Le reflet, et plus la respiration.** Le bouton rebondissait sur place en boucle,
+    /// sur un ressort à peine amorti : c'était le mouvement le plus visible de tout le
+    /// parcours, et il le faisait paraître nerveux. Le reflet qui le balaie suffit à dire
+    /// où appuyer.
     private func startLiveliness() {
-        guard isLively else {
-            withAnimation(.easeOut(duration: 0.2)) { isBouncing = false }
-            return
-        }
+        guard isLively else { return }
 
         shinePhase = 0
         withAnimation(.linear(duration: 1.7).repeatForever(autoreverses: false)) {
             shinePhase = 1
-        }
-        withAnimation(.spring(response: 0.55, dampingFraction: 0.4).repeatForever(autoreverses: true)) {
-            isBouncing = true
         }
     }
 }
@@ -785,11 +780,12 @@ struct OnboardingChoiceRow: View {
         Button(action: action) {
             HStack(spacing: 13) {
                 if let emoji {
-                    // L'emoji de la réponse choisie grandit d'un cinquième : c'est lui
-                    // qui « répond », avant la coche.
+                    // L'emoji de la réponse choisie grandit d'un dixième : c'est lui
+                    // qui « répond », avant la coche. Il grandit **dans** la rangée : rien
+                    // ne dépasse du cadre, donc rien ne passe sous la rangée voisine.
                     Text(emoji)
                         .font(.system(size: 21))
-                        .scaleEffect(isSelected ? 1.18 : 1)
+                        .scaleEffect(isSelected ? 1.12 : 1)
                         .animation(OnboardingMotion.select, value: isSelected)
                 }
 
@@ -849,9 +845,11 @@ struct OnboardingChoiceRow: View {
             }
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-        // La rangée choisie se soulève d'un rien et le reste de la liste ne bouge pas :
-        // c'est la réponse qu'on a prise en main.
-        .scaleEffect(isSelected ? 1.015 : 1)
+        // **La rangée ne grandit pas.** Elle se soulevait d'un pour cent et demi, et ce
+        // pour cent et demi dépassait de son cadre : la rangée suivante, dessinée après,
+        // passait par-dessus, et le filet violet de la réponse choisie se retrouvait coupé
+        // sous les bords blancs de sa voisine. C'est ce que montrait « Tu es où,
+        // exactement ? ». Le lavis, le filet épaissi et l'emoji suffisent à dire le choix.
         .animation(OnboardingMotion.select, value: isSelected)
         .modifier(OnboardingRowAppear(rank: rank))
     }
@@ -924,7 +922,6 @@ struct OnboardingChoiceTile: View {
             }
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-        .scaleEffect(isSelected ? 1.02 : 1)
         .animation(OnboardingMotion.select, value: isSelected)
     }
 }
@@ -957,8 +954,8 @@ struct OnboardingChoiceChip: View {
             .background(isSelected ? MicaboColor.accent : MicaboColor.surface, in: Capsule())
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-        // La puce choisie grandit d'un rien : c'est la réponse qui se détache de la grille.
-        .scaleEffect(isSelected ? 1.05 : 1)
+        // Pas d'échelle : une puce qui grandit dépasse sur sa voisine, dessinée après elle.
+        // Le violet plein dit le choix.
         .animation(OnboardingMotion.select, value: isSelected)
     }
 }

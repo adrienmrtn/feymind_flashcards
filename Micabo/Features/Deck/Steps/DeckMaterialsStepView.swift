@@ -335,10 +335,10 @@ private struct DeckMaterialSlot: View {
             .onChange(of: material.isReady) { _, ready in
                 guard ready else { return }
                 Haptics.success()
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.55)) { pop = true }
+                withAnimation(OnboardingMotion.select) { pop = true }
                 Task { @MainActor in
                     try? await Task.sleep(for: .milliseconds(200))
-                    withAnimation(.spring(response: 0.36, dampingFraction: 0.65)) { pop = false }
+                    withAnimation(OnboardingMotion.select) { pop = false }
                 }
             }
     }

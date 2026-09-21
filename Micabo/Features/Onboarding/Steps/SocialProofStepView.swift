@@ -146,7 +146,7 @@ struct SocialProofStepView: View {
             .offset(y: drop)
             .opacity(alpha)
             .zIndex(order)
-            .animation(.spring(response: 0.55, dampingFraction: 0.8), value: top)
+            .animation(OnboardingMotion.shift, value: top)
     }
 
     private func reviewCard(_ review: Review) -> some View {
