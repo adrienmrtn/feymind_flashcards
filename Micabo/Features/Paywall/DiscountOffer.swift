@@ -3,8 +3,8 @@ import Foundation
 /// **L'offre cadeau, et les mêmes nombres que le web.**
 ///
 /// Après le premier cours importé, Micabo offre l'annuel à tarif réduit. Le cadeau se
-/// présente sur la fiche : trois appuis l'ouvrent, et le paywall qui suit vend le tarif.
-/// Refermé, il laisse une languette qui le rouvre d'un appui.
+/// présente à l'ouverture du premier chapitre de ce cours : trois appuis l'ouvrent, et le
+/// paywall qui suit vend le tarif. Refermé, il laisse une languette qui le rouvre d'un appui.
 ///
 /// **Le paywall ne compte plus.** Il affichait les vingt-quatre heures au centième, et un
 /// décompte posé sur un prix demande de décider vite plutôt que de décider : l'offre tient

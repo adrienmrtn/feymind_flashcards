@@ -46,6 +46,8 @@ struct ChapterSheetView: View {
     @State private var explaining: ExplainedPassage?
     @State private var formulaTarget: SheetFormulaTarget?
     @State private var paywall: PaywallTrigger?
+    /// Le cadeau du premier deck. Voir `presentGiftIfEarned`.
+    @State private var giftOffer: DiscountPresentation?
 
     @StateObject private var editorState = SheetEditorState()
 
@@ -112,6 +114,7 @@ struct ChapterSheetView: View {
         .overlay(alignment: .bottom) { reviewBar }
         .onAppear(perform: reload)
         .onChange(of: isPro) { _, _ in applyGate() }
+        .task { await presentGiftIfEarned() }
         .fullScreenCover(isPresented: $studying) {
             StudyView(source: .chapter(chapter), mode: .scheduled)
                 .onDisappear(perform: reload)
@@ -153,6 +156,50 @@ struct ChapterSheetView: View {
             Button(i18n.t("app.common.cancel"), role: .cancel) {}
         }
         .micaboPaywall($paywall)
+        .micaboDiscountOffer($giftOffer)
+    }
+
+    // MARK: - Le cadeau du premier deck
+
+    /// **Le cadeau se pose ici : premier chapitre du premier deck importé, une fois.**
+    ///
+    /// Il s'ouvrait au lancement, depuis la racine des onglets, et cette feuille refermait
+    /// l'import du premier deck qui venait de s'ouvrir tout seul. Il attend désormais que
+    /// l'étudiant ait quelque chose à lui : son deck est construit, il ouvre son premier
+    /// chapitre — le seul qu'on lui offre en entier — et c'est là que le tarif réduit a un
+    /// sens. Il n'est posé que sur **le premier deck importé** : un deuxième deck n'est pas
+    /// un début.
+    ///
+    /// Il est présenté **par cette page**, en calque puis en feuille au-dessus d'elle :
+    /// rien n'est poussé ni retiré de la pile, et la page est toujours là quand la feuille
+    /// se referme. L'attente laisse la poussée de navigation finir ; une carte qui arrive
+    /// pendant que la page glisse encore donne deux animations concurrentes.
+    @MainActor
+    private func presentGiftIfEarned() async {
+        guard number == 1, isFirstImportedCourse else { return }
+        guard
+            DiscountOffer.shouldPresentGift(
+                isPro: isPro,
+                courseCount: CourseRepository.ownedCount(in: modelContext),
+                seen: DiscountOffer.isSeen(),
+                startedAt: DiscountOffer.start()
+            )
+        else { return }
+
+        try? await Task.sleep(for: .milliseconds(900))
+        guard !Task.isCancelled, giftOffer == nil, paywall == nil, !studying else { return }
+        giftOffer = .gift
+    }
+
+    /// Le deck de ce chapitre est-il le plus ancien des decks importés ?
+    private var isFirstImportedCourse: Bool {
+        guard let courseID = chapter.course?.id else { return false }
+        var descriptor = FetchDescriptor<Course>(
+            predicate: #Predicate { !$0.isFromLibrary },
+            sortBy: [SortDescriptor(\.createdAt, order: .forward)]
+        )
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first?.id == courseID
     }
 
     // MARK: - La lecture
