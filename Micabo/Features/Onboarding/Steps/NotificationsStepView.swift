@@ -55,10 +55,10 @@ struct NotificationsStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: t("ios.notifTitle"),
-            animatesTitle: true,
             // Hors défilement : les ressorts qui centrent la scène n'ont pas de hauteur
             // dans un `ScrollView`.
             scrolls: false,
+            animatesTitle: true,
             expandsContent: true
         ) {
             VStack(spacing: 0) {
