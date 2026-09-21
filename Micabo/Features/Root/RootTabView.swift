@@ -56,6 +56,13 @@ struct RootTabView: View {
         // et un `safeAreaInset` ne franchit pas cette frontière. La place est réservée page
         // par page, par `tabBarClearance`, qui est aussi ce qui pose leurs boutons du bas
         // au-dessus de la barre au lieu de dessous.
+        // **L'app s'ouvre sur Decks après le parcours**, où l'import du premier deck
+        // attend. Voir `OnboardingPreferences.pendingFirstImport`.
+        .onAppear {
+            if OnboardingPreferences.pendingFirstImport {
+                router.selection = .decks
+            }
+        }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if router.isAtRoot {
                 MicaboTabBar()

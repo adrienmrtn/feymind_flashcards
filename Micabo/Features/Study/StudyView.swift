@@ -44,6 +44,8 @@ struct StudyView: View {
     /// Faits figés à l'ouverture. Un `@Query` sur les journaux se réveillerait à
     /// chaque note et ferait ramer la carte suivante.
     @State private var introducedToday = 0
+    /// Les cartes déjà révisées aujourd'hui avant cette session, pour la limite du jour.
+    @State private var reviewedToday = 0
     /// Cartes et comptes lus une fois. Le curseur des neuves ne relit plus
     /// la bibliothèque, ni les examens, à chaque cran.
     @State private var setupCards: [Flashcard] = []
@@ -116,7 +118,7 @@ struct StudyView: View {
 
     private func sessionPaywall() -> some View {
         SessionPaywallView(
-            reviewedCount: session.answeredCount,
+            reviewedCount: min(FreeTier.cardsPerDay, reviewedSoFarToday),
             onGoHome: {
                 sessionPaywallSettled = true
                 leaveForHome()
@@ -526,6 +528,7 @@ struct StudyView: View {
         logs.fetchLimit = 400
         let todayLogs = (try? modelContext.fetch(logs)) ?? []
         introducedToday = DailyNewQuota.introducedToday(from: todayLogs)
+        reviewedToday = todayLogs.count
         setupCards = loadCards()
         setupDue = StudyQueueBuilder.dueBreakdown(from: setupCards)
     }
@@ -574,12 +577,18 @@ struct StudyView: View {
             sourceKey: source.persistenceKey,
             limits: mode.affectsSchedule ? .daily(newRemaining: newPerSession) : nil
         )
+        // La journée peut déjà être pleine avant la première carte : une session lancée
+        // après cinq révisions ailleurs s'arrête ici, pas une carte plus loin.
+        gateIfNeeded()
     }
 
     private func resume(_ snapshot: StudySessionSnapshot) {
         resumable = nil
         didStart = true
         session.resume(snapshot, cards: resolveCards(), context: modelContext)
+        // Les cartes de la session reprise sont déjà dans les journaux du jour : les
+        // compter deux fois fermerait la journée une carte trop tôt.
+        reviewedToday = max(0, reviewedToday - session.answeredCount)
         // Une session reprise a déjà des cartes à son compteur : sans ce contrôle, elle
         // servirait une carte de plus avant de buter sur la limite.
         gateIfNeeded()
@@ -642,16 +651,23 @@ struct StudyView: View {
 
     // MARK: - La limite gratuite
 
-    /// Arrête la session à la cinquième carte, et pas une de plus.
+    /// Arrête la session à la cinquième carte de la journée, et pas une de plus.
     ///
     /// La vérification a lieu **après** la note, jamais avant : une carte qu'on a lue,
     /// retournée et notée doit être comptée, sinon le travail déjà fait disparaît au moment
     /// où l'on demande de payer. La session terminée est exclue — une file de cinq cartes
     /// qui se termine exactement sur la limite a été révisée en entier, et poser un paywall
     /// par-dessus l'écran de fin reviendrait à facturer ce qu'on vient d'offrir.
+    ///
+    /// **Le compte est celui du jour**, pas de la session : les journaux d'avant plus les
+    /// réponses d'ici. Une limite par session se contournait en relançant la session.
+    private var reviewedSoFarToday: Int {
+        reviewedToday + session.answeredCount
+    }
+
     private func gateIfNeeded() {
         guard !isGated, !session.isFinished else { return }
-        guard pro?.hasReachedSessionLimit(answered: session.answeredCount) == true else { return }
+        guard pro?.hasReachedDailyLimit(reviewedToday: reviewedSoFarToday) == true else { return }
         session.flush()
         sessionPaywallSettled = false
         isGated = true

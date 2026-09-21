@@ -256,7 +256,9 @@ struct ChapterSheetView: View {
     private func applyGate() {
         var all = chapter.decodedSheet()?.blocks ?? []
         leadHeading = Self.takeRedundantTitle(from: &all, title: chapter.title)
-        let parts = SheetGate.split(all, isPro: isPro)
+        // Le premier chapitre se lit en entier, abonné ou pas : c'est lui qui montre ce
+        // que vaut une fiche. Les suivants s'arrêtent aux trois dixièmes.
+        let parts = SheetGate.split(all, isPro: isPro, chapterNumber: number)
         blocks = parts.readable
         lockedTail = parts.locked
     }

@@ -93,6 +93,9 @@ struct OnboardingFlowView: View {
     private func finish() {
         Analytics.track(.onboardingFinished)
         OnboardingPreferences.markCompleted()
+        // L'app s'ouvre sur l'import du premier deck, payé ou pas. Voir
+        // `OnboardingPreferences.pendingFirstImport`.
+        OnboardingPreferences.pendingFirstImport = true
         onFinish()
     }
 }

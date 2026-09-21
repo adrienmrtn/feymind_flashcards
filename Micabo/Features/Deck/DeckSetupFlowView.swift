@@ -164,9 +164,15 @@ struct DeckSetupFlowView: View {
     /// d'import posait ses trois commandes sur une seule ligne, sans personnage : neuf
     /// questions d'affilée posées par personne, c'était le seul endroit de l'app où l'on
     /// remplissait un formulaire.
-    @ViewBuilder
+    ///
+    /// **Il reste en place pendant la construction, invisible.** Retiré de la pile, il
+    /// faisait remonter tout l'écran de soixante points au moment même où la page glissait :
+    /// deux mouvements à la fois, et l'arrivée sur la jauge avait l'air de rebondir. Masqué,
+    /// rien ne bouge — la page arrive comme les autres.
     private var header: some View {
-        if step != .building {
+        let isBuilding = step == .building
+
+        return Group {
             VStack(alignment: .leading, spacing: 0) {
                 MicaboProgressBar(
                     progress: step.progress,
@@ -209,6 +215,9 @@ struct DeckSetupFlowView: View {
             .padding(.top, MicaboSpacing.xs)
             .animation(.easeInOut(duration: 0.38), value: step)
         }
+        .opacity(isBuilding ? 0 : 1)
+        .allowsHitTesting(!isBuilding)
+        .animation(.easeInOut(duration: 0.25), value: isBuilding)
     }
 
     @ViewBuilder

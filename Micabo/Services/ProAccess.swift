@@ -3,8 +3,8 @@ import SwiftUI
 
 /// **Ce que la version gratuite laisse faire**, et rien de plus.
 ///
-/// Les trois nombres vivent ici parce qu'ils se répondent : un cours qu'on peut lire aux
-/// sept dixièmes, cinq cartes par session, un seul import. Éparpillés dans les écrans, ils
+/// Les trois nombres vivent ici parce qu'ils se répondent : un cours dont on lit trois
+/// dixièmes, cinq cartes par jour, un seul import. Éparpillés dans les écrans, ils
 /// auraient dérivé au premier ajustement, et le gratuit se serait mis à dire deux choses
 /// différentes selon l'endroit où on l'a rencontré.
 enum FreeTier {
@@ -14,15 +14,19 @@ enum FreeTier {
     /// demande de payer pour un produit qu'on n'a pas vu tourner sur ses propres cours.
     static let courses = 1
 
-    /// La part de la fiche qui se lit sans payer.
+    /// La part d'un chapitre qui se lit sans payer, passé le premier.
     ///
-    /// Sept dixièmes, pas la moitié : il faut que la fiche ait le temps d'être utile avant
-    /// de s'arrêter. Une coupure au milieu se lit comme une démonstration, une coupure à la
-    /// fin se lit comme un manque — et c'est le manque qui fait payer.
+    /// **Le premier chapitre de chaque deck se lit en entier** — voir `SheetGate` — et
+    /// c'est lui qui montre ce que vaut une fiche. Les suivants s'ouvrent, se lisent sur
+    /// trois dixièmes, et le reste se devine derrière le flou : assez pour savoir que la
+    /// fiche continue, pas assez pour s'en passer.
     static let readableSheetRatio = 0.3
 
-    /// Le nombre de cartes qu'une session gratuite sert avant de s'arrêter.
-    static let cardsPerSession = 5
+    /// Le nombre de cartes qu'on révise par jour sans payer, toutes sessions confondues.
+    ///
+    /// Par jour et non par session : une limite par session se contournait en relançant
+    /// la session, et ne limitait donc rien.
+    static let cardsPerDay = 5
 
     /// L'entraînement libre est réservé à Pro.
     ///
@@ -243,9 +247,10 @@ final class ProAccess {
         isPro || FreeTier.allowsPractice
     }
 
-    /// Vrai à partir de la carte qui doit rester derrière le paywall.
-    func hasReachedSessionLimit(answered: Int) -> Bool {
-        !isPro && answered >= FreeTier.cardsPerSession
+    /// Vrai à partir de la carte qui doit rester derrière le paywall, en comptant tout ce
+    /// qui a déjà été révisé dans la journée.
+    func hasReachedDailyLimit(reviewedToday: Int) -> Bool {
+        !isPro && reviewedToday >= FreeTier.cardsPerDay
     }
 }
 
@@ -263,12 +268,16 @@ enum SheetGate {
     }
 
     /// Coupe la fiche en deux : ce qui se lit, ce qui se devine.
+    ///
+    /// `chapterNumber` est le rang du chapitre dans son deck : le premier se lit en entier,
+    /// abonné ou pas. C'est lui qui fait la démonstration.
     static func split(
         _ blocks: [SheetBlock],
         isPro: Bool,
+        chapterNumber: Int = 2,
         ratio: Double = FreeTier.readableSheetRatio
     ) -> (readable: [SheetBlock], locked: [SheetBlock]) {
-        guard !isPro, !blocks.isEmpty else { return (blocks, []) }
+        guard !isPro, chapterNumber > 1, !blocks.isEmpty else { return (blocks, []) }
         let index = lockIndex(blockCount: blocks.count, ratio: ratio)
         return (Array(blocks[..<index]), Array(blocks[index...]))
     }

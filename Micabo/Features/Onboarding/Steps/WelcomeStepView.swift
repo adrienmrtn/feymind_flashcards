@@ -95,12 +95,12 @@ struct WelcomeStepView: View {
         .padding(.bottom, MicaboSpacing.lg)
     }
 
-    /// Deux boutons de la même largeur : commencer, en violet plein ; le compte, en violet
-    /// lavé. Un lien souligné sous un bouton se lisait comme une note de bas de page, et
-    /// ceux qui reviennent le cherchaient.
+    /// Un bouton, et une ligne grise dessous. Le compte est une sortie pour ceux qui
+    /// reviennent, pas une seconde proposition : un second bouton de la même largeur
+    /// faisait hésiter entre deux portes, alors qu'il n'y en a qu'une pour qui arrive.
     private var continueBar: some View {
         MicaboBottomBar(background: surface.background) {
-            VStack(spacing: 10) {
+            VStack(spacing: 14) {
                 OnboardingContinueButton(title: i18n.t("common.start"), isShiny: true) {
                     model.advance()
                 }
@@ -109,16 +109,13 @@ struct WelcomeStepView: View {
                     showLogin = true
                 } label: {
                     Text(i18n.t("common.alreadyAccount"))
-                        .font(MicaboFont.ui(16, weight: .semibold))
-                        .foregroundStyle(MicaboColor.accent)
+                        .font(MicaboFont.ui(13.5, weight: .medium))
+                        .foregroundStyle(MicaboColor.inkTertiary)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(
-                            MicaboColor.accentSoft,
-                            in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                        )
+                        .frame(minHeight: 32)
+                        .contentShape(Rectangle())
                 }
-                .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
+                .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
                 .disabled(auth.isWorking || checkingAccount)
             }
             .onboardingAppear(index: 3, stagger: 0.1)

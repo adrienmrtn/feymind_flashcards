@@ -7,17 +7,16 @@ import SwiftUI
 /// autant, et pendant ce temps il n'y a rien à faire. Deux choses rendent cette attente
 /// tenable, et aucune des deux n'est décorative :
 ///
-/// - **Chaque étape est nommée pendant qu'elle se fait.** « Micabo lit tes documents », puis
+/// - **Chaque étape est nommée pendant qu'elle se fait.** « Micabo lit tes supports », puis
 ///   « écrit ton cours », puis « découpe les chapitres », puis « prépare tes cartes ». Une
 ///   jauge seule, sur quarante secondes, se lit comme un plantage ; une jauge qui dit à
 ///   quoi elle est occupée se lit comme un travail.
-/// - **La jauge n'avance pas à vitesse constante.** Les étapes ne durent pas pareil, et une
-///   jauge qui saute de 25 % en 25 % s'arrête visiblement pendant vingt secondes. Les poids
-///   de `DeckBuilder.Stage` suivent la durée réelle.
+/// - **La jauge avance à son propre rythme**, et non au rythme des vraies étapes. Voir
+///   `shown`.
 ///
 /// **La tâche n'est pas annulable, et l'écran ne prétend pas qu'elle l'est.** La génération
 /// est lancée et payée dès l'arrivée ; une croix qui laisserait croire qu'on peut revenir en
-/// arrière sans rien perdre mentirait. C'est pourquoi l'en-tête du parcours retire sa sortie
+/// arrière sans rien perdre mentirait. C'est pourquoi l'en-tête du parcours masque sa sortie
 /// sur cet écran-là.
 struct DeckBuildingStepView: View {
     let setup: DeckSetup
@@ -30,34 +29,38 @@ struct DeckBuildingStepView: View {
     @Environment(\.aiService) private var aiService
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
-    @State private var stage: DeckBuilder.Stage = .reading
     @State private var failure: String?
     @State private var didStart = false
     /// Le deck construit, en attente que l'étudiant l'ouvre. Voir `build()`.
     @State private var built: Course?
+    /// Vrai une fois la jauge arrivée au bout : c'est là que le bouton s'allume.
+    @State private var isReady = false
 
-    /// **Ce que la jauge affiche, qui n'est pas ce que l'étape vaut.**
+    /// **Ce que la jauge affiche n'est pas ce que le modèle fait, et c'est voulu.**
     ///
-    /// Les quatre étapes ne rendent la main que lorsqu'elles ont fini : la jauge restait donc
-    /// vingt secondes sur quarante-cinq pour cent, puis sautait à quatre-vingt-quinze. Quatre
-    /// bonds et trois longs arrêts, ce qui est exactement ce qu'on lit comme « ça a planté ».
+    /// Les quatre étapes réelles ne durent pas ce qu'elles annoncent : la lecture des
+    /// supports est finie avant que l'écran apparaisse, le découpage est instantané, et les
+    /// deux écritures prennent chacune une vingtaine de secondes sans donner de nouvelles.
+    /// Suivre les vraies étapes donnait donc une jauge déjà entamée à l'arrivée, une
+    /// première ligne déjà cochée, deux lignes cochées d'un coup à la fin, et une barre qui
+    /// s'arrêtait avant le bout. Rien de tout ça ne se lit comme un travail qui avance.
     ///
-    /// Elle rampe maintenant vers la fin de l'étape en cours pendant qu'elle dure, sans
-    /// jamais l'atteindre — le dernier dixième reste pour le vrai passage à l'étape suivante.
-    /// C'est une progression honnête : elle ne prétend pas savoir où en est le modèle, elle
-    /// dit que le travail continue, ce qui est vrai tant qu'aucune erreur n'est remontée.
+    /// La jauge suit donc **son propre temps** : elle part de zéro, avance vite au début et
+    /// de moins en moins — vers quatre-vingt-douze pour cent, qu'elle n'atteint jamais tant
+    /// que le deck n'est pas là —, et les quatre lignes se cochent à mesure qu'elle passe
+    /// leurs seuils. Quand le deck arrive, elle finit le chemin en une seconde, ligne après
+    /// ligne, jusqu'à cent. C'est un mensonge sur le détail et une vérité sur l'essentiel :
+    /// tant que rien n'est cassé, ça avance, et ce sera fini quand la barre sera pleine.
     @State private var shown: Double = 0
 
-    /// La part du chemin déjà faite quand l'étape en cours commence.
-    private var floorOfStage: Double {
-        switch stage {
-        case .reading: 0
-        case .writingSheet: DeckBuilder.Stage.reading.progress
-        case .splitting: DeckBuilder.Stage.writingSheet.progress
-        case .writingCards: DeckBuilder.Stage.splitting.progress
-        case .done: DeckBuilder.Stage.writingCards.progress
-        }
-    }
+    /// Le plafond de la jauge tant que le deck n'est pas construit.
+    private static let ceiling: Double = 0.92
+    /// Les seuils auxquels chaque ligne se coche. Ils suivent la forme de l'asymptote :
+    /// les premières lignes tombent vite, la dernière attend le vrai deck.
+    private static let thresholds: [Double] = [0.22, 0.5, 0.74, 1.0]
+    /// Les étapes telles qu'elles se lisent. `done` n'y est pas : « c'est prêt » n'est pas un
+    /// travail qu'on attend, c'est la fin de la liste.
+    private static let steps: [DeckBuilder.Stage] = [.reading, .writingSheet, .splitting, .writingCards]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -86,10 +89,10 @@ struct DeckBuildingStepView: View {
                 MicaboBottomBar(background: MicaboColor.canvas) {
                     OnboardingContinueButton(
                         title: i18n.t("ios.deckBuild.seePlan"),
-                        isEnabled: built != nil,
-                        isLoading: built == nil,
+                        isEnabled: isReady,
+                        isLoading: !isReady,
                         loadingTitle: i18n.t("ios.deckBuild.title"),
-                        isShiny: built != nil
+                        isShiny: isReady
                     ) {
                         if let built { onCreated(built) }
                     }
@@ -102,18 +105,12 @@ struct DeckBuildingStepView: View {
             didStart = true
             await build()
         }
-        .task(id: stage) { await creep() }
+        .task { await creep() }
     }
 
     // MARK: - Pendant
 
     /// **Les quatre étapes, cochées au fur et à mesure.**
-    ///
-    /// L'écran montrait une jauge, une seule ligne de légende qui se remplaçait, et un bloc de
-    /// quatre traits violets qui clignotaient en boucle. Trois objets qui disaient tous « ça
-    /// travaille » et aucun qui disait **où on en est** : la légende effaçait l'étape
-    /// précédente en s'affichant, donc au bout de trente secondes on n'avait vu qu'une phrase
-    /// à la fois et on ne savait pas s'il en restait une ou trois.
     ///
     /// La liste garde ce qui est fait. Une coche verte derrière soi, un rond qui tourne
     /// devant, des ronds vides après : l'attente cesse d'être un temps mort pour devenir une
@@ -122,10 +119,10 @@ struct DeckBuildingStepView: View {
     private var buildingBody: some View {
         VStack(spacing: 26) {
             VStack(spacing: 9) {
-                Text(i18n.t(built == nil ? "ios.deckBuild.title" : "ios.deckBuild.done"))
+                Text(i18n.t(isReady ? "ios.deckBuild.done" : "ios.deckBuild.title"))
                     .font(MicaboFont.ui(26, weight: .bold))
                     .contentTransition(.opacity)
-                    .animation(.easeOut(duration: 0.25), value: built == nil)
+                    .animation(.easeOut(duration: 0.25), value: isReady)
                     .tracking(-0.5)
                     .foregroundStyle(MicaboColor.ink)
                     .multilineTextAlignment(.center)
@@ -154,13 +151,14 @@ struct DeckBuildingStepView: View {
         }
     }
 
-    /// Les étapes telles qu'elles se lisent. `done` n'y est pas : « c'est prêt » n'est pas un
-    /// travail qu'on attend, c'est la fin de la liste.
-    private static let steps: [DeckBuilder.Stage] = [.reading, .writingSheet, .splitting, .writingCards]
-
+    /// Une ligne : cochée une fois son seuil passé, en cours entre le seuil précédent et le
+    /// sien, vide avant.
     private func stepRow(_ item: DeckBuilder.Stage, isLast: Bool) -> some View {
-        let isDone = item.progress < stage.progress
-        let isCurrent = item == stage
+        let index = Self.steps.firstIndex(of: item) ?? 0
+        let threshold = Self.thresholds[index]
+        let previous: Double = index == 0 ? 0 : Self.thresholds[index - 1]
+        let isDone = shown >= threshold - 0.001
+        let isCurrent = !isDone && shown >= previous - 0.001
 
         return VStack(spacing: 0) {
             HStack(spacing: 13) {
@@ -187,7 +185,8 @@ struct DeckBuildingStepView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.vertical, 11)
-            .animation(.easeOut(duration: 0.25), value: stage)
+            .animation(.easeOut(duration: 0.25), value: isDone)
+            .animation(.easeOut(duration: 0.25), value: isCurrent)
 
             if !isLast {
                 MicaboHairline(inset: 41)
@@ -217,7 +216,10 @@ struct DeckBuildingStepView: View {
             VStack(spacing: 10) {
                 Button(i18n.t("ios.retry")) {
                     failure = nil
-                    Task { await build() }
+                    shown = 0
+                    Task {
+                        await build()
+                    }
                 }
                 .buttonStyle(MicaboPrimaryButtonStyle())
 
@@ -230,29 +232,32 @@ struct DeckBuildingStepView: View {
 
     // MARK: - Le travail
 
-    /// **La reptation de la jauge à l'intérieur d'une étape.**
-    ///
-    /// Elle rattrape d'abord le plancher de l'étape — c'est le seul saut, et il correspond à
-    /// un vrai franchissement — puis avance par pas de trois centièmes de seconde vers la
-    /// borne haute, en s'arrêtant à quatre-vingt-dix pour cent du chemin restant. Ce qui
-    /// manque est ce qu'on ne sait pas : le dixième final n'est comblé que par l'étape
-    /// suivante.
+    /// **L'asymptote.** Toutes les trois dixièmes de seconde, la jauge avance de deux pour
+    /// cent de ce qui la sépare du plafond : vite au début, de moins en moins ensuite, sans
+    /// jamais l'atteindre. Au bout de dix secondes elle est vers la moitié, au bout de
+    /// quarante vers quatre-vingt-cinq. Elle s'arrête d'elle-même quand le deck est là ou
+    /// que la construction a raté.
     @MainActor
     private func creep() async {
-        let ceiling = floorOfStage + (stage.progress - floorOfStage) * 0.9
-
-        if shown < floorOfStage {
-            withAnimation(.easeOut(duration: 0.4)) { shown = floorOfStage }
-            try? await Task.sleep(for: .milliseconds(400))
-        }
-
-        while !Task.isCancelled, shown < ceiling {
-            // Un vingtième du chemin qui reste : le début avance vite, la fin s'approche
-            // sans jamais toucher, ce qui est la forme d'une attente dont on ignore la durée.
-            let step = (ceiling - shown) / 20
-            withAnimation(.linear(duration: 0.3)) { shown += max(0.0015, step) }
+        while !Task.isCancelled, built == nil, failure == nil {
+            let step = (Self.ceiling - shown) * 0.02
+            withAnimation(.linear(duration: 0.3)) { shown += max(0.0006, step) }
             try? await Task.sleep(for: .milliseconds(300))
         }
+    }
+
+    /// **La fin du chemin, ligne après ligne.** Le deck est là : ce qui reste de la jauge se
+    /// remplit en une seconde, par paliers qui franchissent un seuil à la fois, pour que
+    /// les lignes restantes se cochent l'une après l'autre plutôt que d'un coup.
+    @MainActor
+    private func finishGauge() async {
+        for target in Self.thresholds where target > shown {
+            withAnimation(.easeOut(duration: 0.3)) { shown = target }
+            try? await Task.sleep(for: .milliseconds(300))
+        }
+        try? await Task.sleep(for: .milliseconds(120))
+        Haptics.success()
+        withAnimation(.easeOut(duration: 0.3)) { isReady = true }
     }
 
     @MainActor
@@ -262,13 +267,10 @@ struct DeckBuildingStepView: View {
                 setup,
                 using: aiService,
                 in: modelContext
-            ) { stage in
-                self.stage = stage
-            }
+            )
 
-            stage = .done
-            Haptics.success()
-            withAnimation(.easeOut(duration: 0.3)) { built = outcome.course }
+            built = outcome.course
+            await finishGauge()
         } catch {
             failure = error.localizedDescription
         }

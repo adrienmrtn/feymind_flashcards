@@ -13,8 +13,8 @@ final class FreemiumTests: XCTestCase {
 
     func testTheFreeTierIsOneCourseSeventyPercentAndFiveCards() {
         XCTAssertEqual(FreeTier.courses, 1)
-        XCTAssertEqual(FreeTier.readableSheetRatio, 0.7, accuracy: 0.0001)
-        XCTAssertEqual(FreeTier.cardsPerSession, 5)
+        XCTAssertEqual(FreeTier.readableSheetRatio, 0.3, accuracy: 0.0001)
+        XCTAssertEqual(FreeTier.cardsPerDay, 5)
         XCTAssertFalse(FreeTier.allowsPractice, "L'entraînement libre est dans Pro")
     }
 
@@ -112,13 +112,13 @@ final class FreemiumTests: XCTestCase {
     func testTheSessionStopsOnTheFifthCardAndNotBefore() {
         let pro = ProAccess(defaults: isolatedDefaults())
 
-        XCTAssertFalse(pro.hasReachedSessionLimit(answered: 0))
-        XCTAssertFalse(pro.hasReachedSessionLimit(answered: 4), "La cinquième carte se révise")
-        XCTAssertTrue(pro.hasReachedSessionLimit(answered: 5))
-        XCTAssertTrue(pro.hasReachedSessionLimit(answered: 12))
+        XCTAssertFalse(pro.hasReachedDailyLimit(reviewedToday: 0))
+        XCTAssertFalse(pro.hasReachedDailyLimit(reviewedToday: 4), "La cinquième carte se révise")
+        XCTAssertTrue(pro.hasReachedDailyLimit(reviewedToday: 5))
+        XCTAssertTrue(pro.hasReachedDailyLimit(reviewedToday: 12))
 
         pro.unlock()
-        XCTAssertFalse(pro.hasReachedSessionLimit(answered: 999), "Un abonné n'a plus de plafond")
+        XCTAssertFalse(pro.hasReachedDailyLimit(reviewedToday: 999), "Un abonné n'a plus de plafond")
     }
 
     @MainActor

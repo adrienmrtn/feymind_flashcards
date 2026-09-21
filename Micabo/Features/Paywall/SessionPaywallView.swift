@@ -126,7 +126,7 @@ struct SessionPaywallView: View {
 
             Text(i18n.t("app.paywall.session.progress", [
                 "reviewed": "\(reviewedCount)",
-                "limit": "\(FreeTier.cardsPerSession)"
+                "limit": "\(FreeTier.cardsPerDay)"
             ]))
                 .font(MicaboFont.ui(13, weight: .semibold))
                 .monospacedDigit()

@@ -305,48 +305,33 @@ struct DeckConfidenceStepView: View {
 /// grossit. Un curseur horizontal aurait fait le même travail ; celui-ci fait comprendre le
 /// sens de la progression sans une ligne de texte.
 ///
-/// **Les voisins s'éteignent par paliers.** Le cran choisi est en violet à trente-huit
-/// points sur son lavis ; celui d'à côté est gris moyen, le suivant plus clair, le
-/// troisième presque blanc. C'est ce dégradé qui donne la profondeur d'un rouleau de
-/// sélection sans avoir à en simuler la perspective — et qui fait qu'on lit trois valeurs
-/// au lieu de onze.
+/// **La liste ne bouge pas ; c'est la pastille qui se déplace.** La version précédente
+/// était une roue : le barème défilait et la note choisie restait au centre. Choisir la
+/// deuxième note du haut laissait donc une rangée vide au-dessus et cinq en dessous, et
+/// tout le barème semblait tomber en bas de l'écran — « mal aligné », à juste titre. Ici
+/// le barème est posé une fois, centré dans la place qu'on lui laisse, et le lavis violet
+/// glisse d'un cran à l'autre : le centre ne bouge jamais. On appuie sur une note, ou on
+/// fait glisser le doigt le long de la colonne comme sur un curseur.
+///
+/// **Les voisins s'éteignent par paliers.** Le cran choisi est en violet sur son lavis ;
+/// celui d'à côté est gris moyen, le suivant plus clair, le troisième presque blanc. C'est
+/// ce dégradé qui donne la profondeur d'un rouleau sans en simuler la perspective.
 struct VerticalGradePicker: View {
     let ticks: [GradeTick]
     @Binding var score: Int
 
-    /// Toutes les rangées font la même hauteur, y compris celle qu'on a choisie.
-    ///
-    /// C'est ce qui permet au calage du système de tomber juste : un rouleau dont la rangée
-    /// centrale serait plus haute que les autres n'a pas de pas constant, et le point d'arrêt
-    /// dérive d'un cran tous les trois tours. C'est donc le **texte** qui grossit au centre,
-    /// pas la rangée.
-    private static let rowHeight: CGFloat = 52
-
-    /// **Cinq rangées visibles, et pas toute la hauteur de l'écran.**
-    ///
-    /// La roue prenait tout ce qui restait entre le titre et le bouton, et centrait la note
-    /// choisie au milieu de cette hauteur : quand on visait la deuxième note du barème, il
-    /// n'y avait qu'une rangée à montrer au-dessus, et la moitié haute de l'écran restait
-    /// vide pendant que le barème s'entassait en bas. C'est ce que montrait la capture — une
-    /// roue « décalée ». À hauteur fixe, c'est le bloc qui se centre dans l'écran, et le
-    /// vide au-dessus de la première note ne dépasse jamais deux rangées.
-    private static let visibleRows = 5
-    /// La hauteur de la roue, la même sur tous les écrans qui la posent.
-    static let height: CGFloat = rowHeight * CGFloat(visibleRows)
-    /// Le rembourrage qui met la première et la dernière note au centre : sans lui, la roue
-    /// s'arrête en butée avant d'avoir centré les bouts du barème.
-    private static let inset: CGFloat = (height - rowHeight) / 2
-
-    /// La note au centre du rouleau, telle que le défilement la rapporte.
-    ///
-    /// Elle est distincte de `score` parce qu'elle appartient au `ScrollView` : c'est lui qui
-    /// l'écrit pendant qu'on fait tourner la roue, et on la recopie dans la réponse. Les
-    /// tenir dans la même variable ferait écrire la réponse par le défilement et repositionner
-    /// le défilement par la réponse, en boucle.
-    @State private var centred: Int?
+    /// Les rangées se partagent la hauteur qu'on leur laisse, entre ces deux bornes : un
+    /// barème de douze crans tient sur un petit téléphone, un barème de six ne s'étire pas
+    /// jusqu'à ressembler à une liste de réglages.
+    private static let minRowHeight: CGFloat = 32
+    private static let maxRowHeight: CGFloat = 46
 
     /// La note la plus haute en haut, comme sur la maquette.
     private var ordered: [GradeTick] { ticks.reversed() }
+
+    private var selectedIndex: Int {
+        ordered.firstIndex { $0.score == score } ?? 0
+    }
 
     /// L'encre d'un cran selon sa distance à celui qu'on a choisi.
     private func ink(distance: Int) -> Color {
@@ -358,70 +343,57 @@ struct VerticalGradePicker: View {
         }
     }
 
-    private func distance(of tick: GradeTick) -> Int {
-        guard
-            let here = ordered.firstIndex(where: { $0.score == tick.score }),
-            let there = ordered.firstIndex(where: { $0.score == score })
-        else { return 3 }
-        return abs(here - there)
-    }
-
     var body: some View {
-        ScrollView(.vertical) {
-            LazyVStack(spacing: 0) {
-                ForEach(ordered) { tick in
-                    row(tick)
-                        .frame(height: Self.rowHeight)
+        GeometryReader { proxy in
+            let count: Int = max(1, ordered.count)
+            let share: CGFloat = proxy.size.height / CGFloat(count)
+            let rowHeight: CGFloat = min(Self.maxRowHeight, max(Self.minRowHeight, share))
+            let listHeight: CGFloat = rowHeight * CGFloat(count)
+            let top: CGFloat = max(0, (proxy.size.height - listHeight) / 2)
+            let pillY: CGFloat = CGFloat(selectedIndex) * rowHeight + 2
+
+            ZStack(alignment: .top) {
+                // La pastille, derrière les notes, qui glisse d'un cran à l'autre.
+                RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
+                    .fill(MicaboColor.accentWash)
+                    .frame(height: rowHeight - 4)
+                    .offset(y: pillY)
+                    .animation(OnboardingMotion.select, value: selectedIndex)
+
+                VStack(spacing: 0) {
+                    ForEach(ordered) { tick in
+                        row(tick)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: rowHeight)
+                            .contentShape(Rectangle())
+                            .onTapGesture { choose(tick.score) }
+                    }
                 }
             }
-            .scrollTargetLayout()
+            .frame(height: listHeight)
+            .contentShape(Rectangle())
+            // Le doigt qui glisse le long de la colonne emporte la pastille avec lui.
+            .gesture(
+                DragGesture(minimumDistance: 4)
+                    .onChanged { value in
+                        let index = Int((value.location.y / rowHeight).rounded(.down))
+                        let clamped = min(count - 1, max(0, index))
+                        choose(ordered[clamped].score)
+                    }
+            )
+            .offset(y: top)
         }
-        .scrollIndicators(.hidden)
-        .safeAreaPadding(.vertical, Self.inset)
-        .scrollTargetBehavior(.viewAligned)
-        .scrollPosition(id: $centred, anchor: .center)
         .frame(maxWidth: .infinity)
-        .frame(height: Self.height)
-        // Les bouts s'éteignent : c'est ce qui fait lire une roue plutôt qu'une liste coupée
-        // net par le bord de son cadre.
-        .mask(edgeFade)
-        .onAppear { centred = score }
-        .onChange(of: centred) { _, value in
-            guard let value, value != score else { return }
-            Haptics.selection()
-            score = value
-        }
-        .onChange(of: score) { _, value in
-            // La réponse a changé ailleurs — on repositionne la roue sans la faire
-            // réécrire la réponse : `centred` vaut déjà `value` quand c'est elle qui
-            // vient de l'écrire, et la garde du dessus s'arrête là.
-            if centred != value { centred = value }
-        }
-    }
-
-    private var edgeFade: some View {
-        LinearGradient(
-            stops: [
-                .init(color: .clear, location: 0),
-                .init(color: .black, location: 0.2),
-                .init(color: .black, location: 0.8),
-                .init(color: .clear, location: 1),
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
     }
 
     private func row(_ tick: GradeTick) -> some View {
-        let gap = distance(of: tick)
+        let gap = abs((ordered.firstIndex { $0.score == tick.score } ?? 0) - selectedIndex)
         let isSelected = gap == 0
         // Nommées et typées plutôt que posées en ternaires dans la chaîne : un littéral
-        // numérique dans un ternaire est une inconnue pour l'inférence, et neuf maillons
-        // plus loin le compilateur renonce. C'est exactement ce qui vient de casser la
-        // scène d'import.
-        let size: CGFloat = isSelected ? 38 : 27
+        // numérique dans un ternaire est une inconnue pour l'inférence.
+        let size: CGFloat = isSelected ? 32 : 23
         let weight: Font.Weight = isSelected ? .heavy : .bold
-        let kerning: CGFloat = isSelected ? -1.4 : -0.8
+        let kerning: CGFloat = isSelected ? -1.2 : -0.6
 
         return Text(tick.label)
             .font(MicaboFont.ui(size, weight: weight))
@@ -430,15 +402,12 @@ struct VerticalGradePicker: View {
             .monospacedDigit()
             .lineLimit(1)
             .minimumScaleFactor(0.6)
-            .frame(maxWidth: .infinity)
-            .frame(height: Self.rowHeight)
-            .background {
-                if isSelected {
-                    RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
-                        .fill(MicaboColor.accentWash)
-                        .padding(.vertical, 2)
-                }
-            }
-            .animation(OnboardingMotion.tap, value: isSelected)
+            .animation(OnboardingMotion.select, value: isSelected)
+    }
+
+    private func choose(_ value: Int) {
+        guard value != score else { return }
+        Haptics.selection()
+        score = value
     }
 }
