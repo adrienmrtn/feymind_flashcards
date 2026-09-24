@@ -1,20 +1,20 @@
 import SwiftData
 import SwiftUI
 
-/// **L'accroche : la mascotte, ses decks, et une promesse en quatre mots.**
+/// **L'accroche : la promesse, et de quoi la croire.**
 ///
-/// C'est le premier des écrans d'ouverture, et le seul qui porte une sortie : « j'ai déjà
-/// un compte ». Elle doit rester là et nulle part ailleurs — quelqu'un qui réinstalle l'app
-/// n'a aucune raison de traverser vingt-deux écrans pour retrouver ses decks, et la
-/// reléguer plus loin revient à la cacher.
+/// C'est le premier écran, et le seul qui porte une sortie : « j'ai déjà un compte ». Elle
+/// doit rester là et nulle part ailleurs — quelqu'un qui réinstalle l'app n'a aucune raison
+/// de traverser vingt-six écrans pour retrouver ses decks, et la reléguer plus loin revient à
+/// la cacher.
 ///
-/// **Le paquet de cartes qui se rebattait est parti.** Trois cartes de révision qui se
-/// mélangeaient toutes seules montraient l'app de l'intérieur avant qu'on sache ce qu'elle
-/// est, et elles se lisaient de loin comme un écran de jeu. Les applications de référence
-/// (Ahead, Hablo) ouvrent toutes de la même façon : le personnage, au milieu, avec ce qui
-/// gravite autour de lui — puis le nom, la promesse, le bouton. Ici, c'est la mascotte qui
-/// salue, et quatre decks pastel qui flottent autour d'elle : les mêmes tuiles que celles
-/// de l'app, avec les mêmes matières. On voit ce qu'on va avoir, et qui va nous aider.
+/// **Les quatre decks pastel qui flottaient autour de la mascotte sont partis.** Ils
+/// montaient et descendaient en boucle, chacun à son rythme, et c'est le premier mouvement
+/// qu'on voyait de l'app : une scène de jeu, avant d'avoir lu un mot. La mascotte reste,
+/// seule, plus petite, immobile à part sa respiration — c'est ici qu'elle salue, et c'est
+/// l'une des deux seules fois où elle apparaît. Sous la promesse, une ligne de preuve : la
+/// note, les avis, les inscrits de la semaine. Ce qu'on demande de croire est écrit à côté
+/// de ce qui permet de le croire.
 ///
 /// « J'ai déjà un compte » ouvre Apple, Google ou le courriel. Une session Supabase
 /// *est* le compte : on entre dans l'app, on ne recommence pas l'accueil.
@@ -58,13 +58,15 @@ struct WelcomeStepView: View {
             .padding(.top, MicaboSpacing.sm)
             .onboardingAppear(index: 0, stagger: 0.1)
 
-            Spacer(minLength: MicaboSpacing.sm)
+            Spacer(minLength: MicaboSpacing.md)
 
-            WelcomeScene()
+            MicaboMascot(mood: .waving, size: 112)
+                .onboardingAppear(index: 1, stagger: 0.1)
 
             Spacer(minLength: MicaboSpacing.md)
 
             titleBlock
+            proofStrip
             continueBar
         }
     }
@@ -79,7 +81,7 @@ struct WelcomeStepView: View {
                     .tracking(-0.2)
                     .foregroundStyle(MicaboColor.accent)
             }
-            .onboardingAppear(index: 1, stagger: 0.1)
+            .onboardingAppear(index: 2, stagger: 0.1)
 
             Text(i18n.t("ios.intro.tagline"))
                 .font(MicaboFont.ui(36, weight: .bold))
@@ -88,20 +90,61 @@ struct WelcomeStepView: View {
                 .lineSpacing(-2)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
-                .onboardingAppear(index: 2, stagger: 0.1)
+                .onboardingAppear(index: 3, stagger: 0.1)
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, MicaboSpacing.screen)
+    }
+
+    /// **La preuve, sous la promesse.** Les étoiles et leur nombre d'avis, puis les
+    /// inscrits de la semaine : deux lignes courtes, en gris, que l'œil lit après le titre
+    /// sans qu'on les lui impose.
+    private var proofStrip: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                HStack(spacing: 2) {
+                    ForEach(0..<5, id: \.self) { _ in
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 11))
+                            .foregroundStyle(MicaboColor.caution)
+                    }
+                }
+                .accessibilityElement()
+                .accessibilityLabel(i18n.t("ios.starsA11y"))
+
+                Text(i18n.t("ios.welcome.rating", [
+                    "rating": OnboardingNumbers.text(OnboardingProofFigures.rating, locale: i18n.locale),
+                    "n": OnboardingNumbers.text(OnboardingProofFigures.reviews, locale: i18n.locale),
+                ]))
+                .font(MicaboFont.ui(13, weight: .semibold))
+                .foregroundStyle(MicaboColor.ink)
+            }
+
+            Text(i18n.t("ios.welcome.students", [
+                "n": OnboardingNumbers.text(OnboardingProofFigures.studentsThisWeek, locale: i18n.locale),
+            ]))
+            .font(MicaboFont.ui(13, weight: .medium))
+            .foregroundStyle(MicaboColor.inkSecondary)
+        }
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, MicaboSpacing.screen)
+        .padding(.top, 18)
         .padding(.bottom, MicaboSpacing.lg)
+        .onboardingAppear(index: 4, stagger: 0.1)
     }
 
     /// Un bouton, et une ligne grise dessous. Le compte est une sortie pour ceux qui
     /// reviennent, pas une seconde proposition : un second bouton de la même largeur
     /// faisait hésiter entre deux portes, alors qu'il n'y en a qu'une pour qui arrive.
+    ///
+    /// Le bouton se remplit pendant deux secondes : le temps de lire la promesse et la
+    /// preuve. La sortie, elle, répond tout de suite — quelqu'un qui revient n'a rien à
+    /// lire.
     private var continueBar: some View {
         MicaboBottomBar(background: surface.background) {
             VStack(spacing: 14) {
-                OnboardingContinueButton(title: i18n.t("common.start"), isShiny: true) {
+                OnboardingContinueButton(title: i18n.t("common.start"), gate: 2.0) {
                     model.advance()
                 }
 
@@ -118,7 +161,7 @@ struct WelcomeStepView: View {
                 .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
                 .disabled(auth.isWorking || checkingAccount)
             }
-            .onboardingAppear(index: 3, stagger: 0.1)
+            .onboardingAppear(index: 5, stagger: 0.1)
         }
     }
 
@@ -147,106 +190,5 @@ struct WelcomeStepView: View {
         checkingAccount = false
         showLogin = false
         await sync.sync(context: modelContext)
-    }
-}
-
-// MARK: - La scène
-
-/// **La mascotte au milieu, et quatre decks qui flottent autour d'elle.**
-///
-/// Les tuiles sont celles de la grille des decks — même rayon, mêmes pastels, un emoji de
-/// matière — posées en orbite à des hauteurs différentes. Chacune respire à son rythme,
-/// décalée des autres, pour que la scène ne monte pas et ne descende pas d'un bloc. À
-/// l'ouverture, elles arrivent l'une après l'autre en grandissant, la mascotte en dernier :
-/// c'est elle qu'on doit regarder à la fin.
-private struct WelcomeScene: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    @State private var drift = false
-    @State private var shown = false
-
-    private struct Orbit {
-        let emoji: String
-        let x: CGFloat
-        let y: CGFloat
-        let side: CGFloat
-        let tilt: Double
-        let pastel: Int
-        let delay: Double
-    }
-
-    private static let orbits: [Orbit] = [
-        Orbit(emoji: "🏛️", x: -118, y: -66, side: 64, tilt: -8, pastel: 0, delay: 0),
-        Orbit(emoji: "🧬", x: 122, y: -38, side: 58, tilt: 7, pastel: 1, delay: 0.55),
-        Orbit(emoji: "📐", x: -100, y: 76, side: 54, tilt: 6, pastel: 3, delay: 1.1),
-        Orbit(emoji: "🤔", x: 110, y: 84, side: 50, tilt: -6, pastel: 2, delay: 1.65),
-    ]
-
-    var body: some View {
-        let mascotScale: CGFloat = shown ? 1 : 0.6
-        let mascotAlpha: Double = shown ? 1 : 0
-
-        return ZStack {
-            ForEach(Array(Self.orbits.enumerated()), id: \.offset) { index, orbit in
-                tile(orbit, index: index)
-            }
-
-            MicaboMascot(mood: .waving, size: 150)
-                .scaleEffect(mascotScale)
-                .opacity(mascotAlpha)
-                .animation(OnboardingMotion.enter.delay(0.32), value: shown)
-        }
-        .frame(height: 300)
-        .frame(maxWidth: .infinity)
-        .accessibilityHidden(true)
-        .onAppear(perform: start)
-        .task { await feel() }
-    }
-
-    /// **La scène se sent arriver.** Un petit coup par tuile, au rythme où elles se
-    /// posent, puis un plus doux quand la mascotte atterrit : le premier écran de l'app
-    /// répond au doigt avant même qu'on l'ait touché.
-    @MainActor
-    private func feel() async {
-        guard !reduceMotion else { return }
-        try? await Task.sleep(for: .milliseconds(320))
-        for _ in Self.orbits {
-            guard !Task.isCancelled else { return }
-            Haptics.tick()
-            try? await Task.sleep(for: .milliseconds(90))
-        }
-        try? await Task.sleep(for: .milliseconds(180))
-        guard !Task.isCancelled else { return }
-        Haptics.soft()
-    }
-
-    private func tile(_ orbit: Orbit, index: Int) -> some View {
-        let lift: CGFloat = drift ? -6 : 6
-        let turn: Double = drift ? orbit.tilt : -orbit.tilt
-        let scale: CGFloat = shown ? 1 : 0.4
-        let alpha: Double = shown ? 1 : 0
-        let arrival: Double = 0.1 + Double(index) * 0.09
-        let corner: CGFloat = orbit.side * 0.34
-        let glyph: CGFloat = orbit.side * 0.5
-
-        return Text(orbit.emoji)
-            .font(.system(size: glyph))
-            .frame(width: orbit.side, height: orbit.side)
-            .background(
-                MicaboColor.pastel(at: orbit.pastel),
-                in: RoundedRectangle(cornerRadius: corner, style: .continuous)
-            )
-            .rotationEffect(.degrees(turn))
-            .offset(x: orbit.x, y: orbit.y + lift)
-            .animation(.easeInOut(duration: 2.8).repeatForever(autoreverses: true).delay(orbit.delay), value: drift)
-            .scaleEffect(scale)
-            .opacity(alpha)
-            .animation(OnboardingMotion.enter.delay(arrival), value: shown)
-    }
-
-    private func start() {
-        shown = true
-        guard !reduceMotion else { return }
-        drift = true
     }
 }
