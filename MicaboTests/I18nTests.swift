@@ -109,6 +109,14 @@ final class I18nTests: XCTestCase {
             L10n.t("demo.legendWith", locale: .tr).contains("Micabo"),
             true
         )
+        XCTAssertEqual(
+            RetentionCurve.intervalLabel(forDay: 7, locale: .de),
+            "7 T"
+        )
+        XCTAssertEqual(
+            RetentionCurve.intervalLabel(forDay: 3, locale: .tr),
+            "3 g"
+        )
     }
 
     func testNoEmptyStrings() {

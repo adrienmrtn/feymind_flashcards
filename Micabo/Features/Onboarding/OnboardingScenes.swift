@@ -1,498 +1,252 @@
 import SwiftUI
 
-/// **Les visuels des écrans de démonstration.**
+/// **Les visuels des écrans d'ouverture.**
 ///
-/// Ce fichier a porté des tuiles pastel à emoji qui respiraient, et un calendrier de mars
-/// avec trois contrôles inventés. Ils sont partis, et ce n'est pas une question de goût :
-/// la mesure montrait ces écrans passés en une seconde. Une grille de quatre emojis se lit
-/// comme une décoration, et une décoration ne s'arrête pas.
+/// La première version de ce fichier portait trois scènes animées — une feuille qui
+/// devenait des cartes, un anneau de compte à rebours, une carte qui se retournait. Elles
+/// bougeaient, et on ne comprenait pas ce qu'elles montraient : trop d'objets, trop de
+/// mouvements en même temps, et aucun ne ressemblait à ce que l'app affiche vraiment.
 ///
-/// Ce qui est là maintenant est **ce que l'app produit** : une fiche telle qu'elle l'écrit,
-/// avec sa phrase surlignée, son encadré et son graphe, dans la matière que l'élève vient
-/// de cocher ; et une carte de révision qu'il retourne lui-même. Rien ne flotte, rien ne
-/// respire : les blocs se posent l'un après l'autre, comme une page qui s'écrit, puis la
-/// page tient.
+/// Ce qui est là maintenant vient des applications de référence (Growth, Gizmo) : **des
+/// tuiles**, grandes, avec un emoji et trois mots, qui entrent l'une après l'autre. On lit
+/// quatre formats de document en une seconde parce qu'ils sont posés comme quatre objets,
+/// pas racontés. Et elles vivent — chacune respire légèrement, à son rythme — sans que rien
+/// ne demande à être déchiffré.
+enum OnboardingScene {
+    /// Deux colonnes, comme la grille des decks : les tuiles de l'accueil et celles de l'app
+    /// sont le même objet.
+    static let columns = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12),
+    ]
+}
 
-// MARK: - La fiche
+// MARK: - Une tuile
 
-/// **Une fiche telle que Micabo l'écrit**, qui se compose bloc après bloc.
+/// **Une grande tuile pastel, un emoji, un libellé.**
 ///
-/// Le document d'origine d'abord — son nom de fichier, et la flèche vers la fiche —, puis
-/// le chapitre, le titre, un paragraphe dont une phrase est surlignée, l'encadré à retenir,
-/// la formule quand il y en a une, et le graphe qui se trace en dernier. Six blocs, dans
-/// l'ordre où l'œil les lit.
-///
-/// `revealed` est le nombre de blocs déjà posés : c'est l'écran qui décide du rythme, la
-/// fiche ne fait que se dessiner. Elle ne recommence pas : une page qui s'efface et se
-/// réécrit toutes les quatre secondes est un économiseur d'écran, pas un résultat.
-struct OnboardingSheetCard: View {
-    let sheet: DemoSheet
-    /// Le nombre de blocs déjà posés, de 0 à `blockCount`.
-    let revealed: Int
+/// Elle respire : un balancement de trois points sur trois secondes, décalé d'une tuile à
+/// l'autre pour que la grille ne monte pas et ne descende pas d'un bloc. C'est assez pour
+/// qu'un écran ne soit pas une image fixe, et pas assez pour qu'on regarde le mouvement
+/// plutôt que le texte.
+struct OnboardingTile: View {
+    let emoji: String
+    let title: String
+    let pastel: Color
+    var badge: String?
+    /// Le rang dans la grille : règle l'entrée en cascade et le décalage de la respiration.
+    var rank: Int = 0
 
-    static let blockCount = 6
-
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    /// Vrai une fois le dernier bloc posé : le graphe se trace alors.
-    private var isDrawn: Bool { revealed >= Self.blockCount }
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var lifted = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sourceRow
-                .onboardingReveal(0, of: revealed)
+        let lift: CGFloat = lifted ? -3 : 3
+        let wake: Double = Double(rank) * 0.4
 
-            VStack(alignment: .leading, spacing: 6) {
-                eyebrow
-                title
-            }
-            .onboardingReveal(1, of: revealed)
+        return VStack(alignment: .leading, spacing: 12) {
+            Text(emoji)
+                .font(.system(size: 38))
+                .frame(height: 44)
 
-            paragraph
-                .onboardingReveal(2, of: revealed)
-
-            keyBox
-                .onboardingReveal(3, of: revealed)
-
-            if let formula = sheet.formula {
-                formulaBlock(formula)
-                    .onboardingReveal(4, of: revealed)
-            }
-
-            chart
-                .onboardingReveal(5, of: revealed)
-        }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-        .background(MicaboColor.canvas, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-        }
-        .shadow(color: MicaboColor.ink.opacity(0.06), radius: 18, y: 8)
-        .accessibilityElement(children: .combine)
-    }
-
-    // MARK: Les blocs
-
-    /// Le document déposé, et ce qu'il devient : c'est la transformation que l'écran vend,
-    /// dite en une ligne au-dessus du résultat.
-    private var sourceRow: some View {
-        HStack(spacing: 8) {
-            chip(systemImage: "doc.text", text: sheet.sourceFile, tint: MicaboColor.inkSecondary, fill: MicaboColor.surfaceMuted)
-
-            Image(systemName: "arrow.right")
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(MicaboColor.inkTertiary)
-
-            chip(systemImage: "sparkles", text: i18n.t("ios.demo.sheet.result"), tint: MicaboColor.accent, fill: MicaboColor.accentWash)
-
-            Spacer(minLength: 0)
-        }
-    }
-
-    private func chip(systemImage: String, text: String, tint: Color, fill: Color) -> some View {
-        HStack(spacing: 5) {
-            Image(systemName: systemImage)
-                .font(.system(size: 10.5, weight: .semibold))
-            Text(text)
-                .font(MicaboFont.ui(11.5, weight: .semibold))
-                .lineLimit(1)
-        }
-        .foregroundStyle(tint)
-        .padding(.vertical, 5)
-        .padding(.horizontal, 9)
-        .background(fill, in: Capsule())
-    }
-
-    private var eyebrow: some View {
-        Text(i18n.t("ios.demo.sheet.eyebrow", ["n": "\(sheet.chapter)", "cards": "\(sheet.cards)"]).uppercased())
-            .font(MicaboFont.ui(10.5, weight: .bold))
-            .tracking(1.3)
-            .foregroundStyle(MicaboColor.accent)
-    }
-
-    private var title: some View {
-        Text(sheet.title)
-            .font(MicaboFont.ui(20, weight: .bold))
-            .tracking(-0.4)
-            .foregroundStyle(MicaboColor.ink)
-            .fixedSize(horizontal: false, vertical: true)
-    }
-
-    /// Le paragraphe, avec sa phrase au surligneur : c'est le geste de l'app — un passage
-    /// qu'on a marqué parce qu'il compte.
-    private var paragraph: some View {
-        var text = AttributedString(sheet.lead)
-        var mark = AttributedString(sheet.mark)
-        mark.backgroundColor = MicaboColor.sheetMarker
-        text += mark
-
-        return Text(text)
-            .font(MicaboFont.reading(14.5, weight: .regular))
-            .foregroundStyle(MicaboColor.inkReading)
-            .lineSpacing(4)
-            .fixedSize(horizontal: false, vertical: true)
-    }
-
-    private var keyBox: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(sheet.keyLabel.uppercased())
-                .font(MicaboFont.ui(10, weight: .bold))
-                .tracking(1.2)
-                .foregroundStyle(MicaboColor.accent)
-
-            Text(sheet.key)
-                .font(MicaboFont.reading(13.5, weight: .regular))
-                .foregroundStyle(MicaboColor.inkSecondary)
-                .lineSpacing(3)
+            Text(title)
+                .font(MicaboFont.ui(14.5, weight: .semibold))
+                .foregroundStyle(MicaboColor.ink)
+                .lineSpacing(1)
+                .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
+        .padding(16)
+        .frame(maxWidth: .infinity, minHeight: 128, alignment: .topLeading)
+        .background(pastel, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(alignment: .topTrailing) {
+            if let badge {
+                Text(badge)
+                    .font(MicaboFont.ui(10, weight: .heavy))
+                    .tracking(0.6)
+                    .foregroundStyle(MicaboColor.accent)
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 8)
+                    .background(MicaboColor.canvas.opacity(0.85), in: Capsule())
+                    .padding(10)
+            }
+        }
+        .offset(y: lift)
+        .onboardingAppear(index: 3 + rank, stagger: OnboardingMotion.rowStagger)
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.easeInOut(duration: 3.0).repeatForever(autoreverses: true).delay(wake)) {
+                lifted = true
+            }
         }
     }
+}
 
-    /// La formule, composée en vraie notation, sur son lavis.
-    private func formulaBlock(_ source: String) -> some View {
-        FormulaText(source: source, size: 18, weight: .medium, alignment: .center)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(MicaboColor.accentWash, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+// MARK: - Le calendrier
+
+/// **Un mois, et trois épreuves qui se posent dessus, l'une après l'autre.**
+///
+/// C'est ce que la page affirme — « pose les dates de tes examens » — montré tel que l'app
+/// le fait : un calendrier, et sur trois de ses jours l'emoji d'une matière dans son pastel,
+/// avec en dessous la liste des épreuves et leur compte à rebours. Elles arrivent une par
+/// une, à un rythme de main qui pose, puis la scène se vide et recommence. Le calendrier
+/// à une seule date en violet ne disait qu'une chose ; celui-ci dit qu'on en pose autant
+/// qu'on en a, et qu'elles ont un nom.
+struct OnboardingCalendarScene: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    private struct SampleExam {
+        let day: Int
+        let emoji: String
+        let titleKey: String
+        let pastel: Int
+    }
+
+    /// Un mois qui commence un lundi, aujourd'hui le 3.
+    private static let today = 3
+    private static let days = 28
+    private static let exams: [SampleExam] = [
+        SampleExam(day: 9, emoji: "🧬", titleKey: "ios.intro.exam1", pastel: 1),
+        SampleExam(day: 15, emoji: "🏛️", titleKey: "ios.intro.exam2", pastel: 0),
+        SampleExam(day: 24, emoji: "📐", titleKey: "ios.intro.exam3", pastel: 3),
+    ]
+
+    /// Le nombre d'épreuves déjà posées.
+    @State private var placed = 0
+
+    var body: some View {
+        VStack(spacing: 16) {
+            VStack(spacing: 12) {
+                HStack {
+                    Text(i18n.t("ios.intro.sampleMonth"))
+                        .font(MicaboFont.ui(15, weight: .bold))
+                        .foregroundStyle(MicaboColor.ink)
+
+                    Spacer(minLength: 0)
+
+                    if let first = Self.exams.first, placed > 0 {
+                        MicaboCountdownPill(days: first.day - Self.today)
+                            .transition(.opacity)
+                    }
+                }
+
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 6) {
+                    ForEach(1...Self.days, id: \.self) { day in
+                        dayCell(day)
+                    }
+                }
+            }
+            .padding(16)
+            .background(MicaboColor.canvas, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .strokeBorder(MicaboColor.stroke, lineWidth: 1)
+            }
+            .shadow(color: MicaboColor.ink.opacity(0.05), radius: 14, y: 6)
+
+            VStack(spacing: 8) {
+                ForEach(Array(Self.exams.enumerated()), id: \.offset) { index, exam in
+                    examRow(exam, index: index)
+                }
+            }
+        }
+        .animation(OnboardingMotion.select, value: placed)
+        .accessibilityHidden(true)
+        .task { await cycle() }
+    }
+
+    /// Le rang d'une épreuve dans l'ordre où elles se posent, ou nil si ce jour n'en a pas.
+    private func exam(on day: Int) -> (index: Int, exam: SampleExam)? {
+        guard let index = Self.exams.firstIndex(where: { $0.day == day }) else { return nil }
+        return (index, Self.exams[index])
     }
 
     @ViewBuilder
-    private var chart: some View {
-        switch sheet.chart {
-        case .timeline(let chartTitle, let marks):
-            VStack(alignment: .leading, spacing: 10) {
-                DemoChartTitle(text: chartTitle)
-                DemoTimelineChart(marks: marks, isDrawn: isDrawn)
-            }
-        case .curve(let chartTitle):
-            VStack(alignment: .leading, spacing: 8) {
-                DemoChartTitle(text: chartTitle)
-                DemoCurveChart(isDrawn: isDrawn)
-            }
-        case .bars(let chartTitle, let bars):
-            VStack(alignment: .leading, spacing: 8) {
-                DemoChartTitle(text: chartTitle)
-                DemoBarsChart(bars: bars, isDrawn: isDrawn)
-            }
-        }
-    }
-}
+    private func dayCell(_ day: Int) -> some View {
+        let isToday = day == Self.today
 
-private struct DemoChartTitle: View {
-    let text: String
-
-    var body: some View {
-        Text(text)
-            .font(MicaboFont.ui(12, weight: .semibold))
-            .foregroundStyle(MicaboColor.inkSecondary)
-    }
-}
-
-// MARK: - Les graphes
-
-/// Des repères sur une ligne du temps. La ligne se remplit de gauche à droite, et chaque
-/// repère se pose au moment où elle l'atteint.
-private struct DemoTimelineChart: View {
-    let marks: [DemoChartMark]
-    let isDrawn: Bool
-
-    var body: some View {
-        GeometryReader { proxy in
-            let width: CGFloat = proxy.size.width
-            let drawn: CGFloat = isDrawn ? width : 0
-
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(MicaboColor.stroke)
-                    .frame(height: 3)
-
-                Capsule()
-                    .fill(MicaboColor.accent)
-                    .frame(width: drawn, height: 3)
-                    .animation(.easeOut(duration: 0.7), value: isDrawn)
-
-                ForEach(Array(marks.enumerated()), id: \.offset) { _, mark in
-                    landmark(mark, x: CGFloat(mark.value) * width)
+        if let found = exam(on: day), found.index < placed {
+            Text(found.exam.emoji)
+                .font(.system(size: 15))
+                .frame(maxWidth: .infinity)
+                .frame(height: 32)
+                .background(
+                    MicaboColor.pastel(at: found.exam.pastel),
+                    in: RoundedRectangle(cornerRadius: 9, style: .continuous)
+                )
+                .transition(.scale(scale: 0.4).combined(with: .opacity))
+        } else {
+            Text("\(day)")
+                .font(MicaboFont.ui(13, weight: isToday ? .heavy : .medium))
+                .foregroundStyle(isToday ? MicaboColor.accent : MicaboColor.inkSecondary)
+                .monospacedDigit()
+                .frame(maxWidth: .infinity)
+                .frame(height: 32)
+                .background {
+                    if isToday {
+                        RoundedRectangle(cornerRadius: 9, style: .continuous)
+                            .strokeBorder(MicaboColor.accent, lineWidth: 1.6)
+                    }
                 }
-            }
-            .frame(height: 3)
-            .frame(maxHeight: .infinity, alignment: .center)
         }
-        .frame(height: 50)
     }
 
-    private func landmark(_ mark: DemoChartMark, x: CGFloat) -> some View {
-        let delay: Double = 0.1 + mark.value * 0.6
-        let scale: CGFloat = isDrawn ? 1 : 0.2
-        let alpha: Double = isDrawn ? 1 : 0
+    /// Une épreuve posée : son emoji sur son pastel, son nom, et dans combien de jours.
+    private func examRow(_ exam: SampleExam, index: Int) -> some View {
+        let isPlaced = index < placed
+        let alpha: Double = isPlaced ? 1 : 0
+        let rise: CGFloat = isPlaced ? 0 : 8
 
-        return VStack(spacing: 4) {
-            Text(mark.label)
-                .font(MicaboFont.ui(10.5, weight: .bold))
+        return HStack(spacing: 12) {
+            Text(exam.emoji)
+                .font(.system(size: 17))
+                .frame(width: 36, height: 36)
+                .background(
+                    MicaboColor.pastel(at: exam.pastel),
+                    in: RoundedRectangle(cornerRadius: 11, style: .continuous)
+                )
+
+            Text(i18n.t(exam.titleKey))
+                .font(MicaboFont.ui(14.5, weight: .semibold))
                 .foregroundStyle(MicaboColor.ink)
-
-            Circle()
-                .fill(MicaboColor.accent)
-                .frame(width: 10, height: 10)
-                .overlay { Circle().strokeBorder(MicaboColor.canvas, lineWidth: 2) }
-
-            Text(mark.caption)
-                .font(MicaboFont.ui(10, weight: .medium))
-                .foregroundStyle(MicaboColor.inkTertiary)
                 .lineLimit(1)
+
+            Spacer(minLength: 8)
+
+            MicaboCountdownPill(days: exam.day - Self.today)
         }
-        .fixedSize()
-        .scaleEffect(scale)
-        .opacity(alpha)
-        .animation(.easeOut(duration: 0.3).delay(delay), value: isDrawn)
-        .position(x: x, y: 1.5)
-    }
-}
-
-/// La suite géométrique pour q = 1,5, de u₀ à u₆, ramenée à la hauteur du cadre : elle se
-/// trace de gauche à droite, puis ses points se posent.
-private struct DemoCurveChart: View {
-    let isDrawn: Bool
-
-    private static let ratio: CGFloat = 1.5
-    private static let terms = 7
-
-    var body: some View {
-        GeometryReader { proxy in
-            let points = Self.points(in: proxy.size)
-            let trim: CGFloat = isDrawn ? 1 : 0
-
-            ZStack(alignment: .bottomLeading) {
-                Rectangle()
-                    .fill(MicaboColor.stroke)
-                    .frame(height: 1)
-
-                DemoPolyline(points: points)
-                    .trim(from: 0, to: trim)
-                    .stroke(MicaboColor.accent, style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
-                    .animation(.easeInOut(duration: 0.8), value: isDrawn)
-
-                ForEach(Array(points.enumerated()), id: \.offset) { index, point in
-                    dot(index: index, at: point)
-                }
-            }
-        }
-        .frame(height: 78)
-    }
-
-    private func dot(index: Int, at point: CGPoint) -> some View {
-        let delay: Double = 0.08 + Double(index) / Double(Self.terms - 1) * 0.7
-        let scale: CGFloat = isDrawn ? 1 : 0.2
-        let alpha: Double = isDrawn ? 1 : 0
-
-        return Circle()
-            .fill(MicaboColor.accent)
-            .frame(width: 8, height: 8)
-            .overlay { Circle().strokeBorder(MicaboColor.canvas, lineWidth: 1.5) }
-            .scaleEffect(scale)
-            .opacity(alpha)
-            .animation(.easeOut(duration: 0.25).delay(delay), value: isDrawn)
-            .position(point)
-    }
-
-    private static func points(in size: CGSize) -> [CGPoint] {
-        let top: CGFloat = pow(ratio, CGFloat(terms - 1))
-        let inset: CGFloat = 6
-        return (0..<terms).map { index in
-            let x: CGFloat = inset + (size.width - inset * 2) * CGFloat(index) / CGFloat(terms - 1)
-            let value: CGFloat = pow(ratio, CGFloat(index)) / top
-            let y: CGFloat = size.height - inset - (size.height - inset * 2) * value
-            return CGPoint(x: x, y: y)
-        }
-    }
-}
-
-/// La ligne brisée qui passe par les points de la suite.
-private struct DemoPolyline: Shape {
-    let points: [CGPoint]
-
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        guard let first = points.first else { return path }
-        path.move(to: first)
-        for point in points.dropFirst() {
-            path.addLine(to: point)
-        }
-        return path
-    }
-}
-
-/// Des barres qui montent l'une après l'autre, chacune avec sa valeur en dessous.
-private struct DemoBarsChart: View {
-    let bars: [DemoChartMark]
-    let isDrawn: Bool
-
-    private static let height: CGFloat = 74
-
-    var body: some View {
-        HStack(alignment: .bottom, spacing: 10) {
-            ForEach(Array(bars.enumerated()), id: \.offset) { index, bar in
-                column(bar, index: index)
-            }
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private func column(_ bar: DemoChartMark, index: Int) -> some View {
-        let height: CGFloat = isDrawn ? max(3, Self.height * CGFloat(bar.value)) : 3
-        let delay: Double = 0.05 + Double(index) * 0.09
-
-        return VStack(spacing: 6) {
-            Text(bar.caption)
-                .font(MicaboFont.ui(9.5, weight: .medium))
-                .foregroundStyle(MicaboColor.inkTertiary)
-                .lineLimit(1)
-                .opacity(bar.caption.isEmpty ? 0 : 1)
-
-            ZStack(alignment: .bottom) {
-                RoundedRectangle(cornerRadius: 5, style: .continuous)
-                    .fill(MicaboColor.accentWash)
-                    .frame(height: Self.height)
-
-                RoundedRectangle(cornerRadius: 5, style: .continuous)
-                    .fill(MicaboColor.accent)
-                    .frame(height: height)
-                    .animation(.easeOut(duration: 0.55).delay(delay), value: isDrawn)
-            }
-
-            Text(bar.label)
-                .font(MicaboFont.ui(10, weight: .semibold))
-                .foregroundStyle(MicaboColor.inkSecondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-        }
-        .frame(maxWidth: .infinity)
-    }
-}
-
-// MARK: - La carte qu'on retourne
-
-/// **Une carte de révision, et c'est l'élève qui la retourne.**
-///
-/// La question au recto, la réponse au verso, exactement comme dans une session : même
-/// surface, même rayon, même ombre que `StudyCardFace`. La différence est qu'ici rien ne
-/// se passe tant qu'on n'a pas touché la carte — le bouton n'arrive qu'après. Une
-/// démonstration qu'on regarde se passe en une seconde ; une démonstration qu'on fait
-/// prend le temps qu'il faut.
-struct OnboardingDemoFlashcardView: View {
-    let card: DemoFlashcard
-    let isFlipped: Bool
-    var onFlip: () -> Void
-
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    var body: some View {
-        ZStack {
-            face(isBack: false)
-                .opacity(isFlipped ? 0 : 1)
-                .rotation3DEffect(.degrees(isFlipped ? 180 : 0), axis: (x: 0, y: 1, z: 0), perspective: 0.6)
-
-            face(isBack: true)
-                .opacity(isFlipped ? 1 : 0)
-                .rotation3DEffect(.degrees(isFlipped ? 0 : -180), axis: (x: 0, y: 1, z: 0), perspective: 0.6)
-        }
-        // Une courbe monotone, comme le reste du parcours : la carte tourne et s'arrête,
-        // elle ne rebondit pas sur sa charnière.
-        .animation(.timingCurve(0.4, 0, 0.2, 1, duration: 0.5), value: isFlipped)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            guard !isFlipped else { return }
-            Haptics.medium()
-            onFlip()
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(isFlipped ? card.back : card.front)
-        .accessibilityHint(isFlipped ? "" : i18n.t("ios.demo.card.tap"))
-        .accessibilityAddTraits(.isButton)
-    }
-
-    private func face(isBack: Bool) -> some View {
-        VStack(alignment: isBack ? .leading : .center, spacing: 14) {
-            Text(i18n.t(isBack ? "ios.demo.card.answer" : "ios.demo.card.question").uppercased())
-                .font(MicaboFont.ui(11, weight: .semibold))
-                .tracking(1.4)
-                .foregroundStyle(MicaboColor.accent)
-
-            if isBack {
-                Text(card.front)
-                    .font(MicaboFont.ui(16, weight: .semibold))
-                    .foregroundStyle(MicaboColor.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                MicaboHairline()
-
-                Text(card.back)
-                    .font(MicaboFont.reading(15, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkBody)
-                    .lineSpacing(3)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Spacer(minLength: 0)
-            } else {
-                Spacer(minLength: 0)
-
-                Text(card.front)
-                    .font(MicaboFont.ui(21, weight: .bold))
-                    .tracking(-0.4)
-                    .foregroundStyle(MicaboColor.ink)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Spacer(minLength: 0)
-
-                HStack(spacing: 6) {
-                    Image(systemName: "hand.tap")
-                        .font(.system(size: 12, weight: .semibold))
-                    Text(i18n.t("ios.demo.card.tap"))
-                        .font(MicaboFont.ui(12.5, weight: .semibold))
-                }
-                .foregroundStyle(MicaboColor.inkTertiary)
-            }
-        }
-        .padding(26)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: isBack ? .topLeading : .center)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.xxl, style: .continuous))
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(MicaboColor.canvas, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.xxl, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .strokeBorder(MicaboColor.stroke, lineWidth: 1)
         }
-        .shadow(color: MicaboColor.ink.opacity(0.06), radius: 18, y: 8)
+        .opacity(alpha)
+        .offset(y: rise)
     }
-}
 
-// MARK: - L'entrée d'un bloc
-
-/// Un bloc de la fiche : posé quand son rang est atteint, sinon invisible et un peu plus
-/// bas. La même entrée que le reste du parcours.
-private struct OnboardingReveal: ViewModifier {
-    let index: Int
-    let revealed: Int
-
-    func body(content: Content) -> some View {
-        let isShown = index < revealed
-
-        return content
-            .opacity(isShown ? 1 : 0)
-            .offset(y: isShown ? 0 : 10)
-    }
-}
-
-extension View {
-    func onboardingReveal(_ index: Int, of revealed: Int) -> some View {
-        modifier(OnboardingReveal(index: index, revealed: revealed))
+    /// Les épreuves se posent une par une, la scène tient, puis se vide et recommence.
+    /// Dans `.task` : annulé avec la vue.
+    @MainActor
+    private func cycle() async {
+        guard !reduceMotion else {
+            placed = Self.exams.count
+            return
+        }
+        try? await Task.sleep(for: .milliseconds(500))
+        while !Task.isCancelled {
+            for step in 1...Self.exams.count {
+                placed = step
+                Haptics.tick()
+                try? await Task.sleep(for: .milliseconds(720))
+                guard !Task.isCancelled else { return }
+            }
+            try? await Task.sleep(for: .milliseconds(2600))
+            guard !Task.isCancelled else { return }
+            placed = 0
+            try? await Task.sleep(for: .milliseconds(520))
+        }
     }
 }

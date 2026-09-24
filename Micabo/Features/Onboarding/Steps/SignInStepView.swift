@@ -33,17 +33,15 @@ struct SignInStepView: View {
         // compositions qui demandent la même chose ne finissent pas par la demander
         // différemment. La marque et le sous-titre y sont maintenant comme ailleurs — un
         // écran de compte sans rien pour ancrer l'œil était le plus nu de l'app.
-        // **Le sous-titre est revenu, et la mascotte est partie.** L'écran précédent vient
-        // de montrer ce que le parcours contient ; la phrase dit que le compte le garde, sur
-        // ce téléphone et sur le site. Sans elle, un élève sur quatre passait — dix-sept
-        // sans essayer. La mascotte qui se réjouissait au-dessus des trois boutons, elle,
-        // faisait ressembler la demande d'un compte à un écran de jeu.
         SignInScreen(
             placement: .page,
             titleKey: "onboarding.compteTitle",
-            subtitleKey: "onboarding.compteSubtitle",
+            // Pas de sous-titre : « pour retrouver tes decks sur tous tes appareils »
+            // expliquait ce qu'un compte fait, à quelqu'un qui sait ce qu'est un compte.
+            showsSubtitle: false,
             showsLanguageSwitcher: false,
-            onSkip: skip
+            onSkip: skip,
+            showsMascot: true
         )
         // La connexion se termine dans le contrôleur, pas dans le bouton : c'est le passage à
         // l'état « connecté » qui fait avancer, quel que soit le fournisseur emprunté.
