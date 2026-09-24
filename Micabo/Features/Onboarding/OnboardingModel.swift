@@ -31,6 +31,16 @@ final class OnboardingModel {
     var goals: Set<LearningGoal> = []
     var subjects: Set<String> = []
 
+    /// **La matière de la démonstration : la première cochée.**
+    ///
+    /// Les six écrans qui suivent les matières montrent une fiche, une carte et un examen
+    /// blanc dans *une* matière, et c'est celle-ci. La première cochée plutôt qu'une au
+    /// hasard dans l'ensemble : c'est celle à laquelle l'élève a pensé d'abord, donc celle
+    /// qui a le plus de chances d'être celle qui l'inquiète. Décocher la première passe la
+    /// main à la suivante, dans l'ordre alphabétique — le seul ordre qu'un ensemble sache
+    /// rendre.
+    private(set) var primarySubject: String?
+
     /// **La filière suivie**, dans les termes du pays. Elle ne se demande qu'aux pays
     /// décrits en détail ; ailleurs, le palier large (`stage`) est tout ce qu'on sait.
     var track: SchoolTrack? {
@@ -114,6 +124,32 @@ final class OnboardingModel {
     /// avant d'avoir essayé, et la promesse chiffrée reposait sur une réponse au hasard. Le
     /// plafond garde sa valeur par défaut et se règle dans les Réglages.
 
+    /// Coche ou décoche une matière, en tenant la matière de démonstration à jour.
+    func toggleSubject(_ subject: String) {
+        if subjects.contains(subject) {
+            subjects.remove(subject)
+            if primarySubject == subject {
+                primarySubject = subjects.sorted().first
+            }
+        } else {
+            subjects.insert(subject)
+            if primarySubject == nil {
+                primarySubject = subject
+            }
+        }
+    }
+
+    /// La fiche que les écrans de démonstration montrent : celle de la matière cochée en
+    /// premier, dans la langue où l'app écrira pour cet élève.
+    var demoSheet: DemoSheet {
+        OnboardingDemoContent.sheet(for: DemoSubject.matching(primarySubject), language: language)
+    }
+
+    /// L'examen du pays de scolarisation, celui dont la date est posée sur le calendrier.
+    var demoExam: OnboardingDemoExam {
+        OnboardingDemoExam.of(country)
+    }
+
     /// Les filières proposées, vides quand le pays n'est pas décrit en détail.
     var tracks: [SchoolTrack] {
         SchoolSystem.tracks(for: country)
@@ -148,18 +184,18 @@ final class OnboardingModel {
         while let candidate = previous, candidate.isSkipped(for: country) {
             previous = OnboardingStep(rawValue: candidate.rawValue - 1)
         }
-        guard let previous, previous.rawValue >= OnboardingStep.name.rawValue else { return }
+        guard let previous, previous.rawValue >= OnboardingStep.country.rawValue else { return }
         step = previous
     }
 
     /// Vrai quand il y a un écran en arrière qui accepte qu'on y revienne.
     ///
-    /// Les cinq écrans d'ouverture et tout ce qui suit la construction du parcours n'en
-    /// sont pas : une démonstration ne se corrige pas, et revenir sur un compte créé ou un
-    /// essai lancé ne défait rien.
+    /// Seules les questions se corrigent : de l'objectif au prénom, on peut remonter
+    /// jusqu'au pays. L'accroche n'est pas une question, la démonstration ne se corrige
+    /// pas, et revenir sur un compte créé ou un essai lancé ne défait rien.
     var canGoBack: Bool {
-        step.rawValue > OnboardingStep.name.rawValue
-            && step.rawValue <= OnboardingStep.subjects.rawValue
+        step.rawValue > OnboardingStep.country.rawValue
+            && step.rawValue <= OnboardingStep.name.rawValue
     }
 
     /// Recopie les réponses dans les réglages à chaque changement d'écran :
