@@ -77,6 +77,14 @@ struct TodayView: View {
     /// Le chapitre qu'on vient d'ouvrir depuis « Reprendre ».
     @State private var openedChapter: Chapter?
 
+    /// Vrai tant qu'un chapitre est ouvert ; revenir en arrière le referme.
+    private var isChapterOpen: Binding<Bool> {
+        Binding(
+            get: { openedChapter != nil },
+            set: { if !$0 { openedChapter = nil } }
+        )
+    }
+
     /// **Où l'on en est dans un deck** : le deck, le chapitre, et son rang dans le plan.
     ///
     /// **Pas `Equatable`.** Je l'avais déclaré par réflexe, et rien ne compare jamais deux
@@ -406,11 +414,13 @@ struct TodayView: View {
             .navigationDestination(for: CourseCardsRoute.self) { route in
                 FlashcardsView(course: route.course)
             }
-            // `item:` et non `for:`, comme `DeckChaptersView` : c'est la forme qui ouvre
-            // déjà un chapitre ailleurs dans l'app, et elle n'exige pas de `Chapter` ce que
-            // `for:` lui demandait.
-            .navigationDestination(item: $openedChapter) { chapter in
-                ChapterSheetView(chapter: chapter)
+            // `isPresented:` et non `item:` ni `for:` : les deux autres formes exigent que
+            // `Chapter` soit `Hashable`, et le compilateur ne le lui reconnaît pas ici. Un
+            // booléen tiré du chapitre ouvert ne demande rien au type.
+            .navigationDestination(isPresented: isChapterOpen) {
+                if let chapter = openedChapter {
+                    ChapterSheetView(chapter: chapter)
+                }
             }
         }
         .sheet(item: $editingExam) { exam in
