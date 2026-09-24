@@ -17,7 +17,7 @@ struct PathReadyStepView: View {
     }
 
     var body: some View {
-        let summary = summary
+        let summary = self.summary
 
         OnboardingScaffold(
             title: i18n.t("ios.pathReady.title"),

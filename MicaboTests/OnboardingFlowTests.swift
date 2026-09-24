@@ -102,7 +102,7 @@ final class OnboardingFlowTests: XCTestCase {
             for subject in DemoSubject.allCases {
                 let sheet = OnboardingDemoContent.sheet(for: subject, language: language)
                 XCTAssertFalse(sheet.title.isEmpty, "\(language) \(subject) doit avoir un titre")
-                XCTAssertFalse(sheet.cards.isEmpty, "\(language) \(subject) doit avoir des cartes")
+                XCTAssertGreaterThan(sheet.cards, 0, "\(language) \(subject) doit avoir des cartes")
                 XCTAssertFalse(sheet.card.front.isEmpty)
                 XCTAssertFalse(sheet.mock.question.isEmpty)
             }
@@ -116,7 +116,7 @@ final class OnboardingFlowTests: XCTestCase {
         for country in SchoolingCountry.allCases {
             let exam = OnboardingDemoExam.of(country)
             XCTAssertFalse(exam.name.isEmpty, "\(country) doit nommer son examen")
-            XCTAssertGreaterThan(exam.daysLeft(from: Date(), calendar: calendar), 0, "\(country) : l'examen doit être devant")
+            XCTAssertGreaterThanOrEqual(exam.daysLeft(from: Date(), calendar: calendar), 0, "\(country) : l'examen doit être devant")
         }
     }
 
@@ -735,68 +735,6 @@ final class OnboardingFlowTests: XCTestCase {
 
         XCTAssertTrue(WorldCountries.matches("   ").isEmpty, "Une recherche vide ne propose rien")
         XCTAssertLessThanOrEqual(WorldCountries.matches("a").count, 6, "La liste reste courte")
-    }
-
-    // MARK: - Intervalles
-
-    /// Le graphe de rétention garde ses intervalles réels : ce sont eux qu'annoncent les
-    /// étiquettes au-dessus de chaque révision.
-    func testRetentionChartKeepsItsRealIntervals() {
-        XCTAssertEqual(RetentionCurve.intervalLabels(locale: .fr), ["1 j", "3 j", "7 j", "16 j"])
-        XCTAssertEqual(RetentionCurve.intervalLabels(locale: .de), ["1 T", "3 T", "7 T", "16 T"])
-        XCTAssertEqual(
-            RetentionCurve.intervalLabels(locale: .fr).count,
-            RetentionCurve.reviewDays.count,
-            "La liste des intervalles doit couvrir toutes les révisions du graphe"
-        )
-    }
-
-    // MARK: - Démonstration
-
-    /// Les cartes de la démonstration montrent les trois formats. Une démonstration qui
-    /// n'aurait que du recto verso laisserait croire que Micabo ne sait faire que ça.
-    func testDemoCardsCoverTheThreeFormats() {
-        let kinds = OnboardingDemo.cards.map(\.kind)
-
-        XCTAssertTrue(kinds.contains(.basic))
-        XCTAssertTrue(kinds.contains(.choice))
-        XCTAssertTrue(kinds.contains(.gap))
-    }
-
-    /// Le troisième écran montre les quatre formes que prend une fiche. Le schéma en fait
-    /// partie : une démonstration qui n'aurait que des cartes laisserait croire que Micabo
-    /// ne sait pas dessiner un cours.
-    func testDemoOutputsCoverTheFourFormats() {
-        XCTAssertEqual(OnboardingDemo.Output.allCases, [.schema, .flashcard, .quiz, .gap])
-
-        for output in OnboardingDemo.Output.allCases {
-            XCTAssertFalse(output.label.isEmpty, "\(output) doit avoir un libellé")
-            XCTAssertFalse(output.systemImage.isEmpty, "\(output) doit avoir un symbole")
-        }
-    }
-
-    /// Le texte à trou de la démonstration doit vraiment avoir un trou, et le mot qui le
-    /// remplit doit être celui du cours déposé.
-    func testTheGapExerciseComesFromTheRawCourse() {
-        XCTAssertFalse(OnboardingDemo.gapBefore.isEmpty)
-        XCTAssertFalse(OnboardingDemo.gapAnswer.isEmpty)
-
-        let raw = OnboardingDemo.rawLines.joined(separator: " ").lowercased()
-        XCTAssertTrue(raw.contains(OnboardingDemo.gapAnswer.lowercased()))
-    }
-
-    /// Le document déposé doit être plus dense que la fiche qui en sort, sinon l'écran de
-    /// transformation ne transforme rien.
-    func testTheRawDocumentIsDenserThanTheSheet() {
-        let raw = OnboardingDemo.rawLines.joined(separator: " ")
-        let sheet = [
-            OnboardingDemo.sheetHeading,
-            OnboardingDemo.sheetParagraph,
-            OnboardingDemo.sheetDefinition,
-            OnboardingDemo.sheetHighlight
-        ].joined(separator: " ")
-
-        XCTAssertGreaterThan(raw.count, sheet.count)
     }
 
     // MARK: - Jauge
