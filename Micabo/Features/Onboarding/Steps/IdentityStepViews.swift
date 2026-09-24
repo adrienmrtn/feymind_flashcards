@@ -2,16 +2,14 @@ import SwiftUI
 
 /// **« Comment veux-tu qu'on t'appelle ? »**
 ///
-/// La question arrive **après** les matières, et elle est **facultative**. Elle ouvrait le
-/// bloc des questions, clavier levé d'office, et c'était la marche la plus perdante de tout
-/// le parcours avant le compte : vingt élèves sur deux cent trente-six partis là. Un prénom
-/// ne sert qu'à s'adresser à quelqu'un — il ne part ni au modèle ni au serveur —, et une
-/// question dont la réponse ne sert qu'au ton n'a pas à coûter un élève. « Passer » est
-/// donc en haut à droite, et l'app dira « toi » à qui l'a pris.
+/// C'est la première question du parcours, et elle est posée avant celles qui servent à
+/// quelque chose. Ce n'est pas un ordre arbitraire : elle est la seule à laquelle on répond
+/// sans effort, et elle change la nature de ce qui suit. Après elle, l'app s'adresse à
+/// quelqu'un ; avant elle, elle remplit un formulaire.
 ///
-/// **L'écran « enchanté » qui suivait est parti.** Il avançait tout seul au bout de deux
-/// secondes ; quatre-vingt-cinq pour cent des élèves l'avaient déjà passé au doigt. Un
-/// écran qu'on ne lit pas n'a pas de raison d'être un écran.
+/// **Le prénom ne sert à rien d'autre.** Rien ne le lit à part l'écran suivant et l'accueil.
+/// Il ne part pas au modèle, il ne part pas au serveur, il n'entre dans aucune consigne de
+/// génération — et c'est bien pour ça qu'on peut le demander sans rien expliquer.
 struct NameStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -23,9 +21,7 @@ struct NameStepView: View {
 
         return OnboardingScaffold(
             title: i18n.t("ios.onb.name"),
-            subtitle: i18n.t("ios.onb.name.optional"),
-            animatesTitle: true,
-            skip: OnboardingSkip(action: skip)
+            animatesTitle: true
         ) {
             HStack(spacing: 10) {
                 TextField(i18n.t("ios.onb.name.placeholder"), text: $model.displayName)
@@ -69,12 +65,79 @@ struct NameStepView: View {
         guard model.displayName.nilIfBlank != nil else { return }
         model.advance()
     }
+}
 
-    /// Passer laisse le champ vide **et l'écrit** : on ne garde pas la moitié d'un prénom
-    /// tapé puis abandonné.
-    private func skip() {
-        model.displayName = ""
-        isFocused = false
+/// **« Enchanté, Adrien. »**
+///
+/// Un écran entier pour une phrase, et il se traverse en une seconde. Il gagne sa place
+/// parce qu'il est le seul du parcours à ne rien demander : tout ce qui précède était une
+/// démonstration, tout ce qui suit est une question, et sans lui le prénom qu'on vient de
+/// donner disparaîtrait sans que personne l'utilise.
+///
+/// Il avance **tout seul** après deux secondes, et le bouton reste pour qui va plus vite.
+/// Un écran qui n'a rien à demander et qui attend quand même un appui fait douter d'avoir
+/// manqué quelque chose.
+struct GreetingStepView: View {
+    @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    @State private var isVisible = false
+    /// **Le garde-fou de l'écran qui avance tout seul.**
+    ///
+    /// Il part au bout de deux secondes et il part aussi au bouton. Quelqu'un qui appuie à
+    /// la seconde et neuf dixièmes déclencherait les deux, et `advance()` appelé deux fois
+    /// saute un écran — ici, la question du pays, qui ne se reposerait jamais.
+    @State private var didAdvance = false
+
+    private var name: String {
+        model.displayName.nilIfBlank ?? i18n.t("ios.onb.greeting.fallback")
+    }
+
+    var body: some View {
+        VStack(spacing: MicaboSpacing.md) {
+            Spacer(minLength: 0)
+
+            Text("👋")
+                .font(.system(size: 64))
+                .scaleEffect(isVisible ? 1 : 0.6)
+                .opacity(isVisible ? 1 : 0)
+
+            Text(i18n.t("ios.onb.greeting", ["name": name]))
+                .font(MicaboFont.ui(34, weight: .bold))
+                .foregroundStyle(MicaboColor.ink)
+                .tracking(-0.8)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .opacity(isVisible ? 1 : 0)
+                .offset(y: isVisible ? 0 : 10)
+
+            Text(i18n.t("ios.onb.greeting.body"))
+                .font(MicaboFont.ui(15, weight: .regular))
+                .foregroundStyle(MicaboColor.inkSecondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .opacity(isVisible ? 1 : 0)
+
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, MicaboSpacing.xl)
+        .safeAreaInset(edge: .bottom) {
+            MicaboBottomBar {
+                OnboardingContinueButton(action: advance)
+            }
+        }
+        .task {
+            withAnimation(OnboardingMotion.enter) { isVisible = true }
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            advance()
+        }
+    }
+
+    private func advance() {
+        guard !didAdvance else { return }
+        didAdvance = true
         model.advance()
     }
 }
@@ -122,7 +185,7 @@ struct SchoolTypeStepView: View {
 
 /// **« Tu es en quelle année ? »**
 ///
-/// Elle décide des matières proposées un écran plus loin, et du niveau d'écriture des
+/// Elle décide des matières proposées deux écrans plus loin, et du niveau d'écriture des
 /// cours générés. C'est la question la plus précise du parcours, et la dernière sur le
 /// « où j'en suis ».
 struct SchoolYearStepView: View {

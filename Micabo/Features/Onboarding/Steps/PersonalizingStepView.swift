@@ -4,15 +4,11 @@ import SwiftUI
 /// Génération du parcours. Purement visuel — les réponses sont déjà enregistrées — mais il
 /// ne doit jamais laisser croire que l'app a gelé.
 ///
-/// **Les quatre étapes citent les vraies réponses.** Elles disaient « lecture de tes
-/// réponses », « calibrage des intervalles » : des verbes sans objet, qu'on aurait pu
-/// afficher à n'importe qui. Elles disent maintenant la matière et l'année, l'examen et
-/// dans combien de jours, le rythme en cartes, et le chemin d'une note à l'autre. Un
-/// chargement qui montre ce qu'il charge est un chargement qu'on croit.
-///
-/// La mascotte est là, et c'est l'une de ses deux apparitions : elle réfléchit pendant
-/// que ça se construit, elle se redresse quand c'est fini. C'est le seul écran où elle
-/// **fait** quelque chose.
+/// **Ce qu'il y avait, et ce qu'il y a.** L'écran portait un sur-titre en capitales, une
+/// accroche de trente points, une ligne de détail, un anneau avec son propre sous-titre,
+/// une carte de quatre étapes, et un bouton avec son libellé d'attente : six textes pour
+/// dire « ça travaille », sur un lavis violet. Il reste la mascotte qui réfléchit, une
+/// phrase, l'anneau, et les quatre étapes qui se cochent. Sur du blanc.
 ///
 /// **Le chargement dure cinq secondes**, et c'est un plancher, pas une approximation. Un
 /// écran qui annonce qu'il construit un parcours puis disparaît en une seconde n'a rien
@@ -31,15 +27,11 @@ struct PersonalizingStepView: View {
     }
 
     private var phases: [Phase] {
-        let summary = OnboardingSummary(model: model, locale: i18n.locale)
-        let steps = [
-            i18n.t("ios.build.read", ["subject": summary.subject, "level": summary.level]),
-            i18n.t("ios.build.exam", ["exam": summary.examName, "days": "\(summary.examDays)"]),
-            i18n.t("ios.build.pace", ["n": "\(summary.cardsPerDay)"]),
-            i18n.t("ios.build.route", ["from": summary.fromGrade, "to": summary.toGrade]),
-        ]
-        return steps.enumerated().map { index, step in
-            Phase(headline: i18n.t("onboarding.parcoursWorking\(index + 1)"), step: step)
+        (1...4).map { index in
+            Phase(
+                headline: i18n.t("onboarding.parcoursWorking\(index)"),
+                step: i18n.t("onboarding.parcoursStep\(index)")
+            )
         }
     }
 
@@ -100,7 +92,7 @@ struct PersonalizingStepView: View {
             VStack(spacing: 22) {
                 Spacer(minLength: 0)
 
-                MicaboMascot(mood: isDone ? .proud : .thinking, size: 96)
+                MicaboMascot(mood: isDone ? .celebrating : .thinking, size: 112)
 
                 // La hauteur est réservée : les quatre phrases n'ont pas le même nombre de
                 // lignes, et un titre qui se recompose fait sauter l'anneau.
@@ -184,7 +176,6 @@ struct PersonalizingStepView: View {
                         Text(phase.step)
                             .font(MicaboFont.ui(14.5, weight: index == completed ? .semibold : .regular))
                             .foregroundStyle(index <= completed ? MicaboColor.ink : MicaboColor.inkTertiary)
-                            .lineLimit(2)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .padding(.vertical, 10)
@@ -237,49 +228,5 @@ struct PersonalizingStepView: View {
             didRing = true
             Haptics.success()
         }
-    }
-}
-
-// MARK: - Le résumé des réponses
-
-/// **Ce que le parcours sait de l'élève, écrit en mots.**
-///
-/// Deux écrans le lisent — la construction, puis « ton parcours est prêt » — et ils
-/// doivent dire exactement la même chose. Le calculer une fois ici plutôt que deux fois
-/// dans deux vues est ce qui empêche l'un d'annoncer « Terminale » et l'autre « Lycée ».
-struct OnboardingSummary {
-    let subject: String
-    let level: String
-    let examName: String
-    let examDays: Int
-    let cardsPerDay: Int
-    let fromGrade: String
-    let toGrade: String
-    let subjectCount: Int
-
-    init(model: OnboardingModel, locale: UiLocale) {
-        let sheet = model.demoSheet
-        subject = model.primarySubject ?? sheet.subjectName
-        level = model.year?.title ?? model.stage?.localizedTitle ?? model.country.localizedName(locale: locale)
-
-        let exam = model.demoExam
-        examName = exam.name
-        examDays = exam.daysLeft()
-
-        cardsPerDay = DailyLoad.newCardsPerDay(dailyMinutes: OnboardingPreferences.dailyMinutes)
-
-        let scale = DesiredGradeScale.for(model.country)
-        if let current = model.currentScore, current >= TargetScore.min {
-            fromGrade = scale.label(for: current)
-        } else {
-            fromGrade = L10n.t("ios.averageBelowShort", locale: locale)
-        }
-        if let target = model.targetScore {
-            toGrade = scale.label(for: target)
-        } else {
-            toGrade = scale.max
-        }
-
-        subjectCount = model.subjects.count
     }
 }

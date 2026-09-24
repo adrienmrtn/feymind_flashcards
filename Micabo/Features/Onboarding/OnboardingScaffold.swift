@@ -120,10 +120,6 @@ enum OnboardingMotion {
     static let page = Animation.timingCurve(0.32, 0.72, 0.2, 1, duration: 0.36)
     /// Décalage entre deux éléments qui entrent à la suite.
     static let stagger = 0.085
-    /// **Le temps que met un bouton de démonstration à s'ouvrir.** Deux secondes et demie :
-    /// le temps de lire une phrase et de regarder un graphe se tracer, pas plus. Au-delà, on
-    /// attend un bouton ; en deçà, on ne l'a pas vu se remplir.
-    static let gate: Double = 2.5
     /// Le décalage **dans** une liste de réponses. Plus serré que celui des blocs : six
     /// rangées à quatre-vingt-cinq millièmes mettraient une demi-seconde avant que la
     /// dernière n'arrive, et on aurait le temps d'appuyer sur une réponse absente.
@@ -288,13 +284,16 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                     .accessibilityLabel(L10n.t("app.common.back", locale: .resolved()))
 
                     Spacer(minLength: 0)
+
+                    // **La mascotte est sur chaque écran de question**, petite, à droite
+                    // du retour — là où Gizmo met la sienne. Elle cligne des yeux, elle
+                    // respire, elle change de tête d'un écran à l'autre et sursaute quand
+                    // on passe au suivant : c'est ce qui fait qu'une question posée en
+                    // gras ne se lit pas comme un champ de formulaire — quelqu'un la pose.
+                    MicaboMascot(mood: model.step.mascotMood, size: 30)
+                        .frame(width: 46, height: 40)
+                        .mascotHop(on: model.step)
                 }
-                // **Plus de mascotte dans le bandeau.** Elle se tenait à droite du retour,
-                // sur chaque question, et sursautait à chaque écran : vingt-quatre sursauts
-                // sur un parcours qui promet de faire progresser quelqu'un, c'est un jouet.
-                // Elle ne reste que là où elle fait quelque chose : l'accroche, et la
-                // construction du parcours.
-                .frame(height: 40)
                 .padding(.top, 16)
             }
             .padding(.horizontal, MicaboSpacing.screen)
@@ -611,36 +610,20 @@ struct OnboardingContinueButton: View {
     /// franchement où appuyer. Le reste du parcours n'y a pas droit — un bouton qui brille
     /// à chaque écran ne brille plus nulle part.
     var isShiny: Bool = false
-    /// **Le bouton qui se mérite.**
-    ///
-    /// Le nombre de secondes pendant lesquelles il se remplit avant d'accepter l'appui.
-    /// Réservé aux écrans de démonstration : la mesure disait qu'ils se passaient en une à
-    /// deux secondes, soit moins que le temps de lire une phrase. Pendant qu'il se remplit,
-    /// le bouton est gris et son violet monte de gauche à droite ; à la fin, il s'allume et
-    /// sursaute. C'est ce que fait Coconote sur ses démonstrations, et c'est la seule façon
-    /// de garantir qu'un résultat a été vu sans mettre une croix dessus. Jamais sur une
-    /// question : quelqu'un qui sait répondre doit pouvoir répondre vite.
-    var gate: Double?
     var action: () -> Void
 
     @Environment(\.onboardingSurface) private var surface
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var shinePhase: CGFloat = 0
     /// Vrai le temps du sursaut qui accompagne l'activation. Voir `arm()`.
     @State private var isArming = false
-    /// Le remplissage de la jauge, de 0 à 1, et le moment où elle s'ouvre.
-    @State private var gateFill: CGFloat = 0
-    @State private var isGateOpen = false
 
-    private var isOpen: Bool { gate == nil || isGateOpen }
-    private var isUsable: Bool { isEnabled && isOpen }
-    private var isLively: Bool { isShiny && isUsable && !isLoading }
+    private var isLively: Bool { isShiny && isEnabled && !isLoading }
 
     var body: some View {
         Button {
-            guard isUsable, !isLoading else { return }
+            guard isEnabled, !isLoading else { return }
             action()
         } label: {
             HStack(spacing: 9) {
@@ -658,19 +641,6 @@ struct OnboardingContinueButton: View {
                     .minimumScaleFactor(0.82)
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            // La jauge vit **dans** l'étiquette, sous le texte : le style pose son aplat
-            // derrière l'étiquette, donc le violet qui monte passe entre le gris et le mot.
-            .background(alignment: .leading) {
-                if gate != nil, !isGateOpen {
-                    GeometryReader { proxy in
-                        Rectangle()
-                            .fill(surface.buttonTint)
-                            .frame(width: proxy.size.width * gateFill)
-                    }
-                }
-            }
-            .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
         }
         // **Le bouton de la maquette** : cinquante-six points, rayon quatorze, seize et demi
         // de texte, et pas d'ombre. Il faisait soixante-quatre points, dix-huit de rayon et
@@ -678,12 +648,12 @@ struct OnboardingContinueButton: View {
         // du blanc.
         .buttonStyle(
             MicaboActionButtonStyle(
-                tint: isUsable ? surface.buttonTint : surface.disabledButtonTint,
+                tint: isEnabled ? surface.buttonTint : surface.disabledButtonTint,
                 foreground: surface.buttonForeground
             )
         )
-        .disabled(!isUsable || isLoading)
-        .animation(.easeOut(duration: 0.2), value: isUsable)
+        .disabled(!isEnabled || isLoading)
+        .animation(.easeOut(duration: 0.2), value: isEnabled)
         .animation(.easeOut(duration: 0.2), value: isLoading)
         // Le reflet et la respiration se posent au-dessus des animations d'état, et pas
         // dedans : le bouton s'active à l'instant où il se met à respirer, et une courbe
@@ -691,31 +661,10 @@ struct OnboardingContinueButton: View {
         .overlay { if isLively { shine } }
         .scaleEffect(isArming ? 1.03 : 1)
         .onAppear(perform: startLiveliness)
-        .onAppear(perform: openGate)
         .onChange(of: isLively) { _, _ in startLiveliness() }
-        .onChange(of: isUsable) { wasUsable, isUsable in
-            guard isUsable, !wasUsable else { return }
+        .onChange(of: isEnabled) { wasEnabled, isEnabled in
+            guard isEnabled, !wasEnabled else { return }
             arm()
-        }
-    }
-
-    /// La jauge se remplit sur toute la durée demandée, puis le bouton s'ouvre. Sans
-    /// mouvement réduit, il est ouvert d'emblée : une jauge qu'on ne voit pas monter est
-    /// une attente qu'on ne comprend pas.
-    private func openGate() {
-        guard let gate, !isGateOpen else { return }
-        guard !reduceMotion else {
-            isGateOpen = true
-            return
-        }
-        gateFill = 0
-        withAnimation(.linear(duration: gate)) {
-            gateFill = 1
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + gate) {
-            withAnimation(OnboardingMotion.select) {
-                isGateOpen = true
-            }
         }
     }
 

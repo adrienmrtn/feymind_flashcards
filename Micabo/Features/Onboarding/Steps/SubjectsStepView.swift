@@ -109,11 +109,13 @@ struct SubjectsStepView: View {
         return i18n.t("onboarding.continueMany", ["n": "\(model.subjects.count)"])
     }
 
-    /// Par le modèle, et pas directement sur l'ensemble : c'est lui qui retient laquelle a
-    /// été cochée en premier, et c'est elle que la démonstration montrera.
     private func toggle(_ subject: String) {
         withAnimation(OnboardingMotion.tap) {
-            model.toggleSubject(subject)
+            if model.subjects.contains(subject) {
+                model.subjects.remove(subject)
+            } else {
+                model.subjects.insert(subject)
+            }
         }
     }
 }

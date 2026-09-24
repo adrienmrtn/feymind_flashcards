@@ -67,7 +67,6 @@ struct NotificationsStepView: View {
                 VStack(spacing: 16) {
                     weekCard
                     banner
-                    proofLine
                 }
 
                 Spacer(minLength: 0)
@@ -191,24 +190,6 @@ struct NotificationsStepView: View {
         .scaleEffect(hasLanded ? 1 : 0.94)
         .animation(OnboardingMotion.enter, value: hasLanded)
         .accessibilityElement(children: .combine)
-    }
-
-    /// **Pourquoi dire oui**, en une ligne grise sous la notification : ce que font ceux
-    /// qui l'ont activée. Le chiffre vient de `OnboardingProofFigures`, avec les autres.
-    private var proofLine: some View {
-        HStack(spacing: 7) {
-            Image(systemName: "chart.line.uptrend.xyaxis")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(MicaboColor.accent)
-
-            Text(i18n.t("ios.notif.proof", ["n": "\(OnboardingProofFigures.reminderMultiplier)"]))
-                .font(MicaboFont.ui(13, weight: .medium))
-                .foregroundStyle(MicaboColor.inkSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .opacity(hasLanded ? 1 : 0)
-        .animation(OnboardingMotion.enter.delay(0.2), value: hasLanded)
     }
 
     // MARK: - Le déroulé
