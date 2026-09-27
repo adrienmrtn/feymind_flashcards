@@ -33,13 +33,14 @@ struct HookVideoStepView: View {
             .padding(.top, MicaboSpacing.sm)
             .onboardingAppear(index: 0)
 
-            Spacer(minLength: MicaboSpacing.md)
+            Spacer(minLength: MicaboSpacing.sm)
 
             OnboardingPhoneMockup()
                 .frame(maxWidth: .infinity)
+                .frame(maxHeight: .infinity)
                 .onboardingAppear(index: 1)
 
-            Spacer(minLength: MicaboSpacing.lg)
+            Spacer(minLength: MicaboSpacing.md)
 
             Text(i18n.t("ios.hook.title"))
                 .font(OnboardingPalette.title(34))
@@ -112,31 +113,33 @@ struct HookVideoStepView: View {
     }
 }
 
-/// **Un téléphone incliné, et une fiche qui se déroule dedans.**
+/// **Un téléphone incliné, et une vraie fiche qui se déroule dedans.**
 ///
 /// Le cadre est noir, l'écran est blanc, et ce qui défile est une fiche telle que l'app la
-/// compose : un chapitre, un titre, un paragraphe avec son passage surligné, un encadré, un
-/// graphe. Elle monte lentement et recommence, sans à-coup : c'est le geste d'un écran qu'on
-/// fait défiler, pas d'une animation.
+/// compose, **avec ses vrais mots** : un chapitre, un titre, un paragraphe avec son
+/// passage surligné, un encadré, un graphe, une carte. Le texte est traduit : la fiche
+/// suit la langue choisie dans le menu du haut, comme le reste de l'écran. Elle monte
+/// lentement et recommence, sans à-coup : c'est le geste d'un écran qu'on fait défiler.
 private struct OnboardingPhoneMockup: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @State private var scrolled = false
 
-    private static let width: CGFloat = 230
-    private static let height: CGFloat = 470
+    private static let width: CGFloat = 250
+    private static let height: CGFloat = 500
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 40, style: .continuous)
+            RoundedRectangle(cornerRadius: 42, style: .continuous)
                 .fill(OnboardingPalette.ink)
 
-            RoundedRectangle(cornerRadius: 32, style: .continuous)
+            RoundedRectangle(cornerRadius: 34, style: .continuous)
                 .fill(OnboardingPalette.white)
                 .padding(8)
                 .overlay {
                     screen
-                        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: 34, style: .continuous))
                         .padding(8)
                 }
 
@@ -144,126 +147,166 @@ private struct OnboardingPhoneMockup: View {
             VStack {
                 Capsule()
                     .fill(OnboardingPalette.ink)
-                    .frame(width: 70, height: 20)
-                    .padding(.top, 14)
+                    .frame(width: 74, height: 22)
+                    .padding(.top, 16)
                 Spacer(minLength: 0)
             }
         }
         .frame(width: Self.width, height: Self.height)
-        .rotationEffect(.degrees(-6))
-        .rotation3DEffect(.degrees(8), axis: (x: 0, y: 1, z: 0), perspective: 0.6)
+        .rotationEffect(.degrees(-5))
+        .rotation3DEffect(.degrees(7), axis: (x: 0, y: 1, z: 0), perspective: 0.6)
         .shadow(color: OnboardingPalette.ink.opacity(0.18), radius: 30, y: 18)
         .accessibilityHidden(true)
         .onAppear(perform: start)
+        // Changer de langue recompose la fiche : on repart du haut.
+        .id(i18n.locale)
     }
 
     /// La fiche, deux fois de suite, et la seconde copie prend la place de la première
     /// quand le défilement arrive au bout : la boucle ne se voit pas.
     private var screen: some View {
         GeometryReader { proxy in
-            let travel = proxy.size.height * 1.05
             VStack(spacing: 0) {
                 sheet
                 sheet
             }
             .frame(width: proxy.size.width)
-            .offset(y: scrolled ? -travel : 0)
+            .background {
+                // La hauteur d'une fiche décide de la course : on la mesure sur la
+                // première copie, et la seconde vient exactement la remplacer.
+                GeometryReader { inner in
+                    Color.clear.preference(key: SheetHeightKey.self, value: inner.size.height / 2)
+                }
+            }
+            .offset(y: scrolled ? -sheetHeight : 0)
         }
+        .onPreferenceChange(SheetHeightKey.self) { sheetHeight = $0 }
     }
 
-    private var sheet: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Color.clear.frame(height: 30)
+    @State private var sheetHeight: CGFloat = 600
 
-            Text("CHAPITRE 2 · 21 CARTES")
+    private struct SheetHeightKey: PreferenceKey {
+        static var defaultValue: CGFloat = 600
+        static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+    }
+
+    private func t(_ key: String) -> String { i18n.t(key) }
+
+    private var sheet: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            Color.clear.frame(height: 34)
+
+            Text(t("ios.hook.sheet.chapter").uppercased())
                 .font(MicaboFont.ui(6.5, weight: .semibold))
                 .tracking(1)
                 .foregroundStyle(OnboardingPalette.accent)
 
-            Text("La guerre froide, 1947–1991")
-                .font(MicaboFont.ui(13, weight: .bold))
+            Text(t("ios.hook.sheet.title"))
+                .font(MicaboFont.ui(14, weight: .bold))
                 .foregroundStyle(OnboardingPalette.ink)
                 .tracking(-0.3)
+                .fixedSize(horizontal: false, vertical: true)
 
-            paragraph(lines: 3)
+            paragraph(t("ios.hook.sheet.p1"))
 
-            // Le passage surligné.
-            VStack(alignment: .leading, spacing: 4) {
-                line(width: 0.92, highlighted: true)
-                line(width: 0.7, highlighted: true)
-            }
+            // Le passage surligné, au marqueur jaune.
+            Text(t("ios.hook.sheet.highlight"))
+                .font(MicaboFont.reading(8, weight: .medium))
+                .foregroundStyle(OnboardingPalette.ink)
+                .lineSpacing(2)
+                .padding(.horizontal, 3)
+                .padding(.vertical, 2)
+                .background(OnboardingPalette.star.opacity(0.4), in: RoundedRectangle(cornerRadius: 3, style: .continuous))
+                .fixedSize(horizontal: false, vertical: true)
 
-            paragraph(lines: 2)
+            paragraph(t("ios.hook.sheet.p2"))
 
             // L'encadré « à retenir ».
-            VStack(alignment: .leading, spacing: 5) {
-                Text("À RETENIR")
+            VStack(alignment: .leading, spacing: 4) {
+                Text(t("ios.hook.sheet.keyLabel").uppercased())
                     .font(MicaboFont.ui(6, weight: .bold))
                     .tracking(1)
                     .foregroundStyle(OnboardingPalette.accent)
-                line(width: 0.85)
-                line(width: 0.6)
+                Text(t("ios.hook.sheet.key"))
+                    .font(MicaboFont.reading(8, weight: .medium))
+                    .foregroundStyle(OnboardingPalette.ink)
+                    .lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(8)
+            .padding(9)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(OnboardingPalette.accentWash, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+            .background(OnboardingPalette.accentWash, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
 
-            paragraph(lines: 3)
-
-            // Un graphe : quatre barres.
-            HStack(alignment: .bottom, spacing: 8) {
-                ForEach([0.35, 0.6, 0.45, 0.9], id: \.self) { height in
-                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(height > 0.8 ? OnboardingPalette.accent : OnboardingPalette.cardStrong)
-                        .frame(height: 46 * height)
+            // La frise : quatre dates.
+            VStack(alignment: .leading, spacing: 6) {
+                Text(t("ios.hook.sheet.chart").uppercased())
+                    .font(MicaboFont.ui(6, weight: .bold))
+                    .tracking(1)
+                    .foregroundStyle(OnboardingPalette.gray)
+                HStack(alignment: .top, spacing: 0) {
+                    ForEach(1...4, id: \.self) { index in
+                        VStack(spacing: 4) {
+                            Circle()
+                                .fill(index == 3 ? OnboardingPalette.accent : OnboardingPalette.ink)
+                                .frame(width: 6, height: 6)
+                            Text(t("ios.hook.sheet.date\(index)"))
+                                .font(MicaboFont.ui(6, weight: .semibold))
+                                .foregroundStyle(OnboardingPalette.ink)
+                            Text(t("ios.hook.sheet.event\(index)"))
+                                .font(MicaboFont.ui(5.5, weight: .regular))
+                                .foregroundStyle(OnboardingPalette.gray)
+                                .multilineTextAlignment(.center)
+                                .lineLimit(2)
+                        }
                         .frame(maxWidth: .infinity)
+                    }
+                }
+                .background(alignment: .top) {
+                    Rectangle()
+                        .fill(OnboardingPalette.cardStrong)
+                        .frame(height: 1)
+                        .padding(.top, 2.5)
+                        .padding(.horizontal, 20)
                 }
             }
-            .frame(height: 46)
-            .padding(8)
-            .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+            .padding(9)
+            .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
 
-            paragraph(lines: 4)
+            paragraph(t("ios.hook.sheet.p3"))
 
-            // Une carte de révision.
-            VStack(alignment: .leading, spacing: 5) {
-                Text("QUESTION")
+            // Une carte de révision, tirée de la fiche.
+            VStack(alignment: .leading, spacing: 4) {
+                Text(t("ios.hook.sheet.cardLabel").uppercased())
                     .font(MicaboFont.ui(6, weight: .bold))
                     .tracking(1)
                     .foregroundStyle(OnboardingPalette.white.opacity(0.6))
-                line(width: 0.8, color: OnboardingPalette.white.opacity(0.85))
-                line(width: 0.5, color: OnboardingPalette.white.opacity(0.85))
+                Text(t("ios.hook.sheet.card"))
+                    .font(MicaboFont.ui(8.5, weight: .semibold))
+                    .foregroundStyle(OnboardingPalette.white)
+                    .lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(8)
+            .padding(9)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(OnboardingPalette.ink, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+            .background(OnboardingPalette.ink, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
 
-            paragraph(lines: 3)
+            paragraph(t("ios.hook.sheet.p4"))
         }
         .padding(.horizontal, 14)
-        .padding(.bottom, 24)
+        .padding(.bottom, 26)
     }
 
-    private func paragraph(lines: Int) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            ForEach(0..<lines, id: \.self) { index in
-                line(width: index == lines - 1 ? 0.55 : [0.95, 0.88, 0.97][index % 3])
-            }
-        }
-    }
-
-    private func line(width: CGFloat, highlighted: Bool = false, color: Color? = nil) -> some View {
-        GeometryReader { proxy in
-            RoundedRectangle(cornerRadius: 2, style: .continuous)
-                .fill(color ?? (highlighted ? OnboardingPalette.star.opacity(0.55) : OnboardingPalette.cardStrong))
-                .frame(width: proxy.size.width * width, height: 5)
-        }
-        .frame(height: 5)
+    private func paragraph(_ text: String) -> some View {
+        Text(text)
+            .font(MicaboFont.reading(8, weight: .regular))
+            .foregroundStyle(OnboardingPalette.ink.opacity(0.8))
+            .lineSpacing(2)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     private func start() {
         guard !reduceMotion else { return }
-        withAnimation(.linear(duration: 14).repeatForever(autoreverses: false)) {
+        withAnimation(.linear(duration: 16).repeatForever(autoreverses: false)) {
             scrolled = true
         }
     }

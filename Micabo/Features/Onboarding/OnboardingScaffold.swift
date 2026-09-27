@@ -310,14 +310,15 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                     .onboardingAppear(index: 0)
                 }
 
-                Text(title)
-                    .font(OnboardingPalette.title(titleSize))
-                    .foregroundStyle(surface.title)
-                    .tracking(-0.9)
-                    .lineSpacing(-2)
-                    .multilineTextAlignment(centered ? .center : .leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .onboardingAppear(index: 1)
+                // Le titre passe par le texte à chiffre coloré : un passage entre deux
+                // astérisques doubles se peint en violet, ici comme sur les preuves.
+                OnboardingAccentText(
+                    template: title,
+                    size: titleSize,
+                    alignment: centered ? .center : .leading,
+                    color: surface.title
+                )
+                .onboardingAppear(index: 1)
 
                 if let subtitle {
                     Text(subtitle)

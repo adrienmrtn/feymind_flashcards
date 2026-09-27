@@ -49,7 +49,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case method
     case proofStudents
     case name
-    case proofKeep
+    case proofPlan
 
     // La construction.
     case thanks
