@@ -90,7 +90,7 @@ final class OnboardingFlowTests: XCTestCase {
         model.advance()
         XCTAssertEqual(model.step, .name, "Le prénom est la dernière question")
         model.advance()
-        XCTAssertEqual(model.step, .proofKeep)
+        XCTAssertEqual(model.step, .proofPlan)
         model.advance()
         XCTAssertEqual(model.step, .thanks, "Après la dernière preuve, on rend")
     }
@@ -226,7 +226,7 @@ final class OnboardingFlowTests: XCTestCase {
         while model.step != .name { model.advance() }
         XCTAssertTrue(model.canGoBack)
         model.advance()
-        XCTAssertEqual(model.step, .proofKeep)
+        XCTAssertEqual(model.step, .proofPlan)
         XCTAssertFalse(model.canGoBack, "Après le prénom, rien ne se défait")
     }
 

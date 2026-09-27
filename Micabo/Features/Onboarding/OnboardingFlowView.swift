@@ -85,7 +85,7 @@ struct OnboardingFlowView: View {
         case .method: MethodStepView()
         case .proofStudents: ProofStudentsStepView()
         case .name: NameStepView()
-        case .proofKeep: ProofKeepStepView()
+        case .proofPlan: ProofPlanStepView()
         case .thanks: ThanksStepView()
         case .building: BuildingStepView()
         case .planReady: PlanReadyStepView()

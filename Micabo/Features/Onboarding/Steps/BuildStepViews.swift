@@ -178,9 +178,10 @@ struct BuildingStepView: View {
 
 // MARK: - « Ton plan est prêt. »
 
-/// **Quatre cartes, quatre chiffres qui appartiennent à l'élève** : les cartes par jour,
-/// ses matières, les jours avant le jour J, la moyenne visée. C'est l'écran « your custom
-/// plan is ready » de Cal AI, avec ses anneaux remplacés par ce que Micabo sait.
+/// **Une coche noire, une phrase, et une carte de quatre lignes** : le rythme, les
+/// matières, l'échéance, l'objectif. Chaque ligne porte une icône, un libellé gris et sa
+/// valeur en gras à droite. C'est l'écran « your custom plan is ready » de Cal AI, réduit
+/// à ce que Micabo sait, et lisible en deux secondes.
 struct PlanReadyStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -189,51 +190,120 @@ struct PlanReadyStepView: View {
         DesiredGradeScale.for(model.country).label(for: model.targetScore ?? TargetScore.max)
     }
 
-    var body: some View {
-        OnboardingScaffold(
-            title: i18n.t("ios.build.ready.title"),
-            subtitle: i18n.t("ios.build.ready.sub"),
-            contentSpacing: MicaboSpacing.lg
-        ) {
-            VStack(spacing: 12) {
-                HStack(spacing: 12) {
-                    tile(value: "\(model.cardsPerDay)", label: i18n.t("ios.build.ready.cards"), accent: true)
-                    tile(value: "\(model.subjects.count)", label: i18n.t("ios.build.ready.subjects", ["count": "\(model.subjects.count)"]))
-                }
-                HStack(spacing: 12) {
-                    tile(value: "J-\(model.daysToExam)", label: i18n.t("ios.build.ready.exam"))
-                    tile(value: target, label: i18n.t("ios.build.ready.target"))
-                }
-            }
-        } footer: {
-            OnboardingContinueButton(title: i18n.t("ios.build.ready.cta")) {
-                model.advance()
-            }
+    private var subjectsText: String {
+        let names = model.subjects.sorted().map { SubjectDisplay.subject($0, locale: i18n.locale) }
+        switch names.count {
+        case 0: return "—"
+        case 1, 2: return names.joined(separator: ", ")
+        default: return i18n.t("ios.build.ready.subjectsMore", ["first": names[0], "n": "\(names.count - 1)"])
         }
     }
 
-    private func tile(value: String, label: String, accent: Bool = false) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(value)
-                .font(MicaboFont.ui(40, weight: .bold))
+    var body: some View {
+        VStack(spacing: 0) {
+            chrome
+
+            ScrollView {
+                VStack(spacing: 0) {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 30, weight: .bold))
+                        .foregroundStyle(OnboardingPalette.white)
+                        .frame(width: 72, height: 72)
+                        .background(OnboardingPalette.ink, in: Circle())
+                        .padding(.top, MicaboSpacing.xl)
+                        .onboardingAppear(index: 0)
+
+                    Text(i18n.t("ios.build.ready.title"))
+                        .font(OnboardingPalette.title(34))
+                        .foregroundStyle(OnboardingPalette.ink)
+                        .tracking(-0.9)
+                        .multilineTextAlignment(.center)
+                        .padding(.top, 22)
+                        .onboardingAppear(index: 1)
+
+                    Text(i18n.t("ios.build.ready.sub"))
+                        .font(MicaboFont.ui(15, weight: .regular))
+                        .foregroundStyle(OnboardingPalette.gray)
+                        .multilineTextAlignment(.center)
+                        .padding(.top, 8)
+                        .onboardingAppear(index: 2)
+
+                    VStack(spacing: 0) {
+                        row(icon: "rectangle.stack.fill", label: i18n.t("ios.build.ready.cards"), value: i18n.t("ios.build.ready.cardsValue", ["n": "\(model.cardsPerDay)"]), rank: 0)
+                        divider
+                        row(icon: "books.vertical.fill", label: i18n.t("ios.build.ready.subjectsLabel"), value: subjectsText, rank: 1)
+                        divider
+                        row(icon: "calendar", label: i18n.t("ios.build.ready.exam"), value: "J-\(model.daysToExam)", rank: 2)
+                        divider
+                        row(icon: "target", label: i18n.t("ios.build.ready.target"), value: target, rank: 3, accent: true)
+                    }
+                    .padding(.vertical, 6)
+                    .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    .padding(.top, 30)
+                    .onboardingAppear(index: 3)
+                }
+                .padding(.horizontal, MicaboSpacing.screen)
+                .padding(.bottom, MicaboSpacing.lg)
+            }
+            .scrollIndicators(.hidden)
+
+            MicaboBottomBar(background: OnboardingPalette.white) {
+                OnboardingContinueButton(title: i18n.t("ios.build.ready.cta")) {
+                    model.advance()
+                }
+                .onboardingAppear(index: 4)
+            }
+        }
+        .background(OnboardingPalette.white.ignoresSafeArea())
+        .environment(\.onboardingSurface, .canvas)
+    }
+
+    @ViewBuilder
+    private var chrome: some View {
+        HStack(alignment: .center, spacing: 14) {
+            Color.clear.frame(width: 40, height: 40)
+            MicaboProgressBar(
+                progress: model.step.progress,
+                tint: OnboardingPalette.ink,
+                track: OnboardingPalette.cardStrong
+            )
+            .frame(height: 3)
+        }
+        .padding(.horizontal, MicaboSpacing.screen)
+        .padding(.top, MicaboSpacing.sm)
+    }
+
+    private var divider: some View {
+        Rectangle()
+            .fill(OnboardingPalette.cardStrong)
+            .frame(height: 1)
+            .padding(.leading, 62)
+    }
+
+    private func row(icon: String, label: String, value: String, rank: Int, accent: Bool = false) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(accent ? OnboardingPalette.white : OnboardingPalette.ink)
-                .tracking(-1.5)
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
+                .frame(width: 34, height: 34)
+                .background(accent ? OnboardingPalette.accent : OnboardingPalette.white, in: Circle())
 
             Text(label)
-                .font(MicaboFont.ui(13, weight: .medium))
-                .foregroundStyle(accent ? OnboardingPalette.white.opacity(0.75) : OnboardingPalette.gray)
+                .font(MicaboFont.ui(15, weight: .medium))
+                .foregroundStyle(OnboardingPalette.gray)
+
+            Spacer(minLength: 12)
+
+            Text(value)
+                .font(MicaboFont.ui(17, weight: .bold))
+                .foregroundStyle(accent ? OnboardingPalette.accent : OnboardingPalette.ink)
+                .monospacedDigit()
+                .multilineTextAlignment(.trailing)
                 .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
+                .minimumScaleFactor(0.7)
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, minHeight: 124, alignment: .topLeading)
-        .background(
-            accent ? OnboardingPalette.accent : OnboardingPalette.card,
-            in: RoundedRectangle(cornerRadius: 20, style: .continuous)
-        )
+        .padding(.horizontal, 14)
+        .padding(.vertical, 13)
         .accessibilityElement(children: .combine)
     }
 }

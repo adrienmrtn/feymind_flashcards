@@ -95,7 +95,6 @@ struct DailyTimeStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.quiz.time"),
-            subtitle: i18n.t("ios.quiz.time.sub"),
             scrolls: false,
             expandsContent: true
         ) {
@@ -103,7 +102,6 @@ struct DailyTimeStepView: View {
                 OnboardingChoiceRow(
                     title: i18n.t("ios.quiz.time.minutes", ["n": "\(time.rawValue)"]),
                     emoji: time.emoji,
-                    subtitle: i18n.t("ios.quiz.time.cards", ["n": "\(DailyLoad.newCardsPerDay(dailyMinutes: time.rawValue))"]),
                     isSelected: selection == time,
                     fillsHeight: true,
                     rank: rank

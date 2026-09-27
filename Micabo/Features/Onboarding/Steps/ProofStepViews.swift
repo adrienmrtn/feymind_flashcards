@@ -21,9 +21,10 @@ enum OnboardingProofFigures {
     /// Le multiplicateur de rétention et celui des rappels.
     static let retentionMultiplier = 2
     static let reminderMultiplier = 2
-    /// La part des élèves qui atteignent leur objectif, et celle qui le gardent.
+    /// La part des élèves qui atteignent leur objectif.
     static let reachTarget = 82
-    static let keepAverage = 90
+    /// Combien de fois une carte est revue d'ici l'échéance, en moyenne.
+    static let reviewsPerCard = 4
 
     /// Un entier écrit dans la langue de l'élève : « 12 000 », « 12,000 », « 12.000 ».
     static func text(_ value: Int, locale: UiLocale) -> String {
@@ -176,16 +177,15 @@ struct ProofTwiceStepView: View {
 
     var body: some View {
         OnboardingProofPage(
-            headline: i18n.t("ios.proof.twice.title", ["n": "\(OnboardingProofFigures.retentionMultiplier)"]),
-            caption: i18n.t("ios.proof.twice.caption")
+            headline: i18n.t("ios.proof.twice.title", ["n": "\(OnboardingProofFigures.retentionMultiplier)"])
         ) {
             OnboardingBarsChart(
-                title: i18n.t("ios.proof.twice.chart"),
                 bars: [
-                    .init(label: i18n.t("ios.proof.twice.without"), value: 1, tint: OnboardingPalette.cardStrong, valueText: "1×", valueInk: OnboardingPalette.gray),
-                    .init(label: i18n.t("ios.proof.twice.with"), value: OnboardingProofFigures.retentionMultiplier, tint: OnboardingPalette.ink, valueText: "\(OnboardingProofFigures.retentionMultiplier)×", valueInk: OnboardingPalette.white),
+                    .init(label: i18n.t("ios.proof.twice.without"), value: 1, tint: OnboardingPalette.cardStrong),
+                    .init(label: i18n.t("ios.proof.twice.with"), value: OnboardingProofFigures.retentionMultiplier, tint: OnboardingPalette.accent),
                 ],
-                maxValue: OnboardingProofFigures.retentionMultiplier
+                maxValue: OnboardingProofFigures.retentionMultiplier,
+                showsValues: false
             )
         } onContinue: {
             model.advance()
@@ -290,22 +290,75 @@ struct OnboardingReviewCard: View {
     }
 }
 
-// MARK: - « 90 % gardent leur moyenne. »
+// MARK: - « D'ici le jour J, 340 cartes, revues 4 fois. »
 
-/// Le chiffre en très grand, la phrase dessous, et un anneau qui se remplit : c'est la
-/// preuve qui répond à « et après ? ».
-struct ProofKeepStepView: View {
+/// **Ce que le plan fait, en volume.** Le nombre de cartes qu'on aura vues d'ici
+/// l'échéance, et combien de fois chacune. C'est le premier écran qui montre le plan
+/// en chiffres, et ce sont ceux de l'élève : son rythme, son échéance.
+struct ProofPlanStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
+    private var totalCards: Int {
+        model.cardsPerDay * model.daysToExam
+    }
+
     var body: some View {
         OnboardingProofPage(
-            headline: i18n.t("ios.proof.keep.title", ["pct": "\(OnboardingProofFigures.keepAverage)"]),
-            caption: i18n.t("ios.proof.keep.sub")
+            headline: i18n.t("ios.proof.plan.title", [
+                "cards": OnboardingProofFigures.text(totalCards, locale: i18n.locale),
+                "times": "\(OnboardingProofFigures.reviewsPerCard)",
+            ]),
+            caption: i18n.t("ios.proof.plan.sub", ["n": "\(model.cardsPerDay)", "days": "\(model.daysToExam)"])
         ) {
-            OnboardingRing(fraction: Double(OnboardingProofFigures.keepAverage) / 100, label: "\(OnboardingProofFigures.keepAverage) %")
+            OnboardingDaysGrid(days: model.daysToExam)
         } onContinue: {
             model.advance()
+        }
+    }
+}
+
+/// **Les jours jusqu'à l'échéance, un point par jour**, qui s'allument l'un après
+/// l'autre. Au-delà de quatre-vingt-dix, un point vaut plusieurs jours : la grille dit
+/// « c'est long » sans devenir un mur.
+struct OnboardingDaysGrid: View {
+    let days: Int
+
+    @State private var lit = 0
+
+    private static let columns = 10
+    private static let maxDots = 90
+
+    private var dots: Int { max(1, min(Self.maxDots, days)) }
+
+    var body: some View {
+        let rows = Int((Double(dots) / Double(Self.columns)).rounded(.up))
+        VStack(spacing: 10) {
+            ForEach(0..<rows, id: \.self) { row in
+                HStack(spacing: 10) {
+                    ForEach(0..<Self.columns, id: \.self) { column in
+                        let index = row * Self.columns + column
+                        Circle()
+                            .fill(index < lit ? OnboardingPalette.accent : OnboardingPalette.card)
+                            .frame(maxWidth: .infinity)
+                            .aspectRatio(1, contentMode: .fit)
+                            .opacity(index < dots ? 1 : 0)
+                    }
+                }
+            }
+        }
+        .padding(20)
+        .background(OnboardingPalette.card.opacity(0.5), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .accessibilityElement()
+        .accessibilityLabel("\(days)")
+        .task {
+            try? await Task.sleep(for: .milliseconds(300))
+            for index in 1...dots {
+                guard !Task.isCancelled else { return }
+                lit = index
+                if index % 5 == 0 { Haptics.tick() }
+                try? await Task.sleep(for: .milliseconds(max(8, 900 / dots)))
+            }
         }
     }
 }
@@ -438,17 +491,21 @@ struct OnboardingBarsChart: View {
         var valueInk: Color = OnboardingPalette.white
     }
 
-    let title: String
+    var title: String?
     let bars: [Bar]
     var maxValue: Int = 100
+    /// La valeur écrite dans la barre. Sans elle, la hauteur dit tout.
+    var showsValues: Bool = true
 
     @State private var isDrawn = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text(title)
-                .font(MicaboFont.ui(14, weight: .semibold))
-                .foregroundStyle(OnboardingPalette.gray)
+            if let title {
+                Text(title)
+                    .font(MicaboFont.ui(14, weight: .semibold))
+                    .foregroundStyle(OnboardingPalette.gray)
+            }
 
             HStack(alignment: .bottom, spacing: 18) {
                 ForEach(bars) { bar in
@@ -458,12 +515,14 @@ struct OnboardingBarsChart: View {
                                 .fill(bar.tint)
                                 .frame(height: isDrawn ? height(for: bar) : 12)
 
-                            Text(bar.valueText ?? "\(bar.value) %")
-                                .font(MicaboFont.ui(22, weight: .bold))
-                                .foregroundStyle(bar.valueInk)
-                                .monospacedDigit()
-                                .padding(.bottom, 14)
-                                .opacity(isDrawn ? 1 : 0)
+                            if showsValues {
+                                Text(bar.valueText ?? "\(bar.value) %")
+                                    .font(MicaboFont.ui(22, weight: .bold))
+                                    .foregroundStyle(bar.valueInk)
+                                    .monospacedDigit()
+                                    .padding(.bottom, 14)
+                                    .opacity(isDrawn ? 1 : 0)
+                            }
                         }
                         .frame(maxWidth: .infinity)
 
