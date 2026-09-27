@@ -22,8 +22,7 @@ struct SubjectsStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.subjectsTitle"),
-            titleSize: 26,
-            animatesTitle: true
+            subtitle: i18n.t("ios.subjectsSub")
         ) {
             VStack(alignment: .leading, spacing: 20) {
                 if !mine.isEmpty {
@@ -33,9 +32,9 @@ struct SubjectsStepView: View {
                 ForEach(SubjectCatalog.families) { family in
                     VStack(alignment: .leading, spacing: 10) {
                         Text(SubjectDisplay.family(family.name, locale: i18n.locale).uppercased())
-                            .font(MicaboFont.ui(10, weight: .semibold))
+                            .font(MicaboFont.ui(11, weight: .semibold))
                             .tracking(1.4)
-                            .foregroundStyle(MicaboColor.inkTertiary)
+                            .foregroundStyle(OnboardingPalette.gray)
 
                         MicaboFlowLayout(spacing: 8, lineSpacing: 8) {
                             ForEach(family.subjects, id: \.self) { subject in
@@ -81,9 +80,9 @@ struct SubjectsStepView: View {
     private func section(title: String, subjects: [String]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title.uppercased())
-                .font(MicaboFont.ui(10, weight: .semibold))
+                .font(MicaboFont.ui(11, weight: .semibold))
                 .tracking(1.4)
-                .foregroundStyle(MicaboColor.accent)
+                .foregroundStyle(OnboardingPalette.accent)
 
             MicaboFlowLayout(spacing: 8, lineSpacing: 8) {
                 ForEach(subjects, id: \.self) { subject in
@@ -137,18 +136,14 @@ private struct SubjectChip: View {
                         .font(.system(size: 13))
                 }
                 Text(title)
-                    .font(MicaboFont.ui(13, weight: .medium))
+                    .font(MicaboFont.ui(14, weight: .medium))
             }
-            .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.ink)
-            .padding(.vertical, 9)
-            .padding(.horizontal, 13)
-            .background(isSelected ? MicaboColor.accent : MicaboColor.surface, in: Capsule())
-            .overlay {
-                Capsule()
-                    .strokeBorder(isSelected ? Color.clear : MicaboColor.strokeStrong, lineWidth: 1)
-            }
-            .scaleEffect(isSelected ? 1.03 : 1)
+            .foregroundStyle(isSelected ? OnboardingPalette.white : OnboardingPalette.ink)
+            .padding(.vertical, 11)
+            .padding(.horizontal, 15)
+            .background(isSelected ? OnboardingPalette.ink : OnboardingPalette.card, in: Capsule())
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
+        .animation(OnboardingMotion.select, value: isSelected)
     }
 }

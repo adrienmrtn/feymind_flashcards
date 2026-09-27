@@ -1,81 +1,66 @@
 import Foundation
 
-/// Les écrans du parcours d'accueil, dans l'ordre. Le parcours est strictement
-/// linéaire : aucun retour en arrière, on n'expose donc jamais d'étape précédente.
+/// Les écrans du parcours d'accueil, dans l'ordre.
 ///
-/// **Le parcours a changé de forme.** Il comptait vingt-huit écrans et racontait une
-/// méthode : la courbe de l'oubli, la répétition espacée, Feynman, trois écrans sur la
-/// préparation d'une épreuve, une démonstration d'import. C'était une leçon avant le
-/// produit. Le nouveau montre ce qu'on va faire ensemble en cinq écrans, puis pose les
-/// questions dont les réponses servent vraiment à quelque chose.
+/// **Le parcours est un quiz, et le quiz est le produit.** Les apps qui convertissent
+/// (Cal AI, Coconote, Quizlet) posent vingt questions avant de montrer un prix, et chaque
+/// question a la même forme : un titre en gras, trois à cinq cartes grises, un bouton
+/// noir. Entre les questions, des écrans de preuve : un chiffre en couleur dans une phrase
+/// noire, un graphe à deux courbes, une carte d'avis. L'élève lit parce qu'on parle de lui,
+/// et il arrive au compte, puis à l'offre, avec un plan qui porte ses chiffres.
 ///
-/// Ce qui a disparu, et pourquoi :
+/// Quatre blocs :
 ///
-/// - **La courbe de l'oubli, le graphe de rétention, Feynman, les résultats.** Quatre
-///   écrans pour convaincre que la méthode marche, avant d'avoir montré une seule fois ce
-///   que l'app fait. On convainc en faisant.
-/// - **La démonstration en trois écrans** (déposer, ficher, réviser). Elle rejouait le
-///   produit au ralenti pendant vingt secondes. Les écrans 2 à 4 disent la même chose en
-///   trois phrases, et le vrai import est à quatre écrans de là.
-/// - **Les trois écrans sur l'épreuve.** Ils annonçaient un plan, des examens blancs et un
-///   relevé des faiblesses. C'est une brochure : ces choses se découvrent dans un deck.
-/// - **L'écran des jours de repos.** La réponse ne sert plus à rien : le plan ne retire plus
-///   de jours de sa fenêtre — voir `DeckPace`. Une question dont la réponse n'est lue par
-///   personne est pire qu'une question absente.
-/// - **L'établissement.** Il servait une preuve sociale locale qu'on ne tenait pas.
+/// 1. **L'accroche** : le produit en mouvement, la note, où on l'a vu.
+/// 2. **Le quiz**, avec les preuves intercalées : pays, niveau, matières, d'où il vient,
+///    ce qu'il a essayé, son objectif, ses deux moyennes, son temps, ce qui le bloque, sa
+///    prochaine échéance, sa méthode, son prénom.
+/// 3. **La construction** : merci, le plan se calcule, le plan est prêt.
+/// 4. **Le compte et les rappels**, puis l'essai et le paywall, inchangés.
 ///
-/// Ce qui est arrivé :
-///
-/// - **Les cinq écrans d'ouverture**, qui disent le parcours réel : tu déposes, tu poses tes
-///   dates, ça devient des fiches et des cartes, et voilà ce qu'il y a autour.
-/// - **Le prénom, puis « enchanté ».** C'est le premier moment où l'app s'adresse à
-///   quelqu'un plutôt qu'à un utilisateur, et il coûte deux écrans.
-/// - **La filière et l'année**, à la place du palier unique. « Lycée » ne dit pas ce qu'on
-///   étudie : un terminale STMG et un terminale générale n'ont ni les mêmes matières ni la
-///   même épreuve. La question ne se pose qu'aux pays décrits assez finement pour qu'elle
-///   ait de vraies réponses (voir `SchoolSystem`) ; ailleurs, le palier large reste.
-///
-/// **Le pays passe avant la filière**, et la filière avant l'année : chacune décide des
-/// réponses de la suivante. La langue se déduit du pays, et ne se demande pas.
-///
-/// La fin du parcours garde sa progression, et elle est délibérée : le parcours vient d'être
-/// construit sous les yeux (`personalizing`), on demande un compte (`signIn`), d'autres l'ont
-/// déjà suivi (`socialProof`), et c'est maintenant à cet étudiant-là de s'y mettre
-/// (`yourTurn`).
+/// **Le pays passe avant le niveau**, et le niveau avant les matières : chacun décide des
+/// réponses du suivant. La langue se déduit du pays, et ne se demande pas.
 enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
-    // Ce qu'on va faire ensemble, en six écrans.
-    case howItWorks
-    /// La mascotte se présente et annonce la suite. Voir `ShowMeStepView`.
-    case showMe
-    case upload
-    case dates
-    case turnsInto
-    case smartFeatures
+    // L'accroche.
+    case hookVideo
+    case hookRating
+    case hookPress
 
-    // À qui on parle.
-    case name
-    case greeting
-
-    // Où il en est.
+    // Le quiz.
     case country
+    /// Le palier large, pour les pays dont on ne connaît pas les filières.
+    case level
+    /// La filière puis l'année, pour les pays décrits en détail.
     case schoolType
     case year
+    case subjects
+    case source
+    case triedApps
     case goal
-
-    // Où il veut aller.
     case currentAverage
     case targetAverage
-    case together
+    case proofRealistic
+    case dailyTime
+    case proofRetention
+    case blocker
+    case proofTwice
+    case nextExam
+    case proofCurve
+    case method
+    case proofStudents
+    case name
+    case proofKeep
 
-    // Ce qui l'aidera à s'y tenir.
-    case notifications
-    case subjects
+    // La construction.
+    case thanks
+    case building
+    case planReady
 
-    // La construction, puis le compte, puis l'offre.
-    case personalizing
+    // Le compte et les rappels.
     case signIn
-    case socialProof
-    case yourTurn
+    case notifications
+
+    // L'essai, puis l'offre. Inchangés.
     case trialOffer
     case trialReminder
     case paywall
@@ -96,53 +81,39 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         OnboardingStep(rawValue: rawValue + 1)
     }
 
-    /// **L'écran de la filière et celui de l'année se sautent** dans les pays dont on ne
-    /// connaît que les paliers larges.
+    /// **Chaque pays voit une seule des deux questions de niveau.**
     ///
-    /// Inventer des filières pour un pays qu'on ne décrit pas produirait des réponses
-    /// fausses, et un élève à qui l'on propose une année qui n'existe pas chez lui comprend
-    /// tout de suite que l'app n'a pas été écrite pour lui. Le palier large reste alors la
-    /// seule chose qu'on demande, et il suffit à la génération.
+    /// Les pays décrits en détail (`SchoolSystem`) ont une filière et une année, et le
+    /// palier large s'en déduit. Les autres n'ont que le palier large : leur proposer une
+    /// filière serait inventer des réponses fausses, et un élève à qui l'on propose une
+    /// année qui n'existe pas chez lui comprend tout de suite que l'app n'a pas été écrite
+    /// pour lui.
     func isSkipped(for country: SchoolingCountry) -> Bool {
         switch self {
         case .schoolType, .year: !SchoolSystem.isDetailed(country)
+        case .level: SchoolSystem.isDetailed(country)
         default: false
         }
     }
 
-    /// Fond de l'étape, et seule source de vérité à ce sujet : l'écran s'y peint, mais
-    /// aussi le bandeau qui porte la jauge et la zone d'état au-dessus. Une bande claire
-    /// posée au-dessus d'un écran sombre se lit comme un bug d'affichage.
-    ///
-    /// Deux écrans seulement quittent le blanc : l'ouverture et le passage de relais.
-    /// L'attente y est revenue — un lavis violet tenu cinq secondes derrière une mascotte
-    /// violette la faisait disparaître. La variété d'un parcours ne vient pas de ses fonds,
-    /// elle vient de ce qu'il y a à regarder.
-    var surface: OnboardingSurface {
+    /// Vrai pour les écrans qui posent une question. Ce sont les seuls où l'on revient.
+    var isQuestion: Bool {
         switch self {
-        // L'accroche est sur blanc : la mascotte et ses tuiles pastel y ont toute la place,
-        // et le crème teinté de vert se battait avec la tuile verte.
-        case .yourTurn: .ink
-        default: .canvas
+        case .country, .level, .schoolType, .year, .subjects, .source, .triedApps, .goal,
+             .currentAverage, .targetAverage, .dailyTime, .blocker, .nextExam, .method, .name:
+            true
+        default:
+            false
         }
     }
 
-    /// **L'humeur de la mascotte, écran par écran.**
+    /// Fond de l'étape, et seule source de vérité à ce sujet.
     ///
-    /// C'est la réaction du personnage à ce qu'il est en train de demander : il salue quand
-    /// il demande un prénom, penche la tête quand il demande où l'on étudie, réfléchit
-    /// devant la moyenne, lit quand on choisit ses matières, se redresse quand c'est fait.
-    /// Une même tête sur vingt écrans n'est pas un personnage, c'est une icône.
-    var mascotMood: MicaboMascot.Mood {
-        switch self {
-        case .name: .waving
-        case .greeting, .together, .socialProof, .yourTurn: .proud
-        case .country, .schoolType, .goal, .targetAverage: .curious
-        case .currentAverage, .personalizing: .thinking
-        case .subjects: .reading
-        case .trialOffer, .trialReminder, .paywall: .celebrating
-        default: .happy
-        }
+    /// **Tout est blanc.** La variété d'un parcours ne vient pas de ses fonds, elle vient
+    /// de ce qu'il y a à regarder ; et un parcours qui change de couleur à chaque écran se
+    /// lit comme un carrousel.
+    var surface: OnboardingSurface {
+        .canvas
     }
 
     /// Position de l'étape dans la jauge, entre 0 et 1.

@@ -5,11 +5,10 @@ import SwiftUI
 /// dans `OnboardingPreferences` : quitter l'app en cours de route ne les perd pas.
 @Observable
 final class OnboardingModel {
-    private(set) var step: OnboardingStep = .howItWorks
+    private(set) var step: OnboardingStep = .hookVideo
 
-    /// **Le prénom, et rien d'autre.** Il ne sert qu'à s'adresser à quelqu'un — l'écran
-    /// suivant dit « enchanté », et le parcours cesse de parler à un utilisateur. C'est une
-    /// raison suffisante, et c'est la seule : rien d'autre ne le lit.
+    /// **Le prénom, et rien d'autre.** Il ne sert qu'à s'adresser à quelqu'un : l'écran
+    /// « merci » et l'accueil. Il ne part pas au modèle, il ne part pas au serveur.
     var displayName: String = ""
 
     /// Le palier d'études, dans les termes du pays choisi. Il n'est proposé qu'après le
@@ -70,6 +69,61 @@ final class OnboardingModel {
             Analytics.track(.onboardingAnswer, ["field": "targetScore", "value": .number(Double(targetScore))])
         }
     }
+
+    // MARK: Les questions du quiz
+
+    /// **D'où il vient.** La réponse ne change rien au plan : elle sert la mesure, et elle
+    /// fait lire — c'est la question la plus facile du parcours, posée juste après les
+    /// matières pour relancer.
+    var source: OnboardingSource? {
+        didSet {
+            guard let source, source != oldValue else { return }
+            Analytics.track(.onboardingAnswer, ["field": "source", "value": .text(source.rawValue)])
+        }
+    }
+
+    /// A-t-il déjà essayé une app de révision.
+    var triedApps: Bool? {
+        didSet {
+            guard let triedApps, triedApps != oldValue else { return }
+            Analytics.track(.onboardingAnswer, ["field": "triedApps", "value": .text(triedApps ? "yes" : "no")])
+        }
+    }
+
+    /// Le temps qu'il se donne par jour, en minutes. C'est de lui que `DailyLoad` tire le
+    /// nombre de cartes du plan.
+    var dailyMinutes: Int? {
+        didSet {
+            guard let dailyMinutes, dailyMinutes != oldValue else { return }
+            Analytics.track(.onboardingAnswer, ["field": "dailyMinutes", "value": .number(Double(dailyMinutes))])
+        }
+    }
+
+    /// Ce qui le bloque quand il révise.
+    var blocker: OnboardingBlocker? {
+        didSet {
+            guard let blocker, blocker != oldValue else { return }
+            Analytics.track(.onboardingAnswer, ["field": "blocker", "value": .text(blocker.rawValue)])
+        }
+    }
+
+    /// Sa prochaine échéance, en horizon plutôt qu'en date : personne ne connaît la date de
+    /// son prochain contrôle au troisième écran d'une app.
+    var examHorizon: OnboardingExamHorizon? {
+        didSet {
+            guard let examHorizon, examHorizon != oldValue else { return }
+            Analytics.track(.onboardingAnswer, ["field": "examHorizon", "value": .text(examHorizon.rawValue)])
+        }
+    }
+
+    /// Comment il révise aujourd'hui.
+    var method: OnboardingMethod? {
+        didSet {
+            guard let method, method != oldValue else { return }
+            Analytics.track(.onboardingAnswer, ["field": "method", "value": .text(method.rawValue)])
+        }
+    }
+
     /// Le registre de rédaction, seule forme sous laquelle le niveau sort du parcours.
     var level: StudyLevel? {
         stage?.level
@@ -109,18 +163,25 @@ final class OnboardingModel {
         country != .other || customCountry != nil
     }
 
-    /// **Le rythme quotidien ne se demande plus ici.** L'écran qui le posait, et celui qui
-    /// en tirait une projection sur un an, ont été retirés : personne ne connaît son rythme
-    /// avant d'avoir essayé, et la promesse chiffrée reposait sur une réponse au hasard. Le
-    /// plafond garde sa valeur par défaut et se règle dans les Réglages.
-
     /// Les filières proposées, vides quand le pays n'est pas décrit en détail.
     var tracks: [SchoolTrack] {
         SchoolSystem.tracks(for: country)
     }
 
-    /// Le parcours est une file droite : chaque écran a quelque chose à demander ou à
-    /// montrer, donc aucun ne se saute.
+    // MARK: Ce que le plan affiche
+
+    /// Le nombre de cartes par jour que le plan annonce, tiré du temps choisi.
+    var cardsPerDay: Int {
+        DailyLoad.newCardsPerDay(dailyMinutes: dailyMinutes ?? OnboardingPreferences.dailyMinutes)
+    }
+
+    /// Le nombre de jours avant la prochaine échéance, tel que le plan l'affiche.
+    var daysToExam: Int {
+        (examHorizon ?? .term).days
+    }
+
+    // MARK: Avancer, revenir
+
     func advance() {
         persist()
         var next = step.next
@@ -135,11 +196,11 @@ final class OnboardingModel {
 
     /// **Revenir d'un écran.**
     ///
-    /// Le parcours était strictement linéaire : une réponse donnée ne se corrigeait plus. Ça
-    /// tient sur une démonstration qu'on traverse ; ça ne tient pas sur onze questions dont
-    /// les réponses décident du niveau des cours générés. Quelqu'un qui se trompe de pays au
-    /// troisième écran découvrait son erreur douze écrans plus tard et n'avait que la
-    /// réinstallation pour la corriger.
+    /// Une réponse donnée doit pouvoir se corriger : quelqu'un qui se trompe de pays au
+    /// premier écran du quiz découvrirait son erreur douze écrans plus tard. On revient
+    /// jusqu'au pays, et pas plus loin ; on ne revient pas après le prénom, parce que tout
+    /// ce qui suit est un résultat, un compte ou une offre, et que rien de tout ça ne se
+    /// défait.
     ///
     /// Les écrans sautés le restent, dans ce sens comme dans l'autre : on ne fait pas
     /// apparaître au retour une question qu'on n'a pas posée à l'aller.
@@ -148,18 +209,14 @@ final class OnboardingModel {
         while let candidate = previous, candidate.isSkipped(for: country) {
             previous = OnboardingStep(rawValue: candidate.rawValue - 1)
         }
-        guard let previous, previous.rawValue >= OnboardingStep.name.rawValue else { return }
+        guard let previous, previous.rawValue >= OnboardingStep.country.rawValue else { return }
         step = previous
     }
 
     /// Vrai quand il y a un écran en arrière qui accepte qu'on y revienne.
-    ///
-    /// Les cinq écrans d'ouverture et tout ce qui suit la construction du parcours n'en
-    /// sont pas : une démonstration ne se corrige pas, et revenir sur un compte créé ou un
-    /// essai lancé ne défait rien.
     var canGoBack: Bool {
-        step.rawValue > OnboardingStep.name.rawValue
-            && step.rawValue <= OnboardingStep.subjects.rawValue
+        step.rawValue > OnboardingStep.country.rawValue
+            && step.rawValue <= OnboardingStep.name.rawValue
     }
 
     /// Recopie les réponses dans les réglages à chaque changement d'écran :
@@ -175,6 +232,146 @@ final class OnboardingModel {
         OnboardingPreferences.displayName = displayName.nilIfBlank
         OnboardingPreferences.schoolTrackID = track?.id
         OnboardingPreferences.schoolYearID = year?.id
+        if let dailyMinutes { OnboardingPreferences.dailyMinutes = dailyMinutes }
+        OnboardingPreferences.source = source?.rawValue
+        OnboardingPreferences.triedApps = triedApps
+        OnboardingPreferences.blocker = blocker?.rawValue
+        OnboardingPreferences.examHorizon = examHorizon?.rawValue
+        OnboardingPreferences.method = method?.rawValue
     }
 }
 
+// MARK: - Les réponses du quiz
+
+/// D'où l'élève a entendu parler de Micabo.
+enum OnboardingSource: String, CaseIterable, Identifiable {
+    case tiktok
+    case instagram
+    case youtube
+    case friend
+    case appStore
+    case other
+
+    var id: String { rawValue }
+
+    var emoji: String {
+        switch self {
+        case .tiktok: "🎵"
+        case .instagram: "📸"
+        case .youtube: "▶️"
+        case .friend: "💬"
+        case .appStore: "🍎"
+        case .other: "✏️"
+        }
+    }
+}
+
+/// Ce qui bloque quand il révise.
+enum OnboardingBlocker: String, CaseIterable, Identifiable {
+    case forget
+    case procrastinate
+    case tooMuch
+    case noMethod
+    case stress
+
+    var id: String { rawValue }
+
+    var emoji: String {
+        switch self {
+        case .forget: "🫠"
+        case .procrastinate: "⏳"
+        case .tooMuch: "📚"
+        case .noMethod: "🧭"
+        case .stress: "😰"
+        }
+    }
+}
+
+/// La prochaine échéance, en horizon. `days` est ce que le plan affiche.
+enum OnboardingExamHorizon: String, CaseIterable, Identifiable {
+    case week
+    case month
+    case term
+    case yearEnd
+    case none
+
+    var id: String { rawValue }
+
+    var emoji: String {
+        switch self {
+        case .week: "🔥"
+        case .month: "📅"
+        case .term: "🗓️"
+        case .yearEnd: "🎓"
+        case .none: "🧘"
+        }
+    }
+
+    /// Le compte à rebours affiché sur le plan. Un horizon n'a pas de date : ce sont des
+    /// ordres de grandeur, et ils sont écrits pour se lire comme tels.
+    var days: Int {
+        switch self {
+        case .week: 6
+        case .month: 24
+        case .term: 68
+        case .yearEnd: OnboardingExamHorizon.daysToJune
+        case .none: 90
+        }
+    }
+
+    /// Les jours jusqu'au premier juin qui vient : la fin d'année scolaire, pour à peu près
+    /// tout le monde dans les pays décrits.
+    private static var daysToJune: Int {
+        let calendar = MicaboCalendar.shared
+        let now = Date()
+        let year = calendar.component(.year, from: now)
+        let month = calendar.component(.month, from: now)
+        var components = DateComponents()
+        components.year = month >= 6 ? year + 1 : year
+        components.month = 6
+        components.day = 1
+        guard let june = calendar.date(from: components) else { return 180 }
+        let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: june).day ?? 180
+        return max(1, days)
+    }
+}
+
+/// Comment il révise aujourd'hui.
+enum OnboardingMethod: String, CaseIterable, Identifiable {
+    case reread
+    case rewrite
+    case flashcards
+    case lastMinute
+    case notAtAll
+
+    var id: String { rawValue }
+
+    var emoji: String {
+        switch self {
+        case .reread: "👀"
+        case .rewrite: "✍️"
+        case .flashcards: "🃏"
+        case .lastMinute: "🌙"
+        case .notAtAll: "🤷"
+        }
+    }
+}
+
+/// Le temps par jour, en minutes. Quatre crans, et le nombre de cartes qui va avec.
+enum OnboardingDailyTime: Int, CaseIterable, Identifiable {
+    case five = 5
+    case ten = 10
+    case fifteen = 15
+    case thirty = 30
+
+    var id: Int { rawValue }
+
+    var emoji: String {
+        switch self {
+        case .five: "☕️"
+        case .ten: "🚌"
+        case .fifteen: "📖"
+        case .thirty: "🎯"
+        }
+    }
+}

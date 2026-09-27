@@ -73,7 +73,7 @@ final class I18nTests: XCTestCase {
         XCTAssertEqual(Set(IosI18nCatalogs.es.keys), french)
         XCTAssertEqual(Set(IosI18nCatalogs.tr.keys), french)
         XCTAssertTrue(french.contains("ios.welcomeTitle"))
-        XCTAssertTrue(french.contains("ios.yourTurn"))
+        XCTAssertTrue(french.contains("ios.hook.title"))
         XCTAssertTrue(french.contains("ios.appLanguage"))
         XCTAssertTrue(french.contains("ios.appearance"))
         XCTAssertTrue(french.contains("ios.appearanceTwilight"))
@@ -108,14 +108,6 @@ final class I18nTests: XCTestCase {
         XCTAssertEqual(
             L10n.t("demo.legendWith", locale: .tr).contains("Micabo"),
             true
-        )
-        XCTAssertEqual(
-            RetentionCurve.intervalLabel(forDay: 7, locale: .de),
-            "7 T"
-        )
-        XCTAssertEqual(
-            RetentionCurve.intervalLabel(forDay: 3, locale: .tr),
-            "3 g"
         )
     }
 

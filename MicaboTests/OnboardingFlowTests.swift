@@ -18,67 +18,169 @@ final class OnboardingFlowTests: XCTestCase {
 
     // MARK: - Ouverture
 
-    /// **Le pays passe avant le niveau.** Ce sont les paliers du pays choisi qui deviennent
-    /// les réponses de « tu en es où ? » : dans l'autre sens, il fallait proposer les mêmes
-    /// sept réponses françaises à un Américain, qui n'en avait aucune de juste.
-    func testTheCountryIsAskedBeforeTheLevel() {
+    /// **Trois écrans d'accroche, puis le pays.** Le produit en mouvement, la note, où on
+    /// l'a vu : rien n'est demandé avant le quatrième écran, et le pays vient d'abord parce
+    /// que c'est lui qui commande les réponses de tout le reste.
+    func testTheHookComesBeforeTheFirstQuestion() {
         let model = OnboardingModel()
-        XCTAssertEqual(model.step, .welcome)
+        XCTAssertEqual(model.step, .hookVideo)
 
         model.advance()
-        XCTAssertEqual(model.step, .country, "Le pays vient d'abord : il commande les réponses du niveau")
+        XCTAssertEqual(model.step, .hookRating)
 
         model.advance()
-        XCTAssertEqual(model.step, .level)
+        XCTAssertEqual(model.step, .hookPress)
 
         model.advance()
-        XCTAssertEqual(model.step, .personalizeIntro)
+        XCTAssertEqual(model.step, .country, "Le pays est la première question")
     }
 
-    // MARK: - Démonstration
+    /// Dans un pays décrit en détail, on demande la filière puis l'année, jamais le palier
+    /// large ; ailleurs, le palier large et rien d'autre. Chaque élève voit une seule des
+    /// deux questions de niveau.
+    func testEachCountrySeesExactlyOneLevelQuestion() {
+        let detailed = OnboardingModel()
+        detailed.select(country: .fr)
+        while detailed.step != .country { detailed.advance() }
+        detailed.advance()
+        XCTAssertEqual(detailed.step, .schoolType, "La France demande la filière")
+        detailed.advance()
+        XCTAssertEqual(detailed.step, .year)
+        detailed.advance()
+        XCTAssertEqual(detailed.step, .subjects)
 
-    /// Les trois écrans de démonstration suivent le parcours réel de l'app : on dépose, le
-    /// cours est fiché, la fiche se décompose en cartes. Une démonstration qui montrerait
-    /// autre chose que le produit serait une promesse à tenir deux fois.
-    func testDemoFollowsTheRealPipeline() {
-        let model = self.model(advancingTo: .demoImport)
+        let generic = OnboardingModel()
+        generic.select(country: .other)
+        while generic.step != .country { generic.advance() }
+        generic.advance()
+        XCTAssertEqual(generic.step, .level, "Un pays générique demande le palier large")
+        generic.advance()
+        XCTAssertEqual(generic.step, .subjects)
+
+        XCTAssertEqual(OnboardingStep.allCases.filter { $0.isSkipped(for: .fr) }, [.level])
+        XCTAssertEqual(OnboardingStep.allCases.filter { $0.isSkipped(for: .other) }, [.schoolType, .year])
+    }
+
+    // MARK: - Le quiz et ses preuves
+
+    /// **Les preuves sont intercalées, et chacune suit la question qui la prépare** : la
+    /// moyenne visée avant « c'est réaliste », ce qui bloque avant la rétention, l'échéance
+    /// avant la courbe, la méthode avant les avis.
+    func testEachProofFollowsTheQuestionThatSetsItUp() {
+        let model = self.model(advancingTo: .targetAverage)
 
         model.advance()
-        XCTAssertEqual(model.step, .demoSheet, "Le cours déposé est d'abord mis en fiche")
-
+        XCTAssertEqual(model.step, .proofRealistic, "L'écart qu'on vient de se fixer, puis « c'est réaliste »")
         model.advance()
-        XCTAssertEqual(model.step, .demoReview, "La fiche se découpe ensuite en révisions")
-
+        XCTAssertEqual(model.step, .dailyTime)
         model.advance()
-        XCTAssertEqual(model.step, .examPromise, "Le mode examen vient après la démonstration")
+        XCTAssertEqual(model.step, .proofRetention)
+        model.advance()
+        XCTAssertEqual(model.step, .blocker)
+        model.advance()
+        XCTAssertEqual(model.step, .proofTwice)
+        model.advance()
+        XCTAssertEqual(model.step, .nextExam)
+        model.advance()
+        XCTAssertEqual(model.step, .proofCurve, "L'échéance qu'on vient de donner, puis la courbe jusqu'à elle")
+        model.advance()
+        XCTAssertEqual(model.step, .method)
+        model.advance()
+        XCTAssertEqual(model.step, .proofStudents)
+        model.advance()
+        XCTAssertEqual(model.step, .name, "Le prénom est la dernière question")
+        model.advance()
+        XCTAssertEqual(model.step, .proofKeep)
+        model.advance()
+        XCTAssertEqual(model.step, .thanks, "Après la dernière preuve, on rend")
+    }
+
+    /// Les quinze questions sont bien des questions, et rien d'autre ne l'est : c'est ce
+    /// qui décide où l'on peut revenir.
+    func testTheQuestionsAreExactlyTheScreensThatAsk() {
+        let questions = OnboardingStep.allCases.filter(\.isQuestion)
+        XCTAssertEqual(questions, [
+            .country, .level, .schoolType, .year, .subjects, .source, .triedApps, .goal,
+            .currentAverage, .targetAverage, .dailyTime, .blocker, .nextExam, .method, .name,
+        ])
+        XCTAssertEqual(questions.count, 15)
+    }
+
+    /// Les réponses du quiz sont écrites au changement d'écran, et le temps choisi
+    /// devient le rythme que `DailyLoad` lit.
+    func testTheQuizAnswersArePersistedOnAdvance() {
+        OnboardingPreferences.reset()
+        defer { OnboardingPreferences.reset() }
+
+        let model = OnboardingModel()
+        model.source = .tiktok
+        model.triedApps = true
+        model.dailyMinutes = 10
+        model.blocker = .forget
+        model.examHorizon = .month
+        model.method = .reread
+        model.advance()
+
+        XCTAssertEqual(OnboardingPreferences.source, "tiktok")
+        XCTAssertEqual(OnboardingPreferences.triedApps, true)
+        XCTAssertEqual(OnboardingPreferences.dailyMinutes, 10)
+        XCTAssertEqual(OnboardingPreferences.blocker, "forget")
+        XCTAssertEqual(OnboardingPreferences.examHorizon, "month")
+        XCTAssertEqual(OnboardingPreferences.method, "reread")
+        XCTAssertEqual(model.cardsPerDay, DailyLoad.newCardsPerDay(dailyMinutes: 10))
+    }
+
+    /// Un horizon a toujours un compte à rebours positif, et la fin d'année tombe devant.
+    func testEveryExamHorizonIsAhead() {
+        for horizon in OnboardingExamHorizon.allCases {
+            XCTAssertGreaterThan(horizon.days, 0, "\(horizon) doit être devant")
+            XCTAssertFalse(horizon.emoji.isEmpty)
+        }
+        XCTAssertLessThan(OnboardingExamHorizon.week.days, OnboardingExamHorizon.month.days)
+        XCTAssertLessThan(OnboardingExamHorizon.month.days, OnboardingExamHorizon.term.days)
+    }
+
+    /// Les chiffres de preuve s'écrivent dans la langue de l'élève.
+    func testProofFiguresAreFormattedForTheLocale() {
+        XCTAssertEqual(OnboardingProofFigures.text(12_000, locale: .en), "12,000")
+        XCTAssertEqual(OnboardingProofFigures.text(4.8, locale: .fr), "4,8")
+        XCTAssertEqual(OnboardingProofFigures.text(4.8, locale: .en), "4.8")
     }
 
     // MARK: - Sortie du parcours
 
-    /// La fin du parcours a un ordre, et il est délibéré : on construit le parcours sous les
-    /// yeux, on montre que d'autres l'ont suivi, on passe la main à l'étudiant, et c'est
-    /// seulement là qu'on lui demande un compte. Demander de se connecter plus tôt, c'est
-    /// demander un compte pour une app qu'on n'a pas encore vue fonctionner.
-    func testTheAccountIsAskedOnlyOnceTheJourneyIsBuilt() {
-        let model = self.model(advancingTo: .personalizing)
+    /// La fin du parcours a un ordre, et il est délibéré : merci, le plan se calcule, le
+    /// plan est prêt, et c'est seulement là qu'on demande un compte — pour le garder. Puis
+    /// les rappels, l'essai, et le paywall, inchangés.
+    func testTheAccountIsAskedOnlyOnceThePlanIsBuilt() {
+        let model = self.model(advancingTo: .thanks)
 
         model.advance()
-        XCTAssertEqual(model.step, .socialProof, "La preuve sociale arrive sur un parcours déjà construit")
+        XCTAssertEqual(model.step, .building)
 
         model.advance()
-        XCTAssertEqual(model.step, .yourTurn, "Puis on passe la main à l'étudiant")
+        XCTAssertEqual(model.step, .planReady, "On montre ce que le compte va garder")
 
         model.advance()
         XCTAssertEqual(model.step, .signIn, "Le compte n'est demandé qu'à ce moment-là")
 
         model.advance()
-        XCTAssertEqual(model.step, .trialOffer, "L'offre vient après la connexion")
+        XCTAssertEqual(model.step, .notifications)
+
+        model.advance()
+        XCTAssertEqual(model.step, .trialOffer, "L'essai vient après les rappels")
+
+        model.advance()
+        XCTAssertEqual(model.step, .trialReminder)
+
+        model.advance()
+        XCTAssertEqual(model.step, .paywall)
     }
 
-    /// L'écran de génération du parcours ne doit pas passer plus vite qu'on ne le lit : un
+    /// L'écran de calcul du plan ne doit pas passer plus vite qu'on ne le lit : un
     /// chargement qui s'évapore en une seconde n'a rien généré aux yeux de personne.
-    func testTheGenerationScreenLastsLongEnoughToBeRead() {
-        XCTAssertGreaterThanOrEqual(PersonalizingStepView.duration, 5)
+    func testTheBuildScreenLastsLongEnoughToBeRead() {
+        XCTAssertGreaterThanOrEqual(BuildingStepView.duration, 5)
     }
 
     /// Apple et Google restent les deux fournisseurs OAuth. Le courriel n'est pas un
@@ -104,86 +206,68 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(AccountGate.skippedKey, "micabo.auth.skipped")
     }
 
-    // MARK: - Rapport à l'oubli
+    // MARK: - Revenir
 
-    /// Quatre réponses, et non plus un oui et un non : les deux réponses du milieu sont
-    /// celles où la plupart des étudiants se reconnaissent, et ce sont les plus utiles.
-    func testForgettingHasFourAnswers() {
-        XCTAssertEqual(ForgettingHabit.allCases, [.always, .withMethod, .sometimes, .never])
+    /// On revient jusqu'au pays, et pas plus loin ; on ne revient pas après le prénom.
+    func testGoingBackStopsAtTheCountryAndAfterTheName() {
+        let model = OnboardingModel()
+        model.select(country: .fr)
 
-        for habit in ForgettingHabit.allCases {
-            XCTAssertFalse(habit.title.isEmpty, "\(habit) doit avoir un libellé")
-        }
-    }
+        XCTAssertFalse(model.canGoBack, "L'accroche ne se défait pas")
 
-    /// Les quatre réponses se ramènent au oui ou non de la clé historique : les deux qui
-    /// commencent par « oui » disent qu'on oublie, les deux autres non.
-    func testForgettingAnswersFoldBackToTheLegacyYesOrNo() {
-        XCTAssertTrue(ForgettingHabit.always.forgetsOften)
-        XCTAssertTrue(ForgettingHabit.withMethod.forgetsOften)
-        XCTAssertFalse(ForgettingHabit.sometimes.forgetsOften)
-        XCTAssertFalse(ForgettingHabit.never.forgetsOften)
-    }
+        while model.step != .schoolType { model.advance() }
+        XCTAssertTrue(model.canGoBack)
+        model.goBack()
+        XCTAssertEqual(model.step, .country)
+        XCTAssertFalse(model.canGoBack, "Le pays est le premier écran où l'on revient")
+        model.goBack()
+        XCTAssertEqual(model.step, .country, "On ne recule pas dans l'accroche")
 
-    /// La réponse détaillée est écrite au changement d'écran, et la clé historique reste
-    /// tenue à jour pour les appareils qui ont fait le parcours à deux réponses.
-    func testForgettingIsPersistedOnAdvance() {
-        OnboardingPreferences.reset()
-        defer { OnboardingPreferences.reset() }
-
-        let model = self.model(advancingTo: .forgetting)
-        model.forgetting = .withMethod
+        while model.step != .name { model.advance() }
+        XCTAssertTrue(model.canGoBack)
         model.advance()
+        XCTAssertEqual(model.step, .proofKeep)
+        XCTAssertFalse(model.canGoBack, "Après le prénom, rien ne se défait")
+    }
 
-        XCTAssertEqual(OnboardingPreferences.forgetting, .withMethod)
-        XCTAssertEqual(OnboardingPreferences.forgetsOften, true)
+    /// Revenir ne fait pas apparaître une question sautée à l'aller.
+    func testGoingBackKeepsSkippedScreensSkipped() {
+        let model = OnboardingModel()
+        model.select(country: .other)
+        while model.step != .subjects { model.advance() }
+        model.goBack()
+        XCTAssertEqual(model.step, .level, "Le palier large, pas l'année d'une filière inexistante")
+        model.goBack()
+        XCTAssertEqual(model.step, .country)
     }
 
     // MARK: - Écrans retirés
 
-    /// Ces écrans ont été retirés du parcours : la génération simulée, qui faisait patienter
-    /// devant un travail invisible, la courbe de l'oubli prise à contre-pied, qui répétait
-    /// l'écran précédent, et « on a fait Micabo pour nous », qui racontait d'où venait l'app
-    /// à quelqu'un qui ne l'a pas encore vue fonctionner.
+    /// Ces écrans ont été retirés du parcours, et ils ne doivent pas revenir sous un autre
+    /// nom : la mascotte qui se présentait, la démonstration, « enchanté », « on va t'aider »,
+    /// la preuve sociale seule, le passage de relais sur fond noir.
     func testRemovedScreensAreGoneFromTheFlow() {
         let names = OnboardingStep.allCases.map(String.init(describing:))
 
-        XCTAssertFalse(names.contains("demoWrite"))
-        XCTAssertFalse(names.contains("science"))
-        XCTAssertFalse(names.contains("schoolPeers"))
-        XCTAssertFalse(names.contains("builtByStudents"))
-        // L'écran de la langue annonçait « Micabo parle français » avec une seule réponse,
-        // cochée d'avance : la langue se déduit du pays de scolarisation.
-        XCTAssertFalse(names.contains("language"))
-        // « On te rappelle au bon moment » ne demandait rien au système : il notait une
-        // intention que personne ne lisait, juste avant l'écran qui construit le parcours.
-        XCTAssertFalse(names.contains("notifications"))
-        // Le rythme quotidien et la projection sur un an : deux écrans pour une seule idée,
-        // et une idée bâtie sur une réponse que personne ne peut donner avant d'avoir
-        // essayé. Le plafond de cartes neuves garde sa valeur par défaut.
-        XCTAssertFalse(names.contains("dailyTime"))
-        XCTAssertFalse(names.contains("projection"))
+        for name in ["howItWorks", "showMe", "upload", "dates", "turnsInto", "smartFeatures",
+                     "greeting", "together", "personalizing", "socialProof", "yourTurn",
+                     "welcome", "demoImport", "forgetting", "school", "language", "projection"] {
+            XCTAssertFalse(names.contains(name), "\(name) a été retiré du parcours")
+        }
     }
 
-    /// Le rythme et la projection partis, l'établissement mène directement à la
-    /// construction du parcours : c'est la dernière question, et la suite est le résultat.
-    func testTheLastQuestionLeadsStraightToTheBuild() {
-        let model = self.model(advancingTo: .school)
-
-        model.advance()
-        XCTAssertEqual(model.step, .personalizing)
+    /// **Le parcours ne raccourcit pas.** Vingt-quatre écrans avant, jamais moins après.
+    func testTheFlowIsAtLeastAsLongAsBefore() {
+        XCTAssertGreaterThanOrEqual(OnboardingStep.allCases.count, 24)
     }
 
-    /// Les clés des écrans et demandes retirés restent listées : sur un appareil qui a fait
-    /// l'ancien parcours, la remise à zéro doit encore savoir les effacer.
+    /// Les clés des demandes retirées restent listées : sur un appareil qui a fait l'ancien
+    /// parcours, la remise à zéro doit encore savoir les effacer.
     func testTheRetiredOnboardingKeysAreStillErased() {
         OnboardingPreferences.reset()
         defer { OnboardingPreferences.reset() }
 
-        let keys = [
-            OnboardingPreferences.Key.retiredNotificationsOptIn,
-            OnboardingPreferences.Key.retiredRatingAsked,
-        ]
+        let keys = [OnboardingPreferences.Key.retiredNotificationsOptIn]
         for key in keys {
             UserDefaults.standard.set(true, forKey: key)
         }
@@ -195,13 +279,16 @@ final class OnboardingFlowTests: XCTestCase {
         }
     }
 
-    /// Le parcours est une file droite : aucun écran ne se saute, donc avancer depuis
-    /// n'importe quelle étape mène toujours à la suivante.
-    func testNoStepIsEverSkipped() {
-        for step in OnboardingStep.allCases.dropLast() {
-            let model = self.model(advancingTo: step)
+    /// Dans un pays décrit en détail, seul le palier large se saute : avancer depuis
+    /// n'importe quelle autre étape mène toujours à la suivante.
+    func testNoOtherStepIsSkippedInADetailedCountry() {
+        for step in OnboardingStep.allCases.dropLast() where step != .level {
+            let model = OnboardingModel()
+            model.select(country: .fr)
+            while model.step != step { model.advance() }
             model.advance()
-            XCTAssertEqual(model.step, step.next, "\(step) doit mener directement à son suivant")
+            let expected = step.next == .level ? OnboardingStep.level.next : step.next
+            XCTAssertEqual(model.step, expected, "\(step) doit mener directement à son suivant")
         }
     }
 
@@ -214,23 +301,23 @@ final class OnboardingFlowTests: XCTestCase {
 
     // MARK: - Fond des écrans
 
-    /// Trois écrans seulement quittent le crème : la variété d'un parcours ne vient pas de
-    /// ses fonds.
-    ///
-    /// **Le noir ne sert plus qu'une fois**, au passage de relais. Ouvrir l'app sur un écran
-    /// entièrement noir posait le contraste maximal du parcours avant d'avoir rien à lire :
-    /// l'accroche est sur la sauge, un crème teinté de vert, et l'écran de génération sur le
-    /// menthe. Aucun des deux ne s'inverse — l'encre s'y lit mieux que le blanc.
-    func testOnlyOneScreenIsDarkAndItIsTheHandover() {
-        XCTAssertEqual(OnboardingStep.welcome.surface, .sage, "L'accroche n'est plus noire")
-        XCTAssertEqual(OnboardingStep.yourTurn.surface, .ink)
-        XCTAssertEqual(OnboardingStep.personalizing.surface, .accentSoft)
+    /// **Tout est blanc.** La variété d'un parcours ne vient pas de ses fonds.
+    func testEveryScreenIsWhite() {
+        for step in OnboardingStep.allCases {
+            XCTAssertEqual(step.surface, .canvas, "\(step) doit être sur blanc")
+            XCTAssertFalse(step.surface.isDark)
+        }
+    }
 
-        let dark = OnboardingStep.allCases.filter(\.surface.isDark)
-        XCTAssertEqual(dark, [.yourTurn], "Le passage de relais est le seul écran d'encre")
-
-        let coloured = OnboardingStep.allCases.filter { $0.surface != .canvas }
-        XCTAssertEqual(coloured, [.welcome, .personalizing, .yourTurn])
+    /// La jauge ne recule jamais et ne disparaît sur aucun écran.
+    func testTheProgressBarOnlyMovesForward() {
+        var last = 0.0
+        for step in OnboardingStep.allCases {
+            XCTAssertGreaterThan(step.progress, 0, "\(step) doit garder un filet visible")
+            XCTAssertGreaterThanOrEqual(step.progress, last, "\(step) fait reculer la jauge")
+            last = step.progress
+        }
+        XCTAssertEqual(OnboardingStep.paywall.progress, 1)
     }
 
     // MARK: - Niveau
@@ -241,7 +328,7 @@ final class OnboardingFlowTests: XCTestCase {
         OnboardingPreferences.reset()
         defer { OnboardingPreferences.reset() }
 
-        let model = self.model(advancingTo: .level)
+        let model = self.model(advancingTo: .country)
         model.select(country: .fr)
         let sante = try XCTUnwrap(model.country.stages.first { $0.level == .sante })
         model.stage = sante
@@ -500,9 +587,6 @@ final class OnboardingFlowTests: XCTestCase {
         for country in SchoolingCountry.allCases {
             XCTAssertFalse(country.flag.isEmpty, "\(country) doit porter son drapeau")
         }
-        for habit in ForgettingHabit.allCases {
-            XCTAssertFalse(habit.emoji.isEmpty, "\(habit) doit porter un emoji")
-        }
     }
 
     // MARK: - Matières
@@ -688,68 +772,6 @@ final class OnboardingFlowTests: XCTestCase {
 
         XCTAssertTrue(WorldCountries.matches("   ").isEmpty, "Une recherche vide ne propose rien")
         XCTAssertLessThanOrEqual(WorldCountries.matches("a").count, 6, "La liste reste courte")
-    }
-
-    // MARK: - Intervalles
-
-    /// Le graphe de rétention garde ses intervalles réels : ce sont eux qu'annoncent les
-    /// étiquettes au-dessus de chaque révision.
-    func testRetentionChartKeepsItsRealIntervals() {
-        XCTAssertEqual(RetentionCurve.intervalLabels(locale: .fr), ["1 j", "3 j", "7 j", "16 j"])
-        XCTAssertEqual(RetentionCurve.intervalLabels(locale: .de), ["1 T", "3 T", "7 T", "16 T"])
-        XCTAssertEqual(
-            RetentionCurve.intervalLabels(locale: .fr).count,
-            RetentionCurve.reviewDays.count,
-            "La liste des intervalles doit couvrir toutes les révisions du graphe"
-        )
-    }
-
-    // MARK: - Démonstration
-
-    /// Les cartes de la démonstration montrent les trois formats. Une démonstration qui
-    /// n'aurait que du recto verso laisserait croire que Micabo ne sait faire que ça.
-    func testDemoCardsCoverTheThreeFormats() {
-        let kinds = OnboardingDemo.cards.map(\.kind)
-
-        XCTAssertTrue(kinds.contains(.basic))
-        XCTAssertTrue(kinds.contains(.choice))
-        XCTAssertTrue(kinds.contains(.gap))
-    }
-
-    /// Le troisième écran montre les quatre formes que prend une fiche. Le schéma en fait
-    /// partie : une démonstration qui n'aurait que des cartes laisserait croire que Micabo
-    /// ne sait pas dessiner un cours.
-    func testDemoOutputsCoverTheFourFormats() {
-        XCTAssertEqual(OnboardingDemo.Output.allCases, [.schema, .flashcard, .quiz, .gap])
-
-        for output in OnboardingDemo.Output.allCases {
-            XCTAssertFalse(output.label.isEmpty, "\(output) doit avoir un libellé")
-            XCTAssertFalse(output.systemImage.isEmpty, "\(output) doit avoir un symbole")
-        }
-    }
-
-    /// Le texte à trou de la démonstration doit vraiment avoir un trou, et le mot qui le
-    /// remplit doit être celui du cours déposé.
-    func testTheGapExerciseComesFromTheRawCourse() {
-        XCTAssertFalse(OnboardingDemo.gapBefore.isEmpty)
-        XCTAssertFalse(OnboardingDemo.gapAnswer.isEmpty)
-
-        let raw = OnboardingDemo.rawLines.joined(separator: " ").lowercased()
-        XCTAssertTrue(raw.contains(OnboardingDemo.gapAnswer.lowercased()))
-    }
-
-    /// Le document déposé doit être plus dense que la fiche qui en sort, sinon l'écran de
-    /// transformation ne transforme rien.
-    func testTheRawDocumentIsDenserThanTheSheet() {
-        let raw = OnboardingDemo.rawLines.joined(separator: " ")
-        let sheet = [
-            OnboardingDemo.sheetHeading,
-            OnboardingDemo.sheetParagraph,
-            OnboardingDemo.sheetDefinition,
-            OnboardingDemo.sheetHighlight
-        ].joined(separator: " ")
-
-        XCTAssertGreaterThan(raw.count, sheet.count)
     }
 
     // MARK: - Jauge
