@@ -55,10 +55,10 @@ struct NotificationsStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: t("ios.notifTitle"),
+            subtitle: t("ios.notifSub"),
             // Hors défilement : les ressorts qui centrent la scène n'ont pas de hauteur
             // dans un `ScrollView`.
             scrolls: false,
-            animatesTitle: true,
             expandsContent: true
         ) {
             VStack(spacing: 0) {
@@ -67,6 +67,7 @@ struct NotificationsStepView: View {
                 VStack(spacing: 16) {
                     weekCard
                     banner
+                    proofLine
                 }
 
                 Spacer(minLength: 0)
@@ -74,9 +75,9 @@ struct NotificationsStepView: View {
             .frame(maxWidth: .infinity)
         } footer: {
             OnboardingContinueButton(
+                title: t("ios.notifCta"),
                 isEnabled: !isAsking,
-                isLoading: isAsking,
-                isShiny: true
+                isLoading: isAsking
             ) {
                 Task { await ask() }
             }
@@ -88,23 +89,23 @@ struct NotificationsStepView: View {
 
     /// Sept ronds qui se cochent, et la flamme qui compte avec eux.
     private var weekCard: some View {
-        MicaboOutlineCard(padding: EdgeInsets(top: 18, leading: 16, bottom: 18, trailing: 16)) {
-            VStack(alignment: .leading, spacing: 18) {
-                HStack(spacing: 6) {
-                    ForEach(0..<Self.days, id: \.self) { index in
-                        day(index)
-                    }
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(spacing: 6) {
+                ForEach(0..<Self.days, id: \.self) { index in
+                    day(index)
                 }
-
-                streakPill
             }
+
+            streakPill
         }
+        .padding(18)
+        .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     private func day(_ index: Int) -> some View {
         let isChecked = index < checked
-        let fill: Color = isChecked ? MicaboColor.accent : MicaboColor.surfaceMuted
-        let pop: CGFloat = isChecked ? 1 : 0.86
+        let fill: Color = isChecked ? OnboardingPalette.ink : OnboardingPalette.cardStrong
+        let pop: CGFloat = 1
 
         return VStack(spacing: 7) {
             ZStack {
@@ -113,8 +114,8 @@ struct NotificationsStepView: View {
                 if isChecked {
                     Image(systemName: "checkmark")
                         .font(.system(size: 13, weight: .heavy))
-                        .foregroundStyle(MicaboColor.onInk)
-                        .transition(.scale.combined(with: .opacity))
+                        .foregroundStyle(OnboardingPalette.white)
+                        .transition(.opacity)
                 }
             }
             .frame(width: 34, height: 34)
@@ -122,7 +123,7 @@ struct NotificationsStepView: View {
 
             Text(dayInitials[index])
                 .font(MicaboFont.ui(11.5, weight: .semibold))
-                .foregroundStyle(isChecked ? MicaboColor.ink : MicaboColor.inkTertiary)
+                .foregroundStyle(isChecked ? OnboardingPalette.ink : OnboardingPalette.grayLight)
         }
         .frame(maxWidth: .infinity)
         .animation(OnboardingMotion.select, value: isChecked)
@@ -135,13 +136,13 @@ struct NotificationsStepView: View {
                 .font(.system(size: 15))
             Text(i18n.t("ios.notif.streak", ["count": "\(checked)"]))
                 .font(MicaboFont.ui(13.5, weight: .bold))
-                .foregroundStyle(MicaboColor.flameInk)
+                .foregroundStyle(OnboardingPalette.ink)
                 .contentTransition(.numericText())
                 .monospacedDigit()
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 13)
-        .background(MicaboColor.flameSoft, in: Capsule())
+        .background(OnboardingPalette.white, in: Capsule())
         .animation(OnboardingMotion.select, value: checked)
     }
 
@@ -159,37 +160,49 @@ struct NotificationsStepView: View {
                     Text("MICABO")
                         .font(MicaboFont.ui(11.5, weight: .semibold))
                         .tracking(MicaboTracking.caps)
-                        .foregroundStyle(MicaboColor.inkTertiary)
+                        .foregroundStyle(OnboardingPalette.gray)
 
                     Spacer(minLength: 0)
 
                     Text(t("ios.notifNow"))
                         .font(MicaboFont.ui(11.5, weight: .regular))
-                        .foregroundStyle(MicaboColor.inkTertiary)
+                        .foregroundStyle(OnboardingPalette.gray)
                 }
 
                 Text(i18n.t("ios.notifCardTitle", ["count": "\(dueCount)"]))
                     .font(MicaboFont.ui(15, weight: .semibold))
-                    .foregroundStyle(MicaboColor.ink)
+                    .foregroundStyle(OnboardingPalette.ink)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(t("ios.notifCardBody"))
-                    .font(MicaboFont.reading(14, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .font(MicaboFont.ui(14, weight: .regular))
+                    .foregroundStyle(OnboardingPalette.gray)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(14)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
-        .micaboElevation(.card)
-        .offset(y: hasLanded ? 0 : -40)
+        .background(OnboardingPalette.white, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .shadow(color: OnboardingPalette.ink.opacity(0.1), radius: 24, y: 10)
         .opacity(hasLanded ? 1 : 0)
-        .scaleEffect(hasLanded ? 1 : 0.94)
         .animation(OnboardingMotion.enter, value: hasLanded)
         .accessibilityElement(children: .combine)
+    }
+
+    /// **Pourquoi dire oui**, en une ligne sous la notification. Le chiffre vient de
+    /// `OnboardingProofFigures`, avec les autres.
+    private var proofLine: some View {
+        OnboardingAccentText(
+            template: i18n.t("ios.notif.proof", ["n": "\(OnboardingProofFigures.reminderMultiplier)"]),
+            size: 15,
+            alignment: .leading,
+            color: OnboardingPalette.gray
+        )
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .opacity(hasLanded ? 1 : 0)
+        .animation(OnboardingMotion.enter.delay(0.15), value: hasLanded)
     }
 
     // MARK: - Le déroulé

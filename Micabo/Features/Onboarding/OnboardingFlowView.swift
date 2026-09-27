@@ -23,7 +23,7 @@ struct OnboardingFlowView: View {
                 ZStack {
                     stepView
                         .id(model.step)
-                        .transition(.onboardingPage)
+                        .transition(.onboardingFade)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .animation(OnboardingMotion.page, value: model.step)
@@ -51,10 +51,9 @@ struct OnboardingFlowView: View {
                 "step": .text(step.analyticsName),
                 "index": .number(Double(step.rawValue)),
             ])
-            // **La page qui se pose se sent.** Pas à l'appui — le bouton a déjà répondu —
-            // mais un quart de seconde plus tard, quand l'écran suivant est arrivé et que
-            // la mascotte retombe de son saut : c'est l'atterrissage, pas le départ.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.26) {
+            // **La page qui se pose se sent**, un cinquième de seconde après l'appui,
+            // quand le fondu est fini : c'est l'atterrissage, pas le départ.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                 Haptics.tick()
             }
         }
@@ -63,27 +62,35 @@ struct OnboardingFlowView: View {
     @ViewBuilder
     private var stepView: some View {
         switch model.step {
-        case .howItWorks: WelcomeStepView()
-        case .showMe: ShowMeStepView()
-        case .upload: UploadStepView()
-        case .dates: DatesStepView()
-        case .turnsInto: TurnsIntoStepView()
-        case .smartFeatures: SmartFeaturesStepView()
-        case .name: NameStepView()
-        case .greeting: GreetingStepView()
+        case .hookVideo: HookVideoStepView()
+        case .hookRating: HookRatingStepView()
+        case .hookPress: HookPressStepView()
         case .country: CountryStepView()
+        case .level: LevelStepView()
         case .schoolType: SchoolTypeStepView()
         case .year: SchoolYearStepView()
+        case .subjects: SubjectsStepView()
+        case .source: SourceStepView()
+        case .triedApps: TriedAppsStepView()
         case .goal: GoalStepView()
         case .currentAverage: CurrentAverageStepView()
         case .targetAverage: TargetAverageStepView()
-        case .together: TogetherStepView()
-        case .notifications: NotificationsStepView()
-        case .subjects: SubjectsStepView()
-        case .personalizing: PersonalizingStepView()
+        case .proofRealistic: ProofRealisticStepView()
+        case .dailyTime: DailyTimeStepView()
+        case .proofRetention: ProofRetentionStepView()
+        case .blocker: BlockerStepView()
+        case .proofTwice: ProofTwiceStepView()
+        case .nextExam: NextExamStepView()
+        case .proofCurve: ProofCurveStepView()
+        case .method: MethodStepView()
+        case .proofStudents: ProofStudentsStepView()
+        case .name: NameStepView()
+        case .proofKeep: ProofKeepStepView()
+        case .thanks: ThanksStepView()
+        case .building: BuildingStepView()
+        case .planReady: PlanReadyStepView()
         case .signIn: SignInStepView()
-        case .socialProof: SocialProofStepView()
-        case .yourTurn: YourTurnStepView()
+        case .notifications: NotificationsStepView()
         case .trialOffer: TrialOfferStepView()
         case .trialReminder: TrialReminderStepView()
         case .paywall: PaywallStepView(onFinish: finish)
@@ -118,5 +125,11 @@ extension AnyTransition {
             insertion: .offset(x: 28).combined(with: .opacity).combined(with: .scale(scale: 0.98)),
             removal: .offset(x: -28).combined(with: .opacity).combined(with: .scale(scale: 0.98))
         )
+    }
+
+    /// **Le passage d'un écran au suivant dans le parcours d'accueil : un fondu.** Rien ne
+    /// glisse, rien ne grandit. Le glissement reste pour les parcours qui l'appellent.
+    static var onboardingFade: AnyTransition {
+        .opacity
     }
 }

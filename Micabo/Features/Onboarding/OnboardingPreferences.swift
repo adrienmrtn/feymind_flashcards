@@ -355,13 +355,22 @@ enum OnboardingPreferences {
         static let schoolYear = "micabo.onboarding.schoolYear"
         /// Le prénom, tel qu'il a été donné. Il ne sert qu'à s'adresser à quelqu'un.
         static let displayName = "micabo.onboarding.displayName"
+        /// **Les réponses du quiz qui ne servent qu'à la mesure** : d'où il vient, ce qu'il a
+        /// essayé, ce qui le bloque, son échéance, sa méthode. Rien dans l'app ne les lit ;
+        /// elles sont écrites pour ne pas être reposées, et listées pour être effacées.
+        static let source = "micabo.onboarding.source"
+        static let triedApps = "micabo.onboarding.triedApps"
+        static let blocker = "micabo.onboarding.blocker"
+        static let examHorizon = "micabo.onboarding.examHorizon"
+        static let method = "micabo.onboarding.method"
 
         static let all = [
             completed, level, stage, tier, country, customCountryCode,
             goal, goals, forgetting, forgetsOften, subjects,
             institutionId, institutionName,
             dailyMinutes, weeklyMinutes, ratingAsked, pendingFirstImport, retiredNotificationsOptIn, completedAt,
-            sheetLanguage, schoolTrack, schoolYear, displayName
+            sheetLanguage, schoolTrack, schoolYear, displayName,
+            source, triedApps, blocker, examHorizon, method
         ]
     }
 
@@ -459,6 +468,39 @@ enum OnboardingPreferences {
     static var displayName: String? {
         get { defaults.string(forKey: Key.displayName) }
         set { write(newValue, forKey: Key.displayName) }
+    }
+
+    // MARK: Les réponses du quiz
+
+    static var source: String? {
+        get { defaults.string(forKey: Key.source) }
+        set { write(newValue, forKey: Key.source) }
+    }
+
+    static var triedApps: Bool? {
+        get { defaults.object(forKey: Key.triedApps) as? Bool }
+        set {
+            if let newValue {
+                defaults.set(newValue, forKey: Key.triedApps)
+            } else {
+                defaults.removeObject(forKey: Key.triedApps)
+            }
+        }
+    }
+
+    static var blocker: String? {
+        get { defaults.string(forKey: Key.blocker) }
+        set { write(newValue, forKey: Key.blocker) }
+    }
+
+    static var examHorizon: String? {
+        get { defaults.string(forKey: Key.examHorizon) }
+        set { write(newValue, forKey: Key.examHorizon) }
+    }
+
+    static var method: String? {
+        get { defaults.string(forKey: Key.method) }
+        set { write(newValue, forKey: Key.method) }
     }
 
     private static func write(_ value: String?, forKey key: String) {

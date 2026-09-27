@@ -36,9 +36,7 @@ struct CountryStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.countryTitle"),
-            titleSize: 26,
-            scrolls: true,
-            animatesTitle: true
+            scrolls: true
         ) {
             VStack(alignment: .leading, spacing: 14) {
                 dropdown
@@ -82,24 +80,20 @@ struct CountryStepView: View {
                     .font(.system(size: 24))
 
                 Text(title(for: model.country))
-                    .font(MicaboFont.ui(16, weight: .semibold))
-                    .foregroundStyle(MicaboColor.accent)
+                    .font(OnboardingPalette.option)
+                    .foregroundStyle(OnboardingPalette.white)
                     .lineLimit(1)
 
                 Spacer(minLength: 0)
 
                 Image(systemName: "chevron.up.chevron.down")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(MicaboColor.accent)
+                    .foregroundStyle(OnboardingPalette.white.opacity(0.8))
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 18)
             .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
-            .background(MicaboColor.accentWash, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                    .strokeBorder(MicaboColor.accent, lineWidth: 2)
-            }
-            .contentShape(Rectangle())
+            .background(OnboardingPalette.ink, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
         .accessibilityLabel(i18n.t("ios.countryTitle"))
@@ -149,8 +143,8 @@ struct CountryStepView: View {
                     resultsList
                 } else if query.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2 {
                     Text(i18n.t("ios.countryNone"))
-                        .font(MicaboFont.ui(12, weight: .regular))
-                        .foregroundStyle(MicaboColor.inkTertiary)
+                        .font(OnboardingPalette.subtitle)
+                        .foregroundStyle(OnboardingPalette.gray)
                 }
             }
         }
@@ -160,11 +154,11 @@ struct CountryStepView: View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(MicaboColor.inkTertiary)
+                .foregroundStyle(OnboardingPalette.gray)
 
             TextField(i18n.t("ios.countryPlaceholder"), text: $query)
-                .font(MicaboFont.ui(16, weight: .medium))
-                .foregroundStyle(MicaboColor.ink)
+                .font(OnboardingPalette.option)
+                .foregroundStyle(OnboardingPalette.ink)
                 .textInputAutocapitalization(.words)
                 .autocorrectionDisabled()
                 .focused($isSearching)
@@ -176,18 +170,14 @@ struct CountryStepView: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 16))
-                        .foregroundStyle(MicaboColor.inkTertiary)
+                        .foregroundStyle(OnboardingPalette.gray)
                 }
                 .buttonStyle(MicaboPressableButtonStyle())
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 13)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                .strokeBorder(isSearching ? MicaboColor.ink : MicaboColor.stroke, lineWidth: isSearching ? 1.6 : 1)
-        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 15)
+        .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private var resultsList: some View {
@@ -202,7 +192,7 @@ struct CountryStepView: View {
 
                         Text(country.name)
                             .font(MicaboFont.ui(15, weight: .medium))
-                            .foregroundStyle(MicaboColor.ink)
+                            .foregroundStyle(OnboardingPalette.ink)
                             .multilineTextAlignment(.leading)
 
                         Spacer(minLength: 0)
@@ -216,17 +206,13 @@ struct CountryStepView: View {
 
                 if index < matches.count - 1 {
                     Rectangle()
-                        .fill(MicaboColor.stroke)
+                        .fill(OnboardingPalette.cardStrong)
                         .frame(height: 1)
                         .padding(.leading, 46)
                 }
             }
         }
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-        }
+        .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private func chosen(_ country: WorldCountry) -> some View {
@@ -236,7 +222,7 @@ struct CountryStepView: View {
 
             Text(country.name)
                 .font(MicaboFont.ui(15, weight: .semibold))
-                .foregroundStyle(MicaboColor.ink)
+                .foregroundStyle(OnboardingPalette.ink)
 
             Spacer(minLength: 0)
 
@@ -250,12 +236,12 @@ struct CountryStepView: View {
             } label: {
                 Text(i18n.t("ios.countryChange"))
                     .font(MicaboFont.ui(13, weight: .semibold))
-                    .foregroundStyle(MicaboColor.accent)
+                    .foregroundStyle(OnboardingPalette.accent)
             }
             .buttonStyle(MicaboPressableButtonStyle())
         }
-        .padding(12)
-        .background(MicaboColor.positiveSoft, in: RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous))
+        .padding(14)
+        .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private func choose(_ country: WorldCountry) {

@@ -14,9 +14,9 @@ struct GoalStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.goalTitle"),
-            animatesTitle: true
+            subtitle: i18n.t("ios.goalSub")
         ) {
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 ForEach(Array(LearningGoal.allCases.enumerated()), id: \.element.id) { rank, goal in
                     OnboardingChoiceRow(
                         title: goal.title(locale: i18n.locale),

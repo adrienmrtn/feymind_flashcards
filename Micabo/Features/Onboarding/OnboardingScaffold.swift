@@ -1,129 +1,135 @@
 import SwiftUI
 
-/// Fond d'un écran du parcours. Le crème est la règle, mais quelques écrans basculent sur
-/// l'encre ou sur le vert pastel pour donner du rythme : deux écrans voisins ne doivent pas
-/// se ressembler. Le texte reste fer à gauche et le bouton collé en bas, quel que soit le
-/// fond : la variété s'arrête aux couleurs et aux compositions.
+// MARK: - La charte du parcours
+
+/// **Les couleurs du parcours d'accueil, et elles ne sont que quatre.**
+///
+/// Du blanc, de l'encre, un gris de carte, et un violet. Le violet ne sert qu'à trois
+/// choses : ce qui est choisi, la jauge, et le dégradé du bouton d'achat. Le vert et le
+/// rouge n'existent que dans les graphes, où ils disent « mieux » et « moins bien ».
+///
+/// C'est la charte des apps qui convertissent (Cal AI, Coconote, RIZZ) : un fond blanc pur,
+/// des titres énormes en gras, un bouton noir pleine largeur, un seul accent. Pas de crème,
+/// pas de pastel, pas de personnage. Elle est **propre au parcours** : le reste de l'app
+/// garde ses jetons (`MicaboColor`) le temps qu'on décide de l'y faire passer.
+enum OnboardingPalette {
+    static let white = Color(hex: 0xFFFFFF)
+    static let ink = Color(hex: 0x0A0A0A)
+    /// Le gris des cartes de réponse et des blocs.
+    static let card = Color(hex: 0xF4F4F6)
+    /// Un cran plus sombre : le bouton éteint, la piste de la jauge.
+    static let cardStrong = Color(hex: 0xE5E5EA)
+    /// Le violet électrique, seul accent.
+    static let accent = Color(hex: 0x6D28FF)
+    /// Le même violet, dilué : le fond d'un chiffre mis en avant.
+    static let accentWash = Color(hex: 0xF0EAFF)
+    /// Le gris du sous-titre et des légendes.
+    static let gray = Color(hex: 0x6B6B72)
+    static let grayLight = Color(hex: 0xA1A1AA)
+    /// Le vert et le rouge des graphes, et d'eux seuls.
+    static let chartGood = Color(hex: 0x16A34A)
+    static let chartBad = Color(hex: 0xEF4444)
+    /// L'or des étoiles.
+    static let star = Color(hex: 0xF5B942)
+
+    // MARK: Les tailles de texte
+
+    /// Le titre d'un écran : 34 points, gras.
+    static func title(_ size: CGFloat = 34) -> Font { MicaboFont.ui(size, weight: .bold) }
+    /// Une réponse : 17 points, medium.
+    static let option = MicaboFont.ui(17, weight: .medium)
+    /// Le sous-titre : 13 points, gris.
+    static let subtitle = MicaboFont.ui(13, weight: .regular)
+    /// Le bouton.
+    static let button = MicaboFont.ui(17, weight: .semibold)
+}
+
+/// Fond d'un écran du parcours.
+///
+/// **Tout est blanc**, et le cas sombre ne subsiste que pour les composants partagés qui
+/// savent s'inverser : rien dans le parcours ne l'emploie plus.
 enum OnboardingSurface {
     case canvas
     case ink
-    /// Le vert de Micabo, en pastel.
-    ///
-    /// Le vert plein qui servait ici tapait trop fort : un aplat saturé tenu plusieurs
-    /// secondes derrière du texte blanc fatigue, et c'était précisément l'écran où l'on
-    /// demande d'attendre. Le pastel garde la rupture de couleur et rend l'encre lisible,
-    /// donc il se traite comme un fond clair.
+    /// Conservés pour les appels existants ; tous deux se rendent en blanc.
     case accentSoft
-    /// Le crème teinté de vert de l'accroche, un cran plus sobre que le menthe.
     case sage
 
     var background: Color {
         switch self {
-        case .canvas: MicaboColor.canvas
-        case .ink: Color(hex: 0x111827)
-        case .accentSoft: MicaboColor.accentSoft
-        case .sage: MicaboColor.canvasSage
+        case .ink: OnboardingPalette.ink
+        default: OnboardingPalette.white
         }
     }
 
-    /// Vrai quand le texte doit s'inverser. Les deux pastels n'en font pas partie : l'encre
-    /// s'y lit mieux que le blanc.
     var isDark: Bool {
         self == .ink
     }
 
     var title: Color {
-        isDark ? Color.white : MicaboColor.ink
+        isDark ? OnboardingPalette.white : OnboardingPalette.ink
     }
 
     var prose: Color {
-        isDark ? Color.white.opacity(0.78) : MicaboColor.inkSecondary
+        isDark ? OnboardingPalette.white.opacity(0.7) : OnboardingPalette.gray
     }
 
     var eyebrow: Color {
-        switch self {
-        case .canvas, .accentSoft, .sage: MicaboColor.accent
-        case .ink: Color(hex: 0xDBEAFE)
-        }
+        isDark ? OnboardingPalette.white.opacity(0.7) : OnboardingPalette.accent
     }
 
-    /// Teinte de la jauge du parcours. Une seule couleur par fond : le vert sur le crème,
-    /// l'inverse de l'encre sur les fonds sombres, puisqu'un vert posé sur le vert ne se
-    /// verrait pas.
+    /// La jauge est noire sur gris clair : fine, et elle ne demande pas qu'on la regarde.
     var progressTint: Color {
-        isDark ? Color.white : MicaboColor.progress
+        isDark ? OnboardingPalette.white : OnboardingPalette.ink
     }
 
     var progressTrack: Color {
-        switch self {
-        case .canvas: MicaboColor.progressTrack
-        case .ink: Color.white.opacity(0.22)
-        // La piste beige du crème disparaîtrait sur les verts : c'est l'accent lui-même,
-        // très dilué, qui fait la piste.
-        case .accentSoft: MicaboColor.accent.opacity(0.18)
-        case .sage: MicaboColor.accent.opacity(0.16)
-        }
+        isDark ? OnboardingPalette.white.opacity(0.22) : OnboardingPalette.cardStrong
     }
 
-    /// Surface du bouton d'action, inversée sur fond sombre.
+    /// Le bouton est une pilule noire. Sur l'encre, il s'inverse.
     var buttonTint: Color {
-        isDark ? Color.white : MicaboColor.accent
+        isDark ? OnboardingPalette.white : OnboardingPalette.ink
     }
 
     var buttonForeground: Color {
-        isDark ? Color(hex: 0x111827) : MicaboColor.onInk
+        isDark ? OnboardingPalette.ink : OnboardingPalette.white
     }
 
+    /// Éteint, il est gris clair et garde son texte blanc : c'est le bouton de Cal AI, et il
+    /// se lit comme « pas encore », pas comme « cassé ».
     var disabledButtonTint: Color {
-        isDark ? Color.white.opacity(0.3) : MicaboColor.strokeStrong
+        isDark ? OnboardingPalette.white.opacity(0.3) : Color(hex: 0xD1D1D6)
     }
 }
 
 /// **Le mouvement du parcours d'accueil, en un seul endroit.**
 ///
-/// Une seule règle, et elle explique toutes les courbes ci-dessous : **rien ne rebondit.**
-/// Un ressort dépasse sa cible puis revient, et vingt écrans qui dépassent leur cible
-/// donnent un parcours qui tremble. Les quatre courbes sont donc monotones : elles partent
-/// vite, elles ralentissent, elles s'arrêtent net.
+/// Une seule règle : **rien ne rebondit, et rien ne glisse.** Un élément arrive par un
+/// fondu de deux dixièmes de seconde, et c'est tout. Les ressorts, les montées de quatorze
+/// points, le titre qui s'écrit mot à mot, la mascotte qui sursaute : tout ça donnait un
+/// parcours qui tremble et qui a l'air d'un jeu. Un fondu court dit « c'est là », et le
+/// regard va au contenu.
 ///
-/// L'exception est déclarée ailleurs et volontairement unique : le bouton `isShiny` de la
-/// démonstration respire et se laisse balayer d'un reflet. C'est le seul écran où l'on a
-/// regardé une animation sans rien toucher, donc le seul où il faut aller chercher un doigt
-/// immobile.
-///
-/// Les avoir ici plutôt que dans chaque écran n'est pas une coquetterie : c'est ce qui fait
-/// qu'un écran ne peut pas se mettre à bouger autrement que ses voisins.
+/// Les noms sont gardés pour les écrans qui les appellent ; toutes les courbes sont des
+/// fondus courts, et `rise` est nul.
 enum OnboardingMotion {
-    /// Entrée d'un élément à l'ouverture d'un écran.
-    ///
-    /// Un dixième de seconde de plus, et quatorze points de course au lieu de huit. Le
-    /// réglage précédent était si discret qu'on ne voyait rien arriver : à huit points et
-    /// quatre dixièmes, l'œil lit un écran déjà posé, et le parcours entier passait pour une
-    /// succession de pages immobiles.
-    ///
-    /// La courbe est une exponentielle décroissante : l'élément couvre les trois quarts de
-    /// sa course dans le premier tiers du temps, puis vient se poser. C'est la courbe des
-    /// transitions du système, et celle qu'on lit comme « ça arrive » plutôt que « ça
-    /// glisse ».
-    static let enter = Animation.timingCurve(0.16, 1, 0.3, 1, duration: 0.56)
-    /// La course d'un élément qui entre.
-    static let rise: CGFloat = 14
-    /// Réaction à un appui : elle doit être finie avant qu'on ait relevé le doigt.
-    static let tap = Animation.timingCurve(0.3, 0, 0.2, 1, duration: 0.2)
-    /// La réaction d'une réponse qu'on choisit : l'emoji qui grandit, la coche qui arrive.
-    /// Une courbe monotone comme les autres — un ressort ici, même amorti, faisait
-    /// trembler la liste à chaque choix.
-    static let select = Animation.timingCurve(0.2, 0.8, 0.2, 1, duration: 0.26)
-    /// Un élément qui se déplace ou change de forme sous les yeux.
-    static let shift = Animation.timingCurve(0.25, 0.8, 0.25, 1, duration: 0.48)
+    /// Entrée d'un élément à l'ouverture d'un écran : un fondu de 200 ms.
+    static let enter = Animation.easeOut(duration: 0.2)
+    /// La course d'un élément qui entre. Nulle : on ne glisse pas.
+    static let rise: CGFloat = 0
+    /// Réaction à un appui.
+    static let tap = Animation.easeOut(duration: 0.15)
+    /// La réaction d'une réponse qu'on choisit.
+    static let select = Animation.easeOut(duration: 0.2)
+    /// Un élément qui change de forme sous les yeux.
+    static let shift = Animation.easeInOut(duration: 0.3)
     /// Passage d'un écran au suivant.
-    static let page = Animation.timingCurve(0.32, 0.72, 0.2, 1, duration: 0.36)
+    static let page = Animation.easeInOut(duration: 0.2)
     /// Décalage entre deux éléments qui entrent à la suite.
-    static let stagger = 0.085
-    /// Le décalage **dans** une liste de réponses. Plus serré que celui des blocs : six
-    /// rangées à quatre-vingt-cinq millièmes mettraient une demi-seconde avant que la
-    /// dernière n'arrive, et on aurait le temps d'appuyer sur une réponse absente.
-    static let rowStagger = 0.045
+    static let stagger = 0.05
+    /// Le décalage dans une liste de réponses.
+    static let rowStagger = 0.035
 }
 
 private struct OnboardingSurfaceKey: EnvironmentKey {
@@ -140,56 +146,40 @@ extension EnvironmentValues {
 
 /// Échappatoire d'un écran de question, posée en haut à droite de l'écran.
 ///
-/// Elle n'existe que là où la réponse est réellement facultative. Demander son
-/// établissement à quelqu'un qui n'en a pas, qui est entre deux écoles, ou qui n'a pas envie
-/// de le dire, ne doit pas fermer le parcours : un écran sans issue se quitte en quittant
-/// l'app, et on ne le retrouve jamais.
+/// Elle n'existe que là où la réponse est réellement facultative : un écran sans issue se
+/// quitte en quittant l'app, et on ne le retrouve jamais.
 struct OnboardingSkip {
     var title: String?
-    /// Ce que le lecteur d'écran annonce. « Passer cette question » ne convient pas partout :
-    /// sur l'écran de connexion, on ne passe pas une question, on passe la création d'un
-    /// compte.
+    /// Ce que le lecteur d'écran annonce.
     var accessibilityLabel: String?
     var action: () -> Void
 }
 
-/// Mise en page commune à tous les écrans du parcours : sur-titre, titre, sous-titre,
-/// contenu, puis une zone d'action ancrée en bas. Le tout arrive en cascade.
+// MARK: - La page
+
+/// Mise en page commune à tous les écrans du parcours : jauge, retour, titre, sous-titre,
+/// contenu, puis une zone d'action ancrée en bas.
 ///
-/// Un écran de ce parcours tient en **un titre court, une ligne de sous-titre au plus, et
-/// une seule chose à regarder.** Ce n'est pas une préférence esthétique : un écran
-/// d'inscription se lit en deux secondes ou ne se lit pas, et un paragraphe posé dans un
-/// bloc blanc à coins arrondis est exactement ce à quoi ressemble un texte que personne n'a
-/// relu.
+/// Un écran de ce parcours tient en **un titre de deux lignes en 34 points, une ligne
+/// grise au plus, et une seule chose à regarder.** C'est la forme de Cal AI, écran après
+/// écran, et c'est la forme qu'on lit en deux secondes.
 struct OnboardingScaffold<Content: View, Footer: View>: View {
     var eyebrow: String?
     var title: String
     var subtitle: String?
-    var titleSize: CGFloat = 26
+    var titleSize: CGFloat = 34
     var contentSpacing: CGFloat = MicaboSpacing.xl
     var scrolls: Bool = true
-    /// Le titre s'écrit mot à mot au lieu d'apparaître d'un bloc.
-    ///
-    /// Réservé aux **questions** : un titre qui s'écrit sous les yeux donne le rythme d'une
-    /// conversation, et l'animation dure exactement le temps qu'il faut pour la lire. On ne
-    /// l'utilise pas sur un écran de démonstration, où le regard doit aller au contenu, ni
-    /// sur un écran qu'on traverse en deux secondes.
+    /// Conservé pour les appels existants : le titre ne s'écrit plus mot à mot.
     var animatesTitle: Bool = false
     /// Donne au contenu toute la hauteur restante au lieu de le tasser sous le titre.
-    ///
-    /// Sur un écran de question, les réponses *sont* le contenu : les serrer en haut de la
-    /// page laisse un grand vide en dessous et les fait passer pour une note. Elles
-    /// occupent alors la page, et le regard tombe dessus au lieu de les chercher.
     var expandsContent: Bool = false
     var surface: OnboardingSurface = .canvas
-    /// Interdit jusqu'au défilement de secours.
-    ///
-    /// Réservé aux écrans qui portent un **geste de glissement** : un `ScrollView`, même
-    /// quand il n'a rien à faire défiler, prend le déplacement vertical du doigt avant que
-    /// le `DragGesture` de la carte le voie. Un écran de démonstration où l'on ne peut plus
-    /// glisser la carte n'a plus rien à démontrer.
+    /// Interdit jusqu'au défilement de secours, pour les écrans qui portent un geste.
     var locksScrolling: Bool = false
     var skip: OnboardingSkip?
+    /// Le titre se centre sur les écrans qui n'ont qu'une phrase et une image.
+    var centered: Bool = false
     var content: () -> Content
     var footer: () -> Footer
 
@@ -199,7 +189,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         eyebrow: String? = nil,
         title: String,
         subtitle: String? = nil,
-        titleSize: CGFloat = 26,
+        titleSize: CGFloat = 34,
         contentSpacing: CGFloat = MicaboSpacing.xl,
         scrolls: Bool = true,
         animatesTitle: Bool = false,
@@ -207,6 +197,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         surface: OnboardingSurface = .canvas,
         locksScrolling: Bool = false,
         skip: OnboardingSkip? = nil,
+        centered: Bool = false,
         @ViewBuilder content: @escaping () -> Content,
         @ViewBuilder footer: @escaping () -> Footer
     ) {
@@ -221,15 +212,13 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         self.surface = surface
         self.locksScrolling = locksScrolling
         self.skip = skip
+        self.centered = centered
         self.content = content
         self.footer = footer
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            // **La jauge et le retour vivent dans la page**, pas dans une bande au-dessus
-            // d'elle. Posés au-dessus, ils appartenaient à l'app ; posés dans la marge, ils
-            // appartiennent à l'écran, et le titre commence là où l'œil est déjà.
             chrome
 
             if scrolls {
@@ -238,8 +227,6 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                 }
                 .scrollIndicators(.hidden)
             } else if expandsContent || locksScrolling {
-                // Le contenu se partage la hauteur restante : il ne peut pas déborder,
-                // puisque c'est lui qui se comprime.
                 stack(inScrollView: false)
             } else {
                 fittedStack
@@ -254,61 +241,44 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         .environment(\.onboardingSurface, surface)
     }
 
-    /// La jauge, puis le chevron de retour quand il a quelque chose à défaire.
-    ///
-    /// Le chevron garde sa place même quand il ne sert pas : sans ça, le titre remonterait
-    /// de quarante points d'un écran à l'autre, et tout le parcours sauterait.
+    /// **Le retour dans un rond gris, puis la jauge à sa droite**, sur une seule ligne.
+    /// C'est la barre de Cal AI : le chevron garde sa place même quand il ne sert pas, pour
+    /// que le titre ne saute pas d'un écran à l'autre.
     @ViewBuilder
     private var chrome: some View {
         if let model {
-            VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .center, spacing: 14) {
+                Button {
+                    model.goBack()
+                } label: {
+                    Image(systemName: "arrow.left")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(surface.isDark ? OnboardingPalette.white : OnboardingPalette.ink)
+                        .frame(width: 40, height: 40)
+                        .background(
+                            surface.isDark ? OnboardingPalette.white.opacity(0.14) : OnboardingPalette.card,
+                            in: Circle()
+                        )
+                }
+                .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
+                .opacity(model.canGoBack ? 1 : 0)
+                .disabled(!model.canGoBack)
+                .accessibilityLabel(L10n.t("app.common.back", locale: .resolved()))
+
                 MicaboProgressBar(
                     progress: model.step.progress,
                     tint: surface.progressTint,
                     track: surface.progressTrack
                 )
-                .frame(height: 4)
-
-                HStack(alignment: .center, spacing: 0) {
-                    Button {
-                        model.goBack()
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 19, weight: .semibold))
-                            .foregroundStyle(surface.isDark ? MicaboColor.onInkMuted : MicaboColor.inkSecondary)
-                            .frame(width: 40, height: 40, alignment: .leading)
-                    }
-                    .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
-                    .opacity(model.canGoBack ? 1 : 0)
-                    .disabled(!model.canGoBack)
-                    .accessibilityLabel(L10n.t("app.common.back", locale: .resolved()))
-
-                    Spacer(minLength: 0)
-
-                    // **La mascotte est sur chaque écran de question**, petite, à droite
-                    // du retour — là où Gizmo met la sienne. Elle cligne des yeux, elle
-                    // respire, elle change de tête d'un écran à l'autre et sursaute quand
-                    // on passe au suivant : c'est ce qui fait qu'une question posée en
-                    // gras ne se lit pas comme un champ de formulaire — quelqu'un la pose.
-                    MicaboMascot(mood: model.step.mascotMood, size: 30)
-                        .frame(width: 46, height: 40)
-                        .mascotHop(on: model.step)
-                }
-                .padding(.top, 16)
+                .frame(height: 3)
+                .animation(OnboardingMotion.shift, value: model.step)
             }
             .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.top, MicaboSpacing.xs)
+            .padding(.top, MicaboSpacing.sm)
         }
     }
 
     /// Une composition figée **qui défile quand même si elle ne tient pas.**
-    ///
-    /// Ces écrans-là portent une illustration de taille fixe et sont écrits pour tenir d'un
-    /// bloc : les laisser défiler par défaut ferait bouger une scène qu'on regarde. Mais sur
-    /// un petit téléphone, ou dès qu'un élément grandit — le bouton d'action a pris un quart
-    /// —, « ça ne tient pas » ne doit pas vouloir dire « c'est coupé et on ne peut rien y
-    /// faire ». Le défilement n'apparaît donc que quand il sert, et la page se lit
-    /// exactement comme avant partout ailleurs.
     private var fittedStack: some View {
         GeometryReader { proxy in
             ScrollView {
@@ -320,11 +290,8 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
     }
 
     private func stack(inScrollView: Bool, minHeight: CGFloat? = nil) -> some View {
-        VStack(alignment: .leading, spacing: contentSpacing) {
-            VStack(alignment: .leading, spacing: 9) {
-                // Le sur-titre et l'échappatoire partagent la même ligne : « Passer » se
-                // pose ainsi en haut à droite de l'écran sans ajouter une rangée vide
-                // au-dessus du titre.
+        VStack(alignment: centered ? .center : .leading, spacing: contentSpacing) {
+            VStack(alignment: centered ? .center : .leading, spacing: 10) {
                 if eyebrow != nil || skip != nil {
                     HStack(alignment: .firstTextBaseline, spacing: MicaboSpacing.sm) {
                         if let eyebrow {
@@ -343,28 +310,26 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                     .onboardingAppear(index: 0)
                 }
 
-                if animatesTitle {
-                    OnboardingWordByWordTitle(text: title, size: titleSize)
-                } else {
-                    Text(title)
-                        .font(MicaboFont.ui(titleSize, weight: .bold))
-                        .foregroundStyle(surface.title)
-                        .tracking(-0.7)
-                        .lineSpacing(-1)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .onboardingAppear(index: 1)
-                }
+                Text(title)
+                    .font(OnboardingPalette.title(titleSize))
+                    .foregroundStyle(surface.title)
+                    .tracking(-0.9)
+                    .lineSpacing(-2)
+                    .multilineTextAlignment(centered ? .center : .leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .onboardingAppear(index: 1)
 
                 if let subtitle {
                     Text(subtitle)
-                        .font(MicaboFont.ui(15, weight: .regular))
+                        .font(OnboardingPalette.subtitle)
                         .foregroundStyle(surface.prose)
                         .lineSpacing(3)
+                        .multilineTextAlignment(centered ? .center : .leading)
                         .fixedSize(horizontal: false, vertical: true)
                         .onboardingAppear(index: 2)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: centered ? .center : .leading)
 
             content()
                 .frame(maxHeight: expandsContent && !inScrollView ? CGFloat.infinity : nil)
@@ -375,37 +340,31 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
             }
         }
         .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.top, MicaboSpacing.lg)
+        .padding(.top, MicaboSpacing.xl)
         .padding(.bottom, inScrollView ? MicaboSpacing.lg : 0)
         .frame(
             maxWidth: .infinity,
             minHeight: minHeight,
             maxHeight: (inScrollView || minHeight != nil) ? nil : .infinity,
-            alignment: .topLeading
+            alignment: centered ? .top : .topLeading
         )
     }
 
-    /// Volontairement discret : c'est une sortie, pas une proposition. Un « Passer » aussi
-    /// visible que le bouton du bas ferait douter de l'intérêt de la question.
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
+    /// Volontairement discret : c'est une sortie, pas une proposition.
     private func skipButton(_ skip: OnboardingSkip) -> some View {
         let title = skip.title ?? i18n.t("common.skip")
         return Button(action: skip.action) {
-            HStack(spacing: 3) {
-                Text(title)
-                    .font(MicaboFont.ui(13.5, weight: .semibold))
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 9, weight: .bold))
-            }
-            .foregroundStyle(surface.isDark ? Color.white.opacity(0.72) : MicaboColor.inkSecondary)
-            .padding(.vertical, 7)
-            .padding(.horizontal, 11)
-            .background(
-                surface.isDark ? Color.white.opacity(0.12) : MicaboColor.surfaceMuted,
-                in: Capsule()
-            )
+            Text(title)
+                .font(MicaboFont.ui(13.5, weight: .semibold))
+                .foregroundStyle(surface.isDark ? OnboardingPalette.white.opacity(0.72) : OnboardingPalette.gray)
+                .padding(.vertical, 7)
+                .padding(.horizontal, 12)
+                .background(
+                    surface.isDark ? OnboardingPalette.white.opacity(0.12) : OnboardingPalette.card,
+                    in: Capsule()
+                )
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false))
         .accessibilityLabel(skip.accessibilityLabel ?? title)
@@ -417,7 +376,7 @@ extension OnboardingScaffold where Footer == EmptyView {
         eyebrow: String? = nil,
         title: String,
         subtitle: String? = nil,
-        titleSize: CGFloat = 26,
+        titleSize: CGFloat = 34,
         contentSpacing: CGFloat = MicaboSpacing.lg,
         scrolls: Bool = true,
         animatesTitle: Bool = false,
@@ -425,6 +384,7 @@ extension OnboardingScaffold where Footer == EmptyView {
         surface: OnboardingSurface = .canvas,
         locksScrolling: Bool = false,
         skip: OnboardingSkip? = nil,
+        centered: Bool = false,
         @ViewBuilder content: @escaping () -> Content
     ) {
         self.init(
@@ -439,20 +399,17 @@ extension OnboardingScaffold where Footer == EmptyView {
             surface: surface,
             locksScrolling: locksScrolling,
             skip: skip,
+            centered: centered,
             content: content,
             footer: { EmptyView() }
         )
     }
 }
 
-// MARK: - Entrée en cascade
+// MARK: - Entrée en fondu
 
-/// Fait monter l'élément d'un rien, décalé selon sa position dans l'écran.
-///
-/// Le flou de mise au point qu'il y avait ici est parti : c'est un effet qui coûte une
-/// passe de rendu à chaque image, qui rend le texte illisible pendant sa propre apparition,
-/// et qui est devenu la signature des interfaces produites à la chaîne. Huit points de
-/// montée et un fondu suffisent à faire arriver un élément.
+/// Fait apparaître l'élément, décalé selon sa position dans l'écran. Un fondu, et rien
+/// d'autre : ni montée, ni échelle.
 private struct OnboardingAppear: ViewModifier {
     let index: Int
     var stagger: Double = OnboardingMotion.stagger
@@ -462,12 +419,8 @@ private struct OnboardingAppear: ViewModifier {
     func body(content: Content) -> some View {
         content
             .opacity(isVisible ? 1 : 0)
-            // Deux pour cent d'échelle en plus de la montée : l'élément arrive **vers**
-            // l'écran, pas seulement du bas. C'est invisible à l'œil et lisible au regard.
-            .scaleEffect(isVisible ? 1 : 0.98)
-            .offset(y: isVisible ? 0 : OnboardingMotion.rise)
             .onAppear {
-                withAnimation(OnboardingMotion.enter.delay(0.04 + Double(index) * stagger)) {
+                withAnimation(OnboardingMotion.enter.delay(Double(index) * stagger)) {
                     isVisible = true
                 }
             }
@@ -480,112 +433,44 @@ extension View {
     }
 }
 
-// MARK: - Titre qui s'écrit mot par mot
+// MARK: - Titre qui se pose
 
-/// Titre dont le **gras se pose mot par mot**, de gauche à droite, comme si on le
-/// soulignait en le lisant.
+/// Un titre centré ou non, qui apparaît d'un bloc et prévient quand il est là.
 ///
-/// Chaque mot est composé deux fois au même endroit — une fois maigre, une fois gras — et
-/// occupe toujours la largeur de sa version grasse. C'est ce qui permet au gras d'arriver
-/// sans que la ligne se recompose : un titre qui se réaligne à chaque mot se lit comme un
-/// bug, pas comme une animation.
-///
-/// Les retours à la ligne écrits dans le titre sont respectés, et chaque ligne peut
-/// elle-même se replier si l'écran est trop étroit.
+/// Il s'écrivait mot à mot ; c'est parti, avec le reste des animations de lecture. Le nom
+/// et la signature sont gardés pour les écrans de l'essai, qui ne changent pas.
 struct OnboardingWordByWordTitle: View {
     let text: String
     var size: CGFloat = 32
-    /// Fer à gauche partout, sauf sur les deux écrans qui n'ont qu'une phrase et une image
-    /// au milieu de la page : y aligner le titre à gauche laisserait le texte pendre d'un
-    /// côté d'une composition qui est centrée.
     var alignment: HorizontalAlignment = .leading
-    /// Temps entre deux mots.
     var wordDelay: Double = 0.16
-    /// Temps mort avant le premier mot, le temps que l'écran arrive.
     var startDelay: Double = 0.3
-    /// Appelé une fois le dernier mot en gras.
+    /// Appelé une fois le titre posé.
     var onFinish: () -> Void = {}
 
     @Environment(\.onboardingSurface) private var surface
 
-    @State private var boldCount = 0
+    @State private var isVisible = false
     @State private var didStart = false
 
-    private var lines: [[String]] {
-        text.components(separatedBy: "\n").map { line in
-            line.split(separator: " ").map(String.init)
-        }
-    }
-
     var body: some View {
-        VStack(alignment: alignment, spacing: 0) {
-            ForEach(Array(lineOffsets.enumerated()), id: \.offset) { lineIndex, offset in
-                MicaboFlowLayout(spacing: size * 0.26, lineSpacing: 2, alignment: alignment) {
-                    ForEach(Array(lines[lineIndex].enumerated()), id: \.offset) { wordIndex, word in
-                        self.word(word, isBold: offset + wordIndex < boldCount)
-                    }
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: Alignment(horizontal: alignment, vertical: .center))
-        .accessibilityElement()
-        .accessibilityLabel(text.replacingOccurrences(of: "\n", with: " "))
-        .onAppear(perform: run)
-    }
-
-    /// Index du premier mot de chaque ligne, pour que le gras avance d'une ligne à
-    /// l'autre sans repartir de zéro.
-    private var lineOffsets: [Int] {
-        var offsets: [Int] = []
-        var total = 0
-        for line in lines {
-            offsets.append(total)
-            total += line.count
-        }
-        return offsets
-    }
-
-    private var wordCount: Int {
-        lines.reduce(0) { $0 + $1.count }
-    }
-
-    /// Le gabarit gras, invisible, réserve la place ; les deux vraies versions se
-    /// croisent par-dessus, calées à gauche.
-    private func word(_ word: String, isBold: Bool) -> some View {
-        Text(word)
-            .font(MicaboFont.ui(size, weight: .bold))
-            .tracking(-0.7)
-            .opacity(0)
-            .overlay(alignment: .leading) {
-                ZStack(alignment: .leading) {
-                    Text(word)
-                        .font(MicaboFont.ui(size, weight: .regular))
-                        .foregroundStyle(surface.title.opacity(0.3))
-                        .opacity(isBold ? 0 : 1)
-
-                    Text(word)
-                        .font(MicaboFont.ui(size, weight: .bold))
-                        .foregroundStyle(surface.title)
-                        .opacity(isBold ? 1 : 0)
-                }
-                .tracking(-0.7)
-                .fixedSize()
-            }
-            .animation(.easeOut(duration: 0.22), value: isBold)
+        Text(text)
+            .font(OnboardingPalette.title(size))
+            .foregroundStyle(surface.title)
+            .tracking(-0.9)
+            .lineSpacing(-2)
+            .multilineTextAlignment(alignment == .center ? .center : .leading)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: Alignment(horizontal: alignment, vertical: .center))
+            .opacity(isVisible ? 1 : 0)
+            .onAppear(perform: run)
     }
 
     private func run() {
         guard !didStart else { return }
         didStart = true
-
-        for index in 0..<wordCount {
-            DispatchQueue.main.asyncAfter(deadline: .now() + startDelay + Double(index) * wordDelay) {
-                boldCount = index + 1
-                Haptics.tick()
-            }
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + startDelay + Double(wordCount) * wordDelay) {
+        withAnimation(OnboardingMotion.enter.delay(startDelay)) { isVisible = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + startDelay + 0.4) {
             onFinish()
         }
     }
@@ -593,33 +478,23 @@ struct OnboardingWordByWordTitle: View {
 
 // MARK: - Bouton d'avancement
 
-/// CTA principal du parcours : pleine largeur, retour haptique moyen, et un état
-/// de chargement pour les actions qui ne rendent pas la main tout de suite.
+/// CTA principal du parcours : **une pilule noire de cinquante-six points, pleine
+/// largeur**, texte blanc, et un gris clair tant qu'aucune réponse n'est donnée.
 ///
-/// Quand `isLoading` est vrai, le bouton annonce ce qu'il fait et refuse les appuis :
-/// c'est ce qui évite les doubles taps quand une opération tourne derrière.
+/// Le reflet qui le balayait et le sursaut qui l'allumait sont partis : un bouton qui
+/// brille ou qui tressaute se lit comme un bouton de jeu. Il change de couleur, et ça
+/// suffit.
 struct OnboardingContinueButton: View {
     var title: String?
     var isEnabled: Bool = true
     var isLoading: Bool = false
     var loadingTitle: String?
-    /// Reflet qui balaie le bouton.
-    ///
-    /// Réservé au bouton qui clôt une animation qu'on vient de regarder sans rien faire :
-    /// après dix secondes de démonstration, la main est immobile, et il faut lui dire
-    /// franchement où appuyer. Le reste du parcours n'y a pas droit — un bouton qui brille
-    /// à chaque écran ne brille plus nulle part.
+    /// Conservé pour les appels existants. Sans effet.
     var isShiny: Bool = false
     var action: () -> Void
 
     @Environment(\.onboardingSurface) private var surface
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    @State private var shinePhase: CGFloat = 0
-    /// Vrai le temps du sursaut qui accompagne l'activation. Voir `arm()`.
-    @State private var isArming = false
-
-    private var isLively: Bool { isShiny && isEnabled && !isLoading }
 
     var body: some View {
         Button {
@@ -628,98 +503,27 @@ struct OnboardingContinueButton: View {
         } label: {
             HStack(spacing: 9) {
                 if isLoading {
-                    // L'indicateur prend la couleur du texte du bouton, pas celle de la
-                    // progression : posé sur un aplat, il doit d'abord rester lisible.
                     ProgressView()
                         .controlSize(.small)
                         .tint(surface.buttonForeground)
                 }
 
                 Text(isLoading ? (loadingTitle ?? i18n.t("ios.instant")) : (title ?? i18n.t("common.continue")))
+                    .font(OnboardingPalette.button)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .minimumScaleFactor(0.82)
             }
+            .foregroundStyle(surface.buttonForeground)
             .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .background(isEnabled ? surface.buttonTint : surface.disabledButtonTint, in: Capsule())
+            .contentShape(Capsule())
         }
-        // **Le bouton de la maquette** : cinquante-six points, rayon quatorze, seize et demi
-        // de texte, et pas d'ombre. Il faisait soixante-quatre points, dix-huit de rayon et
-        // portait deux ombres portées — ce qui tenait sur le fond crème d'avant, et salit sur
-        // du blanc.
-        .buttonStyle(
-            MicaboActionButtonStyle(
-                tint: isEnabled ? surface.buttonTint : surface.disabledButtonTint,
-                foreground: surface.buttonForeground
-            )
-        )
+        .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .medium))
         .disabled(!isEnabled || isLoading)
-        .animation(.easeOut(duration: 0.2), value: isEnabled)
-        .animation(.easeOut(duration: 0.2), value: isLoading)
-        // Le reflet et la respiration se posent au-dessus des animations d'état, et pas
-        // dedans : le bouton s'active à l'instant où il se met à respirer, et une courbe
-        // d'activation qui s'appliquerait à la respiration lui mangerait sa répétition.
-        .overlay { if isLively { shine } }
-        .scaleEffect(isArming ? 1.03 : 1)
-        .onAppear(perform: startLiveliness)
-        .onChange(of: isLively) { _, _ in startLiveliness() }
-        .onChange(of: isEnabled) { wasEnabled, isEnabled in
-            guard isEnabled, !wasEnabled else { return }
-            arm()
-        }
-    }
-
-    /// **Le bouton se soulève quand il s'allume.**
-    ///
-    /// Il passait du gris au violet, et c'est tout : l'œil, occupé par la réponse qu'on
-    /// vient de choisir, ne le voyait pas changer. Un sursaut de trois pour cent et une
-    /// petite vibration disent « tu peux continuer » sans qu'on ait à regarder en bas.
-    private func arm() {
-        Haptics.tick()
-        withAnimation(OnboardingMotion.select) { isArming = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
-            withAnimation(OnboardingMotion.select) { isArming = false }
-        }
-    }
-
-    /// Bande claire inclinée qui traverse le bouton, découpée à sa forme pour qu'elle
-    /// n'aille pas baver sur le fond de l'écran.
-    private var shine: some View {
-        GeometryReader { proxy in
-            let width = proxy.size.width
-            let band = max(60, width * 0.34)
-
-            LinearGradient(
-                colors: [
-                    surface.buttonForeground.opacity(0),
-                    surface.buttonForeground.opacity(0.4),
-                    surface.buttonForeground.opacity(0)
-                ],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-            // Deux fois la hauteur du bouton, remontée de moitié : une bande inclinée
-            // qui ferait juste la hauteur laisserait deux coins non balayés.
-            .frame(width: band, height: proxy.size.height * 2)
-            .rotationEffect(.degrees(16))
-            .offset(x: shinePhase * (width + band * 2) - band, y: -proxy.size.height / 2)
-        }
-        // Le reflet suit la forme du bouton, qui est plus arrondie depuis qu'il a grandi :
-        // découpé sur l'ancien rayon, il bavait dans les coins.
-        .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
-        .allowsHitTesting(false)
-    }
-
-    /// **Le reflet, et plus la respiration.** Le bouton rebondissait sur place en boucle,
-    /// sur un ressort à peine amorti : c'était le mouvement le plus visible de tout le
-    /// parcours, et il le faisait paraître nerveux. Le reflet qui le balaie suffit à dire
-    /// où appuyer.
-    private func startLiveliness() {
-        guard isLively else { return }
-
-        shinePhase = 0
-        withAnimation(.linear(duration: 1.7).repeatForever(autoreverses: false)) {
-            shinePhase = 1
-        }
+        .animation(OnboardingMotion.select, value: isEnabled)
+        .animation(OnboardingMotion.select, value: isLoading)
     }
 }
 
@@ -734,29 +538,22 @@ struct OnboardingHint: View {
     var body: some View {
         Text(text)
             .font(MicaboFont.ui(12, weight: .medium))
-            .foregroundStyle(surface.isDark ? Color.white.opacity(0.6) : MicaboColor.inkTertiary)
+            .foregroundStyle(surface.isDark ? OnboardingPalette.white.opacity(0.6) : OnboardingPalette.grayLight)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
             .opacity(isVisible ? 1 : 0)
             .onAppear {
-                withAnimation(.easeOut(duration: 0.5).delay(0.5)) {
+                withAnimation(OnboardingMotion.enter.delay(0.4)) {
                     isVisible = true
                 }
             }
     }
 }
 
-/// Rangée de choix : un emoji, un libellé, une coche.
-///
-/// Les tuiles pastel qui vivaient ici ont été retirées, et à juste titre : six pastilles
-/// colorées à gauche de six lignes faisaient lire des pictogrammes au lieu des réponses.
-/// **Un emoji n'est pas une tuile.** Posé à même la ligne, sans fond ni cadre, il donne à
-/// chaque réponse un point d'accroche que l'œil retrouve sans lire, et une liste de réponses
-/// scolaires cesse de ressembler à un formulaire administratif.
-///
-/// `fillsHeight` fait grandir la rangée avec la place qu'on lui laisse. C'est ce qui
-/// permet à une liste de réponses d'occuper la page entière plutôt que de se tasser sous
-/// le titre : le rembourrage vertical fixe est un plancher, pas un plafond.
+// MARK: - Les réponses
+
+/// Rangée de choix : **une carte grise, un emoji, un libellé ; noire avec le texte blanc
+/// quand elle est choisie.** Pas de coche, pas de filet : la couleur dit tout.
 struct OnboardingChoiceRow: View {
     let title: String
     var emoji: String?
@@ -764,68 +561,40 @@ struct OnboardingChoiceRow: View {
     var isSelected: Bool
     var fillsHeight: Bool = false
     /// Le rang de la rangée dans sa liste, quand elle doit entrer en cascade.
-    ///
-    /// Sans lui, les six réponses d'un écran arrivent **ensemble** : le bloc de contenu est
-    /// un seul élément animé, donc la liste entière apparaît d'un coup et l'écran a l'air
-    /// d'avoir été peint avant qu'on y arrive. Avec lui, chaque réponse se pose après la
-    /// précédente, et c'est ce qui donne au parcours son rythme.
     var rank: Int?
     var action: () -> Void
 
-    /// Soixante points de haut au minimum, dix-sept de rembourrage : une réponse doit se
-    /// viser au pouce sans regarder, et une rangée de quarante-quatre se rate.
+    /// Soixante points de haut au minimum : une réponse doit se viser au pouce.
     private static let minHeight: CGFloat = 60
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 13) {
+            HStack(spacing: 14) {
                 if let emoji {
-                    // L'emoji de la réponse choisie grandit d'un dixième : c'est lui
-                    // qui « répond », avant la coche. Il grandit **dans** la rangée : rien
-                    // ne dépasse du cadre, donc rien ne passe sous la rangée voisine.
                     Text(emoji)
-                        .font(.system(size: 21))
-                        .scaleEffect(isSelected ? 1.12 : 1)
-                        .animation(OnboardingMotion.select, value: isSelected)
+                        .font(.system(size: 22))
+                        .frame(width: 28)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(MicaboFont.ui(16, weight: isSelected ? .semibold : .medium))
-                        .foregroundStyle(isSelected ? MicaboColor.accent : MicaboColor.ink)
+                        .font(OnboardingPalette.option)
+                        .foregroundStyle(isSelected ? OnboardingPalette.white : OnboardingPalette.ink)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
 
                     if let subtitle {
                         Text(subtitle)
-                            .font(MicaboFont.ui(12.5, weight: .regular))
-                            .foregroundStyle(MicaboColor.inkTertiary)
+                            .font(OnboardingPalette.subtitle)
+                            .foregroundStyle(isSelected ? OnboardingPalette.white.opacity(0.7) : OnboardingPalette.gray)
                             .multilineTextAlignment(.leading)
                     }
                 }
 
                 Spacer(minLength: MicaboSpacing.xs)
-
-                // **La coche n'apparaît que sur la réponse choisie.**
-                //
-                // Il y avait ici un cercle vide sur chaque ligne non choisie, et c'était un
-                // formulaire : six ronds gris alignés font lire une case à cocher avant de
-                // lire une réponse. Le violet du texte et le filet épaissi disent déjà ce qui
-                // est choisi ; la coche le confirme, elle n'a pas à le demander.
-                if isSelected {
-                    ZStack {
-                        Circle().fill(MicaboColor.accent)
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 11, weight: .heavy))
-                            .foregroundStyle(MicaboColor.onInk)
-                    }
-                    .frame(width: 22, height: 22)
-                    .transition(.scale.combined(with: .opacity))
-                }
             }
-            // Le rembourrage recule d'un point quand le filet en prend deux : sans ça, la
-            // rangée choisie grandirait d'un point et la liste tressauterait à chaque choix.
-            .padding(isSelected ? 16 : 17)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 16)
             .frame(
                 maxWidth: .infinity,
                 minHeight: Self.minHeight,
@@ -833,39 +602,23 @@ struct OnboardingChoiceRow: View {
                 alignment: .leading
             )
             .background(
-                isSelected ? MicaboColor.accentWash : MicaboColor.canvas,
-                in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
+                isSelected ? OnboardingPalette.ink : OnboardingPalette.card,
+                in: RoundedRectangle(cornerRadius: 16, style: .continuous)
             )
-            .overlay {
-                RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                    .strokeBorder(
-                        isSelected ? MicaboColor.accent : MicaboColor.stroke,
-                        lineWidth: isSelected ? 2 : 1
-                    )
-            }
+            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-        // **La rangée ne grandit pas.** Elle se soulevait d'un pour cent et demi, et ce
-        // pour cent et demi dépassait de son cadre : la rangée suivante, dessinée après,
-        // passait par-dessus, et le filet violet de la réponse choisie se retrouvait coupé
-        // sous les bords blancs de sa voisine. C'est ce que montrait « Tu es où,
-        // exactement ? ». Le lavis, le filet épaissi et l'emoji suffisent à dire le choix.
         .animation(OnboardingMotion.select, value: isSelected)
         .modifier(OnboardingRowAppear(rank: rank))
     }
 }
 
 /// Liste de réponses qui occupe toute la hauteur qu'on lui laisse.
-///
-/// Les rangées se partagent la place à égalité : aucune réponse n'est plus grande qu'une
-/// autre, et la question ne se lit pas comme un formulaire posé en haut d'une page vide.
 struct OnboardingAnswerList<Item: Identifiable, Content: View>: View {
     private let items: [Item]
     private let spacing: CGFloat
     private let row: (Int, Item) -> Content
 
-    /// Le rang est donné à la rangée pour qu'elle puisse entrer en cascade : c'est la liste
-    /// qui sait dans quel ordre ses réponses se posent, pas la rangée.
     init(_ items: [Item], spacing: CGFloat = 10, @ViewBuilder row: @escaping (Int, Item) -> Content) {
         self.items = items
         self.spacing = spacing
@@ -883,9 +636,7 @@ struct OnboardingAnswerList<Item: Identifiable, Content: View>: View {
     }
 }
 
-/// Une question fermée à deux réponses n'a pas besoin d'une liste. Deux cases côte à côte
-/// se comparent d'un seul regard, là où deux rangées empilées se lisent l'une après
-/// l'autre et laissent croire que la première compte plus que la seconde.
+/// Deux cases côte à côte, pour une question fermée à deux réponses.
 struct OnboardingChoiceTile: View {
     let title: String
     var systemImage: String?
@@ -902,12 +653,12 @@ struct OnboardingChoiceTile: View {
                 } else if let systemImage {
                     Image(systemName: systemImage)
                         .font(.system(size: 22, weight: .medium))
-                        .foregroundStyle(isSelected ? MicaboColor.ink : MicaboColor.inkTertiary)
+                        .foregroundStyle(isSelected ? OnboardingPalette.white : OnboardingPalette.gray)
                 }
 
                 Text(title)
-                    .font(MicaboFont.ui(16, weight: .semibold))
-                    .foregroundStyle(MicaboColor.ink)
+                    .font(OnboardingPalette.option)
+                    .foregroundStyle(isSelected ? OnboardingPalette.white : OnboardingPalette.ink)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -915,11 +666,10 @@ struct OnboardingChoiceTile: View {
             .padding(.horizontal, 14)
             .frame(maxWidth: .infinity)
             .frame(height: 132)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.group, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: MicaboRadius.group, style: .continuous)
-                    .strokeBorder(isSelected ? MicaboColor.ink : MicaboColor.stroke, lineWidth: isSelected ? 1.8 : 1)
-            }
+            .background(
+                isSelected ? OnboardingPalette.ink : OnboardingPalette.card,
+                in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+            )
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
         .animation(OnboardingMotion.select, value: isSelected)
@@ -927,10 +677,6 @@ struct OnboardingChoiceTile: View {
 }
 
 /// Pastille de choix, pour les questions à réponses courtes.
-///
-/// Dix pays en dix rangées font un écran qu'on fait défiler. En pastilles qui s'enroulent,
-/// ils tiennent en quelques lignes et se lisent d'un coup d'œil. L'emoji tient sur la même
-/// ligne que le libellé : un drapeau se reconnaît plus vite que le nom du pays.
 struct OnboardingChoiceChip: View {
     let title: String
     var emoji: String?
@@ -947,15 +693,13 @@ struct OnboardingChoiceChip: View {
 
                 Text(title)
                     .font(MicaboFont.ui(15, weight: .medium))
-                    .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.ink)
+                    .foregroundStyle(isSelected ? OnboardingPalette.white : OnboardingPalette.ink)
             }
             .padding(.vertical, 12)
             .padding(.horizontal, 18)
-            .background(isSelected ? MicaboColor.accent : MicaboColor.surface, in: Capsule())
+            .background(isSelected ? OnboardingPalette.ink : OnboardingPalette.card, in: Capsule())
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-        // Pas d'échelle : une puce qui grandit dépasse sur sa voisine, dessinée après elle.
-        // Le violet plein dit le choix.
         .animation(OnboardingMotion.select, value: isSelected)
     }
 }
@@ -967,11 +711,47 @@ private struct OnboardingRowAppear: ViewModifier {
     @ViewBuilder
     func body(content: Content) -> some View {
         if let rank {
-            // Trois blocs entrent avant la liste — sur-titre, titre, sous-titre — et le
-            // contenu est le quatrième : la première réponse se pose donc juste après lui.
             content.onboardingAppear(index: 3 + rank, stagger: OnboardingMotion.rowStagger)
         } else {
             content
+        }
+    }
+}
+
+// MARK: - Une question à une seule réponse
+
+/// **Le gabarit de toutes les questions fermées du quiz** : un titre, des cartes grises,
+/// le bouton qui s'allume à la première réponse. Les rangées se partagent la page.
+struct OnboardingSingleChoiceStep<Item: Identifiable & Hashable>: View {
+    let title: String
+    var subtitle: String?
+    let items: [Item]
+    let selection: Item?
+    let label: (Item) -> String
+    var emoji: (Item) -> String? = { _ in nil }
+    let onSelect: (Item) -> Void
+    let onContinue: () -> Void
+
+    var body: some View {
+        OnboardingScaffold(
+            title: title,
+            subtitle: subtitle,
+            scrolls: items.count > 6,
+            expandsContent: items.count <= 6
+        ) {
+            OnboardingAnswerList(items) { rank, item in
+                OnboardingChoiceRow(
+                    title: label(item),
+                    emoji: emoji(item),
+                    isSelected: selection == item,
+                    fillsHeight: items.count <= 6,
+                    rank: rank
+                ) {
+                    onSelect(item)
+                }
+            }
+        } footer: {
+            OnboardingContinueButton(isEnabled: selection != nil, action: onContinue)
         }
     }
 }
