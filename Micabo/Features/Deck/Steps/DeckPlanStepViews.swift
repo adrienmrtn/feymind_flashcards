@@ -43,9 +43,9 @@ struct DeckPurposeStepView: View {
 /// serait malhonnête serait de laisser croire qu'elle intensifie le travail — l'écran ne le
 /// dit nulle part.
 ///
-/// Le curseur est **vertical**, et ce n'est pas une coquetterie : une note qu'on monte se
-/// monte, et la jauge qui l'accompagne se remplit dans le même sens que la barre d'un
-/// graphique de progression.
+/// Le curseur est celui des moyennes du parcours d'accueil : la note en grand, une piste
+/// dessous, le pouce qui glisse. La colonne de crans qui vivait ici se lisait ; celui-ci
+/// se règle.
 struct DeckGradeStepView: View {
     @Bindable var setup: DeckSetup
     var onNext: () -> Void
@@ -57,20 +57,23 @@ struct DeckGradeStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.deckSetup.grade"),
-            // Hors défilement : voir `CurrentAverageStepView`, les ressorts qui centrent la
-            // roue n'ont pas de hauteur dans un `ScrollView`.
+            // Hors défilement : voir `CurrentAverageStepView`, les ressorts qui centrent le
+            // curseur n'ont pas de hauteur dans un `ScrollView`.
             scrolls: false,
-            animatesTitle: true,
             expandsContent: true
         ) {
-            // La roue a sa hauteur à elle, et c'est l'espace autour qui se partage : elle
-            // se pose au milieu de ce qui reste, quelle que soit la note choisie.
             VStack(spacing: 0) {
                 Spacer(minLength: 0)
-                VerticalGradePicker(
-                    ticks: choices,
-                    score: $setup.targetScore
+                GradeWheel(
+                    choices: choices,
+                    score: Binding(
+                        get: { setup.targetScore },
+                        set: { if let value = $0 { setup.targetScore = value } }
+                    ),
+                    fallbackIndex: choices.firstIndex { $0.score == setup.targetScore },
+                    label: i18n.t("ios.deckSetup.grade")
                 )
+                Spacer(minLength: 0)
                 Spacer(minLength: 0)
             }
         } footer: {
@@ -201,16 +204,8 @@ struct DeckConfidenceStepView: View {
         ("ios.deckSetup.confidence.all", 1),
     ]
 
-    /// L'humeur de la mascotte à chaque cran, du doute à la fête.
-    private static func mood(at index: Int) -> MicaboMascot.Mood {
-        switch index {
-        case 0: .unsure
-        case 1: .curious
-        case 2: .happy
-        case 3: .proud
-        default: .celebrating
-        }
-    }
+    /// Un emoji par cran, du doute à la fête : la réponse se lit avant la phrase.
+    private static let faces = ["😶‍🌫️", "🤔", "🙂", "😎", "🤩"]
 
     /// Le cran le plus proche de la valeur enregistrée.
     ///
@@ -234,23 +229,22 @@ struct DeckConfidenceStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.deckSetup.confidence"),
-            animatesTitle: true,
             expandsContent: true
         ) {
             VStack(spacing: MicaboSpacing.xl) {
                 Spacer(minLength: 0)
 
-                // **La mascotte répond au curseur.** Elle s'inquiète quand on part de zéro,
-                // se réjouit quand on connaît déjà le cours : la réponse se lit sur elle
-                // avant même de lire la phrase, et c'est ce qui fait bouger un écran qui
-                // n'avait qu'un curseur.
-                MicaboMascot(mood: Self.mood(at: index), size: 116)
-                    .mascotHop(on: index)
+                Text(Self.faces[index])
+                    .font(.system(size: 88))
+                    .id(index)
+                    .transition(.opacity)
+                    .animation(OnboardingMotion.tap, value: index)
+                    .accessibilityHidden(true)
 
                 Text(i18n.t(Self.steps[index].key))
                     .font(MicaboFont.ui(26, weight: .bold))
                     .tracking(-0.4)
-                    .foregroundStyle(MicaboColor.accent)
+                    .foregroundStyle(OnboardingPalette.ink)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
                     .id(index)
@@ -272,7 +266,7 @@ struct DeckConfidenceStepView: View {
                         in: 0...Double(Self.steps.count - 1),
                         step: 1
                     )
-                    .tint(MicaboColor.accent)
+                    .tint(OnboardingPalette.ink)
 
                     // Les deux bouts nommés : un curseur à cinq crans sans bornes écrites
                     // laisse deviner dans quel sens il monte.
@@ -294,120 +288,5 @@ struct DeckConfidenceStepView: View {
         } footer: {
             OnboardingContinueButton(action: onNext)
         }
-    }
-}
-
-// MARK: - Le curseur vertical
-
-/// **Une note qu'on monte, en la montant.**
-///
-/// Les crans sont empilés du plus bas en bas au plus haut en haut, et celui qu'on choisit
-/// grossit. Un curseur horizontal aurait fait le même travail ; celui-ci fait comprendre le
-/// sens de la progression sans une ligne de texte.
-///
-/// **La liste ne bouge pas ; c'est la pastille qui se déplace.** La version précédente
-/// était une roue : le barème défilait et la note choisie restait au centre. Choisir la
-/// deuxième note du haut laissait donc une rangée vide au-dessus et cinq en dessous, et
-/// tout le barème semblait tomber en bas de l'écran — « mal aligné », à juste titre. Ici
-/// le barème est posé une fois, centré dans la place qu'on lui laisse, et le lavis violet
-/// glisse d'un cran à l'autre : le centre ne bouge jamais. On appuie sur une note, ou on
-/// fait glisser le doigt le long de la colonne comme sur un curseur.
-///
-/// **Les voisins s'éteignent par paliers.** Le cran choisi est en violet sur son lavis ;
-/// celui d'à côté est gris moyen, le suivant plus clair, le troisième presque blanc. C'est
-/// ce dégradé qui donne la profondeur d'un rouleau sans en simuler la perspective.
-struct VerticalGradePicker: View {
-    let ticks: [GradeTick]
-    @Binding var score: Int
-
-    /// Les rangées se partagent la hauteur qu'on leur laisse, entre ces deux bornes : un
-    /// barème de douze crans tient sur un petit téléphone, un barème de six ne s'étire pas
-    /// jusqu'à ressembler à une liste de réglages.
-    private static let minRowHeight: CGFloat = 32
-    private static let maxRowHeight: CGFloat = 46
-
-    /// La note la plus haute en haut, comme sur la maquette.
-    private var ordered: [GradeTick] { ticks.reversed() }
-
-    private var selectedIndex: Int {
-        ordered.firstIndex { $0.score == score } ?? 0
-    }
-
-    /// L'encre d'un cran selon sa distance à celui qu'on a choisi.
-    private func ink(distance: Int) -> Color {
-        switch distance {
-        case 0: MicaboColor.accent
-        case 1: MicaboColor.gradeNear
-        case 2: MicaboColor.gradeMid
-        default: MicaboColor.gradeFar
-        }
-    }
-
-    var body: some View {
-        GeometryReader { proxy in
-            let count: Int = max(1, ordered.count)
-            let share: CGFloat = proxy.size.height / CGFloat(count)
-            let rowHeight: CGFloat = min(Self.maxRowHeight, max(Self.minRowHeight, share))
-            let listHeight: CGFloat = rowHeight * CGFloat(count)
-            let top: CGFloat = max(0, (proxy.size.height - listHeight) / 2)
-            let pillY: CGFloat = CGFloat(selectedIndex) * rowHeight + 2
-
-            ZStack(alignment: .top) {
-                // La pastille, derrière les notes, qui glisse d'un cran à l'autre.
-                RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
-                    .fill(MicaboColor.accentWash)
-                    .frame(height: rowHeight - 4)
-                    .offset(y: pillY)
-                    .animation(OnboardingMotion.select, value: selectedIndex)
-
-                VStack(spacing: 0) {
-                    ForEach(ordered) { tick in
-                        row(tick)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: rowHeight)
-                            .contentShape(Rectangle())
-                            .onTapGesture { choose(tick.score) }
-                    }
-                }
-            }
-            .frame(height: listHeight)
-            .contentShape(Rectangle())
-            // Le doigt qui glisse le long de la colonne emporte la pastille avec lui.
-            .gesture(
-                DragGesture(minimumDistance: 4)
-                    .onChanged { value in
-                        let index = Int((value.location.y / rowHeight).rounded(.down))
-                        let clamped = min(count - 1, max(0, index))
-                        choose(ordered[clamped].score)
-                    }
-            )
-            .offset(y: top)
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private func row(_ tick: GradeTick) -> some View {
-        let gap = abs((ordered.firstIndex { $0.score == tick.score } ?? 0) - selectedIndex)
-        let isSelected = gap == 0
-        // Nommées et typées plutôt que posées en ternaires dans la chaîne : un littéral
-        // numérique dans un ternaire est une inconnue pour l'inférence.
-        let size: CGFloat = isSelected ? 32 : 23
-        let weight: Font.Weight = isSelected ? .heavy : .bold
-        let kerning: CGFloat = isSelected ? -1.2 : -0.6
-
-        return Text(tick.label)
-            .font(MicaboFont.ui(size, weight: weight))
-            .tracking(kerning)
-            .foregroundStyle(ink(distance: gap))
-            .monospacedDigit()
-            .lineLimit(1)
-            .minimumScaleFactor(0.6)
-            .animation(OnboardingMotion.select, value: isSelected)
-    }
-
-    private func choose(_ value: Int) {
-        guard value != score else { return }
-        Haptics.selection()
-        score = value
     }
 }

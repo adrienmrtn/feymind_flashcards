@@ -29,6 +29,10 @@ struct RootView: View {
     /// Vrai quand on a explicitement choisi de rester local. Le drapeau est nécessaire :
     /// sans lui, l'écran de compte reviendrait à chaque lancement.
     @AppStorage(AccountGate.skippedKey) private var didSkipAccount = false
+    /// **Le premier cours se construit avant l'app.** Posé à la fin du parcours, levé quand
+    /// le deck existe : entre les deux, on ne montre pas la liste vide, on montre « créons
+    /// ton premier cours », puis la création elle-même, sans croix.
+    @AppStorage(OnboardingPreferences.Key.pendingFirstImport) private var pendingFirstImport = false
 
     @Environment(AuthController.self) private var auth
 
@@ -46,6 +50,9 @@ struct RootView: View {
             } else if showsAccountGate {
                 AuthView()
                     .transition(.opacity)
+            } else if pendingFirstImport {
+                FirstDeckFlowView()
+                    .transition(.opacity)
             } else {
                 RootTabView()
                     .transition(.opacity)
@@ -53,6 +60,7 @@ struct RootView: View {
         }
         .animation(.easeInOut(duration: 0.45), value: didCompleteOnboarding)
         .animation(.easeInOut(duration: 0.35), value: showsAccountGate)
+        .animation(.easeInOut(duration: 0.45), value: pendingFirstImport)
         // Se connecter depuis les réglages referme la porte : sans ça, le drapeau « plus
         // tard » resterait vrai et l'écran de compte ne reviendrait jamais après une
         // déconnexion.

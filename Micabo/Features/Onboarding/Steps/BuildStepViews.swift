@@ -4,11 +4,18 @@ import SwiftUI
 // MARK: - « Merci de nous faire confiance. »
 
 /// Un écran pour une phrase, entre la dernière question et le calcul. Il gagne sa place
-/// parce qu'il change de registre : jusqu'ici on demandait, à partir d'ici on rend. C'est
-/// l'écran « thank you for trusting us » de Cal AI, et il fait exactement ça.
+/// parce qu'il change de registre : jusqu'ici on demandait, à partir d'ici on rend.
+///
+/// **La phrase se lit, lentement, et il n'y a pas de bouton.** Les mots passent à l'encre
+/// l'un après l'autre ; une fois la phrase lue, une ligne grise dit qu'on peut toucher.
+/// L'appui surligne « confiance », et la page suivante arrive dans la foulée : c'est un
+/// merci qu'on lit, pas un écran qu'on passe.
 struct ThanksStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    @State private var isArmed = false
+    @State private var didTap = false
 
     private var subtitle: String {
         if let name = model.displayName.nilIfBlank {
@@ -18,18 +25,65 @@ struct ThanksStepView: View {
     }
 
     var body: some View {
-        OnboardingProofPage(
-            headline: i18n.t("ios.build.thanks.title"),
-            caption: subtitle
-        ) {
-            Image(systemName: "checkmark")
-                .font(.system(size: 44, weight: .bold))
-                .foregroundStyle(OnboardingPalette.white)
-                .frame(width: 112, height: 112)
-                .background(OnboardingPalette.ink, in: Circle())
-                .accessibilityHidden(true)
-        } onContinue: {
-            model.advance()
+        VStack(spacing: 0) {
+            OnboardingChrome(showsBack: false)
+
+            VStack(spacing: 0) {
+                Spacer(minLength: MicaboSpacing.lg)
+
+                Image(systemName: "checkmark")
+                    .font(.system(size: 34, weight: .bold))
+                    .foregroundStyle(OnboardingPalette.white)
+                    .frame(width: 88, height: 88)
+                    .background(OnboardingPalette.ink, in: Circle())
+                    .accessibilityHidden(true)
+                    .onboardingAppear(index: 1)
+
+                OnboardingReadingText(
+                    template: i18n.t("ios.build.thanks.title"),
+                    size: 34,
+                    wordDelay: 0.26,
+                    startDelay: 0.7,
+                    highlightsOnFinish: false,
+                    isHighlighted: didTap,
+                    onFinish: { isArmed = true },
+                    onHighlighted: { model.advance() }
+                )
+                .padding(.horizontal, MicaboSpacing.screen)
+                .padding(.top, MicaboSpacing.xl)
+
+                Text(subtitle)
+                    .font(MicaboFont.ui(15, weight: .regular))
+                    .foregroundStyle(OnboardingPalette.gray)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, MicaboSpacing.xl)
+                    .padding(.top, MicaboSpacing.md)
+                    .opacity(isArmed ? 1 : 0)
+                    .animation(.easeOut(duration: 0.4), value: isArmed)
+
+                Spacer(minLength: MicaboSpacing.lg)
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            Text(i18n.t("ios.proof.tap"))
+                .font(MicaboFont.ui(14, weight: .medium))
+                .foregroundStyle(OnboardingPalette.grayLight)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 22)
+                .opacity(isArmed && !didTap ? 1 : 0)
+                .animation(.easeOut(duration: 0.4), value: isArmed)
+                .animation(.easeOut(duration: 0.2), value: didTap)
+        }
+        .background(OnboardingPalette.white.ignoresSafeArea())
+        .environment(\.onboardingSurface, .canvas)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            guard isArmed, !didTap else { return }
+            didTap = true
+            Haptics.light()
         }
     }
 }
@@ -40,8 +94,9 @@ struct ThanksStepView: View {
 /// et une liste de quatre lignes qui se cochent. Purement visuel — les réponses sont déjà
 /// enregistrées — mais il ne doit jamais laisser croire que l'app a gelé.
 ///
-/// **Il dure cinq secondes**, et c'est un plancher, pas une approximation. Un écran qui
-/// annonce qu'il construit un plan puis disparaît en une seconde n'a rien construit.
+/// **Il dure huit secondes**, et c'est un plancher, pas une approximation. Un écran qui
+/// annonce qu'il construit un plan puis disparaît en une seconde n'a rien construit ; à
+/// cinq secondes, il avait encore l'air d'une animation.
 ///
 /// **La fin ne se saute pas d'elle-même** : c'est l'élève qui appuie.
 struct BuildingStepView: View {
@@ -49,7 +104,7 @@ struct BuildingStepView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     /// Durée du chargement, en secondes. Verrouillée par un test.
-    static let duration = 5.0
+    static let duration = 8.0
 
     private var steps: [String] {
         (1...4).map { i18n.t("ios.build.step\($0)") }
@@ -179,7 +234,7 @@ struct BuildingStepView: View {
 // MARK: - « Ton plan est prêt. »
 
 /// **Une coche noire, une phrase, et une carte de quatre lignes** : le rythme, les
-/// matières, l'échéance, l'objectif. Chaque ligne porte une icône, un libellé gris et sa
+/// matières, le temps par jour, l'objectif. Chaque ligne porte une icône, un libellé gris et sa
 /// valeur en gras à droite. C'est l'écran « your custom plan is ready » de Cal AI, réduit
 /// à ce que Micabo sait, et lisible en deux secondes.
 struct PlanReadyStepView: View {
@@ -233,7 +288,7 @@ struct PlanReadyStepView: View {
                         divider
                         row(icon: "books.vertical.fill", label: i18n.t("ios.build.ready.subjectsLabel"), value: subjectsText, rank: 1)
                         divider
-                        row(icon: "calendar", label: i18n.t("ios.build.ready.exam"), value: "J-\(model.daysToExam)", rank: 2)
+                        row(icon: "clock.fill", label: i18n.t("ios.build.ready.time"), value: i18n.t("ios.build.ready.timeValue", ["n": "\(model.minutesPerDay)"]), rank: 2)
                         divider
                         row(icon: "target", label: i18n.t("ios.build.ready.target"), value: target, rank: 3, accent: true)
                     }

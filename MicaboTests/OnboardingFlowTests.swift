@@ -18,51 +18,36 @@ final class OnboardingFlowTests: XCTestCase {
 
     // MARK: - Ouverture
 
-    /// **Deux écrans d'accroche, puis le pays.** Le produit en mouvement, la note : rien
-    /// n'est demandé avant le troisième écran, et le pays vient d'abord parce
-    /// que c'est lui qui commande les réponses de tout le reste.
+    /// **Le logo, la note, puis deux écrans qui parlent de lui avant le pays.** Relire ne
+    /// suffit pas, et ce qui le bloque : la première question du quiz est celle où l'on se
+    /// sent compris, et elle vient avant tout ce qui trie.
     func testTheHookComesBeforeTheFirstQuestion() {
         let model = OnboardingModel()
-        XCTAssertEqual(model.step, .hookVideo)
+        XCTAssertEqual(model.step, .hookLogo)
 
         model.advance()
         XCTAssertEqual(model.step, .hookRating)
 
         model.advance()
-        XCTAssertEqual(model.step, .country, "Le pays est la première question")
+        XCTAssertEqual(model.step, .proofRetention, "Relire, c'est oublier, juste après la note")
+
+        model.advance()
+        XCTAssertEqual(model.step, .blocker, "Ce qui bloque, avant le pays")
+
+        model.advance()
+        XCTAssertEqual(model.step, .country, "Le pays commande les réponses de tout le reste")
     }
 
-    /// Dans un pays décrit en détail, on demande la filière puis l'année, jamais le palier
-    /// large ; ailleurs, le palier large et rien d'autre. Chaque élève voit une seule des
-    /// deux questions de niveau.
+    /// Chaque pays ne voit qu'une des deux questions de niveau, et c'est le pays qui
+    /// décide : la filière puis l'année pour ceux qu'on décrit en détail, le palier large
+    /// pour les autres.
     func testEachCountrySeesExactlyOneLevelQuestion() {
         let detailed = OnboardingModel()
-        detailed.select(country: .fr)
-        while detailed.step != .country { detailed.advance() }
-        detailed.advance()
-        XCTAssertEqual(detailed.step, .schoolType, "La France demande la filière")
-        detailed.advance()
-        XCTAssertEqual(detailed.step, .year)
-        detailed.advance()
-        XCTAssertEqual(detailed.step, .subjects)
-
-        let generic = OnboardingModel()
-        generic.select(country: .other)
-        while generic.step != .country { generic.advance() }
-        generic.advance()
-        XCTAssertEqual(generic.step, .level, "Un pays générique demande le palier large")
-        generic.advance()
-        XCTAssertEqual(generic.step, .subjects)
-
-        XCTAssertEqual(OnboardingStep.allCases.filter { $0.isSkipped(for: .fr) }, [.level])
-        XCTAssertEqual(OnboardingStep.allCases.filter { $0.isSkipped(for: .other) }, [.schoolType, .year])
-    }
-
     // MARK: - Le quiz et ses preuves
 
     /// **Les preuves sont intercalées, et chacune suit la question qui la prépare** : la
-    /// moyenne visée avant « c'est réaliste », ce qui bloque avant la rétention, l'échéance
-    /// avant la courbe, la méthode avant les avis.
+    /// moyenne visée avant « c'est réaliste », le temps par jour avant la signature, la
+    /// signature avant la courbe qui la tient.
     func testEachProofFollowsTheQuestionThatSetsItUp() {
         let model = self.model(advancingTo: .targetAverage)
 
@@ -71,34 +56,26 @@ final class OnboardingFlowTests: XCTestCase {
         model.advance()
         XCTAssertEqual(model.step, .dailyTime)
         model.advance()
-        XCTAssertEqual(model.step, .proofRetention)
+        XCTAssertEqual(model.step, .commitment, "Le temps choisi se signe")
         model.advance()
-        XCTAssertEqual(model.step, .blocker)
-        model.advance()
-        XCTAssertEqual(model.step, .nextExam)
-        model.advance()
-        XCTAssertEqual(model.step, .proofCurve, "L'échéance qu'on vient de donner, puis la courbe jusqu'à elle")
+        XCTAssertEqual(model.step, .proofCurve, "Le temps qu'on vient de signer, puis la courbe qu'il donne")
         model.advance()
         XCTAssertEqual(model.step, .method)
         model.advance()
-        XCTAssertEqual(model.step, .proofStudents)
-        model.advance()
         XCTAssertEqual(model.step, .name, "Le prénom est la dernière question")
         model.advance()
-        XCTAssertEqual(model.step, .proofPlan)
-        model.advance()
-        XCTAssertEqual(model.step, .thanks, "Après la dernière preuve, on rend")
+        XCTAssertEqual(model.step, .thanks, "Après la dernière question, on rend")
     }
 
-    /// Les quinze questions sont bien des questions, et rien d'autre ne l'est : c'est ce
+    /// Les quatorze questions sont bien des questions, et rien d'autre ne l'est : c'est ce
     /// qui décide où l'on peut revenir.
     func testTheQuestionsAreExactlyTheScreensThatAsk() {
         let questions = OnboardingStep.allCases.filter(\.isQuestion)
         XCTAssertEqual(questions, [
-            .country, .level, .schoolType, .year, .subjects, .source, .triedApps, .goal,
-            .currentAverage, .targetAverage, .dailyTime, .blocker, .nextExam, .method, .name,
+            .blocker, .country, .level, .schoolType, .year, .subjects, .source, .triedApps, .goal,
+            .currentAverage, .targetAverage, .dailyTime, .method, .name,
         ])
-        XCTAssertEqual(questions.count, 15)
+        XCTAssertEqual(questions.count, 14)
     }
 
     /// Les réponses du quiz sont écrites au changement d'écran, et le temps choisi
@@ -112,27 +89,26 @@ final class OnboardingFlowTests: XCTestCase {
         model.triedApps = true
         model.dailyMinutes = 10
         model.blocker = .forget
-        model.examHorizon = .month
         model.method = .reread
+        model.studyHour = 20
         model.advance()
 
         XCTAssertEqual(OnboardingPreferences.source, "tiktok")
         XCTAssertEqual(OnboardingPreferences.triedApps, true)
         XCTAssertEqual(OnboardingPreferences.dailyMinutes, 10)
         XCTAssertEqual(OnboardingPreferences.blocker, "forget")
-        XCTAssertEqual(OnboardingPreferences.examHorizon, "month")
         XCTAssertEqual(OnboardingPreferences.method, "reread")
+        XCTAssertEqual(OnboardingPreferences.studyHour, 20)
         XCTAssertEqual(model.cardsPerDay, DailyLoad.newCardsPerDay(dailyMinutes: 10))
+        XCTAssertEqual(model.minutesPerDay, 10)
     }
 
-    /// Un horizon a toujours un compte à rebours positif, et la fin d'année tombe devant.
-    func testEveryExamHorizonIsAhead() {
-        for horizon in OnboardingExamHorizon.allCases {
-            XCTAssertGreaterThan(horizon.days, 0, "\(horizon) doit être devant")
-            XCTAssertFalse(horizon.emoji.isEmpty)
-        }
-        XCTAssertLessThan(OnboardingExamHorizon.week.days, OnboardingExamHorizon.month.days)
-        XCTAssertLessThan(OnboardingExamHorizon.month.days, OnboardingExamHorizon.term.days)
+    /// Le chiffre du chemin est celui que le compteur atteint, et la courbe s'arrête au
+    /// même horizon que lui : les deux écrans racontent la même promesse.
+    func testThePathFiguresAgree() {
+        XCTAssertGreaterThan(OnboardingProofFigures.pathAchievers, 0)
+        XCTAssertGreaterThan(OnboardingProofFigures.pathMonths, 0)
+        XCTAssertEqual(OnboardingProofFigures.students, 100_000)
     }
 
     /// Les chiffres de preuve s'écrivent dans la langue de l'élève.
@@ -160,6 +136,9 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(model.step, .signIn, "Le compte n'est demandé qu'à ce moment-là")
 
         model.advance()
+        XCTAssertEqual(model.step, .studyTime, "L'heure du rappel, avant de le demander")
+
+        model.advance()
         XCTAssertEqual(model.step, .notifications)
 
         model.advance()
@@ -175,7 +154,7 @@ final class OnboardingFlowTests: XCTestCase {
     /// L'écran de calcul du plan ne doit pas passer plus vite qu'on ne le lit : un
     /// chargement qui s'évapore en une seconde n'a rien généré aux yeux de personne.
     func testTheBuildScreenLastsLongEnoughToBeRead() {
-        XCTAssertGreaterThanOrEqual(BuildingStepView.duration, 5)
+        XCTAssertGreaterThanOrEqual(BuildingStepView.duration, 8)
     }
 
     /// Apple et Google restent les deux fournisseurs OAuth. Le courriel n'est pas un
@@ -203,8 +182,9 @@ final class OnboardingFlowTests: XCTestCase {
 
     // MARK: - Revenir
 
-    /// On revient jusqu'au pays, et pas plus loin ; on ne revient pas après le prénom.
-    func testGoingBackStopsAtTheCountryAndAfterTheName() {
+    /// On revient jusqu'à la première question, et pas plus loin ; on ne revient pas après
+    /// le prénom.
+    func testGoingBackStopsAtTheFirstQuestionAndAfterTheName() {
         let model = OnboardingModel()
         model.select(country: .fr)
 
@@ -214,14 +194,16 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertTrue(model.canGoBack)
         model.goBack()
         XCTAssertEqual(model.step, .country)
-        XCTAssertFalse(model.canGoBack, "Le pays est le premier écran où l'on revient")
         model.goBack()
-        XCTAssertEqual(model.step, .country, "On ne recule pas dans l'accroche")
+        XCTAssertEqual(model.step, .blocker, "Ce qui bloque est la première question, et on y revient")
+        XCTAssertFalse(model.canGoBack)
+        model.goBack()
+        XCTAssertEqual(model.step, .blocker, "On ne recule pas dans l'accroche")
 
         while model.step != .name { model.advance() }
         XCTAssertTrue(model.canGoBack)
         model.advance()
-        XCTAssertEqual(model.step, .proofPlan)
+        XCTAssertEqual(model.step, .thanks)
         XCTAssertFalse(model.canGoBack, "Après le prénom, rien ne se défait")
     }
 
@@ -247,7 +229,8 @@ final class OnboardingFlowTests: XCTestCase {
         for name in ["howItWorks", "showMe", "upload", "dates", "turnsInto", "smartFeatures",
                      "greeting", "together", "personalizing", "socialProof", "yourTurn",
                      "welcome", "demoImport", "forgetting", "school", "language", "projection",
-                     "hookPress", "proofTwice", "proofKeep"] {
+                     "hookPress", "proofTwice", "proofKeep", "hookVideo", "nextExam", "proofStudents",
+                     "proofPlan"] {
             XCTAssertFalse(names.contains(name), "\(name) a été retiré du parcours")
         }
     }

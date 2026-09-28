@@ -30,17 +30,17 @@ struct PaywallOfferView: View {
                 if let headline {
                     Text(headline)
                         .font(MicaboFont.ui(12.5, weight: .semibold))
-                        .foregroundStyle(MicaboColor.accent)
+                        .foregroundStyle(OnboardingPalette.accent)
                         .multilineTextAlignment(.center)
                         .padding(.vertical, 7)
                         .padding(.horizontal, 14)
-                        .background(MicaboColor.accentSoft, in: Capsule())
+                        .background(OnboardingPalette.accentWash, in: Capsule())
                         .onboardingAppear(index: 0)
                 }
 
                 Image(systemName: "graduationcap.fill")
                     .font(.system(size: 38, weight: .medium))
-                    .foregroundStyle(MicaboColor.ink)
+                    .foregroundStyle(OnboardingPalette.ink)
                     .onboardingAppear(index: 1)
 
                 PaywallPitch.text(for: plan)
@@ -54,7 +54,7 @@ struct PaywallOfferView: View {
                 Button(action: onSeeAllPlans) {
                     Text(L10n.t("ios.paywallSeeAll", locale: .resolved()))
                         .font(MicaboFont.ui(15, weight: .medium))
-                        .foregroundStyle(MicaboColor.info)
+                        .foregroundStyle(OnboardingPalette.accent)
                 }
                 .buttonStyle(MicaboPressableButtonStyle(dimming: true))
                 .onboardingAppear(index: 3)
@@ -67,7 +67,7 @@ struct PaywallOfferView: View {
             VStack(spacing: 14) {
                 Text(PaywallPitch.reassurance)
                     .font(MicaboFont.ui(12.5, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkTertiary)
+                    .foregroundStyle(OnboardingPalette.grayLight)
                     .multilineTextAlignment(.center)
 
                 PaywallCallToAction(isPurchasing: isPurchasing, action: onSubscribe)
@@ -108,7 +108,7 @@ struct PaywallPlansView: View {
                 VStack(alignment: .leading, spacing: 26) {
                     Text(L10n.t("ios.paywallPlansTitle", locale: .resolved()))
                         .font(MicaboFont.ui(26, weight: .bold))
-                        .foregroundStyle(MicaboColor.ink)
+                        .foregroundStyle(OnboardingPalette.ink)
                         .tracking(-0.7)
                         .fixedSize(horizontal: false, vertical: true)
                         .onboardingAppear(index: 0)
@@ -139,7 +139,7 @@ struct PaywallPlansView: View {
             }
             .scrollIndicators(.hidden)
 
-            MicaboBottomBar {
+            MicaboBottomBar(background: OnboardingPalette.white) {
                 VStack(spacing: 12) {
                     PaywallCallToAction(isPurchasing: isPurchasing, plan: selectedPlan) {
                         onSubscribe(selectedPlan)
@@ -184,15 +184,15 @@ private struct PaywallComparisonTable: View {
 
             Text(L10n.t("ios.paywallFree", locale: .resolved()))
                 .font(MicaboFont.ui(13, weight: .medium))
-                .foregroundStyle(MicaboColor.inkTertiary)
+                .foregroundStyle(OnboardingPalette.grayLight)
                 .frame(width: columnWidth)
 
             Text("PRO")
                 .font(MicaboFont.ui(11.5, weight: .bold))
                 .tracking(1)
-                .foregroundStyle(MicaboColor.onInk)
+                .foregroundStyle(OnboardingPalette.white)
                 .frame(width: columnWidth, height: 26)
-                .background(MicaboColor.accent, in: Capsule())
+                .background(OnboardingPalette.accent, in: Capsule())
         }
     }
 
@@ -200,19 +200,19 @@ private struct PaywallComparisonTable: View {
         HStack(spacing: 0) {
             Text(feature)
                 .font(MicaboFont.ui(14.5, weight: .medium))
-                .foregroundStyle(MicaboColor.ink)
+                .foregroundStyle(OnboardingPalette.ink)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.trailing, MicaboSpacing.xs)
 
             Text("—")
                 .font(MicaboFont.ui(15, weight: .regular))
-                .foregroundStyle(MicaboColor.inkTertiary)
+                .foregroundStyle(OnboardingPalette.grayLight)
                 .frame(width: columnWidth)
 
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 19, weight: .medium))
-                .foregroundStyle(MicaboColor.accent)
+                .foregroundStyle(OnboardingPalette.accent)
                 .frame(width: columnWidth)
         }
         .padding(.vertical, 13)
@@ -234,11 +234,11 @@ private struct PaywallPlanCard: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(plan.title)
                         .font(MicaboFont.ui(17, weight: .bold))
-                        .foregroundStyle(MicaboColor.ink)
+                        .foregroundStyle(OnboardingPalette.ink)
 
                     Text(plan.caption)
                         .font(MicaboFont.ui(13, weight: .regular))
-                        .foregroundStyle(MicaboColor.inkSecondary)
+                        .foregroundStyle(OnboardingPalette.gray)
                 }
 
                 Spacer(minLength: 0)
@@ -249,11 +249,11 @@ private struct PaywallPlanCard: View {
                     HStack(alignment: .lastTextBaseline, spacing: 3) {
                         Text(plan.headlinePrice)
                             .font(MicaboFont.ui(17, weight: .bold))
-                            .foregroundStyle(MicaboColor.ink)
+                            .foregroundStyle(OnboardingPalette.ink)
 
                         Text(plan.headlineUnit)
                             .font(MicaboFont.ui(12, weight: .medium))
-                            .foregroundStyle(MicaboColor.inkSecondary)
+                            .foregroundStyle(OnboardingPalette.gray)
                     }
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -262,20 +262,20 @@ private struct PaywallPlanCard: View {
                         ? L10n.t("app.paywall.trialBadge", locale: .resolved(), vars: ["days": "\(plan.trialDays)"])
                         : L10n.t("ios.noTrial", locale: .resolved()))
                         .font(MicaboFont.ui(13, weight: .medium))
-                        .foregroundStyle(plan.hasTrial ? MicaboColor.accent : MicaboColor.inkTertiary)
+                        .foregroundStyle(plan.hasTrial ? OnboardingPalette.accent : OnboardingPalette.grayLight)
                 }
             }
             .padding(.vertical, 15)
             .padding(.horizontal, 16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
-                isSelected ? MicaboColor.accentSoft : MicaboColor.surface,
+                isSelected ? OnboardingPalette.accentWash : OnboardingPalette.card,
                 in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
             )
             .overlay {
                 RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
                     .strokeBorder(
-                        isSelected ? MicaboColor.accent : MicaboColor.stroke,
+                        isSelected ? OnboardingPalette.accent : OnboardingPalette.cardStrong,
                         lineWidth: isSelected ? 1.8 : 1
                     )
             }
@@ -283,10 +283,10 @@ private struct PaywallPlanCard: View {
                 if let badge {
                     Text(badge)
                         .font(MicaboFont.ui(11, weight: .bold))
-                        .foregroundStyle(MicaboColor.onInk)
+                        .foregroundStyle(OnboardingPalette.white)
                         .padding(.vertical, 4)
                         .padding(.horizontal, 9)
-                        .background(MicaboColor.accent, in: Capsule())
+                        .background(OnboardingPalette.accent, in: Capsule())
                         .offset(x: -12, y: -9)
                 }
             }

@@ -61,17 +61,6 @@ enum DeckSetupStep: Hashable {
 
     var analyticsName: String { String(describing: self) }
 
-    /// **L'humeur de la mascotte, écran par écran** — la même grammaire que le parcours
-    /// d'accueil : elle demande, elle lit ce qu'on dépose, elle réfléchit devant la note.
-    /// L'écran de l'auto-évaluation la fait réagir lui-même, cran par cran.
-    var mascotMood: MicaboMascot.Mood {
-        switch self {
-        case .subject, .source, .purpose: .curious
-        case .materials, .topic: .reading
-        case .grade, .building: .thinking
-        case .name, .deadline, .confidence: .happy
-        }
-    }
 }
 
 /// **La création d'un deck, du choix de la matière au plan construit.**
@@ -87,6 +76,10 @@ struct DeckSetupFlowView: View {
     /// La matière, quand elle est déjà connue — création depuis un dossier de matière, par
     /// exemple. L'écran de la matière est alors sauté.
     var presetSubject: String?
+    /// **Faux pour le premier cours.** À la sortie du parcours d'accueil, l'app n'a rien
+    /// d'autre à montrer qu'un deck qui n'existe pas encore : la croix mènerait sur une
+    /// liste vide, et elle disparaît.
+    var isDismissable: Bool = true
     var onCreated: (Course) -> Void
     var onCancel: () -> Void
 
@@ -101,10 +94,12 @@ struct DeckSetupFlowView: View {
 
     init(
         presetSubject: String? = nil,
+        isDismissable: Bool = true,
         onCreated: @escaping (Course) -> Void,
         onCancel: @escaping () -> Void
     ) {
         self.presetSubject = presetSubject
+        self.isDismissable = isDismissable
         self.onCreated = onCreated
         self.onCancel = onCancel
         let model = DeckSetup(subject: presetSubject)
@@ -114,7 +109,9 @@ struct DeckSetupFlowView: View {
 
     var body: some View {
         ZStack {
-            MicaboColor.canvas.ignoresSafeArea()
+            // Le blanc du parcours d'accueil : ces écrans en ont la charte, et un fond
+            // crème sous des pages blanches faisait une bande à chaque passage.
+            OnboardingPalette.white.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 header
@@ -122,7 +119,7 @@ struct DeckSetupFlowView: View {
                 ZStack {
                     stepView
                         .id(step)
-                        .transition(.onboardingPage)
+                        .transition(.onboardingFade)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .animation(OnboardingMotion.page, value: step)
@@ -144,77 +141,58 @@ struct DeckSetupFlowView: View {
         }
     }
 
-    /// **Un retour, la jauge, et une sortie.**
+    /// **La jauge, le retour, et la sortie quand elle a un sens.**
     ///
-    /// Le retour manquait : le parcours pose neuf questions d'affilée et ne laissait corriger
-    /// aucune des huit précédentes. Il ne restait qu'à tout annuler par la croix et
-    /// recommencer, ce qui n'est pas la même chose.
+    /// Le même chrome que le parcours d'accueil : la jauge sur toute la largeur, puis une
+    /// rangée avec le rond du retour à gauche et la croix à droite. Plus de mascotte : neuf
+    /// questions posées par une page blanche se lisent mieux que par un personnage qui
+    /// change de tête.
     ///
-    /// **L'en-tête disparaît entièrement pendant la construction.**
-    ///
-    /// Il n'en retirait que la croix. Restait la jauge du parcours, à cent pour cent, juste
-    /// au-dessus de la jauge de la construction qui, elle, avance : deux barres violettes
-    /// empilées dont une ne bougera plus. La première ne mesure plus rien à ce moment-là —
-    /// il n'y a plus de questions derrière — et sa seule action possible vient d'être
-    /// retirée. Un en-tête sans information ni action n'est plus un en-tête.
-    ///
-    /// **Le même chrome que le parcours d'accueil.** La jauge sur toute la largeur, puis
-    /// une rangée : le retour à gauche, la mascotte à droite — qui change de tête d'un
-    /// écran à l'autre et sursaute quand on passe au suivant — et la croix. Le parcours
-    /// d'import posait ses trois commandes sur une seule ligne, sans personnage : neuf
-    /// questions d'affilée posées par personne, c'était le seul endroit de l'app où l'on
-    /// remplissait un formulaire.
-    ///
-    /// **Il reste en place pendant la construction, invisible.** Retiré de la pile, il
-    /// faisait remonter tout l'écran de soixante points au moment même où la page glissait :
-    /// deux mouvements à la fois, et l'arrivée sur la jauge avait l'air de rebondir. Masqué,
-    /// rien ne bouge — la page arrive comme les autres.
+    /// **L'en-tête reste en place pendant la construction, invisible.** Retiré de la pile,
+    /// il faisait remonter tout l'écran au moment où la page arrivait. Masqué, rien ne
+    /// bouge.
     private var header: some View {
         let isBuilding = step == .building
 
-        return Group {
-            VStack(alignment: .leading, spacing: 0) {
-                MicaboProgressBar(
-                    progress: step.progress,
-                    tint: MicaboColor.accent,
-                    track: MicaboColor.stroke
-                )
-                .frame(height: 4)
+        return VStack(alignment: .leading, spacing: 10) {
+            MicaboProgressBar(
+                progress: step.progress,
+                tint: OnboardingPalette.ink,
+                track: OnboardingPalette.cardStrong
+            )
+            .frame(height: 3)
+            .animation(OnboardingMotion.shift, value: step)
 
-                HStack(alignment: .center, spacing: 10) {
-                    Button(action: goBack) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 19, weight: .semibold))
-                            .foregroundStyle(MicaboColor.inkSecondary)
-                            .frame(width: 40, height: 40, alignment: .leading)
-                    }
-                    .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
-                    .opacity(history.isEmpty ? 0 : 1)
-                    .disabled(history.isEmpty)
-                    .accessibilityLabel(i18n.t("app.common.back"))
+            HStack(alignment: .center, spacing: 10) {
+                Button(action: goBack) {
+                    Image(systemName: "arrow.left")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(OnboardingPalette.ink)
+                        .frame(width: 40, height: 40)
+                        .background(OnboardingPalette.card, in: Circle())
+                }
+                .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
+                .opacity(history.isEmpty ? 0 : 1)
+                .disabled(history.isEmpty)
+                .accessibilityLabel(i18n.t("app.common.back"))
 
-                    Spacer(minLength: 0)
+                Spacer(minLength: 0)
 
-                    MicaboMascot(mood: step.mascotMood, size: 30)
-                        .frame(width: 46, height: 40)
-                        .mascotHop(on: step)
-
+                if isDismissable {
                     Button(action: onCancel) {
                         Image(systemName: "xmark")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(MicaboColor.inkTertiary)
-                            .frame(width: 30, height: 30)
-                            .background(MicaboColor.surfaceMuted, in: Circle())
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(OnboardingPalette.ink)
+                            .frame(width: 40, height: 40)
+                            .background(OnboardingPalette.card, in: Circle())
                     }
                     .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
                     .accessibilityLabel(i18n.t("app.a11y.close"))
                 }
-                .padding(.top, 12)
             }
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.top, MicaboSpacing.xs)
-            .animation(.easeInOut(duration: 0.38), value: step)
         }
+        .padding(.horizontal, MicaboSpacing.screen)
+        .padding(.top, MicaboSpacing.sm)
         .opacity(isBuilding ? 0 : 1)
         .allowsHitTesting(!isBuilding)
         .animation(.easeInOut(duration: 0.25), value: isBuilding)

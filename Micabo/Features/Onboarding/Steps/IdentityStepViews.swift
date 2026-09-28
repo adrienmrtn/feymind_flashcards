@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// **« Comment veux-tu qu'on t'appelle ? »**
+/// **« Dernière question : comment tu t'appelles ? »**
 ///
-/// C'est la dernière question du quiz, et elle est facultative : on la pose quand l'élève
+/// C'est la dernière question du quiz, le titre le dit, et elle est facultative : on la pose quand l'élève
 /// a déjà donné quatorze réponses, au moment où l'app va lui dire merci et construire son
 /// plan. Après elle, l'app s'adresse à quelqu'un.
 ///
@@ -18,7 +18,7 @@ struct NameStepView: View {
         @Bindable var model = model
 
         return OnboardingScaffold(
-            title: i18n.t("ios.onb.name"),
+            title: i18n.t("ios.onb.name.last"),
             subtitle: i18n.t("ios.onb.name.optional"),
             skip: OnboardingSkip(action: { model.advance() })
         ) {

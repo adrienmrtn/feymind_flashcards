@@ -56,10 +56,10 @@ struct RootTabView: View {
         // et un `safeAreaInset` ne franchit pas cette frontière. La place est réservée page
         // par page, par `tabBarClearance`, qui est aussi ce qui pose leurs boutons du bas
         // au-dessus de la barre au lieu de dessous.
-        // **L'app s'ouvre sur Decks après le parcours**, où l'import du premier deck
-        // attend. Voir `OnboardingPreferences.pendingFirstImport`.
+        // **L'app s'ouvre sur Decks après le parcours**, où le premier deck, construit
+        // juste avant, attend qu'on l'ouvre. Voir `FirstDeckHandoff`.
         .onAppear {
-            if OnboardingPreferences.pendingFirstImport {
+            if FirstDeckHandoff.course != nil {
                 router.selection = .decks
             }
         }
