@@ -543,6 +543,11 @@ hebdomadaires (−81 %) ; le tarif réduit fait −40 % sur l'annuel. Seule exce
 | E | Maroc, Algérie, Tunisie, Sénégal, Côte d'Ivoire, Égypte, Asie du Sud-Est, Nigeria | équivalent de $1.99 | de $19.99 | de $11.99 |
 | E | Inde | ₹149 | ₹1 499 | ₹899 |
 
+**Dans les pays alignés sur un équivalent Apple**, seul l'hebdomadaire suit l'équivalent :
+l'annuel et le réduit s'en déduisent dans le pays, au palier Apple le plus proche du même
+rapport que le pays de référence. Sans ça, Apple arrondit chaque offre à sa façon, et la
+remise du cadeau devenait −29 % au Pakistan ou −50 % en Tchéquie.
+
 **La Turquie se revoit tous les six mois.** Apple ne réajuste jamais le prix d'un
 abonnement quand une devise bouge, et la livre perd environ 15 % par an.
 
