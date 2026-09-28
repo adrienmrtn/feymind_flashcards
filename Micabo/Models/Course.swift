@@ -59,6 +59,10 @@ final class Course {
     var updatedAt: Date = Date()
     var sourceRaw: String = CourseSource.text.rawValue
     var sourceFileName: String?
+    /// **La langue du cours**, choisie à sa création. Tout ce qui s'écrit ensuite pour lui —
+    /// cartes, explications, blancs — la reprend, au lieu de retomber sur celle du profil.
+    /// Absente sur les cours d'avant : ils suivent alors le profil, comme avant.
+    var languageRaw: String?
     /// Texte source brut, conservé pour régénérer la fiche ou des cartes.
     var rawText: String = ""
     /// Contenu analysé par l'IA, servant de contexte aux nouvelles cartes.
@@ -136,6 +140,16 @@ final class Course {
     var source: CourseSource {
         get { CourseSource(rawValue: sourceRaw) ?? .text }
         set { sourceRaw = newValue.rawValue }
+    }
+
+    var language: ContentLanguage? {
+        get { languageRaw.flatMap(ContentLanguage.init(rawValue:)) }
+        set { languageRaw = newValue?.rawValue }
+    }
+
+    /// La langue dans laquelle on écrit pour ce cours : la sienne, sinon celle du profil.
+    var writingLanguage: ContentLanguage {
+        language ?? OnboardingPreferences.contentLanguage
     }
 
     var visibility: CourseVisibility {

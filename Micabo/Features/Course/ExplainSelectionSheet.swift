@@ -209,7 +209,7 @@ struct ExplainSelectionSheet: View {
             courseTitle: course.title,
             subject: course.subject,
             courseContext: course.contextSnippet(limit: 16_000),
-            language: OnboardingPreferences.contentLanguage
+            language: course.writingLanguage
         )
 
         do {

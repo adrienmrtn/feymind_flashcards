@@ -769,6 +769,7 @@ final class CloudSync {
             accent_hex: course.accentHex,
             source: course.source.rawValue,
             source_file_name: course.sourceFileName,
+            language: course.languageRaw,
             fingerprint: course.fingerprint,
             raw_text: course.rawText,
             sheet: JSONCodable(data: course.sheetData),
@@ -888,6 +889,7 @@ final class CloudSync {
         if let accent = remote.accent_hex { course.accentHex = accent }
         course.source = CourseSource(rawValue: remote.source) ?? course.source
         course.sourceFileName = remote.source_file_name
+        if let language = remote.language { course.languageRaw = language }
         course.fingerprint = remote.fingerprint
         course.rawText = remote.raw_text
         course.sheetData = remote.sheet?.data

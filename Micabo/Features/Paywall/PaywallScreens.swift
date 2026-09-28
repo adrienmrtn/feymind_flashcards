@@ -20,9 +20,16 @@ struct PaywallOfferView: View {
     var onSubscribe: () -> Void
     var onRestore: () -> Void
 
+    /// **La croix n'arrive qu'après trois secondes.** Le temps de lire la phrase : une
+    /// sortie visible avant qu'on ait lu ce qu'on quitte se prend par réflexe.
+    @State private var showsClose = false
+
     var body: some View {
         VStack(spacing: 0) {
             PaywallHeader(onClose: onClose)
+                .opacity(showsClose ? 1 : 0)
+                .allowsHitTesting(showsClose)
+                .animation(.easeOut(duration: 0.35), value: showsClose)
 
             Spacer(minLength: MicaboSpacing.lg)
 
@@ -77,6 +84,11 @@ struct PaywallOfferView: View {
             .padding(.horizontal, MicaboSpacing.screen)
             .padding(.bottom, MicaboSpacing.sm)
             .onboardingAppear(index: 4)
+        }
+        .task {
+            try? await Task.sleep(for: .seconds(3))
+            guard !Task.isCancelled else { return }
+            showsClose = true
         }
     }
 }

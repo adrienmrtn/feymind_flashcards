@@ -53,7 +53,7 @@ enum CardGeneration {
             // Une carte de droit ne demande pas la même chose qu'une carte de langue : la
             // matière du cours décide de ce qu'il faut interroger.
             subject: course.subject,
-            language: OnboardingPreferences.contentLanguage,
+            language: course.writingLanguage,
             // Le plan part avec la demande : c'est ce qui permet au modèle de rattacher
             // chaque carte à sa partie du cours, et donc à la file de révision d'introduire
             // les cartes neuves dans l'ordre où le cours se lit.

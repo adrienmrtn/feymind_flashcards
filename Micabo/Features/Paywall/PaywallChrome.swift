@@ -57,44 +57,18 @@ struct PaywallCallToAction: View {
     private var hasTrial: Bool { (plan ?? PaywallCatalog.recommended).hasTrial }
 
     var body: some View {
-        Button {
-            guard !isPurchasing else { return }
-            action()
-        } label: {
-            HStack(spacing: 9) {
-                if isPurchasing {
-                    ProgressView()
-                        .controlSize(.small)
-                        .tint(OnboardingPalette.white)
-                }
-
-                Text(
-                    hasTrial
-                        ? L10n.t("ios.paywallStartTrial", locale: .resolved(), vars: ["n": "\(PaywallCatalog.freeTrialDays)"])
-                        : L10n.t("app.paywall.subscribe", locale: .resolved())
-                )
-            }
-            .font(MicaboFont.ui(19, weight: .semibold))
-            .foregroundStyle(OnboardingPalette.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 20)
-            // Le dégradé violet : la seule place de l'app où le violet fait un bouton.
-            // C'est la charte du parcours d'accueil, dont le paywall est la dernière page.
-            .background(
-                LinearGradient(
-                    colors: [OnboardingPalette.accent, Color(hex: 0x8B5CF6)],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                ),
-                in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
-            )
-            .shadow(color: OnboardingPalette.accent.opacity(0.28), radius: 14, y: 8)
-        }
-        // Aussi grand que le bouton du parcours d'accueil : le paywall en est la dernière
-        // page, et un bouton qui rapetisse à l'écran de l'offre se lit comme une hésitation.
-        .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .medium))
-        .disabled(isPurchasing)
-        .animation(.easeOut(duration: 0.2), value: isPurchasing)
+        // **Le bouton du parcours d'accueil, tel quel** : la pilule noire de cinquante-six
+        // points, la même police. Le paywall est la dernière page du parcours, et un bouton
+        // d'une autre forme y ferait un autre écran.
+        OnboardingContinueButton(
+            title: hasTrial
+                ? L10n.t("ios.paywallStartTrial", locale: .resolved(), vars: ["n": "\(PaywallCatalog.freeTrialDays)"])
+                : L10n.t("app.paywall.subscribe", locale: .resolved()),
+            isLoading: isPurchasing,
+            loadingTitle: L10n.t("ios.instant", locale: .resolved()),
+            action: action
+        )
+        .environment(\.onboardingSurface, .canvas)
     }
 }
 
