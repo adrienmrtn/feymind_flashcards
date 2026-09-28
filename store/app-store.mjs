@@ -24,13 +24,16 @@ import { appendFileSync } from "node:fs";
 import { AppStoreConnect, credentialProblems } from "./lib/asc.mjs";
 import {
   currentPrice,
+  dayAfter,
   derivationFor,
   isActiveOffer,
+  latestPrice,
   loadGrid,
   markdownTable,
   namedTerritories,
   pickPricePoint,
   planKeys,
+  priceStartDate,
   ruleFor,
   validateGrid,
 } from "./lib/grid.mjs";
@@ -243,7 +246,9 @@ async function livePrices(sub) {
     };
     byTerritory.set(territory, [...(byTerritory.get(territory) ?? []), entry]);
   }
-  return new Map([...byTerritory].map(([territory, prices]) => [territory, currentPrice(prices)]));
+  return new Map(
+    [...byTerritory].map(([territory, prices]) => [territory, { current: currentPrice(prices), latest: latestPrice(prices) }]),
+  );
 }
 
 // ── Le plan ─────────────────────────────────────────────────────────────────────────────
@@ -266,7 +271,7 @@ for (const key of planKeys(grid)) {
     try {
       const resolved = await target(key, sub, territory, currencies);
       if (resolved.warning) warnings.push(`${key}/${territory} : ${resolved.warning}`);
-      const now = live.get(territory);
+      const { current: now, latest } = live.get(territory) ?? {};
       plan.push({
         key,
         sub,
@@ -277,7 +282,10 @@ for (const key of planKeys(grid)) {
         from: now?.customerPrice ?? null,
         to: resolved.point.customerPrice,
         pointId: resolved.point.id,
-        change: now?.pointId !== resolved.point.id,
+        // Comparé au dernier prix posé, à venir compris : un changement déjà programmé
+        // par une exécution précédente n'est pas reposé.
+        change: (latest ?? now)?.pointId !== resolved.point.id,
+        hasPrice: Boolean(now ?? latest),
       });
     } catch (error) {
       (named.has(territory) ? errors : warnings).push(`${key} : ${error.message}`);
@@ -351,14 +359,13 @@ if (!apply) {
 
 // ── L'écriture ──────────────────────────────────────────────────────────────────────────
 
-let written = 0;
-for (const row of changes) {
-  await asc.post("/v1/subscriptionPrices", {
+function postPrice(row, startDate) {
+  return asc.post("/v1/subscriptionPrices", {
     data: {
       type: "subscriptionPrices",
-      // Tout de suite, et sans toucher aux abonnés en place si le prix monte : une hausse
-      // n'est jamais imposée par ce script, elle se décide dans App Store Connect.
-      attributes: { startDate: null, preserveCurrentPrice: true },
+      // Sans toucher aux abonnés en place si le prix monte : une hausse n'est jamais
+      // imposée par ce script, elle se décide dans App Store Connect.
+      attributes: { startDate, preserveCurrentPrice: true },
       relationships: {
         subscription: { data: { type: "subscriptions", id: row.sub.id } },
         subscriptionPricePoint: { data: { type: "subscriptionPricePoints", id: row.pointId } },
@@ -366,13 +373,37 @@ for (const row of changes) {
       },
     },
   });
-  written += 1;
-  if (written % 25 === 0) log(`  ${written}/${changes.length} prix posés`);
+}
+
+let written = 0;
+const failures = [];
+for (const row of changes) {
+  const startDate = priceStartDate(row.hasPrice);
+  try {
+    try {
+      await postPrice(row, startDate);
+    } catch (error) {
+      // Aujourd'hui peut déjà être hier dans le fuseau d'Apple : on retente pour demain.
+      if (!startDate || ![409, 422].includes(error.status) || /initial price/i.test(error.message)) throw error;
+      await postPrice(row, dayAfter(startDate));
+    }
+    written += 1;
+    if (written % 25 === 0) log(`  ${written}/${changes.length} prix posés`);
+  } catch (error) {
+    failures.push(`${row.key}/${row.territory} : ${error.message}`);
+    // Cinq refus d'affilée sans un seul succès : c'est la requête qui est fausse, pas un
+    // pays. Inutile d'en envoyer cinq cents.
+    if (written === 0 && failures.length >= 5) break;
+  }
 }
 
 let offers = 0;
-for (const trial of trials) {
-  await asc.post("/v1/subscriptionIntroductoryOffers", {
+// Aucun prix n'est passé : la requête est en cause, pas les pays. On s'arrête là plutôt
+// que de poser des essais sur une grille qui n'existe pas encore.
+const skipTrials = changes.length > 0 && written === 0;
+for (const trial of skipTrials ? [] : trials) {
+  try {
+    await asc.post("/v1/subscriptionIntroductoryOffers", {
     data: {
       type: "subscriptionIntroductoryOffers",
       attributes: { duration: trial.duration, offerMode: "FREE_TRIAL", numberOfPeriods: 1, startDate: null, endDate: null },
@@ -382,10 +413,18 @@ for (const trial of trials) {
       },
     },
   });
-  offers += 1;
-  if (offers % 25 === 0) log(`  ${offers}/${trials.length} essais posés`);
+    offers += 1;
+    if (offers % 25 === 0) log(`  ${offers}/${trials.length} essais posés`);
+  } catch (error) {
+    failures.push(`essai ${trial.key}/${trial.territory} : ${error.message}`);
+    if (offers === 0 && failures.length >= 5) break;
+  }
 }
 
-const done = `\n**Fait** : ${written} prix posés, ${offers} essais gratuits créés (${asc.requests} appels à l'API).`;
+const done = [
+  `\n**Fait** : ${written}/${changes.length} prix posés, ${offers} essais gratuits créés (${asc.requests} appels à l'API).`,
+  failures.length ? `\n### Refusés par Apple (${failures.length}) — relancer l'action les reprend\n\n- ${failures.join("\n- ")}` : "",
+].join("\n");
 log(done);
 if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, done + "\n");
+if (failures.length) process.exit(1);

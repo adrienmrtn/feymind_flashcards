@@ -135,6 +135,37 @@ export function currentPrice(prices, today = new Date().toISOString().slice(0, 1
   return live.at(-1) ?? null;
 }
 
+/**
+ * **Le dernier prix posé, à venir compris.** C'est lui qu'on compare à la grille : un prix
+ * déjà programmé pour demain par une exécution précédente ne doit pas être reposé — Apple
+ * n'accepte qu'un changement à venir par pays, et le second serait refusé.
+ */
+export function latestPrice(prices) {
+  const all = prices
+    .filter((price) => price.planType !== "MONTHLY")
+    .sort((a, b) => (a.startDate ?? "").localeCompare(b.startDate ?? ""));
+  return all.at(-1) ?? null;
+}
+
+/**
+ * **La date de début d'un nouveau prix.**
+ *
+ * Sans prix en place, c'est le prix initial : pas de date. Avec un prix en place — un
+ * abonnement déjà approuvé —, Apple refuse un second prix initial (« Initial price cannot
+ * be created again after subscription is approved ») : il faut un changement daté. On date
+ * d'aujourd'hui en UTC, jamais dans le passé pour Apple ; `dayAfter` sert si Apple le juge
+ * trop tôt.
+ */
+export function priceStartDate(hasPrice, today = new Date().toISOString().slice(0, 10)) {
+  return hasPrice ? today : null;
+}
+
+export function dayAfter(date) {
+  const next = new Date(`${date}T00:00:00Z`);
+  next.setUTCDate(next.getUTCDate() + 1);
+  return next.toISOString().slice(0, 10);
+}
+
 /** Un essai gratuit encore actif : pas de date de fin, ou une date de fin à venir. */
 export function isActiveOffer(offer, today = new Date().toISOString().slice(0, 10)) {
   return !offer.endDate || offer.endDate >= today;
