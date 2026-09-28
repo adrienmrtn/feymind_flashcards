@@ -22,7 +22,7 @@ import {
   savingsPercent,
   validateGrid,
 } from "./lib/grid.mjs";
-import { makeToken, readPrivateKey } from "./lib/asc.mjs";
+import { credentialProblems, makeToken, readPrivateKey } from "./lib/asc.mjs";
 import { generateKeyPairSync, verify } from "node:crypto";
 
 const grid = loadGrid();
@@ -149,4 +149,22 @@ test("le jeton App Store Connect est un ES256 valide", () => {
     verify("sha256", Buffer.from(`${header}.${payload}`), { key: publicKey, dsaEncoding: "ieee-p1363" }, Buffer.from(signature, "base64url")),
   );
   assert.ok(readPrivateKey(Buffer.from(pem).toString("base64")));
+});
+
+test("une clé individuelle signe « sub: user » au lieu d'un Issuer ID", () => {
+  const { privateKey } = generateKeyPairSync("ec", { namedCurve: "P-256" });
+  const token = makeToken({ keyId: "KEY", issuerId: "", privateKey, now: 1000 });
+  const claims = JSON.parse(Buffer.from(token.split(".")[1], "base64url"));
+  assert.equal(claims.sub, "user");
+  assert.equal(claims.iss, undefined);
+});
+
+test("les secrets mal formés sont signalés avant d'appeler Apple", () => {
+  const issuer = "57246542-96fe-1a63-e053-0824d011072a";
+  assert.deepEqual(credentialProblems({ keyId: "2X9R4HXF34", issuerId: issuer }), []);
+  assert.deepEqual(credentialProblems({ keyId: "2X9R4HXF34", issuerId: "" }), [], "clé individuelle");
+  assert.equal(credentialProblems({ keyId: "2X9R4HXF3", issuerId: issuer }).length, 1, "Key ID trop court");
+  // Le Team ID à la place de l'Issuer ID : la confusion la plus fréquente.
+  const [teamId] = credentialProblems({ keyId: "2X9R4HXF34", issuerId: "A1B2C3D4E5" });
+  assert.match(teamId, /Team ID/);
 });

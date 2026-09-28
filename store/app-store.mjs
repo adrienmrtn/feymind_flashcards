@@ -21,7 +21,7 @@
  */
 
 import { appendFileSync } from "node:fs";
-import { AppStoreConnect } from "./lib/asc.mjs";
+import { AppStoreConnect, credentialProblems } from "./lib/asc.mjs";
 import {
   currentPrice,
   isActiveOffer,
@@ -44,19 +44,32 @@ if (problems.length) {
   process.exit(1);
 }
 
-for (const name of ["ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_PRIVATE_KEY"]) {
-  if (!process.env[name]) {
+// `ASC_ISSUER_ID` peut manquer : c'est alors une clé individuelle (voir `makeToken`).
+for (const name of ["ASC_KEY_ID", "ASC_PRIVATE_KEY"]) {
+  if (!process.env[name]?.trim()) {
     console.error(`${name} manque. Voir docs/revenuecat.md, §15.`);
     process.exit(1);
   }
 }
 
-const asc = new AppStoreConnect({
-  keyId: process.env.ASC_KEY_ID,
-  issuerId: process.env.ASC_ISSUER_ID,
-  privateKey: process.env.ASC_PRIVATE_KEY,
-  log,
-});
+const credentials = { keyId: process.env.ASC_KEY_ID.trim(), issuerId: (process.env.ASC_ISSUER_ID ?? "").trim() };
+const shapeProblems = credentialProblems(credentials);
+if (shapeProblems.length) {
+  console.error("Les secrets App Store Connect n'ont pas la bonne forme :\n- " + shapeProblems.join("\n- "));
+  process.exit(1);
+}
+
+let asc;
+try {
+  asc = new AppStoreConnect({ ...credentials, privateKey: process.env.ASC_PRIVATE_KEY, log });
+} catch (error) {
+  console.error(
+    `ASC_PRIVATE_KEY ne se lit pas comme une clé .p8 (${error.message}).\n` +
+      "Coller tout le fichier, lignes -----BEGIN PRIVATE KEY----- et -----END PRIVATE KEY----- comprises.",
+  );
+  process.exit(1);
+}
+log(`Clé ${credentials.issuerId ? "d'équipe" : "individuelle"}, Key ID de ${credentials.keyId.length} caractères.`);
 
 /** Un identifiant de palier Apple est du JSON en base64 : `{"s":…,"t":"FRA","p":…}`. */
 function territoryOfPoint(point) {
@@ -75,7 +88,26 @@ function simplePoint(point) {
 
 // ── L'app et ses abonnements ────────────────────────────────────────────────────────────
 
-const apps = await asc.get(`/v1/apps?filter[bundleId]=${encodeURIComponent(grid.bundleId)}`);
+let apps;
+try {
+  apps = await asc.get(`/v1/apps?filter[bundleId]=${encodeURIComponent(grid.bundleId)}`);
+} catch (error) {
+  if (error.status !== 401) throw error;
+  // Apple ne dit pas laquelle des trois valeurs cloche : on dit où regarder.
+  console.error(
+    [
+      "Apple refuse la clé (401). La signature est bien formée ; c'est l'association des trois secrets qui ne va pas.",
+      "À vérifier dans App Store Connect → Utilisateurs et accès → Intégrations → App Store Connect API :",
+      "- la clé apparaît dans « Clés d'équipe » (ou « Clés individuelles ») et n'est pas révoquée ;",
+      "- ASC_KEY_ID = la colonne « ID de clé » de CETTE ligne, et le fichier s'appelle AuthKey_<ce même ID>.p8 ;",
+      "- ASC_ISSUER_ID = l'« Issuer ID » affiché au-dessus du tableau des clés d'équipe (un UUID) ;",
+      "  pour une clé individuelle, supprimer le secret ASC_ISSUER_ID ;",
+      "- le .p8 vient bien de cette page : une clé de notifications push (developer.apple.com → Keys)",
+      "  s'appelle aussi AuthKey_….p8, mais n'ouvre pas l'API App Store Connect.",
+    ].join("\n"),
+  );
+  process.exit(1);
+}
 const app = apps.data?.[0];
 if (!app) {
   console.error(`Aucune app ${grid.bundleId} dans App Store Connect.`);
