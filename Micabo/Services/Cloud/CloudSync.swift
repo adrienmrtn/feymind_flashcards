@@ -47,6 +47,20 @@ final class CloudSync {
     }
 
     private static let watermarkKey = "micabo.cloud.lastPulledAt"
+    /// L'empreinte du profil tel qu'il est monté la dernière fois. Voir `ProfileRecord.signature`.
+    private static let profileSignatureKey = "micabo.cloud.profileSignature"
+
+    private var lastPushedProfileSignature: String? {
+        get { UserDefaults.standard.string(forKey: Self.profileSignatureKey) }
+        set { UserDefaults.standard.set(newValue, forKey: Self.profileSignatureKey) }
+    }
+
+    /// Vrai quand les réglages ont changé sur cet appareil depuis la dernière montée : le
+    /// profil distant est alors plus vieux que le local, et il ne doit pas l'écraser.
+    private var hasLocalProfileChanges: Bool {
+        guard let userID = auth.user?.id, let pushed = lastPushedProfileSignature else { return false }
+        return ProfileRecord.fromLocalPreferences(userID: userID, displayName: nil).signature != pushed
+    }
 
     init(auth: AuthController) {
         self.auth = auth
@@ -57,6 +71,7 @@ final class CloudSync {
     /// hériter du repère du précédent, sinon il ne recevrait que les cours modifiés depuis.
     func forget() {
         UserDefaults.standard.removeObject(forKey: Self.watermarkKey)
+        UserDefaults.standard.removeObject(forKey: Self.profileSignatureKey)
         CloudTombstones.removeAll()
         state = .idle
     }
@@ -73,6 +88,9 @@ final class CloudSync {
         let profile = try? await database.fetch(ProfileRecord.self, from: CloudTable.profiles).first
         profile?.applyToLocalPreferences()
         OnboardingPreferences.markCompleted()
+        if let userID = auth.user?.id {
+            lastPushedProfileSignature = ProfileRecord.fromLocalPreferences(userID: userID, displayName: nil).signature
+        }
         return true
     }
 
@@ -124,10 +142,9 @@ final class CloudSync {
     private func push(context: ModelContext, since: Date?) async throws {
         guard let userID = auth.user?.id else { throw SupabaseDatabase.Failure.notSignedIn }
 
-        try await database.upsert(
-            [ProfileRecord.fromLocalPreferences(userID: userID, displayName: auth.user?.displayName)],
-            into: CloudTable.profiles
-        )
+        let profile = ProfileRecord.fromLocalPreferences(userID: userID, displayName: auth.user?.displayName)
+        try await database.upsert([profile], into: CloudTable.profiles)
+        lastPushedProfileSignature = profile.signature
 
         await flushTombstones()
 
@@ -622,7 +639,13 @@ final class CloudSync {
 
         // Le profil descend en dernier : il touche les réglages, pas la base, et il n'a pas à
         // faire échouer la synchro des cours s'il manque.
-        if let userID = auth.user?.id,
+        //
+        // **Et il ne descend pas par-dessus des réglages changés ici.** La descente passe
+        // avant la montée ; si le pays a été changé dans les Réglages depuis la dernière
+        // montée, le profil distant est celui d'avant, et le recopier annulerait le choix.
+        // La montée qui suit publiera le nouveau.
+        if !hasLocalProfileChanges,
+           let userID = auth.user?.id,
            let profile = try? await database.fetch(ProfileRecord.self, from: CloudTable.profiles).first,
            profile.id == userID {
             profile.applyToLocalPreferences()

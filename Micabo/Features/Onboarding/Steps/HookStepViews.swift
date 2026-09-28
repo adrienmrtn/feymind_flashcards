@@ -120,7 +120,7 @@ struct HookVideoStepView: View {
 /// passage surligné, un encadré, un graphe, une carte. Le texte est traduit : la fiche
 /// suit la langue choisie dans le menu du haut, comme le reste de l'écran. Elle monte
 /// lentement et recommence, sans à-coup : c'est le geste d'un écran qu'on fait défiler.
-private struct OnboardingPhoneMockup: View {
+struct OnboardingPhoneMockup: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
