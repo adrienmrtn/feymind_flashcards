@@ -82,251 +82,143 @@ enum TrialTimeline {
     }
 }
 
-/// La chronologie de l'essai gratuit.
+/// **« On veut que tu essaies Micabo gratuitement. »**
 ///
-/// Le seul écran du parcours qui **répond à une question qu'on ne pose jamais à voix
-/// haute** : quand est-ce qu'on me prélève ? Y répondre avant le paywall coûte un écran et
-/// évite les trois jours d'inquiétude qui font annuler un essai dès la première minute.
-///
-/// Les quatre étapes arrivent l'une après l'autre, et le filet qui les relie pousse en même
-/// temps que celle qu'il annonce : c'est le geste de la ligne qui se trace, pas quatre
-/// blocs qui s'allument. Le bouton n'apparaît qu'après la dernière — on ne fait pas défiler
-/// une chronologie qu'on n'a pas fini de dessiner.
+/// Le premier des écrans d'offre, et il ne parle pas de prix : le produit dans le
+/// téléphone, une phrase, « aucun paiement aujourd'hui », un bouton. C'est l'écran de Cal
+/// AI, et il fait une seule chose : dire que ce qui vient est gratuit avant de dire ce que
+/// ça coûtera.
 struct TrialOfferStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
-    private var milestones: [TrialTimeline.Milestone] {
-        TrialTimeline.milestones(locale: i18n.locale)
-    }
-
-    @State private var revealedCount = 0
-    @State private var showsAction = false
-    @State private var didStart = false
-
-    private var stepDelay: Double { 0.34 }
+    private var plan: PaywallPlan { PaywallCatalog.recommended }
 
     var body: some View {
         VStack(spacing: 0) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 34) {
-                    Text(i18n.t("ios.trialHow"))
-                        .font(MicaboFont.ui(34, weight: .bold))
-                        .foregroundStyle(MicaboColor.ink)
-                        .tracking(-0.9)
-                        .lineSpacing(-2)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .onboardingAppear(index: 0)
+            OnboardingChrome(showsBack: false)
 
-                    VStack(spacing: 0) {
-                        ForEach(Array(milestones.enumerated()), id: \.element.id) { index, milestone in
-                            TrialMilestoneRow(
-                                milestone: milestone,
-                                isLast: index == milestones.count - 1,
-                                isRevealed: index < revealedCount,
-                                // Le filet sous une étape se trace au moment où la
-                                // suivante se pose : la ligne conduit le regard au lieu de
-                                // l'attendre.
-                                isConnectorRevealed: index + 1 < revealedCount
-                            )
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
+            Spacer(minLength: MicaboSpacing.sm)
+
+            OnboardingAccentText(template: i18n.t("ios.trial.title"), size: 32)
                 .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.top, MicaboSpacing.xl)
-                .padding(.bottom, MicaboSpacing.lg)
-            }
-            .scrollIndicators(.hidden)
+                .onboardingAppear(index: 1)
 
-            MicaboBottomBar {
-                OnboardingContinueButton(title: i18n.t("ios.ready")) {
-                    model.advance()
-                }
-                .opacity(showsAction ? 1 : 0)
-                .allowsHitTesting(showsAction)
-            }
-        }
-        .onAppear(perform: reveal)
-    }
+            Spacer(minLength: MicaboSpacing.md)
 
-    private func reveal() {
-        guard !didStart else { return }
-        didStart = true
+            // Le téléphone de l'accroche, réduit : la même fiche, pour que l'offre parle de
+            // ce qu'on a déjà vu.
+            OnboardingPhoneMockup()
+                .scaleEffect(0.68)
+                .frame(height: 360)
+                .frame(maxWidth: .infinity)
+                .onboardingAppear(index: 2)
 
-        for index in milestones.indices {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3 + Double(index) * stepDelay) {
-                withAnimation(OnboardingMotion.enter) {
-                    revealedCount = index + 1
-                }
-                Haptics.tick()
-            }
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3 + Double(milestones.count) * stepDelay) {
-            withAnimation(OnboardingMotion.enter) {
-                showsAction = true
-            }
-        }
-    }
-}
-
-private struct TrialMilestoneRow: View {
-    let milestone: TrialTimeline.Milestone
-    let isLast: Bool
-    let isRevealed: Bool
-    let isConnectorRevealed: Bool
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            VStack(spacing: 0) {
-                Image(systemName: milestone.systemImage)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(iconColor)
-                    .frame(width: 42, height: 42)
-                    .background(discColor, in: Circle())
-                    .scaleEffect(isRevealed ? 1 : 0.55)
-                    .opacity(isRevealed ? 1 : 0)
-
-                if !isLast {
-                    Capsule()
-                        .fill(connectorColor)
-                        .frame(width: 2)
-                        .frame(maxHeight: .infinity)
-                        .padding(.vertical, 4)
-                        .scaleEffect(y: isConnectorRevealed ? 1 : 0, anchor: .top)
-                }
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(milestone.title)
-                    .font(MicaboFont.ui(17, weight: .bold))
-                    .foregroundStyle(MicaboColor.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Text(milestone.detail)
-                    .font(MicaboFont.ui(14.5, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .lineSpacing(2)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(.top, 4)
-            .padding(.bottom, isLast ? 0 : 26)
-            .opacity(isRevealed ? 1 : 0)
-            .offset(y: isRevealed ? 0 : 10)
-
+            Spacer(minLength: MicaboSpacing.md)
             Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
-    }
 
-    /// Le vert pour ce qui est acquis, l'encre pour ce qui commence, le sable pour ce qui
-    /// n'est pas encore arrivé : la chronologie se lit sans lire les libellés.
-    private var discColor: Color {
-        switch milestone.tone {
-        case .done: MicaboColor.accent
-        case .current: MicaboColor.ink
-        case .upcoming: MicaboColor.surfaceSunken
-        }
-    }
+            MicaboBottomBar(background: OnboardingPalette.white) {
+                VStack(spacing: 12) {
+                    PaywallNoPaymentLine()
 
-    private var iconColor: Color {
-        switch milestone.tone {
-        case .done, .current: MicaboColor.onInk
-        case .upcoming: MicaboColor.surface
-        }
-    }
+                    OnboardingContinueButton(title: i18n.t("ios.tryFree")) {
+                        model.advance()
+                    }
 
-    private var connectorColor: Color {
-        milestone.tone == .done ? MicaboColor.accent.opacity(0.35) : MicaboColor.strokeStrong
+                    Text(i18n.t("ios.trial.price", ["yearly": plan.displayPrice, "monthly": plan.monthlyEquivalent ?? plan.displayPrice]))
+                        .font(MicaboFont.ui(12.5, weight: .regular))
+                        .foregroundStyle(OnboardingPalette.gray)
+                        .multilineTextAlignment(.center)
+                }
+                .onboardingAppear(index: 3)
+            }
+        }
+        .background(OnboardingPalette.white.ignoresSafeArea())
+        .environment(\.onboardingSurface, .canvas)
     }
 }
 
-/// La promesse du rappel, seule sur sa page.
+/// **« On t'enverra un rappel avant la fin de ton essai. »**
 ///
-/// Un écran, une phrase, une image. La phrase se met en gras mot à mot pour accompagner la
-/// lecture — c'est l'inquiétude qu'on désamorce ici, et une inquiétude se désamorce en se
-/// faisant lire en entier, pas en survolant un paragraphe. La cloche se balance derrière,
-/// et le bouton n'arrive qu'une fois le dernier mot posé.
+/// Le seul écran du parcours qui **répond à une question qu'on ne pose jamais à voix
+/// haute** : est-ce que je vais me faire prélever sans le voir venir ? Une cloche avec sa
+/// pastille, une phrase, « aucun paiement aujourd'hui », et un bouton qui dit « continuer
+/// gratuitement ». Y répondre avant le paywall coûte un écran et évite les trois jours
+/// d'inquiétude qui font annuler un essai dès la première minute.
 struct TrialReminderStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
-    @State private var showsAction = false
-
     var body: some View {
         VStack(spacing: 0) {
+            OnboardingChrome(showsBack: false)
+
             Spacer(minLength: MicaboSpacing.lg)
 
-            OnboardingWordByWordTitle(
-                text: i18n.t("ios.trialReminder"),
-                size: 29,
-                alignment: .center,
-                wordDelay: 0.13,
-                startDelay: 0.25
-            ) {
-                withAnimation(OnboardingMotion.enter) {
-                    showsAction = true
-                }
-            }
-            .padding(.horizontal, MicaboSpacing.screen)
+            OnboardingAccentText(template: i18n.t("ios.trial.reminder.title"), size: 32)
+                .padding(.horizontal, MicaboSpacing.screen)
+                .onboardingAppear(index: 1)
 
-            // L'écart entre la phrase et la cloche est fixe, et les vides qui l'entourent
-            // sont élastiques : la phrase et son image forment un seul objet, qu'un ressort
-            // posé entre les deux ferait s'écarter sur les grands téléphones.
-            Color.clear.frame(height: 40)
+            Spacer(minLength: MicaboSpacing.xl)
 
-            SwayingBell()
+            PaywallBell()
+                .onboardingAppear(index: 2)
 
-            // Deux vides sous l'objet contre un au-dessus : il se pose ainsi un tiers
-            // au-dessus du centre, là où le regard tombe.
+            Text(i18n.t("ios.trial.reminder.sub", ["day": "\(max(1, TrialTimeline.freeDays - 1))"]))
+                .font(MicaboFont.ui(15, weight: .regular))
+                .foregroundStyle(OnboardingPalette.gray)
+                .multilineTextAlignment(.center)
+                .lineSpacing(3)
+                .padding(.horizontal, MicaboSpacing.xl)
+                .padding(.top, MicaboSpacing.xl)
+                .onboardingAppear(index: 3)
+
             Spacer(minLength: MicaboSpacing.lg)
             Spacer(minLength: 0)
 
-            MicaboBottomBar {
-                OnboardingContinueButton(title: i18n.t("ios.tryFree")) {
-                    model.advance()
+            MicaboBottomBar(background: OnboardingPalette.white) {
+                VStack(spacing: 12) {
+                    PaywallNoPaymentLine()
+
+                    OnboardingContinueButton(title: i18n.t("ios.trial.reminder.cta")) {
+                        model.advance()
+                    }
                 }
-                .opacity(showsAction ? 1 : 0)
-                .allowsHitTesting(showsAction)
+                .onboardingAppear(index: 4)
             }
         }
+        .background(OnboardingPalette.white.ignoresSafeArea())
+        .environment(\.onboardingSurface, .canvas)
     }
 }
 
-/// Cloche qui se balance, sans jamais s'arrêter.
-///
-/// Elle **se balance** au lieu de sonner : la version précédente partait en six secousses
-/// de ressort, ce qui dit « ça sonne maintenant » alors que l'écran promet une notification
-/// dans deux jours. Un balancement lent dit « on y pense pour toi », et il ne réclame pas
-/// l'attention pendant qu'on lit la phrase du dessus.
-private struct SwayingBell: View {
-    @State private var hasLanded = false
-    @State private var isSwaying = false
+/// **La cloche, avec sa pastille rouge.** Grise, immobile, et la pastille qui arrive un
+/// instant après elle : c'est une notification qui vient de tomber, pas une cloche qui
+/// sonne. Le rouge est celui d'iOS, et c'est la seule fois qu'il apparaît dans le parcours.
+private struct PaywallBell: View {
+    @State private var hasBadge = false
 
     var body: some View {
-        Image(systemName: "bell.fill")
-            .font(.system(size: 116, weight: .regular))
-            .foregroundStyle(MicaboColor.cautionVivid)
-            // Le pivot est en haut : une cloche tourne autour de son attache, pas autour de
-            // son centre.
-            .rotationEffect(.degrees(isSwaying ? 10 : -10), anchor: .top)
-            .scaleEffect(hasLanded ? 1 : 0.72)
-            .opacity(hasLanded ? 1 : 0)
-            .accessibilityHidden(true)
-            .onAppear(perform: start)
-    }
+        ZStack(alignment: .topTrailing) {
+            Image(systemName: "bell.fill")
+                .font(.system(size: 120, weight: .regular))
+                .foregroundStyle(OnboardingPalette.cardStrong)
 
-    private func start() {
-        withAnimation(OnboardingMotion.shift.delay(0.1)) {
-            hasLanded = true
+            Text("1")
+                .font(MicaboFont.ui(22, weight: .bold))
+                .foregroundStyle(OnboardingPalette.white)
+                .frame(width: 44, height: 44)
+                .background(Color(hex: 0xEF4444), in: Circle())
+                .overlay(Circle().strokeBorder(OnboardingPalette.white, lineWidth: 3))
+                .offset(x: 10, y: -6)
+                .opacity(hasBadge ? 1 : 0)
+                .animation(OnboardingMotion.enter, value: hasBadge)
         }
-        withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true).delay(0.1)) {
-            isSwaying = true
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            Haptics.tick()
+        .accessibilityHidden(true)
+        .task {
+            try? await Task.sleep(for: .milliseconds(700))
+            hasBadge = true
+            Haptics.light()
         }
     }
 }
