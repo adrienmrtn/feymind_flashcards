@@ -134,9 +134,28 @@ struct ProfileRecord: Codable {
             daily_minutes: OnboardingPreferences.dailyMinutes,
             weekly_minutes: OnboardingPreferences.weeklyMinutes,
             sheet_length: SheetPreferences.length.rawValue,
-            sheet_language: OnboardingPreferences.contentLanguage.rawValue,
+            // **Seulement la langue choisie à la main.** Le profil montait la langue
+            // *résolue* — celle du pays — et redescendait en langue *explicite* : après une
+            // seule synchro, un Allemand passé en France par défaut avait ses fiches
+            // épinglées en français, et changer de pays n'y changeait plus rien.
+            sheet_language: OnboardingPreferences.sheetLanguage?.rawValue,
             onboarding_completed_at: OnboardingPreferences.isCompleted ? Date() : nil
         )
+    }
+
+    /// **L'empreinte de ce que le profil transporte**, telle que cet appareil la voit.
+    ///
+    /// Elle sert à savoir si les réglages ont changé ici depuis la dernière montée : si
+    /// oui, le profil distant ne doit pas les écraser au passage suivant. Sans elle, un
+    /// pays changé dans les Réglages revenait à « France » à la réouverture, parce que la
+    /// descente passait avant la montée et recopiait le profil de la veille.
+    var signature: String {
+        [
+            study_level ?? "", country_code, learning_goals.joined(separator: ","),
+            subjects.joined(separator: ","), institution_id ?? "", institution_name ?? "",
+            "\(daily_minutes)", (weekly_minutes ?? []).map(String.init).joined(separator: ","),
+            sheet_length, sheet_language ?? "",
+        ].joined(separator: "|")
     }
 
     /// Recopie le profil distant dans les réglages locaux.
@@ -166,9 +185,9 @@ struct ProfileRecord: Codable {
             OnboardingPreferences.weeklyMinutes = weekly_minutes
         }
         if let length = SheetLength(rawValue: sheet_length) { SheetPreferences.length = length }
-        if let sheet_language, let language = ContentLanguage(rawValue: sheet_language) {
-            OnboardingPreferences.sheetLanguage = language
-        }
+        // Absente à distance, elle s'efface aussi ici : la langue des fiches redevient celle
+        // du pays, ce qui est la réponse quand personne ne l'a choisie.
+        OnboardingPreferences.sheetLanguage = sheet_language.flatMap(ContentLanguage.init(rawValue:))
         if onboarding_completed_at != nil {
             OnboardingPreferences.markCompleted()
         }

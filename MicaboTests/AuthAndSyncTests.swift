@@ -199,7 +199,50 @@ final class CloudRecordTests: XCTestCase {
         XCTAssertEqual(sent.study_level, "sante")
         XCTAssertEqual(sent.country_code, "be")
         XCTAssertEqual(sent.sheet_length, "deep")
-        XCTAssertEqual(sent.sheet_language, "fr")
+        // La langue ne monte que si elle a été choisie à la main : celle du pays reste
+        // implicite, sinon elle redescendait épinglée et un changement de pays n'y
+        // changeait plus rien.
+        XCTAssertNil(sent.sheet_language)
+        XCTAssertNotEqual(sent.signature, "")
+    }
+
+    /// Un profil distant sans langue explicite efface celle qui était posée ici : la
+    /// langue des fiches redevient celle du pays.
+    func testAProfileWithoutASheetLanguageClearsTheLocalOne() throws {
+        OnboardingPreferences.reset()
+        defer { OnboardingPreferences.reset() }
+
+        OnboardingPreferences.sheetLanguage = .pl
+        let payload = """
+        {
+          "id": "7F9C2B41-3D5E-4A6F-8B12-9C0D1E2F3A4B",
+          "country_code": "de",
+          "learning_goals": [],
+          "subjects": [],
+          "daily_minutes": 20,
+          "sheet_length": "standard"
+        }
+        """
+        let profile = try JSONDecoder().decode(ProfileRecord.self, from: Data(payload.utf8))
+        profile.applyToLocalPreferences()
+
+        XCTAssertNil(OnboardingPreferences.sheetLanguage)
+        XCTAssertEqual(OnboardingPreferences.contentLanguage, .de)
+    }
+
+    /// L'empreinte change avec le pays : c'est elle qui protège un réglage changé ici
+    /// contre le profil de la veille qui redescend.
+    func testTheProfileSignatureFollowsTheCountry() {
+        OnboardingPreferences.reset()
+        defer { OnboardingPreferences.reset() }
+
+        let id = UUID()
+        OnboardingPreferences.schoolingCountry = .fr
+        let before = ProfileRecord.fromLocalPreferences(userID: id, displayName: nil).signature
+        OnboardingPreferences.schoolingCountry = .de
+        let after = ProfileRecord.fromLocalPreferences(userID: id, displayName: nil).signature
+
+        XCTAssertNotEqual(before, after)
     }
 
     /// Une langue de fiche posée sur le web doit revenir sur le téléphone, même si

@@ -24,7 +24,6 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     // L'accroche.
     case hookVideo
     case hookRating
-    case hookPress
 
     // Le quiz.
     case country
@@ -43,7 +42,6 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case dailyTime
     case proofRetention
     case blocker
-    case proofTwice
     case nextExam
     case proofCurve
     case method

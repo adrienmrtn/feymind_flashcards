@@ -120,7 +120,7 @@ struct HookVideoStepView: View {
 /// passage surligné, un encadré, un graphe, une carte. Le texte est traduit : la fiche
 /// suit la langue choisie dans le menu du haut, comme le reste de l'écran. Elle monte
 /// lentement et recommence, sans à-coup : c'est le geste d'un écran qu'on fait défiler.
-private struct OnboardingPhoneMockup: View {
+struct OnboardingPhoneMockup: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
@@ -349,60 +349,6 @@ struct HookRatingStepView: View {
 
                     OnboardingAvatarRow()
                         .padding(.top, 6)
-                }
-
-                Spacer(minLength: 0)
-            }
-            .frame(maxWidth: .infinity)
-        } footer: {
-            OnboardingContinueButton {
-                model.advance()
-            }
-        }
-    }
-}
-
-// MARK: - L'accroche : où on l'a vu
-
-/// **« Tu nous as peut-être déjà vus. »** Quatre noms en gras, ceux des endroits où
-/// Micabo circule. C'est l'écran « as featured on » de RIZZ : des logos en colonne sur
-/// fond uni, et rien d'autre.
-///
-/// Ce sont des noms écrits, pas des logos : les marques ont des règles d'usage, et un logo
-/// redessiné à la main se reconnaît comme faux au premier regard.
-struct HookPressStepView: View {
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    private static let names = ["TikTok", "Instagram", "YouTube", "Snapchat"]
-
-    var body: some View {
-        OnboardingScaffold(
-            title: i18n.t("ios.hook.press.title"),
-            scrolls: false,
-            expandsContent: true,
-            centered: true
-        ) {
-            VStack(spacing: 0) {
-                Spacer(minLength: 0)
-
-                VStack(spacing: 26) {
-                    Text(i18n.t("ios.hook.press.seenOn").uppercased())
-                        .font(MicaboFont.ui(12, weight: .semibold))
-                        .tracking(2)
-                        .foregroundStyle(OnboardingPalette.gray)
-
-                    ForEach(Array(Self.names.enumerated()), id: \.offset) { index, name in
-                        Text(name)
-                            .font(MicaboFont.ui(38, weight: .bold))
-                            .foregroundStyle(OnboardingPalette.ink)
-                            .tracking(-1.2)
-                            .onboardingAppear(index: 4 + index, stagger: 0.08)
-                    }
-
-                    Text(i18n.t("ios.hook.press.more"))
-                        .font(MicaboFont.ui(14, weight: .medium))
-                        .foregroundStyle(OnboardingPalette.grayLight)
                 }
 
                 Spacer(minLength: 0)
