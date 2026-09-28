@@ -739,7 +739,13 @@ struct TodayView: View {
                 MicaboSectionHeading(title: i18n.t("ios.today.resume"))
 
                 Button {
-                    openedChapter = resume.chapter
+                    // Reprendre une fiche, c'est ouvrir une fiche : dans Pro, comme depuis
+                    // le plan du deck.
+                    if pro?.isPro ?? true {
+                        openedChapter = resume.chapter
+                    } else {
+                        paywall = .openChapter
+                    }
                 } label: {
                     MicaboOutlineCard(padding: EdgeInsets(top: 14, leading: 14, bottom: 14, trailing: 14)) {
                         HStack(spacing: 13) {

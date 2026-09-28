@@ -19,6 +19,11 @@ struct DeckChaptersView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(ProAccess.self) private var pro: ProAccess?
+
+    /// **Le plan se voit, les fiches sont dans Pro.** Toucher un chapitre — pour le lire ou
+    /// le réviser seul — ouvre le paywall tant qu'on n'est pas abonné.
+    @State private var paywall: PaywallTrigger?
 
     /// Les pourcentages, calculés à l'apparition et après chaque session.
     ///
@@ -63,6 +68,7 @@ struct DeckChaptersView: View {
             }
         }
         .onAppear(perform: reload)
+        .micaboPaywall($paywall)
         .navigationDestination(item: $opened) { chapter in
             ChapterSheetView(chapter: chapter)
         }
@@ -117,6 +123,13 @@ struct DeckChaptersView: View {
         course.orderedChapters.firstIndex { progress[$0.id]?.state != .learned }
     }
 
+    /// Vrai pour un abonné ; sinon, ouvre le paywall et répond faux.
+    private var unlocked: Bool {
+        if pro?.isPro ?? true { return true }
+        paywall = .openChapter
+        return false
+    }
+
     private func chapterRow(_ chapter: Chapter, number: Int, isNext: Bool) -> some View {
         let readout = progress[chapter.id]
         let state = readout?.state ?? .untouched
@@ -126,10 +139,12 @@ struct DeckChaptersView: View {
             meta: subtitle(for: readout),
             state: isNext && state == .untouched ? .inProgress : state
         ) {
+            guard unlocked else { return }
             opened = chapter
         }
         .contextMenu {
             Button {
+                guard unlocked else { return }
                 reviewing = chapter
             } label: {
                 Label(

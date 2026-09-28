@@ -1017,6 +1017,7 @@ enum IosI18nCatalogs {
         "ios.paywallCourseHeadline": "Tes cours sont dans Pro",
         "ios.paywallSession.oneTitle": "Ta carte gratuite est faite.",
         "ios.paywallSession.oneProgress": "1 / 1 carte révisée",
+        "ios.paywallChapterHeadline": "Tes fiches sont dans Pro",
     ]
 
     static let de: [String: String] = [
@@ -2037,6 +2038,7 @@ enum IosI18nCatalogs {
         "ios.paywallCourseHeadline": "Deine Kurse sind in Pro",
         "ios.paywallSession.oneTitle": "Deine kostenlose Karte ist geschafft.",
         "ios.paywallSession.oneProgress": "1 / 1 Karte gelernt",
+        "ios.paywallChapterHeadline": "Deine Zusammenfassungen sind in Pro",
     ]
 
     static let es: [String: String] = [
@@ -3057,6 +3059,7 @@ enum IosI18nCatalogs {
         "ios.paywallCourseHeadline": "Tus cursos están en Pro",
         "ios.paywallSession.oneTitle": "Tu tarjeta gratis ya está hecha.",
         "ios.paywallSession.oneProgress": "1 / 1 tarjeta repasada",
+        "ios.paywallChapterHeadline": "Tus fichas están en Pro",
     ]
 
     static let tr: [String: String] = [
@@ -4077,6 +4080,7 @@ enum IosI18nCatalogs {
         "ios.paywallCourseHeadline": "Derslerin Pro'da",
         "ios.paywallSession.oneTitle": "Ücretsiz kartın tamamlandı.",
         "ios.paywallSession.oneProgress": "1 / 1 kart çalışıldı",
+        "ios.paywallChapterHeadline": "Özetlerin Pro'da",
     ]
 
     /// **L'anglais, au complet.**
@@ -5104,6 +5108,7 @@ enum IosI18nCatalogs {
         "ios.paywallCourseHeadline": "Your courses are in Pro",
         "ios.paywallSession.oneTitle": "Your free card is done.",
         "ios.paywallSession.oneProgress": "1 / 1 card reviewed",
+        "ios.paywallChapterHeadline": "Your sheets are in Pro",
     ]
 
     static func table(for locale: String) -> [String: String] {

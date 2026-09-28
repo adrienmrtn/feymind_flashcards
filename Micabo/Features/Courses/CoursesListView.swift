@@ -174,10 +174,10 @@ struct CoursesListView: View {
             .task(openFirstImportIfPending)
     }
 
-    /// **Le premier deck ne s'ouvre pas.** Il a été construit avant l'app, à la sortie du
-    /// parcours (`FirstDeckFlowView`), et il est là, dans la liste — mais l'ouvrir est dans
-    /// Pro, comme tous les autres : ce que l'élève voit en arrivant, c'est son deck, puis le
-    /// paywall. Un abonné, lui, tombe directement sur son plan.
+    /// **Le premier deck s'ouvre sur son plan.** Il a été construit avant l'app, à la sortie
+    /// du parcours (`FirstDeckFlowView`), et c'est son plan que l'élève voit en arrivant :
+    /// les chapitres, leurs cartes, le rythme. Toucher un chapitre ouvre le paywall — voir
+    /// `DeckChaptersView` —, et revenir à la liste puis toucher le deck aussi.
     @MainActor
     private func openFirstImportIfPending() async {
         guard let course = FirstDeckHandoff.course else { return }
@@ -186,7 +186,7 @@ struct CoursesListView: View {
         try? await Task.sleep(for: .milliseconds(650))
         guard !Task.isCancelled else { return }
         FirstDeckHandoff.course = nil
-        open(course)
+        path = NavigationPath([course])
     }
 
     private var dialogs: some View {
