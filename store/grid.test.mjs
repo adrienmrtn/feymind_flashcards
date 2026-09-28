@@ -12,12 +12,15 @@ import { resolve } from "node:path";
 import { test } from "node:test";
 import {
   currentPrice,
+  dayAfter,
   derivationFor,
   discountPercent,
   isActiveOffer,
+  latestPrice,
   loadGrid,
   pickPricePoint,
   planKeys,
+  priceStartDate,
   repoRoot,
   ruleFor,
   savingsPercent,
@@ -196,4 +199,21 @@ test("dans un pays aligné sur un équivalent, l'annuel et le réduit gardent le
   assert.equal(pkYearly.customerPrice, "5000");
   assert.equal(pkDiscount.customerPrice, "3000");
   assert.equal(Math.round((1 - 3000 / 5000) * 100), 40);
+});
+
+test("un abonnement déjà approuvé change de prix à une date, jamais par un second prix initial", () => {
+  // Apple : « Initial price cannot be created again after subscription is approved ».
+  assert.equal(priceStartDate(true, "2026-09-28"), "2026-09-28");
+  assert.equal(priceStartDate(false, "2026-09-28"), null);
+  assert.equal(dayAfter("2026-09-30"), "2026-10-01");
+  assert.equal(dayAfter("2026-12-31"), "2027-01-01");
+});
+
+test("un changement déjà programmé compte comme posé", () => {
+  const prices = [
+    { startDate: null, pointId: "old" },
+    { startDate: "2099-01-01", pointId: "next" },
+  ];
+  assert.equal(latestPrice(prices).pointId, "next");
+  assert.equal(currentPrice(prices, "2026-09-28").pointId, "old");
 });
