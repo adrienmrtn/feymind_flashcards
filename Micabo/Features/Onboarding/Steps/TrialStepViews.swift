@@ -245,10 +245,10 @@ private struct TrialMilestoneRow: View {
 
 /// La promesse du rappel, seule sur sa page.
 ///
-/// Un écran, une phrase, une image. La phrase se met en gras mot à mot pour accompagner la
-/// lecture — c'est l'inquiétude qu'on désamorce ici, et une inquiétude se désamorce en se
-/// faisant lire en entier, pas en survolant un paragraphe. La cloche se balance derrière,
-/// et le bouton n'arrive qu'une fois le dernier mot posé.
+/// Un écran, une phrase, une image. La phrase passe à l'encre mot à mot, un coup léger par
+/// mot, pour accompagner la lecture — c'est l'inquiétude qu'on désamorce ici, et une
+/// inquiétude se désamorce en se faisant lire en entier, pas en survolant un paragraphe.
+/// La cloche se balance derrière, et le bouton n'arrive qu'une fois le dernier mot posé.
 struct TrialReminderStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -259,17 +259,18 @@ struct TrialReminderStepView: View {
         VStack(spacing: 0) {
             Spacer(minLength: MicaboSpacing.lg)
 
-            OnboardingWordByWordTitle(
-                text: i18n.t("ios.trialReminder"),
+            OnboardingReadingText(
+                template: i18n.t("ios.trialReminder"),
                 size: 29,
-                alignment: .center,
-                wordDelay: 0.13,
-                startDelay: 0.25
-            ) {
-                withAnimation(OnboardingMotion.enter) {
-                    showsAction = true
+                wordDelay: 0.16,
+                startDelay: 0.3,
+                highlightsOnFinish: false,
+                onFinish: {
+                    withAnimation(OnboardingMotion.enter) {
+                        showsAction = true
+                    }
                 }
-            }
+            )
             .padding(.horizontal, MicaboSpacing.screen)
 
             // L'écart entre la phrase et la cloche est fixe, et les vides qui l'entourent

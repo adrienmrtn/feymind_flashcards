@@ -86,7 +86,7 @@ struct DeckBuildingStepView: View {
             // bouton occupe sa place dès le début, éteint, pour que rien ne saute quand il
             // s'allume.
             if failure == nil {
-                MicaboBottomBar(background: MicaboColor.canvas) {
+                MicaboBottomBar(background: OnboardingPalette.white) {
                     OnboardingContinueButton(
                         title: i18n.t("ios.deckBuild.seePlan"),
                         isEnabled: isReady,
@@ -99,7 +99,7 @@ struct DeckBuildingStepView: View {
                 }
             }
         }
-        .background(MicaboColor.canvas.ignoresSafeArea())
+        .background(OnboardingPalette.white.ignoresSafeArea())
         .task {
             guard !didStart else { return }
             didStart = true
@@ -124,30 +124,30 @@ struct DeckBuildingStepView: View {
                     .contentTransition(.opacity)
                     .animation(.easeOut(duration: 0.25), value: isReady)
                     .tracking(-0.5)
-                    .foregroundStyle(MicaboColor.ink)
+                    .foregroundStyle(OnboardingPalette.ink)
                     .multilineTextAlignment(.center)
 
                 // Ce qu'on a répondu, rappelé pendant l'attente : c'est ce qui fait que
                 // l'écran parle du deck de quelqu'un plutôt que d'un traitement en cours.
                 Text(setup.resolvedTitle)
                     .font(MicaboFont.ui(15, weight: .medium))
-                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .foregroundStyle(OnboardingPalette.gray)
                     .multilineTextAlignment(.center)
             }
 
-            MicaboOutlineCard(padding: EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)) {
-                VStack(spacing: 0) {
-                    ForEach(Array(Self.steps.enumerated()), id: \.offset) { index, item in
-                        stepRow(item, isLast: index == Self.steps.count - 1)
-                    }
+            VStack(spacing: 0) {
+                ForEach(Array(Self.steps.enumerated()), id: \.offset) { index, item in
+                    stepRow(item, isLast: index == Self.steps.count - 1)
                 }
             }
+            .padding(.vertical, 8)
+            .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
 
-            MicaboSlimProgress(
-                percent: Int((shown * 100).rounded()),
-                showsLabel: false,
-                height: 6
-            )
+            MicaboProgressBar(progress: shown, tint: OnboardingPalette.accent, track: OnboardingPalette.card)
+                .frame(height: 6)
+                .padding(.horizontal, MicaboSpacing.xl)
         }
     }
 
@@ -164,24 +164,24 @@ struct DeckBuildingStepView: View {
             HStack(spacing: 13) {
                 ZStack {
                     Circle()
-                        .fill(isDone ? MicaboColor.positiveSoft : (isCurrent ? MicaboColor.accentSoft : MicaboColor.surfaceMuted))
+                        .fill(isDone ? OnboardingPalette.ink : (isCurrent ? OnboardingPalette.accentWash : OnboardingPalette.card))
 
                     if isDone {
                         Image(systemName: "checkmark")
                             .font(.system(size: 12, weight: .heavy))
-                            .foregroundStyle(MicaboColor.positive)
+                            .foregroundStyle(OnboardingPalette.white)
                     } else if isCurrent {
                         ProgressView()
                             .progressViewStyle(.circular)
                             .scaleEffect(0.62)
-                            .tint(MicaboColor.accent)
+                            .tint(OnboardingPalette.accent)
                     }
                 }
                 .frame(width: 28, height: 28)
 
                 Text(i18n.t(item.captionKey))
                     .font(MicaboFont.ui(14.5, weight: isCurrent ? .semibold : .regular))
-                    .foregroundStyle(isCurrent ? MicaboColor.ink : MicaboColor.inkSecondary)
+                    .foregroundStyle(isCurrent || isDone ? OnboardingPalette.ink : OnboardingPalette.grayLight)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.vertical, 11)
@@ -189,7 +189,10 @@ struct DeckBuildingStepView: View {
             .animation(.easeOut(duration: 0.25), value: isCurrent)
 
             if !isLast {
-                MicaboHairline(inset: 41)
+                Rectangle()
+                    .fill(OnboardingPalette.cardStrong)
+                    .frame(height: 1)
+                    .padding(.leading, 41)
             }
         }
     }

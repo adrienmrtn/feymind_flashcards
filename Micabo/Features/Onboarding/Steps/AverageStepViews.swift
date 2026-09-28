@@ -137,12 +137,20 @@ struct TargetAverageStepView: View {
 /// **La note en très grand, et un curseur dessous.** On glisse le pouce, la note change
 /// cran par cran avec un petit coup, et les deux bornes du barème sont écrites aux
 /// extrémités. Un curseur se règle sans lire ; une grille de neuf cartes se lisait.
-private struct GradeWheel: View {
+///
+/// Il sert aussi à l'heure du rappel et à la note visée d'un deck : tout ce qui se choisit
+/// sur une échelle se choisit ici, de la même façon.
+struct GradeWheel: View {
     let choices: [GradeTick]
     @Binding var score: Int?
     /// Le cran de départ, quand rien n'a encore été choisi. Le milieu, sauf avis contraire.
     var fallbackIndex: Int?
     let label: String
+    /// La taille de la valeur en grand. Quatre-vingt-seize pour une note ; une heure, plus
+    /// longue, se lit un cran plus petit.
+    var valueSize: CGFloat = 96
+    /// Un mot sous la valeur, quand elle en appelle un (« le soir »).
+    var caption: String?
 
     @GestureState private var isDragging = false
 
@@ -161,17 +169,27 @@ private struct GradeWheel: View {
 
     var body: some View {
         VStack(spacing: 26) {
-            Text(current?.label ?? "")
-                .font(MicaboFont.ui(96, weight: .bold))
-                .foregroundStyle(OnboardingPalette.ink)
-                .tracking(-4)
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
-                .frame(maxWidth: .infinity)
-                .frame(height: 110)
-                .contentTransition(.numericText())
-                .animation(OnboardingMotion.select, value: index)
+            VStack(spacing: 4) {
+                Text(current?.label ?? "")
+                    .font(MicaboFont.ui(valueSize, weight: .bold))
+                    .foregroundStyle(OnboardingPalette.ink)
+                    .tracking(-valueSize * 0.04)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: valueSize * 1.15)
+                    .contentTransition(.numericText())
+                    .animation(OnboardingMotion.select, value: index)
+
+                if let caption {
+                    Text(caption)
+                        .font(MicaboFont.ui(15, weight: .semibold))
+                        .foregroundStyle(OnboardingPalette.gray)
+                        .contentTransition(.opacity)
+                        .animation(OnboardingMotion.select, value: caption)
+                }
+            }
 
             slider
 

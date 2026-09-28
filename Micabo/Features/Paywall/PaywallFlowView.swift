@@ -93,6 +93,9 @@ struct PaywallFlowView: View {
         .micaboScreenBackground()
         // Le lancement les a déjà demandés ; on repasse ici parce qu'un premier appel
         // tombé sans réseau laisserait ce paywall-là sur les prix de la France.
+        // Le blanc du parcours d'accueil, en pleine page comme en feuille : le paywall en
+        // est la dernière page, et il en garde la charte.
+        .background(OnboardingPalette.white.ignoresSafeArea())
         .task { await PaywallPurchases.refreshPrices() }
         .onAppear {
             openedAt = Date()
@@ -214,6 +217,7 @@ extension View {
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.sheet)
+            .presentationBackground(OnboardingPalette.white)
         }
     }
 }

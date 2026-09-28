@@ -7,9 +7,9 @@ import SwiftUI
 /// fonctionner. Ici, le plan vient d'être montré, et le compte sert à ne pas le perdre.
 ///
 /// **Le même écran que les questions, et pas un écran de connexion.** La marque, la
-/// mascotte et la carte de la reconnexion sont partis : une jauge, un titre en 34, une ligne
-/// grise, et une carte qui dit ce que le compte garde — le plan de l'écran d'avant, en trois
-/// lignes. Puis les trois portes, telles que `SignInProviderButtons` les dessine partout.
+/// mascotte, la carte de la reconnexion et le récapitulatif du plan sont partis : une
+/// jauge, un titre en 34, une ligne grise, puis les trois portes, telles que
+/// `SignInProviderButtons` les dessine partout, étalées sur la hauteur.
 ///
 /// **Les trois flux sont branchés pour de vrai.** Une connexion réussie avance d'elle-même ;
 /// un refus laisse l'écran en place avec sa raison. « Passer » avance, et **referme la porte
@@ -29,17 +29,24 @@ struct SignInStepView: View {
             title: i18n.t("onboarding.compteTitle"),
             subtitle: i18n.t("ios.account.sub"),
             contentSpacing: MicaboSpacing.lg,
+            scrolls: false,
+            expandsContent: true,
             skip: OnboardingSkip(accessibilityLabel: i18n.t("ios.skipNoAccount"), action: skip)
         ) {
+            // Les portes au milieu de la page, et les mentions en bas : sans la carte qui
+            // récapitulait le plan, il reste trois boutons, et ils respirent.
             VStack(alignment: .leading, spacing: 22) {
-                keptCard
+                Spacer(minLength: 0)
 
                 SignInProviderButtons()
 
                 SignInFailureNote(includeSent: false, includeError: true)
 
+                Spacer(minLength: 0)
+
                 legalLine
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .animation(.easeOut(duration: 0.22), value: auth.message)
         .allowsHitTesting(!auth.isWorking)
@@ -53,33 +60,6 @@ struct SignInStepView: View {
             // Déjà connecté avant d'arriver ici, par un lien reçu par courriel par exemple :
             // on ne redemande pas.
             if auth.isSignedIn { advanceOnce() }
-        }
-    }
-
-    /// Ce que le compte garde : le plan qu'on vient de voir, en trois lignes cochées.
-    private var keptCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            line(i18n.t("ios.account.keep.plan", ["n": "\(model.cardsPerDay)"]))
-            line(i18n.t("ios.account.keep.subjects", ["count": "\(model.subjects.count)"]))
-            line(i18n.t("ios.account.keep.devices"))
-        }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-    }
-
-    private func line(_ text: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
-            Image(systemName: "checkmark")
-                .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(OnboardingPalette.white)
-                .frame(width: 22, height: 22)
-                .background(OnboardingPalette.ink, in: Circle())
-
-            Text(text)
-                .font(MicaboFont.ui(15, weight: .medium))
-                .foregroundStyle(OnboardingPalette.ink)
-                .fixedSize(horizontal: false, vertical: true)
         }
     }
 

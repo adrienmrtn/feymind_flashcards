@@ -22,7 +22,7 @@ struct PaywallCloseButton: View {
         Button(action: action) {
             Image(systemName: "xmark")
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(MicaboColor.inkSecondary)
+                .foregroundStyle(OnboardingPalette.gray)
                 // La zone touchable fait 44 points, le signe reste calé sur la marge.
                 .frame(width: 44, height: 44, alignment: .leading)
         }
@@ -65,7 +65,7 @@ struct PaywallCallToAction: View {
                 if isPurchasing {
                     ProgressView()
                         .controlSize(.small)
-                        .tint(MicaboColor.onInk)
+                        .tint(OnboardingPalette.white)
                 }
 
                 Text(
@@ -74,11 +74,25 @@ struct PaywallCallToAction: View {
                         : L10n.t("app.paywall.subscribe", locale: .resolved())
                 )
             }
+            .font(MicaboFont.ui(19, weight: .semibold))
+            .foregroundStyle(OnboardingPalette.white)
             .frame(maxWidth: .infinity)
+            .padding(.vertical, 20)
+            // Le dégradé violet : la seule place de l'app où le violet fait un bouton.
+            // C'est la charte du parcours d'accueil, dont le paywall est la dernière page.
+            .background(
+                LinearGradient(
+                    colors: [OnboardingPalette.accent, Color(hex: 0x8B5CF6)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                ),
+                in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
+            )
+            .shadow(color: OnboardingPalette.accent.opacity(0.28), radius: 14, y: 8)
         }
         // Aussi grand que le bouton du parcours d'accueil : le paywall en est la dernière
         // page, et un bouton qui rapetisse à l'écran de l'offre se lit comme une hésitation.
-        .buttonStyle(MicaboPrimaryButtonStyle(isProminent: true))
+        .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .medium))
         .disabled(isPurchasing)
         .animation(.easeOut(duration: 0.2), value: isPurchasing)
     }
@@ -104,14 +118,14 @@ struct PaywallLegalFooter: View {
     private var separator: some View {
         Text("·")
             .font(MicaboFont.ui(11.5, weight: .regular))
-            .foregroundStyle(MicaboColor.inkTertiary)
+            .foregroundStyle(OnboardingPalette.grayLight)
     }
 
     private func entry(_ title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
                 .font(MicaboFont.ui(11.5, weight: .regular))
-                .foregroundStyle(MicaboColor.inkTertiary)
+                .foregroundStyle(OnboardingPalette.grayLight)
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
         }
@@ -128,7 +142,7 @@ struct PaywallLegalFooter: View {
 enum PaywallPitch {
     /// « Essaie 3 jours gratuitement, puis 4,17 € / mois (facturé 49,99 € par an). »
     ///
-    /// Le vert ne porte que la partie gratuite. Colorer la phrase entière n'aurait mis en
+    /// Le violet ne porte que la partie gratuite. Colorer la phrase entière n'aurait mis en
     /// avant que le prix, colorer le prix aurait mis en avant ce qu'on demande.
     ///
     /// Sans essai — déjà consommé, ou absent dans ce pays —, il reste le prix, et rien
@@ -136,10 +150,10 @@ enum PaywallPitch {
     static func text(for plan: PaywallPlan) -> Text {
         let locale = UiLocale.resolved()
         let price = Text(sentence(for: plan, locale: locale))
-            .foregroundStyle(MicaboColor.ink)
+            .foregroundStyle(OnboardingPalette.ink)
         guard plan.hasTrial else { return price }
         let free = Text(L10n.t("ios.paywallTryDays", locale: locale, vars: ["n": "\(PaywallCatalog.freeTrialDays)"]))
-            .foregroundStyle(MicaboColor.accent)
+            .foregroundStyle(OnboardingPalette.accent)
         return free + price
     }
 

@@ -82,8 +82,9 @@ struct TriedAppsStepView: View {
 
 // MARK: - Le temps par jour
 
-/// **« Combien de temps par jour ? »** Quatre crans, et sous chacun le nombre de cartes que
-/// ça fait : la réponse devient un chiffre du plan avant même qu'on l'ait choisie.
+/// **« Combien de temps par jour ? »** Quatre crans. La réponse devient le rythme du
+/// plan, et elle se confirme en tenant le bouton : c'est la promesse qu'on signe à
+/// l'écran suivant.
 struct DailyTimeStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -110,7 +111,13 @@ struct DailyTimeStepView: View {
                 }
             }
         } footer: {
-            OnboardingContinueButton(isEnabled: selection != nil) {
+            // **Pas de bouton noir : un bouton qu'on tient.** Le temps par jour est la seule
+            // réponse du quiz qui engage, et « tu es sûr ? » se répond en le tenant une
+            // seconde et demie, pendant que le violet le remplit.
+            OnboardingHoldButton(
+                title: i18n.t("ios.quiz.time.hold"),
+                isEnabled: selection != nil
+            ) {
                 model.advance()
             }
         }
@@ -121,7 +128,7 @@ struct DailyTimeStepView: View {
 
 /// **« Qu'est-ce qui te bloque ? »** Cinq réponses, et la plupart des élèves se
 /// reconnaissent dans la première : c'est la question où l'on se sent compris, et c'est
-/// pour ça que l'écran de rétention vient juste après.
+/// pour ça qu'elle vient tout de suite après « relire, c'est oublier », avant même le pays.
 struct BlockerStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -134,28 +141,6 @@ struct BlockerStepView: View {
             label: { i18n.t("ios.quiz.blocker.\($0.rawValue)") },
             emoji: { $0.emoji },
             onSelect: { model.blocker = $0 },
-            onContinue: { model.advance() }
-        )
-    }
-}
-
-// MARK: - La prochaine échéance
-
-/// **« C'est pour quand ? »** Un horizon, pas une date : personne ne connaît la date de
-/// son prochain contrôle au dixième écran d'une app, et un sélecteur de date ferait
-/// passer la question pour un formulaire.
-struct NextExamStepView: View {
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    var body: some View {
-        OnboardingSingleChoiceStep(
-            title: i18n.t("ios.quiz.exam"),
-            items: OnboardingExamHorizon.allCases,
-            selection: model.examHorizon,
-            label: { i18n.t("ios.quiz.exam.\($0.rawValue)") },
-            emoji: { $0.emoji },
-            onSelect: { model.examHorizon = $0 },
             onContinue: { model.advance() }
         )
     }

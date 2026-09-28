@@ -451,49 +451,6 @@ extension View {
     }
 }
 
-// MARK: - Titre qui se pose
-
-/// Un titre centré ou non, qui apparaît d'un bloc et prévient quand il est là.
-///
-/// Il s'écrivait mot à mot ; c'est parti, avec le reste des animations de lecture. Le nom
-/// et la signature sont gardés pour les écrans de l'essai, qui ne changent pas.
-struct OnboardingWordByWordTitle: View {
-    let text: String
-    var size: CGFloat = 32
-    var alignment: HorizontalAlignment = .leading
-    var wordDelay: Double = 0.16
-    var startDelay: Double = 0.3
-    /// Appelé une fois le titre posé.
-    var onFinish: () -> Void = {}
-
-    @Environment(\.onboardingSurface) private var surface
-
-    @State private var isVisible = false
-    @State private var didStart = false
-
-    var body: some View {
-        Text(text)
-            .font(OnboardingPalette.title(size))
-            .foregroundStyle(surface.title)
-            .tracking(-0.9)
-            .lineSpacing(-2)
-            .multilineTextAlignment(alignment == .center ? .center : .leading)
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(maxWidth: .infinity, alignment: Alignment(horizontal: alignment, vertical: .center))
-            .opacity(isVisible ? 1 : 0)
-            .onAppear(perform: run)
-    }
-
-    private func run() {
-        guard !didStart else { return }
-        didStart = true
-        withAnimation(OnboardingMotion.enter.delay(startDelay)) { isVisible = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + startDelay + 0.4) {
-            onFinish()
-        }
-    }
-}
-
 // MARK: - Bouton d'avancement
 
 /// CTA principal du parcours : **une pilule noire de cinquante-six points, pleine

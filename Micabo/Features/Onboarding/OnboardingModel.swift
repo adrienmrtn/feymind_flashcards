@@ -5,7 +5,7 @@ import SwiftUI
 /// dans `OnboardingPreferences` : quitter l'app en cours de route ne les perd pas.
 @Observable
 final class OnboardingModel {
-    private(set) var step: OnboardingStep = .hookVideo
+    private(set) var step: OnboardingStep = .hookLogo
 
     /// **Le prénom, et rien d'autre.** Il ne sert qu'à s'adresser à quelqu'un : l'écran
     /// « merci » et l'accueil. Il ne part pas au modèle, il ne part pas au serveur.
@@ -107,12 +107,12 @@ final class OnboardingModel {
         }
     }
 
-    /// Sa prochaine échéance, en horizon plutôt qu'en date : personne ne connaît la date de
-    /// son prochain contrôle au troisième écran d'une app.
-    var examHorizon: OnboardingExamHorizon? {
+    /// **L'heure à laquelle il révise**, de 5 à 23. C'est l'heure du rappel quotidien, et
+    /// elle se règle au curseur, le soleil qui monte et descend avec elle.
+    var studyHour: Int? {
         didSet {
-            guard let examHorizon, examHorizon != oldValue else { return }
-            Analytics.track(.onboardingAnswer, ["field": "examHorizon", "value": .text(examHorizon.rawValue)])
+            guard let studyHour, studyHour != oldValue else { return }
+            Analytics.track(.onboardingAnswer, ["field": "studyHour", "value": .number(Double(studyHour))])
         }
     }
 
@@ -175,9 +175,9 @@ final class OnboardingModel {
         DailyLoad.newCardsPerDay(dailyMinutes: dailyMinutes ?? OnboardingPreferences.dailyMinutes)
     }
 
-    /// Le nombre de jours avant la prochaine échéance, tel que le plan l'affiche.
-    var daysToExam: Int {
-        (examHorizon ?? .term).days
+    /// Le temps par jour que le plan affiche, en minutes.
+    var minutesPerDay: Int {
+        dailyMinutes ?? OnboardingPreferences.dailyMinutes
     }
 
     // MARK: Avancer, revenir
@@ -198,9 +198,9 @@ final class OnboardingModel {
     ///
     /// Une réponse donnée doit pouvoir se corriger : quelqu'un qui se trompe de pays au
     /// premier écran du quiz découvrirait son erreur douze écrans plus tard. On revient
-    /// jusqu'au pays, et pas plus loin ; on ne revient pas après le prénom, parce que tout
-    /// ce qui suit est un résultat, un compte ou une offre, et que rien de tout ça ne se
-    /// défait.
+    /// jusqu'à la première question — ce qui bloque —, et pas plus loin ; on ne revient pas
+    /// après le prénom, parce que tout ce qui suit est un résultat, un compte ou une offre,
+    /// et que rien de tout ça ne se défait.
     ///
     /// Les écrans sautés le restent, dans ce sens comme dans l'autre : on ne fait pas
     /// apparaître au retour une question qu'on n'a pas posée à l'aller.
@@ -209,13 +209,13 @@ final class OnboardingModel {
         while let candidate = previous, candidate.isSkipped(for: country) {
             previous = OnboardingStep(rawValue: candidate.rawValue - 1)
         }
-        guard let previous, previous.rawValue >= OnboardingStep.country.rawValue else { return }
+        guard let previous, previous.rawValue >= OnboardingStep.blocker.rawValue else { return }
         step = previous
     }
 
     /// Vrai quand il y a un écran en arrière qui accepte qu'on y revienne.
     var canGoBack: Bool {
-        step.rawValue > OnboardingStep.country.rawValue
+        step.rawValue > OnboardingStep.blocker.rawValue
             && step.rawValue <= OnboardingStep.name.rawValue
     }
 
@@ -236,8 +236,8 @@ final class OnboardingModel {
         OnboardingPreferences.source = source?.rawValue
         OnboardingPreferences.triedApps = triedApps
         OnboardingPreferences.blocker = blocker?.rawValue
-        OnboardingPreferences.examHorizon = examHorizon?.rawValue
         OnboardingPreferences.method = method?.rawValue
+        OnboardingPreferences.studyHour = studyHour
     }
 }
 
@@ -284,55 +284,6 @@ enum OnboardingBlocker: String, CaseIterable, Identifiable {
         case .noMethod: "🧭"
         case .stress: "😰"
         }
-    }
-}
-
-/// La prochaine échéance, en horizon. `days` est ce que le plan affiche.
-enum OnboardingExamHorizon: String, CaseIterable, Identifiable {
-    case week
-    case month
-    case term
-    case yearEnd
-    case none
-
-    var id: String { rawValue }
-
-    var emoji: String {
-        switch self {
-        case .week: "🔥"
-        case .month: "📅"
-        case .term: "🗓️"
-        case .yearEnd: "🎓"
-        case .none: "🧘"
-        }
-    }
-
-    /// Le compte à rebours affiché sur le plan. Un horizon n'a pas de date : ce sont des
-    /// ordres de grandeur, et ils sont écrits pour se lire comme tels.
-    var days: Int {
-        switch self {
-        case .week: 6
-        case .month: 24
-        case .term: 68
-        case .yearEnd: OnboardingExamHorizon.daysToJune
-        case .none: 90
-        }
-    }
-
-    /// Les jours jusqu'au premier juin qui vient : la fin d'année scolaire, pour à peu près
-    /// tout le monde dans les pays décrits.
-    private static var daysToJune: Int {
-        let calendar = MicaboCalendar.shared
-        let now = Date()
-        let year = calendar.component(.year, from: now)
-        let month = calendar.component(.month, from: now)
-        var components = DateComponents()
-        components.year = month >= 6 ? year + 1 : year
-        components.month = 6
-        components.day = 1
-        guard let june = calendar.date(from: components) else { return 180 }
-        let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: june).day ?? 180
-        return max(1, days)
     }
 }
 

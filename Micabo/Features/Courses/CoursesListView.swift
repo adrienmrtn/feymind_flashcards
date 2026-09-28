@@ -174,20 +174,19 @@ struct CoursesListView: View {
             .task(openFirstImportIfPending)
     }
 
-    /// **Le premier deck se demande tout seul.** Quelqu'un qui arrive du parcours n'a
-    /// rien à voir ici : l'écran qui l'attend est la question « tu révises quelle
-    /// matière ? », pas une liste vide. Le drapeau est consommé tout de suite : annuler
-    /// l'import rend la liste vide, avec son « + », et ne redemande rien au lancement
-    /// suivant.
+    /// **Le premier deck s'ouvre tout seul.** Il a été construit avant l'app, à la sortie
+    /// du parcours (`FirstDeckFlowView`), et quelqu'un qui arrive ici pour la première fois
+    /// n'a rien à voir d'autre que son plan. La liste vide, avec son « + », ne se montre
+    /// qu'à qui revient.
     @MainActor
     private func openFirstImportIfPending() async {
-        guard OnboardingPreferences.pendingFirstImport else { return }
-        OnboardingPreferences.pendingFirstImport = false
-        // Le temps que l'app se pose : une couverture ouverte pendant que la racine
-        // apparaît encore donne deux animations concurrentes.
+        guard let course = FirstDeckHandoff.course else { return }
+        // Le temps que l'app se pose : une page poussée pendant que la racine apparaît
+        // encore donne deux animations concurrentes.
         try? await Task.sleep(for: .milliseconds(650))
         guard !Task.isCancelled else { return }
-        requestImport()
+        FirstDeckHandoff.course = nil
+        path = NavigationPath([course])
     }
 
     private var dialogs: some View {

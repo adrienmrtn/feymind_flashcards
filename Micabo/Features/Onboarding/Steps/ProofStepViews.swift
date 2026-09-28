@@ -13,7 +13,11 @@ enum OnboardingProofFigures {
     static let rating = 4.8
     static let reviews = 12_000
     /// Les élèves qui utilisent Micabo.
-    static let students = 500_000
+    static let students = 100_000
+    /// Les élèves qui ont fait exactement le chemin qu'on vient de se fixer, et en combien
+    /// de mois. Le compteur monte jusqu'au premier ; la courbe s'arrête au second.
+    static let pathAchievers = 697
+    static let pathMonths = 3
     /// Ce qu'il reste d'un cours une semaine après, en relisant et en se testant.
     /// Karpicke & Roediger, Science, 2008.
     static let retainedByRereading = 36
@@ -21,10 +25,6 @@ enum OnboardingProofFigures {
     /// Le multiplicateur de rétention et celui des rappels.
     static let retentionMultiplier = 2
     static let reminderMultiplier = 2
-    /// La part des élèves qui atteignent leur objectif.
-    static let reachTarget = 82
-    /// Combien de fois une carte est revue d'ici l'échéance, en moyenne.
-    static let reviewsPerCard = 4
 
     /// Un entier écrit dans la langue de l'élève : « 12 000 », « 12,000 », « 12.000 ».
     static func text(_ value: Int, locale: UiLocale) -> String {
@@ -77,14 +77,17 @@ struct OnboardingAccentText: View {
     }
 }
 
-// MARK: - « Passer de 11 à 14 est réaliste. »
+// MARK: - « Passer de 11 à 14, c'est réaliste. »
 
-/// La première preuve, juste après la moyenne visée : l'écart qu'on vient de se fixer,
-/// et une phrase qui dit qu'il se prend. C'est l'écran « losing 14.8 kg is a realistic
-/// target » de Cal AI, avec le chiffre de l'élève dedans.
+/// **La première preuve, en deux temps.** D'abord la phrase seule, qui se lit mot à mot
+/// et se termine par un surligneur sur « réaliste ». Puis, sur un appui, le chiffre : les
+/// élèves qui ont fait exactement ce chemin, qui monte comme un tableau d'aéroport et
+/// freine en arrivant. Le bouton n'existe pas avant que le chiffre soit posé : on ne passe
+/// pas devant une preuve qui n'a pas fini de se donner.
 struct ProofRealisticStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var scale: DesiredGradeScale { DesiredGradeScale.for(model.country) }
 
@@ -99,54 +102,134 @@ struct ProofRealisticStepView: View {
         scale.label(for: model.targetScore ?? TargetScore.max)
     }
 
-    private var gap: Int {
-        max(1, (model.targetScore ?? TargetScore.max) - (model.currentScore ?? TargetScore.min))
+    private enum Phase {
+        /// La phrase se lit.
+        case reading
+        /// La phrase est lue et surlignée : un appui fait venir le chiffre.
+        case armed
+        /// Le chiffre monte.
+        case counting
+        /// Le chiffre est posé : le bouton est là.
+        case done
     }
 
+    @State private var phase: Phase = .reading
+    @State private var shown = 0
+
+    private static let target = OnboardingProofFigures.pathAchievers
+    /// Le temps que met le compteur : long, parce que c'est lui qu'on regarde.
+    private static let countDuration = 3.2
+
     var body: some View {
-        OnboardingProofPage(
-            headline: i18n.t("ios.proof.realistic.title", ["from": from, "to": to]),
-            caption: i18n.t("ios.proof.realistic.sub", ["pct": "\(OnboardingProofFigures.reachTarget)", "gap": "\(gap)"])
-        ) {
-            OnboardingGapBadge(from: from, to: to)
-        } onContinue: {
-            model.advance()
+        VStack(spacing: 0) {
+            OnboardingChrome(showsBack: false)
+
+            VStack(spacing: 0) {
+                Spacer(minLength: MicaboSpacing.lg)
+
+                OnboardingReadingText(
+                    template: i18n.t("ios.proof.realistic.title", ["from": from, "to": to]),
+                    size: 32,
+                    wordDelay: 0.2,
+                    onHighlighted: { if phase == .reading { phase = .armed } }
+                )
+                .padding(.horizontal, MicaboSpacing.screen)
+
+                if phase == .counting || phase == .done {
+                    counter
+                        .padding(.top, MicaboSpacing.xl)
+                        .transition(.opacity)
+                }
+
+                Spacer(minLength: MicaboSpacing.lg)
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .animation(.easeOut(duration: 0.4), value: phase)
+
+            ZStack {
+                Text(i18n.t("ios.proof.tap"))
+                    .font(MicaboFont.ui(14, weight: .medium))
+                    .foregroundStyle(OnboardingPalette.grayLight)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 22)
+                    .opacity(phase == .armed ? 1 : 0)
+
+                MicaboBottomBar(background: OnboardingPalette.white) {
+                    OnboardingContinueButton {
+                        model.advance()
+                    }
+                }
+                .opacity(phase == .done ? 1 : 0)
+                .allowsHitTesting(phase == .done)
+            }
+            .animation(.easeOut(duration: 0.4), value: phase)
+        }
+        .background(OnboardingPalette.white.ignoresSafeArea())
+        .environment(\.onboardingSurface, .canvas)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            guard phase == .armed else { return }
+            Haptics.light()
+            phase = .counting
+            Task { await count() }
         }
     }
-}
 
-/// « 11 → 14 », en grand, sur un lavis violet.
-private struct OnboardingGapBadge: View {
-    let from: String
-    let to: String
+    /// « Plus de », le chiffre qui roule, et ce qu'il compte.
+    private var counter: some View {
+        VStack(spacing: 10) {
+            Text(i18n.t("ios.proof.path.more"))
+                .font(MicaboFont.ui(15, weight: .semibold))
+                .foregroundStyle(OnboardingPalette.gray)
 
-    var body: some View {
-        HStack(spacing: 12) {
-            grade(from, color: OnboardingPalette.gray)
-            Image(systemName: "arrow.right")
-                .font(.system(size: 20, weight: .bold))
-                .foregroundStyle(OnboardingPalette.grayLight)
-            grade(to, color: OnboardingPalette.accent)
+            OnboardingDigitRoller(
+                value: shown,
+                digits: String(Self.target).count,
+                size: 88,
+                tint: phase == .done ? OnboardingPalette.accent : OnboardingPalette.ink
+            )
+            .animation(.easeOut(duration: 0.3), value: phase)
+
+            Text(i18n.t("ios.proof.path.sub", ["months": "\(OnboardingProofFigures.pathMonths)"]))
+                .font(MicaboFont.ui(17, weight: .medium))
+                .foregroundStyle(OnboardingPalette.ink)
+                .multilineTextAlignment(.center)
+                .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, MicaboSpacing.xl)
         }
-        .padding(.vertical, 22)
-        .padding(.horizontal, 24)
         .frame(maxWidth: .infinity)
-        .background(OnboardingPalette.accentWash, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 
-    /// Une note tient sur une ligne, quelle que soit sa longueur : « 13/20 » et « A- » ne
-    /// font pas la même largeur, et deux notes qui débordaient poussaient la flèche hors
-    /// de la carte.
-    private func grade(_ text: String, color: Color) -> some View {
-        Text(text)
-            .font(MicaboFont.ui(40, weight: .bold))
-            .tracking(-1.5)
-            .monospacedDigit()
-            .foregroundStyle(color)
-            .lineLimit(1)
-            .minimumScaleFactor(0.5)
-            .frame(maxWidth: .infinity)
+    /// **Le compteur monte vite, puis freine.** Une courbe en cube : à mi-temps il est aux
+    /// sept huitièmes, et il passe le dernier tiers du temps sur les vingt derniers
+    /// chiffres — ce sont ceux qu'on lit. Un coup à chaque centaine, un coup net au bout.
+    @MainActor
+    private func count() async {
+        if reduceMotion {
+            shown = Self.target
+            phase = .done
+            return
+        }
+        let frames = Int(Self.countDuration * 30)
+        var lastHundred = 0
+        for frame in 1...frames {
+            guard !Task.isCancelled else { return }
+            let t = Double(frame) / Double(frames)
+            let eased = 1 - pow(1 - t, 3)
+            shown = Int((Double(Self.target) * eased).rounded())
+            let hundred = shown / 100
+            if hundred > lastHundred {
+                lastHundred = hundred
+                Haptics.tick()
+            }
+            try? await Task.sleep(for: .milliseconds(33))
+        }
+        shown = Self.target
+        Haptics.success()
+        phase = .done
     }
 }
 
@@ -176,187 +259,11 @@ struct ProofRetentionStepView: View {
     }
 }
 
-// MARK: - « Rejoins 500 000 élèves. »
+// MARK: - « Avec dix minutes par jour, voici ta progression. »
 
-/// La note, et trois avis empilés. Une pile qui ne bouge pas toute seule : on lit celui du
-/// dessus, et on appuie pour voir le suivant.
-struct ProofStudentsStepView: View {
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    private struct Review: Identifiable {
-        let id: Int
-        let quote: String
-        let name: String
-        let level: String
-    }
-
-    private var reviews: [Review] {
-        (1...3).map { index in
-            Review(
-                id: index,
-                quote: i18n.t("ios.review\(index).quote"),
-                name: i18n.t("ios.review\(index).name"),
-                level: i18n.t("ios.review\(index).level")
-            )
-        }
-    }
-
-    var body: some View {
-        OnboardingScaffold(
-            title: i18n.t("ios.proof.students.title", ["n": OnboardingProofFigures.text(OnboardingProofFigures.students, locale: i18n.locale)]),
-            contentSpacing: MicaboSpacing.lg
-        ) {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(spacing: 10) {
-                    OnboardingStars(size: 15)
-                    Text(i18n.t("ios.proof.students.rating", [
-                        "rating": OnboardingProofFigures.text(OnboardingProofFigures.rating, locale: i18n.locale),
-                        "n": OnboardingProofFigures.text(OnboardingProofFigures.reviews, locale: i18n.locale),
-                    ]))
-                    .font(MicaboFont.ui(14, weight: .semibold))
-                    .foregroundStyle(OnboardingPalette.gray)
-                }
-
-                ForEach(Array(reviews.enumerated()), id: \.element.id) { index, review in
-                    OnboardingReviewCard(quote: review.quote, name: review.name, level: review.level)
-                        .onboardingAppear(index: 4 + index, stagger: 0.08)
-                }
-            }
-        } footer: {
-            OnboardingContinueButton {
-                model.advance()
-            }
-        }
-    }
-}
-
-/// Un avis : l'initiale dans un rond, le prénom, le niveau, cinq étoiles, la phrase.
-struct OnboardingReviewCard: View {
-    let quote: String
-    let name: String
-    let level: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
-                Text(String(name.prefix(1)).uppercased())
-                    .font(MicaboFont.ui(15, weight: .bold))
-                    .foregroundStyle(OnboardingPalette.white)
-                    .frame(width: 38, height: 38)
-                    .background(OnboardingPalette.ink, in: Circle())
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(name)
-                        .font(MicaboFont.ui(15, weight: .semibold))
-                        .foregroundStyle(OnboardingPalette.ink)
-                    Text(level)
-                        .font(OnboardingPalette.subtitle)
-                        .foregroundStyle(OnboardingPalette.gray)
-                }
-
-                Spacer(minLength: 0)
-
-                OnboardingStars(size: 12, spacing: 2)
-            }
-
-            Text(quote)
-                .font(MicaboFont.ui(15, weight: .regular))
-                .foregroundStyle(OnboardingPalette.ink)
-                .lineSpacing(3)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .accessibilityElement(children: .combine)
-    }
-}
-
-// MARK: - « D'ici le jour J, 340 cartes, revues 4 fois. »
-
-/// **Ce que le plan fait, en volume.** Le nombre de cartes qu'on aura vues d'ici
-/// l'échéance, et combien de fois chacune. C'est le premier écran qui montre le plan
-/// en chiffres, et ce sont ceux de l'élève : son rythme, son échéance.
-struct ProofPlanStepView: View {
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    private var totalCards: Int {
-        model.cardsPerDay * model.daysToExam
-    }
-
-    var body: some View {
-        OnboardingProofPage(
-            headline: i18n.t("ios.proof.plan.title", [
-                "cards": OnboardingProofFigures.text(totalCards, locale: i18n.locale),
-                "times": "\(OnboardingProofFigures.reviewsPerCard)",
-            ]),
-            caption: i18n.t("ios.proof.plan.sub", ["n": "\(model.cardsPerDay)", "days": "\(model.daysToExam)"]),
-            tapToContinue: true
-        ) {
-            OnboardingDaysGrid(days: model.daysToExam)
-        } onContinue: {
-            model.advance()
-        }
-    }
-}
-
-/// **Les jours jusqu'à l'échéance, un point par jour**, qui s'allument l'un après
-/// l'autre. Au-delà de quatre-vingt-dix, un point vaut plusieurs jours : la grille dit
-/// « c'est long » sans devenir un mur.
-struct OnboardingDaysGrid: View {
-    let days: Int
-
-    @State private var lit = 0
-
-    private static let columns = 10
-    private static let maxDots = 90
-
-    private var dots: Int { max(1, min(Self.maxDots, days)) }
-
-    var body: some View {
-        let rows = Int((Double(dots) / Double(Self.columns)).rounded(.up))
-        VStack(spacing: 10) {
-            ForEach(0..<rows, id: \.self) { row in
-                HStack(spacing: 10) {
-                    ForEach(0..<Self.columns, id: \.self) { column in
-                        let index = row * Self.columns + column
-                        Circle()
-                            .fill(index < lit ? OnboardingPalette.accent : OnboardingPalette.card)
-                            .frame(maxWidth: .infinity)
-                            .aspectRatio(1, contentMode: .fit)
-                            .opacity(index < dots ? 1 : 0)
-                            .animation(.easeOut(duration: 0.25), value: lit)
-                    }
-                }
-            }
-        }
-        .padding(20)
-        .background(OnboardingPalette.card.opacity(0.5), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .accessibilityElement()
-        .accessibilityLabel("\(days)")
-        .task {
-            try? await Task.sleep(for: .milliseconds(500))
-            // Deux secondes et demie pour tout allumer, quel que soit le nombre de points,
-            // et un petit coup à chaque ligne : on sent les semaines passer.
-            let pause = Swift.max(12, 2_500 / dots)
-            for index in 1...dots {
-                guard !Task.isCancelled else { return }
-                lit = index
-                if index % Self.columns == 0 || index == dots { Haptics.tick() }
-                try? await Task.sleep(for: .milliseconds(pause))
-            }
-            Haptics.success()
-        }
-    }
-}
-
-// MARK: - « Ta courbe jusqu'au jour J. »
-
-/// La progression prévue, de la moyenne d'aujourd'hui à celle qu'on vise, jusqu'à
-/// l'échéance qu'on vient de donner. Le tracé est le même quelles que soient les notes :
-/// c'est une forme, pas une prédiction.
+/// La progression prévue, de la moyenne d'aujourd'hui à celle qu'on vise, avec le temps
+/// qu'on vient de promettre — et de signer. Le tracé est le même quelles que soient les
+/// notes : c'est une forme, pas une prédiction.
 struct ProofCurveStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -376,15 +283,15 @@ struct ProofCurveStepView: View {
 
     var body: some View {
         OnboardingProofPage(
-            headline: i18n.t("ios.proof.curve.title"),
-            caption: i18n.t("ios.proof.curve.sub", ["days": "\(model.daysToExam)", "from": from, "to": to]),
+            headline: i18n.t("ios.proof.curve.title", ["n": "\(model.minutesPerDay)"]),
+            caption: i18n.t("ios.proof.curve.sub", ["months": "\(OnboardingProofFigures.pathMonths)", "from": from, "to": to]),
             tapToContinue: true
         ) {
             OnboardingCurveChart(
                 from: from,
                 to: to,
                 startLabel: i18n.t("ios.proof.curve.today"),
-                endLabel: i18n.t("ios.proof.curve.exam", ["days": "\(model.daysToExam)"])
+                endLabel: i18n.t("ios.proof.curve.later", ["months": "\(OnboardingProofFigures.pathMonths)"])
             )
         } onContinue: {
             model.advance()

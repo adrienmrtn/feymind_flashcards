@@ -334,8 +334,8 @@ enum OnboardingPreferences {
         /// chaque passage sur la preuve sociale, et le quota serait dépensé en silence
         /// avant le premier vrai moment de satisfaction.
         static let ratingAsked = "micabo.onboarding.ratingAsked"
-        /// Posée à la fin du parcours, levée par l'onglet Decks : le premier import s'ouvre
-        /// tout seul à l'arrivée dans l'app. Voir `pendingFirstImport`.
+        /// Posée à la fin du parcours, levée quand le premier deck existe : entre les deux,
+        /// l'app montre la création du premier cours, et rien d'autre. Voir `RootView`.
         static let pendingFirstImport = "micabo.onboarding.pendingFirstImport"
         /// Écrite par l'ancien écran des rappels. **Elle reste retirée alors même que
         /// l'écran est revenu** : le nouveau ne note aucune intention, il ouvre la boîte du
@@ -361,8 +361,11 @@ enum OnboardingPreferences {
         static let source = "micabo.onboarding.source"
         static let triedApps = "micabo.onboarding.triedApps"
         static let blocker = "micabo.onboarding.blocker"
+        /// L'échéance n'est plus demandée ; la clé reste listée pour être effacée.
         static let examHorizon = "micabo.onboarding.examHorizon"
         static let method = "micabo.onboarding.method"
+        /// L'heure à laquelle il révise, de 5 à 23. C'est l'heure du rappel.
+        static let studyHour = "micabo.onboarding.studyHour"
 
         static let all = [
             completed, level, stage, tier, country, customCountryCode,
@@ -370,7 +373,7 @@ enum OnboardingPreferences {
             institutionId, institutionName,
             dailyMinutes, weeklyMinutes, ratingAsked, pendingFirstImport, retiredNotificationsOptIn, completedAt,
             sheetLanguage, schoolTrack, schoolYear, displayName,
-            source, triedApps, blocker, examHorizon, method
+            source, triedApps, blocker, examHorizon, method, studyHour
         ]
     }
 
@@ -493,14 +496,15 @@ enum OnboardingPreferences {
         set { write(newValue, forKey: Key.blocker) }
     }
 
-    static var examHorizon: String? {
-        get { defaults.string(forKey: Key.examHorizon) }
-        set { write(newValue, forKey: Key.examHorizon) }
-    }
-
     static var method: String? {
         get { defaults.string(forKey: Key.method) }
         set { write(newValue, forKey: Key.method) }
+    }
+
+    /// L'heure du rappel, telle que le parcours l'a demandée. Absente avant le parcours.
+    static var studyHour: Int? {
+        get { defaults.object(forKey: Key.studyHour) as? Int }
+        set { write(newValue, forKey: Key.studyHour) }
     }
 
     private static func write(_ value: String?, forKey key: String) {
