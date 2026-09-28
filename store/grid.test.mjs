@@ -15,6 +15,7 @@ import {
   dayAfter,
   derivationFor,
   discountPercent,
+  earliestDateFrom,
   isActiveOffer,
   latestPrice,
   loadGrid,
@@ -216,4 +217,11 @@ test("un changement déjà programmé compte comme posé", () => {
   ];
   assert.equal(latestPrice(prices).pointId, "next");
   assert.equal(currentPrice(prices, "2026-09-28").pointId, "old");
+});
+
+test("la date minimale se lit dans le refus d'Apple", () => {
+  const refusal =
+    "POST /v1/subscriptionPrices → 409 ENTITY_ERROR.RELATIONSHIP.INVALID: Invalid startDate=2026-09-29, a future date is expected, and must be on or after 2026-09-30";
+  assert.equal(earliestDateFrom(refusal), "2026-09-30");
+  assert.equal(earliestDateFrom("409 STATE_ERROR: autre chose"), null);
 });

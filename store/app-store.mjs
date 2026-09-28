@@ -26,6 +26,7 @@ import {
   currentPrice,
   dayAfter,
   derivationFor,
+  earliestDateFrom,
   isActiveOffer,
   latestPrice,
   loadGrid,
@@ -377,16 +378,24 @@ function postPrice(row, startDate) {
 
 let written = 0;
 const failures = [];
+// La première date qu'Apple accepte, apprise au premier refus et gardée pour tous les pays.
+let earliest = null;
+const effectiveDates = new Set();
 for (const row of changes) {
-  const startDate = priceStartDate(row.hasPrice);
+  let startDate = priceStartDate(row.hasPrice);
+  if (startDate && earliest && startDate < earliest) startDate = earliest;
   try {
     try {
       await postPrice(row, startDate);
     } catch (error) {
-      // Aujourd'hui peut déjà être hier dans le fuseau d'Apple : on retente pour demain.
       if (!startDate || ![409, 422].includes(error.status) || /initial price/i.test(error.message)) throw error;
-      await postPrice(row, dayAfter(startDate));
+      // Apple écrit la date minimale dans son refus ; à défaut, on tente le lendemain.
+      earliest = earliestDateFrom(error.message) ?? dayAfter(startDate);
+      startDate = earliest;
+      log(`  Apple n'accepte un changement de prix qu'à partir du ${startDate} : tous les prix y sont programmés.`);
+      await postPrice(row, startDate);
     }
+    if (startDate) effectiveDates.add(startDate);
     written += 1;
     if (written % 25 === 0) log(`  ${written}/${changes.length} prix posés`);
   } catch (error) {
@@ -423,6 +432,9 @@ for (const trial of skipTrials ? [] : trials) {
 
 const done = [
   `\n**Fait** : ${written}/${changes.length} prix posés, ${offers} essais gratuits créés (${asc.requests} appels à l'API).`,
+  effectiveDates.size
+    ? `\nLes nouveaux prix sont **programmés** : ils s'appliquent le ${[...effectiveDates].sort().join(", ")}. Jusque-là, App Store Connect les montre comme changements à venir.`
+    : "",
   failures.length ? `\n### Refusés par Apple (${failures.length}) — relancer l'action les reprend\n\n- ${failures.join("\n- ")}` : "",
 ].join("\n");
 log(done);
