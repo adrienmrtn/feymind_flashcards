@@ -210,6 +210,8 @@ struct CourseRecord: Codable {
     var accent_hex: String?
     var source: String
     var source_file_name: String?
+    /// La langue du cours. Absente sur les lignes d'avant.
+    var language: String? = nil
     var fingerprint: String
     var raw_text: String
     /// La fiche en JSON, transportée telle quelle. Elle est déjà du JSON côté app

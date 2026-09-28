@@ -126,6 +126,9 @@ enum DeckBuilder {
         if let name = setup.name.nilIfBlank {
             course.title = name
         }
+        // La langue choisie reste sur le cours : les cartes d'aujourd'hui, et tout ce qui
+        // s'écrira plus tard pour lui, la liront là.
+        course.language = setup.language
 
         onStage(.splitting)
         ChapterBuilder.migrate(course, in: modelContext)

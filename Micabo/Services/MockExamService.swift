@@ -329,7 +329,9 @@ final class MockExamService {
         var payload: [String: Any] = [
             "title": exam.name,
             "context": context,
-            "language": OnboardingPreferences.contentLanguage.rawValue,
+            // La langue des cours de l'épreuve, quand ils en ont une : un blanc sur un
+            // cours en anglais s'écrit en anglais.
+            "language": (matter.first?.writingLanguage ?? OnboardingPreferences.contentLanguage).rawValue,
             "quota": [
                 "choice": quota.choice,
                 "truefalse": quota.trueFalse,
