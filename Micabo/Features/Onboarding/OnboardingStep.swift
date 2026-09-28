@@ -12,11 +12,10 @@ import Foundation
 /// Quatre blocs :
 ///
 /// 1. **L'accroche** : le logo, la note, puis deux écrans qui parlent de lui avant la
-///    première question — relire ne suffit pas, et ce qui le bloque.
+///    première question — relire ne suffit pas, et c'est pour ça que Micabo existe.
 /// 2. **Le quiz**, avec les preuves intercalées : pays, niveau, matières, d'où il vient,
-///    ce qu'il a essayé, son objectif, ses deux moyennes, son temps, sa signature, sa
-///    méthode, son prénom.
-/// 3. **La construction** : merci, le plan se calcule, le plan est prêt.
+///    son objectif, ses deux moyennes, son temps, sa signature, sa méthode, son prénom.
+/// 3. **La construction** : merci, les avis, le plan se calcule, le plan est prêt.
 /// 4. **Le compte et les rappels** : le compte, l'heure où il révise, la notification ;
 ///    puis l'essai et le paywall.
 ///
@@ -29,8 +28,8 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case hookRating
     /// Relire, c'est oublier : deux barres.
     case proofRetention
-    /// Ce qui le bloque. Posée avant le pays : c'est la question où l'on se sent compris.
-    case blocker
+    /// « C'est pour ça qu'on a créé Micabo » : une phrase qui se lit, et rien d'autre.
+    case proofWhy
 
     // Le quiz.
     case country
@@ -41,7 +40,6 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case year
     case subjects
     case source
-    case triedApps
     case goal
     case currentAverage
     case targetAverage
@@ -55,6 +53,8 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
 
     // La construction.
     case thanks
+    /// Les avis, en carrousel : la preuve sociale, au moment où l'on rend.
+    case reviews
     case building
     case planReady
 
@@ -103,7 +103,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// Vrai pour les écrans qui posent une question. Ce sont les seuls où l'on revient.
     var isQuestion: Bool {
         switch self {
-        case .blocker, .country, .level, .schoolType, .year, .subjects, .source, .triedApps, .goal,
+        case .country, .level, .schoolType, .year, .subjects, .source, .goal,
              .currentAverage, .targetAverage, .dailyTime, .method, .name:
             true
         default:

@@ -45,10 +45,16 @@ struct OnboardingReadingText: View {
         var marked = 0
         for (index, segment) in template.components(separatedBy: "**").enumerated() {
             let isMarked = index % 2 == 1
-            for piece in segment.split(whereSeparator: \.isWhitespace) {
+            var pieces = segment.split(whereSeparator: \.isWhitespace).map(String.init)
+            // Une ponctuation collée au mot marqué (« **confiance**. ») reste collée à lui
+            // au lieu de devenir un mot à part, posé après un espace.
+            if index > 0, let first = segment.first, !first.isWhitespace, !pieces.isEmpty, let last = result.last {
+                result[result.count - 1] = Word(id: last.id, text: last.text + pieces.removeFirst(), isMarked: last.isMarked, markedRank: last.markedRank)
+            }
+            for piece in pieces {
                 let rank = isMarked ? marked : -1
                 if isMarked { marked += 1 }
-                result.append(Word(id: result.count, text: String(piece), isMarked: isMarked, markedRank: rank))
+                result.append(Word(id: result.count, text: piece, isMarked: isMarked, markedRank: rank))
             }
         }
         return result

@@ -12,9 +12,11 @@ import SwiftUI
 /// **Une question par écran.** Le tri « tu étudies où ? et en quelle année ? » posé sur la
 /// même page fait répondre à la première sans lire la seconde. C'est vrai ici aussi : la
 /// matière, le nom et l'échéance ont chacun leur page.
-enum DeckSetupStep: Hashable {
+enum DeckSetupStep: Hashable, CaseIterable {
     case subject
     case name
+    /// La langue du cours. Celle de l'interface est proposée d'office.
+    case language
     case source
     case materials
     case topic
@@ -28,7 +30,8 @@ enum DeckSetupStep: Hashable {
     func next(for setup: DeckSetup) -> DeckSetupStep? {
         switch self {
         case .subject: .name
-        case .name: .source
+        case .name: .language
+        case .language: .source
         case .source: setup.source == .generated ? .topic : .materials
         case .materials: .purpose
         case .topic: .purpose
@@ -47,10 +50,11 @@ enum DeckSetupStep: Hashable {
     /// visiblement quand l'étudiant répond « j'apprends, c'est tout ».
     var progress: Double {
         switch self {
-        case .subject: 0.1
-        case .name: 0.22
-        case .source: 0.34
-        case .materials, .topic: 0.46
+        case .subject: 0.08
+        case .name: 0.18
+        case .language: 0.27
+        case .source: 0.36
+        case .materials, .topic: 0.47
         case .purpose: 0.58
         case .grade: 0.68
         case .deadline: 0.78
@@ -61,6 +65,23 @@ enum DeckSetupStep: Hashable {
 
     var analyticsName: String { String(describing: self) }
 
+    /// Le rang de l'écran dans l'entonnoir. Il voyage avec l'événement pour que le
+    /// tableau de bord ordonne les écrans sans recopier la liste ; les deux branches
+    /// (documents ou sujet) partagent le même rang.
+    var analyticsIndex: Int {
+        switch self {
+        case .subject: 0
+        case .name: 1
+        case .language: 2
+        case .source: 3
+        case .materials, .topic: 4
+        case .purpose: 5
+        case .grade: 6
+        case .deadline: 7
+        case .confidence: 8
+        case .building: 9
+        }
+    }
 }
 
 /// **La création d'un deck, du choix de la matière au plan construit.**
@@ -129,10 +150,10 @@ struct DeckSetupFlowView: View {
         .preferredColorScheme(.light)
         .onAppear {
             Haptics.prepare()
-            Analytics.track(.deckSetupStep, ["step": .text(step.analyticsName)])
+            Analytics.track(.deckSetupStep, ["step": .text(step.analyticsName), "index": .number(Double(step.analyticsIndex)), "first": .flag(!isDismissable)])
         }
         .onChange(of: step) { _, value in
-            Analytics.track(.deckSetupStep, ["step": .text(value.analyticsName)])
+            Analytics.track(.deckSetupStep, ["step": .text(value.analyticsName), "index": .number(Double(value.analyticsIndex)), "first": .flag(!isDismissable)])
             // La page qui se pose se sent — à l'atterrissage, comme sur le parcours
             // d'accueil. Voir `OnboardingFlowView`.
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.26) {
@@ -203,6 +224,7 @@ struct DeckSetupFlowView: View {
         switch step {
         case .subject: DeckSubjectStepView(setup: setup, onNext: advance)
         case .name: DeckNameStepView(setup: setup, onNext: advance)
+        case .language: DeckLanguageStepView(setup: setup, onNext: advance)
         case .source: DeckSourceStepView(setup: setup, onNext: advance)
         case .materials: DeckMaterialsStepView(setup: setup, onNext: advance)
         case .topic: DeckTopicStepView(setup: setup, onNext: advance)

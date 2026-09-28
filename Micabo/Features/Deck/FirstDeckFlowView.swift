@@ -49,6 +49,11 @@ struct FirstDeckFlowView: View {
         .animation(OnboardingMotion.page, value: isSettingUp)
         .environment(\.onboardingSurface, .canvas)
         .preferredColorScheme(.light)
+        // La page d'intro est le premier cran de l'entonnoir d'import : sans elle, on ne
+        // saurait pas combien s'arrêtent avant même la première question.
+        .onAppear {
+            Analytics.track(.deckSetupStep, ["step": "firstDeckIntro", "index": -1, "first": true])
+        }
     }
 
     private var intro: some View {

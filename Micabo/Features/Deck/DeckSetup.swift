@@ -69,6 +69,10 @@ enum DeckMaterialSource: String, Codable {
 final class DeckSetup {
     var subject: String?
     var name: String = ""
+    /// **La langue du cours.** Celle de l'interface par défaut — c'est celle que l'élève
+    /// lit —, et il la change en un appui s'il révise dans une autre. Elle part à la
+    /// génération, pour la fiche comme pour les cartes.
+    var language: ContentLanguage
     var source: DeckMaterialSource?
     var materials: [DeckMaterial] = []
     /// Ce que l'étudiant veut apprendre précisément, quand l'IA écrit tout. Vide vaut
@@ -90,10 +94,18 @@ final class DeckSetup {
 
     init(
         subject: String? = nil,
-        country: SchoolingCountry = OnboardingPreferences.schoolingCountry
+        country: SchoolingCountry = OnboardingPreferences.schoolingCountry,
+        language: ContentLanguage = DeckSetup.defaultLanguage()
     ) {
         self.subject = subject
+        self.language = language
         self.scale = DesiredGradeScale.for(country)
+    }
+
+    /// La langue proposée d'office : celle de l'interface, qui existe toujours dans les
+    /// langues de rédaction ; à défaut, celle des fiches de l'élève.
+    static func defaultLanguage() -> ContentLanguage {
+        ContentLanguage(rawValue: UiLocale.resolved().rawValue) ?? OnboardingPreferences.contentLanguage
     }
 
     // MARK: - Ce que chaque écran attend pour laisser passer
