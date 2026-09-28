@@ -87,7 +87,7 @@ struct SubjectsStepView: View {
             MicaboFlowLayout(spacing: 8, lineSpacing: 8) {
                 ForEach(subjects, id: \.self) { subject in
                     SubjectChip(
-                        title: subject,
+                        title: SubjectDisplay.subject(subject, locale: i18n.locale),
                         emoji: SubjectCatalog.emoji(for: subject),
                         isSelected: model.subjects.contains(subject)
                     ) {

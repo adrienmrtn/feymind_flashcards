@@ -241,40 +241,12 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         .environment(\.onboardingSurface, surface)
     }
 
-    /// **Le retour dans un rond gris, puis la jauge à sa droite**, sur une seule ligne.
-    /// C'est la barre de Cal AI : le chevron garde sa place même quand il ne sert pas, pour
-    /// que le titre ne saute pas d'un écran à l'autre.
     @ViewBuilder
     private var chrome: some View {
         if let model {
-            HStack(alignment: .center, spacing: 14) {
-                Button {
-                    model.goBack()
-                } label: {
-                    Image(systemName: "arrow.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(surface.isDark ? OnboardingPalette.white : OnboardingPalette.ink)
-                        .frame(width: 40, height: 40)
-                        .background(
-                            surface.isDark ? OnboardingPalette.white.opacity(0.14) : OnboardingPalette.card,
-                            in: Circle()
-                        )
-                }
-                .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
-                .opacity(model.canGoBack ? 1 : 0)
-                .disabled(!model.canGoBack)
-                .accessibilityLabel(L10n.t("app.common.back", locale: .resolved()))
-
-                MicaboProgressBar(
-                    progress: model.step.progress,
-                    tint: surface.progressTint,
-                    track: surface.progressTrack
-                )
-                .frame(height: 3)
-                .animation(OnboardingMotion.shift, value: model.step)
+            OnboardingChrome(showsBack: model.canGoBack, surface: surface) {
+                model.goBack()
             }
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.top, MicaboSpacing.sm)
         }
     }
 
@@ -341,7 +313,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
             }
         }
         .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.top, MicaboSpacing.xl)
+        .padding(.top, MicaboSpacing.md)
         .padding(.bottom, inScrollView ? MicaboSpacing.lg : 0)
         .frame(
             maxWidth: .infinity,
@@ -404,6 +376,51 @@ extension OnboardingScaffold where Footer == EmptyView {
             content: content,
             footer: { EmptyView() }
         )
+    }
+}
+
+// MARK: - La barre du haut
+
+/// **La jauge sur toute la largeur, et le retour en dessous, à gauche.**
+///
+/// La jauge partageait sa ligne avec le bouton de retour, et se retrouvait décalée à
+/// droite : sur les écrans sans retour, elle avait l'air mal centrée. Elle prend toute la
+/// largeur, sur toutes les pages, et le rond du retour vit sur sa propre ligne — qui
+/// garde sa hauteur même quand il n'y a rien à défaire, pour que le titre ne saute pas.
+struct OnboardingChrome: View {
+    var showsBack: Bool
+    var surface: OnboardingSurface = .canvas
+    var onBack: () -> Void = {}
+
+    @Environment(OnboardingModel.self) private var model: OnboardingModel?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            MicaboProgressBar(
+                progress: model?.step.progress ?? 0,
+                tint: surface.progressTint,
+                track: surface.progressTrack
+            )
+            .frame(height: 3)
+            .animation(OnboardingMotion.shift, value: model?.step)
+
+            Button(action: onBack) {
+                Image(systemName: "arrow.left")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(surface.isDark ? OnboardingPalette.white : OnboardingPalette.ink)
+                    .frame(width: 40, height: 40)
+                    .background(
+                        surface.isDark ? OnboardingPalette.white.opacity(0.14) : OnboardingPalette.card,
+                        in: Circle()
+                    )
+            }
+            .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
+            .opacity(showsBack ? 1 : 0)
+            .disabled(!showsBack)
+            .accessibilityLabel(L10n.t("app.common.back", locale: .resolved()))
+        }
+        .padding(.horizontal, MicaboSpacing.screen)
+        .padding(.top, MicaboSpacing.sm)
     }
 }
 
