@@ -18,8 +18,8 @@ final class OnboardingFlowTests: XCTestCase {
 
     // MARK: - Ouverture
 
-    /// **Trois écrans d'accroche, puis le pays.** Le produit en mouvement, la note, où on
-    /// l'a vu : rien n'est demandé avant le quatrième écran, et le pays vient d'abord parce
+    /// **Deux écrans d'accroche, puis le pays.** Le produit en mouvement, la note : rien
+    /// n'est demandé avant le troisième écran, et le pays vient d'abord parce
     /// que c'est lui qui commande les réponses de tout le reste.
     func testTheHookComesBeforeTheFirstQuestion() {
         let model = OnboardingModel()
@@ -27,9 +27,6 @@ final class OnboardingFlowTests: XCTestCase {
 
         model.advance()
         XCTAssertEqual(model.step, .hookRating)
-
-        model.advance()
-        XCTAssertEqual(model.step, .hookPress)
 
         model.advance()
         XCTAssertEqual(model.step, .country, "Le pays est la première question")
@@ -77,8 +74,6 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(model.step, .proofRetention)
         model.advance()
         XCTAssertEqual(model.step, .blocker)
-        model.advance()
-        XCTAssertEqual(model.step, .proofTwice)
         model.advance()
         XCTAssertEqual(model.step, .nextExam)
         model.advance()
@@ -251,7 +246,8 @@ final class OnboardingFlowTests: XCTestCase {
 
         for name in ["howItWorks", "showMe", "upload", "dates", "turnsInto", "smartFeatures",
                      "greeting", "together", "personalizing", "socialProof", "yourTurn",
-                     "welcome", "demoImport", "forgetting", "school", "language", "projection"] {
+                     "welcome", "demoImport", "forgetting", "school", "language", "projection",
+                     "hookPress", "proofTwice", "proofKeep"] {
             XCTAssertFalse(names.contains(name), "\(name) a été retiré du parcours")
         }
     }

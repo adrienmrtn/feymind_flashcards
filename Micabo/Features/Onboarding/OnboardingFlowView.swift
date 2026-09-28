@@ -64,7 +64,6 @@ struct OnboardingFlowView: View {
         switch model.step {
         case .hookVideo: HookVideoStepView()
         case .hookRating: HookRatingStepView()
-        case .hookPress: HookPressStepView()
         case .country: CountryStepView()
         case .level: LevelStepView()
         case .schoolType: SchoolTypeStepView()
@@ -79,7 +78,6 @@ struct OnboardingFlowView: View {
         case .dailyTime: DailyTimeStepView()
         case .proofRetention: ProofRetentionStepView()
         case .blocker: BlockerStepView()
-        case .proofTwice: ProofTwiceStepView()
         case .nextExam: NextExamStepView()
         case .proofCurve: ProofCurveStepView()
         case .method: MethodStepView()
