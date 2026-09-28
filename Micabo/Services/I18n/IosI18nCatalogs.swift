@@ -1014,6 +1014,9 @@ enum IosI18nCatalogs {
         "ios.reviews.title": "Ils ont essayé Micabo.",
         "ios.deckSetup.language": "Dans quelle langue veux-tu ton cours ?",
         "ios.deckSetup.language.sub": "La fiche et les cartes seront écrites dans cette langue.",
+        "ios.paywallCourseHeadline": "Tes cours sont dans Pro",
+        "ios.paywallSession.oneTitle": "Ta carte gratuite est faite.",
+        "ios.paywallSession.oneProgress": "1 / 1 carte révisée",
     ]
 
     static let de: [String: String] = [
@@ -2031,6 +2034,9 @@ enum IosI18nCatalogs {
         "ios.reviews.title": "Sie haben Micabo ausprobiert.",
         "ios.deckSetup.language": "In welcher Sprache willst du deinen Kurs?",
         "ios.deckSetup.language.sub": "Zusammenfassung und Karten werden in dieser Sprache geschrieben.",
+        "ios.paywallCourseHeadline": "Deine Kurse sind in Pro",
+        "ios.paywallSession.oneTitle": "Deine kostenlose Karte ist geschafft.",
+        "ios.paywallSession.oneProgress": "1 / 1 Karte gelernt",
     ]
 
     static let es: [String: String] = [
@@ -3048,6 +3054,9 @@ enum IosI18nCatalogs {
         "ios.reviews.title": "Ya han probado Micabo.",
         "ios.deckSetup.language": "¿En qué idioma quieres tu curso?",
         "ios.deckSetup.language.sub": "La ficha y las tarjetas se escribirán en este idioma.",
+        "ios.paywallCourseHeadline": "Tus cursos están en Pro",
+        "ios.paywallSession.oneTitle": "Tu tarjeta gratis ya está hecha.",
+        "ios.paywallSession.oneProgress": "1 / 1 tarjeta repasada",
     ]
 
     static let tr: [String: String] = [
@@ -4065,6 +4074,9 @@ enum IosI18nCatalogs {
         "ios.reviews.title": "Micabo'yu denediler.",
         "ios.deckSetup.language": "Dersini hangi dilde istersin?",
         "ios.deckSetup.language.sub": "Özet ve kartlar bu dilde yazılacak.",
+        "ios.paywallCourseHeadline": "Derslerin Pro'da",
+        "ios.paywallSession.oneTitle": "Ücretsiz kartın tamamlandı.",
+        "ios.paywallSession.oneProgress": "1 / 1 kart çalışıldı",
     ]
 
     /// **L'anglais, au complet.**
@@ -5089,6 +5101,9 @@ enum IosI18nCatalogs {
         "ios.reviews.title": "They tried Micabo.",
         "ios.deckSetup.language": "Which language do you want your course in?",
         "ios.deckSetup.language.sub": "The sheet and the cards will be written in this language.",
+        "ios.paywallCourseHeadline": "Your courses are in Pro",
+        "ios.paywallSession.oneTitle": "Your free card is done.",
+        "ios.paywallSession.oneProgress": "1 / 1 card reviewed",
     ]
 
     static func table(for locale: String) -> [String: String] {

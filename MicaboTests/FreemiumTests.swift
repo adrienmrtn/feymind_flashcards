@@ -11,10 +11,10 @@ import XCTest
 final class FreemiumTests: XCTestCase {
     // MARK: - Les limites
 
-    func testTheFreeTierIsOneCourseSeventyPercentAndFiveCards() {
+    func testTheFreeTierIsOneCourseThirtyPercentAndOneCard() {
         XCTAssertEqual(FreeTier.courses, 1)
         XCTAssertEqual(FreeTier.readableSheetRatio, 0.3, accuracy: 0.0001)
-        XCTAssertEqual(FreeTier.cardsPerDay, 5)
+        XCTAssertEqual(FreeTier.cardsPerDay, 1, "Une carte fait la démonstration, la deuxième est dans Pro")
         XCTAssertFalse(FreeTier.allowsPractice, "L'entraînement libre est dans Pro")
     }
 
@@ -109,12 +109,11 @@ final class FreemiumTests: XCTestCase {
     // MARK: - Les portes
 
     @MainActor
-    func testTheSessionStopsOnTheFifthCardAndNotBefore() {
+    func testTheSessionStopsAfterTheFirstCard() {
         let pro = ProAccess(defaults: isolatedDefaults())
 
-        XCTAssertFalse(pro.hasReachedDailyLimit(reviewedToday: 0))
-        XCTAssertFalse(pro.hasReachedDailyLimit(reviewedToday: 4), "La cinquième carte se révise")
-        XCTAssertTrue(pro.hasReachedDailyLimit(reviewedToday: 5))
+        XCTAssertFalse(pro.hasReachedDailyLimit(reviewedToday: 0), "La première carte se révise")
+        XCTAssertTrue(pro.hasReachedDailyLimit(reviewedToday: 1), "La deuxième est dans Pro")
         XCTAssertTrue(pro.hasReachedDailyLimit(reviewedToday: 12))
 
         pro.unlock()

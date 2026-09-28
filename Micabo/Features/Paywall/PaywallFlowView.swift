@@ -16,6 +16,9 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
     case sessionLimit
     /// Depuis les Réglages, sans rien avoir buté : on vient voir le prix.
     case upgrade
+    /// Un cours qu'on touche dans la liste. **Aucun cours ne s'ouvre sans abonnement** :
+    /// le premier se voit une fois, à sa construction, et c'est tout.
+    case openCourse
 
     var id: String { rawValue }
 
@@ -26,6 +29,7 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
         case .practice: L10n.t("ios.paywallPracticeHeadline", locale: .resolved())
         case .sessionLimit: L10n.t("ios.paywallSessionHeadline", locale: .resolved())
         case .upgrade: L10n.t("ios.paywallUpgradeHeadline", locale: .resolved())
+        case .openCourse: L10n.t("ios.paywallCourseHeadline", locale: .resolved())
         }
     }
 }
