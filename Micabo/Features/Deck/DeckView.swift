@@ -103,11 +103,20 @@ struct DeckView: View {
             // refonte n'a pas de chapitres : ses parties n'étaient qu'une lecture des titres
             // de sa fiche, refaite à chaque affichage. On la transforme ici en table, deck
             // par deck, plutôt que de passer toute la base en revue au démarrage.
-            ChapterBuilder.migrate(course, in: modelContext)
+            //
+            // **Après la poussée, pas pendant.** Le découpage et la lecture des journaux
+            // sont synchrones ; lancés dans le même tour que l'arrivée de la page, ils
+            // tombaient au milieu de l'animation, et un retour immédiat les trouvait encore
+            // en train de tourner sur une page déjà partie.
+            reload()
+            try? await Task.sleep(for: .milliseconds(350))
+            guard !Task.isCancelled else { return }
+            let migrated = ChapterBuilder.migrate(course, in: modelContext)
             // Et le rattrapage des decks restés plats, quand leur fiche avait ses parties en
             // titres de niveau deux. Voir `resplitIfFlat`.
-            ChapterBuilder.resplitIfFlat(course, in: modelContext)
-            reload()
+            let resplit = ChapterBuilder.resplitIfFlat(course, in: modelContext)
+            guard !Task.isCancelled else { return }
+            if migrated || resplit { reload() }
             Analytics.track(.sheetOpened, [
                 "written": .flag(course.hasSheet),
                 "source": .text(course.source.rawValue),
