@@ -73,7 +73,7 @@ last_step as (
 finished as (
   select distinct device_id
   from public.app_events
-  where name = 'onboarding_finished'
+  where name = 'onboarding_finished' and build = 'release'
 )
 select
   l.app_version,

@@ -43,6 +43,27 @@ final class OnboardingFlowTests: XCTestCase {
     /// pour les autres.
     func testEachCountrySeesExactlyOneLevelQuestion() {
         let detailed = OnboardingModel()
+        detailed.select(country: .fr)
+        while detailed.step != .country { detailed.advance() }
+        detailed.advance()
+        XCTAssertEqual(detailed.step, .schoolType, "La France demande la filière")
+        detailed.advance()
+        XCTAssertEqual(detailed.step, .year)
+        detailed.advance()
+        XCTAssertEqual(detailed.step, .subjects)
+
+        let generic = OnboardingModel()
+        generic.select(country: .other)
+        while generic.step != .country { generic.advance() }
+        generic.advance()
+        XCTAssertEqual(generic.step, .level, "Un pays générique demande le palier large")
+        generic.advance()
+        XCTAssertEqual(generic.step, .subjects)
+
+        XCTAssertEqual(OnboardingStep.allCases.filter { $0.isSkipped(for: .fr) }, [.level])
+        XCTAssertEqual(OnboardingStep.allCases.filter { $0.isSkipped(for: .other) }, [.schoolType, .year])
+    }
+
     // MARK: - Le quiz et ses preuves
 
     /// **Les preuves sont intercalées, et chacune suit la question qui la prépare** : la

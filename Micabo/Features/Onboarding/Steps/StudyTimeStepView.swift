@@ -140,8 +140,12 @@ struct OnboardingSkyCard: View {
     /// La lune, de 21 h à 5 h, sur le même arc, plus bas ; à six heures elle finit sa course
     /// sous le bord droit pendant que le soleil se lève.
     private var nightProgress: Double {
-        let shifted = hour >= 21 ? Double(hour - 21) : Double(hour + 3)
-        return shifted / 9
+        if hour >= 21 { return Double(hour - 21) / 9 }
+        if hour < 6 { return Double(hour + 3) / 9 }
+        // Le jour, la lune attend juste derrière le bord d'où elle repartira : à droite
+        // le matin, à gauche l'après-midi. Sans ça, elle traversait tout le ciel à
+        // vingt-et-une heures pour revenir à son point de départ.
+        return hour < 13 ? 1.08 : -0.08
     }
 
     private var isDay: Bool { (6...20).contains(hour) }
