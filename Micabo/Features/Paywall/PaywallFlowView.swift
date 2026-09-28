@@ -19,6 +19,9 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
     /// Un cours qu'on touche dans la liste. **Aucun cours ne s'ouvre sans abonnement** :
     /// le premier se voit une fois, à sa construction, et c'est tout.
     case openCourse
+    /// Un chapitre qu'on touche dans le plan d'un deck : la page du deck se voit, ses
+    /// fiches sont dans Pro.
+    case openChapter
 
     var id: String { rawValue }
 
@@ -30,6 +33,7 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
         case .sessionLimit: L10n.t("ios.paywallSessionHeadline", locale: .resolved())
         case .upgrade: L10n.t("ios.paywallUpgradeHeadline", locale: .resolved())
         case .openCourse: L10n.t("ios.paywallCourseHeadline", locale: .resolved())
+        case .openChapter: L10n.t("ios.paywallChapterHeadline", locale: .resolved())
         }
     }
 }
