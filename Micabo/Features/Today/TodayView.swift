@@ -708,7 +708,13 @@ struct TodayView: View {
             // l'épreuve, qui est la seule chose qu'on puisse encore en faire.
             action: {
                 if let course {
-                    path.append(course)
+                    // Le même paywall que la liste des decks : un cours ne s'ouvre pas
+                    // sans abonnement, d'où qu'on le touche.
+                    if pro?.isPro ?? true {
+                        path.append(course)
+                    } else {
+                        paywall = .openCourse
+                    }
                 } else {
                     editingExam = exam
                 }

@@ -69,7 +69,11 @@ struct SessionPaywallView: View {
                     .onboardingAppear(index: 0)
 
                 VStack(spacing: 10) {
-                    Text(i18n.t("app.paywall.session.title", ["reviewed": "\(reviewedCount)"]))
+                    // Au singulier quand la carte offerte est seule : « tes 1 cartes » se
+                    // lisait comme une faute, et la clé partagée ne connaît pas le pluriel.
+                    Text(reviewedCount == 1
+                        ? i18n.t("ios.paywallSession.oneTitle")
+                        : i18n.t("app.paywall.session.title", ["reviewed": "\(reviewedCount)"]))
                         .font(MicaboFont.ui(26, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
                         .tracking(-0.6)
@@ -124,10 +128,12 @@ struct SessionPaywallView: View {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 14, weight: .semibold))
 
-            Text(i18n.t("app.paywall.session.progress", [
-                "reviewed": "\(reviewedCount)",
-                "limit": "\(FreeTier.cardsPerDay)"
-            ]))
+            Text(FreeTier.cardsPerDay == 1
+                ? i18n.t("ios.paywallSession.oneProgress")
+                : i18n.t("app.paywall.session.progress", [
+                    "reviewed": "\(reviewedCount)",
+                    "limit": "\(FreeTier.cardsPerDay)"
+                ]))
                 .font(MicaboFont.ui(13, weight: .semibold))
                 .monospacedDigit()
         }

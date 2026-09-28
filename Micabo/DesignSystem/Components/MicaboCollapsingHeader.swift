@@ -248,7 +248,9 @@ struct MicaboCollapsingHeader<Trailing: View>: View {
         let titleRise: CGFloat = 6 * (1 - collapse)
         // L'emoji : cinquante-deux au centre de la bande, dix-sept dans la barre.
         let emojiScale: CGFloat = 1 - 0.673 * collapse + stretch / 600
-        let restY: CGFloat = (safeTop + band + stretch) / 2
+        // Au centre de la bande **visible**, sous la zone d'état : centré sur la hauteur
+        // entière, il remontait à la hauteur des boutons et avait l'air posé trop haut.
+        let restY: CGFloat = safeTop + (band + stretch) / 2
         let barY: CGFloat = safeTop + Self.button / 2
         let emojiY: CGFloat = restY + (barY - restY) * collapse
         let barX: CGFloat = sidePadding + Self.button + Self.gap + Self.emojiSlot / 2

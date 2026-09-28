@@ -8,10 +8,12 @@ import SwiftUI
 /// auraient dérivé au premier ajustement, et le gratuit se serait mis à dire deux choses
 /// différentes selon l'endroit où on l'a rencontré.
 enum FreeTier {
-    /// Un cours importé, et un seul. Le deuxième demande un abonnement.
+    /// Un cours importé, et un seul : celui du parcours d'accueil. Le deuxième demande un
+    /// abonnement.
     ///
-    /// Ce n'est pas zéro, et c'est le point : un paywall posé avant le premier import
-    /// demande de payer pour un produit qu'on n'a pas vu tourner sur ses propres cours.
+    /// Ce n'est pas zéro, parce que le premier cours se construit à la sortie du parcours
+    /// et fait la démonstration. **Mais il ne se rouvre pas gratuitement** : une fois quitté,
+    /// toucher un cours ouvre le paywall — voir `PaywallTrigger.openCourse`.
     static let courses = 1
 
     /// La part d'un chapitre qui se lit sans payer, passé le premier.
@@ -24,9 +26,10 @@ enum FreeTier {
 
     /// Le nombre de cartes qu'on révise par jour sans payer, toutes sessions confondues.
     ///
-    /// Par jour et non par session : une limite par session se contournait en relançant
-    /// la session, et ne limitait donc rien.
-    static let cardsPerDay = 5
+    /// **Une seule.** La carte qui montre le geste — lire, retourner, noter — et le paywall
+    /// tout de suite après : c'est la démonstration, pas un service. Par jour et non par
+    /// session : une limite par session se contournait en relançant la session.
+    static let cardsPerDay = 1
 
     /// L'entraînement libre est réservé à Pro.
     ///

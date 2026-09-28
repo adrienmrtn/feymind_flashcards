@@ -297,10 +297,14 @@ struct DeckSearchField: View {
 
 /// **« Dans quelle langue veux-tu ton cours ? »**
 ///
-/// Celle de l'interface est déjà cochée : neuf fois sur dix c'est la bonne, et l'écran se
-/// passe en un appui. Le dixième révise l'espagnol en France, ou suit un cours en anglais
-/// à Berlin, et c'est pour lui que la question est posée — sinon sa fiche sortait dans la
-/// langue de son pays d'études, et il n'avait aucun moyen de le changer d'un deck à l'autre.
+/// Celle de l'interface est déjà choisie : neuf fois sur dix c'est la bonne, et l'écran se
+/// passe en un appui sur Continuer. Le dixième révise l'espagnol en France, ou suit un
+/// cours en anglais à Berlin, et c'est pour lui que la question est posée — sinon sa fiche
+/// sortait dans la langue de son pays d'études, sans moyen de le changer d'un deck à
+/// l'autre.
+///
+/// **Un menu déroulant, pas une liste.** Quatorze langues en cartes faisaient défiler ;
+/// le menu d'iOS les montre toutes d'un appui et n'occupe qu'une rangée.
 struct DeckLanguageStepView: View {
     @Bindable var setup: DeckSetup
     var onNext: () -> Void
@@ -308,14 +312,43 @@ struct DeckLanguageStepView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
-        OnboardingSingleChoiceStep(
+        OnboardingScaffold(
             title: i18n.t("ios.deckSetup.language"),
-            subtitle: i18n.t("ios.deckSetup.language.sub"),
-            items: ContentLanguage.allCases,
-            selection: setup.language,
-            label: { $0.label },
-            onSelect: { setup.language = $0 },
-            onContinue: onNext
-        )
+            subtitle: i18n.t("ios.deckSetup.language.sub")
+        ) {
+            Menu {
+                Picker(i18n.t("ios.deckSetup.language"), selection: $setup.language) {
+                    ForEach(ContentLanguage.allCases) { value in
+                        Text(value.label).tag(value)
+                    }
+                }
+            } label: {
+                HStack(spacing: 14) {
+                    Text("🌍")
+                        .font(.system(size: 22))
+                        .frame(width: 28)
+
+                    Text(setup.language.label)
+                        .font(OnboardingPalette.option)
+                        .foregroundStyle(OnboardingPalette.ink)
+
+                    Spacer(minLength: MicaboSpacing.xs)
+
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(OnboardingPalette.gray)
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 16)
+                .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
+                .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
+            .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
+            .accessibilityLabel(i18n.t("ios.deckSetup.language"))
+            .accessibilityValue(setup.language.label)
+        } footer: {
+            OnboardingContinueButton(action: onNext)
+        }
     }
 }

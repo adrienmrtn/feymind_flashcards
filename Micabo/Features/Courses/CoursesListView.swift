@@ -460,7 +460,7 @@ struct CoursesListView: View {
             percent: stats.map(\.masteryPercent),
             countdownDays: countdownDays(for: course)
         ) {
-            path.append(course)
+            open(course)
         }
         .draggable(CourseDrag.payload(for: course))
         .contextMenu { courseMenu(course) }
@@ -515,7 +515,7 @@ struct CoursesListView: View {
     @ViewBuilder
     private func courseRow(_ course: Course, isLast: Bool) -> some View {
         MicaboRow.course(course, stats: census[course.id]) {
-            path.append(course)
+            open(course)
         }
         .draggable(CourseDrag.payload(for: course))
         .contextMenu { courseMenu(course) }
@@ -891,6 +891,17 @@ struct CoursesListView: View {
 
     private var canImport: Bool {
         pro?.canImportCourse(existingCourses: courses) ?? true
+    }
+
+    /// **Toucher un cours, c'est ouvrir le paywall** tant qu'on n'est pas abonné. Le cours
+    /// existe, il est à lui, et il s'est vu une fois à sa construction ; le rouvrir est
+    /// dans Pro. La liste reste visible : on voit ce qu'on a, on paie pour y entrer.
+    private func open(_ course: Course) {
+        guard pro?.isPro ?? true else {
+            paywall = .openCourse
+            return
+        }
+        path.append(course)
     }
 
     /// Le premier cours est offert, le deuxième s'achète.
