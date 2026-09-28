@@ -309,7 +309,8 @@ struct ProofPlanStepView: View {
                 "cards": OnboardingProofFigures.text(totalCards, locale: i18n.locale),
                 "times": "\(OnboardingProofFigures.reviewsPerCard)",
             ]),
-            caption: i18n.t("ios.proof.plan.sub", ["n": "\(model.cardsPerDay)", "days": "\(model.daysToExam)"])
+            caption: i18n.t("ios.proof.plan.sub", ["n": "\(model.cardsPerDay)", "days": "\(model.daysToExam)"]),
+            tapToContinue: true
         ) {
             OnboardingDaysGrid(days: model.daysToExam)
         } onContinue: {
@@ -343,6 +344,7 @@ struct OnboardingDaysGrid: View {
                             .frame(maxWidth: .infinity)
                             .aspectRatio(1, contentMode: .fit)
                             .opacity(index < dots ? 1 : 0)
+                            .animation(.easeOut(duration: 0.25), value: lit)
                     }
                 }
             }
@@ -352,13 +354,17 @@ struct OnboardingDaysGrid: View {
         .accessibilityElement()
         .accessibilityLabel("\(days)")
         .task {
-            try? await Task.sleep(for: .milliseconds(300))
+            try? await Task.sleep(for: .milliseconds(500))
+            // Deux secondes et demie pour tout allumer, quel que soit le nombre de points,
+            // et un petit coup à chaque ligne : on sent les semaines passer.
+            let pause = Swift.max(12, 2_500 / dots)
             for index in 1...dots {
                 guard !Task.isCancelled else { return }
                 lit = index
-                if index % 5 == 0 { Haptics.tick() }
-                try? await Task.sleep(for: .milliseconds(max(8, 900 / dots)))
+                if index % Self.columns == 0 || index == dots { Haptics.tick() }
+                try? await Task.sleep(for: .milliseconds(pause))
             }
+            Haptics.success()
         }
     }
 }
@@ -388,7 +394,8 @@ struct ProofCurveStepView: View {
     var body: some View {
         OnboardingProofPage(
             headline: i18n.t("ios.proof.curve.title"),
-            caption: i18n.t("ios.proof.curve.sub", ["days": "\(model.daysToExam)", "from": from, "to": to])
+            caption: i18n.t("ios.proof.curve.sub", ["days": "\(model.daysToExam)", "from": from, "to": to]),
+            tapToContinue: true
         ) {
             OnboardingCurveChart(
                 from: from,
@@ -410,10 +417,20 @@ struct ProofCurveStepView: View {
 struct OnboardingProofPage<Figure: View>: View {
     let headline: String
     var caption: String?
+    /// **Pas de bouton : on touche l'écran.** Réservé aux deux pages dont la figure se
+    /// dessine sous les yeux. Le bouton noir en bas appelait l'appui avant la fin du
+    /// tracé ; ici rien n'appelle rien pendant deux secondes, puis une ligne grise dit
+    /// qu'on peut toucher, et tout l'écran répond.
+    var tapToContinue: Bool = false
     @ViewBuilder var figure: () -> Figure
     var onContinue: () -> Void
 
     @Environment(OnboardingModel.self) private var model: OnboardingModel?
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    /// Vrai deux secondes après l'arrivée : avant, un appui ne fait rien.
+    @State private var isArmed = false
+    @State private var didContinue = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -449,32 +466,40 @@ struct OnboardingProofPage<Figure: View>: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            MicaboBottomBar(background: OnboardingPalette.white) {
-                OnboardingContinueButton(action: onContinue)
-                    .onboardingAppear(index: 5)
+            if tapToContinue {
+                Text(i18n.t("ios.proof.tap"))
+                    .font(MicaboFont.ui(14, weight: .medium))
+                    .foregroundStyle(OnboardingPalette.grayLight)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 22)
+                    .opacity(isArmed ? 1 : 0)
+                    .animation(.easeOut(duration: 0.4), value: isArmed)
+            } else {
+                MicaboBottomBar(background: OnboardingPalette.white) {
+                    OnboardingContinueButton(action: onContinue)
+                        .onboardingAppear(index: 5)
+                }
             }
         }
         .background(OnboardingPalette.white.ignoresSafeArea())
         .environment(\.onboardingSurface, .canvas)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            guard tapToContinue, isArmed, !didContinue else { return }
+            didContinue = true
+            Haptics.light()
+            onContinue()
+        }
+        .task {
+            guard tapToContinue else { return }
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            isArmed = true
+        }
     }
 
-    /// La même barre que les questions : le retour éteint, la jauge.
-    @ViewBuilder
     private var chrome: some View {
-        if let model {
-            HStack(alignment: .center, spacing: 14) {
-                Color.clear.frame(width: 40, height: 40)
-
-                MicaboProgressBar(
-                    progress: model.step.progress,
-                    tint: OnboardingPalette.ink,
-                    track: OnboardingPalette.cardStrong
-                )
-                .frame(height: 3)
-            }
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.top, MicaboSpacing.sm)
-        }
+        OnboardingChrome(showsBack: false)
     }
 }
 
@@ -591,6 +616,7 @@ struct OnboardingCurveChart: View {
     let endLabel: String
 
     @State private var drawn: CGFloat = 0
+    @State private var arrived = false
 
     private enum Layout {
         static let startX: CGFloat = 0.08
@@ -598,6 +624,11 @@ struct OnboardingCurveChart: View {
         static let goalX: CGFloat = 0.9
         static let goalY: CGFloat = 0.2
     }
+
+    /// Le tracé met deux secondes et demie, sur une courbe qui part doucement, accélère,
+    /// et se pose : c'est la forme du progrès que la page raconte, et c'est assez long pour
+    /// qu'on la regarde. Le point d'arrivée s'allume à la fin, avec un coup net.
+    private static let drawDuration = 2.5
 
     var body: some View {
         VStack(spacing: 14) {
@@ -614,8 +645,19 @@ struct OnboardingCurveChart: View {
         }
         .padding(20)
         .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .onAppear {
-            withAnimation(.easeOut(duration: 1.1).delay(0.25)) { drawn = 1 }
+        .task {
+            try? await Task.sleep(for: .milliseconds(400))
+            withAnimation(.timingCurve(0.45, 0, 0.15, 1, duration: Self.drawDuration)) { drawn = 1 }
+            // Quelques coups légers pendant la montée, puis un coup net à l'arrivée.
+            for _ in 0..<4 {
+                try? await Task.sleep(for: .milliseconds(Int(Self.drawDuration * 1000 / 5)))
+                guard !Task.isCancelled else { return }
+                Haptics.tick()
+            }
+            try? await Task.sleep(for: .milliseconds(Int(Self.drawDuration * 1000 / 5)))
+            guard !Task.isCancelled else { return }
+            withAnimation(OnboardingMotion.select) { arrived = true }
+            Haptics.success()
         }
         .accessibilityElement(children: .combine)
     }
@@ -646,8 +688,14 @@ struct OnboardingCurveChart: View {
                     .stroke(OnboardingPalette.accent, style: StrokeStyle(lineWidth: 4, lineCap: .round))
 
                 dot(at: start, fill: OnboardingPalette.ink)
+
+                // Le point qui voyage : il suit la courbe pendant qu'elle se trace.
+                dot(at: point(on: curve(from: start, to: goal), fraction: drawn), fill: OnboardingPalette.accent)
+                    .opacity(arrived ? 0 : 1)
+
                 dot(at: goal, fill: OnboardingPalette.accent)
-                    .opacity(drawn >= 1 ? 1 : 0)
+                    .scaleEffect(arrived ? 1.25 : 0.6)
+                    .opacity(arrived ? 1 : 0)
 
                 Text(from)
                     .font(MicaboFont.ui(17, weight: .bold))
@@ -663,10 +711,16 @@ struct OnboardingCurveChart: View {
                     .padding(.horizontal, 12)
                     .background(OnboardingPalette.accent, in: Capsule())
                     .position(x: goal.x, y: goal.y - 26)
-                    .opacity(drawn >= 1 ? 1 : 0)
+                    .opacity(arrived ? 1 : 0)
             }
-            .animation(.easeOut(duration: 0.3), value: drawn >= 1)
         }
+    }
+
+    /// Un point de la courbe, à une fraction de sa longueur.
+    private func point(on path: Path, fraction: CGFloat) -> CGPoint {
+        let clamped = Swift.min(Swift.max(0, fraction), 1)
+        let trimmed = path.trimmedPath(from: 0, to: Swift.max(0.001, clamped))
+        return trimmed.currentPoint ?? path.currentPoint ?? .zero
     }
 
     private func curve(from start: CGPoint, to goal: CGPoint) -> Path {

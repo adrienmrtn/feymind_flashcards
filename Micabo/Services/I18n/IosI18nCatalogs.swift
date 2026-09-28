@@ -969,6 +969,7 @@ enum IosI18nCatalogs {
         "ios.account.keep.plan": "Ton plan : {n} cartes par jour",
         "ios.account.keep.subjects": "{count, plural, one {Ta matière et ses fiches} other {Tes # matières et leurs fiches}}",
         "ios.account.keep.devices": "Ta progression, sur tous tes appareils",
+        "ios.proof.tap": "Touche l'écran pour continuer",
     ]
 
     static let de: [String: String] = [
@@ -1941,6 +1942,7 @@ enum IosI18nCatalogs {
         "ios.account.keep.plan": "Dein Plan: {n} Karten am Tag",
         "ios.account.keep.subjects": "{count, plural, one {Dein Fach und seine Zusammenfassungen} other {Deine # Fächer und ihre Zusammenfassungen}}",
         "ios.account.keep.devices": "Dein Fortschritt, auf allen Geräten",
+        "ios.proof.tap": "Zum Weitermachen tippen",
     ]
 
     static let es: [String: String] = [
@@ -2913,6 +2915,7 @@ enum IosI18nCatalogs {
         "ios.account.keep.plan": "Tu plan: {n} tarjetas al día",
         "ios.account.keep.subjects": "{count, plural, one {Tu materia y sus fichas} other {Tus # materias y sus fichas}}",
         "ios.account.keep.devices": "Tu progreso, en todos tus dispositivos",
+        "ios.proof.tap": "Toca para continuar",
     ]
 
     static let tr: [String: String] = [
@@ -3885,6 +3888,7 @@ enum IosI18nCatalogs {
         "ios.account.keep.plan": "Planın: günde {n} kart",
         "ios.account.keep.subjects": "{count, plural, one {Dersin ve özetleri} other {# dersin ve özetleri}}",
         "ios.account.keep.devices": "İlerlemen, tüm cihazlarında",
+        "ios.proof.tap": "Devam etmek için dokun",
     ]
 
     /// **L'anglais, au complet.**
@@ -4864,6 +4868,7 @@ enum IosI18nCatalogs {
         "ios.account.keep.plan": "Your plan: {n} cards a day",
         "ios.account.keep.subjects": "{count, plural, one {Your subject and its sheets} other {Your # subjects and their sheets}}",
         "ios.account.keep.devices": "Your progress, on every device",
+        "ios.proof.tap": "Tap to continue",
     ]
 
     static func table(for locale: String) -> [String: String] {

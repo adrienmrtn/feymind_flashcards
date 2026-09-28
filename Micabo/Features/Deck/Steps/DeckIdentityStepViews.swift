@@ -28,9 +28,12 @@ struct DeckSubjectStepView: View {
     private var shown: [String] {
         guard let needle = query.nilIfBlank else { return suggested }
         let folded = needle.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
-        return SubjectCatalog.allSubjects.filter {
-            $0.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
-                .contains(folded)
+        // La recherche accepte le nom canonique et le nom traduit : un élève anglais
+        // qui tape « maths » doit trouver « Mathématiques ».
+        return SubjectCatalog.allSubjects.filter { subject in
+            [subject, SubjectDisplay.subject(subject, locale: i18n.locale)].contains {
+                $0.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current).contains(folded)
+            }
         }
     }
 
@@ -50,7 +53,8 @@ struct DeckSubjectStepView: View {
                 MicaboFlowLayout(spacing: 8) {
                     ForEach(Array(shown.enumerated()), id: \.element) { rank, subject in
                         OnboardingChoiceChip(
-                            title: subject,
+                            // Le nom stocké reste canonique ; celui qu'on lit est traduit.
+                            title: SubjectDisplay.subject(subject, locale: i18n.locale),
                             emoji: SubjectCatalog.emoji(for: subject),
                             isSelected: setup.subject == subject
                         ) {
@@ -100,19 +104,20 @@ struct DeckNameStepView: View {
             VStack(spacing: MicaboSpacing.sm) {
                 DeckSearchField(
                     text: $setup.name,
-                    placeholder: setup.subject ?? i18n.t("ios.deckSetup.name.placeholder"),
+                    placeholder: setup.subject.map { SubjectDisplay.subject($0, locale: i18n.locale) } ?? i18n.t("ios.deckSetup.name.placeholder"),
                     icon: nil,
                     capitalization: .sentences,
                     isFocused: $isFocused
                 )
 
                 if let subject = setup.subject?.nilIfBlank, setup.name.nilIfBlank == nil {
+                    let shown = SubjectDisplay.subject(subject, locale: i18n.locale)
                     OnboardingChoiceRow(
-                        title: subject,
+                        title: shown,
                         emoji: SubjectCatalog.emoji(for: subject),
                         isSelected: false
                     ) {
-                        setup.name = subject
+                        setup.name = shown
                     }
                 }
             }

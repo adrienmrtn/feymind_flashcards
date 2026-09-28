@@ -258,19 +258,8 @@ struct PlanReadyStepView: View {
         .environment(\.onboardingSurface, .canvas)
     }
 
-    @ViewBuilder
     private var chrome: some View {
-        HStack(alignment: .center, spacing: 14) {
-            Color.clear.frame(width: 40, height: 40)
-            MicaboProgressBar(
-                progress: model.step.progress,
-                tint: OnboardingPalette.ink,
-                track: OnboardingPalette.cardStrong
-            )
-            .frame(height: 3)
-        }
-        .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.top, MicaboSpacing.sm)
+        OnboardingChrome(showsBack: false)
     }
 
     private var divider: some View {
