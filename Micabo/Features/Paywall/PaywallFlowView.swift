@@ -74,7 +74,7 @@ struct PaywallFlowView: View {
                     isPurchasing: isPurchasing,
                     onClose: showPlans,
                     onSeeAllPlans: showPlans,
-                    onSubscribe: { plan in Task { await buy(plan) } },
+                    onSubscribe: { Task { await buy(PaywallCatalog.recommended) } },
                     onRestore: { Task { await restore() } }
                 )
                 .transition(.paywallStage)
@@ -90,7 +90,7 @@ struct PaywallFlowView: View {
             }
         }
         .animation(OnboardingMotion.page, value: stage)
-        .background(OnboardingPalette.white.ignoresSafeArea())
+        .micaboScreenBackground()
         // Le lancement les a déjà demandés ; on repasse ici parce qu'un premier appel
         // tombé sans réseau laisserait ce paywall-là sur les prix de la France.
         .task { await PaywallPurchases.refreshPrices() }

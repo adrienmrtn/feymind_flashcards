@@ -121,22 +121,32 @@ private struct OnboardingGapBadge: View {
     let to: String
 
     var body: some View {
-        HStack(spacing: 14) {
-            Text(from)
-                .foregroundStyle(OnboardingPalette.gray)
+        HStack(spacing: 12) {
+            grade(from, color: OnboardingPalette.gray)
             Image(systemName: "arrow.right")
-                .font(.system(size: 22, weight: .bold))
+                .font(.system(size: 20, weight: .bold))
                 .foregroundStyle(OnboardingPalette.grayLight)
-            Text(to)
-                .foregroundStyle(OnboardingPalette.accent)
+            grade(to, color: OnboardingPalette.accent)
         }
-        .font(MicaboFont.ui(44, weight: .bold))
-        .tracking(-1.5)
-        .monospacedDigit()
         .padding(.vertical, 22)
-        .padding(.horizontal, 36)
+        .padding(.horizontal, 24)
+        .frame(maxWidth: .infinity)
         .background(OnboardingPalette.accentWash, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .accessibilityElement(children: .combine)
+    }
+
+    /// Une note tient sur une ligne, quelle que soit sa longueur : « 13/20 » et « A- » ne
+    /// font pas la même largeur, et deux notes qui débordaient poussaient la flèche hors
+    /// de la carte.
+    private func grade(_ text: String, color: Color) -> some View {
+        Text(text)
+            .font(MicaboFont.ui(40, weight: .bold))
+            .tracking(-1.5)
+            .monospacedDigit()
+            .foregroundStyle(color)
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+            .frame(maxWidth: .infinity)
     }
 }
 
@@ -150,7 +160,7 @@ struct ProofRetentionStepView: View {
 
     var body: some View {
         OnboardingProofPage(
-            headline: i18n.t("ios.proof.retention.title", ["pct": "\(OnboardingProofFigures.retainedByTesting)"]),
+            headline: i18n.t("ios.proof.retention.title"),
             caption: i18n.t("ios.journey.source")
         ) {
             OnboardingBarsChart(
@@ -159,33 +169,6 @@ struct ProofRetentionStepView: View {
                     .init(label: i18n.t("ios.proof.retention.reread"), value: OnboardingProofFigures.retainedByRereading, tint: OnboardingPalette.chartBad),
                     .init(label: i18n.t("ios.proof.retention.testing"), value: OnboardingProofFigures.retainedByTesting, tint: OnboardingPalette.chartGood),
                 ]
-            )
-        } onContinue: {
-            model.advance()
-        }
-    }
-}
-
-// MARK: - « Avec Micabo, tu retiens 2× plus. »
-
-/// La comparaison avant / après : deux colonnes, la seconde noire et deux fois plus
-/// haute. C'est l'écran « lose twice as much with Cal AI » — le même dessin, le même
-/// chiffre.
-struct ProofTwiceStepView: View {
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    var body: some View {
-        OnboardingProofPage(
-            headline: i18n.t("ios.proof.twice.title", ["n": "\(OnboardingProofFigures.retentionMultiplier)"])
-        ) {
-            OnboardingBarsChart(
-                bars: [
-                    .init(label: i18n.t("ios.proof.twice.without"), value: 1, tint: OnboardingPalette.cardStrong),
-                    .init(label: i18n.t("ios.proof.twice.with"), value: OnboardingProofFigures.retentionMultiplier, tint: OnboardingPalette.accent),
-                ],
-                maxValue: OnboardingProofFigures.retentionMultiplier,
-                showsValues: false
             )
         } onContinue: {
             model.advance()
@@ -689,8 +672,14 @@ struct OnboardingCurveChart: View {
 
                 dot(at: start, fill: OnboardingPalette.ink)
 
-                // Le point qui voyage : il suit la courbe pendant qu'elle se trace.
-                dot(at: point(on: curve(from: start, to: goal), fraction: drawn), fill: OnboardingPalette.accent)
+                // Le point qui voyage : il suit la courbe pendant qu'elle se trace. La
+                // position passe par un modificateur animable, image par image : posée
+                // directement, elle allait en ligne droite du départ à l'arrivée.
+                Circle()
+                    .fill(OnboardingPalette.accent)
+                    .overlay(Circle().strokeBorder(OnboardingPalette.white, lineWidth: 3))
+                    .frame(width: 16, height: 16)
+                    .modifier(OnboardingCurveFollower(fraction: drawn, path: curve(from: start, to: goal)))
                     .opacity(arrived ? 0 : 1)
 
                 dot(at: goal, fill: OnboardingPalette.accent)
@@ -716,37 +705,33 @@ struct OnboardingCurveChart: View {
         }
     }
 
-    /// Un point de la courbe, à une fraction de sa longueur.
-    private func point(on path: Path, fraction: CGFloat) -> CGPoint {
-        let clamped = Swift.min(Swift.max(0, fraction), 1)
-        let trimmed = path.trimmedPath(from: 0, to: Swift.max(0.001, clamped))
-        return trimmed.currentPoint ?? path.currentPoint ?? .zero
-    }
-
-    private func curve(from start: CGPoint, to goal: CGPoint) -> Path {
-        Path { path in
-            path.move(to: start)
-            path.addCurve(
-                to: goal,
-                control1: CGPoint(x: start.x + (goal.x - start.x) * 0.4, y: start.y),
-                control2: CGPoint(x: start.x + (goal.x - start.x) * 0.6, y: goal.y)
-            )
-        }
-    }
-
-    private func area(from start: CGPoint, to goal: CGPoint, floor: CGFloat) -> Path {
-        var path = curve(from: start, to: goal)
-        path.addLine(to: CGPoint(x: goal.x, y: floor))
-        path.addLine(to: CGPoint(x: start.x, y: floor))
-        path.closeSubpath()
-        return path
-    }
-
     private func dot(at point: CGPoint, fill: Color) -> some View {
         Circle()
             .fill(fill)
             .overlay(Circle().strokeBorder(OnboardingPalette.white, lineWidth: 3))
             .frame(width: 16, height: 16)
             .position(point)
+    }
+}
+
+/// **Pose une vue sur un point d'une courbe, et suit la courbe quand la fraction s'anime.**
+///
+/// `position` s'anime en ligne droite entre deux points ; pour qu'un point voyage le long
+/// d'une courbe, il faut recalculer sa position à chaque image, et c'est ce qu'un
+/// modificateur animable fait : SwiftUI interpole `animatableData`, et le corps en tire
+/// le point courant du tracé tronqué.
+private struct OnboardingCurveFollower: ViewModifier, Animatable {
+    var fraction: CGFloat
+    let path: Path
+
+    var animatableData: CGFloat {
+        get { fraction }
+        set { fraction = newValue }
+    }
+
+    func body(content: Content) -> some View {
+        let clamped = Swift.min(Swift.max(0.001, fraction), 1)
+        let point = path.trimmedPath(from: 0, to: clamped).currentPoint ?? path.currentPoint ?? .zero
+        return content.position(point)
     }
 }
