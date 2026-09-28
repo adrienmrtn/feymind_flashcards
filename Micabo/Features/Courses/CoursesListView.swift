@@ -174,19 +174,19 @@ struct CoursesListView: View {
             .task(openFirstImportIfPending)
     }
 
-    /// **Le premier deck s'ouvre tout seul.** Il a été construit avant l'app, à la sortie
-    /// du parcours (`FirstDeckFlowView`), et quelqu'un qui arrive ici pour la première fois
-    /// n'a rien à voir d'autre que son plan. La liste vide, avec son « + », ne se montre
-    /// qu'à qui revient.
+    /// **Le premier deck ne s'ouvre pas.** Il a été construit avant l'app, à la sortie du
+    /// parcours (`FirstDeckFlowView`), et il est là, dans la liste — mais l'ouvrir est dans
+    /// Pro, comme tous les autres : ce que l'élève voit en arrivant, c'est son deck, puis le
+    /// paywall. Un abonné, lui, tombe directement sur son plan.
     @MainActor
     private func openFirstImportIfPending() async {
         guard let course = FirstDeckHandoff.course else { return }
-        // Le temps que l'app se pose : une page poussée pendant que la racine apparaît
-        // encore donne deux animations concurrentes.
+        // Le temps que l'app se pose : une page poussée ou une feuille ouverte pendant que
+        // la racine apparaît encore donne deux animations concurrentes.
         try? await Task.sleep(for: .milliseconds(650))
         guard !Task.isCancelled else { return }
         FirstDeckHandoff.course = nil
-        path = NavigationPath([course])
+        open(course)
     }
 
     private var dialogs: some View {
@@ -794,8 +794,14 @@ struct CoursesListView: View {
         census = LibraryCensus.load(in: modelContext, key: censusKey)
     }
 
+    /// Le recensement se relit au retour sur la liste, **une fois la page repliée**. Relu
+    /// dans le même tour que le retour, il faisait son travail pendant l'animation de
+    /// pop, et un retour rapide depuis un deck laissait l'écran figé le temps qu'il finisse.
     private func handlePathDepth(_: Int, _ depth: Int) {
-        if depth == 0, router?.selection == .decks {
+        guard depth == 0, router?.selection == .decks else { return }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(400))
+            guard path.isEmpty else { return }
             census = LibraryCensus.load(in: modelContext, key: censusKey)
         }
     }
