@@ -705,6 +705,25 @@ struct OnboardingCurveChart: View {
         }
     }
 
+    private func curve(from start: CGPoint, to goal: CGPoint) -> Path {
+        Path { path in
+            path.move(to: start)
+            path.addCurve(
+                to: goal,
+                control1: CGPoint(x: start.x + (goal.x - start.x) * 0.4, y: start.y),
+                control2: CGPoint(x: start.x + (goal.x - start.x) * 0.6, y: goal.y)
+            )
+        }
+    }
+
+    private func area(from start: CGPoint, to goal: CGPoint, floor: CGFloat) -> Path {
+        var path = curve(from: start, to: goal)
+        path.addLine(to: CGPoint(x: goal.x, y: floor))
+        path.addLine(to: CGPoint(x: start.x, y: floor))
+        path.closeSubpath()
+        return path
+    }
+
     private func dot(at point: CGPoint, fill: Color) -> some View {
         Circle()
             .fill(fill)
