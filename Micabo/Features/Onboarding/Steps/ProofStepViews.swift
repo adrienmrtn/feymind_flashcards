@@ -259,6 +259,198 @@ struct ProofRetentionStepView: View {
     }
 }
 
+// MARK: - « C'est pour ça qu'on a créé Micabo. »
+
+/// Une phrase, après « relire, c'est oublier », et rien d'autre. Elle se lit mot à mot,
+/// « Micabo » se surligne à la fin, et c'est seulement là que le bouton arrive : la
+/// réponse au constat d'avant, donnée le temps qu'il faut pour la lire.
+struct ProofWhyStepView: View {
+    @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    @State private var isReady = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            OnboardingChrome(showsBack: false)
+
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+
+                OnboardingReadingText(
+                    template: i18n.t("ios.proof.why.title"),
+                    size: 38,
+                    wordDelay: 0.24,
+                    startDelay: 0.6,
+                    onHighlighted: { isReady = true }
+                )
+                .padding(.horizontal, MicaboSpacing.screen)
+
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            MicaboBottomBar(background: OnboardingPalette.white) {
+                OnboardingContinueButton {
+                    model.advance()
+                }
+            }
+            .opacity(isReady ? 1 : 0)
+            .allowsHitTesting(isReady)
+            .animation(.easeOut(duration: 0.4), value: isReady)
+        }
+        .background(OnboardingPalette.white.ignoresSafeArea())
+        .environment(\.onboardingSurface, .canvas)
+    }
+}
+
+// MARK: - Les avis, en carrousel
+
+/// **Trois avis qui défilent d'eux-mêmes**, juste après le merci. On peut les faire glisser
+/// au doigt ; sinon, le suivant vient toutes les trois secondes et demie. Les points
+/// dessous disent où l'on en est.
+struct ReviewsStepView: View {
+    @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    private struct Review: Identifiable {
+        let id: Int
+        let quote: String
+        let name: String
+        let level: String
+    }
+
+    private var reviews: [Review] {
+        (1...3).map { index in
+            Review(
+                id: index,
+                quote: i18n.t("ios.review\(index).quote"),
+                name: i18n.t("ios.review\(index).name"),
+                level: i18n.t("ios.review\(index).level")
+            )
+        }
+    }
+
+    @State private var page = 0
+
+    var body: some View {
+        OnboardingScaffold(
+            title: i18n.t("ios.reviews.title"),
+            scrolls: false,
+            expandsContent: true,
+            centered: true
+        ) {
+            VStack(spacing: 18) {
+                HStack(spacing: 10) {
+                    OnboardingStars(size: 15)
+                    Text(i18n.t("ios.proof.students.rating", [
+                        "rating": OnboardingProofFigures.text(OnboardingProofFigures.rating, locale: i18n.locale),
+                        "n": OnboardingProofFigures.text(OnboardingProofFigures.reviews, locale: i18n.locale),
+                    ]))
+                    .font(MicaboFont.ui(14, weight: .semibold))
+                    .foregroundStyle(OnboardingPalette.gray)
+                }
+
+                OnboardingReviewCarousel(page: $page, count: reviews.count) { index in
+                    OnboardingReviewCard(quote: reviews[index].quote, name: reviews[index].name, level: reviews[index].level)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } footer: {
+            OnboardingContinueButton {
+                model.advance()
+            }
+        }
+    }
+}
+
+/// Le carrousel : une page par avis, qui avance seule et se laisse glisser.
+struct OnboardingReviewCarousel<Page: View>: View {
+    @Binding var page: Int
+    let count: Int
+    @ViewBuilder var content: (Int) -> Page
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        VStack(spacing: 14) {
+            TabView(selection: $page) {
+                ForEach(0..<count, id: \.self) { index in
+                    content(index)
+                        .padding(.horizontal, 2)
+                        .tag(index)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .frame(height: 210)
+            .animation(.easeInOut(duration: 0.45), value: page)
+
+            HStack(spacing: 6) {
+                ForEach(0..<count, id: \.self) { index in
+                    Capsule()
+                        .fill(index == page ? OnboardingPalette.ink : OnboardingPalette.cardStrong)
+                        .frame(width: index == page ? 18 : 6, height: 6)
+                        .animation(OnboardingMotion.select, value: page)
+                }
+            }
+        }
+        .task {
+            guard !reduceMotion, count > 1 else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(3_500))
+                guard !Task.isCancelled else { return }
+                page = (page + 1) % count
+            }
+        }
+    }
+}
+
+/// Un avis : l'initiale dans un rond, le prénom, le niveau, cinq étoiles, la phrase.
+struct OnboardingReviewCard: View {
+    let quote: String
+    let name: String
+    let level: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                Text(String(name.prefix(1)).uppercased())
+                    .font(MicaboFont.ui(15, weight: .bold))
+                    .foregroundStyle(OnboardingPalette.white)
+                    .frame(width: 38, height: 38)
+                    .background(OnboardingPalette.ink, in: Circle())
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(name)
+                        .font(MicaboFont.ui(15, weight: .semibold))
+                        .foregroundStyle(OnboardingPalette.ink)
+                    Text(level)
+                        .font(OnboardingPalette.subtitle)
+                        .foregroundStyle(OnboardingPalette.gray)
+                }
+
+                Spacer(minLength: 0)
+
+                OnboardingStars(size: 12, spacing: 2)
+            }
+
+            Text(quote)
+                .font(MicaboFont.ui(16, weight: .regular))
+                .foregroundStyle(OnboardingPalette.ink)
+                .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer(minLength: 0)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .accessibilityElement(children: .combine)
+    }
+}
+
 // MARK: - « Avec dix minutes par jour, voici ta progression. »
 
 /// La progression prévue, de la moyenne d'aujourd'hui à celle qu'on vise, avec le temps
@@ -511,8 +703,8 @@ struct OnboardingCurveChart: View {
     private enum Layout {
         static let startX: CGFloat = 0.08
         static let startY: CGFloat = 0.82
-        static let goalX: CGFloat = 0.9
-        static let goalY: CGFloat = 0.2
+        static let goalX: CGFloat = 0.88
+        static let goalY: CGFloat = 0.26
     }
 
     /// Le tracé met deux secondes et demie, sur une courbe qui part doucement, accélère,
@@ -589,9 +781,16 @@ struct OnboardingCurveChart: View {
                     .modifier(OnboardingCurveFollower(fraction: drawn, path: curve(from: start, to: goal)))
                     .opacity(arrived ? 0 : 1)
 
-                dot(at: goal, fill: OnboardingPalette.accent)
+                // L'échelle est posée sur le rond **avant** sa position : posée après, elle
+                // grossissait tout le cadre autour de son centre, et poussait le point
+                // hors de la carte.
+                Circle()
+                    .fill(OnboardingPalette.accent)
+                    .overlay(Circle().strokeBorder(OnboardingPalette.white, lineWidth: 3))
+                    .frame(width: 16, height: 16)
                     .scaleEffect(arrived ? 1.25 : 0.6)
                     .opacity(arrived ? 1 : 0)
+                    .position(goal)
 
                 Text(from)
                     .font(MicaboFont.ui(17, weight: .bold))

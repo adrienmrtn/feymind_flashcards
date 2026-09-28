@@ -7,9 +7,9 @@ import SwiftUI
 /// parce qu'il change de registre : jusqu'ici on demandait, à partir d'ici on rend.
 ///
 /// **La phrase se lit, lentement, et il n'y a pas de bouton.** Les mots passent à l'encre
-/// l'un après l'autre ; une fois la phrase lue, une ligne grise dit qu'on peut toucher.
-/// L'appui surligne « confiance », et la page suivante arrive dans la foulée : c'est un
-/// merci qu'on lit, pas un écran qu'on passe.
+/// l'un après l'autre, « confiance » se surligne de lui-même à la fin, et c'est seulement
+/// là qu'une ligne grise dit qu'on peut toucher : c'est un merci qu'on lit, pas un écran
+/// qu'on passe.
 struct ThanksStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -44,10 +44,7 @@ struct ThanksStepView: View {
                     size: 34,
                     wordDelay: 0.26,
                     startDelay: 0.7,
-                    highlightsOnFinish: false,
-                    isHighlighted: didTap,
-                    onFinish: { isArmed = true },
-                    onHighlighted: { model.advance() }
+                    onHighlighted: { isArmed = true }
                 )
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.top, MicaboSpacing.xl)
@@ -84,6 +81,7 @@ struct ThanksStepView: View {
             guard isArmed, !didTap else { return }
             didTap = true
             Haptics.light()
+            model.advance()
         }
     }
 }

@@ -294,3 +294,28 @@ struct DeckSearchField: View {
         }
     }
 }
+
+/// **« Dans quelle langue veux-tu ton cours ? »**
+///
+/// Celle de l'interface est déjà cochée : neuf fois sur dix c'est la bonne, et l'écran se
+/// passe en un appui. Le dixième révise l'espagnol en France, ou suit un cours en anglais
+/// à Berlin, et c'est pour lui que la question est posée — sinon sa fiche sortait dans la
+/// langue de son pays d'études, et il n'avait aucun moyen de le changer d'un deck à l'autre.
+struct DeckLanguageStepView: View {
+    @Bindable var setup: DeckSetup
+    var onNext: () -> Void
+
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    var body: some View {
+        OnboardingSingleChoiceStep(
+            title: i18n.t("ios.deckSetup.language"),
+            subtitle: i18n.t("ios.deckSetup.language.sub"),
+            items: ContentLanguage.allCases,
+            selection: setup.language,
+            label: { $0.label },
+            onSelect: { setup.language = $0 },
+            onContinue: onNext
+        )
+    }
+}

@@ -43,12 +43,24 @@ struct OnboardingReadingText: View {
     private var words: [Word] {
         var result: [Word] = []
         var marked = 0
-        for (index, segment) in template.components(separatedBy: "**").enumerated() {
+        let segments = template.components(separatedBy: "**")
+        for (index, segment) in segments.enumerated() {
             let isMarked = index % 2 == 1
-            for piece in segment.split(whereSeparator: \.isWhitespace) {
+            var pieces = segment.split(whereSeparator: \.isWhitespace).map(String.init)
+            // Une ponctuation collée au mot marqué (« **confiance**. ») reste collée à lui
+            // au lieu de devenir un mot à part, posé après un espace. Il faut qu'aucun
+            // espace ne sépare les deux segments : ni à la fin du précédent, ni au début
+            // de celui-ci.
+            let gluedToPrevious = index > 0
+                && !(segments[index - 1].last?.isWhitespace ?? true)
+                && !(segment.first?.isWhitespace ?? true)
+            if gluedToPrevious, !pieces.isEmpty, let last = result.last {
+                result[result.count - 1] = Word(id: last.id, text: last.text + pieces.removeFirst(), isMarked: last.isMarked, markedRank: last.markedRank)
+            }
+            for piece in pieces {
                 let rank = isMarked ? marked : -1
                 if isMarked { marked += 1 }
-                result.append(Word(id: result.count, text: String(piece), isMarked: isMarked, markedRank: rank))
+                result.append(Word(id: result.count, text: piece, isMarked: isMarked, markedRank: rank))
             }
         }
         return result

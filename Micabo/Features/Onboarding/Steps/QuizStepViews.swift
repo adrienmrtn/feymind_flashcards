@@ -43,43 +43,6 @@ struct SourceStepView: View {
     }
 }
 
-// MARK: - Ce qu'il a essayé
-
-/// **« Tu as déjà essayé une app de révision ? »** Deux cases. La réponse ne change rien
-/// au plan ; elle prépare l'écran de comparaison qui vient plus loin.
-struct TriedAppsStepView: View {
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    var body: some View {
-        OnboardingScaffold(
-            title: i18n.t("ios.quiz.tried")
-        ) {
-            HStack(spacing: 12) {
-                OnboardingChoiceTile(
-                    title: i18n.t("ios.quiz.tried.yes"),
-                    emoji: "📱",
-                    isSelected: model.triedApps == true
-                ) {
-                    model.triedApps = true
-                }
-
-                OnboardingChoiceTile(
-                    title: i18n.t("ios.quiz.tried.no"),
-                    emoji: "🆕",
-                    isSelected: model.triedApps == false
-                ) {
-                    model.triedApps = false
-                }
-            }
-        } footer: {
-            OnboardingContinueButton(isEnabled: model.triedApps != nil) {
-                model.advance()
-            }
-        }
-    }
-}
-
 // MARK: - Le temps par jour
 
 /// **« Combien de temps par jour ? »** Quatre crans. La réponse devient le rythme du
@@ -121,28 +84,6 @@ struct DailyTimeStepView: View {
                 model.advance()
             }
         }
-    }
-}
-
-// MARK: - Ce qui bloque
-
-/// **« Qu'est-ce qui te bloque ? »** Cinq réponses, et la plupart des élèves se
-/// reconnaissent dans la première : c'est la question où l'on se sent compris, et c'est
-/// pour ça qu'elle vient tout de suite après « relire, c'est oublier », avant même le pays.
-struct BlockerStepView: View {
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    var body: some View {
-        OnboardingSingleChoiceStep(
-            title: i18n.t("ios.quiz.blocker"),
-            items: OnboardingBlocker.allCases,
-            selection: model.blocker,
-            label: { i18n.t("ios.quiz.blocker.\($0.rawValue)") },
-            emoji: { $0.emoji },
-            onSelect: { model.blocker = $0 },
-            onContinue: { model.advance() }
-        )
     }
 }
 

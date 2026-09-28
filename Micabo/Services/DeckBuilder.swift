@@ -135,7 +135,7 @@ enum DeckBuilder {
         var cardCount = 0
         var cardFailure: String?
         do {
-            let cards = try await writeCards(for: course, using: service, in: modelContext)
+            let cards = try await writeCards(for: course, language: setup.language, using: service, in: modelContext)
             cardCount = cards.count
         } catch {
             // Le cours est déjà en base : on ne défait rien. L'écran du deck proposera
@@ -211,7 +211,7 @@ enum DeckBuilder {
             sourceName: setup.materials.first(where: \.isReady)?.document?.fileName,
             studyLevel: OnboardingPreferences.studyLevel,
             country: OnboardingPreferences.schoolingCountry,
-            language: OnboardingPreferences.contentLanguage,
+            language: setup.language,
             // Un deck couvre une matière entière, pas un chapitre : il lui faut la fiche
             // longue. C'est elle qui donnera assez de parties pour que le plan ait un sens.
             sheetLength: .deep,
@@ -245,6 +245,7 @@ enum DeckBuilder {
     @MainActor
     private static func writeCards(
         for course: Course,
+        language: ContentLanguage,
         using service: any AIService,
         in modelContext: ModelContext
     ) async throws -> [Flashcard] {
@@ -258,7 +259,7 @@ enum DeckBuilder {
             existingFronts: course.cards.map(\.front),
             quota: quota(total: total),
             subject: course.subject,
-            language: OnboardingPreferences.contentLanguage,
+            language: language,
             chapterTitles: chapters.map(\.title)
         )
 

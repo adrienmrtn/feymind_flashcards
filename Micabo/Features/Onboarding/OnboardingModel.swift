@@ -82,28 +82,12 @@ final class OnboardingModel {
         }
     }
 
-    /// A-t-il déjà essayé une app de révision.
-    var triedApps: Bool? {
-        didSet {
-            guard let triedApps, triedApps != oldValue else { return }
-            Analytics.track(.onboardingAnswer, ["field": "triedApps", "value": .text(triedApps ? "yes" : "no")])
-        }
-    }
-
     /// Le temps qu'il se donne par jour, en minutes. C'est de lui que `DailyLoad` tire le
     /// nombre de cartes du plan.
     var dailyMinutes: Int? {
         didSet {
             guard let dailyMinutes, dailyMinutes != oldValue else { return }
             Analytics.track(.onboardingAnswer, ["field": "dailyMinutes", "value": .number(Double(dailyMinutes))])
-        }
-    }
-
-    /// Ce qui le bloque quand il révise.
-    var blocker: OnboardingBlocker? {
-        didSet {
-            guard let blocker, blocker != oldValue else { return }
-            Analytics.track(.onboardingAnswer, ["field": "blocker", "value": .text(blocker.rawValue)])
         }
     }
 
@@ -198,9 +182,9 @@ final class OnboardingModel {
     ///
     /// Une réponse donnée doit pouvoir se corriger : quelqu'un qui se trompe de pays au
     /// premier écran du quiz découvrirait son erreur douze écrans plus tard. On revient
-    /// jusqu'à la première question — ce qui bloque —, et pas plus loin ; on ne revient pas
-    /// après le prénom, parce que tout ce qui suit est un résultat, un compte ou une offre,
-    /// et que rien de tout ça ne se défait.
+    /// jusqu'au pays, et pas plus loin ; on ne revient pas après le prénom, parce que tout
+    /// ce qui suit est un résultat, un compte ou une offre, et que rien de tout ça ne se
+    /// défait.
     ///
     /// Les écrans sautés le restent, dans ce sens comme dans l'autre : on ne fait pas
     /// apparaître au retour une question qu'on n'a pas posée à l'aller.
@@ -209,13 +193,13 @@ final class OnboardingModel {
         while let candidate = previous, candidate.isSkipped(for: country) {
             previous = OnboardingStep(rawValue: candidate.rawValue - 1)
         }
-        guard let previous, previous.rawValue >= OnboardingStep.blocker.rawValue else { return }
+        guard let previous, previous.rawValue >= OnboardingStep.country.rawValue else { return }
         step = previous
     }
 
     /// Vrai quand il y a un écran en arrière qui accepte qu'on y revienne.
     var canGoBack: Bool {
-        step.rawValue > OnboardingStep.blocker.rawValue
+        step.rawValue > OnboardingStep.country.rawValue
             && step.rawValue <= OnboardingStep.name.rawValue
     }
 
@@ -234,8 +218,6 @@ final class OnboardingModel {
         OnboardingPreferences.schoolYearID = year?.id
         if let dailyMinutes { OnboardingPreferences.dailyMinutes = dailyMinutes }
         OnboardingPreferences.source = source?.rawValue
-        OnboardingPreferences.triedApps = triedApps
-        OnboardingPreferences.blocker = blocker?.rawValue
         OnboardingPreferences.method = method?.rawValue
         OnboardingPreferences.studyHour = studyHour
     }
@@ -262,27 +244,6 @@ enum OnboardingSource: String, CaseIterable, Identifiable {
         case .friend: "💬"
         case .appStore: "🍎"
         case .other: "✏️"
-        }
-    }
-}
-
-/// Ce qui bloque quand il révise.
-enum OnboardingBlocker: String, CaseIterable, Identifiable {
-    case forget
-    case procrastinate
-    case tooMuch
-    case noMethod
-    case stress
-
-    var id: String { rawValue }
-
-    var emoji: String {
-        switch self {
-        case .forget: "🫠"
-        case .procrastinate: "⏳"
-        case .tooMuch: "📚"
-        case .noMethod: "🧭"
-        case .stress: "😰"
         }
     }
 }

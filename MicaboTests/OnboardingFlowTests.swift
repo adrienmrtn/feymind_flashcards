@@ -32,7 +32,7 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(model.step, .proofRetention, "Relire, c'est oublier, juste après la note")
 
         model.advance()
-        XCTAssertEqual(model.step, .blocker, "Ce qui bloque, avant le pays")
+        XCTAssertEqual(model.step, .proofWhy, "C'est pour ça qu'on a créé Micabo, avant le pays")
 
         model.advance()
         XCTAssertEqual(model.step, .country, "Le pays commande les réponses de tout le reste")
@@ -43,6 +43,27 @@ final class OnboardingFlowTests: XCTestCase {
     /// pour les autres.
     func testEachCountrySeesExactlyOneLevelQuestion() {
         let detailed = OnboardingModel()
+        detailed.select(country: .fr)
+        while detailed.step != .country { detailed.advance() }
+        detailed.advance()
+        XCTAssertEqual(detailed.step, .schoolType, "La France demande la filière")
+        detailed.advance()
+        XCTAssertEqual(detailed.step, .year)
+        detailed.advance()
+        XCTAssertEqual(detailed.step, .subjects)
+
+        let generic = OnboardingModel()
+        generic.select(country: .other)
+        while generic.step != .country { generic.advance() }
+        generic.advance()
+        XCTAssertEqual(generic.step, .level, "Un pays générique demande le palier large")
+        generic.advance()
+        XCTAssertEqual(generic.step, .subjects)
+
+        XCTAssertEqual(OnboardingStep.allCases.filter { $0.isSkipped(for: .fr) }, [.level])
+        XCTAssertEqual(OnboardingStep.allCases.filter { $0.isSkipped(for: .other) }, [.schoolType, .year])
+    }
+
     // MARK: - Le quiz et ses preuves
 
     /// **Les preuves sont intercalées, et chacune suit la question qui la prépare** : la
@@ -67,15 +88,15 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(model.step, .thanks, "Après la dernière question, on rend")
     }
 
-    /// Les quatorze questions sont bien des questions, et rien d'autre ne l'est : c'est ce
+    /// Les douze questions sont bien des questions, et rien d'autre ne l'est : c'est ce
     /// qui décide où l'on peut revenir.
     func testTheQuestionsAreExactlyTheScreensThatAsk() {
         let questions = OnboardingStep.allCases.filter(\.isQuestion)
         XCTAssertEqual(questions, [
-            .blocker, .country, .level, .schoolType, .year, .subjects, .source, .triedApps, .goal,
+            .country, .level, .schoolType, .year, .subjects, .source, .goal,
             .currentAverage, .targetAverage, .dailyTime, .method, .name,
         ])
-        XCTAssertEqual(questions.count, 14)
+        XCTAssertEqual(questions.count, 12)
     }
 
     /// Les réponses du quiz sont écrites au changement d'écran, et le temps choisi
@@ -86,17 +107,13 @@ final class OnboardingFlowTests: XCTestCase {
 
         let model = OnboardingModel()
         model.source = .tiktok
-        model.triedApps = true
         model.dailyMinutes = 10
-        model.blocker = .forget
         model.method = .reread
         model.studyHour = 20
         model.advance()
 
         XCTAssertEqual(OnboardingPreferences.source, "tiktok")
-        XCTAssertEqual(OnboardingPreferences.triedApps, true)
         XCTAssertEqual(OnboardingPreferences.dailyMinutes, 10)
-        XCTAssertEqual(OnboardingPreferences.blocker, "forget")
         XCTAssertEqual(OnboardingPreferences.method, "reread")
         XCTAssertEqual(OnboardingPreferences.studyHour, 20)
         XCTAssertEqual(model.cardsPerDay, DailyLoad.newCardsPerDay(dailyMinutes: 10))
@@ -125,6 +142,9 @@ final class OnboardingFlowTests: XCTestCase {
     /// les rappels, l'essai, et le paywall, inchangés.
     func testTheAccountIsAskedOnlyOnceThePlanIsBuilt() {
         let model = self.model(advancingTo: .thanks)
+
+        model.advance()
+        XCTAssertEqual(model.step, .reviews, "Les avis, au moment où l'on rend")
 
         model.advance()
         XCTAssertEqual(model.step, .building)
@@ -182,9 +202,8 @@ final class OnboardingFlowTests: XCTestCase {
 
     // MARK: - Revenir
 
-    /// On revient jusqu'à la première question, et pas plus loin ; on ne revient pas après
-    /// le prénom.
-    func testGoingBackStopsAtTheFirstQuestionAndAfterTheName() {
+    /// On revient jusqu'au pays, et pas plus loin ; on ne revient pas après le prénom.
+    func testGoingBackStopsAtTheCountryAndAfterTheName() {
         let model = OnboardingModel()
         model.select(country: .fr)
 
@@ -194,11 +213,9 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertTrue(model.canGoBack)
         model.goBack()
         XCTAssertEqual(model.step, .country)
+        XCTAssertFalse(model.canGoBack, "Le pays est le premier écran où l'on revient")
         model.goBack()
-        XCTAssertEqual(model.step, .blocker, "Ce qui bloque est la première question, et on y revient")
-        XCTAssertFalse(model.canGoBack)
-        model.goBack()
-        XCTAssertEqual(model.step, .blocker, "On ne recule pas dans l'accroche")
+        XCTAssertEqual(model.step, .country, "On ne recule pas dans l'accroche")
 
         while model.step != .name { model.advance() }
         XCTAssertTrue(model.canGoBack)
@@ -230,7 +247,7 @@ final class OnboardingFlowTests: XCTestCase {
                      "greeting", "together", "personalizing", "socialProof", "yourTurn",
                      "welcome", "demoImport", "forgetting", "school", "language", "projection",
                      "hookPress", "proofTwice", "proofKeep", "hookVideo", "nextExam", "proofStudents",
-                     "proofPlan"] {
+                     "proofPlan", "blocker", "triedApps"] {
             XCTAssertFalse(names.contains(name), "\(name) a été retiré du parcours")
         }
     }

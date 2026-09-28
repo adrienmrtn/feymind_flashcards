@@ -922,7 +922,7 @@ enum IosI18nCatalogs {
         "ios.proof.curve.sub": "De {from} à {to}, en {months} mois environ. Lent au début, rapide ensuite.",
         "ios.proof.curve.today": "Aujourd'hui",
         "ios.proof.curve.exam": "Jour J · dans {days} jours",
-        "ios.build.thanks.title": "Merci de nous faire **confiance**.",
+        "ios.build.thanks.title": "Merci de nous faire **confiance**",
         "ios.build.thanks.sub": "On personnalise Micabo pour toi.",
         "ios.build.thanks.subNamed": "On personnalise Micabo pour toi, {name}.",
         "ios.build.title": "On prépare ton plan",
@@ -1010,6 +1010,10 @@ enum IosI18nCatalogs {
         "ios.firstDeck.title": "Créons ton premier cours ensemble.",
         "ios.firstDeck.sub": "Dépose un cours, ou dis-nous le sujet : Micabo en fait une fiche et des cartes, en quelques minutes.",
         "ios.firstDeck.cta": "C'est parti",
+        "ios.proof.why.title": "C'est pour ça qu'on a créé **Micabo**",
+        "ios.reviews.title": "Ils ont essayé Micabo.",
+        "ios.deckSetup.language": "Dans quelle langue veux-tu ton cours ?",
+        "ios.deckSetup.language.sub": "La fiche et les cartes seront écrites dans cette langue.",
     ]
 
     static let de: [String: String] = [
@@ -1935,7 +1939,7 @@ enum IosI18nCatalogs {
         "ios.proof.curve.sub": "Von {from} auf {to}, in etwa {months} Monaten. Erst langsam, dann schnell.",
         "ios.proof.curve.today": "Heute",
         "ios.proof.curve.exam": "Prüfung · in {days} Tagen",
-        "ios.build.thanks.title": "Danke für dein **Vertrauen**.",
+        "ios.build.thanks.title": "Danke für dein **Vertrauen**",
         "ios.build.thanks.sub": "Wir richten Micabo jetzt für dich ein.",
         "ios.build.thanks.subNamed": "Wir richten Micabo jetzt für dich ein, {name}.",
         "ios.build.title": "Wir bauen deinen Plan",
@@ -2023,6 +2027,10 @@ enum IosI18nCatalogs {
         "ios.firstDeck.title": "Erstellen wir deinen ersten Kurs zusammen.",
         "ios.firstDeck.sub": "Lade einen Kurs hoch oder nenn uns das Thema: Micabo macht daraus in wenigen Minuten eine Zusammenfassung und Karten.",
         "ios.firstDeck.cta": "Los geht's",
+        "ios.proof.why.title": "Deshalb haben wir **Micabo** gebaut",
+        "ios.reviews.title": "Sie haben Micabo ausprobiert.",
+        "ios.deckSetup.language": "In welcher Sprache willst du deinen Kurs?",
+        "ios.deckSetup.language.sub": "Zusammenfassung und Karten werden in dieser Sprache geschrieben.",
     ]
 
     static let es: [String: String] = [
@@ -2948,7 +2956,7 @@ enum IosI18nCatalogs {
         "ios.proof.curve.sub": "De {from} a {to}, en unos {months} meses. Lento al principio, rápido después.",
         "ios.proof.curve.today": "Hoy",
         "ios.proof.curve.exam": "Examen · en {days} días",
-        "ios.build.thanks.title": "Gracias por **confiar** en nosotros.",
+        "ios.build.thanks.title": "Gracias por **confiar** en nosotros",
         "ios.build.thanks.sub": "Ahora personalizamos Micabo para ti.",
         "ios.build.thanks.subNamed": "Ahora personalizamos Micabo para ti, {name}.",
         "ios.build.title": "Preparamos tu plan",
@@ -3036,6 +3044,10 @@ enum IosI18nCatalogs {
         "ios.firstDeck.title": "Creemos tu primer curso juntos.",
         "ios.firstDeck.sub": "Sube un curso o dinos el tema: Micabo lo convierte en una ficha y en tarjetas en unos minutos.",
         "ios.firstDeck.cta": "Vamos",
+        "ios.proof.why.title": "Por eso creamos **Micabo**",
+        "ios.reviews.title": "Ya han probado Micabo.",
+        "ios.deckSetup.language": "¿En qué idioma quieres tu curso?",
+        "ios.deckSetup.language.sub": "La ficha y las tarjetas se escribirán en este idioma.",
     ]
 
     static let tr: [String: String] = [
@@ -3961,7 +3973,7 @@ enum IosI18nCatalogs {
         "ios.proof.curve.sub": "{from}'dan {to}'ya, yaklaşık {months} ayda. Başta yavaş, sonra hızlı.",
         "ios.proof.curve.today": "Bugün",
         "ios.proof.curve.exam": "Sınav · {days} gün sonra",
-        "ios.build.thanks.title": "Bize **güvendiğin** için teşekkürler.",
+        "ios.build.thanks.title": "Bize **güvendiğin** için teşekkürler",
         "ios.build.thanks.sub": "Şimdi Micabo'yu sana göre ayarlıyoruz.",
         "ios.build.thanks.subNamed": "Şimdi Micabo'yu sana göre ayarlıyoruz, {name}.",
         "ios.build.title": "Planını hazırlıyoruz",
@@ -4049,6 +4061,10 @@ enum IosI18nCatalogs {
         "ios.firstDeck.title": "İlk dersini birlikte oluşturalım.",
         "ios.firstDeck.sub": "Bir ders yükle ya da konuyu söyle: Micabo birkaç dakikada özet ve kartlara dönüştürür.",
         "ios.firstDeck.cta": "Hadi başlayalım",
+        "ios.proof.why.title": "Bu yüzden **Micabo**'yu yaptık",
+        "ios.reviews.title": "Micabo'yu denediler.",
+        "ios.deckSetup.language": "Dersini hangi dilde istersin?",
+        "ios.deckSetup.language.sub": "Özet ve kartlar bu dilde yazılacak.",
     ]
 
     /// **L'anglais, au complet.**
@@ -4981,7 +4997,7 @@ enum IosI18nCatalogs {
         "ios.proof.curve.sub": "From {from} to {to}, in about {months} months. Slow at first, fast after.",
         "ios.proof.curve.today": "Today",
         "ios.proof.curve.exam": "Exam day · in {days} days",
-        "ios.build.thanks.title": "Thank you for **trusting us**.",
+        "ios.build.thanks.title": "Thank you for **trusting us**",
         "ios.build.thanks.sub": "Now we're personalizing Micabo for you.",
         "ios.build.thanks.subNamed": "Now we're personalizing Micabo for you, {name}.",
         "ios.build.title": "Building your plan",
@@ -5069,6 +5085,10 @@ enum IosI18nCatalogs {
         "ios.firstDeck.title": "Let's create your first course together.",
         "ios.firstDeck.sub": "Drop in a course, or tell us the topic: Micabo turns it into a sheet and cards in minutes.",
         "ios.firstDeck.cta": "Let's go",
+        "ios.proof.why.title": "That's why we created **Micabo**",
+        "ios.reviews.title": "They tried Micabo.",
+        "ios.deckSetup.language": "Which language do you want your course in?",
+        "ios.deckSetup.language.sub": "The sheet and the cards will be written in this language.",
     ]
 
     static func table(for locale: String) -> [String: String] {

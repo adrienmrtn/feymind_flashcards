@@ -130,18 +130,25 @@ struct OnboardingSkyCard: View {
         return Color(red: last.0, green: last.1, blue: last.2)
     }
 
-    /// De 0 au lever (6 h) à 1 au coucher (21 h). La nuit, pas de soleil.
-    private var dayProgress: Double? {
-        guard (6...20).contains(hour) else { return nil }
-        return (Double(hour) - 6) / 15
+    /// De 0 au lever (6 h) à 1 au coucher (21 h). En dehors, le soleil continue sous
+    /// l'horizon : à cinq heures il attend juste sous le bord gauche, et il monte d'un
+    /// cran fluide quand on passe à six.
+    private var dayProgress: Double {
+        (Double(hour) - 6) / 15
     }
 
-    /// La lune, de 21 h à 5 h, sur le même arc, plus bas.
-    private var nightProgress: Double? {
-        guard isNight else { return nil }
-        let shifted = hour >= 21 ? Double(hour - 21) : Double(hour + 3)
-        return shifted / 9
+    /// La lune, de 21 h à 5 h, sur le même arc, plus bas ; à six heures elle finit sa course
+    /// sous le bord droit pendant que le soleil se lève.
+    private var nightProgress: Double {
+        if hour >= 21 { return Double(hour - 21) / 9 }
+        if hour < 6 { return Double(hour + 3) / 9 }
+        // Le jour, la lune attend juste derrière le bord d'où elle repartira : à droite
+        // le matin, à gauche l'après-midi. Sans ça, elle traversait tout le ciel à
+        // vingt-et-une heures pour revenir à son point de départ.
+        return hour < 13 ? 1.08 : -0.08
     }
+
+    private var isDay: Bool { (6...20).contains(hour) }
 
     private var isNight: Bool { hour < 6 || hour >= 21 }
 
@@ -172,42 +179,44 @@ struct OnboardingSkyCard: View {
                     .frame(height: h - horizon)
                     .position(x: w / 2, y: horizon + (h - horizon) / 2)
 
-                if let progress = dayProgress {
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [Color(hex: 0xFFF1B0), Color(hex: 0xFFB629)],
-                                center: .center,
-                                startRadius: 2,
-                                endRadius: 30
-                            )
+                // Le soleil et la lune existent toujours, et c'est leur opacité qui
+                // change : une vue qui apparaît d'un coup à gauche pendant qu'une autre
+                // disparaît à droite ne se lit pas comme un lever, un objet qui continue
+                // sa course en s'effaçant, si.
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [Color(hex: 0xFFF1B0), Color(hex: 0xFFB629)],
+                            center: .center,
+                            startRadius: 2,
+                            endRadius: 30
                         )
-                        .frame(width: 54, height: 54)
-                        .shadow(color: Color(hex: 0xFFB629).opacity(0.55), radius: 22)
-                        .position(Self.point(progress: progress, width: w, horizon: horizon, peak: h * 0.16))
-                        .transition(.opacity)
-                }
+                    )
+                    .frame(width: 54, height: 54)
+                    .shadow(color: Color(hex: 0xFFB629).opacity(0.55), radius: 22)
+                    .opacity(isDay ? 1 : 0)
+                    .position(Self.point(progress: dayProgress, width: w, horizon: horizon, peak: h * 0.16))
 
-                if let progress = nightProgress {
-                    Image(systemName: "moon.fill")
-                        .font(.system(size: 40, weight: .regular))
-                        .foregroundStyle(Color(hex: 0xF4F1E6))
-                        .shadow(color: OnboardingPalette.white.opacity(0.35), radius: 16)
-                        .position(Self.point(progress: progress, width: w, horizon: horizon, peak: h * 0.28))
-                        .transition(.opacity)
-                }
+                Image(systemName: "moon.fill")
+                    .font(.system(size: 40, weight: .regular))
+                    .foregroundStyle(Color(hex: 0xF4F1E6))
+                    .shadow(color: OnboardingPalette.white.opacity(0.35), radius: 16)
+                    .opacity(isNight ? 1 : 0)
+                    .position(Self.point(progress: nightProgress, width: w, horizon: horizon, peak: h * 0.28))
             }
             .animation(.easeInOut(duration: 0.55), value: hour)
         }
         .frame(height: 200)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .clipped()
         .accessibilityHidden(true)
     }
 
     /// L'arc : le bord à zéro et à un, le sommet au milieu.
     private static func point(progress: Double, width: CGFloat, horizon: CGFloat, peak: CGFloat) -> CGPoint {
         let x = 28 + (width - 56) * progress
-        let lift = sin(progress * .pi)
+        // Hors de l'arc, l'astre passe sous l'horizon au lieu de remonter de l'autre côté.
+        let lift = (0...1).contains(progress) ? sin(progress * .pi) : -0.35
         let y = horizon - (horizon - peak) * lift
         return CGPoint(x: x, y: y)
     }
