@@ -37,6 +37,28 @@ export function ruleFor(grid, territory) {
   return { tier: grid.base.tier, rule: "equalize", from: grid.base.territory, default: true };
 }
 
+/**
+ * **D'où vient le prix d'une offre, dans un pays aligné sur un équivalent Apple.**
+ *
+ * Apple arrondit chaque offre séparément : l'équivalent de 3,99 € et celui de 23,99 € ne
+ * tombent pas sur le même rapport. En Pologne, la remise du cadeau devenait −33 % ; au
+ * Pakistan −29 % ; en Tchéquie −50 %. On n'aligne donc que la **première** offre
+ * (l'hebdomadaire) ; chacune des suivantes se déduit de la précédente, **dans le même
+ * pays**, avec le rapport du pays de référence — annuel = dix hebdomadaires, réduit = −40 %.
+ *
+ * Rend `null` pour un pays à prix écrits, et pour la première offre : elles s'alignent
+ * directement.
+ */
+export function derivationFor(grid, rule, key) {
+  if (rule.rule === "price") return null;
+  const keys = planKeys(grid);
+  const index = keys.indexOf(key);
+  if (index <= 0) return null;
+  const reference = rule.rule === "usd" ? rule.prices : ruleFor(grid, rule.from).prices;
+  const from = keys[index - 1];
+  return { from, factor: Number(reference[key]) / Number(reference[from]) };
+}
+
 /** Tous les pays nommés dans la grille, base comprise. */
 export function namedTerritories(grid) {
   return [grid.base.territory, ...grid.tiers.flatMap((tier) => tier.territories)];

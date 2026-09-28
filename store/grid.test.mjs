@@ -12,6 +12,7 @@ import { resolve } from "node:path";
 import { test } from "node:test";
 import {
   currentPrice,
+  derivationFor,
   discountPercent,
   isActiveOffer,
   loadGrid,
@@ -167,4 +168,32 @@ test("les secrets mal formés sont signalés avant d'appeler Apple", () => {
   // Le Team ID à la place de l'Issuer ID : la confusion la plus fréquente.
   const [teamId] = credentialProblems({ keyId: "2X9R4HXF34", issuerId: "A1B2C3D4E5" });
   assert.match(teamId, /Team ID/);
+});
+
+test("dans un pays aligné sur un équivalent, l'annuel et le réduit gardent les rapports de la grille", () => {
+  // Seul l'hebdomadaire suit l'équivalent Apple ; les suivants s'en déduisent dans le pays.
+  const poland = ruleFor(grid, "POL");
+  assert.equal(derivationFor(grid, poland, "weekly"), null);
+  const yearly = derivationFor(grid, poland, "yearly");
+  assert.equal(yearly.from, "weekly");
+  assert.ok(Math.abs(yearly.factor - 39.99 / 3.99) < 1e-9);
+  const discount = derivationFor(grid, poland, "discount");
+  assert.equal(discount.from, "yearly");
+  assert.ok(Math.abs(discount.factor - 23.99 / 39.99) < 1e-9);
+
+  // Les pays non nommés suivent la France, les pays « usd » leur propre ligne.
+  assert.ok(Math.abs(derivationFor(grid, ruleFor(grid, "GBR"), "yearly").factor - 49.99 / 4.99) < 1e-9);
+  assert.ok(Math.abs(derivationFor(grid, ruleFor(grid, "PAK"), "discount").factor - 11.99 / 19.99) < 1e-9);
+
+  // Un pays à prix écrits ne se déduit pas : il prend ses propres montants.
+  assert.equal(derivationFor(grid, ruleFor(grid, "TUR"), "yearly"), null);
+  assert.equal(derivationFor(grid, ruleFor(grid, "USA"), "discount"), null);
+
+  // Pakistan : 500 PKR la semaine donne ~5 000 l'an et ~3 000 réduit — plus 4 900 / 3 500.
+  const pkr = [500, 2900, 3000, 3500, 4900, 5000].map((p) => ({ id: String(p), customerPrice: String(p) }));
+  const pkYearly = pickPricePoint(pkr, 500 * derivationFor(grid, ruleFor(grid, "PAK"), "yearly").factor).point;
+  const pkDiscount = pickPricePoint(pkr, Number(pkYearly.customerPrice) * derivationFor(grid, ruleFor(grid, "PAK"), "discount").factor).point;
+  assert.equal(pkYearly.customerPrice, "5000");
+  assert.equal(pkDiscount.customerPrice, "3000");
+  assert.equal(Math.round((1 - 3000 / 5000) * 100), 40);
 });

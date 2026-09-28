@@ -24,6 +24,7 @@ import { appendFileSync } from "node:fs";
 import { AppStoreConnect, credentialProblems } from "./lib/asc.mjs";
 import {
   currentPrice,
+  derivationFor,
   isActiveOffer,
   loadGrid,
   markdownTable,
@@ -177,9 +178,27 @@ async function pointForAmount(sub, territory, amount) {
   return picked;
 }
 
-/** Le palier visé pour un pays, et d'où il vient. */
-async function target(key, sub, territory, currencies) {
+/** Le palier visé pour un pays, et d'où il vient. Une seule résolution par offre et par pays. */
+function target(key, sub, territory, currencies) {
+  return once(`target/${key}/${territory}`, () => resolveTarget(key, sub, territory, currencies));
+}
+
+async function resolveTarget(key, sub, territory, currencies) {
   const rule = ruleFor(grid, territory);
+
+  // Pays aligné sur un équivalent : l'annuel et le réduit se déduisent de l'offre d'avant,
+  // dans ce pays, pour garder les rapports de la grille (voir `derivationFor`).
+  const derived = derivationFor(grid, rule, key);
+  if (derived) {
+    const fromSub = subscriptions.get(grid.products[derived.from].productId);
+    const fromCurrencies = await territoriesOf(fromSub);
+    const previous = await target(derived.from, fromSub, territory, fromCurrencies);
+    const wanted = Number(previous.point.customerPrice) * derived.factor;
+    const picked = pickPricePoint(await pricePointsIn(sub, territory), wanted);
+    if (picked.error) throw new Error(`${territory} : ${picked.error}`);
+    // Un écart de palier est normal ici : on cherche le plus proche d'un produit calculé.
+    return { rule, point: picked.point, warning: null };
+  }
 
   if (rule.rule === "price") {
     const currency = currencies.get(territory);
