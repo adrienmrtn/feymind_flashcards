@@ -10,8 +10,9 @@ import SwiftUI
 /// tout seul se referme tout seul. Trois appuis, c'est une seconde et demie où la main
 /// participe — et une offre qu'on a déballée se lit avant de se fermer.
 ///
-/// Les nombres — trois appuis, vingt-quatre heures, 39,99 € — sont tous dans
-/// `DiscountOffer`, qui est le miroir du module partagé avec le web.
+/// Les nombres — trois appuis, vingt-quatre heures — sont dans `DiscountOffer`, miroir du
+/// module partagé avec le web. Le prix, lui, vient de `PaywallCatalog.discount` : 29,99 €
+/// en France, et celui de la grille ailleurs.
 struct DiscountFlowView: View {
     /// Vrai quand on rouvre depuis la pastille : le cadeau ne se déballe qu'une fois.
     var startsAtPaywall: Bool = false

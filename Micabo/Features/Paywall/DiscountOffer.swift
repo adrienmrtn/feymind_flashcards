@@ -237,10 +237,10 @@ enum DiscountOffer {
     static var reference: PaywallPlan { PaywallCatalog.yearly }
 
     /// Ce que le tarif réduit fait économiser sur l'annuel plein, en pourcentage entier.
+    ///
+    /// Sur les prix du pays dès que la boutique a répondu : le sceau est posé à côté des
+    /// deux prix, il ne peut pas en dire un troisième. La grille garde −40 % partout.
     static var savingsPercent: Int {
-        let full = NSDecimalNumber(decimal: reference.annualCost).doubleValue
-        let discounted = NSDecimalNumber(decimal: plan.annualCost).doubleValue
-        guard full > 0 else { return 0 }
-        return Int(((1 - discounted / full) * 100).rounded())
+        PaywallCatalog.savings(of: plan, against: reference)
     }
 }

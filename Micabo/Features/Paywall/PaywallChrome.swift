@@ -48,11 +48,13 @@ struct PaywallHeader: View {
 /// Le bouton d'abonnement, identique partout où il apparaît.
 struct PaywallCallToAction: View {
     var isPurchasing: Bool
-    /// Absent : l'écran ne vend que l'annuel, donc l'essai. Présent : le libellé suit l'offre.
+    /// Absent : l'écran ne vend que l'annuel. Présent : le libellé suit l'offre.
     var plan: PaywallPlan? = nil
     var action: () -> Void
 
-    private var hasTrial: Bool { plan?.hasTrial ?? true }
+    /// Le bouton ne promet l'essai que si ce compte y a droit : un « Commencer l'essai »
+    /// suivi d'un prélèvement immédiat est la pire façon de découvrir la règle d'Apple.
+    private var hasTrial: Bool { (plan ?? PaywallCatalog.recommended).hasTrial }
 
     var body: some View {
         Button {
@@ -124,29 +126,36 @@ struct PaywallLegalFooter: View {
 
 /// La phrase qui dit le prix, et la seule de l'app qui le dise.
 enum PaywallPitch {
-    /// « Essaie 3 jours gratuitement, puis 5,83 € / mois (facturé 69,99 € par an). »
+    /// « Essaie 3 jours gratuitement, puis 4,17 € / mois (facturé 49,99 € par an). »
     ///
     /// Le vert ne porte que la partie gratuite. Colorer la phrase entière n'aurait mis en
     /// avant que le prix, colorer le prix aurait mis en avant ce qu'on demande.
+    ///
+    /// Sans essai — déjà consommé, ou absent dans ce pays —, il reste le prix, et rien
+    /// d'autre : la moitié verte ne s'écrit que si Apple l'honorera.
     static func text(for plan: PaywallPlan) -> Text {
         let locale = UiLocale.resolved()
-        let free = Text(L10n.t("ios.paywallTryDays", locale: locale, vars: ["n": "\(PaywallCatalog.freeTrialDays)"]))
-            .foregroundStyle(MicaboColor.accent)
         let price = Text(sentence(for: plan, locale: locale))
             .foregroundStyle(MicaboColor.ink)
+        guard plan.hasTrial else { return price }
+        let free = Text(L10n.t("ios.paywallTryDays", locale: locale, vars: ["n": "\(PaywallCatalog.freeTrialDays)"]))
+            .foregroundStyle(MicaboColor.accent)
         return free + price
     }
 
+    /// La moitié « prix » de la phrase. Derrière l'essai elle commence par « puis » ; seule,
+    /// elle commence par le prix.
     static func sentence(for plan: PaywallPlan, locale: UiLocale = .resolved()) -> String {
+        let afterTrial = plan.hasTrial
         if let monthly = plan.monthlyEquivalent {
             return L10n.t(
-                "ios.paywallThenYear",
+                afterTrial ? "ios.paywallThenYear" : "ios.paywallPriceYear",
                 locale: locale,
                 vars: ["monthly": monthly, "yearly": plan.displayPrice]
             )
         }
         return L10n.t(
-            "ios.paywallThenPeriod",
+            afterTrial ? "ios.paywallThenPeriod" : "ios.paywallPricePeriod",
             locale: locale,
             vars: ["price": plan.displayPrice, "unit": plan.period.unit]
         )

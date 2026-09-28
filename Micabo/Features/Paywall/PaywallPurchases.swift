@@ -58,6 +58,24 @@ enum PaywallPurchases {
                 )
             }
             PaywallStorePrices.store(prices)
+
+            // **L'essai, compte par compte.** Apple n'en donne qu'un par groupe : qui a pris
+            // les trois jours de l'hebdomadaire ne les retrouve pas sur l'annuel. `unknown`
+            // ne tranche rien et laisse le catalogue parler ; `noIntroOfferExists` veut dire
+            // qu'aucun essai n'est posé dans ce pays, et ne se promet donc pas non plus.
+            let withTrial = PaywallCatalog.all.filter { $0.trialDays > 0 }.map(\.productID)
+            let eligibility = await Purchases.shared
+                .checkTrialOrIntroDiscountEligibility(productIdentifiers: withTrial)
+            var known: [String: Bool] = [:]
+            for (productID, answer) in eligibility {
+                switch answer.status {
+                case .eligible: known[productID] = true
+                case .ineligible, .noIntroOfferExists: known[productID] = false
+                case .unknown: break
+                @unknown default: break
+                }
+            }
+            PaywallStorePrices.storeTrialEligibility(known)
         } catch {
             // Rien à dire : les prix écrits restent affichés.
         }

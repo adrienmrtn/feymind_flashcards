@@ -1,0 +1,85 @@
+# La grille de prix iOS : store/pricing.json → App Store Connect et RevenueCat.
+#
+# Lancement : onglet Actions → « Grille de prix iOS » → Run workflow.
+# Par défaut c'est une simulation : tout est lu, rien n'est écrit, et le résumé de l'action
+# montre pays par pays le prix actuel et le prix visé. Cocher « Appliquer » pour écrire.
+#
+# Secrets du dépôt (Settings → Secrets and variables → Actions) — voir docs/revenuecat.md, §15 :
+#   ASC_KEY_ID, ASC_ISSUER_ID, ASC_PRIVATE_KEY   clé d'API App Store Connect (rôle App Manager)
+#   REVENUECAT_API_KEY, REVENUECAT_PROJECT_ID    clé secrète RevenueCat v2 (sk_…) et projet (proj…)
+
+name: Grille de prix iOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Où poser la grille"
+        type: choice
+        options: [tout, app-store, revenuecat]
+        default: tout
+      apply:
+        description: "Appliquer (sinon : simulation, rien n'est écrit)"
+        type: boolean
+        default: false
+  # Les tests de la grille, sans secret, à chaque changement de prix.
+  pull_request:
+    paths:
+      - "store/**"
+      - "Micabo/Features/Paywall/PaywallCatalog.swift"
+      - "Micabo/Resources/Micabo.storekit"
+      - ".github/workflows/store-pricing.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: store-pricing
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Vérifier la grille
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test store/*.test.mjs
+
+  app-store:
+    name: App Store Connect
+    needs: check
+    if: github.event_name == 'workflow_dispatch' && inputs.target != 'revenuecat'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: ${{ inputs.apply && 'Poser la grille' || 'Simuler la grille' }}
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: node store/app-store.mjs ${{ inputs.apply && '--apply' || '' }}
+
+  revenuecat:
+    name: RevenueCat
+    needs: check
+    if: github.event_name == 'workflow_dispatch' && inputs.target != 'app-store'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: ${{ inputs.apply && 'Configurer RevenueCat' || 'Simuler RevenueCat' }}
+        env:
+          REVENUECAT_API_KEY: ${{ secrets.REVENUECAT_API_KEY }}
+          REVENUECAT_PROJECT_ID: ${{ secrets.REVENUECAT_PROJECT_ID }}
+        run: node store/revenuecat.mjs ${{ inputs.apply && '--apply' || '' }}

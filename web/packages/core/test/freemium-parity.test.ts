@@ -123,9 +123,14 @@ describe("l'offre cadeau, des deux côtés", () => {
 
   it("annonce le prix prélevé, et pas un mensuel, sur l'offre cadeau", () => {
     // Le cadeau disait « 3,30 € / mois » avec l'annuel juste dessous : deux chiffres pour
-    // une seule somme, dont celui qu'on retenait n'était pas celui qui part. Les deux
-    // clients écrivent 39,99 € par an, et rien d'autre.
-    expect(catalog).toContain("price: 39.99");
+    // une seule somme, dont celui qu'on retenait n'était pas celui qui part. Chaque client
+    // écrit sa somme annuelle, et rien d'autre.
+    //
+    // **Les montants ne sont plus les mêmes, et c'est voulu.** iOS suit la grille par pays
+    // de `store/pricing.json` (29,99 € en France, −40 % sur l'annuel à 49,99 €) ; le web
+    // garde 39,99 € tant que Stripe n'est pas repris. Ce test fige les deux, pour qu'un
+    // changement d'un côté ne passe pas pour un oubli de l'autre.
+    expect(catalog).toContain("price: 29.99");
     expect(DISCOUNT_YEARLY.price).toBe(39.99);
     expect(discountOffer).not.toContain("monthlyPrice");
     expect(DISCOUNT_YEARLY).not.toHaveProperty("monthlyPrice");
