@@ -1,0 +1,124 @@
+{
+  "$comment": "La grille de prix iOS de Micabo Pro, pays par pays. C'est la seule source : `store/app-store.mjs` la pose dans App Store Connect, `PaywallCatalog.swift` en garde la ligne française comme repli, et `store/grid.test.mjs` vérifie que les deux disent la même chose. Voir docs/revenuecat.md, §15.",
+  "bundleId": "com.micabo.ios",
+  "products": {
+    "weekly": { "productId": "com.micabo.app.pro.weekly", "trial": "THREE_DAYS" },
+    "yearly": { "productId": "com.micabo.app.pro.yearly", "trial": "THREE_DAYS" },
+    "discount": { "productId": "com.micabo.app.pro.yearly.discount", "trial": null }
+  },
+  "base": {
+    "tier": "B",
+    "label": "France — le pays de référence ; tout pays non listé reçoit l'équivalent Apple de ces prix",
+    "territory": "FRA",
+    "currency": "EUR",
+    "prices": { "weekly": "4.99", "yearly": "49.99", "discount": "29.99" }
+  },
+  "tiers": [
+    {
+      "tier": "A",
+      "label": "États-Unis",
+      "rule": "price",
+      "currency": "USD",
+      "territories": ["USA"],
+      "prices": { "weekly": "7.99", "yearly": "59.99", "discount": "35.99" }
+    },
+    {
+      "tier": "A",
+      "label": "Canada, Australie, Suisse — équivalent Apple du prix américain",
+      "rule": "equalize",
+      "from": "USA",
+      "territories": ["CAN", "AUS", "CHE"]
+    },
+    {
+      "tier": "B",
+      "label": "Zone euro du nord — même prix que la France",
+      "rule": "price",
+      "currency": "EUR",
+      "territories": ["BEL", "LUX", "DEU", "AUT", "NLD", "IRL", "FIN"],
+      "prices": { "weekly": "4.99", "yearly": "49.99", "discount": "29.99" }
+    },
+    {
+      "tier": "C",
+      "label": "Europe du Sud et zone euro de l'Est",
+      "rule": "price",
+      "currency": "EUR",
+      "territories": ["ESP", "ITA", "PRT", "GRC", "SVK", "SVN", "HRV", "EST", "LVA", "LTU"],
+      "prices": { "weekly": "3.99", "yearly": "39.99", "discount": "23.99" }
+    },
+    {
+      "tier": "C",
+      "label": "Europe de l'Est hors euro — équivalent Apple du prix espagnol",
+      "rule": "equalize",
+      "from": "ESP",
+      "territories": ["POL", "CZE", "HUN", "ROU", "BGR"]
+    },
+    {
+      "tier": "D",
+      "label": "Turquie — à revoir tous les six mois, Apple ne réajuste jamais un abonnement",
+      "rule": "price",
+      "currency": "TRY",
+      "territories": ["TUR"],
+      "prices": { "weekly": "149.99", "yearly": "1499.99", "discount": "899.99" }
+    },
+    {
+      "tier": "D",
+      "label": "Brésil",
+      "rule": "price",
+      "currency": "BRL",
+      "territories": ["BRA"],
+      "prices": { "weekly": "14.90", "yearly": "149.90", "discount": "89.90" }
+    },
+    {
+      "tier": "D",
+      "label": "Mexique",
+      "rule": "price",
+      "currency": "MXN",
+      "territories": ["MEX"],
+      "prices": { "weekly": "59", "yearly": "599", "discount": "359" }
+    },
+    {
+      "tier": "D",
+      "label": "Amérique latine — équivalent Apple d'un prix en dollars",
+      "rule": "usd",
+      "territories": ["ARG", "COL", "CHL", "PER"],
+      "prices": { "weekly": "2.99", "yearly": "29.99", "discount": "17.99" }
+    },
+    {
+      "tier": "E",
+      "label": "Afrique francophone, Égypte, Asie du Sud-Est — équivalent Apple d'un prix en dollars",
+      "rule": "usd",
+      "territories": ["MAR", "DZA", "TUN", "SEN", "CIV", "EGY", "IDN", "PHL", "VNM", "PAK", "NGA"],
+      "prices": { "weekly": "1.99", "yearly": "19.99", "discount": "11.99" }
+    },
+    {
+      "tier": "E",
+      "label": "Inde",
+      "rule": "price",
+      "currency": "INR",
+      "territories": ["IND"],
+      "prices": { "weekly": "149", "yearly": "1499", "discount": "899" }
+    }
+  ],
+  "revenuecat": {
+    "entitlement": { "lookupKey": "pro", "displayName": "Micabo Pro" },
+    "offerings": [
+      {
+        "lookupKey": "default",
+        "displayName": "Micabo Pro",
+        "current": true,
+        "packages": [
+          { "lookupKey": "$rc_annual", "displayName": "Annuel", "product": "yearly" },
+          { "lookupKey": "$rc_weekly", "displayName": "Hebdomadaire", "product": "weekly" }
+        ]
+      },
+      {
+        "lookupKey": "discount",
+        "displayName": "Offre cadeau",
+        "current": false,
+        "packages": [
+          { "lookupKey": "$rc_annual", "displayName": "Annuel à tarif réduit", "product": "discount" }
+        ]
+      }
+    ]
+  }
+}

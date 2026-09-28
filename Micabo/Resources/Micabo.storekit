@@ -36,7 +36,7 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "69.99",
+          "displayPrice" : "49.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "6741220001",
@@ -65,10 +65,15 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "7.99",
+          "displayPrice" : "4.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "6741220002",
+          "introductoryOffer" : {
+            "internalID" : "6741220004",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P3D"
+          },
           "localizations" : [
             {
               "description" : "Cours et flashcards illimités, sans engagement.",
@@ -89,7 +94,7 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "39.99",
+          "displayPrice" : "29.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "6741220005",

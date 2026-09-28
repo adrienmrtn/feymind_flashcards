@@ -148,22 +148,23 @@ final class DiscountOfferTests: XCTestCase {
 
     // MARK: - Le prix
 
-    /// 39,99 € par an, et l'annuel plein barré à côté. **Le cadeau écrit la somme
+    /// 29,99 € par an, et l'annuel plein barré à côté. **Le cadeau écrit la somme
     /// prélevée** : il annonçait un mensuel avec l'annuel juste dessous, et le chiffre
     /// qu'on retenait n'était pas celui qui part.
     func testTheOfferShowsTheChargedYearAgainstTheFullYear() {
         XCTAssertTrue(
-            DiscountOffer.plan.displayPrice.hasPrefix("39,99"),
-            "Le cadeau s'annonce à 39,99 € par an, pas \(DiscountOffer.plan.displayPrice)"
+            DiscountOffer.plan.displayPrice.hasPrefix("29,99"),
+            "Le cadeau s'annonce à 29,99 € par an, pas \(DiscountOffer.plan.displayPrice)"
         )
         XCTAssertEqual(DiscountOffer.plan, PaywallCatalog.discount)
         XCTAssertEqual(DiscountOffer.reference, PaywallCatalog.yearly)
-        XCTAssertTrue(DiscountOffer.reference.displayPrice.hasPrefix("69,99"))
+        XCTAssertTrue(DiscountOffer.reference.displayPrice.hasPrefix("49,99"))
     }
 
-    /// La remise est calculée depuis les deux prix, jamais écrite : 39,99 contre 69,99.
+    /// La remise est calculée depuis les deux prix, jamais écrite : 29,99 contre 49,99.
+    /// La grille garde −40 % dans tous les pays.
     func testTheSavingsComeFromTheTwoYearlyPrices() {
-        XCTAssertEqual(DiscountOffer.savingsPercent, 43)
+        XCTAssertEqual(DiscountOffer.savingsPercent, 40)
     }
 
     /// Trois appuis. Un de plus lasse, un de moins n'est pas un geste.

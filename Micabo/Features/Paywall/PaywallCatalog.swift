@@ -5,7 +5,7 @@ enum PaywallPeriod {
     case week
     case year
 
-    /// Le mot qui suit la barre oblique : « 7,99 € / semaine ».
+    /// Le mot qui suit la barre oblique : « 4,99 € / semaine ».
     var unit: String {
         switch self {
         case .week: L10n.t("ios.unitWeek", locale: .resolved())
@@ -14,8 +14,8 @@ enum PaywallPeriod {
     }
 
     /// Combien de fois par an la somme est prélevée. Sert à comparer deux offres qui ne
-    /// se paient pas au même rythme : sans ce ramené à l'année, « 7,99 € » a l'air moins
-    /// cher que « 69,99 € ».
+    /// se paient pas au même rythme : sans ce ramené à l'année, « 4,99 € » a l'air moins
+    /// cher que « 49,99 € ».
     var occurrencesPerYear: Decimal {
         switch self {
         case .week: 52
@@ -53,9 +53,20 @@ struct PaywallPlan: Identifiable, Equatable {
         }
     }
 
-    var hasTrial: Bool { trialDays > 0 }
+    /// **Un essai qu'on peut vraiment promettre.**
+    ///
+    /// Apple n'offre qu'un essai par groupe d'abonnements : qui a pris les trois jours de
+    /// l'hebdomadaire ne les retrouve pas sur l'annuel, et qui a déjà été abonné ne les
+    /// retrouve nulle part. Annoncer « 3 jours gratuits » à quelqu'un qu'Apple va prélever
+    /// tout de suite est exactement ce que la relecture App Store sanctionne (3.1.2).
+    ///
+    /// Tant que la boutique n'a rien dit, on suit le catalogue : c'est le cas d'un premier
+    /// lancement, et donc du plus grand nombre.
+    var hasTrial: Bool {
+        trialDays > 0 && !PaywallStorePrices.isIneligibleForTrial(productID)
+    }
 
-    /// « 69,99 € », ou ce que la boutique du pays annonce.
+    /// « 49,99 € », ou ce que la boutique du pays annonce.
     ///
     /// **Le prix écrit n'est plus qu'un repli.** Il est celui de la France, et un étudiant
     /// turc à qui l'on annonce des euros pendant qu'Apple lui prélève des livres lit un
@@ -66,19 +77,27 @@ struct PaywallPlan: Identifiable, Equatable {
         PaywallStorePrices.price(for: productID)?.localized ?? PaywallPrice.text(price)
     }
 
-    /// Ce que l'offre coûte sur douze mois, quel que soit son rythme de prélèvement.
-    ///
-    /// Il reste calculé sur le prix **écrit**, et c'est voulu : `savingsPercent` compare
-    /// l'annuel à l'hebdomadaire, et une remise qui changerait de quelques points selon le
-    /// pays ferait mentir le sceau « −43 % » imprimé à côté.
+    /// Ce que l'offre coûte sur douze mois, quel que soit son rythme de prélèvement, au
+    /// prix **écrit** — celui de la France.
     var annualCost: Decimal {
         price * period.occurrencesPerYear
+    }
+
+    /// La même somme au prix **de la boutique du pays**, dans sa devise.
+    ///
+    /// Les prix changent d'un pays à l'autre, et pas tous dans la même proportion : aux
+    /// États-Unis l'annuel vaut 7,5 hebdomadaires, en France 10. Un pourcentage calculé sur
+    /// les prix français dirait « −81 % » à un Américain qui lit $7.99 et $59.99 — soit
+    /// −86 %. `nil` tant que la boutique n'a pas répondu.
+    var storeAnnualCost: (amount: Decimal, currency: String?)? {
+        guard let store = PaywallStorePrices.price(for: productID) else { return nil }
+        return (store.amount * period.occurrencesPerYear, store.currencyCode)
     }
 
     /// Le prix ramené au mois, pour les offres qui se paient d'un bloc.
     ///
     /// C'est **le seul chiffre qu'un étudiant sait comparer**. Personne ne divise
-    /// mentalement 69,99 par douze devant un paywall, et personne ne multiplie 7,99 par
+    /// mentalement 49,99 par douze devant un paywall, et personne ne multiplie 4,99 par
     /// cinquante-deux : le mois est l'unité dans laquelle un budget se pense.
     ///
     /// Il se divise dans la même monnaie que l'annuel affiché juste à côté. Deux nombres
@@ -95,8 +114,8 @@ struct PaywallPlan: Identifiable, Equatable {
 
     /// **Le grand chiffre du paywall, et c'est le mois.**
     ///
-    /// Les deux nombres d'une offre annuelle ne pèsent pas pareil : « 69,99 € » est la
-    /// somme prélevée, « 5,83 € » est celle qu'on compare. Personne ne divise soixante-dix
+    /// Les deux nombres d'une offre annuelle ne pèsent pas pareil : « 49,99 € » est la
+    /// somme prélevée, « 4,17 € » est celle qu'on compare. Personne ne divise cinquante
     /// par douze devant un paywall, et une offre annoncée à son prix annuel se lit comme
     /// chère avant d'être lue comme avantageuse. Le mois passe donc en grand, et l'annuel
     /// descend dans `caption` — il n'est pas caché, il n'est plus ce qu'on lit en premier.
@@ -105,7 +124,7 @@ struct PaywallPlan: Identifiable, Equatable {
     /// déjà dans l'unité où on le compare.
     var headlinePrice: String { monthlyEquivalent ?? displayPrice }
 
-    /// L'unité du grand chiffre, qui doit toujours l'accompagner : « 5,83 € » posé sous un
+    /// L'unité du grand chiffre, qui doit toujours l'accompagner : « 4,17 € » posé sous un
     /// titre « Annuel » se lit comme le prix de l'année.
     var headlineUnit: String {
         switch period {
@@ -130,6 +149,12 @@ struct PaywallPlan: Identifiable, Equatable {
 /// **Deux offres, pas trois.** Un paywall à trois colonnes fait comparer des colonnes au
 /// lieu de faire choisir : l'annuel est celui qu'on recommande, l'hebdomadaire existe pour
 /// celui qui a un partiel dans dix jours et ne veut pas s'engager plus loin que ça.
+///
+/// **Les prix écrits ici sont ceux de la France**, et seulement un repli : chaque pays a
+/// le sien, posé dans App Store Connect depuis `store/pricing.json` (voir
+/// `docs/revenuecat.md`, §15). Les trois offres gardent partout le même rapport — l'annuel
+/// vaut dix hebdomadaires, le tarif réduit 40 % de moins que l'annuel —, sauf aux
+/// États-Unis, où l'annuel reste au prix du marché.
 enum PaywallCatalog {
     /// La durée de l'essai vient de la chronologie affichée deux écrans plus tôt : la date
     /// annoncée et la date facturée ne peuvent pas diverger si elles sortent du même nombre.
@@ -138,24 +163,28 @@ enum PaywallCatalog {
     static let yearly = PaywallPlan(
         kind: .yearly,
         productID: "com.micabo.app.pro.yearly",
-        price: 69.99,
+        price: 49.99,
         period: .year,
-        trialDays: 3
+        trialDays: freeTrialDays
     )
 
+    /// **Trois jours offerts, comme l'annuel.** L'hebdomadaire est l'offre de celui qui
+    /// a un partiel dans dix jours : lui demander de payer avant d'avoir vu un seul cours
+    /// transformé, c'était lui demander de parier. Apple ne donne qu'un essai par groupe,
+    /// donc ces trois jours-là ne s'ajoutent jamais à ceux de l'annuel.
     static let weekly = PaywallPlan(
         kind: .weekly,
         productID: "com.micabo.app.pro.weekly",
-        price: 7.99,
+        price: 4.99,
         period: .week,
-        trialDays: 0
+        trialDays: freeTrialDays
     )
 
-    /// Tarif réduit, hors paywall. Le chemin pour y accéder n'est pas encore ouvert.
+    /// Tarif réduit, hors paywall : on y entre par l'offre cadeau (`DiscountOffer`).
     static let discount = PaywallPlan(
         kind: .yearly,
         productID: "com.micabo.app.pro.yearly.discount",
-        price: 39.99,
+        price: 29.99,
         period: .year,
         trialDays: 0
     )
@@ -171,10 +200,29 @@ enum PaywallCatalog {
     /// Calculé, jamais écrit à la main : une remise annoncée à côté de deux prix qui la
     /// contredisent est le genre de détail qu'on ne remarque qu'une fois en production.
     static var savingsPercent: Int {
-        let reference = NSDecimalNumber(decimal: weekly.annualCost).doubleValue
-        let discounted = NSDecimalNumber(decimal: yearly.annualCost).doubleValue
-        guard reference > 0 else { return 0 }
-        return Int(((1 - discounted / reference) * 100).rounded())
+        savings(of: yearly, against: weekly)
+    }
+
+    /// **La remise que lit ce pays-ci.**
+    ///
+    /// Sur les prix de la boutique dès qu'elle a répondu pour les deux offres **dans la
+    /// même devise** — c'est le seul calcul que les deux prix affichés juste en dessous ne
+    /// peuvent pas contredire. Sinon, sur les prix écrits : la grille garde le même rapport
+    /// dans presque tous les pays, et c'est le repli d'avant la réponse du réseau.
+    static func savings(of discounted: PaywallPlan, against reference: PaywallPlan) -> Int {
+        if let full = reference.storeAnnualCost,
+           let cheaper = discounted.storeAnnualCost,
+           full.currency == cheaper.currency {
+            return percentOff(cheaper.amount, from: full.amount)
+        }
+        return percentOff(discounted.annualCost, from: reference.annualCost)
+    }
+
+    private static func percentOff(_ cheaper: Decimal, from reference: Decimal) -> Int {
+        let full = NSDecimalNumber(decimal: reference).doubleValue
+        let discounted = NSDecimalNumber(decimal: cheaper).doubleValue
+        guard full > 0 else { return 0 }
+        return Int(((1 - discounted / full) * 100).rounded())
     }
 
     static func plan(_ kind: PaywallPlan.Kind) -> PaywallPlan {
@@ -182,7 +230,7 @@ enum PaywallCatalog {
     }
 }
 
-/// Écriture des sommes, dans la seule forme qu'on affiche : « 69,99 € ».
+/// Écriture des sommes, dans la seule forme qu'on affiche : « 49,99 € ».
 enum PaywallPrice {
     private static let formatter: NumberFormatter = {
         let formatter = NumberFormatter()
@@ -232,8 +280,30 @@ enum PaywallStorePrices {
 
     private static var byProduct: [String: StorePrice] = [:]
 
+    /// Les produits dont on **sait** qu'ils n'ouvriront pas d'essai à ce compte : essai
+    /// déjà consommé dans le groupe, ou aucun essai posé dans ce pays. Un produit absent
+    /// d'ici n'est pas « éligible » : c'est « la boutique n'a rien dit ».
+    private static var withoutTrial: Set<String> = []
+
     static func price(for productID: String) -> StorePrice? {
         byProduct[productID]
+    }
+
+    static func isIneligibleForTrial(_ productID: String) -> Bool {
+        withoutTrial.contains(productID)
+    }
+
+    /// Remplace ce qu'on savait de l'essai, produit par produit. Un produit dont la
+    /// boutique ne sait rien dire garde l'état précédent : une réponse perdue ne doit pas
+    /// faire réapparaître un essai qu'on savait consommé.
+    static func storeTrialEligibility(_ eligible: [String: Bool]) {
+        for (productID, isEligible) in eligible {
+            if isEligible {
+                withoutTrial.remove(productID)
+            } else {
+                withoutTrial.insert(productID)
+            }
+        }
     }
 
     /// Vrai quand la boutique a répondu et qu'elle vend dans une autre monnaie que l'euro.
@@ -241,6 +311,13 @@ enum PaywallStorePrices {
     static func isForeignCurrency(_ productID: String) -> Bool {
         guard let code = byProduct[productID]?.currencyCode else { return false }
         return code.uppercased() != "EUR"
+    }
+
+    /// Oublie tout ce que la boutique a dit. Pour les tests, qui ne contactent aucune
+    /// boutique et doivent retrouver le repli après avoir simulé une réponse.
+    static func clear() {
+        byProduct = [:]
+        withoutTrial = []
     }
 
     static func store(_ prices: [String: StorePrice]) {

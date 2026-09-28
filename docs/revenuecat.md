@@ -13,9 +13,13 @@ Rappel de ce qu'on vend :
 
 | Offre | Identifiant produit | Prix | Essai | Sur le paywall |
 | --- | --- | --- | --- | --- |
-| Annuel | `com.micabo.app.pro.yearly` | 69,99 € / an | 3 jours offerts | oui |
-| Hebdomadaire | `com.micabo.app.pro.weekly` | 7,99 € / semaine | aucun | oui |
-| Annuel discount | `com.micabo.app.pro.yearly.discount` | 39,99 € / an | aucun | **non** sur le paywall ordinaire — il a son propre écran, l'offre cadeau (§13) |
+| Annuel | `com.micabo.app.pro.yearly` | 49,99 € / an | 3 jours offerts | oui |
+| Hebdomadaire | `com.micabo.app.pro.weekly` | 4,99 € / semaine | 3 jours offerts | oui |
+| Annuel discount | `com.micabo.app.pro.yearly.discount` | 29,99 € / an | aucun | **non** sur le paywall ordinaire — il a son propre écran, l'offre cadeau (§13) |
+
+Ce sont les prix **iOS, en France**. Chaque pays a le sien : la grille complète est dans
+`store/pricing.json`, et une action GitHub la pose dans App Store Connect (§15). Le web
+(Stripe) garde ses prix d'avant — 69,99 €, 7,99 €, 39,99 € — tant qu'il n'est pas repris.
 
 Identifiant de l'app : `com.micabo.ios`.
 
@@ -69,30 +73,32 @@ sable renvoie des erreurs sans rapport avec le code.
    - Product ID : `com.micabo.app.pro.yearly` — **exactement** cette chaîne, c'est celle
      qu'attend `PaywallCatalog.yearly.productID`.
    - Subscription Duration : `1 Year`
-   - Subscription Prices : France **69,99 €** (laisser Apple générer les autres pays, puis
-     vérifier)
+   - Subscription Prices : France **49,99 €** — les autres pays se posent par l'action
+     « Grille de prix iOS » (§15), pas à la main
    - Localizations (fr-FR) : Display Name `Annuel`, Description
      `Cours et flashcards illimités, toute l'année.`
 4. **Deuxième abonnement — hebdomadaire**
    - Reference Name : `Micabo Pro hebdomadaire`
    - Product ID : `com.micabo.app.pro.weekly`
    - Subscription Duration : `1 Week`
-   - Prices : France **7,99 €**
+   - Prices : France **4,99 €** (§15 pour les autres pays)
    - Localizations (fr-FR) : Display Name `Hebdomadaire`, Description
      `Cours et flashcards illimités, sans engagement.`
 5. **Troisième abonnement — annuel discount, sans l'afficher**
    - Reference Name : `Micabo Pro annuel discount`
    - Product ID : `com.micabo.app.pro.yearly.discount`
    - Subscription Duration : `1 Year`
-   - Prices : France **39,99 €**
+   - Prices : France **29,99 €** (§15 pour les autres pays)
    - Localizations (fr-FR) : Display Name `Annuel`, Description
      `Cours et flashcards illimités, toute l'année.`
    - **Pas d'essai.** Ne pas l'ajouter à l'offering `default` chez RevenueCat.
 6. **Les trois jours offerts, sur l'annuel seulement** : onglet *Subscription Prices* du
    produit `com.micabo.app.pro.yearly` → **Introductory Offers** → Create → Territoire :
    tous → Type : `Free`, Durée : `3 Days` → Éligibilité : *New subscribers*.
-   - **Ne pas** poser d'essai sur l'hebdomadaire ni sur le discount. Le paywall dit « sans
-     essai » sur ces deux lignes.
+   - **Même essai sur l'hebdomadaire.** Apple n'en donne qu'un par groupe : qui a pris les
+     trois jours de l'hebdomadaire ne les retrouve pas sur l'annuel, et l'app le sait
+     (`checkTrialOrIntroDiscountEligibility`, §8).
+   - **Pas** d'essai sur le discount. L'action du §15 pose les essais dans tous les pays.
 7. **Review information** : capture d'écran du paywall + note de relecture. Apple refuse un
    abonnement sans capture.
 8. Statut attendu à la fin : *Ready to Submit*. Les produits ne passent *Approved* qu'avec un
@@ -224,11 +230,17 @@ Elle est appelée trois fois, et c'est voulu :
 | `PaywallFlowView` et `DiscountFlowView`, à l'ouverture | un premier appel tombé sans réseau laisserait ces écrans-là en euros |
 | `SessionPaywallView`, à l'ouverture | il écrit son prix lui-même, hors de `PaywallFlowView` |
 
-Un seul nombre reste **calculé sur le prix écrit** :
+**Les remises aussi se calculent sur les prix du pays.** Le sceau « −81 % » de l'annuel et
+le « −40 % » du cadeau sont posés juste à côté de deux prix : ils ne peuvent pas en dire un
+troisième. Avec la grille par pays, l'annuel ne vaut pas partout le même nombre
+d'hebdomadaires — dix en France, sept et demi aux États-Unis — donc `savingsPercent` compare
+les montants de la boutique dès qu'elle a répondu pour les deux offres **dans la même
+devise**, et retombe sur les prix écrits sinon.
 
-- `annualCost`, donc `savingsPercent`. La remise est imprimée dans un sceau festonné
-  (« −43 % ») : elle ne peut pas changer de quelques points selon le pays, sinon le sceau
-  ment dans la moitié du monde ;
+**L'essai ne se promet qu'à qui y a droit.** `refreshPrices()` demande aussi
+`checkTrialOrIntroDiscountEligibility` : un compte qui a déjà consommé son essai dans le
+groupe, ou un pays sans essai posé, voit « S'abonner » et le prix, sans « 3 jours
+gratuits ». Tant que la boutique n'a rien dit, le catalogue parle.
 
 Le mensuel de l'annuel plein (`monthlyEquivalent`), lui, se divise toujours sur le prix
 affiché : deux nombres sur une même carte doivent parler de la même somme.
@@ -259,7 +271,8 @@ relecture en `DEBUG` aussi.
 
 1. **En local, sans réseau Apple** : `Micabo/Resources/Micabo.storekit` décrit les trois mêmes
    produits, et le scheme le référence déjà. Il ne fait pas passer par RevenueCat, mais il
-   valide les prix, les durées, et les trois jours d'essai **sur l'annuel seulement**.
+   valide les prix français, les durées, et les trois jours d'essai **sur l'annuel et
+   l'hebdomadaire**. `store/grid.test.mjs` vérifie qu'il dit la même chose que la grille.
 2. **Bac à sable** : App Store Connect → Users and Access → Sandbox → créer un testeur, puis se
    connecter avec sur l'appareil dans Réglages → App Store → Compte de test. Les durées y sont
    accélérées — trois jours d'essai valent quelques minutes.
@@ -391,13 +404,14 @@ Les nombres vivent à deux endroits qui ne peuvent pas diverger :
 - `Micabo/Features/Paywall/DiscountOffer.swift`
 
 `web/packages/core/test/freemium-parity.test.ts` relit le Swift et compare : trois appuis,
-86 400 s, 172 800 s, et 39,99 €.
+86 400 s, 172 800 s. Le prix, lui, n'est plus le même des deux côtés : 29,99 € sur iOS
+(la grille), 39,99 € sur le web (Stripe, inchangé) — le test fige les deux.
 
 **Le paywall du cadeau annonce le prix prélevé, et rien d'autre.** Il disait « 3,30 € /
 mois » avec l'annuel juste dessous : deux chiffres pour une seule somme, dont celui qu'on
-retenait n'était pas celui qui part. Il écrit maintenant 39,99 € par an — dans la monnaie
-du pays, comme tous les autres prix de l'app (§8). Le 69,99 € barré est l'annuel plein, pas
-la somme de cinquante-deux semaines — d'où 43 % et non 90 %.
+retenait n'était pas celui qui part. Il écrit maintenant 29,99 € par an — dans la monnaie
+du pays, comme tous les autres prix de l'app (§8). Le 49,99 € barré est l'annuel plein, pas
+la somme de cinquante-deux semaines — d'où 40 %, dans tous les pays de la grille.
 
 **Ce que l'appareil retient**, et rien de plus : `micabo.discount.startedAt` et
 `micabo.discount.seen`, en `localStorage` sur le web, en `UserDefaults` sur l'app. Aucune
@@ -497,3 +511,69 @@ Les trois montants sont posés sur `price_1UAqB5…`, `price_1UAqBI…` et
   ratio), donc il ne ment pas d'une devise à l'autre.
 - Pas de second prix, pas de second produit, pas de second entitlement.
   TRY n'est qu'une devise.
+
+---
+
+## 15. La grille par pays, posée par une action GitHub
+
+**Un fichier décide, une action l'applique.** `store/pricing.json` porte les prix des trois
+offres pays par pays ; l'action **« Grille de prix iOS »**
+(`.github/workflows/store-pricing.yml`) les pose dans App Store Connect avec les trois jours
+offerts, puis met RevenueCat d'accord (produits, entitlement `pro`, offerings `default` et
+`discount`). RevenueCat ne stocke aucun prix : il lit ceux d'Apple.
+
+### La grille
+
+Trois règles partout : l'hebdomadaire et l'annuel ont trois jours offerts ; l'annuel vaut dix
+hebdomadaires (−81 %) ; le tarif réduit fait −40 % sur l'annuel. Seule exception : les
+États-Unis, où l'annuel reste au prix du marché (−86 %).
+
+| Palier | Pays | Hebdo | Annuel | Réduit |
+| --- | --- | --- | --- | --- |
+| A | États-Unis | $7.99 | $59.99 | $35.99 |
+| A | Canada, Australie, Suisse | équivalent Apple des prix US | | |
+| B | **France**, Belgique, Luxembourg, Allemagne, Autriche, Pays-Bas, Irlande, Finlande | 4,99 € | 49,99 € | 29,99 € |
+| B | Tout pays non listé (Royaume-Uni, pays nordiques, …) | équivalent Apple des prix français | | |
+| C | Espagne, Italie, Portugal, Grèce, zone euro de l'Est | 3,99 € | 39,99 € | 23,99 € |
+| C | Pologne, Tchéquie, Hongrie, Roumanie, Bulgarie | équivalent Apple des prix espagnols | | |
+| D | Turquie | ₺149,99 | ₺1 499,99 | ₺899,99 |
+| D | Brésil | R$14,90 | R$149,90 | R$89,90 |
+| D | Mexique | MX$59 | MX$599 | MX$359 |
+| D | Argentine, Colombie, Chili, Pérou | équivalent de $2.99 | de $29.99 | de $17.99 |
+| E | Maroc, Algérie, Tunisie, Sénégal, Côte d'Ivoire, Égypte, Asie du Sud-Est, Nigeria | équivalent de $1.99 | de $19.99 | de $11.99 |
+| E | Inde | ₹149 | ₹1 499 | ₹899 |
+
+**La Turquie se revoit tous les six mois.** Apple ne réajuste jamais le prix d'un
+abonnement quand une devise bouge, et la livre perd environ 15 % par an.
+
+### Les secrets à créer une fois
+
+GitHub → Settings → Secrets and variables → Actions → *New repository secret* :
+
+| Secret | Où le trouver |
+| --- | --- |
+| `ASC_KEY_ID` | App Store Connect → Users and Access → **Integrations → App Store Connect API** → *Team Keys* → générer une clé, rôle **App Manager** → *Key ID* |
+| `ASC_ISSUER_ID` | Même page, en haut : *Issuer ID* |
+| `ASC_PRIVATE_KEY` | Le fichier `AuthKey_XXXX.p8` téléchargé (une seule fois), collé tel quel |
+| `REVENUECAT_API_KEY` | RevenueCat → Project settings → **API keys** → *+ New secret API key*, version **v2**, droits *Project configuration* en lecture/écriture (`sk_…`) |
+| `REVENUECAT_PROJECT_ID` | L'identifiant `proj…` dans l'URL du projet RevenueCat |
+
+Ce n'est **pas** la clé In-App Purchase du §3 : celle-là sert à RevenueCat pour lire les
+transactions, celle-ci sert à l'action pour écrire des prix.
+
+### Lancer
+
+1. Actions → **Grille de prix iOS** → *Run workflow*, sans cocher « Appliquer ». C'est une
+   simulation : le résumé de l'exécution montre, pays par pays, le prix actuel et le prix
+   visé, et ce qui serait fait chez RevenueCat.
+2. Relire le tableau, puis relancer en cochant **Appliquer**.
+
+L'action est **rejouable** : un pays déjà au bon prix n'est pas touché, un essai déjà posé
+non plus. Changer un prix, c'est changer `store/pricing.json` (les tests de
+`store/grid.test.mjs` refusent une grille qui casse les −81 % / −40 %, ou un repli Swift qui
+ne dit plus la ligne française) puis relancer l'action.
+
+Ce qu'elle ne fait **pas** : créer les produits (§2), ajouter l'app chez RevenueCat (§4.2),
+imposer une hausse aux abonnés en place (`preserveCurrentPrice`), remplacer une offre
+d'introduction différente déjà posée — elle la signale. Rien n'est écrit si un seul pays
+nommé ne trouve pas son palier.
