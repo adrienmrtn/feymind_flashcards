@@ -43,10 +43,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
+          # Les scripts n'ont aucune dépendance. Sans ça, setup-node v5 lit `packageManager`
+          # dans package.json et cherche pnpm, qui n'est pas installé.
+          package-manager-cache: false
       - run: node --test store/*.test.mjs
 
   app-store:
@@ -56,10 +59,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
+          # Les scripts n'ont aucune dépendance. Sans ça, setup-node v5 lit `packageManager`
+          # dans package.json et cherche pnpm, qui n'est pas installé.
+          package-manager-cache: false
       - name: ${{ inputs.apply && 'Poser la grille' || 'Simuler la grille' }}
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
@@ -74,10 +80,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
+          # Les scripts n'ont aucune dépendance. Sans ça, setup-node v5 lit `packageManager`
+          # dans package.json et cherche pnpm, qui n'est pas installé.
+          package-manager-cache: false
       - name: ${{ inputs.apply && 'Configurer RevenueCat' || 'Simuler RevenueCat' }}
         env:
           REVENUECAT_API_KEY: ${{ secrets.REVENUECAT_API_KEY }}

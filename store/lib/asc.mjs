@@ -28,9 +28,36 @@ export function readPrivateKey(raw) {
   return createPrivateKey(text);
 }
 
+/**
+ * **Ce qui se vérifie sans appeler Apple.** Un 401 d'Apple ne dit jamais laquelle des trois
+ * valeurs est fausse : on attrape ici celles qui ont la mauvaise forme, avant l'appel.
+ *
+ * - Key ID : dix caractères, lettres majuscules et chiffres (`2X9R4HXF34`).
+ * - Issuer ID : un UUID (`57246542-96fe-1a63-e053-0824d011072a`). Le Team ID, lui, fait dix
+ *   caractères — c'est la confusion la plus fréquente. Vide : clé **individuelle**.
+ */
+export function credentialProblems({ keyId, issuerId }) {
+  const problems = [];
+  if (!/^[A-Z0-9]{10}$/.test(keyId)) {
+    problems.push(`ASC_KEY_ID n'a pas la forme d'un Key ID (10 caractères, majuscules et chiffres) : ${keyId.length} caractères reçus`);
+  }
+  if (issuerId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(issuerId)) {
+    problems.push(
+      `ASC_ISSUER_ID n'a pas la forme d'un Issuer ID (un UUID de 36 caractères avec des tirets) : ${issuerId.length} caractères reçus` +
+        (/^[A-Z0-9]{10}$/.test(issuerId) ? " — ça ressemble à un Team ID ou à un Key ID" : ""),
+    );
+  }
+  return problems;
+}
+
+/**
+ * Le jeton. Une clé **d'équipe** signe avec son Issuer ID (`iss`) ; une clé **individuelle**
+ * n'en a pas et signe `sub: "user"` à la place — sinon Apple répond 401 sans autre détail.
+ */
 export function makeToken({ keyId, issuerId, privateKey, now = Math.floor(Date.now() / 1000) }) {
   const header = base64url({ alg: "ES256", kid: keyId, typ: "JWT" });
-  const payload = base64url({ iss: issuerId, iat: now, exp: now + TOKEN_SECONDS + 60, aud: "appstoreconnect-v1" });
+  const who = issuerId ? { iss: issuerId } : { sub: "user" };
+  const payload = base64url({ ...who, iat: now, exp: now + TOKEN_SECONDS + 60, aud: "appstoreconnect-v1" });
   const signature = sign("sha256", Buffer.from(`${header}.${payload}`), {
     key: privateKey,
     dsaEncoding: "ieee-p1363",
@@ -40,7 +67,8 @@ export function makeToken({ keyId, issuerId, privateKey, now = Math.floor(Date.n
 
 export class AppStoreConnect {
   constructor({ keyId, issuerId, privateKey, log = console.log }) {
-    this.credentials = { keyId, issuerId, privateKey: readPrivateKey(privateKey) };
+    // Un secret collé garde souvent un espace ou un retour à la ligne : Apple le refuse.
+    this.credentials = { keyId: keyId.trim(), issuerId: (issuerId ?? "").trim(), privateKey: readPrivateKey(privateKey) };
     this.log = log;
     this.token = null;
     this.tokenAt = 0;

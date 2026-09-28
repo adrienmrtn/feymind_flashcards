@@ -558,6 +558,11 @@ GitHub → Settings → Secrets and variables → Actions → *New repository se
 | `REVENUECAT_API_KEY` | RevenueCat → Project settings → **API keys** → *+ New secret API key*, version **v2**, droits *Project configuration* en lecture/écriture (`sk_…`) |
 | `REVENUECAT_PROJECT_ID` | L'identifiant `proj…` dans l'URL du projet RevenueCat |
 
+Une clé **individuelle** (onglet « Clés individuelles ») marche aussi : elle n'a pas
+d'Issuer ID, il suffit alors de ne pas créer `ASC_ISSUER_ID`. Si Apple répond 401, le
+résumé de l'action liste ce qu'il faut vérifier — le plus souvent, un `.p8` de notifications
+push (developer.apple.com → Keys), qui s'appelle aussi `AuthKey_….p8`.
+
 Ce n'est **pas** la clé In-App Purchase du §3 : celle-là sert à RevenueCat pour lire les
 transactions, celle-ci sert à l'action pour écrire des prix.
 
