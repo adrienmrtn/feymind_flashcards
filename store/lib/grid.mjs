@@ -160,6 +160,16 @@ export function priceStartDate(hasPrice, today = new Date().toISOString().slice(
   return hasPrice ? today : null;
 }
 
+/**
+ * **La date qu'Apple exige, lue dans son refus.** Apple ne dit pas d'avance à partir de quand
+ * un changement de prix est accepté — c'était surlendemain, pas demain — mais il l'écrit dans
+ * l'erreur : « a future date is expected, and must be on or after 2026-09-30 ». On la prend
+ * telle quelle plutôt que de la deviner.
+ */
+export function earliestDateFrom(message) {
+  return /on or after (\d{4}-\d{2}-\d{2})/i.exec(message ?? "")?.[1] ?? null;
+}
+
 export function dayAfter(date) {
   const next = new Date(`${date}T00:00:00Z`);
   next.setUTCDate(next.getUTCDate() + 1);
