@@ -981,6 +981,10 @@ enum IosI18nCatalogs {
         "ios.onb.compare.free": "Gratuit",
         "ios.onb.compare.pro": "Premium",
         "ios.onb.compare.cta": "Rejoindre la communauté",
+        // Le cours du parcours : Mika l'écrit, et ce qu'on fait s'il rate.
+        "ios.mika.course.title": "Mika écrit ton cours",
+        "ios.mika.course.materials": "à partir de tes supports",
+        "ios.onb.course.skip": "Continuer sans cours",
     ]
 
     static let de: [String: String] = [
@@ -1963,6 +1967,10 @@ enum IosI18nCatalogs {
         "ios.onb.compare.free": "Free",
         "ios.onb.compare.pro": "Premium",
         "ios.onb.compare.cta": "Join the community",
+        // The course of the flow: Mika writes it, and what to do if it fails.
+        "ios.mika.course.title": "Mika is writing your course",
+        "ios.mika.course.materials": "from your materials",
+        "ios.onb.course.skip": "Continue without a course",
     ]
 
     static let es: [String: String] = [
@@ -2945,6 +2953,10 @@ enum IosI18nCatalogs {
         "ios.onb.compare.free": "Free",
         "ios.onb.compare.pro": "Premium",
         "ios.onb.compare.cta": "Join the community",
+        // The course of the flow: Mika writes it, and what to do if it fails.
+        "ios.mika.course.title": "Mika is writing your course",
+        "ios.mika.course.materials": "from your materials",
+        "ios.onb.course.skip": "Continue without a course",
     ]
 
     static let tr: [String: String] = [
@@ -3927,6 +3939,10 @@ enum IosI18nCatalogs {
         "ios.onb.compare.free": "Free",
         "ios.onb.compare.pro": "Premium",
         "ios.onb.compare.cta": "Join the community",
+        // The course of the flow: Mika writes it, and what to do if it fails.
+        "ios.mika.course.title": "Mika is writing your course",
+        "ios.mika.course.materials": "from your materials",
+        "ios.onb.course.skip": "Continue without a course",
     ]
 
     /// **L'anglais, au complet.**
@@ -4916,6 +4932,10 @@ enum IosI18nCatalogs {
         "ios.onb.compare.free": "Free",
         "ios.onb.compare.pro": "Premium",
         "ios.onb.compare.cta": "Join the community",
+        // The course of the flow: Mika writes it, and what to do if it fails.
+        "ios.mika.course.title": "Mika is writing your course",
+        "ios.mika.course.materials": "from your materials",
+        "ios.onb.course.skip": "Continue without a course",
     ]
 
     static func table(for locale: String) -> [String: String] {

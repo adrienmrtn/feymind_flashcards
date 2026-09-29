@@ -164,8 +164,11 @@ struct OnboardingFlowView: View {
         case .sheetIntro: MikaSpeaksStepView(text: i18n.t("ios.onb.sheetIntro"))
         case .signIn: SignInStepView()
         case .materialsQuestion: MaterialsQuestionStepView()
-        case .materials, .demoCourse, .courseBuilding, .courseReview, .trainPrompt, .trainCards, .wellDone,
-             .socialProof, .comparison:
+        case .materials: OnboardingMaterialsStepView()
+        case .demoCourse: DemoCourseStepView()
+        case .courseBuilding: CourseBuildingStepView()
+        case .courseReview: CourseReviewStepView()
+        case .trainPrompt, .trainCards, .wellDone, .socialProof, .comparison:
             OnboardingComingStepView(step: step)
         case .trialOffer: TrialOfferStepView()
         case .trialReminder: TrialReminderStepView()
@@ -176,9 +179,17 @@ struct OnboardingFlowView: View {
     private func finish() {
         Analytics.track(.onboardingFinished)
         OnboardingPreferences.markCompleted()
-        // L'app s'ouvre sur l'import du premier deck, payé ou pas. Voir
-        // `OnboardingPreferences.pendingFirstImport`.
-        OnboardingPreferences.pendingFirstImport = true
+        if let course = model.builtCourse {
+            // **Le cours du parcours est le premier cours de l'app.** Il est déjà dans la
+            // bibliothèque ; la liste l'ouvre à l'arrivée, sur son plan, et « créons ton
+            // premier cours » n'a plus lieu d'être.
+            FirstDeckHandoff.course = course
+            OnboardingPreferences.pendingFirstImport = false
+        } else {
+            // Sans cours construit — la construction a raté et l'élève a continué —, l'app
+            // s'ouvre sur l'import du premier deck, comme avant.
+            OnboardingPreferences.pendingFirstImport = true
+        }
         onFinish()
     }
 }

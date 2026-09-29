@@ -511,8 +511,11 @@ enum CourseRepository {
     /// `@Query` coûtait la table entière — c'est le calcul que faisaient quatre écrans pour
     /// obtenir cet entier.
     static func ownedCount(in context: ModelContext) -> Int {
-        (try? context.fetchCount(FetchDescriptor<Course>(
-            predicate: #Predicate { !$0.isFromLibrary }
+        // Le cours de démonstration du parcours d'accueil n'est pas un import : même
+        // règle que `ProAccess.canImportCourse`.
+        let sample = CourseSource.sample.rawValue
+        return (try? context.fetchCount(FetchDescriptor<Course>(
+            predicate: #Predicate { !$0.isFromLibrary && $0.sourceRaw != sample }
         ))) ?? 0
     }
 

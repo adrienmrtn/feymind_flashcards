@@ -14,10 +14,6 @@ struct OnboardingComingStepView: View {
 
     private var title: String {
         switch step {
-        case .materials: i18n.t("ios.deckSetup.materials")
-        case .demoCourse: i18n.t("ios.onb.demo.title")
-        case .courseBuilding: i18n.t("ios.deckBuild.title")
-        case .courseReview: i18n.t("ios.deck.chapters")
         case .trainPrompt: i18n.t("ios.onb.train.title")
         case .trainCards: i18n.t("ios.onb.train.title")
         case .wellDone: i18n.t("ios.onb.wellDone.title", ["name": model.displayName])

@@ -119,6 +119,34 @@ final class OnboardingModel {
         }
     }
 
+    /// Les supports déposés, dans le même objet que la création d'un deck : c'est lui que
+    /// `DeckBuilder` lit, et le parcours n'a pas de raison d'en inventer un second. La
+    /// provenance est posée d'avance : le parcours ne demande ni matière, ni nom, ni
+    /// épreuve — le titre vient du modèle, et le reste se règle plus tard dans l'app.
+    let deckSetup: DeckSetup = {
+        let setup = DeckSetup()
+        setup.source = .materials
+        setup.purpose = .justStudying
+        return setup
+    }()
+
+    /// Le cours de démonstration choisi, quand il n'a pas ses supports.
+    var demoCourse: OnboardingDemoCourse? {
+        didSet {
+            guard let demoCourse, demoCourse.id != oldValue?.id else { return }
+            Analytics.track(.onboardingAnswer, ["field": "demoCourse", "value": .text(demoCourse.id)])
+        }
+    }
+
+    /// **Le cours construit pendant le parcours**, réel ou de démonstration, tel qu'il est
+    /// enregistré. C'est lui que l'écran du cours montre, et lui que l'app ouvre à la sortie.
+    var builtCourse: Course?
+
+    /// **Vrai quand la construction a échoué et qu'on continue sans cours.** Le cours, les
+    /// cartes et le bravo se sautent alors : on ne montre pas un plan vide, et on ne fait pas
+    /// réviser trois cartes qui n'existent pas.
+    var courseUnavailable = false
+
     /// Vrai quand le cours qu'on montre est le cours de démonstration, et non les supports
     /// de l'élève : les trois cartes d'entraînement viennent alors du jeu embarqué.
     var isDemoCourse: Bool {
@@ -184,7 +212,15 @@ final class OnboardingModel {
     // MARK: Avancer, revenir
 
     private func isSkipped(_ step: OnboardingStep) -> Bool {
-        step.isSkipped(for: country, hasMaterials: hasMaterials)
+        step.isSkipped(for: country, hasMaterials: hasMaterials, courseUnavailable: courseUnavailable)
+    }
+
+    /// **Revenir sur un écran hors des règles du retour**, quand quelque chose a raté : la
+    /// construction du cours renvoie aux supports. Le verrou du glissement s'applique
+    /// comme partout.
+    func jump(to target: OnboardingStep) {
+        guard !transitionLock, target != step else { return }
+        step = target
     }
 
     func advance() {

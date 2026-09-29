@@ -127,12 +127,16 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// quand on a dit ne pas en avoir, et on ne choisit pas un cours joué quand on vient de
     /// déposer le sien. Tant que la question n'a pas de réponse, les deux se sautent — le
     /// parcours ne s'arrête jamais sur un écran vide.
-    func isSkipped(for country: SchoolingCountry, hasMaterials: Bool? = nil) -> Bool {
+    ///
+    /// Quand la construction du cours a échoué et qu'on continue sans, le cours, les cartes
+    /// et le bravo se sautent aussi : il n'y a rien à parcourir ni à réviser.
+    func isSkipped(for country: SchoolingCountry, hasMaterials: Bool? = nil, courseUnavailable: Bool = false) -> Bool {
         switch self {
         case .schoolType, .year: !SchoolSystem.isDetailed(country)
         case .level: SchoolSystem.isDetailed(country)
         case .materials: hasMaterials != true
         case .demoCourse: hasMaterials != false
+        case .courseReview, .trainPrompt, .trainCards, .wellDone: courseUnavailable
         default: false
         }
     }

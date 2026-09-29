@@ -16,6 +16,9 @@ import UniformTypeIdentifiers
 /// quatre fois de suite quelqu'un qui en dépose quatre.
 struct DeckMaterialsStepView: View {
     @Bindable var setup: DeckSetup
+    /// **Le rond fléché à la place de la pilule**, dans le parcours d'accueil, où tout ce
+    /// qui avance est un rond. La création d'un deck garde sa pilule.
+    var usesArrow: Bool = false
     var onNext: () -> Void
 
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -65,7 +68,11 @@ struct DeckMaterialsStepView: View {
             }
             .onAppear(perform: seedSlots)
         } footer: {
-            OnboardingContinueButton(isEnabled: setup.hasMaterials, action: onNext)
+            if usesArrow {
+                OnboardingArrowButton(isEnabled: setup.hasMaterials, action: onNext)
+            } else {
+                OnboardingContinueButton(isEnabled: setup.hasMaterials, action: onNext)
+            }
         }
         // **Une languette, pas une feuille système.**
         //
