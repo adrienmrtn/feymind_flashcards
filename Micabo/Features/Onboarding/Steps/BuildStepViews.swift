@@ -1,39 +1,41 @@
 import Combine
 import SwiftUI
 
-// MARK: - « 67 %, on prépare ton plan »
+// MARK: - Mika prépare le profil
 
-/// **Le calcul du plan.** Un pourcentage en très grand qui compte, une barre fine dessous,
-/// et une liste de quatre lignes qui se cochent. Purement visuel — les réponses sont déjà
-/// enregistrées — mais il ne doit jamais laisser croire que l'app a gelé.
+/// **Le profil se prépare, et Mika se présente.** Le blob, « Salut, je suis Mika », ce qu'il
+/// fait, le pourcentage, la grille de points, l'étape. Purement visuel — les réponses sont
+/// déjà enregistrées — mais il ne doit jamais laisser croire que l'app a gelé.
 ///
-/// **Il dure huit secondes**, et c'est un plancher, pas une approximation. Un écran qui
-/// annonce qu'il construit un plan puis disparaît en une seconde n'a rien construit ; à
-/// cinq secondes, il avait encore l'air d'une animation.
+/// **Il dure six secondes et demie**, et c'est un plancher, pas une approximation. Un écran
+/// qui annonce qu'il prépare un profil puis disparaît en une seconde n'a rien préparé.
+/// L'avancement n'est pas linéaire : il ralentit un peu à trois reprises, comme un travail
+/// qui bute, sans les paliers francs de l'ancien écran qui se lisaient comme un script.
 ///
-/// **La fin ne se saute pas d'elle-même** : c'est l'élève qui appuie.
+/// **La fin enchaîne d'elle-même.** À cent pour cent, un coup net, le blob rapetisse, et la
+/// page suivante arrive : c'est Mika qui prend la parole, et personne n'attend un bouton
+/// pour le laisser parler.
 struct BuildingStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     /// Durée du chargement, en secondes. Verrouillée par un test.
-    static let duration = 8.0
-
-    private var steps: [String] {
-        (1...4).map { i18n.t("ios.build.step\($0)") }
-    }
+    static let duration = 6.5
+    /// Ce qu'on laisse lire « 100 % » avant d'enchaîner.
+    private static let holdAtEnd = 0.7
 
     @State private var elapsed = 0.0
-    @State private var completed = 0
-    @State private var didRing = false
+    @State private var didFinish = false
+    @State private var didAdvance = false
 
     private static let ticker = Timer.publish(every: 1.0 / 30.0, on: .main, in: .common).autoconnect()
 
-    /// **Le chargement ne monte pas au métronome.** Une barre parfaitement linéaire se lit
-    /// comme une animation, pas comme un travail.
+    /// **Le chargement ralentit trois fois, sans jamais s'arrêter.** Une barre parfaitement
+    /// linéaire se lit comme une animation, pas comme un travail ; des paliers plats se
+    /// lisent comme un script. Entre les deux : des passages lents, et des passages vifs.
     private static let curve: [(at: Double, reached: Double)] = [
-        (0.00, 0.00), (0.08, 0.21), (0.22, 0.27), (0.36, 0.55), (0.48, 0.61),
-        (0.64, 0.83), (0.82, 0.88), (0.94, 0.98), (1.00, 1.00),
+        (0.00, 0.00), (0.10, 0.11), (0.20, 0.15), (0.38, 0.44), (0.46, 0.48),
+        (0.66, 0.73), (0.74, 0.77), (0.90, 0.94), (1.00, 1.00),
     ]
 
     private var progress: Double {
@@ -50,90 +52,93 @@ struct BuildingStepView: View {
         return 1
     }
 
-    private var isDone: Bool { completed >= steps.count }
+    /// Quatre étapes, aux quarts de l'avancement.
+    private var stepLabel: String {
+        let index = min(3, Int(progress * 4))
+        return i18n.t("ios.mika.step\(index + 1)")
+    }
 
     var body: some View {
-        VStack(spacing: 0) {
-            VStack(spacing: 28) {
-                Spacer(minLength: 0)
-
-                Text("\(Int(progress * 100)) %")
-                    .font(MicaboFont.ui(88, weight: .bold))
-                    .foregroundStyle(OnboardingPalette.ink)
-                    .tracking(-4)
-                    .monospacedDigit()
-                    .contentTransition(.numericText())
-
-                Text(isDone ? i18n.t("ios.build.done") : i18n.t("ios.build.title"))
-                    .font(OnboardingPalette.title(26))
-                    .foregroundStyle(OnboardingPalette.ink)
-                    .tracking(-0.6)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(minHeight: 40)
-                    .animation(OnboardingMotion.enter, value: isDone)
-
-                MicaboProgressBar(progress: progress, tint: OnboardingPalette.accent, track: OnboardingPalette.card)
-                    .frame(height: 6)
-                    .padding(.horizontal, MicaboSpacing.xl)
-
-                checklist
-                    .padding(.top, 8)
-
-                Spacer(minLength: 0)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.horizontal, MicaboSpacing.screen)
-
-            OnboardingArrowBar(isEnabled: isDone, isLoading: !isDone) {
-                model.advance()
-            }
-        }
-        .background(OnboardingPalette.white.ignoresSafeArea())
+        MikaLoadingView(
+            progress: progress,
+            title: i18n.t("ios.mika.hello"),
+            subtitle: i18n.t("ios.mika.role"),
+            stepLabel: stepLabel,
+            isDone: didFinish
+        )
         .environment(\.onboardingSurface, .canvas)
         .onReceive(Self.ticker) { _ in tick() }
     }
 
-    private var checklist: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
-                HStack(spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(index < completed ? OnboardingPalette.ink : OnboardingPalette.card)
-                        if index < completed {
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(OnboardingPalette.white)
-                        }
-                    }
-                    .frame(width: 24, height: 24)
-                    .animation(OnboardingMotion.select, value: completed)
-
-                    Text(step)
-                        .font(MicaboFont.ui(15, weight: index <= completed ? .medium : .regular))
-                        .foregroundStyle(index <= completed ? OnboardingPalette.ink : OnboardingPalette.grayLight)
-                }
-            }
+    private func tick() {
+        guard !didAdvance else { return }
+        guard elapsed < Self.duration else {
+            finishIfNeeded()
+            return
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, MicaboSpacing.md)
+        elapsed = min(Self.duration, elapsed + 1.0 / 30.0)
+        if elapsed >= Self.duration { finishIfNeeded() }
     }
 
-    private func tick() {
-        guard elapsed < Self.duration else { return }
-        elapsed = min(Self.duration, elapsed + 1.0 / 30.0)
-
-        let reached = min(steps.count, Int(progress * Double(steps.count)))
-        if reached > completed {
-            completed = reached
-            Haptics.tick()
+    private func finishIfNeeded() {
+        guard !didFinish else { return }
+        didFinish = true
+        Haptics.success()
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.holdAtEnd) {
+            guard !didAdvance else { return }
+            didAdvance = true
+            model.advance()
         }
+    }
+}
 
-        if elapsed >= Self.duration, !didRing {
-            didRing = true
-            completed = steps.count
-            Haptics.success()
+// MARK: - Mika prend la parole
+
+/// **Une page pour une phrase de Mika.** Le blob, petit, en haut — celui du chargement,
+/// qui vient de rapetisser — et la phrase qui se lit mot à mot dessous, avec le rond qui
+/// n'arrive qu'une fois le dernier mot posé. Elle sert deux fois : avant les cinq écrans de
+/// démonstration, et avant la fiche.
+struct MikaSpeaksStepView: View {
+    let text: String
+
+    @Environment(OnboardingModel.self) private var model
+
+    @State private var isReady = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+
+                MikaBlob(size: 112, wobble: 0.14)
+                    .padding(.bottom, 30)
+                    .onboardingAppear(index: 1)
+
+                OnboardingReadingText(
+                    template: text,
+                    size: 32,
+                    wordDelay: 0.2,
+                    startDelay: 0.6,
+                    highlightsOnFinish: false,
+                    onFinish: {
+                        withAnimation(.easeOut(duration: 0.4)) { isReady = true }
+                    }
+                )
+                .padding(.horizontal, MicaboSpacing.screen)
+
+                Spacer(minLength: 0)
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            OnboardingArrowBar {
+                model.advance()
+            }
+            .opacity(isReady ? 1 : 0)
+            .allowsHitTesting(isReady)
         }
+        .onboardingChromeInset()
+        .background(OnboardingPalette.white.ignoresSafeArea())
+        .environment(\.onboardingSurface, .canvas)
     }
 }

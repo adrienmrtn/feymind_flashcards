@@ -155,8 +155,13 @@ struct OnboardingFlowView: View {
         case .studyTime: StudyTimeStepView()
         case .notifications: NotificationsStepView()
         case .building: BuildingStepView()
-        case .featuresIntro, .featureSheets, .featurePlan, .featureCards, .featurePocket, .featureMika, .sheetIntro:
-            OnboardingComingStepView(step: step)
+        case .featuresIntro: MikaSpeaksStepView(text: i18n.t("ios.onb.features.intro"))
+        case .featureSheets: FeatureStepView(feature: .sheets)
+        case .featurePlan: FeatureStepView(feature: .plan)
+        case .featureCards: FeatureStepView(feature: .cards)
+        case .featurePocket: FeatureStepView(feature: .pocket)
+        case .featureMika: FeatureStepView(feature: .mika)
+        case .sheetIntro: MikaSpeaksStepView(text: i18n.t("ios.onb.sheetIntro"))
         case .signIn: SignInStepView()
         case .materialsQuestion: MaterialsQuestionStepView()
         case .materials, .demoCourse, .courseBuilding, .courseReview, .trainPrompt, .trainCards, .wellDone,
