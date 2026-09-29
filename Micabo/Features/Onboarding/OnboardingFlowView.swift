@@ -1,40 +1,52 @@
 import SwiftUI
 
-/// Parcours d'accueil complet. Strictement linéaire : chaque écran pousse le suivant,
-/// il n'y a ni retour arrière ni geste de balayage.
+/// Parcours d'accueil complet. Strictement linéaire : chaque écran pousse le suivant au
+/// bouton, on revient par la pilule du haut là où c'est permis, et rien ne se feuillette au
+/// doigt.
+///
+/// **La barre du haut ne bouge pas, les pages glissent dessous.** La jauge et la pilule de
+/// retour sont posées par-dessus la pile des pages, hors du glissement : quand une page
+/// arrive, la jauge avance d'un cran sur place, et c'est ce qui fait lire un seul parcours
+/// plutôt qu'une suite d'écrans.
 struct OnboardingFlowView: View {
     var onFinish: () -> Void
 
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var model = OnboardingModel()
+    @State private var pager = OnboardingPager(current: .hookLogo)
 
     private var surface: OnboardingSurface { model.step.surface }
 
     var body: some View {
-        ZStack {
-            // Le fond de l'écran monte jusqu'en haut de la zone d'état : la jauge et
-            // l'heure du téléphone reposent sur la couleur de l'écran, jamais sur une
-            // bande crème rapportée.
-            surface.background
-                .ignoresSafeArea()
-                .animation(.easeInOut(duration: 0.3), value: model.step)
+        GeometryReader { proxy in
+            ZStack(alignment: .top) {
+                surface.background
+                    .ignoresSafeArea()
 
-            VStack(spacing: 0) {
                 ZStack {
-                    stepView
-                        .id(model.step)
-                        .transition(.onboardingFade)
+                    ForEach(pager.pages, id: \.self) { step in
+                        page(for: step, size: proxy.size)
+                    }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .animation(OnboardingMotion.page, value: model.step)
+                .frame(width: proxy.size.width, height: proxy.size.height)
+                .clipped()
+
+                OnboardingTopBar(
+                    progress: model.step.progress,
+                    showsBack: model.canGoBack,
+                    isVisible: model.step.showsChrome,
+                    onBack: { model.goBack() }
+                )
+            }
+            .onChange(of: model.step) { previous, next in
+                slide(from: previous, to: next, width: proxy.size.width)
             }
         }
         .environment(model)
         .environment(\.onboardingSurface, surface)
         .environment(\.locale, i18n.locale.foundation)
-        // Sur fond sombre, l'heure et la batterie doivent passer en clair : sinon elles
-        // disparaissent dans l'encre.
-        .preferredColorScheme(surface.isDark ? .dark : .light)
+        .preferredColorScheme(.light)
         .onAppear {
             Haptics.prepare()
             Analytics.track(.onboardingStarted)
@@ -43,51 +55,113 @@ struct OnboardingFlowView: View {
                 "index": .number(Double(model.step.rawValue)),
             ])
         }
-        // Chaque écran atteint, avec son rang : c'est de ces lignes que se tire
-        // l'entonnoir, et le rang voyage avec pour que le serveur n'ait pas à tenir une
-        // copie de l'ordre des écrans.
-        .onChange(of: model.step) { _, step in
-            Analytics.track(.onboardingStep, [
-                "step": .text(step.analyticsName),
-                "index": .number(Double(step.rawValue)),
-            ])
-            // **La page qui se pose se sent**, un cinquième de seconde après l'appui,
-            // quand le fondu est fini : c'est l'atterrissage, pas le départ.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                Haptics.tick()
+    }
+
+    /// Une page de la pile : l'écran de l'étape, à la taille de l'écran, décalé par le
+    /// glissement en cours. Pendant qu'une page glisse, aucune des deux ne répond au doigt.
+    private func page(for step: OnboardingStep, size: CGSize) -> some View {
+        stepView(step)
+            .frame(width: size.width, height: size.height)
+            .overlay {
+                OnboardingPalette.ink
+                    .opacity(pager.veilOpacity(for: step))
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
             }
+            .opacity(pager.opacity(for: step))
+            .offset(x: pager.offset(for: step))
+            .allowsHitTesting(step == pager.current && pager.outgoing == nil)
+    }
+
+    // MARK: - Le glissement
+
+    /// **Chaque changement d'étape est un glissement**, et il se joue en deux temps : la
+    /// nouvelle page est d'abord posée hors champ, puis, au tour de boucle suivant, les deux
+    /// pages sont animées vers leur place. Poser et animer dans le même tour ne glisserait
+    /// rien : la nouvelle page n'aurait jamais été vue ailleurs qu'à l'arrivée.
+    ///
+    /// Le verrou du modèle tient le temps du glissement : un second appui pendant qu'une
+    /// page arrive n'en empile pas une troisième.
+    private func slide(from previous: OnboardingStep, to next: OnboardingStep, width: CGFloat) {
+        Analytics.track(.onboardingStep, [
+            "step": .text(next.analyticsName),
+            "index": .number(Double(next.rawValue)),
+        ])
+
+        let forward = next.rawValue > previous.rawValue
+        let duration = reduceMotion ? 0.25 : OnboardingMotion.slideDuration
+        model.transitionLock = true
+
+        var staged = OnboardingPager(current: next)
+        staged.outgoing = previous
+        staged.direction = forward ? .forward : .backward
+        if reduceMotion {
+            staged.currentOpacity = 0
+        } else {
+            staged.currentOffset = forward ? width : -width * OnboardingMotion.slideParallax
+            staged.veil = forward ? 0 : OnboardingMotion.slideVeil
+        }
+        pager = staged
+
+        DispatchQueue.main.async {
+            if reduceMotion {
+                withAnimation(.easeInOut(duration: duration)) {
+                    pager.currentOpacity = 1
+                }
+            } else {
+                withAnimation(OnboardingMotion.slide) {
+                    pager.currentOffset = 0
+                    pager.outgoingOffset = forward ? -width * OnboardingMotion.slideParallax : width
+                    pager.veil = forward ? OnboardingMotion.slideVeil : 0
+                }
+            }
+        }
+
+        // **La page qui se pose se sent**, aux trois quarts du glissement, quand elle
+        // freine : c'est l'atterrissage, pas le départ.
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration * 0.75) {
+            Haptics.tick()
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration + 0.03) {
+            if pager.current == next {
+                pager.outgoing = nil
+                pager.veil = 0
+                pager.currentOpacity = 1
+            }
+            model.transitionLock = false
         }
     }
 
+    // MARK: - Les écrans
+
     @ViewBuilder
-    private var stepView: some View {
-        switch model.step {
+    private func stepView(_ step: OnboardingStep) -> some View {
+        switch step {
         case .hookLogo: HookLogoStepView()
-        case .hookRating: HookRatingStepView()
-        case .proofRetention: ProofRetentionStepView()
-        case .proofWhy: ProofWhyStepView()
+        case .name: NameStepView()
+        case .welcome: WelcomeStepView()
         case .country: CountryStepView()
         case .level: LevelStepView()
         case .schoolType: SchoolTypeStepView()
         case .year: SchoolYearStepView()
         case .subjects: SubjectsStepView()
-        case .source: SourceStepView()
+        case .worries: WorriesStepView()
         case .goal: GoalStepView()
+        case .proofRetention: ProofRetentionStepView()
         case .currentAverage: CurrentAverageStepView()
         case .targetAverage: TargetAverageStepView()
-        case .proofRealistic: ProofRealisticStepView()
         case .dailyTime: DailyTimeStepView()
-        case .commitment: CommitmentStepView()
-        case .proofCurve: ProofCurveStepView()
-        case .method: MethodStepView()
-        case .name: NameStepView()
-        case .thanks: ThanksStepView()
-        case .reviews: ReviewsStepView()
-        case .building: BuildingStepView()
-        case .planReady: PlanReadyStepView()
-        case .signIn: SignInStepView()
         case .studyTime: StudyTimeStepView()
         case .notifications: NotificationsStepView()
+        case .building: BuildingStepView()
+        case .featuresIntro, .featureSheets, .featurePlan, .featureCards, .featurePocket, .featureMika, .sheetIntro:
+            OnboardingComingStepView(step: step)
+        case .signIn: SignInStepView()
+        case .materialsQuestion: MaterialsQuestionStepView()
+        case .materials, .demoCourse, .courseBuilding, .courseReview, .trainPrompt, .trainCards, .wellDone,
+             .socialProof, .comparison:
+            OnboardingComingStepView(step: step)
         case .trialOffer: TrialOfferStepView()
         case .trialReminder: TrialReminderStepView()
         case .paywall: PaywallStepView(onFinish: finish)
@@ -104,28 +178,16 @@ struct OnboardingFlowView: View {
     }
 }
 
-extension AnyTransition {
-    /// Passage d'un écran au suivant : un glissement de vingt-huit points, un fondu, et
-    /// un rien de profondeur.
-    ///
-    /// Pas un glissement pleine largeur. Faire traverser tout l'écran à une page donne
-    /// l'impression de feuilleter un carrousel, ça attire l'œil sur le mouvement au lieu du
-    /// contenu, et sur vingt écrans ça fatigue. Un décalage court suffit à dire « on
-    /// avance », et le fondu fait le reste.
-    ///
-    /// **La page qui part recule d'un cheveu, celle qui arrive grandit d'autant.** Deux
-    /// pour cent d'échelle : invisible en soi, mais c'est ce qui fait qu'une page en
-    /// remplace une autre au lieu de glisser à côté d'elle. La transition d'un
-    /// `NavigationStack` fait la même chose.
-    static var onboardingPage: AnyTransition {
-        .asymmetric(
-            insertion: .offset(x: 28).combined(with: .opacity).combined(with: .scale(scale: 0.98)),
-            removal: .offset(x: -28).combined(with: .opacity).combined(with: .scale(scale: 0.98))
-        )
-    }
+extension OnboardingMotion {
+    /// Le voile posé sur la page qui recule sous la nouvelle : six centièmes, juste ce
+    /// qu'il faut pour qu'elle se lise dessous.
+    static let slideVeil: Double = 0.06
+}
 
-    /// **Le passage d'un écran au suivant dans le parcours d'accueil : un fondu.** Rien ne
-    /// glisse, rien ne grandit. Le glissement reste pour les parcours qui l'appellent.
+extension AnyTransition {
+    /// **Un fondu, pour ce qui change à l'intérieur d'un écran** — les étapes d'un deck qui
+    /// se crée, les deux paywalls. Le glissement est réservé aux pages du parcours, et il
+    /// n'est pas une transition : voir `OnboardingPager`.
     static var onboardingFade: AnyTransition {
         .opacity
     }

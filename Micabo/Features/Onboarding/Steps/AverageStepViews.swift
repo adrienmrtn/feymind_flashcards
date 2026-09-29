@@ -63,7 +63,7 @@ struct CurrentAverageStepView: View {
                 Spacer(minLength: 0)
             }
         } footer: {
-            OnboardingContinueButton(isEnabled: model.currentScore != nil) {
+            OnboardingArrowButton(isEnabled: model.currentScore != nil) {
                 model.advance()
             }
         }
@@ -125,7 +125,7 @@ struct TargetAverageStepView: View {
                 .animation(.easeOut(duration: 0.18), value: model.targetScore)
             }
         } footer: {
-            OnboardingContinueButton(isEnabled: isAtTop || model.targetScore != nil) {
+            OnboardingArrowButton(isEnabled: isAtTop || model.targetScore != nil) {
                 model.advance()
             }
         }

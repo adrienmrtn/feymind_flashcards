@@ -2,22 +2,24 @@ import Foundation
 
 /// Les écrans du parcours d'accueil, dans l'ordre.
 ///
-/// **Le parcours est un quiz, et le quiz est le produit.** Les apps qui convertissent
-/// (Cal AI, Coconote, Quizlet) posent vingt questions avant de montrer un prix, et chaque
-/// question a la même forme : un titre en gras, trois à cinq cartes grises, un bouton
-/// noir. Entre les questions, des écrans de preuve : un chiffre en couleur dans une phrase
-/// noire, un graphe à deux courbes, une carte d'avis. L'élève lit parce qu'on parle de lui,
-/// et il arrive au compte, puis à l'offre, avec un plan qui porte ses chiffres.
+/// **Le parcours est un quiz, puis une démonstration, puis une offre.** Il pose ses
+/// questions d'abord — le prénom, le pays, les matières, ce qui inquiète, les deux moyennes,
+/// le temps par jour, l'heure du rappel — parce qu'un élève lit un parcours qui parle de lui.
+/// Il rend ensuite : Mika prépare le profil, cinq écrans disent ce que l'app fait, puis
+/// l'élève **voit un cours fiché** — le sien, importé pour de vrai, ou un cours de
+/// démonstration — et s'entraîne sur trois cartes. La preuve sociale, la comparaison et
+/// l'offre ne viennent qu'après ça, quand il y a quelque chose à comparer.
 ///
-/// Quatre blocs :
+/// Six blocs :
 ///
-/// 1. **L'accroche** : le logo, la note, puis deux écrans qui parlent de lui avant la
-///    première question — relire ne suffit pas, et c'est pour ça que Micabo existe.
-/// 2. **Le quiz**, avec les preuves intercalées : pays, niveau, matières, d'où il vient,
-///    son objectif, ses deux moyennes, son temps, sa signature, sa méthode, son prénom.
-/// 3. **La construction** : merci, les avis, le plan se calcule, le plan est prêt.
-/// 4. **Le compte et les rappels** : le compte, l'heure où il révise, la notification ;
-///    puis l'essai et le paywall.
+/// 1. **L'accroche** : le logo, le prénom, la bienvenue.
+/// 2. **Le quiz** : pays, niveau, matières, inquiétudes, objectifs, une preuve, les deux
+///    moyennes, le temps par jour, l'heure de révision, les rappels.
+/// 3. **Mika** : le profil se prépare, puis ce que Micabo sait faire, en cinq écrans.
+/// 4. **Le cours** : le compte, les supports ou un cours de démonstration, la construction,
+///    le cours fiché qu'on parcourt.
+/// 5. **Les cartes** : trois cartes, puis « bien joué ».
+/// 6. **L'offre** : la preuve sociale, la comparaison, l'essai, le rappel, le paywall.
 ///
 /// **Le pays passe avant le niveau**, et le niveau avant les matières : chacun décide des
 /// réponses du suivant. La langue se déduit du pays, et ne se demande pas.
@@ -25,11 +27,11 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     // L'accroche.
     /// Le splash : le logo seul, puis la phrase et le bouton qui se posent dessous.
     case hookLogo
-    case hookRating
-    /// Relire, c'est oublier : deux barres.
-    case proofRetention
-    /// « C'est pour ça qu'on a créé Micabo » : une phrase qui se lit, et rien d'autre.
-    case proofWhy
+    /// « Comment veux-tu qu'on t'appelle ? » Obligatoire : tout ce qui suit s'adresse à
+    /// quelqu'un.
+    case name
+    /// « Bienvenue, {prénom}. » Une page pour une phrase, avant la première question.
+    case welcome
 
     // Le quiz.
     case country
@@ -39,32 +41,57 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case schoolType
     case year
     case subjects
-    case source
+    /// Ce qui l'inquiète dans ses études. Plusieurs réponses.
+    case worries
     case goal
+    /// « On s'en occupe » : deux barres, relire contre se tester.
+    case proofRetention
     case currentAverage
     case targetAverage
-    case proofRealistic
+    /// Le temps par jour, sur un curseur qui dessine la progression estimée.
     case dailyTime
-    /// La signature : « tu as choisi dix minutes par jour, signe ici ».
-    case commitment
-    case proofCurve
-    case method
-    case name
-
-    // La construction.
-    case thanks
-    /// Les avis, en carrousel : la preuve sociale, au moment où l'on rend.
-    case reviews
-    case building
-    case planReady
-
-    // Le compte et les rappels.
-    case signIn
     /// L'heure à laquelle il révise : c'est celle du rappel.
     case studyTime
     case notifications
 
-    // L'essai, puis l'offre.
+    // Mika prépare, puis montre.
+    /// Le chargement : Mika se présente pendant que le profil se construit.
+    case building
+    /// « Voyons maintenant comment Micabo peut t'aider. »
+    case featuresIntro
+    case featureSheets
+    case featurePlan
+    case featureCards
+    case featurePocket
+    case featureMika
+    /// « Voyons ensemble à quoi ressemble une fiche générée par Micabo. »
+    case sheetIntro
+
+    // Le compte, puis le cours.
+    case signIn
+    /// « Tu as tes supports ? » Oui ou non : c'est la seule branche du parcours.
+    case materialsQuestion
+    /// Les supports déposés, quand il les a.
+    case materials
+    /// Un cours de démonstration à choisir, quand il ne les a pas.
+    case demoCourse
+    /// La construction du cours, réelle ou jouée.
+    case courseBuilding
+    /// Le cours fiché, qu'on parcourt librement.
+    case courseReview
+
+    // Les cartes.
+    /// « Envie de t'entraîner sur quelques cartes ? »
+    case trainPrompt
+    /// Trois cartes : une recto verso, un QCM, un texte à trou.
+    case trainCards
+    case wellDone
+
+    // La preuve, puis l'offre.
+    /// « On a aidé 45 000 élèves », avec les avis.
+    case socialProof
+    /// « Ça t'a plu ? » Le gratuit contre Pro.
+    case comparison
     case trialOffer
     case trialReminder
     case paywall
@@ -85,31 +112,62 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         OnboardingStep(rawValue: rawValue + 1)
     }
 
-    /// **Chaque pays voit une seule des deux questions de niveau.**
+    var previous: OnboardingStep? {
+        OnboardingStep(rawValue: rawValue - 1)
+    }
+
+    /// **Les écrans que le parcours saute, selon ce qui a été répondu.**
     ///
-    /// Les pays décrits en détail (`SchoolSystem`) ont une filière et une année, et le
-    /// palier large s'en déduit. Les autres n'ont que le palier large : leur proposer une
-    /// filière serait inventer des réponses fausses, et un élève à qui l'on propose une
-    /// année qui n'existe pas chez lui comprend tout de suite que l'app n'a pas été écrite
-    /// pour lui.
-    func isSkipped(for country: SchoolingCountry) -> Bool {
+    /// Chaque pays voit une seule des deux questions de niveau : les pays décrits en détail
+    /// (`SchoolSystem`) ont une filière et une année, et le palier large s'en déduit. Les
+    /// autres n'ont que le palier large : leur proposer une filière serait inventer des
+    /// réponses fausses.
+    ///
+    /// Les supports et le cours de démonstration s'excluent : on ne dépose pas de documents
+    /// quand on a dit ne pas en avoir, et on ne choisit pas un cours joué quand on vient de
+    /// déposer le sien. Tant que la question n'a pas de réponse, les deux se sautent — le
+    /// parcours ne s'arrête jamais sur un écran vide.
+    func isSkipped(for country: SchoolingCountry, hasMaterials: Bool? = nil) -> Bool {
         switch self {
         case .schoolType, .year: !SchoolSystem.isDetailed(country)
         case .level: SchoolSystem.isDetailed(country)
+        case .materials: hasMaterials != true
+        case .demoCourse: hasMaterials != false
         default: false
         }
     }
 
-    /// Vrai pour les écrans qui posent une question. Ce sont les seuls où l'on revient.
+    /// Vrai pour les écrans qui posent une question.
     var isQuestion: Bool {
         switch self {
-        case .country, .level, .schoolType, .year, .subjects, .source, .goal,
-             .currentAverage, .targetAverage, .dailyTime, .method, .name:
+        case .name, .country, .level, .schoolType, .year, .subjects, .worries, .goal,
+             .currentAverage, .targetAverage, .dailyTime, .studyTime, .materialsQuestion, .demoCourse:
             true
         default:
             false
         }
     }
+
+    /// **La barre du haut — la pilule de retour et la jauge — se montre sur les écrans qui
+    /// font partie du parcours, et se retire de ceux qui sont un moment à eux seuls** : le
+    /// splash, les deux chargements, le cours qu'on parcourt, les cartes, le bravo, et le
+    /// paywall qui porte sa propre croix.
+    var showsChrome: Bool {
+        switch self {
+        case .hookLogo, .building, .courseBuilding, .courseReview, .trainCards, .wellDone, .paywall:
+            false
+        default:
+            true
+        }
+    }
+
+    /// **Le premier écran où l'on peut revenir, et le dernier.**
+    ///
+    /// On revient jusqu'au pays, et pas plus loin : le prénom et la bienvenue ne se défont
+    /// pas. On ne revient plus après les rappels : tout ce qui suit est un résultat, une
+    /// démonstration, un compte ou une offre, et rien de tout ça ne se défait.
+    static let firstReturnable: OnboardingStep = .country
+    static let lastReturnable: OnboardingStep = .notifications
 
     /// Fond de l'étape, et seule source de vérité à ce sujet.
     ///
@@ -122,10 +180,9 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
 
     /// Position de l'étape dans la jauge, entre 0 et 1.
     ///
-    /// La jauge couvre le parcours entier, du premier écran au paywall : elle ne
-    /// disparaît sur aucune étape, et elle avance toujours dans le même sens. Le
-    /// plancher garde un filet visible dès le premier écran, pour qu'elle ne
-    /// ressemble jamais à une barre cassée.
+    /// La jauge couvre le parcours entier, du premier écran au paywall : elle avance
+    /// toujours dans le même sens. Le plancher garde un filet visible dès le premier écran,
+    /// pour qu'elle ne ressemble jamais à une barre cassée.
     var progress: Double {
         let last = Double(OnboardingStep.allCases.count - 1)
         guard last > 0 else { return 1 }

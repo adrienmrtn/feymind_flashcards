@@ -139,14 +139,14 @@ struct TrialOfferStepView: View {
             }
             .scrollIndicators(.hidden)
 
-            MicaboBottomBar {
-                OnboardingContinueButton(title: i18n.t("ios.ready")) {
-                    model.advance()
-                }
-                .opacity(showsAction ? 1 : 0)
-                .allowsHitTesting(showsAction)
+            OnboardingArrowBar {
+                model.advance()
             }
+            .opacity(showsAction ? 1 : 0)
+            .allowsHitTesting(showsAction)
         }
+        .onboardingChromeInset()
+        .background(OnboardingPalette.white.ignoresSafeArea())
         .onAppear(perform: reveal)
     }
 
@@ -285,14 +285,14 @@ struct TrialReminderStepView: View {
             Spacer(minLength: MicaboSpacing.lg)
             Spacer(minLength: 0)
 
-            MicaboBottomBar {
-                OnboardingContinueButton(title: i18n.t("ios.tryFree")) {
-                    model.advance()
-                }
-                .opacity(showsAction ? 1 : 0)
-                .allowsHitTesting(showsAction)
+            OnboardingArrowBar {
+                model.advance()
             }
+            .opacity(showsAction ? 1 : 0)
+            .allowsHitTesting(showsAction)
         }
+        .onboardingChromeInset()
+        .background(OnboardingPalette.white.ignoresSafeArea())
     }
 }
 

@@ -14,6 +14,10 @@ import SwiftUI
 ///
 /// C'est aussi le seul écran qui porte une sortie : « j'ai déjà un compte ». Quelqu'un qui
 /// réinstalle l'app n'a aucune raison de traverser trente écrans pour retrouver ses decks.
+///
+/// **Le bouton dit « Commencer »**, en toutes lettres : c'est le seul écran où avancer est
+/// une décision qu'on prend, et pas la suite d'une réponse. Partout ailleurs, le rond
+/// fléché suffit.
 struct HookLogoStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(AuthController.self) private var auth
@@ -146,100 +150,5 @@ struct HookLogoStepView: View {
         checkingAccount = false
         showLogin = false
         await sync.sync(context: modelContext)
-    }
-}
-
-// MARK: - L'accroche : la note
-
-/// **« Rejoins plus de 100 000 élèves qui apprennent grâce à Micabo. »** La phrase en
-/// titre, puis le chiffre en très grand, les cinq étoiles, et trois visages en initiales.
-/// Rien d'autre : le titre dit déjà combien ils sont.
-///
-/// Les chiffres viennent de `OnboardingProofFigures` : ils sont provisoires, et ils sont
-/// tous au même endroit pour être remplacés d'un coup par les vrais.
-struct HookRatingStepView: View {
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    var body: some View {
-        OnboardingScaffold(
-            title: i18n.t("ios.hook.rating.title", [
-                "n": OnboardingProofFigures.text(OnboardingProofFigures.students, locale: i18n.locale),
-            ]),
-            scrolls: false,
-            expandsContent: true,
-            centered: true
-        ) {
-            VStack(spacing: 0) {
-                Spacer(minLength: 0)
-
-                VStack(spacing: 18) {
-                    // Pas d'interlettrage négatif : il rognait le dernier chiffre à droite.
-                    Text(OnboardingProofFigures.text(OnboardingProofFigures.rating, locale: i18n.locale))
-                        .font(MicaboFont.ui(112, weight: .bold))
-                        .foregroundStyle(OnboardingPalette.ink)
-                        .monospacedDigit()
-                        .lineLimit(1)
-                        .fixedSize()
-                        .padding(.horizontal, 8)
-
-                    OnboardingStars(size: 26)
-
-                    OnboardingAvatarRow()
-                        .padding(.top, 6)
-                }
-
-                Spacer(minLength: 0)
-            }
-            .frame(maxWidth: .infinity)
-        } footer: {
-            OnboardingContinueButton {
-                model.advance()
-            }
-        }
-    }
-}
-
-// MARK: - Les briques
-
-/// Cinq étoiles, or.
-struct OnboardingStars: View {
-    var size: CGFloat = 14
-    var spacing: CGFloat = 4
-
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    var body: some View {
-        HStack(spacing: spacing) {
-            ForEach(0..<5, id: \.self) { _ in
-                Image(systemName: "star.fill")
-                    .font(.system(size: size))
-                    .foregroundStyle(OnboardingPalette.star)
-            }
-        }
-        .accessibilityElement()
-        .accessibilityLabel(i18n.t("ios.starsA11y"))
-    }
-}
-
-/// Trois ronds d'initiales qui se chevauchent.
-struct OnboardingAvatarRow: View {
-    private static let initials = ["L", "M", "S"]
-    private static let tints: [Color] = [
-        Color(hex: 0x6D28FF), Color(hex: 0x0A0A0A), Color(hex: 0xA78BFA)
-    ]
-
-    var body: some View {
-        HStack(spacing: -10) {
-            ForEach(Array(Self.initials.enumerated()), id: \.offset) { index, initial in
-                Text(initial)
-                    .font(MicaboFont.ui(13, weight: .bold))
-                    .foregroundStyle(OnboardingPalette.white)
-                    .frame(width: 34, height: 34)
-                    .background(Self.tints[index % Self.tints.count], in: Circle())
-                    .overlay(Circle().strokeBorder(OnboardingPalette.white, lineWidth: 2))
-            }
-        }
-        .accessibilityHidden(true)
     }
 }

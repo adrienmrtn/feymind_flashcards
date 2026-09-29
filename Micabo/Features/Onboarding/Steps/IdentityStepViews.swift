@@ -1,10 +1,12 @@
 import SwiftUI
 
-/// **« Dernière question : comment tu t'appelles ? »**
+// MARK: - Le prénom
+
+/// **« Comment veux-tu qu'on t'appelle ? »**
 ///
-/// C'est la dernière question du quiz, le titre le dit, et elle est facultative : on la pose quand l'élève
-/// a déjà donné quatorze réponses, au moment où l'app va lui dire merci et construire son
-/// plan. Après elle, l'app s'adresse à quelqu'un.
+/// C'est la première question, avant tout ce qui trie, et elle n'est pas facultative : tout
+/// ce qui suit s'adresse à quelqu'un — la bienvenue, le bravo, l'accueil — et une app qui
+/// dit « bienvenue, toi » n'a rien demandé.
 ///
 /// **Le prénom ne sert à rien d'autre.** Il ne part pas au modèle, il ne part pas au
 /// serveur, il n'entre dans aucune consigne de génération.
@@ -18,9 +20,7 @@ struct NameStepView: View {
         @Bindable var model = model
 
         return OnboardingScaffold(
-            title: i18n.t("ios.onb.name.last"),
-            subtitle: i18n.t("ios.onb.name.optional"),
-            skip: OnboardingSkip(action: { model.advance() })
+            title: i18n.t("ios.onb.name")
         ) {
             HStack(spacing: 10) {
                 TextField(i18n.t("ios.onb.name.placeholder"), text: $model.displayName)
@@ -47,9 +47,15 @@ struct NameStepView: View {
             .padding(.horizontal, 18)
             .padding(.vertical, 18)
             .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .onAppear { isFocused = true }
+            // Le clavier arrive une fois la page posée : ouvert pendant le glissement, il
+            // ferait remonter le bas de la page avant qu'elle ne soit arrivée.
+            .onAppear {
+                DispatchQueue.main.asyncAfter(deadline: .now() + OnboardingMotion.slideDuration) {
+                    isFocused = true
+                }
+            }
         } footer: {
-            OnboardingContinueButton(
+            OnboardingArrowButton(
                 isEnabled: model.displayName.nilIfBlank != nil,
                 action: advance
             )
@@ -58,9 +64,81 @@ struct NameStepView: View {
 
     private func advance() {
         guard model.displayName.nilIfBlank != nil else { return }
+        isFocused = false
         model.advance()
     }
 }
+
+// MARK: - La bienvenue
+
+/// **« Bienvenue, {prénom}. On est ravis de t'avoir ici. Apprenons à te connaître. »**
+///
+/// Une page pour une phrase, entre le prénom et la première question. Elle gagne sa place
+/// parce qu'elle change de registre : jusqu'ici on demandait, à partir d'ici l'app parle à
+/// quelqu'un. Le prénom s'écrit en grand, la phrase se lit mot à mot en dessous, et le rond
+/// n'arrive qu'une fois le dernier mot posé.
+struct WelcomeStepView: View {
+    @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    @State private var titleRead = false
+    @State private var isReady = false
+
+    private var name: String {
+        model.displayName.nilIfBlank ?? OnboardingPreferences.displayName ?? ""
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+
+                OnboardingReadingText(
+                    template: i18n.t("ios.onb.welcome.title", ["name": name]),
+                    size: 38,
+                    wordDelay: 0.22,
+                    startDelay: 0.55,
+                    highlightsOnFinish: false,
+                    onFinish: { titleRead = true }
+                )
+                .padding(.horizontal, MicaboSpacing.screen)
+
+                if titleRead {
+                    OnboardingReadingText(
+                        template: i18n.t("ios.onb.welcome.sub"),
+                        size: 22,
+                        wordDelay: 0.14,
+                        startDelay: 0.25,
+                        hapticsPerWord: false,
+                        highlightsOnFinish: false,
+                        onFinish: {
+                            withAnimation(.easeOut(duration: 0.4)) { isReady = true }
+                        }
+                    )
+                    .padding(.horizontal, MicaboSpacing.xl)
+                    .padding(.top, MicaboSpacing.lg)
+                    .transition(.opacity)
+                }
+
+                Spacer(minLength: 0)
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .animation(.easeOut(duration: 0.3), value: titleRead)
+
+            OnboardingArrowBar {
+                model.advance()
+            }
+            .opacity(isReady ? 1 : 0)
+            .allowsHitTesting(isReady)
+        }
+        .onboardingChromeInset()
+        .background(OnboardingPalette.white.ignoresSafeArea())
+        .environment(\.onboardingSurface, .canvas)
+    }
+}
+
+// MARK: - La filière
 
 /// **« Tu es dans quel type d'établissement ? »**
 ///
@@ -97,10 +175,12 @@ struct SchoolTypeStepView: View {
             }
             .scrollIndicators(.hidden)
         } footer: {
-            OnboardingContinueButton(isEnabled: model.track != nil) { model.advance() }
+            OnboardingArrowButton(isEnabled: model.track != nil) { model.advance() }
         }
     }
 }
+
+// MARK: - L'année
 
 /// **« Tu es en quelle année ? »**
 ///
@@ -134,7 +214,7 @@ struct SchoolYearStepView: View {
             }
             .scrollIndicators(.hidden)
         } footer: {
-            OnboardingContinueButton(isEnabled: model.year != nil) { model.advance() }
+            OnboardingArrowButton(isEnabled: model.year != nil) { model.advance() }
         }
     }
 }

@@ -5,11 +5,13 @@ import SwiftUI
 /// **Les couleurs du parcours d'accueil, et elles ne sont que quatre.**
 ///
 /// Du blanc, de l'encre, un gris de carte, et un violet. Le violet ne sert qu'à trois
-/// choses : ce qui est choisi, la jauge, et le dégradé du bouton d'achat. Le vert et le
-/// rouge n'existent que dans les graphes, où ils disent « mieux » et « moins bien ».
+/// choses : ce qui est choisi, un chiffre mis en avant, et le dégradé du bouton d'achat. Le
+/// vert et le rouge n'existent que dans les graphes, où ils disent « mieux » et « moins
+/// bien ». **Le dégradé de Mika** — violet, rose, orange — n'apparaît qu'à trois endroits :
+/// le blob de Mika, le sous-titre de son chargement, et le chiffre des élèves aidés.
 ///
 /// C'est la charte des apps qui convertissent (Cal AI, Coconote, RIZZ) : un fond blanc pur,
-/// des titres énormes en gras, un bouton noir pleine largeur, un seul accent. Pas de crème,
+/// des titres énormes en gras, un rond d'encre pour avancer, un seul accent. Pas de crème,
 /// pas de pastel, pas de personnage. Elle est **propre au parcours** : le reste de l'app
 /// garde ses jetons (`MicaboColor`) le temps qu'on décide de l'y faire passer.
 enum OnboardingPalette {
@@ -31,6 +33,12 @@ enum OnboardingPalette {
     static let chartBad = Color(hex: 0xEF4444)
     /// L'or des étoiles.
     static let star = Color(hex: 0xF5B942)
+
+    /// **Le dégradé de Mika** : le violet de l'accent, un rose, un orange. Trois emplois,
+    /// pas un de plus.
+    static let mikaGradient: [Color] = [
+        Color(hex: 0x6D28FF), Color(hex: 0xD946A6), Color(hex: 0xF97316),
+    ]
 
     // MARK: Les tailles de texte
 
@@ -87,7 +95,7 @@ enum OnboardingSurface {
         isDark ? OnboardingPalette.white.opacity(0.22) : OnboardingPalette.cardStrong
     }
 
-    /// Le bouton est une pilule noire. Sur l'encre, il s'inverse.
+    /// Le bouton est d'encre. Sur l'encre, il s'inverse.
     var buttonTint: Color {
         isDark ? OnboardingPalette.white : OnboardingPalette.ink
     }
@@ -105,11 +113,10 @@ enum OnboardingSurface {
 
 /// **Le mouvement du parcours d'accueil, en un seul endroit.**
 ///
-/// Une seule règle : **rien ne rebondit, et rien ne glisse.** Un élément arrive par un
-/// fondu de deux dixièmes de seconde, et c'est tout. Les ressorts, les montées de quatorze
-/// points, le titre qui s'écrit mot à mot, la mascotte qui sursaute : tout ça donnait un
-/// parcours qui tremble et qui a l'air d'un jeu. Un fondu court dit « c'est là », et le
-/// regard va au contenu.
+/// Une seule règle : **rien ne rebondit.** Un élément arrive par un fondu de deux dixièmes
+/// de seconde ; une page arrive par un glissement qui se pose sans dépasser. Les ressorts,
+/// les montées de quatorze points, le titre qui s'écrit mot à mot partout, la mascotte qui
+/// sursaute : tout ça donnait un parcours qui tremble et qui a l'air d'un jeu.
 ///
 /// Les noms sont gardés pour les écrans qui les appellent ; toutes les courbes sont des
 /// fondus courts, et `rise` est nul.
@@ -124,7 +131,8 @@ enum OnboardingMotion {
     static let select = Animation.easeOut(duration: 0.2)
     /// Un élément qui change de forme sous les yeux.
     static let shift = Animation.easeInOut(duration: 0.3)
-    /// Passage d'un écran au suivant.
+    /// Passage d'un état à l'autre **dans** un écran. Les pages, elles, glissent :
+    /// voir `slide`.
     static let page = Animation.easeInOut(duration: 0.2)
     /// Décalage entre deux éléments qui entrent à la suite.
     static let stagger = 0.05
@@ -157,12 +165,17 @@ struct OnboardingSkip {
 
 // MARK: - La page
 
-/// Mise en page commune à tous les écrans du parcours : jauge, retour, titre, sous-titre,
-/// contenu, puis une zone d'action ancrée en bas.
+/// Mise en page commune à tous les écrans du parcours : la place de la barre du haut,
+/// titre, sous-titre, contenu, puis une zone d'action ancrée en bas.
 ///
 /// Un écran de ce parcours tient en **un titre de deux lignes en 34 points, une ligne
 /// grise au plus, et une seule chose à regarder.** C'est la forme de Cal AI, écran après
 /// écran, et c'est la forme qu'on lit en deux secondes.
+///
+/// **La barre du haut n'est pas dedans.** Elle est posée par-dessus les pages, hors du
+/// glissement (`OnboardingTopBar`) ; le gabarit ne fait que lui laisser sa place, sur les
+/// écrans qui la montrent. Hors du parcours — la création d'un deck emploie le même
+/// gabarit — il n'y a pas de barre, donc pas de place à laisser.
 struct OnboardingScaffold<Content: View, Footer: View>: View {
     var eyebrow: String?
     var title: String
@@ -217,10 +230,14 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         self.footer = footer
     }
 
+    /// La place de la barre du haut : seulement dans le parcours, et sur les écrans qui la
+    /// montrent.
+    private var chromeInset: Bool {
+        model?.step.showsChrome ?? false
+    }
+
     var body: some View {
         VStack(spacing: 0) {
-            chrome
-
             if scrolls {
                 ScrollView {
                     stack(inScrollView: true)
@@ -237,17 +254,9 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                     .onboardingAppear(index: 4)
             }
         }
+        .onboardingChromeInset(chromeInset)
         .background(surface.background.ignoresSafeArea(edges: .bottom))
         .environment(\.onboardingSurface, surface)
-    }
-
-    @ViewBuilder
-    private var chrome: some View {
-        if let model {
-            OnboardingChrome(showsBack: model.canGoBack, surface: surface) {
-                model.goBack()
-            }
-        }
     }
 
     /// Une composition figée **qui défile quand même si elle ne tient pas.**
@@ -379,51 +388,6 @@ extension OnboardingScaffold where Footer == EmptyView {
     }
 }
 
-// MARK: - La barre du haut
-
-/// **La jauge sur toute la largeur, et le retour en dessous, à gauche.**
-///
-/// La jauge partageait sa ligne avec le bouton de retour, et se retrouvait décalée à
-/// droite : sur les écrans sans retour, elle avait l'air mal centrée. Elle prend toute la
-/// largeur, sur toutes les pages, et le rond du retour vit sur sa propre ligne — qui
-/// garde sa hauteur même quand il n'y a rien à défaire, pour que le titre ne saute pas.
-struct OnboardingChrome: View {
-    var showsBack: Bool
-    var surface: OnboardingSurface = .canvas
-    var onBack: () -> Void = {}
-
-    @Environment(OnboardingModel.self) private var model: OnboardingModel?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            MicaboProgressBar(
-                progress: model?.step.progress ?? 0,
-                tint: surface.progressTint,
-                track: surface.progressTrack
-            )
-            .frame(height: 3)
-            .animation(OnboardingMotion.shift, value: model?.step)
-
-            Button(action: onBack) {
-                Image(systemName: "arrow.left")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(surface.isDark ? OnboardingPalette.white : OnboardingPalette.ink)
-                    .frame(width: 40, height: 40)
-                    .background(
-                        surface.isDark ? OnboardingPalette.white.opacity(0.14) : OnboardingPalette.card,
-                        in: Circle()
-                    )
-            }
-            .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
-            .opacity(showsBack ? 1 : 0)
-            .disabled(!showsBack)
-            .accessibilityLabel(L10n.t("app.common.back", locale: .resolved()))
-        }
-        .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.top, MicaboSpacing.sm)
-    }
-}
-
 // MARK: - Entrée en fondu
 
 /// Fait apparaître l'élément, décalé selon sa position dans l'écran. Un fondu, et rien
@@ -451,14 +415,14 @@ extension View {
     }
 }
 
-// MARK: - Bouton d'avancement
+// MARK: - Bouton à libellé
 
-/// CTA principal du parcours : **une pilule noire de cinquante-six points, pleine
+/// **Le bouton à libellé du parcours : une pilule d'encre de cinquante-six points, pleine
 /// largeur**, texte blanc, et un gris clair tant qu'aucune réponse n'est donnée.
 ///
-/// Le reflet qui le balayait et le sursaut qui l'allumait sont partis : un bouton qui
-/// brille ou qui tressaute se lit comme un bouton de jeu. Il change de couleur, et ça
-/// suffit.
+/// Il ne sert qu'aux boutons qui **disent** quelque chose — « Commencer », « Oui »,
+/// « Commencer l'essai » — et aux écrans partagés avec le reste de l'app. Partout où le
+/// bouton ne fait qu'avancer, c'est le rond fléché (`OnboardingArrowButton`).
 struct OnboardingContinueButton: View {
     var title: String?
     var isEnabled: Bool = true
@@ -499,29 +463,6 @@ struct OnboardingContinueButton: View {
         .disabled(!isEnabled || isLoading)
         .animation(OnboardingMotion.select, value: isEnabled)
         .animation(OnboardingMotion.select, value: isLoading)
-    }
-}
-
-/// Petit texte qui remplace le bouton sur les écrans à avancement automatique.
-struct OnboardingHint: View {
-    let text: String
-
-    @Environment(\.onboardingSurface) private var surface
-
-    @State private var isVisible = false
-
-    var body: some View {
-        Text(text)
-            .font(MicaboFont.ui(12, weight: .medium))
-            .foregroundStyle(surface.isDark ? OnboardingPalette.white.opacity(0.6) : OnboardingPalette.grayLight)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .opacity(isVisible ? 1 : 0)
-            .onAppear {
-                withAnimation(OnboardingMotion.enter.delay(0.4)) {
-                    isVisible = true
-                }
-            }
     }
 }
 
@@ -616,6 +557,7 @@ struct OnboardingChoiceTile: View {
     let title: String
     var systemImage: String?
     var emoji: String?
+    var subtitle: String?
     var isSelected: Bool
     var action: () -> Void
 
@@ -636,11 +578,19 @@ struct OnboardingChoiceTile: View {
                     .foregroundStyle(isSelected ? OnboardingPalette.white : OnboardingPalette.ink)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
+
+                if let subtitle {
+                    Text(subtitle)
+                        .font(OnboardingPalette.subtitle)
+                        .foregroundStyle(isSelected ? OnboardingPalette.white.opacity(0.7) : OnboardingPalette.gray)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             .padding(.vertical, MicaboSpacing.lg)
             .padding(.horizontal, 14)
             .frame(maxWidth: .infinity)
-            .frame(height: 132)
+            .frame(minHeight: 132)
             .background(
                 isSelected ? OnboardingPalette.ink : OnboardingPalette.card,
                 in: RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -696,7 +646,7 @@ private struct OnboardingRowAppear: ViewModifier {
 // MARK: - Une question à une seule réponse
 
 /// **Le gabarit de toutes les questions fermées du quiz** : un titre, des cartes grises,
-/// le bouton qui s'allume à la première réponse. Les rangées se partagent la page.
+/// le rond qui s'allume à la première réponse. Les rangées se partagent la page.
 struct OnboardingSingleChoiceStep<Item: Identifiable & Hashable>: View {
     let title: String
     var subtitle: String?
@@ -726,7 +676,67 @@ struct OnboardingSingleChoiceStep<Item: Identifiable & Hashable>: View {
                 }
             }
         } footer: {
-            OnboardingContinueButton(isEnabled: selection != nil, action: onContinue)
+            OnboardingArrowButton(isEnabled: selection != nil, action: onContinue)
         }
+    }
+}
+
+// MARK: - Une question à plusieurs réponses
+
+/// **Le gabarit des questions ouvertes à plusieurs réponses** : les mêmes rangées, qui se
+/// cochent et se décochent, et le rond qui s'allume dès la première.
+struct OnboardingMultiChoiceStep<Item: Identifiable & Hashable>: View {
+    let title: String
+    var subtitle: String?
+    let items: [Item]
+    let selection: Set<Item>
+    let label: (Item) -> String
+    var emoji: (Item) -> String? = { _ in nil }
+    let onToggle: (Item) -> Void
+    let onContinue: () -> Void
+
+    var body: some View {
+        OnboardingScaffold(
+            title: title,
+            subtitle: subtitle,
+            scrolls: items.count > 6,
+            expandsContent: items.count <= 6
+        ) {
+            OnboardingAnswerList(items) { rank, item in
+                OnboardingChoiceRow(
+                    title: label(item),
+                    emoji: emoji(item),
+                    isSelected: selection.contains(item),
+                    fillsHeight: items.count <= 6,
+                    rank: rank
+                ) {
+                    onToggle(item)
+                }
+            }
+        } footer: {
+            OnboardingArrowButton(isEnabled: !selection.isEmpty, action: onContinue)
+        }
+    }
+}
+
+// MARK: - Les étoiles
+
+/// Cinq étoiles, or.
+struct OnboardingStars: View {
+    var size: CGFloat = 14
+    var spacing: CGFloat = 4
+
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    var body: some View {
+        HStack(spacing: spacing) {
+            ForEach(0..<5, id: \.self) { _ in
+                Image(systemName: "star.fill")
+                    .font(.system(size: size))
+                    .foregroundStyle(OnboardingPalette.star)
+            }
+        }
+        .accessibilityElement()
+        .accessibilityLabel(i18n.t("ios.starsA11y"))
     }
 }

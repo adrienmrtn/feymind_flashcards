@@ -74,11 +74,9 @@ struct NotificationsStepView: View {
             }
             .frame(maxWidth: .infinity)
         } footer: {
-            OnboardingContinueButton(
-                title: t("ios.notifCta"),
-                isEnabled: !isAsking,
-                isLoading: isAsking
-            ) {
+            // Le rond fléché, comme partout : c'est le sous-titre qui dit qu'avancer
+            // active le rappel, et la boîte du système qui le confirme.
+            OnboardingArrowButton(isEnabled: !isAsking, isLoading: isAsking) {
                 Task { await ask() }
             }
         }
