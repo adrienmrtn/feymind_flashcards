@@ -187,6 +187,22 @@ struct OnboardingArrowBar: View {
     }
 }
 
+// MARK: - L'étape d'une page
+
+private struct OnboardingStepKey: EnvironmentKey {
+    static let defaultValue: OnboardingStep? = nil
+}
+
+extension EnvironmentValues {
+    /// **L'étape que la page dessine**, posée par le parcours sur chacune de ses pages. Elle
+    /// diffère de `OnboardingModel.step` le temps d'un glissement : la page qui part reste
+    /// celle de son étape, et garde la place de la barre si elle la montrait.
+    var onboardingStep: OnboardingStep? {
+        get { self[OnboardingStepKey.self] }
+        set { self[OnboardingStepKey.self] = newValue }
+    }
+}
+
 // MARK: - L'espace de la barre
 
 extension View {

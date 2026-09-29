@@ -82,7 +82,7 @@ final class I18nTests: XCTestCase {
         XCTAssertTrue(french.contains("ios.deck.biology.opt1"))
         XCTAssertTrue(french.contains("ios.sheetReady"))
         XCTAssertTrue(french.contains("ios.examReviewsPlaced"))
-        XCTAssertTrue(french.contains("ios.review1.quote"))
+        XCTAssertTrue(french.contains("ios.onb.review1.title"))
         XCTAssertTrue(french.contains("ios.trialReminder"))
         for goal in LearningGoal.allCases {
             XCTAssertTrue(french.contains("ios.goal.\(goal.rawValue)"), goal.rawValue)

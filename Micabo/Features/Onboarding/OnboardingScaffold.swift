@@ -197,6 +197,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
     var footer: () -> Footer
 
     @Environment(OnboardingModel.self) private var model: OnboardingModel?
+    @Environment(\.onboardingStep) private var step: OnboardingStep?
 
     init(
         eyebrow: String? = nil,
@@ -231,9 +232,10 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
     }
 
     /// La place de la barre du haut : seulement dans le parcours, et sur les écrans qui la
-    /// montrent.
+    /// montrent. L'étape est celle de la page, pas celle du modèle : pendant un glissement,
+    /// la page qui part garde la sienne.
     private var chromeInset: Bool {
-        model?.step.showsChrome ?? false
+        (step ?? model?.step)?.showsChrome ?? false
     }
 
     var body: some View {

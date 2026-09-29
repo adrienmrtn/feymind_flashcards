@@ -61,6 +61,7 @@ struct OnboardingFlowView: View {
     /// glissement en cours. Pendant qu'une page glisse, aucune des deux ne répond au doigt.
     private func page(for step: OnboardingStep, size: CGSize) -> some View {
         stepView(step)
+            .environment(\.onboardingStep, step)
             .frame(width: size.width, height: size.height)
             .overlay {
                 OnboardingPalette.ink
