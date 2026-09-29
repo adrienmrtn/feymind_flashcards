@@ -51,7 +51,7 @@ struct StudyTimeStepView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } footer: {
-            OnboardingContinueButton {
+            OnboardingArrowButton {
                 if model.studyHour == nil { model.studyHour = Self.defaultHour }
                 model.advance()
             }

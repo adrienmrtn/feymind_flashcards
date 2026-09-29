@@ -49,7 +49,7 @@ struct CountryStepView: View {
             .animation(OnboardingMotion.shift, value: model.country)
             .animation(OnboardingMotion.shift, value: model.customCountry)
         } footer: {
-            OnboardingContinueButton(isEnabled: model.hasAnsweredCountry) {
+            OnboardingArrowButton(isEnabled: model.hasAnsweredCountry) {
                 model.advance()
             }
         }

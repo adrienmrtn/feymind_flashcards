@@ -82,7 +82,7 @@ final class I18nTests: XCTestCase {
         XCTAssertTrue(french.contains("ios.deck.biology.opt1"))
         XCTAssertTrue(french.contains("ios.sheetReady"))
         XCTAssertTrue(french.contains("ios.examReviewsPlaced"))
-        XCTAssertTrue(french.contains("ios.review1.quote"))
+        XCTAssertTrue(french.contains("ios.onb.review1.title"))
         XCTAssertTrue(french.contains("ios.trialReminder"))
         for goal in LearningGoal.allCases {
             XCTAssertTrue(french.contains("ios.goal.\(goal.rawValue)"), goal.rawValue)
@@ -132,9 +132,12 @@ final class I18nTests: XCTestCase {
         // Ce qui s'écrit pareil dans les deux langues : des jetons seuls, un nom propre,
         // un objet de courriel, des abréviations que l'anglais partage avec le français,
         // et un pluriel dont les deux branches se ressemblent.
+        // Des formats de nombres, un pluriel ICU, et une référence bibliographique : pareils
+        // dans toutes les langues par nature.
         let sameEverywhere: Set<String> = [
             "ios.rankingAria", "ios.photo.scanName", "ios.mail.subject.bug", "ios.offer.minutes",
-            "ios.durationHm", "ios.readingApprox",
+            "ios.durationHm", "ios.readingApprox", "ios.deck.count", "ios.deck.percentAndCards",
+            "ios.journey.source", "ios.today.approxMinutes",
         ]
         assertNotCopiedFromFrench(
             french: IosI18nCatalogs.fr,

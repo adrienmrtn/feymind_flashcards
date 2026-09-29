@@ -7,8 +7,13 @@ import SwiftUI
 final class OnboardingModel {
     private(set) var step: OnboardingStep = .hookLogo
 
-    /// **Le prénom, et rien d'autre.** Il ne sert qu'à s'adresser à quelqu'un : l'écran
-    /// « merci » et l'accueil. Il ne part pas au modèle, il ne part pas au serveur.
+    /// **Vrai le temps qu'une page glisse.** Posé par la vue du parcours, relu par
+    /// `advance()` : un second appui pendant le glissement n'empile pas deux pages. Les
+    /// tests n'ont pas de vue, donc pas de verrou, et avancent librement.
+    var transitionLock = false
+
+    /// **Le prénom, et rien d'autre.** Il ne sert qu'à s'adresser à quelqu'un : la
+    /// bienvenue, le bravo, l'accueil. Il ne part pas au modèle, il ne part pas au serveur.
     var displayName: String = ""
 
     /// Le palier d'études, dans les termes du pays choisi. Il n'est proposé qu'après le
@@ -29,6 +34,21 @@ final class OnboardingModel {
     var customCountry: WorldCountry?
     var goals: Set<LearningGoal> = []
     var subjects: Set<String> = []
+
+    /// **Ce qui l'inquiète dans ses études.** Plusieurs réponses ; la première, dans l'ordre
+    /// de la liste, donne son titre à l'écran « on s'en occupe ».
+    var worries: Set<StudyWorry> = [] {
+        didSet {
+            guard worries != oldValue, !worries.isEmpty else { return }
+            let ids = StudyWorry.allCases.filter { worries.contains($0) }.map(\.rawValue)
+            Analytics.track(.onboardingAnswer, ["field": "worries", "value": .text(ids.joined(separator: ","))])
+        }
+    }
+
+    /// L'inquiétude mise en avant : la première cochée, dans l'ordre de la liste.
+    var leadWorry: StudyWorry? {
+        StudyWorry.allCases.first { worries.contains($0) }
+    }
 
     /// **La filière suivie**, dans les termes du pays. Elle ne se demande qu'aux pays
     /// décrits en détail ; ailleurs, le palier large (`stage`) est tout ce qu'on sait.
@@ -70,18 +90,6 @@ final class OnboardingModel {
         }
     }
 
-    // MARK: Les questions du quiz
-
-    /// **D'où il vient.** La réponse ne change rien au plan : elle sert la mesure, et elle
-    /// fait lire — c'est la question la plus facile du parcours, posée juste après les
-    /// matières pour relancer.
-    var source: OnboardingSource? {
-        didSet {
-            guard let source, source != oldValue else { return }
-            Analytics.track(.onboardingAnswer, ["field": "source", "value": .text(source.rawValue)])
-        }
-    }
-
     /// Le temps qu'il se donne par jour, en minutes. C'est de lui que `DailyLoad` tire le
     /// nombre de cartes du plan.
     var dailyMinutes: Int? {
@@ -100,12 +108,49 @@ final class OnboardingModel {
         }
     }
 
-    /// Comment il révise aujourd'hui.
-    var method: OnboardingMethod? {
+    // MARK: Le cours
+
+    /// **A-t-il ses supports ?** La seule branche du parcours : oui mène aux cases de
+    /// dépôt, non au choix d'un cours de démonstration. Sans réponse, les deux se sautent.
+    var hasMaterials: Bool? {
         didSet {
-            guard let method, method != oldValue else { return }
-            Analytics.track(.onboardingAnswer, ["field": "method", "value": .text(method.rawValue)])
+            guard let hasMaterials, hasMaterials != oldValue else { return }
+            Analytics.track(.onboardingAnswer, ["field": "hasMaterials", "value": .flag(hasMaterials)])
         }
+    }
+
+    /// Les supports déposés, dans le même objet que la création d'un deck : c'est lui que
+    /// `DeckBuilder` lit, et le parcours n'a pas de raison d'en inventer un second. La
+    /// provenance est posée d'avance : le parcours ne demande ni matière, ni nom, ni
+    /// épreuve — le titre vient du modèle, et le reste se règle plus tard dans l'app.
+    let deckSetup: DeckSetup = {
+        let setup = DeckSetup()
+        setup.source = .materials
+        setup.purpose = .justStudying
+        return setup
+    }()
+
+    /// Le cours de démonstration choisi, quand il n'a pas ses supports.
+    var demoCourse: OnboardingDemoCourse? {
+        didSet {
+            guard let demoCourse, demoCourse.id != oldValue?.id else { return }
+            Analytics.track(.onboardingAnswer, ["field": "demoCourse", "value": .text(demoCourse.id)])
+        }
+    }
+
+    /// **Le cours construit pendant le parcours**, réel ou de démonstration, tel qu'il est
+    /// enregistré. C'est lui que l'écran du cours montre, et lui que l'app ouvre à la sortie.
+    var builtCourse: Course?
+
+    /// **Vrai quand la construction a échoué et qu'on continue sans cours.** Le cours, les
+    /// cartes et le bravo se sautent alors : on ne montre pas un plan vide, et on ne fait pas
+    /// réviser trois cartes qui n'existent pas.
+    var courseUnavailable = false
+
+    /// Vrai quand le cours qu'on montre est le cours de démonstration, et non les supports
+    /// de l'élève : les trois cartes d'entraînement viennent alors du jeu embarqué.
+    var isDemoCourse: Bool {
+        hasMaterials == false
     }
 
     /// Le registre de rédaction, seule forme sous laquelle le niveau sort du parcours.
@@ -166,12 +211,25 @@ final class OnboardingModel {
 
     // MARK: Avancer, revenir
 
+    private func isSkipped(_ step: OnboardingStep) -> Bool {
+        step.isSkipped(for: country, hasMaterials: hasMaterials, courseUnavailable: courseUnavailable)
+    }
+
+    /// **Revenir sur un écran hors des règles du retour**, quand quelque chose a raté : la
+    /// construction du cours renvoie aux supports. Le verrou du glissement s'applique
+    /// comme partout.
+    func jump(to target: OnboardingStep) {
+        guard !transitionLock, target != step else { return }
+        step = target
+    }
+
     func advance() {
+        guard !transitionLock else { return }
         persist()
         var next = step.next
         // Les écrans sans réponse possible se sautent plutôt que de s'afficher vides : un
         // pays dont on ne connaît que les paliers larges n'a ni filière ni année à proposer.
-        while let candidate = next, candidate.isSkipped(for: country) {
+        while let candidate = next, isSkipped(candidate) {
             next = candidate.next
         }
         guard let next else { return }
@@ -182,25 +240,26 @@ final class OnboardingModel {
     ///
     /// Une réponse donnée doit pouvoir se corriger : quelqu'un qui se trompe de pays au
     /// premier écran du quiz découvrirait son erreur douze écrans plus tard. On revient
-    /// jusqu'au pays, et pas plus loin ; on ne revient pas après le prénom, parce que tout
-    /// ce qui suit est un résultat, un compte ou une offre, et que rien de tout ça ne se
-    /// défait.
+    /// jusqu'au pays, et pas plus loin ; on ne revient plus après les rappels, parce que
+    /// tout ce qui suit est un résultat, une démonstration, un compte ou une offre, et que
+    /// rien de tout ça ne se défait.
     ///
     /// Les écrans sautés le restent, dans ce sens comme dans l'autre : on ne fait pas
     /// apparaître au retour une question qu'on n'a pas posée à l'aller.
     func goBack() {
-        var previous = OnboardingStep(rawValue: step.rawValue - 1)
-        while let candidate = previous, candidate.isSkipped(for: country) {
-            previous = OnboardingStep(rawValue: candidate.rawValue - 1)
+        guard !transitionLock, canGoBack else { return }
+        var previous = step.previous
+        while let candidate = previous, isSkipped(candidate) {
+            previous = candidate.previous
         }
-        guard let previous, previous.rawValue >= OnboardingStep.country.rawValue else { return }
+        guard let previous, previous.rawValue >= OnboardingStep.firstReturnable.rawValue else { return }
         step = previous
     }
 
     /// Vrai quand il y a un écran en arrière qui accepte qu'on y revienne.
     var canGoBack: Bool {
-        step.rawValue > OnboardingStep.country.rawValue
-            && step.rawValue <= OnboardingStep.name.rawValue
+        step.rawValue > OnboardingStep.firstReturnable.rawValue
+            && step.rawValue <= OnboardingStep.lastReturnable.rawValue
     }
 
     /// Recopie les réponses dans les réglages à chaque changement d'écran :
@@ -211,61 +270,53 @@ final class OnboardingModel {
         OnboardingPreferences.educationStage = stage
         OnboardingPreferences.goals = goals.map(\.rawValue).sorted()
         OnboardingPreferences.subjects = subjects.sorted()
+        OnboardingPreferences.worries = StudyWorry.allCases.filter { worries.contains($0) }.map(\.rawValue)
         OnboardingPreferences.currentScore = currentScore
         OnboardingPreferences.targetScore = targetScore
         OnboardingPreferences.displayName = displayName.nilIfBlank
         OnboardingPreferences.schoolTrackID = track?.id
         OnboardingPreferences.schoolYearID = year?.id
         if let dailyMinutes { OnboardingPreferences.dailyMinutes = dailyMinutes }
-        OnboardingPreferences.source = source?.rawValue
-        OnboardingPreferences.method = method?.rawValue
         OnboardingPreferences.studyHour = studyHour
     }
 }
 
 // MARK: - Les réponses du quiz
 
-/// D'où l'élève a entendu parler de Micabo.
-enum OnboardingSource: String, CaseIterable, Identifiable {
-    case tiktok
-    case instagram
-    case youtube
-    case friend
-    case appStore
-    case other
+/// Ce qui l'inquiète dans ses études. Plusieurs réponses possibles.
+///
+/// L'ordre de déclaration est l'ordre des rangées, et c'est lui qui choisit l'inquiétude
+/// mise en avant sur l'écran suivant quand plusieurs sont cochées.
+enum StudyWorry: String, CaseIterable, Identifiable {
+    case examStress
+    case hardLessons
+    case homework
+    case forgetting
+    case noStart
+    case motivation
 
     var id: String { rawValue }
 
     var emoji: String {
         switch self {
-        case .tiktok: "🎵"
-        case .instagram: "📸"
-        case .youtube: "▶️"
-        case .friend: "💬"
-        case .appStore: "🍎"
-        case .other: "✏️"
+        case .examStress: "😰"
+        case .hardLessons: "🤯"
+        case .homework: "⏳"
+        case .forgetting: "🫥"
+        case .noStart: "🧭"
+        case .motivation: "🔋"
         }
     }
-}
 
-/// Comment il révise aujourd'hui.
-enum OnboardingMethod: String, CaseIterable, Identifiable {
-    case reread
-    case rewrite
-    case flashcards
-    case lastMinute
-    case notAtAll
+    /// Le libellé de la rangée.
+    func title(locale: UiLocale) -> String {
+        L10n.t("ios.onb.worry.\(rawValue)", locale: locale)
+    }
 
-    var id: String { rawValue }
-
-    var emoji: String {
-        switch self {
-        case .reread: "👀"
-        case .rewrite: "✍️"
-        case .flashcards: "🃏"
-        case .lastMinute: "🌙"
-        case .notAtAll: "🤷"
-        }
+    /// **La forme courte**, pour le titre de « on s'en occupe » : « Le stress des examens ?
+    /// On s'en occupe. » La rangée entière y serait trop longue.
+    func echo(locale: UiLocale) -> String {
+        L10n.t("ios.onb.worry.\(rawValue).echo", locale: locale)
     }
 }
 
@@ -285,5 +336,10 @@ enum OnboardingDailyTime: Int, CaseIterable, Identifiable {
         case .fifteen: "📖"
         case .thirty: "🎯"
         }
+    }
+
+    /// Le mot qui qualifie le cran, sous la courbe : « un bon début » jusqu'à « énorme ».
+    func caption(locale: UiLocale) -> String {
+        L10n.t("ios.quiz.time.caption.\(rawValue)", locale: locale)
     }
 }

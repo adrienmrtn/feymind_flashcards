@@ -231,9 +231,11 @@ final class ProAccess {
     /// Peut-on encore importer un cours ?
     ///
     /// Les cours repris dans la bibliothèque ne comptent pas : ils n'ont rien coûté à
-    /// produire, et faire payer un import qu'on n'a pas fait serait incompréhensible.
+    /// produire, et faire payer un import qu'on n'a pas fait serait incompréhensible. Le
+    /// cours de démonstration du parcours d'accueil (`sample`) ne compte pas non plus : il
+    /// n'est pas le cours de l'élève, et il ne doit pas consommer le seul import offert.
     func canImportCourse(existingCourses courses: [Course]) -> Bool {
-        canImportCourse(ownedCourses: courses.filter { !$0.isFromLibrary }.count)
+        canImportCourse(ownedCourses: courses.filter { !$0.isFromLibrary && $0.source != .sample }.count)
     }
 
     /// La même porte, à partir du seul nombre qui l'ouvre ou la ferme.

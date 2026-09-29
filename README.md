@@ -76,392 +76,88 @@ toute l'interface :
 ## Parcours d'accueil
 
 Au premier lancement, `RootView` affiche `OnboardingFlowView` à la place de la barre d'onglets.
-Le parcours est **strictement linéaire** : chaque écran pousse le suivant, il n'y a ni retour
-arrière ni balayage. Les étapes sont décrites par `OnboardingStep` et rendues par
-`Micabo/Features/Onboarding/Steps/`.
+Les étapes sont décrites par `OnboardingStep`, dans l'ordre, et rendues par
+`Micabo/Features/Onboarding/Steps/`. **Le parcours est un quiz, puis une démonstration, puis
+une offre** : il pose ses questions d'abord, parce qu'un élève lit un parcours qui parle de
+lui ; il rend ensuite, en montrant un cours fiché — le sien, importé pour de vrai, ou un cours
+de démonstration — et trois cartes ; la preuve sociale et l'offre ne viennent qu'après ça,
+quand il y a quelque chose à comparer.
 
 | Bloc | Écrans |
 | --- | --- |
-| Accroche | bienvenue, pays de scolarisation, stade d'étude, annonce des questions |
-| Questions | objectifs (plusieurs réponses), rapport à l'oubli |
-| Démonstration | courbe de mémorisation, puis dépôt → fiche → révisions en trois écrans, puis le mode examen |
-| Personnalisation | matières, établissement (avec « Passer ») |
-| Sortie | génération du parcours, preuve sociale, passage de relais, connexion, chronologie de l'essai, promesse du rappel, paywall |
+| Accroche | le splash (logo seul 1,3 s, puis la phrase, « j'ai déjà un compte », Commencer, le menu de langue), le prénom (obligatoire), « Bienvenue, {prénom} » |
+| Quiz | pays (menu, pays de l'appareil pré-choisi), niveau ou filière puis année, matières, ce qui inquiète (plusieurs réponses), objectifs (plusieurs réponses), « on s'en occupe » (deux barres, 36 % contre 80 %), moyenne actuelle, moyenne visée avec sa carte d'écart, temps par jour sur sa courbe, heure de révision (ciel, soleil, lune), rappels (semaine qui se coche, bannière, demande système) |
+| Mika | le profil se prépare (blob, pourcentage, grille de points, 6,5 s, enchaîne seul), « voyons comment Micabo peut t'aider », cinq écrans de fonctionnalités (maquette, titre, ligne), « voyons ensemble une fiche » |
+| Le cours | connexion (avec « Passer »), « tu as tes supports ? », les cases de dépôt **ou** un cours de démonstration à choisir, Mika écrit le cours, le cours fiché qu'on parcourt en entier |
+| Les cartes | « envie de t'entraîner ? », trois cartes (recto verso, QCM, texte à trou), « bien joué » |
+| L'offre | « on a aidé 45 000+ élèves » avec les avis, le gratuit contre Premium, la chronologie de l'essai, la promesse du rappel, le paywall |
 
-**L'écran des rappels a été retiré.** « On te rappelle au bon moment » proposait d'activer les
-notifications sans rien demander au système : il notait une intention que personne ne lisait
-ensuite, et il la posait juste avant l'écran qui construit le parcours — donc au moment où l'on
-est le plus près d'entrer dans l'app. Une autorisation se demande quand elle sert, la première
-fois qu'il y a des cartes à rappeler. Sa clé de réglage reste listée dans
-`OnboardingPreferences.Key` pour que la remise à zéro sache encore l'effacer sur les appareils
-qui ont fait l'ancien parcours.
+### La navigation
 
-**La note se demande sur la preuve sociale**, et nulle part ailleurs : l'écran montre des avis
-et cinq étoiles, donc la demande du système arrive dans son sujet plutôt qu'au milieu d'une
-révision. Elle part au premier changement d'avis — à l'ouverture, l'alerte couvrirait l'écran
-avant qu'on ait vu ce qu'il raconte — et un drapeau la garde unique : le système plafonne déjà à
-trois demandes par an, mais il les compte même quand il choisit de ne rien afficher.
+**Les pages glissent au bouton, et la barre du haut ne bouge pas.** Rien ne se feuillette au
+doigt : le rond fléché avance, la pilule de retour recule, et chaque changement d'étape est un
+glissement pleine largeur — la page qui arrive entre par la droite, celle qui part recule d'un
+tiers sous elle, voilée d'un rien (`OnboardingPager`). La pilule de retour et la jauge sont
+posées **par-dessus** la pile des pages (`OnboardingTopBar`) : la jauge avance d'un cran sur
+place pendant que la page arrive. Les écrans qui sont un moment à eux seuls — le splash, les
+deux chargements, le cours, les cartes, le bravo, le paywall — la retirent
+(`OnboardingStep.showsChrome`).
 
-**Le pays passe avant le stade d'étude**, et l'ordre est le fond de l'affaire : ce sont les
-paliers du pays choisi qui deviennent les réponses de « tu en es où ? ». Dans l'autre sens, il
-fallait servir les mêmes sept réponses françaises à tout le monde — Lycée, Prépa, Licence,
-PASS, Master, Concours — ce qui ne laissait aucune réponse juste à un Américain, un
-Britannique ou un Québécois. `EducationStage` porte les paliers réels de chaque pays, et un
-pays qu'on ne connaît pas retombe sur une échelle générique en anglais plutôt que sur des
-paliers inventés.
+**On revient du pays jusqu'aux rappels, et nulle part ailleurs.** Le prénom et la bienvenue ne
+se défont pas ; après les rappels, tout est un résultat, une démonstration, un compte ou une
+offre. Les écrans sautés le restent dans les deux sens.
 
-Chaque palier porte deux clés qui ne servent pas à la même chose : son `level`, le **registre
-de rédaction** envoyé à l'Edge Function, volontairement grossier parce qu'un cégep québécois et
-un lycée français demandent la même écriture ; et son `tier`, la **marche sur une échelle
-comparable d'un pays à l'autre**, qui sert à retrouver l'équivalent quand on change de pays.
-Le registre ne pouvait pas s'en charger : un lycéen et un collégien le partagent, et chercher
-par registre ramenait un lycéen français en « Middle school » dès qu'il passait aux
-États-Unis. Sans équivalent exact, on prend la marche la plus proche en montant ; la santé et
-les concours ne sont pas des marches et ne se convertissent jamais.
+**Le rond fléché avance partout** (`OnboardingArrowButton`) : un rond d'encre en bas à droite,
+gris tant qu'aucune réponse n'est donnée. Les seuls boutons à libellé sont ceux qui disent
+autre chose qu'« avancer » : Commencer, le bouton à tenir du temps par jour, « oui » avant les
+cartes, « rejoindre la communauté », le bouton d'achat.
 
-**Aucun écran ne porte de sur-titre.** « Question 1 sur 3 », « Pour commencer », « Comment ça
-marche · 2 sur 3 » : ils comptaient des écrans que personne n'a demandé à compter, et posaient
-une ligne de plus à lire au-dessus d'une question qui se lit déjà en deux secondes. Les
-sous-titres qui énuméraient sans rien apprendre sont partis avec — « Schémas, cartes, QCM,
-textes à trou » listait ce que l'écran montre juste en dessous. Restent ceux qui disent quelque
-chose qu'on ne peut pas deviner : « Plusieurs réponses possibles », par exemple.
+**Les vibrations** : un tick à l'atterrissage de chaque page, la sélection sur chaque réponse
+et chaque cran de curseur, un coup net à la fin des chargements, du bouton tenu, de la
+troisième carte et sur le bravo.
 
-Deux écrans offrent une échappatoire, posée en haut à droite là où vivait le sur-titre
-(`OnboardingSkip`) : l'établissement, parce que le demander à quelqu'un qui n'en a pas, qui est
-entre deux écoles ou qui n'a pas envie de le dire ne doit pas fermer le parcours — passer laisse
-le champ vide **et l'écrit** ; et la connexion, par un « Skip » temporaire qui referme aussi la
-porte du compte pour que l'app ne repose pas la question à l'écran suivant.
+### Mika
 
-Les réponses sont gardées en local (`OnboardingPreferences`), et deux d'entre elles pèsent sur
-le reste de l'app : le **stade d'étude** commande la rédaction des fiches, et le **pays**
-commande à la fois le système scolaire de référence et la **langue** dans laquelle Micabo écrit.
-Le rythme quotidien, lui, ne se demande plus — voir plus bas. Toutes se corrigent dans les
-réglages, où le pays est posé au-dessus du stade pour la même raison que dans le parcours.
+Mika est l'assistant, et il a une forme : un blob au dégradé violet, rose, orange, qui respire
+(`MikaBlob`, quatre ondes lentes sur un cercle). Le dégradé n'apparaît qu'à trois endroits — le
+blob, le sous-titre de son chargement, le chiffre des élèves aidés — et tout le reste du
+parcours reste blanc, encre, violet (`OnboardingPalette`).
 
-### Un écran, une chose
+`MikaLoadingView` sert deux fois : quand le profil se prépare, sur un temps joué de six
+secondes et demie qui ralentit trois fois sans jamais s'arrêter (`MikaProgressCurve`), et quand
+un cours se construit pour de vrai, sur une jauge asymptotique qui finit le chemin à l'arrivée
+du cours. Les deux enchaînent seuls : un coup net, le blob rapetisse, la page suivante.
 
-C'est la règle qui gouverne tout le tunnel, et c'est celle qui a été la plus mal tenue :
-**un titre court, une ligne de sous-titre au plus, et une seule chose à regarder.** Un écran
-d'inscription se lit en deux secondes ou ne se lit pas.
+### Le cours
 
-Ce qui a été retiré, et pourquoi, vaut d'être écrit noir sur blanc :
+**« Tu as tes supports ? » est la seule branche du parcours.** Oui mène aux cases de dépôt de
+la création d'un deck (`DeckMaterialsStepView`, telle quelle), puis `DeckBuilder` écrit la
+fiche, découpe le plan et prépare les cartes — c'est le premier cours de l'élève, offert. Non
+mène à quatre cours de démonstration (`OnboardingDemoCatalog`, en français et en anglais :
+la guerre froide, la photosynthèse, les dérivées, l'énergie), plus riches qu'une fiche
+réelle — schémas, tableaux, graphes, frises, encadrés, dessinés par `DemoSheetView` — et qui
+entrent dans la bibliothèque comme cours d'exemple (`sample`), convertis en texte. Un cours
+d'exemple ne consomme pas l'import offert.
 
-- **les paragraphes dans des blocs blancs à coins arrondis.** Trois rangées à picto sous un
-  intitulé, c'est exactement à quoi ressemble un texte que personne n'a relu. Les trois
-  promesses qui vivaient là sont désormais *montrées* par les trois écrans de démonstration.
-- **l'écran « on a fait Micabo pour nous ».** Il racontait d'où venait l'app à quelqu'un qui
-  ne l'a pas encore vue fonctionner : c'est demander de la confiance avant d'avoir rien
-  montré. La démonstration est le seul argument du parcours.
-- **l'annonce des questions à venir.** L'écran listait les trois questions suivantes avec un
-  sous-titre et trois rangées à picto ; les annoncer prenait plus longtemps que d'y répondre.
-  Il ne reste que la phrase, dont **le gras se pose mot par mot**
-  (`OnboardingWordByWordTitle`), et le bouton n'arrive qu'une fois le dernier mot en place.
-- **les icônes de décoration.** Une pastille colorée par ligne de réponse fait lire des
-  pictogrammes au lieu des réponses. `OnboardingChoiceRow` garde un emoji à même la ligne,
-  sans fond ni cadre : un point d'accroche, pas une tuile.
-- **les réponses tassées en haut de la page.** Sur un écran de question, les réponses *sont*
-  le contenu : les serrer sous le titre laisse les deux tiers de l'écran vides en dessous et
-  fait lire un formulaire. `expandsContent` sur `OnboardingScaffold` et
-  `OnboardingAnswerList` leur donnent la page entière, à hauteur égale entre elles.
-- **l'écran de la langue, en entier.** Il annonçait « Micabo parle français » avec une seule
-  réponse, cochée d'avance : un écran complet pour une information, et une question dont on ne
-  pouvait pas changer la réponse. La langue se déduit du pays de scolarisation, et se lit sous
-  ses pastilles, à côté du système scolaire retenu — là où elle est la conséquence d'un choix
-  qu'on vient de faire.
-- **l'avancement automatique après le chargement.** L'écran de génération enchaînait tout seul
-  six dixièmes de seconde après son dernier coche : le seul moment du parcours où l'on attend
-  quelque chose se terminait par un écran arraché sous les yeux, avant qu'on ait pu lire « ton
-  parcours est prêt ». Le bouton occupe sa place depuis le début, éteint, et c'est l'étudiant
-  qui appuie.
-- **le flou d'apparition.** Il coûtait une passe de rendu par image, rendait le texte illisible
-  pendant sa propre arrivée, et il est devenu la signature des interfaces faites à la chaîne.
-  Huit points de montée et un fondu suffisent.
+Le cours s'ouvre ensuite en entier (`CourseReviewStepView`) : le plan, les chapitres, sans
+cadenas Pro, sans actions de révision, avec le rond fléché qui flotte. À la sortie du
+parcours, la liste des cours l'ouvre (`FirstDeckHandoff`) ; « créons ton premier cours » ne
+reste que pour qui n'en a pas.
 
-### Le mouvement, en un seul endroit
+Les trois cartes d'entraînement viennent du cours (`TrainingCard.pick`, une de chaque format)
+ou du jeu embarqué, avec le schéma sur la première. Rien n'est noté ni enregistré.
 
-`OnboardingMotion` porte les quatre courbes du parcours, et une seule règle les explique :
-**rien ne rebondit.** Un ressort dépasse sa cible puis revient, et vingt écrans qui dépassent
-leur cible donnent un parcours qui tremble. Les courbes sont donc monotones : elles partent
-vite, ralentissent, s'arrêtent net.
+### Les textes
 
-Le passage d'un écran à l'autre est un glissement de **vingt-huit points** avec un fondu, et
-non un glissement pleine largeur : faire traverser tout l'écran à une page donne l'impression
-de feuilleter un carrousel, et attire l'œil sur le mouvement plutôt que sur le contenu.
+Les chaînes du parcours vivent dans `IosI18nCatalogs`, en français et en anglais. Les tables
+allemande, espagnole et turque portent l'anglais pour les phrases nouvelles, en attendant leur
+validation ; le test de parité des clés tient.
 
-Trois oscillations seulement échappent à la règle, et chacune est déclarée là où elle vit :
-
-- **la cloche de l'écran de rappel**, parce qu'une cloche qui sonne oscille ;
-- **le bouton `isShiny`**, qui se laisse balayer d'un reflet et respire sur place, uniquement
-  sur l'écran où l'on vient de regarder une animation sans rien toucher. La main y est
-  immobile depuis dix secondes, il faut aller la chercher — et un bouton qui brille à chaque
-  écran ne brille plus nulle part ;
-- **le calendrier du mode examen**, où l'on regarde un planificateur travailler. Le cercle du
-  jour J s'y trace au stylo, une onde rouge repart en boucle sous la date, le compte à rebours
-  égrène ses chiffres de J-28 à J-19, et les six points de révision *tombent* sur leur case.
-  La règle protège les transitions d'écran et les entrées de contenu, où un dépassement se lit
-  comme un tremblement ; un point qui se pose a le droit de tomber, et c'est le seul moyen de
-  faire lire six événements en une seconde et demie.
-
-### Les trois écrans de démonstration
-
-Ils se traversent en une dizaine de secondes et montrent **le même document à trois états** :
-brut quand on le dépose, fiché après lecture, découpé en révisions ensuite. C'est ce fil qui
-fait comprendre l'app, là où trois illustrations sans rapport ne montreraient que trois
-animations. Le document est embarqué (`OnboardingDemo`) : un chapitre de SVT sur le cycle de
-l'eau, reconnaissable à tous les niveaux. Aucune permission, aucun appel réseau, rien
-d'enregistré : la démonstration tourne en avion.
-
-| Écran | Geste | Ce qui se passe |
-| --- | --- | --- |
-| Dépôt | glisser la page dans la zone en pointillés | La page est **volontairement brute** : un mur de texte sans hiérarchie, titre noyé au milieu, tel qu'on reçoit un polycopié. Sans un vrai avant, l'écran suivant ne transforme rien. Elle passe **au-dessus** de la zone de dépôt, jamais dessous : un document qu'on fait glisser sous sa cible se lit comme un document qu'on perd. Une **flèche coule entre les deux** — trois chevrons qui descendent en cascade — parce que la page qui respirait sur place disait qu'il fallait la toucher, pas où l'emmener ; elle s'efface dès que le doigt prend le relais. La zone fait la moitié de la hauteur de la page : une bande de la hauteur d'un bouton se lit comme un bouton, pas comme un endroit où poser un document. Après deux secondes sans geste la page respire, et un simple appui fait la même chose. |
-| Fiche | aucun | Le balayage de lecture passe sur la page brute, puis la fiche **s'écrit par-dessus, bloc par bloc** : le filet de titre, le paragraphe, la définition, le passage en couleur, le schéma. Les deux états occupent la même place, ce qui fait lire une transformation et non deux illustrations. La page est **au milieu de l'écran** : calée sous le titre avec un tiers d'écran blanc sous elle, elle se lisait comme l'illustration d'un paragraphe plutôt que comme le sujet de l'écran. Le bouton dit « S'entraîner », et c'est le seul du parcours qui brille et respire. |
-| Révisions | aucun | La fiche se **découpe en quatre vignettes** — schéma, recto verso, QCM, texte à trou — qui sortent une à une, puis se remplissent toutes seules. Le bouton s'ouvre dès que les quatre sont là. |
-
-Deux écrans ont été retirés d'ici, pour la même raison. La génération simulée cochait des
-étapes pendant trois secondes : elle faisait patienter devant un travail qu'on ne voyait pas.
-Et le troisième écran demandait d'appuyer sur une carte puis de se noter : c'était faire passer
-un examen à quelqu'un qui n'a pas encore ouvert l'app, sur un cours qui n'est pas le sien.
-**Ce qu'il y a à montrer, c'est ce que Micabo produit à partir d'un cours** — le produire est
-le travail de l'app, y répondre viendra plus tard, avec ses propres cours. Le troisième écran
-est donc une animation, et rien d'autre.
-
-Le schéma compte autant que les cartes, et il a longtemps été le maillon faible : le filet de
-la définition de la fiche était un `Capsule` en `maxHeight: .infinity`, ce qui rendait tout le
-bloc gourmand en hauteur. La fiche s'étirait ou se comprimait selon la place que lui laissait
-l'écran, et c'était toujours la figure qui payait — elle n'a pas de taille propre à défendre,
-elle se tassait jusqu'à disparaître. Un trou blanc à la place d'un schéma ne prouve rien. Le
-filet est maintenant posé en surimpression du texte, la fiche fait exactement sa hauteur
-(`fixedSize`), et la figure est grossie et cernée d'un filet pour se lire comme un schéma.
-
-### Ce que le mode examen promet
-
-Après la démonstration, un écran montre un calendrier où le jour J se cerne de rouge au stylo,
-prend son nom (« EXAMEN · Maths DS sur table »), égrène son compte à rebours de J-28 à J-19,
-puis voit les jours qui le précèdent s'allumer un à un de points de révision, en se resserrant
-à l'approche de l'épreuve. Une ligne conclut sur ce qui vient de se passer : « 6 révisions
-placées avant le jour J ». C'est exactement ce que fait `ExamPlanner`, et le voir vaut mieux
-que le lire.
-
-**Les réponses portent un emoji, et les questions s'écrivent mot à mot.** Les tuiles pastel qui
-vivaient à gauche des réponses ont été retirées à juste titre, elles faisaient lire des
-pictogrammes au lieu des réponses ; un emoji posé à même la ligne, sans fond ni cadre, donne un
-point d'accroche sans rien remplacer, et une liste de réponses scolaires cesse de ressembler à
-un formulaire. Le titre des cinq écrans de question s'écrit ensuite mot à mot
-(`OnboardingScaffold(animatesTitle:)`) : l'animation dure exactement le temps de lire la
-question, et donne au parcours le rythme d'une conversation. Les écrans de démonstration en
-sont exclus, parce que le regard doit y aller au contenu.
-
-Trois règles valent pour tout le tunnel :
-
-- **la jauge est unique** — même barre du premier écran au paywall, sans jamais disparaître,
-  et toujours le vert vif de `MicaboColor.progress`. Elle ne s'inverse (`MicaboColor.onInk`) que
-  sur les fonds sombres, où un vert posé sur le vert ne se verrait plus. Tout ce qui indique
-  une progression ailleurs dans l'app (session de révision, anneaux, curseurs, indicateurs
-  d'attente) prend cette couleur.
-- **aucun bouton ne reste muet** — l'enfoncement (échelle 0,975) part en 80 ms, et un bouton
-  derrière lequel tourne une opération passe en état chargement, annonce ce qu'il fait et
-  refuse les appuis suivants.
-- **le bouton d'action est un quart plus grand** que dans le reste de l'app
-  (`MicaboPrimaryButtonStyle(isProminent:)`, 64 points contre 51) : ces écrans ne font qu'une
-  chose, et le bouton y est la seule cible. La hauteur et le corps montent ensemble — grossir
-  le seul rembourrage donnerait un bouton haut au texte perdu au milieu. Rien n'est masqué pour
-  autant : la barre du bas prend sa place dans la pile, elle ne se pose pas par-dessus. Et les
-  écrans qui ne défilaient pas **défilent désormais s'ils ne tiennent pas**
-  (`scrollBounceBehavior(.basedOnSize)`) : la composition ne bouge pas quand elle tient, et
-  « ça ne rentre pas » ne veut plus dire « c'est coupé ».
-- **deux écrans voisins ne se ressemblent pas** — les compositions alternent (paquet de cartes,
-  pastilles, liste, graphe, calendrier, curseur, carrousel), et **trois écrans seulement**
-  quittent le crème : l'accroche sur la sauge, la génération du parcours sur le menthe, le
-  passage de relais sur l'encre. La variété d'un parcours ne vient pas de ses fonds mais de ce
-  qu'il y a à regarder. Le texte reste **fer à gauche** partout et le bouton **collé au bas de
-  la zone sûre**.
-- **le noir ne sert qu'une fois.** L'accroche était un aplat d'encre : c'est le contraste
-  maximal de l'app posé avant qu'on ait quoi que ce soit à lire, ça donne le ton d'un outil de
-  développeur là où Micabo est une app d'école, et ça oblige tout le reste du parcours à se
-  lire comme un repli dès le deuxième écran. Elle est sur la **sauge**
-  (`MicaboColor.canvasSage`), le crème de l'app teinté du vert du logo : assez discrète pour
-  que le passage à l'écran suivant ne se voie pas, assez teintée pour ne pas passer pour un
-  gris sale. Reste un seul écran d'encre, le passage de relais, le seul moment où le parcours
-  s'arrête de montrer pour s'adresser à quelqu'un.
-
-`OnboardingStep.surface` est la seule source de vérité sur ce point, et `OnboardingScaffold`
-porte la bascule : `surface:` change le fond, la couleur des textes, celle du bouton (clair sur
-fond sombre) et le fondu de la barre du bas. Les écrans hors scaffold lisent la même valeur
-depuis leur étape et la reposent dans `\.onboardingSurface`.
-
-**Le haut de l'écran suit la couleur de l'écran.** Le fond de l'étape monte jusqu'en haut de la
-zone d'état : la jauge, l'heure et la batterie reposent sur l'encre quand l'écran est sombre, sur
-le vert quand il est vert, jamais sur une bande crème rapportée. Le thème clair est donc posé
-par `RootView` sur l'app elle-même, pas au-dessus du parcours : celui-ci passe en sombre le temps
-de son écran d'encre pour que l'heure du téléphone reste lisible.
-
-### La génération du parcours, et ce qui vient après
-
-L'écran de génération est le seul en vert pleine page. Il tient en trois bandes qui ne bougent
-plus une fois posées — l'accroche en haut sur une hauteur réservée d'avance, l'anneau au
-centre, les quatre étapes en bas — parce que sa version précédente empilait tout en haut de
-l'écran et changeait de hauteur à chaque phrase, si bien que l'écran tremblait pendant qu'il
-travaillait. L'anneau fait son tour pendant que le pourcentage compte image par image : deux
-façons de dire la même chose, et c'est la seule chose que cet écran a à dire.
-
-**Il dure cinq secondes, et c'est un plancher verrouillé par un test**
-(`PersonalizingStepView.duration`). Un écran qui annonce qu'il construit un parcours puis
-disparaît en une seconde n'a rien construit : on ne lit ni ce qu'il dit ni ce qu'il coche, et
-la promesse du parcours personnalisé passe pour du décor.
-
-**La fin ne se saute pas d'elle-même.** L'écran enchaînait tout seul six dixièmes de seconde
-après son dernier coche : le seul moment du parcours où l'on ait attendu quelque chose se
-terminait par un écran arraché sous les yeux, avant qu'on ait pu lire « ton parcours est prêt ».
-C'est l'étudiant qui appuie, et le bouton occupe sa place depuis le début — éteint, avec son
-indicateur — pour que rien ne saute quand il s'active.
-
-**Le fond est passé du vert plein au vert pastel.** Un aplat saturé tenu cinq secondes derrière
-du texte blanc fatigue, et c'était précisément l'écran où l'on demande de patienter. Le pastel
-garde la rupture de couleur, rend l'encre lisible, et se traite donc comme un fond clair :
-`OnboardingSurface.isDark` ne vaut que pour l'encre, ni pour le menthe ni pour la sauge.
-
-Les trois écrans qui suivent forment la fin du parcours, et leur ordre est délibéré :
-
-| Écran | Ce qu'il dit | Pourquoi là |
-| --- | --- | --- |
-| Preuve sociale | « Nous avons aidé 500 000 étudiants », puis quatre avis en carrousel qui défilent seuls et se font défiler à la main | Posée en ouverture, elle demande de croire une app qu'on n'a pas vue ; posée ici, elle répond à la seule question qui reste après la génération du parcours : est-ce que ça marche pour d'autres que moi ? |
-| Passage de relais | « C'est maintenant à ton tour de découvrir la méthode d'apprentissage que tous les meilleurs élèves utilisent », dont le gras se pose mot par mot | C'est le pivot : jusque-là on montrait, à partir de là c'est l'étudiant qui s'y met. D'où l'encre, et le bouton qui n'arrive qu'une fois le dernier mot posé. |
-| Connexion | Continuer avec Apple, continuer avec Google, trois lignes sur ce qu'un compte sauvegarde, et un « Skip » en haut à droite | Demander un compte à l'ouverture, c'est le demander pour une app qu'on n'a pas encore vue fonctionner. Ici le parcours est construit, et le compte sert à ne pas le perdre. |
-
-**Les deux flux sont branchés pour de vrai.** `SignInStepView` se contentait d'appeler
-`model.advance()` sur les deux boutons : on croyait s'être connecté, rien n'était créé, et
-l'app redemandait un compte juste après le parcours, sur un second écran de connexion. Elle
-passe maintenant par `AuthController` (voir [Comptes et sauvegarde](#comptes-et-sauvegarde)) —
-Apple par son bouton natif, que ses règles d'interface imposent, Google par une page web
-isolée. C'est le passage à l'état « connecté » qui fait avancer, quel que soit le fournisseur
-emprunté, et l'écran suivant est la chronologie de l'essai.
-
-Les deux boutons sont montrés sans condition, et non plus seulement quand le projet Supabase
-annonce le fournisseur : un fournisseur éteint côté serveur le dit dans son message d'erreur,
-ce qui est plus utile qu'un bouton absent dont personne ne peut deviner la cause.
-
-Le « Skip » est temporaire et il fait deux choses : il avance, et il **referme la porte du
-compte** (`AccountGate.skippedKey`, la clé que relit `RootView`). Sans cette clé partagée,
-passer la connexion pendant le parcours se payait par un écran de connexion à la sortie.
-
-Les réponses sont écrites au fil de l'eau dans `OnboardingPreferences` (clés `micabo.onboarding.*`)
-et survivent donc à une fermeture en cours de route. `Réglages` propose **Refaire l'onboarding**,
-qui efface ces clés et relance le parcours sans toucher aux cours.
-
-La toute première question est **Tu étudies où ?**, en pastilles à drapeau. Elle passe devant
-« tu en es où ? » parce qu'elle commande ses réponses, et elle décide aussi de la langue.
-
-**L'ordre des pastilles est commercial, pas alphabétique** : France, Royaume-Uni, Allemagne,
-Italie, Espagne, Portugal, Tchéquie, Pays-Bas, Grèce, Hongrie, Pologne, Roumanie, Suède,
-Turquie, puis les pays francophones historiques. Rien dans le code ne rappelle cet ordre, donc
-un test le verrouille. Chaque pays ajouté porte ses **vrais paliers, écrits dans sa langue** —
-Liceum et matura en Pologne, Gymnasium et Abitur en Allemagne, Λύκειο en Grèce : c'est la même
-règle que « A-Levels » ou « Cégep », qui n'ont jamais eu de traduction non plus. La langue de
-rédaction suit (`ContentLanguage`), et la fonction Edge engendre sa consigne de sortie depuis le
-nom de la langue au lieu de la recopier quatorze fois.
-
-**« Autre pays » n'est plus une impasse.** La pastille rendait un « ailleurs » qui ne disait
-rien de plus que le silence : on ne savait ni où était l'étudiant, ni combien venaient du même
-endroit. Elle ouvre maintenant un champ de recherche sur **tous les pays du monde**
-(`WorldCountry`), et le bouton attend qu'un pays ait été choisi. Le catalogue est construit
-depuis les régions ISO du système, pas recopié : une liste de deux cents pays écrite à la main
-serait fausse dans l'année et intraduisible. Le drapeau se déduit du code à deux lettres, et le
-pays retenu remplace le libellé de la pastille — elle cesse d'être une catégorie pour devenir
-une réponse. Les paliers, eux, restent l'échelle générique : inventer un système scolaire pour
-un pays qu'on ne connaît pas produirait des réponses fausses.
-
-Vient ensuite **Tu en es où ?**, dont les réponses sont celles du pays : lycée, prépa, licence,
-PASS-santé, master, concours en France ; middle school, high school, college, pre-med, graduate
-school aux États-Unis ; GCSE, A-Levels, undergraduate, medicine, postgraduate au Royaume-Uni.
-Elle situe tout le reste, un lycéen et un PASS n'ayant ni les mêmes matières, ni les mêmes
-examens, ni le même rythme. Les réponses **occupent la page**, en rangées qui se partagent la
-hauteur à égalité. Elles tenaient avant en pastilles serrées sous le titre : tout était visible
-d'un coup, mais les deux tiers de l'écran restaient vides en dessous, et une question posée dans
-le coin supérieur d'une page blanche se lit comme un formulaire. Rien ne défile pour autant.
-
-La question de l'oubli, **En général, oublies-tu ce que tu apprends ?**, a quatre réponses là
-où elle en avait deux (`ForgettingHabit`). Un oui/non sur un sujet aussi personnel force la
-caricature : celui qui retient bien quand il s'y prend correctement n'est ni « oui, tout le
-temps » ni « non, ça va », et devant deux cases il choisit celle qui le décrit le moins mal,
-ce qui ne renseigne personne. Les deux réponses du milieu sont les plus utiles — elles disent
-que le problème est la méthode. La clé historique `micabo.onboarding.forgetsOften` reste tenue
-à jour, les quatre réponses s'y ramenant en oui ou non.
-
-**Le temps quotidien et sa projection ont été retirés.** Le premier demandait combien de minutes
-par jour on comptait réviser, le second annonçait le nombre de cartes que ça ferait au bout d'un
-an. Deux écrans pour une seule idée, et une idée qu'on ne peut pas tenir : personne ne connaît
-son rythme avant d'avoir essayé, et la promesse chiffrée qui suivait — « dans un an, 5 480
-cartes sur le bout des doigts » — reposait entièrement sur une réponse donnée au hasard en
-trente secondes. Le plafond de cartes neuves existe toujours (`DailyLoad`), sur sa valeur par
-défaut, et se règle dans **Réglages → Réviser**, là où l'on va quand on sait vraiment ce qu'on
-veut.
-
-Après le choix des matières, **Tu étudies où ?** propose un autocomplete hybride : un catalogue
-embarqué (`LocalInstitutions.json`, ~600 établissements FR/EU prioritaires) pour l'instantané,
-puis la RPC Supabase `search_institutions` sur la table `institutions` (~14 500 lignes : unis
-mondiales, grandes écoles FR, lycées FR). Le texte libre reste accepté, mais il ne donne pas
-d'`id` : seul un résultat choisi dans la liste en pose un.
-
-Le parcours est une **file droite** : aucun écran ne se saute, et le mécanisme d'écran
-conditionnel qui existait pour la preuve sociale a disparu avec sa première version.
-
-L'écran courbe s'appuie sur `RetentionCurve` : une décroissance exponentielle de la rétention, remise
-à 100 % à chaque révision, avec une stabilité qui augmente à chaque passage. Il doit se lire en trois
-secondes, sans paragraphe : un titre qui annonce ce qu'on regarde, l'intervalle réel étiqueté au-dessus
-de chaque point de révision (1 j, 3 j, 7 j, 16 j), et deux lignes de légende sous le graphe, une par
-courbe. C'est le seul écran de pédagogie qui reste : celui qui reprenait ensuite les mêmes intervalles
-en liste, sous le titre « la courbe de l'oubli prise à contre-pied », disait une deuxième fois ce que
-le graphe montrait déjà.
-
-### La sortie : l'essai, puis les deux paywalls
-
-Trois écrans séparent la connexion de l'app, et chacun répond à une question qu'on ne pose pas
-à voix haute.
-
-**La chronologie** (`TrialOfferStepView`) répond à « quand est-ce qu'on me prélève ? ». Quatre
-étapes empilées — compte créé, aujourd'hui tout est ouvert, rappel au jour 2, fin au jour 3 avec
-**la date écrite en clair** — qui arrivent l'une après l'autre, le filet qui les relie poussant
-en même temps que celle qu'il annonce. Le vert marque ce qui est acquis, l'encre ce qui commence,
-le sable ce qui n'est pas encore arrivé : la chronologie se lit sans lire les libellés. La date
-sort de `TrialTimeline`, qui prend sa date d'origine en paramètre — c'est ce qui permet de
-vérifier le premier prélèvement sans attendre trois jours.
-
-**La promesse du rappel** (`TrialReminderStepView`) tient en une phrase et une image. La phrase
-se met en gras mot à mot (`OnboardingWordByWordTitle`, en version centrée) parce que c'est une
-inquiétude qu'on désamorce, et qu'une inquiétude se désamorce en se faisant lire en entier. La
-cloche **se balance** au lieu de sonner : la version précédente partait en six secousses de
-ressort, ce qui dit « ça sonne maintenant » alors que l'écran promet une notification dans deux
-jours. Elle est au jaune plein (`MicaboColor.cautionVivid`), le seul emploi de cette couleur — le
-`caution` de l'app est assombri pour porter du texte, ce qui en fait un ocre terne dès qu'on le
-tient sur cent points de haut.
-
-**Le paywall est natif et il en compte deux** (`PaywallStepView`). `SubscriptionStoreView` a été
-retiré : l'écran système impose sa mise en page, sa typographie et son bouton, et il n'affiche
-rien du tout tant qu'App Store Connect n'a pas répondu.
-
-| Écran | Ce qu'il montre | Ce que fait la croix |
-| --- | --- | --- |
-| Premier paywall (`PaywallOfferView`) | Une seule offre, une seule phrase : « Essaie 3 jours gratuitement, puis 4,17 € / mois (facturé 49,99 € par an) », et un lien « Voir toutes les offres » | Ouvre le second |
-| Second paywall (`PaywallPlansView`) | La grille Gratuit / Pro en six lignes, puis les deux offres à choisir, l'annuelle cochée d'avance avec sa remise | Entre dans l'app |
-
-**Une croix ne ment jamais** : elle est présente dès la première image, elle réagit au premier
-appui, et le second appui sort pour de bon. Un paywall dont la sortie se dérobe se ferme en
-fermant l'app, ce qui ne fait pas un abonné de plus mais un utilisateur de moins.
-
-Les deux offres, leurs prix et la remise vivent dans `PaywallCatalog` : **annuel à 49,99 €**
-et **hebdomadaire à 4,99 €**, trois jours offerts sur les deux. Un annuel discount à
-**29,99 €** existe dans le catalogue, hors paywall. Ce sont les prix français, et seulement
-un repli : chaque pays a le sien, dans `store/pricing.json`, posé dans App Store Connect par
-une action GitHub (`docs/revenuecat.md`, §15). Le prix mensuel équivalent et la remise
-sont **calculés** sur les prix du pays, jamais écrits à la main — un pourcentage qui contredit les deux prix
-affichés juste en dessous ne se remarque qu'en production. `MicaboTests/PaywallTests.swift`
-verrouille les prix, la remise et la date de premier prélèvement.
-
-Rien n'est encore branché sur une boutique. `PaywallPurchases` est le seul point de passage d'un
-achat, il répond `unavailable`, et le paywall traite cette réponse comme une entrée dans l'app :
-sans cela, le dernier écran du parcours n'aurait pas de sortie. Le fichier documente les cinq
-étapes du branchement RevenueCat. `Micabo/Resources/Micabo.storekit`, référencé par le scheme,
-décrit les deux mêmes produits pour les essais en local.
+Les réponses sont écrites au fil de l'eau dans `OnboardingPreferences` (clés
+`micabo.onboarding.*`) et survivent à une fermeture en cours de route. `Réglages` propose
+**Refaire l'onboarding**, qui efface ces clés et relance le parcours sans toucher aux cours.
+`MicaboTests/OnboardingFlowTests.swift` verrouille l'ordre, les sauts, le retour, la barre du
+haut et la jauge.
 
 ## Le gratuit et le payant
 

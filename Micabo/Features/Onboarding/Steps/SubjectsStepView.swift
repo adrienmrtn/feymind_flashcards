@@ -54,10 +54,7 @@ struct SubjectsStepView: View {
                 }
             }
         } footer: {
-            OnboardingContinueButton(
-                title: subjectsContinueTitle,
-                isEnabled: !model.subjects.isEmpty
-            ) {
+            OnboardingArrowButton(isEnabled: !model.subjects.isEmpty) {
                 model.advance()
             }
         }
@@ -96,16 +93,6 @@ struct SubjectsStepView: View {
                 }
             }
         }
-    }
-
-    private var subjectsContinueTitle: String {
-        if model.subjects.isEmpty {
-            return i18n.t("ios.subjectsNeedOne")
-        }
-        if model.subjects.count == 1 {
-            return i18n.t("onboarding.continueOne")
-        }
-        return i18n.t("onboarding.continueMany", ["n": "\(model.subjects.count)"])
     }
 
     private func toggle(_ subject: String) {

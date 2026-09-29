@@ -29,7 +29,7 @@ struct GoalStepView: View {
                 }
             }
         } footer: {
-            OnboardingContinueButton(isEnabled: !selection.isEmpty) {
+            OnboardingArrowButton(isEnabled: !selection.isEmpty) {
                 model.goals = selection
                 model.advance()
             }

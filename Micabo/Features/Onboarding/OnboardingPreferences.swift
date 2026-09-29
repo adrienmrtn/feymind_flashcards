@@ -366,6 +366,8 @@ enum OnboardingPreferences {
         static let method = "micabo.onboarding.method"
         /// L'heure à laquelle il révise, de 5 à 23. C'est l'heure du rappel.
         static let studyHour = "micabo.onboarding.studyHour"
+        /// Ce qui l'inquiète dans ses études, dans l'ordre de la liste.
+        static let worries = "micabo.onboarding.worries"
 
         static let all = [
             completed, level, stage, tier, country, customCountryCode,
@@ -373,7 +375,7 @@ enum OnboardingPreferences {
             institutionId, institutionName,
             dailyMinutes, weeklyMinutes, ratingAsked, pendingFirstImport, retiredNotificationsOptIn, completedAt,
             sheetLanguage, schoolTrack, schoolYear, displayName,
-            source, triedApps, blocker, examHorizon, method, studyHour
+            source, triedApps, blocker, examHorizon, method, studyHour, worries
         ]
     }
 
@@ -505,6 +507,19 @@ enum OnboardingPreferences {
     static var studyHour: Int? {
         get { defaults.object(forKey: Key.studyHour) as? Int }
         set { write(newValue, forKey: Key.studyHour) }
+    }
+
+    /// Ce qui l'inquiète, tel qu'il l'a coché. Rien dans l'app ne le relit encore : la
+    /// réponse est écrite pour ne pas être reposée, et pour la mesure.
+    static var worries: [String] {
+        get { defaults.stringArray(forKey: Key.worries) ?? [] }
+        set {
+            if newValue.isEmpty {
+                defaults.removeObject(forKey: Key.worries)
+            } else {
+                defaults.set(newValue, forKey: Key.worries)
+            }
+        }
     }
 
     private static func write(_ value: String?, forKey key: String) {
