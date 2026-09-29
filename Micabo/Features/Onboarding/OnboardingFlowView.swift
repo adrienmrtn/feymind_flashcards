@@ -168,8 +168,11 @@ struct OnboardingFlowView: View {
         case .demoCourse: DemoCourseStepView()
         case .courseBuilding: CourseBuildingStepView()
         case .courseReview: CourseReviewStepView()
-        case .trainPrompt, .trainCards, .wellDone, .socialProof, .comparison:
-            OnboardingComingStepView(step: step)
+        case .trainPrompt: TrainPromptStepView()
+        case .trainCards: TrainCardsStepView()
+        case .wellDone: WellDoneStepView()
+        case .socialProof: SocialProofStepView()
+        case .comparison: ComparisonStepView()
         case .trialOffer: TrialOfferStepView()
         case .trialReminder: TrialReminderStepView()
         case .paywall: PaywallStepView(onFinish: finish)
