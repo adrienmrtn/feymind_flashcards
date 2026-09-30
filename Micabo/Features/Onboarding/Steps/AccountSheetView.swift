@@ -24,9 +24,9 @@ struct OnboardingAccountSheet: View {
     @State private var didFinish = false
 
     var body: some View {
-        // Trois étages sur toute la hauteur : la question en haut, les deux portes au milieu,
-        // la sortie et les mentions en bas. Collés en haut, ils laissaient un grand blanc
-        // sous les mentions et un autre au-dessus du titre.
+        // Trois étages à espaces fixes : la question, les deux portes, la sortie et les
+        // mentions. La languette est taillée à leur hauteur (`OnboardingFlowView`) : des
+        // espaces élastiques étiraient le blanc entre eux au lieu de le retirer.
         VStack(spacing: 0) {
             VStack(spacing: 8) {
                 Text(i18n.t("onboarding.compteTitle"))
@@ -45,8 +45,6 @@ struct OnboardingAccountSheet: View {
             }
             .frame(maxWidth: .infinity)
 
-            Spacer(minLength: 24)
-
             VStack(spacing: 0) {
                 // Apple et Google, tels que `SignInProviderButtons` les dessine partout, logos
                 // compris. Le courriel reste à la reconnexion.
@@ -55,10 +53,9 @@ struct OnboardingAccountSheet: View {
                 SignInFailureNote(includeSent: false, includeError: true)
                     .padding(.top, 8)
             }
+            .padding(.top, 22)
 
-            Spacer(minLength: 20)
-
-            VStack(spacing: 10) {
+            VStack(spacing: 6) {
                 Button(action: skip) {
                     Text(i18n.t("common.skip"))
                         .font(MicaboFont.ui(16, weight: .semibold))
@@ -72,10 +69,13 @@ struct OnboardingAccountSheet: View {
 
                 legalLine
             }
+            .padding(.top, 10)
+
+            Spacer(minLength: 0)
         }
         .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.top, 36)
-        .padding(.bottom, MicaboSpacing.md)
+        .padding(.top, 30)
+        .padding(.bottom, MicaboSpacing.sm)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(OnboardingPalette.white.ignoresSafeArea())
         .animation(.easeOut(duration: 0.22), value: auth.message)
