@@ -1,3 +1,4 @@
+import CryptoKit
 import XCTest
 @testable import Micabo
 
@@ -112,6 +113,64 @@ final class AuthDecodingTests: XCTestCase {
             schemes.contains(AuthRedirect.scheme),
             "Le schéma \(AuthRedirect.scheme) doit être déclaré dans l'Info.plist"
         )
+    }
+
+    // MARK: - Le nonce Apple
+
+    /// Un jeton d'identité au format d'Apple : en-tête, charge utile, signature.
+    private func appleToken(_ claims: [String: Any]) throws -> String {
+        let payload = try JSONSerialization.data(withJSONObject: claims).base64URLEncodedString()
+        return "eyJraWQiOiJXNldjT0tCIiwiYWxnIjoiUlMyNTYifQ.\(payload).c2lnbmF0dXJl"
+    }
+
+    /// **Le cas qui faisait `Nonces mismatch`.** Un geste, deux requêtes ; la première
+    /// revient en erreur sans jeton, la seconde avec. Le clair présenté doit être celui dont
+    /// le jeton porte l'empreinte, quel que soit l'ordre des retours.
+    func testTheTokenLeadsBackToTheNonceOfItsOwnRequest() throws {
+        var ledger = AppleNonceLedger()
+        let first = ledger.issue()
+        let second = ledger.issue()
+
+        let token = try appleToken(["iss": "https://appleid.apple.com", "nonce": first])
+        let hashed = try XCTUnwrap(AppleIdentityToken.nonce(in: token))
+        let raw = try XCTUnwrap(ledger.redeem(hashed: hashed))
+
+        let rehashed = SHA256.hash(data: Data(raw.utf8)).map { String(format: "%02x", $0) }.joined()
+        XCTAssertEqual(rehashed, first)
+        XCTAssertNotEqual(rehashed, second)
+    }
+
+    /// Un nonce ne sert qu'une fois, et une empreinte inconnue ne rend rien.
+    func testANonceIsRedeemedOnce() {
+        var ledger = AppleNonceLedger()
+        let hashed = ledger.issue()
+
+        XCTAssertNotNil(ledger.redeem(hashed: hashed))
+        XCTAssertNil(ledger.redeem(hashed: hashed))
+        XCTAssertNil(ledger.redeem(hashed: "inconnue"))
+    }
+
+    /// Le registre ne grossit pas : au-delà de sa capacité, le plus ancien part.
+    func testTheLedgerForgetsTheOldestNonce() {
+        var ledger = AppleNonceLedger()
+        let oldest = ledger.issue()
+        let kept = (0..<AppleNonceLedger.capacity).map { _ in ledger.issue() }
+
+        XCTAssertNil(ledger.redeem(hashed: oldest))
+        XCTAssertNotNil(ledger.redeem(hashed: kept[0]))
+    }
+
+    /// La charge utile se lit quelle que soit sa longueur (le base64 d'un JWT n'a pas de
+    /// `=`), et un jeton sans nonce ou mal formé ne rend rien plutôt qu'une empreinte fausse.
+    func testTheNonceIsReadFromTheTokenPayload() throws {
+        for nonce in ["a", "ab", "abc", "abcd", AppleNonce().hashed] {
+            let token = try appleToken(["nonce": nonce])
+            XCTAssertEqual(AppleIdentityToken.nonce(in: token), nonce)
+        }
+        let withoutNonce = try appleToken(["iss": "https://appleid.apple.com"])
+        XCTAssertNil(AppleIdentityToken.nonce(in: withoutNonce))
+        XCTAssertNil(AppleIdentityToken.nonce(in: "pas.un-jeton"))
+        XCTAssertNil(AppleIdentityToken.nonce(in: "a.%%%.c"))
     }
 }
 

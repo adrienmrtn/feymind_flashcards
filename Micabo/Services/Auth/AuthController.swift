@@ -36,6 +36,10 @@ final class AuthController {
 
     private let client: SupabaseAuthClient
     private var session: AuthSession?
+    /// Les nonces des requêtes Apple en vol. Ici et pas dans le bouton : le contrôleur vit
+    /// autant que l'app, et aucun retour d'Apple ne peut plus renouveler celui d'un autre.
+    /// Hors observation : émettre un nonce ne change rien à ce que l'écran montre.
+    @ObservationIgnored private var appleNonces = AppleNonceLedger()
 
     init(client: SupabaseAuthClient = .shared) {
         self.client = client
@@ -101,25 +105,60 @@ final class AuthController {
 
     // MARK: - Fournisseurs
 
+    /// Remplit la requête que `SignInWithAppleButton` construit lui-même. Chaque requête
+    /// reçoit son propre nonce, y compris quand un seul geste en fait partir deux.
+    func prepareAppleRequest(_ request: ASAuthorizationAppleIDRequest) {
+        request.requestedScopes = [.fullName, .email]
+        request.nonce = appleNonces.issue()
+    }
+
     /// Ouvre la session depuis ce que le bouton d'Apple vient de rendre.
     ///
     /// Le résultat arrive de la vue parce que `SignInWithAppleButton` construit sa requête
     /// lui-même : c'est la seule façon de l'utiliser, et ses règles d'interface imposent ce
     /// bouton-là dès qu'on propose la connexion Apple.
-    func signInWithApple(result: Result<ASAuthorization, Error>, nonce: String) async {
+    ///
+    /// Le nonce ne vient plus de la vue : il se retrouve par l'empreinte que porte le jeton.
+    /// Un retour d'Apple, erreur comprise, ne peut donc plus fausser celui du suivant.
+    func signInWithApple(result: Result<ASAuthorization, Error>) async {
         Analytics.track(.signInStarted, ["provider": "apple"])
         await perform {
             switch result {
             case .failure(let error):
-                throw (error as? ASAuthorizationError)?.code == .canceled
-                    ? AuthError.cancelled
-                    : AuthError.server(error.localizedDescription)
+                if (error as? ASAuthorizationError)?.code == .canceled {
+                    throw AuthError.cancelled
+                }
+                // Le code, et pas seulement le message traduit : c'est lui qui dira ce qu'est
+                // l'erreur immédiate qui précède parfois la vraie autorisation.
+                let nsError = error as NSError
+                Analytics.track(.appleSignInError, [
+                    "stage": "autorisation",
+                    "domain": .text(nsError.domain),
+                    "code": .number(Double(nsError.code)),
+                ])
+                throw AuthError.server(error.localizedDescription)
 
             case .success(let authorization):
                 guard let appleCredential = authorization.credential as? ASAuthorizationAppleIDCredential else {
+                    Analytics.track(.appleSignInError, ["stage": "identifiant"])
                     throw AuthError.invalidResponse
                 }
-                let credential = try AppleCredential(appleCredential)
+                let credential: AppleCredential
+                do {
+                    credential = try AppleCredential(appleCredential)
+                } catch {
+                    Analytics.track(.appleSignInError, ["stage": "jeton"])
+                    throw error
+                }
+                // Un jeton sans nonce part sans nonce : Supabase n'accepte que les deux
+                // présents ou les deux absents. Un nonce que ce registre n'a pas émis ne
+                // passerait pas, et le dire ici évite un aller-retour voué au refus.
+                let tokenNonce = AppleIdentityToken.nonce(in: credential.idToken)
+                let nonce = tokenNonce.flatMap { self.appleNonces.redeem(hashed: $0) }
+                if tokenNonce != nil, nonce == nil {
+                    Analytics.track(.appleSignInError, ["stage": "nonce"])
+                    throw AuthError.invalidResponse
+                }
                 var session = try await self.client.signIn(
                     idToken: credential.idToken,
                     provider: "apple",

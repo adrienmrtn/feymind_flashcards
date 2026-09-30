@@ -38,6 +38,10 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     case signedIn = "signed_in"
     case signInFailed = "sign_in_failed"
     case signedOut = "signed_out"
+    /// Ce qui a échoué côté Apple avant Supabase, avec son étape (`autorisation`,
+    /// `identifiant`, `jeton`, `nonce`) et, pour une autorisation refusée, le `domain` et le
+    /// `code` de l'erreur. `sign_in_failed` ne dit que « refus » ; celui-ci dit lequel.
+    case appleSignInError = "apple_sign_in_error"
 
     // MARK: Paywall
 
