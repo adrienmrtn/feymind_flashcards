@@ -11,17 +11,11 @@ import XCTest
 final class FreemiumTests: XCTestCase {
     // MARK: - Les limites
 
-    func testTheFreeTierIsOneCourseThirtyPercentAndOneCard() {
-        XCTAssertEqual(FreeTier.courses, 1)
+    func testTheFreeTierIsNoCourseThirtyPercentAndOneCard() {
+        XCTAssertEqual(FreeTier.courses, 0, "Générer un cours est dans Pro ; le cours du parcours d'accueil se construit à part")
         XCTAssertEqual(FreeTier.readableSheetRatio, 0.3, accuracy: 0.0001)
         XCTAssertEqual(FreeTier.cardsPerDay, 1, "Une carte fait la démonstration, la deuxième est dans Pro")
         XCTAssertFalse(FreeTier.allowsPractice, "L'entraînement libre est dans Pro")
-    }
-
-    /// Ce n'est pas zéro cours, et c'est le point : un paywall posé avant le premier import
-    /// demande de payer pour un produit qu'on n'a pas vu tourner sur ses propres cours.
-    func testTheFirstCourseIsFree() {
-        XCTAssertGreaterThan(FreeTier.courses, 0)
     }
 
     /// **Sans ligne, pas d'abonnement.** La même règle que le web
@@ -120,40 +114,26 @@ final class FreemiumTests: XCTestCase {
         XCTAssertFalse(pro.hasReachedDailyLimit(reviewedToday: 999), "Un abonné n'a plus de plafond")
     }
 
+    /// **Aucun import sans abonnement**, dès le premier ; un abonné n'a pas de limite.
     @MainActor
-    func testTheSecondImportIsRefusedAndTheFirstIsNot() {
+    func testNoImportIsAllowedWithoutProAndAllAreWithIt() {
         let pro = ProAccess(defaults: isolatedDefaults())
 
-        XCTAssertTrue(pro.canImportCourse(existingCourses: []))
+        XCTAssertFalse(pro.canImportCourse(existingCourses: []))
 
         let mine = Course(title: "Photosynthèse")
         XCTAssertFalse(pro.canImportCourse(existingCourses: [mine]))
 
         pro.unlock()
+        XCTAssertTrue(pro.canImportCourse(existingCourses: []))
         XCTAssertTrue(pro.canImportCourse(existingCourses: [mine, Course(title: "Fonctions affines")]))
     }
 
-    /// Un cours repris dans la bibliothèque n'a rien coûté à produire : le faire compter
-    /// dans le quota ferait payer un import qu'on n'a pas fait.
+    /// **Le compte des cours importés ignore la bibliothèque**, sur un conteneur en mémoire :
+    /// c'est le prédicat de `CourseRepository.ownedCount(in:)` que ce test verrouille, celui
+    /// que la languette de l'offre lit.
     @MainActor
-    func testALibraryCourseDoesNotUseUpTheFreeImport() {
-        let pro = ProAccess(defaults: isolatedDefaults())
-        let adopted = Course(title: "Cours partagé", isFromLibrary: true)
-
-        XCTAssertTrue(pro.canImportCourse(existingCourses: [adopted]))
-    }
-
-    /// **La même règle, par le chemin que l'écran Aujourd'hui emprunte désormais.**
-    ///
-    /// La porte du gratuit ne se franchit plus en filtrant une liste de cours tenue par un
-    /// `@Query` : elle se franchit sur un entier rendu par `CourseRepository.ownedCount(in:)`,
-    /// qui compte en base avec un prédicat. Le test ci-dessus verrouille la règle sur
-    /// l'ancienne surcharge, que cet écran n'appelle plus — il aurait donc continué de passer
-    /// alors même que le prédicat aurait cessé d'écarter les cours de la bibliothèque.
-    ///
-    /// Celui-ci verrouille le prédicat lui-même, sur un conteneur en mémoire.
-    @MainActor
-    func testTheCountedGateAlsoIgnoresLibraryCourses() throws {
+    func testTheOwnedCountIgnoresLibraryCourses() throws {
         let container = try ModelContainer(
             for: Course.self,
             Flashcard.self,
@@ -161,24 +141,17 @@ final class FreemiumTests: XCTestCase {
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
         let context = ModelContext(container)
-        let pro = ProAccess(defaults: isolatedDefaults())
 
         XCTAssertEqual(CourseRepository.ownedCount(in: context), 0)
-        XCTAssertTrue(pro.canImportCourse(ownedCourses: CourseRepository.ownedCount(in: context)))
 
         context.insert(Course(title: "Cours partagé", isFromLibrary: true))
         XCTAssertEqual(
             CourseRepository.ownedCount(in: context), 0,
-            "Un cours repris de la bibliothèque ne consomme pas l'import gratuit"
+            "Un cours repris de la bibliothèque n'est pas un import"
         )
-        XCTAssertTrue(pro.canImportCourse(ownedCourses: CourseRepository.ownedCount(in: context)))
 
         context.insert(Course(title: "Photosynthèse"))
         XCTAssertEqual(CourseRepository.ownedCount(in: context), 1)
-        XCTAssertFalse(pro.canImportCourse(ownedCourses: CourseRepository.ownedCount(in: context)))
-
-        pro.unlock()
-        XCTAssertTrue(pro.canImportCourse(ownedCourses: CourseRepository.ownedCount(in: context)))
     }
 
     @MainActor

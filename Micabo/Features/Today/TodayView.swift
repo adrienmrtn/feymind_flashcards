@@ -953,16 +953,9 @@ struct TodayView: View {
 
     // MARK: - Import
 
-    /// Le premier cours est offert, le deuxième s'achète.
-    ///
-    /// Le contrôle est ici plutôt que dans l'écran d'import : on refuse **avant** d'avoir
-    /// fait choisir un PDF, sélectionner des photos et attendre une analyse. Un paywall qui
-    /// tombe après le travail est un paywall qui fait désinstaller.
+    /// **L'import ouvre les questions à tout le monde.** Le paywall tombe à la fin, sur
+    /// « générer mon cours » (`DeckSetupFlowView`) : c'est là qu'on sait ce qu'on achète.
     private func requestImport() {
-        guard pro?.canImportCourse(ownedCourses: CourseRepository.ownedCount(in: modelContext)) ?? true else {
-            paywall = .secondCourse
-            return
-        }
         creatingDeck = true
     }
 }

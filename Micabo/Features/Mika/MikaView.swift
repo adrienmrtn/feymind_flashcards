@@ -176,15 +176,8 @@ struct MikaView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, MicaboSpacing.md)
 
-            if !isPro, chat.quota.hasFreeQuestion {
-                Text(i18n.t("ios.mika.chat.freeQuestion"))
-                    .font(MicaboFont.ui(13, weight: .semibold))
-                    .foregroundStyle(MicaboColor.accent)
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 12)
-                    .background(MicaboColor.accentSoft, in: Capsule())
-            }
-
+            // Rien ne dit que la première question est offerte : on pose sa question, on
+            // a sa réponse, et c'est à la deuxième qu'on découvre que la suite est dans Pro.
             VStack(spacing: 8) {
                 ForEach(1...3, id: \.self) { index in
                     suggestion(i18n.t("ios.mika.chat.suggestion\(index)"))
