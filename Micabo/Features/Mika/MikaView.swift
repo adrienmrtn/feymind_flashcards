@@ -21,6 +21,9 @@ struct MikaView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @Environment(\.aiService) private var aiService
     @Environment(\.modelContext) private var modelContext
+    /// Le dernier cours entré dans la bibliothèque : c'est lui que la suggestion de carte
+    /// propose, parce que c'est celui qu'on est en train de travailler.
+    @Query(MikaView.latestCourseDescriptor) private var latestCourses: [Course]
 
     @State private var chat = MikaChat()
     @State private var path = NavigationPath()
@@ -32,6 +35,12 @@ struct MikaView: View {
     @FocusState private var isComposing: Bool
 
     private static let bottomAnchor = "mika.bottom"
+
+    private static var latestCourseDescriptor: FetchDescriptor<Course> {
+        var descriptor = FetchDescriptor<Course>(sortBy: [SortDescriptor(\.createdAt, order: .reverse)])
+        descriptor.fetchLimit = 1
+        return descriptor
+    }
 
     private var isPro: Bool { pro?.isPro ?? false }
 
@@ -155,8 +164,10 @@ struct MikaView: View {
 
     // MARK: - L'accueil
 
-    /// La conversation vide : le blob en grand, une phrase, et trois questions qu'on peut
-    /// poser d'un appui pour voir ce que ça donne.
+    /// La conversation vide : le blob en grand, une phrase, et les questions qu'on peut
+    /// poser d'un appui pour voir ce que ça donne. La première, quand la bibliothèque n'est
+    /// pas vide, demande une carte sur le dernier cours ajouté : elle joint le cours, et la
+    /// carte que Mika propose s'y range d'un appui.
     private var welcome: some View {
         VStack(spacing: 14) {
             MikaBlob(size: 150)
@@ -179,6 +190,9 @@ struct MikaView: View {
             // Rien ne dit que la première question est offerte : on pose sa question, on
             // a sa réponse, et c'est à la deuxième qu'on découvre que la suite est dans Pro.
             VStack(spacing: 8) {
+                if let course = latestCourses.first, course.title.nilIfBlank != nil {
+                    suggestion(i18n.t("ios.mika.chat.suggestionCourse", ["course": course.title]), course: course)
+                }
                 ForEach(1...3, id: \.self) { index in
                     suggestion(i18n.t("ios.mika.chat.suggestion\(index)"))
                 }
@@ -188,8 +202,9 @@ struct MikaView: View {
         .frame(maxWidth: .infinity)
     }
 
-    private func suggestion(_ text: String) -> some View {
+    private func suggestion(_ text: String, course: Course? = nil) -> some View {
         Button {
+            if let course { attach(course) }
             chat.draft = text
             Task { await send() }
         } label: {
@@ -448,8 +463,10 @@ struct MikaView: View {
         OnboardingPreferences.educationStage?.level
     }
 
+    /// La langue de l'interface, lue sur le store : c'est la langue par défaut de Mika. Celle
+    /// dans laquelle l'élève écrit passe devant, côté serveur.
     private var language: ContentLanguage {
-        DeckSetup.defaultLanguage()
+        ContentLanguage(rawValue: i18n.locale.rawValue) ?? DeckSetup.defaultLanguage()
     }
 
     private func send() async {

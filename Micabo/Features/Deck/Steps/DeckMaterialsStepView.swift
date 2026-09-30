@@ -19,9 +19,10 @@ struct DeckMaterialsStepView: View {
     /// **Le rond fléché à la place de la pilule**, dans le parcours d'accueil, où tout ce
     /// qui avance est un rond. La création d'un deck garde sa pilule.
     var usesArrow: Bool = false
-    /// **« Je n'ai rien pour l'instant »**, en gris à gauche du rond, quand la page a une
-    /// sortie pour qui n'a pas ses supports sous la main : dans le parcours, elle mène au
-    /// choix d'un cours de démonstration. La création d'un deck n'en a pas.
+    /// **La sortie pour qui n'a pas ses supports sous la main.** Dans le parcours d'accueil,
+    /// « je n'ai rien pour l'instant », à gauche du rond, mène au choix d'un cours de
+    /// démonstration ; dans la création d'un deck, « je n'ai pas de supports », sous la
+    /// pilule, mène au sujet — et l'IA écrit le cours.
     var onNothing: (() -> Void)? = nil
     var onNext: () -> Void
 
@@ -80,7 +81,12 @@ struct DeckMaterialsStepView: View {
                     OnboardingArrowButton(isEnabled: setup.hasMaterials, fillsWidth: onNothing == nil, action: onNext)
                 }
             } else {
-                OnboardingContinueButton(isEnabled: setup.hasMaterials, action: onNext)
+                VStack(spacing: 4) {
+                    OnboardingContinueButton(isEnabled: setup.hasMaterials, action: onNext)
+                    if let onNothing {
+                        noMaterialsLink(onNothing)
+                    }
+                }
             }
         }
         // **Une languette, pas une feuille système.**
@@ -165,6 +171,20 @@ struct DeckMaterialsStepView: View {
                 .frame(minHeight: 56)
                 .background(OnboardingPalette.card, in: Capsule())
                 .contentShape(Capsule())
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
+    }
+
+    /// « Je n'ai pas de supports », sous la pilule : un lien, pas un second bouton. Les
+    /// cases sont la réponse attendue ; celle-ci est la sortie, et elle se lit comme telle.
+    private func noMaterialsLink(_ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(i18n.t("ios.deckSetup.noMaterials"))
+                .font(MicaboFont.ui(15.5, weight: .semibold))
+                .foregroundStyle(OnboardingPalette.gray)
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
     }

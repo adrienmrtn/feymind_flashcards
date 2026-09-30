@@ -50,6 +50,9 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     /// La seconde page, celle qui compare les offres. « Atteint » au sens où l'étudiant
     /// a dépassé la première offre au lieu de refermer.
     case paywallPlansSeen = "paywall_plans_seen"
+    /// Ce que la boutique répond sur l'essai, offre par offre (`eligible`, `deja_utilise`,
+    /// `aucun_essai`, `inconnu`), avec le pays de la boutique.
+    case paywallTrialStatus = "paywall_trial_status"
     case paywallPurchaseStarted = "paywall_purchase_started"
     case paywallPurchased = "paywall_purchased"
     case paywallPurchaseFailed = "paywall_purchase_failed"

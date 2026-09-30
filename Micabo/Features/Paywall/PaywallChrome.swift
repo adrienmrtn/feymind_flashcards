@@ -50,6 +50,9 @@ struct PaywallCallToAction: View {
     var isPurchasing: Bool
     /// Absent : l'écran ne vend que l'annuel. Présent : le libellé suit l'offre.
     var plan: PaywallPlan? = nil
+    /// Voir `PaywallOfferView.storeRevision` : l'essai peut se révéler consommé après
+    /// l'ouverture, et le bouton ne doit plus le promettre.
+    var storeRevision: Int = 0
     var action: () -> Void
 
     /// Le bouton ne promet l'essai que si ce compte y a droit : un « Commencer l'essai »
@@ -141,6 +144,34 @@ enum PaywallPitch {
                 locale: locale,
                 vars: ["monthly": monthly, "yearly": plan.displayPrice]
             )
+        }
+        return L10n.t(
+            afterTrial ? "ios.paywallThenPeriod" : "ios.paywallPricePeriod",
+            locale: locale,
+            vars: ["price": plan.displayPrice, "unit": plan.period.unit]
+        )
+    }
+
+    /// **La phrase du premier paywall** : « Essaie 3 jours gratuitement, puis seulement
+    /// 4,17 € / mois ». Le vert porte la partie gratuite, l'encre le prix ; ce qui est
+    /// prélevé d'un bloc descend dans la ligne grise du bas (`PaywallPlan.billedLine`).
+    ///
+    /// Sans essai — déjà utilisé par ce compte, ou absent dans ce pays —, il reste
+    /// « Seulement 4,17 € / mois » : la moitié verte ne s'écrit que si Apple l'honorera.
+    static func headline(for plan: PaywallPlan, locale: UiLocale = .resolved()) -> Text {
+        let price = Text(headlineSentence(for: plan, locale: locale))
+            .foregroundStyle(OnboardingPalette.ink)
+        guard plan.hasTrial else { return price }
+        let free = Text(L10n.t("ios.paywallTryDays", locale: locale, vars: ["n": "\(PaywallCatalog.freeTrialDays)"]))
+            .foregroundStyle(OnboardingPalette.free)
+        return free + price
+    }
+
+    /// La moitié « prix » de la phrase du premier paywall, sans la somme annuelle.
+    static func headlineSentence(for plan: PaywallPlan, locale: UiLocale = .resolved()) -> String {
+        let afterTrial = plan.hasTrial
+        if let monthly = plan.monthlyEquivalent {
+            return L10n.t(afterTrial ? "ios.paywallThenOnly" : "ios.paywallOnly", locale: locale, vars: ["monthly": monthly])
         }
         return L10n.t(
             afterTrial ? "ios.paywallThenPeriod" : "ios.paywallPricePeriod",

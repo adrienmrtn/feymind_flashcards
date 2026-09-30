@@ -1,4 +1,5 @@
 import Foundation
+import StoreKit
 
 #if canImport(RevenueCat)
 import RevenueCat
@@ -67,20 +68,51 @@ enum PaywallPurchases {
             let eligibility = await Purchases.shared
                 .checkTrialOrIntroDiscountEligibility(productIdentifiers: withTrial)
             var known: [String: Bool] = [:]
+            var notOffered: Set<String> = []
+            var statuses: [String: AnalyticsValue] = [:]
             for (productID, answer) in eligibility {
                 switch answer.status {
-                case .eligible: known[productID] = true
-                case .ineligible, .noIntroOfferExists: known[productID] = false
+                case .eligible:
+                    known[productID] = true
+                case .ineligible:
+                    known[productID] = false
+                case .noIntroOfferExists:
+                    known[productID] = false
+                    notOffered.insert(productID)
                 case .unknown: break
                 @unknown default: break
                 }
+                statuses[Self.analyticsKey(productID)] = .text(Self.statusName(answer.status))
             }
-            PaywallStorePrices.storeTrialEligibility(known)
+            PaywallStorePrices.storeTrialEligibility(known, notOffered: notOffered)
+            // **Ce que la boutique a répondu, tel quel.** « Sans essai » sur un téléphone de
+            // test ne dit pas si l'essai manque dans App Store Connect ou si ce compte l'a
+            // déjà pris ; cette ligne-là le dit, pays compris.
+            let storefront = await StoreKit.Storefront.current
+            statuses["storefront"] = .text(storefront?.countryCode ?? "inconnu")
+            Analytics.track(.paywallTrialStatus, statuses)
         } catch {
             // Rien à dire : les prix écrits restent affichés.
         }
         #endif
     }
+
+    #if canImport(RevenueCat)
+    /// « yearly », « weekly » : la fin de l'identifiant produit, assez pour une colonne.
+    private static func analyticsKey(_ productID: String) -> String {
+        productID.split(separator: ".").last.map(String.init) ?? productID
+    }
+
+    private static func statusName(_ status: IntroEligibilityStatus) -> String {
+        switch status {
+        case .eligible: "eligible"
+        case .ineligible: "deja_utilise"
+        case .noIntroOfferExists: "aucun_essai"
+        case .unknown: "inconnu"
+        @unknown default: "inconnu"
+        }
+    }
+    #endif
 
     static func buy(_ plan: PaywallPlan) async -> PaywallOutcome {
         #if canImport(RevenueCat)

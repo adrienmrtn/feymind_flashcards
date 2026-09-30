@@ -128,54 +128,6 @@ struct DeckNameStepView: View {
     }
 }
 
-/// **Avec des documents, ou sans.**
-///
-/// Deux réponses, donc deux tuiles côte à côte : empilées, la première se lirait comme la
-/// bonne réponse et la seconde comme un repli. Elles ne sont pas de même nature — l'une lit
-/// le cours de l'étudiant, l'autre l'écrit — et elles méritent d'être comparées d'un regard.
-struct DeckSourceStepView: View {
-    @Bindable var setup: DeckSetup
-    var onNext: () -> Void
-
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    private var subject: String {
-        setup.subject?.nilIfBlank ?? i18n.t("ios.deckSetup.thisSubject")
-    }
-
-    var body: some View {
-        OnboardingScaffold(
-            title: i18n.t("ios.deckSetup.source"),
-            animatesTitle: true,
-            expandsContent: true
-        ) {
-            VStack(spacing: 10) {
-                OnboardingChoiceRow(
-                    title: i18n.t("ios.deckSetup.source.materials"),
-                    emoji: "📄",
-                    isSelected: setup.source == .materials,
-                    fillsHeight: true,
-                    rank: 0
-                ) {
-                    setup.source = .materials
-                }
-
-                OnboardingChoiceRow(
-                    title: i18n.t("ios.deckSetup.source.ai", ["subject": subject]),
-                    emoji: "✨",
-                    isSelected: setup.source == .generated,
-                    fillsHeight: true,
-                    rank: 1
-                ) {
-                    setup.source = .generated
-                }
-            }
-        } footer: {
-            OnboardingContinueButton(isEnabled: setup.source != nil, action: onNext)
-        }
-    }
-}
-
 /// **Ce qu'on veut apprendre, précisément.**
 ///
 /// Cet écran n'existe que sur la branche sans document, et c'est lui qui la rend utilisable.

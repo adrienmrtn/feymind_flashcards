@@ -223,7 +223,10 @@ enum OnboardingDemoCatalog {
     static func courses(locale: UiLocale) -> [OnboardingDemoCourse] {
         switch locale {
         case .fr: french
-        default: english
+        case .en: english
+        case .de: german
+        case .es: spanish
+        case .tr: turkish
         }
     }
 
