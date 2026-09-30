@@ -52,14 +52,47 @@ struct SupabaseDatabase {
     /// la met à jour au lieu de refuser un doublon. C'est ce qui permet de tout renvoyer après
     /// trois jours hors ligne sans tenir un journal de ce qui a changé.
     func upsert<T: Encodable>(_ rows: [T], into table: String) async throws {
-        guard !rows.isEmpty else { return }
-        _ = try await send(
-            method: "POST",
-            path: table,
-            query: [],
-            body: try encoder.encode(rows),
-            prefer: "resolution=merge-duplicates,return=minimal"
-        )
+        for body in try uniformBatches(rows) {
+            _ = try await send(
+                method: "POST",
+                path: table,
+                query: [],
+                body: body,
+                prefer: "resolution=merge-duplicates,return=minimal"
+            )
+        }
+    }
+
+    /// **Un envoi par jeu de clés.**
+    ///
+    /// PostgREST refuse en bloc un tableau dont les lignes n'ont pas toutes les mêmes clés :
+    /// `400 PGRST102 All object keys must match`. Or les lignes en omettent, et c'est voulu :
+    /// `encodeIfPresent` laisse `hint` hors d'une carte sans indice, `deleted_at` hors d'une
+    /// carte vivante, parce qu'un `null` envoyé écraserait la colonne au serveur. Un cours
+    /// dont une carte a un indice et la suivante non partait donc en un lot refusé entier -
+    /// 9 envois de cartes sur 24 le 29 septembre 2026, et la moitié des cours sans aucune
+    /// carte côté serveur.
+    ///
+    /// Chaque ligne est encodée une fois, puis rangée avec celles qui portent exactement les
+    /// mêmes clés, dans l'ordre où les groupes apparaissent. Les octets partent tels que
+    /// `JSONEncoder` les a écrits : rien n'est réinterprété en route.
+    func uniformBatches<T: Encodable>(_ rows: [T]) throws -> [Data] {
+        let encoder = self.encoder
+        var order: [Set<String>] = []
+        var groups: [Set<String>: [Data]] = [:]
+
+        for row in rows {
+            let line = try encoder.encode(row)
+            let object = (try? JSONSerialization.jsonObject(with: line)) as? [String: Any]
+            let keys = Set(object.map { Array($0.keys) } ?? [])
+            if groups[keys] == nil { order.append(keys) }
+            groups[keys, default: []].append(line)
+        }
+
+        return order.map { keys in
+            let lines = groups[keys] ?? []
+            return Data("[".utf8) + Data(lines.joined(separator: Data(",".utf8))) + Data("]".utf8)
+        }
     }
 
     // MARK: - Lecture
@@ -69,14 +102,16 @@ struct SupabaseDatabase {
     /// C'est le contraire de `upsert`, et c'est voulu là où le doublon est l'information : une
     /// demande d'amitié déjà envoyée doit se signaler, pas s'écrire une seconde fois.
     func insert<T: Encodable>(_ rows: [T], into table: String) async throws {
-        guard !rows.isEmpty else { return }
-        _ = try await send(
-            method: "POST",
-            path: table,
-            query: [],
-            body: try encoder.encode(rows),
-            prefer: "return=minimal"
-        )
+        // Même règle que `upsert` : un tableau aux clés inégales serait refusé en entier.
+        for body in try uniformBatches(rows) {
+            _ = try await send(
+                method: "POST",
+                path: table,
+                query: [],
+                body: body,
+                prefer: "return=minimal"
+            )
+        }
     }
 
     /// Modifie les lignes que le filtre désigne. Le cloisonnement décide du reste : un filtre

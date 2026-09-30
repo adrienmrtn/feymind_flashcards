@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import UIKit
 
 /// **Construire un deck entier, d'un bout à l'autre.**
 ///
@@ -103,9 +104,19 @@ enum DeckBuilder {
         in modelContext: ModelContext,
         onStage: @MainActor (Stage) -> Void = { _ in }
     ) async throws -> Outcome {
+        // **La construction continue quand l'élève quitte l'app.** Elle dure trente à quarante
+        // secondes, et c'est assez pour qu'il aille voir ses messages : iOS suspendait alors
+        // l'app, la requête en cours tombait, et le cours s'enregistrait sans cartes alors que
+        // le serveur les avait écrites. Entre le 21 et le 30 septembre 2026, c'était 22 des 49
+        // decks arrivés vides. Demander ce délai à iOS couvre une absence d'une demi-minute.
+        let allowance = BackgroundAllowance(name: "micabo.deck")
+        defer { allowance.end() }
+
         onStage(.writingSheet)
 
-        let generated = try await writeSheet(setup, using: service)
+        let generated = try await retryingAfterBackground(ForegroundWatch()) {
+            try await writeSheet(setup, using: service)
+        }
 
         let course = try CourseRepository.save(
             generated,
@@ -137,13 +148,23 @@ enum DeckBuilder {
         onStage(.writingCards)
         var cardCount = 0
         var cardFailure: String?
+        let watch = ForegroundWatch()
         do {
-            let cards = try await writeCards(for: course, language: setup.language, using: service, in: modelContext)
+            let cards = try await retryingAfterBackground(watch) {
+                try await writeCards(for: course, language: setup.language, using: service, in: modelContext)
+            }
             cardCount = cards.count
         } catch {
             // Le cours est déjà en base : on ne défait rien. L'écran du deck proposera
             // d'écrire les cartes, et le bouton existe déjà pour ça.
             cardFailure = error.localizedDescription
+            // L'événement existait, rien ne l'envoyait : 17 % des decks de la 1.6 arrivaient
+            // vides sans qu'on sache pourquoi.
+            Analytics.track(.cardsGenerationFailed, [
+                "reason": .text(failureReason(error)),
+                "background": .flag(watch.leftForeground),
+                "source": .text(setup.courseSource.rawValue),
+            ])
         }
 
         if let deadline = setup.deadline {
@@ -161,6 +182,43 @@ enum DeckBuilder {
         ])
 
         return Outcome(course: course, cardCount: cardCount, cardFailure: cardFailure)
+    }
+
+    // MARK: - L'arrière-plan
+
+    /// **Une coupure pendant l'arrière-plan se refait au retour, une fois.**
+    ///
+    /// Le délai d'iOS ne couvre qu'une demi-minute. Au-delà, l'app est suspendue et la
+    /// requête revient en erreur réseau au moment où l'élève rouvre l'app. Ce n'est pas une
+    /// panne : on attend que l'app soit de nouveau au premier plan, et on redemande. Une
+    /// erreur réseau survenue app ouverte, elle, se dit comme avant.
+    @MainActor
+    private static func retryingAfterBackground<T>(
+        _ watch: ForegroundWatch,
+        _ work: () async throws -> T
+    ) async throws -> T {
+        watch.start()
+        defer { watch.stop() }
+        do {
+            return try await work()
+        } catch let error as AIServiceError where watch.leftForeground && !Task.isCancelled {
+            guard case .network = error else { throw error }
+            await watch.untilActive()
+            try Task.checkCancellation()
+            return try await work()
+        }
+    }
+
+    /// Le motif d'un échec, en une étiquette courte : c'est ce que le tableau de bord groupe.
+    private static func failureReason(_ error: Error) -> String {
+        guard let error = error as? AIServiceError else { return "autre" }
+        switch error {
+        case .network: return "reseau"
+        case .server: return "serveur"
+        case .invalidResponse: return "reponse_illisible"
+        case .emptySource: return "source_vide"
+        case .notConfigured, .missingProviderKey: return "configuration"
+        }
     }
 
     // MARK: - La fiche
@@ -311,6 +369,64 @@ enum DeckBuilder {
         case ..<0.33: .cold
         case ..<0.72: .seen
         default: .solid
+        }
+    }
+}
+
+/// **Le délai qu'iOS accorde encore à une app qu'on quitte.**
+///
+/// Une demi-minute environ : de quoi finir une écriture en cours. Rendu dès que la
+/// construction s'achève, et rendu aussi si iOS le reprend avant, faute de quoi il
+/// tuerait l'app.
+@MainActor
+final class BackgroundAllowance {
+    private var identifier: UIBackgroundTaskIdentifier = .invalid
+
+    init(name: String) {
+        identifier = UIApplication.shared.beginBackgroundTask(withName: name) { [weak self] in
+            MainActor.assumeIsolated { self?.end() }
+        }
+    }
+
+    func end() {
+        guard identifier != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(identifier)
+        identifier = .invalid
+    }
+}
+
+/// **L'app est-elle passée en arrière-plan pendant une opération ?**
+///
+/// Et, si oui, attendre qu'elle revienne. C'est ce qui distingue une requête coupée par la
+/// suspension d'iOS, qu'il suffit de refaire, d'une vraie panne réseau.
+@MainActor
+final class ForegroundWatch {
+    private(set) var leftForeground = false
+    private var observer: NSObjectProtocol?
+
+    func start() {
+        guard observer == nil else { return }
+        observer = NotificationCenter.default.addObserver(
+            forName: UIApplication.didEnterBackgroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.leftForeground = true }
+        }
+    }
+
+    func stop() {
+        if let observer { NotificationCenter.default.removeObserver(observer) }
+        observer = nil
+    }
+
+    /// Rend la main quand l'app est de nouveau active. La requête coupée revient en erreur
+    /// juste avant ce moment, pendant que l'app se rouvre : attendre évite de redemander au
+    /// réseau d'une app encore suspendue.
+    func untilActive() async {
+        guard UIApplication.shared.applicationState != .active else { return }
+        for await _ in NotificationCenter.default.notifications(named: UIApplication.didBecomeActiveNotification) {
+            return
         }
     }
 }

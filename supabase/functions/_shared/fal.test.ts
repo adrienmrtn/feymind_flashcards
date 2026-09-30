@@ -200,3 +200,27 @@ Deno.test("le compteur lit le décompte de fal quand fal en rend un", async () =
   // Rien sur le cache : fal ne l'a pas dit, on ne conclut pas qu'il est froid.
   assertEquals(meter[0]!.cached, null);
 });
+
+Deno.test("errorResponse laisse la raison d'un 5xx, et se tait sur un 4xx", async () => {
+  const { errorResponse, FalError } = await import("./fal.ts");
+  const errored: string[] = [];
+  const error = console.error;
+  console.error = (line: string) => errored.push(line);
+  try {
+    const refused = errorResponse(new FalError("Le cours est trop court.", 400));
+    assertEquals(refused.status, 400);
+    assertEquals(errored.length, 0);
+
+    const failed = errorResponse(
+      new FalError("Le modèle n'a produit aucune carte exploitable.", 502),
+    );
+    assertEquals(failed.status, 502);
+  } finally {
+    console.error = error;
+  }
+  assertEquals(errored.length, 1);
+  assertEquals(JSON.parse(errored[0]), {
+    reponse: 502,
+    raison: "Le modèle n'a produit aucune carte exploitable.",
+  });
+});

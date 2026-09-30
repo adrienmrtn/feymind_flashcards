@@ -32,6 +32,34 @@ export function extractJSONCandidate(output: string): string {
   return balanced ?? slice;
 }
 
+/**
+ * **Ce qu'on peut dire d'une sortie illisible sans la recopier.**
+ *
+ * Une génération qui finit en 502 parce que le JSON ne se lit pas ne laissait rien dans les
+ * journaux : ni sa longueur, ni sa forme, et on ne savait pas si le modèle avait coupé en
+ * route ou répondu en prose. Le texte lui-même n'y va pas - c'est le cours de l'élève -,
+ * seulement son premier et son dernier caractère visibles, et l'endroit où `JSON.parse`
+ * s'est arrêté. Une sortie qui ouvre un `[` sans le refermer est une sortie tronquée.
+ */
+export function describeModelOutput(output: string, error?: unknown): {
+  characters: number;
+  starts: string;
+  ends: string;
+  fenced: boolean;
+  position: number | null;
+} {
+  const trimmed = output.trim();
+  const message = error instanceof Error ? error.message : "";
+  const position = message.match(/position (\d+)/)?.[1];
+  return {
+    characters: output.length,
+    starts: trimmed.slice(0, 1),
+    ends: trimmed.slice(-1),
+    fenced: trimmed.startsWith("```"),
+    position: position ? Number(position) : null,
+  };
+}
+
 export function parseModelJSON<T>(output: string): T {
   const candidate = extractJSONCandidate(output);
   // **La réparation du LaTeX passe en premier**, et c'est tout l'objet de son commentaire :

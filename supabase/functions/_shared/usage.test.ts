@@ -1,6 +1,6 @@
 import { assertEquals } from "jsr:@std/assert@1";
 
-import { type ModelUsage, readUsage, totalUsage } from "./usage.ts";
+import { type ModelUsage, noteUsage, readUsage, totalUsage } from "./usage.ts";
 
 /**
  * L'endpoint compatible OpenAI de Google, celui que `gemini.ts` appelle et que fal relaie.
@@ -116,4 +116,25 @@ Deno.test("totalUsage d'une suite vide ne prétend rien", () => {
   assertEquals(total.input, null);
   assertEquals(total.output, null);
   assertEquals(total.served, []);
+});
+
+Deno.test("noteUsage écrit en log, pas en erreur", () => {
+  const logged: string[] = [];
+  const errored: string[] = [];
+  const log = console.log;
+  const error = console.error;
+  console.log = (line: string) => logged.push(line);
+  console.error = (line: string) => errored.push(line);
+  try {
+    const meter: ModelUsage[] = [];
+    noteUsage(USAGE(), meter);
+    assertEquals(meter.length, 1);
+  } finally {
+    console.log = log;
+    console.error = error;
+  }
+  // Un décompte n'est pas une panne : au niveau erreur, il noyait les vraies.
+  assertEquals(errored, []);
+  assertEquals(logged.length, 1);
+  assertEquals(JSON.parse(logged[0]).usage.asked, "google/gemini-2.5-flash-lite");
 });
