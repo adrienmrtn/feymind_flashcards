@@ -7,8 +7,8 @@ import Foundation
 /// le temps par jour, l'heure du rappel — parce qu'un élève lit un parcours qui parle de lui.
 /// Il rend ensuite : Mika prépare le profil, cinq écrans disent ce que l'app fait, puis
 /// l'élève **voit un cours fiché** — le sien, importé pour de vrai, ou un cours de
-/// démonstration — et s'entraîne sur trois cartes. La preuve sociale, la comparaison et
-/// l'offre ne viennent qu'après ça, quand il y a quelque chose à comparer.
+/// démonstration — et s'entraîne sur trois cartes. La preuve sociale et l'offre ne
+/// viennent qu'après ça, quand il y a quelque chose à prouver.
 ///
 /// Six blocs :
 ///
@@ -16,10 +16,10 @@ import Foundation
 /// 2. **Le quiz** : pays, niveau, matières, inquiétudes, objectifs, une preuve, les deux
 ///    moyennes, le temps par jour, l'heure de révision, les rappels.
 /// 3. **Mika** : le profil se prépare, puis ce que Micabo sait faire, en cinq écrans.
-/// 4. **Le cours** : le compte, les supports ou un cours de démonstration, la construction,
-///    le cours fiché qu'on parcourt.
+/// 4. **Le cours** : le compte, les cases de dépôt — ou, à qui n'a rien, un cours de
+///    démonstration —, la construction, le cours fiché qu'on parcourt.
 /// 5. **Les cartes** : trois cartes, puis « bien joué ».
-/// 6. **L'offre** : la preuve sociale, la comparaison, l'essai, le rappel, le paywall.
+/// 6. **L'offre** : la preuve sociale, l'essai, le rappel, le paywall.
 ///
 /// **Le pays passe avant le niveau**, et le niveau avant les matières : chacun décide des
 /// réponses du suivant. La langue se déduit du pays, et ne se demande pas.
@@ -69,11 +69,10 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
 
     // Le compte, puis le cours.
     case signIn
-    /// « Tu as tes supports ? » Oui ou non : c'est la seule branche du parcours.
-    case materialsQuestion
-    /// Les supports déposés, quand il les a.
+    /// Les cases de dépôt, et « je n'ai rien pour l'instant » à côté du rond : c'est la
+    /// seule branche du parcours, et elle se prend sur l'écran même, sans question avant.
     case materials
-    /// Un cours de démonstration à choisir, quand il ne les a pas.
+    /// Un cours de démonstration à choisir, pour qui n'a rien déposé.
     case demoCourse
     /// La construction du cours, réelle ou jouée.
     case courseBuilding
@@ -88,10 +87,8 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case wellDone
 
     // La preuve, puis l'offre.
-    /// « On a aidé 45 000 élèves », avec les avis.
+    /// « On a aidé 45 000 élèves », avec les avis — et la demande de note du système.
     case socialProof
-    /// « Ça t'a plu ? » Le gratuit contre Pro.
-    case comparison
     case trialOffer
     case trialReminder
     case paywall
@@ -123,10 +120,9 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// autres n'ont que le palier large : leur proposer une filière serait inventer des
     /// réponses fausses.
     ///
-    /// Les supports et le cours de démonstration s'excluent : on ne dépose pas de documents
-    /// quand on a dit ne pas en avoir, et on ne choisit pas un cours joué quand on vient de
-    /// déposer le sien. Tant que la question n'a pas de réponse, les deux se sautent — le
-    /// parcours ne s'arrête jamais sur un écran vide.
+    /// Les cases de dépôt se montrent toujours ; le cours de démonstration ne se choisit que
+    /// si l'on a dit, sur les cases, n'avoir rien pour l'instant. On ne choisit pas un cours
+    /// joué quand on vient de déposer le sien.
     ///
     /// Quand la construction du cours a échoué et qu'on continue sans, le cours, les cartes
     /// et le bravo se sautent aussi : il n'y a rien à parcourir ni à réviser.
@@ -134,7 +130,6 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         switch self {
         case .schoolType, .year: !SchoolSystem.isDetailed(country)
         case .level: SchoolSystem.isDetailed(country)
-        case .materials: hasMaterials != true
         case .demoCourse: hasMaterials != false
         case .courseReview, .trainPrompt, .trainCards, .wellDone: courseUnavailable
         default: false
@@ -145,7 +140,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     var isQuestion: Bool {
         switch self {
         case .name, .country, .level, .schoolType, .year, .subjects, .worries, .goal,
-             .currentAverage, .targetAverage, .dailyTime, .studyTime, .materialsQuestion, .demoCourse:
+             .currentAverage, .targetAverage, .dailyTime, .studyTime, .materials, .demoCourse:
             true
         default:
             false

@@ -1,11 +1,13 @@
 import SwiftData
 import SwiftUI
 
-/// **Le deck construit à la sortie du parcours, en attente que la liste l'ouvre.**
+/// **Le deck construit à la sortie du parcours, pour que l'app s'ouvre sur Decks.**
 ///
-/// Il passe de `FirstDeckFlowView` à `CoursesListView` par ici plutôt que par un
-/// réglage : c'est un objet du même lancement, pas un état à retrouver au suivant. S'il
-/// n'est pas consommé — l'app tuée entre les deux — la liste s'ouvre simplement sur lui.
+/// Il passe du parcours à `RootTabView` par ici plutôt que par un réglage : c'est un objet
+/// du même lancement, pas un état à retrouver au suivant. La liste ne l'ouvre pas d'elle-
+/// même — l'élève vient de le parcourir — ; elle consomme la remise, et le deck attend en
+/// tête. S'il n'est pas consommé — l'app tuée entre les deux — rien n'est perdu : le deck
+/// est dans la bibliothèque.
 @MainActor
 enum FirstDeckHandoff {
     static var course: Course?
@@ -34,8 +36,8 @@ struct FirstDeckFlowView: View {
                     isDismissable: false,
                     onCreated: { course in
                         FirstDeckHandoff.course = course
-                        // Lever le drapeau fait basculer `RootView` sur l'app, où la
-                        // liste des decks ouvre ce cours.
+                        // Lever le drapeau fait basculer `RootView` sur l'app, ouverte
+                        // sur Decks, où ce cours attend en tête.
                         OnboardingPreferences.pendingFirstImport = false
                     },
                     onCancel: {}

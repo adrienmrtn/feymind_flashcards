@@ -108,7 +108,7 @@ extension AIServiceError {
     /// IA. Un texte vide, lui, ne donnera rien de plus hors ligne.
     var allowsOfflineFallback: Bool {
         switch self {
-        case .notConfigured, .missingProviderKey, .network, .server, .invalidResponse:
+        case .notConfigured, .missingProviderKey, .network, .server, .invalidResponse, .quotaExhausted:
             true
         case .emptySource:
             false

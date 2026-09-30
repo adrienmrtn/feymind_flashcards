@@ -42,11 +42,9 @@ struct TodayView: View {
     /// deux sortes de decks, dont une sans plan.
     @State private var creatingDeck = false
     @State private var paywall: PaywallTrigger?
-    /// **La création d'une épreuve se fait d'ici.** L'onglet Examens a disparu de la barre,
-    /// et c'est cet écran qui montre déjà les prochaines dates : la porte qui menait au
-    /// calendrier ouvre maintenant le formulaire, sans écran intermédiaire.
-    @State private var creatingExam = false
-    /// L'épreuve qu'on corrige, quand elle n'a pas de deck à ouvrir.
+    /// L'épreuve qu'on corrige, quand elle n'a pas de deck à ouvrir. **On n'en crée pas
+    /// d'ici** : une épreuve se pose sur un deck, depuis la page du deck, et cet écran ne
+    /// fait que montrer les prochaines dates.
     @State private var editingExam: Exam?
 
     /// La file du jour, **lue à la demande et non observée**.
@@ -428,13 +426,6 @@ struct TodayView: View {
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(MicaboRadius.sheet)
         }
-        .sheet(isPresented: $creatingExam) {
-            ExamEditorSheet(exam: nil) { created in
-                path.append(created)
-            }
-            .presentationDragIndicator(.visible)
-            .presentationCornerRadius(MicaboRadius.sheet)
-        }
         .fullScreenCover(isPresented: $creatingDeck) {
             DeckSetupFlowView { course in
                 creatingDeck = false
@@ -635,8 +626,8 @@ struct TodayView: View {
     /// ligne se lit deux fois. Un appui ouvre la fiche de l'épreuve, où vivent le détail, la
     /// jauge et l'examen blanc.
     ///
-    /// **La section est toujours là**, même sans une seule épreuve : c'est alors la rangée
-    /// qui propose d'en poser une.
+    /// **La section est toujours là**, même sans une seule épreuve : c'est alors une ligne
+    /// qui dit où l'on en pose une — sur la page d'un deck, et pas d'ici.
     private func examSection(_ load: DayLoad) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             MicaboSectionHeading(title: i18n.t("app.today.nextExam")) {
@@ -648,21 +639,16 @@ struct TodayView: View {
             }
 
             if upcomingExams.isEmpty {
-                Button {
-                    openExams()
-                } label: {
-                    MicaboRow(
-                        tile: MicaboTile(
-                            glyph: .symbol("calendar"),
-                            background: MicaboColor.surfaceMuted,
-                            tint: MicaboColor.inkSecondary
-                        ),
-                        title: i18n.t("app.today.planExam"),
-                        subtitle: examEmptySubtitle,
-                        accessory: .chevron
-                    )
-                }
-                .buttonStyle(MicaboRowButtonStyle())
+                MicaboRow(
+                    tile: MicaboTile(
+                        glyph: .symbol("calendar"),
+                        background: MicaboColor.surfaceMuted,
+                        tint: MicaboColor.inkSecondary
+                    ),
+                    title: i18n.t("ios.today.noExam"),
+                    subtitle: i18n.t("ios.today.examsFromDeck"),
+                    accessory: .none
+                )
                 .micaboGroup()
             } else {
                 VStack(spacing: 0) {
@@ -708,13 +694,9 @@ struct TodayView: View {
             // l'épreuve, qui est la seule chose qu'on puisse encore en faire.
             action: {
                 if let course {
-                    // Le même paywall que la liste des decks : un cours ne s'ouvre pas
-                    // sans abonnement, d'où qu'on le touche.
-                    if pro?.isPro ?? true {
-                        path.append(course)
-                    } else {
-                        paywall = .openCourse
-                    }
+                    // La page du deck s'ouvre sans abonnement, d'où qu'on la touche : ce
+                    // sont ses chapitres qui sont dans Pro.
+                    path.append(course)
                 } else {
                     editingExam = exam
                 }
@@ -792,16 +774,6 @@ struct TodayView: View {
                 .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
             }
         }
-    }
-
-    private func openExams() {
-        creatingExam = true
-    }
-
-    private var examEmptySubtitle: String {
-        (load?.totalCards ?? 0) == 0
-            ? i18n.t("app.today.whenYouHaveCards")
-            : i18n.t("app.today.addDate")
     }
 
     // MARK: - La barre et sa légende
@@ -981,16 +953,9 @@ struct TodayView: View {
 
     // MARK: - Import
 
-    /// Le premier cours est offert, le deuxième s'achète.
-    ///
-    /// Le contrôle est ici plutôt que dans l'écran d'import : on refuse **avant** d'avoir
-    /// fait choisir un PDF, sélectionner des photos et attendre une analyse. Un paywall qui
-    /// tombe après le travail est un paywall qui fait désinstaller.
+    /// **L'import ouvre les questions à tout le monde.** Le paywall tombe à la fin, sur
+    /// « générer mon cours » (`DeckSetupFlowView`) : c'est là qu'on sait ce qu'on achète.
     private func requestImport() {
-        guard pro?.canImportCourse(ownedCourses: CourseRepository.ownedCount(in: modelContext)) ?? true else {
-            paywall = .secondCourse
-            return
-        }
         creatingDeck = true
     }
 }

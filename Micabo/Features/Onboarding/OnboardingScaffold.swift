@@ -7,7 +7,7 @@ import SwiftUI
 /// Du blanc, de l'encre, un gris de carte, et un violet. Le violet ne sert qu'à trois
 /// choses : ce qui est choisi, un chiffre mis en avant, et le dégradé du bouton d'achat. Le
 /// vert et le rouge n'existent que dans les graphes, où ils disent « mieux » et « moins
-/// bien ». **Le dégradé de Mika** — violet, rose, orange — n'apparaît qu'à trois endroits :
+/// bien » — et le vert, une fois de plus, sur le « gratuit » du paywall. **Le dégradé de Mika** — violet, rose, orange — n'apparaît qu'à trois endroits :
 /// le blob de Mika, le sous-titre de son chargement, et le chiffre des élèves aidés.
 ///
 /// C'est la charte des apps qui convertissent (Cal AI, Coconote, RIZZ) : un fond blanc pur,
@@ -28,9 +28,13 @@ enum OnboardingPalette {
     /// Le gris du sous-titre et des légendes.
     static let gray = Color(hex: 0x6B6B72)
     static let grayLight = Color(hex: 0xA1A1AA)
-    /// Le vert et le rouge des graphes, et d'eux seuls.
+    /// Le vert et le rouge des graphes.
     static let chartGood = Color(hex: 0x16A34A)
     static let chartBad = Color(hex: 0xEF4444)
+    /// **Le même vert, pour ce qui est gratuit** — et seulement là : « Essaie 3 jours
+    /// gratuitement » sur le paywall. Le vert y dit « rien à payer », comme il dit « mieux »
+    /// sur un graphe.
+    static let free = chartGood
     /// L'or des étoiles.
     static let star = Color(hex: 0xF5B942)
 
@@ -261,7 +265,11 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         // la recherche d'un pays, le courriel du compte — et reste où il est quand la page
         // part. Hors du parcours, le modificateur ne fait rien : le système s'en charge.
         .onboardingKeyboardLift()
-        .background(surface.background.ignoresSafeArea(edges: .bottom))
+        // **Le fond monte jusqu'au bord de l'écran, en haut aussi.** Arrêté à la zone sûre, il
+        // laissait la barre d'état à la page du dessous pendant un glissement : le voile posé
+        // sur celle-ci y restait visible — un petit rectangle gris en haut à gauche, à chaque
+        // transition — jusqu'à ce que la page arrivée l'ait recouvert.
+        .background(surface.background.ignoresSafeArea())
         .environment(\.onboardingSurface, surface)
     }
 

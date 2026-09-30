@@ -16,12 +16,13 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
     case sessionLimit
     /// Depuis les Réglages, sans rien avoir buté : on vient voir le prix.
     case upgrade
-    /// Un cours qu'on touche dans la liste. **Aucun cours ne s'ouvre sans abonnement** :
-    /// le premier se voit une fois, à sa construction, et c'est tout.
-    case openCourse
-    /// Un chapitre qu'on touche dans le plan d'un deck : la page du deck se voit, ses
-    /// fiches sont dans Pro.
+    /// Un chapitre qu'on touche dans le plan d'un deck : **la page du deck se voit sans
+    /// abonnement**, ses chapitres sont dans Pro.
     case openChapter
+    /// Une deuxième question à Mika : la première est offerte, les suivantes sont dans Pro.
+    case mika
+    /// « Générer mon cours », à la fin des questions d'un deck : la génération est dans Pro.
+    case generateCourse
 
     var id: String { rawValue }
 
@@ -32,8 +33,9 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
         case .practice: L10n.t("ios.paywallPracticeHeadline", locale: .resolved())
         case .sessionLimit: L10n.t("ios.paywallSessionHeadline", locale: .resolved())
         case .upgrade: L10n.t("ios.paywallUpgradeHeadline", locale: .resolved())
-        case .openCourse: L10n.t("ios.paywallCourseHeadline", locale: .resolved())
         case .openChapter: L10n.t("ios.paywallChapterHeadline", locale: .resolved())
+        case .mika: L10n.t("ios.paywallMikaHeadline", locale: .resolved())
+        case .generateCourse: L10n.t("ios.paywallGenerateHeadline", locale: .resolved())
         }
     }
 }
@@ -71,6 +73,10 @@ struct PaywallFlowView: View {
     @State private var didSubscribe = false
     /// Ce que la boutique n'a pas pu faire. Un bouton qui ne répond rien passe pour cassé.
     @State private var failure: String?
+    /// La dernière réponse de la boutique qu'on a vue. Le cache des prix n'est pas
+    /// observable : c'est ce numéro, relu après `refreshPrices()`, qui redessine les deux
+    /// écrans quand le prix du pays ou l'essai arrivent après l'ouverture.
+    @State private var storeRevision = PaywallStorePrices.revision
 
     var body: some View {
         ZStack {
@@ -80,6 +86,7 @@ struct PaywallFlowView: View {
                     plan: PaywallCatalog.recommended,
                     headline: trigger?.headline,
                     isPurchasing: isPurchasing,
+                    storeRevision: storeRevision,
                     onClose: showPlans,
                     onSeeAllPlans: showPlans,
                     onSubscribe: { Task { await buy(PaywallCatalog.recommended) } },
@@ -90,6 +97,7 @@ struct PaywallFlowView: View {
             case .plans:
                 PaywallPlansView(
                     isPurchasing: isPurchasing,
+                    storeRevision: storeRevision,
                     onClose: onDismiss,
                     onSubscribe: { plan in Task { await buy(plan) } },
                     onRestore: { Task { await restore() } }
@@ -104,7 +112,10 @@ struct PaywallFlowView: View {
         // Le blanc du parcours d'accueil, en pleine page comme en feuille : le paywall en
         // est la dernière page, et il en garde la charte.
         .background(OnboardingPalette.white.ignoresSafeArea())
-        .task { await PaywallPurchases.refreshPrices() }
+        .task {
+            await PaywallPurchases.refreshPrices()
+            storeRevision = PaywallStorePrices.revision
+        }
         .onAppear {
             openedAt = Date()
             Analytics.track(.paywallOpened, ["trigger": .text(trigger?.rawValue ?? "inconnu")])

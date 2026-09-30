@@ -135,6 +135,8 @@ export async function consumeQuota(
   caller: Caller,
   fn: string,
   units = 1,
+  ceiling = DAILY_CEILING,
+  proCeiling?: number,
 ): Promise<void> {
   if (!caller.userId) return;
 
@@ -143,6 +145,19 @@ export async function consumeQuota(
   // Sans secret, on est en local : bloquer ici casserait tout essai. En production
   // les deux sont posés ; s'ils le sont et que le RPC tombe, on ferme.
   if (!url || !serviceKey) return;
+
+  const payload: Record<string, unknown> = {
+    p_user: caller.userId,
+    p_fn: fn,
+    p_ceiling: Math.max(1, Math.round(ceiling)),
+    p_units: Math.max(1, Math.round(units)),
+  };
+  // Le plafond Pro ne part que quand la fonction en fixe un — Mika, et elle seule. Les
+  // autres gardent le fusible de la base, et leur appel à quatre paramètres reste valable
+  // avant comme après la migration qui ajoute le cinquième.
+  if (proCeiling !== undefined) {
+    payload.p_pro_ceiling = Math.max(1, Math.round(proCeiling));
+  }
 
   let allowed = true;
 
@@ -154,12 +169,7 @@ export async function consumeQuota(
         Authorization: `Bearer ${serviceKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        p_user: caller.userId,
-        p_fn: fn,
-        p_ceiling: DAILY_CEILING,
-        p_units: Math.max(1, Math.round(units)),
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -183,14 +193,21 @@ export async function consumeQuota(
   }
 }
 
-/** Les deux en une fois : c'est ce que chaque fonction appelle en première ligne. */
+/**
+ * Les deux en une fois : c'est ce que chaque fonction appelle en première ligne.
+ *
+ * `ceiling` et `proCeiling` remplacent les plafonds du jour pour cette fonction ; sans eux,
+ * c'est `DAILY_CEILING` et le fusible Pro de la base.
+ */
 export async function authorize(
   request: Request,
   fn: string,
-  options: { meter?: boolean } = {},
+  options: { meter?: boolean; ceiling?: number; proCeiling?: number } = {},
 ): Promise<Caller> {
   const caller = readCaller(request);
-  if (options.meter !== false) await consumeQuota(caller, fn);
+  if (options.meter !== false) {
+    await consumeQuota(caller, fn, 1, options.ceiling ?? DAILY_CEILING, options.proCeiling);
+  }
   return caller;
 }
 

@@ -19,6 +19,11 @@ struct DeckMaterialsStepView: View {
     /// **Le rond fléché à la place de la pilule**, dans le parcours d'accueil, où tout ce
     /// qui avance est un rond. La création d'un deck garde sa pilule.
     var usesArrow: Bool = false
+    /// **La sortie pour qui n'a pas ses supports sous la main.** Dans le parcours d'accueil,
+    /// « je n'ai rien pour l'instant », à gauche du rond, mène au choix d'un cours de
+    /// démonstration ; dans la création d'un deck, « je n'ai pas de supports », sous la
+    /// pilule, mène au sujet — et l'IA écrit le cours.
+    var onNothing: (() -> Void)? = nil
     var onNext: () -> Void
 
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -69,9 +74,19 @@ struct DeckMaterialsStepView: View {
             .onAppear(perform: seedSlots)
         } footer: {
             if usesArrow {
-                OnboardingArrowButton(isEnabled: setup.hasMaterials, action: onNext)
+                HStack(spacing: 12) {
+                    if let onNothing {
+                        nothingButton(onNothing)
+                    }
+                    OnboardingArrowButton(isEnabled: setup.hasMaterials, fillsWidth: onNothing == nil, action: onNext)
+                }
             } else {
-                OnboardingContinueButton(isEnabled: setup.hasMaterials, action: onNext)
+                VStack(spacing: 4) {
+                    OnboardingContinueButton(isEnabled: setup.hasMaterials, action: onNext)
+                    if let onNothing {
+                        noMaterialsLink(onNothing)
+                    }
+                }
             }
         }
         // **Une languette, pas une feuille système.**
@@ -139,6 +154,39 @@ struct DeckMaterialsStepView: View {
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.sheet)
         }
+    }
+
+    /// La sortie grise : une capsule de carte, le texte d'encre, à gauche du rond. Elle se lit
+    /// comme un second choix, pas comme un refus.
+    private func nothingButton(_ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(i18n.t("ios.onb.materials.none"))
+                .font(MicaboFont.ui(15.5, weight: .semibold))
+                .foregroundStyle(OnboardingPalette.ink)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
+                .padding(.horizontal, 18)
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 56)
+                .background(OnboardingPalette.card, in: Capsule())
+                .contentShape(Capsule())
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
+    }
+
+    /// « Je n'ai pas de supports », sous la pilule : un lien, pas un second bouton. Les
+    /// cases sont la réponse attendue ; celle-ci est la sortie, et elle se lit comme telle.
+    private func noMaterialsLink(_ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(i18n.t("ios.deckSetup.noMaterials"))
+                .font(MicaboFont.ui(15.5, weight: .semibold))
+                .foregroundStyle(OnboardingPalette.gray)
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
     }
 
     /// Vrai entre la fermeture de la languette et l'ouverture du sélecteur choisi : sans ça,

@@ -50,6 +50,9 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     /// La seconde page, celle qui compare les offres. « Atteint » au sens où l'étudiant
     /// a dépassé la première offre au lieu de refermer.
     case paywallPlansSeen = "paywall_plans_seen"
+    /// Ce que la boutique répond sur l'essai, offre par offre (`eligible`, `deja_utilise`,
+    /// `aucun_essai`, `inconnu`), avec le pays de la boutique.
+    case paywallTrialStatus = "paywall_trial_status"
     case paywallPurchaseStarted = "paywall_purchase_started"
     case paywallPurchased = "paywall_purchased"
     case paywallPurchaseFailed = "paywall_purchase_failed"
@@ -90,6 +93,17 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
 
     case reviewStarted = "review_started"
     case reviewFinished = "review_finished"
+
+    // MARK: Mika
+
+    /// Une question posée à Mika, et répondue : avec `pro` et `attached`, pour savoir qui
+    /// parle à Mika et si c'est avec un document.
+    case mikaAsked = "mika_asked"
+    /// Une question refusée avant l'appel : `reason` dit si c'est le paywall (la question
+    /// offerte est passée) ou le plafond du jour d'un abonné.
+    case mikaBlocked = "mika_blocked"
+    /// Une carte proposée par Mika, rangée dans un cours.
+    case mikaCardAdded = "mika_card_added"
 }
 
 /// **Ce qu'une étiquette a le droit d'être.**

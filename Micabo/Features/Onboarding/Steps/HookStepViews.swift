@@ -1,23 +1,23 @@
 import SwiftData
 import SwiftUI
 
-// MARK: - Le splash, puis le logo
+// MARK: - Le splash, puis la première page
 
-/// **Le premier écran : le logo seul, puis la phrase et le bouton qui se posent.**
+/// **Le premier écran : un splash simple, puis une page.**
 ///
-/// C'est un splash qui devient une page. Pendant un peu plus d'une seconde, il n'y a que
-/// le monogramme et le mot, au milieu du blanc ; puis, sans que rien ne bouge, la phrase
-/// arrive dessous, le bouton en bas, le menu de langue en haut. Le logo ne se déplace
-/// pas : il était déjà à sa place, et c'est ce qui rend le passage fluide — un élément qui
-/// glisse pour faire de la place se lit comme deux écrans, un élément qui reste se lit
-/// comme un seul.
+/// Le monogramme et le mot apparaissent au milieu du blanc, en fondu, un peu plus grands
+/// qu'à l'arrivée pour se poser ; ils tiennent une seconde ; puis le splash s'efface et la
+/// page prend sa place, en fondu elle aussi. Rien ne voyage, rien ne se transforme : un
+/// logo qui traverse l'écran pour aller se ranger dans un coin attire l'œil sur lui-même,
+/// et c'est la page qu'on veut regarder.
+///
+/// **La page** : le nom en haut, centré ; la maquette du téléphone au milieu ; un titre en
+/// gros, une ligne dessous ; le bouton, en pilule, centré. La maquette est une image du
+/// catalogue (`OnboardingHookMockup.imageName`), fournie à part ; en attendant, le téléphone
+/// dessiné de la fiche tient sa place. Le menu de langue reste en haut à droite.
 ///
 /// C'est aussi le seul écran qui porte une sortie : « j'ai déjà un compte ». Quelqu'un qui
 /// réinstalle l'app n'a aucune raison de traverser trente écrans pour retrouver ses decks.
-///
-/// **Le bouton dit « Commencer »**, en toutes lettres : c'est le seul écran où avancer est
-/// une décision qu'on prend, et pas la suite d'une réponse. Partout ailleurs, le rond
-/// fléché suffit.
 struct HookLogoStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(AuthController.self) private var auth
@@ -30,73 +30,20 @@ struct HookLogoStepView: View {
     @State private var checkingAccount = false
     /// Faux pendant le splash, vrai quand la page est posée.
     @State private var isReady = false
+    /// Le logo s'est posé au milieu.
     @State private var hasLanded = false
 
     /// Le temps du splash, avant que la page ne se pose.
-    private static let splashDuration = 1.3
+    private static let splashDuration = 1.4
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Spacer(minLength: 0)
-                LanguageSwitcher(variant: .menu)
-            }
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.top, MicaboSpacing.sm)
-            .opacity(isReady ? 1 : 0)
-
-            Spacer(minLength: 0)
-
-            VStack(spacing: 18) {
-                MicaboBrandMark(size: 128)
-                    .shadow(color: OnboardingPalette.ink.opacity(0.12), radius: 24, y: 12)
-                    .scaleEffect(hasLanded ? 1 : 0.86)
-
-                Text("Micabo")
-                    .font(MicaboFont.ui(30, weight: .bold))
-                    .tracking(-1)
-                    .foregroundStyle(OnboardingPalette.ink)
-            }
-            .opacity(hasLanded ? 1 : 0)
-
-            Spacer(minLength: 0)
-
-            Text(i18n.t("ios.hook.title"))
-                .font(OnboardingPalette.title(34))
-                .foregroundStyle(OnboardingPalette.ink)
-                .tracking(-0.9)
-                .lineSpacing(-2)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, MicaboSpacing.screen)
-                .opacity(isReady ? 1 : 0)
-
-            Spacer(minLength: MicaboSpacing.md)
-                .frame(maxHeight: MicaboSpacing.xl)
-
-            MicaboBottomBar(background: OnboardingPalette.white) {
-                // Le lien **au-dessus** du bouton : le bouton reste ainsi à la même hauteur
-                // que sur l'écran suivant, et il ne saute pas d'une page à l'autre.
-                VStack(spacing: 14) {
-                    Button {
-                        showLogin = true
-                    } label: {
-                        Text(i18n.t("common.alreadyAccount"))
-                            .font(MicaboFont.ui(14, weight: .medium))
-                            .foregroundStyle(OnboardingPalette.gray)
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: 32)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
-                    .disabled(auth.isWorking || checkingAccount)
-
-                    OnboardingContinueButton(title: i18n.t("common.start")) {
-                        model.advance()
-                    }
-                }
-                .opacity(isReady ? 1 : 0)
-                .allowsHitTesting(isReady)
+        ZStack {
+            if isReady {
+                page
+                    .transition(.opacity)
+            } else {
+                splash
+                    .transition(.opacity)
             }
         }
         .background(OnboardingPalette.white.ignoresSafeArea())
@@ -111,7 +58,104 @@ struct HookLogoStepView: View {
         }
     }
 
-    /// Le logo se pose, on le laisse seul, puis la page arrive autour de lui.
+    // MARK: - Le splash
+
+    /// Le monogramme et le mot, seuls, qui se posent en fondu.
+    private var splash: some View {
+        VStack(spacing: 18) {
+            MicaboBrandMark(size: 120)
+                .shadow(color: OnboardingPalette.ink.opacity(0.12), radius: 24, y: 12)
+
+            Text("Micabo")
+                .font(MicaboFont.ui(30, weight: .bold))
+                .tracking(-1)
+                .foregroundStyle(OnboardingPalette.ink)
+        }
+        .scaleEffect(hasLanded ? 1 : 1.08)
+        .opacity(hasLanded ? 1 : 0)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .accessibilityHidden(true)
+    }
+
+    // MARK: - La page
+
+    private var page: some View {
+        VStack(spacing: 0) {
+            ZStack {
+                HStack(spacing: 8) {
+                    MicaboBrandMark(size: 26)
+                    Text("Micabo")
+                        .font(MicaboFont.ui(24, weight: .bold))
+                        .tracking(-0.8)
+                        .foregroundStyle(OnboardingPalette.ink)
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Micabo")
+
+                HStack {
+                    Spacer(minLength: 0)
+                    LanguageSwitcher(variant: .menu)
+                }
+            }
+            .padding(.horizontal, MicaboSpacing.screen)
+            .padding(.top, MicaboSpacing.sm)
+            .onboardingAppear(index: 1)
+
+            OnboardingHookMockup()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.vertical, MicaboSpacing.lg)
+                .onboardingAppear(index: 2)
+
+            VStack(spacing: 12) {
+                Text(i18n.t("ios.hook.title"))
+                    .font(OnboardingPalette.title(36))
+                    .foregroundStyle(OnboardingPalette.ink)
+                    .tracking(-1.1)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text(i18n.t("ios.hook.sub"))
+                    .font(MicaboFont.ui(17, weight: .regular))
+                    .foregroundStyle(OnboardingPalette.gray)
+                    .lineSpacing(3)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, MicaboSpacing.xl)
+            .onboardingAppear(index: 3)
+
+            Spacer(minLength: MicaboSpacing.lg)
+                .frame(maxHeight: MicaboSpacing.xxl)
+
+            MicaboBottomBar(background: OnboardingPalette.white) {
+                VStack(spacing: 14) {
+                    // La pilule, centrée et pas pleine largeur : c'est la seule page où
+                    // le bouton est un objet au milieu de la composition et non une barre.
+                    OnboardingContinueButton(title: i18n.t("ios.hook.next")) {
+                        model.advance()
+                    }
+                    .frame(width: 168)
+
+                    Button {
+                        showLogin = true
+                    } label: {
+                        Text(i18n.t("common.alreadyAccount"))
+                            .font(MicaboFont.ui(14, weight: .medium))
+                            .foregroundStyle(OnboardingPalette.gray)
+                            .frame(maxWidth: .infinity)
+                            .frame(minHeight: 32)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
+                    .disabled(auth.isWorking || checkingAccount)
+                }
+                .onboardingAppear(index: 4)
+            }
+        }
+    }
+
+    /// **Le logo se pose, tient, puis la page arrive.** Deux vibrations : une douce quand
+    /// le logo apparaît, un coup quand la page se pose.
     @MainActor
     private func land() async {
         if reduceMotion {
@@ -119,10 +163,17 @@ struct HookLogoStepView: View {
             isReady = true
             return
         }
-        withAnimation(.easeOut(duration: 0.6)) { hasLanded = true }
+
+        Haptics.soft()
+        withAnimation(.easeOut(duration: 0.7)) { hasLanded = true }
+
         try? await Task.sleep(for: .seconds(Self.splashDuration))
         guard !Task.isCancelled else { return }
-        withAnimation(.easeOut(duration: 0.5)) { isReady = true }
+        withAnimation(.easeInOut(duration: 0.55)) { isReady = true }
+
+        try? await Task.sleep(for: .milliseconds(450))
+        guard !Task.isCancelled else { return }
+        Haptics.tick()
     }
 
     private var loginSheet: some View {
@@ -150,5 +201,29 @@ struct HookLogoStepView: View {
         checkingAccount = false
         showLogin = false
         await sync.sync(context: modelContext)
+    }
+}
+
+// MARK: - La maquette de la première page
+
+/// **L'image du catalogue si elle existe, le téléphone dessiné sinon**, entière, centrée.
+/// L'image s'appelle `OnboardingHook`, et se dépose dans `Assets.xcassets`.
+struct OnboardingHookMockup: View {
+    static let imageName = "OnboardingHook"
+
+    var body: some View {
+        Group {
+            if UIImage(named: Self.imageName) != nil {
+                Image(Self.imageName)
+                    .resizable()
+                    .scaledToFit()
+            } else {
+                OnboardingPhoneSketch(feature: .sheets)
+                    .aspectRatio(0.49, contentMode: .fit)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 72)
+        .accessibilityHidden(true)
     }
 }

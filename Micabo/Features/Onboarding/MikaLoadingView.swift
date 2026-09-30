@@ -101,20 +101,32 @@ struct MikaLoadingView: View {
     /// recentre à chaque chiffre gagné : ça tremblait à l'arrivée de la page, quand les
     /// unités deviennent des dizaines, et à la fin, quand elles deviennent des centaines.
     /// Ici, le signe ne bouge jamais, et les chiffres roulent sur place.
+    ///
+    /// **Une fois à cent, le chiffre est figé** : un texte nu, sans transition de contenu, et
+    /// plus aucune animation ne l'atteint — pas même celle du glissement qui emporte la page.
+    /// Avec la transition encore posée dessus, le « 100 % » roulait une dernière fois au
+    /// moment où la page suivante venait le recouvrir.
     private var percentLabel: some View {
         ZStack(alignment: .trailing) {
             Text("100 %")
                 .hidden()
 
-            Text("\(percent) %")
-                .contentTransition(.numericText(value: Double(percent)))
-                .animation(.easeOut(duration: 0.2), value: percent)
+            if isDone {
+                Text("100 %")
+            } else {
+                Text("\(percent) %")
+                    .contentTransition(.numericText(value: Double(percent)))
+                    .animation(.easeOut(duration: 0.2), value: percent)
+            }
         }
         .font(MicaboFont.ui(40, weight: .bold))
         .tracking(-1.2)
         .foregroundStyle(OnboardingPalette.ink)
         .monospacedDigit()
         .fixedSize()
+        .transaction { transaction in
+            if isDone { transaction.animation = nil }
+        }
     }
 
     // MARK: - La grille de points
@@ -137,6 +149,10 @@ struct MikaLoadingView: View {
             }
         }
         .animation(.easeOut(duration: 0.18), value: filled)
+        // Comme le chiffre : une fois la grille pleine, rien ne l'anime plus.
+        .transaction { transaction in
+            if isDone { transaction.animation = nil }
+        }
         .accessibilityHidden(true)
     }
 

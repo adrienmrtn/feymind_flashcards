@@ -98,6 +98,66 @@ struct SelectionExplanation: Codable, Equatable {
     }
 }
 
+// MARK: - Mika
+
+/// **Ce qui borne un échange avec Mika**, et donc ce qu'il coûte. Les mêmes nombres que
+/// `_shared/mika.ts` : la fonction coupe au même endroit, et un client qui enverrait plus
+/// paierait pour rien.
+enum MikaLimits {
+    /// Les derniers tours envoyés au modèle. Huit : la conversation garde le fil, et le
+    /// centième message coûte ce que coûte le premier.
+    static let turns = 8
+    /// La longueur d'un message.
+    static let messageCharacters = 1_500
+    /// La longueur du document joint : la même borne que l'explication d'un passage.
+    static let attachmentCharacters = 16_000
+}
+
+/// Un tour de la conversation, dans les termes de la fonction.
+struct MikaTurn: Codable, Equatable {
+    enum Role: String, Codable {
+        case user
+        case mika
+    }
+
+    var role: Role
+    var text: String
+}
+
+/// Le document joint, tel qu'il part : un titre, du texte. Jamais une image.
+struct MikaAttachmentPayload: Equatable {
+    var title: String
+    var text: String
+}
+
+struct MikaChatRequest {
+    /// Les derniers tours, le dernier étant celui de l'élève.
+    var turns: [MikaTurn]
+    var attachment: MikaAttachmentPayload? = nil
+    /// La langue de la réponse : celle de l'interface.
+    var language: ContentLanguage = .fr
+    /// Le registre de l'élève, quand le profil le connaît.
+    var level: StudyLevel? = nil
+
+    /// Les tours tels qu'ils partent : les derniers, chacun borné.
+    var trimmedTurns: [MikaTurn] {
+        turns.suffix(MikaLimits.turns).map { turn in
+            MikaTurn(role: turn.role, text: String(turn.text.prefix(MikaLimits.messageCharacters)))
+        }
+    }
+}
+
+/// Ce que Mika répond : un texte d'un bloc, balisé comme la fiche, et une carte quand il y
+/// a quelque chose à retenir.
+struct MikaChatReply: Codable, Equatable {
+    var reply: String
+    var card: GeneratedFlashcard?
+
+    var isUsable: Bool {
+        !reply.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+}
+
 /// Format de fiche demandé au modèle.
 ///
 /// **Ce sont des usages, pas des tailles** : « L'essentiel » se relit dans le couloir avant
@@ -442,6 +502,9 @@ enum AIServiceError: LocalizedError {
     case server(String)
     case invalidResponse
     case missingProviderKey
+    /// Le quota du jour est atteint, côté serveur. Sans chiffre : le plafond n'est pas un
+    /// argument de vente.
+    case quotaExhausted
 
     var errorDescription: String? {
         switch self {
@@ -457,6 +520,8 @@ enum AIServiceError: LocalizedError {
             L10n.t("ios.ai.invalidResponse", locale: .resolved())
         case .missingProviderKey:
             L10n.t("ios.ai.missingFal", locale: .resolved())
+        case .quotaExhausted:
+            L10n.t("ios.ai.quota", locale: .resolved())
         }
     }
 }
@@ -468,4 +533,6 @@ protocol AIService {
     func generateFlashcards(_ request: FlashcardGenerationRequest) async throws -> [GeneratedFlashcard]
     /// Explique un passage sélectionné dans la fiche.
     func explain(_ request: SelectionExplanationRequest) async throws -> SelectionExplanation
+    /// Mika répond au dernier message de la conversation.
+    func chat(_ request: MikaChatRequest) async throws -> MikaChatReply
 }
