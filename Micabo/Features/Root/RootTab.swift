@@ -2,12 +2,12 @@ import SwiftUI
 
 /// Les destinations de la barre d'onglets, dans l'ordre où elles s'y présentent.
 ///
-/// **Trois, et Réviser au milieu.** Il y en avait cinq — Cours, Paquets, Réviser, Examens,
-/// Profil — ce qui posait deux problèmes. Une barre à cinq n'a plus de milieu, donc plus de
-/// place sous le pouce pour le geste quotidien. Et deux de ces cinq onglets montraient la
-/// même table sous deux angles : *Cours* listait ce qui était importé, *Paquets* listait
-/// les cartes de ces mêmes cours. Un utilisateur devait savoir laquelle des deux portes
-/// ouvrir pour un objet unique.
+/// **Quatre : Decks, Réviser, Mika, Profil.** Il y en avait cinq — Cours, Paquets, Réviser,
+/// Examens, Profil — ce qui posait deux problèmes. Une barre à cinq n'a plus de milieu, donc
+/// plus de place sous le pouce pour le geste quotidien. Et deux de ces cinq onglets
+/// montraient la même table sous deux angles : *Cours* listait ce qui était importé,
+/// *Paquets* listait les cartes de ces mêmes cours. Un utilisateur devait savoir laquelle
+/// des deux portes ouvrir pour un objet unique.
 ///
 /// **Decks remplace Cours**, et c'est le même écran : `CoursesListView`. Le renommage suit
 /// le modèle — on n'importe plus un document mais tout le matériel d'une matière — et
@@ -17,9 +17,14 @@ import SwiftUI
 /// les affiche déjà, et la fiche d'une épreuve s'ouvre de là. Le calendrier plein écran,
 /// lui, ne revient pas : une date d'examen se pose sur un deck, et c'est tout ce qu'elle
 /// fait — elle règle le nombre de cartes neuves par jour.
+///
+/// **Mika a son onglet**, entre Réviser et Profil : c'est l'assistant qu'on a rencontré
+/// dans le parcours d'accueil, et une porte qu'on cherche se met dans la barre, pas dans
+/// un coin d'une autre page.
 enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     case decks
     case today
+    case mika
     case profile
 
     var id: Int { rawValue }
@@ -28,6 +33,7 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
         switch self {
         case .decks: t("nav.decks")
         case .today: t("nav.review")
+        case .mika: t("ios.nav.mika")
         case .profile: t("nav.profile")
         }
     }
@@ -40,6 +46,7 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
         switch self {
         case .decks: "rectangle.on.rectangle.angled"
         case .today: "arrow.triangle.2.circlepath"
+        case .mika: "sparkles"
         case .profile: "person"
         }
     }
@@ -48,11 +55,12 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     ///
     /// **Réviser garde son glyphe creux.** Les deux flèches circulaires n'ont pas de
     /// variante pleine qui se dessine à vingt points ; l'onglet actif se lit déjà par la
-    /// couleur.
+    /// couleur. Les étincelles de Mika non plus : elles sont déjà pleines.
     var selectedSystemImage: String {
         switch self {
         case .decks: "rectangle.on.rectangle.angled.fill"
         case .today: "arrow.triangle.2.circlepath"
+        case .mika: "sparkles"
         case .profile: "person.fill"
         }
     }

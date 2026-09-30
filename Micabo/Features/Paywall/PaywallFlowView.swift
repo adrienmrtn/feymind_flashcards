@@ -22,6 +22,8 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
     /// Un chapitre qu'on touche dans le plan d'un deck : la page du deck se voit, ses
     /// fiches sont dans Pro.
     case openChapter
+    /// Une deuxième question à Mika : la première est offerte, les suivantes sont dans Pro.
+    case mika
 
     var id: String { rawValue }
 
@@ -34,6 +36,7 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
         case .upgrade: L10n.t("ios.paywallUpgradeHeadline", locale: .resolved())
         case .openCourse: L10n.t("ios.paywallCourseHeadline", locale: .resolved())
         case .openChapter: L10n.t("ios.paywallChapterHeadline", locale: .resolved())
+        case .mika: L10n.t("ios.paywallMikaHeadline", locale: .resolved())
         }
     }
 }

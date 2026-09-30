@@ -39,6 +39,18 @@ enum FreeTier {
     static let allowsPractice = false
 }
 
+/// **Ce que Mika laisse demander.**
+///
+/// Une question offerte, une seule, pour toujours : c'est la démonstration, comme le
+/// premier cours. Et pour un abonné, un plafond par jour — un fusible de coût, pas un
+/// palier commercial : il ne s'écrit nulle part tant qu'on ne l'atteint pas. Le serveur
+/// tient les mêmes nombres (`_shared/mika.ts`) ; l'app les applique en premier, pour que
+/// le refus arrive avant l'appel, pas après.
+enum MikaAllowance {
+    static let freeQuestions = 1
+    static let proMessagesPerDay = 30
+}
+
 /// Comptes développeur : Pro à vie, sans abonnement.
 ///
 /// La table `entitlements` ne suffit pas : le compte peut ne pas encore

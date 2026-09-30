@@ -90,6 +90,17 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
 
     case reviewStarted = "review_started"
     case reviewFinished = "review_finished"
+
+    // MARK: Mika
+
+    /// Une question posée à Mika, et répondue : avec `pro` et `attached`, pour savoir qui
+    /// parle à Mika et si c'est avec un document.
+    case mikaAsked = "mika_asked"
+    /// Une question refusée avant l'appel : `reason` dit si c'est le paywall (la question
+    /// offerte est passée) ou le plafond du jour d'un abonné.
+    case mikaBlocked = "mika_blocked"
+    /// Une carte proposée par Mika, rangée dans un cours.
+    case mikaCardAdded = "mika_card_added"
 }
 
 /// **Ce qu'une étiquette a le droit d'être.**

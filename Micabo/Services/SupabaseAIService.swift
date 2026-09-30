@@ -97,6 +97,35 @@ struct SupabaseAIService: AIService {
         return explanation
     }
 
+    // MARK: - Mika
+
+    func chat(_ request: MikaChatRequest) async throws -> MikaChatReply {
+        let turns = request.trimmedTurns
+        guard let last = turns.last, last.role == .user,
+              !last.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw AIServiceError.emptySource
+        }
+
+        var payload: [String: Any] = [
+            "messages": turns.map { ["role": $0.role.rawValue, "text": $0.text] },
+            "language": request.language.rawValue,
+            "level": request.level?.rawValue ?? ""
+        ]
+        // Le document ne part que quand il y en a un : une clé vide se lirait comme un
+        // document vide.
+        if let attachment = request.attachment {
+            payload["attachment"] = [
+                "title": attachment.title,
+                "text": String(attachment.text.prefix(MikaLimits.attachmentCharacters))
+            ]
+        }
+
+        let envelope = try await post("mika-chat", payload: payload)
+        let reply = try decode(MikaChatReply.self, from: envelope, key: "answer")
+        guard reply.isUsable else { throw AIServiceError.invalidResponse }
+        return reply
+    }
+
     // MARK: - Transport
 
     private func post(_ function: String, payload: [String: Any]) async throws -> [String: Any] {
@@ -131,6 +160,10 @@ extension AIServiceError {
         case .server(let status, let message, _):
             if message.localizedCaseInsensitiveContains("FAL_KEY") {
                 self = .missingProviderKey
+            } else if status == 429 {
+                // Le quota du jour, dans les mots de l'app : la phrase du serveur parle de
+                // « générations », et Mika n'en fait pas.
+                self = .quotaExhausted
             } else if status == 401 || status == 403 {
                 self = .server(L10n.t("ios.ai.keyRefused", locale: .resolved(), vars: ["status": "\(status)"]))
             } else if status == 404 {
