@@ -218,6 +218,7 @@ enum DeckBuilder {
         case .invalidResponse: return "reponse_illisible"
         case .emptySource: return "source_vide"
         case .notConfigured, .missingProviderKey: return "configuration"
+        case .quotaExhausted: return "quota"
         }
     }
 
