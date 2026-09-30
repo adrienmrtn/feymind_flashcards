@@ -338,12 +338,13 @@ private struct SignInStage: View {
 /// montre que quand on l'a choisi : il prend alors la place du bouton, s'ouvre avec le
 /// clavier, et l'écran garde jusque-là la forme d'un choix, pas d'un formulaire.
 struct SignInProviderButtons: View {
+    /// Faux à la création du compte en fin de parcours : le courriel n'y est pas proposé,
+    /// « Passer » reste là. La reconnexion le garde — des comptes n'ont que lui.
+    var offersEmail: Bool = true
+
     @Environment(AuthController.self) private var auth
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
-    /// Un nonce ne sert qu'une fois : le suivant est prêt avant même que celui-ci soit
-    /// vérifié.
-    @State private var appleNonce = AppleNonce()
     @State private var email = ""
     /// Vrai une fois qu'on a choisi le courriel : le bouton devient le champ.
     @State private var showsEmail = false
@@ -378,7 +379,7 @@ struct SignInProviderButtons: View {
                 if let suggestion {
                     suggestionNote(typed: suggestion.typed, corrected: suggestion.corrected)
                 }
-            } else {
+            } else if offersEmail {
                 emailButton
                     .transition(.opacity)
             }
@@ -459,18 +460,15 @@ struct SignInProviderButtons: View {
 
     /// Le bouton d'Apple est dessiné par le système, et ce n'est pas négociable : ses règles
     /// d'interface imposent sa forme, son libellé et sa hauteur dès qu'on propose sa
-    /// connexion. Il construit aussi sa propre requête, d'où le nonce gardé ici le temps de
-    /// l'aller-retour.
+    /// connexion. Il construit aussi sa propre requête ; c'est le contrôleur qui la remplit et
+    /// qui garde son nonce, pas la vue.
     private var appleButton: some View {
         ZStack {
             SignInWithAppleButton(.continue) { request in
-                request.requestedScopes = [.fullName, .email]
-                request.nonce = appleNonce.hashed
+                auth.prepareAppleRequest(request)
             } onCompletion: { result in
-                let nonce = appleNonce.raw
-                appleNonce = AppleNonce()
                 Haptics.medium()
-                Task { await auth.signInWithApple(result: result, nonce: nonce) }
+                Task { await auth.signInWithApple(result: result) }
             }
             .signInWithAppleButtonStyle(.black)
             .opacity(0.02)

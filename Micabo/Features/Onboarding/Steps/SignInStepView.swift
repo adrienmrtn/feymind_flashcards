@@ -8,10 +8,11 @@ import SwiftUI
 ///
 /// **Le même écran que les questions, et pas un écran de connexion.** La marque, la
 /// mascotte, la carte de la reconnexion et le récapitulatif du plan sont partis : une
-/// jauge, un titre en 34, une ligne grise, puis les trois portes, telles que
-/// `SignInProviderButtons` les dessine partout, étalées sur la hauteur.
+/// jauge, un titre en 34, une ligne grise, puis Apple et Google, tels que
+/// `SignInProviderButtons` les dessine partout, étalés sur la hauteur. Le courriel reste
+/// à la reconnexion, pas ici.
 ///
-/// **Les trois flux sont branchés pour de vrai.** Une connexion réussie avance d'elle-même ;
+/// **Les flux sont branchés pour de vrai.** Une connexion réussie avance d'elle-même ;
 /// un refus laisse l'écran en place avec sa raison. « Passer » avance, et **referme la porte
 /// du compte** pour que l'app ne repose pas la question à l'écran suivant.
 struct SignInStepView: View {
@@ -34,11 +35,14 @@ struct SignInStepView: View {
             skip: OnboardingSkip(accessibilityLabel: i18n.t("ios.skipNoAccount"), action: skip)
         ) {
             // Les portes au milieu de la page, et les mentions en bas : sans la carte qui
-            // récapitulait le plan, il reste trois boutons, et ils respirent.
+            // récapitulait le plan, il reste deux boutons, et ils respirent.
             VStack(alignment: .leading, spacing: 22) {
                 Spacer(minLength: 0)
 
-                SignInProviderButtons()
+                // Apple et Google seulement : le courriel partait par l'envoyeur de
+                // démonstration de Supabase, plafonné, et échouait près d'une fois sur deux.
+                // Qui ne veut ni l'un ni l'autre a « Passer ».
+                SignInProviderButtons(offersEmail: false)
 
                 SignInFailureNote(includeSent: false, includeError: true)
 

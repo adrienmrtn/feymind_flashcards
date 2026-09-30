@@ -53,19 +53,76 @@ extension Data {
 ///
 /// Le bouton d'Apple construit sa requête lui-même — c'est la seule façon d'utiliser
 /// `SignInWithAppleButton`, et ses règles d'interface imposent ce bouton dès qu'on propose sa
-/// connexion. Ce type ne porte donc que le nonce, que la vue garde le temps de l'aller-retour.
+/// connexion. Ce type ne porte donc que le nonce ; `AppleNonceLedger` le garde le temps de
+/// l'aller-retour.
 struct AppleNonce {
     let raw: String
+    /// La forme envoyée à Apple : SHA-256 en hexadécimal.
+    let hashed: String
 
     init() {
         var bytes = [UInt8](repeating: 0, count: 32)
         _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
         raw = Data(bytes).base64URLEncodedString()
+        hashed = SHA256.hash(data: Data(raw.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
+}
+
+/// **Les nonces Apple partis et pas encore revenus, retrouvés par leur empreinte.**
+///
+/// Le nonce vivait dans un `@State` du bouton, et chaque retour d'Apple en tirait un neuf.
+/// Or un seul geste peut rendre **deux** retours : une erreur immédiate, sans feuille, puis
+/// la vraie autorisation quelques secondes plus tard. La première renouvelait le nonce, la
+/// seconde présentait donc à Supabase un clair qui n'était plus celui qu'Apple avait haché —
+/// `invalid nonce: Nonces mismatch`. Du 21 au 30 septembre 2026, versions 1.4 à 1.6, 132 des
+/// 142 refus du serveur après une autorisation Apple suivaient une telle erreur immédiate.
+///
+/// Le registre ne devine plus quel nonce va avec quelle réponse : il le lit. Apple recopie
+/// dans le jeton d'identité l'empreinte qu'on lui a confiée, et c'est elle qui désigne le
+/// clair. Chaque requête a le sien, et l'ordre des retours ne compte plus.
+struct AppleNonceLedger {
+    /// Assez pour plusieurs gestes d'affilée ; un nonce plus ancien ne reviendra pas.
+    static let capacity = 8
+
+    private var pending: [AppleNonce] = []
+
+    /// Un nonce neuf pour une requête : l'empreinte part chez Apple, le clair reste ici.
+    mutating func issue() -> String {
+        let nonce = AppleNonce()
+        pending.append(nonce)
+        if pending.count > Self.capacity {
+            pending.removeFirst(pending.count - Self.capacity)
+        }
+        return nonce.hashed
     }
 
-    /// La forme envoyée à Apple : SHA-256 en hexadécimal.
-    var hashed: String {
-        SHA256.hash(data: Data(raw.utf8)).map { String(format: "%02x", $0) }.joined()
+    /// Le clair de cette empreinte, retiré du registre : un nonce ne sert qu'une fois.
+    mutating func redeem(hashed: String) -> String? {
+        guard let index = pending.firstIndex(where: { $0.hashed == hashed }) else { return nil }
+        return pending.remove(at: index).raw
+    }
+}
+
+/// Ce qu'on lit dans le jeton d'identité d'Apple, **sans le vérifier**.
+///
+/// La signature est vérifiée par Supabase, pas ici. Ce qu'on lit ne sert qu'à choisir, parmi
+/// les nonces qu'on a soi-même émis, celui à présenter : un jeton forgé qui porterait une
+/// empreinte connue serait refusé de l'autre côté, exactement comme avant.
+enum AppleIdentityToken {
+    /// Le champ `nonce` de la charge utile, ou `nil` si le jeton n'en porte pas.
+    static func nonce(in token: String) -> String? {
+        let parts = token.split(separator: ".", omittingEmptySubsequences: false)
+        guard parts.count == 3 else { return nil }
+
+        var base64 = parts[1]
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        base64 += String(repeating: "=", count: (4 - base64.count % 4) % 4)
+
+        guard let data = Data(base64Encoded: base64),
+              let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return nil }
+        return payload["nonce"] as? String
     }
 }
 
