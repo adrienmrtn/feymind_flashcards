@@ -34,9 +34,12 @@ enum DebugCourseCatalog {
     }
 
     static func courses(locale: UiLocale) -> [OnboardingDemoCourse] {
-        // Les traductions arrivent à part : d'ici là, le français tient lieu de tout.
         switch locale {
-        default: french
+        case .fr: french
+        case .en: english
+        case .de: german
+        case .es: spanish
+        case .tr: turkish
         }
     }
 
