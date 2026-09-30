@@ -192,15 +192,15 @@ struct OnboardingFlowView: View {
         if let course = model.builtCourse {
             // **Le cours du parcours est le premier cours de l'app.** Il est déjà dans la
             // bibliothèque ; l'app s'ouvre sur Decks, où il attend en tête — sans s'ouvrir
-            // de lui-même : l'élève vient de le parcourir —, et « créons ton premier cours »
-            // n'a plus lieu d'être.
+            // de lui-même : l'élève vient de le parcourir.
             FirstDeckHandoff.course = course
-            OnboardingPreferences.pendingFirstImport = false
-        } else {
-            // Sans cours construit — la construction a raté et l'élève a continué —, l'app
-            // s'ouvre sur l'import du premier deck, comme avant.
-            OnboardingPreferences.pendingFirstImport = true
         }
+        // Sans cours construit — la construction a raté et l'élève a continué —, l'app
+        // s'ouvre sur Decks vide, dont la tuile « importer un deck » fait le même travail
+        // que « créons ton premier cours ». Ce dernier écran n'a pas de croix, et générer
+        // un cours est dans Pro : quelqu'un qui n'a pas pris l'abonnement y resterait
+        // enfermé.
+        OnboardingPreferences.pendingFirstImport = false
         onFinish()
     }
 }

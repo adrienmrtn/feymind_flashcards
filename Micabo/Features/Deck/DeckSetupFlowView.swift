@@ -107,11 +107,14 @@ struct DeckSetupFlowView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.aiService) private var aiService
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(ProAccess.self) private var pro: ProAccess?
 
     @State private var setup: DeckSetup
     @State private var step: DeckSetupStep
     /// Les écrans déjà traversés, pour le retour. Voir `goBack`.
     @State private var history: [DeckSetupStep] = []
+    /// Le paywall de « générer mon cours », pour qui n'est pas abonné.
+    @State private var paywall: PaywallTrigger?
 
     init(
         presetSubject: String? = nil,
@@ -148,6 +151,12 @@ struct DeckSetupFlowView: View {
         }
         .environment(\.onboardingSurface, .canvas)
         .preferredColorScheme(.light)
+        .micaboPaywall($paywall) {
+            // Abonné à l'instant : ce qu'on demandait se fait.
+            guard step.next(for: setup) == .building else { return }
+            history.append(step)
+            step = .building
+        }
         .onAppear {
             Haptics.prepare()
             Analytics.track(.deckSetupStep, ["step": .text(step.analyticsName), "index": .number(Double(step.analyticsIndex)), "first": .flag(!isDismissable)])
@@ -237,8 +246,15 @@ struct DeckSetupFlowView: View {
         }
     }
 
+    /// **Générer un cours est dans Pro, et c'est ici que ça se décide.** Les questions se
+    /// posent à tout le monde ; c'est sur « générer mon cours » que le paywall tombe pour
+    /// qui n'est pas abonné, et la construction ne part jamais sans abonnement.
     private func advance() {
         guard let next = step.next(for: setup) else { return }
+        if next == .building, !(pro?.isPro ?? true) {
+            paywall = .generateCourse
+            return
+        }
         history.append(step)
         step = next
     }

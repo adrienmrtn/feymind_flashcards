@@ -332,11 +332,14 @@ struct MicaboAddDeckTile: View {
                     }
 
                 VStack(alignment: .leading, spacing: 5) {
+                    // Deux lignes réservées, comme sur un deck : le cadre pointillé reste
+                    // à la hauteur du pastel d'à côté, quelle que soit la longueur du titre.
                     Text(title)
                         .font(MicaboFont.ui(14.5, weight: .bold))
                         .foregroundStyle(MicaboColor.inkSecondary)
-                        .lineLimit(2)
+                        .lineLimit(2, reservesSpace: true)
                         .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
 
                     Text(meta)
                         .font(MicaboFont.ui(11.5, weight: .medium))
@@ -356,10 +359,15 @@ struct MicaboAddDeckTile: View {
 /// Vingt-deux points en hauteur contre quinze en largeur, et ce n'est pas une coquetterie :
 /// le bloc de texte d'une tuile descend sous elle, donc l'air vertical doit séparer *un bloc
 /// entier* du suivant, là où l'air horizontal ne sépare que deux carrés.
+///
+/// **Les cellules s'alignent en haut.** Une grille centre ses cellules dans la rangée ; une
+/// tuile plus courte — sans barre de progression, ou sans deuxième ligne de titre — se
+/// retrouvait alors plus bas que sa voisine, cadre décalé, légende décalée. Alignées en
+/// haut, les cadres partent de la même ligne.
 enum MicaboDeckGrid {
     static let columns = [
-        GridItem(.flexible(), spacing: 15),
-        GridItem(.flexible(), spacing: 15)
+        GridItem(.flexible(), spacing: 15, alignment: .top),
+        GridItem(.flexible(), spacing: 15, alignment: .top)
     ]
     static let rowSpacing: CGFloat = 22
 }

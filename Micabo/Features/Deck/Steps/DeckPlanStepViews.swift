@@ -286,7 +286,9 @@ struct DeckConfidenceStepView: View {
                 Spacer(minLength: 0)
             }
         } footer: {
-            OnboardingContinueButton(action: onNext)
+            // La dernière question : le bouton dit ce qui va se passer, et c'est sur lui
+            // que le paywall tombe pour qui n'est pas abonné (`DeckSetupFlowView.advance`).
+            OnboardingContinueButton(title: i18n.t("ios.deckSetup.generate"), action: onNext)
         }
     }
 }

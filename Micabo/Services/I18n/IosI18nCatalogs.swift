@@ -275,6 +275,7 @@ enum IosI18nCatalogs {
         "ios.deckSetup.pace.crunch": "C'est proche : tu découvriras des cartes jusqu'au dernier jour.",
         "ios.deckSetup.pace.quiet": "Les deux derniers jours, plus aucune carte neuve. Que des révisions.",
         "ios.deckSetup.confidence": "Tu connais déjà combien de ce cours ?",
+        "ios.deckSetup.generate": "Générer mon cours",
         "ios.deckSetup.confidence.none": "Je pars de zéro",
         "ios.deckSetup.confidence.little": "J'en ai vu un peu",
         "ios.deckSetup.confidence.some": "La moitié, à peu près",
@@ -840,8 +841,9 @@ enum IosI18nCatalogs {
         // Ce qui part vraiment du compte, écrit en petit sous le prix au mois.
         "ios.billedYearly": "facturé {price} par an",
         // Le nouveau parcours d'accueil : l'accroche, le quiz, les preuves, la construction.
-        "ios.hook.title": "Tes cours, fichés\nen 30 secondes.",
-        "ios.hook.sub": "Dépose tes cours, Mika en fait des fiches et des cartes à réviser.",
+        "ios.hook.title": "Apprends 2x plus vite",
+        "ios.hook.sub": "Micabo t'aide à avoir de meilleures notes à l'école.",
+        "ios.hook.next": "Suivant",
         "ios.quiz.level": "Tu en es où ?",
         "ios.quiz.time": "Combien de temps par jour ?",
         "ios.quiz.time.minutes": "{n} min par jour",
@@ -998,7 +1000,6 @@ enum IosI18nCatalogs {
         "ios.mika.chat.cardWhere": "Dans quel cours ?",
         "ios.mika.chat.pickCourse": "Choisis un cours",
         "ios.mika.chat.noCourses": "Aucun cours dans ta bibliothèque pour l'instant.",
-        "ios.mika.chat.freeQuestion": "Ta première question est offerte.",
         "ios.mika.chat.capReached": "Mika a assez parlé pour aujourd'hui. On se retrouve demain.",
         "ios.mika.chat.offline": "Sans réseau, je ne peux pas répondre. Réessaie dans un instant.",
         "ios.mika.chat.documentTitle": "Document",
@@ -1006,6 +1007,7 @@ enum IosI18nCatalogs {
         "ios.mika.chat.suggestion2": "Comment on calcule une dérivée ?",
         "ios.mika.chat.suggestion3": "Fais-moi réviser la guerre froide",
         "ios.paywallMikaHeadline": "Mika répond à toutes tes questions avec Premium.",
+        "ios.paywallGenerateHeadline": "Générer un cours, c'est dans Pro",
         "ios.ai.quota": "Trop de demandes aujourd'hui. Réessaie demain.",
     ]
 
@@ -1779,6 +1781,7 @@ enum IosI18nCatalogs {
         "ios.deckSetup.pace.crunch": "Das ist knapp: du bekommst bis zum letzten Tag neue Karten.",
         "ios.deckSetup.pace.quiet": "In den letzten zwei Tagen keine neuen Karten mehr. Nur Wiederholung.",
         "ios.deckSetup.confidence": "Wie viel davon kennst du schon?",
+        "ios.deckSetup.generate": "Generate my course",
         "ios.deckSetup.confidence.none": "Ich fange bei null an",
         "ios.deckSetup.confidence.little": "Ein bisschen gesehen",
         "ios.deckSetup.confidence.some": "Etwa die Hälfte",
@@ -1850,8 +1853,9 @@ enum IosI18nCatalogs {
         "ios.intro.turnsInto": "Micabo macht daraus einen Kurs mit Zusammenfassung, Kapitel für Kapitel.",
         "ios.intro.upload": "Leg deinen Stoff ab: PDF, Fotos, Word, Videos.",
         // Der neue Einstieg: Aufhänger, Quiz, Belege, Aufbau.
-        "ios.hook.title": "Dein Stoff, in 30 Sekunden\nzusammengefasst.",
-        "ios.hook.sub": "Drop in your notes. Mika turns them into sheets and cards to review.",
+        "ios.hook.title": "Learn 2x faster",
+        "ios.hook.sub": "Micabo will help you get better grades at school.",
+        "ios.hook.next": "Next",
         "ios.quiz.level": "Wo stehst du?",
         "ios.quiz.time": "Wie viel Zeit am Tag?",
         "ios.quiz.time.minutes": "{n} Min. am Tag",
@@ -2006,7 +2010,6 @@ enum IosI18nCatalogs {
         "ios.mika.chat.cardWhere": "Which course?",
         "ios.mika.chat.pickCourse": "Pick a course",
         "ios.mika.chat.noCourses": "No course in your library yet.",
-        "ios.mika.chat.freeQuestion": "Your first question is on us.",
         "ios.mika.chat.capReached": "Mika has talked enough for today. See you tomorrow.",
         "ios.mika.chat.offline": "Without a connection I can't answer. Try again in a moment.",
         "ios.mika.chat.documentTitle": "Document",
@@ -2014,6 +2017,7 @@ enum IosI18nCatalogs {
         "ios.mika.chat.suggestion2": "How do you compute a derivative?",
         "ios.mika.chat.suggestion3": "Quiz me on the Cold War",
         "ios.paywallMikaHeadline": "Mika answers all your questions with Premium.",
+        "ios.paywallGenerateHeadline": "Generating a course is in Pro",
         "ios.ai.quota": "Too many requests today. Try again tomorrow.",
     ]
 
@@ -2787,6 +2791,7 @@ enum IosI18nCatalogs {
         "ios.deckSetup.pace.crunch": "Está cerca: verás tarjetas nuevas hasta el último día.",
         "ios.deckSetup.pace.quiet": "Los dos últimos días, ninguna tarjeta nueva. Solo repaso.",
         "ios.deckSetup.confidence": "¿Cuánto de esto sabes ya?",
+        "ios.deckSetup.generate": "Generate my course",
         "ios.deckSetup.confidence.none": "Empiezo de cero",
         "ios.deckSetup.confidence.little": "He visto un poco",
         "ios.deckSetup.confidence.some": "La mitad, más o menos",
@@ -2858,8 +2863,9 @@ enum IosI18nCatalogs {
         "ios.intro.turnsInto": "Micabo lo convierte en un tema en fichas, capítulo a capítulo.",
         "ios.intro.upload": "Sube tus apuntes: PDF, fotos, Word, vídeos.",
         // El nuevo recorrido de inicio: gancho, quiz, pruebas, construcción.
-        "ios.hook.title": "Tus apuntes, en ficha\nen 30 segundos.",
-        "ios.hook.sub": "Drop in your notes. Mika turns them into sheets and cards to review.",
+        "ios.hook.title": "Learn 2x faster",
+        "ios.hook.sub": "Micabo will help you get better grades at school.",
+        "ios.hook.next": "Next",
         "ios.quiz.level": "¿En qué curso estás?",
         "ios.quiz.time": "¿Cuánto tiempo al día?",
         "ios.quiz.time.minutes": "{n} min al día",
@@ -3014,7 +3020,6 @@ enum IosI18nCatalogs {
         "ios.mika.chat.cardWhere": "Which course?",
         "ios.mika.chat.pickCourse": "Pick a course",
         "ios.mika.chat.noCourses": "No course in your library yet.",
-        "ios.mika.chat.freeQuestion": "Your first question is on us.",
         "ios.mika.chat.capReached": "Mika has talked enough for today. See you tomorrow.",
         "ios.mika.chat.offline": "Without a connection I can't answer. Try again in a moment.",
         "ios.mika.chat.documentTitle": "Document",
@@ -3022,6 +3027,7 @@ enum IosI18nCatalogs {
         "ios.mika.chat.suggestion2": "How do you compute a derivative?",
         "ios.mika.chat.suggestion3": "Quiz me on the Cold War",
         "ios.paywallMikaHeadline": "Mika answers all your questions with Premium.",
+        "ios.paywallGenerateHeadline": "Generating a course is in Pro",
         "ios.ai.quota": "Too many requests today. Try again tomorrow.",
     ]
 
@@ -3795,6 +3801,7 @@ enum IosI18nCatalogs {
         "ios.deckSetup.pace.crunch": "Yakın: son güne kadar yeni kart göreceksin.",
         "ios.deckSetup.pace.quiet": "Son iki gün yeni kart yok. Sadece tekrar.",
         "ios.deckSetup.confidence": "Bu dersin ne kadarını zaten biliyorsun?",
+        "ios.deckSetup.generate": "Generate my course",
         "ios.deckSetup.confidence.none": "Sıfırdan başlıyorum",
         "ios.deckSetup.confidence.little": "Biraz gördüm",
         "ios.deckSetup.confidence.some": "Aşağı yukarı yarısı",
@@ -3866,8 +3873,9 @@ enum IosI18nCatalogs {
         "ios.intro.turnsInto": "Micabo bunları ünite ünite özetlenmiş bir derse dönüştürür.",
         "ios.intro.upload": "Derslerini yükle: PDF, fotoğraf, Word, video.",
         // Yeni karşılama akışı: kanca, quiz, kanıtlar, kurulum.
-        "ios.hook.title": "Derslerin, 30 saniyede\nözete dönüşsün.",
-        "ios.hook.sub": "Drop in your notes. Mika turns them into sheets and cards to review.",
+        "ios.hook.title": "Learn 2x faster",
+        "ios.hook.sub": "Micabo will help you get better grades at school.",
+        "ios.hook.next": "Next",
         "ios.quiz.level": "Hangi seviyedesin?",
         "ios.quiz.time": "Günde ne kadar zaman?",
         "ios.quiz.time.minutes": "Günde {n} dk",
@@ -4022,7 +4030,6 @@ enum IosI18nCatalogs {
         "ios.mika.chat.cardWhere": "Which course?",
         "ios.mika.chat.pickCourse": "Pick a course",
         "ios.mika.chat.noCourses": "No course in your library yet.",
-        "ios.mika.chat.freeQuestion": "Your first question is on us.",
         "ios.mika.chat.capReached": "Mika has talked enough for today. See you tomorrow.",
         "ios.mika.chat.offline": "Without a connection I can't answer. Try again in a moment.",
         "ios.mika.chat.documentTitle": "Document",
@@ -4030,6 +4037,7 @@ enum IosI18nCatalogs {
         "ios.mika.chat.suggestion2": "How do you compute a derivative?",
         "ios.mika.chat.suggestion3": "Quiz me on the Cold War",
         "ios.paywallMikaHeadline": "Mika answers all your questions with Premium.",
+        "ios.paywallGenerateHeadline": "Generating a course is in Pro",
         "ios.ai.quota": "Too many requests today. Try again tomorrow.",
     ]
 
@@ -4316,6 +4324,7 @@ enum IosI18nCatalogs {
         "ios.deckSetup.pace.crunch": "That's close: you'll get new cards right up to the last day.",
         "ios.deckSetup.pace.quiet": "In the last two days, no new cards at all. Reviews only.",
         "ios.deckSetup.confidence": "How much of this do you already know?",
+        "ios.deckSetup.generate": "Generate my course",
         "ios.deckSetup.confidence.none": "Starting from zero",
         "ios.deckSetup.confidence.little": "I've seen a bit",
         "ios.deckSetup.confidence.some": "About half",
@@ -4881,8 +4890,9 @@ enum IosI18nCatalogs {
         // Ce qui part vraiment du compte, écrit en petit sous le prix au mois.
         "ios.billedYearly": "billed {price} a year",
         // The new onboarding: the hook, the quiz, the proofs, the build.
-        "ios.hook.title": "Your notes, turned into\nsheets in 30 seconds.",
-        "ios.hook.sub": "Drop in your notes. Mika turns them into sheets and cards to review.",
+        "ios.hook.title": "Learn 2x faster",
+        "ios.hook.sub": "Micabo will help you get better grades at school.",
+        "ios.hook.next": "Next",
         "ios.quiz.level": "Where are you at?",
         "ios.quiz.time": "How much time a day?",
         "ios.quiz.time.minutes": "{n} min a day",
@@ -5037,7 +5047,6 @@ enum IosI18nCatalogs {
         "ios.mika.chat.cardWhere": "Which course?",
         "ios.mika.chat.pickCourse": "Pick a course",
         "ios.mika.chat.noCourses": "No course in your library yet.",
-        "ios.mika.chat.freeQuestion": "Your first question is on us.",
         "ios.mika.chat.capReached": "Mika has talked enough for today. See you tomorrow.",
         "ios.mika.chat.offline": "Without a connection I can't answer. Try again in a moment.",
         "ios.mika.chat.documentTitle": "Document",
@@ -5045,6 +5054,7 @@ enum IosI18nCatalogs {
         "ios.mika.chat.suggestion2": "How do you compute a derivative?",
         "ios.mika.chat.suggestion3": "Quiz me on the Cold War",
         "ios.paywallMikaHeadline": "Mika answers all your questions with Premium.",
+        "ios.paywallGenerateHeadline": "Generating a course is in Pro",
         "ios.ai.quota": "Too many requests today. Try again tomorrow.",
     ]
 

@@ -8,14 +8,12 @@ import SwiftUI
 /// auraient dérivé au premier ajustement, et le gratuit se serait mis à dire deux choses
 /// différentes selon l'endroit où on l'a rencontré.
 enum FreeTier {
-    /// Un cours importé, et un seul : celui du parcours d'accueil. Le deuxième demande un
-    /// abonnement.
-    ///
-    /// Ce n'est pas zéro, parce que le premier cours se construit à la sortie du parcours
-    /// et fait la démonstration. **Sa page se rouvre librement** — le plan, les chapitres,
-    /// la date — mais ses chapitres, eux, sont dans Pro : en toucher un ouvre le paywall,
-    /// voir `PaywallTrigger.openChapter`.
-    static let courses = 1
+    /// **Aucun cours ne se génère sans abonnement.** Le cours du parcours d'accueil se
+    /// construit à part, c'est la démonstration ; dans l'app, les questions d'un deck se
+    /// posent à tout le monde et c'est « générer mon cours » qui ouvre le paywall — voir
+    /// `DeckSetupFlowView.advance` et `PaywallTrigger.generateCourse`. La page d'un deck se
+    /// rouvre librement, ses chapitres sont dans Pro (`PaywallTrigger.openChapter`).
+    static let courses = 0
 
     /// La part d'un chapitre qui se lit sans payer, passé le premier.
     ///

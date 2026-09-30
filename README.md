@@ -85,7 +85,7 @@ quand il y a quelque chose à comparer.
 
 | Bloc | Écrans |
 | --- | --- |
-| Accroche | le splash (le logo se pose sur un ressort avec une onde derrière lui, 1,45 s, puis monte dans le coin de la page qui arrive autour : la maquette du téléphone — l'image `OnboardingHook`, ou le téléphone dessiné en attendant —, la phrase, sa ligne, « j'ai déjà un compte », Commencer, le menu de langue), le prénom (obligatoire), « Bienvenue, {prénom} » |
+| Accroche | le splash (le logo et le mot se posent en fondu, 1,4 s, puis la page arrive en fondu à leur place : le nom en haut, la maquette du téléphone au milieu — l'image `OnboardingHook`, ou le téléphone dessiné en attendant —, « Apprends 2x plus vite », sa ligne, Suivant en pilule centrée, « j'ai déjà un compte », le menu de langue), le prénom (obligatoire), « Bienvenue, {prénom} » |
 | Quiz | pays (menu, pays de l'appareil pré-choisi), niveau ou filière puis année, matières, ce qui inquiète (plusieurs réponses), objectifs (plusieurs réponses), « on s'en occupe » (deux barres, 36 % contre 80 %, qui montent en deux secondes une fois la page posée, le chiffre comptant avec elles), moyenne actuelle, moyenne visée avec sa carte d'écart, temps par jour sur sa courbe, heure de révision (ciel, soleil, lune), rappels (semaine qui se coche, bannière, demande système) |
 | Mika | le profil se prépare (blob, pourcentage, grille de points, 6,5 s, enchaîne seul), « voyons comment Micabo peut t'aider », cinq écrans de fonctionnalités (maquette, titre, ligne), « voyons ensemble une fiche » |
 | Le cours | connexion (avec « Passer »), les cases de dépôt avec « je n'ai rien pour l'instant » à côté du rond — qui mène à un cours de démonstration à choisir —, Mika écrit le cours, le cours fiché que le rond fait visiter chapitre par chapitre |
@@ -175,7 +175,7 @@ différentes selon la porte par laquelle on l'a rencontré.
 
 | Ce qui est ouvert | Ce qui s'arrête | Où |
 | --- | --- | --- |
-| Le premier cours importé, et la page de chaque deck | Le deuxième import ; les chapitres d'un deck, dès le premier touché | Le « + » de Cours, les états vides de Cours et de Réviser ; le plan d'un deck |
+| Les questions d'un deck, et la page de chaque deck | « Générer mon cours », dès le premier ; les chapitres d'un deck, dès le premier touché | La dernière question de `DeckSetupFlowView` ; le plan d'un deck |
 | Les 70 % de chaque fiche | La fin, floutée et fondue dans le papier | `CourseSheetView` |
 | La génération de cartes, sans limite | — | `GenerateCardsSheet` |
 | Les 5 premières cartes d'une session | La sixième | `StudyView` |
@@ -210,11 +210,13 @@ de l'app où une croix pose une question, et c'est justifié, elle abandonne une
 « Revenir à l'accueil » passe par `TabRouter.goHome()`, qui vide les trois piles — une session
 lancée depuis la fiche d'un cours est deux écrans plus loin que Réviser.
 
-**Les refus arrivent avant le travail, pas après.** Le deuxième import se refuse au moment où
-l'on ouvre le choix du type de document, et non une fois le PDF choisi et l'analyse attendue : un
-paywall qui tombe après le travail est un paywall qui fait désinstaller. De même, les boutons
-« Entraînement libre » portent leur cadenas avant l'appui plutôt que de faire surgir un paywall à
-la place d'une session.
+**Générer un cours est dans Pro, et le refus tombe sur « générer mon cours ».** Le « + » ouvre
+les questions à tout le monde — la matière, le nom, les supports, l'échéance — et c'est le
+dernier bouton, celui qui dit ce qui va se passer, qui ouvre le paywall pour qui n'est pas
+abonné (`PaywallTrigger.generateCourse`) ; la construction ne part jamais sans abonnement. Le
+cours du parcours d'accueil se construit à part : c'est la démonstration. Les boutons
+« Entraînement libre », eux, portent leur cadenas avant l'appui plutôt que de faire surgir un
+paywall à la place d'une session.
 
 **Le « + » de Cours, lui, ne porte pas de cadenas**, et c'est l'exception qui confirme la règle.
 Un bouton verrouillé annonce un refus avant qu'on ait demandé quoi que ce soit : il transforme
@@ -250,7 +252,8 @@ partir. Le centième message coûte ce que coûte le premier. Les nombres sont l
 `MikaLimits` (app) et `_shared/mika.ts` (fonction).
 
 **Une question offerte, puis Premium.** La première question est gratuite, une seule, pour
-toujours — comme le premier cours : c'est la démonstration. La deuxième ouvre le paywall
+toujours : c'est la démonstration, et rien ne l'annonce — on pose sa question, on a sa
+réponse, et c'est à la deuxième qu'on l'apprend. La deuxième ouvre le paywall
 (`PaywallTrigger.mika`). Un abonné a un **plafond de trente messages par jour**
 (`MikaAllowance.proMessagesPerDay`), qu'il ne voit qu'en l'atteignant : c'est un fusible de
 coût, pas un argument de vente. L'app tient la porte (`MikaQuota`, dans les réglages de

@@ -934,9 +934,6 @@ struct CoursesListView: View {
         return "\(courses.count)-\(stamp)-\(day)-\(sync?.epoch ?? 0)"
     }
 
-    private var canImport: Bool {
-        pro?.canImportCourse(existingCourses: courses) ?? true
-    }
 
     /// **Toucher un cours l'ouvre**, abonné ou pas : la page du deck — son plan, ses
     /// chapitres, sa date — se voit librement. Ce sont les chapitres qui sont dans Pro,
@@ -947,16 +944,9 @@ struct CoursesListView: View {
         path.append(course)
     }
 
-    /// Le premier cours est offert, le deuxième s'achète.
-    ///
-    /// Le contrôle est ici plutôt que dans l'écran d'import : on refuse **avant** d'avoir
-    /// fait choisir un PDF, sélectionner des photos et attendre une analyse. Un paywall qui
-    /// tombe après le travail est un paywall qui fait désinstaller.
+    /// **Le « + » ouvre les questions à tout le monde.** Le paywall tombe à la fin, sur
+    /// « générer mon cours » (`DeckSetupFlowView`) : c'est là qu'on sait ce qu'on achète.
     private func requestImport() {
-        guard canImport else {
-            paywall = .secondCourse
-            return
-        }
         creatingDeck = true
     }
 }

@@ -62,21 +62,34 @@ struct DeckBuildingStepView: View {
     /// travail qu'on attend, c'est la fin de la liste.
     private static let steps: [DeckBuilder.Stage] = [.reading, .writingSheet, .splitting, .writingCards]
 
+    /// L'étape en cours, telle que la grille de points la nomme.
+    private var stepLabel: String {
+        let index = Self.thresholds.firstIndex { shown < $0 - 0.001 } ?? Self.steps.count - 1
+        return i18n.t(Self.steps[min(index, Self.steps.count - 1)].captionKey)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
-            VStack(spacing: MicaboSpacing.xl) {
-                Spacer(minLength: 0)
-
-                if let failure {
+            if let failure {
+                VStack(spacing: MicaboSpacing.xl) {
+                    Spacer(minLength: 0)
                     failureBody(failure)
-                } else {
-                    buildingBody
+                    Spacer(minLength: 0)
                 }
-
-                Spacer(minLength: 0)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.horizontal, MicaboSpacing.screen)
+            } else {
+                // **Le même écran que le parcours d'accueil** : le blob, « Mika écrit ton
+                // cours », le nom du deck en dégradé, le pourcentage, la grille de points
+                // et l'étape en cours. C'est le même travail, il a la même tête.
+                MikaLoadingView(
+                    progress: shown,
+                    title: i18n.t("ios.mika.course.title"),
+                    subtitle: setup.resolvedTitle,
+                    stepLabel: stepLabel,
+                    isDone: isReady
+                )
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.horizontal, MicaboSpacing.screen)
 
             // **Le bouton attend que ce soit prêt, et c'est l'étudiant qui ouvre.**
             //
@@ -106,95 +119,6 @@ struct DeckBuildingStepView: View {
             await build()
         }
         .task { await creep() }
-    }
-
-    // MARK: - Pendant
-
-    /// **Les quatre étapes, cochées au fur et à mesure.**
-    ///
-    /// La liste garde ce qui est fait. Une coche verte derrière soi, un rond qui tourne
-    /// devant, des ronds vides après : l'attente cesse d'être un temps mort pour devenir une
-    /// progression qu'on peut lire d'un coup d'œil. Et c'est la même façon de dire un état
-    /// que le plan d'un deck — coche pour ce qui est acquis, violet pour ce qui est en cours.
-    private var buildingBody: some View {
-        VStack(spacing: 26) {
-            VStack(spacing: 9) {
-                Text(i18n.t(isReady ? "ios.deckBuild.done" : "ios.deckBuild.title"))
-                    .font(MicaboFont.ui(26, weight: .bold))
-                    .contentTransition(.opacity)
-                    .animation(.easeOut(duration: 0.25), value: isReady)
-                    .tracking(-0.5)
-                    .foregroundStyle(OnboardingPalette.ink)
-                    .multilineTextAlignment(.center)
-
-                // Ce qu'on a répondu, rappelé pendant l'attente : c'est ce qui fait que
-                // l'écran parle du deck de quelqu'un plutôt que d'un traitement en cours.
-                Text(setup.resolvedTitle)
-                    .font(MicaboFont.ui(15, weight: .medium))
-                    .foregroundStyle(OnboardingPalette.gray)
-                    .multilineTextAlignment(.center)
-            }
-
-            VStack(spacing: 0) {
-                ForEach(Array(Self.steps.enumerated()), id: \.offset) { index, item in
-                    stepRow(item, isLast: index == Self.steps.count - 1)
-                }
-            }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-
-            MicaboProgressBar(progress: shown, tint: OnboardingPalette.accent, track: OnboardingPalette.card)
-                .frame(height: 6)
-                .padding(.horizontal, MicaboSpacing.xl)
-        }
-    }
-
-    /// Une ligne : cochée une fois son seuil passé, en cours entre le seuil précédent et le
-    /// sien, vide avant.
-    private func stepRow(_ item: DeckBuilder.Stage, isLast: Bool) -> some View {
-        let index = Self.steps.firstIndex(of: item) ?? 0
-        let threshold = Self.thresholds[index]
-        let previous: Double = index == 0 ? 0 : Self.thresholds[index - 1]
-        let isDone = shown >= threshold - 0.001
-        let isCurrent = !isDone && shown >= previous - 0.001
-
-        return VStack(spacing: 0) {
-            HStack(spacing: 13) {
-                ZStack {
-                    Circle()
-                        .fill(isDone ? OnboardingPalette.ink : (isCurrent ? OnboardingPalette.accentWash : OnboardingPalette.card))
-
-                    if isDone {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 12, weight: .heavy))
-                            .foregroundStyle(OnboardingPalette.white)
-                    } else if isCurrent {
-                        ProgressView()
-                            .progressViewStyle(.circular)
-                            .scaleEffect(0.62)
-                            .tint(OnboardingPalette.accent)
-                    }
-                }
-                .frame(width: 28, height: 28)
-
-                Text(i18n.t(item.captionKey))
-                    .font(MicaboFont.ui(14.5, weight: isCurrent ? .semibold : .regular))
-                    .foregroundStyle(isCurrent || isDone ? OnboardingPalette.ink : OnboardingPalette.grayLight)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .padding(.vertical, 11)
-            .animation(.easeOut(duration: 0.25), value: isDone)
-            .animation(.easeOut(duration: 0.25), value: isCurrent)
-
-            if !isLast {
-                Rectangle()
-                    .fill(OnboardingPalette.cardStrong)
-                    .frame(height: 1)
-                    .padding(.leading, 41)
-            }
-        }
     }
 
     // MARK: - Quand ça rate
