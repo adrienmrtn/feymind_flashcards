@@ -555,5 +555,554 @@ extension DebugCourseCatalog {
             DemoCard(kind: .cloze, front: "La loi des … énonce que la fréquence d'un événement se rapproche de sa probabilité quand le nombre de répétitions devient très grand.", back: "grands nombres", chapter: 2),
         ]
     )
+
+    // MARK: Économie : l'offre et la demande
+
+    private static let supplyDemandFR = OnboardingDemoCourse(
+        id: "debug-supply-demand",
+        emoji: "⚖️",
+        subject: "Économie",
+        title: "L'offre et la demande",
+        summary: "Comment un marché fixe un prix : les courbes d'offre et de demande, l'équilibre, ce qui le déplace, l'élasticité, et ce que change l'intervention de l'État.",
+        accentIndex: 5,
+        chapters: [
+            DemoChapter(title: "Le marché et la demande", blocks: [
+                .paragraph("Pourquoi une fraise coûte-t-elle trois fois plus cher en mars qu'en juin ? Personne n'a décidé ce prix : il résulte de la rencontre de millions de décisions d'achat et de vente. Le modèle de l'offre et de la demande explique ==comment un marché fixe un prix== sans que personne ne le fixe."),
+                .heading("Qu'est-ce qu'un marché ?"),
+                .callout(
+                    title: "Marché",
+                    text: "Le lieu, physique ou non, où se rencontrent l'**offre** (ce que les vendeurs proposent) et la **demande** (ce que les acheteurs souhaitent acquérir) d'un bien ou d'un service, et où se forme son **prix**.",
+                    tone: .definition
+                ),
+                .paragraph("Un marché n'est pas forcément un lieu : le marché du travail, le marché des changes ou le marché de l'immobilier n'ont pas de halle. Pour raisonner, les économistes partent d'un cas idéal, la **concurrence pure et parfaite**, où aucun acteur n'a assez de poids pour imposer son prix. Il repose sur cinq conditions."),
+                .list([
+                    "Atomicité : beaucoup d'acheteurs et de vendeurs, chacun trop petit pour influencer le prix",
+                    "Homogénéité : tous les vendeurs proposent le même produit",
+                    "Transparence : tout le monde connaît les prix et la qualité",
+                    "Libre entrée : n'importe qui peut entrer sur le marché ou en sortir",
+                    "Libre circulation des facteurs de production : travail et capital vont où ils rapportent le plus",
+                ]),
+                .paragraph("Aucun marché réel ne remplit parfaitement ces cinq conditions, et ce n'est pas le but : le modèle sert de ==point de comparaison==. Un marché de produits agricoles en gros s'en approche ; un marché dominé par trois opérateurs téléphoniques s'en éloigne, et c'est précisément ce qu'on mesure en le comparant au modèle."),
+                .heading("La demande"),
+                .paragraph("La **demande** est la quantité d'un bien que les acheteurs souhaitent acquérir à chaque prix possible. Elle obéit à une loi presque universelle : quand le prix monte, la quantité demandée baisse. Deux raisons à cela. L'**effet de substitution** : le bien devient plus cher que ses concurrents, on se reporte sur eux. L'**effet revenu** : à budget égal, on peut en acheter moins."),
+                .formula("Q_d = 120 - 20\\,p", caption: "Une demande linéaire : quantité demandée (en milliers) en fonction du prix p (en euros)"),
+                .paragraph("Cette fonction servira d'exemple tout au long du cours : imaginez le marché hebdomadaire d'un fromage dans une région, en milliers de pièces. À 1 €, les acheteurs en veulent 100 000 ; à 5 €, seulement 20 000. Chaque euro de plus fait renoncer 20 000 acheteurs. Représentée avec le prix en ordonnée, c'est une droite **décroissante** : la courbe de demande."),
+                .callout(
+                    title: "Le piège du vocabulaire",
+                    text: "Quand le prix d'un bien change, on se **déplace le long** de sa courbe de demande : c'est la *quantité demandée* qui varie. Quand autre chose change — le revenu, les goûts, le prix d'un autre bien —, c'est **la courbe entière qui se déplace** : c'est la *demande* qui varie.",
+                    tone: .warning
+                ),
+                .paragraph("Cette distinction est la source de la plupart des erreurs en exercice. « La demande baisse parce que le prix monte » est faux : c'est la quantité demandée qui baisse. La demande, elle, baisse quand les revenus diminuent, quand un produit concurrent devient moins cher, ou quand une étude révèle un danger pour la santé."),
+                .timeline(title: "Les pères du modèle", events: [
+                    DemoEvent(date: "1776", label: "Adam Smith, La Richesse des nations : la « main invisible »"),
+                    DemoEvent(date: "1838", label: "Antoine-Augustin Cournot trace la première courbe de demande"),
+                    DemoEvent(date: "1874", label: "Léon Walras, la théorie de l'équilibre général"),
+                    DemoEvent(date: "1890", label: "Alfred Marshall croise l'offre et la demande"),
+                ]),
+                .paragraph("Marshall comparait l'offre et la demande aux deux lames d'une paire de ciseaux : se demander laquelle coupe le papier n'a pas de sens, et se demander si c'est l'offre ou la demande qui fixe le prix non plus. C'est ==leur rencontre== qui le détermine, et c'est l'objet du chapitre suivant."),
+            ]),
+            DemoChapter(title: "L'offre et l'équilibre", blocks: [
+                .paragraph("Face aux acheteurs, les producteurs. L'**offre** est la quantité qu'ils sont prêts à vendre à chaque prix possible, et elle obéit à la loi inverse de la demande : plus le prix est élevé, plus ils veulent vendre. Un prix plus haut rend rentable de produire davantage, et attire de nouveaux producteurs."),
+                .heading("La courbe d'offre"),
+                .paragraph("Pourquoi faut-il un prix plus élevé pour produire plus ? Parce que produire chaque unité supplémentaire coûte de plus en plus cher à court terme : heures supplémentaires, machines poussées au-delà de leur régime, matières premières plus difficiles à obtenir. Le producteur n'accepte de produire une unité de plus que si le prix couvre ce **coût marginal** croissant."),
+                .formula("Q_s = 20\\,p", caption: "L'offre du même marché : quantité offerte (en milliers) en fonction du prix p"),
+                .paragraph("À court terme, l'offre finit même par buter sur un mur : la capacité de production. Une fromagerie ne peut pas produire plus que ce que ses cuves et son lait permettent, quel que soit le prix. La quantité offerte monte d'abord vite avec le prix, puis de moins en moins, jusqu'à un plafond."),
+                .figure(.plot(title: "L'offre à court terme plafonne", caption: "En abscisse le prix, en ordonnée la quantité offerte : elle augmente avec le prix, puis bute sur la capacité de production.", kind: .saturation)),
+                .paragraph("C'est pourquoi une hausse soudaine de la demande fait d'abord monter les prix plus que les quantités : les producteurs ne peuvent pas suivre tout de suite. À long terme, ils investissent, de nouveaux producteurs arrivent, et le plafond se relève. Dans notre exemple, on reste dans la zone où l'offre est une droite."),
+                .heading("L'équilibre"),
+                .paragraph("Mettons les deux côtés du marché face à face. Pour chaque prix, on compare la quantité que les acheteurs veulent et celle que les vendeurs proposent. Le tableau se lit ligne par ligne, et une seule ligne fait coïncider les deux."),
+                .table(title: "Le marché du fromage, prix par prix", headers: ["Prix", "Demande (milliers)", "Offre (milliers)", "Situation"], rows: [
+                    ["1 €", "100", "20", "Pénurie de 80"],
+                    ["2 €", "80", "40", "Pénurie de 40"],
+                    ["3 €", "60", "60", "Équilibre"],
+                    ["4 €", "40", "80", "Excédent de 40"],
+                    ["5 €", "20", "100", "Excédent de 80"],
+                ]),
+                .paragraph("Le **prix d'équilibre** est celui pour lequel la quantité offerte égale la quantité demandée. Graphiquement, c'est le point d'intersection des deux courbes ; algébriquement, c'est la solution d'une équation du premier degré."),
+                .formula("120 - 20\\,p = 20\\,p \\;\\Rightarrow\\; p^* = 3 \\text{ €} \\;\\text{ et }\\; Q^* = 60", caption: "L'équilibre : l'offre égale la demande"),
+                .paragraph("Au prix de 3 €, 60 000 fromages sont vendus chaque semaine, et chacun y trouve son compte : tous les acheteurs prêts à payer 3 € sont servis, tous les vendeurs prêts à vendre à 3 € ont écoulé leur production. Il n'y a ==ni file d'attente ni invendus==."),
+                .keyFigure(value: "3 €", label: "le prix d'équilibre, le seul auquel 60 000 fromages trouvent à la fois un vendeur et un acheteur"),
+                .paragraph("Ce prix n'est pas seulement un point sur un graphique : c'est celui vers lequel le marché revient tout seul. Si le prix est trop bas, les acheteurs se disputent une marchandise rare et le font monter ; s'il est trop haut, les vendeurs se retrouvent avec des invendus et le baissent. Le mécanisme se lit en quatre temps."),
+                .figure(.flow(title: "Le retour à l'équilibre, depuis un prix trop bas", steps: ["Prix à 2 € : pénurie de 40 000", "Les acheteurs surenchérissent, le prix monte", "La quantité demandée baisse, l'offre augmente", "La pénurie se résorbe à 3 €"])),
+                .paragraph("Le mécanisme est symétrique depuis un prix trop haut : à 4 €, les vendeurs ont 40 000 pièces d'invendus, ils baissent leurs prix pour les écouler, et le marché redescend vers 3 €. Dans les deux cas, ce sont les écarts entre offre et demande qui font bouger le prix, et c'est leur disparition qui l'arrête."),
+                .callout(
+                    title: "La main invisible",
+                    text: "L'expression d'Adam Smith désigne ce mécanisme : chacun poursuit son intérêt — l'acheteur payer moins, le vendeur gagner plus —, et le prix s'ajuste jusqu'à coordonner leurs décisions, **sans qu'aucun planificateur n'intervienne**. Le prix est un signal : il dit aux producteurs quoi produire et aux consommateurs quoi économiser.",
+                    tone: .insight
+                ),
+                .paragraph("Le mécanisme a une conséquence qui surprend : ==une pénurie est un symptôme de prix trop bas==, pas de production trop faible. C'est ce qu'on observe chaque fois qu'un prix est bloqué en dessous de l'équilibre, et c'est ce que le dernier chapitre étudiera."),
+            ]),
+            DemoChapter(title: "Quand l'équilibre se déplace", blocks: [
+                .paragraph("L'équilibre ne dure que tant que rien ne change. Mais tout change : les revenus, les goûts, les coûts, la météo. Chaque fois, l'une des courbes se déplace, et le marché trouve ==un nouvel équilibre==, avec un autre prix et une autre quantité."),
+                .figure(.split(
+                    title: "Ce qui déplace les courbes",
+                    left: DemoColumn(title: "La demande", items: ["Revenu des ménages", "Prix des biens substituables", "Prix des biens complémentaires", "Goûts, modes, informations", "Taille de la population"]),
+                    right: DemoColumn(title: "L'offre", items: ["Coût des matières premières", "Salaires, énergie", "Progrès technique", "Nombre de producteurs", "Météo, taxes, subventions"])
+                )),
+                .paragraph("La méthode d'analyse est toujours la même, en trois questions : quelle courbe se déplace ? Dans quel sens ? Que deviennent le prix et la quantité d'équilibre ? Si la demande augmente, le prix et la quantité montent tous les deux. Si l'offre diminue, le prix monte mais la quantité baisse."),
+                .callout(
+                    title: "Un gel au Brésil",
+                    text: "Le Brésil produit plus du tiers du café mondial. Quand un gel détruit une partie de la récolte, l'**offre** de café diminue : sa courbe se déplace vers la gauche. Au nouvel équilibre, le prix du café monte et la quantité échangée baisse — sans que la demande ait bougé.",
+                    tone: .example
+                ),
+                .paragraph("Certains marchés ne retrouvent pas leur équilibre en douceur. Quand la production demande du temps — élever des porcs, planter des vergers —, les producteurs décident de ce qu'ils vendront demain en regardant le prix d'aujourd'hui. Un prix élevé les pousse tous à produire plus ; la production arrive en même temps, le prix s'effondre, et ils réduisent tous leur production. C'est le **cycle du porc**, décrit dès les années 1930."),
+                .figure(.cycle(title: "Le cycle du porc", nodes: ["Prix élevé", "Les éleveurs produisent plus", "Surproduction : le prix chute", "Les éleveurs produisent moins"])),
+                .paragraph("Ce cycle est une limite du modèle simple : il suppose que les quantités s'ajustent instantanément. Il explique aussi pourquoi les prix agricoles sont si instables, et pourquoi tant de pays ont mis en place des politiques pour les stabiliser, comme la **politique agricole commune** européenne à partir de 1962."),
+                .heading("L'élasticité-prix"),
+                .paragraph("Toutes les demandes ne réagissent pas de la même façon au prix. Une hausse de 10 % du prix de l'essence fait à peine baisser les achats à court terme : il faut bien aller travailler. La même hausse sur un voyage de loisir peut en faire renoncer beaucoup. L'**élasticité-prix** mesure cette sensibilité."),
+                .formula("e = \\frac{\\Delta Q / Q}{\\Delta p / p}", caption: "La variation relative de la quantité demandée, divisée par la variation relative du prix : presque toujours négative"),
+                .paragraph("Si le prix monte de 10 % et que la quantité baisse de 5 %, $e = -5 / 10 = -0{,}5$ : la demande est **inélastique**, car $|e| < 1$. Si la quantité baisse de 20 %, $e = -2$ : la demande est **élastique**, car $|e| > 1$. Et cela change tout pour le vendeur, parce que sa **recette** est le prix multiplié par la quantité vendue."),
+                .bars(title: "Recette totale des vendeurs selon le prix (milliers d'euros)", unit: "k€", bars: [
+                    DemoBar(label: "1 €", value: 100),
+                    DemoBar(label: "2 €", value: 160),
+                    DemoBar(label: "3 €", value: 180),
+                    DemoBar(label: "4 €", value: 160),
+                    DemoBar(label: "5 €", value: 100),
+                ]),
+                .paragraph("Le graphique montre la recette $R = p \\times Q_d$ sur notre marché. Elle monte jusqu'à 3 €, puis redescend. Ce n'est pas un hasard : le long d'une demande linéaire, l'élasticité change à chaque point, et la recette est maximale exactement ==là où l'élasticité vaut −1==."),
+                .table(title: "L'élasticité le long de la demande Q = 120 − 20p", headers: ["Prix", "Quantité", "Élasticité", "Si le prix monte, la recette…"], rows: [
+                    ["1 €", "100", "−0,2", "augmente"],
+                    ["2 €", "80", "−0,5", "augmente"],
+                    ["3 €", "60", "−1", "est maximale"],
+                    ["4 €", "40", "−2", "diminue"],
+                    ["5 €", "20", "−5", "diminue"],
+                ]),
+                .paragraph("La règle est générale : quand la demande est inélastique, une hausse de prix augmente la recette, car la quantité baisse proportionnellement moins que le prix n'augmente. C'est pourquoi l'État taxe volontiers le tabac et les carburants, dont la demande est peu élastique à court terme : la taxe rapporte, et les ventes ne s'effondrent pas."),
+            ]),
+            DemoChapter(title: "L'État et le marché", blocks: [
+                .paragraph("Le prix d'équilibre n'est pas toujours jugé acceptable : trop élevé pour les locataires, trop bas pour les agriculteurs ou les salariés. L'État intervient alors, en fixant un prix, en taxant, en subventionnant. Le modèle permet de prévoir ==les effets de ces interventions==, y compris ceux qu'on ne souhaitait pas."),
+                .heading("Prix plafond, prix plancher"),
+                .callout(
+                    title: "Prix plafond et prix plancher",
+                    text: "Un **prix plafond** est un prix maximal fixé par l'État, en dessous de l'équilibre, pour protéger les acheteurs (encadrement des loyers). Un **prix plancher** est un prix minimal, au-dessus de l'équilibre, pour protéger les vendeurs (salaire minimum, prix garantis agricoles).",
+                    tone: .definition
+                ),
+                .paragraph("Reprenons notre marché. Un plafond à 2 € rend le fromage moins cher pour ceux qui en trouvent, mais la demande monte à 80 000 et l'offre tombe à 40 000 : ==une pénurie de 40 000== s'installe, avec des files d'attente et un marché noir. Un plancher à 4 € garantit un bon prix aux producteurs, mais ils offrent 80 000 pièces quand les acheteurs n'en veulent que 40 000 : un excédent de 40 000, qu'il faut stocker, détruire ou exporter."),
+                .table(title: "Les instruments de l'État", headers: ["Instrument", "Exemple", "Effet attendu", "Effet pervers possible"], rows: [
+                    ["Prix plafond", "Encadrement des loyers", "Des prix plus bas", "Pénurie, logements retirés du marché"],
+                    ["Prix plancher", "Salaire minimum", "Des revenus plus élevés", "Excédent d'offre : chômage si le plancher est trop haut"],
+                    ["Taxe", "Taxe sur le tabac", "Moins de consommation, des recettes", "Contrebande"],
+                    ["Subvention", "Bonus écologique", "Plus d'achats du bien aidé", "Coût pour les finances publiques"],
+                ]),
+                .paragraph("La dernière colonne n'est pas un réquisitoire : ces effets dépendent de l'écart entre le prix fixé et l'équilibre, et de l'élasticité des courbes. Un salaire minimum modéré peut avoir un effet très faible sur l'emploi ; un encadrement strict et durable des loyers réduit presque toujours l'offre de logements à louer. Le modèle ne dit pas s'il faut intervenir : il dit ==ce que coûte l'intervention==."),
+                .heading("Qui paie une taxe ?"),
+                .paragraph("L'État impose une taxe de 1 € par fromage, versée par les vendeurs. Pour vendre une pièce, un producteur exige désormais 1 € de plus qu'avant : s'il reçoit $p$ des acheteurs, il ne garde que $p - 1$. Son offre devient $Q_s = 20(p - 1)$, et l'équilibre se déplace."),
+                .formula("120 - 20\\,p = 20\\,(p - 1) \\;\\Rightarrow\\; p = 3{,}5 \\text{ €} \\;\\text{ et }\\; Q = 50", caption: "Le nouvel équilibre, avec une taxe de 1 € par unité"),
+                .paragraph("Les acheteurs paient maintenant 3,50 € au lieu de 3 € : ils supportent 50 centimes de la taxe. Les vendeurs reçoivent 3,50 € mais en reversent 1 € à l'État : il leur reste 2,50 € au lieu de 3 €, soit 50 centimes de perte. La taxe est partagée ==moitié-moitié==, parce que les deux courbes ont ici la même pente. L'État encaisse $1 \\times 50\\,000 = 50\\,000$ € par semaine."),
+                .callout(
+                    title: "Verser n'est pas payer",
+                    text: "Le vendeur **verse** la taxe à l'État, mais c'est l'élasticité des courbes qui décide qui la **supporte**. Le côté du marché le moins élastique — celui qui ne peut pas se dérober — en paie la plus grande part. Pour le tabac, dont la demande est peu élastique, ce sont surtout les fumeurs.",
+                    tone: .warning
+                ),
+                .paragraph("La taxe a aussi un coût caché. À l'équilibre, le **surplus du consommateur** — ce que les acheteurs étaient prêts à payer au-delà du prix — et le **surplus du producteur** — ce que les vendeurs reçoivent au-delà de leur coût — valaient chacun 90 000 €, soit 180 000 € au total. Après la taxe, ce total se répartit autrement, et une partie disparaît."),
+                .bars(title: "Le surplus de 180 000 € après la taxe (milliers d'euros)", unit: "k€", bars: [
+                    DemoBar(label: "Consommateurs", value: 62.5),
+                    DemoBar(label: "Producteurs", value: 62.5),
+                    DemoBar(label: "État (recette fiscale)", value: 50),
+                    DemoBar(label: "Perte sèche", value: 5),
+                ]),
+                .paragraph("La **perte sèche** — 5 000 € par semaine — correspond aux 10 000 fromages qui ne sont plus échangés alors qu'un acheteur et un vendeur y auraient trouvé leur compte. Elle ne profite à personne. C'est le coût d'efficacité de la taxe, et il est d'autant plus grand que les courbes sont élastiques."),
+                .list([
+                    "Prix plafond sous l'équilibre : pénurie",
+                    "Prix plancher au-dessus de l'équilibre : excédent",
+                    "Taxe : prix payé en hausse, prix reçu en baisse, quantité en baisse, perte sèche",
+                    "Partage de la taxe : le côté le moins élastique en supporte la plus grande part",
+                ]),
+                .paragraph("Ces quatre résultats valent pour n'importe quel marché, du pétrole au travail en passant par les logements. Ils ne disent pas qu'une intervention est bonne ou mauvaise — l'État peut vouloir réduire la consommation de tabac, ou garantir un revenu —, mais ils obligent à ==en chiffrer les effets==, ce qui est le premier travail de l'économiste."),
+            ]),
+        ],
+        cards: [
+            DemoCard(
+                kind: .basic,
+                front: "Que se passe-t-il sur un marché quand le prix est inférieur au prix d'équilibre ?",
+                back: "La quantité demandée dépasse la quantité offerte : il y a pénurie. Les acheteurs surenchérissent, le prix monte, la quantité demandée baisse et l'offre augmente jusqu'au retour à l'équilibre.",
+                figure: .flow(title: "Retour à l'équilibre", steps: ["Prix trop bas", "Pénurie", "Le prix monte", "Équilibre"]),
+                chapter: 1
+            ),
+            DemoCard(
+                kind: .choice,
+                front: "Un gel détruit une partie de la récolte de café. Que deviennent le prix et la quantité d'équilibre ?",
+                back: "L'offre diminue (sa courbe se déplace vers la gauche) : le prix d'équilibre monte et la quantité échangée baisse.",
+                choices: ["Le prix monte, la quantité monte", "Le prix monte, la quantité baisse", "Le prix baisse, la quantité baisse", "Rien ne change"],
+                answerIndex: 1,
+                chapter: 2
+            ),
+            DemoCard(
+                kind: .cloze,
+                front: "Quand le prix d'un bien augmente, on se déplace … sa courbe de demande : c'est la quantité demandée qui varie, pas la demande.",
+                back: "le long de",
+                chapter: 0
+            ),
+            DemoCard(kind: .basic, front: "Avec $Q_d = 120 - 20p$ et $Q_s = 20p$, quel est l'équilibre ?", back: "$120 - 20p = 20p$ donne $p^* = 3$ € et $Q^* = 60$ (milliers).", hint: "Égalisez l'offre et la demande.", chapter: 1),
+            DemoCard(kind: .choice, front: "Le prix augmente de 10 % et la quantité demandée baisse de 5 %. Quelle est l'élasticité-prix de la demande ?", back: "$e = -5 / 10 = -0{,}5$ : la demande est inélastique, et une hausse de prix augmente la recette.", choices: ["−2", "−0,5", "0,5", "−5"], answerIndex: 1, chapter: 2),
+            DemoCard(kind: .cloze, front: "Un prix plafond fixé en dessous du prix d'équilibre provoque une … .", back: "pénurie", chapter: 3),
+            DemoCard(kind: .basic, front: "Quelles sont les cinq conditions de la concurrence pure et parfaite ?", back: "Atomicité, homogénéité du produit, transparence de l'information, libre entrée et sortie du marché, libre circulation des facteurs de production.", chapter: 0),
+            DemoCard(kind: .choice, front: "Lequel de ces événements déplace la courbe de demande de voiture électrique vers la droite ?", back: "Une hausse du prix de l'essence : la voiture thermique, bien substituable, devient plus coûteuse à utiliser. Une baisse du prix de la voiture électrique elle-même ne déplace pas la courbe : on se déplace le long.", choices: ["Une baisse du prix des voitures électriques", "Une hausse du prix de l'essence", "Une hausse du coût des batteries", "Une baisse des revenus des ménages"], answerIndex: 1, chapter: 2),
+            DemoCard(kind: .basic, front: "Qui supporte une taxe prélevée sur un marché ?", back: "Acheteurs et vendeurs se la partagent, quel que soit celui qui la verse. Le côté le moins élastique en supporte la plus grande part.", chapter: 3),
+            DemoCard(kind: .cloze, front: "Le long d'une demande linéaire, la recette des vendeurs est maximale au point où l'élasticité-prix vaut … .", back: "−1", chapter: 2),
+            DemoCard(kind: .choice, front: "Quel est l'effet d'un prix plancher fixé au-dessus de l'équilibre ?", back: "Un excédent d'offre : les vendeurs proposent plus que ce que les acheteurs veulent acheter à ce prix.", choices: ["Une pénurie", "Un excédent d'offre", "Aucun effet", "Une baisse du prix payé"], answerIndex: 1, chapter: 3),
+            DemoCard(kind: .cloze, front: "La perte de surplus causée par une taxe, qui ne profite à personne, s'appelle la perte … .", back: "sèche", chapter: 3),
+        ]
+    )
+
+    // MARK: Physique : les circuits électriques
+
+    private static let circuitsFR = OnboardingDemoCourse(
+        id: "debug-circuits",
+        emoji: "🔌",
+        subject: "Physique",
+        title: "L'électricité : circuits",
+        summary: "Le courant et la tension, la loi d'Ohm, les montages en série et en dérivation, puis la puissance, l'énergie et les règles de sécurité, avec des calculs faits pas à pas.",
+        accentIndex: 2,
+        chapters: [
+            DemoChapter(title: "Courant et tension", blocks: [
+                .paragraph("Quand on appuie sur un interrupteur, la lampe s'allume instantanément, et pourtant les électrons, dans les fils, avancent de moins d'un millimètre par seconde. Ce paradoxe dit l'essentiel : un circuit électrique est ==une boucle déjà pleine de charges==, que le générateur met en mouvement toutes à la fois."),
+                .heading("Le courant électrique"),
+                .paragraph("Un **courant électrique** est un déplacement d'ensemble de porteurs de charge. Dans les métaux, ce sont des **électrons libres**, qui se déplacent d'atome en atome ; dans les solutions, ce sont des ions. Son **intensité** $I$ mesure la quantité de charge qui traverse une section du fil chaque seconde. Elle s'exprime en **ampères** (A)."),
+                .formula("I = \\frac{Q}{\\Delta t}", caption: "I en ampères (A), Q en coulombs (C), Δt en secondes (s)"),
+                .paragraph("Un électron porte une charge de $1{,}6 \\times 10^{-19}$ C. Un courant de 1 A correspond donc au passage de $1 / (1{,}6 \\times 10^{-19}) \\approx 6{,}25 \\times 10^{18}$ électrons par seconde : plus de six milliards de milliards. C'est pourquoi on ne compte jamais les électrons un par un, mais les coulombs."),
+                .callout(
+                    title: "Sens conventionnel",
+                    text: "Par convention, le courant circule **de la borne + vers la borne −** du générateur, à l'extérieur de celui-ci. Les électrons, chargés négativement, se déplacent **dans le sens inverse**. La convention date d'avant la découverte de l'électron, et on l'a gardée.",
+                    tone: .warning
+                ),
+                .paragraph("Pour qu'un courant circule, il faut une **boucle fermée** : un générateur, des fils, au moins un récepteur, et aucune coupure. Ouvrir un interrupteur, c'est couper la boucle, et le courant s'arrête partout à la fois — avant comme après l'interrupteur."),
+                .figure(.cycle(title: "Une boucle fermée", nodes: ["Borne + du générateur", "Fil de connexion", "Récepteur (lampe)", "Retour à la borne −"])),
+                .paragraph("Dans une boucle simple, sans embranchement, l'intensité est ==la même en tout point== : le courant ne s'use pas en traversant la lampe. Ce qui se « consomme », c'est l'énergie que transportent les charges, pas les charges elles-mêmes. La lampe ne mange pas d'électrons, elle transforme de l'énergie électrique en lumière et en chaleur."),
+                .heading("La tension"),
+                .callout(
+                    title: "Tension électrique",
+                    text: "La **tension** $U$ entre deux points d'un circuit est la différence de leur potentiel électrique. Elle se mesure en **volts** (V). C'est elle qui met les charges en mouvement : sans tension, pas de courant.",
+                    tone: .definition
+                ),
+                .paragraph("Une image aide à fixer les idées : dans un circuit d'eau, la pompe crée une différence de pression, et l'eau circule. Le générateur est la pompe, la tension est la différence de pression, l'intensité est le débit. Une pile de 1,5 V, une batterie de voiture de 12 V et une prise de courant de 230 V n'ont pas la même « pression »."),
+                .table(title: "Mesurer dans un circuit", headers: ["Appareil", "Mesure", "Unité", "Branchement"], rows: [
+                    ["Ampèremètre", "L'intensité", "Ampère (A)", "En série, dans la boucle"],
+                    ["Voltmètre", "La tension", "Volt (V)", "En dérivation, aux bornes du dipôle"],
+                    ["Ohmmètre", "La résistance", "Ohm (Ω)", "Aux bornes du dipôle, hors circuit"],
+                ]),
+                .paragraph("Le branchement découle de ce que l'appareil mesure. Un ampèremètre compte ce qui passe : il doit être traversé par le courant, donc placé **dans** la boucle. Un voltmètre compare deux points : il se branche **entre** eux. Brancher un ampèremètre en dérivation, c'est créer un court-circuit — et souvent griller son fusible."),
+                .list([
+                    "Loi des nœuds : la somme des intensités qui arrivent à un nœud égale la somme de celles qui en repartent",
+                    "Loi des mailles : dans une boucle, la tension du générateur égale la somme des tensions aux bornes des récepteurs",
+                    "Dans une boucle simple, l'intensité est la même partout",
+                ]),
+            ]),
+            DemoChapter(title: "La loi d'Ohm", blocks: [
+                .paragraph("Un fil de cuivre laisse passer le courant presque sans résistance ; un filament de tungstène le freine fortement. La **résistance** $R$ d'un dipôle mesure ==à quel point il s'oppose au passage du courant==. Elle s'exprime en ohms (Ω), du nom du physicien allemand Georg Ohm."),
+                .heading("Une relation de proportionnalité"),
+                .paragraph("Branchons un **conducteur ohmique** — une résistance, au sens du composant — sur un générateur réglable, et mesurons l'intensité pour plusieurs tensions. Les résultats, pour une résistance de 100 Ω, tombent sur une droite qui passe par l'origine."),
+                .table(title: "Mesures aux bornes d'une résistance de 100 Ω", headers: ["Tension U (V)", "Intensité I (mA)", "U / I (Ω)"], rows: [
+                    ["2", "20", "100"],
+                    ["4", "40", "100"],
+                    ["6", "60", "100"],
+                    ["8", "80", "100"],
+                    ["10", "100", "100"],
+                ]),
+                .paragraph("Le rapport $U / I$ est constant : c'est la résistance. Attention aux unités : 20 mA valent 0,020 A, et $2 / 0{,}020 = 100$ Ω. Cette proportionnalité entre la tension et l'intensité est la **loi d'Ohm**, la relation la plus utilisée de toute l'électricité."),
+                .formula("U = R \\times I", caption: "U en volts (V), R en ohms (Ω), I en ampères (A)"),
+                .paragraph("La formule se lit dans les trois sens : $U = RI$, $I = U / R$, $R = U / I$. Pour une tension donnée, plus la résistance est grande, plus l'intensité est faible. Exemple : une résistance de 470 Ω sous 12 V est traversée par $I = 12 / 470 \\approx 0{,}026$ A, soit environ 26 mA."),
+                .heading("Tous les dipôles ne sont pas ohmiques"),
+                .paragraph("La loi d'Ohm ne vaut que pour les conducteurs ohmiques. Une lampe à incandescence, par exemple, ne la respecte pas : quand la tension augmente, le filament chauffe, sa résistance augmente, et l'intensité croît de moins en moins vite. Sa **caractéristique** — la courbe de l'intensité en fonction de la tension — n'est pas une droite, mais une courbe qui s'infléchit."),
+                .figure(.plot(title: "Caractéristique d'une lampe à incandescence", caption: "En abscisse la tension, en ordonnée l'intensité : plus le filament chauffe, plus sa résistance augmente, et plus l'intensité peine à suivre.", kind: .saturation)),
+                .paragraph("Comparez avec la droite d'une résistance : pour la lampe, le rapport $U / I$ n'est pas constant, il augmente avec la tension. C'est la ==signature d'un dipôle non ohmique==. Les diodes en sont un autre exemple, encore plus marqué : elles laissent passer le courant dans un sens et presque pas dans l'autre."),
+                .keyFigure(value: "× 10", label: "au moins : la résistance d'un filament de tungstène à 2 500 °C, comparée à sa résistance à froid"),
+                .paragraph("C'est pourquoi une ampoule à incandescence grille le plus souvent à l'allumage : froide, sa résistance est faible, et un fort courant la traverse pendant une fraction de seconde avant que le filament ne chauffe. Un ohmmètre qui mesure une lampe éteinte donne donc une valeur très différente de sa résistance en fonctionnement."),
+                .callout(
+                    title: "Méthode",
+                    text: "Pour appliquer la loi d'Ohm : 1. vérifier que le dipôle est ohmique ; 2. convertir en unités de base — volts, ampères, ohms (1 mA = 0,001 A, 1 kΩ = 1 000 Ω) ; 3. isoler la grandeur cherchée ; 4. donner le résultat avec son unité et un nombre raisonnable de chiffres.",
+                    tone: .insight
+                ),
+                .paragraph("L'étape deux est celle qui fait perdre le plus de points : $12 / 470$ donne 0,026, et c'est un résultat en ampères. Écrire « 0,026 mA », c'est se tromper d'un facteur mille. Un ordre de grandeur de tête — ==quelques dizaines de milliampères pour quelques centaines d'ohms sous 12 V== — suffit à repérer l'erreur."),
+            ]),
+            DemoChapter(title: "Série et dérivation", blocks: [
+                .paragraph("Dès qu'un circuit compte plus d'un récepteur, il faut savoir comment ils sont reliés. Il n'existe que deux façons élémentaires : **en série**, les uns à la suite des autres dans une même boucle ; **en dérivation**, sur des branches parallèles entre les deux mêmes points. Tout circuit, même complexe, se décompose en ces deux montages."),
+                .figure(.split(
+                    title: "Deux montages",
+                    left: DemoColumn(title: "En série", items: ["Une seule boucle", "Même intensité partout", "Les tensions s'additionnent", "Les résistances s'additionnent", "Un élément grillé coupe tout"]),
+                    right: DemoColumn(title: "En dérivation", items: ["Plusieurs branches", "Même tension aux bornes", "Les intensités s'additionnent", "Résistance équivalente plus petite", "Chaque branche est indépendante"])
+                )),
+                .paragraph("Chaque ligne du tableau découle des deux lois du premier chapitre. En série, il n'y a pas de nœud, donc l'intensité est la même partout ; la loi des mailles dit que les tensions s'ajoutent. En dérivation, les branches sont branchées entre les deux mêmes points, donc elles ont la même tension ; la loi des nœuds dit que les intensités s'ajoutent."),
+                .heading("En série"),
+                .formula("R_{eq} = R_1 + R_2", caption: "Deux résistances en série équivalent à une seule, égale à leur somme"),
+                .callout(
+                    title: "Exemple : deux résistances en série",
+                    text: "Un générateur de 12 V alimente $R_1 = 100$ Ω et $R_2 = 200$ Ω en série. $R_{eq} = 300$ Ω, donc $I = 12 / 300 = 0{,}040$ A = 40 mA. Tensions : $U_1 = 100 \\times 0{,}040 = 4$ V et $U_2 = 200 \\times 0{,}040 = 8$ V. Vérification : $4 + 8 = 12$ V.",
+                    tone: .example
+                ),
+                .paragraph("La tension se partage ==proportionnellement aux résistances== : la résistance deux fois plus grande prend une tension deux fois plus grande. Ce montage s'appelle un **diviseur de tension**, et il est partout en électronique pour obtenir une tension plus faible à partir d'une alimentation fixe."),
+                .heading("En dérivation"),
+                .formula("\\frac{1}{R_{eq}} = \\frac{1}{R_1} + \\frac{1}{R_2} \\;\\;\\Leftrightarrow\\;\\; R_{eq} = \\frac{R_1 R_2}{R_1 + R_2}", caption: "En dérivation, ce sont les inverses des résistances qui s'additionnent"),
+                .paragraph("Branchons maintenant les mêmes résistances en dérivation sur le même générateur. Chacune reçoit les 12 V : $I_1 = 12 / 100 = 0{,}12$ A et $I_2 = 12 / 200 = 0{,}06$ A. Le générateur débite leur somme, $0{,}18$ A. La résistance équivalente vaut $\\frac{100 \\times 200}{300} \\approx 66{,}7$ Ω, et l'on vérifie que $12 / 66{,}7 \\approx 0{,}18$ A."),
+                .table(title: "Les mêmes résistances, deux montages (générateur de 12 V)", headers: ["", "En série", "En dérivation"], rows: [
+                    ["Résistance équivalente", "300 Ω", "≈ 66,7 Ω"],
+                    ["Intensité débitée", "40 mA", "180 mA"],
+                    ["Tension aux bornes de R₁", "4 V", "12 V"],
+                    ["Tension aux bornes de R₂", "8 V", "12 V"],
+                    ["Puissance totale", "0,48 W", "2,16 W"],
+                ]),
+                .paragraph("Le résultat est contre-intuitif : ajouter une résistance **en dérivation diminue** la résistance équivalente, parce qu'on offre au courant un chemin de plus. La résistance équivalente est toujours plus petite que la plus petite des résistances en parallèle — ici 66,7 Ω, moins que 100 Ω."),
+                .callout(
+                    title: "Pourquoi les prises sont en dérivation",
+                    text: "Dans une maison, tous les appareils sont branchés en dérivation : chacun reçoit les 230 V, et on peut en éteindre un sans couper les autres. Mais chaque appareil ajouté augmente l'intensité totale dans le circuit : c'est ainsi qu'une multiprise surchargée fait **disjoncter**.",
+                    tone: .warning
+                ),
+                .paragraph("Retenez la règle d'or : ==en série, l'intensité est commune ; en dérivation, c'est la tension==. Tout le reste — l'addition des tensions ou des intensités, le calcul des résistances équivalentes — s'en déduit, et c'est la première chose à identifier face à un schéma."),
+            ]),
+            DemoChapter(title: "Puissance, énergie et sécurité", blocks: [
+                .paragraph("Un appareil électrique se choisit d'abord par sa **puissance** : 8 W pour une ampoule LED, 2 000 W pour une bouilloire. La puissance électrique reçue par un dipôle est le produit de la tension à ses bornes et de l'intensité qui le traverse. Elle mesure ==le débit d'énergie== qu'il reçoit."),
+                .formula("P = U \\times I", caption: "P en watts (W), U en volts (V), I en ampères (A)"),
+                .paragraph("Combinée à la loi d'Ohm, la formule prend deux autres formes pour un conducteur ohmique : $P = R I^2$ et $P = U^2 / R$. La première explique l'**effet Joule** : un conducteur traversé par un courant chauffe, d'autant plus que l'intensité est forte. C'est utile dans un radiateur ou un grille-pain, et c'est une perte partout ailleurs."),
+                .table(title: "Puissance et intensité de quelques appareils sous 230 V", headers: ["Appareil", "Puissance", "Intensité (I = P / U)"], rows: [
+                    ["Ampoule LED", "8 W", "≈ 0,035 A"],
+                    ["Chargeur de téléphone", "20 W", "≈ 0,09 A"],
+                    ["Téléviseur", "100 W", "≈ 0,43 A"],
+                    ["Bouilloire", "2 000 W", "≈ 8,7 A"],
+                    ["Four", "3 000 W", "≈ 13 A"],
+                ]),
+                .paragraph("Une prise standard est prévue pour 16 A, soit $230 \\times 16 \\approx 3\\,700$ W au maximum. Brancher une bouilloire et un four sur la même multiprise, c'est demander plus de 21 A : les fils chauffent par effet Joule, et c'est ainsi que commencent de nombreux incendies domestiques."),
+                .heading("L'énergie consommée"),
+                .formula("E = P \\times \\Delta t", caption: "E en joules si P est en watts et Δt en secondes ; en kWh si P est en kW et Δt en heures"),
+                .callout(
+                    title: "Combien coûte un thé ?",
+                    text: "Une bouilloire de 2 000 W chauffe l'eau en 3 minutes : $E = 2 \\text{ kW} \\times 0{,}05 \\text{ h} = 0{,}1$ kWh. À environ 0,20 € le kWh, cela coûte **deux centimes**. En joules : $2000 \\times 180 = 360\\,000$ J.",
+                    tone: .example
+                ),
+                .paragraph("Le kilowattheure est l'unité de la facture parce que le joule est bien trop petit à l'échelle d'un foyer : 1 kWh vaut $3{,}6 \\times 10^6$ J. Ce qui coûte cher, ce ne sont pas les appareils puissants utilisés quelques minutes, mais ceux qui fonctionnent longtemps : un radiateur de 1 500 W allumé dix heures consomme 15 kWh, cent cinquante fois plus que le thé."),
+                .heading("L'électricité et le corps humain"),
+                .paragraph("Le danger électrique tient à ==l'intensité qui traverse le corps==, pas directement à la tension. Mais c'est la tension qui la provoque : le corps humain a une résistance de l'ordre de 1 000 Ω entre les deux mains, peau humide. Sous 230 V, la loi d'Ohm donne $I = 230 / 1000 = 0{,}23$ A, soit 230 mA — une intensité mortelle."),
+                .bars(title: "Effets d'un courant alternatif traversant le corps", unit: "mA", bars: [
+                    DemoBar(label: "Seuil de perception", value: 0.5),
+                    DemoBar(label: "Contraction : on ne peut plus lâcher", value: 10),
+                    DemoBar(label: "Paralysie respiratoire", value: 30),
+                    DemoBar(label: "Fibrillation cardiaque", value: 75),
+                ]),
+                .paragraph("Ces seuils expliquent le chiffre qu'on trouve sur tous les tableaux électriques : les **disjoncteurs différentiels 30 mA**. Ils comparent le courant qui part vers un appareil et celui qui en revient ; si la différence dépasse 30 mA, c'est qu'une partie du courant s'échappe — peut-être à travers quelqu'un —, et ils coupent en quelques centièmes de seconde."),
+                .list([
+                    "Fusible ou disjoncteur : coupe le circuit en cas de surintensité (court-circuit, surcharge), protège les installations",
+                    "Disjoncteur différentiel 30 mA : coupe en cas de fuite de courant, protège les personnes",
+                    "Prise de terre : évacue vers le sol le courant d'un appareil à carcasse métallique défectueux",
+                    "Jamais d'appareil électrique près de l'eau : la peau mouillée divise la résistance du corps",
+                ]),
+                .paragraph("Ces protections sont l'aboutissement de deux siècles de maîtrise de l'électricité. Il a fallu d'abord la produire de façon continue, puis comprendre ses lois, puis la distribuer à grande échelle — et, à chaque étape, apprendre à s'en protéger."),
+                .timeline(title: "Deux siècles d'électricité", events: [
+                    DemoEvent(date: "1800", label: "Alessandro Volta invente la pile : le premier courant continu"),
+                    DemoEvent(date: "1820", label: "Ørsted découvre qu'un courant dévie une boussole"),
+                    DemoEvent(date: "1827", label: "Georg Ohm publie la loi qui porte son nom"),
+                    DemoEvent(date: "1831", label: "Faraday découvre l'induction : on sait produire du courant"),
+                    DemoEvent(date: "1879", label: "Lampe à incandescence durable de Swan et Edison"),
+                    DemoEvent(date: "1882", label: "Première centrale électrique publique, à New York"),
+                ]),
+                .paragraph("L'unité d'intensité porte le nom d'Ampère, celle de tension celui de Volta, celle de résistance celui d'Ohm : trois des lettres que vous écrivez à chaque exercice sont ==un hommage aux pionniers== de cette histoire. Et chacune de leurs découvertes se résume aujourd'hui en une formule de quelques caractères."),
+            ]),
+        ],
+        cards: [
+            DemoCard(
+                kind: .basic,
+                front: "Comment se comportent l'intensité et la tension dans un montage en série, et dans un montage en dérivation ?",
+                back: "En série, l'intensité est la même partout et les tensions s'additionnent. En dérivation, la tension est la même aux bornes de chaque branche et les intensités s'additionnent.",
+                figure: .split(
+                    title: "Deux montages",
+                    left: DemoColumn(title: "Série", items: ["I commune", "U s'additionnent"]),
+                    right: DemoColumn(title: "Dérivation", items: ["U commune", "I s'additionnent"])
+                ),
+                chapter: 2
+            ),
+            DemoCard(
+                kind: .choice,
+                front: "Une résistance de 470 Ω est soumise à une tension de 12 V. Quelle intensité la traverse ?",
+                back: "$I = U / R = 12 / 470 \\approx 0{,}026$ A, soit environ 26 mA.",
+                choices: ["≈ 26 mA", "≈ 39 A", "≈ 5,6 A", "≈ 0,26 mA"],
+                answerIndex: 0,
+                chapter: 1
+            ),
+            DemoCard(
+                kind: .cloze,
+                front: "Un voltmètre se branche en … aux bornes du dipôle dont on veut mesurer la tension.",
+                back: "dérivation",
+                chapter: 0
+            ),
+            DemoCard(kind: .basic, front: "Énoncez la loi d'Ohm.", back: "Pour un conducteur ohmique, la tension à ses bornes est proportionnelle à l'intensité qui le traverse : $U = R \\times I$, avec U en volts, R en ohms, I en ampères.", chapter: 1),
+            DemoCard(kind: .choice, front: "Deux résistances de 100 Ω et 200 Ω sont montées en série sur un générateur de 12 V. Quelle est la tension aux bornes de la résistance de 200 Ω ?", back: "$I = 12 / 300 = 0{,}04$ A, donc $U_2 = 200 \\times 0{,}04 = 8$ V.", hint: "Calculez d'abord l'intensité commune.", choices: ["4 V", "6 V", "8 V", "12 V"], answerIndex: 2, chapter: 2),
+            DemoCard(kind: .cloze, front: "Par convention, le courant circule de la borne … vers la borne − du générateur, à l'extérieur de celui-ci.", back: "+", chapter: 0),
+            DemoCard(kind: .basic, front: "Pourquoi ajouter une résistance en dérivation diminue-t-il la résistance équivalente ?", back: "Parce qu'on offre au courant un chemin supplémentaire : les intensités des branches s'additionnent, le générateur débite davantage sous la même tension, donc $R_{eq} = U / I$ diminue.", chapter: 2),
+            DemoCard(kind: .choice, front: "Quelle énergie consomme une bouilloire de 2 000 W en fonctionnant 3 minutes ?", back: "$E = P \\times \\Delta t = 2 \\text{ kW} \\times 0{,}05 \\text{ h} = 0{,}1$ kWh, soit 360 000 J.", choices: ["6 kWh", "0,1 kWh", "6 000 J", "0,6 kWh"], answerIndex: 1, chapter: 3),
+            DemoCard(kind: .cloze, front: "La puissance électrique reçue par un dipôle vaut $P = U \\times$ … .", back: "$I$", chapter: 3),
+            DemoCard(kind: .basic, front: "Que protège un disjoncteur différentiel 30 mA, et comment ?", back: "Les personnes : il compare le courant qui part vers un appareil et celui qui en revient, et coupe si la différence dépasse 30 mA, signe d'une fuite de courant, peut-être à travers un corps.", chapter: 3),
+            DemoCard(kind: .choice, front: "À partir de quelle intensité environ un courant traversant le corps peut-il provoquer une paralysie respiratoire ?", back: "Environ 30 mA, d'où le calibre des disjoncteurs différentiels domestiques.", choices: ["0,5 mA", "30 mA", "1 A", "10 A"], answerIndex: 1, chapter: 3),
+            DemoCard(kind: .cloze, front: "Un électron porte une charge de $1{,}6 \\times 10^{-19}$ … .", back: "coulomb", chapter: 0),
+        ]
+    )
+
+    // MARK: SVT : la cellule et la mitose
+
+    private static let mitosisFR = OnboardingDemoCourse(
+        id: "debug-mitosis",
+        emoji: "🔬",
+        subject: "SVT",
+        title: "La cellule et la mitose",
+        summary: "La cellule et ses organites, le cycle cellulaire, les phases de la mitose, la méiose qui fabrique les gamètes, et le cancer, quand la division échappe à tout contrôle.",
+        accentIndex: 3,
+        chapters: [
+            DemoChapter(title: "La cellule, unité du vivant", blocks: [
+                .paragraph("Tout être vivant est fait de cellules : une seule pour une bactérie, environ ==30 000 milliards== pour un être humain. Et toute cellule naît d'une autre cellule, par division. Ces deux phrases forment la **théorie cellulaire**, l'un des piliers de la biologie."),
+                .heading("Une découverte en deux siècles"),
+                .paragraph("Il a fallu inventer le microscope pour voir les cellules, puis deux siècles d'observations pour comprendre qu'elles étaient le point commun de tous les êtres vivants. La frise résume ce long chemin, qui s'achève quand on observe enfin une cellule en train de se diviser."),
+                .timeline(title: "La théorie cellulaire", events: [
+                    DemoEvent(date: "1665", label: "Robert Hooke observe des « cellules » dans le liège"),
+                    DemoEvent(date: "1674", label: "Van Leeuwenhoek découvre des êtres vivants microscopiques"),
+                    DemoEvent(date: "1838–1839", label: "Schleiden et Schwann : plantes et animaux sont faits de cellules"),
+                    DemoEvent(date: "1855", label: "Virchow : toute cellule provient d'une cellule"),
+                    DemoEvent(date: "1882", label: "Flemming décrit et nomme la mitose"),
+                ]),
+                .paragraph("La phrase de Virchow, *omnis cellula e cellula*, a une conséquence vertigineuse : chacune de vos cellules descend, par une chaîne ininterrompue de divisions, de la toute première cellule vivante. La division cellulaire n'est pas un détail du fonctionnement du vivant, c'est ==ce qui le fait durer==."),
+                .callout(
+                    title: "Cellule",
+                    text: "La plus petite unité structurale et fonctionnelle du vivant : un espace délimité par une **membrane plasmique**, contenant un **cytoplasme** et une information génétique sous forme d'**ADN**, capable de se nourrir, de produire de l'énergie et de se reproduire.",
+                    tone: .definition
+                ),
+                .paragraph("Il existe deux grands types de cellules. Les **procaryotes** — les bactéries — n'ont pas de noyau : leur ADN flotte dans le cytoplasme. Les **eucaryotes** — animaux, végétaux, champignons, protistes — ont un noyau qui enferme l'ADN, et des compartiments spécialisés, les **organites**."),
+                .heading("Les organites"),
+                .table(title: "Les principaux organites d'une cellule eucaryote", headers: ["Organite", "Rôle"], rows: [
+                    ["Noyau", "Contient l'ADN, siège de la réplication et de la transcription"],
+                    ["Mitochondrie", "Respiration cellulaire : produit l'ATP"],
+                    ["Ribosome", "Traduction : fabrique les protéines"],
+                    ["Réticulum endoplasmique", "Synthèse et transport des protéines et des lipides"],
+                    ["Appareil de Golgi", "Modifie, trie et expédie les protéines"],
+                    ["Chloroplaste", "Photosynthèse, chez les végétaux seulement"],
+                ]),
+                .paragraph("La cellule végétale possède en plus une **paroi** rigide de cellulose autour de sa membrane, une grande **vacuole** remplie d'eau qui la maintient gonflée, et des chloroplastes. La cellule animale n'a ni paroi ni chloroplaste, mais des **centrosomes**, qui joueront un rôle central pendant la division."),
+                .keyFigure(value: "10 à 100 µm", label: "la taille typique d'une cellule eucaryote, environ dix fois celle d'une bactérie : invisible à l'œil nu"),
+                .paragraph("Cette taille n'est pas un hasard. Une cellule échange tout — nourriture, oxygène, déchets — à travers sa membrane, et quand son volume augmente, sa surface augmente moins vite. Au-delà d'une certaine taille, ==la membrane ne suffit plus== à nourrir l'intérieur : la cellule doit se diviser ou mourir."),
+            ]),
+            DemoChapter(title: "Le cycle cellulaire", blocks: [
+                .paragraph("Une cellule qui se divise passe par une succession d'étapes qui se répètent à chaque génération : c'est le **cycle cellulaire**. Il comprend une longue **interphase**, pendant laquelle la cellule grandit et copie son ADN, et une courte **mitose**, pendant laquelle elle se divise en deux."),
+                .figure(.cycle(title: "Le cycle cellulaire", nodes: ["G1 : croissance", "S : réplication de l'ADN", "G2 : préparation", "M : mitose et cytocinèse"])),
+                .paragraph("La phase **G1** (de l'anglais *gap*, intervalle) est celle où la cellule grandit et fonctionne normalement. En phase **S** (synthèse), elle réplique tout son ADN. En phase **G2**, elle vérifie la copie et prépare la division. La phase **M** est la mitose elle-même, suivie de la **cytocinèse**, qui partage le cytoplasme."),
+                .bars(title: "Durée des phases pour une cellule humaine en culture", unit: "h", bars: [
+                    DemoBar(label: "G1", value: 11),
+                    DemoBar(label: "S", value: 8),
+                    DemoBar(label: "G2", value: 4),
+                    DemoBar(label: "M", value: 1),
+                ]),
+                .paragraph("Sur un cycle de 24 heures environ, la mitose n'occupe qu'une heure. C'est pourquoi, sur une lame de microscope, l'immense majorité des cellules sont en interphase : la proportion de cellules observées dans chaque phase ==reflète la durée de cette phase==. Beaucoup de cellules, comme les neurones, quittent même le cycle pour une phase de repos, dite G0, et ne se divisent plus."),
+                .heading("Chromosomes et chromatides"),
+                .callout(
+                    title: "Chromosome et chromatide",
+                    text: "Un **chromosome** est une molécule d'ADN associée à des protéines. Après la phase S, chaque chromosome est formé de **deux chromatides sœurs**, deux copies identiques reliées par un **centromère**. Il reste **un seul** chromosome, mais à deux chromatides.",
+                    tone: .definition
+                ),
+                .paragraph("La quantité d'ADN d'une cellule suit donc le cycle. Appelons $Q$ la quantité d'ADN d'une cellule en G1. Pendant la phase S, elle double progressivement pour atteindre $2Q$. À la fin de la mitose, chaque cellule fille repart avec $Q$. La courbe de la quantité d'ADN en fonction du temps a la forme d'un escalier qui monte en S et redescend d'un coup à la division."),
+                .formula("Q \\;\\to\\; 2Q \\;\\to\\; Q", caption: "La quantité d'ADN par cellule : doublée pendant la phase S, partagée à la mitose"),
+                .paragraph("Le nombre de chromosomes, lui, ne change pas pendant la phase S : une cellule humaine a 46 chromosomes en G1, et toujours 46 en G2 — mais à deux chromatides chacun. On le note ==2n = 46== : $n$ est le nombre de chromosomes d'un jeu, 23 chez l'humain, et les cellules du corps en ont deux jeux, l'un maternel, l'autre paternel."),
+                .callout(
+                    title: "L'erreur classique",
+                    text: "Croire que la réplication double le nombre de chromosomes. Elle double **la quantité d'ADN**, pas le nombre de chromosomes : 46 chromosomes à une chromatide deviennent 46 chromosomes à deux chromatides. Le nombre ne double qu'un instant, en anaphase, quand les chromatides se séparent.",
+                    tone: .warning
+                ),
+                .list([
+                    "G1 : croissance, chromosomes à une chromatide, quantité d'ADN Q",
+                    "S : réplication, la quantité d'ADN passe de Q à 2Q",
+                    "G2 : chromosomes à deux chromatides, vérification de la copie",
+                    "M : mitose, chaque cellule fille reçoit Q",
+                ]),
+                .paragraph("Le passage d'une phase à l'autre n'est pas automatique : il est contrôlé par des **points de contrôle**, où la cellule vérifie que tout est en ordre avant de continuer — que l'ADN est intact avant la phase S, qu'il est entièrement copié avant la mitose. Leur découverte a valu le prix Nobel 2001 à Hartwell, Hunt et Nurse, et c'est leur défaillance qui ouvre la porte au cancer."),
+            ]),
+            DemoChapter(title: "Les phases de la mitose", blocks: [
+                .paragraph("La mitose est la division d'une cellule en ==deux cellules filles génétiquement identiques== à la cellule mère. Son enjeu est simple à énoncer et redoutable à réaliser : répartir exactement une copie de chacun des 46 chromosomes dans chacune des deux cellules, sans en perdre ni en doubler aucun."),
+                .figure(.flow(title: "Les étapes de la mitose", steps: ["Prophase : les chromosomes se condensent", "Métaphase : ils s'alignent à l'équateur", "Anaphase : les chromatides sœurs se séparent", "Télophase : deux noyaux se reforment", "Cytocinèse : deux cellules filles"])),
+                .paragraph("Chaque phase a ses marqueurs visibles au microscope, et c'est ce qu'on vous demandera de reconnaître sur une photographie. Le tableau les rassemble ; la métaphase est la plus facile à identifier, avec ses chromosomes alignés comme une rangée de soldats au milieu de la cellule."),
+                .table(title: "Ce qu'on voit à chaque phase", headers: ["Phase", "Ce qui se passe"], rows: [
+                    ["Prophase", "Les chromosomes se condensent et deviennent visibles ; l'enveloppe du noyau disparaît ; le fuseau de division se forme"],
+                    ["Métaphase", "Les chromosomes, à deux chromatides, s'alignent sur la plaque équatoriale, accrochés au fuseau par leur centromère"],
+                    ["Anaphase", "Les chromatides sœurs se séparent et migrent vers les pôles opposés : chaque pôle reçoit 46 chromosomes à une chromatide"],
+                    ["Télophase", "Les chromosomes se décondensent ; une enveloppe nucléaire se reforme autour de chaque lot"],
+                ]),
+                .paragraph("Le **fuseau de division** est la machine qui rend tout cela possible : un réseau de fibres de protéines, les microtubules, tendues entre les deux pôles de la cellule. Elles s'accrochent aux centromères, alignent les chromosomes, puis raccourcissent pour tirer les chromatides vers les pôles. Un point de contrôle bloque l'anaphase tant qu'un seul chromosome n'est pas correctement accroché."),
+                .callout(
+                    title: "Le bilan de la mitose",
+                    text: "Une cellule mère à 2n = 46 chromosomes donne **deux cellules filles à 2n = 46 chromosomes**, portant exactement la même information génétique. La mitose est une **reproduction conforme** : c'est elle qui permet la croissance, le renouvellement des tissus et la cicatrisation.",
+                    tone: .insight
+                ),
+                .paragraph("La cytocinèse diffère selon le type de cellule. La cellule animale s'étrangle en son milieu, comme un ballon qu'on pince, grâce à un anneau de protéines contractiles. La cellule végétale, prisonnière de sa paroi rigide, ne peut pas s'étrangler : elle construit une nouvelle paroi au milieu, de l'intérieur vers l'extérieur."),
+                .figure(.split(
+                    title: "Deux façons de se diviser",
+                    left: DemoColumn(title: "Cellule animale", items: ["Centrosomes aux pôles", "Anneau contractile", "Étranglement du cytoplasme"]),
+                    right: DemoColumn(title: "Cellule végétale", items: ["Pas de centrosome", "Paroi rigide", "Nouvelle paroi construite au centre"])
+                )),
+                .paragraph("Chaque division double le nombre de cellules. Partant d'une cellule, on en a 2 après une division, 4 après deux, 8 après trois : la croissance est **exponentielle**. Après $k$ divisions, une population de $N_0$ cellules en compte $N_0 \\times 2^k$."),
+                .formula("N = N_0 \\times 2^k", caption: "Le nombre de cellules après k divisions successives, si toutes se divisent"),
+                .paragraph("Dix divisions donnent déjà $2^{10} = 1\\,024$ cellules ; quarante-cinq divisions, environ 35 000 milliards — l'ordre de grandeur d'un corps humain. En réalité, les cellules d'un organisme ne se divisent pas toutes, et beaucoup meurent : la croissance d'un tissu sain est un ==équilibre entre divisions et morts cellulaires==, que l'organisme règle en permanence."),
+            ]),
+            DemoChapter(title: "Méiose, mitose et cancer", blocks: [
+                .paragraph("La mitose fabrique des copies conformes. Mais pour la reproduction sexuée, il faut autre chose : des cellules qui n'ont qu'un seul jeu de chromosomes, pour qu'à la fécondation, l'ovule et le spermatozoïde reconstituent une cellule à deux jeux. C'est le rôle de la **méiose**, qui a lieu uniquement dans les gonades."),
+                .table(title: "Mitose et méiose face à face", headers: ["", "Mitose", "Méiose"], rows: [
+                    ["Où", "Presque toutes les cellules du corps", "Les cellules reproductrices des gonades"],
+                    ["Divisions", "Une", "Deux successives"],
+                    ["Cellules obtenues", "2", "4"],
+                    ["Chromosomes", "2n = 46, comme la mère", "n = 23, moitié moins"],
+                    ["Information génétique", "Identique à la cellule mère", "Différente d'une cellule à l'autre"],
+                    ["Rôle", "Croissance, renouvellement", "Fabrication des gamètes"],
+                ]),
+                .paragraph("La première division de méiose sépare les chromosomes **homologues** — le chromosome d'origine maternelle et celui d'origine paternelle de chaque paire — ; elle divise par deux le nombre de chromosomes. La seconde sépare les chromatides sœurs, comme une mitose. Au passage, la méiose ==brasse l'information génétique== de deux façons."),
+                .formula("2^{23} \\approx 8{,}4 \\times 10^{6}", caption: "Le nombre de combinaisons de chromosomes possibles dans un gamète humain, par le seul brassage interchromosomique"),
+                .paragraph("Le **brassage interchromosomique** vient de ce que chaque paire se sépare indépendamment des autres : pour chacune des 23 paires, le gamète reçoit l'homologue maternel ou le paternel, d'où $2^{23}$, plus de huit millions de combinaisons. Le **brassage intrachromosomique**, par des échanges de morceaux entre homologues appelés *crossing-over*, multiplie encore ce nombre. Deux frères et sœurs, hors vrais jumeaux, ne reçoivent jamais la même combinaison."),
+                .heading("Quand la division échappe au contrôle"),
+                .paragraph("Dans un organisme sain, chaque cellule ne se divise que lorsqu'elle en reçoit le signal, et s'arrête lorsqu'on le lui demande. Deux familles de gènes règlent ce contrôle. Les **proto-oncogènes** fonctionnent comme un accélérateur : ils poussent la cellule à se diviser. Les **gènes suppresseurs de tumeurs** fonctionnent comme un frein : ils arrêtent le cycle en cas de problème."),
+                .callout(
+                    title: "Cancer",
+                    text: "Une maladie due à la **prolifération incontrôlée** de cellules qui ont accumulé des mutations : un accélérateur bloqué (un proto-oncogène devenu **oncogène**) et des freins cassés (des gènes suppresseurs inactivés). Les cellules forment une tumeur, puis peuvent envahir les tissus voisins et essaimer à distance : ce sont les **métastases**.",
+                    tone: .definition
+                ),
+                .paragraph("Le plus célèbre des freins est la protéine **p53**, surnommée « la gardienne du génome » : quand l'ADN est endommagé, elle bloque le cycle le temps de la réparation, ou déclenche le suicide de la cellule si les dégâts sont trop graves. Le gène qui la code est muté dans environ la moitié des cancers humains. Il faut en général ==plusieurs mutations successives==, accumulées sur des années, pour qu'une cellule devienne cancéreuse — ce qui explique que le risque augmente avec l'âge."),
+                .keyFigure(value: "≈ 30", label: "doublements pour qu'une seule cellule devienne une tumeur d'un centimètre, soit environ un milliard de cellules (2³⁰ ≈ 1,07 × 10⁹)"),
+                .paragraph("Une tumeur n'est donc détectable qu'après une longue histoire silencieuse : trente doublements pour atteindre un centimètre, alors que dix de plus suffiraient à la multiplier par mille. C'est tout l'enjeu du **dépistage** : repérer la tumeur le plus tôt possible sur cette courbe exponentielle, quand elle est encore petite et localisée."),
+                .callout(
+                    title: "Pourquoi la chimiothérapie fait perdre les cheveux",
+                    text: "La plupart des chimiothérapies visent les cellules **qui se divisent**, en bloquant la réplication de l'ADN ou le fuseau de division. Elles touchent donc aussi les cellules saines qui se divisent vite : racines des cheveux, muqueuse de l'intestin, moelle osseuse. Les effets secondaires sont la conséquence directe de la cible.",
+                    tone: .warning
+                ),
+                .list([
+                    "Tabac : la première cause évitable de cancer en France",
+                    "Alcool, surpoids, sédentarité : des facteurs de risque majeurs",
+                    "Rayons UV : les coups de soleil, surtout dans l'enfance, favorisent les mélanomes",
+                    "Certains virus : le papillomavirus, contre lequel il existe un vaccin",
+                ]),
+                .paragraph("Tous ces facteurs agissent de la même façon : ils augmentent le nombre de mutations dans les cellules qui se divisent. Comprendre la mitose, c'est donc comprendre à la fois ==comment le corps se construit et se répare==, et comment, parfois, cette même machine se dérègle."),
+            ]),
+        ],
+        cards: [
+            DemoCard(
+                kind: .basic,
+                front: "Quelles sont les phases du cycle cellulaire ?",
+                back: "L'interphase, formée de G1 (croissance), S (réplication de l'ADN) et G2 (préparation), puis la phase M : la mitose, suivie de la cytocinèse.",
+                figure: .cycle(title: "Le cycle cellulaire", nodes: ["G1", "S", "G2", "M"]),
+                chapter: 1
+            ),
+            DemoCard(
+                kind: .choice,
+                front: "Pendant quelle phase de la mitose les chromatides sœurs se séparent-elles ?",
+                back: "L'anaphase : les chromatides sœurs migrent vers les pôles opposés, et chaque pôle reçoit un chromosome à une chromatide de chaque sorte.",
+                choices: ["Prophase", "Métaphase", "Anaphase", "Télophase"],
+                answerIndex: 2,
+                chapter: 2
+            ),
+            DemoCard(
+                kind: .cloze,
+                front: "L'ADN d'une cellule est répliqué pendant la phase … de l'interphase.",
+                back: "S",
+                chapter: 1
+            ),
+            DemoCard(kind: .basic, front: "Quelle est la différence entre un procaryote et un eucaryote ?", back: "Un procaryote (une bactérie) n'a pas de noyau : son ADN est dans le cytoplasme. Un eucaryote a un noyau qui enferme son ADN, et des organites.", chapter: 0),
+            DemoCard(kind: .choice, front: "Quel organite produit l'essentiel de l'ATP de la cellule ?", back: "La mitochondrie, siège de la respiration cellulaire.", choices: ["Le noyau", "La mitochondrie", "Le ribosome", "L'appareil de Golgi"], answerIndex: 1, chapter: 0),
+            DemoCard(kind: .cloze, front: "Après la phase S, chaque chromosome est formé de deux … sœurs reliées par un centromère.", back: "chromatides", chapter: 1),
+            DemoCard(kind: .basic, front: "Que devient le nombre de chromosomes et la quantité d'ADN au cours du cycle cellulaire ?", back: "La quantité d'ADN double en phase S (de Q à 2Q) et revient à Q à la division. Le nombre de chromosomes reste 46 : ils passent d'une à deux chromatides.", hint: "Distinguez la quantité d'ADN et le nombre de chromosomes.", chapter: 1),
+            DemoCard(kind: .choice, front: "Combien de cellules, et à combien de chromosomes, la méiose produit-elle à partir d'une cellule humaine ?", back: "Quatre cellules à n = 23 chromosomes, génétiquement différentes les unes des autres.", choices: ["2 cellules à 46 chromosomes", "2 cellules à 23 chromosomes", "4 cellules à 23 chromosomes", "4 cellules à 46 chromosomes"], answerIndex: 2, chapter: 3),
+            DemoCard(kind: .cloze, front: "Pendant la …, les chromosomes s'alignent sur la plaque équatoriale.", back: "métaphase", chapter: 2),
+            DemoCard(kind: .basic, front: "Qu'est-ce qu'un cancer, à l'échelle de la cellule ?", back: "La prolifération incontrôlée de cellules qui ont accumulé des mutations : des proto-oncogènes devenus oncogènes (accélérateur bloqué) et des gènes suppresseurs de tumeurs inactivés (freins cassés).", chapter: 3),
+            DemoCard(kind: .choice, front: "Combien de combinaisons de chromosomes un gamète humain peut-il recevoir par le seul brassage interchromosomique ?", back: "$2^{23}$, soit environ 8,4 millions : chacune des 23 paires se sépare indépendamment des autres.", choices: ["23", "46", "$2^{23}$, environ 8,4 millions", "$23^2$, soit 529"], answerIndex: 2, chapter: 3),
+            DemoCard(kind: .cloze, front: "La mitose produit deux cellules filles génétiquement … à la cellule mère.", back: "identiques", chapter: 2),
+        ]
+    )
 }
 #endif
