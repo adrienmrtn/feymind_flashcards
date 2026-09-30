@@ -24,9 +24,6 @@ struct SocialProofStepView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @Environment(\.requestReview) private var requestReview
 
-    /// Le temps de laisser la page se poser et les avis commencer à défiler.
-    private static let reviewDelay = 1.8
-
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
@@ -67,11 +64,11 @@ struct SocialProofStepView: View {
         .onboardingChromeInset()
         .background(OnboardingPalette.white.ignoresSafeArea())
         .environment(\.onboardingSurface, .canvas)
+        // **Tout de suite, à l'arrivée sur la page** : la demande se pose sur « on a aidé
+        // 45 000 élèves », pas une seconde après, quand l'œil est déjà passé aux avis.
         .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Self.reviewDelay) {
-                guard model.step == .socialProof else { return }
-                requestReview()
-            }
+            guard model.step == .socialProof else { return }
+            requestReview()
         }
     }
 

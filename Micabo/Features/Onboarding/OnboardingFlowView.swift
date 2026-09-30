@@ -219,6 +219,8 @@ struct OnboardingFlowView: View {
         // un cours est dans Pro : quelqu'un qui n'a pas pris l'abonnement y resterait
         // enfermé.
         OnboardingPreferences.pendingFirstImport = false
+        // La note se redemande une fois, à la première arrivée dans l'app (`RootView`).
+        UserDefaults.standard.set(true, forKey: InAppReviewPrompt.pendingKey)
         onFinish()
     }
 }
