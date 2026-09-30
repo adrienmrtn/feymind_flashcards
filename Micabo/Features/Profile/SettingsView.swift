@@ -41,6 +41,10 @@ struct SettingsView: View {
     @Environment(ProAccess.self) private var pro: ProAccess?
     @State private var paywall: PaywallTrigger?
     @State private var discountOffer: DiscountPresentation?
+    #if DEBUG
+    @State private var debugCourseLanguage = DebugCourseCatalog.language
+    @State private var debugMock: MockSessionRecord?
+    #endif
     /// Relues pour que la rangée de l'offre suive son décompte sans qu'on rouvre l'écran.
     @AppStorage(DiscountOffer.Key.startedAt) private var discountStartedAt: Double = 0
 
@@ -62,6 +66,7 @@ struct SettingsView: View {
                 languageSection
                 reviewSection
                 #if DEBUG
+                debugCoursesSection
                 intelligenceSection
                 connectionSection
                 #endif
@@ -646,6 +651,66 @@ struct SettingsView: View {
             Haptics.selection()
         }
     }
+
+    #if DEBUG
+    /// **Les cours de debug** : leur langue, la copie corrigée, et de quoi les retirer. Pas
+    /// traduit : ces lignes n'existent que dans les constructions de développement.
+    private var debugCoursesSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            MicaboSectionCaption(text: "Cours de debug")
+
+            VStack(spacing: 0) {
+                Menu {
+                    Picker("Langue des cours de debug", selection: $debugCourseLanguage) {
+                        ForEach(UiLocale.allCases) { locale in
+                            Text("\(locale.flag)  \(locale.nativeName)").tag(locale)
+                        }
+                    }
+                } label: {
+                    MicaboRow(
+                        tile: MicaboTile(glyph: .emoji("🧪"), background: MicaboColor.accentSoft),
+                        title: "Langue des cours de debug",
+                        subtitle: "\(debugCourseLanguage.flag)  \(debugCourseLanguage.nativeName) · réinstalle les 6 cours et l'activité",
+                        accessory: .symbol("chevron.up.chevron.down")
+                    )
+                }
+
+                MicaboHairline()
+
+                MicaboRow(
+                    tile: MicaboTile(glyph: .emoji("📝"), background: MicaboColor.tilePastels[1]),
+                    title: "Voir un examen blanc corrigé",
+                    subtitle: "Une copie notée, tirée des cours de debug",
+                    accessory: .chevron,
+                    action: { debugMock = DebugMock.gradedSession(in: modelContext) }
+                )
+
+                MicaboHairline()
+
+                MicaboRow(
+                    tile: MicaboTile(glyph: .emoji("🧹"), background: MicaboColor.tilePastels[3]),
+                    title: "Retirer les cours de debug",
+                    subtitle: "Cours, révisions, épreuves et amis simulés",
+                    accessory: .none,
+                    titleColor: MicaboColor.negative,
+                    action: {
+                        DebugCourseCatalog.removeAll(in: modelContext)
+                        social.debugClear()
+                        Haptics.success()
+                    }
+                )
+            }
+            .micaboGroup()
+        }
+        .onChange(of: debugCourseLanguage) { _, locale in
+            DebugCourseCatalog.install(locale: locale, in: modelContext, social: social)
+            Haptics.success()
+        }
+        .fullScreenCover(item: $debugMock) { session in
+            MockReportView(session: session, examName: "Examen blanc", onDone: { debugMock = nil })
+        }
+    }
+    #endif
 
     private var intelligenceSection: some View {
         VStack(alignment: .leading, spacing: 8) {

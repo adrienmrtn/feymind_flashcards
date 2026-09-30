@@ -194,7 +194,7 @@ final class CloudSync {
 
         let courses = try fetchChangedCourses(in: context, since: since)
             .filter {
-                !CloudTombstones.contains(CloudTable.courses, id: $0.id)
+                !CloudTombstones.contains(CloudTable.courses, id: $0.id) && !Self.isLocalOnly($0)
             }
         try await database.upsert(courses.map { record(for: $0, userID: userID) }, into: CloudTable.courses)
 
@@ -204,7 +204,7 @@ final class CloudSync {
         // arriver plus tard ferait monter des cartes dont le chapitre n'existe pas encore,
         // qui se retrouveraient non classées côté serveur jusqu'à la synchro suivante.
         let chapters = try fetchChangedChapters(in: context, since: since)
-            .filter { !CloudTombstones.contains(CloudTable.chapters, id: $0.id) }
+            .filter { !CloudTombstones.contains(CloudTable.chapters, id: $0.id) && !Self.isLocalOnly($0.course) }
         try await database.upsert(
             chapters.compactMap { record(for: $0, userID: userID) },
             into: CloudTable.chapters
@@ -227,7 +227,8 @@ final class CloudSync {
             logs += retriedCards.flatMap { $0.logs ?? [] }.filter { !changedLogs.contains($0.id) }
         }
 
-        cards = cards.filter { !CloudTombstones.contains(CloudTable.flashcards, id: $0.id) }
+        cards = cards.filter { !CloudTombstones.contains(CloudTable.flashcards, id: $0.id) && !Self.isLocalOnly($0.course) }
+        logs = logs.filter { !Self.isLocalOnly($0.card?.course) }
         let refused = try await pushCards(cards, userID: userID)
 
         // L'historique est en ajout seul. Renvoyer les milliers d'anciennes lignes à chaque
@@ -244,13 +245,35 @@ final class CloudSync {
             userID: userID
         )
 
+        let localOnly = Self.localOnlyCourseIDs(in: context)
         let exams = try fetchChangedExams(in: context, since: since)
             .filter {
                 !CloudTombstones.contains(CloudTable.exams, id: $0.id)
+                    && !$0.courseIDs.contains(where: localOnly.contains)
             }
         try await database.upsert(exams.map { record(for: $0, userID: userID) }, into: CloudTable.exams)
 
         try await pushOffDays(context: context, userID: userID)
+    }
+
+    // MARK: - Ce qui ne monte pas
+
+    /// **Les cours de debug restent sur le téléphone**, et tout ce qui s'y rattache avec eux :
+    /// ils rempliraient un vrai compte de faux cours. Toujours faux hors debug.
+    private static func isLocalOnly(_ course: Course?) -> Bool {
+        #if DEBUG
+        DebugCourseCatalog.isDebug(course)
+        #else
+        false
+        #endif
+    }
+
+    private static func localOnlyCourseIDs(in context: ModelContext) -> Set<UUID> {
+        #if DEBUG
+        DebugCourseCatalog.courseIDs(in: context)
+        #else
+        []
+        #endif
     }
 
     private struct IDRow: Decodable {

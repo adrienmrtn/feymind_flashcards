@@ -169,7 +169,12 @@ struct ChapterSheetView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 9)
 
-            if blocks.isEmpty, lockedTail.isEmpty {
+            if let demo = debugDemoChapter {
+                // Un cours de debug se lit avec le rendu riche de la démonstration : sa fiche
+                // enregistrée n'en est que la version texte.
+                DemoSheetView(blocks: demo.blocks, tint: tint)
+                    .padding(.top, 14)
+            } else if blocks.isEmpty, lockedTail.isEmpty {
                 Text(i18n.t("ios.deck.emptyChapter"))
                     .font(MicaboFont.ui(14, weight: .regular))
                     .foregroundStyle(MicaboColor.inkSecondary)
@@ -187,13 +192,22 @@ struct ChapterSheetView: View {
                 .padding(.top, 14)
             }
 
-            if !lockedTail.isEmpty {
+            if debugDemoChapter == nil, !lockedTail.isEmpty {
                 LockedSheetTail(blocks: lockedTail, tint: tint) {
                     paywall = .lockedSheet
                 }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Le chapitre riche d'un cours de debug ; toujours `nil` hors debug.
+    private var debugDemoChapter: DemoChapter? {
+        #if DEBUG
+        DebugCourseCatalog.demoChapter(for: chapter)
+        #else
+        nil
+        #endif
     }
 
     /// Le rang, le nombre de cartes, le temps de lecture. Le rang porte le violet parce que
