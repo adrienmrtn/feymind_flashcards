@@ -219,13 +219,21 @@ struct OnboardingHoldButton: View {
         .onDisappear { timer?.cancel() }
     }
 
+    /// **Le violet qui avance se sent** : un coup à chaque quart du chemin, puis le coup net
+    /// de la fin. Lâcher avant annule les coups qui restaient avec le reste.
     private func begin() {
         isPressing = true
         Haptics.light()
         withAnimation(.linear(duration: duration)) { progress = 1 }
         timer?.cancel()
         timer = Task { @MainActor in
-            try? await Task.sleep(for: .seconds(duration))
+            let quarter = duration / 4
+            for _ in 0..<3 {
+                try? await Task.sleep(for: .seconds(quarter))
+                guard !Task.isCancelled else { return }
+                Haptics.tick()
+            }
+            try? await Task.sleep(for: .seconds(quarter))
             guard !Task.isCancelled else { return }
             complete()
         }

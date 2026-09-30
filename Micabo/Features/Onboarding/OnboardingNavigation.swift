@@ -77,9 +77,11 @@ extension OnboardingMotion {
 /// **La pilule de retour et la jauge, sur une même ligne, fixes au-dessus des pages.**
 ///
 /// Elle ne fait pas partie de ce qui glisse : les pages passent dessous, la barre reste, et
-/// la jauge avance d'un cran pendant que la page arrive. Sur les écrans où l'on ne revient
-/// pas, la pilule s'efface mais garde sa place, pour que la jauge ne saute jamais d'un écran
-/// à l'autre.
+/// la jauge avance d'un cran pendant que la page arrive. **Sans retour, la jauge prend toute
+/// la largeur** : la pilule n'existe que sur les écrans où l'on revient, et quand elle
+/// arrive, au pays, la jauge se resserre d'un mouvement pour lui faire place. Une pilule
+/// invisible qui garderait sa place laisserait la jauge décalée sur les premiers écrans, où
+/// il n'y a rien à côté d'elle.
 struct OnboardingTopBar: View {
     /// La hauteur que les pages lui laissent, sous la zone sûre.
     static let height: CGFloat = 56
@@ -93,20 +95,19 @@ struct OnboardingTopBar: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            Button(action: onBack) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(OnboardingPalette.ink)
-                    .frame(width: 64, height: 40)
-                    .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            if showsBack {
+                Button(action: onBack) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(OnboardingPalette.ink)
+                        .frame(width: 64, height: 40)
+                        .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                }
+                .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
+                .accessibilityLabel(i18n.t("app.common.back"))
+                .transition(.opacity.combined(with: .scale(scale: 0.86)))
             }
-            .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
-            .opacity(showsBack ? 1 : 0)
-            .disabled(!showsBack)
-            .animation(OnboardingMotion.shift, value: showsBack)
-            .accessibilityLabel(i18n.t("app.common.back"))
-            .accessibilityHidden(!showsBack)
 
             MicaboProgressBar(
                 progress: progress,
@@ -116,6 +117,7 @@ struct OnboardingTopBar: View {
             .frame(height: 4)
             .animation(OnboardingMotion.slide, value: progress)
         }
+        .animation(OnboardingMotion.shift, value: showsBack)
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, MicaboSpacing.xs)
         .frame(height: Self.height, alignment: .top)
@@ -213,5 +215,70 @@ extension View {
     /// composés à la main l'appellent en tête de leur pile.
     func onboardingChromeInset(_ shows: Bool = true) -> some View {
         padding(.top, shows ? OnboardingTopBar.height : 0)
+    }
+
+    /// **Le clavier, sans que la page ne change de forme.** Voir `OnboardingKeyboardLift`.
+    func onboardingKeyboardLift() -> some View {
+        modifier(OnboardingKeyboardLift())
+    }
+}
+
+// MARK: - Le clavier
+
+/// **La page lève son pied au-dessus du clavier, elle-même, et ne le rebaisse pas en
+/// partant.**
+///
+/// La pile des pages ignore le clavier (`OnboardingFlowView`) : sans ça, chaque page était
+/// redimensionnée par le système à l'arrivée et au départ du clavier, et la page du prénom
+/// **changeait de forme au moment de l'appui** — le clavier se rangeait, son pied
+/// redescendait — avant que la page suivante ne glisse dessus. Ici, c'est la page qui
+/// écoute le clavier et se rembourre du bas de sa hauteur, avec son animation ; et dès
+/// qu'elle n'est plus l'étape du modèle, ou qu'une page glisse, elle **se fige** : elle part
+/// telle qu'elle était, le clavier descend sous la page qui arrive.
+///
+/// Le rembourrage est la part du clavier qui dépasse de la zone sûre du bas : la page
+/// s'arrête déjà au-dessus de l'indicateur d'accueil.
+struct OnboardingKeyboardLift: ViewModifier {
+    @Environment(OnboardingModel.self) private var model: OnboardingModel?
+    @Environment(\.onboardingStep) private var step: OnboardingStep?
+
+    @State private var lift: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        content
+            .padding(.bottom, lift)
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { note in
+                guard isLive else { return }
+                move(to: Self.lift(for: note), with: note)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { note in
+                guard isLive else { return }
+                move(to: 0, with: note)
+            }
+    }
+
+    /// Vrai tant que la page est celle du modèle et qu'aucune page ne glisse. Le modèle est
+    /// lu au moment de l'avis, pas à la construction de la vue : l'étape change avant que
+    /// le clavier ne bouge, et c'est ce qui fige la page qui part.
+    private var isLive: Bool {
+        guard let model else { return false }
+        if model.transitionLock { return false }
+        if let step, step != model.step { return false }
+        return true
+    }
+
+    private func move(to target: CGFloat, with note: Notification) {
+        guard target != lift else { return }
+        let duration = (note.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double) ?? 0.25
+        withAnimation(.easeOut(duration: max(0.15, duration))) { lift = target }
+    }
+
+    /// Ce que le clavier couvre de la page : sa hauteur sur l'écran, moins la zone sûre du
+    /// bas, que la page laisse déjà libre.
+    private static func lift(for note: Notification) -> CGFloat {
+        guard let end = (note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue,
+              let window = MicaboScreen.keyWindow else { return 0 }
+        let covered = max(0, window.bounds.maxY - end.minY)
+        return max(0, covered - window.safeAreaInsets.bottom)
     }
 }

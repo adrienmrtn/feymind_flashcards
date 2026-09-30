@@ -366,13 +366,17 @@ struct MicaboBannerButton<Label: View>: View {
 /// Il ne change pas pendant la vie de l'app : c'est une propriété de l'appareil, pas de la
 /// mise en page.
 enum MicaboScreen {
-    static var safeTop: CGFloat {
-        let window = UIApplication.shared.connectedScenes
+    /// La fenêtre principale, quand la scène est attachée.
+    static var keyWindow: UIWindow? {
+        UIApplication.shared.connectedScenes
             .compactMap { $0 as? UIWindowScene }
             .flatMap(\.windows)
             .first { $0.isKeyWindow }
+    }
+
+    static var safeTop: CGFloat {
         // Quarante-sept : le creux d'un iPhone à encoche. Ce n'est qu'un dernier recours —
         // il n'y a pas de fenêtre avant que la scène ne soit attachée.
-        return window?.safeAreaInsets.top ?? 47
+        keyWindow?.safeAreaInsets.top ?? 47
     }
 }

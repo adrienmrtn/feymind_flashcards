@@ -134,10 +134,11 @@ du cours. Les deux enchaînent seuls : un coup net, le blob rapetisse, la page s
 la création d'un deck (`DeckMaterialsStepView`, telle quelle), puis `DeckBuilder` écrit la
 fiche, découpe le plan et prépare les cartes — c'est le premier cours de l'élève, offert. Non
 mène à quatre cours de démonstration (`OnboardingDemoCatalog`, en français et en anglais :
-la guerre froide, la photosynthèse, les dérivées, l'énergie), plus riches qu'une fiche
-réelle — schémas, tableaux, graphes, frises, encadrés, dessinés par `DemoSheetView` — et qui
-entrent dans la bibliothèque comme cours d'exemple (`sample`), convertis en texte. Un cours
-d'exemple ne consomme pas l'import offert.
+la guerre froide, la photosynthèse, les dérivées, l'énergie), **quatre chapitres chacun**,
+plus riches qu'une fiche réelle — schémas, tableaux, graphes, frises, encadrés, dessinés par
+`DemoSheetView`, et jamais deux objets qui se touchent : un paragraphe amène chacun et en
+tire quelque chose — et qui entrent dans la bibliothèque comme cours d'exemple (`sample`),
+convertis en texte. Un cours d'exemple ne consomme pas l'import offert.
 
 Le cours s'ouvre ensuite en entier (`CourseReviewStepView`) : le plan, les chapitres, sans
 cadenas Pro, sans actions de révision, avec le rond fléché qui flotte. À la sortie du

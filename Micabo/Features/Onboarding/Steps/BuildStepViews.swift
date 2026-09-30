@@ -27,6 +27,10 @@ struct BuildingStepView: View {
     @State private var elapsed = 0.0
     @State private var didFinish = false
     @State private var didAdvance = false
+    /// **Le compteur ne part qu'une fois la page posée.** Lancé à la construction de la
+    /// vue, il tournait déjà pendant le glissement d'arrivée : les chiffres roulaient sur
+    /// une page encore en mouvement, et ça se lisait comme un tremblement.
+    @State private var hasLanded = false
 
     private static let ticker = Timer.publish(every: 1.0 / 30.0, on: .main, in: .common).autoconnect()
 
@@ -67,11 +71,16 @@ struct BuildingStepView: View {
             isDone: didFinish
         )
         .environment(\.onboardingSurface, .canvas)
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + OnboardingMotion.slideDuration + 0.05) {
+                hasLanded = true
+            }
+        }
         .onReceive(Self.ticker) { _ in tick() }
     }
 
     private func tick() {
-        guard !didAdvance else { return }
+        guard hasLanded, !didAdvance else { return }
         guard elapsed < Self.duration else {
             finishIfNeeded()
             return

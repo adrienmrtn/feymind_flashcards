@@ -30,6 +30,11 @@ struct MikaLoadingView: View {
         Int((min(1, max(0, progress)) * 100).rounded())
     }
 
+    /// Les colonnes de points que l'avancement a remplies.
+    private var filledColumns: Int {
+        Int((min(1, max(0, progress)) * Double(Self.columns)).rounded(.down))
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
@@ -53,13 +58,7 @@ struct MikaLoadingView: View {
             Spacer(minLength: MicaboSpacing.lg)
                 .frame(maxHeight: MicaboSpacing.xxl)
 
-            Text("\(percent) %")
-                .font(MicaboFont.ui(40, weight: .bold))
-                .tracking(-1.2)
-                .foregroundStyle(OnboardingPalette.ink)
-                .monospacedDigit()
-                .contentTransition(.numericText())
-                .animation(.easeOut(duration: 0.2), value: percent)
+            percentLabel
 
             dots
                 .padding(.top, 18)
@@ -79,9 +78,43 @@ struct MikaLoadingView: View {
         .padding(.horizontal, MicaboSpacing.screen)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(OnboardingPalette.white.ignoresSafeArea())
+        // **Le travail se sent.** Un coup doux à chaque colonne qui s'allume — vingt-huit sur
+        // le chargement, à un rythme qui suit les ralentissements de la jauge — et un coup
+        // plus net à chaque étape franchie. C'est ce qui fait lire un travail qui avance
+        // plutôt qu'une animation qu'on regarde.
+        .onChange(of: filledColumns) { previous, next in
+            guard next > previous else { return }
+            Haptics.soft()
+        }
+        .onChange(of: stepLabel) { _, _ in
+            Haptics.light()
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title). \(stepLabel)")
         .accessibilityValue("\(percent) %")
+    }
+
+    // MARK: - Le pourcentage
+
+    /// **Le chiffre a une largeur fixe, celle de « 100 % », et s'y aligne à droite.** Un
+    /// texte centré qui passe de « 9 % » à « 10 % » puis à « 100 % » s'élargit et se
+    /// recentre à chaque chiffre gagné : ça tremblait à l'arrivée de la page, quand les
+    /// unités deviennent des dizaines, et à la fin, quand elles deviennent des centaines.
+    /// Ici, le signe ne bouge jamais, et les chiffres roulent sur place.
+    private var percentLabel: some View {
+        ZStack(alignment: .trailing) {
+            Text("100 %")
+                .hidden()
+
+            Text("\(percent) %")
+                .contentTransition(.numericText(value: Double(percent)))
+                .animation(.easeOut(duration: 0.2), value: percent)
+        }
+        .font(MicaboFont.ui(40, weight: .bold))
+        .tracking(-1.2)
+        .foregroundStyle(OnboardingPalette.ink)
+        .monospacedDigit()
+        .fixedSize()
     }
 
     // MARK: - La grille de points
@@ -89,7 +122,7 @@ struct MikaLoadingView: View {
     /// Quatre rangées de points. Ceux que l'avancement a dépassés sont en violet, la
     /// colonne qu'il vient d'atteindre s'allume en orange, le reste attend en gris.
     private var dots: some View {
-        let filled = Int((min(1, max(0, progress)) * Double(Self.columns)).rounded(.down))
+        let filled = filledColumns
 
         return VStack(spacing: 5) {
             ForEach(0..<Self.rows, id: \.self) { _ in

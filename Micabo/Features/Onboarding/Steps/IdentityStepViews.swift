@@ -31,7 +31,7 @@ struct NameStepView: View {
                     .autocorrectionDisabled()
                     .focused($isFocused)
                     .submitLabel(.done)
-                    .onSubmit { advance() }
+                    .onSubmit { advance(fromKeyboard: true) }
 
                 if !model.displayName.isEmpty {
                     Button {
@@ -55,17 +55,22 @@ struct NameStepView: View {
                 }
             }
         } footer: {
-            OnboardingArrowButton(
-                isEnabled: model.displayName.nilIfBlank != nil,
-                action: advance
-            )
+            OnboardingArrowButton(isEnabled: model.displayName.nilIfBlank != nil) {
+                advance()
+            }
         }
     }
 
-    private func advance() {
-        guard model.displayName.nilIfBlank != nil else { return }
-        isFocused = false
+    /// **L'étape d'abord, le clavier ensuite.** Le modèle change d'étape avant que le clavier
+    /// ne commence à se ranger : la page, qui n'est plus l'étape courante, se fige avec son
+    /// pied levé (`OnboardingKeyboardLift`) et part telle quelle sous la bienvenue, pendant
+    /// que le clavier descend dessous. Dans l'autre ordre, le pied redescendait à l'appui.
+    private func advance(fromKeyboard: Bool = false) {
+        guard model.displayName.nilIfBlank != nil, !model.transitionLock else { return }
+        // Le rond vibre de lui-même à l'enfoncement ; la touche « OK » du clavier, non.
+        if fromKeyboard { Haptics.medium() }
         model.advance()
+        isFocused = false
     }
 }
 
@@ -109,7 +114,6 @@ struct WelcomeStepView: View {
                         size: 22,
                         wordDelay: 0.14,
                         startDelay: 0.25,
-                        hapticsPerWord: false,
                         highlightsOnFinish: false,
                         onFinish: {
                             withAnimation(.easeOut(duration: 0.4)) { isReady = true }
