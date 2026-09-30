@@ -36,10 +36,12 @@ struct MicaboApp: App {
         _mocks = State(initialValue: MockExamService(auth: auth))
         _pro = State(initialValue: ProAccess(
             accessToken: { await auth.validAccessToken() },
-            userID: { auth.user?.id },
+            userID: { auth.billingUserID },
             email: { auth.user?.email }
         ))
-        SupabaseFunctions.accessToken = { await auth.validAccessToken() }
+        // Le compte, sinon le compte invité de qui a passé la connexion : les fonctions
+        // décomptent par utilisateur, et la clé publique n'y passe plus qu'en transition.
+        SupabaseFunctions.accessToken = { await auth.functionsAccessToken() }
         // Les statistiques partent avec le jeton du compte quand il y en a un, et sous la
         // clé publique sinon : le parcours d'accueil se mesure **avant** qu'il y ait
         // quelqu'un de connecté, et c'est justement la moitié qui intéresse.
@@ -87,7 +89,7 @@ struct MicaboApp: App {
                     await auth.restore()
                     // L'identité RevenueCat **avant** de lire le droit, et avant tout achat :
                     // `app_user_id` doit être l'`auth.users.id`, sinon le webhook refuse.
-                    await PurchasesBridge.identify(auth.user?.id)
+                    await PurchasesBridge.identify(auth.billingUserID, guestID: auth.guestUserID)
                     await pro.refresh()
                     pro.observePurchases()
                     // Les prix du pays, une fois par lancement : un paywall qui les
@@ -113,10 +115,20 @@ struct MicaboApp: App {
                 .onChange(of: auth.user?.id) { _, userID in
                     Analytics.account(changedTo: userID)
                     Task {
-                        await PurchasesBridge.identify(userID)
+                        await PurchasesBridge.identify(auth.billingUserID, guestID: auth.guestUserID)
                         await pro.refresh()
                         await sync.sync(context: container.mainContext)
                         await social.refresh()
+                    }
+                }
+                // Le compte invité vient de s'ouvrir (« Passer ») : RevenueCat passe sous son
+                // identifiant avant tout achat, sinon l'abonnement n'aurait pas de propriétaire
+                // côté serveur.
+                .onChange(of: auth.guestUserID) { _, _ in
+                    guard auth.user == nil else { return }
+                    Task {
+                        await PurchasesBridge.identify(auth.billingUserID, guestID: auth.guestUserID)
+                        await pro.refresh()
                     }
                 }
                 // Les liens de confirmation et de connexion reviennent sur le schéma de
@@ -124,7 +136,7 @@ struct MicaboApp: App {
                 .onOpenURL { url in
                     Task {
                         await auth.handle(callback: url)
-                        await PurchasesBridge.identify(auth.user?.id)
+                        await PurchasesBridge.identify(auth.billingUserID, guestID: auth.guestUserID)
                         await pro.refresh()
                         await sync.sync(context: container.mainContext)
                         await social.refresh()

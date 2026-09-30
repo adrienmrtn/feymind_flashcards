@@ -223,8 +223,33 @@ final class OnboardingModel {
         step = target
     }
 
+    /// **La languette du compte**, montée sur la page qui annonce la fiche. Apple, Google, ou
+    /// « Passer » : aucune des trois ne coûte une page au parcours. Qui passe garde ses cours
+    /// sur le téléphone, et se connecte plus tard depuis les réglages.
+    var isAccountSheetPresented = false
+    /// Vrai une fois la languette refermée, par une connexion ou par « Passer ». Le retour
+    /// n'y ramène pas : on ne redemande pas un compte à qui vient de répondre.
+    private(set) var didAnswerAccount = false
+    /// Vrai quand un compte est déjà ouvert — un lien de connexion ouvert plus tôt, par
+    /// exemple : la languette ne monte pas pour rien. Tenu à jour par la vue du parcours.
+    var hasAccount = false
+
+    /// La connexion a abouti, ou l'élève a passé : la languette se referme, et le parcours
+    /// reprend là où elle l'avait arrêté.
+    func finishAccountSheet() {
+        didAnswerAccount = true
+        isAccountSheetPresented = false
+        advance()
+    }
+
     func advance() {
         guard !transitionLock else { return }
+        // Le compte se demande en quittant l'annonce de la fiche, juste avant de déposer
+        // ses supports : c'est là qu'il protège quelque chose.
+        if step == .sheetIntro, !didAnswerAccount, !hasAccount {
+            isAccountSheetPresented = true
+            return
+        }
         persist()
         var next = step.next
         // Les écrans sans réponse possible se sautent plutôt que de s'afficher vides : un

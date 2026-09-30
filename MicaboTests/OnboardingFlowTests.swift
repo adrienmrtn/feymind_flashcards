@@ -9,7 +9,11 @@ final class OnboardingFlowTests: XCTestCase {
         let model = OnboardingModel()
         var guardCounter = 0
         while model.step != target, guardCounter < OnboardingStep.allCases.count * 2 {
-            model.advance()
+            if model.isAccountSheetPresented {
+                model.finishAccountSheet()
+            } else {
+                model.advance()
+            }
             guardCounter += 1
         }
         XCTAssertEqual(model.step, target, "Le parcours n'atteint pas \(target)")
@@ -147,15 +151,31 @@ final class OnboardingFlowTests: XCTestCase {
     // MARK: - Mika, le cours, les cartes, l'offre
 
     /// **Après le quiz, on rend** : Mika prépare, cinq écrans montrent, une phrase annonce
-    /// la fiche, et c'est seulement là qu'on demande un compte — juste avant de construire
-    /// un cours.
+    /// la fiche, et c'est seulement là qu'on demande un compte — dans une languette, sur
+    /// cette même page, juste avant de déposer ses supports.
     func testMikaShowsWhatMicaboDoesBeforeAskingForAnAccount() {
         let model = self.model(advancingTo: .building)
 
-        for expected in [OnboardingStep.featuresIntro, .featureSheets, .featurePlan, .featureCards, .featurePocket, .featureMika, .sheetIntro, .signIn] {
+        for expected in [OnboardingStep.featuresIntro, .featureSheets, .featurePlan, .featureCards, .featurePocket, .featureMika, .sheetIntro] {
             model.advance()
             XCTAssertEqual(model.step, expected)
         }
+
+        model.advance()
+        XCTAssertEqual(model.step, .sheetIntro, "Le compte ne change pas de page")
+        XCTAssertTrue(model.isAccountSheetPresented, "Le compte monte en languette")
+    }
+
+    /// Connexion ou « Passer », la languette se referme et le parcours reprend sur les cases
+    /// de dépôt. Le retour ne la rouvre pas.
+    func testTheAccountSheetLeadsToTheMaterials() {
+        let model = self.model(advancingTo: .sheetIntro)
+        model.advance()
+        XCTAssertTrue(model.isAccountSheetPresented)
+
+        model.finishAccountSheet()
+        XCTAssertFalse(model.isAccountSheetPresented)
+        XCTAssertEqual(model.step, .materials)
     }
 
     /// **La seule branche du parcours se prend sur les cases de dépôt**, qui suivent le
@@ -163,8 +183,9 @@ final class OnboardingFlowTests: XCTestCase {
     /// rien pour l'instant » mène au choix d'un cours de démonstration. Dans les deux cas,
     /// la construction puis le cours.
     func testMaterialsAndDemoCourseAreTheTwoBranches() {
-        let signedIn = self.model(advancingTo: .signIn)
+        let signedIn = self.model(advancingTo: .sheetIntro)
         signedIn.advance()
+        signedIn.finishAccountSheet()
         XCTAssertEqual(signedIn.step, .materials, "Les cases de dépôt, tout de suite après le compte")
 
         let withMaterials = self.model(advancingTo: .materials)

@@ -198,19 +198,29 @@ enum PurchasesBridge {
     }
 
     /// Attache — ou détache — l'identifiant Supabase. Appelé à chaque changement de compte.
-    static func identify(_ userID: UUID?) async {
+    ///
+    /// `guestID` est le compte invité de qui a passé la connexion. **Un abonnement pris sous
+    /// lui doit suivre l'élève quand il se connecte** : passer de l'invité au vrai compte
+    /// renvoie donc les achats de l'appareil à RevenueCat, qui les transfère au compte.
+    static func identify(_ userID: UUID?, guestID: UUID? = nil) async {
         #if canImport(RevenueCat)
         guard isConfigured else { return }
 
         if let userID {
             let wanted = userID.uuidString.lowercased()
-            guard Purchases.shared.appUserID != wanted else { return }
-            _ = try? await Purchases.shared.logIn(wanted)
+            let previous = Purchases.shared.appUserID
+            guard previous != wanted else { return }
+            guard let result = try? await Purchases.shared.logIn(wanted) else { return }
+            let leftGuest = guestID.map { previous == $0.uuidString.lowercased() } ?? false
+            if leftGuest, result.customerInfo.entitlements[ProEntitlement.id]?.isActive != true {
+                _ = try? await Purchases.shared.syncPurchases()
+            }
         } else if !Purchases.shared.isAnonymous {
             _ = try? await Purchases.shared.logOut()
         }
         #else
         _ = userID
+        _ = guestID
         #endif
     }
 

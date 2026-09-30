@@ -12,6 +12,7 @@ struct OnboardingFlowView: View {
     var onFinish: () -> Void
 
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(AuthController.self) private var auth
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var model = OnboardingModel()
     @State private var pager = OnboardingPager(current: .hookLogo)
@@ -55,6 +56,24 @@ struct OnboardingFlowView: View {
         .environment(\.onboardingSurface, surface)
         .environment(\.locale, i18n.locale.foundation)
         .preferredColorScheme(.light)
+        // **Le compte, en languette**, posée sur l'annonce de la fiche : le parcours ne
+        // change pas de page pour le demander. Balayée vers le bas, elle se referme sans
+        // répondre, et la flèche la rouvre.
+        .sheet(isPresented: Binding(
+            get: { model.isAccountSheetPresented },
+            set: { model.isAccountSheetPresented = $0 }
+        )) {
+            OnboardingAccountSheet { model.finishAccountSheet() }
+                .environment(\.locale, i18n.locale.foundation)
+                .presentationDetents([.height(460), .large])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(MicaboRadius.sheet)
+                .presentationBackground(OnboardingPalette.white)
+                .preferredColorScheme(.light)
+        }
+        .onChange(of: auth.isSignedIn, initial: true) { _, isSignedIn in
+            model.hasAccount = isSignedIn
+        }
         .onAppear {
             Haptics.prepare()
             Analytics.track(.onboardingStarted)
@@ -171,7 +190,6 @@ struct OnboardingFlowView: View {
         case .featurePocket: FeatureStepView(feature: .pocket)
         case .featureMika: FeatureStepView(feature: .mika)
         case .sheetIntro: MikaSpeaksStepView(text: i18n.t("ios.onb.sheetIntro"))
-        case .signIn: SignInStepView()
         case .materials: OnboardingMaterialsStepView()
         case .demoCourse: DemoCourseStepView()
         case .courseBuilding: CourseBuildingStepView()

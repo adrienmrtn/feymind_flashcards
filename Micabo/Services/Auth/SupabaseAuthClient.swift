@@ -40,6 +40,15 @@ struct SupabaseAuthClient {
         return try decodeSession(payload)
     }
 
+    /// **Ouvre un compte anonyme** : un vrai utilisateur Supabase, sans courriel ni
+    /// fournisseur. C'est ce qui porte le quota des fonctions et l'abonnement de qui a passé
+    /// la connexion. Demande « Allow anonymous sign-ins » dans le tableau de bord ; sans ce
+    /// réglage, GoTrue refuse et l'appelant retombe sur la clé publique.
+    func signInAnonymously() async throws -> AuthSession {
+        let payload = try await post("signup", body: ["data": [String: Any]()])
+        return try decodeSession(payload)
+    }
+
     /// Ouvre une session par mot de passe. Réservé au compte de relecture Apple :
     /// l'écran continue d'offrir « Recevoir un lien », et c'est ce chemin qui s'y
     /// substitue quand l'adresse est `review@apple.com`.

@@ -14,9 +14,14 @@ import Security
 /// iCloud, donc restaurer un vieux backup sur un autre téléphone ne connecte personne.
 enum AuthTokenStore {
     private static let service = "com.micabo.app.auth"
-    private static let account = "session"
+    /// La session du compte.
+    static let account = "session"
+    /// **La session invitée** : le compte anonyme ouvert quand l'élève passe la connexion.
+    /// Rangée à part pour qu'une connexion, une déconnexion ou une suppression du vrai
+    /// compte ne la touche jamais.
+    static let guestAccount = "guest"
 
-    static func load() -> AuthSession? {
+    static func load(account: String = AuthTokenStore.account) -> AuthSession? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -33,7 +38,7 @@ enum AuthTokenStore {
         return try? JSONDecoder().decode(AuthSession.self, from: data)
     }
 
-    static func save(_ session: AuthSession) {
+    static func save(_ session: AuthSession, account: String = AuthTokenStore.account) {
         guard let data = try? JSONEncoder().encode(session) else { return }
 
         let query: [String: Any] = [
@@ -55,7 +60,7 @@ enum AuthTokenStore {
         SecItemAdd(query.merging(attributes) { current, _ in current } as CFDictionary, nil)
     }
 
-    static func clear() {
+    static func clear(account: String = AuthTokenStore.account) {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,

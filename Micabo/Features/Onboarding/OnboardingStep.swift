@@ -16,7 +16,7 @@ import Foundation
 /// 2. **Le quiz** : pays, niveau, matières, inquiétudes, objectifs, une preuve, les deux
 ///    moyennes, le temps par jour, l'heure de révision, les rappels.
 /// 3. **Mika** : le profil se prépare, puis ce que Micabo sait faire, en cinq écrans.
-/// 4. **Le cours** : le compte, les cases de dépôt — ou, à qui n'a rien, un cours de
+/// 4. **Le cours** : le compte (une languette, qu'on peut passer), les cases de dépôt — ou, à qui n'a rien, un cours de
 ///    démonstration —, la construction, le cours fiché qu'on parcourt.
 /// 5. **Les cartes** : trois cartes, puis « bien joué ».
 /// 6. **L'offre** : la preuve sociale, l'essai, le rappel, le paywall.
@@ -67,8 +67,8 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// « Voyons ensemble à quoi ressemble une fiche générée par Micabo. »
     case sheetIntro
 
-    // Le compte, puis le cours.
-    case signIn
+    // Le cours. Le compte se propose juste avant, dans une languette qui monte sur
+    // `sheetIntro` (`OnboardingAccountSheet`) : ce n'est plus une page du parcours.
     /// Les cases de dépôt, et « je n'ai rien pour l'instant » à côté du rond : c'est la
     /// seule branche du parcours, et elle se prend sur l'écran même, sans question avant.
     case materials
