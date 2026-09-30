@@ -233,8 +233,8 @@ extension View {
 /// **changeait de forme au moment de l'appui** — le clavier se rangeait, son pied
 /// redescendait — avant que la page suivante ne glisse dessus. Ici, c'est la page qui
 /// écoute le clavier et se rembourre du bas de sa hauteur, avec son animation ; et dès
-/// qu'elle n'est plus l'étape du modèle, ou qu'une page glisse, elle **se fige** : elle part
-/// telle qu'elle était, le clavier descend sous la page qui arrive.
+/// qu'elle n'est plus l'étape du modèle, elle **se fige** : elle part telle qu'elle était,
+/// le clavier descend sous la page qui arrive.
 ///
 /// Le rembourrage est la part du clavier qui dépasse de la zone sûre du bas : la page
 /// s'arrête déjà au-dessus de l'indicateur d'accueil.
@@ -257,13 +257,23 @@ struct OnboardingKeyboardLift: ViewModifier {
             }
     }
 
-    /// Vrai tant que la page est celle du modèle et qu'aucune page ne glisse. Le modèle est
-    /// lu au moment de l'avis, pas à la construction de la vue : l'étape change avant que
-    /// le clavier ne bouge, et c'est ce qui fige la page qui part.
+    /// Vrai tant que la page est celle du modèle. Le modèle est lu au moment de l'avis, pas
+    /// à la construction de la vue : l'étape change avant que le clavier ne bouge, et c'est
+    /// ce qui fige la page qui part.
+    ///
+    /// **Le verrou du glissement n'entre pas en jeu.** Le prénom demande son clavier à la
+    /// fin du glissement, à quelques millisecondes près du moment où le verrou se lève :
+    /// un avis reçu pendant le verrou serait perdu, et rien ne le réémet — la page resterait
+    /// sous le clavier pour toute l'étape. L'étape suffit : la page qui part n'est plus
+    /// celle du modèle, et celle qui arrive ne reçoit qu'un « se range » sans effet.
+    ///
+    /// **Le clavier d'une feuille n'est pas celui de la page.** Les avis du clavier sont
+    /// ceux de toute l'app : quand une feuille posée par-dessus le parcours prend le
+    /// clavier — le lien ou le texte des supports —, la page dessous ne bouge pas.
     private var isLive: Bool {
         guard let model else { return false }
-        if model.transitionLock { return false }
         if let step, step != model.step { return false }
+        if MicaboScreen.keyWindow?.rootViewController?.presentedViewController != nil { return false }
         return true
     }
 
