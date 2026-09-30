@@ -6,23 +6,35 @@ import SwiftUI
 ///
 /// Il ne montre **qu'une offre et qu'un prix**, et c'est tout son intérêt : à l'instant où
 /// l'on sort du parcours, une grille de comparaison demande de choisir avant d'avoir décidé
-/// d'acheter. La phrase dit les trois choses qu'on veut savoir — c'est gratuit trois jours,
-/// ça coûtera tant par mois, c'est prélevé une fois par an — et « Voir toutes les offres »
-/// ouvre la grille à ceux qui la cherchent.
+/// d'acheter. La phrase dit les deux choses qu'on veut savoir — c'est gratuit trois jours,
+/// ça coûtera tant par mois —, la ligne grise du bas dit ce qui est prélevé d'un bloc, et
+/// « Voir toutes les offres » ouvre la grille à ceux qui la cherchent.
+///
+/// **La typographie est celle du parcours** : le titre en gras de trente-deux points, serré
+/// comme les autres titres, et le bouton noir. Le paywall en est la dernière page — et
+/// celui de « générer mon cours » est le même écran.
 struct PaywallOfferView: View {
     let plan: PaywallPlan
     /// Ce qui a ouvert l'écran, en une ligne. Absent à la sortie du parcours d'accueil : on
     /// n'y vient de nulle part, on y arrive.
     var headline: String?
     var isPurchasing: Bool
+    /// La dernière réponse de la boutique (`PaywallStorePrices.revision`). Elle ne sert qu'à
+    /// redessiner l'écran quand le prix du pays ou l'essai arrivent après son ouverture.
+    var storeRevision: Int = 0
     var onClose: () -> Void
     var onSeeAllPlans: () -> Void
     var onSubscribe: () -> Void
     var onRestore: () -> Void
 
-    /// **La croix n'arrive qu'après trois secondes.** Le temps de lire la phrase : une
-    /// sortie visible avant qu'on ait lu ce qu'on quitte se prend par réflexe.
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    /// **La croix n'arrive qu'après quatre secondes.** Le temps de lire la phrase : une
+    /// sortie visible avant qu'on ait lu ce qu'on quitte se prend par réflexe. La feuille,
+    /// elle, se balaie toujours vers le bas.
     @State private var showsClose = false
+
+    static let closeDelay: Duration = .seconds(4)
 
     var body: some View {
         VStack(spacing: 0) {
@@ -33,10 +45,10 @@ struct PaywallOfferView: View {
 
             Spacer(minLength: MicaboSpacing.lg)
 
-            VStack(spacing: 20) {
+            VStack(spacing: 22) {
                 if let headline {
                     Text(headline)
-                        .font(MicaboFont.ui(12.5, weight: .semibold))
+                        .font(MicaboFont.ui(13, weight: .semibold))
                         .foregroundStyle(OnboardingPalette.accent)
                         .multilineTextAlignment(.center)
                         .padding(.vertical, 7)
@@ -50,34 +62,36 @@ struct PaywallOfferView: View {
                     .foregroundStyle(OnboardingPalette.ink)
                     .onboardingAppear(index: 1)
 
-                PaywallPitch.text(for: plan)
-                    .font(MicaboFont.ui(21, weight: .bold))
-                    .tracking(-0.4)
+                PaywallPitch.headline(for: plan, locale: i18n.locale)
+                    .font(OnboardingPalette.title(32))
+                    .tracking(-0.9)
+                    .lineSpacing(-2)
                     .multilineTextAlignment(.center)
-                    .lineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
                     .onboardingAppear(index: 2)
 
                 Button(action: onSeeAllPlans) {
-                    Text(L10n.t("ios.paywallSeeAll", locale: .resolved()))
-                        .font(MicaboFont.ui(15, weight: .medium))
+                    Text(i18n.t("ios.paywallSeeAll"))
+                        .font(MicaboFont.ui(16, weight: .semibold))
                         .foregroundStyle(OnboardingPalette.accent)
                 }
                 .buttonStyle(MicaboPressableButtonStyle(dimming: true))
                 .onboardingAppear(index: 3)
             }
-            .padding(.horizontal, MicaboSpacing.xl)
+            .padding(.horizontal, MicaboSpacing.lg)
 
             Spacer(minLength: MicaboSpacing.lg)
             Spacer(minLength: 0)
 
             VStack(spacing: 14) {
-                Text(PaywallPitch.reassurance)
-                    .font(MicaboFont.ui(12.5, weight: .regular))
-                    .foregroundStyle(OnboardingPalette.grayLight)
+                // Ce qui part vraiment du compte, en gris : le mois est en grand juste
+                // au-dessus, la somme prélevée d'un bloc ne se cache pas pour autant.
+                Text(plan.billedLine(locale: i18n.locale))
+                    .font(OnboardingPalette.subtitle)
+                    .foregroundStyle(OnboardingPalette.gray)
                     .multilineTextAlignment(.center)
 
-                PaywallCallToAction(isPurchasing: isPurchasing, action: onSubscribe)
+                PaywallCallToAction(isPurchasing: isPurchasing, storeRevision: storeRevision, action: onSubscribe)
 
                 PaywallLegalFooter(onRestore: onRestore)
             }
@@ -86,7 +100,7 @@ struct PaywallOfferView: View {
             .onboardingAppear(index: 4)
         }
         .task {
-            try? await Task.sleep(for: .seconds(3))
+            try? await Task.sleep(for: Self.closeDelay)
             guard !Task.isCancelled else { return }
             showsClose = true
         }
@@ -102,6 +116,8 @@ struct PaywallOfferView: View {
 /// lignes se lisent d'un regard, quinze se survolent.
 struct PaywallPlansView: View {
     var isPurchasing: Bool
+    /// Voir `PaywallOfferView.storeRevision`.
+    var storeRevision: Int = 0
     var onClose: () -> Void
     var onSubscribe: (PaywallPlan) -> Void
     var onRestore: () -> Void
@@ -119,9 +135,10 @@ struct PaywallPlansView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 26) {
                     Text(L10n.t("ios.paywallPlansTitle", locale: .resolved()))
-                        .font(MicaboFont.ui(26, weight: .bold))
+                        .font(OnboardingPalette.title(30))
                         .foregroundStyle(OnboardingPalette.ink)
-                        .tracking(-0.7)
+                        .tracking(-0.9)
+                        .lineSpacing(-2)
                         .fixedSize(horizontal: false, vertical: true)
                         .onboardingAppear(index: 0)
 
@@ -133,6 +150,7 @@ struct PaywallPlansView: View {
                             PaywallPlanCard(
                                 plan: plan,
                                 isSelected: plan.kind == selection,
+                                storeRevision: storeRevision,
                                 badge: plan.kind == .yearly
                                     ? L10n.t("ios.paywallSave", locale: .resolved(), vars: ["pct": "\(PaywallCatalog.savingsPercent)"])
                                     : nil
@@ -153,7 +171,7 @@ struct PaywallPlansView: View {
 
             MicaboBottomBar(background: OnboardingPalette.white) {
                 VStack(spacing: 12) {
-                    PaywallCallToAction(isPurchasing: isPurchasing, plan: selectedPlan) {
+                    PaywallCallToAction(isPurchasing: isPurchasing, plan: selectedPlan, storeRevision: storeRevision) {
                         onSubscribe(selectedPlan)
                     }
 
@@ -237,6 +255,9 @@ private struct PaywallComparisonTable: View {
 private struct PaywallPlanCard: View {
     let plan: PaywallPlan
     let isSelected: Bool
+    /// Voir `PaywallOfferView.storeRevision` : sans lui, la carte — dont les autres entrées
+    /// ne changent pas — garderait le prix et l'essai d'avant la réponse de la boutique.
+    let storeRevision: Int
     let badge: String?
     var action: () -> Void
 
@@ -270,9 +291,7 @@ private struct PaywallPlanCard: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
 
-                    Text(plan.hasTrial
-                        ? L10n.t("app.paywall.trialBadge", locale: .resolved(), vars: ["days": "\(plan.trialDays)"])
-                        : L10n.t("ios.noTrial", locale: .resolved()))
+                    Text(trialLine)
                         .font(MicaboFont.ui(13, weight: .medium))
                         .foregroundStyle(plan.hasTrial ? OnboardingPalette.accent : OnboardingPalette.grayLight)
                 }
@@ -304,7 +323,18 @@ private struct PaywallPlanCard: View {
             }
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-        .accessibilityLabel("\(plan.title), \(plan.headlinePrice) \(plan.headlineUnit), \(plan.caption)")
+        .accessibilityLabel("\(plan.title), \(plan.headlinePrice) \(plan.headlineUnit), \(plan.caption), \(trialLine)")
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
+
+    /// « 3 jours gratuits », ou pourquoi il n'y en a pas : **déjà utilisé** par ce compte
+    /// Apple — un seul essai par groupe d'abonnements —, ou absent de ce pays.
+    private var trialLine: String {
+        if plan.hasTrial {
+            return L10n.t("app.paywall.trialBadge", locale: .resolved(), vars: ["days": "\(plan.trialDays)"])
+        }
+        return plan.missingTrialReason == .consumed
+            ? L10n.t("ios.trialUsed", locale: .resolved())
+            : L10n.t("ios.noTrial", locale: .resolved())
     }
 }

@@ -73,6 +73,10 @@ struct PaywallFlowView: View {
     @State private var didSubscribe = false
     /// Ce que la boutique n'a pas pu faire. Un bouton qui ne répond rien passe pour cassé.
     @State private var failure: String?
+    /// La dernière réponse de la boutique qu'on a vue. Le cache des prix n'est pas
+    /// observable : c'est ce numéro, relu après `refreshPrices()`, qui redessine les deux
+    /// écrans quand le prix du pays ou l'essai arrivent après l'ouverture.
+    @State private var storeRevision = PaywallStorePrices.revision
 
     var body: some View {
         ZStack {
@@ -82,6 +86,7 @@ struct PaywallFlowView: View {
                     plan: PaywallCatalog.recommended,
                     headline: trigger?.headline,
                     isPurchasing: isPurchasing,
+                    storeRevision: storeRevision,
                     onClose: showPlans,
                     onSeeAllPlans: showPlans,
                     onSubscribe: { Task { await buy(PaywallCatalog.recommended) } },
@@ -92,6 +97,7 @@ struct PaywallFlowView: View {
             case .plans:
                 PaywallPlansView(
                     isPurchasing: isPurchasing,
+                    storeRevision: storeRevision,
                     onClose: onDismiss,
                     onSubscribe: { plan in Task { await buy(plan) } },
                     onRestore: { Task { await restore() } }
@@ -106,7 +112,10 @@ struct PaywallFlowView: View {
         // Le blanc du parcours d'accueil, en pleine page comme en feuille : le paywall en
         // est la dernière page, et il en garde la charte.
         .background(OnboardingPalette.white.ignoresSafeArea())
-        .task { await PaywallPurchases.refreshPrices() }
+        .task {
+            await PaywallPurchases.refreshPrices()
+            storeRevision = PaywallStorePrices.revision
+        }
         .onAppear {
             openedAt = Date()
             Analytics.track(.paywallOpened, ["trigger": .text(trigger?.rawValue ?? "inconnu")])

@@ -66,6 +66,15 @@ struct PaywallPlan: Identifiable, Equatable {
         trialDays > 0 && !PaywallStorePrices.isIneligibleForTrial(productID)
     }
 
+    /// **Pourquoi l'essai n'est pas proposé**, quand il ne l'est pas : c'est ce que dit la
+    /// petite ligne de l'offre. « Sans essai » posé sur une offre qui en a un, parce que ce
+    /// compte a déjà pris le sien, se lit comme une erreur de configuration ; « essai déjà
+    /// utilisé » dit la règle d'Apple.
+    var missingTrialReason: PaywallStorePrices.TrialAbsence? {
+        guard trialDays > 0 else { return .notOffered }
+        return PaywallStorePrices.trialAbsence(for: productID)
+    }
+
     /// « 49,99 € », ou ce que la boutique du pays annonce.
     ///
     /// **Le prix écrit n'est plus qu'un repli.** Il est celui de la France, et un étudiant
@@ -131,6 +140,15 @@ struct PaywallPlan: Identifiable, Equatable {
         case .year: L10n.t("app.paywall.perMonthSlash", locale: .resolved())
         case .week: L10n.t("app.paywall.perWeekSlash", locale: .resolved())
         }
+    }
+
+    /// **La ligne grise du premier paywall** : ce qui part vraiment du compte, écrit court,
+    /// « Facturé 49,99 € / an ». C'est la contrepartie du mois mis en avant juste au-dessus.
+    func billedLine(locale: UiLocale = .resolved()) -> String {
+        guard period == .year else {
+            return L10n.t("ios.paywallBilledPer", locale: locale, vars: ["price": displayPrice, "unit": period.unit])
+        }
+        return L10n.t("ios.paywallBilledPerYear", locale: locale, vars: ["price": displayPrice])
     }
 
     /// La ligne posée sous le nom de l'offre : **ce qui part vraiment du compte**, et à
@@ -231,17 +249,17 @@ enum PaywallCatalog {
 }
 
 /// Écriture des sommes, dans la seule forme qu'on affiche : « 49,99 € ».
+///
+/// La somme est en euros — ce sont les prix de la France —, mais **elle s'écrit dans la
+/// langue de l'app** : « €4.17 » pour qui lit l'anglais, « 4,17 € » pour qui lit le français.
+/// Ce n'est qu'un repli, le temps que la boutique réponde avec la devise du pays.
 enum PaywallPrice {
-    private static let formatter: NumberFormatter = {
+    static func text(_ amount: Decimal, locale: UiLocale = .resolved()) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
-        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.locale = locale.foundation
         formatter.currencyCode = "EUR"
-        return formatter
-    }()
-
-    static func text(_ amount: Decimal) -> String {
-        formatter.string(from: amount as NSDecimalNumber) ?? "\(amount) €"
+        return formatter.string(from: amount as NSDecimalNumber) ?? "\(amount) €"
     }
 }
 
@@ -278,32 +296,57 @@ enum PaywallStorePrices {
         }
     }
 
+    /// Pourquoi un essai posé dans le catalogue ne s'ouvrira pas à ce compte.
+    enum TrialAbsence: Equatable {
+        /// **Ce compte Apple a déjà eu son essai dans le groupe** — ou un abonnement, ce qui
+        /// revient au même pour Apple : un seul essai par groupe et par identifiant Apple.
+        /// C'est le cas de presque tous les comptes de test qui ont déjà acheté une fois.
+        case consumed
+        /// Aucun essai n'est posé sur ce produit dans le pays de la boutique.
+        case notOffered
+    }
+
     private static var byProduct: [String: StorePrice] = [:]
 
-    /// Les produits dont on **sait** qu'ils n'ouvriront pas d'essai à ce compte : essai
-    /// déjà consommé dans le groupe, ou aucun essai posé dans ce pays. Un produit absent
-    /// d'ici n'est pas « éligible » : c'est « la boutique n'a rien dit ».
-    private static var withoutTrial: Set<String> = []
+    /// Les produits dont on **sait** qu'ils n'ouvriront pas d'essai à ce compte, et
+    /// pourquoi. Un produit absent d'ici n'est pas « éligible » : c'est « la boutique n'a
+    /// rien dit ».
+    private static var withoutTrial: [String: TrialAbsence] = [:]
+
+    /// **Change à chaque réponse de la boutique.** Le cache n'est pas observable — il est
+    /// lu hors de tout acteur, par les tests —, donc un écran déjà affiché ne se redessinait
+    /// pas quand la réponse arrivait : le premier paywall promettait l'essai, le second,
+    /// ouvert une seconde plus tard, disait « sans essai ». Les paywalls passent ce numéro
+    /// à leurs vues, et une réponse les redessine.
+    private(set) static var revision = 0
 
     static func price(for productID: String) -> StorePrice? {
         byProduct[productID]
     }
 
     static func isIneligibleForTrial(_ productID: String) -> Bool {
-        withoutTrial.contains(productID)
+        withoutTrial[productID] != nil
+    }
+
+    static func trialAbsence(for productID: String) -> TrialAbsence? {
+        withoutTrial[productID]
     }
 
     /// Remplace ce qu'on savait de l'essai, produit par produit. Un produit dont la
     /// boutique ne sait rien dire garde l'état précédent : une réponse perdue ne doit pas
     /// faire réapparaître un essai qu'on savait consommé.
-    static func storeTrialEligibility(_ eligible: [String: Bool]) {
+    ///
+    /// `notOffered` nomme les produits refusés parce qu'aucun essai n'y est posé ; les
+    /// autres refus sont des essais déjà consommés.
+    static func storeTrialEligibility(_ eligible: [String: Bool], notOffered: Set<String> = []) {
         for (productID, isEligible) in eligible {
             if isEligible {
-                withoutTrial.remove(productID)
+                withoutTrial[productID] = nil
             } else {
-                withoutTrial.insert(productID)
+                withoutTrial[productID] = notOffered.contains(productID) ? .notOffered : .consumed
             }
         }
+        revision += 1
     }
 
     /// Vrai quand la boutique a répondu et qu'elle vend dans une autre monnaie que l'euro.
@@ -317,12 +360,14 @@ enum PaywallStorePrices {
     /// boutique et doivent retrouver le repli après avoir simulé une réponse.
     static func clear() {
         byProduct = [:]
-        withoutTrial = []
+        withoutTrial = [:]
+        revision += 1
     }
 
     static func store(_ prices: [String: StorePrice]) {
         guard !prices.isEmpty else { return }
         byProduct.merge(prices) { _, fresh in fresh }
+        revision += 1
     }
 }
 

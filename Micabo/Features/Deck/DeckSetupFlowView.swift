@@ -17,8 +17,12 @@ enum DeckSetupStep: Hashable, CaseIterable {
     case name
     /// La langue du cours. Celle de l'interface est proposée d'office.
     case language
-    case source
+    /// **Les cases de dépôt, tout de suite**, et « je n'ai pas de supports » en dessous.
+    /// Une page « tu as tes supports ? » passait avant : elle faisait répondre avant d'avoir
+    /// vu ce qu'on pouvait déposer, et c'est le même choix que le parcours d'accueil a déjà
+    /// posé sur les cases elles-mêmes.
     case materials
+    /// Le sujet précis, pour qui n'a pas de supports : l'IA écrit le cours.
     case topic
     case purpose
     case grade
@@ -31,9 +35,8 @@ enum DeckSetupStep: Hashable, CaseIterable {
         switch self {
         case .subject: .name
         case .name: .language
-        case .language: .source
-        case .source: setup.source == .generated ? .topic : .materials
-        case .materials: .purpose
+        case .language: .materials
+        case .materials: setup.source == .generated ? .topic : .purpose
         case .topic: .purpose
         // La note visée ne se demande qu'à qui passe une épreuve. « Quelle note vises-tu
         // pour ton apprentissage personnel ? » n'a pas de réponse.
@@ -53,8 +56,8 @@ enum DeckSetupStep: Hashable, CaseIterable {
         case .subject: 0.08
         case .name: 0.18
         case .language: 0.27
-        case .source: 0.36
-        case .materials, .topic: 0.47
+        case .materials: 0.38
+        case .topic: 0.47
         case .purpose: 0.58
         case .grade: 0.68
         case .deadline: 0.78
@@ -73,7 +76,6 @@ enum DeckSetupStep: Hashable, CaseIterable {
         case .subject: 0
         case .name: 1
         case .language: 2
-        case .source: 3
         case .materials, .topic: 4
         case .purpose: 5
         case .grade: 6
@@ -234,15 +236,27 @@ struct DeckSetupFlowView: View {
         case .subject: DeckSubjectStepView(setup: setup, onNext: advance)
         case .name: DeckNameStepView(setup: setup, onNext: advance)
         case .language: DeckLanguageStepView(setup: setup, onNext: advance)
-        case .source: DeckSourceStepView(setup: setup, onNext: advance)
-        case .materials: DeckMaterialsStepView(setup: setup, onNext: advance)
+        case .materials:
+            DeckMaterialsStepView(
+                setup: setup,
+                onNothing: {
+                    setup.source = .generated
+                    advance()
+                }
+            ) {
+                setup.source = .materials
+                advance()
+            }
         case .topic: DeckTopicStepView(setup: setup, onNext: advance)
         case .purpose: DeckPurposeStepView(setup: setup, onNext: advance)
         case .grade: DeckGradeStepView(setup: setup, onNext: advance)
         case .deadline: DeckDeadlineStepView(setup: setup, onNext: advance)
         case .confidence: DeckConfidenceStepView(setup: setup, onNext: advance)
         case .building:
-            DeckBuildingStepView(setup: setup, onCreated: onCreated, onFailed: { history.removeAll(); step = .source })
+            DeckBuildingStepView(setup: setup, onCreated: onCreated, onFailed: {
+                history.removeAll()
+                step = setup.source == .generated ? .topic : .materials
+            })
         }
     }
 
