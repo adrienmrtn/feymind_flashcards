@@ -1,3 +1,4 @@
+import StoreKit
 import SwiftUI
 
 /// La porte du compte, et la clé qui la referme.
@@ -7,6 +8,15 @@ import SwiftUI
 /// connexion pendant le parcours se payait par un second écran de connexion à la sortie.
 enum AccountGate {
     static let skippedKey = "micabo.auth.skipped"
+}
+
+/// **La seconde demande de note**, à la première arrivée dans l'app.
+///
+/// Armée par la fin du parcours d'accueil (`OnboardingFlowView.finish`), levée à la première
+/// apparition des onglets : une fois, et seulement pour qui sort du parcours. Un compte déjà
+/// installé avant cette version n'a pas le drapeau, et n'est pas redemandé.
+enum InAppReviewPrompt {
+    static let pendingKey = "micabo.review.pendingFirstArrival"
 }
 
 /// Aiguillage au lancement : parcours d'accueil, puis l'application.
@@ -34,7 +44,10 @@ struct RootView: View {
     /// ton premier cours », puis la création elle-même, sans croix.
     @AppStorage(OnboardingPreferences.Key.pendingFirstImport) private var pendingFirstImport = false
 
+    @AppStorage(InAppReviewPrompt.pendingKey) private var pendingReview = false
+
     @Environment(AuthController.self) private var auth
+    @Environment(\.requestReview) private var requestReview
 
     private var showsAccountGate: Bool {
         didCompleteOnboarding && !auth.isSignedIn && !didSkipAccount && auth.state != .restoring
@@ -56,6 +69,11 @@ struct RootView: View {
             } else {
                 RootTabView()
                     .transition(.opacity)
+                    .onAppear {
+                        guard pendingReview else { return }
+                        pendingReview = false
+                        requestReview()
+                    }
             }
         }
         .animation(.easeInOut(duration: 0.45), value: didCompleteOnboarding)
