@@ -36,6 +36,21 @@ final class AuthController {
 
     private let client: SupabaseAuthClient
     private var session: AuthSession?
+
+    /// **Le compte invisible de qui a passé la connexion.**
+    ///
+    /// Les cours restent sur le téléphone et n'en ont pas besoin. Les fonctions, si : sans
+    /// jeton d'utilisateur, elles n'acceptent la clé publique que jusqu'à la fin de la
+    /// transition (`ANON_GRACE_UNTIL`, côté serveur), et un élève sans compte ne pourrait plus
+    /// générer de cours ni parler à Mika. Un compte anonyme porte leur quota, et
+    /// l'identifiant RevenueCat de qui s'abonne sans compte.
+    ///
+    /// **Ce n'est pas un compte au sens de l'app** : `isSignedIn` reste faux, rien ne se
+    /// synchronise, les réglages proposent toujours de se connecter. Une connexion Apple ou
+    /// Google ouvre le vrai compte à côté ; les cours locaux y montent à la première synchro.
+    private(set) var guestUserID: UUID?
+    @ObservationIgnored private var guestSession: AuthSession?
+    @ObservationIgnored private var guestCreation: Task<AuthSession?, Never>?
     /// Les nonces des requêtes Apple en vol. Ici et pas dans le bouton : le contrôleur vit
     /// autant que l'app, et aucun retour d'Apple ne peut plus renouveler celui d'un autre.
     /// Hors observation : émettre un nonce ne change rien à ce que l'écran montre.
@@ -54,11 +69,20 @@ final class AuthController {
         user != nil
     }
 
+    /// L'identifiant sous lequel on achète : le compte, sinon le compte invité. C'est lui
+    /// que RevenueCat reçoit, pour que le webhook sache à qui ouvrir Pro.
+    var billingUserID: UUID? {
+        user?.id ?? guestUserID
+    }
+
     // MARK: - Reprise
 
     /// À appeler au lancement. Relit la session du trousseau et la rafraîchit si son jeton a
     /// expiré.
     func restore() async {
+        guestSession = AuthTokenStore.load(account: AuthTokenStore.guestAccount)
+        guestUserID = guestSession?.user.id
+
         guard let stored = AuthTokenStore.load() else {
             state = .signedOut
             return
@@ -101,6 +125,76 @@ final class AuthController {
         } catch {
             return nil
         }
+    }
+
+    // MARK: - Sans compte
+
+    /// Le jeton des fonctions : celui du compte, sinon celui du compte invité, ouvert à la
+    /// première demande. `nil` quand ni l'un ni l'autre n'est possible — hors ligne, ou
+    /// connexion anonyme fermée côté Supabase : l'appel part alors sous la clé publique.
+    func functionsAccessToken() async -> String? {
+        if session != nil, let token = await validAccessToken() {
+            return token
+        }
+        return await guestAccessToken()
+    }
+
+    /// **« Passer ».** Ouvre le compte invité tout de suite, plutôt qu'au premier appel : il
+    /// faut qu'il existe avant un achat, pour que l'abonnement ait un propriétaire.
+    func continueWithoutAccount() async {
+        guard session == nil else { return }
+        _ = await guestAccessToken()
+    }
+
+    private func guestAccessToken() async -> String? {
+        guard AppConfig.isConfigured else { return nil }
+
+        if let guest = guestSession {
+            guard guest.isExpired else { return guest.accessToken }
+            do {
+                let renewed = try await client.refresh(refreshToken: guest.refreshToken)
+                keepGuest(renewed)
+                return renewed.accessToken
+            } catch AuthError.sessionExpired {
+                // Le compte invité a été oublié par GoTrue : on en rouvre un. Rien ne s'y
+                // perd, les cours sont sur le téléphone.
+                dropGuest()
+            } catch {
+                return nil
+            }
+        }
+
+        // Deux appels simultanés ne doivent pas ouvrir deux comptes.
+        if let pending = guestCreation {
+            return await pending.value?.accessToken
+        }
+        let client = self.client
+        let creation = Task { () -> AuthSession? in
+            do {
+                return try await client.signInAnonymously()
+            } catch {
+                Analytics.track(.signInFailed, ["reason": "invite"])
+                return nil
+            }
+        }
+        guestCreation = creation
+        let created = await creation.value
+        guestCreation = nil
+        guard let created else { return nil }
+        keepGuest(created)
+        return created.accessToken
+    }
+
+    private func keepGuest(_ guest: AuthSession) {
+        guestSession = guest
+        AuthTokenStore.save(guest, account: AuthTokenStore.guestAccount)
+        if guestUserID != guest.user.id { guestUserID = guest.user.id }
+    }
+
+    private func dropGuest() {
+        guestSession = nil
+        guestUserID = nil
+        AuthTokenStore.clear(account: AuthTokenStore.guestAccount)
     }
 
     // MARK: - Fournisseurs
