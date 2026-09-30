@@ -172,7 +172,6 @@ struct OnboardingFlowView: View {
         case .featureMika: FeatureStepView(feature: .mika)
         case .sheetIntro: MikaSpeaksStepView(text: i18n.t("ios.onb.sheetIntro"))
         case .signIn: SignInStepView()
-        case .materialsQuestion: MaterialsQuestionStepView()
         case .materials: OnboardingMaterialsStepView()
         case .demoCourse: DemoCourseStepView()
         case .courseBuilding: CourseBuildingStepView()
@@ -181,7 +180,6 @@ struct OnboardingFlowView: View {
         case .trainCards: TrainCardsStepView()
         case .wellDone: WellDoneStepView()
         case .socialProof: SocialProofStepView()
-        case .comparison: ComparisonStepView()
         case .trialOffer: TrialOfferStepView()
         case .trialReminder: TrialReminderStepView()
         case .paywall: PaywallStepView(onFinish: finish)
@@ -193,8 +191,9 @@ struct OnboardingFlowView: View {
         OnboardingPreferences.markCompleted()
         if let course = model.builtCourse {
             // **Le cours du parcours est le premier cours de l'app.** Il est déjà dans la
-            // bibliothèque ; la liste l'ouvre à l'arrivée, sur son plan, et « créons ton
-            // premier cours » n'a plus lieu d'être.
+            // bibliothèque ; l'app s'ouvre sur Decks, où il attend en tête — sans s'ouvrir
+            // de lui-même : l'élève vient de le parcourir —, et « créons ton premier cours »
+            // n'a plus lieu d'être.
             FirstDeckHandoff.course = course
             OnboardingPreferences.pendingFirstImport = false
         } else {

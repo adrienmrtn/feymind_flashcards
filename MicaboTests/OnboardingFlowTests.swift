@@ -57,8 +57,8 @@ final class OnboardingFlowTests: XCTestCase {
         generic.advance()
         XCTAssertEqual(generic.step, .subjects)
 
-        XCTAssertEqual(OnboardingStep.allCases.filter { $0.isSkipped(for: .fr) }, [.level, .materials, .demoCourse])
-        XCTAssertEqual(OnboardingStep.allCases.filter { $0.isSkipped(for: .other) }, [.schoolType, .year, .materials, .demoCourse])
+        XCTAssertEqual(OnboardingStep.allCases.filter { $0.isSkipped(for: .fr) }, [.level, .demoCourse])
+        XCTAssertEqual(OnboardingStep.allCases.filter { $0.isSkipped(for: .other) }, [.schoolType, .year, .demoCourse])
     }
 
     // MARK: - Le quiz
@@ -94,7 +94,7 @@ final class OnboardingFlowTests: XCTestCase {
         let questions = OnboardingStep.allCases.filter(\.isQuestion)
         XCTAssertEqual(questions, [
             .name, .country, .level, .schoolType, .year, .subjects, .worries, .goal,
-            .currentAverage, .targetAverage, .dailyTime, .studyTime, .materialsQuestion, .demoCourse,
+            .currentAverage, .targetAverage, .dailyTime, .studyTime, .materials, .demoCourse,
         ])
     }
 
@@ -158,19 +158,23 @@ final class OnboardingFlowTests: XCTestCase {
         }
     }
 
-    /// **La seule branche du parcours** : avec ses supports, on les dépose ; sans, on
-    /// choisit un cours de démonstration. Dans les deux cas, la construction puis le cours.
+    /// **La seule branche du parcours se prend sur les cases de dépôt**, qui suivent le
+    /// compte sans question avant : déposer et avancer mène à la construction ; « je n'ai
+    /// rien pour l'instant » mène au choix d'un cours de démonstration. Dans les deux cas,
+    /// la construction puis le cours.
     func testMaterialsAndDemoCourseAreTheTwoBranches() {
-        let withMaterials = self.model(advancingTo: .materialsQuestion)
+        let signedIn = self.model(advancingTo: .signIn)
+        signedIn.advance()
+        XCTAssertEqual(signedIn.step, .materials, "Les cases de dépôt, tout de suite après le compte")
+
+        let withMaterials = self.model(advancingTo: .materials)
         withMaterials.hasMaterials = true
         withMaterials.advance()
-        XCTAssertEqual(withMaterials.step, .materials)
-        withMaterials.advance()
-        XCTAssertEqual(withMaterials.step, .courseBuilding)
+        XCTAssertEqual(withMaterials.step, .courseBuilding, "Avec ses supports, pas de cours de démonstration à choisir")
         withMaterials.advance()
         XCTAssertEqual(withMaterials.step, .courseReview)
 
-        let without = self.model(advancingTo: .materialsQuestion)
+        let without = self.model(advancingTo: .materials)
         without.hasMaterials = false
         without.advance()
         XCTAssertEqual(without.step, .demoCourse)
@@ -180,20 +184,21 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertFalse(withMaterials.isDemoCourse)
     }
 
-    /// Sans réponse à la question des supports, aucune des deux branches ne s'affiche :
-    /// le parcours ne s'arrête jamais sur un écran vide.
-    func testAnUnansweredMaterialsQuestionSkipsBothBranches() {
-        let model = self.model(advancingTo: .materialsQuestion)
+    /// Le cours de démonstration ne se propose qu'à qui a dit n'avoir rien : sans réponse,
+    /// il se saute, et le parcours ne s'arrête jamais sur un écran vide.
+    func testTheDemoChoiceOnlyShowsToWhoHasNoMaterials() {
+        let model = self.model(advancingTo: .materials)
         XCTAssertNil(model.hasMaterials)
         model.advance()
         XCTAssertEqual(model.step, .courseBuilding)
     }
 
-    /// Le cours, puis les cartes, puis le bravo, puis la preuve et l'offre, dans cet ordre.
+    /// Le cours, puis les cartes, puis le bravo, puis la preuve et l'offre, dans cet ordre —
+    /// et plus d'écran comparatif entre la preuve et l'essai.
     func testTheCardsComeBeforeTheProofAndTheOffer() {
         let model = self.model(advancingTo: .courseReview)
 
-        for expected in [OnboardingStep.trainPrompt, .trainCards, .wellDone, .socialProof, .comparison, .trialOffer, .trialReminder, .paywall] {
+        for expected in [OnboardingStep.trainPrompt, .trainCards, .wellDone, .socialProof, .trialOffer, .trialReminder, .paywall] {
             model.advance()
             XCTAssertEqual(model.step, expected)
         }
@@ -259,7 +264,7 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(model.step, .building)
 
         for step in OnboardingStep.allCases
-        where step.rawValue > OnboardingStep.notifications.rawValue && step != .materials && step != .demoCourse {
+        where step.rawValue > OnboardingStep.notifications.rawValue && step != .demoCourse {
             let later = self.model(advancingTo: step)
             XCTAssertFalse(later.canGoBack, "\(step) ne doit pas proposer de retour")
         }
@@ -303,7 +308,7 @@ final class OnboardingFlowTests: XCTestCase {
                      "hookPress", "proofTwice", "proofKeep", "hookVideo", "nextExam", "proofStudents",
                      "proofPlan", "blocker", "triedApps",
                      "hookRating", "proofWhy", "source", "proofRealistic", "commitment", "proofCurve",
-                     "method", "thanks", "planReady", "reviews"] {
+                     "method", "thanks", "planReady", "reviews", "materialsQuestion", "comparison"] {
             XCTAssertFalse(names.contains(name), "\(name) a été retiré du parcours")
         }
     }
@@ -335,10 +340,10 @@ final class OnboardingFlowTests: XCTestCase {
         }
     }
 
-    /// Dans un pays décrit en détail, seuls le palier large et les deux branches du cours se
+    /// Dans un pays décrit en détail, seuls le palier large et le cours de démonstration se
     /// sautent : avancer depuis n'importe quelle autre étape mène toujours à la suivante.
     func testNoOtherStepIsSkippedInADetailedCountry() {
-        let skipped: Set<OnboardingStep> = [.level, .materials, .demoCourse]
+        let skipped: Set<OnboardingStep> = [.level, .demoCourse]
         for step in OnboardingStep.allCases.dropLast() where !skipped.contains(step) {
             let model = OnboardingModel()
             model.select(country: .fr)

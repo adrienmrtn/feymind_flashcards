@@ -1,3 +1,4 @@
+import StoreKit
 import SwiftUI
 import UIKit
 
@@ -12,9 +13,19 @@ import UIKit
 /// lauriers autour de l'App Store, puis les avis en carrousel, qui défilent seuls et se
 /// laissent glisser. Les photos viennent du catalogue (`ReviewAvatar1` à `5`) ; en
 /// attendant, une initiale sur le dégradé tient leur place.
+///
+/// **C'est ici que l'app demande sa note.** L'élève vient de lire un cours, de répondre
+/// à trois cartes et de voir ce que d'autres en disent : c'est le moment où il a quelque
+/// chose à dire, et la page qui parle de notes est la seule où la demande ne tombe pas de
+/// nulle part. Le système garde la main — trois demandes par an au plus, et jamais deux
+/// fois pour la même version —, donc la page ne compte pas dessus pour avancer.
 struct SocialProofStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.requestReview) private var requestReview
+
+    /// Le temps de laisser la page se poser et les avis commencer à défiler.
+    private static let reviewDelay = 1.8
 
     var body: some View {
         VStack(spacing: 0) {
@@ -56,6 +67,12 @@ struct SocialProofStepView: View {
         .onboardingChromeInset()
         .background(OnboardingPalette.white.ignoresSafeArea())
         .environment(\.onboardingSurface, .canvas)
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Self.reviewDelay) {
+                guard model.step == .socialProof else { return }
+                requestReview()
+            }
+        }
     }
 
     /// Les lauriers, et ce qu'ils encadrent.

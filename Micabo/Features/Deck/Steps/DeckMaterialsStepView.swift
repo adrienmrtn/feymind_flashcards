@@ -19,6 +19,10 @@ struct DeckMaterialsStepView: View {
     /// **Le rond fléché à la place de la pilule**, dans le parcours d'accueil, où tout ce
     /// qui avance est un rond. La création d'un deck garde sa pilule.
     var usesArrow: Bool = false
+    /// **« Je n'ai rien pour l'instant »**, en gris à gauche du rond, quand la page a une
+    /// sortie pour qui n'a pas ses supports sous la main : dans le parcours, elle mène au
+    /// choix d'un cours de démonstration. La création d'un deck n'en a pas.
+    var onNothing: (() -> Void)? = nil
     var onNext: () -> Void
 
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -69,7 +73,12 @@ struct DeckMaterialsStepView: View {
             .onAppear(perform: seedSlots)
         } footer: {
             if usesArrow {
-                OnboardingArrowButton(isEnabled: setup.hasMaterials, action: onNext)
+                HStack(spacing: 12) {
+                    if let onNothing {
+                        nothingButton(onNothing)
+                    }
+                    OnboardingArrowButton(isEnabled: setup.hasMaterials, fillsWidth: onNothing == nil, action: onNext)
+                }
             } else {
                 OnboardingContinueButton(isEnabled: setup.hasMaterials, action: onNext)
             }
@@ -139,6 +148,25 @@ struct DeckMaterialsStepView: View {
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.sheet)
         }
+    }
+
+    /// La sortie grise : une capsule de carte, le texte d'encre, à gauche du rond. Elle se lit
+    /// comme un second choix, pas comme un refus.
+    private func nothingButton(_ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(i18n.t("ios.onb.materials.none"))
+                .font(MicaboFont.ui(15.5, weight: .semibold))
+                .foregroundStyle(OnboardingPalette.ink)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
+                .padding(.horizontal, 18)
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 56)
+                .background(OnboardingPalette.card, in: Capsule())
+                .contentShape(Capsule())
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
     }
 
     /// Vrai entre la fermeture de la languette et l'ouverture du sélecteur choisi : sans ça,

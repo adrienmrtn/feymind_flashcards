@@ -88,9 +88,9 @@ quand il y a quelque chose à comparer.
 | Accroche | le splash (logo seul 1,3 s, puis la phrase, « j'ai déjà un compte », Commencer, le menu de langue), le prénom (obligatoire), « Bienvenue, {prénom} » |
 | Quiz | pays (menu, pays de l'appareil pré-choisi), niveau ou filière puis année, matières, ce qui inquiète (plusieurs réponses), objectifs (plusieurs réponses), « on s'en occupe » (deux barres, 36 % contre 80 %), moyenne actuelle, moyenne visée avec sa carte d'écart, temps par jour sur sa courbe, heure de révision (ciel, soleil, lune), rappels (semaine qui se coche, bannière, demande système) |
 | Mika | le profil se prépare (blob, pourcentage, grille de points, 6,5 s, enchaîne seul), « voyons comment Micabo peut t'aider », cinq écrans de fonctionnalités (maquette, titre, ligne), « voyons ensemble une fiche » |
-| Le cours | connexion (avec « Passer »), « tu as tes supports ? », les cases de dépôt **ou** un cours de démonstration à choisir, Mika écrit le cours, le cours fiché qu'on parcourt en entier |
+| Le cours | connexion (avec « Passer »), les cases de dépôt avec « je n'ai rien pour l'instant » à côté du rond — qui mène à un cours de démonstration à choisir —, Mika écrit le cours, le cours fiché que le rond fait visiter chapitre par chapitre |
 | Les cartes | « envie de t'entraîner ? », trois cartes (recto verso, QCM, texte à trou), « bien joué » |
-| L'offre | « on a aidé 45 000+ élèves » avec les avis, le gratuit contre Premium, la chronologie de l'essai, la promesse du rappel, le paywall |
+| L'offre | « on a aidé 45 000+ élèves » avec les avis et la demande de note du système, la chronologie de l'essai, la promesse du rappel, le paywall |
 
 ### La navigation
 
@@ -130,9 +130,11 @@ du cours. Les deux enchaînent seuls : un coup net, le blob rapetisse, la page s
 
 ### Le cours
 
-**« Tu as tes supports ? » est la seule branche du parcours.** Oui mène aux cases de dépôt de
-la création d'un deck (`DeckMaterialsStepView`, telle quelle), puis `DeckBuilder` écrit la
-fiche, découpe le plan et prépare les cartes — c'est le premier cours de l'élève, offert. Non
+**Les cases de dépôt sont la seule branche du parcours**, et elle se prend sur l'écran même :
+ce sont les cases de la création d'un deck (`DeckMaterialsStepView`, telle quelle), avec
+« je n'ai rien pour l'instant » en gris à gauche du rond. Déposer et avancer, c'est
+`DeckBuilder` qui écrit la fiche, découpe le plan et prépare les cartes — le premier cours de
+l'élève, offert. « Je n'ai rien »
 mène à quatre cours de démonstration (`OnboardingDemoCatalog`, en français et en anglais :
 la guerre froide, la photosynthèse, les dérivées, l'énergie), **quatre chapitres chacun**,
 plus riches qu'une fiche réelle — schémas, tableaux, graphes, frises, encadrés, dessinés par
