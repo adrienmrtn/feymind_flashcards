@@ -65,7 +65,7 @@ struct OnboardingFlowView: View {
         )) {
             OnboardingAccountSheet { model.finishAccountSheet() }
                 .environment(\.locale, i18n.locale.foundation)
-                .presentationDetents([.height(460), .large])
+                .presentationDetents([.height(480), .large])
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(MicaboRadius.sheet)
                 .presentationBackground(OnboardingPalette.white)

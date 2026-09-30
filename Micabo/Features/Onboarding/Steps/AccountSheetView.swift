@@ -24,48 +24,59 @@ struct OnboardingAccountSheet: View {
     @State private var didFinish = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 8) {
+        // Trois étages sur toute la hauteur : la question en haut, les deux portes au milieu,
+        // la sortie et les mentions en bas. Collés en haut, ils laissaient un grand blanc
+        // sous les mentions et un autre au-dessus du titre.
+        VStack(spacing: 0) {
+            VStack(spacing: 8) {
                 Text(i18n.t("onboarding.compteTitle"))
-                    .font(OnboardingPalette.title(26))
-                    .tracking(-0.7)
+                    .font(OnboardingPalette.title(28))
+                    .tracking(-0.8)
                     .foregroundStyle(OnboardingPalette.ink)
+                    .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(i18n.t("ios.account.sub"))
-                    .font(OnboardingPalette.subtitle)
+                    .font(MicaboFont.ui(15, weight: .regular))
                     .foregroundStyle(OnboardingPalette.gray)
                     .lineSpacing(3)
+                    .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.bottom, 22)
+            .frame(maxWidth: .infinity)
 
-            // Apple et Google, tels que `SignInProviderButtons` les dessine partout, logos
-            // compris. Le courriel reste à la reconnexion.
-            SignInProviderButtons(offersEmail: false)
+            Spacer(minLength: 24)
 
-            SignInFailureNote(includeSent: false, includeError: true)
-                .padding(.top, 8)
+            VStack(spacing: 0) {
+                // Apple et Google, tels que `SignInProviderButtons` les dessine partout, logos
+                // compris. Le courriel reste à la reconnexion.
+                SignInProviderButtons(offersEmail: false)
 
-            Button(action: skip) {
-                Text(i18n.t("common.skip"))
-                    .font(MicaboFont.ui(15.5, weight: .semibold))
-                    .foregroundStyle(OnboardingPalette.gray)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: 48)
-                    .contentShape(Rectangle())
+                SignInFailureNote(includeSent: false, includeError: true)
+                    .padding(.top, 8)
             }
-            .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
-            .accessibilityLabel(i18n.t("ios.skipNoAccount"))
-            .padding(.top, 6)
 
-            legalLine
-                .padding(.top, 4)
+            Spacer(minLength: 20)
+
+            VStack(spacing: 10) {
+                Button(action: skip) {
+                    Text(i18n.t("common.skip"))
+                        .font(MicaboFont.ui(16, weight: .semibold))
+                        .foregroundStyle(OnboardingPalette.gray)
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
+                .accessibilityLabel(i18n.t("ios.skipNoAccount"))
+
+                legalLine
+            }
         }
         .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.top, 28)
-        .padding(.bottom, MicaboSpacing.sm)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 36)
+        .padding(.bottom, MicaboSpacing.md)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(OnboardingPalette.white.ignoresSafeArea())
         .animation(.easeOut(duration: 0.22), value: auth.message)
         .allowsHitTesting(!auth.isWorking)
