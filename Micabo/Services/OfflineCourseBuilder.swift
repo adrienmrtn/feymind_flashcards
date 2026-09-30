@@ -154,6 +154,13 @@ struct OfflineAIService: AIService {
         try await Task.sleep(nanoseconds: 300_000_000)
         return OfflineCourseBuilder.explain(request)
     }
+
+    /// Hors ligne, Mika ne fabrique pas de réponse : il dit qu'il ne peut pas, et c'est
+    /// mieux qu'une phrase inventée qui aurait l'air d'en être une.
+    func chat(_ request: MikaChatRequest) async throws -> MikaChatReply {
+        try await Task.sleep(nanoseconds: 300_000_000)
+        return MikaChatReply(reply: L10n.t("ios.mika.chat.offline", locale: .resolved()), card: nil)
+    }
 }
 
 extension String {

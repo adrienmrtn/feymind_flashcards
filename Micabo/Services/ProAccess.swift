@@ -12,8 +12,9 @@ enum FreeTier {
     /// abonnement.
     ///
     /// Ce n'est pas zéro, parce que le premier cours se construit à la sortie du parcours
-    /// et fait la démonstration. **Mais il ne se rouvre pas gratuitement** : une fois quitté,
-    /// toucher un cours ouvre le paywall — voir `PaywallTrigger.openCourse`.
+    /// et fait la démonstration. **Sa page se rouvre librement** — le plan, les chapitres,
+    /// la date — mais ses chapitres, eux, sont dans Pro : en toucher un ouvre le paywall,
+    /// voir `PaywallTrigger.openChapter`.
     static let courses = 1
 
     /// La part d'un chapitre qui se lit sans payer, passé le premier.
@@ -37,6 +38,18 @@ enum FreeTier {
     /// elle se tient : réviser ce qui est dû est le service que Micabo rend, s'entraîner à
     /// volonté sur tout un paquet est ce qu'on fait la veille d'un partiel.
     static let allowsPractice = false
+}
+
+/// **Ce que Mika laisse demander.**
+///
+/// Une question offerte, une seule, pour toujours : c'est la démonstration, comme le
+/// premier cours. Et pour un abonné, un plafond par jour — un fusible de coût, pas un
+/// palier commercial : il ne s'écrit nulle part tant qu'on ne l'atteint pas. Le serveur
+/// tient les mêmes nombres (`_shared/mika.ts`) ; l'app les applique en premier, pour que
+/// le refus arrive avant l'appel, pas après.
+enum MikaAllowance {
+    static let freeQuestions = 1
+    static let proMessagesPerDay = 30
 }
 
 /// Comptes développeur : Pro à vie, sans abonnement.

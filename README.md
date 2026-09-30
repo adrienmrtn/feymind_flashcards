@@ -85,11 +85,11 @@ quand il y a quelque chose à comparer.
 
 | Bloc | Écrans |
 | --- | --- |
-| Accroche | le splash (logo seul 1,3 s, puis la phrase, « j'ai déjà un compte », Commencer, le menu de langue), le prénom (obligatoire), « Bienvenue, {prénom} » |
-| Quiz | pays (menu, pays de l'appareil pré-choisi), niveau ou filière puis année, matières, ce qui inquiète (plusieurs réponses), objectifs (plusieurs réponses), « on s'en occupe » (deux barres, 36 % contre 80 %), moyenne actuelle, moyenne visée avec sa carte d'écart, temps par jour sur sa courbe, heure de révision (ciel, soleil, lune), rappels (semaine qui se coche, bannière, demande système) |
+| Accroche | le splash (le logo se pose sur un ressort avec une onde derrière lui, 1,45 s, puis monte dans le coin de la page qui arrive autour : la maquette du téléphone — l'image `OnboardingHook`, ou le téléphone dessiné en attendant —, la phrase, sa ligne, « j'ai déjà un compte », Commencer, le menu de langue), le prénom (obligatoire), « Bienvenue, {prénom} » |
+| Quiz | pays (menu, pays de l'appareil pré-choisi), niveau ou filière puis année, matières, ce qui inquiète (plusieurs réponses), objectifs (plusieurs réponses), « on s'en occupe » (deux barres, 36 % contre 80 %, qui montent en deux secondes une fois la page posée, le chiffre comptant avec elles), moyenne actuelle, moyenne visée avec sa carte d'écart, temps par jour sur sa courbe, heure de révision (ciel, soleil, lune), rappels (semaine qui se coche, bannière, demande système) |
 | Mika | le profil se prépare (blob, pourcentage, grille de points, 6,5 s, enchaîne seul), « voyons comment Micabo peut t'aider », cinq écrans de fonctionnalités (maquette, titre, ligne), « voyons ensemble une fiche » |
 | Le cours | connexion (avec « Passer »), les cases de dépôt avec « je n'ai rien pour l'instant » à côté du rond — qui mène à un cours de démonstration à choisir —, Mika écrit le cours, le cours fiché que le rond fait visiter chapitre par chapitre |
-| Les cartes | « envie de t'entraîner ? », trois cartes (recto verso, QCM, texte à trou), « bien joué » |
+| Les cartes | « envie de t'entraîner ? » (sans « Passer » ni sous-titre), trois cartes (recto verso avec son schéma **au dos**, QCM, texte à trou), « bien joué » avec le blob Mika |
 | L'offre | « on a aidé 45 000+ élèves » avec les avis et la demande de note du système, la chronologie de l'essai, la promesse du rappel, le paywall |
 
 ### La navigation
@@ -175,7 +175,7 @@ différentes selon la porte par laquelle on l'a rencontré.
 
 | Ce qui est ouvert | Ce qui s'arrête | Où |
 | --- | --- | --- |
-| Le premier cours importé | Le deuxième | Le « + » de Cours, les états vides de Cours et de Réviser |
+| Le premier cours importé, et la page de chaque deck | Le deuxième import ; les chapitres d'un deck, dès le premier touché | Le « + » de Cours, les états vides de Cours et de Réviser ; le plan d'un deck |
 | Les 70 % de chaque fiche | La fin, floutée et fondue dans le papier | `CourseSheetView` |
 | La génération de cartes, sans limite | — | `GenerateCardsSheet` |
 | Les 5 premières cartes d'une session | La sixième | `StudyView` |
@@ -231,6 +231,49 @@ L'abonnement n'est branché sur aucune boutique. `Réglages → Test → Micabo 
 verraient qu'une fois, le bouton du paywall ouvrant tout. Il disparaîtra le jour où RevenueCat
 décidera à sa place. `MicaboTests/FreemiumTests.swift` verrouille les trois nombres et la coupure
 de la fiche.
+
+## Mika, l'onglet
+
+**Mika, l'assistant du parcours d'accueil, a son onglet dans la barre du bas**, entre Réviser
+et Profil (`Micabo/Features/Mika/`). C'est un chat classique : un champ en bas, sans style,
+les réponses d'un bloc balisées comme la fiche, le blob de Mika qui respire en haut et qui
+s'agite sous le dernier message pendant qu'il réfléchit. Une seule conversation, gardée sur
+l'appareil (`MikaConversationStore`, un fichier JSON dans le dossier de l'app), avec « nouvelle
+conversation » en haut à droite.
+
+**Ce que ça coûte, et pourquoi si peu.** Le modèle est le moins cher de la liste
+(`gemini-2.5-flash-lite`, celui par défaut des fonctions) ; seuls les **huit derniers tours**
+partent, chacun borné à 1 500 caractères ; la réponse est bornée à 700 jetons, 250 mots au
+plus ; le document joint est borné à 16 000 caractères, et **aucune image ne voyage** : le
+texte d'un cours est déjà sur l'appareil, celui d'un document est lu par l'app avant de
+partir. Le centième message coûte ce que coûte le premier. Les nombres sont les mêmes dans
+`MikaLimits` (app) et `_shared/mika.ts` (fonction).
+
+**Une question offerte, puis Premium.** La première question est gratuite, une seule, pour
+toujours — comme le premier cours : c'est la démonstration. La deuxième ouvre le paywall
+(`PaywallTrigger.mika`). Un abonné a un **plafond de trente messages par jour**
+(`MikaAllowance.proMessagesPerDay`), qu'il ne voit qu'en l'atteignant : c'est un fusible de
+coût, pas un argument de vente. L'app tient la porte (`MikaQuota`, dans les réglages de
+l'appareil) pour que le refus arrive avant l'appel ; le serveur tient les mêmes nombres
+(`MIKA_FREE_CEILING`, `MIKA_PRO_CEILING`) par `consume_ai_quota`, qui accepte depuis la
+migration `ai_quota_pro_ceiling` un plafond Pro propre à la fonction. La question offerte ne
+se consomme qu'une fois la réponse arrivée : une panne de réseau ne brûle pas la seule
+question de quelqu'un.
+
+**La pièce jointe.** Une à la fois : un cours de la bibliothèque (son texte à plat, choisi
+dans une feuille), ou un document, par les cases de dépôt de la création d'un deck, telles
+quelles. Elle reste attachée à la conversation jusqu'à ce qu'on la retire.
+
+**La carte.** Quand la réponse porte une chose à retenir, Mika propose une carte de révision
+sous sa réponse, avec « ajouter cette carte » : elle se range dans le cours joint, ou dans le
+cours qu'on choisit. C'est le même geste que l'explication d'un passage.
+
+**Le champ se pose sur le clavier.** Pendant qu'on tape, la page se déclare « poussée »
+auprès du routeur (`reportsNavigationDepth`) : la barre d'onglets se retire, comme sur un
+écran de détail, et revient quand le clavier se range. Les textes sont en français et en
+anglais ; l'anglais tient la place des autres langues en attendant. `MicaboTests/MikaTests.swift`
+verrouille la porte, le plafond, la borne des tours et la conversation qui survit à un
+relancement ; `_shared/mika.test.ts` fait de même côté fonction.
 
 ## Direction visuelle
 
@@ -424,6 +467,7 @@ L'application appelle deux Edge Functions Supabase. Le code source est dans `sup
 | `generate-course` | Reçoit le texte déjà extrait (et, en option, jusqu'à 6 pages JPEG), renvoie titre, matière, résumé et **la fiche** |
 | `generate-flashcards` | Produit un jeu de cartes recto verso à partir de cette fiche |
 | `explain-selection` | Explique un passage sélectionné dans la fiche, en s'appuyant sur le reste du cours |
+| `mika-chat` | Mika répond au dernier message d'une conversation, avec les huit derniers tours et le document joint ; rend une réponse d'un bloc et, quand il y a quelque chose à retenir, une carte. Voir « Mika, l'onglet » |
 | `youtube-transcript` | Métadonnées d'une vidéo puis, après confirmation, ses sous-titres. C'est la seule fonction qui n'appelle aucun modèle |
 
 ### 1. Ajouter la clé fal.ai
@@ -442,8 +486,13 @@ supabase link --project-ref votre-ref
 supabase functions deploy generate-course
 supabase functions deploy generate-flashcards
 supabase functions deploy explain-selection
+supabase functions deploy mika-chat
 supabase functions deploy youtube-transcript
 ```
+
+`mika-chat` demande la migration `20260930120000_ai_quota_pro_ceiling.sql` **avant** son
+premier appel : elle passe un plafond Pro à `consume_ai_quota`, que l'ancienne signature ne
+connaît pas. Les autres fonctions n'en passent pas et tournent avec l'une comme avec l'autre.
 
 #### Déployer sans terminal, depuis le web
 
@@ -480,7 +529,7 @@ Le diagnostic se refait en une commande, et c'est la bonne façon de savoir ce q
 vraiment :
 
 ```bash
-for FN in generate-course generate-flashcards explain-selection youtube-transcript; do
+for FN in generate-course generate-flashcards explain-selection mika-chat youtube-transcript; do
   curl -s -X POST "$SUPABASE_URL/functions/v1/$FN" \
     -H "apikey: $KEY" -H "Authorization: Bearer $KEY" \
     -H "Content-Type: application/json" -d '{}' | head -c 80; echo " ← $FN"
@@ -508,10 +557,11 @@ un client à jour reconstitue le contexte depuis la fiche si le serveur ne l'env
 supabase db push
 ```
 
-`supabase/migrations/` porte deux migrations : l'annuaire des établissements, et **les comptes
-et le stockage des cours**. La seconde crée cinq tables, leurs règles de cloisonnement et le
-déclencheur qui crée un profil à l'inscription. Elle est écrite pour être rejouable : chaque
-objet est créé avec `if not exists` ou remplacé.
+`supabase/migrations/` porte, entre autres, l'annuaire des établissements, **les comptes et le
+stockage des cours** — cinq tables, leurs règles de cloisonnement et le déclencheur qui crée
+un profil à l'inscription —, le compteur d'appels à l'IA, et son plafond Pro par fonction
+(`ai_quota_pro_ceiling`, pour Mika). Elles sont écrites pour être rejouables : chaque objet est
+créé avec `if not exists` ou remplacé.
 
 Pour savoir où en est un projet, sans ouvrir le tableau de bord :
 
@@ -1381,12 +1431,14 @@ plus loin, et **elle se fiche de la date du contrôle** : une carte revue hier a
 intervalle de vingt jours retombera trois semaines après l'examen, au pire moment possible.
 Le mode examen corrige exactement ça.
 
-La page se pousse depuis l'onglet Réviser, où une rangée annonce le prochain examen et son
-compte à rebours. **Cette rangée est toujours là**, même sans un seul cours. Elle
-n'apparaissait qu'une fois qu'il y avait des cartes, au motif que planifier ne mène à rien
-sans elles : c'était confondre une fonctionnalité qui ne s'applique pas encore avec une
-fonctionnalité qui n'existe pas, et une entrée d'accueil qui n'apparaît qu'après un import ne
-s'apprend pas — on ne découvre pas ce qu'on n'a jamais vu.
+L'onglet Réviser annonce le prochain examen et son compte à rebours, dans une rangée qui mène
+au deck concerné. **Cette rangée est toujours là**, même sans un seul examen : elle dit alors
+qu'aucun n'est prévu, et où l'on en pose un. Elle n'apparaissait qu'une fois qu'il y avait
+des cartes, au motif que planifier ne mène à rien sans elles : c'était confondre une
+fonctionnalité qui ne s'applique pas encore avec une fonctionnalité qui n'existe pas, et une
+entrée d'accueil qui n'apparaît qu'après un import ne s'apprend pas — on ne découvre pas ce
+qu'on n'a jamais vu. **Mais on ne crée pas d'épreuve depuis Réviser** : une épreuve se pose
+sur un deck, depuis la page du deck, et la rangée vide ne fait que le dire.
 
 La page sait donc se présenter à vide, et elle distingue les deux situations. Sans cours, elle
 propose d'en importer un et ouvre l'import. Avec des cours mais sans carte, elle renvoie à la

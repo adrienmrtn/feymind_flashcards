@@ -342,15 +342,25 @@ struct ProfileView: View {
         .padding(.top, MicaboSpacing.xs)
     }
 
-    /// **Qui l'on est**, sur une ligne, en tête du panneau.
+    /// **Qui l'on est**, sur une ligne, en tête du panneau : le prénom donné au parcours
+    /// d'accueil, puis le nom d'utilisateur.
     ///
-    /// Le nom d'utilisateur passe devant l'adresse : c'est lui qu'on dicte à un camarade, et
-    /// une adresse électronique affichée sur un écran qu'on montre n'a rien à y faire. Il ne
-    /// va pas dans le sur-titre de l'en-tête, qui met ce qu'il reçoit en capitales : un nom
-    /// d'utilisateur n'est pas un intitulé de section, et « @MARIE-DUPONT » ne se lit pas.
+    /// Le prénom d'abord : c'est ainsi que l'app s'adresse à l'élève partout ailleurs, et
+    /// une page de profil sans son prénom parle de quelqu'un d'autre. Le nom d'utilisateur
+    /// passe devant l'adresse : c'est lui qu'on dicte à un camarade, et une adresse
+    /// électronique affichée sur un écran qu'on montre n'a rien à y faire. Rien de tout ça
+    /// ne va dans le sur-titre de l'en-tête, qui met ce qu'il reçoit en capitales : un nom
+    /// n'est pas un intitulé de section, et « @MARIE-DUPONT » ne se lit pas.
     private var identityLabel: String {
-        if let username = social.username { return Username.display(username) }
-        if let name = auth.user?.label.nilIfBlank { return name }
+        let name = OnboardingPreferences.displayName?.nilIfBlank
+        let identity: String? = {
+            if let username = social.username { return Username.display(username) }
+            if let label = auth.user?.label.nilIfBlank, label != name { return label }
+            return nil
+        }()
+
+        let parts = [name, identity].compactMap { $0 }
+        if !parts.isEmpty { return parts.joined(separator: " · ") }
         if auth.isSignedIn { return i18n.t("app.profile.signedIn") }
         return i18n.t("app.profile.offline")
     }

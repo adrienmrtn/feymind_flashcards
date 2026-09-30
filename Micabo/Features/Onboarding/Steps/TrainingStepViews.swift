@@ -3,8 +3,9 @@ import SwiftUI
 // MARK: - « Envie de t'entraîner sur quelques cartes ? »
 
 /// **La proposition, avant les cartes.** Trois cartes en éventail, la question, « oui »
-/// en toutes lettres, et « passer » en haut à droite pour qui ne veut pas : on ne fait pas
-/// passer un test à quelqu'un qui ne l'a pas demandé.
+/// en toutes lettres. Pas de « passer » ici : l'élève vient de lire un cours, les trois
+/// cartes sont la suite naturelle, et c'est sur les cartes elles-mêmes qu'on peut
+/// s'arrêter, en haut à droite.
 struct TrainPromptStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -12,10 +13,8 @@ struct TrainPromptStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.onb.train.title"),
-            subtitle: i18n.t("ios.onb.train.sub"),
             scrolls: false,
-            expandsContent: true,
-            skip: OnboardingSkip(action: { model.jump(to: .socialProof) })
+            expandsContent: true
         ) {
             VStack(spacing: 0) {
                 Spacer(minLength: 0)
@@ -292,8 +291,10 @@ private struct TrainingCardView: View {
         }
     }
 
-    /// La recto verso : la question, la figure, puis, au toucher, la réponse. Le
-    /// retournement est une rotation sur l'axe vertical ; avec le mouvement réduit, un fondu.
+    /// La recto verso : la question seule, puis, au toucher, la réponse — **et son schéma
+    /// avec elle**. Le schéma est la réponse dessinée ; posé sous la question, il la
+    /// donnait. Le retournement est une rotation sur l'axe vertical ; avec le mouvement
+    /// réduit, un fondu.
     private var flippingFace: some View {
         ZStack {
             surface {
@@ -302,10 +303,6 @@ private struct TrainingCardView: View {
                     eyebrow(kindLabel)
                     FormulaText(source: card.front, size: 22, weight: .semibold, alignment: .center)
                         .fixedSize(horizontal: false, vertical: true)
-                    if let figure = card.figure {
-                        DemoFigureView(figure: figure, tint: OnboardingPalette.accent)
-                            .padding(.top, 4)
-                    }
                     Spacer(minLength: 0)
                 }
             }
@@ -319,9 +316,15 @@ private struct TrainingCardView: View {
                         .fixedSize(horizontal: false, vertical: true)
                     MicaboHairline()
                     ScrollView {
-                        FormulaText(source: card.back, size: 16, color: MicaboColor.inkBody, family: .reading)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .fixedSize(horizontal: false, vertical: true)
+                        VStack(alignment: .leading, spacing: 14) {
+                            FormulaText(source: card.back, size: 16, color: MicaboColor.inkBody, family: .reading)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .fixedSize(horizontal: false, vertical: true)
+
+                            if let figure = card.figure {
+                                DemoFigureView(figure: figure, tint: OnboardingPalette.accent)
+                            }
+                        }
                     }
                     .scrollIndicators(.hidden)
                 }
@@ -468,17 +471,20 @@ private struct TrainingCardView: View {
         .accessibilityHint(i18n.t("ios.onb.train.reveal"))
     }
 
+    /// La phrase est composée en `Text` concaténés, qui ne lisent pas le balisage : chaque
+    /// morceau passe donc par la transposition des formules, sans quoi « $f'$ » s'écrivait
+    /// tel quel, dollars compris.
     private var clozeText: some View {
         let parts = card.front.components(separatedBy: ClozeGap.marker)
         var text = Text("")
         for (index, part) in parts.enumerated() {
             if index > 0 {
-                let filler = isRevealed ? " \(card.back) " : " ……… "
+                let filler = isRevealed ? " \(FormulaRenderer.stripped(card.back)) " : " ……… "
                 text = text + Text(filler)
                     .font(MicaboFont.ui(22, weight: .bold))
                     .foregroundStyle(OnboardingPalette.accent)
             }
-            text = text + Text(part)
+            text = text + Text(FormulaRenderer.stripped(part))
                 .font(MicaboFont.ui(22, weight: .semibold))
                 .foregroundStyle(MicaboColor.ink)
         }
@@ -567,9 +573,10 @@ private struct TrainingCardView: View {
 
 // MARK: - « Bien joué »
 
-/// **Une coche, le prénom, une phrase.** Le seul écran du parcours qui félicite, et il
-/// félicite quelque chose de vrai : l'élève vient de se tester, ce que la plupart ne font
-/// jamais.
+/// **Mika, le prénom, une phrase.** Le seul écran du parcours qui félicite, et il félicite
+/// quelque chose de vrai : l'élève vient de se tester, ce que la plupart ne font jamais.
+/// C'est le blob qui félicite, pas une coche : c'est lui qu'on connaît depuis le
+/// chargement, et une coche est le signe d'une tâche, pas d'une rencontre.
 struct WellDoneStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -585,11 +592,7 @@ struct WellDoneStepView: View {
             VStack(spacing: 0) {
                 Spacer(minLength: 0)
 
-                Image(systemName: "checkmark")
-                    .font(.system(size: 36, weight: .bold))
-                    .foregroundStyle(OnboardingPalette.white)
-                    .frame(width: 96, height: 96)
-                    .background(OnboardingPalette.ink, in: Circle())
+                MikaBlob(size: 132, wobble: 0.16, speed: 0.26)
                     .scaleEffect(hasLanded ? 1 : 0.6)
                     .opacity(hasLanded ? 1 : 0)
                     .accessibilityHidden(true)

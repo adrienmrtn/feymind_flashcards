@@ -226,10 +226,13 @@ struct MicaboDeckTile: View {
                 }
 
                 VStack(alignment: .leading, spacing: 5) {
+                    // **Deux lignes réservées, toujours.** Un titre d'une ligne à côté d'un
+                    // titre de deux faisait deux tuiles de hauteurs différentes sur la même
+                    // rangée, et leurs légendes ne s'alignaient plus.
                     Text(title)
                         .font(MicaboFont.ui(14.5, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
-                        .lineLimit(2)
+                        .lineLimit(2, reservesSpace: true)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
 
@@ -285,10 +288,11 @@ struct MicaboFolderTile: View {
                 .animation(.easeOut(duration: 0.15), value: isTargeted)
 
                 VStack(alignment: .leading, spacing: 5) {
+                    // Deux lignes réservées, comme sur un deck : même hauteur sur la rangée.
                     Text(title)
                         .font(MicaboFont.ui(14.5, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
-                        .lineLimit(2)
+                        .lineLimit(2, reservesSpace: true)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
 
