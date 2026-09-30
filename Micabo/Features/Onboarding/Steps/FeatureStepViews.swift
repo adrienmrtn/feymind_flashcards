@@ -114,10 +114,21 @@ enum OnboardingFeature: Int, CaseIterable, Identifiable {
 struct OnboardingFeatureMockup: View {
     let feature: OnboardingFeature
 
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    /// **La capture dans la langue de l'app**, `OnboardingFeature1-fr` par exemple ; à défaut,
+    /// celle sans suffixe, prise en anglais. Une maquette qui parle une autre langue que la
+    /// page qui la porte se lit comme une capture d'une autre app.
+    private var imageName: String? {
+        let localized = "\(feature.imageName)-\(i18n.locale.rawValue)"
+        if UIImage(named: localized) != nil { return localized }
+        return UIImage(named: feature.imageName) != nil ? feature.imageName : nil
+    }
+
     var body: some View {
         Group {
-            if UIImage(named: feature.imageName) != nil {
-                Image(feature.imageName)
+            if let imageName {
+                Image(imageName)
                     .resizable()
                     .scaledToFit()
                     .padding(.horizontal, MicaboSpacing.xxl)
