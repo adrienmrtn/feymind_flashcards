@@ -221,8 +221,12 @@ struct OnboardingBarsChart: View {
         .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .onAppear {
             // Les barres montent une fois la page posée : pendant le glissement, une
-            // animation dans une animation se lit comme un tremblement.
-            withAnimation(.easeOut(duration: 0.6).delay(OnboardingMotion.slideDuration + 0.1)) { isDrawn = true }
+            // animation dans une animation se lit comme un tremblement. Elles se sentent
+            // partir, et se sentent se poser.
+            let start = OnboardingMotion.slideDuration + 0.1
+            withAnimation(.easeOut(duration: 0.6).delay(start)) { isDrawn = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + start) { Haptics.soft() }
+            DispatchQueue.main.asyncAfter(deadline: .now() + start + 0.55) { Haptics.light() }
         }
         .accessibilityElement(children: .combine)
     }

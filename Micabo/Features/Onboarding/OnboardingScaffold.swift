@@ -257,6 +257,10 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
             }
         }
         .onboardingChromeInset(chromeInset)
+        // Le pied monte au-dessus du clavier sur les écrans qui en prennent un — le prénom,
+        // la recherche d'un pays, le courriel du compte — et reste où il est quand la page
+        // part. Hors du parcours, le modificateur ne fait rien : le système s'en charge.
+        .onboardingKeyboardLift()
         .background(surface.background.ignoresSafeArea(edges: .bottom))
         .environment(\.onboardingSurface, surface)
     }

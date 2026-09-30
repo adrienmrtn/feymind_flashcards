@@ -24,13 +24,16 @@ struct OnboardingFlowView: View {
                 surface.background
                     .ignoresSafeArea()
 
-                ZStack {
+                // **Pas de rognage.** Une page qui glisse sort par le bord de l'écran, qui la
+                // coupe déjà ; rogner la pile à la zone sûre coupait en plus ce que les pages
+                // étendent sous la barre d'état — le bandeau d'un cours s'arrêtait sous elle,
+                // avec une bande blanche au-dessus.
+                ZStack(alignment: .top) {
                     ForEach(pager.pages, id: \.self) { step in
                         page(for: step, size: proxy.size)
                     }
                 }
                 .frame(width: proxy.size.width, height: proxy.size.height)
-                .clipped()
 
                 OnboardingTopBar(
                     progress: model.step.progress,
@@ -43,6 +46,11 @@ struct OnboardingFlowView: View {
                 slide(from: previous, to: next, width: proxy.size.width)
             }
         }
+        // **Le clavier ne redimensionne pas les pages.** Laissé au système, il rétrécissait
+        // la pile à son arrivée et la rallongeait à son départ : la page du prénom changeait
+        // de forme à l'appui, avant même que la suivante ne glisse. Chaque page qui prend
+        // le clavier lève son pied elle-même (`OnboardingKeyboardLift`).
+        .ignoresSafeArea(.keyboard)
         .environment(model)
         .environment(\.onboardingSurface, surface)
         .environment(\.locale, i18n.locale.foundation)

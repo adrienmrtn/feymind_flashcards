@@ -175,6 +175,10 @@ struct CourseBuildingStepView: View {
         .task {
             guard !didStart else { return }
             didStart = true
+            // La jauge ne bouge qu'une fois la page posée : des chiffres qui roulent sur une
+            // page encore en train de glisser se lisent comme un tremblement.
+            try? await Task.sleep(for: .seconds(OnboardingMotion.slideDuration + 0.05))
+            guard !Task.isCancelled else { return }
             if model.isDemoCourse {
                 await playDemo()
             } else {

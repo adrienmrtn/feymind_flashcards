@@ -148,6 +148,8 @@ struct OnboardingReviewCarousel: View {
         .scrollIndicators(.hidden)
         .frame(height: Self.cardHeight)
         .simultaneousGesture(DragGesture(minimumDistance: 8).onChanged { _ in isDriving = false })
+        // Chaque carte qui s'aligne se sent, qu'elle vienne seule ou du doigt.
+        .onChange(of: position) { _, _ in Haptics.selection() }
         .task {
             guard !reduceMotion, reviews.count > 1 else { return }
             while !Task.isCancelled, isDriving {

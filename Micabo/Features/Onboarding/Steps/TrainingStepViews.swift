@@ -628,7 +628,10 @@ struct WellDoneStepView: View {
         .environment(\.onboardingSurface, .canvas)
         .onAppear {
             withAnimation(.timingCurve(0.2, 0.9, 0.3, 1.1, duration: 0.5).delay(0.15)) { hasLanded = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { Haptics.success() }
+            // La coche se pose d'un coup sec ; le bravo, la double vibration du système,
+            // vient une fois qu'elle est là.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { Haptics.rigid() }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { Haptics.success() }
         }
     }
 }

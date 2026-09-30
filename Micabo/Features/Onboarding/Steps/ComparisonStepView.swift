@@ -33,8 +33,11 @@ struct ComparisonStepView: View {
             header
                 .padding(.bottom, 8)
 
+            // Les lignes arrivent l'une après l'autre, et chacune se sent : le tableau se
+            // remplit sous les yeux plutôt que d'être posé d'un bloc.
             ForEach(1...Self.rows, id: \.self) { index in
                 row(index)
+                    .onboardingAppear(index: 4 + index, stagger: Self.rowStagger)
                 if index < Self.rows {
                     Rectangle()
                         .fill(OnboardingPalette.cardStrong)
@@ -46,7 +49,18 @@ struct ComparisonStepView: View {
         .padding(.vertical, 12)
         .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .onboardingAppear(index: 3)
+        .onAppear {
+            for index in 1...Self.rows {
+                DispatchQueue.main.asyncAfter(deadline: .now() + Double(4 + index) * Self.rowStagger) {
+                    Haptics.soft()
+                }
+            }
+        }
     }
+
+    /// L'écart entre deux lignes qui entrent : un peu plus que celui des réponses, pour que
+    /// les six coups se distinguent.
+    private static let rowStagger = 0.07
 
     private var header: some View {
         HStack(spacing: 0) {
