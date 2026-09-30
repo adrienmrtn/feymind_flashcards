@@ -142,10 +142,13 @@ final class MikaTests: XCTestCase {
             .appendingPathComponent("mika-tests-\(UUID().uuidString).json")
         defer { try? FileManager.default.removeItem(at: url) }
 
+        // Des dates à la seconde : le fichier les écrit en ISO 8601, sans les fractions, et
+        // l'égalité compare la date.
+        let at = Date(timeIntervalSince1970: 1_800_000_000)
         var conversation = MikaConversation()
         conversation.messages = [
-            MikaMessage(role: .user, text: "Bonjour"),
-            MikaMessage(role: .mika, text: "Salut !", cardFront: "Q ?", cardBack: "R.", cardAdded: true),
+            MikaMessage(role: .user, text: "Bonjour", createdAt: at),
+            MikaMessage(role: .mika, text: "Salut !", cardFront: "Q ?", cardBack: "R.", cardAdded: true, createdAt: at),
         ]
         conversation.attachment = MikaAttachment(kind: .course, title: "Les dérivées", text: "Le nombre dérivé…", courseID: UUID(), emoji: "📐")
 

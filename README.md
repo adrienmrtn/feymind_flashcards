@@ -85,11 +85,11 @@ quand il y a quelque chose à comparer.
 
 | Bloc | Écrans |
 | --- | --- |
-| Accroche | le splash (logo seul 1,3 s, puis la phrase, « j'ai déjà un compte », Commencer, le menu de langue), le prénom (obligatoire), « Bienvenue, {prénom} » |
-| Quiz | pays (menu, pays de l'appareil pré-choisi), niveau ou filière puis année, matières, ce qui inquiète (plusieurs réponses), objectifs (plusieurs réponses), « on s'en occupe » (deux barres, 36 % contre 80 %), moyenne actuelle, moyenne visée avec sa carte d'écart, temps par jour sur sa courbe, heure de révision (ciel, soleil, lune), rappels (semaine qui se coche, bannière, demande système) |
+| Accroche | le splash (le logo se pose sur un ressort avec une onde derrière lui, 1,45 s, puis monte dans le coin de la page qui arrive autour : la maquette du téléphone — l'image `OnboardingHook`, ou le téléphone dessiné en attendant —, la phrase, sa ligne, « j'ai déjà un compte », Commencer, le menu de langue), le prénom (obligatoire), « Bienvenue, {prénom} » |
+| Quiz | pays (menu, pays de l'appareil pré-choisi), niveau ou filière puis année, matières, ce qui inquiète (plusieurs réponses), objectifs (plusieurs réponses), « on s'en occupe » (deux barres, 36 % contre 80 %, qui montent en deux secondes une fois la page posée, le chiffre comptant avec elles), moyenne actuelle, moyenne visée avec sa carte d'écart, temps par jour sur sa courbe, heure de révision (ciel, soleil, lune), rappels (semaine qui se coche, bannière, demande système) |
 | Mika | le profil se prépare (blob, pourcentage, grille de points, 6,5 s, enchaîne seul), « voyons comment Micabo peut t'aider », cinq écrans de fonctionnalités (maquette, titre, ligne), « voyons ensemble une fiche » |
 | Le cours | connexion (avec « Passer »), les cases de dépôt avec « je n'ai rien pour l'instant » à côté du rond — qui mène à un cours de démonstration à choisir —, Mika écrit le cours, le cours fiché que le rond fait visiter chapitre par chapitre |
-| Les cartes | « envie de t'entraîner ? », trois cartes (recto verso, QCM, texte à trou), « bien joué » |
+| Les cartes | « envie de t'entraîner ? » (sans « Passer » ni sous-titre), trois cartes (recto verso avec son schéma **au dos**, QCM, texte à trou), « bien joué » avec le blob Mika |
 | L'offre | « on a aidé 45 000+ élèves » avec les avis et la demande de note du système, la chronologie de l'essai, la promesse du rappel, le paywall |
 
 ### La navigation
@@ -175,7 +175,7 @@ différentes selon la porte par laquelle on l'a rencontré.
 
 | Ce qui est ouvert | Ce qui s'arrête | Où |
 | --- | --- | --- |
-| Le premier cours importé | Le deuxième | Le « + » de Cours, les états vides de Cours et de Réviser |
+| Le premier cours importé, et la page de chaque deck | Le deuxième import ; les chapitres d'un deck, dès le premier touché | Le « + » de Cours, les états vides de Cours et de Réviser ; le plan d'un deck |
 | Les 70 % de chaque fiche | La fin, floutée et fondue dans le papier | `CourseSheetView` |
 | La génération de cartes, sans limite | — | `GenerateCardsSheet` |
 | Les 5 premières cartes d'une session | La sixième | `StudyView` |
@@ -1431,12 +1431,14 @@ plus loin, et **elle se fiche de la date du contrôle** : une carte revue hier a
 intervalle de vingt jours retombera trois semaines après l'examen, au pire moment possible.
 Le mode examen corrige exactement ça.
 
-La page se pousse depuis l'onglet Réviser, où une rangée annonce le prochain examen et son
-compte à rebours. **Cette rangée est toujours là**, même sans un seul cours. Elle
-n'apparaissait qu'une fois qu'il y avait des cartes, au motif que planifier ne mène à rien
-sans elles : c'était confondre une fonctionnalité qui ne s'applique pas encore avec une
-fonctionnalité qui n'existe pas, et une entrée d'accueil qui n'apparaît qu'après un import ne
-s'apprend pas — on ne découvre pas ce qu'on n'a jamais vu.
+L'onglet Réviser annonce le prochain examen et son compte à rebours, dans une rangée qui mène
+au deck concerné. **Cette rangée est toujours là**, même sans un seul examen : elle dit alors
+qu'aucun n'est prévu, et où l'on en pose un. Elle n'apparaissait qu'une fois qu'il y avait
+des cartes, au motif que planifier ne mène à rien sans elles : c'était confondre une
+fonctionnalité qui ne s'applique pas encore avec une fonctionnalité qui n'existe pas, et une
+entrée d'accueil qui n'apparaît qu'après un import ne s'apprend pas — on ne découvre pas ce
+qu'on n'a jamais vu. **Mais on ne crée pas d'épreuve depuis Réviser** : une épreuve se pose
+sur un deck, depuis la page du deck, et la rangée vide ne fait que le dire.
 
 La page sait donc se présenter à vide, et elle distingue les deux situations. Sans cours, elle
 propose d'en importer un et ouvre l'import. Avec des cours mais sans carte, elle renvoie à la

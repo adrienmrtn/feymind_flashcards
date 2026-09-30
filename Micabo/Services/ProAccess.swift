@@ -12,8 +12,9 @@ enum FreeTier {
     /// abonnement.
     ///
     /// Ce n'est pas zéro, parce que le premier cours se construit à la sortie du parcours
-    /// et fait la démonstration. **Mais il ne se rouvre pas gratuitement** : une fois quitté,
-    /// toucher un cours ouvre le paywall — voir `PaywallTrigger.openCourse`.
+    /// et fait la démonstration. **Sa page se rouvre librement** — le plan, les chapitres,
+    /// la date — mais ses chapitres, eux, sont dans Pro : en toucher un ouvre le paywall,
+    /// voir `PaywallTrigger.openChapter`.
     static let courses = 1
 
     /// La part d'un chapitre qui se lit sans payer, passé le premier.

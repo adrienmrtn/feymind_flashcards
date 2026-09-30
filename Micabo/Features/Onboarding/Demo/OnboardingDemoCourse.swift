@@ -188,7 +188,8 @@ struct DemoCard: Identifiable {
     var hint: String? = nil
     var choices: [String] = []
     var answerIndex: Int = 0
-    /// La figure de la carte recto verso : le schéma qui accompagne la question.
+    /// La figure de la carte recto verso : le schéma qui accompagne **la réponse**, au dos.
+    /// Il dessine ce que la réponse dit ; sous la question, il la donnerait.
     var figure: DemoFigure? = nil
     /// Le rang du chapitre d'où vient la carte.
     var chapter: Int = 0

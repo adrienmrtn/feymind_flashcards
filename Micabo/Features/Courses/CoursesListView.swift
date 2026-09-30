@@ -938,14 +938,11 @@ struct CoursesListView: View {
         pro?.canImportCourse(existingCourses: courses) ?? true
     }
 
-    /// **Toucher un cours, c'est ouvrir le paywall** tant qu'on n'est pas abonné. Le cours
-    /// existe, il est à lui, et il s'est vu une fois à sa construction ; le rouvrir est
-    /// dans Pro. La liste reste visible : on voit ce qu'on a, on paie pour y entrer.
+    /// **Toucher un cours l'ouvre**, abonné ou pas : la page du deck — son plan, ses
+    /// chapitres, sa date — se voit librement. Ce sont les chapitres qui sont dans Pro,
+    /// et c'est en en touchant un que le paywall s'ouvre (`PaywallTrigger.openChapter`) :
+    /// on voit ce qu'on a, on paie pour y entrer.
     private func open(_ course: Course) {
-        guard pro?.isPro ?? true else {
-            paywall = .openCourse
-            return
-        }
         lastOpenedCourseID = course.id
         path.append(course)
     }

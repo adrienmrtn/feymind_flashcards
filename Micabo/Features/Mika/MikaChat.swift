@@ -177,12 +177,13 @@ final class MikaChat {
 
     // MARK: Envoyer
 
-    /// Envoie ce qui est dans le champ, si la porte est ouverte. Rend la porte : c'est l'écran
-    /// qui montre le paywall ou le plafond, pas le modèle.
+    /// Envoie ce qui est dans le champ, si la porte est ouverte. Rend la porte — c'est
+    /// l'écran qui montre le paywall ou le plafond, pas le modèle — ou **rien** quand il n'y
+    /// avait rien à envoyer : un champ vide, ou Mika encore en train de répondre.
     @discardableResult
-    func send(isPro: Bool, level: StudyLevel?, language: ContentLanguage, using service: any AIService) async -> MikaQuota.Gate {
+    func send(isPro: Bool, level: StudyLevel?, language: ContentLanguage, using service: any AIService) async -> MikaQuota.Gate? {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty, !isThinking else { return .allowed }
+        guard !text.isEmpty, !isThinking else { return nil }
 
         let gate = quota.gate(isPro: isPro)
         guard gate == .allowed else {

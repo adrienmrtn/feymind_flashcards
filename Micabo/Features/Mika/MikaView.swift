@@ -460,9 +460,11 @@ struct MikaView: View {
     }
 
     private func send() async {
-        let gate = await chat.send(isPro: isPro, level: level, language: language, using: aiService)
+        guard let gate = await chat.send(isPro: isPro, level: level, language: language, using: aiService) else { return }
         switch gate {
         case .allowed:
+            // Posée **et répondue** : une panne n'est pas une question.
+            guard chat.failure == nil else { return }
             Analytics.track(.mikaAsked, ["pro": .flag(isPro), "attached": .flag(chat.attachment != nil)])
         case .paywall:
             isComposing = false

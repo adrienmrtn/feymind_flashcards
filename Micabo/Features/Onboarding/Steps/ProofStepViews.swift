@@ -177,10 +177,15 @@ struct OnboardingBarsChart: View {
     /// La valeur écrite dans la barre. Sans elle, la hauteur dit tout.
     var showsValues: Bool = true
 
-    /// Le temps que les barres mettent à monter.
-    static let riseDuration = 1.5
+    /// Le temps que les barres mettent à monter : deux secondes, lentement, et le chiffre
+    /// compte avec elles.
+    static let riseDuration = 2.0
+    /// La hauteur d'une barre avant qu'elle ne monte.
+    private static let restingHeight: CGFloat = 12
 
-    @State private var isDrawn = false
+    /// De zéro à un : la part du chemin que les barres ont faite. Une seule valeur animée
+    /// pour la hauteur **et** le chiffre, qui montent donc ensemble.
+    @State private var drawn: CGFloat = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -196,15 +201,21 @@ struct OnboardingBarsChart: View {
                         ZStack(alignment: .bottom) {
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(bar.tint)
-                                .frame(height: isDrawn ? height(for: bar) : 12)
+                                .frame(height: Self.restingHeight + (height(for: bar) - Self.restingHeight) * drawn)
 
                             if showsValues {
-                                Text(bar.valueText ?? "\(bar.value) %")
-                                    .font(MicaboFont.ui(22, weight: .bold))
-                                    .foregroundStyle(bar.valueInk)
-                                    .monospacedDigit()
-                                    .padding(.bottom, 14)
-                                    .opacity(isDrawn ? 1 : 0)
+                                if let text = bar.valueText {
+                                    Text(text)
+                                        .font(MicaboFont.ui(22, weight: .bold))
+                                        .foregroundStyle(bar.valueInk)
+                                        .monospacedDigit()
+                                        .padding(.bottom, 14)
+                                        .opacity(drawn > 0.15 ? 1 : 0)
+                                } else {
+                                    OnboardingCountingPercent(value: Double(bar.value) * Double(drawn), ink: bar.valueInk)
+                                        .padding(.bottom, 14)
+                                        .opacity(drawn > 0.15 ? 1 : 0)
+                                }
                             }
                         }
                         .frame(maxWidth: .infinity)
@@ -223,15 +234,19 @@ struct OnboardingBarsChart: View {
         .padding(20)
         .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .onAppear {
-            // Les barres montent une fois la page posée : pendant le glissement, une
-            // animation dans une animation se lit comme un tremblement. **Elles montent
-            // lentement**, une seconde et demie, vite au départ et de plus en plus posées :
-            // c'est le temps de lire les deux chiffres pendant qu'ils grandissent. Elles se
-            // sentent partir, et se sentent se poser.
-            let start = OnboardingMotion.slideDuration + 0.1
-            withAnimation(.timingCurve(0.2, 0.7, 0.2, 1, duration: Self.riseDuration).delay(start)) { isDrawn = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + start) { Haptics.soft() }
-            DispatchQueue.main.asyncAfter(deadline: .now() + start + Self.riseDuration - 0.1) { Haptics.light() }
+            // **Les barres ne partent qu'une fois le glissement fini**, et pas avant : une
+            // animation dans une animation se lit comme un tremblement. Le départ est donc
+            // posté après la durée du glissement, plutôt que différé dans l'animation elle-même,
+            // pour qu'aucune image de la montée ne tombe pendant que la page arrive. Puis
+            // **deux secondes**, lentement et de plus en plus posées, le chiffre comptant avec
+            // la barre. Elles se sentent partir, et se sentent se poser.
+            DispatchQueue.main.asyncAfter(deadline: .now() + OnboardingMotion.slideDuration + 0.2) {
+                Haptics.soft()
+                withAnimation(.timingCurve(0.35, 0, 0.2, 1, duration: Self.riseDuration)) { drawn = 1 }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + OnboardingMotion.slideDuration + 0.2 + Self.riseDuration - 0.1) {
+                Haptics.light()
+            }
         }
         .accessibilityElement(children: .combine)
     }
@@ -239,5 +254,25 @@ struct OnboardingBarsChart: View {
     private func height(for bar: Bar) -> CGFloat {
         let fraction = CGFloat(bar.value) / CGFloat(max(1, maxValue))
         return max(56, 180 * fraction)
+    }
+}
+
+/// **Un pourcentage qui compte.** La valeur est animable : quand elle va de zéro à
+/// quatre-vingts en deux secondes, le texte passe par tous les nombres entre les deux, au
+/// rythme de la barre qui monte sous lui. Un `Text` ordinaire sauterait de 0 à 80.
+private struct OnboardingCountingPercent: View, Animatable {
+    var value: Double
+    var ink: Color
+
+    var animatableData: Double {
+        get { value }
+        set { value = newValue }
+    }
+
+    var body: some View {
+        Text("\(Int(value.rounded())) %")
+            .font(MicaboFont.ui(22, weight: .bold))
+            .foregroundStyle(ink)
+            .monospacedDigit()
     }
 }
