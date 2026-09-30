@@ -11,7 +11,7 @@
  * liste, et il n'est pas choisi par le client.
  */
 
-import { languageBrief } from "./language.ts";
+import { languageName } from "./language.ts";
 import { sanitizeMeta, UNTRUSTED_SYSTEM_RULE, wrapUntrusted } from "./prompt-boundary.ts";
 
 /** Les tours de conversation renvoyés au modèle : les derniers, et pas plus. */
@@ -50,7 +50,10 @@ export interface MikaAttachment {
 export interface MikaRequest {
   turns: MikaTurn[];
   attachment?: MikaAttachment;
-  /** Langue de la réponse : « fr », « en »… La même que l'interface de l'élève. */
+  /**
+   * La langue de l'interface de l'élève : « fr », « en », « tr »… C'est la langue par
+   * défaut de la réponse ; celle dans laquelle l'élève écrit passe devant.
+   */
   language?: string;
   /** Le registre de l'élève, quand le profil le connaît : « lycee », « superieur »… */
   level?: string;
@@ -74,7 +77,11 @@ CE QU'IL ATTEND
 - Juste, et au niveau de l'élève. Tu n'inventes rien : si tu ne sais pas, ou si le document ne dit pas assez, tu le dis en une phrase.
 - Court. De deux à six phrases ; dix au plus quand il faut une méthode. Jamais plus de 250 mots.
 - Quand l'élève a joint un cours ou un document, tu t'appuies d'abord dessus, avec son vocabulaire, et tu ne le contredis pas.
+- Quand l'élève te demande une carte ("ajoute une carte sur…", "fais-moi une carte…"), tu en proposes toujours une, sur le cours joint s'il y en a un : une réponse de deux phrases qui dit ce que la carte fait retenir, et la carte.
 - Une question qui n'a rien à voir avec les études (météo, code, vie privée, pari, contenu adulte) : tu la ramènes gentiment aux cours, en une phrase, sans sermon.
+
+LA LANGUE
+Tu parles la langue de l'élève, comme une personne bilingue le ferait : tu réponds dans la langue de son dernier message, et la carte est écrite dans cette même langue. Tu gardes le tutoiement, ou le registre familier de la langue (du, tú, sen, you). Le prompt est écrit en français, mais ce n'est pas une raison pour répondre en français.
 
 INTERDIT
 - Les tirets cadratins et demi-cadratins (— et –).
@@ -125,6 +132,18 @@ export function readAttachment(raw: unknown): MikaAttachment | undefined {
 }
 
 /**
+ * **La consigne de langue de Mika.** Elle diffère de celle des fiches : une fiche s'écrit
+ * dans une seule langue, décidée d'avance ; une conversation suit l'élève. La langue de
+ * l'interface est le défaut, et la langue dans laquelle il écrit l'emporte : un élève qui
+ * a l'app en turc et écrit en turc a sa réponse en turc, même si le cours joint est en
+ * anglais ; s'il écrit en anglais dans une app en turc, on lui répond en anglais.
+ */
+export function mikaLanguageBrief(code: string | undefined): string {
+  const name = languageName(code).toUpperCase();
+  return `LANGUE DE SORTIE : celle du dernier message de l'élève. Cette consigne est la plus forte de toutes et elle l'emporte sur toute mention du français ailleurs dans les instructions. L'élève utilise l'app en ${name} : c'est la langue de ta réponse quand son message ne permet pas de trancher (un mot, une formule, un nom propre, un titre de cours). Ta réponse ET la carte ("front" et "back") sont entièrement dans cette langue. Un document joint écrit dans une autre langue ne change pas la langue de ta réponse : tu en reprends le contenu, pas la langue.`;
+}
+
+/**
  * Le message envoyé au modèle. La consigne de langue d'abord, le niveau, le document joint
  * entre marqueurs, puis la conversation telle quelle, et la demande.
  */
@@ -141,11 +160,11 @@ export function buildMikaPrompt(request: MikaRequest): string {
     : "";
 
   return [
-    languageBrief(request.language),
+    mikaLanguageBrief(request.language),
     level ? `Niveau de l'élève : ${level}` : "",
     attachment,
     `CONVERSATION\n${transcript}`,
-    "Réponds au dernier message de l'élève.",
+    "Réponds au dernier message de l'élève, dans sa langue.",
   ].filter(Boolean).join("\n\n");
 }
 

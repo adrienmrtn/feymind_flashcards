@@ -56,7 +56,7 @@ Deno.test("buildMikaPrompt met la langue en tête, le document entre marqueurs, 
   assert(prompt.includes("Élève : C'est quoi une dérivée ?"));
   assert(prompt.includes("Mika : Salut"));
   assert(prompt.indexOf(UNTRUSTED_BEGIN) < prompt.indexOf("CONVERSATION"));
-  assert(prompt.trimEnd().endsWith("Réponds au dernier message de l'élève."));
+  assert(prompt.trimEnd().endsWith("Réponds au dernier message de l'élève, dans sa langue."));
 
   const bare = buildMikaPrompt({ turns: [{ role: "user", text: "Hello" }], language: "en" });
   assert(!bare.includes("Niveau"));
@@ -73,4 +73,14 @@ Deno.test("parseMikaReply refuse une réponse vide et une carte à moitié écri
 
   const full = parseMikaReply({ reply: " Une réponse. ", card: { front: " Q ? ", back: " R. " } });
   assertEquals(full, { reply: "Une réponse.", card: { front: "Q ?", back: "R." } });
+});
+
+Deno.test("buildMikaPrompt suit la langue de l'élève, celle de l'interface par défaut", () => {
+  const prompt = buildMikaPrompt({ turns: [{ role: "user", text: "Türev nedir?" }], language: "tr" });
+  assert(prompt.startsWith("LANGUE DE SORTIE : celle du dernier message de l'élève."));
+  assert(prompt.includes("L'élève utilise l'app en TURC"));
+  assert(!prompt.includes("LANGUE DE SORTIE : FRANÇAIS"));
+
+  const unknown = buildMikaPrompt({ turns: [{ role: "user", text: "?" }], language: "xx" });
+  assert(unknown.includes("L'élève utilise l'app en FRANÇAIS"));
 });
