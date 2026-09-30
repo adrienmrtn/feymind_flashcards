@@ -24,7 +24,7 @@ struct FeatureStepView: View {
                     // La maquette prend les deux tiers : le téléphone se lit, et le titre
                     // descend vers le pouce, juste au-dessus du rond.
                     OnboardingFeatureMockup(feature: feature)
-                        .frame(height: proxy.size.height * 0.68)
+                        .frame(height: proxy.size.height * 0.76)
                         .frame(maxWidth: .infinity)
                         .onboardingAppear(index: 1)
 
@@ -128,33 +128,54 @@ struct OnboardingFeatureMockup: View {
     }
 
     var body: some View {
+        OnboardingFadingPhone(imageName: imageName) {
+            OnboardingPhoneSketch(feature: feature)
+        }
+    }
+}
+
+/// **Un grand téléphone qui se dissout dans le blanc**, la maquette commune aux écrans du
+/// parcours qui en montrent une.
+///
+/// **Réglé sur la largeur, jamais sur la hauteur.** Une image en `scaledToFit` se cale sur
+/// la plus petite des deux dimensions proposées, et c'était la hauteur : le téléphone
+/// rétrécissait pour tenir entier, et restait petit quoi qu'on demande à sa largeur. Ici sa
+/// hauteur découle de sa largeur ; ce qui dépasse le cadre est coupé, et le fondu du bas le
+/// fait disparaître avant le titre.
+struct OnboardingFadingPhone<Fallback: View>: View {
+    var imageName: String?
+    /// La part de la largeur de l'écran que prend le téléphone.
+    var widthRatio: CGFloat = 0.8
+    @ViewBuilder var fallback: () -> Fallback
+
+    /// Largeur sur hauteur des maquettes du catalogue (972 × 2052).
+    private static var aspect: CGFloat { 972.0 / 2052.0 }
+
+    var body: some View {
         GeometryReader { proxy in
+            let width = proxy.size.width * widthRatio
             Group {
                 if let imageName {
-                    // **Réglé sur la largeur, pas sur la hauteur** : le téléphone est grand, et
-                    // son bas, qui dépasse, se perd dans le fondu plutôt que de rétrécir tout
-                    // l'écran pour tenir entier.
                     Image(imageName)
                         .resizable()
-                        .scaledToFit()
-                        .frame(width: proxy.size.width * 0.74)
+                        .frame(width: width, height: width / Self.aspect)
                 } else {
-                    OnboardingPhoneSketch(feature: feature)
-                        .padding(.horizontal, 64)
+                    fallback()
+                        .frame(width: width, height: width / Self.aspect)
                 }
             }
             .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
             .clipped()
         }
         .padding(.top, MicaboSpacing.sm)
-        // Un fondu long : le téléphone se dissout dans le blanc sur le dernier tiers, et
-        // le titre arrive sur du blanc.
+        // Un fondu long : le téléphone se dissout dans le blanc sur sa moitié basse, et le
+        // titre arrive sur du blanc.
         .mask {
             LinearGradient(
                 stops: [
                     .init(color: .black, location: 0),
-                    .init(color: .black, location: 0.55),
-                    .init(color: .clear, location: 0.97),
+                    .init(color: .black, location: 0.45),
+                    .init(color: .clear, location: 0.96),
                 ],
                 startPoint: .top,
                 endPoint: .bottom

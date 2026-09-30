@@ -101,9 +101,10 @@ struct HookLogoStepView: View {
             .padding(.top, MicaboSpacing.sm)
             .onboardingAppear(index: 1)
 
+            // Le téléphone prend toute la place libre : le titre descend vers le bouton.
             OnboardingHookMockup()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.vertical, MicaboSpacing.lg)
+                .padding(.top, MicaboSpacing.md)
                 .onboardingAppear(index: 2)
 
             VStack(spacing: 12) {
@@ -206,7 +207,8 @@ struct HookLogoStepView: View {
 
 // MARK: - La maquette de la première page
 
-/// **L'image du catalogue si elle existe, le téléphone dessiné sinon**, entière, centrée.
+/// **L'image du catalogue si elle existe, le téléphone dessiné sinon**, grande, et fondue
+/// dans le blanc par le bas (`OnboardingFadingPhone`).
 /// L'image s'appelle `OnboardingHook`, et se dépose dans `Assets.xcassets`.
 struct OnboardingHookMockup: View {
     static let imageName = "OnboardingHook"
@@ -222,18 +224,8 @@ struct OnboardingHookMockup: View {
     }
 
     var body: some View {
-        Group {
-            if let imageName {
-                Image(imageName)
-                    .resizable()
-                    .scaledToFit()
-            } else {
-                OnboardingPhoneSketch(feature: .sheets)
-                    .aspectRatio(0.49, contentMode: .fit)
-            }
+        OnboardingFadingPhone(imageName: imageName) {
+            OnboardingPhoneSketch(feature: .sheets)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.horizontal, 72)
-        .accessibilityHidden(true)
     }
 }
