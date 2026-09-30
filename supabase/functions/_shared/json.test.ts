@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { closeOpenStructures, parseModelJSON, repairModelJSON } from "./json.ts";
+import {
+  closeOpenStructures,
+  describeModelOutput,
+  parseModelJSON,
+  repairModelJSON,
+} from "./json.ts";
 
 describe("parseModelJSON", () => {
   it("lit un JSON déjà valide", () => {
@@ -177,5 +182,33 @@ describe("l'antislash du LaTeX", () => {
     );
     assert.equal(rendu.a, "\\frac{1}{2}");
     assert.equal(rendu.b, "café");
+  });
+});
+
+describe("describeModelOutput", () => {
+  it("dit qu'une sortie ouvre un tableau sans le refermer, sans la recopier", () => {
+    const truncated = `[{"front": "La photosynthèse", "back": "Elle a lieu dans les chlo`;
+    const shape = describeModelOutput(truncated);
+    assert.equal(shape.characters, truncated.length);
+    assert.equal(shape.starts, "[");
+    assert.equal(shape.ends, "o");
+    assert.equal(shape.fenced, false);
+    // Rien du texte de la carte ne ressort, hormis ces deux caractères.
+    assert.ok(!JSON.stringify(shape).includes("photosynthèse"));
+  });
+
+  it("repère une réponse entre balises et la position où la lecture s'arrête", () => {
+    let failure: unknown;
+    try {
+      JSON.parse(`{"a": 1,, "b": 2}`);
+    } catch (error) {
+      failure = error;
+    }
+    const shape = describeModelOutput("```json\n{}\n```", failure);
+    assert.equal(shape.fenced, true);
+    assert.equal(shape.starts, "`");
+    // Selon le moteur, JSON.parse donne la position ou ne la donne pas : jamais autre chose
+    // qu'un nombre ou `null`.
+    assert.ok(shape.position === null || Number.isInteger(shape.position));
   });
 });

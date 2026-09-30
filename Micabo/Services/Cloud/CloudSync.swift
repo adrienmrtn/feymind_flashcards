@@ -47,6 +47,32 @@ final class CloudSync {
     }
 
     private static let watermarkKey = "micabo.cloud.lastPulledAt"
+
+    /// **Les cours dont les cartes ne sont pas montées**, retentés en entier au passage
+    /// suivant.
+    ///
+    /// Le repère avance même quand un cours est refusé, et c'est voulu : un seul cours
+    /// bloqué ne doit pas faire renvoyer à chaque ouverture tout ce qui a changé ailleurs.
+    /// Mais le passage suivant ne lit que ce qui a changé **depuis** le repère, et les cartes
+    /// refusées, elles, n'avaient pas changé : elles ne remontaient jamais. Le commentaire
+    /// promettait que « le prochain passage retentera » ; c'est cette liste qui le tient.
+    private var pendingCourseIDs: Set<UUID> {
+        get {
+            Set((UserDefaults.standard.stringArray(forKey: Self.pendingCoursesKey) ?? [])
+                .compactMap(UUID.init(uuidString:)))
+        }
+        set { UserDefaults.standard.set(newValue.map(\.uuidString), forKey: Self.pendingCoursesKey) }
+    }
+
+    private static let pendingCoursesKey = "micabo.cloud.pendingCourses"
+
+    /// **Une montée complète, une fois par appareil.** Jusqu'au 30 septembre 2026, un lot de
+    /// cartes aux clés inégales était refusé en entier (voir `SupabaseDatabase.uniformBatches`)
+    /// et le repère avançait quand même : ces cartes-là, et l'historique qui en dépend,
+    /// manquent au serveur. Le premier passage après la mise à jour renvoie donc tout, une
+    /// fois. Monter ce numéro refait un rattrapage.
+    private static let repairKey = "micabo.cloud.repairedPushVersion"
+    private static let repairVersion = 1
     /// L'empreinte du profil tel qu'il est monté la dernière fois. Voir `ProfileRecord.signature`.
     private static let profileSignatureKey = "micabo.cloud.profileSignature"
 
@@ -72,6 +98,7 @@ final class CloudSync {
     func forget() {
         UserDefaults.standard.removeObject(forKey: Self.watermarkKey)
         UserDefaults.standard.removeObject(forKey: Self.profileSignatureKey)
+        UserDefaults.standard.removeObject(forKey: Self.pendingCoursesKey)
         CloudTombstones.removeAll()
         state = .idle
     }
@@ -114,10 +141,14 @@ final class CloudSync {
         // Relire cinq minutes de recouvrement rend un léger décalage inoffensif ; les
         // identifiants et `updated_at` rendent cette relecture idempotente.
         let pullSince = since?.addingTimeInterval(-5 * 60)
+        let repaired = UserDefaults.standard.integer(forKey: Self.repairKey) >= Self.repairVersion
         do {
             try await pull(context: context, since: pullSince)
-            try await push(context: context, since: since)
+            try await push(context: context, since: repaired ? since : nil)
             lastSyncedAt = checkpoint
+            // Fait même si un cours a encore été refusé : il est dans `pendingCourseIDs`, et
+            // c'est par là qu'il sera retenté, sans refaire toute la montée.
+            UserDefaults.standard.set(Self.repairVersion, forKey: Self.repairKey)
             epoch += 1
             LibraryCensus.forget()
             // Un cours dont les cartes ont été refusées ne bloque plus le reste, mais il ne
@@ -182,17 +213,36 @@ final class CloudSync {
         // Les cartes changent indépendamment de leur cours : noter une carte ne touche pas
         // `Course.updatedAt`. Il faut donc les lire directement, pas seulement sous les cours
         // retenus ci-dessus.
-        let cards = try fetchChangedCards(in: context, since: since)
-            .filter {
-                !CloudTombstones.contains(CloudTable.flashcards, id: $0.id)
-            }
-        try await pushCards(cards, userID: userID)
+        var cards = try fetchChangedCards(in: context, since: since)
+        var logs = try fetchChangedLogs(in: context, since: since)
+
+        // Les cours refusés à un passage précédent remontent en entier : leurs cartes, et
+        // l'historique de ces cartes, qu'une clé étrangère avait refusé faute de carte.
+        let retried = try retriedCourses(in: context)
+        if !retried.isEmpty {
+            let changedCards = Set(cards.map(\.id))
+            let changedLogs = Set(logs.map(\.id))
+            let retriedCards = retried.flatMap(\.cards)
+            cards += retriedCards.filter { !changedCards.contains($0.id) }
+            logs += retriedCards.flatMap { $0.logs ?? [] }.filter { !changedLogs.contains($0.id) }
+        }
+
+        cards = cards.filter { !CloudTombstones.contains(CloudTable.flashcards, id: $0.id) }
+        let refused = try await pushCards(cards, userID: userID)
 
         // L'historique est en ajout seul. Renvoyer les milliers d'anciennes lignes à chaque
         // ouverture ne les dupliquait pas, mais faisait encoder et transférer tout le passé
         // pour rien.
-        let logs = try fetchChangedLogs(in: context, since: since)
-        try await database.upsert(logs.map { record(for: $0, userID: userID) }, into: CloudTable.reviewLogs)
+        //
+        // Celui des cours refusés à l'instant attend leurs cartes : il pointerait vers des
+        // cartes que le serveur n'a pas, et la clé étrangère refuserait le lot.
+        await pushLogs(
+            logs.filter { log in
+                guard let courseID = log.card?.course?.id else { return true }
+                return !refused.contains(courseID)
+            },
+            userID: userID
+        )
 
         let exams = try fetchChangedExams(in: context, since: since)
             .filter {
@@ -219,8 +269,9 @@ final class CloudSync {
     /// un autre compte). Les cartes partent ensuite **par cours**, pour qu'un cours refusé
     /// n'entraîne que les siennes. Et un refus ne coupe pas la montée : les autres tables
     /// suivent, et le refus est dit à la fin, dans les Réglages, au lieu d'être avalé.
-    private func pushCards(_ cards: [Flashcard], userID: UUID) async throws {
-        guard !cards.isEmpty else { return }
+    @discardableResult
+    private func pushCards(_ cards: [Flashcard], userID: UUID) async throws -> Set<UUID> {
+        guard !cards.isEmpty else { return [] }
         let mine = URLQueryItem(name: "user_id", value: "eq.\(userID.uuidString.lowercased())")
         let known = Set(
             try await database.rows(IDRow.self, from: CloudTable.courses, select: "id", filters: [mine], limit: 5000)
@@ -235,17 +286,68 @@ final class CloudSync {
             groups[courseID, default: []].append(card)
         }
 
+        var pending = pendingCourseIDs
+        var refused: Set<UUID> = []
         for (courseID, group) in groups {
             guard let course = group.first?.course else { continue }
-            if CloudTombstones.contains(CloudTable.courses, id: courseID) { continue }
+            if CloudTombstones.contains(CloudTable.courses, id: courseID) {
+                pending.remove(courseID)
+                continue
+            }
             do {
                 if !known.contains(courseID) {
                     try await database.upsert([record(for: course, userID: userID)], into: CloudTable.courses)
                 }
                 try await database.upsert(group.map { record(for: $0, userID: userID) }, into: CloudTable.flashcards)
+                pending.remove(courseID)
             } catch {
                 refusedCourses.append(course.title)
+                refused.insert(courseID)
+                pending.insert(courseID)
             }
+        }
+        pendingCourseIDs = pending
+        return refused
+    }
+
+    /// Les cours à retenter qui existent encore ici. Un cours effacé depuis, ou vidé de ses
+    /// cartes, n'a plus rien à monter : il sort de la liste au lieu d'y rester pour toujours.
+    private func retriedCourses(in context: ModelContext) throws -> [Course] {
+        let pending = pendingCourseIDs
+        guard !pending.isEmpty else { return [] }
+        let found = try keyedCourses(in: context, matching: Array(pending), loadAll: false)
+        let alive = found.values.filter {
+            !$0.cards.isEmpty && !CloudTombstones.contains(CloudTable.courses, id: $0.id)
+        }
+        pendingCourseIDs = Set(alive.map(\.id))
+        return alive
+    }
+
+    /// **L'historique ne fait plus tomber la synchro.**
+    ///
+    /// Une ligne d'historique dont la carte manque au serveur est refusée par la clé
+    /// étrangère (`review_logs_card_id_fkey`, un 409), et le lot entier avec elle. Cette
+    /// erreur remontait jusqu'à `sync` : les examens et les journées fermées, envoyés après,
+    /// ne partaient plus, et la même panne revenait à chaque ouverture - 7 refus en un jour
+    /// le 29 septembre 2026. Un lot refusé est désormais renvoyé cours par cours ; ce qui
+    /// reste refusé met son cours en attente, et remontera avec ses cartes.
+    private func pushLogs(_ logs: [ReviewLog], userID: UUID) async {
+        guard !logs.isEmpty else { return }
+        do {
+            try await database.upsert(logs.map { record(for: $0, userID: userID) }, into: CloudTable.reviewLogs)
+        } catch {
+            var pending = pendingCourseIDs
+            for (courseID, group) in Dictionary(grouping: logs, by: { $0.card?.course?.id }) {
+                do {
+                    try await database.upsert(
+                        group.map { record(for: $0, userID: userID) },
+                        into: CloudTable.reviewLogs
+                    )
+                } catch {
+                    if let courseID { pending.insert(courseID) }
+                }
+            }
+            pendingCourseIDs = pending
         }
     }
 

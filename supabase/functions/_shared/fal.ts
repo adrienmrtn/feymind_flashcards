@@ -12,7 +12,7 @@
 
 import { checkCircuit, circuitIsOpen, recordFailure, recordSuccess } from "./circuit.ts";
 import { callGemini, readGeminiKey, upstreamReason } from "./gemini.ts";
-import { parseModelJSON } from "./json.ts";
+import { describeModelOutput, parseModelJSON } from "./json.ts";
 import { FalError } from "./model-error.ts";
 import { DEFAULT_MODEL, resolveModel } from "./models.ts";
 import { type ModelUsage, noteUsage, readUsage } from "./usage.ts";
@@ -69,7 +69,7 @@ export async function callModel(options: CallOptions): Promise<string> {
     } catch (error) {
       if (geminiKey && worthAnotherProvider(error)) {
         const status = error instanceof FalError ? error.status : 502;
-        console.error(JSON.stringify({ fal: "fallback_gemini", status }));
+        console.warn(JSON.stringify({ fal: "fallback_gemini", status }));
         return await callGemini(options, geminiKey);
       }
       throw error;
@@ -77,7 +77,7 @@ export async function callModel(options: CallOptions): Promise<string> {
   }
 
   if (geminiKey) {
-    if (falKey) console.error(JSON.stringify({ fal: "circuit_open_gemini" }));
+    if (falKey) console.warn(JSON.stringify({ fal: "circuit_open_gemini" }));
     return await callGemini(options, geminiKey);
   }
 
@@ -106,7 +106,7 @@ async function callFal(options: CallOptions, key: string): Promise<string> {
     if (attempt > 0) {
       const wait = delays[attempt - 1] ?? 0;
       if (wait > 0) await sleep(wait);
-      console.error(JSON.stringify({ fal: "retry", attempt: attempt + 1, model }));
+      console.warn(JSON.stringify({ fal: "retry", attempt: attempt + 1, model }));
     }
 
     try {
@@ -239,6 +239,12 @@ export function extractJSON<T>(output: string): T {
     return parseModelJSON<T>(output);
   } catch (error) {
     const detail = error instanceof Error ? error.message : "";
+    // La forme de la sortie, pas son texte : voir `describeModelOutput`. C'est ce qui
+    // manquait pour distinguer une réponse tronquée d'une réponse en prose.
+    console.error(JSON.stringify({
+      json: detail.includes("n'a pas renvoyé de JSON") ? "absent" : "illisible",
+      ...describeModelOutput(output, error),
+    }));
     if (detail.includes("n'a pas renvoyé de JSON")) {
       throw new FalError("Le modèle n'a pas renvoyé de JSON.", 502);
     }
@@ -288,5 +294,12 @@ export function errorResponse(error: unknown): Response {
     ? (error as { status: number }).status
     : 500;
   const message = error instanceof Error ? error.message : "Erreur inconnue.";
+  // **Toute réponse 5xx laisse sa raison.** Les journaux ne gardaient que le statut : un
+  // 502 de `generate-flashcards` ne disait pas s'il venait du fournisseur, d'un JSON
+  // illisible ou d'un lot sans carte exploitable. Les 4xx sont des refus attendus (quota,
+  // cours trop court) et restent silencieux.
+  if (status >= 500) {
+    console.error(JSON.stringify({ reponse: status, raison: message.slice(0, 200) }));
+  }
   return jsonResponse({ error: message }, status);
 }

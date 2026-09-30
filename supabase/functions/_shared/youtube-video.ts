@@ -128,14 +128,14 @@ export async function readTranscript(
       // Sans clé Gemini il n'y a pas de second chemin : le refus des sous-titres est
       // alors la réponse, avec son propre code.
       if (!canReadVideo()) throw error;
-      console.error(JSON.stringify({
+      console.warn(JSON.stringify({
         youtube: "sous_titres_refuses",
         code: error instanceof YouTubeError ? error.code : "inconnu",
         pistes: captions.length,
       }));
     }
   } else {
-    console.error(JSON.stringify({ youtube: "aucune_piste", pistes: 0 }));
+    console.warn(JSON.stringify({ youtube: "aucune_piste", pistes: 0 }));
   }
 
   const reading = await readVideoWithGemini(videoId);

@@ -109,9 +109,13 @@ export function readUsage(
  *
  * La ligne part dans les journaux même sans compteur : une fonction qui ne s'intéresse pas à
  * sa facture ne doit pas être la seule dont on ne sache rien.
+ *
+ * **En `log`, pas en `error`.** Une ligne par appel au modèle, écrite au niveau erreur,
+ * faisait de chaque génération réussie une erreur dans le tableau de bord : les vraies
+ * pannes s'y noyaient sous des centaines de décomptes.
  */
 export function noteUsage(usage: ModelUsage, meter?: ModelUsage[]): void {
-  console.error(JSON.stringify({ usage }));
+  console.log(JSON.stringify({ usage }));
   meter?.push(usage);
 }
 

@@ -259,6 +259,50 @@ function selectByQuota(cards: OutputCard[], quota: Record<Format, number>): Outp
   return kept.concat(leftovers.slice(0, Math.max(0, total - kept.length)));
 }
 
+/** Deux écritures au plus : la seconde rattrape une sortie illisible, pas davantage. */
+const DRAFT_ATTEMPTS = 2;
+
+/**
+ * Les cartes d'une sortie du modèle, ou un 502 qui dit pourquoi il n'y en a pas.
+ *
+ * Quand rien n'est exploitable, la forme de la réponse part dans les journaux - combien
+ * d'éléments, sous quelle clé, combien avaient un recto et un verso -, jamais le texte des
+ * cartes : c'est ce qui dira si le modèle a nommé son tableau autrement ou vidé ses champs.
+ */
+function draftCards(
+  output: string,
+  quota: Record<Format, number>,
+  allowedKinds: Set<string>,
+  chapterCount: number,
+): OutputCard[] {
+  const parsed = extractJSON<GeneratedCard[] | { cards?: GeneratedCard[] }>(output);
+  const rawCards = Array.isArray(parsed) ? parsed : parsed.cards ?? [];
+
+  const withSides = deepStripEmDashes(Array.isArray(rawCards) ? rawCards : [])
+    .filter((card) => typeof card?.front === "string" && typeof card?.back === "string");
+  const normalized = withSides
+    .map((card) => normalizeCard(card, allowedKinds, chapterCount))
+    .filter((card) => card.front.length > 0 && card.back.length > 0);
+
+  const cards = selectByQuota(normalized, quota);
+
+  if (cards.length === 0) {
+    console.error(JSON.stringify({
+      cartes: "aucune_exploitable",
+      forme: Array.isArray(parsed) ? "tableau" : typeof parsed,
+      cles: parsed && typeof parsed === "object" && !Array.isArray(parsed)
+        ? Object.keys(parsed).slice(0, 6)
+        : [],
+      elements: Array.isArray(rawCards) ? rawCards.length : 0,
+      rectoVerso: withSides.length,
+      caracteres: output.length,
+    }));
+    throw new FalError("Le modèle n'a produit aucune carte exploitable.", 502);
+  }
+
+  return cards;
+}
+
 Deno.serve((request: Request) =>
   withCors(request, async () => {
     try {
@@ -322,25 +366,30 @@ Deno.serve((request: Request) =>
         wrapUntrusted("CONTENU DU COURS", context),
       ].filter(Boolean);
 
-      const output = await callModel({
-        prompt: sections.join("\n\n"),
-        systemPrompt: SYSTEM_PROMPT,
-        temperature: 0.5,
-        maxTokens: 8_192,
-      });
-
-      const parsed = extractJSON<GeneratedCard[] | { cards?: GeneratedCard[] }>(output);
-      const rawCards = Array.isArray(parsed) ? parsed : parsed.cards ?? [];
-
-      const normalized = deepStripEmDashes(rawCards)
-        .filter((card) => typeof card?.front === "string" && typeof card?.back === "string")
-        .map((card) => normalizeCard(card, allowedKinds, chapterTitles.length))
-        .filter((card) => card.front.length > 0 && card.back.length > 0);
-
-      const cards = selectByQuota(normalized, quota);
-
-      if (cards.length === 0) {
-        throw new FalError("Le modèle n'a produit aucune carte exploitable.", 502);
+      // **Une seconde écriture quand la première ne se lit pas.** Le fournisseur a répondu,
+      // mais sa sortie n'est pas un JSON lisible ou ne donne aucune carte : c'était le 502
+      // derrière une partie des decks arrivés vides, et le bouton « Écrire les cartes »,
+      // pressé ensuite à la main, réussissait à chaque fois. Le même essai, fait ici, évite
+      // à l'élève de le découvrir. Une panne du fournisseur, elle, ne repasse pas par là :
+      // `callModel` a déjà ses propres essais et son repli.
+      let cards: OutputCard[] = [];
+      for (let attempt = 1; cards.length === 0; attempt += 1) {
+        const output = await callModel({
+          prompt: sections.join("\n\n"),
+          systemPrompt: SYSTEM_PROMPT,
+          temperature: 0.5,
+          maxTokens: 8_192,
+        });
+        try {
+          cards = draftCards(output, quota, allowedKinds, chapterTitles.length);
+        } catch (error) {
+          if (!(error instanceof FalError) || attempt >= DRAFT_ATTEMPTS) throw error;
+          console.warn(JSON.stringify({
+            cartes: "nouvel_essai",
+            essai: attempt + 1,
+            raison: error.message,
+          }));
+        }
       }
 
       return jsonResponse({ cards });

@@ -65,7 +65,7 @@ export async function callGemini(options: {
     // alias coûte un appel et rattrape le refus le plus fréquent, la file d'attente.
     if (!(error instanceof FalError) || !worthTheOtherModel(error.upstreamStatus ?? 0)) throw error;
     const second = otherGeminiModel(first);
-    console.error(JSON.stringify({ gemini: "autre_modele", model: second }));
+    console.warn(JSON.stringify({ gemini: "autre_modele", model: second }));
     return await callGeminiOnce(options, key, second);
   }
 }

@@ -361,6 +361,49 @@ final class CloudRecordTests: XCTestCase {
         XCTAssertFalse(json.contains("image_path"))
     }
 
+    /// **Le 400 du 29 septembre.** Une carte avec indice et une carte sans ne portent pas les
+    /// mêmes clés, et PostgREST refuse en entier un tableau aux clés inégales
+    /// (`PGRST102 All object keys must match`). Elles partent donc en deux envois, chacun
+    /// uniforme, dans l'ordre où elles apparaissent.
+    func testCardsWithAndWithoutHintLeaveInUniformBatches() throws {
+        let card = """
+        {
+          "id": "%@",
+          "user_id": "7F9C2B41-3D5E-4A6F-8B12-9C0D1E2F3A4B",
+          "front": "Q", "back": "A", %@
+          "position": 0, "kind": "basic", "choices": [], "correct_choice_index": 0,
+          "mask_x": 0, "mask_y": 0, "mask_width": 0, "mask_height": 0,
+          "is_reversed": false, "is_suspended": false, "state": "new",
+          "due_date": "2026-08-28T10:00:00Z", "interval_days": 0, "ease_factor": 2.5,
+          "repetitions": 0, "lapses": 0, "step_index": 0,
+          "created_at": "2026-08-28T10:00:00Z", "updated_at": "2026-08-28T10:00:00Z"
+        }
+        """
+        let hinted = try decodeCard(String(format: card, UUID().uuidString, "\"hint\": \"Un indice\","))
+        let plain = try decodeCard(String(format: card, UUID().uuidString, ""))
+        let other = try decodeCard(String(format: card, UUID().uuidString, "\"hint\": \"Un autre\","))
+
+        let database = SupabaseDatabase(accessToken: { nil })
+        let batches = try database.uniformBatches([hinted, plain, other])
+
+        XCTAssertEqual(batches.count, 2)
+        let rows = try batches.map { try XCTUnwrap(JSONSerialization.jsonObject(with: $0) as? [[String: Any]]) }
+        XCTAssertEqual(rows.map(\.count), [2, 1], "Les cartes à indice ensemble, d'abord")
+        for batch in rows {
+            let keys = batch.map { Set($0.keys) }
+            XCTAssertEqual(Set(keys).count, 1, "Un envoi dont les lignes n'ont pas les mêmes clés serait refusé")
+        }
+        XCTAssertTrue(rows[0].allSatisfy { $0["hint"] != nil })
+        XCTAssertTrue(rows[1].allSatisfy { $0["hint"] == nil })
+    }
+
+    /// Des lignes toutes pareilles partent en un seul envoi, et rien ne part pour rien.
+    func testUniformRowsStayInOneBatch() throws {
+        let database = SupabaseDatabase(accessToken: { nil })
+        XCTAssertEqual(try database.uniformBatches([["a": 1], ["a": 2], ["a": 3]]).count, 1)
+        XCTAssertTrue(try database.uniformBatches([[String: Int]]()).isEmpty)
+    }
+
     func testAnOcclusionImageTravelsAsADataURL() {
         let bytes = Data([0xFF, 0xD8, 0xFF, 0x01, 0x02])
         XCTAssertEqual(CloudImage.data(from: CloudImage.dataURL(from: bytes)), bytes)
