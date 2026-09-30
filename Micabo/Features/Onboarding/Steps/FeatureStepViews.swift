@@ -21,8 +21,10 @@ struct FeatureStepView: View {
         VStack(spacing: 0) {
             GeometryReader { proxy in
                 VStack(spacing: 0) {
+                    // La maquette prend les deux tiers : le téléphone se lit, et le titre
+                    // descend vers le pouce, juste au-dessus du rond.
                     OnboardingFeatureMockup(feature: feature)
-                        .frame(height: proxy.size.height * 0.56)
+                        .frame(height: proxy.size.height * 0.68)
                         .frame(maxWidth: .infinity)
                         .onboardingAppear(index: 1)
 
@@ -45,7 +47,7 @@ struct FeatureStepView: View {
                             .onboardingAppear(index: 3)
                     }
                     .padding(.horizontal, MicaboSpacing.xl)
-                    .padding(.top, MicaboSpacing.lg)
+                    .padding(.top, MicaboSpacing.xs)
 
                     Spacer(minLength: 0)
                 }
@@ -126,25 +128,33 @@ struct OnboardingFeatureMockup: View {
     }
 
     var body: some View {
-        Group {
-            if let imageName {
-                Image(imageName)
-                    .resizable()
-                    .scaledToFit()
-                    .padding(.horizontal, MicaboSpacing.xxl)
-            } else {
-                OnboardingPhoneSketch(feature: feature)
-                    .padding(.horizontal, 64)
+        GeometryReader { proxy in
+            Group {
+                if let imageName {
+                    // **Réglé sur la largeur, pas sur la hauteur** : le téléphone est grand, et
+                    // son bas, qui dépasse, se perd dans le fondu plutôt que de rétrécir tout
+                    // l'écran pour tenir entier.
+                    Image(imageName)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: proxy.size.width * 0.74)
+                } else {
+                    OnboardingPhoneSketch(feature: feature)
+                        .padding(.horizontal, 64)
+                }
             }
+            .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
+            .clipped()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .padding(.top, MicaboSpacing.md)
+        .padding(.top, MicaboSpacing.sm)
+        // Un fondu long : le téléphone se dissout dans le blanc sur le dernier tiers, et
+        // le titre arrive sur du blanc.
         .mask {
             LinearGradient(
                 stops: [
                     .init(color: .black, location: 0),
-                    .init(color: .black, location: 0.72),
-                    .init(color: .clear, location: 1),
+                    .init(color: .black, location: 0.55),
+                    .init(color: .clear, location: 0.97),
                 ],
                 startPoint: .top,
                 endPoint: .bottom
