@@ -52,6 +52,30 @@ final class SocialService {
 
     var isReady: Bool { auth.isSignedIn && AppConfig.isConfigured }
 
+    #if DEBUG
+    /// Vrai quand le cercle vient de `DebugSocial` : les rechargements le laissent en place,
+    /// sinon le premier passage sans compte l'effacerait.
+    private(set) var hasDebugFakes = false
+
+    /// Pose de faux amis et un faux classement, sans un appel au serveur.
+    func debugInstall(username: String, friends: [Person], incoming: [Person], ranking: [WeekReviewRanking.Row]) {
+        hasDebugFakes = true
+        self.username = username
+        self.friends = friends
+        self.incoming = incoming
+        outgoing = []
+        weekRanking = ranking
+        failure = nil
+    }
+
+    func debugClear() {
+        hasDebugFakes = false
+        reset()
+    }
+    #else
+    var hasDebugFakes: Bool { false }
+    #endif
+
     private let auth: AuthController
     private let database: SupabaseDatabase
 
@@ -65,6 +89,7 @@ final class SocialService {
     /// Relit le nom d'utilisateur et les amitiés. Deux requêtes, et une troisième pour mettre
     /// des noms sur les identifiants : l'annuaire est une table à part, donc pas de jointure.
     func refresh() async {
+        guard !hasDebugFakes else { return }
         guard isReady, let me = auth.user?.id else {
             reset()
             return
@@ -108,6 +133,7 @@ final class SocialService {
     /// le rappelle en s'ouvrant : une session qui vient de se terminer doit
     /// bouger le chiffre tout de suite.
     func refreshWeekRanking() async {
+        guard !hasDebugFakes else { return }
         guard isReady, let me = auth.user?.id else {
             weekRanking = []
             return

@@ -85,6 +85,9 @@ struct MicaboApp: App {
                     // Dans sa propre tâche : l'extraction du PDF n'a aucune raison de
                     // retarder la restauration de la session, qui suit juste en dessous.
                     Task { await DebugSampleCourse.seedIfNeeded(in: container.mainContext) }
+                    // Six cours fichés et un compte qui a l'air actif, sur le téléphone seulement.
+                    // Voir `DebugCourseCatalog`.
+                    DebugCourseCatalog.seedIfNeeded(in: container.mainContext, social: social)
                     #endif
                     await auth.restore()
                     // L'identité RevenueCat **avant** de lire le droit, et avant tout achat :

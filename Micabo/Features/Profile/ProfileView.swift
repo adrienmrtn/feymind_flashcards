@@ -752,7 +752,7 @@ struct ProfileView: View {
                     subtitle: friendsSubtitle,
                     accessory: friendsAccessory
                 ) {
-                    guard auth.isSignedIn else {
+                    guard auth.isSignedIn || social.hasDebugFakes else {
                         showSettings = true
                         return
                     }
@@ -763,7 +763,7 @@ struct ProfileView: View {
     }
 
     private var friendsSubtitle: String {
-        guard auth.isSignedIn else { return i18n.t("app.friends.needAccount") }
+        guard auth.isSignedIn || social.hasDebugFakes else { return i18n.t("app.friends.needAccount") }
         if !social.friends.isEmpty {
             return i18n.t("app.friends.friendCount", ["count": "\(social.friends.count)"])
         }
@@ -771,7 +771,7 @@ struct ProfileView: View {
     }
 
     private var friendsAccessory: MicaboRowAccessory {
-        guard auth.isSignedIn else { return .chevron }
+        guard auth.isSignedIn || social.hasDebugFakes else { return .chevron }
         let pending = social.pendingCount
         guard pending > 0 else { return .chevron }
         return .badge("\(pending)", .accent)
