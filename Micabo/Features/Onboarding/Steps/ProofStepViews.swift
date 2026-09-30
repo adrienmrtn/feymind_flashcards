@@ -177,6 +177,9 @@ struct OnboardingBarsChart: View {
     /// La valeur écrite dans la barre. Sans elle, la hauteur dit tout.
     var showsValues: Bool = true
 
+    /// Le temps que les barres mettent à monter.
+    static let riseDuration = 1.5
+
     @State private var isDrawn = false
 
     var body: some View {
@@ -221,12 +224,14 @@ struct OnboardingBarsChart: View {
         .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .onAppear {
             // Les barres montent une fois la page posée : pendant le glissement, une
-            // animation dans une animation se lit comme un tremblement. Elles se sentent
-            // partir, et se sentent se poser.
+            // animation dans une animation se lit comme un tremblement. **Elles montent
+            // lentement**, une seconde et demie, vite au départ et de plus en plus posées :
+            // c'est le temps de lire les deux chiffres pendant qu'ils grandissent. Elles se
+            // sentent partir, et se sentent se poser.
             let start = OnboardingMotion.slideDuration + 0.1
-            withAnimation(.easeOut(duration: 0.6).delay(start)) { isDrawn = true }
+            withAnimation(.timingCurve(0.2, 0.7, 0.2, 1, duration: Self.riseDuration).delay(start)) { isDrawn = true }
             DispatchQueue.main.asyncAfter(deadline: .now() + start) { Haptics.soft() }
-            DispatchQueue.main.asyncAfter(deadline: .now() + start + 0.55) { Haptics.light() }
+            DispatchQueue.main.asyncAfter(deadline: .now() + start + Self.riseDuration - 0.1) { Haptics.light() }
         }
         .accessibilityElement(children: .combine)
     }

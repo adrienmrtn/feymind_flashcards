@@ -9,8 +9,9 @@ import SwiftUI
 ///
 /// Elle se colle au **bord droit**, à mi-hauteur, au-dessus de la barre et des boutons du
 /// bas : une pastille dans le coin bas-droit recouvrait le bouton de session, et c'est
-/// précisément ce qu'on ne veut plus. Le cadeau, lui, se présente en pop-up sur le premier
-/// chapitre du premier deck importé : c'est là qu'il a un sens.
+/// précisément ce qu'on ne veut plus. Le cadeau, lui, se présente en pop-up au retour du
+/// premier deck importé, à la demande de la liste (`TabRouter.requestGift`), et c'est
+/// d'ici qu'il se pose : par-dessus les onglets **et** la barre du bas.
 ///
 /// Le `ZStack` ne prend **aucun appui** hors de la languette : une surface pleine qui
 /// avale les doigts rendrait l'app inerte.
@@ -31,6 +32,7 @@ struct DiscountBadgeHost: View {
 
     @Environment(ProAccess.self) private var pro: ProAccess?
     @Environment(CloudSync.self) private var sync: CloudSync?
+    @Environment(TabRouter.self) private var router: TabRouter?
     @Environment(\.modelContext) private var modelContext
 
     /// **Le nombre de cours, compté et non observé.**
@@ -87,6 +89,11 @@ struct DiscountBadgeHost: View {
             }
         }
         .animation(OnboardingMotion.enter, value: shows)
+        // **Le cadeau se pose ici, par-dessus tout** — les onglets et la barre du bas
+        // compris —, à la demande de la liste des decks, au retour du premier cours.
+        .onChange(of: router?.giftRequests ?? 0) { _, _ in
+            presentation = .gift
+        }
         .micaboDiscountOffer($presentation)
         // Le compte n'est réécrit que s'il a changé : `@AppStorage` écrit dans les réglages et
         // invalide la vue à chaque affectation, même quand la valeur est la même.

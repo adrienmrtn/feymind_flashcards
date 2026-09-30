@@ -261,7 +261,11 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         // la recherche d'un pays, le courriel du compte — et reste où il est quand la page
         // part. Hors du parcours, le modificateur ne fait rien : le système s'en charge.
         .onboardingKeyboardLift()
-        .background(surface.background.ignoresSafeArea(edges: .bottom))
+        // **Le fond monte jusqu'au bord de l'écran, en haut aussi.** Arrêté à la zone sûre, il
+        // laissait la barre d'état à la page du dessous pendant un glissement : le voile posé
+        // sur celle-ci y restait visible — un petit rectangle gris en haut à gauche, à chaque
+        // transition — jusqu'à ce que la page arrivée l'ait recouvert.
+        .background(surface.background.ignoresSafeArea())
         .environment(\.onboardingSurface, surface)
     }
 

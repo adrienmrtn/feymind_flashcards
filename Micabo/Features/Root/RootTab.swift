@@ -87,6 +87,17 @@ final class TabRouter {
     /// pour le même geste.
     private(set) var courseImportRequests = 0
 
+    /// Compteur de demandes du cadeau. La liste des decks le demande au retour du premier
+    /// cours ; c'est la racine (`DiscountBadgeHost`) qui le présente, par-dessus la barre
+    /// du bas et les onglets. Présenté depuis la page, le pop-up assombrissait tout sauf
+    /// la barre.
+    private(set) var giftRequests = 0
+
+    /// Demande à la racine de poser le cadeau par-dessus l'app.
+    func requestGift() {
+        giftRequests += 1
+    }
+
     /// **Ramène l'app à son écran d'accueil**, quelle que soit la profondeur d'où l'on part.
     ///
     /// Une session lancée depuis la fiche d'un deck est deux écrans plus loin que

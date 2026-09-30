@@ -32,11 +32,8 @@ struct CoursesListView: View {
     /// remplir un support, ce qui permet d'en mélanger plusieurs dans le même deck.
     @State private var creatingDeck = false
     @State private var paywall: PaywallTrigger?
-    /// **Le cadeau, au retour du premier cours.** L'élève vient de voir son plan, a touché
-    /// un chapitre, a vu le paywall, et revient à la liste : c'est là que l'offre réduite
-    /// se déballe, une fois par fenêtre. Voir `DiscountOffer`.
-    @State private var giftOffer: DiscountPresentation?
-    /// Le deck qu'on vient de quitter, pour savoir si c'était le premier.
+    /// Le deck qu'on vient de quitter, pour savoir si c'était le premier : c'est au retour
+    /// du premier cours que le cadeau se déballe. Voir `presentGiftIfEarned`.
     @State private var lastOpenedCourseID: UUID?
     @State private var coursePendingDelete: Course?
     /// Totaux par cours, lus **une fois**. Le corps ne touche plus `course.cards`.
@@ -177,23 +174,18 @@ struct CoursesListView: View {
             .task(id: censusTaskID, refreshCensusIfVisible)
             .onChange(of: path.count, handlePathDepth)
             .onChange(of: router?.courseImportRequests ?? 0, handleImportRequest)
-            .task(openFirstImportIfPending)
+            .task(consumeFirstDeckHandoff)
     }
 
-    /// **Le premier deck s'ouvre sur son plan.** Il a été construit avant l'app, à la sortie
-    /// du parcours (`FirstDeckFlowView`), et c'est son plan que l'élève voit en arrivant :
-    /// les chapitres, leurs cartes, le rythme. Toucher un chapitre ouvre le paywall — voir
-    /// `DeckChaptersView` —, et revenir à la liste puis toucher le deck aussi.
+    /// **Le premier deck attend dans la liste ; il ne s'ouvre pas tout seul.** Il a été
+    /// construit avant l'app, à la sortie du parcours, et l'élève vient de le parcourir en
+    /// entier : le rouvrir d'office à l'arrivée, c'est lui remettre sous les yeux ce qu'il
+    /// vient de fermer. L'app s'ouvre sur Decks (`RootTabView`), le deck est en tête, et
+    /// c'est lui qui l'ouvre quand il veut. La remise ne sert plus qu'à ça, et se consomme.
     @MainActor
-    private func openFirstImportIfPending() async {
-        guard let course = FirstDeckHandoff.course else { return }
-        // Le temps que l'app se pose : une page poussée ou une feuille ouverte pendant que
-        // la racine apparaît encore donne deux animations concurrentes.
-        try? await Task.sleep(for: .milliseconds(650))
-        guard !Task.isCancelled else { return }
+    private func consumeFirstDeckHandoff() async {
+        guard FirstDeckHandoff.course != nil else { return }
         FirstDeckHandoff.course = nil
-        lastOpenedCourseID = course.id
-        path = NavigationPath([course])
     }
 
     private var dialogs: some View {
@@ -208,7 +200,6 @@ struct CoursesListView: View {
                 message: folderDeleteMessage
             )
             .micaboPaywall($paywall)
-            .micaboDiscountOffer($giftOffer)
             .confirmationDialog(
                 deleteCourseTitle,
                 isPresented: courseDeletePresented,
@@ -818,6 +809,11 @@ struct CoursesListView: View {
     /// **Le cadeau se déballe quand on quitte son premier cours.** Pas avant : il vient
     /// après avoir vu le plan et buté sur le paywall, au moment où l'on revient à la liste
     /// sans avoir acheté. Une fois par fenêtre de vingt-quatre heures, puis après le repos.
+    ///
+    /// **La liste le demande, la racine le présente** (`DiscountBadgeHost`, par le
+    /// routeur). Présenté d'ici, le pop-up n'assombrissait que la page : la barre du bas,
+    /// posée hors des onglets, restait claire sous un écran gris, et ça se lisait comme un
+    /// défaut plutôt que comme une carte posée sur l'app.
     @MainActor
     private func presentGiftIfEarned() async {
         guard let left = lastOpenedCourseID else { return }
@@ -835,8 +831,8 @@ struct CoursesListView: View {
         // Le temps que la liste se pose : une boîte qui tombe pendant que la page glisse
         // encore donne deux animations concurrentes.
         try? await Task.sleep(for: .milliseconds(500))
-        guard path.isEmpty, paywall == nil, giftOffer == nil, !creatingDeck else { return }
-        giftOffer = .gift
+        guard path.isEmpty, paywall == nil, !creatingDeck else { return }
+        router?.requestGift()
     }
 
     /// Le plus ancien des decks importés : celui du parcours d'accueil.

@@ -136,6 +136,9 @@ struct OnboardingTopBar: View {
 struct OnboardingArrowButton: View {
     var isEnabled: Bool = true
     var isLoading: Bool = false
+    /// Le rond se pousse tout seul à droite de sa ligne. À faux, il ne prend que sa place :
+    /// pour le poser à côté d'un autre bouton.
+    var fillsWidth: Bool = true
     var action: () -> Void
 
     @Environment(\.onboardingSurface) private var surface
@@ -144,35 +147,42 @@ struct OnboardingArrowButton: View {
     static let size: CGFloat = 64
 
     var body: some View {
-        HStack(spacing: 0) {
-            Spacer(minLength: 0)
-
-            Button {
-                guard isEnabled, !isLoading else { return }
-                action()
-            } label: {
-                ZStack {
-                    if isLoading {
-                        ProgressView()
-                            .controlSize(.regular)
-                            .tint(surface.buttonForeground)
-                    } else {
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 23, weight: .bold))
-                    }
-                }
-                .foregroundStyle(surface.buttonForeground)
-                .frame(width: Self.size, height: Self.size)
-                .background(isEnabled ? surface.buttonTint : surface.disabledButtonTint, in: Circle())
-                .shadow(color: OnboardingPalette.ink.opacity(isEnabled && !surface.isDark ? 0.18 : 0), radius: 14, y: 6)
-                .contentShape(Circle())
+        if fillsWidth {
+            HStack(spacing: 0) {
+                Spacer(minLength: 0)
+                button
             }
-            .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .medium))
-            .disabled(!isEnabled || isLoading)
-            .animation(OnboardingMotion.select, value: isEnabled)
-            .animation(OnboardingMotion.select, value: isLoading)
-            .accessibilityLabel(i18n.t("common.continue"))
+        } else {
+            button
         }
+    }
+
+    private var button: some View {
+        Button {
+            guard isEnabled, !isLoading else { return }
+            action()
+        } label: {
+            ZStack {
+                if isLoading {
+                    ProgressView()
+                        .controlSize(.regular)
+                        .tint(surface.buttonForeground)
+                } else {
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 23, weight: .bold))
+                }
+            }
+            .foregroundStyle(surface.buttonForeground)
+            .frame(width: Self.size, height: Self.size)
+            .background(isEnabled ? surface.buttonTint : surface.disabledButtonTint, in: Circle())
+            .shadow(color: OnboardingPalette.ink.opacity(isEnabled && !surface.isDark ? 0.18 : 0), radius: 14, y: 6)
+            .contentShape(Circle())
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .medium))
+        .disabled(!isEnabled || isLoading)
+        .animation(OnboardingMotion.select, value: isEnabled)
+        .animation(OnboardingMotion.select, value: isLoading)
+        .accessibilityLabel(i18n.t("common.continue"))
     }
 }
 

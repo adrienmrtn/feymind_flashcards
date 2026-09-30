@@ -6,11 +6,24 @@ import SwiftUI
 /// **Les cases de dépôt, celles de la création d'un deck.** Le parcours ne redessine pas
 /// l'import : c'est le même écran, avec le rond fléché à la place de la pilule, et le même
 /// objet `DeckSetup` que `DeckBuilder` lira à l'écran suivant.
+///
+/// **La branche du parcours se prend ici**, sans question avant : déposer et avancer mène
+/// à la construction ; « je n'ai rien pour l'instant », en gris à gauche du rond, mène au
+/// choix d'un cours de démonstration. Une question « tu as tes supports ? » posée sur un
+/// écran à part demandait de répondre avant d'avoir vu ce qu'on pouvait déposer.
 struct OnboardingMaterialsStepView: View {
     @Environment(OnboardingModel.self) private var model
 
     var body: some View {
-        DeckMaterialsStepView(setup: model.deckSetup, usesArrow: true) {
+        DeckMaterialsStepView(
+            setup: model.deckSetup,
+            usesArrow: true,
+            onNothing: {
+                model.hasMaterials = false
+                model.advance()
+            }
+        ) {
+            model.hasMaterials = true
             model.advance()
         }
     }
@@ -347,16 +360,32 @@ enum MikaProgressCurve {
 ///
 /// C'est le vrai plan du deck — le bandeau, le titre, les chapitres —, sans les actions
 /// de révision, sans le cadenas Pro, sans le menu : on lit, on ouvre un chapitre, on
-/// revient, et on continue quand on veut. Le cours est déjà dans la bibliothèque ; c'est le
-/// même objet que l'app ouvrira à la sortie du parcours.
+/// revient. Le cours est déjà dans la bibliothèque ; c'est le même objet que l'app montrera
+/// à la sortie du parcours.
+///
+/// **Le rond fait visiter.** Il n'avance pas d'un coup : il ouvre le premier chapitre, puis
+/// le deuxième, puis les suivants, et ne passe à la suite qu'une fois le dernier ouvert.
+/// Un élève qui touche un chapitre de lui-même compte comme y étant passé : le rond reprend
+/// au premier chapitre qu'il n'a pas vu. C'est ce qui garantit qu'on a lu une fiche avant
+/// de s'entraîner dessus — sans forcer personne à défiler jusqu'en bas.
 struct CourseReviewStepView: View {
     @Environment(OnboardingModel.self) private var model
+
+    /// La pile : vide sur le plan, le chapitre ouvert sinon.
+    @State private var path: [Chapter] = []
+    /// Le rang du prochain chapitre que le rond ouvre.
+    @State private var nextChapter = 0
 
     var body: some View {
         ZStack {
             if let course = model.builtCourse {
-                NavigationStack {
-                    OnboardingCoursePlanView(course: course)
+                NavigationStack(path: $path) {
+                    OnboardingCoursePlanView(course: course) { chapter in
+                        open(chapter, in: course)
+                    }
+                    .navigationDestination(for: Chapter.self) { chapter in
+                        OnboardingChapterView(chapter: chapter, demo: demoChapter(for: chapter))
+                    }
                 }
             } else {
                 OnboardingPalette.white.ignoresSafeArea()
@@ -364,23 +393,50 @@ struct CourseReviewStepView: View {
         }
         .overlay(alignment: .bottomTrailing) {
             OnboardingArrowButton {
-                model.advance()
+                advance()
             }
             .padding(.trailing, MicaboSpacing.screen)
             .padding(.bottom, MicaboSpacing.sm)
         }
         .environment(\.onboardingSurface, .canvas)
     }
+
+    /// Un chapitre touché sur le plan : il s'ouvre, et le rond reprendra après lui.
+    private func open(_ chapter: Chapter, in course: Course) {
+        if let index = course.orderedChapters.firstIndex(where: { $0.id == chapter.id }) {
+            nextChapter = max(nextChapter, index + 1)
+        }
+        path = [chapter]
+    }
+
+    /// Le rond : le prochain chapitre non vu, ou la suite quand tous le sont. Depuis un
+    /// chapitre ouvert, le suivant le remplace dans la pile : on ne repasse pas par le plan.
+    private func advance() {
+        let chapters = model.builtCourse?.orderedChapters ?? []
+        guard nextChapter < chapters.count else {
+            model.advance()
+            return
+        }
+        let chapter = chapters[nextChapter]
+        nextChapter += 1
+        path = [chapter]
+    }
+
+    /// Le chapitre de démonstration qui correspond, quand le cours est le cours joué :
+    /// c'est lui qui porte les schémas et les graphes.
+    private func demoChapter(for chapter: Chapter) -> DemoChapter? {
+        guard model.isDemoCourse, let demo = model.demoCourse else { return nil }
+        return demo.chapters.indices.contains(chapter.position) ? demo.chapters[chapter.position] : nil
+    }
 }
 
-/// Le plan : bandeau, titre, matière, chapitres. Toucher un chapitre l'ouvre.
+/// Le plan : bandeau, titre, matière, chapitres. Toucher un chapitre le signale au parent,
+/// qui l'ouvre.
 private struct OnboardingCoursePlanView: View {
     let course: Course
+    var onOpen: (Chapter) -> Void
 
-    @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    @State private var opened: Chapter?
 
     private var safeTop: CGFloat { MicaboScreen.safeTop }
     private var pastel: Color { MicaboColor.pastel(for: course.id) }
@@ -409,9 +465,6 @@ private struct OnboardingCoursePlanView: View {
         .micaboScreenBackground()
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
-        .navigationDestination(item: $opened) { chapter in
-            OnboardingChapterView(chapter: chapter, demo: demoChapter(for: chapter))
-        }
     }
 
     private var identity: some View {
@@ -478,7 +531,7 @@ private struct OnboardingCoursePlanView: View {
                             : i18n.t("ios.deck.notStarted"),
                         state: index == 0 ? .inProgress : .untouched
                     ) {
-                        opened = chapter
+                        onOpen(chapter)
                     }
                     if index < course.orderedChapters.count - 1 {
                         MicaboHairline(onCanvas: true)
@@ -488,12 +541,6 @@ private struct OnboardingCoursePlanView: View {
         }
     }
 
-    /// Le chapitre de démonstration qui correspond, quand le cours est le cours joué :
-    /// c'est lui qui porte les schémas et les graphes.
-    private func demoChapter(for chapter: Chapter) -> DemoChapter? {
-        guard model.isDemoCourse, let demo = model.demoCourse else { return nil }
-        return demo.chapters.indices.contains(chapter.position) ? demo.chapters[chapter.position] : nil
-    }
 }
 
 /// Un chapitre ouvert : la fiche riche pour le cours de démonstration, la fiche telle
