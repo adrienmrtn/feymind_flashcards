@@ -211,10 +211,20 @@ struct HookLogoStepView: View {
 struct OnboardingHookMockup: View {
     static let imageName = "OnboardingHook"
 
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    /// La capture dans la langue choisie (`OnboardingHook-fr`…), sinon l'anglaise. La langue
+    /// se change sur cette page même : la maquette suit.
+    private var imageName: String? {
+        let localized = "\(Self.imageName)-\(i18n.locale.rawValue)"
+        if UIImage(named: localized) != nil { return localized }
+        return UIImage(named: Self.imageName) != nil ? Self.imageName : nil
+    }
+
     var body: some View {
         Group {
-            if UIImage(named: Self.imageName) != nil {
-                Image(Self.imageName)
+            if let imageName {
+                Image(imageName)
                     .resizable()
                     .scaledToFit()
             } else {
