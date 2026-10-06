@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>App Store Micabo</title>
+<!--
+  Les sept images de la fiche App Store, côte à côte sur une seule page de 7 × 1320 px :
+  le téléphone penché des deux premières passe de l'une à l'autre, et le quadrillage aussi.
+  `render.mjs` découpe la page écran par écran, une langue à la fois (`index.html#en`).
+  Les captures viennent de `statusbar.py`.
+-->
+<style>
+  @font-face { font-family: "Outfit"; font-weight: 700; src: url("../../../Micabo/Resources/Fonts/Outfit-Bold.ttf"); }
+  @font-face { font-family: "Outfit"; font-weight: 600; src: url("../../../Micabo/Resources/Fonts/Outfit-SemiBold.ttf"); }
+
+  :root {
+    --bg: #ECEAF5;
+    --grid: #DFDCEC;
+    --ink: #16151A;
+    --case: #8B71F3;
+    --case-edge: #6A50DC;
+    --ring: #D4CFDC;
+    --marker: #FFE36E;
+    --S: 1320px;           /* largeur d'un écran */
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 9240px; height: 2868px; overflow: hidden; }
+
+  body {
+    position: relative;
+    background-color: var(--bg);
+    background-image:
+      linear-gradient(var(--grid) 2px, transparent 2px),
+      linear-gradient(90deg, var(--grid) 2px, transparent 2px);
+    background-size: 132px 132px;
+    background-position: -1px -1px;
+    font-family: "Outfit", sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Ce qui doit tenir sur sa largeur : mesuré, puis réduit au besoin (voir fit()). */
+  .fit { display: inline-block; white-space: nowrap; }
+
+  /* ---------- Le téléphone : coque violette, liseré argent, capture ---------- */
+  .device {
+    position: absolute;
+    padding: var(--c);
+    background: var(--case);
+    border-radius: calc(var(--w) * 0.144 + var(--c));
+    box-shadow:
+      inset 0 0 0 calc(var(--c) * 0.12) var(--case-edge),
+      0 60px 110px rgba(70, 45, 170, .16);
+  }
+  .bezel {
+    width: var(--w);
+    border-radius: calc(var(--w) * 0.144);
+    background: #121214;
+    box-shadow: 0 0 0 calc(var(--c) * 0.24) var(--ring);
+  }
+  .bezel img { display: block; width: 100%; }
+
+  .straight { --w: 900px; --c: 30px; top: 730px; }
+
+  /* ---------- Titres ---------- */
+  .title {
+    position: absolute; top: 190px; width: var(--S);
+    text-align: center;
+  }
+  .title h2 {
+    font-weight: 700; font-size: 150px; line-height: 1; letter-spacing: -.035em;
+  }
+  .title p {
+    margin-top: 34px; font-weight: 600; font-size: 64px; letter-spacing: -.015em;
+  }
+
+  .hero {
+    position: absolute; left: 92px; top: 200px;
+    font-weight: 700; font-size: 176px; line-height: .94; letter-spacing: -.02em;
+    text-transform: uppercase;
+  }
+  .mark { position: relative; display: inline-block; padding: 0 .08em; margin-left: -.08em; }
+  .mark::before {
+    content: ""; position: absolute; z-index: -1;
+    left: 0; right: 0; top: .1em; bottom: .02em;
+    background: var(--marker); border-radius: .06em;
+    transform: rotate(-1.4deg);
+  }
+  .mark span { position: relative; }
+
+  /* ---------- Les chiffres ---------- */
+  .stat { position: absolute; left: calc(var(--S) + 660px); width: 620px; text-align: center; }
+  .stat svg { width: 184px; height: 184px; display: block; margin: 0 auto 16px; overflow: visible; }
+  .stat b { display: block; font-weight: 700; font-size: 154px; line-height: 1; letter-spacing: -.035em; }
+  .stat span.label { display: block; margin-top: 12px; font-weight: 600; font-size: 64px; line-height: 1.1; letter-spacing: -.015em; }
+
+  /* ---------- Les pastilles à cheval sur deux écrans ---------- */
+  .sticker {
+    position: absolute; width: 210px; height: 210px; border-radius: 52px;
+    background: var(--case); border: 7px solid var(--ink);
+    display: grid; place-items: center;
+    box-shadow: 0 30px 60px rgba(70, 45, 170, .18);
+  }
+  .sticker svg { width: 116px; height: 116px; overflow: visible; }
+
+  svg .ic { fill: #fff; stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .stat svg .ic { fill: var(--case); }
+</style>
+</head>
+<body>
+
+<!-- ================= 1 + 2 : le panorama ================= -->
+
+  <h1 class="hero"><span class="fit" data-t="hero"></span></h1>
+
+  <div class="device" style="--w: 1360px; --c: 44px; left: 150px; top: 1190px; transform: rotate(-12deg); transform-origin: 0 0;">
+    <div class="bezel"><img data-img="fiche" alt=""></div>
+  </div>
+
+  <div class="stat" style="top: 330px;">
+    <svg viewBox="0 0 24 24"><g class="ic">
+      <path d="M16 3.4a4 4 0 0 1 0 7.4" fill="none"/>
+      <path d="M22 21v-2a4 4 0 0 0-3-3.9" fill="none"/>
+      <path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2z"/>
+      <circle cx="9" cy="7" r="4"/>
+    </g></svg>
+    <b><span class="fit" data-t="n1"></span></b><span class="label"><span class="fit" data-t="l1"></span></span>
+  </div>
+
+  <div class="stat" style="top: 1040px;">
+    <svg viewBox="0 0 24 24"><g class="ic">
+      <path d="M12 2.6l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17l-5.6 3 1.1-6.3-4.6-4.4 6.3-.9z"/>
+    </g></svg>
+    <b><span class="fit" data-t="n2"></span></b><span class="label"><span class="fit" data-t="l2"></span></span>
+  </div>
+
+  <div class="stat" style="top: 1750px;">
+    <svg viewBox="0 0 24 24"><g class="ic">
+      <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/>
+      <path d="m9 12 2 2 4-4" fill="none"/>
+    </g></svg>
+    <b><span class="fit" data-t="n3"></span></b><span class="label"><span class="fit" data-t="l3"></span></span>
+  </div>
+
+<!-- ================= 3 à 7 : un titre, une ligne, un téléphone droit ================= -->
+
+  <div class="title" style="left: calc(var(--S) * 2);"><h2><span class="fit" data-t="t3"></span></h2><p><span class="fit" data-t="s3"></span></p></div>
+  <div class="device straight" style="left: calc(var(--S) * 2 + 180px);"><div class="bezel"><img data-img="today" alt=""></div></div>
+
+  <div class="title" style="left: calc(var(--S) * 3);"><h2><span class="fit" data-t="t4"></span></h2><p><span class="fit" data-t="s4"></span></p></div>
+  <div class="device straight" style="left: calc(var(--S) * 3 + 180px);"><div class="bezel"><img data-img="quiz" alt=""></div></div>
+
+  <div class="title" style="left: calc(var(--S) * 4);"><h2><span class="fit" data-t="t5"></span></h2><p><span class="fit" data-t="s5"></span></p></div>
+  <div class="device straight" style="left: calc(var(--S) * 4 + 180px);"><div class="bezel"><img data-img="mika" alt=""></div></div>
+
+  <div class="title" style="left: calc(var(--S) * 5);"><h2><span class="fit" data-t="t6"></span></h2><p><span class="fit" data-t="s6"></span></p></div>
+  <div class="device straight" style="left: calc(var(--S) * 5 + 180px);"><div class="bezel"><img data-img="meca" alt=""></div></div>
+
+  <div class="title" style="left: calc(var(--S) * 6);"><h2><span class="fit" data-t="t7"></span></h2><p><span class="fit" data-t="s7"></span></p></div>
+  <div class="device straight" style="left: calc(var(--S) * 6 + 180px);"><div class="bezel"><img data-img="decks" alt=""></div></div>
+
+<!-- ================= Les pastilles, à cheval sur deux écrans ================= -->
+
+  <!-- 3 | 4 : la série -->
+  <div class="sticker" style="left: calc(var(--S) * 3 - 105px); top: 820px; transform: rotate(14deg);">
+    <svg viewBox="0 0 24 24"><g class="ic">
+      <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+    </g></svg>
+  </div>
+
+  <!-- 5 | 6 : Mika -->
+  <div class="sticker" style="left: calc(var(--S) * 5 - 105px); top: 760px; transform: rotate(-13deg);">
+    <svg viewBox="0 0 24 24"><g class="ic">
+      <path d="M12 2.5C12.9 8.3 15.7 11.1 21.5 12 15.7 12.9 12.9 15.7 12 21.5 11.1 15.7 8.3 12.9 2.5 12 8.3 11.1 11.1 8.3 12 2.5z"/>
+    </g></svg>
+  </div>
+
+  <!-- 6 | 7 : les formules -->
+  <div class="sticker" style="left: calc(var(--S) * 6 - 105px); top: 840px; transform: rotate(12deg);">
+    <svg viewBox="0 0 24 24"><g class="ic">
+      <path d="M18 7V4H6l6 8-6 8h12v-3" fill="none" stroke-width="2.4"/>
+    </g></svg>
+  </div>
+
+<script>
+  // Le mot surligné : <m>…</m> dans les textes.
+  const T = {
+    fr: {
+      hero: "Tes cours<br>deviennent<br>des <m>fiches</m>",
+      n1: "45&nbsp;000+", l1: "élèves",
+      n2: "4,8", l2: "12&nbsp;000 avis",
+      n3: "#1", l3: "App d'étude IA",
+      t3: "Révise au<br>bon moment", s3: "Micabo planifie pour toi",
+      t4: "Teste-toi", s4: "Sur ton propre cours",
+      t5: "Une question&nbsp;?<br>Demande à Mika", s5: "Mika connaît ton cours",
+      t6: "Même les<br>formules", s6: "Maths, physique, chimie",
+      t7: "Tout est<br>rangé", s7: "Par matière, avec ta progression",
+    },
+    en: {
+      hero: "Turn your<br>notes into<br><m>study sheets</m>",
+      n1: "45,000+", l1: "students",
+      n2: "4.8", l2: "12,000 reviews",
+      n3: "#1", l3: "AI study app",
+      t3: "Review at the<br>right time", s3: "Micabo plans it for you",
+      t4: "Test yourself", s4: "Built from your own notes",
+      t5: "Got a question?<br>Ask Mika", s5: "Mika knows your course",
+      t6: "Even the<br>formulas", s6: "Math, physics, chemistry",
+      t7: "All in<br>one place", s7: "By subject, with your progress",
+    },
+    es: {
+      hero: "Convierte<br>tus apuntes<br>en <m>resúmenes</m>", heroLineHeight: 1.06,
+      n1: "45.000+", l1: "estudiantes",
+      n2: "4,8", l2: "12.000 reseñas",
+      n3: "N.º&nbsp;1", l3: "App de estudio<br>con IA",
+      t3: "Repasa en el<br>momento justo", s3: "Micabo lo planifica por ti",
+      t4: "Ponte a prueba", s4: "Con tus propios apuntes",
+      t5: "¿Una duda?<br>Pregunta a Mika", s5: "Mika conoce tu curso",
+      t6: "Con ejemplos<br>reales", s6: "Esquemas claros, casos concretos",
+      t7: "Todo<br>ordenado", s7: "Por asignatura, con tu progreso",
+    },
+    de: {
+      hero: "Deine Kurse<br>werden zu<br><m>Lernzetteln</m>",
+      n1: "45.000+", l1: "Lernende",
+      n2: "4,8", l2: "12.000 Bewertungen",
+      n3: "Nr.&nbsp;1", l3: "KI-Lernhelfer",
+      t3: "Wiederhole zur<br>richtigen Zeit", s3: "Micabo plant für dich",
+      t4: "Teste dich", s4: "Mit deinem eigenen Kurs",
+      t5: "Eine Frage?<br>Frag Mika", s5: "Mika kennt deinen Kurs",
+      t6: "Sogar<br>Formeln", s6: "Mathe, Physik, Chemie",
+      t7: "Alles<br>sortiert", s7: "Nach Fach, mit deinem Fortschritt",
+    },
+    tr: {
+      hero: "Derslerin<br><m>özetlere</m><br>dönüşsün", heroLineHeight: 1.12,
+      n1: "45.000+", l1: "öğrenci",
+      n2: "4,8", l2: "12.000 değerlendirme",
+      n3: "#1", l3: "Yapay zekâ<br>çalışma asistanı",
+      t3: "Doğru zamanda<br>tekrar et", s3: "Micabo senin için planlar",
+      t4: "Kendini test et", s4: "Kendi ders notlarınla",
+      t5: "Takıldın mı?<br>Mika'ya sor", s5: "Mika dersini biliyor",
+      t6: "Tablolar ve<br>formüller", s6: "Matematik, fizik, ekonomi",
+      t7: "Her şey<br>düzenli", s7: "Ders ders, ilerlemeni gör",
+    },
+  };
+
+  const lang = (location.hash.slice(1) || "fr");
+  const t = T[lang];
+  document.documentElement.lang = lang;
+  document.title = "App Store Micabo " + lang.toUpperCase();
+
+  for (const el of document.querySelectorAll("[data-t]")) {
+    el.innerHTML = t[el.dataset.t].replace(/<m>(.*?)<\/m>/, '<span class="mark"><span>$1</span></span>');
+  }
+  // Les majuscules accentuées (Ú, Ö, Ü, Ş, İ) débordent d'un interligne serré.
+  if (t.heroLineHeight) document.querySelector(".hero").style.lineHeight = t.heroLineHeight;
+
+  for (const img of document.querySelectorAll("[data-img]")) {
+    img.src = `captures/${lang}/${img.dataset.img}.png`;
+  }
+
+  // Une seule taille par famille de textes, la plus grande qui laisse tout tenir :
+  // un titre plus petit que ses voisins se verrait d'un écran à l'autre.
+  function fit(selector, maxWidth) {
+    const spans = [...document.querySelectorAll(selector)];
+    const hosts = spans.map(s => s.parentElement);
+    let size = parseFloat(getComputedStyle(hosts[0]).fontSize);
+    while (spans.some(s => s.getBoundingClientRect().width > maxWidth) && size > 40) {
+      size -= 2;
+      hosts.forEach(h => h.style.fontSize = size + "px");
+    }
+    return size;
+  }
+
+  document.fonts.ready.then(() => {
+    const sizes = {
+      hero: fit(".hero > .fit", 1170),
+      titles: fit(".title h2 > .fit", 1180),
+      subtitles: fit(".title p > .fit", 1180),
+      numbers: fit(".stat b > .fit", 600),
+      labels: fit(".stat .label > .fit", 600),
+    };
+    document.body.dataset.sizes = JSON.stringify(sizes);
+    document.body.dataset.ready = "1";
+  });
+</script>
+</body>
+</html>
