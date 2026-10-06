@@ -1,11 +1,27 @@
 import Observation
+import SwiftData
 import SwiftUI
 
 /// État partagé du parcours d'accueil. Les réponses sont écrites au fil de l'eau
-/// dans `OnboardingPreferences` : quitter l'app en cours de route ne les perd pas.
+/// dans `OnboardingPreferences` : quitter l'app en cours de route ne les perd pas, et
+/// l'écran atteint non plus (`resuming(in:)`).
 @Observable
 final class OnboardingModel {
-    private(set) var step: OnboardingStep = .hookLogo
+    private(set) var step: OnboardingStep = .hookLogo {
+        didSet {
+            guard !isRestoring else { return }
+            OnboardingPreferences.resumeStep = step
+        }
+    }
+
+    /// Vrai quand le parcours reprend là où une app fermée l'avait laissé.
+    private(set) var isResumed = false
+
+    /// **Vrai le temps de relire un parcours interrompu.** Les réponses relues ne sont pas
+    /// des réponses données : elles ne repartent pas dans les statistiques, et elles ne
+    /// réécrivent rien. La vue du parcours peut construire plusieurs fois son modèle de
+    /// reprise et n'en garder qu'un ; ceux qu'elle jette ne doivent rien avoir changé.
+    @ObservationIgnored private var isRestoring = false
 
     /// **Vrai le temps qu'une page glisse.** Posé par la vue du parcours, relu par
     /// `advance()` : un second appui pendant le glissement n'empile pas deux pages. Les
@@ -24,7 +40,7 @@ final class OnboardingModel {
     /// qu'une liste de choix ne parle pas.
     var stage: EducationStage? {
         didSet {
-            guard let stage, stage != oldValue else { return }
+            guard let stage, stage != oldValue, !isRestoring else { return }
             Analytics.track(.onboardingAnswer, ["field": "stage", "value": .text(stage.id)])
         }
     }
@@ -39,7 +55,7 @@ final class OnboardingModel {
     /// de la liste, donne son titre à l'écran « on s'en occupe ».
     var worries: Set<StudyWorry> = [] {
         didSet {
-            guard worries != oldValue, !worries.isEmpty else { return }
+            guard worries != oldValue, !worries.isEmpty, !isRestoring else { return }
             let ids = StudyWorry.allCases.filter { worries.contains($0) }.map(\.rawValue)
             Analytics.track(.onboardingAnswer, ["field": "worries", "value": .text(ids.joined(separator: ","))])
         }
@@ -54,7 +70,7 @@ final class OnboardingModel {
     /// décrits en détail ; ailleurs, le palier large (`stage`) est tout ce qu'on sait.
     var track: SchoolTrack? {
         didSet {
-            guard let track, track != oldValue else { return }
+            guard let track, track != oldValue, !isRestoring else { return }
             // Changer de filière efface l'année : « Terminale » accrochée à « Collège » est
             // une réponse que personne n'a donnée.
             if oldValue != nil { year = nil }
@@ -68,7 +84,7 @@ final class OnboardingModel {
     /// L'année dans la filière. Elle décide des matières proposées deux écrans plus loin.
     var year: SchoolYear? {
         didSet {
-            guard let year, year != oldValue else { return }
+            guard let year, year != oldValue, !isRestoring else { return }
             Analytics.track(.onboardingAnswer, ["field": "year", "value": .text(year.id)])
         }
     }
@@ -78,14 +94,14 @@ final class OnboardingModel {
     /// pas prévu.
     var currentScore: Int? {
         didSet {
-            guard let currentScore, currentScore != oldValue else { return }
+            guard let currentScore, currentScore != oldValue, !isRestoring else { return }
             Analytics.track(.onboardingAnswer, ["field": "currentScore", "value": .number(Double(currentScore))])
         }
     }
     /// La moyenne visée. Toujours au-dessus de l'actuelle.
     var targetScore: Int? {
         didSet {
-            guard let targetScore, targetScore != oldValue else { return }
+            guard let targetScore, targetScore != oldValue, !isRestoring else { return }
             Analytics.track(.onboardingAnswer, ["field": "targetScore", "value": .number(Double(targetScore))])
         }
     }
@@ -94,7 +110,7 @@ final class OnboardingModel {
     /// nombre de cartes du plan.
     var dailyMinutes: Int? {
         didSet {
-            guard let dailyMinutes, dailyMinutes != oldValue else { return }
+            guard let dailyMinutes, dailyMinutes != oldValue, !isRestoring else { return }
             Analytics.track(.onboardingAnswer, ["field": "dailyMinutes", "value": .number(Double(dailyMinutes))])
         }
     }
@@ -103,7 +119,7 @@ final class OnboardingModel {
     /// elle se règle au curseur, le soleil qui monte et descend avec elle.
     var studyHour: Int? {
         didSet {
-            guard let studyHour, studyHour != oldValue else { return }
+            guard let studyHour, studyHour != oldValue, !isRestoring else { return }
             Analytics.track(.onboardingAnswer, ["field": "studyHour", "value": .number(Double(studyHour))])
         }
     }
@@ -114,6 +130,8 @@ final class OnboardingModel {
     /// dépôt, non au choix d'un cours de démonstration. Sans réponse, les deux se sautent.
     var hasMaterials: Bool? {
         didSet {
+            guard !isRestoring else { return }
+            OnboardingPreferences.resumeHasMaterials = hasMaterials
             guard let hasMaterials, hasMaterials != oldValue else { return }
             Analytics.track(.onboardingAnswer, ["field": "hasMaterials", "value": .flag(hasMaterials)])
         }
@@ -133,6 +151,8 @@ final class OnboardingModel {
     /// Le cours de démonstration choisi, quand il n'a pas ses supports.
     var demoCourse: OnboardingDemoCourse? {
         didSet {
+            guard !isRestoring else { return }
+            OnboardingPreferences.resumeDemoCourseID = demoCourse?.id
             guard let demoCourse, demoCourse.id != oldValue?.id else { return }
             Analytics.track(.onboardingAnswer, ["field": "demoCourse", "value": .text(demoCourse.id)])
         }
@@ -140,7 +160,12 @@ final class OnboardingModel {
 
     /// **Le cours construit pendant le parcours**, réel ou de démonstration, tel qu'il est
     /// enregistré. C'est lui que l'écran du cours montre, et lui que l'app ouvre à la sortie.
-    var builtCourse: Course?
+    var builtCourse: Course? {
+        didSet {
+            guard !isRestoring else { return }
+            OnboardingPreferences.resumeCourseID = builtCourse?.id
+        }
+    }
 
     /// **Vrai quand la construction a échoué et qu'on continue sans cours.** Le cours, les
     /// cartes et le bravo se sautent alors : on ne montre pas un plan vide, et on ne fait pas
@@ -303,6 +328,70 @@ final class OnboardingModel {
         OnboardingPreferences.schoolYearID = year?.id
         if let dailyMinutes { OnboardingPreferences.dailyMinutes = dailyMinutes }
         OnboardingPreferences.studyHour = studyHour
+    }
+}
+
+// MARK: - La reprise
+
+extension OnboardingModel {
+    /// **Le parcours tel qu'une app fermée l'a laissé**, ou un parcours neuf s'il n'y a
+    /// rien à reprendre.
+    ///
+    /// Les réponses sont relues de `OnboardingPreferences`, où `persist()` les écrit à
+    /// chaque écran ; le cours construit est retrouvé dans la bibliothèque. L'écran de
+    /// reprise est celui de `OnboardingStep.resumePoint`.
+    ///
+    /// `OnboardingModel()` reste un parcours neuf : seule la vue du parcours reprend.
+    static func resuming(in context: ModelContext?) -> OnboardingModel {
+        let model = OnboardingModel()
+        guard let saved = OnboardingPreferences.resumeStep, saved != .hookLogo else { return model }
+
+        model.isRestoring = true
+        defer { model.isRestoring = false }
+
+        model.restoreAnswers()
+        if let id = OnboardingPreferences.resumeCourseID, let context {
+            model.builtCourse = course(id: id, in: context)
+        }
+        model.hasMaterials = OnboardingPreferences.resumeHasMaterials
+        model.demoCourse = OnboardingPreferences.resumeDemoCourseID.flatMap {
+            OnboardingDemoCatalog.course(id: $0, locale: .resolved())
+        }
+        // Qui a passé la connexion ne la revoit pas : `RootView` lit le même drapeau.
+        model.didAnswerAccount = UserDefaults.standard.bool(forKey: AccountGate.skippedKey)
+
+        let target = saved.resumePoint(
+            hasName: model.displayName.nilIfBlank != nil,
+            hasCourse: model.builtCourse != nil
+        )
+        guard target != .hookLogo else { return OnboardingModel() }
+        model.step = target
+        model.isResumed = true
+        return model
+    }
+
+    private func restoreAnswers() {
+        displayName = OnboardingPreferences.displayName ?? ""
+        if OnboardingPreferences.hasChosenCountry {
+            country = OnboardingPreferences.schoolingCountry
+        }
+        customCountry = OnboardingPreferences.customCountry
+        track = SchoolSystem.track(id: OnboardingPreferences.schoolTrackID, in: country)
+        year = SchoolSystem.year(id: OnboardingPreferences.schoolYearID, in: track)
+        stage = OnboardingPreferences.educationStage
+        goals = Set(OnboardingPreferences.learningGoals)
+        subjects = Set(OnboardingPreferences.subjects)
+        worries = Set(OnboardingPreferences.worries.compactMap(StudyWorry.init(rawValue:)))
+        currentScore = OnboardingPreferences.currentScore
+        targetScore = OnboardingPreferences.targetScore
+        dailyMinutes = OnboardingPreferences.answeredDailyMinutes
+        studyHour = OnboardingPreferences.studyHour
+    }
+
+    private static func course(id target: UUID, in context: ModelContext) -> Course? {
+        var descriptor = FetchDescriptor<Course>(predicate: #Predicate { $0.id == target })
+        descriptor.fetchLimit = 1
+        return try? context.fetch(descriptor).first
     }
 }
 

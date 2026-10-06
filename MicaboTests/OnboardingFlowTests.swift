@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 import XCTest
 @testable import Micabo
@@ -879,6 +880,124 @@ final class OnboardingFlowTests: XCTestCase {
         }
 
         XCTAssertEqual(OnboardingStep.paywall.progress, 1, accuracy: 0.0001)
+    }
+
+    // MARK: - La reprise
+
+    /// **Seuls l'accroche et une construction interrompue se refont.** Le reste reprend sur
+    /// l'écran quitté ; le cours et les cartes, seulement si le cours est retrouvé.
+    func testOnlyTheHookAndAnInterruptedBuildAreReplayed() {
+        XCTAssertEqual(OnboardingStep.welcome.resumePoint(hasName: true, hasCourse: false), .hookLogo)
+        XCTAssertEqual(OnboardingStep.subjects.resumePoint(hasName: true, hasCourse: false), .subjects)
+        XCTAssertEqual(OnboardingStep.subjects.resumePoint(hasName: false, hasCourse: false), .hookLogo,
+                       "Sans prénom, tout ce qui suit s'adresserait à personne")
+        XCTAssertEqual(OnboardingStep.demoCourse.resumePoint(hasName: true, hasCourse: false), .materials)
+        XCTAssertEqual(OnboardingStep.courseBuilding.resumePoint(hasName: true, hasCourse: true), .materials,
+                       "Une construction ne reprend pas en cours de route")
+        XCTAssertEqual(OnboardingStep.courseReview.resumePoint(hasName: true, hasCourse: true), .courseReview)
+        XCTAssertEqual(OnboardingStep.courseReview.resumePoint(hasName: true, hasCourse: false), .materials)
+        XCTAssertEqual(OnboardingStep.wellDone.resumePoint(hasName: true, hasCourse: true), .trainPrompt,
+                       "Les cartes se tirent du cours à l'ouverture de leur écran")
+        XCTAssertEqual(OnboardingStep.paywall.resumePoint(hasName: true, hasCourse: false), .paywall)
+    }
+
+    /// **Un quiz interrompu reprend sur la question quittée**, avec les réponses déjà données.
+    func testAnInterruptedQuizResumesOnTheScreenItLeft() {
+        OnboardingPreferences.reset()
+        defer { OnboardingPreferences.reset() }
+
+        let first = OnboardingModel()
+        first.displayName = "Lina"
+        first.select(country: .fr)
+        first.currentScore = 12
+        first.targetScore = 16
+        while first.step != .dailyTime { first.advance() }
+
+        let resumed = OnboardingModel.resuming(in: nil)
+        XCTAssertTrue(resumed.isResumed)
+        XCTAssertEqual(resumed.step, .dailyTime)
+        XCTAssertEqual(resumed.displayName, "Lina")
+        XCTAssertEqual(resumed.country, .fr)
+        XCTAssertEqual(resumed.currentScore, 12)
+        XCTAssertEqual(resumed.targetScore, 16)
+    }
+
+    /// Sans prénom enregistré, il n'y a rien à reprendre : le parcours repart du logo.
+    func testAFlowWithoutANameStartsOver() {
+        OnboardingPreferences.reset()
+        defer { OnboardingPreferences.reset() }
+
+        let first = OnboardingModel()
+        while first.step != .subjects { first.advance() }
+
+        let resumed = OnboardingModel.resuming(in: nil)
+        XCTAssertEqual(resumed.step, .hookLogo)
+        XCTAssertFalse(resumed.isResumed)
+    }
+
+    /// **Le cours se rouvre s'il est dans la bibliothèque**, et la relecture n'écrit rien :
+    /// la vue du parcours peut construire puis jeter un modèle de reprise sans déplacer
+    /// l'écran enregistré.
+    func testTheCourseStageResumesOnlyWithItsCourse() throws {
+        OnboardingPreferences.reset()
+        defer { OnboardingPreferences.reset() }
+
+        let container = try ModelContainer(
+            for: Course.self,
+            Flashcard.self,
+            ReviewLog.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = ModelContext(container)
+        let course = Course(title: "Photosynthèse", subject: "Biologie", summary: "", contextText: "")
+        context.insert(course)
+        try context.save()
+
+        OnboardingPreferences.displayName = "Lina"
+        OnboardingPreferences.resumeStep = .trainCards
+        OnboardingPreferences.resumeCourseID = course.id
+
+        let resumed = OnboardingModel.resuming(in: context)
+        XCTAssertEqual(resumed.step, .trainPrompt)
+        XCTAssertEqual(resumed.builtCourse?.id, course.id)
+        XCTAssertEqual(OnboardingPreferences.resumeStep, .trainCards, "Relire ne réécrit pas l'écran quitté")
+        XCTAssertEqual(OnboardingPreferences.resumeCourseID, course.id)
+
+        OnboardingPreferences.resumeCourseID = UUID()
+        XCTAssertEqual(OnboardingModel.resuming(in: context).step, .materials, "Sans son cours, on repart des supports")
+    }
+
+    /// Qui a passé la connexion ne revoit pas la languette en reprenant juste avant elle.
+    func testASkippedAccountIsNotAskedAgainOnResume() {
+        OnboardingPreferences.reset()
+        UserDefaults.standard.set(true, forKey: AccountGate.skippedKey)
+        defer {
+            OnboardingPreferences.reset()
+            UserDefaults.standard.removeObject(forKey: AccountGate.skippedKey)
+        }
+
+        OnboardingPreferences.displayName = "Lina"
+        OnboardingPreferences.resumeStep = .sheetIntro
+
+        let resumed = OnboardingModel.resuming(in: nil)
+        resumed.advance()
+        XCTAssertFalse(resumed.isAccountSheetPresented)
+        XCTAssertEqual(resumed.step, .materials)
+    }
+
+    /// Seule la vue du parcours reprend, et un parcours fini ne laisse rien à reprendre.
+    func testAFinishedFlowLeavesNothingToResume() {
+        OnboardingPreferences.reset()
+        defer { OnboardingPreferences.reset() }
+
+        OnboardingPreferences.displayName = "Lina"
+        OnboardingPreferences.resumeStep = .paywall
+        XCTAssertEqual(OnboardingModel().step, .hookLogo)
+        XCTAssertEqual(OnboardingModel.resuming(in: nil).step, .paywall)
+
+        OnboardingPreferences.markCompleted()
+        XCTAssertNil(OnboardingPreferences.resumeStep)
+        XCTAssertEqual(OnboardingModel.resuming(in: nil).step, .hookLogo)
     }
 }
 

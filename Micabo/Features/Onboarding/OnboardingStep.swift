@@ -113,6 +113,38 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         OnboardingStep(rawValue: rawValue - 1)
     }
 
+    /// **Où reprendre un parcours laissé sur cet écran.**
+    ///
+    /// Un élève qui sort de l'app pendant le parcours — aller chercher son cours dans
+    /// Fichiers, répondre à un message pendant que Mika écrit — revient souvent sur une app
+    /// qu'iOS a fermée entre-temps. Il repartait du logo, trente-quatre écrans plus tôt, et
+    /// une fois sur deux il ne refaisait pas le chemin.
+    ///
+    /// On reprend donc là où il s'est arrêté, sauf là où l'écran ne peut pas se rejouer :
+    ///
+    /// - **l'accroche** se refait : trois écrans, et le prénom en fait partie ;
+    /// - **une construction interrompue** repart des cases de dépôt : les supports déposés
+    ///   ne sont pas gardés, et une construction ne reprend pas en cours de route ;
+    /// - **le cours et les cartes** ne reprennent que si le cours construit est retrouvé
+    ///   dans la bibliothèque, et les cartes repartent de leur proposition : les trois
+    ///   cartes se tirent du cours à l'ouverture de leur écran.
+    func resumePoint(hasName: Bool, hasCourse: Bool) -> OnboardingStep {
+        switch self {
+        case .hookLogo, .name, .welcome:
+            .hookLogo
+        case _ where !hasName:
+            .hookLogo
+        case .materials, .demoCourse, .courseBuilding:
+            .materials
+        case .courseReview:
+            hasCourse ? .courseReview : .materials
+        case .trainPrompt, .trainCards, .wellDone:
+            hasCourse ? .trainPrompt : .materials
+        default:
+            self
+        }
+    }
+
     /// **Les écrans que le parcours saute, selon ce qui a été répondu.**
     ///
     /// Chaque pays voit une seule des deux questions de niveau : les pays décrits en détail

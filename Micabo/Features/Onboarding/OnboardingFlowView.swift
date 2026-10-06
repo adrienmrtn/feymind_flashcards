@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// Parcours d'accueil complet. Strictement linéaire : chaque écran pousse le suivant au
@@ -8,14 +9,27 @@ import SwiftUI
 /// retour sont posées par-dessus la pile des pages, hors du glissement : quand une page
 /// arrive, la jauge avance d'un cran sur place, et c'est ce qui fait lire un seul parcours
 /// plutôt qu'une suite d'écrans.
+///
+/// **Il reprend où il s'est arrêté.** Une app fermée en arrière-plan pendant le parcours le
+/// faisait repartir du logo ; il repart maintenant de l'écran quitté, réponses et cours
+/// compris (`OnboardingModel.resuming(in:)`). La bibliothèque est passée à la construction
+/// parce que le cours se retrouve avant la première image : la pile des pages commence sur
+/// l'écran de reprise, sans glisser depuis un autre.
 struct OnboardingFlowView: View {
     var onFinish: () -> Void
 
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @Environment(AuthController.self) private var auth
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var model = OnboardingModel()
-    @State private var pager = OnboardingPager(current: .hookLogo)
+    @State private var model: OnboardingModel
+    @State private var pager: OnboardingPager
+
+    init(library: ModelContext, onFinish: @escaping () -> Void) {
+        self.onFinish = onFinish
+        let model = OnboardingModel.resuming(in: library)
+        _model = State(initialValue: model)
+        _pager = State(initialValue: OnboardingPager(current: model.step))
+    }
 
     private var surface: OnboardingSurface { model.step.surface }
 
@@ -76,7 +90,7 @@ struct OnboardingFlowView: View {
         }
         .onAppear {
             Haptics.prepare()
-            Analytics.track(.onboardingStarted)
+            Analytics.track(.onboardingStarted, model.isResumed ? ["resumed": .flag(true)] : [:])
             Analytics.track(.onboardingStep, [
                 "step": .text(model.step.analyticsName),
                 "index": .number(Double(model.step.rawValue)),
