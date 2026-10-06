@@ -1,0 +1,85 @@
+# Les images de la fiche App Store : store/screenshots → App Store Connect.
+#
+# Lancement : onglet Actions → « Images App Store » → Run workflow.
+# Par défaut c'est une simulation : tout est lu, rien n'est envoyé, et le résumé de l'action
+# montre fiche par fiche ce qu'il y a aujourd'hui et ce qui changera. Cocher « Appliquer »
+# pour envoyer. Les images vont sur la version en préparation ; une version en ligne est figée.
+#
+# Les images du 6,9″ sont dans le dépôt (store/screenshots/<langue>/) ; celles du 6,3″ en sont
+# tirées ici, à chaque envoi. Pour en changer un texte : store/screenshots/generator/.
+#
+# Secrets du dépôt : ASC_KEY_ID, ASC_ISSUER_ID, ASC_PRIVATE_KEY — les mêmes que la grille de
+# prix (docs/revenuecat.md, §15).
+
+name: Images App Store
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Appliquer (sinon : simulation, rien n'est envoyé)"
+        type: boolean
+        default: false
+      version:
+        description: "Version à habiller, par ex. 1.7 (vide : la seule version en préparation)"
+        type: string
+        required: false
+  # Les vérifications des images, sans secret, à chaque changement.
+  pull_request:
+    paths:
+      - "store/screenshots/**"
+      - "store/screenshots.mjs"
+      - "store/screenshots.test.mjs"
+      - "store/lib/screenshots.mjs"
+      - ".github/workflows/store-screenshots.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: store-screenshots
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Vérifier les images
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          # Les scripts n'ont aucune dépendance. Sans ça, setup-node v5 lit `packageManager`
+          # dans package.json et cherche pnpm, qui n'est pas installé.
+          package-manager-cache: false
+      - run: node --test store/screenshots.test.mjs
+
+  upload:
+    name: App Store Connect
+    needs: check
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      # Le Python du système refuse `pip install` (PEP 668) : on en prend un à part.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Les images du 6,3″
+        run: |
+          pip install --quiet "pillow>=11,<12"
+          python store/screenshots/generator/resize.py "$RUNNER_TEMP/iphone-6.3"
+      - name: ${{ inputs.apply && 'Envoyer les images' || 'Simuler l''envoi' }}
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+          APPLY: ${{ inputs.apply && '--apply' || '' }}
+          VERSION: ${{ inputs.version }}
+        run: node store/screenshots.mjs --small "$RUNNER_TEMP/iphone-6.3" $APPLY ${VERSION:+--version "$VERSION"}

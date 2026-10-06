@@ -22,3 +22,6 @@ CLAUDE.md
 
 # Réglages locaux de Claude Code
 .claude/settings.local.json
+
+# Les captures de l'app repeintes par `store/screenshots/generator/statusbar.py` : elles se refont.
+store/screenshots/generator/captures/
