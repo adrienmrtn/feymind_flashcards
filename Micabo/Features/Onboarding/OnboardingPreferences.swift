@@ -368,6 +368,17 @@ enum OnboardingPreferences {
         static let studyHour = "micabo.onboarding.studyHour"
         /// Ce qui l'inquiète dans ses études, dans l'ordre de la liste.
         static let worries = "micabo.onboarding.worries"
+        /// **Où le parcours en est**, pour le reprendre là après une app fermée. L'écran
+        /// est écrit par son nom et non par son rang : le rang change dès qu'un écran
+        /// s'ajoute, et une mise à jour reprendrait sur le mauvais.
+        static let resumeStep = "micabo.onboarding.resumeStep"
+        /// Le cours construit pendant le parcours, retrouvé dans la bibliothèque à la reprise.
+        static let resumeCourse = "micabo.onboarding.resumeCourse"
+        /// La branche prise sur les cases de dépôt : ses supports, ou un cours de démonstration.
+        static let resumeHasMaterials = "micabo.onboarding.resumeHasMaterials"
+        static let resumeDemoCourse = "micabo.onboarding.resumeDemoCourse"
+
+        static let resume = [resumeStep, resumeCourse, resumeHasMaterials, resumeDemoCourse]
 
         static let all = [
             completed, level, stage, tier, country, customCountryCode,
@@ -376,7 +387,7 @@ enum OnboardingPreferences {
             dailyMinutes, weeklyMinutes, ratingAsked, pendingFirstImport, retiredNotificationsOptIn, completedAt,
             sheetLanguage, schoolTrack, schoolYear, displayName,
             source, triedApps, blocker, examHorizon, method, studyHour, worries
-        ]
+        ] + resume
     }
 
     private static var defaults: UserDefaults { .standard }
@@ -733,9 +744,50 @@ enum OnboardingPreferences {
         set { defaults.set(newValue, forKey: Key.pendingFirstImport) }
     }
 
+    /// Le temps par jour tel qu'il a été répondu, ou rien avant la question. `dailyMinutes`
+    /// retombe sur quinze minutes, et ne distingue donc pas une réponse d'un défaut.
+    static var answeredDailyMinutes: Int? {
+        let stored = defaults.integer(forKey: Key.dailyMinutes)
+        return stored == 0 ? nil : stored
+    }
+
+    // MARK: La reprise
+
+    /// L'écran où le parcours s'est arrêté. Voir `OnboardingStep.resumePoint`.
+    static var resumeStep: OnboardingStep? {
+        get {
+            guard let name = defaults.string(forKey: Key.resumeStep) else { return nil }
+            return OnboardingStep.allCases.first { $0.analyticsName == name }
+        }
+        set { write(newValue?.analyticsName, forKey: Key.resumeStep) }
+    }
+
+    static var resumeCourseID: UUID? {
+        get { defaults.string(forKey: Key.resumeCourse).flatMap(UUID.init(uuidString:)) }
+        set { write(newValue?.uuidString, forKey: Key.resumeCourse) }
+    }
+
+    static var resumeHasMaterials: Bool? {
+        get { defaults.object(forKey: Key.resumeHasMaterials) as? Bool }
+        set {
+            if let newValue {
+                defaults.set(newValue, forKey: Key.resumeHasMaterials)
+            } else {
+                defaults.removeObject(forKey: Key.resumeHasMaterials)
+            }
+        }
+    }
+
+    static var resumeDemoCourseID: String? {
+        get { defaults.string(forKey: Key.resumeDemoCourse) }
+        set { write(newValue, forKey: Key.resumeDemoCourse) }
+    }
+
     static func markCompleted() {
         defaults.set(Date(), forKey: Key.completedAt)
         isCompleted = true
+        // Un parcours fini ne se reprend pas : la prochaine remise à zéro repart du logo.
+        Key.resume.forEach(defaults.removeObject(forKey:))
     }
 
     /// Remet le parcours à zéro (bouton de test dans les réglages).

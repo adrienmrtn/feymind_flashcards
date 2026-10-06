@@ -1,4 +1,5 @@
 import StoreKit
+import SwiftData
 import SwiftUI
 
 /// La porte du compte, et la clé qui la referme.
@@ -48,6 +49,7 @@ struct RootView: View {
 
     @Environment(AuthController.self) private var auth
     @Environment(\.requestReview) private var requestReview
+    @Environment(\.modelContext) private var modelContext
 
     private var showsAccountGate: Bool {
         didCompleteOnboarding && !auth.isSignedIn && !didSkipAccount && auth.state != .restoring
@@ -56,7 +58,7 @@ struct RootView: View {
     var body: some View {
         ZStack {
             if !didCompleteOnboarding {
-                OnboardingFlowView {
+                OnboardingFlowView(library: modelContext) {
                     didCompleteOnboarding = true
                 }
                 .transition(.opacity.combined(with: .scale(scale: 1.03)))

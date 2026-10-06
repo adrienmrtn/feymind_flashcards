@@ -107,6 +107,16 @@ deux chargements, le cours, les cartes, le bravo, le paywall — la retirent
 se défont pas ; après les rappels, tout est un résultat, une démonstration, un compte ou une
 offre. Les écrans sautés le restent dans les deux sens.
 
+**Une app fermée pendant le parcours le reprend où il s'était arrêté.** Un élève sur cinq
+quittait l'app en route — chercher son cours dans Fichiers, attendre que Mika écrive — et
+revenait quelques minutes plus tard sur une app qu'iOS avait fermée : il repartait du logo, et
+la moitié ne refaisait pas le chemin. L'écran atteint est maintenant écrit à chaque pas, avec
+le cours construit, et `OnboardingModel.resuming(in:)` relit le tout au lancement. Seuls
+l'accroche et une construction interrompue se refont : les supports déposés ne sont pas gardés,
+et le cours ou les cartes ne reprennent que si le cours est retrouvé dans la bibliothèque
+(`OnboardingStep.resumePoint`). La relecture ne compte aucune réponse dans les statistiques ;
+`onboarding_started` porte alors `resumed`.
+
 **Le rond fléché avance partout** (`OnboardingArrowButton`) : un rond d'encre en bas à droite,
 gris tant qu'aucune réponse n'est donnée. Les seuls boutons à libellé sont ceux qui disent
 autre chose qu'« avancer » : Commencer, le bouton à tenir du temps par jour, « oui » avant les
