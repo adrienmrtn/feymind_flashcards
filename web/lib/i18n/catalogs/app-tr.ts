@@ -1465,6 +1465,7 @@ export const appTr = {
     signInSubscribe: "Abone olmadan önce giriş yap.",
     signInImport: "Ders içe aktarmak için giriş yap.",
     subscribeClosed: "Abonelik henüz açık değil.",
+    checkoutMaintenance: "Site bakımda: ödeme şu anda kullanılamıyor. Lütfen daha sonra tekrar dene.",
     stripeCheckout: "Stripe ödeme sayfası vermedi.",
     noSubscription: "Devam eden aboneliğin yok.",
     giftedAccess: "Bu erişim hediye: yönetilecek bir şey yok.",

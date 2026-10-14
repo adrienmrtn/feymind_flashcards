@@ -11,6 +11,20 @@ import type { pricing } from "@micabo/core";
  * Stripe est lu, et les champs vides ne partent plus.
  */
 
+/**
+ * **Le paiement web est fermé.**
+ *
+ * Tant que c'est vrai, `startCheckout` refuse avant de regarder qui demande, quelle offre,
+ * ou si la clé Stripe est posée : aucune session Checkout n'est créée, d'où que vienne
+ * l'appel. Le site dit « en maintenance », et c'est tout ce qu'il dit.
+ *
+ * C'est une constante et non une variable d'environnement, à dessein : rouvrir le paiement
+ * est une décision qui se relit dans un commit, pas un réglage qu'on bascule par erreur
+ * dans un tableau de bord. Le portail de gestion d'un abonnement existant reste ouvert :
+ * il ne vend rien.
+ */
+export const CHECKOUT_MAINTENANCE = true;
+
 export function envOrCatalogPrice(
   fromEnv: string | undefined,
   fallback: string,

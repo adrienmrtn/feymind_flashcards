@@ -1466,6 +1466,7 @@ export const appEs = {
     signInSubscribe: "Inicia sesión antes de suscribirte.",
     signInImport: "Inicia sesión para importar un curso.",
     subscribeClosed: "La suscripción aún no está abierta.",
+    checkoutMaintenance: "Sitio en mantenimiento: el pago no está disponible por ahora. Vuelve a intentarlo más tarde.",
     stripeCheckout: "Stripe no ha dado una página de pago.",
     noSubscription: "No tienes una suscripción en curso.",
     giftedAccess: "Este acceso te lo han regalado: no hay nada que gestionar.",

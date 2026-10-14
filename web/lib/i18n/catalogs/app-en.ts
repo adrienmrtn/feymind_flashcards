@@ -1462,6 +1462,7 @@ export const appEn = {
     signInSubscribe: "Sign in before you subscribe.",
     signInImport: "Sign in to import a course.",
     subscribeClosed: "Subscriptions aren't open yet.",
+    checkoutMaintenance: "Site under maintenance: payment isn't available right now. Please try again later.",
     stripeCheckout: "Stripe didn't return a payment page.",
     noSubscription: "You don't have an active subscription.",
     giftedAccess: "This access was gifted: there's nothing to manage.",

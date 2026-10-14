@@ -1465,6 +1465,7 @@ export const appFr = {
     signInSubscribe: "Connecte-toi avant de t'abonner.",
     signInImport: "Connecte-toi pour importer un cours.",
     subscribeClosed: "L'abonnement n'est pas encore ouvert.",
+    checkoutMaintenance: "Site en maintenance : le paiement n'est pas disponible pour le moment. Réessaie plus tard.",
     stripeCheckout: "Stripe n'a pas rendu de page de paiement.",
     noSubscription: "Tu n'as pas d'abonnement en cours.",
     giftedAccess: "Cet accès a été offert : il n'y a rien à gérer.",

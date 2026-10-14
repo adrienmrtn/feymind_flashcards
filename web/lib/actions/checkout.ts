@@ -9,6 +9,7 @@ import { DEFAULT_UI_LOCALE, isUiLocale } from "@/lib/i18n/locales";
 import { readLocaleSignals, readUiLocale, translatorFor } from "@/lib/i18n/server";
 import { checkoutNote } from "@/lib/pricing-copy";
 import {
+  CHECKOUT_MAINTENANCE,
   checkoutIdempotencyKey,
   checkoutReturnUrl,
   checkoutSessionFields,
@@ -21,6 +22,10 @@ import { createClient } from "@/lib/supabase/server";
 
 /**
  * L'encaissement web : Stripe Checkout, puis RevenueCat écrit le droit.
+ *
+ * **Fermé pour l'instant.** `CHECKOUT_MAINTENANCE` fait refuser l'action avant toute
+ * lecture : le site répond « en maintenance » et ne crée aucune session. Tout ce qui suit
+ * dans cette fonction décrit le fonctionnement quand il rouvrira.
  *
  * Tant que `STRIPE_SECRET_KEY` manque, le bouton dit que l'abonnement n'est
  * pas ouvert. Un 400 de Stripe affiche désormais le motif réel — un `price_…`
@@ -76,6 +81,13 @@ function priceId(plan: pricing.CatalogPlan): string {
 }
 
 export async function startCheckout(kind: pricing.CatalogPlan): Promise<CheckoutResult> {
+  // **Fermé pour maintenance, avant tout le reste.** Pas de lecture du compte, pas de prix,
+  // pas d'appel à Stripe : quel que soit le chemin par lequel on arrive ici, la réponse est
+  // la même, et aucune session de paiement n'existe. Voir `CHECKOUT_MAINTENANCE`.
+  if (CHECKOUT_MAINTENANCE) {
+    return { status: "unavailable", message: await actionT("app.errors.checkoutMaintenance") };
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
