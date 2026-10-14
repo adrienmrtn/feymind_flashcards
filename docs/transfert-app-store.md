@@ -14,6 +14,9 @@ adresse réelle est rattrapé par l'adresse. Un élève qui avait masqué la sie
 passage** (`transfer_sub`), mais il ferme **60 jours après l'acceptation du transfert**, et
 rien ne le rouvre. `store/apple-transfer.mjs` s'en sert (étapes 2.4 et 3.2).
 
+**L'enjeu, en chiffres** (Supabase, 14 octobre 2026) : 1 589 comptes Apple sur 3 905, dont
+**1 096 à adresse masquée**. Ce sont eux qui arriveraient sur un compte vide.
+
 ## Ce qui change, ce qui ne change pas
 
 | | Après le transfert |
@@ -21,7 +24,7 @@ rien ne le rouvre. `store/apple-transfer.mjs` s'en sert (étapes 2.4 et 3.2).
 | Bundle `com.micabo.ios`, identifiant App Store `6806651497` | **Inchangés.** Le lien `APP_STORE_URL` de `web/lib/iphone.ts` reste bon. |
 | Avis, notes, mises à jour des élèves | Conservés. L'app reste en vente pendant le transfert. |
 | Abonnements en cours, produits, prix | Conservés. Les renouvellements continuent. Les revenus vont à Vik Studios à partir de l'acceptation. |
-| Service ID `com.micabo.app.service` (connexion Apple du site) | Suit l'App ID. Sa configuration est à revérifier (3.4). |
+| Service ID `com.micabo.ios.service` (connexion Apple du site) | Suit l'App ID. Sa configuration est à revérifier (3.4). C'est celui que Supabase utilise, pas le `com.micabo.app.service` de [`oauth-setup.md`](oauth-setup.md). |
 | Clé publique RevenueCat `appl_…` dans `Info.plist` | **Inchangée.** Même projet, même app RevenueCat. Seules les clés Apple y sont remplacées (3.6). |
 | Code de l'app et du site | **Rien à modifier**, sauf l'équipe que Xcode écrira dans le projet (3.8). |
 | Clés `.p8` : Sign in with Apple, In-App Purchase, API App Store Connect | **Ne suivent pas.** Elles appartiennent à l'équipe. Il faut les recréer chez Vik Studios. |
@@ -346,13 +349,13 @@ la nouvelle équipe. Tous les quelques jours, tant que `exchange` ne dit pas `N/
    documentation Supabase *Login with Apple* → *Generate a client secret*. Saisir :
    - Team ID : celui de **Vik Studios** ;
    - Key ID : celui de 3.1 ;
-   - Services ID : `com.micabo.app.service` ;
+   - Services ID : `com.micabo.ios.service` ;
    - la clé : le contenu complet du `.p8` de 3.1, lignes `BEGIN` et `END` comprises.
 
    Copier le JWT obtenu.
 2. *Authentication* → *Sign In / Providers* → **Apple** → activer :
-   - *Client IDs* : `com.micabo.app.service,com.micabo.ios` (inchangés, Service ID en
-     premier) ;
+   - *Client IDs* : **ne pas y toucher**. Ils valent `com.micabo.ios.service,com.micabo.ios`
+     (relevé le 14 octobre 2026), Service ID en premier ;
    - *Secret Key (for OAuth)* : le JWT.
 
    *Save*.
@@ -363,7 +366,7 @@ cette app.
 
 ### 3.4 Le Service ID du site
 
-*Identifiers* → filtre en haut à droite : *Services IDs* → `com.micabo.app.service` → *Sign in
+*Identifiers* → filtre en haut à droite : *Services IDs* → `com.micabo.ios.service` → *Sign in
 with Apple* → *Configure*. Vérifier :
 
 | Champ | Valeur |
