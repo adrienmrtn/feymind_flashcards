@@ -4,6 +4,7 @@ import { pricing } from "@micabo/core";
 
 import { checkoutNote } from "../pricing-copy";
 import {
+  CHECKOUT_MAINTENANCE,
   checkoutIdempotencyKey,
   checkoutReturnUrl,
   checkoutSessionFields,
@@ -13,6 +14,13 @@ import {
   priceIdProblem,
   stripeRefusalMessage,
 } from "./checkout";
+
+describe("CHECKOUT_MAINTENANCE", () => {
+  it("le paiement web est fermé : aucune session Stripe ne se crée", () => {
+    // Rouvrir le paiement est une décision : elle passe par ce test, pas par un réglage.
+    expect(CHECKOUT_MAINTENANCE).toBe(true);
+  });
+});
 
 describe("envOrCatalogPrice", () => {
   it("laisse l'env gagner, et ignore une chaîne vide", () => {

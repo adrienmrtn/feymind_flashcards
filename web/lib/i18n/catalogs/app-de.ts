@@ -1465,6 +1465,7 @@ export const appDe = {
     signInSubscribe: "Melde dich an, bevor du ein Abo nimmst.",
     signInImport: "Melde dich an, um einen Kurs zu importieren.",
     subscribeClosed: "Das Abo ist noch nicht offen.",
+    checkoutMaintenance: "Seite in Wartung: Die Zahlung ist gerade nicht verfügbar. Bitte versuch es später noch einmal.",
     stripeCheckout: "Stripe hat keine Zahlungsseite geliefert.",
     noSubscription: "Du hast kein laufendes Abo.",
     giftedAccess: "Dieser Zugang wurde geschenkt: es gibt nichts zu verwalten.",
