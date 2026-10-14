@@ -25,3 +25,8 @@ CLAUDE.md
 
 # Les captures de l'app repeintes par `store/screenshots/generator/statusbar.py` : elles se refont.
 store/screenshots/generator/captures/
+
+# La migration des comptes Apple (`store/apple-transfer.mjs`) : identifiants des élèves, jamais dans le dépôt.
+apple-users.csv
+apple-transfer.csv
+apple-migration.sql

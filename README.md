@@ -797,6 +797,12 @@ demande que le **bundle de l'app et le Service ID soient tous les deux** dans le
 « Client IDs », parce que le jeton du bouton natif porte le premier et celui du retour web le
 second.
 
+Ces identifiants Apple sont **propres à l'équipe développeur**. Si l'app change de compte App
+Store, chaque élève inscrit avec Apple reçoit un identifiant neuf. Ceux qui avaient masqué
+leur adresse arriveraient sur un compte vide. La marche à suivre, et le script qui migre les
+comptes dans le délai de 60 jours fixé par Apple, sont dans
+**[`docs/transfert-app-store.md`](docs/transfert-app-store.md)**.
+
 Et **[`docs/data-flywheel.md`](docs/data-flywheel.md)** propose ce qu'il faudrait garder en plus
 pour que ces données deviennent un avantage : rien n'y est implémenté, c'est une note de
 conception.
