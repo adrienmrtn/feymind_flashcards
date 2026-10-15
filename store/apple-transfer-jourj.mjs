@@ -19,7 +19,9 @@
  *   migrate                réécrit les identités Apple d'après la table, puis compte les états
  *
  * L'accès à Supabase passe par l'API de gestion ; le jeton est ajouté par le proxy de
- * l'environnement (secret réseau sur api.supabase.com). Aucune commande n'affiche de secret.
+ * l'environnement (secret réseau sur api.supabase.com). Le `fetch` de Node ne passe par ce
+ * proxy que si on le lui demande : dans une session cloud, lancer avec `NODE_USE_ENV_PROXY=1`,
+ * sinon Supabase répond 401 « No access token provided ». Aucune commande n'affiche de secret.
  */
 
 import {
