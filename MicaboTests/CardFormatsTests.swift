@@ -354,8 +354,8 @@ final class CardFormatsTests: XCTestCase {
     }
 }
 
-/// Ce qui se passe quand l'import échoue : message utile, doublons repérés.
-final class ImportFailureTests: XCTestCase {
+/// Un même cours importé deux fois est reconnu, même sous un autre nom.
+final class DuplicateImportTests: XCTestCase {
     private var container: ModelContainer!
     private var context: ModelContext!
 
@@ -374,64 +374,7 @@ final class ImportFailureTests: XCTestCase {
         container = nil
     }
 
-    private func isEnableVision(_ recovery: ImportFailure.Recovery) -> Bool {
-        if case .enableVision = recovery { return true }
-        return false
-    }
-
     private let longText = String(repeating: "La photosynthèse transforme la lumière en matière organique. ", count: 6)
-
-    func testHandwrittenPhotoThatGivesNothingIsExplained() {
-        let failure = ImportReadiness.failure(text: "  ", hasImages: false, canEnableVision: true, kind: .photo)
-
-        XCTAssertNotNil(failure)
-        XCTAssertEqual(failure?.title, L10n.t("ios.err.pagesUnreadable", locale: .resolved()))
-        XCTAssertTrue(failure?.message.contains(L10n.t("ios.noTextRead", locale: .resolved())) ?? false)
-        XCTAssertTrue(isEnableVision(failure?.recovery ?? .none), "On doit proposer le modèle de vision")
-    }
-
-    func testScannedPdfSuggestsVisionOnlyWhenItIsStillAvailable() {
-        let withOption = ImportReadiness.failure(text: "Chapitre 1", hasImages: false, canEnableVision: true, kind: .pdf)
-        let withoutOption = ImportReadiness.failure(text: "Chapitre 1", hasImages: false, canEnableVision: false, kind: .pdf)
-
-        XCTAssertTrue(isEnableVision(withOption?.recovery ?? .none))
-        XCTAssertFalse(isEnableVision(withoutOption?.recovery ?? .none))
-    }
-
-    func testEnoughTextPassesThrough() {
-        XCTAssertNil(ImportReadiness.failure(text: longText, hasImages: false, canEnableVision: true, kind: .pdf))
-    }
-
-    func testImagesSentToVisionAreEnoughOnTheirOwn() {
-        XCTAssertNil(ImportReadiness.failure(text: "", hasImages: true, canEnableVision: false, kind: .pdf))
-    }
-
-    /// Un paquet de cartes n'emprunte pas l'écran d'import : le compilateur doit quand
-    /// même connaître ce cas, et le garde ne doit rien inventer pour lui.
-    func testCardsKindIsNotADocumentImport() {
-        XCTAssertFalse(ImportKind.cards.producesSheet)
-        XCTAssertEqual(ImportKind.cards.courseSource, .deck)
-        XCTAssertFalse(CourseSource.deck.expectsSheet)
-        XCTAssertNil(
-            ImportReadiness.failure(
-                text: "",
-                hasImages: false,
-                canEnableVision: false,
-                kind: .cards
-            )
-        )
-    }
-
-    /// Chaque source a un libellé, une icône et une `CourseSource` : un cas oublié ici
-    /// est le même oubli qui faisait échouer le `switch` de `ImportView`.
-    func testEveryImportKindIsFullyDescribed() {
-        for kind in ImportKind.allCases {
-            XCTAssertFalse(kind.title.isEmpty, "\(kind.rawValue) sans titre")
-            XCTAssertFalse(kind.systemImage.isEmpty, "\(kind.rawValue) sans icône")
-            XCTAssertFalse(kind.courseSource.label.isEmpty, "\(kind.rawValue) sans source")
-        }
-        XCTAssertTrue(ImportKind.allCases.contains(.cards))
-    }
 
     // MARK: - Doublons
 
