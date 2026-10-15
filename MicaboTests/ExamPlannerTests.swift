@@ -615,8 +615,9 @@ final class ExamDeadlinesTests: XCTestCase {
 
     /// Un second examen ne ramène pas une carte déjà notée aujourd'hui.
     func testASecondExamDoesNotYankCardsReviewedToday() throws {
-        let course = try makeCourse(cards: 4, dueInDays: 30)
+        let course = try makeCourse()
         let reviewed = try XCTUnwrap(course.orderedCards.first)
+        reviewed.dueDate = Date().addingTimeInterval(30 * 86_400)
         reviewed.lastReviewedAt = Date()
         let originalDue = reviewed.dueDate
         try context.save()
