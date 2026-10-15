@@ -606,14 +606,11 @@ final class ExamDeadlinesTests: XCTestCase {
         let capped = StudyQueueBuilder.build(from: cards, limits: smallLimits, deadlines: .empty)
         XCTAssertEqual(capped.count, 3)
 
-        _ = try exam(name: "Examen", inDays: 7, courses: [course], planned: true)
-        let withExam = StudyQueueBuilder.build(
-            from: cards,
-            limits: smallLimits,
-            deadlines: ExamDeadlines.active(in: context)
-        )
+        let planned = try exam(name: "Examen", inDays: 7, courses: [course], planned: true)
+        let deadlines = ExamDeadlines.active(exams: [planned], cards: cards)
+        let withExam = StudyQueueBuilder.build(from: cards, limits: smallLimits, deadlines: deadlines)
         XCTAssertEqual(withExam.count, 3)
-        XCTAssertTrue(withExam.allSatisfy { ExamDeadlines.active(in: context).covers($0) })
+        XCTAssertTrue(withExam.allSatisfy { deadlines.covers($0) })
     }
 
     /// Un second examen ne ramène pas une carte déjà notée aujourd'hui.

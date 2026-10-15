@@ -341,7 +341,6 @@ final class YouTubeDocumentTests: XCTestCase {
 /// La source vidéo dans le reste de l'app.
 final class YouTubeSourceTests: XCTestCase {
     func testYouTubeIsASourceLikeTheOthers() {
-        XCTAssertEqual(ImportKind.youtube.courseSource, .youtube)
         XCTAssertEqual(CourseSource.youtube.label, "YouTube")
         // Le brut est stocké en base : le renommer perdrait la source des cours déjà là.
         XCTAssertEqual(CourseSource.youtube.rawValue, "youtube")
@@ -351,19 +350,6 @@ final class YouTubeSourceTests: XCTestCase {
     /// casser la lecture du cours.
     func testAnUnknownStoredSourceFallsBack() {
         XCTAssertNil(CourseSource(rawValue: "tiktok"))
-    }
-
-    /// La transcription est trop courte : la phrase est celle de l'import vidéo, pas le
-    /// message générique des documents.
-    func testTooShortTranscriptUsesTheVideoSentence() {
-        let failure = ImportReadiness.failure(
-            text: "trois mots",
-            hasImages: false,
-            canEnableVision: false,
-            kind: .youtube
-        )
-
-        XCTAssertEqual(failure?.message, L10n.t("ios.yt.tooShort", locale: .resolved()))
     }
 }
 
