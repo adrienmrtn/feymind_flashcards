@@ -22,11 +22,11 @@ const APPLE = "https://appleid.apple.com";
 /** L'identifiant présenté à Apple : le bundle de l'app, celui que portent les jetons iOS. */
 export const DEFAULT_CLIENT_ID = "com.micabo.ios";
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** `001234.0a1b…c9.1234` pour un `sub`, `760417.ebbf…8a.1827` pour un `transfer_sub`. */
-const APPLE_ID = /^[0-9A-Za-z][0-9A-Za-z._-]{0,254}$/;
+export const APPLE_ID = /^[0-9A-Za-z][0-9A-Za-z._-]{0,254}$/;
 const TEAM_ID = /^[A-Z0-9]{10}$/;
-const EMAIL = /^[^\s@'"\\]+@[^\s@'"\\]+\.[^\s@'"\\]+$/;
+export const EMAIL = /^[^\s@'"\\]+@[^\s@'"\\]+\.[^\s@'"\\]+$/;
 
 /**
  * **Ce qui se vérifie sans appeler Apple.** La confusion la plus fréquente : le Key ID de la
@@ -44,10 +44,19 @@ export function credentialProblems({ teamId, keyId }) {
  * Le `client_secret` d'Apple : un JWT ES256 signé avec la clé **Sign in with Apple** de
  * l'équipe (developer.apple.com → Keys), pas avec la clé d'API App Store Connect.
  */
-export function makeClientSecret({ teamId, keyId, privateKey, clientId = DEFAULT_CLIENT_ID, now = Math.floor(Date.now() / 1000) }) {
+export function makeClientSecret({
+  teamId,
+  keyId,
+  privateKey,
+  clientId = DEFAULT_CLIENT_ID,
+  seconds = 24 * 3600,
+  now = Math.floor(Date.now() / 1000),
+}) {
+  // Apple refuse un secret qui vit plus de six mois.
+  if (seconds > 15_777_000) throw new Error("un client_secret Apple vit six mois au plus");
   const encode = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
   const header = encode({ alg: "ES256", kid: keyId, typ: "JWT" });
-  const payload = encode({ iss: teamId, iat: now, exp: now + 24 * 3600, aud: APPLE, sub: clientId });
+  const payload = encode({ iss: teamId, iat: now, exp: now + seconds, aud: APPLE, sub: clientId });
   const signature = sign("sha256", Buffer.from(`${header}.${payload}`), {
     key: privateKey,
     dsaEncoding: "ieee-p1363",
@@ -100,8 +109,74 @@ export function readTransfers(text) {
   return rows;
 }
 
-function literal(value) {
+export function literal(value) {
   return value == null ? "null" : `'${String(value).replaceAll("'", "''")}'`;
+}
+
+/**
+ * Les trois écritures de la migration, lues dans `relation` (`user_id`, `new_sub`,
+ * `new_email`) : la table temporaire du SQL à coller, ou la table de travail du jour J.
+ * Une ligne sans `new_sub` (échange pas encore fait) est ignorée.
+ */
+export function migrationStatements(relation) {
+  return `-- Reconnecté avec une adresse réelle : la nouvelle identité est déjà sur le compte, l'ancienne part.
+delete from auth.identities old
+using ${relation} m
+where m.new_sub is not null
+  and old.provider = 'apple'
+  and old.user_id = m.user_id
+  and old.provider_id <> m.new_sub
+  and exists (
+    select 1 from auth.identities fresh
+    where fresh.provider = 'apple' and fresh.provider_id = m.new_sub and fresh.user_id = m.user_id
+  );
+
+-- Personne ne s'est reconnecté : l'identité prend le nouvel identifiant, et la nouvelle adresse relais.
+update auth.identities i
+set provider_id = m.new_sub,
+    identity_data = i.identity_data
+      || jsonb_build_object('sub', m.new_sub, 'provider_id', m.new_sub)
+      || case when m.new_email is null then '{}'::jsonb else jsonb_build_object('email', m.new_email) end,
+    updated_at = now()
+from ${relation} m
+where m.new_sub is not null
+  and i.provider = 'apple'
+  and i.user_id = m.user_id
+  and i.provider_id <> m.new_sub
+  and not exists (
+    select 1 from auth.identities taken
+    where taken.provider = 'apple' and taken.provider_id = m.new_sub
+  );
+
+-- L'adresse du compte, quand c'était l'adresse relais de l'ancienne équipe : elle ne relaie plus rien.
+update auth.users u
+set email = m.new_email,
+    updated_at = now()
+from ${relation} m
+where m.new_sub is not null
+  and u.id = m.user_id
+  and m.new_email is not null
+  and u.email like '%@privaterelay.appleid.com'
+  and u.email is distinct from m.new_email
+  and not exists (select 1 from auth.users twin where twin.email = m.new_email and twin.id <> m.user_id);
+`;
+}
+
+/** L'état de chaque compte. « en double » : un second compte s'est ouvert, à fusionner à la main. */
+export function migrationReport(relation) {
+  return `select m.user_id,
+  case
+    when mine.user_id is not null then 'migré'
+    when other.user_id is not null then 'en double'
+    else 'sans identité Apple'
+  end as etat,
+  other.user_id as autre_compte
+from ${relation} m
+left join auth.identities mine
+  on mine.provider = 'apple' and mine.provider_id = m.new_sub and mine.user_id = m.user_id
+left join auth.identities other
+  on other.provider = 'apple' and other.provider_id = m.new_sub and other.user_id <> m.user_id
+where m.new_sub is not null`;
 }
 
 /**
@@ -143,57 +218,9 @@ create temporary table apple_migration (
 insert into apple_migration (user_id, new_sub, new_email) values
 ${values};
 
--- Reconnecté avec une adresse réelle : la nouvelle identité est déjà sur le compte, l'ancienne part.
-delete from auth.identities old
-using apple_migration m
-where old.provider = 'apple'
-  and old.user_id = m.user_id
-  and old.provider_id <> m.new_sub
-  and exists (
-    select 1 from auth.identities fresh
-    where fresh.provider = 'apple' and fresh.provider_id = m.new_sub and fresh.user_id = m.user_id
-  );
-
--- Personne ne s'est reconnecté : l'identité prend le nouvel identifiant, et la nouvelle adresse relais.
-update auth.identities i
-set provider_id = m.new_sub,
-    identity_data = i.identity_data
-      || jsonb_build_object('sub', m.new_sub, 'provider_id', m.new_sub)
-      || case when m.new_email is null then '{}'::jsonb else jsonb_build_object('email', m.new_email) end,
-    updated_at = now()
-from apple_migration m
-where i.provider = 'apple'
-  and i.user_id = m.user_id
-  and i.provider_id <> m.new_sub
-  and not exists (
-    select 1 from auth.identities taken
-    where taken.provider = 'apple' and taken.provider_id = m.new_sub
-  );
-
--- L'adresse du compte, quand c'était l'adresse relais de l'ancienne équipe : elle ne relaie plus rien.
-update auth.users u
-set email = m.new_email,
-    updated_at = now()
-from apple_migration m
-where u.id = m.user_id
-  and m.new_email is not null
-  and u.email like '%@privaterelay.appleid.com'
-  and u.email is distinct from m.new_email
-  and not exists (select 1 from auth.users twin where twin.email = m.new_email and twin.id <> m.user_id);
-
+${migrationStatements("apple_migration")}
 -- L'état de chaque compte. « en double » : un second compte s'est ouvert, à fusionner à la main.
-select m.user_id,
-  case
-    when mine.user_id is not null then 'migré'
-    when other.user_id is not null then 'en double'
-    else 'sans identité Apple'
-  end as etat,
-  other.user_id as autre_compte
-from apple_migration m
-left join auth.identities mine
-  on mine.provider = 'apple' and mine.provider_id = m.new_sub and mine.user_id = m.user_id
-left join auth.identities other
-  on other.provider = 'apple' and other.provider_id = m.new_sub and other.user_id <> m.user_id
+${migrationReport("apple_migration")}
 order by etat desc, m.user_id;
 `;
 }
