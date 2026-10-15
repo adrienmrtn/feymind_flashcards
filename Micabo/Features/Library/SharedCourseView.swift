@@ -89,7 +89,7 @@ struct SharedCourseView: View {
             title: course.title,
             eyebrow: eyebrow,
             tile: MicaboTile(
-                glyph: .emoji(course.emoji?.nilIfBlank ?? "📘"),
+                glyph: .symbol(MicaboIcon.guess(subject: course.subject, title: course.title).symbol),
                 background: tint.lightened(by: 0.8),
                 tint: tint.darkened(by: 0.25),
                 size: 52

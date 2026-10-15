@@ -59,7 +59,7 @@ struct FolderPickerSheet: View {
                     ForEach(rows, id: \.folder.id) { row in
                         let allowed = isAllowed(row.folder)
                         MicaboRow(
-                            tile: MicaboTile(glyph: .emoji(row.folder.emoji ?? "📁"), size: 42),
+                            tile: MicaboTile(glyph: .symbol("folder.fill"), size: 42),
                             title: row.folder.name,
                             subtitle: nil,
                             accessory: current == row.folder.id ? .symbol("checkmark") : .none,

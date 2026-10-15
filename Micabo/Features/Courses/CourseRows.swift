@@ -27,7 +27,7 @@ extension MicaboRow {
     static func folder(_ folder: CourseFolder, total: Int, action: (() -> Void)? = nil) -> MicaboRow {
         MicaboRow(
             tile: MicaboTile(
-                glyph: .emoji(folder.emoji ?? "📁"),
+                glyph: .symbol("folder.fill"),
                 background: MicaboColor.surfaceMuted,
                 tint: MicaboColor.inkSecondary,
                 size: 42

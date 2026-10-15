@@ -759,7 +759,7 @@ struct ProfileView: View {
         MicaboRowGroup(
             rows: [
                 MicaboRow(
-                    tile: MicaboTile(glyph: .emoji("👋"), background: MicaboColor.tilePastels[2]),
+                    tile: MicaboTile(glyph: .symbol("person.2.fill"), background: MicaboColor.tilePastels[2]),
                     title: i18n.t("nav.friends"),
                     subtitle: friendsSubtitle,
                     accessory: friendsAccessory
