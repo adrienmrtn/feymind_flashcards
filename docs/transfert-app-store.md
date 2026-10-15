@@ -154,6 +154,18 @@ Micabo → onglet **TestFlight**.
 
 `ci_scripts/ci_post_clone.sh` ne dépend d'aucune équipe. Il resservira tel quel.
 
+**Le flux, relevé par l'API le 15 octobre 2026**, pour le recréer à l'identique en 3.8 :
+
+| Réglage | Valeur |
+| --- | --- |
+| Nom | `Default`, activé |
+| Dépôt | `https://github.com/adrienmrtn/feymind_flashcards.git` |
+| Projet | `Micabo.xcodeproj` |
+| Environnement | Xcode *Latest Release*, macOS *Latest Release*, construction propre (*Clean*) |
+| Démarrage | à chaque modification de la branche `main`, avec annulation automatique des builds en cours |
+| Action | *Archive – iOS*, schéma `Micabo`, distribution *App Store Eligible*, obligatoire |
+| Dernier build envoyé | 132 : le *Next Build Number* chez Vik Studios part de 133 |
+
 ### 1.9 La clé Sign in with Apple d'Adrien Martinot
 
 developer.apple.com/account (équipe Adrien Martinot) → *Certificates, Identifiers &
