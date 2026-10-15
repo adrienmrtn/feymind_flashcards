@@ -142,12 +142,12 @@ final class RenderGalleryTests: XCTestCase {
 
         let session = LessonSession(course: course)
         try RenderGallery.render(
-            "lesson-path",
+            "lesson-path", night: true,
             PathMapView(session: session, tone: course.tone, width: 393, onOpen: { _ in }, onRetry: { _ in })
                 .padding(.top, 40)
         )
         try RenderGallery.render(
-            "lesson-notes",
+            "lesson-notes", night: true,
             VStack(alignment: .leading, spacing: 22) {
                 ThemeHeader(chapter: course.orderedChapters[0])
                 ThemeNotesView(notes: Self.sampleNotes, tone: course.tone)
@@ -212,7 +212,7 @@ final class RenderGalleryTests: XCTestCase {
 
         let resume = try XCTUnwrap(ResumeTarget.pick(from: [course]))
         try RenderGallery.render(
-            "home",
+            "home", night: true,
             VStack(alignment: .leading, spacing: 28) {
                 HomeGreeting()
                 ComposerBarPreview(composer: composer)
@@ -261,7 +261,7 @@ final class RenderGalleryTests: XCTestCase {
         try context.save()
 
         try RenderGallery.render(
-            "lessons",
+            "lessons", night: true,
             VStack(spacing: 12) {
                 LessonFolderCard(name: "Bac de maths", count: 4) {}
                 LessonCard(course: course, dueCount: 8, examDays: 12) {}
@@ -271,7 +271,7 @@ final class RenderGalleryTests: XCTestCase {
             .padding(20)
         )
         try RenderGallery.render(
-            "profile",
+            "profile", night: true,
             VStack(alignment: .leading, spacing: 22) {
                 ProfileCard(name: "Marie", identity: "@marie", studies: "Terminale") {}
                 ProUpgradeCard {}
@@ -331,27 +331,32 @@ enum RenderGallery {
     }
 
     /// Dessine `view` sur la largeur d'un écran, à sa hauteur naturelle (ou à `height`), et
-    /// l'écrit sous `<nom>.png`. Sans dossier de rendu, ne fait rien.
+    /// l'écrit sous `<nom>.png` — et sous `<nom>-nuit.png` en sombre quand `night` est vrai.
+    /// Sans dossier de rendu, ne fait rien.
     static func render<V: View>(
         _ name: String,
         width: CGFloat = 393,
         height: CGFloat? = nil,
+        night: Bool = false,
         _ view: V
     ) throws {
         guard let directory else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
         FontLoader.registerFonts()
-        let framed = view
-            .frame(width: width, height: height)
-            .background(MicaboColor.canvas)
-            .environment(\.colorScheme, .light)
-        let renderer = ImageRenderer(content: framed)
-        renderer.scale = 3
-        guard let data = renderer.uiImage?.pngData() else {
-            XCTFail("rendu vide : \(name)")
-            return
-        }
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        try data.write(to: directory.appendingPathComponent("\(name).png"))
+        let schemes: [(ColorScheme, String)] = night ? [(.light, name), (.dark, "\(name)-nuit")] : [(.light, name)]
+        for (scheme, file) in schemes {
+            let framed = view
+                .frame(width: width, height: height)
+                .background(MicaboColor.canvas)
+                .environment(\.colorScheme, scheme)
+            let renderer = ImageRenderer(content: framed)
+            renderer.scale = 3
+            guard let data = renderer.uiImage?.pngData() else {
+                XCTFail("rendu vide : \(file)")
+                continue
+            }
+            try data.write(to: directory.appendingPathComponent("\(file).png"))
+        }
     }
 }
 

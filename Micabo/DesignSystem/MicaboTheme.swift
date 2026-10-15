@@ -551,7 +551,7 @@ extension Color {
         var targetRed: CGFloat = 1
         var targetGreen: CGFloat = 1
         var targetBlue: CGFloat = 1
-        if AppearanceStore.shared.appearance.isDark {
+        if AppearanceStore.isDarkNow {
             var unused: CGFloat = 1
             UIColor(AppearanceStore.shared.palette.surface)
                 .getRed(&targetRed, green: &targetGreen, blue: &targetBlue, alpha: &unused)
@@ -597,7 +597,7 @@ extension Color {
         var brightness: CGFloat = 0
         var alpha: CGFloat = 0
         UIColor(self).getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
-        let dark = AppearanceStore.shared.appearance.isDark
+        let dark = AppearanceStore.isDarkNow
         return Color(
             hue: Double(hue),
             saturation: Double(dark ? min(saturation, CGFloat(0.55)) : saturation),
@@ -668,8 +668,9 @@ private struct MicaboElevationStyle: ViewModifier {
         let contact = level.contact
         let ambient = level.ambient
         return content
-            .shadow(color: MicaboColor.ink.opacity(contact.opacity), radius: contact.radius, x: 0, y: contact.y)
-            .shadow(color: MicaboColor.ink.opacity(level.ambientOpacity), radius: ambient.radius, x: 0, y: ambient.y)
+            // Du noir, pas l'encre : la nuit, l'encre est ivoire, et une ombre claire serait un halo.
+            .shadow(color: Color.black.opacity(contact.opacity), radius: contact.radius, x: 0, y: contact.y)
+            .shadow(color: Color.black.opacity(level.ambientOpacity), radius: ambient.radius, x: 0, y: ambient.y)
     }
 }
 
@@ -712,7 +713,7 @@ extension View {
 
     /// Ombre douce des éléments posés sur le fond, sans passer par une carte complète.
     func micaboSoftShadow(strength: Double = 0.06) -> some View {
-        shadow(color: MicaboColor.ink.opacity(strength), radius: 16, x: 0, y: 8)
+        shadow(color: Color.black.opacity(strength), radius: 16, x: 0, y: 8)
     }
 
     /// Applique le fond de l'application et masque le fond système du conteneur.

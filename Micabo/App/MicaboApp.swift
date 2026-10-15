@@ -18,6 +18,11 @@ struct MicaboApp: App {
     @State private var uiLocale = UiLocaleStore()
     /// Les leçons qui s'écrivent : le travail survit à l'écran qui l'a lancé.
     @State private var lessons = LessonBuilder()
+    /// Le thème choisi dans le Profil : clair, sombre ou celui du téléphone.
+    @State private var appearance = AppearanceStore.shared
+    /// Le parcours d'accueil et le premier cours sont dessinés pour le clair : ils le gardent.
+    @AppStorage(OnboardingPreferences.Key.completed) private var didCompleteOnboarding = false
+    @AppStorage(OnboardingPreferences.Key.pendingFirstImport) private var pendingFirstImport = false
     @Environment(\.scenePhase) private var scenePhase
 
     private static let schema = Schema([Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self])
@@ -74,6 +79,11 @@ struct MicaboApp: App {
         .modelContainer(container)
     }
 
+    private var colorScheme: ColorScheme? {
+        guard didCompleteOnboarding, !pendingFirstImport else { return .light }
+        return appearance.appearance.colorScheme
+    }
+
     private var app: some View {
         // L'apparence (jour, nuit, crépuscule) est posée ici. Le parcours
         // d'accueil peut encore forcer le sombre le temps de ses écrans d'encre.
@@ -90,7 +100,7 @@ struct MicaboApp: App {
             .environment(uiLocale)
             .environment(lessons)
             .environment(\.locale, uiLocale.locale.foundation)
-            .preferredColorScheme(.light)
+            .preferredColorScheme(colorScheme)
             // Avant le reste de la tâche : ouvrir la session de statistiques est
             // quelques microsecondes, et tout ce qui suit peut vouloir tracer.
             .onAppear { Analytics.start() }

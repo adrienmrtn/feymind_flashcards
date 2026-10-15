@@ -22,7 +22,7 @@ ne se construit pas, et ce qui change de cap s'écrit ici d'abord.
 | Mascotte | **Un seul personnage : Mika.** La mascotte du zip s'appelle Mika : Home, chat, chargements, fin de leçon. Le blob dégradé disparaît |
 | Quiz | **3 QCM de réserve par thème**, générés une fois. Un quiz de 2 thèmes tire 5 QCM sur 6 ; le quiz de 10 et l'examen blanc tirent dans la réserve du cours, ratés d'abord |
 | Ce qui disparaît | **Tout ce que le PDF ne nomme pas** (§ 11). Les modèles qui se synchronisent restent, pour le web |
-| Thème | « Changer le thème » est tenu : clair / sombre / système, dans le dernier lot |
+| Thème | « Changer le thème » est tenu : clair / sombre / comme le téléphone (`MicaboAppearance`, palette `adaptive`). L'accueil et le premier cours restent en clair |
 | Série (flamme) | Hors du PDF, donc hors de l'interface. Le classement de la semaine reste |
 | Lexique | **Leçon** à l'écran (onglet Leçons, Nouvelle leçon, Leçon terminée). Cercle, Palier, Notes, Quiz, Flashcards |
 | Langues | Les 5 langues (fr, en, de, es, tr) traduites dans la foulée ; le turc pèse la moitié des comptes |
@@ -475,7 +475,8 @@ thèmes, appels de thème consommés) :
   Le blob disparaît.
 - **Style épuré** : pas de sous-titres inutiles, texte agrandi.
 - **Navbar en verre** (§ 2), boutons d'action principaux **noirs** (encre).
-- **Thème** : clair, sombre, système (dernier lot). D'ici là, clair seulement.
+- **Thème** : clair, sombre, ou comme le téléphone. Chaque jeton de `MicaboPalette.adaptive` porte
+  sa valeur de jour et de nuit ; le réglage ne fait que fixer l'apparence de la fenêtre.
 
 ---
 

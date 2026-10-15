@@ -163,10 +163,11 @@ struct ProfileRow: View {
     }
 }
 
-/// **Réglages** : changer la langue, nous noter.
+/// **Réglages** : changer la langue, changer le thème, nous noter.
 struct ProfileSettingsGroup: View {
     @Environment(UiLocaleStore.self) private var store: UiLocaleStore?
     @Environment(\.requestReview) private var requestReview
+    @State private var appearance = AppearanceStore.shared
 
     var body: some View {
         ProfileGroup(title: L10n.t("lesson.profile.settings", locale: .resolved())) {
@@ -187,6 +188,27 @@ struct ProfileSettingsGroup: View {
                     icon: .language,
                     title: L10n.t("lesson.profile.language", locale: .resolved()),
                     value: (store?.locale ?? .resolved()).nativeName
+                ) {}
+                .label
+            }
+            Menu {
+                ForEach(MicaboAppearance.allCases) { mode in
+                    Button {
+                        appearance.appearance = mode
+                        Haptics.selection()
+                    } label: {
+                        if mode == appearance.appearance {
+                            Label(L10n.t(mode.titleKey, locale: .resolved()), systemImage: "checkmark")
+                        } else {
+                            Text(L10n.t(mode.titleKey, locale: .resolved()))
+                        }
+                    }
+                }
+            } label: {
+                ProfileRow(
+                    icon: .theme,
+                    title: L10n.t("lesson.profile.theme", locale: .resolved()),
+                    value: L10n.t(appearance.appearance.titleKey, locale: .resolved())
                 ) {}
                 .label
             }

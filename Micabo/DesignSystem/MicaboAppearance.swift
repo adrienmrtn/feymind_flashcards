@@ -1,32 +1,41 @@
 import Observation
 import SwiftUI
+import UIKit
 
-/// **Une seule apparence, et c'est le jour.**
+/// **Le thème : clair, sombre, ou celui du téléphone** (`docs/refonte-parcours.md` § 12).
 ///
-/// Il y en avait trois — jour, nuit, crépuscule — soit trois palettes complètes à tenir
-/// pour un sélecteur que presque personne n'ouvrait, et trois fois le travail à chaque
-/// jeton ajouté. La refonte n'en garde qu'une et la règle au pixel. Le mode sombre
-/// reviendra quand la palette claire aura cessé de bouger : une palette qu'on retouche
-/// chaque semaine ne se décline pas.
-///
-/// Le type survit à un seul cas parce que `AppearanceStore` est lu depuis le thème, et
-/// qu'un jeton de couleur qui s'appellerait `MicaboPalette.day` en dur dans trente fichiers
-/// serait exactement ce qu'il faudrait défaire le jour où la nuit revient.
+/// Les couleurs ne changent pas de palette en route : `MicaboPalette.adaptive` porte les deux,
+/// et chaque jeton se résout au moment de peindre. Le réglage ne fait que fixer l'apparence de
+/// la fenêtre (`colorScheme`) ; en « Système », c'est le téléphone qui décide.
 enum MicaboAppearance: String, CaseIterable, Identifiable {
+    case system
     case day
+    case night
 
     var id: String { rawValue }
 
-    var isDark: Bool { false }
+    /// L'apparence imposée à la fenêtre ; `nil` laisse le téléphone choisir.
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: nil
+        case .day: .light
+        case .night: .dark
+        }
+    }
 
-    var colorScheme: ColorScheme { .light }
+    var titleKey: String { "lesson.theme.\(rawValue)" }
 
     static let storageKey = "micabo.appearance"
 
-    /// Les anciens appareils ont « night » ou « twilight » en réglage. Ils retombent sur le
-    /// jour sans erreur, et la clé est réécrite au premier enregistrement.
+    /// Le réglage enregistré. Les anciens appareils ont « day », « night » ou « twilight » :
+    /// le crépuscule était une nuit douce, il redevient la nuit. Sans réglage, le téléphone
+    /// décide.
     static func fromUnknown(_ value: String?) -> MicaboAppearance {
-        MicaboAppearance(rawValue: value ?? "") ?? .day
+        switch value {
+        case "day": .day
+        case "night", "twilight": .night
+        default: .system
+        }
     }
 }
 
@@ -249,25 +258,212 @@ struct MicaboPalette: Equatable {
         groupShadow: 0.0
     )
 
-    static func of(_ appearance: MicaboAppearance) -> MicaboPalette {
-        switch appearance {
-        case .day: .day
-        }
+
+    /// **La nuit** : le même papier retourné. Un fond presque noir, à peine bleuté, des surfaces
+    /// un cran plus claires, l'encre devient l'ivoire. Les boutons d'action restent « d'encre » :
+    /// ivoire sur la nuit, texte sombre dessus. Les tons d'une leçon gardent leur vif ; leur pâle
+    /// passe en lavis sombre, et leur encre s'éclaircit pour se lire dessus.
+    static let night = MicaboPalette(
+        canvas: Color(hex: 0x121317),
+        surface: Color(hex: 0x1C1E24),
+        surfaceMuted: Color(hex: 0x23262D),
+        surfaceSunken: Color(hex: 0x2A2D35),
+        stroke: Color(hex: 0x30333B),
+        strokeStrong: Color(hex: 0x3B3F48),
+        hairline: Color(hex: 0x2A2D34),
+        hairlineOnCanvas: Color(hex: 0x24272E),
+        ink: Color(hex: 0xF3F1EA),
+        inkSecondary: Color(hex: 0xA4A7AE),
+        inkTertiary: Color(hex: 0x6F737B),
+        inkReading: Color(hex: 0xE7E5DF),
+        inkBody: Color(hex: 0xC9CAC6),
+        sheetMarker: Color(hex: 0x5A4A12),
+        sheetHighlights: [
+            Color(hex: 0x5A4A12),
+            Color(hex: 0x1F4A33),
+            Color(hex: 0x1E3A5F),
+            Color(hex: 0x5A2235),
+            Color(hex: 0x3E2C66)
+        ],
+        onInk: Color(hex: 0x121317),
+        onInkMuted: Color(hex: 0x4D5058),
+        canvasSage: Color(hex: 0x121317),
+        accent: Color(hex: 0x6B9BF2),
+        accentSoft: Color(hex: 0x1D2A45),
+        accentVivid: Color(hex: 0x60A5FA),
+        progressTrack: Color(hex: 0x30333B),
+        positive: Color(hex: 0x4CC38A),
+        caution: Color(hex: 0xE3B24C),
+        cautionVivid: Color(hex: 0xFFC53D),
+        negative: Color(hex: 0xF06A5A),
+        ratingAgain: Color(hex: 0xE07A5F),
+        info: Color(hex: 0x6E9BEA),
+        positiveWash: Color(hex: 0x15291F),
+        positiveInk: Color(hex: 0x6FD3A0),
+        positiveSoft: Color(hex: 0x18301F),
+        cautionSoft: Color(hex: 0x33280F),
+        negativeSoft: Color(hex: 0x3A1A16),
+        infoSoft: Color(hex: 0x1A2740),
+        offerWash: Color(hex: 0x3E2C66),
+        offerWashSoft: Color(hex: 0x261C3D),
+        gradeNear: Color(hex: 0x56575F),
+        gradeMid: Color(hex: 0x40414A),
+        gradeFar: Color(hex: 0x31323A),
+        accentWash: Color(hex: 0x17213A),
+        accentPale: Color(hex: 0x2B4677),
+        track: Color(hex: 0x2C2F36),
+        flame: Color(hex: 0xFF6B57),
+        flameInk: Color(hex: 0xFF8A78),
+        flameSoft: Color(hex: 0x3A1D19),
+        flameTrack: Color(hex: 0x4A2A24),
+        warmProse: Color(hex: 0xCBB8AE),
+        warmWashStart: Color(hex: 0x2B211B),
+        warmWashEnd: Color(hex: 0x2B1C22),
+        warmWashStroke: Color(hex: 0x3A2C25),
+        dayWashStart: Color(hex: 0x221C33),
+        dayWashMid: Color(hex: 0x1B2233),
+        dayWashEnd: Color(hex: 0x182A26),
+        dayWashStroke: Color(hex: 0x2E2645),
+        tilePastels: [
+            Color(hex: 0x463A10),
+            Color(hex: 0x173D2B),
+            Color(hex: 0x1C3352),
+            Color(hex: 0x4A1F30),
+            Color(hex: 0x33275A),
+            Color(hex: 0x23262D)
+        ],
+        keyword: Color(hex: 0xA78BFA),
+        correct: Color(hex: 0x22C55E),
+        correctInk: Color(hex: 0x4ADE80),
+        correctSoft: Color(hex: 0x13301E),
+        wrong: Color(hex: 0xEF4444),
+        wrongInk: Color(hex: 0xF87171),
+        wrongSoft: Color(hex: 0x3A1717),
+        tonePale: [
+            Color(hex: 0x3B3112),
+            Color(hex: 0x143326),
+            Color(hex: 0x182B45),
+            Color(hex: 0x3D1A29),
+            Color(hex: 0x2A2148)
+        ],
+        toneVivid: [
+            Color(hex: 0xF2B200),
+            Color(hex: 0x22B573),
+            Color(hex: 0x3B82F6),
+            Color(hex: 0xEC5B8F),
+            Color(hex: 0x8B5CF6)
+        ],
+        toneInk: [
+            Color(hex: 0xF6CF5A),
+            Color(hex: 0x5DD69B),
+            Color(hex: 0x8DB8FA),
+            Color(hex: 0xF49AB9),
+            Color(hex: 0xB9A0FA)
+        ],
+        cardShadow: 0.0,
+        groupShadow: 0.0
+    )
+
+    /// **La palette que l'app lit** : chaque jeton suit l'apparence de l'écran qui le dessine,
+    /// jour ou nuit. C'est le système qui choisit, au moment de peindre — selon le réglage
+    /// « Thème » (`AppearanceStore`) ou, en « Système », selon le téléphone. Les ombres restent
+    /// celles du jour : sur la nuit, une ombre ne se voit pas, et les surfaces se détachent par
+    /// leur clarté.
+    static let adaptive = MicaboPalette(
+        canvas: blend(day.canvas, night.canvas),
+        surface: blend(day.surface, night.surface),
+        surfaceMuted: blend(day.surfaceMuted, night.surfaceMuted),
+        surfaceSunken: blend(day.surfaceSunken, night.surfaceSunken),
+        stroke: blend(day.stroke, night.stroke),
+        strokeStrong: blend(day.strokeStrong, night.strokeStrong),
+        hairline: blend(day.hairline, night.hairline),
+        hairlineOnCanvas: blend(day.hairlineOnCanvas, night.hairlineOnCanvas),
+        ink: blend(day.ink, night.ink),
+        inkSecondary: blend(day.inkSecondary, night.inkSecondary),
+        inkTertiary: blend(day.inkTertiary, night.inkTertiary),
+        inkReading: blend(day.inkReading, night.inkReading),
+        inkBody: blend(day.inkBody, night.inkBody),
+        sheetMarker: blend(day.sheetMarker, night.sheetMarker),
+        sheetHighlights: zip(day.sheetHighlights, night.sheetHighlights).map { blend($0, $1) },
+        onInk: blend(day.onInk, night.onInk),
+        onInkMuted: blend(day.onInkMuted, night.onInkMuted),
+        canvasSage: blend(day.canvasSage, night.canvasSage),
+        accent: blend(day.accent, night.accent),
+        accentSoft: blend(day.accentSoft, night.accentSoft),
+        accentVivid: blend(day.accentVivid, night.accentVivid),
+        progressTrack: blend(day.progressTrack, night.progressTrack),
+        positive: blend(day.positive, night.positive),
+        caution: blend(day.caution, night.caution),
+        cautionVivid: blend(day.cautionVivid, night.cautionVivid),
+        negative: blend(day.negative, night.negative),
+        ratingAgain: blend(day.ratingAgain, night.ratingAgain),
+        info: blend(day.info, night.info),
+        positiveWash: blend(day.positiveWash, night.positiveWash),
+        positiveInk: blend(day.positiveInk, night.positiveInk),
+        positiveSoft: blend(day.positiveSoft, night.positiveSoft),
+        cautionSoft: blend(day.cautionSoft, night.cautionSoft),
+        negativeSoft: blend(day.negativeSoft, night.negativeSoft),
+        infoSoft: blend(day.infoSoft, night.infoSoft),
+        offerWash: blend(day.offerWash, night.offerWash),
+        offerWashSoft: blend(day.offerWashSoft, night.offerWashSoft),
+        gradeNear: blend(day.gradeNear, night.gradeNear),
+        gradeMid: blend(day.gradeMid, night.gradeMid),
+        gradeFar: blend(day.gradeFar, night.gradeFar),
+        accentWash: blend(day.accentWash, night.accentWash),
+        accentPale: blend(day.accentPale, night.accentPale),
+        track: blend(day.track, night.track),
+        flame: blend(day.flame, night.flame),
+        flameInk: blend(day.flameInk, night.flameInk),
+        flameSoft: blend(day.flameSoft, night.flameSoft),
+        flameTrack: blend(day.flameTrack, night.flameTrack),
+        warmProse: blend(day.warmProse, night.warmProse),
+        warmWashStart: blend(day.warmWashStart, night.warmWashStart),
+        warmWashEnd: blend(day.warmWashEnd, night.warmWashEnd),
+        warmWashStroke: blend(day.warmWashStroke, night.warmWashStroke),
+        dayWashStart: blend(day.dayWashStart, night.dayWashStart),
+        dayWashMid: blend(day.dayWashMid, night.dayWashMid),
+        dayWashEnd: blend(day.dayWashEnd, night.dayWashEnd),
+        dayWashStroke: blend(day.dayWashStroke, night.dayWashStroke),
+        tilePastels: zip(day.tilePastels, night.tilePastels).map { blend($0, $1) },
+        keyword: blend(day.keyword, night.keyword),
+        correct: blend(day.correct, night.correct),
+        correctInk: blend(day.correctInk, night.correctInk),
+        correctSoft: blend(day.correctSoft, night.correctSoft),
+        wrong: blend(day.wrong, night.wrong),
+        wrongInk: blend(day.wrongInk, night.wrongInk),
+        wrongSoft: blend(day.wrongSoft, night.wrongSoft),
+        tonePale: zip(day.tonePale, night.tonePale).map { blend($0, $1) },
+        toneVivid: zip(day.toneVivid, night.toneVivid).map { blend($0, $1) },
+        toneInk: zip(day.toneInk, night.toneInk).map { blend($0, $1) },
+        cardShadow: day.cardShadow,
+        groupShadow: day.groupShadow
+    )
+
+    private static func blend(_ light: Color, _ dark: Color) -> Color {
+        let light = UIColor(light)
+        let dark = UIColor(dark)
+        return Color(UIColor { traits in traits.userInterfaceStyle == .dark ? dark : light })
     }
 }
 
-/// L'apparence en cours.
-///
-/// Elle n'a plus qu'une valeur, et le type reste pour une seule raison : c'est lui que
-/// `MicaboColor` interroge. Le jour où la nuit revient, elle revient ici, et nulle part
-/// ailleurs.
+/// Le thème choisi, et la palette que tout le monde lit.
 @Observable
 final class AppearanceStore {
     static let shared = AppearanceStore()
 
-    let appearance: MicaboAppearance = .day
+    var appearance: MicaboAppearance {
+        didSet { defaults.set(appearance.rawValue, forKey: MicaboAppearance.storageKey) }
+    }
 
-    var palette: MicaboPalette { MicaboPalette.of(appearance) }
+    private let defaults: UserDefaults
 
-    init() {}
+    var palette: MicaboPalette { .adaptive }
+
+    /// Vrai quand l'écran qui se dessine en ce moment est en sombre.
+    static var isDarkNow: Bool { UITraitCollection.current.userInterfaceStyle == .dark }
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        appearance = MicaboAppearance.fromUnknown(defaults.string(forKey: MicaboAppearance.storageKey))
+    }
 }

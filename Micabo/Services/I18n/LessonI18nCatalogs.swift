@@ -186,6 +186,10 @@ enum LessonI18nCatalogs {
         "lesson.profile.otherApps": "Nos autres apps",
         "lesson.profile.terms": "Conditions d'utilisation",
         "lesson.profile.privacy": "Politique de confidentialité",
+        "lesson.profile.theme": "Thème",
+        "lesson.theme.system": "Comme le téléphone",
+        "lesson.theme.day": "Clair",
+        "lesson.theme.night": "Sombre",
     ]
 
     static let en: [String: String] = [
@@ -354,6 +358,10 @@ enum LessonI18nCatalogs {
         "lesson.profile.otherApps": "Our other apps",
         "lesson.profile.terms": "Terms of use",
         "lesson.profile.privacy": "Privacy policy",
+        "lesson.profile.theme": "Theme",
+        "lesson.theme.system": "Same as phone",
+        "lesson.theme.day": "Light",
+        "lesson.theme.night": "Dark",
     ]
 
     static let de: [String: String] = [
@@ -522,6 +530,10 @@ enum LessonI18nCatalogs {
         "lesson.profile.otherApps": "Unsere anderen Apps",
         "lesson.profile.terms": "Nutzungsbedingungen",
         "lesson.profile.privacy": "Datenschutzerklärung",
+        "lesson.profile.theme": "Design",
+        "lesson.theme.system": "Wie das Handy",
+        "lesson.theme.day": "Hell",
+        "lesson.theme.night": "Dunkel",
     ]
 
     static let es: [String: String] = [
@@ -690,6 +702,10 @@ enum LessonI18nCatalogs {
         "lesson.profile.otherApps": "Nuestras otras apps",
         "lesson.profile.terms": "Condiciones de uso",
         "lesson.profile.privacy": "Política de privacidad",
+        "lesson.profile.theme": "Tema",
+        "lesson.theme.system": "Como el teléfono",
+        "lesson.theme.day": "Claro",
+        "lesson.theme.night": "Oscuro",
     ]
 
     static let tr: [String: String] = [
@@ -858,5 +874,9 @@ enum LessonI18nCatalogs {
         "lesson.profile.otherApps": "Diğer uygulamalarımız",
         "lesson.profile.terms": "Kullanım koşulları",
         "lesson.profile.privacy": "Gizlilik politikası",
+        "lesson.profile.theme": "Tema",
+        "lesson.theme.system": "Telefonla aynı",
+        "lesson.theme.day": "Açık",
+        "lesson.theme.night": "Koyu",
     ]
 }

@@ -278,7 +278,7 @@ struct LessonPathView: View {
                 MicaboIconView(icon: .mika, size: 34)
                     .frame(width: 40, height: 40)
                     .background(MicaboColor.surface, in: Circle())
-                    .shadow(color: MicaboColor.ink.opacity(0.05), radius: 10, x: 0, y: 4)
+                    .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 4)
             }
             .buttonStyle(MicaboPressableButtonStyle())
             .accessibilityLabel(Text(L10n.t("lesson.mika.open", locale: .resolved())))

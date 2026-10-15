@@ -9,6 +9,8 @@ struct MicaboGlass<S: Shape>: ViewModifier {
     var shape: S
     var interactive = false
 
+    @Environment(\.colorScheme) private var colorScheme
+
     func body(content: Content) -> some View {
         #if compiler(>=6.2)
         if #available(iOS 26.0, *) {
@@ -24,8 +26,8 @@ struct MicaboGlass<S: Shape>: ViewModifier {
     private func fallback(_ content: Content) -> some View {
         content
             .background(.ultraThinMaterial, in: shape)
-            .overlay(shape.stroke(Color.white.opacity(0.55), lineWidth: 1))
-            .shadow(color: MicaboColor.ink.opacity(0.10), radius: 18, x: 0, y: 8)
+            .overlay(shape.stroke(Color.white.opacity(colorScheme == .dark ? 0.12 : 0.55), lineWidth: 1))
+            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.4 : 0.10), radius: 18, x: 0, y: 8)
     }
 }
 
