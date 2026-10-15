@@ -232,12 +232,21 @@ struct CourseRecord: Codable {
     var adopt_count: Int? = nil
     /// Le dossier qui range le cours. `nil` = à la racine.
     var folder_id: UUID?
+    /// **La leçon** : son plan, sa progression, son ton, son icône, sa dernière ouverture.
+    /// Absents sur les lignes d'avant la refonte, et jamais envoyés à une base qui n'a pas
+    /// encore les colonnes (`CloudSchema`) : `record(for:)` les laisse alors à `nil`.
+    var path: JSONCodable? = nil
+    var progress: JSONCodable? = nil
+    var tone: String? = nil
+    var icon: String? = nil
+    var last_opened_at: Date? = nil
 
     enum CodingKeys: String, CodingKey {
         case id, user_id, title, subject, summary, emoji, accent_hex, source
-        case source_file_name, fingerprint, raw_text, sheet, context_text
+        case source_file_name, language, fingerprint, raw_text, sheet, context_text
         case is_from_library, visibility, created_at, updated_at, deleted_at
         case view_count, adopt_count, folder_id
+        case path, progress, tone, icon, last_opened_at
     }
 
     func encode(to encoder: Encoder) throws {
@@ -251,6 +260,8 @@ struct CourseRecord: Codable {
         try container.encodeIfPresent(accent_hex, forKey: .accent_hex)
         try container.encode(source, forKey: .source)
         try container.encodeIfPresent(source_file_name, forKey: .source_file_name)
+        // La langue n'était ni envoyée ni lue : elle manquait aux clés. Elle voyage.
+        try container.encodeIfPresent(language, forKey: .language)
         try container.encode(fingerprint, forKey: .fingerprint)
         try container.encode(raw_text, forKey: .raw_text)
         try container.encodeIfPresent(sheet, forKey: .sheet)
@@ -264,6 +275,11 @@ struct CourseRecord: Codable {
         // dossier sur l'iPhone y ressort aussi sur le site. Un `encodeIfPresent` laisserait
         // la colonne telle quelle et le rangement ne se déferait jamais.
         try container.encode(folder_id, forKey: .folder_id)
+        try container.encodeIfPresent(path, forKey: .path)
+        try container.encodeIfPresent(progress, forKey: .progress)
+        try container.encodeIfPresent(tone, forKey: .tone)
+        try container.encodeIfPresent(icon, forKey: .icon)
+        try container.encodeIfPresent(last_opened_at, forKey: .last_opened_at)
     }
 }
 
@@ -284,6 +300,36 @@ struct ChapterRecord: Codable {
     var created_at: Date
     var updated_at: Date
     var deleted_at: Date?
+    /// **Le thème** : son icône, ses notes, ses questions, l'état de sa génération. Mêmes
+    /// règles que pour le cours : absents d'avant la refonte, jamais envoyés à une base qui
+    /// n'a pas les colonnes.
+    var icon: String? = nil
+    var notes: JSONCodable? = nil
+    var quiz: JSONCodable? = nil
+    var status: String? = nil
+
+    enum CodingKeys: String, CodingKey {
+        case id, user_id, course_id, position, title, sheet
+        case created_at, updated_at, deleted_at
+        case icon, notes, quiz, status
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(user_id, forKey: .user_id)
+        try container.encode(course_id, forKey: .course_id)
+        try container.encode(position, forKey: .position)
+        try container.encode(title, forKey: .title)
+        try container.encodeIfPresent(sheet, forKey: .sheet)
+        try container.encode(created_at, forKey: .created_at)
+        try container.encode(updated_at, forKey: .updated_at)
+        try container.encodeIfPresent(deleted_at, forKey: .deleted_at)
+        try container.encodeIfPresent(icon, forKey: .icon)
+        try container.encodeIfPresent(notes, forKey: .notes)
+        try container.encodeIfPresent(quiz, forKey: .quiz)
+        try container.encodeIfPresent(status, forKey: .status)
+    }
 }
 
 /// Un dossier de la bibliothèque, tel qu'il voyage.

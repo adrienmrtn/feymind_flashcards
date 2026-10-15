@@ -359,11 +359,12 @@ passage. Toute modification de progression touche `updatedAt` pour partir au pro
 // LessonPath — courses.path
 {
   "version": 1,
-  "icon": "globe",
+  "icon": "globe",                       // nom dans la base d'icônes 3D
   "intro": { "lines": ["…", "…", "…"], "minutes": 25 },
-  "conclusion": { "takeaways": ["…", "…", "…", "…", "…"] },
+  "takeaways": ["…", "…", "…", "…", "…"], // la Conclusion
   "groups": [ { "name": "Les causes", "themes": [0, 1] }, … ],
-  "shortened": false,
+  "shortened": false,                    // supports coupés à 60 000 caractères
+  "singleQuiz": false,                   // leçon très courte : un seul quiz
   "status": "generating" | "ready" | "failed"
 }
 
@@ -382,20 +383,24 @@ passage. Toute modification de progression touche `updatedAt` pour partir au pro
   "takeaways": ["…", "…", "…"]
 }
 
-// QuizQuestion — chapters.quiz (la première est la question de fin)
-{ "prompt": "…", "choices": ["…", "…", "…", "…"], "answer": 2, "why": "…" }
+// ThemeQuiz — chapters.quiz (la première question est celle de fin, les suivantes la réserve)
+{ "questions": [ { "id": "<thème>:0", "prompt": "…", "choices": ["…", "…", "…", "…"],
+                   "answer": 2, "why": "…" }, … ] }
 
 // LessonProgress — courses.progress
 {
   "done": ["intro", "notes:0", "notes:1", "quiz:0"],
-  "current": "notes:2",
   "inCircle": 0.4,
   "quizScores": { "quiz:0": [4, 5] },
   "missed": ["<id de question>", …],
   "seconds": { "notes": 840, "quiz": 210, "flashcards": 300 },
-  "finishedAt": null
+  "finishedAt": "2026-10-20T18:03:00Z"
 }
 ```
+
+Les identifiants de cercle (`intro`, `notes:<rang>`, `quiz:<groupe>`, `flashcards`,
+`conclusion`) sont stables : c'est la clé de la progression. Le cercle en cours n'est pas
+stocké, c'est le premier cercle non coché (`PathLayout.current`).
 
 Le balisage en ligne des notes ne garde que `**mot-clé**` (gras violet) et `$latex$`.
 

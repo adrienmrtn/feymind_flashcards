@@ -143,6 +143,7 @@ final class CloudSync {
         let pullSince = since?.addingTimeInterval(-5 * 60)
         let repaired = UserDefaults.standard.integer(forKey: Self.repairKey) >= Self.repairVersion
         do {
+            await CloudSchema.probe(database)
             try await pull(context: context, since: pullSince)
             try await push(context: context, since: repaired ? since : nil)
             lastSyncedAt = checkpoint
@@ -904,9 +905,17 @@ final class CloudSync {
             created_at: course.createdAt,
             updated_at: course.updatedAt,
             deleted_at: nil,
-            folder_id: course.folderID
+            folder_id: course.folderID,
+            path: lessonColumns ? JSONCodable(data: course.pathData) : nil,
+            progress: lessonColumns ? JSONCodable(data: course.progressData) : nil,
+            tone: lessonColumns ? course.toneRaw.nilIfBlank : nil,
+            icon: lessonColumns ? course.iconID.nilIfBlank : nil,
+            last_opened_at: lessonColumns ? course.lastOpenedAt : nil
         )
     }
+
+    /// Les colonnes de la leçon partent seulement si la base les a. Voir `CloudSchema`.
+    private var lessonColumns: Bool { CloudSchema.hasLessonColumns }
 
     private func record(for folder: CourseFolder, userID: UUID) -> CourseFolderRecord {
         CourseFolderRecord(
@@ -957,7 +966,11 @@ final class CloudSync {
             sheet: chapter.sheetData.flatMap(JSONCodable.init(data:)),
             created_at: chapter.createdAt,
             updated_at: chapter.updatedAt,
-            deleted_at: nil
+            deleted_at: nil,
+            icon: lessonColumns ? chapter.iconID.nilIfBlank : nil,
+            notes: lessonColumns ? JSONCodable(data: chapter.notesData) : nil,
+            quiz: lessonColumns ? JSONCodable(data: chapter.quizData) : nil,
+            status: lessonColumns ? chapter.statusRaw : nil
         )
     }
 
@@ -969,15 +982,26 @@ final class CloudSync {
             course: course
         )
         chapter.sheetData = remote.sheet?.data
+        applyLesson(remote, to: chapter)
         chapter.createdAt = remote.created_at
         chapter.updatedAt = remote.updated_at
         return chapter
+    }
+
+    /// Ce que la leçon ajoute à un chapitre. Une colonne vide ne vide rien : une ligne écrite
+    /// par une version d'avant la refonte (ou par le site) n'efface pas les notes d'un thème.
+    private func applyLesson(_ remote: ChapterRecord, to chapter: Chapter) {
+        if let icon = remote.icon?.nilIfBlank { chapter.iconID = icon }
+        if let notes = remote.notes?.data { chapter.notesData = notes }
+        if let quiz = remote.quiz?.data { chapter.quizData = quiz }
+        if let status = remote.status, ThemeStatus(rawValue: status) != nil { chapter.statusRaw = status }
     }
 
     private func apply(_ remote: ChapterRecord, to chapter: Chapter, course: Course?) {
         chapter.position = remote.position
         chapter.title = remote.title
         chapter.sheetData = remote.sheet?.data
+        applyLesson(remote, to: chapter)
         // Un chapitre ne change pas de deck en pratique, mais une ligne descendue avant son
         // cours arrive avec `course` à nul : le rattachement se rattrape à la passe suivante
         // plutôt que d'écraser un lien correct par rien.
@@ -1031,6 +1055,12 @@ final class CloudSync {
         if let views = remote.view_count { course.viewCount = views }
         if let adopts = remote.adopt_count { course.adoptCount = adopts }
         course.folderID = remote.folder_id
+        // La leçon : même règle que pour les thèmes, une colonne vide ne vide rien.
+        if let path = remote.path?.data { course.pathData = path }
+        if let progress = remote.progress?.data { course.progressData = progress }
+        if let tone = remote.tone?.nilIfBlank { course.toneRaw = tone }
+        if let icon = remote.icon?.nilIfBlank { course.iconID = icon }
+        if let opened = remote.last_opened_at { course.lastOpenedAt = opened }
     }
 
     private func record(for card: Flashcard, userID: UUID) -> FlashcardRecord {

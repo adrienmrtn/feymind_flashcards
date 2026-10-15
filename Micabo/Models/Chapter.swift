@@ -38,6 +38,18 @@ final class Chapter {
     var createdAt: Date = Date()
     var updatedAt: Date = Date()
 
+    // MARK: La refonte « parcours » — un chapitre est un thème, et un cercle Notes
+
+    /// L'icône 3D du thème (`MicaboIcon`).
+    var iconID: String = ""
+    /// Les notes au format de la refonte (`ThemeNotes`, en JSON). `nil` sur un ancien
+    /// chapitre, qui garde sa fiche (`sheetData`).
+    var notesData: Data?
+    /// La question de fin et les QCM de réserve (`ThemeQuiz`, en JSON).
+    var quizData: Data?
+    /// La génération du thème (`ThemeStatus`). Un ancien chapitre est prêt.
+    var statusRaw: String = ThemeStatus.ready.rawValue
+
     var course: Course?
 
     /// Les cartes nées de ces blocs.

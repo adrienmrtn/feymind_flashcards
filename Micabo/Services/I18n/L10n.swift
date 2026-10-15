@@ -15,6 +15,12 @@ enum L10n {
         let fallback = SharedI18nCatalogs.fr
         let ios = IosI18nCatalogs.table(for: locale.rawValue)
         let iosFallback = IosI18nCatalogs.fr
+        // Les phrases de la refonte d'abord : leurs clés commencent toutes par `lesson.`.
+        if key.hasPrefix("lesson.") {
+            let lesson = LessonI18nCatalogs.table(for: locale.rawValue)[key]
+                ?? LessonI18nCatalogs.fr[key] ?? key
+            return format(lesson, locale: locale, vars: vars)
+        }
         let template = ios[key] ?? table[key] ?? iosFallback[key] ?? fallback[key] ?? key
         return format(template, locale: locale, vars: vars)
     }
