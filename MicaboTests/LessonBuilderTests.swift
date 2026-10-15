@@ -202,4 +202,32 @@ final class LessonBuilderTests: XCTestCase {
         XCTAssertEqual(course.cards.first?.chapter?.id, course.orderedChapters.first?.id)
         XCTAssertTrue(course.isLesson)
     }
+    /// Hors ligne, un ancien cours s'ouvre quand même : ses chapitres font le chemin, sans
+    /// questions, et ses cartes restent.
+    func testAnOldCourseOpensOfflineWithoutTheModel() throws {
+        let context = try makeContext()
+        let sheet = CourseSheet(blocks: [
+            .heading(level: 1, text: "Les causes"),
+            .paragraph(text: "Après 1945, deux blocs."),
+            .heading(level: 1, text: "Les crises"),
+            .paragraph(text: "Berlin, Cuba."),
+            .heading(level: 1, text: "La fin"),
+            .paragraph(text: "1991."),
+        ])
+        let course = Course(title: "Guerre froide", subject: "Histoire", sheet: sheet)
+        context.insert(course)
+        context.insert(Flashcard(front: "Q", back: "R", position: 0, course: course))
+        try context.save()
+
+        builder(FakeLessonService()).convertOffline(course, in: context)
+
+        XCTAssertTrue(course.isLesson)
+        XCTAssertEqual(course.lessonPath?.status, .ready)
+        XCTAssertEqual(course.icon, .scroll)
+        XCTAssertEqual(course.lessonPath?.groups.map(\.themes), [[0, 1, 2]])
+        XCTAssertEqual(course.orderedChapters.count, 3)
+        XCTAssertTrue(course.orderedChapters.allSatisfy { $0.status == .ready && ($0.quiz?.questions ?? []).isEmpty })
+        XCTAssertEqual(course.cards.count, 1)
+        XCTAssertNotNil(course.orderedChapters.first?.decodedSheet())
+    }
 }

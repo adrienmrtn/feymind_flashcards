@@ -517,9 +517,10 @@ compte (connexion, déconnexion), **suppression du compte** (exigée par l'App S
 
 ## 13. Langues
 
-Chaque phrase nouvelle est écrite dans les 5 langues au moment où elle entre, dans
-`IosI18nCatalogs` (iOS) ou les catalogues partagés du web (puis l'export). Le test de parité des
-clés tient. Les prompts écrivent dans la langue de l'app.
+Chaque phrase nouvelle est écrite dans les 5 langues au moment où elle entre. Les phrases de la
+refonte (`lesson.*`) vivent dans `LessonI18nCatalogs`, à part des catalogues générés ; les autres
+dans `IosI18nCatalogs` (iOS) ou les catalogues partagés du web (puis l'export). Le test de parité
+des clés tient. Les prompts écrivent dans la langue de l'app.
 
 ---
 
@@ -553,9 +554,14 @@ projet de production n'est pas joignable depuis la session de développement.
 | 8 | **Nettoyage** | Les portes du gratuit, les anciens écrans supprimés (§ 11), les tests réalignés, les tests de parité du web |
 | 9 | **Finitions** | Traductions relues, thème sombre, README |
 
-## 16. En attente
+## 16. Reçu, et ce qui reste à faire hors du code
 
-- **`micabo-mascotte-mico (2).zip`** — la mascotte à animer. Le lot 1 pose le composant `Mika`
-  sur la mascotte dessinée actuelle ; le zip la remplace sans toucher aux écrans.
-- **`micabo-icones-3d.zip`** — la base d'icônes 3D. Le lot 1 pose `MicaboIcon` avec un repli
-  SF Symbols ; le zip remplit le catalogue, et la liste des icônes est donnée au modèle.
+- **La mascotte** (`micabo-mascotte-mico (2).zip`) est intégrée : `design/mika/` garde le SVG et
+  le CSS d'origine, `scripts/generate-mika.py` les traduit en `Micabo/Resources/mika.json`, que
+  `MikaMascot` rejoue nativement (huit humeurs). Les GIF du zip ne sont pas embarqués.
+- **Les icônes 3D** (`micabo-icones-3d.zip`) sont dans `Assets.xcassets` (`Icon3D-*`) ; la même
+  liste est donnée au modèle (`supabase/functions/_shared/icons.ts`, testée contre le Swift).
+- **À déployer à la main** sur le projet de production : les migrations
+  `20261016090000_lesson_paths.sql` et `20261016091000_lesson_generations.sql`, puis la fonction
+  `generate-lesson`. Tant que les colonnes manquent, l'app ne les envoie pas (`CloudSchema`) ; tant
+  que la fonction manque, un ancien cours s'ouvre quand même (« Ouvrir sans attendre »).

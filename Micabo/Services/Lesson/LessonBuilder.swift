@@ -379,6 +379,36 @@ final class LessonBuilder {
         return String(text.prefix(3_000))
     }
 
+    /// **La conversion sans le modèle**, quand il ne répond pas (hors ligne, sans compte) : les
+    /// chapitres deviennent les cercles Notes, les paliers se calculent, les icônes se devinent.
+    /// Pas de questions : les cercles Quiz se passent, les cartes du cours font les Flashcards.
+    /// L'élève n'est jamais bloqué devant son propre cours.
+    func convertOffline(_ course: Course, in context: ModelContext) {
+        guard !course.isLesson, !converting.contains(course.id) else { return }
+        Self.prepareChapters(of: course, in: context)
+        Self.apply(Self.offlineConversion(of: course), to: course, in: context)
+        try? context.save()
+    }
+
+    static func offlineConversion(of course: Course) -> LessonConversion {
+        let chapters = course.orderedChapters
+        let icon = course.iconID.isEmpty ? MicaboIcon.guess(subject: course.subject, title: course.title).rawValue : course.iconID
+        let words = chapters.reduce(0) { $0 + $1.plainText.split(whereSeparator: \.isWhitespace).count }
+        return LessonConversion(
+            icon: icon,
+            intro: LessonPath.Intro(lines: [], minutes: max(5, words / 180 + chapters.count * 3)),
+            takeaways: [],
+            groups: PathLayout.groups(themeCount: chapters.count).map { LessonPath.Group(name: "", themes: $0) },
+            chapters: chapters.map { chapter in
+                LessonConversion.Chapter(
+                    icon: chapter.iconID.isEmpty ? MicaboIcon.guess(subject: course.subject, title: chapter.title).rawValue : chapter.iconID,
+                    questions: [],
+                    flashcards: []
+                )
+            }
+        )
+    }
+
     static func apply(_ conversion: LessonConversion, to course: Course, in context: ModelContext) {
         let chapters = course.orderedChapters
         if course.iconID.isEmpty { course.iconID = conversion.icon }

@@ -644,7 +644,7 @@ struct CoursesListView: View {
     }
 
     private func openCourse(_ course: Course) -> some View {
-        DeckView(course: course)
+        LessonPathView(course: course)
     }
 
     private func openCards(_ route: CourseCardsRoute) -> some View {

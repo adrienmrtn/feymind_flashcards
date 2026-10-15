@@ -309,6 +309,34 @@ final class LessonI18nTests: XCTestCase {
         }
     }
 
+    /// Chaque clé `lesson.*` écrite dans le code existe dans le catalogue : une clé oubliée
+    /// s'afficherait telle quelle à l'écran.
+    func testEveryKeyUsedInTheCodeIsTranslated() throws {
+        let sources = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Micabo", isDirectory: true)
+        guard let files = FileManager.default.enumerator(at: sources, includingPropertiesForKeys: nil) else {
+            throw XCTSkip("les sources ne sont pas lisibles depuis ce simulateur")
+        }
+        let pattern = try NSRegularExpression(pattern: #""(lesson\.[A-Za-z0-9_.]+)""#)
+        let known = Set(LessonI18nCatalogs.fr.keys)
+        var missing: Set<String> = []
+        var read = 0
+        for case let url as URL in files where url.pathExtension == "swift" {
+            guard let text = try? String(contentsOf: url, encoding: .utf8) else { continue }
+            read += 1
+            let range = NSRange(text.startIndex..., in: text)
+            for match in pattern.matches(in: text, range: range) {
+                guard let keyRange = Range(match.range(at: 1), in: text) else { continue }
+                let key = String(text[keyRange])
+                if !known.contains(key) { missing.insert(key) }
+            }
+        }
+        guard read > 0 else { throw XCTSkip("aucune source lue") }
+        XCTAssertEqual(missing.sorted(), [], "clés sans traduction")
+    }
+
     /// Les clés de la refonte passent avant les autres catalogues, et une langue sans la clé
     /// retombe sur le français plutôt que d'afficher la clé.
     func testLookupFindsLessonKeys() {

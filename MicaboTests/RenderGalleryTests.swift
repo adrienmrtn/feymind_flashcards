@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 import XCTest
 @testable import Micabo
@@ -95,6 +96,100 @@ final class RenderGalleryTests: XCTestCase {
                     .foregroundStyle(MicaboColor.inkSecondary)
             }
             .padding(20)
+        )
+    }
+
+    /// Une leçon de démonstration : son chemin à mi-parcours, les notes d'un thème avec tous
+    /// les blocs, une question ratée, la navbar.
+    func testLessonScreens() throws {
+        guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
+        let container = try ModelContainer(
+            for: Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = ModelContext(container)
+        let course = Course(title: "La guerre froide", subject: "Histoire")
+        course.toneRaw = LessonTone.mint.rawValue
+        course.iconID = MicaboIcon.globe.rawValue
+        context.insert(course)
+        let themes: [(String, MicaboIcon)] = [
+            ("Deux blocs face à face", .globe),
+            ("Berlin, ville coupée", .flag),
+            ("Cuba au bord du gouffre", .hourglass),
+            ("La détente", .puzzle),
+            ("La chute du mur", .trophy),
+        ]
+        for (index, theme) in themes.enumerated() {
+            let chapter = Chapter(position: index, title: theme.0, course: course)
+            chapter.iconID = theme.1.rawValue
+            chapter.setNotes(Self.sampleNotes)
+            chapter.setQuiz(ThemeQuiz(questions: [Self.sampleQuestion(id: "\(chapter.id.uuidString):0")]))
+            chapter.statusRaw = (index == 4 ? ThemeStatus.pending : ThemeStatus.ready).rawValue
+            context.insert(chapter)
+        }
+        course.setLessonPath(LessonPath(
+            icon: MicaboIcon.globe.rawValue,
+            intro: LessonPath.Intro(lines: ["Pourquoi deux blocs", "Les crises", "La fin"], minutes: 25),
+            takeaways: ["Deux blocs s'opposent sans guerre directe."],
+            groups: [LessonPath.Group(name: "Les débuts", themes: [0, 1]), LessonPath.Group(name: "Les crises", themes: [2, 3, 4])],
+            status: .generating
+        ))
+        course.updateProgress { progress in
+            progress.done = ["intro", "notes:0", "notes:1"]
+            progress.inCircle = 0.4
+        }
+        try context.save()
+
+        let session = LessonSession(course: course)
+        try RenderGallery.render(
+            "lesson-path",
+            PathMapView(session: session, tone: course.tone, width: 393, onOpen: { _ in }, onRetry: { _ in })
+                .padding(.top, 40)
+        )
+        try RenderGallery.render(
+            "lesson-notes",
+            VStack(alignment: .leading, spacing: 22) {
+                ThemeHeader(chapter: course.orderedChapters[0])
+                ThemeNotesView(notes: Self.sampleNotes, tone: course.tone)
+            }
+            .padding(20)
+        )
+        try RenderGallery.render(
+            "lesson-question",
+            VStack(spacing: 24) {
+                QuestionCard(question: Self.sampleQuestion(id: "a"), tone: course.tone, answered: nil) { _ in }
+                QuestionCard(question: Self.sampleQuestion(id: "b"), tone: course.tone, answered: 2) { _ in }
+                LessonNavbar(dueCount: 8) { _ in }
+            }
+            .padding(20)
+        )
+    }
+
+    private static let sampleNotes = ThemeNotes(
+        oneLiner: "Après 1945, les **États-Unis** et l'**URSS** s'opposent sans jamais se battre directement.",
+        blocks: [
+            .subtitle("Deux visions du monde"),
+            .paragraph("D'un côté le **capitalisme** et la démocratie libérale, de l'autre le **communisme** et le parti unique."),
+            .list(["Plan Marshall en 1947", "Pacte de Varsovie en 1955", "Course aux armements"]),
+            .definition(term: "Rideau de fer", text: "La frontière qui coupe l'Europe en deux blocs."),
+            .dates([
+                NoteBlock.DateItem(date: "1947", text: "Doctrine Truman"),
+                NoteBlock.DateItem(date: "1961", text: "Mur de Berlin"),
+                NoteBlock.DateItem(date: "1989", text: "Chute du mur"),
+            ]),
+            .formula(latex: "E = mc^2", caption: "Une formule, pour voir le bloc"),
+            .example("Berlin-Ouest ravitaillée par avion pendant onze mois."),
+        ],
+        takeaways: ["Deux blocs, deux modèles.", "Une guerre sans affrontement direct.", "L'Europe coupée en deux."]
+    )
+
+    private static func sampleQuestion(id: String) -> QuizQuestion {
+        QuizQuestion(
+            id: id,
+            prompt: "Quelle année voit la construction du mur de Berlin ?",
+            choices: ["1949", "1961", "1975", "1989"],
+            answer: 1,
+            why: "Le mur est construit en août 1961 pour arrêter les départs vers l'Ouest."
         )
     }
 
