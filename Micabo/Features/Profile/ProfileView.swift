@@ -29,7 +29,9 @@ struct ProfileView: View {
 
     @Environment(CloudSync.self) private var sync: CloudSync?
 
+    @Environment(ProAccess.self) private var pro: ProAccess?
     @State private var showSettings = false
+    @State private var paywall: PaywallTrigger?
     @State private var path = NavigationPath()
     @State private var metrics = Metrics.empty
 
@@ -234,15 +236,20 @@ struct ProfileView: View {
     private func profile(_ metrics: Metrics) -> some View {
         NavigationStack(path: $path) {
             ScrollView(.vertical) {
-                VStack(alignment: .leading, spacing: MicaboSpacing.md) {
+                VStack(alignment: .leading, spacing: 22) {
                     header
-                    streakPanel(metrics)
-                    totalsStrip(metrics)
-                    masteryPanel(metrics)
-                    activityPanel(metrics)
-                    weakPanel(metrics)
-                    weekRanking
-                    friendsRow
+                    ProfileCard(name: profileName, identity: profileIdentity, studies: profileStudies) {
+                        showSettings = true
+                    }
+                    if !(pro?.isPro ?? true) {
+                        ProUpgradeCard { paywall = .upgrade }
+                    }
+                    VStack(alignment: .leading, spacing: MicaboSpacing.md) {
+                        weekRanking
+                        friendsRow
+                    }
+                    ProfileSettingsGroup()
+                    ProfileSupportGroup()
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.top, MicaboSpacing.xs)
@@ -295,7 +302,24 @@ struct ProfileView: View {
                 SettingsView()
                     .presentationCornerRadius(MicaboRadius.sheet)
             }
+            .micaboPaywall($paywall)
         }
+    }
+
+    // MARK: - La carte profil
+
+    private var profileName: String {
+        OnboardingPreferences.displayName?.nilIfBlank ?? i18n.t("lesson.profile.me")
+    }
+
+    private var profileIdentity: String? {
+        if let username = social.username { return Username.display(username) }
+        if let label = auth.user?.label.nilIfBlank, label != profileName { return label }
+        return auth.isSignedIn ? nil : i18n.t("app.profile.offline")
+    }
+
+    private var profileStudies: String? {
+        OnboardingPreferences.educationStage?.localizedTitle.nilIfBlank
     }
 
     // MARK: - En-tête
@@ -326,20 +350,8 @@ struct ProfileView: View {
     }
 
     private var header: some View {
-        MicaboPageHeading(title: i18n.t("ios.profile.title"), subtitle: identityLabel) {
-            Button {
-                showSettings = true
-            } label: {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 17, weight: .medium))
-                    .foregroundStyle(MicaboColor.ink)
-                    .frame(width: 38, height: 38)
-                    .overlay(Circle().strokeBorder(MicaboColor.stroke, lineWidth: 1))
-            }
-            .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
-            .accessibilityLabel(i18n.t("nav.settings"))
-        }
-        .padding(.top, MicaboSpacing.xs)
+        MicaboPageHeading(title: i18n.t("lesson.tab.profile"), subtitle: nil)
+            .padding(.top, MicaboSpacing.xs)
     }
 
     /// **Qui l'on est**, sur une ligne, en tête du panneau : le prénom donné au parcours

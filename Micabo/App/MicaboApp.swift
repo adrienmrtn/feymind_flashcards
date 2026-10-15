@@ -78,6 +78,9 @@ struct MicaboApp: App {
         // L'apparence (jour, nuit, crépuscule) est posée ici. Le parcours
         // d'accueil peut encore forcer le sombre le temps de ses écrans d'encre.
         RootView()
+            // Une langue choisie dans l'app redessine tout : les écrans de la refonte lisent
+            // leurs phrases au moment de se dessiner, pas dans le magasin de langue.
+            .id(uiLocale.locale)
             .tint(MicaboColor.accent)
             .environment(auth)
             .environment(sync)

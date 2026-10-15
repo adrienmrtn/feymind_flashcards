@@ -44,6 +44,8 @@ struct CoursesListView: View {
     @State private var moving: MovingItem?
     @State private var folderPendingDelete: CourseFolder?
     @State private var renamingFolder: CourseFolder?
+    @State private var renamingCourse: Course?
+    @State private var courseName = ""
     @State private var folderName = ""
     @State private var namingNewFolder = false
     /// Le dossier survolé par un glisser en cours. Il sert à le montrer, et à savoir qu'un
@@ -192,6 +194,11 @@ struct CoursesListView: View {
         covers
             .alert(newFolderTitle, isPresented: $namingNewFolder, actions: newFolderActions)
             .alert(renameTitle, isPresented: renamingPresented, actions: renameActions)
+            .alert(i18n.t("lesson.lessons.renameTitle"), isPresented: renamingCoursePresented) {
+                TextField(i18n.t("lesson.lessons.renamePlaceholder"), text: $courseName)
+                Button(i18n.t("app.common.cancel"), role: .cancel) { renamingCourse = nil }
+                Button(i18n.t("app.folders.rename")) { saveRenamedCourse() }
+            }
             .confirmationDialog(
                 deleteFolderTitle,
                 isPresented: folderDeletePresented,
@@ -257,7 +264,7 @@ struct CoursesListView: View {
     /// bas, il n'y a nulle part d'où revenir. La maquette pose un titre de vingt-et-un points
     /// et son compte en dessous, et laisse la place au reste.
     private var header: some View {
-        MicaboPageHeading(title: i18n.t("nav.decks"), subtitle: countLabel)
+        MicaboPageHeading(title: i18n.t("lesson.tab.lessons"), subtitle: countLabel)
             .padding(.top, MicaboSpacing.xs)
     }
 
@@ -288,11 +295,8 @@ struct CoursesListView: View {
     }
 
     private var countLabel: String {
-        guard !sheets.isEmpty else { return i18n.t("app.courses.none") }
-        if let cardCount {
-            return "\(MicaboCopy.courses(sheets.count)) · \(MicaboCopy.cards(cardCount))"
-        }
-        return MicaboCopy.courses(sheets.count)
+        guard !sheets.isEmpty else { return i18n.t("lesson.lessons.none") }
+        return i18n.t("lesson.lessons.count", ["count": "\(sheets.count)"])
     }
 
     @ViewBuilder
@@ -302,8 +306,6 @@ struct CoursesListView: View {
                 .padding(.horizontal, MicaboSpacing.screen)
 
             folderTrail
-
-            filterRow
         }
 
         content
@@ -384,9 +386,9 @@ struct CoursesListView: View {
     private var emptyLibrary: some View {
         MicaboEmptyState(
             systemImage: "books.vertical",
-            title: i18n.t("app.courses.emptyTitle"),
-            message: i18n.t("app.courses.emptyBody"),
-            actionTitle: i18n.t("ios.importAction")
+            title: i18n.t("lesson.lessons.emptyTitle"),
+            message: i18n.t("lesson.lessons.emptyBody"),
+            actionTitle: i18n.t("lesson.lessons.new")
         ) {
             requestImport()
         }
@@ -422,24 +424,18 @@ struct CoursesListView: View {
     /// gris à pointillés au lieu d'un pastel, et le nombre de decks qu'il contient.
     private var libraryList: some View {
         let items = filtered
-        return VStack(alignment: .leading, spacing: MicaboSpacing.md) {
-            LazyVGrid(columns: MicaboDeckGrid.columns, spacing: MicaboDeckGrid.rowSpacing) {
-                ForEach(listedFolders) { branch in
-                    folderTile(branch)
-                }
-
-                ForEach(items, id: \.id) { course in
-                    deckTile(course)
-                }
-
-                // La tuile de création ferme la grille plutôt que de flotter dans un coin :
-                // elle se lit comme l'emplacement suivant, ce qu'elle est.
-                MicaboAddDeckTile(
-                    title: i18n.t("ios.deck.add"),
-                    meta: i18n.t("ios.deckSetup.materials.formats"),
-                    action: requestImport
-                )
+        return LazyVStack(alignment: .leading, spacing: 12) {
+            ForEach(listedFolders) { branch in
+                folderTile(branch)
             }
+
+            ForEach(items, id: \.id) { course in
+                deckTile(course)
+            }
+
+            // « Nouvelle leçon » ferme la liste : elle ramène à la barre de Home, le seul
+            // endroit où une leçon se crée.
+            NewLessonRow(action: requestImport)
         }
         .padding(.horizontal, MicaboSpacing.screen)
     }
@@ -450,14 +446,10 @@ struct CoursesListView: View {
     /// rien une fois le deck matérialisé, et l'ajouter au recensement aurait fait payer une
     /// requête de plus à chaque ouverture pour un nombre qui ne bouge presque jamais.
     private func deckTile(_ course: Course) -> some View {
-        let stats = census[course.id]
-        return MicaboDeckTile(
-            emoji: course.emoji,
-            pastel: MicaboColor.pastel(for: course.id),
-            title: course.title,
-            meta: deckMeta(course, stats: stats),
-            percent: stats.map(\.masteryPercent),
-            countdownDays: countdownDays(for: course)
+        LessonCard(
+            course: course,
+            dueCount: census[course.id]?.dueCount ?? 0,
+            examDays: countdownDays(for: course)
         ) {
             open(course)
         }
@@ -482,10 +474,9 @@ struct CoursesListView: View {
     private func folderTile(_ branch: FolderTree) -> some View {
         let isTargeted = dropTarget == branch.folder.id
 
-        MicaboFolderTile(
-            emoji: branch.folder.emoji?.nilIfBlank ?? "📁",
-            title: branch.folder.name,
-            meta: i18n.t("ios.deck.count", ["count": "\(branch.total)"]),
+        LessonFolderCard(
+            name: branch.folder.name,
+            count: branch.total,
             isTargeted: isTargeted
         ) {
             // Un lâcher n'est pas un appui : voir `lastDrop`, armé dès le survol.
@@ -527,6 +518,12 @@ struct CoursesListView: View {
 
     @ViewBuilder
     private func courseMenu(_ course: Course) -> some View {
+        Button {
+            renamingCourse = course
+            courseName = course.title
+        } label: {
+            Label(i18n.t("app.folders.rename"), systemImage: "pencil")
+        }
         Button {
             moving = .course(course)
         } label: {
@@ -947,6 +944,18 @@ struct CoursesListView: View {
     /// **Le « + » ouvre les questions à tout le monde.** Le paywall tombe à la fin, sur
     /// « générer mon cours » (`DeckSetupFlowView`) : c'est là qu'on sait ce qu'on achète.
     private func requestImport() {
-        creatingDeck = true
+        router?.selection = .today
+    }
+
+    private var renamingCoursePresented: Binding<Bool> {
+        Binding(get: { renamingCourse != nil }, set: { if !$0 { renamingCourse = nil } })
+    }
+
+    private func saveRenamedCourse() {
+        defer { renamingCourse = nil }
+        guard let course = renamingCourse, let name = courseName.nilIfBlank else { return }
+        course.title = String(name.prefix(120))
+        course.updatedAt = Date()
+        try? modelContext.save()
     }
 }

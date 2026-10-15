@@ -64,7 +64,6 @@ struct SettingsView: View {
                 identitySection
                 studiesSection
                 languageSection
-                reviewSection
                 #if DEBUG
                 debugCoursesSection
                 intelligenceSection

@@ -232,6 +232,56 @@ final class RenderGalleryTests: XCTestCase {
         )
     }
 
+    /// Leçons et Profil : une carte de leçon, un dossier, « Nouvelle leçon », la carte profil,
+    /// « Passer en Pro » et le support.
+    func testLessonsAndProfile() throws {
+        guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
+        let container = try ModelContainer(
+            for: Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = ModelContext(container)
+        let course = Course(title: "Les fonctions affines", subject: "Mathématiques")
+        course.toneRaw = LessonTone.lilac.rawValue
+        context.insert(course)
+        for index in 0..<3 {
+            context.insert(Chapter(position: index, title: "Thème \(index + 1)", course: course))
+        }
+        course.setLessonPath(LessonPath(
+            icon: MicaboIcon.calculator.rawValue,
+            intro: LessonPath.Intro(lines: [], minutes: 15),
+            takeaways: [],
+            groups: [LessonPath.Group(name: "", themes: [0, 1, 2])],
+            status: .ready
+        ))
+        course.iconID = MicaboIcon.calculator.rawValue
+        course.updateProgress { $0.done = ["intro", "notes:0"] }
+        let old = Course(title: "Ancien cours d'histoire", subject: "Histoire")
+        context.insert(old)
+        try context.save()
+
+        try RenderGallery.render(
+            "lessons",
+            VStack(spacing: 12) {
+                LessonFolderCard(name: "Bac de maths", count: 4) {}
+                LessonCard(course: course, dueCount: 8, examDays: 12) {}
+                LessonCard(course: old) {}
+                NewLessonRow {}
+            }
+            .padding(20)
+        )
+        try RenderGallery.render(
+            "profile",
+            VStack(alignment: .leading, spacing: 22) {
+                ProfileCard(name: "Marie", identity: "@marie", studies: "Terminale") {}
+                ProUpgradeCard {}
+                ProfileSettingsGroup()
+                ProfileSupportGroup()
+            }
+            .padding(20)
+        )
+    }
+
     private static let sampleNotes = ThemeNotes(
         oneLiner: "Après 1945, les **États-Unis** et l'**URSS** s'opposent sans jamais se battre directement.",
         blocks: [
