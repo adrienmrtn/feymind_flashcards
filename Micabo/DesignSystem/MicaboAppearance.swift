@@ -106,46 +106,58 @@ struct MicaboPalette: Equatable {
     var dayWashEnd: Color
     var dayWashStroke: Color
     var tilePastels: [Color]
+    /// **Les mots-clés des notes**, et les termes définis. C'est le seul usage du violet dans
+    /// une leçon : un mot violet est un mot à retenir, nulle part ailleurs.
+    var keyword: Color
+    /// Bonne et mauvaise réponse, **et rien d'autre** : un quiz, la question de fin d'un
+    /// thème. Le plein pour la case choisie, l'encre pour la phrase qui explique, le lavis
+    /// pour le fond.
+    var correct: Color
+    var correctInk: Color
+    var correctSoft: Color
+    var wrong: Color
+    var wrongInk: Color
+    var wrongSoft: Color
+    /// Les cinq tons d'une leçon, dans l'ordre de `LessonTone.allCases` : pâle pour les
+    /// encadrés, vif pour les cercles cochés, le trait et la barre, encre pour ce qui
+    /// s'écrit sur le pâle. Voir `LessonTone`.
+    var tonePale: [Color]
+    var toneVivid: [Color]
+    var toneInk: [Color]
     var cardShadow: Double
     var groupShadow: Double
 
-    /// **Le jour, refait pour la refonte.** Quatre décisions, et elles se voient toutes.
+    /// **Le jour de la refonte « parcours » : ivoire, encre, bleu.**
     ///
-    /// **Le fond devient blanc.** Il était gris-bleu, et les cartes blanches posées dessus
-    /// se détachaient par leur clarté. La nouvelle direction fait l'inverse : un fond blanc,
-    /// des surfaces blanches, et ce qui se détache se détache par un filet d'un pixel ou par
-    /// un aplat de couleur — jamais par une ombre. C'est ce qui laisse les tuiles de matière
-    /// porter la couleur de l'écran sans que rien ne leur dispute l'attention.
+    /// Le fond redevient l'ivoire de Micabo, et les surfaces restent blanches : une carte se
+    /// détache du papier par sa clarté, sans bordure. L'accent revient au bleu `#2563EB`, celui
+    /// du site — le violet a été l'accent de l'app pendant une version, mais la refonte le
+    /// réserve aux mots-clés des notes, et un violet qui voudrait dire « bouton » et « à
+    /// retenir » ne dirait plus rien.
     ///
-    /// **L'accent passe du bleu au violet.** `#6442EF` est un violet franc, qui porte du
-    /// blanc à 7,5:1 et qui ne ressemble à aucun bleu système. Il ne dit qu'une chose :
-    /// ce qui est actif, sélectionné, ou en cours de progression.
+    /// Les boutons d'action principaux sont **noirs** (l'encre) ; le bleu dit ce qui est
+    /// actif ou sélectionné. Vert et rouge ne disent que juste et faux. Chaque leçon porte un
+    /// des cinq tons de Micabo (`LessonTone`).
     ///
-    /// **Les couleurs des notes de révision ne bougent pas.** `ratingAgain`, `caution`,
-    /// `positive`, `info` et leurs quatre fonds pastel sont ceux d'avant, au code
-    /// hexadécimal près. La direction artistique des cartes est la seule partie de l'app
-    /// que la refonte conserve, et un vert ou un ambre déplacé d'un demi-ton rendrait
-    /// illisible le bilan de fin de session, qui rejoue les mêmes couleurs.
-    ///
-    /// **Les ombres tombent presque à zéro.** Il n'en reste qu'une, sur la carte de
-    /// révision, et elle est déjà écrite dans `StudyView`. Partout ailleurs, c'est `stroke`.
+    /// **Les couleurs des notes de révision ne bougent pas** (`ratingAgain`, `caution`,
+    /// `positive`, `info` et leurs fonds) : le bilan de fin de session les rejoue.
     static let day = MicaboPalette(
-        canvas: .white,
+        canvas: Color(hex: 0xF6F4ED),
         surface: .white,
-        surfaceMuted: Color(hex: 0xF7F7FA),
-        surfaceSunken: Color(hex: 0xF2F2F5),
-        stroke: Color(hex: 0xECECF1),
-        strokeStrong: Color(hex: 0xE5E5EA),
-        hairline: Color(hex: 0xECECF1),
-        hairlineOnCanvas: Color(hex: 0xECECF1),
-        // L'encre n'est ni noire ni navy : un gris très sombre à peine violacé, qui
-        // s'accorde à l'accent sans jamais le concurrencer. 17,3:1 sur le blanc.
-        ink: Color(hex: 0x16151A),
-        // 4,9:1 sur blanc — au-dessus du seuil, y compris à onze points.
-        inkSecondary: Color(hex: 0x6E6E78),
-        inkTertiary: Color(hex: 0xA2A2AC),
-        inkReading: Color(hex: 0x2E2D36),
-        inkBody: Color(hex: 0x4E4D57),
+        surfaceMuted: Color(hex: 0xF0EDE4),
+        surfaceSunken: Color(hex: 0xE9E5DA),
+        stroke: Color(hex: 0xE7E2D7),
+        strokeStrong: Color(hex: 0xDAD4C7),
+        hairline: Color(hex: 0xECE8DE),
+        hairlineOnCanvas: Color(hex: 0xE3DED2),
+        // Un noir à peine bleuté : 16:1 sur l'ivoire. C'est aussi le fond des boutons
+        // d'action principaux.
+        ink: Color(hex: 0x1B1E24),
+        // 5,2:1 sur l'ivoire — au-dessus du seuil, y compris à douze points.
+        inkSecondary: Color(hex: 0x63676F),
+        inkTertiary: Color(hex: 0x9C9C96),
+        inkReading: Color(hex: 0x2A2D33),
+        inkBody: Color(hex: 0x464A52),
         sheetMarker: Color(hex: 0xFFF0A6),
         sheetHighlights: [
             Color(hex: 0xFFF0A6),
@@ -155,12 +167,12 @@ struct MicaboPalette: Equatable {
             Color(hex: 0xDCC9FB)
         ],
         onInk: .white,
-        onInkMuted: Color(hex: 0x9D95C0),
-        canvasSage: .white,
-        accent: Color(hex: 0x6442EF),
-        accentSoft: Color(hex: 0xEFECFD),
-        accentVivid: Color(hex: 0x6442EF),
-        progressTrack: Color(hex: 0xE5E5EA),
+        onInkMuted: Color(hex: 0xA8ABB3),
+        canvasSage: Color(hex: 0xF6F4ED),
+        accent: Color(hex: 0x2563EB),
+        accentSoft: Color(hex: 0xDBEAFE),
+        accentVivid: Color(hex: 0x3B82F6),
+        progressTrack: Color(hex: 0xE7E2D7),
         // À partir d'ici, et jusqu'à `infoSoft` : les couleurs des notes de révision,
         // reprises telles quelles de l'ancienne palette. Voir le commentaire du type.
         positive: Color(hex: 0x2F7D57),
@@ -180,9 +192,9 @@ struct MicaboPalette: Equatable {
         gradeNear: Color(hex: 0xB9B9C2),
         gradeMid: Color(hex: 0xD3D3DA),
         gradeFar: Color(hex: 0xE6E6EB),
-        accentWash: Color(hex: 0xF6F4FE),
-        accentPale: Color(hex: 0xCFC4FA),
-        track: Color(hex: 0xE5E5EA),
+        accentWash: Color(hex: 0xEEF4FE),
+        accentPale: Color(hex: 0xBFD5FA),
+        track: Color(hex: 0xE3DED2),
         flame: Color(hex: 0xFF5440),
         flameInk: Color(hex: 0xC0341F),
         flameSoft: Color(hex: 0xFFF0ED),
@@ -195,15 +207,43 @@ struct MicaboPalette: Equatable {
         dayWashMid: Color(hex: 0xEBF1FC),
         dayWashEnd: Color(hex: 0xE9F5F1),
         dayWashStroke: Color(hex: 0xE4DDFA),
-        // Les teintes de matière. Elles sont franches et non pastel-pâles : à 112 points
-        // de côté sur un fond blanc, une teinte trop lavée ne tient pas la tuile.
+        // Les tuiles : les cinq tons pâles, et un gris de papier.
         tilePastels: [
-            Color(hex: 0xFFE2A8),
-            Color(hex: 0xC9EBD3),
-            Color(hex: 0xDCC9FB),
-            Color(hex: 0xBCD8FA),
+            Color(hex: 0xFFF1B8),
+            Color(hex: 0xCDEFDC),
+            Color(hex: 0xD6E7FB),
             Color(hex: 0xFBD9E4),
-            Color(hex: 0xF2F2F5)
+            Color(hex: 0xE4D9FB),
+            Color(hex: 0xF0EDE4)
+        ],
+        keyword: Color(hex: 0x7C3AED),
+        correct: Color(hex: 0x16A34A),
+        correctInk: Color(hex: 0x15803D),
+        correctSoft: Color(hex: 0xDCFCE7),
+        wrong: Color(hex: 0xDC2626),
+        wrongInk: Color(hex: 0xB91C1C),
+        wrongSoft: Color(hex: 0xFEE2E2),
+        // jaune, menthe, bleu, rose, lilas
+        tonePale: [
+            Color(hex: 0xFFF1B8),
+            Color(hex: 0xCDEFDC),
+            Color(hex: 0xD6E7FB),
+            Color(hex: 0xFBD9E4),
+            Color(hex: 0xE4D9FB)
+        ],
+        toneVivid: [
+            Color(hex: 0xF2B200),
+            Color(hex: 0x22B573),
+            Color(hex: 0x3B82F6),
+            Color(hex: 0xEC5B8F),
+            Color(hex: 0x8B5CF6)
+        ],
+        toneInk: [
+            Color(hex: 0x7A5600),
+            Color(hex: 0x146C45),
+            Color(hex: 0x1D4ED8),
+            Color(hex: 0xA8204F),
+            Color(hex: 0x5B21B6)
         ],
         cardShadow: 0.04,
         groupShadow: 0.0

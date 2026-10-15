@@ -54,6 +54,8 @@ jobs:
         run: |
           XCODE=$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -1)
           sudo xcode-select -s "$XCODE"
+          # Toutes les erreurs d'un coup, et pas seulement celles du premier fichier qui casse.
+          defaults write com.apple.dt.Xcode IDEBuildingContinueBuildingAfterErrors -bool YES
           xcodebuild -version
           sw_vers
 
@@ -103,6 +105,7 @@ jobs:
             -clonedSourcePackagesDirPath "$PACKAGES" \
             -skipPackagePluginValidation \
             CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO \
+            OTHER_SWIFT_FLAGS='$(inherited) -continue-building-after-errors' \
             2>&1 | tee build/build.log | grep -E "(error|warning): |\*\* BUILD" || true
           grep -q "\*\* TEST BUILD SUCCEEDED \*\*" build/build.log
 

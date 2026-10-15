@@ -127,7 +127,7 @@ final class CourseContentTests: XCTestCase {
     /// La règle passe par le nettoyage : une matière criée **et** balisée ressort propre des
     /// deux côtés, et c'est ce chemin-là que prend un cours importé.
     func testTheImportPathCleansAndLowersTheSubject() {
-        let course = GeneratedCourse(title: "T", subject: "**HISTOIRE**", summary: "S")
+        let course = GeneratedCourse(title: "T", subject: "**HISTOIRE**", summary: "S", contextText: "")
         XCTAssertEqual(course.sanitized().subject, "Histoire")
     }
 
