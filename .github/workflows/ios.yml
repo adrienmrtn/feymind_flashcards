@@ -152,22 +152,29 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-      - name: Rendus dans le journal
+      - name: Rendus en JPEG
         # Le stockage des artefacts n'est pas joignable partout (la session de développement
-        # ne l'atteint pas) : chaque rendu passe aussi dans le journal, en JPEG réduit encodé
-        # en base64, entre deux repères. `scripts/ci-renders.py` les remet en images.
+        # ne l'atteint pas) : les rendus repassent aussi par les journaux, en JPEG réduit encodé
+        # en base64, dans le job « Rendus dans le journal » ci-dessous, un groupe d'écrans par
+        # job pour que chaque journal reste lisible en entier. `scripts/ci-renders.py` les
+        # remet en images.
         if: always()
         run: |
           [ -d build/renders ] || exit 0
           mkdir -p build/small
           for png in build/renders/*.png; do
             [ -f "$png" ] || continue
-            name=$(basename "$png" .png)
-            sips -s format jpeg -s formatOptions 55 -Z 1100 "$png" --out "build/small/$name.jpg" >/dev/null
-            echo "=== RENDU $name ==="
-            base64 -b 76 -i "build/small/$name.jpg"
-            echo "=== FIN $name ==="
+            sips -s format jpeg -s formatOptions 55 -Z 1100 "$png" --out "build/small/$(basename "$png" .png).jpg" >/dev/null
           done
+
+      - name: Rendus JPEG (artefact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendus-jpg
+          path: build/small
+          if-no-files-found: ignore
+          retention-days: 3
 
       - name: Ce qui a cassé
         if: failure()
@@ -188,3 +195,30 @@ jobs:
             fi
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"
+
+  renders-log:
+    name: Rendus dans le journal (${{ matrix.group }})
+    needs: build-and-test
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        group: ["home*", "lesson-*", "lessons* profile*", "mika*", "icons* palette*"]
+    steps:
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: rendus-jpg
+          path: small
+      - name: Imprimer les rendus
+        run: |
+          cd small 2>/dev/null || exit 0
+          for jpg in ${{ matrix.group }}; do
+            [ -f "$jpg" ] || continue
+            name="${jpg%.jpg}"
+            echo "=== RENDU $name ==="
+            base64 -w 76 "$jpg"
+            echo "=== FIN $name ==="
+          done
