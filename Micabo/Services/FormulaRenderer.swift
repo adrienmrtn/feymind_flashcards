@@ -27,7 +27,8 @@ enum FormulaRenderer {
         let normalized = source.replacingOccurrences(of: "$$", with: "$")
         let pieces = normalized.components(separatedBy: "$")
         guard pieces.count > 1 else {
-            return [Segment(text: source, isMath: false)]
+            // Sans délimiteurs aussi, les commandes se transposent : « 1914 \rightarrow 1918 ».
+            return [Segment(text: symbolsOnly(source), isMath: false)]
         }
 
         // Un nombre pair de délimiteurs laisse un fragment ouvert : on le rend littéral.

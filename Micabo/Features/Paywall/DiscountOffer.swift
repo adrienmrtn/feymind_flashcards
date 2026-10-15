@@ -178,6 +178,9 @@ enum DiscountOffer {
 
     // MARK: - Les règles d'affichage
 
+    /// Le cadeau attend la première leçon : sans rien à soi, l'offre passe pour une réclame.
+    static let giftAfterCourses = 1
+
     /// Faut-il poser le cadeau sur cette fiche ?
     ///
     /// Une fonction pure, pour qu'elle se teste sans vue ni horloge. `startedAt` à `nil`
@@ -193,7 +196,7 @@ enum DiscountOffer {
         guard !isPro else { return false }
         // Le cadeau vient après le premier cours. Sans cours importé, il n'y a rien à
         // récompenser et l'offre passe pour une réclame.
-        guard courseCount >= FreeTier.courses else { return false }
+        guard courseCount >= giftAfterCourses else { return false }
         // Un « déjà vu » sans instant d'ouverture est un état bâtard, laissé par une version
         // qui marquait le cadeau vu sans démarrer son décompte. On le représente : rien n'a
         // jamais été chronométré, donc rien n'a été offert.
@@ -211,7 +214,7 @@ enum DiscountOffer {
     /// ni que le cadeau n'ait pas été vu — l'ouvrir depuis là relance une fenêtre. Sans ce
     /// chemin, une offre en repos n'était atteignable nulle part.
     static func isReachable(isPro: Bool, courseCount: Int) -> Bool {
-        !isPro && courseCount >= FreeTier.courses
+        !isPro && courseCount >= giftAfterCourses
     }
 
     /// Faut-il garder la pastille et son décompte ?
@@ -222,7 +225,7 @@ enum DiscountOffer {
         startedAt: Date?,
         now: Date = Date()
     ) -> Bool {
-        guard !isPro, seen, courseCount >= FreeTier.courses else { return false }
+        guard !isPro, seen, courseCount >= giftAfterCourses else { return false }
         guard let startedAt else { return false }
         return isLive(startedAt: startedAt, now: now)
     }

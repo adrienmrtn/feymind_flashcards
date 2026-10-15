@@ -20,7 +20,8 @@ enum CourseSource: String, Codable, CaseIterable {
         case .pdf: L10n.t("app.course.source.pdf", locale: locale)
         case .photo: L10n.t("app.course.source.photos", locale: locale)
         case .docx: L10n.t("app.course.source.word", locale: locale)
-        case .youtube: L10n.t("app.course.source.video", locale: locale)
+        // Un nom de marque, le même dans toutes les langues : c'est aussi l'icône de Home.
+        case .youtube: "YouTube"
         case .library: L10n.t("app.course.source.library", locale: locale)
         case .sample: L10n.t("app.course.source.sample", locale: locale)
         case .deck: L10n.t("app.course.source.deck", locale: locale)

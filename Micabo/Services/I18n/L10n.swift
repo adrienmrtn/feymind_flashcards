@@ -29,6 +29,12 @@ enum L10n {
         SharedI18nCatalogs.table(for: locale.rawValue)
     }
 
+    /// Le français met zéro au singulier (« 0 vue »), l'anglais, l'allemand, l'espagnol et le
+    /// turc au pluriel.
+    static func isSingular(_ count: Int, locale: UiLocale) -> Bool {
+        locale == .fr ? (count == 0 || count == 1) : count == 1
+    }
+
     private static func replacePlurals(
         in template: String,
         locale: UiLocale,
@@ -51,7 +57,7 @@ enum L10n {
             let count = Int(raw) ?? 0
             let one = String(template[oneRange])
             let other = String(template[otherRange])
-            let branch = count == 1 ? one : other
+            let branch = isSingular(count, locale: locale) ? one : other
             let formatted = raw
             let replacement = branch.replacingOccurrences(of: "#", with: formatted)
             result.replaceSubrange(allRange, with: replacement)

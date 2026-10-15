@@ -79,8 +79,10 @@ final class DiscountOfferTests: XCTestCase {
         XCTAssertFalse(
             DiscountOffer.shouldPresentGift(isPro: true, courseCount: 1, seen: false, startedAt: nil)
         )
+        // Vu pendant une fenêtre ouverte : il ne revient pas. (Vu sans fenêtre, c'est l'état
+        // laissé par une ancienne version, et le cadeau se représente : voir `shouldPresentGift`.)
         XCTAssertFalse(
-            DiscountOffer.shouldPresentGift(isPro: false, courseCount: 1, seen: true, startedAt: nil)
+            DiscountOffer.shouldPresentGift(isPro: false, courseCount: 1, seen: true, startedAt: Date())
         )
     }
 

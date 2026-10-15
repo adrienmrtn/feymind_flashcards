@@ -39,7 +39,9 @@ final class AuthDecodingTests: XCTestCase {
     /// connaître sa date d'expiration demanderait de faire confiance à un contenu non vérifié.
     func testTheExpiryIsComputedOnArrival() throws {
         let response = try JSONDecoder().decode(AuthTokenResponse.self, from: Data(tokenPayload.utf8))
-        let now = Date(timeIntervalSince1970: 1_787_649_000)
+        // Maintenant, et pas une date figée : `isExpired` se lit contre l'horloge, et un test
+        // daté finit toujours par tomber le jour où sa date passe.
+        let now = Date()
 
         let session = response.session(now: now)
 

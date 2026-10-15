@@ -324,18 +324,17 @@ final class SheetRenderingTests: XCTestCase {
         XCTAssertTrue(spans.contains { $0.isHighlighted && $0.isBold })
     }
 
-    /// Toute l'échelle a perdu un dixième, corps comme titres : ce qui compte sur une page,
-    /// c'est le rapport entre les tailles. Réduire le corps seul aurait fait grossir les
-    /// titres par contraste.
-    func testTheWholeScaleLostATenth() {
-        XCTAssertEqual(SheetTypography.body, 16.5 * 0.9, accuracy: 0.01)
-        XCTAssertEqual(SheetTypography.headingLarge, 22 * 0.9, accuracy: 0.01)
-        XCTAssertEqual(SheetTypography.formula, 20 * 0.9, accuracy: 0.01)
+    /// L'échelle des anciennes fiches, telle que `SheetTypography` la documente : le corps du
+    /// site, un titre de partie à une fois et demie le corps, une formule entre les deux.
+    func testTheSheetScaleMatchesTheSite() {
+        XCTAssertEqual(SheetTypography.body, 15, accuracy: 0.01)
+        XCTAssertEqual(SheetTypography.headingLarge, 22, accuracy: 0.01)
+        XCTAssertEqual(SheetTypography.formula, 18, accuracy: 0.01)
     }
 
-    /// La hiérarchie tient après la réduction, et elle est monotone : du titre de partie à la
-    /// légende, chaque cran est plus petit que le précédent. Un intitulé d'objet plus petit
-    /// que le texte qu'il introduit n'introduirait rien.
+    /// La hiérarchie est monotone : du titre de partie à la légende, chaque cran est plus
+    /// petit que le précédent. Le titre de sous-partie se place un cran au-dessus du corps,
+    /// sous le titre de partie : à la taille du corps, une sous-partie ne se voyait pas.
     func testTheHierarchyStillHolds() {
         let scale = [
             SheetTypography.headingLarge,
@@ -347,16 +346,17 @@ final class SheetRenderingTests: XCTestCase {
         ]
 
         XCTAssertEqual(scale, scale.sorted(by: >), "L'échelle doit descendre sans remonter")
-        XCTAssertEqual(SheetTypography.headingSmall, SheetTypography.body)
+        XCTAssertGreaterThan(SheetTypography.headingSmall, SheetTypography.body)
+        XCTAssertLessThan(SheetTypography.headingSmall, SheetTypography.headingLarge)
     }
 
-    /// Les espaces ont baissé plus que les tailles : une fiche se relit la veille au soir, et
-    /// le blanc qui aère un écran d'accueil fait ici scroller pour rien.
-    func testTheVerticalRhythmIsTighterThanTheTypeScale() {
-        XCTAssertLessThan(SheetTypography.lineSpacing, 7.5 * 0.9)
-        XCTAssertLessThan(SheetTypography.blockSpacing, 15 * 0.9)
-        XCTAssertLessThan(SheetTypography.spaceBeforeLargeHeading, 26 * 0.9)
-        XCTAssertLessThanOrEqual(SheetTypography.spaceBeforeSmallHeading, 16)
+    /// Le plan se voit en feuilletant : l'air au-dessus d'un titre vaut nettement plus qu'un
+    /// changement de paragraphe (un rapport de 1,36 ne se distinguait pas d'un paragraphe de
+    /// plus), et un titre de partie en reçoit plus qu'un titre de sous-partie.
+    func testTheHeadingsBreatheMoreThanParagraphs() {
+        XCTAssertGreaterThanOrEqual(SheetTypography.spaceBeforeSmallHeading / SheetTypography.blockSpacing, 1.8)
+        XCTAssertGreaterThan(SheetTypography.spaceBeforeLargeHeading, SheetTypography.spaceBeforeSmallHeading)
+        XCTAssertLessThan(SheetTypography.lineSpacing, SheetTypography.body)
     }
 
     /// Un sous-titre a la taille du corps : c'est l'air au-dessus de lui qui dit qu'une
