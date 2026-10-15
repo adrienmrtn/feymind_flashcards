@@ -1,0 +1,145 @@
+# L'app iOS, compilée et testée à chaque push : personne n'a besoin d'ouvrir Xcode pour savoir
+# si une branche tient debout.
+#
+# Deux étapes séparées, pour que le résumé dise tout de suite laquelle a cassé :
+#   1. « Compiler » — build-for-testing : l'app et la cible de tests compilent ;
+#   2. « Tester » — test-without-building : les tests passent, sur un simulateur iPhone.
+#
+# En cas d'échec, les lignes « error: » et les tests en échec sont recopiés à la toute fin du
+# journal et dans le résumé de l'action : c'est ce qu'on lit en premier, et c'est ce qui reste
+# dans les dernières lignes quand le journal est long.
+#
+# Les rendus : `RenderGalleryTests` dessine des écrans en PNG quand MICABO_RENDER_DIR est
+# défini (xcodebuild passe au processus de test, sans le préfixe, toute variable qui commence
+# par TEST_RUNNER_). Ils partent dans l'artefact « rendus », pour regarder l'interface sans
+# simulateur.
+
+name: iOS
+
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths:
+      - "Micabo/**"
+      - "MicaboTests/**"
+      - "Micabo.xcodeproj/**"
+      - ".github/workflows/ios.yml"
+  pull_request:
+    paths:
+      - "Micabo/**"
+      - "MicaboTests/**"
+      - "Micabo.xcodeproj/**"
+      - ".github/workflows/ios.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Compiler et tester
+    runs-on: macos-latest
+    timeout-minutes: 75
+    env:
+      DERIVED: build/DerivedData
+      PACKAGES: build/SourcePackages
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Choisir Xcode
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -1)
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+          sw_vers
+
+      - name: Choisir un simulateur
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, re, sys
+          best = None
+          for runtime, devices in json.load(sys.stdin)["devices"].items():
+              m = re.search(r"iOS-(\d+)-(\d+)", runtime)
+              if not m:
+                  continue
+              version = (int(m.group(1)), int(m.group(2)))
+              for d in devices:
+                  name = d["name"]
+                  if not d.get("isAvailable") or not name.startswith("iPhone"):
+                      continue
+                  # Un iPhone « simple » (ni Pro, ni Plus, ni SE) : la taille la plus courante.
+                  plain = re.fullmatch(r"iPhone \d+", name) is not None
+                  key = (version, plain, name)
+                  if best is None or key > best[0]:
+                      best = (key, d["udid"], f"{name} — {runtime}")
+          if best is None:
+              sys.exit("aucun simulateur iPhone disponible")
+          print(best[2], file=sys.stderr)
+          print(best[1])
+          ')
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Contrôle des attributs Swift
+        run: python3 scripts/swift-attributes.py
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ env.PACKAGES }}
+          key: spm-${{ hashFiles('Micabo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+
+      - name: Compiler
+        run: |
+          set -o pipefail
+          mkdir -p build
+          xcodebuild build-for-testing \
+            -project Micabo.xcodeproj -scheme Micabo \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -derivedDataPath "$DERIVED" \
+            -clonedSourcePackagesDirPath "$PACKAGES" \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO \
+            2>&1 | tee build/build.log | grep -E "(error|warning): |\*\* BUILD" || true
+          grep -q "\*\* TEST BUILD SUCCEEDED \*\*" build/build.log
+
+      - name: Tester
+        run: |
+          set -o pipefail
+          mkdir -p build/renders
+          export TEST_RUNNER_MICABO_RENDER_DIR="$PWD/build/renders"
+          xcodebuild test-without-building \
+            -project Micabo.xcodeproj -scheme Micabo \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -derivedDataPath "$DERIVED" \
+            -clonedSourcePackagesDirPath "$PACKAGES" \
+            -resultBundlePath build/Tests.xcresult \
+            2>&1 | tee build/test.log | grep -E "error: |Executed [0-9]+ test|\*\* TEST" || true
+          grep -q "\*\* TEST EXECUTE SUCCEEDED \*\*" build/test.log
+
+      - name: Rendus
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendus
+          path: build/renders
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Ce qui a cassé
+        if: failure()
+        run: |
+          {
+            echo "## Ce qui a cassé"
+            echo
+            echo '```'
+            for log in build/build.log build/test.log; do
+              [ -f "$log" ] || continue
+              grep -E "error: |: error |Test Case .* failed|failed \(|Fatal error|Testing failed|BUILD FAILED" "$log" \
+                | sed -E "s#^$PWD/##" | awk '!seen[$0]++' | head -150
+            done
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
