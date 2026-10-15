@@ -21,16 +21,8 @@ struct CoursesListView: View {
     @State private var searchText = ""
     @State private var sortOrder: SortOrder = .recent
     @State private var subjectFilter: String?
-    /// Un cours mène à sa fiche, un `CourseCardsRoute` à ses cartes : deux destinations
-    /// pour le même cours, donc un chemin hétérogène.
+    /// Une leçon ouvre son chemin (`LessonPathView`). Une leçon se crée depuis Home, pas ici.
     @State private var path = NavigationPath()
-    /// **La création d'un deck a remplacé l'écran d'import.**
-    ///
-    /// L'ancien demandait un format — PDF, photos, YouTube — puis un document, et rendait la
-    /// main sur une fiche. Le nouveau demande ce qu'il faut pour poser un plan de travail, et
-    /// le format n'est plus la première question : on le choisit case par case, au moment de
-    /// remplir un support, ce qui permet d'en mélanger plusieurs dans le même deck.
-    @State private var creatingDeck = false
     @State private var paywall: PaywallTrigger?
     /// Le deck qu'on vient de quitter, pour savoir si c'était le premier : c'est au retour
     /// du premier cours que le cadeau se déballe. Voir `presentGiftIfEarned`.
@@ -218,7 +210,6 @@ struct CoursesListView: View {
 
     private var covers: some View {
         stack
-            .fullScreenCover(isPresented: $creatingDeck, content: deckSetup)
             .sheet(item: $moving, content: folderPicker)
     }
 
@@ -229,12 +220,6 @@ struct CoursesListView: View {
                 .reportsNavigationDepth(for: .decks, depth: path.count)
                 .returnsHome(path: $path)
                 .navigationDestination(for: Course.self, destination: openCourse)
-                .navigationDestination(for: CourseCardsRoute.self, destination: openCards)
-                // Reprendre un cours partagé atterrit sur **sa** fiche, dans sa propre pile :
-                // le chemin est remplacé, donc le retour ramène à la liste de ses cours et
-                // non à la bibliothèque. Un cours qu'on vient de s'approprier n'est plus un
-                // cours partagé.
-                .navigationDestination(for: SharedCourseRoute.self, destination: openShared)
         }
     }
 
@@ -617,18 +602,6 @@ struct CoursesListView: View {
 
     // MARK: - Feuilles et dialogues
 
-    private func deckSetup() -> some View {
-        DeckSetupFlowView { course in
-            creatingDeck = false
-            // Un deck construit se termine sur **son plan**, pas sur sa fiche. C'est la
-            // différence de fond avec l'ancien import : ce qu'on vient de fabriquer est un
-            // programme de travail, et c'est lui qu'il faut voir en premier.
-            path = NavigationPath([course])
-        } onCancel: {
-            creatingDeck = false
-        }
-    }
-
     private func folderPicker(_ item: MovingItem) -> some View {
         FolderPickerSheet(
             movingFolder: movingFolderID(of: item),
@@ -642,16 +615,6 @@ struct CoursesListView: View {
 
     private func openCourse(_ course: Course) -> some View {
         LessonPathView(course: course)
-    }
-
-    private func openCards(_ route: CourseCardsRoute) -> some View {
-        FlashcardsView(course: route.course)
-    }
-
-    private func openShared(_ route: SharedCourseRoute) -> some View {
-        SharedCourseView(route: route) { adopted in
-            path = NavigationPath([adopted])
-        }
     }
 
     private func movingFolderID(of item: MovingItem) -> UUID? {
@@ -828,7 +791,7 @@ struct CoursesListView: View {
         // Le temps que la liste se pose : une boîte qui tombe pendant que la page glisse
         // encore donne deux animations concurrentes.
         try? await Task.sleep(for: .milliseconds(500))
-        guard path.isEmpty, paywall == nil, !creatingDeck else { return }
+        guard path.isEmpty, paywall == nil else { return }
         router?.requestGift()
     }
 

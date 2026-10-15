@@ -51,55 +51,6 @@ final class FreemiumTests: XCTestCase {
         XCTAssertNotEqual(outcome, .purchased, "Aucun achat ne se conclut sans boutique")
     }
 
-    // MARK: - La coupure de la fiche
-
-    func testTheSheetIsCutAtSevenTenthsOfItsBlocks() {
-        XCTAssertEqual(SheetGate.lockIndex(blockCount: 10), 7)
-        XCTAssertEqual(SheetGate.lockIndex(blockCount: 20), 14)
-        XCTAssertEqual(SheetGate.lockIndex(blockCount: 14), 10, "9,8 s'arrondit à 10")
-    }
-
-    /// Une fiche courte se lit quand même : au moins un bloc reste lisible, et jamais plus
-    /// que ce que la fiche contient.
-    func testAShortSheetAlwaysKeepsSomethingReadable() {
-        XCTAssertEqual(SheetGate.lockIndex(blockCount: 0), 0)
-        XCTAssertEqual(SheetGate.lockIndex(blockCount: 1), 1, "Un bloc unique se lit en entier")
-        XCTAssertEqual(SheetGate.lockIndex(blockCount: 2), 1)
-        XCTAssertEqual(SheetGate.lockIndex(blockCount: 3), 2)
-
-        for count in 1...60 {
-            let index = SheetGate.lockIndex(blockCount: count)
-            XCTAssertGreaterThanOrEqual(index, 1, "\(count) blocs sans rien à lire")
-            XCTAssertLessThanOrEqual(index, count, "\(count) blocs, et on en cache plus qu'il n'y en a")
-        }
-    }
-
-    func testTheSplitKeepsEveryBlockExactlyOnce() {
-        let blocks = SampleData.photosynthesisSheet.blocks
-        let parts = SheetGate.split(blocks, isPro: false)
-
-        XCTAssertEqual(parts.readable.count + parts.locked.count, blocks.count)
-        XCTAssertFalse(parts.readable.isEmpty)
-        XCTAssertFalse(parts.locked.isEmpty, "Une fiche de \(blocks.count) blocs doit se couper")
-        XCTAssertEqual(parts.readable + parts.locked, blocks, "L'ordre des blocs ne change pas")
-    }
-
-    /// L'abonné ne voit jamais la coupure, et surtout pas une liste vide : c'est la même
-    /// vue qui affiche les deux cas.
-    func testAnAbonneReadsTheWholeSheet() {
-        let blocks = SampleData.affineFunctionsSheet.blocks
-        let parts = SheetGate.split(blocks, isPro: true)
-
-        XCTAssertEqual(parts.readable, blocks)
-        XCTAssertTrue(parts.locked.isEmpty)
-    }
-
-    func testAnEmptySheetHasNothingToLock() {
-        let parts = SheetGate.split([], isPro: false)
-        XCTAssertTrue(parts.readable.isEmpty)
-        XCTAssertTrue(parts.locked.isEmpty)
-    }
-
     // MARK: - Les portes
 
     @MainActor

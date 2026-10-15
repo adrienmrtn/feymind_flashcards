@@ -152,6 +152,23 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+      - name: Rendus dans le journal
+        # Le stockage des artefacts n'est pas joignable partout (la session de développement
+        # ne l'atteint pas) : chaque rendu passe aussi dans le journal, en JPEG réduit encodé
+        # en base64, entre deux repères. `scripts/ci-renders.py` les remet en images.
+        if: always()
+        run: |
+          [ -d build/renders ] || exit 0
+          mkdir -p build/small
+          for png in build/renders/*.png; do
+            [ -f "$png" ] || continue
+            name=$(basename "$png" .png)
+            sips -s format jpeg -s formatOptions 55 -Z 1100 "$png" --out "build/small/$name.jpg" >/dev/null
+            echo "=== RENDU $name ==="
+            base64 -b 76 -i "build/small/$name.jpg"
+            echo "=== FIN $name ==="
+          done
+
       - name: Ce qui a cassé
         if: failure()
         run: |

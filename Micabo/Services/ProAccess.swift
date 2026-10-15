@@ -1,12 +1,13 @@
 import Observation
 import SwiftUI
 
-/// **Ce que la version gratuite laisse faire**, et rien de plus.
+/// **Le gratuit d'avant la refonte**, tenu à l'identique de celui du site.
 ///
-/// Les trois nombres vivent ici parce qu'ils se répondent : un cours dont on lit trois
-/// dixièmes, cinq cartes par jour, un seul import. Éparpillés dans les écrans, ils
-/// auraient dérivé au premier ajustement, et le gratuit se serait mis à dire deux choses
-/// différentes selon l'endroit où on l'a rencontré.
+/// L'app iOS n'en lit plus les portes : depuis la refonte « parcours », le gratuit est une
+/// leçon offerte depuis un sujet ou un texte collé (`LessonAllowance`, et `begin_lesson`
+/// côté serveur), et la fiche coupée, la carte par jour et l'entraînement verrouillé ont
+/// disparu de l'interface. Les valeurs restent parce que le site les applique encore, et que
+/// `web/packages/core/test/freemium-parity.test.ts` vérifie qu'elles disent la même chose.
 enum FreeTier {
     /// **Aucun cours ne se génère sans abonnement.** Le cours du parcours d'accueil se
     /// construit à part, c'est la démonstration ; dans l'app, les questions d'un deck se
@@ -17,7 +18,7 @@ enum FreeTier {
 
     /// La part d'un chapitre qui se lit sans payer, passé le premier.
     ///
-    /// **Le premier chapitre de chaque deck se lit en entier** — voir `SheetGate` — et
+    /// **Le premier chapitre de chaque deck se lit en entier** — sur le site — et
     /// c'est lui qui montre ce que vaut une fiche. Les suivants s'ouvrent, se lisent sur
     /// trois dixièmes, et le reste se devine derrière le flou : assez pour savoir que la
     /// fiche continue, pas assez pour s'en passer.
@@ -267,34 +268,5 @@ final class ProAccess {
     /// qui a déjà été révisé dans la journée.
     func hasReachedDailyLimit(reviewedToday: Int) -> Bool {
         !isPro && reviewedToday >= FreeTier.cardsPerDay
-    }
-}
-
-/// **Où s'arrête la lecture d'une fiche**, pour qui n'est pas abonné.
-///
-/// La coupure se compte en blocs et non en caractères : couper un paragraphe en deux au
-/// septième dixième de son texte donnerait une phrase interrompue au milieu d'un mot, ce
-/// qui ressemble à un bug d'affichage plutôt qu'à une limite assumée.
-enum SheetGate {
-    /// Indice du premier bloc flouté. Toujours au moins un bloc lisible, et au plus tous.
-    static func lockIndex(blockCount: Int, ratio: Double = FreeTier.readableSheetRatio) -> Int {
-        guard blockCount > 0 else { return 0 }
-        let raw = Int((Double(blockCount) * ratio).rounded())
-        return max(1, min(blockCount, raw))
-    }
-
-    /// Coupe la fiche en deux : ce qui se lit, ce qui se devine.
-    ///
-    /// `chapterNumber` est le rang du chapitre dans son deck : le premier se lit en entier,
-    /// abonné ou pas. C'est lui qui fait la démonstration.
-    static func split(
-        _ blocks: [SheetBlock],
-        isPro: Bool,
-        chapterNumber: Int = 2,
-        ratio: Double = FreeTier.readableSheetRatio
-    ) -> (readable: [SheetBlock], locked: [SheetBlock]) {
-        guard !isPro, chapterNumber > 1, !blocks.isEmpty else { return (blocks, []) }
-        let index = lockIndex(blockCount: blocks.count, ratio: ratio)
-        return (Array(blocks[..<index]), Array(blocks[index...]))
     }
 }

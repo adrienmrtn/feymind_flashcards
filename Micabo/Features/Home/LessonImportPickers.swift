@@ -57,7 +57,17 @@ struct LessonImportPickers: ViewModifier {
                 }
             }
             .confirmationDialog(L10n.t("lesson.import.photo", locale: .resolved()), isPresented: $showPhotoChoice, titleVisibility: .hidden) {
-                Button(L10n.t("lesson.import.scan", locale: .resolved())) { showScanner = true }
+                Button(L10n.t("lesson.import.scan", locale: .resolved())) {
+                    // La question système d'abord, et le scanner seulement sur un oui : refusée
+                    // dans le scanner, la caméra y laisserait l'impasse de VisionKit.
+                    Task {
+                        if await CameraAccess.request() {
+                            showScanner = true
+                        } else {
+                            showPhotoPicker = true
+                        }
+                    }
+                }
                 Button(L10n.t("lesson.import.library", locale: .resolved())) { showPhotoPicker = true }
             }
             .confirmationDialog(L10n.t("lesson.import.audio", locale: .resolved()), isPresented: $showAudioChoice, titleVisibility: .hidden) {
@@ -119,7 +129,10 @@ struct LessonImportPickers: ViewModifier {
             fileTarget = .document
             showFiles = true
         case .photo:
-            if DocumentCameraView.isSupported {
+            // Une caméra refusée n'ouvre pas le scanner : VisionKit afficherait sa propre
+            // impasse vers les Réglages, que l'App Store a déjà refusée (règle 5.1.1(iv)). On
+            // va droit à la photothèque.
+            if DocumentCameraView.isSupported, CameraAccess.allowsScanner(CameraAccess.status) {
                 showPhotoChoice = true
             } else {
                 showPhotoPicker = true

@@ -7,26 +7,23 @@ import SwiftUI
 /// d'un onglet à l'autre : la barre est le seul moyen de changer de page.
 ///
 /// Les noms de cas datent de l'ancienne barre (`today` porte Home, `decks` les Leçons) : ils
-/// sont la clé de la profondeur de navigation de chaque page, et `mika` reste le temps que
-/// l'ancien écran de Mika parte avec le nettoyage.
+/// sont la clé de la profondeur de navigation de chaque page.
 enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     case decks
     case today
-    case mika
     case profile
 
     var id: Int { rawValue }
 
     /// **Les trois onglets de la refonte**, dans l'ordre de la barre : Home, Leçons, Profil
     /// (`docs/refonte-parcours.md` § 2). `today` porte Home, `decks` les Leçons ; Mika vit
-    /// désormais dans chaque leçon, son onglet ne s'affiche plus.
+    /// désormais dans chaque leçon.
     static let tabs: [RootTab] = [.today, .decks, .profile]
 
     func label(t: (String) -> String) -> String {
         switch self {
         case .decks: t("lesson.tab.lessons")
         case .today: t("lesson.tab.home")
-        case .mika: t("ios.nav.mika")
         case .profile: t("lesson.tab.profile")
         }
     }
@@ -39,21 +36,15 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
         switch self {
         case .decks: "books.vertical"
         case .today: "house"
-        case .mika: "sparkles"
         case .profile: "person"
         }
     }
 
     /// Variante pleine, affichée quand l'onglet est actif.
-    ///
-    /// **Réviser garde son glyphe creux.** Les deux flèches circulaires n'ont pas de
-    /// variante pleine qui se dessine à vingt points ; l'onglet actif se lit déjà par la
-    /// couleur. Les étincelles de Mika non plus : elles sont déjà pleines.
     var selectedSystemImage: String {
         switch self {
         case .decks: "books.vertical.fill"
         case .today: "house.fill"
-        case .mika: "sparkles"
         case .profile: "person.fill"
         }
     }

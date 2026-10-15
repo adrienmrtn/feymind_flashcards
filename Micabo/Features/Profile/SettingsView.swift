@@ -43,7 +43,6 @@ struct SettingsView: View {
     @State private var discountOffer: DiscountPresentation?
     #if DEBUG
     @State private var debugCourseLanguage = DebugCourseCatalog.language
-    @State private var debugMock: MockSessionRecord?
     #endif
     /// Relues pour que la rangée de l'offre suive son décompte sans qu'on rouvre l'écran.
     @AppStorage(DiscountOffer.Key.startedAt) private var discountStartedAt: Double = 0
@@ -674,15 +673,6 @@ struct SettingsView: View {
                     )
                 }
 
-                MicaboHairline()
-
-                MicaboRow(
-                    tile: MicaboTile(glyph: .emoji("📝"), background: MicaboColor.tilePastels[1]),
-                    title: "Voir un examen blanc corrigé",
-                    subtitle: "Une copie notée, tirée des cours de debug",
-                    accessory: .chevron,
-                    action: { debugMock = DebugMock.gradedSession(in: modelContext) }
-                )
 
                 MicaboHairline()
 
@@ -704,9 +694,6 @@ struct SettingsView: View {
         .onChange(of: debugCourseLanguage) { _, locale in
             DebugCourseCatalog.install(locale: locale, in: modelContext, social: social)
             Haptics.success()
-        }
-        .fullScreenCover(item: $debugMock) { session in
-            MockReportView(session: session, examName: "Examen blanc", onDone: { debugMock = nil })
         }
     }
     #endif
