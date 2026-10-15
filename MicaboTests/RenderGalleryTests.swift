@@ -11,21 +11,30 @@ import XCTest
 /// Rien ne se dessine hors de la CI : sans `MICABO_RENDER_DIR`, chaque test s'arrête aussitôt.
 @MainActor
 final class RenderGalleryTests: XCTestCase {
-    func testMascot() throws {
-        let moods: [(String, MicaboMascot.Mood)] = [
-            ("happy", .happy), ("thinking", .thinking), ("celebrating", .celebrating),
-            ("waving", .waving), ("curious", .curious), ("reading", .reading),
-            ("unsure", .unsure), ("proud", .proud)
-        ]
+    /// Mika dans ses huit humeurs, à trois instants de chaque animation.
+    func testMika() throws {
+        let instants: [Double] = [0.25, 0.7, 1.4]
         try RenderGallery.render(
-            "mascot-moods",
-            width: 393,
-            HStack(spacing: 0) {
-                ForEach(moods, id: \.0) { mood in
-                    MicaboMascot(mood: mood.1, size: 44)
+            "mika-moods",
+            VStack(spacing: 4) {
+                ForEach(MikaMood.allCases) { mood in
+                    HStack(spacing: 12) {
+                        Text(mood.rawValue)
+                            .font(MicaboFont.ui(11, weight: .bold))
+                            .foregroundStyle(MicaboColor.inkSecondary)
+                            .frame(width: 64, alignment: .leading)
+                        ForEach(instants, id: \.self) { instant in
+                            MikaMascot(mood: mood, size: 84, frozenAt: instant)
+                        }
+                    }
                 }
             }
             .padding(16)
+        )
+        try RenderGallery.render(
+            "mika-large",
+            MikaMascot(mood: .wave, size: 300, frozenAt: 0.5)
+                .padding(40)
         )
     }
 
