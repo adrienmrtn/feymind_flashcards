@@ -114,12 +114,17 @@ jobs:
           set -o pipefail
           mkdir -p build/renders
           export TEST_RUNNER_MICABO_RENDER_DIR="$PWD/build/renders"
+          # Un test qui ne rend pas la main en une minute est arrêté et compté en échec,
+          # au lieu de tenir le runner jusqu'à la limite du job.
           xcodebuild test-without-building \
             -project Micabo.xcodeproj -scheme Micabo \
             -destination "id=${{ steps.sim.outputs.udid }}" \
             -derivedDataPath "$DERIVED" \
             -clonedSourcePackagesDirPath "$PACKAGES" \
             -resultBundlePath build/Tests.xcresult \
+            -test-timeouts-enabled YES \
+            -default-test-execution-time-allowance 60 \
+            -maximum-test-execution-time-allowance 180 \
             2>&1 | tee build/test.log | grep -E "error: |Executed [0-9]+ test|\*\* TEST" || true
           grep -q "\*\* TEST EXECUTE SUCCEEDED \*\*" build/test.log
 
