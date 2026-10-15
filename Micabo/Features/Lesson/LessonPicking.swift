@@ -95,7 +95,8 @@ enum LessonPicking {
     }
 }
 
-/// SplitMix64 : un générateur reproductible, pour des tirages qu'on peut rejouer.
+/// SplitMix64 : un générateur reproductible, pour des tirages qu'on peut rejouer (les quiz
+/// d'une leçon, et les cours de démonstration du mode débogage).
 struct SeededGenerator: RandomNumberGenerator {
     private var state: UInt64
 
