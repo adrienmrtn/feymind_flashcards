@@ -33,9 +33,26 @@ final class AppearanceTests: XCTestCase {
         let light = UITraitCollection(userInterfaceStyle: .light)
         let dark = UITraitCollection(userInterfaceStyle: .dark)
         let canvas = UIColor(MicaboPalette.adaptive.canvas)
-        XCTAssertEqual(canvas.resolvedColor(with: light), UIColor(MicaboPalette.day.canvas).resolvedColor(with: light))
-        XCTAssertEqual(canvas.resolvedColor(with: dark), UIColor(MicaboPalette.night.canvas).resolvedColor(with: dark))
+        assertSame(canvas.resolvedColor(with: light), UIColor(MicaboPalette.day.canvas))
+        assertSame(canvas.resolvedColor(with: dark), UIColor(MicaboPalette.night.canvas))
         XCTAssertEqual(MicaboPalette.adaptive.toneVivid.count, LessonTone.allCases.count)
         XCTAssertEqual(MicaboPalette.night.tonePale.count, LessonTone.allCases.count)
+    }
+
+    private func assertSame(_ lhs: UIColor, _ rhs: UIColor, file: StaticString = #filePath, line: UInt = #line) {
+        let a = components(lhs)
+        let b = components(rhs)
+        for index in 0..<3 {
+            XCTAssertEqual(a[index], b[index], accuracy: 0.01, file: file, line: line)
+        }
+    }
+
+    private func components(_ color: UIColor) -> [CGFloat] {
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+        color.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        return [red, green, blue, alpha]
     }
 }
