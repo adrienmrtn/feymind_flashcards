@@ -16,18 +16,33 @@ struct MicaboApp: App {
     /// même question, et personne n'y répond de son côté.
     @State private var pro: ProAccess
     @State private var uiLocale = UiLocaleStore()
+    /// Les leçons qui s'écrivent : le travail survit à l'écran qui l'a lancé.
+    @State private var lessons = LessonBuilder()
     @Environment(\.scenePhase) private var scenePhase
 
     private static let schema = Schema([Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self])
 
+    /// Vrai quand l'app ne sert que d'hôte aux tests unitaires : elle ne lance alors ni
+    /// réseau, ni achats, ni synchro, ni cours de démonstration. Les tests construisent ce
+    /// dont ils ont besoin, et une app qui démarre pour de vrai sur la machine de CI peut
+    /// retarder le lancement des tests jusqu'à les faire abandonner.
+    static let isHostingTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+
     init() {
         FontLoader.registerFonts()
-        // Avant tout le reste : le SDK doit être configuré avant qu'un écran ne puisse
-        // demander une offre, et avant le premier `logIn`.
-        PurchasesBridge.configureIfPossible()
-        container = Self.makeContainer()
-        SampleContentPurge.purgeIfNeeded(in: container.mainContext)
-        SubjectCasePass.runIfNeeded(in: container.mainContext)
+        if Self.isHostingTests {
+            container = try! ModelContainer(
+                for: Self.schema,
+                configurations: ModelConfiguration(schema: Self.schema, isStoredInMemoryOnly: true)
+            )
+        } else {
+            // Avant tout le reste : le SDK doit être configuré avant qu'un écran ne puisse
+            // demander une offre, et avant le premier `logIn`.
+            PurchasesBridge.configureIfPossible()
+            container = Self.makeContainer()
+            SampleContentPurge.purgeIfNeeded(in: container.mainContext)
+            SubjectCasePass.runIfNeeded(in: container.mainContext)
+        }
 
         let auth = AuthController()
         _auth = State(initialValue: auth)
@@ -50,103 +65,112 @@ struct MicaboApp: App {
 
     var body: some Scene {
         WindowGroup {
-            // L'apparence (jour, nuit, crépuscule) est posée ici. Le parcours
-            // d'accueil peut encore forcer le sombre le temps de ses écrans d'encre.
-            RootView()
-                .tint(MicaboColor.accent)
-                .environment(auth)
-                .environment(sync)
-                .environment(social)
-                .environment(mocks)
-                .environment(pro)
-                .environment(uiLocale)
-                .environment(\.locale, uiLocale.locale.foundation)
-                .preferredColorScheme(.light)
-                // Avant le reste de la tâche : ouvrir la session de statistiques est
-                // quelques microsecondes, et tout ce qui suit peut vouloir tracer.
-                .onAppear { Analytics.start() }
-                // Vider la file en partant à l'arrière-plan, et l'écrire sur disque : c'est
-                // le seul moment où l'on sait que l'app risque de ne pas revenir.
-                .onChange(of: scenePhase) { _, phase in
-                    switch phase {
-                    case .background: Analytics.flushForBackground()
-                    case .active: Analytics.enterForeground()
-                    default: break
-                    }
-                }
-                .task {
-                    #if DEBUG
-                    // Un vrai cours en PDF, posé au premier lancement d'une construction de
-                    // développement : la fiche ne se travaille pas sans cours à ficher, et
-                    // retrouver un document dans le sélecteur de fichiers à chaque
-                    // réinstallation du simulateur coûtait plus que le cycle qu'on voulait
-                    // mesurer. Voir `DebugSampleCourse`.
-                    //
-                    // Dans sa propre tâche : l'extraction du PDF n'a aucune raison de
-                    // retarder la restauration de la session, qui suit juste en dessous.
-                    Task { await DebugSampleCourse.seedIfNeeded(in: container.mainContext) }
-                    // Six cours fichés et un compte qui a l'air actif, sur le téléphone seulement.
-                    // Voir `DebugCourseCatalog`.
-                    DebugCourseCatalog.seedIfNeeded(in: container.mainContext, social: social)
-                    #endif
-                    await auth.restore()
-                    // L'identité RevenueCat **avant** de lire le droit, et avant tout achat :
-                    // `app_user_id` doit être l'`auth.users.id`, sinon le webhook refuse.
-                    await PurchasesBridge.identify(auth.billingUserID, guestID: auth.guestUserID)
-                    await pro.refresh()
-                    pro.observePurchases()
-                    // Les prix du pays, une fois par lancement : un paywall qui les
-                    // demanderait à son ouverture s'afficherait d'abord avec ceux de la
-                    // France, puis changerait de chiffre sous les yeux.
-                    await PaywallPurchases.refreshPrices()
-                    // La première image se pose avant le premier encodage des fiches :
-                    // c'est ça, pas le réseau, qui figeait l'ouverture.
-                    await Task.yield()
-                    try? await Task.sleep(for: .milliseconds(180))
-                    await sync.sync(context: container.mainContext)
-                    // L'annuaire et les amitiés viennent après la synchro : ils n'ont de sens
-                    // qu'avec un compte, et la synchro est ce qui confirme qu'il y en a un.
-                    await social.refresh()
-                }
-                // Une connexion, une déconnexion, un changement de compte : l'identifiant
-                // RevenueCat suit, et le droit se relit. Sans ça, un achat partirait sous
-                // l'identifiant de la personne précédente.
-                //
-                // La synchro suit pour la même raison qu'elle suit un lien de courriel :
-                // c'est ici qu'on apprend qu'il y a un compte. Sans elle, se connecter
-                // depuis le parcours n'apportait ses cours qu'au lancement suivant.
-                .onChange(of: auth.user?.id) { _, userID in
-                    Analytics.account(changedTo: userID)
-                    Task {
-                        await PurchasesBridge.identify(auth.billingUserID, guestID: auth.guestUserID)
-                        await pro.refresh()
-                        await sync.sync(context: container.mainContext)
-                        await social.refresh()
-                    }
-                }
-                // Le compte invité vient de s'ouvrir (« Passer ») : RevenueCat passe sous son
-                // identifiant avant tout achat, sinon l'abonnement n'aurait pas de propriétaire
-                // côté serveur.
-                .onChange(of: auth.guestUserID) { _, _ in
-                    guard auth.user == nil else { return }
-                    Task {
-                        await PurchasesBridge.identify(auth.billingUserID, guestID: auth.guestUserID)
-                        await pro.refresh()
-                    }
-                }
-                // Les liens de confirmation et de connexion reviennent sur le schéma de
-                // Micabo : c'est ici qu'ils ouvrent la session, quel que soit l'écran affiché.
-                .onOpenURL { url in
-                    Task {
-                        await auth.handle(callback: url)
-                        await PurchasesBridge.identify(auth.billingUserID, guestID: auth.guestUserID)
-                        await pro.refresh()
-                        await sync.sync(context: container.mainContext)
-                        await social.refresh()
-                    }
-                }
+            if Self.isHostingTests {
+                Color.clear
+            } else {
+                app
+            }
         }
         .modelContainer(container)
+    }
+
+    private var app: some View {
+        // L'apparence (jour, nuit, crépuscule) est posée ici. Le parcours
+        // d'accueil peut encore forcer le sombre le temps de ses écrans d'encre.
+        RootView()
+            .tint(MicaboColor.accent)
+            .environment(auth)
+            .environment(sync)
+            .environment(social)
+            .environment(mocks)
+            .environment(pro)
+            .environment(uiLocale)
+            .environment(lessons)
+            .environment(\.locale, uiLocale.locale.foundation)
+            .preferredColorScheme(.light)
+            // Avant le reste de la tâche : ouvrir la session de statistiques est
+            // quelques microsecondes, et tout ce qui suit peut vouloir tracer.
+            .onAppear { Analytics.start() }
+            // Vider la file en partant à l'arrière-plan, et l'écrire sur disque : c'est
+            // le seul moment où l'on sait que l'app risque de ne pas revenir.
+            .onChange(of: scenePhase) { _, phase in
+                switch phase {
+                case .background: Analytics.flushForBackground()
+                case .active: Analytics.enterForeground()
+                default: break
+                }
+            }
+            .task {
+                #if DEBUG
+                // Un vrai cours en PDF, posé au premier lancement d'une construction de
+                // développement : la fiche ne se travaille pas sans cours à ficher, et
+                // retrouver un document dans le sélecteur de fichiers à chaque
+                // réinstallation du simulateur coûtait plus que le cycle qu'on voulait
+                // mesurer. Voir `DebugSampleCourse`.
+                //
+                // Dans sa propre tâche : l'extraction du PDF n'a aucune raison de
+                // retarder la restauration de la session, qui suit juste en dessous.
+                Task { await DebugSampleCourse.seedIfNeeded(in: container.mainContext) }
+                // Six cours fichés et un compte qui a l'air actif, sur le téléphone seulement.
+                // Voir `DebugCourseCatalog`.
+                DebugCourseCatalog.seedIfNeeded(in: container.mainContext, social: social)
+                #endif
+                await auth.restore()
+                // L'identité RevenueCat **avant** de lire le droit, et avant tout achat :
+                // `app_user_id` doit être l'`auth.users.id`, sinon le webhook refuse.
+                await PurchasesBridge.identify(auth.billingUserID, guestID: auth.guestUserID)
+                await pro.refresh()
+                pro.observePurchases()
+                // Les prix du pays, une fois par lancement : un paywall qui les
+                // demanderait à son ouverture s'afficherait d'abord avec ceux de la
+                // France, puis changerait de chiffre sous les yeux.
+                await PaywallPurchases.refreshPrices()
+                // La première image se pose avant le premier encodage des fiches :
+                // c'est ça, pas le réseau, qui figeait l'ouverture.
+                await Task.yield()
+                try? await Task.sleep(for: .milliseconds(180))
+                await sync.sync(context: container.mainContext)
+                // L'annuaire et les amitiés viennent après la synchro : ils n'ont de sens
+                // qu'avec un compte, et la synchro est ce qui confirme qu'il y en a un.
+                await social.refresh()
+            }
+            // Une connexion, une déconnexion, un changement de compte : l'identifiant
+            // RevenueCat suit, et le droit se relit. Sans ça, un achat partirait sous
+            // l'identifiant de la personne précédente.
+            //
+            // La synchro suit pour la même raison qu'elle suit un lien de courriel :
+            // c'est ici qu'on apprend qu'il y a un compte. Sans elle, se connecter
+            // depuis le parcours n'apportait ses cours qu'au lancement suivant.
+            .onChange(of: auth.user?.id) { _, userID in
+                Analytics.account(changedTo: userID)
+                Task {
+                    await PurchasesBridge.identify(auth.billingUserID, guestID: auth.guestUserID)
+                    await pro.refresh()
+                    await sync.sync(context: container.mainContext)
+                    await social.refresh()
+                }
+            }
+            // Le compte invité vient de s'ouvrir (« Passer ») : RevenueCat passe sous son
+            // identifiant avant tout achat, sinon l'abonnement n'aurait pas de propriétaire
+            // côté serveur.
+            .onChange(of: auth.guestUserID) { _, _ in
+                guard auth.user == nil else { return }
+                Task {
+                    await PurchasesBridge.identify(auth.billingUserID, guestID: auth.guestUserID)
+                    await pro.refresh()
+                }
+            }
+            // Les liens de confirmation et de connexion reviennent sur le schéma de
+            // Micabo : c'est ici qu'ils ouvrent la session, quel que soit l'écran affiché.
+            .onOpenURL { url in
+                Task {
+                    await auth.handle(callback: url)
+                    await PurchasesBridge.identify(auth.billingUserID, guestID: auth.guestUserID)
+                    await pro.refresh()
+                    await sync.sync(context: container.mainContext)
+                    await social.refresh()
+                }
+            }
     }
 
     // MARK: - Stockage
