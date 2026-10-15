@@ -166,6 +166,14 @@ struct LessonPathView: View {
                 .lineLimit(2)
                 .padding(.horizontal, 24)
             progressLine
+            if session.plan?.shortened == true {
+                Label(L10n.t("lesson.path.shortened", locale: .resolved()), systemImage: "scissors")
+                    .font(MicaboFont.ui(13, weight: .bold))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(MicaboColor.surfaceMuted, in: Capsule())
+            }
             if let exam = nextExam {
                 examPill(exam)
                 if (1...7).contains(exam.daysRemaining()) {

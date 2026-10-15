@@ -190,6 +190,7 @@ enum LessonI18nCatalogs {
         "lesson.theme.system": "Comme le téléphone",
         "lesson.theme.day": "Clair",
         "lesson.theme.night": "Sombre",
+        "lesson.path.shortened": "La leçon a été raccourcie : tes supports dépassaient 60 000 caractères.",
     ]
 
     static let en: [String: String] = [
@@ -362,6 +363,7 @@ enum LessonI18nCatalogs {
         "lesson.theme.system": "Same as phone",
         "lesson.theme.day": "Light",
         "lesson.theme.night": "Dark",
+        "lesson.path.shortened": "The lesson was shortened: your materials were over 60,000 characters.",
     ]
 
     static let de: [String: String] = [
@@ -534,6 +536,7 @@ enum LessonI18nCatalogs {
         "lesson.theme.system": "Wie das Handy",
         "lesson.theme.day": "Hell",
         "lesson.theme.night": "Dunkel",
+        "lesson.path.shortened": "Die Lektion wurde gekürzt: Deine Materialien hatten mehr als 60.000 Zeichen.",
     ]
 
     static let es: [String: String] = [
@@ -706,6 +709,7 @@ enum LessonI18nCatalogs {
         "lesson.theme.system": "Como el teléfono",
         "lesson.theme.day": "Claro",
         "lesson.theme.night": "Oscuro",
+        "lesson.path.shortened": "La lección se acortó: tus materiales superaban los 60.000 caracteres.",
     ]
 
     static let tr: [String: String] = [
@@ -878,5 +882,6 @@ enum LessonI18nCatalogs {
         "lesson.theme.system": "Telefonla aynı",
         "lesson.theme.day": "Açık",
         "lesson.theme.night": "Koyu",
+        "lesson.path.shortened": "Ders kısaltıldı: kaynakların 60.000 karakteri aşıyordu.",
     ]
 }
