@@ -33,15 +33,12 @@ struct RootTabView: View {
                 .ignoresSafeArea()
 
             TabView(selection: $router.selection) {
+                HomeView()
+                    .toolbar(.hidden, for: .tabBar)
+                    .tag(RootTab.today)
                 CoursesListView()
                     .toolbar(.hidden, for: .tabBar)
                     .tag(RootTab.decks)
-                TodayView()
-                    .toolbar(.hidden, for: .tabBar)
-                    .tag(RootTab.today)
-                MikaView()
-                    .toolbar(.hidden, for: .tabBar)
-                    .tag(RootTab.mika)
                 ProfileView()
                     .toolbar(.hidden, for: .tabBar)
                     .tag(RootTab.profile)

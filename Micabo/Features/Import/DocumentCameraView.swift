@@ -6,6 +6,9 @@ struct DocumentCameraView: UIViewControllerRepresentable {
     var onComplete: ([UIImage]) -> Void
     var onCancel: () -> Void
 
+    /// Faux sur un appareil sans caméra (le simulateur) : on va droit à la photothèque.
+    static var isSupported: Bool { VNDocumentCameraViewController.isSupported }
+
     func makeCoordinator() -> Coordinator {
         Coordinator(onComplete: onComplete, onCancel: onCancel)
     }

@@ -1,26 +1,14 @@
 import SwiftUI
 
-/// Les destinations de la barre d'onglets, dans l'ordre où elles s'y présentent.
+/// Les destinations de la barre d'onglets.
 ///
-/// **Quatre : Decks, Réviser, Mika, Profil.** Il y en avait cinq — Cours, Paquets, Réviser,
-/// Examens, Profil — ce qui posait deux problèmes. Une barre à cinq n'a plus de milieu, donc
-/// plus de place sous le pouce pour le geste quotidien. Et deux de ces cinq onglets
-/// montraient la même table sous deux angles : *Cours* listait ce qui était importé,
-/// *Paquets* listait les cartes de ces mêmes cours. Un utilisateur devait savoir laquelle
-/// des deux portes ouvrir pour un objet unique.
+/// **Trois : Home, Leçons, Profil** (`docs/refonte-parcours.md` § 2). Home crée une leçon et
+/// montre les stats, Leçons les range, Profil garde le compte et les réglages. On ne balaye pas
+/// d'un onglet à l'autre : la barre est le seul moyen de changer de page.
 ///
-/// **Decks remplace Cours**, et c'est le même écran : `CoursesListView`. Le renommage suit
-/// le modèle — on n'importe plus un document mais tout le matériel d'une matière — et
-/// l'ancien onglet *Paquets* disparaît avec sa vue.
-///
-/// **Examens disparaît de la barre, pas de l'app.** Les épreuves se lisent sur Réviser, qui
-/// les affiche déjà, et la fiche d'une épreuve s'ouvre de là. Le calendrier plein écran,
-/// lui, ne revient pas : une date d'examen se pose sur un deck, et c'est tout ce qu'elle
-/// fait — elle règle le nombre de cartes neuves par jour.
-///
-/// **Mika a son onglet**, entre Réviser et Profil : c'est l'assistant qu'on a rencontré
-/// dans le parcours d'accueil, et une porte qu'on cherche se met dans la barre, pas dans
-/// un coin d'une autre page.
+/// Les noms de cas datent de l'ancienne barre (`today` porte Home, `decks` les Leçons) : ils
+/// sont la clé de la profondeur de navigation de chaque page, et `mika` reste le temps que
+/// l'ancien écran de Mika parte avec le nettoyage.
 enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     case decks
     case today
@@ -29,12 +17,17 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
 
     var id: Int { rawValue }
 
+    /// **Les trois onglets de la refonte**, dans l'ordre de la barre : Home, Leçons, Profil
+    /// (`docs/refonte-parcours.md` § 2). `today` porte Home, `decks` les Leçons ; Mika vit
+    /// désormais dans chaque leçon, son onglet ne s'affiche plus.
+    static let tabs: [RootTab] = [.today, .decks, .profile]
+
     func label(t: (String) -> String) -> String {
         switch self {
-        case .decks: t("nav.decks")
-        case .today: t("nav.review")
+        case .decks: t("lesson.tab.lessons")
+        case .today: t("lesson.tab.home")
         case .mika: t("ios.nav.mika")
-        case .profile: t("nav.profile")
+        case .profile: t("lesson.tab.profile")
         }
     }
 
@@ -44,8 +37,8 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
 
     var systemImage: String {
         switch self {
-        case .decks: "rectangle.on.rectangle.angled"
-        case .today: "arrow.triangle.2.circlepath"
+        case .decks: "books.vertical"
+        case .today: "house"
         case .mika: "sparkles"
         case .profile: "person"
         }
@@ -58,8 +51,8 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     /// couleur. Les étincelles de Mika non plus : elles sont déjà pleines.
     var selectedSystemImage: String {
         switch self {
-        case .decks: "rectangle.on.rectangle.angled.fill"
-        case .today: "arrow.triangle.2.circlepath"
+        case .decks: "books.vertical.fill"
+        case .today: "house.fill"
         case .mika: "sparkles"
         case .profile: "person.fill"
         }

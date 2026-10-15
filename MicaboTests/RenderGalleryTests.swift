@@ -165,6 +165,73 @@ final class RenderGalleryTests: XCTestCase {
         )
     }
 
+    /// Home : Mika et sa question, la barre avec deux supports, les chiffres, « Reprendre »,
+    /// l'écran de génération et la barre d'onglets.
+    func testHomeScreens() throws {
+        guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
+        let container = try ModelContainer(
+            for: Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = ModelContext(container)
+        let course = Course(title: "La photosynthèse", subject: "Biologie")
+        course.toneRaw = LessonTone.yellow.rawValue
+        context.insert(course)
+        for index in 0..<4 {
+            context.insert(Chapter(position: index, title: ["La lumière", "La chlorophylle", "Le cycle de Calvin", "Le bilan"][index], course: course))
+        }
+        course.setLessonPath(LessonPath(
+            icon: MicaboIcon.flask.rawValue,
+            intro: LessonPath.Intro(lines: [], minutes: 20),
+            takeaways: [],
+            groups: [LessonPath.Group(name: "", themes: [0, 1]), LessonPath.Group(name: "", themes: [2, 3])],
+            status: .ready
+        ))
+        course.iconID = MicaboIcon.flask.rawValue
+        course.updateProgress { progress in
+            progress.done = ["intro", "notes:0", "notes:1"]
+            progress.addTime(2_700, to: .notes)
+        }
+        course.lastOpenedAt = Date()
+        try context.save()
+
+        let composer = LessonComposer()
+        composer.draft = "Les étapes clés"
+        if let id = composer.begin(.pdf, title: "Chapitre 3.pdf") {
+            composer.finish(id, with: ImportedDocument(
+                text: String(repeating: "La lumière est captée par la chlorophylle. ", count: 10),
+                pageImages: [],
+                coverImage: nil,
+                pageCount: 4,
+                fileName: "Chapitre 3",
+                source: .pdf,
+                extractionNote: nil
+            ))
+        }
+        composer.begin(.youtube, title: "YouTube")
+
+        let resume = try XCTUnwrap(ResumeTarget.pick(from: [course]))
+        try RenderGallery.render(
+            "home",
+            VStack(alignment: .leading, spacing: 28) {
+                HomeGreeting()
+                ComposerBarPreview(composer: composer)
+                HomeStatsRow(stats: HomeStats(seconds: 5_400, learnedLessons: 3, learnedCards: 42))
+                ResumeCard(course: resume.0, target: resume.1) {}
+                MicaboTabBar().environment(TabRouter())
+            }
+            .padding(20)
+        )
+        try RenderGallery.render(
+            "home-generating",
+            VStack(spacing: 28) {
+                MikaMascot(mood: .think, size: 170, frozenAt: 0.6)
+                GenerationSteps(current: .writing, hasSupports: true)
+            }
+            .padding(40)
+        )
+    }
+
     private static let sampleNotes = ThemeNotes(
         oneLiner: "Après 1945, les **États-Unis** et l'**URSS** s'opposent sans jamais se battre directement.",
         blocks: [
@@ -235,5 +302,15 @@ enum RenderGallery {
         }
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         try data.write(to: directory.appendingPathComponent("\(name).png"))
+    }
+}
+
+/// La barre de Home a besoin d'un focus : une vue le porte, le temps du rendu.
+private struct ComposerBarPreview: View {
+    let composer: LessonComposer
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        HomeComposerBar(composer: composer, focused: $focused, isPro: true, onImport: { _ in }, onSend: {})
     }
 }

@@ -17,12 +17,12 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Micabo accède à vos photos pour importer un cours ou un schéma.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Micabo utilise le micro pour que tu répondes à voix haute aux questions d'un examen blanc.</string>
+	<string>Micabo utilise le micro pour enregistrer un cours ou une note vocale et en faire une leçon.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Micabo transcrit ce que tu dis pendant un examen blanc pour le corriger.</string>
+	<string>Micabo transcrit tes enregistrements sur ton téléphone pour en faire une leçon.</string>
 	<!--
-	Les deux familles, et le partage est net : Outfit écrit l'interface, Hanken Grotesk
-	écrit le texte qu'on lit. Voir `MicaboFont`.
+	Une seule famille, Nunito, pour l'interface comme pour le texte qu'on lit. Voir
+	`MicaboFont`.
 	-->
 	<key>UIAppFonts</key>
 	<array>

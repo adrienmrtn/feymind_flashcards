@@ -2,14 +2,11 @@ import SwiftUI
 
 /// Barre d'onglets dessinée une seule fois par `RootTabView`, à l'extérieur des pages :
 /// elle reste immobile pendant qu'elles se remplacent. C'est le routeur qui la retire sur
-/// les écrans poussés. Depuis que le balayage entre onglets a disparu, c'est **le seul
-/// moyen de changer de page** : elle ne peut donc pas se permettre d'être discrète.
+/// les écrans poussés.
 ///
-/// **Elle est opaque, et elle est collée au bas.** Plus de verre, plus de pastille qui
-/// flotte : c'est un `UITabBar` classique — une bande pleine largeur, un filet du dessus,
-/// le fond de la page qui continue sous l'indicateur d'accueil. L'air qu'elle laisse
-/// au-dessus d'elle (`MicaboLayout.tabBarGap`) sert aux boutons de page, pas à la faire
-/// léviter.
+/// **Une pilule de verre qui flotte** (`docs/refonte-parcours.md` § 2) : Liquid Glass sur
+/// iOS 26, un matériau fin avant (`micaboGlass`). L'onglet actif se pose sur une pastille
+/// bleu pâle.
 ///
 /// Sa hauteur est fixée par `MicaboLayout.tabBarHeight` et non mesurée sur ses libellés :
 /// c'est cette hauteur que les pages réservent, et une réserve qui varie est une réserve
@@ -25,40 +22,42 @@ struct MicaboTabBar: View {
     }
 
     private func bar(_ router: TabRouter) -> some View {
-        HStack(spacing: 0) {
-            ForEach(RootTab.allCases) { tab in
+        HStack(spacing: 4) {
+            ForEach(RootTab.tabs) { tab in
                 let label = tab.label(t: { i18n.t($0) })
+                let isSelected = tab == router.selection
                 Button {
-                    // Sans `withAnimation` : animer `selection` faisait fondre les quatre
-                    // pages, et l'onglet touché n'était lisible qu'après 280 ms.
+                    // Sans `withAnimation` : animer `selection` faisait fondre les pages, et
+                    // l'onglet touché n'était lisible qu'après 280 ms.
                     router.selection = tab
                 } label: {
-                    let isSelected = tab == router.selection
-                    VStack(spacing: 5) {
+                    VStack(spacing: 3) {
                         Image(systemName: isSelected ? tab.selectedSystemImage : tab.systemImage)
-                            .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
+                            .font(.system(size: 19, weight: isSelected ? .bold : .semibold))
                         Text(label)
-                            .font(MicaboFont.ui(10, weight: isSelected ? .semibold : .medium))
+                            .font(MicaboFont.ui(11, weight: .heavy))
                             .lineLimit(1)
                             .minimumScaleFactor(0.75)
                     }
-                    .foregroundStyle(isSelected ? MicaboColor.accent : MicaboColor.inkTertiary)
+                    .foregroundStyle(isSelected ? MicaboColor.accent : MicaboColor.inkSecondary)
                     .frame(maxWidth: .infinity)
-                    .contentShape(Rectangle())
+                    .frame(height: MicaboLayout.tabBarHeight - 10)
+                    .background {
+                        if isSelected {
+                            Capsule().fill(MicaboColor.accentSoft.opacity(0.9))
+                        }
+                    }
+                    .contentShape(Capsule())
                 }
                 .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
                 .accessibilityLabel(label)
-                .accessibilityAddTraits(tab == router.selection ? .isSelected : [])
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
             }
         }
+        .padding(5)
         .frame(height: MicaboLayout.tabBarHeight)
-        .background(MicaboColor.canvas)
-        .overlay(alignment: .top) {
-            Rectangle()
-                .fill(MicaboColor.stroke)
-                .frame(height: 1 / 3)
-        }
-        .background(MicaboColor.canvas.ignoresSafeArea(edges: .bottom))
+        .micaboGlass(in: Capsule(), interactive: true)
+        .padding(.horizontal, 44)
     }
 }
 
