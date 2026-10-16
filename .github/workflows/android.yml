@@ -81,7 +81,8 @@ jobs:
 
       - name: Pas de clé, pas d'envoi
         if: env.HAS_KEYSTORE != 'true'
-        run: echo "::warning::Secrets de signature absents : le bundle n'est pas signé et ne peut pas aller sur Google Play. Voir docs/google-play.md."
+        run: |
+          echo "::warning::Secrets de signature absents, le bundle n'est pas signé et ne peut pas aller sur Google Play. Voir docs/google-play.md."
 
       - uses: actions/upload-artifact@v4
         with:
