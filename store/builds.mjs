@@ -80,10 +80,29 @@ try {
   console.log("\nApp Store — dernières versions :");
   for (const version of versions.data ?? []) {
     const a = version.attributes ?? {};
-    console.log(`  ${a.versionString} · ${a.appVersionState ?? a.appStoreState} · créée ${day(a.createdDate)}`);
+    console.log(`  ${a.versionString} · ${a.appVersionState} / ${a.appStoreState} · créée ${day(a.createdDate)}`);
   }
 } catch (error) {
   console.log(`\nApp Store : illisible (${error.message.split("→").pop().trim()}).`);
+}
+
+// En vente, et où : une app retirée de la vente (abonnement développeur échu, retrait…) le dit ici.
+try {
+  const availability = await asc.get(`/v1/apps/${app.id}/appAvailabilityV2`);
+  const territories = await asc.getAll(`/v2/appAvailabilities/${availability.data.id}/territoryAvailabilities?limit=200&include=territory`);
+  const available = territories.data.filter((t) => t.attributes?.available);
+  const statuses = new Map();
+  for (const t of territories.data) {
+    for (const status of t.attributes?.contentStatuses ?? []) statuses.set(status, (statuses.get(status) ?? 0) + 1);
+  }
+  const france = territories.data.find((t) => t.relationships?.territory?.data?.id === "FRA");
+  console.log(
+    `\nApp Store — disponibilité : ${available.length}/${territories.data.length} pays` +
+      ` · France : ${france ? `${france.attributes?.available ? "en vente" : "pas en vente"} (${(france.attributes?.contentStatuses ?? []).join(", ")})` : "—"}` +
+      ` · statuts : ${[...statuses].map(([k, n]) => `${k} ${n}`).join(", ")}`,
+  );
+} catch (error) {
+  console.log(`\nApp Store — disponibilité : illisible (${error.message.split("→").pop().trim()}).`);
 }
 
 // ── Xcode Cloud ─────────────────────────────────────────────────────────────────────────
