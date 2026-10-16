@@ -124,8 +124,8 @@ struct PaywallPlansView: View {
         VStack(spacing: 0) {
             PaywallHeader(onClose: onClose)
 
-            // **Le second paywall a la forme du premier** : Mika et sa couronne, un titre
-            // centré, puis les offres en cartes de l'app, ce que Pro ouvre, et la recherche.
+            // **Le second paywall a la forme du premier** : la couronne, un titre centré, puis
+            // les offres en cartes de l'app, ce que Pro ouvre, et la recherche.
             ScrollView {
                 VStack(spacing: 20) {
                     PaywallHero(size: 104)
@@ -175,35 +175,67 @@ struct PaywallPlansView: View {
     }
 }
 
-/// **Mika et sa couronne**, en tête des deux paywalls : il arrive en ressort, la couronne
-/// se pose de travers et brille.
+/// **La couronne de Pro**, en tête des deux paywalls : elle arrive en ressort sur son halo,
+/// flotte et brille, et trois des choses que Pro ouvre — un PDF, un quiz, un examen — se
+/// posent autour d'elle l'une après l'autre. Plus de Mika ici : l'offre parle d'elle-même.
+///
+/// Toutes les icônes restent sous 85 points : dessinées en 256 pixels, elles sont nettes
+/// jusque-là et floues au-delà.
 struct PaywallHero: View {
     var size: CGFloat = 124
 
     @State private var shown = false
-    @State private var glint = false
+    @State private var float = false
     @Environment(\.onboardingStill) private var still
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var crown: CGFloat { min(84, size * 0.66) }
+    private var satellite: CGFloat { min(40, size * 0.32) }
+
+    /// Les trois satellites : l'icône, sa place autour de la couronne, son retard.
+    private var satellites: [(icon: MicaboIcon, x: CGFloat, y: CGFloat, delay: Double)] {
+        [
+            (.pdf, -size * 0.78, size * 0.12, 0.25),
+            (.quiz, size * 0.8, -size * 0.18, 0.4),
+            (.exam, size * 0.56, size * 0.36, 0.55),
+        ]
+    }
 
     var body: some View {
         let isShown = shown || still
-        return ZStack(alignment: .topTrailing) {
+        return ZStack {
             Circle()
-                .fill(RadialGradient(colors: [MicaboColor.accent.opacity(0.22), .clear], center: .center, startRadius: 4, endRadius: size * 0.95))
-                .frame(width: size * 1.9, height: size * 1.9)
-                .offset(x: size * 0.2, y: -size * 0.25)
-            MikaMascot(mood: .happy, size: size, reactsToTap: true)
-            MicaboIconView(icon: .crown, size: size * 0.38)
-                .rotationEffect(.degrees(glint ? 18 : 10))
-                .offset(x: size * 0.16, y: -size * 0.1)
-                .scaleEffect(isShown ? 1 : 0.2, anchor: .bottomLeading)
+                .fill(RadialGradient(colors: [MicaboColor.accent.opacity(0.24), MicaboColor.accent.opacity(0)], center: .center, startRadius: 4, endRadius: size * 0.8))
+                .frame(width: size * 1.6, height: size * 1.6)
+
+            ForEach(Array(satellites.enumerated()), id: \.offset) { _, item in
+                MicaboIconView(icon: item.icon, size: satellite)
+                    .padding(8)
+                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+                    .micaboElevation(.card)
+                    .rotationEffect(.degrees(item.x < 0 ? -8 : 8))
+                    .offset(x: item.x, y: item.y + (float ? -3 : 3))
+                    .scaleEffect(isShown ? 1 : 0.3)
+                    .opacity(isShown ? 1 : 0)
+                    .animation(.spring(duration: 0.5, bounce: 0.45).delay(still ? 0 : item.delay), value: isShown)
+            }
+
+            MicaboIconView(icon: .crown, size: crown)
+                .shadow(color: MicaboColor.accent.opacity(0.28), radius: 18, y: 10)
+                .rotationEffect(.degrees(float ? -4 : 4))
+                .offset(y: float ? -5 : 4)
+                .scaleEffect(isShown ? 1 : 0.4)
+                .opacity(isShown ? 1 : 0)
+                .animation(.spring(duration: 0.6, bounce: 0.45), value: isShown)
         }
-        .frame(height: size * 1.1)
-        .scaleEffect(isShown ? 1 : 0.6)
-        .opacity(isShown ? 1 : 0)
+        .frame(maxWidth: .infinity)
+        .frame(height: size * 1.05)
         .accessibilityHidden(true)
         .onAppear {
-            withAnimation(.spring(duration: 0.6, bounce: 0.45)) { shown = true }
-            withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true).delay(0.6)) { glint = true }
+            shown = true
+            guard !reduceMotion else { return }
+            withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true).delay(0.6)) { float = true }
         }
     }
 }
@@ -307,7 +339,11 @@ private struct PaywallPlanCard: View {
                     Text(plan.caption)
                         .font(MicaboFont.ui(13, weight: .regular))
                         .foregroundStyle(OnboardingPalette.gray)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
+                .layoutPriority(1)
 
                 Spacer(minLength: 0)
 
@@ -329,6 +365,9 @@ private struct PaywallPlanCard: View {
                     Text(trialLine)
                         .font(MicaboFont.ui(13, weight: .medium))
                         .foregroundStyle(plan.hasTrial ? OnboardingPalette.accent : OnboardingPalette.grayLight)
+                        .multilineTextAlignment(.trailing)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
                 }
             }
             .padding(.vertical, 17)
@@ -344,6 +383,7 @@ private struct PaywallPlanCard: View {
                         .foregroundStyle(Color.white)
                         .padding(.vertical, 5)
                         .padding(.horizontal, 10)
+                        .lineLimit(1)
                         .background(LinearGradient(colors: OnboardingPalette.mikaGradient, startPoint: .leading, endPoint: .trailing), in: Capsule())
                         .offset(x: -14, y: -11)
                 }

@@ -7,7 +7,8 @@ import UIKit
 /// **La preuve sociale, au moment où elle a quelque chose à prouver.** Elle vient après
 /// que Mika s'est présenté, pas avant : posée en ouverture, elle demanderait de croire une
 /// app qu'on n'a pas vue ; posée ici, elle répond à la seule question qui reste — est-ce
-/// que ça marche pour d'autres que moi ? Puis ce que dit la recherche (`ResearchQuoteCard`).
+/// que ça marche pour d'autres que moi ? La recherche, elle, a son écran plus tôt
+/// (« L'IA est le compagnon le plus incroyable pour apprendre »).
 ///
 /// La forme est celle de la référence : « on a aidé », le chiffre peint du dégradé, les
 /// lauriers autour de l'App Store, puis les avis en carrousel, qui défilent seuls et se
@@ -52,13 +53,6 @@ struct SocialProofStepView: View {
                     laurels
                         .padding(.top, 22)
                         .onboardingAppear(index: 2)
-
-                    // L'étude de Harvard, entre les étoiles et les avis : ce que disent les
-                    // élèves, puis ce que dit la recherche.
-                    ResearchQuoteCard()
-                        .padding(.horizontal, MicaboSpacing.screen)
-                        .padding(.top, 26)
-                        .onboardingAppear(index: 3)
 
                     OnboardingReviewCarousel(reviews: OnboardingReviews.all(locale: i18n.locale))
                         .padding(.top, 28)

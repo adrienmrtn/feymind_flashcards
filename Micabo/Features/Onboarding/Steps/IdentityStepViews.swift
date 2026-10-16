@@ -171,24 +171,20 @@ struct SchoolTypeStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n.t("ios.onb.schoolType"),
-            expandsContent: true
+            title: i18n.t("ios.onb.schoolType")
         ) {
-            ScrollView {
-                VStack(spacing: 10) {
-                    ForEach(Array(model.tracks.enumerated()), id: \.element.id) { rank, track in
-                        OnboardingChoiceRow(
-                            title: track.title,
-                            emoji: track.emoji,
-                            isSelected: model.track?.id == track.id,
-                            rank: rank
-                        ) {
-                            model.track = track
-                        }
+            VStack(spacing: 10) {
+                ForEach(Array(model.tracks.enumerated()), id: \.element.id) { rank, track in
+                    OnboardingChoiceRow(
+                        title: track.title,
+                        emoji: track.emoji,
+                        isSelected: model.track?.id == track.id,
+                        rank: rank
+                    ) {
+                        model.track = track
                     }
                 }
             }
-            .scrollIndicators(.hidden)
         } footer: {
             OnboardingArrowButton(isEnabled: model.track != nil) { model.advance() }
         }
@@ -211,23 +207,19 @@ struct SchoolYearStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.onb.year"),
-            subtitle: model.track?.title,
-            expandsContent: true
+            subtitle: model.track?.title
         ) {
-            ScrollView {
-                VStack(spacing: 10) {
-                    ForEach(Array(years.enumerated()), id: \.element.id) { rank, year in
-                        OnboardingChoiceRow(
-                            title: year.title,
-                            isSelected: model.year?.id == year.id,
-                            rank: rank
-                        ) {
-                            model.year = year
-                        }
+            VStack(spacing: 10) {
+                ForEach(Array(years.enumerated()), id: \.element.id) { rank, year in
+                    OnboardingChoiceRow(
+                        title: year.title,
+                        isSelected: model.year?.id == year.id,
+                        rank: rank
+                    ) {
+                        model.year = year
                     }
                 }
             }
-            .scrollIndicators(.hidden)
         } footer: {
             OnboardingArrowButton(isEnabled: model.year != nil) { model.advance() }
         }

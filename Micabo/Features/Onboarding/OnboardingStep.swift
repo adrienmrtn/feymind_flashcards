@@ -47,6 +47,12 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case goal
     /// « On s'en occupe » : deux barres, relire contre se tester.
     case proofRetention
+    /// « Micabo a été créé par deux étudiants… » : l'histoire, avant les chiffres.
+    case founders
+    /// « L'IA est le compagnon le plus incroyable pour apprendre » : l'étude de Harvard.
+    case aiCompanion
+    /// « Maintenant, partons de là où tu en es » : le pont vers les deux moyennes.
+    case startingPoint
     case currentAverage
     case targetAverage
     /// « Combien de temps es-tu prêt à étudier sur Micabo par jour ? », sur un curseur qui
@@ -71,6 +77,8 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case mikaDesign
     /// La solution pour travailler efficacement et facilement.
     case mikaSolution
+    /// « Mika, c'est ton prof particulier, disponible à tout moment, dans ta poche. »
+    case mikaTutor
     /// La pression et la montagne de choses à revoir, c'est fini.
     case mikaRelief
 
@@ -137,7 +145,6 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// dit le sujet de la page avant qu'on lise le titre.
     var heroIcon: MicaboIcon? {
         switch self {
-        case .name: .quill
         case .country: .globe
         case .level, .schoolType: .diploma
         case .year: .book

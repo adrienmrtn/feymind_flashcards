@@ -39,14 +39,14 @@ struct MikaLoadingView: View {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
 
-            MikaMascot(mood: isDone ? .happy : .think, size: 210)
-                .scaleEffect(isDone ? 0.86 : 1)
+            MikaMascot(mood: isDone ? .happy : .think, size: 180)
+                .scaleEffect(isDone ? 0.88 : 1)
                 .animation(.easeInOut(duration: 0.6), value: isDone)
-                .padding(.bottom, 34)
+                .padding(.bottom, 26)
 
             Text(title)
-                .font(MicaboFont.ui(34, weight: .bold))
-                .tracking(-0.9)
+                .font(MicaboFont.display(32))
+                .tracking(-0.8)
                 .foregroundStyle(OnboardingPalette.ink)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)

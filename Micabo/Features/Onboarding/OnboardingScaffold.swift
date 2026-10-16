@@ -206,7 +206,14 @@ struct OnboardingFooterMika: View {
 /// doucement, comme les objets des écrans de Mika.
 struct OnboardingHeroIcon: View {
     let icon: MicaboIcon
-    var size: CGFloat = 92
+
+    /// **Soixante-seize points, pas plus** : les icônes 3D sont dessinées en 256 pixels, soit
+    /// 85 points nets sur un écran Retina. Au-delà, l'image s'étire et devient floue.
+    static let size: CGFloat = 76
+    /// La hauteur de son cadre : l'icône et l'air de son flottement.
+    static var height: CGFloat { size * 1.25 }
+
+    private var size: CGFloat { Self.size }
 
     @State private var shown = false
     @State private var up = false
@@ -223,7 +230,7 @@ struct OnboardingHeroIcon: View {
                 .shadow(color: MicaboColor.accent.opacity(0.22), radius: 18, y: 10)
                 .offset(y: up ? -5 : 4)
         }
-        .frame(height: size * 1.25)
+        .frame(height: Self.height)
         .scaleEffect(isShown ? 1 : 0.4)
         .opacity(isShown ? 1 : 0)
         .accessibilityHidden(true)
@@ -345,50 +352,123 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         (step ?? model?.step)?.showsChrome ?? false
     }
 
+    /// La hauteur visible de la page, entre la barre du haut et le pied.
+    @State private var viewport: CGFloat = 0
+    /// **La plus grande hauteur vue** : le clavier rétrécit la page, il ne doit pas faire
+    /// disparaître l'icône au moment où il monte.
+    @State private var roomiest: CGFloat = 0
+    /// La hauteur naturelle de la composition, telle qu'elle est dessinée.
+    @State private var natural: CGFloat = 0
+
+    /// La place que prend l'icône 3D au-dessus du titre : son cadre, son air, l'espacement.
+    private static var heroBlock: CGFloat { OnboardingHeroIcon.height + 6 + 10 }
+
+    /// **L'icône ne se montre que si tout tient avec elle.** Sur un petit écran, ou sous un
+    /// titre de trois lignes en allemand, elle s'efface d'elle-même : c'est elle qui cède la
+    /// place, jamais le bouton ni une réponse. La hauteur sans l'icône se déduit de celle
+    /// mesurée, avec ou sans elle : la décision ne bascule pas d'un rendu à l'autre.
+    private var showsHero: Bool {
+        guard heroIcon != nil, roomiest > 0, natural > 0 else { return false }
+        let bare = natural - (heroShown ? Self.heroBlock : 0)
+        return bare + Self.heroBlock <= roomiest
+    }
+
+    @State private var heroShown = false
+
+    /// **Trente et un points au plus dans le parcours** : à trente-quatre, une question en
+    /// allemand ou en turc prenait trois lignes et poussait les réponses sous le pied.
+    private var shownTitleSize: CGFloat { model != nil ? min(titleSize, 31) : titleSize }
+
+    /// Hors du parcours, un écran sans défilement donne au contenu toute la hauteur (la
+    /// création d'un deck, comme avant).
+    private var stretchesContent: Bool { expandsContent && model == nil && !scrolls }
+
+    /// Dans le parcours, un écran à roue ou à scène garde sa hauteur naturelle et se centre
+    /// dans la page ; les listes, elles, partent du haut.
+    private var centersVertically: Bool { expandsContent && model != nil }
+
     var body: some View {
-        VStack(spacing: 0) {
-            if scrolls {
-                ScrollView {
-                    stack(inScrollView: true)
+        page
+            // **Le pied est épinglé en bas, quoi qu'il arrive.** Il était posé sous la page
+            // dans une pile : une page trop haute le poussait sous le bord de l'écran. Ici la
+            // page défile dessous, et sa dernière ligne remonte entièrement au-dessus de lui.
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                MicaboBottomBar(background: surface.background) {
+                    footer()
+                        .onboardingAppear(index: 4)
                 }
-                .scrollIndicators(.hidden)
-            } else if expandsContent || locksScrolling {
-                stack(inScrollView: false)
-            } else {
-                fittedStack
+                // Le fond du pied descend jusqu'au bord de l'écran : sans ça, ce qui défile
+                // se voyait sous l'indicateur d'accueil, en dessous du bouton.
+                .background {
+                    VStack(spacing: 0) {
+                        Color.clear.frame(height: 28)
+                        surface.background
+                    }
+                    .ignoresSafeArea(edges: .bottom)
+                }
             }
-
-            MicaboBottomBar(background: surface.background) {
-                footer()
-                    .onboardingAppear(index: 4)
+            .environment(\.onboardingCheer, { cheers += 1 })
+            .onboardingChromeInset(chromeInset)
+            // Le pied monte au-dessus du clavier sur les écrans qui en prennent un — le prénom,
+            // la recherche d'un pays, le courriel du compte — et reste où il est quand la page
+            // part. Hors du parcours, le modificateur ne fait rien : le système s'en charge.
+            .onboardingKeyboardLift()
+            // **Le fond monte jusqu'au bord de l'écran, en haut aussi.** Arrêté à la zone sûre, il
+            // laissait la barre d'état à la page du dessous pendant un glissement : le voile posé
+            // sur celle-ci y restait visible — un petit rectangle gris en haut à gauche, à chaque
+            // transition — jusqu'à ce que la page arrivée l'ait recouvert.
+            .background(surface.background.ignoresSafeArea())
+            .environment(\.onboardingSurface, surface)
+            .onChange(of: showsHero) { _, shows in
+                withAnimation(.spring(duration: 0.4, bounce: 0.2)) { heroShown = shows }
             }
-        }
-        .environment(\.onboardingCheer, { cheers += 1 })
-        .onboardingChromeInset(chromeInset)
-        // Le pied monte au-dessus du clavier sur les écrans qui en prennent un — le prénom,
-        // la recherche d'un pays, le courriel du compte — et reste où il est quand la page
-        // part. Hors du parcours, le modificateur ne fait rien : le système s'en charge.
-        .onboardingKeyboardLift()
-        // **Le fond monte jusqu'au bord de l'écran, en haut aussi.** Arrêté à la zone sûre, il
-        // laissait la barre d'état à la page du dessous pendant un glissement : le voile posé
-        // sur celle-ci y restait visible — un petit rectangle gris en haut à gauche, à chaque
-        // transition — jusqu'à ce que la page arrivée l'ait recouvert.
-        .background(surface.background.ignoresSafeArea())
-        .environment(\.onboardingSurface, surface)
     }
 
-    /// Une composition figée **qui défile quand même si elle ne tient pas.**
-    private var fittedStack: some View {
-        GeometryReader { proxy in
-            ScrollView {
-                stack(inScrollView: false, minHeight: proxy.size.height)
+    /// **Une seule mise en page, qui défile toujours si elle ne tient pas.** La composition
+    /// prend au moins toute la hauteur visible : les écrans à roue ou à scène s'y centrent,
+    /// les listes partent du haut ; et quand elle dépasse, elle défile au lieu de déborder.
+    private var page: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                if centersVertically {
+                    Spacer(minLength: 0)
+                }
+
+                composition
+                    .onGeometryChange(for: CGFloat.self) { proxy in
+                        proxy.size.height
+                    } action: { height in
+                        natural = height
+                    }
+
+                if !stretchesContent {
+                    Spacer(minLength: 0)
+                }
             }
-            .scrollIndicators(.hidden)
-            .scrollBounceBehavior(.basedOnSize)
+            .frame(maxWidth: .infinity, minHeight: viewport > 0 ? viewport : nil, alignment: .top)
+        }
+        .scrollIndicators(.hidden)
+        .scrollBounceBehavior(.basedOnSize)
+        .scrollDisabled(locksScrolling && natural <= viewport + 1)
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            max(0, proxy.size.height - proxy.safeAreaInsets.top - proxy.safeAreaInsets.bottom)
+        } action: { height in
+            viewport = height
+            roomiest = max(roomiest, height)
         }
     }
 
-    private func stack(inScrollView: Bool, minHeight: CGFloat? = nil) -> some View {
+    /// L'icône, le titre, le contenu : à leur hauteur naturelle dans le parcours.
+    @ViewBuilder
+    private var composition: some View {
+        if stretchesContent {
+            stack.frame(maxHeight: .infinity, alignment: .top)
+        } else {
+            stack.fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var stack: some View {
         VStack(alignment: isCentered ? .center : .leading, spacing: contentSpacing) {
             VStack(alignment: isCentered ? .center : .leading, spacing: 10) {
                 if eyebrow != nil || skip != nil {
@@ -409,17 +489,18 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                     .onboardingAppear(index: 0)
                 }
 
-                if let heroIcon {
+                if let heroIcon, heroShown {
                     OnboardingHeroIcon(icon: heroIcon)
                         .frame(maxWidth: .infinity)
                         .padding(.bottom, 6)
+                        .transition(.scale(scale: 0.6).combined(with: .opacity))
                 }
 
                 // Le titre passe par le texte à chiffre coloré : un passage entre deux
                 // astérisques doubles se peint du dégradé de l'app, ici comme sur Home.
                 OnboardingAccentText(
                     template: title,
-                    size: titleSize,
+                    size: shownTitleSize,
                     alignment: isCentered ? .center : .leading,
                     color: surface.title
                 )
@@ -441,22 +522,13 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
             .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
 
             content()
-                .frame(maxHeight: expandsContent && !inScrollView ? CGFloat.infinity : nil)
+                .frame(maxHeight: stretchesContent ? CGFloat.infinity : nil)
                 .onboardingAppear(index: 3)
-
-            if !inScrollView, !expandsContent {
-                Spacer(minLength: 0)
-            }
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, MicaboSpacing.md)
-        .padding(.bottom, inScrollView ? MicaboSpacing.lg : 0)
-        .frame(
-            maxWidth: .infinity,
-            minHeight: minHeight,
-            maxHeight: (inScrollView || minHeight != nil) ? nil : .infinity,
-            alignment: isCentered ? .top : .topLeading
-        )
+        .padding(.bottom, MicaboSpacing.lg)
+        .frame(maxWidth: .infinity, alignment: isCentered ? .top : .topLeading)
     }
 
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -512,6 +584,37 @@ extension OnboardingScaffold where Footer == EmptyView {
             content: content,
             footer: { EmptyView() }
         )
+    }
+}
+
+// MARK: - Une page composée à la main
+
+/// **Une page composée à la main, centrée dans la hauteur visible, qui défile si elle ne
+/// tient pas.** Les écrans de Mika, du rappel, des fondateurs : leur composition se pose au
+/// milieu de la page sur un grand téléphone, et défile sur un petit au lieu de pousser le
+/// bouton sous le bord de l'écran.
+struct OnboardingCenteredScroll<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    @State private var viewport: CGFloat = 0
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+                content
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, minHeight: viewport > 0 ? viewport : nil)
+        }
+        .scrollIndicators(.hidden)
+        .scrollBounceBehavior(.basedOnSize)
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            max(0, proxy.size.height - proxy.safeAreaInsets.top - proxy.safeAreaInsets.bottom)
+        } action: { height in
+            viewport = height
+        }
     }
 }
 
@@ -675,13 +778,14 @@ struct OnboardingAnswerList<Item: Identifiable, Content: View>: View {
     }
 
     var body: some View {
+        // Chaque réponse à sa hauteur : étirées pour remplir la page, six réponses
+        // poussaient le bouton sous le bord de l'écran dès que le titre prenait trois lignes.
         VStack(spacing: spacing) {
             ForEach(Array(items.enumerated()), id: \.element.id) { rank, item in
                 row(rank, item)
-                    .frame(maxHeight: .infinity)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -802,15 +906,13 @@ struct OnboardingSingleChoiceStep<Item: Identifiable & Hashable>: View {
         OnboardingScaffold(
             title: title,
             subtitle: subtitle,
-            scrolls: items.count > 6,
-            expandsContent: items.count <= 6
+            scrolls: true
         ) {
             OnboardingAnswerList(items) { rank, item in
                 OnboardingChoiceRow(
                     title: label(item),
                     emoji: emoji(item),
                     isSelected: selection == item,
-                    fillsHeight: items.count <= 6,
                     rank: rank
                 ) {
                     onSelect(item)
@@ -840,15 +942,13 @@ struct OnboardingMultiChoiceStep<Item: Identifiable & Hashable>: View {
         OnboardingScaffold(
             title: title,
             subtitle: subtitle,
-            scrolls: items.count > 6,
-            expandsContent: items.count <= 6
+            scrolls: true
         ) {
             OnboardingAnswerList(items) { rank, item in
                 OnboardingChoiceRow(
                     title: label(item),
                     emoji: emoji(item),
                     isSelected: selection.contains(item),
-                    fillsHeight: items.count <= 6,
                     rank: rank
                 ) {
                     onToggle(item)

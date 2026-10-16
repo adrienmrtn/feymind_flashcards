@@ -12,10 +12,17 @@ import SwiftUI
 final class OnboardingModel {
     private(set) var step: OnboardingStep = .hookLogo {
         didSet {
+            arrivedAt = Date()
             guard !isRestoring else { return }
             OnboardingPreferences.resumeStep = step
         }
     }
+
+    /// **Le temps minimal sur une page avant de la quitter.** Un second appui sur le rond, un
+    /// doigt resté posé à la fin du chargement : la page suivante se passait avant d'avoir été
+    /// vue. Posé par la vue du parcours ; les tests, sans vue, avancent librement.
+    @ObservationIgnored var minimumDwell: TimeInterval = 0
+    @ObservationIgnored private var arrivedAt = Date.distantPast
 
     /// Vrai quand le parcours reprend là où une app fermée l'avait laissé.
     private(set) var isResumed = false
@@ -210,6 +217,7 @@ final class OnboardingModel {
 
     func advance() {
         guard !transitionLock else { return }
+        guard Date().timeIntervalSince(arrivedAt) >= minimumDwell else { return }
         // Le compte se demande en quittant le dernier écran de Mika, juste avant l'offre :
         // c'est là qu'il protège quelque chose — le profil qu'on vient de construire.
         if step == .mikaRelief, !didAnswerAccount, !hasAccount {

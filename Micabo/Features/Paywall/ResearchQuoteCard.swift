@@ -51,11 +51,15 @@ struct ResearchQuoteCard: View {
         .frame(maxWidth: .infinity)
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        // Le guillemet reste dans la carte : posé à cheval sur le bord, il débordait sur ce
+        // qui est au-dessus.
         .overlay(alignment: .topTrailing) {
             Text("”")
-                .font(MicaboFont.display(compact ? 64 : 84))
+                .font(MicaboFont.display(compact ? 46 : 58))
                 .foregroundStyle(MicaboColor.accentSoft)
-                .offset(x: -14, y: compact ? -22 : -28)
+                .frame(height: compact ? 34 : 42, alignment: .top)
+                .padding(.top, 6)
+                .padding(.trailing, 16)
                 .accessibilityHidden(true)
         }
         .micaboElevation(.card)

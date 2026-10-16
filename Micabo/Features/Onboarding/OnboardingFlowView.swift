@@ -26,6 +26,9 @@ struct OnboardingFlowView: View {
     init(library: ModelContext, onFinish: @escaping () -> Void) {
         self.onFinish = onFinish
         let model = OnboardingModel.resuming(in: library)
+        // Une page se regarde avant de se quitter : moins d'une seconde après son arrivée,
+        // le rond ne fait rien (voir `OnboardingModel.minimumDwell`).
+        model.minimumDwell = 0.9
         _model = State(initialValue: model)
         _pager = State(initialValue: OnboardingPager(current: model.step))
     }
@@ -190,6 +193,9 @@ struct OnboardingFlowView: View {
         case .worries: WorriesStepView()
         case .goal: GoalStepView()
         case .proofRetention: ProofRetentionStepView()
+        case .founders: MikaStepView(page: .founders)
+        case .aiCompanion: MikaStepView(page: .companion)
+        case .startingPoint: MikaStepView(page: .start)
         case .currentAverage: CurrentAverageStepView()
         case .targetAverage: TargetAverageStepView()
         case .dailyTime: DailyTimeStepView()
@@ -202,6 +208,7 @@ struct OnboardingFlowView: View {
         case .mikaPaths: MikaStepView(page: .paths)
         case .mikaDesign: MikaStepView(page: .design)
         case .mikaSolution: MikaStepView(page: .solution)
+        case .mikaTutor: MikaStepView(page: .tutor)
         case .mikaRelief: MikaStepView(page: .relief)
         case .socialProof: SocialProofStepView()
         case .trialOffer: TrialOfferStepView()

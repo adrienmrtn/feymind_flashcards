@@ -81,6 +81,12 @@ final class OnboardingFlowTests: XCTestCase {
         model.advance()
         XCTAssertEqual(model.step, .proofRetention, "« On s'en occupe » répond à l'inquiétude")
         model.advance()
+        XCTAssertEqual(model.step, .founders, "L'histoire de Micabo, après l'inquiétude")
+        model.advance()
+        XCTAssertEqual(model.step, .aiCompanion, "La recherche de Harvard")
+        model.advance()
+        XCTAssertEqual(model.step, .startingPoint, "Le pont vers les moyennes")
+        model.advance()
         XCTAssertEqual(model.step, .currentAverage)
         model.advance()
         XCTAssertEqual(model.step, .targetAverage)
@@ -158,7 +164,7 @@ final class OnboardingFlowTests: XCTestCase {
     func testMikaPresentsHimselfBeforeAskingForAnAccount() {
         let model = self.model(advancingTo: .building)
 
-        for expected in [OnboardingStep.featuresIntro, .mikaMission, .mikaSources, .mikaPaths, .mikaDesign, .mikaSolution, .mikaRelief] {
+        for expected in [OnboardingStep.featuresIntro, .mikaMission, .mikaSources, .mikaPaths, .mikaDesign, .mikaSolution, .mikaTutor, .mikaRelief] {
             model.advance()
             XCTAssertEqual(model.step, expected)
         }
@@ -317,9 +323,22 @@ final class OnboardingFlowTests: XCTestCase {
     }
 
     /// **Le parcours garde sa longueur** : le cours, les cartes et les cinq écrans de
-    /// fonctionnalités sont partis (treize écrans), Mika en a apporté six. Vingt-huit écrans.
+    /// fonctionnalités sont partis (treize écrans), Mika en a apporté six ; puis l'histoire,
+    /// la recherche, le point de départ et le prof particulier. Trente-deux écrans.
     func testTheFlowKeepsItsLength() {
-        XCTAssertEqual(OnboardingStep.allCases.count, 28)
+        XCTAssertEqual(OnboardingStep.allCases.count, 32)
+    }
+
+    /// **Une page ne se quitte pas avant d'avoir été vue** : un second appui sur le rond,
+    /// juste après l'arrivée, ne fait rien.
+    func testAPageIsNotLeftBeforeItIsSeen() {
+        let model = self.model(advancingTo: .goal)
+        model.minimumDwell = 60
+        model.advance()
+        XCTAssertEqual(model.step, .goal, "Trop tôt : la page reste")
+        model.minimumDwell = 0
+        model.advance()
+        XCTAssertEqual(model.step, .proofRetention)
     }
 
     /// Les clés des demandes retirées restent listées : sur un appareil qui a fait l'ancien

@@ -127,35 +127,33 @@ struct OnboardingProofPage<Figure: View>: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 0) {
-                Spacer(minLength: MicaboSpacing.lg)
+            // Centrée quand elle tient, défilante quand elle ne tient pas : la figure ne passe
+            // plus jamais sous le rond.
+            OnboardingCenteredScroll {
+                VStack(spacing: 0) {
+                    OnboardingAccentText(template: headline)
+                        .padding(.horizontal, MicaboSpacing.screen)
+                        .onboardingAppear(index: 1)
 
-                OnboardingAccentText(template: headline)
-                    .padding(.horizontal, MicaboSpacing.screen)
-                    .onboardingAppear(index: 1)
+                    figure()
+                        .padding(.horizontal, MicaboSpacing.screen)
+                        .padding(.top, MicaboSpacing.xl)
+                        .onboardingAppear(index: 3)
 
-                Spacer(minLength: MicaboSpacing.xl)
-
-                figure()
-                    .padding(.horizontal, MicaboSpacing.screen)
-                    .onboardingAppear(index: 3)
-
-                if let caption {
-                    Text(caption)
-                        .font(MicaboFont.ui(14, weight: .regular))
-                        .foregroundStyle(OnboardingPalette.gray)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(3)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.horizontal, MicaboSpacing.xl)
-                        .padding(.top, MicaboSpacing.lg)
-                        .onboardingAppear(index: 4)
+                    if let caption {
+                        Text(caption)
+                            .font(MicaboFont.ui(14, weight: .regular))
+                            .foregroundStyle(OnboardingPalette.gray)
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(3)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal, MicaboSpacing.xl)
+                            .padding(.top, MicaboSpacing.lg)
+                            .onboardingAppear(index: 4)
+                    }
                 }
-
-                Spacer(minLength: MicaboSpacing.lg)
-                Spacer(minLength: 0)
+                .padding(.vertical, MicaboSpacing.lg)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             OnboardingArrowBar(action: onContinue)
                 .onboardingAppear(index: 5)

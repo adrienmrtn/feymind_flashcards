@@ -37,11 +37,9 @@ struct CurrentAverageStepView: View {
         OnboardingScaffold(
             title: i18n.t("ios.averageTitle"),
             subtitle: i18n.t("ios.averageSub"),
-            // **Sans défilement, sinon la roue n'a pas de hauteur.** `expandsContent` ne
-            // donne la hauteur restante au contenu que hors d'un `ScrollView` ; dedans, un
-            // `GeometryReader` se voit proposer dix points, et la roue s'écrasait en une
-            // bande de vingt points avec un chiffre coupé. C'est ce que montrait la capture.
-            scrolls: true
+            // La roue a ses hauteurs propres : la page la centre, et défile si elle ne tient
+            // pas.
+            expandsContent: true
         ) {
             VStack(spacing: 0) {
                 GradeWheel(
@@ -234,11 +232,11 @@ struct GradeWheel: View {
 
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(OnboardingPalette.card)
+                    .fill(MicaboColor.track)
                     .frame(height: Self.track)
 
                 Capsule()
-                    .fill(OnboardingPalette.ink)
+                    .fill(LinearGradient(colors: OnboardingPalette.mikaGradient, startPoint: .leading, endPoint: .trailing))
                     .frame(width: x, height: Self.track)
 
                 // Les crans, en points sur la piste.
@@ -250,10 +248,10 @@ struct GradeWheel: View {
                 }
 
                 Circle()
-                    .fill(OnboardingPalette.ink)
+                    .fill(MicaboColor.surface)
                     .frame(width: Self.knob, height: Self.knob)
-                    .overlay(Circle().strokeBorder(OnboardingPalette.white, lineWidth: 3))
-                    .shadow(color: OnboardingPalette.ink.opacity(0.18), radius: 8, y: 4)
+                    .overlay(Circle().strokeBorder(MicaboColor.accent, lineWidth: 4))
+                    .shadow(color: MicaboColor.accent.opacity(0.3), radius: 8, y: 4)
                     .scaleEffect(isDragging ? 1.12 : 1)
                     .position(x: x, y: Self.knob / 2)
             }

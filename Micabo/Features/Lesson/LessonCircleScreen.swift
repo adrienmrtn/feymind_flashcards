@@ -221,7 +221,7 @@ struct ConclusionCircleView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     HStack {
                         Spacer()
-                        MicaboIconView(icon: .trophy, size: 96)
+                        MicaboIconView(icon: .trophy, size: 84)
                         Spacer()
                     }
                     Text(L10n.t("lesson.conclusion.title", locale: .resolved()))

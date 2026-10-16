@@ -38,10 +38,13 @@ struct DailyTimeStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.quiz.time"),
+            // La question est longue — trois lignes en allemand — : un cran plus petit, et
+            // tout tient au-dessus du rond, courbe et curseur compris.
+            titleSize: 29,
             contentSpacing: MicaboSpacing.lg,
             scrolls: true
         ) {
-            VStack(spacing: 22) {
+            VStack(spacing: 18) {
                 OnboardingProgressCurveCard(selected: index, count: Self.times.count)
 
                 HStack(spacing: 6) {
@@ -52,11 +55,14 @@ struct DailyTimeStepView: View {
                     }
                 }
 
-                VStack(spacing: 18) {
+                VStack(spacing: 14) {
                     Text(selection.caption(locale: i18n.locale))
-                        .font(MicaboFont.ui(21, weight: .bold))
+                        .font(MicaboFont.ui(20, weight: .heavy))
                         .tracking(-0.4)
-                        .foregroundStyle(OnboardingPalette.ink)
+                        .foregroundStyle(MicaboColor.accent)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
                         .contentTransition(.opacity)
                         .animation(OnboardingMotion.select, value: index)
                         .frame(minHeight: 28)
@@ -92,12 +98,13 @@ struct DailyTimeStepView: View {
         Button(action: action) {
             Text(i18n.t("ios.quiz.time.short", ["n": "\(time.rawValue)"]))
                 .font(MicaboFont.ui(15, weight: .semibold))
-                .foregroundStyle(isSelected ? OnboardingPalette.white : OnboardingPalette.gray)
+                .foregroundStyle(isSelected ? MicaboColor.onInk : OnboardingPalette.gray)
                 .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                .minimumScaleFactor(0.7)
                 .padding(.vertical, 10)
                 .frame(maxWidth: .infinity)
-                .background(isSelected ? OnboardingPalette.ink : Color.clear, in: Capsule())
+                .background(isSelected ? MicaboColor.accent : MicaboColor.surface, in: Capsule())
+                .overlay(Capsule().strokeBorder(isSelected ? Color.clear : MicaboColor.stroke, lineWidth: 1.5))
                 .contentShape(Capsule())
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
@@ -131,10 +138,10 @@ struct OnboardingProgressCurveCard: View {
                 .foregroundStyle(OnboardingPalette.gray)
 
             chart
-                .frame(height: 190)
+                .frame(height: 150)
         }
-        .padding(20)
-        .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .padding(18)
+        .onboardingCard(selected: false, radius: 24)
         .onAppear {
             withAnimation(.easeOut(duration: 0.9).delay(OnboardingMotion.slideDuration)) { drawn = 1 }
         }
@@ -261,11 +268,11 @@ struct OnboardingSnapSlider: View {
 
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(OnboardingPalette.card)
+                    .fill(MicaboColor.track)
                     .frame(height: Self.track)
 
                 Capsule()
-                    .fill(OnboardingPalette.ink)
+                    .fill(LinearGradient(colors: OnboardingPalette.mikaGradient, startPoint: .leading, endPoint: .trailing))
                     .frame(width: x, height: Self.track)
 
                 ForEach(0..<count, id: \.self) { tick in
@@ -276,10 +283,10 @@ struct OnboardingSnapSlider: View {
                 }
 
                 Circle()
-                    .fill(OnboardingPalette.ink)
+                    .fill(MicaboColor.surface)
                     .frame(width: Self.knob, height: Self.knob)
-                    .overlay(Circle().strokeBorder(OnboardingPalette.white, lineWidth: 3))
-                    .shadow(color: OnboardingPalette.ink.opacity(0.18), radius: 8, y: 4)
+                    .overlay(Circle().strokeBorder(MicaboColor.accent, lineWidth: 4))
+                    .shadow(color: MicaboColor.accent.opacity(0.3), radius: 8, y: 4)
                     .scaleEffect(isDragging ? 1.12 : 1)
                     .position(x: x, y: Self.knob / 2)
             }

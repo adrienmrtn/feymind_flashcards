@@ -232,7 +232,7 @@ struct NotesPageView: View {
                 case .opening:
                     if let notes = chapter.notes {
                         VStack(alignment: .leading, spacing: 18) {
-                            MicaboIconView(icon: chapter.icon, size: 96)
+                            MicaboIconView(icon: chapter.icon, size: 84)
                                 .reveal(0)
                             Text(chapter.title)
                                 .font(MicaboFont.display(30))
