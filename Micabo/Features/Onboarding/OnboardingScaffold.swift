@@ -668,9 +668,7 @@ struct OnboardingChoiceTile: View {
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
 
-                // Plus de sous-titre sous les questions : le titre suffit, et la ligne grise
-                // se lisait comme du remplissage.
-                if let subtitle, showsSubtitle {
+                if let subtitle {
                     Text(subtitle)
                         .font(OnboardingPalette.subtitle)
                         .foregroundStyle(OnboardingPalette.gray)
