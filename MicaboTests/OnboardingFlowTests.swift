@@ -164,7 +164,7 @@ final class OnboardingFlowTests: XCTestCase {
     func testMikaPresentsHimselfBeforeAskingForAnAccount() {
         let model = self.model(advancingTo: .building)
 
-        for expected in [OnboardingStep.featuresIntro, .mikaMission, .mikaSources, .mikaPaths, .mikaDesign, .mikaSolution, .mikaTutor, .mikaRelief] {
+        for expected in [OnboardingStep.featuresIntro, .mikaMission, .mikaSources, .mikaPaths, .mikaDesign, .mikaTutor, .mikaSolution, .mikaRelief] {
             model.advance()
             XCTAssertEqual(model.step, expected)
         }
@@ -192,7 +192,7 @@ final class OnboardingFlowTests: XCTestCase {
         let model = self.model(advancingTo: .mikaRelief)
         model.hasAccount = true
 
-        for expected in [OnboardingStep.socialProof, .trialOffer, .trialReminder, .paywall] {
+        for expected in [OnboardingStep.socialProof, .planBuilding, .profileSummary, .commitment, .freeTrialIntro, .trialOffer, .trialReminder, .paywall] {
             model.advance()
             XCTAssertEqual(model.step, expected)
         }
@@ -324,9 +324,10 @@ final class OnboardingFlowTests: XCTestCase {
 
     /// **Le parcours garde sa longueur** : le cours, les cartes et les cinq écrans de
     /// fonctionnalités sont partis (treize écrans), Mika en a apporté six ; puis l'histoire,
-    /// la recherche, le point de départ et le prof particulier. Trente-deux écrans.
+    /// la recherche, le point de départ et le prof particulier ; puis le calcul du parcours, le
+    /// profil, l'engagement et l'essai offert. Trente-six écrans.
     func testTheFlowKeepsItsLength() {
-        XCTAssertEqual(OnboardingStep.allCases.count, 32)
+        XCTAssertEqual(OnboardingStep.allCases.count, 36)
     }
 
     /// **Une page ne se quitte pas avant d'avoir été vue** : un second appui sur le rond,

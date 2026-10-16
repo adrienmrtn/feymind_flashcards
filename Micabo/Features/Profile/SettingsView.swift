@@ -772,6 +772,18 @@ struct SettingsView: View {
         )
         #endif
 
+        // **Les paywalls, à vue**, même abonné ou déjà en essai : sans cette rangée, un compte
+        // qui a commencé son essai ne les revoyait plus jamais.
+        rows.append(
+            MicaboRow(
+                tile: MicaboTile(glyph: .symbol("crown.fill"), background: MicaboColor.cautionSoft),
+                title: i18n.t("ios.debug.showPaywall"),
+                subtitle: i18n.t("ios.debug.showPaywallHelp"),
+                accessory: .chevron,
+                action: { paywall = .upgrade }
+            )
+        )
+
         rows.append(
             MicaboRow(
                 tile: MicaboTile(glyph: .symbol("repeat"), background: MicaboColor.tilePastels[2]),

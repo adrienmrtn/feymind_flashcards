@@ -56,7 +56,7 @@ struct PaywallOfferView: View {
                             .onboardingAppear(index: 0)
                     }
 
-                    PaywallHero()
+                    PaywallHero(size: 108)
                         .onboardingAppear(index: 1)
 
                     PaywallPitch.headline(for: plan, locale: i18n.locale)
@@ -205,8 +205,8 @@ struct PaywallHero: View {
         let isShown = shown || still
         return ZStack {
             Circle()
-                .fill(RadialGradient(colors: [MicaboColor.accent.opacity(0.24), MicaboColor.accent.opacity(0)], center: .center, startRadius: 4, endRadius: size * 0.8))
-                .frame(width: size * 1.6, height: size * 1.6)
+                .fill(RadialGradient(colors: [MicaboColor.accent.opacity(0.24), MicaboColor.accent.opacity(0)], center: .center, startRadius: 4, endRadius: size * 0.7))
+                .frame(width: size * 1.4, height: size * 1.4)
 
             ForEach(Array(satellites.enumerated()), id: \.offset) { _, item in
                 MicaboIconView(icon: item.icon, size: satellite)
@@ -230,7 +230,9 @@ struct PaywallHero: View {
                 .animation(.spring(duration: 0.6, bounce: 0.45), value: isShown)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: size * 1.05)
+        // **Le halo tient dans le cadre** : plus grand que lui, il débordait au-dessus et la
+        // page qui défile le coupait net sous l'en-tête, en une bande droite.
+        .frame(height: size * 1.4)
         .accessibilityHidden(true)
         .onAppear {
             shown = true

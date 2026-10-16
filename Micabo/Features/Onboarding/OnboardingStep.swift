@@ -75,10 +75,10 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case mikaPaths
     /// Des leçons qui donnent vraiment envie d'étudier.
     case mikaDesign
-    /// La solution pour travailler efficacement et facilement.
-    case mikaSolution
     /// « Mika, c'est ton prof particulier, disponible à tout moment, dans ta poche. »
     case mikaTutor
+    /// La solution pour travailler efficacement et facilement.
+    case mikaSolution
     /// La pression et la montagne de choses à revoir, c'est fini.
     case mikaRelief
 
@@ -86,6 +86,14 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// « On a aidé 45 000 élèves », l'étude de Harvard, les avis — et la demande de note du
     /// système.
     case socialProof
+    /// Mika calcule le parcours : le chargement d'après la preuve.
+    case planBuilding
+    /// « Voici ton profil » : les réponses relues, et ce que Mika va en faire.
+    case profileSummary
+    /// L'engagement envers le soi de dans un an, qu'on maintient appuyé.
+    case commitment
+    /// « Nous tenons à ce que tu essaies gratuitement », qui sort du noir de l'engagement.
+    case freeTrialIntro
     case trialOffer
     case trialReminder
     case paywall
