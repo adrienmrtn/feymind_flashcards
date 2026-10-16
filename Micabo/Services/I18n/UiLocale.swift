@@ -5,12 +5,9 @@ import Foundation
 /// UserDefaults, pas colonne : c'est le même contrat que le cookie web
 /// `micabo.ui_locale`. Les deux clients ne se synchronisent pas encore.
 ///
-/// **L'anglais vient en premier** parce que c'est la langue du plus grand nombre de
-/// lecteurs, et parce que c'est déjà la langue de base du site. Viennent ensuite les langues
-/// des marchés de Micabo, de l'Europe au Moyen-Orient et à l'Amérique latine. Sur l'iPhone, le repli
-/// reste le français : c'est la langue de la quasi-totalité des comptes existants, et un
-/// utilisateur qui n'a jamais touché au sélecteur ne doit pas voir son app changer de
-/// langue du jour au lendemain.
+/// **L'anglais vient en premier, et c'est la langue de base** : l'app s'ouvre dans la langue
+/// du téléphone quand Micabo la parle, et en anglais sinon. Viennent ensuite les langues des
+/// marchés de Micabo, de l'Europe au Moyen-Orient et à l'Amérique latine.
 enum UiLocale: String, CaseIterable, Identifiable, Sendable {
     case en
     case fr
@@ -42,7 +39,9 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
     var id: String { rawValue }
 
     static let storageKey = "micabo.ui_locale"
-    static let fallback = UiLocale.fr
+    /// **L'anglais, quand le téléphone ne parle aucune des langues de Micabo** : c'est la
+    /// langue que le plus de monde lit.
+    static let fallback = UiLocale.en
 
     var nativeName: String {
         switch self {
@@ -219,8 +218,7 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
 
     /// **La langue du téléphone, région comprise.** Le portugais du Brésil n'est pas celui du
     /// Portugal, ni l'espagnol du Mexique celui de l'Espagne : la région décide, puis la
-    /// langue seule. Une langue qu'on ne parle pas retombe sur l'anglais, lu partout ; un
-    /// appareil sans préférence aucune, sur le français.
+    /// langue seule. Une langue qu'on ne parle pas retombe sur l'anglais.
     static func fromPreferredLanguages(_ languages: [String] = Locale.preferredLanguages) -> UiLocale {
         for tag in languages {
             let parts = tag.replacingOccurrences(of: "_", with: "-").split(separator: "-").map { String($0).lowercased() }
@@ -234,7 +232,7 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
                 if let locale = UiLocale(rawValue: primary) { return locale }
             }
         }
-        return languages.isEmpty ? fallback : .en
+        return fallback
     }
 
     static func resolved(defaults: UserDefaults = .standard) -> UiLocale {

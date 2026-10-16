@@ -158,7 +158,7 @@
 				};
 			};
 			buildConfigurationList = FE00000000000000000052 /* Build configuration list for PBXProject "Micabo" */;
-			developmentRegion = fr;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				fr,

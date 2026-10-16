@@ -25,7 +25,7 @@ final class I18nTests: XCTestCase {
     }
 
     /// Un iPhone ouvre l'app dans sa langue, région comprise ; une langue que Micabo ne parle
-    /// pas retombe sur l'anglais, et un appareil sans préférence sur le français.
+    /// pas retombe sur l'anglais, la langue de base — un appareil sans préférence aussi.
     func testPreferredLanguagesFollowTheRegion() {
         XCTAssertEqual(UiLocale.fromPreferredLanguages(["de-DE", "en"]), .de)
         XCTAssertEqual(UiLocale.fromPreferredLanguages(["es-ES"]), .es)
@@ -40,7 +40,7 @@ final class I18nTests: XCTestCase {
         XCTAssertEqual(UiLocale.fromPreferredLanguages(["en-GB"]), .en)
         XCTAssertEqual(UiLocale.fromPreferredLanguages(["it-IT", "ja"]), .it)
         XCTAssertEqual(UiLocale.fromPreferredLanguages(["ja"]), .en)
-        XCTAssertEqual(UiLocale.fromPreferredLanguages([]), .fr)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages([]), .en)
     }
 
     func testSharedCatalogsHaveTheSameKeys() {

@@ -10,9 +10,9 @@ enum L10n {
         return result
     }
 
-    /// **Ce qui manque se lit en anglais, pas en français** : une phrase oubliée dans une langue
-    /// tombe sur la langue que le plus de monde lit. Le français ne reste le repli que du
-    /// français lui-même, puis le dernier recours de tous.
+    /// **Ce qui manque se lit en anglais**, la langue de base : une phrase oubliée dans une
+    /// langue tombe sur la langue que le plus de monde lit. Le français, langue d'écriture du
+    /// projet, ne reste que le dernier recours.
     static func t(_ key: String, locale: UiLocale, vars: [String: String] = [:]) -> String {
         // Les phrases de la refonte d'abord : leurs clés commencent toutes par `lesson.`.
         if key.hasPrefix("lesson.") {

@@ -5484,7 +5484,7 @@ enum IosI18nCatalogs {
         case "en": en
         case "es": es
         case "tr": tr
-        default: regional[locale] ?? fr
+        default: regional[locale] ?? en
         }
     }
 }
