@@ -34,6 +34,7 @@ import { sanitizeMeta, wrapUntrusted } from "../_shared/prompt-boundary.ts";
 import { normalizeIcon } from "../_shared/icons.ts";
 import { readingBrief, VISION_SYSTEM_PROMPT } from "../generate-course/prompt.ts";
 import { learnerBrief, readLearner, volumeOf } from "../_shared/learner.ts";
+import { assessmentBrief, disciplineName, hasVariedKinds } from "../_shared/assessment.ts";
 import {
   CONVERT_SYSTEM_PROMPT,
   convertBrief,
@@ -123,7 +124,7 @@ interface RequestBody {
   // Un examen blanc
   examTitle?: string;
   minutes?: number;
-  lessons?: { title?: string; themes?: { title?: string; notes?: string }[] }[];
+  lessons?: { title?: string; subject?: string; themes?: { title?: string; notes?: string }[] }[];
 
   // De nouvelles questions
   practiceThemes?: { title?: string; notes?: string }[];
@@ -533,6 +534,11 @@ async function practice(request: Request, body: RequestBody): Promise<Response> 
 
     const sections = audienceSections(body, themes.map((theme) => theme.notes).join("\n").slice(0, 6_000));
     sections.push(practiceBrief({ lessonTitle, themes, focus, avoid, count, kinds }));
+    sections.push(assessmentBrief({
+      tier: readLearner(body).tier,
+      disciplines: [detectDiscipline(themes.map((theme) => theme.notes).join("\n"), lessonTitle, body.subject)],
+      count,
+    }));
     sections.push(wrapUntrusted("NOTES DE LA LEÇON", practiceNotes(themes)));
     sections.push("Écris maintenant le JSON des nouvelles questions.");
     const prompt = sections.join("\n\n");
@@ -591,7 +597,12 @@ async function exam(request: Request, body: RequestBody): Promise<Response> {
       budget -= notes.length;
       return { title: sanitizeMeta(theme?.title, 120) || `${rank + 1}`, notes };
     });
-    return { title: sanitizeMeta(lesson?.title, 160) || `${index + 1}`, themes };
+    const title = sanitizeMeta(lesson?.title, 160) || `${index + 1}`;
+    const notes = themes.map((theme) => theme.notes).join("\n");
+    // La matière de chaque leçon : un examen sur l'histoire et les maths ne se compose pas
+    // comme un seul sujet.
+    const discipline = detectDiscipline(notes, title, sanitizeMeta(lesson?.subject, 80));
+    return { title, discipline, themes };
   });
   if (!lessons.some((lesson) => lesson.themes.some((theme) => theme.notes.length > 0))) {
     throw new FalError("Ces leçons n'ont pas encore de notes.", 400);
@@ -608,15 +619,22 @@ async function exam(request: Request, body: RequestBody): Promise<Response> {
     const title = sanitizeMeta(body.examTitle, 120);
     const meter: ModelUsage[] = [];
 
-    const sample = lessons.flatMap((lesson) => lesson.themes.map((theme) => theme.notes)).join("\n").slice(0, 6_000);
-    const sections = audienceSections({ ...body, lessonTitle: lessons[0]!.title }, sample);
+    const learner = readLearner(body);
+    // Pas la consigne de matière des notes : celle des questions, matière par matière, au
+    // niveau de l'élève (`assessment.ts`).
+    const sections = [languageBrief(body.language), learnerBrief(learner)];
     sections.push(examBrief({
       title,
-      lessons: lessons.map((lesson) => ({ title: lesson.title, themes: lesson.themes.map((theme) => theme.title) })),
+      lessons: lessons.map((lesson) => ({
+        title: lesson.title,
+        subject: disciplineName(lesson.discipline),
+        themes: lesson.themes.map((theme) => theme.title),
+      })),
       count,
       minutes,
       kinds,
     }));
+    sections.push(assessmentBrief({ tier: learner.tier, disciplines: lessons.map((lesson) => lesson.discipline), count }));
     sections.push(wrapUntrusted("NOTES DES LEÇONS", examNotes(lessons)));
     sections.push("Écris maintenant le JSON de l'examen blanc.");
     const prompt = sections.join("\n\n");
@@ -639,14 +657,19 @@ async function exam(request: Request, body: RequestBody): Promise<Response> {
     };
 
     let written = read(await ask({ prompt, system: EXAM_SYSTEM_PROMPT, temperature: 0.5, maxTokens: EXAM_TOKENS, meter }));
-    if (!written) {
+    // Une copie illisible, ou qui ne fait que des QCM, se réécrit une fois. La seconde copie
+    // ne remplace la première que si elle se lit.
+    if (!written || !hasVariedKinds(written.questions.map((question) => question.kind), kinds.length)) {
+      const note = written
+        ? `Ta copie ne variait pas assez ses formes. Réécris-la avec au moins trois formes différentes parmi ${kinds.join(", ")}, ${count} questions.`
+        : `Ta réponse précédente était illisible ou incomplète. Rends le JSON complet, avec ${count} questions.`;
       written = read(await ask({
-        prompt: `${prompt}\n\nTa réponse précédente était illisible ou incomplète. Rends le JSON complet, avec ${count} questions.`,
+        prompt: `${prompt}\n\n${note}`,
         system: EXAM_SYSTEM_PROMPT,
-        temperature: 0.3,
+        temperature: 0.4,
         maxTokens: EXAM_TOKENS,
         meter,
-      }));
+      })) ?? written;
     }
     if (!written) {
       throw new FalError("L'examen blanc n'a pas pu se composer. Réessaie.", 502);

@@ -253,6 +253,7 @@ struct LessonPracticeRequest: Sendable {
 
     var lessonID: UUID
     var lessonTitle: String
+    var subject: String? = nil
     var themes: [Theme]
     var focus: [Int]
     var avoid: [String]
@@ -267,6 +268,8 @@ struct LessonPracticeRequest: Sendable {
 struct LessonExamRequest: Sendable {
     struct Lesson: Sendable, Equatable {
         var title: String
+        /// La matière, quand la leçon la connaît : elle décide des formes de questions.
+        var subject: String? = nil
         var themes: [LessonPracticeRequest.Theme]
     }
 
@@ -385,6 +388,7 @@ struct SupabaseLessonService: LessonGenerating {
         payload["stage"] = "practice"
         payload["lessonId"] = request.lessonID.uuidString.lowercased()
         payload["lessonTitle"] = request.lessonTitle
+        payload["subject"] = request.subject ?? ""
         payload["practiceThemes"] = request.themes.map { ["title": $0.title, "notes": String($0.notes.prefix(2_000))] }
         payload["focus"] = request.focus
         payload["avoid"] = request.avoid.suffix(80).map { String($0.prefix(200)) }
@@ -404,6 +408,7 @@ struct SupabaseLessonService: LessonGenerating {
         payload["lessons"] = request.lessons.prefix(8).map { lesson in
             [
                 "title": lesson.title,
+                "subject": lesson.subject ?? "",
                 "themes": lesson.themes.prefix(14).map { ["title": $0.title, "notes": String($0.notes.prefix(2_000))] }
             ] as [String: Any]
         }

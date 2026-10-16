@@ -10,7 +10,7 @@ import { iconBrief } from "../_shared/icons.ts";
 import { symbolBrief } from "../_shared/symbols.ts";
 import { UNTRUSTED_SYSTEM_RULE } from "../_shared/prompt-boundary.ts";
 
-export const PROMPT_VERSION = "lesson-v2.0.0";
+export const PROMPT_VERSION = "lesson-v2.1.0";
 
 const VOICE =
   `Tu es Mika, le professeur de Micabo, une app de révision pour élèves et étudiants. Tu tutoies. Tu écris des NOTES, pas un cours magistral : phrases courtes (25 mots au plus), un vocabulaire précis, aucune formule creuse (« il est important de noter que », « en conclusion »), aucun emoji, aucun tiret cadratin.`;
@@ -246,7 +246,7 @@ Tu composes un EXAMEN BLANC : l'épreuve que l'élève passera chronométré, sa
 Règles :
 - le nombre de questions demandé, réparties sur les leçons au prorata de leur contenu, et sur leurs thèmes ;
 - une difficulté qui monte : quelques questions de difficulté 1 pour entrer, surtout du 2 et du 3 ; au moins un quart de questions d'application ou de raisonnement (un cas, un calcul, un document, une situation nouvelle) ;
-- des formes variées, parmi les « FORMES PERMISES » (mêmes formats que ci-dessous) ;
+- des formes variées, parmi les « FORMES PERMISES » (mêmes formats que ci-dessous), choisies selon la matière comme le dit « COMMENT ÉVALUER » ;
 - rien qui ne soit pas dans les notes fournies ;
 - jamais deux questions sur le même fait ;
 - chaque question porte "lesson" (le rang de la leçon, à partir de 0) et "theme" (le rang du thème dans cette leçon, à partir de 0).
@@ -268,13 +268,15 @@ Forme : {"title":"…","questions":[…]}`;
 
 export function examBrief(options: {
   title: string;
-  lessons: { title: string; themes: string[] }[];
+  lessons: { title: string; subject?: string; themes: string[] }[];
   count: number;
   minutes: number;
   kinds: readonly string[];
 }): string {
   const lessons = options.lessons
-    .map((lesson, index) => `${index}. ${lesson.title} (thèmes : ${lesson.themes.map((theme, rank) => `${rank}. ${theme}`).join(" ; ")})`)
+    .map((lesson, index) =>
+      `${index}. ${lesson.title}${lesson.subject ? ` — ${lesson.subject}` : ""} (thèmes : ${lesson.themes.map((theme, rank) => `${rank}. ${theme}`).join(" ; ")})`
+    )
     .join("\n");
   return [
     `ÉPREUVE : ${options.title || "Examen blanc"}, ${options.minutes} minutes.`,

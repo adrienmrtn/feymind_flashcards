@@ -349,6 +349,7 @@ final class LessonBuilder {
         let request = LessonPracticeRequest(
             lessonID: course.id,
             lessonTitle: course.title,
+            subject: course.subject,
             themes: chapters.map { .init(title: $0.title, notes: Self.flatNotes(of: $0)) },
             focus: focus,
             avoid: Array(avoid.suffix(80)),
@@ -406,7 +407,7 @@ final class LessonBuilder {
             minutes: minutes,
             count: Self.examQuestionCount(minutes: minutes),
             lessons: zip(courses, chapters).map { course, chapters in
-                .init(title: course.title, themes: chapters.map { .init(title: $0.title, notes: Self.flatNotes(of: $0)) })
+                .init(title: course.title, subject: course.subject, themes: chapters.map { .init(title: $0.title, notes: Self.flatNotes(of: $0)) })
             },
             audience: audience().preparing(exam.map { Self.examLine(name: $0.name, date: $0.date) })
         )
