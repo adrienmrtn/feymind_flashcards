@@ -204,7 +204,7 @@ struct MockExamFlow: View {
     private func begin() {
         let isPro = pro?.isPro == true
         if !isPro && ExamAllowance.freeMockUsed {
-            paywall = .practice
+            paywall = .mockExam
             return
         }
         let chosen = lessons.filter { selected.contains($0.id) }
@@ -222,7 +222,7 @@ struct MockExamFlow: View {
             } catch let error as LessonServiceError where error.opensPaywall {
                 ExamAllowance.freeMockUsed = true
                 withAnimation { phase = .setup }
-                paywall = .practice
+                paywall = .mockExam
             } catch {
                 withAnimation {
                     phase = .failed((error as? LocalizedError)?.errorDescription ?? L10n.t("lesson.exam.failed", locale: .resolved()))

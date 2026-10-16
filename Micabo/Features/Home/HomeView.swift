@@ -2,8 +2,8 @@ import SwiftData
 import SwiftUI
 
 /// **Home** (`docs/refonte-parcours.md` § 3) : la grande question, la barre « comme une IA »
-/// avec Mika perché dessus, les cinq imports en grand — c'est eux qu'on voit d'abord —, trois
-/// petits chiffres mesurés, et « Reprendre ».
+/// avec Mika perché dessus — c'est elle qu'on voit d'abord —, les cinq supports en petit
+/// dessous, trois petits chiffres mesurés, et « Reprendre ».
 struct HomeView: View {
     @Environment(ProAccess.self) private var pro: ProAccess?
     @Query(sort: \Course.createdAt, order: .reverse) private var courses: [Course]
@@ -187,9 +187,9 @@ struct HomeComposerBar: View {
                         text: $composer.draft,
                         axis: .vertical
                     )
-                    .font(MicaboFont.ui(18, weight: .semibold))
+                    .font(MicaboFont.ui(20, weight: .semibold))
                     .foregroundStyle(MicaboColor.ink)
-                    .lineLimit(1...4)
+                    .lineLimit(3...6)
                     .focused(focused)
                     .submitLabel(.send)
                     .onSubmit(onSend)
@@ -197,25 +197,39 @@ struct HomeComposerBar: View {
 
                     Button(action: onSend) {
                         Image(systemName: "arrow.up")
-                            .font(.system(size: 18, weight: .heavy))
-                            .foregroundStyle(MicaboColor.onInk)
-                            .frame(width: 44, height: 44)
-                            .background(composer.canSend ? MicaboColor.ink : MicaboColor.inkTertiary, in: Circle())
+                            .font(.system(size: 20, weight: .heavy))
+                            .foregroundStyle(Color.white)
+                            .frame(width: 52, height: 52)
+                            .background {
+                                if composer.canSend {
+                                    Circle().fill(LinearGradient(colors: [MicaboColor.accent, MicaboColor.keyword], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                } else {
+                                    Circle().fill(MicaboColor.inkTertiary)
+                                }
+                            }
+                            .shadow(color: MicaboColor.accent.opacity(composer.canSend ? 0.35 : 0), radius: 10, y: 5)
                     }
                     .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
                     .disabled(!composer.canSend)
                     .accessibilityLabel(Text(L10n.t("lesson.home.send", locale: .resolved())))
                 }
             }
-            .padding(.leading, 18)
-            .padding(.trailing, 8)
-            .padding(.vertical, 8)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+            // **La barre est ce qui ressort le plus** : haute, bordée du dégradé de l'app, avec
+            // un halo bleu qui s'allume quand on écrit.
+            .padding(.leading, 20)
+            .padding(.trailing, 10)
+            .padding(.vertical, 12)
+            .frame(minHeight: 132, alignment: .bottom)
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 26, style: .continuous)
-                    .strokeBorder(focused.wrappedValue ? MicaboColor.accent : MicaboColor.stroke, lineWidth: 1.5)
+                RoundedRectangle(cornerRadius: 30, style: .continuous)
+                    .strokeBorder(
+                        LinearGradient(colors: [MicaboColor.accent, MicaboColor.keyword], startPoint: .topLeading, endPoint: .bottomTrailing),
+                        lineWidth: focused.wrappedValue ? 3 : 2
+                    )
             )
-            .micaboElevation(.card)
+            .shadow(color: MicaboColor.accent.opacity(focused.wrappedValue ? 0.3 : 0.18), radius: focused.wrappedValue ? 22 : 16, y: 8)
+            .animation(.easeOut(duration: 0.25), value: focused.wrappedValue)
             .overlay(alignment: .topTrailing) {
                 HomePerch(isThinking: isThinking)
                     .offset(x: -18, y: -HomePerch.height)
@@ -241,26 +255,60 @@ private extension LessonComposer.Support {
     }
 }
 
-/// **Les cinq imports, en grand** : c'est ce qu'on voit d'abord. Le PDF et la photo, les plus
-/// courants, en deux grandes tuiles ; l'audio, YouTube et le texte dessous. Une tuile Pro
-/// porte sa couronne pour qui n'est pas abonné.
+/// **Les cinq supports, en petit, sous la barre** : une ligne de pastilles, l'icône 3D et
+/// son nom. La barre reste ce qu'on voit d'abord ; un support Pro porte sa petite couronne
+/// pour qui n'est pas abonné.
 struct ImportGrid: View {
     let isPro: Bool
     var enabled = true
     let onImport: (LessonComposer.Kind) -> Void
 
+    private static let kinds: [LessonComposer.Kind] = [.pdf, .photo, .audio, .youtube, .text]
+
     var body: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 12) {
-                ImportButton(kind: .pdf, size: .large, locked: !isPro, enabled: enabled) { onImport(.pdf) }
-                ImportButton(kind: .photo, size: .large, locked: !isPro, enabled: enabled) { onImport(.photo) }
-            }
-            HStack(spacing: 12) {
-                ImportButton(kind: .audio, size: .medium, locked: !isPro, enabled: enabled) { onImport(.audio) }
-                ImportButton(kind: .youtube, size: .medium, locked: !isPro, enabled: enabled) { onImport(.youtube) }
-                ImportButton(kind: .text, size: .medium, locked: false, enabled: enabled) { onImport(.text) }
+        HStack(spacing: 8) {
+            ForEach(Self.kinds, id: \.self) { kind in
+                ImportChip(kind: kind, locked: kind != .text && !isPro, enabled: enabled) { onImport(kind) }
             }
         }
+    }
+}
+
+/// Une pastille d'import : l'icône 3D, le nom dessous, en petit.
+struct ImportChip: View {
+    let kind: LessonComposer.Kind
+    var locked = false
+    var enabled = true
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                MicaboIconView(icon: kind.icon, size: 30, dimmed: !enabled)
+                Text(L10n.t(kind.titleKey, locale: .resolved()))
+                    .font(MicaboFont.ui(12, weight: .heavy))
+                    .foregroundStyle(enabled ? MicaboColor.inkSecondary : MicaboColor.inkTertiary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background(MicaboColor.surface.opacity(0.7), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+            .overlay(alignment: .topTrailing) {
+                if locked {
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(LessonTone.yellow.ink)
+                        .padding(4)
+                        .background(LessonTone.yellow.pale, in: Circle())
+                        .offset(x: 3, y: -3)
+                        .accessibilityLabel(Text("Pro"))
+                }
+            }
+        }
+        .buttonStyle(MicaboPressableButtonStyle(feedback: .soft))
+        .disabled(!enabled)
     }
 }
 

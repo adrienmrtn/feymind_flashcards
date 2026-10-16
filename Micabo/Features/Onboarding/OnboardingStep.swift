@@ -133,6 +133,26 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         }
     }
 
+    /// **L'icône 3D en tête de la question**, comme l'illustration des écrans de Mika : elle
+    /// dit le sujet de la page avant qu'on lise le titre.
+    var heroIcon: MicaboIcon? {
+        switch self {
+        case .name: .quill
+        case .country: .globe
+        case .level, .schoolType: .diploma
+        case .year: .book
+        case .subjects: .lightbulb
+        case .worries: .brain
+        case .goal: .rocket
+        case .currentAverage: .exam
+        case .targetAverage: .trophy
+        case .dailyTime: .hourglass
+        case .studyTime: .alarm
+        case .notifications: .check
+        default: nil
+        }
+    }
+
     /// Vrai pour les écrans qui posent une question.
     var isQuestion: Bool {
         switch self {

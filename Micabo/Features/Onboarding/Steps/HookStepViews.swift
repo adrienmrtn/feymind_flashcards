@@ -80,21 +80,11 @@ struct HookLogoStepView: View {
 
     private var page: some View {
         VStack(spacing: 0) {
-            ZStack {
-                HStack(spacing: 8) {
-                    MicaboBrandMark(size: 26)
-                    Text("Micabo")
-                        .font(MicaboFont.ui(24, weight: .bold))
-                        .tracking(-0.8)
-                        .foregroundStyle(OnboardingPalette.ink)
-                }
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Micabo")
-
-                HStack {
-                    Spacer(minLength: 0)
-                    LanguageSwitcher(variant: .menu)
-                }
+            // Plus de logo en tête : la leçon dans le téléphone et la phrase suffisent. Le
+            // menu de langue reste en haut à droite.
+            HStack {
+                Spacer(minLength: 0)
+                LanguageSwitcher(variant: .menu)
             }
             .padding(.horizontal, MicaboSpacing.screen)
             .padding(.top, MicaboSpacing.sm)
@@ -106,20 +96,15 @@ struct HookLogoStepView: View {
                 .padding(.top, MicaboSpacing.md)
                 .onboardingAppear(index: 2)
 
-            VStack(spacing: 12) {
-                Text(i18n.t("ios.hook.title"))
-                    .font(OnboardingPalette.title(36))
-                    .foregroundStyle(OnboardingPalette.ink)
-                    .tracking(-1.1)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
+            // La phrase, posée bas, juste au-dessus du bouton : « Apprends » prend le dégradé
+            // de l'app.
+            OnboardingAccentText(template: i18n.t("ios.hook.title"), size: 40, alignment: .center)
+                .padding(.horizontal, MicaboSpacing.xl)
+                .padding(.top, MicaboSpacing.sm)
+                .onboardingAppear(index: 3)
 
-            }
-            .padding(.horizontal, MicaboSpacing.xl)
-            .onboardingAppear(index: 3)
-
-            Spacer(minLength: MicaboSpacing.lg)
-                .frame(maxHeight: MicaboSpacing.xxl)
+            Spacer(minLength: MicaboSpacing.md)
+                .frame(maxHeight: MicaboSpacing.lg)
 
             MicaboBottomBar(background: OnboardingPalette.white) {
                 VStack(spacing: 14) {

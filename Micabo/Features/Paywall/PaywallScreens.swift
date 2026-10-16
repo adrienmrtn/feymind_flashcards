@@ -56,17 +56,11 @@ struct PaywallOfferView: View {
                             .onboardingAppear(index: 0)
                     }
 
-                    ZStack(alignment: .topTrailing) {
-                        MikaMascot(mood: .happy, size: 120, reactsToTap: true)
-                        MicaboIconView(icon: .crown, size: 44)
-                            .rotationEffect(.degrees(14))
-                            .offset(x: 18, y: -10)
-                    }
-                    .accessibilityHidden(true)
-                    .onboardingAppear(index: 1)
+                    PaywallHero()
+                        .onboardingAppear(index: 1)
 
                     PaywallPitch.headline(for: plan, locale: i18n.locale)
-                        .font(OnboardingPalette.title(30))
+                        .font(OnboardingPalette.title(31))
                         .tracking(-0.6)
                         .lineSpacing(-1)
                         .multilineTextAlignment(.center)
@@ -94,21 +88,8 @@ struct PaywallOfferView: View {
             }
             .scrollIndicators(.hidden)
 
-            MicaboBottomBar(background: OnboardingPalette.white) {
-                VStack(spacing: 12) {
-                    // Ce qui part vraiment du compte, en gris : le mois est en grand plus
-                    // haut, la somme prélevée d'un bloc ne se cache pas pour autant.
-                    Text(plan.billedLine(locale: i18n.locale))
-                        .font(OnboardingPalette.subtitle)
-                        .foregroundStyle(OnboardingPalette.gray)
-                        .multilineTextAlignment(.center)
-
-                    PaywallCallToAction(isPurchasing: isPurchasing, storeRevision: storeRevision, action: onSubscribe)
-
-                    PaywallLegalFooter(onRestore: onRestore)
-                }
+            PaywallFooter(plan: plan, isPurchasing: isPurchasing, storeRevision: storeRevision, onSubscribe: onSubscribe, onRestore: onRestore)
                 .onboardingAppear(index: 4)
-            }
         }
         .task {
             try? await Task.sleep(for: Self.closeDelay)
@@ -143,20 +124,17 @@ struct PaywallPlansView: View {
         VStack(spacing: 0) {
             PaywallHeader(onClose: onClose)
 
+            // **Le second paywall a la forme du premier** : Mika et sa couronne, un titre
+            // centré, puis les offres en cartes de l'app, ce que Pro ouvre, et la recherche.
             ScrollView {
-                VStack(alignment: .leading, spacing: 26) {
-                    Text(L10n.t("ios.paywallPlansTitle", locale: .resolved()))
-                        .font(OnboardingPalette.title(30))
-                        .foregroundStyle(OnboardingPalette.ink)
-                        .tracking(-0.6)
-                        .lineSpacing(-1)
-                        .fixedSize(horizontal: false, vertical: true)
+                VStack(spacing: 20) {
+                    PaywallHero(size: 104)
                         .onboardingAppear(index: 0)
 
-                    PaywallComparisonTable()
+                    OnboardingAccentText(template: L10n.t("ios.paywallPlansTitle", locale: .resolved()), size: 31, alignment: .center)
                         .onboardingAppear(index: 1)
 
-                    VStack(spacing: 10) {
+                    VStack(spacing: 12) {
                         ForEach(PaywallCatalog.all) { plan in
                             PaywallPlanCard(
                                 plan: plan,
@@ -166,7 +144,7 @@ struct PaywallPlansView: View {
                                     ? L10n.t("ios.paywallSave", locale: .resolved(), vars: ["pct": "\(PaywallCatalog.savingsPercent)"])
                                     : nil
                             ) {
-                                withAnimation(OnboardingMotion.tap) {
+                                withAnimation(OnboardingMotion.select) {
                                     selection = plan.kind
                                 }
                             }
@@ -174,24 +152,58 @@ struct PaywallPlansView: View {
                     }
                     .onboardingAppear(index: 2)
 
-                    ResearchQuoteCard()
+                    PaywallFeatureList()
+                        .onboardingAppear(index: 3)
+
+                    ResearchQuoteCard(compact: true)
                         .onboardingAppear(index: 3)
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.top, MicaboSpacing.sm)
+                .padding(.top, MicaboSpacing.xs)
                 .padding(.bottom, MicaboSpacing.lg)
             }
             .scrollIndicators(.hidden)
 
-            MicaboBottomBar(background: OnboardingPalette.white) {
-                VStack(spacing: 12) {
-                    PaywallCallToAction(isPurchasing: isPurchasing, plan: selectedPlan, storeRevision: storeRevision) {
-                        onSubscribe(selectedPlan)
-                    }
+            PaywallFooter(
+                plan: selectedPlan,
+                isPurchasing: isPurchasing,
+                storeRevision: storeRevision,
+                onSubscribe: { onSubscribe(selectedPlan) },
+                onRestore: onRestore
+            )
+        }
+    }
+}
 
-                    PaywallLegalFooter(onRestore: onRestore)
-                }
-            }
+/// **Mika et sa couronne**, en tête des deux paywalls : il arrive en ressort, la couronne
+/// se pose de travers et brille.
+struct PaywallHero: View {
+    var size: CGFloat = 124
+
+    @State private var shown = false
+    @State private var glint = false
+    @Environment(\.onboardingStill) private var still
+
+    var body: some View {
+        let isShown = shown || still
+        return ZStack(alignment: .topTrailing) {
+            Circle()
+                .fill(RadialGradient(colors: [MicaboColor.accent.opacity(0.22), .clear], center: .center, startRadius: 4, endRadius: size * 0.95))
+                .frame(width: size * 1.9, height: size * 1.9)
+                .offset(x: size * 0.2, y: -size * 0.25)
+            MikaMascot(mood: .happy, size: size, reactsToTap: true)
+            MicaboIconView(icon: .crown, size: size * 0.38)
+                .rotationEffect(.degrees(glint ? 18 : 10))
+                .offset(x: size * 0.16, y: -size * 0.1)
+                .scaleEffect(isShown ? 1 : 0.2, anchor: .bottomLeading)
+        }
+        .frame(height: size * 1.1)
+        .scaleEffect(isShown ? 1 : 0.6)
+        .opacity(isShown ? 1 : 0)
+        .accessibilityHidden(true)
+        .onAppear {
+            withAnimation(.spring(duration: 0.6, bounce: 0.45)) { shown = true }
+            withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true).delay(0.6)) { glint = true }
         }
     }
 }
@@ -285,9 +297,11 @@ private struct PaywallPlanCard: View {
     var body: some View {
         Button(action: action) {
             HStack(alignment: .center, spacing: MicaboSpacing.sm) {
+                OnboardingCheck(isOn: isSelected)
+
                 VStack(alignment: .leading, spacing: 3) {
                     Text(plan.title)
-                        .font(MicaboFont.ui(17, weight: .bold))
+                        .font(MicaboFont.ui(18, weight: .heavy))
                         .foregroundStyle(OnboardingPalette.ink)
 
                     Text(plan.caption)
@@ -302,7 +316,7 @@ private struct PaywallPlanCard: View {
                     // c'est le chiffre qu'on compare, et il ne se lit qu'avec son unité.
                     HStack(alignment: .lastTextBaseline, spacing: 3) {
                         Text(plan.headlinePrice)
-                            .font(MicaboFont.ui(17, weight: .bold))
+                            .font(MicaboFont.number(20))
                             .foregroundStyle(OnboardingPalette.ink)
 
                         Text(plan.headlineUnit)
@@ -317,29 +331,21 @@ private struct PaywallPlanCard: View {
                         .foregroundStyle(plan.hasTrial ? OnboardingPalette.accent : OnboardingPalette.grayLight)
                 }
             }
-            .padding(.vertical, 15)
+            .padding(.vertical, 17)
             .padding(.horizontal, 16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                isSelected ? OnboardingPalette.accentWash : OnboardingPalette.card,
-                in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
-            )
-            .overlay {
-                RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
-                    .strokeBorder(
-                        isSelected ? OnboardingPalette.accent : OnboardingPalette.cardStrong,
-                        lineWidth: isSelected ? 1.8 : 1
-                    )
-            }
+            // La carte de réponse de l'app : blanche, bordée, avec son relief ; bleue quand
+            // elle est choisie.
+            .onboardingCard(selected: isSelected, radius: 22)
             .overlay(alignment: .topTrailing) {
                 if let badge {
                     Text(badge)
-                        .font(MicaboFont.ui(11, weight: .bold))
+                        .font(MicaboFont.ui(12, weight: .heavy))
                         .foregroundStyle(Color.white)
-                        .padding(.vertical, 4)
-                        .padding(.horizontal, 9)
-                        .background(OnboardingPalette.accent, in: Capsule())
-                        .offset(x: -12, y: -9)
+                        .padding(.vertical, 5)
+                        .padding(.horizontal, 10)
+                        .background(LinearGradient(colors: OnboardingPalette.mikaGradient, startPoint: .leading, endPoint: .trailing), in: Capsule())
+                        .offset(x: -14, y: -11)
                 }
             }
         }

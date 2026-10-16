@@ -23,6 +23,8 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
     case mika
     /// « Générer mon cours », à la fin des questions d'un deck : la génération est dans Pro.
     case generateCourse
+    /// Le deuxième examen blanc : le premier est offert.
+    case mockExam
 
     var id: String { rawValue }
 
@@ -36,6 +38,7 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
         case .openChapter: L10n.t("ios.paywallChapterHeadline", locale: .resolved())
         case .mika: L10n.t("ios.paywallMikaHeadline", locale: .resolved())
         case .generateCourse: L10n.t("ios.paywallGenerateHeadline", locale: .resolved())
+        case .mockExam: L10n.t("ios.paywallMockHeadline", locale: .resolved())
         }
     }
 }

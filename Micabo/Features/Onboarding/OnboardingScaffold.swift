@@ -202,6 +202,39 @@ struct OnboardingFooterMika: View {
     }
 }
 
+/// **L'icône 3D d'une question**, posée sur son halo : elle arrive en ressort puis flotte
+/// doucement, comme les objets des écrans de Mika.
+struct OnboardingHeroIcon: View {
+    let icon: MicaboIcon
+    var size: CGFloat = 92
+
+    @State private var shown = false
+    @State private var up = false
+    @Environment(\.onboardingStill) private var still
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        let isShown = shown || still
+        return ZStack {
+            Circle()
+                .fill(RadialGradient(colors: [MicaboColor.accent.opacity(0.2), MicaboColor.accent.opacity(0)], center: .center, startRadius: 2, endRadius: size * 0.9))
+                .frame(width: size * 1.8, height: size * 1.8)
+            MicaboIconView(icon: icon, size: size)
+                .shadow(color: MicaboColor.accent.opacity(0.22), radius: 18, y: 10)
+                .offset(y: up ? -5 : 4)
+        }
+        .frame(height: size * 1.25)
+        .scaleEffect(isShown ? 1 : 0.4)
+        .opacity(isShown ? 1 : 0)
+        .accessibilityHidden(true)
+        .onAppear {
+            withAnimation(.spring(duration: 0.55, bounce: 0.45).delay(0.05)) { shown = true }
+            guard !reduceMotion else { return }
+            withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true).delay(0.6)) { up = true }
+        }
+    }
+}
+
 /// Échappatoire d'un écran de question, posée en haut à droite de l'écran.
 ///
 /// Elle n'existe que là où la réponse est réellement facultative : un écran sans issue se
@@ -288,6 +321,16 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         model != nil && !centered && !surface.isDark && titleSize >= 26
     }
 
+    /// **Dans le parcours, tout est centré**, comme les écrans de Mika : l'icône 3D, le
+    /// titre, puis les réponses. La création d'un deck garde sa mise en page.
+    private var isCentered: Bool { centered || model != nil }
+
+    /// L'icône de la page, dans le parcours.
+    private var heroIcon: MicaboIcon? {
+        guard model != nil else { return nil }
+        return (step ?? model?.step)?.heroIcon
+    }
+
     /// Le nombre de réponses données sur cette page.
     @State private var cheers = 0
 
@@ -346,8 +389,8 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
     }
 
     private func stack(inScrollView: Bool, minHeight: CGFloat? = nil) -> some View {
-        VStack(alignment: centered ? .center : .leading, spacing: contentSpacing) {
-            VStack(alignment: centered ? .center : .leading, spacing: 10) {
+        VStack(alignment: isCentered ? .center : .leading, spacing: contentSpacing) {
+            VStack(alignment: isCentered ? .center : .leading, spacing: 10) {
                 if eyebrow != nil || skip != nil {
                     HStack(alignment: .firstTextBaseline, spacing: MicaboSpacing.sm) {
                         if let eyebrow {
@@ -366,15 +409,21 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                     .onboardingAppear(index: 0)
                 }
 
+                if let heroIcon {
+                    OnboardingHeroIcon(icon: heroIcon)
+                        .frame(maxWidth: .infinity)
+                        .padding(.bottom, 6)
+                }
+
                 // Le titre passe par le texte à chiffre coloré : un passage entre deux
                 // astérisques doubles se peint du dégradé de l'app, ici comme sur Home.
                 OnboardingAccentText(
                     template: title,
                     size: titleSize,
-                    alignment: centered ? .center : .leading,
+                    alignment: isCentered ? .center : .leading,
                     color: surface.title
                 )
-                .frame(maxWidth: .infinity, alignment: centered ? .center : .leading)
+                .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
                 .onboardingAppear(index: 1)
 
                 // Plus de sous-titre sous les questions : le titre suffit, et la ligne grise
@@ -384,12 +433,12 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                         .font(OnboardingPalette.subtitle)
                         .foregroundStyle(surface.prose)
                         .lineSpacing(3)
-                        .multilineTextAlignment(centered ? .center : .leading)
+                        .multilineTextAlignment(isCentered ? .center : .leading)
                         .fixedSize(horizontal: false, vertical: true)
                         .onboardingAppear(index: 2)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: centered ? .center : .leading)
+            .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
 
             content()
                 .frame(maxHeight: expandsContent && !inScrollView ? CGFloat.infinity : nil)
@@ -406,7 +455,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
             maxWidth: .infinity,
             minHeight: minHeight,
             maxHeight: (inScrollView || minHeight != nil) ? nil : .infinity,
-            alignment: centered ? .top : .topLeading
+            alignment: isCentered ? .top : .topLeading
         )
     }
 

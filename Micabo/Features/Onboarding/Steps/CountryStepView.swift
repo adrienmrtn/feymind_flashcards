@@ -38,12 +38,23 @@ struct CountryStepView: View {
             title: i18n.t("ios.countryTitle"),
             scrolls: true
         ) {
-            VStack(alignment: .leading, spacing: 14) {
-                dropdown
+            // **La liste des pays, à même la page** : on voit le sien, on le touche. Le pays
+            // du téléphone vient en tête, déjà choisi ; « Autre pays » ouvre la recherche.
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(Array(ordered.enumerated()), id: \.element) { rank, country in
+                    OnboardingChoiceRow(
+                        title: title(for: country),
+                        emoji: flag(for: country),
+                        isSelected: model.country == country,
+                        rank: rank
+                    ) {
+                        select(country)
+                    }
 
-                if model.country == .other {
-                    elsewherePicker
-                        .transition(.opacity.combined(with: .offset(y: -6)))
+                    if country == .other, model.country == .other {
+                        elsewherePicker
+                            .transition(.opacity.combined(with: .offset(y: -6)))
+                    }
                 }
             }
             .animation(OnboardingMotion.shift, value: model.country)
@@ -53,6 +64,13 @@ struct CountryStepView: View {
                 model.advance()
             }
         }
+    }
+
+    /// Les pays, celui du téléphone d'abord, « Autre pays » en dernier.
+    private var ordered: [SchoolingCountry] {
+        let guessed = SchoolingCountry.guessed()
+        let rest = SchoolingCountry.allCases.filter { $0 != guessed && $0 != .other }
+        return (guessed == .other ? [] : [guessed]) + rest + [.other]
     }
 
     /// **Le menu.** Un `Picker` en ligne dans un `Menu` : c'est ce qui donne la liste
