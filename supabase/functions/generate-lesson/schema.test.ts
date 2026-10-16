@@ -1,10 +1,14 @@
 import { assert, assertEquals } from "jsr:@std/assert@1";
 import {
+  answerIndex,
   clampParagraph,
   cleanInline,
   cleanText,
   estimateMinutes,
+  fairShares,
+  finalFirst,
   GAP,
+  givesAway,
   groupThemes,
   LIMITS,
   nameGroups,
@@ -14,6 +18,7 @@ import {
   readPlan,
   readQuestion,
   readQuestions,
+  readTrueFalse,
   separateBoxes,
   words,
 } from "./schema.ts";
@@ -254,4 +259,73 @@ Deno.test("le plan : de 4 à 12 thèmes, titres courts, icônes de la base, dur�
   assertEquals(short.title, "Leçon");
 
   assertEquals(readPlan({ themes: [] }, { shortSource: false, shortened: false, fallbackTitle: "x" }), null);
+});
+
+Deno.test("la bonne réponse se lit en nombre, en texte, ou par la proposition elle-même", () => {
+  const choices = ["Paris", "Lyon", "Nice"];
+  assertEquals(answerIndex(1, choices), 1);
+  assertEquals(answerIndex("2", choices), 2);
+  assertEquals(answerIndex("lyon", choices), 1);
+  assertEquals(answerIndex("Marseille", choices), -1);
+  assertEquals(answerIndex(null, choices), -1);
+  const question = readQuestion({ prompt: "La capitale ?", choices, answer: "Paris", why: "." }, "s");
+  assertEquals(question?.choices[question.answer], "Paris");
+});
+
+Deno.test("un vrai/faux : la réponse dans toutes les langues, « vrai » toujours au rang 0", () => {
+  assertEquals(readTrueFalse(true), true);
+  assertEquals(readTrueFalse("True"), true);
+  assertEquals(readTrueFalse("Faux"), false);
+  assertEquals(readTrueFalse("falsch"), false);
+  assertEquals(readTrueFalse("1"), false);
+  assertEquals(readTrueFalse("peut-être"), null);
+  const all = ["choice", "truefalse"] as const;
+  // Le modèle commence par « Faux » : la langue est connue, les libellés sont les nôtres.
+  const known = readQuestion({ kind: "truefalse", prompt: "Le mur tombe en 1989.", choices: ["Faux", "Vrai"], answer: true, why: "." }, "s", { kinds: all, language: "fr" });
+  assertEquals(known?.choices, ["Vrai", "Faux"]);
+  assertEquals(known?.answer, 0);
+  // Langue du document : les libellés du modèle, remis dans l'ordre.
+  const source = readQuestion({ kind: "truefalse", prompt: "Il muro cade nel 1989.", choices: ["Falso", "Vero"], answer: false, why: "." }, "s", { kinds: all, language: "source" });
+  assertEquals(source?.choices, ["Vero", "Falso"]);
+  assertEquals(source?.answer, 1);
+  const arabic = readQuestion({ kind: "truefalse", prompt: "سقط الجدار عام 1989.", answer: true, why: "." }, "s", { kinds: all, language: "ar" });
+  assertEquals(arabic?.choices, ["صحيح", "خطأ"]);
+  const brazil = readQuestion({ kind: "truefalse", prompt: "O muro caiu em 1989.", answer: true, why: "." }, "s", { kinds: all, language: "pt-BR" });
+  assertEquals(brazil?.choices, ["Verdadeiro", "Falso"]);
+});
+
+Deno.test("une phrase à trou ne donne pas sa réponse, et garde son trou au-delà de 30 mots", () => {
+  const all = ["choice", "gap"] as const;
+  assert(givesAway("Paris, la … de la France, compte deux millions d'habitants : Paris.", "Paris"));
+  assert(!givesAway("La … est la capitale de la France.", "Paris"));
+  assert(!givesAway("Le … de l'eau", "H"), "une réponse trop courte ne se cherche pas");
+  assertEquals(
+    readQuestion({ kind: "gap", prompt: "La mitochondrie produit l'… : la mitochondrie produit l'ATP.", choices: ["ATP", "ADN", "ARN"], answer: 0, why: "." }, "s", { kinds: all }),
+    null,
+  );
+  const long = `${Array.from({ length: 32 }, (_, i) => `mot${i}`).join(" ")} … fin.`;
+  const kept = readQuestion({ kind: "gap", prompt: long, choices: ["juste", "faux", "leurre"], answer: 0, why: "." }, "s", { kinds: all });
+  assertEquals(kept?.kind, "gap");
+  assert(kept?.prompt.includes(GAP));
+});
+
+Deno.test("la question de fin d'un thème est une question simple", () => {
+  const questions = readQuestions([
+    { kind: "order", prompt: "Dans l'ordre", items: ["a", "b", "c"], why: ".", difficulty: 3 },
+    { prompt: "Difficile ?", choices: ["a", "b", "c"], answer: 0, why: ".", difficulty: 3 },
+    { prompt: "Simple ?", choices: ["a", "b", "c"], answer: 0, why: ".", difficulty: 1 },
+  ], "s", { kinds: ["choice", "order"] });
+  assertEquals(finalFirst(questions).map((q) => q.prompt), ["Simple ?", "Dans l'ordre", "Difficile ?"]);
+  const hardOnly = questions.slice(0, 2);
+  assertEquals(finalFirst(hardOnly).map((q) => q.prompt), ["Difficile ?", "Dans l'ordre"]);
+  assertEquals(finalFirst([]), []);
+});
+
+Deno.test("le budget des notes se partage entre tous les thèmes", () => {
+  assertEquals(fairShares([2_000, 2_000, 2_000, 2_000], 4_000), [1_000, 1_000, 1_000, 1_000]);
+  assertEquals(fairShares([100, 5_000, 5_000], 3_100), [100, 1_500, 1_500], "un thème court garde tout");
+  assertEquals(fairShares([10, 20], 1_000), [10, 20]);
+  assertEquals(fairShares([], 1_000), []);
+  const shares = fairShares([7, 7, 7], 10);
+  assertEquals(shares.reduce((a, b) => a + b, 0), 10);
 });

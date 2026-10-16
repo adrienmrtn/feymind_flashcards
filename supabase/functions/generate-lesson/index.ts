@@ -22,7 +22,7 @@
  * Déployer : `supabase functions deploy generate-lesson`, après la migration
  * `lesson_generations` (la porte du gratuit), ou par `pin.sh`.
  */
-import { consumeQuota, readCaller, withCors } from "../_shared/caller.ts";
+import { type Caller, consumeQuota, readCaller, withCors } from "../_shared/caller.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { callModel, errorResponse, FalError, jsonResponse } from "../_shared/fal.ts";
 import { CircuitOpenError } from "../_shared/circuit.ts";
@@ -61,6 +61,8 @@ import {
   cleanText,
   clampWords,
   estimateMinutes,
+  fairShares,
+  finalFirst,
   groupThemes,
   LIMITS,
   MAX_SOURCE,
@@ -79,6 +81,7 @@ import {
   LessonGateError,
   normalizeSource,
   refundExtra,
+  releaseLesson,
 } from "./gate.ts";
 
 interface RequestBody {
@@ -239,6 +242,32 @@ async function plan(request: Request, body: RequestBody): Promise<Response> {
     themes: 0,
     onboarding: body.onboarding === true,
   });
+  try {
+    return await writePlan(body, { caller, fromScratch, shortened, text, images, topic, source });
+  } catch (error) {
+    // Aucun plan n'est parti : la leçon réservée est rendue. Sans cela, une panne du modèle
+    // au premier essai coûtait la leçon offerte, et l'élève tombait sur le paywall sans
+    // avoir rien reçu.
+    await releaseLesson(caller, body.lessonId);
+    throw error;
+  }
+}
+
+/** Le plan lui-même, une fois la leçon réservée : tout ce qui peut échouer est ici. */
+async function writePlan(
+  body: RequestBody,
+  options: {
+    caller: Caller;
+    fromScratch: boolean;
+    shortened: boolean;
+    text: string;
+    images: string[];
+    topic: string;
+    source: string;
+  },
+): Promise<Response> {
+  const { caller, fromScratch, shortened, text, images, topic, source } = options;
+  const lessonId = body.lessonId!;
   await consumeQuota(caller, "generate-lesson");
 
   const meter: ModelUsage[] = [];
@@ -300,7 +329,7 @@ async function plan(request: Request, body: RequestBody): Promise<Response> {
 
   // La leçon connaît maintenant son nombre de thèmes : c'est lui qui borne les « Réessayer ».
   await beginLesson(caller, {
-    lessonId: body.lessonId,
+    lessonId,
     kind: "create",
     source,
     themes: lessonPlan.themes.length,
@@ -344,7 +373,8 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
     .filter(Boolean)
     .slice(0, LIMITS.introLines);
 
-  const sections = audienceSections(body, context || lessonTitle);
+  const sample = context || lessonTitle;
+  const sections = audienceSections(body, sample);
   sections.push(themeBrief({
     lessonTitle,
     themeTitle: themes[index]!,
@@ -355,6 +385,14 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
     questions: volume.questions,
     flashcards: volume.flashcards,
     kinds,
+  }));
+  // Les questions du thème sont celles de tous les quiz de la leçon : elles suivent la même
+  // consigne de formes que l'entraînement et l'examen blanc, selon la matière et la marche.
+  // Sans elle, un collégien et un étudiant en santé recevaient le même mélange de formes.
+  sections.push(assessmentBrief({
+    tier: readLearner(body).tier,
+    disciplines: [detectDiscipline(sample, body.lessonTitle, body.subject)],
+    count: volume.questions,
   }));
   if (context) {
     const reading = readingBrief(body.source, context.length);
@@ -373,7 +411,7 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
   const read = (parsed: Record<string, unknown> | null) => {
     if (!parsed) return null;
     const notes = readNotes(parsed);
-    const questions = readQuestions(parsed.questions, seed, { kinds, language: body.language, max: volume.questions });
+    const questions = finalFirst(readQuestions(parsed.questions, seed, { kinds, language: body.language, max: volume.questions }));
     if (!notes || questions.length < LIMITS.minQuestions) return null;
     return { notes, questions, flashcards: readFlashcards(parsed.flashcards, volume.flashcards) };
   };
@@ -441,11 +479,11 @@ async function convert(request: Request, body: RequestBody): Promise<Response> {
       const entry = (rawChapters[index] ?? {}) as Record<string, unknown>;
       return {
         icon: normalizeIcon(entry.icon),
-        questions: readQuestions(entry.questions, `${body.lessonId}:${index}`, {
+        questions: finalFirst(readQuestions(entry.questions, `${body.lessonId}:${index}`, {
           kinds: readKinds(body.kinds).filter((kind) => kind === "choice" || kind === "truefalse"),
           language: body.language,
           max: 5,
-        }),
+        })),
         flashcards: chapter.needsCards ? readFlashcards(entry.flashcards) : [],
       };
     });
@@ -500,16 +538,16 @@ async function practice(request: Request, body: RequestBody): Promise<Response> 
   const caller = readCaller(request);
   if (!isLessonId(body.lessonId)) throw new FalError("Identifiant de leçon manquant.", 400);
 
-  let budget = PRACTICE_TOTAL_NOTES;
-  const themes = (Array.isArray(body.practiceThemes) ? body.practiceThemes : [])
+  const rawThemes = (Array.isArray(body.practiceThemes) ? body.practiceThemes : [])
     .slice(0, 30)
-    .map((entry, index) => {
-      const title = sanitizeMeta(entry?.title, 120) || `${index + 1}`;
-      const share = Math.min(PRACTICE_THEME_NOTES, Math.max(0, budget));
-      const notes = (typeof entry?.notes === "string" ? entry.notes : "").trim().slice(0, share);
-      budget -= notes.length;
-      return { title, notes };
-    });
+    .map((entry, index) => ({
+      title: sanitizeMeta(entry?.title, 120) || `${index + 1}`,
+      notes: (typeof entry?.notes === "string" ? entry.notes : "").trim().slice(0, PRACTICE_THEME_NOTES),
+    }));
+  // Le budget se partage entre tous les thèmes, pas dans l'ordre : les derniers ont leurs
+  // notes, et donc leurs questions.
+  const practiceShares = fairShares(rawThemes.map((theme) => theme.notes.length), PRACTICE_TOTAL_NOTES);
+  const themes = rawThemes.map((theme, index) => ({ title: theme.title, notes: theme.notes.slice(0, practiceShares[index]) }));
   // Les rangs restent ceux de l'app, même pour un thème sans notes : c'est par eux qu'une
   // question retrouve son thème.
   if (!themes.some((theme) => theme.notes.length > 0)) throw new FalError("Cette leçon n'a pas encore de notes.", 400);
@@ -588,15 +626,23 @@ async function exam(request: Request, body: RequestBody): Promise<Response> {
   const caller = readCaller(request);
   if (!isLessonId(body.lessonId)) throw new FalError("Identifiant d'examen manquant.", 400);
 
-  let budget = EXAM_TOTAL_NOTES;
-  const lessons = (Array.isArray(body.lessons) ? body.lessons : []).slice(0, 8).map((lesson, index) => {
-    let share = Math.min(EXAM_LESSON_NOTES, Math.max(0, budget));
-    const themes = (Array.isArray(lesson?.themes) ? lesson.themes : []).slice(0, 14).map((theme, rank) => {
-      const notes = (typeof theme?.notes === "string" ? theme.notes : "").trim().slice(0, Math.max(0, share));
-      share -= notes.length;
-      budget -= notes.length;
-      return { title: sanitizeMeta(theme?.title, 120) || `${rank + 1}`, notes };
-    });
+  const rawLessons = (Array.isArray(body.lessons) ? body.lessons : []).slice(0, 8).map((lesson) => ({
+    lesson,
+    themes: (Array.isArray(lesson?.themes) ? lesson.themes : []).slice(0, 14).map((theme, rank) => ({
+      title: sanitizeMeta(theme?.title, 120) || `${rank + 1}`,
+      notes: (typeof theme?.notes === "string" ? theme.notes : "").trim(),
+    })),
+  }));
+  // Le budget se partage équitablement : entre les leçons, puis entre les thèmes de chacune.
+  // Coupé dans l'ordre, il laissait sans notes la fin de chaque leçon, et l'examen blanc
+  // n'interrogeait que sur ses premiers thèmes.
+  const lessonShares = fairShares(
+    rawLessons.map((entry) => Math.min(EXAM_LESSON_NOTES, entry.themes.reduce((sum, theme) => sum + theme.notes.length, 0))),
+    EXAM_TOTAL_NOTES,
+  );
+  const lessons = rawLessons.map(({ lesson, themes: rawThemes }, index) => {
+    const shares = fairShares(rawThemes.map((theme) => theme.notes.length), lessonShares[index]!);
+    const themes = rawThemes.map((theme, rank) => ({ title: theme.title, notes: theme.notes.slice(0, shares[rank]) }));
     const title = sanitizeMeta(lesson?.title, 160) || `${index + 1}`;
     const notes = themes.map((theme) => theme.notes).join("\n");
     // La matière de chaque leçon : un examen sur l'histoire et les maths ne se compose pas

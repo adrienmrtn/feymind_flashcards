@@ -94,6 +94,19 @@ export async function beginLesson(
   }
 }
 
+/**
+ * **Rend une leçon réservée dont le plan n'a pas pu s'écrire.** `begin_lesson` réserve la
+ * leçon avant le plan ; sans ce retour, une panne du modèle au premier essai comptait comme
+ * la leçon offerte, et l'essai suivant (un autre identifiant) tombait sur `free_limit`. La
+ * base ne rend qu'une leçon dont le plan n'est jamais arrivé (`themes = 0`, aucun thème
+ * demandé) : un plan déjà livré, dont la réponse s'est perdue, reste compté. Sans la
+ * migration `lesson_release`, l'appel échoue en silence, comme le reste de la porte.
+ */
+export async function releaseLesson(caller: Caller, lessonId: string): Promise<void> {
+  if (!caller.userId) return;
+  await rpc("release_lesson", { p_user: caller.userId, p_lesson: lessonId });
+}
+
 /** Compte un appel de thème ; refuse une leçon inconnue ou des « Réessayer » sans fin. */
 export async function admitThemeCall(caller: Caller, lessonId: string): Promise<void> {
   if (!caller.userId) return;

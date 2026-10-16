@@ -10,7 +10,7 @@ import { iconBrief } from "../_shared/icons.ts";
 import { symbolBrief } from "../_shared/symbols.ts";
 import { UNTRUSTED_SYSTEM_RULE } from "../_shared/prompt-boundary.ts";
 
-export const PROMPT_VERSION = "lesson-v2.1.0";
+export const PROMPT_VERSION = "lesson-v2.2.0";
 
 const VOICE =
   `Tu es Mika, le professeur de Micabo, une app de révision pour élèves et étudiants. Tu tutoies. Tu écris des NOTES, pas un cours magistral : phrases courtes (25 mots au plus), un vocabulaire précis, aucune formule creuse (« il est important de noter que », « en conclusion »), aucun emoji, aucun tiret cadratin.`;
@@ -290,7 +290,9 @@ export function examNotes(lessons: { title: string; themes: { title: string; not
   return lessons
     .map((lesson, index) =>
       `LEÇON ${index} : ${lesson.title}\n` +
-      lesson.themes.map((theme, rank) => `THÈME ${rank} : ${theme.title}\n${theme.notes}`).join("\n\n")
+      // Un thème sans notes (en échec, ou encore en préparation) reste nommé pour garder les
+      // rangs, mais ne doit pas être interrogé : le modèle l'inventerait.
+      lesson.themes.map((theme, rank) => `THÈME ${rank} : ${theme.title}\n${theme.notes || "(pas de notes : ne pose aucune question sur ce thème)"}`).join("\n\n")
     )
     .join("\n\n");
 }

@@ -324,6 +324,32 @@ export function trueFalseLabels(language: string | undefined): [string, string] 
   return TRUE_FALSE[(language ?? "").trim().toLowerCase().slice(0, 2)] ?? TRUE_FALSE.fr!;
 }
 
+/** Vrai quand la langue des notes est une de celles dont on connaît « vrai » et « faux ». */
+function knowsTrueFalse(language: string | undefined): boolean {
+  return (language ?? "").trim().toLowerCase().slice(0, 2) in TRUE_FALSE;
+}
+
+const TRUE_WORDS = new Set(Object.values(TRUE_FALSE).map(([yes]) => promptKey(yes)));
+const FALSE_WORDS = new Set(Object.values(TRUE_FALSE).map(([, no]) => promptKey(no)));
+
+/**
+ * **La réponse d'un vrai/faux**, lue comme le modèle l'écrit : un booléen, le rang dans
+ * « Vrai, Faux », ou le mot lui-même dans n'importe quelle langue servie (« True »,
+ * « Richtig », « "faux" »). `null` quand on ne sait pas : la question part plutôt que d'être
+ * corrigée au hasard.
+ */
+export function readTrueFalse(value: unknown): boolean | null {
+  if (value === true || value === 0) return true;
+  if (value === false || value === 1) return false;
+  if (typeof value !== "string") return null;
+  const key = promptKey(value);
+  if (key === "0") return true;
+  if (key === "1") return false;
+  if (TRUE_WORDS.has(key)) return true;
+  if (FALSE_WORDS.has(key)) return false;
+  return null;
+}
+
 /** Le trou d'une phrase : une seule graphie, celle de l'app (`ClozeGap.marker`). */
 export const GAP = "…";
 
@@ -385,10 +411,25 @@ function distinct(raw: unknown, maxWords: number): string[] {
   return out;
 }
 
+/**
+ * **Le rang de la bonne réponse**, quelle que soit la façon dont le modèle l'écrit : un nombre,
+ * un nombre en texte (« "2" »), ou le texte même de la bonne proposition. Sans cette lecture,
+ * une question juste partait parce que sa réponse était écrite « "0" ».
+ */
+export function answerIndex(raw: unknown, choices: readonly unknown[]): number {
+  if (typeof raw === "number" && Number.isFinite(raw)) return Math.round(raw);
+  if (typeof raw !== "string") return -1;
+  const text = raw.trim();
+  if (/^\d+$/.test(text)) return Number(text);
+  const key = promptKey(text);
+  if (!key) return -1;
+  return choices.findIndex((choice) => typeof choice === "string" && promptKey(choice) === key);
+}
+
 /** Un QCM ou une phrase à trou : une bonne proposition, au moins deux fausses distinctes. */
 function readChoices(question: Record<string, unknown>, seed: string): { choices: string[]; answer: number } | null {
   const rawChoices = Array.isArray(question.choices) ? question.choices : [];
-  const answer = typeof question.answer === "number" ? Math.round(question.answer) : -1;
+  const answer = answerIndex(question.answer, rawChoices);
   if (answer < 0 || answer >= rawChoices.length) return null;
   const right = shortText(rawChoices[answer], 14);
   const seen = new Set([right.toLowerCase()]);
@@ -429,14 +470,19 @@ export function readQuestion(
   if (!prompt) return null;
 
   if (kind === "truefalse") {
-    const value = question.answer;
-    const isTrue = value === true || value === 0 || value === "true" || value === "vrai";
-    const isFalse = value === false || value === 1 || value === "false" || value === "faux";
-    if (!isTrue && !isFalse) return null;
-    // Les libellés du modèle sont dans la langue des notes, même quand on ne la connaît pas
-    // (une leçon « dans la langue du document ») ; sinon, ceux de la langue demandée.
+    const isTrue = readTrueFalse(question.answer);
+    if (isTrue === null) return null;
+    // L'app dessine « vrai » au rang 0 (la coche) et « faux » au rang 1 (la croix), et la
+    // réponse se lit sur ces rangs. Les libellés de la langue demandée sont donc les seuls
+    // sûrs ; ceux du modèle ne servent que pour une langue qu'on ne connaît pas (une leçon
+    // « dans la langue du document »), et remis dans l'ordre s'il a commencé par « faux ».
     const given = distinct(question.choices, 3);
-    const labels = given.length === 2 ? given : trueFalseLabels(options.language);
+    let labels: string[] = trueFalseLabels(options.language);
+    if (!knowsTrueFalse(options.language) && given.length === 2) {
+      labels = FALSE_WORDS.has(promptKey(given[0]!)) || TRUE_WORDS.has(promptKey(given[1]!))
+        ? [given[1]!, given[0]!]
+        : given;
+    }
     // Une app qui ne connaît pas encore le vrai/faux le lit comme un QCM à deux choix.
     return { kind: kinds.includes("truefalse") ? "truefalse" : "choice", prompt, choices: [...labels], answer: isTrue ? 0 : 1, why, difficulty };
   }
@@ -478,13 +524,73 @@ export function readQuestion(
   const chosen = readChoices(question, seed);
   if (!chosen) return null;
   if (kind === "gap") {
-    const sentence = normalizeGap(prompt);
+    // Le trou se repère avant la coupe à 30 mots : coupé, il ferait de la phrase un QCM
+    // sans question.
+    const sentence = clampWords(normalizeGap(cleanInline(cleanText(question.prompt, 400)).replace(/\*\*/g, "")), 40);
+    // Une phrase qui contient déjà le mot à trouver le donne : elle ne vérifie plus rien.
+    if (givesAway(sentence, chosen.choices[chosen.answer]!)) return null;
     if (kinds.includes("gap") && sentence.includes(GAP)) {
       return { kind, prompt: sentence, ...chosen, why, difficulty };
     }
     return { kind: "choice", prompt: sentence, ...chosen, why, difficulty };
   }
   return { kind: "choice", prompt, ...chosen, why, difficulty };
+}
+
+/** Vrai quand la phrase à trou écrit en toutes lettres la bonne réponse, hors du trou. */
+export function givesAway(sentence: string, answer: string): boolean {
+  const key = promptKey(answer);
+  if (key.length < 3) return false;
+  return ` ${promptKey(sentence)} `.includes(` ${key} `);
+}
+
+/**
+ * **La question de fin d'abord.** L'app prend la première question d'un thème pour la question
+ * de fin de son cercle Notes (`ThemeQuiz.final`) : elle doit vérifier l'idée clé, simplement.
+ * Le modèle ne commence pas toujours par là, et une question mal formée qui part peut laisser
+ * la première place à une remise en ordre de difficulté 3. On remonte donc la première
+ * question simple (QCM, vrai/faux, trou, difficulté 1 ou 2), sinon le premier QCM ; l'ordre
+ * des autres ne change pas.
+ */
+export function finalFirst(questions: QuizQuestion[]): QuizQuestion[] {
+  const simple = (question: QuizQuestion) => question.kind === "choice" || question.kind === "truefalse" || question.kind === "gap";
+  let index = questions.findIndex((question) => simple(question) && question.difficulty <= 2);
+  if (index === -1) index = questions.findIndex(simple);
+  if (index <= 0) return questions;
+  return [questions[index]!, ...questions.slice(0, index), ...questions.slice(index + 1)];
+}
+
+/**
+ * **Partager un budget de caractères équitablement** entre des textes. Les plus courts gardent
+ * tout, et ce qu'ils laissent revient aux plus longs. Couper dans l'ordre, au fil de l'eau,
+ * vidait les derniers thèmes : un examen blanc sur une leçon de dix thèmes n'en voyait que
+ * les quatre premiers, et n'interrogeait que sur eux.
+ */
+export function fairShares(lengths: readonly number[], budget: number): number[] {
+  const shares = lengths.map(() => 0);
+  let left = Math.max(0, Math.floor(budget));
+  let open = lengths.map((length, index) => ({ length: Math.max(0, length), index }));
+  while (open.length > 0 && left > 0) {
+    const even = Math.floor(left / open.length);
+    const short = open.filter((entry) => entry.length - shares[entry.index]! <= even);
+    if (short.length === 0) {
+      for (const entry of open) shares[entry.index]! += even;
+      // Le reste de la division va aux premiers, un caractère chacun.
+      let rest = left - even * open.length;
+      for (const entry of open) {
+        if (rest <= 0) break;
+        shares[entry.index]! += 1;
+        rest -= 1;
+      }
+      break;
+    }
+    for (const entry of short) {
+      left -= entry.length - shares[entry.index]!;
+      shares[entry.index] = entry.length;
+    }
+    open = open.filter((entry) => !short.includes(entry));
+  }
+  return shares;
 }
 
 /**
