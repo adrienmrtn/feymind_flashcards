@@ -27,7 +27,8 @@ on:
       - ".github/workflows/android.yml"
 
 permissions:
-  contents: read
+  # « write » pour pousser la branche `android-build/run-<n>` (ci-dessous) ; rien d'autre n'écrit.
+  contents: write
 
 concurrency:
   group: android-${{ github.ref }}
@@ -83,6 +84,28 @@ jobs:
         if: env.HAS_KEYSTORE != 'true'
         run: |
           echo "::warning::Secrets de signature absents, le bundle n'est pas signé et ne peut pas aller sur Google Play. Voir docs/google-play.md."
+
+      # **Sans les secrets, le bundle non signé part sur une branche neuve,
+      # `android-build/run-<n>`** : il se signe alors hors de GitHub, avec la clé d'envoi, puis
+      # se dépose à la main dans la Play Console. Un bundle non signé ne contient rien de secret,
+      # et chaque run a sa branche : rien n'est jamais écrasé.
+      - name: Garder le bundle non signé sur une branche
+        if: env.HAS_KEYSTORE != 'true'
+        env:
+          TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN: ${{ github.run_number }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/out"
+          cp android/app/build/outputs/bundle/release/app-release.aab "$RUNNER_TEMP/out/micabo-unsigned.aab"
+          echo "$MICABO_VERSION_CODE" > "$RUNNER_TEMP/out/version-code.txt"
+          cd "$RUNNER_TEMP/out"
+          git init -q -b "android-build/run-$RUN"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Bundle Android non signé, run $RUN"
+          git push -q "https://x-access-token:$TOKEN@github.com/$REPO.git" "android-build/run-$RUN"
 
       - uses: actions/upload-artifact@v4
         with:
