@@ -28,6 +28,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.revenuecat.purchases.Purchases
+import com.revenuecat.purchases.PurchasesConfiguration
 
 /**
  * **L'écran d'accueil de Micabo sur Android**, en attendant l'app : le logo, le nom, une
@@ -38,6 +40,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+        // Les achats démarrent dès que la clé RevenueCat Android existe ; sans elle, rien.
+        if (BuildConfig.REVENUECAT_KEY.isNotEmpty() && !Purchases.isConfigured) {
+            Purchases.configure(PurchasesConfiguration.Builder(applicationContext, BuildConfig.REVENUECAT_KEY).build())
+        }
         enableEdgeToEdge()
         setContent { Welcome() }
     }

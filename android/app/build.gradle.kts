@@ -26,6 +26,9 @@ android {
         // Le numéro de build vient de la CI (un de plus à chaque envoi), comme pour TestFlight.
         versionCode = (System.getenv("MICABO_VERSION_CODE") ?: "1").toInt()
         versionName = "1.9"
+        // La clé publique Android de RevenueCat (`goog_…`), posée par la CI quand l'app Google
+        // Play existe dans RevenueCat. Vide : le SDK est embarqué mais pas démarré.
+        buildConfigField("String", "REVENUECAT_KEY", "\"${System.getenv("REVENUECAT_ANDROID_KEY") ?: ""}\"")
     }
 
     signingConfigs {
@@ -55,6 +58,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -70,4 +74,6 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.core:core-splashscreen:1.0.1")
+    // Les achats : Google Play Billing via RevenueCat (ajoute la permission BILLING).
+    implementation("com.revenuecat.purchases:purchases:10.24.0")
 }
