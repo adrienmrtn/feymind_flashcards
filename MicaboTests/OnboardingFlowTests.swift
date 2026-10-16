@@ -192,7 +192,7 @@ final class OnboardingFlowTests: XCTestCase {
         let model = self.model(advancingTo: .mikaRelief)
         model.hasAccount = true
 
-        for expected in [OnboardingStep.socialProof, .planBuilding, .profileSummary, .commitment, .freeTrialIntro, .trialOffer, .trialReminder, .paywall] {
+        for expected in [OnboardingStep.socialProof, .planBuilding, .profileSummary, .pledge, .freeTrialIntro, .trialOffer, .trialReminder, .paywall] {
             model.advance()
             XCTAssertEqual(model.step, expected)
         }

@@ -14,6 +14,7 @@ enum LessonI18nCatalogs {
         case "de": de
         case "es": es
         case "tr": tr
+        case "fr": fr
         default: regional[locale] ?? en
         }
     }
