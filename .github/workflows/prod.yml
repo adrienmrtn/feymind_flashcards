@@ -1,0 +1,49 @@
+# La prod, vérifiée de l'extérieur, sans rien y écrire :
+#   - Supabase : les migrations de la refonte et les Edge Functions (supabase/prod-check.sh) ;
+#   - les builds : Xcode Cloud a-t-il pris le dernier commit de `main`, et où en est
+#     TestFlight (store/builds.mjs, avec la clé App Store Connect de la grille de prix).
+#
+# Lancement : onglet Actions → « Prod » → Run workflow. Il part aussi à chaque changement de
+# ses scripts.
+
+name: Prod
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "supabase/prod-check.sh"
+      - "store/builds.mjs"
+      - ".github/workflows/prod.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  supabase:
+    name: Supabase
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - run: ./supabase/prod-check.sh
+
+  builds:
+    name: Xcode Cloud et TestFlight
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          # Les scripts n'ont aucune dépendance. Sans ça, setup-node v5 lit `packageManager`
+          # dans package.json et cherche pnpm, qui n'est pas installé.
+          package-manager-cache: false
+      - env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: node store/builds.mjs "$(git rev-parse origin/main)"
