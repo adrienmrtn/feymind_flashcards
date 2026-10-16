@@ -11,7 +11,8 @@
  *     ASC_KEY_ID=… ASC_ISSUER_ID=… ASC_PRIVATE_KEY=… node store/testflight.mjs
  *
  * Les valeurs partent dans `$GITHUB_OUTPUT` (team, build, key_path, key_id, issuer_id).
- * Lecture seule côté Apple.
+ * Côté Apple, une seule écriture : la révocation des certificats de développement laissés par
+ * les builds précédents (voir plus bas).
  */
 
 import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
@@ -58,7 +59,14 @@ if (!team) {
   process.exit(1);
 }
 
-// Pour le journal : ce que la clé voit des certificats (la signature en dépend).
+// **Les certificats de développement des builds précédents.** À chaque archive, xcodebuild
+// (`-allowProvisioningUpdates`) crée un certificat de développement dont la clé privée reste
+// dans le trousseau du Mac de GitHub, jeté à la fin du run : le certificat ne resservira
+// jamais. Ils s'accumulaient jusqu'au plafond d'Apple, et l'archive suivante échouait
+// (« Your account has reached the maximum number of certificates »). On les révoque avant
+// d'archiver ; ceux de moins d'une heure restent, au cas où un autre run tournerait. Les
+// certificats de distribution ne sont jamais touchés.
+const DEVELOPMENT = new Set(["DEVELOPMENT", "IOS_DEVELOPMENT"]);
 try {
   const certificates = await asc.getAll(`/v1/certificates?limit=200`);
   const byType = new Map();
@@ -67,6 +75,26 @@ try {
     byType.set(type, (byType.get(type) ?? 0) + 1);
   }
   console.log(`Certificats visibles : ${[...byType].map(([k, n]) => `${k} ${n}`).join(", ") || "aucun"}`);
+
+  const hourAgo = Date.now() - 60 * 60 * 1000;
+  const stale = certificates.data.filter((item) => {
+    if (!DEVELOPMENT.has(item.attributes?.certificateType)) return false;
+    // L'API ne donne pas la date de création : un certificat de développement vaut un an,
+    // la création est donc son expiration moins un an.
+    const expires = Date.parse(item.attributes?.expirationDate ?? "");
+    if (!Number.isFinite(expires)) return false;
+    return expires - 365 * 24 * 60 * 60 * 1000 < hourAgo;
+  });
+  let revoked = 0;
+  for (const item of stale) {
+    try {
+      await asc.request("DELETE", `/v1/certificates/${item.id}`);
+      revoked += 1;
+    } catch (error) {
+      console.log(`Certificat ${item.id} non révoqué (${error.message.split("→").pop().trim()}).`);
+    }
+  }
+  if (stale.length) console.log(`Certificats de développement des builds précédents révoqués : ${revoked}/${stale.length}.`);
 } catch (error) {
   console.log(`Certificats illisibles avec cette clé (${error.message.split("→").pop().trim()}).`);
 }
