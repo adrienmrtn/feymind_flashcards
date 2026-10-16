@@ -327,7 +327,7 @@ enum LessonServiceError: LocalizedError, Equatable {
             case "pro_required": return .proRequired
             case "daily_limit": return .dailyLimit
             case "forbidden": return .forbidden
-            default: return .failed(message.isEmpty ? L10n.t("lesson.error.generic", locale: .resolved()) : message)
+            default: return .failed(ServerMessage.localized(message, fallback: "lesson.error.generic"))
             }
         case .notConfigured:
             return .notConfigured

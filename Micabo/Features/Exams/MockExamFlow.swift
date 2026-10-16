@@ -53,6 +53,8 @@ struct MockExamFlow: View {
                 MockExamRunView(paper: paper, tone: tone, onQuit: { dismiss() }) { answers, seconds in
                     let result = paper.result(answers: answers, seconds: seconds)
                     ExamHistory.record(result)
+                    // Une copie rendue est une séance : elle allume la journée de la série.
+                    StudyStreak.record()
                     withAnimation(.spring(duration: 0.5)) { phase = .result(paper, answers, result) }
                 }
                 .transition(.move(edge: .trailing))
@@ -130,7 +132,7 @@ struct MockExamFlow: View {
                                     VStack(spacing: 2) {
                                         Text("\(value)")
                                             .font(MicaboFont.number(24))
-                                        Text("min")
+                                        Text(L10n.t("ios.minutesShort", locale: .resolved()))
                                             .font(MicaboFont.ui(13, weight: .bold))
                                     }
                                     .foregroundStyle(isOn ? MicaboColor.accent : MicaboColor.ink)

@@ -13,9 +13,9 @@
 	<key>MicaboCommit</key>
 	<string>dev</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Micabo utilise l'appareil photo pour scanner vos pages de cours.</string>
+	<string>Micabo utilise l'appareil photo pour scanner tes pages de cours.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Micabo accède à vos photos pour importer un cours ou un schéma.</string>
+	<string>Micabo accède à tes photos pour importer un cours ou un schéma.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Micabo utilise le micro pour enregistrer un cours ou une note vocale et en faire une leçon.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>

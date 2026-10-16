@@ -29,6 +29,10 @@ struct LessonPathView: View {
     @State private var confirmsReset = false
     /// Un palier franchi : des confettis, une fois.
     @State private var celebration = 0
+    /// **La série qui grandit**, une fois par jour, après l'étape (`StreakCelebrationView`).
+    @State private var streakCelebration = false
+    /// Où l'on allait en quittant « Leçon terminée », quand la série passe entre les deux.
+    @State private var afterStreak: LessonFinishedView.Destination?
 
     init(course: Course) {
         self.course = course
@@ -109,13 +113,22 @@ struct LessonPathView: View {
         .fullScreenCover(isPresented: $finished) {
             LessonFinishedView(session: session) { destination in
                 finished = false
-                switch destination {
-                case .flashcards:
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { sheet = .cards }
-                case .lessons:
-                    dismiss()
+                // La série se fête après la leçon : « Leçon terminée » a son moment, la flamme
+                // le sien, et l'on va ensuite là où l'on avait choisi d'aller.
+                guard StudyStreak.celebrationIsDue() else {
+                    leave(to: destination)
+                    return
+                }
+                afterStreak = destination
+                // Le temps que « Leçon terminée » finisse de descendre : deux plein-écrans ne
+                // se croisent pas.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    if !celebrateStreakIfNeeded() { leaveAfterStreak() }
                 }
             }
+        }
+        .fullScreenCover(isPresented: $streakCelebration, onDismiss: leaveAfterStreak) {
+            StreakCelebrationView { streakCelebration = false }
         }
         .sheet(item: $sheet) { sheet in
             switch sheet {
@@ -328,7 +341,43 @@ struct LessonPathView: View {
             }
             if case .final = circle.kind {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { finished = true }
+            } else {
+                // La série passe après le chemin : le cercle se remplit, le trait avance, les
+                // confettis d'un palier tombent, et seulement ensuite la flamme.
+                DispatchQueue.main.asyncAfter(deadline: .now() + (circle.isMilestone ? 2.2 : 1.3)) {
+                    celebrateStreakIfNeeded()
+                }
             }
+        }
+    }
+
+    /// **Fête la série si c'est le premier jour qu'elle peut l'être**, et rend vrai si elle le
+    /// fait.
+    ///
+    /// Le registre ne réserve la fête qu'au moment où l'écran est libre : un cercle rouvert
+    /// entre-temps, une feuille ouverte ou « Leçon terminée » à l'écran, et elle attend la
+    /// prochaine étape au lieu de se perdre derrière.
+    @discardableResult
+    private func celebrateStreakIfNeeded() -> Bool {
+        guard openCircle == nil, sheet == nil, !finished, !streakCelebration else { return false }
+        guard StudyStreak.claimCelebration() else { return false }
+        streakCelebration = true
+        return true
+    }
+
+    /// Reprend le chemin choisi à la sortie de « Leçon terminée », une fois la série saluée.
+    private func leaveAfterStreak() {
+        guard let destination = afterStreak else { return }
+        afterStreak = nil
+        leave(to: destination)
+    }
+
+    private func leave(to destination: LessonFinishedView.Destination) {
+        switch destination {
+        case .flashcards:
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { sheet = .cards }
+        case .lessons:
+            dismiss()
         }
     }
 
@@ -366,8 +415,16 @@ struct LessonPathHeader: View {
 
     var body: some View {
         VStack(spacing: 18) {
-            MicaboIconView(icon: course.icon, size: 150)
+            // 88 points : les icônes 3D font 256 pixels, au-delà elles s'étirent et floutent.
+            // Le halo de la couleur de la leçon garde au grand en-tête sa présence.
+            MicaboIconView(icon: course.icon, size: 88)
                 .shadow(color: tone.vivid.opacity(0.25), radius: 24, x: 0, y: 14)
+                .background(
+                    Circle()
+                        .fill(RadialGradient(colors: [tone.vivid.opacity(0.22), tone.vivid.opacity(0)], center: .center, startRadius: 4, endRadius: 90))
+                        .frame(width: 180, height: 180)
+                )
+                .padding(.vertical, 14)
             Text(course.title)
                 .font(MicaboFont.display(30))
                 .foregroundStyle(MicaboColor.ink)
@@ -430,7 +487,8 @@ struct LessonPathHeader: View {
     }
 
     private func examPill(_ exam: Exam) -> some View {
-        let date = exam.date.formatted(.dateTime.day().month(.abbreviated))
+        // La date dans la langue de l'app, pas dans celle du téléphone.
+        let date = MicaboCalendar.shortDayLabel(exam.date)
         return Label {
             Text(L10n.t("lesson.path.examPill", locale: .resolved(), vars: [
                 "date": date,

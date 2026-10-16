@@ -41,7 +41,7 @@ struct MicaboTile: View {
                 .minimumScaleFactor(0.75)
                 .lineLimit(1)
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel(value.formatted(date: .long, time: .omitted))
+                .accessibilityLabel(value.formatted(.dateTime.day().month(.wide).year().locale(UiLocale.resolved().foundation)))
             }
         }
         .frame(width: size, height: size)

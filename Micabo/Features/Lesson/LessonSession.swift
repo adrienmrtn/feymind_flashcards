@@ -193,7 +193,11 @@ final class LessonSession {
     // MARK: Écrire
 
     /// Coche une étape. Le Quiz final coche aussi la leçon : elle passe en « apprise ».
+    ///
+    /// Une étape finie allume aussi la journée de la série (`StudyStreak`) : lire ses notes
+    /// jusqu'au bout est une vraie séance, même sans une seule carte notée.
     func complete(_ circle: PathCircle, in context: ModelContext) {
+        StudyStreak.record()
         course.updateProgress { progress in
             progress.done.insert(circle.id)
             progress.inCircle = 0
@@ -236,7 +240,11 @@ final class LessonSession {
     }
 
     /// Une réponse à un QCM. Ratée, la question devient une flashcard à revoir demain.
+    ///
+    /// Juste ou fausse, elle compte pour la série : on a travaillé, même si l'étape n'est pas
+    /// allée à son terme.
     func answered(_ question: QuizQuestion, right: Bool, in context: ModelContext) {
+        StudyStreak.record()
         course.updateProgress { progress in
             if right { progress.noteRight(question.id) } else { progress.noteMissed(question.id) }
         }

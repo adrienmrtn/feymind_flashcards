@@ -36,6 +36,22 @@ struct EducationStage: Identifiable, Hashable {
     }
 
     private static func titleKey(for id: String) -> String? {
+        // « Autre » se dit dans la langue de l'app, quel que soit le pays : un élève qui lit
+        // l'app en français ne doit pas tomber sur « Altro » ou « Sonstiges ».
+        if id.hasSuffix(".other") { return "ios.level.other" }
+        switch id {
+        // L'échelle générique, pour un pays dont on ne connaît pas le système : dans la langue
+        // de l'app, et plus en anglais pour tout le monde.
+        case "generic.middle": return "ios.level.generic.middle"
+        case "generic.high": return "ios.level.generic.high"
+        case "generic.college": return "ios.level.generic.college"
+        case "generic.university": return "ios.level.generic.university"
+        default: break
+        }
+        return localKey(for: id)
+    }
+
+    private static func localKey(for id: String) -> String? {
         switch id {
         case "fr.lycee": "ios.level.lycee"
         case "fr.prepa", "ma.prepa": "ios.level.prepa"

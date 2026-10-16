@@ -34,6 +34,7 @@ struct ProfileView: View {
     @State private var paywall: PaywallTrigger?
     @State private var path = NavigationPath()
     @State private var metrics = Metrics.empty
+    @State private var showsStreak = false
 
     /// Les statistiques sont calculées une seule fois par rendu. Avant, `streak`,
     /// `bestStreak`, la répartition et les cartes les plus passées reparcouraient le même
@@ -62,9 +63,14 @@ struct ProfileView: View {
         init(snapshot: ProfileSnapshot) {
             courseCount = snapshot.courseCount
             cardCount = snapshot.cardCount
-            hasReviews = !snapshot.reviewDates.isEmpty
-            streak = StudyStats.streak(reviewDates: snapshot.reviewDates)
-            bestStreak = StudyStats.bestStreak(reviewDates: snapshot.reviewDates)
+            // **La série ne se lit plus dans le journal des cartes** : une leçon, un quiz, une
+            // copie d'examen blanc comptent aussi (`StudyStreak`). Le journal y est versé à
+            // chaque lecture — un compte d'avant la refonte garde sa série, et une révision
+            // synchronisée depuis un autre appareil allume son jour ici aussi.
+            StudyStreak.merge(snapshot.reviewDates)
+            streak = StudyStreak.current()
+            bestStreak = StudyStreak.best()
+            hasReviews = !snapshot.reviewDates.isEmpty || bestStreak > 0
             knowledge = StudyStats.knowledgeDistribution(from: snapshot.knowledge)
             masteryPercent = snapshot.masteryPercent
             byCourse = snapshot.byCourse
@@ -241,6 +247,12 @@ struct ProfileView: View {
                     ProfileCard(name: profileName, identity: profileIdentity, studies: profileStudies) {
                         showSettings = true
                     }
+                    Button {
+                        showsStreak = true
+                    } label: {
+                        streakPanel(metrics)
+                    }
+                    .buttonStyle(MicaboPressableButtonStyle(feedback: .soft))
                     if !(pro?.isPro ?? true) {
                         ProUpgradeCard { paywall = .upgrade }
                     }
@@ -301,6 +313,9 @@ struct ProfileView: View {
             .sheet(isPresented: $showSettings) {
                 SettingsView()
                     .presentationCornerRadius(MicaboRadius.sheet)
+            }
+            .sheet(isPresented: $showsStreak) {
+                StreakSheet()
             }
             .micaboPaywall($paywall)
         }
@@ -429,14 +444,15 @@ struct ProfileView: View {
         return "\(unit) \(i18n.t("app.profile.streak.record", ["record": "\(metrics.bestStreak)"]))"
     }
 
+    /// Avant le premier jour : la série n'existe pas encore, et la carte dit comment l'allumer.
     private var firstReviewInvitation: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(i18n.t("app.profile.noReviews"))
+            Text(i18n.t("ios.streak.zeroTitle"))
                 .font(MicaboFont.ui(19, weight: .bold))
                 .foregroundStyle(MicaboColor.ink)
                 .tracking(MicaboTracking.tight)
 
-            Text(i18n.t("app.profile.streak.empty"))
+            Text(i18n.t("ios.streak.emptyBody"))
                 .font(MicaboFont.ui(13.5, weight: .regular))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .fixedSize(horizontal: false, vertical: true)

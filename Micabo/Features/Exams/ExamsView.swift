@@ -380,7 +380,7 @@ struct MockResultRow: View {
                     .font(MicaboFont.ui(16, weight: .heavy))
                     .foregroundStyle(MicaboColor.ink)
                     .lineLimit(1)
-                Text("\(MicaboCalendar.shortDayLabel(result.date)) · \(result.correct)/\(result.total) · \(result.minutes) min")
+                Text("\(MicaboCalendar.shortDayLabel(result.date)) · \(result.correct)/\(result.total) · \(L10n.t("lesson.finished.minutes", locale: .resolved(), vars: ["n": "\(result.minutes)"]))")
                     .font(MicaboFont.ui(13.5, weight: .medium))
                     .foregroundStyle(MicaboColor.inkSecondary)
             }

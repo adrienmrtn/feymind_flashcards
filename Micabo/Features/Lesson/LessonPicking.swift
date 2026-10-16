@@ -131,7 +131,7 @@ struct SeededGenerator: RandomNumberGenerator {
 /// une question ratée.
 enum LessonReview {
     /// Note une carte comme la session de révision le fait : SM-2, puis le journal (qui nourrit
-    /// aussi le classement de la semaine).
+    /// aussi le classement de la semaine), et la journée de la série (`StudyStreak`).
     static func rate(_ card: Flashcard, _ rating: ReviewRating, now: Date = Date()) {
         let before = CardScheduling(card: card)
         let outcome = SM2Scheduler.schedule(snapshot: before.snapshot, rating: rating, now: now)
@@ -147,6 +147,7 @@ enum LessonReview {
             easeAfter: outcome.easeFactor
         )
         card.logs = (card.logs ?? []) + [log]
+        StudyStreak.record(now: now)
     }
 
     /// **Une question ratée devient une flashcard à revoir demain.** Une carte QCM, rattachée

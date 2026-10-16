@@ -119,7 +119,7 @@ extension MicaboScreenHeader where Trailing == EmptyView {
 /// Champ de recherche large, blanc, aux coins généreux.
 struct MicaboSearchField: View {
     @Binding var text: String
-    var placeholder: String = "Rechercher"
+    var placeholder: String = L10n.t("ios.search", locale: .resolved())
 
     var body: some View {
         HStack(spacing: 10) {

@@ -1,10 +1,17 @@
 import SwiftData
 import SwiftUI
 
-/// **Home** (`docs/refonte-parcours.md` § 3) : la grande question, la barre « comme une IA »
-/// avec Mika perché dessus — c'est elle qu'on voit d'abord —, les cinq supports en petit
-/// dessous, trois petits chiffres mesurés, et « Reprendre ».
+/// **Home** (`docs/refonte-parcours.md` § 3) : la série en haut à droite, la grande question
+/// au centre, la barre « comme une IA » avec Mika perché dessus — c'est elle qu'on voit
+/// d'abord —, les cinq supports en petit dessous, trois petits chiffres mesurés, et
+/// « Reprendre ».
+///
+/// **Un appui à côté du champ range le clavier.** Le titre, la rangée du haut, les chiffres et
+/// tout le vide entre les blocs le rendent ; les boutons gardent leur appui, parce qu'un geste
+/// posé sur un parent passe après ceux de ses enfants. Le geste n'est jamais posé sur la barre
+/// elle-même : un appui dans le champ doit l'ouvrir, pas le refermer aussitôt.
 struct HomeView: View {
+    @Environment(\.modelContext) private var modelContext
     @Environment(ProAccess.self) private var pro: ProAccess?
     @Query(sort: \Course.createdAt, order: .reverse) private var courses: [Course]
 
@@ -13,6 +20,7 @@ struct HomeView: View {
     @State private var importRequest: LessonComposer.Kind?
     @State private var creating = false
     @State private var paywall: PaywallTrigger?
+    @State private var showsStreak = false
     @FocusState private var focused: Bool
 
     private var isPro: Bool { pro?.isPro ?? true }
@@ -21,8 +29,7 @@ struct HomeView: View {
         NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 26) {
-                    HomeTitle()
-                        .padding(.top, 12)
+                    header
                     HomeComposerBar(
                         composer: composer,
                         focused: $focused,
@@ -33,6 +40,8 @@ struct HomeView: View {
                     )
                     .padding(.top, HomePerch.height)
                     HomeStatsRow(stats: HomeStats(courses: courses))
+                        .contentShape(Rectangle())
+                        .onTapGesture(perform: dismissKeyboard)
                     if let resume = ResumeTarget.pick(from: courses) {
                         ResumeCard(course: resume.0, target: resume.1) {
                             path.append(resume.0)
@@ -42,6 +51,14 @@ struct HomeView: View {
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.top, 8)
                 .padding(.bottom, 24)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                // Le vide entre les blocs et autour d'eux : rien n'y est touchable, l'appui
+                // tombe sur ce fond.
+                .background {
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture(perform: dismissKeyboard)
+                }
             }
             .scrollDismissesKeyboard(.interactively)
             .scrollIndicators(.hidden)
@@ -62,9 +79,49 @@ struct HomeView: View {
                 }
             }
             .micaboPaywall($paywall)
+            .sheet(isPresented: $showsStreak) {
+                StreakSheet(onStudy: study)
+            }
+            // Le journal des cartes rejoint la série une fois : un ancien compte retrouve la
+            // sienne dans la pastille dès l'ouverture.
+            .task { StudyStreak.adoptReviewHistoryIfNeeded(in: modelContext) }
         }
         .reportsNavigationDepth(for: .today, depth: path.count)
         .returnsHome(path: $path)
+    }
+
+    /// **La rangée du haut et la question**, centrées l'une sur l'autre. La série se pose à
+    /// droite, sur sa propre ligne : elle ne pousse ni le titre ni Mika.
+    private var header: some View {
+        VStack(spacing: 8) {
+            HStack {
+                Spacer(minLength: 0)
+                StreakPill {
+                    dismissKeyboard()
+                    showsStreak = true
+                }
+            }
+            HomeTitle()
+                .padding(.horizontal, 4)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture(perform: dismissKeyboard)
+    }
+
+    private func dismissKeyboard() {
+        focused = false
+    }
+
+    /// « Faire une leçon », depuis la feuille de la série : la leçon en cours s'il y en a une,
+    /// sinon la barre, prête à écrire.
+    private func study() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            if let resume = ResumeTarget.pick(from: courses) {
+                path.append(resume.0)
+            } else {
+                focused = true
+            }
+        }
     }
 
     /// PDF, Photo, Audio et YouTube sont Pro ; un texte collé est la leçon offerte.
@@ -93,11 +150,20 @@ struct HomeView: View {
 
 /// **« Qu'est-ce que tu veux apprendre aujourd'hui ? »**, en grand, le mot « apprendre » dans
 /// une couleur qui ressort. Le mot est marqué `**…**` dans le catalogue, dans chaque langue.
+///
+/// **Centrée, sur toute la largeur de la barre.** Calée à gauche, avec Mika perché à droite
+/// en dessous, la question avait l'air poussée de côté : deux lignes de longueurs inégales
+/// contre un bord, un personnage contre l'autre, et un grand vide entre les deux. Centrée,
+/// elle tombe dans l'axe de Mika et de la barre, et l'écran se lit de haut en bas sur une
+/// seule ligne.
 struct HomeTitle: View {
     var body: some View {
         Self.text(L10n.t("lesson.home.title", locale: .resolved()))
             .font(MicaboFont.display(34))
+            .tracking(MicaboTracking.tight)
             .foregroundStyle(MicaboColor.ink)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
             .fixedSize(horizontal: false, vertical: true)
             .accessibilityAddTraits(.isHeader)
     }
@@ -119,8 +185,8 @@ struct HomeTitle: View {
     }
 }
 
-/// **Mika, perché sur la barre** : ses pattes et son ombre posées sur le bord haut, du côté
-/// droit. Il fait coucou, puis attend ; il réfléchit pendant qu'un support se lit.
+/// **Mika, perché sur la barre** : ses pattes et son ombre posées sur le bord haut, au milieu,
+/// sous la question. Il fait coucou, puis attend ; il réfléchit pendant qu'un support se lit.
 struct HomePerch: View {
     var isThinking = false
 
@@ -230,9 +296,12 @@ struct HomeComposerBar: View {
             )
             .shadow(color: MicaboColor.accent.opacity(focused.wrappedValue ? 0.3 : 0.18), radius: focused.wrappedValue ? 22 : 16, y: 8)
             .animation(.easeOut(duration: 0.25), value: focused.wrappedValue)
-            .overlay(alignment: .topTrailing) {
+            .overlay(alignment: .top) {
                 HomePerch(isThinking: isThinking)
-                    .offset(x: -18, y: -HomePerch.height)
+                    .offset(y: -HomePerch.height)
+                    // Le toucher le fait sauter de joie, et range aussi le clavier : il est
+                    // au-dessus de la barre, là où l'on appuie pour sortir du champ.
+                    .simultaneousGesture(TapGesture().onEnded { focused.wrappedValue = false })
             }
             .animation(.spring(duration: 0.3), value: composer.supports.count)
 
