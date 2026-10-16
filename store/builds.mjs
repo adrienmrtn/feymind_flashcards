@@ -38,17 +38,23 @@ if (!app) {
 }
 console.log(`App : ${app.attributes?.name} (${bundleId})`);
 
-const day = (date) => (date ? date.replace("T", " ").slice(0, 16) : "—");
+// Apple date à l'heure du Pacifique (`…-07:00`) : tout est ramené en UTC, comme GitHub.
+const day = (date) => (date ? `${new Date(date).toISOString().replace("T", " ").slice(0, 16)} UTC` : "—");
 
 // ── Xcode Cloud ─────────────────────────────────────────────────────────────────────────
 
 let seen = false;
 let product = null;
-try {
-  const products = await asc.get(`/v1/apps/${app.id}/ciProduct`);
-  product = products.data ?? null;
-} catch (error) {
-  console.log(`\nXcode Cloud : illisible (${error.message})`);
+for (const path of [`/v1/apps/${app.id}/ciProduct`, `/v1/ciProducts?filter[app]=${app.id}`, `/v1/ciProducts?limit=200&include=app`]) {
+  try {
+    const products = await asc.get(path);
+    const found = [products.data ?? []].flat();
+    product = found.find((item) => item.relationships?.app?.data?.id === app.id) ?? (found.length === 1 ? found[0] : null);
+    console.log(`\nXcode Cloud : ${path} → ${found.length} produit(s)${found.length ? ` (${found.map((f) => f.attributes?.name).join(", ")})` : ""}`);
+    if (product) break;
+  } catch (error) {
+    console.log(`\nXcode Cloud : ${path} illisible (${error.message})`);
+  }
 }
 
 if (product) {
