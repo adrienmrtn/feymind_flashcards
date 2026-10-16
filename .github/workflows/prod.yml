@@ -1,0 +1,63 @@
+# La prod, vérifiée de l'extérieur, sans rien y écrire :
+#   - Supabase : les migrations de la refonte et les Edge Functions (supabase/prod-check.sh) ;
+#   - les builds, sur `main` : le dernier commit a-t-il donné un build TestFlight, et où en
+#     est l'App Store (store/builds.mjs, avec la clé App Store Connect de la grille de prix).
+#     Après une fusion qui touche l'app, le job attend ce build (45 min au plus).
+#
+# Lancement : onglet Actions → « Prod » → Run workflow. Il part aussi à chaque push qui touche
+# l'app, Supabase ou ses scripts.
+
+name: Prod
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "supabase/prod-check.sh"
+      - "supabase/migrations/**"
+      - "supabase/functions/**"
+      - "store/builds.mjs"
+      - ".github/workflows/prod.yml"
+      - "Micabo/**"
+      - "Micabo.xcodeproj/**"
+
+permissions:
+  contents: read
+
+jobs:
+  supabase:
+    name: Supabase
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - run: ./supabase/prod-check.sh
+
+  # Sur `main` seulement : c'est là que Xcode Cloud construit. Après une fusion qui touche
+  # l'app, le job attend que le build arrive dans TestFlight et qu'Apple l'ait traité.
+  builds:
+    name: Xcode Cloud et TestFlight
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          # Les scripts n'ont aucune dépendance. Sans ça, setup-node v5 lit `packageManager`
+          # dans package.json et cherche pnpm, qui n'est pas installé.
+          package-manager-cache: false
+      - env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          args=("$(git rev-parse HEAD)" "$(git show -s --format=%cI HEAD)")
+          if [ "${{ github.event_name }}" = "push" ] && git diff --name-only "$BEFORE" HEAD 2>/dev/null | grep -qE '^Micabo(/|\.xcodeproj/)'; then
+            args+=(--wait 45)
+          fi
+          node store/builds.mjs "${args[@]}"
