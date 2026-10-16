@@ -88,6 +88,7 @@ struct WelcomeStepView: View {
 
     @State private var titleRead = false
     @State private var isReady = false
+    @State private var mikaShown = false
 
     private var name: String {
         model.displayName.nilIfBlank ?? OnboardingPreferences.displayName ?? ""
@@ -97,6 +98,16 @@ struct WelcomeStepView: View {
         VStack(spacing: 0) {
             VStack(spacing: 0) {
                 Spacer(minLength: 0)
+
+                // Mika accueille : il arrive en ressort et fait coucou, au-dessus du prénom.
+                MikaMascot(mood: .wave, size: 150, reactsToTap: true)
+                    .scaleEffect(mikaShown ? 1 : 0.4)
+                    .opacity(mikaShown ? 1 : 0)
+                    .padding(.bottom, MicaboSpacing.lg)
+                    .accessibilityHidden(true)
+                    .onAppear {
+                        withAnimation(.spring(duration: 0.6, bounce: 0.45).delay(0.15)) { mikaShown = true }
+                    }
 
                 OnboardingReadingText(
                     template: i18n.t("ios.onb.welcome.title", ["name": name]),

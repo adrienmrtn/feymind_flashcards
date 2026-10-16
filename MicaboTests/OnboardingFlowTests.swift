@@ -62,8 +62,8 @@ final class OnboardingFlowTests: XCTestCase {
         generic.advance()
         XCTAssertEqual(generic.step, .subjects)
 
-        XCTAssertEqual(OnboardingStep.allCases.filter { $0.isSkipped(for: .fr) }, [.level, .demoCourse])
-        XCTAssertEqual(OnboardingStep.allCases.filter { $0.isSkipped(for: .other) }, [.schoolType, .year, .demoCourse])
+        XCTAssertEqual(OnboardingStep.allCases.filter { $0.isSkipped(for: .fr) }, [.level])
+        XCTAssertEqual(OnboardingStep.allCases.filter { $0.isSkipped(for: .other) }, [.schoolType, .year])
     }
 
     // MARK: - Le quiz
@@ -99,7 +99,7 @@ final class OnboardingFlowTests: XCTestCase {
         let questions = OnboardingStep.allCases.filter(\.isQuestion)
         XCTAssertEqual(questions, [
             .name, .country, .level, .schoolType, .year, .subjects, .worries, .goal,
-            .currentAverage, .targetAverage, .dailyTime, .studyTime, .materials, .demoCourse,
+            .currentAverage, .targetAverage, .dailyTime, .studyTime,
         ])
     }
 
@@ -149,81 +149,60 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(OnboardingProofFigures.students, 45_000)
     }
 
-    // MARK: - Mika, le cours, les cartes, l'offre
+    // MARK: - Mika, puis l'offre
 
-    /// **Après le quiz, on rend** : Mika prépare, cinq écrans montrent, une phrase annonce
-    /// la fiche, et c'est seulement là qu'on demande un compte — dans une languette, sur
-    /// cette même page, juste avant de déposer ses supports.
-    func testMikaShowsWhatMicaboDoesBeforeAskingForAnAccount() {
+    /// **Après le quiz, Mika** : il prépare le profil, annonce comment il peut aider, puis
+    /// six écrans — sa mission, les documents, les parcours, l'envie, la solution, la fin de
+    /// la pression. C'est en quittant le dernier qu'on demande un compte, dans une languette,
+    /// sur cette même page.
+    func testMikaPresentsHimselfBeforeAskingForAnAccount() {
         let model = self.model(advancingTo: .building)
 
-        for expected in [OnboardingStep.featuresIntro, .featureSheets, .featurePlan, .featureCards, .featurePocket, .featureMika, .sheetIntro] {
+        for expected in [OnboardingStep.featuresIntro, .mikaMission, .mikaSources, .mikaPaths, .mikaDesign, .mikaSolution, .mikaRelief] {
             model.advance()
             XCTAssertEqual(model.step, expected)
         }
 
         model.advance()
-        XCTAssertEqual(model.step, .sheetIntro, "Le compte ne change pas de page")
+        XCTAssertEqual(model.step, .mikaRelief, "Le compte ne change pas de page")
         XCTAssertTrue(model.isAccountSheetPresented, "Le compte monte en languette")
     }
 
-    /// Connexion ou « Passer », la languette se referme et le parcours reprend sur les cases
-    /// de dépôt. Le retour ne la rouvre pas.
-    func testTheAccountSheetLeadsToTheMaterials() {
-        let model = self.model(advancingTo: .sheetIntro)
+    /// Connexion ou « Passer », la languette se referme et le parcours reprend sur la preuve
+    /// sociale. Le retour ne la rouvre pas.
+    func testTheAccountSheetLeadsToTheOffer() {
+        let model = self.model(advancingTo: .mikaRelief)
         model.advance()
         XCTAssertTrue(model.isAccountSheetPresented)
 
         model.finishAccountSheet()
         XCTAssertFalse(model.isAccountSheetPresented)
-        XCTAssertEqual(model.step, .materials)
+        XCTAssertEqual(model.step, .socialProof)
     }
 
-    /// **La seule branche du parcours se prend sur les cases de dépôt**, qui suivent le
-    /// compte sans question avant : déposer et avancer mène à la construction ; « je n'ai
-    /// rien pour l'instant » mène au choix d'un cours de démonstration. Dans les deux cas,
-    /// la construction puis le cours.
-    func testMaterialsAndDemoCourseAreTheTwoBranches() {
-        let signedIn = self.model(advancingTo: .sheetIntro)
-        signedIn.advance()
-        signedIn.finishAccountSheet()
-        XCTAssertEqual(signedIn.step, .materials, "Les cases de dépôt, tout de suite après le compte")
+    /// **Le parcours n'écrit plus de cours** : ni cases de dépôt, ni cours de démonstration,
+    /// ni cartes. Après Mika, la preuve et l'offre, dans cet ordre.
+    func testMikaLeadsStraightToTheProofAndTheOffer() {
+        let model = self.model(advancingTo: .mikaRelief)
+        model.hasAccount = true
 
-        let withMaterials = self.model(advancingTo: .materials)
-        withMaterials.hasMaterials = true
-        withMaterials.advance()
-        XCTAssertEqual(withMaterials.step, .courseBuilding, "Avec ses supports, pas de cours de démonstration à choisir")
-        withMaterials.advance()
-        XCTAssertEqual(withMaterials.step, .courseReview)
-
-        let without = self.model(advancingTo: .materials)
-        without.hasMaterials = false
-        without.advance()
-        XCTAssertEqual(without.step, .demoCourse)
-        without.advance()
-        XCTAssertEqual(without.step, .courseBuilding)
-        XCTAssertTrue(without.isDemoCourse)
-        XCTAssertFalse(withMaterials.isDemoCourse)
-    }
-
-    /// Le cours de démonstration ne se propose qu'à qui a dit n'avoir rien : sans réponse,
-    /// il se saute, et le parcours ne s'arrête jamais sur un écran vide.
-    func testTheDemoChoiceOnlyShowsToWhoHasNoMaterials() {
-        let model = self.model(advancingTo: .materials)
-        XCTAssertNil(model.hasMaterials)
-        model.advance()
-        XCTAssertEqual(model.step, .courseBuilding)
-    }
-
-    /// Le cours, puis les cartes, puis le bravo, puis la preuve et l'offre, dans cet ordre —
-    /// et plus d'écran comparatif entre la preuve et l'essai.
-    func testTheCardsComeBeforeTheProofAndTheOffer() {
-        let model = self.model(advancingTo: .courseReview)
-
-        for expected in [OnboardingStep.trainPrompt, .trainCards, .wellDone, .socialProof, .trialOffer, .trialReminder, .paywall] {
+        for expected in [OnboardingStep.socialProof, .trialOffer, .trialReminder, .paywall] {
             model.advance()
             XCTAssertEqual(model.step, expected)
         }
+    }
+
+    /// Chaque écran de Mika a sa phrase, dans toutes les langues, avec un passage marqué.
+    func testEveryMikaScreenHasItsSentence() {
+        for page in MikaPage.allCases {
+            for locale in UiLocale.allCases {
+                let text = L10n.t(page.titleKey, locale: locale)
+                XCTAssertNotEqual(text, page.titleKey, "\(page) \(locale)")
+                XCTAssertTrue(text.contains("**"), "\(page) \(locale) met un mot en avant")
+            }
+        }
+        XCTAssertEqual(L10n.t("ios.quiz.time", locale: .fr), "Combien de temps es-tu prêt à étudier sur Micabo par jour ?")
+        XCTAssertEqual(L10n.t("ios.onb.features.intro", locale: .fr), "Voyons maintenant comment **Mika** peut t'aider.")
     }
 
     /// L'écran de calcul du plan ne doit pas passer plus vite qu'on ne le lit : un
@@ -286,7 +265,7 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(model.step, .building)
 
         for step in OnboardingStep.allCases
-        where step.rawValue > OnboardingStep.notifications.rawValue && step != .demoCourse {
+        where step.rawValue > OnboardingStep.notifications.rawValue {
             let later = self.model(advancingTo: step)
             XCTAssertFalse(later.canGoBack, "\(step) ne doit pas proposer de retour")
         }
@@ -330,14 +309,17 @@ final class OnboardingFlowTests: XCTestCase {
                      "hookPress", "proofTwice", "proofKeep", "hookVideo", "nextExam", "proofStudents",
                      "proofPlan", "blocker", "triedApps",
                      "hookRating", "proofWhy", "source", "proofRealistic", "commitment", "proofCurve",
-                     "method", "thanks", "planReady", "reviews", "materialsQuestion", "comparison"] {
+                     "method", "thanks", "planReady", "reviews", "materialsQuestion", "comparison",
+                     "featureSheets", "featurePlan", "featureCards", "featurePocket", "featureMika", "sheetIntro",
+                     "materials", "demoCourse", "courseBuilding", "courseReview", "trainPrompt", "trainCards", "wellDone"] {
             XCTAssertFalse(names.contains(name), "\(name) a été retiré du parcours")
         }
     }
 
-    /// **Le parcours ne raccourcit pas.** Trente écrans avant, jamais moins après.
-    func testTheFlowIsAtLeastAsLongAsBefore() {
-        XCTAssertGreaterThanOrEqual(OnboardingStep.allCases.count, 30)
+    /// **Le parcours garde sa longueur** : le cours, les cartes et les cinq écrans de
+    /// fonctionnalités sont partis (treize écrans), Mika en a apporté six. Vingt-huit écrans.
+    func testTheFlowKeepsItsLength() {
+        XCTAssertEqual(OnboardingStep.allCases.count, 28)
     }
 
     /// Les clés des demandes retirées restent listées : sur un appareil qui a fait l'ancien
@@ -362,14 +344,14 @@ final class OnboardingFlowTests: XCTestCase {
         }
     }
 
-    /// Dans un pays décrit en détail, seuls le palier large et le cours de démonstration se
-    /// sautent : avancer depuis n'importe quelle autre étape mène toujours à la suivante.
+    /// Dans un pays décrit en détail, seul le palier large se saute : avancer depuis
+    /// n'importe quelle autre étape mène toujours à la suivante.
     func testNoOtherStepIsSkippedInADetailedCountry() {
-        let skipped: Set<OnboardingStep> = [.level, .demoCourse]
+        let skipped: Set<OnboardingStep> = [.level]
         for step in OnboardingStep.allCases.dropLast() where !skipped.contains(step) {
             let model = OnboardingModel()
             model.select(country: .fr)
-            // Le compte se propose en quittant l'annonce de la fiche ; ici, on l'a déjà.
+            // Le compte se propose en quittant le dernier écran de Mika ; ici, on l'a déjà.
             model.hasAccount = true
             while model.step != step { model.advance() }
             model.advance()
@@ -388,11 +370,11 @@ final class OnboardingFlowTests: XCTestCase {
 
     // MARK: - La barre du haut
 
-    /// **La barre se retire des écrans qui sont un moment à eux seuls** : le splash, les deux
-    /// chargements, le cours, les cartes, le bravo, le paywall. Partout ailleurs elle reste.
+    /// **La barre se retire des écrans qui sont un moment à eux seuls** : le splash, le
+    /// chargement du profil, le paywall. Partout ailleurs elle reste.
     func testTheChromeHidesOnlyOnTheScreensThatStandAlone() {
         let hidden = OnboardingStep.allCases.filter { !$0.showsChrome }
-        XCTAssertEqual(hidden, [.hookLogo, .building, .courseBuilding, .courseReview, .trainCards, .wellDone, .paywall])
+        XCTAssertEqual(hidden, [.hookLogo, .building, .paywall])
     }
 
     // MARK: - Fond des écrans
@@ -886,21 +868,14 @@ final class OnboardingFlowTests: XCTestCase {
 
     // MARK: - La reprise
 
-    /// **Seuls l'accroche et une construction interrompue se refont.** Le reste reprend sur
-    /// l'écran quitté ; le cours et les cartes, seulement si le cours est retrouvé.
-    func testOnlyTheHookAndAnInterruptedBuildAreReplayed() {
-        XCTAssertEqual(OnboardingStep.welcome.resumePoint(hasName: true, hasCourse: false), .hookLogo)
-        XCTAssertEqual(OnboardingStep.subjects.resumePoint(hasName: true, hasCourse: false), .subjects)
-        XCTAssertEqual(OnboardingStep.subjects.resumePoint(hasName: false, hasCourse: false), .hookLogo,
+    /// **Seule l'accroche se refait.** Le reste reprend sur l'écran quitté.
+    func testOnlyTheHookIsReplayed() {
+        XCTAssertEqual(OnboardingStep.welcome.resumePoint(hasName: true), .hookLogo)
+        XCTAssertEqual(OnboardingStep.subjects.resumePoint(hasName: true), .subjects)
+        XCTAssertEqual(OnboardingStep.subjects.resumePoint(hasName: false), .hookLogo,
                        "Sans prénom, tout ce qui suit s'adresserait à personne")
-        XCTAssertEqual(OnboardingStep.demoCourse.resumePoint(hasName: true, hasCourse: false), .materials)
-        XCTAssertEqual(OnboardingStep.courseBuilding.resumePoint(hasName: true, hasCourse: true), .materials,
-                       "Une construction ne reprend pas en cours de route")
-        XCTAssertEqual(OnboardingStep.courseReview.resumePoint(hasName: true, hasCourse: true), .courseReview)
-        XCTAssertEqual(OnboardingStep.courseReview.resumePoint(hasName: true, hasCourse: false), .materials)
-        XCTAssertEqual(OnboardingStep.wellDone.resumePoint(hasName: true, hasCourse: true), .trainPrompt,
-                       "Les cartes se tirent du cours à l'ouverture de leur écran")
-        XCTAssertEqual(OnboardingStep.paywall.resumePoint(hasName: true, hasCourse: false), .paywall)
+        XCTAssertEqual(OnboardingStep.mikaPaths.resumePoint(hasName: true), .mikaPaths)
+        XCTAssertEqual(OnboardingStep.paywall.resumePoint(hasName: true), .paywall)
     }
 
     /// **Un quiz interrompu reprend sur la question quittée**, avec les réponses déjà données.
@@ -937,36 +912,16 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertFalse(resumed.isResumed)
     }
 
-    /// **Le cours se rouvre s'il est dans la bibliothèque**, et la relecture n'écrit rien :
-    /// la vue du parcours peut construire puis jeter un modèle de reprise sans déplacer
-    /// l'écran enregistré.
-    func testTheCourseStageResumesOnlyWithItsCourse() throws {
+    /// **Un écran retiré ne se reprend pas** : un parcours laissé sur les cartes d'avant
+    /// repart du logo plutôt que d'un écran qui n'existe plus.
+    func testARetiredScreenIsNotResumed() {
         OnboardingPreferences.reset()
         defer { OnboardingPreferences.reset() }
 
-        let container = try ModelContainer(
-            for: Course.self,
-            Flashcard.self,
-            ReviewLog.self,
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-        )
-        let context = ModelContext(container)
-        let course = Course(title: "Photosynthèse", subject: "Biologie", summary: "", contextText: "")
-        context.insert(course)
-        try context.save()
-
         OnboardingPreferences.displayName = "Lina"
-        OnboardingPreferences.resumeStep = .trainCards
-        OnboardingPreferences.resumeCourseID = course.id
-
-        let resumed = OnboardingModel.resuming(in: context)
-        XCTAssertEqual(resumed.step, .trainPrompt)
-        XCTAssertEqual(resumed.builtCourse?.id, course.id)
-        XCTAssertEqual(OnboardingPreferences.resumeStep, .trainCards, "Relire ne réécrit pas l'écran quitté")
-        XCTAssertEqual(OnboardingPreferences.resumeCourseID, course.id)
-
-        OnboardingPreferences.resumeCourseID = UUID()
-        XCTAssertEqual(OnboardingModel.resuming(in: context).step, .materials, "Sans son cours, on repart des supports")
+        UserDefaults.standard.set("trainCards", forKey: OnboardingPreferences.Key.resumeStep)
+        XCTAssertNil(OnboardingPreferences.resumeStep)
+        XCTAssertEqual(OnboardingModel.resuming(in: nil).step, .hookLogo)
     }
 
     /// Qui a passé la connexion ne revoit pas la languette en reprenant juste avant elle.
@@ -979,12 +934,12 @@ final class OnboardingFlowTests: XCTestCase {
         }
 
         OnboardingPreferences.displayName = "Lina"
-        OnboardingPreferences.resumeStep = .sheetIntro
+        OnboardingPreferences.resumeStep = .mikaRelief
 
         let resumed = OnboardingModel.resuming(in: nil)
         resumed.advance()
         XCTAssertFalse(resumed.isAccountSheetPresented)
-        XCTAssertEqual(resumed.step, .materials)
+        XCTAssertEqual(resumed.step, .socialProof)
     }
 
     /// Seule la vue du parcours reprend, et un parcours fini ne laisse rien à reprendre.

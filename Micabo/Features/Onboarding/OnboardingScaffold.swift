@@ -32,13 +32,14 @@ enum OnboardingPalette {
     /// L'or des étoiles.
     static let star = Color(hex: 0xF5B942)
 
-    /// Le dégradé des mots mis en avant : le bleu de l'accent, le violet des mots-clés.
-    static let mikaGradient: [Color] = [MicaboColor.accent, MicaboColor.keyword, Color(hex: 0xD946A6)]
+    /// Le dégradé des mots mis en avant : le bleu de l'accent vers le violet des mots-clés,
+    /// celui du titre de Home.
+    static let mikaGradient: [Color] = [MicaboColor.accent, MicaboColor.keyword]
 
     // MARK: Les tailles de texte
 
-    /// Le titre d'un écran : 34 points, gras.
-    static func title(_ size: CGFloat = 34) -> Font { MicaboFont.ui(size, weight: .bold) }
+    /// Le titre d'un écran : la graisse des titres de l'app (`MicaboFont.display`).
+    static func title(_ size: CGFloat = 34) -> Font { MicaboFont.display(size) }
     /// Une réponse : 17 points, medium.
     static let option = MicaboFont.ui(17, weight: .medium)
     /// Le sous-titre : 13 points, gris.
@@ -147,6 +148,60 @@ extension EnvironmentValues {
     }
 }
 
+private struct OnboardingCheerKey: EnvironmentKey {
+    static let defaultValue: () -> Void = {}
+}
+
+extension EnvironmentValues {
+    /// **Ce qu'une réponse dit à Mika** : posé par le gabarit, appelé par les rangées, les
+    /// cases et les pastilles de choix. Mika, au pied de la page, s'en réjouit.
+    var onboardingCheer: () -> Void {
+        get { self[OnboardingCheerKey.self] }
+        set { self[OnboardingCheerKey.self] = newValue }
+    }
+}
+
+/// **Mika au pied de la page**, debout à gauche du rond, à la hauteur du pouce : il fait
+/// coucou en arrivant, attend, puis saute de joie à chaque réponse. Il est un peu plus grand
+/// que le rond, posé sur la même ligne : il accompagne, il ne cache rien.
+struct OnboardingFooterMika: View {
+    var cheers: Int
+
+    static let size: CGFloat = 78
+
+    @State private var mood: MikaMood = .wave
+    @State private var hop = false
+    @State private var settle: Task<Void, Never>?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        MikaMascot(mood: mood, size: Self.size, reactsToTap: true)
+            .frame(width: Self.size, height: Self.size)
+            .offset(y: hop ? -10 : 0)
+            .accessibilityHidden(true)
+            .onAppear { calm(after: 2.2) }
+            .onChange(of: cheers) { _, _ in
+                mood = .happy
+                if !reduceMotion {
+                    withAnimation(.spring(duration: 0.22, bounce: 0.6)) { hop = true }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+                        withAnimation(.spring(duration: 0.35, bounce: 0.4)) { hop = false }
+                    }
+                }
+                calm(after: 1.6)
+            }
+    }
+
+    private func calm(after seconds: Double) {
+        settle?.cancel()
+        settle = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(seconds))
+            guard !Task.isCancelled else { return }
+            mood = .idle
+        }
+    }
+}
+
 /// Échappatoire d'un écran de question, posée en haut à droite de l'écran.
 ///
 /// Elle n'existe que là où la réponse est réellement facultative : un écran sans issue se
@@ -226,10 +281,15 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         self.footer = footer
     }
 
-    /// Mika à côté du titre : sur les écrans de questions, ni centrés ni sombres.
+    /// Mika au pied de la page, à côté du rond : sur les écrans de questions, ni centrés ni
+    /// sombres. Il fait coucou en arrivant, et se réjouit à chaque réponse.
     private var showsMika: Bool {
-        !centered && !surface.isDark && titleSize >= 26
+        // Dans le parcours seulement : la création d'un deck emploie le même gabarit.
+        model != nil && !centered && !surface.isDark && titleSize >= 26
     }
+
+    /// Le nombre de réponses données sur cette page : chaque réponse fait réagir Mika.
+    @State private var cheers = 0
 
     /// La place de la barre du haut : seulement dans le parcours, et sur les écrans qui la
     /// montrent. L'étape est celle de la page, pas celle du modèle : pendant un glissement,
@@ -255,7 +315,15 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                 footer()
                     .onboardingAppear(index: 4)
             }
+            .overlay(alignment: .bottomLeading) {
+                if showsMika {
+                    OnboardingFooterMika(cheers: cheers)
+                        .padding(.leading, MicaboSpacing.screen - 8)
+                        .padding(.bottom, MicaboSpacing.sm - 4)
+                }
+            }
         }
+        .environment(\.onboardingCheer, { cheers += 1 })
         .onboardingChromeInset(chromeInset)
         // Le pied monte au-dessus du clavier sur les écrans qui en prennent un — le prénom,
         // la recherche d'un pays, le courriel du compte — et reste où il est quand la page
@@ -302,22 +370,14 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                 }
 
                 // Le titre passe par le texte à chiffre coloré : un passage entre deux
-                // astérisques doubles se peint en couleur, ici comme sur les preuves. Mika
-                // l'accompagne sur les écrans de questions, comme dans l'app.
-                HStack(alignment: .top, spacing: 10) {
-                    OnboardingAccentText(
-                        template: title,
-                        size: titleSize,
-                        alignment: centered ? .center : .leading,
-                        color: surface.title
-                    )
-                    if showsMika {
-                        Spacer(minLength: 0)
-                        MikaMascot(mood: .idle, size: 64, reactsToTap: true)
-                            .padding(.top, -6)
-                            .accessibilityHidden(true)
-                    }
-                }
+                // astérisques doubles se peint du dégradé de l'app, ici comme sur Home.
+                OnboardingAccentText(
+                    template: title,
+                    size: titleSize,
+                    alignment: centered ? .center : .leading,
+                    color: surface.title
+                )
+                .frame(maxWidth: .infinity, alignment: centered ? .center : .leading)
                 .onboardingAppear(index: 1)
 
                 if let subtitle {
@@ -416,10 +476,11 @@ private struct OnboardingAppear: ViewModifier {
     var stagger: Double = OnboardingMotion.stagger
 
     @State private var isVisible = false
+    @Environment(\.onboardingStill) private var still
 
     func body(content: Content) -> some View {
         content
-            .opacity(isVisible ? 1 : 0)
+            .opacity(isVisible || still ? 1 : 0)
             .onAppear {
                 withAnimation(OnboardingMotion.enter.delay(Double(index) * stagger)) {
                     isVisible = true
@@ -487,8 +548,8 @@ struct OnboardingContinueButton: View {
 
 // MARK: - Les réponses
 
-/// Rangée de choix : **une carte grise, un emoji, un libellé ; noire avec le texte blanc
-/// quand elle est choisie.** Pas de coche, pas de filet : la couleur dit tout.
+/// Rangée de choix : **une carte blanche de l'app, un emoji, un libellé ; bleue quand elle
+/// est choisie**, avec sa coche.
 struct OnboardingChoiceRow: View {
     let title: String
     var emoji: String?
@@ -502,8 +563,13 @@ struct OnboardingChoiceRow: View {
     /// Soixante points de haut au minimum : une réponse doit se viser au pouce.
     private static let minHeight: CGFloat = 60
 
+    @Environment(\.onboardingCheer) private var cheer
+
     var body: some View {
-        Button(action: action) {
+        Button {
+            action()
+            cheer()
+        } label: {
             HStack(spacing: 14) {
                 if let emoji {
                     Text(emoji)
@@ -579,8 +645,13 @@ struct OnboardingChoiceTile: View {
     var isSelected: Bool
     var action: () -> Void
 
+    @Environment(\.onboardingCheer) private var cheer
+
     var body: some View {
-        Button(action: action) {
+        Button {
+            action()
+            cheer()
+        } label: {
             VStack(spacing: 10) {
                 if let emoji {
                     Text(emoji)
@@ -623,8 +694,13 @@ struct OnboardingChoiceChip: View {
     let isSelected: Bool
     var action: () -> Void
 
+    @Environment(\.onboardingCheer) private var cheer
+
     var body: some View {
-        Button(action: action) {
+        Button {
+            action()
+            cheer()
+        } label: {
             HStack(spacing: 7) {
                 if let emoji {
                     Text(emoji)

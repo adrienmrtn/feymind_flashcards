@@ -113,22 +113,28 @@ struct MikaSpeaksStepView: View {
     @Environment(OnboardingModel.self) private var model
 
     @State private var isReady = false
+    @State private var mikaShown = false
 
     var body: some View {
         VStack(spacing: 0) {
             VStack(spacing: 0) {
                 Spacer(minLength: 0)
 
-                MikaMascot(mood: .wave, size: 140)
-                    .padding(.bottom, 30)
-                    .onboardingAppear(index: 1)
+                MikaMascot(mood: .wave, size: 170, reactsToTap: true)
+                    .scaleEffect(mikaShown ? 1 : 0.4)
+                    .opacity(mikaShown ? 1 : 0)
+                    .padding(.bottom, 26)
+                    .onAppear {
+                        withAnimation(.spring(duration: 0.6, bounce: 0.45).delay(0.1)) { mikaShown = true }
+                    }
 
                 OnboardingReadingText(
                     template: text,
                     size: 32,
                     wordDelay: 0.2,
                     startDelay: 0.6,
-                    highlightsOnFinish: false,
+                    // Le nom marqué (« **Mika** ») s'allume quand la phrase est lue.
+                    highlightsOnFinish: true,
                     onFinish: {
                         withAnimation(.easeOut(duration: 0.4)) { isReady = true }
                     }

@@ -2,24 +2,25 @@ import Foundation
 
 /// Les écrans du parcours d'accueil, dans l'ordre.
 ///
-/// **Le parcours est un quiz, puis une démonstration, puis une offre.** Il pose ses
-/// questions d'abord — le prénom, le pays, les matières, ce qui inquiète, les deux moyennes,
-/// le temps par jour, l'heure du rappel — parce qu'un élève lit un parcours qui parle de lui.
-/// Il rend ensuite : Mika prépare le profil, cinq écrans disent ce que l'app fait, puis
-/// l'élève **voit un cours fiché** — le sien, importé pour de vrai, ou un cours de
-/// démonstration — et s'entraîne sur trois cartes. La preuve sociale et l'offre ne
-/// viennent qu'après ça, quand il y a quelque chose à prouver.
+/// **Le parcours est un quiz, puis Mika, puis une offre.** Il pose ses questions d'abord — le
+/// prénom, le pays, les matières, ce qui inquiète, les deux moyennes, le temps par jour,
+/// l'heure du rappel — parce qu'un élève lit un parcours qui parle de lui. Mika prépare
+/// ensuite le profil, puis six écrans disent ce qu'il fait : sa mission, les documents qu'il
+/// prend, les parcours qu'il en tire, des leçons qui donnent envie, la solution, la fin de la
+/// pression. La preuve sociale et l'offre viennent après.
 ///
-/// Six blocs :
+/// **Le parcours n'écrit plus de cours.** La première leçon se crée dans l'app, depuis Home :
+/// c'est là qu'elle a ses vraies portes (sujet tapé, PDF, photos, YouTube), et le parcours
+/// n'en joue plus une version réduite.
+///
+/// Quatre blocs :
 ///
 /// 1. **L'accroche** : le logo, le prénom, la bienvenue.
 /// 2. **Le quiz** : pays, niveau, matières, inquiétudes, objectifs, une preuve, les deux
 ///    moyennes, le temps par jour, l'heure de révision, les rappels.
-/// 3. **Mika** : le profil se prépare, puis ce que Micabo sait faire, en cinq écrans.
-/// 4. **Le cours** : le compte (une languette, qu'on peut passer), les cases de dépôt — ou, à qui n'a rien, un cours de
-///    démonstration —, la construction, le cours fiché qu'on parcourt.
-/// 5. **Les cartes** : trois cartes, puis « bien joué ».
-/// 6. **L'offre** : la preuve sociale, l'essai, le rappel, le paywall.
+/// 3. **Mika** : le profil se prépare, « voyons comment Mika peut t'aider », puis six écrans.
+///    Le compte se propose en quittant le dernier, dans une languette.
+/// 4. **L'offre** : la preuve sociale, l'essai, le rappel, le paywall.
 ///
 /// **Le pays passe avant le niveau**, et le niveau avant les matières : chacun décide des
 /// réponses du suivant. La langue se déduit du pays, et ne se demande pas.
@@ -48,46 +49,34 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case proofRetention
     case currentAverage
     case targetAverage
-    /// Le temps par jour, sur un curseur qui dessine la progression estimée.
+    /// « Combien de temps es-tu prêt à étudier sur Micabo par jour ? », sur un curseur qui
+    /// dessine la progression estimée.
     case dailyTime
     /// L'heure à laquelle il révise : c'est celle du rappel.
     case studyTime
     case notifications
 
-    // Mika prépare, puis montre.
+    // Mika prépare, puis se présente.
     /// Le chargement : Mika se présente pendant que le profil se construit.
     case building
-    /// « Voyons maintenant comment Micabo peut t'aider. »
+    /// « Voyons maintenant comment Mika peut t'aider. »
     case featuresIntro
-    case featureSheets
-    case featurePlan
-    case featureCards
-    case featurePocket
-    case featureMika
-    /// « Voyons ensemble à quoi ressemble une fiche générée par Micabo. »
-    case sheetIntro
-
-    // Le cours. Le compte se propose juste avant, dans une languette qui monte sur
-    // `sheetIntro` (`OnboardingAccountSheet`) : ce n'est plus une page du parcours.
-    /// Les cases de dépôt, et « je n'ai rien pour l'instant » à côté du rond : c'est la
-    /// seule branche du parcours, et elle se prend sur l'écran même, sans question avant.
-    case materials
-    /// Un cours de démonstration à choisir, pour qui n'a rien déposé.
-    case demoCourse
-    /// La construction du cours, réelle ou jouée.
-    case courseBuilding
-    /// Le cours fiché, qu'on parcourt librement.
-    case courseReview
-
-    // Les cartes.
-    /// « Envie de t'entraîner sur quelques cartes ? »
-    case trainPrompt
-    /// Trois cartes : une recto verso, un QCM, un texte à trou.
-    case trainCards
-    case wellDone
+    /// Sa mission : les cours les plus interactifs possibles, pour apprendre simplement.
+    case mikaMission
+    /// Il prend tous tes documents : cours, PDF, notes, YouTube.
+    case mikaSources
+    /// … et il en fait des parcours simples, faits pour toi.
+    case mikaPaths
+    /// Des leçons qui donnent vraiment envie d'étudier.
+    case mikaDesign
+    /// La solution pour travailler efficacement et facilement.
+    case mikaSolution
+    /// La pression et la montagne de choses à revoir, c'est fini.
+    case mikaRelief
 
     // La preuve, puis l'offre.
-    /// « On a aidé 45 000 élèves », avec les avis — et la demande de note du système.
+    /// « On a aidé 45 000 élèves », l'étude de Harvard, les avis — et la demande de note du
+    /// système.
     case socialProof
     case trialOffer
     case trialReminder
@@ -115,31 +104,16 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
 
     /// **Où reprendre un parcours laissé sur cet écran.**
     ///
-    /// Un élève qui sort de l'app pendant le parcours — aller chercher son cours dans
-    /// Fichiers, répondre à un message pendant que Mika écrit — revient souvent sur une app
-    /// qu'iOS a fermée entre-temps. Il repartait du logo, trente-quatre écrans plus tôt, et
-    /// une fois sur deux il ne refaisait pas le chemin.
-    ///
-    /// On reprend donc là où il s'est arrêté, sauf là où l'écran ne peut pas se rejouer :
-    ///
-    /// - **l'accroche** se refait : trois écrans, et le prénom en fait partie ;
-    /// - **une construction interrompue** repart des cases de dépôt : les supports déposés
-    ///   ne sont pas gardés, et une construction ne reprend pas en cours de route ;
-    /// - **le cours et les cartes** ne reprennent que si le cours construit est retrouvé
-    ///   dans la bibliothèque, et les cartes repartent de leur proposition : les trois
-    ///   cartes se tirent du cours à l'ouverture de leur écran.
-    func resumePoint(hasName: Bool, hasCourse: Bool) -> OnboardingStep {
+    /// Un élève qui sort de l'app pendant le parcours revient souvent sur une app qu'iOS a
+    /// fermée entre-temps. Il repartait du logo, trente écrans plus tôt, et une fois sur deux
+    /// il ne refaisait pas le chemin. On reprend donc là où il s'est arrêté, sauf pour
+    /// **l'accroche**, qui se refait : trois écrans, et le prénom en fait partie.
+    func resumePoint(hasName: Bool) -> OnboardingStep {
         switch self {
         case .hookLogo, .name, .welcome:
             .hookLogo
         case _ where !hasName:
             .hookLogo
-        case .materials, .demoCourse, .courseBuilding:
-            .materials
-        case .courseReview:
-            hasCourse ? .courseReview : .materials
-        case .trainPrompt, .trainCards, .wellDone:
-            hasCourse ? .trainPrompt : .materials
         default:
             self
         }
@@ -151,19 +125,10 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// (`SchoolSystem`) ont une filière et une année, et le palier large s'en déduit. Les
     /// autres n'ont que le palier large : leur proposer une filière serait inventer des
     /// réponses fausses.
-    ///
-    /// Les cases de dépôt se montrent toujours ; le cours de démonstration ne se choisit que
-    /// si l'on a dit, sur les cases, n'avoir rien pour l'instant. On ne choisit pas un cours
-    /// joué quand on vient de déposer le sien.
-    ///
-    /// Quand la construction du cours a échoué et qu'on continue sans, le cours, les cartes
-    /// et le bravo se sautent aussi : il n'y a rien à parcourir ni à réviser.
-    func isSkipped(for country: SchoolingCountry, hasMaterials: Bool? = nil, courseUnavailable: Bool = false) -> Bool {
+    func isSkipped(for country: SchoolingCountry) -> Bool {
         switch self {
         case .schoolType, .year: !SchoolSystem.isDetailed(country)
         case .level: SchoolSystem.isDetailed(country)
-        case .demoCourse: hasMaterials != false
-        case .courseReview, .trainPrompt, .trainCards, .wellDone: courseUnavailable
         default: false
         }
     }
@@ -172,7 +137,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     var isQuestion: Bool {
         switch self {
         case .name, .country, .level, .schoolType, .year, .subjects, .worries, .goal,
-             .currentAverage, .targetAverage, .dailyTime, .studyTime, .materials, .demoCourse:
+             .currentAverage, .targetAverage, .dailyTime, .studyTime:
             true
         default:
             false
@@ -181,11 +146,10 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
 
     /// **La barre du haut — la pilule de retour et la jauge — se montre sur les écrans qui
     /// font partie du parcours, et se retire de ceux qui sont un moment à eux seuls** : le
-    /// splash, les deux chargements, le cours qu'on parcourt, les cartes, le bravo, et le
-    /// paywall qui porte sa propre croix.
+    /// splash, le chargement du profil, et le paywall qui porte sa propre croix.
     var showsChrome: Bool {
         switch self {
-        case .hookLogo, .building, .courseBuilding, .courseReview, .trainCards, .wellDone, .paywall:
+        case .hookLogo, .building, .paywall:
             false
         default:
             true
@@ -196,7 +160,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     ///
     /// On revient jusqu'au pays, et pas plus loin : le prénom et la bienvenue ne se défont
     /// pas. On ne revient plus après les rappels : tout ce qui suit est un résultat, une
-    /// démonstration, un compte ou une offre, et rien de tout ça ne se défait.
+    /// présentation, un compte ou une offre, et rien de tout ça ne se défait.
     static let firstReturnable: OnboardingStep = .country
     static let lastReturnable: OnboardingStep = .notifications
 

@@ -11,10 +11,9 @@ import SwiftUI
 /// logo qui traverse l'écran pour aller se ranger dans un coin attire l'œil sur lui-même,
 /// et c'est la page qu'on veut regarder.
 ///
-/// **La page** : le nom en haut, centré ; la maquette du téléphone au milieu ; un titre en
-/// gros, une ligne dessous ; le bouton, en pilule, centré. La maquette est une image du
-/// catalogue (`OnboardingHookMockup.imageName`), fournie à part ; en attendant, le téléphone
-/// dessiné de la fiche tient sa place. Le menu de langue reste en haut à droite.
+/// **La page** : le nom en haut, centré ; un téléphone qui montre une leçon de l'app au
+/// milieu ; un titre en gros, une ligne dessous ; le bouton, en pilule, centré. Le menu de
+/// langue reste en haut à droite.
 ///
 /// C'est aussi le seul écran qui porte une sortie : « j'ai déjà un compte ». Quelqu'un qui
 /// réinstalle l'app n'a aucune raison de traverser trente écrans pour retrouver ses decks.
@@ -207,25 +206,12 @@ struct HookLogoStepView: View {
 
 // MARK: - La maquette de la première page
 
-/// **L'image du catalogue si elle existe, le téléphone dessiné sinon**, grande, et fondue
-/// dans le blanc par le bas (`OnboardingFadingPhone`).
-/// L'image s'appelle `OnboardingHook`, et se dépose dans `Assets.xcassets`.
+/// **Une leçon de l'app, telle qu'elle est aujourd'hui** : son en-tête, son chemin, la barre
+/// Notes · Quiz · Flashcards — dessinée avec les composants mêmes du parcours, pas une
+/// capture. Elle parle donc la langue choisie sur cette page, et ne vieillit pas quand l'app
+/// change.
 struct OnboardingHookMockup: View {
-    static let imageName = "OnboardingHook"
-
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    /// La capture dans la langue choisie (`OnboardingHook-fr`…), sinon l'anglaise. La langue
-    /// se change sur cette page même : la maquette suit.
-    private var imageName: String? {
-        let localized = "\(Self.imageName)-\(i18n.locale.rawValue)"
-        if UIImage(named: localized) != nil { return localized }
-        return UIImage(named: Self.imageName) != nil ? Self.imageName : nil
-    }
-
     var body: some View {
-        OnboardingFadingPhone(imageName: imageName) {
-            OnboardingPhoneSketch(feature: .sheets)
-        }
+        OnboardingLessonPhone(fades: true)
     }
 }

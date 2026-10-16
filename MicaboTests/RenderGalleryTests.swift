@@ -405,6 +405,45 @@ final class RenderGalleryTests: XCTestCase {
         )
     }
 
+    /// Le parcours d'accueil : la leçon dans le téléphone, les six écrans de Mika, une
+    /// question avec Mika au pied de la page, la barre du haut.
+    func testOnboardingScreens() throws {
+        guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
+        let model = OnboardingModel()
+        model.displayName = "Lina"
+
+        try RenderGallery.render(
+            "onboarding-hook",
+            height: 560,
+            OnboardingHookMockup()
+                .environment(\.onboardingStill, true)
+        )
+        for page in MikaPage.allCases {
+            try RenderGallery.render(
+                "onboarding-mika-\(page.rawValue)",
+                height: 780,
+                MikaStepView(page: page)
+                    .environment(model)
+                    .environment(\.onboardingStill, true)
+            )
+        }
+        try RenderGallery.render(
+            "onboarding-question",
+            height: 780,
+            VStack(spacing: 0) {
+                OnboardingTopBar(progress: 0.42, showsBack: true, isVisible: true, onBack: {})
+                GoalStepView()
+            }
+            .environment(model)
+        )
+        try RenderGallery.render(
+            "onboarding-time",
+            height: 780,
+            DailyTimeStepView()
+                .environment(model)
+        )
+    }
+
     private static let sampleNotes = ThemeNotes(
         oneLiner: "Après 1945, les **États-Unis** et l'**URSS** s'opposent sans jamais se battre directement.",
         blocks: [

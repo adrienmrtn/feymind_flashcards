@@ -2,7 +2,8 @@ import SwiftUI
 
 // MARK: - Le temps par jour
 
-/// **« Combien de temps par jour ? »** Quatre crans, et une courbe qui répond.
+/// **« Combien de temps es-tu prêt à étudier sur Micabo par jour ? »** Quatre crans, et une
+/// courbe qui répond.
 ///
 /// La réponse ne se lit pas dans une liste, elle se règle au curseur et se **voit** : une
 /// carte « progression estimée » porte les quatre courbes en pointillés, et celle du cran
@@ -14,9 +15,8 @@ import SwiftUI
 /// dit que dix minutes montent, et que trente montent plus vite. C'est tout ce qu'on peut
 /// affirmer honnêtement, et c'est déjà ce qui fait bouger le curseur.
 ///
-/// **Le bouton se tient.** Le temps par jour est la seule réponse du quiz qui engage, et
-/// « tu es sûr ? » se répond en le tenant une seconde et demie, pendant que le violet le
-/// remplit.
+/// On avance au rond, comme partout : la question dit déjà l'engagement, le bouton n'a pas
+/// à le faire tenir.
 struct DailyTimeStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -74,10 +74,7 @@ struct DailyTimeStepView: View {
                 if model.dailyMinutes == nil { model.dailyMinutes = Self.times[Self.defaultIndex].rawValue }
             }
         } footer: {
-            OnboardingHoldButton(
-                title: i18n.t("ios.quiz.time.hold"),
-                isEnabled: model.dailyMinutes != nil
-            ) {
+            OnboardingArrowButton(isEnabled: model.dailyMinutes != nil) {
                 model.advance()
             }
         }

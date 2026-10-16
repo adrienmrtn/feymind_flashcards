@@ -42,7 +42,7 @@ enum OnboardingProofFigures {
 
 // MARK: - Le texte à chiffre coloré
 
-/// **Une phrase noire, avec un passage en violet.** Le passage est marqué entre deux
+/// **Une phrase d'encre, avec un passage au dégradé de l'app.** Le passage est marqué entre deux
 /// astérisques doubles dans la chaîne traduite (`**14**`), pour que chaque langue décide
 /// de sa place dans la phrase.
 struct OnboardingAccentText: View {
@@ -55,18 +55,26 @@ struct OnboardingAccentText: View {
     var body: some View {
         composed
             .font(OnboardingPalette.title(size))
-            .tracking(-0.9)
-            .lineSpacing(-2)
+            .tracking(-0.6)
+            .lineSpacing(-1)
             .multilineTextAlignment(alignment)
             .fixedSize(horizontal: false, vertical: true)
     }
 
+    /// Les passages marqués prennent le dégradé de l'app, du bleu au violet — celui du titre
+    /// de Home —, le reste la couleur du texte.
     private var composed: Text {
         var result = Text("")
         var isAccent = false
         for (index, part) in template.components(separatedBy: "**").enumerated() {
             if index > 0 { isAccent.toggle() }
-            result = result + Text(part).foregroundStyle(isAccent ? accent : color)
+            if isAccent {
+                result = result + Text(part).foregroundStyle(
+                    LinearGradient(colors: OnboardingPalette.mikaGradient, startPoint: .leading, endPoint: .trailing)
+                )
+            } else {
+                result = result + Text(part).foregroundStyle(color)
+            }
         }
         return result
     }
@@ -149,7 +157,7 @@ struct OnboardingProofPage<Figure: View>: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            OnboardingArrowBar(action: onContinue)
+            OnboardingArrowBar(showsMika: true, action: onContinue)
                 .onboardingAppear(index: 5)
         }
         .onboardingChromeInset()
