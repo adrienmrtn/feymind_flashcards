@@ -1,0 +1,328 @@
+#!/usr/bin/env python3
+"""
+**Les textes de l'app Android, tirés des catalogues de l'app iPhone.**
+
+Le script lit les noms `R.string.*` utilisés par le code Kotlin, retrouve chaque phrase dans les
+catalogues Swift (`Micabo/Services/I18n` : `SharedI18nCatalogs`, `IosI18nCatalogs`,
+`LessonI18nCatalogs` et les 21 langues régionales de `Locales/`), et écrit un
+`res/values-*/strings.xml` par langue. `lesson.notes.callout.why` devient
+`lesson_notes_callout_why` ; les phrases propres à Android (préfixe `x_`) sont dans `CUSTOM`
+ci-dessous. Les variables `{n}` deviennent `%1$s`, dans l'ordre de la phrase anglaise.
+
+Relancer après avoir ajouté un `R.string.…` dans le code :
+
+    python3 android/tools/generate_strings.py
+"""
+from __future__ import annotations
+
+import pathlib
+import re
+import sys
+from xml.sax.saxutils import escape
+
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+I18N = ROOT / "Micabo" / "Services" / "I18n"
+SOURCES = ROOT / "android" / "app" / "src" / "main" / "java"
+RES = ROOT / "android" / "app" / "src" / "main" / "res"
+
+# Le nom de la table Swift → le dossier Android.
+LOCALES = {
+    "en": "values",
+    "fr": "values-fr",
+    "de": "values-de",
+    "es": "values-es",
+    "es419": "values-b+es+419",
+    "it": "values-it",
+    "pt": "values-pt",
+    "ptBR": "values-pt-rBR",
+    "nl": "values-nl",
+    "pl": "values-pl",
+    "ro": "values-ro",
+    "sv": "values-sv",
+    "da": "values-da",
+    "fi": "values-fi",
+    "et": "values-et",
+    "cs": "values-cs",
+    "sk": "values-sk",
+    "hu": "values-hu",
+    "hr": "values-hr",
+    "sl": "values-sl",
+    "sr": "values-sr",
+    "bg": "values-bg",
+    "el": "values-el",
+    "ru": "values-ru",
+    "tr": "values-tr",
+    "ar": "values-ar",
+}
+
+# Les phrases propres à Android. L'anglais est la langue de base ; une langue absente lit l'anglais.
+CUSTOM: dict[str, dict[str, str]] = {
+    "x_onb_language": {
+        "en": "Which language do you study in?",
+        "fr": "Dans quelle langue tu étudies ?",
+        "de": "In welcher Sprache lernst du?",
+        "es": "¿En qué idioma estudias?",
+        "es419": "¿En qué idioma estudias?",
+        "it": "In che lingua studi?",
+        "pt": "Em que língua estudas?",
+        "ptBR": "Em que idioma você estuda?",
+        "tr": "Hangi dilde çalışıyorsun?",
+        "nl": "In welke taal studeer je?",
+        "pl": "W jakim języku się uczysz?",
+        "ar": "بأي لغة تدرس؟",
+        "ru": "На каком языке ты учишься?",
+    },
+    "x_onb_language_sub": {
+        "en": "Mika writes your lessons, quizzes and flashcards in this language.",
+        "fr": "Mika écrit tes leçons, tes quiz et tes flashcards dans cette langue.",
+        "de": "Mika schreibt deine Lektionen, Quizze und Karteikarten in dieser Sprache.",
+        "es": "Mika escribe tus lecciones, quizzes y flashcards en este idioma.",
+        "es419": "Mika escribe tus lecciones, quizzes y flashcards en este idioma.",
+        "it": "Mika scrive lezioni, quiz e flashcard in questa lingua.",
+        "pt": "O Mika escreve as tuas lições, quizzes e flashcards nesta língua.",
+        "ptBR": "O Mika escreve suas lições, quizzes e flashcards neste idioma.",
+        "tr": "Mika derslerini, testlerini ve kartlarını bu dilde yazar.",
+    },
+    "x_onb_start": {
+        "en": "Let's go!",
+        "fr": "C'est parti !",
+        "de": "Los geht's!",
+        "es": "¡Vamos!",
+        "es419": "¡Vamos!",
+        "it": "Si parte!",
+        "pt": "Vamos!",
+        "ptBR": "Vamos lá!",
+        "tr": "Hadi başlayalım!",
+        "nl": "Aan de slag!",
+        "pl": "Zaczynamy!",
+    },
+    "x_score_1": {"en": "I'm struggling", "fr": "J'ai du mal", "de": "Ich tue mich schwer", "es": "Me cuesta", "es419": "Me cuesta", "it": "Faccio fatica", "pt": "Tenho dificuldades", "ptBR": "Tenho dificuldade", "tr": "Zorlanıyorum"},
+    "x_score_2": {"en": "Just below average", "fr": "Un peu en dessous de la moyenne", "de": "Knapp unter dem Durchschnitt", "es": "Un poco por debajo de la media", "es419": "Un poco por debajo del promedio", "it": "Poco sotto la media", "pt": "Um pouco abaixo da média", "ptBR": "Um pouco abaixo da média", "tr": "Ortalamanın biraz altında"},
+    "x_score_3": {"en": "Average", "fr": "Dans la moyenne", "de": "Durchschnittlich", "es": "En la media", "es419": "En el promedio", "it": "Nella media", "pt": "Na média", "ptBR": "Na média", "tr": "Ortalama"},
+    "x_score_4": {"en": "Good", "fr": "Bien", "de": "Gut", "es": "Bien", "es419": "Bien", "it": "Bene", "pt": "Bom", "ptBR": "Bom", "tr": "İyi"},
+    "x_score_5": {"en": "Top of the class", "fr": "Parmi les meilleurs", "de": "Unter den Besten", "es": "Entre los mejores", "es419": "Entre los mejores", "it": "Tra i migliori", "pt": "Entre os melhores", "ptBR": "Entre os melhores", "tr": "En iyiler arasında"},
+    "x_lessons_emptyBody": {
+        "en": "Type a topic above, or paste your notes: Mika turns it into a path.",
+        "fr": "Tape un sujet plus haut, ou colle tes notes : Mika en fait un parcours.",
+        "de": "Gib oben ein Thema ein oder füge deine Notizen ein: Mika macht daraus einen Lernpfad.",
+        "es": "Escribe un tema arriba o pega tus apuntes: Mika lo convierte en un recorrido.",
+        "es419": "Escribe un tema arriba o pega tus apuntes: Mika lo convierte en un recorrido.",
+        "it": "Scrivi un argomento qui sopra o incolla i tuoi appunti: Mika lo trasforma in un percorso.",
+        "pt": "Escreve um tema acima ou cola os teus apontamentos: o Mika transforma-o num percurso.",
+        "ptBR": "Digite um tema acima ou cole suas anotações: o Mika transforma em uma trilha.",
+        "tr": "Yukarıya bir konu yaz ya da notlarını yapıştır: Mika onu bir yola dönüştürür.",
+    },
+    "x_paste_tooShort": {
+        "en": "A few more lines, and Mika can work with it.",
+        "fr": "Encore quelques lignes, et Mika pourra s'en servir.",
+        "de": "Noch ein paar Zeilen, dann kann Mika damit arbeiten.",
+        "es": "Unas líneas más y Mika podrá trabajar con ello.",
+        "es419": "Unas líneas más y Mika podrá trabajar con eso.",
+        "it": "Ancora qualche riga e Mika potrà usarlo.",
+        "pt": "Mais umas linhas e o Mika já consegue trabalhar.",
+        "ptBR": "Mais algumas linhas e o Mika consegue trabalhar.",
+        "tr": "Birkaç satır daha, Mika bununla çalışabilir.",
+    },
+    "x_error_network": {
+        "en": "No connection. Check your internet and try again.",
+        "fr": "Pas de connexion. Vérifie ton internet et réessaie.",
+        "de": "Keine Verbindung. Prüfe dein Internet und versuch es noch einmal.",
+        "es": "Sin conexión. Revisa tu internet e inténtalo de nuevo.",
+        "es419": "Sin conexión. Revisa tu internet e inténtalo de nuevo.",
+        "it": "Nessuna connessione. Controlla internet e riprova.",
+        "pt": "Sem ligação. Verifica a internet e tenta de novo.",
+        "ptBR": "Sem conexão. Verifique sua internet e tente de novo.",
+        "tr": "Bağlantı yok. İnternetini kontrol edip tekrar dene.",
+    },
+    "x_paywall_soon": {
+        "en": "Coming soon on Android",
+        "fr": "Bientôt disponible sur Android",
+        "de": "Bald auf Android verfügbar",
+        "es": "Muy pronto en Android",
+        "es419": "Muy pronto en Android",
+        "it": "Presto disponibile su Android",
+        "pt": "Brevemente no Android",
+        "ptBR": "Em breve no Android",
+        "tr": "Yakında Android'de",
+    },
+    "x_paywall_soonBody": {
+        "en": "Subscriptions open on Android very soon. Your free lesson is waiting for you in the meantime.",
+        "fr": "Les abonnements arrivent très bientôt sur Android. En attendant, ta leçon offerte t'attend.",
+        "de": "Abos gibt es sehr bald auf Android. Bis dahin wartet deine kostenlose Lektion auf dich.",
+        "es": "Las suscripciones llegan muy pronto a Android. Mientras tanto, tu lección gratis te espera.",
+        "es419": "Las suscripciones llegan muy pronto a Android. Mientras tanto, tu lección gratis te espera.",
+        "it": "Gli abbonamenti arrivano prestissimo su Android. Intanto, la tua lezione gratuita ti aspetta.",
+        "pt": "As subscrições chegam muito em breve ao Android. Até lá, a tua lição grátis espera por ti.",
+        "ptBR": "As assinaturas chegam muito em breve ao Android. Enquanto isso, sua lição grátis te espera.",
+        "tr": "Abonelikler çok yakında Android'de. Bu arada ücretsiz dersin seni bekliyor.",
+    },
+    "x_paywall_finePrint": {
+        "en": "{n} days free, then {price} per {unit}. Renews automatically, cancel anytime in Google Play.",
+        "fr": "{n} jours offerts, puis {price} par {unit}. Renouvellement automatique, résiliable à tout moment dans Google Play.",
+        "de": "{n} Tage gratis, danach {price} pro {unit}. Verlängert sich automatisch, jederzeit in Google Play kündbar.",
+        "es": "{n} días gratis, luego {price} por {unit}. Se renueva automáticamente, cancela cuando quieras en Google Play.",
+        "es419": "{n} días gratis, luego {price} por {unit}. Se renueva automáticamente, cancela cuando quieras en Google Play.",
+        "it": "{n} giorni gratis, poi {price} a {unit}. Rinnovo automatico, disdici quando vuoi su Google Play.",
+        "pt": "{n} dias grátis, depois {price} por {unit}. Renova automaticamente, cancela quando quiseres no Google Play.",
+        "ptBR": "{n} dias grátis, depois {price} por {unit}. Renova automaticamente, cancele quando quiser no Google Play.",
+        "tr": "{n} gün ücretsiz, ardından {unit} başına {price}. Otomatik yenilenir, Google Play'den istediğin zaman iptal et.",
+    },
+    "x_settings_level": {
+        "en": "Level", "fr": "Niveau", "de": "Stufe", "es": "Nivel", "es419": "Nivel", "it": "Livello",
+        "pt": "Nível", "ptBR": "Nível", "tr": "Seviye", "nl": "Niveau", "pl": "Poziom",
+    },
+    "x_settings_reset": {
+        "en": "Erase everything", "fr": "Tout effacer", "de": "Alles löschen", "es": "Borrar todo", "es419": "Borrar todo",
+        "it": "Cancella tutto", "pt": "Apagar tudo", "ptBR": "Apagar tudo", "tr": "Her şeyi sil",
+    },
+    "x_settings_resetTitle": {
+        "en": "Erase everything?", "fr": "Tout effacer ?", "de": "Alles löschen?", "es": "¿Borrar todo?", "es419": "¿Borrar todo?",
+        "it": "Cancellare tutto?", "pt": "Apagar tudo?", "ptBR": "Apagar tudo?", "tr": "Her şey silinsin mi?",
+    },
+    "x_settings_resetBody": {
+        "en": "Your lessons and your profile leave this phone. This can't be undone.",
+        "fr": "Tes leçons et ton profil quittent ce téléphone. C'est définitif.",
+        "de": "Deine Lektionen und dein Profil werden von diesem Handy gelöscht. Das lässt sich nicht rückgängig machen.",
+        "es": "Tus lecciones y tu perfil se borran de este teléfono. No se puede deshacer.",
+        "es419": "Tus lecciones y tu perfil se borran de este teléfono. No se puede deshacer.",
+        "it": "Lezioni e profilo spariscono da questo telefono. Non si può annullare.",
+        "pt": "As tuas lições e o teu perfil saem deste telemóvel. Não dá para desfazer.",
+        "ptBR": "Suas lições e seu perfil saem deste celular. Não dá para desfazer.",
+        "tr": "Derslerin ve profilin bu telefondan silinir. Geri alınamaz.",
+    },
+}
+
+LINE = re.compile(r'^\s*"([^"\\]+)"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,?\s*(//.*)?$')
+TABLE = re.compile(r'^\s*static let (\w+): \[String: String\] = \[\s*$')
+EXTENSION = re.compile(r'^\s*(?:extension|enum) (\w+)')
+
+
+def swift_unescape(value: str) -> str:
+    out = []
+    index = 0
+    while index < len(value):
+        char = value[index]
+        if char == "\\" and index + 1 < len(value):
+            nxt = value[index + 1]
+            out.append({"n": "\n", "t": "\t", '"': '"', "\\": "\\", "'": "'", "0": ""}.get(nxt, nxt))
+            index += 2
+            continue
+        out.append(char)
+        index += 1
+    return "".join(out)
+
+
+def read_catalogs() -> dict[str, dict[str, dict[str, str]]]:
+    """{catalogue: {langue: {clé: phrase}}} pour `shared`, `ios` et `lesson`."""
+    catalogs: dict[str, dict[str, dict[str, str]]] = {"shared": {}, "ios": {}, "lesson": {}}
+    files = [I18N / "Generated" / "SharedI18nCatalogs.swift", I18N / "IosI18nCatalogs.swift", I18N / "LessonI18nCatalogs.swift"]
+    files += sorted((I18N / "Locales").glob("I18n+*.swift"))
+    for path in files:
+        owner = None
+        table = None
+        for raw in path.read_text(encoding="utf-8").splitlines():
+            ext = EXTENSION.match(raw)
+            if ext:
+                owner = {"SharedI18nCatalogs": "shared", "IosI18nCatalogs": "ios", "LessonI18nCatalogs": "lesson"}.get(ext.group(1))
+                continue
+            start = TABLE.match(raw)
+            if start and owner:
+                table = catalogs[owner].setdefault(start.group(1), {})
+                continue
+            if table is None:
+                continue
+            if raw.strip() == "]":
+                table = None
+                continue
+            match = LINE.match(raw)
+            if match:
+                table[match.group(1)] = swift_unescape(match.group(2))
+    return catalogs
+
+
+def lookup(catalogs, key: str, locale: str) -> str | None:
+    if key.startswith("lesson."):
+        return catalogs["lesson"].get(locale, {}).get(key)
+    return catalogs["ios"].get(locale, {}).get(key) or catalogs["shared"].get(locale, {}).get(key)
+
+
+def android_text(text: str, variables: list[str]) -> tuple[str, bool]:
+    """La phrase au format Android, et vrai si elle prend des arguments."""
+    has_args = bool(variables)
+    if has_args:
+        text = text.replace("%", "%%")
+        for position, name in enumerate(variables, start=1):
+            text = text.replace("{" + name + "}", f"%{position}$s")
+    text = escape(text)
+    text = text.replace("\\", "\\\\").replace("'", "\\'").replace('"', '\\"').replace("\n", "\\n")
+    if text.startswith("@") or text.startswith("?"):
+        text = "\\" + text
+    return text, has_args
+
+
+def main() -> int:
+    names = sorted(set(re.findall(r"R\.string\.([A-Za-z0-9_]+)", "\n".join(p.read_text(encoding="utf-8") for p in SOURCES.rglob("*.kt")))))
+    catalogs = read_catalogs()
+    every_key = set()
+    for tables in catalogs.values():
+        for table in tables.values():
+            every_key.update(table)
+    by_name: dict[str, str] = {}
+    for key in every_key:
+        by_name.setdefault(re.sub(r"[.\-]", "_", key), key)
+
+    missing = []
+    entries: dict[str, dict[str, tuple[str, list[str]]]] = {folder: {} for folder in LOCALES.values()}
+    for name in names:
+        if name == "app_name":
+            continue
+        if name in CUSTOM:
+            texts = CUSTOM[name]
+        elif name in by_name:
+            key = by_name[name]
+            texts = {locale: lookup(catalogs, key, locale) for locale in LOCALES}
+            texts = {k: v for k, v in texts.items() if v}
+            if "en" not in texts:
+                texts["en"] = lookup(catalogs, key, "fr") or key
+        else:
+            missing.append(name)
+            continue
+        base = texts["en"]
+        if "plural," in base:
+            print(f"pluriel ICU non géré : {name}", file=sys.stderr)
+        variables = list(dict.fromkeys(re.findall(r"\{(\w+)\}", base)))
+        for locale, folder in LOCALES.items():
+            text = texts.get(locale)
+            if text is None:
+                continue
+            if locale != "en" and text == base and locale != "fr":
+                continue
+            entries[folder][name] = (text, variables)
+
+    if missing:
+        print("Introuvables : " + ", ".join(missing), file=sys.stderr)
+        return 1
+
+    for folder, strings in entries.items():
+        directory = RES / folder
+        directory.mkdir(parents=True, exist_ok=True)
+        lines = [
+            '<?xml version="1.0" encoding="utf-8"?>',
+            "<!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->",
+            "<resources>",
+        ]
+        if folder == "values":
+            lines.append('    <string name="app_name" translatable="false">Micabo</string>')
+        for name in sorted(strings):
+            text, variables = strings[name]
+            value, has_args = android_text(text, variables)
+            attributes = "" if has_args or "%" not in value else ' formatted="false"'
+            lines.append(f'    <string name="{name}"{attributes}>{value}</string>')
+        lines.append("</resources>")
+        (directory / "strings.xml").write_text("\n".join(lines) + "\n", encoding="utf-8")
+        print(f"{folder}: {len(strings)} phrases")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

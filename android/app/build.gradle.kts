@@ -5,6 +5,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 // **La clé d'envoi**, lue dans `keystore.properties` (écrit par la CI depuis les secrets) :
@@ -73,6 +74,12 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.10.1")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material:material-icons-core")
+    implementation("androidx.compose.animation:animation")
+    implementation("androidx.compose.foundation:foundation")
+    // Les leçons, gardées en JSON sur le téléphone, et les réponses de Supabase.
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     implementation("androidx.core:core-splashscreen:1.0.1")
     // Les achats : Google Play Billing via RevenueCat (ajoute la permission BILLING).
     implementation("com.revenuecat.purchases:purchases:10.24.0")
