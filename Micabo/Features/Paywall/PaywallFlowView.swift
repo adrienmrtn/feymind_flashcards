@@ -109,6 +109,20 @@ struct PaywallFlowView: View {
             }
         }
         .animation(OnboardingMotion.page, value: stage)
+        // **Un balayage vers le bas sur l'offre ne referme pas : il montre les formules**,
+        // comme la croix. Sans ça, la feuille se refermait d'un geste sur le premier écran,
+        // et l'élève ne voyait jamais la comparaison ni l'offre annuelle. Sur les formules,
+        // le geste referme pour de bon.
+        .interactiveDismissDisabled(stage == .offer)
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 24).onEnded { value in
+                guard stage == .offer,
+                      value.translation.height > 90,
+                      value.translation.height > abs(value.translation.width) * 1.5 else { return }
+                Haptics.selection()
+                showPlans()
+            }
+        )
         .micaboScreenBackground()
         // Le lancement les a déjà demandés ; on repasse ici parce qu'un premier appel
         // tombé sans réseau laisserait ce paywall-là sur les prix de la France.
