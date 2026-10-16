@@ -341,9 +341,11 @@ struct MockExamRunView: View {
         .background(MicaboColor.canvas.ignoresSafeArea())
         .onReceive(timer) { value in
             now = value
-            if remaining == 0, !submitted {
+            // Lu depuis l'instant reçu, pas depuis l'état qu'on vient d'écrire.
+            let left = total - Int(value.timeIntervalSince(startedAt))
+            if left <= 0, !submitted {
                 submit()
-            } else if remaining == 60 {
+            } else if left == 60 {
                 Haptics.warning()
             }
         }
