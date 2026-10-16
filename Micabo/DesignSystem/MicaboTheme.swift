@@ -168,19 +168,31 @@ enum MicaboColor {
 
     /// **Le pastel d'un deck**, tiré de son identité et non de sa teinte d'accent.
     ///
-    /// Les six pastels sont ceux de la maquette, et le choix est déterministe : le même deck
-    /// garde sa couleur d'un lancement à l'autre, et deux decks voisins dans la grille en
-    /// ont presque toujours deux différentes. Tirer la teinte de `accentHex` aurait donné
-    /// des carrés délavés, parce que cette teinte a été choisie pour un filet de fiche.
+    /// Le choix est déterministe — `StableHash`, et non `hashValue`, que Swift re-sale à
+    /// chaque lancement : le même deck garde sa couleur d'une ouverture à l'autre et d'un
+    /// téléphone à l'autre.
     static func pastel(for id: UUID) -> Color {
-        let slot = abs(id.uuidString.hashValue) % tilePastels.count
+        let slot = Int(StableHash.of(id.uuidString) % UInt64(tilePastels.count))
         return tilePastels[slot]
     }
 
     static func pastel(forName name: String) -> Color {
-        let slot = abs(name.hashValue) % tilePastels.count
+        let slot = Int(StableHash.of(name) % UInt64(tilePastels.count))
         return tilePastels[slot]
     }
+
+    // MARK: La refonte « parcours »
+
+    /// Les mots-clés et les termes définis des notes. Le seul violet d'une leçon.
+    static var keyword: Color { palette.keyword }
+    /// Bonne réponse : le plein, l'encre lisible, le lavis.
+    static var correct: Color { palette.correct }
+    static var correctInk: Color { palette.correctInk }
+    static var correctSoft: Color { palette.correctSoft }
+    /// Mauvaise réponse : le plein, l'encre lisible, le lavis.
+    static var wrong: Color { palette.wrong }
+    static var wrongInk: Color { palette.wrongInk }
+    static var wrongSoft: Color { palette.wrongSoft }
 
     /// Le pastel d'un rang, pour une grille dont on choisit l'ordre des couleurs. Deux
     /// tuiles voisines tirées au hasard peuvent tomber sur le même ; par rang, jamais.
@@ -255,14 +267,13 @@ enum MicaboLayout {
     /// Elle est déclarée ici et pas déduite du contenu : c'est cette hauteur que
     /// `safeAreaInset` réserve aux pages, et une barre qui se mesure elle-même donne une
     /// réserve qui change avec la longueur des libellés.
-    static let tabBarHeight: CGFloat = 49
+    static let tabBarHeight: CGFloat = 60
 
     /// Air laissé entre la barre d'onglets et ce qu'une page ancre juste au-dessus d'elle :
     /// le « + » de Cours, le bouton de session de Réviser.
     ///
-    /// La barre n'est plus en verre : elle est opaque, collée au bas, comme un `UITabBar`.
-    /// Un bouton collé dessus se lit encore comme un bouton à moitié caché, d'où ces
-    /// huit points — pas les douze du flottement d'avant.
+    /// La barre est une pilule de verre qui flotte : huit points d'air au-dessus d'elle
+    /// suffisent pour qu'un bouton de page ne se lise pas comme à moitié caché.
     static let tabBarGap: CGFloat = 8
 
     /// **Tout ce que la barre d'onglets occupe**, hors zone sûre : c'est la hauteur
@@ -274,123 +285,117 @@ enum MicaboLayout {
     static var tabBarSpace: CGFloat { tabBarGap + tabBarHeight }
 }
 
-/// Typographie de l'app : San Francisco, la police native d'iOS.
-/// **Deux familles, et chacune a son domaine.**
+/// **Une seule famille : Nunito, partout.**
 ///
-/// Outfit écrit l'interface : titres d'écran, intitulés de rangée, libellés de bouton,
-/// sur-titres, onglets, et tous les nombres qui se lisent comme un résultat. C'est une
-/// géométrique large, qui tient le gras sans s'épaissir — ce qu'on veut d'un titre de
-/// trente points et d'un compteur de cinquante-quatre.
+/// L'app a eu deux familles — Outfit pour nommer, Hanken Grotesk pour raconter. La refonte
+/// « parcours » n'en garde qu'une, arrondie : un parcours façon Duolingo se lit comme un jeu,
+/// et une grotesque serrée le ferait ressembler à un tableau de bord. Nunito tient les deux
+/// rôles — ses graisses vont du normal au noir, et elle a un vrai italique, là où Hanken
+/// demandait une inclinaison synthétique.
 ///
-/// Hanken Grotesk écrit **ce qu'on lit vraiment** : le corps d'une fiche de cours, ses
-/// encadrés, le verso d'une carte. Plus étroite, plus sobre, elle tient l'œil d'une ligne
-/// à l'autre sur une page dense — ce qu'une géométrique ne fait pas au-delà de quelques
-/// lignes.
-///
-/// Deux familles sur une page ne tiennent que si chacune a un domaine net. Le partage est
-/// donc celui-là, et pas « la plus jolie pour les titres » : **l'une nomme, l'autre
-/// raconte.**
-///
-/// Les deux étaient déjà dans le dépôt, et aucune des deux ne servait : `hanken()`
-/// renvoyait `.system()`, donc l'app entière était en San Francisco et les quatre fichiers
-/// Hanken voyageaient dans le bundle sans jamais être appelés.
+/// Le barème des Notes (26 / 20 / 17 / 12) est celui de la refonte, voir
+/// `docs/refonte-parcours.md` § 6. Les anciens rôles restent tant que les anciens écrans
+/// vivent.
 enum MicaboFont {
-    // MARK: Les deux familles
+    // MARK: La famille
 
-    /// **Outfit** — l'interface. Voir la note de l'énumération pour le partage.
+    /// Nunito, à une graisse donnée.
     static func ui(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        .custom(outfitName(for: weight), size: size)
+        .custom(nunitoName(for: weight), size: size)
     }
 
-    /// **Hanken Grotesk** — le texte qu'on lit.
+    /// Le texte qu'on lit. Même famille que l'interface depuis la refonte ; le nom reste pour
+    /// dire l'intention à l'appel.
     static func reading(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        .custom(hankenName(for: weight), size: size)
+        ui(size, weight: weight)
     }
 
-    /// La police de lecture côté UIKit : la fiche compose ses paragraphes dans un
-    /// `UITextView` pour que la sélection d'un passage soit celle du système, et il lui
-    /// faut donc des `UIFont`.
-    ///
-    /// **Hanken n'a pas d'italique dessiné.** On demande donc l'inclinaison au descripteur,
-    /// et on retombe sur le droit si le système refuse de la synthétiser — un faux italique
-    /// absent vaut mieux qu'une police qui disparaît au milieu d'un paragraphe.
+    /// Nunito côté UIKit : la fiche compose ses paragraphes dans un `UITextView` pour que la
+    /// sélection d'un passage soit celle du système, et il lui faut donc des `UIFont`.
     static func uiFont(_ size: CGFloat, weight: Font.Weight = .regular, italic: Bool = false) -> UIFont {
-        let base = UIFont(name: hankenName(for: weight), size: size)
+        UIFont(name: nunitoName(for: weight, italic: italic), size: size)
             ?? UIFont.systemFont(ofSize: size, weight: uiWeight(for: weight))
-        guard italic else { return base }
-        guard let descriptor = base.fontDescriptor.withSymbolicTraits(.traitItalic) else { return base }
-        return UIFont(descriptor: descriptor, size: size)
     }
 
     /// La police d'interface côté UIKit, pour les rares vues qui en sont faites.
     static func uiDisplayFont(_ size: CGFloat, weight: Font.Weight = .regular) -> UIFont {
-        UIFont(name: outfitName(for: weight), size: size)
-            ?? UIFont.systemFont(ofSize: size, weight: uiWeight(for: weight))
+        uiFont(size, weight: weight)
     }
 
     // MARK: Noms PostScript
 
-    /// Les quatre coupes embarquées, et rien d'autre : une graisse plus fine ou plus grasse
-    /// retombe sur la plus proche plutôt que sur une police absente.
-    private static func outfitName(for weight: Font.Weight) -> String {
-        switch weight {
-        case .bold, .heavy, .black: "Outfit-Bold"
-        case .semibold: "Outfit-SemiBold"
-        case .medium: "Outfit-Medium"
-        default: "Outfit-Regular"
+    /// Les six graisses embarquées, et les deux italiques. Une graisse plus fine que le normal
+    /// retombe sur le normal plutôt que sur une police absente ; l'italique n'existe qu'en
+    /// normal et en gras, et chaque graisse prend le plus proche des deux.
+    static func nunitoName(for weight: Font.Weight, italic: Bool = false) -> String {
+        if italic {
+            switch weight {
+            case .semibold, .bold, .heavy, .black: return "Nunito-BoldItalic"
+            default: return "Nunito-Italic"
+            }
         }
-    }
-
-    private static func hankenName(for weight: Font.Weight) -> String {
         switch weight {
-        case .bold, .heavy, .black: "HankenGrotesk-Bold"
-        case .semibold: "HankenGrotesk-SemiBold"
-        case .medium: "HankenGrotesk-Medium"
-        default: "HankenGrotesk-Regular"
+        case .black: return "Nunito-Black"
+        case .heavy: return "Nunito-ExtraBold"
+        case .bold: return "Nunito-Bold"
+        case .semibold: return "Nunito-SemiBold"
+        case .medium: return "Nunito-Medium"
+        default: return "Nunito-Regular"
         }
     }
 
     private static func uiWeight(for weight: Font.Weight) -> UIFont.Weight {
-        if weight == .bold || weight == .heavy || weight == .black { return .bold }
+        if weight == .black { return .black }
+        if weight == .heavy { return .heavy }
+        if weight == .bold { return .bold }
         if weight == .semibold { return .semibold }
         if weight == .medium { return .medium }
         return .regular
     }
 
+    // MARK: Le barème de la refonte
+
+    /// Titre d'un thème, titre d'une leçon en tête de parcours.
+    static let title = ui(26, weight: .bold)
+    /// Sous-titre dans les notes, titre d'une page de quiz.
+    static let subtitle = ui(20, weight: .bold)
+    /// Corps des notes et des puces. Interligne 1,35 : c'est la hauteur naturelle de Nunito.
+    static let notes = ui(17, weight: .regular)
+    /// Un mot-clé dans les notes : gras, et violet (`MicaboColor.keyword`).
+    static let keyword = ui(17, weight: .bold)
+    /// Titre d'un cercle sur le chemin, intitulé d'une rangée.
+    static let label = ui(17, weight: .bold)
+    /// **Le seul petit texte autorisé** : durée, numéro de cercle, palier. Toujours en
+    /// capitales, en gris, avec `MicaboTracking.caps`.
+    static let small = ui(12, weight: .bold)
+
     // MARK: Rôles
 
     static func display(_ size: CGFloat) -> Font {
-        ui(size, weight: .bold)
+        ui(size, weight: .heavy)
     }
 
-    /// **Les chiffres qu'on lit comme un résultat**, et eux seuls : le compte de cartes du
-    /// jour, la série, les statistiques d'une session, les minutes d'un objectif.
-    ///
-    /// Ils sont en Outfit comme le reste de l'interface, et c'est tout l'intérêt d'avoir
-    /// pris une géométrique : un grand nombre y a des chiffres de même largeur et des
-    /// formes assez ouvertes pour se lire comme un score. Poser `.monospacedDigit()` là où
-    /// le nombre bouge reste nécessaire — c'est ce qui empêche un compteur de tressauter.
-    static func number(_ size: CGFloat, weight: Font.Weight = .bold) -> Font {
+    /// **Les chiffres qu'on lit comme un résultat** : les stats de Home, un score, une
+    /// progression. Poser `.monospacedDigit()` là où le nombre bouge reste nécessaire — c'est
+    /// ce qui empêche un compteur de tressauter.
+    static func number(_ size: CGFloat, weight: Font.Weight = .heavy) -> Font {
         ui(size, weight: weight)
     }
 
-    /// Grand titre d'écran, posé à même le fond sous son sur-titre.
-    ///
-    /// Il perd deux points en passant à Outfit : la géométrique est plus large que San
-    /// Francisco à corps égal, et « Histoire contemporaine » ne tenait plus sur deux lignes.
-    static let screenTitle = ui(30, weight: .bold)
+    /// Grand titre d'écran, posé à même le fond.
+    static let screenTitle = ui(30, weight: .heavy)
     static let pageTitle = ui(22, weight: .bold)
-    static let sectionTitle = ui(18, weight: .semibold)
-    static let cardTitle = ui(16, weight: .semibold)
-    static let rowTitle = ui(15.5, weight: .semibold)
-    static let rowSubtitle = ui(13, weight: .regular)
-    static let body = ui(15, weight: .regular)
-    static let bodyEmphasis = ui(15, weight: .medium)
-    static let caption = ui(13, weight: .regular)
-    static let captionEmphasis = ui(13, weight: .medium)
-    static let micro = ui(11, weight: .medium)
+    static let sectionTitle = ui(19, weight: .bold)
+    static let cardTitle = ui(17, weight: .bold)
+    static let rowTitle = ui(17, weight: .bold)
+    static let rowSubtitle = ui(14, weight: .medium)
+    static let body = ui(17, weight: .regular)
+    static let bodyEmphasis = ui(17, weight: .semibold)
+    static let caption = ui(14, weight: .medium)
+    static let captionEmphasis = ui(14, weight: .bold)
+    static let micro = ui(12, weight: .bold)
     /// Sur-titres et intitulés de section, toujours en capitales.
-    static let eyebrow = ui(11, weight: .semibold)
+    static let eyebrow = ui(12, weight: .bold)
 }
 
 /// Le réglage typographique de la fiche d'un cours.
@@ -546,7 +551,7 @@ extension Color {
         var targetRed: CGFloat = 1
         var targetGreen: CGFloat = 1
         var targetBlue: CGFloat = 1
-        if AppearanceStore.shared.appearance.isDark {
+        if AppearanceStore.isDarkNow {
             var unused: CGFloat = 1
             UIColor(AppearanceStore.shared.palette.surface)
                 .getRed(&targetRed, green: &targetGreen, blue: &targetBlue, alpha: &unused)
@@ -592,7 +597,7 @@ extension Color {
         var brightness: CGFloat = 0
         var alpha: CGFloat = 0
         UIColor(self).getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
-        let dark = AppearanceStore.shared.appearance.isDark
+        let dark = AppearanceStore.isDarkNow
         return Color(
             hue: Double(hue),
             saturation: Double(dark ? min(saturation, CGFloat(0.55)) : saturation),
@@ -663,8 +668,9 @@ private struct MicaboElevationStyle: ViewModifier {
         let contact = level.contact
         let ambient = level.ambient
         return content
-            .shadow(color: MicaboColor.ink.opacity(contact.opacity), radius: contact.radius, x: 0, y: contact.y)
-            .shadow(color: MicaboColor.ink.opacity(level.ambientOpacity), radius: ambient.radius, x: 0, y: ambient.y)
+            // Du noir, pas l'encre : la nuit, l'encre est ivoire, et une ombre claire serait un halo.
+            .shadow(color: Color.black.opacity(contact.opacity), radius: contact.radius, x: 0, y: contact.y)
+            .shadow(color: Color.black.opacity(level.ambientOpacity), radius: ambient.radius, x: 0, y: ambient.y)
     }
 }
 
@@ -707,7 +713,7 @@ extension View {
 
     /// Ombre douce des éléments posés sur le fond, sans passer par une carte complète.
     func micaboSoftShadow(strength: Double = 0.06) -> some View {
-        shadow(color: MicaboColor.ink.opacity(strength), radius: 16, x: 0, y: 8)
+        shadow(color: Color.black.opacity(strength), radius: 16, x: 0, y: 8)
     }
 
     /// Applique le fond de l'application et masque le fond système du conteneur.

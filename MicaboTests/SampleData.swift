@@ -17,11 +17,18 @@ import Foundation
 /// encartées. Il n'y a plus que du texte, et c'est ce qu'elles doivent montrer : ce qu'un
 /// tableau disait s'écrit en lignes, ce qu'un encadré appuyait s'écrit en gras.
 enum SampleData {
+    /// La fiche telle qu'elle se relit : un pavé trop long se coupe à une fin de phrase à la
+    /// lecture (`SheetText.split`). Les fiches de référence sont donc écrites dans cette forme
+    /// relue, sans quoi un aller-retour ne rendrait jamais la même fiche.
+    static func canonical(_ sheet: CourseSheet) -> CourseSheet {
+        sheet.encoded().flatMap(CourseSheet.decode(from:)) ?? sheet
+    }
+
     // MARK: - Sciences de la vie
 
     /// Fiche de référence : elle exerce les quatre blocs et tout le balisage en ligne, y
     /// compris les surligneurs de couleur.
-    static let photosynthesisSheet = CourseSheet(blocks: [
+    static let photosynthesisSheet = canonical(CourseSheet(blocks: [
         .paragraph(text: "Une plante ne mange pas. Elle **fabrique** sa propre matière organique à partir de trois choses gratuites : le dioxyde de carbone de l'air, l'eau puisée par les racines et la lumière du Soleil. C'est par cette réaction que presque toute la matière vivante de la planète entre dans les chaînes alimentaires."),
 
         .formula(
@@ -80,7 +87,7 @@ enum SampleData {
         ]),
 
         .paragraph(text: "Tiens la chaîne complète et le reste se déduit : la lumière casse l'eau et libère l'oxygène, l'énergie récupérée sert à ==coller le carbone de l'air sur du sucre==. Les noms d'enzymes et de compartiments viennent ensuite.")
-    ])
+    ]))
 
     // MARK: - Mathématiques
 

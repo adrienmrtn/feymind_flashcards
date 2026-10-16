@@ -31,7 +31,7 @@ struct FeedbackView: View {
                 MicaboRowGroup(rows: MicaboMail.Kind.allCases.map { option in
                     MicaboRow(
                         tile: MicaboTile(
-                            glyph: .emoji(option == .bug ? "🪲" : "💡"),
+                            glyph: .symbol(option == .bug ? "ladybug.fill" : "lightbulb.fill"),
                             background: option == .bug ? MicaboColor.cautionSoft : MicaboColor.infoSoft
                         ),
                         title: option.title,

@@ -952,7 +952,7 @@ enum IosI18nCatalogs {
         "ios.onb.feature.pocket.sub": "Garde tous tes cours dans une seule app, prêts à ouvrir et à réviser à tout moment.",
         "ios.onb.feature.mika.title": "Tu ne comprends pas quelque chose ?",
         "ios.onb.feature.mika.sub": "Demande à Mika : il te répond sur mesure.",
-        "ios.onb.sheetIntro": "Voyons ensemble à quoi ressemble une fiche générée par Micabo.",
+        "ios.onb.sheetIntro": "Voyons ensemble à quoi ressemble une leçon écrite par Micabo.",
         "ios.onb.demo.title": "Choisis un cours à générer",
         "ios.onb.demo.sub": "Un exemple, pour voir ce que Micabo écrit.",
         "ios.onb.train.title": "Envie de t'entraîner sur quelques cartes ?",
@@ -968,7 +968,7 @@ enum IosI18nCatalogs {
         "ios.onb.social.store": "App Store",
         "ios.onb.social.rank": "#1 des assistants d'étude IA",
         // Le cours du parcours : Mika l'écrit, et ce qu'on fait s'il rate.
-        "ios.mika.course.title": "Mika écrit ton cours",
+        "ios.mika.course.title": "Mika écrit ta leçon",
         "ios.mika.course.materials": "à partir de tes supports",
         "ios.onb.course.skip": "Continuer sans cours",
         // Les avis de la preuve sociale, et le tableau du gratuit contre Premium.
@@ -1969,7 +1969,7 @@ enum IosI18nCatalogs {
         "ios.onb.feature.pocket.sub": "Alle deine Kurse in einer App, jederzeit bereit zum Öffnen und Lernen.",
         "ios.onb.feature.mika.title": "Du verstehst etwas nicht?",
         "ios.onb.feature.mika.sub": "Frag Mika, und er gibt dir eine maßgeschneiderte Antwort.",
-        "ios.onb.sheetIntro": "Schauen wir uns gemeinsam an, wie ein von Micabo erstellter Lernzettel aussieht.",
+        "ios.onb.sheetIntro": "Schauen wir uns gemeinsam an, wie eine von Micabo geschriebene Lektion aussieht.",
         "ios.onb.demo.title": "Wähle einen Kurs zum Erstellen",
         "ios.onb.demo.sub": "Ein Beispiel, um zu sehen, was Micabo schreibt.",
         "ios.onb.train.title": "Lust, mit ein paar Karten zu üben?",
@@ -1985,7 +1985,7 @@ enum IosI18nCatalogs {
         "ios.onb.social.store": "App Store",
         "ios.onb.social.rank": "Nr. 1 der KI-Lernhelfer",
         // The course of the flow: Mika writes it, and what to do if it fails.
-        "ios.mika.course.title": "Mika schreibt deinen Kurs",
+        "ios.mika.course.title": "Mika schreibt deine Lektion",
         "ios.mika.course.materials": "aus deinen Unterlagen",
         "ios.onb.course.skip": "Ohne Kurs fortfahren",
         // The social-proof reviews, and the free-versus-Premium table.
@@ -2986,7 +2986,7 @@ enum IosI18nCatalogs {
         "ios.onb.feature.pocket.sub": "Todos tus cursos en una sola app, listos para abrir y repasar en cualquier momento.",
         "ios.onb.feature.mika.title": "¿No entiendes algo?",
         "ios.onb.feature.mika.sub": "Pregúntale a Mika y te dará una respuesta a tu medida.",
-        "ios.onb.sheetIntro": "Veamos juntos cómo es un resumen generado por Micabo.",
+        "ios.onb.sheetIntro": "Veamos juntos cómo es una lección escrita por Micabo.",
         "ios.onb.demo.title": "Elige un curso para generar",
         "ios.onb.demo.sub": "Un ejemplo, para ver lo que escribe Micabo.",
         "ios.onb.train.title": "¿Te apetece practicar con unas tarjetas?",
@@ -3002,7 +3002,7 @@ enum IosI18nCatalogs {
         "ios.onb.social.store": "App Store",
         "ios.onb.social.rank": "N.º 1 de los asistentes de estudio con IA",
         // The course of the flow: Mika writes it, and what to do if it fails.
-        "ios.mika.course.title": "Mika está escribiendo tu curso",
+        "ios.mika.course.title": "Mika está escribiendo tu lección",
         "ios.mika.course.materials": "a partir de tus materiales",
         "ios.onb.course.skip": "Continuar sin curso",
         // The social-proof reviews, and the free-versus-Premium table.
@@ -4003,7 +4003,7 @@ enum IosI18nCatalogs {
         "ios.onb.feature.pocket.sub": "Tüm kursların tek bir uygulamada, her an açıp çalışmaya hazır.",
         "ios.onb.feature.mika.title": "Bir şeyi anlamadın mı?",
         "ios.onb.feature.mika.sub": "Mika'ya sor, sana özel bir cevap versin.",
-        "ios.onb.sheetIntro": "Micabo'nun oluşturduğu bir ders özetinin nasıl göründüğüne birlikte bakalım.",
+        "ios.onb.sheetIntro": "Micabo'nun yazdığı bir dersin nasıl göründüğüne birlikte bakalım.",
         "ios.onb.demo.title": "Oluşturmak için bir kurs seç",
         "ios.onb.demo.sub": "Micabo'nun ne yazdığını görmek için bir örnek.",
         "ios.onb.train.title": "Birkaç kartla alıştırma yapmak ister misin?",
@@ -4019,7 +4019,7 @@ enum IosI18nCatalogs {
         "ios.onb.social.store": "App Store",
         "ios.onb.social.rank": "1 numaralı yapay zekâ çalışma asistanı",
         // The course of the flow: Mika writes it, and what to do if it fails.
-        "ios.mika.course.title": "Mika kursunu yazıyor",
+        "ios.mika.course.title": "Mika dersini yazıyor",
         "ios.mika.course.materials": "materyallerinden",
         "ios.onb.course.skip": "Kurs olmadan devam et",
         // The social-proof reviews, and the free-versus-Premium table.
@@ -5027,7 +5027,7 @@ enum IosI18nCatalogs {
         "ios.onb.feature.pocket.sub": "Keep all your courses in one app, ready to open and study at all times.",
         "ios.onb.feature.mika.title": "You don't understand something?",
         "ios.onb.feature.mika.sub": "Ask Mika and he'll give you a tailored answer.",
-        "ios.onb.sheetIntro": "Let's see together what a study sheet generated by Micabo looks like.",
+        "ios.onb.sheetIntro": "Let's see together what a lesson written by Micabo looks like.",
         "ios.onb.demo.title": "Choose a course to generate",
         "ios.onb.demo.sub": "A sample, to see what Micabo writes.",
         "ios.onb.train.title": "Want to train on some cards?",
@@ -5043,7 +5043,7 @@ enum IosI18nCatalogs {
         "ios.onb.social.store": "App Store",
         "ios.onb.social.rank": "#1 AI study helper",
         // The course of the flow: Mika writes it, and what to do if it fails.
-        "ios.mika.course.title": "Mika is writing your course",
+        "ios.mika.course.title": "Mika is writing your lesson",
         "ios.mika.course.materials": "from your materials",
         "ios.onb.course.skip": "Continue without a course",
         // The social-proof reviews, and the free-versus-Premium table.

@@ -17,23 +17,23 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Micabo accède à vos photos pour importer un cours ou un schéma.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Micabo utilise le micro pour que tu répondes à voix haute aux questions d'un examen blanc.</string>
+	<string>Micabo utilise le micro pour enregistrer un cours ou une note vocale et en faire une leçon.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Micabo transcrit ce que tu dis pendant un examen blanc pour le corriger.</string>
+	<string>Micabo transcrit tes enregistrements sur ton téléphone pour en faire une leçon.</string>
 	<!--
-	Les deux familles, et le partage est net : Outfit écrit l'interface, Hanken Grotesk
-	écrit le texte qu'on lit. Voir `MicaboFont`.
+	Une seule famille, Nunito, pour l'interface comme pour le texte qu'on lit. Voir
+	`MicaboFont`.
 	-->
 	<key>UIAppFonts</key>
 	<array>
-		<string>Outfit-Regular.ttf</string>
-		<string>Outfit-Medium.ttf</string>
-		<string>Outfit-SemiBold.ttf</string>
-		<string>Outfit-Bold.ttf</string>
-		<string>HankenGrotesk-Regular.ttf</string>
-		<string>HankenGrotesk-Medium.ttf</string>
-		<string>HankenGrotesk-SemiBold.ttf</string>
-		<string>HankenGrotesk-Bold.ttf</string>
+		<string>Nunito-Regular.ttf</string>
+		<string>Nunito-Medium.ttf</string>
+		<string>Nunito-SemiBold.ttf</string>
+		<string>Nunito-Bold.ttf</string>
+		<string>Nunito-ExtraBold.ttf</string>
+		<string>Nunito-Black.ttf</string>
+		<string>Nunito-Italic.ttf</string>
+		<string>Nunito-BoldItalic.ttf</string>
 	</array>
 	<!--
 	Le schéma de retour des connexions.

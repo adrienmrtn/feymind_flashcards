@@ -1,77 +1,60 @@
 # Micabo
 
-Application iOS native de révision : tes cours (PDF, photos, Word ou notes) deviennent une
-**fiche** qu'on relit, et, si tu le veux, des cartes en répétition espacée façon Anki.
+Application iOS native de révision : un sujet tapé, ou tes supports (PDF, Word, photos, audio,
+YouTube, texte), deviennent **une leçon en chemin, façon Duolingo** — une intro, des notes par
+thème, des quiz, des flashcards en répétition espacée, une conclusion.
 
 <img src="Micabo/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png" width="120" alt="Icône Micabo" />
 
+> **La refonte « parcours » est décrite dans [`docs/refonte-parcours.md`](docs/refonte-parcours.md)** :
+> c'est la référence de ce que l'app fait aujourd'hui. Les sections plus bas qui parlent de
+> l'onglet Réviser, de la fiche à éditer, du planificateur d'examen ou de l'onglet Mika décrivent
+> l'app d'avant ; elles disparaissent avec le nettoyage de la refonte.
+
 ## Ce que fait l'application
 
-Trois onglets, pas plus, avec **Réviser au milieu** : c'est là que l'app ouvre, et c'est
-l'onglet qui doit être sous le pouce. Le bouton de session y est ancré en bas de l'écran :
-entre le lancement et la première carte, il n'y a qu'un appui.
+Trois onglets, dans une pilule de verre : **Home, Leçons, Profil**. On ne balaye pas de l'un à
+l'autre.
 
 | Onglet | Rôle |
 | --- | --- |
-| Cours | Tout ce qui est importé, avec recherche, tri et filtre par matière. Second rayon « Découvrir » : les cours que ton école et tes amis partagent, masqué sans compte |
-| Réviser | Écran d'ouverture : les cartes à réviser aujourd'hui dans une carte unique — le chiffre, la durée, la barre de composition et sa légende — puis les cours au programme et les examens. Rien d'autre : ni salutation, ni date, ni liste de cours, ni bouton d'import |
-| Profil | **Un tableau de bord** : la série et la courbe des quinze derniers jours dans un panneau, les trois totaux dans une bande, la porte des amis. Et les réglages, en haut à droite |
+| Home | Mika demande « Qu'est-ce que tu veux apprendre aujourd'hui ? ». La barre « comme une IA » prend un sujet, ou jusqu'à cinq supports (PDF·Photo·Audio·YouTube·Texte) lus sur l'appareil. Dessous : le temps de révision mesuré, les leçons apprises, les flashcards apprises, et « Reprendre » |
+| Leçons | Les leçons en cartes horizontales, rangées dans des dossiers ; « 8 à réviser », « J-12 » ; Renommer · Déplacer · Supprimer |
+| Profil | La carte profil (et le compte), Passer en Pro, les amis et le classement de la semaine, la langue, nous noter, le support |
 
-**On ne balaye pas d'un onglet à l'autre.** Le carrousel qui vivait là était un `TabView` en
-style page : un défilement horizontal qui traîne sur un tiers de geste rend chaque écran mou,
-il entre en conflit avec tout ce qui se balaye à l'intérieur d'une page, et il fallait un
-bricolage parcourant la hiérarchie UIKit à chaque passe de mise en page pour le couper dès
-qu'un écran de détail était poussé. Les pages restent montées en même temps, simplement
-masquées, pour garder leur défilement et leur pile ; le changement d'onglet est un fondu
-court. Le geste de retour du système, lui, reste : ce n'est pas le même geste, et le retirer
-n'aurait fluidifié que le travail du pouce.
-
-**L'app part vide.** Deux cours de démonstration étaient insérés au premier lancement ; ils
-ne montraient pas ce que fait Micabo, ils montraient ce que quelqu'un d'autre avait importé,
-et le premier geste devenait de les supprimer. Les écrans d'accueil vides existaient déjà et
-ne se voyaient jamais. `SampleContentPurge` efface une fois les cours marqués `sample` restés
-sur les téléphones où l'app a déjà tourné ; un cours importé par l'utilisateur n'est jamais
-touché. Les deux fiches écrites à la main vivent maintenant dans la cible de test, où elles
-servent de référence de mise en page.
-
-**Il n'y aura pas de quatrième onglet.** Trois onglets avec Réviser au milieu est une règle
-de composition, pas un état des lieux : à quatre, il n'y a plus de milieu. Les écrans qui
-arrivent se poussent donc depuis l'onglet dont ils relèvent, comme la page Examens depuis
-Réviser.
-
-Le parcours d'import tient en trois écrans : bouton `+` flottant en bas à droite de Cours,
-choix de la source (PDF, scan/photos, vidéo YouTube, Word ou texte), puis **la fiche du
-cours**. Les cartes ne sont plus produites au passage : elles se demandent depuis la fiche,
-et c'est le premier bouton de l'écran tant qu'il n'y en a aucune. Une fois écrites, **elles
-s'ouvrent d'elles-mêmes** : on retombait avant sur la fiche, qu'il fallait faire défiler
-jusqu'en bas pour trouver la rangée « Cartes » et découvrir ce qui venait d'être produit.
+Créer une leçon : envoyer depuis Home, « As-tu un examen ? », « Quelle date ? », puis l'écran de
+génération dont les quatre étapes suivent le vrai travail. La leçon s'ouvre dès son plan et son
+premier thème écrits ; les autres thèmes s'écrivent pendant qu'on lit (`LessonBuilder`).
 
 ```
-import -> lecture sur l'appareil -> cours fiché -> (facultatif) cartes -> session
+Home -> (2 questions) -> plan -> chemin : Intro, Notes x N, Quiz par palier, Flashcards, Conclusion
 ```
 
-**Ce qu'on regarde pendant que Micabo travaille** (`GenerationOverlay`) montre la page en
-train de se faire : un filet de titre, des lignes, un passage en couleur, un tableau, un graphe,
-qui se posent l'un après l'autre pendant qu'un balayage de lecture descend en boucle. C'est la
-même image que celle du parcours d'accueil, et c'est voulu — ce qu'on a promis à l'inscription
-est ce qu'on montre en train d'arriver. L'écran d'avant cochait quatre étapes sur un minuteur
-de 2,2 secondes : le problème n'était pas la laideur, c'était que les coches n'étaient reliées
-à rien. Rien n'est du faux texte, seulement des formes, et la page ne se vide jamais pour
-repartir : une page qui s'effacerait toutes les trois secondes se lirait comme un travail qui
-recommence, donc comme un échec.
+Dans une leçon : des cercles de 72 points en zigzag, qu'on ne peut pas sauter ; la navbar
+Notes · Quiz · Flashcards ; Mika en haut à droite, avec la leçon jointe ; l'examen blanc QCM
+à l'approche de l'examen ; « Leçon terminée » et ses confettis. Un ancien cours devient une
+leçon à sa première ouverture (et s'ouvre quand même hors ligne).
+
+**Le gratuit tient en une phrase** : une leçon offerte, à vie, depuis un sujet tapé ou un texte
+collé ; les imports sont Pro. La porte est tenue par l'app (`LessonAllowance`) et par le
+serveur (`begin_lesson`).
+
+**Vérifier sans Xcode.** Chaque push sur `main` ou `claude/**` passe par
+`.github/workflows/ios.yml` : compilation, tests sur le dernier simulateur iPhone, et des rendus
+d'écran en PNG (`RenderGalleryTests`, artefact « rendus », et dans le journal en JPEG que
+`scripts/ci-renders.py` remet en images).
 
 ## Lexique
 
-Le vocabulaire est verrouillé dans `Micabo/DesignSystem/MicaboCopy.swift`, et il vaut pour
-toute l'interface :
+Un seul mot par concept, partout dans l'interface et dans les cinq langues
+(`docs/refonte-parcours.md` § 1) :
 
-- **un seul mot par concept** — un contenu importé est un *cours*, ce que Micabo en écrit est
-  sa *fiche* (ni « résumé », ni « synthèse »), une question-réponse est une *carte*
-  (« flashcard » ne vit que dans le code et les noms d'Edge Functions), un passage de
-  révision est une *session*, et l'action est *réviser* : ni « entraînement », ni « exercice »
-- **tutoiement systématique**, de l'onboarding aux messages d'erreur
-- **un bouton garde son nom du début à la fin d'un parcours** — celui qui ouvre une session
-  s'appelle « Réviser N cartes », qu'on parte de l'onglet Réviser ou d'un cours
+- **Leçon** : ce que l'élève crée et retrouve dans l'onglet Leçons (`Course` dans le code) ;
+- **Cercle** : une étape du chemin — Intro, Notes, Quiz, Flashcards, Conclusion ;
+- **Thème** : une sous-partie de la leçon, qui porte un cercle Notes (`Chapter`) ;
+- **Palier** : un groupe de deux ou trois thèmes et son quiz ;
+- **Notes**, **Quiz**, **Flashcards** : le contenu d'un thème, des QCM, les cartes à retourner ;
+- **tutoiement systématique**, de l'onboarding aux messages d'erreur.
 
 ## Parcours d'accueil
 

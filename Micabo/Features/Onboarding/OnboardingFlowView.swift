@@ -222,16 +222,14 @@ struct OnboardingFlowView: View {
         Analytics.track(.onboardingFinished)
         OnboardingPreferences.markCompleted()
         if let course = model.builtCourse {
-            // **Le cours du parcours est le premier cours de l'app.** Il est déjà dans la
-            // bibliothèque ; l'app s'ouvre sur Decks, où il attend en tête — sans s'ouvrir
-            // de lui-même : l'élève vient de le parcourir.
+            // **La leçon du parcours est la première leçon de l'app.** Elle est déjà dans la
+            // bibliothèque ; l'app s'ouvre sur Home, où elle attend dans « Reprendre » — sans
+            // s'ouvrir d'elle-même : l'élève vient de la parcourir.
             FirstDeckHandoff.course = course
         }
-        // Sans cours construit — la construction a raté et l'élève a continué —, l'app
-        // s'ouvre sur Decks vide, dont la tuile « importer un deck » fait le même travail
-        // que « créons ton premier cours ». Ce dernier écran n'a pas de croix, et générer
-        // un cours est dans Pro : quelqu'un qui n'a pas pris l'abonnement y resterait
-        // enfermé.
+        // Sans leçon construite — la construction a raté et l'élève a continué —, l'app
+        // s'ouvre sur Home, dont la barre fait le même travail que « créons ton premier
+        // cours ». Ce dernier écran n'a pas de croix : on n'y enferme personne.
         OnboardingPreferences.pendingFirstImport = false
         // La note se redemande une fois, à la première arrivée dans l'app (`RootView`).
         UserDefaults.standard.set(true, forKey: InAppReviewPrompt.pendingKey)

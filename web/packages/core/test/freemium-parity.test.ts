@@ -78,8 +78,9 @@ describe("le branchement RevenueCat de l'app", () => {
   it("n'ouvre Pro que sur un achat confirmé", () => {
     // `unavailable` veut dire « je n'ai pas pu vendre ». L'accepter comme un achat ferait
     // de chaque panne de réseau un abonnement gratuit — c'est ce que faisaient les deux
-    // paywalls tant qu'aucune boutique n'existait.
-    for (const file of ["Features/Paywall/PaywallFlowView.swift", "Features/Paywall/SessionPaywallView.swift"]) {
+    // paywalls tant qu'aucune boutique n'existait. Le paywall de fin de session est parti
+    // avec l'onglet Réviser (refonte « parcours ») : il reste celui de l'app.
+    for (const file of ["Features/Paywall/PaywallFlowView.swift"]) {
       const source = readFileSync(resolve(repoRoot, "Micabo", file), "utf8");
       expect(source).not.toContain("case .purchased, .unavailable:");
     }

@@ -15,12 +15,24 @@ enum L10n {
         let fallback = SharedI18nCatalogs.fr
         let ios = IosI18nCatalogs.table(for: locale.rawValue)
         let iosFallback = IosI18nCatalogs.fr
+        // Les phrases de la refonte d'abord : leurs clés commencent toutes par `lesson.`.
+        if key.hasPrefix("lesson.") {
+            let lesson = LessonI18nCatalogs.table(for: locale.rawValue)[key]
+                ?? LessonI18nCatalogs.fr[key] ?? key
+            return format(lesson, locale: locale, vars: vars)
+        }
         let template = ios[key] ?? table[key] ?? iosFallback[key] ?? fallback[key] ?? key
         return format(template, locale: locale, vars: vars)
     }
 
     static func table(for locale: UiLocale) -> [String: String] {
         SharedI18nCatalogs.table(for: locale.rawValue)
+    }
+
+    /// Le français met zéro au singulier (« 0 vue »), l'anglais, l'allemand, l'espagnol et le
+    /// turc au pluriel.
+    static func isSingular(_ count: Int, locale: UiLocale) -> Bool {
+        locale == .fr ? (count == 0 || count == 1) : count == 1
     }
 
     private static func replacePlurals(
@@ -45,7 +57,7 @@ enum L10n {
             let count = Int(raw) ?? 0
             let one = String(template[oneRange])
             let other = String(template[otherRange])
-            let branch = count == 1 ? one : other
+            let branch = isSingular(count, locale: locale) ? one : other
             let formatted = raw
             let replacement = branch.replacingOccurrences(of: "#", with: formatted)
             result.replaceSubrange(allRange, with: replacement)

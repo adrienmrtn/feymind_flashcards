@@ -138,7 +138,7 @@ final class OnboardingModel {
     }
 
     /// Les supports déposés, dans le même objet que la création d'un deck : c'est lui que
-    /// `DeckBuilder` lit, et le parcours n'a pas de raison d'en inventer un second. La
+    /// la leçon lit (`LessonCreation.onboarding`), et le parcours n'en invente pas un second. La
     /// provenance est posée d'avance : le parcours ne demande ni matière, ni nom, ni
     /// épreuve — le titre vient du modèle, et le reste se règle plus tard dans l'app.
     let deckSetup: DeckSetup = {

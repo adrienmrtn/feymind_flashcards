@@ -860,7 +860,7 @@ struct MicaboSpeechBubble: View {
                     .rotationEffect(.degrees(tailTurn))
                     .offset(y: tailOffset)
             }
-            .shadow(color: MicaboColor.ink.opacity(0.05), radius: 12, y: 5)
+            .shadow(color: Color.black.opacity(0.05), radius: 12, y: 5)
     }
 
     private var tailShape: some View {

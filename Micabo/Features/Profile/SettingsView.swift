@@ -13,7 +13,6 @@ struct SettingsView: View {
     @State private var supabaseURL = AppConfig.supabaseURL
     @State private var anonKey = AppConfig.supabaseAnonKey
     @State private var model = AppConfig.aiModel
-    @State private var dailyMinutes = OnboardingPreferences.dailyMinutes
     @Environment(AuthController.self) private var auth
     @Environment(CloudSync.self) private var sync
     @Environment(SocialService.self) private var social
@@ -24,10 +23,6 @@ struct SettingsView: View {
     @State private var country = OnboardingPreferences.schoolingCountry
     /// La langue des fiches, quand elle n'est pas celle du pays. `nil` : celle du pays.
     @State private var sheetLanguage = OnboardingPreferences.sheetLanguage
-    /// Le format, et pas le nombre de blocs : un menu ne fait pas un curseur. L'écrire
-    /// replace le curseur de l'import au milieu de la plage choisie.
-    @State private var sheetLength = SheetPreferences.length
-    @State private var readingSize = SheetPreferences.readingSize
     @State private var showResetConfirmation = false
     @State private var showDeleteAccountConfirmation = false
     @State private var showSignOutConfirmation = false
@@ -43,7 +38,6 @@ struct SettingsView: View {
     @State private var discountOffer: DiscountPresentation?
     #if DEBUG
     @State private var debugCourseLanguage = DebugCourseCatalog.language
-    @State private var debugMock: MockSessionRecord?
     #endif
     /// Relues pour que la rangée de l'offre suive son décompte sans qu'on rouvre l'écran.
     @AppStorage(DiscountOffer.Key.startedAt) private var discountStartedAt: Double = 0
@@ -64,7 +58,6 @@ struct SettingsView: View {
                 identitySection
                 studiesSection
                 languageSection
-                reviewSection
                 #if DEBUG
                 debugCoursesSection
                 intelligenceSection
@@ -177,7 +170,7 @@ struct SettingsView: View {
             VStack(spacing: 0) {
                 if isSubscribed {
                     MicaboRow(
-                        tile: MicaboTile(glyph: .emoji("⭐️"), background: MicaboColor.accentSoft),
+                        tile: MicaboTile(glyph: .symbol("star.fill"), background: MicaboColor.accentSoft),
                         title: i18n.t("ios.pro.title"),
                         subtitle: i18n.t("ios.pro.active"),
                         accessory: .none
@@ -188,7 +181,7 @@ struct SettingsView: View {
                     // La gestion d'un abonnement App Store se fait chez Apple, et nulle part
                     // ailleurs : une app qui prétendrait résilier à sa place mentirait.
                     MicaboRow(
-                        tile: MicaboTile(glyph: .emoji("🧾"), background: MicaboColor.surfaceMuted),
+                        tile: MicaboTile(glyph: .symbol("doc.plaintext.fill"), background: MicaboColor.surfaceMuted),
                         title: i18n.t("ios.pro.manage"),
                         subtitle: i18n.t("ios.pro.manageHelp"),
                         accessory: .chevron,
@@ -196,7 +189,7 @@ struct SettingsView: View {
                     )
                 } else {
                     MicaboRow(
-                        tile: MicaboTile(glyph: .emoji("⭐️"), background: MicaboColor.accentSoft),
+                        tile: MicaboTile(glyph: .symbol("star.fill"), background: MicaboColor.accentSoft),
                         title: i18n.t("ios.pro.upgrade"),
                         subtitle: i18n.t("ios.pro.upgradeHelp"),
                         accessory: .chevron,
@@ -207,7 +200,7 @@ struct SettingsView: View {
                         MicaboHairline(inset: 72)
 
                         MicaboRow(
-                            tile: MicaboTile(glyph: .emoji("🎁"), background: MicaboColor.tilePastels[1]),
+                            tile: MicaboTile(glyph: .symbol("gift.fill"), background: MicaboColor.tilePastels[1]),
                             title: i18n.t("ios.pro.offer"),
                             subtitle: discountSubtitle,
                             accessory: .chevron,
@@ -269,7 +262,7 @@ struct SettingsView: View {
             VStack(spacing: 0) {
                 if let user = auth.user {
                     MicaboRow(
-                        tile: MicaboTile(glyph: .emoji("👤"), background: MicaboColor.accentSoft),
+                        tile: MicaboTile(glyph: .symbol("person.fill"), background: MicaboColor.accentSoft),
                         title: user.label,
                         subtitle: user.email ?? i18n.t("ios.connected"),
                         accessory: .none
@@ -278,7 +271,7 @@ struct SettingsView: View {
                     MicaboHairline(inset: 72)
 
                     MicaboRow(
-                        tile: MicaboTile(glyph: .emoji("☁️"), background: MicaboColor.tilePastels[3]),
+                        tile: MicaboTile(glyph: .symbol("icloud.fill"), background: MicaboColor.tilePastels[3]),
                         title: i18n.t("ios.backup"),
                         subtitle: syncSubtitle,
                         accessory: .none,
@@ -288,7 +281,7 @@ struct SettingsView: View {
                     MicaboHairline(inset: 72)
 
                     MicaboRow(
-                        tile: MicaboTile(glyph: .emoji("🚪"), background: MicaboColor.surfaceMuted),
+                        tile: MicaboTile(glyph: .symbol("rectangle.portrait.and.arrow.right"), background: MicaboColor.surfaceMuted),
                         title: i18n.t("common.signOut"),
                         accessory: .none,
                         titleColor: MicaboColor.negative,
@@ -296,7 +289,7 @@ struct SettingsView: View {
                     )
                 } else {
                     MicaboRow(
-                        tile: MicaboTile(glyph: .emoji("☁️"), background: MicaboColor.tilePastels[3]),
+                        tile: MicaboTile(glyph: .symbol("icloud.fill"), background: MicaboColor.tilePastels[3]),
                         title: i18n.t("ios.createOrSignIn"),
                         subtitle: i18n.t("ios.createOrSignInHelp"),
                         accessory: .chevron,
@@ -469,7 +462,7 @@ struct SettingsView: View {
                     }
                 } label: {
                     MicaboRow(
-                        tile: MicaboTile(glyph: .emoji("✍️"), background: MicaboColor.tilePastels[1]),
+                        tile: MicaboTile(glyph: .symbol("pencil"), background: MicaboColor.tilePastels[1]),
                         title: i18n.t("ios.sheetLanguageCaption"),
                         subtitle: i18n.t("settings.sheetLanguageHelp"),
                         accessory: .value((sheetLanguage ?? country.language).label)
@@ -487,7 +480,7 @@ struct SettingsView: View {
                     }
                 } label: {
                     MicaboRow(
-                        tile: MicaboTile(glyph: .emoji(stage?.emoji ?? "🎓"), background: MicaboColor.tilePastels[0]),
+                        tile: MicaboTile(glyph: .symbol("graduationcap.fill"), background: MicaboColor.tilePastels[0]),
                         title: i18n.t("ios.stage"),
                         subtitle: stage?.level.detail ?? i18n.t("ios.balancedCopy"),
                         accessory: .value(stage?.localizedTitle ?? i18n.t("ios.unspecified"))
@@ -497,7 +490,7 @@ struct SettingsView: View {
                 MicaboHairline(inset: 72)
 
                 MicaboRow(
-                    tile: MicaboTile(glyph: .emoji("📚"), background: MicaboColor.tilePastels[4]),
+                    tile: MicaboTile(glyph: .symbol("books.vertical.fill"), background: MicaboColor.tilePastels[4]),
                     title: i18n.t("ios.subjects"),
                     subtitle: subjectsSubtitle,
                     accessory: .chevron,
@@ -507,48 +500,14 @@ struct SettingsView: View {
                 MicaboHairline(inset: 72)
 
                 MicaboRow(
-                    tile: MicaboTile(glyph: .emoji("🏫"), background: MicaboColor.tilePastels[5]),
+                    tile: MicaboTile(glyph: .symbol("building.columns.fill"), background: MicaboColor.tilePastels[5]),
                     title: i18n.t("ios.school"),
                     subtitle: schoolName?.nilIfBlank ?? i18n.t("ios.schoolEmpty"),
                     accessory: .chevron,
                     action: { showSchool = true }
                 )
 
-                MicaboHairline(inset: 72)
 
-                Menu {
-                    Picker(i18n.t("ios.sheetLength"), selection: $sheetLength) {
-                        ForEach(SheetLength.allCases) { length in
-                            Text("\(length.title) · \(readingHint(for: length))").tag(length)
-                        }
-                    }
-                } label: {
-                    MicaboRow(
-                        tile: MicaboTile(glyph: .emoji("📄"), background: MicaboColor.tilePastels[3]),
-                        title: i18n.t("ios.sheetLength"),
-                        subtitle: i18n.t("ios.readingOf", ["hint": readingHint(for: sheetLength)]),
-                        accessory: .value(sheetLength.title)
-                    )
-                }
-
-                MicaboHairline(inset: 72)
-
-                // La taille du texte des fiches, comme sur le site : sur cet appareil
-                // seulement, parce qu'elle appartient à l'œil qui lit, pas au cours.
-                Menu {
-                    Picker(i18n.t("app.settings.readingSize"), selection: $readingSize) {
-                        ForEach(SheetReadingSize.allCases) { size in
-                            Text(size.title(locale: i18n.locale)).tag(size)
-                        }
-                    }
-                } label: {
-                    MicaboRow(
-                        tile: MicaboTile(glyph: .emoji("🔍"), background: MicaboColor.tilePastels[1]),
-                        title: i18n.t("app.settings.readingSize"),
-                        subtitle: i18n.t("app.settings.readingSizeHint"),
-                        accessory: .value(readingSize.title(locale: i18n.locale))
-                    )
-                }
             }
             .micaboGroup()
         }
@@ -577,14 +536,6 @@ struct SettingsView: View {
             Haptics.selection()
             Task { await sync.sync(context: modelContext) }
         }
-        .onChange(of: sheetLength) { _, newValue in
-            SheetPreferences.length = newValue
-            Haptics.selection()
-        }
-        .onChange(of: readingSize) { _, newValue in
-            SheetPreferences.readingSize = newValue
-            Haptics.selection()
-        }
         .sheet(isPresented: $showSubjects, onDismiss: { subjects = OnboardingPreferences.subjects }) {
             SettingsSubjectsSheet()
                 .presentationDetents([.large])
@@ -607,49 +558,8 @@ struct SettingsView: View {
         return "\(shown.prefix(3).joined(separator: ", ")) +\(shown.count - 3)"
     }
 
-    private func readingHint(for length: SheetLength) -> String {
-        SheetPreferences.readingHint(forBlocks: length.defaultBlocks)
-    }
-
     private var languageSection: some View {
         LanguageSwitcher(variant: .card)
-    }
-
-    /// Le rythme quotidien commande le plafond de cartes neuves : les deux rangées se
-    /// lisent ensemble, et la seconde n'est qu'une conséquence de la première.
-    private var reviewSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: i18n.t("ios.reviewSection"))
-
-            VStack(spacing: 0) {
-                Menu {
-                    Picker(i18n.t("ios.dailyGoal"), selection: $dailyMinutes) {
-                        ForEach(DailyLoad.steps, id: \.self) { minutes in
-                            Text(DailyLoad.label(forMinutes: minutes)).tag(minutes)
-                        }
-                    }
-                } label: {
-                    MicaboRow(
-                        tile: MicaboTile(glyph: .emoji("⏱️"), background: MicaboColor.tilePastels[1]),
-                        title: i18n.t("ios.dailyGoal"),
-                        accessory: .value(DailyLoad.label(forMinutes: dailyMinutes))
-                    )
-                }
-
-                MicaboHairline(inset: 72)
-
-                MicaboRow(
-                    tile: MicaboTile(glyph: .emoji("🆕"), background: MicaboColor.accentSoft),
-                    title: i18n.t("ios.newCards"),
-                    accessory: .value(i18n.t("ios.newCardsMax", ["n": "\(DailyLoad.newCardsPerDay(dailyMinutes: dailyMinutes))"]))
-                )
-            }
-            .micaboGroup()
-        }
-        .onChange(of: dailyMinutes) { _, newValue in
-            OnboardingPreferences.dailyMinutes = newValue
-            Haptics.selection()
-        }
     }
 
     #if DEBUG
@@ -668,27 +578,18 @@ struct SettingsView: View {
                     }
                 } label: {
                     MicaboRow(
-                        tile: MicaboTile(glyph: .emoji("🧪"), background: MicaboColor.accentSoft),
+                        tile: MicaboTile(glyph: .symbol("testtube.2"), background: MicaboColor.accentSoft),
                         title: "Langue des cours de debug",
                         subtitle: "\(debugCourseLanguage.flag)  \(debugCourseLanguage.nativeName) · réinstalle les 6 cours et l'activité",
                         accessory: .symbol("chevron.up.chevron.down")
                     )
                 }
 
-                MicaboHairline()
-
-                MicaboRow(
-                    tile: MicaboTile(glyph: .emoji("📝"), background: MicaboColor.tilePastels[1]),
-                    title: "Voir un examen blanc corrigé",
-                    subtitle: "Une copie notée, tirée des cours de debug",
-                    accessory: .chevron,
-                    action: { debugMock = DebugMock.gradedSession(in: modelContext) }
-                )
 
                 MicaboHairline()
 
                 MicaboRow(
-                    tile: MicaboTile(glyph: .emoji("🧹"), background: MicaboColor.tilePastels[3]),
+                    tile: MicaboTile(glyph: .symbol("wand.and.stars"), background: MicaboColor.tilePastels[3]),
                     title: "Retirer les cours de debug",
                     subtitle: "Cours, révisions, épreuves et amis simulés",
                     accessory: .none,
@@ -706,9 +607,6 @@ struct SettingsView: View {
             DebugCourseCatalog.install(locale: locale, in: modelContext, social: social)
             Haptics.success()
         }
-        .fullScreenCover(item: $debugMock) { session in
-            MockReportView(session: session, examName: "Examen blanc", onDone: { debugMock = nil })
-        }
     }
     #endif
 
@@ -725,7 +623,7 @@ struct SettingsView: View {
                     }
                 } label: {
                     MicaboRow(
-                        tile: MicaboTile(glyph: .emoji("🧠"), background: MicaboColor.accentSoft),
+                        tile: MicaboTile(glyph: .symbol("brain.head.profile"), background: MicaboColor.accentSoft),
                         title: i18n.t("ios.debug.model"),
                         subtitle: model,
                         accessory: .symbol("chevron.up.chevron.down")
@@ -766,13 +664,13 @@ struct SettingsView: View {
     private var dataSection: some View {
         var rows = [
             MicaboRow(
-                tile: MicaboTile(glyph: .emoji("♻️"), background: MicaboColor.tilePastels[1]),
+                tile: MicaboTile(glyph: .symbol("arrow.triangle.2.circlepath"), background: MicaboColor.tilePastels[1]),
                 title: i18n.t("ios.restoreDefaults"),
                 accessory: .none,
                 action: restoreDefaults
             ),
             MicaboRow(
-                tile: MicaboTile(glyph: .emoji("🗑️"), background: MicaboColor.negativeSoft),
+                tile: MicaboTile(glyph: .symbol("trash.fill"), background: MicaboColor.negativeSoft),
                 title: i18n.t("ios.eraseAllCourses"),
                 accessory: .none,
                 titleColor: MicaboColor.negative,
@@ -782,7 +680,7 @@ struct SettingsView: View {
         if case .signedIn = auth.state {
             rows.append(
                 MicaboRow(
-                    tile: MicaboTile(glyph: .emoji("🚪"), background: MicaboColor.negativeSoft),
+                    tile: MicaboTile(glyph: .symbol("rectangle.portrait.and.arrow.right"), background: MicaboColor.negativeSoft),
                     title: i18n.t("ios.deleteAccount"),
                     accessory: .none,
                     titleColor: MicaboColor.negative,
@@ -815,7 +713,7 @@ struct SettingsView: View {
         // revoir demanderait de désinstaller l'app.
         rows.append(
             MicaboRow(
-                tile: MicaboTile(glyph: .emoji("🎁"), background: MicaboColor.infoSoft),
+                tile: MicaboTile(glyph: .symbol("gift.fill"), background: MicaboColor.infoSoft),
                 title: i18n.t("ios.debug.replayGift"),
                 subtitle: i18n.t("ios.debug.replayGiftHelp"),
                 accessory: .chevron,
@@ -828,7 +726,7 @@ struct SettingsView: View {
         // interrupteur, les voir demandait deux comptes et un webhook coopératif.
         rows.append(
             MicaboRow(
-                tile: MicaboTile(glyph: .emoji("👑"), background: MicaboColor.cautionSoft),
+                tile: MicaboTile(glyph: .symbol("crown.fill"), background: MicaboColor.cautionSoft),
                 title: i18n.t("ios.debug.forcePro"),
                 subtitle: i18n.t(pro?.debugProOverride == nil ? "ios.debug.forceProOff" : "ios.debug.forceProOn"),
                 accessory: .toggle(Binding(
@@ -844,7 +742,7 @@ struct SettingsView: View {
         if pro?.debugProOverride != nil {
             rows.append(
                 MicaboRow(
-                    tile: MicaboTile(glyph: .emoji("↩️"), background: MicaboColor.surfaceMuted),
+                    tile: MicaboTile(glyph: .symbol("arrow.uturn.backward"), background: MicaboColor.surfaceMuted),
                     title: i18n.t("ios.debug.forceProClear"),
                     accessory: .chevron,
                     action: {
@@ -860,7 +758,7 @@ struct SettingsView: View {
         // avec deux réglages de longueur.
         rows.append(
             MicaboRow(
-                tile: MicaboTile(glyph: .emoji("🌿"), background: MicaboColor.tilePastels[0]),
+                tile: MicaboTile(glyph: .symbol("leaf.fill"), background: MicaboColor.tilePastels[0]),
                 title: i18n.t("ios.debug.sampleCourse"),
                 subtitle: i18n.t("ios.debug.sampleCourseHelp"),
                 accessory: .chevron,
@@ -876,7 +774,7 @@ struct SettingsView: View {
 
         rows.append(
             MicaboRow(
-                tile: MicaboTile(glyph: .emoji("🔁"), background: MicaboColor.tilePastels[2]),
+                tile: MicaboTile(glyph: .symbol("repeat"), background: MicaboColor.tilePastels[2]),
                 title: i18n.t("ios.debug.replayOnboarding"),
                 accessory: .chevron,
                 action: replayOnboarding
@@ -899,7 +797,7 @@ struct SettingsView: View {
             caption: i18n.t("ios.feedbackSection"),
             rows: [
                 MicaboRow(
-                    tile: MicaboTile(glyph: .emoji("✉️"), background: MicaboColor.infoSoft),
+                    tile: MicaboTile(glyph: .symbol("envelope.fill"), background: MicaboColor.infoSoft),
                     title: i18n.t("app.feedback.title"),
                     subtitle: i18n.t("ios.feedbackIdea"),
                     accessory: .chevron,
@@ -915,24 +813,24 @@ struct SettingsView: View {
             caption: i18n.t("ios.about"),
             rows: [
                 MicaboRow(
-                    tile: MicaboTile(glyph: .emoji("📦"), background: MicaboColor.tilePastels[4]),
+                    tile: MicaboTile(glyph: .symbol("shippingbox.fill"), background: MicaboColor.tilePastels[4]),
                     title: i18n.t("ios.version"),
                     subtitle: buildCommit,
                     accessory: .value(appVersion)
                 ),
                 MicaboRow(
-                    tile: MicaboTile(glyph: .emoji("📈"), background: MicaboColor.tilePastels[0]),
+                    tile: MicaboTile(glyph: .symbol("chart.line.uptrend.xyaxis"), background: MicaboColor.tilePastels[0]),
                     title: i18n.t("ios.spacedRep"),
                     accessory: .value("SM-2")
                 ),
                 MicaboRow(
-                    tile: MicaboTile(glyph: .emoji("🔒"), background: MicaboColor.tilePastels[3]),
+                    tile: MicaboTile(glyph: .symbol("lock.fill"), background: MicaboColor.tilePastels[3]),
                     title: i18n.t("common.privacy"),
                     accessory: .chevron,
                     action: { openLegal(PaywallLinks.privacy) }
                 ),
                 MicaboRow(
-                    tile: MicaboTile(glyph: .emoji("📜"), background: MicaboColor.tilePastels[5]),
+                    tile: MicaboTile(glyph: .symbol("doc.text.fill"), background: MicaboColor.tilePastels[5]),
                     title: i18n.t("common.terms"),
                     accessory: .chevron,
                     action: { openLegal(PaywallLinks.terms) }

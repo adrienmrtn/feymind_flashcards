@@ -369,6 +369,8 @@ final class OnboardingFlowTests: XCTestCase {
         for step in OnboardingStep.allCases.dropLast() where !skipped.contains(step) {
             let model = OnboardingModel()
             model.select(country: .fr)
+            // Le compte se propose en quittant l'annonce de la fiche ; ici, on l'a déjà.
+            model.hasAccount = true
             while model.step != step { model.advance() }
             model.advance()
             var expected = step.next

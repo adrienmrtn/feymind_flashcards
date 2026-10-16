@@ -99,7 +99,7 @@ struct FriendProfileView: View {
             MicaboRowGroup(rows: courses.map { course in
                 MicaboRow(
                     tile: MicaboTile(
-                        glyph: .emoji(course.emoji?.nilIfBlank ?? "📘"),
+                        glyph: .symbol(MicaboIcon.guess(subject: course.subject, title: course.title).symbol),
                         background: tint(for: course).lightened(by: 0.8),
                         tint: tint(for: course).darkened(by: 0.25)
                     ),

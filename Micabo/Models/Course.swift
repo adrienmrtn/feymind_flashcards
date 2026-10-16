@@ -20,7 +20,8 @@ enum CourseSource: String, Codable, CaseIterable {
         case .pdf: L10n.t("app.course.source.pdf", locale: locale)
         case .photo: L10n.t("app.course.source.photos", locale: locale)
         case .docx: L10n.t("app.course.source.word", locale: locale)
-        case .youtube: L10n.t("app.course.source.video", locale: locale)
+        // Un nom de marque, le même dans toutes les langues : c'est aussi l'icône de Home.
+        case .youtube: "YouTube"
         case .library: L10n.t("app.course.source.library", locale: locale)
         case .sample: L10n.t("app.course.source.sample", locale: locale)
         case .deck: L10n.t("app.course.source.deck", locale: locale)
@@ -90,6 +91,21 @@ final class Course {
     /// pas casser le graphe, il doit rendre le cours à la racine. Un identifiant qui ne
     /// correspond à rien se lit comme « nulle part » ; une relation cassée, non.
     var folderID: UUID?
+
+    // MARK: La refonte « parcours » — voir `Course+Lesson.swift`
+
+    /// Le plan de la leçon (`LessonPath`, en JSON). `nil` sur un ancien cours pas encore
+    /// converti en parcours.
+    var pathData: Data?
+    /// Où en est l'élève (`LessonProgress`, en JSON).
+    var progressData: Data?
+    /// Le ton de la leçon (`LessonTone`). Vide sur un ancien cours : il en reçoit un, stable,
+    /// tiré de son identifiant.
+    var toneRaw: String = ""
+    /// L'icône 3D de la leçon (`MicaboIcon`). Vide : l'icône se déduit de la matière.
+    var iconID: String = ""
+    /// La dernière ouverture, pour « Reprendre » sur Home.
+    var lastOpenedAt: Date?
 
     @Relationship(deleteRule: .cascade, inverse: \Flashcard.course)
     var flashcards: [Flashcard]? = []

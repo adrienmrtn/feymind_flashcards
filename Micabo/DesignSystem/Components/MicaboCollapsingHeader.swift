@@ -300,7 +300,7 @@ struct MicaboCollapsingHeader<Trailing: View>: View {
         .background {
             Rectangle()
                 .fill(pastel)
-                .shadow(color: MicaboColor.ink.opacity(shadowAlpha), radius: 14, x: 0, y: 2)
+                .shadow(color: Color.black.opacity(shadowAlpha), radius: 14, x: 0, y: 2)
         }
         .overlay(alignment: .bottom) {
             if let readingProgress {

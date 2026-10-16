@@ -29,7 +29,9 @@ struct ProfileView: View {
 
     @Environment(CloudSync.self) private var sync: CloudSync?
 
+    @Environment(ProAccess.self) private var pro: ProAccess?
     @State private var showSettings = false
+    @State private var paywall: PaywallTrigger?
     @State private var path = NavigationPath()
     @State private var metrics = Metrics.empty
 
@@ -234,15 +236,20 @@ struct ProfileView: View {
     private func profile(_ metrics: Metrics) -> some View {
         NavigationStack(path: $path) {
             ScrollView(.vertical) {
-                VStack(alignment: .leading, spacing: MicaboSpacing.md) {
+                VStack(alignment: .leading, spacing: 22) {
                     header
-                    streakPanel(metrics)
-                    totalsStrip(metrics)
-                    masteryPanel(metrics)
-                    activityPanel(metrics)
-                    weakPanel(metrics)
-                    weekRanking
-                    friendsRow
+                    ProfileCard(name: profileName, identity: profileIdentity, studies: profileStudies) {
+                        showSettings = true
+                    }
+                    if !(pro?.isPro ?? true) {
+                        ProUpgradeCard { paywall = .upgrade }
+                    }
+                    VStack(alignment: .leading, spacing: MicaboSpacing.md) {
+                        weekRanking
+                        friendsRow
+                    }
+                    ProfileSettingsGroup()
+                    ProfileSupportGroup()
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.top, MicaboSpacing.xs)
@@ -289,13 +296,30 @@ struct ProfileView: View {
                 }
             }
             .navigationDestination(for: Course.self) { course in
-                DeckView(course: course)
+                LessonPathView(course: course)
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
                     .presentationCornerRadius(MicaboRadius.sheet)
             }
+            .micaboPaywall($paywall)
         }
+    }
+
+    // MARK: - La carte profil
+
+    private var profileName: String {
+        OnboardingPreferences.displayName?.nilIfBlank ?? i18n.t("lesson.profile.me")
+    }
+
+    private var profileIdentity: String? {
+        if let username = social.username { return Username.display(username) }
+        if let label = auth.user?.label.nilIfBlank, label != profileName { return label }
+        return auth.isSignedIn ? nil : i18n.t("app.profile.offline")
+    }
+
+    private var profileStudies: String? {
+        OnboardingPreferences.educationStage?.localizedTitle.nilIfBlank
     }
 
     // MARK: - En-tête
@@ -318,7 +342,7 @@ struct ProfileView: View {
     /// l'œil qu'une matière.
     /// **La rangée ouvre le deck.** Elle envoyait vers l'onglet des decks — la liste, pas le
     /// deck sur lequel on venait d'appuyer — et il fallait le retrouver dans la grille. La
-    /// pile du profil connaît déjà `DeckView` ; il ne manquait que l'objet.
+    /// pile du profil connaît déjà `LessonPathView` ; il ne manquait que l'objet.
     private func open(deckID: UUID) {
         let descriptor = FetchDescriptor<Course>(predicate: #Predicate { $0.id == deckID })
         guard let course = try? modelContext.fetch(descriptor).first else { return }
@@ -326,20 +350,8 @@ struct ProfileView: View {
     }
 
     private var header: some View {
-        MicaboPageHeading(title: i18n.t("ios.profile.title"), subtitle: identityLabel) {
-            Button {
-                showSettings = true
-            } label: {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 17, weight: .medium))
-                    .foregroundStyle(MicaboColor.ink)
-                    .frame(width: 38, height: 38)
-                    .overlay(Circle().strokeBorder(MicaboColor.stroke, lineWidth: 1))
-            }
-            .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
-            .accessibilityLabel(i18n.t("nav.settings"))
-        }
-        .padding(.top, MicaboSpacing.xs)
+        MicaboPageHeading(title: i18n.t("lesson.tab.profile"), subtitle: nil)
+            .padding(.top, MicaboSpacing.xs)
     }
 
     /// **Qui l'on est**, sur une ligne, en tête du panneau : le prénom donné au parcours
@@ -747,7 +759,7 @@ struct ProfileView: View {
         MicaboRowGroup(
             rows: [
                 MicaboRow(
-                    tile: MicaboTile(glyph: .emoji("👋"), background: MicaboColor.tilePastels[2]),
+                    tile: MicaboTile(glyph: .symbol("person.2.fill"), background: MicaboColor.tilePastels[2]),
                     title: i18n.t("nav.friends"),
                     subtitle: friendsSubtitle,
                     accessory: friendsAccessory

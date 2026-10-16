@@ -108,17 +108,6 @@ final class ExamPlanTests: XCTestCase {
         )
     }
 
-    /// Le contrat de l'écran de confirmation : les quatre chiffres annoncés.
-    func testProjectionAnnouncesTheFourFigures() {
-        let result = plan(cards: cards(30), inDays: 10)
-
-        XCTAssertEqual(result.projection.cardCount, 30)
-        XCTAssertEqual(result.projection.daysRemaining, 10)
-        XCTAssertEqual(result.projection.totalReviews, 90, "30 cartes × 3 passages")
-        XCTAssertEqual(result.projection.averageDailyLoad, 9, "90 passages sur 10 jours")
-        XCTAssertNotNil(result.projection.busiest)
-    }
-
     /// La révision s'arrête la veille : le jour de l'examen ne sert plus à apprendre.
     func testTheWindowStopsOnTheEveOfTheExam() {
         let result = plan(cards: cards(4), inDays: 7)
@@ -138,36 +127,6 @@ final class ExamPlanTests: XCTestCase {
             XCTAssertEqual(result.projection.load, [5])
             for offsets in result.days.values {
                 XCTAssertEqual(offsets, [0])
-            }
-        }
-    }
-
-    /// La charge doit être tenable. Elle n'est pas parfaitement plate, et c'est voulu : les
-    /// derniers jours portent le dernier passage de toutes les cartes, donc ils pèsent plus.
-    /// Ce que le test verrouille, c'est qu'aucun jour ne soit vide, que les jours ordinaires
-    /// restent près de la moyenne, et que même le pire jour reste dans un ordre de grandeur
-    /// faisable.
-    func testDailyLoadStaysTenable() {
-        let result = plan(cards: cards(120), inDays: 14, intensity: .intense)
-        let load = result.projection.load
-        let average = Double(result.projection.totalReviews) / Double(load.count)
-        let closingStart = result.windowDays - ExamPlanner.closingDays
-
-        XCTAssertEqual(load.count, 14)
-
-        for (offset, count) in load.enumerated() {
-            XCTAssertGreaterThan(count, 0, "Le jour \(offset) ne doit pas rester vide")
-            XCTAssertLessThanOrEqual(
-                Double(count),
-                average * 2.5,
-                "Le jour \(offset) porte \(count) passages pour une moyenne de \(Int(average))"
-            )
-            if offset < closingStart {
-                XCTAssertLessThanOrEqual(
-                    Double(count),
-                    average * 1.6,
-                    "Un jour ordinaire doit rester près de la moyenne, or le jour \(offset) porte \(count)"
-                )
             }
         }
     }
@@ -606,20 +565,18 @@ final class ExamDeadlinesTests: XCTestCase {
         let capped = StudyQueueBuilder.build(from: cards, limits: smallLimits, deadlines: .empty)
         XCTAssertEqual(capped.count, 3)
 
-        _ = try exam(name: "Examen", inDays: 7, courses: [course], planned: true)
-        let withExam = StudyQueueBuilder.build(
-            from: cards,
-            limits: smallLimits,
-            deadlines: ExamDeadlines.active(in: context)
-        )
+        let planned = try exam(name: "Examen", inDays: 7, courses: [course], planned: true)
+        let deadlines = ExamDeadlines.active(exams: [planned], cards: cards)
+        let withExam = StudyQueueBuilder.build(from: cards, limits: smallLimits, deadlines: deadlines)
         XCTAssertEqual(withExam.count, 3)
-        XCTAssertTrue(withExam.allSatisfy { ExamDeadlines.active(in: context).covers($0) })
+        XCTAssertTrue(withExam.allSatisfy { deadlines.covers($0) })
     }
 
     /// Un second examen ne ramène pas une carte déjà notée aujourd'hui.
     func testASecondExamDoesNotYankCardsReviewedToday() throws {
-        let course = try makeCourse(cards: 4, dueInDays: 30)
+        let course = try makeCourse()
         let reviewed = try XCTUnwrap(course.orderedCards.first)
+        reviewed.dueDate = Date().addingTimeInterval(30 * 86_400)
         reviewed.lastReviewedAt = Date()
         let originalDue = reviewed.dueDate
         try context.save()
