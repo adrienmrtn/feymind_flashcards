@@ -175,7 +175,9 @@ jobs:
       - uses: supabase/setup-cli@v1
         if: steps.touched.outputs.names != ''
         with:
-          version: latest
+          # Une version fixe : « latest » interroge l'API GitHub à chaque run, et une limite
+          # d'appels atteinte faisait tomber le déploiement avant qu'il ait commencé.
+          version: 2.119.0
 
       - name: Déployer les fonctions
         if: steps.touched.outputs.names != ''
