@@ -9,6 +9,7 @@ protocol LessonGenerating: Sendable {
     func theme(_ request: LessonThemeRequest) async throws -> LessonThemeResult
     func convert(_ request: LessonConvertRequest) async throws -> LessonConversion
     func practice(_ request: LessonPracticeRequest) async throws -> [GeneratedQuestion]
+    func exam(_ request: LessonExamRequest) async throws -> GeneratedExam
 }
 
 /// **Pour qui on écrit** : la marche d'études, le pays, le palier, la filière, la classe
@@ -149,8 +150,10 @@ struct GeneratedQuestion: Decodable, Sendable, Equatable {
     var why: String
     var difficulty: Int?
     var matches: [String]?
-    /// Le rang du thème, pour une question d'entraînement.
+    /// Le rang du thème, pour une question d'entraînement ou d'examen blanc.
     var theme: Int?
+    /// Le rang de la leçon, pour une question d'examen blanc.
+    var lesson: Int?
 
     init(
         kind: String? = nil,
@@ -160,7 +163,8 @@ struct GeneratedQuestion: Decodable, Sendable, Equatable {
         why: String,
         difficulty: Int? = nil,
         matches: [String]? = nil,
-        theme: Int? = nil
+        theme: Int? = nil,
+        lesson: Int? = nil
     ) {
         self.kind = kind
         self.prompt = prompt
@@ -170,6 +174,7 @@ struct GeneratedQuestion: Decodable, Sendable, Equatable {
         self.difficulty = difficulty
         self.matches = matches
         self.theme = theme
+        self.lesson = lesson
     }
 
     func question(id: String) -> QuizQuestion {
@@ -253,6 +258,30 @@ struct LessonPracticeRequest: Sendable {
     var avoid: [String]
     var count: Int = 10
     var audience: LessonAudience
+}
+
+// MARK: - L'examen blanc
+
+/// **Un examen blanc** sur une ou plusieurs leçons : autant de questions que la durée en
+/// laisse le temps, dans le format de l'examen visé, sans retour avant la fin.
+struct LessonExamRequest: Sendable {
+    struct Lesson: Sendable, Equatable {
+        var title: String
+        var themes: [LessonPracticeRequest.Theme]
+    }
+
+    /// L'identifiant de cette copie : chaque examen blanc est une copie neuve.
+    var paperID: UUID
+    var title: String
+    var minutes: Int
+    var count: Int
+    var lessons: [Lesson]
+    var audience: LessonAudience
+}
+
+struct GeneratedExam: Decodable, Sendable, Equatable {
+    var title: String
+    var questions: [GeneratedQuestion]
 }
 
 // MARK: - Les refus
@@ -362,6 +391,24 @@ struct SupabaseLessonService: LessonGenerating {
         payload["count"] = request.count
         return try await call(payload) { envelope in
             try functions.decode([GeneratedQuestion].self, from: envelope, key: "questions")
+        }
+    }
+
+    func exam(_ request: LessonExamRequest) async throws -> GeneratedExam {
+        var payload = request.audience.payload
+        payload["stage"] = "exam"
+        payload["lessonId"] = request.paperID.uuidString.lowercased()
+        payload["examTitle"] = request.title
+        payload["minutes"] = request.minutes
+        payload["count"] = request.count
+        payload["lessons"] = request.lessons.prefix(8).map { lesson in
+            [
+                "title": lesson.title,
+                "themes": lesson.themes.prefix(14).map { ["title": $0.title, "notes": String($0.notes.prefix(2_000))] }
+            ] as [String: Any]
+        }
+        return try await call(payload) { envelope in
+            try functions.decode(GeneratedExam.self, from: envelope, key: "exam")
         }
     }
 

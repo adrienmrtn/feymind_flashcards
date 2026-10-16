@@ -237,6 +237,64 @@ export function practiceNotes(themes: { title: string; notes: string }[]): strin
     .join("\n\n");
 }
 
+// MARK: - L'examen blanc
+
+export const EXAM_SYSTEM_PROMPT = `${VOICE}
+
+Tu composes un EXAMEN BLANC : l'épreuve que l'élève passera chronométré, sans aide, sur les leçons données. Il doit ressembler à l'examen réel de sa classe dans son pays : le même niveau d'exigence, le même vocabulaire, des questions qui demandent de comprendre et d'appliquer, pas de réciter.
+
+Règles :
+- le nombre de questions demandé, réparties sur les leçons au prorata de leur contenu, et sur leurs thèmes ;
+- une difficulté qui monte : quelques questions de difficulté 1 pour entrer, surtout du 2 et du 3 ; au moins un quart de questions d'application ou de raisonnement (un cas, un calcul, un document, une situation nouvelle) ;
+- des formes variées, parmi les « FORMES PERMISES » (mêmes formats que ci-dessous) ;
+- rien qui ne soit pas dans les notes fournies ;
+- jamais deux questions sur le même fait ;
+- chaque question porte "lesson" (le rang de la leçon, à partir de 0) et "theme" (le rang du thème dans cette leçon, à partir de 0).
+
+Les formes :
+- {"kind":"choice","prompt":"…","choices":["…","…","…","…"],"answer":0,"why":"…","difficulty":2,"lesson":0,"theme":0}
+- {"kind":"truefalse","prompt":"une affirmation","choices":["Vrai","Faux"],"answer":true,"why":"…","difficulty":2,"lesson":0,"theme":0} ("choices" dans la langue des notes)
+- {"kind":"gap","prompt":"une phrase avec … à la place du mot clé","choices":["…","…","…"],"answer":0,"why":"…","difficulty":2,"lesson":0,"theme":0}
+- {"kind":"order","prompt":"Remets dans l'ordre …","items":["…","…","…"],"why":"…","difficulty":2,"lesson":0,"theme":0}
+- {"kind":"match","prompt":"Associe …","pairs":[["…","…"],["…","…"],["…","…"]],"why":"…","difficulty":2,"lesson":0,"theme":0}
+Les propositions fausses sont les erreurs que font vraiment les élèves à cet examen. "why" (35 mots au plus) dit pourquoi c'est juste et ce qui piège : c'est le corrigé.
+
+Puis "title" : le titre de l'épreuve, 8 mots au plus (« Examen blanc · La guerre froide »).
+
+${UNTRUSTED_SYSTEM_RULE}
+
+${JSON_ONLY}
+Forme : {"title":"…","questions":[…]}`;
+
+export function examBrief(options: {
+  title: string;
+  lessons: { title: string; themes: string[] }[];
+  count: number;
+  minutes: number;
+  kinds: readonly string[];
+}): string {
+  const lessons = options.lessons
+    .map((lesson, index) => `${index}. ${lesson.title} (thèmes : ${lesson.themes.map((theme, rank) => `${rank}. ${theme}`).join(" ; ")})`)
+    .join("\n");
+  return [
+    `ÉPREUVE : ${options.title || "Examen blanc"}, ${options.minutes} minutes.`,
+    `\nLEÇONS AU PROGRAMME\n${lessons}`,
+    `\nVOLUME : ${options.count} questions.`,
+    `FORMES PERMISES : ${options.kinds.join(", ")}.`,
+  ].join("\n");
+}
+
+export function examNotes(lessons: { title: string; themes: { title: string; notes: string }[] }[]): string {
+  return lessons
+    .map((lesson, index) =>
+      `LEÇON ${index} : ${lesson.title}\n` +
+      lesson.themes.map((theme, rank) => `THÈME ${rank} : ${theme.title}\n${theme.notes}`).join("\n\n")
+    )
+    .join("\n\n");
+}
+
+export const EXAM_TOKENS = 8_192;
+
 // MARK: - Le niveau
 
 /**

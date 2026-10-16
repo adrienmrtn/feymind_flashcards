@@ -57,7 +57,8 @@ struct MicaboTabBar: View {
         .padding(5)
         .frame(height: MicaboLayout.tabBarHeight)
         .micaboGlass(in: Capsule(), interactive: true)
-        .padding(.horizontal, 44)
+        // Quatre onglets : la pilule s'élargit pour que chaque libellé tienne.
+        .padding(.horizontal, 24)
     }
 }
 

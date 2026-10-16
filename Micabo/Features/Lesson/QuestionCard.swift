@@ -20,6 +20,9 @@ struct QuestionCard: View {
     var shuffleSeed: UInt64 = 0
     /// Faux dans un quiz : le retour passe dans le panneau du bas, à la Duolingo.
     var showsFeedback = true
+    /// Faux dans un examen blanc : la réponse choisie se surligne, sans dire si elle est
+    /// juste. Le corrigé vient à la fin de l'épreuve.
+    var reveals = true
     let onAnswer: (QuizAnswer) -> Void
 
     var body: some View {
@@ -28,22 +31,22 @@ struct QuestionCard: View {
             switch question.kind {
             case .choice:
                 prompt(question.prompt)
-                ChoiceList(question: question, tone: tone, answered: answered, seed: shuffleSeed, onAnswer: onAnswer)
+                ChoiceList(question: question, tone: tone, answered: answered, seed: shuffleSeed, reveals: reveals, onAnswer: onAnswer)
             case .gap:
-                GapSentence(question: question, tone: tone, answered: answered, order: ChoiceList.order(of: question, seed: shuffleSeed))
-                ChoiceList(question: question, tone: tone, answered: answered, seed: shuffleSeed, compact: true, onAnswer: onAnswer)
+                GapSentence(question: question, tone: tone, answered: reveals ? answered : nil, order: ChoiceList.order(of: question, seed: shuffleSeed))
+                ChoiceList(question: question, tone: tone, answered: answered, seed: shuffleSeed, compact: true, reveals: reveals, onAnswer: onAnswer)
             case .truefalse:
                 prompt(question.prompt)
-                TrueFalseButtons(question: question, answered: answered, onAnswer: onAnswer)
+                TrueFalseButtons(question: question, answered: answered, reveals: reveals, onAnswer: onAnswer)
             case .order:
                 prompt(question.prompt)
-                OrderBuilder(question: question, tone: tone, answered: answered, seed: shuffleSeed, onAnswer: onAnswer)
+                OrderBuilder(question: question, tone: tone, answered: answered, seed: shuffleSeed, reveals: reveals, onAnswer: onAnswer)
             case .match:
                 prompt(question.prompt)
-                MatchBoard(question: question, tone: tone, answered: answered, seed: shuffleSeed, onAnswer: onAnswer)
+                MatchBoard(question: question, tone: tone, answered: answered, seed: shuffleSeed, reveals: reveals, onAnswer: onAnswer)
             }
 
-            if showsFeedback, let answered {
+            if showsFeedback, reveals, let answered {
                 QuestionFeedback(question: question, right: answered.right)
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
@@ -124,6 +127,7 @@ struct ChoiceList: View {
     let answered: QuizAnswer?
     let seed: UInt64
     var compact = false
+    var reveals = true
     let onAnswer: (QuizAnswer) -> Void
 
     /// L'ordre d'affichage : `order[i]` est le rang, dans `choices`, de la proposition montrée
@@ -176,7 +180,7 @@ struct ChoiceList: View {
                 }
                 .buttonStyle(MicaboPressableButtonStyle(feedback: .none))
                 .disabled(answered != nil)
-                .modifier(Shake(amount: isPicked(shown) && answered?.right == false ? 1 : 0))
+                .modifier(Shake(amount: reveals && isPicked(shown) && answered?.right == false ? 1 : 0))
                 .animation(.linear(duration: 0.4), value: answered)
             }
         }
@@ -186,6 +190,7 @@ struct ChoiceList: View {
 
     private func background(shown: Int, original: Int) -> Color {
         guard answered != nil else { return MicaboColor.surface }
+        guard reveals else { return isPicked(shown) ? MicaboColor.accentSoft : MicaboColor.surface }
         if original == question.answer { return MicaboColor.correct }
         if isPicked(shown) { return MicaboColor.wrong }
         return MicaboColor.surface
@@ -193,16 +198,20 @@ struct ChoiceList: View {
 
     private func foreground(shown: Int, original: Int) -> Color {
         guard answered != nil else { return MicaboColor.ink }
+        guard reveals else { return isPicked(shown) ? MicaboColor.accent : MicaboColor.inkSecondary }
         if original == question.answer || isPicked(shown) { return MicaboColor.onInk }
         return MicaboColor.inkTertiary
     }
 
     private func border(shown: Int, original: Int) -> Color {
-        answered == nil ? MicaboColor.stroke : .clear
+        guard answered != nil else { return MicaboColor.stroke }
+        guard reveals else { return isPicked(shown) ? MicaboColor.accent : MicaboColor.stroke }
+        return .clear
     }
 
     private func symbol(shown: Int, original: Int) -> String? {
         guard answered != nil else { return nil }
+        guard reveals else { return isPicked(shown) ? "circle.inset.filled" : nil }
         if original == question.answer { return "checkmark" }
         if isPicked(shown) { return "xmark" }
         return nil
@@ -242,6 +251,7 @@ struct GapSentence: View {
 struct TrueFalseButtons: View {
     let question: QuizQuestion
     let answered: QuizAnswer?
+    var reveals = true
     let onAnswer: (QuizAnswer) -> Void
 
     var body: some View {
@@ -270,7 +280,7 @@ struct TrueFalseButtons: View {
                 }
                 .buttonStyle(MicaboPressableButtonStyle(feedback: .none))
                 .disabled(answered != nil)
-                .modifier(Shake(amount: answered?.picked == index && answered?.right == false ? 1 : 0))
+                .modifier(Shake(amount: reveals && answered?.picked == index && answered?.right == false ? 1 : 0))
                 .animation(.linear(duration: 0.4), value: answered)
             }
         }
@@ -278,6 +288,7 @@ struct TrueFalseButtons: View {
 
     private func background(_ index: Int) -> Color {
         guard let answered else { return MicaboColor.surface }
+        guard reveals else { return answered.picked == index ? MicaboColor.accentSoft : MicaboColor.surface }
         if index == question.answer { return MicaboColor.correct }
         if answered.picked == index { return MicaboColor.wrong }
         return MicaboColor.surface
@@ -285,6 +296,7 @@ struct TrueFalseButtons: View {
 
     private func foreground(_ index: Int) -> Color {
         guard let answered else { return index == 0 ? MicaboColor.correctInk : MicaboColor.wrongInk }
+        guard reveals else { return answered.picked == index ? MicaboColor.accent : MicaboColor.inkTertiary }
         if index == question.answer || answered.picked == index { return MicaboColor.onInk }
         return MicaboColor.inkTertiary
     }
@@ -300,6 +312,7 @@ struct OrderBuilder: View {
     let tone: LessonTone
     let answered: QuizAnswer?
     let seed: UInt64
+    var reveals = true
     let onAnswer: (QuizAnswer) -> Void
 
     @State private var placed: [Int] = []
@@ -384,17 +397,18 @@ struct OrderBuilder: View {
         }
         .onAppear {
             // Relue après coup, la question montre l'ordre juste.
-            if answered != nil, placed.isEmpty { placed = Array(question.choices.indices) }
+            if answered != nil, placed.isEmpty, reveals { placed = Array(question.choices.indices) }
         }
     }
 
     private func numberColor(position: Int, item: Int) -> Color {
-        guard answered != nil else { return tone.vivid }
+        guard answered != nil, reveals else { return tone.vivid }
         return item == position ? MicaboColor.correct : MicaboColor.wrong
     }
 
     private func rowBorder(position: Int, item: Int) -> Color {
         guard answered != nil else { return MicaboColor.stroke }
+        guard reveals else { return MicaboColor.accent }
         return item == position ? MicaboColor.correct : MicaboColor.wrong
     }
 }
@@ -409,6 +423,7 @@ struct MatchBoard: View {
     let tone: LessonTone
     let answered: QuizAnswer?
     let seed: UInt64
+    var reveals = true
     let onAnswer: (QuizAnswer) -> Void
 
     /// Terme (rang dans `choices`) → définition (rang dans `matches`).
@@ -460,7 +475,7 @@ struct MatchBoard: View {
             }
         }
         .onAppear {
-            if answered != nil, pairs.isEmpty {
+            if answered != nil, pairs.isEmpty, reveals {
                 pairs = Dictionary(uniqueKeysWithValues: question.choices.indices.map { ($0, $0) })
             }
         }
@@ -473,7 +488,7 @@ struct MatchBoard: View {
 
     /// Après la réponse : la paire est-elle juste ?
     private func verdict(left: Int) -> Bool? {
-        guard answered != nil, let right = pairs[left] else { return nil }
+        guard answered != nil, reveals, let right = pairs[left] else { return nil }
         return right == left
     }
 

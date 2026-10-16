@@ -9,6 +9,8 @@
  *   arrive.
  * - `stage: "convert"` — un ancien cours → ce qui lui manque pour devenir un chemin, sans
  *   réécrire ses notes : icônes, intro, conclusion, noms de paliers, questions.
+ * - `stage: "exam"` — un examen blanc chronométré sur une ou plusieurs leçons, au format de
+ *   l'examen visé ; un gratuit, puis Pro (`begin_extra`, `exam`).
  * - `stage: "practice"` — de nouvelles questions d'entraînement sur une leçon déjà écrite,
  *   loin de celles déjà posées, surtout sur les thèmes ratés. Un lot gratuit, puis Pro
  *   (`begin_extra`, migration `lesson_extras`).
@@ -35,6 +37,10 @@ import { learnerBrief, readLearner, volumeOf } from "../_shared/learner.ts";
 import {
   CONVERT_SYSTEM_PROMPT,
   convertBrief,
+  EXAM_SYSTEM_PROMPT,
+  EXAM_TOKENS,
+  examBrief,
+  examNotes,
   convertTokens,
   iconsSection,
   PLAN_SYSTEM_PROMPT,
@@ -112,6 +118,11 @@ interface RequestBody {
   /** Ce que l'élève saura faire à la fin (l'intro du plan). */
   objectives?: string[];
   context?: string;
+
+  // Un examen blanc
+  examTitle?: string;
+  minutes?: number;
+  lessons?: { title?: string; themes?: { title?: string; notes?: string }[] }[];
 
   // De nouvelles questions
   practiceThemes?: { title?: string; notes?: string }[];
@@ -554,6 +565,89 @@ async function practice(request: Request, body: RequestBody): Promise<Response> 
   });
 }
 
+// MARK: - L'examen blanc
+
+const EXAM_LESSON_NOTES = 8_000;
+const EXAM_TOTAL_NOTES = 48_000;
+
+async function exam(request: Request, body: RequestBody): Promise<Response> {
+  const caller = readCaller(request);
+  if (!isLessonId(body.lessonId)) throw new FalError("Identifiant d'examen manquant.", 400);
+
+  let budget = EXAM_TOTAL_NOTES;
+  const lessons = (Array.isArray(body.lessons) ? body.lessons : []).slice(0, 8).map((lesson, index) => {
+    let share = Math.min(EXAM_LESSON_NOTES, Math.max(0, budget));
+    const themes = (Array.isArray(lesson?.themes) ? lesson.themes : []).slice(0, 14).map((theme, rank) => {
+      const notes = (typeof theme?.notes === "string" ? theme.notes : "").trim().slice(0, Math.max(0, share));
+      share -= notes.length;
+      budget -= notes.length;
+      return { title: sanitizeMeta(theme?.title, 120) || `${rank + 1}`, notes };
+    });
+    return { title: sanitizeMeta(lesson?.title, 160) || `${index + 1}`, themes };
+  });
+  if (!lessons.some((lesson) => lesson.themes.some((theme) => theme.notes.length > 0))) {
+    throw new FalError("Ces leçons n'ont pas encore de notes.", 400);
+  }
+
+  await beginExtra(caller, { kind: "exam", lessonId: body.lessonId });
+  await consumeQuota(caller, "generate-lesson-exam");
+
+  const kinds = readKinds(body.kinds);
+  const minutes = Math.min(120, Math.max(10, Math.round(typeof body.minutes === "number" ? body.minutes : 30)));
+  const count = Math.min(LIMITS.examMax, Math.max(6, Math.round(typeof body.count === "number" ? body.count : minutes / 1.5)));
+  const title = sanitizeMeta(body.examTitle, 120);
+  const meter: ModelUsage[] = [];
+
+  const sample = lessons.flatMap((lesson) => lesson.themes.map((theme) => theme.notes)).join("\n").slice(0, 6_000);
+  const sections = audienceSections({ ...body, lessonTitle: lessons[0]!.title }, sample);
+  sections.push(examBrief({
+    title,
+    lessons: lessons.map((lesson) => ({ title: lesson.title, themes: lesson.themes.map((theme) => theme.title) })),
+    count,
+    minutes,
+    kinds,
+  }));
+  sections.push(wrapUntrusted("NOTES DES LEÇONS", examNotes(lessons)));
+  sections.push("Écris maintenant le JSON de l'examen blanc.");
+  const prompt = sections.join("\n\n");
+  const seed = `${body.lessonId}:exam`;
+
+  const read = (parsed: Record<string, unknown> | null) => {
+    if (!parsed) return null;
+    const questions = readQuestions(parsed.questions, seed, { kinds, language: body.language, max: count })
+      .map((question) => {
+        const lesson = question.lesson !== undefined && question.lesson >= 0 && question.lesson < lessons.length ? question.lesson : 0;
+        const themeCount = lessons[lesson]!.themes.length;
+        const theme = question.theme !== undefined && question.theme >= 0 && question.theme < themeCount ? question.theme : 0;
+        return { ...question, lesson, theme };
+      });
+    if (questions.length < Math.min(6, count)) return null;
+    return {
+      title: clampWords(cleanText(parsed.title, 160).replace(/\*\*/g, ""), 10) || title,
+      questions,
+    };
+  };
+
+  let written = read(await ask({ prompt, system: EXAM_SYSTEM_PROMPT, temperature: 0.5, maxTokens: EXAM_TOKENS, meter }));
+  if (!written) {
+    written = read(await ask({
+      prompt: `${prompt}\n\nTa réponse précédente était illisible ou incomplète. Rends le JSON complet, avec ${count} questions.`,
+      system: EXAM_SYSTEM_PROMPT,
+      temperature: 0.3,
+      maxTokens: EXAM_TOKENS,
+      meter,
+    }));
+  }
+  if (!written) {
+    throw new FalError("L'examen blanc n'a pas pu se composer. Réessaie.", 502);
+  }
+
+  return jsonResponse({
+    exam: written,
+    meta: { promptVersion: PROMPT_VERSION, usage: totalUsage(meter) },
+  });
+}
+
 Deno.serve((request: Request) =>
   withCors(request, async () => {
     try {
@@ -567,6 +661,8 @@ Deno.serve((request: Request) =>
           return await convert(request, body);
         case "practice":
           return await practice(request, body);
+        case "exam":
+          return await exam(request, body);
         default:
           throw new FalError("Étape inconnue.", 400);
       }

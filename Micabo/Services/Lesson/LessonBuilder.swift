@@ -380,6 +380,62 @@ final class LessonBuilder {
         return added
     }
 
+    // MARK: - L'examen blanc
+
+    /// Combien de questions pour une durée : une et demie par minute, entre six et trente.
+    static func examQuestionCount(minutes: Int) -> Int {
+        min(30, max(6, Int((Double(minutes) / 1.5).rounded())))
+    }
+
+    /// **Une copie d'examen blanc** sur ces leçons, écrite par Mika au format de l'examen visé.
+    /// Rien n'est enregistré : la copie se joue tout de suite, seul son résultat reste.
+    func examPaper(
+        title: String,
+        exam: Exam?,
+        courses: [Course],
+        minutes: Int,
+        in context: ModelContext
+    ) async throws -> ExamPaper {
+        let courses = Array(courses.filter(\.isLesson).prefix(8))
+        guard !courses.isEmpty else { throw LessonServiceError.failed(L10n.t("lesson.exam.noLessons", locale: .resolved())) }
+        let paperID = UUID()
+        let chapters = courses.map { Array($0.orderedChapters.prefix(14)) }
+        let request = LessonExamRequest(
+            paperID: paperID,
+            title: title,
+            minutes: minutes,
+            count: Self.examQuestionCount(minutes: minutes),
+            lessons: zip(courses, chapters).map { course, chapters in
+                .init(title: course.title, themes: chapters.map { .init(title: $0.title, notes: Self.flatNotes(of: $0)) })
+            },
+            audience: audience().preparing(exam.map { Self.examLine(name: $0.name, date: $0.date) })
+        )
+        let generated: GeneratedExam
+        do {
+            generated = try await service.exam(request)
+        } catch {
+            throw LessonServiceError.from(error)
+        }
+
+        var items: [ExamPaper.Item] = []
+        for (number, item) in generated.questions.enumerated() {
+            let lesson = item.lesson.flatMap { courses.indices.contains($0) ? $0 : nil } ?? 0
+            let theme = item.theme.flatMap { chapters[lesson].indices.contains($0) ? $0 : nil } ?? 0
+            let question = item.question(id: "\(paperID.uuidString):\(number)")
+            guard question.isValid else { continue }
+            items.append(.init(question: question, lesson: lesson, theme: theme))
+        }
+        return ExamPaper(
+            id: paperID,
+            examID: exam?.id,
+            title: generated.title.nilIfBlank ?? title,
+            minutes: minutes,
+            createdAt: Date(),
+            lessons: zip(courses, chapters).map { .init(courseID: $0.id, title: $0.title, chapterIDs: $1.map(\.id)) },
+            items: items
+        )
+    }
+
     /// Les notes d'un thème, mises à plat pour le modèle : l'idée, les blocs, « À retenir ».
     static func flatNotes(of chapter: Chapter) -> String {
         guard let notes = chapter.notes else { return "" }

@@ -2,9 +2,10 @@ import SwiftUI
 
 /// Les destinations de la barre d'onglets.
 ///
-/// **Trois : Home, Leçons, Profil** (`docs/refonte-parcours.md` § 2). Home crée une leçon et
-/// montre les stats, Leçons les range, Profil garde le compte et les réglages. On ne balaye pas
-/// d'un onglet à l'autre : la barre est le seul moyen de changer de page.
+/// **Quatre : Home, Leçons, Examen, Profil** (`docs/refonte-parcours.md` § 2). Home crée une
+/// leçon et montre les stats, Leçons les range, Examen compte les jours et fait passer des
+/// examens blancs, Profil garde le compte et les réglages. On ne balaye pas d'un onglet à
+/// l'autre : la barre est le seul moyen de changer de page.
 ///
 /// Les noms de cas datent de l'ancienne barre (`today` porte Home, `decks` les Leçons) : ils
 /// sont la clé de la profondeur de navigation de chaque page.
@@ -12,18 +13,21 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     case decks
     case today
     case profile
+    /// Ajouté après les autres : les rangs déjà donnés ne bougent pas.
+    case exams
 
     var id: Int { rawValue }
 
-    /// **Les trois onglets de la refonte**, dans l'ordre de la barre : Home, Leçons, Profil
+    /// **Les quatre onglets**, dans l'ordre de la barre : Home, Leçons, Examen, Profil
     /// (`docs/refonte-parcours.md` § 2). `today` porte Home, `decks` les Leçons ; Mika vit
     /// désormais dans chaque leçon.
-    static let tabs: [RootTab] = [.today, .decks, .profile]
+    static let tabs: [RootTab] = [.today, .decks, .exams, .profile]
 
     func label(t: (String) -> String) -> String {
         switch self {
         case .decks: t("lesson.tab.lessons")
         case .today: t("lesson.tab.home")
+        case .exams: t("lesson.tab.exams")
         case .profile: t("lesson.tab.profile")
         }
     }
@@ -36,6 +40,7 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
         switch self {
         case .decks: "books.vertical"
         case .today: "house"
+        case .exams: "graduationcap"
         case .profile: "person"
         }
     }
@@ -45,6 +50,7 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
         switch self {
         case .decks: "books.vertical.fill"
         case .today: "house.fill"
+        case .exams: "graduationcap.fill"
         case .profile: "person.fill"
         }
     }

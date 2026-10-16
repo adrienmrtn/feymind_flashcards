@@ -346,6 +346,65 @@ final class RenderGalleryTests: XCTestCase {
         )
     }
 
+    func testExamScreens() throws {
+        guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
+        let container = try ModelContainer(
+            for: Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = ModelContext(container)
+        let course = Course(title: "La guerre froide", subject: "Histoire")
+        course.iconID = MicaboIcon.calculator.rawValue
+        context.insert(course)
+        let exam = Exam(name: "Bac d'histoire", date: Date().addingTimeInterval(12 * 86_400), courseIDs: [course.id])
+        let later = Exam(name: "Partiel de bio", date: Date().addingTimeInterval(40 * 86_400), courseIDs: [course.id])
+        context.insert(exam)
+        context.insert(later)
+        try context.save()
+        let result = ExamPaperResult(
+            id: UUID(), examID: exam.id, title: "Bac d'histoire", date: Date(), correct: 14, total: 20, seconds: 1_500, minutes: 30,
+            lessons: [.init(title: "La guerre froide", correct: 9, total: 12), .init(title: "La décolonisation", correct: 5, total: 8)]
+        )
+
+        try RenderGallery.render(
+            "exam-tab", night: true,
+            VStack(alignment: .leading, spacing: 18) {
+                MicaboPageHeading(title: "Examen", subtitle: "2 examens à venir")
+                ExamHero(exam: exam, lessons: [course], best: result, onMock: {}, onEdit: {})
+                ExamRow(exam: later, lessonCount: 1) {}
+                MockResultRow(result: result)
+            }
+            .padding(20)
+            .modelContainer(container)
+        )
+
+        let question = Self.sampleQuestion(id: "exam:0")
+        try RenderGallery.render(
+            "exam-run", night: true,
+            VStack(alignment: .leading, spacing: 18) {
+                HStack {
+                    TimerPill(remaining: 754, total: 1_800)
+                    TimerPill(remaining: 45, total: 1_800)
+                }
+                QuestionCard(question: question, tone: .blue, answered: QuizAnswer(right: false, picked: 2), showsFeedback: false, reveals: false) { _ in }
+            }
+            .padding(20)
+        )
+
+        try RenderGallery.render(
+            "exam-result", night: true,
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach([SchoolingCountry.fr, .de, .ch, .us, .uk, .tr], id: \.self) { country in
+                    Text("\(country.rawValue) : \(ExamGrade.label(0.7, country: country))")
+                        .font(MicaboFont.ui(15, weight: .bold))
+                }
+                CorrectionRow(number: 1, question: question, answer: QuizAnswer(right: false, picked: 2), seed: 0)
+                CorrectionRow(number: 2, question: question, answer: nil, seed: 0)
+            }
+            .padding(20)
+        )
+    }
+
     private static let sampleNotes = ThemeNotes(
         oneLiner: "Après 1945, les **États-Unis** et l'**URSS** s'opposent sans jamais se battre directement.",
         blocks: [

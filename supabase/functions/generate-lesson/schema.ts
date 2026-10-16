@@ -37,6 +37,8 @@ export const LIMITS = {
   pointsPerTheme: 4,
   /** Un lot de « nouvelles questions ». */
   practiceMax: 12,
+  /** Un examen blanc. */
+  examMax: 30,
   orderItemsMin: 3,
   orderItemsMax: 6,
   matchPairsMin: 3,
@@ -277,8 +279,10 @@ export interface QuizQuestion {
   /** De 1 (reconnaître) à 3 (appliquer, raisonner). */
   difficulty: number;
   matches?: string[];
-  /** Le rang du thème, pour un lot de nouvelles questions. */
+  /** Le rang du thème, pour un lot de nouvelles questions ou un examen blanc. */
   theme?: number;
+  /** Le rang de la leçon, pour un examen blanc sur plusieurs leçons. */
+  lesson?: number;
 }
 
 /** Ce que la requête accepte : une app qui ne sait pas afficher un ordre n'en reçoit pas. */
@@ -492,6 +496,8 @@ export function readQuestions(
     seen.add(key);
     const theme = (item as Record<string, unknown>)?.theme;
     if (typeof theme === "number" && Number.isFinite(theme)) question.theme = Math.round(theme);
+    const lesson = (item as Record<string, unknown>)?.lesson;
+    if (typeof lesson === "number" && Number.isFinite(lesson)) question.lesson = Math.round(lesson);
     out.push(question);
   });
   return out.slice(0, options.max ?? LIMITS.questionsPerTheme);

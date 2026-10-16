@@ -61,6 +61,20 @@ private final class FakeLessonService: LessonGenerating, @unchecked Sendable {
         }
     }
 
+    private(set) var examRequests: [LessonExamRequest] = []
+
+    func exam(_ request: LessonExamRequest) async throws -> GeneratedExam {
+        lock.lock()
+        examRequests.append(request)
+        lock.unlock()
+        return GeneratedExam(
+            title: "Blanc",
+            questions: (0..<request.count).map {
+                GeneratedQuestion(prompt: "Examen \($0)", choices: ["a", "b", "c", "d"], answer: 2, why: ".", theme: $0 % 3, lesson: $0 % 2)
+            }
+        )
+    }
+
     func convert(_ request: LessonConvertRequest) async throws -> LessonConversion {
         LessonConversion(
             icon: "globe",
@@ -181,6 +195,53 @@ final class LessonBuilderTests: XCTestCase {
         XCTAssertTrue(request.avoid.contains("Q0 ?"), "les questions déjà posées sont à éviter")
         XCTAssertEqual(course.orderedChapters[0].quiz?.questions.count, 6, "deux nouvelles questions rejoignent le premier thème")
         XCTAssertTrue(fresh.allSatisfy { $0.id.contains(":p") })
+    }
+
+    func testAMockExamCoversEveryLessonAndKeepsItsThemes() async throws {
+        let context = try makeContext()
+        let service = FakeLessonService()
+        let builder = builder(service)
+        let first = try await builder.create(LessonCreation(topic: "x", source: .topic), in: context)
+        let second = try await builder.create(LessonCreation(topic: "y", source: .topic), in: context)
+        await waitUntilDone(builder, first)
+        await waitUntilDone(builder, second)
+        let exam = try ExamRepository.create(
+            name: "Bac blanc", date: Date().addingTimeInterval(20 * 86_400), courseIDs: [first.id, second.id], intensity: .standard, in: context
+        )
+
+        let paper = try await builder.examPaper(title: "Bac blanc", exam: exam, courses: [first, second], minutes: 30, in: context)
+
+        let request = try XCTUnwrap(service.examRequests.first)
+        XCTAssertEqual(request.count, 20, "une question et demie par minute")
+        XCTAssertEqual(request.lessons.count, 2)
+        XCTAssertEqual(request.lessons[0].themes.count, 4)
+        XCTAssertTrue(request.audience.exam.contains("Bac blanc"), "l'examen visé part avec la copie")
+        XCTAssertEqual(paper.items.count, 20)
+        XCTAssertEqual(paper.examID, exam.id)
+        XCTAssertEqual(Set(paper.items.map(\.lesson)), [0, 1])
+        XCTAssertEqual(paper.lessons[1].chapterIDs, second.orderedChapters.map(\.id))
+        XCTAssertEqual(Set(paper.items.map(\.id)).count, 20, "chaque question a son identifiant")
+
+        var answers: [String: QuizAnswer] = [:]
+        for item in paper.items.prefix(15) { answers[item.id] = QuizAnswer(right: true, picked: 2) }
+        let result = paper.result(answers: answers, seconds: 600)
+        XCTAssertEqual(result.correct, 15)
+        XCTAssertEqual(result.total, 20, "une question sans réponse compte fausse")
+        XCTAssertEqual(result.lessons.map(\.total), [10, 10])
+    }
+
+    func testAMockExamGradeIsReadInTheCountryScale() {
+        let locale = UiLocale.fr
+        XCTAssertEqual(ExamGrade.label(0.675, country: .fr, locale: locale), "13,5/20")
+        XCTAssertEqual(ExamGrade.label(0.5, country: .de, locale: locale), "4,0")
+        XCTAssertEqual(ExamGrade.label(1, country: .de, locale: locale), "1,0")
+        XCTAssertEqual(ExamGrade.label(0.7, country: .ch, locale: locale), "4,5")
+        XCTAssertEqual(ExamGrade.label(0.85, country: .us, locale: locale), "B")
+        XCTAssertEqual(ExamGrade.label(0.78, country: .tr, locale: locale), "78 %")
+        XCTAssertEqual(ExamGrade.label(0.75, country: .it, locale: locale), "7,5/10")
+        XCTAssertEqual(ExamGrade.label(0.2, country: .uk, locale: locale), "U")
+        XCTAssertTrue(ExamGrade.passes(0.5))
+        XCTAssertFalse(ExamGrade.passes(0.45))
     }
 
     func testAnUsedFreePracticeOpensThePaywall() async throws {
