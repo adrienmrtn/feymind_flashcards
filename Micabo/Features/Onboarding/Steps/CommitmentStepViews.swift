@@ -70,16 +70,14 @@ struct PlanBuildingStepView: View {
 
 // MARK: - Le profil
 
-/// **« Voici ton profil »** : tout ce qu'on vient de dire à Mika, relu en une carte — le pays,
-/// le niveau, les matières, la moyenne et l'objectif, le temps et l'heure —, puis ce que Mika va
-/// en faire. C'est le moment où les questions deviennent un plan : chaque ligne vient d'une
-/// réponse, aucune n'est inventée.
+/// **« Voici ce qui va changer pour toi »** : les réponses deviennent des bénéfices. En tête,
+/// la moyenne d'aujourd'hui et celle visée, côte à côte ; dessous, trois ou quatre cartes qui
+/// disent ce que l'élève gagne — sa crainte principale d'abord, réglée, puis des cours faits
+/// sur ses matières, les examens blancs, le rythme du jour. Chaque carte vient d'une réponse ;
+/// aucune n'est inventée, et une réponse absente retire sa carte au lieu de la laisser vide.
 struct ProfileSummaryStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-    @Environment(\.onboardingStill) private var still
-
-    @State private var shown = false
 
     private var name: String {
         model.displayName.nilIfBlank ?? OnboardingPreferences.displayName ?? ""
@@ -90,12 +88,7 @@ struct ProfileSummaryStepView: View {
     var body: some View {
         VStack(spacing: 0) {
             OnboardingCenteredScroll {
-                VStack(spacing: 22) {
-                    MikaMascot(mood: .happy, size: 96, reactsToTap: true)
-                        .scaleEffect(shown || still ? 1 : 0.4)
-                        .opacity(shown || still ? 1 : 0)
-                        .accessibilityHidden(true)
-
+                VStack(spacing: 20) {
                     OnboardingAccentText(
                         template: name.isEmpty ? i18n.t("ios.profileCard.titleNoName") : i18n.t("ios.profileCard.title", ["name": name]),
                         size: 28,
@@ -103,148 +96,129 @@ struct ProfileSummaryStepView: View {
                     )
                     .onboardingAppear(index: 1)
 
-                    card
-                        .onboardingAppear(index: 2)
+                    if let current = model.currentScore, let target = model.targetScore {
+                        goal(current: current, target: target)
+                            .onboardingAppear(index: 2)
+                    }
 
-                    helps
-                        .onboardingAppear(index: 3)
+                    VStack(spacing: 10) {
+                        ForEach(Array(benefits.enumerated()), id: \.offset) { index, benefit in
+                            BenefitCard(benefit: benefit)
+                                .onboardingAppear(index: 3 + index)
+                        }
+                    }
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.vertical, MicaboSpacing.md)
             }
 
             OnboardingArrowBar { model.advance() }
-                .onboardingAppear(index: 4)
+                .onboardingAppear(index: 7)
         }
         .onboardingChromeInset()
         .background(OnboardingPalette.white.ignoresSafeArea())
         .environment(\.onboardingSurface, .canvas)
-        .onAppear {
-            withAnimation(.spring(duration: 0.6, bounce: 0.45).delay(0.1)) { shown = true }
-        }
     }
 
-    // MARK: La carte
+    // MARK: L'objectif
 
-    private var card: some View {
-        VStack(spacing: 0) {
-            ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
-                if index > 0 {
-                    Rectangle().fill(MicaboColor.stroke).frame(height: 1).padding(.leading, 56)
-                }
-                HStack(spacing: 12) {
-                    MicaboIconView(icon: row.icon, size: 34)
-                    Text(row.label)
-                        .font(MicaboFont.ui(14, weight: .bold))
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                    Spacer(minLength: 8)
-                    Text(row.value)
-                        .font(MicaboFont.ui(15, weight: .heavy))
-                        .foregroundStyle(MicaboColor.ink)
-                        .multilineTextAlignment(.trailing)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.8)
-                }
-                .padding(.vertical, 11)
+    /// Aujourd'hui → l'objectif, en grand : la seule promesse chiffrée de la page.
+    private func goal(current: Int, target: Int) -> some View {
+        HStack(spacing: 0) {
+            VStack(spacing: 6) {
+                Text(i18n.t("ios.profileCard.goal.now"))
+                    .font(MicaboFont.ui(13, weight: .bold))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                Text(grade(current))
+                    .font(MicaboFont.ui(30, weight: .heavy))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
             }
+            .frame(maxWidth: .infinity)
+
+            Image(systemName: "arrow.right")
+                .font(.system(size: 20, weight: .heavy))
+                .foregroundStyle(MicaboColor.accent)
+                .frame(width: 44, height: 44)
+                .background(MicaboColor.accentSoft, in: Circle())
+
+            VStack(spacing: 6) {
+                Text(i18n.t("ios.profileCard.goal.target"))
+                    .font(MicaboFont.ui(13, weight: .bold))
+                    .foregroundStyle(MicaboColor.accent)
+                MikaGradientText(text: grade(target), size: 34, weight: .heavy)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+            }
+            .frame(maxWidth: .infinity)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 6)
+        .padding(.vertical, 18)
+        .padding(.horizontal, 12)
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
         .micaboElevation(.card)
+        .accessibilityElement(children: .combine)
     }
 
-    private struct Row {
+    // MARK: Les bénéfices
+
+    struct Benefit {
         let icon: MicaboIcon
-        let label: String
-        let value: String
+        let title: String
+        let body: String
     }
 
-    /// Les lignes de la carte, dans l'ordre du parcours. Une réponse absente (un écran sauté)
-    /// ne laisse pas de ligne vide : la ligne disparaît.
-    private var rows: [Row] {
-        var result: [Row] = []
+    /// La crainte principale d'abord, réglée ; puis les cours sur mesure, les examens (ou la
+    /// mémoire, si les examens étaient déjà la crainte), et le rythme. Quatre cartes au plus.
+    private var benefits: [Benefit] {
         let locale = i18n.locale
-        let country: String = {
-            if model.country == .other, let custom = model.customCountry { return "\(custom.flag) \(custom.name)" }
-            return "\(model.country.flag) \(model.country.localizedName(locale: locale))"
-        }()
-        result.append(Row(icon: .globe, label: i18n.t("ios.profileCard.country"), value: country))
-
-        if let level = model.year?.title ?? model.track?.title ?? model.stage?.localizedTitle {
-            result.append(Row(icon: .diploma, label: i18n.t("ios.profileCard.level"), value: level))
+        var result: [Benefit] = []
+        let worry = model.leadWorry
+        if let worry {
+            result.append(Benefit(
+                icon: Self.icon(for: worry),
+                title: i18n.t("ios.profileCard.worry.\(worry.rawValue).title"),
+                body: i18n.t("ios.profileCard.worry.\(worry.rawValue).body")
+            ))
         }
 
         let subjects = model.subjects.sorted().map { SubjectDisplay.subject($0, locale: locale) }
-        if !subjects.isEmpty {
-            let shown = subjects.prefix(2).joined(separator: ", ")
-            let value = subjects.count > 2
-                ? i18n.t("ios.profileCard.more", ["list": shown, "n": "\(subjects.count - 2)"])
-                : shown
-            result.append(Row(icon: .book, label: i18n.t("ios.profileCard.subjects"), value: value))
-        }
+        let shown = subjects.prefix(2).joined(separator: ", ")
+        let list = subjects.count > 2 ? i18n.t("ios.profileCard.more", ["list": shown, "n": "\(subjects.count - 2)"]) : shown
+        result.append(Benefit(
+            icon: .lessons,
+            title: i18n.t("ios.profileCard.courses.title"),
+            body: subjects.isEmpty ? i18n.t("ios.profileCard.courses.bodyAny") : i18n.t("ios.profileCard.courses.body", ["subjects": list])
+        ))
 
-        if let current = model.currentScore {
-            var value = grade(current)
-            if let target = model.targetScore { value += " → " + grade(target) }
-            result.append(Row(icon: .trophy, label: i18n.t("ios.profileCard.average"), value: value))
+        if worry == .examStress {
+            result.append(Benefit(
+                icon: .brain,
+                title: i18n.t("ios.profileCard.worry.forgetting.title"),
+                body: i18n.t("ios.profileCard.worry.forgetting.body")
+            ))
+        } else {
+            result.append(Benefit(icon: .exam, title: i18n.t("ios.profileCard.exams.title"), body: i18n.t("ios.profileCard.exams.body")))
         }
 
         if let minutes = model.dailyMinutes {
-            result.append(Row(icon: .hourglass, label: i18n.t("ios.profileCard.daily"), value: i18n.t("ios.quiz.time.short", ["n": "\(minutes)"])))
+            let body = model.studyHour.map { i18n.t("ios.profileCard.rhythm.body", ["hour": Self.hourText($0, locale: locale)]) }
+                ?? i18n.t("ios.profileCard.rhythm.bodyAny")
+            result.append(Benefit(icon: .alarm, title: i18n.t("ios.profileCard.rhythm.title", ["n": "\(minutes)"]), body: body))
         }
-
-        if let hour = model.studyHour {
-            result.append(Row(icon: .alarm, label: i18n.t("ios.profileCard.hour"), value: Self.hourText(hour, locale: locale)))
-        }
-        return result
+        return Array(result.prefix(4))
     }
 
-    // MARK: Ce que Mika va faire
-
-    private var helps: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(i18n.t("ios.profileCard.helpTitle"))
-                .font(MicaboFont.ui(17, weight: .heavy))
-                .foregroundStyle(MicaboColor.ink)
-            ForEach(Array(helpLines.enumerated()), id: \.offset) { _, line in
-                HStack(alignment: .top, spacing: 10) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(MicaboColor.onInk, MicaboColor.correct)
-                    Text(line)
-                        .font(MicaboFont.ui(15.5, weight: .semibold))
-                        .foregroundStyle(MicaboColor.ink)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Spacer(minLength: 0)
-                }
-            }
+    private static func icon(for worry: StudyWorry) -> MicaboIcon {
+        switch worry {
+        case .examStress: .trophy
+        case .hardLessons: .lightbulb
+        case .homework: .hourglass
+        case .forgetting: .brain
+        case .noStart: .flag
+        case .motivation: .flame
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-    }
-
-    /// L'objectif chiffré d'abord, puis les objectifs cochés, puis le rythme : trois ou quatre
-    /// lignes, pas un catalogue.
-    private var helpLines: [String] {
-        var lines: [String] = []
-        if let current = model.currentScore, let target = model.targetScore {
-            lines.append(i18n.t("ios.profileCard.help.target", ["current": grade(current), "target": grade(target)]))
-        }
-        let goals = LearningGoal.allCases.filter { model.goals.contains($0) }.prefix(2)
-        lines += goals.map { $0.title(locale: i18n.locale) }
-        if let worry = model.leadWorry {
-            lines.append(i18n.t("ios.profileCard.help.worry", ["worry": worry.title(locale: i18n.locale)]))
-        }
-        if let minutes = model.dailyMinutes {
-            lines.append(i18n.t("ios.profileCard.help.daily", ["n": "\(minutes)"]))
-        }
-        if lines.isEmpty { lines.append(i18n.t("ios.profileCard.help.default")) }
-        return lines
     }
 
     private func grade(_ score: Int) -> String {
@@ -260,6 +234,36 @@ struct ProfileSummaryStepView: View {
         formatter.setLocalizedDateFormatFromTemplate("j")
         let date = Calendar.current.date(bySettingHour: hour, minute: 0, second: 0, of: Date()) ?? Date()
         return formatter.string(from: date)
+    }
+}
+
+/// Une carte de bénéfice : l'icône dans sa pastille, le gain en gras, une ligne qui dit comment.
+private struct BenefitCard: View {
+    let benefit: ProfileSummaryStepView.Benefit
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            MicaboIconView(icon: benefit.icon, size: 30)
+                .frame(width: 50, height: 50)
+                .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(benefit.title)
+                    .font(MicaboFont.ui(16.5, weight: .heavy))
+                    .tracking(-0.2)
+                    .foregroundStyle(MicaboColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(benefit.body)
+                    .font(MicaboFont.ui(14, weight: .medium))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .lineSpacing(1.5)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .accessibilityElement(children: .combine)
     }
 }
 

@@ -218,6 +218,14 @@ private struct MikaGlow: View {
     @State private var breathe = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    /// **La plus grande taille qui tienne sous le haut de la page**, centrée en `center` : au
+    /// delà, le halo (et sa respiration, 6 %) dépasse les dix points d'air au-dessus de la
+    /// scène et se fait rogner net par le bord de la page. Par le bas, il peut déborder : rien
+    /// ne le coupe, il passe sous la phrase.
+    static func room(_ center: CGPoint, in size: CGSize) -> CGFloat {
+        2 * (center.y + 8) / 1.08
+    }
+
     var body: some View {
         Circle()
             .fill(RadialGradient(colors: [color.opacity(0.22), color.opacity(0)], center: .center, startRadius: 4, endRadius: size / 2))
@@ -273,7 +281,7 @@ private struct MikaMissionScene: View {
     var body: some View {
         GeometryReader { proxy in
             ZStack {
-                MikaGlow(size: min(proxy.size.width, proxy.size.height) * 0.9)
+                MikaGlow(size: min(min(proxy.size.width, proxy.size.height) * 0.9, MikaGlow.room(CGPoint(x: 0, y: proxy.size.height * 0.52), in: proxy.size)))
                     .position(x: proxy.size.width / 2, y: proxy.size.height * 0.52)
 
                 ForEach(Array(Self.orbit.enumerated()), id: \.offset) { index, item in
@@ -332,7 +340,7 @@ private struct MikaSourcesScene: View {
         GeometryReader { proxy in
             let mika = CGPoint(x: proxy.size.width / 2, y: proxy.size.height * 0.74)
             ZStack {
-                MikaGlow(size: proxy.size.width * 0.7)
+                MikaGlow(size: min(proxy.size.width * 0.7, MikaGlow.room(mika, in: proxy.size)))
                     .position(mika)
 
                 ForEach(Array(Self.sources.enumerated()), id: \.offset) { index, source in
@@ -455,7 +463,7 @@ private struct MikaDesignScene: View {
         GeometryReader { proxy in
             let cardWidth = min(330, proxy.size.width - 56)
             ZStack {
-                MikaGlow(size: proxy.size.width * 0.9, color: MicaboColor.correct)
+                MikaGlow(size: min(proxy.size.width * 0.9, MikaGlow.room(CGPoint(x: 0, y: proxy.size.height * 0.55), in: proxy.size)), color: MicaboColor.correct)
                     .position(x: proxy.size.width / 2, y: proxy.size.height * 0.55)
 
                 card(width: cardWidth)
@@ -678,7 +686,7 @@ private struct MikaReliefScene: View {
         GeometryReader { proxy in
             let base = CGPoint(x: proxy.size.width / 2, y: proxy.size.height * 0.62)
             ZStack {
-                MikaGlow(size: proxy.size.width * 0.85, color: tidy ? MicaboColor.correct : MicaboColor.wrong)
+                MikaGlow(size: min(proxy.size.width * 0.85, MikaGlow.room(base, in: proxy.size)), color: tidy ? MicaboColor.correct : MicaboColor.wrong)
                     .position(base)
                     .animation(.easeInOut(duration: 0.8), value: tidy)
 
@@ -806,7 +814,7 @@ private struct MikaFoundersScene: View {
             let h = proxy.size.height
             let center = CGPoint(x: w / 2, y: h * 0.6)
             ZStack {
-                MikaGlow(size: min(w, h) * 0.95, color: stage >= 2 ? MicaboColor.cautionVivid : MicaboColor.accent)
+                MikaGlow(size: min(min(w, h) * 0.95, MikaGlow.room(center, in: proxy.size)), color: stage >= 2 ? MicaboColor.cautionVivid : MicaboColor.accent)
                     .position(center)
                     .animation(.easeInOut(duration: 0.8), value: stage)
 
@@ -911,7 +919,7 @@ private struct MikaCompanionScene: View {
             let chart = max(90, min(proxy.size.height - 120, 200))
             let barWidth = min(96, proxy.size.width * 0.24)
             ZStack {
-                MikaGlow(size: proxy.size.width * 0.8)
+                MikaGlow(size: min(proxy.size.width * 0.8, MikaGlow.room(CGPoint(x: 0, y: proxy.size.height * 0.45), in: proxy.size)))
                     .position(x: proxy.size.width * 0.62, y: proxy.size.height * 0.45)
 
                 HStack(alignment: .bottom, spacing: proxy.size.width * 0.12) {
@@ -971,7 +979,7 @@ private struct MikaStartScene: View {
     @State private var shown = false
 
     private static let start = CGPoint(x: 0.2, y: 0.8)
-    private static let end = CGPoint(x: 0.8, y: 0.2)
+    private static let end = CGPoint(x: 0.8, y: 0.26)
     private static let stops: [(CGFloat, CGFloat)] = [(0.42, 0.62), (0.6, 0.42)]
 
     private var progress: CGFloat { still ? 1 : drawn }
@@ -982,7 +990,7 @@ private struct MikaStartScene: View {
             let a = CGPoint(x: size.width * Self.start.x, y: size.height * Self.start.y)
             let b = CGPoint(x: size.width * Self.end.x, y: size.height * Self.end.y)
             ZStack {
-                MikaGlow(size: size.width * 0.6, color: MicaboColor.cautionVivid)
+                MikaGlow(size: min(size.width * 0.6, MikaGlow.room(b, in: size)), color: MicaboColor.cautionVivid)
                     .position(b)
 
                 StartTrail(from: a, to: b)
@@ -1099,7 +1107,7 @@ private struct MikaTutorScene: View {
             let phoneWidth = min(230, proxy.size.width * 0.58)
             let phoneHeight = min(proxy.size.height * 0.94, phoneWidth * 1.6)
             ZStack {
-                MikaGlow(size: proxy.size.width * 0.85)
+                MikaGlow(size: min(proxy.size.width * 0.85, MikaGlow.room(CGPoint(x: 0, y: proxy.size.height / 2), in: proxy.size)))
                     .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
 
                 phone(width: phoneWidth, height: phoneHeight)

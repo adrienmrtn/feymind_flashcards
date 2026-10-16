@@ -27,40 +27,53 @@ struct SocialProofStepView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScrollView {
-                VStack(spacing: 0) {
-                    VStack(spacing: 4) {
-                        MikaMascot(mood: .celebrate, size: 104, reactsToTap: true)
-                            .padding(.bottom, 6)
-                            .accessibilityHidden(true)
+            GeometryReader { proxy in
+                // **Tout tient au-dessus du rond.** Les avis passaient sous le pied de page sur les
+                // écrans courts : Mika s'efface d'abord, puis les cartes raccourcissent, et la page
+                // ne défile qu'en dernier recours.
+                let room = proxy.size.height
+                let showsMika = room >= 650
+                let cardHeight = min(OnboardingReviewCarousel.fullHeight, max(214, room - (showsMika ? 356 : 238)))
+                ScrollView {
+                    VStack(spacing: 0) {
+                        VStack(spacing: 4) {
+                            if showsMika {
+                                MikaMascot(mood: .celebrate, size: 104, reactsToTap: true)
+                                    .padding(.bottom, 6)
+                                    .accessibilityHidden(true)
+                            }
 
-                        Text(i18n.t("ios.onb.social.title"))
-                            .font(OnboardingPalette.title(32))
-                            .tracking(-0.6)
-                            .foregroundStyle(OnboardingPalette.ink)
-                            .multilineTextAlignment(.center)
+                            Text(i18n.t("ios.onb.social.title"))
+                                .font(OnboardingPalette.title(32))
+                                .tracking(-0.6)
+                                .foregroundStyle(OnboardingPalette.ink)
+                                .multilineTextAlignment(.center)
 
-                        MikaGradientText(
-                            text: i18n.t("ios.onb.social.count", ["n": OnboardingProofFigures.text(OnboardingProofFigures.students, locale: i18n.locale)]),
-                            size: 34,
-                            weight: .heavy
-                        )
+                            MikaGradientText(
+                                text: i18n.t("ios.onb.social.count", ["n": OnboardingProofFigures.text(OnboardingProofFigures.students, locale: i18n.locale)]),
+                                size: 34,
+                                weight: .heavy
+                            )
+                        }
+                        .padding(.top, MicaboSpacing.sm)
+                        .padding(.horizontal, MicaboSpacing.screen)
+                        .onboardingAppear(index: 1)
+
+                        laurels
+                            .padding(.top, 22)
+                            .onboardingAppear(index: 2)
+
+                        OnboardingReviewCarousel(reviews: OnboardingReviews.all(locale: i18n.locale), cardHeight: cardHeight)
+                            .padding(.top, 24)
+                            .onboardingAppear(index: 4)
                     }
-                    .padding(.top, MicaboSpacing.sm)
-                    .padding(.horizontal, MicaboSpacing.screen)
-                    .onboardingAppear(index: 1)
-
-                    laurels
-                        .padding(.top, 22)
-                        .onboardingAppear(index: 2)
-
-                    OnboardingReviewCarousel(reviews: OnboardingReviews.all(locale: i18n.locale))
-                        .padding(.top, 28)
-                        .onboardingAppear(index: 4)
+                    .padding(.bottom, MicaboSpacing.md)
+                    .frame(width: proxy.size.width)
+                    .frame(minHeight: room, alignment: .top)
                 }
-                .padding(.bottom, MicaboSpacing.lg)
+                .scrollIndicators(.hidden)
+                .scrollBounceBehavior(.basedOnSize)
             }
-            .scrollIndicators(.hidden)
 
             OnboardingArrowBar {
                 model.advance()
@@ -141,6 +154,7 @@ enum OnboardingReviews {
 /// vient de la prendre.
 struct OnboardingReviewCarousel: View {
     let reviews: [OnboardingReview]
+    var cardHeight: CGFloat = Self.fullHeight
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -148,14 +162,14 @@ struct OnboardingReviewCarousel: View {
     @State private var isDriving = true
 
     private static let cardWidth: CGFloat = 300
-    private static let cardHeight: CGFloat = 296
+    static let fullHeight: CGFloat = 296
 
     var body: some View {
         ScrollView(.horizontal) {
             LazyHStack(spacing: 12) {
                 ForEach(reviews) { review in
                     OnboardingReviewCard(review: review)
-                        .frame(width: Self.cardWidth, height: Self.cardHeight)
+                        .frame(width: Self.cardWidth, height: cardHeight)
                         .id(review.id)
                 }
             }
@@ -165,7 +179,9 @@ struct OnboardingReviewCarousel: View {
         .scrollPosition(id: $position)
         .contentMargins(.horizontal, MicaboSpacing.screen, for: .scrollContent)
         .scrollIndicators(.hidden)
-        .frame(height: Self.cardHeight)
+        // L'ombre des cartes déborde en haut et en bas : sans ça, la bande les coupait net.
+        .scrollClipDisabled()
+        .frame(height: cardHeight)
         .simultaneousGesture(DragGesture(minimumDistance: 8).onChanged { _ in isDriving = false })
         // Chaque carte qui s'aligne se sent, qu'elle vienne seule ou du doigt.
         .onChange(of: position) { _, _ in Haptics.selection() }
@@ -201,13 +217,13 @@ struct OnboardingReviewCard: View {
                 .foregroundStyle(OnboardingPalette.ink)
                 .fixedSize(horizontal: false, vertical: true)
 
+            // Sur une carte raccourcie, le texte se resserre plutôt que de passer sous le pseudo.
             Text(review.body)
                 .font(MicaboFont.ui(15.5, weight: .regular))
                 .foregroundStyle(OnboardingPalette.ink.opacity(0.85))
                 .lineSpacing(4)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Spacer(minLength: 0)
+                .minimumScaleFactor(0.78)
+                .frame(maxHeight: .infinity, alignment: .topLeading)
 
             Text(review.author)
                 .font(MicaboFont.ui(13, weight: .medium))
