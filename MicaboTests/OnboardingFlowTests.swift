@@ -192,7 +192,7 @@ final class OnboardingFlowTests: XCTestCase {
         let model = self.model(advancingTo: .mikaRelief)
         model.hasAccount = true
 
-        for expected in [OnboardingStep.socialProof, .planBuilding, .profileSummary, .pledge, .freeTrialIntro, .trialOffer, .trialReminder, .paywall] {
+        for expected in [OnboardingStep.socialProof, .planBuilding, .profileSummary, .freeTrialIntro, .trialOffer, .trialReminder, .paywall] {
             model.advance()
             XCTAssertEqual(model.step, expected)
         }
@@ -314,7 +314,7 @@ final class OnboardingFlowTests: XCTestCase {
                      "demoImport", "forgetting", "school", "language", "projection",
                      "hookPress", "proofTwice", "proofKeep", "hookVideo", "nextExam", "proofStudents",
                      "proofPlan", "blocker", "triedApps",
-                     "hookRating", "proofWhy", "source", "proofRealistic", "commitment", "proofCurve",
+                     "hookRating", "proofWhy", "source", "proofRealistic", "commitment", "pledge", "proofCurve",
                      "method", "thanks", "planReady", "reviews", "materialsQuestion", "comparison",
                      "featureSheets", "featurePlan", "featureCards", "featurePocket", "featureMika", "sheetIntro",
                      "materials", "demoCourse", "courseBuilding", "courseReview", "trainPrompt", "trainCards", "wellDone"] {
@@ -327,7 +327,7 @@ final class OnboardingFlowTests: XCTestCase {
     /// la recherche, le point de départ et le prof particulier ; puis le calcul du parcours, le
     /// profil, l'engagement et l'essai offert. Trente-six écrans.
     func testTheFlowKeepsItsLength() {
-        XCTAssertEqual(OnboardingStep.allCases.count, 36)
+        XCTAssertEqual(OnboardingStep.allCases.count, 35)
     }
 
     /// **Une page ne se quitte pas avant d'avoir été vue** : un second appui sur le rond,

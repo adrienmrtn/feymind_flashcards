@@ -90,9 +90,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case planBuilding
     /// « Voici ton profil » : les réponses relues, et ce que Mika va en faire.
     case profileSummary
-    /// L'engagement envers le soi de dans un an, qu'on maintient appuyé.
-    case pledge
-    /// « Nous tenons à ce que tu essaies gratuitement », qui sort du noir de l'engagement.
+    /// « Nous tenons à ce que tu essaies gratuitement » : Mika couronné, avant l'essai.
     case freeTrialIntro
     case trialOffer
     case trialReminder

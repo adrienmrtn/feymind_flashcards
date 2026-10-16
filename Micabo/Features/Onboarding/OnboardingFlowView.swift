@@ -215,7 +215,6 @@ struct OnboardingFlowView: View {
         case .socialProof: SocialProofStepView()
         case .planBuilding: PlanBuildingStepView()
         case .profileSummary: ProfileSummaryStepView()
-        case .pledge: CommitmentStepView()
         case .freeTrialIntro: FreeTrialIntroStepView()
         case .trialOffer: TrialOfferStepView()
         case .trialReminder: TrialReminderStepView()

@@ -263,236 +263,15 @@ struct ProfileSummaryStepView: View {
     }
 }
 
-// MARK: - L'engagement
-
-/// **« Prends un engagement envers le toi de dans un an. »**
-///
-/// Trois lignes, tirées des réponses — le temps, l'heure, ne pas lâcher —, et un bouton qu'on
-/// **maintient** : trois secondes. Tant que le doigt reste posé, un trou noir s'ouvre depuis le
-/// bouton et avale la page — un disque d'encre au cœur violet, cerclé d'un anneau de lumière
-/// qui tourne de plus en plus vite —, les vibrations se resserrent, le texte passe au blanc.
-/// Lâcher avant la fin, et tout se referme. Au bout, la page est entièrement noire : c'est
-/// signé, et la suivante sort de ce noir.
-struct CommitmentStepView: View {
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-    @Environment(\.onboardingStill) private var still
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    static let holdDuration = 3.0
-
-    @State private var progress: CGFloat = 0
-    @State private var isHolding = false
-    @State private var didCommit = false
-    @State private var spin = false
-    @State private var holdTask: Task<Void, Never>?
-
-    /// Le texte passe au blanc quand le noir l'a rejoint.
-    private var isDark: Bool { progress > 0.42 }
-
-    var body: some View {
-        GeometryReader { proxy in
-            let size = proxy.size
-            let center = CGPoint(x: size.width / 2, y: size.height - 92)
-            let reach = hypot(size.width, size.height) * 2.3
-
-            ZStack {
-                OnboardingPalette.white.ignoresSafeArea()
-
-                hole(diameter: max(1, reach * progress))
-                    .position(center)
-                    .allowsHitTesting(false)
-
-                VStack(spacing: 0) {
-                    OnboardingCenteredScroll {
-                        VStack(spacing: 26) {
-                            OnboardingAccentText(
-                                template: i18n.t("ios.commit.title"),
-                                size: 30,
-                                alignment: .center,
-                                color: isDark ? .white : OnboardingPalette.ink
-                            )
-                            .onboardingAppear(index: 1)
-
-                            VStack(spacing: 12) {
-                                ForEach(Array(promises.enumerated()), id: \.offset) { index, line in
-                                    promise(line, index: index)
-                                }
-                            }
-                            .onboardingAppear(index: 2)
-                        }
-                        .padding(.horizontal, MicaboSpacing.screen)
-                        .padding(.vertical, MicaboSpacing.md)
-                    }
-
-                    holdButton
-                        .padding(.horizontal, MicaboSpacing.screen)
-                        .padding(.bottom, 28)
-                        .onboardingAppear(index: 3)
-                }
-                .onboardingChromeInset()
-                .animation(.easeInOut(duration: 0.35), value: isDark)
-            }
-        }
-        .environment(\.onboardingSurface, .canvas)
-        .onDisappear { holdTask?.cancel() }
-    }
-
-    private var promises: [String] {
-        var lines: [String] = []
-        lines.append(i18n.t("ios.commit.line1", ["n": "\(model.dailyMinutes ?? 10)"]))
-        if let hour = model.studyHour {
-            lines.append(i18n.t("ios.commit.line2", ["hour": ProfileSummaryStepView.hourText(hour, locale: i18n.locale)]))
-        }
-        lines.append(i18n.t("ios.commit.line3"))
-        return lines
-    }
-
-    private func promise(_ text: String, index: Int) -> some View {
-        HStack(spacing: 12) {
-            Text("\(index + 1)")
-                .font(MicaboFont.number(16))
-                .foregroundStyle(isDark ? OnboardingPalette.ink : MicaboColor.onInk)
-                .frame(width: 32, height: 32)
-                .background(isDark ? Color.white : MicaboColor.accent, in: Circle())
-            Text(text)
-                .font(MicaboFont.ui(16.5, weight: .bold))
-                .foregroundStyle(isDark ? Color.white : MicaboColor.ink)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-        }
-        .padding(14)
-        .background(
-            isDark ? Color.white.opacity(0.1) : MicaboColor.surface,
-            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(isDark ? Color.white.opacity(0.18) : MicaboColor.stroke, lineWidth: 1.5)
-        )
-    }
-
-    // MARK: Le trou noir
-
-    /// Le disque d'encre, son cœur violet, et l'anneau de lumière qui tourne sur son bord.
-    private func hole(diameter: CGFloat) -> some View {
-        ZStack {
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [Color(hex: 0x05050A), Color(hex: 0x0B0B14), MicaboColor.keyword.opacity(0.85), MicaboColor.accent.opacity(0.35), .clear],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: diameter / 2
-                    )
-                )
-            Circle()
-                .strokeBorder(
-                    AngularGradient(
-                        colors: [MicaboColor.accent, MicaboColor.keyword, .white.opacity(0.9), MicaboColor.accent.opacity(0.2), MicaboColor.accent],
-                        center: .center
-                    ),
-                    lineWidth: max(2, diameter * 0.035)
-                )
-                .padding(diameter * 0.14)
-                .blur(radius: max(1, diameter * 0.02))
-                .rotationEffect(.degrees(spin ? 360 : 0))
-                .opacity(progress < 0.98 ? 1 : 0)
-        }
-        .frame(width: diameter, height: diameter)
-    }
-
-    // MARK: Le bouton qu'on maintient
-
-    private var holdButton: some View {
-        ZStack {
-            Capsule().fill(isDark ? Color.white : OnboardingPalette.ink)
-            GeometryReader { geo in
-                Capsule()
-                    .fill(LinearGradient(colors: OnboardingPalette.mikaGradient, startPoint: .leading, endPoint: .trailing))
-                    .frame(width: geo.size.width * progress)
-            }
-            .clipShape(Capsule())
-            HStack(spacing: 8) {
-                Image(systemName: didCommit ? "checkmark" : "hand.point.up.left.fill")
-                    .font(.system(size: 16, weight: .bold))
-                Text(didCommit ? i18n.t("ios.commit.done") : (isHolding ? i18n.t("ios.commit.holding") : i18n.t("ios.commit.hold")))
-                    .font(MicaboFont.ui(18, weight: .heavy))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
-            .foregroundStyle(isDark && progress < 0.5 ? OnboardingPalette.ink : (isDark ? Color.white : MicaboColor.onInk))
-        }
-        .frame(height: 62)
-        .scaleEffect(isHolding ? 0.96 : 1)
-        .animation(OnboardingMotion.tap, value: isHolding)
-        .contentShape(Capsule())
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in if !isHolding, !didCommit { begin() } }
-                .onEnded { _ in release() }
-        )
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(i18n.t("ios.commit.hold"))
-        .accessibilityAddTraits(.isButton)
-        .accessibilityAction { commit() }
-    }
-
-    /// **Trois secondes, et les coups se resserrent** : un toutes les trois dixièmes au début,
-    /// de plus en plus vite et de plus en plus fort vers la fin.
-    private func begin() {
-        isHolding = true
-        Haptics.light()
-        if !reduceMotion {
-            withAnimation(.linear(duration: 1.6).repeatForever(autoreverses: false)) { spin = true }
-        }
-        withAnimation(.easeIn(duration: Self.holdDuration)) { progress = 1 }
-        holdTask?.cancel()
-        holdTask = Task { @MainActor in
-            var elapsed = 0.0
-            while elapsed < Self.holdDuration {
-                let gap = max(0.07, 0.32 - elapsed * 0.085)
-                try? await Task.sleep(for: .seconds(gap))
-                guard !Task.isCancelled else { return }
-                elapsed += gap
-                if elapsed > Self.holdDuration * 0.66 { Haptics.medium() } else { Haptics.tick() }
-            }
-            commit()
-        }
-    }
-
-    private func release() {
-        guard isHolding, !didCommit else { return }
-        isHolding = false
-        holdTask?.cancel()
-        spin = false
-        withAnimation(.spring(duration: 0.5, bounce: 0.2)) { progress = 0 }
-    }
-
-    private func commit() {
-        guard !didCommit else { return }
-        didCommit = true
-        isHolding = false
-        holdTask?.cancel()
-        withAnimation(.easeOut(duration: 0.4)) { progress = 1 }
-        Haptics.success()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
-            model.advance()
-        }
-    }
-}
-
 // MARK: - L'essai offert
 
-/// **« Nous tenons à ce que tu essaies ton parcours avec Mika gratuitement. »** La page sort du
-/// noir de l'engagement : elle s'ouvre en encre, puis l'ivoire revient pendant que Mika arrive
-/// et que la phrase se lit. Ensuite, comment marche l'essai.
+/// **« Nous tenons à ce que tu essaies ton parcours avec Mika gratuitement. »** Mika arrive
+/// couronné pendant que la phrase se lit. Ensuite, comment marche l'essai.
 struct FreeTrialIntroStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @Environment(\.onboardingStill) private var still
 
-    @State private var veil = 1.0
     @State private var mikaShown = false
     @State private var isReady = false
 
@@ -534,16 +313,10 @@ struct FreeTrialIntroStepView: View {
             }
             .onboardingChromeInset()
             .background(OnboardingPalette.white.ignoresSafeArea())
-
-            Color(hex: 0x05050A)
-                .ignoresSafeArea()
-                .opacity(still ? 0 : veil)
-                .allowsHitTesting(false)
         }
         .environment(\.onboardingSurface, .canvas)
         .onAppear {
-            withAnimation(.easeInOut(duration: 0.9).delay(0.25)) { veil = 0 }
-            withAnimation(.spring(duration: 0.6, bounce: 0.45).delay(0.6)) { mikaShown = true }
+            withAnimation(.spring(duration: 0.6, bounce: 0.45).delay(0.2)) { mikaShown = true }
         }
     }
 }
