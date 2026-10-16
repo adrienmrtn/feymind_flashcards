@@ -1,5 +1,6 @@
 import { assert, assertEquals } from "jsr:@std/assert@1";
-import { COUNTRIES, learnerBrief, readLearner, volumeOf } from "./learner.ts";
+import { COUNTRIES, depthOf, learnerBrief, readLearner, volumeOf } from "./learner.ts";
+import { LIMITS } from "../generate-lesson/schema.ts";
 
 Deno.test("la marche prime sur le registre : un collégien n'est pas un lycéen", () => {
   const learner = readLearner({ tier: "lowerSecondary", level: "lycee", country: "fr", year: "Quatrième", track: "Collège" });
@@ -44,4 +45,26 @@ Deno.test("le volume suit la marche", () => {
     assert(volume.questions >= 5 && volume.questions <= 8, tier);
     assert(volume.flashcards >= 4 && volume.flashcards <= 8, tier);
   }
+});
+
+Deno.test("la profondeur des notes suit la marche, sous les plafonds du serveur", () => {
+  const tiers = ["lowerSecondary", "upperSecondary", "preUniversity", "undergraduate", "graduate", "health", "competitive", "other"] as const;
+  assertEquals(depthOf("lowerSecondary").blocks, [4, 6]);
+  assertEquals(depthOf("lowerSecondary").paragraphWords, 70);
+  assertEquals(depthOf("upperSecondary").blocks, [5, 8]);
+  assertEquals(depthOf("upperSecondary").paragraphWords, 90);
+  for (const tier of ["preUniversity", "undergraduate", "graduate", "health", "competitive"] as const) {
+    assertEquals(depthOf(tier).blocks, [6, 10], tier);
+    assertEquals(depthOf(tier).paragraphWords, 110, tier);
+  }
+  for (const tier of tiers) {
+    const depth = depthOf(tier);
+    assert(depth.blocks[0] >= 4 && depth.blocks[0] <= depth.blocks[1], tier);
+    assert(depth.blocks[1] + 2 <= LIMITS.blocksHardMax, tier);
+    assert(depth.paragraphWords <= LIMITS.paragraphHardWords, tier);
+    assert(depth.style.length > 20, tier);
+  }
+  assert(depthOf("lowerSecondary").style.includes("analogie"));
+  assert(depthOf("health").examFormat && depthOf("competitive").examFormat && depthOf("upperSecondary").examFormat);
+  assert(!depthOf("lowerSecondary").examFormat && !depthOf("graduate").examFormat);
 });

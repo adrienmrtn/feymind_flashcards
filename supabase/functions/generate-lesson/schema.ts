@@ -19,12 +19,22 @@ export const LIMITS = {
   themeTitleWords: 6,
   lessonTitleWords: 10,
   sentenceWords: 25,
+  /** Un paragraphe, quand la marche n'est pas connue ; `depthOf` le règle par marche. */
   paragraphWords: 60,
+  /** Le plafond d'un paragraphe, quelle que soit la marche. */
+  paragraphHardWords: 120,
   listItemsMin: 3,
   listItemsMax: 5,
   listItemWords: 16,
   blocksMin: 2,
   blocksMax: 5,
+  /** Le plafond des blocs d'un thème, sous-titres non compris, quelle que soit la marche. */
+  blocksHardMax: 12,
+  /** Un encadré « pourquoi », « piège », « astuce » ou « à retenir ». */
+  calloutWords: 45,
+  calloutTitleWords: 6,
+  /** Au-delà, les encadrés de plus se relisent en texte courant. */
+  calloutsMax: 4,
   takeawaysPerTheme: 3,
   lessonTakeaways: 5,
   introLines: 3,
@@ -141,11 +151,11 @@ export function sentences(text: string): string[] {
 }
 
 /**
- * **Un paragraphe aux règles** : 60 mots au plus, des phrases de 25 mots au plus. Une phrase
- * trop longue est coupée à sa première virgule passé la moitié, sinon à 25 mots ; les phrases
- * qui débordent du paragraphe partent.
+ * **Un paragraphe aux règles** : `maxWords` mots au plus (60 par défaut, selon la marche
+ * sinon), des phrases de 25 mots au plus. Une phrase trop longue est coupée à 25 mots ; les
+ * phrases qui débordent du paragraphe partent.
  */
-export function clampParagraph(text: string): string {
+export function clampParagraph(text: string, maxWords: number = LIMITS.paragraphWords): string {
   const out: string[] = [];
   let count = 0;
   for (let sentence of sentences(text)) {
@@ -153,7 +163,7 @@ export function clampParagraph(text: string): string {
       sentence = clampWords(sentence, LIMITS.sentenceWords).replace(/[,;:]?$/, ".");
     }
     const n = words(sentence).length;
-    if (count + n > LIMITS.paragraphWords && out.length > 0) break;
+    if (count + n > maxWords && out.length > 0) break;
     out.push(sentence);
     count += n;
   }
@@ -190,17 +200,17 @@ function inline(value: unknown, maxLength: number, maxWords: number): string {
 }
 
 /** Un paragraphe aux règles : coupé aux phrases d'abord, le balisage remis au propre ensuite. */
-function prose(value: unknown, maxLength: number): string {
-  return cleanInline(clampParagraph(cleanText(value, maxLength)));
+function prose(value: unknown, maxLength: number, maxWords: number = LIMITS.paragraphWords): string {
+  return cleanInline(clampParagraph(cleanText(value, maxLength), maxWords));
 }
 
 // MARK: - Notes
 
 /**
- * Les blocs d'un thème. `steps`, `table` et `quote` sont arrivés après les premières versions
- * de l'app : une app qui ne les connaît pas lit un type inconnu comme un paragraphe, sur son
- * champ `text`. Les étapes et le tableau portent donc aussi un `text` lisible (« 1. … 2. … »,
- * « a — b ; c — d ») ; la citation a déjà le sien.
+ * Les blocs d'un thème. `steps`, `table`, `quote` et `callout` sont arrivés après les
+ * premières versions de l'app : une app qui ne les connaît pas lit un type inconnu comme un
+ * paragraphe, sur son champ `text`. Les étapes et le tableau portent donc aussi un `text`
+ * lisible (« 1. … 2. … », « a — b ; c — d ») ; la citation et l'encadré ont déjà le leur.
  */
 export type NoteBlock =
   | { type: "subtitle"; text: string }
@@ -212,7 +222,77 @@ export type NoteBlock =
   | { type: "example"; text: string }
   | { type: "steps"; items: string[]; text: string }
   | { type: "table"; columns: string[]; rows: string[][]; text: string }
-  | { type: "quote"; text: string; author?: string };
+  | { type: "quote"; text: string; author?: string }
+  | { type: "callout"; kind: CalloutKind; title?: string; text: string };
+
+/**
+ * Les encadrés qui font enseigner les notes : `why` dit pourquoi ça compte (l'intuition
+ * derrière la règle), `mistake` l'erreur classique et comment l'éviter, `tip` une astuce de
+ * méthode ou un moyen mnémotechnique, `remember` une règle à savoir par cœur.
+ */
+export type CalloutKind = "why" | "mistake" | "tip" | "remember";
+
+export const CALLOUT_KINDS: readonly CalloutKind[] = ["why", "mistake", "tip", "remember"];
+
+/** Les noms qu'un modèle donne parfois à un genre d'encadré, ramenés aux quatre de l'app. */
+const CALLOUT_ALIASES = new Map<string, CalloutKind>([
+  ["why", "why"],
+  ["intuition", "why"],
+  ["pourquoi", "why"],
+  ["stakes", "why"],
+  ["mistake", "mistake"],
+  ["pitfall", "mistake"],
+  ["trap", "mistake"],
+  ["warning", "mistake"],
+  ["error", "mistake"],
+  ["misconception", "mistake"],
+  ["piege", "mistake"],
+  ["piège", "mistake"],
+  ["erreur", "mistake"],
+  ["tip", "tip"],
+  ["trick", "tip"],
+  ["hint", "tip"],
+  ["mnemonic", "tip"],
+  ["astuce", "tip"],
+  ["remember", "remember"],
+  ["rule", "remember"],
+  ["key", "remember"],
+  ["retenir", "remember"],
+]);
+
+/** Le genre d'un encadré ; un genre inconnu est une astuce, le plus neutre des quatre. */
+export function calloutKind(raw: unknown): CalloutKind {
+  const key = typeof raw === "string" ? raw.trim().toLowerCase() : "";
+  return CALLOUT_ALIASES.get(key) ?? "tip";
+}
+
+/**
+ * **Combien de notes, selon la marche** (`depthOf` dans `_shared/learner.ts`) : le nombre de
+ * blocs gardés, sous-titres non compris, et la longueur d'un paragraphe. Sans marche, ce sont
+ * les nombres d'avant : cinq blocs (et deux de tolérance), soixante mots.
+ */
+export interface NoteLimits {
+  blocksMax: number;
+  paragraphWords: number;
+}
+
+export const DEFAULT_NOTE_LIMITS: NoteLimits = {
+  blocksMax: LIMITS.blocksMax + 2,
+  paragraphWords: LIMITS.paragraphWords,
+};
+
+/**
+ * Les bornes d'un thème pour une profondeur donnée : le haut de la fourchette demandée, plus
+ * deux blocs de tolérance (un modèle qui écrit un bloc de trop ne perd pas sa fin), sous les
+ * plafonds durs. Jamais en dessous des bornes d'avant.
+ */
+export function noteLimits(depth?: { blocks: readonly [number, number]; paragraphWords: number }): NoteLimits {
+  if (!depth) return DEFAULT_NOTE_LIMITS;
+  return {
+    blocksMax: Math.min(LIMITS.blocksHardMax, Math.max(DEFAULT_NOTE_LIMITS.blocksMax, depth.blocks[1] + 2)),
+    paragraphWords: Math.min(LIMITS.paragraphHardWords, Math.max(LIMITS.paragraphWords, depth.paragraphWords)),
+  };
+}
 
 export interface ThemeNotes {
   oneLiner: string;
@@ -221,7 +301,7 @@ export interface ThemeNotes {
 }
 
 /** Les blocs encadrés : jamais deux de suite (`separateBoxes`). */
-const BOXED = new Set(["definition", "formula", "example", "steps", "table", "quote"]);
+const BOXED = new Set(["definition", "formula", "example", "steps", "table", "quote", "callout"]);
 
 /** La puce ou le numéro qu'un modèle écrit parfois en tête d'un élément de liste. */
 const ITEM_MARKER = /^\s*(?:[-•*·▪●–]|\d{1,2}[.)])\s+/;
@@ -262,7 +342,7 @@ export function rewriteChemistry(latex: string): string {
 }
 
 /** Une liste aux règles : 3 à 5 puces ; moins, elle se lit en phrase. */
-function listBlock(rawItems: unknown[]): NoteBlock[] {
+function listBlock(rawItems: unknown[], limits: NoteLimits = DEFAULT_NOTE_LIMITS): NoteBlock[] {
   const items = rawItems
     .map((item) => inline(stripMarker(item), 240, LIMITS.listItemWords))
     .filter(Boolean)
@@ -270,13 +350,13 @@ function listBlock(rawItems: unknown[]): NoteBlock[] {
   if (items.length === 0) return [];
   // Une liste d'un ou deux points n'en est pas une : elle se lit en phrase.
   if (items.length < LIMITS.listItemsMin) {
-    return [{ type: "paragraph", text: cleanInline(clampParagraph(items.join(". ").replace(/\.\./g, "."))) }];
+    return [{ type: "paragraph", text: cleanInline(clampParagraph(items.join(". ").replace(/\.\./g, "."), limits.paragraphWords)) }];
   }
   return [{ type: "list", items }];
 }
 
-function paragraphBlock(raw: unknown): NoteBlock[] {
-  const text = prose(raw, 900);
+function paragraphBlock(raw: unknown, limits: NoteLimits = DEFAULT_NOTE_LIMITS): NoteBlock[] {
+  const text = prose(raw, 1_200, limits.paragraphWords);
   return text ? [{ type: "paragraph", text }] : [];
 }
 
@@ -308,7 +388,7 @@ function tableCells(line: string): string[] {
  * numéros des étapes, un titre seul sur sa ligne un sous-titre, un tableau un tableau. `null`
  * quand le texte n'a aucune ligne de ce genre : c'est un paragraphe.
  */
-export function markdownBlocks(raw: unknown): NoteBlock[] | null {
+export function markdownBlocks(raw: unknown, limits: NoteLimits = DEFAULT_NOTE_LIMITS): NoteBlock[] | null {
   if (typeof raw !== "string") return null;
   const lines = raw.split(/\r?\n/);
   const kinds = lines.map(lineKind);
@@ -324,7 +404,7 @@ export function markdownBlocks(raw: unknown): NoteBlock[] | null {
     }
     if (kind === "heading") {
       const title = HEADING_LINE.exec(lines[index]!)![1]!;
-      out.push(...readBlock({ type: "subtitle", text: title }));
+      out.push(...readBlock({ type: "subtitle", text: title }, limits));
       index += 1;
       continue;
     }
@@ -333,13 +413,13 @@ export function markdownBlocks(raw: unknown): NoteBlock[] | null {
     while (end < lines.length && kinds[end] === kind) end += 1;
     const group = lines.slice(index, end);
     index = end;
-    if (kind === "bullet") out.push(...listBlock(group));
-    else if (kind === "number") out.push(...readBlock({ type: "steps", items: group }));
+    if (kind === "bullet") out.push(...listBlock(group, limits));
+    else if (kind === "number") out.push(...readBlock({ type: "steps", items: group }, limits));
     else if (kind === "table") {
       const rows = group.filter((line) => !TABLE_RULE.test(line)).map(tableCells);
       const [columns, ...body] = rows;
-      out.push(...readBlock({ type: "table", columns: columns ?? [], rows: body }));
-    } else out.push(...paragraphBlock(group.join(" ")));
+      out.push(...readBlock({ type: "table", columns: columns ?? [], rows: body }, limits));
+    } else out.push(...paragraphBlock(group.join(" "), limits));
   }
   return out;
 }
@@ -348,10 +428,14 @@ export function markdownBlocks(raw: unknown): NoteBlock[] | null {
  * **Un bloc du modèle, aux règles.** Rend zéro, un ou plusieurs blocs : un paragraphe écrit en
  * Markdown se déplie (`markdownBlocks`), un tableau trop maigre redevient une liste.
  */
-export function readBlock(raw: unknown): NoteBlock[] {
+export function readBlock(raw: unknown, limits: NoteLimits = DEFAULT_NOTE_LIMITS): NoteBlock[] {
   if (!raw || typeof raw !== "object") return [];
   const block = raw as Record<string, unknown>;
   const type = typeof block.type === "string" ? block.type : "";
+  // Un encadré écrit sous le nom de son genre ({"type":"mistake", …}) reste un encadré.
+  if (type !== "callout" && CALLOUT_ALIASES.has(type.toLowerCase())) {
+    return readBlock({ ...block, type: "callout", kind: block.kind ?? type }, limits);
+  }
   const items = Array.isArray(block.items) ? block.items : [];
   switch (type) {
     case "subtitle": {
@@ -360,9 +444,9 @@ export function readBlock(raw: unknown): NoteBlock[] {
       return text ? [{ type, text }] : [];
     }
     case "paragraph":
-      return markdownBlocks(block.text) ?? paragraphBlock(block.text);
+      return markdownBlocks(block.text, limits) ?? paragraphBlock(block.text, limits);
     case "list":
-      return listBlock(items);
+      return listBlock(items, limits);
     case "steps": {
       const steps = items
         .map((item) => inline(stripMarker(item), 300, LIMITS.stepWords))
@@ -370,7 +454,7 @@ export function readBlock(raw: unknown): NoteBlock[] {
         .slice(0, LIMITS.stepsMax);
       if (steps.length === 0) return [];
       // Une seule étape n'est pas une méthode : elle se lit en phrase.
-      if (steps.length < LIMITS.stepsMin) return paragraphBlock(steps[0]);
+      if (steps.length < LIMITS.stepsMin) return paragraphBlock(steps[0], limits);
       return [{ type, items: steps, text: stepsText(steps) }];
     }
     case "table": {
@@ -387,7 +471,7 @@ export function readBlock(raw: unknown): NoteBlock[] {
       const header = width >= LIMITS.tableColumnsMin && columns.every(Boolean);
       if (!header || rows.length < LIMITS.tableRowsMin) {
         // Trop maigre pour un tableau : ce qui reste se lit en liste.
-        return listBlock(rows.map((row) => row.filter(Boolean).join(" : ")));
+        return listBlock(rows.map((row) => row.filter(Boolean).join(" : ")), limits);
       }
       return [{ type, columns, rows, text: tableText(rows) }];
     }
@@ -400,9 +484,16 @@ export function readBlock(raw: unknown): NoteBlock[] {
       if (!text) return [];
       return author ? [{ type, text, author }] : [{ type, text }];
     }
+    case "callout": {
+      const text = prose(block.text, 500, LIMITS.calloutWords);
+      if (!text) return [];
+      const kind = calloutKind(block.kind);
+      const title = inline(block.title, 80, LIMITS.calloutTitleWords).replace(/\*\*/g, "").replace(/[.:]$/, "").trim();
+      return title ? [{ type, kind, title, text }] : [{ type, kind, text }];
+    }
     case "definition": {
       const term = cleanText(block.term, 80).replace(/\*\*/g, "");
-      const text = prose(block.text, 600);
+      const text = prose(block.text, 1_000, limits.paragraphWords);
       return term && text ? [{ type, term, text }] : [];
     }
     case "dates": {
@@ -430,7 +521,7 @@ export function readBlock(raw: unknown): NoteBlock[] {
       return caption ? [{ type, latex: formula.latex, caption }] : [{ type, latex: formula.latex }];
     }
     case "example": {
-      const text = prose(block.text, 600);
+      const text = prose(block.text, 1_000, limits.paragraphWords);
       return text ? [{ type, text }] : [];
     }
     default:
@@ -449,6 +540,8 @@ function unboxed(block: NoteBlock): NoteBlock | null {
       return { type: "paragraph", text: block.text };
     case "quote":
       return { type: "paragraph", text: block.author ? `${block.text} (${block.author})` : block.text };
+    case "callout":
+      return { type: "paragraph", text: block.title ? `**${block.title}** : ${block.text}` : block.text };
     case "steps":
       return block.items.length >= LIMITS.listItemsMin && block.items.length <= LIMITS.listItemsMax
         ? { type: "list", items: block.items }
@@ -487,23 +580,32 @@ export function separateBoxes(blocks: NoteBlock[]): NoteBlock[] {
   return out;
 }
 
-export function readNotes(raw: unknown): ThemeNotes | null {
+export function readNotes(raw: unknown, limits: NoteLimits = DEFAULT_NOTE_LIMITS): ThemeNotes | null {
   if (!raw || typeof raw !== "object") return null;
   const notes = raw as Record<string, unknown>;
   const oneLiner = prose(notes.oneLiner, 300);
-  let blocks = (Array.isArray(notes.blocks) ? notes.blocks : []).flatMap(readBlock);
+  let blocks = (Array.isArray(notes.blocks) ? notes.blocks : []).flatMap((block) => readBlock(block, limits));
   // Un sous-titre en dernier n'ouvre rien, et deux sous-titres de suite n'en font qu'un.
   blocks = blocks.filter((block, index) =>
     block.type !== "subtitle" ||
     (index < blocks.length - 1 && blocks[index + 1]!.type !== "subtitle")
   );
+  // Des encadrés à chaque bloc n'en font plus ressortir aucun : au-delà du plafond, ils se
+  // relisent en texte courant.
+  let callouts = 0;
+  blocks = blocks.map((block) => {
+    if (block.type !== "callout") return block;
+    callouts += 1;
+    return callouts > LIMITS.calloutsMax ? unboxed(block) ?? block : block;
+  });
   blocks = separateBoxes(blocks);
-  // Cinq blocs courts au plus, sans compter les sous-titres qui les ouvrent.
+  // Le nombre de blocs que la marche permet, sans compter les sous-titres qui les ouvrent.
+  const max = Math.min(LIMITS.blocksHardMax, limits.blocksMax);
   let counted = 0;
   blocks = blocks.filter((block) => {
     if (block.type === "subtitle") return true;
     counted += 1;
-    return counted <= LIMITS.blocksMax + 2;
+    return counted <= max;
   });
   while (blocks.length > 0 && blocks[blocks.length - 1]!.type === "subtitle") blocks.pop();
   const takeaways = readSentences(notes.takeaways, LIMITS.takeawaysPerTheme, 22);
@@ -726,7 +828,7 @@ export function readQuestion(
   let kind = (typeof question.kind === "string" ? question.kind : "choice") as QuestionKind;
   if (!ALL_KINDS.includes(kind)) kind = "choice";
   const prompt = cleanInline(clampWords(cleanText(question.prompt, 400).replace(/\*\*/g, ""), 30));
-  const why = cleanInline(clampWords(cleanText(question.why, 500).replace(/\*\*/g, ""), 40));
+  const why = cleanInline(clampWords(cleanText(question.why, 600).replace(/\*\*/g, ""), 50));
   const difficulty = readDifficulty(question.difficulty ?? question.level, 2);
   if (!prompt) return null;
 

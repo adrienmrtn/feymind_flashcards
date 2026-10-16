@@ -3,8 +3,11 @@ import { describe, it } from "node:test";
 import {
   clampParagraph,
   clampWords,
+  calloutKind,
   cleanInline,
+  LIMITS,
   markdownBlocks,
+  noteLimits,
   type NoteBlock,
   readBlock,
   readFlashcards,
@@ -13,8 +16,10 @@ import {
   rewriteChemistry,
   sentences,
   separateBoxes,
+  words,
 } from "./schema.ts";
-import { THEME_SYSTEM_PROMPT, themeBrief } from "./prompt.ts";
+import { depthOf } from "../_shared/learner.ts";
+import { PROMPT_VERSION, THEME_SYSTEM_PROMPT, themeBrief } from "./prompt.ts";
 
 describe("les nombres décimaux et les abréviations", () => {
   it("ne coupe pas une phrase dans un nombre ni dans une formule", () => {
@@ -187,5 +192,128 @@ describe("le prompt du thème", () => {
     const opening = (text: string) => text.split("FORME DE CE THÈME\n")[1];
     assert.notEqual(opening(brief(0)), opening(brief(1)));
     assert.notEqual(opening(brief(1)), opening(brief(2)));
+  });
+});
+
+describe("les encadrés (callout)", () => {
+  it("garde le genre, le titre et le texte", () => {
+    assert.deepEqual(
+      readBlock({ type: "callout", kind: "mistake", title: "Le piège du signe.", text: "On oublie le **signe moins** devant la parenthèse." }),
+      [{ type: "callout", kind: "mistake", title: "Le piège du signe", text: "On oublie le **signe moins** devant la parenthèse." }],
+    );
+    assert.deepEqual(readBlock({ type: "callout", kind: "why", text: "Parce que." }), [{ type: "callout", kind: "why", text: "Parce que." }]);
+  });
+
+  it("un genre inconnu devient une astuce, un alias retrouve son genre", () => {
+    assert.equal(calloutKind("carousel"), "tip");
+    assert.equal(calloutKind(undefined), "tip");
+    assert.equal(calloutKind("constructor"), "tip");
+    assert.equal(calloutKind("Pitfall"), "mistake");
+    assert.equal(calloutKind("mnemonic"), "tip");
+    assert.equal(calloutKind("rule"), "remember");
+    const [block] = readBlock({ type: "callout", kind: "mystère", text: "Un texte." });
+    assert.equal(block?.type === "callout" && block.kind, "tip");
+  });
+
+  it("un encadré écrit sous le nom de son genre reste un encadré", () => {
+    assert.deepEqual(readBlock({ type: "mistake", text: "Confondre masse et poids." }), [
+      { type: "callout", kind: "mistake", text: "Confondre masse et poids." },
+    ]);
+    assert.deepEqual(readBlock({ type: "constructor", text: "x" }), []);
+  });
+
+  it("le texte tient en 45 mots, le titre en 6, et un encadré vide part", () => {
+    const long = Array.from({ length: 12 }, (_, i) => `Phrase ${i} assez courte ici.`).join(" ");
+    const [block] = readBlock({ type: "callout", kind: "tip", title: "Un titre bien trop long pour un encadré", text: long });
+    assert(block?.type === "callout");
+    assert(words(block.text).length <= LIMITS.calloutWords);
+    assert(words(block.title ?? "").length <= LIMITS.calloutTitleWords);
+    assert.deepEqual(readBlock({ type: "callout", kind: "tip", title: "Seul", text: "  " }), []);
+  });
+
+  it("est un encadré : jamais deux de suite, et il se relit en texte courant", () => {
+    const callout: NoteBlock = { type: "callout", kind: "mistake", title: "Piège", text: "Ne pas oublier l'unité." };
+    const example: NoteBlock = { type: "example", text: "E." };
+    assert.deepEqual(
+      separateBoxes([example, callout, { type: "paragraph", text: "P." }]).map((block) => block.type),
+      ["example", "paragraph", "callout"],
+    );
+    const tail = separateBoxes([example, callout]);
+    assert.deepEqual(tail.map((block) => block.type), ["example", "paragraph"]);
+    assert.equal(tail[1]!.type === "paragraph" && tail[1]!.text, "**Piège** : Ne pas oublier l'unité.");
+  });
+
+  it("au-delà du plafond, les encadrés de plus se lisent en paragraphe", () => {
+    const blocks = Array.from({ length: 6 }, (_, i) => [
+      { type: "paragraph", text: `Paragraphe ${i}.` },
+      { type: "callout", kind: "tip", text: `Astuce ${i}.` },
+    ]).flat();
+    const notes = readNotes({ oneLiner: "Une idée.", blocks }, noteLimits(depthOf("health")));
+    assert(notes);
+    assert.equal(notes.blocks.filter((block) => block.type === "callout").length, LIMITS.calloutsMax);
+    assert(notes.blocks.some((block) => block.type === "paragraph" && block.text === "Astuce 4."));
+  });
+});
+
+describe("la profondeur suit la marche", () => {
+  const sentence = "Cette phrase compte exactement dix mots pour le test ici.";
+  const paragraph = Array.from({ length: 12 }, () => sentence).join(" ");
+  const many = (n: number) =>
+    Array.from({ length: n }, (_, i) => i % 2 === 0 ? { type: "paragraph", text: `P${i}.` } : { type: "list", items: ["a", "b", `c${i}`] });
+
+  it("les bornes viennent de depthOf, sous les plafonds durs", () => {
+    assert.deepEqual(noteLimits(), { blocksMax: 7, paragraphWords: 60 });
+    assert.deepEqual(noteLimits(depthOf("lowerSecondary")), { blocksMax: 8, paragraphWords: 70 });
+    assert.deepEqual(noteLimits(depthOf("upperSecondary")), { blocksMax: 10, paragraphWords: 90 });
+    assert.deepEqual(noteLimits(depthOf("graduate")), { blocksMax: 12, paragraphWords: 110 });
+    assert.deepEqual(noteLimits({ blocks: [20, 40], paragraphWords: 500 }), { blocksMax: LIMITS.blocksHardMax, paragraphWords: LIMITS.paragraphHardWords });
+    assert.deepEqual(noteLimits({ blocks: [1, 2], paragraphWords: 10 }), { blocksMax: 7, paragraphWords: 60 });
+  });
+
+  it("un étudiant garde plus de blocs et des paragraphes plus longs qu'un collégien", () => {
+    const raw = { oneLiner: "Une idée.", blocks: [{ type: "paragraph", text: paragraph }, ...many(14)] };
+    const young = readNotes(raw, noteLimits(depthOf("lowerSecondary")))!;
+    const old = readNotes(raw, noteLimits(depthOf("undergraduate")))!;
+    const before = readNotes(raw)!;
+    assert.equal(before.blocks.length, 7, "sans marche, les bornes d'avant");
+    assert.equal(young.blocks.length, 8);
+    assert.equal(old.blocks.length, 12);
+    const first = (notes: typeof young) => notes.blocks[0]!.type === "paragraph" ? words(notes.blocks[0]!.text).length : 0;
+    assert.equal(first(before), 60);
+    assert.equal(first(young), 70);
+    assert.equal(first(old), 110);
+  });
+
+  it("la définition et l'exemple suivent la longueur de la marche", () => {
+    const limits = noteLimits(depthOf("health"));
+    const [example] = readBlock({ type: "example", text: paragraph }, limits);
+    assert.equal(example?.type === "example" && words(example.text).length, 110);
+    const [short] = readBlock({ type: "example", text: paragraph });
+    assert.equal(short?.type === "example" && words(short.text).length, 60);
+  });
+});
+
+describe("le fil d'enseignement du thème", () => {
+  it("le prompt demande d'enseigner, pas de résumer, et décrit l'encadré", () => {
+    for (const part of ["UN THÈME ENSEIGNE", "EXEMPLE TRAVAILLÉ", "PIÈGE", "parce que", '"type":"callout"', '"mistake"', '"remember"', "cas NOUVEAU", "l'idée fausse"]) {
+      assert(THEME_SYSTEM_PROMPT.includes(part), part);
+    }
+    assert(!THEME_SYSTEM_PROMPT.includes("2 à 5 blocs"), "le nombre de blocs vient de la marche");
+    assert.equal(PROMPT_VERSION, "lesson-v3.0.0");
+  });
+
+  it("le volume des notes et la question d'examen suivent la marche", () => {
+    const brief = (tier: Parameters<typeof depthOf>[0]) =>
+      themeBrief({ lessonTitle: "L", themeTitle: "T", themeIndex: 0, themes: ["a"], questions: 6, flashcards: 5, kinds: ["choice"], depth: depthOf(tier) });
+    assert.match(brief("lowerSecondary"), /4 à 6 blocs .* 70 mots au plus/);
+    assert.match(brief("graduate"), /6 à 10 blocs .* 110 mots au plus/);
+    assert(brief("health").includes("format exact de son examen"));
+    assert(!brief("lowerSecondary").includes("format exact de son examen"));
+    assert.match(themeBrief({ lessonTitle: "L", themeTitle: "T", themeIndex: 0, themes: ["a"], questions: 6, flashcards: 5, kinds: ["choice"] }), /5 à 7 blocs/);
+  });
+
+  it("une ouverture propose de commencer par le piège", () => {
+    const opening = themeBrief({ lessonTitle: "L", themeTitle: "T", themeIndex: 3, themes: ["a", "b", "c", "d"], questions: 5, flashcards: 4, kinds: ["choice"] });
+    assert(opening.includes('"callout" "mistake"'));
   });
 });

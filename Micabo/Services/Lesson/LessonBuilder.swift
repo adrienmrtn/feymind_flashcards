@@ -455,6 +455,9 @@ final class LessonBuilder {
                 lines.append(columns.joined(separator: " | "))
                 lines.append(contentsOf: rows.map { $0.joined(separator: " | ") })
             case .quote(let text, let author): lines.append(["« \(text) »", author].compactMap { $0 }.joined(separator: " — "))
+            case .callout(let kind, let title, let text):
+                let label = [kind.promptLabel, title].compactMap { $0 }.joined(separator: " · ")
+                lines.append(label + " : " + text)
             }
         }
         lines.append(contentsOf: notes.takeaways.map { "À retenir : \($0)" })

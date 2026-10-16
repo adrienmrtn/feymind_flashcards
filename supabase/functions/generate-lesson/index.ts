@@ -33,7 +33,7 @@ import { languageBrief } from "../_shared/language.ts";
 import { sanitizeMeta, wrapUntrusted } from "../_shared/prompt-boundary.ts";
 import { normalizeIcon } from "../_shared/icons.ts";
 import { readingBrief, VISION_SYSTEM_PROMPT } from "../generate-course/prompt.ts";
-import { learnerBrief, readLearner, volumeOf } from "../_shared/learner.ts";
+import { depthOf, learnerBrief, readLearner, volumeOf } from "../_shared/learner.ts";
 import { assessmentBrief, disciplineName, hasVariedKinds } from "../_shared/assessment.ts";
 import {
   CONVERT_SYSTEM_PROMPT,
@@ -66,6 +66,7 @@ import {
   groupThemes,
   LIMITS,
   MAX_SOURCE,
+  noteLimits,
   readFlashcards,
   readKinds,
   readNotes,
@@ -373,7 +374,13 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
   const context = (body.context ?? "").trim().slice(0, MAX_SOURCE);
   const lessonTitle = sanitizeMeta(body.lessonTitle, 200) || themes[index]!;
   const meter: ModelUsage[] = [];
-  const volume = volumeOf(readLearner(body).tier);
+  const learner = readLearner(body);
+  const volume = volumeOf(learner.tier);
+  // Jusqu'où expliquer : le nombre de blocs et leur longueur suivent la marche, et un examen
+  // nommé appelle toujours une question à son format.
+  const tierDepth = depthOf(learner.tier);
+  const depth = learner.exam ? { ...tierDepth, examFormat: true } : tierDepth;
+  const limits = noteLimits(depth);
   const kinds = readKinds(body.kinds);
   const points = (Array.isArray(body.points) ? body.points : []).slice(0, themes.length).map((list) =>
     (Array.isArray(list) ? list : []).map((point) => sanitizeMeta(typeof point === "string" ? point : "", 100)).filter(Boolean).slice(0, LIMITS.pointsPerTheme)
@@ -395,6 +402,7 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
     questions: volume.questions,
     flashcards: volume.flashcards,
     kinds,
+    depth,
   }));
   // Les formes de bloc que la matière appelle : sans elles, chaque thème avait le même squelette.
   sections.push(lessonShapesBrief(detectDiscipline(sample, body.lessonTitle ?? body.title, body.subject)));
@@ -402,7 +410,7 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
   // consigne de formes que l'entraînement et l'examen blanc, selon la matière et la marche.
   // Sans elle, un collégien et un étudiant en santé recevaient le même mélange de formes.
   sections.push(assessmentBrief({
-    tier: readLearner(body).tier,
+    tier: learner.tier,
     disciplines: [detectDiscipline(sample, body.lessonTitle, body.subject)],
     count: volume.questions,
   }));
@@ -422,7 +430,7 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
 
   const read = (parsed: Record<string, unknown> | null) => {
     if (!parsed) return null;
-    const notes = readNotes(parsed);
+    const notes = readNotes(parsed, limits);
     const questions = finalFirst(readQuestions(parsed.questions, seed, { kinds, language: body.language, max: volume.questions }));
     if (!notes || questions.length < LIMITS.minQuestions) return null;
     return { notes, questions, flashcards: readFlashcards(parsed.flashcards, volume.flashcards) };

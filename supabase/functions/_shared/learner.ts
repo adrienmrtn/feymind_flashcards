@@ -428,3 +428,69 @@ export function volumeOf(tier: Tier): Volume {
       return { topicThemes: [5, 8], maxThemes: 12, questions: 6, flashcards: 6 };
   }
 }
+
+// MARK: - La profondeur
+
+export interface Depth {
+  /** Le nombre de blocs des notes d'un thème, sous-titres non compris : [au moins, au plus]. */
+  blocks: [number, number];
+  /** La longueur d'un paragraphe, en mots. */
+  paragraphWords: number;
+  /** Comment expliquer à cette marche : analogies, densité, rigueur. Une ligne du prompt. */
+  style: string;
+  /** Vrai quand la marche prépare un examen au format connu : une question le reprend. */
+  examFormat: boolean;
+}
+
+/**
+ * **Jusqu'où expliquer, selon la marche.** Deux à cinq blocs de soixante mots faisaient un
+ * résumé, pas une leçon : un thème enseigne (une accroche, le mécanisme, un exemple travaillé,
+ * le piège), et il lui faut la place de le faire. Un collégien a moins de blocs et plus
+ * d'images ; un étudiant, plus de blocs et plus denses. Les nombres restent sous les plafonds
+ * de `schema.ts` (`LIMITS.blocksHardMax`, `LIMITS.paragraphHardWords`).
+ *
+ * La ligne `style` dit la FAÇON d'expliquer ; le vocabulaire et le registre sont dans
+ * `TIER_BRIEFS`, elle ne les répète pas.
+ */
+export function depthOf(tier: Tier): Depth {
+  switch (tier) {
+    case "lowerSecondary":
+      return {
+        blocks: [4, 6],
+        paragraphWords: 70,
+        style: "Explique pas à pas, sans rien sauter : une analogie de la vie courante (le sport, l'argent de poche, la cuisine, un jeu) pour chaque idée abstraite, un exemple de son âge, et la raison de chaque règle dite simplement.",
+        examFormat: false,
+      };
+    case "upperSecondary":
+      return {
+        blocks: [5, 8],
+        paragraphWords: 90,
+        style: "Explique chaque mécanisme jusqu'au bout, avec ses causes et ses conséquences ; une analogie quand la notion est abstraite ; des exemples du niveau d'un sujet d'examen.",
+        examFormat: true,
+      };
+    case "preUniversity":
+    case "health":
+    case "competitive":
+      return {
+        blocks: [6, 10],
+        paragraphWords: 110,
+        style: "Dense et rigoureux : hypothèses, conditions d'application, cas limites et valeurs exactes ; chaque étape d'un raisonnement écrite ; une analogie seulement quand elle éclaire, jamais à la place de l'énoncé exact.",
+        examFormat: true,
+      };
+    case "undergraduate":
+    case "graduate":
+      return {
+        blocks: [6, 10],
+        paragraphWords: 110,
+        style: "Dense et rigoureux : le mécanisme détaillé, ses conditions de validité, ses limites et les nuances du cours ; une analogie seulement quand elle éclaire, jamais à la place de l'énoncé exact.",
+        examFormat: false,
+      };
+    default:
+      return {
+        blocks: [5, 7],
+        paragraphWords: 80,
+        style: "Explique chaque idée avec sa raison et un exemple concret ; une analogie quand la notion est abstraite.",
+        examFormat: false,
+      };
+  }
+}

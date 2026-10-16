@@ -60,8 +60,9 @@ struct LessonPath: Codable, Equatable {
     }
 }
 
-/// **Les notes d'un thème**, au format de la refonte (§ 6) : une idée en une phrase, deux à
-/// cinq blocs courts, des blocs spéciaux quand le contenu le demande, trois phrases à retenir.
+/// **Les notes d'un thème**, au format de la refonte (§ 6) : une idée en une phrase, des blocs
+/// courts (quatre à dix selon le niveau de l'élève), des blocs spéciaux et des encadrés quand
+/// le contenu le demande, trois phrases à retenir.
 ///
 /// Encodé en JSON dans `Chapter.notesData` et `chapters.notes`. Un ancien chapitre n'en a pas :
 /// il garde sa fiche (`Chapter.sheetData`), affichée avec la même typographie.
@@ -105,6 +106,8 @@ struct ThemeNotes: Codable, Equatable {
                 lines.append(contentsOf: rows.map { $0.joined(separator: " | ") })
             case .quote(let text, let author):
                 lines.append(["« \(text) »", author].compactMap { $0 }.joined(separator: " — "))
+            case .callout(_, let title, let text):
+                lines.append([title, text].compactMap { $0 }.joined(separator: " : "))
             }
         }
         lines.append(contentsOf: takeaways)
@@ -141,7 +144,8 @@ private struct LossyNoteBlock: Decodable {
 ///
 /// Les formes `steps`, `table` et `quote` arrivent avec un champ `text` de repli, pour les
 /// versions de l'app qui ne les connaissent pas : on l'ignore ici, sauf si le bloc est
-/// incomplet.
+/// incomplet. L'encadré (`callout`) a son texte dans `text` : une version qui ne le connaît
+/// pas le lit en paragraphe.
 enum NoteBlock: Codable, Equatable {
     struct DateItem: Codable, Equatable {
         var date: String
@@ -161,9 +165,12 @@ enum NoteBlock: Codable, Equatable {
     case table(columns: [String], rows: [[String]])
     /// Une citation, et qui l'a dite.
     case quote(text: String, author: String?)
+    /// Un encadré qui enseigne : pourquoi ça compte, le piège, l'astuce, la règle à retenir.
+    /// L'app écrit toujours le nom de son genre ; le titre, facultatif, vient dessous.
+    case callout(kind: CalloutKind, title: String?, text: String)
 
     private enum CodingKeys: String, CodingKey {
-        case type, text, items, term, latex, caption, columns, rows, author
+        case type, text, items, term, latex, caption, columns, rows, author, kind, title
     }
 
     init(from decoder: Decoder) throws {
@@ -204,6 +211,14 @@ enum NoteBlock: Codable, Equatable {
             let author = (try container.decodeIfPresent(String.self, forKey: .author))?
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             self = .quote(text: text, author: (author?.isEmpty ?? true) ? nil : author)
+        case "callout":
+            let text = try container.decode(String.self, forKey: .text)
+            // Un genre inconnu (d'une version plus récente du serveur) se lit comme une astuce.
+            let rawKind = (try? container.decodeIfPresent(String.self, forKey: .kind)) ?? nil
+            let kind = rawKind.flatMap(CalloutKind.init(rawValue:)) ?? .tip
+            let rawTitle = (try? container.decodeIfPresent(String.self, forKey: .title)) ?? nil
+            let title = rawTitle?.trimmingCharacters(in: .whitespacesAndNewlines)
+            self = .callout(kind: kind, title: (title?.isEmpty ?? true) ? nil : title, text: text)
         default:
             // Un bloc d'une version plus récente du serveur se lit comme un paragraphe plutôt
             // que de faire tomber toutes les notes du thème.
@@ -262,13 +277,18 @@ enum NoteBlock: Codable, Equatable {
             try container.encode("quote", forKey: .type)
             try container.encode(text, forKey: .text)
             try container.encodeIfPresent(author, forKey: .author)
+        case .callout(let kind, let title, let text):
+            try container.encode("callout", forKey: .type)
+            try container.encode(kind.rawValue, forKey: .kind)
+            try container.encodeIfPresent(title, forKey: .title)
+            try container.encode(text, forKey: .text)
         }
     }
 
     /// Vrai pour les blocs qui se dessinent dans un encadré : deux encadrés ne se suivent pas.
     var isBoxed: Bool {
         switch self {
-        case .definition, .formula, .example, .steps, .table, .quote: true
+        case .definition, .formula, .example, .steps, .table, .quote, .callout: true
         default: false
         }
     }
@@ -276,10 +296,43 @@ enum NoteBlock: Codable, Equatable {
     /// Vrai pour un bloc qui n'a rien à montrer : il laisserait un trou blanc.
     var isEmpty: Bool {
         switch self {
-        case .subtitle(let text), .paragraph(let text):
+        case .subtitle(let text), .paragraph(let text), .callout(_, _, let text):
             text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         default:
             false
+        }
+    }
+}
+
+/// Le genre d'un encadré des notes. Voir `supabase/functions/generate-lesson/schema.ts`.
+enum CalloutKind: String, Codable, CaseIterable, Sendable {
+    /// Pourquoi ça compte : l'intuition derrière la règle.
+    case why
+    /// L'erreur classique, et comment l'éviter.
+    case mistake
+    /// Une astuce de méthode, un moyen mnémotechnique.
+    case tip
+    /// Une règle à savoir par cœur.
+    case remember
+
+    /// Le titre de l'encadré quand le serveur n'en donne pas (`lesson.notes.callout.*`).
+    var titleKey: String {
+        switch self {
+        case .why: "lesson.notes.callout.why"
+        case .mistake: "lesson.notes.callout.mistake"
+        case .tip: "lesson.notes.callout.tip"
+        case .remember: "lesson.notes.callout.remember"
+        }
+    }
+
+    /// Le nom du genre pour le modèle, quand les notes lui sont relues : en français, comme
+    /// toutes les consignes.
+    var promptLabel: String {
+        switch self {
+        case .why: "Pourquoi"
+        case .mistake: "Piège"
+        case .tip: "Astuce"
+        case .remember: "À retenir"
         }
     }
 }

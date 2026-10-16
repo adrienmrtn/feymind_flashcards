@@ -5,7 +5,8 @@ import SwiftUI
 /// quand le contenu le demande, « À retenir » dans la couleur de la leçon.
 ///
 /// Trois couleurs et pas plus : la couleur de la leçon pour les encadrés et les puces, le
-/// violet pour les mots-clés, le vert et le rouge pour les réponses — et rien d'autre.
+/// violet pour les mots-clés, le vert et le rouge pour les réponses. Seule exception, les
+/// encadrés qui enseignent (`NoteCallout`) : leur teinte dit leur genre (piège, règle…).
 struct ThemeNotesView: View {
     let notes: ThemeNotes
     let tone: LessonTone
@@ -176,6 +177,9 @@ struct NoteBlockView: View {
 
         case .quote(let text, let author):
             NoteQuote(text: text, author: author, tone: tone)
+
+        case .callout(let kind, let title, let text):
+            NoteCallout(kind: kind, title: title, text: text, tone: tone)
         }
     }
 
@@ -404,6 +408,82 @@ struct NoteQuote: View {
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+}
+
+/// **Un encadré qui enseigne** : pourquoi ça compte, le piège classique, une astuce, une règle à
+/// retenir. Chaque genre a sa teinte et son pictogramme, pour qu'on reconnaisse un piège avant
+/// de l'avoir lu : le bleu de l'information, le rouge de l'erreur, la couleur de la leçon pour
+/// l'astuce, le jaune de l'attention pour la règle. Le nom du genre est toujours écrit ; le titre
+/// du serveur, facultatif, vient dessous.
+struct NoteCallout: View {
+    let kind: CalloutKind
+    let title: String?
+    let text: String
+    let tone: LessonTone
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .center, spacing: 8) {
+                Image(systemName: Self.symbol(for: kind))
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(ink)
+                    .accessibilityHidden(true)
+                Text(L10n.t(kind.titleKey, locale: .resolved()))
+                    .font(MicaboFont.small)
+                    .tracking(MicaboTracking.caps)
+                    .textCase(.uppercase)
+                    .foregroundStyle(ink)
+            }
+            if let title {
+                KeywordText(title, size: 18, weight: .bold, tintsKeywords: false)
+                    .font(MicaboFont.ui(18, weight: .bold))
+                    .foregroundStyle(MicaboColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            KeywordText(text)
+                .font(MicaboFont.notes)
+                .foregroundStyle(MicaboColor.ink)
+                .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(wash, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(ink.opacity(0.25), lineWidth: 1.5)
+        )
+        .accessibilityElement(children: .combine)
+    }
+
+    /// La couleur du pictogramme, du nom du genre et du filet.
+    private var ink: Color {
+        switch kind {
+        case .why: MicaboColor.info
+        case .mistake: MicaboColor.negative
+        case .tip: tone.ink
+        case .remember: MicaboColor.caution
+        }
+    }
+
+    /// Le fond de l'encadré, la même teinte en pâle.
+    private var wash: Color {
+        switch kind {
+        case .why: MicaboColor.infoSoft
+        case .mistake: MicaboColor.negativeSoft
+        case .tip: tone.pale
+        case .remember: MicaboColor.cautionSoft
+        }
+    }
+
+    static func symbol(for kind: CalloutKind) -> String {
+        switch kind {
+        case .why: "lightbulb.fill"
+        case .mistake: "exclamationmark.triangle.fill"
+        case .tip: "sparkles"
+        case .remember: "pin.fill"
+        }
     }
 }
 

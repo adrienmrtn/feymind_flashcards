@@ -153,6 +153,58 @@ final class LessonFormatTests: XCTestCase {
         XCTAssertEqual(again, notes)
     }
 
+    /// L'encadré (`callout`) : son genre, son titre facultatif, son texte. Un genre inconnu se
+    /// lit comme une astuce ; sans texte, il disparaît.
+    func testCalloutsReadTheirKindAndTitleAndRoundTrip() throws {
+        let json = """
+        {"oneLiner":"Une idée.",
+         "blocks":[
+           {"type":"callout","kind":"mistake","title":"Le piège du signe","text":"On oublie le **signe moins**."},
+           {"type":"callout","kind":"why","text":"Parce que la vitesse change."},
+           {"type":"callout","kind":"remember","title":"  ","text":"Toujours l'unité."},
+           {"type":"callout","kind":"carousel","text":"Un genre d'une version future."},
+           {"type":"callout","text":"Sans genre."},
+           {"type":"callout","kind":"tip","title":"Sans texte"},
+           {"type":"callout","kind":"tip","text":"   "}
+         ],
+         "takeaways":[]}
+        """
+        let notes = try XCTUnwrap(ThemeNotes.decode(from: Data(json.utf8)))
+        XCTAssertEqual(notes.blocks, [
+            .callout(kind: .mistake, title: "Le piège du signe", text: "On oublie le **signe moins**."),
+            .callout(kind: .why, title: nil, text: "Parce que la vitesse change."),
+            .callout(kind: .remember, title: nil, text: "Toujours l'unité."),
+            .callout(kind: .tip, title: nil, text: "Un genre d'une version future."),
+            .callout(kind: .tip, title: nil, text: "Sans genre.")
+        ])
+        XCTAssertTrue(notes.blocks.allSatisfy(\.isBoxed))
+        XCTAssertTrue(notes.plainText.contains("Le piège du signe : On oublie le signe moins."))
+
+        let again = try XCTUnwrap(ThemeNotes.decode(from: notes.encoded()))
+        XCTAssertEqual(again, notes)
+
+        // Le serveur écrit toujours `text` : c'est aussi ce qu'une app d'avant lit.
+        let encoded = try XCTUnwrap(notes.encoded())
+        let object = try XCTUnwrap(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+        let first = try XCTUnwrap((object["blocks"] as? [[String: Any]])?.first)
+        XCTAssertEqual(first["type"] as? String, "callout")
+        XCTAssertEqual(first["kind"] as? String, "mistake")
+        XCTAssertEqual(first["title"] as? String, "Le piège du signe")
+        XCTAssertEqual(first["text"] as? String, "On oublie le **signe moins**.")
+    }
+
+    /// Chaque genre d'encadré a son titre traduit, et son pictogramme.
+    @MainActor
+    func testEveryCalloutKindHasATitleAndASymbol() {
+        for kind in CalloutKind.allCases {
+            XCTAssertNotNil(LessonI18nCatalogs.fr[kind.titleKey], kind.rawValue)
+            XCTAssertNotNil(LessonI18nCatalogs.en[kind.titleKey], kind.rawValue)
+            XCTAssertFalse(kind.promptLabel.isEmpty)
+        }
+        XCTAssertEqual(L10n.t(CalloutKind.mistake.titleKey, locale: .en), "Common mistake")
+        XCTAssertEqual(Set(CalloutKind.allCases.map { NoteCallout.symbol(for: $0) }).count, CalloutKind.allCases.count)
+    }
+
     /// Un bloc illisible disparaît : ni trou blanc, ni notes perdues.
     func testAnUnreadableBlockIsSkippedNotShownEmpty() throws {
         let json = """
@@ -296,6 +348,36 @@ final class CourseLessonTests: XCTestCase {
             card.dueDate = now.addingTimeInterval(days * 86_400)
         }
         XCTAssertEqual(course.learnedCardCount(now: now), 2)
+    }
+
+    /// Un encadré reste sur l'écran du bloc qu'il commente ; un encadré en tête a le sien.
+    func testACalloutStaysOnTheScreenOfTheBlockItComments() throws {
+        let course = Course(title: "Leçon")
+        context.insert(course)
+        let chapter = Chapter(position: 0, title: "Thème", course: course)
+        context.insert(chapter)
+        chapter.notesData = ThemeNotes(
+            oneLiner: "Une idée.",
+            blocks: [
+                .callout(kind: .why, title: nil, text: "Pourquoi."),
+                .paragraph("Le mécanisme."),
+                .callout(kind: .mistake, title: nil, text: "Le piège."),
+                .subtitle("Partie deux"),
+                .paragraph("La suite."),
+                .callout(kind: .tip, title: nil, text: "L'astuce."),
+                .example("Un cas.")
+            ],
+            takeaways: ["Un"]
+        ).encoded()
+        XCTAssertEqual(NotesPage.pages(for: chapter, hasQuestion: true), [
+            .opening,
+            .blocks(0..<1),
+            .blocks(1..<3),
+            .blocks(3..<6),
+            .blocks(6..<7),
+            .takeaways,
+            .question
+        ])
     }
 
     func testThePathOfALessonFollowsItsChapters() throws {

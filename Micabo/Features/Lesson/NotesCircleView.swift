@@ -122,7 +122,8 @@ struct NotesCircleView: View {
 enum NotesPage: Equatable {
     /// L'icône, le titre du thème et son idée en une phrase.
     case opening
-    /// Des blocs des notes : un sous-titre et le bloc qu'il ouvre, ou un bloc seul.
+    /// Des blocs des notes : un sous-titre et le bloc qu'il ouvre, ou un bloc seul ; un
+    /// encadré qui suit un bloc reste avec lui.
     case blocks(Range<Int>)
     case takeaways
     /// Un ancien chapitre : toute sa fiche d'un coup.
@@ -137,6 +138,11 @@ enum NotesPage: Equatable {
             while index < notes.blocks.count {
                 var end = index + 1
                 if case .subtitle = notes.blocks[index], end < notes.blocks.count { end += 1 }
+                // Un encadré (le piège, l'astuce) commente le bloc qui le précède : il reste sur
+                // son écran, au lieu d'arriver seul, détaché de ce qu'il explique.
+                if end < notes.blocks.count, case .callout = notes.blocks[end], !notes.blocks[end - 1].isBoxed {
+                    end += 1
+                }
                 pages.append(.blocks(index..<end))
                 index = end
             }
