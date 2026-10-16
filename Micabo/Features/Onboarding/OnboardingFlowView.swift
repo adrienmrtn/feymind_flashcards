@@ -71,6 +71,7 @@ struct OnboardingFlowView: View {
         .environment(model)
         .environment(\.onboardingSurface, surface)
         .environment(\.locale, i18n.locale.foundation)
+        .environment(\.layoutDirection, i18n.locale.isRightToLeft ? .rightToLeft : .leftToRight)
         // **Les couleurs de l'app, jour ou nuit** : le parcours suit l'apparence de l'app
         // (celle du téléphone par défaut), comme tous les écrans qui suivent.
         // **Le compte, en languette**, posée sur le dernier écran de Mika : le parcours ne
@@ -82,6 +83,7 @@ struct OnboardingFlowView: View {
         )) {
             OnboardingAccountSheet { model.finishAccountSheet() }
                 .environment(\.locale, i18n.locale.foundation)
+                .environment(\.layoutDirection, i18n.locale.isRightToLeft ? .rightToLeft : .leftToRight)
                 .presentationDetents([.height(410), .large])
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(MicaboRadius.sheet)

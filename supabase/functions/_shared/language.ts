@@ -27,16 +27,28 @@ const NAMES = {
   en: "anglais",
   de: "allemand",
   it: "italien",
-  es: "espagnol",
-  pt: "portugais",
+  es: "espagnol d'Espagne",
+  "es-419": "espagnol d'Amérique latine",
+  pt: "portugais du Portugal",
+  "pt-BR": "portugais du Brésil",
   cs: "tchèque",
+  sk: "slovaque",
   nl: "néerlandais",
   el: "grec",
   hu: "hongrois",
   pl: "polonais",
   ro: "roumain",
   sv: "suédois",
+  da: "danois",
+  fi: "finnois",
+  et: "estonien",
+  hr: "croate",
+  sl: "slovène",
+  sr: "serbe (alphabet latin)",
+  bg: "bulgare",
+  ru: "russe",
   tr: "turc",
+  ar: "arabe standard moderne",
 } as const;
 
 /** Ce que le modèle appelle la langue quand il l'écrit lui-même, dans cette langue. */
@@ -45,16 +57,28 @@ const ENDONYMS: Record<ContentLanguage, string> = {
   en: "English",
   de: "Deutsch",
   it: "italiano",
-  es: "español",
-  pt: "português",
+  es: "español de España",
+  "es-419": "español latinoamericano",
+  pt: "português europeu",
+  "pt-BR": "português brasileiro",
   cs: "čeština",
+  sk: "slovenčina",
   nl: "Nederlands",
   el: "ελληνικά",
   hu: "magyar",
   pl: "polski",
   ro: "română",
   sv: "svenska",
+  da: "dansk",
+  fi: "suomi",
+  et: "eesti",
+  hr: "hrvatski",
+  sl: "slovenščina",
+  sr: "srpski (latinica)",
+  bg: "български",
+  ru: "русский",
   tr: "Türkçe",
+  ar: "العربية الفصحى",
 };
 
 /**
@@ -89,7 +113,13 @@ export function isSourceLanguage(code: string | undefined): boolean {
 /** La langue demandée, ou le français quand la demande est absente ou inconnue. */
 export function resolveLanguage(code: string | undefined): ContentLanguage {
   if (isSourceLanguage(code)) return DEFAULT_LANGUAGE;
-  const cleaned = (code ?? "").trim().toLowerCase().slice(0, 2);
+  const raw = (code ?? "").trim().replace("_", "-");
+  // La région d'abord : « pt-BR » et « es-419 » sont des langues à part entière. Une autre
+  // région (« es-MX », « pt-AO ») retombe sur sa variante la plus proche.
+  const lower = raw.toLowerCase();
+  if (lower === "pt-br") return "pt-BR";
+  if (lower === "es-419" || (lower.startsWith("es-") && lower !== "es-es")) return "es-419";
+  const cleaned = lower.slice(0, 2);
   return cleaned in NAMES ? cleaned as ContentLanguage : DEFAULT_LANGUAGE;
 }
 

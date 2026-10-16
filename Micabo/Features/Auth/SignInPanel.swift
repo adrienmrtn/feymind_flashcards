@@ -113,6 +113,7 @@ struct SignInScreen: View {
                 .padding(.top, placement == .sheet ? MicaboSpacing.sm : 0)
                 .padding(.bottom, MicaboSpacing.xl)
                 .environment(\.locale, i18n.locale.foundation)
+                .environment(\.layoutDirection, i18n.locale.isRightToLeft ? .rightToLeft : .leftToRight)
             }
             .scrollDismissesKeyboard(.interactively)
             .scrollBounceBehavior(.basedOnSize)

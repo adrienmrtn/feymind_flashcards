@@ -227,6 +227,8 @@ enum OnboardingDemoCatalog {
         case .de: german
         case .es: spanish
         case .tr: turkish
+        // Les autres langues reçoivent les cours anglais, la langue la plus lue après la leur.
+        default: english
         }
     }
 

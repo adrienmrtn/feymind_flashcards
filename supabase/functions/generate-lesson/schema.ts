@@ -308,6 +308,16 @@ const TRUE_FALSE: Record<string, [string, string]> = {
   ro: ["Adevărat", "Fals"],
   sv: ["Sant", "Falskt"],
   tr: ["Doğru", "Yanlış"],
+  sk: ["Pravda", "Nepravda"],
+  da: ["Sandt", "Falsk"],
+  fi: ["Tosi", "Epätosi"],
+  et: ["Õige", "Vale"],
+  hr: ["Točno", "Netočno"],
+  sl: ["Drži", "Ne drži"],
+  sr: ["Tačno", "Netačno"],
+  bg: ["Вярно", "Невярно"],
+  ru: ["Верно", "Неверно"],
+  ar: ["صحيح", "خطأ"],
 };
 
 export function trueFalseLabels(language: string | undefined): [string, string] {

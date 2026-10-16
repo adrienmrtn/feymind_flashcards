@@ -166,15 +166,27 @@ enum ContentLanguage: String, CaseIterable, Identifiable {
     case de
     case it
     case es
+    case es419 = "es-419"
     case pt
+    case ptBR = "pt-BR"
     case cs
+    case sk
     case nl
     case el
     case hu
     case pl
     case ro
     case sv
+    case da
+    case fi
+    case et
+    case hr
+    case sl
+    case sr
+    case bg
+    case ru
     case tr
+    case ar
 
     var id: String { rawValue }
 
@@ -185,16 +197,28 @@ enum ContentLanguage: String, CaseIterable, Identifiable {
         case .en: "English"
         case .de: "Deutsch"
         case .it: "Italiano"
-        case .es: "Español"
-        case .pt: "Português"
+        case .es: "Español (España)"
+        case .es419: "Español (Latinoamérica)"
+        case .pt: "Português (Portugal)"
+        case .ptBR: "Português (Brasil)"
         case .cs: "Čeština"
+        case .sk: "Slovenčina"
         case .nl: "Nederlands"
         case .el: "Ελληνικά"
         case .hu: "Magyar"
         case .pl: "Polski"
         case .ro: "Română"
         case .sv: "Svenska"
+        case .da: "Dansk"
+        case .fi: "Suomi"
+        case .et: "Eesti"
+        case .hr: "Hrvatski"
+        case .sl: "Slovenščina"
+        case .sr: "Srpski"
+        case .bg: "Български"
+        case .ru: "Русский"
         case .tr: "Türkçe"
+        case .ar: "العربية"
         }
     }
 }
@@ -475,7 +499,10 @@ extension SchoolingCountry {
     var language: ContentLanguage {
         switch self {
         case .fr, .be, .ch, .ca, .lu, .ma, .dz, .tn, .sn, .ci: .fr
-        case .uk, .us, .other: .en
+        case .uk, .us: .en
+        // Un pays hors liste : la langue de l'app, qui est celle que l'élève a choisie pour
+        // lire — un élève de Varsovie qui a mis l'app en polonais veut des fiches en polonais.
+        case .other: UiLocale.resolved().contentLanguage
         case .de: .de
         case .it: .it
         case .es: .es

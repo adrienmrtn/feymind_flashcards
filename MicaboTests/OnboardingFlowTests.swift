@@ -478,7 +478,7 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(SchoolingCountry.ca.language, .fr)
         XCTAssertEqual(SchoolingCountry.us.language, .en)
         XCTAssertEqual(SchoolingCountry.uk.language, .en)
-        XCTAssertEqual(SchoolingCountry.other.language, .en)
+        XCTAssertEqual(SchoolingCountry.other.language, UiLocale.resolved().contentLanguage, "Hors liste : la langue de l'app")
 
         OnboardingPreferences.reset()
         defer { OnboardingPreferences.reset() }

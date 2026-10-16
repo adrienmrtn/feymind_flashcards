@@ -101,6 +101,7 @@ struct MicaboApp: App {
             .environment(uiLocale)
             .environment(lessons)
             .environment(\.locale, uiLocale.locale.foundation)
+            .environment(\.layoutDirection, uiLocale.locale.isRightToLeft ? .rightToLeft : .leftToRight)
             .preferredColorScheme(colorScheme)
             // Avant le reste de la tâche : ouvrir la session de statistiques est
             // quelques microsecondes, et tout ce qui suit peut vouloir tracer.
