@@ -21,6 +21,7 @@ on:
       - "Micabo.xcodeproj/**"
       - "ci_scripts/**"
       - "store/testflight.mjs"
+      - "store/distribute.mjs"
       - ".github/workflows/testflight.yml"
 
 permissions:
@@ -149,6 +150,9 @@ jobs:
 
       - name: Attendre le traitement d'Apple
         run: node store/builds.mjs "$GITHUB_SHA" "$(cat "$RUNNER_TEMP/sent-at")" --wait 40
+
+      - name: Donner le build aux testeurs
+        run: node store/distribute.mjs
 
       - name: Effacer la clé
         if: always()
