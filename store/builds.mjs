@@ -68,9 +68,22 @@ for (const build of builds.data ?? []) {
   if (since && !arrived && a.uploadedDate && new Date(a.uploadedDate) > since) arrived = label;
   console.log(
     `  ${label} · reçu ${day(a.uploadedDate)} · ${a.processingState}` +
-      `${a.expired ? " · expiré" : ""} · ${encryption}` +
+      `${a.expired ? ` · expiré (expiration prévue ${day(a.expirationDate)})` : ""} · ${encryption}` +
       `${beta.internalBuildState ? ` · interne : ${beta.internalBuildState}` : ""}`,
   );
+}
+
+// ── App Store ───────────────────────────────────────────────────────────────────────────
+
+try {
+  const versions = await asc.get(`/v1/apps/${app.id}/appStoreVersions?limit=4`);
+  console.log("\nApp Store — dernières versions :");
+  for (const version of versions.data ?? []) {
+    const a = version.attributes ?? {};
+    console.log(`  ${a.versionString} · ${a.appVersionState ?? a.appStoreState} · créée ${day(a.createdDate)}`);
+  }
+} catch (error) {
+  console.log(`\nApp Store : illisible (${error.message.split("→").pop().trim()}).`);
 }
 
 // ── Xcode Cloud ─────────────────────────────────────────────────────────────────────────
