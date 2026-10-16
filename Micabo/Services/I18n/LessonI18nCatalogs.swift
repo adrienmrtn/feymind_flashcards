@@ -191,6 +191,7 @@ enum LessonI18nCatalogs {
         "lesson.theme.day": "Clair",
         "lesson.theme.night": "Sombre",
         "lesson.path.shortened": "La leçon a été raccourcie : tes supports dépassaient 60 000 caractères.",
+        "lesson.onboarding.previewSub": "Ton chemin est prêt : une étape après l'autre, jusqu'à la conclusion.",
     ]
 
     static let en: [String: String] = [
@@ -364,6 +365,7 @@ enum LessonI18nCatalogs {
         "lesson.theme.day": "Light",
         "lesson.theme.night": "Dark",
         "lesson.path.shortened": "The lesson was shortened: your materials were over 60,000 characters.",
+        "lesson.onboarding.previewSub": "Your path is ready: one step after another, all the way to the wrap-up.",
     ]
 
     static let de: [String: String] = [
@@ -537,6 +539,7 @@ enum LessonI18nCatalogs {
         "lesson.theme.day": "Hell",
         "lesson.theme.night": "Dunkel",
         "lesson.path.shortened": "Die Lektion wurde gekürzt: Deine Materialien hatten mehr als 60.000 Zeichen.",
+        "lesson.onboarding.previewSub": "Dein Lernpfad ist fertig: ein Schritt nach dem anderen, bis zum Abschluss.",
     ]
 
     static let es: [String: String] = [
@@ -710,6 +713,7 @@ enum LessonI18nCatalogs {
         "lesson.theme.day": "Claro",
         "lesson.theme.night": "Oscuro",
         "lesson.path.shortened": "La lección se acortó: tus materiales superaban los 60.000 caracteres.",
+        "lesson.onboarding.previewSub": "Tu recorrido está listo: un paso tras otro, hasta la conclusión.",
     ]
 
     static let tr: [String: String] = [
@@ -883,5 +887,6 @@ enum LessonI18nCatalogs {
         "lesson.theme.day": "Açık",
         "lesson.theme.night": "Koyu",
         "lesson.path.shortened": "Ders kısaltıldı: kaynakların 60.000 karakteri aşıyordu.",
+        "lesson.onboarding.previewSub": "Yolun hazır: adım adım, sonuca kadar.",
     ]
 }

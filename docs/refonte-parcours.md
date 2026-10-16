@@ -27,7 +27,7 @@ ne se construit pas, et ce qui change de cap s'écrit ici d'abord.
 | Lexique | **Leçon** à l'écran (onglet Leçons, Nouvelle leçon, Leçon terminée). Cercle, Palier, Notes, Quiz, Flashcards |
 | Langues | Les 5 langues (fr, en, de, es, tr) traduites dans la foulée ; le turc pèse la moitié des comptes |
 | Audio | Fichier **et** enregistrement, transcrits **sur l'appareil**, 90 min au plus |
-| Onboarding | Inchangé pour l'instant. Le cours qu'il crée devient un parcours (conversion), et c'est la requête gratuite |
+| Onboarding | Ses écrans sont inchangés ; **son cours est une leçon**, écrite par `generate-lesson` comme depuis Home. C'est la requête gratuite, même depuis un support importé (`begin_lesson(p_onboarding)`). Le cours de démonstration entre en leçon sans appel au modèle. L'app s'ouvre ensuite sur Home, la leçon dans « Reprendre » |
 | Notifications | Aucune dans cette version |
 | Livraison | Une branche, une CI macOS qui compile, teste et rend des écrans en PNG à chaque push (§ 14) |
 
@@ -563,6 +563,7 @@ projet de production n'est pas joignable depuis la session de développement.
 - **Les icônes 3D** (`micabo-icones-3d.zip`) sont dans `Assets.xcassets` (`Icon3D-*`) ; la même
   liste est donnée au modèle (`supabase/functions/_shared/icons.ts`, testée contre le Swift).
 - **À déployer à la main** sur le projet de production : les migrations
-  `20261016090000_lesson_paths.sql` et `20261016091000_lesson_generations.sql`, puis la fonction
+  `20261016090000_lesson_paths.sql`, `20261016091000_lesson_generations.sql` et
+  `20261016092000_lesson_onboarding.sql`, dans cet ordre, puis la fonction
   `generate-lesson`. Tant que les colonnes manquent, l'app ne les envoie pas (`CloudSchema`) ; tant
   que la fonction manque, un ancien cours s'ouvre quand même (« Ouvrir sans attendre »).

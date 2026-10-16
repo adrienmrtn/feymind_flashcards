@@ -76,6 +76,8 @@ interface RequestBody {
   topic?: string;
   source?: string;
   sourceName?: string;
+  /** La leçon du parcours d'accueil : la leçon offerte peut alors venir d'un support. */
+  onboarding?: boolean;
 
   // Thème
   lessonTitle?: string;
@@ -167,7 +169,13 @@ async function plan(request: Request, body: RequestBody): Promise<Response> {
   }
 
   const source = normalizeSource(body.source, fromScratch);
-  await beginLesson(caller, { lessonId: body.lessonId, kind: "create", source, themes: 0 });
+  await beginLesson(caller, {
+    lessonId: body.lessonId,
+    kind: "create",
+    source,
+    themes: 0,
+    onboarding: body.onboarding === true,
+  });
   await consumeQuota(caller, "generate-lesson");
 
   const meter: ModelUsage[] = [];

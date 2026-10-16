@@ -5,7 +5,7 @@ import SwiftUI
 
 /// **Les cases de dépôt, celles de la création d'un deck.** Le parcours ne redessine pas
 /// l'import : c'est le même écran, avec le rond fléché à la place de la pilule, et le même
-/// objet `DeckSetup` que `DeckBuilder` lira à l'écran suivant.
+/// objet `DeckSetup`, dont `LessonBuilder` fera la leçon à l'écran suivant.
 ///
 /// **La branche du parcours se prend ici**, sans question avant : déposer et avancer mène
 /// à la construction ; « je n'ai rien pour l'instant », en gris à gauche du rond, mène au
@@ -125,23 +125,26 @@ private struct DemoCourseRow: View {
 
 // MARK: - La construction du cours
 
-/// **Mika écrit le cours**, pour de vrai ou pour de faux, sur le même écran.
+/// **Mika écrit la leçon**, pour de vrai ou pour de faux, sur le même écran.
 ///
-/// Avec des supports, c'est `DeckBuilder` qui travaille : la fiche, le plan, les cartes,
-/// enregistrés dès qu'ils existent. La jauge suit son propre temps — vite au début, de
-/// moins en moins, sans jamais atteindre le bout tant que le cours n'est pas là — et
-/// finit le chemin en une seconde quand il arrive. Sans supports, le cours de
-/// démonstration entre dans la bibliothèque au bout du même chargement joué que le profil.
+/// Avec des supports, c'est `LessonBuilder` qui travaille, comme depuis Home : le plan, puis
+/// les thèmes, quatre à la fois. L'écran rend la main dès que le premier thème est écrit ; les
+/// autres s'écrivent pendant la suite du parcours. La jauge suit son propre temps — vite au
+/// début, de moins en moins — et ne descend jamais sous l'étape que la génération a atteinte.
+/// Sans supports, le cours de démonstration entre dans la bibliothèque, déjà en leçon, au
+/// bout du même chargement joué que le profil.
 ///
 /// **La fin enchaîne d'elle-même**, comme le profil : un coup net, le blob rapetisse, et le
 /// cours s'ouvre.
 struct CourseBuildingStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.aiService) private var aiService
+    @Environment(LessonBuilder.self) private var lessons
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @State private var shown: Double = 0
+    /// L'étape réelle de la génération, quand c'est une vraie leçon.
+    @State private var stage: LessonBuilder.Stage?
     @State private var elapsed: Double = 0
     @State private var built: Course?
     @State private var failure: String?
@@ -155,11 +158,24 @@ struct CourseBuildingStepView: View {
     static let demoDuration = 6.5
     private static let holdAtEnd = 0.7
     private static let thresholds: [Double] = [0.22, 0.5, 0.74, 1.0]
-    private static let stages: [DeckBuilder.Stage] = [.reading, .writingSheet, .splitting, .writingCards]
+    private static let stages = LessonBuilder.Stage.allCases
 
     private var stepLabel: String {
+        if let stage {
+            return i18n.t(GenerationSteps.key(for: stage, hasSupports: true))
+        }
         let index = Self.thresholds.firstIndex { shown < $0 - 0.001 } ?? Self.stages.count - 1
-        return i18n.t(Self.stages[min(index, Self.stages.count - 1)].captionKey)
+        return i18n.t(GenerationSteps.key(for: Self.stages[min(index, Self.stages.count - 1)], hasSupports: true))
+    }
+
+    /// Le plancher de la jauge à chaque étape réelle : elle ne recule jamais derrière le travail.
+    private static func floor(for stage: LessonBuilder.Stage) -> Double {
+        switch stage {
+        case .reading: 0.04
+        case .cutting: thresholds[0]
+        case .writing: thresholds[1]
+        case .questions: thresholds[2]
+        }
     }
 
     private var subtitle: String {
@@ -206,13 +222,19 @@ struct CourseBuildingStepView: View {
     private func buildReal() async {
         let creeping = Task { @MainActor in await creep() }
         do {
-            let outcome = try await DeckBuilder.build(model.deckSetup, using: aiService, in: modelContext)
+            let course = try await lessons.create(.onboarding(from: model.deckSetup), in: modelContext) { reached in
+                stage = reached
+                let floor = Self.floor(for: reached)
+                if shown < floor {
+                    withAnimation(.easeOut(duration: 0.3)) { shown = floor }
+                }
+            }
             creeping.cancel()
-            built = outcome.course
-            await finish(with: outcome.course)
+            built = course
+            await finish(with: course)
         } catch {
             creeping.cancel()
-            failure = error.localizedDescription
+            failure = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
     }
 
@@ -245,7 +267,7 @@ struct CourseBuildingStepView: View {
         guard !Task.isCancelled else { return }
         do {
             let language = ContentLanguage(rawValue: i18n.locale.rawValue) ?? .en
-            let course = try OnboardingDemoCatalog.install(demo, language: language, in: modelContext)
+            let course = try OnboardingDemoCatalog.installLesson(demo, language: language, in: modelContext)
             built = course
             await finish(with: course)
         } catch {
@@ -304,6 +326,7 @@ struct CourseBuildingStepView: View {
                     OnboardingContinueButton(title: i18n.t("ios.retry")) {
                         failure = nil
                         shown = 0
+                        stage = nil
                         elapsed = 0
                         didStart = false
                         Task { @MainActor in
@@ -354,39 +377,24 @@ enum MikaProgressCurve {
     }
 }
 
-// MARK: - Le cours qu'on parcourt
+// MARK: - La leçon qu'on regarde
 
-/// **Le cours fiché, ouvert en entier**, avec le rond fléché qui flotte en bas à droite.
+/// **La leçon écrite, en chemin**, avec le rond fléché qui flotte en bas à droite.
 ///
-/// C'est le vrai plan du deck — le bandeau, le titre, les chapitres —, sans les actions
-/// de révision, sans le cadenas Pro, sans le menu : on lit, on ouvre un chapitre, on
-/// revient. Le cours est déjà dans la bibliothèque ; c'est le même objet que l'app montrera
-/// à la sortie du parcours.
-///
-/// **Le rond fait visiter.** Il n'avance pas d'un coup : il ouvre le premier chapitre, puis
-/// le deuxième, puis les suivants, et ne passe à la suite qu'une fois le dernier ouvert.
-/// Un élève qui touche un chapitre de lui-même compte comme y étant passé : le rond reprend
-/// au premier chapitre qu'il n'a pas vu. C'est ce qui garantit qu'on a lu une fiche avant
-/// de s'entraîner dessus — sans forcer personne à défiler jusqu'en bas.
+/// C'est le vrai parcours de la leçon — l'icône, le titre, les cercles et les paliers — tel que
+/// l'app l'ouvrira : on le regarde, on n'y joue pas encore. **Le rond fait lire** : il ouvre les
+/// notes du premier thème, puis passe à l'entraînement. C'est ce qui garantit qu'on a lu une
+/// page de la leçon avant de s'entraîner dessus, sans forcer personne à tout lire.
 struct CourseReviewStepView: View {
     @Environment(OnboardingModel.self) private var model
 
-    /// La pile : vide sur le plan, le chapitre ouvert sinon.
-    @State private var path: [Chapter] = []
-    /// Le rang du prochain chapitre que le rond ouvre.
-    @State private var nextChapter = 0
+    @State private var reading: Chapter?
+    @State private var didRead = false
 
     var body: some View {
         ZStack {
             if let course = model.builtCourse {
-                NavigationStack(path: $path) {
-                    OnboardingCoursePlanView(course: course) { chapter in
-                        open(chapter, in: course)
-                    }
-                    .navigationDestination(for: Chapter.self) { chapter in
-                        OnboardingChapterView(chapter: chapter, demo: demoChapter(for: chapter))
-                    }
-                }
+                OnboardingLessonPreview(course: course)
             } else {
                 OnboardingPalette.white.ignoresSafeArea()
             }
@@ -398,28 +406,25 @@ struct CourseReviewStepView: View {
             .padding(.trailing, MicaboSpacing.screen)
             .padding(.bottom, MicaboSpacing.sm)
         }
+        .sheet(item: $reading) { chapter in
+            OnboardingThemeReader(chapter: chapter, demo: demoChapter(for: chapter)) {
+                reading = nil
+                model.advance()
+            }
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+        }
         .environment(\.onboardingSurface, .canvas)
     }
 
-    /// Un chapitre touché sur le plan : il s'ouvre, et le rond reprendra après lui.
-    private func open(_ chapter: Chapter, in course: Course) {
-        if let index = course.orderedChapters.firstIndex(where: { $0.id == chapter.id }) {
-            nextChapter = max(nextChapter, index + 1)
-        }
-        path = [chapter]
-    }
-
-    /// Le rond : le prochain chapitre non vu, ou la suite quand tous le sont. Depuis un
-    /// chapitre ouvert, le suivant le remplace dans la pile : on ne repasse pas par le plan.
+    /// Le rond : les notes du premier thème la première fois, la suite ensuite.
     private func advance() {
-        let chapters = model.builtCourse?.orderedChapters ?? []
-        guard nextChapter < chapters.count else {
+        guard !didRead, let first = model.builtCourse?.orderedChapters.first else {
             model.advance()
             return
         }
-        let chapter = chapters[nextChapter]
-        nextChapter += 1
-        path = [chapter]
+        didRead = true
+        reading = first
     }
 
     /// Le chapitre de démonstration qui correspond, quand le cours est le cours joué :
@@ -427,311 +432,5 @@ struct CourseReviewStepView: View {
     private func demoChapter(for chapter: Chapter) -> DemoChapter? {
         guard model.isDemoCourse, let demo = model.demoCourse else { return nil }
         return demo.chapters.indices.contains(chapter.position) ? demo.chapters[chapter.position] : nil
-    }
-}
-
-/// Le plan : bandeau, titre, matière, chapitres. Toucher un chapitre le signale au parent,
-/// qui l'ouvre.
-private struct OnboardingCoursePlanView: View {
-    let course: Course
-    var onOpen: (Chapter) -> Void
-
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    private var safeTop: CGFloat { MicaboScreen.safeTop }
-    private var pastel: Color { MicaboColor.pastel(for: course.id) }
-
-    var body: some View {
-        MicaboCollapsingScreen(expandedHeight: safeTop + MicaboHeaderBand.deck) { scroll in
-            OnboardingCourseBanner(
-                emoji: course.emoji,
-                pastel: pastel,
-                title: course.title,
-                band: MicaboHeaderBand.deck,
-                safeTop: safeTop,
-                offset: scroll.offset,
-                showsBack: false,
-                onBack: {}
-            )
-        } content: {
-            VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
-                identity
-                plan
-            }
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.top, 22)
-            .padding(.bottom, MicaboLayout.bottomBarClearance)
-        }
-        .micaboScreenBackground()
-        .navigationBarBackButtonHidden(true)
-        .toolbar(.hidden, for: .navigationBar)
-    }
-
-    private var identity: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(course.title)
-                .font(MicaboFont.ui(25, weight: .bold))
-                .tracking(-0.5)
-                .foregroundStyle(MicaboColor.ink)
-                .fixedSize(horizontal: false, vertical: true)
-
-            HStack(spacing: 9) {
-                if let subject = course.subject?.nilIfBlank {
-                    Text(SubjectDisplay.subject(subject, locale: i18n.locale).uppercased())
-                        .font(MicaboFont.ui(11, weight: .bold))
-                        .tracking(1.2)
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                    dot
-                }
-
-                Text(i18n.t("ios.deck.chapterCount", ["count": "\(course.orderedChapters.count)"]))
-                    .font(MicaboFont.ui(13, weight: .medium))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-
-                dot
-
-                Text(MicaboCopy.cards(course.cards.count, locale: i18n.locale))
-                    .font(MicaboFont.ui(13, weight: .medium))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-
-                Spacer(minLength: 0)
-            }
-
-            if !course.summary.isEmpty {
-                Text(course.summary)
-                    .font(MicaboFont.reading(15))
-                    .foregroundStyle(MicaboColor.inkReading)
-                    .lineSpacing(4)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 4)
-            }
-        }
-    }
-
-    private var dot: some View {
-        Circle()
-            .fill(MicaboColor.inkTertiary)
-            .frame(width: 3, height: 3)
-    }
-
-    private var plan: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(i18n.t("ios.deck.chapters"))
-                .font(MicaboFont.ui(17, weight: .bold))
-                .foregroundStyle(MicaboColor.ink)
-                .padding(.bottom, 2)
-
-            VStack(spacing: 0) {
-                ForEach(Array(course.orderedChapters.enumerated()), id: \.element.id) { index, chapter in
-                    MicaboChapterRow(
-                        number: index + 1,
-                        title: chapter.title.nilIfBlank ?? i18n.t("ios.deck.untitledChapter", ["number": "\(index + 1)"]),
-                        meta: chapter.cardCount > 0
-                            ? i18n.t("ios.deck.notStarted") + " · " + i18n.t("ios.deck.cardCount", ["count": "\(chapter.cardCount)"])
-                            : i18n.t("ios.deck.notStarted"),
-                        state: index == 0 ? .inProgress : .untouched
-                    ) {
-                        onOpen(chapter)
-                    }
-                    if index < course.orderedChapters.count - 1 {
-                        MicaboHairline(onCanvas: true)
-                    }
-                }
-            }
-        }
-    }
-
-}
-
-/// Un chapitre ouvert : la fiche riche pour le cours de démonstration, la fiche telle
-/// qu'elle est enregistrée pour le cours de l'élève. On lit, on ne corrige pas.
-private struct OnboardingChapterView: View {
-    let chapter: Chapter
-    let demo: DemoChapter?
-
-    @Environment(\.dismiss) private var dismiss
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    private static let margin: CGFloat = 22
-    private var safeTop: CGFloat { MicaboScreen.safeTop }
-
-    private var tint: Color { Color(hexString: chapter.course?.accentHex ?? "") }
-    private var pastel: Color { MicaboColor.pastel(for: chapter.course?.id ?? chapter.id) }
-
-    private var number: Int {
-        (chapter.course?.orderedChapters.firstIndex { $0.id == chapter.id } ?? chapter.position) + 1
-    }
-
-    /// Les blocs enregistrés, sans le titre de partie que la page écrit déjà en tête.
-    private var blocks: [SheetBlock] {
-        var all = chapter.decodedSheet()?.blocks ?? []
-        if case .heading(_, let text)? = all.first,
-           SheetMarkup.plain(text).caseInsensitiveCompare(chapter.title.trimmingCharacters(in: .whitespacesAndNewlines)) == .orderedSame {
-            all.removeFirst()
-        }
-        return all
-    }
-
-    var body: some View {
-        MicaboCollapsingScreen(expandedHeight: safeTop + MicaboHeaderBand.chapter) { scroll in
-            OnboardingCourseBanner(
-                emoji: chapter.course?.emoji ?? "📘",
-                pastel: pastel,
-                title: chapter.title,
-                band: MicaboHeaderBand.chapter,
-                safeTop: safeTop,
-                offset: scroll.offset,
-                readingProgress: scroll.progress,
-                showsBack: true,
-                onBack: { dismiss() }
-            )
-        } content: {
-            VStack(alignment: .leading, spacing: 0) {
-                MicaboFactLine(facts: facts)
-
-                Text(chapter.title)
-                    .font(MicaboFont.ui(25, weight: .bold))
-                    .tracking(-0.5)
-                    .lineSpacing(2)
-                    .foregroundStyle(MicaboColor.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 9)
-
-                Group {
-                    if let demo {
-                        DemoSheetView(blocks: demo.blocks, tint: tint)
-                    } else {
-                        VStack(alignment: .leading, spacing: 0) {
-                            ForEach(Array(blocks.enumerated()), id: \.offset) { index, block in
-                                SheetBlockView(block: block, tint: tint)
-                                    .padding(.top, index == 0 ? 0 : SheetBlockView.spacing(before: block))
-                            }
-                        }
-                    }
-                }
-                .padding(.top, 16)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, Self.margin)
-            .padding(.top, 20)
-            .padding(.bottom, MicaboLayout.bottomBarClearance)
-        }
-        .micaboScreenBackground()
-        .navigationBarBackButtonHidden(true)
-        .toolbar(.hidden, for: .navigationBar)
-        .enablesSwipeBack()
-    }
-
-    private var facts: [MicaboFactLine.Fact] {
-        var out: [MicaboFactLine.Fact] = [
-            .init(text: i18n.t("ios.chapterShort", ["number": "\(number)"]), isLead: true),
-        ]
-        if chapter.cardCount > 0 {
-            out.append(.init(text: MicaboCopy.cards(chapter.cardCount, locale: i18n.locale)))
-        }
-        let minutes = CourseSheet(blocks: blocks).readingMinutes
-        out.append(.init(text: i18n.t("ios.chapter.readingTime", ["minutes": "\(minutes)"])))
-        return out
-    }
-}
-
-// MARK: - Le bandeau
-
-/// **Le bandeau d'un cours ou d'un chapitre, réduit à ce que le parcours en montre** : le
-/// pastel, l'emoji qui voyage en se repliant, le titre qui arrive, et un retour quand il y
-/// a où revenir. Pas de menu, pas de taille de texte : on ne fait que lire.
-struct OnboardingCourseBanner: View {
-    let emoji: String
-    let pastel: Color
-    let title: String
-    let band: CGFloat
-    let safeTop: CGFloat
-    let offset: CGFloat
-    var readingProgress: Double? = nil
-    var showsBack: Bool
-    var onBack: () -> Void
-
-    private var travel: CGFloat { band - MicaboHeaderBand.collapsed }
-    private var collapse: CGFloat { min(1, max(0, offset / travel)) }
-    private var stretch: CGFloat { max(0, -offset) }
-    private var height: CGFloat { safeTop + band - travel * collapse + stretch }
-
-    private static var button: CGFloat { 38 }
-    private static var emojiSlot: CGFloat { 22 }
-    private static var gap: CGFloat { 8 }
-
-    var body: some View {
-        let sidePadding: CGFloat = 18 - 4 * collapse
-        let circleAlpha: Double = 0.88 * Double(1 - collapse)
-        let titleAlpha: Double = Double(max(0, (collapse - 0.4) / 0.6))
-        let titleRise: CGFloat = 6 * (1 - collapse)
-        let emojiScale: CGFloat = 1 - 0.673 * collapse + stretch / 600
-        let restY: CGFloat = safeTop + (band + stretch) / 2
-        let barY: CGFloat = safeTop + Self.button / 2
-        let emojiY: CGFloat = restY + (barY - restY) * collapse
-        let barX: CGFloat = sidePadding + Self.button + Self.gap + Self.emojiSlot / 2
-        let shadowAlpha: Double = 0.10 * Double(collapse)
-
-        ZStack(alignment: .top) {
-            GeometryReader { proxy in
-                let restX: CGFloat = proxy.size.width / 2
-                let emojiX: CGFloat = restX + (barX - restX) * collapse
-
-                Text(emoji)
-                    .font(.system(size: 52))
-                    .scaleEffect(emojiScale)
-                    .position(x: emojiX, y: emojiY)
-            }
-            .allowsHitTesting(false)
-
-            HStack(spacing: Self.gap) {
-                if showsBack {
-                    MicaboBannerButton(circleAlpha: circleAlpha, action: onBack) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 17, weight: .semibold))
-                    }
-                    .accessibilityLabel(L10n.t("app.common.back", locale: .resolved()))
-                } else {
-                    Color.clear.frame(width: Self.button, height: Self.button)
-                }
-
-                Color.clear
-                    .frame(width: Self.emojiSlot, height: Self.button)
-
-                Text(title)
-                    .font(MicaboFont.ui(16, weight: .bold))
-                    .tracking(-0.2)
-                    .foregroundStyle(MicaboColor.ink)
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .opacity(titleAlpha)
-                    .offset(y: titleRise)
-                    .accessibilityHidden(titleAlpha < 0.5)
-
-                Color.clear.frame(width: Self.button, height: Self.button)
-            }
-            .padding(.horizontal, sidePadding)
-            .padding(.top, safeTop)
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: height)
-        .background {
-            Rectangle()
-                .fill(pastel)
-                .shadow(color: Color.black.opacity(shadowAlpha), radius: 14, x: 0, y: 2)
-        }
-        .overlay(alignment: .bottom) {
-            if let readingProgress {
-                GeometryReader { proxy in
-                    let fill: CGFloat = CGFloat(max(0, min(1, readingProgress))) * proxy.size.width
-                    ZStack(alignment: .leading) {
-                        Rectangle().fill(MicaboColor.ink.opacity(0.10))
-                        Rectangle().fill(MicaboColor.accent).frame(width: fill)
-                    }
-                }
-                .frame(height: 3)
-                .opacity(Double(collapse))
-            }
-        }
     }
 }

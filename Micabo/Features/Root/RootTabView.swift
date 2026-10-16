@@ -56,13 +56,9 @@ struct RootTabView: View {
         // et un `safeAreaInset` ne franchit pas cette frontière. La place est réservée page
         // par page, par `tabBarClearance`, qui est aussi ce qui pose leurs boutons du bas
         // au-dessus de la barre au lieu de dessous.
-        // **L'app s'ouvre sur Decks après le parcours**, où le premier deck, construit
-        // juste avant, attend qu'on l'ouvre. Voir `FirstDeckHandoff`.
-        .onAppear {
-            if FirstDeckHandoff.course != nil {
-                router.selection = .decks
-            }
-        }
+        // **L'app s'ouvre sur Home après le parcours** : la leçon qu'il vient d'écrire y
+        // attend dans « Reprendre », un appui l'ouvre sur son chemin. La remise ne sert plus
+        // à choisir l'onglet ; Leçons la consomme. Voir `FirstDeckHandoff`.
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if router.isAtRoot {
                 MicaboTabBar()

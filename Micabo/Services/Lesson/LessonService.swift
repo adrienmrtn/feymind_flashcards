@@ -44,6 +44,8 @@ struct LessonPlanRequest: Sendable {
     /// D'où vient le texte : text, pdf, photo, audio, youtube, docx, mixed.
     var source: String
     var sourceName: String?
+    /// La leçon du parcours d'accueil (voir `LessonCreation.onboarding`).
+    var onboarding = false
     var audience: LessonAudience
 }
 
@@ -192,6 +194,9 @@ struct SupabaseLessonService: LessonGenerating {
         payload["images"] = request.images.prefix(6).map { "data:image/jpeg;base64," + $0.base64EncodedString() }
         payload["source"] = request.source
         payload["sourceName"] = request.sourceName ?? ""
+        if request.onboarding {
+            payload["onboarding"] = true
+        }
         if let topic = request.topic {
             payload["topic"] = String(topic.prefix(400))
         }

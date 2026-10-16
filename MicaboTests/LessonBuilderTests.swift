@@ -8,9 +8,13 @@ private final class FakeLessonService: LessonGenerating, @unchecked Sendable {
     var failingThemes: Set<Int> = []
     var planError: Error?
     private(set) var themeCalls: [Int] = []
+    private(set) var planRequests: [LessonPlanRequest] = []
     private let lock = NSLock()
 
     func plan(_ request: LessonPlanRequest) async throws -> LessonPlanResult {
+        lock.lock()
+        planRequests.append(request)
+        lock.unlock()
         if let planError { throw planError }
         return LessonPlanResult(
             plan: .init(
@@ -229,5 +233,70 @@ final class LessonBuilderTests: XCTestCase {
         XCTAssertTrue(course.orderedChapters.allSatisfy { $0.status == .ready && ($0.quiz?.questions ?? []).isEmpty })
         XCTAssertEqual(course.cards.count, 1)
         XCTAssertNotNil(course.orderedChapters.first?.decodedSheet())
+    }
+    /// La leçon du parcours d'accueil part avec son drapeau : c'est lui qui laisse le serveur
+    /// l'écrire depuis un PDF sans abonnement, une fois.
+    func testTheOnboardingLessonTellsTheServerWhereItComesFrom() async throws {
+        let context = try makeContext()
+        let service = FakeLessonService()
+        let setup = DeckSetup()
+        setup.source = .materials
+        let material = DeckMaterial()
+        material.document = ImportedDocument(
+            text: String(repeating: "La photosynthèse transforme la lumière. ", count: 20),
+            pageImages: [Data([0xFF])],
+            coverImage: Data([0x01]),
+            pageCount: 3,
+            fileName: "Chapitre 3",
+            source: .pdf,
+            extractionNote: nil
+        )
+        material.state = .ready
+        setup.materials = [material, DeckMaterial()]
+
+        let request = LessonCreation.onboarding(from: setup)
+        XCTAssertTrue(request.onboarding)
+        XCTAssertEqual(request.source, .pdf)
+        XCTAssertEqual(request.sourceName, "Chapitre 3")
+        XCTAssertEqual(request.images.count, 1)
+        XCTAssertNotNil(request.coverImage)
+        XCTAssertNil(request.topic)
+        XCTAssertTrue(request.text.contains("photosynthèse"))
+
+        let course = try await builder(service).create(request, in: context)
+        XCTAssertTrue(course.isLesson)
+        XCTAssertEqual(service.planRequests.first?.onboarding, true)
+        XCTAssertEqual(service.planRequests.first?.source, "pdf")
+    }
+
+    /// Une leçon créée depuis Home ne porte pas le drapeau.
+    func testAHomeLessonIsNotAnOnboardingLesson() async throws {
+        let context = try makeContext()
+        let service = FakeLessonService()
+        _ = try await builder(service).create(LessonCreation(topic: "La guerre froide"), in: context)
+        XCTAssertEqual(service.planRequests.first?.onboarding, false)
+    }
+
+    /// Le cours de démonstration entre en leçon, sans appel au modèle : ses chapitres font le
+    /// chemin, ses QCM les quiz, et il ne consomme pas la leçon offerte.
+    func testTheDemoCourseIsInstalledAsALesson() throws {
+        for locale in UiLocale.allCases {
+            let context = try makeContext()
+            let demo = try XCTUnwrap(OnboardingDemoCatalog.courses(locale: locale).first, "\(locale)")
+            let course = try OnboardingDemoCatalog.installLesson(demo, language: .fr, in: context)
+
+            XCTAssertTrue(course.isLesson, "\(locale)")
+            XCTAssertEqual(course.lessonPath?.status, .ready)
+            XCTAssertEqual(course.source, .sample)
+            XCTAssertNotNil(course.lastOpenedAt)
+            XCTAssertFalse(course.orderedChapters.isEmpty)
+            XCTAssertTrue(course.orderedChapters.allSatisfy { $0.status == .ready })
+            XCTAssertFalse(course.pathSteps().isEmpty)
+            XCTAssertFalse(LessonAllowance.hasUsedFreeLesson(courses: [course]))
+
+            let expected = demo.cards.filter { $0.kind == .choice && $0.chapter < course.orderedChapters.count && $0.choices.count >= 2 }.count
+            let questions = course.orderedChapters.reduce(0) { $0 + ($1.quiz?.questions.count ?? 0) }
+            XCTAssertEqual(questions, expected, "\(locale)")
+        }
     }
 }

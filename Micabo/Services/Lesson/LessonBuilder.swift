@@ -15,6 +15,9 @@ struct LessonCreation {
     var sourceName: String?
     var coverImage: Data?
     var examDate: Date?
+    /// La leçon du parcours d'accueil : c'est la leçon offerte, même depuis un support importé
+    /// (`begin_lesson`, migration `lesson_onboarding`).
+    var onboarding = false
 }
 
 /// D'où vient une leçon. La valeur brute part au serveur, qui en tire la porte du gratuit.
@@ -112,6 +115,7 @@ final class LessonBuilder {
                 images: request.images,
                 source: request.source.rawValue,
                 sourceName: request.sourceName,
+                onboarding: request.onboarding,
                 audience: audience
             ))
         } catch {

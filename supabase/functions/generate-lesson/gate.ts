@@ -67,7 +67,14 @@ export function isLessonId(value: unknown): value is string {
  */
 export async function beginLesson(
   caller: Caller,
-  options: { lessonId: string; kind: "create" | "convert"; source: string; themes: number },
+  options: {
+    lessonId: string;
+    kind: "create" | "convert";
+    source: string;
+    themes: number;
+    /** La leçon du parcours d'accueil : offerte même depuis un support importé. */
+    onboarding?: boolean;
+  },
 ): Promise<void> {
   if (!caller.userId) return;
   const verdict = await rpc("begin_lesson", {
@@ -76,6 +83,7 @@ export async function beginLesson(
     p_kind: options.kind,
     p_source: options.source,
     p_themes: options.themes,
+    p_onboarding: options.onboarding === true,
   });
   if (verdict === "free_limit" || verdict === "import_pro" || verdict === "forbidden") {
     throw new LessonGateError(verdict);

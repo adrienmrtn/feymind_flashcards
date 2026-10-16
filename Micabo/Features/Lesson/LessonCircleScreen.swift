@@ -221,23 +221,25 @@ struct ConclusionCircleView: View {
                         .font(MicaboFont.title)
                         .foregroundStyle(MicaboColor.ink)
 
-                    VStack(alignment: .leading, spacing: 12) {
-                        ForEach(Array(takeaways.enumerated()), id: \.offset) { _, line in
-                            HStack(alignment: .top, spacing: 10) {
-                                Circle()
-                                    .fill(session.course.tone.vivid)
-                                    .frame(width: 8, height: 8)
-                                    .padding(.top, 8)
-                                KeywordText(line)
-                                    .font(MicaboFont.notes)
-                                    .foregroundStyle(MicaboColor.ink)
-                                    .fixedSize(horizontal: false, vertical: true)
+                    if !takeaways.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            ForEach(Array(takeaways.enumerated()), id: \.offset) { _, line in
+                                HStack(alignment: .top, spacing: 10) {
+                                    Circle()
+                                        .fill(session.course.tone.vivid)
+                                        .frame(width: 8, height: 8)
+                                        .padding(.top, 8)
+                                    KeywordText(line)
+                                        .font(MicaboFont.notes)
+                                        .foregroundStyle(MicaboColor.ink)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
                             }
                         }
+                        .padding(18)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(session.course.tone.pale, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                     }
-                    .padding(18)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(session.course.tone.pale, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
 
                     if let score = session.progress.averageQuizPercent {
                         HStack {
