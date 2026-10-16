@@ -9,8 +9,15 @@
  * (`consume_ai_quota`) reste le fusible du coût.
  */
 import type { Caller } from "../_shared/caller.ts";
+import { syncProFromRevenueCat } from "../_shared/revenuecat.ts";
 
-export type GateVerdict = "ok" | "free_limit" | "import_pro" | "forbidden" | "pro_required" | "daily_limit";
+export type GateVerdict =
+  | "ok"
+  | "free_limit"
+  | "import_pro"
+  | "forbidden"
+  | "pro_required"
+  | "daily_limit";
 
 /** Un refus de la porte : l'app le lit par son `code`, et ouvre le paywall. */
 export class LessonGateError extends Error {
@@ -81,14 +88,24 @@ export async function beginLesson(
   },
 ): Promise<void> {
   if (!caller.userId) return;
-  const verdict = await rpc("begin_lesson", {
-    p_user: caller.userId,
-    p_lesson: options.lessonId,
-    p_kind: options.kind,
-    p_source: options.source,
-    p_themes: options.themes,
-    p_onboarding: options.onboarding === true,
-  });
+  const userId = caller.userId;
+  const ask = () =>
+    rpc("begin_lesson", {
+      p_user: userId,
+      p_lesson: options.lessonId,
+      p_kind: options.kind,
+      p_source: options.source,
+      p_themes: options.themes,
+      p_onboarding: options.onboarding === true,
+    });
+  let verdict = await ask();
+  // « Pas d'abonnement » selon la base : RevenueCat a peut-être un achat que le webhook n'a
+  // pas encore recopié. S'il dit Pro, la ligne est écrite et on redemande.
+  if (
+    (verdict === "free_limit" || verdict === "import_pro") && await syncProFromRevenueCat(userId)
+  ) {
+    verdict = await ask();
+  }
   if (verdict === "free_limit" || verdict === "import_pro" || verdict === "forbidden") {
     throw new LessonGateError(verdict);
   }
@@ -127,11 +144,17 @@ export async function beginExtra(
   options: { kind: "practice" | "exam"; lessonId?: string },
 ): Promise<void> {
   if (!caller.userId) throw new LessonGateError("pro_required");
-  const verdict = await rpc("begin_extra", {
-    p_user: caller.userId,
-    p_kind: options.kind,
-    p_lesson: isLessonId(options.lessonId) ? options.lessonId : null,
-  });
+  const userId = caller.userId;
+  const ask = () =>
+    rpc("begin_extra", {
+      p_user: userId,
+      p_kind: options.kind,
+      p_lesson: isLessonId(options.lessonId) ? options.lessonId : null,
+    });
+  let verdict = await ask();
+  if (verdict === "pro_required" && await syncProFromRevenueCat(userId)) {
+    verdict = await ask();
+  }
   if (verdict === "pro_required" || verdict === "daily_limit" || verdict === "forbidden") {
     throw new LessonGateError(verdict);
   }
