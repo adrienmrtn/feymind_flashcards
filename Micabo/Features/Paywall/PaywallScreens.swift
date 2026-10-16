@@ -10,9 +10,9 @@ import SwiftUI
 /// ça coûtera tant par mois —, la ligne grise du bas dit ce qui est prélevé d'un bloc, et
 /// « Voir toutes les offres » ouvre la grille à ceux qui la cherchent.
 ///
-/// **La typographie est celle du parcours** : le titre en gras de trente-deux points, serré
-/// comme les autres titres, et le bouton noir. Le paywall en est la dernière page — et
-/// celui de « générer mon cours » est le même écran.
+/// **La typographie est celle de l'app** : le titre dans la graisse des titres, le bouton
+/// d'encre. Sous la phrase du prix, ce que Pro ouvre, puis l'étude de Harvard ; le bouton
+/// reste en bas, toujours visible.
 struct PaywallOfferView: View {
     let plan: PaywallPlan
     /// Ce qui a ouvert l'écran, en une ligne. Absent à la sortie du parcours d'accueil : on
@@ -43,65 +43,72 @@ struct PaywallOfferView: View {
                 .allowsHitTesting(showsClose)
                 .animation(.easeOut(duration: 0.35), value: showsClose)
 
-            Spacer(minLength: MicaboSpacing.lg)
+            ScrollView {
+                VStack(spacing: 20) {
+                    if let headline {
+                        Text(headline)
+                            .font(MicaboFont.ui(13, weight: .semibold))
+                            .foregroundStyle(OnboardingPalette.accent)
+                            .multilineTextAlignment(.center)
+                            .padding(.vertical, 7)
+                            .padding(.horizontal, 14)
+                            .background(OnboardingPalette.accentWash, in: Capsule())
+                            .onboardingAppear(index: 0)
+                    }
 
-            VStack(spacing: 22) {
-                if let headline {
-                    Text(headline)
-                        .font(MicaboFont.ui(13, weight: .semibold))
-                        .foregroundStyle(OnboardingPalette.accent)
+                    ZStack(alignment: .topTrailing) {
+                        MikaMascot(mood: .happy, size: 120, reactsToTap: true)
+                        MicaboIconView(icon: .crown, size: 44)
+                            .rotationEffect(.degrees(14))
+                            .offset(x: 18, y: -10)
+                    }
+                    .accessibilityHidden(true)
+                    .onboardingAppear(index: 1)
+
+                    PaywallPitch.headline(for: plan, locale: i18n.locale)
+                        .font(OnboardingPalette.title(30))
+                        .tracking(-0.6)
+                        .lineSpacing(-1)
                         .multilineTextAlignment(.center)
-                        .padding(.vertical, 7)
-                        .padding(.horizontal, 14)
-                        .background(OnboardingPalette.accentWash, in: Capsule())
-                        .onboardingAppear(index: 0)
-                }
+                        .fixedSize(horizontal: false, vertical: true)
+                        .onboardingAppear(index: 2)
 
-                ZStack(alignment: .topTrailing) {
-                    MikaMascot(mood: .happy, size: 130, reactsToTap: true)
-                    MicaboIconView(icon: .crown, size: 44)
-                        .rotationEffect(.degrees(14))
-                        .offset(x: 18, y: -10)
-                }
-                .accessibilityHidden(true)
-                .onboardingAppear(index: 1)
+                    PaywallFeatureList()
+                        .onboardingAppear(index: 3)
 
-                PaywallPitch.headline(for: plan, locale: i18n.locale)
-                    .font(OnboardingPalette.title(32))
-                    .tracking(-0.9)
-                    .lineSpacing(-2)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .onboardingAppear(index: 2)
+                    // L'étude de Harvard, sous ce que Pro ouvre : la preuve après la promesse.
+                    ResearchQuoteCard(compact: true)
+                        .onboardingAppear(index: 3)
 
-                Button(action: onSeeAllPlans) {
-                    Text(i18n.t("ios.paywallSeeAll"))
-                        .font(MicaboFont.ui(16, weight: .semibold))
-                        .foregroundStyle(OnboardingPalette.accent)
+                    Button(action: onSeeAllPlans) {
+                        Text(i18n.t("ios.paywallSeeAll"))
+                            .font(MicaboFont.ui(16, weight: .bold))
+                            .foregroundStyle(OnboardingPalette.accent)
+                    }
+                    .buttonStyle(MicaboPressableButtonStyle(dimming: true))
+                    .onboardingAppear(index: 3)
                 }
-                .buttonStyle(MicaboPressableButtonStyle(dimming: true))
-                .onboardingAppear(index: 3)
+                .padding(.horizontal, MicaboSpacing.screen)
+                .padding(.top, MicaboSpacing.xs)
+                .padding(.bottom, MicaboSpacing.lg)
             }
-            .padding(.horizontal, MicaboSpacing.lg)
+            .scrollIndicators(.hidden)
 
-            Spacer(minLength: MicaboSpacing.lg)
-            Spacer(minLength: 0)
+            MicaboBottomBar(background: OnboardingPalette.white) {
+                VStack(spacing: 12) {
+                    // Ce qui part vraiment du compte, en gris : le mois est en grand plus
+                    // haut, la somme prélevée d'un bloc ne se cache pas pour autant.
+                    Text(plan.billedLine(locale: i18n.locale))
+                        .font(OnboardingPalette.subtitle)
+                        .foregroundStyle(OnboardingPalette.gray)
+                        .multilineTextAlignment(.center)
 
-            VStack(spacing: 14) {
-                // Ce qui part vraiment du compte, en gris : le mois est en grand juste
-                // au-dessus, la somme prélevée d'un bloc ne se cache pas pour autant.
-                Text(plan.billedLine(locale: i18n.locale))
-                    .font(OnboardingPalette.subtitle)
-                    .foregroundStyle(OnboardingPalette.gray)
-                    .multilineTextAlignment(.center)
+                    PaywallCallToAction(isPurchasing: isPurchasing, storeRevision: storeRevision, action: onSubscribe)
 
-                PaywallCallToAction(isPurchasing: isPurchasing, storeRevision: storeRevision, action: onSubscribe)
-
-                PaywallLegalFooter(onRestore: onRestore)
+                    PaywallLegalFooter(onRestore: onRestore)
+                }
+                .onboardingAppear(index: 4)
             }
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.bottom, MicaboSpacing.sm)
-            .onboardingAppear(index: 4)
         }
         .task {
             try? await Task.sleep(for: Self.closeDelay)
@@ -141,8 +148,8 @@ struct PaywallPlansView: View {
                     Text(L10n.t("ios.paywallPlansTitle", locale: .resolved()))
                         .font(OnboardingPalette.title(30))
                         .foregroundStyle(OnboardingPalette.ink)
-                        .tracking(-0.9)
-                        .lineSpacing(-2)
+                        .tracking(-0.6)
+                        .lineSpacing(-1)
                         .fixedSize(horizontal: false, vertical: true)
                         .onboardingAppear(index: 0)
 
@@ -166,6 +173,9 @@ struct PaywallPlansView: View {
                         }
                     }
                     .onboardingAppear(index: 2)
+
+                    ResearchQuoteCard()
+                        .onboardingAppear(index: 3)
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.top, MicaboSpacing.sm)
@@ -188,8 +198,13 @@ struct PaywallPlansView: View {
 
 /// Ce que l'abonnement ouvre, en face de ce que la version gratuite laisse fermé.
 private struct PaywallComparisonTable: View {
-    private var features: [String] {
-        (1...6).map { L10n.t("ios.paywallFeat\($0)", locale: .resolved()) }
+    /// Ce que Pro ouvre, et ce que le gratuit en laisse : « 1 » leçon, « 1 lot » de
+    /// questions, « — » quand le gratuit n'y a pas accès. Une croix partout aurait dit que le
+    /// gratuit n'a rien, ce qui est faux.
+    private var features: [(title: String, free: String)] {
+        (1...5).map {
+            (L10n.t("ios.paywallFeat\($0)", locale: .resolved()), L10n.t("ios.paywallFree\($0)", locale: .resolved()))
+        }
     }
 
     /// Les deux colonnes ont la même largeur : une croix et une coche qui ne tombent pas
@@ -207,7 +222,7 @@ private struct PaywallComparisonTable: View {
                     // le filet du fond qu'il lui faut, l'autre s'y verrait à peine.
                     MicaboHairline(onCanvas: true)
                 }
-                row(feature)
+                row(feature.title, free: feature.free)
             }
         }
     }
@@ -230,7 +245,7 @@ private struct PaywallComparisonTable: View {
         }
     }
 
-    private func row(_ feature: String) -> some View {
+    private func row(_ feature: String, free: String) -> some View {
         HStack(spacing: 0) {
             Text(feature)
                 .font(MicaboFont.ui(14.5, weight: .medium))
@@ -239,9 +254,11 @@ private struct PaywallComparisonTable: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.trailing, MicaboSpacing.xs)
 
-            Text("—")
-                .font(MicaboFont.ui(15, weight: .regular))
-                .foregroundStyle(OnboardingPalette.grayLight)
+            Text(free)
+                .font(MicaboFont.ui(14, weight: .semibold))
+                .foregroundStyle(OnboardingPalette.gray)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
                 .frame(width: columnWidth)
 
             Image(systemName: "checkmark.circle.fill")

@@ -205,7 +205,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        group: ["home*", "lesson-*", "lessons* profile*", "mika*", "icons* palette*", "onboarding-mika*", "onboarding-hook* onboarding-question* onboarding-time* exam*"]
+        group: ["home*", "lesson-*", "lessons* profile*", "mika*", "icons* palette*", "onboarding-mika*", "onboarding-hook* onboarding-question* onboarding-time* exam*", "onboarding-social* onboarding-paywall* onboarding-plans*"]
     steps:
       - uses: actions/download-artifact@v4
         continue-on-error: true

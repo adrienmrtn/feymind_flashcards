@@ -111,10 +111,10 @@ struct TrialOfferStepView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 34) {
                     Text(i18n.t("ios.trialHow"))
-                        .font(MicaboFont.ui(34, weight: .bold))
+                        .font(OnboardingPalette.title(32))
                         .foregroundStyle(MicaboColor.ink)
-                        .tracking(-0.9)
-                        .lineSpacing(-2)
+                        .tracking(-0.6)
+                        .lineSpacing(-1)
                         .fixedSize(horizontal: false, vertical: true)
                         .onboardingAppear(index: 0)
 
@@ -139,7 +139,7 @@ struct TrialOfferStepView: View {
             }
             .scrollIndicators(.hidden)
 
-            OnboardingArrowBar {
+            OnboardingArrowBar(showsMika: true) {
                 model.advance()
             }
             .opacity(showsAction ? 1 : 0)
@@ -181,10 +181,11 @@ private struct TrialMilestoneRow: View {
         HStack(alignment: .top, spacing: 16) {
             VStack(spacing: 0) {
                 Image(systemName: milestone.systemImage)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(iconColor)
-                    .frame(width: 42, height: 42)
+                    .frame(width: 46, height: 46)
                     .background(discColor, in: Circle())
+                    .background(Circle().fill(discColor.opacity(0.55)).offset(y: 3))
                     .scaleEffect(isRevealed ? 1 : 0.55)
                     .opacity(isRevealed ? 1 : 0)
 
@@ -200,7 +201,7 @@ private struct TrialMilestoneRow: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(milestone.title)
-                    .font(MicaboFont.ui(17, weight: .bold))
+                    .font(MicaboFont.ui(18, weight: .heavy))
                     .foregroundStyle(MicaboColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -278,7 +279,13 @@ struct TrialReminderStepView: View {
             // posé entre les deux ferait s'écarter sur les grands téléphones.
             Color.clear.frame(height: 40)
 
+            // Le réveil, et Mika qui veille à côté.
             SwayingBell()
+                .overlay(alignment: .bottomTrailing) {
+                    MikaMascot(mood: .happy, size: 92, reactsToTap: true)
+                        .offset(x: 70, y: 18)
+                        .accessibilityHidden(true)
+                }
 
             // Deux vides sous l'objet contre un au-dessus : il se pose ainsi un tiers
             // au-dessus du centre, là où le regard tombe.
@@ -307,12 +314,11 @@ private struct SwayingBell: View {
     @State private var isSwaying = false
 
     var body: some View {
-        Image(systemName: "bell.fill")
-            .font(.system(size: 116, weight: .regular))
-            .foregroundStyle(MicaboColor.cautionVivid)
-            // Le pivot est en haut : une cloche tourne autour de son attache, pas autour de
-            // son centre.
-            .rotationEffect(.degrees(isSwaying ? 10 : -10), anchor: .top)
+        // Le réveil 3D de l'app, plutôt qu'un pictogramme : la même famille d'objets que les
+        // icônes des leçons.
+        MicaboIconView(icon: .alarm, size: 150)
+            // Un réveil vacille sur sa base, doucement : il dit « on y pense pour toi ».
+            .rotationEffect(.degrees(isSwaying ? 6 : -6), anchor: .bottom)
             .scaleEffect(hasLanded ? 1 : 0.72)
             .opacity(hasLanded ? 1 : 0)
             .accessibilityHidden(true)

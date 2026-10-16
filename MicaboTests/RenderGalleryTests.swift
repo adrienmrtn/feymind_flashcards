@@ -442,6 +442,32 @@ final class RenderGalleryTests: XCTestCase {
             DailyTimeStepView()
                 .environment(model)
         )
+        try RenderGallery.render(
+            "onboarding-social",
+            height: 1_400,
+            SocialProofStepView()
+                .environment(model)
+                .environment(\.onboardingStill, true)
+        )
+        try RenderGallery.render(
+            "onboarding-paywall",
+            height: 1_250,
+            PaywallOfferView(
+                plan: PaywallCatalog.recommended,
+                isPurchasing: false,
+                onClose: {},
+                onSeeAllPlans: {},
+                onSubscribe: {},
+                onRestore: {}
+            )
+            .environment(\.onboardingStill, true)
+        )
+        try RenderGallery.render(
+            "onboarding-plans",
+            height: 1_300,
+            PaywallPlansView(isPurchasing: false, onClose: {}, onSubscribe: { _ in }, onRestore: {})
+                .environment(\.onboardingStill, true)
+        )
     }
 
     private static let sampleNotes = ThemeNotes(

@@ -5,9 +5,9 @@ import UIKit
 // MARK: - « On a aidé 45 000 élèves »
 
 /// **La preuve sociale, au moment où elle a quelque chose à prouver.** Elle vient après
-/// le cours et les trois cartes, pas avant : posée en ouverture, elle demanderait de
-/// croire une app qu'on n'a pas vue ; posée ici, elle répond à la seule question qui
-/// reste — est-ce que ça marche pour d'autres que moi ?
+/// que Mika s'est présenté, pas avant : posée en ouverture, elle demanderait de croire une
+/// app qu'on n'a pas vue ; posée ici, elle répond à la seule question qui reste — est-ce
+/// que ça marche pour d'autres que moi ? Puis ce que dit la recherche (`ResearchQuoteCard`).
 ///
 /// La forme est celle de la référence : « on a aidé », le chiffre peint du dégradé, les
 /// lauriers autour de l'App Store, puis les avis en carrousel, qui défilent seuls et se
@@ -29,29 +29,40 @@ struct SocialProofStepView: View {
             ScrollView {
                 VStack(spacing: 0) {
                     VStack(spacing: 4) {
+                        MikaMascot(mood: .celebrate, size: 104, reactsToTap: true)
+                            .padding(.bottom, 6)
+                            .accessibilityHidden(true)
+
                         Text(i18n.t("ios.onb.social.title"))
-                            .font(OnboardingPalette.title(34))
-                            .tracking(-0.9)
+                            .font(OnboardingPalette.title(32))
+                            .tracking(-0.6)
                             .foregroundStyle(OnboardingPalette.ink)
                             .multilineTextAlignment(.center)
 
                         MikaGradientText(
                             text: i18n.t("ios.onb.social.count", ["n": OnboardingProofFigures.text(OnboardingProofFigures.students, locale: i18n.locale)]),
                             size: 34,
-                            weight: .bold
+                            weight: .heavy
                         )
                     }
-                    .padding(.top, MicaboSpacing.lg)
+                    .padding(.top, MicaboSpacing.sm)
                     .padding(.horizontal, MicaboSpacing.screen)
                     .onboardingAppear(index: 1)
 
                     laurels
-                        .padding(.top, 26)
+                        .padding(.top, 22)
                         .onboardingAppear(index: 2)
 
-                    OnboardingReviewCarousel(reviews: OnboardingReviews.all(locale: i18n.locale))
-                        .padding(.top, 34)
+                    // L'étude de Harvard, entre les étoiles et les avis : ce que disent les
+                    // élèves, puis ce que dit la recherche.
+                    ResearchQuoteCard()
+                        .padding(.horizontal, MicaboSpacing.screen)
+                        .padding(.top, 26)
                         .onboardingAppear(index: 3)
+
+                    OnboardingReviewCarousel(reviews: OnboardingReviews.all(locale: i18n.locale))
+                        .padding(.top, 28)
+                        .onboardingAppear(index: 4)
                 }
                 .padding(.bottom, MicaboSpacing.lg)
             }
@@ -191,7 +202,7 @@ struct OnboardingReviewCard: View {
             }
 
             Text(review.title)
-                .font(MicaboFont.ui(19, weight: .bold))
+                .font(MicaboFont.ui(19, weight: .heavy))
                 .tracking(-0.3)
                 .foregroundStyle(OnboardingPalette.ink)
                 .fixedSize(horizontal: false, vertical: true)
@@ -212,6 +223,8 @@ struct OnboardingReviewCard: View {
         .padding(20)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .micaboElevation(.card)
         .accessibilityElement(children: .combine)
     }
 
