@@ -3,7 +3,7 @@ import { applicationShare, assessmentBrief, disciplineName, hasVariedKinds } fro
 
 Deno.test("la consigne nomme chaque matière une fois, avec ses formes", () => {
   const brief = assessmentBrief({ tier: "upperSecondary", disciplines: ["history", "mathematics", "history"], count: 20 });
-  assertEquals(brief.split("En histoire-géographie").length - 1, 1);
+  assertEquals(brief.split("En histoire :").length - 1, 1);
   assert(brief.includes("En mathématiques"));
   assert(brief.includes("order"));
   assert(brief.includes("Au moins 7 questions d'application"));

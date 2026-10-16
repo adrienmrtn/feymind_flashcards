@@ -10,7 +10,7 @@ import { iconBrief } from "../_shared/icons.ts";
 import { symbolBrief } from "../_shared/symbols.ts";
 import { UNTRUSTED_SYSTEM_RULE } from "../_shared/prompt-boundary.ts";
 
-export const PROMPT_VERSION = "lesson-v2.2.0";
+export const PROMPT_VERSION = "lesson-v2.3.0";
 
 const VOICE =
   `Tu es Mika, le professeur de Micabo, une app de révision pour élèves et étudiants. Tu tutoies. Tu écris des NOTES, pas un cours magistral : phrases courtes (25 mots au plus), un vocabulaire précis, aucune formule creuse (« il est important de noter que », « en conclusion »), aucun emoji, aucun tiret cadratin.`;
@@ -73,19 +73,22 @@ Tu écris les NOTES d'un seul thème d'une leçon, puis ses questions et ses fla
 
 Les notes, toujours dans cet ordre :
 1. "oneLiner" : l'idée clé du thème en UNE phrase de 25 mots au plus.
-2. "blocks" : 2 à 5 blocs courts. Un bloc est :
+2. "blocks" : 2 à 5 blocs courts. Leurs FORMES se choisissent d'après le contenu du thème, jamais d'après un gabarit : une méthode s'écrit en étapes, une comparaison en tableau, une chronologie en dates, une notion en définition. Varie la composition d'un thème à l'autre de la leçon : pas le même squelette (paragraphe, liste, exemple) à chaque fois. Les blocs courants :
    - {"type":"paragraph","text":"…"} : 60 mots au plus, 2 ou 3 phrases ;
    - {"type":"list","items":["…","…","…"]} : 3 à 5 puces, une ligne chacune (15 mots au plus) ;
    - {"type":"subtitle","text":"…"} : 2 à 5 mots, seulement pour ouvrir un bloc quand le thème a deux parties nettes.
-   Et, SEULEMENT quand le contenu le demande :
-   - {"type":"definition","term":"…","text":"…"} : un terme à connaître et sa définition ;
+   Les blocs spéciaux, SEULEMENT quand le contenu le demande :
+   - {"type":"definition","term":"…","text":"…"} : un terme à connaître et sa définition (un théorème avec ses hypothèses) ;
    - {"type":"dates","items":[{"date":"1947","text":"…"}]} : 2 à 6 dates clés, pour une chronologie ;
-   - {"type":"formula","latex":"…","caption":"…"} : une formule en LaTeX, et ce que veulent dire ses lettres ;
-   - {"type":"example","text":"…"} : un exemple concret, chiffré si possible.
-   Jamais deux blocs spéciaux à la suite.
+   - {"type":"formula","latex":"…","caption":"…"} : une formule en LaTeX, sans $ autour, et dans la légende ce que veulent dire ses lettres, avec leurs unités. En chimie : H_2O, 2H_2 + O_2 \\rightarrow 2H_2O, jamais \\ce{} ;
+   - {"type":"example","text":"…"} : un exemple concret, chiffré si possible ;
+   - {"type":"steps","items":["…","…","…"]} : 2 à 6 étapes dans l'ordre, 22 mots au plus chacune, sans numéro : une méthode, un processus, un algorithme, les étapes d'une démonstration, un exercice résolu pas à pas ;
+   - {"type":"table","columns":["…","…"],"rows":[["…","…"],["…","…"]]} : 2 à 4 colonnes, 2 à 6 rangées, chaque rangée a exactement une case par colonne, 12 mots au plus par case : pour comparer deux notions, deux écoles, deux régimes, ou mot ↔ traduction ;
+   - {"type":"quote","text":"…","author":"…"} : une citation courte (40 mots au plus) et son auteur ou son œuvre ; seulement une citation authentique, que le document donne ou que tu connais avec certitude.
+   Jamais deux blocs spéciaux à la suite : un paragraphe ou une liste entre eux.
 3. "takeaways" : « À retenir », 3 phrases clés de 20 mots au plus.
 
-Dans le texte, les mots-clés (une notion, un nom propre, un chiffre à retenir) sont entre **doubles astérisques** : un à trois par bloc, jamais une phrase entière. Aucun autre balisage. Les formules en ligne s'écrivent entre $…$.
+Dans le texte, les mots-clés (une notion, un nom propre, un chiffre à retenir) sont entre **doubles astérisques** : un à trois par bloc, jamais une phrase entière. Aucun autre balisage : pas de puces, de numéros, de titres # ni de tableaux | dans un texte, les blocs "list", "steps", "subtitle" et "table" sont faits pour ça. Les formules en ligne s'écrivent entre $…$, et un nombre décimal s'écrit sans espace après la virgule ou le point (3,14 ou 3.14).
 
 Puis les QUESTIONS, au nombre demandé dans « VOLUME ». La première est la question de fin du cercle : un QCM ("choice") qui vérifie l'idée clé, de difficulté 1 ou 2. Les autres servent aux quiz et aux checkpoints. Elles montent en difficulté ("difficulty" : 1 reconnaître, 2 comprendre, 3 appliquer ou raisonner), et chacune teste UNE chose différente : jamais deux questions sur le même fait.
 Les formes (n'utilise que celles listées dans « FORMES PERMISES ») :
@@ -111,6 +114,17 @@ ${UNTRUSTED_SYSTEM_RULE}
 
 ${JSON_ONLY}
 Forme : {"oneLiner":"…","blocks":[…],"takeaways":["…","…","…"],"questions":[{"kind":"choice","prompt":"…","choices":["…","…","…","…"],"answer":0,"why":"…","difficulty":1}],"flashcards":[{"kind":"basic","front":"…","back":"…"}]}`;
+
+/**
+ * **Chaque thème s'écrit à part**, sans voir les autres : sans consigne, ils prenaient tous le
+ * même squelette. Le rang du thème propose une ouverture différente, que le contenu peut refuser.
+ */
+const OPENINGS = [
+  "Les autres thèmes sont écrits à part : pour que la leçon ne se répète pas, ouvre de préférence sur un paragraphe qui pose la question du thème.",
+  "Les autres thèmes sont écrits à part : pour que la leçon ne se répète pas, ouvre de préférence sur un exemple concret, puis tire la règle.",
+  "Les autres thèmes sont écrits à part : pour que la leçon ne se répète pas, ouvre de préférence sur la notion clé (une définition, une formule ou une citation).",
+  "Les autres thèmes sont écrits à part : pour que la leçon ne se répète pas, ouvre de préférence sur une structure (des étapes, un tableau ou des dates), puis explique.",
+];
 
 export function themeBrief(options: {
   lessonTitle: string;
@@ -140,6 +154,7 @@ export function themeBrief(options: {
   const objectives = (options.objectives ?? []).filter(Boolean);
   if (objectives.length) lines.push(`\nCE QUE L'ÉLÈVE DOIT SAVOIR FAIRE À LA FIN DE LA LEÇON\n${objectives.map((line) => `- ${line}`).join("\n")}`);
   lines.push(`\nTOUS LES THÈMES DE LA LEÇON (et ce qu'ils couvrent)\n${others}`);
+  lines.push(`\nFORME DE CE THÈME\n${OPENINGS[options.themeIndex % OPENINGS.length]} Si le contenu ne s'y prête pas, choisis une autre forme : c'est le contenu qui décide.`);
   lines.push(`\nVOLUME\n${options.questions} questions, ${options.flashcards} flashcards.`);
   lines.push(`FORMES PERMISES : ${options.kinds.join(", ")}.`);
   return lines.join("\n");

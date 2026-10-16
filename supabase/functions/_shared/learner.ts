@@ -39,7 +39,30 @@ export interface Learner {
   year: string;
   /** L'examen visé, quand l'élève l'a donné (« Bac de français, le 2027-06-15 »). */
   exam: string;
+  /** Son niveau actuel, de 0 à 100 sur l'échelle de l'app, quand il l'a donné. */
+  currentScore?: number;
+  /** Son objectif, de 0 à 100 sur la même échelle. */
+  targetScore?: number;
+  /** Sa note actuelle telle qu'il la dit (« 12/20 », « B+ »). */
+  scoreLabel?: string;
+  /** Son objectif tel qu'il le dit (« 16/20 », « A »). */
+  targetLabel?: string;
+  /** Ce qui le freine, parmi `WORRIES`. */
+  worries?: Worry[];
 }
+
+/** Ce qui freine l'élève, tel que l'app le demande à l'accueil. */
+export type Worry = "examStress" | "hardLessons" | "homework" | "forgetting" | "noStart" | "motivation";
+
+/** Une phrase par frein : elles vont dans chaque prompt, elles restent courtes. */
+const WORRIES: Record<Worry, string> = {
+  examStress: "L'examen le stresse : des questions au format exact de son examen, pour qu'il s'y habitue.",
+  hardLessons: "Certaines notions lui résistent : explique les passages difficiles lentement, avec un exemple.",
+  homework: "Il bute sur ses exercices : montre la méthode sur un exercice type, étape par étape.",
+  forgetting: "Il oublie vite : plus de faits nets à mettre en flashcards, et des repères pour s'en souvenir (un lien, une image, un moyen mnémotechnique).",
+  noStart: "Il a du mal à s'y mettre : une structure claire, des blocs courts, une étape après l'autre.",
+  motivation: "Sa motivation flanche : des exemples concrets, proches de sa vie.",
+};
 
 const TIERS: readonly Tier[] = [
   "lowerSecondary",
@@ -67,6 +90,32 @@ function clean(value: unknown, max: number): string {
   return typeof value === "string" ? value.replace(/[\r\n<>{}]/g, " ").replace(/\s+/g, " ").trim().slice(0, max) : "";
 }
 
+/**
+ * **Une note, ramenée sur 100.** Un nombre de 0 à 100 passe tel quel ; sinon on lit le libellé
+ * quand il se calcule (« 12/20 » → 60, « 75 % » → 75). Une lettre (« B+ ») ne se convertit
+ * pas : elle reste un libellé, sans seuil.
+ */
+export function readScore(value: unknown, label?: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) return Math.round(Math.min(100, Math.max(0, value)));
+  if (typeof value === "string" && /^\s*\d+(?:[.,]\d+)?\s*$/.test(value)) return readScore(Number(value.replace(",", ".")));
+  if (typeof label !== "string") return undefined;
+  const fraction = /(\d+(?:[.,]\d+)?)\s*\/\s*(\d+(?:[.,]\d+)?)/.exec(label);
+  if (fraction) {
+    const [got, out] = [Number(fraction[1]!.replace(",", ".")), Number(fraction[2]!.replace(",", "."))];
+    return out > 0 ? readScore((got / out) * 100) : undefined;
+  }
+  const percent = /(\d+(?:[.,]\d+)?)\s*%/.exec(label);
+  return percent ? readScore(Number(percent[1]!.replace(",", "."))) : undefined;
+}
+
+function readWorries(raw: unknown): Worry[] {
+  const out: Worry[] = [];
+  for (const item of Array.isArray(raw) ? raw : []) {
+    if (typeof item === "string" && item in WORRIES && !out.includes(item as Worry)) out.push(item as Worry);
+  }
+  return out;
+}
+
 /** Ce que la requête dit de l'élève, remis au propre. Une marche inconnue retombe sur le registre. */
 export function readLearner(body: {
   tier?: unknown;
@@ -76,12 +125,17 @@ export function readLearner(body: {
   track?: unknown;
   year?: unknown;
   exam?: unknown;
+  currentScore?: unknown;
+  targetScore?: unknown;
+  scoreLabel?: unknown;
+  targetLabel?: unknown;
+  worries?: unknown;
 }): Learner {
   const rawTier = clean(body.tier, 40) as Tier;
   const level = clean(body.level, 40).toLowerCase();
   const tier = TIERS.includes(rawTier) ? rawTier : (TIER_OF_LEVEL[level] ?? "other");
   const country = clean(body.country, 8).toLowerCase() || "other";
-  return {
+  const learner: Learner = {
     tier,
     country: COUNTRIES[country] ? country : "other",
     stage: clean(body.schoolStage, 80),
@@ -89,6 +143,42 @@ export function readLearner(body: {
     year: clean(body.year, 60),
     exam: clean(body.exam, 120),
   };
+  const currentScore = readScore(body.currentScore, body.scoreLabel);
+  const targetScore = readScore(body.targetScore, body.targetLabel);
+  const scoreLabel = clean(body.scoreLabel, 20);
+  const targetLabel = clean(body.targetLabel, 20);
+  const worries = readWorries(body.worries);
+  if (currentScore !== undefined) learner.currentScore = currentScore;
+  if (targetScore !== undefined) learner.targetScore = targetScore;
+  if (scoreLabel) learner.scoreLabel = scoreLabel;
+  if (targetLabel) learner.targetLabel = targetLabel;
+  if (worries.length) learner.worries = worries;
+  return learner;
+}
+
+/**
+ * **Le niveau de l'élève et ce qui le freine**, en quelques lignes : elles vont dans chaque
+ * prompt de la leçon (thèmes, entraînement, examen blanc). Vide quand l'élève n'a rien dit.
+ */
+export function difficultyBrief(learner: Learner): string {
+  const lines: string[] = [];
+  const current = learner.currentScore;
+  const target = learner.targetScore;
+  const said = (label: string | undefined, score: number | undefined) =>
+    label ? `« ${label} »` : score !== undefined ? `${score}/100` : "";
+  if (current !== undefined && current <= 50) {
+    lines.push(`Il est en difficulté (niveau actuel ${said(learner.scoreLabel, current)}) : plus d'exemples résolus pas à pas, rappelle en une ligne le prérequis dont dépend une notion, des phrases plus simples, sans appauvrir le vocabulaire du cours.`);
+  } else if (current !== undefined && current >= 75) {
+    lines.push(`Il a de bonnes bases (niveau actuel ${said(learner.scoreLabel, current)}) : ne réexplique pas l'évident, va vers l'application.`);
+  }
+  const gap = current !== undefined && target !== undefined ? target - current : 0;
+  if ((target !== undefined && target >= 80) || gap >= 25) {
+    lines.push(`Il vise ${said(learner.targetLabel, target) || "haut"} : ajoute des questions d'application plus exigeantes et signale les pièges qui coûtent des points.`);
+  } else if (target === undefined && learner.targetLabel) {
+    lines.push(`Son objectif : « ${learner.targetLabel} ».`);
+  }
+  for (const worry of learner.worries ?? []) lines.push(WORRIES[worry]);
+  return lines.join("\n");
 }
 
 // MARK: - La marche
@@ -300,6 +390,8 @@ export function learnerBrief(learner: Learner): string {
     lines.push(`Il prépare précisément : ${learner.exam}. Les exemples, les mots attendus et le format des questions sont ceux de cet examen.`);
   }
   lines.push("Le niveau, les mots et les exemples sont ceux de CETTE classe dans CE pays : ni plus simples, ni plus savants.");
+  const difficulty = difficultyBrief(learner);
+  if (difficulty) lines.push(difficulty);
   return lines.join("\n");
 }
 

@@ -28,7 +28,7 @@ import { callModel, errorResponse, FalError, jsonResponse } from "../_shared/fal
 import { CircuitOpenError } from "../_shared/circuit.ts";
 import { parseModelJSON } from "../_shared/json.ts";
 import { type ModelUsage, totalUsage } from "../_shared/usage.ts";
-import { detectDiscipline, disciplineBrief } from "../_shared/discipline.ts";
+import { detectDiscipline, disciplineBrief, lessonShapesBrief } from "../_shared/discipline.ts";
 import { languageBrief } from "../_shared/language.ts";
 import { sanitizeMeta, wrapUntrusted } from "../_shared/prompt-boundary.ts";
 import { normalizeIcon } from "../_shared/icons.ts";
@@ -101,6 +101,16 @@ interface RequestBody {
   year?: string;
   /** L'examen visé : « Bac de français, le 2027-06-15 ». */
   exam?: string;
+  /** Le niveau actuel de l'élève, de 0 à 100 sur l'échelle de l'app (`learner.ts`). */
+  currentScore?: number;
+  /** Son objectif, de 0 à 100. */
+  targetScore?: number;
+  /** La note actuelle telle qu'il la dit : « 12/20 », « B+ ». */
+  scoreLabel?: string;
+  /** L'objectif tel qu'il le dit : « 16/20 », « A ». */
+  targetLabel?: string;
+  /** Ce qui le freine : examStress, hardLessons, homework, forgetting, noStart, motivation. */
+  worries?: string[];
   subject?: string;
   /** Les formes de question que l'app sait afficher. Absent : des QCM seulement. */
   kinds?: string[];
@@ -386,6 +396,8 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
     flashcards: volume.flashcards,
     kinds,
   }));
+  // Les formes de bloc que la matière appelle : sans elles, chaque thème avait le même squelette.
+  sections.push(lessonShapesBrief(detectDiscipline(sample, body.lessonTitle ?? body.title, body.subject)));
   // Les questions du thème sont celles de tous les quiz de la leçon : elles suivent la même
   // consigne de formes que l'entraînement et l'examen blanc, selon la matière et la marche.
   // Sans elle, un collégien et un étudiant en santé recevaient le même mélange de formes.

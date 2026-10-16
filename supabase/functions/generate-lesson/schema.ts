@@ -9,6 +9,7 @@
  */
 import { DEFAULT_ICON, LESSON_ICONS, normalizeIcon } from "../_shared/icons.ts";
 import { uniqueSymbols } from "../_shared/symbols.ts";
+import { normalizeFormula, protectedSpans } from "../_shared/sheet.ts";
 
 // MARK: - Les nombres de la leçon
 
@@ -44,6 +45,15 @@ export const LIMITS = {
   matchPairsMin: 3,
   matchPairsMax: 5,
   datesMax: 6,
+  stepsMin: 2,
+  stepsMax: 6,
+  stepWords: 22,
+  tableColumnsMin: 2,
+  tableColumnsMax: 4,
+  tableRowsMin: 2,
+  tableRowsMax: 6,
+  tableCellWords: 12,
+  quoteWords: 40,
 } as const;
 
 /** Moins que ça, une leçon tient en un seul quiz : très courte, quatre thèmes. */
@@ -72,16 +82,62 @@ export function words(text: string): string[] {
   return text.split(/\s+/).filter(Boolean);
 }
 
-/** Coupe à `max` mots. Un titre trop long perd sa fin, pas son début. */
+/** Vrai quand `index` tombe dans une formule `$…$` ou un mot-clé `**…**`. */
+function insideSpans(spans: [number, number][], index: number): boolean {
+  return spans.some(([from, to]) => index >= from && index < to);
+}
+
+/**
+ * Les « mots » d'une coupe : une formule `$…$` ou un mot-clé `**…**` compte pour un seul,
+ * même quand il contient des espaces. Couper au milieu laissait un `$` ou des `**` orphelins,
+ * et l'app rendait le reste du texte en formule ou en gras.
+ */
+export function tokens(text: string): string[] {
+  const spans = protectedSpans(text);
+  const out: string[] = [];
+  let current = "";
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index]!;
+    if (/\s/.test(char) && !insideSpans(spans, index)) {
+      if (current) out.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  if (current) out.push(current);
+  return out;
+}
+
+/**
+ * Coupe à `max` mots. Un titre trop long perd sa fin, pas son début. Une formule ou un
+ * mot-clé ne se coupe jamais en deux : il reste entier ou part entier.
+ */
 export function clampWords(text: string, max: number): string {
-  const list = words(text);
+  const list = tokens(text);
   if (list.length <= max) return text;
   return list.slice(0, max).join(" ").replace(/[,;:]$/, "");
 }
 
-/** Les phrases d'un texte, ponctuation comprise. */
+/**
+ * Les phrases d'un texte, ponctuation comprise. Une phrase finit sur « . », « ! », « ? » ou
+ * « … » SUIVI D'UN BLANC, et jamais dans une formule : « 3.14 », « $g = 9.81$ » et « e.g. »
+ * restent entiers. Couper sur chaque point rendait « 3. 14 » une fois les phrases recollées.
+ */
 export function sentences(text: string): string[] {
-  return text.match(/[^.!?…]+[.!?…]+["»”)]*\s*|[^.!?…]+$/g)?.map((s) => s.trim()).filter(Boolean) ?? [];
+  const spans = protectedSpans(text);
+  const out: string[] = [];
+  let start = 0;
+  for (const match of text.matchAll(/[.!?…]+["»”)]*(?=\s)/g)) {
+    if (insideSpans(spans, match.index!)) continue;
+    const end = match.index! + match[0].length;
+    const sentence = text.slice(start, end).trim();
+    if (sentence) out.push(sentence);
+    start = end;
+  }
+  const rest = text.slice(start).trim();
+  if (rest) out.push(rest);
+  return out;
 }
 
 /**
@@ -119,11 +175,33 @@ export function cleanInline(text: string): string {
     const last = out.lastIndexOf("**");
     out = out.slice(0, last) + out.slice(last + 2);
   }
-  return out;
+  // Même chose pour un `$` orphelin : tout ce qui le suit passerait en formule.
+  const dollars = out.match(/\$/g)?.length ?? 0;
+  if (dollars % 2 === 1) {
+    const last = out.lastIndexOf("$");
+    out = out.slice(0, last) + out.slice(last + 1);
+  }
+  return out.replace(/[ \t]{2,}/g, " ").trim();
+}
+
+/** Un texte court aux règles : nettoyé, coupé à `maxWords` (formules et mots-clés entiers), puis remis au propre. */
+function inline(value: unknown, maxLength: number, maxWords: number): string {
+  return cleanInline(clampWords(cleanText(value, maxLength), maxWords));
+}
+
+/** Un paragraphe aux règles : coupé aux phrases d'abord, le balisage remis au propre ensuite. */
+function prose(value: unknown, maxLength: number): string {
+  return cleanInline(clampParagraph(cleanText(value, maxLength)));
 }
 
 // MARK: - Notes
 
+/**
+ * Les blocs d'un thème. `steps`, `table` et `quote` sont arrivés après les premières versions
+ * de l'app : une app qui ne les connaît pas lit un type inconnu comme un paragraphe, sur son
+ * champ `text`. Les étapes et le tableau portent donc aussi un `text` lisible (« 1. … 2. … »,
+ * « a — b ; c — d ») ; la citation a déjà le sien.
+ */
 export type NoteBlock =
   | { type: "subtitle"; text: string }
   | { type: "paragraph"; text: string }
@@ -131,7 +209,10 @@ export type NoteBlock =
   | { type: "definition"; term: string; text: string }
   | { type: "dates"; items: { date: string; text: string }[] }
   | { type: "formula"; latex: string; caption?: string }
-  | { type: "example"; text: string };
+  | { type: "example"; text: string }
+  | { type: "steps"; items: string[]; text: string }
+  | { type: "table"; columns: string[]; rows: string[][]; text: string }
+  | { type: "quote"; text: string; author?: string };
 
 export interface ThemeNotes {
   oneLiner: string;
@@ -139,61 +220,243 @@ export interface ThemeNotes {
   takeaways: string[];
 }
 
-const BOXED = new Set(["definition", "formula", "example"]);
+/** Les blocs encadrés : jamais deux de suite (`separateBoxes`). */
+const BOXED = new Set(["definition", "formula", "example", "steps", "table", "quote"]);
 
-function readBlock(raw: unknown): NoteBlock | null {
-  if (!raw || typeof raw !== "object") return null;
+/** La puce ou le numéro qu'un modèle écrit parfois en tête d'un élément de liste. */
+const ITEM_MARKER = /^\s*(?:[-•*·▪●–]|\d{1,2}[.)])\s+/;
+
+function stripMarker(value: unknown): unknown {
+  return typeof value === "string" ? value.replace(ITEM_MARKER, "") : value;
+}
+
+function cellValue(value: unknown): unknown {
+  return typeof value === "number" && Number.isFinite(value) ? String(value) : value;
+}
+
+/** Le texte de repli des étapes, pour une app qui ne sait pas les dessiner. */
+export function stepsText(items: string[]): string {
+  return items.map((item, index) => `${index + 1}. ${item}`).join(" ");
+}
+
+/** Le texte de repli d'un tableau : une ligne par rangée, « a — b ; c — d ». */
+export function tableText(rows: string[][]): string {
+  return rows.map((row) => row.filter(Boolean).join(" — ")).join(" ; ");
+}
+
+/**
+ * La chimie écrite en `\ce{…}` (mhchem) : le moteur de l'app ne la compose pas. Elle redevient
+ * du LaTeX ordinaire, indices et flèches compris : `\ce{2H2 + O2 -> 2H2O}` → `2H_2 + O_2 \rightarrow 2H_2O`.
+ */
+export function rewriteChemistry(latex: string): string {
+  return latex.replace(/\\ce\s*\{([^{}]*)\}/g, (_match, body: string) =>
+    body
+      .replace(/<=>|<->/g, " \\rightleftharpoons ")
+      .replace(/->/g, " \\rightarrow ")
+      .replace(/([A-Za-z)\]])(\d+)/g, (_m, before: string, digits: string) =>
+        digits.length === 1 ? `${before}_${digits}` : `${before}_{${digits}}`
+      )
+      .replace(/\s{2,}/g, " ")
+      .trim()
+  );
+}
+
+/** Une liste aux règles : 3 à 5 puces ; moins, elle se lit en phrase. */
+function listBlock(rawItems: unknown[]): NoteBlock[] {
+  const items = rawItems
+    .map((item) => inline(stripMarker(item), 240, LIMITS.listItemWords))
+    .filter(Boolean)
+    .slice(0, LIMITS.listItemsMax);
+  if (items.length === 0) return [];
+  // Une liste d'un ou deux points n'en est pas une : elle se lit en phrase.
+  if (items.length < LIMITS.listItemsMin) {
+    return [{ type: "paragraph", text: cleanInline(clampParagraph(items.join(". ").replace(/\.\./g, "."))) }];
+  }
+  return [{ type: "list", items }];
+}
+
+function paragraphBlock(raw: unknown): NoteBlock[] {
+  const text = prose(raw, 900);
+  return text ? [{ type: "paragraph", text }] : [];
+}
+
+const BULLET_LINE = /^\s*(?:[-•*·▪●–])\s+\S/;
+const NUMBERED_LINE = /^\s*\d{1,2}[.)]\s+\S/;
+const HEADING_LINE = /^\s*#{1,6}\s+(.+?)\s*#*\s*$/;
+const TABLE_LINE = /^\s*\|.*\|\s*$/;
+const TABLE_RULE = /^\s*\|?\s*:?-{2,}:?\s*(?:\|\s*:?-{2,}:?\s*)*\|?\s*$/;
+
+type LineKind = "bullet" | "number" | "heading" | "table" | "text" | "blank";
+
+function lineKind(line: string): LineKind {
+  if (!line.trim()) return "blank";
+  if (TABLE_LINE.test(line) || TABLE_RULE.test(line) && line.includes("|")) return "table";
+  if (HEADING_LINE.test(line)) return "heading";
+  if (NUMBERED_LINE.test(line)) return "number";
+  if (BULLET_LINE.test(line)) return "bullet";
+  return "text";
+}
+
+function tableCells(line: string): string[] {
+  return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((cell) => cell.trim());
+}
+
+/**
+ * **Le Markdown d'un paragraphe, rendu en blocs.** Le modèle écrit parfois des puces, une
+ * méthode numérotée, un titre `##` ou un tableau `| a | b |` dans un paragraphe : une fois les
+ * retours à la ligne repliés, tout se lisait en un pavé. Les puces deviennent une liste, les
+ * numéros des étapes, un titre seul sur sa ligne un sous-titre, un tableau un tableau. `null`
+ * quand le texte n'a aucune ligne de ce genre : c'est un paragraphe.
+ */
+export function markdownBlocks(raw: unknown): NoteBlock[] | null {
+  if (typeof raw !== "string") return null;
+  const lines = raw.split(/\r?\n/);
+  const kinds = lines.map(lineKind);
+  if (!kinds.some((kind) => kind !== "text" && kind !== "blank")) return null;
+
+  const out: NoteBlock[] = [];
+  let index = 0;
+  while (index < lines.length) {
+    const kind = kinds[index]!;
+    if (kind === "blank") {
+      index += 1;
+      continue;
+    }
+    if (kind === "heading") {
+      const title = HEADING_LINE.exec(lines[index]!)![1]!;
+      out.push(...readBlock({ type: "subtitle", text: title }));
+      index += 1;
+      continue;
+    }
+    // Les lignes voisines du même genre vont ensemble ; un paragraphe s'arrête à une ligne vide.
+    let end = index;
+    while (end < lines.length && kinds[end] === kind) end += 1;
+    const group = lines.slice(index, end);
+    index = end;
+    if (kind === "bullet") out.push(...listBlock(group));
+    else if (kind === "number") out.push(...readBlock({ type: "steps", items: group }));
+    else if (kind === "table") {
+      const rows = group.filter((line) => !TABLE_RULE.test(line)).map(tableCells);
+      const [columns, ...body] = rows;
+      out.push(...readBlock({ type: "table", columns: columns ?? [], rows: body }));
+    } else out.push(...paragraphBlock(group.join(" ")));
+  }
+  return out;
+}
+
+/**
+ * **Un bloc du modèle, aux règles.** Rend zéro, un ou plusieurs blocs : un paragraphe écrit en
+ * Markdown se déplie (`markdownBlocks`), un tableau trop maigre redevient une liste.
+ */
+export function readBlock(raw: unknown): NoteBlock[] {
+  if (!raw || typeof raw !== "object") return [];
   const block = raw as Record<string, unknown>;
   const type = typeof block.type === "string" ? block.type : "";
+  const items = Array.isArray(block.items) ? block.items : [];
   switch (type) {
     case "subtitle": {
-      const text = clampWords(cleanInline(cleanText(block.text, 120)).replace(/\*\*/g, ""), 8);
-      return text ? { type, text } : null;
+      const title = typeof block.text === "string" ? block.text.replace(/^\s*#+\s*/, "") : block.text;
+      const text = inline(title, 120, 8).replace(/\*\*/g, "").trim();
+      return text ? [{ type, text }] : [];
     }
-    case "paragraph": {
-      const text = clampParagraph(cleanInline(cleanText(block.text, 900)));
-      return text ? { type, text } : null;
-    }
-    case "list": {
-      const items = (Array.isArray(block.items) ? block.items : [])
-        .map((item) => clampWords(cleanInline(cleanText(item, 240)), LIMITS.listItemWords))
+    case "paragraph":
+      return markdownBlocks(block.text) ?? paragraphBlock(block.text);
+    case "list":
+      return listBlock(items);
+    case "steps": {
+      const steps = items
+        .map((item) => inline(stripMarker(item), 300, LIMITS.stepWords))
         .filter(Boolean)
-        .slice(0, LIMITS.listItemsMax);
-      if (items.length === 0) return null;
-      // Une liste d'un ou deux points n'en est pas une : elle se lit en phrase.
-      if (items.length < LIMITS.listItemsMin) {
-        return { type: "paragraph", text: clampParagraph(items.join(". ").replace(/\.\./g, ".")) };
+        .slice(0, LIMITS.stepsMax);
+      if (steps.length === 0) return [];
+      // Une seule étape n'est pas une méthode : elle se lit en phrase.
+      if (steps.length < LIMITS.stepsMin) return paragraphBlock(steps[0]);
+      return [{ type, items: steps, text: stepsText(steps) }];
+    }
+    case "table": {
+      const rawColumns = Array.isArray(block.columns) ? block.columns : [];
+      const width = rawColumns.length;
+      const keep = Math.min(width, LIMITS.tableColumnsMax);
+      const columns = rawColumns.slice(0, keep).map((cell) => inline(cellValue(cell), 120, LIMITS.tableCellWords).replace(/\*\*/g, ""));
+      // Une rangée qui n'a pas autant de cases que d'en-têtes est mal formée : elle part.
+      const rows = (Array.isArray(block.rows) ? block.rows : [])
+        .filter((row): row is unknown[] => Array.isArray(row) && row.length === width)
+        .map((row) => row.slice(0, keep).map((cell) => inline(cellValue(cell), 160, LIMITS.tableCellWords)))
+        .filter((row) => row[0] && row.some((cell, index) => index > 0 && cell))
+        .slice(0, LIMITS.tableRowsMax);
+      const header = width >= LIMITS.tableColumnsMin && columns.every(Boolean);
+      if (!header || rows.length < LIMITS.tableRowsMin) {
+        // Trop maigre pour un tableau : ce qui reste se lit en liste.
+        return listBlock(rows.map((row) => row.filter(Boolean).join(" : ")));
       }
-      return { type, items };
+      return [{ type, columns, rows, text: tableText(rows) }];
+    }
+    case "quote": {
+      const quoted = typeof block.text === "string"
+        ? block.text.trim().replace(/^[«"“„'\s]+|[»"”'\s]+$/g, "")
+        : block.text;
+      const text = inline(quoted, 400, LIMITS.quoteWords);
+      const author = inline(block.author ?? block.source, 120, 12).replace(/\*\*/g, "").replace(/^[-,\s]+/, "");
+      if (!text) return [];
+      return author ? [{ type, text, author }] : [{ type, text }];
     }
     case "definition": {
       const term = cleanText(block.term, 80).replace(/\*\*/g, "");
-      const text = clampParagraph(cleanInline(cleanText(block.text, 600)));
-      return term && text ? { type, term, text } : null;
+      const text = prose(block.text, 600);
+      return term && text ? [{ type, term, text }] : [];
     }
     case "dates": {
-      const items = (Array.isArray(block.items) ? block.items : [])
+      const dates = items
         .map((item) => {
           const entry = (item ?? {}) as Record<string, unknown>;
           return {
-            date: cleanText(entry.date, 40),
-            text: clampWords(cleanInline(cleanText(entry.text, 200)), 14),
+            date: cleanText(cellValue(entry.date), 40),
+            text: inline(entry.text, 200, 14),
           };
         })
         .filter((item) => item.date && item.text)
         .slice(0, LIMITS.datesMax);
-      return items.length >= 2 ? { type, items } : null;
+      return dates.length >= 2 ? [{ type, items: dates }] : [];
     }
     case "formula": {
-      const latex = typeof block.latex === "string" ? block.latex.trim().slice(0, 240) : "";
-      const caption = clampWords(cleanText(block.caption, 160), 16);
-      if (!latex) return null;
-      return caption ? { type, latex, caption } : { type, latex };
+      // La même remise en forme que les fiches (`sheet.ts`) : sans `$` autour, sans flèche
+      // étiquetée d'amsmath, sans boucle de répétition, sous le plafond de longueur.
+      const latex = typeof block.latex === "string"
+        ? rewriteChemistry(block.latex.trim().replace(/^\$+|\$+$/g, "").trim())
+        : "";
+      const formula = latex ? normalizeFormula(latex, cleanText(block.caption, 160) || undefined) : null;
+      if (!formula) return [];
+      const caption = formula.caption ? inline(formula.caption, 200, 20) : "";
+      return caption ? [{ type, latex: formula.latex, caption }] : [{ type, latex: formula.latex }];
     }
     case "example": {
-      const text = clampParagraph(cleanInline(cleanText(block.text, 600)));
-      return text ? { type, text } : null;
+      const text = prose(block.text, 600);
+      return text ? [{ type, text }] : [];
     }
+    default:
+      return [];
+  }
+}
+
+/**
+ * Ce que devient un encadré qu'on ne peut pas éloigner de son voisin : un exemple, une
+ * citation, des étapes ou un tableau se relisent en texte courant ; une définition ou une
+ * formule part.
+ */
+function unboxed(block: NoteBlock): NoteBlock | null {
+  switch (block.type) {
+    case "example":
+      return { type: "paragraph", text: block.text };
+    case "quote":
+      return { type: "paragraph", text: block.author ? `${block.text} (${block.author})` : block.text };
+    case "steps":
+      return block.items.length >= LIMITS.listItemsMin && block.items.length <= LIMITS.listItemsMax
+        ? { type: "list", items: block.items }
+        : { type: "paragraph", text: block.text };
+    case "table":
+      return block.rows.length >= LIMITS.listItemsMin && block.rows.length <= LIMITS.listItemsMax
+        ? { type: "list", items: block.rows.map((row) => row.filter(Boolean).join(" : ")) }
+        : { type: "paragraph", text: block.text };
     default:
       return null;
   }
@@ -201,7 +464,7 @@ function readBlock(raw: unknown): NoteBlock | null {
 
 /**
  * **Jamais deux encadrés de suite.** Le second est repoussé après le bloc courant qui suit ;
- * s'il n'y en a pas, un exemple redevient un paragraphe, et tout autre encadré part.
+ * s'il n'y en a pas, il redevient du texte courant quand il le peut (`unboxed`), sinon il part.
  */
 export function separateBoxes(blocks: NoteBlock[]): NoteBlock[] {
   const out = [...blocks];
@@ -213,9 +476,9 @@ export function separateBoxes(blocks: NoteBlock[]): NoteBlock[] {
       out.splice(i, 0, plain!);
       continue;
     }
-    const boxed = out[i]!;
-    if (boxed.type === "example") {
-      out[i] = { type: "paragraph", text: boxed.text };
+    const plain = unboxed(out[i]!);
+    if (plain) {
+      out[i] = plain;
     } else {
       out.splice(i, 1);
       i -= 1;
@@ -227,10 +490,8 @@ export function separateBoxes(blocks: NoteBlock[]): NoteBlock[] {
 export function readNotes(raw: unknown): ThemeNotes | null {
   if (!raw || typeof raw !== "object") return null;
   const notes = raw as Record<string, unknown>;
-  const oneLiner = clampParagraph(cleanInline(cleanText(notes.oneLiner, 300)));
-  let blocks = (Array.isArray(notes.blocks) ? notes.blocks : [])
-    .map(readBlock)
-    .filter((block): block is NoteBlock => block !== null);
+  const oneLiner = prose(notes.oneLiner, 300);
+  let blocks = (Array.isArray(notes.blocks) ? notes.blocks : []).flatMap(readBlock);
   // Un sous-titre en dernier n'ouvre rien, et deux sous-titres de suite n'en font qu'un.
   blocks = blocks.filter((block, index) =>
     block.type !== "subtitle" ||
@@ -253,7 +514,7 @@ export function readNotes(raw: unknown): ThemeNotes | null {
 
 function readSentences(raw: unknown, max: number, maxWords: number): string[] {
   return (Array.isArray(raw) ? raw : [])
-    .map((item) => clampWords(cleanInline(cleanText(item, 300)), maxWords))
+    .map((item) => inline(item, 300, maxWords))
     .filter(Boolean)
     .slice(0, max);
 }
@@ -389,7 +650,7 @@ function shuffled<T>(items: T[], seed: string): T[] {
 }
 
 function shortText(value: unknown, maxWords: number): string {
-  return clampWords(cleanText(value, 240).replace(/\*\*/g, ""), maxWords);
+  return cleanInline(clampWords(cleanText(cellValue(value), 240).replace(/\*\*/g, ""), maxWords));
 }
 
 function readDifficulty(raw: unknown, fallback: number): number {
@@ -464,8 +725,8 @@ export function readQuestion(
   const kinds = options.kinds ?? ["choice"];
   let kind = (typeof question.kind === "string" ? question.kind : "choice") as QuestionKind;
   if (!ALL_KINDS.includes(kind)) kind = "choice";
-  const prompt = clampWords(cleanInline(cleanText(question.prompt, 400)).replace(/\*\*/g, ""), 30);
-  const why = clampWords(cleanInline(cleanText(question.why, 500)).replace(/\*\*/g, ""), 40);
+  const prompt = cleanInline(clampWords(cleanText(question.prompt, 400).replace(/\*\*/g, ""), 30));
+  const why = cleanInline(clampWords(cleanText(question.why, 500).replace(/\*\*/g, ""), 40));
   const difficulty = readDifficulty(question.difficulty ?? question.level, 2);
   if (!prompt) return null;
 
@@ -526,7 +787,7 @@ export function readQuestion(
   if (kind === "gap") {
     // Le trou se repère avant la coupe à 30 mots : coupé, il ferait de la phrase un QCM
     // sans question.
-    const sentence = clampWords(normalizeGap(cleanInline(cleanText(question.prompt, 400)).replace(/\*\*/g, "")), 40);
+    const sentence = cleanInline(clampWords(normalizeGap(cleanText(question.prompt, 400).replace(/\*\*/g, "")), 40));
     // Une phrase qui contient déjà le mot à trouver le donne : elle ne vérifie plus rien.
     if (givesAway(sentence, chosen.choices[chosen.answer]!)) return null;
     if (kinds.includes("gap") && sentence.includes(GAP)) {
@@ -638,8 +899,8 @@ export function readFlashcards(raw: unknown, max: number = LIMITS.flashcardsPerT
   return (Array.isArray(raw) ? raw : [])
     .map((card): Flashcard => {
       const entry = (card ?? {}) as Record<string, unknown>;
-      const front = clampWords(cleanText(entry.front, 300).replace(/\*\*/g, ""), 24);
-      const back = clampWords(cleanText(entry.back, 400).replace(/\*\*/g, ""), 30);
+      const front = cleanInline(clampWords(cleanText(entry.front, 300).replace(/\*\*/g, ""), 24));
+      const back = cleanInline(clampWords(cleanText(cellValue(entry.back), 400).replace(/\*\*/g, ""), 30));
       if (entry.kind === "cloze") {
         const sentence = normalizeGap(front);
         if (sentence.includes(GAP)) return { kind: "cloze", front: sentence, back };

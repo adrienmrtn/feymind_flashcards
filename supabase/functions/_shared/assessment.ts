@@ -35,10 +35,16 @@ const FORMATS: Record<Discipline, DisciplineFormats> = {
     distractors: "les résultats des erreurs classiques : signe, facteur oublié, mauvaise formule, condition non vérifiée",
   },
   physics: {
-    name: "physique-chimie",
+    name: "physique",
     mix: "des « choice » avec unités, des « gap » sur une grandeur ou son unité, un « match » grandeur ↔ unité ou loi ↔ domaine, un « order » pour un protocole",
     application: "un calcul ou un ordre de grandeur dans une situation expérimentale nouvelle",
     distractors: "les erreurs d'unité, de conversion, de puissance de dix, et la loi appliquée hors de son domaine",
+  },
+  chemistry: {
+    name: "chimie",
+    mix: "des « choice » sur une équation équilibrée ou un résultat avec unité, des « gap » sur un coefficient ou une espèce, un « match » espèce ↔ nom ou acide ↔ base conjuguée, un « order » pour un protocole ou un mécanisme",
+    application: "un calcul de quantité de matière ou de concentration, ou une réaction nouvelle à équilibrer",
+    distractors: "l'équation mal équilibrée, l'erreur de masse molaire ou de conversion, l'acide pris pour sa base conjuguée",
   },
   biology: {
     name: "SVT, biologie",
@@ -47,10 +53,16 @@ const FORMATS: Record<Discipline, DisciplineFormats> = {
     distractors: "les confusions d'échelle (molécule, cellule, organisme), de cause et d'effet, et les structures voisines",
   },
   history: {
-    name: "histoire-géographie",
+    name: "histoire",
     mix: "un « order » chronologique, un « match » date ou acteur ↔ événement, des « choice » de cause ou de conséquence, des « gap » sur la notion du cours",
     application: "un court extrait ou une situation, à replacer dans son contexte ou à expliquer",
     distractors: "les dates voisines, les acteurs du camp d'en face, l'anachronisme et la conséquence prise pour une cause",
+  },
+  geography: {
+    name: "géographie",
+    mix: "des « choice » de cause ou de conséquence, un « match » lieu ↔ phénomène ou notion ↔ définition, des « truefalse » sur l'échelle ou un chiffre, un « order » pour un enchaînement de causes",
+    application: "un territoire ou une situation décrite en deux phrases, à expliquer avec les notions du cours",
+    distractors: "l'échelle confondue, le chiffre d'une autre année, la cause prise pour une conséquence, le lieu voisin",
   },
   literature: {
     name: "lettres",
