@@ -163,7 +163,7 @@ struct IntroCircleView: View {
                     if let lines = session.plan?.intro.lines, !lines.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
                             ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
-                                Text(line)
+                                KeywordText(line)
                                     .font(MicaboFont.notes)
                                     .foregroundStyle(MicaboColor.ink)
                                     .fixedSize(horizontal: false, vertical: true)

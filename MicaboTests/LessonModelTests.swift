@@ -121,6 +121,73 @@ final class LessonFormatTests: XCTestCase {
         XCTAssertEqual(again, notes)
     }
 
+    /// Les formes `steps`, `table` et `quote` : leur champ `text` de repli est pour les
+    /// anciennes versions, l'app le lit seulement quand le bloc est incomplet.
+    func testTheNewBlocksReadTheirOwnFieldsAndRoundTrip() throws {
+        let json = """
+        {"oneLiner":"Une idée.",
+         "blocks":[
+           {"type":"steps","items":["Lire l'énoncé","Poser $x^2 = 4$"],"text":"1. Lire 2. Poser"},
+           {"type":"table","columns":["Pays","Capitale"],"rows":[["France","Paris"],["Italie","Rome"]],"text":"France : Paris"},
+           {"type":"quote","text":"Je pense, donc je suis.","author":"Descartes"},
+           {"type":"quote","text":"Sans auteur.","author":"  "},
+           {"type":"steps","items":[],"text":"Repli lisible."}
+         ],
+         "takeaways":["Un"]}
+        """
+        let notes = try XCTUnwrap(ThemeNotes.decode(from: Data(json.utf8)))
+        XCTAssertEqual(notes.blocks, [
+            .steps(["Lire l'énoncé", "Poser $x^2 = 4$"]),
+            .table(columns: ["Pays", "Capitale"], rows: [["France", "Paris"], ["Italie", "Rome"]]),
+            .quote(text: "Je pense, donc je suis.", author: "Descartes"),
+            .quote(text: "Sans auteur.", author: nil),
+            .paragraph("Repli lisible.")
+        ])
+        XCTAssertTrue(notes.blocks[0].isBoxed)
+        XCTAssertTrue(notes.blocks[1].isBoxed)
+        XCTAssertTrue(notes.blocks[2].isBoxed)
+        XCTAssertTrue(notes.plainText.contains("2. Poser"))
+        XCTAssertTrue(notes.plainText.contains("France | Paris"))
+
+        let again = try XCTUnwrap(ThemeNotes.decode(from: notes.encoded()))
+        XCTAssertEqual(again, notes)
+    }
+
+    /// Un bloc illisible disparaît : ni trou blanc, ni notes perdues.
+    func testAnUnreadableBlockIsSkippedNotShownEmpty() throws {
+        let json = """
+        {"oneLiner":"Une idée.",
+         "blocks":[
+           {"type":"carousel"},
+           {"type":"paragraph","text":"  "},
+           {"type":"table","columns":["A"],"text":""},
+           {"type":"definition","term":"Sans texte"},
+           {"type":"paragraph","text":"Reste."}
+         ],
+         "takeaways":[]}
+        """
+        let notes = try XCTUnwrap(ThemeNotes.decode(from: Data(json.utf8)))
+        XCTAssertEqual(notes.blocks, [.paragraph("Reste.")])
+    }
+
+    @MainActor
+    func testInlineFormulasAreTransposedInNotesText() {
+        let text = String(KeywordText.attributed("L'aire vaut $\\pi r^2$ et **E = mc^2**.").characters)
+        XCTAssertFalse(text.contains("$"))
+        XCTAssertFalse(text.contains("\\pi"))
+        XCTAssertTrue(text.contains("π"))
+        XCTAssertFalse(text.contains("**"))
+        XCTAssertEqual(KeywordText.plain("**Δ** vaut $b^2 - 4ac$"), FormulaRenderer.stripped("Δ vaut $b^2 - 4ac$"))
+    }
+
+    func testTheNotesRhythmKeepsASubtitleWithItsBlock() {
+        XCTAssertEqual(NoteRhythm.spacing(before: .paragraph("a"), after: nil), 0)
+        XCTAssertEqual(NoteRhythm.spacing(before: .paragraph("a"), after: .subtitle("s")), NoteRhythm.afterSubtitle)
+        XCTAssertEqual(NoteRhythm.spacing(before: .subtitle("s"), after: .paragraph("a")), NoteRhythm.beforeSubtitle)
+        XCTAssertEqual(NoteRhythm.spacing(before: .list(["x"]), after: .paragraph("a")), NoteRhythm.between)
+        XCTAssertLessThan(NoteRhythm.afterSubtitle, NoteRhythm.between)
+    }
+
     func testThePathRoundTrips() throws {
         let path = LessonPath(
             icon: "globe",
@@ -425,6 +492,30 @@ final class LessonAudienceTests: XCTestCase {
         XCTAssertEqual(payload["exam"] as? String, "YKS, le 2027-06-19")
         XCTAssertEqual(payload["kinds"] as? [String], ["choice", "truefalse", "gap", "order", "match"])
         XCTAssertNil(LessonAudience(level: "", country: "fr", schoolStage: "", language: "fr").payload["tier"], "rien de vide ne part")
+    }
+
+    /// La note d'aujourd'hui, celle visée et les craintes ne partent que si elles sont là.
+    func testThePayloadCarriesTheGoalOnlyWhenKnown() {
+        let bare = LessonAudience(level: "lycee", country: "fr", schoolStage: "Terminale", language: "fr").payload
+        for key in ["currentScore", "targetScore", "scoreLabel", "targetLabel", "worries"] {
+            XCTAssertNil(bare[key], key)
+        }
+
+        let scale = DesiredGradeScale.for(.fr)
+        let audience = LessonAudience(
+            level: "lycee", country: "fr", schoolStage: "Terminale", language: "fr",
+            currentScore: 12, targetScore: 16,
+            scoreLabel: LessonAudience.gradeLabel(12, scale: scale),
+            targetLabel: LessonAudience.gradeLabel(16, scale: scale),
+            worries: ["examStress", "forgetting"]
+        )
+        let payload = audience.payload
+        XCTAssertEqual(payload["currentScore"] as? Int, 12)
+        XCTAssertEqual(payload["targetScore"] as? Int, 16)
+        XCTAssertEqual(payload["scoreLabel"] as? String, "12/20")
+        XCTAssertEqual(payload["targetLabel"] as? String, "16/20")
+        XCTAssertEqual(payload["worries"] as? [String], ["examStress", "forgetting"])
+        XCTAssertEqual(LessonAudience.gradeLabel(DesiredGradeScale.belowScore, scale: scale), "< 10/20")
     }
 
     func testPathSymbolsAreUniqueAndFromTheCatalog() {

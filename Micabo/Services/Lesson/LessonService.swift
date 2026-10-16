@@ -28,11 +28,23 @@ struct LessonAudience: Sendable, Equatable {
     var year: String = ""
     /// L'examen visé par cette leçon : « Bac de français, le 2027-06-15 ».
     var exam: String = ""
+    /// La moyenne d'aujourd'hui et celle qu'on vise, sur la droite 10–20 du produit
+    /// (`TargetScore`) ; `TargetScore.min - 1` veut dire « en dessous du barème ».
+    var currentScore: Int?
+    var targetScore: Int?
+    /// Les mêmes notes, dans le barème du pays : « 12/20 », « B+ », « 2,3 ».
+    var scoreLabel: String = ""
+    var targetLabel: String = ""
+    /// Ce qui l'inquiète (`StudyWorry.rawValue`), tel qu'il l'a coché.
+    var worries: [String] = []
 
     static var current: LessonAudience {
         let country = OnboardingPreferences.schoolingCountry
         let track = SchoolSystem.track(id: OnboardingPreferences.schoolTrackID, in: country)
         let year = SchoolSystem.year(id: OnboardingPreferences.schoolYearID, in: track)
+        let scale = DesiredGradeScale.for(country)
+        let currentScore = OnboardingPreferences.currentScore
+        let targetScore = OnboardingPreferences.targetScore
         return LessonAudience(
             level: OnboardingPreferences.studyLevel?.rawValue ?? "",
             country: country.rawValue,
@@ -40,8 +52,23 @@ struct LessonAudience: Sendable, Equatable {
             language: OnboardingPreferences.contentLanguage.rawValue,
             tier: (tier(track: track, year: year) ?? OnboardingPreferences.educationTier)?.rawValue ?? "",
             track: track?.title ?? "",
-            year: year?.title ?? ""
+            year: year?.title ?? "",
+            currentScore: currentScore,
+            targetScore: targetScore,
+            scoreLabel: currentScore.map { gradeLabel($0, scale: scale) } ?? "",
+            targetLabel: targetScore.map { gradeLabel($0, scale: scale) } ?? "",
+            worries: OnboardingPreferences.worries.compactMap(StudyWorry.init(rawValue:)).map(\.rawValue)
         )
+    }
+
+    /// Le libellé d'une note dans le barème du pays, comme le résumé du parcours d'accueil
+    /// l'affiche. Le cran hors barème s'écrit « < 10/20 » : le serveur le lit dans toutes les
+    /// langues.
+    static func gradeLabel(_ score: Int, scale: DesiredGradeScale) -> String {
+        if score <= DesiredGradeScale.belowScore {
+            return "< " + (scale.choices.first?.label ?? "")
+        }
+        return scale.label(for: score)
     }
 
     /// Les années de master sont rangées dans la filière « université » : leur marche est celle
@@ -73,6 +100,11 @@ struct LessonAudience: Sendable, Equatable {
         if !track.isEmpty { out["track"] = track }
         if !year.isEmpty { out["year"] = year }
         if !exam.isEmpty { out["exam"] = exam }
+        if let currentScore { out["currentScore"] = currentScore }
+        if let targetScore { out["targetScore"] = targetScore }
+        if !scoreLabel.isEmpty { out["scoreLabel"] = scoreLabel }
+        if !targetLabel.isEmpty { out["targetLabel"] = targetLabel }
+        if !worries.isEmpty { out["worries"] = worries }
         return out
     }
 }

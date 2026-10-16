@@ -240,7 +240,7 @@ struct NotesPageView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                                 .reveal(1)
                             ToneBox(label: L10n.t("lesson.notes.oneLiner", locale: .resolved()), tone: tone) {
-                                KeywordText(notes.oneLiner)
+                                KeywordText(notes.oneLiner, size: 20, weight: .bold)
                                     .font(MicaboFont.ui(20, weight: .bold))
                                     .foregroundStyle(MicaboColor.ink)
                             }
@@ -250,10 +250,17 @@ struct NotesPageView: View {
                     }
                 case .blocks(let range):
                     if let notes = chapter.notes {
-                        ForEach(Array(range.enumerated()), id: \.offset) { offset, index in
-                            if notes.blocks.indices.contains(index) {
-                                NoteBlockView(block: notes.blocks[index], tone: tone)
-                                    .reveal(offset)
+                        // Un seul air en tête d'écran, puis le rythme des notes entre les blocs :
+                        // posé sur chaque bloc, l'espace du haut s'ajoutait à celui de la pile.
+                        VStack(alignment: .leading, spacing: 0) {
+                            ForEach(Array(range.enumerated()), id: \.offset) { offset, index in
+                                if notes.blocks.indices.contains(index) {
+                                    let block = notes.blocks[index]
+                                    let previous: NoteBlock? = offset > 0 && notes.blocks.indices.contains(index - 1) ? notes.blocks[index - 1] : nil
+                                    NoteBlockView(block: block, tone: tone)
+                                        .padding(.top, NoteRhythm.spacing(before: block, after: previous))
+                                        .reveal(offset)
+                                }
                             }
                         }
                         .padding(.top, 24)
@@ -271,7 +278,7 @@ struct NotesPageView: View {
                                     Image(systemName: "checkmark.circle.fill")
                                         .font(.system(size: 20, weight: .bold))
                                         .foregroundStyle(tone.vivid)
-                                    KeywordText(line)
+                                    KeywordText(line, size: 19, weight: .semibold)
                                         .font(MicaboFont.ui(19, weight: .semibold))
                                         .foregroundStyle(MicaboColor.ink)
                                         .fixedSize(horizontal: false, vertical: true)

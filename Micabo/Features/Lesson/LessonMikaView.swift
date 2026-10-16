@@ -169,7 +169,7 @@ struct LessonMikaView: View {
     private func bubble(_ message: MikaMessage) -> some View {
         let mine = message.role == .user
         return VStack(alignment: mine ? .trailing : .leading, spacing: 8) {
-            KeywordText(message.text)
+            KeywordText(message.text, size: 16, weight: .medium, tintsKeywords: message.role != .user)
                 .font(MicaboFont.ui(16, weight: .medium))
                 .foregroundStyle(mine ? MicaboColor.onInk : MicaboColor.ink)
                 .padding(.horizontal, 14)
@@ -189,10 +189,10 @@ struct LessonMikaView: View {
 
     private func proposedCard(_ card: GeneratedFlashcard, added: Bool, messageID: UUID) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(card.front)
+            KeywordText(card.front, size: 15, weight: .heavy)
                 .font(MicaboFont.ui(15, weight: .heavy))
                 .foregroundStyle(MicaboColor.ink)
-            Text(card.back)
+            KeywordText(card.back, size: 14, weight: .medium)
                 .font(MicaboFont.ui(14, weight: .medium))
                 .foregroundStyle(MicaboColor.inkSecondary)
             Button {

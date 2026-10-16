@@ -184,13 +184,13 @@ struct AnswerPanel: View {
                 MikaMascot(mood: right ? .happy : .sad, size: 52)
             }
             if !right, question.kind == .order || question.kind == .match || question.kind == .gap {
-                Text(question.answerText)
+                KeywordText(question.answerText, size: 16, weight: .bold, tintsKeywords: false)
                     .font(MicaboFont.ui(16, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
             }
             if !question.why.isEmpty {
-                Text(question.why)
+                KeywordText(question.why, size: 16, weight: .medium)
                     .font(MicaboFont.ui(16, weight: .medium))
                     .foregroundStyle(MicaboColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
@@ -500,12 +500,13 @@ struct FlashcardFace: View {
                 // Une carte à trou : le trou au recto, le mot à sa place au verso.
                 KeywordText(flipped
                     ? card.front.replacingOccurrences(of: ClozeGap.marker, with: "**\(card.back)**")
-                    : card.front.replacingOccurrences(of: ClozeGap.marker, with: "_____"))
+                    : card.front.replacingOccurrences(of: ClozeGap.marker, with: "_____"),
+                    size: 24, weight: .heavy)
                     .font(MicaboFont.ui(24, weight: .heavy))
                     .foregroundStyle(MicaboColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
-                Text(card.front)
+                KeywordText(card.front, size: flipped ? 18 : 24, weight: .heavy)
                     .font(MicaboFont.ui(flipped ? 18 : 24, weight: .heavy))
                     .foregroundStyle(flipped ? MicaboColor.inkSecondary : MicaboColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
@@ -514,7 +515,7 @@ struct FlashcardFace: View {
             if card.kind == .choice, card.choices.count > 1, !flipped {
                 VStack(alignment: .leading, spacing: 8) {
                     ForEach(Array(card.choices.enumerated()), id: \.offset) { _, choice in
-                        Text("• \(choice)")
+                        KeywordText("• \(choice)", size: 17, weight: .medium)
                             .font(MicaboFont.ui(17, weight: .medium))
                             .foregroundStyle(MicaboColor.ink)
                     }
@@ -523,13 +524,13 @@ struct FlashcardFace: View {
 
             if flipped {
                 if card.kind == .choice, card.choices.indices.contains(card.correctChoiceIndex) {
-                    Text(card.choices[card.correctChoiceIndex])
+                    KeywordText(card.choices[card.correctChoiceIndex], size: 24, weight: .heavy, tintsKeywords: false)
                         .font(MicaboFont.ui(24, weight: .heavy))
                         .foregroundStyle(MicaboColor.correctInk)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 if card.format != .cloze {
-                    KeywordText(card.back)
+                    KeywordText(card.back, size: card.kind == .choice ? 17 : 22, weight: card.kind == .choice ? .medium : .bold)
                         .font(MicaboFont.ui(card.kind == .choice ? 17 : 22, weight: card.kind == .choice ? .medium : .bold))
                         .foregroundStyle(MicaboColor.ink)
                         .fixedSize(horizontal: false, vertical: true)

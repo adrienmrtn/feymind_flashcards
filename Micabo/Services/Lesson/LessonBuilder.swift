@@ -450,6 +450,11 @@ final class LessonBuilder {
             case .dates(let items): lines.append(contentsOf: items.map { "\($0.date) : \($0.text)" })
             case .formula(let latex, let caption): lines.append([latex, caption].compactMap { $0 }.joined(separator: " : "))
             case .example(let text): lines.append("Exemple : \(text)")
+            case .steps(let items): lines.append(contentsOf: items.enumerated().map { "\($0.offset + 1). \($0.element)" })
+            case .table(let columns, let rows):
+                lines.append(columns.joined(separator: " | "))
+                lines.append(contentsOf: rows.map { $0.joined(separator: " | ") })
+            case .quote(let text, let author): lines.append(["« \(text) »", author].compactMap { $0 }.joined(separator: " — "))
             }
         }
         lines.append(contentsOf: notes.takeaways.map { "À retenir : \($0)" })

@@ -75,7 +75,7 @@ struct QuestionCard: View {
     }
 
     private func prompt(_ text: String) -> some View {
-        KeywordText(text)
+        KeywordText(text, size: 22, weight: .heavy)
             .font(MicaboFont.ui(22, weight: .heavy))
             .foregroundStyle(MicaboColor.ink)
             .fixedSize(horizontal: false, vertical: true)
@@ -99,13 +99,13 @@ struct QuestionFeedback: View {
                     .font(MicaboFont.ui(18, weight: .heavy))
                     .foregroundStyle(right ? MicaboColor.correctInk : MicaboColor.wrongInk)
                 if !right, question.kind == .order || question.kind == .match {
-                    Text(question.answerText)
+                    KeywordText(question.answerText, size: 15, weight: .bold, tintsKeywords: false)
                         .font(MicaboFont.ui(15, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 if !question.why.isEmpty {
-                    Text(question.why)
+                    KeywordText(question.why, size: 15, weight: .medium)
                         .font(MicaboFont.ui(15, weight: .medium))
                         .foregroundStyle(MicaboColor.ink)
                         .fixedSize(horizontal: false, vertical: true)
@@ -150,7 +150,7 @@ struct ChoiceList: View {
                     onAnswer(QuizAnswer(right: original == question.answer, picked: shown))
                 } label: {
                     HStack(spacing: 12) {
-                        Text(question.choices[original])
+                        KeywordText(question.choices[original], size: compact ? 18 : 17, weight: .bold, tintsKeywords: false)
                             .font(MicaboFont.ui(compact ? 18 : 17, weight: .bold))
                             .foregroundStyle(foreground(shown: shown, original: original))
                             .multilineTextAlignment(.leading)
@@ -230,12 +230,14 @@ struct GapSentence: View {
         let parts = question.prompt.components(separatedBy: ClozeGap.marker)
         let word = question.choices.indices.contains(question.answer) ? question.choices[question.answer] : ""
         let filled = answered != nil
-        var text = AttributedString(parts.first ?? "")
-        var blank = AttributedString(filled ? " \(word) " : " ________ ")
+        var text = KeywordText.attributed(parts.first ?? "", size: 22, weight: .heavy)
+        var blank = AttributedString(filled ? " \(KeywordText.plain(word)) " : " ________ ")
         blank.foregroundColor = filled ? MicaboColor.correctInk : tone.ink
         blank.backgroundColor = filled ? MicaboColor.correctSoft : tone.pale
         text.append(blank)
-        if parts.count > 1 { text.append(AttributedString(parts.dropFirst().joined(separator: ClozeGap.marker))) }
+        if parts.count > 1 {
+            text.append(KeywordText.attributed(parts.dropFirst().joined(separator: ClozeGap.marker), size: 22, weight: .heavy))
+        }
         return Text(text)
             .font(MicaboFont.ui(22, weight: .heavy))
             .foregroundStyle(MicaboColor.ink)
@@ -341,7 +343,7 @@ struct OrderBuilder: View {
                                 .foregroundStyle(MicaboColor.onInk)
                                 .frame(width: 30, height: 30)
                                 .background(numberColor(position: position, item: item), in: Circle())
-                            Text(question.choices[item])
+                            KeywordText(question.choices[item], size: 17, weight: .bold, tintsKeywords: false)
                                 .font(MicaboFont.ui(17, weight: .bold))
                                 .foregroundStyle(MicaboColor.ink)
                                 .multilineTextAlignment(.leading)
@@ -375,8 +377,9 @@ struct OrderBuilder: View {
                             Haptics.selection()
                             withAnimation(.spring(duration: 0.35)) { placed.append(item) }
                         } label: {
-                            Text(question.choices[item])
+                            KeywordText(question.choices[item], size: 16, weight: .bold, tintsKeywords: false)
                                 .font(MicaboFont.ui(16, weight: .bold))
+                                .multilineTextAlignment(.leading)
                                 .foregroundStyle(MicaboColor.ink)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 11)
@@ -494,7 +497,7 @@ struct MatchBoard: View {
 
     private func tile(_ text: String, color: Color?, selected: Bool, verdict: Bool?, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(text)
+            KeywordText(text, size: 15, weight: .bold, tintsKeywords: false)
                 .font(MicaboFont.ui(15, weight: .bold))
                 .foregroundStyle(MicaboColor.ink)
                 .multilineTextAlignment(.center)

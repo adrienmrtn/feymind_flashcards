@@ -70,6 +70,10 @@ struct ThemeNotes: Codable, Equatable {
     var blocks: [NoteBlock]
     var takeaways: [String]
 
+    enum CodingKeys: String, CodingKey {
+        case oneLiner, blocks, takeaways
+    }
+
     static func decode(from data: Data?) -> ThemeNotes? {
         guard let data, !data.isEmpty else { return nil }
         return try? JSONDecoder().decode(ThemeNotes.self, from: data)
@@ -94,6 +98,13 @@ struct ThemeNotes: Codable, Equatable {
                 lines.append(contentsOf: items.map { "\($0.date) : \($0.text)" })
             case .formula(let latex, let caption):
                 lines.append([latex, caption].compactMap { $0 }.joined(separator: " — "))
+            case .steps(let items):
+                lines.append(contentsOf: items.enumerated().map { "\($0.offset + 1). \($0.element)" })
+            case .table(let columns, let rows):
+                lines.append(columns.joined(separator: " | "))
+                lines.append(contentsOf: rows.map { $0.joined(separator: " | ") })
+            case .quote(let text, let author):
+                lines.append(["« \(text) »", author].compactMap { $0 }.joined(separator: " — "))
             }
         }
         lines.append(contentsOf: takeaways)
@@ -101,8 +112,36 @@ struct ThemeNotes: Codable, Equatable {
     }
 }
 
+extension ThemeNotes {
+    /// Les blocs se lisent un par un : un bloc illisible (une forme inconnue sans texte de
+    /// repli, un champ manquant) disparaît, au lieu de laisser un trou blanc ou de faire
+    /// tomber toutes les notes du thème. Écrit dans une extension pour garder l'initialiseur
+    /// membre à membre.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        oneLiner = try container.decode(String.self, forKey: .oneLiner)
+        blocks = try container.decode([LossyNoteBlock].self, forKey: .blocks)
+            .compactMap(\.block)
+            .filter { !$0.isEmpty }
+        takeaways = try container.decode([String].self, forKey: .takeaways)
+    }
+}
+
+/// Un bloc qui se décode sans jamais échouer : `nil` quand il est illisible.
+private struct LossyNoteBlock: Decodable {
+    let block: NoteBlock?
+
+    init(from decoder: Decoder) throws {
+        block = try? NoteBlock(from: decoder)
+    }
+}
+
 /// Un bloc des notes. Le balisage en ligne ne garde que `**mot-clé**` (gras violet) et
 /// `$latex$`.
+///
+/// Les formes `steps`, `table` et `quote` arrivent avec un champ `text` de repli, pour les
+/// versions de l'app qui ne les connaissent pas : on l'ignore ici, sauf si le bloc est
+/// incomplet.
 enum NoteBlock: Codable, Equatable {
     struct DateItem: Codable, Equatable {
         var date: String
@@ -116,9 +155,15 @@ enum NoteBlock: Codable, Equatable {
     case dates([DateItem])
     case formula(latex: String, caption: String?)
     case example(String)
+    /// Des étapes numérotées, dans l'ordre.
+    case steps([String])
+    /// Un petit tableau : deux à quatre colonnes, des cellules courtes.
+    case table(columns: [String], rows: [[String]])
+    /// Une citation, et qui l'a dite.
+    case quote(text: String, author: String?)
 
     private enum CodingKeys: String, CodingKey {
-        case type, text, items, term, latex, caption
+        case type, text, items, term, latex, caption, columns, rows, author
     }
 
     init(from decoder: Decoder) throws {
@@ -145,12 +190,39 @@ enum NoteBlock: Codable, Equatable {
             )
         case "example":
             self = .example(try container.decode(String.self, forKey: .text))
+        case "steps":
+            let items = (try? container.decode([String].self, forKey: .items)) ?? []
+            self = try items.isEmpty ? Self.fallback(in: container) : .steps(items)
+        case "table":
+            let columns = (try? container.decode([String].self, forKey: .columns)) ?? []
+            let rows = (try? container.decode([[String]].self, forKey: .rows)) ?? []
+            self = try columns.isEmpty || rows.isEmpty
+                ? Self.fallback(in: container)
+                : .table(columns: columns, rows: rows)
+        case "quote":
+            let text = try container.decode(String.self, forKey: .text)
+            let author = (try container.decodeIfPresent(String.self, forKey: .author))?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            self = .quote(text: text, author: (author?.isEmpty ?? true) ? nil : author)
         default:
             // Un bloc d'une version plus récente du serveur se lit comme un paragraphe plutôt
             // que de faire tomber toutes les notes du thème.
-            let text = try container.decodeIfPresent(String.self, forKey: .text) ?? ""
-            self = .paragraph(text)
+            self = try Self.fallback(in: container)
         }
+    }
+
+    /// Le texte de repli d'un bloc, en paragraphe. Sans texte, le bloc est illisible :
+    /// `ThemeNotes` le retire plutôt que d'afficher un paragraphe vide.
+    private static func fallback(in container: KeyedDecodingContainer<CodingKeys>) throws -> NoteBlock {
+        let text = try? container.decodeIfPresent(String.self, forKey: .text)
+        guard let text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw DecodingError.dataCorruptedError(
+                forKey: .text,
+                in: container,
+                debugDescription: "Bloc sans contenu lisible."
+            )
+        }
+        return .paragraph(text)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -179,14 +251,35 @@ enum NoteBlock: Codable, Equatable {
         case .example(let text):
             try container.encode("example", forKey: .type)
             try container.encode(text, forKey: .text)
+        case .steps(let items):
+            try container.encode("steps", forKey: .type)
+            try container.encode(items, forKey: .items)
+        case .table(let columns, let rows):
+            try container.encode("table", forKey: .type)
+            try container.encode(columns, forKey: .columns)
+            try container.encode(rows, forKey: .rows)
+        case .quote(let text, let author):
+            try container.encode("quote", forKey: .type)
+            try container.encode(text, forKey: .text)
+            try container.encodeIfPresent(author, forKey: .author)
         }
     }
 
     /// Vrai pour les blocs qui se dessinent dans un encadré : deux encadrés ne se suivent pas.
     var isBoxed: Bool {
         switch self {
-        case .definition, .formula, .example: true
+        case .definition, .formula, .example, .steps, .table, .quote: true
         default: false
+        }
+    }
+
+    /// Vrai pour un bloc qui n'a rien à montrer : il laisserait un trou blanc.
+    var isEmpty: Bool {
+        switch self {
+        case .subtitle(let text), .paragraph(let text):
+            text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        default:
+            false
         }
     }
 }

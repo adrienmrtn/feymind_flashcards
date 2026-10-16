@@ -175,11 +175,11 @@ private struct CardRow: View {
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
             VStack(alignment: .leading, spacing: 8) {
-                Text(card.format == .cloze ? card.front.replacingOccurrences(of: ClozeGap.marker, with: "____") : card.front)
+                KeywordText(card.format == .cloze ? card.front.replacingOccurrences(of: ClozeGap.marker, with: "____") : card.front, size: 18, weight: .heavy, tintsKeywords: false)
                     .font(MicaboFont.ui(18, weight: .heavy))
                     .foregroundStyle(tone.ink)
                     .lineLimit(2)
-                Text(card.kind == .choice && card.choices.indices.contains(card.correctChoiceIndex) ? card.choices[card.correctChoiceIndex] : card.back)
+                KeywordText(card.kind == .choice && card.choices.indices.contains(card.correctChoiceIndex) ? card.choices[card.correctChoiceIndex] : card.back, size: 16, weight: .medium, tintsKeywords: false)
                     .font(MicaboFont.ui(16, weight: .medium))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .lineLimit(3)

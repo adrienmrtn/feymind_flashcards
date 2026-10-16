@@ -432,7 +432,7 @@ struct MockExamRunView: View {
             // Un ordre ou une association ne se redessine pas tel qu'on l'a laissé : on dit
             // qu'il est enregistré, et l'on peut le refaire.
             VStack(alignment: .leading, spacing: 16) {
-                Text(item.question.prompt)
+                KeywordText(item.question.prompt, size: 22, weight: .heavy)
                     .font(MicaboFont.ui(22, weight: .heavy))
                     .foregroundStyle(MicaboColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
@@ -780,13 +780,13 @@ struct CorrectionRow: View {
                 Image(systemName: answer == nil ? "minus.circle.fill" : right ? "checkmark.circle.fill" : "xmark.circle.fill")
                     .font(.system(size: 22, weight: .bold))
                     .foregroundStyle(answer == nil ? MicaboColor.inkTertiary : right ? MicaboColor.correct : MicaboColor.wrong)
-                Text("\(number). \(question.prompt.replacingOccurrences(of: "**", with: ""))")
+                KeywordText("\(number). \(question.prompt)", size: 16, weight: .heavy)
                     .font(MicaboFont.ui(16, weight: .heavy))
                     .foregroundStyle(MicaboColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
             }
             if let picked = pickedText, !right {
-                Text(L10n.t("lesson.exam.yourAnswer", locale: .resolved(), vars: ["answer": picked]))
+                Text(L10n.t("lesson.exam.yourAnswer", locale: .resolved(), vars: ["answer": KeywordText.plain(picked)]))
                     .font(MicaboFont.ui(14.5, weight: .semibold))
                     .foregroundStyle(MicaboColor.wrongInk)
                     .fixedSize(horizontal: false, vertical: true)
@@ -795,12 +795,12 @@ struct CorrectionRow: View {
                     .font(MicaboFont.ui(14.5, weight: .semibold))
                     .foregroundStyle(MicaboColor.inkSecondary)
             }
-            Text(L10n.t("lesson.exam.rightAnswer", locale: .resolved(), vars: ["answer": question.answerText]))
+            Text(L10n.t("lesson.exam.rightAnswer", locale: .resolved(), vars: ["answer": KeywordText.plain(question.answerText)]))
                 .font(MicaboFont.ui(14.5, weight: .bold))
                 .foregroundStyle(MicaboColor.correctInk)
                 .fixedSize(horizontal: false, vertical: true)
             if !question.why.isEmpty {
-                Text(question.why)
+                KeywordText(question.why, size: 14.5, weight: .medium)
                     .font(MicaboFont.ui(14.5, weight: .medium))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)

@@ -30,7 +30,7 @@ struct MicaboFlowLayout: Layout {
             }
 
             for index in row.indices {
-                let size = subviews[index].sizeThatFits(.unspecified)
+                let size = Self.size(of: subviews[index], maxWidth: bounds.width)
                 subviews[index].place(
                     at: CGPoint(x: x, y: y + (row.height - size.height) / 2),
                     proposal: ProposedViewSize(size)
@@ -40,6 +40,16 @@ struct MicaboFlowLayout: Layout {
 
             y += row.height + lineSpacing
         }
+    }
+
+    /// La taille d'une pastille : sa taille naturelle, sauf si elle dépasse la ligne entière.
+    /// Une pastille trop longue (une proposition de phrase à trou, un élément à remettre dans
+    /// l'ordre) reçoit alors la largeur de la ligne, et son texte revient à la ligne au lieu
+    /// de sortir de l'écran.
+    private static func size(of subview: LayoutSubview, maxWidth: CGFloat) -> CGSize {
+        let natural = subview.sizeThatFits(.unspecified)
+        guard maxWidth.isFinite, natural.width > maxWidth else { return natural }
+        return subview.sizeThatFits(ProposedViewSize(width: maxWidth, height: nil))
     }
 
     private struct Row {
@@ -53,7 +63,7 @@ struct MicaboFlowLayout: Layout {
         var current = Row()
 
         for index in subviews.indices {
-            let size = subviews[index].sizeThatFits(.unspecified)
+            let size = Self.size(of: subviews[index], maxWidth: maxWidth)
             let widthWithItem = current.indices.isEmpty ? size.width : current.width + spacing + size.width
 
             if widthWithItem > maxWidth, !current.indices.isEmpty {
