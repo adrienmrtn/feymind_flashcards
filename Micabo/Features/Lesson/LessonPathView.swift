@@ -3,10 +3,11 @@ import SwiftUI
 
 /// **L'écran d'une leçon : son chemin.** Voir `docs/refonte-parcours.md` § 5.3.
 ///
-/// En haut, le retour et Mika ; l'icône de la leçon, son titre, sa progression, son examen. Le
-/// chemin, centré sur le cercle en cours à l'ouverture. En bas, la navbar interne : Notes, Quiz,
-/// Flashcards. Un ancien cours qui s'ouvre ici pour la première fois devient une leçon : on le
-/// convertit sur place, Mika au travail.
+/// En haut, le retour, le menu « ⋯ » (renommer, recommencer, supprimer) et Mika. La grande
+/// illustration de la leçon, son titre, « 27 % · 3 sur 11 étapes » et la barre qui se remplit.
+/// Le chemin, centré sur l'étape en cours à l'ouverture ; « Recommencer la leçon » tout en bas.
+/// En bas de l'écran, Notes, Quiz et Flashcards. Un ancien cours qui s'ouvre ici pour la
+/// première fois devient une leçon : on le convertit sur place, Mika au travail.
 struct LessonPathView: View {
     let course: Course
 
@@ -22,6 +23,12 @@ struct LessonPathView: View {
     @State private var conversionError: String?
     @State private var scrolledPastHeader = false
     @State private var fullQuizAttempt = 0
+    @State private var renaming = false
+    @State private var newTitle = ""
+    @State private var confirmsDelete = false
+    @State private var confirmsReset = false
+    /// Un palier franchi : des confettis, une fois.
+    @State private var celebration = 0
 
     init(course: Course) {
         self.course = course
@@ -43,6 +50,12 @@ struct LessonPathView: View {
                 )
             }
             topBar
+            if celebration > 0 {
+                ConfettiView(colors: [tone.vivid, tone.pale, MicaboColor.accent, LessonTone.yellow.vivid])
+                    .id(celebration)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+            }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if course.isLesson {
@@ -55,8 +68,30 @@ struct LessonPathView: View {
                     case .flashcards: sheet = .cards
                     }
                 }
-                .padding(.bottom, 4)
             }
+        }
+        .alert(L10n.t("lesson.menu.renameTitle", locale: .resolved()), isPresented: $renaming) {
+            TextField(L10n.t("lesson.menu.renamePlaceholder", locale: .resolved()), text: $newTitle)
+            Button(L10n.t("lesson.menu.save", locale: .resolved()), action: saveTitle)
+            Button(L10n.t("lesson.menu.cancel", locale: .resolved()), role: .cancel) {}
+        }
+        .confirmationDialog(
+            L10n.t("lesson.menu.deleteTitle", locale: .resolved()),
+            isPresented: $confirmsDelete,
+            titleVisibility: .visible
+        ) {
+            Button(L10n.t("lesson.menu.delete", locale: .resolved()), role: .destructive, action: deleteLesson)
+        } message: {
+            Text(L10n.t("lesson.menu.deleteMessage", locale: .resolved()))
+        }
+        .confirmationDialog(
+            L10n.t("lesson.menu.resetTitle", locale: .resolved()),
+            isPresented: $confirmsReset,
+            titleVisibility: .visible
+        ) {
+            Button(L10n.t("lesson.menu.reset", locale: .resolved()), role: .destructive, action: resetLesson)
+        } message: {
+            Text(L10n.t("lesson.menu.resetMessage", locale: .resolved()))
         }
         .toolbar(.hidden, for: .navigationBar)
         .navigationBarBackButtonHidden(true)
@@ -117,9 +152,9 @@ struct LessonPathView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 0) {
-                        header
-                            .padding(.top, 64)
-                            .padding(.bottom, 28)
+                        LessonPathHeader(course: course, session: session, exam: nextExam)
+                            .padding(.top, 60)
+                            .padding(.bottom, 44)
                         PathMapView(
                             session: session,
                             tone: tone,
@@ -127,8 +162,15 @@ struct LessonPathView: View {
                             onOpen: { openCircle = $0 },
                             onRetry: retry
                         )
+                        if session.doneCount > 0 {
+                            Button(L10n.t("lesson.menu.reset", locale: .resolved())) { confirmsReset = true }
+                                .font(MicaboFont.ui(16, weight: .semibold))
+                                .foregroundStyle(MicaboColor.inkTertiary)
+                                .buttonStyle(MicaboPressableButtonStyle())
+                                .padding(.top, 20)
+                        }
                     }
-                    .padding(.bottom, 24)
+                    .padding(.bottom, 40)
                     .micaboScrollProbes(space: Self.scrollSpace)
                 }
                 .micaboScrollGeometry(space: Self.scrollSpace) { geometry in
@@ -156,110 +198,6 @@ struct LessonPathView: View {
 
     private static let scrollSpace = "lessonPathScroll"
 
-    private var header: some View {
-        VStack(spacing: 14) {
-            MicaboIconView(icon: course.icon, size: 96)
-            Text(course.title)
-                .font(MicaboFont.title)
-                .foregroundStyle(MicaboColor.ink)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .padding(.horizontal, 24)
-            progressLine
-            if session.plan?.shortened == true {
-                Label(L10n.t("lesson.path.shortened", locale: .resolved()), systemImage: "scissors")
-                    .font(MicaboFont.ui(13, weight: .bold))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(MicaboColor.surfaceMuted, in: Capsule())
-            }
-            if let exam = nextExam {
-                examPill(exam)
-                if (1...7).contains(exam.daysRemaining()) {
-                    mockExamBanner(exam)
-                }
-            }
-        }
-    }
-
-    private var progressLine: some View {
-        VStack(spacing: 8) {
-            Text(L10n.t("lesson.path.progress", locale: .resolved(), vars: [
-                "done": String(session.doneCount),
-                "total": String(session.totalCount),
-                "percent": String(session.percent),
-            ]))
-            .font(MicaboFont.ui(15, weight: .bold))
-            .foregroundStyle(MicaboColor.inkSecondary)
-            .monospacedDigit()
-
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(MicaboColor.track)
-                    Capsule()
-                        .fill(tone.vivid)
-                        .frame(width: proxy.size.width * CGFloat(session.percent) / 100)
-                }
-            }
-            .frame(width: 180, height: 6)
-            .animation(.easeInOut(duration: 0.6), value: session.percent)
-        }
-    }
-
-    private func examPill(_ exam: Exam) -> some View {
-        let date = exam.date.formatted(.dateTime.day().month(.abbreviated))
-        return Label {
-            Text(L10n.t("lesson.path.examPill", locale: .resolved(), vars: [
-                "date": date,
-                "countdown": countdown(exam),
-            ]))
-        } icon: {
-            MicaboIconView(icon: .exam, size: 20)
-        }
-        .font(MicaboFont.ui(14, weight: .bold))
-        .foregroundStyle(tone.ink)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
-        .background(tone.pale, in: Capsule())
-    }
-
-    private func countdown(_ exam: Exam) -> String {
-        let days = exam.daysRemaining()
-        return days <= 0
-            ? L10n.t("app.exams.countdown.today", locale: .resolved())
-            : L10n.t("lesson.path.daysLeft", locale: .resolved(), vars: ["days": String(days)])
-    }
-
-    /// À l'approche de l'examen, l'examen blanc : le quiz complet de la leçon.
-    private func mockExamBanner(_ exam: Exam) -> some View {
-        Button {
-            fullQuizAttempt += 1
-            sheet = .exam
-        } label: {
-            HStack(spacing: 12) {
-                MicaboIconView(icon: .quiz, size: 40)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(L10n.t("lesson.exam.mockTitle", locale: .resolved()))
-                        .font(MicaboFont.label)
-                        .foregroundStyle(MicaboColor.ink)
-                    Text(L10n.t("lesson.exam.mockSubtitle", locale: .resolved(), vars: ["countdown": countdown(exam)]))
-                        .font(MicaboFont.ui(14, weight: .medium))
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-            }
-            .padding(14)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .micaboElevation(.row)
-        }
-        .buttonStyle(MicaboPressableButtonStyle())
-        .padding(.horizontal, MicaboSpacing.screen)
-    }
-
     private var nextExam: Exam? {
         exams
             .filter { $0.courseIDs.contains(course.id) && !$0.isPast() }
@@ -280,6 +218,35 @@ struct LessonPathView: View {
                 .lineLimit(1)
                 .opacity(scrolledPastHeader ? 1 : 0)
             Spacer(minLength: 0)
+            if course.isLesson {
+                Menu {
+                    Button {
+                        newTitle = course.title
+                        renaming = true
+                    } label: {
+                        Label(L10n.t("lesson.menu.rename", locale: .resolved()), systemImage: "pencil")
+                    }
+                    Button {
+                        confirmsReset = true
+                    } label: {
+                        Label(L10n.t("lesson.menu.reset", locale: .resolved()), systemImage: "arrow.counterclockwise")
+                    }
+                    .disabled(session.doneCount == 0)
+                    Button(role: .destructive) {
+                        confirmsDelete = true
+                    } label: {
+                        Label(L10n.t("lesson.menu.delete", locale: .resolved()), systemImage: "trash")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundStyle(MicaboColor.ink)
+                        .frame(width: 40, height: 40)
+                        .background(MicaboColor.surface, in: Circle())
+                        .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 4)
+                }
+                .accessibilityLabel(Text(L10n.t("lesson.menu.more", locale: .resolved())))
+            }
             Button {
                 sheet = .mika
             } label: {
@@ -340,8 +307,8 @@ struct LessonPathView: View {
         let themes: [Int]
         switch circle.kind {
         case .notes(let theme): themes = [theme]
-        case .quiz(_, let covered): themes = covered
-        default: themes = []
+        case .quiz(_, let covered), .final(let covered): themes = covered
+        case .intro: themes = []
         }
         let chapters = themes.compactMap(session.chapter(at:)).filter { $0.status == .failed }
         for chapter in chapters {
@@ -359,11 +326,139 @@ struct LessonPathView: View {
                 session.complete(circle, in: modelContext)
             }
             Haptics.success()
-            if case .conclusion = circle.kind {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { finished = true }
+            if circle.isMilestone {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    celebration += 1
+                    Haptics.burst(count: 3, over: 0.4)
+                }
+            }
+            if case .final = circle.kind {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { finished = true }
             }
         }
     }
+
+    private func saveTitle() {
+        guard let title = newTitle.nilIfBlank else { return }
+        course.title = String(title.prefix(120))
+        course.updatedAt = Date()
+        try? modelContext.save()
+    }
+
+    private func resetLesson() {
+        withAnimation(.spring(duration: 0.6)) {
+            session.reset(in: modelContext)
+        }
+        Haptics.medium()
+    }
+
+    private func deleteLesson() {
+        dismiss()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            try? CourseRepository.delete(course, in: modelContext)
+            CourseLedger.noteChange()
+        }
+    }
+}
+
+/// **L'en-tête d'une leçon** : la grande illustration, le titre, « 27 % · 3 sur 11 étapes » et
+/// la barre qui se remplit, l'examen s'il y en a un.
+struct LessonPathHeader: View {
+    let course: Course
+    let session: LessonSession
+    let exam: Exam?
+
+    private var tone: LessonTone { course.tone }
+
+    var body: some View {
+        VStack(spacing: 18) {
+            MicaboIconView(icon: course.icon, size: 150)
+                .shadow(color: tone.vivid.opacity(0.25), radius: 24, x: 0, y: 14)
+            Text(course.title)
+                .font(MicaboFont.display(30))
+                .foregroundStyle(MicaboColor.ink)
+                .multilineTextAlignment(.center)
+                .lineLimit(3)
+                .minimumScaleFactor(0.8)
+                .padding(.horizontal, 28)
+            progressLine
+                .padding(.horizontal, 28)
+                .padding(.top, 4)
+            if session.plan?.shortened == true {
+                Label(L10n.t("lesson.path.shortened", locale: .resolved()), systemImage: "scissors")
+                    .font(MicaboFont.ui(13, weight: .bold))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(MicaboColor.surfaceMuted, in: Capsule())
+            }
+            if let exam {
+                examPill(exam)
+            }
+        }
+    }
+
+    /// « 27 % » à gauche, « 3 sur 11 étapes » à droite, et la barre pleine largeur, qui se
+    /// remplit en douceur à chaque étape finie.
+    private var progressLine: some View {
+        VStack(spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("\(session.percent) %")
+                    .font(MicaboFont.number(26))
+                    .foregroundStyle(tone.ink)
+                    .contentTransition(.numericText(value: Double(session.percent)))
+                Spacer(minLength: 8)
+                Text(L10n.t("lesson.path.stepsDone", locale: .resolved(), vars: [
+                    "done": String(session.doneCount),
+                    "total": String(session.totalCount),
+                ]))
+                .font(MicaboFont.ui(17, weight: .semibold))
+                .foregroundStyle(MicaboColor.inkSecondary)
+                .contentTransition(.numericText(value: Double(session.doneCount)))
+            }
+            .monospacedDigit()
+
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(MicaboColor.track)
+                    Capsule()
+                        .fill(LinearGradient(colors: [tone.vivid, tone.vivid.opacity(0.85)], startPoint: .leading, endPoint: .trailing))
+                        .frame(width: max(14, proxy.size.width * CGFloat(session.percent) / 100))
+                        .overlay(alignment: .top) {
+                            Capsule().fill(.white.opacity(0.28)).frame(height: 3).padding(.horizontal, 6).padding(.top, 3)
+                        }
+                        .opacity(session.percent == 0 ? 0.35 : 1)
+                }
+            }
+            .frame(height: 14)
+        }
+        .animation(.spring(duration: 0.8, bounce: 0.2), value: session.percent)
+    }
+
+    private func examPill(_ exam: Exam) -> some View {
+        let date = exam.date.formatted(.dateTime.day().month(.abbreviated))
+        return Label {
+            Text(L10n.t("lesson.path.examPill", locale: .resolved(), vars: [
+                "date": date,
+                "countdown": countdown(exam),
+            ]))
+        } icon: {
+            MicaboIconView(icon: .exam, size: 20)
+        }
+        .font(MicaboFont.ui(14, weight: .bold))
+        .foregroundStyle(tone.ink)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(tone.pale, in: Capsule())
+    }
+
+    private func countdown(_ exam: Exam) -> String {
+        let days = exam.daysRemaining()
+        return days <= 0
+            ? L10n.t("app.exams.countdown.today", locale: .resolved())
+            : L10n.t("lesson.path.daysLeft", locale: .resolved(), vars: ["days": String(days)])
+    }
+
 }
 
 /// Les feuilles qu'une leçon peut ouvrir.
@@ -416,7 +511,8 @@ struct LessonPreparingView: View {
     }
 }
 
-/// **La navbar interne** : une pilule de verre, trois entrées.
+/// **La barre du bas d'une leçon** : Notes, Quiz, Flashcards, trois grandes icônes posées sur
+/// un fondu, sans cadre. Les cartes à revoir aujourd'hui se comptent sur la pastille.
 struct LessonNavbar: View {
     enum Entry: CaseIterable {
         case notes
@@ -428,41 +524,58 @@ struct LessonNavbar: View {
     let onSelect: (Entry) -> Void
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 0) {
             item(.notes, icon: .notes, title: L10n.t("lesson.nav.notes", locale: .resolved()))
             item(.quiz, icon: .quiz, title: L10n.t("lesson.nav.quiz", locale: .resolved()))
             item(.flashcards, icon: .cards, title: L10n.t("lesson.nav.flashcards", locale: .resolved()))
-                .overlay(alignment: .topTrailing) {
+                .overlay(alignment: .top) {
                     if dueCount > 0 {
                         Text("\(dueCount)")
-                            .font(MicaboFont.ui(11, weight: .heavy))
+                            .font(MicaboFont.ui(12, weight: .heavy))
                             .foregroundStyle(MicaboColor.onInk)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
                             .background(MicaboColor.wrong, in: Capsule())
-                            .offset(x: -8, y: 2)
+                            .offset(x: 22, y: -2)
+                            .transition(.scale.combined(with: .opacity))
                     }
                 }
         }
-        .padding(6)
-        .micaboGlass(in: Capsule(), interactive: true)
-        .padding(.horizontal, 32)
+        .padding(.horizontal, 12)
+        .padding(.top, 26)
+        .padding(.bottom, 2)
+        .background {
+            LinearGradient(
+                stops: [
+                    .init(color: MicaboColor.canvas.opacity(0), location: 0),
+                    .init(color: MicaboColor.canvas.opacity(0.92), location: 0.38),
+                    .init(color: MicaboColor.canvas, location: 1),
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea(edges: .bottom)
+            .allowsHitTesting(false)
+        }
+        .animation(.spring(duration: 0.4), value: dueCount)
     }
 
     private func item(_ entry: Entry, icon: MicaboIcon, title: String) -> some View {
         Button {
+            Haptics.light()
             onSelect(entry)
         } label: {
-            VStack(spacing: 2) {
-                MicaboIconView(icon: icon, size: 30)
+            VStack(spacing: 6) {
+                MicaboIconView(icon: icon, size: 50)
+                    .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 4)
                 Text(title)
-                    .font(MicaboFont.ui(12, weight: .heavy))
+                    .font(MicaboFont.ui(16, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
+            .padding(.vertical, 4)
             .contentShape(Rectangle())
         }
-        .buttonStyle(MicaboPressableButtonStyle())
+        .buttonStyle(MicaboPressableButtonStyle(feedback: .none))
     }
 }

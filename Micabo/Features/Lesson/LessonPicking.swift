@@ -8,10 +8,24 @@ import SwiftData
 /// reprise stable (on retrouve ses questions) et les tests exacts. La graine change d'une
 /// tentative à l'autre : un quiz relancé ne repose pas les mêmes questions dans le même ordre.
 enum LessonPicking {
-    /// Le quiz d'un palier : cinq questions.
+    /// Le Checkpoint d'un palier : cinq questions sur le palier…
     static let circleQuizCount = 5
+    /// … et deux sur les paliers d'avant, pour ne pas les oublier (l'entrelacement).
+    static let checkpointReviewCount = 2
     /// Le quiz complet et l'examen blanc : dix questions.
     static let fullQuizCount = 10
+
+    /// Le Quiz final : deux questions par thème, entre huit et douze.
+    static func finalQuizCount(themes: Int) -> Int {
+        min(12, max(8, themes * 2))
+    }
+
+    /// Du plus simple au plus exigeant, sans changer l'ordre entre questions de même difficulté.
+    static func progressive(_ questions: [QuizQuestion]) -> [QuizQuestion] {
+        questions.enumerated()
+            .sorted { ($0.element.difficulty, $0.offset) < ($1.element.difficulty, $1.offset) }
+            .map(\.element)
+    }
     /// Le cercle Flashcards : dix cartes.
     static let circleCardCount = 10
 

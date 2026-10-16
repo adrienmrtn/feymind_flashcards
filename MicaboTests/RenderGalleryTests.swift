@@ -143,26 +143,64 @@ final class RenderGalleryTests: XCTestCase {
         let session = LessonSession(course: course)
         try RenderGallery.render(
             "lesson-path", night: true,
-            PathMapView(session: session, tone: course.tone, width: 393, onOpen: { _ in }, onRetry: { _ in })
-                .padding(.top, 40)
+            VStack(spacing: 0) {
+                LessonPathHeader(course: course, session: session, exam: nil)
+                    .padding(.top, 40)
+                    .padding(.bottom, 44)
+                PathMapView(session: session, tone: course.tone, width: 393, onOpen: { _ in }, onRetry: { _ in })
+                LessonNavbar(dueCount: 8) { _ in }
+            }
         )
+        let chapter = course.orderedChapters[0]
         try RenderGallery.render(
             "lesson-notes", night: true,
-            VStack(alignment: .leading, spacing: 22) {
-                ThemeHeader(chapter: course.orderedChapters[0])
-                ThemeNotesView(notes: Self.sampleNotes, tone: course.tone)
+            VStack(spacing: 0) {
+                NotesSegments(count: 6, page: 2, tone: course.tone, onClose: {}, onBack: {})
+                NotesPageView(page: .opening, chapter: chapter, tone: course.tone, question: nil, answer: nil) { _ in }
+                    .frame(height: 420)
+                NotesPageView(page: .blocks(0..<2), chapter: chapter, tone: course.tone, question: nil, answer: nil) { _ in }
+                    .frame(height: 360)
+                NotesPageView(page: .takeaways, chapter: chapter, tone: course.tone, question: nil, answer: nil) { _ in }
+                    .frame(height: 460)
             }
-            .padding(20)
         )
+        let question = Self.sampleQuestion(id: "b")
         try RenderGallery.render(
             "lesson-question",
             VStack(spacing: 24) {
-                QuestionCard(question: Self.sampleQuestion(id: "a"), tone: course.tone, answered: nil) { _ in }
-                QuestionCard(question: Self.sampleQuestion(id: "b"), tone: course.tone, answered: 2) { _ in }
-                LessonNavbar(dueCount: 8) { _ in }
+                QuestionCard(question: Self.sampleQuestion(id: "a"), tone: course.tone, answered: nil, shuffleSeed: 3) { _ in }
+                QuestionCard(question: question, tone: course.tone, answered: QuizAnswer(right: false, picked: 2), showsFeedback: false) { _ in }
+                AnswerPanel(question: question, right: false, isLast: false) {}
+                AnswerPanel(question: question, right: true, isLast: true) {}
+            }
+            .padding(.vertical, 20)
+        )
+        try RenderGallery.render(
+            "lesson-kinds", night: true,
+            VStack(alignment: .leading, spacing: 32) {
+                QuestionCard(question: Self.kindQuestion(.truefalse), tone: course.tone, answered: QuizAnswer(right: true, picked: 0), showsFeedback: false) { _ in }
+                QuestionCard(question: Self.kindQuestion(.gap), tone: course.tone, answered: nil, shuffleSeed: 5) { _ in }
+                QuestionCard(question: Self.kindQuestion(.order), tone: course.tone, answered: nil, shuffleSeed: 9) { _ in }
+                QuestionCard(question: Self.kindQuestion(.match), tone: course.tone, answered: nil, shuffleSeed: 2) { _ in }
+                StreakBadge(count: 4, tone: course.tone)
             }
             .padding(20)
         )
+    }
+
+    private static func kindQuestion(_ kind: QuizKind) -> QuizQuestion {
+        switch kind {
+        case .truefalse:
+            QuizQuestion(id: "tf", kind: .truefalse, prompt: "Le mur de Berlin tombe en 1989.", choices: ["Vrai", "Faux"], answer: 0, why: "Il tombe le 9 novembre 1989.")
+        case .gap:
+            QuizQuestion(id: "gap", kind: .gap, prompt: "La doctrine \(ClozeGap.marker) veut contenir le communisme.", choices: ["Truman", "Jdanov", "Monroe"], answer: 0, why: "Annoncée en mars 1947.", difficulty: 1)
+        case .order:
+            QuizQuestion(id: "order", kind: .order, prompt: "Remets ces événements dans l'ordre.", choices: ["Plan Marshall", "Blocus de Berlin", "Construction du mur", "Chute du mur"], answer: 0, why: "1947, 1948, 1961, 1989.")
+        case .match:
+            QuizQuestion(id: "match", kind: .match, prompt: "Associe chaque crise à son année.", choices: ["Blocus de Berlin", "Crise de Cuba", "Chute du mur"], answer: 0, why: ".", matches: ["1948", "1962", "1989"])
+        case .choice:
+            sampleQuestion(id: "choice")
+        }
     }
 
     /// Home : Mika et sa question, la barre avec deux supports, les chiffres, « Reprendre »,

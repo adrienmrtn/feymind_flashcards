@@ -137,7 +137,7 @@ final class LessonBuilderTests: XCTestCase {
         XCTAssertEqual(symbols.first, "flag")
         XCTAssertEqual(course.lessonPath?.points?.first, ["Notion 0"])
         XCTAssertTrue(service.planRequests.first?.audience.exam.contains("un examen, le ") == true, "l'examen visé part avec le plan")
-        XCTAssertEqual(course.pathSteps().compactMap(\.circle).count, 9)
+        XCTAssertEqual(course.pathSteps().compactMap(\.circle).count, 7)
 
         let exams = try context.fetch(FetchDescriptor<Exam>())
         XCTAssertEqual(exams.first?.courseIDs, [course.id], "la date d'examen devient un examen de la leçon")

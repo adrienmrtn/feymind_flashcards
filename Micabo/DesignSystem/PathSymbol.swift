@@ -147,6 +147,37 @@ enum PathSymbol {
         }
     }
 
+    /// Le pictogramme qui va avec une icône 3D : pour une leçon d'avant les pictogrammes.
+    static func forIcon(_ id: String) -> String {
+        switch id {
+        case "globe": "globe.europe.africa"
+        case "fiole": "testtube.2"
+        case "parchemin": "scroll"
+        case "calculatrice": "function"
+        case "atome": "atom"
+        case "ampoule": "lightbulb"
+        case "loupe": "magnifyingglass"
+        case "puzzle": "puzzlepiece"
+        case "cerveau": "brain.head.profile"
+        case "reveil": "clock"
+        case "sablier": "hourglass"
+        case "plume": "pencil"
+        case "palette": "paintpalette"
+        case "fusee": "sparkles"
+        case "drapeau": "flag"
+        case "diplome": "graduationcap"
+        case "epingle": "mappin.and.ellipse"
+        case "coche": "checklist"
+        case "cadenas": "lock"
+        case "etoile": "highlighter"
+        case "trophee": "chart.bar"
+        case "couronne": "crown"
+        case "flamme": "flame"
+        case "examen": "calendar"
+        default: "book"
+        }
+    }
+
     /// Le nom à donner à `Image(systemName:)` : le symbole s'il existe sur ce téléphone.
     static func resolved(_ id: String) -> String {
         UIImage(systemName: id) != nil ? id : fallback

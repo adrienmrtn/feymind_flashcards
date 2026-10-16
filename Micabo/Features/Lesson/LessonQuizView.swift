@@ -1,19 +1,22 @@
 import SwiftData
 import SwiftUI
 
-/// **Un quiz** : un QCM par écran, la barre « 2 / 5 », la réponse tout de suite en vert ou en
-/// rouge avec sa phrase d'explication, puis le score avec Mika. Sert au cercle Quiz (cinq
-/// questions), au quiz complet de la navbar et à l'examen blanc (dix).
+/// **Un quiz** : une question par écran, quelle que soit sa forme, la barre qui se remplit, et
+/// la réponse dans un panneau qui monte du bas, vert ou rouge, avec sa phrase d'explication.
+/// Une série de bonnes réponses s'affiche ; à la fin, le score se remplit en cercle et Mika
+/// réagit. Sert aux Checkpoints, au Quiz final, au quiz de la barre du bas et à l'examen blanc.
 ///
-/// Il n'y a pas de score minimum : un cercle Quiz se coche quand toutes les questions sont
+/// Il n'y a pas de score minimum : une étape se coche quand toutes les questions sont
 /// répondues. Chaque question ratée devient une flashcard à revoir demain.
 struct LessonQuizView: View {
     let session: LessonSession
     let title: String
-    /// Le cercle que ce quiz coche ; `nil` pour le quiz complet et l'examen blanc.
+    /// L'étape que ce quiz coche ; `nil` pour le quiz de la barre du bas et l'examen blanc.
     let circleID: String?
     let onClose: () -> Void
     var onDone: (() -> Void)?
+    /// À la fin : « Générer de nouvelles questions », quand l'entraînement le propose.
+    var onMore: (() -> Void)?
 
     @Environment(\.modelContext) private var modelContext
 
@@ -21,9 +24,12 @@ struct LessonQuizView: View {
     /// pas celui du quiz en cours.
     @State private var questions: [QuizQuestion]
     @State private var index = 0
-    @State private var answer: Int?
+    @State private var answer: QuizAnswer?
     @State private var right = 0
+    @State private var streak = 0
     @State private var finished = false
+    /// La graine du mélange des propositions : neuve à chaque ouverture.
+    @State private var seed = UInt64.random(in: 1...UInt64.max)
 
     init(
         session: LessonSession,
@@ -31,13 +37,15 @@ struct LessonQuizView: View {
         title: String,
         circleID: String?,
         onClose: @escaping () -> Void,
-        onDone: (() -> Void)? = nil
+        onDone: (() -> Void)? = nil,
+        onMore: (() -> Void)? = nil
     ) {
         self.session = session
         self.title = title
         self.circleID = circleID
         self.onClose = onClose
         self.onDone = onDone
+        self.onMore = onMore
         _questions = State(initialValue: questions)
     }
 
@@ -54,35 +62,66 @@ struct LessonQuizView: View {
             if questions.isEmpty {
                 empty
             } else if finished {
-                score
+                QuizScoreView(
+                    right: right,
+                    total: questions.count,
+                    tone: tone,
+                    doneTitle: onDone == nil
+                        ? L10n.t("lesson.quiz.finish", locale: .resolved())
+                        : L10n.t("lesson.circle.next", locale: .resolved()),
+                    onDone: { if let onDone { onDone() } else { onClose() } },
+                    onMore: onMore
+                )
+                .transition(.scale(scale: 0.92).combined(with: .opacity))
             } else {
                 ScrollView {
-                    QuestionCard(question: questions[index], tone: tone, answered: answer) { choice in
-                        record(choice)
+                    VStack(alignment: .leading, spacing: 14) {
+                        if streak >= 3 {
+                            StreakBadge(count: streak, tone: tone)
+                                .transition(.scale.combined(with: .opacity))
+                        }
+                        QuestionCard(
+                            question: questions[index],
+                            tone: tone,
+                            answered: answer,
+                            shuffleSeed: seed &+ UInt64(index),
+                            showsFeedback: false
+                        ) { result in
+                            record(result)
+                        }
                     }
                     .id(index)
                     .padding(.horizontal, MicaboSpacing.screen)
-                    .padding(.vertical, 16)
+                    .padding(.top, 16)
+                    .padding(.bottom, 200)
                     .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)).combined(with: .opacity))
                 }
-                Button(L10n.t("lesson.quiz.continue", locale: .resolved()), action: next)
-                    .buttonStyle(LessonPrimaryButtonStyle(enabled: answer != nil))
-                    .disabled(answer == nil)
-                    .padding(.horizontal, MicaboSpacing.screen)
-                    .padding(.bottom, 12)
+                .scrollIndicators(.hidden)
             }
         }
+        .overlay(alignment: .bottom) {
+            if let answer, !finished, questions.indices.contains(index) {
+                AnswerPanel(question: questions[index], right: answer.right, isLast: index + 1 == questions.count, action: next)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .animation(.spring(duration: 0.4, bounce: 0.2), value: answer)
         .background(MicaboColor.canvas.ignoresSafeArea())
         .lessonClock(session, activity: circleID == nil ? .quiz : nil)
     }
 
-    private func record(_ choice: Int) {
-        answer = choice
+    private func record(_ result: QuizAnswer) {
+        answer = result
         let question = questions[index]
-        let isRight = choice == question.answer
-        if isRight { right += 1 }
-        isRight ? Haptics.success() : Haptics.warning()
-        session.answered(question, right: isRight, in: modelContext)
+        if result.right {
+            right += 1
+            streak += 1
+            Haptics.success()
+        } else {
+            streak = 0
+            Haptics.warning()
+        }
+        session.answered(question, right: result.right, in: modelContext)
     }
 
     private func next() {
@@ -96,44 +135,8 @@ struct LessonQuizView: View {
             if let circleID {
                 session.recordQuiz(circleID, right: right, total: questions.count, in: modelContext)
             }
-            withAnimation(.spring(duration: 0.4)) { finished = true }
+            withAnimation(.spring(duration: 0.5)) { finished = true }
         }
-    }
-
-    private var score: some View {
-        let ratio = Double(right) / Double(max(1, questions.count))
-        return VStack(spacing: 18) {
-            Spacer()
-            MikaMascot(mood: ratio >= 0.8 ? .celebrate : ratio >= 0.5 ? .happy : .think, size: 170)
-            Text("\(right) / \(questions.count)")
-                .font(MicaboFont.number(56))
-                .foregroundStyle(tone.ink)
-                .monospacedDigit()
-            Text(ratio >= 0.8
-                ? L10n.t("lesson.quiz.great", locale: .resolved())
-                : ratio >= 0.5
-                ? L10n.t("lesson.quiz.good", locale: .resolved())
-                : L10n.t("lesson.quiz.keepGoing", locale: .resolved()))
-                .font(MicaboFont.subtitle)
-                .foregroundStyle(MicaboColor.ink)
-                .multilineTextAlignment(.center)
-            if right < questions.count {
-                Text(L10n.t("lesson.quiz.missedBecomeCards", locale: .resolved()))
-                    .font(MicaboFont.ui(15, weight: .medium))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .multilineTextAlignment(.center)
-            }
-            Spacer()
-            Button(onDone == nil
-                ? L10n.t("lesson.quiz.finish", locale: .resolved())
-                : L10n.t("lesson.circle.next", locale: .resolved())) {
-                if let onDone { onDone() } else { onClose() }
-            }
-            .buttonStyle(LessonPrimaryButtonStyle())
-        }
-        .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.bottom, 12)
-        .onAppear { if ratio >= 0.8 { Haptics.burst(count: 3, over: 0.4) } }
     }
 
     private var empty: some View {
@@ -154,6 +157,171 @@ struct LessonQuizView: View {
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.bottom, 12)
+    }
+}
+
+/// **La réponse, dans un panneau qui monte du bas** : vert et « Bien joué ! », ou rouge et
+/// « Pas tout à fait », la phrase qui explique, et « Continuer » dans la même couleur.
+struct AnswerPanel: View {
+    let question: QuizQuestion
+    let right: Bool
+    let isLast: Bool
+    let action: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 12) {
+                Image(systemName: right ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    .font(.system(size: 30, weight: .bold))
+                    .foregroundStyle(right ? MicaboColor.correct : MicaboColor.wrong)
+                    .symbolEffect(.bounce, value: right)
+                Text(right
+                    ? L10n.t("lesson.question.right", locale: .resolved())
+                    : L10n.t("lesson.question.wrong", locale: .resolved()))
+                    .font(MicaboFont.ui(21, weight: .heavy))
+                    .foregroundStyle(right ? MicaboColor.correctInk : MicaboColor.wrongInk)
+                Spacer(minLength: 0)
+                MikaMascot(mood: right ? .happy : .sad, size: 52)
+            }
+            if !right, question.kind == .order || question.kind == .match || question.kind == .gap {
+                Text(question.answerText)
+                    .font(MicaboFont.ui(16, weight: .bold))
+                    .foregroundStyle(MicaboColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if !question.why.isEmpty {
+                Text(question.why)
+                    .font(MicaboFont.ui(16, weight: .medium))
+                    .foregroundStyle(MicaboColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Button(isLast
+                ? L10n.t("lesson.quiz.seeScore", locale: .resolved())
+                : L10n.t("lesson.quiz.continue", locale: .resolved()), action: action)
+                .buttonStyle(AnswerButtonStyle(color: right ? MicaboColor.correct : MicaboColor.wrong))
+        }
+        .padding(.horizontal, MicaboSpacing.screen)
+        .padding(.top, 20)
+        .padding(.bottom, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            (right ? MicaboColor.correctSoft : MicaboColor.wrongSoft)
+                .ignoresSafeArea(edges: .bottom)
+                .overlay(alignment: .top) {
+                    Rectangle().fill((right ? MicaboColor.correct : MicaboColor.wrong).opacity(0.35)).frame(height: 2)
+                }
+        }
+    }
+}
+
+/// Le bouton du panneau de réponse : plein, dans la couleur de la réponse, avec son relief.
+struct AnswerButtonStyle: ButtonStyle {
+    let color: Color
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(MicaboFont.ui(18, weight: .heavy))
+            .foregroundStyle(MicaboColor.onInk)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(color, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(color.opacity(0.6))
+                    .offset(y: configuration.isPressed ? 0 : 4)
+            )
+            .offset(y: configuration.isPressed ? 3 : 0)
+            .animation(.spring(duration: 0.18), value: configuration.isPressed)
+    }
+}
+
+/// « Série de 4 » : des bonnes réponses d'affilée.
+struct StreakBadge: View {
+    let count: Int
+    let tone: LessonTone
+
+    var body: some View {
+        Label(L10n.t("lesson.quiz.streak", locale: .resolved(), vars: ["n": String(count)]), systemImage: "flame.fill")
+            .font(MicaboFont.ui(14, weight: .heavy))
+            .foregroundStyle(LessonTone.yellow.ink)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(LessonTone.yellow.pale, in: Capsule())
+            .contentTransition(.numericText(value: Double(count)))
+            .animation(.spring(duration: 0.3), value: count)
+    }
+}
+
+/// **Le score** : un anneau qui se remplit jusqu'au résultat, le compte qui monte, Mika qui
+/// réagit, et ce qui vient ensuite.
+struct QuizScoreView: View {
+    let right: Int
+    let total: Int
+    let tone: LessonTone
+    let doneTitle: String
+    let onDone: () -> Void
+    var onMore: (() -> Void)?
+
+    @State private var shown: Double = 0
+
+    private var ratio: Double { Double(right) / Double(max(1, total)) }
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Spacer()
+            MikaMascot(mood: ratio >= 0.8 ? .celebrate : ratio >= 0.5 ? .happy : .think, size: 130)
+            ZStack {
+                Circle().stroke(MicaboColor.track, lineWidth: 14)
+                Circle()
+                    .trim(from: 0, to: shown)
+                    .stroke(ratio >= 0.5 ? tone.vivid : MicaboColor.wrong, style: StrokeStyle(lineWidth: 14, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                VStack(spacing: 2) {
+                    Text("\(Int((shown * Double(total)).rounded())) / \(total)")
+                        .font(MicaboFont.number(40))
+                        .foregroundStyle(tone.ink)
+                        .monospacedDigit()
+                        .contentTransition(.numericText(value: shown))
+                    Text("\(Int((shown * 100).rounded())) %")
+                        .font(MicaboFont.ui(16, weight: .bold))
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                        .monospacedDigit()
+                        .contentTransition(.numericText(value: shown))
+                }
+            }
+            .frame(width: 170, height: 170)
+            Text(ratio >= 0.8
+                ? L10n.t("lesson.quiz.great", locale: .resolved())
+                : ratio >= 0.5
+                ? L10n.t("lesson.quiz.good", locale: .resolved())
+                : L10n.t("lesson.quiz.keepGoing", locale: .resolved()))
+                .font(MicaboFont.subtitle)
+                .foregroundStyle(MicaboColor.ink)
+                .multilineTextAlignment(.center)
+            if right < total {
+                Text(L10n.t("lesson.quiz.missedBecomeCards", locale: .resolved()))
+                    .font(MicaboFont.ui(15, weight: .medium))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .multilineTextAlignment(.center)
+            }
+            Spacer()
+            VStack(spacing: 12) {
+                Button(doneTitle, action: onDone)
+                    .buttonStyle(LessonPrimaryButtonStyle())
+                if let onMore {
+                    Button(action: onMore) {
+                        Label(L10n.t("lesson.practice.more", locale: .resolved()), systemImage: "sparkles")
+                    }
+                    .buttonStyle(MicaboSecondaryButtonStyle())
+                }
+            }
+        }
+        .padding(.horizontal, MicaboSpacing.screen)
+        .padding(.bottom, 12)
+        .onAppear {
+            withAnimation(.easeOut(duration: 1.1).delay(0.2)) { shown = ratio }
+            if ratio >= 0.8 { Haptics.burst(count: 3, over: 0.4) }
+        }
     }
 }
 

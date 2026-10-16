@@ -8,11 +8,12 @@ final class PathLayoutTests: XCTestCase {
         (0..<count).map { PathTheme(title: "Thème \($0 + 1)", icon: .book) }
     }
 
-    /// Le tableau du PDF : 4 thèmes font 9 cercles, 6 en font 12, 12 en font 19.
-    func testTheCircleCountsOfTheBrief() {
-        XCTAssertEqual(PathLayout.circles(themes: themes(4)).count, 9)
-        XCTAssertEqual(PathLayout.circles(themes: themes(6)).count, 12)
-        XCTAssertEqual(PathLayout.circles(themes: themes(12)).count, 19)
+    /// 4 thèmes font 7 étapes, 6 en font 10, 12 en font 17 : Intro, les thèmes, un Checkpoint
+    /// par palier sauf le dernier, le Quiz final.
+    func testTheStepCounts() {
+        XCTAssertEqual(PathLayout.circles(themes: themes(4)).count, 7)
+        XCTAssertEqual(PathLayout.circles(themes: themes(6)).count, 10)
+        XCTAssertEqual(PathLayout.circles(themes: themes(12)).count, 17)
     }
 
     func testGroupsOfTwoThenThreeBeyondEight() {
@@ -37,28 +38,46 @@ final class PathLayoutTests: XCTestCase {
         XCTAssertEqual(PathLayout.groups(themeCount: 0), [])
     }
 
-    func testAVeryShortLessonHasASingleQuiz() {
+    func testAVeryShortLessonGoesStraightToTheFinalQuiz() {
         let circles = PathLayout.circles(themes: themes(4), singleQuiz: true)
-        XCTAssertEqual(circles.map(\.id), [
-            "intro", "notes:0", "notes:1", "notes:2", "notes:3", "quiz:0", "flashcards", "conclusion"
-        ])
+        XCTAssertEqual(circles.map(\.id), ["intro", "notes:0", "notes:1", "notes:2", "notes:3", "final"])
     }
 
-    func testThePathReadsLikeTheBrief() {
+    func testThePathReadsLikeTheReference() {
         let steps = PathLayout.steps(themes: themes(4), groupNames: ["Les causes", "Les suites"])
-        XCTAssertEqual(steps.map(\.id), [
-            "intro", "palier:1", "notes:0", "notes:1", "quiz:0",
-            "palier:2", "notes:2", "notes:3", "quiz:1", "flashcards", "conclusion"
-        ])
-        XCTAssertEqual(steps[1], .palier(number: 1, name: "Les causes"))
+        XCTAssertEqual(steps.map(\.id), ["intro", "notes:0", "notes:1", "quiz:0", "notes:2", "notes:3", "final"])
         let circles = steps.compactMap(\.circle)
-        XCTAssertEqual(circles.map(\.number), Array(1...9), "« CERCLE 4 » se compte sur le chemin")
+        XCTAssertEqual(circles.map(\.number), Array(1...7), "« ÉTAPE 4 » se compte sur le chemin")
         XCTAssertEqual(circles[1].title, "Thème 1")
+        XCTAssertEqual(circles[3].subtitle, "Les causes", "le Checkpoint dit le palier qu'il conclut")
+        XCTAssertTrue(circles[3].isMilestone)
+        XCTAssertFalse(circles[1].isMilestone)
         if case .quiz(_, let covered) = circles[3].kind {
-            XCTAssertEqual(covered, [0, 1], "le quiz porte sur les thèmes qui le précèdent")
+            XCTAssertEqual(covered, [0, 1], "le Checkpoint porte sur les thèmes qui le précèdent")
         } else {
-            XCTFail("le quatrième cercle est le premier quiz")
+            XCTFail("la quatrième étape est le premier Checkpoint")
         }
+        if case .final(let covered) = circles[6].kind {
+            XCTAssertEqual(covered, [0, 1, 2, 3], "le Quiz final reprend toute la leçon")
+        } else {
+            XCTFail("la dernière étape est le Quiz final")
+        }
+    }
+
+    /// Une progression d'avant le Quiz final ne perd pas sa fin.
+    func testAnOldProgressKeepsItsEnd() {
+        let circles = PathLayout.circles(themes: themes(4))
+        XCTAssertTrue(PathLayout.migrated(done: ["conclusion"], circles: circles, finished: false).contains("final"))
+        XCTAssertTrue(PathLayout.migrated(done: ["quiz:1"], circles: circles, finished: false).contains("final"), "le quiz du dernier palier valait la fin")
+        XCTAssertTrue(PathLayout.migrated(done: [], circles: circles, finished: true).contains("final"))
+        XCTAssertFalse(PathLayout.migrated(done: ["quiz:0"], circles: circles, finished: false).contains("final"))
+    }
+
+    func testEveryStepHasADifferentSymbol() {
+        let themes = (0..<12).map { PathTheme(title: "T\($0)", icon: .book, symbol: PathSymbol.unique(Array(repeating: "flag", count: 12))[$0]) }
+        let circles = PathLayout.circles(themes: themes)
+        let symbols = circles.map(\.symbol)
+        XCTAssertEqual(Set(symbols).count, symbols.count, "jamais deux ronds pareils")
     }
 
     /// On ne saute pas : seul le premier cercle non coché est « en cours ».
@@ -227,9 +246,12 @@ final class CourseLessonTests: XCTestCase {
             groups: [.init(name: "Un", themes: [0, 1]), .init(name: "Deux", themes: [2, 3])]
         ))
         let steps = course.pathSteps()
-        XCTAssertEqual(steps.count, 11)
-        XCTAssertEqual(steps.compactMap(\.circle)[1].icon, .lightbulb)
-        XCTAssertEqual(steps[5], .palier(number: 2, name: "Deux"))
+        XCTAssertEqual(steps.count, 7)
+        let circles = steps.compactMap(\.circle)
+        XCTAssertEqual(circles[1].icon, .lightbulb)
+        XCTAssertEqual(circles[1].symbol, "lightbulb", "une leçon d'avant les pictogrammes en reçoit d'après ses icônes")
+        XCTAssertNotEqual(circles[2].symbol, circles[1].symbol)
+        XCTAssertEqual(circles[3].subtitle, "Un")
     }
 }
 
