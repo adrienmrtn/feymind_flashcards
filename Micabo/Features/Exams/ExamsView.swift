@@ -247,7 +247,7 @@ struct ExamHero: View {
             }
 
             HStack(alignment: .lastTextBaseline, spacing: 10) {
-                Text(days == 0 ? L10n.t("app.exams.countdown.today", locale: .resolved()) : "J-\(days)")
+                Text(days == 0 ? L10n.t("app.exams.countdown.today", locale: .resolved()).capitalizedFirstLetter : "\(days)")
                     .font(MicaboFont.number(days == 0 ? 44 : 64))
                     .foregroundStyle(MicaboColor.onInk)
                     .contentTransition(.numericText())
