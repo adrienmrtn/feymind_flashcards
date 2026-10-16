@@ -57,10 +57,14 @@ struct PaywallOfferView: View {
                         .onboardingAppear(index: 0)
                 }
 
-                Image(systemName: "graduationcap.fill")
-                    .font(.system(size: 38, weight: .medium))
-                    .foregroundStyle(OnboardingPalette.ink)
-                    .onboardingAppear(index: 1)
+                ZStack(alignment: .topTrailing) {
+                    MikaMascot(mood: .happy, size: 130, reactsToTap: true)
+                    MicaboIconView(icon: .crown, size: 44)
+                        .rotationEffect(.degrees(14))
+                        .offset(x: 18, y: -10)
+                }
+                .accessibilityHidden(true)
+                .onboardingAppear(index: 1)
 
                 PaywallPitch.headline(for: plan, locale: i18n.locale)
                     .font(OnboardingPalette.title(32))

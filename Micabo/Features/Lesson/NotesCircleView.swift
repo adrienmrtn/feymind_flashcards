@@ -26,7 +26,7 @@ struct NotesCircleView: View {
     private var pages: [NotesPage] { NotesPage.pages(for: chapter, hasQuestion: question != nil) }
 
     var body: some View {
-        let pages = pages
+        let pages = self.pages
         let current = pages.indices.contains(page) ? pages[page] : .question
         VStack(spacing: 0) {
             NotesSegments(count: pages.count, page: page, tone: tone, onClose: leave, onBack: page > 0 ? back : nil)
@@ -376,39 +376,53 @@ struct ThemeBody: View {
     }
 }
 
-/// **Toutes les notes de la leçon d'un coup**, pour relire avant un contrôle : les mêmes blocs
-/// que les cercles Notes, thème après thème.
+/// **Les notes entières du cours**, sur un seul document : la leçon, son sommaire (un appui
+/// mène au thème), puis chaque thème, numéroté, avec ses notes complètes. Pour relire avant
+/// un contrôle, d'une traite.
 struct LessonNotesReader: View {
     let session: LessonSession
 
     @Environment(\.dismiss) private var dismiss
 
+    private var course: Course { session.course }
+    private var tone: LessonTone { course.tone }
+
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 36) {
-                    ForEach(session.course.orderedChapters) { chapter in
-                        VStack(alignment: .leading, spacing: 18) {
-                            ThemeHeader(chapter: chapter)
-                            if chapter.status == .pending {
-                                HStack(spacing: 10) {
-                                    ProgressView()
-                                    Text(L10n.t("lesson.notes.writing", locale: .resolved()))
-                                        .font(MicaboFont.ui(15, weight: .bold))
-                                        .foregroundStyle(MicaboColor.inkSecondary)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 32) {
+                        cover
+                        summary(proxy)
+                        ForEach(Array(course.orderedChapters.enumerated()), id: \.element.id) { index, chapter in
+                            section(chapter, number: index + 1)
+                                .id(chapter.id)
+                        }
+                        if let takeaways = session.plan?.takeaways, !takeaways.isEmpty {
+                            ToneBox(label: L10n.t("lesson.conclusion.title", locale: .resolved()), tone: tone) {
+                                VStack(alignment: .leading, spacing: 10) {
+                                    ForEach(Array(takeaways.enumerated()), id: \.offset) { _, line in
+                                        HStack(alignment: .firstTextBaseline, spacing: 10) {
+                                            Image(systemName: "checkmark")
+                                                .font(.system(size: 13, weight: .black))
+                                                .foregroundStyle(tone.ink)
+                                            KeywordText(line)
+                                                .font(MicaboFont.notes)
+                                                .foregroundStyle(MicaboColor.ink)
+                                        }
+                                    }
                                 }
-                            } else {
-                                ThemeBody(chapter: chapter, tone: session.course.tone)
                             }
                         }
                     }
+                    .padding(.horizontal, MicaboSpacing.screen)
+                    .padding(.top, 8)
+                    .padding(.bottom, 40)
                 }
-                .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.vertical, 20)
             }
             .background(MicaboColor.canvas.ignoresSafeArea())
             .lessonClock(session, activity: .notes)
-            .navigationTitle(L10n.t("lesson.nav.notes", locale: .resolved()))
+            .navigationTitle(L10n.t("lesson.notes.full", locale: .resolved()))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -420,6 +434,93 @@ struct LessonNotesReader: View {
                     .accessibilityLabel(Text(L10n.t("lesson.circle.close", locale: .resolved())))
                 }
             }
+        }
+    }
+
+    private var cover: some View {
+        HStack(spacing: 16) {
+            MicaboIconView(icon: course.icon, size: 72)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(course.title)
+                    .font(MicaboFont.display(26))
+                    .foregroundStyle(MicaboColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let subject = course.subject?.nilIfBlank {
+                    Text(subject)
+                        .font(MicaboFont.ui(15, weight: .semibold))
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                }
+            }
+        }
+    }
+
+    private func summary(_ proxy: ScrollViewProxy) -> some View {
+        let themes = course.pathThemes(plan: session.plan)
+        return VStack(alignment: .leading, spacing: 4) {
+            Text(L10n.t("lesson.notes.summary", locale: .resolved()))
+                .font(MicaboFont.small)
+                .tracking(MicaboTracking.caps)
+                .textCase(.uppercase)
+                .foregroundStyle(MicaboColor.inkSecondary)
+                .padding(.bottom, 6)
+            ForEach(Array(course.orderedChapters.enumerated()), id: \.element.id) { index, chapter in
+                Button {
+                    Haptics.light()
+                    withAnimation(.easeInOut(duration: 0.5)) { proxy.scrollTo(chapter.id, anchor: .top) }
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: PathSymbol.resolved(themes.indices.contains(index) ? themes[index].symbol : PathSymbol.fallback))
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(tone.ink)
+                            .frame(width: 34, height: 34)
+                            .background(tone.pale, in: Circle())
+                        Text("\(index + 1). \(chapter.title)")
+                            .font(MicaboFont.ui(17, weight: .bold))
+                            .foregroundStyle(MicaboColor.ink)
+                            .multilineTextAlignment(.leading)
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(MicaboColor.inkTertiary)
+                    }
+                    .padding(.vertical, 6)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(MicaboPressableButtonStyle())
+            }
+        }
+        .padding(16)
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .micaboElevation(.row)
+    }
+
+    private func section(_ chapter: Chapter, number: Int) -> some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .center, spacing: 14) {
+                MicaboIconView(icon: chapter.icon, size: 48)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(L10n.t("lesson.notes.themeNumber", locale: .resolved(), vars: ["n": String(number)]))
+                        .font(MicaboFont.ui(13, weight: .heavy))
+                        .tracking(1.2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(tone.ink)
+                    Text(chapter.title)
+                        .font(MicaboFont.title)
+                        .foregroundStyle(MicaboColor.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            if chapter.status == .pending {
+                HStack(spacing: 10) {
+                    ProgressView()
+                    Text(L10n.t("lesson.notes.writing", locale: .resolved()))
+                        .font(MicaboFont.ui(15, weight: .bold))
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                }
+            } else {
+                ThemeBody(chapter: chapter, tone: tone)
+            }
+            Rectangle().fill(MicaboColor.hairline).frame(height: 1).padding(.top, 8)
         }
     }
 }

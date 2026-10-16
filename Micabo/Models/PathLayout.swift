@@ -76,7 +76,7 @@ enum PathLayout {
             steps.append(.circle(PathCircle(kind: circle, number: number, title: title, icon: icon, symbol: symbol, subtitle: subtitle)))
         }
 
-        add(.intro, title: L10n.t("lesson.circle.intro", locale: .resolved()), icon: .star, symbol: "sparkles")
+        add(.intro, title: L10n.t("lesson.circle.intro", locale: .resolved()), icon: .star, symbol: "play.fill")
         let groups = groups(themeCount: themes.count, singleQuiz: singleQuiz)
         for (index, group) in groups.enumerated() {
             for theme in group {
@@ -88,7 +88,7 @@ enum PathLayout {
                     .quiz(group: index, themes: group),
                     title: L10n.t("lesson.circle.checkpoint", locale: .resolved()),
                     icon: .quiz,
-                    symbol: "rosette",
+                    symbol: checkpointSymbols[index % checkpointSymbols.count],
                     subtitle: name
                 )
             }
@@ -101,6 +101,10 @@ enum PathLayout {
         )
         return steps
     }
+
+    /// Les pictogrammes des Checkpoints, un par palier : hors du catalogue des thèmes, pour
+    /// qu'aucun rond du chemin n'en répète un autre.
+    static let checkpointSymbols = ["rosette", "medal", "flag.checkered", "seal", "shield.checkered", "star.circle"]
 
     /// **Une progression d'avant le Quiz final**, relue sans rien perdre : la Conclusion ou
     /// le quiz du dernier palier valaient la fin de la leçon.

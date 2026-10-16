@@ -2,47 +2,38 @@ import SwiftUI
 
 // MARK: - La charte du parcours
 
-/// **Les couleurs du parcours d'accueil, et elles ne sont que quatre.**
+/// **Les couleurs du parcours d'accueil : celles de l'app.**
 ///
-/// Du blanc, de l'encre, un gris de carte, et un violet. Le violet ne sert qu'à trois
-/// choses : ce qui est choisi, un chiffre mis en avant, et le dégradé du bouton d'achat. Le
-/// vert et le rouge n'existent que dans les graphes, où ils disent « mieux » et « moins
-/// bien » — et le vert, une fois de plus, sur le « gratuit » du paywall. **Le dégradé de Mika** — violet, rose, orange — n'apparaît qu'à trois endroits :
-/// le blob de Mika, le sous-titre de son chargement, et le chiffre des élèves aidés.
-///
-/// C'est la charte des apps qui convertissent (Cal AI, Coconote, RIZZ) : un fond blanc pur,
-/// des titres énormes en gras, un rond d'encre pour avancer, un seul accent. Pas de crème,
-/// pas de pastel, pas de personnage. Elle est **propre au parcours** : le reste de l'app
-/// garde ses jetons (`MicaboColor`) le temps qu'on décide de l'y faire passer.
+/// Le parcours avait sa charte (blanc pur, encre, violet électrique) ; il prend maintenant
+/// les jetons de l'app (`MicaboColor`) : l'ivoire du papier, des cartes blanches, l'encre, le
+/// bleu de l'accent. Du parcours à la première leçon, on reste dans le même monde. Les noms
+/// restent ceux d'avant pour ne rien casser des 35 écrans qui les lisent : `white` est le
+/// fond de page, `card` une carte, `accent` le bleu.
 enum OnboardingPalette {
-    static let white = Color(hex: 0xFFFFFF)
-    static let ink = Color(hex: 0x0A0A0A)
-    /// Le gris des cartes de réponse et des blocs.
-    static let card = Color(hex: 0xF4F4F6)
-    /// Un cran plus sombre : le bouton éteint, la piste de la jauge.
-    static let cardStrong = Color(hex: 0xE5E5EA)
-    /// Le violet électrique, seul accent.
-    static let accent = Color(hex: 0x6D28FF)
-    /// Le même violet, dilué : le fond d'un chiffre mis en avant.
-    static let accentWash = Color(hex: 0xF0EAFF)
+    /// Le fond des pages : l'ivoire de l'app.
+    static let white = MicaboColor.canvas
+    static let ink = MicaboColor.ink
+    /// Une carte de réponse, un bloc : blanche, sur l'ivoire.
+    static let card = MicaboColor.surface
+    /// Un cran plus marqué : le bouton éteint, la piste de la jauge.
+    static let cardStrong = MicaboColor.track
+    /// Le bleu de l'app, seul accent.
+    static let accent = MicaboColor.accent
+    /// Le même bleu, dilué : un choix fait, un chiffre mis en avant.
+    static let accentWash = MicaboColor.accentSoft
     /// Le gris du sous-titre et des légendes.
-    static let gray = Color(hex: 0x6B6B72)
-    static let grayLight = Color(hex: 0xA1A1AA)
-    /// Le vert et le rouge des graphes.
-    static let chartGood = Color(hex: 0x16A34A)
-    static let chartBad = Color(hex: 0xEF4444)
-    /// **Le même vert, pour ce qui est gratuit** — et seulement là : « Essaie 3 jours
-    /// gratuitement » sur le paywall. Le vert y dit « rien à payer », comme il dit « mieux »
-    /// sur un graphe.
+    static let gray = MicaboColor.inkSecondary
+    static let grayLight = MicaboColor.inkTertiary
+    /// Le vert et le rouge des graphes, ceux des réponses dans l'app.
+    static let chartGood = MicaboColor.correct
+    static let chartBad = MicaboColor.wrong
+    /// **Le même vert, pour ce qui est gratuit** : « Essaie 3 jours gratuitement ».
     static let free = chartGood
     /// L'or des étoiles.
     static let star = Color(hex: 0xF5B942)
 
-    /// **Le dégradé de Mika** : le violet de l'accent, un rose, un orange. Trois emplois,
-    /// pas un de plus.
-    static let mikaGradient: [Color] = [
-        Color(hex: 0x6D28FF), Color(hex: 0xD946A6), Color(hex: 0xF97316),
-    ]
+    /// Le dégradé des mots mis en avant : le bleu de l'accent, le violet des mots-clés.
+    static let mikaGradient: [Color] = [MicaboColor.accent, MicaboColor.keyword, Color(hex: 0xD946A6)]
 
     // MARK: Les tailles de texte
 
@@ -90,9 +81,9 @@ enum OnboardingSurface {
         isDark ? OnboardingPalette.white.opacity(0.7) : OnboardingPalette.accent
     }
 
-    /// La jauge est noire sur gris clair : fine, et elle ne demande pas qu'on la regarde.
+    /// La jauge est bleue, comme les barres de progression de l'app.
     var progressTint: Color {
-        isDark ? OnboardingPalette.white : OnboardingPalette.ink
+        isDark ? OnboardingPalette.white : MicaboColor.accent
     }
 
     var progressTrack: Color {
@@ -111,7 +102,7 @@ enum OnboardingSurface {
     /// Éteint, il est gris clair et garde son texte blanc : c'est le bouton de Cal AI, et il
     /// se lit comme « pas encore », pas comme « cassé ».
     var disabledButtonTint: Color {
-        isDark ? OnboardingPalette.white.opacity(0.3) : Color(hex: 0xD1D1D6)
+        isDark ? OnboardingPalette.white.opacity(0.3) : MicaboColor.inkTertiary.opacity(0.45)
     }
 }
 
@@ -235,6 +226,11 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         self.footer = footer
     }
 
+    /// Mika à côté du titre : sur les écrans de questions, ni centrés ni sombres.
+    private var showsMika: Bool {
+        !centered && !surface.isDark && titleSize >= 26
+    }
+
     /// La place de la barre du haut : seulement dans le parcours, et sur les écrans qui la
     /// montrent. L'étape est celle de la page, pas celle du modèle : pendant un glissement,
     /// la page qui part garde la sienne.
@@ -306,13 +302,22 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                 }
 
                 // Le titre passe par le texte à chiffre coloré : un passage entre deux
-                // astérisques doubles se peint en violet, ici comme sur les preuves.
-                OnboardingAccentText(
-                    template: title,
-                    size: titleSize,
-                    alignment: centered ? .center : .leading,
-                    color: surface.title
-                )
+                // astérisques doubles se peint en couleur, ici comme sur les preuves. Mika
+                // l'accompagne sur les écrans de questions, comme dans l'app.
+                HStack(alignment: .top, spacing: 10) {
+                    OnboardingAccentText(
+                        template: title,
+                        size: titleSize,
+                        alignment: centered ? .center : .leading,
+                        color: surface.title
+                    )
+                    if showsMika {
+                        Spacer(minLength: 0)
+                        MikaMascot(mood: .idle, size: 64, reactsToTap: true)
+                            .padding(.top, -6)
+                            .accessibilityHidden(true)
+                    }
+                }
                 .onboardingAppear(index: 1)
 
                 if let subtitle {
@@ -462,16 +467,16 @@ struct OnboardingContinueButton: View {
                 }
 
                 Text(isLoading ? (loadingTitle ?? i18n.t("ios.instant")) : (title ?? i18n.t("common.continue")))
-                    .font(OnboardingPalette.button)
+                    .font(MicaboFont.ui(18, weight: .heavy))
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .minimumScaleFactor(0.82)
             }
             .foregroundStyle(surface.buttonForeground)
             .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background(isEnabled ? surface.buttonTint : surface.disabledButtonTint, in: Capsule())
-            .contentShape(Capsule())
+            .frame(height: 58)
+            .background(isEnabled ? surface.buttonTint : surface.disabledButtonTint, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .medium))
         .disabled(!isEnabled || isLoading)
@@ -503,39 +508,38 @@ struct OnboardingChoiceRow: View {
                 if let emoji {
                     Text(emoji)
                         .font(.system(size: 22))
-                        .frame(width: 28)
+                        .frame(width: 42, height: 42)
+                        .background(isSelected ? MicaboColor.surface : MicaboColor.surfaceSunken, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(OnboardingPalette.option)
-                        .foregroundStyle(isSelected ? OnboardingPalette.white : OnboardingPalette.ink)
+                        .font(MicaboFont.ui(17, weight: .bold))
+                        .foregroundStyle(isSelected ? MicaboColor.accent : OnboardingPalette.ink)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
 
                     if let subtitle {
                         Text(subtitle)
-                            .font(OnboardingPalette.subtitle)
-                            .foregroundStyle(isSelected ? OnboardingPalette.white.opacity(0.7) : OnboardingPalette.gray)
+                            .font(MicaboFont.ui(13, weight: .medium))
+                            .foregroundStyle(OnboardingPalette.gray)
                             .multilineTextAlignment(.leading)
                     }
                 }
 
                 Spacer(minLength: MicaboSpacing.xs)
+
+                OnboardingCheck(isOn: isSelected)
             }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 16)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
             .frame(
                 maxWidth: .infinity,
                 minHeight: Self.minHeight,
                 maxHeight: fillsHeight ? CGFloat.infinity : nil,
                 alignment: .leading
             )
-            .background(
-                isSelected ? OnboardingPalette.ink : OnboardingPalette.card,
-                in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-            )
-            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .onboardingCard(selected: isSelected, radius: 18)
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
         .animation(OnboardingMotion.select, value: isSelected)
@@ -584,19 +588,19 @@ struct OnboardingChoiceTile: View {
                 } else if let systemImage {
                     Image(systemName: systemImage)
                         .font(.system(size: 22, weight: .medium))
-                        .foregroundStyle(isSelected ? OnboardingPalette.white : OnboardingPalette.gray)
+                        .foregroundStyle(isSelected ? MicaboColor.accent : OnboardingPalette.gray)
                 }
 
                 Text(title)
-                    .font(OnboardingPalette.option)
-                    .foregroundStyle(isSelected ? OnboardingPalette.white : OnboardingPalette.ink)
+                    .font(MicaboFont.ui(17, weight: .bold))
+                    .foregroundStyle(isSelected ? MicaboColor.accent : OnboardingPalette.ink)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
 
                 if let subtitle {
                     Text(subtitle)
                         .font(OnboardingPalette.subtitle)
-                        .foregroundStyle(isSelected ? OnboardingPalette.white.opacity(0.7) : OnboardingPalette.gray)
+                        .foregroundStyle(OnboardingPalette.gray)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -605,10 +609,7 @@ struct OnboardingChoiceTile: View {
             .padding(.horizontal, 14)
             .frame(maxWidth: .infinity)
             .frame(minHeight: 132)
-            .background(
-                isSelected ? OnboardingPalette.ink : OnboardingPalette.card,
-                in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-            )
+            .onboardingCard(selected: isSelected, radius: 20)
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
         .animation(OnboardingMotion.select, value: isSelected)
@@ -631,12 +632,13 @@ struct OnboardingChoiceChip: View {
                 }
 
                 Text(title)
-                    .font(MicaboFont.ui(15, weight: .medium))
-                    .foregroundStyle(isSelected ? OnboardingPalette.white : OnboardingPalette.ink)
+                    .font(MicaboFont.ui(15, weight: .bold))
+                    .foregroundStyle(isSelected ? MicaboColor.accent : OnboardingPalette.ink)
             }
             .padding(.vertical, 12)
             .padding(.horizontal, 18)
-            .background(isSelected ? OnboardingPalette.ink : OnboardingPalette.card, in: Capsule())
+            .background(isSelected ? MicaboColor.accentSoft : MicaboColor.surface, in: Capsule())
+            .overlay(Capsule().strokeBorder(isSelected ? MicaboColor.accent : MicaboColor.stroke, lineWidth: isSelected ? 2 : 1.5))
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
         .animation(OnboardingMotion.select, value: isSelected)
@@ -752,5 +754,50 @@ struct OnboardingStars: View {
         }
         .accessibilityElement()
         .accessibilityLabel(i18n.t("ios.starsA11y"))
+    }
+}
+
+// MARK: - Les cartes du parcours, comme celles de l'app
+
+/// La coche ronde d'une réponse : vide, puis pleine de bleu quand on la choisit.
+struct OnboardingCheck: View {
+    let isOn: Bool
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .strokeBorder(isOn ? MicaboColor.accent : MicaboColor.stroke, lineWidth: 2)
+                .background(Circle().fill(isOn ? MicaboColor.accent : .clear))
+            if isOn {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 12, weight: .black))
+                    .foregroundStyle(MicaboColor.onInk)
+                    .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .frame(width: 24, height: 24)
+        .animation(.spring(duration: 0.3, bounce: 0.4), value: isOn)
+    }
+}
+
+private struct OnboardingCardStyle: ViewModifier {
+    let selected: Bool
+    let radius: CGFloat
+
+    func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
+        content
+            .background(selected ? MicaboColor.accentSoft : MicaboColor.surface, in: shape)
+            .overlay(shape.strokeBorder(selected ? MicaboColor.accent : MicaboColor.stroke, lineWidth: selected ? 2 : 1.5))
+            .background(shape.fill(selected ? MicaboColor.accent.opacity(0.35) : MicaboColor.stroke).offset(y: 3))
+            .contentShape(shape)
+    }
+}
+
+extension View {
+    /// Une réponse du parcours : une carte blanche bordée, à relief, bleue quand elle est
+    /// choisie. La même que les réponses des quiz de l'app.
+    func onboardingCard(selected: Bool, radius: CGFloat = 18) -> some View {
+        modifier(OnboardingCardStyle(selected: selected, radius: radius))
     }
 }

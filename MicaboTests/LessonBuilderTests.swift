@@ -161,6 +161,44 @@ final class LessonBuilderTests: XCTestCase {
         XCTAssertEqual(course.cards.count, 16)
     }
 
+    func testNewPracticeQuestionsJoinTheirThemesAndAvoidTheOldOnes() async throws {
+        let context = try makeContext()
+        let service = FakeLessonService()
+        let builder = builder(service)
+        let course = try await builder.create(LessonCreation(topic: "x", source: .topic), in: context)
+        await waitUntilDone(builder, course)
+        let second = course.orderedChapters[1]
+        course.updateProgress { $0.noteMissed("\(second.id.uuidString):2") }
+
+        let fresh = try await builder.practice(course, in: context, count: 8)
+
+        XCTAssertEqual(fresh.count, 8)
+        XCTAssertTrue(fresh.allSatisfy { $0.kind == .truefalse && $0.difficulty == 3 })
+        let request = try XCTUnwrap(service.practiceRequests.first)
+        XCTAssertEqual(request.focus, [1], "les thèmes ratés d'abord")
+        XCTAssertEqual(request.themes.count, 4)
+        XCTAssertTrue(request.themes[0].notes.contains("Idée 0"), "les notes partent à plat")
+        XCTAssertTrue(request.avoid.contains("Q0 ?"), "les questions déjà posées sont à éviter")
+        XCTAssertEqual(course.orderedChapters[0].quiz?.questions.count, 6, "deux nouvelles questions rejoignent le premier thème")
+        XCTAssertTrue(fresh.allSatisfy { $0.id.contains(":p") })
+    }
+
+    func testAnUsedFreePracticeOpensThePaywall() async throws {
+        let context = try makeContext()
+        let service = FakeLessonService()
+        let builder = builder(service)
+        let course = try await builder.create(LessonCreation(topic: "x", source: .topic), in: context)
+        await waitUntilDone(builder, course)
+        service.practiceError = SupabaseFunctionError.server(status: 402, message: "…", code: "pro_required")
+        do {
+            _ = try await builder.practice(course, in: context)
+            XCTFail("le lot aurait dû être refusé")
+        } catch let error as LessonServiceError {
+            XCTAssertEqual(error, .proRequired)
+            XCTAssertTrue(error.opensPaywall)
+        }
+    }
+
     func testTheFreeLimitComesBackAsAPaywallError() async throws {
         let context = try makeContext()
         let service = FakeLessonService()

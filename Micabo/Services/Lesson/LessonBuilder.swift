@@ -333,6 +333,72 @@ final class LessonBuilder {
         }
     }
 
+    // MARK: - De nouvelles questions
+
+    /// **Un lot de nouvelles questions d'entraînement**, écrit par Mika loin de celles déjà
+    /// posées et surtout sur les thèmes ratés. Les questions rejoignent la réserve de leur
+    /// thème : les quiz suivants les tirent aussi. Rend celles du lot, à jouer tout de suite.
+    func practice(_ course: Course, in context: ModelContext, count: Int = 10) async throws -> [QuizQuestion] {
+        let chapters = course.orderedChapters
+        let indexByChapter = Dictionary(uniqueKeysWithValues: chapters.enumerated().map { ($1.id.uuidString, $0) })
+        let progress = course.progress
+        let focus = Array(Set(progress.missed.compactMap { id in
+            indexByChapter[id.split(separator: ":").first.map(String.init) ?? ""]
+        })).sorted()
+        let avoid = chapters.flatMap { $0.quiz?.questions.map(\.prompt) ?? [] }
+        let request = LessonPracticeRequest(
+            lessonID: course.id,
+            lessonTitle: course.title,
+            themes: chapters.map { .init(title: $0.title, notes: Self.flatNotes(of: $0)) },
+            focus: focus,
+            avoid: Array(avoid.suffix(80)),
+            count: count,
+            audience: audience().preparing(Self.examLine(for: course, in: context))
+        )
+        let generated: [GeneratedQuestion]
+        do {
+            generated = try await service.practice(request)
+        } catch {
+            throw LessonServiceError.from(error)
+        }
+
+        let stamp = String(Int(Date().timeIntervalSince1970) % 1_000_000, radix: 36)
+        var added: [QuizQuestion] = []
+        for (number, item) in generated.enumerated() {
+            let index = item.theme ?? 0
+            guard chapters.indices.contains(index) else { continue }
+            let chapter = chapters[index]
+            var quiz = chapter.quiz ?? ThemeQuiz(questions: [])
+            let question = item.question(id: "\(chapter.id.uuidString):p\(stamp)\(number)")
+            guard question.isValid else { continue }
+            quiz.questions.append(question)
+            chapter.setQuiz(quiz)
+            added.append(question)
+        }
+        course.updatedAt = Date()
+        try? context.save()
+        return added
+    }
+
+    /// Les notes d'un thème, mises à plat pour le modèle : l'idée, les blocs, « À retenir ».
+    static func flatNotes(of chapter: Chapter) -> String {
+        guard let notes = chapter.notes else { return "" }
+        var lines = [notes.oneLiner]
+        for block in notes.blocks {
+            switch block {
+            case .subtitle(let text): lines.append("## \(text)")
+            case .paragraph(let text): lines.append(text)
+            case .list(let items): lines.append(contentsOf: items.map { "- \($0)" })
+            case .definition(let term, let text): lines.append("\(term) : \(text)")
+            case .dates(let items): lines.append(contentsOf: items.map { "\($0.date) : \($0.text)" })
+            case .formula(let latex, let caption): lines.append([latex, caption].compactMap { $0 }.joined(separator: " : "))
+            case .example(let text): lines.append("Exemple : \(text)")
+            }
+        }
+        lines.append(contentsOf: notes.takeaways.map { "À retenir : \($0)" })
+        return lines.joined(separator: "\n").replacingOccurrences(of: "**", with: "")
+    }
+
     // MARK: - L'examen visé
 
     /// L'examen, tel que la consigne le reprend : « Examen « La guerre froide », le 2027-06-15 ».

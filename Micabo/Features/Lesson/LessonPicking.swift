@@ -181,6 +181,9 @@ enum LessonReview {
             card = Flashcard(front: question.prompt, back: back, position: course.cards.count, course: course)
         }
         card.chapter = chapter
+        // Ratée dans un quiz, la carte est déjà « en cours » : elle compte dans « à réviser »
+        // dès demain, au lieu d'attendre sa première séance comme une carte neuve.
+        card.state = .learning
         card.dueDate = tomorrow
         context.insert(card)
         return card

@@ -236,7 +236,12 @@ extension View {
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.sheet)
-            .presentationBackground(OnboardingPalette.white)
+            // **Toujours clair** : le paywall est la page ivoire de l'app, même quand le
+            // téléphone est en sombre. Un paywall sombre se lit comme un écran d'erreur.
+            .preferredColorScheme(.light)
+            .presentationBackground {
+                MicaboColor.canvas.environment(\.colorScheme, .light)
+            }
         }
     }
 }

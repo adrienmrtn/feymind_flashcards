@@ -496,9 +496,10 @@ async function practice(request: Request, body: RequestBody): Promise<Response> 
       const notes = (typeof entry?.notes === "string" ? entry.notes : "").trim().slice(0, share);
       budget -= notes.length;
       return { title, notes };
-    })
-    .filter((theme) => theme.notes.length > 0);
-  if (themes.length === 0) throw new FalError("Cette leçon n'a pas encore de notes.", 400);
+    });
+  // Les rangs restent ceux de l'app, même pour un thème sans notes : c'est par eux qu'une
+  // question retrouve son thème.
+  if (!themes.some((theme) => theme.notes.length > 0)) throw new FalError("Cette leçon n'a pas encore de notes.", 400);
 
   await beginExtra(caller, { kind: "practice", lessonId: body.lessonId });
   await consumeQuota(caller, "generate-lesson-practice");

@@ -1,8 +1,9 @@
 import SwiftData
 import SwiftUI
 
-/// **Home** (`docs/refonte-parcours.md` § 3) : Mika demande ce qu'on veut apprendre, la barre
-/// « comme une IA » et ses cinq imports, les trois chiffres mesurés, et « Reprendre ».
+/// **Home** (`docs/refonte-parcours.md` § 3) : la grande question, la barre « comme une IA »
+/// avec Mika perché dessus, les cinq imports en grand — c'est eux qu'on voit d'abord —, trois
+/// petits chiffres mesurés, et « Reprendre ».
 struct HomeView: View {
     @Environment(ProAccess.self) private var pro: ProAccess?
     @Query(sort: \Course.createdAt, order: .reverse) private var courses: [Course]
@@ -19,15 +20,18 @@ struct HomeView: View {
     var body: some View {
         NavigationStack(path: $path) {
             ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
-                    HomeGreeting(isThinking: composer.isReading)
+                VStack(alignment: .leading, spacing: 26) {
+                    HomeTitle()
+                        .padding(.top, 12)
                     HomeComposerBar(
                         composer: composer,
                         focused: $focused,
                         isPro: isPro,
+                        isThinking: composer.isReading,
                         onImport: tapImport,
                         onSend: send
                     )
+                    .padding(.top, HomePerch.height)
                     HomeStatsRow(stats: HomeStats(courses: courses))
                     if let resume = ResumeTarget.pick(from: courses) {
                         ResumeCard(course: resume.0, target: resume.1) {
@@ -85,43 +89,57 @@ struct HomeView: View {
     }
 }
 
-// MARK: - Mika
+// MARK: - La question
 
-/// Mika, et sa question dans une bulle.
-struct HomeGreeting: View {
+/// **« Qu'est-ce que tu veux apprendre aujourd'hui ? »**, en grand, le mot « apprendre » dans
+/// une couleur qui ressort. Le mot est marqué `**…**` dans le catalogue, dans chaque langue.
+struct HomeTitle: View {
+    var body: some View {
+        Self.text(L10n.t("lesson.home.title", locale: .resolved()))
+            .font(MicaboFont.display(34))
+            .foregroundStyle(MicaboColor.ink)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityAddTraits(.isHeader)
+    }
+
+    /// Le texte, le mot marqué en dégradé bleu-violet.
+    static func text(_ source: String) -> Text {
+        let parts = source.components(separatedBy: "**")
+        var out = Text("")
+        for (index, part) in parts.enumerated() where !part.isEmpty {
+            if index % 2 == 1 {
+                out = out + Text(part).foregroundStyle(
+                    LinearGradient(colors: [MicaboColor.accent, MicaboColor.keyword], startPoint: .leading, endPoint: .trailing)
+                )
+            } else {
+                out = out + Text(part)
+            }
+        }
+        return out
+    }
+}
+
+/// **Mika, perché sur la barre** : ses pattes et son ombre posées sur le bord haut, du côté
+/// droit. Il fait coucou, puis attend ; il réfléchit pendant qu'un support se lit.
+struct HomePerch: View {
     var isThinking = false
+
+    static let size: CGFloat = 96
+    /// La place qu'il prend au-dessus de la barre : sa taille, moins ce qui se pose dessus.
+    static let height: CGFloat = size - sink
+    /// Ce qui descend sous le bord : les pattes et l'ombre, pour qu'il soit assis, pas posé à
+    /// côté.
+    static let sink: CGFloat = 10
 
     @State private var mood: MikaMood = .wave
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 6) {
-            MikaMascot(mood: isThinking ? .think : mood, size: 104, reactsToTap: true)
-            Text(L10n.t("lesson.home.question", locale: .resolved()))
-                .font(MicaboFont.subtitle)
-                .foregroundStyle(MicaboColor.ink)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .background(SpeechBubble().fill(MicaboColor.surface))
-                .micaboElevation(.row)
-                .padding(.bottom, 34)
-        }
-        .task {
-            try? await Task.sleep(for: .seconds(2.4))
-            mood = .idle
-        }
-    }
-}
-
-/// Une bulle dont la pointe part vers Mika, en bas à gauche.
-struct SpeechBubble: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path(roundedRect: rect, cornerRadius: 20, style: .continuous)
-        path.move(to: CGPoint(x: rect.minX + 2, y: rect.maxY - 26))
-        path.addQuadCurve(to: CGPoint(x: rect.minX - 12, y: rect.maxY - 2), control: CGPoint(x: rect.minX - 2, y: rect.maxY - 8))
-        path.addQuadCurve(to: CGPoint(x: rect.minX + 18, y: rect.maxY - 6), control: CGPoint(x: rect.minX + 4, y: rect.maxY - 2))
-        path.closeSubpath()
-        return path
+        MikaMascot(mood: isThinking ? .think : mood, size: Self.size, reactsToTap: true)
+            .frame(width: Self.size, height: Self.size)
+            .task {
+                try? await Task.sleep(for: .seconds(2.4))
+                mood = .idle
+            }
     }
 }
 
@@ -133,12 +151,13 @@ struct HomeComposerBar: View {
     let composer: LessonComposer
     var focused: FocusState<Bool>.Binding
     let isPro: Bool
+    var isThinking = false
     let onImport: (LessonComposer.Kind) -> Void
     let onSend: () -> Void
 
     var body: some View {
         @Bindable var composer = composer
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 10) {
                 if !composer.supports.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -197,14 +216,13 @@ struct HomeComposerBar: View {
                     .strokeBorder(focused.wrappedValue ? MicaboColor.accent : MicaboColor.stroke, lineWidth: 1.5)
             )
             .micaboElevation(.card)
+            .overlay(alignment: .topTrailing) {
+                HomePerch(isThinking: isThinking)
+                    .offset(x: -18, y: -HomePerch.height)
+            }
             .animation(.spring(duration: 0.3), value: composer.supports.count)
 
-            HStack(spacing: 0) {
-                ForEach(LessonComposer.Kind.allCases) { kind in
-                    ImportButton(kind: kind, enabled: composer.hasRoom) { onImport(kind) }
-                        .frame(maxWidth: .infinity)
-                }
-            }
+            ImportGrid(isPro: isPro, enabled: composer.hasRoom, onImport: onImport)
 
             if !composer.hasRoom {
                 Text(L10n.t("lesson.home.supportsFull", locale: .resolved(), vars: ["n": String(LessonComposer.maximumSupports)]))
@@ -223,27 +241,84 @@ private extension LessonComposer.Support {
     }
 }
 
-/// Une icône d'import, et son nom dessous.
+/// **Les cinq imports, en grand** : c'est ce qu'on voit d'abord. Le PDF et la photo, les plus
+/// courants, en deux grandes tuiles ; l'audio, YouTube et le texte dessous. Une tuile Pro
+/// porte sa couronne pour qui n'est pas abonné.
+struct ImportGrid: View {
+    let isPro: Bool
+    var enabled = true
+    let onImport: (LessonComposer.Kind) -> Void
+
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                ImportButton(kind: .pdf, size: .large, locked: !isPro, enabled: enabled) { onImport(.pdf) }
+                ImportButton(kind: .photo, size: .large, locked: !isPro, enabled: enabled) { onImport(.photo) }
+            }
+            HStack(spacing: 12) {
+                ImportButton(kind: .audio, size: .medium, locked: !isPro, enabled: enabled) { onImport(.audio) }
+                ImportButton(kind: .youtube, size: .medium, locked: !isPro, enabled: enabled) { onImport(.youtube) }
+                ImportButton(kind: .text, size: .medium, locked: false, enabled: enabled) { onImport(.text) }
+            }
+        }
+    }
+}
+
+/// Une tuile d'import : son icône 3D, son nom, et pour les grandes, ce qu'on y met.
 struct ImportButton: View {
+    enum Size {
+        case large
+        case medium
+    }
+
     let kind: LessonComposer.Kind
+    var size: Size = .medium
+    var locked = false
     var enabled = true
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 6) {
-                MicaboIconView(icon: kind.icon, size: 34, dimmed: !enabled)
-                    .frame(width: 58, height: 58)
-                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
-                Text(L10n.t(kind.titleKey, locale: .resolved()))
-                    .font(MicaboFont.ui(12, weight: .heavy))
-                    .foregroundStyle(enabled ? MicaboColor.ink : MicaboColor.inkTertiary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+            VStack(alignment: size == .large ? .leading : .center, spacing: size == .large ? 10 : 8) {
+                MicaboIconView(icon: kind.icon, size: size == .large ? 58 : 46, dimmed: !enabled)
+                VStack(alignment: size == .large ? .leading : .center, spacing: 2) {
+                    Text(L10n.t(kind.titleKey, locale: .resolved()))
+                        .font(MicaboFont.ui(size == .large ? 19 : 16, weight: .heavy))
+                        .foregroundStyle(enabled ? MicaboColor.ink : MicaboColor.inkTertiary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    if size == .large {
+                        Text(L10n.t(kind.titleKey + "Sub", locale: .resolved()))
+                            .font(MicaboFont.ui(13, weight: .semibold))
+                            .foregroundStyle(MicaboColor.inkSecondary)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                    }
+                }
+            }
+            .padding(size == .large ? 16 : 12)
+            .frame(maxWidth: .infinity, minHeight: size == .large ? 150 : 112, alignment: size == .large ? .topLeading : .center)
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+            .background(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(MicaboColor.stroke)
+                    .offset(y: 4)
+            )
+            .overlay(alignment: .topTrailing) {
+                if locked {
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(LessonTone.yellow.ink)
+                        .padding(6)
+                        .background(LessonTone.yellow.pale, in: Circle())
+                        .padding(10)
+                        .accessibilityLabel(Text("Pro"))
+                }
             }
         }
-        .buttonStyle(MicaboPressableButtonStyle())
+        .buttonStyle(MicaboPressableButtonStyle(feedback: .soft))
+        .disabled(!enabled)
     }
 }
 
@@ -291,37 +366,42 @@ struct SupportChip: View {
 
 // MARK: - Les chiffres
 
-/// X h de révision · X leçons apprises · X flashcards apprises.
+/// X h de révision · X leçons apprises · X flashcards apprises : trois petites pastilles de
+/// la même taille, sous les imports. Elles disent où on en est sans prendre la place.
 struct HomeStatsRow: View {
     let stats: HomeStats
 
     var body: some View {
-        HStack(spacing: 10) {
-            tile(stats.formattedTime(), L10n.t("lesson.home.statTime", locale: .resolved()), icon: .hourglass)
-            tile(String(stats.learnedLessons), L10n.t("lesson.home.statLessons", locale: .resolved()), icon: .diploma)
-            tile(String(stats.learnedCards), L10n.t("lesson.home.statCards", locale: .resolved()), icon: .cards)
+        HStack(spacing: 8) {
+            pill(stats.formattedTime(), L10n.t("lesson.home.statTime", locale: .resolved()), icon: .hourglass)
+            pill(String(stats.learnedLessons), L10n.t("lesson.home.statLessons", locale: .resolved()), icon: .diploma)
+            pill(String(stats.learnedCards), L10n.t("lesson.home.statCards", locale: .resolved()), icon: .cards)
         }
     }
 
-    private func tile(_ value: String, _ label: String, icon: MicaboIcon) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            MicaboIconView(icon: icon, size: 28)
-            Text(value)
-                .font(MicaboFont.number(24))
-                .foregroundStyle(MicaboColor.ink)
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-            Text(label)
-                .font(MicaboFont.ui(12, weight: .bold))
-                .foregroundStyle(MicaboColor.inkSecondary)
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
+    private func pill(_ value: String, _ label: String, icon: MicaboIcon) -> some View {
+        HStack(spacing: 8) {
+            MicaboIconView(icon: icon, size: 22)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(value)
+                    .font(MicaboFont.number(16))
+                    .foregroundStyle(MicaboColor.ink)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Text(label)
+                    .font(MicaboFont.ui(11, weight: .bold))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, minHeight: 120, alignment: .topLeading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .micaboElevation(.row)
+        .padding(.horizontal, 10)
+        .frame(maxWidth: .infinity, minHeight: 62, maxHeight: 62, alignment: .leading)
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
     }
 }
 

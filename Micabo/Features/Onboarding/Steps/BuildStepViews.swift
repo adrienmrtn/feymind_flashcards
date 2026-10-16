@@ -119,7 +119,7 @@ struct MikaSpeaksStepView: View {
             VStack(spacing: 0) {
                 Spacer(minLength: 0)
 
-                MikaBlob(size: 112, wobble: 0.14)
+                MikaMascot(mood: .wave, size: 140)
                     .padding(.bottom, 30)
                     .onboardingAppear(index: 1)
 

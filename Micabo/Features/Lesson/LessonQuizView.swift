@@ -366,11 +366,18 @@ struct LessonCardsRun: View {
                 finishedState
             } else {
                 Spacer(minLength: 12)
-                FlashcardFace(card: cards[index], flipped: flipped, tone: tone)
-                    .id(index)
-                    .padding(.horizontal, MicaboSpacing.screen)
-                    .onTapGesture { flip() }
-                    .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)).combined(with: .opacity))
+                ZStack {
+                    FlashcardFace(card: cards[index], flipped: false, tone: tone)
+                        .opacity(flipped ? 0 : 1)
+                    FlashcardFace(card: cards[index], flipped: true, tone: tone)
+                        .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+                        .opacity(flipped ? 1 : 0)
+                }
+                .rotation3DEffect(.degrees(flipped ? 180 : 0), axis: (x: 0, y: 1, z: 0), perspective: 0.55)
+                .id(index)
+                .padding(.horizontal, MicaboSpacing.screen)
+                .onTapGesture { flip() }
+                .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)).combined(with: .opacity))
                 Spacer(minLength: 12)
                 controls
                     .padding(.horizontal, MicaboSpacing.screen)
@@ -410,7 +417,8 @@ struct LessonCardsRun: View {
     }
 
     private func flip() {
-        withAnimation(.spring(duration: 0.35)) { flipped.toggle() }
+        Haptics.light()
+        withAnimation(.spring(duration: 0.5, bounce: 0.2)) { flipped.toggle() }
     }
 
     private func rate(_ rating: ReviewRating) {
@@ -488,10 +496,20 @@ struct FlashcardFace: View {
                 .textCase(.uppercase)
                 .foregroundStyle(tone.ink)
 
-            Text(card.front)
-                .font(MicaboFont.ui(flipped ? 18 : 24, weight: .heavy))
-                .foregroundStyle(flipped ? MicaboColor.inkSecondary : MicaboColor.ink)
-                .fixedSize(horizontal: false, vertical: true)
+            if card.format == .cloze {
+                // Une carte à trou : le trou au recto, le mot à sa place au verso.
+                KeywordText(flipped
+                    ? card.front.replacingOccurrences(of: ClozeGap.marker, with: "**\(card.back)**")
+                    : card.front.replacingOccurrences(of: ClozeGap.marker, with: "_____"))
+                    .font(MicaboFont.ui(24, weight: .heavy))
+                    .foregroundStyle(MicaboColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                Text(card.front)
+                    .font(MicaboFont.ui(flipped ? 18 : 24, weight: .heavy))
+                    .foregroundStyle(flipped ? MicaboColor.inkSecondary : MicaboColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
             if card.kind == .choice, card.choices.count > 1, !flipped {
                 VStack(alignment: .leading, spacing: 8) {
@@ -510,10 +528,12 @@ struct FlashcardFace: View {
                         .foregroundStyle(MicaboColor.correctInk)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                KeywordText(card.back)
-                    .font(MicaboFont.ui(card.kind == .choice ? 17 : 22, weight: card.kind == .choice ? .medium : .bold))
-                    .foregroundStyle(MicaboColor.ink)
-                    .fixedSize(horizontal: false, vertical: true)
+                if card.format != .cloze {
+                    KeywordText(card.back)
+                        .font(MicaboFont.ui(card.kind == .choice ? 17 : 22, weight: card.kind == .choice ? .medium : .bold))
+                        .foregroundStyle(MicaboColor.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             Spacer(minLength: 0)
         }
@@ -527,68 +547,5 @@ struct FlashcardFace: View {
         .micaboElevation(.card)
         .accessibilityElement(children: .combine)
         .accessibilityHint(Text(L10n.t("lesson.cards.flip", locale: .resolved())))
-    }
-}
-
-/// **L'entrée Flashcards de la navbar** : « X à réviser aujourd'hui », et la révision.
-struct LessonCardsHub: View {
-    let session: LessonSession
-
-    @Environment(\.dismiss) private var dismiss
-    @State private var running: [Flashcard]?
-
-    var body: some View {
-        Group {
-            if let running {
-                LessonCardsRun(session: session, cards: running, onClose: { dismiss() })
-            } else {
-                overview
-            }
-        }
-    }
-
-    private var overview: some View {
-        let due = session.dueCards()
-        return VStack(spacing: 18) {
-            HStack {
-                Button { dismiss() } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                        .frame(width: 36, height: 36)
-                }
-                .buttonStyle(MicaboPressableButtonStyle())
-                Spacer()
-            }
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.top, 8)
-
-            Spacer()
-            MicaboIconView(icon: .cards, size: 110)
-            Text(due.isEmpty
-                ? L10n.t("lesson.cards.nothingDue", locale: .resolved())
-                : L10n.t("lesson.cards.dueToday", locale: .resolved(), vars: ["count": String(due.count)]))
-                .font(MicaboFont.title)
-                .foregroundStyle(MicaboColor.ink)
-                .multilineTextAlignment(.center)
-            Text(L10n.t("lesson.cards.total", locale: .resolved(), vars: [
-                "count": String(session.course.cards.count),
-                "learned": String(session.course.learnedCardCount()),
-            ]))
-            .font(MicaboFont.ui(16, weight: .medium))
-            .foregroundStyle(MicaboColor.inkSecondary)
-            Spacer()
-            Button(due.isEmpty
-                ? L10n.t("lesson.cards.reviewAnyway", locale: .resolved())
-                : L10n.t("lesson.cards.review", locale: .resolved())) {
-                withAnimation { running = due.isEmpty ? session.circleCards() : Array(due.prefix(30)) }
-            }
-            .buttonStyle(LessonPrimaryButtonStyle())
-            .disabled(session.course.cards.isEmpty)
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.bottom, 12)
-        }
-        .padding(.horizontal, 8)
-        .background(MicaboColor.canvas.ignoresSafeArea())
     }
 }

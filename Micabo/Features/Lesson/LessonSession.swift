@@ -173,6 +173,16 @@ final class LessonSession {
         return ids.compactMap { byID[$0] }
     }
 
+    /// Une séance de révision : les cartes dues d'abord, puis des nouvelles, quinze au plus.
+    static let newCardsPerSession = 15
+
+    func studyQueue(now: Date = Date()) -> [Flashcard] {
+        let active = course.cards.filter { !$0.isSuspended }
+        let due = active.filter { $0.state != .new && $0.dueDate <= now }.sorted { $0.dueDate < $1.dueDate }
+        let fresh = active.filter { $0.state == .new }.sorted { $0.position < $1.position }.prefix(Self.newCardsPerSession)
+        return Array((due + fresh).prefix(30))
+    }
+
     /// Les cartes de la leçon à revoir aujourd'hui.
     func dueCards(now: Date = Date()) -> [Flashcard] {
         course.cards

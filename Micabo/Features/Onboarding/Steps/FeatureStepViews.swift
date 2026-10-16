@@ -338,7 +338,7 @@ struct OnboardingPhoneSketch: View {
                 bubble(width: 0.7, tint: OnboardingPalette.ink, ink: OnboardingPalette.white.opacity(0.7))
             }
             HStack(alignment: .top, spacing: 8) {
-                MikaBlob(size: 26, wobble: 0.16)
+                MikaMascot(mood: .happy, size: 30)
                 bubble(width: 0.82, tint: OnboardingPalette.card, ink: OnboardingPalette.grayLight)
             }
             HStack {
@@ -346,7 +346,7 @@ struct OnboardingPhoneSketch: View {
                 bubble(width: 0.5, tint: OnboardingPalette.ink, ink: OnboardingPalette.white.opacity(0.7))
             }
             HStack(alignment: .top, spacing: 8) {
-                MikaBlob(size: 26, wobble: 0.16)
+                MikaMascot(mood: .happy, size: 30)
                 bubble(width: 0.9, tint: OnboardingPalette.card, ink: OnboardingPalette.grayLight, lines: 3)
             }
         }

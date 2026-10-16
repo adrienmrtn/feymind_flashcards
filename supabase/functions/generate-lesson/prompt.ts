@@ -232,7 +232,9 @@ export function practiceBrief(options: {
 }
 
 export function practiceNotes(themes: { title: string; notes: string }[]): string {
-  return themes.map((theme, index) => `THÈME ${index} : ${theme.title}\n${theme.notes}`).join("\n\n");
+  return themes
+    .map((theme, index) => `THÈME ${index} : ${theme.title}\n${theme.notes || "(pas de notes : ne pose aucune question sur ce thème)"}`)
+    .join("\n\n");
 }
 
 // MARK: - Le niveau

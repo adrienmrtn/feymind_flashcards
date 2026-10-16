@@ -138,9 +138,34 @@ final class RenderGalleryTests: XCTestCase {
             progress.done = ["intro", "notes:0", "notes:1"]
             progress.inCircle = 0.4
         }
+        let cards: [(String, String, CardState, Double)] = [
+            ("Gains de pouvoir d'achat", "Hausse du pouvoir d'achat permise par des prix plus bas.", .learning, 2),
+            ("Trilemme de Rodrik", "On ne peut avoir à la fois intégration, souveraineté et démocratie.", .new, 0),
+            ("GATT", "Accord de 1947 qui baisse peu à peu les droits de douane.", .review, 30),
+            ("Rideau de fer", "La frontière qui coupe l'Europe en deux blocs.", .new, 0),
+        ]
+        for (index, card) in cards.enumerated() {
+            let flashcard = Flashcard(front: card.0, back: card.1, position: index, course: course)
+            flashcard.state = card.2
+            flashcard.intervalDays = card.3
+            context.insert(flashcard)
+        }
+        let cloze = Flashcard(front: "La doctrine \(ClozeGap.marker) veut contenir le communisme.", back: "Truman", position: 9, course: course)
+        cloze.kindRaw = CardKind.cloze.rawValue
+        context.insert(cloze)
         try context.save()
 
         let session = LessonSession(course: course)
+        try RenderGallery.render(
+            "lesson-cards", night: true,
+            LessonCardsHub(session: session)
+                .frame(height: 980)
+        )
+        try RenderGallery.render(
+            "lesson-notes-reader",
+            LessonNotesReader(session: session)
+                .frame(height: 900)
+        )
         try RenderGallery.render(
             "lesson-path", night: true,
             VStack(spacing: 0) {
@@ -252,7 +277,8 @@ final class RenderGalleryTests: XCTestCase {
         try RenderGallery.render(
             "home", night: true,
             VStack(alignment: .leading, spacing: 28) {
-                HomeGreeting()
+                HomeTitle()
+                    .padding(.bottom, HomePerch.height)
                 ComposerBarPreview(composer: composer)
                 HomeStatsRow(stats: HomeStats(seconds: 5_400, learnedLessons: 3, learnedCards: 42))
                 ResumeCard(course: resume.0, target: resume.1) {}

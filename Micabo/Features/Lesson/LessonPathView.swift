@@ -122,13 +122,7 @@ struct LessonPathView: View {
             case .notes:
                 LessonNotesReader(session: session)
             case .quiz:
-                LessonQuizView(
-                    session: session,
-                    questions: session.fullQuiz(attempt: fullQuizAttempt),
-                    title: L10n.t("lesson.quiz.fullTitle", locale: .resolved()),
-                    circleID: nil,
-                    onClose: { self.sheet = nil }
-                )
+                LessonPracticeView(session: session, attempt: fullQuizAttempt)
             case .exam:
                 LessonQuizView(
                     session: session,

@@ -592,7 +592,7 @@ struct WellDoneStepView: View {
             VStack(spacing: 0) {
                 Spacer(minLength: 0)
 
-                MikaBlob(size: 132, wobble: 0.16, speed: 0.26)
+                MikaMascot(mood: .celebrate, size: 160)
                     .scaleEffect(hasLanded ? 1 : 0.6)
                     .opacity(hasLanded ? 1 : 0)
                     .accessibilityHidden(true)
