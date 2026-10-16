@@ -9,6 +9,13 @@
  *   arrive.
  * - `stage: "convert"` — un ancien cours → ce qui lui manque pour devenir un chemin, sans
  *   réécrire ses notes : icônes, intro, conclusion, noms de paliers, questions.
+ * - `stage: "practice"` — de nouvelles questions d'entraînement sur une leçon déjà écrite,
+ *   loin de celles déjà posées, surtout sur les thèmes ratés. Un lot gratuit, puis Pro
+ *   (`begin_extra`, migration `lesson_extras`).
+ *
+ * Le volume (thèmes, questions, cartes) et le registre suivent la marche d'études et le pays
+ * de l'élève (`_shared/learner.ts`). Les questions prennent cinq formes (`schema.ts`) ; une
+ * app qui ne déclare pas les formes qu'elle sait afficher (`kinds`) ne reçoit que des QCM.
  *
  * Déployer : `supabase functions deploy generate-lesson`, après la migration
  * `lesson_generations` (la porte du gratuit), ou par `pin.sh`.
@@ -23,7 +30,8 @@ import { detectDiscipline, disciplineBrief } from "../_shared/discipline.ts";
 import { languageBrief } from "../_shared/language.ts";
 import { sanitizeMeta, wrapUntrusted } from "../_shared/prompt-boundary.ts";
 import { normalizeIcon } from "../_shared/icons.ts";
-import { audienceBrief, readingBrief, VISION_SYSTEM_PROMPT } from "../generate-course/prompt.ts";
+import { readingBrief, VISION_SYSTEM_PROMPT } from "../generate-course/prompt.ts";
+import { learnerBrief, readLearner, volumeOf } from "../_shared/learner.ts";
 import {
   CONVERT_SYSTEM_PROMPT,
   convertBrief,
@@ -32,8 +40,12 @@ import {
   PLAN_SYSTEM_PROMPT,
   PLAN_TOKENS,
   planShapeBrief,
+  practiceBrief,
+  practiceNotes,
+  PRACTICE_SYSTEM_PROMPT,
+  PRACTICE_TOKENS,
   PROMPT_VERSION,
-  stageBrief,
+  symbolsSection,
   THEME_SYSTEM_PROMPT,
   THEME_TOKENS,
   themeBrief,
@@ -46,6 +58,7 @@ import {
   LIMITS,
   MAX_SOURCE,
   readFlashcards,
+  readKinds,
   readNotes,
   readPlan,
   readQuestions,
@@ -53,6 +66,7 @@ import {
 } from "./schema.ts";
 import {
   admitThemeCall,
+  beginExtra,
   beginLesson,
   isLessonId,
   LessonGateError,
@@ -66,9 +80,19 @@ interface RequestBody {
   language?: string;
   level?: string;
   country?: string;
-  /** L'étape précise : « 4e », « Terminale », « L2 »… */
+  /** Le palier tel que le pays le nomme : « Lycée », « Lise, YKS »… */
   schoolStage?: string;
+  /** La marche d'études (`EducationTier`) : lowerSecondary, upperSecondary… */
+  tier?: string;
+  /** La filière : « Lycée général », « Gymnasium »… */
+  track?: string;
+  /** La classe ou l'année : « Terminale », « 4e », « Master 1 », « TYT »… */
+  year?: string;
+  /** L'examen visé : « Bac de français, le 2027-06-15 ». */
+  exam?: string;
   subject?: string;
+  /** Les formes de question que l'app sait afficher. Absent : des QCM seulement. */
+  kinds?: string[];
 
   // Plan
   text?: string;
@@ -83,7 +107,17 @@ interface RequestBody {
   lessonTitle?: string;
   themeIndex?: number;
   themes?: string[];
+  /** Les notions de chaque thème, données par le plan. */
+  points?: string[][];
+  /** Ce que l'élève saura faire à la fin (l'intro du plan). */
+  objectives?: string[];
   context?: string;
+
+  // De nouvelles questions
+  practiceThemes?: { title?: string; notes?: string }[];
+  focus?: number[];
+  avoid?: string[];
+  count?: number;
 
   // Conversion
   title?: string;
@@ -97,6 +131,16 @@ const MAX_TOPIC = 400;
 const THEME_DAILY_CEILING = 60;
 const CONVERT_CHAPTER_TEXT = 3_000;
 const CONVERT_TOTAL_TEXT = 40_000;
+const PRACTICE_THEME_NOTES = 2_000;
+const PRACTICE_TOTAL_NOTES = 24_000;
+const PRACTICE_AVOID = 80;
+
+/**
+ * **Le modèle de l'écriture** : les notes et les questions sont ce que l'élève apprend par
+ * cœur. Flash coûte quelques centimes de plus par leçon que Flash-Lite, et ne se trompe pas
+ * de bonne réponse aussi souvent. Les replis de `fal.ts` restent les mêmes.
+ */
+const WRITING_MODEL = "google/gemini-2.5-flash";
 
 function acceptedImages(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
@@ -116,7 +160,7 @@ function acceptedImages(raw: unknown): string[] {
 
 /** Un appel au modèle qui rend un objet JSON, ou `null` quand la réponse est illisible. */
 async function ask(
-  options: { prompt: string; system: string; temperature: number; maxTokens: number; meter: ModelUsage[] },
+  options: { prompt: string; system: string; temperature: number; maxTokens: number; meter: ModelUsage[]; model?: string },
 ): Promise<Record<string, unknown> | null> {
   try {
     const output = await callModel({
@@ -125,6 +169,7 @@ async function ask(
       temperature: options.temperature,
       maxTokens: options.maxTokens,
       meter: options.meter,
+      model: options.model ?? WRITING_MODEL,
     });
     const parsed = parseModelJSON<unknown>(output);
     return parsed && typeof parsed === "object" && !Array.isArray(parsed)
@@ -140,13 +185,18 @@ async function ask(
 
 /** Ce qui précède toujours : la langue d'abord, puis pour qui on écrit. */
 function audienceSections(body: RequestBody, sample: string): string[] {
-  const sections = [languageBrief(body.language), audienceBrief(body.level, body.country)];
-  const stage = stageBrief(body.schoolStage);
-  if (stage) sections.push(stage);
+  const sections = [languageBrief(body.language), learnerBrief(readLearner(body))];
   const discipline = disciplineBrief(detectDiscipline(sample, body.lessonTitle ?? body.title, body.subject));
   if (discipline) sections.push(discipline);
   return sections;
 }
+
+/**
+ * Sans document, le modèle écrit depuis ce qu'il sait : il doit le dire moins plutôt que
+ * l'inventer. Une leçon apprise par cœur ne se corrige plus.
+ */
+const SCRATCH_RULES =
+  "Il n'y a pas de document : écris depuis ce que tu sais, au niveau de l'élève et selon son programme. Si tu n'es pas certain d'un fait, d'une date, d'un chiffre ou d'une définition, ÉCRIS-EN MOINS : une notion de moins vaut mieux qu'une notion fausse, que l'élève apprendrait par cœur. N'invente ni référence, ni citation, ni statistique.";
 
 // MARK: - Le plan
 
@@ -199,10 +249,13 @@ async function plan(request: Request, body: RequestBody): Promise<Response> {
   const reference = [text, visualNotes].filter(Boolean).join("\n\n").slice(0, MAX_SOURCE);
   const shortSource = !fromScratch && reference.length < SHORT_SOURCE;
 
+  const volume = volumeOf(readLearner(body).tier);
   const sections = audienceSections(body, fromScratch ? topic : reference);
-  sections.push(planShapeBrief({ shortSource, fromScratch }));
+  sections.push(planShapeBrief({ shortSource, fromScratch, topicThemes: volume.topicThemes, maxThemes: volume.maxThemes }));
   sections.push(iconsSection());
+  sections.push(symbolsSection());
   if (fromScratch) {
+    sections.push(SCRATCH_RULES);
     sections.push(`SUJET DEMANDÉ PAR L'ÉLÈVE\n${topic}`);
   } else {
     const reading = readingBrief(body.source, text.length);
@@ -216,7 +269,7 @@ async function plan(request: Request, body: RequestBody): Promise<Response> {
 
   const fallbackTitle = fromScratch ? clampWords(topic, LIMITS.lessonTitleWords) : "Ma leçon";
   const read = (parsed: Record<string, unknown> | null) =>
-    parsed ? readPlan(parsed, { shortSource, shortened, fallbackTitle }) : null;
+    parsed ? readPlan(parsed, { shortSource, shortened, fallbackTitle, maxThemes: volume.maxThemes }) : null;
 
   let lessonPlan = read(await ask({ prompt, system: PLAN_SYSTEM_PROMPT, temperature: 0.3, maxTokens: PLAN_TOKENS, meter }));
   if (!lessonPlan) {
@@ -268,16 +321,37 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
   const context = (body.context ?? "").trim().slice(0, MAX_SOURCE);
   const lessonTitle = sanitizeMeta(body.lessonTitle, 200) || themes[index]!;
   const meter: ModelUsage[] = [];
+  const volume = volumeOf(readLearner(body).tier);
+  const kinds = readKinds(body.kinds);
+  const points = (Array.isArray(body.points) ? body.points : []).slice(0, themes.length).map((list) =>
+    (Array.isArray(list) ? list : []).map((point) => sanitizeMeta(typeof point === "string" ? point : "", 100)).filter(Boolean).slice(0, LIMITS.pointsPerTheme)
+  );
+  const objectives = (Array.isArray(body.objectives) ? body.objectives : [])
+    .map((line) => sanitizeMeta(typeof line === "string" ? line : "", 160))
+    .filter(Boolean)
+    .slice(0, LIMITS.introLines);
 
   const sections = audienceSections(body, context || lessonTitle);
-  sections.push(themeBrief({ lessonTitle, themeTitle: themes[index]!, themeIndex: index, themes }));
+  sections.push(themeBrief({
+    lessonTitle,
+    themeTitle: themes[index]!,
+    themeIndex: index,
+    themes,
+    points,
+    objectives,
+    questions: volume.questions,
+    flashcards: volume.flashcards,
+    kinds,
+  }));
   if (context) {
+    const reading = readingBrief(body.source, context.length);
+    if (reading) sections.push(reading);
     sections.push(
-      "Appuie-toi sur les supports de l'élève ci-dessous : ce qu'ils disent passe avant ce que tu sais. Ne recopie pas, réécris en notes.",
+      "Appuie-toi sur les supports de l'élève ci-dessous : ce qu'ils disent passe avant ce que tu sais. Ne recopie pas, réécris en notes. Ne traite que ce qui concerne CE thème.",
     );
     sections.push(wrapUntrusted("SUPPORTS DE L'ÉLÈVE", context));
   } else {
-    sections.push("Il n'y a pas de document : écris depuis ce que tu sais, au niveau de l'élève, sans rien inventer de douteux.");
+    sections.push(SCRATCH_RULES);
   }
   sections.push("Écris maintenant le JSON de ce thème.");
   const prompt = sections.join("\n\n");
@@ -286,15 +360,15 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
   const read = (parsed: Record<string, unknown> | null) => {
     if (!parsed) return null;
     const notes = readNotes(parsed);
-    const questions = readQuestions(parsed.questions, seed);
-    if (!notes || questions.length < 2) return null;
-    return { notes, questions, flashcards: readFlashcards(parsed.flashcards) };
+    const questions = readQuestions(parsed.questions, seed, { kinds, language: body.language, max: volume.questions });
+    if (!notes || questions.length < LIMITS.minQuestions) return null;
+    return { notes, questions, flashcards: readFlashcards(parsed.flashcards, volume.flashcards) };
   };
 
   let written = read(await ask({ prompt, system: THEME_SYSTEM_PROMPT, temperature: 0.35, maxTokens: THEME_TOKENS, meter }));
   if (!written) {
     written = read(await ask({
-      prompt: `${prompt}\n\nTa réponse précédente était illisible ou incomplète. Rends le JSON complet : notes, 4 questions, 3 flashcards.`,
+      prompt: `${prompt}\n\nTa réponse précédente était illisible ou incomplète. Rends le JSON complet : notes, ${volume.questions} questions, ${volume.flashcards} flashcards.`,
       system: THEME_SYSTEM_PROMPT,
       temperature: 0.2,
       maxTokens: THEME_TOKENS,
@@ -354,7 +428,11 @@ async function convert(request: Request, body: RequestBody): Promise<Response> {
       const entry = (rawChapters[index] ?? {}) as Record<string, unknown>;
       return {
         icon: normalizeIcon(entry.icon),
-        questions: readQuestions(entry.questions, `${body.lessonId}:${index}`),
+        questions: readQuestions(entry.questions, `${body.lessonId}:${index}`, {
+          kinds: readKinds(body.kinds).filter((kind) => kind === "choice" || kind === "truefalse"),
+          language: body.language,
+          max: 5,
+        }),
         flashcards: chapter.needsCards ? readFlashcards(entry.flashcards) : [],
       };
     });
@@ -403,6 +481,78 @@ async function convert(request: Request, body: RequestBody): Promise<Response> {
   });
 }
 
+// MARK: - De nouvelles questions
+
+async function practice(request: Request, body: RequestBody): Promise<Response> {
+  const caller = readCaller(request);
+  if (!isLessonId(body.lessonId)) throw new FalError("Identifiant de leçon manquant.", 400);
+
+  let budget = PRACTICE_TOTAL_NOTES;
+  const themes = (Array.isArray(body.practiceThemes) ? body.practiceThemes : [])
+    .slice(0, 30)
+    .map((entry, index) => {
+      const title = sanitizeMeta(entry?.title, 120) || `${index + 1}`;
+      const share = Math.min(PRACTICE_THEME_NOTES, Math.max(0, budget));
+      const notes = (typeof entry?.notes === "string" ? entry.notes : "").trim().slice(0, share);
+      budget -= notes.length;
+      return { title, notes };
+    })
+    .filter((theme) => theme.notes.length > 0);
+  if (themes.length === 0) throw new FalError("Cette leçon n'a pas encore de notes.", 400);
+
+  await beginExtra(caller, { kind: "practice", lessonId: body.lessonId });
+  await consumeQuota(caller, "generate-lesson-practice");
+
+  const kinds = readKinds(body.kinds);
+  const count = Math.min(LIMITS.practiceMax, Math.max(4, Math.round(typeof body.count === "number" ? body.count : 10)));
+  const avoid = (Array.isArray(body.avoid) ? body.avoid : [])
+    .map((prompt) => sanitizeMeta(typeof prompt === "string" ? prompt : "", 200))
+    .filter(Boolean)
+    .slice(-PRACTICE_AVOID);
+  const focus = (Array.isArray(body.focus) ? body.focus : [])
+    .filter((n): n is number => typeof n === "number" && Number.isFinite(n))
+    .map((n) => Math.round(n))
+    .slice(0, 12);
+  const lessonTitle = sanitizeMeta(body.lessonTitle, 200) || themes[0]!.title;
+  const meter: ModelUsage[] = [];
+
+  const sections = audienceSections(body, themes.map((theme) => theme.notes).join("\n").slice(0, 6_000));
+  sections.push(practiceBrief({ lessonTitle, themes, focus, avoid, count, kinds }));
+  sections.push(wrapUntrusted("NOTES DE LA LEÇON", practiceNotes(themes)));
+  sections.push("Écris maintenant le JSON des nouvelles questions.");
+  const prompt = sections.join("\n\n");
+  const seed = `${body.lessonId}:practice:${Date.now()}`;
+
+  const read = (parsed: Record<string, unknown> | null) => {
+    if (!parsed) return null;
+    const questions = readQuestions(parsed.questions, seed, { kinds, language: body.language, max: count, avoid })
+      .map((question) => ({
+        ...question,
+        theme: question.theme !== undefined && question.theme >= 0 && question.theme < themes.length ? question.theme : 0,
+      }));
+    return questions.length >= 3 ? questions : null;
+  };
+
+  let questions = read(await ask({ prompt, system: PRACTICE_SYSTEM_PROMPT, temperature: 0.7, maxTokens: PRACTICE_TOKENS, meter }));
+  if (!questions) {
+    questions = read(await ask({
+      prompt: `${prompt}\n\nTa réponse précédente était illisible ou incomplète. Rends le JSON complet, avec ${count} questions.`,
+      system: PRACTICE_SYSTEM_PROMPT,
+      temperature: 0.5,
+      maxTokens: PRACTICE_TOKENS,
+      meter,
+    }));
+  }
+  if (!questions) {
+    throw new FalError("Les nouvelles questions n'ont pas pu s'écrire. Réessaie.", 502);
+  }
+
+  return jsonResponse({
+    questions,
+    meta: { promptVersion: PROMPT_VERSION, usage: totalUsage(meter) },
+  });
+}
+
 Deno.serve((request: Request) =>
   withCors(request, async () => {
     try {
@@ -414,6 +564,8 @@ Deno.serve((request: Request) =>
           return await theme(request, body);
         case "convert":
           return await convert(request, body);
+        case "practice":
+          return await practice(request, body);
         default:
           throw new FalError("Étape inconnue.", 400);
       }

@@ -4,7 +4,9 @@ import {
   cleanInline,
   cleanText,
   estimateMinutes,
+  GAP,
   groupThemes,
+  LIMITS,
   nameGroups,
   type NoteBlock,
   readFlashcards,
@@ -125,18 +127,90 @@ Deno.test("le mélange est reproductible, et déplace la bonne réponse", () => 
     Array.from({ length: 24 }, (_, i) => readQuestion(raw, `seed-${i}`)!.answer),
   );
   assert(positions.size >= 3, "la bonne réponse n'est pas toujours au même rang");
-  assertEquals(readQuestions([raw, raw, raw, raw, raw], "t").length, 4);
+  assertEquals(readQuestions([raw, raw, raw], "t").length, 1, "deux énoncés identiques n'en font qu'un");
+  const many = Array.from({ length: 10 }, (_, i) => ({ ...raw, prompt: `Question ${i} ?` }));
+  assertEquals(readQuestions(many, "t").length, LIMITS.questionsPerTheme);
+  assertEquals(readQuestions(many, "t", { max: 5 }).length, 5);
 });
 
-Deno.test("trois flashcards, recto et verso remplis", () => {
+Deno.test("les cinq formes de question, et seulement celles que l'app sait afficher", () => {
+  const all = ["choice", "truefalse", "gap", "order", "match"] as const;
+  const tf = readQuestion({ kind: "truefalse", prompt: "Le plan Marshall date de 1947.", answer: true, why: "." }, "s", { kinds: all, language: "de" });
+  assertEquals(tf?.kind, "truefalse");
+  assertEquals(tf?.choices, ["Richtig", "Falsch"]);
+  assertEquals(tf?.answer, 0);
+  const tfOld = readQuestion({ kind: "truefalse", prompt: "Faux ?", answer: false, why: "." }, "s");
+  assertEquals(tfOld?.kind, "choice", "une app sans vrai/faux le lit comme un QCM à deux choix");
+  assertEquals(tfOld?.answer, 1);
+
+  const gap = readQuestion({ kind: "gap", prompt: "La ___ est la capitale.", choices: ["Paris", "Lyon", "Nice"], answer: 0, why: "." }, "s", { kinds: all });
+  assertEquals(gap?.kind, "gap");
+  assert(gap?.prompt.includes(GAP));
+  assertEquals(gap?.choices[gap.answer], "Paris");
+  const noGap = readQuestion({ kind: "gap", prompt: "Sans trou ?", choices: ["a", "b", "c"], answer: 0, why: "." }, "s", { kinds: all });
+  assertEquals(noGap?.kind, "choice", "une phrase à trou sans trou redevient un QCM");
+
+  const order = readQuestion({ kind: "order", prompt: "Dans l'ordre", items: ["1947", "1949", "1961", "1989"], why: "." }, "s", { kinds: all });
+  assertEquals(order?.kind, "order");
+  assertEquals(order?.choices, ["1947", "1949", "1961", "1989"], "l'ordre reste le bon : l'app mélange");
+  assertEquals(readQuestion({ kind: "order", prompt: "Dans l'ordre", items: ["a", "b"] }, "s", { kinds: all }), null, "deux éléments ne font pas un ordre");
+  assertEquals(readQuestion({ kind: "order", prompt: "Dans l'ordre", items: ["a", "b", "c"] }, "s"), null, "une app sans ordre n'en reçoit pas");
+
+  const match = readQuestion({ kind: "match", prompt: "Associe", pairs: [["CO2", "dioxyde de carbone"], ["H2O", "eau"], ["NaCl", "sel"], ["H2O", "doublon"]], why: "." }, "s", { kinds: all });
+  assertEquals(match?.kind, "match");
+  assertEquals(match?.choices, ["CO2", "H2O", "NaCl"]);
+  assertEquals(match?.matches, ["dioxyde de carbone", "eau", "sel"]);
+
+  const hard = readQuestion({ prompt: "Q ?", choices: ["a", "b", "c"], answer: 0, why: ".", difficulty: 9 }, "s");
+  assertEquals(hard?.difficulty, 3, "la difficulté reste entre 1 et 3");
+});
+
+Deno.test("les questions déjà posées ne reviennent pas", () => {
+  const questions = readQuestions([
+    { prompt: "Qui lance le plan Marshall ?", choices: ["a", "b", "c"], answer: 0, why: "." },
+    { prompt: "Quand tombe le mur ?", choices: ["a", "b", "c"], answer: 0, why: ".", theme: 2 },
+  ], "s", { avoid: ["qui lance le Plan Marshall"] });
+  assertEquals(questions.map((q) => q.prompt), ["Quand tombe le mur ?"]);
+  assertEquals(questions[0]?.theme, 2);
+});
+
+Deno.test("des flashcards remplies, sans doublon, et des cartes à trou", () => {
   const cards = readFlashcards([
     { front: "Q1", back: "R1" },
     { front: "", back: "R2" },
     { front: "Q3", back: "R3" },
-    { front: "Q4", back: "R4" },
-    { front: "Q5", back: "R5" },
-  ]);
-  assertEquals(cards.map((c) => c.front), ["Q1", "Q3", "Q4"]);
+    { front: "q1", back: "doublon" },
+    { kind: "cloze", front: "La ___ produit du dioxygène.", back: "photosynthèse" },
+    { kind: "cloze", front: "Sans trou", back: "x" },
+  ], 3);
+  assertEquals(cards.map((c) => c.front), ["Q1", "Q3", `La ${GAP} produit du dioxygène.`]);
+  assertEquals(cards[2]?.kind, "cloze");
+  assertEquals(readFlashcards([{ kind: "cloze", front: "Sans trou", back: "x" }])[0]?.kind, "basic");
+});
+
+Deno.test("jamais deux fois la même icône ni le même pictogramme sur un chemin", () => {
+  const plan = readPlan({
+    title: "La guerre froide",
+    icon: "globe",
+    themes: [
+      { title: "Un", icon: "globe", symbol: "flag", points: ["a", "b"] },
+      { title: "Deux", icon: "parchemin", symbol: "flag" },
+      { title: "Trois", icon: "parchemin", symbol: "inconnu" },
+      { title: "Quatre", icon: "drapeau", symbol: "map" },
+    ],
+  }, { shortSource: false, shortened: false, fallbackTitle: "x" });
+  assert(plan);
+  const icons = plan.themes.map((t) => t.icon);
+  assertEquals(new Set([plan.icon, ...icons]).size, icons.length + 1);
+  const symbols = plan.themes.map((t) => t.symbol);
+  assertEquals(new Set(symbols).size, symbols.length);
+  assertEquals(symbols[0], "flag");
+  assertEquals(plan.themes[0]?.points, ["a", "b"]);
+  const capped = readPlan({
+    title: "T",
+    themes: Array.from({ length: 12 }, (_, i) => ({ title: `Thème ${i}` })),
+  }, { shortSource: false, shortened: false, fallbackTitle: "x", maxThemes: 8 });
+  assertEquals(capped?.themes.length, 8, "le plafond de la marche tient");
 });
 
 Deno.test("les paliers prennent les noms du modèle, même quand il groupe autrement", () => {

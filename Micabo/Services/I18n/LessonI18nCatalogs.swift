@@ -192,6 +192,8 @@ enum LessonI18nCatalogs {
         "lesson.theme.night": "Sombre",
         "lesson.path.shortened": "La leçon a été raccourcie : tes supports dépassaient 60 000 caractères.",
         "lesson.onboarding.previewSub": "Ton chemin est prêt : une étape après l'autre, jusqu'à la conclusion.",
+        "lesson.error.proRequired": "Tu as utilisé ton essai gratuit. Passe à Pro pour continuer.",
+        "lesson.error.dailyLimit": "Tu as beaucoup travaillé aujourd'hui. Reviens demain pour la suite.",
     ]
 
     static let en: [String: String] = [
@@ -366,6 +368,8 @@ enum LessonI18nCatalogs {
         "lesson.theme.night": "Dark",
         "lesson.path.shortened": "The lesson was shortened: your materials were over 60,000 characters.",
         "lesson.onboarding.previewSub": "Your path is ready: one step after another, all the way to the wrap-up.",
+        "lesson.error.proRequired": "You've used your free try. Go Pro to keep going.",
+        "lesson.error.dailyLimit": "You've worked a lot today. Come back tomorrow for more.",
     ]
 
     static let de: [String: String] = [
@@ -540,6 +544,8 @@ enum LessonI18nCatalogs {
         "lesson.theme.night": "Dunkel",
         "lesson.path.shortened": "Die Lektion wurde gekürzt: Deine Materialien hatten mehr als 60.000 Zeichen.",
         "lesson.onboarding.previewSub": "Dein Lernpfad ist fertig: ein Schritt nach dem anderen, bis zum Abschluss.",
+        "lesson.error.proRequired": "Du hast deinen kostenlosen Versuch genutzt. Mit Pro geht es weiter.",
+        "lesson.error.dailyLimit": "Du hast heute viel gelernt. Morgen geht es weiter.",
     ]
 
     static let es: [String: String] = [
@@ -714,6 +720,8 @@ enum LessonI18nCatalogs {
         "lesson.theme.night": "Oscuro",
         "lesson.path.shortened": "La lección se acortó: tus materiales superaban los 60.000 caracteres.",
         "lesson.onboarding.previewSub": "Tu recorrido está listo: un paso tras otro, hasta la conclusión.",
+        "lesson.error.proRequired": "Ya usaste tu prueba gratis. Pásate a Pro para seguir.",
+        "lesson.error.dailyLimit": "Hoy has trabajado mucho. Vuelve mañana para seguir.",
     ]
 
     static let tr: [String: String] = [
@@ -888,5 +896,7 @@ enum LessonI18nCatalogs {
         "lesson.theme.night": "Koyu",
         "lesson.path.shortened": "Ders kısaltıldı: kaynakların 60.000 karakteri aşıyordu.",
         "lesson.onboarding.previewSub": "Yolun hazır: adım adım, sonuca kadar.",
+        "lesson.error.proRequired": "Ücretsiz denemeni kullandın. Devam etmek için Pro'ya geç.",
+        "lesson.error.dailyLimit": "Bugün çok çalıştın. Devamı için yarın gel.",
     ]
 }

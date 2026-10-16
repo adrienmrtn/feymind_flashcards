@@ -345,3 +345,70 @@ final class LessonI18nTests: XCTestCase {
         XCTAssertEqual(L10n.t("lesson.unknown", locale: .en), "lesson.unknown")
     }
 }
+
+/// Les formes de question (refonte v2) : une question d'avant reste un QCM, et chaque forme
+/// sait dire si elle est jouable.
+final class QuizKindTests: XCTestCase {
+    func testAnOldQuestionDecodesAsAMultipleChoice() throws {
+        let json = #"{"id":"t:0","prompt":"Q ?","choices":["a","b","c"],"answer":1,"why":"."}"#
+        let question = try JSONDecoder().decode(QuizQuestion.self, from: Data(json.utf8))
+        XCTAssertEqual(question.kind, .choice)
+        XCTAssertEqual(question.difficulty, 2)
+        XCTAssertTrue(question.matches.isEmpty)
+        XCTAssertTrue(question.isValid)
+    }
+
+    func testAnUnknownKindFallsBackToAMultipleChoice() throws {
+        let json = #"{"id":"t:0","kind":"hologram","prompt":"Q ?","choices":["a","b"],"answer":0,"why":"."}"#
+        XCTAssertEqual(try JSONDecoder().decode(QuizQuestion.self, from: Data(json.utf8)).kind, .choice)
+    }
+
+    func testEachKindKnowsWhenItIsPlayable() {
+        XCTAssertTrue(QuizQuestion(id: "o", kind: .order, prompt: "Ordre", choices: ["1", "2", "3"], answer: 0, why: "").isValid)
+        XCTAssertFalse(QuizQuestion(id: "o", kind: .order, prompt: "Ordre", choices: ["1", "2"], answer: 0, why: "").isValid)
+        XCTAssertTrue(QuizQuestion(id: "m", kind: .match, prompt: "Associe", choices: ["a", "b"], answer: 0, why: "", matches: ["x", "y"]).isValid)
+        XCTAssertFalse(QuizQuestion(id: "m", kind: .match, prompt: "Associe", choices: ["a", "b"], answer: 0, why: "", matches: ["x"]).isValid)
+        XCTAssertEqual(QuizQuestion(id: "m", kind: .match, prompt: "A", choices: ["a"], answer: 0, why: "", matches: ["x"]).answerText, "a : x")
+        XCTAssertEqual(QuizQuestion(id: "q", prompt: "Q", choices: ["a", "b"], answer: 1, why: "", difficulty: 9).difficulty, 3)
+    }
+
+    func testAKindRoundTrips() throws {
+        let question = QuizQuestion(id: "g", kind: .gap, prompt: "La … est rouge.", choices: ["pomme", "poire", "prune"], answer: 0, why: ".", difficulty: 1)
+        let decoded = try JSONDecoder().decode(QuizQuestion.self, from: JSONEncoder().encode(question))
+        XCTAssertEqual(decoded, question)
+    }
+}
+
+/// Pour qui on écrit : la marche d'une filière et de son année, ce que l'app envoie.
+final class LessonAudienceTests: XCTestCase {
+    func testACollegeStudentIsNotWrittenForAsAHighSchooler() {
+        let track = SchoolSystem.track(id: "fr.college", in: .fr)
+        XCTAssertEqual(LessonAudience.tier(track: track, year: SchoolSystem.year(id: "fr.4e", in: track)), .lowerSecondary)
+    }
+
+    func testMasterYearsAreGraduate() {
+        let track = SchoolSystem.track(id: "fr.universite", in: .fr)
+        XCTAssertEqual(LessonAudience.tier(track: track, year: SchoolSystem.year(id: "fr.m1", in: track)), .graduate)
+        XCTAssertEqual(LessonAudience.tier(track: track, year: SchoolSystem.year(id: "fr.l2", in: track)), .undergraduate)
+        XCTAssertNil(LessonAudience.tier(track: nil, year: nil))
+    }
+
+    func testThePayloadCarriesTheLearnerAndTheKindsTheAppCanShow() {
+        let audience = LessonAudience(level: "lycee", country: "tr", schoolStage: "Lise, YKS", language: "tr", tier: "competitive", track: "YKS hazırlık", year: "TYT")
+            .preparing("YKS, le 2027-06-19")
+        let payload = audience.payload
+        XCTAssertEqual(payload["tier"] as? String, "competitive")
+        XCTAssertEqual(payload["track"] as? String, "YKS hazırlık")
+        XCTAssertEqual(payload["year"] as? String, "TYT")
+        XCTAssertEqual(payload["exam"] as? String, "YKS, le 2027-06-19")
+        XCTAssertEqual(payload["kinds"] as? [String], ["choice", "truefalse", "gap", "order", "match"])
+        XCTAssertNil(LessonAudience(level: "", country: "fr", schoolStage: "", language: "fr").payload["tier"], "rien de vide ne part")
+    }
+
+    func testPathSymbolsAreUniqueAndFromTheCatalog() {
+        let symbols = PathSymbol.unique(["flag", "flag", "nope", ""])
+        XCTAssertEqual(symbols.first, "flag")
+        XCTAssertEqual(Set(symbols).count, 4)
+        XCTAssertTrue(symbols.allSatisfy(PathSymbol.catalog.contains))
+    }
+}

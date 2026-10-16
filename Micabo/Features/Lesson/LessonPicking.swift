@@ -148,15 +148,24 @@ enum LessonReview {
         calendar: Calendar = .current
     ) -> Flashcard {
         let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now)) ?? now
-        if let existing = course.cards.first(where: { $0.kind == .choice && $0.front == question.prompt }) {
+        if let existing = course.cards.first(where: { $0.front == question.prompt && ($0.kind == .choice || $0.kind == .basic) }) {
             if existing.dueDate > tomorrow { existing.dueDate = tomorrow }
             existing.updatedAt = now
             return existing
         }
-        let card = Flashcard(front: question.prompt, back: question.why, position: course.cards.count, course: course)
-        card.kind = .choice
-        card.choices = question.choices
-        card.correctChoiceIndex = question.answer
+        let card: Flashcard
+        switch question.kind {
+        case .choice, .truefalse, .gap:
+            card = Flashcard(front: question.prompt, back: question.why, position: course.cards.count, course: course)
+            card.kind = .choice
+            card.choices = question.choices
+            card.correctChoiceIndex = question.answer
+        case .order, .match:
+            // Un ordre ou une association se révise en recto verso : la question, et au dos la
+            // bonne réponse en clair, puis pourquoi.
+            let back = [question.answerText, question.why].filter { !$0.isEmpty }.joined(separator: "\n\n")
+            card = Flashcard(front: question.prompt, back: back, position: course.cards.count, course: course)
+        }
         card.chapter = chapter
         card.dueDate = tomorrow
         context.insert(card)

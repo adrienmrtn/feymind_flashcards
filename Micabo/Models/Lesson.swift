@@ -43,6 +43,12 @@ struct LessonPath: Codable, Equatable {
     /// Leçon très courte : un seul quiz pour tous les thèmes.
     var singleQuiz: Bool = false
     var status: Status = .generating
+    /// Le pictogramme de chaque thème sur le chemin (`PathSymbol`), dans l'ordre des thèmes,
+    /// tous différents. Absent sur une leçon d'avant : l'app en choisit.
+    var symbols: [String]?
+    /// Les notions que chaque thème doit couvrir, données par le plan : elles bornent
+    /// l'écriture du thème, et « Réessayer » les renvoie telles quelles.
+    var points: [[String]]?
 
     static func decode(from data: Data?) -> LessonPath? {
         guard let data, !data.isEmpty else { return nil }
@@ -185,19 +191,94 @@ enum NoteBlock: Codable, Equatable {
     }
 }
 
-/// **Un QCM** : la question de fin d'un thème, ou une des questions de réserve qui font les
-/// quiz. Quatre choix, une bonne réponse, une phrase qui explique.
+/// La forme d'une question. Voir `supabase/functions/generate-lesson/schema.ts`.
+enum QuizKind: String, Codable, CaseIterable, Sendable {
+    /// Un QCM : `choices`, une seule bonne (`answer`).
+    case choice
+    /// Une affirmation à juger : `choices` vaut « Vrai », « Faux » dans la langue des notes.
+    case truefalse
+    /// Une phrase à trou (`ClozeGap.marker`) et ses propositions.
+    case gap
+    /// Des éléments à remettre dans l'ordre : `choices` est dans le BON ordre, l'app mélange.
+    case order
+    /// Des paires à associer : `choices` à gauche, `matches` à droite, dans le même ordre.
+    case match
+}
+
+/// **Une question** : la question de fin d'un thème, une des questions de réserve qui font
+/// les quiz, ou une question d'entraînement écrite plus tard. Cinq formes (`QuizKind`), une
+/// difficulté de 1 (reconnaître) à 3 (appliquer), une phrase qui explique.
 struct QuizQuestion: Codable, Equatable, Identifiable {
-    /// Stable : `<id du thème>:<rang>`. C'est lui qu'on retient pour « ratée ».
+    /// Stable : `<id du thème>:<rang>`, ou `<id du thème>:p<n>` pour l'entraînement. C'est lui
+    /// qu'on retient pour « ratée ».
     var id: String
+    var kind: QuizKind
     var prompt: String
     var choices: [String]
     var answer: Int
     var why: String
+    var matches: [String]
+    var difficulty: Int
+
+    init(
+        id: String,
+        kind: QuizKind = .choice,
+        prompt: String,
+        choices: [String],
+        answer: Int,
+        why: String,
+        matches: [String] = [],
+        difficulty: Int = 2
+    ) {
+        self.id = id
+        self.kind = kind
+        self.prompt = prompt
+        self.choices = choices
+        self.answer = answer
+        self.why = why
+        self.matches = matches
+        self.difficulty = min(3, max(1, difficulty))
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, kind, prompt, choices, answer, why, matches, difficulty
+    }
+
+    /// Une question d'avant les formes est un QCM ; une forme inconnue aussi.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        kind = (try container.decodeIfPresent(String.self, forKey: .kind)).flatMap(QuizKind.init(rawValue:)) ?? .choice
+        prompt = try container.decode(String.self, forKey: .prompt)
+        choices = try container.decodeIfPresent([String].self, forKey: .choices) ?? []
+        answer = try container.decodeIfPresent(Int.self, forKey: .answer) ?? 0
+        why = try container.decodeIfPresent(String.self, forKey: .why) ?? ""
+        matches = try container.decodeIfPresent([String].self, forKey: .matches) ?? []
+        difficulty = min(3, max(1, try container.decodeIfPresent(Int.self, forKey: .difficulty) ?? 2))
+    }
 
     var isValid: Bool {
-        choices.count >= 2 && choices.indices.contains(answer)
-            && !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        guard !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        switch kind {
+        case .choice, .truefalse, .gap:
+            return choices.count >= 2 && choices.indices.contains(answer)
+        case .order:
+            return choices.count >= 3
+        case .match:
+            return choices.count >= 2 && matches.count == choices.count
+        }
+    }
+
+    /// La bonne réponse, en clair : pour le corrigé et pour une carte faite d'une question ratée.
+    var answerText: String {
+        switch kind {
+        case .choice, .truefalse, .gap:
+            return choices.indices.contains(answer) ? choices[answer] : ""
+        case .order:
+            return choices.joined(separator: " → ")
+        case .match:
+            return zip(choices, matches).map { "\($0) : \($1)" }.joined(separator: " · ")
+        }
     }
 }
 

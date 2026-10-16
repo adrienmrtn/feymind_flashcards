@@ -21,7 +21,7 @@ private final class FakeLessonService: LessonGenerating, @unchecked Sendable {
                 title: "La guerre froide",
                 subject: "HISTOIRE",
                 icon: "parchemin",
-                themes: (0..<4).map { .init(title: "Thème \($0 + 1)", icon: "ampoule") },
+                themes: (0..<4).map { .init(title: "Thème \($0 + 1)", icon: "ampoule", symbol: $0 < 2 ? "flag" : nil, points: ["Notion \($0)"]) },
                 groups: [.init(name: "Les causes", themes: [0, 1]), .init(name: "Les suites", themes: [2, 3])],
                 intro: .init(lines: ["Un", "Deux", "Trois"], minutes: 25),
                 takeaways: ["A", "B", "C", "D", "E"],
@@ -44,7 +44,21 @@ private final class FakeLessonService: LessonGenerating, @unchecked Sendable {
                 GeneratedQuestion(prompt: "Q\($0) ?", choices: ["a", "b", "c", "d"], answer: 1, why: "Parce que.")
             },
             flashcards: (0..<3).map { GeneratedCard(front: "Recto \($0)", back: "Verso \($0)") }
+                + [GeneratedCard(kind: "cloze", front: "La ___ est rouge.", back: "pomme")]
         )
+    }
+
+    private(set) var practiceRequests: [LessonPracticeRequest] = []
+    var practiceError: Error?
+
+    func practice(_ request: LessonPracticeRequest) async throws -> [GeneratedQuestion] {
+        lock.lock()
+        practiceRequests.append(request)
+        lock.unlock()
+        if let practiceError { throw practiceError }
+        return (0..<request.count).map {
+            GeneratedQuestion(kind: "truefalse", prompt: "Nouvelle \($0)", choices: ["Vrai", "Faux"], answer: 0, why: ".", difficulty: 3, theme: $0 % max(1, request.themes.count))
+        }
     }
 
     func convert(_ request: LessonConvertRequest) async throws -> LessonConversion {
@@ -109,12 +123,20 @@ final class LessonBuilderTests: XCTestCase {
         await waitUntilDone(builder, course)
         XCTAssertEqual(course.orderedChapters.map(\.status), [.ready, .ready, .ready, .ready])
         XCTAssertEqual(course.lessonPath?.status, .ready)
-        XCTAssertEqual(course.cards.count, 12, "trois flashcards par thème")
+        XCTAssertEqual(course.cards.count, 16, "quatre flashcards par thème")
         let first = try XCTUnwrap(course.orderedChapters.first)
         XCTAssertEqual(first.notes?.oneLiner.hasPrefix("Idée"), true)
         XCTAssertEqual(first.quiz?.questions.count, 4)
         XCTAssertEqual(first.quiz?.final?.id, "\(first.id.uuidString):0")
-        XCTAssertEqual(first.cards?.count, 3)
+        XCTAssertEqual(first.cards?.count, 4)
+        let cloze = try XCTUnwrap(first.cards?.first { $0.kind == .cloze }, "une carte à trou garde sa forme")
+        XCTAssertEqual(cloze.front, "La \(ClozeGap.marker) est rouge.")
+        let symbols = try XCTUnwrap(course.lessonPath?.symbols)
+        XCTAssertEqual(symbols.count, 4)
+        XCTAssertEqual(Set(symbols).count, 4, "jamais deux fois le même pictogramme")
+        XCTAssertEqual(symbols.first, "flag")
+        XCTAssertEqual(course.lessonPath?.points?.first, ["Notion 0"])
+        XCTAssertTrue(service.planRequests.first?.audience.exam.contains("un examen, le ") == true, "l'examen visé part avec le plan")
         XCTAssertEqual(course.pathSteps().compactMap(\.circle).count, 9)
 
         let exams = try context.fetch(FetchDescriptor<Exam>())
@@ -136,7 +158,7 @@ final class LessonBuilderTests: XCTestCase {
         service.failingThemes = []
         await builder.retry(course.orderedChapters[2], in: context)
         XCTAssertEqual(course.orderedChapters[2].status, .ready)
-        XCTAssertEqual(course.cards.count, 12)
+        XCTAssertEqual(course.cards.count, 16)
     }
 
     func testTheFreeLimitComesBackAsAPaywallError() async throws {

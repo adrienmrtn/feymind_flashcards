@@ -10,7 +10,7 @@
  */
 import type { Caller } from "../_shared/caller.ts";
 
-export type GateVerdict = "ok" | "free_limit" | "import_pro" | "forbidden";
+export type GateVerdict = "ok" | "free_limit" | "import_pro" | "forbidden" | "pro_required" | "daily_limit";
 
 /** Un refus de la porte : l'app le lit par son `code`, et ouvre le paywall. */
 export class LessonGateError extends Error {
@@ -23,10 +23,14 @@ export class LessonGateError extends Error {
         ? "Importer un support, c'est avec Micabo Pro."
         : code === "free_limit"
         ? "Ta leçon offerte est déjà créée. Passe à Micabo Pro pour en créer d'autres."
+        : code === "pro_required"
+        ? "Tu as utilisé ton essai gratuit. Passe à Micabo Pro pour continuer."
+        : code === "daily_limit"
+        ? "Tu as beaucoup travaillé aujourd'hui. Reviens demain pour la suite."
         : "Cette leçon n'est pas à toi.",
     );
     this.code = code;
-    this.status = code === "forbidden" ? 403 : 402;
+    this.status = code === "forbidden" ? 403 : code === "daily_limit" ? 429 : 402;
   }
 }
 
@@ -96,6 +100,27 @@ export async function admitThemeCall(caller: Caller, lessonId: string): Promise<
   const allowed = await rpc("lesson_theme_call", { p_user: caller.userId, p_lesson: lessonId });
   if (allowed === false) {
     throw new LessonGateError("forbidden");
+  }
+}
+
+/**
+ * **Un supplément** : un lot de nouvelles questions (`practice`) ou un examen blanc (`exam`).
+ * Sans abonnement, un seul de chaque, pour goûter ; avec, un plafond par jour. Un appel sans
+ * compte n'a pas d'essai à consommer : il est refusé. Une base muette laisse passer, comme
+ * pour la leçon.
+ */
+export async function beginExtra(
+  caller: Caller,
+  options: { kind: "practice" | "exam"; lessonId?: string },
+): Promise<void> {
+  if (!caller.userId) throw new LessonGateError("pro_required");
+  const verdict = await rpc("begin_extra", {
+    p_user: caller.userId,
+    p_kind: options.kind,
+    p_lesson: isLessonId(options.lessonId) ? options.lessonId : null,
+  });
+  if (verdict === "pro_required" || verdict === "daily_limit" || verdict === "forbidden") {
+    throw new LessonGateError(verdict);
   }
 }
 

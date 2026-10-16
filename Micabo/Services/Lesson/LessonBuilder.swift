@@ -105,7 +105,7 @@ final class LessonBuilder {
         defer { background.end() }
 
         onStage(.reading)
-        let audience = audience()
+        let audience = audience().preparing(request.examDate.map { Self.examLine(name: nil, date: $0) })
         let result: LessonPlanResult
         do {
             result = try await service.plan(LessonPlanRequest(
@@ -170,7 +170,9 @@ final class LessonBuilder {
             groups: plan.groups,
             shortened: plan.shortened,
             singleQuiz: plan.singleQuiz,
-            status: .generating
+            status: .generating,
+            symbols: PathSymbol.unique(plan.themes.map { $0.symbol ?? "" }),
+            points: plan.themes.map { $0.points ?? [] }
         ).encoded()
         context.insert(course)
 
@@ -222,13 +224,17 @@ final class LessonBuilder {
         for chapter in chapters { writing.insert(chapter.id) }
 
         let titles = course.orderedChapters.map(\.title)
+        let path = course.lessonPath
         let base = ThemeJob.Base(
             lessonID: course.id,
             lessonTitle: course.title,
             themes: titles,
             context: course.contextText,
             subject: course.subject,
-            audience: audience()
+            audience: audience().preparing(Self.examLine(for: course, in: context)),
+            points: path?.points ?? [],
+            objectives: path?.intro.lines ?? [],
+            source: LessonSourceKind(courseSource: course.source).rawValue
         )
 
         var notified = false
@@ -311,15 +317,39 @@ final class LessonBuilder {
         try? context.save()
     }
 
-    /// Les flashcards d'un thème : recto/verso, rattachées au thème, à réviser dès aujourd'hui.
+    /// Les flashcards d'un thème : recto/verso ou à trou, rattachées au thème, à réviser dès
+    /// aujourd'hui.
     static func addCards(_ cards: [GeneratedCard], to chapter: Chapter, of course: Course, in context: ModelContext) {
         var position = course.cards.count
         for generated in cards {
-            let card = Flashcard(front: generated.front, back: generated.back, position: position, course: course)
+            let front = generated.kind == "cloze" ? ClozeGap.normalize(generated.front) : generated.front
+            let card = Flashcard(front: front, back: generated.back, position: position, course: course)
+            if generated.kind == "cloze", ClozeGap.isPresent(in: front) {
+                card.kindRaw = CardKind.cloze.rawValue
+            }
             card.chapter = chapter
             context.insert(card)
             position += 1
         }
+    }
+
+    // MARK: - L'examen visé
+
+    /// L'examen, tel que la consigne le reprend : « Examen « La guerre froide », le 2027-06-15 ».
+    /// La date est écrite à l'ISO : le serveur la lit dans toutes les langues.
+    static func examLine(name: String?, date: Date) -> String {
+        let day = date.formatted(.iso8601.year().month().day())
+        let title = name?.nilIfBlank.map { "« \($0) »" } ?? ""
+        return title.isEmpty ? "un examen, le \(day)" : "l'examen \(title), le \(day)"
+    }
+
+    /// L'examen à venir qui porte sur cette leçon, s'il y en a un.
+    static func examLine(for course: Course, in context: ModelContext) -> String? {
+        let today = Calendar.current.startOfDay(for: Date())
+        let descriptor = FetchDescriptor<Exam>(sortBy: [SortDescriptor(\.date)])
+        guard let exam = (try? context.fetch(descriptor))?.first(where: { $0.date >= today && $0.courseIDs.contains(course.id) })
+        else { return nil }
+        return examLine(name: exam.name, date: exam.date)
     }
 
     // MARK: - Convertir un ancien cours
@@ -446,6 +476,9 @@ private struct ThemeJob: Sendable {
         var context: String
         var subject: String?
         var audience: LessonAudience
+        var points: [[String]] = []
+        var objectives: [String] = []
+        var source: String = ""
     }
 
     var base: Base
@@ -460,7 +493,10 @@ private struct ThemeJob: Sendable {
             themes: base.themes,
             context: base.context,
             subject: base.subject,
-            audience: base.audience
+            audience: base.audience,
+            points: base.points,
+            objectives: base.objectives,
+            source: base.source
         )
     }
 }

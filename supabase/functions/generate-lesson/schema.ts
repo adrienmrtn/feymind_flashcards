@@ -7,7 +7,8 @@
  *
  * Tout est pur : aucune entrée-sortie, et chaque règle a son test.
  */
-import { DEFAULT_ICON, normalizeIcon } from "../_shared/icons.ts";
+import { DEFAULT_ICON, LESSON_ICONS, normalizeIcon } from "../_shared/icons.ts";
+import { uniqueSymbols } from "../_shared/symbols.ts";
 
 // MARK: - Les nombres de la leçon
 
@@ -27,8 +28,19 @@ export const LIMITS = {
   lessonTakeaways: 5,
   introLines: 3,
   choices: 4,
-  questionsPerTheme: 4,
-  flashcardsPerTheme: 3,
+  /** Le plafond par thème : le nombre demandé dépend de la marche (`volumeOf`). */
+  questionsPerTheme: 8,
+  /** Moins que ça, le thème est à réécrire : la question de fin et deux pour les quiz. */
+  minQuestions: 3,
+  flashcardsPerTheme: 8,
+  /** Les notions qu'un thème doit couvrir, données par le plan. */
+  pointsPerTheme: 4,
+  /** Un lot de « nouvelles questions ». */
+  practiceMax: 12,
+  orderItemsMin: 3,
+  orderItemsMax: 6,
+  matchPairsMin: 3,
+  matchPairsMax: 5,
   datesMax: 6,
 } as const;
 
@@ -246,11 +258,68 @@ function readSentences(raw: unknown, max: number, maxWords: number): string[] {
 
 // MARK: - Questions
 
+/**
+ * Les formes de question. `choice` est le QCM ; `truefalse` une affirmation à juger ; `gap`
+ * une phrase à trou et ses propositions ; `order` des éléments à remettre dans l'ordre (les
+ * `choices` sont dans le bon ordre) ; `match` des paires à associer (`choices` à gauche,
+ * `matches` à droite, dans le même ordre).
+ */
+export type QuestionKind = "choice" | "truefalse" | "gap" | "order" | "match";
+
+export const ALL_KINDS: readonly QuestionKind[] = ["choice", "truefalse", "gap", "order", "match"];
+
 export interface QuizQuestion {
+  kind: QuestionKind;
   prompt: string;
   choices: string[];
   answer: number;
   why: string;
+  /** De 1 (reconnaître) à 3 (appliquer, raisonner). */
+  difficulty: number;
+  matches?: string[];
+  /** Le rang du thème, pour un lot de nouvelles questions. */
+  theme?: number;
+}
+
+/** Ce que la requête accepte : une app qui ne sait pas afficher un ordre n'en reçoit pas. */
+export function readKinds(raw: unknown): QuestionKind[] {
+  const kinds = (Array.isArray(raw) ? raw : [])
+    .filter((kind): kind is QuestionKind => ALL_KINDS.includes(kind as QuestionKind));
+  return kinds.includes("choice") ? kinds : ["choice"];
+}
+
+/** « Vrai » et « Faux » dans la langue des notes. */
+const TRUE_FALSE: Record<string, [string, string]> = {
+  fr: ["Vrai", "Faux"],
+  en: ["True", "False"],
+  de: ["Richtig", "Falsch"],
+  it: ["Vero", "Falso"],
+  es: ["Verdadero", "Falso"],
+  pt: ["Verdadeiro", "Falso"],
+  cs: ["Pravda", "Nepravda"],
+  nl: ["Waar", "Onwaar"],
+  el: ["Σωστό", "Λάθος"],
+  hu: ["Igaz", "Hamis"],
+  pl: ["Prawda", "Fałsz"],
+  ro: ["Adevărat", "Fals"],
+  sv: ["Sant", "Falskt"],
+  tr: ["Doğru", "Yanlış"],
+};
+
+export function trueFalseLabels(language: string | undefined): [string, string] {
+  return TRUE_FALSE[(language ?? "").trim().toLowerCase().slice(0, 2)] ?? TRUE_FALSE.fr!;
+}
+
+/** Le trou d'une phrase : une seule graphie, celle de l'app (`ClozeGap.marker`). */
+export const GAP = "…";
+
+export function normalizeGap(text: string): string {
+  let out = text;
+  for (const candidate of ["[...]", "(...)", "[…]", "(…)", "_____", "____", "___", "__", "..."]) {
+    out = out.split(candidate).join(GAP);
+  }
+  while (out.includes(GAP + GAP)) out = out.split(GAP + GAP).join(GAP);
+  return out;
 }
 
 /** Un générateur pseudo-aléatoire reproductible : le même thème mélange toujours pareil. */
@@ -269,66 +338,198 @@ export function seededRandom(seed: string): () => number {
   };
 }
 
-/**
- * Une question aux règles : quatre propositions distinctes, une seule bonne, une phrase qui
- * explique. Le modèle met presque toujours la bonne réponse en premier ou en deuxième : les
- * propositions sont mélangées ici, de façon reproductible.
- */
-export function readQuestion(raw: unknown, seed: string): QuizQuestion | null {
-  if (!raw || typeof raw !== "object") return null;
-  const question = raw as Record<string, unknown>;
-  const prompt = clampWords(cleanInline(cleanText(question.prompt, 400)).replace(/\*\*/g, ""), 30);
+function shuffled<T>(items: T[], seed: string): T[] {
+  const out = [...items];
+  const random = seededRandom(seed);
+  for (let i = out.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(random() * (i + 1));
+    [out[i], out[j]] = [out[j]!, out[i]!];
+  }
+  return out;
+}
+
+function shortText(value: unknown, maxWords: number): string {
+  return clampWords(cleanText(value, 240).replace(/\*\*/g, ""), maxWords);
+}
+
+function readDifficulty(raw: unknown, fallback: number): number {
+  const value = typeof raw === "number" ? Math.round(raw) : fallback;
+  return Math.min(3, Math.max(1, value));
+}
+
+/** Une liste sans doublons ni vides : les éléments d'un ordre, les termes d'une association. */
+function distinct(raw: unknown, maxWords: number): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const item of Array.isArray(raw) ? raw : []) {
+    const text = shortText(item, maxWords);
+    if (text && !seen.has(text.toLowerCase())) {
+      seen.add(text.toLowerCase());
+      out.push(text);
+    }
+  }
+  return out;
+}
+
+/** Un QCM ou une phrase à trou : une bonne proposition, au moins deux fausses distinctes. */
+function readChoices(question: Record<string, unknown>, seed: string): { choices: string[]; answer: number } | null {
   const rawChoices = Array.isArray(question.choices) ? question.choices : [];
   const answer = typeof question.answer === "number" ? Math.round(question.answer) : -1;
-  if (!prompt || answer < 0 || answer >= rawChoices.length) return null;
-
-  const right = clampWords(cleanText(rawChoices[answer], 200).replace(/\*\*/g, ""), 14);
+  if (answer < 0 || answer >= rawChoices.length) return null;
+  const right = shortText(rawChoices[answer], 14);
   const seen = new Set([right.toLowerCase()]);
   const wrong: string[] = [];
   rawChoices.forEach((choice, index) => {
     if (index === answer) return;
-    const text = clampWords(cleanText(choice, 200).replace(/\*\*/g, ""), 14);
+    const text = shortText(choice, 14);
     if (text && !seen.has(text.toLowerCase())) {
       seen.add(text.toLowerCase());
       wrong.push(text);
     }
   });
   if (!right || wrong.length < 2) return null;
-
-  const choices = [right, ...wrong.slice(0, LIMITS.choices - 1)];
-  const random = seededRandom(seed);
-  for (let i = choices.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(random() * (i + 1));
-    [choices[i], choices[j]] = [choices[j]!, choices[i]!];
-  }
-  const why = clampParagraph(cleanInline(cleanText(question.why, 400)).replace(/\*\*/g, ""));
-  return { prompt, choices, answer: choices.indexOf(right), why };
+  // Le modèle met presque toujours la bonne réponse en premier : on mélange, de façon
+  // reproductible. L'app mélange encore à l'affichage, à chaque passage.
+  const choices = shuffled([right, ...wrong.slice(0, LIMITS.choices - 1)], seed);
+  return { choices, answer: choices.indexOf(right) };
 }
 
-export function readQuestions(raw: unknown, seed: string, max = LIMITS.questionsPerTheme): QuizQuestion[] {
-  return (Array.isArray(raw) ? raw : [])
-    .map((question, index) => readQuestion(question, `${seed}:${index}`))
-    .filter((question): question is QuizQuestion => question !== null)
-    .slice(0, max);
+/**
+ * **Une question aux règles**, quelle que soit sa forme. Une forme que l'app ne sait pas
+ * afficher, ou une question mal formée, ne passe pas : mieux vaut une question de moins
+ * qu'un écran cassé. Une phrase à trou sans trou redevient un QCM.
+ */
+export function readQuestion(
+  raw: unknown,
+  seed: string,
+  options: { kinds?: readonly QuestionKind[]; language?: string } = {},
+): QuizQuestion | null {
+  if (!raw || typeof raw !== "object") return null;
+  const question = raw as Record<string, unknown>;
+  const kinds = options.kinds ?? ["choice"];
+  let kind = (typeof question.kind === "string" ? question.kind : "choice") as QuestionKind;
+  if (!ALL_KINDS.includes(kind)) kind = "choice";
+  const prompt = clampWords(cleanInline(cleanText(question.prompt, 400)).replace(/\*\*/g, ""), 30);
+  const why = clampWords(cleanInline(cleanText(question.why, 500)).replace(/\*\*/g, ""), 40);
+  const difficulty = readDifficulty(question.difficulty ?? question.level, 2);
+  if (!prompt) return null;
+
+  if (kind === "truefalse") {
+    const value = question.answer;
+    const isTrue = value === true || value === 0 || value === "true" || value === "vrai";
+    const isFalse = value === false || value === 1 || value === "false" || value === "faux";
+    if (!isTrue && !isFalse) return null;
+    // Les libellés du modèle sont dans la langue des notes, même quand on ne la connaît pas
+    // (une leçon « dans la langue du document ») ; sinon, ceux de la langue demandée.
+    const given = distinct(question.choices, 3);
+    const labels = given.length === 2 ? given : trueFalseLabels(options.language);
+    // Une app qui ne connaît pas encore le vrai/faux le lit comme un QCM à deux choix.
+    return { kind: kinds.includes("truefalse") ? "truefalse" : "choice", prompt, choices: [...labels], answer: isTrue ? 0 : 1, why, difficulty };
+  }
+
+  if (kind === "order") {
+    if (!kinds.includes("order")) return null;
+    const items = distinct(question.items ?? question.choices, 12).slice(0, LIMITS.orderItemsMax);
+    if (items.length < LIMITS.orderItemsMin) return null;
+    return { kind, prompt, choices: items, answer: 0, why, difficulty };
+  }
+
+  if (kind === "match") {
+    if (!kinds.includes("match")) return null;
+    const seen = new Set<string>();
+    const left: string[] = [];
+    const right: string[] = [];
+    for (const pair of Array.isArray(question.pairs) ? question.pairs : []) {
+      const entry = Array.isArray(pair) ? pair : [];
+      const term = shortText(entry[0], 8);
+      const match = shortText(entry[1], 14);
+      if (!term || !match || seen.has(term.toLowerCase()) || seen.has(match.toLowerCase())) continue;
+      seen.add(term.toLowerCase());
+      seen.add(match.toLowerCase());
+      left.push(term);
+      right.push(match);
+    }
+    if (left.length < LIMITS.matchPairsMin) return null;
+    return {
+      kind,
+      prompt,
+      choices: left.slice(0, LIMITS.matchPairsMax),
+      matches: right.slice(0, LIMITS.matchPairsMax),
+      answer: 0,
+      why,
+      difficulty,
+    };
+  }
+
+  const chosen = readChoices(question, seed);
+  if (!chosen) return null;
+  if (kind === "gap") {
+    const sentence = normalizeGap(prompt);
+    if (kinds.includes("gap") && sentence.includes(GAP)) {
+      return { kind, prompt: sentence, ...chosen, why, difficulty };
+    }
+    return { kind: "choice", prompt: sentence, ...chosen, why, difficulty };
+  }
+  return { kind: "choice", prompt, ...chosen, why, difficulty };
+}
+
+/**
+ * Les questions d'un thème, sans doublons : deux questions dont l'énoncé est le même, à la
+ * casse près, n'en font qu'une.
+ */
+export function readQuestions(
+  raw: unknown,
+  seed: string,
+  options: { kinds?: readonly QuestionKind[]; language?: string; max?: number; avoid?: readonly string[] } = {},
+): QuizQuestion[] {
+  const seen = new Set((options.avoid ?? []).map((prompt) => promptKey(prompt)));
+  const out: QuizQuestion[] = [];
+  (Array.isArray(raw) ? raw : []).forEach((item, index) => {
+    const question = readQuestion(item, `${seed}:${index}`, options);
+    if (!question) return;
+    const key = promptKey(question.prompt);
+    if (seen.has(key)) return;
+    seen.add(key);
+    const theme = (item as Record<string, unknown>)?.theme;
+    if (typeof theme === "number" && Number.isFinite(theme)) question.theme = Math.round(theme);
+    out.push(question);
+  });
+  return out.slice(0, options.max ?? LIMITS.questionsPerTheme);
+}
+
+/** La clé d'un énoncé : sans casse, sans ponctuation, pour repérer une question déjà posée. */
+export function promptKey(prompt: string): string {
+  return prompt.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 }
 
 // MARK: - Flashcards
 
 export interface Flashcard {
+  /** `basic` (recto/verso) ou `cloze` (le recto est une phrase à trou, le verso ce qui manque). */
+  kind: "basic" | "cloze";
   front: string;
   back: string;
 }
 
-export function readFlashcards(raw: unknown, max = LIMITS.flashcardsPerTheme): Flashcard[] {
+export function readFlashcards(raw: unknown, max: number = LIMITS.flashcardsPerTheme): Flashcard[] {
+  const seen = new Set<string>();
   return (Array.isArray(raw) ? raw : [])
-    .map((card) => {
+    .map((card): Flashcard => {
       const entry = (card ?? {}) as Record<string, unknown>;
-      return {
-        front: clampWords(cleanText(entry.front, 300).replace(/\*\*/g, ""), 20),
-        back: clampWords(cleanText(entry.back, 400).replace(/\*\*/g, ""), 30),
-      };
+      const front = clampWords(cleanText(entry.front, 300).replace(/\*\*/g, ""), 24);
+      const back = clampWords(cleanText(entry.back, 400).replace(/\*\*/g, ""), 30);
+      if (entry.kind === "cloze") {
+        const sentence = normalizeGap(front);
+        if (sentence.includes(GAP)) return { kind: "cloze", front: sentence, back };
+      }
+      return { kind: "basic", front, back };
     })
-    .filter((card) => card.front && card.back)
+    .filter((card) => {
+      const key = promptKey(card.front);
+      if (!card.front || !card.back || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
     .slice(0, max);
 }
 
@@ -392,12 +593,35 @@ export interface LessonPlan {
   title: string;
   subject: string;
   icon: string;
-  themes: { title: string; icon: string }[];
+  /**
+   * Chaque thème : son icône 3D, son pictogramme sur le chemin (jamais deux fois le même) et
+   * les notions qu'il doit couvrir.
+   */
+  themes: { title: string; icon: string; symbol: string; points: string[] }[];
   groups: { name: string; themes: number[] }[];
   intro: { lines: string[]; minutes: number };
   takeaways: string[];
   shortened: boolean;
   singleQuiz: boolean;
+}
+
+/**
+ * **Jamais deux fois la même icône sur un chemin.** Un thème dont l'icône est déjà prise (par
+ * un thème précédent ou par la leçon) en reçoit une autre de la base, la première libre dans
+ * l'ordre de `LESSON_ICONS` : le chemin reste lisible d'un coup d'œil.
+ */
+export function uniqueIcons<T extends { icon: string }>(themes: T[], lessonIcon: string): T[] {
+  const used = new Set<string>([lessonIcon]);
+  return themes.map((theme) => {
+    if (!used.has(theme.icon)) {
+      used.add(theme.icon);
+      return theme;
+    }
+    const free = LESSON_ICONS.find((icon) => !used.has(icon.id))?.id;
+    if (!free) return theme;
+    used.add(free);
+    return { ...theme, icon: free };
+  });
 }
 
 /**
@@ -407,7 +631,7 @@ export interface LessonPlan {
  */
 export function readPlan(
   raw: unknown,
-  options: { shortSource: boolean; shortened: boolean; fallbackTitle: string },
+  options: { shortSource: boolean; shortened: boolean; fallbackTitle: string; maxThemes?: number },
 ): LessonPlan | null {
   if (!raw || typeof raw !== "object") return null;
   const plan = raw as Record<string, unknown>;
@@ -418,6 +642,8 @@ export function readPlan(
       return {
         title: clampWords(cleanText(entry.title, 120).replace(/\*\*/g, "").replace(/[.:]$/, ""), LIMITS.themeTitleWords),
         icon: normalizeIcon(entry.icon),
+        symbol: typeof entry.symbol === "string" ? entry.symbol : "",
+        points: readSentences(entry.points, LIMITS.pointsPerTheme, 12).map((point) => point.replace(/\*\*/g, "")),
       };
     })
     .filter((theme) => {
@@ -427,8 +653,13 @@ export function readPlan(
       return true;
     });
   const singleQuiz = options.shortSource;
-  themes = themes.slice(0, singleQuiz ? LIMITS.minThemes : LIMITS.maxThemes);
+  const ceiling = Math.min(LIMITS.maxThemes, Math.max(LIMITS.minThemes, options.maxThemes ?? LIMITS.maxThemes));
+  themes = themes.slice(0, singleQuiz ? LIMITS.minThemes : ceiling);
   if (themes.length < (singleQuiz ? 2 : LIMITS.minThemes - 1)) return null;
+  const lessonIcon = normalizeIcon(plan.icon) || DEFAULT_ICON;
+  themes = uniqueIcons(themes, lessonIcon);
+  const symbols = uniqueSymbols(themes.map((theme) => theme.symbol));
+  themes = themes.map((theme, index) => ({ ...theme, symbol: symbols[index]! }));
 
   const groups = groupThemes(themes.length, singleQuiz);
   const names = nameGroups(groups, plan.groups);
@@ -441,7 +672,7 @@ export function readPlan(
   return {
     title: title || options.fallbackTitle,
     subject: clampWords(cleanText(plan.subject, 60).replace(/\*\*/g, ""), 4),
-    icon: normalizeIcon(plan.icon) || DEFAULT_ICON,
+    icon: lessonIcon,
     themes,
     groups: groups.map((themes, index) => ({ name: names[index] ?? "", themes })),
     intro: { lines, minutes: estimateMinutes(themes.length, groups.length) },
