@@ -114,12 +114,6 @@ struct HookLogoStepView: View {
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Text(i18n.t("ios.hook.sub"))
-                    .font(MicaboFont.ui(17, weight: .regular))
-                    .foregroundStyle(OnboardingPalette.gray)
-                    .lineSpacing(3)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.horizontal, MicaboSpacing.xl)
             .onboardingAppear(index: 3)

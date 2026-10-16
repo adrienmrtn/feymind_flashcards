@@ -157,7 +157,7 @@ struct OnboardingProofPage<Figure: View>: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            OnboardingArrowBar(showsMika: true, action: onContinue)
+            OnboardingArrowBar(action: onContinue)
                 .onboardingAppear(index: 5)
         }
         .onboardingChromeInset()

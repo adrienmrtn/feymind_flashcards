@@ -117,14 +117,14 @@ enum OnboardingSurface {
 /// Les noms sont gardés pour les écrans qui les appellent ; toutes les courbes sont des
 /// fondus courts, et `rise` est nul.
 enum OnboardingMotion {
-    /// Entrée d'un élément à l'ouverture d'un écran : un fondu de 200 ms.
-    static let enter = Animation.easeOut(duration: 0.2)
-    /// La course d'un élément qui entre. Nulle : on ne glisse pas.
-    static let rise: CGFloat = 0
+    /// Entrée d'un élément à l'ouverture d'un écran : le ressort doux de l'app.
+    static let enter = Animation.spring(duration: 0.55, bounce: 0.25)
+    /// La course d'un élément qui entre : il monte de quatorze points, comme dans l'app.
+    static let rise: CGFloat = 14
     /// Réaction à un appui.
     static let tap = Animation.easeOut(duration: 0.15)
-    /// La réaction d'une réponse qu'on choisit.
-    static let select = Animation.easeOut(duration: 0.2)
+    /// La réaction d'une réponse qu'on choisit : un petit ressort.
+    static let select = Animation.spring(duration: 0.3, bounce: 0.35)
     /// Un élément qui change de forme sous les yeux.
     static let shift = Animation.easeInOut(duration: 0.3)
     /// Passage d'un état à l'autre **dans** un écran. Les pages, elles, glissent :
@@ -288,8 +288,12 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         model != nil && !centered && !surface.isDark && titleSize >= 26
     }
 
-    /// Le nombre de réponses données sur cette page : chaque réponse fait réagir Mika.
+    /// Le nombre de réponses données sur cette page.
     @State private var cheers = 0
+
+    /// Les sous-titres ne s'affichent plus dans le parcours ; la création d'un deck, qui
+    /// emploie le même gabarit, garde les siens.
+    private var showsSubtitle: Bool { model == nil }
 
     /// La place de la barre du haut : seulement dans le parcours, et sur les écrans qui la
     /// montrent. L'étape est celle de la page, pas celle du modèle : pendant un glissement,
@@ -314,13 +318,6 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
             MicaboBottomBar(background: surface.background) {
                 footer()
                     .onboardingAppear(index: 4)
-            }
-            .overlay(alignment: .bottomLeading) {
-                if showsMika {
-                    OnboardingFooterMika(cheers: cheers)
-                        .padding(.leading, MicaboSpacing.screen - 8)
-                        .padding(.bottom, MicaboSpacing.sm - 4)
-                }
             }
         }
         .environment(\.onboardingCheer, { cheers += 1 })
@@ -380,7 +377,9 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                 .frame(maxWidth: .infinity, alignment: centered ? .center : .leading)
                 .onboardingAppear(index: 1)
 
-                if let subtitle {
+                // Plus de sous-titre sous les questions : le titre suffit, et la ligne grise
+                // se lisait comme du remplissage.
+                if let subtitle, showsSubtitle {
                     Text(subtitle)
                         .font(OnboardingPalette.subtitle)
                         .foregroundStyle(surface.prose)
@@ -481,6 +480,7 @@ private struct OnboardingAppear: ViewModifier {
     func body(content: Content) -> some View {
         content
             .opacity(isVisible || still ? 1 : 0)
+            .offset(y: isVisible || still ? 0 : OnboardingMotion.rise)
             .onAppear {
                 withAnimation(OnboardingMotion.enter.delay(Double(index) * stagger)) {
                     isVisible = true
@@ -668,7 +668,9 @@ struct OnboardingChoiceTile: View {
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
 
-                if let subtitle {
+                // Plus de sous-titre sous les questions : le titre suffit, et la ligne grise
+                // se lisait comme du remplissage.
+                if let subtitle, showsSubtitle {
                     Text(subtitle)
                         .font(OnboardingPalette.subtitle)
                         .foregroundStyle(OnboardingPalette.gray)

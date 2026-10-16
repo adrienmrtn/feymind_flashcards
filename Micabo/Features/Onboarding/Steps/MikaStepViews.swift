@@ -732,6 +732,7 @@ struct OnboardingLessonPhone: View {
     static let screenHeight: CGFloat = 844
     /// La bordure du téléphone, en points d'écran.
     private static let bezel: CGFloat = 12
+    private static let frame = Color(hex: 0x15161A)
 
     var body: some View {
         GeometryReader { proxy in
@@ -767,18 +768,19 @@ struct OnboardingLessonPhone: View {
 
     private var phone: some View {
         ZStack(alignment: .top) {
+            // Le cadre d'un téléphone est noir, de jour comme de nuit.
             RoundedRectangle(cornerRadius: 62, style: .continuous)
-                .fill(MicaboColor.ink)
+                .fill(Self.frame)
             OnboardingLessonScreen(animated: animated)
                 .frame(width: Self.screenWidth, height: Self.screenHeight)
                 .clipShape(RoundedRectangle(cornerRadius: 52, style: .continuous))
                 .padding(Self.bezel)
             Capsule()
-                .fill(MicaboColor.ink)
+                .fill(Self.frame)
                 .frame(width: 120, height: 34)
                 .padding(.top, Self.bezel + 12)
         }
-        .shadow(color: MicaboColor.ink.opacity(0.16), radius: 30, y: 16)
+        .shadow(color: .black.opacity(0.18), radius: 30, y: 16)
     }
 }
 

@@ -239,7 +239,7 @@ private struct PaywallComparisonTable: View {
             Text("PRO")
                 .font(MicaboFont.ui(11.5, weight: .bold))
                 .tracking(1)
-                .foregroundStyle(OnboardingPalette.white)
+                .foregroundStyle(Color.white)
                 .frame(width: columnWidth, height: 26)
                 .background(OnboardingPalette.accent, in: Capsule())
         }
@@ -335,7 +335,7 @@ private struct PaywallPlanCard: View {
                 if let badge {
                     Text(badge)
                         .font(MicaboFont.ui(11, weight: .bold))
-                        .foregroundStyle(OnboardingPalette.white)
+                        .foregroundStyle(Color.white)
                         .padding(.vertical, 4)
                         .padding(.horizontal, 9)
                         .background(OnboardingPalette.accent, in: Capsule())

@@ -81,14 +81,14 @@ struct CountryStepView: View {
 
                 Text(title(for: model.country))
                     .font(OnboardingPalette.option)
-                    .foregroundStyle(OnboardingPalette.white)
+                    .foregroundStyle(MicaboColor.onInk)
                     .lineLimit(1)
 
                 Spacer(minLength: 0)
 
                 Image(systemName: "chevron.up.chevron.down")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(OnboardingPalette.white.opacity(0.8))
+                    .foregroundStyle(MicaboColor.onInk.opacity(0.8))
             }
             .padding(.horizontal, 18)
             .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)

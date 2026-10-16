@@ -68,7 +68,8 @@ struct OnboardingFlowView: View {
         .environment(model)
         .environment(\.onboardingSurface, surface)
         .environment(\.locale, i18n.locale.foundation)
-        .preferredColorScheme(.light)
+        // **Les couleurs de l'app, jour ou nuit** : le parcours suit l'apparence de l'app
+        // (celle du téléphone par défaut), comme tous les écrans qui suivent.
         // **Le compte, en languette**, posée sur le dernier écran de Mika : le parcours ne
         // change pas de page pour le demander. Balayée vers le bas, elle se referme sans
         // répondre, et la flèche la rouvre.
@@ -82,7 +83,6 @@ struct OnboardingFlowView: View {
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(MicaboRadius.sheet)
                 .presentationBackground(OnboardingPalette.white)
-                .preferredColorScheme(.light)
         }
         .onChange(of: auth.isSignedIn, initial: true) { _, isSignedIn in
             model.hasAccount = isSignedIn

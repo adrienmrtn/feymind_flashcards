@@ -158,7 +158,7 @@ struct MikaLoadingView: View {
 
     private static func color(column: Int, filled: Int) -> Color {
         if column < filled - 2 { return OnboardingPalette.mikaGradient[0] }
-        if column < filled { return OnboardingPalette.mikaGradient[2] }
+        if column < filled { return OnboardingPalette.mikaGradient[1] }
         return OnboardingPalette.cardStrong
     }
 }

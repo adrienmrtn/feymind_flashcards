@@ -139,7 +139,7 @@ struct TrialOfferStepView: View {
             }
             .scrollIndicators(.hidden)
 
-            OnboardingArrowBar(showsMika: true) {
+            OnboardingArrowBar {
                 model.advance()
             }
             .opacity(showsAction ? 1 : 0)

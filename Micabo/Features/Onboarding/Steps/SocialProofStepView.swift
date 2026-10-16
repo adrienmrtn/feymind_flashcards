@@ -239,7 +239,7 @@ struct OnboardingReviewCard: View {
                 LinearGradient(colors: OnboardingPalette.mikaGradient, startPoint: .topLeading, endPoint: .bottomTrailing)
                 Text(String(review.author.prefix(1)).uppercased())
                     .font(MicaboFont.ui(20, weight: .bold))
-                    .foregroundStyle(OnboardingPalette.white)
+                    .foregroundStyle(Color.white)
             }
         }
         .frame(width: 54, height: 54)

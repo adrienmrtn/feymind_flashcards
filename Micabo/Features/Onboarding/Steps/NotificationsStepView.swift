@@ -112,7 +112,7 @@ struct NotificationsStepView: View {
                 if isChecked {
                     Image(systemName: "checkmark")
                         .font(.system(size: 13, weight: .heavy))
-                        .foregroundStyle(OnboardingPalette.white)
+                        .foregroundStyle(Color.white)
                         .transition(.opacity)
                 }
             }

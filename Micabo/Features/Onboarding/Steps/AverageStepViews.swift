@@ -315,7 +315,7 @@ struct GradeGapCard: View {
         HStack(spacing: 14) {
             Image(systemName: "arrow.up.right")
                 .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(OnboardingPalette.white)
+                .foregroundStyle(Color.white)
                 .frame(width: 42, height: 42)
                 .background(OnboardingPalette.accent, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
 
