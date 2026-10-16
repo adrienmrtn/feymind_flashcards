@@ -3,11 +3,13 @@
  * de l'export, test interne) et, si la clé y a accès, les derniers passages Xcode Cloud.
  * Lecture seule : rien n'est lancé ni modifié.
  *
- *     ASC_KEY_ID=… ASC_ISSUER_ID=… ASC_PRIVATE_KEY=… node store/builds.mjs [commit] [date]
+ *     ASC_KEY_ID=… ASC_ISSUER_ID=… ASC_PRIVATE_KEY=… node store/builds.mjs [commit] [date] [--wait minutes]
  *
  * Avec un commit et sa date, le script dit en dernière ligne si ce commit a donné un build
  * (Xcode Cloud l'a pris, ou un build est arrivé dans TestFlight depuis), et sort en erreur
- * sinon. Le workflow « Prod » le lance avec le commit de tête de `main`.
+ * sinon. Avec `--wait`, il attend ce build jusqu'à la fin de son traitement par Apple. Le
+ * workflow « Prod » le lance avec le commit de tête de `main`, et attend après une fusion
+ * qui touche l'app.
  *
  * La clé de la grille de prix (rôle App Manager) voit le produit Xcode Cloud mais pas ses
  * passages : Apple répond 404. Le script le dit et s'en tient à TestFlight.
@@ -19,8 +21,11 @@ import { loadGrid } from "./lib/grid.mjs";
 const keyId = process.env.ASC_KEY_ID ?? "";
 const issuerId = process.env.ASC_ISSUER_ID ?? "";
 const privateKey = process.env.ASC_PRIVATE_KEY ?? "";
-const wanted = (process.argv[2] ?? "").trim().toLowerCase();
-const since = process.argv[3] ? new Date(process.argv[3]) : null;
+const args = process.argv.slice(2);
+const waitAt = args.indexOf("--wait");
+const waitMinutes = waitAt >= 0 ? Number(args.splice(waitAt, 2)[1]) || 0 : 0;
+const wanted = (args[0] ?? "").trim().toLowerCase();
+const since = args[1] ? new Date(args[1]) : null;
 
 if (!keyId || !privateKey) {
   console.error("Secrets ASC_KEY_ID et ASC_PRIVATE_KEY absents : rien à lire.");
@@ -142,8 +147,43 @@ if (wanted) {
   console.log("");
   if (seen) console.log(`Xcode Cloud a pris ${short}.`);
   if (arrived) console.log(`TestFlight a reçu ${arrived} depuis ${short}.`);
-  if (!seen && !arrived) {
+  if (!seen && !arrived && !(waitMinutes && since)) {
     console.log(`Pas encore de build pour ${short}${since ? ` (commit du ${day(since.toISOString())})` : ""}.`);
     process.exit(1);
+  }
+}
+
+// ── L'attente du build d'une fusion ─────────────────────────────────────────────────────
+
+if (wanted && since && waitMinutes) {
+  const short = wanted.slice(0, 7);
+  const deadline = Date.now() + waitMinutes * 60_000;
+  let last = "";
+  for (;;) {
+    const latest = await asc.get(`/v1/builds?filter[app]=${app.id}&sort=-uploadedDate&limit=1&include=preReleaseVersion`);
+    const build = latest.data?.[0];
+    const a = build?.attributes ?? {};
+    if (build && a.uploadedDate && new Date(a.uploadedDate) > since) {
+      const version = (latest.included ?? []).find((item) => item.type === "preReleaseVersions")?.attributes?.version;
+      const label = `${version ?? "?"} (${a.version}) · reçu ${day(a.uploadedDate)} · ${a.processingState}`;
+      if (label !== last) console.log(`TestFlight : ${label}`);
+      last = label;
+      if (a.processingState !== "PROCESSING") {
+        if (a.processingState === "VALID") {
+          console.log(`Le build de ${short} est prêt dans TestFlight.`);
+          process.exit(0);
+        }
+        console.log(`Le build de ${short} est arrivé, mais Apple l'a refusé (${a.processingState}).`);
+        process.exit(1);
+      }
+    }
+    if (Date.now() > deadline) {
+      console.log(
+        `Toujours pas de build prêt pour ${short} après ${waitMinutes} min. ` +
+          "App Store Connect → Micabo → Xcode Cloud dit pourquoi (build lancé ? en échec ? bandeau à accepter ?).",
+      );
+      process.exit(1);
+    }
+    await new Promise((done) => setTimeout(done, 60_000));
   }
 }
