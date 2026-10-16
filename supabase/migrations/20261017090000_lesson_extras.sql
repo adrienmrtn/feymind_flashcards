@@ -60,3 +60,26 @@ end;
 $$;
 
 revoke execute on function public.begin_extra(uuid, text, uuid) from anon, authenticated, public;
+
+-- Rend le dernier supplément pris sur cette leçon quand son écriture a échoué : une panne du
+-- modèle ne coûte ni l'essai gratuit, ni une part du plafond Pro. Seule une ligne de moins
+-- d'un quart d'heure se rend.
+create or replace function public.refund_extra(p_user uuid, p_kind text, p_lesson uuid default null)
+returns void
+language sql
+security definer
+set search_path = ''
+as $$
+  delete from public.lesson_extras
+  where id = (
+    select id from public.lesson_extras
+    where user_id = p_user
+      and kind = p_kind
+      and lesson_id is not distinct from p_lesson
+      and created_at > now() - interval '15 minutes'
+    order by created_at desc
+    limit 1
+  );
+$$;
+
+revoke execute on function public.refund_extra(uuid, text, uuid) from anon, authenticated, public;

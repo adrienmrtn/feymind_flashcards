@@ -77,6 +77,7 @@ import {
   isLessonId,
   LessonGateError,
   normalizeSource,
+  refundExtra,
 } from "./gate.ts";
 
 interface RequestBody {
@@ -512,57 +513,64 @@ async function practice(request: Request, body: RequestBody): Promise<Response> 
   // question retrouve son thème.
   if (!themes.some((theme) => theme.notes.length > 0)) throw new FalError("Cette leçon n'a pas encore de notes.", 400);
 
-  await beginExtra(caller, { kind: "practice", lessonId: body.lessonId });
-  await consumeQuota(caller, "generate-lesson-practice");
+  const extra = { kind: "practice", lessonId: body.lessonId } as const;
+  await beginExtra(caller, extra);
+  try {
+    await consumeQuota(caller, "generate-lesson-practice");
 
-  const kinds = readKinds(body.kinds);
-  const count = Math.min(LIMITS.practiceMax, Math.max(4, Math.round(typeof body.count === "number" ? body.count : 10)));
-  const avoid = (Array.isArray(body.avoid) ? body.avoid : [])
-    .map((prompt) => sanitizeMeta(typeof prompt === "string" ? prompt : "", 200))
-    .filter(Boolean)
-    .slice(-PRACTICE_AVOID);
-  const focus = (Array.isArray(body.focus) ? body.focus : [])
-    .filter((n): n is number => typeof n === "number" && Number.isFinite(n))
-    .map((n) => Math.round(n))
-    .slice(0, 12);
-  const lessonTitle = sanitizeMeta(body.lessonTitle, 200) || themes[0]!.title;
-  const meter: ModelUsage[] = [];
+    const kinds = readKinds(body.kinds);
+    const count = Math.min(LIMITS.practiceMax, Math.max(4, Math.round(typeof body.count === "number" ? body.count : 10)));
+    const avoid = (Array.isArray(body.avoid) ? body.avoid : [])
+      .map((prompt) => sanitizeMeta(typeof prompt === "string" ? prompt : "", 200))
+      .filter(Boolean)
+      .slice(-PRACTICE_AVOID);
+    const focus = (Array.isArray(body.focus) ? body.focus : [])
+      .filter((n): n is number => typeof n === "number" && Number.isFinite(n))
+      .map((n) => Math.round(n))
+      .slice(0, 12);
+    const lessonTitle = sanitizeMeta(body.lessonTitle, 200) || themes[0]!.title;
+    const meter: ModelUsage[] = [];
 
-  const sections = audienceSections(body, themes.map((theme) => theme.notes).join("\n").slice(0, 6_000));
-  sections.push(practiceBrief({ lessonTitle, themes, focus, avoid, count, kinds }));
-  sections.push(wrapUntrusted("NOTES DE LA LEÇON", practiceNotes(themes)));
-  sections.push("Écris maintenant le JSON des nouvelles questions.");
-  const prompt = sections.join("\n\n");
-  const seed = `${body.lessonId}:practice:${Date.now()}`;
+    const sections = audienceSections(body, themes.map((theme) => theme.notes).join("\n").slice(0, 6_000));
+    sections.push(practiceBrief({ lessonTitle, themes, focus, avoid, count, kinds }));
+    sections.push(wrapUntrusted("NOTES DE LA LEÇON", practiceNotes(themes)));
+    sections.push("Écris maintenant le JSON des nouvelles questions.");
+    const prompt = sections.join("\n\n");
+    const seed = `${body.lessonId}:practice:${Date.now()}`;
 
-  const read = (parsed: Record<string, unknown> | null) => {
-    if (!parsed) return null;
-    const questions = readQuestions(parsed.questions, seed, { kinds, language: body.language, max: count, avoid })
-      .map((question) => ({
-        ...question,
-        theme: question.theme !== undefined && question.theme >= 0 && question.theme < themes.length ? question.theme : 0,
+    const read = (parsed: Record<string, unknown> | null) => {
+      if (!parsed) return null;
+      const questions = readQuestions(parsed.questions, seed, { kinds, language: body.language, max: count, avoid })
+        .map((question) => ({
+          ...question,
+          theme: question.theme !== undefined && question.theme >= 0 && question.theme < themes.length ? question.theme : 0,
+        }));
+      return questions.length >= 3 ? questions : null;
+    };
+
+    let questions = read(await ask({ prompt, system: PRACTICE_SYSTEM_PROMPT, temperature: 0.7, maxTokens: PRACTICE_TOKENS, meter }));
+    if (!questions) {
+      questions = read(await ask({
+        prompt: `${prompt}\n\nTa réponse précédente était illisible ou incomplète. Rends le JSON complet, avec ${count} questions.`,
+        system: PRACTICE_SYSTEM_PROMPT,
+        temperature: 0.5,
+        maxTokens: PRACTICE_TOKENS,
+        meter,
       }));
-    return questions.length >= 3 ? questions : null;
-  };
+    }
+    if (!questions) {
+      throw new FalError("Les nouvelles questions n'ont pas pu s'écrire. Réessaie.", 502);
+    }
 
-  let questions = read(await ask({ prompt, system: PRACTICE_SYSTEM_PROMPT, temperature: 0.7, maxTokens: PRACTICE_TOKENS, meter }));
-  if (!questions) {
-    questions = read(await ask({
-      prompt: `${prompt}\n\nTa réponse précédente était illisible ou incomplète. Rends le JSON complet, avec ${count} questions.`,
-      system: PRACTICE_SYSTEM_PROMPT,
-      temperature: 0.5,
-      maxTokens: PRACTICE_TOKENS,
-      meter,
-    }));
+    return jsonResponse({
+      questions,
+      meta: { promptVersion: PROMPT_VERSION, usage: totalUsage(meter) },
+    });
+  } catch (error) {
+    // Rien ne s'est écrit : le supplément est rendu, l'essai gratuit ne se perd pas.
+    await refundExtra(caller, extra);
+    throw error;
   }
-  if (!questions) {
-    throw new FalError("Les nouvelles questions n'ont pas pu s'écrire. Réessaie.", 502);
-  }
-
-  return jsonResponse({
-    questions,
-    meta: { promptVersion: PROMPT_VERSION, usage: totalUsage(meter) },
-  });
 }
 
 // MARK: - L'examen blanc
@@ -589,63 +597,70 @@ async function exam(request: Request, body: RequestBody): Promise<Response> {
     throw new FalError("Ces leçons n'ont pas encore de notes.", 400);
   }
 
-  await beginExtra(caller, { kind: "exam", lessonId: body.lessonId });
-  await consumeQuota(caller, "generate-lesson-exam");
+  const extra = { kind: "exam", lessonId: body.lessonId } as const;
+  await beginExtra(caller, extra);
+  try {
+    await consumeQuota(caller, "generate-lesson-exam");
 
-  const kinds = readKinds(body.kinds);
-  const minutes = Math.min(120, Math.max(10, Math.round(typeof body.minutes === "number" ? body.minutes : 30)));
-  const count = Math.min(LIMITS.examMax, Math.max(6, Math.round(typeof body.count === "number" ? body.count : minutes / 1.5)));
-  const title = sanitizeMeta(body.examTitle, 120);
-  const meter: ModelUsage[] = [];
+    const kinds = readKinds(body.kinds);
+    const minutes = Math.min(120, Math.max(10, Math.round(typeof body.minutes === "number" ? body.minutes : 30)));
+    const count = Math.min(LIMITS.examMax, Math.max(6, Math.round(typeof body.count === "number" ? body.count : minutes / 1.5)));
+    const title = sanitizeMeta(body.examTitle, 120);
+    const meter: ModelUsage[] = [];
 
-  const sample = lessons.flatMap((lesson) => lesson.themes.map((theme) => theme.notes)).join("\n").slice(0, 6_000);
-  const sections = audienceSections({ ...body, lessonTitle: lessons[0]!.title }, sample);
-  sections.push(examBrief({
-    title,
-    lessons: lessons.map((lesson) => ({ title: lesson.title, themes: lesson.themes.map((theme) => theme.title) })),
-    count,
-    minutes,
-    kinds,
-  }));
-  sections.push(wrapUntrusted("NOTES DES LEÇONS", examNotes(lessons)));
-  sections.push("Écris maintenant le JSON de l'examen blanc.");
-  const prompt = sections.join("\n\n");
-  const seed = `${body.lessonId}:exam`;
-
-  const read = (parsed: Record<string, unknown> | null) => {
-    if (!parsed) return null;
-    const questions = readQuestions(parsed.questions, seed, { kinds, language: body.language, max: count })
-      .map((question) => {
-        const lesson = question.lesson !== undefined && question.lesson >= 0 && question.lesson < lessons.length ? question.lesson : 0;
-        const themeCount = lessons[lesson]!.themes.length;
-        const theme = question.theme !== undefined && question.theme >= 0 && question.theme < themeCount ? question.theme : 0;
-        return { ...question, lesson, theme };
-      });
-    if (questions.length < Math.min(6, count)) return null;
-    return {
-      title: clampWords(cleanText(parsed.title, 160).replace(/\*\*/g, ""), 10) || title,
-      questions,
-    };
-  };
-
-  let written = read(await ask({ prompt, system: EXAM_SYSTEM_PROMPT, temperature: 0.5, maxTokens: EXAM_TOKENS, meter }));
-  if (!written) {
-    written = read(await ask({
-      prompt: `${prompt}\n\nTa réponse précédente était illisible ou incomplète. Rends le JSON complet, avec ${count} questions.`,
-      system: EXAM_SYSTEM_PROMPT,
-      temperature: 0.3,
-      maxTokens: EXAM_TOKENS,
-      meter,
+    const sample = lessons.flatMap((lesson) => lesson.themes.map((theme) => theme.notes)).join("\n").slice(0, 6_000);
+    const sections = audienceSections({ ...body, lessonTitle: lessons[0]!.title }, sample);
+    sections.push(examBrief({
+      title,
+      lessons: lessons.map((lesson) => ({ title: lesson.title, themes: lesson.themes.map((theme) => theme.title) })),
+      count,
+      minutes,
+      kinds,
     }));
-  }
-  if (!written) {
-    throw new FalError("L'examen blanc n'a pas pu se composer. Réessaie.", 502);
-  }
+    sections.push(wrapUntrusted("NOTES DES LEÇONS", examNotes(lessons)));
+    sections.push("Écris maintenant le JSON de l'examen blanc.");
+    const prompt = sections.join("\n\n");
+    const seed = `${body.lessonId}:exam`;
 
-  return jsonResponse({
-    exam: written,
-    meta: { promptVersion: PROMPT_VERSION, usage: totalUsage(meter) },
-  });
+    const read = (parsed: Record<string, unknown> | null) => {
+      if (!parsed) return null;
+      const questions = readQuestions(parsed.questions, seed, { kinds, language: body.language, max: count })
+        .map((question) => {
+          const lesson = question.lesson !== undefined && question.lesson >= 0 && question.lesson < lessons.length ? question.lesson : 0;
+          const themeCount = lessons[lesson]!.themes.length;
+          const theme = question.theme !== undefined && question.theme >= 0 && question.theme < themeCount ? question.theme : 0;
+          return { ...question, lesson, theme };
+        });
+      if (questions.length < Math.min(6, count)) return null;
+      return {
+        title: clampWords(cleanText(parsed.title, 160).replace(/\*\*/g, ""), 10) || title,
+        questions,
+      };
+    };
+
+    let written = read(await ask({ prompt, system: EXAM_SYSTEM_PROMPT, temperature: 0.5, maxTokens: EXAM_TOKENS, meter }));
+    if (!written) {
+      written = read(await ask({
+        prompt: `${prompt}\n\nTa réponse précédente était illisible ou incomplète. Rends le JSON complet, avec ${count} questions.`,
+        system: EXAM_SYSTEM_PROMPT,
+        temperature: 0.3,
+        maxTokens: EXAM_TOKENS,
+        meter,
+      }));
+    }
+    if (!written) {
+      throw new FalError("L'examen blanc n'a pas pu se composer. Réessaie.", 502);
+    }
+
+    return jsonResponse({
+      exam: written,
+      meta: { promptVersion: PROMPT_VERSION, usage: totalUsage(meter) },
+    });
+  } catch (error) {
+    // Rien ne s'est écrit : le supplément est rendu, l'essai gratuit ne se perd pas.
+    await refundExtra(caller, extra);
+    throw error;
+  }
 }
 
 Deno.serve((request: Request) =>

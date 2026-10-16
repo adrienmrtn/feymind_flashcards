@@ -124,6 +124,22 @@ export async function beginExtra(
   }
 }
 
+/**
+ * **Rend un supplément** dont l'écriture a échoué : une panne du modèle ne coûte pas l'essai
+ * gratuit, ni une part du plafond Pro. Sans effet pour un anonyme, qui n'en a pas pris.
+ */
+export async function refundExtra(
+  caller: Caller,
+  options: { kind: "practice" | "exam"; lessonId?: string },
+): Promise<void> {
+  if (!caller.userId) return;
+  await rpc("refund_extra", {
+    p_user: caller.userId,
+    p_kind: options.kind,
+    p_lesson: isLessonId(options.lessonId) ? options.lessonId : null,
+  });
+}
+
 /** La source déclarée, ramenée aux valeurs que la base connaît. */
 export function normalizeSource(value: unknown, fromScratch: boolean): string {
   if (fromScratch) return "topic";
