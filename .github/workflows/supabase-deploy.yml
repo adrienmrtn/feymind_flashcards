@@ -7,8 +7,10 @@
 #      et celles qui importent un module de `_shared/` qui a changé —, avec la CLI. Une
 #      fonction qui n'a pas bougé n'est pas redéployée : elle garde le code qui tourne.
 #
-# À la demande aussi : Actions → « Supabase » → Run workflow, sur la branche voulue, avec
-# les fonctions à déployer (par défaut `generate-lesson`) et la migration à passer.
+# À la demande aussi : Actions → « Supabase » → Run workflow, avec les fonctions à déployer
+# (par défaut `generate-lesson`) et la migration à passer. Et depuis une branche de travail,
+# avec « [supabase] » dans le message du commit : tout ce que la branche change par rapport à
+# `main` part alors en production, migrations et fonctions.
 #
 # `revenuecat-webhook` se déploie sans vérification de JWT : RevenueCat l'appelle sans
 # session. Toutes les autres la gardent.
@@ -31,10 +33,11 @@ on:
         required: false
         default: ""
   push:
-    branches: [main]
+    branches: [main, "claude/**"]
     paths:
       - "supabase/functions/**"
       - "supabase/migrations/**"
+      - ".github/workflows/supabase-deploy.yml"
 
 permissions:
   contents: read
@@ -49,6 +52,10 @@ env:
 jobs:
   deploy:
     name: Déployer Supabase
+    if: >-
+      github.ref == 'refs/heads/main'
+      || github.event_name == 'workflow_dispatch'
+      || contains(github.event.head_commit.message, '[supabase]')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -65,9 +72,23 @@ jobs:
             exit 1
           fi
 
-      - name: Les migrations nouvelles
+      # Ce qui est nouveau depuis le dernier déploiement : sur `main`, depuis le push
+      # d'avant ; sur une branche de travail, depuis `main`.
+      - name: Le point de départ
+        id: base
         env:
           BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "sha=${BEFORE:-}" >> "$GITHUB_OUTPUT"
+          else
+            git fetch --quiet origin main
+            echo "sha=$(git merge-base origin/main HEAD)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Les migrations nouvelles
+        env:
+          BEFORE: ${{ steps.base.outputs.sha }}
           ASKED: ${{ github.event.inputs.migration }}
         run: |
           set -euo pipefail
@@ -103,7 +124,7 @@ jobs:
       - name: Les fonctions touchées
         id: touched
         env:
-          BEFORE: ${{ github.event.before }}
+          BEFORE: ${{ steps.base.outputs.sha }}
           ASKED: ${{ github.event.inputs.functions }}
         run: |
           set -euo pipefail
