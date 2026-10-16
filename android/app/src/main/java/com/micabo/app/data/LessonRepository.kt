@@ -89,6 +89,8 @@ class LessonRepository(
                     .getOrNull()
             }
             _lessons.update { current -> loaded.associateBy { it.id } + current }
+            // Une app fermée en route : les thèmes restés en préparation reprennent.
+            loaded.filter { it.isWriting }.forEach { resume(it.id) }
         }
     }
 

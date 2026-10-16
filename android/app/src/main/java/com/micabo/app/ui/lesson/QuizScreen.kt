@@ -174,7 +174,7 @@ fun QuizScreen(id: String, circle: String) {
                 Spacer(Modifier.height(24.dp))
             }
         }
-        Box(Modifier.navigationBarsPadding().padding(horizontal = 20.dp, vertical = 12.dp)) {
+        Column(Modifier.navigationBarsPadding().padding(horizontal = 20.dp, vertical = 12.dp)) {
             AnimatedVisibility(visible = answeredRight != null, enter = fadeIn() + slideInVertically { it }) {
                 MicaboButton(
                     text = if (index == questions.lastIndex) stringResource(R.string.lesson_quiz_seeScore) else stringResource(R.string.lesson_quiz_continue),
