@@ -754,7 +754,7 @@ struct MockExamResultView: View {
             let chapterIDs = paper.lessons[item.lesson].chapterIDs
             let chapterID = chapterIDs.indices.contains(item.theme) ? chapterIDs[item.theme] : nil
             let chapter = course.orderedChapters.first { $0.id == chapterID }
-            LessonPicking.cardForMissed(item.question, chapter: chapter, course: course, in: modelContext)
+            LessonReview.cardForMissed(item.question, chapter: chapter, course: course, in: modelContext)
         }
         try? modelContext.save()
         CourseLedger.noteChange()
