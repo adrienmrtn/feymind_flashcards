@@ -300,8 +300,12 @@ struct NotesPageView: View {
             }
             .padding(.horizontal, MicaboSpacing.screen)
             .padding(.bottom, 32)
+            // La page a exactement la largeur de l'écran : un bloc trop large (un tableau,
+            // une formule) défile dans son cadre, la page ne bouge jamais de gauche à droite.
+            .containerRelativeFrame(.horizontal)
         }
         .scrollIndicators(.hidden)
+        .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
     }
 }
 
@@ -420,7 +424,9 @@ struct LessonNotesReader: View {
                     .padding(.horizontal, MicaboSpacing.screen)
                     .padding(.top, 8)
                     .padding(.bottom, 40)
+                    .containerRelativeFrame(.horizontal)
                 }
+                .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
             }
             .background(MicaboColor.canvas.ignoresSafeArea())
             .lessonClock(session, activity: .notes)
