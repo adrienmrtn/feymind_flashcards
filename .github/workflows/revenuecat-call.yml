@@ -1,0 +1,49 @@
+# **Un appel à l'API RevenueCat v2**, lancé à la main (Actions → « RevenueCat (appel) ») avec
+# la clé du dépôt. Sert à configurer le catalogue des stores (plans d'état du store) sans
+# exposer la clé. Limité au projet Micabo ; la réponse s'imprime dans le journal.
+name: RevenueCat (appel)
+
+on:
+  workflow_dispatch:
+    inputs:
+      method:
+        description: "GET, POST, PATCH ou DELETE"
+        default: GET
+      path:
+        description: "Chemin sous /v2/projects/<projet> (ex. /store_state/plans)"
+        required: true
+      body:
+        description: "Corps JSON (optionnel)"
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  call:
+    name: Appeler RevenueCat
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Appel
+        env:
+          KEY: ${{ secrets.REVENUECAT_API_KEY }}
+          PROJECT: ${{ secrets.REVENUECAT_PROJECT_ID || 'proj415c7a8d' }}
+          METHOD: ${{ inputs.method }}
+          CALL_PATH: ${{ inputs.path }}
+          BODY: ${{ inputs.body }}
+        run: |
+          case "$METHOD" in GET|POST|PATCH|DELETE) ;; *) echo "Méthode refusée"; exit 1 ;; esac
+          case "$CALL_PATH" in /*) ;; *) echo "Le chemin commence par /"; exit 1 ;; esac
+          url="https://api.revenuecat.com/v2/projects/${PROJECT}${CALL_PATH}"
+          echo "$METHOD $CALL_PATH"
+          if [ -n "$BODY" ]; then
+            code=$(curl -sS -o out.json -w '%{http_code}' -X "$METHOD" "$url" -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" --data "$BODY")
+          else
+            code=$(curl -sS -o out.json -w '%{http_code}' -X "$METHOD" "$url" -H "Authorization: Bearer $KEY")
+          fi
+          echo "HTTP $code"
+          echo "=== RÉPONSE ==="
+          cat out.json
+          echo
+          echo "=== FIN ==="
