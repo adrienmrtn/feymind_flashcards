@@ -2,8 +2,230 @@
  "calls": [
   {
    "method": "POST",
-   "path": "/store_state/plans/b1cd6c13-cbd2-41ab-a8ce-5e2e0eb565ae/actions/plan",
+   "path": "/store_state/plans/b1cd6c13-cbd2-41ab-a8ce-5e2e0eb565ae/actions/discard",
    "body": {}
+  },
+  {
+   "method": "POST",
+   "path": "/store_state/plans",
+   "body": {
+    "desired_states": [
+     {
+      "product_id": "prodd706abe0ee",
+      "store": "play_store",
+      "common": {
+       "availability": {
+        "territories": {
+         "AR": true,
+         "AU": true,
+         "AT": true,
+         "BE": true,
+         "BG": true,
+         "BR": true,
+         "CA": true,
+         "CH": true,
+         "CL": true,
+         "CI": true,
+         "CO": true,
+         "CZ": true,
+         "DE": true,
+         "DZ": true,
+         "EG": true,
+         "ES": true,
+         "EE": true,
+         "FI": true,
+         "FR": true,
+         "GR": true,
+         "HR": true,
+         "HU": true,
+         "ID": true,
+         "IN": true,
+         "IE": true,
+         "IT": true,
+         "LT": true,
+         "LU": true,
+         "LV": true,
+         "MA": true,
+         "MX": true,
+         "NG": true,
+         "NL": true,
+         "PK": true,
+         "PE": true,
+         "PH": true,
+         "PL": true,
+         "PT": true,
+         "RO": true,
+         "SN": true,
+         "SK": true,
+         "SI": true,
+         "TN": true,
+         "TR": true,
+         "US": true,
+         "VN": true,
+         "GB": true,
+         "SE": true,
+         "DK": true,
+         "NO": true,
+         "RS": true,
+         "SA": true,
+         "AE": true,
+         "NZ": true,
+         "SG": true,
+         "ZA": true,
+         "JP": true,
+         "KR": true,
+         "IL": true,
+         "CY": true,
+         "MT": true,
+         "IS": true
+        }
+       },
+       "pricing": {
+        "territory_prices": {
+         "FR": {
+          "amount_micros": 4990000,
+          "currency": "EUR"
+         },
+         "US": {
+          "amount_micros": 7990000,
+          "currency": "USD"
+         }
+        },
+        "equalize_missing_subscription_prices": {
+         "base_territory": "FR"
+        }
+       },
+       "localizations": {
+        "fr-FR": {
+         "name": "Micabo Pro — semaine",
+         "description": "Tous les cours, quiz et examens blancs"
+        },
+        "en-US": {
+         "name": "Micabo Pro — weekly",
+         "description": "All lessons, quizzes and mock exams"
+        }
+       }
+      },
+      "store_state": {
+       "base_plans": {
+        "weekly": {
+         "state": "ACTIVE",
+         "auto_renewing_base_plan_type": {
+          "billing_period_duration": "P1W"
+         }
+        }
+       }
+      }
+     },
+     {
+      "product_id": "prodb02f3a3631",
+      "store": "play_store",
+      "common": {
+       "availability": {
+        "territories": {
+         "AR": true,
+         "AU": true,
+         "AT": true,
+         "BE": true,
+         "BG": true,
+         "BR": true,
+         "CA": true,
+         "CH": true,
+         "CL": true,
+         "CI": true,
+         "CO": true,
+         "CZ": true,
+         "DE": true,
+         "DZ": true,
+         "EG": true,
+         "ES": true,
+         "EE": true,
+         "FI": true,
+         "FR": true,
+         "GR": true,
+         "HR": true,
+         "HU": true,
+         "ID": true,
+         "IN": true,
+         "IE": true,
+         "IT": true,
+         "LT": true,
+         "LU": true,
+         "LV": true,
+         "MA": true,
+         "MX": true,
+         "NG": true,
+         "NL": true,
+         "PK": true,
+         "PE": true,
+         "PH": true,
+         "PL": true,
+         "PT": true,
+         "RO": true,
+         "SN": true,
+         "SK": true,
+         "SI": true,
+         "TN": true,
+         "TR": true,
+         "US": true,
+         "VN": true,
+         "GB": true,
+         "SE": true,
+         "DK": true,
+         "NO": true,
+         "RS": true,
+         "SA": true,
+         "AE": true,
+         "NZ": true,
+         "SG": true,
+         "ZA": true,
+         "JP": true,
+         "KR": true,
+         "IL": true,
+         "CY": true,
+         "MT": true,
+         "IS": true
+        }
+       },
+       "pricing": {
+        "territory_prices": {
+         "FR": {
+          "amount_micros": 49990000,
+          "currency": "EUR"
+         },
+         "US": {
+          "amount_micros": 59990000,
+          "currency": "USD"
+         }
+        },
+        "equalize_missing_subscription_prices": {
+         "base_territory": "FR"
+        }
+       },
+       "localizations": {
+        "fr-FR": {
+         "name": "Micabo Pro — année",
+         "description": "Tous les cours, quiz et examens blancs"
+        },
+        "en-US": {
+         "name": "Micabo Pro — yearly",
+         "description": "All lessons, quizzes and mock exams"
+        }
+       }
+      },
+      "store_state": {
+       "base_plans": {
+        "yearly": {
+         "state": "ACTIVE",
+         "auto_renewing_base_plan_type": {
+          "billing_period_duration": "P1Y"
+         }
+        }
+       }
+      }
+     }
+    ]
+   }
   }
  ]
 }
