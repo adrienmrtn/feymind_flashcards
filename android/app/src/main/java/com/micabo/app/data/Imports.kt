@@ -10,6 +10,7 @@ import android.graphics.Matrix
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.Build
+import android.os.ParcelFileDescriptor
 import android.provider.OpenableColumns
 import android.util.Base64
 import androidx.annotation.StringRes
@@ -23,10 +24,13 @@ import com.tom_roush.pdfbox.io.MemoryUsageSetting
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.encryption.InvalidPasswordException
 import com.tom_roush.pdfbox.text.PDFTextStripper
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.io.IOException
 import java.util.zip.ZipInputStream
 import kotlin.math.max
@@ -131,9 +135,14 @@ object ImagePrep {
 object OnDeviceOcr {
     private val recognizer by lazy { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
 
-    suspend fun read(bitmap: Bitmap): String = runCatching {
+    /** Une page illisible rend un texte vide ; un support retiré arrête la lecture. */
+    suspend fun read(bitmap: Bitmap): String = try {
         recognizer.process(InputImage.fromBitmap(bitmap, 0)).await().textBlocks.joinToString("\n\n") { it.text }
-    }.getOrDefault("")
+    } catch (cancel: CancellationException) {
+        throw cancel
+    } catch (error: Exception) {
+        ""
+    }
 
     suspend fun read(bitmaps: List<Bitmap>): String =
         bitmaps.map { read(it) }.filter { it.isNotBlank() }.joinToString("\n\n")
@@ -163,55 +172,76 @@ private fun sampledPages(count: Int, limit: Int): List<Int> {
 object PdfImport {
     suspend fun read(context: Context, uri: Uri): ImportedDocument = withContext(Dispatchers.IO) {
         val name = displayName(context, uri) ?: "PDF"
-        var text = embeddedText(context, uri)
-        val descriptor = runCatching { context.contentResolver.openFileDescriptor(uri, "r") }.getOrNull()
-            ?: throw ImportException(R.string.ios_pdf_unreadable)
-        val renderer = try {
-            PdfRenderer(descriptor)
-        } catch (error: SecurityException) {
-            descriptor.close()
-            throw ImportException(R.string.ios_pdf_protected)
-        } catch (error: IOException) {
-            descriptor.close()
-            throw ImportException(R.string.ios_pdf_unreadable)
-        }
+        // Une copie locale d'abord : un fournisseur dans le nuage rend souvent un tube, que
+        // PdfRenderer ne sait pas parcourir, et le fichier se lit deux fois (PDFBox, puis le rendu).
+        val file = copyToCache(context, uri) ?: throw ImportException(R.string.ios_pdf_unreadable)
         try {
-            val count = renderer.pageCount
-            if (count == 0) throw ImportException(R.string.ios_pdf_empty)
-            val images = sampledPages(count, ImportLimits.IMAGE_PAGES).mapNotNull { index ->
-                render(renderer, index, ImportLimits.IMAGE_DIMENSION)?.let { page ->
-                    ImagePrep.dataUrl(page).also { page.recycle() }
+            var text = embeddedText(context, file)
+            val descriptor = runCatching { ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY) }.getOrNull()
+                ?: throw ImportException(R.string.ios_pdf_unreadable)
+            val renderer = try {
+                PdfRenderer(descriptor)
+            } catch (error: Exception) {
+                descriptor.close()
+                // Le texte lu par PDFBox suffit à faire une leçon, même sans les pages en images.
+                if (text.length >= ImportLimits.SCAN_TEXT) {
+                    return@withContext ImportedDocument(text = text, images = emptyList(), name = name, source = "pdf")
                 }
+                throw ImportException(if (error is SecurityException) R.string.ios_pdf_protected else R.string.ios_pdf_unreadable)
             }
-            if (text.length < ImportLimits.SCAN_TEXT) {
-                val pages = (0 until minOf(count, ImportLimits.OCR_PAGES))
-                val read = StringBuilder()
-                for (index in pages) {
-                    val page = render(renderer, index, ImportLimits.OCR_DIMENSION) ?: continue
-                    val pageText = OnDeviceOcr.read(page)
-                    page.recycle()
-                    if (pageText.isNotBlank()) read.append(pageText).append("\n\n")
+            try {
+                val count = renderer.pageCount
+                if (count == 0) throw ImportException(R.string.ios_pdf_empty)
+                val images = sampledPages(count, ImportLimits.IMAGE_PAGES).mapNotNull { index ->
+                    ensureActive()
+                    render(renderer, index, ImportLimits.IMAGE_DIMENSION)?.let { page ->
+                        ImagePrep.dataUrl(page).also { page.recycle() }
+                    }
                 }
-                val ocr = normalize(read.toString())
-                if (ocr.length > text.length) text = ocr
+                if (text.length < ImportLimits.SCAN_TEXT) {
+                    val pages = (0 until minOf(count, ImportLimits.OCR_PAGES))
+                    val read = StringBuilder()
+                    for (index in pages) {
+                        ensureActive()
+                        val page = render(renderer, index, ImportLimits.OCR_DIMENSION) ?: continue
+                        val pageText = OnDeviceOcr.read(page)
+                        page.recycle()
+                        if (pageText.isNotBlank()) read.append(pageText).append("\n\n")
+                    }
+                    val ocr = normalize(read.toString())
+                    if (ocr.length > text.length) text = ocr
+                }
+                if (text.isBlank() && images.isEmpty()) throw ImportException(R.string.ios_pdf_empty)
+                ImportedDocument(text = text, images = images, name = name, source = "pdf")
+            } finally {
+                renderer.close()
+                descriptor.close()
             }
-            if (text.isBlank() && images.isEmpty()) throw ImportException(R.string.ios_pdf_empty)
-            ImportedDocument(text = text, images = images, name = name, source = "pdf")
         } finally {
-            renderer.close()
-            descriptor.close()
+            file.delete()
         }
     }
 
-    private fun embeddedText(context: Context, uri: Uri): String = try {
+    /** Le PDF recopié dans le cache de l'app, ou rien s'il ne se lit pas. */
+    private fun copyToCache(context: Context, uri: Uri): File? {
+        val file = runCatching { File.createTempFile("import", ".pdf", context.cacheDir) }.getOrNull() ?: return null
+        val copied = runCatching {
+            context.contentResolver.openInputStream(uri)?.use { input -> file.outputStream().use { input.copyTo(it) } } != null
+        }.getOrDefault(false)
+        if (!copied || file.length() == 0L) {
+            file.delete()
+            return null
+        }
+        return file
+    }
+
+    private fun embeddedText(context: Context, file: File): String = try {
         PDFBoxResourceLoader.init(context.applicationContext)
-        context.contentResolver.openInputStream(uri)?.use { stream ->
-            // Un gros PDF passe par un fichier temporaire plutôt que par la mémoire, et seules les
-            // deux cents premières pages sont lues : le serveur n'en lit pas plus de 60 000 signes.
-            PDDocument.load(stream, MemoryUsageSetting.setupMixed(24L * 1024 * 1024)).use { document ->
-                normalize(PDFTextStripper().apply { sortByPosition = true; endPage = 200 }.getText(document))
-            }
-        }.orEmpty()
+        // Un gros PDF passe par un fichier temporaire plutôt que par la mémoire, et seules les
+        // deux cents premières pages sont lues : le serveur n'en lit pas plus de 60 000 signes.
+        PDDocument.load(file, MemoryUsageSetting.setupMixed(24L * 1024 * 1024)).use { document ->
+            normalize(PDFTextStripper().apply { sortByPosition = true; endPage = 200 }.getText(document))
+        }
     } catch (error: InvalidPasswordException) {
         throw ImportException(R.string.ios_pdf_protected)
     } catch (error: Throwable) {
@@ -244,6 +274,7 @@ object PhotoImport {
         val texts = mutableListOf<String>()
         val images = mutableListOf<String>()
         for ((index, uri) in pages.withIndex()) {
+            ensureActive()
             val bitmap = ImagePrep.decode(context, uri, ImportLimits.OCR_DIMENSION) ?: continue
             texts.add(OnDeviceOcr.read(bitmap))
             if (index < ImportLimits.IMAGE_PAGES) images.add(ImagePrep.dataUrl(bitmap))

@@ -82,7 +82,6 @@
     <string name="ios_onb_sample_step2">Wyścig zbrojeń</string>
     <string name="ios_onb_sample_title">Zimna wojna</string>
     <string name="ios_onb_social_count">%1$s+ uczniów</string>
-    <string name="ios_onb_social_rank">Pomocnik do nauki z AI nr 1</string>
     <string name="ios_onb_social_title">Pomogliśmy już</string>
     <string name="ios_onb_tutor_answer">Jasne! Przejdźmy przez to w 3 krokach, ze schematem 🌱</string>
     <string name="ios_onb_tutor_ask">Możesz mi wyjaśnić fotosyntezę?</string>
@@ -194,6 +193,7 @@
     <string name="lesson_circle_checkpoint">Punkt kontrolny</string>
     <string name="lesson_circle_final">Quiz końcowy</string>
     <string name="lesson_circle_intro">Wstęp</string>
+    <string name="lesson_circle_next">Następny krąg</string>
     <string name="lesson_conclusion_title">Najważniejsze wnioski</string>
     <string name="lesson_create_cancel">Anuluj</string>
     <string name="lesson_create_continue">Dalej</string>
@@ -350,6 +350,9 @@
     <string name="lesson_notes_takeaways">Zapamiętaj</string>
     <string name="lesson_notes_themeNumber">Temat %1$s</string>
     <string name="lesson_notes_writing">Mika pisze te notatki…</string>
+    <string name="lesson_path_a11y_current">Bieżący etap</string>
+    <string name="lesson_path_a11y_done">Ukończone</string>
+    <string name="lesson_path_a11y_locked">Zablokowane</string>
     <string name="lesson_path_continue">Dalej</string>
     <string name="lesson_path_finishFirst">Najpierw ukończ „%1$s”</string>
     <string name="lesson_path_palier">Poziom %1$s</string>

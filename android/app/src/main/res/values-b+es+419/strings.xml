@@ -81,7 +81,6 @@
     <string name="ios_onb_sample_step2">La carrera armamentista</string>
     <string name="ios_onb_sample_title">La Guerra Fría</string>
     <string name="ios_onb_social_count">%1$s+ estudiantes</string>
-    <string name="ios_onb_social_rank">La app de estudio con IA n.º 1</string>
     <string name="ios_onb_social_title">Ya ayudamos a</string>
     <string name="ios_onb_tutor_answer">¡Claro! Vamos a verlo en 3 pasos, con un diagrama 🌱</string>
     <string name="ios_onb_tutor_ask">¿Me explicas la fotosíntesis?</string>
@@ -192,6 +191,7 @@
     <string name="lesson_cards_start">Empezar a estudiar · %1$s</string>
     <string name="lesson_circle_checkpoint">Punto de control</string>
     <string name="lesson_circle_final">Quiz final</string>
+    <string name="lesson_circle_next">Siguiente círculo</string>
     <string name="lesson_conclusion_title">Lo esencial</string>
     <string name="lesson_create_cancel">Cancelar</string>
     <string name="lesson_create_continue">Continuar</string>
@@ -346,6 +346,9 @@
     <string name="lesson_notes_takeaways">Para recordar</string>
     <string name="lesson_notes_themeNumber">Tema %1$s</string>
     <string name="lesson_notes_writing">Mika está escribiendo estos apuntes…</string>
+    <string name="lesson_path_a11y_current">Paso actual</string>
+    <string name="lesson_path_a11y_done">Completado</string>
+    <string name="lesson_path_a11y_locked">Bloqueado</string>
     <string name="lesson_path_continue">Continuar</string>
     <string name="lesson_path_finishFirst">Primero termina “%1$s”</string>
     <string name="lesson_path_palier">Nivel %1$s</string>

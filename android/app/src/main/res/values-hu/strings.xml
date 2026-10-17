@@ -83,7 +83,6 @@
     <string name="ios_onb_sample_step2">A fegyverkezési verseny</string>
     <string name="ios_onb_sample_title">A hidegháború</string>
     <string name="ios_onb_social_count">%1$s+ diák</string>
-    <string name="ios_onb_social_rank">Az 1. számú MI-tanulássegítő</string>
     <string name="ios_onb_social_title">Eddig segítettünk</string>
     <string name="ios_onb_tutor_answer">Persze! Nézzük át 3 lépésben, egy ábrával 🌱</string>
     <string name="ios_onb_tutor_anytime">0–24</string>
@@ -196,6 +195,7 @@
     <string name="lesson_circle_checkpoint">Ellenőrzőpont</string>
     <string name="lesson_circle_final">Záró kvíz</string>
     <string name="lesson_circle_intro">Bevezető</string>
+    <string name="lesson_circle_next">Következő kör</string>
     <string name="lesson_conclusion_title">A lényeg</string>
     <string name="lesson_create_cancel">Mégse</string>
     <string name="lesson_create_continue">Tovább</string>
@@ -354,6 +354,9 @@
     <string name="lesson_notes_takeaways">Jegyezd meg</string>
     <string name="lesson_notes_themeNumber">%1$s. téma</string>
     <string name="lesson_notes_writing">Mika írja ezeket a jegyzeteket…</string>
+    <string name="lesson_path_a11y_current">Aktuális lépés</string>
+    <string name="lesson_path_a11y_done">Kész</string>
+    <string name="lesson_path_a11y_locked">Zárolva</string>
     <string name="lesson_path_continue">Tovább</string>
     <string name="lesson_path_finishFirst">Előbb fejezd be: „%1$s”</string>
     <string name="lesson_path_palier">%1$s. szint</string>

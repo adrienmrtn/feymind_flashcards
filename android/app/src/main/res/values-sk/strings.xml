@@ -82,7 +82,6 @@
     <string name="ios_onb_sample_step2">Preteky v zbrojení</string>
     <string name="ios_onb_sample_title">Studená vojna</string>
     <string name="ios_onb_social_count">%1$s+ študentov</string>
-    <string name="ios_onb_social_rank">AI pomocník na učenie č. 1</string>
     <string name="ios_onb_social_title">Už sme pomohli</string>
     <string name="ios_onb_tutor_answer">Jasné! Prejdeme to v 3 krokoch, so schémou 🌱</string>
     <string name="ios_onb_tutor_ask">Môžeš mi vysvetliť fotosyntézu?</string>
@@ -194,6 +193,7 @@
     <string name="lesson_circle_checkpoint">Kontrolný bod</string>
     <string name="lesson_circle_final">Záverečný kvíz</string>
     <string name="lesson_circle_intro">Úvod</string>
+    <string name="lesson_circle_next">Ďalší kruh</string>
     <string name="lesson_conclusion_title">Hlavné poznatky</string>
     <string name="lesson_create_cancel">Zrušiť</string>
     <string name="lesson_create_continue">Pokračovať</string>
@@ -348,6 +348,9 @@
     <string name="lesson_notes_takeaways">Zapamätaj si</string>
     <string name="lesson_notes_themeNumber">Téma %1$s</string>
     <string name="lesson_notes_writing">Mika píše tieto poznámky…</string>
+    <string name="lesson_path_a11y_current">Aktuálny krok</string>
+    <string name="lesson_path_a11y_done">Hotovo</string>
+    <string name="lesson_path_a11y_locked">Zamknuté</string>
     <string name="lesson_path_continue">Pokračovať</string>
     <string name="lesson_path_finishFirst">Najprv dokonči „%1$s“</string>
     <string name="lesson_path_palier">Úroveň %1$s</string>

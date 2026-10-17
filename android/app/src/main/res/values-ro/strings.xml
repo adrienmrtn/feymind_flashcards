@@ -78,7 +78,6 @@
     <string name="ios_onb_sample_step2">Cursa înarmărilor</string>
     <string name="ios_onb_sample_title">Războiul Rece</string>
     <string name="ios_onb_social_count">%1$s+ elevi</string>
-    <string name="ios_onb_social_rank">Ajutorul de studiu AI nr. 1</string>
     <string name="ios_onb_social_title">Am ajutat deja</string>
     <string name="ios_onb_tutor_answer">Sigur! Hai s-o luăm în 3 pași, cu o schemă 🌱</string>
     <string name="ios_onb_tutor_ask">Îmi explici fotosinteza?</string>
@@ -189,6 +188,7 @@
     <string name="lesson_cards_start">Începe să înveți · %1$s</string>
     <string name="lesson_circle_checkpoint">Punct de control</string>
     <string name="lesson_circle_final">Quiz final</string>
+    <string name="lesson_circle_next">Cercul următor</string>
     <string name="lesson_conclusion_title">Ce reții</string>
     <string name="lesson_create_cancel">Anulează</string>
     <string name="lesson_create_continue">Continuă</string>
@@ -343,6 +343,9 @@
     <string name="lesson_notes_takeaways">De reținut</string>
     <string name="lesson_notes_themeNumber">Tema %1$s</string>
     <string name="lesson_notes_writing">Mika scrie notițele astea…</string>
+    <string name="lesson_path_a11y_current">Pasul curent</string>
+    <string name="lesson_path_a11y_done">Gata</string>
+    <string name="lesson_path_a11y_locked">Blocat</string>
     <string name="lesson_path_continue">Continuă</string>
     <string name="lesson_path_finishFirst">Termină mai întâi „%1$s”</string>
     <string name="lesson_path_palier">Nivelul %1$s</string>

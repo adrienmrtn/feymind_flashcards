@@ -53,6 +53,7 @@
     <string name="ios_level_medicine">Medicina, zdravstvo</string>
     <string name="ios_level_other">Ostalo</string>
     <string name="ios_level_prepa">Pripremna odeljenja (prépa)</string>
+    <string name="ios_ok">U redu</string>
     <string name="ios_onb_mika_paths">… i svaku lekciju pretvara u **jednostavan put**, napravljen za tebe.</string>
     <string name="ios_onb_mika_source_course">Lekcije</string>
     <string name="ios_onb_mika_source_notes">Beleške</string>
@@ -81,7 +82,6 @@
     <string name="ios_onb_sample_step2">Trka u naoružanju</string>
     <string name="ios_onb_sample_title">Hladni rat</string>
     <string name="ios_onb_social_count">%1$s+ učenika</string>
-    <string name="ios_onb_social_rank">Br. 1 AI pomoćnik za učenje</string>
     <string name="ios_onb_social_title">Pomogli smo</string>
     <string name="ios_onb_tutor_answer">Naravno! Hajde da prođemo kroz to u 3 koraka, sa dijagramom 🌱</string>
     <string name="ios_onb_tutor_anytime">0–24 h</string>
@@ -194,6 +194,7 @@
     <string name="lesson_circle_checkpoint">Kontrolna tačka</string>
     <string name="lesson_circle_final">Završni kviz</string>
     <string name="lesson_circle_intro">Uvod</string>
+    <string name="lesson_circle_next">Sledeći krug</string>
     <string name="lesson_conclusion_title">Za zapamtiti</string>
     <string name="lesson_create_cancel">Otkaži</string>
     <string name="lesson_create_continue">Nastavi</string>
@@ -350,6 +351,9 @@
     <string name="lesson_notes_takeaways">Zapamti</string>
     <string name="lesson_notes_themeNumber">Tema %1$s</string>
     <string name="lesson_notes_writing">Mika piše ove beleške…</string>
+    <string name="lesson_path_a11y_current">Trenutni korak</string>
+    <string name="lesson_path_a11y_done">Gotovo</string>
+    <string name="lesson_path_a11y_locked">Zaključano</string>
     <string name="lesson_path_continue">Nastavi</string>
     <string name="lesson_path_finishFirst">Prvo završi „%1$s”</string>
     <string name="lesson_path_palier">Nivo %1$s</string>

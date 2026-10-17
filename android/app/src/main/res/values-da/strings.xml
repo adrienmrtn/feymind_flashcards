@@ -79,7 +79,6 @@
     <string name="ios_onb_sample_step2">Våbenkapløbet</string>
     <string name="ios_onb_sample_title">Den Kolde Krig</string>
     <string name="ios_onb_social_count">%1$s+ elever</string>
-    <string name="ios_onb_social_rank">#1 AI-studiehjælp</string>
     <string name="ios_onb_social_title">Vi har hjulpet</string>
     <string name="ios_onb_tutor_answer">Klart! Vi tager det i 3 trin med et diagram 🌱</string>
     <string name="ios_onb_tutor_anytime">Døgnet rundt</string>
@@ -190,6 +189,7 @@
     <string name="lesson_cards_reviewAnyway">Repetér alligevel</string>
     <string name="lesson_cards_start">Begynd at øve · %1$s</string>
     <string name="lesson_circle_final">Afsluttende quiz</string>
+    <string name="lesson_circle_next">Næste cirkel</string>
     <string name="lesson_conclusion_title">Det vigtigste at tage med</string>
     <string name="lesson_create_cancel">Annuller</string>
     <string name="lesson_create_continue">Fortsæt</string>
@@ -342,6 +342,9 @@
     <string name="lesson_notes_takeaways">Husk</string>
     <string name="lesson_notes_themeNumber">Emne %1$s</string>
     <string name="lesson_notes_writing">Mika skriver noterne…</string>
+    <string name="lesson_path_a11y_current">Nuværende trin</string>
+    <string name="lesson_path_a11y_done">Færdig</string>
+    <string name="lesson_path_a11y_locked">Låst</string>
     <string name="lesson_path_continue">Fortsæt</string>
     <string name="lesson_path_finishFirst">Gør “%1$s” færdig først</string>
     <string name="lesson_path_palier">Niveau %1$s</string>

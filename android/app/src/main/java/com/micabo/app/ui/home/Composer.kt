@@ -3,6 +3,7 @@ package com.micabo.app.ui.home
 import android.app.Activity
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.ContextWrapper
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.PickVisualMediaRequest
@@ -15,6 +16,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,6 +60,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -135,7 +138,7 @@ fun ComposerCard(composer: LessonComposer, onSend: () -> Unit) {
             }
             BasicTextField(
                 value = composer.draft,
-                onValueChange = { if (it.length <= 400) composer.draft = it },
+                onValueChange = { composer.draft = it.take(400) },
                 textStyle = nunito(19.sp, FontWeight.SemiBold).copy(color = colors.ink),
                 cursorBrush = SolidColor(colors.accent),
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Send),
@@ -200,12 +203,20 @@ private fun SupportChip(support: Support, onRemove: () -> Unit) {
 
 private data class SourceChip(val kind: SupportKind, val title: Int, val subtitle: Int)
 
+/** L'activité sous un contexte, même enveloppé. */
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
+
 /**
  * **Les imports sous la barre** : PDF ou Word, photos ou scan, YouTube, texte collé. Ils
- * s'ajoutent à la barre ; la porte de Pro se tient à l'envoi, comme sur iPhone.
+ * s'ajoutent à la barre. Sans Pro, toucher un import verrouillé ouvre le paywall tout de suite,
+ * comme sur iPhone (`HomeView.tapImport`) : pas de PDF lu pour rien avant le refus à l'envoi.
  */
 @Composable
-fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit) {
+fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit, onLocked: () -> Unit) {
     val colors = Micabo.colors
     val context = LocalContext.current
     var dialog by rememberSaveable { mutableStateOf<String?>(null) }
@@ -226,7 +237,7 @@ fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit) {
     fun pickPhotos() = photos.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
 
     fun scan() {
-        val activity = context as? Activity ?: return pickPhotos()
+        val activity = context.findActivity() ?: return pickPhotos()
         val options = GmsDocumentScannerOptions.Builder()
             .setGalleryImportAllowed(true)
             .setPageLimit(PhotoImport.MAX_PAGES)
@@ -250,6 +261,7 @@ fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit) {
         items(chips) { chip ->
             val locked = !isPro && chip.kind != SupportKind.TEXT
             Pressable(onClick = {
+                if (locked) return@Pressable onLocked()
                 if (!composer.hasRoom) return@Pressable onFull()
                 when (chip.kind) {
                     SupportKind.PDF -> files.launch(arrayOf("application/pdf", WORD_TYPE))
@@ -306,15 +318,20 @@ fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit) {
     }
 }
 
-/** Une feuille simple, au bas de l'écran. */
+/** Une feuille simple, au bas de l'écran ; toucher au-dessus la ferme. */
 @Composable
 private fun Sheet(onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
     val colors = Micabo.colors
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.BottomCenter) {
+        Box(
+            Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures(onTap = { onDismiss() }) }.padding(16.dp),
+            contentAlignment = Alignment.BottomCenter,
+        ) {
             Column(
                 Modifier
                     .fillMaxWidth()
+                    // La feuille garde ses touchers : seul le vide au-dessus ferme.
+                    .pointerInput(Unit) { detectTapGestures() }
                     .clip(RoundedCornerShape(28.dp))
                     .background(colors.canvas)
                     .padding(20.dp),

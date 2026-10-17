@@ -54,6 +54,7 @@
     <string name="ios_level_medicine">Medicina, zdravstvo</string>
     <string name="ios_level_other">Drugo</string>
     <string name="ios_level_prepa">Pripravljalni letniki (prépa)</string>
+    <string name="ios_ok">V redu</string>
     <string name="ios_onb_mika_paths">… in vsako lekcijo spremeni v **preprosto pot**, narejeno zate.</string>
     <string name="ios_onb_mika_source_course">Lekcije</string>
     <string name="ios_onb_mika_source_notes">Zapiski</string>
@@ -82,7 +83,6 @@
     <string name="ios_onb_sample_step2">Oboroževalna tekma</string>
     <string name="ios_onb_sample_title">Hladna vojna</string>
     <string name="ios_onb_social_count">%1$s+ učencev</string>
-    <string name="ios_onb_social_rank">Št. 1 med AI-pomočniki za učenje</string>
     <string name="ios_onb_social_title">Pomagali smo</string>
     <string name="ios_onb_tutor_answer">Seveda! Poglejva v 3 korakih, z diagramom 🌱</string>
     <string name="ios_onb_tutor_anytime">Ves čas</string>
@@ -195,6 +195,7 @@
     <string name="lesson_circle_checkpoint">Kontrolna točka</string>
     <string name="lesson_circle_final">Končni kviz</string>
     <string name="lesson_circle_intro">Uvod</string>
+    <string name="lesson_circle_next">Naslednji krog</string>
     <string name="lesson_conclusion_title">Za zapomniti</string>
     <string name="lesson_create_cancel">Prekliči</string>
     <string name="lesson_create_continue">Nadaljuj</string>
@@ -351,6 +352,9 @@
     <string name="lesson_notes_takeaways">Zapomni si</string>
     <string name="lesson_notes_themeNumber">Tema %1$s</string>
     <string name="lesson_notes_writing">Mika piše te zapiske …</string>
+    <string name="lesson_path_a11y_current">Trenutni korak</string>
+    <string name="lesson_path_a11y_done">Končano</string>
+    <string name="lesson_path_a11y_locked">Zaklenjeno</string>
     <string name="lesson_path_continue">Nadaljuj</string>
     <string name="lesson_path_finishFirst">Najprej končaj »%1$s«</string>
     <string name="lesson_path_palier">Raven %1$s</string>

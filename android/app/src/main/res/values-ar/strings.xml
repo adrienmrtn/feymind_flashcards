@@ -56,6 +56,7 @@
     <string name="ios_level_other">أخرى</string>
     <string name="ios_level_prepa">الأقسام التحضيرية (prépa)</string>
     <string name="ios_minutesShort">د</string>
+    <string name="ios_ok">حسنًا</string>
     <string name="ios_onb_mika_paths">… ويحوّل كل درس إلى **مسار بسيط**، مصمّم لك.</string>
     <string name="ios_onb_mika_source_course">دروس</string>
     <string name="ios_onb_mika_source_notes">ملاحظات</string>
@@ -84,7 +85,6 @@
     <string name="ios_onb_sample_step2">سباق التسلّح</string>
     <string name="ios_onb_sample_title">الحرب الباردة</string>
     <string name="ios_onb_social_count">أكثر من %1$s طالب</string>
-    <string name="ios_onb_social_rank">المساعد الدراسي الذكي رقم 1</string>
     <string name="ios_onb_social_title">ساعدنا</string>
     <string name="ios_onb_tutor_answer">بالتأكيد! لنشرحه في 3 خطوات، مع رسم توضيحي 🌱</string>
     <string name="ios_onb_tutor_ask">هل يمكنك أن تشرح لي التمثيل الضوئي؟</string>
@@ -196,6 +196,7 @@
     <string name="lesson_circle_checkpoint">نقطة تحقّق</string>
     <string name="lesson_circle_final">الاختبار النهائي</string>
     <string name="lesson_circle_intro">مقدمة</string>
+    <string name="lesson_circle_next">الحلقة التالية</string>
     <string name="lesson_conclusion_title">أهم ما يجب تذكّره</string>
     <string name="lesson_create_cancel">إلغاء</string>
     <string name="lesson_create_continue">متابعة</string>
@@ -354,6 +355,9 @@
     <string name="lesson_notes_takeaways">تذكّر</string>
     <string name="lesson_notes_themeNumber">الموضوع %1$s</string>
     <string name="lesson_notes_writing">Mika يكتب هذه الملاحظات…</string>
+    <string name="lesson_path_a11y_current">الخطوة الحالية</string>
+    <string name="lesson_path_a11y_done">مكتملة</string>
+    <string name="lesson_path_a11y_locked">مقفلة</string>
     <string name="lesson_path_continue">متابعة</string>
     <string name="lesson_path_finishFirst">أنهِ «%1$s» أولًا</string>
     <string name="lesson_path_palier">المستوى %1$s</string>

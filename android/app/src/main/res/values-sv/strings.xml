@@ -80,7 +80,6 @@
     <string name="ios_onb_sample_step2">Kapprustningen</string>
     <string name="ios_onb_sample_title">Kalla kriget</string>
     <string name="ios_onb_social_count">%1$s+ elever</string>
-    <string name="ios_onb_social_rank">#1 AI-studiehjälp</string>
     <string name="ios_onb_social_title">Vi har hjälpt</string>
     <string name="ios_onb_tutor_answer">Absolut! Vi tar det i 3 steg, med ett diagram 🌱</string>
     <string name="ios_onb_tutor_anytime">Dygnet runt</string>
@@ -192,6 +191,7 @@
     <string name="lesson_cards_start">Börja plugga · %1$s</string>
     <string name="lesson_circle_checkpoint">Kontrollpunkt</string>
     <string name="lesson_circle_final">Slutquiz</string>
+    <string name="lesson_circle_next">Nästa cirkel</string>
     <string name="lesson_conclusion_title">Det viktigaste att ta med sig</string>
     <string name="lesson_create_cancel">Avbryt</string>
     <string name="lesson_create_continue">Fortsätt</string>
@@ -345,6 +345,9 @@
     <string name="lesson_notes_takeaways">Kom ihåg</string>
     <string name="lesson_notes_themeNumber">Tema %1$s</string>
     <string name="lesson_notes_writing">Mika skriver anteckningarna…</string>
+    <string name="lesson_path_a11y_current">Aktuellt steg</string>
+    <string name="lesson_path_a11y_done">Klart</string>
+    <string name="lesson_path_a11y_locked">Låst</string>
     <string name="lesson_path_continue">Fortsätt</string>
     <string name="lesson_path_finishFirst">Klara ”%1$s” först</string>
     <string name="lesson_path_palier">Nivå %1$s</string>

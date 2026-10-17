@@ -84,7 +84,6 @@
     <string name="ios_onb_sample_step2">Гонка вооружений</string>
     <string name="ios_onb_sample_title">Холодная война</string>
     <string name="ios_onb_social_count">%1$s+ учеников</string>
-    <string name="ios_onb_social_rank">ИИ-помощник для учёбы №1</string>
     <string name="ios_onb_social_title">Мы помогли</string>
     <string name="ios_onb_tutor_answer">Конечно! Разберём в 3 шага, со схемой 🌱</string>
     <string name="ios_onb_tutor_ask">Объяснишь мне фотосинтез?</string>
@@ -196,6 +195,7 @@
     <string name="lesson_circle_checkpoint">Проверка</string>
     <string name="lesson_circle_final">Итоговый тест</string>
     <string name="lesson_circle_intro">Введение</string>
+    <string name="lesson_circle_next">Следующий круг</string>
     <string name="lesson_conclusion_title">Главное</string>
     <string name="lesson_create_cancel">Отмена</string>
     <string name="lesson_create_continue">Продолжить</string>
@@ -354,6 +354,9 @@
     <string name="lesson_notes_takeaways">Запомни</string>
     <string name="lesson_notes_themeNumber">Тема %1$s</string>
     <string name="lesson_notes_writing">Mika пишет эти заметки…</string>
+    <string name="lesson_path_a11y_current">Текущий шаг</string>
+    <string name="lesson_path_a11y_done">Готово</string>
+    <string name="lesson_path_a11y_locked">Закрыто</string>
     <string name="lesson_path_continue">Продолжить</string>
     <string name="lesson_path_finishFirst">Сначала заверши «%1$s»</string>
     <string name="lesson_path_palier">Уровень %1$s</string>

@@ -64,6 +64,7 @@
     <string name="ios_level_prepa">Hazırlık</string>
     <string name="ios_libraryNoSearch">Bu aramada ders yok</string>
     <string name="ios_minutesShort">dk</string>
+    <string name="ios_ok">Tamam</string>
     <string name="ios_onb_mika_paths">… ve her dersi sana özel, **basit bir yola** dönüştürür.</string>
     <string name="ios_onb_mika_source_course">Dersler</string>
     <string name="ios_onb_mika_source_notes">Notlar</string>
@@ -92,7 +93,6 @@
     <string name="ios_onb_sample_step2">Silahlanma yarışı</string>
     <string name="ios_onb_sample_title">Soğuk Savaş</string>
     <string name="ios_onb_social_count">%1$s+ öğrenci</string>
-    <string name="ios_onb_social_rank">1 numaralı yapay zekâ çalışma asistanı</string>
     <string name="ios_onb_social_title">Yardım ettiğimiz</string>
     <string name="ios_onb_train_reveal">Cevabı görmek için karta dokun</string>
     <string name="ios_onb_tutor_answer">Tabii! 3 adımda, bir şemayla görelim 🌱</string>
@@ -217,6 +217,7 @@
     <string name="lesson_circle_checkpoint">Kontrol noktası</string>
     <string name="lesson_circle_final">Son quiz</string>
     <string name="lesson_circle_intro">Giriş</string>
+    <string name="lesson_circle_next">Sonraki daire</string>
     <string name="lesson_conclusion_title">Akılda kalsın</string>
     <string name="lesson_create_cancel">İptal</string>
     <string name="lesson_create_continue">Devam</string>
@@ -374,6 +375,9 @@
     <string name="lesson_notes_takeaways">Akılda kalsın</string>
     <string name="lesson_notes_themeNumber">Konu %1$s</string>
     <string name="lesson_notes_writing">Mika bu notları yazıyor…</string>
+    <string name="lesson_path_a11y_current">Şu anki adım</string>
+    <string name="lesson_path_a11y_done">Tamamlandı</string>
+    <string name="lesson_path_a11y_locked">Kilitli</string>
     <string name="lesson_path_continue">Devam et</string>
     <string name="lesson_path_finishFirst">Önce “%1$s” bitir</string>
     <string name="lesson_path_palier">Seviye %1$s</string>

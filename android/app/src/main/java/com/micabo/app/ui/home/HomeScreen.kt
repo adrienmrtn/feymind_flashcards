@@ -114,7 +114,8 @@ fun HomeScreen() {
     // La porte du gratuit, côté app (`LessonAllowance.gate`) : les imports sont Pro, et la leçon
     // offerte ne se crée qu'une fois. Le serveur tient la même porte ; celle-ci évite un appel refusé.
     fun send() {
-        if (!composer.canSend) return
+        // Un double toucher n'empile pas deux écrans (création ou paywall) l'un sur l'autre.
+        if (!composer.canSend || navigator.current != Screen.Home) return
         focus.clearFocus()
         when {
             !isPro && composer.needsPro -> navigator.push(Screen.Paywall("import_pro"))
@@ -158,7 +159,15 @@ fun HomeScreen() {
             ComposerCard(composer, onSend = ::send)
         }
         item {
-            SourceRow(composer, isPro = isPro, onFull = { full = true })
+            SourceRow(
+                composer,
+                isPro = isPro,
+                onFull = { full = true },
+                onLocked = {
+                    focus.clearFocus()
+                    if (navigator.current == Screen.Home) navigator.push(Screen.Paywall("import_pro"))
+                },
+            )
         }
         if (lessons.isNotEmpty()) {
             item { StatsCard(stats) }
@@ -172,7 +181,7 @@ fun HomeScreen() {
         AlertDialog(
             onDismissRequest = { full = false },
             text = { Text(stringResource(R.string.lesson_home_supportsFull, LessonComposer.MAX_SUPPORTS.toString()), style = nunito(16.sp)) },
-            confirmButton = { TextButton(onClick = { full = false }) { Text("OK", style = nunito(16.sp, FontWeight.ExtraBold)) } },
+            confirmButton = { TextButton(onClick = { full = false }) { Text(stringResource(R.string.ios_ok), style = nunito(16.sp, FontWeight.ExtraBold)) } },
             containerColor = colors.surface,
         )
     }

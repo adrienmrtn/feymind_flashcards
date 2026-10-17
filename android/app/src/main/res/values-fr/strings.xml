@@ -66,6 +66,7 @@
     <string name="ios_level_prepa">Prépa</string>
     <string name="ios_libraryNoSearch">Aucun cours pour cette recherche</string>
     <string name="ios_minutesShort">min</string>
+    <string name="ios_ok">OK</string>
     <string name="ios_onb_mika_paths">… et il transforme chaque leçon en **parcours simple**, fait pour toi.</string>
     <string name="ios_onb_mika_source_course">Cours</string>
     <string name="ios_onb_mika_source_notes">Notes</string>
@@ -96,7 +97,6 @@
     <string name="ios_onb_sample_step2">La course aux armements</string>
     <string name="ios_onb_sample_title">La guerre froide</string>
     <string name="ios_onb_social_count">%1$s+ élèves</string>
-    <string name="ios_onb_social_rank">#1 des assistants d\'étude IA</string>
     <string name="ios_onb_social_title">On a aidé</string>
     <string name="ios_onb_train_reveal">Touche la carte pour voir la réponse</string>
     <string name="ios_onb_tutor_answer">Bien sûr ! On la voit en 3 étapes, avec un schéma 🌱</string>
@@ -221,6 +221,7 @@
     <string name="lesson_circle_checkpoint">Checkpoint</string>
     <string name="lesson_circle_final">Quiz final</string>
     <string name="lesson_circle_intro">Intro</string>
+    <string name="lesson_circle_next">Cercle suivant</string>
     <string name="lesson_conclusion_title">À retenir</string>
     <string name="lesson_create_cancel">Annuler</string>
     <string name="lesson_create_continue">Continuer</string>
@@ -382,6 +383,9 @@
     <string name="lesson_notes_takeaways">À retenir</string>
     <string name="lesson_notes_themeNumber">Thème %1$s</string>
     <string name="lesson_notes_writing">Mika écrit ces notes…</string>
+    <string name="lesson_path_a11y_current">Étape en cours</string>
+    <string name="lesson_path_a11y_done">Terminée</string>
+    <string name="lesson_path_a11y_locked">À venir</string>
     <string name="lesson_path_continue">Continuer</string>
     <string name="lesson_path_finishFirst">Termine d\'abord « %1$s »</string>
     <string name="lesson_path_palier">Palier %1$s</string>

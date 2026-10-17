@@ -79,7 +79,6 @@
     <string name="ios_onb_sample_step2">Asevarustelukilpa</string>
     <string name="ios_onb_sample_title">Kylmä sota</string>
     <string name="ios_onb_social_count">%1$s+ opiskelijaa</string>
-    <string name="ios_onb_social_rank">#1 tekoälyopiskeluapu</string>
     <string name="ios_onb_social_title">Olemme auttaneet</string>
     <string name="ios_onb_tutor_answer">Totta kai! Käydään se läpi 3 vaiheessa kaavion avulla 🌱</string>
     <string name="ios_onb_tutor_ask">Voitko selittää fotosynteesin?</string>
@@ -190,6 +189,7 @@
     <string name="lesson_cards_start">Aloita · %1$s</string>
     <string name="lesson_circle_checkpoint">Välitarkistus</string>
     <string name="lesson_circle_final">Loppuvisa</string>
+    <string name="lesson_circle_next">Seuraava kierros</string>
     <string name="lesson_conclusion_title">Tärkeimmät opit</string>
     <string name="lesson_create_cancel">Peru</string>
     <string name="lesson_create_continue">Jatka</string>
@@ -346,6 +346,9 @@
     <string name="lesson_notes_takeaways">Muista</string>
     <string name="lesson_notes_themeNumber">Aihe %1$s</string>
     <string name="lesson_notes_writing">Mika kirjoittaa muistiinpanoja…</string>
+    <string name="lesson_path_a11y_current">Nykyinen vaihe</string>
+    <string name="lesson_path_a11y_done">Valmis</string>
+    <string name="lesson_path_a11y_locked">Lukittu</string>
     <string name="lesson_path_continue">Jatka</string>
     <string name="lesson_path_finishFirst">Suorita ensin ”%1$s”</string>
     <string name="lesson_path_palier">Taso %1$s</string>

@@ -81,7 +81,6 @@
     <string name="ios_onb_sample_step2">A corrida armamentista</string>
     <string name="ios_onb_sample_title">A Guerra Fria</string>
     <string name="ios_onb_social_count">%1$s+ alunos</string>
-    <string name="ios_onb_social_rank">#1 entre os assistentes de estudo com IA</string>
     <string name="ios_onb_social_title">Já ajudamos</string>
     <string name="ios_onb_tutor_answer">Claro! Vamos ver em 3 passos, com um esquema 🌱</string>
     <string name="ios_onb_tutor_anytime">24 horas</string>
@@ -192,6 +191,7 @@
     <string name="lesson_cards_reviewAnyway">Revisar mesmo assim</string>
     <string name="lesson_cards_start">Começar a revisar · %1$s</string>
     <string name="lesson_circle_final">Quiz final</string>
+    <string name="lesson_circle_next">Próximo círculo</string>
     <string name="lesson_conclusion_title">Para lembrar</string>
     <string name="lesson_create_cancel">Cancelar</string>
     <string name="lesson_create_continue">Continuar</string>
@@ -346,6 +346,9 @@
     <string name="lesson_notes_takeaways">Para lembrar</string>
     <string name="lesson_notes_themeNumber">Tema %1$s</string>
     <string name="lesson_notes_writing">O Mika está escrevendo estas anotações…</string>
+    <string name="lesson_path_a11y_current">Etapa atual</string>
+    <string name="lesson_path_a11y_done">Concluída</string>
+    <string name="lesson_path_a11y_locked">Bloqueada</string>
     <string name="lesson_path_continue">Continuar</string>
     <string name="lesson_path_finishFirst">Conclua “%1$s” primeiro</string>
     <string name="lesson_path_palier">Nível %1$s</string>

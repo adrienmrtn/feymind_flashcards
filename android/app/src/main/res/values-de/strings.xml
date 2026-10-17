@@ -90,7 +90,6 @@
     <string name="ios_onb_sample_step2">Das Wettrüsten</string>
     <string name="ios_onb_sample_title">Der Kalte Krieg</string>
     <string name="ios_onb_social_count">%1$s+ Schüler</string>
-    <string name="ios_onb_social_rank">Nr. 1 der KI-Lernhelfer</string>
     <string name="ios_onb_social_title">Uns vertrauen</string>
     <string name="ios_onb_train_reveal">Tippe auf die Karte, um die Antwort zu sehen</string>
     <string name="ios_onb_tutor_answer">Klar! In 3 Schritten, mit einer Skizze 🌱</string>
@@ -214,6 +213,7 @@
     <string name="lesson_circle_checkpoint">Zwischentest</string>
     <string name="lesson_circle_final">Abschlussquiz</string>
     <string name="lesson_circle_intro">Einstieg</string>
+    <string name="lesson_circle_next">Nächster Kreis</string>
     <string name="lesson_conclusion_title">Das Wichtigste</string>
     <string name="lesson_create_cancel">Abbrechen</string>
     <string name="lesson_create_continue">Weiter</string>
@@ -369,6 +369,9 @@
     <string name="lesson_notes_takeaways">Merk dir</string>
     <string name="lesson_notes_themeNumber">Thema %1$s</string>
     <string name="lesson_notes_writing">Mika schreibt diese Notizen…</string>
+    <string name="lesson_path_a11y_current">Aktueller Schritt</string>
+    <string name="lesson_path_a11y_done">Erledigt</string>
+    <string name="lesson_path_a11y_locked">Gesperrt</string>
     <string name="lesson_path_continue">Weiter</string>
     <string name="lesson_path_finishFirst">Schließ zuerst „%1$s“ ab</string>
     <string name="lesson_path_palier">Etappe %1$s</string>

@@ -50,6 +50,7 @@
     <string name="ios_level_medicine">Geneeskunde, zorg</string>
     <string name="ios_level_other">Anders</string>
     <string name="ios_level_prepa">Voorbereidende klassen (prépa)</string>
+    <string name="ios_ok">Oké</string>
     <string name="ios_onb_mika_paths">… en maakt van elke les een **simpel pad**, speciaal voor jou.</string>
     <string name="ios_onb_mika_source_course">Lessen</string>
     <string name="ios_onb_mika_source_notes">Aantekeningen</string>
@@ -78,7 +79,6 @@
     <string name="ios_onb_sample_step2">De wapenwedloop</string>
     <string name="ios_onb_sample_title">De Koude Oorlog</string>
     <string name="ios_onb_social_count">%1$s+ leerlingen</string>
-    <string name="ios_onb_social_rank">#1 AI-studiehulp</string>
     <string name="ios_onb_social_title">We hebben geholpen</string>
     <string name="ios_onb_tutor_answer">Tuurlijk! We doen het in 3 stappen, met een schema 🌱</string>
     <string name="ios_onb_tutor_ask">Kun je me fotosynthese uitleggen?</string>
@@ -187,6 +187,7 @@
     <string name="lesson_cards_reviewAnyway">Toch herhalen</string>
     <string name="lesson_cards_start">Begin met leren · %1$s</string>
     <string name="lesson_circle_final">Eindquiz</string>
+    <string name="lesson_circle_next">Volgende cirkel</string>
     <string name="lesson_conclusion_title">Belangrijkste punten</string>
     <string name="lesson_create_cancel">Annuleren</string>
     <string name="lesson_create_continue">Doorgaan</string>
@@ -340,6 +341,9 @@
     <string name="lesson_notes_takeaways">Onthoud</string>
     <string name="lesson_notes_themeNumber">Onderwerp %1$s</string>
     <string name="lesson_notes_writing">Mika schrijft deze aantekeningen…</string>
+    <string name="lesson_path_a11y_current">Huidige stap</string>
+    <string name="lesson_path_a11y_done">Klaar</string>
+    <string name="lesson_path_a11y_locked">Vergrendeld</string>
     <string name="lesson_path_continue">Doorgaan</string>
     <string name="lesson_path_finishFirst">Rond eerst “%1$s” af</string>
     <string name="lesson_path_palier">Niveau %1$s</string>

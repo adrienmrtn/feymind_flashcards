@@ -81,7 +81,6 @@
     <string name="ios_onb_sample_step2">Võidurelvastumine</string>
     <string name="ios_onb_sample_title">Külm sõda</string>
     <string name="ios_onb_social_count">%1$s+ õpilast</string>
-    <string name="ios_onb_social_rank">AI-õppeabiliste #1</string>
     <string name="ios_onb_social_title">Oleme aidanud</string>
     <string name="ios_onb_tutor_answer">Muidugi! Võtame selle läbi 3 sammuga, koos joonisega 🌱</string>
     <string name="ios_onb_tutor_ask">Kas saad mulle fotosünteesi selgitada?</string>
@@ -193,6 +192,7 @@
     <string name="lesson_circle_checkpoint">Vahekontroll</string>
     <string name="lesson_circle_final">Lõpuviktoriin</string>
     <string name="lesson_circle_intro">Sissejuhatus</string>
+    <string name="lesson_circle_next">Järgmine ring</string>
     <string name="lesson_conclusion_title">Peamine</string>
     <string name="lesson_create_cancel">Tühista</string>
     <string name="lesson_create_continue">Jätka</string>
@@ -349,6 +349,9 @@
     <string name="lesson_notes_takeaways">Pea meeles</string>
     <string name="lesson_notes_themeNumber">Teema %1$s</string>
     <string name="lesson_notes_writing">Mika kirjutab neid märkmeid…</string>
+    <string name="lesson_path_a11y_current">Praegune samm</string>
+    <string name="lesson_path_a11y_done">Tehtud</string>
+    <string name="lesson_path_a11y_locked">Lukus</string>
     <string name="lesson_path_continue">Jätka</string>
     <string name="lesson_path_finishFirst">Lõpeta esmalt „%1$s“</string>
     <string name="lesson_path_palier">Tase %1$s</string>

@@ -84,7 +84,6 @@
     <string name="ios_onb_sample_step2">Η κούρσα των εξοπλισμών</string>
     <string name="ios_onb_sample_title">Ο Ψυχρός Πόλεμος</string>
     <string name="ios_onb_social_count">%1$s+ μαθητές</string>
-    <string name="ios_onb_social_rank">Βοηθός μελέτης ΤΝ #1</string>
     <string name="ios_onb_social_title">Έχουμε βοηθήσει</string>
     <string name="ios_onb_tutor_answer">Φυσικά! Ας το δούμε σε 3 βήματα, με ένα διάγραμμα 🌱</string>
     <string name="ios_onb_tutor_ask">Μου εξηγείς τη φωτοσύνθεση;</string>
@@ -196,6 +195,7 @@
     <string name="lesson_circle_checkpoint">Σημείο ελέγχου</string>
     <string name="lesson_circle_final">Τελικό κουίζ</string>
     <string name="lesson_circle_intro">Εισαγωγή</string>
+    <string name="lesson_circle_next">Επόμενος κύκλος</string>
     <string name="lesson_conclusion_title">Τα βασικά συμπεράσματα</string>
     <string name="lesson_create_cancel">Ακύρωση</string>
     <string name="lesson_create_continue">Συνέχεια</string>
@@ -354,6 +354,9 @@
     <string name="lesson_notes_takeaways">Να θυμάσαι</string>
     <string name="lesson_notes_themeNumber">Θέμα %1$s</string>
     <string name="lesson_notes_writing">Ο Mika γράφει αυτές τις σημειώσεις…</string>
+    <string name="lesson_path_a11y_current">Τρέχον βήμα</string>
+    <string name="lesson_path_a11y_done">Ολοκληρώθηκε</string>
+    <string name="lesson_path_a11y_locked">Κλειδωμένο</string>
     <string name="lesson_path_continue">Συνέχεια</string>
     <string name="lesson_path_finishFirst">Ολοκλήρωσε πρώτα το «%1$s»</string>
     <string name="lesson_path_palier">Επίπεδο %1$s</string>

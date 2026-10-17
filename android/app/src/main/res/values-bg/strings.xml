@@ -84,7 +84,6 @@
     <string name="ios_onb_sample_step2">Надпреварата във въоръжаването</string>
     <string name="ios_onb_sample_title">Студената война</string>
     <string name="ios_onb_social_count">%1$s+ ученици</string>
-    <string name="ios_onb_social_rank">AI помощник за учене №1</string>
     <string name="ios_onb_social_title">Помогнахме на</string>
     <string name="ios_onb_tutor_answer">Разбира се! Да минем през това в 3 стъпки, с диаграма 🌱</string>
     <string name="ios_onb_tutor_ask">Можеш ли да ми обясниш фотосинтезата?</string>
@@ -196,6 +195,7 @@
     <string name="lesson_circle_checkpoint">Проверка</string>
     <string name="lesson_circle_final">Финален тест</string>
     <string name="lesson_circle_intro">Увод</string>
+    <string name="lesson_circle_next">Следващ кръг</string>
     <string name="lesson_conclusion_title">Основни изводи</string>
     <string name="lesson_create_cancel">Отказ</string>
     <string name="lesson_create_continue">Продължи</string>
@@ -354,6 +354,9 @@
     <string name="lesson_notes_takeaways">Запомни</string>
     <string name="lesson_notes_themeNumber">Тема %1$s</string>
     <string name="lesson_notes_writing">Mika пише тези бележки…</string>
+    <string name="lesson_path_a11y_current">Текуща стъпка</string>
+    <string name="lesson_path_a11y_done">Готово</string>
+    <string name="lesson_path_a11y_locked">Заключено</string>
     <string name="lesson_path_continue">Продължи</string>
     <string name="lesson_path_finishFirst">Първо завърши „%1$s“</string>
     <string name="lesson_path_palier">Ниво %1$s</string>

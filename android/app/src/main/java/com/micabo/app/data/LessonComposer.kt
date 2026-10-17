@@ -10,6 +10,7 @@ import com.micabo.app.R
 import com.micabo.app.i18n.AppLocale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -42,6 +43,8 @@ class LessonComposer(
     private val track: (String, Map<String, Any?>) -> Unit = { _, _ -> },
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    /** Les lectures en cours : retirer un support arrête la sienne (un PDF de quarante pages à l'OCR). */
+    private val jobs = mutableMapOf<String, Job>()
 
     var draft by mutableStateOf("")
     val supports = mutableStateListOf<Support>()
@@ -73,10 +76,13 @@ class LessonComposer(
         AppLocale.wrap(context, Prefs.storedLanguage(context)).getString(id, *args)
 
     fun remove(id: String) {
+        jobs.remove(id)?.cancel()
         supports.removeAll { it.id == id }
     }
 
     fun reset() {
+        jobs.values.forEach { it.cancel() }
+        jobs.clear()
         draft = ""
         supports.clear()
     }
@@ -85,8 +91,9 @@ class LessonComposer(
         if (!hasRoom) return
         val id = UUID.randomUUID().toString()
         supports.add(Support(id, kind, title))
-        scope.launch {
+        jobs[id] = scope.launch {
             val outcome = runCatching { work() }
+            jobs.remove(id)
             val index = supports.indexOfFirst { it.id == id }
             if (index < 0) return@launch
             val document = outcome.getOrNull()
@@ -97,9 +104,16 @@ class LessonComposer(
             }
             supports[index] = when {
                 document != null && document.isUsable -> supports[index].copy(title = document.name, document = document)
-                else -> supports[index].copy(failure = (outcome.exceptionOrNull() as? ImportException)?.messageRes ?: R.string.lesson_import_unreadable)
+                else -> supports[index].copy(failure = failureMessage(outcome.exceptionOrNull()))
             }
         }
+    }
+
+    /** La phrase d'un échec : celle de l'import, le réseau, ou « illisible ». */
+    private fun failureMessage(error: Throwable?): Int = when (error) {
+        is ImportException -> error.messageRes
+        is NetworkException -> R.string.x_error_network
+        else -> R.string.lesson_import_unreadable
     }
 
     fun addFile(uri: Uri) {
@@ -150,14 +164,27 @@ class LessonComposer(
             topic = null,
             text = parts.joinToString("\n\n").take(LessonRepository.MAX_TEXT),
             sourceName = supports.singleOrNull()?.document?.name,
-            images = supports.mapNotNull { it.document }.flatMap { it.images }.take(MAX_IMAGES),
+            images = withinBudget(supports.mapNotNull { it.document }.flatMap { it.images }),
             source = source,
             examDate = examDate,
         )
     }
 
+    /** Six pages au plus, et pas plus de signes que le serveur n'en garde (`acceptedImages`). */
+    private fun withinBudget(images: List<String>): List<String> {
+        val kept = mutableListOf<String>()
+        var total = 0
+        for (image in images) {
+            if (kept.size >= MAX_IMAGES || total + image.length > MAX_IMAGE_CHARS) break
+            total += image.length
+            kept.add(image)
+        }
+        return kept
+    }
+
     companion object {
         const val MAX_SUPPORTS = 5
         const val MAX_IMAGES = 6
+        const val MAX_IMAGE_CHARS = 4_000_000
     }
 }

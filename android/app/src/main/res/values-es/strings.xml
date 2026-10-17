@@ -90,7 +90,6 @@
     <string name="ios_onb_sample_step2">La carrera armamentística</string>
     <string name="ios_onb_sample_title">La Guerra Fría</string>
     <string name="ios_onb_social_count">%1$s+ estudiantes</string>
-    <string name="ios_onb_social_rank">N.º 1 de los asistentes de estudio con IA</string>
     <string name="ios_onb_social_title">Hemos ayudado a</string>
     <string name="ios_onb_train_reveal">Toca la tarjeta para ver la respuesta</string>
     <string name="ios_onb_tutor_answer">¡Claro! La vemos en 3 pasos, con un esquema 🌱</string>
@@ -214,6 +213,7 @@
     <string name="lesson_circle_checkpoint">Punto de control</string>
     <string name="lesson_circle_final">Quiz final</string>
     <string name="lesson_circle_intro">Introducción</string>
+    <string name="lesson_circle_next">Siguiente círculo</string>
     <string name="lesson_conclusion_title">Para recordar</string>
     <string name="lesson_create_cancel">Cancelar</string>
     <string name="lesson_create_continue">Continuar</string>
@@ -368,6 +368,9 @@
     <string name="lesson_notes_takeaways">Para recordar</string>
     <string name="lesson_notes_themeNumber">Tema %1$s</string>
     <string name="lesson_notes_writing">Mika escribe estos apuntes…</string>
+    <string name="lesson_path_a11y_current">Paso actual</string>
+    <string name="lesson_path_a11y_done">Terminado</string>
+    <string name="lesson_path_a11y_locked">Bloqueado</string>
     <string name="lesson_path_continue">Continuar</string>
     <string name="lesson_path_finishFirst">Termina primero «%1$s»</string>
     <string name="lesson_path_palier">Nivel %1$s</string>

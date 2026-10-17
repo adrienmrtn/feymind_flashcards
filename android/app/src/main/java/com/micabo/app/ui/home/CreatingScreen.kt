@@ -1,5 +1,6 @@
 package com.micabo.app.ui.home
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
@@ -51,10 +52,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.micabo.app.R
@@ -106,6 +108,10 @@ fun CreatingScreen(request: LessonRequest) {
     var stage by remember { mutableStateOf(CreationStage.READING) }
     var error by remember { mutableStateOf<Throwable?>(null) }
     var attempt by remember { mutableIntStateOf(0) }
+
+    // Pendant la génération, ni croix ni retour, comme sur iPhone : quitter l'écran annulait
+    // l'attente, et l'examen annoncé n'était jamais enregistré ni la barre vidée.
+    BackHandler(enabled = step == "generating" && error == null) {}
 
     if (step == "generating") {
         LaunchedEffect(attempt) {
@@ -245,8 +251,8 @@ private fun Generating(request: LessonRequest, stage: CreationStage, error: Thro
         Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Row(Modifier.fillMaxWidth()) {
-            CloseButton(onClick = onClose)
+        Row(Modifier.fillMaxWidth().height(44.dp)) {
+            if (error != null) CloseButton(onClick = onClose)
         }
         Spacer(Modifier.weight(0.6f))
         AnimatedContent(targetState = error, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "state") { failure ->
@@ -265,7 +271,14 @@ private fun Generating(request: LessonRequest, stage: CreationStage, error: Thro
                     )
                     request.topic?.let {
                         Spacer(Modifier.height(6.dp))
-                        Text("« $it »", style = nunito(16.sp, FontWeight.Bold), color = colors.accent, textAlign = TextAlign.Center)
+                        Text(
+                            "« $it »",
+                            style = nunito(16.sp, FontWeight.Bold),
+                            color = colors.accent,
+                            textAlign = TextAlign.Center,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                     }
                     Spacer(Modifier.height(28.dp))
                     Stages(stage, fromTopic = request.topic != null)
@@ -303,10 +316,15 @@ private fun Halo() {
     val transition = rememberInfiniteTransition(label = "halo")
     val angle by transition.animateFloat(0f, 360f, infiniteRepeatable(tween(6000, easing = LinearEasing)), label = "angle")
     val pulse by transition.animateFloat(0.92f, 1.06f, infiniteRepeatable(tween(1400), RepeatMode.Reverse), label = "pulse")
+    // Le halo respire par sa couche, pas par sa taille : la mise en page ne bouge pas à chaque image.
     Box(
         Modifier
-            .size((190 * pulse).dp)
-            .rotate(angle)
+            .size(190.dp)
+            .graphicsLayer {
+                scaleX = pulse
+                scaleY = pulse
+                rotationZ = angle
+            }
             .clip(CircleShape)
             .background(
                 androidx.compose.ui.graphics.Brush.sweepGradient(

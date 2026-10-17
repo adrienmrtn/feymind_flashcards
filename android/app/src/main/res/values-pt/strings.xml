@@ -81,7 +81,6 @@
     <string name="ios_onb_sample_step2">A corrida ao armamento</string>
     <string name="ios_onb_sample_title">A Guerra Fria</string>
     <string name="ios_onb_social_count">%1$s+ alunos</string>
-    <string name="ios_onb_social_rank">#1 dos assistentes de estudo com IA</string>
     <string name="ios_onb_social_title">Já ajudámos</string>
     <string name="ios_onb_tutor_answer">Claro! Vamos vê-la em 3 passos, com um esquema 🌱</string>
     <string name="ios_onb_tutor_anytime">24 h por dia</string>
@@ -193,6 +192,7 @@
     <string name="lesson_cards_start">Começar a rever · %1$s</string>
     <string name="lesson_circle_checkpoint">Ponto de controlo</string>
     <string name="lesson_circle_final">Quiz final</string>
+    <string name="lesson_circle_next">Círculo seguinte</string>
     <string name="lesson_conclusion_title">A reter</string>
     <string name="lesson_create_cancel">Cancelar</string>
     <string name="lesson_create_continue">Continuar</string>
@@ -347,6 +347,9 @@
     <string name="lesson_notes_takeaways">A reter</string>
     <string name="lesson_notes_themeNumber">Tema %1$s</string>
     <string name="lesson_notes_writing">O Mika está a escrever estes apontamentos…</string>
+    <string name="lesson_path_a11y_current">Etapa atual</string>
+    <string name="lesson_path_a11y_done">Concluída</string>
+    <string name="lesson_path_a11y_locked">Bloqueada</string>
     <string name="lesson_path_continue">Continuar</string>
     <string name="lesson_path_finishFirst">Conclui primeiro «%1$s»</string>
     <string name="lesson_path_palier">Nível %1$s</string>

@@ -166,6 +166,7 @@ class YouTubeImport(private val functions: SupabaseFunctions) {
         private fun captionText(base: String): String? {
             fetch(base, "json3")?.let(::fromJson3)?.takeIf { it.isNotEmpty() }?.let { return it }
             fetch(base, null)?.let(::fromXml)?.takeIf { it.isNotEmpty() }?.let { return it }
+            fetch(base, "vtt")?.let(::fromVtt)?.takeIf { it.isNotEmpty() }?.let { return it }
             return null
         }
 
@@ -209,6 +210,24 @@ class YouTubeImport(private val functions: SupabaseFunctions) {
             val lines = Regex("<(?:text|p)\\b[^>]*>([\\s\\S]*?)</(?:text|p)>").findAll(xml).map { match ->
                 decode(match.groupValues[1].replace(Regex("<[^>]+>"), " ")).replace(Regex("\\s+"), " ").trim()
             }.filter { it.isNotEmpty() }.toList()
+            return clean(lines)
+        }
+
+        /** WebVTT : les lignes dites, sans l'en-tête, les numéros ni les horodatages. */
+        private fun fromVtt(vtt: String): String? {
+            val normalized = vtt.replace("\r\n", "\n")
+            val header = Regex("^\uFEFF?WEBVTT[^\n]*").find(normalized) ?: return null
+            val body = normalized.substring(header.range.last + 1)
+            val lines = body.split("\n\n").mapNotNull { block ->
+                block.split("\n").map { it.trim() }.filter { line ->
+                    line.isNotEmpty() && "-->" !in line && !line.matches(Regex("\\d+")) &&
+                        !line.startsWith("kind:", ignoreCase = true) && !line.startsWith("language:", ignoreCase = true)
+                }.joinToString(" ")
+                    .replace(Regex("<[^>]+>"), " ")
+                    .replace(Regex("\\s+"), " ")
+                    .trim()
+                    .takeIf { it.isNotEmpty() }
+            }
             return clean(lines)
         }
 

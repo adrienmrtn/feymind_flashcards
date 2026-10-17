@@ -76,7 +76,6 @@
     <string name="ios_onb_sample_step2">La corsa agli armamenti</string>
     <string name="ios_onb_sample_title">La guerra fredda</string>
     <string name="ios_onb_social_count">%1$s+ studenti</string>
-    <string name="ios_onb_social_rank">#1 tra gli assistenti di studio IA</string>
     <string name="ios_onb_social_title">Abbiamo aiutato</string>
     <string name="ios_onb_tutor_answer">Certo! Vediamola in 3 passaggi, con uno schema 🌱</string>
     <string name="ios_onb_tutor_anytime">24 ore su 24</string>
@@ -187,6 +186,7 @@
     <string name="lesson_cards_reviewAnyway">Ripassa comunque</string>
     <string name="lesson_cards_start">Inizia a ripassare · %1$s</string>
     <string name="lesson_circle_final">Quiz finale</string>
+    <string name="lesson_circle_next">Cerchio successivo</string>
     <string name="lesson_conclusion_title">Da ricordare</string>
     <string name="lesson_create_cancel">Annulla</string>
     <string name="lesson_create_continue">Continua</string>
@@ -341,6 +341,9 @@
     <string name="lesson_notes_takeaways">Da ricordare</string>
     <string name="lesson_notes_themeNumber">Tema %1$s</string>
     <string name="lesson_notes_writing">Mika sta scrivendo questi appunti…</string>
+    <string name="lesson_path_a11y_current">Tappa in corso</string>
+    <string name="lesson_path_a11y_done">Completata</string>
+    <string name="lesson_path_a11y_locked">Bloccata</string>
     <string name="lesson_path_continue">Continua</string>
     <string name="lesson_path_finishFirst">Prima completa «%1$s»</string>
     <string name="lesson_path_palier">Livello %1$s</string>

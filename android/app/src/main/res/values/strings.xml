@@ -67,6 +67,7 @@
     <string name="ios_level_prepa">Prep classes (prépa)</string>
     <string name="ios_libraryNoSearch">No course for this search</string>
     <string name="ios_minutesShort">min</string>
+    <string name="ios_ok">OK</string>
     <string name="ios_onb_mika_paths">… and turns every lesson into a **simple path**, made for you.</string>
     <string name="ios_onb_mika_source_course">Lessons</string>
     <string name="ios_onb_mika_source_notes">Notes</string>
@@ -97,7 +98,6 @@
     <string name="ios_onb_sample_step2">The arms race</string>
     <string name="ios_onb_sample_title">The Cold War</string>
     <string name="ios_onb_social_count">%1$s+ students</string>
-    <string name="ios_onb_social_rank">#1 AI study helper</string>
     <string name="ios_onb_social_title">We\'ve helped</string>
     <string name="ios_onb_train_reveal">Tap the card to see the answer</string>
     <string name="ios_onb_tutor_answer">Sure! Let\'s go through it in 3 steps, with a diagram 🌱</string>
@@ -222,6 +222,7 @@
     <string name="lesson_circle_checkpoint">Checkpoint</string>
     <string name="lesson_circle_final">Final quiz</string>
     <string name="lesson_circle_intro">Intro</string>
+    <string name="lesson_circle_next">Next circle</string>
     <string name="lesson_conclusion_title">Key takeaways</string>
     <string name="lesson_create_cancel">Cancel</string>
     <string name="lesson_create_continue">Continue</string>
@@ -383,6 +384,9 @@
     <string name="lesson_notes_takeaways">Remember</string>
     <string name="lesson_notes_themeNumber">Topic %1$s</string>
     <string name="lesson_notes_writing">Mika is writing these notes…</string>
+    <string name="lesson_path_a11y_current">Current step</string>
+    <string name="lesson_path_a11y_done">Done</string>
+    <string name="lesson_path_a11y_locked">Locked</string>
     <string name="lesson_path_continue">Continue</string>
     <string name="lesson_path_finishFirst">Finish “%1$s” first</string>
     <string name="lesson_path_palier">Level %1$s</string>
