@@ -211,10 +211,32 @@ class LessonRepository(
     /** Une carte notée : son prochain rappel, et la journée de la série. */
     fun review(id: String, key: String, rating: Rating) {
         streak.record()
+        val before = lesson(id)?.progress?.cards?.get(key) ?: CardReview()
         modify(id) { lesson ->
             val card = lesson.progress.cards[key] ?: CardReview()
             lesson.copy(progress = lesson.progress.copy(cards = lesson.progress.cards + (key to Srs.schedule(card, rating))))
         }
+        // Hors de `modify` : sa transformation peut être rejouée, la note ne doit partir qu'une fois.
+        val lesson = lesson(id) ?: return
+        logReview(lesson, key, before, lesson.progress.cards[key] ?: return, rating)
+    }
+
+    /** La note, pour `review_logs` : elle montera à la prochaine synchronisation, compte ouvert. */
+    private fun logReview(lesson: Lesson, key: String, before: CardReview, after: CardReview, rating: Rating) {
+        if (prefs.accountUser.isEmpty()) return
+        val theme = key.substringBefore(':').toIntOrNull() ?: return
+        val index = key.substringAfter(':').toIntOrNull() ?: return
+        val cardId = lesson.themes.getOrNull(theme)?.flashcards?.getOrNull(index)?.id?.takeIf { it.isNotEmpty() } ?: return
+        prefs.queueReview(buildJsonObject {
+            put("id", newId())
+            put("card_id", cardId.lowercase())
+            put("reviewed_at", java.time.Instant.now().toString())
+            put("rating", rating.ordinal + 1)
+            put("state_before", before.state)
+            put("previous_interval_days", before.interval)
+            put("new_interval_days", after.interval)
+            put("ease_after", after.ease)
+        }.toString())
     }
 
     /** Une réponse fausse : son thème passe en tête de l'entraînement suivant. */

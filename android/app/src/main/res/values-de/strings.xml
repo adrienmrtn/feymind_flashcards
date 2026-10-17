@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_a11y_close">Schließen</string>
     <string name="app_common_add">Hinzufügen</string>
+    <string name="app_common_back">Zurück</string>
     <string name="app_common_cancel">Abbrechen</string>
     <string name="app_common_save">Speichern</string>
     <string name="app_exams_countdown_today">heute</string>
@@ -21,6 +23,7 @@
     <string name="app_friends_removeFriend">Aus meinen Freunden nehmen</string>
     <string name="app_friends_results">Treffer</string>
     <string name="app_friends_seeCourses">Seine Kurse sehen</string>
+    <string name="app_friends_someone">Jemand</string>
     <string name="app_friends_theirCourses">Seine Kurse</string>
     <string name="app_friends_usernamePlaceholder">benutzername</string>
     <string name="app_friends_you">Du</string>
@@ -241,6 +244,9 @@
     <string name="ios_username_taken">%1$s ist schon vergeben.</string>
     <string name="ios_username_tooLong">Höchstens zwanzig Zeichen.</string>
     <string name="ios_username_tooShort">Mindestens drei Zeichen.</string>
+    <string name="ios_weekRanking">Wochenrangliste</string>
+    <string name="ios_weekRankingHint">Karten seit Montag</string>
+    <string name="ios_youLower">du</string>
     <string name="ios_yt_invalidLink">Dieser Link ist kein YouTube-Video.</string>
     <string name="ios_yt_noCaptions">Micabo konnte dieses Video nicht lesen. Versuch es nochmal, oder füg den Kurstext ein.</string>
     <string name="ios_yt_tooShort">Dieses Video ist zu kurz, um Karten zu erzeugen.</string>

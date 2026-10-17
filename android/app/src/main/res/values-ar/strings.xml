@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_a11y_close">إغلاق</string>
     <string name="app_common_add">إضافة</string>
+    <string name="app_common_back">رجوع</string>
     <string name="app_common_cancel">إلغاء</string>
     <string name="app_common_save">حفظ</string>
     <string name="app_exams_countdown_today">اليوم</string>
@@ -21,6 +23,7 @@
     <string name="app_friends_removeFriend">إزالة من أصدقائي</string>
     <string name="app_friends_results">النتائج</string>
     <string name="app_friends_seeCourses">عرض دروسه</string>
+    <string name="app_friends_someone">شخص ما</string>
     <string name="app_friends_theirCourses">دروسه</string>
     <string name="app_friends_usernamePlaceholder">اسم المستخدم</string>
     <string name="app_friends_you">أنت</string>
@@ -224,6 +227,9 @@
     <string name="ios_username_taken">%1$s مستخدم بالفعل.</string>
     <string name="ios_username_tooLong">عشرون حرفًا كحد أقصى.</string>
     <string name="ios_username_tooShort">ثلاثة أحرف على الأقل.</string>
+    <string name="ios_weekRanking">ترتيب هذا الأسبوع</string>
+    <string name="ios_weekRankingHint">بطاقات تمت مراجعتها منذ الإثنين</string>
+    <string name="ios_youLower">أنت</string>
     <string name="ios_yt_invalidLink">هذا الرابط ليس فيديو YouTube.</string>
     <string name="ios_yt_noCaptions">لم يتمكن Micabo من قراءة هذا الفيديو. حاول مجددًا، أو الصق نص الدرس.</string>
     <string name="ios_yt_tooShort">هذا الفيديو قصير جدًا لإنشاء بطاقات.</string>

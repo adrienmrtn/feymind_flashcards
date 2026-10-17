@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_a11y_close">Κλείσιμο</string>
     <string name="app_common_add">Προσθήκη</string>
+    <string name="app_common_back">Πίσω</string>
     <string name="app_common_cancel">Ακύρωση</string>
     <string name="app_common_save">Αποθήκευση</string>
     <string name="app_exams_countdown_today">σήμερα</string>
@@ -21,6 +23,7 @@
     <string name="app_friends_removeFriend">Αφαίρεση από φίλους</string>
     <string name="app_friends_results">Αποτελέσματα</string>
     <string name="app_friends_seeCourses">Δες τα μαθήματα</string>
+    <string name="app_friends_someone">Κάποιος</string>
     <string name="app_friends_theirCourses">Τα μαθήματά του</string>
     <string name="app_friends_usernamePlaceholder">όνομα χρήστη</string>
     <string name="app_friends_you">Εσύ</string>
@@ -223,6 +226,9 @@
     <string name="ios_username_taken">Το %1$s χρησιμοποιείται ήδη.</string>
     <string name="ios_username_tooLong">Έως είκοσι χαρακτήρες.</string>
     <string name="ios_username_tooShort">Τουλάχιστον τρεις χαρακτήρες.</string>
+    <string name="ios_weekRanking">Κατάταξη εβδομάδας</string>
+    <string name="ios_weekRankingHint">κάρτες σε επανάληψη από τη Δευτέρα</string>
+    <string name="ios_youLower">εσύ</string>
     <string name="ios_yt_invalidLink">Αυτός ο σύνδεσμος δεν είναι βίντεο YouTube.</string>
     <string name="ios_yt_noCaptions">Το Micabo δεν μπόρεσε να διαβάσει αυτό το βίντεο. Δοκίμασε ξανά ή επικόλλησε το κείμενο του μαθήματος.</string>
     <string name="ios_yt_tooShort">Αυτό το βίντεο είναι πολύ μικρό για να φτιαχτούν κάρτες.</string>

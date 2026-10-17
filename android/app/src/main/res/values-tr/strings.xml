@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_a11y_close">Kapat</string>
     <string name="app_common_add">Ekle</string>
+    <string name="app_common_back">Geri</string>
     <string name="app_common_cancel">Vazgeç</string>
     <string name="app_common_save">Kaydet</string>
     <string name="app_exams_countdown_today">bugün</string>
@@ -21,6 +23,7 @@
     <string name="app_friends_removeFriend">Arkadaşlarımdan çıkar</string>
     <string name="app_friends_results">Sonuçlar</string>
     <string name="app_friends_seeCourses">Derslerini gör</string>
+    <string name="app_friends_someone">Biri</string>
     <string name="app_friends_theirCourses">Dersleri</string>
     <string name="app_friends_usernamePlaceholder">kullanıcı adı</string>
     <string name="app_friends_you">Sen</string>
@@ -245,6 +248,9 @@
     <string name="ios_username_taken">%1$s zaten alınmış.</string>
     <string name="ios_username_tooLong">En fazla yirmi karakter.</string>
     <string name="ios_username_tooShort">En az üç karakter.</string>
+    <string name="ios_weekRanking">Haftanın sıralaması</string>
+    <string name="ios_weekRankingHint">pazartesiden beri geçilen kartlar</string>
+    <string name="ios_youLower">sen</string>
     <string name="ios_yt_invalidLink">Bu bağlantı bir YouTube videosu değil.</string>
     <string name="ios_yt_noCaptions">Micabo bu videoyu okuyamadı. Tekrar dene ya da ders metnini yapıştır.</string>
     <string name="ios_yt_tooShort">Bu video kart üretmek için çok kısa.</string>

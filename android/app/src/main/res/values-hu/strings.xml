@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_a11y_close">Bezárás</string>
     <string name="app_common_add">Hozzáadás</string>
+    <string name="app_common_back">Vissza</string>
     <string name="app_common_cancel">Mégse</string>
     <string name="app_common_save">Mentés</string>
     <string name="app_exams_countdown_today">ma</string>
@@ -21,6 +23,7 @@
     <string name="app_friends_removeFriend">Eltávolítás a barátaim közül</string>
     <string name="app_friends_results">Találatok</string>
     <string name="app_friends_seeCourses">Kurzusai</string>
+    <string name="app_friends_someone">Valaki</string>
     <string name="app_friends_theirCourses">Kurzusai</string>
     <string name="app_friends_usernamePlaceholder">felhasználónév</string>
     <string name="app_friends_you">Te</string>
@@ -223,6 +226,9 @@
     <string name="ios_username_taken">%1$s már foglalt.</string>
     <string name="ios_username_tooLong">Legfeljebb húsz karakter.</string>
     <string name="ios_username_tooShort">Legalább három karakter.</string>
+    <string name="ios_weekRanking">A hét ranglistája</string>
+    <string name="ios_weekRankingHint">hétfő óta átnézett kártya</string>
+    <string name="ios_youLower">te</string>
     <string name="ios_yt_invalidLink">Ez a link nem YouTube-videó.</string>
     <string name="ios_yt_noCaptions">A Micabo nem tudta beolvasni ezt a videót. Próbáld újra, vagy illeszd be a kurzus szövegét.</string>
     <string name="ios_yt_tooShort">Ez a videó túl rövid a kártyák készítéséhez.</string>

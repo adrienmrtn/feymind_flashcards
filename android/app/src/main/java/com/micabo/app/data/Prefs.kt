@@ -156,6 +156,22 @@ class Prefs(context: Context) {
         prefs.edit { putStringSet("sync.tombstones", tombstones - ids.toSet()) }
     }
 
+    /**
+     * Les cartes notées qui attendent de monter (`review_logs`), une ligne JSON chacune : le
+     * classement de la semaine et les statistiques de l'iPhone les comptent. Cinq cents au plus.
+     */
+    val pendingReviews: Set<String> get() = prefs.getStringSet("sync.reviews", emptySet()).orEmpty().toSet()
+
+    fun queueReview(row: String) {
+        val current = pendingReviews
+        if (current.size >= 500) return
+        prefs.edit { putStringSet("sync.reviews", current + row) }
+    }
+
+    fun removeReviews(rows: Collection<String>) {
+        prefs.edit { putStringSet("sync.reviews", pendingReviews - rows.toSet()) }
+    }
+
     /** La dernière synchronisation réussie, en millisecondes ; 0 pour tout reprendre. */
     var syncWatermark: Long
         get() = prefs.getLong("sync.watermark", 0)

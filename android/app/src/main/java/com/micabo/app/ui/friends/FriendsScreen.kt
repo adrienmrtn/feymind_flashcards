@@ -175,6 +175,7 @@ fun FriendsScreen() {
     val outgoing by social.outgoing.collectAsState()
     val loading by social.loading.collectAsState()
     val problem by social.problem.collectAsState()
+    val ranking by social.ranking.collectAsState()
     var search by rememberSaveable { mutableStateOf("") }
     var results by remember { mutableStateOf<List<Person>>(emptyList()) }
     var searching by remember { mutableStateOf(false) }
@@ -263,6 +264,35 @@ fun FriendsScreen() {
             }
 
             problem?.let { Text(problemText(it), style = nunito(14.sp, FontWeight.SemiBold), color = colors.wrongInk) }
+
+            // Le classement de la semaine : seulement avec un cercle, un podium seul n'en est pas un.
+            if (ranking.size >= 2) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Caption(stringResource(R.string.ios_weekRanking))
+                    Card {
+                        ranking.forEachIndexed { index, row ->
+                            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text("${index + 1}", style = nunito(15.sp, FontWeight.Black), color = colors.inkTertiary, modifier = Modifier.width(26.dp))
+                                Text(
+                                    when {
+                                        row.isMe -> stringResource(R.string.ios_youLower)
+                                        row.username.isNotBlank() -> Username.display(row.username)
+                                        else -> stringResource(R.string.app_friends_someone)
+                                    },
+                                    style = nunito(16.sp, if (row.isMe) FontWeight.Black else FontWeight.Bold),
+                                    color = if (row.isMe) colors.accent else colors.ink,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                Text(pluralStringResource(R.plurals.copy_cards, row.passes, row.passes), style = nunito(14.sp, FontWeight.Bold), color = colors.inkSecondary)
+                            }
+                            if (index < ranking.lastIndex) Hairline()
+                        }
+                    }
+                    Text(stringResource(R.string.ios_weekRankingHint), style = nunito(12.sp, FontWeight.SemiBold), color = colors.inkTertiary, modifier = Modifier.padding(start = 6.dp))
+                }
+            }
 
             if (incoming.isNotEmpty()) section(stringResource(R.string.app_friends_incoming), incoming)
 

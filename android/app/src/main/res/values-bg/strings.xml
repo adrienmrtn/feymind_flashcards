@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_a11y_close">Затвори</string>
     <string name="app_common_add">Добави</string>
+    <string name="app_common_back">Назад</string>
     <string name="app_common_cancel">Отказ</string>
     <string name="app_common_save">Запази</string>
     <string name="app_exams_countdown_today">днес</string>
@@ -21,6 +23,7 @@
     <string name="app_friends_removeFriend">Премахни от приятели</string>
     <string name="app_friends_results">Резултати</string>
     <string name="app_friends_seeCourses">Виж курсовете</string>
+    <string name="app_friends_someone">Някой</string>
     <string name="app_friends_theirCourses">Курсовете му</string>
     <string name="app_friends_usernamePlaceholder">потребителско име</string>
     <string name="app_friends_you">Ти</string>
@@ -223,6 +226,9 @@
     <string name="ios_username_taken">%1$s вече е заето.</string>
     <string name="ios_username_tooLong">Максимум двайсет символа.</string>
     <string name="ios_username_tooShort">Минимум три символа.</string>
+    <string name="ios_weekRanking">Класация за седмицата</string>
+    <string name="ios_weekRankingHint">прегледани карти от понеделник</string>
+    <string name="ios_youLower">ти</string>
     <string name="ios_yt_invalidLink">Този линк не е видео в YouTube.</string>
     <string name="ios_yt_noCaptions">Micabo не успя да прочете това видео. Опитай пак или постави текста на урока.</string>
     <string name="ios_yt_tooShort">Това видео е твърде кратко за карти.</string>

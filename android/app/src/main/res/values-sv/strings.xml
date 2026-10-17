@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_a11y_close">Stäng</string>
     <string name="app_common_add">Lägg till</string>
+    <string name="app_common_back">Tillbaka</string>
     <string name="app_common_cancel">Avbryt</string>
     <string name="app_common_save">Spara</string>
     <string name="app_exams_countdown_today">i dag</string>
@@ -21,6 +23,7 @@
     <string name="app_friends_removeFriend">Ta bort från mina vänner</string>
     <string name="app_friends_results">Resultat</string>
     <string name="app_friends_seeCourses">Se deras kurser</string>
+    <string name="app_friends_someone">Någon</string>
     <string name="app_friends_theirCourses">Deras kurser</string>
     <string name="app_friends_usernamePlaceholder">användarnamn</string>
     <string name="app_friends_you">Du</string>
@@ -220,6 +223,9 @@
     <string name="ios_username_taken">%1$s är redan upptaget.</string>
     <string name="ios_username_tooLong">Högst tjugo tecken.</string>
     <string name="ios_username_tooShort">Minst tre tecken.</string>
+    <string name="ios_weekRanking">Veckans topplista</string>
+    <string name="ios_weekRankingHint">repeterade kort sedan måndag</string>
+    <string name="ios_youLower">du</string>
     <string name="ios_yt_invalidLink">Länken är inte en YouTube-video.</string>
     <string name="ios_yt_noCaptions">Micabo kunde inte läsa videon. Försök igen, eller klistra in kursens text.</string>
     <string name="ios_yt_tooShort">Videon är för kort för att skapa kort.</string>

@@ -82,6 +82,7 @@ class CloudSync(
     fun forget() {
         prefs.syncWatermark = 0
         prefs.removeTombstones(prefs.tombstones)
+        prefs.removeReviews(prefs.pendingReviews)
         _state.value = SyncState()
     }
 
@@ -265,6 +266,24 @@ class CloudSync(
             upsert(token, "courses", listOf(courseRow(stamped, user)))
             upsert(token, "chapters", stamped.themes.mapIndexed { index, theme -> chapterRow(stamped, theme, index, user) })
             upsert(token, "flashcards", cardRows(stamped, user))
+        }
+
+        // Les cartes notées, après les cartes elles-mêmes (`card_id` y renvoie).
+        val reviews = prefs.pendingReviews.toList()
+        reviews.chunked(200).forEach { chunk ->
+            val rows = chunk.mapNotNull { line ->
+                (runCatching { MicaboJson.parseToJsonElement(line) }.getOrNull() as? JsonObject)?.let { JsonObject(it + ("user_id" to JsonPrimitive(user))) }
+            }
+            val result = if (rows.isEmpty()) null else request(
+                "POST",
+                "review_logs",
+                JsonArray(rows).toString(),
+                token,
+                mapOf("Prefer" to "resolution=ignore-duplicates,return=minimal"),
+            )
+            // Un refus (une carte supprimée entre-temps) ne passera pas mieux plus tard : le lot est laissé.
+            if (result != null && result.status >= 500) throw IOException("POST review_logs ${result.status}")
+            prefs.removeReviews(chunk)
         }
 
         val changedExams = exams.exams.value.filter { it.updatedAt > since }

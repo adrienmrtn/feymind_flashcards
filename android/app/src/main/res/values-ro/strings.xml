@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_a11y_close">Închide</string>
     <string name="app_common_add">Adaugă</string>
+    <string name="app_common_back">Înapoi</string>
     <string name="app_common_cancel">Anulează</string>
     <string name="app_common_save">Salvează</string>
     <string name="app_exams_countdown_today">azi</string>
@@ -21,6 +23,7 @@
     <string name="app_friends_removeFriend">Elimină din prieteni</string>
     <string name="app_friends_results">Rezultate</string>
     <string name="app_friends_seeCourses">Vezi cursurile lor</string>
+    <string name="app_friends_someone">Cineva</string>
     <string name="app_friends_theirCourses">Cursurile lor</string>
     <string name="app_friends_usernamePlaceholder">utilizator</string>
     <string name="app_friends_you">Tu</string>
@@ -216,6 +219,9 @@
     <string name="ios_username_taken">%1$s e deja folosit.</string>
     <string name="ios_username_tooLong">Maximum douăzeci de caractere.</string>
     <string name="ios_username_tooShort">Minimum trei caractere.</string>
+    <string name="ios_weekRanking">Clasamentul săptămânii</string>
+    <string name="ios_weekRankingHint">carduri recapitulate de luni</string>
+    <string name="ios_youLower">tu</string>
     <string name="ios_yt_invalidLink">Linkul ăsta nu e un video YouTube.</string>
     <string name="ios_yt_noCaptions">Micabo n-a putut citi videoclipul. Încearcă din nou sau lipește textul cursului.</string>
     <string name="ios_yt_tooShort">Videoclipul e prea scurt ca să generez carduri.</string>

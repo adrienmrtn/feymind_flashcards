@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_a11y_close">Zapri</string>
     <string name="app_common_add">Dodaj</string>
+    <string name="app_common_back">Nazaj</string>
     <string name="app_common_cancel">Prekliči</string>
     <string name="app_common_save">Shrani</string>
     <string name="app_exams_countdown_today">danes</string>
@@ -21,6 +23,7 @@
     <string name="app_friends_removeFriend">Odstrani iz prijateljev</string>
     <string name="app_friends_results">Rezultati</string>
     <string name="app_friends_seeCourses">Poglej tečaje</string>
+    <string name="app_friends_someone">Nekdo</string>
     <string name="app_friends_theirCourses">Tečaji</string>
     <string name="app_friends_usernamePlaceholder">uporabniško ime</string>
     <string name="app_friends_you">Ti</string>
@@ -223,6 +226,9 @@
     <string name="ios_username_taken">%1$s je že zasedeno.</string>
     <string name="ios_username_tooLong">Največ dvajset znakov.</string>
     <string name="ios_username_tooShort">Najmanj trije znaki.</string>
+    <string name="ios_weekRanking">Lestvica tedna</string>
+    <string name="ios_weekRankingHint">kartic, ponovljenih od ponedeljka</string>
+    <string name="ios_youLower">ti</string>
     <string name="ios_yt_invalidLink">Ta povezava ni videoposnetek YouTube.</string>
     <string name="ios_yt_noCaptions">Micabo tega videoposnetka ni mogel prebrati. Poskusi znova ali prilepi besedilo tečaja.</string>
     <string name="ios_yt_tooShort">Ta videoposnetek je prekratek za ustvarjanje kartic.</string>

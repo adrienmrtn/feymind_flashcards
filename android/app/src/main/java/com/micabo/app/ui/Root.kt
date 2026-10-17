@@ -17,6 +17,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -121,8 +122,18 @@ fun MicaboRoot(app: MicaboApplication) {
     // L'onglet survit à la recréation de l'activité (langue changée depuis le Profil) : sans
     // ça, on retombait sur l'Accueil.
     var savedTab by rememberSaveable { mutableStateOf(Tab.HOME) }
-    val navigator = remember { Navigator(Screen.Home).also { it.tab = savedTab } }
+    // La pile aussi : Android tue l'app en arrière-plan, et l'élève revient là où il était.
+    var savedStack by rememberSaveable { mutableStateOf(emptyList<String>()) }
+    val navigator = remember {
+        Navigator(Screen.Home).also { navigator ->
+            navigator.tab = savedTab
+            navigator.stack.addAll(savedStack.mapNotNull(::decodeScreen))
+        }
+    }
     LaunchedEffect(navigator.tab) { savedTab = navigator.tab }
+    LaunchedEffect(navigator) {
+        snapshotFlow { navigator.stack.toList() }.collect { stack -> savedStack = stack.drop(1).mapNotNull(::encodeScreen) }
+    }
 
     CompositionLocalProvider(LocalApp provides app, LocalNavigator provides navigator) {
         Box(Modifier.fillMaxSize().background(Micabo.colors.canvas)) {
@@ -195,5 +206,37 @@ private fun StreakCelebrationHost(navigator: Navigator) {
     val calm = navigator.current is Screen.Home || navigator.current is Screen.LessonPath
     if (pending && calm && status.current > 0) {
         StreakCelebration(status, onDismiss = { app.streak.celebrated() })
+    }
+}
+
+/**
+ * Un écran en une ligne, pour la sauvegarde de la pile. Seuls ceux qui se rouvrent d'un
+ * identifiant y entrent : une génération en cours ou le profil d'un ami ne reviennent pas.
+ */
+private fun encodeScreen(screen: Screen): String? = when (screen) {
+    is Screen.LessonPath -> "lesson\u0000${screen.id}"
+    is Screen.Intro -> "intro\u0000${screen.id}"
+    is Screen.Notes -> "notes\u0000${screen.id}\u0000${screen.theme}"
+    is Screen.Quiz -> "quiz\u0000${screen.id}\u0000${screen.circle}"
+    is Screen.Flashcards -> "cards\u0000${screen.id}"
+    is Screen.Mika -> "mika\u0000${screen.id}"
+    is Screen.ExamEdit -> "exam\u0000${screen.id.orEmpty()}"
+    Screen.Friends -> "friends"
+    else -> null
+}
+
+private fun decodeScreen(line: String): Screen? {
+    val parts = line.split('\u0000')
+    val id = parts.getOrNull(1).orEmpty()
+    return when (parts[0]) {
+        "lesson" -> Screen.LessonPath(id)
+        "intro" -> Screen.Intro(id)
+        "notes" -> parts.getOrNull(2)?.toIntOrNull()?.let { Screen.Notes(id, it) }
+        "quiz" -> Screen.Quiz(id, parts.getOrNull(2).orEmpty())
+        "cards" -> Screen.Flashcards(id)
+        "mika" -> Screen.Mika(id)
+        "exam" -> Screen.ExamEdit(id.ifEmpty { null })
+        "friends" -> Screen.Friends
+        else -> null
     }
 }

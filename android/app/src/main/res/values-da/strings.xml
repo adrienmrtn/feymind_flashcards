@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_a11y_close">Luk</string>
     <string name="app_common_add">Tilføj</string>
+    <string name="app_common_back">Tilbage</string>
     <string name="app_common_cancel">Annuller</string>
     <string name="app_common_save">Gem</string>
     <string name="app_exams_countdown_today">i dag</string>
@@ -21,6 +23,7 @@
     <string name="app_friends_removeFriend">Fjern fra mine venner</string>
     <string name="app_friends_results">Resultater</string>
     <string name="app_friends_seeCourses">Se deres kurser</string>
+    <string name="app_friends_someone">Nogen</string>
     <string name="app_friends_theirCourses">Deres kurser</string>
     <string name="app_friends_usernamePlaceholder">brugernavn</string>
     <string name="app_friends_you">Dig</string>
@@ -218,6 +221,9 @@
     <string name="ios_username_taken">%1$s er allerede taget.</string>
     <string name="ios_username_tooLong">Højst tyve tegn.</string>
     <string name="ios_username_tooShort">Mindst tre tegn.</string>
+    <string name="ios_weekRanking">Ugens rangliste</string>
+    <string name="ios_weekRankingHint">repeterede kort siden mandag</string>
+    <string name="ios_youLower">dig</string>
     <string name="ios_yt_invalidLink">Linket er ikke en YouTube-video.</string>
     <string name="ios_yt_noCaptions">Micabo kunne ikke læse videoen. Prøv igen, eller indsæt kursets tekst.</string>
     <string name="ios_yt_tooShort">Videoen er for kort til at lave kort.</string>

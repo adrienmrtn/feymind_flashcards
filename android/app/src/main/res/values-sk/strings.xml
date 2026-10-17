@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_a11y_close">Zavrieť</string>
     <string name="app_common_add">Pridať</string>
+    <string name="app_common_back">Späť</string>
     <string name="app_common_cancel">Zrušiť</string>
     <string name="app_common_save">Uložiť</string>
     <string name="app_exams_countdown_today">dnes</string>
@@ -21,6 +23,7 @@
     <string name="app_friends_removeFriend">Odobrať z kamarátov</string>
     <string name="app_friends_results">Výsledky</string>
     <string name="app_friends_seeCourses">Zobraziť kurzy</string>
+    <string name="app_friends_someone">Niekto</string>
     <string name="app_friends_theirCourses">Kurzy</string>
     <string name="app_friends_usernamePlaceholder">používateľské meno</string>
     <string name="app_friends_you">Ty</string>
@@ -221,6 +224,9 @@
     <string name="ios_username_taken">%1$s je už obsadené.</string>
     <string name="ios_username_tooLong">Maximálne dvadsať znakov.</string>
     <string name="ios_username_tooShort">Minimálne tri znaky.</string>
+    <string name="ios_weekRanking">Rebríček týždňa</string>
+    <string name="ios_weekRankingHint">kartičky zopakované od pondelka</string>
+    <string name="ios_youLower">ty</string>
     <string name="ios_yt_invalidLink">Tento odkaz nie je video z YouTube.</string>
     <string name="ios_yt_noCaptions">Micabo toto video nedokázalo prečítať. Skús to znova alebo vlož text kurzu.</string>
     <string name="ios_yt_tooShort">Toto video je na kartičky prikrátke.</string>

@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_a11y_close">Sulje</string>
     <string name="app_common_add">Lisää</string>
+    <string name="app_common_back">Takaisin</string>
     <string name="app_common_cancel">Peru</string>
     <string name="app_common_save">Tallenna</string>
     <string name="app_exams_countdown_today">tänään</string>
@@ -21,6 +23,7 @@
     <string name="app_friends_removeFriend">Poista kavereista</string>
     <string name="app_friends_results">Tulokset</string>
     <string name="app_friends_seeCourses">Näytä kurssit</string>
+    <string name="app_friends_someone">Joku</string>
     <string name="app_friends_theirCourses">Kurssit</string>
     <string name="app_friends_usernamePlaceholder">käyttäjänimi</string>
     <string name="app_friends_you">Sinä</string>
@@ -218,6 +221,9 @@
     <string name="ios_username_taken">%1$s on jo varattu.</string>
     <string name="ios_username_tooLong">Enintään kaksikymmentä merkkiä.</string>
     <string name="ios_username_tooShort">Vähintään kolme merkkiä.</string>
+    <string name="ios_weekRanking">Viikon kärkilista</string>
+    <string name="ios_weekRankingHint">kerrattua korttia maanantaista asti</string>
+    <string name="ios_youLower">sinä</string>
     <string name="ios_yt_invalidLink">Linkki ei ole YouTube-video.</string>
     <string name="ios_yt_noCaptions">Micabo ei pystynyt lukemaan videota. Yritä uudelleen tai liitä kurssin teksti.</string>
     <string name="ios_yt_tooShort">Video on liian lyhyt korttien luomiseen.</string>

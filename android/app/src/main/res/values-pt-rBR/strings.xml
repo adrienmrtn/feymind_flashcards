@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_a11y_close">Fechar</string>
     <string name="app_common_add">Adicionar</string>
+    <string name="app_common_back">Voltar</string>
     <string name="app_common_cancel">Cancelar</string>
     <string name="app_common_save">Salvar</string>
     <string name="app_exams_countdown_today">hoje</string>
@@ -21,6 +23,7 @@
     <string name="app_friends_removeFriend">Remover dos meus amigos</string>
     <string name="app_friends_results">Resultados</string>
     <string name="app_friends_seeCourses">Ver os cursos</string>
+    <string name="app_friends_someone">Alguém</string>
     <string name="app_friends_theirCourses">Os cursos</string>
     <string name="app_friends_usernamePlaceholder">nome de usuário</string>
     <string name="app_friends_you">Você</string>
@@ -220,6 +223,9 @@
     <string name="ios_username_taken">%1$s já está em uso.</string>
     <string name="ios_username_tooLong">No máximo vinte caracteres.</string>
     <string name="ios_username_tooShort">No mínimo três caracteres.</string>
+    <string name="ios_weekRanking">Ranking da semana</string>
+    <string name="ios_weekRankingHint">cartões revisados desde segunda</string>
+    <string name="ios_youLower">você</string>
     <string name="ios_yt_invalidLink">Este link não é um vídeo do YouTube.</string>
     <string name="ios_yt_noCaptions">O Micabo não conseguiu ler este vídeo. Tente de novo, ou cole o texto da matéria.</string>
     <string name="ios_yt_tooShort">Este vídeo é curto demais para gerar cartões.</string>

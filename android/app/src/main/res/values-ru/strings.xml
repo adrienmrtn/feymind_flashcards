@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_a11y_close">Закрыть</string>
     <string name="app_common_add">Добавить</string>
+    <string name="app_common_back">Назад</string>
     <string name="app_common_cancel">Отмена</string>
     <string name="app_common_save">Сохранить</string>
     <string name="app_exams_countdown_today">сегодня</string>
@@ -21,6 +23,7 @@
     <string name="app_friends_removeFriend">Удалить из друзей</string>
     <string name="app_friends_results">Результаты</string>
     <string name="app_friends_seeCourses">Их курсы</string>
+    <string name="app_friends_someone">Кто-то</string>
     <string name="app_friends_theirCourses">Их курсы</string>
     <string name="app_friends_usernamePlaceholder">имя пользователя</string>
     <string name="app_friends_you">Ты</string>
@@ -223,6 +226,9 @@
     <string name="ios_username_taken">%1$s уже занято.</string>
     <string name="ios_username_tooLong">Максимум двадцать символов.</string>
     <string name="ios_username_tooShort">Минимум три символа.</string>
+    <string name="ios_weekRanking">Рейтинг недели</string>
+    <string name="ios_weekRankingHint">карточек повторено с понедельника</string>
+    <string name="ios_youLower">ты</string>
     <string name="ios_yt_invalidLink">Эта ссылка не ведёт на видео YouTube.</string>
     <string name="ios_yt_noCaptions">Micabo не смог прочитать это видео. Попробуй ещё раз или вставь текст урока.</string>
     <string name="ios_yt_tooShort">Это видео слишком короткое для карточек.</string>

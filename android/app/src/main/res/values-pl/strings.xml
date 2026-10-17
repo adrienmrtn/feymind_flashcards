@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_a11y_close">Zamknij</string>
     <string name="app_common_add">Dodaj</string>
+    <string name="app_common_back">Wstecz</string>
     <string name="app_common_cancel">Anuluj</string>
     <string name="app_common_save">Zapisz</string>
     <string name="app_exams_countdown_today">dziś</string>
@@ -21,6 +23,7 @@
     <string name="app_friends_removeFriend">Usuń ze znajomych</string>
     <string name="app_friends_results">Wyniki</string>
     <string name="app_friends_seeCourses">Zobacz kursy</string>
+    <string name="app_friends_someone">Ktoś</string>
     <string name="app_friends_theirCourses">Kursy</string>
     <string name="app_friends_usernamePlaceholder">nazwa użytkownika</string>
     <string name="app_friends_you">Ty</string>
@@ -221,6 +224,9 @@
     <string name="ios_username_taken">%1$s jest już zajęte.</string>
     <string name="ios_username_tooLong">Maksymalnie dwadzieścia znaków.</string>
     <string name="ios_username_tooShort">Minimum trzy znaki.</string>
+    <string name="ios_weekRanking">Ranking tygodnia</string>
+    <string name="ios_weekRankingHint">fiszki powtórzone od poniedziałku</string>
+    <string name="ios_youLower">ty</string>
     <string name="ios_yt_invalidLink">Ten link nie prowadzi do filmu z YouTube.</string>
     <string name="ios_yt_noCaptions">Micabo nie mogło odczytać tego filmu. Spróbuj ponownie albo wklej tekst kursu.</string>
     <string name="ios_yt_tooShort">Ten film jest za krótki, by zrobić fiszki.</string>

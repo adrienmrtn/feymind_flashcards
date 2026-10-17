@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_a11y_close">Zatvori</string>
     <string name="app_common_add">Dodaj</string>
+    <string name="app_common_back">Nazad</string>
     <string name="app_common_cancel">Otkaži</string>
     <string name="app_common_save">Sačuvaj</string>
     <string name="app_exams_countdown_today">danas</string>
@@ -21,6 +23,7 @@
     <string name="app_friends_removeFriend">Ukloni iz prijatelja</string>
     <string name="app_friends_results">Rezultati</string>
     <string name="app_friends_seeCourses">Pogledaj kurseve</string>
+    <string name="app_friends_someone">Neko</string>
     <string name="app_friends_theirCourses">Kursevi</string>
     <string name="app_friends_usernamePlaceholder">korisničko ime</string>
     <string name="app_friends_you">Ti</string>
@@ -222,6 +225,9 @@
     <string name="ios_username_taken">%1$s je već zauzeto.</string>
     <string name="ios_username_tooLong">Najviše dvadeset znakova.</string>
     <string name="ios_username_tooShort">Najmanje tri znaka.</string>
+    <string name="ios_weekRanking">Rang-lista nedelje</string>
+    <string name="ios_weekRankingHint">kartica ponovljenih od ponedeljka</string>
+    <string name="ios_youLower">ti</string>
     <string name="ios_yt_invalidLink">Ovaj link nije YouTube video.</string>
     <string name="ios_yt_noCaptions">Micabo nije mogao da pročita ovaj video. Pokušaj ponovo ili nalepi tekst kursa.</string>
     <string name="ios_yt_tooShort">Ovaj video je prekratak za pravljenje kartica.</string>

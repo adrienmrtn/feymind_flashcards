@@ -2,7 +2,9 @@
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
     <string name="app_name" translatable="false">Micabo</string>
+    <string name="app_a11y_close">Close</string>
     <string name="app_common_add">Add</string>
+    <string name="app_common_back">Back</string>
     <string name="app_common_cancel">Cancel</string>
     <string name="app_common_save">Save</string>
     <string name="app_exams_countdown_today">today</string>
@@ -22,6 +24,7 @@
     <string name="app_friends_removeFriend">Remove from my friends</string>
     <string name="app_friends_results">Results</string>
     <string name="app_friends_seeCourses">See their courses</string>
+    <string name="app_friends_someone">Someone</string>
     <string name="app_friends_theirCourses">Their courses</string>
     <string name="app_friends_usernamePlaceholder">username</string>
     <string name="app_friends_you">You</string>
@@ -250,6 +253,9 @@
     <string name="ios_username_taken">%1$s is already taken.</string>
     <string name="ios_username_tooLong">Twenty characters maximum.</string>
     <string name="ios_username_tooShort">Three characters minimum.</string>
+    <string name="ios_weekRanking">This week\'s ranking</string>
+    <string name="ios_weekRankingHint">cards reviewed since Monday</string>
+    <string name="ios_youLower">you</string>
     <string name="ios_yt_invalidLink">This link isn\'t a YouTube video.</string>
     <string name="ios_yt_noCaptions">Micabo couldn\'t read this video. Try again, or paste the text of the course.</string>
     <string name="ios_yt_tooShort">This video is too short to generate cards.</string>

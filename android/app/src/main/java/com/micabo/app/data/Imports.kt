@@ -273,12 +273,20 @@ object PhotoImport {
         if (pages.isEmpty()) throw ImportException(R.string.ios_photo_empty)
         val texts = mutableListOf<String>()
         val images = mutableListOf<String>()
-        for ((index, uri) in pages.withIndex()) {
-            ensureActive()
-            val bitmap = ImagePrep.decode(context, uri, ImportLimits.OCR_DIMENSION) ?: continue
-            texts.add(OnDeviceOcr.read(bitmap))
-            if (index < ImportLimits.IMAGE_PAGES) images.add(ImagePrep.dataUrl(bitmap))
-            bitmap.recycle()
+        try {
+            for ((index, uri) in pages.withIndex()) {
+                ensureActive()
+                val bitmap = ImagePrep.decode(context, uri, ImportLimits.OCR_DIMENSION) ?: continue
+                texts.add(OnDeviceOcr.read(bitmap))
+                if (index < ImportLimits.IMAGE_PAGES) images.add(ImagePrep.dataUrl(bitmap))
+                bitmap.recycle()
+            }
+        } finally {
+            // Les pages du scanner sont des JPEG dans le cache de l'app : lues, elles ne servent plus.
+            val cache = context.cacheDir.canonicalPath
+            uris.filter { it.scheme == "file" }.mapNotNull { it.path?.let(::File) }
+                .filter { runCatching { it.canonicalPath.startsWith(cache) }.getOrDefault(false) }
+                .forEach { it.delete() }
         }
         if (images.isEmpty()) throw ImportException(R.string.ios_photo_unreadable)
         val text = normalize(texts.filter { it.isNotBlank() }.joinToString("\n\n"))
@@ -326,5 +334,12 @@ object DocxImport {
     }.filter { it.isNotEmpty() }.toList()
 
     private fun unescape(value: String): String = value
-        .replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&apos;", "'").replace("&amp;", "&")
+        .replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&apos;", "'")
+        // Les entités numériques (`&#8217;`, `&#x2019;`) : apostrophes et tirets typographiques.
+        .replace(Regex("&#(x[0-9a-fA-F]+|[0-9]+);")) { match ->
+            val code = match.groupValues[1]
+            val point = if (code.startsWith("x")) code.drop(1).toIntOrNull(16) else code.toIntOrNull()
+            point?.takeIf { Character.isValidCodePoint(it) }?.let { String(Character.toChars(it)) } ?: match.value
+        }
+        .replace("&amp;", "&")
 }

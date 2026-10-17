@@ -42,6 +42,9 @@ data class SharedCourse(
     val visibility: String,
 )
 
+/** Une ligne du classement de la semaine : cartes passées depuis lundi. */
+data class RankingRow(val userId: String, val username: String, val passes: Int, val isMe: Boolean)
+
 /** Une carte d'un cours partagé : le contenu, pas ce que l'auteur savait. */
 data class SharedCard(val front: String, val back: String)
 
@@ -119,6 +122,9 @@ class Social(private val auth: SupabaseAuth) {
     val incoming: StateFlow<List<Person>> = _incoming.asStateFlow()
     private val _outgoing = MutableStateFlow<List<Person>>(emptyList())
     val outgoing: StateFlow<List<Person>> = _outgoing.asStateFlow()
+    /** Soi et ses amis, cartes passées depuis lundi ; vide sans cercle. */
+    private val _ranking = MutableStateFlow<List<RankingRow>>(emptyList())
+    val ranking: StateFlow<List<RankingRow>> = _ranking.asStateFlow()
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
     private val _problem = MutableStateFlow<SocialProblem?>(null)
@@ -136,6 +142,7 @@ class Social(private val auth: SupabaseAuth) {
         _friends.value = emptyList()
         _incoming.value = emptyList()
         _outgoing.value = emptyList()
+        _ranking.value = emptyList()
         _problem.value = null
     }
 
@@ -156,6 +163,7 @@ class Social(private val auth: SupabaseAuth) {
                 .mapNotNull { people[it.str("requester_id").lowercase()] }
             _outgoing.value = links.filter { it.str("status") != ACCEPTED && it.str("requester_id").lowercase() == me }
                 .mapNotNull { people[it.str("addressee_id").lowercase()] }
+            _ranking.value = loadRanking(me)
             _problem.value = null
         } catch (error: Exception) {
             _problem.value = describe(error)
@@ -163,6 +171,18 @@ class Social(private val auth: SupabaseAuth) {
             _loading.value = false
         }
     }
+
+    /** Le classement vient du serveur (`week_review_ranking`) : les notes des autres ne se lisent pas. */
+    private suspend fun loadRanking(me: String): List<RankingRow> = runCatching {
+        val result = call("POST", "rpc/week_review_ranking", "{}")
+        check(result)
+        MicaboJson.parseToJsonElement(result.body).jsonArray.mapNotNull { item ->
+            val row = item as? JsonObject ?: return@mapNotNull null
+            val id = row.str("user_id").lowercase()
+            if (id.isEmpty()) return@mapNotNull null
+            RankingRow(id, row.str("username"), row.str("passes").toIntOrNull() ?: 0, id == me)
+        }
+    }.getOrDefault(emptyList())
 
     fun relation(id: String): Relation {
         val key = id.lowercase()

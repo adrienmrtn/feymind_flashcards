@@ -58,6 +58,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -210,11 +211,11 @@ fun CircleIconButton(icon: ImageVector, contentDescription: String?, onClick: ()
 
 @Composable
 fun BackButton(onClick: () -> Unit, modifier: Modifier = Modifier) =
-    CircleIconButton(Icons.AutoMirrored.Filled.ArrowBack, null, onClick, modifier)
+    CircleIconButton(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.app_common_back), onClick, modifier)
 
 @Composable
 fun CloseButton(onClick: () -> Unit, modifier: Modifier = Modifier) =
-    CircleIconButton(Icons.Filled.Close, null, onClick, modifier)
+    CircleIconButton(Icons.Filled.Close, stringResource(R.string.app_a11y_close), onClick, modifier)
 
 // MARK: - La jauge
 

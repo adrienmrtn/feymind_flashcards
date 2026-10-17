@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_a11y_close">Sulge</string>
     <string name="app_common_add">Lisa</string>
+    <string name="app_common_back">Tagasi</string>
     <string name="app_common_cancel">Tühista</string>
     <string name="app_common_save">Salvesta</string>
     <string name="app_exams_countdown_today">täna</string>
@@ -21,6 +23,7 @@
     <string name="app_friends_removeFriend">Eemalda sõprade hulgast</string>
     <string name="app_friends_results">Tulemused</string>
     <string name="app_friends_seeCourses">Vaata kursusi</string>
+    <string name="app_friends_someone">Keegi</string>
     <string name="app_friends_theirCourses">Tema kursused</string>
     <string name="app_friends_usernamePlaceholder">kasutajanimi</string>
     <string name="app_friends_you">Sina</string>
@@ -220,6 +223,9 @@
     <string name="ios_username_taken">%1$s on juba võetud.</string>
     <string name="ios_username_tooLong">Maksimaalselt kakskümmend tähemärki.</string>
     <string name="ios_username_tooShort">Vähemalt kolm tähemärki.</string>
+    <string name="ios_weekRanking">Nädala edetabel</string>
+    <string name="ios_weekRankingHint">esmaspäevast korratud kaarte</string>
+    <string name="ios_youLower">sina</string>
     <string name="ios_yt_invalidLink">See link pole YouTube\'i video.</string>
     <string name="ios_yt_noCaptions">Micabo ei saanud seda videot lugeda. Proovi uuesti või kleebi kursuse tekst.</string>
     <string name="ios_yt_tooShort">See video on kaartide loomiseks liiga lühike.</string>

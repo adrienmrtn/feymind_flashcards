@@ -305,11 +305,21 @@ private fun Opening(item: Theme, theme: Int, tone: Tone, oneLiner: String?) {
     }
 }
 
-/** Une leçon supprimée pendant qu'on la lit : on revient au chemin. */
+/**
+ * Une leçon supprimée pendant qu'on la lit : on revient au chemin. Après une mort du processus,
+ * l'écran revient avant les leçons : on attend qu'elles soient lues, puis deux images, le
+ * temps qu'une leçon arrivée remplace cet écran (et annule ce retour).
+ */
 @Composable
 fun LeaveWhenMissing() {
+    val app = LocalApp.current
     val navigator = LocalNavigator.current
-    androidx.compose.runtime.LaunchedEffect(Unit) { navigator.back() }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        app.lessons.ready()
+        androidx.compose.runtime.withFrameNanos {}
+        androidx.compose.runtime.withFrameNanos {}
+        navigator.back()
+    }
 }
 
 @Composable
