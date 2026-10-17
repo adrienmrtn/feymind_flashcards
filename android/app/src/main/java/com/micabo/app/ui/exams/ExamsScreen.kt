@@ -155,14 +155,24 @@ private fun NextExam(exam: Exam, results: List<MockResult>, country: String, onE
             Text(dayLabel(exam.date), style = nunito(14.sp, FontWeight.SemiBold), color = colors.inkSecondary)
             Spacer(Modifier.height(14.dp))
             Row(verticalAlignment = Alignment.Bottom) {
-                Text(days.coerceAtLeast(0).toString(), style = nunito(64.sp, FontWeight.Black, lineHeight = 64.sp), color = colors.toneInk[3])
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    stringResource(if (days == 1) R.string.lesson_exam_dayLeft else R.string.lesson_exam_daysLeft),
-                    style = nunito(18.sp, FontWeight.ExtraBold),
-                    color = colors.ink,
-                    modifier = Modifier.padding(bottom = 10.dp),
-                )
+                if (days <= 0) {
+                    // Le jour même : « Aujourd'hui », pas « 0 jours restants » (`ExamHero`).
+                    Text(
+                        stringResource(R.string.app_exams_countdown_today).replaceFirstChar { it.uppercase() },
+                        style = nunito(44.sp, FontWeight.Black, lineHeight = 48.sp),
+                        color = colors.toneInk[3],
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                } else {
+                    Text(days.toString(), style = nunito(64.sp, FontWeight.Black, lineHeight = 64.sp), color = colors.toneInk[3])
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        stringResource(if (days == 1) R.string.lesson_exam_dayLeft else R.string.lesson_exam_daysLeft),
+                        style = nunito(18.sp, FontWeight.ExtraBold),
+                        color = colors.ink,
+                        modifier = Modifier.padding(bottom = 10.dp),
+                    )
+                }
                 Spacer(Modifier.weight(1f))
                 if (best != null) {
                     Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(bottom = 8.dp)) {

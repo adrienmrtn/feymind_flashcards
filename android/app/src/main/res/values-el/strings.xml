@@ -3,6 +3,7 @@
 <resources>
     <string name="app_exams_countdown_today">σήμερα</string>
     <string name="common_continue">Συνέχεια</string>
+    <string name="common_privacy">Απόρρητο</string>
     <string name="country_be">Βέλγιο</string>
     <string name="country_ca">Καναδάς</string>
     <string name="country_ch">Ελβετία</string>
@@ -121,6 +122,7 @@
     <string name="ios_paywallReassurance">Δύο πατήματα για να ξεκινήσεις, ακύρωση σε δεκαπέντε δευτερόλεπτα.</string>
     <string name="ios_paywallRestore">Επαναφορά</string>
     <string name="ios_paywallStartTrial">Ξεκίνα τις %1$s δωρεάν μέρες μου</string>
+    <string name="ios_paywallTerms">Όροι χρήσης</string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, χωρίς όρια</string>
     <string name="ios_pdf_empty">Αυτό το PDF δεν έχει ούτε κείμενο ούτε αξιοποιήσιμη σελίδα.</string>
     <string name="ios_pdf_protected">Αυτό το PDF προστατεύεται με κωδικό.</string>

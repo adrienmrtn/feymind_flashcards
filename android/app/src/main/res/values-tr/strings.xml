@@ -3,6 +3,7 @@
 <resources>
     <string name="app_exams_countdown_today">bugün</string>
     <string name="common_continue">Devam</string>
+    <string name="common_privacy">Gizlilik</string>
     <string name="country_be">Belçika</string>
     <string name="country_ca">Kanada</string>
     <string name="country_ch">İsviçre</string>
@@ -131,6 +132,7 @@
     <string name="ios_paywallReassurance">İki dokunuşla başla, on beş saniyede iptal et.</string>
     <string name="ios_paywallRestore">Geri yükle</string>
     <string name="ios_paywallStartTrial">%1$s günlük denememi başlat</string>
+    <string name="ios_paywallTerms">Kullanım koşulları</string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, sınırsız</string>
     <string name="ios_paywall_badge_free">%1$s gün ücretsiz</string>
     <string name="ios_pdf_empty">Bu PDF\'te ne metin ne kullanılabilir sayfa var.</string>

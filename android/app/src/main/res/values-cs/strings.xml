@@ -3,6 +3,7 @@
 <resources>
     <string name="app_exams_countdown_today">dnes</string>
     <string name="common_continue">Pokračovat</string>
+    <string name="common_privacy">Soukromí</string>
     <string name="country_be">Belgie</string>
     <string name="country_ca">Kanada</string>
     <string name="country_ch">Švýcarsko</string>
@@ -119,6 +120,7 @@
     <string name="ios_paywallReassurance">Dvě klepnutí a jedeš, zrušíš za patnáct vteřin.</string>
     <string name="ios_paywallRestore">Obnovit</string>
     <string name="ios_paywallStartTrial">Začít %1$sdenní zkoušku zdarma</string>
+    <string name="ios_paywallTerms">Podmínky použití</string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, bez limitů</string>
     <string name="ios_pdf_empty">Tohle PDF neobsahuje text ani použitelnou stránku.</string>
     <string name="ios_pdf_protected">Tohle PDF je chráněné heslem.</string>

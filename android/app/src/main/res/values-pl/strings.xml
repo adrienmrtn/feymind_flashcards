@@ -3,6 +3,7 @@
 <resources>
     <string name="app_exams_countdown_today">dziś</string>
     <string name="common_continue">Dalej</string>
+    <string name="common_privacy">Prywatność</string>
     <string name="country_be">Belgia</string>
     <string name="country_ca">Kanada</string>
     <string name="country_ch">Szwajcaria</string>
@@ -119,6 +120,7 @@
     <string name="ios_paywallReassurance">Dwa stuknięcia, by zacząć, anulujesz w piętnaście sekund.</string>
     <string name="ios_paywallRestore">Przywróć</string>
     <string name="ios_paywallStartTrial">Zacznij %1$s dni za darmo</string>
+    <string name="ios_paywallTerms">Warunki korzystania</string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, bez limitów</string>
     <string name="ios_pdf_empty">Ten PDF nie zawiera ani tekstu, ani strony do wykorzystania.</string>
     <string name="ios_pdf_protected">Ten PDF jest chroniony hasłem.</string>

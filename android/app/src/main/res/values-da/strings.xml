@@ -3,6 +3,7 @@
 <resources>
     <string name="app_exams_countdown_today">i dag</string>
     <string name="common_continue">Fortsæt</string>
+    <string name="common_privacy">Privatliv</string>
     <string name="country_be">Belgien</string>
     <string name="country_ch">Schweiz</string>
     <string name="country_ci">Elfenbenskysten</string>
@@ -117,6 +118,7 @@
     <string name="ios_paywallReassurance">To tryk for at starte, opsig på femten sekunder.</string>
     <string name="ios_paywallRestore">Gendan</string>
     <string name="ios_paywallStartTrial">Start mine %1$s gratis dage</string>
+    <string name="ios_paywallTerms">Vilkår for brug</string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, uden grænser</string>
     <string name="ios_pdf_empty">Denne PDF indeholder hverken tekst eller en brugbar side.</string>
     <string name="ios_pdf_protected">Denne PDF er beskyttet med adgangskode.</string>

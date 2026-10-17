@@ -115,6 +115,7 @@
     <string name="ios_paywallReassurance">Due tocchi per iniziare, disdici in quindici secondi.</string>
     <string name="ios_paywallRestore">Ripristina</string>
     <string name="ios_paywallStartTrial">Inizia i miei %1$s giorni gratis</string>
+    <string name="ios_paywallTerms">Termini di utilizzo</string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, senza limiti</string>
     <string name="ios_pdf_empty">Questo PDF non contiene né testo né pagine utilizzabili.</string>
     <string name="ios_pdf_protected">Questo PDF è protetto da password.</string>

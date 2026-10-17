@@ -50,6 +50,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.micabo.app.R
@@ -95,9 +96,10 @@ fun LessonsScreen() {
     var deleting by remember { mutableStateOf<Lesson?>(null) }
     var renaming by remember { mutableStateOf<Lesson?>(null) }
     val sorted = remember(lessons) { lessons.values.sortedByDescending { maxOf(it.openedAt, it.createdAt) } }
+    // La recherche ne filtre que tant que son champ est là : sous quatre leçons, plus de filtre caché.
     val shown = remember(sorted, query) {
-        val needle = folded(query.trim())
-        if (needle.isEmpty()) sorted else sorted.filter { folded(it.title).contains(needle) || folded(it.subject).contains(needle) }
+        val needle = if (sorted.size > 3) folded(query.trim()) else ""
+        if (needle.isEmpty()) sorted else sorted.filter { folded(plainText(it.title)).contains(needle) || folded(it.subject).contains(needle) }
     }
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -324,14 +326,22 @@ fun LessonRow(lesson: Lesson, onOpen: () -> Unit, onRename: () -> Unit, onDelete
                     Row {
                         if (due > 0) Badge(stringResource(R.string.lesson_lessons_due, due.toString()), colors.accentWash, colors.accent)
                         if (due > 0 && examDays != null) Spacer(Modifier.width(6.dp))
-                        if (examDays != null) Badge(stringResource(R.string.lesson_lessons_examDays, examDays.toString()), colors.cautionSoft, colors.caution)
+                        if (examDays != null) {
+                            Badge(
+                                if (examDays == 0) stringResource(R.string.app_exams_countdown_today).replaceFirstChar { it.uppercase() }
+                                else stringResource(R.string.lesson_lessons_examDays, examDays.toString()),
+                                colors.cautionSoft,
+                                colors.caution,
+                            )
+                        }
                     }
                 }
                 Spacer(Modifier.height(8.dp))
                 ProgressBar(if (circles.isEmpty()) 0f else done / circles.size.toFloat(), height = 8.dp, color = if (finished) colors.correct else tone.vivid)
             }
         }
-        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }, containerColor = colors.surface) {
+        // Sous la carte, pas au bord de l'écran : la carte a ses marges.
+        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }, offset = DpOffset(20.dp, 0.dp), containerColor = colors.surface) {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.lesson_menu_rename), style = nunito(16.sp, FontWeight.Bold)) },
                 onClick = { menu = false; onRename() },

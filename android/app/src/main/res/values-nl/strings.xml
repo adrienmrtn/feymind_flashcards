@@ -116,6 +116,7 @@
     <string name="ios_paywallReassurance">Twee tikken om te starten, opzeggen in vijftien seconden.</string>
     <string name="ios_paywallRestore">Herstellen</string>
     <string name="ios_paywallStartTrial">Start mijn %1$s gratis dagen</string>
+    <string name="ios_paywallTerms">Gebruiksvoorwaarden</string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, zonder grenzen</string>
     <string name="ios_pdf_empty">Deze PDF bevat geen tekst en geen bruikbare pagina.</string>
     <string name="ios_pdf_protected">Deze PDF is beveiligd met een wachtwoord.</string>

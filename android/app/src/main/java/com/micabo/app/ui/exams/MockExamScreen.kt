@@ -1,5 +1,6 @@
 package com.micabo.app.ui.exams
 
+import android.os.SystemClock
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -102,8 +103,14 @@ fun MockExamScreen(examId: String?) {
     var result by remember { mutableStateOf<MockResult?>(null) }
     val answers = remember { mutableStateMapOf<Int, Boolean>() }
     val picked = remember { mutableStateMapOf<Int, Int>() }
+    // Le dernier réglage : « Réessayer » et le retour du paywall le retrouvent.
+    var lastLessons by remember { mutableStateOf<List<String>>(emptyList()) }
+    var lastMinutes by remember { mutableIntStateOf(30) }
+    val title = exam?.name?.ifBlank { null } ?: stringResource(R.string.lesson_exam_mockTitle)
 
     fun begin(lessonIds: List<String>, minutes: Int) {
+        lastLessons = lessonIds
+        lastMinutes = minutes
         if (!isPro && app.prefs.mockFreeUsed) {
             navigator.push(Screen.Paywall("pro_required"))
             return
@@ -112,7 +119,8 @@ fun MockExamScreen(examId: String?) {
         failure = null
         scope.launch {
             try {
-                val written = app.lessons.examPaper(exam?.name ?: "", exam, lessonIds, minutes)
+                // Le titre de l'historique, comme sur iPhone : le nom de l'examen, sinon « Examen blanc ».
+                val written = app.lessons.examPaper(title, exam, lessonIds, minutes)
                 if (!isPro) app.prefs.mockFreeUsed = true
                 answers.clear()
                 picked.clear()
@@ -136,11 +144,20 @@ fun MockExamScreen(examId: String?) {
 
     AnimatedContent(targetState = phase, transitionSpec = { fadeIn(tween(250)) togetherWith fadeOut(tween(180)) }, label = "mock") { shown ->
         when (shown) {
-            "setup" -> Setup(exam?.name, exam?.lessonIds.orEmpty(), showsFree = !isPro && !app.prefs.mockFreeUsed, onClose = { navigator.back() }, onBegin = ::begin)
+            "setup" -> Setup(
+                exam?.name,
+                lastLessons.ifEmpty { exam?.lessonIds.orEmpty() },
+                lastMinutes,
+                showsFree = !isPro && !app.prefs.mockFreeUsed,
+                onClose = { navigator.back() },
+                onBegin = ::begin,
+            )
             "writing" -> Writing()
-            "failed" -> Failed(failure, onRetry = { phase = "setup" }, onClose = { navigator.back() })
+            "failed" -> Failed(failure, onRetry = { begin(lastLessons, lastMinutes) }, onClose = { navigator.back() })
             "running" -> paper?.let { current ->
                 Running(current, answers, picked, onQuit = { navigator.back() }, onSubmit = { seconds ->
+                    // Une seule copie rendue, même si le chrono et le bouton tombent ensemble.
+                    if (phase != "running") return@Running
                     val graded = current.result(answers.toMap(), seconds)
                     app.exams.record(graded)
                     app.streak.record()
@@ -158,12 +175,12 @@ fun MockExamScreen(examId: String?) {
 }
 
 @Composable
-private fun Setup(examName: String?, examLessons: List<String>, showsFree: Boolean, onClose: () -> Unit, onBegin: (List<String>, Int) -> Unit) {
+private fun Setup(examName: String?, examLessons: List<String>, initialMinutes: Int, showsFree: Boolean, onClose: () -> Unit, onBegin: (List<String>, Int) -> Unit) {
     val app = LocalApp.current
     val colors = Micabo.colors
     val lessons by app.lessons.lessons.collectAsState()
     val ready = remember(lessons) { lessons.values.filter { it.readyThemes > 0 }.sortedByDescending { maxOf(it.openedAt, it.createdAt) } }
-    var minutes by remember { mutableIntStateOf(30) }
+    var minutes by remember { mutableIntStateOf(initialMinutes) }
     var chosen by remember {
         mutableStateOf(examLessons.filter { id -> ready.any { it.id == id } }.toSet().ifEmpty { ready.take(1).map { it.id }.toSet() })
     }
@@ -292,19 +309,33 @@ private fun Running(
 ) {
     val colors = Micabo.colors
     val total = paper.minutes * 60
+    // Le temps réel écoulé, pas des secondes comptées une à une : sans dérive, et l'arrière-plan compte.
+    val startedAt = remember(paper.id) { SystemClock.elapsedRealtime() }
     var left by remember { mutableIntStateOf(total) }
+    var submitted by remember { mutableStateOf(false) }
     var index by remember { mutableIntStateOf(0) }
     var round by remember { mutableIntStateOf(0) }
     var confirmQuit by remember { mutableStateOf(false) }
     var confirmSubmit by remember { mutableStateOf(false) }
     val tone = colors.tone(2)
 
-    LaunchedEffect(Unit) {
-        while (left > 0) {
-            delay(1_000)
-            left -= 1
+    fun submit() {
+        if (submitted) return
+        submitted = true
+        confirmSubmit = false
+        confirmQuit = false
+        onSubmit(((SystemClock.elapsedRealtime() - startedAt) / 1_000).toInt().coerceIn(0, total))
+    }
+
+    LaunchedEffect(paper.id) {
+        while (true) {
+            val elapsed = SystemClock.elapsedRealtime() - startedAt
+            left = (total - (elapsed / 1_000).toInt()).coerceAtLeast(0)
+            if (left == 0) break
+            delay(1_000 - elapsed % 1_000)
         }
-        onSubmit(total)
+        // À zéro, la copie se rend seule.
+        submit()
     }
     BackHandler { confirmQuit = true }
 
@@ -376,7 +407,7 @@ private fun Running(
                     MicaboButton(stringResource(if (index in answers) R.string.lesson_exam_next else R.string.lesson_exam_skip), onClick = { index += 1 })
                 } else {
                     MicaboButton(stringResource(R.string.lesson_exam_submit), color = colors.correct, onClick = {
-                        if (answers.size < paper.items.size) confirmSubmit = true else onSubmit(total - left)
+                        if (answers.size < paper.items.size) confirmSubmit = true else submit()
                     })
                 }
             }
@@ -399,7 +430,7 @@ private fun Running(
             containerColor = colors.surface,
             text = { Text(pluralStringResource(R.plurals.lesson_exam_submitConfirm, missing, missing), style = nunito(16.sp)) },
             confirmButton = {
-                TextButton(onClick = { confirmSubmit = false; onSubmit(total - left) }) {
+                TextButton(onClick = { submit() }) {
                     Text(stringResource(R.string.lesson_exam_submit), color = colors.accent, style = nunito(16.sp, FontWeight.ExtraBold))
                 }
             },
@@ -494,16 +525,15 @@ private fun Result(paper: Paper, result: MockResult, answers: Map<Int, Boolean>,
                         RichText(item.question.prompt, style = nunito(15.sp, FontWeight.ExtraBold, lineHeight = 20.sp))
                     }
                     Spacer(Modifier.height(6.dp))
-                    if (!right) {
-                        Text(
-                            when {
-                                index !in answers -> stringResource(R.string.lesson_exam_unanswered)
-                                mine != null -> stringResource(R.string.lesson_exam_yourAnswer, plainText(mine))
-                                else -> stringResource(R.string.lesson_exam_unanswered)
-                            },
-                            style = nunito(13.sp, FontWeight.SemiBold),
-                            color = colors.wrongInk,
-                        )
+                    // Un ordre ou une association ratés n'ont pas de choix à citer : seulement le corrigé.
+                    val line = when {
+                        right -> null
+                        index !in answers -> stringResource(R.string.lesson_exam_unanswered)
+                        mine != null -> stringResource(R.string.lesson_exam_yourAnswer, plainText(mine))
+                        else -> null
+                    }
+                    if (line != null) {
+                        Text(line, style = nunito(13.sp, FontWeight.SemiBold), color = colors.wrongInk)
                     }
                     Text(stringResource(R.string.lesson_exam_rightAnswer, plainText(item.question.answerText)), style = nunito(13.sp, FontWeight.SemiBold), color = colors.correctInk)
                     if (item.question.why.isNotBlank()) {

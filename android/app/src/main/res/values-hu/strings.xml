@@ -3,6 +3,7 @@
 <resources>
     <string name="app_exams_countdown_today">ma</string>
     <string name="common_continue">Tovább</string>
+    <string name="common_privacy">Adatvédelem</string>
     <string name="country_ca">Kanada</string>
     <string name="country_ch">Svájc</string>
     <string name="country_ci">Elefántcsontpart</string>
@@ -121,6 +122,7 @@
     <string name="ios_paywallReassurance">Két koppintás az indításhoz, tizenöt másodperc a lemondáshoz.</string>
     <string name="ios_paywallRestore">Visszaállítás</string>
     <string name="ios_paywallStartTrial">%1$s ingyenes nap indítása</string>
+    <string name="ios_paywallTerms">Felhasználási feltételek</string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, korlátok nélkül</string>
     <string name="ios_pdf_empty">Ebben a PDF-ben nincs se szöveg, se használható oldal.</string>
     <string name="ios_pdf_protected">Ez a PDF jelszóval védett.</string>

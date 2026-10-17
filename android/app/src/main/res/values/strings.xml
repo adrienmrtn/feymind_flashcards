@@ -4,6 +4,7 @@
     <string name="app_name" translatable="false">Micabo</string>
     <string name="app_exams_countdown_today">today</string>
     <string name="common_continue">Continue</string>
+    <string name="common_privacy">Privacy</string>
     <string name="country_be">Belgium</string>
     <string name="country_ca">Canada</string>
     <string name="country_ch">Switzerland</string>
@@ -136,6 +137,7 @@
     <string name="ios_paywallReassurance">Two taps to start, cancel in fifteen seconds.</string>
     <string name="ios_paywallRestore">Restore</string>
     <string name="ios_paywallStartTrial">Start my %1$s free days</string>
+    <string name="ios_paywallTerms">Terms of use</string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, no limits</string>
     <string name="ios_paywall_badge_free">%1$s days free</string>
     <string name="ios_pdf_empty">This PDF holds neither text nor a usable page.</string>

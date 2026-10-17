@@ -3,6 +3,7 @@
 <resources>
     <string name="app_exams_countdown_today">اليوم</string>
     <string name="common_continue">متابعة</string>
+    <string name="common_privacy">الخصوصية</string>
     <string name="country_be">بلجيكا</string>
     <string name="country_ca">كندا</string>
     <string name="country_ch">سويسرا</string>
@@ -121,6 +122,7 @@
     <string name="ios_paywallReassurance">نقرتان للبدء، والإلغاء في خمس عشرة ثانية.</string>
     <string name="ios_paywallRestore">استعادة</string>
     <string name="ios_paywallStartTrial">ابدأ أيامي المجانية (%1$s)</string>
+    <string name="ios_paywallTerms">شروط الاستخدام</string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro، بلا حدود</string>
     <string name="ios_pdf_empty">لا يحتوي ملف PDF هذا على نص ولا على صفحة قابلة للاستخدام.</string>
     <string name="ios_pdf_protected">ملف PDF هذا محمي بكلمة مرور.</string>

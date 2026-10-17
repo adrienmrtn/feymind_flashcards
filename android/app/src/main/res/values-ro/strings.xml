@@ -3,6 +3,7 @@
 <resources>
     <string name="app_exams_countdown_today">azi</string>
     <string name="common_continue">Continuă</string>
+    <string name="common_privacy">Confidențialitate</string>
     <string name="country_be">Belgia</string>
     <string name="country_ch">Elveția</string>
     <string name="country_ci">Coasta de Fildeș</string>
@@ -115,6 +116,7 @@
     <string name="ios_paywallReassurance">Două atingeri ca să începi, anulezi în cincisprezece secunde.</string>
     <string name="ios_paywallRestore">Restaurează</string>
     <string name="ios_paywallStartTrial">Încep cele %1$s zile gratuite</string>
+    <string name="ios_paywallTerms">Termeni de utilizare</string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, fără limite</string>
     <string name="ios_pdf_empty">PDF-ul ăsta nu conține nici text, nici o pagină utilizabilă.</string>
     <string name="ios_pdf_protected">PDF-ul ăsta e protejat cu parolă.</string>

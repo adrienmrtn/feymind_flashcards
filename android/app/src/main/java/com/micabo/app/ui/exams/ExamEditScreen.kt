@@ -28,6 +28,7 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -48,8 +49,10 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.micabo.app.MicaboApplication
 import com.micabo.app.R
 import com.micabo.app.data.Exam
+import com.micabo.app.data.startOfDay
 import com.micabo.app.ui.LocalApp
 import com.micabo.app.ui.LocalNavigator
 import com.micabo.app.ui.components.CloseButton
@@ -79,6 +82,19 @@ internal fun utcToLocalDay(utc: Long): Long {
     }.timeInMillis
 }
 
+/**
+ * Le jour que porte chaque leçon : le plus proche des examens à venir qui la couvrent
+ * (`DeckPace.deadline`), sinon aucun. Une leçon retirée d'un examen ne garde pas son jour.
+ */
+private fun syncExamDates(app: MicaboApplication, lessonIds: Collection<String>) {
+    val today = startOfDay(System.currentTimeMillis())
+    val exams = app.exams.exams.value
+    lessonIds.toSet().forEach { lessonId ->
+        val date = exams.filter { lessonId in it.lessonIds && it.date >= today }.minOfOrNull { it.date } ?: 0L
+        if (app.lessons.lesson(lessonId)?.examDate != date) app.lessons.modify(lessonId) { it.copy(examDate = date) }
+    }
+}
+
 /** **Un examen, à créer ou à modifier** : son nom, son jour, les leçons qu'il couvre. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,7 +109,15 @@ fun ExamEditScreen(id: String?) {
     var chosen by remember { mutableStateOf(existing?.lessonIds?.toSet() ?: emptySet()) }
     var confirmDelete by remember { mutableStateOf(false) }
     val initial = remember { existing?.date ?: (System.currentTimeMillis() + 14L * 86_400_000L) }
-    val state = rememberDatePickerState(initialSelectedDateMillis = localToUtcDay(initial))
+    // Comme sur iPhone, pas de jour passé ; sauf celui d'un examen déjà enregistré.
+    val selectable = remember {
+        val first = localToUtcDay(System.currentTimeMillis())
+        val kept = existing?.date?.let(::localToUtcDay)
+        object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean = utcTimeMillis >= first || utcTimeMillis == kept
+        }
+    }
+    val state = rememberDatePickerState(initialSelectedDateMillis = localToUtcDay(initial), selectableDates = selectable)
     val canSave = name.isNotBlank() && state.selectedDateMillis != null
 
     Column(Modifier.fillMaxSize().statusBarsPadding().imePadding()) {
@@ -183,10 +207,12 @@ fun ExamEditScreen(id: String?) {
                 enabled = canSave,
                 onClick = {
                     val date = state.selectedDateMillis?.let(::utcToLocalDay) ?: return@MicaboButton
-                    val exam = (existing ?: Exam(name = name.trim(), date = date)).copy(name = name.trim(), date = date, lessonIds = chosen.toList())
+                    // Une leçon supprimée entre-temps ne reste pas cochée.
+                    val covered = sorted.map { it.id }.filter { it in chosen }
+                    val exam = (existing ?: Exam(name = name.trim(), date = date)).copy(name = name.trim(), date = date, lessonIds = covered)
                     app.exams.save(exam)
                     // Les leçons couvertes portent l'examen : leurs thèmes et leurs badges le lisent.
-                    exam.lessonIds.forEach { lessonId -> app.lessons.modify(lessonId) { it.copy(examDate = date) } }
+                    syncExamDates(app, exam.lessonIds + existing?.lessonIds.orEmpty())
                     navigator.back()
                 },
             )
@@ -201,7 +227,7 @@ fun ExamEditScreen(id: String?) {
             confirmButton = {
                 TextButton(onClick = {
                     app.exams.delete(existing.id)
-                    existing.lessonIds.forEach { lessonId -> app.lessons.modify(lessonId) { if (it.examDate == existing.date) it.copy(examDate = 0) else it } }
+                    syncExamDates(app, existing.lessonIds)
                     confirmDelete = false
                     navigator.back()
                 }) { Text(stringResource(R.string.lesson_exam_delete), color = colors.wrong, style = nunito(16.sp, FontWeight.ExtraBold)) }

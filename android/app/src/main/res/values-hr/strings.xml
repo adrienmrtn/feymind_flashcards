@@ -3,6 +3,7 @@
 <resources>
     <string name="app_exams_countdown_today">danas</string>
     <string name="common_continue">Nastavi</string>
+    <string name="common_privacy">Privatnost</string>
     <string name="country_be">Belgija</string>
     <string name="country_ca">Kanada</string>
     <string name="country_ch">Švicarska</string>
@@ -119,6 +120,7 @@
     <string name="ios_paywallReassurance">Dva dodira za početak, otkazivanje za petnaest sekundi.</string>
     <string name="ios_paywallRestore">Vrati kupnje</string>
     <string name="ios_paywallStartTrial">Počni besplatno: %1$s dana</string>
+    <string name="ios_paywallTerms">Uvjeti korištenja</string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, bez ograničenja</string>
     <string name="ios_pdf_empty">Ovaj PDF nema ni teksta ni upotrebljive stranice.</string>
     <string name="ios_pdf_protected">Ovaj PDF je zaštićen lozinkom.</string>
