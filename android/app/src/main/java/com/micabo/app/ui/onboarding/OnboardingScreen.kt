@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -259,11 +260,17 @@ fun OnboardingScreen() {
                 dailyMinutes = daily.coerceAtLeast(0),
             )
         }
+        app.analytics.track("onboarding_finished", mapOf("tier" to tier, "worries" to worries.size, "daily" to daily))
         // Le parcours se termine sur le paywall de l'essai ; le refermer ouvre l'accueil.
         navigator.push(Screen.Paywall("onboarding"))
     }
 
     BackHandler(enabled = index > 0 && step != Step.BUILDING) { go(index - 1) }
+
+    LaunchedEffect(step) {
+        if (step == Step.HOOK && index == 0) app.analytics.track("onboarding_started")
+        app.analytics.track("onboarding_step", mapOf("step" to step.name.lowercase(), "index" to index))
+    }
 
     Column(Modifier.fillMaxSize().background(Micabo.colors.canvas).statusBarsPadding().navigationBarsPadding().imePadding()) {
         if (step.asks || (index > 0 && step != Step.BUILDING)) {

@@ -26,6 +26,16 @@ class MainActivity : ComponentActivity() {
         super.attachBaseContext(AppLocale.wrap(newBase, Prefs.storedLanguage(newBase)))
     }
 
+    override fun onStart() {
+        super.onStart()
+        (application as MicaboApplication).analytics.resumed()
+    }
+
+    override fun onStop() {
+        (application as MicaboApplication).analytics.backgrounded()
+        super.onStop()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)

@@ -127,9 +127,16 @@ fun MikaScreen(id: String) {
     fun send(text: String) {
         if (text.isBlank() || thinking) return
         when (app.mika.gate(isPro)) {
-            MikaGate.PAYWALL -> navigator.push(Screen.Paywall("pro_required"))
-            MikaGate.DAILY_CAP -> capped = true
+            MikaGate.PAYWALL -> {
+                app.analytics.track("mika_blocked", mapOf("reason" to "paywall"))
+                navigator.push(Screen.Paywall("pro_required"))
+            }
+            MikaGate.DAILY_CAP -> {
+                app.analytics.track("mika_blocked", mapOf("reason" to "cap"))
+                capped = true
+            }
             MikaGate.ALLOWED -> {
+                app.analytics.track("mika_asked", mapOf("turn" to chat.size / 2 + 1))
                 app.mika.ask(id, text)
                 draft = ""
                 answer()
@@ -170,7 +177,11 @@ fun MikaScreen(id: String) {
                 }
             }
             itemsIndexed(chat) { index, message ->
-                Message(message, toneInk = tone.ink, onAddCard = { haptics.success(); app.mika.addCard(id, index) })
+                Message(message, toneInk = tone.ink, onAddCard = {
+                    haptics.success()
+                    app.mika.addCard(id, index)
+                    app.analytics.track("mika_card_added")
+                })
             }
             if (thinking) {
                 item {

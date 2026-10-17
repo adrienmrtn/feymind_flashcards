@@ -247,6 +247,8 @@ private fun CardsRun(lesson: Lesson, cards: List<CardEntry>, onClose: () -> Unit
     var index by rememberSaveable { mutableIntStateOf(0) }
     var flipped by remember { mutableStateOf(false) }
     val finished = index >= cards.size
+    LaunchedEffect(Unit) { app.analytics.track("review_started", mapOf("cards" to cards.size, "lesson" to true)) }
+    LaunchedEffect(finished) { if (finished) app.analytics.track("review_finished", mapOf("cards" to cards.size, "lesson" to true)) }
 
     fun rate(rating: Rating) {
         if (finished) return

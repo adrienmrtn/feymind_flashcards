@@ -100,7 +100,9 @@ fun PaywallScreen(reason: String) {
     val noRestoreText = stringResource(R.string.ios_paywallNoRestore)
 
     LaunchedEffect(Unit) {
+        app.analytics.track("paywall_opened", mapOf("trigger" to reason.ifEmpty { "upgrade" }))
         plans = app.billing.plans()
+        app.analytics.track("paywall_plans_seen", mapOf("available" to !plans.isNullOrEmpty()))
     }
     LaunchedEffect(Unit) {
         delay(2500)
@@ -126,7 +128,10 @@ fun PaywallScreen(reason: String) {
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp), horizontalArrangement = Arrangement.End) {
             AnimatedVisibility(visible = showsClose, enter = fadeIn(tween(350))) {
-                CloseButton(onClick = { navigator.back() })
+                CloseButton(onClick = {
+                    app.analytics.track("paywall_dismissed", mapOf("trigger" to reason.ifEmpty { "upgrade" }))
+                    navigator.back()
+                })
             }
             if (!showsClose) Spacer(Modifier.size(44.dp))
         }
@@ -194,12 +199,20 @@ fun PaywallScreen(reason: String) {
                         val activity = context as? Activity ?: return@MicaboButton
                         busy = true
                         message = null
+                        app.analytics.track("paywall_purchase_started", mapOf("plan" to if (plan.yearly) "yearly" else "weekly"))
                         scope.launch {
-                            when (val outcome = app.billing.purchase(activity, plan)) {
-                                PurchaseOutcome.Success -> { haptics.success(); navigator.back() }
-                                PurchaseOutcome.Cancelled -> Unit
+                            when (app.billing.purchase(activity, plan)) {
+                                PurchaseOutcome.Success -> {
+                                    app.analytics.track("paywall_purchased", mapOf("plan" to if (plan.yearly) "yearly" else "weekly", "trial" to plan.trialDays))
+                                    haptics.success()
+                                    navigator.back()
+                                }
+                                PurchaseOutcome.Cancelled -> app.analytics.track("paywall_purchase_cancelled")
                                 PurchaseOutcome.Unavailable -> message = failText
-                                is PurchaseOutcome.Failed -> message = failText.takeIf { outcome.message.isBlank() } ?: failText
+                                is PurchaseOutcome.Failed -> {
+                                    app.analytics.track("paywall_purchase_failed")
+                                    message = failText
+                                }
                             }
                             busy = false
                         }
@@ -223,6 +236,7 @@ fun PaywallScreen(reason: String) {
                     scope.launch {
                         busy = true
                         val restored = app.billing.restore()
+                        if (restored) app.analytics.track("paywall_restored")
                         busy = false
                         if (!restored) message = noRestoreText
                     }

@@ -19,6 +19,7 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.micabo.app.R
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
+import com.tom_roush.pdfbox.io.MemoryUsageSetting
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.encryption.InvalidPasswordException
 import com.tom_roush.pdfbox.text.PDFTextStripper
@@ -205,8 +206,10 @@ object PdfImport {
     private fun embeddedText(context: Context, uri: Uri): String = try {
         PDFBoxResourceLoader.init(context.applicationContext)
         context.contentResolver.openInputStream(uri)?.use { stream ->
-            PDDocument.load(stream).use { document ->
-                normalize(PDFTextStripper().apply { sortByPosition = true }.getText(document))
+            // Un gros PDF passe par un fichier temporaire plutôt que par la mémoire, et seules les
+            // deux cents premières pages sont lues : le serveur n'en lit pas plus de 60 000 signes.
+            PDDocument.load(stream, MemoryUsageSetting.setupMixed(24L * 1024 * 1024)).use { document ->
+                normalize(PDFTextStripper().apply { sortByPosition = true; endPage = 200 }.getText(document))
             }
         }.orEmpty()
     } catch (error: InvalidPasswordException) {

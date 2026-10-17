@@ -36,7 +36,11 @@ data class Support(
  * sa pastille, pas trente secondes plus tard. Il vit dans l'app, pas dans l'écran : ouvrir le
  * paywall ou une leçon ne fait rien perdre.
  */
-class LessonComposer(private val context: Context, private val youtube: YouTubeImport) {
+class LessonComposer(
+    private val context: Context,
+    private val youtube: YouTubeImport,
+    private val track: (String, Map<String, Any?>) -> Unit = { _, _ -> },
+) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     var draft by mutableStateOf("")
@@ -86,6 +90,11 @@ class LessonComposer(private val context: Context, private val youtube: YouTubeI
             val index = supports.indexOfFirst { it.id == id }
             if (index < 0) return@launch
             val document = outcome.getOrNull()
+            if (document != null && document.isUsable) {
+                track("import_document_read", mapOf("kind" to document.source, "chars" to document.text.length, "pages" to document.images.size))
+            } else {
+                track("import_document_failed", mapOf("kind" to kind.name.lowercase()))
+            }
             supports[index] = when {
                 document != null && document.isUsable -> supports[index].copy(title = document.name, document = document)
                 else -> supports[index].copy(failure = (outcome.exceptionOrNull() as? ImportException)?.messageRes ?: R.string.lesson_import_unreadable)

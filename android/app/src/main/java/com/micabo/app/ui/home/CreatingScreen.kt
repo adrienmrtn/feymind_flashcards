@@ -111,6 +111,8 @@ fun CreatingScreen(request: LessonRequest) {
         LaunchedEffect(attempt) {
             error = null
             stage = CreationStage.READING
+            val properties = mapOf("source" to request.source, "chars" to request.text.length, "images" to request.images.size, "exam" to (examDate != null), "lesson" to true)
+            app.analytics.track("course_generation_started", properties)
             try {
                 // Le même identifiant d'un essai à l'autre : le serveur a réservé la leçon sous lui.
                 val id = app.lessons.create(request.copy(examDate = examDate)) { stage = it }
@@ -119,12 +121,14 @@ fun CreatingScreen(request: LessonRequest) {
                     app.exams.save(Exam(name = app.lessons.lesson(id)?.title.orEmpty(), date = date, lessonIds = listOf(id)))
                 }
                 haptics.success()
+                app.analytics.track("course_imported", properties)
                 app.composer.reset()
                 navigator.replace(Screen.LessonPath(id))
             } catch (cancel: CancellationException) {
                 throw cancel
             } catch (failure: Throwable) {
                 haptics.error()
+                app.analytics.track("course_generation_failed", properties + ("code" to ((failure as? ApiException)?.code ?: failure.javaClass.simpleName)))
                 if (failure is ApiException && failure.opensPaywall) {
                     navigator.replace(Screen.Paywall(failure.code))
                 } else {

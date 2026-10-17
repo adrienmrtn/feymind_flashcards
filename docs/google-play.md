@@ -1,8 +1,24 @@
 # Google Play : la chaîne d'envoi
 
-L'app Android vit dans `android/`. Pour l'instant c'est une **coquille** : l'écran d'accueil
-Micabo (logo, nom, une phrase, clair ou sombre comme l'iPhone), l'icône et la fiche Play. Elle
-sert à ouvrir la fiche et la piste de test interne ; la vraie app viendra ensuite.
+L'app Android vit dans `android/` : Kotlin et Jetpack Compose, une seule activité. Elle fait
+ce que fait l'iPhone, sur le même backend Supabase (compte invité, `generate-lesson`,
+`mika-chat`, `youtube-transcript`) :
+
+- le parcours d'accueil (prénom, langue, pays, marche d'études, inquiétudes, buts, moyenne,
+  objectif, temps par jour, Mika, avis), l'essai gratuit et son rappel, puis le paywall ;
+- l'accueil : un sujet tapé, ou jusqu'à cinq supports lus sur le téléphone — PDF (PDFBox,
+  OCR ML Kit pour un scan), Word, photos ou scanner de documents ML Kit, YouTube, texte
+  collé — et « As-tu un examen ? » ;
+- la leçon en chemin : intro, notes en écrans courts, quiz de palier et final, entraînement
+  et nouvelles questions, flashcards à répétition espacée (SM-2), Mika sur la leçon ;
+- les onglets Leçons (recherche, renommer, supprimer), Examens (compte à rebours, examen
+  blanc chronométré noté au barème du pays) et Profil (série de jours, réglages, apparence) ;
+- les achats par RevenueCat et Google Play Billing (entitlement `pro`) ;
+- les événements dans `app_events` (`platform = 'android'`) ;
+- 26 langues, tirées des catalogues de l'iPhone par `android/tools/generate_strings.py`.
+
+Pas encore sur Android : l'import audio (transcription sur le téléphone), la connexion à un
+compte (Google) et la synchronisation des leçons entre appareils, les amis.
 
 - Identifiant de l'app : `com.micabo.app` (définitif après le premier envoi).
 - Version : `versionName` 1.9, `versionCode` = numéro du run GitHub Actions.
