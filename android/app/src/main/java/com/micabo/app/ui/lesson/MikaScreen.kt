@@ -160,7 +160,8 @@ fun MikaScreen(id: String) {
                 Text(plainText(lesson.title), style = nunito(13.sp, FontWeight.SemiBold), color = colors.inkSecondary, maxLines = 1)
             }
             if (chat.isNotEmpty()) {
-                TextButton(onClick = { app.mika.reset(id); failure = null; capped = false }) {
+                // Pas de nouvelle conversation pendant que Mika répond : sa réponse arriverait dans la suivante.
+                TextButton(onClick = { app.mika.reset(id); failure = null; capped = false }, enabled = !thinking) {
                     Text(stringResource(R.string.lesson_mika_new), style = nunito(14.sp, FontWeight.ExtraBold), color = colors.accent)
                 }
             }

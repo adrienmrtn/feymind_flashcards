@@ -101,7 +101,7 @@ fun QuestionCard(
         when (question.kind) {
             "gap" -> {
                 GapSentence(question, tone, answered)
-                ChoiceList(question, tone, answered, compact = true, onAnswer = answer)
+                ChoiceList(question, tone, seed, answered, compact = true, onAnswer = answer)
             }
             "truefalse" -> {
                 Prompt(question.prompt)
@@ -117,7 +117,7 @@ fun QuestionCard(
             }
             else -> {
                 Prompt(question.prompt)
-                ChoiceList(question, tone, answered, compact = false, onAnswer = answer)
+                ChoiceList(question, tone, seed, answered, compact = false, onAnswer = answer)
             }
         }
         AnimatedVisibility(visible = reveal && answered != null, enter = fadeIn(tween(250)) + slideInVertically { it / 3 }) {
@@ -182,7 +182,10 @@ private fun rememberShake(trigger: Boolean): Float {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ChoiceList(question: Question, tone: Tone, answered: QuizAnswer?, compact: Boolean, onAnswer: (QuizAnswer) -> Unit) {
+private fun ChoiceList(question: Question, tone: Tone, seed: Long, answered: QuizAnswer?, compact: Boolean, onAnswer: (QuizAnswer) -> Unit) {
+    // Les propositions se mélangent à l'affichage (`ChoiceList.order`) : une question qui revient
+    // ne montre pas sa réponse au même rang. `picked` reste le rang dans `choices`.
+    val order = remember(question, seed) { question.choices.indices.shuffled(Random(seed xor question.prompt.hashCode().toLong())) }
     val items: @Composable (Int) -> Unit = { index ->
         ChoiceButton(
             text = question.choices[index],
@@ -199,11 +202,11 @@ private fun ChoiceList(question: Question, tone: Tone, answered: QuizAnswer?, co
     }
     if (compact) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            question.choices.indices.forEach { items(it) }
+            order.forEach { items(it) }
         }
     } else {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            question.choices.indices.forEach { items(it) }
+            order.forEach { items(it) }
         }
     }
 }
@@ -346,7 +349,8 @@ private fun OrderBuilder(question: Question, tone: Tone, seed: Long, answered: Q
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             placed.forEachIndexed { position, item ->
-                val verdict = answered?.let { item == position }
+                // Deux étapes au même libellé se valent : on compare les textes, pas les rangs.
+                val verdict = answered?.let { question.choices[item] == question.choices[position] }
                 Pressable(onClick = { if (answered == null) placed.remove(item) }, enabled = answered == null) {
                     Row(
                         Modifier
@@ -401,7 +405,7 @@ private fun OrderBuilder(question: Question, tone: Tone, seed: Long, answered: Q
                 stringResource(R.string.lesson_question_check),
                 enabled = placed.size == question.choices.size,
                 color = tone.vivid,
-                onClick = { onAnswer(QuizAnswer(placed.toList() == question.choices.indices.toList())) },
+                onClick = { onAnswer(QuizAnswer(placed.map { question.choices[it] } == question.choices)) },
             )
         }
     }
@@ -427,6 +431,8 @@ private fun MatchBoard(question: Question, tone: Tone, seed: Long, answered: Qui
         order
     }
     val pairs = remember(question) { mutableStateMapOf<Int, Int>() }
+    /** Une définition juste pour ce terme : la sienne, ou une autre au même libellé. */
+    fun matched(left: Int, right: Int): Boolean = question.matches.getOrNull(left) == question.matches.getOrNull(right)
     var selected by remember(question) { mutableStateOf<Int?>(null) }
     val palette = colors.toneVivid
     var submitted by remember(question) { mutableStateOf(false) }
@@ -436,11 +442,13 @@ private fun MatchBoard(question: Question, tone: Tone, seed: Long, answered: Qui
             question.choices.indices.forEach { pairs[it] = it }
         }
     }
+    // Une paire défaite pendant la courte pause annule l'envoi (l'effet repart) : marquer
+    // l'envoi avant la pause bloquerait la question pour de bon.
     LaunchedEffect(pairs.size) {
         if (!submitted && answered == null && pairs.size == question.choices.size && question.choices.isNotEmpty()) {
-            submitted = true
             delay(250)
-            onAnswer(QuizAnswer(pairs.all { it.key == it.value }))
+            submitted = true
+            onAnswer(QuizAnswer(pairs.all { matched(it.key, it.value) }))
         }
     }
 
@@ -476,7 +484,7 @@ private fun MatchBoard(question: Question, tone: Tone, seed: Long, answered: Qui
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             question.choices.indices.forEach { left ->
                 val color = if (pairs.containsKey(left) || selected == left) palette[left % palette.size] else null
-                val verdict = if (answered != null) pairs[left]?.let { it == left } else null
+                val verdict = if (answered != null) pairs[left]?.let { matched(left, it) } else null
                 Tile(question.choices[left], color, selected == left, verdict, Modifier.fillMaxWidth()) {
                     haptics.selection()
                     pairs.remove(left)
@@ -488,7 +496,7 @@ private fun MatchBoard(question: Question, tone: Tone, seed: Long, answered: Qui
             rightOrder.forEach { right ->
                 val owner = pairs.entries.firstOrNull { it.value == right }?.key
                 val color = owner?.let { palette[it % palette.size] }
-                val verdict = if (answered != null) owner?.let { it == right } else null
+                val verdict = if (answered != null) owner?.let { matched(it, right) } else null
                 Tile(question.matches[right], color, false, verdict, Modifier.fillMaxWidth()) {
                     val left = selected ?: return@Tile
                     haptics.selection()

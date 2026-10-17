@@ -92,6 +92,12 @@ private val Mastery.titleRes: Int
         Mastery.MASTERED -> R.string.lesson_cards_mastery_mastered
     }
 
+/**
+ * Un texte à trou qui a bien son trou (`Flashcard.format`) ; sans lui, la carte se lit en recto
+ * verso, sinon son verso ne s'afficherait jamais.
+ */
+private val Flashcard.isCloze: Boolean get() = kind == "cloze" && GAP in front
+
 @Composable
 private fun Mastery.color(tone: Tone): Color = when (this) {
     Mastery.NEW -> Micabo.colors.accent
@@ -215,7 +221,7 @@ private fun CardsHub(lesson: Lesson, onClose: () -> Unit, onStart: (List<CardEnt
                 ) {
                     Column(Modifier.weight(1f)) {
                         Text(
-                            plainText(if (entry.card.kind == "cloze") entry.card.front.replace(GAP, "____") else entry.card.front),
+                            plainText(if (entry.card.isCloze) entry.card.front.replace(GAP, "____") else entry.card.front),
                             style = nunito(17.sp, FontWeight.ExtraBold, lineHeight = 22.sp),
                             color = tone.ink,
                             maxLines = 2,
@@ -364,9 +370,9 @@ private fun CardView(card: Flashcard, tone: Tone, flipped: Boolean, onFlip: () -
                     Eyebrow(stringResource(if (back) R.string.lesson_cards_answer else R.string.lesson_cards_question), tone.ink)
                     Spacer(Modifier.height(16.dp))
                     val text = if (back) {
-                        if (card.kind == "cloze") card.front.replace(GAP, "**${card.back}**") else card.back
+                        if (card.isCloze) card.front.replace(GAP, "**${card.back}**") else card.back
                     } else {
-                        if (card.kind == "cloze") card.front.replace(GAP, "_____") else card.front
+                        if (card.isCloze) card.front.replace(GAP, "_____") else card.front
                     }
                     RichText(
                         text,

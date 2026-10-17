@@ -286,7 +286,10 @@ fun Lesson.pathGroups(): List<Group> {
     val count = themes.size
     if (count == 0) return emptyList()
     val fromPlan = groups.filter { it.themes.isNotEmpty() && it.themes.all { index -> index in 0 until count } }
-    if (fromPlan.isNotEmpty() && fromPlan.flatMap { it.themes }.toSet().size == count) return fromPlan
+    // Les paliers du plan valent s'ils couvrent chaque thème une fois et une seule : deux paliers
+    // qui partagent un thème doubleraient son cercle.
+    val planned = fromPlan.flatMap { it.themes }
+    if (fromPlan.isNotEmpty() && planned.size == count && planned.toSet().size == count) return fromPlan
     if (singleQuiz) return listOf(Group("", (0 until count).toList()))
     val size = if (count > 8) 3 else 2
     val sizes = MutableList(count / size) { size }

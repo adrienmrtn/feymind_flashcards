@@ -78,27 +78,51 @@ import com.micabo.app.ui.theme.tone
 import kotlin.random.Random
 
 /**
- * Les questions d'un quiz : les questions de réserve des thèmes du palier (la première de
- * chaque thème est sa question de fin, déjà posée), mélangées, puis les questions de fin si
- * la réserve ne suffit pas.
+ * **Les questions d'un quiz** (`LessonPicking`). Un palier pose cinq questions sur ses thèmes
+ * et deux sur les paliers d'avant ; le quiz final, deux par thème (de huit à douze) ; le quiz
+ * complet, dix. On tire en alternant les thèmes (ceux où l'élève s'est trompé passent en
+ * tête), les questions de réserve d'abord : la première de chaque thème est sa question de
+ * fin, déjà posée. Un quiz de cercle va du plus simple au plus exigeant.
  */
 fun quizQuestions(lesson: Lesson, circle: String, seed: Long): List<Pair<Int, Question>> {
-    val target = lesson.pathCircles().firstOrNull { it.id == circle }
-    val themes = when (target) {
-        is PathCircle.QuizCircle -> target.themes
-        is PathCircle.FinalCircle -> target.themes
-        else -> lesson.themes.indices.toList()
-    }
-    val count = when (target) {
-        is PathCircle.QuizCircle -> (themes.size * 3).coerceIn(4, 8)
-        is PathCircle.FinalCircle -> 10
-        else -> 15
-    }
     val random = Random(seed)
-    val pool = themes.mapNotNull { index -> lesson.themes.getOrNull(index)?.let { index to it } }
-    val reserve = pool.flatMap { (index, theme) -> theme.questions.drop(1).map { index to it } }.filter { it.second.isValid }.shuffled(random)
-    val finals = pool.mapNotNull { (index, theme) -> theme.questions.firstOrNull()?.let { index to it } }.filter { it.second.isValid }.shuffled(random)
-    return (reserve + finals).distinctBy { it.second.prompt }.take(count)
+    fun pick(themes: List<Int>, count: Int, used: Set<String>): List<Pair<Int, Question>> {
+        val pools = themes.sortedBy { if (it in lesson.progress.missed) 0 else 1 }
+            .map { index -> lesson.themes.getOrNull(index)?.questions.orEmpty().map { index to it } }
+        val picked = mutableListOf<Pair<Int, Question>>()
+        val seen = used.toMutableSet()
+        fun roundRobin(lists: List<List<Pair<Int, Question>>>) {
+            val queues = lists.map { list -> list.filter { it.second.isValid }.shuffled(random).toMutableList() }
+            var progressed = true
+            while (picked.size < count && progressed) {
+                progressed = false
+                for (queue in queues) {
+                    if (picked.size >= count) break
+                    while (queue.isNotEmpty()) {
+                        val next = queue.removeAt(0)
+                        if (seen.add(next.second.prompt)) {
+                            picked.add(next)
+                            progressed = true
+                            break
+                        }
+                    }
+                }
+            }
+        }
+        roundRobin(pools.map { it.drop(1) })
+        roundRobin(pools.map { it.take(1) })
+        return picked
+    }
+    return when (val target = lesson.pathCircles().firstOrNull { it.id == circle }) {
+        is PathCircle.QuizCircle -> {
+            val current = pick(target.themes, 5, emptySet())
+            val earlier = (0 until (target.themes.minOrNull() ?: 0)).toList()
+            val review = pick(earlier, 2, current.map { it.second.prompt }.toSet())
+            (current + review).sortedBy { it.second.difficulty }
+        }
+        is PathCircle.FinalCircle -> pick(target.themes, (target.themes.size * 2).coerceIn(8, 12), emptySet()).sortedBy { it.second.difficulty }
+        else -> pick(lesson.themes.indices.toList(), 10, emptySet())
+    }
 }
 
 /** **Un quiz** : celui d'un palier, le quiz final, ou tout le quiz de la leçon. */
@@ -120,7 +144,12 @@ fun QuizScreen(id: String, circle: String) {
     // Un lot de nouvelles questions remplace la série en cours (`LessonPracticeView`).
     var fresh by remember { mutableStateOf<List<Pair<Int, Question>>?>(null) }
     var round by rememberSaveable { mutableIntStateOf(0) }
-    val drawn = remember(id, circle, available) { quizQuestions(lesson, circle, seed) }
+    // Tirée une fois : un thème qui arrive en cours de route ne rebat pas la série (l'élève
+    // perdrait sa question, et le score tomberait trop tôt). Seule une série vide se retire.
+    var drawn by remember(id, circle) { mutableStateOf(quizQuestions(lesson, circle, seed)) }
+    LaunchedEffect(available) {
+        if (drawn.isEmpty()) drawn = quizQuestions(lesson, circle, seed)
+    }
     val questions = fresh ?: drawn
     var index by rememberSaveable { mutableIntStateOf(0) }
     var right by rememberSaveable { mutableIntStateOf(0) }
@@ -143,8 +172,28 @@ fun QuizScreen(id: String, circle: String) {
                 )
             }
         }
-        if (questions.isEmpty()) {
+        if (questions.isEmpty() && lesson.isWriting) {
             Waiting(stringResource(R.string.lesson_quiz_empty), Modifier.fillMaxSize())
+        } else if (questions.isEmpty()) {
+            // Des thèmes prêts sans une question valable : le quiz se passe d'un appui plutôt que
+            // de bloquer le chemin (`LessonQuizView.empty`).
+            Column(
+                Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = 20.dp, vertical = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Spacer(Modifier.weight(1f))
+                Mika(MikaMood.THINK, 150.dp)
+                Spacer(Modifier.height(16.dp))
+                Text(stringResource(R.string.lesson_quiz_empty), style = nunito(20.sp, FontWeight.ExtraBold, lineHeight = 26.sp), color = colors.ink, textAlign = TextAlign.Center)
+                Spacer(Modifier.weight(1f))
+                MicaboButton(
+                    stringResource(if (circle.isEmpty()) R.string.lesson_quiz_finish else R.string.lesson_circle_next),
+                    onClick = {
+                        if (circle.isNotEmpty()) app.lessons.complete(id, circle)
+                        navigator.back()
+                    },
+                )
+            }
         } else if (index >= questions.size) {
             Results(lesson, circle, right, questions.size, onFresh = { batch ->
                 fresh = batch

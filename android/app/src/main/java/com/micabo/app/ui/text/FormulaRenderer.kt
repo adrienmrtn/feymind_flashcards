@@ -33,6 +33,7 @@ object FormulaRenderer {
         text = replacingFractions(text)
         text = replacingRoots(text)
         text = replacingCommands(text)
+        text = strippingStyles(text)
         text = replacingScripts(text, '^', SUPERSCRIPTS)
         text = replacingScripts(text, '_', SUBSCRIPTS)
         text = strippingMarkup(text)
@@ -64,8 +65,12 @@ object FormulaRenderer {
         var index = 0
         while (index < source.length) {
             if (source.startsWith("\\sqrt", index)) {
-                val group = braceGroup(source, index + 5)
+                // `\sqrt[3]{x}` devient ³√x : l'indice de la racine passe en exposant devant.
+                val close = if (source.getOrNull(index + 5) == '[') source.indexOf(']', index + 5) else -1
+                val degree = if (close > 0) source.substring(index + 6, close) else ""
+                val group = braceGroup(source, if (close > 0) close + 1 else index + 5)
                 if (group != null) {
+                    if (degree.isNotBlank()) out.append(converted(degree.trim(), SUPERSCRIPTS) ?: "(${degree.trim()})")
                     out.append('√').append(wrapped(plain(group.first)))
                     index = group.second
                     continue
@@ -134,11 +139,30 @@ object FormulaRenderer {
     }
 
     private fun converted(content: String, map: Map<Char, Char>): String? {
-        if (content.isEmpty()) return null
         val out = StringBuilder()
-        for (character in content) out.append(map[character] ?: return null)
-        return out.toString()
+        // Les accolades d'un `\text{max}` déjà retiré ne comptent pas : v_{\text{max}} donne vₘₐₓ.
+        for (character in content) {
+            if (character == '{' || character == '}') continue
+            out.append(map[character] ?: return null)
+        }
+        return out.toString().ifEmpty { null }
     }
+
+    /**
+     * Les commandes de style (`\text`, `\mathrm`, `\vec`…) disparaissent avant les exposants et
+     * les indices : leur contenu s'y transpose alors comme le reste. Les commandes à symbole
+     * (`\leftarrow`…) ont déjà été remplacées.
+     */
+    private fun strippingStyles(source: String): String {
+        var text = source
+        for (style in STYLES) text = text.replace(style, "")
+        return text
+    }
+
+    private val STYLES = listOf(
+        "\\operatorname", "\\displaystyle", "\\overrightarrow", "\\overline", "\\mathrm", "\\mathbf",
+        "\\mathit", "\\text", "\\vec", "\\hat", "\\bar",
+    )
 
     private fun strippingMarkup(source: String): String {
         var text = source

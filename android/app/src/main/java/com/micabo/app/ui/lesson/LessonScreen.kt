@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -61,6 +62,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -172,18 +175,32 @@ private fun LessonPath(lesson: Lesson) {
     val colors = Micabo.colors
     val haptics = rememberHaptics()
     val tone = colors.tone(lesson.tone)
-    val circles = remember(lesson) { lesson.pathCircles() }
+    // Un plan dont deux paliers partagent un thème donnerait deux fois le même cercle (et la
+    // même clé, qui fait planter la liste) : chaque cercle ne compte qu'une fois.
+    val circles = remember(lesson) { lesson.pathCircles().distinctBy { it.id } }
     val groups = remember(lesson) { lesson.pathGroups() }
+    val rows = remember(circles, groups) { pathRows(circles, groups) }
     val current = circles.firstOrNull { it.id !in lesson.progress.done }
     val done = circles.count { it.id in lesson.progress.done }
     var banner by remember { mutableStateOf<String?>(null) }
     var menu by remember { mutableStateOf(false) }
     var confirm by remember { mutableStateOf<String?>(null) }
     val listState = rememberLazyListState()
+    var placedOnCurrent by remember { mutableStateOf(false) }
 
     val writingText = stringResource(R.string.lesson_path_writing)
     val finishFirstTemplate = stringResource(R.string.lesson_path_finishFirst, "%s")
     val currentTitle = current?.let { circleTitle(lesson, it) }.orEmpty()
+
+    // Le chemin se cale sur l'étape en cours : d'un coup à l'ouverture, en glissant ensuite.
+    val leading = if (lesson.shortened) 2 else 1
+    LaunchedEffect(current?.id) {
+        val row = rows.indexOfFirst { it is PathRow.Node && it.circle.id == current?.id }
+        if (row > 1) {
+            if (placedOnCurrent) listState.animateScrollToItem(leading + row - 1) else listState.scrollToItem(leading + row - 1)
+        }
+        placedOnCurrent = true
+    }
 
     LaunchedEffect(banner) {
         if (banner != null) {
@@ -199,19 +216,20 @@ private fun LessonPath(lesson: Lesson) {
             else -> 2
         }
         val blocked = circleBlocked(lesson, circle)
+        // Comme sur iPhone, une étape à venir dit d'abord de finir l'étape en cours ; seul un
+        // échec se relance d'ici, le titre « Réessayer » n'étant pas un bouton à part.
         when {
-            blocked == ThemeStatus.FAILED && circle is PathCircle.NotesCircle -> {
+            blocked == ThemeStatus.FAILED -> {
                 haptics.tap()
                 app.lessons.resume(lesson.id, retryFailed = true)
-            }
-            blocked == ThemeStatus.FAILED -> app.lessons.resume(lesson.id, retryFailed = true)
-            blocked == ThemeStatus.PENDING -> {
-                haptics.error()
-                banner = writingText
             }
             state == 2 -> {
                 haptics.error()
                 banner = finishFirstTemplate.replace("%s", currentTitle)
+            }
+            blocked == ThemeStatus.PENDING -> {
+                haptics.error()
+                banner = writingText
             }
             else -> openCircle(navigator, lesson, circle)
         }
@@ -241,32 +259,10 @@ private fun LessonPath(lesson: Lesson) {
                     )
                 }
             }
-            var index = 0
-            item(key = "intro") {
-                val circle = circles.first()
-                CircleNode(lesson, circle, 0, tone, state(lesson, circle, current), onTap = { tap(circle, it) })
-            }
-            index = 1
-            groups.forEachIndexed { groupIndex, group ->
-                item(key = "group:$groupIndex") {
-                    GroupHeader(groupIndex + 1, group.name, tone)
-                }
-                val inGroup = circles.filter { circle ->
-                    (circle is PathCircle.NotesCircle && circle.theme in group.themes) ||
-                        (circle is PathCircle.QuizCircle && circle.group == groupIndex)
-                }
-                inGroup.forEach { circle ->
-                    val position = index
-                    item(key = circle.id) {
-                        CircleNode(lesson, circle, position, tone, state(lesson, circle, current), onTap = { tap(circle, it) })
-                    }
-                    index += 1
-                }
-            }
-            circles.lastOrNull()?.takeIf { it is PathCircle.FinalCircle }?.let { final ->
-                val position = index
-                item(key = "final") {
-                    CircleNode(lesson, final, position, tone, state(lesson, final, current), onTap = { tap(final, it) })
+            items(rows, key = { it.key }) { row ->
+                when (row) {
+                    is PathRow.Header -> GroupHeader(row.group + 1, row.name, tone)
+                    is PathRow.Node -> CircleNode(lesson, row.circle, row.position, tone, state(lesson, row.circle, current), onTap = { tap(row.circle, it) })
                 }
             }
         }
@@ -390,6 +386,37 @@ private fun LessonPath(lesson: Lesson) {
 
 private enum class NodeState { DONE, CURRENT, UPCOMING }
 
+/** Une ligne du chemin : l'en-tête d'un palier, ou un cercle à sa place sur la sinusoïde. */
+private sealed interface PathRow {
+    val key: String
+
+    data class Header(val group: Int, val name: String) : PathRow {
+        override val key = "group:$group"
+    }
+
+    data class Node(val circle: PathCircle, val position: Int) : PathRow {
+        override val key = circle.id
+    }
+}
+
+/** L'intro, puis chaque palier (ses thèmes et son quiz), puis le quiz final. */
+private fun pathRows(circles: List<PathCircle>, groups: List<com.micabo.app.data.Group>): List<PathRow> = buildList {
+    val placed = mutableSetOf<String>()
+    var position = 0
+    fun node(circle: PathCircle) {
+        if (placed.add(circle.id)) add(PathRow.Node(circle, position++))
+    }
+    circles.firstOrNull()?.let(::node)
+    groups.forEachIndexed { groupIndex, group ->
+        add(PathRow.Header(groupIndex, group.name))
+        circles.filter { circle ->
+            (circle is PathCircle.NotesCircle && circle.theme in group.themes) ||
+                (circle is PathCircle.QuizCircle && circle.group == groupIndex)
+        }.forEach(::node)
+    }
+    circles.lastOrNull()?.takeIf { it is PathCircle.FinalCircle }?.let(::node)
+}
+
 private fun state(lesson: Lesson, circle: PathCircle, current: PathCircle?): NodeState = when {
     circle.id in lesson.progress.done -> NodeState.DONE
     circle == current -> NodeState.CURRENT
@@ -490,8 +517,20 @@ private fun CircleNode(lesson: Lesson, circle: PathCircle, position: Int, tone: 
     val offset = (sin(position * 0.9) * 70).dp
     val milestone = circle is PathCircle.QuizCircle || circle is PathCircle.FinalCircle
     val size = if (milestone) 88.dp else 78.dp
-    val pulse = rememberInfiniteTransition(label = "pulse")
-    val scale by pulse.animateFloat(1f, if (state == NodeState.CURRENT) 1.06f else 1f, infiniteRepeatable(tween(900, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "scale")
+    // Seule l'étape en cours respire : une animation sans fin par cercle redessinerait tout le chemin.
+    val scale = if (state == NodeState.CURRENT) {
+        val pulse = rememberInfiniteTransition(label = "pulse")
+        pulse.animateFloat(1f, 1.06f, infiniteRepeatable(tween(900, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "scale").value
+    } else {
+        1f
+    }
+    val stateLabel = stringResource(
+        when (state) {
+            NodeState.DONE -> R.string.lesson_path_a11y_done
+            NodeState.CURRENT -> R.string.lesson_path_a11y_current
+            NodeState.UPCOMING -> R.string.lesson_path_a11y_locked
+        },
+    )
     val ring = when (state) {
         NodeState.DONE -> colors.correct
         NodeState.CURRENT -> tone.vivid
@@ -514,7 +553,10 @@ private fun CircleNode(lesson: Lesson, circle: PathCircle, position: Int, tone: 
                     .padding(horizontal = 12.dp, vertical = 6.dp),
             )
         }
-        Pressable(onClick = { onTap(title) }, modifier = Modifier.scale(scale)) {
+        Pressable(
+            onClick = { onTap(title) },
+            modifier = Modifier.scale(scale).semantics(mergeDescendants = true) { contentDescription = "$title, $stateLabel" },
+        ) {
             Box(contentAlignment = Alignment.Center) {
                 Box(
                     Modifier

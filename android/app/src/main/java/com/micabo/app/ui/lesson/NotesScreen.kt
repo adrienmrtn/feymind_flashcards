@@ -15,6 +15,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.runtime.remember
 import com.micabo.app.data.NoteBlock
 import com.micabo.app.data.Theme
@@ -77,13 +79,32 @@ import com.micabo.app.ui.theme.Micabo
 import com.micabo.app.ui.theme.nunito
 import com.micabo.app.ui.theme.tone
 
-/** Garde le temps passé sur un écran de leçon (« X h de révision »). */
+/**
+ * Garde le temps passé sur un écran de leçon (« X h de révision »). Comme `LessonClock` sur
+ * iPhone, l'horloge s'arrête quand l'app passe en arrière-plan : un écran laissé ouvert la nuit
+ * ne compte pas des heures de révision.
+ */
 @Composable
 fun TrackTime(lessonId: String) {
     val app = LocalApp.current
-    DisposableEffect(lessonId) {
-        val start = System.currentTimeMillis()
-        onDispose { app.lessons.addTime(lessonId, (System.currentTimeMillis() - start) / 1000) }
+    @Suppress("DEPRECATION")
+    val owner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    DisposableEffect(lessonId, owner) {
+        var start = 0L
+        fun flush() {
+            if (start > 0L) app.lessons.addTime(lessonId, (System.currentTimeMillis() - start) / 1000)
+            start = 0L
+        }
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && start == 0L) start = System.currentTimeMillis()
+            if (event == Lifecycle.Event.ON_PAUSE) flush()
+        }
+        // L'observateur reçoit aussitôt ON_RESUME si l'écran est déjà au premier plan.
+        owner.lifecycle.addObserver(observer)
+        onDispose {
+            owner.lifecycle.removeObserver(observer)
+            flush()
+        }
     }
 }
 
@@ -137,7 +158,8 @@ fun NotesScreen(id: String, theme: Int) {
     var page by rememberSaveable(id, theme) { mutableIntStateOf(0) }
     var forward by remember { mutableStateOf(true) }
     val answered = answeredRight?.let { QuizAnswer(it, picked.takeIf { index -> index >= 0 }) }
-    val final = item.questions.firstOrNull()
+    // Une question de fin mal formée (sans propositions) bloquerait « Terminer » : on s'en passe.
+    val final = item.questions.firstOrNull()?.takeIf { it.isValid }
     val notes = item.notes
     val blocks = remember(notes) { notes?.blocks.orEmpty().mapNotNull { NoteBlock.parse(it) } }
     val pages = remember(blocks, notes, final) { notesPages(blocks, notes?.takeaways.orEmpty().isNotEmpty(), final != null) }
