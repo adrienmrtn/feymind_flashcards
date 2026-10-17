@@ -49,6 +49,33 @@ for (const plan of open.items ?? []) {
 }
 
 const body = JSON.parse(readFileSync("store/play-subscriptions.json", "utf8"));
+
+// **Ne rien retirer.** Google Play refuse qu'un plan enlève une région qu'un forfait sert
+// déjà (il en ajoute parfois de lui-même). On repart donc de l'état actuel du store : ses
+// pays, ses prix et ses régions restent, nos valeurs passent par-dessus.
+for (const desired of body.desired_states) {
+  let current;
+  try {
+    current = await call("GET", `https://api.revenuecat.com/v2/projects/${project}/products/${desired.product_id}/store_state`);
+  } catch (error) {
+    console.log(`État actuel illisible pour ${desired.product_id} : ${error.message}`);
+    continue;
+  }
+  const prices = current?.common?.pricing?.territory_prices ?? {};
+  const territories = current?.common?.availability?.territories ?? {};
+  desired.common.pricing.territory_prices = { ...prices, ...desired.common.pricing.territory_prices };
+  desired.common.availability = { territories: { ...territories, ...(desired.common.availability?.territories ?? {}) } };
+  for (const [planId, plan] of Object.entries(desired.store_state.base_plans)) {
+    const regions = Object.keys(current?.store_state?.base_plans?.[planId]?.regional_configs ?? {});
+    for (const offer of Object.values(plan.offers ?? {})) {
+      for (const region of regions) {
+        offer.regional_configs[region] ??= { new_subscriber_availability: true };
+        for (const phase of offer.phases ?? []) phase.regional_configs[region] ??= { free: true };
+      }
+    }
+  }
+  console.log(`${desired.product_id} : ${Object.keys(desired.common.pricing.territory_prices).length} pays repris de l'état actuel.`);
+}
 const created = await call("POST", base, body);
 console.log(`Plan créé : ${created.id}`);
 await call("POST", `${base}/${created.id}/actions/plan`, {});
