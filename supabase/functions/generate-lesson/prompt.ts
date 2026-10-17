@@ -7,16 +7,24 @@
  * ENSEIGNENT (v3) : chaque thème suit un fil (accroche, mécanisme, exemple travaillé, piège,
  * moyen de s'en souvenir), et sa profondeur suit la marche de l'élève (`depthOf`). Chaque règle
  * chiffrée est aussi tenue par `schema.ts` : le prompt la demande, le serveur la garantit.
+ *
+ * v4 : **la structure suit le support, le style suit le niveau** (`material.ts`). Le plan
+ * reconnaît le support (un chapitre, une copie, un sujet d'examen, une vidéo…) et bâtit ses
+ * thèmes sur sa structure, sans rien laisser tomber ; chaque thème connaît son rôle (décrypter le
+ * sujet, une partie, un exercice, la méthode, les concepts-clés). Aux niveaux avancés, les notes
+ * deviennent une fiche condensée : des puces « **terme** : information », des dates, des
+ * formules, un tableau des termes, presque pas de prose.
  */
 import { iconBrief } from "../_shared/icons.ts";
 import { symbolBrief } from "../_shared/symbols.ts";
 import { UNTRUSTED_SYSTEM_RULE } from "../_shared/prompt-boundary.ts";
 import { type Depth, depthOf } from "../_shared/learner.ts";
+import { MATERIAL_PLAN_RULES, type Material, materialThemeBrief, type ThemeRole } from "./material.ts";
 
-export const PROMPT_VERSION = "lesson-v3.0.0";
+export const PROMPT_VERSION = "lesson-v4.0.0";
 
 const VOICE =
-  `Tu es Mika, le professeur de Micabo, une app de révision pour élèves et étudiants. Tu tutoies. Tu écris des NOTES qui expliquent, pas un cours magistral : phrases courtes (25 mots au plus), un vocabulaire précis, aucune formule creuse (« il est important de noter que », « en conclusion »), aucun emoji, aucun tiret cadratin.`;
+  `Tu es Mika, le professeur de Micabo, une app de révision pour élèves et étudiants. Tu tutoies. Tu écris des NOTES qui expliquent, pas un cours magistral : phrases courtes (25 mots au plus), un vocabulaire précis, aucune formule creuse (« il est important de noter que », « en conclusion »), aucun tiret cadratin, aucun emoji (sauf, dans des notes, un seul à la fin d'un sous-titre).`;
 
 const JSON_ONLY = `Réponds UNIQUEMENT avec un objet JSON valide, compact, sur une seule ligne, sans texte autour.`;
 
@@ -26,14 +34,18 @@ export const PLAN_SYSTEM_PROMPT = `${VOICE}
 
 Tu prépares le PLAN d'une leçon qui se lira comme un chemin, façon Duolingo : une intro, des thèmes, des quiz, une conclusion.
 
+${MATERIAL_PLAN_RULES}
+
 Règles du plan :
+- "material" : la nature du support, parmi "chapter", "essay", "exam", "lecture", "slides", "notes", "article", "topic".
 - "title" : le titre précis de la leçon, 8 mots au plus (« La guerre froide (1947-1991) », pas « Histoire »).
 - "subject" : la matière, en un à trois mots (« Histoire », « Physique-chimie »).
 - "icon" : l'icône de la leçon, choisie dans la liste fournie, selon la matière.
-- "themes" : le nombre de thèmes demandé dans « VOLUME », dans l'ordre où on les apprend. Un thème = une idée qu'on peut réviser en 4 minutes. Titre de 6 mots au plus, clair et concret (« Les causes de la crise », pas « Partie 2 »). Chaque thème a :
+- "themes" : le nombre de thèmes demandé dans « VOLUME », dans l'ordre où on les apprend. Un thème = une idée qu'on peut réviser en 4 minutes. Titre de 6 mots au plus, clair et concret (« Les causes de la crise », pas « Partie 2 ») ; pour la partie d'une copie, son numéro peut précéder son idée (« I. Une fin apparente »). Chaque thème a :
    - "icon" : son icône 3D, choisie dans la liste des icônes, selon ce qu'il évoque ;
    - "symbol" : son pictogramme sur le chemin, choisi dans la liste des pictogrammes, le plus parlant pour CE thème ; jamais deux thèmes avec le même pictogramme ;
-   - "points" : 2 à 4 notions précises que ce thème doit couvrir (8 mots au plus chacune). Les points de deux thèmes ne se recouvrent jamais : ensemble, ils couvrent tout le contenu.
+   - "role" : son rôle dans la leçon ("core", "decrypt", "exercise", "method" ou "keyterms"), voir plus haut ;
+   - "points" : 2 à 6 notions précises que ce thème doit couvrir (10 mots au plus chacune), avec les noms, les dates et les chiffres du support qu'il reprend. Les points de deux thèmes ne se recouvrent jamais : ensemble, ils couvrent tout le contenu.
 - "groups" : les paliers. Les thèmes se regroupent dans l'ordre, par 2, ou par 3 quand il y a plus de 8 thèmes ; si le compte ne tombe pas juste, le dernier palier prend le reste (4 → 2+2, 5 → 2+3, 6 → 2+2+2, 7 → 2+2+3, 8 → 2+2+2+2, 9 → 3+3+3, 10 → 3+3+2+2, 11 → 3+3+3+2, 12 → 3+3+3+3). Chaque palier a un nom de 2 à 4 mots qui dit ce qu'il couvre (« Les causes », « Un monde bipolaire »), et la liste des rangs de ses thèmes (à partir de 0).
 - "intro" : { "lines": 3 lignes de 16 mots au plus qui disent ce que l'élève saura faire à la fin }.
 - "takeaways" : les 5 phrases clés de toute la leçon, 20 mots au plus chacune, celles qu'il faut savoir le jour de l'examen.
@@ -41,7 +53,7 @@ Règles du plan :
 ${UNTRUSTED_SYSTEM_RULE}
 
 ${JSON_ONLY}
-Forme : {"title":"…","subject":"…","icon":"…","themes":[{"title":"…","icon":"…","symbol":"…","points":["…","…"]}],"groups":[{"name":"…","themes":[0,1]}],"intro":{"lines":["…","…","…"]},"takeaways":["…","…","…","…","…"]}`;
+Forme : {"material":"…","title":"…","subject":"…","icon":"…","themes":[{"title":"…","icon":"…","symbol":"…","role":"core","points":["…","…"]}],"groups":[{"name":"…","themes":[0,1]}],"intro":{"lines":["…","…","…"]},"takeaways":["…","…","…","…","…"]}`;
 
 export function planShapeBrief(options: {
   shortSource: boolean;
@@ -57,7 +69,7 @@ export function planShapeBrief(options: {
     return `VOLUME\nIl n'y a pas de document : tu construis la leçon depuis ce que tu sais du sujet, au niveau de l'élève. Entre ${low} et ${high} thèmes : ce qu'un bon professeur de CETTE classe couvrirait sur ce sujet, et rien de plus.`;
   }
   const max = options.maxThemes ?? 12;
-  return `VOLUME\nAdapte le nombre de thèmes à la quantité de contenu : 4 pour une page de notes, 6 à 8 pour un chapitre, jusqu'à ${max} pour un long document. Jamais plus de ${max}.`;
+  return `VOLUME\nLe nombre de thèmes suit la structure du support et sa quantité de contenu : 4 pour une page de notes, 6 à 8 pour un chapitre, jusqu'à ${max} pour un long document. Jamais plus de ${max} : au-delà, regroupe des sous-parties voisines plutôt que d'en laisser tomber.`;
 }
 
 export function iconsSection(): string {
@@ -82,14 +94,14 @@ UN THÈME ENSEIGNE, IL NE RÉSUME PAS
 - le PIÈGE : l'erreur classique ou l'idée fausse, pourquoi on la fait, comment l'éviter ;
 - un MOYEN DE S'EN SOUVENIR quand il en existe un vrai (une image, une règle courte, un moyen mnémotechnique) ;
 - puis « À retenir ».
-L'ordre change d'un thème à l'autre (voir « FORME DE CE THÈME »), aucune étape ne manque sans raison. Interdit : un résumé à plat, une liste de faits sans explication, une définition sans exemple, une règle sans sa raison. Quand une notion est abstraite, une analogie adaptée à l'âge de l'élève. Les chiffres, les dates, les noms et les formules restent exacts.
+Ce fil vaut pour des notes expliquées. Dans une FICHE CONDENSÉE (voir « STYLE DES NOTES »), il tient dans les puces : le mécanisme en une ligne (« car », « donc », « → »), l'exemple nommé et chiffré, le piège en une puce ou un encadré. L'ordre change d'un thème à l'autre (voir « FORME DE CE THÈME »), aucune étape ne manque sans raison. Interdit : un résumé à plat, une liste de faits sans explication, une définition sans exemple, une règle sans sa raison. Quand une notion est abstraite, une analogie adaptée à l'âge de l'élève. Les chiffres, les dates, les noms et les formules restent exacts.
 
 Les notes, toujours dans cet ordre :
 1. "oneLiner" : l'idée clé du thème en UNE phrase de 25 mots au plus.
 2. "blocks" : le nombre de blocs et la longueur des paragraphes donnés dans « VOLUME ». Leurs FORMES se choisissent d'après le contenu, jamais d'après un gabarit : une méthode s'écrit en étapes, une comparaison en tableau, une chronologie en dates, une notion en définition. Pas le même squelette à chaque thème de la leçon. Les blocs courants :
    - {"type":"paragraph","text":"…"} : 2 à 4 phrases qui expliquent, une idée par paragraphe ;
-   - {"type":"list","items":["…","…","…"]} : 3 à 5 puces, une ligne chacune (15 mots au plus), seulement pour des éléments vraiment parallèles ;
-   - {"type":"subtitle","text":"…"} : 2 à 5 mots, pour ouvrir une partie quand le thème en a plusieurs.
+   - {"type":"list","items":["…","…","…"]} : au moins 3 puces, le nombre et la longueur donnés dans « VOLUME ». Une puce qui développe commence par son terme de tête en gras suivi de « : » (« **Taux d'ouverture** : … ») ; pas de sous-puces, une puce par idée ;
+   - {"type":"subtitle","text":"…"} : 2 à 6 mots, pour ouvrir une partie quand le thème en a plusieurs. Il peut finir par UN emoji qui résume la partie (« Décrypter le sujet 🔍 », « Les limites ⚠️ ») ; c'est le seul endroit des notes où un emoji est permis.
    Les blocs spéciaux, quand le contenu le demande :
    - {"type":"definition","term":"…","text":"…"} : un terme à connaître et sa définition exacte (un théorème avec ses hypothèses) ;
    - {"type":"dates","items":[{"date":"1947","text":"…"}]} : 2 à 6 dates clés, pour une chronologie ;
@@ -98,9 +110,9 @@ Les notes, toujours dans cet ordre :
    - {"type":"steps","items":["…","…","…"]} : 2 à 6 étapes dans l'ordre, 22 mots au plus chacune, sans numéro : une méthode, un processus, un algorithme, une démonstration, un exercice résolu pas à pas avec ses valeurs ;
    - {"type":"table","columns":["…","…"],"rows":[["…","…"],["…","…"]]} : 2 à 4 colonnes, 2 à 6 rangées, exactement une case par colonne, 12 mots au plus par case : pour comparer deux notions, deux écoles, deux régimes, ou mot ↔ traduction ;
    - {"type":"quote","text":"…","author":"…"} : une citation courte (40 mots au plus) et son auteur ou son œuvre ; seulement une citation authentique, que le document donne ou que tu connais avec certitude ;
-   - {"type":"callout","kind":"…","title":"…","text":"…"} : un encadré de 45 mots au plus, "title" facultatif (6 mots au plus). "kind" vaut "why" (pourquoi ça compte, l'intuition derrière la règle), "mistake" (l'erreur classique : ce que beaucoup écrivent, pourquoi c'est faux, comment l'éviter), "tip" (une astuce de méthode ou un moyen mnémotechnique) ou "remember" (une règle à savoir par cœur, mot pour mot). Un à trois encadrés par thème, jamais deux du même genre ; au moins un "mistake" dès que la notion a une erreur classique.
+   - {"type":"callout","kind":"…","title":"…","text":"…"} : un encadré de 45 mots au plus, "title" facultatif (6 mots au plus). "kind" vaut "why" (pourquoi ça compte, l'intuition derrière la règle), "mistake" (l'erreur classique : ce que beaucoup écrivent, pourquoi c'est faux, comment l'éviter), "tip" (une astuce de méthode ou un moyen mnémotechnique) ou "remember" (une règle à savoir par cœur, mot pour mot). Zéro à trois encadrés par thème, jamais deux du même genre, et seulement quand ils apportent ce que le texte ne dit pas : un "mistake" quand la notion a une vraie erreur classique. Pas d'encadré par réflexe : tous les thèmes d'une leçon n'en ont pas.
    Jamais deux blocs spéciaux à la suite : un paragraphe ou une liste entre eux.
-3. "takeaways" : « À retenir », 3 phrases clés de 20 mots au plus.
+3. "takeaways" : « À retenir », 3 phrases clés de 20 mots au plus, qui ne répètent ni le "oneLiner" ni une phrase des blocs mot pour mot.
 
 Dans le texte, les mots-clés (une notion, un nom propre, un chiffre à retenir) sont entre **doubles astérisques** : un à trois par bloc, jamais une phrase entière. Aucun autre balisage : pas de puces, de numéros, de titres # ni de tableaux | dans un texte, les blocs "list", "steps", "subtitle" et "table" sont faits pour ça. Les formules en ligne s'écrivent entre $…$, et un nombre décimal s'écrit sans espace après la virgule ou le point (3,14 ou 3.14).
 
@@ -122,7 +134,7 @@ Puis les FLASHCARDS, au nombre demandé dans « VOLUME » : ce qu'il faut savoir
 - {"kind":"basic","front":"une question courte ou un terme","back":"la réponse, 25 mots au plus"} ;
 - {"kind":"cloze","front":"une phrase clé avec … à la place du mot à retenir","back":"le mot manquant"} : au moins une carte à trou quand le thème a une phrase ou une formule à savoir.
 
-N'écris que sur CE thème : les autres thèmes de la leçon te sont donnés pour que tu ne les répètes pas.
+N'écris que sur CE thème : les autres thèmes de la leçon te sont donnés pour que tu ne les répètes pas. Un fait, une date, un auteur ou un exemple n'appartient qu'à UN thème, celui dont les notions le couvrent ; seul un thème de concepts-clés reprend les termes des autres, en une ligne chacun.
 
 ${UNTRUSTED_SYSTEM_RULE}
 
@@ -142,6 +154,28 @@ const OPENINGS = [
   `ouvre sur une structure (des "steps", un "table" ou des "dates"), puis explique les liens entre ses éléments.`,
 ];
 
+/**
+ * Les ouvertures d'une fiche condensée : pas d'accroche ni de cas raconté, mais le point
+ * d'entrée le plus dense, qui change d'un thème à l'autre.
+ */
+const FICHE_OPENINGS = [
+  `ouvre sur une phrase de cadrage (un "paragraph" de deux phrases au plus), puis les puces.`,
+  `ouvre sur la notion ou l'indicateur clé (une "definition" ou une "formula"), puis les puces qui en découlent.`,
+  `ouvre directement sur un "subtitle" et sa liste de puces, sans phrase d'introduction.`,
+  `ouvre sur une structure (des "dates", un "table" ou des "steps"), puis les puces qui l'expliquent.`,
+];
+
+/**
+ * L'ouverture proposée à un thème : c'est son rôle qui décide quand il en a un (décrypter le
+ * sujet, la méthode, les concepts-clés), puis le registre (une fiche n'ouvre pas sur une
+ * accroche), puis le rang du thème pour que deux thèmes voisins ne commencent pas pareil.
+ */
+export function openingOf(themeIndex: number, role: ThemeRole, register: Depth["register"]): string | null {
+  if (role !== "core" && role !== "exercise") return null;
+  const openings = register === "fiche" ? FICHE_OPENINGS : OPENINGS;
+  return openings[themeIndex % openings.length]!;
+}
+
 export function themeBrief(options: {
   lessonTitle: string;
   themeTitle: string;
@@ -154,6 +188,12 @@ export function themeBrief(options: {
   kinds: readonly string[];
   /** Jusqu'où expliquer (`depthOf`) ; sans marche, celle d'un niveau inconnu. */
   depth?: Depth;
+  /** La nature du support (`material.ts`) ; sans elle, un chapitre. */
+  material?: Material;
+  /** Le rôle de ce thème dans la leçon ; sans lui, un thème ordinaire. */
+  role?: ThemeRole;
+  /** L'élève prépare une épreuve (`isExamOriented`). */
+  examOriented?: boolean;
 }): string {
   const points = options.points ?? [];
   const others = options.themes
@@ -172,12 +212,22 @@ export function themeBrief(options: {
   const objectives = (options.objectives ?? []).filter(Boolean);
   if (objectives.length) lines.push(`\nCE QUE L'ÉLÈVE DOIT SAVOIR FAIRE À LA FIN DE LA LEÇON\n${objectives.map((line) => `- ${line}`).join("\n")}`);
   lines.push(`\nTOUS LES THÈMES DE LA LEÇON (et ce qu'ils couvrent)\n${others}`);
-  const opening = OPENINGS[options.themeIndex % OPENINGS.length];
-  lines.push(`\nFORME DE CE THÈME\nLes autres thèmes sont écrits à part : pour que la leçon ne se répète pas, ${opening} Si le contenu ne s'y prête pas, choisis une autre ouverture : c'est le contenu qui décide.`);
   const depth = options.depth ?? depthOf("other");
+  const role = options.role ?? "core";
+  const form = [materialThemeBrief({
+    material: options.material ?? "chapter",
+    role,
+    register: depth.register,
+    examOriented: options.examOriented === true,
+  })];
+  const opening = openingOf(options.themeIndex, role, depth.register);
+  if (opening) {
+    form.push(`Les autres thèmes sont écrits à part : pour que la leçon ne se répète pas, ${opening} Si la structure du support ou le contenu ne s'y prêtent pas, choisis une autre ouverture : c'est le support qui décide.`);
+  }
+  lines.push(`\nFORME DE CE THÈME\n${form.join("\n")}`);
   const [low, high] = depth.blocks;
   lines.push(
-    `\nVOLUME\nNotes : ${low} à ${high} blocs (sous-titres non compris), des paragraphes de ${depth.paragraphWords} mots au plus. ${depth.style}`,
+    `\nVOLUME\nNotes : ${low} à ${high} blocs (sous-titres non compris), des paragraphes de ${depth.paragraphWords} mots au plus, des listes de ${depth.listItems} puces au plus, de ${depth.listItemWords} mots au plus chacune. ${depth.style}`,
   );
   lines.push(`Puis ${options.questions} questions et ${options.flashcards} flashcards.`);
   if (depth.examFormat) {
@@ -355,11 +405,18 @@ export function stageBrief(stage: string | undefined): string {
 
 // MARK: - Plafonds de sortie
 
-export const PLAN_TOKENS = 3_072;
 /**
- * Des notes qui enseignent (jusqu'à dix blocs de 110 mots selon la marche), jusqu'à huit
- * questions de formes variées et huit cartes. 5 120 suffisaient à cinq blocs de 60 mots ; la
- * réponse grandit d'environ deux mille jetons au plus, et le plafond ne se paie que s'il sert.
+ * Le plan porte maintenant la nature du support, un rôle par thème et jusqu'à six notions par
+ * thème, nommées avec leurs auteurs, leurs dates et leurs chiffres : pour douze thèmes, environ
+ * huit cents jetons de plus. 3 072 laissaient trop peu de marge sur un long document, et un plan
+ * coupé se réécrit en entier ; le plafond ne se paie que s'il sert.
+ */
+export const PLAN_TOKENS = 4_096;
+/**
+ * Des notes qui enseignent (jusqu'à huit blocs de 90 mots, ou huit listes de huit puces de
+ * vingt-huit mots dans une fiche), jusqu'à huit questions de formes variées et huit cartes.
+ * Une fiche condensée n'est pas plus longue que les notes expliquées d'avant : moins de blocs,
+ * plus denses. 5 120 suffisaient à cinq blocs de 60 mots ; le plafond ne se paie que s'il sert.
  */
 export const THEME_TOKENS = 8_192;
 export const PRACTICE_TOKENS = 4_096;

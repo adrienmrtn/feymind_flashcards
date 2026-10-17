@@ -431,6 +431,13 @@ export function volumeOf(tier: Tier): Volume {
 
 // MARK: - La profondeur
 
+/**
+ * Le registre des notes : `fiche` une fiche condensée de niveau avancé, en puces denses qui
+ * commencent par leur terme de tête ; `explained` des notes structurées qui expliquent ;
+ * `guided` des notes pas à pas, pour les plus jeunes.
+ */
+export type NoteRegister = "fiche" | "explained" | "guided";
+
 export interface Depth {
   /** Le nombre de blocs des notes d'un thème, sous-titres non compris : [au moins, au plus]. */
   blocks: [number, number];
@@ -440,6 +447,12 @@ export interface Depth {
   style: string;
   /** Vrai quand la marche prépare un examen au format connu : une question le reprend. */
   examFormat: boolean;
+  /** Le registre des notes (`NoteRegister`). */
+  register: NoteRegister;
+  /** Le nombre de puces d'une liste, au plus. */
+  listItems: number;
+  /** La longueur d'une puce, en mots. */
+  listItemWords: number;
 }
 
 /**
@@ -451,6 +464,12 @@ export interface Depth {
  *
  * La ligne `style` dit la FAÇON d'expliquer ; le vocabulaire et le registre sont dans
  * `TIER_BRIEFS`, elle ne les répète pas.
+ *
+ * **Une fiche, pas un manuel, aux niveaux avancés.** De la prépa au master, en santé et pour un
+ * concours, les notes se lisent comme une fiche de révision dense : moins de blocs, mais des
+ * listes plus longues dont chaque puce porte un terme de tête et son information (un auteur et
+ * son année, un chiffre, un mécanisme en une ligne). Les paragraphes y sont rares et courts. Au
+ * lycée, les notes restent expliquées ; au collège, guidées pas à pas.
  */
 export function depthOf(tier: Tier): Depth {
   switch (tier) {
@@ -460,6 +479,9 @@ export function depthOf(tier: Tier): Depth {
         paragraphWords: 70,
         style: "Explique pas à pas, sans rien sauter : une analogie de la vie courante (le sport, l'argent de poche, la cuisine, un jeu) pour chaque idée abstraite, un exemple de son âge, et la raison de chaque règle dite simplement.",
         examFormat: false,
+        register: "guided",
+        listItems: 5,
+        listItemWords: 16,
       };
     case "upperSecondary":
       return {
@@ -467,23 +489,32 @@ export function depthOf(tier: Tier): Depth {
         paragraphWords: 90,
         style: "Explique chaque mécanisme jusqu'au bout, avec ses causes et ses conséquences ; une analogie quand la notion est abstraite ; des exemples du niveau d'un sujet d'examen.",
         examFormat: true,
+        register: "explained",
+        listItems: 6,
+        listItemWords: 22,
       };
     case "preUniversity":
     case "health":
     case "competitive":
       return {
-        blocks: [6, 10],
-        paragraphWords: 110,
-        style: "Dense et rigoureux : hypothèses, conditions d'application, cas limites et valeurs exactes ; chaque étape d'un raisonnement écrite ; une analogie seulement quand elle éclaire, jamais à la place de l'énoncé exact.",
+        blocks: [4, 8],
+        paragraphWords: 80,
+        style: "Dense et rigoureux : hypothèses, conditions d'application, cas limites et valeurs exactes, chaque étape d'un raisonnement écrite, le tout en puces serrées ; pas d'analogie.",
         examFormat: true,
+        register: "fiche",
+        listItems: 8,
+        listItemWords: 28,
       };
     case "undergraduate":
     case "graduate":
       return {
-        blocks: [6, 10],
-        paragraphWords: 110,
-        style: "Dense et rigoureux : le mécanisme détaillé, ses conditions de validité, ses limites et les nuances du cours ; une analogie seulement quand elle éclaire, jamais à la place de l'énoncé exact.",
+        blocks: [4, 8],
+        paragraphWords: 80,
+        style: "Dense et rigoureux : le mécanisme, ses conditions de validité, ses limites, les auteurs et les nuances du cours, le tout en puces serrées ; pas d'analogie.",
         examFormat: false,
+        register: "fiche",
+        listItems: 8,
+        listItemWords: 28,
       };
     default:
       return {
@@ -491,6 +522,9 @@ export function depthOf(tier: Tier): Depth {
         paragraphWords: 80,
         style: "Explique chaque idée avec sa raison et un exemple concret ; une analogie quand la notion est abstraite.",
         examFormat: false,
+        register: "explained",
+        listItems: 6,
+        listItemWords: 22,
       };
   }
 }

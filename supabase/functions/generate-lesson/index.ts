@@ -16,7 +16,9 @@
  *   (`begin_extra`, migration `lesson_extras`).
  *
  * Le volume (thèmes, questions, cartes) et le registre suivent la marche d'études et le pays
- * de l'élève (`_shared/learner.ts`). Les questions prennent cinq formes (`schema.ts`) ; une
+ * de l'élève (`_shared/learner.ts`). La structure du plan suit la nature du support (un
+ * chapitre, une copie, un sujet d'examen, une vidéo…), qui voyage jusqu'aux thèmes en tête du
+ * texte de référence (`material.ts`). Les questions prennent cinq formes (`schema.ts`) ; une
  * app qui ne déclare pas les formes qu'elle sait afficher (`kinds`) ne reçoit que des QCM.
  *
  * Déployer : `supabase functions deploy generate-lesson`, après la migration
@@ -84,6 +86,18 @@ import {
   refundExtra,
   releaseLesson,
 } from "./gate.ts";
+import {
+  allowedRole,
+  guessMaterial,
+  guessRole,
+  isExamOriented,
+  type Material,
+  materialHeader,
+  planMaterialBrief,
+  readMaterial,
+  readMaterialHeader,
+  readRole,
+} from "./material.ts";
 
 interface RequestBody {
   stage?: string;
@@ -133,7 +147,15 @@ interface RequestBody {
   points?: string[][];
   /** Ce que l'élève saura faire à la fin (l'intro du plan). */
   objectives?: string[];
+  /**
+   * Le texte de référence rendu par le plan (`contextText`). Il commence par la nature du
+   * support et les rôles des thèmes (`materialHeader`) : c'est par lui qu'ils arrivent ici.
+   */
   context?: string;
+  /** La nature du support, pour une app qui la renverrait d'elle-même ; facultative. */
+  material?: string;
+  /** Le rôle de ce thème, pour une app qui le renverrait d'elle-même ; facultatif. */
+  role?: string;
 
   // Un examen blanc
   examTitle?: string;
@@ -302,9 +324,16 @@ async function writePlan(
   const reference = [text, visualNotes].filter(Boolean).join("\n\n").slice(0, MAX_SOURCE);
   const shortSource = !fromScratch && reference.length < SHORT_SOURCE;
 
-  const volume = volumeOf(readLearner(body).tier);
+  const learner = readLearner(body);
+  const volume = volumeOf(learner.tier);
+  const examOriented = isExamOriented(learner);
+  // Une première lecture du support : le modèle la corrige, sauf quand elle ne fait pas de
+  // doute (pas de document, ou une vidéo et sa transcription).
+  const guess: Material = fromScratch ? "topic" : guessMaterial(reference, source);
+  const forcedMaterial: Material | undefined = guess === "topic" || guess === "lecture" ? guess : undefined;
   const sections = audienceSections(body, fromScratch ? topic : reference);
   sections.push(planShapeBrief({ shortSource, fromScratch, topicThemes: volume.topicThemes, maxThemes: volume.maxThemes }));
+  sections.push(planMaterialBrief({ guess, fromScratch, register: depthOf(learner.tier).register, examOriented }));
   sections.push(iconsSection());
   sections.push(symbolsSection());
   if (fromScratch) {
@@ -322,7 +351,17 @@ async function writePlan(
 
   const fallbackTitle = fromScratch ? clampWords(topic, LIMITS.lessonTitleWords) : "Ma leçon";
   const read = (parsed: Record<string, unknown> | null) =>
-    parsed ? readPlan(parsed, { shortSource, shortened, fallbackTitle, maxThemes: volume.maxThemes }) : null;
+    parsed
+      ? readPlan(parsed, {
+        shortSource,
+        shortened,
+        fallbackTitle,
+        maxThemes: volume.maxThemes,
+        fallbackMaterial: guess,
+        forcedMaterial,
+        examOriented,
+      })
+      : null;
 
   let lessonPlan = read(await ask({ prompt, system: PLAN_SYSTEM_PROMPT, temperature: 0.3, maxTokens: PLAN_TOKENS, meter }));
   if (!lessonPlan) {
@@ -346,11 +385,13 @@ async function writePlan(
     themes: lessonPlan.themes.length,
   });
 
+  // Le texte de référence de chaque thème, précédé de la nature du support et des rôles des
+  // thèmes : les apps le renvoient tel quel à chaque thème, c'est par là qu'ils voyagent. Vide en
+  // mode « sujet » (chaque thème s'écrit depuis ce que le modèle sait, et se sait « topic »).
+  const header = materialHeader(lessonPlan.material, lessonPlan.themes.map((entry) => entry.role));
   return jsonResponse({
     plan: lessonPlan,
-    // Le texte de référence de chaque thème. Vide en mode « sujet » : chaque thème s'écrit
-    // alors depuis ce que le modèle sait.
-    contextText: fromScratch ? "" : reference,
+    contextText: fromScratch ? "" : header + reference.slice(0, MAX_SOURCE - header.length),
     meta: { promptVersion: PROMPT_VERSION, usage: totalUsage(meter) },
   });
 }
@@ -371,7 +412,13 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
   await admitThemeCall(caller, body.lessonId);
   await consumeQuota(caller, "generate-lesson-theme", 1, THEME_DAILY_CEILING);
 
-  const context = (body.context ?? "").trim().slice(0, MAX_SOURCE);
+  // L'en-tête du texte de référence dit la nature du support et le rôle de chaque thème ; une
+  // leçon d'avant n'en a pas, et les deux se devinent alors sur le texte et sur le titre.
+  const carried = readMaterialHeader((body.context ?? "").trim());
+  const context = carried.text.trim().slice(0, MAX_SOURCE);
+  const material: Material = readMaterial(body.material) ?? carried.material ??
+    (context ? guessMaterial(context, body.source) : "topic");
+  const carriedRole = carried.roles?.length === themes.length ? carried.roles[index] : undefined;
   const lessonTitle = sanitizeMeta(body.lessonTitle, 200) || themes[index]!;
   const meter: ModelUsage[] = [];
   const learner = readLearner(body);
@@ -381,6 +428,12 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
   const tierDepth = depthOf(learner.tier);
   const depth = learner.exam ? { ...tierDepth, examFormat: true } : tierDepth;
   const limits = noteLimits(depth);
+  const examOriented = isExamOriented(learner);
+  const role = allowedRole(
+    typeof body.role === "string" ? readRole(body.role) : carriedRole ?? guessRole(themes[index]!, material),
+    material,
+    examOriented || (material === "topic" && themes.some((title) => guessRole(title, material) === "decrypt")),
+  );
   const kinds = readKinds(body.kinds);
   const points = (Array.isArray(body.points) ? body.points : []).slice(0, themes.length).map((list) =>
     (Array.isArray(list) ? list : []).map((point) => sanitizeMeta(typeof point === "string" ? point : "", 100)).filter(Boolean).slice(0, LIMITS.pointsPerTheme)
@@ -403,6 +456,9 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
     flashcards: volume.flashcards,
     kinds,
     depth,
+    material,
+    role,
+    examOriented,
   }));
   // Les formes de bloc que la matière appelle : sans elles, chaque thème avait le même squelette.
   sections.push(lessonShapesBrief(detectDiscipline(sample, body.lessonTitle ?? body.title, body.subject)));
@@ -418,7 +474,7 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
     const reading = readingBrief(body.source, context.length);
     if (reading) sections.push(reading);
     sections.push(
-      "Appuie-toi sur les supports de l'élève ci-dessous : ce qu'ils disent passe avant ce que tu sais. Ne recopie pas, réécris en notes. Ne traite que ce qui concerne CE thème.",
+      "Appuie-toi sur les supports de l'élève ci-dessous : ce qu'ils disent passe avant ce que tu sais. Ne recopie pas, réécris en notes. Ne traite que ce qui concerne CE thème, mais traite-le en entier : ce que le support en dit (ses auteurs, ses dates, ses chiffres, ses exemples) se retrouve dans les notes, condensé, jamais omis.",
     );
     sections.push(wrapUntrusted("SUPPORTS DE L'ÉLÈVE", context));
   } else {

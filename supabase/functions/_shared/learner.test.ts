@@ -53,15 +53,23 @@ Deno.test("la profondeur des notes suit la marche, sous les plafonds du serveur"
   assertEquals(depthOf("lowerSecondary").paragraphWords, 70);
   assertEquals(depthOf("upperSecondary").blocks, [5, 8]);
   assertEquals(depthOf("upperSecondary").paragraphWords, 90);
+  // Les niveaux avancés écrivent une fiche : moins de blocs, peu de prose, des puces denses.
   for (const tier of ["preUniversity", "undergraduate", "graduate", "health", "competitive"] as const) {
-    assertEquals(depthOf(tier).blocks, [6, 10], tier);
-    assertEquals(depthOf(tier).paragraphWords, 110, tier);
+    assertEquals(depthOf(tier).blocks, [4, 8], tier);
+    assertEquals(depthOf(tier).paragraphWords, 80, tier);
+    assertEquals(depthOf(tier).register, "fiche", tier);
+    assertEquals([depthOf(tier).listItems, depthOf(tier).listItemWords], [8, 28], tier);
   }
+  assertEquals(depthOf("upperSecondary").register, "explained");
+  assertEquals(depthOf("other").register, "explained");
+  assertEquals(depthOf("lowerSecondary").register, "guided");
+  assertEquals([depthOf("lowerSecondary").listItems, depthOf("lowerSecondary").listItemWords], [5, 16]);
   for (const tier of tiers) {
     const depth = depthOf(tier);
     assert(depth.blocks[0] >= 4 && depth.blocks[0] <= depth.blocks[1], tier);
     assert(depth.blocks[1] + 2 <= LIMITS.blocksHardMax, tier);
     assert(depth.paragraphWords <= LIMITS.paragraphHardWords, tier);
+    assert(depth.listItems <= LIMITS.listItemsHardMax && depth.listItemWords <= LIMITS.listItemHardWords, tier);
     assert(depth.style.length > 20, tier);
   }
   assert(depthOf("lowerSecondary").style.includes("analogie"));

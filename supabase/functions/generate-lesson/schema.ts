@@ -10,6 +10,7 @@
 import { DEFAULT_ICON, LESSON_ICONS, normalizeIcon } from "../_shared/icons.ts";
 import { uniqueSymbols } from "../_shared/symbols.ts";
 import { normalizeFormula, protectedSpans } from "../_shared/sheet.ts";
+import { allowedRole, type Material, readMaterial, readRole, type ThemeRole } from "./material.ts";
 
 // MARK: - Les nombres de la leçon
 
@@ -24,8 +25,12 @@ export const LIMITS = {
   /** Le plafond d'un paragraphe, quelle que soit la marche. */
   paragraphHardWords: 120,
   listItemsMin: 3,
+  /** Une liste, quand la marche n'est pas connue ; `depthOf` le règle par marche. */
   listItemsMax: 5,
   listItemWords: 16,
+  /** Le plafond d'une liste et d'une puce, quelle que soit la marche (une fiche dense). */
+  listItemsHardMax: 8,
+  listItemHardWords: 30,
   blocksMin: 2,
   blocksMax: 5,
   /** Le plafond des blocs d'un thème, sous-titres non compris, quelle que soit la marche. */
@@ -44,8 +49,11 @@ export const LIMITS = {
   /** Moins que ça, le thème est à réécrire : la question de fin et deux pour les quiz. */
   minQuestions: 3,
   flashcardsPerTheme: 8,
-  /** Les notions qu'un thème doit couvrir, données par le plan. */
-  pointsPerTheme: 4,
+  /**
+   * Les notions qu'un thème doit couvrir, données par le plan. Six plutôt que quatre : une
+   * partie dense d'un chapitre ou d'une copie en a plus, et ce qui n'est pas nommé se perd.
+   */
+  pointsPerTheme: 6,
   /** Un lot de « nouvelles questions ». */
   practiceMax: 12,
   /** Un examen blanc. */
@@ -73,8 +81,28 @@ export const MAX_SOURCE = 60_000;
 
 // MARK: - Texte
 
-/** Les emojis et pictogrammes : jamais dans le texte d'une leçon. */
+/** Les emojis et pictogrammes : jamais dans le texte d'une leçon, sauf un en fin de sous-titre. */
 const EMOJI = /[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{FE0F}\u{200D}]/gu;
+
+/**
+ * Un emoji entier (avec son sélecteur de variante et ses jonctions), hors des symboles de texte
+ * que la propriété range aussi parmi les pictogrammes (©, ®, ™, ‼…) : ceux-là ne finissent pas
+ * un sous-titre.
+ */
+const EMOJI_SEQUENCE = /(?![©®™‼⁉])\p{Extended_Pictographic}\u{FE0F}?(?:\u{200D}\p{Extended_Pictographic}\u{FE0F}?)*/u;
+
+/**
+ * **Un sous-titre et son emoji.** Une fiche ouvre chaque partie par un titre qui finit sur un
+ * emoji (« Décrypter le sujet 🔍 ») : c'est le seul endroit où il en reste un. Le premier que le
+ * modèle écrit est gardé et mis à la fin ; les autres partent avec le reste du nettoyage.
+ */
+export function subtitleText(value: unknown, maxWords = 8): string {
+  if (typeof value !== "string") return "";
+  const emoji = EMOJI_SEQUENCE.exec(value)?.[0] ?? "";
+  const text = inline(value.replace(/^\s*#+\s*/, ""), 120, maxWords).replace(/\*\*/g, "").replace(/[\s,:;.\-]+$/, "").trim();
+  if (!text) return "";
+  return emoji ? `${text} ${emoji}` : text;
+}
 
 export function cleanText(value: unknown, maxLength = 600): string {
   if (typeof value !== "string") return "";
@@ -274,11 +302,17 @@ export function calloutKind(raw: unknown): CalloutKind {
 export interface NoteLimits {
   blocksMax: number;
   paragraphWords: number;
+  /** Les puces d'une liste, au plus : cinq d'ordinaire, huit dans une fiche dense. */
+  listItemsMax: number;
+  /** Les mots d'une puce : seize d'ordinaire, vingt-huit pour « **terme** : information ». */
+  listItemWords: number;
 }
 
 export const DEFAULT_NOTE_LIMITS: NoteLimits = {
   blocksMax: LIMITS.blocksMax + 2,
   paragraphWords: LIMITS.paragraphWords,
+  listItemsMax: LIMITS.listItemsMax,
+  listItemWords: LIMITS.listItemWords,
 };
 
 /**
@@ -286,11 +320,15 @@ export const DEFAULT_NOTE_LIMITS: NoteLimits = {
  * deux blocs de tolérance (un modèle qui écrit un bloc de trop ne perd pas sa fin), sous les
  * plafonds durs. Jamais en dessous des bornes d'avant.
  */
-export function noteLimits(depth?: { blocks: readonly [number, number]; paragraphWords: number }): NoteLimits {
+export function noteLimits(
+  depth?: { blocks: readonly [number, number]; paragraphWords: number; listItems?: number; listItemWords?: number },
+): NoteLimits {
   if (!depth) return DEFAULT_NOTE_LIMITS;
   return {
     blocksMax: Math.min(LIMITS.blocksHardMax, Math.max(DEFAULT_NOTE_LIMITS.blocksMax, depth.blocks[1] + 2)),
     paragraphWords: Math.min(LIMITS.paragraphHardWords, Math.max(LIMITS.paragraphWords, depth.paragraphWords)),
+    listItemsMax: Math.min(LIMITS.listItemsHardMax, Math.max(LIMITS.listItemsMax, depth.listItems ?? 0)),
+    listItemWords: Math.min(LIMITS.listItemHardWords, Math.max(LIMITS.listItemWords, depth.listItemWords ?? 0)),
   };
 }
 
@@ -341,12 +379,16 @@ export function rewriteChemistry(latex: string): string {
   );
 }
 
-/** Une liste aux règles : 3 à 5 puces ; moins, elle se lit en phrase. */
+/**
+ * Une liste aux règles : 3 à 5 puces (jusqu'à 8 dans une fiche dense) ; moins, elle se lit en
+ * phrase. Une sous-puce (« - » en retrait) devient une puce comme les autres : l'app dessine
+ * des listes plates.
+ */
 function listBlock(rawItems: unknown[], limits: NoteLimits = DEFAULT_NOTE_LIMITS): NoteBlock[] {
   const items = rawItems
-    .map((item) => inline(stripMarker(item), 240, LIMITS.listItemWords))
+    .map((item) => inline(stripMarker(item), 400, limits.listItemWords))
     .filter(Boolean)
-    .slice(0, LIMITS.listItemsMax);
+    .slice(0, limits.listItemsMax);
   if (items.length === 0) return [];
   // Une liste d'un ou deux points n'en est pas une : elle se lit en phrase.
   if (items.length < LIMITS.listItemsMin) {
@@ -439,8 +481,7 @@ export function readBlock(raw: unknown, limits: NoteLimits = DEFAULT_NOTE_LIMITS
   const items = Array.isArray(block.items) ? block.items : [];
   switch (type) {
     case "subtitle": {
-      const title = typeof block.text === "string" ? block.text.replace(/^\s*#+\s*/, "") : block.text;
-      const text = inline(title, 120, 8).replace(/\*\*/g, "").trim();
+      const text = subtitleText(block.text);
       return text ? [{ type, text }] : [];
     }
     case "paragraph":
@@ -502,11 +543,12 @@ export function readBlock(raw: unknown, limits: NoteLimits = DEFAULT_NOTE_LIMITS
           const entry = (item ?? {}) as Record<string, unknown>;
           return {
             date: cleanText(cellValue(entry.date), 40),
-            text: inline(entry.text, 200, 14),
+            // Une date de fiche porte aussi son chiffre (« OMC : 123 pays, droits de douane à 4 % »).
+            text: inline(entry.text, 300, Math.min(22, Math.max(14, limits.listItemWords - 6))),
           };
         })
         .filter((item) => item.date && item.text)
-        .slice(0, LIMITS.datesMax);
+        .slice(0, Math.min(8, Math.max(LIMITS.datesMax, limits.listItemsMax)));
       return dates.length >= 2 ? [{ type, items: dates }] : [];
     }
     case "formula": {
@@ -608,10 +650,29 @@ export function readNotes(raw: unknown, limits: NoteLimits = DEFAULT_NOTE_LIMITS
     return counted <= max;
   });
   while (blocks.length > 0 && blocks[blocks.length - 1]!.type === "subtitle") blocks.pop();
-  const takeaways = readSentences(notes.takeaways, LIMITS.takeawaysPerTheme, 22);
+  const takeaways = distinctTakeaways(readSentences(notes.takeaways, LIMITS.takeawaysPerTheme + 2, 22), oneLiner)
+    .slice(0, LIMITS.takeawaysPerTheme);
   const content = blocks.filter((block) => block.type !== "subtitle").length;
   if (!oneLiner || content < 1) return null;
   return { oneLiner, blocks, takeaways };
+}
+
+/**
+ * **« À retenir » ne redit pas l'idée clé.** Une phrase qui recopie le `oneLiner` (ou qui le
+ * contient, ou qu'il contient), ou qui en recopie une autre, part : l'élève la lit déjà deux
+ * lignes plus haut.
+ */
+export function distinctTakeaways(takeaways: string[], oneLiner: string): string[] {
+  const seen = [promptKey(oneLiner)].filter((key) => key.length >= 12);
+  const out: string[] = [];
+  for (const takeaway of takeaways) {
+    const key = promptKey(takeaway);
+    if (!key) continue;
+    if (seen.some((other) => other === key || (key.length >= 12 && (other.includes(key) || key.includes(other))))) continue;
+    seen.push(key);
+    out.push(takeaway);
+  }
+  return out;
 }
 
 function readSentences(raw: unknown, max: number, maxWords: number): string[] {
@@ -1079,10 +1140,16 @@ export interface LessonPlan {
   subject: string;
   icon: string;
   /**
-   * Chaque thème : son icône 3D, son pictogramme sur le chemin (jamais deux fois le même) et
-   * les notions qu'il doit couvrir.
+   * La nature du support (`material.ts`) : un chapitre, une copie, un sujet d'examen, une
+   * vidéo… Champ ajouté après les premières apps, qui l'ignorent ; il voyage jusqu'aux thèmes
+   * en tête du texte de référence (`materialHeader`).
    */
-  themes: { title: string; icon: string; symbol: string; points: string[] }[];
+  material: Material;
+  /**
+   * Chaque thème : son icône 3D, son pictogramme sur le chemin (jamais deux fois le même), les
+   * notions qu'il doit couvrir et son rôle dans la leçon (`ThemeRole`, ajouté comme `material`).
+   */
+  themes: { title: string; icon: string; symbol: string; points: string[]; role: ThemeRole }[];
   groups: { name: string; themes: number[] }[];
   intro: { lines: string[]; minutes: number };
   takeaways: string[];
@@ -1116,10 +1183,22 @@ export function uniqueIcons<T extends { icon: string }>(themes: T[], lessonIcon:
  */
 export function readPlan(
   raw: unknown,
-  options: { shortSource: boolean; shortened: boolean; fallbackTitle: string; maxThemes?: number },
+  options: {
+    shortSource: boolean;
+    shortened: boolean;
+    fallbackTitle: string;
+    maxThemes?: number;
+    /** La nature du support quand le modèle n'en donne pas : celle que le texte laisse deviner. */
+    fallbackMaterial?: Material;
+    /** Imposée quand elle ne fait pas de doute : `topic` sans document, `lecture` pour une vidéo. */
+    forcedMaterial?: Material;
+    /** L'élève prépare une épreuve : un thème de méthode est permis même pour un cours. */
+    examOriented?: boolean;
+  },
 ): LessonPlan | null {
   if (!raw || typeof raw !== "object") return null;
   const plan = raw as Record<string, unknown>;
+  const material = options.forcedMaterial ?? readMaterial(plan.material) ?? options.fallbackMaterial ?? "chapter";
   const seen = new Set<string>();
   let themes = (Array.isArray(plan.themes) ? plan.themes : [])
     .map((theme) => {
@@ -1129,6 +1208,7 @@ export function readPlan(
         icon: normalizeIcon(entry.icon),
         symbol: typeof entry.symbol === "string" ? entry.symbol : "",
         points: readSentences(entry.points, LIMITS.pointsPerTheme, 12).map((point) => point.replace(/\*\*/g, "")),
+        role: readRole(entry.role),
       };
     })
     .filter((theme) => {
@@ -1141,6 +1221,10 @@ export function readPlan(
   const ceiling = Math.min(LIMITS.maxThemes, Math.max(LIMITS.minThemes, options.maxThemes ?? LIMITS.maxThemes));
   themes = themes.slice(0, singleQuiz ? LIMITS.minThemes : ceiling);
   if (themes.length < (singleQuiz ? 2 : LIMITS.minThemes - 1)) return null;
+  // Un sujet de dissertation tapé se lit comme une copie : sa méthode a sa place.
+  const examOriented = options.examOriented === true ||
+    (material === "topic" && themes.some((theme) => theme.role === "decrypt"));
+  themes = themes.map((theme) => ({ ...theme, role: allowedRole(theme.role, material, examOriented) }));
   const lessonIcon = normalizeIcon(plan.icon) || DEFAULT_ICON;
   themes = uniqueIcons(themes, lessonIcon);
   const symbols = uniqueSymbols(themes.map((theme) => theme.symbol));
@@ -1158,6 +1242,7 @@ export function readPlan(
     title: title || options.fallbackTitle,
     subject: clampWords(cleanText(plan.subject, 60).replace(/\*\*/g, ""), 4),
     icon: lessonIcon,
+    material,
     themes,
     groups: groups.map((themes, index) => ({ name: names[index] ?? "", themes })),
     intro: { lines, minutes: estimateMinutes(themes.length, groups.length) },

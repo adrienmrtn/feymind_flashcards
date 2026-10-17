@@ -4,6 +4,7 @@ import {
   clampParagraph,
   cleanInline,
   cleanText,
+  distinctTakeaways,
   estimateMinutes,
   fairShares,
   finalFirst,
@@ -20,6 +21,7 @@ import {
   readQuestions,
   readTrueFalse,
   separateBoxes,
+  subtitleText,
   words,
 } from "./schema.ts";
 
@@ -328,4 +330,87 @@ Deno.test("le budget des notes se partage entre tous les thèmes", () => {
   assertEquals(fairShares([], 1_000), []);
   const shares = fairShares([7, 7, 7], 10);
   assertEquals(shares.reduce((a, b) => a + b, 0), 10);
+});
+
+Deno.test("un sous-titre garde un emoji, à sa fin ; nulle part ailleurs", () => {
+  assertEquals(subtitleText("Décrypter le sujet 🔍"), "Décrypter le sujet 🔍");
+  assertEquals(subtitleText("🔍 Décrypter le sujet"), "Décrypter le sujet 🔍", "l'emoji passe à la fin");
+  assertEquals(subtitleText("Les limites ⚠️ et les risques 🔥"), "Les limites et les risques ⚠️", "un seul");
+  assertEquals(subtitleText("## **Méthode** pour la copie 🛠️"), "Méthode pour la copie 🛠️");
+  assertEquals(subtitleText("Familles 👨‍👩‍👧"), "Familles 👨‍👩‍👧", "une séquence jointe reste entière");
+  assertEquals(subtitleText("Marque déposée ™"), "Marque déposée", "un symbole de texte n'est pas un emoji de titre");
+  assertEquals(subtitleText("🔍"), "", "un emoji seul n'est pas un titre");
+  const notes = readNotes({
+    oneLiner: "Le taux d'ouverture 📈 mesure la place du commerce.",
+    blocks: [
+      { type: "subtitle", text: "Mesurer l'ouverture 📈" },
+      { type: "paragraph", text: "Un indicateur 📊 simple." },
+      { type: "list", items: ["**GATT** 🌍 : 1947", "**OMC** : 1995", "**Covid-19** : choc de 2020"] },
+    ],
+  });
+  assert(notes);
+  assertEquals(notes.blocks[0], { type: "subtitle", text: "Mesurer l'ouverture 📈" });
+  assert(!notes.oneLiner.includes("📈"));
+  assert(notes.blocks[1]?.type === "paragraph" && !notes.blocks[1].text.includes("📊"));
+  assert(notes.blocks[2]?.type === "list" && !notes.blocks[2].items[0]!.includes("🌍"));
+});
+
+Deno.test("« À retenir » ne redit pas l'idée clé", () => {
+  const oneLiner = "Le commerce mondial se transforme plutôt qu'il ne disparaît.";
+  assertEquals(
+    distinctTakeaways([
+      "Le commerce mondial se transforme plutôt qu'il ne disparaît.",
+      "Le commerce mondial se transforme",
+      "Le taux d'ouverture rapporte (X+M)/2 au PIB.",
+      "Le taux d'ouverture rapporte (X+M)/2 au PIB !",
+      "Rodrik (2024) décrit un trilemme.",
+    ], oneLiner),
+    ["Le taux d'ouverture rapporte (X+M)/2 au PIB.", "Rodrik (2024) décrit un trilemme."],
+  );
+  const notes = readNotes({
+    oneLiner,
+    blocks: [{ type: "paragraph", text: "Un texte." }],
+    takeaways: [oneLiner, "Une.", "Deux idées différentes ici.", "Trois idées encore différentes.", "Quatre."],
+  });
+  assert(notes);
+  assertEquals(notes.takeaways.length, 3, "la place laissée par le doublon revient à la suivante");
+  assert(!notes.takeaways.includes(oneLiner));
+});
+
+Deno.test("le plan porte la nature du support et le rôle de chaque thème", () => {
+  const themes = [
+    { title: "Décrypter le sujet", role: "decrypt" },
+    { title: "I. Une fin apparente", role: "core" },
+    { title: "II. Des fondations solides", role: "partie" },
+    { title: "III. Une transformation", role: "core" },
+    { title: "Méthode pour la copie", role: "method" },
+    { title: "Concepts-clés", role: "keyterms" },
+  ];
+  const essay = readPlan({ material: "dissertation", title: "La fin de l'ouverture ?", themes }, { shortSource: false, shortened: false, fallbackTitle: "x" });
+  assert(essay);
+  assertEquals(essay.material, "essay");
+  assertEquals(essay.themes.map((theme) => theme.role), ["decrypt", "core", "core", "core", "method", "keyterms"]);
+  assertEquals(essay.themes[1]!.title, "I. Une fin apparente");
+
+  // Sans nature lisible, la première lecture du serveur ; sans elle, un chapitre.
+  assertEquals(readPlan({ themes }, { shortSource: false, shortened: false, fallbackTitle: "x", fallbackMaterial: "exam" })?.material, "exam");
+  assertEquals(readPlan({ material: "?", themes }, { shortSource: false, shortened: false, fallbackTitle: "x" })?.material, "chapter");
+
+  // Une vidéo reste une vidéo, quoi qu'en dise le modèle ; ni sujet à décrypter, ni méthode
+  // de copie pour un élève qui ne prépare pas d'épreuve.
+  const video = readPlan({ material: "essay", themes }, { shortSource: false, shortened: false, fallbackTitle: "x", forcedMaterial: "lecture" });
+  assert(video);
+  assertEquals(video.material, "lecture");
+  assertEquals(video.themes.map((theme) => theme.role), ["core", "core", "core", "core", "core", "keyterms"]);
+  const prepared = readPlan({ material: "chapter", themes }, { shortSource: false, shortened: false, fallbackTitle: "x", examOriented: true });
+  assertEquals(prepared?.themes[4]!.role, "method", "un élève qui prépare une épreuve garde la méthode");
+
+  // Un sujet de dissertation tapé : décrypté, il garde sa méthode.
+  const typed = readPlan({ material: "topic", themes }, { shortSource: false, shortened: false, fallbackTitle: "x", forcedMaterial: "topic" });
+  assertEquals(typed?.themes.map((theme) => theme.role), ["decrypt", "core", "core", "core", "method", "keyterms"]);
+
+  // Six notions par thème au plus.
+  const points = readPlan({ themes: themes.map((theme) => ({ ...theme, points: ["a", "b", "c", "d", "e", "f", "g", "h"] })) }, { shortSource: false, shortened: false, fallbackTitle: "x" });
+  assertEquals(points?.themes[0]!.points.length, LIMITS.pointsPerTheme);
+  assertEquals(LIMITS.pointsPerTheme, 6);
 });
