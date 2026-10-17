@@ -264,10 +264,10 @@ describe("la profondeur suit la marche", () => {
   it("les bornes viennent de depthOf, sous les plafonds durs", () => {
     const lists = { listItemsMax: 5, listItemWords: 16 };
     assert.deepEqual(noteLimits(), { blocksMax: 7, paragraphWords: 60, ...lists });
-    assert.deepEqual(noteLimits(depthOf("lowerSecondary")), { blocksMax: 8, paragraphWords: 70, ...lists });
-    assert.deepEqual(noteLimits(depthOf("upperSecondary")), { blocksMax: 10, paragraphWords: 90, listItemsMax: 6, listItemWords: 22 });
+    assert.deepEqual(noteLimits(depthOf("lowerSecondary")), { blocksMax: 8, paragraphWords: 85, ...lists });
+    assert.deepEqual(noteLimits(depthOf("upperSecondary")), { blocksMax: 10, paragraphWords: 110, listItemsMax: 6, listItemWords: 22 });
     // Une fiche : moins de blocs, plus denses ; des listes de huit puces de vingt-huit mots.
-    assert.deepEqual(noteLimits(depthOf("graduate")), { blocksMax: 10, paragraphWords: 80, listItemsMax: 8, listItemWords: 28 });
+    assert.deepEqual(noteLimits(depthOf("graduate")), { blocksMax: 10, paragraphWords: 95, listItemsMax: 8, listItemWords: 28 });
     assert.deepEqual(
       noteLimits({ blocks: [20, 40], paragraphWords: 500, listItems: 30, listItemWords: 90 }),
       { blocksMax: LIMITS.blocksHardMax, paragraphWords: LIMITS.paragraphHardWords, listItemsMax: LIMITS.listItemsHardMax, listItemWords: LIMITS.listItemHardWords },
@@ -285,8 +285,9 @@ describe("la profondeur suit la marche", () => {
     assert.equal(old.blocks.length, 10);
     const first = (notes: typeof young) => notes.blocks[0]!.type === "paragraph" ? words(notes.blocks[0]!.text).length : 0;
     assert.equal(first(before), 60);
-    assert.equal(first(young), 70);
-    assert.equal(first(old), 80, "une fiche a peu de prose, et courte");
+    // Des phrases de dix mots : un plafond de 85 garde huit phrases, un de 95 en garde neuf.
+    assert.equal(first(young), 80);
+    assert.equal(first(old), 90, "une fiche a peu de prose, et courte");
     const item = `**Rodrik (2024)** : ${Array.from({ length: 40 }, (_, i) => `mot${i}`).join(" ")}`;
     const items = Array.from({ length: 10 }, (_, i) => `${item} ${i}`);
     const [kid] = readBlock({ type: "list", items }, noteLimits(depthOf("lowerSecondary")));
@@ -302,7 +303,7 @@ describe("la profondeur suit la marche", () => {
   it("la définition et l'exemple suivent la longueur de la marche", () => {
     const limits = noteLimits(depthOf("health"));
     const [example] = readBlock({ type: "example", text: paragraph }, limits);
-    assert.equal(example?.type === "example" && words(example.text).length, 80);
+    assert.equal(example?.type === "example" && words(example.text).length, 90);
     const [short] = readBlock({ type: "example", text: paragraph });
     assert.equal(short?.type === "example" && words(short.text).length, 60);
   });
@@ -314,14 +315,15 @@ describe("le fil d'enseignement du thème", () => {
       assert(THEME_SYSTEM_PROMPT.includes(part), part);
     }
     assert(!THEME_SYSTEM_PROMPT.includes("2 à 5 blocs"), "le nombre de blocs vient de la marche");
-    assert.equal(PROMPT_VERSION, "lesson-v4.0.0");
+    assert.equal(PROMPT_VERSION, "lesson-v4.1.0");
   });
 
   it("le volume des notes et la question d'examen suivent la marche", () => {
     const brief = (tier: Parameters<typeof depthOf>[0]) =>
       themeBrief({ lessonTitle: "L", themeTitle: "T", themeIndex: 0, themes: ["a"], questions: 6, flashcards: 5, kinds: ["choice"], depth: depthOf(tier) });
-    assert.match(brief("lowerSecondary"), /4 à 6 blocs .* 70 mots au plus/);
-    assert.match(brief("graduate"), /4 à 8 blocs .* 80 mots au plus, des listes de 8 puces au plus, de 28 mots/);
+    // Un plancher et un plafond : un plafond seul donnait des paragraphes de deux phrases.
+    assert.match(brief("lowerSecondary"), /4 à 6 blocs .* paragraphes de 51 à 85 mots/);
+    assert.match(brief("graduate"), /4 à 8 blocs .* paragraphes de 57 à 95 mots, des listes de 8 puces au plus, de 28 mots/);
     assert(brief("health").includes("format exact de son examen"));
     assert(!brief("lowerSecondary").includes("format exact de son examen"));
     assert.match(themeBrief({ lessonTitle: "L", themeTitle: "T", themeIndex: 0, themes: ["a"], questions: 6, flashcards: 5, kinds: ["choice"] }), /5 à 7 blocs/);

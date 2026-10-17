@@ -465,6 +465,11 @@ export interface Depth {
  * La ligne `style` dit la FAÇON d'expliquer ; le vocabulaire et le registre sont dans
  * `TIER_BRIEFS`, elle ne les répète pas.
  *
+ * **Des paragraphes qui ont la place d'expliquer.** Le plafond seul ne suffisait pas : un
+ * modèle à qui l'on dit « quatre-vingt-dix mots au plus » en écrit quarante-cinq, deux phrases
+ * par écran, et l'élève tournait des pages presque vides. Les plafonds ont monté d'un cran, et
+ * le prompt donne aussi un plancher (`PARAGRAPH_FLOOR`, dans `generate-lesson/prompt.ts`).
+ *
  * **Une fiche, pas un manuel, aux niveaux avancés.** De la prépa au master, en santé et pour un
  * concours, les notes se lisent comme une fiche de révision dense : moins de blocs, mais des
  * listes plus longues dont chaque puce porte un terme de tête et son information (un auteur et
@@ -476,7 +481,7 @@ export function depthOf(tier: Tier): Depth {
     case "lowerSecondary":
       return {
         blocks: [4, 6],
-        paragraphWords: 70,
+        paragraphWords: 85,
         style: "Explique pas à pas, sans rien sauter : une analogie de la vie courante (le sport, l'argent de poche, la cuisine, un jeu) pour chaque idée abstraite, un exemple de son âge, et la raison de chaque règle dite simplement.",
         examFormat: false,
         register: "guided",
@@ -486,7 +491,7 @@ export function depthOf(tier: Tier): Depth {
     case "upperSecondary":
       return {
         blocks: [5, 8],
-        paragraphWords: 90,
+        paragraphWords: 110,
         style: "Explique chaque mécanisme jusqu'au bout, avec ses causes et ses conséquences ; une analogie quand la notion est abstraite ; des exemples du niveau d'un sujet d'examen.",
         examFormat: true,
         register: "explained",
@@ -498,7 +503,7 @@ export function depthOf(tier: Tier): Depth {
     case "competitive":
       return {
         blocks: [4, 8],
-        paragraphWords: 80,
+        paragraphWords: 95,
         style: "Dense et rigoureux : hypothèses, conditions d'application, cas limites et valeurs exactes, chaque étape d'un raisonnement écrite, le tout en puces serrées ; pas d'analogie.",
         examFormat: true,
         register: "fiche",
@@ -509,7 +514,7 @@ export function depthOf(tier: Tier): Depth {
     case "graduate":
       return {
         blocks: [4, 8],
-        paragraphWords: 80,
+        paragraphWords: 95,
         style: "Dense et rigoureux : le mécanisme, ses conditions de validité, ses limites, les auteurs et les nuances du cours, le tout en puces serrées ; pas d'analogie.",
         examFormat: false,
         register: "fiche",
@@ -519,7 +524,7 @@ export function depthOf(tier: Tier): Depth {
     default:
       return {
         blocks: [5, 7],
-        paragraphWords: 80,
+        paragraphWords: 95,
         style: "Explique chaque idée avec sa raison et un exemple concret ; une analogie quand la notion est abstraite.",
         examFormat: false,
         register: "explained",

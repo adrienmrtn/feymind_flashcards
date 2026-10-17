@@ -190,3 +190,41 @@ Deno.test("stripPreamble ôte la phrase d'annonce, pas la première notion", () 
   // Un texte d'une seule ligne n'a pas de préambule à retirer.
   assertEquals(stripPreamble("Voici le compte rendu."), "Voici le compte rendu.");
 });
+
+/** Le décompte suit l'argent : les sous-titres sont gratuits, la lecture par le modèle non. */
+Deno.test("readTranscript ne décompte que la lecture par le modèle", async () => {
+  let counted = 0;
+  const count = () => {
+    counted += 1;
+    return Promise.resolve();
+  };
+
+  await withFetch(
+    (url) => (isGemini(url) ? geminiReading() : captionsJson3()),
+    "gemini-test",
+    async () => {
+      await readTranscript("abc", [track()], ["fr"], count);
+      assertEquals(counted, 0);
+
+      const transcript = await readTranscript("abc", [], ["fr"], count);
+      assertEquals(transcript.source, "model");
+      assertEquals(counted, 1);
+    },
+  );
+});
+
+/** Un quota épuisé arrête la lecture avant l'appel, pas après. */
+Deno.test("readTranscript n'appelle pas Gemini quand le décompte refuse", async () => {
+  await withFetch(
+    (url) => (isGemini(url) ? geminiReading() : captionsJson3()),
+    "gemini-test",
+    async (calls) => {
+      await assertRejects(
+        () => readTranscript("abc", [], ["fr"], () => Promise.reject(new Error("quota"))),
+        Error,
+        "quota",
+      );
+      assertEquals(calls.some(isGemini), false);
+    },
+  );
+});

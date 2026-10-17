@@ -464,7 +464,7 @@ L'application appelle deux Edge Functions Supabase. Le code source est dans `sup
 | `generate-flashcards` | Produit un jeu de cartes recto verso à partir de cette fiche |
 | `explain-selection` | Explique un passage sélectionné dans la fiche, en s'appuyant sur le reste du cours |
 | `mika-chat` | Mika répond au dernier message d'une conversation, avec les huit derniers tours et le document joint ; rend une réponse d'un bloc et, quand il y a quelque chose à retenir, une carte. Voir « Mika, l'onglet » |
-| `youtube-transcript` | Métadonnées d'une vidéo puis, après confirmation, ses sous-titres. C'est la seule fonction qui n'appelle aucun modèle |
+| `youtube-transcript` | Métadonnées d'une vidéo puis, après confirmation, ses sous-titres. Quand YouTube les refuse, Gemini lit la vidéo : c'est l'appel le plus cher, décompté à part (`youtube-video`, 2 par jour en gratuit, 10 en Pro). Les sous-titres ne décomptent rien |
 
 ### 1. Ajouter la clé fal.ai
 

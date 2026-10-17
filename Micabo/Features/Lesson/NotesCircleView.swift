@@ -14,6 +14,7 @@ struct NotesCircleView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.layoutDirection) private var layoutDirection
 
     @State private var page = 0
     /// Le plus loin qu'on soit allé : on ne glisse pas au-delà sans avoir lu.
@@ -41,11 +42,26 @@ struct NotesCircleView: View {
                     removal: .move(edge: forward ? .leading : .trailing).combined(with: .opacity)
                 ))
             }
-            // **Pas de balayage latéral** : la page ne bouge que de haut en bas, marges fixes.
-            // Le glisser à gauche ou à droite tournait la page au moindre geste de travers, et
-            // la page semblait flotter. On avance avec « Continuer », on revient avec la flèche.
+            // **Le glissé tourne la page, et seulement lui.** La page ne suit pas le doigt : elle
+            // tourne quand le geste est fini, marges fixes, sans flotter. Un geste de travers ou
+            // un défilement vertical ne la tourne pas : voir `NotesSwipe`.
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .clipped()
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 30, coordinateSpace: .global)
+                    .onEnded { value in
+                        switch NotesSwipe.direction(
+                            of: value.translation,
+                            predicted: value.predictedEndTranslation,
+                            rightToLeft: layoutDirection == .rightToLeft
+                        ) {
+                        case .forward: advanceIfAllowed()
+                        case .back: back()
+                        case nil: break
+                        }
+                    }
+            )
 
             bottomBar(current: current, isLast: page == pages.count - 1)
         }
@@ -85,6 +101,14 @@ struct NotesCircleView: View {
         }
     }
 
+    /// Le glissé vers l'avant fait ce que fait « Continuer », sauf finir l'étape : la question
+    /// de fin attend sa réponse, et la dernière page se quitte avec son bouton.
+    private func advanceIfAllowed() {
+        let current = pages.indices.contains(page) ? pages[page] : .question
+        guard current != .question || answer != nil else { return }
+        next()
+    }
+
     private func back() {
         guard page > 0 else { return }
         Haptics.light()
@@ -104,6 +128,36 @@ struct NotesCircleView: View {
         let read = Double(furthest + 1) / Double(max(1, pages.count))
         session.setInCircle(read * (answer == nil ? 0.9 : 1), in: modelContext)
         dismiss()
+    }
+}
+
+/// **Le glissé qui tourne une page de notes, et ceux qui ne la tournent pas.**
+///
+/// Le balayage avait été retiré parce qu'il tournait la page au moindre geste de travers :
+/// cinquante points, et un geste à peine plus horizontal que vertical, suffisaient. Il revient
+/// plus exigeant : le geste doit être nettement horizontal (`slant` fois plus large que haut),
+/// et assez long, ou lancé assez vite. Un défilement vertical qui dérive un peu ne tourne rien.
+///
+/// Le geste est lu en coordonnées d'écran : en arabe ou en hébreu, la page suivante arrive par
+/// la gauche, comme le reste de l'app, et c'est un glissé vers la droite qui l'amène.
+enum NotesSwipe {
+    enum Direction: Equatable { case forward, back }
+
+    /// La longueur d'un glissé qui tourne la page.
+    static let distance: CGFloat = 70
+    /// La longueur où le geste, lancé, serait arrivé : un geste court mais vif tourne aussi.
+    static let flick: CGFloat = 160
+    /// De combien le geste doit être plus large que haut.
+    static let slant: CGFloat = 2.2
+
+    static func direction(of translation: CGSize, predicted: CGSize, rightToLeft: Bool = false) -> Direction? {
+        let dx = translation.width
+        guard abs(dx) > slant * abs(translation.height) else { return nil }
+        let long = abs(dx) >= distance
+        let flung = abs(dx) >= distance / 2 && abs(predicted.width) >= flick && predicted.width.sign == dx.sign
+        guard long || flung else { return nil }
+        let towardStart = rightToLeft ? dx < 0 : dx > 0
+        return towardStart ? .back : .forward
     }
 }
 
