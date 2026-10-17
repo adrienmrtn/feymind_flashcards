@@ -15,6 +15,7 @@
         <item quantity="other">%1$d dana zaredom</item>
     </plurals>
     <plurals name="ios_profile_streakToBeat">
+        <item quantity="one">Tvoj rekord je %2$s. Još %1$d dan i obaraš ga.</item>
         <item quantity="other">Tvoj rekord je %2$s. Još %1$d dana i obaraš ga.</item>
     </plurals>
     <plurals name="ios_streak_bestValue">
@@ -34,6 +35,7 @@
         <item quantity="other">Pitanja bez odgovora: %1$d. Ipak predati?</item>
     </plurals>
     <plurals name="lesson_lessons_examDays">
+        <item quantity="one">Još %1$d dan</item>
         <item quantity="other">Još %1$d dana</item>
     </plurals>
 </resources>

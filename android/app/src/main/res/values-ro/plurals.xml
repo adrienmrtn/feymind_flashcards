@@ -17,6 +17,7 @@
         <item quantity="other">%1$d de zile la rând</item>
     </plurals>
     <plurals name="ios_profile_streakToBeat">
+        <item quantity="one">Recordul tău e %2$s. Încă %1$d zi și-l depășești.</item>
         <item quantity="other">Recordul tău e %2$s. Încă %1$d zile și-l depășești.</item>
     </plurals>
     <plurals name="ios_streak_bestValue">
@@ -40,6 +41,7 @@
         <item quantity="other">%1$d de întrebări sunt fără răspuns. Predai oricum?</item>
     </plurals>
     <plurals name="lesson_lessons_examDays">
+        <item quantity="one">Mai e %1$d zi</item>
         <item quantity="other">Mai sunt %1$d zile</item>
     </plurals>
 </resources>

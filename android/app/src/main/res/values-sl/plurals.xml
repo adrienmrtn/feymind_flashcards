@@ -16,7 +16,8 @@
         <item quantity="other">Dni zapored: %1$d</item>
     </plurals>
     <plurals name="ios_profile_streakToBeat">
-        <item quantity="other">Tvoj rekord je %2$s. Še %1$d dni in ga podreš.</item>
+        <item quantity="one">Tvoj rekord je %2$s. Še %1$d dan in ga podreš.</item>
+        <item quantity="other">Tvoj rekord je %2$s. Dni do novega rekorda: %1$d.</item>
     </plurals>
     <plurals name="ios_streak_bestValue">
         <item quantity="one">%1$d dan</item>
@@ -39,6 +40,7 @@
         <item quantity="other">Vprašanja brez odgovora: %1$d. Vseeno oddaš?</item>
     </plurals>
     <plurals name="lesson_lessons_examDays">
-        <item quantity="other">Še %1$d dni</item>
+        <item quantity="one">Še %1$d dan</item>
+        <item quantity="other">Preostali dnevi: %1$d</item>
     </plurals>
 </resources>

@@ -14,6 +14,7 @@
         <item quantity="other">%1$d jours d\'affilée</item>
     </plurals>
     <plurals name="ios_profile_streakToBeat">
+        <item quantity="one">Ton record est de %2$s. Encore %1$d jour et tu le bats.</item>
         <item quantity="other">Ton record est de %2$s. Encore %1$d jours et tu le bats.</item>
     </plurals>
     <plurals name="ios_streak_bestValue">

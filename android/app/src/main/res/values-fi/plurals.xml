@@ -14,6 +14,7 @@
         <item quantity="other">%1$d päivää putkeen</item>
     </plurals>
     <plurals name="ios_profile_streakToBeat">
+        <item quantity="one">Ennätyksesi on %2$s. Vielä %1$d päivä, niin rikot sen.</item>
         <item quantity="other">Ennätyksesi on %2$s. Vielä %1$d päivää, niin rikot sen.</item>
     </plurals>
     <plurals name="ios_streak_bestValue">
@@ -33,6 +34,7 @@
         <item quantity="other">%1$d kysymystä on vastaamatta. Palautetaanko silti?</item>
     </plurals>
     <plurals name="lesson_lessons_examDays">
+        <item quantity="one">%1$d päivä jäljellä</item>
         <item quantity="other">%1$d päivää jäljellä</item>
     </plurals>
 </resources>

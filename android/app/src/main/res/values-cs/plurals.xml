@@ -14,7 +14,8 @@
         <item quantity="other">Dní v řadě: %1$d</item>
     </plurals>
     <plurals name="ios_profile_streakToBeat">
-        <item quantity="other">Tvůj rekord: %2$s. Vydrž ještě %1$d dní a pokoříš ho.</item>
+        <item quantity="one">Tvůj rekord: %2$s. Vydrž ještě %1$d den a pokoříš ho.</item>
+        <item quantity="other">Tvůj rekord: %2$s. Dní do nového rekordu: %1$d.</item>
     </plurals>
     <plurals name="ios_streak_bestValue">
         <item quantity="one">%1$d den</item>

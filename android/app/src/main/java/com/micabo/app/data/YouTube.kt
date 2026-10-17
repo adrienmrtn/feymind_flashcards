@@ -61,11 +61,16 @@ class YouTubeImport(private val functions: SupabaseFunctions) {
             }, timeoutMs = 240_000)
         } catch (error: ApiException) {
             throw ImportException(
-                when (error.code) {
-                    "invalid_url" -> R.string.ios_yt_invalidLink
-                    "unavailable" -> R.string.ios_yt_unavailable
-                    "too_short" -> R.string.ios_yt_tooShort
-                    else -> R.string.ios_yt_noCaptions
+                when {
+                    // Le plafond du jour des lectures par le modèle (code « quota », 429) : le dire
+                    // tel quel, au lieu d'un « pas de sous-titres » qu'on réessaierait.
+                    error.code == "quota" || error.isDailyLimit -> R.string.lesson_error_dailyLimit
+                    else -> when (error.code) {
+                        "invalid_url" -> R.string.ios_yt_invalidLink
+                        "unavailable" -> R.string.ios_yt_unavailable
+                        "too_short" -> R.string.ios_yt_tooShort
+                        else -> R.string.ios_yt_noCaptions
+                    }
                 },
             )
         }

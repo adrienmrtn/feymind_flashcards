@@ -14,6 +14,7 @@
         <item quantity="other">%1$d dni z rzędu</item>
     </plurals>
     <plurals name="ios_profile_streakToBeat">
+        <item quantity="one">Twój rekord: %2$s. Jeszcze %1$d dzień i go pobijesz.</item>
         <item quantity="other">Twój rekord: %2$s. Jeszcze %1$d dni i go pobijesz.</item>
     </plurals>
     <plurals name="ios_streak_bestValue">

@@ -14,7 +14,8 @@
         <item quantity="other">أيام متتالية: %1$d</item>
     </plurals>
     <plurals name="ios_profile_streakToBeat">
-        <item quantity="other">رقمك القياسي %2$s. بقيت %1$d أيام لتتجاوزه.</item>
+        <item quantity="one">رقمك القياسي %2$s. بقي يوم واحد لتتجاوزه.</item>
+        <item quantity="other">رقمك القياسي %2$s. الأيام المتبقية لتتجاوزه: %1$d.</item>
     </plurals>
     <plurals name="ios_streak_bestValue">
         <item quantity="one">يوم واحد</item>
@@ -36,6 +37,7 @@
         <item quantity="other">أسئلة دون إجابة: %1$d. هل تسلّم على أي حال؟</item>
     </plurals>
     <plurals name="lesson_lessons_examDays">
-        <item quantity="other">بقي %1$d أيام</item>
+        <item quantity="one">بقي يوم واحد</item>
+        <item quantity="other">الأيام المتبقية: %1$d</item>
     </plurals>
 </resources>

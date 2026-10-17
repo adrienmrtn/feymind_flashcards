@@ -18,7 +18,7 @@
     <string name="app_friends_list">Arkadaşların</string>
     <string name="app_friends_loadingCourses">Derslerine bakıyoruz…</string>
     <string name="app_friends_needAccount">Birini eklemek için hesap gerekir</string>
-    <string name="app_friends_noShared">%1$s paylaşılmış dersi yok.</string>
+    <string name="app_friends_noShared">%1$s henüz ders paylaşmamış.</string>
     <string name="app_friends_nothingToSee">Şimdilik görülecek bir şey yok</string>
     <string name="app_friends_outgoing">Gönderilen istekler</string>
     <string name="app_friends_removeFriend">Arkadaşlarımdan çıkar</string>

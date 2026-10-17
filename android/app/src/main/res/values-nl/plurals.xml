@@ -14,6 +14,7 @@
         <item quantity="other">%1$d dagen op rij</item>
     </plurals>
     <plurals name="ios_profile_streakToBeat">
+        <item quantity="one">Je record is %2$s. Nog %1$d dag en je verbreekt het.</item>
         <item quantity="other">Je record is %2$s. Nog %1$d dagen en je verbreekt het.</item>
     </plurals>
     <plurals name="ios_streak_bestValue">
@@ -33,6 +34,7 @@
         <item quantity="other">%1$d vragen zijn niet beantwoord. Toch inleveren?</item>
     </plurals>
     <plurals name="lesson_lessons_examDays">
+        <item quantity="one">Nog %1$d dag</item>
         <item quantity="other">Nog %1$d dagen</item>
     </plurals>
 </resources>

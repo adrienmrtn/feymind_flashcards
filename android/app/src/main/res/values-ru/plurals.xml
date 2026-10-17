@@ -14,6 +14,7 @@
         <item quantity="other">Дней подряд: %1$d</item>
     </plurals>
     <plurals name="ios_profile_streakToBeat">
+        <item quantity="one">Твой рекорд — %2$s. Ещё %1$d день — и он побит.</item>
         <item quantity="other">Твой рекорд — %2$s. Ещё %1$d дн. — и он побит.</item>
     </plurals>
     <plurals name="ios_streak_bestValue">
