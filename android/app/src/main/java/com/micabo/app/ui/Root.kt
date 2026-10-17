@@ -28,6 +28,7 @@ import com.micabo.app.MicaboApplication
 import com.micabo.app.data.LessonRequest
 import com.micabo.app.ui.home.CreatingScreen
 import com.micabo.app.ui.lesson.FlashcardsScreen
+import com.micabo.app.ui.lesson.MikaScreen
 import com.micabo.app.ui.lesson.IntroScreen
 import com.micabo.app.ui.lesson.LessonScreen
 import com.micabo.app.ui.lesson.NotesScreen
@@ -48,6 +49,7 @@ sealed interface Screen {
     /** Un quiz : celui d'un palier, le final, ou « tout le quiz » (`circle` vide). */
     data class Quiz(val id: String, val circle: String) : Screen
     data class Flashcards(val id: String) : Screen
+    data class Mika(val id: String) : Screen
     /** `reason` : le code du refus (`free_limit`, `import_pro`…), vide depuis les réglages. */
     data class Paywall(val reason: String) : Screen
 
@@ -149,6 +151,7 @@ private fun MainScreens(navigator: Navigator) {
                         is Screen.Notes -> NotesScreen(screen.id, screen.theme)
                         is Screen.Quiz -> QuizScreen(screen.id, screen.circle)
                         is Screen.Flashcards -> FlashcardsScreen(screen.id)
+                        is Screen.Mika -> MikaScreen(screen.id)
                         is Screen.Paywall -> PaywallScreen(screen.reason)
                     }
                 }

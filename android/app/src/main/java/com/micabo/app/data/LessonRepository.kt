@@ -166,6 +166,53 @@ class LessonRepository(
         }
     }
 
+    /** Une réponse fausse : son thème passe en tête de l'entraînement suivant. */
+    fun missed(id: String, theme: Int) = modify(id) { it.copy(progress = it.progress.copy(missed = it.progress.missed + theme)) }
+
+    /**
+     * **De nouvelles questions** (`LessonBuilder.practice`) : dix, loin de celles déjà posées,
+     * surtout là où l'élève se trompe. Elles rejoignent leurs thèmes et ressortent dans les
+     * quiz suivants. Rend les questions ajoutées, avec leur thème.
+     */
+    suspend fun practice(id: String, count: Int = 10): List<Pair<Int, Question>> {
+        val lesson = _lessons.value[id] ?: return emptyList()
+        val profile = prefs.profile.value
+        val payload = buildJsonObject {
+            audience(profile, language = lesson.language, exam = lesson.upcomingExam()?.let { examLine(lesson.title, it) })
+            put("stage", "practice")
+            put("lessonId", id)
+            put("lessonTitle", lesson.title)
+            put("subject", lesson.subject)
+            putJsonArray("practiceThemes") {
+                lesson.themes.forEach { theme ->
+                    add(buildJsonObject {
+                        put("title", theme.title)
+                        put("notes", theme.flatNotes().take(2_000))
+                    })
+                }
+            }
+            putJsonArray("focus") { lesson.progress.missed.sorted().forEach { add(JsonPrimitive(it)) } }
+            putJsonArray("avoid") { lesson.themes.flatMap { it.questions }.map { it.prompt.take(200) }.takeLast(80).forEach { add(JsonPrimitive(it)) } }
+            put("count", count)
+        }
+        val envelope = functions.call("generate-lesson", payload)
+        val generated = (envelope["questions"] as? JsonArray).orEmpty().mapNotNull { item ->
+            val raw = item as? JsonObject ?: return@mapNotNull null
+            val theme = raw.int("theme") ?: 0
+            val question = runCatching { MicaboJson.decodeFromJsonElement<Question>(raw) }.getOrNull() ?: return@mapNotNull null
+            if (theme in lesson.themes.indices && question.isValid) theme to question else null
+        }
+        if (generated.isNotEmpty()) {
+            modify(id) { current ->
+                current.copy(themes = current.themes.mapIndexed { index, theme ->
+                    val added = generated.filter { it.first == index }.map { it.second }
+                    if (added.isEmpty()) theme else theme.copy(questions = theme.questions + added)
+                })
+            }
+        }
+        return generated
+    }
+
     fun rename(id: String, title: String) {
         val clean = title.trim().take(120)
         if (clean.isNotEmpty()) modify(id) { it.copy(title = clean) }
@@ -363,7 +410,7 @@ class LessonRepository(
         putJsonArray("kinds") { listOf("choice", "truefalse", "gap", "order", "match").forEach { add(JsonPrimitive(it)) } }
     }
 
-    private fun levelOf(tier: String): String = when (tier) {
+    fun levelOf(tier: String): String = when (tier) {
         "lowerSecondary", "upperSecondary" -> "lycee"
         "preUniversity" -> "prepa"
         "undergraduate" -> "licence"

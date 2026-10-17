@@ -31,6 +31,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.rememberCoroutineScope
+import com.micabo.app.data.ApiException
+import com.micabo.app.data.Question
+import kotlinx.coroutines.launch
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,7 +59,6 @@ import androidx.compose.ui.unit.sp
 import com.micabo.app.R
 import com.micabo.app.data.Lesson
 import com.micabo.app.data.PathCircle
-import com.micabo.app.data.Question
 import com.micabo.app.data.pathCircles
 import com.micabo.app.ui.LocalApp
 import com.micabo.app.ui.LocalNavigator
@@ -77,7 +82,7 @@ import kotlin.random.Random
  * chaque thème est sa question de fin, déjà posée), mélangées, puis les questions de fin si
  * la réserve ne suffit pas.
  */
-fun quizQuestions(lesson: Lesson, circle: String, seed: Long): List<Question> {
+fun quizQuestions(lesson: Lesson, circle: String, seed: Long): List<Pair<Int, Question>> {
     val target = lesson.pathCircles().firstOrNull { it.id == circle }
     val themes = when (target) {
         is PathCircle.QuizCircle -> target.themes
@@ -90,10 +95,10 @@ fun quizQuestions(lesson: Lesson, circle: String, seed: Long): List<Question> {
         else -> 15
     }
     val random = Random(seed)
-    val pool = themes.mapNotNull { lesson.themes.getOrNull(it) }
-    val reserve = pool.flatMap { it.questions.drop(1) }.filter { it.isValid }.shuffled(random)
-    val finals = pool.mapNotNull { it.questions.firstOrNull() }.filter { it.isValid }.shuffled(random)
-    return (reserve + finals).distinctBy { it.prompt }.take(count)
+    val pool = themes.mapNotNull { index -> lesson.themes.getOrNull(index)?.let { index to it } }
+    val reserve = pool.flatMap { (index, theme) -> theme.questions.drop(1).map { index to it } }.filter { it.second.isValid }.shuffled(random)
+    val finals = pool.mapNotNull { (index, theme) -> theme.questions.firstOrNull()?.let { index to it } }.filter { it.second.isValid }.shuffled(random)
+    return (reserve + finals).distinctBy { it.second.prompt }.take(count)
 }
 
 /** **Un quiz** : celui d'un palier, le quiz final, ou tout le quiz de la leçon. */
@@ -112,7 +117,11 @@ fun QuizScreen(id: String, circle: String) {
     val haptics = rememberHaptics()
     val seed = rememberSaveable { System.currentTimeMillis() }
     val available = lesson.readyThemes
-    val questions = remember(id, circle, available) { quizQuestions(lesson, circle, seed) }
+    // Un lot de nouvelles questions remplace la série en cours (`LessonPracticeView`).
+    var fresh by remember { mutableStateOf<List<Pair<Int, Question>>?>(null) }
+    var round by rememberSaveable { mutableIntStateOf(0) }
+    val drawn = remember(id, circle, available) { quizQuestions(lesson, circle, seed) }
+    val questions = fresh ?: drawn
     var index by rememberSaveable { mutableIntStateOf(0) }
     var right by rememberSaveable { mutableIntStateOf(0) }
     var streak by rememberSaveable { mutableIntStateOf(0) }
@@ -137,7 +146,13 @@ fun QuizScreen(id: String, circle: String) {
         if (questions.isEmpty()) {
             Waiting(stringResource(R.string.lesson_quiz_empty), Modifier.fillMaxSize())
         } else if (index >= questions.size) {
-            Results(lesson, circle, right, questions.size)
+            Results(lesson, circle, right, questions.size, onFresh = { batch ->
+                fresh = batch
+                round += 1
+                index = 0
+                right = 0
+                streak = 0
+            })
         } else {
         AnimatedContent(
             targetState = index,
@@ -148,7 +163,7 @@ fun QuizScreen(id: String, circle: String) {
             modifier = Modifier.weight(1f),
             label = "question",
         ) { shown ->
-            val question = questions[shown]
+            val (theme, question) = questions[shown.coerceAtMost(questions.lastIndex)]
             Column(
                 Modifier
                     .fillMaxSize()
@@ -168,6 +183,7 @@ fun QuizScreen(id: String, circle: String) {
                             streak += 1
                         } else {
                             streak = 0
+                            app.lessons.missed(lesson.id, theme)
                         }
                     },
                 )
@@ -193,11 +209,62 @@ fun QuizScreen(id: String, circle: String) {
 }
 
 @Composable
-private fun Results(lesson: Lesson, circle: String, right: Int, total: Int) {
+private fun Results(lesson: Lesson, circle: String, right: Int, total: Int, onFresh: (List<Pair<Int, Question>>) -> Unit) {
     val app = LocalApp.current
     val navigator = LocalNavigator.current
     val colors = Micabo.colors
     val haptics = rememberHaptics()
+    val scope = rememberCoroutineScope()
+    val isPro by app.billing.isPro.collectAsState()
+    var writing by remember { mutableStateOf(false) }
+    var failed by remember { mutableStateOf(false) }
+
+    // Sans abonnement, un lot est offert ; le suivant ouvre le paywall. Le serveur tient la même
+    // porte (`begin_extra`) : celle-ci évite un appel pour rien.
+    fun more() {
+        if (!isPro && app.prefs.practiceFreeUsed) {
+            navigator.push(Screen.Paywall("pro_required"))
+            return
+        }
+        writing = true
+        failed = false
+        scope.launch {
+            try {
+                val batch = app.lessons.practice(lesson.id)
+                if (!isPro) app.prefs.practiceFreeUsed = true
+                writing = false
+                if (batch.isEmpty()) failed = true else {
+                    haptics.success()
+                    onFresh(batch)
+                }
+            } catch (cancel: kotlin.coroutines.cancellation.CancellationException) {
+                throw cancel
+            } catch (error: Throwable) {
+                writing = false
+                if (error is ApiException && error.opensPaywall) {
+                    app.prefs.practiceFreeUsed = true
+                    navigator.push(Screen.Paywall("pro_required"))
+                } else {
+                    failed = true
+                }
+            }
+        }
+    }
+
+    if (writing) {
+        Column(Modifier.fillMaxSize().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Spacer(Modifier.weight(1f))
+            Mika(MikaMood.THINK, 160.dp)
+            Spacer(Modifier.height(16.dp))
+            Text(stringResource(R.string.lesson_practice_writing), style = nunito(24.sp, FontWeight.Black, lineHeight = 28.sp), color = colors.ink, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(8.dp))
+            Text(stringResource(R.string.lesson_practice_writingSub), style = nunito(16.sp, FontWeight.Medium, lineHeight = 22.sp), color = colors.inkSecondary, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(16.dp))
+            CircularProgressIndicator(color = colors.accent)
+            Spacer(Modifier.weight(1.4f))
+        }
+        return
+    }
     val percent = if (total == 0) 0 else Math.round(right * 100f / total)
     val shown by animateIntAsState(percent, tween(900), label = "percent")
     val final = circle == "final"
@@ -259,6 +326,12 @@ private fun Results(lesson: Lesson, circle: String, right: Int, total: Int) {
             if (final && lesson.flashcards.isNotEmpty()) {
                 MicaboButton(stringResource(R.string.lesson_finished_cards), onClick = { navigator.replace(Screen.Flashcards(lesson.id)) })
                 MicaboSecondaryButton(stringResource(R.string.lesson_finished_back), onClick = { navigator.home() })
+            } else if (circle.isEmpty()) {
+                if (failed) {
+                    Text(stringResource(R.string.lesson_practice_failed), style = nunito(14.sp, FontWeight.Bold), color = colors.wrongInk, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                }
+                MicaboButton(stringResource(if (failed) R.string.lesson_practice_retry else R.string.lesson_practice_more), onClick = ::more, icon = Icons.Filled.Refresh)
+                MicaboSecondaryButton(stringResource(R.string.lesson_practice_back), onClick = { navigator.back() })
             } else {
                 MicaboButton(stringResource(R.string.lesson_quiz_finish), onClick = { navigator.back() })
             }

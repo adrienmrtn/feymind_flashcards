@@ -77,6 +77,22 @@ class Prefs(context: Context) {
         _profile.value = read()
     }
 
+    /** Le lot de nouvelles questions offert, une fois (`PracticeAllowance`). */
+    var practiceFreeUsed: Boolean
+        get() = prefs.getBoolean("practice.freeUsed", false)
+        set(value) = prefs.edit { putBoolean("practice.freeUsed", value) }
+
+    /** La question offerte à Mika, et le compte du jour (`MikaQuota`). */
+    var mikaFreeUsed: Boolean
+        get() = prefs.getBoolean("mika.freeUsed", false)
+        set(value) = prefs.edit { putBoolean("mika.freeUsed", value) }
+    var mikaDay: String
+        get() = prefs.getString("mika.day", "").orEmpty()
+        set(value) = prefs.edit { putString("mika.day", value) }
+    var mikaDayCount: Int
+        get() = prefs.getInt("mika.dayCount", 0)
+        set(value) = prefs.edit { putInt("mika.dayCount", value) }
+
     // La session invitée de Supabase.
     var accessToken: String
         get() = prefs.getString("auth.access", "").orEmpty()

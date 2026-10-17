@@ -44,6 +44,8 @@ data class Lesson(
     val progress: Progress = Progress(),
     /** Le jour de l'examen qui porte sur la leçon, en millisecondes ; 0 sans examen. */
     val examDate: Long = 0,
+    /** La conversation avec Mika sur cette leçon, gardée sur le téléphone. */
+    val chat: List<ChatMessage> = emptyList(),
 ) {
     /** L'examen, s'il est encore à venir (aujourd'hui compris). */
     fun upcomingExam(now: Long = System.currentTimeMillis()): Long? =
@@ -121,6 +123,18 @@ data class Question(
 @Serializable
 data class Flashcard(val kind: String = "basic", val front: String = "", val back: String = "")
 
+/** Un message de la conversation avec Mika ; sa réponse peut proposer une carte. */
+@Serializable
+data class ChatMessage(
+    /** user ou assistant. */
+    val role: String,
+    val text: String,
+    val card: Flashcard? = null,
+    /** Le thème où ranger la carte proposée, s'il est connu. */
+    val cardTheme: Int? = null,
+    val cardAdded: Boolean = false,
+)
+
 /** Où en est l'élève : les cercles faits, les scores des quiz. */
 @Serializable
 data class Progress(
@@ -128,6 +142,8 @@ data class Progress(
     val quizScores: Map<String, List<Int>> = emptyMap(),
     val seconds: Long = 0,
     val finishedAt: Long = 0,
+    /** Les thèmes où l'élève s'est trompé : l'entraînement y revient d'abord. */
+    val missed: Set<Int> = emptySet(),
     /** La mémoire des flashcards, par clé `thème:rang` (SM-2, `Srs`). */
     val cards: Map<String, CardReview> = emptyMap(),
 ) {
@@ -139,6 +155,30 @@ data class Progress(
             val total = scores.sumOf { it[1] }
             return Math.round(right * 100.0 / total).toInt()
         }
+}
+
+/** Les notes d'un thème à plat, pour le serveur : l'entraînement, Mika, l'examen blanc. */
+fun Theme.flatNotes(): String {
+    val lines = mutableListOf<String>()
+    notes?.oneLiner?.takeIf { it.isNotBlank() }?.let(lines::add)
+    notes?.blocks.orEmpty().forEach { raw ->
+        when (val block = NoteBlock.parse(raw)) {
+            is NoteBlock.Subtitle -> lines.add(block.text)
+            is NoteBlock.Paragraph -> lines.add(block.text)
+            is NoteBlock.Bullets -> lines.addAll(block.items.map { "- $it" })
+            is NoteBlock.Definition -> lines.add("${block.term} : ${block.text}")
+            is NoteBlock.Dates -> lines.addAll(block.items.map { "${it.first} : ${it.second}" })
+            is NoteBlock.Formula -> lines.add(block.latex + (block.caption?.let { " ($it)" } ?: ""))
+            is NoteBlock.Example -> lines.add(block.text)
+            is NoteBlock.Steps -> lines.addAll(block.items.mapIndexed { index, step -> "${index + 1}. $step" })
+            is NoteBlock.Table -> lines.addAll(listOf(block.columns.joinToString(" | ")) + block.rows.map { it.joinToString(" | ") })
+            is NoteBlock.Quote -> lines.add(block.text)
+            is NoteBlock.Callout -> lines.add(block.text)
+            null -> Unit
+        }
+    }
+    notes?.takeaways.orEmpty().forEach { lines.add("- $it") }
+    return lines.joinToString("\n")
 }
 
 /** Le début du jour local d'un instant. */

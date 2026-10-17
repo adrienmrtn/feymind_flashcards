@@ -409,6 +409,21 @@ private fun Header(lesson: Lesson, tone: Tone, done: Int, total: Int, onMenu: ()
         Row(verticalAlignment = Alignment.CenterVertically) {
             BackButton(onClick = { navigator.back() })
             Spacer(Modifier.weight(1f))
+            // Mika, qui connaît la leçon par cœur (`LessonMikaView`).
+            Pressable(onClick = { navigator.push(Screen.Mika(lesson.id)) }) {
+                Row(
+                    Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(colors.surface)
+                        .border(1.5.dp, colors.stroke, RoundedCornerShape(50))
+                        .padding(start = 4.dp, end = 14.dp, top = 2.dp, bottom = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Mika(MikaMood.WAVE, 38.dp)
+                    Text(stringResource(R.string.lesson_mika_open), style = nunito(14.sp, FontWeight.ExtraBold), color = colors.ink)
+                }
+            }
+            Spacer(Modifier.width(10.dp))
             CircleIconButton(Icons.Filled.MoreVert, stringResource(R.string.lesson_menu_more), onClick = onMenu)
         }
         Spacer(Modifier.height(12.dp))
