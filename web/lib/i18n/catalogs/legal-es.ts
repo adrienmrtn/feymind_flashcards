@@ -20,7 +20,7 @@ export const legalEs = {
     dataAccount:
       "**La cuenta.** Dirección de correo, identificadores que proporcionan Apple o Google si elige esas conexiones, y un nombre de usuario. No almacenamos su contraseña: la conexión por correo se hace con un enlace, no con un secreto que guardaríamos.",
     dataSchool:
-      "**El recorrido escolar.** País de estudios, nivel, asignaturas, centro si lo indica. Sirve para escribir la ficha en el idioma y el sistema adecuados, y para mostrarle a los compañeros del mismo centro si un curso está compartido.",
+      "**El recorrido escolar.** País de estudios, nivel, asignaturas, centro si lo indica. Sirve para escribir la ficha en el idioma y el sistema adecuados, y para mostrarle compañeros del mismo centro si un curso está compartido.",
     dataCourses:
       "**Sus cursos.** Los archivos o enlaces que deposita, el texto extraído, las fichas y las tarjetas generadas, las imágenes de esquemas, los exámenes (nombre, fecha, nota objetivo) y el historial de revisión (cuándo vuelve una tarjeta, cómo la ha valorado).",
     dataFriends:
@@ -119,9 +119,9 @@ export const legalEs = {
     coursesOwn:
       "Usted conserva la propiedad de lo que deposita. Solo nos da el derecho, limitado y revocable, de leerlo, almacenarlo y transformarlo en ficha y en tarjetas, para prestarle el servicio — incluido enviarlo a un modelo de lenguaje el tiempo de la generación.",
     coursesRights:
-      "Solo deposita documentos que tiene derecho a usar. Un temario de su profesor, sus apuntes, un vídeo cuyo import está autorizado: sí. Una obra entera copiada, el trabajo de otro, un contenido ilegal: no. Podemos retirar un curso o cerrar una cuenta que rompa esta regla.",
+      "Solo deposita documentos que tiene derecho a usar. Un temario de su profesor, sus apuntes, un vídeo cuya importación está autorizada: sí. Una obra entera copiada, el trabajo de otro, un contenido ilegal: no. Podemos retirar un curso o cerrar una cuenta que rompa esta regla.",
     coursesShare:
-      "La visibilidad se decide al importar. Un curso privado se queda entre usted. Un curso compartido solo lo ven las personas que ha elegido (amigos o compañeros del centro). No es una biblioteca abierta a todos.",
+      "La visibilidad se decide al importar. Un curso privado se queda con usted. Un curso compartido solo lo ven las personas que ha elegido (amigos o compañeros del centro). No es una biblioteca abierta a todos.",
     notTitle: "Lo que Micabo no es",
     notBody:
       "La ficha y las tarjetas se generan automáticamente. Pueden equivocarse, omitir un pasaje o leer mal un escaneo. Micabo no es un profesor ni una garantía de nota. Usted sigue siendo responsable de lo que aprende y de lo que entrega el día del examen.",

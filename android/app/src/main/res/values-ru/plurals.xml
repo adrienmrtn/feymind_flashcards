@@ -13,6 +13,10 @@
         <item quantity="one">%1$d день подряд</item>
         <item quantity="other">Дней подряд: %1$d</item>
     </plurals>
+    <plurals name="ios_profile_streakToBeat">
+        <item quantity="one">Твой рекорд — %2$s. Ещё %1$d день — и он побит.</item>
+        <item quantity="other">Твой рекорд — %2$s. Ещё %1$d дн. — и он побит.</item>
+    </plurals>
     <plurals name="ios_streak_bestValue">
         <item quantity="one">%1$d день</item>
         <item quantity="other">%1$d дн.</item>
@@ -28,5 +32,8 @@
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d вопрос без ответа. Всё равно сдать?</item>
         <item quantity="other">Вопросов без ответа: %1$d. Всё равно сдать?</item>
+    </plurals>
+    <plurals name="lesson_lessons_examDays">
+        <item quantity="other">Осталось дней: %1$d</item>
     </plurals>
 </resources>

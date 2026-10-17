@@ -272,7 +272,8 @@ private fun Generating(request: LessonRequest, stage: CreationStage, error: Thro
                     request.topic?.let {
                         Spacer(Modifier.height(6.dp))
                         Text(
-                            "« $it »",
+                            // Les guillemets de la langue : « … » en français, “…” en anglais, „…“ en allemand.
+                            stringResource(R.string.x_quoted, it),
                             style = nunito(16.sp, FontWeight.Bold),
                             color = colors.accent,
                             textAlign = TextAlign.Center,

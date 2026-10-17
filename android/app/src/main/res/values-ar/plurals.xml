@@ -13,13 +13,20 @@
         <item quantity="one">يوم واحد متتالٍ</item>
         <item quantity="other">أيام متتالية: %1$d</item>
     </plurals>
+    <plurals name="ios_profile_streakToBeat">
+        <item quantity="one">رقمك القياسي %2$s. بقي يوم واحد لتتجاوزه.</item>
+        <item quantity="other">رقمك القياسي %2$s. الأيام المتبقية لتتجاوزه: %1$d.</item>
+    </plurals>
     <plurals name="ios_streak_bestValue">
         <item quantity="one">يوم واحد</item>
         <item quantity="other">عدد الأيام: %1$d</item>
     </plurals>
     <plurals name="ios_streak_unit">
         <item quantity="one">يوم متتالٍ</item>
-        <item quantity="other">أيام متتالية</item>
+        <item quantity="two">يومان متتاليان</item>
+        <item quantity="few">أيام متتالية</item>
+        <item quantity="many">يومًا متتاليًا</item>
+        <item quantity="other">يوم متتالٍ</item>
     </plurals>
     <plurals name="lesson_exam_addCards">
         <item quantity="one">أضف خطئي إلى البطاقات</item>
@@ -28,5 +35,9 @@
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">بقي سؤال واحد دون إجابة. هل تسلّم على أي حال؟</item>
         <item quantity="other">أسئلة دون إجابة: %1$d. هل تسلّم على أي حال؟</item>
+    </plurals>
+    <plurals name="lesson_lessons_examDays">
+        <item quantity="one">بقي يوم واحد</item>
+        <item quantity="other">الأيام المتبقية: %1$d</item>
     </plurals>
 </resources>

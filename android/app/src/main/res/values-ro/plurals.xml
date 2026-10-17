@@ -3,30 +3,45 @@
 <resources>
     <plurals name="app_friends_friendCount">
         <item quantity="one">%1$d prieten</item>
-        <item quantity="other">%1$d prieteni</item>
+        <item quantity="few">%1$d prieteni</item>
+        <item quantity="other">%1$d de prieteni</item>
     </plurals>
     <plurals name="copy_cards">
         <item quantity="one">%1$d card</item>
-        <item quantity="other">%1$d carduri</item>
+        <item quantity="few">%1$d carduri</item>
+        <item quantity="other">%1$d de carduri</item>
     </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">%1$d zi la rând</item>
-        <item quantity="other">%1$d zile la rând</item>
+        <item quantity="few">%1$d zile la rând</item>
+        <item quantity="other">%1$d de zile la rând</item>
+    </plurals>
+    <plurals name="ios_profile_streakToBeat">
+        <item quantity="one">Recordul tău e %2$s. Încă %1$d zi și-l depășești.</item>
+        <item quantity="other">Recordul tău e %2$s. Încă %1$d zile și-l depășești.</item>
     </plurals>
     <plurals name="ios_streak_bestValue">
         <item quantity="one">%1$d zi</item>
-        <item quantity="other">%1$d zile</item>
+        <item quantity="few">%1$d zile</item>
+        <item quantity="other">%1$d de zile</item>
     </plurals>
     <plurals name="ios_streak_unit">
         <item quantity="one">zi la rând</item>
-        <item quantity="other">zile la rând</item>
+        <item quantity="few">zile la rând</item>
+        <item quantity="other">de zile la rând</item>
     </plurals>
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Adaugă greșeala mea la carduri</item>
-        <item quantity="other">Adaugă cele %1$d greșeli la carduri</item>
+        <item quantity="few">Adaugă cele %1$d greșeli la carduri</item>
+        <item quantity="other">Adaugă cele %1$d de greșeli la carduri</item>
     </plurals>
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d întrebare e fără răspuns. Predai oricum?</item>
-        <item quantity="other">%1$d întrebări sunt fără răspuns. Predai oricum?</item>
+        <item quantity="few">%1$d întrebări sunt fără răspuns. Predai oricum?</item>
+        <item quantity="other">%1$d de întrebări sunt fără răspuns. Predai oricum?</item>
+    </plurals>
+    <plurals name="lesson_lessons_examDays">
+        <item quantity="one">Mai e %1$d zi</item>
+        <item quantity="other">Mai sunt %1$d zile</item>
     </plurals>
 </resources>

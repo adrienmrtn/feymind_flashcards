@@ -6,8 +6,8 @@
   bundle avant que la moindre ligne de Swift ne tourne. C'est la seule copie de l'app qui
   échappe à `L10n`, et c'est pour ça qu'elle est écrite ici plutôt que dans un catalogue.
 
-  Le `Info.plist` reste la version française : c'est la langue de développement du projet, et
-  ce qui s'affiche quand le téléphone ne parle aucune des cinq.
+  Le `Info.plist` porte l'anglais, la langue de base : c'est ce qui s'affiche quand le
+  téléphone ne parle aucune des langues de Micabo. Chaque langue a son `.lproj`.
 */
 
 "NSCameraUsageDescription" = "Micabo usa la cámara para escanear tus páginas de curso.";

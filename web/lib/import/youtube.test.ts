@@ -89,12 +89,12 @@ describe("parseJson3", () => {
     expect(text).toBe("Bonjour le monde");
   });
 
-  it("s'arrête à 90 minutes", () => {
+  it("s'arrête à 60 minutes", () => {
     const text = parseJson3(
       JSON.stringify({
         events: [
           { t: 0, segs: [{ utf8: "Début" }] },
-          { t: 91 * 60 * 1000, segs: [{ utf8: "Trop tard" }] },
+          { t: 61 * 60 * 1000, segs: [{ utf8: "Trop tard" }] },
         ],
       }),
     );

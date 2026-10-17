@@ -1,22 +1,23 @@
 Tvoja snov postane povzetek, ki ga ponovno prebereš, in kartice, ki ti jih Micabo zastavi tik preden jih pozabiš.
 
-Naloži skripto, fotografijo table, datoteko Word ali video. Micabo napiše povzetek, izdela kartice in načrtuje tvoje učenje. Se bliža izpit? Načrt se proti temu dnevu zgošča.
+Naloži skripto, fotografijo table, datoteko Word ali video. Micabo napiše povzetek, izdela kartice in načrtuje tvoje učenje. Se bliža izpit? Dodaj datum: Micabo šteje dneve in te uri s časovno omejenimi poskusnimi izpiti.
 
 KAJ POČNEŠ
 • Uvoziš snov (PDF, fotografije, Word, YouTube ali besedilo)
-• Prebereš povzetek, ga popraviš, ga prebereš znova
+• Prebereš povzetek in se preizkusiš s kvizi
 • Ponavljaš kartice z razmaknjenim ponavljanjem
 • Nastaviš datum izpita
 • Snov deliš s prijatelji ali jo obdržiš zase
 
-TRIJE ZAVIHKI
-Snov: vse, kar si uvozil.
-Ponavljanje: današnje kartice, nič drugega.
-Profil: tvoj niz, tvoji seštevki, tvoji prijatelji.
+ŠTIRJE ZAVIHKI
+Domov: ustvariš novo lekcijo.
+Lekcije: vse, kar si ustvaril.
+Izpiti: odštevanje in tvoji poskusni izpiti.
+Profil: tvoj niz, tvoje nastavitve, tvoji prijatelji.
 
 BREZPLAČNO IN PRO
-Brez naročnine: 1 snov, 70 % povzetka, 5 kartic na sejo.
-Micabo Pro: neomejena snov in kartice, celoten povzetek, izpitni način. 3-dnevni brezplačni preizkus, nato tedenska ali letna naročnina, ki jo lahko kadar koli prekličeš v Google Play.
+Brez naročnine: 1 lekcija iz teme ali prilepljenega besedila ter tvoj prvi poskusni izpit.
+Micabo Pro: neomejeno lekcij, uvoz (PDF, fotografije, Word, zvok, YouTube) in poskusni izpiti. 3-dnevni brezplačni preizkus, nato tedenska ali letna naročnina, ki jo lahko kadar koli prekličeš v Google Play.
 
 Pogoji uporabe: https://micabo.app/conditions
 Pravilnik o zasebnosti: https://micabo.app/confidentialite

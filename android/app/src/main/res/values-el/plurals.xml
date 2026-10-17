@@ -13,6 +13,10 @@
         <item quantity="one">%1$d μέρα στη σειρά</item>
         <item quantity="other">%1$d μέρες στη σειρά</item>
     </plurals>
+    <plurals name="ios_profile_streakToBeat">
+        <item quantity="one">Το ρεκόρ σου είναι %2$s. Ακόμα %1$d μέρα και το σπας.</item>
+        <item quantity="other">Το ρεκόρ σου είναι %2$s. Ακόμα %1$d μέρες και το σπας.</item>
+    </plurals>
     <plurals name="ios_streak_bestValue">
         <item quantity="one">%1$d μέρα</item>
         <item quantity="other">%1$d μέρες</item>
@@ -28,5 +32,9 @@
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d ερώτηση έμεινε αναπάντητη. Παράδοση ούτως ή άλλως;</item>
         <item quantity="other">%1$d ερωτήσεις έμειναν αναπάντητες. Παράδοση ούτως ή άλλως;</item>
+    </plurals>
+    <plurals name="lesson_lessons_examDays">
+        <item quantity="one">Απομένει %1$d μέρα</item>
+        <item quantity="other">Απομένουν %1$d μέρες</item>
     </plurals>
 </resources>

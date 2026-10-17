@@ -32,7 +32,8 @@ const INVIDIOUS_HOSTS = [
 ];
 
 export const MIN_CAPTION_CHARS = 400;
-export const MAX_DURATION_SECONDS = 90 * 60;
+/** Une heure, comme le serveur (`YOUTUBE_LIMITS`) : une leçon ne garde pas plus de texte. */
+export const MAX_DURATION_SECONDS = 60 * 60;
 
 export interface YouTubeCaption {
   code: string;

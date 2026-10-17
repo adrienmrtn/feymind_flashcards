@@ -125,7 +125,7 @@ export const en: Catalog = {
     footerProduct: "The product",
     footerSite: "The site",
     footerRead: "Read",
-    footerLegal: "The framework",
+    footerLegal: "Legal",
     footerApp: "In the app",
     footerCards: "The cards",
     faq1q: "Are my courses private?",
@@ -158,7 +158,7 @@ export const en: Catalog = {
     card1Kind: "Front and back",
     card1Front: "What does the sun do to ocean water?",
     card1Back: "It makes it evaporate.",
-    card1Note: "71 % of global evaporation comes from the oceans.",
+    card1Note: "71% of global evaporation comes from the oceans.",
     card1Hint: "It changes state, it doesn't disappear.",
     card2Kind: "Multiple choice",
     card2Front: "Where does the vapor condense?",
@@ -188,13 +188,13 @@ export const en: Catalog = {
     fileName: "The water cycle.pdf",
     sheetHeading: "Three stages, one loop",
     sheetParagraph:
-      "Water changes state without ever leaving the planet: what evaporates from the oceans falls back on the continents, then returns. 71 % of evaporation comes from the oceans.",
+      "Water changes state without ever leaving the planet: what evaporates from the oceans falls back on the continents, then returns. 71% of evaporation comes from the oceans.",
     defTerm: "Condensation",
     defText: "Passage from vapor to the liquid state, around condensation nuclei.",
     chartTitle: "Where the water that evaporates comes from",
     oceans: "Oceans",
     continents: "Continents",
-    chartCaption: "The oceans cover 71 % of the Earth's surface.",
+    chartCaption: "The oceans cover 71% of the Earth's surface.",
     examTitle: "Biology test",
     targetGrade: "Target grade",
     progress: "Course learned at",
@@ -233,7 +233,7 @@ export const en: Catalog = {
     raw1:
       "The water cycle refers to all the movements of water between the oceans, the atmosphere and the continents.",
     raw2:
-      "Under the effect of solar radiation, surface water turns into vapor; this phenomenon is called evaporation and mainly concerns the oceans, which cover 71 % of the Earth's surface.",
+      "Under the effect of solar radiation, surface water turns into vapor; this phenomenon is called evaporation and mainly concerns the oceans, which cover 71% of the Earth's surface.",
     raw3:
       "Water vapor rises and meets colder layers; it then condenses around condensation nuclei to form droplets that make up the clouds.",
     raw4:
@@ -241,14 +241,14 @@ export const en: Catalog = {
     raw5:
       "Some of this water runs off and joins rivers then the oceans; some soaks into the ground and feeds the water tables.",
     sheetParagraphMarked:
-      "Water changes state without ever leaving the planet: what **evaporates** from the oceans falls back on the continents, then returns. ==71 % of evaporation comes from the oceans.==",
+      "Water changes state without ever leaving the planet: what **evaporates** from the oceans falls back on the continents, then returns. ==71% of evaporation comes from the oceans.==",
     sheetCallout:
       "Rain or snow does not depend on the altitude of the cloud but on the **temperature met during the fall**.",
     sheetStep1: "Ocean water evaporates under the sun's radiation.",
     sheetStep2: "The vapour condenses high up and forms the clouds.",
     sheetStep3: "Precipitation gives the water back to the land and the oceans.",
     rivers: "Rivers bring the water back to the sea",
-    sheetHighlight: "71 % of evaporation comes from the oceans.",
+    sheetHighlight: "71% of evaporation comes from the oceans.",
     tapToDrop: "Tap to drop it",
     dropAria: "Drop {file}",
     dropped: "Course dropped",
@@ -295,7 +295,7 @@ export const en: Catalog = {
       histCaption: "Four dates, four turning points — not one more timeline.",
       histTerm: "Third Estate",
       histDef:
-        "Everyone who is neither clergy nor nobility: **98 % of the population**, and one vote out of three.",
+        "Everyone who is neither clergy nor nobility: **98% of the population**, and one vote out of three.",
       histCallout:
         "The night of 4 August does not abolish the monarchy, it abolishes **privileges**. The king stays until 1792.",
     },

@@ -1,22 +1,23 @@
 Dina kurser blir en sammanfattning du läser om, och kort som Micabo frågar dig igen precis innan du glömmer dem.
 
-Ladda upp ett kompendium, ett foto av tavlan, en Word-fil eller en video. Micabo skriver sammanfattningen, skapar korten och planerar dina pass. Närmar sig en tenta? Planen tätnar fram mot den dagen.
+Ladda upp ett kompendium, ett foto av tavlan, en Word-fil eller en video. Micabo skriver sammanfattningen, skapar korten och planerar dina pass. Närmar sig en tenta? Lägg till datumet: Micabo räknar ner dagarna och tränar dig med tidsatta provtentor.
 
 DET HÄR GÖR DU
 • Importera en kurs (PDF, foton, Word, YouTube eller text)
-• Läs sammanfattningen, rätta den, läs den igen
+• Läs sammanfattningen och testa dig själv med quiz
 • Repetera dina kort med spaced repetition
 • Ange ett tentadatum
 • Dela en kurs med dina vänner, eller behåll den för dig själv
 
-TRE FLIKAR
-Kurser: allt du har importerat.
-Repetera: dagens kort, inget annat.
-Profil: din svit, dina totaler, dina vänner.
+FYRA FLIKAR
+Hem: skapa en ny lektion.
+Lektioner: allt du har skapat.
+Prov: nedräkningen och dina provtentor.
+Profil: din svit, dina inställningar, dina vänner.
 
 GRATIS OCH PRO
-Utan prenumeration: 1 kurs, 70 % av sammanfattningen, 5 kort per pass.
-Micabo Pro: obegränsat med kurser och kort, hela sammanfattningen, tentaläge. 3 dagars gratis provperiod, sedan en vecko- eller årsprenumeration som du kan säga upp när som helst i Google Play.
+Utan prenumeration: 1 lektion, från ett ämne eller en inklistrad text, plus din första provtenta.
+Micabo Pro: obegränsat med lektioner, import (PDF, foton, Word, ljud, YouTube) och provtentor. 3 dagars gratis provperiod, sedan en vecko- eller årsprenumeration som du kan säga upp när som helst i Google Play.
 
 Användarvillkor: https://micabo.app/conditions
 Integritetspolicy: https://micabo.app/confidentialite

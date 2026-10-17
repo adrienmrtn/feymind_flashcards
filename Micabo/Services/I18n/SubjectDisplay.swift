@@ -53,7 +53,7 @@ enum SubjectDisplay {
         "Psychologie": [.en: "Psychology", .fr: "Psychologie", .de: "Psychologie", .es: "Psicología", .tr: "Psikoloji"],
         "Sciences politiques": [.en: "Politics", .fr: "Sciences politiques", .de: "Politik", .es: "Ciencias políticas", .tr: "Siyaset"],
         "Anglais": [.en: "English", .fr: "Anglais", .de: "Englisch", .es: "Inglés", .tr: "İngilizce"],
-        "Espagnol": [.en: "Spanish", .fr: "Español", .de: "Spanisch", .es: "Español", .tr: "İspanyolca"],
+        "Espagnol": [.en: "Spanish", .fr: "Espagnol", .de: "Spanisch", .es: "Español", .tr: "İspanyolca"],
         "Allemand": [.en: "German", .fr: "Allemand", .de: "Deutsch", .es: "Alemán", .tr: "Almanca"],
         "Italien": [.en: "Italian", .fr: "Italien", .de: "Italienisch", .es: "Italiano", .tr: "İtalyanca"],
         "Portugais": [.en: "Portuguese", .fr: "Portugais", .de: "Portugiesisch", .es: "Portugués", .tr: "Portekizce"],

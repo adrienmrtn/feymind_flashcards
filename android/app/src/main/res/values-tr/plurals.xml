@@ -13,6 +13,9 @@
         <item quantity="one">%1$d gün üst üste</item>
         <item quantity="other">%1$d gün üst üste</item>
     </plurals>
+    <plurals name="ios_profile_streakToBeat">
+        <item quantity="other">Rekorun %2$s. %1$d gün daha dayan, rekoru kır.</item>
+    </plurals>
     <plurals name="ios_streak_bestValue">
         <item quantity="one">%1$d gün</item>
         <item quantity="other">%1$d gün</item>
@@ -20,5 +23,14 @@
     <plurals name="ios_streak_unit">
         <item quantity="one">gün üst üste</item>
         <item quantity="other">gün üst üste</item>
+    </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="other">%1$d hatamı kartlara ekle</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="other">%1$d soru cevapsız. Yine de teslim edilsin mi?</item>
+    </plurals>
+    <plurals name="lesson_lessons_examDays">
+        <item quantity="other">%1$d gün kaldı</item>
     </plurals>
 </resources>

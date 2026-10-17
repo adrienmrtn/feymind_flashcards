@@ -1,22 +1,23 @@
 Tvoji predmeti postaju sažetak koji ponovno čitaš i kartice koje ti Micabo ponovno postavlja tik prije nego što ih zaboraviš.
 
-Učitaj skriptu, fotografiju ploče, Word datoteku ili video. Micabo piše sažetak, izvlači kartice i planira tvoje sesije učenja. Bliži se ispit? Plan se zgušnjava prema tom danu.
+Učitaj skriptu, fotografiju ploče, Word datoteku ili video. Micabo piše sažetak, izvlači kartice i planira tvoje sesije učenja. Bliži se ispit? Dodaj datum: Micabo broji dane i trenira te probnim ispitima s mjerenjem vremena.
 
 ŠTO RADIŠ
 • Uvoziš predmet (PDF, fotografije, Word, YouTube ili tekst)
-• Čitaš sažetak, ispravljaš ga, ponovno ga čitaš
+• Čitaš sažetak i provjeravaš se kvizovima
 • Ponavljaš kartice metodom razmaknutog ponavljanja
 • Postavljaš datum ispita
 • Dijeliš predmet s prijateljima ili ga zadržiš za sebe
 
-TRI ODJELJKA
-Predmeti: sve što si uvezao.
-Ponavljanje: kartice za danas, ništa više.
-Profil: tvoj niz, tvoji ukupni rezultati, tvoji prijatelji.
+ČETIRI ODJELJKA
+Početna: izrađuješ novu lekciju.
+Lekcije: sve što si izradio.
+Ispiti: odbrojavanje i tvoji probni ispiti.
+Profil: tvoj niz, tvoje postavke, tvoji prijatelji.
 
 BESPLATNO I PRO
-Bez pretplate: 1 predmet, 70 % sažetka, 5 kartica po sesiji.
-Micabo Pro: neograničeni predmeti i kartice, cijeli sažetak, način rada za ispit. 3 dana besplatne probe, zatim tjedna ili godišnja pretplata koju možeš otkazati bilo kada u Google Playu.
+Bez pretplate: 1 lekcija iz teme ili zalijepljenog teksta, uz tvoj prvi probni ispit.
+Micabo Pro: neograničene lekcije, uvoz (PDF, fotografije, Word, audio, YouTube) i probni ispiti. 3 dana besplatne probe, zatim tjedna ili godišnja pretplata koju možeš otkazati bilo kada u Google Playu.
 
 Uvjeti korištenja: https://micabo.app/conditions
 Pravila o privatnosti: https://micabo.app/confidentialite

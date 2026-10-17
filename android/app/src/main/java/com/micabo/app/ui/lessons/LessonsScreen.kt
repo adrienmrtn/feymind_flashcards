@@ -44,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -327,9 +328,13 @@ fun LessonRow(lesson: Lesson, onOpen: () -> Unit, onRename: () -> Unit, onDelete
                         if (due > 0) Badge(stringResource(R.string.lesson_lessons_due, due.toString()), colors.accentWash, colors.accent)
                         if (due > 0 && examDays != null) Spacer(Modifier.width(6.dp))
                         if (examDays != null) {
+                            // La veille de l'examen dit « Demain », pas « 1 jours restants ».
                             Badge(
-                                if (examDays == 0) stringResource(R.string.app_exams_countdown_today).replaceFirstChar { it.uppercase() }
-                                else stringResource(R.string.lesson_lessons_examDays, examDays.toString()),
+                                when (examDays) {
+                                    0 -> stringResource(R.string.app_exams_countdown_today).replaceFirstChar { it.uppercase() }
+                                    1 -> stringResource(R.string.app_exams_countdown_tomorrow).replaceFirstChar { it.uppercase() }
+                                    else -> pluralStringResource(R.plurals.lesson_lessons_examDays, examDays, examDays)
+                                },
                                 colors.cautionSoft,
                                 colors.caution,
                             )

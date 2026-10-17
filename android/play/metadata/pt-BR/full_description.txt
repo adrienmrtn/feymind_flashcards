@@ -1,22 +1,23 @@
 Suas matérias viram um resumo para reler e flashcards que o Micabo pergunta de novo pouco antes de você esquecer.
 
-Envie uma apostila, uma foto da lousa, um arquivo Word ou um vídeo. O Micabo escreve o resumo, cria os flashcards e planeja suas sessões. A prova está chegando? O plano se intensifica até esse dia.
+Envie uma apostila, uma foto da lousa, um arquivo Word ou um vídeo. O Micabo escreve o resumo, cria os flashcards e planeja suas sessões. A prova está chegando? Adicione a data: o Micabo faz a contagem regressiva e te treina com simulados cronometrados.
 
 O QUE VOCÊ FAZ
 • Importar uma matéria (PDF, fotos, Word, YouTube ou texto)
-• Ler o resumo, corrigir, reler
+• Ler o resumo e se testar com quizzes
 • Revisar seus flashcards com repetição espaçada
 • Definir a data da prova
 • Compartilhar uma matéria com seus amigos ou guardar só para você
 
-TRÊS ABAS
-Matérias: tudo o que você importou.
-Revisar: os flashcards de hoje, nada mais.
-Perfil: sua sequência, seus totais, seus amigos.
+QUATRO ABAS
+Início: criar uma nova aula.
+Aulas: tudo o que você criou.
+Provas: a contagem regressiva e seus simulados.
+Perfil: sua sequência, suas configurações, seus amigos.
 
 GRÁTIS E PRO
-Sem assinatura: 1 matéria, 70% do resumo, 5 flashcards por sessão.
-Micabo Pro: matérias e flashcards ilimitados, resumo completo, modo prova. 3 dias de teste grátis e depois uma assinatura semanal ou anual que você pode cancelar quando quiser no Google Play.
+Sem assinatura: 1 aula, a partir de um tema ou de um texto colado, e seu primeiro simulado.
+Micabo Pro: aulas ilimitadas, importação (PDF, fotos, Word, áudio, YouTube) e simulados. 3 dias de teste grátis e depois uma assinatura semanal ou anual que você pode cancelar quando quiser no Google Play.
 
 Termos de uso: https://micabo.app/conditions
 Política de privacidade: https://micabo.app/confidentialite

@@ -872,7 +872,7 @@ n'est pas ponctué, et l'utilisateur doit savoir d'où vient un texte irrégulie
 | Vidéo privée, supprimée ou à accès restreint | « Cette vidéo n'est pas accessible. » |
 | Aucun sous-titre | « Cette vidéo n'a pas de sous-titres. Micabo ne peut pas la lire. » |
 | Transcription trop courte | « Cette vidéo est trop courte pour générer des cartes. » |
-| Vidéo trop longue | « Cette vidéo dure 2 h 14. Micabo lit les vidéos jusqu'à 1 h 30. » |
+| Vidéo trop longue | « Cette vidéo dure 2 h 14. On écrira la fiche à partir des 60 min du début. » |
 
 Deux règles tiennent ces messages. Le **code** renvoyé par l'Edge Function décide, jamais la
 forme de son message : le serveur peut reformuler ses journaux sans qu'un mot change dans
@@ -880,7 +880,8 @@ l'application. Et les phrases vivent en un seul endroit, `YouTubeImportError`, y
 celle du garde de `ImportReadiness`, qui ne réécrit pas la sienne.
 
 La limite est **toujours annoncée** quand une vidéo est trop longue : un refus qui ne dit pas
-jusqu'où on peut aller laisse essayer au hasard. Le plafond est de 1 h 30, appliqué par
+jusqu'où on peut aller laisse essayer au hasard. Le plafond est d'une heure (une leçon ne garde
+pas plus de texte, et la lecture par Gemini se facture à la minute), appliqué par
 l'application depuis la durée de l'aperçu et revérifié par la fonction avant de télécharger
 le texte.
 

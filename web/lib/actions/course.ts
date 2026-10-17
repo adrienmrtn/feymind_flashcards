@@ -311,11 +311,7 @@ async function readableError(error: unknown): Promise<string> {
       // Un corps illisible : on retombe sur le message du transport, qui vaut mieux que rien.
     }
   }
-  return fallbackMessage(error);
-}
-
-function fallbackMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Micabo n'a pas pu écrire cette fiche.";
+  return error instanceof Error ? error.message : await actionT("app.errors.sheetWriteFailed");
 }
 
 /**

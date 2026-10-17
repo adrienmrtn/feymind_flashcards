@@ -13,6 +13,10 @@
         <item quantity="one">%1$d day in a row</item>
         <item quantity="other">%1$d days in a row</item>
     </plurals>
+    <plurals name="ios_profile_streakToBeat">
+        <item quantity="one">Your record is %2$s. %1$d more day and you beat it.</item>
+        <item quantity="other">Your record is %2$s. %1$d more days and you beat it.</item>
+    </plurals>
     <plurals name="ios_streak_bestValue">
         <item quantity="one">%1$d day</item>
         <item quantity="other">%1$d days</item>
@@ -28,5 +32,9 @@
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d question is unanswered. Hand in anyway?</item>
         <item quantity="other">%1$d questions are unanswered. Hand in anyway?</item>
+    </plurals>
+    <plurals name="lesson_lessons_examDays">
+        <item quantity="one">%1$d day left</item>
+        <item quantity="other">%1$d days left</item>
     </plurals>
 </resources>

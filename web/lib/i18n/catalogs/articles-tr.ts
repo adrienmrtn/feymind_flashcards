@@ -2,7 +2,7 @@
 export const articlesTr = {
   shared: {
     navAria: "Sayfalar",
-    nextTitle: "Sırada oku",
+    nextTitle: "Sıradaki yazı",
     ctaTitle: "Bir ders bırak, neye dönüştüğüne bak.",
     ctaBody: "Sitede de iPhone'da da, aynı hesap ve aynı planla.",
   },
@@ -12,14 +12,14 @@ export const articlesTr = {
       "Bir dersi yeniden okumak onu akılda tutmaz. Bellekten çıkarman gereken kalır — soru unutmadan hemen önce geri gelirse hele. Micabo aralıklı tekrarı gerçek aralıklarla nasıl uygular.",
     h1: "Yeniden okumak yetmez. Hatırlamak yeter.",
     lead1:
-      "Dört kez okunan bir sayfa, sınava kadar dayanamayan bir hâkimiyet hissi verir. İlerleyen tanımadır — « evet, bunu daha önce gördüm » — ve tanıma, bir sınavın sorduğu şey değildir.",
+      "Dört kez okunan bir sayfa, sınava kadar dayanamayan bir hâkimiyet hissi verir. İlerleyen tanımadır — “evet, bunu daha önce gördüm” — ve tanıma, bir sınavın sorduğu şey değildir.",
     lead2:
       "Tutan, **bellekten çıkarmak** zorunda kaldığın ve **unutmadan hemen önce** geri gelen şeydir. İki eski fikir, bir yüzyıldan fazladır ölçülmüş, elle uygulanması zahmetli. Micabo'nun bütün işi bu.",
     activeTitle: "Aktif hatırlama: yanıttan önce soru",
     active1:
       "Kendini sınamak, yeniden okumaktan daha etkilidir — yanıldığında bile. İzi güçlendiren, geri getirme çabasıdır: üç saniye aranan bir yanıt, bir saniyede okunandan değerlidir.",
     active2:
-      "Bir kartın **hatırlanacak tek bir şey** taşımasının nedeni de budur. Bir anda beş öğe soran bir kart notlanamaz: üçünü hatırlarsın, « beşte üç » düğmesi yoktur.",
+      "Bir kartın **hatırlanacak tek bir şey** taşımasının nedeni de budur. Bir anda beş öğe soran bir kart notlanamaz: üçünü hatırlarsın, “beşte üç” düğmesi yoktur.",
     spacingTitle: "Aralık: son yararlı anda geri gelmek",
     spacing1:
       "Tekrar olmadan, bir dersten kalan bir ayda neredeyse yok olur. Her hatırlatma sayacı yüze çeker — ve sonraki iniş **öncekinden daha yavaştır**. Doğru anda tekrar etmek daha fazla zaman istemez: bellek oturdukça daha az ister.",
@@ -29,19 +29,19 @@ export const articlesTr = {
     planner1:
       "Micabo **SM-2** ile planlar, Anki'nin varsayılan kuralıdır. Yeni bir kart kısa basamaklardan — {steps} — geçer, sonra günlere çıkar. Sonra her not, {ease} ile başlayan ve yanıtlarına göre kımıldayan bir kolaylıkla aralığı çarpar.",
     planner2:
-      "Dört düğme, iki değil: « biliyorum / bilmiyorum » zor hatırlanan kartı kendiliğinden gelenden ayırmaz — sonraki tarihi de tam bu fark kararlaştırır. Yeni bir kartta dört düğmenin duyurduğu budur:",
+      "Dört düğme, iki değil: “biliyorum / bilmiyorum” zor hatırlanan kartı kendiliğinden gelenden ayırmaz — sonraki tarihi de tam bu fark kararlaştırır. Yeni bir kartta dört düğmenin duyurduğu budur:",
     buttonsCaption: "Aralıklar uygulamanın planlayıcısı tarafından hesaplanır, elle yazılmaz.",
     planner3:
-      "Aralık, basmadan **önce** düğmenin üstündedir. Kendi köşesinde karar veren bir planlayıcıya çabuk uyulmaz: hızlanmak için « kolay » dersin, kart üç hafta gider, sınav günü yeniden keşfedersin.",
+      "Aralık, basmadan **önce** düğmenin üstündedir. Kendi köşesinde karar veren bir planlayıcıya çabuk uyulmaz: hızlanmak için “kolay” dersin, kart üç hafta gider, sınav günü yeniden keşfedersin.",
     stepMinutes: "{n} dk",
     stepJoin: ", sonra ",
     paceTitle: "Tempo: kotanın değil, yükün istediği",
     pace1: "Micabo ne günde kaç kart ne de kaç dakika sorar. Bugün son tarihlerin ne istediğine bakar, hepsini sunar ve ne kadar süreceğini söyler. Bir öğrenci bir saatte yaklaşık {seen} kart görür.",
-    pace2: "Burada bir zamanlar yeni kart tavanı vardı, bir kartın oturması için gereken {reps} geçişe göre ayarlanmıştı. Belirleyici bir kusuru vardı: bir sınava üç gün kala, günün temposu adına o sınavın kartlarını geri çeviriyordu. En çok gerektiği gün işi tutmak, yanlış meslektir.",
+    pace2: "Burada bir zamanlar yeni kart tavanı vardı, bir kartın oturması için gereken {reps} geçişe göre ayarlanmıştı. Belirleyici bir kusuru vardı: bir sınava üç gün kala, günün temposu adına o sınavın kartlarını geri çeviriyordu. İşin en çok önem taşıdığı gün onu geri tutmak, bir planlayıcıya yakışmaz.",
     paceNote: "Planın dağıttığı şey, sınav gününe kadarki geçişlerdir. Kaçırılan bir gün bu yüzden delik bırakmaz: kaydırır, ve plan bir sonraki hesapta yeniden kurulur.",
     sheetTitle: "Önce özet kâğıdı, sonra kartlar",
     sheet1:
-      "Bir flashcard, anlamış olmayı varsayar. Okumadığın bir fikri sınamak, neyden söz ettiğini bilmeden bir yanıt ezberlemektir — kart tutar, sınav tutmaz.",
+      "Bir kart, anlamış olmayı varsayar. Okumadığın bir fikri sınamak, neyden söz ettiğini bilmeden bir yanıt ezberlemektir — kart tutar, sınav tutmaz.",
     sheetFigure: "Bırakılan belge **bir özet kâğıdı** olur: ders sıraya konur, önemli yerler işaretlenir. Kartlar sonra buradan çıkar. Uygulamadaki özet bileşeninin aynısı, demo ders üzerinde.",
     sheet2:
       "Bu yüzden Micabo belgenden önce **özet kâğıdını** yazar: ders sıraya konur, önemli yerler işaretlenir. Kartlar bu kâğıttan çıkar, ham belgeden değil. Okursun, sonra kendini sınarsın.",
@@ -55,38 +55,38 @@ export const articlesTr = {
       "Aralıklı tekrar, tekrarları yerleştirir. Senin yerine anlamaz, kompozisyon yazmaz, dün başlanan bir bölümü kurtarmaz — bir gecelik aralık yoktur.",
     limits2:
       "Tarihleri de, yapısı gereği, umursamaz: SM-2 üç hafta sonra sınav olduğunu bilmez. [[exam]] tam bunu düzeltir.",
-    examLink: "sınav kipi",
+    examLink: "Sınav modu",
   },
   exam: {
-    metaTitle: "Sınav kipi: tarihi ver, plan sıkışır",
+    metaTitle: "Sınav modu: tarihi ver, plan sıkışır",
     metaDescription:
-      "Aralıklı tekrar J gününü bilmez. Micabo'nun sınav kipi ona bir son tarih verir, geçişleri sınava yaklaştıkça sıkıştırır ve hiçbir kartın ötesine gitmesine izin vermez.",
+      "Aralıklı tekrar sınav gününü bilmez. Micabo'nun sınav modu ona bir son tarih verir, geçişleri sınava yaklaştıkça sıkıştırır ve hiçbir kartın ötesine gitmesine izin vermez.",
     h1: "Tarihi sen ver. Micabo her şeyi yeniden dizer.",
     lead1:
-      "Aralıklı tekrar her kartı son yararlı ana koyar, sonsuza dek. 14'ünde vize olduğunu bilmez. Bugün « kolay » notlanan bir kart üç hafta gider — sınav on gün sonra olsa bile — ve daha önce dönmez.",
+      "Aralıklı tekrar her kartı son yararlı ana koyar, sonsuza dek. 14'ünde vize olduğunu bilmez. Bugün “kolay” notlanan bir kart üç hafta gider — sınav on gün sonra olsa bile — ve daha önce dönmez.",
     lead2:
-      "Sınav kipi planlayıcıya eksiğini verir: **bir son tarih**. J gününü koyarsın, desteyi onun etrafında yeniden planlar.",
+      "Sınav modu planlayıcıya eksiğini verir: **bir son tarih** ve hedeflediğin not. Sınav gününü koyarsın, desteyi onun etrafında yeniden planlar.",
     trapTitle: "Sıradan bir plan neden tuzağa düşer",
     trap1:
-      "Aralıklı tekrardaki iki yüz kartlık bir deste sürekli kontrol için iyidir, sabit bir tarih için kötüdür. Üç şey bozulur: kartlar sınavdan sonra düşer, bazıları hiç sokulmamıştır, en kırılganlar J gününde işe yaramayacak kadar erken döner.",
+      "Aralıklı tekrardaki iki yüz kartlık bir deste sürekli değerlendirme için iyidir, sabit bir tarih için kötüdür. Üç şey bozulur: kartlar sınavdan sonra düşer, bazıları hiç sokulmamıştır, en kırılganlar sınav gününde işe yaramayacak kadar erken döner.",
     trap2:
       "Elle çözüm, destenin hepsini akşamdan tekrar etmektir. Yöntemin kaçındığı tam budur: bir gecede üç yüz kart, ertesi güne bir şey bırakmaz — ve bunu başlamadan bilirsin.",
-    capTitle: "Hiçbir kart J gününün ötesine gitmez",
+    capTitle: "Hiçbir kart sınav gününün ötesine gitmez",
     cap1:
       "Her şeyi tutan kural budur ve göründüğünden daha keskindir. Etkin bir sınavda bir kartın aldığı aralık **sınav tarihine tavanlanır**.",
     cap2:
-      "Bu tavan olmadan ilk doğru yanıt planı bozar: kart üç hafta gider, alandan çıkar. Onunla, J gününden önce bir kez daha döner. Düğmelerin altındaki aralıklar bu yüzden her zamankinden kısadır ve oturum bunu tepede söyler — yoksa planlayıcı bozuk sanılır.",
+      "Bu tavan olmadan ilk doğru yanıt planı bozar: kart üç hafta gider, alandan çıkar. Onunla, sınav gününden önce bir kez daha döner. Düğmelerin altındaki aralıklar bu yüzden her zamankinden kısadır ve oturum bunu tepede söyler — yoksa planlayıcı bozuk sanılır.",
     planTitle: "Plan, uygulanmadan önce duyurulur",
     plan1:
       "Micabo projeksiyonu bir şeyi **kaydırmadan önce** gösterir: kaç kart kapsandı, kaç geçiş kondu, kaç güne yayıldı. Sonradan keşfedilen bir yeniden planlama, iptal edilen bir yeniden planlamadır.",
     plan2:
-      "Yük sona doğru sıkışır, akşamüstüne yığılmaz: son geçişler son {days} güne yayılır, karttan karta kaydırılır.",
+      "Yük sona doğru sıkışır ama son akşama yığılmaz: son geçişler son {days} güne yayılır, karttan karta kaydırılır.",
     dailyTitle: "Her gün adı konmuş bir iş taşır",
-    daily1: "„30 dakika tekrar et“ diyen bir plan bir zamanlayıcıdan farksızdır. Micabo'nunki ne yapılacağını söyler: 3. bölüm üzerine bir test, bir deneme sınavı, sesli bir anlatım, bir mola günü. Uygulamayı açarsın ve gün zaten yazılmıştır.",
+    daily1: "“30 dakika tekrar et” diyen bir plan bir zamanlayıcıdan farksızdır. Micabo'nunki ne yapılacağını söyler: 3. bölüm üzerine bir test, bir deneme sınavı, sesli bir anlatım, bir mola günü. Uygulamayı açarsın ve gün zaten yazılmıştır.",
     dailyFigure: "Plan zamanın yönünde okunur ve son satır sınavdır. **Kaçırılan bir gün işi kaydırır, boşluk açmaz**: plan bir sonraki hesaplamada yeniden kurulur.",
     intensityTitle: "Üç yoğunluk, istediğin nota göre",
     intensityLead:
-      "Her kartın sınavdan önce kaç kez geçeceği, « geçmek istiyorum » ile « birincilik istiyorum » için aynı soru değildir. Hedef notu koyarsın, Micabo yoğunluğu çıkarır:",
+      "Her kartın sınavdan önce kaç kez geçeceği, “geçmek istiyorum” ile “birincilik istiyorum” için aynı soru değildir. Hedef notu koyarsın, Micabo yoğunluğu çıkarır:",
     intensityLight: "Hafif",
     intensityStandard: "Normal",
     intensityIntense: "Yoğun",
@@ -97,12 +97,12 @@ export const articlesTr = {
     several1:
       "Bir sınav, ona verdiğin dersleri kapsar; bir ders birkaç sınavda olabilir. İki tarih aynı kartı çekişirse tavanı **daha yakın olan** koyar: ilk kısıt odur, ikincisine önce uymak ikisini de kaçırır.",
     severalNote:
-      "J günü geçince sınav zorlamayı bırakır, deste normal planına döner. Kapatılacak bir şey yoktur: geçmiş bir tarih artık tarih değildir.",
-    limitsTitle: "Sınav kipinin yapmadığı",
+      "Sınav günü geçince sınav zorlamayı bırakır, deste normal planına döner. Kapatılacak bir şey yoktur: geçmiş bir tarih artık tarih değildir.",
+    limitsTitle: "Sınav modunun yapmadığı",
     limits1:
       "Zaman üretmez. Yarın için iki yüz yeni kartlık bir sınav, dürüst ve tutulamaz bir plan verir — Micabo teselli etmek yerine onu olduğu gibi gösterir.",
     limits2:
-      "Yöntemin yerini de almaz: işi [[method]] yapar, sınav kipi onlara yalnız bir süre verir. Anki'den geliyorsan [[anki]] tam olarak neyin değiştiğini söyler.",
+      "Yöntemin yerini de almaz: işi [[method]] yapar, sınav modu onlara yalnız bir süre verir. Anki'den geliyorsan [[anki]] tam olarak neyin değiştiğini söyler.",
     methodLink: "aktif hatırlama ve aralık",
     ankiLink: "karşılaştırma",
   },
@@ -126,7 +126,7 @@ export const articlesTr = {
       "Ders özet kâğıdı olur, kâğıt kart olur. Yeniden okur, düzeltirsin.",
     rowWriteAnki: "Sana kalmış. Zamanın çoğu orada geçer.",
     rowDate: "Bir sınav tarihi",
-    rowDateMicabo: "Deste J gününün etrafında yeniden planlanır, hiçbiri ötesine gitmez.",
+    rowDateMicabo: "Deste sınav gününün etrafında yeniden planlanır, hiçbiri ötesine gitmez.",
     rowDateAnki: "Son tarih diye bir fikir yoktur. Deste elle öne alınır.",
     rowQuestions: "Sorgulanma biçimleri",
     rowQuestionsMicabo: "Kartlar, testler, boşluk doldurma, puanlı deneme sınavları, sesli anlatım.",
@@ -153,11 +153,11 @@ export const articlesTr = {
       "Tersi gerçektir: üretilen bir kart kötü kurulmuş veya kötü okunmuş bir taramadan çıkmış olabilir. Kâğıdın kartlardan önce gelmesinin ve Micabo'nun belgenin konuşmadığı bir terimi tanımlamamasının nedeni budur. Yanılan bir kâğıt hataya benzemez.",
     dateTitle: "Anki'nin yapmadığı: tarih",
     date1:
-      "Asıl mekanik fark budur. Aralıklı tekrar her kartı son yararlı ana koyar, sonsuza dek. 14'ünde vize olduğunu bilmez: « kolay » notlanan bir kart üç hafta gider, sınavdan önce dönmez.",
+      "Asıl mekanik fark budur. Aralıklı tekrar her kartı son yararlı ana koyar, sonsuza dek. 14'ünde vize olduğunu bilmez: “kolay” notlanan bir kart üç hafta gider, sınavdan önce dönmez.",
     date2:
-      "Anki'de desteyi elle öne alarak veya akşamdan hepsini tekrar ederek idare edilir. Micabo'da tarihi koyarsın, deste etrafında yeniden planlanır; bir tavan kartın J gününün ötesine gitmesini engeller. Nasıl olduğunu [[exam]] anlatır.",
-    examLink: "Sınav kipi",
-    pickTitle: "Hangisini almak",
+      "Anki'de desteyi elle öne alarak veya akşamdan hepsini tekrar ederek idare edilir. Micabo'da tarihi koyarsın, deste etrafında yeniden planlanır; bir tavan kartın sınav gününün ötesine gitmesini engeller. Nasıl olduğunu [[exam]] anlatır.",
+    examLink: "sınav modu",
+    pickTitle: "Hangisini seçmeli",
     pickAnki: "**Anki'de kal**: planlayıcını ayarlamayı seviyorsan, FSRS istiyorsan, Android kullanıyorsan ya da dosyaları sana ait açık bir araca önem veriyorsan.",
     pickMicabo:
       "**Micabo'yu dene** seni durduran tekrar değil de kart üretmekse, ya da tekrarların sürekli bir akış değil sınav tarihleri etrafındaysa.",

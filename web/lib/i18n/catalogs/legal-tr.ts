@@ -18,7 +18,7 @@ export const legalTr = {
       "Micabo bir dersi (PDF, fotoğraf, belge, video) özet kâğıdına ve kartlara dönüştürür, sonra unutmadan önce geri getirir. Sınav modu, bir tarihe yaklaşırken tekrarları sıkılaştırır. Bir dersi arkadaşlarınızla paylaşabilir veya kendinize saklayabilirsiniz.",
     dataTitle: "Hangi verileri işliyoruz",
     dataAccount:
-      "**Hesap.** E-posta adresi, bu bağlantıları seçerseniz Apple veya Google'ın verdiği tanımlayıcılar ve bir kullanıcı adı. Parolanızı saklamıyoruz: e-posta ile giriş, saklayacağımız bir sırla değil, bir bağlantıyla yapılır.",
+      "**Hesap.** E-posta adresi, bu giriş yöntemlerini seçerseniz Apple veya Google'ın verdiği tanımlayıcılar ve bir kullanıcı adı. Parolanızı saklamıyoruz: e-posta ile giriş, saklayacağımız bir sırla değil, bir bağlantıyla yapılır.",
     dataSchool:
       "**Öğrenim yolu.** Öğrenim ülkesi, kademe, dersler, verirseniz okul. Özet kâğıdını doğru dilde ve doğru sistemde yazmak ve bir ders paylaşılmışsa aynı okuldaki arkadaşları göstermek için kullanılır.",
     dataCourses:
@@ -44,7 +44,7 @@ export const legalTr = {
     whyContract:
       "**Sözleşmenin ifası** — hesabı oluşturmak, bir dersi içe aktarmak, özet kâğıdını ve kartları yazmak, tekrarlamak, iPhone ile siteyi eşitlemek, aboneliği yönetmek.",
     whyLegitimate:
-      "**Meşru menfaat** — hizmeti güvenceye almak, kötüye kullanımı engellemek, bir arızayı teşhis etmek, sitenin kitlesini toplu biçimde ölçmek ve gönderdiğiniz geri bildirimleri okumak. Bu menfaat sizinkinin önüne geçmez: ayrıştırma uygulamada değil, veritabanındadır.",
+      "**Meşru menfaat** — hizmeti güvenceye almak, kötüye kullanımı engellemek, bir arızayı teşhis etmek, sitenin kitlesini toplu biçimde ölçmek ve gönderdiğiniz geri bildirimleri okumak. Bu menfaat sizinkinin önüne geçmez: ayrıştırma yalnızca uygulamada değil, veritabanının kendisindedir.",
     whyLegal:
       "**Yasal yükümlülük** — faturalama veya muhasebenin istediğini, öngörülen süre boyunca saklamak.",
     whyConsent:
@@ -83,7 +83,7 @@ export const legalTr = {
       "Silmeden sonra yüklenicilerde yasanın veya sözleşmelerinin istediği kalır: Stripe veya Apple faturaları, RevenueCat abonelik tanımlayıcısı, teknik günlükler (Vercel, Supabase) birkaç hafta. fal.ai metni özet kâğıdını yazdığı süre alır; saklamasını istemeyiz.",
     rightsTitle: "Haklarınız",
     rightsBody:
-      "Verilerinize erişebilir, düzeltebilir, dışa aktarabilir, bir işlemeye itiraz edebilir veya silinmesini isteyebilirsiniz. Bir kopya indirmek için: Ayarlar → «Verilerimi indir». Hesabı silmek için: Ayarlar → «Hesabı sil», sitede veya iPhone uygulamasında. [[contact]] adresine de yazabilirsiniz. Bir ay içinde yanıtlarız.",
+      "Verilerinize erişebilir, düzeltebilir, dışa aktarabilir, bir işlemeye itiraz edebilir veya silinmesini isteyebilirsiniz. Bir kopya indirmek için: Ayarlar → “Verilerimi indir”. Hesabı silmek için: Ayarlar → “Hesabı sil”, sitede veya iPhone uygulamasında. [[contact]] adresine de yazabilirsiniz. Bir ay içinde yanıtlarız.",
     rightsCnil: "CNIL'e de şikâyet başvurabilirsiniz (cnil.fr).",
     minorsTitle: "Reşit olmayanlar",
     minorsBody:
@@ -94,7 +94,7 @@ export const legalTr = {
     changesTitle: "Değişiklikler",
     changesBody:
       "Bu politika esaslı biçimde değişirse sayfa başındaki tarihi güncelleriz. Bu tarihten sonraki sürekli kullanım, yasa ayrı bir onay istemedikçe, yeni sürüm için geçerlidir.",
-    changesAlso: "[[terms]] bu metni tamamlar.",
+    changesAlso: "Bu metni [[terms]] tamamlar.",
   },
   terms: {
     metaTitle: "Kullanım koşulları",
@@ -114,7 +114,7 @@ export const legalTr = {
     accountBody:
       "Apple, Google veya e-posta ile gönderilen bir bağlantıyla giriş yapabilirsiniz. Posta kutunuza ve bu üçüncü taraf hesaplara erişimden siz sorumlusunuz. Kişi başına bir hesap.",
     accountDelete:
-      "Hesabı Ayarlar'dan silebilirsiniz, sitede veya iPhone uygulamasında. Bu, derslerinizi, kartlarınızı ve geçmişinizi siler. Apple veya Stripe'ın zaten aldığı alışlar, onların iade kurallarına bağlı kalır.",
+      "Hesabı Ayarlar'dan silebilirsiniz, sitede veya iPhone uygulamasında. Bu, derslerinizi, kartlarınızı ve geçmişinizi siler. Apple veya Stripe'ın zaten tahsil ettiği satın alımlar, onların iade kurallarına bağlı kalır.",
     coursesTitle: "Dersleriniz",
     coursesOwn:
       "Yüklediğinizin mülkiyeti sizde kalır. Bize yalnızca, hizmeti sunmak için — üretim süresi boyunca bir dil modeline göndermek dahil — okuma, saklama ve özet kâğıdı ile kartlara dönüştürme konusunda sınırlı ve geri alınabilir bir hak verirsiniz.",
@@ -129,7 +129,7 @@ export const legalTr = {
       "Belge taşımıyorsa bir tanım uydurmamaya çalışırız. Bu, sonucu yanılmaz yapmaz.",
     subTitle: "Abonelik",
     subPrices:
-      "Fiyatlar, süre ve varsa deneme, ödemeden önce gösterilenlerdir. Yeni alışlar için değişebilir; süren bir abonelik yenilenene kadar kendi koşullarını korur.",
+      "Fiyatlar, süre ve varsa deneme, ödemeden önce gösterilenlerdir. Yeni satın alımlar için değişebilir; süren bir abonelik yenilenene kadar kendi koşullarını korur.",
     subIos:
       "**iPhone'da** ödeme App Store üzerinden geçer. İptal, yenileme ve iadeler Apple'ın kurallarını izler. Aboneliği Apple hesabınızın ayarlarından yönetin.",
     subWeb:
@@ -162,6 +162,6 @@ export const legalTr = {
     changesTitle: "Değişiklikler",
     changesBody:
       "Bu koşulları güncelleyebiliriz. Sayfa başındaki tarih geçerlidir. Süregelen bir aboneliğin fiyatını ilgilendiren bir değişiklik, yenilemeden önce size duyurulur.",
-    changesAlso: "[[privacy]] verilerinizin işlenmesini anlatır.",
+    changesAlso: "Verilerinizin işlenmesini [[privacy]] anlatır.",
   },
 } as const;

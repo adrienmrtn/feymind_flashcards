@@ -13,12 +13,17 @@
         <item quantity="one">%1$d den v řadě</item>
         <item quantity="other">Dní v řadě: %1$d</item>
     </plurals>
+    <plurals name="ios_profile_streakToBeat">
+        <item quantity="one">Tvůj rekord: %2$s. Vydrž ještě %1$d den a pokoříš ho.</item>
+        <item quantity="other">Tvůj rekord: %2$s. Dní do nového rekordu: %1$d.</item>
+    </plurals>
     <plurals name="ios_streak_bestValue">
         <item quantity="one">%1$d den</item>
         <item quantity="other">Dní: %1$d</item>
     </plurals>
     <plurals name="ios_streak_unit">
         <item quantity="one">den v řadě</item>
+        <item quantity="few">dny v řadě</item>
         <item quantity="other">dní v řadě</item>
     </plurals>
     <plurals name="lesson_exam_addCards">
@@ -28,5 +33,8 @@
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d otázka je bez odpovědi. Přesto odevzdat?</item>
         <item quantity="other">Otázky bez odpovědi: %1$d. Přesto odevzdat?</item>
+    </plurals>
+    <plurals name="lesson_lessons_examDays">
+        <item quantity="other">Zbývá dní: %1$d</item>
     </plurals>
 </resources>

@@ -173,7 +173,7 @@ export const de: Catalog = {
     card3Note: "Regen oder Schnee, je nach Temperatur im Fall.",
     card3Hint: "Regen oder Schnee, dasselbe Wort deckt beides.",
     card4Kind: "Schema",
-    card4Front: "Nenne die drei Zeiten des Kreislaufs.",
+    card4Front: "Nenne die drei Phasen des Kreislaufs.",
     card4Back: "Verdunstung, Kondensation, Niederschlag.",
     evap: "Verdunstung",
     cond: "Kondensation",
@@ -186,7 +186,7 @@ export const de: Catalog = {
     panelCards: "Deine Karten",
     panelExam: "Deine Prüfung",
     fileName: "Wasserkreislauf.pdf",
-    sheetHeading: "Drei Zeiten, eine Schleife",
+    sheetHeading: "Drei Phasen, ein Kreislauf",
     sheetParagraph:
       "Wasser wechselt den Zustand, ohne den Planeten zu verlassen: was aus den Meeren verdunstet, fällt auf die Kontinente und kehrt zurück. 71 % der Verdunstung kommt aus den Meeren.",
     defTerm: "Kondensation",

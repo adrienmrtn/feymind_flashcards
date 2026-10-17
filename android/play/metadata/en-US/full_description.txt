@@ -1,22 +1,23 @@
 Your courses become a summary you reread, and flashcards Micabo brings back just before you forget.
 
-Drop in a handout, a photo of the whiteboard, a Word file or a video. Micabo writes the summary, pulls out the cards and plans your sessions. Exam coming up? The plan tightens toward that day.
+Drop in a handout, a photo of the whiteboard, a Word file or a video. Micabo writes the summary, pulls out the cards and plans your sessions. Exam coming up? Add its date: Micabo counts down the days and trains you with timed mock exams.
 
 WHAT YOU DO
 • Import a course (PDF, photos, Word, YouTube or text)
-• Read the summary, fix it, reread it
+• Read the summary, then test yourself with quizzes
 • Review your cards with spaced repetition
 • Set an exam date
 • Share a course with friends, or keep it to yourself
 
-THREE TABS
-Courses: everything you've imported.
-Review: the cards due today, nothing else.
-Profile: your streak, your totals, your friends.
+FOUR TABS
+Home: create a new lesson.
+Lessons: everything you've created.
+Exams: the countdown and your mock exams.
+Profile: your streak, your settings, your friends.
 
 FREE AND PRO
-Without a subscription: 1 course, 70% of the summary, 5 cards per session.
-Micabo Pro: unlimited courses and cards, full summary, exam mode. 3-day free trial, then a weekly or yearly subscription you can cancel anytime from Google Play.
+Without a subscription: 1 lesson, from a topic or a pasted text, plus your first mock exam.
+Micabo Pro: unlimited lessons, imports (PDF, photos, Word, audio, YouTube) and mock exams. 3-day free trial, then a weekly or yearly subscription you can cancel anytime from Google Play.
 
 Terms of use: https://micabo.app/conditions
 Privacy policy: https://micabo.app/confidentialite

@@ -54,7 +54,9 @@ enum class AppLocale(val code: String, val label: String, val content: String) {
                     "es" -> if (region.isEmpty() || region == "ES") ES else ES419
                     "pt" -> if (region == "BR") PTBR else PT
                     "nb", "no", "nn" -> DA
-                    "sh", "bs" -> SR
+                    // Comme l'iPhone (`UiLocale.fromPreferredLanguages`) : le bosnien et le
+                    // monténégrin s'écrivent en ijékavien, comme le croate.
+                    "sh", "bs", "cnr" -> HR
                     else -> entries.firstOrNull { it.code == language }
                 }
                 if (match != null) return match
@@ -73,9 +75,16 @@ enum class AppLocale(val code: String, val label: String, val content: String) {
             }
         }
 
-        /** Le contexte de l'activité, dans la langue choisie : textes et sens de lecture. */
+        /**
+         * Le contexte de l'activité, dans la langue choisie : textes et sens de lecture.
+         *
+         * **Avant tout choix, la langue du téléphone ramenée à celles de l'app** (`fromDevice`),
+         * celle que l'écran de la langue présélectionne : sans elle, un téléphone en norvégien ou
+         * en bosnien lisait le parcours d'accueil en anglais, et un téléphone en serbe latin
+         * (`sr-Latn`, qu'Android ne sert pas avec `values-sr`) aussi.
+         */
         fun wrap(base: Context, stored: String): Context {
-            val chosen = of(stored) ?: return base
+            val chosen = of(stored) ?: fromDevice()
             val locale = chosen.locale
             Locale.setDefault(locale)
             val config = Configuration(base.resources.configuration)

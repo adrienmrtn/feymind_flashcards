@@ -7,6 +7,7 @@
     <string name="app_common_cancel">Vazgeç</string>
     <string name="app_common_save">Kaydet</string>
     <string name="app_exams_countdown_today">bugün</string>
+    <string name="app_exams_countdown_tomorrow">yarın</string>
     <string name="app_friends_accept">Kabul et</string>
     <string name="app_friends_addSomeone">Birini ekle</string>
     <string name="app_friends_decline">Reddet</string>
@@ -17,7 +18,7 @@
     <string name="app_friends_list">Arkadaşların</string>
     <string name="app_friends_loadingCourses">Derslerine bakıyoruz…</string>
     <string name="app_friends_needAccount">Birini eklemek için hesap gerekir</string>
-    <string name="app_friends_noShared">%1$s paylaşılmış dersi yok.</string>
+    <string name="app_friends_noShared">%1$s henüz ders paylaşmamış.</string>
     <string name="app_friends_nothingToSee">Şimdilik görülecek bir şey yok</string>
     <string name="app_friends_outgoing">Gönderilen istekler</string>
     <string name="app_friends_removeFriend">Arkadaşlarımdan çıkar</string>
@@ -189,7 +190,6 @@
     <string name="ios_planYearly">Yıllık</string>
     <string name="ios_profile_streakBest">Bu senin rekorun. Bırakma.</string>
     <string name="ios_profile_streakStart">Yarın gel, seri başlasın.</string>
-    <string name="ios_profile_streakToBeat">Rekorun %1$s. %2$s gün daha dayan, rekoru kır.</string>
     <string name="ios_proof_gotYou">**Biz hallederiz.**</string>
     <string name="ios_proof_gotYou_named">%1$s? **Biz hallederiz.**</string>
     <string name="ios_proof_retention_caption">Bir dersi çalıştıktan bir hafta sonra aklında kalan</string>
@@ -402,7 +402,6 @@
     <string name="lesson_lessons_due">%1$s tekrar</string>
     <string name="lesson_lessons_emptyBody">Ana sayfada bir konu yaz ya da PDF, fotoğraf veya ses ekle: Mika bunu bir yola dönüştürür.</string>
     <string name="lesson_lessons_emptyTitle">İlk dersin seni bekliyor</string>
-    <string name="lesson_lessons_examDays">%1$s gün kaldı</string>
     <string name="lesson_lessons_finished">Ders tamamlandı</string>
     <string name="lesson_lessons_toOpen">Açılmadı</string>
     <string name="lesson_menu_cancel">Vazgeç</string>

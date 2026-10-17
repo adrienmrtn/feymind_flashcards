@@ -127,7 +127,7 @@ export async function createSheetFromImport(input: {
     return { status: "error", message: await actionT("app.errors.sheetUnusable") };
   }
 
-  const title = (course.title ?? input.hintTitle ?? "Cours sans titre").trim();
+  const title = (course.title ?? input.hintTitle ?? (await actionT("app.course.untitled"))).trim();
   const id = crypto.randomUUID();
 
   const { error: insertError } = await supabase.from("courses").insert({
@@ -161,7 +161,7 @@ async function readableError(error: unknown): Promise<string> {
       // Corps illisible : le message du transport vaut mieux que rien.
     }
   }
-  return error instanceof Error ? error.message : "Micabo n'a pas pu écrire cette fiche.";
+  return error instanceof Error ? error.message : await actionT("app.errors.sheetWriteFailed");
 }
 
 function acceptedImportImages(raw: unknown): string[] {

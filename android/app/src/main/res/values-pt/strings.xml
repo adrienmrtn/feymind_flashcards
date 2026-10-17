@@ -7,6 +7,7 @@
     <string name="app_common_cancel">Cancelar</string>
     <string name="app_common_save">Guardar</string>
     <string name="app_exams_countdown_today">hoje</string>
+    <string name="app_exams_countdown_tomorrow">amanhã</string>
     <string name="app_friends_accept">Aceitar</string>
     <string name="app_friends_addSomeone">Adicionar alguém</string>
     <string name="app_friends_decline">Recusar</string>
@@ -60,8 +61,15 @@
     <string name="ios_auth_invalidResponse">Não foi possível ler a resposta do servidor. Tenta novamente.</string>
     <string name="ios_auth_providerNotEnabled">O início de sessão com %1$s ainda não está ativo neste projeto Supabase.</string>
     <string name="ios_auth_sessionExpired">A tua sessão expirou. Inicia sessão novamente.</string>
+    <string name="ios_averageLead">Ninguém te julga. É um ponto de partida, não uma pauta.</string>
     <string name="ios_averageTitle">Qual é a tua média\nneste momento?</string>
     <string name="ios_backup">Cópia de segurança</string>
+    <string name="ios_build_done">O teu plano está pronto</string>
+    <string name="ios_build_step1">A ler as tuas respostas</string>
+    <string name="ios_build_step2">A calcular o teu ritmo</string>
+    <string name="ios_build_step3">A distribuir o trabalho até ao exame</string>
+    <string name="ios_build_step4">A definir o teu objetivo</string>
+    <string name="ios_build_title">A preparar o teu plano</string>
     <string name="ios_cardsSection">Cartões · %1$s</string>
     <string name="ios_connected">Sessão iniciada</string>
     <string name="ios_country">País</string>
@@ -86,8 +94,10 @@
     <string name="ios_goal_other">Outra coisa</string>
     <string name="ios_goal_profession">Ganhar competências para o trabalho</string>
     <string name="ios_hook_next">Seguinte</string>
+    <string name="ios_hook_sub">O Micabo ajuda-te a ter melhores notas na escola.</string>
     <string name="ios_hook_title">**Aprende** 2x mais rápido</string>
     <string name="ios_journey_source">Karpicke e Roediger, Science, 2008</string>
+    <string name="ios_levelTitle">Em que ponto estás?</string>
     <string name="ios_level_concours">Exame de acesso</string>
     <string name="ios_level_generic_college">Universidade</string>
     <string name="ios_level_generic_high">Secundário</string>
@@ -96,6 +106,7 @@
     <string name="ios_level_medicine">Medicina, saúde</string>
     <string name="ios_level_other">Outro</string>
     <string name="ios_level_prepa">Preparatórias (prépa)</string>
+    <string name="ios_libraryNoSearch">Nenhum curso para esta pesquisa</string>
     <string name="ios_onb_mika_paths">… e transforma cada lição num **percurso simples**, feito para ti.</string>
     <string name="ios_onb_mika_source_course">Aulas</string>
     <string name="ios_onb_mika_source_notes">Apontamentos</string>
@@ -125,6 +136,7 @@
     <string name="ios_onb_sample_title">A Guerra Fria</string>
     <string name="ios_onb_social_count">%1$s+ alunos</string>
     <string name="ios_onb_social_title">Já ajudámos</string>
+    <string name="ios_onb_train_reveal">Toca no cartão para ver a resposta</string>
     <string name="ios_onb_tutor_answer">Claro! Vamos vê-la em 3 passos, com um esquema 🌱</string>
     <string name="ios_onb_tutor_anytime">24 h por dia</string>
     <string name="ios_onb_tutor_ask">Podes explicar-me a fotossíntese?</string>
@@ -164,6 +176,7 @@
     <string name="ios_paywallStartTrial">Começar os meus %1$s dias grátis</string>
     <string name="ios_paywallTerms">Termos de utilização</string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, sem limites</string>
+    <string name="ios_paywall_badge_free">%1$s dias grátis</string>
     <string name="ios_pdf_empty">Este PDF não tem texto nem páginas utilizáveis.</string>
     <string name="ios_pdf_protected">Este PDF está protegido por palavra-passe.</string>
     <string name="ios_pdf_unreadable">Não foi possível abrir este PDF.</string>
@@ -175,17 +188,19 @@
     <string name="ios_planYearly">Anual</string>
     <string name="ios_profile_streakBest">É o teu recorde. Não o percas.</string>
     <string name="ios_profile_streakStart">Volta amanhã e a sequência começa.</string>
-    <string name="ios_profile_streakToBeat">O teu recorde é %1$s. Mais %2$s dias e bate-lo.</string>
     <string name="ios_proof_gotYou">**Nós tratamos disso.**</string>
     <string name="ios_proof_gotYou_named">%1$s? **Nós tratamos disso.**</string>
     <string name="ios_proof_retention_caption">O que fica de uma matéria uma semana depois de a estudares</string>
     <string name="ios_proof_retention_reread">Ao relê-la</string>
     <string name="ios_proof_retention_testing">Ao testares-te nela</string>
+    <string name="ios_proof_retention_title">Reler é **esquecer**.</string>
     <string name="ios_quiz_time">Quanto tempo estás disposto a estudar no Micabo por dia?</string>
     <string name="ios_quiz_time_caption_10">Bom ritmo</string>
     <string name="ios_quiz_time_caption_15">A sério</string>
     <string name="ios_quiz_time_caption_30">Brutal</string>
     <string name="ios_quiz_time_caption_5">Um bom começo</string>
+    <string name="ios_quiz_time_minutes">%1$s min por dia</string>
+    <string name="ios_searchCourse">Um curso, uma disciplina…</string>
     <string name="ios_sharedCourse">Curso partilhado</string>
     <string name="ios_sharedNoSheet">Este curso não tem ficha</string>
     <string name="ios_signOutMsg">Os teus cursos ficam neste dispositivo e na tua conta. Vais encontrá-los quando voltares a iniciar sessão.</string>
@@ -205,6 +220,7 @@
     <string name="ios_streak_zeroTitle">Ainda sem sequência</string>
     <string name="ios_syncing">A sincronizar…</string>
     <string name="ios_tapToSync">Toca para sincronizar</string>
+    <string name="ios_targetLead">Aponta para o que te faria mesmo feliz, não para o que parece razoável.</string>
     <string name="ios_targetTitle">E qual é\no teu objetivo?</string>
     <string name="ios_trialDay2">Dia 2: lembrete antes do fim</string>
     <string name="ios_trialDay2Detail">Avisamos-te com uma notificação. Cancelas em quinze segundos.</string>
@@ -214,6 +230,12 @@
     <string name="ios_trialReminder_cardTitle">O teu teste acaba amanhã</string>
     <string name="ios_trialToday">Hoje: experimenta o Micabo Pro</string>
     <string name="ios_trialTodayDetail">Cursos ilimitados, cartões gerados, revisões: está tudo desbloqueado.</string>
+    <string name="ios_trial_noPayment">Nada a pagar hoje</string>
+    <string name="ios_trial_price">Depois %1$s por ano, ou seja, %2$s por mês.</string>
+    <string name="ios_trial_reminder_cta">Continuar grátis</string>
+    <string name="ios_trial_reminder_sub">No dia %1$s, uma notificação avisa-te. Se quiseres, cancelas em dois toques.</string>
+    <string name="ios_trial_reminder_title">Vamos enviar-te um **lembrete** antes de o teste acabar.</string>
+    <string name="ios_trial_title">Queremos que experimentes o Micabo **gratuitamente**.</string>
     <string name="ios_unitWeek">semana</string>
     <string name="ios_unitYear">ano</string>
     <string name="ios_usernameLabel">Nome de utilizador</string>
@@ -375,7 +397,6 @@
     <string name="lesson_lessons_due">%1$s para rever</string>
     <string name="lesson_lessons_emptyBody">Escreve um tema no Início, ou carrega um PDF, uma foto ou uma gravação: o Mika transforma-o num percurso.</string>
     <string name="lesson_lessons_emptyTitle">A tua primeira lição está à tua espera</string>
-    <string name="lesson_lessons_examDays">Faltam %1$s dias</string>
     <string name="lesson_lessons_finished">Lição concluída</string>
     <string name="lesson_lessons_toOpen">Por começar</string>
     <string name="lesson_menu_cancel">Cancelar</string>
@@ -486,6 +507,7 @@
     <string name="x_paywall_soon">Brevemente no Android</string>
     <string name="x_paywall_soonBody">As subscrições chegam muito em breve ao Android. Até lá, a tua lição grátis espera por ti.</string>
     <string name="x_paywall_subscribe">Passar a Pro</string>
+    <string name="x_quoted">«%1$s»</string>
     <string name="x_record_limit">Até 90 minutos. O Mika passa a gravação a texto e depois escreve a tua lição.</string>
     <string name="x_score_1">Tenho dificuldades</string>
     <string name="x_score_2">Um pouco abaixo da média</string>

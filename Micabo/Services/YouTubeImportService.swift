@@ -66,7 +66,8 @@ enum YouTubeLink {
 enum YouTubeLimits {
     /// Au delà, on ne garde que le début de la transcription. Un cours de deux heures
     /// n'est plus un refus : c'est le début qui rentre dans un appel de génération.
-    static let maximumDuration: TimeInterval = 90 * 60
+    /// Une heure, comme le serveur (`YOUTUBE_LIMITS`) : une leçon ne garde pas plus de texte.
+    static let maximumDuration: TimeInterval = 60 * 60
 }
 
 // MARK: - Modèles
@@ -213,10 +214,13 @@ enum YouTubeImportError: LocalizedError, Equatable {
     case tooLong(duration: TimeInterval, limit: TimeInterval)
     case notConfigured
     case network(String)
+    /// Le plafond du jour des lectures de vidéo par le modèle : réessayer ne servira à rien
+    /// avant demain.
+    case dailyLimit
     case server(String)
 
-    /// Traduit un refus du serveur. Un code inconnu retombe sur le message du serveur
-    /// plutôt que sur une phrase inventée.
+    /// Traduit un refus du serveur. Un code inconnu retombe sur le message du serveur en
+    /// français, et sur une phrase de l'app dans les autres langues (`ServerMessage`).
     init(_ error: SupabaseFunctionError) {
         switch error {
         case .notConfigured:
@@ -240,8 +244,14 @@ enum YouTubeImportError: LocalizedError, Equatable {
                 self = .transcriptTooShort
             case "too_long":
                 self = .tooLong(duration: 0, limit: YouTubeLimits.maximumDuration)
+            case "quota":
+                self = .dailyLimit
             default:
-                self = .server(YouTubeImportError.transportMessage(status: status, message: message))
+                // Un 429 sans code est le même plafond, dit par une version du serveur qui
+                // ne le nommait pas encore.
+                self = status == 429
+                    ? .dailyLimit
+                    : .server(YouTubeImportError.transportMessage(status: status, message: message))
             }
         }
     }
@@ -262,6 +272,8 @@ enum YouTubeImportError: LocalizedError, Equatable {
             L10n.t("ios.ai.notConfigured", locale: .resolved())
         case .network(let detail):
             L10n.t("ios.ai.network", locale: .resolved(), vars: ["detail": detail])
+        case .dailyLimit:
+            L10n.t("ios.ai.quota", locale: .resolved())
         case .server(let message):
             message
         }
@@ -276,7 +288,7 @@ enum YouTubeImportError: LocalizedError, Equatable {
         case .noCaptions: L10n.t("ios.yt.titleNoCaptions", locale: .resolved())
         case .transcriptTooShort: L10n.t("ios.yt.titleTooShort", locale: .resolved())
         case .tooLong: L10n.t("ios.yt.titleTooLong", locale: .resolved())
-        case .notConfigured, .network, .server: L10n.t("ios.err.readFailed", locale: .resolved())
+        case .notConfigured, .network, .dailyLimit, .server: L10n.t("ios.err.readFailed", locale: .resolved())
         }
     }
 
@@ -288,7 +300,7 @@ enum YouTubeImportError: LocalizedError, Equatable {
     var allowsRetry: Bool {
         switch self {
         case .network, .server, .unavailable, .noCaptions: true
-        case .invalidLink, .transcriptTooShort, .tooLong, .notConfigured: false
+        case .invalidLink, .transcriptTooShort, .tooLong, .notConfigured, .dailyLimit: false
         }
     }
 
@@ -310,7 +322,9 @@ enum YouTubeImportError: LocalizedError, Equatable {
         if status == 401 || status == 403 {
             return L10n.t("ios.yt.keyRefused", locale: .resolved(), vars: ["status": "\(status)"])
         }
-        return message.nilIfBlank ?? L10n.t("ios.yt.serverStatus", locale: .resolved(), vars: ["status": "\(status)"])
+        // Le serveur écrit en français : son message ne passe tel quel qu'en français.
+        return message.nilIfBlank.map { ServerMessage.localized($0, fallback: "ios.yt.responseUnread") }
+            ?? L10n.t("ios.yt.serverStatus", locale: .resolved(), vars: ["status": "\(status)"])
     }
 }
 

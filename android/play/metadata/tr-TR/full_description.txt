@@ -1,22 +1,23 @@
 Derslerin tekrar okunan bir özete ve Micabo'nun unutmadan hemen önce sana yeniden sorduğu kartlara dönüşür.
 
-Bir ders notu, tahtanın fotoğrafı, bir Word dosyası ya da bir video yükle. Micabo özetini yazar, kartlarını çıkarır ve çalışma seanslarını planlar. Sınav mı yaklaşıyor? Plan o güne doğru sıkılaşır.
+Bir ders notu, tahtanın fotoğrafı, bir Word dosyası ya da bir video yükle. Micabo özetini yazar, kartlarını çıkarır ve çalışma seanslarını planlar. Sınav mı yaklaşıyor? Tarihini ekle: Micabo günleri sayar ve seni süreli deneme sınavlarıyla çalıştırır.
 
 NE YAPARSIN
 • Ders içe aktar (PDF, fotoğraf, Word, YouTube veya metin)
-• Özeti oku, düzelt, yeniden oku
+• Özeti oku, sonra kendini testlerle sına
 • Kartlarını aralıklı tekrarla çalış
 • Sınav tarihi belirle
 • Bir dersi arkadaşlarınla paylaş ya da kendine sakla
 
-ÜÇ SEKME
-Dersler: içe aktardığın her şey.
-Çalış: bugün sırası gelen kartlar, başka bir şey yok.
-Profil: serin, toplamların, arkadaşların.
+DÖRT SEKME
+Ana sayfa: yeni bir ders oluştur.
+Dersler: oluşturduğun her şey.
+Sınavlar: geri sayım ve deneme sınavların.
+Profil: serin, ayarların, arkadaşların.
 
 ÜCRETSİZ VE PRO
-Abonelik olmadan: 1 ders, özetin %70'i, seans başına 5 kart.
-Micabo Pro: sınırsız ders ve kart, özetin tamamı, sınav modu. 3 günlük ücretsiz deneme, ardından Google Play'den istediğin zaman iptal edebileceğin haftalık veya yıllık abonelik.
+Abonelik olmadan: bir konudan ya da yapıştırdığın bir metinden 1 ders, üstüne ilk deneme sınavın.
+Micabo Pro: sınırsız ders, içe aktarma (PDF, fotoğraf, Word, ses, YouTube) ve deneme sınavları. 3 günlük ücretsiz deneme, ardından Google Play'den istediğin zaman iptal edebileceğin haftalık veya yıllık abonelik.
 
-Kullanım koşulları: https://micabo.app/conditions
-Gizlilik politikası: https://micabo.app/confidentialite
+Kullanım koşulları: https://micabo.app/tr/conditions
+Gizlilik politikası: https://micabo.app/tr/confidentialite
