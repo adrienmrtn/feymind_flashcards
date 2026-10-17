@@ -196,6 +196,37 @@ jobs:
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"
 
+  # **Les rendus sur une branche git**, `renders/run-<n>` : la session de développement lit
+  # git mais pas le stockage des artefacts. Une branche neuve par run, rien n'est écrasé.
+  renders-branch:
+    name: Rendus sur une branche
+    needs: build-and-test
+    if: always() && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: rendus-jpg
+          path: small
+      - name: Pousser les rendus
+        env:
+          TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN: ${{ github.run_number }}
+        run: |
+          [ -d small ] && [ -n "$(ls small)" ] || exit 0
+          cd small
+          git init -q -b "renders/run-$RUN"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Rendus iOS, run $RUN"
+          git push -q "https://x-access-token:$TOKEN@github.com/$REPO.git" "renders/run-$RUN"
+
   renders-log:
     name: Rendus dans le journal (${{ matrix.group }})
     needs: build-and-test
