@@ -1,22 +1,23 @@
 A tananyagodból összefoglaló lesz, amit újraolvasol, és kártyák, amelyeket a Micabo épp azelőtt kérdez vissza, hogy elfelejtenéd őket.
 
-Tölts fel jegyzetet, egy fotót a tábláról, egy Word-fájlt vagy egy videót. A Micabo megírja az összefoglalót, elkészíti a kártyákat, és beosztja a tanulásodat. Közeleg a vizsga? A terv egyre sűrűbb lesz addig a napig.
+Tölts fel jegyzetet, egy fotót a tábláról, egy Word-fájlt vagy egy videót. A Micabo megírja az összefoglalót, elkészíti a kártyákat, és beosztja a tanulásodat. Közeleg a vizsga? Add meg a dátumát: a Micabo visszaszámol, és időre írt próbavizsgákkal készít fel.
 
 MIT CSINÁLSZ
 • Tananyagot importálsz (PDF, fotók, Word, YouTube vagy szöveg)
-• Elolvasod az összefoglalót, javítod, újraolvasod
+• Elolvasod az összefoglalót, és kvízekkel teszteled magad
 • Ismételed a kártyáidat időközönkénti ismétléssel
 • Megadod a vizsga dátumát
 • Megosztasz egy tananyagot a barátaiddal, vagy megtartod magadnak
 
-HÁROM FÜL
-Tananyagok: minden, amit importáltál.
-Ismétlés: a mai kártyák, semmi más.
-Profil: a sorozatod, az összesítéseid, a barátaid.
+NÉGY FÜL
+Kezdőlap: új leckét készítesz.
+Leckék: minden, amit készítettél.
+Vizsgák: a visszaszámlálás és a próbavizsgáid.
+Profil: a sorozatod, a beállításaid, a barátaid.
 
 INGYENES ÉS PRO
-Előfizetés nélkül: 1 tananyag, az összefoglaló 70%-a, alkalmanként 5 kártya.
-Micabo Pro: korlátlan tananyag és kártya, teljes összefoglaló, vizsgamód. 3 napos ingyenes próbaidő, utána heti vagy éves előfizetés, amelyet bármikor lemondhatsz a Google Playen.
+Előfizetés nélkül: 1 lecke egy témából vagy bemásolt szövegből, plusz az első próbavizsgád.
+Micabo Pro: korlátlan lecke, importálás (PDF, fotók, Word, hang, YouTube) és próbavizsgák. 3 napos ingyenes próbaidő, utána heti vagy éves előfizetés, amelyet bármikor lemondhatsz a Google Playen.
 
 Felhasználási feltételek: https://micabo.app/conditions
 Adatvédelmi irányelvek: https://micabo.app/confidentialite

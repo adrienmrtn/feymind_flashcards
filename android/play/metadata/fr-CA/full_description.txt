@@ -1,22 +1,23 @@
 Tes cours deviennent une fiche qu’on relit, et des cartes que Micabo te repose juste avant que tu oublies.
 
-Dépose des notes de cours, une photo du tableau, un Word ou une vidéo. Micabo en écrit la fiche, en tire les cartes, et planifie tes sessions. Un examen approche : le plan se resserre vers ce jour.
+Dépose des notes de cours, une photo du tableau, un Word ou une vidéo. Micabo en écrit la fiche, en tire les cartes, et planifie tes sessions. Un examen approche ? Ajoute sa date : Micabo compte les jours et t’entraîne avec des examens blancs chronométrés.
 
 CE QUE TU FAIS
 • Importer un cours (PDF, photos, Word, YouTube ou texte)
-• Lire la fiche, la corriger, la relire
+• Lire la fiche, puis te tester avec les quiz
 • Réviser tes cartes en répétition espacée
 • Poser une date d’examen
 • Partager un cours avec tes amis, ou le garder pour toi
 
-TROIS ONGLETS
-Cours : tout ce que tu as importé.
-Réviser : les cartes dues aujourd’hui, rien d’autre.
-Profil : ta série, tes totaux, tes amis.
+QUATRE ONGLETS
+Home : créer une nouvelle leçon.
+Leçons : tout ce que tu as créé.
+Examen : le compte à rebours et tes examens blancs.
+Profil : ta série, tes réglages, tes amis.
 
 GRATUIT ET PRO
-Sans abonnement : 1 cours, 70 % de la fiche, 5 cartes par session.
-Micabo Pro : cours et cartes illimités, fiche complète, mode examen. 3 jours d’essai gratuit, puis un abonnement hebdomadaire ou annuel résiliable à tout moment depuis Google Play.
+Sans abonnement : 1 leçon, à partir d’un sujet ou d’un texte collé, et ton premier examen blanc.
+Micabo Pro : leçons illimitées, imports (PDF, photos, Word, audio, YouTube) et examens blancs. 3 jours d’essai gratuit, puis un abonnement hebdomadaire ou annuel résiliable à tout moment depuis Google Play.
 
-Conditions d’utilisation : https://micabo.app/conditions
-Règles de confidentialité : https://micabo.app/confidentialite
+Conditions d’utilisation : https://micabo.app/fr/conditions
+Règles de confidentialité : https://micabo.app/fr/confidentialite

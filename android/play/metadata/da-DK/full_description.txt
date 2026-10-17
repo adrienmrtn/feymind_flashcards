@@ -1,22 +1,23 @@
 Dit pensum bliver til et resumé, du læser igen, og flashcards, som Micabo stiller dig lige før du glemmer dem.
 
-Upload et kompendium, et billede af tavlen, en Word-fil eller en video. Micabo skriver resuméet, laver kortene og planlægger dine sessioner. Nærmer eksamen sig? Planen strammes til mod den dag.
+Upload et kompendium, et billede af tavlen, en Word-fil eller en video. Micabo skriver resuméet, laver kortene og planlægger dine sessioner. Nærmer eksamen sig? Tilføj datoen: Micabo tæller dagene ned og træner dig med prøveeksamener på tid.
 
 DET GØR DU
 • Importér et fag (PDF, billeder, Word, YouTube eller tekst)
-• Læs resuméet, ret det, læs det igen
+• Læs resuméet, og test dig selv med quizzer
 • Repetér dine kort med spaced repetition
 • Sæt en eksamensdato
 • Del et fag med dine venner, eller behold det selv
 
-TRE FANER
-Fag: alt, hvad du har importeret.
-Repetér: dagens kort, intet andet.
-Profil: din stime, dine tal, dine venner.
+FIRE FANER
+Hjem: lav en ny lektion.
+Lektioner: alt, hvad du har lavet.
+Eksamener: nedtællingen og dine prøveeksamener.
+Profil: din stime, dine indstillinger, dine venner.
 
 GRATIS OG PRO
-Uden abonnement: 1 fag, 70 % af resuméet, 5 kort pr. session.
-Micabo Pro: ubegrænsede fag og kort, fuldt resumé, eksamenstilstand. 3 dages gratis prøveperiode, derefter et ugentligt eller årligt abonnement, som du altid kan opsige i Google Play.
+Uden abonnement: 1 lektion ud fra et emne eller en indsat tekst, plus din første prøveeksamen.
+Micabo Pro: ubegrænsede lektioner, import (PDF, billeder, Word, lyd, YouTube) og prøveeksamener. 3 dages gratis prøveperiode, derefter et ugentligt eller årligt abonnement, som du altid kan opsige i Google Play.
 
 Vilkår for brug: https://micabo.app/conditions
 Privatlivspolitik: https://micabo.app/confidentialite

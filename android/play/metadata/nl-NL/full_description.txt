@@ -1,22 +1,23 @@
 Je vakken worden een samenvatting die je herleest, en flashcards die Micabo je opnieuw voorlegt vlak voordat je ze vergeet.
 
-Upload een reader, een foto van het bord, een Word-bestand of een video. Micabo schrijft de samenvatting, maakt de kaarten en plant je sessies. Komt er een tentamen aan? Het plan wordt naar die dag toe intensiever.
+Upload een reader, een foto van het bord, een Word-bestand of een video. Micabo schrijft de samenvatting, maakt de kaarten en plant je sessies. Komt er een tentamen aan? Voeg de datum toe: Micabo telt af en traint je met proefexamens op tijd.
 
 WAT JE DOET
 • Een vak importeren (PDF, foto's, Word, YouTube of tekst)
-• De samenvatting lezen, verbeteren, herlezen
+• De samenvatting lezen en jezelf testen met quizzen
 • Je kaarten herhalen met gespreide herhaling
 • Een tentamendatum instellen
 • Een vak delen met je vrienden, of het voor jezelf houden
 
-DRIE TABBLADEN
-Vakken: alles wat je hebt geïmporteerd.
-Herhalen: de kaarten van vandaag, verder niets.
-Profiel: je reeks, je totalen, je vrienden.
+VIER TABBLADEN
+Home: een nieuwe les maken.
+Lessen: alles wat je hebt gemaakt.
+Examens: het aftellen en je proefexamens.
+Profiel: je reeks, je instellingen, je vrienden.
 
 GRATIS EN PRO
-Zonder abonnement: 1 vak, 70% van de samenvatting, 5 kaarten per sessie.
-Micabo Pro: onbeperkt vakken en kaarten, volledige samenvatting, tentamenmodus. 3 dagen gratis proberen, daarna een week- of jaarabonnement dat je altijd kunt opzeggen via Google Play.
+Zonder abonnement: 1 les, vanuit een onderwerp of een geplakte tekst, plus je eerste proefexamen.
+Micabo Pro: onbeperkt lessen, importeren (PDF, foto's, Word, audio, YouTube) en proefexamens. 3 dagen gratis proberen, daarna een week- of jaarabonnement dat je altijd kunt opzeggen via Google Play.
 
 Gebruiksvoorwaarden: https://micabo.app/conditions
 Privacybeleid: https://micabo.app/confidentialite

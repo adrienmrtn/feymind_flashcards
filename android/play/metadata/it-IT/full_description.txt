@@ -1,22 +1,23 @@
 I tuoi corsi diventano un riassunto da rileggere e flashcard che Micabo ti ripropone poco prima che tu le dimentichi.
 
-Carica una dispensa, una foto della lavagna, un file Word o un video. Micabo scrive il riassunto, crea le flashcard e pianifica le tue sessioni. Si avvicina un esame? Il piano si intensifica verso quel giorno.
+Carica una dispensa, una foto della lavagna, un file Word o un video. Micabo scrive il riassunto, crea le flashcard e pianifica le tue sessioni. Si avvicina un esame? Aggiungi la data: Micabo conta i giorni e ti allena con simulazioni d'esame a tempo.
 
 COSA FAI
 • Importi un corso (PDF, foto, Word, YouTube o testo)
-• Leggi il riassunto, lo correggi, lo rileggi
+• Leggi il riassunto, poi ti metti alla prova con i quiz
 • Ripassi le flashcard con la ripetizione dilazionata
 • Imposti la data dell'esame
 • Condividi un corso con gli amici o lo tieni per te
 
-TRE SCHEDE
-Corsi: tutto ciò che hai importato.
-Ripasso: le flashcard di oggi, nient'altro.
-Profilo: la tua serie, i tuoi totali, i tuoi amici.
+QUATTRO SCHEDE
+Home: crea una nuova lezione.
+Lezioni: tutto ciò che hai creato.
+Esami: il conto alla rovescia e le tue simulazioni.
+Profilo: la tua serie, le tue impostazioni, i tuoi amici.
 
 GRATIS E PRO
-Senza abbonamento: 1 corso, il 70% del riassunto, 5 flashcard per sessione.
-Micabo Pro: corsi e flashcard illimitati, riassunto completo, modalità esame. 3 giorni di prova gratuita, poi un abbonamento settimanale o annuale che puoi disdire in qualsiasi momento da Google Play.
+Senza abbonamento: 1 lezione, da un argomento o da un testo incollato, più la tua prima simulazione d'esame.
+Micabo Pro: lezioni illimitate, importazioni (PDF, foto, Word, audio, YouTube) e simulazioni d'esame. 3 giorni di prova gratuita, poi un abbonamento settimanale o annuale che puoi disdire in qualsiasi momento da Google Play.
 
 Termini di utilizzo: https://micabo.app/conditions
 Informativa sulla privacy: https://micabo.app/confidentialite

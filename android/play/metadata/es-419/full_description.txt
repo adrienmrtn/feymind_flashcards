@@ -1,22 +1,23 @@
 Tus clases se convierten en un resumen para releer y en tarjetas que Micabo te vuelve a preguntar justo antes de que las olvides.
 
-Sube un apunte, una foto del pizarrón, un Word o un video. Micabo escribe el resumen, saca las tarjetas y planifica tus sesiones. ¿Se acerca un examen? El plan se intensifica hacia ese día.
+Sube un apunte, una foto del pizarrón, un Word o un video. Micabo escribe el resumen, saca las tarjetas y planifica tus sesiones. ¿Se acerca un examen? Agrega la fecha: Micabo cuenta los días y te entrena con simulacros cronometrados.
 
 LO QUE HACES
 • Importar una materia (PDF, fotos, Word, YouTube o texto)
-• Leer el resumen, corregirlo, releerlo
+• Leer el resumen y ponerte a prueba con cuestionarios
 • Repasar tus tarjetas con repetición espaciada
 • Fijar una fecha de examen
 • Compartir una materia con tus amigos, o guardarla para ti
 
-TRES PESTAÑAS
-Materias: todo lo que importaste.
-Repasar: las tarjetas de hoy, nada más.
-Perfil: tu racha, tus totales, tus amigos.
+CUATRO PESTAÑAS
+Inicio: crear una nueva lección.
+Lecciones: todo lo que creaste.
+Exámenes: la cuenta regresiva y tus simulacros.
+Perfil: tu racha, tu configuración, tus amigos.
 
 GRATIS Y PRO
-Sin suscripción: 1 materia, el 70 % del resumen, 5 tarjetas por sesión.
-Micabo Pro: materias y tarjetas ilimitadas, resumen completo, modo examen. 3 días de prueba gratis y luego una suscripción semanal o anual que puedes cancelar cuando quieras desde Google Play.
+Sin suscripción: 1 lección, a partir de un tema o de un texto pegado, y tu primer simulacro.
+Micabo Pro: lecciones ilimitadas, importaciones (PDF, fotos, Word, audio, YouTube) y simulacros. 3 días de prueba gratis y luego una suscripción semanal o anual que puedes cancelar cuando quieras desde Google Play.
 
-Condiciones de uso: https://micabo.app/conditions
-Política de privacidad: https://micabo.app/confidentialite
+Condiciones de uso: https://micabo.app/es/conditions
+Política de privacidad: https://micabo.app/es/confidentialite

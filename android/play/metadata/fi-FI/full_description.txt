@@ -1,22 +1,23 @@
 Kursseistasi tulee tiivistelmä, jonka luet uudelleen, ja kortit, jotka Micabo kysyy sinulta juuri ennen kuin unohdat ne.
 
-Lisää moniste, kuva taulusta, Word-tiedosto tai video. Micabo kirjoittaa tiivistelmän, tekee kortit ja suunnittelee opiskelukertasi. Koe lähestyy? Suunnitelma tiivistyy kohti sitä päivää.
+Lisää moniste, kuva taulusta, Word-tiedosto tai video. Micabo kirjoittaa tiivistelmän, tekee kortit ja suunnittelee opiskelukertasi. Koe lähestyy? Lisää päivämäärä: Micabo laskee päiviä ja valmentaa sinua ajastetuilla harjoituskokeilla.
 
 MITÄ TEET
 • Tuot kurssin (PDF, kuvat, Word, YouTube tai teksti)
-• Luet tiivistelmän, korjaat sen, luet sen uudelleen
+• Luet tiivistelmän ja testaat itseäsi visoilla
 • Kertaat korttisi jaksotetulla kertauksella
 • Asetat koepäivän
 • Jaat kurssin kavereidesi kanssa tai pidät sen itselläsi
 
-KOLME VÄLILEHTEÄ
-Kurssit: kaikki, mitä olet tuonut.
-Kertaus: tämän päivän kortit, ei muuta.
-Profiili: putkesi, kokonaismääräsi, kaverisi.
+NELJÄ VÄLILEHTEÄ
+Koti: luo uusi oppitunti.
+Oppitunnit: kaikki, mitä olet luonut.
+Kokeet: lähtölaskenta ja harjoituskokeesi.
+Profiili: putkesi, asetuksesi, kaverisi.
 
 ILMAINEN JA PRO
-Ilman tilausta: 1 kurssi, 70 % tiivistelmästä, 5 korttia kertaa kohden.
-Micabo Pro: rajattomasti kursseja ja kortteja, koko tiivistelmä, koetila. 3 päivän ilmainen kokeilu, sen jälkeen viikko- tai vuositilaus, jonka voit perua milloin tahansa Google Playssa.
+Ilman tilausta: 1 oppitunti aiheesta tai liitetystä tekstistä sekä ensimmäinen harjoituskokeesi.
+Micabo Pro: rajattomasti oppitunteja, tuonnit (PDF, kuvat, Word, ääni, YouTube) ja harjoituskokeet. 3 päivän ilmainen kokeilu, sen jälkeen viikko- tai vuositilaus, jonka voit perua milloin tahansa Google Playssa.
 
 Käyttöehdot: https://micabo.app/conditions
 Tietosuojakäytäntö: https://micabo.app/confidentialite
