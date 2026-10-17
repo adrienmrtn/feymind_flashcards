@@ -80,8 +80,11 @@ class SupabaseAuth(private val prefs: Prefs) {
                 }
                 renewed.getOrNull()?.let { return@withContext keep(it) }
                 val error = renewed.exceptionOrNull()
-                // Un jeton oublié par GoTrue : un nouveau compte invité. Une panne réseau : on réessaiera.
+                // Un jeton oublié par GoTrue : un nouveau compte invité. Une panne réseau, ou de
+                // GoTrue lui-même (5xx, 429) : on réessaiera. Sans ça, un 503 passager jetait le
+                // compte invité, et avec lui l'abonnement et la leçon offerte.
                 if (error is NetworkException) throw error
+                if (error is ApiException && (error.status >= 500 || error.status == 429)) throw error
                 prefs.clearSession()
             }
             keep(request("signup", buildJsonObject { put("data", JsonObject(emptyMap())) }))
@@ -120,6 +123,9 @@ class SupabaseFunctions(private val auth: SupabaseAuth) {
     suspend fun call(function: String, payload: JsonObject, timeoutMs: Int = 150_000): JsonObject = withContext(Dispatchers.IO) {
         var token = runCatching { auth.accessToken() }.getOrElse { error ->
             if (error is NetworkException) throw error
+            // GoTrue en panne passagère : réessayer plus tard, pas appeler en anonyme (le
+            // serveur y verrait un compte sans abonnement et ouvrirait le paywall).
+            if (error is ApiException && (error.status >= 500 || error.status == 429)) throw NetworkException(error)
             SupabaseConfig.ANON_KEY
         }
         var attempt = 0

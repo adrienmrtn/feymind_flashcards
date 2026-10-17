@@ -54,9 +54,13 @@ class MicaboApplication : Application() {
         lessons = LessonRepository(this, functions, prefs, streak)
         mika = MikaChat(functions, lessons, prefs)
         exams = ExamRepository(this)
+        // Avant les événements : chacun lit `isPro`, et un `lateinit` encore vide ferait planter.
+        billing = Billing(this) {
+            runCatching { auth.accessToken() }
+            auth.userId.ifEmpty { null }
+        }
         analytics = Analytics(this, prefs, auth) { billing.isPro.value }
         composer = LessonComposer(this, YouTubeImport(functions)) { name, props -> analytics.track(name, props) }
-        billing = Billing(this)
         analytics.start()
         // Le compte invité s'ouvre tout de suite : il doit exister avant un achat, pour que
         // l'abonnement ait un propriétaire. Sans réseau, il s'ouvrira au premier appel.

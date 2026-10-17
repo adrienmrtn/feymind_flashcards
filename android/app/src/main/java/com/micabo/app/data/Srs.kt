@@ -1,9 +1,10 @@
 package com.micabo.app.data
 
 import kotlinx.serialization.Serializable
+import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.roundToLong
+import kotlin.random.Random
 
 /** La note donnée à une carte retournée. */
 enum class Rating { AGAIN, HARD, GOOD, EASY }
@@ -119,7 +120,8 @@ object Srs {
                 step = 0,
             )
         }
-        val late = max(0.0, (now - card.due).toDouble() / DAY)
+        // Des jours entiers de retard, comme Anki (`daysLate`).
+        val late = max(0.0, floor((now - card.due).toDouble() / DAY))
         val hard = constrained(previous * HARD_MULTIPLIER, previous)
         val good = constrained((previous + late / 2) * card.ease, hard)
         val easy = constrained((previous + late) * card.ease * EASY_BONUS, good)
@@ -130,13 +132,14 @@ object Srs {
         }
     }
 
+    /** Un intervalle entier (tronqué, pas arrondi), toujours plus long que le précédent (`constrainedIvl`). */
     private fun constrained(interval: Double, previous: Double): Double =
-        min(MAX_INTERVAL, max(interval.roundToLong().toDouble(), previous + 1))
+        min(MAX_INTERVAL, max(max(floor(interval), previous + 1), 1.0))
 
     private fun graduate(card: CardReview, interval: Double, ease: Double, now: Long): CardReview {
         val clamped = min(MAX_INTERVAL, max(1.0, interval))
         // Un peu de flou, comme Anki : les cartes apprises ensemble ne reviennent pas toutes le même jour.
-        val shown = if (clamped < 3) clamped else (clamped * (0.95 + Math.random() * 0.1)).roundToLong().toDouble()
+        val shown = fuzzed(clamped)
         return card.copy(
             state = CardState.REVIEW,
             interval = shown,
@@ -145,6 +148,24 @@ object Srs {
             step = 0,
             due = now + (shown * DAY).toLong(),
         )
+    }
+
+    /** La dispersion d'Anki (`fuzzIvlRange`) : un nombre entier de jours, celui qui est gardé. */
+    private fun fuzzed(interval: Double): Double {
+        val ivl = interval.toInt()
+        val (low, high) = when {
+            ivl < 2 -> 1 to 1
+            ivl == 2 -> 2 to 3
+            else -> {
+                val fuzz = when {
+                    ivl < 7 -> (ivl * 0.25).toInt()
+                    ivl < 30 -> max(2, (ivl * 0.15).toInt())
+                    else -> max(4, (ivl * 0.05).toInt())
+                }.coerceAtLeast(1)
+                (ivl - fuzz) to (ivl + fuzz)
+            }
+        }
+        return min(MAX_INTERVAL, max(1.0, Random.nextInt(low, high + 1).toDouble()))
     }
 
     private fun stay(card: CardReview, state: String, step: Int, minutes: Double, now: Long): CardReview =

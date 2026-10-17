@@ -2,12 +2,14 @@ package com.micabo.app.data
 
 import android.content.Context
 import android.util.Log
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -107,18 +109,27 @@ class ExamRepository(context: Context) {
     private val _results = MutableStateFlow<List<MockResult>>(emptyList())
     val results: StateFlow<List<MockResult>> = _results.asStateFlow()
 
+    /** Le fichier est lu : avant, une écriture l'aurait remplacé par une liste vide. */
+    private val loaded = CompletableDeferred<Unit>()
+
     init {
         scope.launch {
-            val stored = runCatching { MicaboJson.decodeFromString(ExamStore.serializer(), file.readText()) }.getOrNull()
-            if (stored != null) {
-                _exams.value = stored.exams
-                _results.value = stored.results
+            try {
+                val stored = runCatching { MicaboJson.decodeFromString(ExamStore.serializer(), file.readText()) }.getOrNull()
+                if (stored != null) {
+                    // Ce qui a changé pendant la lecture passe devant ce qui était gardé.
+                    _exams.update { current -> (stored.exams.filter { old -> current.none { it.id == old.id } } + current).sortedBy { it.date } }
+                    _results.update { current -> (current + stored.results.filter { old -> current.none { it.id == old.id } }).take(30) }
+                }
+            } finally {
+                loaded.complete(Unit)
             }
         }
     }
 
     private fun persist() {
         scope.launch {
+            loaded.await()
             lock.withLock {
                 runCatching {
                     val temp = File(file.parentFile, "exams.json.tmp")

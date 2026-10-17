@@ -91,6 +91,7 @@ class LessonRepository(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val diskLock = Mutex()
     private val writing = MutableStateFlow<Set<String>>(emptySet())
+    private val dirty: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
     private val themeLimiter = Semaphore(PARALLEL_THEMES)
 
     private val _lessons = MutableStateFlow<Map<String, Lesson>>(emptyMap())
@@ -113,9 +114,19 @@ class LessonRepository(
 
     private fun save(lesson: Lesson) {
         _lessons.update { it + (lesson.id to lesson) }
+        persist(lesson.id)
+    }
+
+    /**
+     * Écrit la dernière version de la leçon. Une écriture déjà prévue suffit : dix cartes notées
+     * d'affilée ne réécrivent pas dix fois le fichier (le texte de référence pèse jusqu'à 60 Ko).
+     */
+    private fun persist(id: String) {
+        if (!dirty.add(id)) return
         scope.launch(Dispatchers.IO) {
             diskLock.withLock {
-                val latest = _lessons.value[lesson.id] ?: return@withLock
+                dirty.remove(id)
+                val latest = _lessons.value[id] ?: return@withLock
                 runCatching {
                     val temp = File(directory, "${latest.id}.json.tmp")
                     temp.writeText(MicaboJson.encodeToString(Lesson.serializer(), latest))
@@ -125,9 +136,19 @@ class LessonRepository(
         }
     }
 
+    /**
+     * Change une leçon d'un seul geste atomique : quatre thèmes qui arrivent en même temps ne
+     * s'écrasent plus (un thème fini restait « en préparation »). `change` peut être rejoué :
+     * il doit rester sans effet de bord.
+     */
     fun modify(id: String, change: (Lesson) -> Lesson) {
-        val current = _lessons.value[id] ?: return
-        save(change(current))
+        var found = false
+        _lessons.update { map ->
+            val current = map[id]
+            found = current != null
+            if (current == null) map else map + (id to change(current))
+        }
+        if (found) persist(id)
     }
 
     fun delete(id: String) {
@@ -362,12 +383,16 @@ class LessonRepository(
 
     private suspend fun writeThemes(id: String, retryFailed: Boolean, onFirst: () -> Unit) {
         val lesson = _lessons.value[id] ?: return
-        val wanted = lesson.themes.withIndex().filter { (index, theme) ->
-            val key = "$id:$index"
-            key !in writing.value && (theme.status == ThemeStatus.PENDING || (retryFailed && theme.status == ThemeStatus.FAILED))
-        }.map { it.index }
+        // Choisis et réservés d'un même geste : deux relances simultanées (la reprise au
+        // lancement et « Réessayer ») ne demandent pas deux fois le même thème.
+        var wanted: List<Int> = emptyList()
+        writing.update { current ->
+            wanted = (_lessons.value[id] ?: lesson).themes.withIndex().filter { (index, theme) ->
+                "$id:$index" !in current && (theme.status == ThemeStatus.PENDING || (retryFailed && theme.status == ThemeStatus.FAILED))
+            }.map { it.index }
+            current + wanted.map { index -> "$id:$index" }
+        }
         if (wanted.isEmpty()) return
-        writing.update { it + wanted.map { index -> "$id:$index" } }
         if (retryFailed) {
             modify(id) { current ->
                 current.copy(themes = current.themes.mapIndexed { index, theme ->

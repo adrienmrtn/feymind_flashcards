@@ -70,19 +70,33 @@ class Analytics(context: Context, private val prefs: Prefs, private val auth: Su
     }
 
     fun track(name: String, props: Map<String, Any?> = emptyMap()) {
+        // La table refuse un nom hors de sa forme, et avec lui tout le lot où il voyage.
+        if (!NAME.matches(name)) {
+            Log.w(TAG, "Nom d'événement refusé : $name")
+            return
+        }
         val profile = prefs.profile.value
+        val labels = props.mapNotNull { (key, value) ->
+            when (value) {
+                null -> null
+                is Boolean -> key.take(40) to JsonPrimitive(value)
+                // NaN et l'infini ne sont pas du JSON : le lot entier serait refusé.
+                is Double -> if (value.isFinite()) key.take(40) to JsonPrimitive(value) else null
+                is Float -> if (value.isFinite()) key.take(40) to JsonPrimitive(value) else null
+                is Number -> key.take(40) to JsonPrimitive(value)
+                else -> key.take(40) to JsonPrimitive(value.toString().take(120))
+            }
+        }.toMap()
+        // Deux mille caractères au plus, comme la contrainte de `props` : au-delà, on garde les premiers.
+        var kept = labels
+        while (kept.isNotEmpty() && JsonObject(kept).toString().length > MAX_PROPS) {
+            kept = kept.entries.toList().dropLast(1).associate { it.key to it.value }
+        }
         val row = buildJsonObject {
             put("device_id", deviceId)
             put("session_id", sessionId)
             put("name", name)
-            put("props", JsonObject(props.mapNotNull { (key, value) ->
-                when (value) {
-                    null -> null
-                    is Boolean -> key to JsonPrimitive(value)
-                    is Number -> key to JsonPrimitive(value)
-                    else -> key to JsonPrimitive(value.toString().take(120))
-                }
-            }.toMap()))
+            put("props", JsonObject(kept))
             Locale.getDefault().country.uppercase().takeIf { it.length == 2 && it.all(Char::isLetter) }?.let { put("country", it) }
             profile.country.takeIf { it.isNotBlank() }?.let { put("school_country", it.take(16)) }
             put("locale", Locale.getDefault().toLanguageTag().take(16))
@@ -90,7 +104,7 @@ class Analytics(context: Context, private val prefs: Prefs, private val auth: Su
             put("app_version", "${BuildConfig.VERSION_NAME}+${BuildConfig.VERSION_CODE}".take(24))
             put("build", if (BuildConfig.DEBUG) "debug" else "release")
             put("is_pro", isPro())
-            put("occurred_at", iso.format(Date()))
+            put("occurred_at", now())
         }
         scope.launch {
             lock.withLock {
@@ -141,12 +155,16 @@ class Analytics(context: Context, private val prefs: Prefs, private val auth: Su
         }
     }
 
-    private val iso = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ROOT).apply { timeZone = TimeZone.getTimeZone("UTC") }
+    /** Un format neuf à chaque ligne : `SimpleDateFormat` partagé entre fils mélange les dates. */
+    private fun now(): String =
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ROOT).apply { timeZone = TimeZone.getTimeZone("UTC") }.format(Date())
 
     private companion object {
         const val TAG = "Analytics"
         const val SESSION_GAP = 30 * 60_000L
         const val BATCH = 20
         const val MAX_PENDING = 200
+        const val MAX_PROPS = 1_900
+        val NAME = Regex("^[a-z][a-z0-9_]{1,46}[a-z0-9]$")
     }
 }

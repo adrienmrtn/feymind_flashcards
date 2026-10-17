@@ -58,7 +58,9 @@ class MikaChat(
             putJsonArray("messages") {
                 turns.forEach { turn ->
                     add(buildJsonObject {
-                        put("role", turn.role)
+                        // Le serveur ne connaît que « user » et « mika » (`readTurns`) : un tour
+                        // « assistant » était jeté, et Mika oubliait ce qu'elle venait de dire.
+                        put("role", if (turn.role == "user") "user" else "mika")
                         put("text", turn.text.take(MESSAGE_CHARACTERS))
                     })
                 }

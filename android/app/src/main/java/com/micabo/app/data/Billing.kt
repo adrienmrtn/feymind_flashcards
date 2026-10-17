@@ -11,6 +11,7 @@ import com.revenuecat.purchases.PurchaseParams
 import com.revenuecat.purchases.Purchases
 import com.revenuecat.purchases.PurchasesConfiguration
 import com.revenuecat.purchases.getCustomerInfoWith
+import com.revenuecat.purchases.interfaces.UpdatedCustomerInfoListener
 import com.revenuecat.purchases.getOfferingsWith
 import com.revenuecat.purchases.logInWith
 import com.revenuecat.purchases.purchaseWith
@@ -19,7 +20,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlin.coroutines.resume
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 
 /** Une offre du paywall, avec le prix de la boutique quand elle a répondu. */
 data class StorePlan(
@@ -64,7 +67,11 @@ sealed interface PurchaseOutcome {
  * verrait pas l'abonnement). Sans clé Android (`BuildConfig.REVENUECAT_KEY` vide), le SDK
  * reste éteint et le paywall dit « bientôt disponible ».
  */
-class Billing(private val context: Context) {
+class Billing(
+    private val context: Context,
+    /** L'identifiant Supabase de l'invité, son compte ouvert s'il le faut ; `null` sans réseau. */
+    private val guestId: suspend () -> String? = { null },
+) {
     val enabled: Boolean get() = BuildConfig.REVENUECAT_KEY.isNotEmpty()
 
     private val _isPro = MutableStateFlow(false)
@@ -77,11 +84,42 @@ class Billing(private val context: Context) {
                 val builder = PurchasesConfiguration.Builder(context.applicationContext, BuildConfig.REVENUECAT_KEY)
                 if (!userId.isNullOrEmpty()) builder.appUserID(userId)
                 Purchases.configure(builder.build())
+                // Un renouvellement, une fin d'abonnement, un achat en attente validé : Pro suit.
+                Purchases.sharedInstance.updatedCustomerInfoListener = object : UpdatedCustomerInfoListener {
+                    override fun onReceived(customerInfo: CustomerInfo) = read(customerInfo)
+                }
             } else if (!userId.isNullOrEmpty() && Purchases.sharedInstance.appUserID != userId) {
                 Purchases.sharedInstance.logInWith(userId, onError = {}, onSuccess = { info, _ -> read(info) })
             }
             Purchases.sharedInstance.getCustomerInfoWith(onError = {}, onSuccess = ::read)
         }.onFailure { Log.w("Billing", "RevenueCat indisponible", it) }
+    }
+
+    /**
+     * Avant un achat ou une restauration : RevenueCat doit connaître l'invité. Lancée hors
+     * ligne, l'app a configuré un identifiant anonyme, et l'abonnement n'aurait eu aucun
+     * propriétaire côté serveur (la porte du gratuit ne l'aurait jamais vu).
+     */
+    private suspend fun identify() {
+        if (!enabled) return
+        val id = runCatching { guestId() }.getOrNull()?.takeIf { it.isNotEmpty() } ?: return
+        withContext<Unit>(Dispatchers.Main) {
+            if (!Purchases.isConfigured) {
+                start(id)
+                return@withContext
+            }
+            if (Purchases.sharedInstance.appUserID == id) return@withContext
+            suspendCancellableCoroutine<Unit> { continuation ->
+                Purchases.sharedInstance.logInWith(
+                    id,
+                    onError = { if (continuation.isActive) continuation.resume(Unit) },
+                    onSuccess = { info, _ ->
+                        read(info)
+                        if (continuation.isActive) continuation.resume(Unit)
+                    },
+                )
+            }
+        }
     }
 
     private fun read(info: CustomerInfo) {
@@ -112,6 +150,7 @@ class Billing(private val context: Context) {
 
     suspend fun purchase(activity: Activity, plan: StorePlan): PurchaseOutcome {
         val pkg = plan.pkg ?: return PurchaseOutcome.Unavailable
+        identify()
         if (!Purchases.isConfigured) return PurchaseOutcome.Unavailable
         return suspendCancellableCoroutine { continuation ->
             Purchases.sharedInstance.purchaseWith(
@@ -132,6 +171,7 @@ class Billing(private val context: Context) {
     }
 
     suspend fun restore(): Boolean {
+        identify()
         if (!enabled || !Purchases.isConfigured) return false
         return suspendCancellableCoroutine { continuation ->
             Purchases.sharedInstance.restorePurchasesWith(
