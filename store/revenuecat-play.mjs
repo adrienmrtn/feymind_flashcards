@@ -37,6 +37,17 @@ async function until(id, statuses) {
   throw new Error(`Le plan ${id} n'a pas atteint ${statuses.join("/")}.`);
 }
 
+// Un seul plan ouvert par app : on écarte ceux qu'un essai précédent a laissés (expirés,
+// planifiés, brouillons) avant d'en créer un neuf.
+const open = await call("GET", `${base}?limit=50`);
+for (const plan of open.items ?? []) {
+  if (["applied", "discarded", "cancelled", "apply_errored"].includes(plan.status)) continue;
+  const detail = await call("GET", `${base}/${plan.id}`);
+  if (!(detail.actions ?? []).includes("discard")) continue;
+  await call("POST", `${base}/${plan.id}/actions/discard`, {});
+  console.log(`Plan ${plan.id} (${plan.status}) écarté.`);
+}
+
 const body = JSON.parse(readFileSync("store/play-subscriptions.json", "utf8"));
 const created = await call("POST", base, body);
 console.log(`Plan créé : ${created.id}`);
