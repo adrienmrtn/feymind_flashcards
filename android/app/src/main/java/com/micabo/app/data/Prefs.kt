@@ -58,8 +58,18 @@ class Prefs(context: Context) {
         _profile.value = next
     }
 
+    /**
+     * Efface le profil et les réglages, **pas le compte invité** : c'est lui qui porte
+     * l'abonnement et la leçon offerte. Un compte neuf perdait Pro.
+     */
     fun reset() {
-        prefs.edit { clear() }
+        val session = listOf("auth.access", "auth.refresh", "auth.user").associateWith { prefs.getString(it, "").orEmpty() }
+        val expiresAt = this.expiresAt
+        prefs.edit {
+            clear()
+            session.forEach { (key, value) -> putString(key, value) }
+            putLong("auth.expiresAt", expiresAt)
+        }
         _profile.value = read()
     }
 

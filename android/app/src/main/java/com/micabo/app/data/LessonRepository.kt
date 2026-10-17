@@ -30,10 +30,24 @@ import kotlinx.serialization.Serializable
 import java.io.File
 import java.util.UUID
 
-/** Ce que l'élève demande : un sujet tapé, ou un texte collé. */
-data class LessonRequest(val topic: String?, val text: String, val sourceName: String? = null) {
-    val source: String get() = if (topic != null) "topic" else "text"
-}
+/** Ce que l'élève demande : un sujet tapé, ou des supports mis à plat (`LessonCreation`). */
+data class LessonRequest(
+    val topic: String?,
+    val text: String,
+    val sourceName: String? = null,
+    /** Les pages en `data:image/jpeg;base64,…`, six au plus. */
+    val images: List<String> = emptyList(),
+    /** topic, text, pdf, photo, youtube, docx, mixed : le serveur en tire la porte du gratuit. */
+    val source: String = if (topic != null) "topic" else "text",
+    /** Le jour de l'examen, en millisecondes, s'il y en a un. */
+    val examDate: Long? = null,
+    /**
+     * L'identifiant de la leçon, gardé d'un essai à l'autre : le serveur réserve la leçon sous
+     * cet identifiant (`begin_lesson`). Un identifiant neuf à chaque « Réessayer » la comptait
+     * comme une seconde leçon, et la leçon offerte finissait sur le paywall.
+     */
+    val id: String = UUID.randomUUID().toString().lowercase(),
+)
 
 /** Les étapes de l'écran de génération, reliées au vrai travail (`LessonBuilder.Stage`). */
 enum class CreationStage { READING, CUTTING, WRITING, QUESTIONS }
@@ -154,16 +168,16 @@ class LessonRepository(
         scope.async { createNow(request, onStage) }.await()
 
     private suspend fun createNow(request: LessonRequest, onStage: (CreationStage) -> Unit): String {
-        val id = UUID.randomUUID().toString().lowercase()
+        val id = request.id
         val profile = prefs.profile.value
         onStage(CreationStage.READING)
         val payload = buildJsonObject {
-            audience(profile)
+            audience(profile, exam = request.examDate?.let { examLine(null, it) })
             put("stage", "plan")
             put("lessonId", id)
             put("source", request.source)
             put("text", request.text.take(MAX_TEXT))
-            putJsonArray("images") {}
+            putJsonArray("images") { request.images.forEach { add(JsonPrimitive(it)) } }
             put("sourceName", request.sourceName.orEmpty())
             if (request.topic != null) put("topic", request.topic.take(400))
         }
@@ -192,6 +206,7 @@ class LessonRepository(
             singleQuiz = plan.singleQuiz,
             themes = plan.themes.map { Theme(title = it.title, icon = it.icon, points = it.points) },
             tone = (previousTone + 1) % 5,
+            examDate = request.examDate ?: 0,
         )
         save(lesson)
 
@@ -268,7 +283,7 @@ class LessonRepository(
         val lesson = _lessons.value[id] ?: throw IllegalStateException("Leçon absente")
         val profile = prefs.profile.value
         val payload = buildJsonObject {
-            audience(profile, language = lesson.language)
+            audience(profile, language = lesson.language, exam = lesson.upcomingExam()?.let { examLine(lesson.title, it) })
             put("stage", "theme")
             put("lessonId", id)
             put("lessonTitle", lesson.title)
@@ -309,7 +324,14 @@ class LessonRepository(
     private fun contentLanguage(profile: Profile): String =
         com.micabo.app.i18n.AppLocale.resolved(profile.language).content
 
-    private fun JsonObjectBuilder.audience(profile: Profile, language: String = contentLanguage(profile)) {
+    /** L'examen tel que le serveur le lit (`LessonBuilder.examLine`). */
+    private fun examLine(name: String?, date: Long): String {
+        val day = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.ROOT).format(java.util.Date(date))
+        return if (name.isNullOrBlank()) "un examen, le $day" else "l'examen « $name », le $day"
+    }
+
+    private fun JsonObjectBuilder.audience(profile: Profile, language: String = contentLanguage(profile), exam: String? = null) {
+        if (!exam.isNullOrBlank()) put("exam", exam)
         put("level", levelOf(profile.tier))
         put("country", profile.country.ifBlank { "other" })
         put("schoolStage", Tiers.englishName(profile.tier))

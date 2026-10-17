@@ -30,7 +30,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SelectableDates
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -65,6 +73,8 @@ import com.micabo.app.ui.components.MicaboSecondaryButton
 import com.micabo.app.ui.components.rememberHaptics
 import com.micabo.app.ui.theme.Micabo
 import com.micabo.app.ui.theme.nunito
+import java.util.Calendar
+import java.util.TimeZone
 import kotlin.coroutines.cancellation.CancellationException
 
 /** Le message d'un échec, dans la langue de l'app. */
@@ -80,8 +90,9 @@ fun errorMessage(error: Throwable): String = when {
 }
 
 /**
- * **Mika prépare la leçon** : les quatre étapes du vrai travail (lire, découper, écrire,
- * préparer les questions). Le chemin s'ouvre dès que le premier thème est arrivé.
+ * **Créer une leçon, après l'envoi** (`LessonCreationFlow`) : « As-tu un examen ? », la date si
+ * oui, puis Mika prépare la leçon, au rythme du vrai travail (lire, découper, écrire, préparer
+ * les questions). Le chemin s'ouvre dès que le premier thème est arrivé.
  */
 @Composable
 fun CreatingScreen(request: LessonRequest) {
@@ -89,34 +100,144 @@ fun CreatingScreen(request: LessonRequest) {
     val navigator = LocalNavigator.current
     val colors = Micabo.colors
     val haptics = rememberHaptics()
+    var step by rememberSaveable { mutableStateOf("exam") }
+    var examDate by remember { mutableStateOf<Long?>(null) }
     var stage by remember { mutableStateOf(CreationStage.READING) }
     var error by remember { mutableStateOf<Throwable?>(null) }
     var attempt by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(attempt) {
-        error = null
-        try {
-            val id = app.lessons.create(request) { stage = it }
-            haptics.success()
-            navigator.replace(Screen.LessonPath(id))
-        } catch (cancel: CancellationException) {
-            throw cancel
-        } catch (failure: Throwable) {
-            haptics.error()
-            if (failure is ApiException && failure.opensPaywall) {
-                navigator.replace(Screen.Paywall(failure.code))
-            } else {
-                error = failure
+    if (step == "generating") {
+        LaunchedEffect(attempt) {
+            error = null
+            stage = CreationStage.READING
+            try {
+                // Le même identifiant d'un essai à l'autre : le serveur a réservé la leçon sous lui.
+                val id = app.lessons.create(request.copy(examDate = examDate)) { stage = it }
+                haptics.success()
+                app.composer.reset()
+                navigator.replace(Screen.LessonPath(id))
+            } catch (cancel: CancellationException) {
+                throw cancel
+            } catch (failure: Throwable) {
+                haptics.error()
+                if (failure is ApiException && failure.opensPaywall) {
+                    navigator.replace(Screen.Paywall(failure.code))
+                } else {
+                    error = failure
+                }
             }
         }
     }
 
+    AnimatedContent(targetState = step, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "step") { shown ->
+        when (shown) {
+            "exam" -> ExamQuestion(
+                onClose = { navigator.back() },
+                onYes = { step = "date" },
+                onNo = { step = "generating" },
+            )
+            "date" -> ExamDate(
+                onClose = { navigator.back() },
+                onPick = { date ->
+                    examDate = date
+                    step = "generating"
+                },
+            )
+            else -> Generating(request, stage, error, onClose = { navigator.back() }, onRetry = { attempt += 1 })
+        }
+    }
+}
+
+@Composable
+private fun ExamQuestion(onClose: () -> Unit, onYes: () -> Unit, onNo: () -> Unit) {
+    val colors = Micabo.colors
+    Column(
+        Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Row(Modifier.fillMaxWidth()) { CloseButton(onClick = onClose) }
+        Spacer(Modifier.weight(1f))
+        Mika(MikaMood.THINK, 150.dp)
+        Spacer(Modifier.height(20.dp))
+        Text(
+            stringResource(R.string.lesson_create_examQuestion),
+            style = nunito(28.sp, FontWeight.Black, lineHeight = 32.sp),
+            color = colors.ink,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.weight(1f))
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            MicaboButton(stringResource(R.string.lesson_create_examYes), onClick = onYes)
+            MicaboSecondaryButton(stringResource(R.string.lesson_create_examNo), onClick = onNo)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ExamDate(onClose: () -> Unit, onPick: (Long) -> Unit) {
+    val colors = Micabo.colors
+    // Le sélecteur parle en minuit UTC ; l'examen se garde en minuit local.
+    val tomorrowUtc = remember {
+        val local = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 1) }
+        Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+            clear()
+            set(local.get(Calendar.YEAR), local.get(Calendar.MONTH), local.get(Calendar.DAY_OF_MONTH))
+        }.timeInMillis
+    }
+    val state = rememberDatePickerState(
+        initialSelectedDateMillis = tomorrowUtc + 13L * 24 * 3600 * 1000,
+        selectableDates = object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean = utcTimeMillis >= tomorrowUtc
+        },
+    )
+    Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(20.dp)) {
+        Row(Modifier.fillMaxWidth()) { CloseButton(onClick = onClose) }
+        Text(
+            stringResource(R.string.lesson_create_dateQuestion),
+            style = nunito(26.sp, FontWeight.Black, lineHeight = 30.sp),
+            color = colors.ink,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+        )
+        DatePicker(
+            state = state,
+            title = null,
+            headline = null,
+            showModeToggle = false,
+            colors = DatePickerDefaults.colors(
+                containerColor = colors.canvas,
+                selectedDayContainerColor = colors.accent,
+                todayDateBorderColor = colors.accent,
+                todayContentColor = colors.accent,
+            ),
+            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
+        )
+        MicaboButton(
+            stringResource(R.string.lesson_create_continue),
+            enabled = state.selectedDateMillis != null,
+            onClick = {
+                val utc = state.selectedDateMillis ?: return@MicaboButton
+                val day = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = utc }
+                val local = Calendar.getInstance().apply {
+                    clear()
+                    set(day.get(Calendar.YEAR), day.get(Calendar.MONTH), day.get(Calendar.DAY_OF_MONTH))
+                }
+                onPick(local.timeInMillis)
+            },
+        )
+    }
+}
+
+@Composable
+private fun Generating(request: LessonRequest, stage: CreationStage, error: Throwable?, onClose: () -> Unit, onRetry: () -> Unit) {
+    val colors = Micabo.colors
     Column(
         Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Row(Modifier.fillMaxWidth()) {
-            CloseButton(onClick = { navigator.back() })
+            CloseButton(onClick = onClose)
         }
         Spacer(Modifier.weight(0.6f))
         AnimatedContent(targetState = error, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "state") { failure ->
@@ -159,9 +280,9 @@ fun CreatingScreen(request: LessonRequest) {
         if (error != null) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 if ((error as? ApiException)?.isDailyLimit != true) {
-                    MicaboButton(stringResource(R.string.lesson_path_retry), onClick = { attempt += 1 })
+                    MicaboButton(stringResource(R.string.lesson_path_retry), onClick = onRetry)
                 }
-                MicaboSecondaryButton(stringResource(R.string.lesson_create_cancel), onClick = { navigator.back() })
+                MicaboSecondaryButton(stringResource(R.string.lesson_create_cancel), onClick = onClose)
             }
         }
     }

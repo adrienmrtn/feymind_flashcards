@@ -12,3 +12,6 @@
 -keepclasseswithmembers class com.micabo.app.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
+
+# PDFBox : le décodeur JPEG 2000 est facultatif, et absent.
+-dontwarn com.gemalto.jp2.**

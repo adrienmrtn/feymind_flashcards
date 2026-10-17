@@ -83,4 +83,11 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.0.1")
     // Les achats : Google Play Billing via RevenueCat (ajoute la permission BILLING).
     implementation("com.revenuecat.purchases:purchases:10.24.0")
+    // Les imports : le scanner de documents et l'OCR de ML Kit, par les services Google Play
+    // (rien à embarquer), le texte des PDF par PDFBox, les photos remises à l'endroit.
+    implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0-beta1")
+    implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2")
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
+    implementation("androidx.exifinterface:exifinterface:1.4.1")
 }

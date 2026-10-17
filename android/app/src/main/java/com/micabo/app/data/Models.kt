@@ -42,7 +42,13 @@ data class Lesson(
     val themes: List<Theme> = emptyList(),
     val tone: Int = 0,
     val progress: Progress = Progress(),
+    /** Le jour de l'examen qui porte sur la leçon, en millisecondes ; 0 sans examen. */
+    val examDate: Long = 0,
 ) {
+    /** L'examen, s'il est encore à venir (aujourd'hui compris). */
+    fun upcomingExam(now: Long = System.currentTimeMillis()): Long? =
+        examDate.takeIf { it > 0 && it >= startOfDay(now) }
+
     val readyThemes: Int get() = themes.count { it.status == ThemeStatus.READY }
     val isWriting: Boolean get() = themes.any { it.status == ThemeStatus.PENDING }
 
@@ -132,6 +138,15 @@ data class Progress(
             return Math.round(right * 100.0 / total).toInt()
         }
 }
+
+/** Le début du jour local d'un instant. */
+fun startOfDay(time: Long): Long = java.util.Calendar.getInstance().apply {
+    timeInMillis = time
+    set(java.util.Calendar.HOUR_OF_DAY, 0)
+    set(java.util.Calendar.MINUTE, 0)
+    set(java.util.Calendar.SECOND, 0)
+    set(java.util.Calendar.MILLISECOND, 0)
+}.timeInMillis
 
 // MARK: - Les blocs de notes
 
