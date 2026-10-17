@@ -36,7 +36,7 @@ Pas besoin d'Android Studio ni du SDK Android : tout compile sur GitHub Actions
   directement sur un téléphone (sans les achats).
 - **Envoyer au test interne** : mettre `[play]` dans le message du commit, ou Actions →
   Android → **Run workflow**. Le numéro de build (`versionCode`) est le numéro du run.
-- **Envoyer la fiche du Play Store** (textes des 26 langues, captures, icône) :
+- **Envoyer la fiche du Play Store** (textes des 33 langues, captures, icône) :
   `[play-listing]`, ou la case « fiche » au lancement manuel. Les textes sont dans
   `android/play/metadata`.
 - Tant que Google n'a jamais validé l'app, une version envoyée arrive en **brouillon** : la

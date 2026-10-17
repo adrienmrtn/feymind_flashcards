@@ -1,18 +1,22 @@
-Micabo turns any course into an interactive lesson. Drop in a PDF, a photo of your notes, an audio recording or a YouTube video: Mika, your personal AI tutor, turns it into a simple path, step by step, matched to your level and your subject.
+Your courses become a summary you reread, and flashcards Micabo brings back just before you forget.
 
-WHY MICABO
-• Lessons you actually want to study: clear notes, diagrams, examples, and a quiz at every step.
-• Varied quizzes: multiple choice, true or false, fill in the blanks, put in order, match.
-• Flashcards that come back at the right moment, so you remember for the long run.
-• Mock exams at your level, graded, with what you still need to review.
-• A daily streak to keep your rhythm, and a reminder at the time you choose.
-• Mika answers your questions, any time.
+Drop in a handout, a photo of the whiteboard, a Word file or a video. Micabo writes the summary, pulls out the cards and plans your sessions. Exam coming up? The plan tightens toward that day.
 
-FOR EVERY LEVEL
-Middle school, high school, university, medicine, competitive exams: Micabo adapts to your country, your year and your subjects. Available in 26 languages.
+WHAT YOU DO
+• Import a course (PDF, photos, Word, YouTube or text)
+• Read the summary, fix it, reread it
+• Review your cards with spaced repetition
+• Set an exam date
+• Share a course with friends, or keep it to yourself
 
-WHAT RESEARCH SAYS
-In a controlled trial at Harvard (Kestin et al., Scientific Reports, 2025), students working with an AI tutor learned more than twice as much as in class, in less time.
+THREE TABS
+Courses: everything you've imported.
+Review: the cards due today, nothing else.
+Profile: your streak, your totals, your friends.
 
-MICABO PRO
-Unlimited lessons, PDF, photo, audio and YouTube import, unlimited quizzes and mock exams. Free trial, then a subscription you can cancel anytime from Google Play.
+FREE AND PRO
+Without a subscription: 1 course, 70% of the summary, 5 cards per session.
+Micabo Pro: unlimited courses and cards, full summary, exam mode. 3-day free trial, then a weekly or yearly subscription you can cancel anytime from Google Play.
+
+Terms of use: https://micabo.app/conditions
+Privacy policy: https://micabo.app/confidentialite

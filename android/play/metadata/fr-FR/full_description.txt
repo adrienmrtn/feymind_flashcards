@@ -1,18 +1,22 @@
-Micabo transforme n'importe quel cours en leçon interactive. Dépose un PDF, une photo de tes notes, un audio ou une vidéo YouTube : Mika, ton prof particulier IA, en fait un parcours simple, étape par étape, adapté à ton niveau et à ta matière.
+Tes cours deviennent une fiche qu’on relit, et des cartes que Micabo te repose juste avant que tu oublies.
 
-POURQUOI MICABO
-• Des leçons qui donnent envie : notes claires, schémas, exemples, et un quiz à chaque étape.
-• Des quiz variés : QCM, vrai ou faux, textes à trous, remettre dans l'ordre, associer.
-• Des flashcards qui reviennent au bon moment, pour retenir sur la durée.
-• Des examens blancs à ton niveau, corrigés, avec ce qu'il te reste à revoir.
-• Une série quotidienne pour garder le rythme, et un rappel à l'heure que tu choisis.
-• Mika répond à tes questions, à toute heure.
+Dépose un polycopié, une photo du tableau, un Word ou une vidéo. Micabo en écrit la fiche, en tire les cartes, et planifie tes sessions. Un examen approche : le plan se resserre vers ce jour.
 
-POUR TOUS LES NIVEAUX
-Collège, lycée, prépa, université, médecine, concours : Micabo s'adapte à ton pays, à ton année et à tes matières. Disponible en 26 langues.
+CE QUE TU FAIS
+• Importer un cours (PDF, photos, Word, YouTube ou texte)
+• Lire la fiche, la corriger, la relire
+• Réviser tes cartes en répétition espacée
+• Poser une date d’examen
+• Partager un cours avec tes amis, ou le garder pour toi
 
-CE QUE DIT LA RECHERCHE
-Dans un essai contrôlé mené à Harvard (Kestin et al., Scientific Reports, 2025), des étudiants accompagnés d'un tuteur IA ont appris plus de deux fois plus qu'en cours, en moins de temps.
+TROIS ONGLETS
+Cours : tout ce que tu as importé.
+Réviser : les cartes dues aujourd’hui, rien d’autre.
+Profil : ta série, tes totaux, tes amis.
 
-MICABO PRO
-Leçons illimitées, import de PDF, photos, audio et YouTube, quiz et examens blancs sans limite. Essai gratuit, puis abonnement résiliable à tout moment depuis Google Play.
+GRATUIT ET PRO
+Sans abonnement : 1 cours, 70 % de la fiche, 5 cartes par session.
+Micabo Pro : cours et cartes illimités, fiche complète, mode examen. 3 jours d’essai gratuit, puis un abonnement hebdomadaire ou annuel résiliable à tout moment depuis Google Play.
+
+Conditions d’utilisation : https://micabo.app/conditions
+Règles de confidentialité : https://micabo.app/confidentialite
