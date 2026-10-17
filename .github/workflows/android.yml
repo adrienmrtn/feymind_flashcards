@@ -37,8 +37,9 @@ concurrency:
 env:
   PACKAGE_NAME: com.micabo.app
   # « draft » tant que l'app n'a jamais été validée par Google : l'API refuse tout autre
-  # statut pour une app en brouillon. Passer à « completed » après la première validation.
-  RELEASE_STATUS: ${{ vars.PLAY_RELEASE_STATUS || 'draft' }}
+  # statut pour une app en brouillon : l'envoi retente alors en « draft » (étape suivante), et la
+  # version attend un clic sur « Déployer » dans la Play Console.
+  RELEASE_STATUS: ${{ vars.PLAY_RELEASE_STATUS || 'completed' }}
 
 jobs:
   build:
@@ -123,9 +124,11 @@ jobs:
           path: android/app/build/outputs/bundle/release/app-release.aab
 
       - name: Envoyer dans le test interne
+        id: upload
         if: >-
           env.HAS_KEYSTORE == 'true' && env.HAS_PLAY == 'true' &&
           (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[play]'))
+        continue-on-error: true
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
@@ -133,6 +136,17 @@ jobs:
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           track: internal
           status: ${{ env.RELEASE_STATUS }}
+
+      # Une app jamais validée par Google n'accepte que des brouillons : on renvoie en « draft ».
+      - name: Envoyer dans le test interne, en brouillon
+        if: steps.upload.outcome == 'failure'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: ${{ env.PACKAGE_NAME }}
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          track: internal
+          status: draft
 
       - name: Envoyer la fiche Play
         if: >-
