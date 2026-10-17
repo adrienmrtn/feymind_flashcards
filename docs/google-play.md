@@ -17,8 +17,8 @@ ce que fait l'iPhone, sur le même backend Supabase (compte invité, `generate-l
 - les événements dans `app_events` (`platform = 'android'`) ;
 - 26 langues, tirées des catalogues de l'iPhone par `android/tools/generate_strings.py`.
 
-Pas encore sur Android : l'import audio (transcription sur le téléphone), la connexion à un
-compte (Google) et la synchronisation des leçons entre appareils, les amis.
+Aussi : l'import audio (transcrit par `transcribe-audio`), la connexion à un compte (Google ou
+lien par courriel) et la synchronisation avec l'iPhone, les amis et le partage des leçons.
 
 - Identifiant de l'app : `com.micabo.app` (définitif après le premier envoi).
 - Version : `versionName` 1.9, `versionCode` = numéro du run GitHub Actions.
@@ -34,6 +34,15 @@ compte (Google) et la synchronisation des leçons entre appareils, les amis.
    **test interne** — une fois le compte de service relié ;
 5. avec « [play-listing] » (ou la case « fiche » au lancement manuel), envoie la fiche
    depuis `android/play/metadata`.
+
+## Essayer sur un téléphone sans Google Play
+
+Chaque run garde aussi `micabo-apk-<n>` : un APK de la version de publication, signé avec la
+clé de débogage. Sur le téléphone : ouvrir le run (Actions → Android), télécharger
+l'artefact, ouvrir le .zip, toucher `app-preview.apk` et autoriser l'installation depuis ce
+navigateur ou ce gestionnaire de fichiers. Tout marche (compte, synchronisation, amis), sauf
+les achats. Avant d'installer la version du Play Store, désinstaller celle-ci : les deux
+n'ont pas la même signature.
 
 ## Les secrets (Settings → Secrets and variables → Actions)
 

@@ -80,6 +80,16 @@ jobs:
       - name: Compiler le bundle
         run: gradle -p android :app:bundleRelease --no-daemon --stacktrace
 
+      # **L'APK d'essai**, à installer sur un téléphone sans Google Play : artefact
+      # `micabo-apk-<n>` du run (un .zip à ouvrir sur le téléphone, puis l'APK dedans).
+      - name: Compiler l'APK d'essai
+        run: gradle -p android :app:assemblePreview --no-daemon --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: micabo-apk-${{ github.run_number }}
+          path: android/app/build/outputs/apk/preview/app-preview.apk
+
       - name: Pas de clé, pas d'envoi
         if: env.HAS_KEYSTORE != 'true'
         run: |

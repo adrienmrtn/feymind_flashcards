@@ -50,6 +50,14 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             if (keystore.isNotEmpty()) signingConfig = signingConfigs.getByName("upload")
         }
+        // **L'APK d'essai** : la version de publication (R8 compris), signée avec la clé de
+        // débogage, à installer directement sur un téléphone sans passer par Google Play. Les
+        // achats n'y marchent pas (Google Play Billing veut une app venue du Play Store).
+        create("preview") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+        }
     }
 
     compileOptions {
