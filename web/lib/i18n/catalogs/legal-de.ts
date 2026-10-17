@@ -26,7 +26,7 @@ export const legalDe = {
     dataFriends:
       "**Die Freunde.** Freundschaftsanfragen, Ihre Freundesliste und die Sichtbarkeit, die Sie jedem Kurs beim Import geben: nur Sie, Ihre Freunde oder die Kommilitonen Ihrer Einrichtung. Es gibt keinen öffentlichen Katalog, in dem ein Unbekannter auf Ihre Merkblätter stoßen würde.",
     dataSubscription:
-      "**Das Abo.** Der Stand Ihres Pro-Zugangs (aktiv, Probe, gekündigt), nicht Ihre Kartennummer. Die Zahlung nimmt Apple auf dem iPhone entgegen, Stripe auf der Website. RevenueCat hält das Recht, damit iPhone und Browser übereinstimmen.",
+      "**Das Abo.** Der Stand Ihres Pro-Zugangs (aktiv, Testphase, gekündigt), nicht Ihre Kartennummer. Die Zahlung nimmt Apple auf dem iPhone entgegen, Stripe auf der Website. RevenueCat hält das Recht, damit iPhone und Browser übereinstimmen.",
     dataWaitlist:
       "**Die Warteliste.** Wenn Sie Ihre Adresse hinterlassen, bevor Sie ein Konto haben, behalten wir sie, um Sie über die Öffnung zu informieren, zusammen mit der Seite, von der Sie kommen. Sie ist an kein Konto gebunden und in der App nicht sichtbar.",
     dataFeedback:
@@ -83,7 +83,7 @@ export const legalDe = {
       "Nach der Löschung bleibt bei Dienstleistern, was das Gesetz oder ihr Vertrag verlangt: Stripe- oder Apple-Rechnungen, RevenueCat-Abo-Kennung, technische Protokolle (Vercel, Supabase) einige Wochen. fal.ai erhält den Text für die Zeit, das Merkblatt zu schreiben; wir verlangen nicht, dass es ihn behält.",
     rightsTitle: "Ihre Rechte",
     rightsBody:
-      "Sie können auf Ihre Daten zugreifen, sie berichtigen, sie exportieren, einer Verarbeitung widersprechen oder die Löschung verlangen. Eine Kopie herunterladen: Einstellungen → «Meine Daten herunterladen». Das Konto löschen: Einstellungen → «Konto löschen», auf der Website oder in der iPhone-App. Sie können auch an [[contact]] schreiben. Wir antworten innerhalb eines Monats.",
+      "Sie können auf Ihre Daten zugreifen, sie berichtigen, sie exportieren, einer Verarbeitung widersprechen oder die Löschung verlangen. Eine Kopie herunterladen: Einstellungen → „Meine Daten herunterladen“. Das Konto löschen: Einstellungen → „Konto löschen“, auf der Website oder in der iPhone-App. Sie können auch an [[contact]] schreiben. Wir antworten innerhalb eines Monats.",
     rightsCnil:
       "Sie können auch eine Beschwerde bei der CNIL einreichen (cnil.fr).",
     minorsTitle: "Minderjährige",

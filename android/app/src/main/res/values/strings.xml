@@ -8,6 +8,7 @@
     <string name="app_common_cancel">Cancel</string>
     <string name="app_common_save">Save</string>
     <string name="app_exams_countdown_today">today</string>
+    <string name="app_exams_countdown_tomorrow">tomorrow</string>
     <string name="app_friends_accept">Accept</string>
     <string name="app_friends_addSomeone">Add someone</string>
     <string name="app_friends_decline">Decline</string>
@@ -194,7 +195,6 @@
     <string name="ios_planYearly">Yearly</string>
     <string name="ios_profile_streakBest">That\'s your record. Don\'t drop it.</string>
     <string name="ios_profile_streakStart">Come back tomorrow and the streak begins.</string>
-    <string name="ios_profile_streakToBeat">Your record is %1$s. %2$s more days and you beat it.</string>
     <string name="ios_proof_gotYou">**We\'ve got you.**</string>
     <string name="ios_proof_gotYou_named">%1$s? **We\'ve got you.**</string>
     <string name="ios_proof_retention_caption">What\'s left of a lesson one week after you worked on it</string>
@@ -410,7 +410,6 @@
     <string name="lesson_lessons_due">%1$s to review</string>
     <string name="lesson_lessons_emptyBody">Type a topic on Home, or drop a PDF, a photo or a recording: Mika turns it into a path.</string>
     <string name="lesson_lessons_emptyTitle">Your first lesson is waiting</string>
-    <string name="lesson_lessons_examDays">%1$s days left</string>
     <string name="lesson_lessons_finished">Lesson complete</string>
     <string name="lesson_lessons_toOpen">Not started</string>
     <string name="lesson_menu_cancel">Cancel</string>
@@ -523,6 +522,7 @@
     <string name="x_paywall_soon">Coming soon on Android</string>
     <string name="x_paywall_soonBody">Subscriptions open on Android very soon. Your free lesson is waiting for you in the meantime.</string>
     <string name="x_paywall_subscribe">Go Pro</string>
+    <string name="x_quoted">“%1$s”</string>
     <string name="x_record_limit">Up to 90 minutes. Mika turns your recording into text, then writes your lesson.</string>
     <string name="x_score_1">I\'m struggling</string>
     <string name="x_score_2">Just below average</string>

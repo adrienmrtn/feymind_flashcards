@@ -7,6 +7,7 @@
     <string name="app_common_cancel">Abbrechen</string>
     <string name="app_common_save">Speichern</string>
     <string name="app_exams_countdown_today">heute</string>
+    <string name="app_exams_countdown_tomorrow">morgen</string>
     <string name="app_friends_accept">Annehmen</string>
     <string name="app_friends_addSomeone">Jemanden hinzufügen</string>
     <string name="app_friends_decline">Ablehnen</string>
@@ -185,7 +186,6 @@
     <string name="ios_planYearly">Jährlich</string>
     <string name="ios_profile_streakBest">Das ist dein Rekord. Bleib dran.</string>
     <string name="ios_profile_streakStart">Komm morgen wieder, und die Serie beginnt.</string>
-    <string name="ios_profile_streakToBeat">Dein Rekord ist %1$s. Noch %2$s Tage, und du schlägst ihn.</string>
     <string name="ios_proof_gotYou">**Wir kümmern uns darum.**</string>
     <string name="ios_proof_gotYou_named">%1$s? **Wir kümmern uns darum.**</string>
     <string name="ios_proof_retention_caption">Was von einer Stunde eine Woche später noch da ist</string>
@@ -396,7 +396,6 @@
     <string name="lesson_lessons_due">%1$s fällig</string>
     <string name="lesson_lessons_emptyBody">Gib unter Start ein Thema ein oder lade ein PDF, ein Foto oder eine Aufnahme hoch: Mika macht daraus einen Lernpfad.</string>
     <string name="lesson_lessons_emptyTitle">Deine erste Lektion wartet</string>
-    <string name="lesson_lessons_examDays">Noch %1$s Tage</string>
     <string name="lesson_lessons_finished">Lektion abgeschlossen</string>
     <string name="lesson_lessons_toOpen">Nicht begonnen</string>
     <string name="lesson_menu_cancel">Abbrechen</string>
@@ -507,6 +506,7 @@
     <string name="x_paywall_soon">Bald auf Android verfügbar</string>
     <string name="x_paywall_soonBody">Abos gibt es sehr bald auf Android. Bis dahin wartet deine kostenlose Lektion auf dich.</string>
     <string name="x_paywall_subscribe">Pro holen</string>
+    <string name="x_quoted">„%1$s“</string>
     <string name="x_record_limit">Bis zu 90 Minuten. Mika macht aus deiner Aufnahme Text und schreibt dann deine Lektion.</string>
     <string name="x_score_1">Ich tue mich schwer</string>
     <string name="x_score_2">Knapp unter dem Durchschnitt</string>

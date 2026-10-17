@@ -1477,6 +1477,7 @@ export const appFr = {
     feedbackKind: "Dis s'il s'agit d'un bug ou d'une idée.",
     writeMessage: "Écris un message.",
     noted: "C'est noté.",
+    feedbackQuota: "Trop de retours aujourd'hui. Réessaie demain.",
     wrongAccount: "Cette page n'est pas pour ce compte.",
     markReadFailed: "Impossible de marquer comme lu.",
     unknownLanguage: "Langue inconnue.",

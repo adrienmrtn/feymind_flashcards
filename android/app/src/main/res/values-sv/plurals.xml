@@ -13,6 +13,9 @@
         <item quantity="one">%1$d dag i rad</item>
         <item quantity="other">%1$d dagar i rad</item>
     </plurals>
+    <plurals name="ios_profile_streakToBeat">
+        <item quantity="other">Ditt rekord är %2$s. %1$d dagar till så slår du det.</item>
+    </plurals>
     <plurals name="ios_streak_bestValue">
         <item quantity="one">%1$d dag</item>
         <item quantity="other">%1$d dagar</item>
@@ -28,5 +31,8 @@
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d fråga är obesvarad. Lämna in ändå?</item>
         <item quantity="other">%1$d frågor är obesvarade. Lämna in ändå?</item>
+    </plurals>
+    <plurals name="lesson_lessons_examDays">
+        <item quantity="other">%1$d dagar kvar</item>
     </plurals>
 </resources>

@@ -296,13 +296,9 @@ export function ImportPanel({
     }
 
     setPhase("repos");
-    setFailure(
-      remote.status === "error"
-        ? remote.message
-        : local.status === "error"
-          ? local.message
-          : t("app.import.videoUnreadable"),
-    );
+    // Les refus de l'onglet (`lib/import/youtube`) sont écrits en français : on montre celui
+    // du serveur, traduit, et sinon la phrase du catalogue.
+    setFailure(remote.status === "error" ? remote.message : t("app.import.videoUnreadable"));
   }
 
   async function generateVideo() {
@@ -324,7 +320,7 @@ export function ImportPanel({
     }
 
     setPhase("apercu");
-    setFailure(remote.message ?? local.message);
+    setFailure(remote.message ?? t("app.errors.videoNoCaptions"));
   }
 
   async function handleFile(file: File) {

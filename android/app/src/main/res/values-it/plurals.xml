@@ -13,6 +13,9 @@
         <item quantity="one">%1$d giorno di fila</item>
         <item quantity="other">%1$d giorni di fila</item>
     </plurals>
+    <plurals name="ios_profile_streakToBeat">
+        <item quantity="other">Il tuo record è %2$s. Ancora %1$d giorni e lo batti.</item>
+    </plurals>
     <plurals name="ios_streak_bestValue">
         <item quantity="one">%1$d giorno</item>
         <item quantity="other">%1$d giorni</item>
@@ -28,5 +31,8 @@
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">C\'è %1$d domanda senza risposta. Consegnare comunque?</item>
         <item quantity="other">Ci sono %1$d domande senza risposta. Consegnare comunque?</item>
+    </plurals>
+    <plurals name="lesson_lessons_examDays">
+        <item quantity="other">Mancano %1$d giorni</item>
     </plurals>
 </resources>

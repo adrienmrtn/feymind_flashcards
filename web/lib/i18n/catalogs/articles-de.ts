@@ -12,14 +12,14 @@ export const articlesDe = {
       "Ein Kurs, den man nur nachliest, bleibt nicht. Was man aus dem Gedächtnis holen muss, bleibt — vor allem, wenn die Frage kurz vor dem Vergessen wiederkommt. So wendet Micabo die Wiederholung an, mit den echten Abständen.",
     h1: "Nachlesen reicht nicht. Erinnern schon.",
     lead1:
-      "Eine Seite, viermal gelesen, gibt das Gefühl, man könne sie — bis zur Klausur. Was wächst, ist Wiedererkennen: « ja, das habe ich schon gesehen ». Eine Prüfung fragt das nicht.",
+      "Eine Seite, viermal gelesen, gibt das Gefühl, man könne sie — bis zur Klausur. Was wächst, ist Wiedererkennen: „ja, das habe ich schon gesehen“. Eine Prüfung fragt das nicht.",
     lead2:
       "Was hält, ist das, was man **aus dem Gedächtnis holen** musste, und das, was **kurz vor dem Vergessen** wiederkommt. Zwei alte Ideen, seit über einem Jahrhundert gemessen, und zu mühsam, sie von Hand zu halten. Das ist Micabos ganze Arbeit.",
     activeTitle: "Aktiver Abruf: die Frage vor der Antwort",
     active1:
       "Sich selbst zu prüfen wirkt mehr als Nachlesen, auch wenn man danebenliegt. Die Anstrengung des Abrufs festigt die Spur: eine Antwort, die man drei Sekunden sucht, wiegt mehr als eine, die man in einer liest.",
     active2:
-      "Darum trägt eine Karte **eine Sache zum Abrufen**. Eine Karte mit fünf Punkten auf einmal lässt sich nicht benoten: man holt drei, und es gibt keinen Knopf für « drei Fünftel ».",
+      "Darum trägt eine Karte **eine Sache zum Abrufen**. Eine Karte mit fünf Punkten auf einmal lässt sich nicht benoten: man holt drei, und es gibt keinen Knopf für „drei Fünftel“.",
     spacingTitle: "Abstand: im letzten nützlichen Moment wiederkommen",
     spacing1:
       "Ohne Wiederholung bleibt von einem Kurs nach einem Monat fast nichts. Jeder Abruf setzt den Zähler auf hundert — und der Abfall danach ist **langsamer als der vorige**. Zur richtigen Zeit wiederholen kostet also nicht mehr Zeit: mit der Zeit weniger, weil das Gedächtnis sich festigt.",
@@ -29,15 +29,15 @@ export const articlesDe = {
     planner1:
       "Micabo plant nach **SM-2**, Ankis Standardregel. Eine neue Karte geht durch kurze Stufen — {steps} — bevor sie in Tagen läuft. Danach multipliziert jede Note den Abstand mit einer Leichtigkeit, die bei {ease} startet und sich nach deinen Antworten bewegt.",
     planner2:
-      "Vier Knöpfe, nicht zwei: « ich kann / ich kann nicht » trennt nicht die mühsam geholte Karte von der, die von allein kam — und genau dieser Abstand entscheidet das nächste Datum. Das kündigen die vier Knöpfe auf einer neuen Karte an:",
+      "Vier Knöpfe, nicht zwei: „ich kann / ich kann nicht“ trennt nicht die mühsam geholte Karte von der, die von allein kam — und genau dieser Abstand entscheidet das nächste Datum. Das kündigen die vier Knöpfe auf einer neuen Karte an:",
     buttonsCaption: "Die Intervalle berechnet der Planer der App, sie sind nicht von Hand geschrieben.",
     planner3:
-      "Der Abstand steht **vor** dem Tippen auf dem Knopf. Ein Planer, der im Verborgenen entscheidet, wird schnell manuell überstimmt: man tippt « leicht », um schneller fertig zu sein, die Karte wandert drei Wochen weg, und man entdeckt sie am Prüfungstag neu.",
+      "Der Abstand steht **vor** dem Tippen auf dem Knopf. Ein Planer, der im Verborgenen entscheidet, wird schnell manuell überstimmt: man tippt „leicht“, um schneller fertig zu sein, die Karte wandert drei Wochen weg, und man entdeckt sie am Prüfungstag neu.",
     stepMinutes: "{n} Min.",
     stepJoin: ", dann ",
     paceTitle: "Das Tempo: was die Last verlangt, keine Quote",
     pace1: "Micabo fragt weder nach einer Anzahl Karten pro Tag noch nach einem Minutenbudget. Es sieht, was die Termine heute verlangen, bedient alles davon und sagt, wie lange es dauern wird. Ein Studierender sieht etwa {seen} Karten in einer Stunde.",
-    pace2: "Hier gab es einmal eine Obergrenze für neue Karten, kalibriert auf die {reps} Durchgänge, die eine Karte bis zum Sitzen braucht. Sie hatte einen entscheidenden Fehler: drei Tage vor einer Klausur lehnte sie Karten genau dieser Klausur im Namen des Tagestempos ab. Arbeit an dem Tag zurückzuhalten, an dem sie am meisten zählt, ist der falsche Beruf.",
+    pace2: "Hier gab es einmal eine Obergrenze für neue Karten, kalibriert auf die {reps} Durchgänge, die eine Karte bis zum Sitzen braucht. Sie hatte einen entscheidenden Fehler: drei Tage vor einer Klausur lehnte sie Karten genau dieser Klausur im Namen des Tagestempos ab. Arbeit an dem Tag zurückzuhalten, an dem sie am meisten zählt, ist nicht die Aufgabe eines Planers.",
     paceNote: "Was der Plan verteilt, sind die Durchgänge bis zum Prüfungstag. Ein verpasster Tag hinterlässt also kein Loch: er verschiebt, und der Plan wird bei der nächsten Berechnung neu gebaut.",
     sheetTitle: "Zuerst das Merkblatt, dann die Karten",
     sheet1:
@@ -54,7 +54,7 @@ export const articlesDe = {
     limits1:
       "Verteiltes Wiederholen legt die Wiederholungen. Es versteht nicht für dich, schreibt keine Klausur, und rettet kein Kapitel, das gestern angefangen wurde — über eine Nacht gibt es keinen Abstand.",
     limits2:
-      "Es ignoriert auch Daten, von Bau her: SM-2 weiß nicht, dass in drei Wochen eine Prüfung ist. Genau das korrigiert der [[exam]].",
+      "Es ignoriert auch Daten, konstruktionsbedingt: SM-2 weiß nicht, dass in drei Wochen eine Prüfung ist. Genau das korrigiert der [[exam]].",
     examLink: "Prüfungsmodus",
   },
   exam: {
@@ -63,10 +63,10 @@ export const articlesDe = {
       "Verteiltes Wiederholen kennt den Stichtag nicht. Micabos Prüfungsmodus gibt ihm eine Frist, rückt die Durchgänge zur Prüfung hin enger und lässt keine Karte darüber hinausgehen.",
     h1: "Du nennst das Datum. Micabo ordnet alles neu.",
     lead1:
-      "Verteiltes Wiederholen legt jede Karte auf den letzten nützlichen Moment, ohne Ende. Es weiß nicht, dass am 14. eine Klausur ist. Eine heute als « leicht » notierte Karte wandert drei Wochen weiter — auch wenn die Prüfung in zehn Tagen ist — und kommt nicht vorher zurück.",
+      "Verteiltes Wiederholen legt jede Karte auf den letzten nützlichen Moment, ohne Ende. Es weiß nicht, dass am 14. eine Klausur ist. Eine heute als „leicht“ notierte Karte wandert drei Wochen weiter — auch wenn die Prüfung in zehn Tagen ist — und kommt nicht vorher zurück.",
     lead2:
-      "Der Prüfungsmodus gibt dem Planer, was ihm fehlt: **eine Frist**. Du setzt den Stichtag, er legt das Deck darum neu.",
-    trapTitle: "Warum ein normaler Plan sich fängt",
+      "Der Prüfungsmodus gibt dem Planer, was ihm fehlt: **eine Frist** und die Note, die du anstrebst. Du setzt den Stichtag, er legt das Deck darum neu.",
+    trapTitle: "Warum ein normaler Plan in die Falle geht",
     trap1:
       "Ein Deck aus zweihundert Karten in verteilter Wiederholung ist gut für laufende Tests und schlecht für ein festes Datum. Drei Dinge laufen schief: Karten fallen nach der Prüfung, andere wurden nie eingeführt, und die unsicheren kommen zu früh, um am Stichtag zu nützen.",
     trap2:
@@ -86,13 +86,13 @@ export const articlesDe = {
     dailyFigure: "Der Plan liest sich in der Reihenfolge der Zeit, und die letzte Zeile ist die Prüfung. **Ein verpasster Tag verschiebt die Arbeit, er reißt kein Loch**: Der Plan wird bei der nächsten Berechnung neu gebaut.",
     intensityTitle: "Drei Stärken, je nach der Note, die du willst",
     intensityLead:
-      "Wie oft jede Karte vor der Prüfung wiederkommen soll, ist nicht dieselbe Frage für « ich will bestehen » und « ich will die Bestnote ». Du nennst die Zielnote, Micabo leitet die Stärke ab:",
+      "Wie oft jede Karte vor der Prüfung wiederkommen soll, ist nicht dieselbe Frage für „ich will bestehen“ und „ich will die Bestnote“. Du nennst die Zielnote, Micabo leitet die Stärke ab:",
     intensityLight: "Leicht",
     intensityStandard: "Normal",
     intensityIntense: "Intensiv",
     intensityPasses: "Durchgänge pro Karte",
     intensityScale:
-      "Die Notenskala folgt deinem Schulsystem: eine französische 20, eine quebecer 100 und ein britisches A-Level lassen sich nicht vergleichen — und ein Regler, der überall gälte, gälte nirgendwo.",
+      "Die Notenskala folgt deinem Schulsystem: eine französische 20, eine Quebecer 100 und ein britisches A-Level lassen sich nicht vergleichen — und ein Regler, der überall gälte, gälte nirgendwo.",
     severalTitle: "Mehrere Prüfungen, mehrere Kurse",
     several1:
       "Eine Prüfung gilt für die Kurse, die du ihr gibst, und ein Kurs kann in mehreren Prüfungen liegen. Streiten sich zwei Daten um dieselbe Karte, deckelt **das nähere**: es ist die erste Grenze, und die zweite zuerst zu achten verfehlte beide.",
@@ -102,7 +102,7 @@ export const articlesDe = {
     limits1:
       "Er macht keine Zeit. Eine Prüfung für morgen auf zweihundert neue Karten ergibt einen ehrlichen, unhaltbaren Plan — und Micabo zeigt ihn so, statt zu beruhigen.",
     limits2:
-      "Er ersetzt auch nicht die Methode: [[method]] tun die Arbeit, der Prüfungsmodus gibt ihnen nur eine Frist. Kommst du von Anki, sagt die [[anki]] genau, was sich ändert.",
+      "Er ersetzt auch nicht die Methode: [[method]] tun die Arbeit, der Prüfungsmodus gibt ihnen nur eine Frist. Kommst du von Anki, sagt [[anki]] genau, was sich ändert.",
     methodLink: "aktiver Abruf und Abstand",
     ankiLink: "der Vergleich",
   },
@@ -138,7 +138,7 @@ export const articlesDe = {
     rowDecksMicabo: "Kein Katalog. Deine Kurse, und die, die Freunde teilen.",
     rowDecksAnki: "Tausende öffentliche Decks, von ungleicher Qualität.",
     rowFriends: "Die Kurse deiner Kommilitonen",
-    rowFriendsMicabo: "Ein geteilter Kurs kommt mit einer Geste zurück und wird deiner.",
+    rowFriendsMicabo: "Ein geteilter Kurs wird mit einer Geste übernommen und gehört dann dir.",
     rowFriendsAnki: "Eine Datei, die man sich schickt.",
     rowStart: "Der Einstieg",
     rowStartMicabo: "Ein Dokument abgelegt, ein Blatt zu lesen, am Abend schon eine Sitzung.",
@@ -153,7 +153,7 @@ export const articlesDe = {
       "Die Kehrseite ist echt: eine erzeugte Karte kann schlecht formuliert oder aus einem schlecht gelesenen Scan gezogen sein. Darum kommt das Blatt vor den Karten, und Micabo definiert keinen Begriff, über den das Dokument nicht spricht. Ein Blatt, das sich irrt, sieht nicht nach einem Fehler aus.",
     dateTitle: "Was Anki nicht tut: das Datum",
     date1:
-      "Das ist der echte mechanische Unterschied. Verteiltes Wiederholen legt jede Karte auf den letzten nützlichen Moment, ohne Ende. Es weiß nicht, dass am 14. eine Klausur ist: eine als « leicht » notierte Karte wandert drei Wochen und kommt nicht vor der Prüfung zurück.",
+      "Das ist der echte mechanische Unterschied. Verteiltes Wiederholen legt jede Karte auf den letzten nützlichen Moment, ohne Ende. Es weiß nicht, dass am 14. eine Klausur ist: eine als „leicht“ notierte Karte wandert drei Wochen und kommt nicht vor der Prüfung zurück.",
     date2:
       "In Anki schiebt man das Deck von Hand vor oder wiederholt alles am Vorabend. In Micabo setzt du das Datum, und das Deck legt sich darum neu, mit einer Deckelung, die keine Karte über den Stichtag hinauslässt. [[exam]] sagt, wie.",
     examLink: "Der Prüfungsmodus",

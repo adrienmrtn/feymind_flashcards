@@ -48,7 +48,7 @@ export async function sendFeedback(
   if (error.code === "42501" || /feedback_today_count|row-level security/i.test(error.message)) {
     return {
       status: "quota",
-      message: `Trop de retours aujourd'hui. Réessaie demain.`,
+      message: await actionT("app.errors.feedbackQuota"),
     };
   }
 

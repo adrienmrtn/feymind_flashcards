@@ -13,6 +13,9 @@
         <item quantity="one">%1$d nap egymás után</item>
         <item quantity="other">%1$d nap egymás után</item>
     </plurals>
+    <plurals name="ios_profile_streakToBeat">
+        <item quantity="other">A rekordod: %2$s. Még %1$d nap, és megdöntöd.</item>
+    </plurals>
     <plurals name="ios_streak_bestValue">
         <item quantity="one">%1$d nap</item>
         <item quantity="other">%1$d nap</item>
@@ -28,5 +31,8 @@
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d kérdés megválaszolatlan. Beadod így is?</item>
         <item quantity="other">%1$d kérdés megválaszolatlan. Beadod így is?</item>
+    </plurals>
+    <plurals name="lesson_lessons_examDays">
+        <item quantity="other">még %1$d nap</item>
     </plurals>
 </resources>

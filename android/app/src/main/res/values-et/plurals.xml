@@ -13,6 +13,9 @@
         <item quantity="one">%1$d päev järjest</item>
         <item quantity="other">%1$d päeva järjest</item>
     </plurals>
+    <plurals name="ios_profile_streakToBeat">
+        <item quantity="other">Sinu rekord on %2$s. Veel %1$d päeva ja oled selle ületanud.</item>
+    </plurals>
     <plurals name="ios_streak_bestValue">
         <item quantity="one">%1$d päev</item>
         <item quantity="other">%1$d päeva</item>
@@ -28,5 +31,8 @@
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d küsimus on vastamata. Kas esitada ikkagi?</item>
         <item quantity="other">%1$d küsimust on vastamata. Kas esitada ikkagi?</item>
+    </plurals>
+    <plurals name="lesson_lessons_examDays">
+        <item quantity="other">%1$d päeva jäänud</item>
     </plurals>
 </resources>

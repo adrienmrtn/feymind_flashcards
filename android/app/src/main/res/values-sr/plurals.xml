@@ -7,11 +7,15 @@
     </plurals>
     <plurals name="copy_cards">
         <item quantity="one">%1$d kartica</item>
+        <item quantity="few">%1$d kartice</item>
         <item quantity="other">%1$d kartica</item>
     </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">%1$d dan zaredom</item>
         <item quantity="other">%1$d dana zaredom</item>
+    </plurals>
+    <plurals name="ios_profile_streakToBeat">
+        <item quantity="other">Tvoj rekord je %2$s. Još %1$d dana i obaraš ga.</item>
     </plurals>
     <plurals name="ios_streak_bestValue">
         <item quantity="one">%1$d dan</item>
@@ -28,5 +32,8 @@
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d pitanje je bez odgovora. Ipak predati?</item>
         <item quantity="other">Pitanja bez odgovora: %1$d. Ipak predati?</item>
+    </plurals>
+    <plurals name="lesson_lessons_examDays">
+        <item quantity="other">Još %1$d dana</item>
     </plurals>
 </resources>

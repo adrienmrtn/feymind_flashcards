@@ -216,7 +216,9 @@ fun StreakPanel() {
                     when {
                         status.current == 0 -> stringResource(R.string.ios_profile_streakStart)
                         status.current >= status.best -> stringResource(R.string.ios_profile_streakBest)
-                        else -> stringResource(R.string.ios_profile_streakToBeat, status.best.toString(), (status.best - status.current + 1).toString())
+                        else -> (status.best - status.current + 1).let { days ->
+                            pluralStringResource(R.plurals.ios_profile_streakToBeat, days, days, status.best.toString())
+                        }
                     },
                     style = nunito(14.sp, FontWeight.SemiBold, lineHeight = 19.sp),
                     color = colors.inkSecondary,

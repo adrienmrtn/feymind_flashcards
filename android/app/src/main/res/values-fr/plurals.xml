@@ -13,6 +13,9 @@
         <item quantity="one">%1$d jour d\'affilée</item>
         <item quantity="other">%1$d jours d\'affilée</item>
     </plurals>
+    <plurals name="ios_profile_streakToBeat">
+        <item quantity="other">Ton record est de %2$s. Encore %1$d jours et tu le bats.</item>
+    </plurals>
     <plurals name="ios_streak_bestValue">
         <item quantity="one">%1$d jour</item>
         <item quantity="other">%1$d jours</item>
@@ -28,5 +31,8 @@
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">Il reste %1$d question sans réponse. Rendre quand même ?</item>
         <item quantity="other">Il reste %1$d questions sans réponse. Rendre quand même ?</item>
+    </plurals>
+    <plurals name="lesson_lessons_examDays">
+        <item quantity="other">J-%1$d</item>
     </plurals>
 </resources>

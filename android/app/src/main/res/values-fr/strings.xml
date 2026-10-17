@@ -7,6 +7,7 @@
     <string name="app_common_cancel">Annuler</string>
     <string name="app_common_save">Enregistrer</string>
     <string name="app_exams_countdown_today">aujourd\'hui</string>
+    <string name="app_exams_countdown_tomorrow">demain</string>
     <string name="app_friends_accept">Accepter</string>
     <string name="app_friends_addSomeone">Ajouter quelqu\'un</string>
     <string name="app_friends_decline">Refuser</string>
@@ -193,7 +194,6 @@
     <string name="ios_planYearly">Annuel</string>
     <string name="ios_profile_streakBest">C\'est ton record. Ne le lâche pas.</string>
     <string name="ios_profile_streakStart">Reviens demain et la série commence.</string>
-    <string name="ios_profile_streakToBeat">Ton record est de %1$s. Encore %2$s jours et tu le bats.</string>
     <string name="ios_proof_gotYou">**On s\'en occupe.**</string>
     <string name="ios_proof_gotYou_named">%1$s ? **On s\'en occupe.**</string>
     <string name="ios_proof_retention_caption">Ce qu\'il te reste d\'un cours, une semaine après l\'avoir travaillé</string>
@@ -409,7 +409,6 @@
     <string name="lesson_lessons_due">%1$s à réviser</string>
     <string name="lesson_lessons_emptyBody">Tape un sujet sur Home, ou dépose un PDF, une photo, un audio : Mika en fait un parcours.</string>
     <string name="lesson_lessons_emptyTitle">Ta première leçon t\'attend</string>
-    <string name="lesson_lessons_examDays">J-%1$s</string>
     <string name="lesson_lessons_finished">Leçon terminée</string>
     <string name="lesson_lessons_toOpen">À ouvrir</string>
     <string name="lesson_menu_cancel">Annuler</string>
@@ -522,6 +521,7 @@
     <string name="x_paywall_soon">Bientôt disponible sur Android</string>
     <string name="x_paywall_soonBody">Les abonnements arrivent très bientôt sur Android. En attendant, ta leçon offerte t\'attend.</string>
     <string name="x_paywall_subscribe">Passer à Pro</string>
+    <string name="x_quoted">« %1$s »</string>
     <string name="x_record_limit">Jusqu\'à 90 minutes. Mika met ton enregistrement en texte, puis écrit ta leçon.</string>
     <string name="x_score_1">J\'ai du mal</string>
     <string name="x_score_2">Un peu en dessous de la moyenne</string>

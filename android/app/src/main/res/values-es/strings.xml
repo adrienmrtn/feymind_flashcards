@@ -7,6 +7,7 @@
     <string name="app_common_cancel">Cancelar</string>
     <string name="app_common_save">Guardar</string>
     <string name="app_exams_countdown_today">hoy</string>
+    <string name="app_exams_countdown_tomorrow">mañana</string>
     <string name="app_friends_accept">Aceptar</string>
     <string name="app_friends_addSomeone">Añadir a alguien</string>
     <string name="app_friends_decline">Rechazar</string>
@@ -185,7 +186,6 @@
     <string name="ios_planYearly">Anual</string>
     <string name="ios_profile_streakBest">Es tu récord. No lo sueltes.</string>
     <string name="ios_profile_streakStart">Vuelve mañana y empieza la racha.</string>
-    <string name="ios_profile_streakToBeat">Tu récord es %1$s. %2$s días más y lo bates.</string>
     <string name="ios_proof_gotYou">**Nos encargamos.**</string>
     <string name="ios_proof_gotYou_named">%1$s? **Nos encargamos.**</string>
     <string name="ios_proof_retention_caption">Lo que te queda de un tema una semana después de trabajarlo</string>
@@ -394,7 +394,6 @@
     <string name="lesson_lessons_due">%1$s por repasar</string>
     <string name="lesson_lessons_emptyBody">Escribe un tema en Inicio, o sube un PDF, una foto o un audio: Mika lo convierte en un recorrido.</string>
     <string name="lesson_lessons_emptyTitle">Tu primera lección te espera</string>
-    <string name="lesson_lessons_examDays">Faltan %1$s días</string>
     <string name="lesson_lessons_finished">Lección terminada</string>
     <string name="lesson_lessons_toOpen">Sin abrir</string>
     <string name="lesson_menu_cancel">Cancelar</string>
@@ -499,13 +498,14 @@
     <string name="x_friends_adopt">Hacer mi lección con esto</string>
     <string name="x_lesson_whoSees">Quién ve esta lección</string>
     <string name="x_onb_language">¿En qué idioma estudias?</string>
-    <string name="x_onb_language_sub">Mika escribe tus lecciones, quizzes y flashcards en este idioma.</string>
+    <string name="x_onb_language_sub">Mika escribe tus lecciones, quizzes y tarjetas en este idioma.</string>
     <string name="x_paste_tooShort">Unas líneas más y Mika podrá trabajar con ello.</string>
     <string name="x_paywall_finePrint">%1$s días gratis, luego %2$s por %3$s. Se renueva automáticamente, cancela cuando quieras en Google Play.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s por %2$s. Se renueva automáticamente, cancela cuando quieras en Google Play.</string>
     <string name="x_paywall_soon">Muy pronto en Android</string>
     <string name="x_paywall_soonBody">Las suscripciones llegan muy pronto a Android. Mientras tanto, tu lección gratis te espera.</string>
     <string name="x_paywall_subscribe">Hazte Pro</string>
+    <string name="x_quoted">«%1$s»</string>
     <string name="x_record_limit">Hasta 90 minutos. Mika convierte tu grabación en texto y luego escribe tu lección.</string>
     <string name="x_score_1">Me cuesta</string>
     <string name="x_score_2">Un poco por debajo de la media</string>
