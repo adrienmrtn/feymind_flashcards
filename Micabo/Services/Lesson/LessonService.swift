@@ -352,14 +352,18 @@ enum LessonServiceError: LocalizedError, Equatable {
     static func from(_ error: Error) -> LessonServiceError {
         if let error = error as? LessonServiceError { return error }
         switch error as? SupabaseFunctionError {
-        case .server(_, let message, let code):
+        case .server(let status, let message, let code):
             switch code {
             case "free_limit": return .freeLimit
             case "import_pro": return .importPro
             case "pro_required": return .proRequired
             case "daily_limit": return .dailyLimit
             case "forbidden": return .forbidden
-            default: return .failed(ServerMessage.localized(message, fallback: "lesson.error.generic"))
+            default:
+                // Le plafond du jour (`consume_ai_quota`) arrive en 429 sans code : sans ce
+                // cas, il se lisait « la leçon n'a pas pu s'écrire, réessaie ».
+                if status == 429 { return .dailyLimit }
+                return .failed(ServerMessage.localized(message, fallback: "lesson.error.generic"))
             }
         case .notConfigured:
             return .notConfigured

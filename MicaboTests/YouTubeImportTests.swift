@@ -114,11 +114,29 @@ final class YouTubeImportErrorTests: XCTestCase {
         }
     }
 
+    /// Le serveur écrit en français : son message passe tel quel en français, et laisse la
+    /// place à une phrase de l'app dans les autres langues.
     func testUnknownCodeFallsBackOnTheServerMessage() {
         let error = YouTubeImportError(
             .server(status: 500, message: "Panne inattendue.", code: "quelque_chose_de_neuf")
         )
-        XCTAssertEqual(error.errorDescription, "Panne inattendue.")
+        XCTAssertEqual(
+            error.errorDescription,
+            ServerMessage.localized("Panne inattendue.", fallback: "ios.yt.responseUnread")
+        )
+        XCTAssertEqual(ServerMessage.localized("Panne inattendue.", fallback: "ios.yt.responseUnread", locale: .fr), "Panne inattendue.")
+        XCTAssertNotEqual(ServerMessage.localized("Panne inattendue.", fallback: "ios.yt.responseUnread", locale: .de), "Panne inattendue.")
+    }
+
+    /// Le plafond des lectures de vidéo se dit dans la langue de l'app, et ne propose pas de
+    /// réessayer un refus qui ne se lèvera que demain.
+    func testDailyLimitIsTranslatedAndNotRetried() {
+        let named = YouTubeImportError(.server(status: 429, message: "Trop de générations aujourd'hui. Réessaie demain.", code: "quota"))
+        let unnamed = YouTubeImportError(.server(status: 429, message: "", code: nil))
+        XCTAssertEqual(named, .dailyLimit)
+        XCTAssertEqual(unnamed, .dailyLimit)
+        XCTAssertEqual(named.errorDescription, L10n.t("ios.ai.quota", locale: .resolved()))
+        XCTAssertFalse(named.allowsRetry)
     }
 
     /// « Réessayer » ne s'affiche que quand réessayer peut marcher. Une vidéo que le modèle
