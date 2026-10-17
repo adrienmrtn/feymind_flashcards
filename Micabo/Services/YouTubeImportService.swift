@@ -66,7 +66,8 @@ enum YouTubeLink {
 enum YouTubeLimits {
     /// Au delà, on ne garde que le début de la transcription. Un cours de deux heures
     /// n'est plus un refus : c'est le début qui rentre dans un appel de génération.
-    static let maximumDuration: TimeInterval = 90 * 60
+    /// Une heure, comme le serveur (`YOUTUBE_LIMITS`) : une leçon ne garde pas plus de texte.
+    static let maximumDuration: TimeInterval = 60 * 60
 }
 
 // MARK: - Modèles

@@ -10,8 +10,15 @@
 
 export const YOUTUBE_LIMITS = {
   /** Au delà, on ne garde que le début de la transcription. Un cours de deux heures
-   *  n'est plus un refus : c'est le début qui rentre dans un appel de génération. */
-  maxDurationSeconds: 90 * 60,
+   *  n'est plus un refus : c'est le début qui rentre dans un appel de génération.
+   *
+   *  Une heure, et non plus une heure et demie. Une leçon ne garde de toute façon que
+   *  soixante mille caractères de support (`generate-lesson`), soit à peu près une heure de
+   *  parole : la demi-heure suivante était lue pour être coupée. Et quand c'est Gemini qui
+   *  regarde la vidéo, faute de sous-titres, chaque minute se facture : c'est un tiers de
+   *  la lecture la plus chère de l'app en moins. Les apps (`YouTubeLimits`, web) annoncent
+   *  le même nombre. */
+  maxDurationSeconds: 60 * 60,
   /** En dessous, il n'y a pas de quoi écrire une fiche ni des cartes. */
   minTranscriptCharacters: 400,
   /** Au delà, on coupe : une heure de sous-titres n'a pas à saturer le prompt. */
