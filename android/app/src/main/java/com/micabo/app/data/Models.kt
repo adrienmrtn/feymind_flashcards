@@ -128,6 +128,8 @@ data class Progress(
     val quizScores: Map<String, List<Int>> = emptyMap(),
     val seconds: Long = 0,
     val finishedAt: Long = 0,
+    /** La mémoire des flashcards, par clé `thème:rang` (SM-2, `Srs`). */
+    val cards: Map<String, CardReview> = emptyMap(),
 ) {
     val averageQuizPercent: Int?
         get() {

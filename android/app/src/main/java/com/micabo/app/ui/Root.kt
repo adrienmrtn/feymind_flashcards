@@ -18,13 +18,15 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import com.micabo.app.MicaboApplication
 import com.micabo.app.data.LessonRequest
 import com.micabo.app.ui.home.CreatingScreen
-import com.micabo.app.ui.home.HomeScreen
 import com.micabo.app.ui.lesson.FlashcardsScreen
 import com.micabo.app.ui.lesson.IntroScreen
 import com.micabo.app.ui.lesson.LessonScreen
@@ -32,13 +34,13 @@ import com.micabo.app.ui.lesson.NotesScreen
 import com.micabo.app.ui.lesson.QuizScreen
 import com.micabo.app.ui.onboarding.OnboardingScreen
 import com.micabo.app.ui.paywall.PaywallScreen
-import com.micabo.app.ui.settings.SettingsScreen
+import com.micabo.app.ui.streak.StreakCelebration
 import com.micabo.app.ui.theme.Micabo
 
 /** Les écrans de l'app. */
 sealed interface Screen {
+    /** Les onglets : Accueil, Leçons, Profil. */
     data object Home : Screen
-    data object Settings : Screen
     data class Creating(val request: LessonRequest) : Screen
     data class LessonPath(val id: String) : Screen
     data class Intro(val id: String) : Screen
@@ -53,9 +55,16 @@ sealed interface Screen {
     val isModal: Boolean get() = this is Paywall || this is Creating
 }
 
-/** La pile d'écrans : pousser, revenir, remplacer. */
+/** Les onglets du bas (`RootTab`). */
+enum class Tab { HOME, LESSONS, PROFILE }
+
+/** La place que prend la barre d'onglets, à garder libre en bas des onglets. */
+val TAB_BAR_SPACE = 84.dp
+
+/** La pile d'écrans : pousser, revenir, remplacer ; et l'onglet ouvert sous la pile. */
 class Navigator(initial: Screen) {
     val stack = mutableStateListOf(initial)
+    var tab by mutableStateOf(Tab.HOME)
     val current: Screen get() = stack.last()
     var forward = true
         private set
@@ -77,9 +86,11 @@ class Navigator(initial: Screen) {
         return true
     }
 
+    /** Revient à l'accueil : la pile se vide, l'onglet Accueil s'ouvre. */
     fun home() {
         forward = false
         while (stack.size > 1) stack.removeAt(stack.lastIndex)
+        tab = Tab.HOME
     }
 }
 
@@ -97,6 +108,7 @@ fun MicaboRoot(app: MicaboApplication) {
                 OnboardingScreen()
             } else {
                 MainScreens(navigator)
+                StreakCelebrationHost(navigator)
             }
         }
     }
@@ -104,7 +116,10 @@ fun MicaboRoot(app: MicaboApplication) {
 
 @Composable
 private fun MainScreens(navigator: Navigator) {
-            BackHandler(enabled = navigator.stack.size > 1) { navigator.back() }
+            // Le retour du système : la pile d'abord, puis l'onglet Accueil, puis quitter l'app.
+            BackHandler(enabled = navigator.stack.size > 1 || navigator.tab != Tab.HOME) {
+                if (!navigator.back()) navigator.tab = Tab.HOME
+            }
             AnimatedContent(
                 targetState = navigator.current,
                 transitionSpec = {
@@ -127,8 +142,7 @@ private fun MainScreens(navigator: Navigator) {
             ) { screen ->
                 Box(Modifier.fillMaxSize().background(Micabo.colors.canvas)) {
                     when (screen) {
-                        Screen.Home -> HomeScreen()
-                        Screen.Settings -> SettingsScreen()
+                        Screen.Home -> TabsScreen(navigator)
                         is Screen.Creating -> CreatingScreen(screen.request)
                         is Screen.LessonPath -> LessonScreen(screen.id)
                         is Screen.Intro -> IntroScreen(screen.id)
@@ -139,4 +153,19 @@ private fun MainScreens(navigator: Navigator) {
                     }
                 }
             }
+}
+
+/**
+ * La flamme du jour, célébrée une fois, au retour sur le chemin ou les onglets : jamais au
+ * milieu d'une étape.
+ */
+@Composable
+private fun StreakCelebrationHost(navigator: Navigator) {
+    val app = LocalApp.current
+    val pending by app.streak.celebrate.collectAsState()
+    val status by app.streak.status.collectAsState()
+    val calm = navigator.current is Screen.Home || navigator.current is Screen.LessonPath
+    if (pending && calm && status.current > 0) {
+        StreakCelebration(status, onDismiss = { app.streak.celebrated() })
+    }
 }

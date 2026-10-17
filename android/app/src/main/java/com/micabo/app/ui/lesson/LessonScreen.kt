@@ -75,6 +75,7 @@ import com.micabo.app.data.pathGroups
 import com.micabo.app.ui.LocalApp
 import com.micabo.app.ui.LocalNavigator
 import com.micabo.app.ui.Screen
+import com.micabo.app.ui.lessons.RenameDialog
 import com.micabo.app.ui.components.BackButton
 import com.micabo.app.ui.components.CircleIconButton
 import com.micabo.app.ui.components.Icon3D
@@ -325,6 +326,10 @@ private fun LessonPath(lesson: Lesson) {
     if (menu) {
         Box(Modifier.statusBarsPadding().padding(top = 56.dp).fillMaxWidth().padding(end = 20.dp), contentAlignment = Alignment.TopEnd) {
             DropdownMenu(expanded = true, onDismissRequest = { menu = false }, containerColor = colors.surface) {
+                DropdownMenuItem(text = { Text(stringResource(R.string.lesson_menu_rename), style = nunito(16.sp, FontWeight.Bold)) }, onClick = {
+                    menu = false
+                    confirm = "rename"
+                })
                 DropdownMenuItem(text = { Text(stringResource(R.string.lesson_menu_reset), style = nunito(16.sp, FontWeight.Bold)) }, onClick = {
                     menu = false
                     confirm = "reset"
@@ -336,7 +341,13 @@ private fun LessonPath(lesson: Lesson) {
             }
         }
     }
-    confirm?.let { action ->
+    if (confirm == "rename") {
+        RenameDialog(lesson.title, onDismiss = { confirm = null }, onSave = { title ->
+            app.lessons.rename(lesson.id, title)
+            confirm = null
+        })
+    }
+    confirm?.takeIf { it != "rename" }?.let { action ->
         AlertDialog(
             onDismissRequest = { confirm = null },
             containerColor = colors.surface,

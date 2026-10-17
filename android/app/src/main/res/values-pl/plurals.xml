@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
+<resources>
+    <plurals name="ios_profile_streakDays">
+        <item quantity="one">%1$d dzień z rzędu</item>
+        <item quantity="other">%1$d dni z rzędu</item>
+    </plurals>
+    <plurals name="ios_streak_bestValue">
+        <item quantity="one">%1$d dzień</item>
+        <item quantity="other">%1$d dni</item>
+    </plurals>
+    <plurals name="ios_streak_unit">
+        <item quantity="one">dzień z rzędu</item>
+        <item quantity="other">dni z rzędu</item>
+    </plurals>
+</resources>

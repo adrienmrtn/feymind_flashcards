@@ -22,6 +22,8 @@ data class Profile(
     /** La moyenne d'aujourd'hui et l'objectif, de 0 à 100 (`learner.ts`). */
     val currentScore: Int? = null,
     val targetScore: Int? = null,
+    /** system, light ou dark : l'apparence, propre à ce téléphone. */
+    val theme: String = "system",
 )
 
 class Prefs(context: Context) {
@@ -40,6 +42,7 @@ class Prefs(context: Context) {
         worries = prefs.getStringSet("worries", emptySet()).orEmpty().toSet(),
         currentScore = prefs.getInt("currentScore", -1).takeIf { it >= 0 },
         targetScore = prefs.getInt("targetScore", -1).takeIf { it >= 0 },
+        theme = prefs.getString("theme", "system").orEmpty().ifEmpty { "system" },
     )
 
     fun update(change: (Profile) -> Profile) {
@@ -54,6 +57,7 @@ class Prefs(context: Context) {
             putStringSet("worries", next.worries)
             putInt("currentScore", next.currentScore ?: -1)
             putInt("targetScore", next.targetScore ?: -1)
+            putString("theme", next.theme)
         }
         _profile.value = next
     }

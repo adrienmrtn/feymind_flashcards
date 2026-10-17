@@ -54,6 +54,8 @@ import com.micabo.app.i18n.AppLocale
 import com.micabo.app.ui.LocalApp
 import com.micabo.app.ui.LocalNavigator
 import com.micabo.app.ui.Screen
+import com.micabo.app.ui.TAB_BAR_SPACE
+import com.micabo.app.ui.streak.StreakPanel
 import com.micabo.app.ui.components.BackButton
 import com.micabo.app.ui.components.Icon3D
 import com.micabo.app.ui.components.Mika
@@ -67,9 +69,12 @@ import com.micabo.app.data.Tiers
 import com.micabo.app.ui.theme.Micabo
 import com.micabo.app.ui.theme.nunito
 
-/** **Les réglages** : Pro, la langue, le pays, la marche d'études, les liens, tout effacer. */
+/**
+ * **L'onglet Profil** (`ProfileView` et `SettingsView`) : la série, Pro, la langue, le pays, la
+ * marche d'études, l'apparence, nous noter, les liens, tout effacer.
+ */
 @Composable
-fun SettingsScreen() {
+fun ProfileScreen() {
     val app = LocalApp.current
     val navigator = LocalNavigator.current
     val context = LocalContext.current
@@ -85,21 +90,21 @@ fun SettingsScreen() {
     }
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
-        Row(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            BackButton(onClick = { navigator.back() })
-            Spacer(Modifier.width(14.dp))
-            Text(stringResource(R.string.lesson_profile_settings), style = nunito(24.sp, FontWeight.Black), color = colors.ink)
-        }
         Column(
             Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 12.dp),
+                .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = TAB_BAR_SPACE + 16.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
+            Text(stringResource(R.string.lesson_profile_me), style = nunito(34.sp, FontWeight.Black), color = colors.ink)
+            StreakPanel()
             // Pro.
-            Pressable(onClick = { if (!isPro) navigator.push(Screen.Paywall("")) }) {
+            // Abonné : la gestion de l'abonnement est chez Google Play.
+            Pressable(onClick = {
+                if (isPro) open("https://play.google.com/store/account/subscriptions?package=${context.packageName}") else navigator.push(Screen.Paywall(""))
+            }) {
                 Row(
                     Modifier
                         .fillMaxWidth()
@@ -131,6 +136,16 @@ fun SettingsScreen() {
                 Item(stringResource(R.string.ios_country), "${countryFlag(profile.country.ifEmpty { "other" })}  ${countryName(profile.country)}") { picker = "country" }
                 Divider()
                 Item(stringResource(R.string.x_settings_level), tierName(profile.tier)) { picker = "tier" }
+                Divider()
+                Item(stringResource(R.string.lesson_profile_theme), themeName(profile.theme)) { picker = "theme" }
+            }
+
+            Group {
+                Item(stringResource(R.string.lesson_profile_rate), null) {
+                    val id = context.packageName
+                    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$id"))) }
+                        .onFailure { open("https://play.google.com/store/apps/details?id=$id") }
+                }
             }
 
             Group {
@@ -176,6 +191,16 @@ fun SettingsScreen() {
                 app.prefs.update { it.copy(country = code) }
             },
         )
+        "theme" -> Picker(
+            options = listOf("system", "light", "dark"),
+            selected = profile.theme,
+            label = { themeName(it) },
+            onDismiss = { picker = null },
+            onPick = { theme ->
+                picker = null
+                app.prefs.update { it.copy(theme = theme) }
+            },
+        )
         "tier" -> Picker(
             options = Tiers.all,
             selected = profile.tier,
@@ -199,8 +224,11 @@ fun SettingsScreen() {
                     confirmReset = false
                     app.lessons.deleteAll()
                     val language = app.prefs.profile.value.language
+                    val theme = app.prefs.profile.value.theme
                     app.prefs.reset()
-                    app.prefs.update { it.copy(language = language) }
+                    app.prefs.update { it.copy(language = language, theme = theme) }
+                    app.streak.reset()
+                    app.composer.reset()
                     navigator.home()
                 }) { Text(stringResource(R.string.x_settings_reset), color = colors.wrong, style = nunito(16.sp, FontWeight.ExtraBold)) }
             },
@@ -210,6 +238,15 @@ fun SettingsScreen() {
         )
     }
 }
+
+@Composable
+private fun themeName(theme: String): String = stringResource(
+    when (theme) {
+        "light" -> R.string.lesson_theme_day
+        "dark" -> R.string.lesson_theme_night
+        else -> R.string.lesson_theme_system
+    },
+)
 
 @Composable
 private fun Group(content: @Composable () -> Unit) {

@@ -5,6 +5,7 @@ import com.micabo.app.data.Billing
 import com.micabo.app.data.LessonComposer
 import com.micabo.app.data.LessonRepository
 import com.micabo.app.data.Prefs
+import com.micabo.app.data.Streak
 import com.micabo.app.data.SupabaseAuth
 import com.micabo.app.data.SupabaseFunctions
 import com.micabo.app.data.YouTubeImport
@@ -26,6 +27,8 @@ class MicaboApplication : Application() {
         private set
     lateinit var functions: SupabaseFunctions
         private set
+    lateinit var streak: Streak
+        private set
     /** La barre de l'accueil et ses supports : ils survivent au paywall et aux leçons ouvertes. */
     lateinit var composer: LessonComposer
         private set
@@ -38,7 +41,8 @@ class MicaboApplication : Application() {
         prefs = Prefs(this)
         auth = SupabaseAuth(prefs)
         functions = SupabaseFunctions(auth)
-        lessons = LessonRepository(this, functions, prefs)
+        streak = Streak(this)
+        lessons = LessonRepository(this, functions, prefs, streak)
         composer = LessonComposer(this, YouTubeImport(functions))
         billing = Billing(this)
         // Le compte invité s'ouvre tout de suite : il doit exister avant un achat, pour que

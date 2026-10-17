@@ -85,6 +85,7 @@ class LessonRepository(
     context: Context,
     private val functions: SupabaseFunctions,
     private val prefs: Prefs,
+    private val streak: Streak,
 ) {
     private val directory = File(context.filesDir, "lessons").apply { mkdirs() }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -141,15 +142,34 @@ class LessonRepository(
 
     fun markOpened(id: String) = modify(id) { it.copy(openedAt = System.currentTimeMillis()) }
 
-    fun complete(id: String, circle: String, score: List<Int>? = null) = modify(id) { lesson ->
-        val progress = lesson.progress
-        val scores = if (score != null) progress.quizScores + (circle to score) else progress.quizScores
-        val done = progress.done + circle
-        val finished = circle == "final" && progress.finishedAt == 0L
-        lesson.copy(progress = progress.copy(done = done, quizScores = scores, finishedAt = if (finished) System.currentTimeMillis() else progress.finishedAt))
+    /** Une étape finie : elle allume aussi la journée de la série (`LessonSession.complete`). */
+    fun complete(id: String, circle: String, score: List<Int>? = null) {
+        streak.record()
+        modify(id) { lesson ->
+            val progress = lesson.progress
+            val scores = if (score != null) progress.quizScores + (circle to score) else progress.quizScores
+            val done = progress.done + circle
+            val finished = circle == "final" && progress.finishedAt == 0L
+            lesson.copy(progress = progress.copy(done = done, quizScores = scores, finishedAt = if (finished) System.currentTimeMillis() else progress.finishedAt))
+        }
     }
 
-    fun restart(id: String) = modify(id) { it.copy(progress = Progress(seconds = it.progress.seconds)) }
+    /** Recommence le chemin ; le temps passé et la mémoire des cartes restent. */
+    fun restart(id: String) = modify(id) { it.copy(progress = Progress(seconds = it.progress.seconds, cards = it.progress.cards)) }
+
+    /** Une carte notée : son prochain rappel, et la journée de la série. */
+    fun review(id: String, key: String, rating: Rating) {
+        streak.record()
+        modify(id) { lesson ->
+            val card = lesson.progress.cards[key] ?: CardReview()
+            lesson.copy(progress = lesson.progress.copy(cards = lesson.progress.cards + (key to Srs.schedule(card, rating))))
+        }
+    }
+
+    fun rename(id: String, title: String) {
+        val clean = title.trim().take(120)
+        if (clean.isNotEmpty()) modify(id) { it.copy(title = clean) }
+    }
 
     fun addTime(id: String, seconds: Long) {
         if (seconds <= 0 || seconds > 6 * 3600) return

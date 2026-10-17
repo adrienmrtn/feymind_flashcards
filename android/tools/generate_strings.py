@@ -260,8 +260,99 @@ def android_text(text: str, variables: list[str]) -> tuple[str, bool]:
     return text, has_args
 
 
+def icu_plural(text: str) -> tuple[str, dict[str, str], str] | None:
+    """`avant {count, plural, one {…} other {…}} après` → (variable, {catégorie: phrase}, …)."""
+    start = re.search(r"\{(\w+),\s*plural,", text)
+    if not start:
+        return None
+    index = start.end()
+    depth = 1
+    branches: dict[str, str] = {}
+    while index < len(text) and depth > 0:
+        while index < len(text) and text[index].isspace():
+            index += 1
+        if index < len(text) and text[index] == "}":
+            depth -= 1
+            index += 1
+            break
+        key_match = re.match(r"(=?\w+)\s*\{", text[index:])
+        if not key_match:
+            return None
+        index += key_match.end()
+        level = 1
+        body_start = index
+        while index < len(text) and level > 0:
+            if text[index] == "{":
+                level += 1
+            elif text[index] == "}":
+                level -= 1
+            index += 1
+        branches[key_match.group(1)] = text[body_start:index - 1]
+    before, after = text[:start.start()], text[index:]
+    return start.group(1), {k: before + v + after for k, v in branches.items() if not k.startswith("=")}, ""
+
+
+def plural_items(text: str) -> dict[str, str] | None:
+    """Les phrases d'un pluriel ICU au format Android : `#` et la variable du compte en `%1$d`."""
+    parsed = icu_plural(text)
+    if not parsed:
+        return None
+    variable, branches, _ = parsed
+    out = {}
+    for quantity, body in branches.items():
+        if quantity not in ("zero", "one", "two", "few", "many", "other"):
+            continue
+        body = body.replace("%", "%%").replace("#", "%1$d").replace("{" + variable + "}", "%1$d")
+        others = [name for name in dict.fromkeys(re.findall(r"\{(\w+)\}", body))]
+        for position, name in enumerate(others, start=2):
+            body = body.replace("{" + name + "}", f"%{position}$s")
+        value = escape(body).replace("\\", "\\\\").replace("'", "\\'").replace('"', '\\"').replace("\n", "\\n")
+        out[quantity] = value
+    return out if "other" in out else None
+
+
+def write_plurals(catalogs, by_name: dict[str, str], names: list[str]) -> list[str]:
+    """`res/values-*/plurals.xml`, pour les `R.plurals.*` du code. Rend les noms introuvables."""
+    missing = []
+    entries: dict[str, dict[str, dict[str, str]]] = {folder: {} for folder in LOCALES.values()}
+    for name in names:
+        key = by_name.get(name)
+        if key is None:
+            missing.append(name)
+            continue
+        base = lookup(catalogs, key, "en") or lookup(catalogs, key, "fr")
+        for locale, folder in LOCALES.items():
+            text = lookup(catalogs, key, locale) or (base if locale == "en" else None)
+            if text is None or (locale not in ("en", "fr") and text == base):
+                continue
+            items = plural_items(text)
+            if items:
+                entries[folder][name] = items
+    for folder, plurals in entries.items():
+        path = RES / folder / "plurals.xml"
+        if not plurals:
+            path.unlink(missing_ok=True)
+            continue
+        lines = [
+            '<?xml version="1.0" encoding="utf-8"?>',
+            "<!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->",
+            "<resources>",
+        ]
+        for name in sorted(plurals):
+            lines.append(f'    <plurals name="{name}">')
+            for quantity in ("zero", "one", "two", "few", "many", "other"):
+                if quantity in plurals[name]:
+                    lines.append(f'        <item quantity="{quantity}">{plurals[name][quantity]}</item>')
+            lines.append("    </plurals>")
+        lines.append("</resources>")
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return missing
+
+
 def main() -> int:
-    names = sorted(set(re.findall(r"R\.string\.([A-Za-z0-9_]+)", "\n".join(p.read_text(encoding="utf-8") for p in SOURCES.rglob("*.kt")))))
+    code = "\n".join(p.read_text(encoding="utf-8") for p in SOURCES.rglob("*.kt"))
+    names = sorted(set(re.findall(r"R\.string\.([A-Za-z0-9_]+)", code)))
+    plural_names = sorted(set(re.findall(r"R\.plurals\.([A-Za-z0-9_]+)", code)))
     catalogs = read_catalogs()
     every_key = set()
     for tables in catalogs.values():
@@ -299,6 +390,7 @@ def main() -> int:
                 continue
             entries[folder][name] = (text, variables)
 
+    missing += write_plurals(catalogs, by_name, plural_names)
     if missing:
         print("Introuvables : " + ", ".join(missing), file=sys.stderr)
         return 1

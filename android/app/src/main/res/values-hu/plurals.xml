@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
+<resources>
+    <plurals name="ios_profile_streakDays">
+        <item quantity="one">%1$d nap egymás után</item>
+        <item quantity="other">%1$d nap egymás után</item>
+    </plurals>
+    <plurals name="ios_streak_bestValue">
+        <item quantity="one">%1$d nap</item>
+        <item quantity="other">%1$d nap</item>
+    </plurals>
+    <plurals name="ios_streak_unit">
+        <item quantity="one">nap egymás után</item>
+        <item quantity="other">nap egymás után</item>
+    </plurals>
+</resources>

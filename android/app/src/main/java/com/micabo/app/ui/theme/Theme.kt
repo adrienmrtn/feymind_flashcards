@@ -166,8 +166,7 @@ object Micabo {
 }
 
 @Composable
-fun MicaboTheme(content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
+fun MicaboTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
     val colors = if (dark) Dark else Light
     val scheme = if (dark) {
         darkColorScheme(
