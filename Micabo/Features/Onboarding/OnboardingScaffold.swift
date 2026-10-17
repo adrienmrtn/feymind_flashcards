@@ -597,8 +597,24 @@ struct OnboardingCenteredScroll<Content: View>: View {
     @ViewBuilder var content: Content
 
     @State private var viewport: CGFloat = 0
+    @Environment(\.onboardingStill) private var still
 
     var body: some View {
+        // Le rendu figé (les rendus de la CI) n'a pas de défilement : `ImageRenderer` ne
+        // dessine pas l'intérieur d'une ScrollView, et l'écran sortait vide.
+        if still {
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+                content.fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            scrolling
+        }
+    }
+
+    private var scrolling: some View {
         ScrollView {
             VStack(spacing: 0) {
                 Spacer(minLength: 0)
