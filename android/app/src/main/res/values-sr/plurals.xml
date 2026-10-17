@@ -13,4 +13,12 @@
         <item quantity="one">dan zaredom</item>
         <item quantity="other">dana zaredom</item>
     </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Dodaj moju grešku u kartice</item>
+        <item quantity="other">Dodaj moje greške u kartice (%1$d)</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">%1$d pitanje je bez odgovora. Ipak predati?</item>
+        <item quantity="other">Pitanja bez odgovora: %1$d. Ipak predati?</item>
+    </plurals>
 </resources>

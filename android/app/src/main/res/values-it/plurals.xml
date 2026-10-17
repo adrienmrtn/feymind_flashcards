@@ -13,4 +13,12 @@
         <item quantity="one">giorno di fila</item>
         <item quantity="other">giorni di fila</item>
     </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Aggiungi il mio errore alle flashcard</item>
+        <item quantity="other">Aggiungi i miei %1$d errori alle flashcard</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">C\'è %1$d domanda senza risposta. Consegnare comunque?</item>
+        <item quantity="other">Ci sono %1$d domande senza risposta. Consegnare comunque?</item>
+    </plurals>
 </resources>

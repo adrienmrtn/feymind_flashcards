@@ -13,4 +13,12 @@
         <item quantity="one">dag op rij</item>
         <item quantity="other">dagen op rij</item>
     </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Mijn fout toevoegen aan flashcards</item>
+        <item quantity="other">Mijn %1$d fouten toevoegen aan flashcards</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">%1$d vraag is niet beantwoord. Toch inleveren?</item>
+        <item quantity="other">%1$d vragen zijn niet beantwoord. Toch inleveren?</item>
+    </plurals>
 </resources>

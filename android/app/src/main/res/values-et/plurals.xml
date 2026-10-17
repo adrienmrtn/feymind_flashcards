@@ -13,4 +13,12 @@
         <item quantity="one">päev järjest</item>
         <item quantity="other">päeva järjest</item>
     </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Lisa minu viga mälukaartidele</item>
+        <item quantity="other">Lisa minu %1$d viga mälukaartidele</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">%1$d küsimus on vastamata. Kas esitada ikkagi?</item>
+        <item quantity="other">%1$d küsimust on vastamata. Kas esitada ikkagi?</item>
+    </plurals>
 </resources>

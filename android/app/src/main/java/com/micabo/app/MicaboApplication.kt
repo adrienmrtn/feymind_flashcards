@@ -2,6 +2,7 @@ package com.micabo.app
 
 import android.app.Application
 import com.micabo.app.data.Billing
+import com.micabo.app.data.ExamRepository
 import com.micabo.app.data.LessonComposer
 import com.micabo.app.data.LessonRepository
 import com.micabo.app.data.MikaChat
@@ -32,6 +33,8 @@ class MicaboApplication : Application() {
         private set
     lateinit var mika: MikaChat
         private set
+    lateinit var exams: ExamRepository
+        private set
     /** La barre de l'accueil et ses supports : ils survivent au paywall et aux leçons ouvertes. */
     lateinit var composer: LessonComposer
         private set
@@ -47,6 +50,7 @@ class MicaboApplication : Application() {
         streak = Streak(this)
         lessons = LessonRepository(this, functions, prefs, streak)
         mika = MikaChat(functions, lessons, prefs)
+        exams = ExamRepository(this)
         composer = LessonComposer(this, YouTubeImport(functions))
         billing = Billing(this)
         // Le compte invité s'ouvre tout de suite : il doit exister avant un achat, pour que

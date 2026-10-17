@@ -213,6 +213,72 @@ class LessonRepository(
         return generated
     }
 
+    /**
+     * **Une copie d'examen blanc** (`LessonBuilder.examPaper`), écrite au format de l'examen
+     * visé, sur huit leçons au plus. Rien n'est gardé : la copie se joue tout de suite.
+     */
+    suspend fun examPaper(title: String, exam: Exam?, lessonIds: List<String>, minutes: Int): Paper {
+        val chosen = lessonIds.mapNotNull { _lessons.value[it] }.filter { it.readyThemes > 0 }.take(8)
+        if (chosen.isEmpty()) throw ApiException(400, "invalid", "")
+        val paperId = UUID.randomUUID().toString().lowercase()
+        val profile = prefs.profile.value
+        val payload = buildJsonObject {
+            audience(profile, language = chosen.first().language, exam = exam?.let { examLine(it.name, it.date) })
+            put("stage", "exam")
+            put("lessonId", paperId)
+            put("examTitle", title)
+            put("minutes", minutes)
+            put("count", Paper.questionCount(minutes))
+            putJsonArray("lessons") {
+                chosen.forEach { lesson ->
+                    add(buildJsonObject {
+                        put("title", lesson.title)
+                        put("subject", lesson.subject)
+                        putJsonArray("themes") {
+                            lesson.themes.take(14).forEach { theme ->
+                                add(buildJsonObject {
+                                    put("title", theme.title)
+                                    put("notes", theme.flatNotes().take(2_000))
+                                })
+                            }
+                        }
+                    })
+                }
+            }
+        }
+        val envelope = functions.call("generate-lesson", payload, timeoutMs = 180_000)
+        val generated = envelope["exam"] as? JsonObject ?: throw ApiException(502, "invalid", "")
+        val items = (generated["questions"] as? JsonArray).orEmpty().mapNotNull { item ->
+            val raw = item as? JsonObject ?: return@mapNotNull null
+            val question = runCatching { MicaboJson.decodeFromJsonElement<Question>(raw) }.getOrNull()?.takeIf { it.isValid } ?: return@mapNotNull null
+            val lesson = raw.int("lesson")?.takeIf { it in chosen.indices } ?: 0
+            val theme = raw.int("theme")?.takeIf { it in chosen[lesson].themes.indices } ?: 0
+            PaperItem(question, lesson, theme)
+        }
+        if (items.isEmpty()) throw ApiException(502, "invalid", "")
+        return Paper(
+            id = paperId,
+            examId = exam?.id,
+            title = generated.str("title").ifBlank { title },
+            minutes = minutes,
+            lessons = chosen.map { it.id to it.title },
+            items = items,
+        )
+    }
+
+    /** Les erreurs d'une copie deviennent des flashcards, dans le thème d'où vient chaque question. */
+    fun addMistakeCards(paper: Paper, wrong: List<Int>) {
+        wrong.mapNotNull { paper.items.getOrNull(it) }.groupBy { paper.lessons.getOrNull(it.lesson)?.first }.forEach { (lessonId, items) ->
+            if (lessonId == null) return@forEach
+            modify(lessonId) { lesson ->
+                lesson.copy(themes = lesson.themes.mapIndexed { index, theme ->
+                    val cards = items.filter { it.theme == index }.map { Flashcard(front = it.question.prompt, back = it.question.answerText) }
+                    if (cards.isEmpty()) theme else theme.copy(flashcards = theme.flashcards + cards)
+                })
+            }
+        }
+    }
+
     fun rename(id: String, title: String) {
         val clean = title.trim().take(120)
         if (clean.isNotEmpty()) modify(id) { it.copy(title = clean) }

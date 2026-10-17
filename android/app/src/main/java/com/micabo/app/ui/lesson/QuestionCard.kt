@@ -88,10 +88,12 @@ fun QuestionCard(
     answered: QuizAnswer?,
     onAnswer: (QuizAnswer) -> Unit,
     modifier: Modifier = Modifier,
+    /** Faux pendant un examen blanc : ni retour ni vibration qui trahirait la réponse. */
+    reveal: Boolean = true,
 ) {
     val haptics = rememberHaptics()
     val answer: (QuizAnswer) -> Unit = {
-        if (it.right) haptics.success() else haptics.error()
+        if (!reveal) haptics.tap() else if (it.right) haptics.success() else haptics.error()
         onAnswer(it)
     }
     Column(modifier.animateContentSize(spring()), verticalArrangement = Arrangement.spacedBy(18.dp)) {
@@ -118,7 +120,7 @@ fun QuestionCard(
                 ChoiceList(question, tone, answered, compact = false, onAnswer = answer)
             }
         }
-        AnimatedVisibility(visible = answered != null, enter = fadeIn(tween(250)) + slideInVertically { it / 3 }) {
+        AnimatedVisibility(visible = reveal && answered != null, enter = fadeIn(tween(250)) + slideInVertically { it / 3 }) {
             Feedback(question, answered?.right == true)
         }
     }

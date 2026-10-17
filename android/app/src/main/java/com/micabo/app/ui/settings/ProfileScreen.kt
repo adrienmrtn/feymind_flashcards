@@ -228,6 +228,7 @@ fun ProfileScreen() {
                     app.prefs.reset()
                     app.prefs.update { it.copy(language = language, theme = theme) }
                     app.streak.reset()
+                    app.exams.reset()
                     app.composer.reset()
                     navigator.home()
                 }) { Text(stringResource(R.string.x_settings_reset), color = colors.wrong, style = nunito(16.sp, FontWeight.ExtraBold)) }

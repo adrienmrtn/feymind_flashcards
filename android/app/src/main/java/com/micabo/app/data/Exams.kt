@@ -1,0 +1,196 @@
+package com.micabo.app.data
+
+import android.content.Context
+import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.Serializable
+import java.io.File
+import java.text.NumberFormat
+import java.util.UUID
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
+
+/** **Un examen à venir** (`Exam`) : son nom, son jour, les leçons qu'il couvre. */
+@Serializable
+data class Exam(
+    val id: String = UUID.randomUUID().toString(),
+    val name: String,
+    /** Le jour, à minuit local, en millisecondes. */
+    val date: Long,
+    val lessonIds: List<String> = emptyList(),
+)
+
+/** Le score d'une leçon dans une copie. */
+@Serializable
+data class LessonScore(val title: String, val correct: Int, val total: Int) {
+    val fraction: Double get() = if (total == 0) 0.0 else correct.toDouble() / total
+}
+
+/** **Le résultat d'un examen blanc** (`ExamPaperResult`), gardé dans l'historique. */
+@Serializable
+data class MockResult(
+    val id: String,
+    val examId: String? = null,
+    val title: String,
+    val date: Long,
+    val correct: Int,
+    val total: Int,
+    val seconds: Int,
+    val minutes: Int,
+    val lessons: List<LessonScore> = emptyList(),
+) {
+    val fraction: Double get() = if (total == 0) 0.0 else correct.toDouble() / total
+}
+
+/** Une question de la copie, avec la leçon et le thème d'où elle vient. */
+data class PaperItem(val question: Question, val lesson: Int, val theme: Int)
+
+/** **Une copie d'examen blanc** (`ExamPaper`) : rien n'est gardé, sauf son résultat. */
+data class Paper(
+    val id: String,
+    val examId: String?,
+    val title: String,
+    val minutes: Int,
+    val lessons: List<Pair<String, String>>,
+    val items: List<PaperItem>,
+) {
+    fun result(answers: Map<Int, Boolean>, seconds: Int): MockResult {
+        val perLesson = lessons.map { (_, title) -> intArrayOf(0, 0) to title }
+        var correct = 0
+        items.forEachIndexed { index, item ->
+            val right = answers[index] == true
+            if (right) correct += 1
+            perLesson.getOrNull(item.lesson)?.first?.let {
+                it[1] += 1
+                if (right) it[0] += 1
+            }
+        }
+        return MockResult(
+            id = id,
+            examId = examId,
+            title = title,
+            date = System.currentTimeMillis(),
+            correct = correct,
+            total = items.size,
+            seconds = seconds,
+            minutes = minutes,
+            lessons = perLesson.filter { it.first[1] > 0 }.map { LessonScore(it.second, it.first[0], it.first[1]) },
+        )
+    }
+
+    companion object {
+        /** Une question et demie par minute, entre six et trente (`examQuestionCount`). */
+        fun questionCount(minutes: Int): Int = min(30, max(6, (minutes / 1.5).roundToInt()))
+    }
+}
+
+@Serializable
+private data class ExamStore(val exams: List<Exam> = emptyList(), val results: List<MockResult> = emptyList())
+
+/** **Les examens et les examens blancs**, gardés dans `files/exams.json`. */
+class ExamRepository(context: Context) {
+    private val file = File(context.filesDir, "exams.json")
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val lock = Mutex()
+
+    private val _exams = MutableStateFlow<List<Exam>>(emptyList())
+    val exams: StateFlow<List<Exam>> = _exams.asStateFlow()
+    private val _results = MutableStateFlow<List<MockResult>>(emptyList())
+    val results: StateFlow<List<MockResult>> = _results.asStateFlow()
+
+    init {
+        scope.launch {
+            val stored = runCatching { MicaboJson.decodeFromString(ExamStore.serializer(), file.readText()) }.getOrNull()
+            if (stored != null) {
+                _exams.value = stored.exams
+                _results.value = stored.results
+            }
+        }
+    }
+
+    private fun persist() {
+        scope.launch {
+            lock.withLock {
+                runCatching {
+                    val temp = File(file.parentFile, "exams.json.tmp")
+                    temp.writeText(MicaboJson.encodeToString(ExamStore.serializer(), ExamStore(_exams.value, _results.value)))
+                    temp.renameTo(file)
+                }.onFailure { Log.w("Exams", "Examens non enregistrés", it) }
+            }
+        }
+    }
+
+    fun exam(id: String?): Exam? = _exams.value.firstOrNull { it.id == id }
+
+    fun save(exam: Exam) {
+        _exams.value = (_exams.value.filter { it.id != exam.id } + exam).sortedBy { it.date }
+        persist()
+    }
+
+    fun delete(id: String) {
+        _exams.value = _exams.value.filter { it.id != id }
+        persist()
+    }
+
+    /** Une leçon supprimée sort des examens qui la couvraient. */
+    fun forgetLesson(lessonId: String) {
+        if (_exams.value.none { lessonId in it.lessonIds }) return
+        _exams.value = _exams.value.map { it.copy(lessonIds = it.lessonIds - lessonId) }
+        persist()
+    }
+
+    fun record(result: MockResult) {
+        _results.value = (listOf(result) + _results.value.filter { it.id != result.id }).take(30)
+        persist()
+    }
+
+    fun reset() {
+        _exams.value = emptyList()
+        _results.value = emptyList()
+        persist()
+    }
+
+    /** Les examens d'aujourd'hui et après, le plus proche d'abord. */
+    fun upcoming(now: Long = System.currentTimeMillis()): List<Exam> =
+        _exams.value.filter { it.date >= startOfDay(now) }.sortedBy { it.date }
+}
+
+/** Les jours qui restent avant un jour donné. */
+fun daysUntil(date: Long, now: Long = System.currentTimeMillis()): Int =
+    ((startOfDay(date) - startOfDay(now) + 3_600_000L) / 86_400_000L).toInt()
+
+/** **La note d'une copie, au barème du pays** (`ExamGrade`). */
+object ExamGrade {
+    fun label(fraction: Double, country: String): String {
+        val value = min(1.0, max(0.0, fraction))
+        val number = NumberFormat.getNumberInstance().apply { maximumFractionDigits = 1; minimumFractionDigits = 0 }
+        fun pick(steps: List<Pair<Double, String>>, fallback: String) = steps.firstOrNull { value >= it.first }?.second ?: fallback
+        return when (country) {
+            "fr", "be", "ma", "dz", "tn", "sn", "ci", "pt", "gr" -> "${number.format(Math.round(value * 40) / 2.0)}/20"
+            "it", "es" -> "${number.format(Math.round(value * 20) / 2.0)}/10"
+            "lu" -> "${(value * 60).roundToInt()}/60"
+            "ca", "tr" -> "${(value * 100).roundToInt()} %"
+            "ch" -> number.format(Math.round((value * 5 + 1) * 2) / 2.0)
+            "nl" -> number.format(Math.round((value * 9 + 1) * 10) / 10.0)
+            "ro" -> number.format(Math.round(max(1.0, value * 10) * 10) / 10.0)
+            "de" -> pick(listOf(0.95 to "1,0", 0.90 to "1,3", 0.85 to "1,7", 0.80 to "2,0", 0.75 to "2,3", 0.70 to "2,7", 0.65 to "3,0", 0.60 to "3,3", 0.55 to "3,7", 0.50 to "4,0", 0.30 to "5,0"), "6,0")
+            "cz" -> pick(listOf(0.9 to "1", 0.75 to "2", 0.6 to "3", 0.5 to "4"), "5")
+            "hu" -> pick(listOf(0.9 to "5", 0.7 to "4", 0.5 to "3", 0.35 to "2"), "1")
+            "pl" -> pick(listOf(0.98 to "6", 0.9 to "5", 0.7 to "4", 0.5 to "3", 0.3 to "2"), "1")
+            "se" -> pick(listOf(0.9 to "A", 0.8 to "B", 0.7 to "C", 0.6 to "D", 0.5 to "E"), "F")
+            "uk" -> pick(listOf(0.9 to "A*", 0.8 to "A", 0.7 to "B", 0.6 to "C", 0.5 to "D", 0.4 to "E"), "U")
+            else -> pick(listOf(0.97 to "A+", 0.93 to "A", 0.90 to "A-", 0.87 to "B+", 0.83 to "B", 0.80 to "B-", 0.77 to "C+", 0.73 to "C", 0.70 to "C-", 0.60 to "D"), "F")
+        }
+    }
+
+    fun passes(fraction: Double): Boolean = fraction >= 0.5
+}

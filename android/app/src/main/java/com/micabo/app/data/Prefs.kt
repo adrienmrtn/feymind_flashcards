@@ -90,6 +90,11 @@ class Prefs(context: Context) {
         get() = prefs.getBoolean("practice.freeUsed", false)
         set(value) = prefs.edit { putBoolean("practice.freeUsed", value) }
 
+    /** L'examen blanc offert, une fois (`ExamAllowance`). */
+    var mockFreeUsed: Boolean
+        get() = prefs.getBoolean("mock.freeUsed", false)
+        set(value) = prefs.edit { putBoolean("mock.freeUsed", value) }
+
     /** La question offerte à Mika, et le compte du jour (`MikaQuota`). */
     var mikaFreeUsed: Boolean
         get() = prefs.getBoolean("mika.freeUsed", false)

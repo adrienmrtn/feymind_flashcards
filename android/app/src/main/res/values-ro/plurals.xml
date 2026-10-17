@@ -13,4 +13,12 @@
         <item quantity="one">zi la rând</item>
         <item quantity="other">zile la rând</item>
     </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Adaugă greșeala mea la carduri</item>
+        <item quantity="other">Adaugă cele %1$d greșeli la carduri</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">%1$d întrebare e fără răspuns. Predai oricum?</item>
+        <item quantity="other">%1$d întrebări sunt fără răspuns. Predai oricum?</item>
+    </plurals>
 </resources>

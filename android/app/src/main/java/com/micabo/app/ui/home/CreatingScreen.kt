@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.sp
 import com.micabo.app.R
 import com.micabo.app.data.ApiException
 import com.micabo.app.data.CreationStage
+import com.micabo.app.data.Exam
 import com.micabo.app.data.LessonRequest
 import com.micabo.app.data.NetworkException
 import com.micabo.app.ui.LocalApp
@@ -113,6 +114,10 @@ fun CreatingScreen(request: LessonRequest) {
             try {
                 // Le même identifiant d'un essai à l'autre : le serveur a réservé la leçon sous lui.
                 val id = app.lessons.create(request.copy(examDate = examDate)) { stage = it }
+                // L'examen annoncé rejoint l'onglet Examens, sous le nom de la leçon (`LessonBuilder`).
+                examDate?.let { date ->
+                    app.exams.save(Exam(name = app.lessons.lesson(id)?.title.orEmpty(), date = date, lessonIds = listOf(id)))
+                }
                 haptics.success()
                 app.composer.reset()
                 navigator.replace(Screen.LessonPath(id))

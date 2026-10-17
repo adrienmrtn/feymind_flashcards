@@ -13,4 +13,12 @@
         <item quantity="one">ден поред</item>
         <item quantity="other">поредни дни</item>
     </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Добави грешката си във флашкартите</item>
+        <item quantity="other">Добави %1$d грешки във флашкартите</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">%1$d въпрос е без отговор. Да предадеш ли все пак?</item>
+        <item quantity="other">%1$d въпроса са без отговор. Да предадеш ли все пак?</item>
+    </plurals>
 </resources>

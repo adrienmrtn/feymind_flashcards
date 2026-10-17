@@ -13,4 +13,12 @@
         <item quantity="one">day in a row</item>
         <item quantity="other">days in a row</item>
     </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Add my mistake to flashcards</item>
+        <item quantity="other">Add my %1$d mistakes to flashcards</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">%1$d question is unanswered. Hand in anyway?</item>
+        <item quantity="other">%1$d questions are unanswered. Hand in anyway?</item>
+    </plurals>
 </resources>

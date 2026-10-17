@@ -26,6 +26,8 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import com.micabo.app.MicaboApplication
 import com.micabo.app.data.LessonRequest
+import com.micabo.app.ui.exams.ExamEditScreen
+import com.micabo.app.ui.exams.MockExamScreen
 import com.micabo.app.ui.home.CreatingScreen
 import com.micabo.app.ui.lesson.FlashcardsScreen
 import com.micabo.app.ui.lesson.MikaScreen
@@ -40,7 +42,7 @@ import com.micabo.app.ui.theme.Micabo
 
 /** Les écrans de l'app. */
 sealed interface Screen {
-    /** Les onglets : Accueil, Leçons, Profil. */
+    /** Les onglets : Accueil, Leçons, Examens, Profil. */
     data object Home : Screen
     data class Creating(val request: LessonRequest) : Screen
     data class LessonPath(val id: String) : Screen
@@ -50,6 +52,10 @@ sealed interface Screen {
     data class Quiz(val id: String, val circle: String) : Screen
     data class Flashcards(val id: String) : Screen
     data class Mika(val id: String) : Screen
+    /** Un examen à créer (`id` nul) ou à modifier. */
+    data class ExamEdit(val id: String?) : Screen
+    /** Un examen blanc, sur un examen déclaré ou non. */
+    data class Mock(val examId: String?) : Screen
     /** `reason` : le code du refus (`free_limit`, `import_pro`…), vide depuis les réglages. */
     data class Paywall(val reason: String) : Screen
 
@@ -58,7 +64,7 @@ sealed interface Screen {
 }
 
 /** Les onglets du bas (`RootTab`). */
-enum class Tab { HOME, LESSONS, PROFILE }
+enum class Tab { HOME, LESSONS, EXAMS, PROFILE }
 
 /** La place que prend la barre d'onglets, à garder libre en bas des onglets. */
 val TAB_BAR_SPACE = 84.dp
@@ -152,6 +158,8 @@ private fun MainScreens(navigator: Navigator) {
                         is Screen.Quiz -> QuizScreen(screen.id, screen.circle)
                         is Screen.Flashcards -> FlashcardsScreen(screen.id)
                         is Screen.Mika -> MikaScreen(screen.id)
+                        is Screen.ExamEdit -> ExamEditScreen(screen.id)
+                        is Screen.Mock -> MockExamScreen(screen.examId)
                         is Screen.Paywall -> PaywallScreen(screen.reason)
                     }
                 }

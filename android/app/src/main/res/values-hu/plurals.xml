@@ -13,4 +13,12 @@
         <item quantity="one">nap egymás után</item>
         <item quantity="other">nap egymás után</item>
     </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Hibám hozzáadása a kártyákhoz</item>
+        <item quantity="other">%1$d hibám hozzáadása a kártyákhoz</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">%1$d kérdés megválaszolatlan. Beadod így is?</item>
+        <item quantity="other">%1$d kérdés megválaszolatlan. Beadod így is?</item>
+    </plurals>
 </resources>

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
@@ -39,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.micabo.app.R
 import com.micabo.app.ui.components.Pressable
+import com.micabo.app.ui.exams.ExamsScreen
 import com.micabo.app.ui.home.HomeScreen
 import com.micabo.app.ui.lessons.LessonsScreen
 import com.micabo.app.ui.settings.ProfileScreen
@@ -49,6 +51,7 @@ private val Tab.icon: ImageVector
     get() = when (this) {
         Tab.HOME -> Icons.Filled.Home
         Tab.LESSONS -> Icons.AutoMirrored.Filled.List
+        Tab.EXAMS -> Icons.Filled.DateRange
         Tab.PROFILE -> Icons.Filled.Person
     }
 
@@ -56,10 +59,11 @@ private val Tab.title: Int
     get() = when (this) {
         Tab.HOME -> R.string.lesson_tab_home
         Tab.LESSONS -> R.string.lesson_tab_lessons
+        Tab.EXAMS -> R.string.lesson_tab_exams
         Tab.PROFILE -> R.string.lesson_tab_profile
     }
 
-/** **Les onglets** (`RootTabView`) : Accueil, Leçons, Profil, et la barre qui flotte en bas. */
+/** **Les onglets** (`RootTabView`) : Accueil, Leçons, Examens, Profil, et la barre qui flotte en bas. */
 @Composable
 fun TabsScreen(navigator: Navigator) {
     val app = LocalApp.current
@@ -74,6 +78,7 @@ fun TabsScreen(navigator: Navigator) {
             when (tab) {
                 Tab.HOME -> HomeScreen()
                 Tab.LESSONS -> LessonsScreen()
+                Tab.EXAMS -> ExamsScreen()
                 Tab.PROFILE -> ProfileScreen()
             }
         }

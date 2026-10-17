@@ -179,6 +179,7 @@ fun LessonsScreen() {
             confirmButton = {
                 TextButton(onClick = {
                     app.lessons.delete(lesson.id)
+                    app.exams.forgetLesson(lesson.id)
                     deleting = null
                 }) { Text(stringResource(R.string.lesson_menu_delete), color = colors.wrong, style = nunito(16.sp, FontWeight.ExtraBold)) }
             },

@@ -13,4 +13,12 @@
         <item quantity="one">jour de suite</item>
         <item quantity="other">jours de suite</item>
     </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Ajouter mon erreur aux flashcards</item>
+        <item quantity="other">Ajouter mes %1$d erreurs aux flashcards</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">Il reste %1$d question sans réponse. Rendre quand même ?</item>
+        <item quantity="other">Il reste %1$d questions sans réponse. Rendre quand même ?</item>
+    </plurals>
 </resources>

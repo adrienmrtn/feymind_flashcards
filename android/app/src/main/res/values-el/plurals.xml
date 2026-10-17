@@ -13,4 +13,12 @@
         <item quantity="one">μέρα στη σειρά</item>
         <item quantity="other">μέρες στη σειρά</item>
     </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Πρόσθεσε το λάθος μου στις κάρτες</item>
+        <item quantity="other">Πρόσθεσε τα %1$d λάθη μου στις κάρτες</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">%1$d ερώτηση έμεινε αναπάντητη. Παράδοση ούτως ή άλλως;</item>
+        <item quantity="other">%1$d ερωτήσεις έμειναν αναπάντητες. Παράδοση ούτως ή άλλως;</item>
+    </plurals>
 </resources>

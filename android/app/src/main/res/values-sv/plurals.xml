@@ -13,4 +13,12 @@
         <item quantity="one">dag i rad</item>
         <item quantity="other">dagar i rad</item>
     </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Lägg till mitt fel bland korten</item>
+        <item quantity="other">Lägg till mina %1$d fel bland korten</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">%1$d fråga är obesvarad. Lämna in ändå?</item>
+        <item quantity="other">%1$d frågor är obesvarade. Lämna in ändå?</item>
+    </plurals>
 </resources>

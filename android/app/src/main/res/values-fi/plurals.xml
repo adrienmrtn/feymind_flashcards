@@ -13,4 +13,12 @@
         <item quantity="one">päivä putkeen</item>
         <item quantity="other">päivää putkeen</item>
     </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Lisää virheeni kortteihin</item>
+        <item quantity="other">Lisää %1$d virhettäni kortteihin</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">%1$d kysymys on vastaamatta. Palautetaanko silti?</item>
+        <item quantity="other">%1$d kysymystä on vastaamatta. Palautetaanko silti?</item>
+    </plurals>
 </resources>

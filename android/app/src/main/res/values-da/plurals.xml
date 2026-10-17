@@ -13,4 +13,12 @@
         <item quantity="one">dag i træk</item>
         <item quantity="other">dage i træk</item>
     </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Tilføj min fejl til kortene</item>
+        <item quantity="other">Tilføj mine %1$d fejl til kortene</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">%1$d spørgsmål er ubesvaret. Aflevér alligevel?</item>
+        <item quantity="other">%1$d spørgsmål er ubesvarede. Aflevér alligevel?</item>
+    </plurals>
 </resources>

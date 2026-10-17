@@ -13,4 +13,12 @@
         <item quantity="one">den v řadě</item>
         <item quantity="other">dní v řadě</item>
     </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Přidat moji chybu do kartiček</item>
+        <item quantity="other">Přidat moje chyby (%1$d) do kartiček</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">%1$d otázka je bez odpovědi. Přesto odevzdat?</item>
+        <item quantity="other">Otázky bez odpovědi: %1$d. Přesto odevzdat?</item>
+    </plurals>
 </resources>

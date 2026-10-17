@@ -368,6 +368,7 @@ private fun LessonPath(lesson: Lesson) {
                     confirm = null
                     if (action == "delete") {
                         app.lessons.delete(lesson.id)
+                        app.exams.forgetLesson(lesson.id)
                         navigator.back()
                     } else {
                         app.lessons.restart(lesson.id)

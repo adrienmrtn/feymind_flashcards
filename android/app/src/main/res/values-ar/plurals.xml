@@ -13,4 +13,12 @@
         <item quantity="one">يوم متتالٍ</item>
         <item quantity="other">أيام متتالية</item>
     </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">أضف خطئي إلى البطاقات</item>
+        <item quantity="other">أضف أخطائي إلى البطاقات (%1$d)</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">بقي سؤال واحد دون إجابة. هل تسلّم على أي حال؟</item>
+        <item quantity="other">أسئلة دون إجابة: %1$d. هل تسلّم على أي حال؟</item>
+    </plurals>
 </resources>
