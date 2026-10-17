@@ -122,7 +122,7 @@ struct MikaGradientText: View {
     var body: some View {
         Text(text)
             .font(MicaboFont.ui(size, weight: weight))
-            .tracking(-0.4)
+            .tracking(-0.6)
             .multilineTextAlignment(.center)
             .foregroundStyle(
                 LinearGradient(

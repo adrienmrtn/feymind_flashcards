@@ -2,11 +2,14 @@ import XCTest
 @testable import Micabo
 
 final class I18nTests: XCTestCase {
-    func testFiveUiLocales() {
-        XCTAssertEqual(UiLocale.allCases.map(\.rawValue), ["en", "fr", "de", "es", "tr"])
+    /// Les langues des marchés de Micabo : l'Europe, le Moyen-Orient, le Brésil et
+    /// l'Amérique latine, chacun avec la sienne.
+    func testEveryMarketHasItsLanguage() {
+        XCTAssertEqual(UiLocale.allCases.map(\.rawValue), ["en", "fr", "de", "es", "es-419", "it", "pt-PT", "pt-BR", "nl", "pl", "ro", "sv", "da", "fi", "et", "cs", "sk", "hu", "hr", "sl", "sr", "bg", "el", "ru", "tr", "ar"])
         XCTAssertTrue(UiLocale.isKnown("de"))
-        XCTAssertTrue(UiLocale.isKnown("en"))
-        XCTAssertFalse(UiLocale.isKnown("it"))
+        XCTAssertTrue(UiLocale.isKnown("pt-BR"))
+        XCTAssertFalse(UiLocale.isKnown("ja"))
+        XCTAssertTrue(UiLocale.ar.isRightToLeft)
     }
 
     func testEachLocaleHasAFlag() {
@@ -21,16 +24,23 @@ final class I18nTests: XCTestCase {
         }
     }
 
-    /// Un iPhone en anglais ouvre l'app en anglais. Une langue qu'on ne parle pas retombe
-    /// toujours sur le français : c'est celle de la quasi-totalité des comptes existants.
-    func testPreferredLanguagesPickEnglishAndFallBackToFrench() {
+    /// Un iPhone ouvre l'app dans sa langue, région comprise ; une langue que Micabo ne parle
+    /// pas retombe sur l'anglais, la langue de base — un appareil sans préférence aussi.
+    func testPreferredLanguagesFollowTheRegion() {
         XCTAssertEqual(UiLocale.fromPreferredLanguages(["de-DE", "en"]), .de)
-        XCTAssertEqual(UiLocale.fromPreferredLanguages(["es-MX"]), .es)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages(["es-ES"]), .es)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages(["es-MX"]), .es419)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages(["es-419"]), .es419)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages(["pt-BR"]), .ptBR)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages(["pt-PT"]), .pt)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages(["sr-Latn-RS"]), .sr)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages(["ar-AE"]), .ar)
         XCTAssertEqual(UiLocale.fromPreferredLanguages(["tr"]), .tr)
         XCTAssertEqual(UiLocale.fromPreferredLanguages(["en-US", "en"]), .en)
         XCTAssertEqual(UiLocale.fromPreferredLanguages(["en-GB"]), .en)
-        XCTAssertEqual(UiLocale.fromPreferredLanguages(["it-IT", "ja"]), .fr)
-        XCTAssertEqual(UiLocale.fromPreferredLanguages([]), .fr)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages(["it-IT", "ja"]), .it)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages(["ja"]), .en)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages([]), .en)
     }
 
     func testSharedCatalogsHaveTheSameKeys() {
@@ -54,7 +64,7 @@ final class I18nTests: XCTestCase {
         // Une langue non branchée dans le `switch` rendrait le français sans le dire.
         for locale in UiLocale.allCases where locale != .fr {
             XCTAssertNotEqual(
-                SharedI18nCatalogs.table(for: locale.rawValue)["landing.titleAccent"],
+                L10n.table(for: locale)["landing.titleAccent"],
                 SharedI18nCatalogs.fr["landing.titleAccent"],
                 locale.rawValue
             )

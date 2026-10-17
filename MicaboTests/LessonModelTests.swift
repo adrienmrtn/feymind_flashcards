@@ -8,11 +8,12 @@ final class PathLayoutTests: XCTestCase {
         (0..<count).map { PathTheme(title: "Thème \($0 + 1)", icon: .book) }
     }
 
-    /// Le tableau du PDF : 4 thèmes font 9 cercles, 6 en font 12, 12 en font 19.
-    func testTheCircleCountsOfTheBrief() {
-        XCTAssertEqual(PathLayout.circles(themes: themes(4)).count, 9)
-        XCTAssertEqual(PathLayout.circles(themes: themes(6)).count, 12)
-        XCTAssertEqual(PathLayout.circles(themes: themes(12)).count, 19)
+    /// 4 thèmes font 7 étapes, 6 en font 10, 12 en font 17 : Intro, les thèmes, un Checkpoint
+    /// par palier sauf le dernier, le Quiz final.
+    func testTheStepCounts() {
+        XCTAssertEqual(PathLayout.circles(themes: themes(4)).count, 7)
+        XCTAssertEqual(PathLayout.circles(themes: themes(6)).count, 10)
+        XCTAssertEqual(PathLayout.circles(themes: themes(12)).count, 17)
     }
 
     func testGroupsOfTwoThenThreeBeyondEight() {
@@ -37,28 +38,46 @@ final class PathLayoutTests: XCTestCase {
         XCTAssertEqual(PathLayout.groups(themeCount: 0), [])
     }
 
-    func testAVeryShortLessonHasASingleQuiz() {
+    func testAVeryShortLessonGoesStraightToTheFinalQuiz() {
         let circles = PathLayout.circles(themes: themes(4), singleQuiz: true)
-        XCTAssertEqual(circles.map(\.id), [
-            "intro", "notes:0", "notes:1", "notes:2", "notes:3", "quiz:0", "flashcards", "conclusion"
-        ])
+        XCTAssertEqual(circles.map(\.id), ["intro", "notes:0", "notes:1", "notes:2", "notes:3", "final"])
     }
 
-    func testThePathReadsLikeTheBrief() {
+    func testThePathReadsLikeTheReference() {
         let steps = PathLayout.steps(themes: themes(4), groupNames: ["Les causes", "Les suites"])
-        XCTAssertEqual(steps.map(\.id), [
-            "intro", "palier:1", "notes:0", "notes:1", "quiz:0",
-            "palier:2", "notes:2", "notes:3", "quiz:1", "flashcards", "conclusion"
-        ])
-        XCTAssertEqual(steps[1], .palier(number: 1, name: "Les causes"))
+        XCTAssertEqual(steps.map(\.id), ["intro", "notes:0", "notes:1", "quiz:0", "notes:2", "notes:3", "final"])
         let circles = steps.compactMap(\.circle)
-        XCTAssertEqual(circles.map(\.number), Array(1...9), "« CERCLE 4 » se compte sur le chemin")
+        XCTAssertEqual(circles.map(\.number), Array(1...7), "« ÉTAPE 4 » se compte sur le chemin")
         XCTAssertEqual(circles[1].title, "Thème 1")
+        XCTAssertEqual(circles[3].subtitle, "Les causes", "le Checkpoint dit le palier qu'il conclut")
+        XCTAssertTrue(circles[3].isMilestone)
+        XCTAssertFalse(circles[1].isMilestone)
         if case .quiz(_, let covered) = circles[3].kind {
-            XCTAssertEqual(covered, [0, 1], "le quiz porte sur les thèmes qui le précèdent")
+            XCTAssertEqual(covered, [0, 1], "le Checkpoint porte sur les thèmes qui le précèdent")
         } else {
-            XCTFail("le quatrième cercle est le premier quiz")
+            XCTFail("la quatrième étape est le premier Checkpoint")
         }
+        if case .final(let covered) = circles[6].kind {
+            XCTAssertEqual(covered, [0, 1, 2, 3], "le Quiz final reprend toute la leçon")
+        } else {
+            XCTFail("la dernière étape est le Quiz final")
+        }
+    }
+
+    /// Une progression d'avant le Quiz final ne perd pas sa fin.
+    func testAnOldProgressKeepsItsEnd() {
+        let circles = PathLayout.circles(themes: themes(4))
+        XCTAssertTrue(PathLayout.migrated(done: ["conclusion"], circles: circles, finished: false).contains("final"))
+        XCTAssertTrue(PathLayout.migrated(done: ["quiz:1"], circles: circles, finished: false).contains("final"), "le quiz du dernier palier valait la fin")
+        XCTAssertTrue(PathLayout.migrated(done: [], circles: circles, finished: true).contains("final"))
+        XCTAssertFalse(PathLayout.migrated(done: ["quiz:0"], circles: circles, finished: false).contains("final"))
+    }
+
+    func testEveryStepHasADifferentSymbol() {
+        let themes = (0..<12).map { PathTheme(title: "T\($0)", icon: .book, symbol: PathSymbol.unique(Array(repeating: "flag", count: 12))[$0]) }
+        let circles = PathLayout.circles(themes: themes)
+        let symbols = circles.map(\.symbol)
+        XCTAssertEqual(Set(symbols).count, symbols.count, "jamais deux ronds pareils")
     }
 
     /// On ne saute pas : seul le premier cercle non coché est « en cours ».
@@ -100,6 +119,125 @@ final class LessonFormatTests: XCTestCase {
 
         let again = try XCTUnwrap(ThemeNotes.decode(from: notes.encoded()))
         XCTAssertEqual(again, notes)
+    }
+
+    /// Les formes `steps`, `table` et `quote` : leur champ `text` de repli est pour les
+    /// anciennes versions, l'app le lit seulement quand le bloc est incomplet.
+    func testTheNewBlocksReadTheirOwnFieldsAndRoundTrip() throws {
+        let json = """
+        {"oneLiner":"Une idée.",
+         "blocks":[
+           {"type":"steps","items":["Lire l'énoncé","Poser $x^2 = 4$"],"text":"1. Lire 2. Poser"},
+           {"type":"table","columns":["Pays","Capitale"],"rows":[["France","Paris"],["Italie","Rome"]],"text":"France : Paris"},
+           {"type":"quote","text":"Je pense, donc je suis.","author":"Descartes"},
+           {"type":"quote","text":"Sans auteur.","author":"  "},
+           {"type":"steps","items":[],"text":"Repli lisible."}
+         ],
+         "takeaways":["Un"]}
+        """
+        let notes = try XCTUnwrap(ThemeNotes.decode(from: Data(json.utf8)))
+        XCTAssertEqual(notes.blocks, [
+            .steps(["Lire l'énoncé", "Poser $x^2 = 4$"]),
+            .table(columns: ["Pays", "Capitale"], rows: [["France", "Paris"], ["Italie", "Rome"]]),
+            .quote(text: "Je pense, donc je suis.", author: "Descartes"),
+            .quote(text: "Sans auteur.", author: nil),
+            .paragraph("Repli lisible.")
+        ])
+        XCTAssertTrue(notes.blocks[0].isBoxed)
+        XCTAssertTrue(notes.blocks[1].isBoxed)
+        XCTAssertTrue(notes.blocks[2].isBoxed)
+        XCTAssertTrue(notes.plainText.contains("2. Poser"))
+        XCTAssertTrue(notes.plainText.contains("France | Paris"))
+
+        let again = try XCTUnwrap(ThemeNotes.decode(from: notes.encoded()))
+        XCTAssertEqual(again, notes)
+    }
+
+    /// L'encadré (`callout`) : son genre, son titre facultatif, son texte. Un genre inconnu se
+    /// lit comme une astuce ; sans texte, il disparaît.
+    func testCalloutsReadTheirKindAndTitleAndRoundTrip() throws {
+        let json = """
+        {"oneLiner":"Une idée.",
+         "blocks":[
+           {"type":"callout","kind":"mistake","title":"Le piège du signe","text":"On oublie le **signe moins**."},
+           {"type":"callout","kind":"why","text":"Parce que la vitesse change."},
+           {"type":"callout","kind":"remember","title":"  ","text":"Toujours l'unité."},
+           {"type":"callout","kind":"carousel","text":"Un genre d'une version future."},
+           {"type":"callout","text":"Sans genre."},
+           {"type":"callout","kind":"tip","title":"Sans texte"},
+           {"type":"callout","kind":"tip","text":"   "}
+         ],
+         "takeaways":[]}
+        """
+        let notes = try XCTUnwrap(ThemeNotes.decode(from: Data(json.utf8)))
+        XCTAssertEqual(notes.blocks, [
+            .callout(kind: .mistake, title: "Le piège du signe", text: "On oublie le **signe moins**."),
+            .callout(kind: .why, title: nil, text: "Parce que la vitesse change."),
+            .callout(kind: .remember, title: nil, text: "Toujours l'unité."),
+            .callout(kind: .tip, title: nil, text: "Un genre d'une version future."),
+            .callout(kind: .tip, title: nil, text: "Sans genre.")
+        ])
+        XCTAssertTrue(notes.blocks.allSatisfy(\.isBoxed))
+        XCTAssertTrue(notes.plainText.contains("Le piège du signe : On oublie le signe moins."))
+
+        let again = try XCTUnwrap(ThemeNotes.decode(from: notes.encoded()))
+        XCTAssertEqual(again, notes)
+
+        // Le serveur écrit toujours `text` : c'est aussi ce qu'une app d'avant lit.
+        let encoded = try XCTUnwrap(notes.encoded())
+        let object = try XCTUnwrap(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+        let first = try XCTUnwrap((object["blocks"] as? [[String: Any]])?.first)
+        XCTAssertEqual(first["type"] as? String, "callout")
+        XCTAssertEqual(first["kind"] as? String, "mistake")
+        XCTAssertEqual(first["title"] as? String, "Le piège du signe")
+        XCTAssertEqual(first["text"] as? String, "On oublie le **signe moins**.")
+    }
+
+    /// Chaque genre d'encadré a son titre traduit, et son pictogramme.
+    @MainActor
+    func testEveryCalloutKindHasATitleAndASymbol() {
+        for kind in CalloutKind.allCases {
+            XCTAssertNotNil(LessonI18nCatalogs.fr[kind.titleKey], kind.rawValue)
+            XCTAssertNotNil(LessonI18nCatalogs.en[kind.titleKey], kind.rawValue)
+            XCTAssertFalse(kind.promptLabel.isEmpty)
+        }
+        XCTAssertEqual(L10n.t(CalloutKind.mistake.titleKey, locale: .en), "Common mistake")
+        XCTAssertEqual(Set(CalloutKind.allCases.map { NoteCallout.symbol(for: $0) }).count, CalloutKind.allCases.count)
+    }
+
+    /// Un bloc illisible disparaît : ni trou blanc, ni notes perdues.
+    func testAnUnreadableBlockIsSkippedNotShownEmpty() throws {
+        let json = """
+        {"oneLiner":"Une idée.",
+         "blocks":[
+           {"type":"carousel"},
+           {"type":"paragraph","text":"  "},
+           {"type":"table","columns":["A"],"text":""},
+           {"type":"definition","term":"Sans texte"},
+           {"type":"paragraph","text":"Reste."}
+         ],
+         "takeaways":[]}
+        """
+        let notes = try XCTUnwrap(ThemeNotes.decode(from: Data(json.utf8)))
+        XCTAssertEqual(notes.blocks, [.paragraph("Reste.")])
+    }
+
+    @MainActor
+    func testInlineFormulasAreTransposedInNotesText() {
+        let text = String(KeywordText.attributed("L'aire vaut $\\pi r^2$ et **E = mc^2**.").characters)
+        XCTAssertFalse(text.contains("$"))
+        XCTAssertFalse(text.contains("\\pi"))
+        XCTAssertTrue(text.contains("π"))
+        XCTAssertFalse(text.contains("**"))
+        XCTAssertEqual(KeywordText.plain("**Δ** vaut $b^2 - 4ac$"), FormulaRenderer.stripped("Δ vaut $b^2 - 4ac$"))
+    }
+
+    func testTheNotesRhythmKeepsASubtitleWithItsBlock() {
+        XCTAssertEqual(NoteRhythm.spacing(before: .paragraph("a"), after: nil), 0)
+        XCTAssertEqual(NoteRhythm.spacing(before: .paragraph("a"), after: .subtitle("s")), NoteRhythm.afterSubtitle)
+        XCTAssertEqual(NoteRhythm.spacing(before: .subtitle("s"), after: .paragraph("a")), NoteRhythm.beforeSubtitle)
+        XCTAssertEqual(NoteRhythm.spacing(before: .list(["x"]), after: .paragraph("a")), NoteRhythm.between)
+        XCTAssertLessThan(NoteRhythm.afterSubtitle, NoteRhythm.between)
     }
 
     func testThePathRoundTrips() throws {
@@ -212,6 +350,36 @@ final class CourseLessonTests: XCTestCase {
         XCTAssertEqual(course.learnedCardCount(now: now), 2)
     }
 
+    /// Un encadré reste sur l'écran du bloc qu'il commente ; un encadré en tête a le sien.
+    func testACalloutStaysOnTheScreenOfTheBlockItComments() throws {
+        let course = Course(title: "Leçon")
+        context.insert(course)
+        let chapter = Chapter(position: 0, title: "Thème", course: course)
+        context.insert(chapter)
+        chapter.notesData = ThemeNotes(
+            oneLiner: "Une idée.",
+            blocks: [
+                .callout(kind: .why, title: nil, text: "Pourquoi."),
+                .paragraph("Le mécanisme."),
+                .callout(kind: .mistake, title: nil, text: "Le piège."),
+                .subtitle("Partie deux"),
+                .paragraph("La suite."),
+                .callout(kind: .tip, title: nil, text: "L'astuce."),
+                .example("Un cas.")
+            ],
+            takeaways: ["Un"]
+        ).encoded()
+        XCTAssertEqual(NotesPage.pages(for: chapter, hasQuestion: true), [
+            .opening,
+            .blocks(0..<1),
+            .blocks(1..<3),
+            .blocks(3..<6),
+            .blocks(6..<7),
+            .takeaways,
+            .question
+        ])
+    }
+
     func testThePathOfALessonFollowsItsChapters() throws {
         let course = Course(title: "Leçon")
         context.insert(course)
@@ -227,9 +395,12 @@ final class CourseLessonTests: XCTestCase {
             groups: [.init(name: "Un", themes: [0, 1]), .init(name: "Deux", themes: [2, 3])]
         ))
         let steps = course.pathSteps()
-        XCTAssertEqual(steps.count, 11)
-        XCTAssertEqual(steps.compactMap(\.circle)[1].icon, .lightbulb)
-        XCTAssertEqual(steps[5], .palier(number: 2, name: "Deux"))
+        XCTAssertEqual(steps.count, 7)
+        let circles = steps.compactMap(\.circle)
+        XCTAssertEqual(circles[1].icon, .lightbulb)
+        XCTAssertEqual(circles[1].symbol, "lightbulb", "une leçon d'avant les pictogrammes en reçoit d'après ses icônes")
+        XCTAssertNotEqual(circles[2].symbol, circles[1].symbol)
+        XCTAssertEqual(circles[3].subtitle, "Un")
     }
 }
 
@@ -343,5 +514,96 @@ final class LessonI18nTests: XCTestCase {
         XCTAssertEqual(L10n.t("lesson.circle.conclusion", locale: .fr), "Conclusion")
         XCTAssertEqual(L10n.t("lesson.circle.conclusion", locale: .en), "Wrap-up")
         XCTAssertEqual(L10n.t("lesson.unknown", locale: .en), "lesson.unknown")
+    }
+}
+
+/// Les formes de question (refonte v2) : une question d'avant reste un QCM, et chaque forme
+/// sait dire si elle est jouable.
+final class QuizKindTests: XCTestCase {
+    func testAnOldQuestionDecodesAsAMultipleChoice() throws {
+        let json = #"{"id":"t:0","prompt":"Q ?","choices":["a","b","c"],"answer":1,"why":"."}"#
+        let question = try JSONDecoder().decode(QuizQuestion.self, from: Data(json.utf8))
+        XCTAssertEqual(question.kind, .choice)
+        XCTAssertEqual(question.difficulty, 2)
+        XCTAssertTrue(question.matches.isEmpty)
+        XCTAssertTrue(question.isValid)
+    }
+
+    func testAnUnknownKindFallsBackToAMultipleChoice() throws {
+        let json = #"{"id":"t:0","kind":"hologram","prompt":"Q ?","choices":["a","b"],"answer":0,"why":"."}"#
+        XCTAssertEqual(try JSONDecoder().decode(QuizQuestion.self, from: Data(json.utf8)).kind, .choice)
+    }
+
+    func testEachKindKnowsWhenItIsPlayable() {
+        XCTAssertTrue(QuizQuestion(id: "o", kind: .order, prompt: "Ordre", choices: ["1", "2", "3"], answer: 0, why: "").isValid)
+        XCTAssertFalse(QuizQuestion(id: "o", kind: .order, prompt: "Ordre", choices: ["1", "2"], answer: 0, why: "").isValid)
+        XCTAssertTrue(QuizQuestion(id: "m", kind: .match, prompt: "Associe", choices: ["a", "b"], answer: 0, why: "", matches: ["x", "y"]).isValid)
+        XCTAssertFalse(QuizQuestion(id: "m", kind: .match, prompt: "Associe", choices: ["a", "b"], answer: 0, why: "", matches: ["x"]).isValid)
+        XCTAssertEqual(QuizQuestion(id: "m", kind: .match, prompt: "A", choices: ["a"], answer: 0, why: "", matches: ["x"]).answerText, "a : x")
+        XCTAssertEqual(QuizQuestion(id: "q", prompt: "Q", choices: ["a", "b"], answer: 1, why: "", difficulty: 9).difficulty, 3)
+    }
+
+    func testAKindRoundTrips() throws {
+        let question = QuizQuestion(id: "g", kind: .gap, prompt: "La … est rouge.", choices: ["pomme", "poire", "prune"], answer: 0, why: ".", difficulty: 1)
+        let decoded = try JSONDecoder().decode(QuizQuestion.self, from: JSONEncoder().encode(question))
+        XCTAssertEqual(decoded, question)
+    }
+}
+
+/// Pour qui on écrit : la marche d'une filière et de son année, ce que l'app envoie.
+final class LessonAudienceTests: XCTestCase {
+    func testACollegeStudentIsNotWrittenForAsAHighSchooler() {
+        let track = SchoolSystem.track(id: "fr.college", in: .fr)
+        XCTAssertEqual(LessonAudience.tier(track: track, year: SchoolSystem.year(id: "fr.4e", in: track)), .lowerSecondary)
+    }
+
+    func testMasterYearsAreGraduate() {
+        let track = SchoolSystem.track(id: "fr.universite", in: .fr)
+        XCTAssertEqual(LessonAudience.tier(track: track, year: SchoolSystem.year(id: "fr.m1", in: track)), .graduate)
+        XCTAssertEqual(LessonAudience.tier(track: track, year: SchoolSystem.year(id: "fr.l2", in: track)), .undergraduate)
+        XCTAssertNil(LessonAudience.tier(track: nil, year: nil))
+    }
+
+    func testThePayloadCarriesTheLearnerAndTheKindsTheAppCanShow() {
+        let audience = LessonAudience(level: "lycee", country: "tr", schoolStage: "Lise, YKS", language: "tr", tier: "competitive", track: "YKS hazırlık", year: "TYT")
+            .preparing("YKS, le 2027-06-19")
+        let payload = audience.payload
+        XCTAssertEqual(payload["tier"] as? String, "competitive")
+        XCTAssertEqual(payload["track"] as? String, "YKS hazırlık")
+        XCTAssertEqual(payload["year"] as? String, "TYT")
+        XCTAssertEqual(payload["exam"] as? String, "YKS, le 2027-06-19")
+        XCTAssertEqual(payload["kinds"] as? [String], ["choice", "truefalse", "gap", "order", "match"])
+        XCTAssertNil(LessonAudience(level: "", country: "fr", schoolStage: "", language: "fr").payload["tier"], "rien de vide ne part")
+    }
+
+    /// La note d'aujourd'hui, celle visée et les craintes ne partent que si elles sont là.
+    func testThePayloadCarriesTheGoalOnlyWhenKnown() {
+        let bare = LessonAudience(level: "lycee", country: "fr", schoolStage: "Terminale", language: "fr").payload
+        for key in ["currentScore", "targetScore", "scoreLabel", "targetLabel", "worries"] {
+            XCTAssertNil(bare[key], key)
+        }
+
+        let scale = DesiredGradeScale.for(.fr)
+        let audience = LessonAudience(
+            level: "lycee", country: "fr", schoolStage: "Terminale", language: "fr",
+            currentScore: 12, targetScore: 16,
+            scoreLabel: LessonAudience.gradeLabel(12, scale: scale),
+            targetLabel: LessonAudience.gradeLabel(16, scale: scale),
+            worries: ["examStress", "forgetting"]
+        )
+        let payload = audience.payload
+        XCTAssertEqual(payload["currentScore"] as? Int, 12)
+        XCTAssertEqual(payload["targetScore"] as? Int, 16)
+        XCTAssertEqual(payload["scoreLabel"] as? String, "12/20")
+        XCTAssertEqual(payload["targetLabel"] as? String, "16/20")
+        XCTAssertEqual(payload["worries"] as? [String], ["examStress", "forgetting"])
+        XCTAssertEqual(LessonAudience.gradeLabel(DesiredGradeScale.belowScore, scale: scale), "< 10/20")
+    }
+
+    func testPathSymbolsAreUniqueAndFromTheCatalog() {
+        let symbols = PathSymbol.unique(["flag", "flag", "nope", ""])
+        XCTAssertEqual(symbols.first, "flag")
+        XCTAssertEqual(Set(symbols).count, 4)
+        XCTAssertTrue(symbols.allSatisfy(PathSymbol.catalog.contains))
     }
 }

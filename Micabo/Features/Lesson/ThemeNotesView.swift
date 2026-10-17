@@ -5,21 +5,27 @@ import SwiftUI
 /// quand le contenu le demande, « À retenir » dans la couleur de la leçon.
 ///
 /// Trois couleurs et pas plus : la couleur de la leçon pour les encadrés et les puces, le
-/// violet pour les mots-clés, le vert et le rouge pour les réponses — et rien d'autre.
+/// violet pour les mots-clés, le vert et le rouge pour les réponses. Seule exception, les
+/// encadrés qui enseignent (`NoteCallout`) : leur teinte dit leur genre (piège, règle…).
 struct ThemeNotesView: View {
     let notes: ThemeNotes
     let tone: LessonTone
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: NoteRhythm.between) {
             ToneBox(label: L10n.t("lesson.notes.oneLiner", locale: .resolved()), tone: tone) {
-                KeywordText(notes.oneLiner)
+                KeywordText(notes.oneLiner, size: 18, weight: .bold)
                     .font(MicaboFont.ui(18, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
             }
 
-            ForEach(Array(notes.blocks.enumerated()), id: \.offset) { _, block in
-                NoteBlockView(block: block, tone: tone)
+            if !notes.blocks.isEmpty {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(notes.blocks.enumerated()), id: \.offset) { index, block in
+                        NoteBlockView(block: block, tone: tone)
+                            .padding(.top, NoteRhythm.spacing(before: block, after: index > 0 ? notes.blocks[index - 1] : nil))
+                    }
+                }
             }
 
             if !notes.takeaways.isEmpty {
@@ -39,6 +45,26 @@ struct ThemeNotesView: View {
                 }
             }
         }
+    }
+}
+
+/// **Le rythme vertical des notes**, le même sur la page d'un thème et dans le cercle Notes :
+/// un pas régulier entre deux blocs, plus d'air au-dessus d'un sous-titre, et le sous-titre
+/// collé au bloc qu'il ouvre — sinon il flotte entre deux parties sans dire laquelle.
+enum NoteRhythm {
+    /// Entre deux blocs.
+    static let between: CGFloat = 18
+    /// Au-dessus d'un sous-titre : il ouvre une partie.
+    static let beforeSubtitle: CGFloat = 28
+    /// Sous un sous-titre : il tient au bloc qu'il ouvre.
+    static let afterSubtitle: CGFloat = 10
+
+    /// L'espace au-dessus de `block`, selon le bloc qui le précède ; rien pour le premier.
+    static func spacing(before block: NoteBlock, after previous: NoteBlock?) -> CGFloat {
+        guard let previous else { return 0 }
+        if case .subtitle = previous { return afterSubtitle }
+        if case .subtitle = block { return beforeSubtitle }
+        return between
     }
 }
 
@@ -76,11 +102,11 @@ struct NoteBlockView: View {
         case .subtitle(let text):
             HStack(spacing: 10) {
                 Capsule().fill(tone.vivid).frame(width: 4, height: 20)
-                Text(text)
+                KeywordText(text, size: 20, weight: .bold)
                     .font(MicaboFont.subtitle)
                     .foregroundStyle(MicaboColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.top, 6)
 
         case .paragraph(let text):
             KeywordText(text)
@@ -116,7 +142,7 @@ struct NoteBlockView: View {
                 MathFormula(latex: latex, fontSize: 20, color: MicaboColor.ink)
                     .frame(maxWidth: .infinity)
                 if let caption {
-                    KeywordText(caption)
+                    KeywordText(caption, size: 15, weight: .medium)
                         .font(MicaboFont.ui(15, weight: .medium))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .multilineTextAlignment(.center)
@@ -142,6 +168,18 @@ struct NoteBlockView: View {
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+        case .steps(let items):
+            NoteSteps(items: items, tone: tone)
+
+        case .table(let columns, let rows):
+            NoteTable(columns: columns, rows: rows, tone: tone)
+
+        case .quote(let text, let author):
+            NoteQuote(text: text, author: author, tone: tone)
+
+        case .callout(let kind, let title, let text):
+            NoteCallout(kind: kind, title: title, text: text, tone: tone)
         }
     }
 
@@ -163,7 +201,7 @@ struct NoteBlockView: View {
                         .foregroundStyle(MicaboColor.keyword)
                         .rotationEffect(.degrees(definitionOpen ? 180 : 0))
                 }
-                Text(term)
+                KeywordText(term, size: 19, weight: .heavy, tintsKeywords: false)
                     .font(MicaboFont.ui(19, weight: .heavy))
                     .foregroundStyle(MicaboColor.keyword)
                     .multilineTextAlignment(.leading)
@@ -204,10 +242,10 @@ struct DatesTimeline: View {
                                 .fill(index == items.count - 1 ? Color.clear : tone.vivid.opacity(0.5))
                                 .frame(height: 3)
                         }
-                        Text(item.date)
+                        KeywordText(item.date, size: 17, weight: .heavy, tintsKeywords: false)
                             .font(MicaboFont.ui(17, weight: .heavy))
                             .foregroundStyle(tone.ink)
-                        KeywordText(item.text)
+                        KeywordText(item.text, size: 15, weight: .medium)
                             .font(MicaboFont.ui(15, weight: .medium))
                             .foregroundStyle(MicaboColor.ink)
                             .fixedSize(horizontal: false, vertical: true)
@@ -222,142 +260,308 @@ struct DatesTimeline: View {
     }
 }
 
-/// **Un texte des notes** : les mots-clés (`**mot**`) en gras violet, les formules en ligne
-/// (`$…$`) en italique sans leurs dollars.
-struct KeywordText: View {
-    let source: String
+/// Des étapes numérotées : une pastille par étape dans la couleur de la leçon, reliées par
+/// un filet qui dit « puis ».
+struct NoteSteps: View {
+    let items: [String]
+    let tone: LessonTone
 
-    init(_ source: String) {
-        self.source = source
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                let isLast = index == items.count - 1
+                HStack(alignment: .top, spacing: 14) {
+                    Text("\(index + 1)")
+                        .font(MicaboFont.number(15))
+                        .foregroundStyle(MicaboColor.onInk)
+                        .frame(width: 30, height: 30)
+                        .background(tone.vivid, in: Circle())
+                    KeywordText(item)
+                        .font(MicaboFont.notes)
+                        .foregroundStyle(MicaboColor.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 4)
+                        .padding(.bottom, isLast ? 0 : 16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                // Le filet part sous la pastille et rejoint la suivante : posé en fond, il
+                // prend la hauteur de l'étape, quelle que soit la longueur de son texte.
+                .background(alignment: .topLeading) {
+                    if !isLast {
+                        Rectangle()
+                            .fill(tone.vivid.opacity(0.35))
+                            .frame(width: 2)
+                            .padding(.top, 30)
+                            .padding(.leading, 14)
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+    }
+}
+
+/// **Un petit tableau** : l'en-tête en gras sur la teinte de la leçon, une ligne sur deux
+/// teintée, des cellules qui reviennent à la ligne. Quand les colonnes ne tiennent pas à
+/// leur largeur minimale, le tableau glisse en travers plutôt que d'écraser ses cellules.
+struct NoteTable: View {
+    let columns: [String]
+    let rows: [[String]]
+    let tone: LessonTone
+
+    @State private var width: CGFloat = 0
+
+    /// En dessous, une cellule ne tient plus qu'un mot par ligne.
+    private static let minColumnWidth: CGFloat = 88
+    /// La largeur d'une colonne quand le tableau défile.
+    private static let scrollingColumnWidth: CGFloat = 150
+
+    private var fits: Bool {
+        width == 0 || CGFloat(columns.count) * Self.minColumnWidth <= width
     }
 
     var body: some View {
-        Text(Self.attributed(source))
+        Group {
+            if fits {
+                table(columnWidth: nil)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    table(columnWidth: Self.scrollingColumnWidth)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            GeometryReader { proxy in
+                Color.clear
+                    .onAppear { width = proxy.size.width }
+                    .onChange(of: proxy.size.width) { _, value in width = value }
+            }
+        }
     }
 
-    static func attributed(_ source: String) -> AttributedString {
+    private func table(columnWidth: CGFloat?) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            row(columns, isHeader: true, tint: tone.pale, columnWidth: columnWidth)
+            ForEach(Array(rows.enumerated()), id: \.offset) { index, cells in
+                row(
+                    cells,
+                    isHeader: false,
+                    tint: index % 2 == 1 ? MicaboColor.surfaceMuted : MicaboColor.surface,
+                    columnWidth: columnWidth
+                )
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+    }
+
+    private func row(_ cells: [String], isHeader: Bool, tint: Color, columnWidth: CGFloat?) -> some View {
+        HStack(alignment: .top, spacing: 0) {
+            ForEach(columns.indices, id: \.self) { column in
+                KeywordText(
+                    cells.indices.contains(column) ? cells[column] : "",
+                    size: 15,
+                    weight: isHeader ? .heavy : .medium,
+                    tintsKeywords: !isHeader
+                )
+                .font(MicaboFont.ui(15, weight: isHeader ? .heavy : .medium))
+                .foregroundStyle(isHeader ? tone.ink : MicaboColor.ink)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .frame(width: columnWidth, alignment: .leading)
+                .frame(maxWidth: columnWidth == nil ? .infinity : nil, alignment: .leading)
+            }
+        }
+        .background(tint)
+    }
+}
+
+/// Une citation : un filet dans la couleur de la leçon, le texte en italique, et qui l'a dite.
+struct NoteQuote: View {
+    let text: String
+    let author: String?
+    let tone: LessonTone
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            KeywordText(text, size: 18, weight: .medium, italic: true)
+                .font(MicaboFont.ui(18, weight: .medium).italic())
+                .foregroundStyle(MicaboColor.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            if let author {
+                Text("— " + KeywordText.plain(author))
+                    .font(MicaboFont.ui(15, weight: .bold))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.leading, 18)
+        .background(alignment: .leading) {
+            Capsule().fill(tone.vivid).frame(width: 4)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+}
+
+/// **Un encadré qui enseigne** : pourquoi ça compte, le piège classique, une astuce, une règle à
+/// retenir. Chaque genre a sa teinte et son pictogramme, pour qu'on reconnaisse un piège avant
+/// de l'avoir lu : le bleu de l'information, le rouge de l'erreur, la couleur de la leçon pour
+/// l'astuce, le jaune de l'attention pour la règle. Le nom du genre est toujours écrit ; le titre
+/// du serveur, facultatif, vient dessous.
+struct NoteCallout: View {
+    let kind: CalloutKind
+    let title: String?
+    let text: String
+    let tone: LessonTone
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .center, spacing: 8) {
+                Image(systemName: Self.symbol(for: kind))
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(ink)
+                    .accessibilityHidden(true)
+                Text(L10n.t(kind.titleKey, locale: .resolved()))
+                    .font(MicaboFont.small)
+                    .tracking(MicaboTracking.caps)
+                    .textCase(.uppercase)
+                    .foregroundStyle(ink)
+            }
+            if let title {
+                KeywordText(title, size: 18, weight: .bold, tintsKeywords: false)
+                    .font(MicaboFont.ui(18, weight: .bold))
+                    .foregroundStyle(MicaboColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            KeywordText(text)
+                .font(MicaboFont.notes)
+                .foregroundStyle(MicaboColor.ink)
+                .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(wash, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(ink.opacity(0.25), lineWidth: 1.5)
+        )
+        .accessibilityElement(children: .combine)
+    }
+
+    /// La couleur du pictogramme, du nom du genre et du filet.
+    private var ink: Color {
+        switch kind {
+        case .why: MicaboColor.info
+        case .mistake: MicaboColor.negative
+        case .tip: tone.ink
+        case .remember: MicaboColor.caution
+        }
+    }
+
+    /// Le fond de l'encadré, la même teinte en pâle.
+    private var wash: Color {
+        switch kind {
+        case .why: MicaboColor.infoSoft
+        case .mistake: MicaboColor.negativeSoft
+        case .tip: tone.pale
+        case .remember: MicaboColor.cautionSoft
+        }
+    }
+
+    static func symbol(for kind: CalloutKind) -> String {
+        switch kind {
+        case .why: "lightbulb.fill"
+        case .mistake: "exclamationmark.triangle.fill"
+        case .tip: "sparkles"
+        case .remember: "pin.fill"
+        }
+    }
+}
+
+/// **Un texte des notes** : les mots-clés (`**mot**`) en gras violet, les formules en ligne
+/// (`$…$`) transposées par `FormulaRenderer` — exposants, indices, fractions, lettres
+/// grecques — en italique, sans leurs dollars.
+///
+/// C'est aussi le rendu de tout texte écrit par le modèle (question, proposition, « pourquoi »,
+/// carte) : un `Text` nu y montrerait `$x^2$` tel quel.
+///
+/// Les mots-clés et les formules portent une police explicite, et un `AttributedString` ne
+/// sait pas hériter d'une taille : `size` et `weight` disent donc celles du texte autour, pour
+/// qu'un mot-clé d'une question à 22 points ne retombe pas à 17. Le reste du texte prend la
+/// police posée par `.font(_:)`. `tintsKeywords` à faux garde le gras sans le violet, là où
+/// la couleur du texte dit déjà autre chose (une réponse juste, une pastille choisie).
+struct KeywordText: View {
+    let source: String
+    var size: CGFloat
+    var weight: Font.Weight
+    var tintsKeywords: Bool
+    var isItalic: Bool
+
+    init(
+        _ source: String,
+        size: CGFloat = 17,
+        weight: Font.Weight = .regular,
+        tintsKeywords: Bool = true,
+        italic: Bool = false
+    ) {
+        self.source = source
+        self.size = size
+        self.weight = weight
+        self.tintsKeywords = tintsKeywords
+        self.isItalic = italic
+    }
+
+    var body: some View {
+        Text(Self.attributed(source, size: size, weight: weight, tintsKeywords: tintsKeywords, italic: isItalic))
+    }
+
+    static func attributed(
+        _ source: String,
+        size: CGFloat = 17,
+        weight: Font.Weight = .regular,
+        tintsKeywords: Bool = true,
+        italic: Bool = false
+    ) -> AttributedString {
         var result = AttributedString()
         for (index, part) in source.components(separatedBy: "**").enumerated() where !part.isEmpty {
             let isKeyword = index % 2 == 1
-            for (formulaIndex, piece) in part.components(separatedBy: "$").enumerated() where !piece.isEmpty {
-                var chunk = AttributedString(piece)
-                if isKeyword {
-                    chunk.font = MicaboFont.keyword
+            for segment in FormulaRenderer.segments(of: part) where !segment.text.isEmpty {
+                var chunk = AttributedString(segment.text)
+                if isKeyword || segment.isMath {
+                    let font = MicaboFont.ui(size, weight: isKeyword ? keywordWeight(weight) : formulaWeight(weight))
+                    chunk.font = segment.isMath || italic ? font.italic() : font
+                }
+                if isKeyword, tintsKeywords {
                     chunk.foregroundColor = MicaboColor.keyword
-                } else if formulaIndex % 2 == 1 {
-                    chunk.font = MicaboFont.ui(17, weight: .medium).italic()
                 }
                 result += chunk
             }
         }
         return result
     }
-}
 
-// MARK: - La question de fin
-
-/// **Un QCM** : quatre propositions ; la bonne passe au vert, une mauvaise au rouge avec la
-/// phrase qui explique. Mika réagit.
-struct QuestionCard: View {
-    let question: QuizQuestion
-    let tone: LessonTone
-    /// Le choix déjà fait, quand la carte est relue.
-    var answered: Int?
-    let onAnswer: (Int) -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(question.prompt)
-                .font(MicaboFont.ui(20, weight: .heavy))
-                .foregroundStyle(MicaboColor.ink)
-                .fixedSize(horizontal: false, vertical: true)
-
-            VStack(spacing: 10) {
-                ForEach(Array(question.choices.enumerated()), id: \.offset) { index, choice in
-                    Button {
-                        guard answered == nil else { return }
-                        onAnswer(index)
-                    } label: {
-                        HStack(spacing: 12) {
-                            Text(choice)
-                                .font(MicaboFont.ui(17, weight: .bold))
-                                .foregroundStyle(foreground(for: index))
-                                .multilineTextAlignment(.leading)
-                                .fixedSize(horizontal: false, vertical: true)
-                            Spacer(minLength: 0)
-                            if let symbol = symbol(for: index) {
-                                Image(systemName: symbol)
-                                    .font(.system(size: 17, weight: .black))
-                                    .foregroundStyle(foreground(for: index))
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 15)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(background(for: index), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(border(for: index), lineWidth: 2)
-                        )
-                    }
-                    .buttonStyle(MicaboPressableButtonStyle(feedback: .none))
-                    .disabled(answered != nil)
-                }
-            }
-
-            if let answered {
-                feedback(right: answered == question.answer)
-                    .transition(.opacity.combined(with: .move(edge: .bottom)))
-            }
-        }
-        .animation(.spring(duration: 0.35), value: answered)
+    /// Le même texte à plat : mots-clés sans leurs astérisques, formules transposées. Pour
+    /// les endroits où l'on ne compose qu'une chaîne (un libellé, une phrase traduite).
+    static func plain(_ source: String) -> String {
+        FormulaRenderer.stripped(source.replacingOccurrences(of: "**", with: ""))
     }
 
-    private func feedback(right: Bool) -> some View {
-        HStack(alignment: .center, spacing: 12) {
-            MikaMascot(mood: right ? .happy : .sad, size: 64)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(right
-                    ? L10n.t("lesson.question.right", locale: .resolved())
-                    : L10n.t("lesson.question.wrong", locale: .resolved()))
-                    .font(MicaboFont.ui(18, weight: .heavy))
-                    .foregroundStyle(right ? MicaboColor.correctInk : MicaboColor.wrongInk)
-                if !question.why.isEmpty, !right || question.why.count < 160 {
-                    Text(question.why)
-                        .font(MicaboFont.ui(15, weight: .medium))
-                        .foregroundStyle(MicaboColor.ink)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(right ? MicaboColor.correctSoft : MicaboColor.wrongSoft, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    /// Un mot-clé est en gras ; dans un texte déjà très gras, il garde la graisse du texte.
+    private static func keywordWeight(_ weight: Font.Weight) -> Font.Weight {
+        weight == .heavy || weight == .black ? weight : .bold
     }
 
-    private func isRight(_ index: Int) -> Bool { index == question.answer }
-
-    private func background(for index: Int) -> Color {
-        guard let answered else { return MicaboColor.surface }
-        if isRight(index) { return MicaboColor.correct }
-        if index == answered { return MicaboColor.wrong }
-        return MicaboColor.surface
-    }
-
-    private func foreground(for index: Int) -> Color {
-        guard let answered else { return MicaboColor.ink }
-        if isRight(index) || index == answered { return MicaboColor.onInk }
-        return MicaboColor.inkTertiary
-    }
-
-    private func border(for index: Int) -> Color {
-        answered == nil ? MicaboColor.stroke : .clear
-    }
-
-    private func symbol(for index: Int) -> String? {
-        guard let answered else { return nil }
-        if isRight(index) { return "checkmark" }
-        if index == answered { return "xmark" }
-        return nil
+    /// Une formule, un cran au-dessus du texte maigre : l'italique fin se lit mal.
+    private static func formulaWeight(_ weight: Font.Weight) -> Font.Weight {
+        weight == .regular ? .medium : weight
     }
 }

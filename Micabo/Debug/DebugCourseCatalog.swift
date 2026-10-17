@@ -40,6 +40,7 @@ enum DebugCourseCatalog {
         case .de: german
         case .es: spanish
         case .tr: turkish
+        default: english
         }
     }
 
@@ -327,6 +328,7 @@ enum DebugActivity {
         case .de: ["Stochastik-Test", "Biologie-Klausur", "Probeabitur Geschichte & Wirtschaft"]
         case .es: ["Control de probabilidad", "Parcial de biología", "Simulacro de historia y economía"]
         case .tr: ["Olasılık yazılısı", "Biyoloji ara sınavı", "Tarih ve ekonomi deneme sınavı"]
+        default: examNames(.en)
         }
     }
 }
@@ -437,6 +439,7 @@ enum DebugMock {
         case .de: ["Eine gute Arbeit mit zwei Punkten zum Wiederholen.", "Die Definitionen sitzen.", "Die Argumentation ist sauber.", "Bedingte Wahrscheinlichkeiten.", "Wiederhole morgen die verpassten Karten, dann in einer Woche ein neuer Test."]
         case .es: ["Un buen examen, con dos puntos que repasar.", "Las definiciones son sólidas.", "El razonamiento está bien llevado.", "Los cálculos de probabilidad condicionada.", "Repite mañana las tarjetas falladas y haz otro simulacro en una semana."]
         case .tr: ["İyi bir kağıt, gözden geçirilecek iki nokta var.", "Tanımlar sağlam.", "Akıl yürütme düzenli.", "Koşullu olasılık hesapları.", "Yarın kaçırdığın kartları tekrar et, bir hafta sonra yeni bir deneme yap."]
+        default: debriefTexts(.en)
         }
     }
 }

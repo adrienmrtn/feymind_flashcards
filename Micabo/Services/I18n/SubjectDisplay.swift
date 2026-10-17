@@ -3,14 +3,26 @@ import Foundation
 /// Libellés d'affichage. La valeur stockée reste le français du catalogue.
 enum SubjectDisplay {
     static func family(_ name: String, locale: UiLocale) -> String {
-        families[name]?[locale] ?? name
+        families[name]?[locale] ?? families[name]?[.en] ?? name
     }
 
     static func subject(_ name: String, locale: UiLocale) -> String {
-        subjects[name]?[locale] ?? name
+        subjects[name]?[locale] ?? subjects[name]?[.en] ?? name
     }
 
-    static let families: [String: [UiLocale: String]] = [
+    /// Les cinq langues d'origine, complétées par celles des nouveaux marchés
+    /// (`SubjectDisplay+Regional.swift`).
+    static let families: [String: [UiLocale: String]] = merged(baseFamilies, regionalFamilies)
+    static let subjects: [String: [UiLocale: String]] = merged(baseSubjects, regionalSubjects)
+
+    private static func merged(
+        _ base: [String: [UiLocale: String]],
+        _ extra: [String: [UiLocale: String]]
+    ) -> [String: [UiLocale: String]] {
+        base.merging(extra) { old, new in old.merging(new) { first, _ in first } }
+    }
+
+    private static let baseFamilies: [String: [UiLocale: String]] = [
         "Sciences": [.en: "Science", .fr: "Sciences", .de: "Naturwiss.", .es: "Ciencias", .tr: "Bilimler"],
         "Santé": [.en: "Health", .fr: "Santé", .de: "Gesundheit", .es: "Salud", .tr: "Sağlık"],
         "Sciences humaines": [.en: "Humanities", .fr: "Sciences humaines", .de: "Geisteswiss.", .es: "Humanidades", .tr: "Beşeri bilimler"],
@@ -20,7 +32,7 @@ enum SubjectDisplay {
         "Et aussi": [.en: "And also", .fr: "Et aussi", .de: "Und auch", .es: "Y también", .tr: "Ayrıca"],
     ]
 
-    static let subjects: [String: [UiLocale: String]] = [
+    private static let baseSubjects: [String: [UiLocale: String]] = [
         "Mathématiques": [.en: "Maths", .fr: "Mathématiques", .de: "Mathematik", .es: "Matemáticas", .tr: "Matematik"],
         "Physique": [.en: "Physics", .fr: "Physique", .de: "Physik", .es: "Física", .tr: "Fizik"],
         "Chimie": [.en: "Chemistry", .fr: "Chimie", .de: "Chemie", .es: "Química", .tr: "Kimya"],

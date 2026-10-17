@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
+<resources>
+    <plurals name="app_friends_friendCount">
+        <item quantity="one">%1$d znajomy</item>
+        <item quantity="other">znajomi: %1$d</item>
+    </plurals>
+    <plurals name="copy_cards">
+        <item quantity="one">%1$d fiszka</item>
+        <item quantity="other">fiszki: %1$d</item>
+    </plurals>
+    <plurals name="ios_profile_streakDays">
+        <item quantity="one">%1$d dzień z rzędu</item>
+        <item quantity="other">%1$d dni z rzędu</item>
+    </plurals>
+    <plurals name="ios_streak_bestValue">
+        <item quantity="one">%1$d dzień</item>
+        <item quantity="other">%1$d dni</item>
+    </plurals>
+    <plurals name="ios_streak_unit">
+        <item quantity="one">dzień z rzędu</item>
+        <item quantity="other">dni z rzędu</item>
+    </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Dodaj mój błąd do fiszek</item>
+        <item quantity="other">Dodaj moje błędy (%1$d) do fiszek</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">%1$d pytanie bez odpowiedzi. Oddać mimo to?</item>
+        <item quantity="other">Pytania bez odpowiedzi: %1$d. Oddać mimo to?</item>
+    </plurals>
+</resources>

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { detectDiscipline, disciplineBrief } from "./discipline.ts";
+import { detectDiscipline, disciplineBrief, fromSubject, lessonShapesBrief } from "./discipline.ts";
 
 describe("detectDiscipline", () => {
   it("reconnaît un cours de philosophie à ses auteurs", () => {
@@ -69,5 +69,105 @@ describe("disciplineBrief", () => {
 
   it("ne dit rien quand la matière est inconnue", () => {
     assert.equal(disciplineBrief("general"), "");
+  });
+});
+
+describe("detectDiscipline dans les autres langues", () => {
+  it("reconnaît les mathématiques en anglais, en allemand et en turc", () => {
+    assert.equal(detectDiscipline("The derivative of a polynomial is found with this theorem."), "mathematics");
+    assert.equal(detectDiscipline("Die Ableitung einer Funktion und die Gleichung der Tangente."), "mathematics");
+    assert.equal(detectDiscipline("Türev ve integral: denklem çözümü, olasılık hesabı."), "mathematics");
+  });
+
+  it("reconnaît l'histoire en espagnol, en italien et en portugais", () => {
+    assert.equal(detectDiscipline("La guerra civil y el imperio en el siglo XIX."), "history");
+    assert.equal(detectDiscipline("Il Medioevo e la rivoluzione: un secolo di guerra."), "history");
+    assert.equal(detectDiscipline("A revolução e o império no século XVIII."), "history");
+  });
+
+  it("sépare la chimie de la physique", () => {
+    assert.equal(detectDiscipline("Chemistry: a covalent bond, the periodic table and a titration."), "chemistry");
+    assert.equal(detectDiscipline("L'équation de la réaction chimique, la molécule et l'acide."), "chemistry");
+    assert.equal(detectDiscipline("Die Geschwindigkeit, die Beschleunigung und die kinetische Energie."), "physics");
+  });
+
+  it("reconnaît la géographie", () => {
+    assert.equal(detectDiscipline("Urbanisation, mondialisation et littoral : la métropole française."), "geography");
+    assert.equal(detectDiscipline("Population density and climate across the continent."), "geography");
+  });
+
+  it("reconnaît la biologie, l'économie et les langues ailleurs qu'en français", () => {
+    assert.equal(detectDiscipline("Photosynthesis happens in the ecosystem; DNA and chromosomes."), "biology");
+    assert.equal(detectDiscipline("Inflation, unemployment and the central bank in the economy."), "economics");
+    assert.equal(detectDiscipline("Vocabulario y gramática: la conjugación del verbo irregular."), "language");
+  });
+
+  it("ne compte pas un mot courant comme indice", () => {
+    // « ses » ne signe plus l'économie, « onde » portugais n'est pas la physique.
+    assert.equal(detectDiscipline("Il range ses classes et ses affaires."), "general");
+    assert.equal(detectDiscipline("Onde fica a escola? Perto da praça."), "general");
+  });
+});
+
+describe("la matière déclarée, dans toutes les langues", () => {
+  const cases: [string, string][] = [
+    ["Mathematics", "mathematics"],
+    ["Matemáticas", "mathematics"],
+    ["Mathe", "mathematics"],
+    ["Matematik", "mathematics"],
+    ["History", "history"],
+    ["Geschichte", "history"],
+    ["Histoire-géographie", "history"],
+    ["Geografía", "geography"],
+    ["Erdkunde", "geography"],
+    ["Biology", "biology"],
+    ["SVT", "biology"],
+    ["Chemistry", "chemistry"],
+    ["Química", "chemistry"],
+    ["Physik", "physics"],
+    ["Physique-chimie", "physics"],
+    ["Economics", "economics"],
+    ["SES", "economics"],
+    ["Philosophy", "philosophy"],
+    ["Felsefe", "philosophy"],
+    ["Literature", "literature"],
+    ["English literature", "literature"],
+    ["English", "language"],
+    ["Spanish", "language"],
+    ["İngilizce", "language"],
+    ["Informatik", "computing"],
+    ["NSI", "computing"],
+    ["Tıp", "medicine"],
+  ];
+  for (const [subject, expected] of cases) {
+    it(`« ${subject} » → ${expected}`, () => {
+      assert.equal(fromSubject(subject), expected);
+      assert.equal(detectDiscipline("", undefined, subject), expected);
+    });
+  }
+
+  it("« Passé composé » n'est pas une matière de santé", () => {
+    assert.notEqual(fromSubject("Passé composé"), "medicine");
+  });
+});
+
+describe("lessonShapesBrief", () => {
+  it("donne à chaque matière ses formes de bloc", () => {
+    assert.match(lessonShapesBrief("mathematics"), /"steps"/);
+    assert.match(lessonShapesBrief("mathematics"), /"formula"/);
+    assert.match(lessonShapesBrief("philosophy"), /"quote"/);
+    assert.match(lessonShapesBrief("philosophy"), /"table"/);
+    assert.match(lessonShapesBrief("language"), /traduction/);
+    assert.match(lessonShapesBrief("history"), /"dates"/);
+    assert.match(lessonShapesBrief("chemistry"), /\\ce/);
+    assert.ok(lessonShapesBrief("general").length > 0);
+  });
+
+  it("les consignes de fond ne nomment aucun bloc", () => {
+    for (const discipline of ["computing", "philosophy", "law", "medicine", "history"] as const) {
+      assert.doesNotMatch(disciplineBrief(discipline), /"steps"|"table"|tableau/);
+    }
+    assert.match(disciplineBrief("chemistry"), /équilibrée/);
+    assert.match(disciplineBrief("geography"), /échelle/);
   });
 });

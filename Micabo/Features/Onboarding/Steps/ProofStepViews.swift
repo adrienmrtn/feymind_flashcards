@@ -42,7 +42,7 @@ enum OnboardingProofFigures {
 
 // MARK: - Le texte à chiffre coloré
 
-/// **Une phrase noire, avec un passage en violet.** Le passage est marqué entre deux
+/// **Une phrase d'encre, avec un passage au dégradé de l'app.** Le passage est marqué entre deux
 /// astérisques doubles dans la chaîne traduite (`**14**`), pour que chaque langue décide
 /// de sa place dans la phrase.
 struct OnboardingAccentText: View {
@@ -55,18 +55,26 @@ struct OnboardingAccentText: View {
     var body: some View {
         composed
             .font(OnboardingPalette.title(size))
-            .tracking(-0.9)
-            .lineSpacing(-2)
+            .tracking(-0.6)
+            .lineSpacing(-1)
             .multilineTextAlignment(alignment)
             .fixedSize(horizontal: false, vertical: true)
     }
 
+    /// Les passages marqués prennent le dégradé de l'app, du bleu au violet — celui du titre
+    /// de Home —, le reste la couleur du texte.
     private var composed: Text {
         var result = Text("")
         var isAccent = false
         for (index, part) in template.components(separatedBy: "**").enumerated() {
             if index > 0 { isAccent.toggle() }
-            result = result + Text(part).foregroundStyle(isAccent ? accent : color)
+            if isAccent {
+                result = result + Text(part).foregroundStyle(
+                    LinearGradient(colors: OnboardingPalette.mikaGradient, startPoint: .leading, endPoint: .trailing)
+                )
+            } else {
+                result = result + Text(part).foregroundStyle(color)
+            }
         }
         return result
     }
@@ -119,35 +127,33 @@ struct OnboardingProofPage<Figure: View>: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 0) {
-                Spacer(minLength: MicaboSpacing.lg)
+            // Centrée quand elle tient, défilante quand elle ne tient pas : la figure ne passe
+            // plus jamais sous le rond.
+            OnboardingCenteredScroll {
+                VStack(spacing: 0) {
+                    OnboardingAccentText(template: headline)
+                        .padding(.horizontal, MicaboSpacing.screen)
+                        .onboardingAppear(index: 1)
 
-                OnboardingAccentText(template: headline)
-                    .padding(.horizontal, MicaboSpacing.screen)
-                    .onboardingAppear(index: 1)
+                    figure()
+                        .padding(.horizontal, MicaboSpacing.screen)
+                        .padding(.top, MicaboSpacing.xl)
+                        .onboardingAppear(index: 3)
 
-                Spacer(minLength: MicaboSpacing.xl)
-
-                figure()
-                    .padding(.horizontal, MicaboSpacing.screen)
-                    .onboardingAppear(index: 3)
-
-                if let caption {
-                    Text(caption)
-                        .font(MicaboFont.ui(14, weight: .regular))
-                        .foregroundStyle(OnboardingPalette.gray)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(3)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.horizontal, MicaboSpacing.xl)
-                        .padding(.top, MicaboSpacing.lg)
-                        .onboardingAppear(index: 4)
+                    if let caption {
+                        Text(caption)
+                            .font(MicaboFont.ui(14, weight: .regular))
+                            .foregroundStyle(OnboardingPalette.gray)
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(3)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal, MicaboSpacing.xl)
+                            .padding(.top, MicaboSpacing.lg)
+                            .onboardingAppear(index: 4)
+                    }
                 }
-
-                Spacer(minLength: MicaboSpacing.lg)
-                Spacer(minLength: 0)
+                .padding(.vertical, MicaboSpacing.lg)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             OnboardingArrowBar(action: onContinue)
                 .onboardingAppear(index: 5)

@@ -13,13 +13,13 @@
 	<key>MicaboCommit</key>
 	<string>dev</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Micabo utilise l'appareil photo pour scanner vos pages de cours.</string>
+	<string>Micabo uses the camera to scan your course pages.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Micabo accède à vos photos pour importer un cours ou un schéma.</string>
+	<string>Micabo accesses your photos to import a course or a diagram.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Micabo utilise le micro pour enregistrer un cours ou une note vocale et en faire une leçon.</string>
+	<string>Micabo uses the microphone to record a class or a voice note and turn it into a lesson.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Micabo transcrit tes enregistrements sur ton téléphone pour en faire une leçon.</string>
+	<string>Micabo transcribes your recordings on your phone to turn them into a lesson.</string>
 	<!--
 	Une seule famille, Nunito, pour l'interface comme pour le texte qu'on lit. Voir
 	`MicaboFont`.

@@ -11,10 +11,9 @@ import SwiftUI
 /// plutôt qu'une suite d'écrans.
 ///
 /// **Il reprend où il s'est arrêté.** Une app fermée en arrière-plan pendant le parcours le
-/// faisait repartir du logo ; il repart maintenant de l'écran quitté, réponses et cours
-/// compris (`OnboardingModel.resuming(in:)`). La bibliothèque est passée à la construction
-/// parce que le cours se retrouve avant la première image : la pile des pages commence sur
-/// l'écran de reprise, sans glisser depuis un autre.
+/// faisait repartir du logo ; il repart maintenant de l'écran quitté, réponses comprises
+/// (`OnboardingModel.resuming(in:)`) : la pile des pages commence sur l'écran de reprise,
+/// sans glisser depuis un autre.
 struct OnboardingFlowView: View {
     var onFinish: () -> Void
 
@@ -27,6 +26,9 @@ struct OnboardingFlowView: View {
     init(library: ModelContext, onFinish: @escaping () -> Void) {
         self.onFinish = onFinish
         let model = OnboardingModel.resuming(in: library)
+        // Une page se regarde avant de se quitter : moins d'une seconde après son arrivée,
+        // le rond ne fait rien (voir `OnboardingModel.minimumDwell`).
+        model.minimumDwell = 0.9
         _model = State(initialValue: model)
         _pager = State(initialValue: OnboardingPager(current: model.step))
     }
@@ -69,8 +71,10 @@ struct OnboardingFlowView: View {
         .environment(model)
         .environment(\.onboardingSurface, surface)
         .environment(\.locale, i18n.locale.foundation)
-        .preferredColorScheme(.light)
-        // **Le compte, en languette**, posée sur l'annonce de la fiche : le parcours ne
+        .environment(\.layoutDirection, i18n.locale.isRightToLeft ? .rightToLeft : .leftToRight)
+        // **Les couleurs de l'app, jour ou nuit** : le parcours suit l'apparence de l'app
+        // (celle du téléphone par défaut), comme tous les écrans qui suivent.
+        // **Le compte, en languette**, posée sur le dernier écran de Mika : le parcours ne
         // change pas de page pour le demander. Balayée vers le bas, elle se referme sans
         // répondre, et la flèche la rouvre.
         .sheet(isPresented: Binding(
@@ -79,11 +83,11 @@ struct OnboardingFlowView: View {
         )) {
             OnboardingAccountSheet { model.finishAccountSheet() }
                 .environment(\.locale, i18n.locale.foundation)
+                .environment(\.layoutDirection, i18n.locale.isRightToLeft ? .rightToLeft : .leftToRight)
                 .presentationDetents([.height(410), .large])
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(MicaboRadius.sheet)
                 .presentationBackground(OnboardingPalette.white)
-                .preferredColorScheme(.light)
         }
         .onChange(of: auth.isSignedIn, initial: true) { _, isSignedIn in
             model.hasAccount = isSignedIn
@@ -191,6 +195,9 @@ struct OnboardingFlowView: View {
         case .worries: WorriesStepView()
         case .goal: GoalStepView()
         case .proofRetention: ProofRetentionStepView()
+        case .founders: MikaStepView(page: .founders)
+        case .aiCompanion: MikaStepView(page: .companion)
+        case .startingPoint: MikaStepView(page: .start)
         case .currentAverage: CurrentAverageStepView()
         case .targetAverage: TargetAverageStepView()
         case .dailyTime: DailyTimeStepView()
@@ -198,20 +205,18 @@ struct OnboardingFlowView: View {
         case .notifications: NotificationsStepView()
         case .building: BuildingStepView()
         case .featuresIntro: MikaSpeaksStepView(text: i18n.t("ios.onb.features.intro"))
-        case .featureSheets: FeatureStepView(feature: .sheets)
-        case .featurePlan: FeatureStepView(feature: .plan)
-        case .featureCards: FeatureStepView(feature: .cards)
-        case .featurePocket: FeatureStepView(feature: .pocket)
-        case .featureMika: FeatureStepView(feature: .mika)
-        case .sheetIntro: MikaSpeaksStepView(text: i18n.t("ios.onb.sheetIntro"))
-        case .materials: OnboardingMaterialsStepView()
-        case .demoCourse: DemoCourseStepView()
-        case .courseBuilding: CourseBuildingStepView()
-        case .courseReview: CourseReviewStepView()
-        case .trainPrompt: TrainPromptStepView()
-        case .trainCards: TrainCardsStepView()
-        case .wellDone: WellDoneStepView()
+        case .mikaMission: MikaStepView(page: .mission)
+        case .mikaSources: MikaStepView(page: .sources)
+        case .mikaPaths: MikaStepView(page: .paths)
+        case .mikaDesign: MikaStepView(page: .design)
+        case .mikaSolution: MikaStepView(page: .solution)
+        case .mikaTutor: MikaStepView(page: .tutor)
+        case .mikaRelief: MikaStepView(page: .relief)
         case .socialProof: SocialProofStepView()
+        case .supportUs: SupportUsStepView()
+        case .planBuilding: PlanBuildingStepView()
+        case .profileSummary: ProfileSummaryStepView()
+        case .freeTrialIntro: FreeTrialIntroStepView()
         case .trialOffer: TrialOfferStepView()
         case .trialReminder: TrialReminderStepView()
         case .paywall: PaywallStepView(onFinish: finish)
@@ -221,15 +226,8 @@ struct OnboardingFlowView: View {
     private func finish() {
         Analytics.track(.onboardingFinished)
         OnboardingPreferences.markCompleted()
-        if let course = model.builtCourse {
-            // **La leçon du parcours est la première leçon de l'app.** Elle est déjà dans la
-            // bibliothèque ; l'app s'ouvre sur Home, où elle attend dans « Reprendre » — sans
-            // s'ouvrir d'elle-même : l'élève vient de la parcourir.
-            FirstDeckHandoff.course = course
-        }
-        // Sans leçon construite — la construction a raté et l'élève a continué —, l'app
-        // s'ouvre sur Home, dont la barre fait le même travail que « créons ton premier
-        // cours ». Ce dernier écran n'a pas de croix : on n'y enferme personne.
+        // L'app s'ouvre sur Home, dont la barre crée la première leçon : le parcours n'en
+        // écrit plus. Ce dernier écran n'a pas de croix : on n'y enferme personne.
         OnboardingPreferences.pendingFirstImport = false
         // La note se redemande une fois, à la première arrivée dans l'app (`RootView`).
         UserDefaults.standard.set(true, forKey: InAppReviewPrompt.pendingKey)

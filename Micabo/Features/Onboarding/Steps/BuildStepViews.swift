@@ -12,21 +12,22 @@ import SwiftUI
 /// L'avancement n'est pas linéaire : il ralentit un peu à trois reprises, comme un travail
 /// qui bute, sans les paliers francs de l'ancien écran qui se lisaient comme un script.
 ///
-/// **La fin enchaîne d'elle-même.** À cent pour cent, un coup net, le blob rapetisse, et la
-/// page suivante arrive : c'est Mika qui prend la parole, et personne n'attend un bouton
-/// pour le laisser parler.
+/// **La fin attend qu'on la touche.** À cent pour cent, un coup net, le blob rapetisse, et
+/// le rond arrive. Enchaînée d'elle-même, la page suivante tombait sous un doigt qui
+/// s'impatientait, et passait avant d'avoir été lue.
 struct BuildingStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     /// Durée du chargement, en secondes. Verrouillée par un test.
     static let duration = 6.5
-    /// Ce qu'on laisse lire « 100 % » avant d'enchaîner.
-    private static let holdAtEnd = 0.7
+    /// Ce qu'on laisse lire « 100 % » avant que le rond n'arrive.
+    private static let holdAtEnd = 0.5
 
     @State private var elapsed = 0.0
     @State private var didFinish = false
     @State private var didAdvance = false
+    @State private var showsAction = false
     /// **Le compteur ne part qu'une fois la page posée.** Lancé à la construction de la
     /// vue, il tournait déjà pendant le glissement d'arrivée : les chiffres roulaient sur
     /// une page encore en mouvement, et ça se lisait comme un tremblement.
@@ -63,13 +64,24 @@ struct BuildingStepView: View {
     }
 
     var body: some View {
-        MikaLoadingView(
-            progress: progress,
-            title: i18n.t("ios.mika.hello"),
-            subtitle: i18n.t("ios.mika.role"),
-            stepLabel: stepLabel,
-            isDone: didFinish
-        )
+        VStack(spacing: 0) {
+            MikaLoadingView(
+                progress: progress,
+                title: i18n.t("ios.mika.hello"),
+                subtitle: i18n.t("ios.mika.role"),
+                stepLabel: stepLabel,
+                isDone: didFinish
+            )
+
+            OnboardingArrowBar {
+                guard !didAdvance else { return }
+                didAdvance = true
+                model.advance()
+            }
+            .opacity(showsAction ? 1 : 0)
+            .allowsHitTesting(showsAction)
+        }
+        .background(OnboardingPalette.white.ignoresSafeArea())
         .environment(\.onboardingSurface, .canvas)
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + OnboardingMotion.slideDuration + 0.05) {
@@ -94,9 +106,7 @@ struct BuildingStepView: View {
         didFinish = true
         Haptics.success()
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.holdAtEnd) {
-            guard !didAdvance else { return }
-            didAdvance = true
-            model.advance()
+            withAnimation(.easeOut(duration: 0.35)) { showsAction = true }
         }
     }
 }
@@ -113,22 +123,28 @@ struct MikaSpeaksStepView: View {
     @Environment(OnboardingModel.self) private var model
 
     @State private var isReady = false
+    @State private var mikaShown = false
 
     var body: some View {
         VStack(spacing: 0) {
             VStack(spacing: 0) {
                 Spacer(minLength: 0)
 
-                MikaBlob(size: 112, wobble: 0.14)
-                    .padding(.bottom, 30)
-                    .onboardingAppear(index: 1)
+                MikaMascot(mood: .wave, size: 170, reactsToTap: true)
+                    .scaleEffect(mikaShown ? 1 : 0.4)
+                    .opacity(mikaShown ? 1 : 0)
+                    .padding(.bottom, 26)
+                    .onAppear {
+                        withAnimation(.spring(duration: 0.6, bounce: 0.45).delay(0.1)) { mikaShown = true }
+                    }
 
                 OnboardingReadingText(
                     template: text,
                     size: 32,
                     wordDelay: 0.2,
                     startDelay: 0.6,
-                    highlightsOnFinish: false,
+                    // Le nom marqué (« **Mika** ») s'allume quand la phrase est lue.
+                    highlightsOnFinish: true,
                     onFinish: {
                         withAnimation(.easeOut(duration: 0.4)) { isReady = true }
                     }

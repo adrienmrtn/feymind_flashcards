@@ -8,10 +8,24 @@ import SwiftData
 /// reprise stable (on retrouve ses questions) et les tests exacts. La graine change d'une
 /// tentative à l'autre : un quiz relancé ne repose pas les mêmes questions dans le même ordre.
 enum LessonPicking {
-    /// Le quiz d'un palier : cinq questions.
+    /// Le Checkpoint d'un palier : cinq questions sur le palier…
     static let circleQuizCount = 5
+    /// … et deux sur les paliers d'avant, pour ne pas les oublier (l'entrelacement).
+    static let checkpointReviewCount = 2
     /// Le quiz complet et l'examen blanc : dix questions.
     static let fullQuizCount = 10
+
+    /// Le Quiz final : deux questions par thème, entre huit et douze.
+    static func finalQuizCount(themes: Int) -> Int {
+        min(12, max(8, themes * 2))
+    }
+
+    /// Du plus simple au plus exigeant, sans changer l'ordre entre questions de même difficulté.
+    static func progressive(_ questions: [QuizQuestion]) -> [QuizQuestion] {
+        questions.enumerated()
+            .sorted { ($0.element.difficulty, $0.offset) < ($1.element.difficulty, $1.offset) }
+            .map(\.element)
+    }
     /// Le cercle Flashcards : dix cartes.
     static let circleCardCount = 10
 
@@ -117,7 +131,7 @@ struct SeededGenerator: RandomNumberGenerator {
 /// une question ratée.
 enum LessonReview {
     /// Note une carte comme la session de révision le fait : SM-2, puis le journal (qui nourrit
-    /// aussi le classement de la semaine).
+    /// aussi le classement de la semaine), et la journée de la série (`StudyStreak`).
     static func rate(_ card: Flashcard, _ rating: ReviewRating, now: Date = Date()) {
         let before = CardScheduling(card: card)
         let outcome = SM2Scheduler.schedule(snapshot: before.snapshot, rating: rating, now: now)
@@ -133,6 +147,7 @@ enum LessonReview {
             easeAfter: outcome.easeFactor
         )
         card.logs = (card.logs ?? []) + [log]
+        StudyStreak.record(now: now)
     }
 
     /// **Une question ratée devient une flashcard à revoir demain.** Une carte QCM, rattachée
@@ -148,16 +163,28 @@ enum LessonReview {
         calendar: Calendar = .current
     ) -> Flashcard {
         let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now)) ?? now
-        if let existing = course.cards.first(where: { $0.kind == .choice && $0.front == question.prompt }) {
+        if let existing = course.cards.first(where: { $0.front == question.prompt && ($0.kind == .choice || $0.kind == .basic) }) {
             if existing.dueDate > tomorrow { existing.dueDate = tomorrow }
             existing.updatedAt = now
             return existing
         }
-        let card = Flashcard(front: question.prompt, back: question.why, position: course.cards.count, course: course)
-        card.kind = .choice
-        card.choices = question.choices
-        card.correctChoiceIndex = question.answer
+        let card: Flashcard
+        switch question.kind {
+        case .choice, .truefalse, .gap:
+            card = Flashcard(front: question.prompt, back: question.why, position: course.cards.count, course: course)
+            card.kind = .choice
+            card.choices = question.choices
+            card.correctChoiceIndex = question.answer
+        case .order, .match:
+            // Un ordre ou une association se révise en recto verso : la question, et au dos la
+            // bonne réponse en clair, puis pourquoi.
+            let back = [question.answerText, question.why].filter { !$0.isEmpty }.joined(separator: "\n\n")
+            card = Flashcard(front: question.prompt, back: back, position: course.cards.count, course: course)
+        }
         card.chapter = chapter
+        // Ratée dans un quiz, la carte est déjà « en cours » : elle compte dans « à réviser »
+        // dès demain, au lieu d'attendre sa première séance comme une carte neuve.
+        card.state = .learning
         card.dueDate = tomorrow
         context.insert(card)
         return card

@@ -9,31 +9,52 @@
  *   arrive.
  * - `stage: "convert"` — un ancien cours → ce qui lui manque pour devenir un chemin, sans
  *   réécrire ses notes : icônes, intro, conclusion, noms de paliers, questions.
+ * - `stage: "exam"` — un examen blanc chronométré sur une ou plusieurs leçons, au format de
+ *   l'examen visé ; un gratuit, puis Pro (`begin_extra`, `exam`).
+ * - `stage: "practice"` — de nouvelles questions d'entraînement sur une leçon déjà écrite,
+ *   loin de celles déjà posées, surtout sur les thèmes ratés. Un lot gratuit, puis Pro
+ *   (`begin_extra`, migration `lesson_extras`).
+ *
+ * Le volume (thèmes, questions, cartes) et le registre suivent la marche d'études et le pays
+ * de l'élève (`_shared/learner.ts`). La structure du plan suit la nature du support (un
+ * chapitre, une copie, un sujet d'examen, une vidéo…), qui voyage jusqu'aux thèmes en tête du
+ * texte de référence (`material.ts`). Les questions prennent cinq formes (`schema.ts`) ; une
+ * app qui ne déclare pas les formes qu'elle sait afficher (`kinds`) ne reçoit que des QCM.
  *
  * Déployer : `supabase functions deploy generate-lesson`, après la migration
  * `lesson_generations` (la porte du gratuit), ou par `pin.sh`.
  */
-import { consumeQuota, readCaller, withCors } from "../_shared/caller.ts";
+import { type Caller, consumeQuota, readCaller, withCors } from "../_shared/caller.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { callModel, errorResponse, FalError, jsonResponse } from "../_shared/fal.ts";
 import { CircuitOpenError } from "../_shared/circuit.ts";
 import { parseModelJSON } from "../_shared/json.ts";
 import { type ModelUsage, totalUsage } from "../_shared/usage.ts";
-import { detectDiscipline, disciplineBrief } from "../_shared/discipline.ts";
+import { detectDiscipline, disciplineBrief, lessonShapesBrief } from "../_shared/discipline.ts";
 import { languageBrief } from "../_shared/language.ts";
 import { sanitizeMeta, wrapUntrusted } from "../_shared/prompt-boundary.ts";
 import { normalizeIcon } from "../_shared/icons.ts";
-import { audienceBrief, readingBrief, VISION_SYSTEM_PROMPT } from "../generate-course/prompt.ts";
+import { readingBrief, VISION_SYSTEM_PROMPT } from "../generate-course/prompt.ts";
+import { depthOf, learnerBrief, readLearner, volumeOf } from "../_shared/learner.ts";
+import { assessmentBrief, disciplineName, hasVariedKinds } from "../_shared/assessment.ts";
 import {
   CONVERT_SYSTEM_PROMPT,
   convertBrief,
+  EXAM_SYSTEM_PROMPT,
+  EXAM_TOKENS,
+  examBrief,
+  examNotes,
   convertTokens,
   iconsSection,
   PLAN_SYSTEM_PROMPT,
   PLAN_TOKENS,
   planShapeBrief,
+  practiceBrief,
+  practiceNotes,
+  PRACTICE_SYSTEM_PROMPT,
+  PRACTICE_TOKENS,
   PROMPT_VERSION,
-  stageBrief,
+  symbolsSection,
   THEME_SYSTEM_PROMPT,
   THEME_TOKENS,
   themeBrief,
@@ -42,10 +63,14 @@ import {
   cleanText,
   clampWords,
   estimateMinutes,
+  fairShares,
+  finalFirst,
   groupThemes,
   LIMITS,
   MAX_SOURCE,
+  noteLimits,
   readFlashcards,
+  readKinds,
   readNotes,
   readPlan,
   readQuestions,
@@ -53,11 +78,26 @@ import {
 } from "./schema.ts";
 import {
   admitThemeCall,
+  beginExtra,
   beginLesson,
   isLessonId,
   LessonGateError,
   normalizeSource,
+  refundExtra,
+  releaseLesson,
 } from "./gate.ts";
+import {
+  allowedRole,
+  guessMaterial,
+  guessRole,
+  isExamOriented,
+  type Material,
+  materialHeader,
+  planMaterialBrief,
+  readMaterial,
+  readMaterialHeader,
+  readRole,
+} from "./material.ts";
 import { excerptForTheme, GAP as EXCERPT_GAP } from "./excerpt.ts";
 
 interface RequestBody {
@@ -67,9 +107,29 @@ interface RequestBody {
   language?: string;
   level?: string;
   country?: string;
-  /** L'étape précise : « 4e », « Terminale », « L2 »… */
+  /** Le palier tel que le pays le nomme : « Lycée », « Lise, YKS »… */
   schoolStage?: string;
+  /** La marche d'études (`EducationTier`) : lowerSecondary, upperSecondary… */
+  tier?: string;
+  /** La filière : « Lycée général », « Gymnasium »… */
+  track?: string;
+  /** La classe ou l'année : « Terminale », « 4e », « Master 1 », « TYT »… */
+  year?: string;
+  /** L'examen visé : « Bac de français, le 2027-06-15 ». */
+  exam?: string;
+  /** Le niveau actuel de l'élève, de 0 à 100 sur l'échelle de l'app (`learner.ts`). */
+  currentScore?: number;
+  /** Son objectif, de 0 à 100. */
+  targetScore?: number;
+  /** La note actuelle telle qu'il la dit : « 12/20 », « B+ ». */
+  scoreLabel?: string;
+  /** L'objectif tel qu'il le dit : « 16/20 », « A ». */
+  targetLabel?: string;
+  /** Ce qui le freine : examStress, hardLessons, homework, forgetting, noStart, motivation. */
+  worries?: string[];
   subject?: string;
+  /** Les formes de question que l'app sait afficher. Absent : des QCM seulement. */
+  kinds?: string[];
 
   // Plan
   text?: string;
@@ -84,7 +144,30 @@ interface RequestBody {
   lessonTitle?: string;
   themeIndex?: number;
   themes?: string[];
+  /** Les notions de chaque thème, données par le plan. */
+  points?: string[][];
+  /** Ce que l'élève saura faire à la fin (l'intro du plan). */
+  objectives?: string[];
+  /**
+   * Le texte de référence rendu par le plan (`contextText`). Il commence par la nature du
+   * support et les rôles des thèmes (`materialHeader`) : c'est par lui qu'ils arrivent ici.
+   */
   context?: string;
+  /** La nature du support, pour une app qui la renverrait d'elle-même ; facultative. */
+  material?: string;
+  /** Le rôle de ce thème, pour une app qui le renverrait d'elle-même ; facultatif. */
+  role?: string;
+
+  // Un examen blanc
+  examTitle?: string;
+  minutes?: number;
+  lessons?: { title?: string; subject?: string; themes?: { title?: string; notes?: string }[] }[];
+
+  // De nouvelles questions
+  practiceThemes?: { title?: string; notes?: string }[];
+  focus?: number[];
+  avoid?: string[];
+  count?: number;
 
   // Conversion
   title?: string;
@@ -98,6 +181,16 @@ const MAX_TOPIC = 400;
 const THEME_DAILY_CEILING = 60;
 const CONVERT_CHAPTER_TEXT = 3_000;
 const CONVERT_TOTAL_TEXT = 40_000;
+const PRACTICE_THEME_NOTES = 2_000;
+const PRACTICE_TOTAL_NOTES = 24_000;
+const PRACTICE_AVOID = 80;
+
+/**
+ * **Le modèle de l'écriture** : les notes et les questions sont ce que l'élève apprend par
+ * cœur. Flash coûte quelques centimes de plus par leçon que Flash-Lite, et ne se trompe pas
+ * de bonne réponse aussi souvent. Les replis de `fal.ts` restent les mêmes.
+ */
+const WRITING_MODEL = "google/gemini-2.5-flash";
 
 function acceptedImages(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
@@ -117,7 +210,7 @@ function acceptedImages(raw: unknown): string[] {
 
 /** Un appel au modèle qui rend un objet JSON, ou `null` quand la réponse est illisible. */
 async function ask(
-  options: { prompt: string; system: string; temperature: number; maxTokens: number; meter: ModelUsage[] },
+  options: { prompt: string; system: string; temperature: number; maxTokens: number; meter: ModelUsage[]; model?: string },
 ): Promise<Record<string, unknown> | null> {
   try {
     const output = await callModel({
@@ -126,6 +219,7 @@ async function ask(
       temperature: options.temperature,
       maxTokens: options.maxTokens,
       meter: options.meter,
+      model: options.model ?? WRITING_MODEL,
     });
     const parsed = parseModelJSON<unknown>(output);
     return parsed && typeof parsed === "object" && !Array.isArray(parsed)
@@ -141,13 +235,18 @@ async function ask(
 
 /** Ce qui précède toujours : la langue d'abord, puis pour qui on écrit. */
 function audienceSections(body: RequestBody, sample: string): string[] {
-  const sections = [languageBrief(body.language), audienceBrief(body.level, body.country)];
-  const stage = stageBrief(body.schoolStage);
-  if (stage) sections.push(stage);
+  const sections = [languageBrief(body.language), learnerBrief(readLearner(body))];
   const discipline = disciplineBrief(detectDiscipline(sample, body.lessonTitle ?? body.title, body.subject));
   if (discipline) sections.push(discipline);
   return sections;
 }
+
+/**
+ * Sans document, le modèle écrit depuis ce qu'il sait : il doit le dire moins plutôt que
+ * l'inventer. Une leçon apprise par cœur ne se corrige plus.
+ */
+const SCRATCH_RULES =
+  "Il n'y a pas de document : écris depuis ce que tu sais, au niveau de l'élève et selon son programme. Si tu n'es pas certain d'un fait, d'une date, d'un chiffre ou d'une définition, ÉCRIS-EN MOINS : une notion de moins vaut mieux qu'une notion fausse, que l'élève apprendrait par cœur. N'invente ni référence, ni citation, ni statistique.";
 
 // MARK: - Le plan
 
@@ -177,6 +276,32 @@ async function plan(request: Request, body: RequestBody): Promise<Response> {
     themes: 0,
     onboarding: body.onboarding === true,
   });
+  try {
+    return await writePlan(body, { caller, fromScratch, shortened, text, images, topic, source });
+  } catch (error) {
+    // Aucun plan n'est parti : la leçon réservée est rendue. Sans cela, une panne du modèle
+    // au premier essai coûtait la leçon offerte, et l'élève tombait sur le paywall sans
+    // avoir rien reçu.
+    await releaseLesson(caller, body.lessonId);
+    throw error;
+  }
+}
+
+/** Le plan lui-même, une fois la leçon réservée : tout ce qui peut échouer est ici. */
+async function writePlan(
+  body: RequestBody,
+  options: {
+    caller: Caller;
+    fromScratch: boolean;
+    shortened: boolean;
+    text: string;
+    images: string[];
+    topic: string;
+    source: string;
+  },
+): Promise<Response> {
+  const { caller, fromScratch, shortened, text, images, topic, source } = options;
+  const lessonId = body.lessonId!;
   await consumeQuota(caller, "generate-lesson");
 
   const meter: ModelUsage[] = [];
@@ -200,10 +325,20 @@ async function plan(request: Request, body: RequestBody): Promise<Response> {
   const reference = [text, visualNotes].filter(Boolean).join("\n\n").slice(0, MAX_SOURCE);
   const shortSource = !fromScratch && reference.length < SHORT_SOURCE;
 
+  const learner = readLearner(body);
+  const volume = volumeOf(learner.tier);
+  const examOriented = isExamOriented(learner);
+  // Une première lecture du support : le modèle la corrige, sauf quand elle ne fait pas de
+  // doute (pas de document, ou une vidéo et sa transcription).
+  const guess: Material = fromScratch ? "topic" : guessMaterial(reference, source);
+  const forcedMaterial: Material | undefined = guess === "topic" || guess === "lecture" ? guess : undefined;
   const sections = audienceSections(body, fromScratch ? topic : reference);
-  sections.push(planShapeBrief({ shortSource, fromScratch }));
+  sections.push(planShapeBrief({ shortSource, fromScratch, topicThemes: volume.topicThemes, maxThemes: volume.maxThemes }));
+  sections.push(planMaterialBrief({ guess, fromScratch, register: depthOf(learner.tier).register, examOriented }));
   sections.push(iconsSection());
+  sections.push(symbolsSection());
   if (fromScratch) {
+    sections.push(SCRATCH_RULES);
     sections.push(`SUJET DEMANDÉ PAR L'ÉLÈVE\n${topic}`);
   } else {
     const reading = readingBrief(body.source, text.length);
@@ -217,7 +352,17 @@ async function plan(request: Request, body: RequestBody): Promise<Response> {
 
   const fallbackTitle = fromScratch ? clampWords(topic, LIMITS.lessonTitleWords) : "Ma leçon";
   const read = (parsed: Record<string, unknown> | null) =>
-    parsed ? readPlan(parsed, { shortSource, shortened, fallbackTitle }) : null;
+    parsed
+      ? readPlan(parsed, {
+        shortSource,
+        shortened,
+        fallbackTitle,
+        maxThemes: volume.maxThemes,
+        fallbackMaterial: guess,
+        forcedMaterial,
+        examOriented,
+      })
+      : null;
 
   let lessonPlan = read(await ask({ prompt, system: PLAN_SYSTEM_PROMPT, temperature: 0.3, maxTokens: PLAN_TOKENS, meter }));
   if (!lessonPlan) {
@@ -235,17 +380,19 @@ async function plan(request: Request, body: RequestBody): Promise<Response> {
 
   // La leçon connaît maintenant son nombre de thèmes : c'est lui qui borne les « Réessayer ».
   await beginLesson(caller, {
-    lessonId: body.lessonId,
+    lessonId,
     kind: "create",
     source,
     themes: lessonPlan.themes.length,
   });
 
+  // Le texte de référence de chaque thème, précédé de la nature du support et des rôles des
+  // thèmes : les apps le renvoient tel quel à chaque thème, c'est par là qu'ils voyagent. Vide en
+  // mode « sujet » (chaque thème s'écrit depuis ce que le modèle sait, et se sait « topic »).
+  const header = materialHeader(lessonPlan.material, lessonPlan.themes.map((entry) => entry.role));
   return jsonResponse({
     plan: lessonPlan,
-    // Le texte de référence de chaque thème. Vide en mode « sujet » : chaque thème s'écrit
-    // alors depuis ce que le modèle sait.
-    contextText: fromScratch ? "" : reference,
+    contextText: fromScratch ? "" : header + reference.slice(0, MAX_SOURCE - header.length),
     meta: { promptVersion: PROMPT_VERSION, usage: totalUsage(meter) },
   });
 }
@@ -266,30 +413,85 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
   await admitThemeCall(caller, body.lessonId);
   await consumeQuota(caller, "generate-lesson-theme", 1, THEME_DAILY_CEILING);
 
-  const context = (body.context ?? "").trim().slice(0, MAX_SOURCE);
+  // L'en-tête du texte de référence dit la nature du support et le rôle de chaque thème ; une
+  // leçon d'avant n'en a pas, et les deux se devinent alors sur le texte et sur le titre.
+  const carried = readMaterialHeader((body.context ?? "").trim());
+  const context = carried.text.trim().slice(0, MAX_SOURCE);
+  const material: Material = readMaterial(body.material) ?? carried.material ??
+    (context ? guessMaterial(context, body.source) : "topic");
+  const carriedRole = carried.roles?.length === themes.length ? carried.roles[index] : undefined;
   const lessonTitle = sanitizeMeta(body.lessonTitle, 200) || themes[index]!;
   const meter: ModelUsage[] = [];
+  const learner = readLearner(body);
+  const volume = volumeOf(learner.tier);
+  // Jusqu'où expliquer : le nombre de blocs et leur longueur suivent la marche, et un examen
+  // nommé appelle toujours une question à son format.
+  const tierDepth = depthOf(learner.tier);
+  const depth = learner.exam ? { ...tierDepth, examFormat: true } : tierDepth;
+  const limits = noteLimits(depth);
+  const examOriented = isExamOriented(learner);
+  const role = allowedRole(
+    typeof body.role === "string" ? readRole(body.role) : carriedRole ?? guessRole(themes[index]!, material),
+    material,
+    examOriented || (material === "topic" && themes.some((title) => guessRole(title, material) === "decrypt")),
+  );
+  const kinds = readKinds(body.kinds);
+  const points = (Array.isArray(body.points) ? body.points : []).slice(0, themes.length).map((list) =>
+    (Array.isArray(list) ? list : []).map((point) => sanitizeMeta(typeof point === "string" ? point : "", 100)).filter(Boolean).slice(0, LIMITS.pointsPerTheme)
+  );
+  const objectives = (Array.isArray(body.objectives) ? body.objectives : [])
+    .map((line) => sanitizeMeta(typeof line === "string" ? line : "", 160))
+    .filter(Boolean)
+    .slice(0, LIMITS.introLines);
 
-  const sections = audienceSections(body, context || lessonTitle);
-  sections.push(themeBrief({ lessonTitle, themeTitle: themes[index]!, themeIndex: index, themes }));
+  const sample = context || lessonTitle;
+  const sections = audienceSections(body, sample);
+  sections.push(themeBrief({
+    lessonTitle,
+    themeTitle: themes[index]!,
+    themeIndex: index,
+    themes,
+    points,
+    objectives,
+    questions: volume.questions,
+    flashcards: volume.flashcards,
+    kinds,
+    depth,
+    material,
+    role,
+    examOriented,
+  }));
+  // Les formes de bloc que la matière appelle : sans elles, chaque thème avait le même squelette.
+  sections.push(lessonShapesBrief(detectDiscipline(sample, body.lessonTitle ?? body.title, body.subject)));
+  // Les questions du thème sont celles de tous les quiz de la leçon : elles suivent la même
+  // consigne de formes que l'entraînement et l'examen blanc, selon la matière et la marche.
+  // Sans elle, un collégien et un étudiant en santé recevaient le même mélange de formes.
+  sections.push(assessmentBrief({
+    tier: learner.tier,
+    disciplines: [detectDiscipline(sample, body.lessonTitle, body.subject)],
+    count: volume.questions,
+  }));
   if (context) {
-    // Le passage du thème, pas tout le document : voir `excerpt.ts`.
-    const excerpt = excerptForTheme(context, themes, index);
-    if (excerpt.length < context.length) {
+    const reading = readingBrief(body.source, context.length);
+    if (reading) sections.push(reading);
+    // Le passage du thème, pas tout le document : voir `excerpt.ts`. Les points que le plan
+    // lui a donnés désignent ses passages mieux que son titre seul.
+    const excerpt = excerptForTheme(context, themes, index, points);
+    const cut = excerpt.length < context.length;
+    if (cut) {
       console.log(JSON.stringify({
         extrait: { theme: index, avant: context.length, apres: excerpt.length },
       }));
-      sections.push(
-        `Les supports ci-dessous sont des EXTRAITS du document de l'élève, choisis pour ce thème ; ${EXCERPT_GAP} marque un passage retiré. Appuie-toi sur eux : ce qu'ils disent passe avant ce que tu sais. Ne recopie pas, réécris en notes.`,
-      );
-    } else {
-      sections.push(
-        "Appuie-toi sur les supports de l'élève ci-dessous : ce qu'ils disent passe avant ce que tu sais. Ne recopie pas, réécris en notes.",
-      );
     }
+    sections.push(
+      (cut
+        ? `Les supports ci-dessous sont des EXTRAITS du document de l'élève, choisis pour ce thème ; ${EXCERPT_GAP} marque un passage retiré. `
+        : "") +
+        "Appuie-toi sur les supports de l'élève ci-dessous : ce qu'ils disent passe avant ce que tu sais. Ne recopie pas, réécris en notes. Ne traite que ce qui concerne CE thème, mais traite-le en entier : ce que le support en dit (ses auteurs, ses dates, ses chiffres, ses exemples) se retrouve dans les notes, condensé, jamais omis.",
+    );
     sections.push(wrapUntrusted("SUPPORTS DE L'ÉLÈVE", excerpt));
   } else {
-    sections.push("Il n'y a pas de document : écris depuis ce que tu sais, au niveau de l'élève, sans rien inventer de douteux.");
+    sections.push(SCRATCH_RULES);
   }
   sections.push("Écris maintenant le JSON de ce thème.");
   const prompt = sections.join("\n\n");
@@ -297,16 +499,16 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
 
   const read = (parsed: Record<string, unknown> | null) => {
     if (!parsed) return null;
-    const notes = readNotes(parsed);
-    const questions = readQuestions(parsed.questions, seed);
-    if (!notes || questions.length < 2) return null;
-    return { notes, questions, flashcards: readFlashcards(parsed.flashcards) };
+    const notes = readNotes(parsed, limits);
+    const questions = finalFirst(readQuestions(parsed.questions, seed, { kinds, language: body.language, max: volume.questions }));
+    if (!notes || questions.length < LIMITS.minQuestions) return null;
+    return { notes, questions, flashcards: readFlashcards(parsed.flashcards, volume.flashcards) };
   };
 
   let written = read(await ask({ prompt, system: THEME_SYSTEM_PROMPT, temperature: 0.35, maxTokens: THEME_TOKENS, meter }));
   if (!written) {
     written = read(await ask({
-      prompt: `${prompt}\n\nTa réponse précédente était illisible ou incomplète. Rends le JSON complet : notes, 4 questions, 3 flashcards.`,
+      prompt: `${prompt}\n\nTa réponse précédente était illisible ou incomplète. Rends le JSON complet : notes, ${volume.questions} questions, ${volume.flashcards} flashcards.`,
       system: THEME_SYSTEM_PROMPT,
       temperature: 0.2,
       maxTokens: THEME_TOKENS,
@@ -366,7 +568,11 @@ async function convert(request: Request, body: RequestBody): Promise<Response> {
       const entry = (rawChapters[index] ?? {}) as Record<string, unknown>;
       return {
         icon: normalizeIcon(entry.icon),
-        questions: readQuestions(entry.questions, `${body.lessonId}:${index}`),
+        questions: finalFirst(readQuestions(entry.questions, `${body.lessonId}:${index}`, {
+          kinds: readKinds(body.kinds).filter((kind) => kind === "choice" || kind === "truefalse"),
+          language: body.language,
+          max: 5,
+        })),
         flashcards: chapter.needsCards ? readFlashcards(entry.flashcards) : [],
       };
     });
@@ -415,6 +621,206 @@ async function convert(request: Request, body: RequestBody): Promise<Response> {
   });
 }
 
+// MARK: - De nouvelles questions
+
+async function practice(request: Request, body: RequestBody): Promise<Response> {
+  const caller = readCaller(request);
+  if (!isLessonId(body.lessonId)) throw new FalError("Identifiant de leçon manquant.", 400);
+
+  const rawThemes = (Array.isArray(body.practiceThemes) ? body.practiceThemes : [])
+    .slice(0, 30)
+    .map((entry, index) => ({
+      title: sanitizeMeta(entry?.title, 120) || `${index + 1}`,
+      notes: (typeof entry?.notes === "string" ? entry.notes : "").trim().slice(0, PRACTICE_THEME_NOTES),
+    }));
+  // Le budget se partage entre tous les thèmes, pas dans l'ordre : les derniers ont leurs
+  // notes, et donc leurs questions.
+  const practiceShares = fairShares(rawThemes.map((theme) => theme.notes.length), PRACTICE_TOTAL_NOTES);
+  const themes = rawThemes.map((theme, index) => ({ title: theme.title, notes: theme.notes.slice(0, practiceShares[index]) }));
+  // Les rangs restent ceux de l'app, même pour un thème sans notes : c'est par eux qu'une
+  // question retrouve son thème.
+  if (!themes.some((theme) => theme.notes.length > 0)) throw new FalError("Cette leçon n'a pas encore de notes.", 400);
+
+  const extra = { kind: "practice", lessonId: body.lessonId } as const;
+  await beginExtra(caller, extra);
+  try {
+    await consumeQuota(caller, "generate-lesson-practice");
+
+    const kinds = readKinds(body.kinds);
+    const count = Math.min(LIMITS.practiceMax, Math.max(4, Math.round(typeof body.count === "number" ? body.count : 10)));
+    const avoid = (Array.isArray(body.avoid) ? body.avoid : [])
+      .map((prompt) => sanitizeMeta(typeof prompt === "string" ? prompt : "", 200))
+      .filter(Boolean)
+      .slice(-PRACTICE_AVOID);
+    const focus = (Array.isArray(body.focus) ? body.focus : [])
+      .filter((n): n is number => typeof n === "number" && Number.isFinite(n))
+      .map((n) => Math.round(n))
+      .slice(0, 12);
+    const lessonTitle = sanitizeMeta(body.lessonTitle, 200) || themes[0]!.title;
+    const meter: ModelUsage[] = [];
+
+    const sections = audienceSections(body, themes.map((theme) => theme.notes).join("\n").slice(0, 6_000));
+    sections.push(practiceBrief({ lessonTitle, themes, focus, avoid, count, kinds }));
+    sections.push(assessmentBrief({
+      tier: readLearner(body).tier,
+      disciplines: [detectDiscipline(themes.map((theme) => theme.notes).join("\n"), lessonTitle, body.subject)],
+      count,
+    }));
+    sections.push(wrapUntrusted("NOTES DE LA LEÇON", practiceNotes(themes)));
+    sections.push("Écris maintenant le JSON des nouvelles questions.");
+    const prompt = sections.join("\n\n");
+    const seed = `${body.lessonId}:practice:${Date.now()}`;
+
+    const read = (parsed: Record<string, unknown> | null) => {
+      if (!parsed) return null;
+      const questions = readQuestions(parsed.questions, seed, { kinds, language: body.language, max: count, avoid })
+        .map((question) => ({
+          ...question,
+          theme: question.theme !== undefined && question.theme >= 0 && question.theme < themes.length ? question.theme : 0,
+        }));
+      return questions.length >= 3 ? questions : null;
+    };
+
+    let questions = read(await ask({ prompt, system: PRACTICE_SYSTEM_PROMPT, temperature: 0.7, maxTokens: PRACTICE_TOKENS, meter }));
+    if (!questions) {
+      questions = read(await ask({
+        prompt: `${prompt}\n\nTa réponse précédente était illisible ou incomplète. Rends le JSON complet, avec ${count} questions.`,
+        system: PRACTICE_SYSTEM_PROMPT,
+        temperature: 0.5,
+        maxTokens: PRACTICE_TOKENS,
+        meter,
+      }));
+    }
+    if (!questions) {
+      throw new FalError("Les nouvelles questions n'ont pas pu s'écrire. Réessaie.", 502);
+    }
+
+    return jsonResponse({
+      questions,
+      meta: { promptVersion: PROMPT_VERSION, usage: totalUsage(meter) },
+    });
+  } catch (error) {
+    // Rien ne s'est écrit : le supplément est rendu, l'essai gratuit ne se perd pas.
+    await refundExtra(caller, extra);
+    throw error;
+  }
+}
+
+// MARK: - L'examen blanc
+
+const EXAM_LESSON_NOTES = 8_000;
+const EXAM_TOTAL_NOTES = 48_000;
+
+async function exam(request: Request, body: RequestBody): Promise<Response> {
+  const caller = readCaller(request);
+  if (!isLessonId(body.lessonId)) throw new FalError("Identifiant d'examen manquant.", 400);
+
+  const rawLessons = (Array.isArray(body.lessons) ? body.lessons : []).slice(0, 8).map((lesson) => ({
+    lesson,
+    themes: (Array.isArray(lesson?.themes) ? lesson.themes : []).slice(0, 14).map((theme, rank) => ({
+      title: sanitizeMeta(theme?.title, 120) || `${rank + 1}`,
+      notes: (typeof theme?.notes === "string" ? theme.notes : "").trim(),
+    })),
+  }));
+  // Le budget se partage équitablement : entre les leçons, puis entre les thèmes de chacune.
+  // Coupé dans l'ordre, il laissait sans notes la fin de chaque leçon, et l'examen blanc
+  // n'interrogeait que sur ses premiers thèmes.
+  const lessonShares = fairShares(
+    rawLessons.map((entry) => Math.min(EXAM_LESSON_NOTES, entry.themes.reduce((sum, theme) => sum + theme.notes.length, 0))),
+    EXAM_TOTAL_NOTES,
+  );
+  const lessons = rawLessons.map(({ lesson, themes: rawThemes }, index) => {
+    const shares = fairShares(rawThemes.map((theme) => theme.notes.length), lessonShares[index]!);
+    const themes = rawThemes.map((theme, rank) => ({ title: theme.title, notes: theme.notes.slice(0, shares[rank]) }));
+    const title = sanitizeMeta(lesson?.title, 160) || `${index + 1}`;
+    const notes = themes.map((theme) => theme.notes).join("\n");
+    // La matière de chaque leçon : un examen sur l'histoire et les maths ne se compose pas
+    // comme un seul sujet.
+    const discipline = detectDiscipline(notes, title, sanitizeMeta(lesson?.subject, 80));
+    return { title, discipline, themes };
+  });
+  if (!lessons.some((lesson) => lesson.themes.some((theme) => theme.notes.length > 0))) {
+    throw new FalError("Ces leçons n'ont pas encore de notes.", 400);
+  }
+
+  const extra = { kind: "exam", lessonId: body.lessonId } as const;
+  await beginExtra(caller, extra);
+  try {
+    await consumeQuota(caller, "generate-lesson-exam");
+
+    const kinds = readKinds(body.kinds);
+    const minutes = Math.min(120, Math.max(10, Math.round(typeof body.minutes === "number" ? body.minutes : 30)));
+    const count = Math.min(LIMITS.examMax, Math.max(6, Math.round(typeof body.count === "number" ? body.count : minutes / 1.5)));
+    const title = sanitizeMeta(body.examTitle, 120);
+    const meter: ModelUsage[] = [];
+
+    const learner = readLearner(body);
+    // Pas la consigne de matière des notes : celle des questions, matière par matière, au
+    // niveau de l'élève (`assessment.ts`).
+    const sections = [languageBrief(body.language), learnerBrief(learner)];
+    sections.push(examBrief({
+      title,
+      lessons: lessons.map((lesson) => ({
+        title: lesson.title,
+        subject: disciplineName(lesson.discipline),
+        themes: lesson.themes.map((theme) => theme.title),
+      })),
+      count,
+      minutes,
+      kinds,
+    }));
+    sections.push(assessmentBrief({ tier: learner.tier, disciplines: lessons.map((lesson) => lesson.discipline), count }));
+    sections.push(wrapUntrusted("NOTES DES LEÇONS", examNotes(lessons)));
+    sections.push("Écris maintenant le JSON de l'examen blanc.");
+    const prompt = sections.join("\n\n");
+    const seed = `${body.lessonId}:exam`;
+
+    const read = (parsed: Record<string, unknown> | null) => {
+      if (!parsed) return null;
+      const questions = readQuestions(parsed.questions, seed, { kinds, language: body.language, max: count })
+        .map((question) => {
+          const lesson = question.lesson !== undefined && question.lesson >= 0 && question.lesson < lessons.length ? question.lesson : 0;
+          const themeCount = lessons[lesson]!.themes.length;
+          const theme = question.theme !== undefined && question.theme >= 0 && question.theme < themeCount ? question.theme : 0;
+          return { ...question, lesson, theme };
+        });
+      if (questions.length < Math.min(6, count)) return null;
+      return {
+        title: clampWords(cleanText(parsed.title, 160).replace(/\*\*/g, ""), 10) || title,
+        questions,
+      };
+    };
+
+    let written = read(await ask({ prompt, system: EXAM_SYSTEM_PROMPT, temperature: 0.5, maxTokens: EXAM_TOKENS, meter }));
+    // Une copie illisible, ou qui ne fait que des QCM, se réécrit une fois. La seconde copie
+    // ne remplace la première que si elle se lit.
+    if (!written || !hasVariedKinds(written.questions.map((question) => question.kind), kinds.length)) {
+      const note = written
+        ? `Ta copie ne variait pas assez ses formes. Réécris-la avec au moins trois formes différentes parmi ${kinds.join(", ")}, ${count} questions.`
+        : `Ta réponse précédente était illisible ou incomplète. Rends le JSON complet, avec ${count} questions.`;
+      written = read(await ask({
+        prompt: `${prompt}\n\n${note}`,
+        system: EXAM_SYSTEM_PROMPT,
+        temperature: 0.4,
+        maxTokens: EXAM_TOKENS,
+        meter,
+      })) ?? written;
+    }
+    if (!written) {
+      throw new FalError("L'examen blanc n'a pas pu se composer. Réessaie.", 502);
+    }
+
+    return jsonResponse({
+      exam: written,
+      meta: { promptVersion: PROMPT_VERSION, usage: totalUsage(meter) },
+    });
+  } catch (error) {
+    // Rien ne s'est écrit : le supplément est rendu, l'essai gratuit ne se perd pas.
+    await refundExtra(caller, extra);
+    throw error;
+  }
+}
+
 Deno.serve((request: Request) =>
   withCors(request, async () => {
     try {
@@ -426,6 +832,10 @@ Deno.serve((request: Request) =>
           return await theme(request, body);
         case "convert":
           return await convert(request, body);
+        case "practice":
+          return await practice(request, body);
+        case "exam":
+          return await exam(request, body);
         default:
           throw new FalError("Étape inconnue.", 400);
       }

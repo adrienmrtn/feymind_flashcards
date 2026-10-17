@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
+<resources>
+    <plurals name="app_friends_friendCount">
+        <item quantity="one">%1$d sõber</item>
+        <item quantity="other">%1$d sõpra</item>
+    </plurals>
+    <plurals name="copy_cards">
+        <item quantity="one">%1$d kaart</item>
+        <item quantity="other">%1$d kaarti</item>
+    </plurals>
+    <plurals name="ios_profile_streakDays">
+        <item quantity="one">%1$d päev järjest</item>
+        <item quantity="other">%1$d päeva järjest</item>
+    </plurals>
+    <plurals name="ios_streak_bestValue">
+        <item quantity="one">%1$d päev</item>
+        <item quantity="other">%1$d päeva</item>
+    </plurals>
+    <plurals name="ios_streak_unit">
+        <item quantity="one">päev järjest</item>
+        <item quantity="other">päeva järjest</item>
+    </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Lisa minu viga mälukaartidele</item>
+        <item quantity="other">Lisa minu %1$d viga mälukaartidele</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">%1$d küsimus on vastamata. Kas esitada ikkagi?</item>
+        <item quantity="other">%1$d küsimust on vastamata. Kas esitada ikkagi?</item>
+    </plurals>
+</resources>

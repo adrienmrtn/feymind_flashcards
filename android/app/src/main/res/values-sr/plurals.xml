@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
+<resources>
+    <plurals name="app_friends_friendCount">
+        <item quantity="one">%1$d prijatelj</item>
+        <item quantity="other">Prijatelja: %1$d</item>
+    </plurals>
+    <plurals name="copy_cards">
+        <item quantity="one">%1$d kartica</item>
+        <item quantity="other">%1$d kartica</item>
+    </plurals>
+    <plurals name="ios_profile_streakDays">
+        <item quantity="one">%1$d dan zaredom</item>
+        <item quantity="other">%1$d dana zaredom</item>
+    </plurals>
+    <plurals name="ios_streak_bestValue">
+        <item quantity="one">%1$d dan</item>
+        <item quantity="other">%1$d dana</item>
+    </plurals>
+    <plurals name="ios_streak_unit">
+        <item quantity="one">dan zaredom</item>
+        <item quantity="other">dana zaredom</item>
+    </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Dodaj moju grešku u kartice</item>
+        <item quantity="other">Dodaj moje greške u kartice (%1$d)</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">%1$d pitanje je bez odgovora. Ipak predati?</item>
+        <item quantity="other">Pitanja bez odgovora: %1$d. Ipak predati?</item>
+    </plurals>
+</resources>

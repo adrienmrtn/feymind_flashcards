@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
+<resources>
+    <plurals name="app_friends_friendCount">
+        <item quantity="one">%1$d kamarát</item>
+        <item quantity="other">kamaráti: %1$d</item>
+    </plurals>
+    <plurals name="copy_cards">
+        <item quantity="one">%1$d kartička</item>
+        <item quantity="other">kartičky: %1$d</item>
+    </plurals>
+    <plurals name="ios_profile_streakDays">
+        <item quantity="one">%1$d deň v rade</item>
+        <item quantity="other">Dní v rade: %1$d</item>
+    </plurals>
+    <plurals name="ios_streak_bestValue">
+        <item quantity="one">%1$d deň</item>
+        <item quantity="other">Dní: %1$d</item>
+    </plurals>
+    <plurals name="ios_streak_unit">
+        <item quantity="one">deň v rade</item>
+        <item quantity="other">dní v rade</item>
+    </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Pridať moju chybu do kartičiek</item>
+        <item quantity="other">Pridať moje chyby (%1$d) do kartičiek</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">%1$d otázka je bez odpovede. Aj tak odovzdať?</item>
+        <item quantity="other">Otázky bez odpovede: %1$d. Aj tak odovzdať?</item>
+    </plurals>
+</resources>

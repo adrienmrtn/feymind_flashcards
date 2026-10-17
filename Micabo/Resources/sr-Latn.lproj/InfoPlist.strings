@@ -1,0 +1,6 @@
+/* Les demandes d'accès d'iOS, dans la langue du téléphone (voir en.lproj). */
+
+"NSCameraUsageDescription" = "Micabo koristi kameru za skeniranje strana tvojih kurseva.";
+"NSPhotoLibraryUsageDescription" = "Micabo pristupa tvojim fotografijama da bi uvezao kurs ili dijagram.";
+"NSMicrophoneUsageDescription" = "Micabo koristi mikrofon za snimanje časa ili glasovne beleške koje pretvara u lekciju.";
+"NSSpeechRecognitionUsageDescription" = "Micabo prepisuje tvoje snimke na tvom telefonu da bi ih pretvorio u lekciju.";

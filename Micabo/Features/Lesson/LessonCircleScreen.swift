@@ -1,14 +1,16 @@
 import SwiftData
 import SwiftUI
 
-/// **Un cercle ouvert**, en plein écran : l'Intro, des Notes, un Quiz, les Flashcards ou la
-/// Conclusion. Chacun se termine par un bouton noir qui coche le cercle et ramène au chemin.
+/// **Une étape ouverte**, en plein écran : l'Intro, des Notes, un Checkpoint ou le Quiz final
+/// (puis « À retenir »). Chacune se termine par un bouton qui coche l'étape et ramène au
+/// chemin.
 struct LessonCircleScreen: View {
     let session: LessonSession
     let circle: PathCircle
     let onDone: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @State private var showsTakeaways = false
 
     var body: some View {
         Group {
@@ -28,15 +30,20 @@ struct LessonCircleScreen: View {
                     onClose: { dismiss() },
                     onDone: onDone
                 )
-            case .flashcards:
-                LessonCardsRun(
-                    session: session,
-                    cards: session.circleCards(),
-                    onClose: { dismiss() },
-                    onDone: onDone
-                )
-            case .conclusion:
-                ConclusionCircleView(session: session, onDone: onDone)
+            case .final:
+                if showsTakeaways {
+                    ConclusionCircleView(session: session, onDone: onDone)
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                } else {
+                    LessonQuizView(
+                        session: session,
+                        questions: session.circleQuiz(circle),
+                        title: circle.title,
+                        circleID: circle.id,
+                        onClose: { dismiss() },
+                        onDone: { withAnimation(.spring(duration: 0.45)) { showsTakeaways = true } }
+                    )
+                }
             }
         }
         .lessonClock(session, activity: circle.activity)
@@ -156,7 +163,7 @@ struct IntroCircleView: View {
                     if let lines = session.plan?.intro.lines, !lines.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
                             ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
-                                Text(line)
+                                KeywordText(line)
                                     .font(MicaboFont.notes)
                                     .foregroundStyle(MicaboColor.ink)
                                     .fixedSize(horizontal: false, vertical: true)
@@ -214,7 +221,7 @@ struct ConclusionCircleView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     HStack {
                         Spacer()
-                        MicaboIconView(icon: .trophy, size: 96)
+                        MicaboIconView(icon: .trophy, size: 84)
                         Spacer()
                     }
                     Text(L10n.t("lesson.conclusion.title", locale: .resolved()))

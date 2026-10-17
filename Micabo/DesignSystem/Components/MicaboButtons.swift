@@ -245,19 +245,24 @@ struct MicaboBottomBar<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
-        VStack(spacing: 0) {
-            LinearGradient(
-                colors: [background.opacity(0), background],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: fade)
-
-            content
-                .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.bottom, MicaboSpacing.sm)
-                .background(background)
-        }
+        content
+            .padding(.horizontal, MicaboSpacing.screen)
+            .padding(.top, MicaboSpacing.sm)
+            .padding(.bottom, MicaboSpacing.sm)
+            .frame(maxWidth: .infinity)
+            .background(background)
+            // **Le fondu recouvre le contenu**, au-dessus de la barre : posé dans la pile, il
+            // tombait sous la page, qui se coupait net à son bord. Il laisse passer le doigt.
+            .overlay(alignment: .top) {
+                LinearGradient(
+                    colors: [background.opacity(0), background],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: fade)
+                .offset(y: -fade)
+                .allowsHitTesting(false)
+            }
     }
 }
 

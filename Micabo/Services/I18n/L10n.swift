@@ -10,23 +10,31 @@ enum L10n {
         return result
     }
 
+    /// **Ce qui manque se lit en anglais**, la langue de base : une phrase oubliée dans une
+    /// langue tombe sur la langue que le plus de monde lit. Le français, langue d'écriture du
+    /// projet, ne reste que le dernier recours.
     static func t(_ key: String, locale: UiLocale, vars: [String: String] = [:]) -> String {
-        let table = table(for: locale)
-        let fallback = SharedI18nCatalogs.fr
-        let ios = IosI18nCatalogs.table(for: locale.rawValue)
-        let iosFallback = IosI18nCatalogs.fr
         // Les phrases de la refonte d'abord : leurs clés commencent toutes par `lesson.`.
         if key.hasPrefix("lesson.") {
             let lesson = LessonI18nCatalogs.table(for: locale.rawValue)[key]
+                ?? (locale == .fr ? nil : LessonI18nCatalogs.en[key])
                 ?? LessonI18nCatalogs.fr[key] ?? key
             return format(lesson, locale: locale, vars: vars)
         }
-        let template = ios[key] ?? table[key] ?? iosFallback[key] ?? fallback[key] ?? key
+        let ios = IosI18nCatalogs.table(for: locale.rawValue)
+        let shared = table(for: locale)
+        let template = ios[key] ?? shared[key]
+            ?? (locale == .fr ? nil : IosI18nCatalogs.en[key] ?? SharedI18nCatalogs.en[key])
+            ?? IosI18nCatalogs.fr[key] ?? SharedI18nCatalogs.fr[key] ?? key
         return format(template, locale: locale, vars: vars)
     }
 
+    /// La table partagée avec le site, qui ne parle que cinq langues : les autres lisent
+    /// l'anglais, et leurs phrases propres vivent dans `IosI18nCatalogs`.
     static func table(for locale: UiLocale) -> [String: String] {
-        SharedI18nCatalogs.table(for: locale.rawValue)
+        SharedI18nCatalogs.sharedLocales.contains(locale.rawValue)
+            ? SharedI18nCatalogs.table(for: locale.rawValue)
+            : SharedI18nCatalogs.en
     }
 
     /// Le français met zéro au singulier (« 0 vue »), l'anglais, l'allemand, l'espagnol et le

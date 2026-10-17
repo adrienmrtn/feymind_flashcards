@@ -143,3 +143,12 @@ Deno.test("les mots du titre : sans accents, sans mots-outils, ramenés à leur 
   assertEquals(termsOf("La crise"), termsOf("les crises"));
   assertEquals(termsOf("Partie 2 : introduction"), []);
 });
+
+Deno.test("les points du plan désignent les passages mieux que le titre", () => {
+  const themes = THEMES.map((_, index) => `Partie ${index + 1}`);
+  const points = themes.map(() => [] as string[]);
+  points[0] = ["Darwin et la sélection naturelle"];
+  const excerpt = excerptForTheme(COURSE, themes, 0, points);
+  assert(excerpt.startsWith("Chapitre 1 : La photosynthèse"), "la place garde le début");
+  assert(excerpt.includes("Darwin"), "le point a ramené le chapitre de la fin");
+});

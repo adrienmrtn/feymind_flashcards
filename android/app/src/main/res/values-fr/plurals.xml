@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
+<resources>
+    <plurals name="app_friends_friendCount">
+        <item quantity="one">%1$d ami</item>
+        <item quantity="other">%1$d amis</item>
+    </plurals>
+    <plurals name="copy_cards">
+        <item quantity="one">%1$d carte</item>
+        <item quantity="other">%1$d cartes</item>
+    </plurals>
+    <plurals name="ios_profile_streakDays">
+        <item quantity="one">%1$d jour d\'affilée</item>
+        <item quantity="other">%1$d jours d\'affilée</item>
+    </plurals>
+    <plurals name="ios_streak_bestValue">
+        <item quantity="one">%1$d jour</item>
+        <item quantity="other">%1$d jours</item>
+    </plurals>
+    <plurals name="ios_streak_unit">
+        <item quantity="one">jour de suite</item>
+        <item quantity="other">jours de suite</item>
+    </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Ajouter mon erreur aux flashcards</item>
+        <item quantity="other">Ajouter mes %1$d erreurs aux flashcards</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">Il reste %1$d question sans réponse. Rendre quand même ?</item>
+        <item quantity="other">Il reste %1$d questions sans réponse. Rendre quand même ?</item>
+    </plurals>
+</resources>

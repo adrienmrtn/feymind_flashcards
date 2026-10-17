@@ -173,7 +173,7 @@ extension AIServiceError {
             } else if Self.isParserJargon(message) {
                 self = .server(L10n.t("ios.ai.writeFailed", locale: .resolved()))
             } else {
-                self = .server(message)
+                self = .server(ServerMessage.localized(message, fallback: "ios.ai.writeFailed"))
             }
         }
     }

@@ -14,10 +14,11 @@
  * installées envoient le texte entier, et c'est ici qu'il est réduit, pour elles aussi.
  *
  * - Le support est coupé en passages de la taille d'un paragraphe.
- * - Chaque passage reçoit une note pour le thème : les mots du titre qu'il contient, pesés
- *   par leur rareté (un mot présent partout ne désigne rien) et par le nombre de titres qui
- *   le partagent (« guerre » dans tous les thèmes d'une leçon sur la guerre froide ne
- *   distingue aucun thème).
+ * - Chaque passage reçoit une note pour le thème : les mots de son titre et de ses points
+ *   (les notions que le plan lui attribue, avec les noms, les dates et les chiffres du
+ *   support) qu'il contient, pesés par leur rareté (un mot présent partout ne désigne rien)
+ *   et par le nombre de thèmes qui les partagent (« guerre » dans tous les thèmes d'une leçon
+ *   sur la guerre froide ne distingue aucun thème).
  * - S'y ajoute la place : les thèmes sont écrits « dans l'ordre où on les apprend », et pour
  *   un cours c'est l'ordre du document. Le thème `i` sur `N` est donc cherché autour du
  *   `i`-ième `N`-ième du texte. Quand aucun mot du titre ne se retrouve, c'est elle seule
@@ -77,9 +78,15 @@ interface Passage {
 
 /**
  * Les passages du document qui servent le thème `index`, ou le document entier quand il est
- * court. `themes` est la liste complète des titres, dans l'ordre du plan.
+ * court. `themes` est la liste complète des titres, dans l'ordre du plan ; `points`, quand le
+ * plan en a donné, les notions de chaque thème, dans le même ordre.
  */
-export function excerptForTheme(context: string, themes: readonly string[], index: number): string {
+export function excerptForTheme(
+  context: string,
+  themes: readonly string[],
+  index: number,
+  points: readonly (readonly string[])[] = [],
+): string {
   const text = context.trim();
   if (text.length <= WHOLE_SOURCE || themes.length === 0) return text;
 
@@ -89,7 +96,7 @@ export function excerptForTheme(context: string, themes: readonly string[], inde
   const passages = splitPassages(text);
   if (passages.length <= 1) return text.slice(0, budget);
 
-  const scores = scorePassages(passages, themes, index);
+  const scores = scorePassages(passages, themes, index, points);
   const order = passages
     .map((_, rank) => rank)
     .sort((a, b) => scores[b]! - scores[a]! || a - b);
@@ -197,8 +204,11 @@ function scorePassages(
   passages: readonly Passage[],
   themes: readonly string[],
   index: number,
+  points: readonly (readonly string[])[],
 ): number[] {
-  const titleTerms = themes.map((title) => new Set(termsOf(title)));
+  const titleTerms = themes.map((title, rank) =>
+    new Set(termsOf([title, ...(points[rank] ?? [])].join(" ")))
+  );
   const own = titleTerms[index] ?? new Set<string>();
 
   // Combien de passages, et combien de titres, portent chaque mot du thème.

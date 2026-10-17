@@ -5,14 +5,24 @@ import SwiftUI
 /// État partagé du parcours d'accueil. Les réponses sont écrites au fil de l'eau
 /// dans `OnboardingPreferences` : quitter l'app en cours de route ne les perd pas, et
 /// l'écran atteint non plus (`resuming(in:)`).
+///
+/// **Il n'y a plus de cours dans le parcours** : ni supports à déposer, ni cours de
+/// démonstration, ni cartes. La première leçon se crée depuis Home.
 @Observable
 final class OnboardingModel {
     private(set) var step: OnboardingStep = .hookLogo {
         didSet {
+            arrivedAt = Date()
             guard !isRestoring else { return }
             OnboardingPreferences.resumeStep = step
         }
     }
+
+    /// **Le temps minimal sur une page avant de la quitter.** Un second appui sur le rond, un
+    /// doigt resté posé à la fin du chargement : la page suivante se passait avant d'avoir été
+    /// vue. Posé par la vue du parcours ; les tests, sans vue, avancent librement.
+    @ObservationIgnored var minimumDwell: TimeInterval = 0
+    @ObservationIgnored private var arrivedAt = Date.distantPast
 
     /// Vrai quand le parcours reprend là où une app fermée l'avait laissé.
     private(set) var isResumed = false
@@ -124,60 +134,6 @@ final class OnboardingModel {
         }
     }
 
-    // MARK: Le cours
-
-    /// **A-t-il ses supports ?** La seule branche du parcours : oui mène aux cases de
-    /// dépôt, non au choix d'un cours de démonstration. Sans réponse, les deux se sautent.
-    var hasMaterials: Bool? {
-        didSet {
-            guard !isRestoring else { return }
-            OnboardingPreferences.resumeHasMaterials = hasMaterials
-            guard let hasMaterials, hasMaterials != oldValue else { return }
-            Analytics.track(.onboardingAnswer, ["field": "hasMaterials", "value": .flag(hasMaterials)])
-        }
-    }
-
-    /// Les supports déposés, dans le même objet que la création d'un deck : c'est lui que
-    /// la leçon lit (`LessonCreation.onboarding`), et le parcours n'en invente pas un second. La
-    /// provenance est posée d'avance : le parcours ne demande ni matière, ni nom, ni
-    /// épreuve — le titre vient du modèle, et le reste se règle plus tard dans l'app.
-    let deckSetup: DeckSetup = {
-        let setup = DeckSetup()
-        setup.source = .materials
-        setup.purpose = .justStudying
-        return setup
-    }()
-
-    /// Le cours de démonstration choisi, quand il n'a pas ses supports.
-    var demoCourse: OnboardingDemoCourse? {
-        didSet {
-            guard !isRestoring else { return }
-            OnboardingPreferences.resumeDemoCourseID = demoCourse?.id
-            guard let demoCourse, demoCourse.id != oldValue?.id else { return }
-            Analytics.track(.onboardingAnswer, ["field": "demoCourse", "value": .text(demoCourse.id)])
-        }
-    }
-
-    /// **Le cours construit pendant le parcours**, réel ou de démonstration, tel qu'il est
-    /// enregistré. C'est lui que l'écran du cours montre, et lui que l'app ouvre à la sortie.
-    var builtCourse: Course? {
-        didSet {
-            guard !isRestoring else { return }
-            OnboardingPreferences.resumeCourseID = builtCourse?.id
-        }
-    }
-
-    /// **Vrai quand la construction a échoué et qu'on continue sans cours.** Le cours, les
-    /// cartes et le bravo se sautent alors : on ne montre pas un plan vide, et on ne fait pas
-    /// réviser trois cartes qui n'existent pas.
-    var courseUnavailable = false
-
-    /// Vrai quand le cours qu'on montre est le cours de démonstration, et non les supports
-    /// de l'élève : les trois cartes d'entraînement viennent alors du jeu embarqué.
-    var isDemoCourse: Bool {
-        hasMaterials == false
-    }
-
     /// Le registre de rédaction, seule forme sous laquelle le niveau sort du parcours.
     var level: StudyLevel? {
         stage?.level
@@ -237,20 +193,12 @@ final class OnboardingModel {
     // MARK: Avancer, revenir
 
     private func isSkipped(_ step: OnboardingStep) -> Bool {
-        step.isSkipped(for: country, hasMaterials: hasMaterials, courseUnavailable: courseUnavailable)
+        step.isSkipped(for: country)
     }
 
-    /// **Revenir sur un écran hors des règles du retour**, quand quelque chose a raté : la
-    /// construction du cours renvoie aux supports. Le verrou du glissement s'applique
-    /// comme partout.
-    func jump(to target: OnboardingStep) {
-        guard !transitionLock, target != step else { return }
-        step = target
-    }
-
-    /// **La languette du compte**, montée sur la page qui annonce la fiche. Apple, Google, ou
-    /// « Passer » : aucune des trois ne coûte une page au parcours. Qui passe garde ses cours
-    /// sur le téléphone, et se connecte plus tard depuis les réglages.
+    /// **La languette du compte**, montée sur le dernier écran de Mika, juste avant l'offre.
+    /// Apple, Google, ou « Passer » : aucune des trois ne coûte une page au parcours. Qui
+    /// passe garde ses leçons sur le téléphone, et se connecte plus tard depuis les réglages.
     var isAccountSheetPresented = false
     /// Vrai une fois la languette refermée, par une connexion ou par « Passer ». Le retour
     /// n'y ramène pas : on ne redemande pas un compte à qui vient de répondre.
@@ -269,9 +217,10 @@ final class OnboardingModel {
 
     func advance() {
         guard !transitionLock else { return }
-        // Le compte se demande en quittant l'annonce de la fiche, juste avant de déposer
-        // ses supports : c'est là qu'il protège quelque chose.
-        if step == .sheetIntro, !didAnswerAccount, !hasAccount {
+        guard Date().timeIntervalSince(arrivedAt) >= minimumDwell else { return }
+        // Le compte se demande en quittant le dernier écran de Mika, juste avant l'offre :
+        // c'est là qu'il protège quelque chose — le profil qu'on vient de construire.
+        if step == .mikaRelief, !didAnswerAccount, !hasAccount {
             isAccountSheetPresented = true
             return
         }
@@ -288,28 +237,31 @@ final class OnboardingModel {
 
     /// **Revenir d'un écran.**
     ///
-    /// Une réponse donnée doit pouvoir se corriger : quelqu'un qui se trompe de pays au
-    /// premier écran du quiz découvrirait son erreur douze écrans plus tard. On revient
-    /// jusqu'au pays, et pas plus loin ; on ne revient plus après les rappels, parce que
-    /// tout ce qui suit est un résultat, une démonstration, un compte ou une offre, et que
-    /// rien de tout ça ne se défait.
+    /// Une réponse donnée doit pouvoir se corriger, et la langue se rechoisir : quelqu'un
+    /// dont le téléphone a mal deviné la langue, ou qui n'a pas vu le sélecteur de
+    /// l'accroche, doit pouvoir y retourner. On revient donc depuis tous les écrans, sauf
+    /// les chargements et le paywall, et jusqu'à l'accroche.
     ///
-    /// Les écrans sautés le restent, dans ce sens comme dans l'autre : on ne fait pas
-    /// apparaître au retour une question qu'on n'a pas posée à l'aller.
+    /// Le retour enjambe les chargements (ils avancent seuls : y revenir renverrait aussitôt
+    /// en avant) et les écrans sautés à l'aller : on ne fait pas apparaître au retour une
+    /// question qu'on n'a pas posée.
     func goBack() {
-        guard !transitionLock, canGoBack else { return }
-        var previous = step.previous
-        while let candidate = previous, isSkipped(candidate) {
-            previous = candidate.previous
-        }
-        guard let previous, previous.rawValue >= OnboardingStep.firstReturnable.rawValue else { return }
+        guard !transitionLock, let previous = returnTarget else { return }
         step = previous
     }
 
     /// Vrai quand il y a un écran en arrière qui accepte qu'on y revienne.
     var canGoBack: Bool {
-        step.rawValue > OnboardingStep.firstReturnable.rawValue
-            && step.rawValue <= OnboardingStep.lastReturnable.rawValue
+        step.allowsReturn && returnTarget != nil
+    }
+
+    /// L'écran où le retour mène : le précédent qui n'est ni sauté ni un chargement.
+    private var returnTarget: OnboardingStep? {
+        var previous = step.previous
+        while let candidate = previous, isSkipped(candidate) || candidate.isLoading {
+            previous = candidate.previous
+        }
+        return previous
     }
 
     /// Recopie les réponses dans les réglages à chaque changement d'écran :
@@ -338,8 +290,7 @@ extension OnboardingModel {
     /// rien à reprendre.
     ///
     /// Les réponses sont relues de `OnboardingPreferences`, où `persist()` les écrit à
-    /// chaque écran ; le cours construit est retrouvé dans la bibliothèque. L'écran de
-    /// reprise est celui de `OnboardingStep.resumePoint`.
+    /// chaque écran. L'écran de reprise est celui de `OnboardingStep.resumePoint`.
     ///
     /// `OnboardingModel()` reste un parcours neuf : seule la vue du parcours reprend.
     static func resuming(in context: ModelContext?) -> OnboardingModel {
@@ -350,20 +301,10 @@ extension OnboardingModel {
         defer { model.isRestoring = false }
 
         model.restoreAnswers()
-        if let id = OnboardingPreferences.resumeCourseID, let context {
-            model.builtCourse = course(id: id, in: context)
-        }
-        model.hasMaterials = OnboardingPreferences.resumeHasMaterials
-        model.demoCourse = OnboardingPreferences.resumeDemoCourseID.flatMap {
-            OnboardingDemoCatalog.course(id: $0, locale: .resolved())
-        }
         // Qui a passé la connexion ne la revoit pas : `RootView` lit le même drapeau.
         model.didAnswerAccount = UserDefaults.standard.bool(forKey: AccountGate.skippedKey)
 
-        let target = saved.resumePoint(
-            hasName: model.displayName.nilIfBlank != nil,
-            hasCourse: model.builtCourse != nil
-        )
+        let target = saved.resumePoint(hasName: model.displayName.nilIfBlank != nil)
         guard target != .hookLogo else { return OnboardingModel() }
         model.step = target
         model.isResumed = true
@@ -386,12 +327,6 @@ extension OnboardingModel {
         targetScore = OnboardingPreferences.targetScore
         dailyMinutes = OnboardingPreferences.answeredDailyMinutes
         studyHour = OnboardingPreferences.studyHour
-    }
-
-    private static func course(id target: UUID, in context: ModelContext) -> Course? {
-        var descriptor = FetchDescriptor<Course>(predicate: #Predicate { $0.id == target })
-        descriptor.fetchLimit = 1
-        return try? context.fetch(descriptor).first
     }
 }
 

@@ -65,7 +65,7 @@ struct Institution: Identifiable, Hashable, Codable {
     }
 
     var subtitle: String {
-        let country = Locale.current.localizedString(forRegionCode: countryCode) ?? countryCode
+        let country = UiLocale.resolved().foundation.localizedString(forRegionCode: countryCode) ?? countryCode
         if countryCode.isEmpty {
             return kind.label
         }

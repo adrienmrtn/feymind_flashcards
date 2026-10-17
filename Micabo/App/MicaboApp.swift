@@ -79,14 +79,15 @@ struct MicaboApp: App {
         .modelContainer(container)
     }
 
+    /// **L'apparence de l'app, partout** : le parcours d'accueil et les paywalls compris.
+    /// Ils étaient forcés en clair tant que le parcours n'était pas fini, ce qui leur donnait
+    /// d'autres couleurs que l'app qui les suit.
     private var colorScheme: ColorScheme? {
-        guard didCompleteOnboarding, !pendingFirstImport else { return .light }
-        return appearance.appearance.colorScheme
+        appearance.appearance.colorScheme
     }
 
     private var app: some View {
-        // L'apparence (jour, nuit, crépuscule) est posée ici. Le parcours
-        // d'accueil peut encore forcer le sombre le temps de ses écrans d'encre.
+        // L'apparence (jour, nuit) est posée ici, pour toute l'app.
         RootView()
             // Une langue choisie dans l'app redessine tout : les écrans de la refonte lisent
             // leurs phrases au moment de se dessiner, pas dans le magasin de langue.
@@ -100,6 +101,7 @@ struct MicaboApp: App {
             .environment(uiLocale)
             .environment(lessons)
             .environment(\.locale, uiLocale.locale.foundation)
+            .environment(\.layoutDirection, uiLocale.locale.isRightToLeft ? .rightToLeft : .leftToRight)
             .preferredColorScheme(colorScheme)
             // Avant le reste de la tâche : ouvrir la session de statistiques est
             // quelques microsecondes, et tout ce qui suit peut vouloir tracer.

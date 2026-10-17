@@ -164,13 +164,19 @@ struct LessonCreationFlow: View {
     }
 
     @State private var pendingExamDate: Date?
+    /// L'identifiant de la leçon, gardé d'un essai à l'autre. Le serveur réserve la leçon sous
+    /// cet identifiant (`begin_lesson`) : « Réessayer » avec un identifiant neuf la comptait
+    /// comme une seconde leçon, et un élève sans abonnement dont le premier plan avait échoué
+    /// tombait sur le paywall.
+    @State private var lessonID = UUID()
 
     private func start(examDate: Date?) {
         pendingExamDate = examDate
         failure = nil
         stage = nil
         step = .generating
-        let request = composer.creation(examDate: examDate)
+        var request = composer.creation(examDate: examDate)
+        request.lessonID = lessonID
         let properties: [String: AnalyticsValue] = [
             "source": .text(request.source.rawValue),
             "chars": .number(Double(request.text.count)),

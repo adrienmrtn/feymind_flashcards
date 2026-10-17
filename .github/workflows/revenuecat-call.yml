@@ -1,0 +1,47 @@
+# **Des appels à l'API RevenueCat v2**, décrits dans store/revenuecat-call.json, avec
+# la clé du dépôt. Sert à configurer le catalogue des stores (plans d'état du store) sans
+# exposer la clé. Limité au projet Micabo ; la réponse s'imprime dans le journal.
+name: RevenueCat (appel)
+
+on:
+  push:
+    branches: ["claude/**"]
+    paths:
+      - "store/revenuecat-call.json"
+
+permissions:
+  contents: read
+
+jobs:
+  call:
+    name: Appeler RevenueCat
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Appel
+        env:
+          KEY: ${{ secrets.REVENUECAT_API_KEY }}
+          PROJECT: ${{ secrets.REVENUECAT_PROJECT_ID || 'proj415c7a8d' }}
+        run: |
+          # store/revenuecat-call.json : {"calls": [{"method": "...", "path": "...", "body": {...}}]}
+          n=$(jq '.calls | length' store/revenuecat-call.json)
+          for i in $(seq 0 $((n - 1))); do
+          METHOD=$(jq -r ".calls[$i].method" store/revenuecat-call.json)
+          CALL_PATH=$(jq -r ".calls[$i].path" store/revenuecat-call.json)
+          BODY=$(jq -c ".calls[$i].body // empty" store/revenuecat-call.json)
+          case "$METHOD" in GET|POST|PATCH|DELETE) ;; *) echo "Méthode refusée"; exit 1 ;; esac
+          case "$CALL_PATH" in /*) ;; *) echo "Le chemin commence par /"; exit 1 ;; esac
+          url="https://api.revenuecat.com/v2/projects/${PROJECT}${CALL_PATH}"
+          echo "$METHOD $CALL_PATH"
+          if [ -n "$BODY" ]; then
+            code=$(curl -sS -o out.json -w '%{http_code}' -X "$METHOD" "$url" -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" --data "$BODY")
+          else
+            code=$(curl -sS -o out.json -w '%{http_code}' -X "$METHOD" "$url" -H "Authorization: Bearer $KEY")
+          fi
+          echo "HTTP $code"
+          echo "=== RÉPONSE ==="
+          cat out.json
+          echo
+          echo "=== FIN ==="
+          done
