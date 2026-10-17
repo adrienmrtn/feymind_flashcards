@@ -27,9 +27,9 @@ android {
         // Le numéro de build vient de la CI (un de plus à chaque envoi), comme pour TestFlight.
         versionCode = (System.getenv("MICABO_VERSION_CODE") ?: "1").toInt()
         versionName = "1.9"
-        // La clé publique Android de RevenueCat (`goog_…`), posée par la CI quand l'app Google
-        // Play existe dans RevenueCat. Vide : le SDK est embarqué mais pas démarré.
-        buildConfigField("String", "REVENUECAT_KEY", "\"${System.getenv("REVENUECAT_ANDROID_KEY") ?: ""}\"")
+        // La clé publique Android de RevenueCat (`goog_…`) : publique, l'app l'embarque. La CI
+        // peut la remplacer par REVENUECAT_ANDROID_KEY.
+        buildConfigField("String", "REVENUECAT_KEY", "\"${System.getenv("REVENUECAT_ANDROID_KEY")?.takeIf { it.isNotBlank() } ?: "goog_tWKnMrBUAJTiDzOnwmvfIWTQhqY"}\"")
     }
 
     signingConfigs {
