@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_exams_countdown_today">dnes</string>
     <string name="common_continue">Pokračovať</string>
     <string name="country_be">Belgicko</string>
     <string name="country_ca">Kanada</string>
@@ -169,6 +170,10 @@
     <string name="ios_yt_noCaptions">Micabo toto video nedokázalo prečítať. Skús to znova alebo vlož text kurzu.</string>
     <string name="ios_yt_tooShort">Toto video je na kartičky prikrátke.</string>
     <string name="ios_yt_unavailable">Toto video nie je dostupné.</string>
+    <string name="lesson_audio_empty">V tejto nahrávke skoro nič nepočujem.</string>
+    <string name="lesson_audio_micDenied">Povoľ v Nastaveniach mikrofón, aby sa dala nahrať hodina.</string>
+    <string name="lesson_audio_tooLong">Táto nahrávka je dlhšia ako 90 minút: rozdeľ ju na dve.</string>
+    <string name="lesson_audio_unreadable">Tento zvukový súbor sa nedá prečítať.</string>
     <string name="lesson_cards_again">Znova</string>
     <string name="lesson_cards_all">Všetky kartičky (%1$s)</string>
     <string name="lesson_cards_answer">Odpoveď</string>
@@ -276,6 +281,7 @@
     <string name="lesson_home_supportsFull">Max. %1$s materiálov na lekciu.</string>
     <string name="lesson_home_title">Čo sa chceš dnes **naučiť**?</string>
     <string name="lesson_import_add">Pridať</string>
+    <string name="lesson_import_audioFile">Vybrať zvukový súbor</string>
     <string name="lesson_import_instruction">Čo si z toho študent chce odniesť: %1$s</string>
     <string name="lesson_import_library">Vybrať fotky</string>
     <string name="lesson_import_paste">Vložiť</string>
@@ -283,6 +289,9 @@
     <string name="lesson_import_pdfSub">Kurz, podklady alebo výpisky</string>
     <string name="lesson_import_photo">Fotka</string>
     <string name="lesson_import_photoSub">Zošit, tabuľa, učebnica</string>
+    <string name="lesson_import_record">Nahrať</string>
+    <string name="lesson_import_recordStop">Zastaviť nahrávanie</string>
+    <string name="lesson_import_recordTitle">Nahraj hodinu</string>
     <string name="lesson_import_scan">Skenovať strany</string>
     <string name="lesson_import_textPlaceholder">Poznámky z hodiny, článok…</string>
     <string name="lesson_import_textSub">Vlož svoje poznámky</string>

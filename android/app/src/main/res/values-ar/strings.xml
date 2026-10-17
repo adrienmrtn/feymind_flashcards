@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_exams_countdown_today">اليوم</string>
     <string name="common_continue">متابعة</string>
     <string name="country_be">بلجيكا</string>
     <string name="country_ca">كندا</string>
@@ -171,6 +172,10 @@
     <string name="ios_yt_noCaptions">لم يتمكن Micabo من قراءة هذا الفيديو. حاول مجددًا، أو الصق نص الدرس.</string>
     <string name="ios_yt_tooShort">هذا الفيديو قصير جدًا لإنشاء بطاقات.</string>
     <string name="ios_yt_unavailable">هذا الفيديو غير متاح.</string>
+    <string name="lesson_audio_empty">بالكاد سمعت شيئًا في هذا التسجيل.</string>
+    <string name="lesson_audio_micDenied">اسمح باستخدام الميكروفون في الإعدادات لتسجيل حصتك.</string>
+    <string name="lesson_audio_tooLong">هذا التسجيل أطول من 90 دقيقة: قسّمه إلى جزأين.</string>
+    <string name="lesson_audio_unreadable">لا يمكن قراءة هذا الملف الصوتي.</string>
     <string name="lesson_cards_again">مجددًا</string>
     <string name="lesson_cards_all">كل البطاقات (%1$s)</string>
     <string name="lesson_cards_answer">الإجابة</string>
@@ -280,6 +285,7 @@
     <string name="lesson_home_supportsFull">حتى %1$s مواد لكل درس.</string>
     <string name="lesson_home_title">ماذا تريد أن **تتعلّم** اليوم؟</string>
     <string name="lesson_import_add">إضافة</string>
+    <string name="lesson_import_audioFile">اختر ملفًا صوتيًا</string>
     <string name="lesson_import_instruction">ما يريد الطالب أن يستفيده منه: %1$s</string>
     <string name="lesson_import_library">اختر صورًا</string>
     <string name="lesson_import_paste">لصق</string>
@@ -287,6 +293,9 @@
     <string name="lesson_import_pdfSub">درس، مذكرة أو ملخص</string>
     <string name="lesson_import_photo">صورة</string>
     <string name="lesson_import_photoSub">دفترك، السبورة، كتاب مدرسي</string>
+    <string name="lesson_import_record">تسجيل</string>
+    <string name="lesson_import_recordStop">أوقف التسجيل</string>
+    <string name="lesson_import_recordTitle">سجّل حصتك</string>
     <string name="lesson_import_scan">مسح الصفحات ضوئيًا</string>
     <string name="lesson_import_text">نص</string>
     <string name="lesson_import_textPlaceholder">ملاحظات حصتك، مقال…</string>
@@ -392,4 +401,5 @@
     <string name="lesson_theme_system">مثل الهاتف</string>
     <string name="x_onb_language">بأي لغة تدرس؟</string>
     <string name="x_paywall_subscribe">اشترك في Pro</string>
+    <string name="x_record_limit">حتى 90 دقيقة. يحوّل ميكا تسجيلك إلى نص ثم يكتب درسك.</string>
 </resources>

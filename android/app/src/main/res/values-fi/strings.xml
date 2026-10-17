@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_exams_countdown_today">tänään</string>
     <string name="common_continue">Jatka</string>
     <string name="country_be">Belgia</string>
     <string name="country_ca">Kanada</string>
@@ -166,6 +167,10 @@
     <string name="ios_yt_noCaptions">Micabo ei pystynyt lukemaan videota. Yritä uudelleen tai liitä kurssin teksti.</string>
     <string name="ios_yt_tooShort">Video on liian lyhyt korttien luomiseen.</string>
     <string name="ios_yt_unavailable">Videota ei saada auki.</string>
+    <string name="lesson_audio_empty">Tallenteesta ei kuulunut juuri mitään.</string>
+    <string name="lesson_audio_micDenied">Salli mikrofoni asetuksissa, jotta voit tallentaa tunnin.</string>
+    <string name="lesson_audio_tooLong">Tallenne on yli 90 minuuttia: jaa se kahteen osaan.</string>
+    <string name="lesson_audio_unreadable">Äänitiedostoa ei voi lukea.</string>
     <string name="lesson_cards_again">Uudelleen</string>
     <string name="lesson_cards_all">Kaikki kortit (%1$s)</string>
     <string name="lesson_cards_answer">Vastaus</string>
@@ -272,6 +277,7 @@
     <string name="lesson_home_supportsFull">Enintään %1$s materiaalia oppituntia kohden.</string>
     <string name="lesson_home_title">Mitä haluat **oppia** tänään?</string>
     <string name="lesson_import_add">Lisää</string>
+    <string name="lesson_import_audioFile">Valitse äänitiedosto</string>
     <string name="lesson_import_instruction">Mitä opiskelija haluaa siitä irti: %1$s</string>
     <string name="lesson_import_library">Valitse kuvat</string>
     <string name="lesson_import_paste">Liitä</string>
@@ -279,6 +285,9 @@
     <string name="lesson_import_pdfSub">Kurssi, moniste tai tiivistelmä</string>
     <string name="lesson_import_photo">Kuva</string>
     <string name="lesson_import_photoSub">Vihkosi, taulu, oppikirja</string>
+    <string name="lesson_import_record">Tallenna</string>
+    <string name="lesson_import_recordStop">Lopeta tallennus</string>
+    <string name="lesson_import_recordTitle">Tallenna tuntisi</string>
     <string name="lesson_import_scan">Skannaa sivuja</string>
     <string name="lesson_import_text">Teksti</string>
     <string name="lesson_import_textPlaceholder">Tuntimuistiinpanosi, artikkeli…</string>

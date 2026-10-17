@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_exams_countdown_today">täna</string>
     <string name="common_continue">Jätka</string>
     <string name="country_be">Belgia</string>
     <string name="country_ca">Kanada</string>
@@ -168,6 +169,10 @@
     <string name="ios_yt_noCaptions">Micabo ei saanud seda videot lugeda. Proovi uuesti või kleebi kursuse tekst.</string>
     <string name="ios_yt_tooShort">See video on kaartide loomiseks liiga lühike.</string>
     <string name="ios_yt_unavailable">See video pole kättesaadav.</string>
+    <string name="lesson_audio_empty">Selles salvestises oli vaevu midagi kuulda.</string>
+    <string name="lesson_audio_micDenied">Luba seadetes mikrofon, et oma tundi salvestada.</string>
+    <string name="lesson_audio_tooLong">See salvestis on pikem kui 90 minutit: jaga see kaheks.</string>
+    <string name="lesson_audio_unreadable">Seda helifaili ei saa lugeda.</string>
     <string name="lesson_cards_again">Uuesti</string>
     <string name="lesson_cards_all">Kõik kaardid (%1$s)</string>
     <string name="lesson_cards_answer">Vastus</string>
@@ -275,6 +280,7 @@
     <string name="lesson_home_supportsFull">Kuni %1$s materjali tunni kohta.</string>
     <string name="lesson_home_title">Mida sa täna **õppida** tahad?</string>
     <string name="lesson_import_add">Lisa</string>
+    <string name="lesson_import_audioFile">Vali helifail</string>
     <string name="lesson_import_instruction">Mida õpilane tahab sellest teada saada: %1$s</string>
     <string name="lesson_import_library">Vali fotod</string>
     <string name="lesson_import_paste">Kleebi</string>
@@ -282,6 +288,9 @@
     <string name="lesson_import_pdfSub">Kursus, jaotusmaterjal või konspekt</string>
     <string name="lesson_import_photo">Foto</string>
     <string name="lesson_import_photoSub">Sinu vihik, tahvel, õpik</string>
+    <string name="lesson_import_record">Salvesta</string>
+    <string name="lesson_import_recordStop">Lõpeta salvestamine</string>
+    <string name="lesson_import_recordTitle">Salvesta oma tund</string>
     <string name="lesson_import_scan">Skanni lehti</string>
     <string name="lesson_import_text">Tekst</string>
     <string name="lesson_import_textPlaceholder">Sinu tunnimärkmed, artikkel…</string>

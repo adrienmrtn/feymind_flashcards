@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_exams_countdown_today">hoje</string>
     <string name="common_continue">Continuar</string>
     <string name="country_be">Bélgica</string>
     <string name="country_ca">Canadá</string>
@@ -169,6 +170,10 @@
     <string name="ios_yt_noCaptions">O Micabo não conseguiu ler este vídeo. Tente de novo, ou cole o texto da matéria.</string>
     <string name="ios_yt_tooShort">Este vídeo é curto demais para gerar cartões.</string>
     <string name="ios_yt_unavailable">Este vídeo não está disponível.</string>
+    <string name="lesson_audio_empty">Quase não ouvi nada nesta gravação.</string>
+    <string name="lesson_audio_micDenied">Permita o microfone nos Ajustes para gravar sua aula.</string>
+    <string name="lesson_audio_tooLong">Esta gravação passa de 90 minutos: divida em duas.</string>
+    <string name="lesson_audio_unreadable">Não é possível ler este arquivo de áudio.</string>
     <string name="lesson_cards_again">De novo</string>
     <string name="lesson_cards_all">Todos os cartões (%1$s)</string>
     <string name="lesson_cards_answer">Resposta</string>
@@ -274,6 +279,7 @@
     <string name="lesson_home_supportsFull">No máximo %1$s materiais por aula.</string>
     <string name="lesson_home_title">O que você quer **aprender** hoje?</string>
     <string name="lesson_import_add">Adicionar</string>
+    <string name="lesson_import_audioFile">Escolher um arquivo de áudio</string>
     <string name="lesson_import_instruction">O que o aluno quer aprender com isso: %1$s</string>
     <string name="lesson_import_library">Escolher fotos</string>
     <string name="lesson_import_paste">Colar</string>
@@ -281,6 +287,9 @@
     <string name="lesson_import_pdfSub">Um curso, uma apostila, uma ficha</string>
     <string name="lesson_import_photo">Foto</string>
     <string name="lesson_import_photoSub">Seu caderno, a lousa, um livro</string>
+    <string name="lesson_import_record">Gravar</string>
+    <string name="lesson_import_recordStop">Parar a gravação</string>
+    <string name="lesson_import_recordTitle">Grave sua aula</string>
     <string name="lesson_import_scan">Escanear páginas</string>
     <string name="lesson_import_text">Texto</string>
     <string name="lesson_import_textPlaceholder">Sua matéria, suas anotações, um artigo…</string>
@@ -391,6 +400,7 @@
     <string name="x_paywall_soon">Em breve no Android</string>
     <string name="x_paywall_soonBody">As assinaturas chegam muito em breve ao Android. Enquanto isso, sua lição grátis te espera.</string>
     <string name="x_paywall_subscribe">Assinar o Pro</string>
+    <string name="x_record_limit">Até 90 minutos. O Mika transforma a gravação em texto e depois escreve sua lição.</string>
     <string name="x_score_1">Tenho dificuldade</string>
     <string name="x_score_2">Um pouco abaixo da média</string>
     <string name="x_score_3">Na média</string>

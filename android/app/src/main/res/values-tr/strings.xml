@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_exams_countdown_today">bugün</string>
     <string name="common_continue">Devam</string>
     <string name="country_be">Belçika</string>
     <string name="country_ca">Kanada</string>
@@ -192,6 +193,10 @@
     <string name="ios_yt_noCaptions">Micabo bu videoyu okuyamadı. Tekrar dene ya da ders metnini yapıştır.</string>
     <string name="ios_yt_tooShort">Bu video kart üretmek için çok kısa.</string>
     <string name="ios_yt_unavailable">Bu video erişilemiyor.</string>
+    <string name="lesson_audio_empty">Bu kayıtta neredeyse hiçbir şey duyamadım.</string>
+    <string name="lesson_audio_micDenied">Dersini kaydetmek için Ayarlar\'dan mikrofona izin ver.</string>
+    <string name="lesson_audio_tooLong">Bu kayıt 90 dakikadan uzun: ikiye böl.</string>
+    <string name="lesson_audio_unreadable">Bu ses dosyası okunamıyor.</string>
     <string name="lesson_cards_again">Tekrar</string>
     <string name="lesson_cards_all">Tüm kartlar (%1$s)</string>
     <string name="lesson_cards_answer">Cevap</string>
@@ -301,6 +306,7 @@
     <string name="lesson_home_supportsFull">Bir ders için en fazla %1$s kaynak.</string>
     <string name="lesson_home_title">Bugün ne **öğrenmek** istersin?</string>
     <string name="lesson_import_add">Ekle</string>
+    <string name="lesson_import_audioFile">Ses dosyası seç</string>
     <string name="lesson_import_instruction">Öğrencinin odaklanmak istediği konu: %1$s</string>
     <string name="lesson_import_library">Fotoğraf seç</string>
     <string name="lesson_import_paste">Yapıştır</string>
@@ -308,6 +314,9 @@
     <string name="lesson_import_pdfSub">Ders notu, föy, özet</string>
     <string name="lesson_import_photo">Fotoğraf</string>
     <string name="lesson_import_photoSub">Defterin, tahta, ders kitabı</string>
+    <string name="lesson_import_record">Ses kaydet</string>
+    <string name="lesson_import_recordStop">Kaydı durdur</string>
+    <string name="lesson_import_recordTitle">Dersini kaydet</string>
     <string name="lesson_import_scan">Sayfa tara</string>
     <string name="lesson_import_text">Metin</string>
     <string name="lesson_import_textPlaceholder">Dersin, notların, bir makale…</string>
@@ -419,6 +428,7 @@
     <string name="x_paywall_soon">Yakında Android\'de</string>
     <string name="x_paywall_soonBody">Abonelikler çok yakında Android\'de. Bu arada ücretsiz dersin seni bekliyor.</string>
     <string name="x_paywall_subscribe">Pro\'ya geç</string>
+    <string name="x_record_limit">90 dakikaya kadar. Mika kaydını metne çevirir, sonra dersini yazar.</string>
     <string name="x_score_1">Zorlanıyorum</string>
     <string name="x_score_2">Ortalamanın biraz altında</string>
     <string name="x_score_3">Ortalama</string>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_exams_countdown_today">ma</string>
     <string name="common_continue">Tovább</string>
     <string name="country_ca">Kanada</string>
     <string name="country_ch">Svájc</string>
@@ -171,6 +172,10 @@
     <string name="ios_yt_noCaptions">A Micabo nem tudta beolvasni ezt a videót. Próbáld újra, vagy illeszd be a kurzus szövegét.</string>
     <string name="ios_yt_tooShort">Ez a videó túl rövid a kártyák készítéséhez.</string>
     <string name="ios_yt_unavailable">Ez a videó nem érhető el.</string>
+    <string name="lesson_audio_empty">Szinte semmit sem hallottam ezen a felvételen.</string>
+    <string name="lesson_audio_micDenied">Engedélyezd a mikrofont a Beállításokban az órád felvételéhez.</string>
+    <string name="lesson_audio_tooLong">Ez a felvétel 90 percnél hosszabb: vágd ketté.</string>
+    <string name="lesson_audio_unreadable">Ez a hangfájl nem olvasható.</string>
     <string name="lesson_cards_again">Újra</string>
     <string name="lesson_cards_all">Összes kártya (%1$s)</string>
     <string name="lesson_cards_answer">Válasz</string>
@@ -280,6 +285,7 @@
     <string name="lesson_home_supportsFull">Leckénként legfeljebb %1$s anyag.</string>
     <string name="lesson_home_title">Mit szeretnél ma **megtanulni**?</string>
     <string name="lesson_import_add">Hozzáadás</string>
+    <string name="lesson_import_audioFile">Hangfájl kiválasztása</string>
     <string name="lesson_import_instruction">Amit a diák meg szeretne tanulni belőle: %1$s</string>
     <string name="lesson_import_library">Fotók kiválasztása</string>
     <string name="lesson_import_paste">Beillesztés</string>
@@ -287,6 +293,9 @@
     <string name="lesson_import_pdfSub">Kurzus, segédanyag vagy jegyzet</string>
     <string name="lesson_import_photo">Fotó</string>
     <string name="lesson_import_photoSub">A füzeted, a tábla, egy tankönyv</string>
+    <string name="lesson_import_record">Felvétel</string>
+    <string name="lesson_import_recordStop">Felvétel leállítása</string>
+    <string name="lesson_import_recordTitle">Vedd fel az órát</string>
     <string name="lesson_import_scan">Oldalak szkennelése</string>
     <string name="lesson_import_text">Szöveg</string>
     <string name="lesson_import_textPlaceholder">Órai jegyzeteid, egy cikk…</string>

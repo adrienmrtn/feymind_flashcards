@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_exams_countdown_today">hoy</string>
     <string name="common_continue">Continuar</string>
     <string name="country_be">Bélgica</string>
     <string name="country_ca">Canadá</string>
@@ -189,6 +190,10 @@
     <string name="ios_yt_noCaptions">Micabo no ha podido leer este vídeo. Inténtalo otra vez, o pega el texto del curso.</string>
     <string name="ios_yt_tooShort">Este vídeo es demasiado corto para generar tarjetas.</string>
     <string name="ios_yt_unavailable">Este vídeo no es accesible.</string>
+    <string name="lesson_audio_empty">Casi no se oye nada en esta grabación.</string>
+    <string name="lesson_audio_micDenied">Permite el micrófono en Ajustes para grabar tu clase.</string>
+    <string name="lesson_audio_tooLong">Esta grabación dura más de 90 minutos: divídela en dos.</string>
+    <string name="lesson_audio_unreadable">Este archivo de audio no se puede leer.</string>
     <string name="lesson_cards_again">Otra vez</string>
     <string name="lesson_cards_all">Todas las tarjetas (%1$s)</string>
     <string name="lesson_cards_answer">Respuesta</string>
@@ -295,6 +300,7 @@
     <string name="lesson_home_supportsFull">Hasta %1$s materiales por lección.</string>
     <string name="lesson_home_title">¿Qué quieres **aprender** hoy?</string>
     <string name="lesson_import_add">Añadir</string>
+    <string name="lesson_import_audioFile">Elegir un archivo de audio</string>
     <string name="lesson_import_instruction">Lo que el estudiante quiere retener: %1$s</string>
     <string name="lesson_import_library">Elegir fotos</string>
     <string name="lesson_import_paste">Pegar</string>
@@ -302,6 +308,9 @@
     <string name="lesson_import_pdfSub">Apuntes, un temario, una ficha</string>
     <string name="lesson_import_photo">Foto</string>
     <string name="lesson_import_photoSub">Tu cuaderno, la pizarra, un libro</string>
+    <string name="lesson_import_record">Grabar</string>
+    <string name="lesson_import_recordStop">Detener la grabación</string>
+    <string name="lesson_import_recordTitle">Graba tu clase</string>
     <string name="lesson_import_scan">Escanear páginas</string>
     <string name="lesson_import_text">Texto</string>
     <string name="lesson_import_textPlaceholder">Tu clase, tus apuntes, un artículo…</string>
@@ -413,6 +422,7 @@
     <string name="x_paywall_soon">Muy pronto en Android</string>
     <string name="x_paywall_soonBody">Las suscripciones llegan muy pronto a Android. Mientras tanto, tu lección gratis te espera.</string>
     <string name="x_paywall_subscribe">Hazte Pro</string>
+    <string name="x_record_limit">Hasta 90 minutos. Mika convierte tu grabación en texto y luego escribe tu lección.</string>
     <string name="x_score_1">Me cuesta</string>
     <string name="x_score_2">Un poco por debajo de la media</string>
     <string name="x_score_3">En la media</string>

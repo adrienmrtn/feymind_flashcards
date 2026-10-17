@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_exams_countdown_today">danes</string>
     <string name="common_continue">Nadaljuj</string>
     <string name="country_be">Belgija</string>
     <string name="country_ca">Kanada</string>
@@ -170,6 +171,10 @@
     <string name="ios_yt_noCaptions">Micabo tega videoposnetka ni mogel prebrati. Poskusi znova ali prilepi besedilo tečaja.</string>
     <string name="ios_yt_tooShort">Ta videoposnetek je prekratek za ustvarjanje kartic.</string>
     <string name="ios_yt_unavailable">Ta videoposnetek ni dosegljiv.</string>
+    <string name="lesson_audio_empty">Na tem posnetku nisem slišal skoraj ničesar.</string>
+    <string name="lesson_audio_micDenied">V Nastavitvah dovoli mikrofon, da posnameš pouk.</string>
+    <string name="lesson_audio_tooLong">Ta posnetek je daljši od 90 minut: razdeli ga na dva dela.</string>
+    <string name="lesson_audio_unreadable">Te zvočne datoteke ni mogoče prebrati.</string>
     <string name="lesson_cards_again">Znova</string>
     <string name="lesson_cards_all">Vse kartice (%1$s)</string>
     <string name="lesson_cards_answer">Odgovor</string>
@@ -277,6 +282,7 @@
     <string name="lesson_home_supportsFull">Največ %1$s gradiv na lekcijo.</string>
     <string name="lesson_home_title">Kaj se želiš danes **naučiti**?</string>
     <string name="lesson_import_add">Dodaj</string>
+    <string name="lesson_import_audioFile">Izberi zvočno datoteko</string>
     <string name="lesson_import_instruction">Kaj želi učenec odnesti iz tega: %1$s</string>
     <string name="lesson_import_library">Izberi fotografije</string>
     <string name="lesson_import_paste">Prilepi</string>
@@ -284,6 +290,9 @@
     <string name="lesson_import_pdfSub">Tečaj, skripta ali učni list</string>
     <string name="lesson_import_photo">Fotografija</string>
     <string name="lesson_import_photoSub">Tvoj zvezek, tabla, učbenik</string>
+    <string name="lesson_import_record">Posnemi</string>
+    <string name="lesson_import_recordStop">Ustavi snemanje</string>
+    <string name="lesson_import_recordTitle">Posnemi svoj pouk</string>
     <string name="lesson_import_scan">Skeniraj strani</string>
     <string name="lesson_import_text">Besedilo</string>
     <string name="lesson_import_textPlaceholder">Tvoji zapiski s pouka, članek …</string>

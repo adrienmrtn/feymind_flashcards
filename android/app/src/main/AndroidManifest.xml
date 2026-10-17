@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Le rappel avant la fin de l'essai gratuit (Android 13 et plus le demande). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Enregistrer son cours, pour en faire une leçon. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
         android:name=".MicaboApplication"

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_exams_countdown_today">azi</string>
     <string name="common_continue">Continuă</string>
     <string name="country_be">Belgia</string>
     <string name="country_ch">Elveția</string>
@@ -165,6 +166,10 @@
     <string name="ios_yt_noCaptions">Micabo n-a putut citi videoclipul. Încearcă din nou sau lipește textul cursului.</string>
     <string name="ios_yt_tooShort">Videoclipul e prea scurt ca să generez carduri.</string>
     <string name="ios_yt_unavailable">Videoclipul nu e accesibil.</string>
+    <string name="lesson_audio_empty">Abia am auzit ceva în înregistrarea asta.</string>
+    <string name="lesson_audio_micDenied">Permite microfonul în Setări ca să-ți înregistrezi ora.</string>
+    <string name="lesson_audio_tooLong">Înregistrarea depășește 90 de minute: împarte-o în două.</string>
+    <string name="lesson_audio_unreadable">Fișierul audio nu poate fi citit.</string>
     <string name="lesson_cards_again">Din nou</string>
     <string name="lesson_cards_all">Toate cardurile (%1$s)</string>
     <string name="lesson_cards_answer">Răspuns</string>
@@ -271,6 +276,7 @@
     <string name="lesson_home_supportsFull">Până la %1$s materiale pe lecție.</string>
     <string name="lesson_home_title">Ce vrei să **înveți** azi?</string>
     <string name="lesson_import_add">Adaugă</string>
+    <string name="lesson_import_audioFile">Alege un fișier audio</string>
     <string name="lesson_import_instruction">Ce vrea elevul să obțină: %1$s</string>
     <string name="lesson_import_library">Alege poze</string>
     <string name="lesson_import_paste">Lipește</string>
@@ -278,6 +284,9 @@
     <string name="lesson_import_pdfSub">Un curs, un suport sau o fișă</string>
     <string name="lesson_import_photo">Poză</string>
     <string name="lesson_import_photoSub">Caietul, tabla, un manual</string>
+    <string name="lesson_import_record">Înregistrează</string>
+    <string name="lesson_import_recordStop">Oprește înregistrarea</string>
+    <string name="lesson_import_recordTitle">Înregistrează-ți ora</string>
     <string name="lesson_import_scan">Scanează pagini</string>
     <string name="lesson_import_textPlaceholder">Notițele de la oră, un articol…</string>
     <string name="lesson_import_textSub">Lipește-ți notițele</string>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_exams_countdown_today">сегодня</string>
     <string name="common_continue">Продолжить</string>
     <string name="country_be">Бельгия</string>
     <string name="country_ca">Канада</string>
@@ -171,6 +172,10 @@
     <string name="ios_yt_noCaptions">Micabo не смог прочитать это видео. Попробуй ещё раз или вставь текст урока.</string>
     <string name="ios_yt_tooShort">Это видео слишком короткое для карточек.</string>
     <string name="ios_yt_unavailable">Это видео недоступно.</string>
+    <string name="lesson_audio_empty">В этой записи почти ничего не слышно.</string>
+    <string name="lesson_audio_micDenied">Разреши доступ к микрофону в Настройках, чтобы записывать урок.</string>
+    <string name="lesson_audio_tooLong">Запись длиннее 90 минут: раздели её на две.</string>
+    <string name="lesson_audio_unreadable">Не удалось прочитать этот аудиофайл.</string>
     <string name="lesson_cards_again">Снова</string>
     <string name="lesson_cards_all">Все карточки (%1$s)</string>
     <string name="lesson_cards_answer">Ответ</string>
@@ -280,6 +285,7 @@
     <string name="lesson_home_supportsFull">Не больше %1$s материалов на урок.</string>
     <string name="lesson_home_title">Что хочешь **изучить** сегодня?</string>
     <string name="lesson_import_add">Добавить</string>
+    <string name="lesson_import_audioFile">Выбрать аудиофайл</string>
     <string name="lesson_import_instruction">Что ученик хочет из этого получить: %1$s</string>
     <string name="lesson_import_library">Выбрать фото</string>
     <string name="lesson_import_paste">Вставить</string>
@@ -287,6 +293,9 @@
     <string name="lesson_import_pdfSub">Курс, методичка или конспект</string>
     <string name="lesson_import_photo">Фото</string>
     <string name="lesson_import_photoSub">Тетрадь, доска, учебник</string>
+    <string name="lesson_import_record">Запись</string>
+    <string name="lesson_import_recordStop">Остановить запись</string>
+    <string name="lesson_import_recordTitle">Запиши занятие</string>
     <string name="lesson_import_scan">Сканировать страницы</string>
     <string name="lesson_import_text">Текст</string>
     <string name="lesson_import_textPlaceholder">Заметки с урока, статья…</string>
@@ -392,4 +401,5 @@
     <string name="lesson_theme_system">Как на телефоне</string>
     <string name="x_onb_language">На каком языке ты учишься?</string>
     <string name="x_paywall_subscribe">Перейти на Pro</string>
+    <string name="x_record_limit">До 90 минут. Мика превращает запись в текст, а затем пишет урок.</string>
 </resources>

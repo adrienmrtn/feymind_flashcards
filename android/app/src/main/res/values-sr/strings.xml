@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_exams_countdown_today">danas</string>
     <string name="common_continue">Nastavi</string>
     <string name="country_be">Belgija</string>
     <string name="country_ca">Kanada</string>
@@ -169,6 +170,10 @@
     <string name="ios_yt_noCaptions">Micabo nije mogao da pročita ovaj video. Pokušaj ponovo ili nalepi tekst kursa.</string>
     <string name="ios_yt_tooShort">Ovaj video je prekratak za pravljenje kartica.</string>
     <string name="ios_yt_unavailable">Ovaj video nije dostupan.</string>
+    <string name="lesson_audio_empty">Na ovom snimku skoro ništa nisam čuo.</string>
+    <string name="lesson_audio_micDenied">Dozvoli mikrofon u Podešavanjima da snimiš čas.</string>
+    <string name="lesson_audio_tooLong">Ovaj snimak traje duže od 90 minuta: podeli ga na dva dela.</string>
+    <string name="lesson_audio_unreadable">Ovaj audio fajl ne može da se pročita.</string>
     <string name="lesson_cards_again">Ponovo</string>
     <string name="lesson_cards_all">Sve kartice (%1$s)</string>
     <string name="lesson_cards_answer">Odgovor</string>
@@ -276,6 +281,7 @@
     <string name="lesson_home_supportsFull">Najviše %1$s materijala po lekciji.</string>
     <string name="lesson_home_title">Šta želiš da **naučiš** danas?</string>
     <string name="lesson_import_add">Dodaj</string>
+    <string name="lesson_import_audioFile">Izaberi audio fajl</string>
     <string name="lesson_import_instruction">Šta učenik želi da zapamti: %1$s</string>
     <string name="lesson_import_library">Izaberi fotografije</string>
     <string name="lesson_import_paste">Nalepi</string>
@@ -283,6 +289,9 @@
     <string name="lesson_import_pdfSub">Kurs, skripta ili radni list</string>
     <string name="lesson_import_photo">Fotografija</string>
     <string name="lesson_import_photoSub">Tvoja sveska, tabla, udžbenik</string>
+    <string name="lesson_import_record">Snimi</string>
+    <string name="lesson_import_recordStop">Zaustavi snimanje</string>
+    <string name="lesson_import_recordTitle">Snimi svoj čas</string>
     <string name="lesson_import_scan">Skeniraj strane</string>
     <string name="lesson_import_text">Tekst</string>
     <string name="lesson_import_textPlaceholder">Tvoje beleške sa časa, članak…</string>
