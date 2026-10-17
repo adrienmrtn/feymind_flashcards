@@ -4,6 +4,7 @@
     <string name="app_exams_countdown_today">اليوم</string>
     <string name="common_continue">متابعة</string>
     <string name="common_privacy">الخصوصية</string>
+    <string name="common_signOut">تسجيل الخروج</string>
     <string name="country_be">بلجيكا</string>
     <string name="country_ca">كندا</string>
     <string name="country_ch">سويسرا</string>
@@ -29,9 +30,22 @@
     <string name="country_tr">تركيا</string>
     <string name="country_uk">المملكة المتحدة</string>
     <string name="country_us">الولايات المتحدة</string>
+    <string name="ios_account">الحساب</string>
+    <string name="ios_account_sub">خطتك وملخصاتك وسلسلتك، على هذا الهاتف وعلى الموقع.</string>
+    <string name="ios_auth_emailNotConfirmed">لم يتم تأكيد بريدك بعد. افتح الرابط الذي أرسلناه إليك للتو.</string>
+    <string name="ios_auth_invalidResponse">تعذّرت قراءة رد الخادم. حاول مرة أخرى.</string>
+    <string name="ios_auth_providerNotEnabled">تسجيل الدخول عبر %1$s غير مُفعّل بعد في مشروع Supabase هذا.</string>
+    <string name="ios_auth_sessionExpired">انتهت جلستك. سجّل الدخول مرة أخرى.</string>
     <string name="ios_averageTitle">ما معدّلك\nحاليًا؟</string>
+    <string name="ios_backup">النسخ الاحتياطي</string>
+    <string name="ios_connected">مسجّل الدخول</string>
     <string name="ios_country">الدولة</string>
     <string name="ios_countryTitle">أين تدرس؟</string>
+    <string name="ios_createOrSignIn">أنشئ حسابًا أو سجّل الدخول</string>
+    <string name="ios_createOrSignInHelp">استرجع دروسك على أجهزتك الأخرى</string>
+    <string name="ios_dataFootnote">مسح دروسك يمسحها أيضًا من حسابك عند المزامنة التالية. حذف الحساب يمسحها من كل مكان.</string>
+    <string name="ios_deleteAccount">حذف الحساب</string>
+    <string name="ios_deleteAccountQ">حذف الحساب؟</string>
     <string name="ios_docx_corrupt">مستند Word غير مكتمل أو تالف.</string>
     <string name="ios_docx_empty">لم يُعثر على أي نص في هذا المستند.</string>
     <string name="ios_docx_notDocx">هذا الملف ليس مستند Word ‏(.docx).</string>
@@ -146,6 +160,8 @@
     <string name="ios_quiz_time_caption_15">جدّي</string>
     <string name="ios_quiz_time_caption_30">رهيب</string>
     <string name="ios_quiz_time_caption_5">بداية جيدة</string>
+    <string name="ios_signOutMsg">تبقى دروسك على هذا الجهاز وفي حسابك. ستجدها عند تسجيل الدخول المرة القادمة.</string>
+    <string name="ios_signOutQ">تسجيل الخروج؟</string>
     <string name="ios_streak_bestLabel">رقمك القياسي</string>
     <string name="ios_streak_celebrate_first">بدأت سلسلتك! عُد غدًا لتكبر.</string>
     <string name="ios_streak_celebrate_line">شعلتك ما زالت مشتعلة. أراك غدًا!</string>
@@ -159,6 +175,8 @@
     <string name="ios_streak_todayPending">أنجز درسًا اليوم لتحافظ على سلسلتك.</string>
     <string name="ios_streak_week">هذا الأسبوع</string>
     <string name="ios_streak_zeroTitle">لا توجد سلسلة بعد</string>
+    <string name="ios_syncing">جارٍ المزامنة…</string>
+    <string name="ios_tapToSync">انقر للمزامنة</string>
     <string name="ios_targetTitle">وما الذي\nتطمح إليه؟</string>
     <string name="ios_trialDay2">اليوم 2: تذكير قبل الانتهاء</string>
     <string name="ios_trialDay2Detail">سننبّهك بإشعار. يمكنك الإلغاء في خمس عشرة ثانية.</string>
@@ -408,7 +426,16 @@
     <string name="lesson_theme_day">فاتح</string>
     <string name="lesson_theme_night">داكن</string>
     <string name="lesson_theme_system">مثل الهاتف</string>
+    <string name="onboarding_compteTitle">احتفظ بتقدّمك</string>
+    <string name="onboarding_continueGoogle">المتابعة باستخدام Google</string>
+    <string name="onboarding_emailLabel">بريدك الإلكتروني</string>
+    <string name="onboarding_emailNote">نرسل لك رابطًا، دون كلمة مرور لتتذكّرها.</string>
+    <string name="onboarding_linkSent">افتح الرابط المرسل إلى %1$s</string>
+    <string name="onboarding_sendLink">احصل على رابط</string>
+    <string name="x_account_deleteMsg">ستُحذف دوراتك وبطاقاتك وسجلك في كل مكان. يُدار الاشتراك من Google Play.</string>
+    <string name="x_auth_rateLimited">محاولات كثيرة جدًا. انتظر دقيقة ثم حاول مجددًا.</string>
     <string name="x_onb_language">بأي لغة تدرس؟</string>
     <string name="x_paywall_subscribe">اشترك في Pro</string>
     <string name="x_record_limit">حتى 90 دقيقة. يحوّل ميكا تسجيلك إلى نص ثم يكتب درسك.</string>
+    <string name="x_sync_failed">لم تتم المزامنة. اضغط للمحاولة مجددًا.</string>
 </resources>

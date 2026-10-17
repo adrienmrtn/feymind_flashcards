@@ -3,6 +3,7 @@
 <resources>
     <string name="app_exams_countdown_today">oggi</string>
     <string name="common_continue">Continua</string>
+    <string name="common_signOut">Esci</string>
     <string name="country_be">Belgio</string>
     <string name="country_ch">Svizzera</string>
     <string name="country_ci">Costa d\'Avorio</string>
@@ -23,9 +24,20 @@
     <string name="country_tr">Turchia</string>
     <string name="country_uk">Regno Unito</string>
     <string name="country_us">Stati Uniti</string>
+    <string name="ios_account_sub">Il tuo piano, le tue schede e la tua serie, su questo telefono e sul sito.</string>
+    <string name="ios_auth_emailNotConfirmed">Il tuo indirizzo non è ancora confermato. Apri il link che ti abbiamo appena inviato.</string>
+    <string name="ios_auth_invalidResponse">Impossibile leggere la risposta del server. Riprova.</string>
+    <string name="ios_auth_providerNotEnabled">L\'accesso con %1$s non è ancora attivo su questo progetto Supabase.</string>
+    <string name="ios_auth_sessionExpired">La tua sessione è scaduta. Accedi di nuovo.</string>
     <string name="ios_averageTitle">Qual è la tua media\nin questo momento?</string>
+    <string name="ios_connected">Connesso</string>
     <string name="ios_country">Paese</string>
     <string name="ios_countryTitle">Dove studi?</string>
+    <string name="ios_createOrSignIn">Crea un account o accedi</string>
+    <string name="ios_createOrSignInHelp">Ritrova i tuoi corsi sugli altri dispositivi</string>
+    <string name="ios_dataFootnote">Cancellare i tuoi corsi li cancella anche dal tuo account alla prossima sincronizzazione. Eliminare l\'account li cancella ovunque.</string>
+    <string name="ios_deleteAccount">Elimina l\'account</string>
+    <string name="ios_deleteAccountQ">Eliminare l\'account?</string>
     <string name="ios_docx_corrupt">Il documento Word è incompleto o danneggiato.</string>
     <string name="ios_docx_empty">Nessun testo trovato in questo documento.</string>
     <string name="ios_docx_notDocx">Questo file non è un documento Word (.docx).</string>
@@ -138,6 +150,8 @@
     <string name="ios_quiz_time_caption_15">Serio</string>
     <string name="ios_quiz_time_caption_30">Pazzesco</string>
     <string name="ios_quiz_time_caption_5">Un buon inizio</string>
+    <string name="ios_signOutMsg">I tuoi corsi restano su questo dispositivo e sul tuo account. Li ritroverai al prossimo accesso.</string>
+    <string name="ios_signOutQ">Vuoi uscire?</string>
     <string name="ios_streak_bestLabel">Il tuo record</string>
     <string name="ios_streak_celebrate_first">La tua serie comincia! Torna domani per farla crescere.</string>
     <string name="ios_streak_celebrate_line">La tua fiamma brucia ancora. A domani!</string>
@@ -151,6 +165,8 @@
     <string name="ios_streak_todayPending">Fai una lezione oggi per mantenere la tua serie.</string>
     <string name="ios_streak_week">Questa settimana</string>
     <string name="ios_streak_zeroTitle">Ancora nessuna serie</string>
+    <string name="ios_syncing">Sincronizzazione…</string>
+    <string name="ios_tapToSync">Tocca per sincronizzare</string>
     <string name="ios_targetTitle">E a quanto\npunti?</string>
     <string name="ios_trialDay2">Giorno 2: promemoria prima della fine</string>
     <string name="ios_trialDay2Detail">Ti avvisiamo con una notifica. Disdici in quindici secondi.</string>
@@ -392,6 +408,15 @@
     <string name="lesson_theme_day">Chiaro</string>
     <string name="lesson_theme_night">Scuro</string>
     <string name="lesson_theme_system">Come il telefono</string>
+    <string name="onboarding_compteTitle">Conserva i tuoi progressi</string>
+    <string name="onboarding_continueGoogle">Continua con Google</string>
+    <string name="onboarding_emailLabel">Il tuo indirizzo email</string>
+    <string name="onboarding_emailNote">Ti inviamo un link, nessuna password da ricordare.</string>
+    <string name="onboarding_emailPlaceholder">tu@email.it</string>
+    <string name="onboarding_linkSent">Apri il link inviato a %1$s</string>
+    <string name="onboarding_sendLink">Ricevi un link</string>
+    <string name="x_account_deleteMsg">Corsi, carte e cronologia verranno cancellati ovunque. L\'abbonamento si gestisce su Google Play.</string>
+    <string name="x_auth_rateLimited">Troppi tentativi. Aspetta un minuto, poi riprova.</string>
     <string name="x_error_network">Nessuna connessione. Controlla internet e riprova.</string>
     <string name="x_onb_language">In che lingua studi?</string>
     <string name="x_onb_language_sub">Mika scrive lezioni, quiz e flashcard in questa lingua.</string>
@@ -411,4 +436,5 @@
     <string name="x_settings_reset">Cancella tutto</string>
     <string name="x_settings_resetBody">Lezioni e profilo spariscono da questo telefono. Non si può annullare.</string>
     <string name="x_settings_resetTitle">Cancellare tutto?</string>
+    <string name="x_sync_failed">Non sincronizzato. Tocca per riprovare.</string>
 </resources>

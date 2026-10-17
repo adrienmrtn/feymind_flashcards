@@ -4,6 +4,7 @@
     <string name="app_exams_countdown_today">tänään</string>
     <string name="common_continue">Jatka</string>
     <string name="common_privacy">Tietosuoja</string>
+    <string name="common_signOut">Kirjaudu ulos</string>
     <string name="country_be">Belgia</string>
     <string name="country_ca">Kanada</string>
     <string name="country_ch">Sveitsi</string>
@@ -25,9 +26,22 @@
     <string name="country_tr">Turkki</string>
     <string name="country_uk">Iso-Britannia</string>
     <string name="country_us">Yhdysvallat</string>
+    <string name="ios_account">Tili</string>
+    <string name="ios_account_sub">Tilauksesi, tiivistelmäsi ja putkesi, sekä puhelimessa että verkossa.</string>
+    <string name="ios_auth_emailNotConfirmed">Osoitettasi ei ole vielä vahvistettu. Avaa linkki, jonka juuri lähetimme.</string>
+    <string name="ios_auth_invalidResponse">Palvelimen vastausta ei voitu lukea. Yritä uudelleen.</string>
+    <string name="ios_auth_providerNotEnabled">Kirjautumistapaa %1$s ei ole vielä otettu käyttöön tässä Supabase-projektissa.</string>
+    <string name="ios_auth_sessionExpired">Istuntosi on vanhentunut. Kirjaudu uudelleen.</string>
     <string name="ios_averageTitle">Mikä on keskiarvosi\ntällä hetkellä?</string>
+    <string name="ios_backup">Varmuuskopio</string>
+    <string name="ios_connected">Kirjautunut</string>
     <string name="ios_country">Maa</string>
     <string name="ios_countryTitle">Missä opiskelet?</string>
+    <string name="ios_createOrSignIn">Luo tili tai kirjaudu</string>
+    <string name="ios_createOrSignInHelp">Löydä kurssisi muilla laitteillasi</string>
+    <string name="ios_dataFootnote">Kun poistat kurssisi, ne poistuvat myös tililtäsi seuraavassa synkronoinnissa. Tilin poistaminen poistaa ne kaikkialta.</string>
+    <string name="ios_deleteAccount">Poista tili</string>
+    <string name="ios_deleteAccountQ">Poistetaanko tili?</string>
     <string name="ios_docx_corrupt">Word-asiakirja on vajaa tai vioittunut.</string>
     <string name="ios_docx_empty">Asiakirjasta ei löytynyt tekstiä.</string>
     <string name="ios_docx_notDocx">Tiedosto ei ole Word-asiakirja (.docx).</string>
@@ -140,6 +154,8 @@
     <string name="ios_quiz_time_caption_15">Tosissaan</string>
     <string name="ios_quiz_time_caption_30">Hullua</string>
     <string name="ios_quiz_time_caption_5">Hyvä alku</string>
+    <string name="ios_signOutMsg">Kurssisi säilyvät laitteella ja tililläsi. Löydät ne, kun kirjaudut seuraavan kerran.</string>
+    <string name="ios_signOutQ">Kirjaudutaanko ulos?</string>
     <string name="ios_streak_bestLabel">Paras putkesi</string>
     <string name="ios_streak_celebrate_first">Putkesi alkoi! Palaa huomenna kasvattamaan sitä.</string>
     <string name="ios_streak_celebrate_line">Liekkisi palaa yhä. Nähdään huomenna!</string>
@@ -153,6 +169,8 @@
     <string name="ios_streak_todayPending">Tee oppitunti tänään, niin putki säilyy.</string>
     <string name="ios_streak_week">Tällä viikolla</string>
     <string name="ios_streak_zeroTitle">Ei vielä putkea</string>
+    <string name="ios_syncing">Synkronoidaan…</string>
+    <string name="ios_tapToSync">Synkronoi napauttamalla</string>
     <string name="ios_targetTitle">Ja mihin\ntähtäät?</string>
     <string name="ios_trialDay2">Päivä 2: muistutus ennen loppua</string>
     <string name="ios_trialDay2Detail">Ilmoitamme sinulle etukäteen. Peruminen vie viisitoista sekuntia.</string>
@@ -399,4 +417,11 @@
     <string name="lesson_theme_day">Vaalea</string>
     <string name="lesson_theme_night">Tumma</string>
     <string name="lesson_theme_system">Kuten puhelin</string>
+    <string name="onboarding_compteTitle">Säilytä edistymisesi</string>
+    <string name="onboarding_continueGoogle">Jatka Googlella</string>
+    <string name="onboarding_emailLabel">Sähköpostiosoitteesi</string>
+    <string name="onboarding_emailNote">Lähetämme linkin, ei salasanaa muistettavaksi.</string>
+    <string name="onboarding_emailPlaceholder">sinä@sähköposti.fi</string>
+    <string name="onboarding_linkSent">Avaa osoitteeseen %1$s lähetetty linkki</string>
+    <string name="onboarding_sendLink">Lähetä linkki</string>
 </resources>

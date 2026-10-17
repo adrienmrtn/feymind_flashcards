@@ -4,6 +4,7 @@
     <string name="app_exams_countdown_today">hoy</string>
     <string name="common_continue">Continuar</string>
     <string name="common_privacy">Privacidad</string>
+    <string name="common_signOut">Cerrar sesión</string>
     <string name="country_be">Bélgica</string>
     <string name="country_ca">Canadá</string>
     <string name="country_ch">Suiza</string>
@@ -27,16 +28,29 @@
     <string name="country_tr">Turquía</string>
     <string name="country_uk">Reino Unido</string>
     <string name="country_us">Estados Unidos</string>
+    <string name="ios_account">Cuenta</string>
+    <string name="ios_account_sub">Tu plan, tus fichas y tu racha, en este móvil y en la web.</string>
+    <string name="ios_auth_emailNotConfirmed">Tu dirección aún no está confirmada. Abre el enlace que acabamos de enviarte.</string>
+    <string name="ios_auth_invalidResponse">No se pudo leer la respuesta del servidor. Inténtalo de nuevo.</string>
+    <string name="ios_auth_providerNotEnabled">El inicio de sesión con %1$s aún no está activado en este proyecto de Supabase.</string>
+    <string name="ios_auth_sessionExpired">Tu sesión ha caducado. Vuelve a iniciar sesión.</string>
     <string name="ios_averageLead">Nadie te juzga. Es un punto de partida, no un boletín.</string>
     <string name="ios_averageTitle">¿Cuál es tu media\nahora mismo?</string>
+    <string name="ios_backup">Copia de seguridad</string>
     <string name="ios_build_done">Tu plan está listo</string>
     <string name="ios_build_step1">Leyendo tus respuestas</string>
     <string name="ios_build_step2">Calculando tu ritmo</string>
     <string name="ios_build_step3">Repartiendo hasta el examen</string>
     <string name="ios_build_step4">Ajustando tu objetivo</string>
     <string name="ios_build_title">Preparamos tu plan</string>
+    <string name="ios_connected">Conectado</string>
     <string name="ios_country">País</string>
     <string name="ios_countryTitle">¿Dónde estudias?</string>
+    <string name="ios_createOrSignIn">Crear una cuenta o entrar</string>
+    <string name="ios_createOrSignInHelp">Recupera tus cursos en tus otros dispositivos</string>
+    <string name="ios_dataFootnote">Borrar tus cursos también los borra de tu cuenta en la próxima sincronización. Borrar la cuenta los borra en todas partes.</string>
+    <string name="ios_deleteAccount">Eliminar la cuenta</string>
+    <string name="ios_deleteAccountQ">¿Eliminar la cuenta?</string>
     <string name="ios_docx_corrupt">El documento Word está incompleto o corrupto.</string>
     <string name="ios_docx_empty">No se ha encontrado texto en este documento.</string>
     <string name="ios_docx_notDocx">Este archivo no es un documento Word (.docx).</string>
@@ -156,6 +170,8 @@
     <string name="ios_quiz_time_caption_5">Un buen comienzo</string>
     <string name="ios_quiz_time_minutes">%1$s min al día</string>
     <string name="ios_searchCourse">Un curso, una materia…</string>
+    <string name="ios_signOutMsg">Tus cursos siguen en este aparato y en tu cuenta. Los verás al volver a entrar.</string>
+    <string name="ios_signOutQ">¿Cerrar sesión?</string>
     <string name="ios_streak_bestLabel">Tu récord</string>
     <string name="ios_streak_celebrate_first">¡Empieza tu racha! Vuelve mañana para que crezca.</string>
     <string name="ios_streak_celebrate_line">Tu llama sigue encendida. ¡Hasta mañana!</string>
@@ -169,6 +185,8 @@
     <string name="ios_streak_todayPending">Haz una lección hoy para mantener tu racha.</string>
     <string name="ios_streak_week">Esta semana</string>
     <string name="ios_streak_zeroTitle">Aún no tienes racha</string>
+    <string name="ios_syncing">Sincronizando…</string>
+    <string name="ios_tapToSync">Toca para sincronizar</string>
     <string name="ios_targetLead">Apunta a lo que de verdad te haría feliz, no a lo que suena razonable.</string>
     <string name="ios_targetTitle">¿Y a cuánto\naspiras?</string>
     <string name="ios_trialDay2">Día 2: aviso antes del final</string>
@@ -420,6 +438,15 @@
     <string name="lesson_theme_day">Claro</string>
     <string name="lesson_theme_night">Oscuro</string>
     <string name="lesson_theme_system">Como el teléfono</string>
+    <string name="onboarding_compteTitle">Guarda tu progreso</string>
+    <string name="onboarding_continueGoogle">Continuar con Google</string>
+    <string name="onboarding_emailLabel">Tu correo electrónico</string>
+    <string name="onboarding_emailNote">Te enviamos un enlace, sin contraseña que recordar.</string>
+    <string name="onboarding_emailPlaceholder">tu@correo.es</string>
+    <string name="onboarding_linkSent">Abre el enlace enviado a %1$s</string>
+    <string name="onboarding_sendLink">Recibir un enlace</string>
+    <string name="x_account_deleteMsg">Tus cursos, tarjetas e historial se borrarán en todas partes. La suscripción se gestiona en Google Play.</string>
+    <string name="x_auth_rateLimited">Demasiados intentos. Espera un minuto y vuelve a intentarlo.</string>
     <string name="x_error_network">Sin conexión. Revisa tu internet e inténtalo de nuevo.</string>
     <string name="x_onb_language">¿En qué idioma estudias?</string>
     <string name="x_onb_language_sub">Mika escribe tus lecciones, quizzes y flashcards en este idioma.</string>
@@ -439,4 +466,5 @@
     <string name="x_settings_reset">Borrar todo</string>
     <string name="x_settings_resetBody">Tus lecciones y tu perfil se borran de este teléfono. No se puede deshacer.</string>
     <string name="x_settings_resetTitle">¿Borrar todo?</string>
+    <string name="x_sync_failed">Sin sincronizar. Toca para reintentar.</string>
 </resources>

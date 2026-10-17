@@ -4,6 +4,7 @@
     <string name="app_exams_countdown_today">dnes</string>
     <string name="common_continue">Pokračovať</string>
     <string name="common_privacy">Súkromie</string>
+    <string name="common_signOut">Odhlásiť sa</string>
     <string name="country_be">Belgicko</string>
     <string name="country_ca">Kanada</string>
     <string name="country_ch">Švajčiarsko</string>
@@ -28,9 +29,22 @@
     <string name="country_tr">Turecko</string>
     <string name="country_uk">Spojené kráľovstvo</string>
     <string name="country_us">Spojené štáty</string>
+    <string name="ios_account">Účet</string>
+    <string name="ios_account_sub">Tvoj plán, zhrnutia a séria – v mobile aj na webe.</string>
+    <string name="ios_auth_emailNotConfirmed">Tvoja adresa ešte nie je potvrdená. Otvor odkaz, ktorý sme ti práve poslali.</string>
+    <string name="ios_auth_invalidResponse">Odpoveď servera sa nedala prečítať. Skús to znova.</string>
+    <string name="ios_auth_providerNotEnabled">Prihlásenie cez %1$s ešte v tomto projekte Supabase nie je zapnuté.</string>
+    <string name="ios_auth_sessionExpired">Relácia vypršala. Prihlás sa znova.</string>
     <string name="ios_averageTitle">Aký máš teraz\npriemer?</string>
+    <string name="ios_backup">Záloha</string>
+    <string name="ios_connected">Prihlásené</string>
     <string name="ios_country">Krajina</string>
     <string name="ios_countryTitle">Kde študuješ?</string>
+    <string name="ios_createOrSignIn">Vytvor si účet alebo sa prihlás</string>
+    <string name="ios_createOrSignInHelp">Maj svoje kurzy aj na ďalších zariadeniach</string>
+    <string name="ios_dataFootnote">Vymazanie kurzov ich pri ďalšej synchronizácii vymaže aj z účtu. Zrušenie účtu ich vymaže všade.</string>
+    <string name="ios_deleteAccount">Zrušiť účet</string>
+    <string name="ios_deleteAccountQ">Zrušiť účet?</string>
     <string name="ios_docx_corrupt">Dokument Word je neúplný alebo poškodený.</string>
     <string name="ios_docx_empty">V tomto dokumente sa nenašiel žiadny text.</string>
     <string name="ios_docx_notDocx">Tento súbor nie je dokument Word (.docx).</string>
@@ -143,6 +157,8 @@
     <string name="ios_quiz_time_caption_15">Vážne</string>
     <string name="ios_quiz_time_caption_30">Šialenstvo</string>
     <string name="ios_quiz_time_caption_5">Dobrý začiatok</string>
+    <string name="ios_signOutMsg">Tvoje kurzy zostanú v tomto zariadení aj na účte. Nájdeš ich pri ďalšom prihlásení.</string>
+    <string name="ios_signOutQ">Odhlásiť sa?</string>
     <string name="ios_streak_bestLabel">Tvoj rekord</string>
     <string name="ios_streak_celebrate_first">Tvoja séria začína! Vráť sa zajtra a predĺž ju.</string>
     <string name="ios_streak_celebrate_line">Tvoj plameň stále horí. Zajtra ahoj!</string>
@@ -156,6 +172,8 @@
     <string name="ios_streak_todayPending">Sprav si dnes lekciu a udrž sériu.</string>
     <string name="ios_streak_week">Tento týždeň</string>
     <string name="ios_streak_zeroTitle">Zatiaľ bez série</string>
+    <string name="ios_syncing">Synchronizácia…</string>
+    <string name="ios_tapToSync">Ťukni na synchronizáciu</string>
     <string name="ios_targetTitle">A na čo\nmieriš?</string>
     <string name="ios_trialDay2">Deň 2: pripomienka pred koncom</string>
     <string name="ios_trialDay2Detail">Upozorníme ťa notifikáciou. Zrušíš za pätnásť sekúnd.</string>
@@ -400,4 +418,11 @@
     <string name="lesson_theme_day">Svetlý</string>
     <string name="lesson_theme_night">Tmavý</string>
     <string name="lesson_theme_system">Podľa telefónu</string>
+    <string name="onboarding_compteTitle">Uchovaj si svoj pokrok</string>
+    <string name="onboarding_continueGoogle">Pokračovať cez Google</string>
+    <string name="onboarding_emailLabel">Tvoja e-mailová adresa</string>
+    <string name="onboarding_emailNote">Pošleme ti odkaz, žiadne heslo si nemusíš pamätať.</string>
+    <string name="onboarding_emailPlaceholder">ty@email.sk</string>
+    <string name="onboarding_linkSent">Otvor odkaz poslaný na %1$s</string>
+    <string name="onboarding_sendLink">Poslať odkaz</string>
 </resources>

@@ -4,6 +4,7 @@
     <string name="app_exams_countdown_today">ma</string>
     <string name="common_continue">Tovább</string>
     <string name="common_privacy">Adatvédelem</string>
+    <string name="common_signOut">Kijelentkezés</string>
     <string name="country_ca">Kanada</string>
     <string name="country_ch">Svájc</string>
     <string name="country_ci">Elefántcsontpart</string>
@@ -28,9 +29,22 @@
     <string name="country_tr">Törökország</string>
     <string name="country_uk">Egyesült Királyság</string>
     <string name="country_us">Egyesült Államok</string>
+    <string name="ios_account">Fiók</string>
+    <string name="ios_account_sub">A csomagod, a jegyzeteid és a szériád – ezen a telefonon és a weboldalon.</string>
+    <string name="ios_auth_emailNotConfirmed">A címed még nincs megerősítve. Nyisd meg a linket, amit most küldtünk.</string>
+    <string name="ios_auth_invalidResponse">Nem sikerült beolvasni a szerver válaszát. Próbáld újra.</string>
+    <string name="ios_auth_providerNotEnabled">Ebben a Supabase-projektben még nincs engedélyezve a bejelentkezés ezzel: %1$s.</string>
+    <string name="ios_auth_sessionExpired">Lejárt a munkameneted. Jelentkezz be újra.</string>
     <string name="ios_averageTitle">Mennyi most\naz átlagod?</string>
+    <string name="ios_backup">Biztonsági mentés</string>
+    <string name="ios_connected">Bejelentkezve</string>
     <string name="ios_country">Ország</string>
     <string name="ios_countryTitle">Hol tanulsz?</string>
+    <string name="ios_createOrSignIn">Fiók létrehozása vagy bejelentkezés</string>
+    <string name="ios_createOrSignInHelp">Érd el a kurzusaidat a többi eszközödön is</string>
+    <string name="ios_dataFootnote">Ha törlöd a kurzusaidat, a következő szinkronizáláskor a fiókodból is törlődnek. A fiók törlése mindenhonnan eltávolítja őket.</string>
+    <string name="ios_deleteAccount">Fiók törlése</string>
+    <string name="ios_deleteAccountQ">Törlöd a fiókot?</string>
     <string name="ios_docx_corrupt">A Word-dokumentum hiányos vagy sérült.</string>
     <string name="ios_docx_empty">Ebben a dokumentumban nem található szöveg.</string>
     <string name="ios_docx_notDocx">Ez a fájl nem Word-dokumentum (.docx).</string>
@@ -145,6 +159,8 @@
     <string name="ios_quiz_time_caption_15">Komoly</string>
     <string name="ios_quiz_time_caption_30">Őrület</string>
     <string name="ios_quiz_time_caption_5">Jó kezdet</string>
+    <string name="ios_signOutMsg">A kurzusaid ezen az eszközön és a fiókodban maradnak. A következő bejelentkezéskor újra megtalálod őket.</string>
+    <string name="ios_signOutQ">Kijelentkezel?</string>
     <string name="ios_streak_bestLabel">A rekordod</string>
     <string name="ios_streak_celebrate_first">Indul a szériád! Gyere vissza holnap, hogy tovább nőjön.</string>
     <string name="ios_streak_celebrate_line">A lángod még ég. Holnap találkozunk!</string>
@@ -158,6 +174,8 @@
     <string name="ios_streak_todayPending">Csinálj ma egy leckét, hogy megtartsd a szériád.</string>
     <string name="ios_streak_week">Ezen a héten</string>
     <string name="ios_streak_zeroTitle">Még nincs széria</string>
+    <string name="ios_syncing">Szinkronizálás…</string>
+    <string name="ios_tapToSync">Koppints a szinkronizáláshoz</string>
     <string name="ios_targetTitle">És mennyit\nszeretnél elérni?</string>
     <string name="ios_trialDay2">2. nap: emlékeztető a vége előtt</string>
     <string name="ios_trialDay2Detail">Értesítéssel szólunk. Tizenöt másodperc alatt lemondhatod.</string>
@@ -407,4 +425,11 @@
     <string name="lesson_theme_day">Világos</string>
     <string name="lesson_theme_night">Sötét</string>
     <string name="lesson_theme_system">Mint a telefonon</string>
+    <string name="onboarding_compteTitle">Őrizd meg a haladásod</string>
+    <string name="onboarding_continueGoogle">Folytatás Google-lel</string>
+    <string name="onboarding_emailLabel">Az e-mail-címed</string>
+    <string name="onboarding_emailNote">Küldünk egy linket, nem kell jelszót megjegyezned.</string>
+    <string name="onboarding_emailPlaceholder">te@email.hu</string>
+    <string name="onboarding_linkSent">Nyisd meg a linket, amit ide küldtünk: %1$s</string>
+    <string name="onboarding_sendLink">Link kérése</string>
 </resources>

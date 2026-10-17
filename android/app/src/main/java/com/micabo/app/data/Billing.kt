@@ -122,6 +122,26 @@ class Billing(
         }
     }
 
+    /**
+     * L'élève vient de se connecter (ou de se déconnecter) : RevenueCat suit le nouvel
+     * identifiant (`PaywallPurchases.syncIdentity`). Un abonnement pris sous l'invité est
+     * rapatrié par `syncPurchases`, sinon le compte le verrait gratuit.
+     */
+    fun follow(userId: String, fromGuest: Boolean) {
+        if (!enabled || userId.isEmpty()) return
+        runCatching {
+            if (!Purchases.isConfigured) return start(userId)
+            if (Purchases.sharedInstance.appUserID == userId) return
+            Purchases.sharedInstance.logInWith(userId, onError = {}, onSuccess = { info, _ ->
+                read(info)
+                if (fromGuest && !_isPro.value) {
+                    runCatching { Purchases.sharedInstance.syncPurchases() }
+                    Purchases.sharedInstance.getCustomerInfoWith(onError = {}, onSuccess = ::read)
+                }
+            })
+        }.onFailure { Log.w("Billing", "RevenueCat indisponible", it) }
+    }
+
     private fun read(info: CustomerInfo) {
         _isPro.value = info.entitlements["pro"]?.isActive == true
     }

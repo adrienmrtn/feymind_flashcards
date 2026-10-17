@@ -4,6 +4,7 @@
     <string name="app_exams_countdown_today">сегодня</string>
     <string name="common_continue">Продолжить</string>
     <string name="common_privacy">Конфиденциальность</string>
+    <string name="common_signOut">Выйти</string>
     <string name="country_be">Бельгия</string>
     <string name="country_ca">Канада</string>
     <string name="country_ch">Швейцария</string>
@@ -29,9 +30,22 @@
     <string name="country_tr">Турция</string>
     <string name="country_uk">Великобритания</string>
     <string name="country_us">США</string>
+    <string name="ios_account">Аккаунт</string>
+    <string name="ios_account_sub">Твой тариф, конспекты и серия — на этом телефоне и на сайте.</string>
+    <string name="ios_auth_emailNotConfirmed">Твой адрес ещё не подтверждён. Открой ссылку, которую мы только что отправили.</string>
+    <string name="ios_auth_invalidResponse">Не удалось прочитать ответ сервера. Попробуй ещё раз.</string>
+    <string name="ios_auth_providerNotEnabled">Вход через %1$s пока не включён в этом проекте Supabase.</string>
+    <string name="ios_auth_sessionExpired">Сессия истекла. Войди снова.</string>
     <string name="ios_averageTitle">Какой у тебя средний балл\nсейчас?</string>
+    <string name="ios_backup">Резервная копия</string>
+    <string name="ios_connected">Вход выполнен</string>
     <string name="ios_country">Страна</string>
     <string name="ios_countryTitle">Где ты учишься?</string>
+    <string name="ios_createOrSignIn">Создай аккаунт или войди</string>
+    <string name="ios_createOrSignInHelp">Твои курсы на всех твоих устройствах</string>
+    <string name="ios_dataFootnote">Удаление курсов удалит их и из аккаунта при следующей синхронизации. Удаление аккаунта сотрёт их везде.</string>
+    <string name="ios_deleteAccount">Удалить аккаунт</string>
+    <string name="ios_deleteAccountQ">Удалить аккаунт?</string>
     <string name="ios_docx_corrupt">Документ Word неполный или повреждён.</string>
     <string name="ios_docx_empty">В этом документе не найден текст.</string>
     <string name="ios_docx_notDocx">Этот файл не документ Word (.docx).</string>
@@ -145,6 +159,8 @@
     <string name="ios_quiz_time_caption_15">Серьёзно</string>
     <string name="ios_quiz_time_caption_30">Безумно</string>
     <string name="ios_quiz_time_caption_5">Хорошее начало</string>
+    <string name="ios_signOutMsg">Курсы останутся на этом устройстве и в аккаунте. Ты найдёшь их при следующем входе.</string>
+    <string name="ios_signOutQ">Выйти?</string>
     <string name="ios_streak_bestLabel">Твой рекорд</string>
     <string name="ios_streak_celebrate_first">Серия началась! Возвращайся завтра, чтобы её продлить.</string>
     <string name="ios_streak_celebrate_line">Твой огонёк всё ещё горит. До завтра!</string>
@@ -158,6 +174,8 @@
     <string name="ios_streak_todayPending">Пройди урок сегодня, чтобы сохранить серию.</string>
     <string name="ios_streak_week">Эта неделя</string>
     <string name="ios_streak_zeroTitle">Серии пока нет</string>
+    <string name="ios_syncing">Синхронизация…</string>
+    <string name="ios_tapToSync">Нажми для синхронизации</string>
     <string name="ios_targetTitle">А к чему\nты стремишься?</string>
     <string name="ios_trialDay2">День 2: напоминание перед окончанием</string>
     <string name="ios_trialDay2Detail">Предупредим уведомлением. Отмена за пятнадцать секунд.</string>
@@ -407,7 +425,17 @@
     <string name="lesson_theme_day">Светлая</string>
     <string name="lesson_theme_night">Тёмная</string>
     <string name="lesson_theme_system">Как на телефоне</string>
+    <string name="onboarding_compteTitle">Сохрани свой прогресс</string>
+    <string name="onboarding_continueGoogle">Продолжить с Google</string>
+    <string name="onboarding_emailLabel">Твой email</string>
+    <string name="onboarding_emailNote">Мы пришлём ссылку — никаких паролей.</string>
+    <string name="onboarding_emailPlaceholder">ty@email.com</string>
+    <string name="onboarding_linkSent">Открой ссылку, отправленную на %1$s</string>
+    <string name="onboarding_sendLink">Получить ссылку</string>
+    <string name="x_account_deleteMsg">Твои курсы, карточки и история будут удалены везде. Подпиской управляют в Google Play.</string>
+    <string name="x_auth_rateLimited">Слишком много попыток. Подожди минуту и попробуй снова.</string>
     <string name="x_onb_language">На каком языке ты учишься?</string>
     <string name="x_paywall_subscribe">Перейти на Pro</string>
     <string name="x_record_limit">До 90 минут. Мика превращает запись в текст, а затем пишет урок.</string>
+    <string name="x_sync_failed">Не синхронизировано. Нажми, чтобы повторить.</string>
 </resources>

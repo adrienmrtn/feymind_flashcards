@@ -4,6 +4,7 @@
     <string name="app_exams_countdown_today">azi</string>
     <string name="common_continue">Continuă</string>
     <string name="common_privacy">Confidențialitate</string>
+    <string name="common_signOut">Deconectează-te</string>
     <string name="country_be">Belgia</string>
     <string name="country_ch">Elveția</string>
     <string name="country_ci">Coasta de Fildeș</string>
@@ -25,9 +26,21 @@
     <string name="country_tr">Turcia</string>
     <string name="country_uk">Regatul Unit</string>
     <string name="country_us">Statele Unite</string>
+    <string name="ios_account">Cont</string>
+    <string name="ios_account_sub">Planul tău, fișele tale și seria ta, pe telefonul ăsta și pe site.</string>
+    <string name="ios_auth_emailNotConfirmed">Adresa ta nu e încă confirmată. Deschide linkul pe care tocmai ți l-am trimis.</string>
+    <string name="ios_auth_invalidResponse">Răspunsul serverului n-a putut fi citit. Încearcă din nou.</string>
+    <string name="ios_auth_providerNotEnabled">Conectarea cu %1$s nu e încă activată în acest proiect Supabase.</string>
+    <string name="ios_auth_sessionExpired">Sesiunea ta a expirat. Conectează-te din nou.</string>
     <string name="ios_averageTitle">Care e media ta\nchiar acum?</string>
+    <string name="ios_connected">Conectat</string>
     <string name="ios_country">Țară</string>
     <string name="ios_countryTitle">Unde studiezi?</string>
+    <string name="ios_createOrSignIn">Creează un cont sau conectează-te</string>
+    <string name="ios_createOrSignInHelp">Regăsește-ți cursurile pe celelalte dispozitive</string>
+    <string name="ios_dataFootnote">Dacă ștergi cursurile, se șterg și din cont la următoarea sincronizare. Ștergerea contului le șterge peste tot.</string>
+    <string name="ios_deleteAccount">Șterge contul</string>
+    <string name="ios_deleteAccountQ">Ștergi contul?</string>
     <string name="ios_docx_corrupt">Documentul Word e incomplet sau corupt.</string>
     <string name="ios_docx_empty">N-am găsit text în documentul ăsta.</string>
     <string name="ios_docx_notDocx">Fișierul ăsta nu e un document Word (.docx).</string>
@@ -139,6 +152,8 @@
     <string name="ios_quiz_time_caption_15">Serios</string>
     <string name="ios_quiz_time_caption_30">Nebunie</string>
     <string name="ios_quiz_time_caption_5">Un început bun</string>
+    <string name="ios_signOutMsg">Cursurile rămân pe dispozitiv și în cont. Le regăsești data viitoare când te conectezi.</string>
+    <string name="ios_signOutQ">Te deconectezi?</string>
     <string name="ios_streak_bestLabel">Cel mai bun</string>
     <string name="ios_streak_celebrate_first">Seria ta începe! Revino mâine ca s-o crești.</string>
     <string name="ios_streak_celebrate_line">Flacăra ta încă arde. Pe mâine!</string>
@@ -152,6 +167,8 @@
     <string name="ios_streak_todayPending">Fă o lecție azi ca să-ți păstrezi seria.</string>
     <string name="ios_streak_week">Săptămâna asta</string>
     <string name="ios_streak_zeroTitle">Nicio serie încă</string>
+    <string name="ios_syncing">Se sincronizează…</string>
+    <string name="ios_tapToSync">Atinge ca să sincronizezi</string>
     <string name="ios_targetTitle">Și ce notă\nvrei să atingi?</string>
     <string name="ios_trialDay2">Ziua 2: reminder înainte de final</string>
     <string name="ios_trialDay2Detail">Te anunțăm printr-o notificare. Anulezi în cincisprezece secunde.</string>
@@ -395,4 +412,11 @@
     <string name="lesson_theme_day">Luminos</string>
     <string name="lesson_theme_night">Întunecat</string>
     <string name="lesson_theme_system">Ca telefonul</string>
+    <string name="onboarding_compteTitle">Păstrează-ți progresul</string>
+    <string name="onboarding_continueGoogle">Continuă cu Google</string>
+    <string name="onboarding_emailLabel">Adresa ta de e-mail</string>
+    <string name="onboarding_emailNote">Îți trimitem un link, fără parolă de ținut minte.</string>
+    <string name="onboarding_emailPlaceholder">tu@email.com</string>
+    <string name="onboarding_linkSent">Deschide linkul trimis la %1$s</string>
+    <string name="onboarding_sendLink">Primește un link</string>
 </resources>

@@ -120,6 +120,53 @@ class Prefs(context: Context) {
         get() = prefs.getString("auth.user", "").orEmpty()
         set(value) = prefs.edit { putString("auth.user", value) }
 
+    // Le vrai compte, quand l'élève s'est connecté (Google, lien par courriel).
+    var accountAccess: String
+        get() = prefs.getString("account.access", "").orEmpty()
+        set(value) = prefs.edit { putString("account.access", value) }
+    var accountRefresh: String
+        get() = prefs.getString("account.refresh", "").orEmpty()
+        set(value) = prefs.edit { putString("account.refresh", value) }
+    var accountExpiresAt: Long
+        get() = prefs.getLong("account.expiresAt", 0)
+        set(value) = prefs.edit { putLong("account.expiresAt", value) }
+    var accountUser: String
+        get() = prefs.getString("account.user", "").orEmpty()
+        set(value) = prefs.edit { putString("account.user", value) }
+    var accountEmail: String
+        get() = prefs.getString("account.email", "").orEmpty()
+        set(value) = prefs.edit { putString("account.email", value) }
+    var accountName: String
+        get() = prefs.getString("account.name", "").orEmpty()
+        set(value) = prefs.edit { putString("account.name", value) }
+    /** Le vérificateur PKCE en attente : le lien du courriel peut s'ouvrir des jours après. */
+    var pkceVerifier: String
+        get() = prefs.getString("account.pkce", "").orEmpty()
+        set(value) = prefs.edit { putString("account.pkce", value) }
+
+    /** Les suppressions qui attendent la synchronisation : `course:<id>`, `card:<id>`, `exam:<id>`. */
+    val tombstones: Set<String> get() = prefs.getStringSet("sync.tombstones", emptySet()).orEmpty().toSet()
+
+    fun addTombstones(ids: Collection<String>) {
+        if (ids.isEmpty()) return
+        prefs.edit { putStringSet("sync.tombstones", tombstones + ids) }
+    }
+
+    fun removeTombstones(ids: Collection<String>) {
+        prefs.edit { putStringSet("sync.tombstones", tombstones - ids.toSet()) }
+    }
+
+    /** La dernière synchronisation réussie, en millisecondes ; 0 pour tout reprendre. */
+    var syncWatermark: Long
+        get() = prefs.getLong("sync.watermark", 0)
+        set(value) = prefs.edit { putLong("sync.watermark", value) }
+
+    fun clearAccount() {
+        prefs.edit {
+            listOf("account.access", "account.refresh", "account.expiresAt", "account.user", "account.email", "account.name").forEach(::remove)
+        }
+    }
+
     fun clearSession() {
         prefs.edit {
             remove("auth.access")

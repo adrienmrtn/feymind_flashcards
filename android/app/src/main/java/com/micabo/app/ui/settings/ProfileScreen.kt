@@ -72,7 +72,7 @@ import com.micabo.app.ui.theme.Micabo
 import com.micabo.app.ui.theme.nunito
 
 /**
- * **L'onglet Profil** (`ProfileView` et `SettingsView`) : la série, Pro, la langue, le pays, la
+ * **L'onglet Profil** (`ProfileView` et `SettingsView`) : la série, Pro, le compte, la langue, le pays, la
  * marche d'études, l'apparence, nous noter, les liens, tout effacer.
  */
 @Composable
@@ -131,6 +131,8 @@ fun ProfileScreen() {
                     }
                 }
             }
+
+            AccountSection()
 
             Group {
                 Item(stringResource(R.string.lesson_profile_language), language.label) { picker = "language" }
@@ -227,7 +229,11 @@ fun ProfileScreen() {
                     app.lessons.deleteAll()
                     val language = app.prefs.profile.value.language
                     val theme = app.prefs.profile.value.theme
+                    // Tout effacer déconnecte aussi : les leçons du compte restent sur le serveur.
                     app.prefs.reset()
+                    app.auth.reload()
+                    app.sync.forget()
+                    app.billing.follow(app.auth.guestId, fromGuest = false)
                     app.prefs.update { it.copy(language = language, theme = theme) }
                     app.streak.reset()
                     app.exams.reset()
@@ -252,7 +258,7 @@ private fun themeName(theme: String): String = stringResource(
 )
 
 @Composable
-private fun Group(content: @Composable () -> Unit) {
+internal fun Group(content: @Composable () -> Unit) {
     val colors = Micabo.colors
     Column(
         Modifier
@@ -264,10 +270,10 @@ private fun Group(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun Divider() = HorizontalDivider(color = Micabo.colors.hairline, modifier = Modifier.padding(start = 18.dp))
+internal fun Divider() = HorizontalDivider(color = Micabo.colors.hairline, modifier = Modifier.padding(start = 18.dp))
 
 @Composable
-private fun Item(title: String, value: String?, danger: Boolean = false, onClick: () -> Unit) {
+internal fun Item(title: String, value: String?, danger: Boolean = false, onClick: () -> Unit) {
     val colors = Micabo.colors
     Row(
         Modifier

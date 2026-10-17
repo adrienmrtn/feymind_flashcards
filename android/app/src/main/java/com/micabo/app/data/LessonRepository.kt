@@ -97,6 +97,11 @@ class LessonRepository(
     private val _lessons = MutableStateFlow<Map<String, Lesson>>(emptyMap())
     val lessons: StateFlow<Map<String, Lesson>> = _lessons.asStateFlow()
 
+    /** Les fichiers sont lus : la synchronisation ne compare qu'une liste complète. */
+    private val loadedFromDisk = CompletableDeferred<Unit>()
+
+    suspend fun ready() = loadedFromDisk.await()
+
     init {
         scope.launch(Dispatchers.IO) {
             val loaded = directory.listFiles { file -> file.extension == "json" }.orEmpty().mapNotNull { file ->
@@ -104,7 +109,14 @@ class LessonRepository(
                     .onFailure { Log.w(TAG, "Leçon illisible : ${file.name}", it) }
                     .getOrNull()
             }
-            _lessons.update { current -> loaded.associateBy { it.id } + current }
+            // Les leçons d'avant la synchronisation reçoivent leurs identifiants de thèmes et de
+            // cartes, et une date de modification : sans elle, elles ne monteraient jamais.
+            val stamped = loaded.map { lesson ->
+                lesson.stamped().let { if (it.updatedAt > 0) it else it.copy(updatedAt = lesson.createdAt.takeIf { c -> c > 0 } ?: System.currentTimeMillis()) }
+            }
+            _lessons.update { current -> stamped.associateBy { it.id } + current }
+            stamped.zip(loaded).filter { (new, old) -> new !== old }.forEach { persist(it.first.id) }
+            loadedFromDisk.complete(Unit)
             // Une app fermée en route : les thèmes restés en préparation reprennent.
             loaded.filter { it.isWriting }.forEach { resume(it.id) }
         }
@@ -113,8 +125,24 @@ class LessonRepository(
     fun lesson(id: String): Lesson? = _lessons.value[id]
 
     private fun save(lesson: Lesson) {
-        _lessons.update { it + (lesson.id to lesson) }
+        val stamped = lesson.stamped().copy(updatedAt = System.currentTimeMillis())
+        _lessons.update { it + (stamped.id to stamped) }
+        persist(stamped.id)
+    }
+
+    /** Une leçon venue du serveur : gardée telle quelle, avec sa date ; la conversation locale reste. */
+    fun applyFromCloud(lesson: Lesson) {
+        _lessons.update { map ->
+            val local = map[lesson.id]
+            map + (lesson.id to lesson.copy(chat = local?.chat ?: lesson.chat))
+        }
         persist(lesson.id)
+    }
+
+    /** Une leçon supprimée sur un autre appareil. */
+    fun removeFromCloud(id: String) {
+        _lessons.update { it - id }
+        scope.launch(Dispatchers.IO) { diskLock.withLock { File(directory, "$id.json").delete() } }
     }
 
     /**
@@ -146,12 +174,14 @@ class LessonRepository(
         _lessons.update { map ->
             val current = map[id]
             found = current != null
-            if (current == null) map else map + (id to change(current))
+            if (current == null) map else map + (id to change(current).stamped().copy(updatedAt = System.currentTimeMillis()))
         }
         if (found) persist(id)
     }
 
     fun delete(id: String) {
+        // La suppression part au serveur à la prochaine synchronisation : la leçon et ses cartes.
+        _lessons.value[id]?.let { lesson -> prefs.addTombstones(listOf("course:$id") + lesson.themes.flatMap { it.flashcards }.map { "card:${it.id}" }) }
         _lessons.update { it - id }
         scope.launch(Dispatchers.IO) { diskLock.withLock { File(directory, "$id.json").delete() } }
     }

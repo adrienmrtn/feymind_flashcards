@@ -31,9 +31,20 @@ object TrialReminder {
     fun schedule(context: Context, trialDays: Int, now: Long = System.currentTimeMillis()) {
         if (trialDays < 2) return
         val end = now + trialDays * Srs.DAY
-        val at = end - Srs.DAY
+        context.getSharedPreferences("micabo", Context.MODE_PRIVATE).edit().putLong(END_KEY, end).apply()
+        arm(context, end)
+    }
+
+    private fun arm(context: Context, end: Long) {
         val alarms = context.getSystemService(AlarmManager::class.java) ?: return
-        alarms.set(AlarmManager.RTC_WAKEUP, at, pending(context, end))
+        alarms.set(AlarmManager.RTC_WAKEUP, maxOf(end - Srs.DAY, System.currentTimeMillis() + 60_000), pending(context, end))
+    }
+
+    /** Après un redémarrage : l'alarme revient si l'essai court encore et que le rappel n'est pas passé. */
+    fun rearm(context: Context) {
+        val prefs = context.getSharedPreferences("micabo", Context.MODE_PRIVATE)
+        val end = prefs.getLong(END_KEY, 0)
+        if (end > System.currentTimeMillis() && !prefs.getBoolean(SHOWN_KEY, false)) arm(context, end)
     }
 
     private fun pending(context: Context, end: Long): PendingIntent = PendingIntent.getBroadcast(
@@ -43,7 +54,11 @@ object TrialReminder {
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
 
+    private const val END_KEY = "trial.end"
+    private const val SHOWN_KEY = "trial.reminded"
+
     fun show(context: Context, end: Long) {
+        context.getSharedPreferences("micabo", Context.MODE_PRIVATE).edit().putBoolean(SHOWN_KEY, true).apply()
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) return
@@ -78,5 +93,12 @@ object TrialReminder {
 class TrialReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         TrialReminder.show(context, TrialReminder.endOf(intent))
+    }
+}
+
+/** Le redémarrage du téléphone : le rappel de l'essai se reprogramme. */
+class TrialReminderBootReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED) TrialReminder.rearm(context)
     }
 }

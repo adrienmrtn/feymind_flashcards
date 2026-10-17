@@ -4,6 +4,7 @@
     <string name="app_exams_countdown_today">i dag</string>
     <string name="common_continue">Fortsæt</string>
     <string name="common_privacy">Privatliv</string>
+    <string name="common_signOut">Log ud</string>
     <string name="country_be">Belgien</string>
     <string name="country_ch">Schweiz</string>
     <string name="country_ci">Elfenbenskysten</string>
@@ -25,9 +26,21 @@
     <string name="country_tr">Tyrkiet</string>
     <string name="country_uk">Storbritannien</string>
     <string name="country_us">USA</string>
+    <string name="ios_account">Konto</string>
+    <string name="ios_account_sub">Dit abonnement, dine resuméer og din stime, både på telefonen og på sitet.</string>
+    <string name="ios_auth_emailNotConfirmed">Din adresse er ikke bekræftet endnu. Åbn linket, vi lige har sendt dig.</string>
+    <string name="ios_auth_invalidResponse">Serverens svar kunne ikke læses. Prøv igen.</string>
+    <string name="ios_auth_providerNotEnabled">Login med %1$s er ikke aktiveret i dette Supabase-projekt endnu.</string>
+    <string name="ios_auth_sessionExpired">Din session er udløbet. Log ind igen.</string>
     <string name="ios_averageTitle">Hvad er dit gennemsnit\nlige nu?</string>
+    <string name="ios_connected">Logget ind</string>
     <string name="ios_country">Land</string>
     <string name="ios_countryTitle">Hvor studerer du?</string>
+    <string name="ios_createOrSignIn">Opret en konto eller log ind</string>
+    <string name="ios_createOrSignInHelp">Find dine kurser på dine andre enheder</string>
+    <string name="ios_dataFootnote">Sletter du dine kurser, slettes de også fra din konto ved næste synkronisering. Sletter du kontoen, forsvinder de overalt.</string>
+    <string name="ios_deleteAccount">Slet konto</string>
+    <string name="ios_deleteAccountQ">Slet kontoen?</string>
     <string name="ios_docx_corrupt">Word-dokumentet er ufuldstændigt eller beskadiget.</string>
     <string name="ios_docx_empty">Der blev ikke fundet tekst i dokumentet.</string>
     <string name="ios_docx_notDocx">Filen er ikke et Word-dokument (.docx).</string>
@@ -141,6 +154,8 @@
     <string name="ios_quiz_time_caption_15">Seriøst</string>
     <string name="ios_quiz_time_caption_30">Vildt</string>
     <string name="ios_quiz_time_caption_5">En god start</string>
+    <string name="ios_signOutMsg">Dine kurser bliver på enheden og på din konto. Du finder dem igen, næste gang du logger ind.</string>
+    <string name="ios_signOutQ">Log ud?</string>
     <string name="ios_streak_bestLabel">Din bedste</string>
     <string name="ios_streak_celebrate_first">Din stime er begyndt! Kom igen i morgen for at bygge videre.</string>
     <string name="ios_streak_celebrate_line">Din flamme brænder stadig. Vi ses i morgen!</string>
@@ -154,6 +169,8 @@
     <string name="ios_streak_todayPending">Tag en lektion i dag for at holde din stime.</string>
     <string name="ios_streak_week">Denne uge</string>
     <string name="ios_streak_zeroTitle">Ingen stime endnu</string>
+    <string name="ios_syncing">Synkroniserer…</string>
+    <string name="ios_tapToSync">Tryk for at synkronisere</string>
     <string name="ios_targetTitle">Og hvad sigter\ndu efter?</string>
     <string name="ios_trialDay2">Dag 2: påmindelse før den slutter</string>
     <string name="ios_trialDay2Detail">Vi giver dig besked med en notifikation. Opsig på femten sekunder.</string>
@@ -394,4 +411,11 @@
     <string name="lesson_theme_day">Lyst</string>
     <string name="lesson_theme_night">Mørkt</string>
     <string name="lesson_theme_system">Som telefonen</string>
+    <string name="onboarding_compteTitle">Behold dine fremskridt</string>
+    <string name="onboarding_continueGoogle">Fortsæt med Google</string>
+    <string name="onboarding_emailLabel">Din e-mailadresse</string>
+    <string name="onboarding_emailNote">Vi sender dig et link, ingen adgangskode at huske.</string>
+    <string name="onboarding_emailPlaceholder">dig@email.dk</string>
+    <string name="onboarding_linkSent">Åbn linket, der er sendt til %1$s</string>
+    <string name="onboarding_sendLink">Få et link</string>
 </resources>

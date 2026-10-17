@@ -1,6 +1,8 @@
 package com.micabo.app
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -28,7 +30,34 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        (application as MicaboApplication).analytics.resumed()
+        val app = application as MicaboApplication
+        app.analytics.resumed()
+        app.syncSoon()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleAuthCallback(intent)
+    }
+
+    /**
+     * Le retour d'une connexion : `micabo://auth-callback?code=…` (Google, lien PKCE) ou un
+     * fragment `#access_token=…&refresh_token=…`. Requête et fragment se lisent ensemble.
+     */
+    private fun handleAuthCallback(intent: Intent?) {
+        val uri = intent?.data ?: return
+        if (uri.scheme != "micabo" || uri.host != "auth-callback") return
+        val values = mutableMapOf<String, String>()
+        listOfNotNull(uri.encodedQuery, uri.encodedFragment).forEach { part ->
+            part.split('&').forEach { pair ->
+                val key = pair.substringBefore('=')
+                val value = pair.substringAfter('=', "")
+                if (key.isNotEmpty()) values[Uri.decode(key)] = Uri.decode(value)
+            }
+        }
+        intent.data = null
+        (application as MicaboApplication).completeSignIn(values)
     }
 
     override fun onStop() {
@@ -41,6 +70,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val app = application as MicaboApplication
+        if (savedInstanceState == null) handleAuthCallback(intent)
         setContent {
             val profile by app.prefs.profile.collectAsState()
             val dark = when (profile.theme) {

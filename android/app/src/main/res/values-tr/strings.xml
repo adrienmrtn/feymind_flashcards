@@ -4,6 +4,7 @@
     <string name="app_exams_countdown_today">bugün</string>
     <string name="common_continue">Devam</string>
     <string name="common_privacy">Gizlilik</string>
+    <string name="common_signOut">Çıkış yap</string>
     <string name="country_be">Belçika</string>
     <string name="country_ca">Kanada</string>
     <string name="country_ch">İsviçre</string>
@@ -28,16 +29,29 @@
     <string name="country_tr">Türkiye</string>
     <string name="country_uk">Birleşik Krallık</string>
     <string name="country_us">Amerika Birleşik Devletleri</string>
+    <string name="ios_account">Hesap</string>
+    <string name="ios_account_sub">Planın, özetlerin ve serin; bu telefonda ve sitede.</string>
+    <string name="ios_auth_emailNotConfirmed">Adresin henüz onaylanmadı. Az önce gönderdiğimiz bağlantıyı aç.</string>
+    <string name="ios_auth_invalidResponse">Sunucunun yanıtı okunamadı. Tekrar dene.</string>
+    <string name="ios_auth_providerNotEnabled">%1$s ile giriş bu Supabase projesinde henüz açık değil.</string>
+    <string name="ios_auth_sessionExpired">Oturumun sona erdi. Tekrar giriş yap.</string>
     <string name="ios_averageLead">Kimse seni yargılamıyor. Bu bir başlangıç noktası, karne değil.</string>
     <string name="ios_averageTitle">Şu anki ortalaman\nkaç?</string>
+    <string name="ios_backup">Yedek</string>
     <string name="ios_build_done">Planın hazır</string>
     <string name="ios_build_step1">Cevapların okunuyor</string>
     <string name="ios_build_step2">Tempon hesaplanıyor</string>
     <string name="ios_build_step3">Sınav gününe kadar dağıtılıyor</string>
     <string name="ios_build_step4">Hedefin ayarlanıyor</string>
     <string name="ios_build_title">Planını hazırlıyoruz</string>
+    <string name="ios_connected">Giriş yapıldı</string>
     <string name="ios_country">Ülke</string>
     <string name="ios_countryTitle">Nerede okuyorsun?</string>
+    <string name="ios_createOrSignIn">Hesap oluştur veya giriş yap</string>
+    <string name="ios_createOrSignInHelp">Derslerini diğer cihazlarında bul</string>
+    <string name="ios_dataFootnote">Dersleri silmek, sonraki senkronizasyonda hesabından da siler. Hesabı silmek her yerden siler.</string>
+    <string name="ios_deleteAccount">Hesabı sil</string>
+    <string name="ios_deleteAccountQ">Hesap silinsin mi?</string>
     <string name="ios_docx_corrupt">Word belgesi eksik veya bozulmuş.</string>
     <string name="ios_docx_empty">Bu belgede metin bulunamadı.</string>
     <string name="ios_docx_notDocx">Bu dosya bir Word belgesi (.docx) değil.</string>
@@ -160,6 +174,8 @@
     <string name="ios_quiz_time_caption_5">İyi bir başlangıç</string>
     <string name="ios_quiz_time_minutes">Günde %1$s dk</string>
     <string name="ios_searchCourse">Bir ders, bir konu…</string>
+    <string name="ios_signOutMsg">Derslerin bu cihazda ve hesabında kalır. Sonraki girişte onları bulursun.</string>
+    <string name="ios_signOutQ">Çıkış yapılsın mı?</string>
     <string name="ios_streak_bestLabel">Rekorun</string>
     <string name="ios_streak_celebrate_first">Serin başladı! Büyütmek için yarın yine gel.</string>
     <string name="ios_streak_celebrate_line">Alevin hâlâ yanıyor. Yarın görüşürüz!</string>
@@ -173,6 +189,8 @@
     <string name="ios_streak_todayPending">Serini korumak için bugün bir ders yap.</string>
     <string name="ios_streak_week">Bu hafta</string>
     <string name="ios_streak_zeroTitle">Henüz serin yok</string>
+    <string name="ios_syncing">Eşitleniyor…</string>
+    <string name="ios_tapToSync">Eşitlemek için dokun</string>
     <string name="ios_targetLead">Makul olana değil, seni gerçekten mutlu edecek olana nişan al.</string>
     <string name="ios_targetTitle">Peki hedefin\nkaç?</string>
     <string name="ios_trialDay2">2. gün: bitmeden hatırlatma</string>
@@ -428,6 +446,15 @@
     <string name="lesson_theme_day">Açık</string>
     <string name="lesson_theme_night">Koyu</string>
     <string name="lesson_theme_system">Telefonla aynı</string>
+    <string name="onboarding_compteTitle">İlerlemeni sakla</string>
+    <string name="onboarding_continueGoogle">Google ile devam</string>
+    <string name="onboarding_emailLabel">E-posta adresin</string>
+    <string name="onboarding_emailNote">Sana bir bağlantı yolluyoruz, akılda tutulacak parola yok.</string>
+    <string name="onboarding_emailPlaceholder">sen@adresin.tr</string>
+    <string name="onboarding_linkSent">%1$s adresine giden bağlantıyı aç</string>
+    <string name="onboarding_sendLink">Bağlantı al</string>
+    <string name="x_account_deleteMsg">Kursların, kartların ve geçmişin her yerden silinecek. Abonelik Google Play\'den yönetilir.</string>
+    <string name="x_auth_rateLimited">Çok fazla deneme. Bir dakika bekle, sonra tekrar dene.</string>
     <string name="x_error_network">Bağlantı yok. İnternetini kontrol edip tekrar dene.</string>
     <string name="x_onb_language">Hangi dilde çalışıyorsun?</string>
     <string name="x_onb_language_sub">Mika derslerini, testlerini ve kartlarını bu dilde yazar.</string>
@@ -447,4 +474,5 @@
     <string name="x_settings_reset">Her şeyi sil</string>
     <string name="x_settings_resetBody">Derslerin ve profilin bu telefondan silinir. Geri alınamaz.</string>
     <string name="x_settings_resetTitle">Her şey silinsin mi?</string>
+    <string name="x_sync_failed">Eşitlenmedi. Tekrar denemek için dokun.</string>
 </resources>

@@ -4,6 +4,7 @@
     <string name="app_exams_countdown_today">i dag</string>
     <string name="common_continue">Fortsätt</string>
     <string name="common_privacy">Integritet</string>
+    <string name="common_signOut">Logga ut</string>
     <string name="country_be">Belgien</string>
     <string name="country_ca">Kanada</string>
     <string name="country_ch">Schweiz</string>
@@ -27,9 +28,22 @@
     <string name="country_tr">Turkiet</string>
     <string name="country_uk">Storbritannien</string>
     <string name="country_us">USA</string>
+    <string name="ios_account">Konto</string>
+    <string name="ios_account_sub">Din plan, dina sammanfattningar och din svit, både i mobilen och på webben.</string>
+    <string name="ios_auth_emailNotConfirmed">Din adress är inte bekräftad än. Öppna länken vi just skickade.</string>
+    <string name="ios_auth_invalidResponse">Serverns svar kunde inte läsas. Försök igen.</string>
+    <string name="ios_auth_providerNotEnabled">Inloggning med %1$s är inte aktiverad i det här Supabase-projektet än.</string>
+    <string name="ios_auth_sessionExpired">Din session har gått ut. Logga in igen.</string>
     <string name="ios_averageTitle">Vilket snitt har du\njust nu?</string>
+    <string name="ios_backup">Säkerhetskopia</string>
+    <string name="ios_connected">Inloggad</string>
     <string name="ios_country">Land</string>
     <string name="ios_countryTitle">Var pluggar du?</string>
+    <string name="ios_createOrSignIn">Skapa ett konto eller logga in</string>
+    <string name="ios_createOrSignInHelp">Hitta dina kurser på dina andra enheter</string>
+    <string name="ios_dataFootnote">Om du raderar dina kurser raderas de även från ditt konto vid nästa synk. Om du raderar kontot försvinner de överallt.</string>
+    <string name="ios_deleteAccount">Radera konto</string>
+    <string name="ios_deleteAccountQ">Radera kontot?</string>
     <string name="ios_docx_corrupt">Word-dokumentet är ofullständigt eller skadat.</string>
     <string name="ios_docx_empty">Ingen text hittades i dokumentet.</string>
     <string name="ios_docx_notDocx">Filen är inte ett Word-dokument (.docx).</string>
@@ -142,6 +156,8 @@
     <string name="ios_quiz_time_caption_15">Seriöst</string>
     <string name="ios_quiz_time_caption_30">Galet</string>
     <string name="ios_quiz_time_caption_5">En bra start</string>
+    <string name="ios_signOutMsg">Dina kurser finns kvar på enheten och på ditt konto. Du hittar dem igen nästa gång du loggar in.</string>
+    <string name="ios_signOutQ">Logga ut?</string>
     <string name="ios_streak_bestLabel">Ditt bästa</string>
     <string name="ios_streak_celebrate_first">Din svit har börjat! Kom tillbaka i morgon för att bygga på den.</string>
     <string name="ios_streak_celebrate_line">Din låga brinner fortfarande. Vi ses i morgon!</string>
@@ -155,6 +171,8 @@
     <string name="ios_streak_todayPending">Gör en lektion i dag för att behålla din svit.</string>
     <string name="ios_streak_week">Den här veckan</string>
     <string name="ios_streak_zeroTitle">Ingen svit än</string>
+    <string name="ios_syncing">Synkar…</string>
+    <string name="ios_tapToSync">Tryck för att synka</string>
     <string name="ios_targetTitle">Och vad siktar\ndu på?</string>
     <string name="ios_trialDay2">Dag 2: påminnelse innan den slutar</string>
     <string name="ios_trialDay2Detail">Vi varnar dig med en notis. Avsluta på femton sekunder.</string>
@@ -398,4 +416,11 @@
     <string name="lesson_theme_day">Ljust</string>
     <string name="lesson_theme_night">Mörkt</string>
     <string name="lesson_theme_system">Som telefonen</string>
+    <string name="onboarding_compteTitle">Behåll dina framsteg</string>
+    <string name="onboarding_continueGoogle">Fortsätt med Google</string>
+    <string name="onboarding_emailLabel">Din e-postadress</string>
+    <string name="onboarding_emailNote">Vi skickar en länk, inget lösenord att komma ihåg.</string>
+    <string name="onboarding_emailPlaceholder">du@epost.se</string>
+    <string name="onboarding_linkSent">Öppna länken som skickades till %1$s</string>
+    <string name="onboarding_sendLink">Få en länk</string>
 </resources>

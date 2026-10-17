@@ -4,6 +4,7 @@
     <string name="app_exams_countdown_today">dnes</string>
     <string name="common_continue">Pokračovat</string>
     <string name="common_privacy">Soukromí</string>
+    <string name="common_signOut">Odhlásit se</string>
     <string name="country_be">Belgie</string>
     <string name="country_ca">Kanada</string>
     <string name="country_ch">Švýcarsko</string>
@@ -28,9 +29,22 @@
     <string name="country_tr">Turecko</string>
     <string name="country_uk">Spojené království</string>
     <string name="country_us">Spojené státy</string>
+    <string name="ios_account">Účet</string>
+    <string name="ios_account_sub">Tvůj plán, shrnutí a série – v mobilu i na webu.</string>
+    <string name="ios_auth_emailNotConfirmed">Tvoje adresa ještě není potvrzená. Otevři odkaz, který jsme ti právě poslali.</string>
+    <string name="ios_auth_invalidResponse">Odpověď serveru se nedala přečíst. Zkus to znovu.</string>
+    <string name="ios_auth_providerNotEnabled">Přihlášení přes %1$s zatím v tomto projektu Supabase není zapnuté.</string>
+    <string name="ios_auth_sessionExpired">Relace vypršela. Přihlas se znovu.</string>
     <string name="ios_averageTitle">Jaký máš teď\nprůměr?</string>
+    <string name="ios_backup">Záloha</string>
+    <string name="ios_connected">Přihlášeno</string>
     <string name="ios_country">Země</string>
     <string name="ios_countryTitle">Kde studuješ?</string>
+    <string name="ios_createOrSignIn">Vytvoř si účet nebo se přihlas</string>
+    <string name="ios_createOrSignInHelp">Měj své kurzy i na dalších zařízeních</string>
+    <string name="ios_dataFootnote">Smazání kurzů je při další synchronizaci smaže i z účtu. Smazání účtu je smaže všude.</string>
+    <string name="ios_deleteAccount">Smazat účet</string>
+    <string name="ios_deleteAccountQ">Smazat účet?</string>
     <string name="ios_docx_corrupt">Dokument Word je neúplný nebo poškozený.</string>
     <string name="ios_docx_empty">V tomto dokumentu se nenašel žádný text.</string>
     <string name="ios_docx_notDocx">Tento soubor není dokument Word (.docx).</string>
@@ -143,6 +157,8 @@
     <string name="ios_quiz_time_caption_15">Vážně</string>
     <string name="ios_quiz_time_caption_30">Šílenství</string>
     <string name="ios_quiz_time_caption_5">Dobrý začátek</string>
+    <string name="ios_signOutMsg">Tvoje kurzy zůstanou v tomto zařízení i na účtu. Najdeš je při dalším přihlášení.</string>
+    <string name="ios_signOutQ">Odhlásit se?</string>
     <string name="ios_streak_bestLabel">Tvůj rekord</string>
     <string name="ios_streak_celebrate_first">Tvoje série začíná! Vrať se zítra a prodluž ji.</string>
     <string name="ios_streak_celebrate_line">Tvůj plamen pořád hoří. Zítra ahoj!</string>
@@ -156,6 +172,8 @@
     <string name="ios_streak_todayPending">Udělej si dnes lekci a udrž sérii.</string>
     <string name="ios_streak_week">Tento týden</string>
     <string name="ios_streak_zeroTitle">Zatím bez série</string>
+    <string name="ios_syncing">Synchronizace…</string>
+    <string name="ios_tapToSync">Klepni pro synchronizaci</string>
     <string name="ios_targetTitle">A na co\nmíříš?</string>
     <string name="ios_trialDay2">Den 2: připomínka před koncem</string>
     <string name="ios_trialDay2Detail">Upozorníme tě oznámením. Zrušíš za patnáct vteřin.</string>
@@ -400,4 +418,11 @@
     <string name="lesson_theme_day">Světlý</string>
     <string name="lesson_theme_night">Tmavý</string>
     <string name="lesson_theme_system">Podle telefonu</string>
+    <string name="onboarding_compteTitle">Uchovej si svůj pokrok</string>
+    <string name="onboarding_continueGoogle">Pokračovat přes Google</string>
+    <string name="onboarding_emailLabel">Tvoje e-mailová adresa</string>
+    <string name="onboarding_emailNote">Pošleme ti odkaz, žádné heslo si nemusíš pamatovat.</string>
+    <string name="onboarding_emailPlaceholder">ty@email.cz</string>
+    <string name="onboarding_linkSent">Otevři odkaz poslaný na %1$s</string>
+    <string name="onboarding_sendLink">Poslat odkaz</string>
 </resources>

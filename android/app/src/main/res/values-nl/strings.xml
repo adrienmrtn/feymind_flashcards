@@ -3,6 +3,7 @@
 <resources>
     <string name="app_exams_countdown_today">vandaag</string>
     <string name="common_continue">Doorgaan</string>
+    <string name="common_signOut">Uitloggen</string>
     <string name="country_be">België</string>
     <string name="country_ch">Zwitserland</string>
     <string name="country_ci">Ivoorkust</string>
@@ -25,9 +26,21 @@
     <string name="country_tr">Turkije</string>
     <string name="country_uk">Verenigd Koninkrijk</string>
     <string name="country_us">Verenigde Staten</string>
+    <string name="ios_account_sub">Je abonnement, je samenvattingen en je reeks, op deze telefoon en op de site.</string>
+    <string name="ios_auth_emailNotConfirmed">Je adres is nog niet bevestigd. Open de link die we je net hebben gestuurd.</string>
+    <string name="ios_auth_invalidResponse">Het antwoord van de server kon niet worden gelezen. Probeer het opnieuw.</string>
+    <string name="ios_auth_providerNotEnabled">Inloggen met %1$s is nog niet ingeschakeld in dit Supabase-project.</string>
+    <string name="ios_auth_sessionExpired">Je sessie is verlopen. Log opnieuw in.</string>
     <string name="ios_averageTitle">Wat is je gemiddelde\nop dit moment?</string>
+    <string name="ios_backup">Back-up</string>
+    <string name="ios_connected">Ingelogd</string>
     <string name="ios_country">Land</string>
     <string name="ios_countryTitle">Waar studeer je?</string>
+    <string name="ios_createOrSignIn">Maak een account of log in</string>
+    <string name="ios_createOrSignInHelp">Vind je cursussen terug op je andere apparaten</string>
+    <string name="ios_dataFootnote">Als je je cursussen wist, worden ze bij de volgende synchronisatie ook uit je account gewist. Je account verwijderen wist ze overal.</string>
+    <string name="ios_deleteAccount">Account verwijderen</string>
+    <string name="ios_deleteAccountQ">Account verwijderen?</string>
     <string name="ios_docx_corrupt">Het Word-document is onvolledig of beschadigd.</string>
     <string name="ios_docx_empty">Er is geen tekst gevonden in dit document.</string>
     <string name="ios_docx_notDocx">Dit bestand is geen Word-document (.docx).</string>
@@ -140,6 +153,8 @@
     <string name="ios_quiz_time_caption_15">Serieus</string>
     <string name="ios_quiz_time_caption_30">Krankzinnig</string>
     <string name="ios_quiz_time_caption_5">Een goed begin</string>
+    <string name="ios_signOutMsg">Je cursussen blijven op dit apparaat en in je account. Je vindt ze terug zodra je weer inlogt.</string>
+    <string name="ios_signOutQ">Uitloggen?</string>
     <string name="ios_streak_bestLabel">Je beste</string>
     <string name="ios_streak_celebrate_first">Je reeks begint! Kom morgen terug om hem te laten groeien.</string>
     <string name="ios_streak_celebrate_line">Je vlam brandt nog. Tot morgen!</string>
@@ -153,6 +168,8 @@
     <string name="ios_streak_todayPending">Doe vandaag een les om je reeks te houden.</string>
     <string name="ios_streak_week">Deze week</string>
     <string name="ios_streak_zeroTitle">Nog geen reeks</string>
+    <string name="ios_syncing">Synchroniseren…</string>
+    <string name="ios_tapToSync">Tik om te synchroniseren</string>
     <string name="ios_targetTitle">En waar ga je\nvoor?</string>
     <string name="ios_trialDay2">Dag 2: herinnering voor het einde</string>
     <string name="ios_trialDay2Detail">We waarschuwen je met een melding. Opzeggen in vijftien seconden.</string>
@@ -392,8 +409,18 @@
     <string name="lesson_theme_day">Licht</string>
     <string name="lesson_theme_night">Donker</string>
     <string name="lesson_theme_system">Zoals telefoon</string>
+    <string name="onboarding_compteTitle">Bewaar je voortgang</string>
+    <string name="onboarding_continueGoogle">Doorgaan met Google</string>
+    <string name="onboarding_emailLabel">Je e-mailadres</string>
+    <string name="onboarding_emailNote">We sturen je een link, geen wachtwoord om te onthouden.</string>
+    <string name="onboarding_emailPlaceholder">jij@email.nl</string>
+    <string name="onboarding_linkSent">Open de link die naar %1$s is gestuurd</string>
+    <string name="onboarding_sendLink">Link ontvangen</string>
+    <string name="x_account_deleteMsg">Je cursussen, kaarten en geschiedenis worden overal gewist. Een abonnement beheer je in Google Play.</string>
+    <string name="x_auth_rateLimited">Te veel pogingen. Wacht een minuut en probeer het opnieuw.</string>
     <string name="x_onb_language">In welke taal studeer je?</string>
     <string name="x_paywall_subscribe">Word Pro</string>
     <string name="x_record_limit">Tot 90 minuten. Mika zet je opname om in tekst en schrijft dan je les.</string>
     <string name="x_settings_level">Niveau</string>
+    <string name="x_sync_failed">Niet gesynchroniseerd. Tik om het opnieuw te proberen.</string>
 </resources>

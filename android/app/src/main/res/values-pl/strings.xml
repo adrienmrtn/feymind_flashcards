@@ -4,6 +4,7 @@
     <string name="app_exams_countdown_today">dziś</string>
     <string name="common_continue">Dalej</string>
     <string name="common_privacy">Prywatność</string>
+    <string name="common_signOut">Wyloguj się</string>
     <string name="country_be">Belgia</string>
     <string name="country_ca">Kanada</string>
     <string name="country_ch">Szwajcaria</string>
@@ -28,9 +29,22 @@
     <string name="country_tr">Turcja</string>
     <string name="country_uk">Wielka Brytania</string>
     <string name="country_us">Stany Zjednoczone</string>
+    <string name="ios_account">Konto</string>
+    <string name="ios_account_sub">Twój plan, notatki i seria – na telefonie i na stronie.</string>
+    <string name="ios_auth_emailNotConfirmed">Twój adres nie jest jeszcze potwierdzony. Otwórz link, który właśnie wysłaliśmy.</string>
+    <string name="ios_auth_invalidResponse">Nie udało się odczytać odpowiedzi serwera. Spróbuj ponownie.</string>
+    <string name="ios_auth_providerNotEnabled">Logowanie przez %1$s nie jest jeszcze włączone w tym projekcie Supabase.</string>
+    <string name="ios_auth_sessionExpired">Sesja wygasła. Zaloguj się ponownie.</string>
     <string name="ios_averageTitle">Jaką masz teraz\nśrednią?</string>
+    <string name="ios_backup">Kopia zapasowa</string>
+    <string name="ios_connected">Zalogowano</string>
     <string name="ios_country">Kraj</string>
     <string name="ios_countryTitle">Gdzie się uczysz?</string>
+    <string name="ios_createOrSignIn">Załóż konto lub zaloguj się</string>
+    <string name="ios_createOrSignInHelp">Miej swoje kursy na innych urządzeniach</string>
+    <string name="ios_dataFootnote">Usunięcie kursów usuwa je też z konta przy następnej synchronizacji. Usunięcie konta usuwa je wszędzie.</string>
+    <string name="ios_deleteAccount">Usuń konto</string>
+    <string name="ios_deleteAccountQ">Usunąć konto?</string>
     <string name="ios_docx_corrupt">Dokument Word jest niekompletny lub uszkodzony.</string>
     <string name="ios_docx_empty">W tym dokumencie nie znaleziono tekstu.</string>
     <string name="ios_docx_notDocx">Ten plik nie jest dokumentem Word (.docx).</string>
@@ -143,6 +157,8 @@
     <string name="ios_quiz_time_caption_15">Na poważnie</string>
     <string name="ios_quiz_time_caption_30">Szaleństwo</string>
     <string name="ios_quiz_time_caption_5">Dobry początek</string>
+    <string name="ios_signOutMsg">Twoje kursy zostają na tym urządzeniu i na koncie. Znajdziesz je przy następnym logowaniu.</string>
+    <string name="ios_signOutQ">Wylogować się?</string>
     <string name="ios_streak_bestLabel">Twój rekord</string>
     <string name="ios_streak_celebrate_first">Twoja seria się zaczyna! Wróć jutro, żeby ją przedłużyć.</string>
     <string name="ios_streak_celebrate_line">Twój płomień wciąż się pali. Do jutra!</string>
@@ -156,6 +172,8 @@
     <string name="ios_streak_todayPending">Zrób dziś lekcję, żeby utrzymać serię.</string>
     <string name="ios_streak_week">Ten tydzień</string>
     <string name="ios_streak_zeroTitle">Jeszcze bez serii</string>
+    <string name="ios_syncing">Synchronizacja…</string>
+    <string name="ios_tapToSync">Stuknij, by zsynchronizować</string>
     <string name="ios_targetTitle">A do czego\ndążysz?</string>
     <string name="ios_trialDay2">Dzień 2: przypomnienie przed końcem</string>
     <string name="ios_trialDay2Detail">Uprzedzimy Cię powiadomieniem. Anulujesz w piętnaście sekund.</string>
@@ -401,8 +419,18 @@
     <string name="lesson_theme_day">Jasny</string>
     <string name="lesson_theme_night">Ciemny</string>
     <string name="lesson_theme_system">Jak w telefonie</string>
+    <string name="onboarding_compteTitle">Zachowaj swoje postępy</string>
+    <string name="onboarding_continueGoogle">Kontynuuj z Google</string>
+    <string name="onboarding_emailLabel">Twój adres e-mail</string>
+    <string name="onboarding_emailNote">Wyślemy Ci link, żadnego hasła do zapamiętania.</string>
+    <string name="onboarding_emailPlaceholder">ty@email.com</string>
+    <string name="onboarding_linkSent">Otwórz link wysłany na %1$s</string>
+    <string name="onboarding_sendLink">Wyślij link</string>
+    <string name="x_account_deleteMsg">Twoje kursy, karty i historia zostaną usunięte wszędzie. Subskrypcją zarządzasz w Google Play.</string>
+    <string name="x_auth_rateLimited">Zbyt wiele prób. Odczekaj minutę i spróbuj ponownie.</string>
     <string name="x_onb_language">W jakim języku się uczysz?</string>
     <string name="x_paywall_subscribe">Przejdź na Pro</string>
     <string name="x_record_limit">Do 90 minut. Mika zamienia nagranie na tekst, a potem pisze twoją lekcję.</string>
     <string name="x_settings_level">Poziom</string>
+    <string name="x_sync_failed">Nie zsynchronizowano. Dotknij, aby spróbować ponownie.</string>
 </resources>

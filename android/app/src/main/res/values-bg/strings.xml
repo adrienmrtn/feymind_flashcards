@@ -4,6 +4,7 @@
     <string name="app_exams_countdown_today">днес</string>
     <string name="common_continue">Продължи</string>
     <string name="common_privacy">Поверителност</string>
+    <string name="common_signOut">Изход</string>
     <string name="country_be">Белгия</string>
     <string name="country_ca">Канада</string>
     <string name="country_ch">Швейцария</string>
@@ -29,9 +30,22 @@
     <string name="country_tr">Турция</string>
     <string name="country_uk">Обединеното кралство</string>
     <string name="country_us">САЩ</string>
+    <string name="ios_account">Профил</string>
+    <string name="ios_account_sub">Твоят план, твоите конспекти и твоята серия – на този телефон и на сайта.</string>
+    <string name="ios_auth_emailNotConfirmed">Имейлът ти още не е потвърден. Отвори линка, който току-що ти изпратихме.</string>
+    <string name="ios_auth_invalidResponse">Отговорът на сървъра не можа да се прочете. Опитай пак.</string>
+    <string name="ios_auth_providerNotEnabled">Входът с %1$s още не е активиран в този проект на Supabase.</string>
+    <string name="ios_auth_sessionExpired">Сесията ти изтече. Влез отново.</string>
     <string name="ios_averageTitle">Какъв е средният ти успех\nв момента?</string>
+    <string name="ios_backup">Резервно копие</string>
+    <string name="ios_connected">Профилът е свързан</string>
     <string name="ios_country">Държава</string>
     <string name="ios_countryTitle">Къде учиш?</string>
+    <string name="ios_createOrSignIn">Създай профил или влез</string>
+    <string name="ios_createOrSignInHelp">Курсовете ти и на другите ти устройства</string>
+    <string name="ios_dataFootnote">Изтриването на курсовете ги изтрива и от профила ти при следващата синхронизация. Изтриването на профила ги изтрива навсякъде.</string>
+    <string name="ios_deleteAccount">Изтрий профила</string>
+    <string name="ios_deleteAccountQ">Да изтрием ли профила?</string>
     <string name="ios_docx_corrupt">Документът Word е непълен или повреден.</string>
     <string name="ios_docx_empty">В този документ не е намерен текст.</string>
     <string name="ios_docx_notDocx">Този файл не е документ Word (.docx).</string>
@@ -145,6 +159,8 @@
     <string name="ios_quiz_time_caption_15">Сериозно</string>
     <string name="ios_quiz_time_caption_30">Лудница</string>
     <string name="ios_quiz_time_caption_5">Добро начало</string>
+    <string name="ios_signOutMsg">Курсовете ти остават на това устройство и в профила ти. Ще ги намериш отново при следващото влизане.</string>
+    <string name="ios_signOutQ">Да излезеш ли?</string>
     <string name="ios_streak_bestLabel">Твоят рекорд</string>
     <string name="ios_streak_celebrate_first">Серията ти започва! Върни се утре, за да я продължиш.</string>
     <string name="ios_streak_celebrate_line">Пламъкът ти още гори. До утре!</string>
@@ -158,6 +174,8 @@
     <string name="ios_streak_todayPending">Направи урок днес, за да запазиш серията.</string>
     <string name="ios_streak_week">Тази седмица</string>
     <string name="ios_streak_zeroTitle">Още няма серия</string>
+    <string name="ios_syncing">Синхронизиране…</string>
+    <string name="ios_tapToSync">Докосни за синхронизация</string>
     <string name="ios_targetTitle">А към какво\nсе стремиш?</string>
     <string name="ios_trialDay2">Ден 2: напомняне преди края</string>
     <string name="ios_trialDay2Detail">Ще те предупредим с известие. Отказ за петнайсет секунди.</string>
@@ -407,4 +425,11 @@
     <string name="lesson_theme_day">Светла</string>
     <string name="lesson_theme_night">Тъмна</string>
     <string name="lesson_theme_system">Като телефона</string>
+    <string name="onboarding_compteTitle">Запази напредъка си</string>
+    <string name="onboarding_continueGoogle">Продължи с Google</string>
+    <string name="onboarding_emailLabel">Твоят имейл</string>
+    <string name="onboarding_emailNote">Изпращаме ти линк – без парола за помнене.</string>
+    <string name="onboarding_emailPlaceholder">ti@email.com</string>
+    <string name="onboarding_linkSent">Отвори линка, изпратен до %1$s</string>
+    <string name="onboarding_sendLink">Получи линк</string>
 </resources>

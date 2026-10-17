@@ -90,4 +90,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2")
     implementation("com.tom-roush:pdfbox-android:2.0.27.0")
     implementation("androidx.exifinterface:exifinterface:1.4.1")
+    // La connexion Google s'ouvre dans un onglet de l'app, pas dans le navigateur.
+    implementation("androidx.browser:browser:1.8.0")
 }

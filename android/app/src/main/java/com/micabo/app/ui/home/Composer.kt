@@ -331,7 +331,7 @@ fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit, onLo
 
 /** Une feuille simple, au bas de l'écran ; toucher au-dessus la ferme. */
 @Composable
-private fun Sheet(onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+internal fun Sheet(onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
     val colors = Micabo.colors
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Box(

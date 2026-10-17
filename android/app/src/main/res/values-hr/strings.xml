@@ -4,6 +4,7 @@
     <string name="app_exams_countdown_today">danas</string>
     <string name="common_continue">Nastavi</string>
     <string name="common_privacy">Privatnost</string>
+    <string name="common_signOut">Odjavi se</string>
     <string name="country_be">Belgija</string>
     <string name="country_ca">Kanada</string>
     <string name="country_ch">Švicarska</string>
@@ -27,9 +28,22 @@
     <string name="country_tr">Turska</string>
     <string name="country_uk">Ujedinjeno Kraljevstvo</string>
     <string name="country_us">Sjedinjene Američke Države</string>
+    <string name="ios_account">Račun</string>
+    <string name="ios_account_sub">Tvoj plan, tvoje skripte i tvoj niz, na ovom mobitelu i na webu.</string>
+    <string name="ios_auth_emailNotConfirmed">Tvoja adresa još nije potvrđena. Otvori poveznicu koju smo ti upravo poslali.</string>
+    <string name="ios_auth_invalidResponse">Odgovor poslužitelja nije se mogao pročitati. Pokušaj ponovno.</string>
+    <string name="ios_auth_providerNotEnabled">Prijava putem %1$s još nije omogućena na ovom Supabase projektu.</string>
+    <string name="ios_auth_sessionExpired">Tvoja sesija je istekla. Prijavi se ponovno.</string>
     <string name="ios_averageTitle">Koji ti je prosjek\ntrenutačno?</string>
+    <string name="ios_backup">Sigurnosna kopija</string>
+    <string name="ios_connected">Prijavljen račun</string>
     <string name="ios_country">Država</string>
     <string name="ios_countryTitle">Gdje studiraš?</string>
+    <string name="ios_createOrSignIn">Izradi račun ili se prijavi</string>
+    <string name="ios_createOrSignInHelp">Pronađi svoje tečajeve na drugim uređajima</string>
+    <string name="ios_dataFootnote">Brisanjem tečajeva brišeš ih i s računa pri sljedećoj sinkronizaciji. Brisanjem računa brišu se posvuda.</string>
+    <string name="ios_deleteAccount">Izbriši račun</string>
+    <string name="ios_deleteAccountQ">Izbrisati račun?</string>
     <string name="ios_docx_corrupt">Word dokument je nepotpun ili oštećen.</string>
     <string name="ios_docx_empty">U ovom dokumentu nije pronađen tekst.</string>
     <string name="ios_docx_notDocx">Ova datoteka nije Word dokument (.docx).</string>
@@ -144,6 +158,8 @@
     <string name="ios_quiz_time_caption_15">Ozbiljno</string>
     <string name="ios_quiz_time_caption_30">Ludo</string>
     <string name="ios_quiz_time_caption_5">Dobar početak</string>
+    <string name="ios_signOutMsg">Tvoji tečajevi ostaju na ovom uređaju i na tvom računu. Naći ćeš ih opet pri sljedećoj prijavi.</string>
+    <string name="ios_signOutQ">Odjaviti se?</string>
     <string name="ios_streak_bestLabel">Tvoj rekord</string>
     <string name="ios_streak_celebrate_first">Tvoj niz počinje! Vrati se sutra da ga produžiš.</string>
     <string name="ios_streak_celebrate_line">Tvoj plamen još gori. Vidimo se sutra!</string>
@@ -157,6 +173,8 @@
     <string name="ios_streak_todayPending">Napravi lekciju danas da zadržiš niz.</string>
     <string name="ios_streak_week">Ovaj tjedan</string>
     <string name="ios_streak_zeroTitle">Još nema niza</string>
+    <string name="ios_syncing">Sinkronizacija…</string>
+    <string name="ios_tapToSync">Dodirni za sinkronizaciju</string>
     <string name="ios_targetTitle">A čemu\nciljaš?</string>
     <string name="ios_trialDay2">2. dan: podsjetnik prije kraja</string>
     <string name="ios_trialDay2Detail">Upozorit ćemo te obavijesti. Otkazivanje za petnaest sekundi.</string>
@@ -404,4 +422,11 @@
     <string name="lesson_theme_day">Svijetla</string>
     <string name="lesson_theme_night">Tamna</string>
     <string name="lesson_theme_system">Kao na mobitelu</string>
+    <string name="onboarding_compteTitle">Sačuvaj svoj napredak</string>
+    <string name="onboarding_continueGoogle">Nastavi s Googleom</string>
+    <string name="onboarding_emailLabel">Tvoja e-mail adresa</string>
+    <string name="onboarding_emailNote">Šaljemo ti poveznicu, nema lozinke za pamćenje.</string>
+    <string name="onboarding_emailPlaceholder">ti@email.com</string>
+    <string name="onboarding_linkSent">Otvori poveznicu poslanu na %1$s</string>
+    <string name="onboarding_sendLink">Pošalji mi poveznicu</string>
 </resources>

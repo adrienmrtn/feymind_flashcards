@@ -29,6 +29,8 @@ data class Exam(
     /** Le jour, à minuit local, en millisecondes. */
     val date: Long,
     val lessonIds: List<String> = emptyList(),
+    /** La dernière modification, pour la synchronisation. */
+    val updatedAt: Long = 0,
 )
 
 /** Le score d'une leçon dans une copie. */
@@ -99,7 +101,7 @@ data class Paper(
 private data class ExamStore(val exams: List<Exam> = emptyList(), val results: List<MockResult> = emptyList())
 
 /** **Les examens et les examens blancs**, gardés dans `files/exams.json`. */
-class ExamRepository(context: Context) {
+class ExamRepository(context: Context, private val prefs: Prefs? = null) {
     private val file = File(context.filesDir, "exams.json")
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val lock = Mutex()
@@ -118,7 +120,9 @@ class ExamRepository(context: Context) {
                 val stored = runCatching { MicaboJson.decodeFromString(ExamStore.serializer(), file.readText()) }.getOrNull()
                 if (stored != null) {
                     // Ce qui a changé pendant la lecture passe devant ce qui était gardé.
-                    _exams.update { current -> (stored.exams.filter { old -> current.none { it.id == old.id } } + current).sortedBy { it.date } }
+                    // Un examen d'avant la synchronisation reçoit une date : sans elle, il ne monterait jamais.
+                    val dated = stored.exams.map { if (it.updatedAt > 0) it else it.copy(updatedAt = 1) }
+                    _exams.update { current -> (dated.filter { old -> current.none { it.id == old.id } } + current).sortedBy { it.date } }
                     _results.update { current -> (current + stored.results.filter { old -> current.none { it.id == old.id } }).take(30) }
                 }
             } finally {
@@ -143,19 +147,35 @@ class ExamRepository(context: Context) {
     fun exam(id: String?): Exam? = _exams.value.firstOrNull { it.id == id }
 
     fun save(exam: Exam) {
-        _exams.value = (_exams.value.filter { it.id != exam.id } + exam).sortedBy { it.date }
+        val stamped = exam.copy(updatedAt = System.currentTimeMillis())
+        _exams.value = (_exams.value.filter { it.id != exam.id } + stamped).sortedBy { it.date }
         persist()
     }
 
     fun delete(id: String) {
         _exams.value = _exams.value.filter { it.id != id }
+        prefs?.addTombstones(listOf("exam:$id"))
         persist()
     }
+
+    /** Un examen venu du serveur, gardé avec sa date. */
+    fun applyFromCloud(exam: Exam) {
+        _exams.value = (_exams.value.filter { it.id != exam.id } + exam).sortedBy { it.date }
+        persist()
+    }
+
+    fun removeFromCloud(id: String) {
+        _exams.value = _exams.value.filter { it.id != id }
+        persist()
+    }
+
+    /** Attend la lecture du fichier : la synchronisation ne compare qu'une liste complète. */
+    suspend fun ready() = loaded.await()
 
     /** Une leçon supprimée sort des examens qui la couvraient. */
     fun forgetLesson(lessonId: String) {
         if (_exams.value.none { lessonId in it.lessonIds }) return
-        _exams.value = _exams.value.map { it.copy(lessonIds = it.lessonIds - lessonId) }
+        _exams.value = _exams.value.map { if (lessonId in it.lessonIds) it.copy(lessonIds = it.lessonIds - lessonId, updatedAt = System.currentTimeMillis()) else it }
         persist()
     }
 

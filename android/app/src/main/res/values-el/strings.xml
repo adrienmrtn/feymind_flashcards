@@ -4,6 +4,7 @@
     <string name="app_exams_countdown_today">σήμερα</string>
     <string name="common_continue">Συνέχεια</string>
     <string name="common_privacy">Απόρρητο</string>
+    <string name="common_signOut">Αποσύνδεση</string>
     <string name="country_be">Βέλγιο</string>
     <string name="country_ca">Καναδάς</string>
     <string name="country_ch">Ελβετία</string>
@@ -29,9 +30,22 @@
     <string name="country_tr">Τουρκία</string>
     <string name="country_uk">Ηνωμένο Βασίλειο</string>
     <string name="country_us">ΗΠΑ</string>
+    <string name="ios_account">Λογαριασμός</string>
+    <string name="ios_account_sub">Το πρόγραμμά σου, οι συνόψεις σου και το σερί σου, σε αυτό το κινητό και στο site.</string>
+    <string name="ios_auth_emailNotConfirmed">Η διεύθυνσή σου δεν έχει επιβεβαιωθεί ακόμα. Άνοιξε τον σύνδεσμο που μόλις σου στείλαμε.</string>
+    <string name="ios_auth_invalidResponse">Η απάντηση του διακομιστή δεν διαβάστηκε. Δοκίμασε ξανά.</string>
+    <string name="ios_auth_providerNotEnabled">Η σύνδεση με %1$s δεν έχει ενεργοποιηθεί ακόμα σε αυτό το project Supabase.</string>
+    <string name="ios_auth_sessionExpired">Η συνεδρία σου έληξε. Συνδέσου ξανά.</string>
     <string name="ios_averageTitle">Ποιος είναι ο μέσος όρος σου\nαυτή τη στιγμή;</string>
+    <string name="ios_backup">Αντίγραφο ασφαλείας</string>
+    <string name="ios_connected">Σε σύνδεση</string>
     <string name="ios_country">Χώρα</string>
     <string name="ios_countryTitle">Πού σπουδάζεις;</string>
+    <string name="ios_createOrSignIn">Δημιούργησε λογαριασμό ή συνδέσου</string>
+    <string name="ios_createOrSignInHelp">Βρες τα μαθήματά σου και στις άλλες συσκευές σου</string>
+    <string name="ios_dataFootnote">Αν σβήσεις τα μαθήματά σου, σβήνονται και από τον λογαριασμό σου στον επόμενο συγχρονισμό. Η διαγραφή του λογαριασμού τα σβήνει παντού.</string>
+    <string name="ios_deleteAccount">Διαγραφή λογαριασμού</string>
+    <string name="ios_deleteAccountQ">Διαγραφή του λογαριασμού;</string>
     <string name="ios_docx_corrupt">Το έγγραφο Word είναι ελλιπές ή κατεστραμμένο.</string>
     <string name="ios_docx_empty">Δεν βρέθηκε κείμενο σε αυτό το έγγραφο.</string>
     <string name="ios_docx_notDocx">Αυτό το αρχείο δεν είναι έγγραφο Word (.docx).</string>
@@ -145,6 +159,8 @@
     <string name="ios_quiz_time_caption_15">Σοβαρά</string>
     <string name="ios_quiz_time_caption_30">Τρέλα</string>
     <string name="ios_quiz_time_caption_5">Καλή αρχή</string>
+    <string name="ios_signOutMsg">Τα μαθήματά σου μένουν σε αυτή τη συσκευή και στον λογαριασμό σου. Θα τα βρεις ξανά την επόμενη φορά που θα συνδεθείς.</string>
+    <string name="ios_signOutQ">Αποσύνδεση;</string>
     <string name="ios_streak_bestLabel">Το ρεκόρ σου</string>
     <string name="ios_streak_celebrate_first">Το σερί σου ξεκινά! Γύρνα αύριο για να το μεγαλώσεις.</string>
     <string name="ios_streak_celebrate_line">Η φλόγα σου καίει ακόμα. Τα λέμε αύριο!</string>
@@ -158,6 +174,8 @@
     <string name="ios_streak_todayPending">Κάνε ένα μάθημα σήμερα για να κρατήσεις το σερί σου.</string>
     <string name="ios_streak_week">Αυτή την εβδομάδα</string>
     <string name="ios_streak_zeroTitle">Κανένα σερί ακόμα</string>
+    <string name="ios_syncing">Συγχρονισμός…</string>
+    <string name="ios_tapToSync">Πάτα για συγχρονισμό</string>
     <string name="ios_targetTitle">Και τι\nστοχεύεις;</string>
     <string name="ios_trialDay2">Μέρα 2: υπενθύμιση πριν τη λήξη</string>
     <string name="ios_trialDay2Detail">Θα σε ειδοποιήσουμε. Ακύρωση σε δεκαπέντε δευτερόλεπτα.</string>
@@ -407,4 +425,11 @@
     <string name="lesson_theme_day">Φωτεινό</string>
     <string name="lesson_theme_night">Σκοτεινό</string>
     <string name="lesson_theme_system">Όπως το κινητό</string>
+    <string name="onboarding_compteTitle">Κράτα την πρόοδό σου</string>
+    <string name="onboarding_continueGoogle">Συνέχεια με Google</string>
+    <string name="onboarding_emailLabel">Η διεύθυνση email σου</string>
+    <string name="onboarding_emailNote">Σου στέλνουμε έναν σύνδεσμο, χωρίς κωδικό για να θυμάσαι.</string>
+    <string name="onboarding_emailPlaceholder">esy@email.com</string>
+    <string name="onboarding_linkSent">Άνοιξε τον σύνδεσμο που στάλθηκε στο %1$s</string>
+    <string name="onboarding_sendLink">Λήψη συνδέσμου</string>
 </resources>

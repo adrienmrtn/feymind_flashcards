@@ -46,7 +46,23 @@ data class Lesson(
     val examDate: Long = 0,
     /** La conversation avec Mika sur cette leçon, gardée sur le téléphone. */
     val chat: List<ChatMessage> = emptyList(),
+    /** La dernière modification, en millisecondes : la synchronisation garde la plus récente. */
+    val updatedAt: Long = 0,
 ) {
+    /**
+     * La leçon avec un identifiant stable pour chaque thème et chaque carte : ce sont les
+     * lignes `chapters` et `flashcards` de la synchronisation, qu'un iPhone relit.
+     */
+    fun stamped(): Lesson {
+        if (themes.all { theme -> theme.id.isNotEmpty() && theme.flashcards.all { it.id.isNotEmpty() } }) return this
+        return copy(themes = themes.map { theme ->
+            theme.copy(
+                id = theme.id.ifEmpty { newId() },
+                flashcards = theme.flashcards.map { card -> if (card.id.isEmpty()) card.copy(id = newId()) else card },
+            )
+        })
+    }
+
     /** L'examen, s'il est encore à venir (aujourd'hui compris). */
     fun upcomingExam(now: Long = System.currentTimeMillis()): Long? =
         examDate.takeIf { it > 0 && it >= startOfDay(now) }
@@ -78,6 +94,8 @@ object ThemeStatus {
 @Serializable
 data class Theme(
     val title: String,
+    /** L'identifiant du thème, celui de sa ligne `chapters`. */
+    val id: String = "",
     val icon: String = "livre-ouvert",
     val points: List<String> = emptyList(),
     val status: String = ThemeStatus.PENDING,
@@ -121,7 +139,16 @@ data class Question(
 }
 
 @Serializable
-data class Flashcard(val kind: String = "basic", val front: String = "", val back: String = "")
+data class Flashcard(
+    val kind: String = "basic",
+    val front: String = "",
+    val back: String = "",
+    /** L'identifiant de la carte, celui de sa ligne `flashcards`. */
+    val id: String = "",
+)
+
+/** Un identifiant neuf, au format que Postgres et l'iPhone attendent. */
+fun newId(): String = java.util.UUID.randomUUID().toString().lowercase()
 
 /** Un message de la conversation avec Mika ; sa réponse peut proposer une carte. */
 @Serializable

@@ -4,6 +4,7 @@
     <string name="app_exams_countdown_today">täna</string>
     <string name="common_continue">Jätka</string>
     <string name="common_privacy">Privaatsus</string>
+    <string name="common_signOut">Logi välja</string>
     <string name="country_be">Belgia</string>
     <string name="country_ca">Kanada</string>
     <string name="country_ch">Šveits</string>
@@ -27,9 +28,22 @@
     <string name="country_tr">Türgi</string>
     <string name="country_uk">Ühendkuningriik</string>
     <string name="country_us">Ameerika Ühendriigid</string>
+    <string name="ios_account">Konto</string>
+    <string name="ios_account_sub">Sinu pakett, konspektid ja seeria – selles telefonis ja veebis.</string>
+    <string name="ios_auth_emailNotConfirmed">Sinu aadress pole veel kinnitatud. Ava link, mille sulle just saatsime.</string>
+    <string name="ios_auth_invalidResponse">Serveri vastust ei õnnestunud lugeda. Proovi uuesti.</string>
+    <string name="ios_auth_providerNotEnabled">Selles Supabase\'i projektis pole sisselogimine teenusega %1$s veel lubatud.</string>
+    <string name="ios_auth_sessionExpired">Sinu sessioon on aegunud. Logi uuesti sisse.</string>
     <string name="ios_averageTitle">Mis on sinu keskmine\npraegu?</string>
+    <string name="ios_backup">Varundus</string>
+    <string name="ios_connected">Sisse logitud</string>
     <string name="ios_country">Riik</string>
     <string name="ios_countryTitle">Kus sa õpid?</string>
+    <string name="ios_createOrSignIn">Loo konto või logi sisse</string>
+    <string name="ios_createOrSignInHelp">Leia oma kursused ka teistest seadmetest</string>
+    <string name="ios_dataFootnote">Kui kustutad oma kursused, kaovad need järgmisel sünkroonimisel ka kontolt. Konto kustutamine eemaldab need kõikjalt.</string>
+    <string name="ios_deleteAccount">Kustuta konto</string>
+    <string name="ios_deleteAccountQ">Kas kustutada konto?</string>
     <string name="ios_docx_corrupt">Wordi dokument on puudulik või rikutud.</string>
     <string name="ios_docx_empty">Selles dokumendis ei leitud teksti.</string>
     <string name="ios_docx_notDocx">See fail pole Wordi dokument (.docx).</string>
@@ -142,6 +156,8 @@
     <string name="ios_quiz_time_caption_15">Tõsine</string>
     <string name="ios_quiz_time_caption_30">Hullumeelne</string>
     <string name="ios_quiz_time_caption_5">Hea algus</string>
+    <string name="ios_signOutMsg">Sinu kursused jäävad sellesse seadmesse ja sinu kontole. Leiad need järgmisel sisselogimisel uuesti.</string>
+    <string name="ios_signOutQ">Kas logida välja?</string>
     <string name="ios_streak_bestLabel">Sinu rekord</string>
     <string name="ios_streak_celebrate_first">Sinu seeria algab! Tule homme tagasi, et seda kasvatada.</string>
     <string name="ios_streak_celebrate_line">Sinu leek põleb endiselt. Homseni!</string>
@@ -155,6 +171,8 @@
     <string name="ios_streak_todayPending">Tee täna üks tund, et seeriat hoida.</string>
     <string name="ios_streak_week">See nädal</string>
     <string name="ios_streak_zeroTitle">Seeriat veel pole</string>
+    <string name="ios_syncing">Sünkroonin…</string>
+    <string name="ios_tapToSync">Puuduta sünkroonimiseks</string>
     <string name="ios_targetTitle">Ja mida sa\nsihid?</string>
     <string name="ios_trialDay2">2. päev: meeldetuletus enne lõppu</string>
     <string name="ios_trialDay2Detail">Hoiatame sind teavitusega. Tühistamine viieteistkümne sekundiga.</string>
@@ -402,4 +420,11 @@
     <string name="lesson_theme_day">Hele</string>
     <string name="lesson_theme_night">Tume</string>
     <string name="lesson_theme_system">Nagu telefonis</string>
+    <string name="onboarding_compteTitle">Hoia oma edusamme alles</string>
+    <string name="onboarding_continueGoogle">Jätka Google\'iga</string>
+    <string name="onboarding_emailLabel">Sinu e-posti aadress</string>
+    <string name="onboarding_emailNote">Saadame sulle lingi, parooli pole vaja meeles pidada.</string>
+    <string name="onboarding_emailPlaceholder">sina@email.ee</string>
+    <string name="onboarding_linkSent">Ava link, mis saadeti aadressile %1$s</string>
+    <string name="onboarding_sendLink">Saa link</string>
 </resources>
