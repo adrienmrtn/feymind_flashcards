@@ -191,13 +191,25 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         }
     }
 
-    /// **Le premier écran où l'on peut revenir, et le dernier.**
-    ///
-    /// On revient jusqu'au pays, et pas plus loin : le prénom et la bienvenue ne se défont
-    /// pas. On ne revient plus après les rappels : tout ce qui suit est un résultat, une
-    /// présentation, un compte ou une offre, et rien de tout ça ne se défait.
-    static let firstReturnable: OnboardingStep = .country
-    static let lastReturnable: OnboardingStep = .notifications
+    /// **Les chargements** : ils ne se revisitent pas, et ne portent pas de flèche — ils
+    /// avancent seuls. Le retour les enjambe.
+    var isLoading: Bool {
+        switch self {
+        case .building, .planBuilding: true
+        default: false
+        }
+    }
+
+    /// **Un écran d'où l'on peut revenir.** Tous, sauf le premier (rien derrière), les
+    /// chargements, et le paywall, qui porte sa propre croix. Revenir jusqu'à l'accroche
+    /// rend le choix de la langue à qui ne l'avait pas vu, ou dont le téléphone l'avait
+    /// mal deviné.
+    var allowsReturn: Bool {
+        switch self {
+        case .hookLogo, .paywall: false
+        default: !isLoading
+        }
+    }
 
     /// Fond de l'étape, et seule source de vérité à ce sujet.
     ///

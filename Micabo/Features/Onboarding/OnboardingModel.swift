@@ -237,28 +237,31 @@ final class OnboardingModel {
 
     /// **Revenir d'un écran.**
     ///
-    /// Une réponse donnée doit pouvoir se corriger : quelqu'un qui se trompe de pays au
-    /// premier écran du quiz découvrirait son erreur douze écrans plus tard. On revient
-    /// jusqu'au pays, et pas plus loin ; on ne revient plus après les rappels, parce que
-    /// tout ce qui suit est un résultat, une démonstration, un compte ou une offre, et que
-    /// rien de tout ça ne se défait.
+    /// Une réponse donnée doit pouvoir se corriger, et la langue se rechoisir : quelqu'un
+    /// dont le téléphone a mal deviné la langue, ou qui n'a pas vu le sélecteur de
+    /// l'accroche, doit pouvoir y retourner. On revient donc depuis tous les écrans, sauf
+    /// les chargements et le paywall, et jusqu'à l'accroche.
     ///
-    /// Les écrans sautés le restent, dans ce sens comme dans l'autre : on ne fait pas
-    /// apparaître au retour une question qu'on n'a pas posée à l'aller.
+    /// Le retour enjambe les chargements (ils avancent seuls : y revenir renverrait aussitôt
+    /// en avant) et les écrans sautés à l'aller : on ne fait pas apparaître au retour une
+    /// question qu'on n'a pas posée.
     func goBack() {
-        guard !transitionLock, canGoBack else { return }
-        var previous = step.previous
-        while let candidate = previous, isSkipped(candidate) {
-            previous = candidate.previous
-        }
-        guard let previous, previous.rawValue >= OnboardingStep.firstReturnable.rawValue else { return }
+        guard !transitionLock, let previous = returnTarget else { return }
         step = previous
     }
 
     /// Vrai quand il y a un écran en arrière qui accepte qu'on y revienne.
     var canGoBack: Bool {
-        step.rawValue > OnboardingStep.firstReturnable.rawValue
-            && step.rawValue <= OnboardingStep.lastReturnable.rawValue
+        step.allowsReturn && returnTarget != nil
+    }
+
+    /// L'écran où le retour mène : le précédent qui n'est ni sauté ni un chargement.
+    private var returnTarget: OnboardingStep? {
+        var previous = step.previous
+        while let candidate = previous, isSkipped(candidate) || candidate.isLoading {
+            previous = candidate.previous
+        }
+        return previous
     }
 
     /// Recopie les réponses dans les réglages à chaque changement d'écran :

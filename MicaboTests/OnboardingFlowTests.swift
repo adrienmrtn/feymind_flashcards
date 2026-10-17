@@ -242,38 +242,43 @@ final class OnboardingFlowTests: XCTestCase {
 
     // MARK: - Revenir
 
-    /// On revient jusqu'au pays, et pas plus loin ; on ne revient plus après les rappels.
-    func testGoingBackStopsAtTheCountryAndAfterTheReminders() {
+    /// **On revient de partout, jusqu'à l'accroche** (et donc jusqu'au choix de la langue),
+    /// sauf depuis les chargements et le paywall ; le retour enjambe les chargements.
+    func testGoingBackWorksEverywhereExceptLoadingAndPaywall() {
         let model = OnboardingModel()
         model.select(country: .fr)
 
-        XCTAssertFalse(model.canGoBack, "L'accroche ne se défait pas")
+        XCTAssertFalse(model.canGoBack, "L'accroche est le premier écran : rien derrière")
         model.advance()
         XCTAssertEqual(model.step, .name)
-        XCTAssertFalse(model.canGoBack, "Le prénom ne se défait pas")
+        XCTAssertTrue(model.canGoBack, "Du prénom, on revient à l'accroche et à sa langue")
+        model.goBack()
+        XCTAssertEqual(model.step, .hookLogo)
         model.advance()
-        XCTAssertFalse(model.canGoBack, "La bienvenue ne se défait pas")
-
-        while model.step != .schoolType { model.advance() }
+        model.advance()
+        XCTAssertEqual(model.step, .welcome)
         XCTAssertTrue(model.canGoBack)
-        model.goBack()
-        XCTAssertEqual(model.step, .country)
-        XCTAssertFalse(model.canGoBack, "Le pays est le premier écran où l'on revient")
-        model.goBack()
-        XCTAssertEqual(model.step, .country, "On ne recule pas dans l'accroche")
 
         while model.step != .notifications { model.advance() }
-        XCTAssertTrue(model.canGoBack, "Les rappels sont le dernier écran d'où l'on revient")
         model.advance()
         XCTAssertEqual(model.step, .building)
-        XCTAssertFalse(model.canGoBack, "Après les rappels, rien ne se défait")
+        XCTAssertFalse(model.canGoBack, "Un chargement ne porte pas de flèche")
+        model.advance()
+        XCTAssertEqual(model.step, .featuresIntro)
+        XCTAssertTrue(model.canGoBack)
         model.goBack()
-        XCTAssertEqual(model.step, .building)
+        XCTAssertEqual(model.step, .notifications, "Le retour enjambe le chargement")
 
-        for step in OnboardingStep.allCases
-        where step.rawValue > OnboardingStep.notifications.rawValue {
+        let country = OnboardingModel().country
+        for step in OnboardingStep.allCases where step != .hookLogo && !step.isSkipped(for: country) {
             let later = self.model(advancingTo: step)
-            XCTAssertFalse(later.canGoBack, "\(step) ne doit pas proposer de retour")
+            let expected = !step.isLoading && step != .paywall
+            XCTAssertEqual(later.canGoBack, expected, "\(step) : retour \(expected ? "attendu" : "interdit")")
+            if expected {
+                later.goBack()
+                XCTAssertFalse(later.step.isLoading, "Revenir de \(step) ne mène pas à un chargement")
+                XCTAssertLessThan(later.step.rawValue, step.rawValue)
+            }
         }
     }
 
