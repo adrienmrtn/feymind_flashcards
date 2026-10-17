@@ -314,7 +314,9 @@
     <string name="lesson_home_supportsFull">Up to %1$s materials per lesson.</string>
     <string name="lesson_home_title">What do you want to **learn** today?</string>
     <string name="lesson_import_add">Add</string>
+    <string name="lesson_import_audio">Audio</string>
     <string name="lesson_import_audioFile">Choose an audio file</string>
+    <string name="lesson_import_audioSub">A recorded class</string>
     <string name="lesson_import_instruction">What the student wants to get out of it: %1$s</string>
     <string name="lesson_import_library">Choose photos</string>
     <string name="lesson_import_paste">Paste</string>
@@ -326,6 +328,7 @@
     <string name="lesson_import_record">Record</string>
     <string name="lesson_import_recordStop">Stop recording</string>
     <string name="lesson_import_recordTitle">Record your class</string>
+    <string name="lesson_import_recordingName">Recording</string>
     <string name="lesson_import_scan">Scan pages</string>
     <string name="lesson_import_text">Text</string>
     <string name="lesson_import_textPlaceholder">Your class notes, an article…</string>

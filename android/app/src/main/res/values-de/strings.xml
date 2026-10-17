@@ -306,6 +306,7 @@
     <string name="lesson_home_title">Was möchtest du heute **lernen**?</string>
     <string name="lesson_import_add">Hinzufügen</string>
     <string name="lesson_import_audioFile">Audiodatei auswählen</string>
+    <string name="lesson_import_audioSub">Eine aufgenommene Stunde</string>
     <string name="lesson_import_instruction">Worauf es dem Schüler ankommt: %1$s</string>
     <string name="lesson_import_library">Fotos auswählen</string>
     <string name="lesson_import_paste">Einfügen</string>
@@ -316,6 +317,7 @@
     <string name="lesson_import_record">Aufnehmen</string>
     <string name="lesson_import_recordStop">Aufnahme beenden</string>
     <string name="lesson_import_recordTitle">Nimm deinen Unterricht auf</string>
+    <string name="lesson_import_recordingName">Aufnahme</string>
     <string name="lesson_import_scan">Seiten scannen</string>
     <string name="lesson_import_textPlaceholder">Dein Kurs, deine Notizen, ein Artikel…</string>
     <string name="lesson_import_textSub">Füge deine Notizen ein</string>

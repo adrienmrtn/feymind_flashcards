@@ -313,7 +313,9 @@
     <string name="lesson_home_supportsFull">%1$s supports au plus pour une leçon.</string>
     <string name="lesson_home_title">Qu\'est-ce que tu veux **apprendre** aujourd\'hui ?</string>
     <string name="lesson_import_add">Ajouter</string>
+    <string name="lesson_import_audio">Audio</string>
     <string name="lesson_import_audioFile">Choisir un fichier audio</string>
+    <string name="lesson_import_audioSub">Un cours enregistré</string>
     <string name="lesson_import_instruction">Ce que l\'élève veut en retenir : %1$s</string>
     <string name="lesson_import_library">Choisir des photos</string>
     <string name="lesson_import_paste">Coller</string>
@@ -325,6 +327,7 @@
     <string name="lesson_import_record">Enregistrer</string>
     <string name="lesson_import_recordStop">Arrêter l\'enregistrement</string>
     <string name="lesson_import_recordTitle">Enregistre ton cours</string>
+    <string name="lesson_import_recordingName">Enregistrement</string>
     <string name="lesson_import_scan">Scanner des pages</string>
     <string name="lesson_import_text">Texte</string>
     <string name="lesson_import_textPlaceholder">Ton cours, tes notes, un article…</string>

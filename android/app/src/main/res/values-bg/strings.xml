@@ -287,7 +287,9 @@
     <string name="lesson_home_supportsFull">До %1$s материала на урок.</string>
     <string name="lesson_home_title">Какво искаш да **научиш** днес?</string>
     <string name="lesson_import_add">Добави</string>
+    <string name="lesson_import_audio">Аудио</string>
     <string name="lesson_import_audioFile">Избери аудиофайл</string>
+    <string name="lesson_import_audioSub">Записан час</string>
     <string name="lesson_import_instruction">Какво иска да извлече ученикът: %1$s</string>
     <string name="lesson_import_library">Избери снимки</string>
     <string name="lesson_import_paste">Постави</string>
@@ -298,6 +300,7 @@
     <string name="lesson_import_record">Запис</string>
     <string name="lesson_import_recordStop">Спри записа</string>
     <string name="lesson_import_recordTitle">Запиши часа</string>
+    <string name="lesson_import_recordingName">Запис</string>
     <string name="lesson_import_scan">Сканирай страници</string>
     <string name="lesson_import_text">Текст</string>
     <string name="lesson_import_textPlaceholder">Бележките от часа, статия…</string>

@@ -65,6 +65,7 @@ import com.micabo.app.ui.components.ProgressBar
 import com.micabo.app.ui.text.RichText
 import com.micabo.app.ui.theme.Micabo
 import com.micabo.app.ui.theme.nunito
+import kotlinx.coroutines.delay
 
 /** Les pays que le serveur connaît (`learner.ts`), et « un autre pays ». */
 val COUNTRIES = listOf(
@@ -220,13 +221,29 @@ fun OnboardingScreen() {
     var language by rememberSaveable { mutableStateOf(AppLocale.resolved(app.prefs.profile.value.language).code) }
     var country by rememberSaveable { mutableStateOf(AppLocale.deviceCountry().takeIf { it in COUNTRIES } ?: "") }
     var tier by rememberSaveable { mutableStateOf("") }
-    var worries by remember { mutableStateOf(listOf<String>()) }
-    var goals by remember { mutableStateOf(listOf<String>()) }
+    var worries by rememberSaveable { mutableStateOf(listOf<String>()) }
+    var goals by rememberSaveable { mutableStateOf(listOf<String>()) }
     var current by rememberSaveable { mutableIntStateOf(-1) }
     var target by rememberSaveable { mutableIntStateOf(-1) }
     var daily by rememberSaveable { mutableIntStateOf(-1) }
-    val steps = Step.entries
-    val step = steps[index]
+    // Les jours d'essai que Google Play accordera à ce compte : null tant qu'il n'a pas répondu.
+    var trialDays by rememberSaveable { mutableStateOf<Int?>(null) }
+    LaunchedEffect(Unit) {
+        // RevenueCat se configure après la session invitée : on redemande quelques fois.
+        repeat(5) {
+            val plans = app.billing.plans()
+            if (plans.isNotEmpty()) {
+                trialDays = (plans.firstOrNull { it.yearly } ?: plans.first()).trialDays
+                return@LaunchedEffect
+            }
+            delay(3_000)
+        }
+    }
+    // Pas d'abonnement, ou un essai déjà consommé sur ce compte Google : on ne promet ni
+    // l'essai gratuit ni son rappel.
+    val offersTrial = app.billing.enabled && trialDays != 0
+    val steps = Step.entries.filter { offersTrial || (it != Step.TRIAL && it != Step.REMINDER) }
+    val step = steps[index.coerceAtMost(steps.lastIndex)]
     val asking = steps.filter { it.asks }
 
     fun go(to: Int) {
@@ -234,7 +251,12 @@ fun OnboardingScreen() {
         index = to.coerceIn(0, steps.lastIndex)
     }
 
-    fun next() = go(index + 1)
+    /** Le retour enjambe le chargement du plan, qui sinon repartait aussitôt en avant. */
+    fun back() {
+        var to = index.coerceAtMost(steps.lastIndex) - 1
+        if (to > 0 && steps[to] == Step.BUILDING) to -= 1
+        go(to)
+    }
 
     /** La langue choisie vaut tout de suite : les écrans suivants la parlent. */
     fun pickLanguage(code: String) {
@@ -246,6 +268,8 @@ fun OnboardingScreen() {
     }
 
     fun finish() {
+        // Un double appui (ou la réponse à la permission, puis l'appui) ne pousse qu'un paywall.
+        if (app.prefs.profile.value.onboarded) return
         app.prefs.update {
             it.copy(
                 onboarded = true,
@@ -261,11 +285,16 @@ fun OnboardingScreen() {
             )
         }
         app.analytics.track("onboarding_finished", mapOf("tier" to tier, "worries" to worries.size, "daily" to daily))
-        // Le parcours se termine sur le paywall de l'essai ; le refermer ouvre l'accueil.
-        navigator.push(Screen.Paywall("onboarding"))
+        // Le parcours se termine sur le paywall de l'essai ; le refermer ouvre l'accueil. Sans
+        // abonnements à vendre (ou déjà Pro), on va droit à l'accueil.
+        if (app.billing.enabled && !app.billing.isPro.value) navigator.push(Screen.Paywall("onboarding"))
     }
 
-    BackHandler(enabled = index > 0 && step != Step.BUILDING) { go(index - 1) }
+    /** La suite, ou la fin du parcours après le dernier écran. */
+    fun next() = if (index >= steps.lastIndex) finish() else go(index + 1)
+
+    // Pendant le chargement, le retour ne fait rien : il ne doit pas fermer l'app en plein parcours.
+    BackHandler(enabled = index > 0) { if (step != Step.BUILDING) back() }
 
     LaunchedEffect(step) {
         if (step == Step.HOOK && index == 0) app.analytics.track("onboarding_started")
@@ -275,7 +304,7 @@ fun OnboardingScreen() {
     Column(Modifier.fillMaxSize().background(Micabo.colors.canvas).statusBarsPadding().navigationBarsPadding().imePadding()) {
         if (step.asks || (index > 0 && step != Step.BUILDING)) {
             Row(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                BackButton(onClick = { go(index - 1) })
+                BackButton(onClick = ::back)
                 Spacer(Modifier.width(14.dp))
                 if (step.asks) {
                     ProgressBar((asking.indexOf(step) + 1) / asking.size.toFloat(), Modifier.weight(1f))
@@ -378,7 +407,7 @@ fun OnboardingScreen() {
                 Step.TUTOR -> MikaTutor(onNext = ::next)
                 Step.SOCIAL -> SocialProof(onNext = ::next)
                 Step.TRIAL -> TrialOffer(onNext = ::next)
-                Step.REMINDER -> TrialReminderStep(onNext = ::finish)
+                Step.REMINDER -> TrialReminderStep(days = trialDays ?: 3, onNext = ::next)
             }
         }
     }

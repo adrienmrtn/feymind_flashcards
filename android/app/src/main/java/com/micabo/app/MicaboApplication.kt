@@ -2,6 +2,7 @@ package com.micabo.app
 
 import android.app.Application
 import com.micabo.app.data.Analytics
+import com.micabo.app.data.AudioImport
 import com.micabo.app.data.Billing
 import com.micabo.app.data.ExamRepository
 import com.micabo.app.data.LessonComposer
@@ -60,7 +61,7 @@ class MicaboApplication : Application() {
             auth.userId.ifEmpty { null }
         }
         analytics = Analytics(this, prefs, auth) { billing.isPro.value }
-        composer = LessonComposer(this, YouTubeImport(functions)) { name, props -> analytics.track(name, props) }
+        composer = LessonComposer(this, YouTubeImport(functions), AudioImport(functions)) { name, props -> analytics.track(name, props) }
         analytics.start()
         // Le compte invité s'ouvre tout de suite : il doit exister avant un achat, pour que
         // l'abonnement ait un propriétaire. Sans réseau, il s'ouvrira au premier appel.

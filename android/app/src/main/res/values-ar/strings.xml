@@ -288,7 +288,9 @@
     <string name="lesson_home_supportsFull">حتى %1$s مواد لكل درس.</string>
     <string name="lesson_home_title">ماذا تريد أن **تتعلّم** اليوم؟</string>
     <string name="lesson_import_add">إضافة</string>
+    <string name="lesson_import_audio">صوت</string>
     <string name="lesson_import_audioFile">اختر ملفًا صوتيًا</string>
+    <string name="lesson_import_audioSub">حصة مسجّلة</string>
     <string name="lesson_import_instruction">ما يريد الطالب أن يستفيده منه: %1$s</string>
     <string name="lesson_import_library">اختر صورًا</string>
     <string name="lesson_import_paste">لصق</string>
@@ -299,6 +301,7 @@
     <string name="lesson_import_record">تسجيل</string>
     <string name="lesson_import_recordStop">أوقف التسجيل</string>
     <string name="lesson_import_recordTitle">سجّل حصتك</string>
+    <string name="lesson_import_recordingName">تسجيل</string>
     <string name="lesson_import_scan">مسح الصفحات ضوئيًا</string>
     <string name="lesson_import_text">نص</string>
     <string name="lesson_import_textPlaceholder">ملاحظات حصتك، مقال…</string>

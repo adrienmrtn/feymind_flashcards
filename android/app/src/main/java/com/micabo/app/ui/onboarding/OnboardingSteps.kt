@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -271,7 +270,7 @@ fun Proof(worry: String?, onNext: () -> Unit) {
         ) {
             Text(stringResource(R.string.ios_proof_retention_caption), style = nunito(15.sp, FontWeight.Bold, lineHeight = 20.sp), color = colors.inkSecondary)
             Spacer(Modifier.height(18.dp))
-            Row(Modifier.fillMaxWidth().height(200.dp), horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.Bottom) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.Bottom) {
                 Bar(stringResource(R.string.ios_proof_retention_reread), 36, colors.wrong, grow.value, Modifier.weight(1f))
                 Bar(stringResource(R.string.ios_proof_retention_testing), 80, colors.correct, grow.value, Modifier.weight(1f))
             }
@@ -284,18 +283,20 @@ fun Proof(worry: String?, onNext: () -> Unit) {
 @Composable
 private fun Bar(label: String, percent: Int, color: Color, grow: Float, modifier: Modifier) {
     val colors = Micabo.colors
-    Column(modifier.fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Bottom) {
+    // La hauteur des barres est en dp, pas en fraction d'une ligne fixe : avec un grand texte
+    // système, les étiquettes passaient sous le bas de la carte.
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text("${(percent * grow).toInt()} %", style = nunito(24.sp, FontWeight.Black), color = color)
         Spacer(Modifier.height(6.dp))
         Box(
             Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.62f * percent / 100f * grow + 0.02f)
+                .height((124f * percent / 100f * grow + 4f).dp)
                 .clip(RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp))
                 .background(color),
         )
         Spacer(Modifier.height(8.dp))
-        Text(label, style = nunito(14.sp, FontWeight.Bold, lineHeight = 18.sp), color = colors.ink, textAlign = TextAlign.Center, maxLines = 2)
+        Text(label, style = nunito(14.sp, FontWeight.Bold, lineHeight = 18.sp), color = colors.ink, textAlign = TextAlign.Center, minLines = 2, maxLines = 2)
     }
 }
 
@@ -571,12 +572,8 @@ fun SocialProof(onNext: () -> Unit) {
         Spacer(Modifier.height(20.dp))
         Text(stringResource(R.string.ios_onb_social_title), style = nunito(22.sp, FontWeight.ExtraBold), color = colors.inkSecondary, textAlign = TextAlign.Center)
         Text(stringResource(R.string.ios_onb_social_count, students), style = nunito(40.sp, FontWeight.Black, lineHeight = 44.sp), color = colors.accent, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(8.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            repeat(5) { Icon(Icons.Filled.Star, null, tint = colors.caution, modifier = Modifier.size(22.dp)) }
-        }
-        Spacer(Modifier.height(4.dp))
-        Text(stringResource(R.string.ios_onb_social_rank), style = nunito(15.sp, FontWeight.Bold), color = colors.inkSecondary)
+        // Sur iPhone, « n° 1 » et les cinq étoiles encadrent le classement de l'App Store. Google
+        // Play n'en a pas encore : les afficher ici serait une note de boutique inventée.
         Spacer(Modifier.height(26.dp))
         AnimatedContent(targetState = current, transitionSpec = { fadeIn(tween(400)) togetherWith fadeOut(tween(300)) }, label = "review") { index ->
             val (title, body, author) = reviews[index]
@@ -652,11 +649,10 @@ fun TrialOffer(onNext: () -> Unit) {
  * dernier jour l'abonnement commence. La permission des notifications se demande ici.
  */
 @Composable
-fun TrialReminderStep(onNext: () -> Unit) {
+fun TrialReminderStep(days: Int, onNext: () -> Unit) {
     val colors = Micabo.colors
-    val days = 3
-    val end = remember { System.currentTimeMillis() + days * 86_400_000L }
-    val date = remember { DateFormat.getDateInstance(DateFormat.LONG).format(Date(end)) }
+    val end = remember(days) { System.currentTimeMillis() + days * 86_400_000L }
+    val date = remember(end) { DateFormat.getDateInstance(DateFormat.LONG).format(Date(end)) }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { onNext() }
     StepScaffold(
         stringResource(R.string.ios_trial_reminder_cta),

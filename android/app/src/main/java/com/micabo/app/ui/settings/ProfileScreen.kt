@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -45,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -277,7 +279,15 @@ private fun Item(title: String, value: String?, danger: Boolean = false, onClick
     ) {
         Text(title, style = nunito(16.sp, FontWeight.Bold), color = if (danger) colors.wrong else colors.ink, modifier = Modifier.weight(1f))
         if (value != null) {
-            Text(value, style = nunito(15.sp, FontWeight.SemiBold), color = colors.inkSecondary, maxLines = 1)
+            // La valeur cède la place au titre : un long nom de pays ne l'écrase plus à zéro.
+            Text(
+                value,
+                style = nunito(15.sp, FontWeight.SemiBold),
+                color = colors.inkSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.widthIn(max = 170.dp),
+            )
             Spacer(Modifier.width(6.dp))
         }
         if (!danger) Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = colors.inkTertiary)

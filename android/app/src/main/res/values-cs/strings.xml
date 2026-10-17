@@ -284,6 +284,7 @@
     <string name="lesson_home_title">Co se chceš dnes **naučit**?</string>
     <string name="lesson_import_add">Přidat</string>
     <string name="lesson_import_audioFile">Vybrat zvukový soubor</string>
+    <string name="lesson_import_audioSub">Nahraná hodina</string>
     <string name="lesson_import_instruction">Co si z toho student chce odnést: %1$s</string>
     <string name="lesson_import_library">Vybrat fotky</string>
     <string name="lesson_import_paste">Vložit</string>
@@ -294,6 +295,7 @@
     <string name="lesson_import_record">Nahrát</string>
     <string name="lesson_import_recordStop">Zastavit nahrávání</string>
     <string name="lesson_import_recordTitle">Nahraj hodinu</string>
+    <string name="lesson_import_recordingName">Nahrávka</string>
     <string name="lesson_import_scan">Skenovat stránky</string>
     <string name="lesson_import_textPlaceholder">Poznámky z hodiny, článek…</string>
     <string name="lesson_import_textSub">Vlož své poznámky</string>

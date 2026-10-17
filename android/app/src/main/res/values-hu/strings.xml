@@ -287,7 +287,9 @@
     <string name="lesson_home_supportsFull">Leckénként legfeljebb %1$s anyag.</string>
     <string name="lesson_home_title">Mit szeretnél ma **megtanulni**?</string>
     <string name="lesson_import_add">Hozzáadás</string>
+    <string name="lesson_import_audio">Hang</string>
     <string name="lesson_import_audioFile">Hangfájl kiválasztása</string>
+    <string name="lesson_import_audioSub">Rögzített óra</string>
     <string name="lesson_import_instruction">Amit a diák meg szeretne tanulni belőle: %1$s</string>
     <string name="lesson_import_library">Fotók kiválasztása</string>
     <string name="lesson_import_paste">Beillesztés</string>
@@ -298,6 +300,7 @@
     <string name="lesson_import_record">Felvétel</string>
     <string name="lesson_import_recordStop">Felvétel leállítása</string>
     <string name="lesson_import_recordTitle">Vedd fel az órát</string>
+    <string name="lesson_import_recordingName">Felvétel</string>
     <string name="lesson_import_scan">Oldalak szkennelése</string>
     <string name="lesson_import_text">Szöveg</string>
     <string name="lesson_import_textPlaceholder">Órai jegyzeteid, egy cikk…</string>

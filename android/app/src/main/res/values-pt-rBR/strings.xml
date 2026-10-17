@@ -281,7 +281,9 @@
     <string name="lesson_home_supportsFull">No máximo %1$s materiais por aula.</string>
     <string name="lesson_home_title">O que você quer **aprender** hoje?</string>
     <string name="lesson_import_add">Adicionar</string>
+    <string name="lesson_import_audio">Áudio</string>
     <string name="lesson_import_audioFile">Escolher um arquivo de áudio</string>
+    <string name="lesson_import_audioSub">Uma aula gravada</string>
     <string name="lesson_import_instruction">O que o aluno quer aprender com isso: %1$s</string>
     <string name="lesson_import_library">Escolher fotos</string>
     <string name="lesson_import_paste">Colar</string>
@@ -292,6 +294,7 @@
     <string name="lesson_import_record">Gravar</string>
     <string name="lesson_import_recordStop">Parar a gravação</string>
     <string name="lesson_import_recordTitle">Grave sua aula</string>
+    <string name="lesson_import_recordingName">Gravação</string>
     <string name="lesson_import_scan">Escanear páginas</string>
     <string name="lesson_import_text">Texto</string>
     <string name="lesson_import_textPlaceholder">Sua matéria, suas anotações, um artigo…</string>

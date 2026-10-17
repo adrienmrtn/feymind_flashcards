@@ -279,7 +279,9 @@
     <string name="lesson_home_supportsFull">Enintään %1$s materiaalia oppituntia kohden.</string>
     <string name="lesson_home_title">Mitä haluat **oppia** tänään?</string>
     <string name="lesson_import_add">Lisää</string>
+    <string name="lesson_import_audio">Ääni</string>
     <string name="lesson_import_audioFile">Valitse äänitiedosto</string>
+    <string name="lesson_import_audioSub">Tallennettu tunti</string>
     <string name="lesson_import_instruction">Mitä opiskelija haluaa siitä irti: %1$s</string>
     <string name="lesson_import_library">Valitse kuvat</string>
     <string name="lesson_import_paste">Liitä</string>
@@ -290,6 +292,7 @@
     <string name="lesson_import_record">Tallenna</string>
     <string name="lesson_import_recordStop">Lopeta tallennus</string>
     <string name="lesson_import_recordTitle">Tallenna tuntisi</string>
+    <string name="lesson_import_recordingName">Tallenne</string>
     <string name="lesson_import_scan">Skannaa sivuja</string>
     <string name="lesson_import_text">Teksti</string>
     <string name="lesson_import_textPlaceholder">Tuntimuistiinpanosi, artikkeli…</string>

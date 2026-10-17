@@ -281,7 +281,9 @@
     <string name="lesson_home_supportsFull">Upp till %1$s material per lektion.</string>
     <string name="lesson_home_title">Vad vill du **lära dig** i dag?</string>
     <string name="lesson_import_add">Lägg till</string>
+    <string name="lesson_import_audio">Ljud</string>
     <string name="lesson_import_audioFile">Välj en ljudfil</string>
+    <string name="lesson_import_audioSub">En inspelad lektion</string>
     <string name="lesson_import_instruction">Det eleven vill få ut av det: %1$s</string>
     <string name="lesson_import_library">Välj foton</string>
     <string name="lesson_import_paste">Klistra in</string>
@@ -292,6 +294,7 @@
     <string name="lesson_import_record">Spela in</string>
     <string name="lesson_import_recordStop">Stoppa inspelningen</string>
     <string name="lesson_import_recordTitle">Spela in din lektion</string>
+    <string name="lesson_import_recordingName">Inspelning</string>
     <string name="lesson_import_scan">Skanna sidor</string>
     <string name="lesson_import_textPlaceholder">Dina lektionsanteckningar, en artikel…</string>
     <string name="lesson_import_textSub">Klistra in dina anteckningar</string>

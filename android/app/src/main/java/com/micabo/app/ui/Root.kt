@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -22,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import com.micabo.app.MicaboApplication
@@ -108,7 +110,11 @@ val LocalNavigator = staticCompositionLocalOf<Navigator> { error("Pas de navigat
 @Composable
 fun MicaboRoot(app: MicaboApplication) {
     val profile by app.prefs.profile.collectAsState()
-    val navigator = remember { Navigator(Screen.Home) }
+    // L'onglet survit à la recréation de l'activité (langue changée depuis le Profil) : sans
+    // ça, on retombait sur l'Accueil.
+    var savedTab by rememberSaveable { mutableStateOf(Tab.HOME) }
+    val navigator = remember { Navigator(Screen.Home).also { it.tab = savedTab } }
+    LaunchedEffect(navigator.tab) { savedTab = navigator.tab }
 
     CompositionLocalProvider(LocalApp provides app, LocalNavigator provides navigator) {
         Box(Modifier.fillMaxSize().background(Micabo.colors.canvas)) {

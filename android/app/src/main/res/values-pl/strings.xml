@@ -285,6 +285,7 @@
     <string name="lesson_home_title">Czego chcesz się dziś **nauczyć**?</string>
     <string name="lesson_import_add">Dodaj</string>
     <string name="lesson_import_audioFile">Wybierz plik audio</string>
+    <string name="lesson_import_audioSub">Nagrane zajęcia</string>
     <string name="lesson_import_instruction">Co uczeń chce z tego wynieść: %1$s</string>
     <string name="lesson_import_library">Wybierz zdjęcia</string>
     <string name="lesson_import_paste">Wklej</string>
@@ -295,6 +296,7 @@
     <string name="lesson_import_record">Nagraj</string>
     <string name="lesson_import_recordStop">Zatrzymaj nagrywanie</string>
     <string name="lesson_import_recordTitle">Nagraj zajęcia</string>
+    <string name="lesson_import_recordingName">Nagranie</string>
     <string name="lesson_import_scan">Skanuj strony</string>
     <string name="lesson_import_text">Tekst</string>
     <string name="lesson_import_textPlaceholder">Notatki z zajęć, artykuł…</string>

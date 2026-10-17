@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 
 /** Une icône d'import sous la barre (`LessonComposer.Kind`). */
-enum class SupportKind { PDF, PHOTO, YOUTUBE, TEXT }
+enum class SupportKind { PDF, PHOTO, AUDIO, YOUTUBE, TEXT }
 
 /** Un support déposé dans la barre : en lecture, prêt, ou illisible. */
 data class Support(
@@ -40,6 +40,7 @@ data class Support(
 class LessonComposer(
     private val context: Context,
     private val youtube: YouTubeImport,
+    private val audio: AudioImport? = null,
     private val track: (String, Map<String, Any?>) -> Unit = { _, _ -> },
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -129,6 +130,21 @@ class LessonComposer(
         if (uris.isEmpty()) return
         val name = if (uris.size == 1) localized(R.string.ios_photo_courseName) else localized(R.string.ios_photo_scanName, uris.size.toString())
         read(SupportKind.PHOTO, name) { PhotoImport.read(context, uris, name) }
+    }
+
+    /** Un enregistrement ou un fichier audio : le serveur le transcrit (`transcribe-audio`). */
+    fun addAudio(uri: Uri, fromRecorder: Boolean) {
+        val transcriber = audio ?: return
+        val name = if (fromRecorder) localized(R.string.lesson_import_recordingName) else displayName(context, uri) ?: localized(R.string.lesson_import_audio)
+        val language = AppLocale.resolved(Prefs.storedLanguage(context)).content
+        read(SupportKind.AUDIO, name) {
+            try {
+                transcriber.transcribe(context, uri, name, language)
+            } finally {
+                // L'enregistrement du micro ne sert plus une fois transcrit (ou refusé).
+                if (fromRecorder) uri.path?.let { java.io.File(it).delete() }
+            }
+        }
     }
 
     fun addYouTube(link: String) {

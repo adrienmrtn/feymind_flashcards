@@ -1,6 +1,8 @@
 package com.micabo.app.ui.paywall
 
 import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
@@ -17,6 +19,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -41,6 +45,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -62,6 +67,7 @@ import com.micabo.app.data.PurchaseOutcome
 import com.micabo.app.data.StorePlan
 import com.micabo.app.ui.LocalApp
 import com.micabo.app.ui.LocalNavigator
+import com.micabo.app.ui.Screen
 import com.micabo.app.ui.components.CloseButton
 import com.micabo.app.ui.components.Icon3D
 import com.micabo.app.ui.components.MicaboButton
@@ -72,8 +78,6 @@ import com.micabo.app.ui.theme.Micabo
 import com.micabo.app.ui.theme.nunito
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
-private const val TRIAL_DAYS = 3
 
 /**
  * **Le paywall**, sur le modèle de l'iPhone (`PaywallPlansView`) : la couronne de Pro, ce qui
@@ -95,12 +99,15 @@ fun PaywallScreen(reason: String) {
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var showsClose by remember { mutableStateOf(false) }
+    var attempt by remember { mutableIntStateOf(0) }
 
     val failText = stringResource(R.string.ios_paywallBuyFail)
     val noRestoreText = stringResource(R.string.ios_paywallNoRestore)
 
-    LaunchedEffect(Unit) {
-        app.analytics.track("paywall_opened", mapOf("trigger" to reason.ifEmpty { "upgrade" }))
+    LaunchedEffect(Unit) { app.analytics.track("paywall_opened", mapOf("trigger" to reason.ifEmpty { "upgrade" })) }
+    // Les offres de Google Play ; « réessayer » les redemande après une coupure.
+    LaunchedEffect(attempt) {
+        plans = null
         plans = app.billing.plans()
         app.analytics.track("paywall_plans_seen", mapOf("available" to !plans.isNullOrEmpty()))
     }
@@ -108,15 +115,20 @@ fun PaywallScreen(reason: String) {
         delay(2500)
         showsClose = true
     }
-    LaunchedEffect(isPro) { if (isPro) navigator.back() }
+    // Une seule sortie : l'achat et la restauration allument Pro, qui referme l'écran. Sans
+    // garde, l'achat refermait deux fois, et l'écran d'en dessous partait avec le paywall.
+    LaunchedEffect(isPro) { if (isPro && navigator.current is Screen.Paywall) navigator.back() }
 
-    val available = app.billing.enabled && !plans.isNullOrEmpty()
-    val selected = plans?.firstOrNull { it.yearly == yearly }
-    val yearlyPrice = plans?.firstOrNull { it.yearly }
-    val weeklyPrice = plans?.firstOrNull { !it.yearly }
-    // Les jours offerts viennent de Google Play : un essai déjà utilisé n'est plus promis.
-    val yearlyTrial = if (yearlyPrice == null) TRIAL_DAYS else yearlyPrice.trialDays
-    val selectedTrial = if (selected == null) TRIAL_DAYS else selected.trialDays
+    val loaded = plans
+    val available = app.billing.enabled && !loaded.isNullOrEmpty()
+    val yearlyPrice = loaded?.firstOrNull { it.yearly }
+    val weeklyPrice = loaded?.firstOrNull { !it.yearly }
+    // L'offre absente de la boutique ne se choisit pas : le bouton ne ferait rien.
+    val selected = loaded?.firstOrNull { it.yearly == yearly } ?: loaded?.firstOrNull()
+    val choosesYearly = selected?.yearly ?: yearly
+    // Les jours offerts viennent de Google Play seul : un essai déjà utilisé n'est plus promis.
+    val yearlyTrial = yearlyPrice?.trialDays ?: 0
+    val selectedTrial = selected?.trialDays ?: 0
 
     val headline = when (reason) {
         "free_limit" -> stringResource(R.string.lesson_error_freeLimit)
@@ -162,23 +174,29 @@ fun PaywallScreen(reason: String) {
                 keywordColor = colors.accent,
             )
             Spacer(Modifier.height(20.dp))
-            PlanCard(
-                title = stringResource(R.string.ios_planYearly),
-                price = yearlyPrice?.monthly?.let { stringResource(R.string.ios_paywallOnly, it) } ?: yearlyPrice?.price ?: "—",
-                detail = yearlyPrice?.price?.let { stringResource(R.string.ios_paywallBilledPerYear, it) },
-                badge = if (yearlyTrial > 0) stringResource(R.string.ios_paywall_badge_free, yearlyTrial.toString()) else null,
-                selected = yearly,
-                onClick = { haptics.selection(); yearly = true },
-            )
-            Spacer(Modifier.height(12.dp))
-            PlanCard(
-                title = stringResource(R.string.ios_planWeekly),
-                price = weeklyPrice?.price?.let { stringResource(R.string.ios_paywallBilledPer, it, stringResource(R.string.ios_unitWeek)) } ?: "—",
-                detail = null,
-                badge = null,
-                selected = !yearly,
-                onClick = { haptics.selection(); yearly = false },
-            )
+            // Google Play : la somme prélevée est le prix le plus visible, l'équivalent mensuel
+            // vient dessous.
+            if (loaded.isNullOrEmpty() || yearlyPrice != null) {
+                PlanCard(
+                    title = stringResource(R.string.ios_planYearly),
+                    price = yearlyPrice?.price?.let { stringResource(R.string.ios_paywallBilledPerYear, it) } ?: "—",
+                    detail = yearlyPrice?.monthly?.let { stringResource(R.string.ios_paywallOnly, it) },
+                    badge = if (yearlyTrial > 0) stringResource(R.string.ios_paywall_badge_free, yearlyTrial.toString()) else null,
+                    selected = choosesYearly,
+                    onClick = { haptics.selection(); yearly = true },
+                )
+                Spacer(Modifier.height(12.dp))
+            }
+            if (loaded.isNullOrEmpty() || weeklyPrice != null) {
+                PlanCard(
+                    title = stringResource(R.string.ios_planWeekly),
+                    price = weeklyPrice?.price?.let { stringResource(R.string.ios_paywallBilledPer, it, stringResource(R.string.ios_unitWeek)) } ?: "—",
+                    detail = null,
+                    badge = null,
+                    selected = !choosesYearly,
+                    onClick = { haptics.selection(); yearly = false },
+                )
+            }
             Spacer(Modifier.height(22.dp))
             Features()
             Spacer(Modifier.height(18.dp))
@@ -205,7 +223,7 @@ fun PaywallScreen(reason: String) {
                                 PurchaseOutcome.Success -> {
                                     app.analytics.track("paywall_purchased", mapOf("plan" to if (plan.yearly) "yearly" else "weekly", "trial" to plan.trialDays))
                                     haptics.success()
-                                    navigator.back()
+                                    if (navigator.current is Screen.Paywall) navigator.back()
                                 }
                                 PurchaseOutcome.Cancelled -> app.analytics.track("paywall_purchase_cancelled")
                                 PurchaseOutcome.Unavailable -> message = failText
@@ -232,17 +250,19 @@ fun PaywallScreen(reason: String) {
                     color = colors.inkTertiary,
                     textAlign = TextAlign.Center,
                 )
-                TextButton(onClick = {
-                    scope.launch {
-                        busy = true
-                        val restored = app.billing.restore()
-                        if (restored) app.analytics.track("paywall_restored")
-                        busy = false
-                        if (!restored) message = noRestoreText
-                    }
-                }) {
-                    Text(stringResource(R.string.ios_paywallRestore), style = nunito(14.sp, FontWeight.Bold), color = colors.inkSecondary)
-                }
+            } else if (app.billing.enabled && loaded == null) {
+                // Google Play répond : pas de « bientôt disponible » le temps qu'il réponde.
+                MicaboButton(text = "", loading = true, onClick = {})
+            } else if (app.billing.enabled) {
+                // Abonnements configurés, mais la boutique n'a pas répondu (hors ligne, le plus souvent).
+                Text(
+                    stringResource(R.string.x_error_network),
+                    style = nunito(14.sp, FontWeight.Bold),
+                    color = colors.inkSecondary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+                MicaboButton(text = stringResource(R.string.lesson_path_retry), onClick = { attempt += 1 })
             } else {
                 MicaboButton(text = stringResource(R.string.x_paywall_soon), enabled = false, onClick = {})
                 Spacer(Modifier.height(8.dp))
@@ -256,6 +276,40 @@ fun PaywallScreen(reason: String) {
                     Text(stringResource(R.string.lesson_finished_back), style = nunito(15.sp, FontWeight.Bold), color = colors.accent)
                 }
             }
+            if (app.billing.enabled) {
+                LegalFooter(
+                    restoreEnabled = !busy,
+                    onRestore = {
+                        scope.launch {
+                            busy = true
+                            message = null
+                            val restored = app.billing.restore()
+                            if (restored) app.analytics.track("paywall_restored")
+                            busy = false
+                            if (!restored) message = noRestoreText
+                        }
+                    },
+                    onOpen = { url -> runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } },
+                )
+            }
+        }
+    }
+}
+
+/** Restauration et mentions légales, en pied de page, comme sur iPhone (`PaywallLegalFooter`). */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun LegalFooter(restoreEnabled: Boolean, onRestore: () -> Unit, onOpen: (String) -> Unit) {
+    val colors = Micabo.colors
+    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalArrangement = Arrangement.Center) {
+        TextButton(onClick = onRestore, enabled = restoreEnabled) {
+            Text(stringResource(R.string.ios_paywallRestore), style = nunito(13.sp, FontWeight.Bold), color = colors.inkSecondary)
+        }
+        TextButton(onClick = { onOpen("https://micabo.app/conditions") }) {
+            Text(stringResource(R.string.ios_paywallTerms), style = nunito(13.sp, FontWeight.Bold), color = colors.inkSecondary)
+        }
+        TextButton(onClick = { onOpen("https://micabo.app/confidentialite") }) {
+            Text(stringResource(R.string.common_privacy), style = nunito(13.sp, FontWeight.Bold), color = colors.inkSecondary)
         }
     }
 }

@@ -279,6 +279,7 @@
     <string name="lesson_home_title">Ce vrei să **înveți** azi?</string>
     <string name="lesson_import_add">Adaugă</string>
     <string name="lesson_import_audioFile">Alege un fișier audio</string>
+    <string name="lesson_import_audioSub">O oră înregistrată</string>
     <string name="lesson_import_instruction">Ce vrea elevul să obțină: %1$s</string>
     <string name="lesson_import_library">Alege poze</string>
     <string name="lesson_import_paste">Lipește</string>
@@ -289,6 +290,7 @@
     <string name="lesson_import_record">Înregistrează</string>
     <string name="lesson_import_recordStop">Oprește înregistrarea</string>
     <string name="lesson_import_recordTitle">Înregistrează-ți ora</string>
+    <string name="lesson_import_recordingName">Înregistrare</string>
     <string name="lesson_import_scan">Scanează pagini</string>
     <string name="lesson_import_textPlaceholder">Notițele de la oră, un articol…</string>
     <string name="lesson_import_textSub">Lipește-ți notițele</string>

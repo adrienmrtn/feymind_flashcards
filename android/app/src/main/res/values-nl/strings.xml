@@ -278,6 +278,7 @@
     <string name="lesson_home_title">Wat wil je vandaag **leren**?</string>
     <string name="lesson_import_add">Toevoegen</string>
     <string name="lesson_import_audioFile">Kies een audiobestand</string>
+    <string name="lesson_import_audioSub">Een opgenomen les</string>
     <string name="lesson_import_instruction">Wat de leerling eruit wil halen: %1$s</string>
     <string name="lesson_import_library">Foto’s kiezen</string>
     <string name="lesson_import_paste">Plakken</string>
@@ -288,6 +289,7 @@
     <string name="lesson_import_record">Opnemen</string>
     <string name="lesson_import_recordStop">Opname stoppen</string>
     <string name="lesson_import_recordTitle">Neem je les op</string>
+    <string name="lesson_import_recordingName">Opname</string>
     <string name="lesson_import_scan">Pagina’s scannen</string>
     <string name="lesson_import_text">Tekst</string>
     <string name="lesson_import_textPlaceholder">Je lesaantekeningen, een artikel…</string>

@@ -285,6 +285,7 @@
     <string name="lesson_home_title">Šta želiš da **naučiš** danas?</string>
     <string name="lesson_import_add">Dodaj</string>
     <string name="lesson_import_audioFile">Izaberi audio fajl</string>
+    <string name="lesson_import_audioSub">Snimljeno predavanje</string>
     <string name="lesson_import_instruction">Šta učenik želi da zapamti: %1$s</string>
     <string name="lesson_import_library">Izaberi fotografije</string>
     <string name="lesson_import_paste">Nalepi</string>
@@ -295,6 +296,7 @@
     <string name="lesson_import_record">Snimi</string>
     <string name="lesson_import_recordStop">Zaustavi snimanje</string>
     <string name="lesson_import_recordTitle">Snimi svoj čas</string>
+    <string name="lesson_import_recordingName">Snimak</string>
     <string name="lesson_import_scan">Skeniraj strane</string>
     <string name="lesson_import_text">Tekst</string>
     <string name="lesson_import_textPlaceholder">Tvoje beleške sa časa, članak…</string>

@@ -285,7 +285,9 @@
     <string name="lesson_home_supportsFull">Največ %1$s gradiv na lekcijo.</string>
     <string name="lesson_home_title">Kaj se želiš danes **naučiti**?</string>
     <string name="lesson_import_add">Dodaj</string>
+    <string name="lesson_import_audio">Zvok</string>
     <string name="lesson_import_audioFile">Izberi zvočno datoteko</string>
+    <string name="lesson_import_audioSub">Posnet pouk</string>
     <string name="lesson_import_instruction">Kaj želi učenec odnesti iz tega: %1$s</string>
     <string name="lesson_import_library">Izberi fotografije</string>
     <string name="lesson_import_paste">Prilepi</string>
@@ -296,6 +298,7 @@
     <string name="lesson_import_record">Posnemi</string>
     <string name="lesson_import_recordStop">Ustavi snemanje</string>
     <string name="lesson_import_recordTitle">Posnemi svoj pouk</string>
+    <string name="lesson_import_recordingName">Posnetek</string>
     <string name="lesson_import_scan">Skeniraj strani</string>
     <string name="lesson_import_text">Besedilo</string>
     <string name="lesson_import_textPlaceholder">Tvoji zapiski s pouka, članek …</string>

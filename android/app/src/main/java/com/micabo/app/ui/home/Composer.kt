@@ -95,6 +95,7 @@ private const val WORD_TYPE = "application/vnd.openxmlformats-officedocument.wor
 private fun SupportKind.icon(): String = when (this) {
     SupportKind.PDF -> "pdf"
     SupportKind.PHOTO -> "fiche"
+    SupportKind.AUDIO -> "reveil"
     SupportKind.YOUTUBE -> "fusee"
     SupportKind.TEXT -> "texte"
 }
@@ -224,6 +225,9 @@ fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit, onLo
     val files = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) composer.addFile(uri)
     }
+    val audioFiles = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) composer.addAudio(uri, fromRecorder = false)
+    }
     val photos = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(PhotoImport.MAX_PAGES)) { uris ->
         composer.addPhotos(uris)
     }
@@ -254,6 +258,7 @@ fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit, onLo
     val chips = listOf(
         SourceChip(SupportKind.PDF, R.string.lesson_import_pdf, R.string.lesson_import_pdfSub),
         SourceChip(SupportKind.PHOTO, R.string.lesson_import_photo, R.string.lesson_import_photoSub),
+        SourceChip(SupportKind.AUDIO, R.string.lesson_import_audio, R.string.lesson_import_audioSub),
         SourceChip(SupportKind.YOUTUBE, R.string.lesson_import_youtube, R.string.lesson_import_youtubeSub),
         SourceChip(SupportKind.TEXT, R.string.lesson_import_text, R.string.lesson_import_textSub),
     )
@@ -266,6 +271,7 @@ fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit, onLo
                 when (chip.kind) {
                     SupportKind.PDF -> files.launch(arrayOf("application/pdf", WORD_TYPE))
                     SupportKind.PHOTO -> dialog = "photo"
+                    SupportKind.AUDIO -> dialog = "audio"
                     SupportKind.YOUTUBE -> dialog = "youtube"
                     SupportKind.TEXT -> dialog = "text"
                 }
@@ -306,6 +312,11 @@ fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit, onLo
             onDismiss = { dialog = null },
             onScan = { dialog = null; scan() },
             onLibrary = { dialog = null; pickPhotos() },
+        )
+        "audio" -> AudioSheet(
+            onDismiss = { dialog = null },
+            onRecorded = { file -> dialog = null; composer.addAudio(android.net.Uri.fromFile(file), fromRecorder = true) },
+            onPickFile = { dialog = null; audioFiles.launch(arrayOf("audio/*")) },
         )
         "youtube" -> YouTubeDialog(
             onDismiss = { dialog = null },

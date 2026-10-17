@@ -287,7 +287,9 @@
     <string name="lesson_home_supportsFull">Έως %1$s υλικά ανά μάθημα.</string>
     <string name="lesson_home_title">Τι θέλεις να **μάθεις** σήμερα;</string>
     <string name="lesson_import_add">Προσθήκη</string>
+    <string name="lesson_import_audio">Ήχος</string>
     <string name="lesson_import_audioFile">Διάλεξε αρχείο ήχου</string>
+    <string name="lesson_import_audioSub">Ηχογραφημένο μάθημα</string>
     <string name="lesson_import_instruction">Τι θέλει να κρατήσει ο μαθητής: %1$s</string>
     <string name="lesson_import_library">Διάλεξε φωτογραφίες</string>
     <string name="lesson_import_paste">Επικόλληση</string>
@@ -298,6 +300,7 @@
     <string name="lesson_import_record">Ηχογράφηση</string>
     <string name="lesson_import_recordStop">Διακοπή ηχογράφησης</string>
     <string name="lesson_import_recordTitle">Ηχογράφησε το μάθημα</string>
+    <string name="lesson_import_recordingName">Ηχογράφηση</string>
     <string name="lesson_import_scan">Σάρωση σελίδων</string>
     <string name="lesson_import_text">Κείμενο</string>
     <string name="lesson_import_textPlaceholder">Οι σημειώσεις σου, ένα άρθρο…</string>

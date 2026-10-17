@@ -309,7 +309,9 @@
     <string name="lesson_home_supportsFull">Bir ders için en fazla %1$s kaynak.</string>
     <string name="lesson_home_title">Bugün ne **öğrenmek** istersin?</string>
     <string name="lesson_import_add">Ekle</string>
+    <string name="lesson_import_audio">Ses</string>
     <string name="lesson_import_audioFile">Ses dosyası seç</string>
+    <string name="lesson_import_audioSub">Kaydedilmiş bir ders</string>
     <string name="lesson_import_instruction">Öğrencinin odaklanmak istediği konu: %1$s</string>
     <string name="lesson_import_library">Fotoğraf seç</string>
     <string name="lesson_import_paste">Yapıştır</string>
@@ -320,6 +322,7 @@
     <string name="lesson_import_record">Ses kaydet</string>
     <string name="lesson_import_recordStop">Kaydı durdur</string>
     <string name="lesson_import_recordTitle">Dersini kaydet</string>
+    <string name="lesson_import_recordingName">Kayıt</string>
     <string name="lesson_import_scan">Sayfa tara</string>
     <string name="lesson_import_text">Metin</string>
     <string name="lesson_import_textPlaceholder">Dersin, notların, bir makale…</string>

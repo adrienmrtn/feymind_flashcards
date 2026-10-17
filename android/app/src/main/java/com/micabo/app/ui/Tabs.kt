@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -36,6 +37,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.micabo.app.R
@@ -98,7 +100,8 @@ private fun TabBar(selected: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = 
             .clip(RoundedCornerShape(28.dp))
             .background(colors.surface)
             .border(1.5.dp, colors.stroke, RoundedCornerShape(28.dp))
-            .height(64.dp),
+            // Au moins 64 : avec un grand texte système, l'intitulé ne se coupe plus.
+            .heightIn(min = 64.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Tab.entries.forEach { tab ->
@@ -115,7 +118,13 @@ private fun TabBar(selected: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = 
                         Icon(tab.icon, null, tint = tint, modifier = Modifier.size(24.dp))
                     }
                     Spacer(Modifier.height(2.dp))
-                    Text(stringResource(tab.title), style = nunito(12.sp, if (active) FontWeight.ExtraBold else FontWeight.Bold), color = tint)
+                    Text(
+                        stringResource(tab.title),
+                        style = nunito(12.sp, if (active) FontWeight.ExtraBold else FontWeight.Bold),
+                        color = tint,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
         }

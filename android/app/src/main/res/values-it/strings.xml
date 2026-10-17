@@ -276,6 +276,7 @@
     <string name="lesson_home_title">Cosa vuoi **imparare** oggi?</string>
     <string name="lesson_import_add">Aggiungi</string>
     <string name="lesson_import_audioFile">Scegli un file audio</string>
+    <string name="lesson_import_audioSub">Una lezione registrata</string>
     <string name="lesson_import_instruction">Cosa lo studente vuole ricavarne: %1$s</string>
     <string name="lesson_import_library">Scegli foto</string>
     <string name="lesson_import_paste">Incolla</string>
@@ -286,6 +287,7 @@
     <string name="lesson_import_record">Registra</string>
     <string name="lesson_import_recordStop">Interrompi la registrazione</string>
     <string name="lesson_import_recordTitle">Registra la tua lezione</string>
+    <string name="lesson_import_recordingName">Registrazione</string>
     <string name="lesson_import_scan">Scansiona pagine</string>
     <string name="lesson_import_text">Testo</string>
     <string name="lesson_import_textPlaceholder">La tua lezione, i tuoi appunti, un articolo…</string>

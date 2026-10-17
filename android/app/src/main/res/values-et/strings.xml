@@ -282,7 +282,9 @@
     <string name="lesson_home_supportsFull">Kuni %1$s materjali tunni kohta.</string>
     <string name="lesson_home_title">Mida sa täna **õppida** tahad?</string>
     <string name="lesson_import_add">Lisa</string>
+    <string name="lesson_import_audio">Heli</string>
     <string name="lesson_import_audioFile">Vali helifail</string>
+    <string name="lesson_import_audioSub">Salvestatud tund</string>
     <string name="lesson_import_instruction">Mida õpilane tahab sellest teada saada: %1$s</string>
     <string name="lesson_import_library">Vali fotod</string>
     <string name="lesson_import_paste">Kleebi</string>
@@ -293,6 +295,7 @@
     <string name="lesson_import_record">Salvesta</string>
     <string name="lesson_import_recordStop">Lõpeta salvestamine</string>
     <string name="lesson_import_recordTitle">Salvesta oma tund</string>
+    <string name="lesson_import_recordingName">Salvestis</string>
     <string name="lesson_import_scan">Skanni lehti</string>
     <string name="lesson_import_text">Tekst</string>
     <string name="lesson_import_textPlaceholder">Sinu tunnimärkmed, artikkel…</string>
