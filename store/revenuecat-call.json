@@ -2,7 +2,8 @@
  "calls": [
   {
    "method": "POST",
-   "path": "/store_state/plans/b1cd6c13-cbd2-41ab-a8ce-5e2e0eb565ae/actions/plan"
+   "path": "/store_state/plans/b1cd6c13-cbd2-41ab-a8ce-5e2e0eb565ae/actions/plan",
+   "body": {}
   }
  ]
 }
