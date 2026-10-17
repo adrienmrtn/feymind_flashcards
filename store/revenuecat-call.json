@@ -1,33 +1,90 @@
 {
-  "calls": [
-    {
-      "method": "POST",
-      "path": "/store_state/plans",
-      "body": {
-        "desired_states": [
-          {
-            "product_id": "prodd706abe0ee",
-            "common": {
-              "pricing": {
-                "territory_prices": {
-                  "FR": { "amount_micros": 4990000, "currency": "EUR" },
-                  "US": { "amount_micros": 7990000, "currency": "USD" }
-                },
-                "equalize_missing_subscription_prices": true
-              },
-              "localizations": {
-                "fr-FR": { "name": "Micabo Pro — semaine", "description": "Tous les cours, quiz et examens blancs" },
-                "en-US": { "name": "Micabo Pro — weekly", "description": "All lessons, quizzes and mock exams" }
-              }
-            },
-            "store_state": {
-              "base_plans": {
-                "weekly": { "state": "ACTIVE", "auto_renewing_base_plan_type": { "billing_period_duration": "P1W" } }
-              }
-            }
-          }
-        ]
+ "calls": [
+  {
+   "method": "POST",
+   "path": "/store_state/plans",
+   "body": {
+    "desired_states": [
+     {
+      "product_id": "prodd706abe0ee",
+      "store": "play_store",
+      "common": {
+       "pricing": {
+        "territory_prices": {
+         "FR": {
+          "amount_micros": 4990000,
+          "currency": "EUR"
+         },
+         "US": {
+          "amount_micros": 7990000,
+          "currency": "USD"
+         }
+        },
+        "equalize_missing_subscription_prices": true
+       },
+       "localizations": {
+        "fr-FR": {
+         "name": "Micabo Pro — semaine",
+         "description": "Tous les cours, quiz et examens blancs"
+        },
+        "en-US": {
+         "name": "Micabo Pro — weekly",
+         "description": "All lessons, quizzes and mock exams"
+        }
+       }
+      },
+      "store_state": {
+       "base_plans": {
+        "weekly": {
+         "state": "ACTIVE",
+         "auto_renewing_base_plan_type": {
+          "billing_period_duration": "P1W"
+         }
+        }
+       }
       }
-    }
-  ]
+     },
+     {
+      "product_id": "prodb02f3a3631",
+      "store": "play_store",
+      "common": {
+       "pricing": {
+        "territory_prices": {
+         "FR": {
+          "amount_micros": 49990000,
+          "currency": "EUR"
+         },
+         "US": {
+          "amount_micros": 59990000,
+          "currency": "USD"
+         }
+        },
+        "equalize_missing_subscription_prices": true
+       },
+       "localizations": {
+        "fr-FR": {
+         "name": "Micabo Pro — année",
+         "description": "Tous les cours, quiz et examens blancs"
+        },
+        "en-US": {
+         "name": "Micabo Pro — yearly",
+         "description": "All lessons, quizzes and mock exams"
+        }
+       }
+      },
+      "store_state": {
+       "base_plans": {
+        "yearly": {
+         "state": "ACTIVE",
+         "auto_renewing_base_plan_type": {
+          "billing_period_duration": "P1Y"
+         }
+        }
+       }
+      }
+     }
+    ]
+   }
+  }
+ ]
 }
