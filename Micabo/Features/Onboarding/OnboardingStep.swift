@@ -86,6 +86,8 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// « On a aidé 45 000 élèves », l'étude de Harvard, les avis — et la demande de note du
     /// système.
     case socialProof
+    /// « Soutiens-nous » : le bouton suivant ouvre la demande de note du système, puis avance.
+    case supportUs
     /// Mika calcule le parcours : le chargement d'après la preuve.
     case planBuilding
     /// « Voici ton profil » : les réponses relues, et ce que Mika va en faire.

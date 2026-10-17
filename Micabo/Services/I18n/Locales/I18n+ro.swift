@@ -704,6 +704,8 @@ extension IosI18nCatalogs {
         "ios.subjects": "Materii",
         "ios.subjectsSub": "Bifează toate materiile pe care le studiezi.",
         "ios.subjectsTitle": "Ce recapitulezi?",
+        "ios.support.body": "Micabo este făcut de o echipă mică și pasionată. O notă în App Store ne ajută enorm să ajutăm alți elevi.",
+        "ios.support.title": "Susține **Micabo**",
         "ios.syncRefused": "Carduri refuzate de server: {titles}. Reîncercăm la următoarea sincronizare.",
         "ios.syncing": "Se sincronizează…",
         "ios.tapGiftHint": "Atinge de {n} ori",

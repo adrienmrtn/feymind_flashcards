@@ -704,6 +704,8 @@ extension IosI18nCatalogs {
         "ios.subjects": "Ained",
         "ios.subjectsSub": "Märgi kõik, mida õpid.",
         "ios.subjectsTitle": "Mida sa kordad?",
+        "ios.support.body": "Micabot teeb väike ja kirglik meeskond. Hinnang App Store'is aitab meil väga palju teisi õpilasi aidata.",
+        "ios.support.title": "Toeta **Micabot**",
         "ios.syncRefused": "Server lükkas kaardid tagasi: {titles}. Proovime järgmisel sünkroonimisel uuesti.",
         "ios.syncing": "Sünkroonin…",
         "ios.tapGiftHint": "Puuduta {n} korda",

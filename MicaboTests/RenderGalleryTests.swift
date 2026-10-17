@@ -450,6 +450,40 @@ final class RenderGalleryTests: XCTestCase {
                 .environment(\.onboardingStill, true)
         )
         try RenderGallery.render(
+            "onboarding-social-support",
+            height: 780,
+            SupportUsStepView()
+                .environment(model)
+                .environment(\.onboardingStill, true)
+        )
+
+        // « Voici ce qui va changer pour toi » : un profil rempli, puis une moyenne sous le
+        // barème, dont l'étiquette est la plus longue.
+        let profiled = OnboardingModel()
+        profiled.displayName = "Lina"
+        profiled.subjects = ["Mathématiques", "Histoire", "Physique-chimie"]
+        profiled.worries = [.forgetting, .examStress]
+        profiled.currentScore = 12
+        profiled.targetScore = 16
+        profiled.dailyMinutes = 15
+        profiled.studyHour = 18
+        try RenderGallery.render(
+            "onboarding-social-profile",
+            height: 1_100,
+            ProfileSummaryStepView()
+                .environment(profiled)
+                .environment(\.onboardingStill, true)
+        )
+        profiled.currentScore = DesiredGradeScale.belowScore
+        profiled.worries = []
+        try RenderGallery.render(
+            "onboarding-social-profile-low",
+            height: 1_100,
+            ProfileSummaryStepView()
+                .environment(profiled)
+                .environment(\.onboardingStill, true)
+        )
+        try RenderGallery.render(
             "onboarding-paywall",
             height: 1_250,
             PaywallOfferView(

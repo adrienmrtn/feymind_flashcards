@@ -704,6 +704,8 @@ extension IosI18nCatalogs {
         "ios.subjects": "Fag",
         "ios.subjectsSub": "Sæt flueben ved alle, du har.",
         "ios.subjectsTitle": "Hvad læser du op på?",
+        "ios.support.body": "Micabo er lavet af et lille, passioneret team. En bedømmelse i App Store hjælper os enormt med at hjælpe andre elever.",
+        "ios.support.title": "Støt **Micabo**",
         "ios.syncRefused": "Kort afvist af serveren: {titles}. Vi prøver igen ved næste synkronisering.",
         "ios.syncing": "Synkroniserer…",
         "ios.tapGiftHint": "Tryk {n} gange",

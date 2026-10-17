@@ -704,6 +704,8 @@ extension IosI18nCatalogs {
         "ios.subjects": "Предметы",
         "ios.subjectsSub": "Отметь всё, что изучаешь.",
         "ios.subjectsTitle": "Что ты повторяешь?",
+        "ios.support.body": "Micabo делает небольшая увлечённая команда. Оценка в App Store очень помогает нам помогать другим ученикам.",
+        "ios.support.title": "Поддержи **Micabo**",
         "ios.syncRefused": "Карточки, отклонённые сервером: {titles}. Повторим при следующей синхронизации.",
         "ios.syncing": "Синхронизация…",
         "ios.tapGiftHint": "Нажатий: {n}",

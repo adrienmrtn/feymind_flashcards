@@ -41,16 +41,11 @@ struct NotesCircleView: View {
                     removal: .move(edge: forward ? .leading : .trailing).combined(with: .opacity)
                 ))
             }
+            // **Pas de balayage latéral** : la page ne bouge que de haut en bas, marges fixes.
+            // Le glisser à gauche ou à droite tournait la page au moindre geste de travers, et
+            // la page semblait flotter. On avance avec « Continuer », on revient avec la flèche.
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 24)
-                    .onEnded { value in
-                        guard abs(value.translation.width) > abs(value.translation.height) else { return }
-                        if value.translation.width < -50 { advanceIfAllowed() }
-                        if value.translation.width > 50, page > 0 { back() }
-                    }
-            )
+            .clipped()
 
             bottomBar(current: current, isLast: page == pages.count - 1)
         }
@@ -88,12 +83,6 @@ struct NotesCircleView: View {
             page += 1
             furthest = max(furthest, page)
         }
-    }
-
-    private func advanceIfAllowed() {
-        let current = pages.indices.contains(page) ? pages[page] : .question
-        guard current != .question || answer != nil else { return }
-        next()
     }
 
     private func back() {

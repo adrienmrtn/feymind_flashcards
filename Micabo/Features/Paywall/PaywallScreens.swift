@@ -115,6 +115,11 @@ struct PaywallPlansView: View {
     var onRestore: () -> Void
 
     @State private var selection: PaywallPlan.Kind = PaywallCatalog.recommended.kind
+    /// **La croix des formules arrive deux secondes après l'écran**, le temps de voir les deux
+    /// offres côte à côte. Le balayage de la feuille, lui, referme toujours.
+    @State private var showsClose = false
+
+    static let closeDelay: Duration = .seconds(2)
 
     private var selectedPlan: PaywallPlan {
         PaywallCatalog.plan(selection)
@@ -123,6 +128,14 @@ struct PaywallPlansView: View {
     var body: some View {
         VStack(spacing: 0) {
             PaywallHeader(onClose: onClose)
+                .opacity(showsClose ? 1 : 0)
+                .allowsHitTesting(showsClose)
+                .animation(.easeOut(duration: 0.35), value: showsClose)
+                .task {
+                    try? await Task.sleep(for: Self.closeDelay)
+                    guard !Task.isCancelled else { return }
+                    showsClose = true
+                }
 
             // **Le second paywall a la forme du premier** : la couronne, un titre centré, puis
             // les offres en cartes de l'app, ce que Pro ouvre, et la recherche.

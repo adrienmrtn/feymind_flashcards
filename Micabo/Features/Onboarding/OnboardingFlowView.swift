@@ -213,6 +213,7 @@ struct OnboardingFlowView: View {
         case .mikaTutor: MikaStepView(page: .tutor)
         case .mikaRelief: MikaStepView(page: .relief)
         case .socialProof: SocialProofStepView()
+        case .supportUs: SupportUsStepView()
         case .planBuilding: PlanBuildingStepView()
         case .profileSummary: ProfileSummaryStepView()
         case .freeTrialIntro: FreeTrialIntroStepView()

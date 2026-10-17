@@ -704,6 +704,8 @@ extension IosI18nCatalogs {
         "ios.subjects": "Przedmioty",
         "ios.subjectsSub": "Zaznacz wszystkie, których się uczysz.",
         "ios.subjectsTitle": "Czego się uczysz?",
+        "ios.support.body": "Micabo tworzy mały, pełen pasji zespół. Ocena w App Store bardzo pomaga nam pomagać innym uczniom.",
+        "ios.support.title": "Wesprzyj **Micabo**",
         "ios.syncRefused": "Fiszki odrzucone przez serwer: {titles}. Spróbujemy ponownie przy następnej synchronizacji.",
         "ios.syncing": "Synchronizacja…",
         "ios.tapGiftHint": "Stuknij {n} razy",

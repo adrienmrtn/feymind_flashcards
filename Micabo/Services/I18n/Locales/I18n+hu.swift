@@ -704,6 +704,8 @@ extension IosI18nCatalogs {
         "ios.subjects": "Tantárgyak",
         "ios.subjectsSub": "Jelöld be mindet, amit tanulsz.",
         "ios.subjectsTitle": "Mit tanulsz?",
+        "ios.support.body": "A Micabót egy kicsi, lelkes csapat készíti. Egy értékelés az App Store-ban rengeteget segít, hogy más diákoknak is segíthessünk.",
+        "ios.support.title": "Támogasd a **Micabót**",
         "ios.syncRefused": "A szerver elutasította a kártyákat: {titles}. A következő szinkronizáláskor újrapróbáljuk.",
         "ios.syncing": "Szinkronizálás…",
         "ios.tapGiftHint": "Koppints {n} alkalommal",

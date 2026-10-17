@@ -89,6 +89,16 @@ struct ProfileSummaryStepView: View {
         VStack(spacing: 0) {
             OnboardingCenteredScroll {
                 VStack(spacing: 20) {
+                    ZStack {
+                        Circle()
+                            .fill(RadialGradient(colors: [MicaboColor.accent.opacity(0.18), MicaboColor.accent.opacity(0)], center: .center, startRadius: 2, endRadius: 70))
+                            .frame(width: 140, height: 140)
+                        MicaboIconView(icon: .rocket, size: 76)
+                    }
+                    .frame(height: 104)
+                    .accessibilityHidden(true)
+                    .onboardingAppear(index: 0)
+
                     OnboardingAccentText(
                         template: name.isEmpty ? i18n.t("ios.profileCard.titleNoName") : i18n.t("ios.profileCard.title", ["name": name]),
                         size: 28,
@@ -124,41 +134,55 @@ struct ProfileSummaryStepView: View {
 
     /// Aujourd'hui → l'objectif, en grand : la seule promesse chiffrée de la page.
     private func goal(current: Int, target: Int) -> some View {
-        HStack(spacing: 0) {
-            VStack(spacing: 6) {
-                Text(i18n.t("ios.profileCard.goal.now"))
-                    .font(MicaboFont.ui(13, weight: .bold))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                Text(grade(current))
-                    .font(MicaboFont.ui(30, weight: .heavy))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
-            }
-            .frame(maxWidth: .infinity)
+        HStack(alignment: .center, spacing: 8) {
+            gradeColumn(label: i18n.t("ios.profileCard.goal.now"), grade: grade(current), isTarget: false)
 
             Image(systemName: "arrow.right")
-                .font(.system(size: 20, weight: .heavy))
+                .font(.system(size: 18, weight: .heavy))
                 .foregroundStyle(MicaboColor.accent)
-                .frame(width: 44, height: 44)
+                .frame(width: 40, height: 40)
                 .background(MicaboColor.accentSoft, in: Circle())
+                .flipsForRightToLeftLayoutDirection(true)
 
-            VStack(spacing: 6) {
-                Text(i18n.t("ios.profileCard.goal.target"))
-                    .font(MicaboFont.ui(13, weight: .bold))
-                    .foregroundStyle(MicaboColor.accent)
-                MikaGradientText(text: grade(target), size: 34, weight: .heavy)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
-            }
-            .frame(maxWidth: .infinity)
+            gradeColumn(label: i18n.t("ios.profileCard.goal.target"), grade: grade(target), isTarget: true)
         }
-        .padding(.vertical, 18)
+        .padding(.vertical, 16)
         .padding(.horizontal, 12)
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
         .micaboElevation(.card)
         .accessibilityElement(children: .combine)
+    }
+
+    /// Une colonne de la carte : l'étiquette, puis la note. Une note longue (« Moins de
+    /// 10/20 ») passe sur deux lignes ou rapetisse, sans jamais déborder sur la flèche.
+    private func gradeColumn(label: String, grade: String, isTarget: Bool) -> some View {
+        VStack(spacing: 6) {
+            HStack(spacing: 5) {
+                MicaboIconView(icon: isTarget ? .trophy : .pin, size: 20)
+                Text(label)
+                    .font(MicaboFont.ui(13, weight: .bold))
+                    .foregroundStyle(isTarget ? MicaboColor.accent : MicaboColor.inkSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            Group {
+                if isTarget {
+                    MikaGradientText(text: grade, size: 30, weight: .heavy)
+                } else {
+                    Text(grade)
+                        .font(MicaboFont.ui(26, weight: .heavy))
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                        .multilineTextAlignment(.center)
+                }
+            }
+            .lineLimit(2)
+            .minimumScaleFactor(0.55)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 6)
+        .background(isTarget ? MicaboColor.accentSoft.opacity(0.6) : Color.clear, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
     // MARK: Les bénéfices
@@ -187,7 +211,7 @@ struct ProfileSummaryStepView: View {
         let shown = subjects.prefix(2).joined(separator: ", ")
         let list = subjects.count > 2 ? i18n.t("ios.profileCard.more", ["list": shown, "n": "\(subjects.count - 2)"]) : shown
         result.append(Benefit(
-            icon: .lessons,
+            icon: .book,
             title: i18n.t("ios.profileCard.courses.title"),
             body: subjects.isEmpty ? i18n.t("ios.profileCard.courses.bodyAny") : i18n.t("ios.profileCard.courses.body", ["subjects": list])
         ))

@@ -1145,6 +1145,8 @@ enum IosI18nCatalogs {
         "ios.profileCard.worry.noStart.body": "Un parcours clair, étape par étape : tu n'as plus qu'à suivre.",
         "ios.profileCard.worry.motivation.title": "Garder la motivation",
         "ios.profileCard.worry.motivation.body": "Des séances courtes, une série à tenir, et des progrès que tu vois.",
+        "ios.support.title": "Soutiens **Micabo**",
+        "ios.support.body": "Micabo est fait par une petite équipe passionnée. Une note sur l'App Store nous aide énormément à aider d'autres élèves.",
     ]
 
     static let de: [String: String] = [
@@ -2291,6 +2293,8 @@ enum IosI18nCatalogs {
         "ios.profileCard.worry.noStart.body": "Ein klarer Weg, Schritt für Schritt: Du musst nur folgen.",
         "ios.profileCard.worry.motivation.title": "Motiviert bleiben",
         "ios.profileCard.worry.motivation.body": "Kurze Einheiten, eine Serie zum Halten und Fortschritte, die du siehst.",
+        "ios.support.title": "Unterstütze **Micabo**",
+        "ios.support.body": "Micabo wird von einem kleinen, leidenschaftlichen Team gemacht. Eine Bewertung im App Store hilft uns enorm, weiteren Schülern zu helfen.",
     ]
 
     static let es: [String: String] = [
@@ -3437,6 +3441,8 @@ enum IosI18nCatalogs {
         "ios.profileCard.worry.noStart.body": "Un camino claro, paso a paso: solo tienes que seguirlo.",
         "ios.profileCard.worry.motivation.title": "Mantener la motivación",
         "ios.profileCard.worry.motivation.body": "Sesiones cortas, una racha que mantener y progresos que ves.",
+        "ios.support.title": "Apoya a **Micabo**",
+        "ios.support.body": "Micabo lo hace un equipo pequeño y apasionado. Una valoración en la App Store nos ayuda muchísimo a ayudar a otros estudiantes.",
     ]
 
     static let tr: [String: String] = [
@@ -4583,6 +4589,8 @@ enum IosI18nCatalogs {
         "ios.profileCard.worry.noStart.body": "Adım adım net bir yol: sadece takip etmen yeterli.",
         "ios.profileCard.worry.motivation.title": "Motivasyonunu koru",
         "ios.profileCard.worry.motivation.body": "Kısa seanslar, korunacak bir seri ve gözle görülen ilerleme.",
+        "ios.support.title": "**Micabo**'ya destek ol",
+        "ios.support.body": "Micabo küçük ve tutkulu bir ekip tarafından yapılıyor. App Store'daki bir puan, başka öğrencilere yardım etmemizi çok kolaylaştırır.",
     ]
 
     /// **L'anglais, au complet.**
@@ -5736,6 +5744,8 @@ enum IosI18nCatalogs {
         "ios.profileCard.worry.noStart.body": "A clear path, step by step: all you have to do is follow it.",
         "ios.profileCard.worry.motivation.title": "Stay motivated",
         "ios.profileCard.worry.motivation.body": "Short sessions, a streak to keep, and progress you can see.",
+        "ios.support.title": "Support **Micabo**",
+        "ios.support.body": "Micabo is built by a small, passionate team. A rating on the App Store helps us enormously to help other students.",
     ]
 
     static func table(for locale: String) -> [String: String] {

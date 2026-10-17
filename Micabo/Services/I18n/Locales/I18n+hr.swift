@@ -704,6 +704,8 @@ extension IosI18nCatalogs {
         "ios.subjects": "Predmeti",
         "ios.subjectsSub": "Označi sve koje učiš.",
         "ios.subjectsTitle": "Što učiš?",
+        "ios.support.body": "Micabo izrađuje mali, strastveni tim. Ocjena u App Storeu jako nam pomaže da pomognemo drugim učenicima.",
+        "ios.support.title": "Podrži **Micabo**",
         "ios.syncRefused": "Poslužitelj je odbio kartice: {titles}. Pokušat ćemo ponovno pri sljedećoj sinkronizaciji.",
         "ios.syncing": "Sinkronizacija…",
         "ios.tapGiftHint": "Dodirni {n} puta",

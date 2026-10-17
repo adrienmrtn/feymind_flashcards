@@ -192,7 +192,7 @@ final class OnboardingFlowTests: XCTestCase {
         let model = self.model(advancingTo: .mikaRelief)
         model.hasAccount = true
 
-        for expected in [OnboardingStep.socialProof, .planBuilding, .profileSummary, .freeTrialIntro, .trialOffer, .trialReminder, .paywall] {
+        for expected in [OnboardingStep.socialProof, .supportUs, .planBuilding, .profileSummary, .freeTrialIntro, .trialOffer, .trialReminder, .paywall] {
             model.advance()
             XCTAssertEqual(model.step, expected)
         }
@@ -327,7 +327,7 @@ final class OnboardingFlowTests: XCTestCase {
     /// la recherche, le point de départ et le prof particulier ; puis le calcul du parcours, le
     /// profil, l'engagement et l'essai offert. Trente-six écrans.
     func testTheFlowKeepsItsLength() {
-        XCTAssertEqual(OnboardingStep.allCases.count, 35)
+        XCTAssertEqual(OnboardingStep.allCases.count, 36)
     }
 
     /// **Une page ne se quitte pas avant d'avoir été vue** : un second appui sur le rond,

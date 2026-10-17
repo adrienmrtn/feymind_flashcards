@@ -704,6 +704,8 @@ extension IosI18nCatalogs {
         "ios.subjects": "المواد",
         "ios.subjectsSub": "حدّد كل المواد التي تدرسها.",
         "ios.subjectsTitle": "ماذا تراجع؟",
+        "ios.support.body": "يصنع Micabo فريق صغير وشغوف. تقييمك على App Store يساعدنا كثيرًا على مساعدة طلاب آخرين.",
+        "ios.support.title": "ادعم **Micabo**",
         "ios.syncRefused": "رفض الخادم البطاقات: {titles}. سنعيد المحاولة عند المزامنة التالية.",
         "ios.syncing": "جارٍ المزامنة…",
         "ios.tapGiftHint": "انقر {n} مرات",

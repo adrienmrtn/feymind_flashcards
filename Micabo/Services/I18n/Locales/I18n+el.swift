@@ -704,6 +704,8 @@ extension IosI18nCatalogs {
         "ios.subjects": "Μαθήματα",
         "ios.subjectsSub": "Τσέκαρε όλα όσα διαβάζεις.",
         "ios.subjectsTitle": "Τι επαναλαμβάνεις;",
+        "ios.support.body": "Το Micabo το φτιάχνει μια μικρή, αφοσιωμένη ομάδα. Μια βαθμολογία στο App Store μάς βοηθά πάρα πολύ να βοηθάμε κι άλλους μαθητές.",
+        "ios.support.title": "Στήριξε το **Micabo**",
         "ios.syncRefused": "Κάρτες που απέρριψε ο διακομιστής: {titles}. Θα ξαναδοκιμάσουμε στον επόμενο συγχρονισμό.",
         "ios.syncing": "Συγχρονισμός…",
         "ios.tapGiftHint": "Πάτα {n} φορές",

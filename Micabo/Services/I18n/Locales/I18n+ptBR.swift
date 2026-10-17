@@ -704,6 +704,8 @@ extension IosI18nCatalogs {
         "ios.subjects": "Matérias",
         "ios.subjectsSub": "Marque todas as que você está estudando.",
         "ios.subjectsTitle": "O que você está estudando?",
+        "ios.support.body": "O Micabo é feito por uma equipe pequena e apaixonada. Uma avaliação na App Store ajuda muito a gente a ajudar outros estudantes.",
+        "ios.support.title": "Apoie o **Micabo**",
         "ios.syncRefused": "Cartões recusados pelo servidor: {titles}. Vamos tentar de novo na próxima sincronização.",
         "ios.syncing": "Sincronizando…",
         "ios.tapGiftHint": "Toque {n} vezes",

@@ -704,6 +704,8 @@ extension IosI18nCatalogs {
         "ios.subjects": "Aineet",
         "ios.subjectsSub": "Valitse kaikki, joita opiskelet.",
         "ios.subjectsTitle": "Mitä kertaat?",
+        "ios.support.body": "Micaboa tekee pieni ja intohimoinen tiimi. Arvio App Storessa auttaa meitä valtavasti auttamaan muita opiskelijoita.",
+        "ios.support.title": "Tue **Micaboa**",
         "ios.syncRefused": "Palvelin hylkäsi kortit: {titles}. Yritämme uudelleen seuraavassa synkronoinnissa.",
         "ios.syncing": "Synkronoidaan…",
         "ios.tapGiftHint": "Napauta {n} kertaa",

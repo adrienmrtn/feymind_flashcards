@@ -704,6 +704,8 @@ extension IosI18nCatalogs {
         "ios.subjects": "Предмети",
         "ios.subjectsSub": "Отбележи всички, които учиш.",
         "ios.subjectsTitle": "Какво преговаряш?",
+        "ios.support.body": "Micabo се създава от малък и запален екип. Оценка в App Store ни помага изключително много да помагаме на други ученици.",
+        "ios.support.title": "Подкрепи **Micabo**",
         "ios.syncRefused": "Карти, отхвърлени от сървъра: {titles}. Ще опитаме пак при следващата синхронизация.",
         "ios.syncing": "Синхронизиране…",
         "ios.tapGiftHint": "Докосни {n} пъти",

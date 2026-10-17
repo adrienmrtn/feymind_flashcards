@@ -704,6 +704,8 @@ extension IosI18nCatalogs {
         "ios.subjects": "Vakken",
         "ios.subjectsSub": "Vink elk vak aan dat je leert.",
         "ios.subjectsTitle": "Wat ben je aan het leren?",
+        "ios.support.body": "Micabo wordt gemaakt door een klein, gepassioneerd team. Een beoordeling in de App Store helpt ons enorm om andere leerlingen te helpen.",
+        "ios.support.title": "Steun **Micabo**",
         "ios.syncRefused": "Kaarten geweigerd door de server: {titles}. We proberen het opnieuw bij de volgende synchronisatie.",
         "ios.syncing": "Synchroniseren…",
         "ios.tapGiftHint": "Tik {n} keer",
