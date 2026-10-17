@@ -154,6 +154,181 @@
       "state": "ACTIVE",
       "auto_renewing_base_plan_type": {
        "billing_period_duration": "P1W"
+      },
+      "offers": {
+       "trial": {
+        "state": "ACTIVE",
+        "phases": [
+         {
+          "duration": "P3D",
+          "recurrence_count": 1,
+          "regional_configs": {
+           "FR": {
+            "free": {}
+           },
+           "BE": {
+            "free": {}
+           },
+           "LU": {
+            "free": {}
+           },
+           "DE": {
+            "free": {}
+           },
+           "AT": {
+            "free": {}
+           },
+           "NL": {
+            "free": {}
+           },
+           "IE": {
+            "free": {}
+           },
+           "FI": {
+            "free": {}
+           },
+           "ES": {
+            "free": {}
+           },
+           "IT": {
+            "free": {}
+           },
+           "PT": {
+            "free": {}
+           },
+           "GR": {
+            "free": {}
+           },
+           "SK": {
+            "free": {}
+           },
+           "SI": {
+            "free": {}
+           },
+           "HR": {
+            "free": {}
+           },
+           "EE": {
+            "free": {}
+           },
+           "LV": {
+            "free": {}
+           },
+           "LT": {
+            "free": {}
+           },
+           "CY": {
+            "free": {}
+           },
+           "MT": {
+            "free": {}
+           },
+           "US": {
+            "free": {}
+           },
+           "TR": {
+            "free": {}
+           },
+           "BR": {
+            "free": {}
+           },
+           "MX": {
+            "free": {}
+           },
+           "IN": {
+            "free": {}
+           }
+          }
+         }
+        ],
+        "regional_configs": {
+         "FR": {
+          "new_subscriber_availability": true
+         },
+         "BE": {
+          "new_subscriber_availability": true
+         },
+         "LU": {
+          "new_subscriber_availability": true
+         },
+         "DE": {
+          "new_subscriber_availability": true
+         },
+         "AT": {
+          "new_subscriber_availability": true
+         },
+         "NL": {
+          "new_subscriber_availability": true
+         },
+         "IE": {
+          "new_subscriber_availability": true
+         },
+         "FI": {
+          "new_subscriber_availability": true
+         },
+         "ES": {
+          "new_subscriber_availability": true
+         },
+         "IT": {
+          "new_subscriber_availability": true
+         },
+         "PT": {
+          "new_subscriber_availability": true
+         },
+         "GR": {
+          "new_subscriber_availability": true
+         },
+         "SK": {
+          "new_subscriber_availability": true
+         },
+         "SI": {
+          "new_subscriber_availability": true
+         },
+         "HR": {
+          "new_subscriber_availability": true
+         },
+         "EE": {
+          "new_subscriber_availability": true
+         },
+         "LV": {
+          "new_subscriber_availability": true
+         },
+         "LT": {
+          "new_subscriber_availability": true
+         },
+         "CY": {
+          "new_subscriber_availability": true
+         },
+         "MT": {
+          "new_subscriber_availability": true
+         },
+         "US": {
+          "new_subscriber_availability": true
+         },
+         "TR": {
+          "new_subscriber_availability": true
+         },
+         "BR": {
+          "new_subscriber_availability": true
+         },
+         "MX": {
+          "new_subscriber_availability": true
+         },
+         "IN": {
+          "new_subscriber_availability": true
+         }
+        },
+        "targeting": {
+         "acquisition_rule": {
+          "scope": {
+           "this_subscription": {}
+          }
+         }
+        },
+        "offer_tags": [
+         "trial"
+        ]
+       }
       }
      }
     }
@@ -313,6 +488,181 @@
       "state": "ACTIVE",
       "auto_renewing_base_plan_type": {
        "billing_period_duration": "P1Y"
+      },
+      "offers": {
+       "trial": {
+        "state": "ACTIVE",
+        "phases": [
+         {
+          "duration": "P3D",
+          "recurrence_count": 1,
+          "regional_configs": {
+           "FR": {
+            "free": {}
+           },
+           "BE": {
+            "free": {}
+           },
+           "LU": {
+            "free": {}
+           },
+           "DE": {
+            "free": {}
+           },
+           "AT": {
+            "free": {}
+           },
+           "NL": {
+            "free": {}
+           },
+           "IE": {
+            "free": {}
+           },
+           "FI": {
+            "free": {}
+           },
+           "ES": {
+            "free": {}
+           },
+           "IT": {
+            "free": {}
+           },
+           "PT": {
+            "free": {}
+           },
+           "GR": {
+            "free": {}
+           },
+           "SK": {
+            "free": {}
+           },
+           "SI": {
+            "free": {}
+           },
+           "HR": {
+            "free": {}
+           },
+           "EE": {
+            "free": {}
+           },
+           "LV": {
+            "free": {}
+           },
+           "LT": {
+            "free": {}
+           },
+           "CY": {
+            "free": {}
+           },
+           "MT": {
+            "free": {}
+           },
+           "US": {
+            "free": {}
+           },
+           "TR": {
+            "free": {}
+           },
+           "BR": {
+            "free": {}
+           },
+           "MX": {
+            "free": {}
+           },
+           "IN": {
+            "free": {}
+           }
+          }
+         }
+        ],
+        "regional_configs": {
+         "FR": {
+          "new_subscriber_availability": true
+         },
+         "BE": {
+          "new_subscriber_availability": true
+         },
+         "LU": {
+          "new_subscriber_availability": true
+         },
+         "DE": {
+          "new_subscriber_availability": true
+         },
+         "AT": {
+          "new_subscriber_availability": true
+         },
+         "NL": {
+          "new_subscriber_availability": true
+         },
+         "IE": {
+          "new_subscriber_availability": true
+         },
+         "FI": {
+          "new_subscriber_availability": true
+         },
+         "ES": {
+          "new_subscriber_availability": true
+         },
+         "IT": {
+          "new_subscriber_availability": true
+         },
+         "PT": {
+          "new_subscriber_availability": true
+         },
+         "GR": {
+          "new_subscriber_availability": true
+         },
+         "SK": {
+          "new_subscriber_availability": true
+         },
+         "SI": {
+          "new_subscriber_availability": true
+         },
+         "HR": {
+          "new_subscriber_availability": true
+         },
+         "EE": {
+          "new_subscriber_availability": true
+         },
+         "LV": {
+          "new_subscriber_availability": true
+         },
+         "LT": {
+          "new_subscriber_availability": true
+         },
+         "CY": {
+          "new_subscriber_availability": true
+         },
+         "MT": {
+          "new_subscriber_availability": true
+         },
+         "US": {
+          "new_subscriber_availability": true
+         },
+         "TR": {
+          "new_subscriber_availability": true
+         },
+         "BR": {
+          "new_subscriber_availability": true
+         },
+         "MX": {
+          "new_subscriber_availability": true
+         },
+         "IN": {
+          "new_subscriber_availability": true
+         }
+        },
+        "targeting": {
+         "acquisition_rule": {
+          "scope": {
+           "this_subscription": {}
+          }
+         }
+        },
+        "offer_tags": [
+         "trial"
+        ]
+       }
       }
      }
     }
