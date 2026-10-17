@@ -164,79 +164,79 @@
           "recurrence_count": 1,
           "regional_configs": {
            "FR": {
-            "free": {}
+            "free": true
            },
            "BE": {
-            "free": {}
+            "free": true
            },
            "LU": {
-            "free": {}
+            "free": true
            },
            "DE": {
-            "free": {}
+            "free": true
            },
            "AT": {
-            "free": {}
+            "free": true
            },
            "NL": {
-            "free": {}
+            "free": true
            },
            "IE": {
-            "free": {}
+            "free": true
            },
            "FI": {
-            "free": {}
+            "free": true
            },
            "ES": {
-            "free": {}
+            "free": true
            },
            "IT": {
-            "free": {}
+            "free": true
            },
            "PT": {
-            "free": {}
+            "free": true
            },
            "GR": {
-            "free": {}
+            "free": true
            },
            "SK": {
-            "free": {}
+            "free": true
            },
            "SI": {
-            "free": {}
+            "free": true
            },
            "HR": {
-            "free": {}
+            "free": true
            },
            "EE": {
-            "free": {}
+            "free": true
            },
            "LV": {
-            "free": {}
+            "free": true
            },
            "LT": {
-            "free": {}
+            "free": true
            },
            "CY": {
-            "free": {}
+            "free": true
            },
            "MT": {
-            "free": {}
+            "free": true
            },
            "US": {
-            "free": {}
+            "free": true
            },
            "TR": {
-            "free": {}
+            "free": true
            },
            "BR": {
-            "free": {}
+            "free": true
            },
            "MX": {
-            "free": {}
+            "free": true
            },
            "IN": {
-            "free": {}
+            "free": true
            }
           }
          }
@@ -498,79 +498,79 @@
           "recurrence_count": 1,
           "regional_configs": {
            "FR": {
-            "free": {}
+            "free": true
            },
            "BE": {
-            "free": {}
+            "free": true
            },
            "LU": {
-            "free": {}
+            "free": true
            },
            "DE": {
-            "free": {}
+            "free": true
            },
            "AT": {
-            "free": {}
+            "free": true
            },
            "NL": {
-            "free": {}
+            "free": true
            },
            "IE": {
-            "free": {}
+            "free": true
            },
            "FI": {
-            "free": {}
+            "free": true
            },
            "ES": {
-            "free": {}
+            "free": true
            },
            "IT": {
-            "free": {}
+            "free": true
            },
            "PT": {
-            "free": {}
+            "free": true
            },
            "GR": {
-            "free": {}
+            "free": true
            },
            "SK": {
-            "free": {}
+            "free": true
            },
            "SI": {
-            "free": {}
+            "free": true
            },
            "HR": {
-            "free": {}
+            "free": true
            },
            "EE": {
-            "free": {}
+            "free": true
            },
            "LV": {
-            "free": {}
+            "free": true
            },
            "LT": {
-            "free": {}
+            "free": true
            },
            "CY": {
-            "free": {}
+            "free": true
            },
            "MT": {
-            "free": {}
+            "free": true
            },
            "US": {
-            "free": {}
+            "free": true
            },
            "TR": {
-            "free": {}
+            "free": true
            },
            "BR": {
-            "free": {}
+            "free": true
            },
            "MX": {
-            "free": {}
+            "free": true
            },
            "IN": {
-            "free": {}
+            "free": true
            }
           }
          }
