@@ -214,6 +214,9 @@ struct ExamHero: View {
 
     @State private var pulse = false
 
+    /// Au-delà, les leçons de l'examen se résument en « +N » : la carte reste une carte.
+    static let shownLessons = 4
+
     private var days: Int { max(0, exam.daysRemaining()) }
 
     var body: some View {
@@ -271,23 +274,35 @@ struct ExamHero: View {
             }
 
             if !lessons.isEmpty {
-                ScrollView(.horizontal) {
-                    HStack(spacing: 8) {
-                        ForEach(lessons) { course in
-                            HStack(spacing: 6) {
-                                MicaboIconView(icon: course.icon, size: 22)
-                                Text(course.title)
-                                    .font(MicaboFont.ui(13.5, weight: .bold))
-                                    .foregroundStyle(MicaboColor.ink)
-                                    .lineLimit(1)
-                            }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 7)
-                            .background(MicaboColor.surface, in: Capsule())
+                // **Les leçons reviennent à la ligne, elles ne défilent pas.** Dans une bande qui
+                // défilait de côté, un titre long (« La plante, productrice de matière
+                // organique ») sortait de la carte, coupé net, et rien ne disait qu'on pouvait le
+                // faire glisser. Une pastille trop longue prend la ligne entière et passe sur deux
+                // lignes ; au-delà de quatre leçons, un « +N » dit le reste.
+                MicaboFlowLayout(spacing: 8, lineSpacing: 8) {
+                    ForEach(lessons.prefix(Self.shownLessons)) { course in
+                        HStack(spacing: 6) {
+                            MicaboIconView(icon: course.icon, size: 22)
+                            Text(course.title)
+                                .font(MicaboFont.ui(13.5, weight: .bold))
+                                .foregroundStyle(MicaboColor.ink)
+                                .lineLimit(2)
+                                .multilineTextAlignment(.leading)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                    if lessons.count > Self.shownLessons {
+                        Text("+\(lessons.count - Self.shownLessons)")
+                            .font(MicaboFont.ui(13.5, weight: .heavy))
+                            .foregroundStyle(MicaboColor.ink)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 9)
+                            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
                 }
-                .scrollIndicators(.hidden)
             }
 
             Button(action: onMock) {

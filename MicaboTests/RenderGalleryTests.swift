@@ -356,7 +356,10 @@ final class RenderGalleryTests: XCTestCase {
         let course = Course(title: "La guerre froide", subject: "Histoire")
         course.iconID = MicaboIcon.calculator.rawValue
         context.insert(course)
-        let exam = Exam(name: "Bac d'histoire", date: Date().addingTimeInterval(12 * 86_400), courseIDs: [course.id])
+        // Un titre long : il revient à la ligne dans la carte au lieu d'en sortir coupé.
+        let plant = Course(title: "La plante, productrice de matière organique", subject: "SVT")
+        context.insert(plant)
+        let exam = Exam(name: "Bac d'histoire", date: Date().addingTimeInterval(12 * 86_400), courseIDs: [course.id, plant.id])
         let later = Exam(name: "Partiel de bio", date: Date().addingTimeInterval(40 * 86_400), courseIDs: [course.id])
         context.insert(exam)
         context.insert(later)
@@ -370,7 +373,7 @@ final class RenderGalleryTests: XCTestCase {
             "exam-tab", night: true,
             VStack(alignment: .leading, spacing: 18) {
                 MicaboPageHeading(title: "Examen", subtitle: "2 examens à venir")
-                ExamHero(exam: exam, lessons: [course], best: result, onMock: {}, onEdit: {})
+                ExamHero(exam: exam, lessons: [course, plant], best: result, onMock: {}, onEdit: {})
                 ExamRow(exam: later, lessonCount: 1) {}
                 MockResultRow(result: result)
             }

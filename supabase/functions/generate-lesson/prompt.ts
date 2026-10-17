@@ -21,7 +21,7 @@ import { UNTRUSTED_SYSTEM_RULE } from "../_shared/prompt-boundary.ts";
 import { type Depth, depthOf } from "../_shared/learner.ts";
 import { MATERIAL_PLAN_RULES, type Material, materialThemeBrief, type ThemeRole } from "./material.ts";
 
-export const PROMPT_VERSION = "lesson-v4.0.0";
+export const PROMPT_VERSION = "lesson-v4.1.0";
 
 const VOICE =
   `Tu es Mika, le professeur de Micabo, une app de révision pour élèves et étudiants. Tu tutoies. Tu écris des NOTES qui expliquent, pas un cours magistral : phrases courtes (25 mots au plus), un vocabulaire précis, aucune formule creuse (« il est important de noter que », « en conclusion »), aucun tiret cadratin, aucun emoji (sauf, dans des notes, un seul à la fin d'un sous-titre).`;
@@ -99,7 +99,7 @@ Ce fil vaut pour des notes expliquées. Dans une FICHE CONDENSÉE (voir « STYLE
 Les notes, toujours dans cet ordre :
 1. "oneLiner" : l'idée clé du thème en UNE phrase de 25 mots au plus.
 2. "blocks" : le nombre de blocs et la longueur des paragraphes donnés dans « VOLUME ». Leurs FORMES se choisissent d'après le contenu, jamais d'après un gabarit : une méthode s'écrit en étapes, une comparaison en tableau, une chronologie en dates, une notion en définition. Pas le même squelette à chaque thème de la leçon. Les blocs courants :
-   - {"type":"paragraph","text":"…"} : 2 à 4 phrases qui expliquent, une idée par paragraphe ;
+   - {"type":"paragraph","text":"…"} : 3 à 5 phrases qui expliquent, une idée par paragraphe, à la longueur donnée dans « VOLUME » ;
    - {"type":"list","items":["…","…","…"]} : au moins 3 puces, le nombre et la longueur donnés dans « VOLUME ». Une puce qui développe commence par son terme de tête en gras suivi de « : » (« **Taux d'ouverture** : … ») ; pas de sous-puces, une puce par idée ;
    - {"type":"subtitle","text":"…"} : 2 à 6 mots, pour ouvrir une partie quand le thème en a plusieurs. Il peut finir par UN emoji qui résume la partie (« Décrypter le sujet 🔍 », « Les limites ⚠️ ») ; c'est le seul endroit des notes où un emoji est permis.
    Les blocs spéciaux, quand le contenu le demande :
@@ -226,8 +226,9 @@ export function themeBrief(options: {
   }
   lines.push(`\nFORME DE CE THÈME\n${form.join("\n")}`);
   const [low, high] = depth.blocks;
+  const shortest = Math.round(depth.paragraphWords * PARAGRAPH_FLOOR);
   lines.push(
-    `\nVOLUME\nNotes : ${low} à ${high} blocs (sous-titres non compris), des paragraphes de ${depth.paragraphWords} mots au plus, des listes de ${depth.listItems} puces au plus, de ${depth.listItemWords} mots au plus chacune. ${depth.style}`,
+    `\nVOLUME\nNotes : ${low} à ${high} blocs (sous-titres non compris), des paragraphes de ${shortest} à ${depth.paragraphWords} mots, des listes de ${depth.listItems} puces au plus, de ${depth.listItemWords} mots au plus chacune. ${depth.style}`,
   );
   lines.push(`Puis ${options.questions} questions et ${options.flashcards} flashcards.`);
   if (depth.examFormat) {
@@ -418,6 +419,15 @@ export const PLAN_TOKENS = 4_096;
  * Une fiche condensée n'est pas plus longue que les notes expliquées d'avant : moins de blocs,
  * plus denses. 5 120 suffisaient à cinq blocs de 60 mots ; le plafond ne se paie que s'il sert.
  */
+/**
+ * Le plancher d'un paragraphe, en part de son plafond.
+ *
+ * Sans lui, « quatre-vingt-dix mots au plus » donnait des paragraphes de deux phrases : un
+ * écran de notes par bloc, et des écrans presque vides. Les six dixièmes laissent au modèle
+ * la place de faire court quand l'idée l'est, sans qu'un paragraphe tienne en une ligne.
+ */
+export const PARAGRAPH_FLOOR = 0.6;
+
 export const THEME_TOKENS = 8_192;
 export const PRACTICE_TOKENS = 4_096;
 

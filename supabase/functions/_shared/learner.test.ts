@@ -50,13 +50,13 @@ Deno.test("le volume suit la marche", () => {
 Deno.test("la profondeur des notes suit la marche, sous les plafonds du serveur", () => {
   const tiers = ["lowerSecondary", "upperSecondary", "preUniversity", "undergraduate", "graduate", "health", "competitive", "other"] as const;
   assertEquals(depthOf("lowerSecondary").blocks, [4, 6]);
-  assertEquals(depthOf("lowerSecondary").paragraphWords, 70);
+  assertEquals(depthOf("lowerSecondary").paragraphWords, 85);
   assertEquals(depthOf("upperSecondary").blocks, [5, 8]);
-  assertEquals(depthOf("upperSecondary").paragraphWords, 90);
+  assertEquals(depthOf("upperSecondary").paragraphWords, 110);
   // Les niveaux avancés écrivent une fiche : moins de blocs, peu de prose, des puces denses.
   for (const tier of ["preUniversity", "undergraduate", "graduate", "health", "competitive"] as const) {
     assertEquals(depthOf(tier).blocks, [4, 8], tier);
-    assertEquals(depthOf(tier).paragraphWords, 80, tier);
+    assertEquals(depthOf(tier).paragraphWords, 95, tier);
     assertEquals(depthOf(tier).register, "fiche", tier);
     assertEquals([depthOf(tier).listItems, depthOf(tier).listItemWords], [8, 28], tier);
   }
