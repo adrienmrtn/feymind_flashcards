@@ -112,6 +112,9 @@ fun PaywallScreen(reason: String) {
     val selected = plans?.firstOrNull { it.yearly == yearly }
     val yearlyPrice = plans?.firstOrNull { it.yearly }
     val weeklyPrice = plans?.firstOrNull { !it.yearly }
+    // Les jours offerts viennent de Google Play : un essai déjà utilisé n'est plus promis.
+    val yearlyTrial = if (yearlyPrice == null) TRIAL_DAYS else yearlyPrice.trialDays
+    val selectedTrial = if (selected == null) TRIAL_DAYS else selected.trialDays
 
     val headline = when (reason) {
         "free_limit" -> stringResource(R.string.lesson_error_freeLimit)
@@ -158,7 +161,7 @@ fun PaywallScreen(reason: String) {
                 title = stringResource(R.string.ios_planYearly),
                 price = yearlyPrice?.monthly?.let { stringResource(R.string.ios_paywallOnly, it) } ?: yearlyPrice?.price ?: "—",
                 detail = yearlyPrice?.price?.let { stringResource(R.string.ios_paywallBilledPerYear, it) },
-                badge = stringResource(R.string.ios_paywall_badge_free, TRIAL_DAYS.toString()),
+                badge = if (yearlyTrial > 0) stringResource(R.string.ios_paywall_badge_free, yearlyTrial.toString()) else null,
                 selected = yearly,
                 onClick = { haptics.selection(); yearly = true },
             )
@@ -184,7 +187,7 @@ fun PaywallScreen(reason: String) {
             }
             if (available) {
                 MicaboButton(
-                    text = stringResource(R.string.ios_paywallStartTrial, TRIAL_DAYS.toString()),
+                    text = if (selectedTrial > 0) stringResource(R.string.ios_paywallStartTrial, selectedTrial.toString()) else stringResource(R.string.x_paywall_subscribe),
                     loading = busy,
                     onClick = {
                         val plan = selected ?: return@MicaboButton
@@ -205,12 +208,12 @@ fun PaywallScreen(reason: String) {
                 Spacer(Modifier.height(6.dp))
                 Text(
                     selected?.let {
-                        stringResource(
-                            R.string.x_paywall_finePrint,
-                            TRIAL_DAYS.toString(),
-                            it.price,
-                            stringResource(if (it.yearly) R.string.ios_unitYear else R.string.ios_unitWeek),
-                        )
+                        val unit = stringResource(if (it.yearly) R.string.ios_unitYear else R.string.ios_unitWeek)
+                        if (it.trialDays > 0) {
+                            stringResource(R.string.x_paywall_finePrint, it.trialDays.toString(), it.price, unit)
+                        } else {
+                            stringResource(R.string.x_paywall_finePrintNoTrial, it.price, unit)
+                        }
                     } ?: stringResource(R.string.ios_paywallReassurance),
                     style = nunito(12.sp, FontWeight.Medium, lineHeight = 16.sp),
                     color = colors.inkTertiary,

@@ -53,6 +53,8 @@ import com.micabo.app.R
 import com.micabo.app.data.Tiers
 import com.micabo.app.i18n.AppLocale
 import com.micabo.app.ui.LocalApp
+import com.micabo.app.ui.LocalNavigator
+import com.micabo.app.ui.Screen
 import com.micabo.app.ui.components.BackButton
 import com.micabo.app.ui.components.Mika
 import com.micabo.app.ui.components.MikaMood
@@ -162,56 +164,115 @@ fun scoreName(score: Int): String = stringResource(
     },
 )
 
-private const val STEPS = 7
+val GOALS = listOf("exam", "lectures", "competition", "language", "curiosity", "profession", "other")
+
+@Composable
+fun goalName(goal: String): String = stringResource(
+    when (goal) {
+        "exam" -> R.string.ios_goal_exam
+        "lectures" -> R.string.ios_goal_lectures
+        "competition" -> R.string.ios_goal_competition
+        "language" -> R.string.ios_goal_language
+        "curiosity" -> R.string.ios_goal_curiosity
+        "profession" -> R.string.ios_goal_profession
+        else -> R.string.ios_goal_other
+    },
+)
+
+/** Les étapes du parcours d'accueil, dans l'ordre de l'iPhone (`OnboardingStep`). */
+private enum class Step(val asks: Boolean = false) {
+    HOOK,
+    NAME(true),
+    WELCOME,
+    LANGUAGE(true),
+    COUNTRY(true),
+    LEVEL(true),
+    WORRIES(true),
+    PROOF,
+    GOAL(true),
+    CURRENT(true),
+    TARGET(true),
+    DAILY(true),
+    BUILDING,
+    SOURCES,
+    PATHS,
+    TUTOR,
+    SOCIAL,
+    TRIAL,
+    REMINDER,
+}
 
 /**
- * **Le parcours d'accueil**, court : Mika dit bonjour, puis la langue, le pays, la marche
- * d'études, ce qui freine, la moyenne et l'objectif. Tout est facultatif sauf les trois
- * premiers ; c'est ce qui dit au serveur pour qui écrire.
+ * **Le parcours d'accueil** (`OnboardingFlowView`) : l'accroche, le prénom, la langue, le pays,
+ * la marche d'études, ce qui freine, les buts, la moyenne et l'objectif, le temps par jour ;
+ * Mika prépare le plan, montre ce qu'il sait faire, puis l'essai gratuit et le paywall. Ce
+ * qui est répondu dit au serveur pour qui écrire.
  */
 @Composable
 fun OnboardingScreen() {
     val app = LocalApp.current
+    val navigator = LocalNavigator.current
     val context = LocalContext.current
-    var step by rememberSaveable { mutableIntStateOf(0) }
+    var index by rememberSaveable { mutableIntStateOf(0) }
     var forward by remember { mutableStateOf(true) }
+    var name by rememberSaveable { mutableStateOf(app.prefs.profile.value.name) }
     var language by rememberSaveable { mutableStateOf(AppLocale.resolved(app.prefs.profile.value.language).code) }
     var country by rememberSaveable { mutableStateOf(AppLocale.deviceCountry().takeIf { it in COUNTRIES } ?: "") }
     var tier by rememberSaveable { mutableStateOf("") }
     var worries by remember { mutableStateOf(listOf<String>()) }
+    var goals by remember { mutableStateOf(listOf<String>()) }
     var current by rememberSaveable { mutableIntStateOf(-1) }
     var target by rememberSaveable { mutableIntStateOf(-1) }
+    var daily by rememberSaveable { mutableIntStateOf(-1) }
+    val steps = Step.entries
+    val step = steps[index]
+    val asking = steps.filter { it.asks }
 
     fun go(to: Int) {
-        forward = to > step
-        step = to
+        forward = to > index
+        index = to.coerceIn(0, steps.lastIndex)
+    }
+
+    fun next() = go(index + 1)
+
+    /** La langue choisie vaut tout de suite : les écrans suivants la parlent. */
+    fun pickLanguage(code: String) {
+        language = code
+        if (AppLocale.resolved(app.prefs.profile.value.language).code != code) {
+            app.prefs.update { it.copy(language = code) }
+            (context as? Activity)?.recreate()
+        }
     }
 
     fun finish() {
-        val before = app.prefs.profile.value.language
         app.prefs.update {
             it.copy(
                 onboarded = true,
+                name = name.trim(),
                 language = language,
                 country = country.ifEmpty { "other" },
                 tier = tier.ifEmpty { "other" },
                 worries = worries.toSet(),
+                goals = goals.toSet(),
                 currentScore = current.takeIf { score -> score >= 0 },
                 targetScore = target.takeIf { score -> score >= 0 },
+                dailyMinutes = daily.coerceAtLeast(0),
             )
         }
-        // La langue de l'interface change : l'activité se recompose dans la bonne langue.
-        if (before != language && AppLocale.resolved(before).code != language) (context as? Activity)?.recreate()
+        // Le parcours se termine sur le paywall de l'essai ; le refermer ouvre l'accueil.
+        navigator.push(Screen.Paywall("onboarding"))
     }
 
-    BackHandler(enabled = step > 0) { go(step - 1) }
+    BackHandler(enabled = index > 0 && step != Step.BUILDING) { go(index - 1) }
 
     Column(Modifier.fillMaxSize().background(Micabo.colors.canvas).statusBarsPadding().navigationBarsPadding().imePadding()) {
-        if (step > 0) {
+        if (step.asks || (index > 0 && step != Step.BUILDING)) {
             Row(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                BackButton(onClick = { go(step - 1) })
+                BackButton(onClick = { go(index - 1) })
                 Spacer(Modifier.width(14.dp))
-                ProgressBar(step / (STEPS - 1f), Modifier.weight(1f))
+                if (step.asks) {
+                    ProgressBar((asking.indexOf(step) + 1) / asking.size.toFloat(), Modifier.weight(1f))
+                }
             }
         }
         AnimatedContent(
@@ -225,18 +286,20 @@ fun OnboardingScreen() {
             label = "onboarding",
         ) { shown ->
             when (shown) {
-                0 -> Welcome(onNext = { go(1) })
-                1 -> Choices(
+                Step.HOOK -> Hook(onNext = ::next)
+                Step.NAME -> NameStep(name, onName = { name = it.take(40) }, onNext = ::next)
+                Step.WELCOME -> Welcome(name.trim(), onNext = ::next)
+                Step.LANGUAGE -> Choices(
                     title = stringResource(R.string.x_onb_language),
                     subtitle = stringResource(R.string.x_onb_language_sub),
                     options = AppLocale.entries.map { it.code },
                     selected = setOf(language),
                     label = { code -> AppLocale.of(code)?.label.orEmpty() },
-                    onToggle = { language = it },
+                    onToggle = ::pickLanguage,
                     canContinue = true,
-                    onNext = { go(2) },
+                    onNext = ::next,
                 )
-                2 -> Choices(
+                Step.COUNTRY -> Choices(
                     title = stringResource(R.string.ios_countryTitle),
                     subtitle = null,
                     options = COUNTRIES,
@@ -245,9 +308,9 @@ fun OnboardingScreen() {
                     leading = { code -> countryFlag(code) },
                     onToggle = { country = it },
                     canContinue = country.isNotEmpty(),
-                    onNext = { go(3) },
+                    onNext = ::next,
                 )
-                3 -> Choices(
+                Step.LEVEL -> Choices(
                     title = stringResource(R.string.ios_levelTitle),
                     subtitle = null,
                     options = Tiers.all,
@@ -256,9 +319,9 @@ fun OnboardingScreen() {
                     leading = { tierEmoji(it) },
                     onToggle = { tier = it },
                     canContinue = tier.isNotEmpty(),
-                    onNext = { go(4) },
+                    onNext = ::next,
                 )
-                4 -> Choices(
+                Step.WORRIES -> Choices(
                     title = stringResource(R.string.ios_onb_worries_title),
                     subtitle = stringResource(R.string.ios_onb_worries_sub),
                     options = WORRIES,
@@ -267,9 +330,21 @@ fun OnboardingScreen() {
                     multiple = true,
                     onToggle = { worry -> worries = if (worry in worries) worries - worry else worries + worry },
                     canContinue = true,
-                    onNext = { go(5) },
+                    onNext = ::next,
                 )
-                5 -> Choices(
+                Step.PROOF -> Proof(worries.firstOrNull(), onNext = ::next)
+                Step.GOAL -> Choices(
+                    title = stringResource(R.string.ios_goalTitle),
+                    subtitle = stringResource(R.string.ios_goalSub),
+                    options = GOALS,
+                    selected = goals.toSet(),
+                    label = { goalName(it) },
+                    multiple = true,
+                    onToggle = { goal -> goals = if (goal in goals) goals - goal else goals + goal },
+                    canContinue = true,
+                    onNext = ::next,
+                )
+                Step.CURRENT -> Choices(
                     title = stringResource(R.string.ios_averageTitle),
                     subtitle = stringResource(R.string.ios_averageLead),
                     options = SCORE_STEPS.map { it.toString() },
@@ -277,51 +352,33 @@ fun OnboardingScreen() {
                     label = { scoreName(it.toInt()) },
                     onToggle = { current = it.toInt() },
                     canContinue = true,
-                    onNext = { go(6) },
+                    onNext = ::next,
                 )
-                else -> Choices(
+                Step.TARGET -> Choices(
                     title = stringResource(R.string.ios_targetTitle),
                     subtitle = stringResource(R.string.ios_targetLead),
-                    options = SCORE_STEPS.map { it.toString() },
+                    options = SCORE_STEPS.filter { current < 0 || it >= current }.map { it.toString() },
                     selected = setOfNotNull(target.takeIf { it >= 0 }?.toString()),
                     label = { scoreName(it.toInt()) },
                     onToggle = { target = it.toInt() },
                     canContinue = true,
-                    onNext = { finish() },
-                    cta = stringResource(R.string.x_onb_start),
+                    onNext = ::next,
                 )
+                Step.DAILY -> DailyTime(daily, onPick = { daily = it }, onNext = ::next)
+                Step.BUILDING -> Building(onDone = ::next)
+                Step.SOURCES -> MikaSources(onNext = ::next)
+                Step.PATHS -> MikaPaths(onNext = ::next)
+                Step.TUTOR -> MikaTutor(onNext = ::next)
+                Step.SOCIAL -> SocialProof(onNext = ::next)
+                Step.TRIAL -> TrialOffer(onNext = ::next)
+                Step.REMINDER -> TrialReminderStep(onNext = ::finish)
             }
         }
     }
 }
 
 @Composable
-private fun Welcome(onNext: () -> Unit) {
-    val colors = Micabo.colors
-    Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Spacer(Modifier.weight(1f))
-        Mika(MikaMood.WAVE, 190.dp)
-        Spacer(Modifier.height(24.dp))
-        Text(
-            stringResource(R.string.ios_welcomeTitle),
-            style = nunito(34.sp, FontWeight.Black, lineHeight = 38.sp),
-            color = colors.ink,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(14.dp))
-        RichText(
-            stringResource(R.string.ios_onb_mika_mission),
-            style = nunito(17.sp, FontWeight.SemiBold, lineHeight = 24.sp),
-            color = colors.inkSecondary,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.weight(1.2f))
-        MicaboButton(stringResource(R.string.common_continue), onClick = onNext)
-    }
-}
-
-@Composable
-private fun Choices(
+internal fun Choices(
     title: String,
     subtitle: String?,
     options: List<String>,

@@ -4,6 +4,8 @@
     <!-- Le réseau : RevenueCat, Supabase. La permission BILLING (Google Play Billing) est
          ajoutée par le SDK RevenueCat, à la fusion des manifestes. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Le rappel avant la fin de l'essai gratuit (Android 13 et plus le demande). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".MicaboApplication"
@@ -28,5 +30,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <receiver
+            android:name=".data.TrialReminderReceiver"
+            android:exported="false" />
     </application>
 </manifest>

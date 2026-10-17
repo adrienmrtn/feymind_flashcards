@@ -22,6 +22,10 @@ data class Profile(
     /** La moyenne d'aujourd'hui et l'objectif, de 0 à 100 (`learner.ts`). */
     val currentScore: Int? = null,
     val targetScore: Int? = null,
+    /** Ce que l'élève vient chercher (`ios.goal.*`). */
+    val goals: Set<String> = emptySet(),
+    /** Les minutes par jour qu'il est prêt à donner. */
+    val dailyMinutes: Int = 0,
     /** system, light ou dark : l'apparence, propre à ce téléphone. */
     val theme: String = "system",
 )
@@ -42,6 +46,8 @@ class Prefs(context: Context) {
         worries = prefs.getStringSet("worries", emptySet()).orEmpty().toSet(),
         currentScore = prefs.getInt("currentScore", -1).takeIf { it >= 0 },
         targetScore = prefs.getInt("targetScore", -1).takeIf { it >= 0 },
+        goals = prefs.getStringSet("goals", emptySet()).orEmpty().toSet(),
+        dailyMinutes = prefs.getInt("dailyMinutes", 0),
         theme = prefs.getString("theme", "system").orEmpty().ifEmpty { "system" },
     )
 
@@ -57,6 +63,8 @@ class Prefs(context: Context) {
             putStringSet("worries", next.worries)
             putInt("currentScore", next.currentScore ?: -1)
             putInt("targetScore", next.targetScore ?: -1)
+            putStringSet("goals", next.goals)
+            putInt("dailyMinutes", next.dailyMinutes)
             putString("theme", next.theme)
         }
         _profile.value = next

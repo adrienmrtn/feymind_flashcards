@@ -167,6 +167,22 @@ CUSTOM: dict[str, dict[str, str]] = {
         "ptBR": "{n} dias grátis, depois {price} por {unit}. Renova automaticamente, cancele quando quiser no Google Play.",
         "tr": "{n} gün ücretsiz, ardından {unit} başına {price}. Otomatik yenilenir, Google Play'den istediğin zaman iptal et.",
     },
+    "x_paywall_finePrintNoTrial": {
+        "en": "{price} per {unit}. Renews automatically, cancel anytime in Google Play.",
+        "fr": "{price} par {unit}. Renouvellement automatique, résiliable à tout moment dans Google Play.",
+        "de": "{price} pro {unit}. Verlängert sich automatisch, jederzeit in Google Play kündbar.",
+        "es": "{price} por {unit}. Se renueva automáticamente, cancela cuando quieras en Google Play.",
+        "es419": "{price} por {unit}. Se renueva automáticamente, cancela cuando quieras en Google Play.",
+        "it": "{price} a {unit}. Rinnovo automatico, disdici quando vuoi su Google Play.",
+        "pt": "{price} por {unit}. Renova automaticamente, cancela quando quiseres no Google Play.",
+        "ptBR": "{price} por {unit}. Renova automaticamente, cancele quando quiser no Google Play.",
+        "tr": "{unit} başına {price}. Otomatik yenilenir, Google Play'den istediğin zaman iptal et.",
+    },
+    "x_paywall_subscribe": {
+        "en": "Go Pro", "fr": "Passer à Pro", "de": "Pro holen", "es": "Hazte Pro", "es419": "Hazte Pro",
+        "it": "Passa a Pro", "pt": "Passar a Pro", "ptBR": "Assinar o Pro", "tr": "Pro'ya geç",
+        "nl": "Word Pro", "pl": "Przejdź na Pro", "ru": "Перейти на Pro", "ar": "اشترك في Pro",
+    },
     "x_settings_level": {
         "en": "Level", "fr": "Niveau", "de": "Stufe", "es": "Nivel", "es419": "Nivel", "it": "Livello",
         "pt": "Nível", "ptBR": "Nível", "tr": "Seviye", "nl": "Niveau", "pl": "Poziom",

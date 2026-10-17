@@ -28,7 +28,21 @@ data class StorePlan(
     val pkg: Package?,
     /** Le prix par mois d'un abonnement annuel, dans la devise de la boutique. */
     val monthly: String? = null,
+    /** Les jours offerts par la boutique, 0 sans essai (ou s'il a déjà servi). */
+    val trialDays: Int = 0,
 )
+
+/** Les jours d'essai gratuit d'une offre, d'après Google Play. */
+private fun trialDaysOf(pkg: Package): Int = runCatching {
+    val period = pkg.product.defaultOption?.freePhase?.billingPeriod ?: return@runCatching 0
+    when (period.unit) {
+        com.revenuecat.purchases.models.Period.Unit.DAY -> period.value
+        com.revenuecat.purchases.models.Period.Unit.WEEK -> period.value * 7
+        com.revenuecat.purchases.models.Period.Unit.MONTH -> period.value * 30
+        com.revenuecat.purchases.models.Period.Unit.YEAR -> period.value * 365
+        else -> 0
+    }
+}.getOrDefault(0)
 
 private fun monthlyOf(pkg: Package): String? = runCatching {
     val price = pkg.product.price
@@ -87,8 +101,8 @@ class Billing(private val context: Context) {
                     val weekly = packages.firstOrNull { it.packageType == PackageType.WEEKLY }
                         ?: packages.firstOrNull { it.product.id.contains("weekly") }
                     val out = listOfNotNull(
-                        yearly?.let { StorePlan(true, it.product.price.formatted, it, monthlyOf(it)) },
-                        weekly?.let { StorePlan(false, it.product.price.formatted, it) },
+                        yearly?.let { StorePlan(true, it.product.price.formatted, it, monthlyOf(it), trialDaysOf(it)) },
+                        weekly?.let { StorePlan(false, it.product.price.formatted, it, trialDays = trialDaysOf(it)) },
                     )
                     if (continuation.isActive) continuation.resume(out)
                 },
@@ -109,6 +123,8 @@ class Billing(private val context: Context) {
                 },
                 onSuccess = { _, info ->
                     read(info)
+                    // Un essai commence : le rappel de la veille de la fin, comme promis.
+                    if (plan.trialDays > 0) TrialReminder.schedule(context, plan.trialDays)
                     if (continuation.isActive) continuation.resume(PurchaseOutcome.Success)
                 },
             )
