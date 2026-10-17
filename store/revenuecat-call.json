@@ -20,7 +20,7 @@
           "currency": "USD"
          }
         },
-        "equalize_missing_subscription_prices": true
+        "equalize_missing_subscription_prices": {}
        },
        "localizations": {
         "fr-FR": {
@@ -59,7 +59,7 @@
           "currency": "USD"
          }
         },
-        "equalize_missing_subscription_prices": true
+        "equalize_missing_subscription_prices": {}
        },
        "localizations": {
         "fr-FR": {
