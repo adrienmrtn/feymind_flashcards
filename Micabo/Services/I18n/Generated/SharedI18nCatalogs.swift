@@ -8411,7 +8411,7 @@ enum SharedI18nCatalogs {
         "app.plan.sheet.applyHint": "Plan kalan günler üzerinden yeniden hesaplanır.",
         "app.plan.sheet.back": "Plana dön",
         "app.plan.calibration.title": "Planın senin hakkında öğrendikleri",
-        "app.plan.calibration.slower": "Dakikada {rate} kart yapıyorsun, varsayılan tahminden % {percent} daha az. Plan artık senin sayınla hesaplıyor.",
+        "app.plan.calibration.slower": "Dakikada {rate} kart yapıyorsun, varsayılan tahminden %{percent} daha az. Plan artık senin sayınla hesaplıyor.",
         "app.plan.calibration.faster": "Dakikada {rate} kart yapıyorsun, varsayılan tahminden % {percent} daha fazla. Plan artık senin sayınla hesaplıyor.",
         "app.agenda.examDay": "Sınav günü",
         "app.agenda.cards": "{count} kart",

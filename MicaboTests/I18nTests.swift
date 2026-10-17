@@ -327,7 +327,7 @@ final class I18nTests: XCTestCase {
         XCTAssertEqual(DiscountHeadline.split(percent: 30, locale: .en).rate, "30\u{00a0}%")
         XCTAssertEqual(DiscountHeadline.split(percent: 30, locale: .en).rest, " off")
         XCTAssertEqual(DiscountHeadline.split(percent: 30, locale: .tr).rate, "%30")
-        XCTAssertEqual(DiscountHeadline.split(percent: 30, locale: .tr).rest, " daha az")
+        XCTAssertEqual(DiscountHeadline.split(percent: 30, locale: .tr).rest, " indirim")
     }
 
     func testUiLocaleStorePersists() {

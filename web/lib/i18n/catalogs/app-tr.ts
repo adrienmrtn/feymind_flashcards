@@ -418,7 +418,7 @@ export const appTr = {
     },
     calibration: {
       title: "Planın senin hakkında öğrendikleri",
-      slower: "Dakikada {rate} kart yapıyorsun, varsayılan tahminden % {percent} daha az. Plan artık senin sayınla hesaplıyor.",
+      slower: "Dakikada {rate} kart yapıyorsun, varsayılan tahminden %{percent} daha az. Plan artık senin sayınla hesaplıyor.",
       faster: "Dakikada {rate} kart yapıyorsun, varsayılan tahminden % {percent} daha fazla. Plan artık senin sayınla hesaplıyor.",
     },
   },
