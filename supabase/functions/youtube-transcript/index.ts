@@ -1,4 +1,4 @@
-import { authorize, withCors } from "../_shared/caller.ts";
+import { authorize, CallerError, consumeQuota, withCors } from "../_shared/caller.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import {
   extractVideoId,
@@ -6,7 +6,12 @@ import {
   YOUTUBE_LIMITS,
   YouTubeError,
 } from "../_shared/youtube.ts";
-import { canReadVideo, readTranscript } from "../_shared/youtube-video.ts";
+import {
+  canReadVideo,
+  readTranscript,
+  VIDEO_FREE_CEILING,
+  VIDEO_PRO_CEILING,
+} from "../_shared/youtube-video.ts";
 
 interface RequestBody {
   url?: string;
@@ -34,15 +39,16 @@ interface RequestBody {
  * ont toutes été refusées en 422 alors que les 9 aperçus passaient. `youtube-video.ts`
  * documente la mesure et le chemin qui reste ouvert — Gemini lit la vidéo chez Google.
  * Les sous-titres restent essayés d'abord : quand ils répondent, ils sont exacts et gratuits.
+ * La lecture par Gemini, elle, est décomptée (`VIDEO_FREE_CEILING`, `VIDEO_PRO_CEILING`) :
+ * c'est l'appel le plus cher de Micabo.
  */
 Deno.serve((request: Request) =>
   withCors(request, async () => {
     try {
-      // Cette fonction n'appelle aucun modèle, mais elle va chercher n'importe quelle URL :
-      // laissée ouverte, c'est un relais anonyme. Elle passe donc le même contrôle, sans quota.
-      // Pas de quota modèle : cette fonction ne parle pas à fal.ai. Le contrôle
-      // d'identité reste, pour que ça ne serve pas de relais anonyme.
-      await authorize(request, "youtube-transcript", { meter: false });
+      // Cette fonction va chercher n'importe quelle URL : laissée ouverte, c'est un relais
+      // anonyme. Elle passe donc le même contrôle d'identité. L'aperçu et les sous-titres ne
+      // coûtent rien et ne décomptent rien ; seule la lecture par Gemini décompte, plus bas.
+      const caller = await authorize(request, "youtube-transcript", { meter: false });
       const body = (await request.json()) as RequestBody;
 
       const videoId = extractVideoId(body.url);
@@ -81,7 +87,12 @@ Deno.serve((request: Request) =>
         return json({ video });
       }
 
-      const transcript = await readTranscript(videoId, metadata.captions, languages);
+      const transcript = await readTranscript(
+        videoId,
+        metadata.captions,
+        languages,
+        () => consumeQuota(caller, "youtube-video", 1, VIDEO_FREE_CEILING, VIDEO_PRO_CEILING),
+      );
       const text = stripEmDashes(transcript.text).slice(0, YOUTUBE_LIMITS.maxTranscriptCharacters);
 
       return json({
@@ -95,6 +106,10 @@ Deno.serve((request: Request) =>
         },
       });
     } catch (error) {
+      // Le plafond des lectures de vidéo : un refus attendu, avec sa phrase, pas une panne.
+      if (error instanceof CallerError && error.status === 429) {
+        return json({ error: error.message, code: "quota" }, 429);
+      }
       if (error instanceof YouTubeError) {
         // Un refus sans trace ne se corrige pas : les 19 refus du 8 septembre
         // n'ont laissé dans les journaux que leur statut, et il a fallu rejouer

@@ -58,6 +58,7 @@ import {
   LessonGateError,
   normalizeSource,
 } from "./gate.ts";
+import { excerptForTheme, GAP as EXCERPT_GAP } from "./excerpt.ts";
 
 interface RequestBody {
   stage?: string;
@@ -272,10 +273,21 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
   const sections = audienceSections(body, context || lessonTitle);
   sections.push(themeBrief({ lessonTitle, themeTitle: themes[index]!, themeIndex: index, themes }));
   if (context) {
-    sections.push(
-      "Appuie-toi sur les supports de l'élève ci-dessous : ce qu'ils disent passe avant ce que tu sais. Ne recopie pas, réécris en notes.",
-    );
-    sections.push(wrapUntrusted("SUPPORTS DE L'ÉLÈVE", context));
+    // Le passage du thème, pas tout le document : voir `excerpt.ts`.
+    const excerpt = excerptForTheme(context, themes, index);
+    if (excerpt.length < context.length) {
+      console.log(JSON.stringify({
+        extrait: { theme: index, avant: context.length, apres: excerpt.length },
+      }));
+      sections.push(
+        `Les supports ci-dessous sont des EXTRAITS du document de l'élève, choisis pour ce thème ; ${EXCERPT_GAP} marque un passage retiré. Appuie-toi sur eux : ce qu'ils disent passe avant ce que tu sais. Ne recopie pas, réécris en notes.`,
+      );
+    } else {
+      sections.push(
+        "Appuie-toi sur les supports de l'élève ci-dessous : ce qu'ils disent passe avant ce que tu sais. Ne recopie pas, réécris en notes.",
+      );
+    }
+    sections.push(wrapUntrusted("SUPPORTS DE L'ÉLÈVE", excerpt));
   } else {
     sections.push("Il n'y a pas de document : écris depuis ce que tu sais, au niveau de l'élève, sans rien inventer de douteux.");
   }
