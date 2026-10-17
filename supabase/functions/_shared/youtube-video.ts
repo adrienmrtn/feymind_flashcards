@@ -41,6 +41,7 @@
  */
 
 import { readGeminiKey, upstreamReason } from "./gemini.ts";
+import { noteUsage, readUsage } from "./usage.ts";
 import {
   type CaptionTrack,
   fetchBestTranscript,
@@ -78,6 +79,22 @@ const VIDEO_BUDGET_MS = 240_000;
 /** En deçà, l'essai n'a pas le temps d'aboutir : autant rendre le refus tout de suite. */
 const MINIMUM_ATTEMPT_MS = 25_000;
 
+/**
+ * Les lectures de vidéo par Gemini, par utilisateur et par jour.
+ *
+ * C'est l'appel le plus cher de Micabo : une vidéo se facture image par image et seconde de
+ * son par seconde de son, et une heure et demie de cours en fait plus de cent mille jetons,
+ * soit deux à dix fois une leçon entière écrite par fal. Il était pourtant le seul à ne rien
+ * décompter. Les sous-titres, eux, ne coûtent rien et ne sont pas comptés.
+ *
+ * Deux pour un compte gratuit : l'import est Pro, sauf la leçon du parcours d'accueil, qui
+ * peut venir d'une vidéo, et un second essai ne doit pas tomber sur un refus. Dix pour un
+ * abonné : bien au-delà d'une journée de révision, assez bas pour qu'une boucle s'arrête
+ * avant d'avoir coûté quelque chose.
+ */
+export const VIDEO_FREE_CEILING = 2;
+export const VIDEO_PRO_CEILING = 10;
+
 const PROMPT = [
   "Écris le compte rendu complet de cette vidéo, dans la langue parlée dans la vidéo.",
   "",
@@ -114,11 +131,16 @@ export function canReadVideo(): boolean {
  * reconnaissance de YouTube, elle est exacte, et elle ne coûte rien. La lecture par Gemini
  * coûte des jetons vidéo et reformule. On ne la demande donc qu'après un refus — et le refus
  * est tracé, parce que c'est lui qui dira si YouTube rouvre un jour.
+ *
+ * `beforeReading` passe juste avant la lecture par le modèle, et seulement alors : c'est là
+ * que l'appelant décompte, pour que des sous-titres trouvés ne coûtent aucune unité de quota.
+ * S'il lève, la vidéo n'est pas lue.
  */
 export async function readTranscript(
   videoId: string,
   captions: CaptionTrack[],
   languages: string[],
+  beforeReading?: () => Promise<void>,
 ): Promise<Transcript & { source: TranscriptSource }> {
   if (captions.length > 0) {
     try {
@@ -138,6 +160,8 @@ export async function readTranscript(
     console.warn(JSON.stringify({ youtube: "aucune_piste", pistes: 0 }));
   }
 
+  // Sans clé, `readVideoWithGemini` refuse sans rien appeler : rien à décompter.
+  if (canReadVideo()) await beforeReading?.();
   const reading = await readVideoWithGemini(videoId);
   return {
     text: reading.text,
@@ -206,6 +230,7 @@ export async function readVideoWithGemini(videoId: string): Promise<VideoReading
     }
 
     const raw = await response.text();
+    if (response.ok) noteVideoUsage(raw, model);
     if (!response.ok) {
       lastReason = `${response.status} ${upstreamReason(raw)}`;
       console.error(JSON.stringify({
@@ -238,6 +263,26 @@ export async function readVideoWithGemini(videoId: string): Promise<VideoReading
     422,
     { reason: lastReason.slice(0, 120) },
   );
+}
+
+/**
+ * Ce que la lecture a coûté, dans les journaux comme tout autre appel au modèle.
+ *
+ * C'était le seul appel dont on ne savait rien, et c'est le plus cher. L'API native nomme le
+ * modèle servi `modelVersion` et non `model` : c'est lui qui dit sur quelle génération
+ * l'alias `-latest` a atterri, donc à quel tarif.
+ */
+function noteVideoUsage(raw: string, model: string): void {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return;
+  }
+  const usage = readUsage(parsed, "gemini", model);
+  const served = asRecord(parsed)?.modelVersion;
+  if (!usage.served && typeof served === "string") usage.served = served;
+  noteUsage(usage);
 }
 
 /** Le texte des `parts` de la première réponse, recollé et débarrassé de son préambule. */
