@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <plurals name="app_friends_friendCount">
+        <item quantity="one">صديق واحد</item>
+        <item quantity="other">عدد الأصدقاء: %1$d</item>
+    </plurals>
+    <plurals name="copy_cards">
+        <item quantity="one">بطاقة واحدة</item>
+        <item quantity="other">عدد البطاقات: %1$d</item>
+    </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">يوم واحد متتالٍ</item>
         <item quantity="other">أيام متتالية: %1$d</item>

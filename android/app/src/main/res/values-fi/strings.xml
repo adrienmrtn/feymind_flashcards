@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_common_add">Lisää</string>
+    <string name="app_common_cancel">Peru</string>
+    <string name="app_common_save">Tallenna</string>
     <string name="app_exams_countdown_today">tänään</string>
+    <string name="app_friends_accept">Hyväksy</string>
+    <string name="app_friends_addSomeone">Lisää kaveri</string>
+    <string name="app_friends_decline">Hylkää</string>
+    <string name="app_friends_emptyBody">Hae käyttäjänimellä lisätäksesi kaverin.</string>
+    <string name="app_friends_emptyTitle">Ei vielä ketään</string>
+    <string name="app_friends_findClassmates">Löydä luokkakavereidesi kurssit</string>
+    <string name="app_friends_incoming">Saapuneet pyynnöt</string>
+    <string name="app_friends_list">Kaverisi</string>
+    <string name="app_friends_loadingCourses">Katsotaan kursseja…</string>
+    <string name="app_friends_needAccount">Tarvitset tilin kavereiden lisäämiseen</string>
+    <string name="app_friends_noShared">Käyttäjällä %1$s ei ole jaettuja kursseja.</string>
+    <string name="app_friends_nothingToSee">Ei vielä mitään nähtävää</string>
+    <string name="app_friends_outgoing">Lähetetyt pyynnöt</string>
+    <string name="app_friends_removeFriend">Poista kavereista</string>
+    <string name="app_friends_results">Tulokset</string>
+    <string name="app_friends_seeCourses">Näytä kurssit</string>
+    <string name="app_friends_theirCourses">Kurssit</string>
+    <string name="app_friends_usernamePlaceholder">käyttäjänimi</string>
+    <string name="app_friends_you">Sinä</string>
+    <string name="app_friends_yourAccount">Tilisi</string>
     <string name="common_continue">Jatka</string>
     <string name="common_privacy">Tietosuoja</string>
     <string name="common_signOut">Kirjaudu ulos</string>
@@ -34,6 +57,7 @@
     <string name="ios_auth_sessionExpired">Istuntosi on vanhentunut. Kirjaudu uudelleen.</string>
     <string name="ios_averageTitle">Mikä on keskiarvosi\ntällä hetkellä?</string>
     <string name="ios_backup">Varmuuskopio</string>
+    <string name="ios_cardsSection">Kortit · %1$s</string>
     <string name="ios_connected">Kirjautunut</string>
     <string name="ios_country">Maa</string>
     <string name="ios_countryTitle">Missä opiskelet?</string>
@@ -45,6 +69,8 @@
     <string name="ios_docx_corrupt">Word-asiakirja on vajaa tai vioittunut.</string>
     <string name="ios_docx_empty">Asiakirjasta ei löytynyt tekstiä.</string>
     <string name="ios_docx_notDocx">Tiedosto ei ole Word-asiakirja (.docx).</string>
+    <string name="ios_friend">Kaveri</string>
+    <string name="ios_friends_requestExists">Pyyntö on jo olemassa.</string>
     <string name="ios_goalSub">Valitse niin monta kuin haluat.</string>
     <string name="ios_goalTitle">Mitkä ovat tavoitteesi?</string>
     <string name="ios_goal_competition">Valmistautua pääsykokeeseen</string>
@@ -154,6 +180,8 @@
     <string name="ios_quiz_time_caption_15">Tosissaan</string>
     <string name="ios_quiz_time_caption_30">Hullua</string>
     <string name="ios_quiz_time_caption_5">Hyvä alku</string>
+    <string name="ios_sharedCourse">Jaettu kurssi</string>
+    <string name="ios_sharedNoSheet">Tällä kurssilla ei ole tiivistelmää</string>
     <string name="ios_signOutMsg">Kurssisi säilyvät laitteella ja tililläsi. Löydät ne, kun kirjaudut seuraavan kerran.</string>
     <string name="ios_signOutQ">Kirjaudutaanko ulos?</string>
     <string name="ios_streak_bestLabel">Paras putkesi</string>
@@ -182,6 +210,14 @@
     <string name="ios_trialTodayDetail">Rajattomasti kursseja, luotuja kortteja ja kertausta: kaikki on auki.</string>
     <string name="ios_unitWeek">viikko</string>
     <string name="ios_unitYear">vuosi</string>
+    <string name="ios_usernameLabel">Käyttäjänimi</string>
+    <string name="ios_usernamePlaceholder">käyttäjänimi</string>
+    <string name="ios_usernameRules">Kolmesta kahteenkymmeneen merkkiä, alkaen kirjaimella tai numerolla.</string>
+    <string name="ios_usernameSavedAs">Tallennetaan muodossa %1$s.</string>
+    <string name="ios_username_empty">Valitse käyttäjänimi.</string>
+    <string name="ios_username_taken">%1$s on jo varattu.</string>
+    <string name="ios_username_tooLong">Enintään kaksikymmentä merkkiä.</string>
+    <string name="ios_username_tooShort">Vähintään kolme merkkiä.</string>
     <string name="ios_yt_invalidLink">Linkki ei ole YouTube-video.</string>
     <string name="ios_yt_noCaptions">Micabo ei pystynyt lukemaan videota. Yritä uudelleen tai liitä kurssin teksti.</string>
     <string name="ios_yt_tooShort">Video on liian lyhyt korttien luomiseen.</string>
@@ -417,6 +453,7 @@
     <string name="lesson_theme_day">Vaalea</string>
     <string name="lesson_theme_night">Tumma</string>
     <string name="lesson_theme_system">Kuten puhelin</string>
+    <string name="nav_friends">Kaverit</string>
     <string name="onboarding_compteTitle">Säilytä edistymisesi</string>
     <string name="onboarding_continueGoogle">Jatka Googlella</string>
     <string name="onboarding_emailLabel">Sähköpostiosoitteesi</string>

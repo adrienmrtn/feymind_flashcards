@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_common_add">إضافة</string>
+    <string name="app_common_cancel">إلغاء</string>
+    <string name="app_common_save">حفظ</string>
     <string name="app_exams_countdown_today">اليوم</string>
+    <string name="app_friends_accept">قبول</string>
+    <string name="app_friends_addSomeone">أضف شخصًا</string>
+    <string name="app_friends_decline">رفض</string>
+    <string name="app_friends_emptyBody">ابحث عن اسم مستخدم لإضافة شخص.</string>
+    <string name="app_friends_emptyTitle">لا أحد بعد</string>
+    <string name="app_friends_findClassmates">اعثر على دروس زملائك</string>
+    <string name="app_friends_incoming">الطلبات الواردة</string>
+    <string name="app_friends_list">أصدقاؤك</string>
+    <string name="app_friends_loadingCourses">نلقي نظرة على دروسه…</string>
+    <string name="app_friends_needAccount">تحتاج إلى حساب لإضافة شخص</string>
+    <string name="app_friends_noShared">لا توجد دروس مشتركة لدى %1$s.</string>
+    <string name="app_friends_nothingToSee">لا شيء لعرضه حاليًا</string>
+    <string name="app_friends_outgoing">الطلبات المُرسلة</string>
+    <string name="app_friends_removeFriend">إزالة من أصدقائي</string>
+    <string name="app_friends_results">النتائج</string>
+    <string name="app_friends_seeCourses">عرض دروسه</string>
+    <string name="app_friends_theirCourses">دروسه</string>
+    <string name="app_friends_usernamePlaceholder">اسم المستخدم</string>
+    <string name="app_friends_you">أنت</string>
+    <string name="app_friends_yourAccount">حسابك</string>
     <string name="common_continue">متابعة</string>
     <string name="common_privacy">الخصوصية</string>
     <string name="common_signOut">تسجيل الخروج</string>
@@ -38,6 +61,7 @@
     <string name="ios_auth_sessionExpired">انتهت جلستك. سجّل الدخول مرة أخرى.</string>
     <string name="ios_averageTitle">ما معدّلك\nحاليًا؟</string>
     <string name="ios_backup">النسخ الاحتياطي</string>
+    <string name="ios_cardsSection">البطاقات · %1$s</string>
     <string name="ios_connected">مسجّل الدخول</string>
     <string name="ios_country">الدولة</string>
     <string name="ios_countryTitle">أين تدرس؟</string>
@@ -49,6 +73,8 @@
     <string name="ios_docx_corrupt">مستند Word غير مكتمل أو تالف.</string>
     <string name="ios_docx_empty">لم يُعثر على أي نص في هذا المستند.</string>
     <string name="ios_docx_notDocx">هذا الملف ليس مستند Word ‏(.docx).</string>
+    <string name="ios_friend">صديق</string>
+    <string name="ios_friends_requestExists">هذا الطلب موجود بالفعل.</string>
     <string name="ios_goalSub">اختر ما تشاء.</string>
     <string name="ios_goalTitle">ما أهدافك؟</string>
     <string name="ios_goal_competition">الاستعداد لامتحان تنافسي</string>
@@ -160,6 +186,8 @@
     <string name="ios_quiz_time_caption_15">جدّي</string>
     <string name="ios_quiz_time_caption_30">رهيب</string>
     <string name="ios_quiz_time_caption_5">بداية جيدة</string>
+    <string name="ios_sharedCourse">درس مشترك</string>
+    <string name="ios_sharedNoSheet">هذا الدرس بلا ملخص</string>
     <string name="ios_signOutMsg">تبقى دروسك على هذا الجهاز وفي حسابك. ستجدها عند تسجيل الدخول المرة القادمة.</string>
     <string name="ios_signOutQ">تسجيل الخروج؟</string>
     <string name="ios_streak_bestLabel">رقمك القياسي</string>
@@ -188,6 +216,14 @@
     <string name="ios_trialTodayDetail">دروس غير محدودة، بطاقات مُنشأة، مراجعات: كل شيء متاح.</string>
     <string name="ios_unitWeek">أسبوع</string>
     <string name="ios_unitYear">سنة</string>
+    <string name="ios_usernameLabel">اسم المستخدم</string>
+    <string name="ios_usernamePlaceholder">اسم المستخدم</string>
+    <string name="ios_usernameRules">من ثلاثة إلى عشرين حرفًا، تبدأ بحرف أو رقم.</string>
+    <string name="ios_usernameSavedAs">سيُحفظ باسم %1$s.</string>
+    <string name="ios_username_empty">اختر اسم مستخدم.</string>
+    <string name="ios_username_taken">%1$s مستخدم بالفعل.</string>
+    <string name="ios_username_tooLong">عشرون حرفًا كحد أقصى.</string>
+    <string name="ios_username_tooShort">ثلاثة أحرف على الأقل.</string>
     <string name="ios_yt_invalidLink">هذا الرابط ليس فيديو YouTube.</string>
     <string name="ios_yt_noCaptions">لم يتمكن Micabo من قراءة هذا الفيديو. حاول مجددًا، أو الصق نص الدرس.</string>
     <string name="ios_yt_tooShort">هذا الفيديو قصير جدًا لإنشاء بطاقات.</string>
@@ -426,6 +462,7 @@
     <string name="lesson_theme_day">فاتح</string>
     <string name="lesson_theme_night">داكن</string>
     <string name="lesson_theme_system">مثل الهاتف</string>
+    <string name="nav_friends">الأصدقاء</string>
     <string name="onboarding_compteTitle">احتفظ بتقدّمك</string>
     <string name="onboarding_continueGoogle">المتابعة باستخدام Google</string>
     <string name="onboarding_emailLabel">بريدك الإلكتروني</string>
@@ -434,6 +471,8 @@
     <string name="onboarding_sendLink">احصل على رابط</string>
     <string name="x_account_deleteMsg">ستُحذف دوراتك وبطاقاتك وسجلك في كل مكان. يُدار الاشتراك من Google Play.</string>
     <string name="x_auth_rateLimited">محاولات كثيرة جدًا. انتظر دقيقة ثم حاول مجددًا.</string>
+    <string name="x_error_generic">حدث خطأ ما. حاول مجددًا.</string>
+    <string name="x_friends_adopt">اجعله درسي</string>
     <string name="x_onb_language">بأي لغة تدرس؟</string>
     <string name="x_paywall_subscribe">اشترك في Pro</string>
     <string name="x_record_limit">حتى 90 دقيقة. يحوّل ميكا تسجيلك إلى نص ثم يكتب درسك.</string>

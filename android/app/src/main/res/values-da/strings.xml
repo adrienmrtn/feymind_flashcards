@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_common_add">Tilføj</string>
+    <string name="app_common_cancel">Annuller</string>
+    <string name="app_common_save">Gem</string>
     <string name="app_exams_countdown_today">i dag</string>
+    <string name="app_friends_accept">Acceptér</string>
+    <string name="app_friends_addSomeone">Tilføj nogen</string>
+    <string name="app_friends_decline">Afvis</string>
+    <string name="app_friends_emptyBody">Søg efter et brugernavn for at tilføje nogen.</string>
+    <string name="app_friends_emptyTitle">Ingen endnu</string>
+    <string name="app_friends_findClassmates">Find dine klassekammeraters kurser</string>
+    <string name="app_friends_incoming">Indgående anmodninger</string>
+    <string name="app_friends_list">Dine venner</string>
+    <string name="app_friends_loadingCourses">Kigger på deres kurser…</string>
+    <string name="app_friends_needAccount">Du skal have en konto for at tilføje nogen</string>
+    <string name="app_friends_noShared">%1$s har intet delt kursus.</string>
+    <string name="app_friends_nothingToSee">Intet at se lige nu</string>
+    <string name="app_friends_outgoing">Udgående anmodninger</string>
+    <string name="app_friends_removeFriend">Fjern fra mine venner</string>
+    <string name="app_friends_results">Resultater</string>
+    <string name="app_friends_seeCourses">Se deres kurser</string>
+    <string name="app_friends_theirCourses">Deres kurser</string>
+    <string name="app_friends_usernamePlaceholder">brugernavn</string>
+    <string name="app_friends_you">Dig</string>
+    <string name="app_friends_yourAccount">Din konto</string>
     <string name="common_continue">Fortsæt</string>
     <string name="common_privacy">Privatliv</string>
     <string name="common_signOut">Log ud</string>
@@ -33,6 +56,7 @@
     <string name="ios_auth_providerNotEnabled">Login med %1$s er ikke aktiveret i dette Supabase-projekt endnu.</string>
     <string name="ios_auth_sessionExpired">Din session er udløbet. Log ind igen.</string>
     <string name="ios_averageTitle">Hvad er dit gennemsnit\nlige nu?</string>
+    <string name="ios_cardsSection">Kort · %1$s</string>
     <string name="ios_connected">Logget ind</string>
     <string name="ios_country">Land</string>
     <string name="ios_countryTitle">Hvor studerer du?</string>
@@ -44,6 +68,8 @@
     <string name="ios_docx_corrupt">Word-dokumentet er ufuldstændigt eller beskadiget.</string>
     <string name="ios_docx_empty">Der blev ikke fundet tekst i dokumentet.</string>
     <string name="ios_docx_notDocx">Filen er ikke et Word-dokument (.docx).</string>
+    <string name="ios_friend">Ven</string>
+    <string name="ios_friends_requestExists">Den anmodning findes allerede.</string>
     <string name="ios_goalSub">Vælg så mange, du vil.</string>
     <string name="ios_goalTitle">Hvad er dine mål?</string>
     <string name="ios_goal_competition">Forberede mig til en optagelsesprøve</string>
@@ -154,6 +180,8 @@
     <string name="ios_quiz_time_caption_15">Seriøst</string>
     <string name="ios_quiz_time_caption_30">Vildt</string>
     <string name="ios_quiz_time_caption_5">En god start</string>
+    <string name="ios_sharedCourse">Delt kursus</string>
+    <string name="ios_sharedNoSheet">Dette kursus har intet resumé</string>
     <string name="ios_signOutMsg">Dine kurser bliver på enheden og på din konto. Du finder dem igen, næste gang du logger ind.</string>
     <string name="ios_signOutQ">Log ud?</string>
     <string name="ios_streak_bestLabel">Din bedste</string>
@@ -182,6 +210,14 @@
     <string name="ios_trialTodayDetail">Ubegrænsede kurser, genererede kort, repetitioner: alt er åbent.</string>
     <string name="ios_unitWeek">uge</string>
     <string name="ios_unitYear">år</string>
+    <string name="ios_usernameLabel">Brugernavn</string>
+    <string name="ios_usernamePlaceholder">brugernavn</string>
+    <string name="ios_usernameRules">Tre til tyve tegn, der starter med et bogstav eller et tal.</string>
+    <string name="ios_usernameSavedAs">Gemmes som %1$s.</string>
+    <string name="ios_username_empty">Vælg et brugernavn.</string>
+    <string name="ios_username_taken">%1$s er allerede taget.</string>
+    <string name="ios_username_tooLong">Højst tyve tegn.</string>
+    <string name="ios_username_tooShort">Mindst tre tegn.</string>
     <string name="ios_yt_invalidLink">Linket er ikke en YouTube-video.</string>
     <string name="ios_yt_noCaptions">Micabo kunne ikke læse videoen. Prøv igen, eller indsæt kursets tekst.</string>
     <string name="ios_yt_tooShort">Videoen er for kort til at lave kort.</string>
@@ -411,6 +447,7 @@
     <string name="lesson_theme_day">Lyst</string>
     <string name="lesson_theme_night">Mørkt</string>
     <string name="lesson_theme_system">Som telefonen</string>
+    <string name="nav_friends">Venner</string>
     <string name="onboarding_compteTitle">Behold dine fremskridt</string>
     <string name="onboarding_continueGoogle">Fortsæt med Google</string>
     <string name="onboarding_emailLabel">Din e-mailadresse</string>

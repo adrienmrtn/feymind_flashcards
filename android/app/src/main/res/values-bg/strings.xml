@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_common_add">Добави</string>
+    <string name="app_common_cancel">Отказ</string>
+    <string name="app_common_save">Запази</string>
     <string name="app_exams_countdown_today">днес</string>
+    <string name="app_friends_accept">Приеми</string>
+    <string name="app_friends_addSomeone">Добави човек</string>
+    <string name="app_friends_decline">Откажи</string>
+    <string name="app_friends_emptyBody">Потърси потребителско име, за да добавиш някого.</string>
+    <string name="app_friends_emptyTitle">Още никой</string>
+    <string name="app_friends_findClassmates">Намери курсовете на съучениците си</string>
+    <string name="app_friends_incoming">Получени покани</string>
+    <string name="app_friends_list">Твоите приятели</string>
+    <string name="app_friends_loadingCourses">Разглеждаме курсовете…</string>
+    <string name="app_friends_needAccount">Трябва ти профил, за да добавиш някого</string>
+    <string name="app_friends_noShared">%1$s няма споделен курс.</string>
+    <string name="app_friends_nothingToSee">Засега няма нищо</string>
+    <string name="app_friends_outgoing">Изпратени покани</string>
+    <string name="app_friends_removeFriend">Премахни от приятели</string>
+    <string name="app_friends_results">Резултати</string>
+    <string name="app_friends_seeCourses">Виж курсовете</string>
+    <string name="app_friends_theirCourses">Курсовете му</string>
+    <string name="app_friends_usernamePlaceholder">потребителско име</string>
+    <string name="app_friends_you">Ти</string>
+    <string name="app_friends_yourAccount">Твоят профил</string>
     <string name="common_continue">Продължи</string>
     <string name="common_privacy">Поверителност</string>
     <string name="common_signOut">Изход</string>
@@ -38,6 +61,7 @@
     <string name="ios_auth_sessionExpired">Сесията ти изтече. Влез отново.</string>
     <string name="ios_averageTitle">Какъв е средният ти успех\nв момента?</string>
     <string name="ios_backup">Резервно копие</string>
+    <string name="ios_cardsSection">Карти · %1$s</string>
     <string name="ios_connected">Профилът е свързан</string>
     <string name="ios_country">Държава</string>
     <string name="ios_countryTitle">Къде учиш?</string>
@@ -49,6 +73,8 @@
     <string name="ios_docx_corrupt">Документът Word е непълен или повреден.</string>
     <string name="ios_docx_empty">В този документ не е намерен текст.</string>
     <string name="ios_docx_notDocx">Този файл не е документ Word (.docx).</string>
+    <string name="ios_friend">Приятел</string>
+    <string name="ios_friends_requestExists">Тази покана вече съществува.</string>
     <string name="ios_goalSub">Избери колкото искаш.</string>
     <string name="ios_goalTitle">Какви са целите ти?</string>
     <string name="ios_goal_competition">Подготовка за конкурсен изпит</string>
@@ -159,6 +185,8 @@
     <string name="ios_quiz_time_caption_15">Сериозно</string>
     <string name="ios_quiz_time_caption_30">Лудница</string>
     <string name="ios_quiz_time_caption_5">Добро начало</string>
+    <string name="ios_sharedCourse">Споделен курс</string>
+    <string name="ios_sharedNoSheet">Този курс няма конспект</string>
     <string name="ios_signOutMsg">Курсовете ти остават на това устройство и в профила ти. Ще ги намериш отново при следващото влизане.</string>
     <string name="ios_signOutQ">Да излезеш ли?</string>
     <string name="ios_streak_bestLabel">Твоят рекорд</string>
@@ -187,6 +215,14 @@
     <string name="ios_trialTodayDetail">Неограничени курсове, генерирани карти, преговори: всичко е отключено.</string>
     <string name="ios_unitWeek">седмица</string>
     <string name="ios_unitYear">година</string>
+    <string name="ios_usernameLabel">Потребителско име</string>
+    <string name="ios_usernamePlaceholder">потребителско име</string>
+    <string name="ios_usernameRules">От три до двайсет символа, започва с буква или цифра.</string>
+    <string name="ios_usernameSavedAs">Ще се запази като %1$s.</string>
+    <string name="ios_username_empty">Избери потребителско име.</string>
+    <string name="ios_username_taken">%1$s вече е заето.</string>
+    <string name="ios_username_tooLong">Максимум двайсет символа.</string>
+    <string name="ios_username_tooShort">Минимум три символа.</string>
     <string name="ios_yt_invalidLink">Този линк не е видео в YouTube.</string>
     <string name="ios_yt_noCaptions">Micabo не успя да прочете това видео. Опитай пак или постави текста на урока.</string>
     <string name="ios_yt_tooShort">Това видео е твърде кратко за карти.</string>
@@ -425,6 +461,7 @@
     <string name="lesson_theme_day">Светла</string>
     <string name="lesson_theme_night">Тъмна</string>
     <string name="lesson_theme_system">Като телефона</string>
+    <string name="nav_friends">Приятели</string>
     <string name="onboarding_compteTitle">Запази напредъка си</string>
     <string name="onboarding_continueGoogle">Продължи с Google</string>
     <string name="onboarding_emailLabel">Твоят имейл</string>

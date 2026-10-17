@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_common_add">Ekle</string>
+    <string name="app_common_cancel">Vazgeç</string>
+    <string name="app_common_save">Kaydet</string>
     <string name="app_exams_countdown_today">bugün</string>
+    <string name="app_friends_accept">Kabul et</string>
+    <string name="app_friends_addSomeone">Birini ekle</string>
+    <string name="app_friends_decline">Reddet</string>
+    <string name="app_friends_emptyBody">Birini eklemek için kullanıcı adı ara.</string>
+    <string name="app_friends_emptyTitle">Şimdilik kimse yok</string>
+    <string name="app_friends_findClassmates">Arkadaşlarının derslerini bul</string>
+    <string name="app_friends_incoming">Gelen istekler</string>
+    <string name="app_friends_list">Arkadaşların</string>
+    <string name="app_friends_loadingCourses">Derslerine bakıyoruz…</string>
+    <string name="app_friends_needAccount">Birini eklemek için hesap gerekir</string>
+    <string name="app_friends_noShared">%1$s paylaşılmış dersi yok.</string>
+    <string name="app_friends_nothingToSee">Şimdilik görülecek bir şey yok</string>
+    <string name="app_friends_outgoing">Gönderilen istekler</string>
+    <string name="app_friends_removeFriend">Arkadaşlarımdan çıkar</string>
+    <string name="app_friends_results">Sonuçlar</string>
+    <string name="app_friends_seeCourses">Derslerini gör</string>
+    <string name="app_friends_theirCourses">Dersleri</string>
+    <string name="app_friends_usernamePlaceholder">kullanıcı adı</string>
+    <string name="app_friends_you">Sen</string>
+    <string name="app_friends_yourAccount">Hesabın</string>
     <string name="common_continue">Devam</string>
     <string name="common_privacy">Gizlilik</string>
     <string name="common_signOut">Çıkış yap</string>
@@ -44,6 +67,7 @@
     <string name="ios_build_step3">Sınav gününe kadar dağıtılıyor</string>
     <string name="ios_build_step4">Hedefin ayarlanıyor</string>
     <string name="ios_build_title">Planını hazırlıyoruz</string>
+    <string name="ios_cardsSection">Kartlar · %1$s</string>
     <string name="ios_connected">Giriş yapıldı</string>
     <string name="ios_country">Ülke</string>
     <string name="ios_countryTitle">Nerede okuyorsun?</string>
@@ -55,6 +79,8 @@
     <string name="ios_docx_corrupt">Word belgesi eksik veya bozulmuş.</string>
     <string name="ios_docx_empty">Bu belgede metin bulunamadı.</string>
     <string name="ios_docx_notDocx">Bu dosya bir Word belgesi (.docx) değil.</string>
+    <string name="ios_friend">Arkadaş</string>
+    <string name="ios_friends_requestExists">Bu istek zaten var.</string>
     <string name="ios_goalSub">Birden fazla seçebilirsin.</string>
     <string name="ios_goalTitle">Hedeflerin neler?</string>
     <string name="ios_goal_competition">Bir giriş sınavına hazırlanmak</string>
@@ -174,6 +200,8 @@
     <string name="ios_quiz_time_caption_5">İyi bir başlangıç</string>
     <string name="ios_quiz_time_minutes">Günde %1$s dk</string>
     <string name="ios_searchCourse">Bir ders, bir konu…</string>
+    <string name="ios_sharedCourse">Paylaşılan ders</string>
+    <string name="ios_sharedNoSheet">Bu dersin özeti yok</string>
     <string name="ios_signOutMsg">Derslerin bu cihazda ve hesabında kalır. Sonraki girişte onları bulursun.</string>
     <string name="ios_signOutQ">Çıkış yapılsın mı?</string>
     <string name="ios_streak_bestLabel">Rekorun</string>
@@ -209,6 +237,14 @@
     <string name="ios_trial_title">Micabo\'yu **ücretsiz** denemeni istiyoruz.</string>
     <string name="ios_unitWeek">hafta</string>
     <string name="ios_unitYear">yıl</string>
+    <string name="ios_usernameLabel">Kullanıcı adı</string>
+    <string name="ios_usernamePlaceholder">kullanıcı adı</string>
+    <string name="ios_usernameRules">Üç ila yirmi karakter, harf veya rakamla başlamalı.</string>
+    <string name="ios_usernameSavedAs">%1$s olarak kaydedilecek.</string>
+    <string name="ios_username_empty">Bir kullanıcı adı seç.</string>
+    <string name="ios_username_taken">%1$s zaten alınmış.</string>
+    <string name="ios_username_tooLong">En fazla yirmi karakter.</string>
+    <string name="ios_username_tooShort">En az üç karakter.</string>
     <string name="ios_yt_invalidLink">Bu bağlantı bir YouTube videosu değil.</string>
     <string name="ios_yt_noCaptions">Micabo bu videoyu okuyamadı. Tekrar dene ya da ders metnini yapıştır.</string>
     <string name="ios_yt_tooShort">Bu video kart üretmek için çok kısa.</string>
@@ -446,6 +482,7 @@
     <string name="lesson_theme_day">Açık</string>
     <string name="lesson_theme_night">Koyu</string>
     <string name="lesson_theme_system">Telefonla aynı</string>
+    <string name="nav_friends">Arkadaşlar</string>
     <string name="onboarding_compteTitle">İlerlemeni sakla</string>
     <string name="onboarding_continueGoogle">Google ile devam</string>
     <string name="onboarding_emailLabel">E-posta adresin</string>
@@ -455,7 +492,9 @@
     <string name="onboarding_sendLink">Bağlantı al</string>
     <string name="x_account_deleteMsg">Kursların, kartların ve geçmişin her yerden silinecek. Abonelik Google Play\'den yönetilir.</string>
     <string name="x_auth_rateLimited">Çok fazla deneme. Bir dakika bekle, sonra tekrar dene.</string>
+    <string name="x_error_generic">Bir şeyler ters gitti. Tekrar dene.</string>
     <string name="x_error_network">Bağlantı yok. İnternetini kontrol edip tekrar dene.</string>
+    <string name="x_friends_adopt">Bundan dersimi yap</string>
     <string name="x_onb_language">Hangi dilde çalışıyorsun?</string>
     <string name="x_onb_language_sub">Mika derslerini, testlerini ve kartlarını bu dilde yazar.</string>
     <string name="x_paste_tooShort">Birkaç satır daha, Mika bununla çalışabilir.</string>

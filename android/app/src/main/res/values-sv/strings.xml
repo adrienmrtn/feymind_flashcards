@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_common_add">Lägg till</string>
+    <string name="app_common_cancel">Avbryt</string>
+    <string name="app_common_save">Spara</string>
     <string name="app_exams_countdown_today">i dag</string>
+    <string name="app_friends_accept">Acceptera</string>
+    <string name="app_friends_addSomeone">Lägg till någon</string>
+    <string name="app_friends_decline">Avböj</string>
+    <string name="app_friends_emptyBody">Sök ett användarnamn för att lägga till någon.</string>
+    <string name="app_friends_emptyTitle">Ingen än</string>
+    <string name="app_friends_findClassmates">Hitta dina klasskompisars kurser</string>
+    <string name="app_friends_incoming">Inkommande förfrågningar</string>
+    <string name="app_friends_list">Dina vänner</string>
+    <string name="app_friends_loadingCourses">Tittar på deras kurser…</string>
+    <string name="app_friends_needAccount">Du behöver ett konto för att lägga till någon</string>
+    <string name="app_friends_noShared">%1$s har ingen delad kurs.</string>
+    <string name="app_friends_nothingToSee">Inget att se just nu</string>
+    <string name="app_friends_outgoing">Skickade förfrågningar</string>
+    <string name="app_friends_removeFriend">Ta bort från mina vänner</string>
+    <string name="app_friends_results">Resultat</string>
+    <string name="app_friends_seeCourses">Se deras kurser</string>
+    <string name="app_friends_theirCourses">Deras kurser</string>
+    <string name="app_friends_usernamePlaceholder">användarnamn</string>
+    <string name="app_friends_you">Du</string>
+    <string name="app_friends_yourAccount">Ditt konto</string>
     <string name="common_continue">Fortsätt</string>
     <string name="common_privacy">Integritet</string>
     <string name="common_signOut">Logga ut</string>
@@ -36,6 +59,7 @@
     <string name="ios_auth_sessionExpired">Din session har gått ut. Logga in igen.</string>
     <string name="ios_averageTitle">Vilket snitt har du\njust nu?</string>
     <string name="ios_backup">Säkerhetskopia</string>
+    <string name="ios_cardsSection">Kort · %1$s</string>
     <string name="ios_connected">Inloggad</string>
     <string name="ios_country">Land</string>
     <string name="ios_countryTitle">Var pluggar du?</string>
@@ -47,6 +71,8 @@
     <string name="ios_docx_corrupt">Word-dokumentet är ofullständigt eller skadat.</string>
     <string name="ios_docx_empty">Ingen text hittades i dokumentet.</string>
     <string name="ios_docx_notDocx">Filen är inte ett Word-dokument (.docx).</string>
+    <string name="ios_friend">Vän</string>
+    <string name="ios_friends_requestExists">Den förfrågan finns redan.</string>
     <string name="ios_goalSub">Välj så många du vill.</string>
     <string name="ios_goalTitle">Vilka är dina mål?</string>
     <string name="ios_goal_competition">Plugga inför ett antagningsprov</string>
@@ -156,6 +182,8 @@
     <string name="ios_quiz_time_caption_15">Seriöst</string>
     <string name="ios_quiz_time_caption_30">Galet</string>
     <string name="ios_quiz_time_caption_5">En bra start</string>
+    <string name="ios_sharedCourse">Delad kurs</string>
+    <string name="ios_sharedNoSheet">Den här kursen har ingen sammanfattning</string>
     <string name="ios_signOutMsg">Dina kurser finns kvar på enheten och på ditt konto. Du hittar dem igen nästa gång du loggar in.</string>
     <string name="ios_signOutQ">Logga ut?</string>
     <string name="ios_streak_bestLabel">Ditt bästa</string>
@@ -184,6 +212,14 @@
     <string name="ios_trialTodayDetail">Obegränsat med kurser, genererade kort, repetitioner: allt är öppet.</string>
     <string name="ios_unitWeek">vecka</string>
     <string name="ios_unitYear">år</string>
+    <string name="ios_usernameLabel">Användarnamn</string>
+    <string name="ios_usernamePlaceholder">användarnamn</string>
+    <string name="ios_usernameRules">Tre till tjugo tecken, och börja med en bokstav eller siffra.</string>
+    <string name="ios_usernameSavedAs">Sparas som %1$s.</string>
+    <string name="ios_username_empty">Välj ett användarnamn.</string>
+    <string name="ios_username_taken">%1$s är redan upptaget.</string>
+    <string name="ios_username_tooLong">Högst tjugo tecken.</string>
+    <string name="ios_username_tooShort">Minst tre tecken.</string>
     <string name="ios_yt_invalidLink">Länken är inte en YouTube-video.</string>
     <string name="ios_yt_noCaptions">Micabo kunde inte läsa videon. Försök igen, eller klistra in kursens text.</string>
     <string name="ios_yt_tooShort">Videon är för kort för att skapa kort.</string>
@@ -416,6 +452,7 @@
     <string name="lesson_theme_day">Ljust</string>
     <string name="lesson_theme_night">Mörkt</string>
     <string name="lesson_theme_system">Som telefonen</string>
+    <string name="nav_friends">Vänner</string>
     <string name="onboarding_compteTitle">Behåll dina framsteg</string>
     <string name="onboarding_continueGoogle">Fortsätt med Google</string>
     <string name="onboarding_emailLabel">Din e-postadress</string>

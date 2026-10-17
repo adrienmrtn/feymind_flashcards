@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_common_add">Pridať</string>
+    <string name="app_common_cancel">Zrušiť</string>
+    <string name="app_common_save">Uložiť</string>
     <string name="app_exams_countdown_today">dnes</string>
+    <string name="app_friends_accept">Prijať</string>
+    <string name="app_friends_addSomeone">Pridať niekoho</string>
+    <string name="app_friends_decline">Odmietnuť</string>
+    <string name="app_friends_emptyBody">Vyhľadaj používateľské meno a niekoho pridaj.</string>
+    <string name="app_friends_emptyTitle">Zatiaľ nikto</string>
+    <string name="app_friends_findClassmates">Nájdi kurzy spolužiakov</string>
+    <string name="app_friends_incoming">Prijaté žiadosti</string>
+    <string name="app_friends_list">Tvoji kamaráti</string>
+    <string name="app_friends_loadingCourses">Prezerám kurzy…</string>
+    <string name="app_friends_needAccount">Na pridanie kamaráta potrebuješ účet</string>
+    <string name="app_friends_noShared">%1$s nezdieľa žiadny kurz.</string>
+    <string name="app_friends_nothingToSee">Zatiaľ tu nič nie je</string>
+    <string name="app_friends_outgoing">Odoslané žiadosti</string>
+    <string name="app_friends_removeFriend">Odobrať z kamarátov</string>
+    <string name="app_friends_results">Výsledky</string>
+    <string name="app_friends_seeCourses">Zobraziť kurzy</string>
+    <string name="app_friends_theirCourses">Kurzy</string>
+    <string name="app_friends_usernamePlaceholder">používateľské meno</string>
+    <string name="app_friends_you">Ty</string>
+    <string name="app_friends_yourAccount">Tvoj účet</string>
     <string name="common_continue">Pokračovať</string>
     <string name="common_privacy">Súkromie</string>
     <string name="common_signOut">Odhlásiť sa</string>
@@ -37,6 +60,7 @@
     <string name="ios_auth_sessionExpired">Relácia vypršala. Prihlás sa znova.</string>
     <string name="ios_averageTitle">Aký máš teraz\npriemer?</string>
     <string name="ios_backup">Záloha</string>
+    <string name="ios_cardsSection">Kartičky · %1$s</string>
     <string name="ios_connected">Prihlásené</string>
     <string name="ios_country">Krajina</string>
     <string name="ios_countryTitle">Kde študuješ?</string>
@@ -48,6 +72,8 @@
     <string name="ios_docx_corrupt">Dokument Word je neúplný alebo poškodený.</string>
     <string name="ios_docx_empty">V tomto dokumente sa nenašiel žiadny text.</string>
     <string name="ios_docx_notDocx">Tento súbor nie je dokument Word (.docx).</string>
+    <string name="ios_friend">Kamarát</string>
+    <string name="ios_friends_requestExists">Táto žiadosť už existuje.</string>
     <string name="ios_goalSub">Vyber, koľko chceš.</string>
     <string name="ios_goalTitle">Aké máš ciele?</string>
     <string name="ios_goal_competition">Pripraviť sa na prijímačky</string>
@@ -157,6 +183,8 @@
     <string name="ios_quiz_time_caption_15">Vážne</string>
     <string name="ios_quiz_time_caption_30">Šialenstvo</string>
     <string name="ios_quiz_time_caption_5">Dobrý začiatok</string>
+    <string name="ios_sharedCourse">Zdieľaný kurz</string>
+    <string name="ios_sharedNoSheet">Tento kurz nemá zhrnutie</string>
     <string name="ios_signOutMsg">Tvoje kurzy zostanú v tomto zariadení aj na účte. Nájdeš ich pri ďalšom prihlásení.</string>
     <string name="ios_signOutQ">Odhlásiť sa?</string>
     <string name="ios_streak_bestLabel">Tvoj rekord</string>
@@ -185,6 +213,14 @@
     <string name="ios_trialTodayDetail">Neobmedzené kurzy, generované kartičky, opakovanie: všetko je otvorené.</string>
     <string name="ios_unitWeek">týždeň</string>
     <string name="ios_unitYear">rok</string>
+    <string name="ios_usernameLabel">Používateľské meno</string>
+    <string name="ios_usernamePlaceholder">používateľské meno</string>
+    <string name="ios_usernameRules">Tri až dvadsať znakov, na začiatku písmeno alebo číslica.</string>
+    <string name="ios_usernameSavedAs">Uloží sa ako %1$s.</string>
+    <string name="ios_username_empty">Vyber si používateľské meno.</string>
+    <string name="ios_username_taken">%1$s je už obsadené.</string>
+    <string name="ios_username_tooLong">Maximálne dvadsať znakov.</string>
+    <string name="ios_username_tooShort">Minimálne tri znaky.</string>
     <string name="ios_yt_invalidLink">Tento odkaz nie je video z YouTube.</string>
     <string name="ios_yt_noCaptions">Micabo toto video nedokázalo prečítať. Skús to znova alebo vlož text kurzu.</string>
     <string name="ios_yt_tooShort">Toto video je na kartičky prikrátke.</string>
@@ -418,6 +454,7 @@
     <string name="lesson_theme_day">Svetlý</string>
     <string name="lesson_theme_night">Tmavý</string>
     <string name="lesson_theme_system">Podľa telefónu</string>
+    <string name="nav_friends">Kamaráti</string>
     <string name="onboarding_compteTitle">Uchovaj si svoj pokrok</string>
     <string name="onboarding_continueGoogle">Pokračovať cez Google</string>
     <string name="onboarding_emailLabel">Tvoja e-mailová adresa</string>

@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_common_add">Añadir</string>
+    <string name="app_common_cancel">Cancelar</string>
+    <string name="app_common_save">Guardar</string>
     <string name="app_exams_countdown_today">hoy</string>
+    <string name="app_friends_accept">Aceptar</string>
+    <string name="app_friends_addSomeone">Añadir a alguien</string>
+    <string name="app_friends_decline">Rechazar</string>
+    <string name="app_friends_emptyBody">Busca un nombre de usuario para añadir a alguien.</string>
+    <string name="app_friends_emptyTitle">Nadie por ahora</string>
+    <string name="app_friends_findClassmates">Encuentra los cursos de tus compañeros</string>
+    <string name="app_friends_incoming">Solicitudes recibidas</string>
+    <string name="app_friends_list">Tus amigos</string>
+    <string name="app_friends_loadingCourses">Miramos sus cursos…</string>
+    <string name="app_friends_needAccount">Hace falta una cuenta para añadir a alguien</string>
+    <string name="app_friends_noShared">%1$s no tiene ningún curso compartido.</string>
+    <string name="app_friends_nothingToSee">Nada que ver por ahora</string>
+    <string name="app_friends_outgoing">Solicitudes enviadas</string>
+    <string name="app_friends_removeFriend">Quitar de mis amigos</string>
+    <string name="app_friends_results">Resultados</string>
+    <string name="app_friends_seeCourses">Ver sus cursos</string>
+    <string name="app_friends_theirCourses">Sus cursos</string>
+    <string name="app_friends_usernamePlaceholder">nombre de usuario</string>
+    <string name="app_friends_you">Tú</string>
+    <string name="app_friends_yourAccount">Tu cuenta</string>
     <string name="common_continue">Continuar</string>
     <string name="common_privacy">Privacidad</string>
     <string name="common_signOut">Cerrar sesión</string>
@@ -43,6 +66,7 @@
     <string name="ios_build_step3">Repartiendo hasta el examen</string>
     <string name="ios_build_step4">Ajustando tu objetivo</string>
     <string name="ios_build_title">Preparamos tu plan</string>
+    <string name="ios_cardsSection">Tarjetas · %1$s</string>
     <string name="ios_connected">Conectado</string>
     <string name="ios_country">País</string>
     <string name="ios_countryTitle">¿Dónde estudias?</string>
@@ -54,6 +78,8 @@
     <string name="ios_docx_corrupt">El documento Word está incompleto o corrupto.</string>
     <string name="ios_docx_empty">No se ha encontrado texto en este documento.</string>
     <string name="ios_docx_notDocx">Este archivo no es un documento Word (.docx).</string>
+    <string name="ios_friend">Amigo</string>
+    <string name="ios_friends_requestExists">Esa solicitud ya existe.</string>
     <string name="ios_goalSub">Puedes elegir varias.</string>
     <string name="ios_goalTitle">¿Cuáles son tus objetivos?</string>
     <string name="ios_goal_competition">Preparar un examen de acceso</string>
@@ -170,6 +196,8 @@
     <string name="ios_quiz_time_caption_5">Un buen comienzo</string>
     <string name="ios_quiz_time_minutes">%1$s min al día</string>
     <string name="ios_searchCourse">Un curso, una materia…</string>
+    <string name="ios_sharedCourse">Curso compartido</string>
+    <string name="ios_sharedNoSheet">Este curso no tiene ficha</string>
     <string name="ios_signOutMsg">Tus cursos siguen en este aparato y en tu cuenta. Los verás al volver a entrar.</string>
     <string name="ios_signOutQ">¿Cerrar sesión?</string>
     <string name="ios_streak_bestLabel">Tu récord</string>
@@ -205,6 +233,14 @@
     <string name="ios_trial_title">Queremos que pruebes Micabo **gratis**.</string>
     <string name="ios_unitWeek">semana</string>
     <string name="ios_unitYear">año</string>
+    <string name="ios_usernameLabel">Nombre de usuario</string>
+    <string name="ios_usernamePlaceholder">nombre de usuario</string>
+    <string name="ios_usernameRules">De tres a veinte caracteres, empezando por una letra o un número.</string>
+    <string name="ios_usernameSavedAs">Se guardará como %1$s.</string>
+    <string name="ios_username_empty">Elige un nombre de usuario.</string>
+    <string name="ios_username_taken">%1$s ya está en uso.</string>
+    <string name="ios_username_tooLong">Veinte caracteres como máximo.</string>
+    <string name="ios_username_tooShort">Tres caracteres como mínimo.</string>
     <string name="ios_yt_invalidLink">Este enlace no es un vídeo de YouTube.</string>
     <string name="ios_yt_noCaptions">Micabo no ha podido leer este vídeo. Inténtalo otra vez, o pega el texto del curso.</string>
     <string name="ios_yt_tooShort">Este vídeo es demasiado corto para generar tarjetas.</string>
@@ -438,6 +474,7 @@
     <string name="lesson_theme_day">Claro</string>
     <string name="lesson_theme_night">Oscuro</string>
     <string name="lesson_theme_system">Como el teléfono</string>
+    <string name="nav_friends">Amigos</string>
     <string name="onboarding_compteTitle">Guarda tu progreso</string>
     <string name="onboarding_continueGoogle">Continuar con Google</string>
     <string name="onboarding_emailLabel">Tu correo electrónico</string>
@@ -447,7 +484,9 @@
     <string name="onboarding_sendLink">Recibir un enlace</string>
     <string name="x_account_deleteMsg">Tus cursos, tarjetas e historial se borrarán en todas partes. La suscripción se gestiona en Google Play.</string>
     <string name="x_auth_rateLimited">Demasiados intentos. Espera un minuto y vuelve a intentarlo.</string>
+    <string name="x_error_generic">Algo salió mal. Inténtalo de nuevo.</string>
     <string name="x_error_network">Sin conexión. Revisa tu internet e inténtalo de nuevo.</string>
+    <string name="x_friends_adopt">Hacer mi lección con esto</string>
     <string name="x_onb_language">¿En qué idioma estudias?</string>
     <string name="x_onb_language_sub">Mika escribe tus lecciones, quizzes y flashcards en este idioma.</string>
     <string name="x_paste_tooShort">Unas líneas más y Mika podrá trabajar con ello.</string>

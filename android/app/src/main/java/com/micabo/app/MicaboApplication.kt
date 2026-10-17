@@ -11,6 +11,7 @@ import com.micabo.app.data.LessonComposer
 import com.micabo.app.data.LessonRepository
 import com.micabo.app.data.MikaChat
 import com.micabo.app.data.Prefs
+import com.micabo.app.data.Social
 import com.micabo.app.data.Streak
 import com.micabo.app.data.SupabaseAuth
 import com.micabo.app.data.SupabaseFunctions
@@ -49,6 +50,8 @@ class MicaboApplication : Application() {
         private set
 
     lateinit var sync: CloudSync
+        private set
+    lateinit var social: Social
         private set
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -100,6 +103,7 @@ class MicaboApplication : Application() {
         runCatching { sync.sync() }
         auth.signOut()
         sync.forget()
+        social.reset()
         analytics.track("signed_out")
         withContext(Dispatchers.Main) { billing.follow(auth.guestId, fromGuest = false) }
     }
@@ -108,6 +112,7 @@ class MicaboApplication : Application() {
     suspend fun deleteAccount() {
         auth.deleteAccount()
         sync.forget()
+        social.reset()
         withContext(Dispatchers.Main) { billing.follow(auth.guestId, fromGuest = false) }
     }
 
@@ -128,6 +133,7 @@ class MicaboApplication : Application() {
         }
         analytics = Analytics(this, prefs, auth) { billing.isPro.value }
         sync = CloudSync(auth, lessons, exams, prefs)
+        social = Social(auth)
         composer = LessonComposer(this, YouTubeImport(functions), AudioImport(functions)) { name, props -> analytics.track(name, props) }
         analytics.start()
         // Le compte invité s'ouvre tout de suite : il doit exister avant un achat, pour que

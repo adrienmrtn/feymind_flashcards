@@ -2,7 +2,30 @@
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
     <string name="app_name" translatable="false">Micabo</string>
+    <string name="app_common_add">Add</string>
+    <string name="app_common_cancel">Cancel</string>
+    <string name="app_common_save">Save</string>
     <string name="app_exams_countdown_today">today</string>
+    <string name="app_friends_accept">Accept</string>
+    <string name="app_friends_addSomeone">Add someone</string>
+    <string name="app_friends_decline">Decline</string>
+    <string name="app_friends_emptyBody">Search a username to add someone.</string>
+    <string name="app_friends_emptyTitle">No one yet</string>
+    <string name="app_friends_findClassmates">Find your classmates\' courses</string>
+    <string name="app_friends_incoming">Incoming requests</string>
+    <string name="app_friends_list">Your friends</string>
+    <string name="app_friends_loadingCourses">Looking at their courses…</string>
+    <string name="app_friends_needAccount">You need an account to add someone</string>
+    <string name="app_friends_noShared">%1$s has no shared course.</string>
+    <string name="app_friends_nothingToSee">Nothing to see for now</string>
+    <string name="app_friends_outgoing">Outgoing requests</string>
+    <string name="app_friends_removeFriend">Remove from my friends</string>
+    <string name="app_friends_results">Results</string>
+    <string name="app_friends_seeCourses">See their courses</string>
+    <string name="app_friends_theirCourses">Their courses</string>
+    <string name="app_friends_usernamePlaceholder">username</string>
+    <string name="app_friends_you">You</string>
+    <string name="app_friends_yourAccount">Your account</string>
     <string name="common_continue">Continue</string>
     <string name="common_privacy">Privacy</string>
     <string name="common_signOut">Sign out</string>
@@ -46,6 +69,7 @@
     <string name="ios_build_step3">Spreading the work to exam day</string>
     <string name="ios_build_step4">Setting your target</string>
     <string name="ios_build_title">Building your plan</string>
+    <string name="ios_cardsSection">Cards · %1$s</string>
     <string name="ios_connected">Signed in</string>
     <string name="ios_country">Country</string>
     <string name="ios_countryTitle">Where do you study?</string>
@@ -57,6 +81,8 @@
     <string name="ios_docx_corrupt">The Word document is incomplete or corrupted.</string>
     <string name="ios_docx_empty">No text was found in this document.</string>
     <string name="ios_docx_notDocx">This file isn\'t a Word document (.docx).</string>
+    <string name="ios_friend">Friend</string>
+    <string name="ios_friends_requestExists">That request already exists.</string>
     <string name="ios_goalSub">Pick as many as you like.</string>
     <string name="ios_goalTitle">What are your goals?</string>
     <string name="ios_goal_competition">Prepare for a competitive exam</string>
@@ -179,6 +205,8 @@
     <string name="ios_quiz_time_caption_5">A good start</string>
     <string name="ios_quiz_time_minutes">%1$s min a day</string>
     <string name="ios_searchCourse">A course, a subject…</string>
+    <string name="ios_sharedCourse">Shared course</string>
+    <string name="ios_sharedNoSheet">This course has no sheet</string>
     <string name="ios_signOutMsg">Your courses stay on this device and on your account. You\'ll find them again next time you sign in.</string>
     <string name="ios_signOutQ">Sign out?</string>
     <string name="ios_streak_bestLabel">Your best</string>
@@ -214,6 +242,14 @@
     <string name="ios_trial_title">We want you to try Micabo **for free**.</string>
     <string name="ios_unitWeek">week</string>
     <string name="ios_unitYear">year</string>
+    <string name="ios_usernameLabel">Username</string>
+    <string name="ios_usernamePlaceholder">username</string>
+    <string name="ios_usernameRules">Three to twenty characters, starting with a letter or a digit.</string>
+    <string name="ios_usernameSavedAs">Will be saved as %1$s.</string>
+    <string name="ios_username_empty">Choose a username.</string>
+    <string name="ios_username_taken">%1$s is already taken.</string>
+    <string name="ios_username_tooLong">Twenty characters maximum.</string>
+    <string name="ios_username_tooShort">Three characters minimum.</string>
     <string name="ios_yt_invalidLink">This link isn\'t a YouTube video.</string>
     <string name="ios_yt_noCaptions">Micabo couldn\'t read this video. Try again, or paste the text of the course.</string>
     <string name="ios_yt_tooShort">This video is too short to generate cards.</string>
@@ -455,6 +491,7 @@
     <string name="lesson_theme_day">Light</string>
     <string name="lesson_theme_night">Dark</string>
     <string name="lesson_theme_system">Same as phone</string>
+    <string name="nav_friends">Friends</string>
     <string name="onboarding_compteTitle">Keep your progress</string>
     <string name="onboarding_continueGoogle">Continue with Google</string>
     <string name="onboarding_emailLabel">Your email address</string>
@@ -464,7 +501,9 @@
     <string name="onboarding_sendLink">Get a link</string>
     <string name="x_account_deleteMsg">Your courses, cards and history will be erased everywhere. A subscription is managed in Google Play.</string>
     <string name="x_auth_rateLimited">Too many tries. Wait a minute, then try again.</string>
+    <string name="x_error_generic">Something went wrong. Try again.</string>
     <string name="x_error_network">No connection. Check your internet and try again.</string>
+    <string name="x_friends_adopt">Make my lesson from it</string>
     <string name="x_onb_language">Which language do you study in?</string>
     <string name="x_onb_language_sub">Mika writes your lessons, quizzes and flashcards in this language.</string>
     <string name="x_paste_tooShort">A few more lines, and Mika can work with it.</string>

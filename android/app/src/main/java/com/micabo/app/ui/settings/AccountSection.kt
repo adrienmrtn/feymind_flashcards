@@ -49,6 +49,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -62,6 +63,8 @@ import com.micabo.app.data.Account
 import com.micabo.app.data.AuthException
 import com.micabo.app.data.NetworkException
 import com.micabo.app.ui.LocalApp
+import com.micabo.app.ui.LocalNavigator
+import com.micabo.app.ui.Screen
 import com.micabo.app.ui.components.MicaboButton
 import com.micabo.app.ui.components.MicaboSecondaryButton
 import com.micabo.app.ui.components.Mika
@@ -81,6 +84,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun AccountSection() {
     val app = LocalApp.current
+    val navigator = LocalNavigator.current
     val colors = Micabo.colors
     val scope = rememberCoroutineScope()
     val account by app.auth.account.collectAsState()
@@ -103,6 +107,10 @@ fun AccountSection() {
             null -> Unit
         }
     }
+
+    val friends by app.social.friends.collectAsState()
+    val incoming by app.social.incoming.collectAsState()
+    LaunchedEffect(account?.userId) { if (account != null) app.social.refresh() }
 
     val current = account
     if (current == null) {
@@ -187,6 +195,41 @@ fun AccountSection() {
                 Text(authMessage(it), style = nunito(13.sp, FontWeight.SemiBold), color = colors.wrongInk, modifier = Modifier.padding(horizontal = 6.dp))
             }
             Text(stringResource(R.string.ios_dataFootnote), style = nunito(13.sp, FontWeight.SemiBold, lineHeight = 18.sp), color = colors.inkTertiary, modifier = Modifier.padding(horizontal = 6.dp))
+        }
+    }
+
+    // Les amis : un compte d'abord, pour qu'ils puissent nous retrouver.
+    Group {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 56.dp)
+                .clickable { if (current == null) sheet = true else navigator.push(Screen.Friends) }
+                .padding(horizontal = 18.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.nav_friends), style = nunito(16.sp, FontWeight.Bold), color = colors.ink)
+                Text(
+                    when {
+                        current == null -> stringResource(R.string.app_friends_needAccount)
+                        friends.isNotEmpty() -> pluralStringResource(R.plurals.app_friends_friendCount, friends.size, friends.size)
+                        else -> stringResource(R.string.app_friends_findClassmates)
+                    },
+                    style = nunito(13.sp, FontWeight.SemiBold),
+                    color = colors.inkSecondary,
+                )
+            }
+            if (current != null && incoming.isNotEmpty()) {
+                Text(
+                    incoming.size.toString(),
+                    style = nunito(13.sp, FontWeight.Black),
+                    color = Color.White,
+                    modifier = Modifier.clip(CircleShape).background(colors.wrong).padding(horizontal = 8.dp, vertical = 2.dp),
+                )
+                Spacer(Modifier.width(6.dp))
+            }
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = colors.inkTertiary)
         }
     }
 

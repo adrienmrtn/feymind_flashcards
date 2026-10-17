@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <plurals name="app_friends_friendCount">
+        <item quantity="one">%1$d prijatelj</item>
+        <item quantity="other">Prijatelja: %1$d</item>
+    </plurals>
+    <plurals name="copy_cards">
+        <item quantity="one">%1$d kartica</item>
+        <item quantity="other">%1$d kartica</item>
+    </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">%1$d dan zaredom</item>
         <item quantity="other">%1$d dana zaredom</item>

@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_common_add">Dodaj</string>
+    <string name="app_common_cancel">Anuluj</string>
+    <string name="app_common_save">Zapisz</string>
     <string name="app_exams_countdown_today">dziś</string>
+    <string name="app_friends_accept">Akceptuj</string>
+    <string name="app_friends_addSomeone">Dodaj kogoś</string>
+    <string name="app_friends_decline">Odrzuć</string>
+    <string name="app_friends_emptyBody">Wyszukaj nazwę użytkownika, żeby kogoś dodać.</string>
+    <string name="app_friends_emptyTitle">Jeszcze nikogo</string>
+    <string name="app_friends_findClassmates">Znajdź kursy znajomych z klasy</string>
+    <string name="app_friends_incoming">Otrzymane zaproszenia</string>
+    <string name="app_friends_list">Twoi znajomi</string>
+    <string name="app_friends_loadingCourses">Przeglądam kursy…</string>
+    <string name="app_friends_needAccount">Aby kogoś dodać, potrzebujesz konta</string>
+    <string name="app_friends_noShared">%1$s nie udostępnia żadnego kursu.</string>
+    <string name="app_friends_nothingToSee">Na razie nic tu nie ma</string>
+    <string name="app_friends_outgoing">Wysłane zaproszenia</string>
+    <string name="app_friends_removeFriend">Usuń ze znajomych</string>
+    <string name="app_friends_results">Wyniki</string>
+    <string name="app_friends_seeCourses">Zobacz kursy</string>
+    <string name="app_friends_theirCourses">Kursy</string>
+    <string name="app_friends_usernamePlaceholder">nazwa użytkownika</string>
+    <string name="app_friends_you">Ty</string>
+    <string name="app_friends_yourAccount">Twoje konto</string>
     <string name="common_continue">Dalej</string>
     <string name="common_privacy">Prywatność</string>
     <string name="common_signOut">Wyloguj się</string>
@@ -37,6 +60,7 @@
     <string name="ios_auth_sessionExpired">Sesja wygasła. Zaloguj się ponownie.</string>
     <string name="ios_averageTitle">Jaką masz teraz\nśrednią?</string>
     <string name="ios_backup">Kopia zapasowa</string>
+    <string name="ios_cardsSection">Fiszki · %1$s</string>
     <string name="ios_connected">Zalogowano</string>
     <string name="ios_country">Kraj</string>
     <string name="ios_countryTitle">Gdzie się uczysz?</string>
@@ -48,6 +72,8 @@
     <string name="ios_docx_corrupt">Dokument Word jest niekompletny lub uszkodzony.</string>
     <string name="ios_docx_empty">W tym dokumencie nie znaleziono tekstu.</string>
     <string name="ios_docx_notDocx">Ten plik nie jest dokumentem Word (.docx).</string>
+    <string name="ios_friend">Znajomy</string>
+    <string name="ios_friends_requestExists">To zaproszenie już istnieje.</string>
     <string name="ios_goalSub">Wybierz, ile chcesz.</string>
     <string name="ios_goalTitle">Jakie masz cele?</string>
     <string name="ios_goal_competition">Przygotować się do egzaminu konkursowego</string>
@@ -157,6 +183,8 @@
     <string name="ios_quiz_time_caption_15">Na poważnie</string>
     <string name="ios_quiz_time_caption_30">Szaleństwo</string>
     <string name="ios_quiz_time_caption_5">Dobry początek</string>
+    <string name="ios_sharedCourse">Udostępniony kurs</string>
+    <string name="ios_sharedNoSheet">Ten kurs nie ma notatki</string>
     <string name="ios_signOutMsg">Twoje kursy zostają na tym urządzeniu i na koncie. Znajdziesz je przy następnym logowaniu.</string>
     <string name="ios_signOutQ">Wylogować się?</string>
     <string name="ios_streak_bestLabel">Twój rekord</string>
@@ -185,6 +213,14 @@
     <string name="ios_trialTodayDetail">Bez limitu kursów, generowane fiszki, powtórki: wszystko otwarte.</string>
     <string name="ios_unitWeek">tydzień</string>
     <string name="ios_unitYear">rok</string>
+    <string name="ios_usernameLabel">Nazwa użytkownika</string>
+    <string name="ios_usernamePlaceholder">nazwa użytkownika</string>
+    <string name="ios_usernameRules">Od trzech do dwudziestu znaków, zaczynając od litery lub cyfry.</string>
+    <string name="ios_usernameSavedAs">Zostanie zapisane jako %1$s.</string>
+    <string name="ios_username_empty">Wybierz nazwę użytkownika.</string>
+    <string name="ios_username_taken">%1$s jest już zajęte.</string>
+    <string name="ios_username_tooLong">Maksymalnie dwadzieścia znaków.</string>
+    <string name="ios_username_tooShort">Minimum trzy znaki.</string>
     <string name="ios_yt_invalidLink">Ten link nie prowadzi do filmu z YouTube.</string>
     <string name="ios_yt_noCaptions">Micabo nie mogło odczytać tego filmu. Spróbuj ponownie albo wklej tekst kursu.</string>
     <string name="ios_yt_tooShort">Ten film jest za krótki, by zrobić fiszki.</string>
@@ -419,6 +455,7 @@
     <string name="lesson_theme_day">Jasny</string>
     <string name="lesson_theme_night">Ciemny</string>
     <string name="lesson_theme_system">Jak w telefonie</string>
+    <string name="nav_friends">Znajomi</string>
     <string name="onboarding_compteTitle">Zachowaj swoje postępy</string>
     <string name="onboarding_continueGoogle">Kontynuuj z Google</string>
     <string name="onboarding_emailLabel">Twój adres e-mail</string>
@@ -428,6 +465,8 @@
     <string name="onboarding_sendLink">Wyślij link</string>
     <string name="x_account_deleteMsg">Twoje kursy, karty i historia zostaną usunięte wszędzie. Subskrypcją zarządzasz w Google Play.</string>
     <string name="x_auth_rateLimited">Zbyt wiele prób. Odczekaj minutę i spróbuj ponownie.</string>
+    <string name="x_error_generic">Coś poszło nie tak. Spróbuj ponownie.</string>
+    <string name="x_friends_adopt">Zrób z tego moją lekcję</string>
     <string name="x_onb_language">W jakim języku się uczysz?</string>
     <string name="x_paywall_subscribe">Przejdź na Pro</string>
     <string name="x_record_limit">Do 90 minut. Mika zamienia nagranie na tekst, a potem pisze twoją lekcję.</string>

@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_common_add">Dodaj</string>
+    <string name="app_common_cancel">Prekliči</string>
+    <string name="app_common_save">Shrani</string>
     <string name="app_exams_countdown_today">danes</string>
+    <string name="app_friends_accept">Sprejmi</string>
+    <string name="app_friends_addSomeone">Dodaj nekoga</string>
+    <string name="app_friends_decline">Zavrni</string>
+    <string name="app_friends_emptyBody">Poišči uporabniško ime, da koga dodaš.</string>
+    <string name="app_friends_emptyTitle">Zaenkrat nikogar</string>
+    <string name="app_friends_findClassmates">Poišči tečaje sošolcev</string>
+    <string name="app_friends_incoming">Prejete prošnje</string>
+    <string name="app_friends_list">Tvoji prijatelji</string>
+    <string name="app_friends_loadingCourses">Pregledujemo tečaje …</string>
+    <string name="app_friends_needAccount">Za dodajanje potrebuješ račun</string>
+    <string name="app_friends_noShared">%1$s nima deljenih tečajev.</string>
+    <string name="app_friends_nothingToSee">Zaenkrat ni ničesar</string>
+    <string name="app_friends_outgoing">Poslane prošnje</string>
+    <string name="app_friends_removeFriend">Odstrani iz prijateljev</string>
+    <string name="app_friends_results">Rezultati</string>
+    <string name="app_friends_seeCourses">Poglej tečaje</string>
+    <string name="app_friends_theirCourses">Tečaji</string>
+    <string name="app_friends_usernamePlaceholder">uporabniško ime</string>
+    <string name="app_friends_you">Ti</string>
+    <string name="app_friends_yourAccount">Tvoj račun</string>
     <string name="common_continue">Nadaljuj</string>
     <string name="common_privacy">Zasebnost</string>
     <string name="common_signOut">Odjava</string>
@@ -37,6 +60,7 @@
     <string name="ios_auth_sessionExpired">Tvoja seja je potekla. Znova se prijavi.</string>
     <string name="ios_averageTitle">Kakšno povprečje\nimaš trenutno?</string>
     <string name="ios_backup">Varnostna kopija</string>
+    <string name="ios_cardsSection">Kartice · %1$s</string>
     <string name="ios_connected">Prijavljen račun</string>
     <string name="ios_country">Država</string>
     <string name="ios_countryTitle">Kje se šolaš?</string>
@@ -48,6 +72,8 @@
     <string name="ios_docx_corrupt">Dokument Word je nepopoln ali poškodovan.</string>
     <string name="ios_docx_empty">V tem dokumentu ni bilo najdenega besedila.</string>
     <string name="ios_docx_notDocx">Ta datoteka ni dokument Word (.docx).</string>
+    <string name="ios_friend">Prijatelj</string>
+    <string name="ios_friends_requestExists">Ta prošnja že obstaja.</string>
     <string name="ios_goalSub">Izberi, kolikor želiš.</string>
     <string name="ios_goalTitle">Kakšni so tvoji cilji?</string>
     <string name="ios_goal_competition">Pripraviti se na sprejemni izpit</string>
@@ -159,6 +185,8 @@
     <string name="ios_quiz_time_caption_15">Resno</string>
     <string name="ios_quiz_time_caption_30">Noro</string>
     <string name="ios_quiz_time_caption_5">Dober začetek</string>
+    <string name="ios_sharedCourse">Deljen tečaj</string>
+    <string name="ios_sharedNoSheet">Ta tečaj nima povzetka</string>
     <string name="ios_signOutMsg">Tvoji tečaji ostanejo v tej napravi in v tvojem računu. Ob naslednji prijavi jih najdeš znova.</string>
     <string name="ios_signOutQ">Se želiš odjaviti?</string>
     <string name="ios_streak_bestLabel">Tvoj rekord</string>
@@ -187,6 +215,14 @@
     <string name="ios_trialTodayDetail">Neomejeno tečajev, ustvarjene kartice, ponavljanja: vse je odklenjeno.</string>
     <string name="ios_unitWeek">teden</string>
     <string name="ios_unitYear">leto</string>
+    <string name="ios_usernameLabel">Uporabniško ime</string>
+    <string name="ios_usernamePlaceholder">uporabniško ime</string>
+    <string name="ios_usernameRules">Od tri do dvajset znakov, na začetku črka ali številka.</string>
+    <string name="ios_usernameSavedAs">Shranjeno bo kot %1$s.</string>
+    <string name="ios_username_empty">Izberi uporabniško ime.</string>
+    <string name="ios_username_taken">%1$s je že zasedeno.</string>
+    <string name="ios_username_tooLong">Največ dvajset znakov.</string>
+    <string name="ios_username_tooShort">Najmanj trije znaki.</string>
     <string name="ios_yt_invalidLink">Ta povezava ni videoposnetek YouTube.</string>
     <string name="ios_yt_noCaptions">Micabo tega videoposnetka ni mogel prebrati. Poskusi znova ali prilepi besedilo tečaja.</string>
     <string name="ios_yt_tooShort">Ta videoposnetek je prekratek za ustvarjanje kartic.</string>
@@ -423,6 +459,7 @@
     <string name="lesson_theme_day">Svetla</string>
     <string name="lesson_theme_night">Temna</string>
     <string name="lesson_theme_system">Kot v telefonu</string>
+    <string name="nav_friends">Prijatelji</string>
     <string name="onboarding_compteTitle">Ohrani svoj napredek</string>
     <string name="onboarding_continueGoogle">Nadaljuj z Google</string>
     <string name="onboarding_emailLabel">Tvoj e-poštni naslov</string>

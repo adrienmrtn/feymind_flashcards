@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_common_add">Toevoegen</string>
+    <string name="app_common_cancel">Annuleren</string>
+    <string name="app_common_save">Opslaan</string>
     <string name="app_exams_countdown_today">vandaag</string>
+    <string name="app_friends_accept">Accepteren</string>
+    <string name="app_friends_addSomeone">Iemand toevoegen</string>
+    <string name="app_friends_decline">Weigeren</string>
+    <string name="app_friends_emptyBody">Zoek een gebruikersnaam om iemand toe te voegen.</string>
+    <string name="app_friends_emptyTitle">Nog niemand</string>
+    <string name="app_friends_findClassmates">Vind de cursussen van je klasgenoten</string>
+    <string name="app_friends_incoming">Ontvangen verzoeken</string>
+    <string name="app_friends_list">Je vrienden</string>
+    <string name="app_friends_loadingCourses">Hun cursussen bekijken…</string>
+    <string name="app_friends_needAccount">Je hebt een account nodig om iemand toe te voegen</string>
+    <string name="app_friends_noShared">%1$s heeft geen gedeelde cursus.</string>
+    <string name="app_friends_nothingToSee">Nog niets te zien</string>
+    <string name="app_friends_outgoing">Verstuurde verzoeken</string>
+    <string name="app_friends_removeFriend">Verwijderen uit mijn vrienden</string>
+    <string name="app_friends_results">Resultaten</string>
+    <string name="app_friends_seeCourses">Bekijk hun cursussen</string>
+    <string name="app_friends_theirCourses">Hun cursussen</string>
+    <string name="app_friends_usernamePlaceholder">gebruikersnaam</string>
+    <string name="app_friends_you">Jij</string>
+    <string name="app_friends_yourAccount">Je account</string>
     <string name="common_continue">Doorgaan</string>
     <string name="common_signOut">Uitloggen</string>
     <string name="country_be">België</string>
@@ -33,6 +56,7 @@
     <string name="ios_auth_sessionExpired">Je sessie is verlopen. Log opnieuw in.</string>
     <string name="ios_averageTitle">Wat is je gemiddelde\nop dit moment?</string>
     <string name="ios_backup">Back-up</string>
+    <string name="ios_cardsSection">Kaarten · %1$s</string>
     <string name="ios_connected">Ingelogd</string>
     <string name="ios_country">Land</string>
     <string name="ios_countryTitle">Waar studeer je?</string>
@@ -44,6 +68,8 @@
     <string name="ios_docx_corrupt">Het Word-document is onvolledig of beschadigd.</string>
     <string name="ios_docx_empty">Er is geen tekst gevonden in dit document.</string>
     <string name="ios_docx_notDocx">Dit bestand is geen Word-document (.docx).</string>
+    <string name="ios_friend">Vriend</string>
+    <string name="ios_friends_requestExists">Dat verzoek bestaat al.</string>
     <string name="ios_goalSub">Kies er zoveel als je wilt.</string>
     <string name="ios_goalTitle">Wat zijn je doelen?</string>
     <string name="ios_goal_competition">Me voorbereiden op een toelatingsexamen</string>
@@ -153,6 +179,8 @@
     <string name="ios_quiz_time_caption_15">Serieus</string>
     <string name="ios_quiz_time_caption_30">Krankzinnig</string>
     <string name="ios_quiz_time_caption_5">Een goed begin</string>
+    <string name="ios_sharedCourse">Gedeelde cursus</string>
+    <string name="ios_sharedNoSheet">Deze cursus heeft geen samenvatting</string>
     <string name="ios_signOutMsg">Je cursussen blijven op dit apparaat en in je account. Je vindt ze terug zodra je weer inlogt.</string>
     <string name="ios_signOutQ">Uitloggen?</string>
     <string name="ios_streak_bestLabel">Je beste</string>
@@ -180,6 +208,14 @@
     <string name="ios_trialToday">Vandaag: probeer Micabo Pro</string>
     <string name="ios_trialTodayDetail">Onbeperkt cursussen, gegenereerde kaarten, herhalingen: alles staat open.</string>
     <string name="ios_unitYear">jaar</string>
+    <string name="ios_usernameLabel">Gebruikersnaam</string>
+    <string name="ios_usernamePlaceholder">gebruikersnaam</string>
+    <string name="ios_usernameRules">Drie tot twintig tekens, beginnend met een letter of cijfer.</string>
+    <string name="ios_usernameSavedAs">Wordt opgeslagen als %1$s.</string>
+    <string name="ios_username_empty">Kies een gebruikersnaam.</string>
+    <string name="ios_username_taken">%1$s is al bezet.</string>
+    <string name="ios_username_tooLong">Maximaal twintig tekens.</string>
+    <string name="ios_username_tooShort">Minimaal drie tekens.</string>
     <string name="ios_yt_invalidLink">Deze link is geen YouTube-video.</string>
     <string name="ios_yt_noCaptions">Micabo kon deze video niet lezen. Probeer het opnieuw of plak de tekst van de cursus.</string>
     <string name="ios_yt_tooShort">Deze video is te kort om kaarten te maken.</string>
@@ -409,6 +445,7 @@
     <string name="lesson_theme_day">Licht</string>
     <string name="lesson_theme_night">Donker</string>
     <string name="lesson_theme_system">Zoals telefoon</string>
+    <string name="nav_friends">Vrienden</string>
     <string name="onboarding_compteTitle">Bewaar je voortgang</string>
     <string name="onboarding_continueGoogle">Doorgaan met Google</string>
     <string name="onboarding_emailLabel">Je e-mailadres</string>
@@ -418,6 +455,8 @@
     <string name="onboarding_sendLink">Link ontvangen</string>
     <string name="x_account_deleteMsg">Je cursussen, kaarten en geschiedenis worden overal gewist. Een abonnement beheer je in Google Play.</string>
     <string name="x_auth_rateLimited">Te veel pogingen. Wacht een minuut en probeer het opnieuw.</string>
+    <string name="x_error_generic">Er ging iets mis. Probeer het opnieuw.</string>
+    <string name="x_friends_adopt">Er mijn les van maken</string>
     <string name="x_onb_language">In welke taal studeer je?</string>
     <string name="x_paywall_subscribe">Word Pro</string>
     <string name="x_record_limit">Tot 90 minuten. Mika zet je opname om in tekst en schrijft dan je les.</string>

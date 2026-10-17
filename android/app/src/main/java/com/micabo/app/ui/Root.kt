@@ -1,5 +1,9 @@
 package com.micabo.app.ui
 
+import com.micabo.app.data.Person
+import com.micabo.app.ui.friends.FriendProfileScreen
+import com.micabo.app.ui.friends.FriendsScreen
+import com.micabo.app.ui.friends.SharedCourseScreen
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -60,6 +64,10 @@ sealed interface Screen {
     data class Mock(val examId: String?) : Screen
     /** `reason` : le code du refus (`free_limit`, `import_pro`…), vide depuis les réglages. */
     data class Paywall(val reason: String) : Screen
+    /** Les amis, le profil d'un ami, et le cours qu'il partage. */
+    data object Friends : Screen
+    data class FriendProfile(val person: Person) : Screen
+    data class SharedCourse(val course: com.micabo.app.data.SharedCourse, val author: Person) : Screen
 
     /** Les écrans qui montent du bas, comme une feuille. */
     val isModal: Boolean get() = this is Paywall || this is Creating
@@ -167,6 +175,9 @@ private fun MainScreens(navigator: Navigator) {
                         is Screen.ExamEdit -> ExamEditScreen(screen.id)
                         is Screen.Mock -> MockExamScreen(screen.examId)
                         is Screen.Paywall -> PaywallScreen(screen.reason)
+                        Screen.Friends -> FriendsScreen()
+                        is Screen.FriendProfile -> FriendProfileScreen(screen.person)
+                        is Screen.SharedCourse -> SharedCourseScreen(screen.course, screen.author)
                     }
                 }
             }

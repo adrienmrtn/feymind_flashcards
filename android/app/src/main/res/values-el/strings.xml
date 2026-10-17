@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_common_add">Προσθήκη</string>
+    <string name="app_common_cancel">Ακύρωση</string>
+    <string name="app_common_save">Αποθήκευση</string>
     <string name="app_exams_countdown_today">σήμερα</string>
+    <string name="app_friends_accept">Αποδοχή</string>
+    <string name="app_friends_addSomeone">Πρόσθεσε κάποιον</string>
+    <string name="app_friends_decline">Απόρριψη</string>
+    <string name="app_friends_emptyBody">Αναζήτησε ένα όνομα χρήστη για να προσθέσεις κάποιον.</string>
+    <string name="app_friends_emptyTitle">Κανείς ακόμα</string>
+    <string name="app_friends_findClassmates">Βρες τα μαθήματα των συμμαθητών σου</string>
+    <string name="app_friends_incoming">Εισερχόμενα αιτήματα</string>
+    <string name="app_friends_list">Οι φίλοι σου</string>
+    <string name="app_friends_loadingCourses">Κοιτάμε τα μαθήματά τους…</string>
+    <string name="app_friends_needAccount">Χρειάζεσαι λογαριασμό για να προσθέσεις κάποιον</string>
+    <string name="app_friends_noShared">Ο/Η %1$s δεν έχει κοινόχρηστο μάθημα.</string>
+    <string name="app_friends_nothingToSee">Τίποτα για να δεις προς το παρόν</string>
+    <string name="app_friends_outgoing">Εξερχόμενα αιτήματα</string>
+    <string name="app_friends_removeFriend">Αφαίρεση από φίλους</string>
+    <string name="app_friends_results">Αποτελέσματα</string>
+    <string name="app_friends_seeCourses">Δες τα μαθήματα</string>
+    <string name="app_friends_theirCourses">Τα μαθήματά του</string>
+    <string name="app_friends_usernamePlaceholder">όνομα χρήστη</string>
+    <string name="app_friends_you">Εσύ</string>
+    <string name="app_friends_yourAccount">Ο λογαριασμός σου</string>
     <string name="common_continue">Συνέχεια</string>
     <string name="common_privacy">Απόρρητο</string>
     <string name="common_signOut">Αποσύνδεση</string>
@@ -38,6 +61,7 @@
     <string name="ios_auth_sessionExpired">Η συνεδρία σου έληξε. Συνδέσου ξανά.</string>
     <string name="ios_averageTitle">Ποιος είναι ο μέσος όρος σου\nαυτή τη στιγμή;</string>
     <string name="ios_backup">Αντίγραφο ασφαλείας</string>
+    <string name="ios_cardsSection">Κάρτες · %1$s</string>
     <string name="ios_connected">Σε σύνδεση</string>
     <string name="ios_country">Χώρα</string>
     <string name="ios_countryTitle">Πού σπουδάζεις;</string>
@@ -49,6 +73,8 @@
     <string name="ios_docx_corrupt">Το έγγραφο Word είναι ελλιπές ή κατεστραμμένο.</string>
     <string name="ios_docx_empty">Δεν βρέθηκε κείμενο σε αυτό το έγγραφο.</string>
     <string name="ios_docx_notDocx">Αυτό το αρχείο δεν είναι έγγραφο Word (.docx).</string>
+    <string name="ios_friend">Φίλος</string>
+    <string name="ios_friends_requestExists">Αυτό το αίτημα υπάρχει ήδη.</string>
     <string name="ios_goalSub">Διάλεξε όσα θέλεις.</string>
     <string name="ios_goalTitle">Ποιοι είναι οι στόχοι σου;</string>
     <string name="ios_goal_competition">Προετοιμασία για διαγωνισμό</string>
@@ -159,6 +185,8 @@
     <string name="ios_quiz_time_caption_15">Σοβαρά</string>
     <string name="ios_quiz_time_caption_30">Τρέλα</string>
     <string name="ios_quiz_time_caption_5">Καλή αρχή</string>
+    <string name="ios_sharedCourse">Κοινόχρηστο μάθημα</string>
+    <string name="ios_sharedNoSheet">Αυτό το μάθημα δεν έχει σύνοψη</string>
     <string name="ios_signOutMsg">Τα μαθήματά σου μένουν σε αυτή τη συσκευή και στον λογαριασμό σου. Θα τα βρεις ξανά την επόμενη φορά που θα συνδεθείς.</string>
     <string name="ios_signOutQ">Αποσύνδεση;</string>
     <string name="ios_streak_bestLabel">Το ρεκόρ σου</string>
@@ -187,6 +215,14 @@
     <string name="ios_trialTodayDetail">Απεριόριστα μαθήματα, έτοιμες κάρτες, επαναλήψεις: όλα ανοιχτά.</string>
     <string name="ios_unitWeek">εβδομάδα</string>
     <string name="ios_unitYear">έτος</string>
+    <string name="ios_usernameLabel">Όνομα χρήστη</string>
+    <string name="ios_usernamePlaceholder">όνομα χρήστη</string>
+    <string name="ios_usernameRules">Τρεις έως είκοσι χαρακτήρες, με αρχή γράμμα ή ψηφίο.</string>
+    <string name="ios_usernameSavedAs">Θα αποθηκευτεί ως %1$s.</string>
+    <string name="ios_username_empty">Διάλεξε όνομα χρήστη.</string>
+    <string name="ios_username_taken">Το %1$s χρησιμοποιείται ήδη.</string>
+    <string name="ios_username_tooLong">Έως είκοσι χαρακτήρες.</string>
+    <string name="ios_username_tooShort">Τουλάχιστον τρεις χαρακτήρες.</string>
     <string name="ios_yt_invalidLink">Αυτός ο σύνδεσμος δεν είναι βίντεο YouTube.</string>
     <string name="ios_yt_noCaptions">Το Micabo δεν μπόρεσε να διαβάσει αυτό το βίντεο. Δοκίμασε ξανά ή επικόλλησε το κείμενο του μαθήματος.</string>
     <string name="ios_yt_tooShort">Αυτό το βίντεο είναι πολύ μικρό για να φτιαχτούν κάρτες.</string>
@@ -425,6 +461,7 @@
     <string name="lesson_theme_day">Φωτεινό</string>
     <string name="lesson_theme_night">Σκοτεινό</string>
     <string name="lesson_theme_system">Όπως το κινητό</string>
+    <string name="nav_friends">Φίλοι</string>
     <string name="onboarding_compteTitle">Κράτα την πρόοδό σου</string>
     <string name="onboarding_continueGoogle">Συνέχεια με Google</string>
     <string name="onboarding_emailLabel">Η διεύθυνση email σου</string>

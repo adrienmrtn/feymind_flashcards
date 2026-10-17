@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_common_add">Adaugă</string>
+    <string name="app_common_cancel">Anulează</string>
+    <string name="app_common_save">Salvează</string>
     <string name="app_exams_countdown_today">azi</string>
+    <string name="app_friends_accept">Acceptă</string>
+    <string name="app_friends_addSomeone">Adaugă pe cineva</string>
+    <string name="app_friends_decline">Refuză</string>
+    <string name="app_friends_emptyBody">Caută un nume de utilizator ca să adaugi pe cineva.</string>
+    <string name="app_friends_emptyTitle">Încă nimeni</string>
+    <string name="app_friends_findClassmates">Găsește cursurile colegilor</string>
+    <string name="app_friends_incoming">Cereri primite</string>
+    <string name="app_friends_list">Prietenii tăi</string>
+    <string name="app_friends_loadingCourses">Ne uităm la cursurile lor…</string>
+    <string name="app_friends_needAccount">Ai nevoie de un cont ca să adaugi pe cineva</string>
+    <string name="app_friends_noShared">%1$s nu are niciun curs partajat.</string>
+    <string name="app_friends_nothingToSee">Nimic de văzut deocamdată</string>
+    <string name="app_friends_outgoing">Cereri trimise</string>
+    <string name="app_friends_removeFriend">Elimină din prieteni</string>
+    <string name="app_friends_results">Rezultate</string>
+    <string name="app_friends_seeCourses">Vezi cursurile lor</string>
+    <string name="app_friends_theirCourses">Cursurile lor</string>
+    <string name="app_friends_usernamePlaceholder">utilizator</string>
+    <string name="app_friends_you">Tu</string>
+    <string name="app_friends_yourAccount">Contul tău</string>
     <string name="common_continue">Continuă</string>
     <string name="common_privacy">Confidențialitate</string>
     <string name="common_signOut">Deconectează-te</string>
@@ -33,6 +56,7 @@
     <string name="ios_auth_providerNotEnabled">Conectarea cu %1$s nu e încă activată în acest proiect Supabase.</string>
     <string name="ios_auth_sessionExpired">Sesiunea ta a expirat. Conectează-te din nou.</string>
     <string name="ios_averageTitle">Care e media ta\nchiar acum?</string>
+    <string name="ios_cardsSection">Carduri · %1$s</string>
     <string name="ios_connected">Conectat</string>
     <string name="ios_country">Țară</string>
     <string name="ios_countryTitle">Unde studiezi?</string>
@@ -44,6 +68,8 @@
     <string name="ios_docx_corrupt">Documentul Word e incomplet sau corupt.</string>
     <string name="ios_docx_empty">N-am găsit text în documentul ăsta.</string>
     <string name="ios_docx_notDocx">Fișierul ăsta nu e un document Word (.docx).</string>
+    <string name="ios_friend">Prieten</string>
+    <string name="ios_friends_requestExists">Cererea asta există deja.</string>
     <string name="ios_goalSub">Alege câte vrei.</string>
     <string name="ios_goalTitle">Care sunt obiectivele tale?</string>
     <string name="ios_goal_competition">Să mă pregătesc pentru un concurs</string>
@@ -152,6 +178,8 @@
     <string name="ios_quiz_time_caption_15">Serios</string>
     <string name="ios_quiz_time_caption_30">Nebunie</string>
     <string name="ios_quiz_time_caption_5">Un început bun</string>
+    <string name="ios_sharedCourse">Curs partajat</string>
+    <string name="ios_sharedNoSheet">Cursul ăsta nu are fișă</string>
     <string name="ios_signOutMsg">Cursurile rămân pe dispozitiv și în cont. Le regăsești data viitoare când te conectezi.</string>
     <string name="ios_signOutQ">Te deconectezi?</string>
     <string name="ios_streak_bestLabel">Cel mai bun</string>
@@ -180,6 +208,14 @@
     <string name="ios_trialTodayDetail">Cursuri nelimitate, carduri generate, recapitulări: totul e deschis.</string>
     <string name="ios_unitWeek">săptămână</string>
     <string name="ios_unitYear">an</string>
+    <string name="ios_usernameLabel">Nume de utilizator</string>
+    <string name="ios_usernamePlaceholder">utilizator</string>
+    <string name="ios_usernameRules">Între trei și douăzeci de caractere, începând cu o literă sau o cifră.</string>
+    <string name="ios_usernameSavedAs">Va fi salvat ca %1$s.</string>
+    <string name="ios_username_empty">Alege un nume de utilizator.</string>
+    <string name="ios_username_taken">%1$s e deja folosit.</string>
+    <string name="ios_username_tooLong">Maximum douăzeci de caractere.</string>
+    <string name="ios_username_tooShort">Minimum trei caractere.</string>
     <string name="ios_yt_invalidLink">Linkul ăsta nu e un video YouTube.</string>
     <string name="ios_yt_noCaptions">Micabo n-a putut citi videoclipul. Încearcă din nou sau lipește textul cursului.</string>
     <string name="ios_yt_tooShort">Videoclipul e prea scurt ca să generez carduri.</string>
@@ -412,6 +448,7 @@
     <string name="lesson_theme_day">Luminos</string>
     <string name="lesson_theme_night">Întunecat</string>
     <string name="lesson_theme_system">Ca telefonul</string>
+    <string name="nav_friends">Prieteni</string>
     <string name="onboarding_compteTitle">Păstrează-ți progresul</string>
     <string name="onboarding_continueGoogle">Continuă cu Google</string>
     <string name="onboarding_emailLabel">Adresa ta de e-mail</string>

@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_common_add">Lisa</string>
+    <string name="app_common_cancel">Tühista</string>
+    <string name="app_common_save">Salvesta</string>
     <string name="app_exams_countdown_today">täna</string>
+    <string name="app_friends_accept">Nõustu</string>
+    <string name="app_friends_addSomeone">Lisa keegi</string>
+    <string name="app_friends_decline">Keeldu</string>
+    <string name="app_friends_emptyBody">Otsi kasutajanime, et kedagi lisada.</string>
+    <string name="app_friends_emptyTitle">Veel pole kedagi</string>
+    <string name="app_friends_findClassmates">Leia klassikaaslaste kursused</string>
+    <string name="app_friends_incoming">Saabunud kutsed</string>
+    <string name="app_friends_list">Sinu sõbrad</string>
+    <string name="app_friends_loadingCourses">Vaatan kursusi…</string>
+    <string name="app_friends_needAccount">Kellegi lisamiseks on vaja kontot</string>
+    <string name="app_friends_noShared">Kasutajal %1$s pole jagatud kursusi.</string>
+    <string name="app_friends_nothingToSee">Praegu pole midagi näha</string>
+    <string name="app_friends_outgoing">Saadetud kutsed</string>
+    <string name="app_friends_removeFriend">Eemalda sõprade hulgast</string>
+    <string name="app_friends_results">Tulemused</string>
+    <string name="app_friends_seeCourses">Vaata kursusi</string>
+    <string name="app_friends_theirCourses">Tema kursused</string>
+    <string name="app_friends_usernamePlaceholder">kasutajanimi</string>
+    <string name="app_friends_you">Sina</string>
+    <string name="app_friends_yourAccount">Sinu konto</string>
     <string name="common_continue">Jätka</string>
     <string name="common_privacy">Privaatsus</string>
     <string name="common_signOut">Logi välja</string>
@@ -36,6 +59,7 @@
     <string name="ios_auth_sessionExpired">Sinu sessioon on aegunud. Logi uuesti sisse.</string>
     <string name="ios_averageTitle">Mis on sinu keskmine\npraegu?</string>
     <string name="ios_backup">Varundus</string>
+    <string name="ios_cardsSection">Kaardid · %1$s</string>
     <string name="ios_connected">Sisse logitud</string>
     <string name="ios_country">Riik</string>
     <string name="ios_countryTitle">Kus sa õpid?</string>
@@ -47,6 +71,8 @@
     <string name="ios_docx_corrupt">Wordi dokument on puudulik või rikutud.</string>
     <string name="ios_docx_empty">Selles dokumendis ei leitud teksti.</string>
     <string name="ios_docx_notDocx">See fail pole Wordi dokument (.docx).</string>
+    <string name="ios_friend">Sõber</string>
+    <string name="ios_friends_requestExists">See kutse on juba olemas.</string>
     <string name="ios_goalSub">Vali nii palju, kui soovid.</string>
     <string name="ios_goalTitle">Mis on sinu eesmärgid?</string>
     <string name="ios_goal_competition">Valmistu konkursieksamiks</string>
@@ -156,6 +182,8 @@
     <string name="ios_quiz_time_caption_15">Tõsine</string>
     <string name="ios_quiz_time_caption_30">Hullumeelne</string>
     <string name="ios_quiz_time_caption_5">Hea algus</string>
+    <string name="ios_sharedCourse">Jagatud kursus</string>
+    <string name="ios_sharedNoSheet">Sellel kursusel pole konspekti</string>
     <string name="ios_signOutMsg">Sinu kursused jäävad sellesse seadmesse ja sinu kontole. Leiad need järgmisel sisselogimisel uuesti.</string>
     <string name="ios_signOutQ">Kas logida välja?</string>
     <string name="ios_streak_bestLabel">Sinu rekord</string>
@@ -184,6 +212,14 @@
     <string name="ios_trialTodayDetail">Piiramatult kursusi, loodud kaardid, kordamine: kõik on avatud.</string>
     <string name="ios_unitWeek">nädal</string>
     <string name="ios_unitYear">aasta</string>
+    <string name="ios_usernameLabel">Kasutajanimi</string>
+    <string name="ios_usernamePlaceholder">kasutajanimi</string>
+    <string name="ios_usernameRules">Kolm kuni kakskümmend tähemärki, algab tähe või numbriga.</string>
+    <string name="ios_usernameSavedAs">Salvestatakse nimega %1$s.</string>
+    <string name="ios_username_empty">Vali kasutajanimi.</string>
+    <string name="ios_username_taken">%1$s on juba võetud.</string>
+    <string name="ios_username_tooLong">Maksimaalselt kakskümmend tähemärki.</string>
+    <string name="ios_username_tooShort">Vähemalt kolm tähemärki.</string>
     <string name="ios_yt_invalidLink">See link pole YouTube\'i video.</string>
     <string name="ios_yt_noCaptions">Micabo ei saanud seda videot lugeda. Proovi uuesti või kleebi kursuse tekst.</string>
     <string name="ios_yt_tooShort">See video on kaartide loomiseks liiga lühike.</string>
@@ -420,6 +456,7 @@
     <string name="lesson_theme_day">Hele</string>
     <string name="lesson_theme_night">Tume</string>
     <string name="lesson_theme_system">Nagu telefonis</string>
+    <string name="nav_friends">Sõbrad</string>
     <string name="onboarding_compteTitle">Hoia oma edusamme alles</string>
     <string name="onboarding_continueGoogle">Jätka Google\'iga</string>
     <string name="onboarding_emailLabel">Sinu e-posti aadress</string>

@@ -164,6 +164,12 @@ class LessonComposer(
         read(SupportKind.TEXT, name) { ImportedDocument(text = text, images = emptyList(), name = name, source = "text") }
     }
 
+    /** Le cours d'un ami, repris : son texte devient un support, sous son titre. */
+    fun addShared(title: String, text: String) {
+        val name = title.ifBlank { localized(R.string.lesson_import_pastedName) }
+        read(SupportKind.TEXT, name) { ImportedDocument(text = text, images = emptyList(), name = name, source = "text") }
+    }
+
     /**
      * Tout ce qui part au serveur (`LessonComposer.creation`). Un sujet seul part comme sujet ;
      * avec des supports, ce qui est tapé devient la consigne de l'élève, en tête du texte.

@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_common_add">Hozzáadás</string>
+    <string name="app_common_cancel">Mégse</string>
+    <string name="app_common_save">Mentés</string>
     <string name="app_exams_countdown_today">ma</string>
+    <string name="app_friends_accept">Elfogadás</string>
+    <string name="app_friends_addSomeone">Ismerős hozzáadása</string>
+    <string name="app_friends_decline">Elutasítás</string>
+    <string name="app_friends_emptyBody">Keress rá egy felhasználónévre, hogy hozzáadj valakit.</string>
+    <string name="app_friends_emptyTitle">Még senki</string>
+    <string name="app_friends_findClassmates">Találd meg az osztálytársaid kurzusait</string>
+    <string name="app_friends_incoming">Beérkezett kérések</string>
+    <string name="app_friends_list">A barátaid</string>
+    <string name="app_friends_loadingCourses">Kurzusok betöltése…</string>
+    <string name="app_friends_needAccount">Ismerős hozzáadásához fiók kell</string>
+    <string name="app_friends_noShared">%1$s nem osztott meg kurzust.</string>
+    <string name="app_friends_nothingToSee">Egyelőre nincs mit nézni</string>
+    <string name="app_friends_outgoing">Elküldött kérések</string>
+    <string name="app_friends_removeFriend">Eltávolítás a barátaim közül</string>
+    <string name="app_friends_results">Találatok</string>
+    <string name="app_friends_seeCourses">Kurzusai</string>
+    <string name="app_friends_theirCourses">Kurzusai</string>
+    <string name="app_friends_usernamePlaceholder">felhasználónév</string>
+    <string name="app_friends_you">Te</string>
+    <string name="app_friends_yourAccount">A fiókod</string>
     <string name="common_continue">Tovább</string>
     <string name="common_privacy">Adatvédelem</string>
     <string name="common_signOut">Kijelentkezés</string>
@@ -37,6 +60,7 @@
     <string name="ios_auth_sessionExpired">Lejárt a munkameneted. Jelentkezz be újra.</string>
     <string name="ios_averageTitle">Mennyi most\naz átlagod?</string>
     <string name="ios_backup">Biztonsági mentés</string>
+    <string name="ios_cardsSection">Kártyák · %1$s</string>
     <string name="ios_connected">Bejelentkezve</string>
     <string name="ios_country">Ország</string>
     <string name="ios_countryTitle">Hol tanulsz?</string>
@@ -48,6 +72,8 @@
     <string name="ios_docx_corrupt">A Word-dokumentum hiányos vagy sérült.</string>
     <string name="ios_docx_empty">Ebben a dokumentumban nem található szöveg.</string>
     <string name="ios_docx_notDocx">Ez a fájl nem Word-dokumentum (.docx).</string>
+    <string name="ios_friend">Barát</string>
+    <string name="ios_friends_requestExists">Ez a kérés már létezik.</string>
     <string name="ios_goalSub">Többet is választhatsz.</string>
     <string name="ios_goalTitle">Mik a céljaid?</string>
     <string name="ios_goal_competition">Felkészülés felvételire</string>
@@ -159,6 +185,8 @@
     <string name="ios_quiz_time_caption_15">Komoly</string>
     <string name="ios_quiz_time_caption_30">Őrület</string>
     <string name="ios_quiz_time_caption_5">Jó kezdet</string>
+    <string name="ios_sharedCourse">Megosztott kurzus</string>
+    <string name="ios_sharedNoSheet">Ennek a kurzusnak nincs jegyzete</string>
     <string name="ios_signOutMsg">A kurzusaid ezen az eszközön és a fiókodban maradnak. A következő bejelentkezéskor újra megtalálod őket.</string>
     <string name="ios_signOutQ">Kijelentkezel?</string>
     <string name="ios_streak_bestLabel">A rekordod</string>
@@ -187,6 +215,14 @@
     <string name="ios_trialTodayDetail">Korlátlan kurzus, generált kártyák, ismétlés: minden nyitva áll.</string>
     <string name="ios_unitWeek">hét</string>
     <string name="ios_unitYear">év</string>
+    <string name="ios_usernameLabel">Felhasználónév</string>
+    <string name="ios_usernamePlaceholder">felhasználónév</string>
+    <string name="ios_usernameRules">Három–húsz karakter, betűvel vagy számjeggyel kezdődik.</string>
+    <string name="ios_usernameSavedAs">Így lesz mentve: %1$s.</string>
+    <string name="ios_username_empty">Válassz felhasználónevet.</string>
+    <string name="ios_username_taken">%1$s már foglalt.</string>
+    <string name="ios_username_tooLong">Legfeljebb húsz karakter.</string>
+    <string name="ios_username_tooShort">Legalább három karakter.</string>
     <string name="ios_yt_invalidLink">Ez a link nem YouTube-videó.</string>
     <string name="ios_yt_noCaptions">A Micabo nem tudta beolvasni ezt a videót. Próbáld újra, vagy illeszd be a kurzus szövegét.</string>
     <string name="ios_yt_tooShort">Ez a videó túl rövid a kártyák készítéséhez.</string>
@@ -425,6 +461,7 @@
     <string name="lesson_theme_day">Világos</string>
     <string name="lesson_theme_night">Sötét</string>
     <string name="lesson_theme_system">Mint a telefonon</string>
+    <string name="nav_friends">Barátok</string>
     <string name="onboarding_compteTitle">Őrizd meg a haladásod</string>
     <string name="onboarding_continueGoogle">Folytatás Google-lel</string>
     <string name="onboarding_emailLabel">Az e-mail-címed</string>

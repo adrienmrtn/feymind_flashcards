@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
 <resources>
+    <string name="app_common_add">Добавить</string>
+    <string name="app_common_cancel">Отмена</string>
+    <string name="app_common_save">Сохранить</string>
     <string name="app_exams_countdown_today">сегодня</string>
+    <string name="app_friends_accept">Принять</string>
+    <string name="app_friends_addSomeone">Добавить друга</string>
+    <string name="app_friends_decline">Отклонить</string>
+    <string name="app_friends_emptyBody">Найди имя пользователя, чтобы добавить друга.</string>
+    <string name="app_friends_emptyTitle">Пока никого</string>
+    <string name="app_friends_findClassmates">Найди курсы одноклассников</string>
+    <string name="app_friends_incoming">Входящие запросы</string>
+    <string name="app_friends_list">Твои друзья</string>
+    <string name="app_friends_loadingCourses">Смотрим их курсы…</string>
+    <string name="app_friends_needAccount">Чтобы добавить друга, нужен аккаунт</string>
+    <string name="app_friends_noShared">У %1$s нет общих курсов.</string>
+    <string name="app_friends_nothingToSee">Пока смотреть нечего</string>
+    <string name="app_friends_outgoing">Исходящие запросы</string>
+    <string name="app_friends_removeFriend">Удалить из друзей</string>
+    <string name="app_friends_results">Результаты</string>
+    <string name="app_friends_seeCourses">Их курсы</string>
+    <string name="app_friends_theirCourses">Их курсы</string>
+    <string name="app_friends_usernamePlaceholder">имя пользователя</string>
+    <string name="app_friends_you">Ты</string>
+    <string name="app_friends_yourAccount">Твой аккаунт</string>
     <string name="common_continue">Продолжить</string>
     <string name="common_privacy">Конфиденциальность</string>
     <string name="common_signOut">Выйти</string>
@@ -38,6 +61,7 @@
     <string name="ios_auth_sessionExpired">Сессия истекла. Войди снова.</string>
     <string name="ios_averageTitle">Какой у тебя средний балл\nсейчас?</string>
     <string name="ios_backup">Резервная копия</string>
+    <string name="ios_cardsSection">Карточки · %1$s</string>
     <string name="ios_connected">Вход выполнен</string>
     <string name="ios_country">Страна</string>
     <string name="ios_countryTitle">Где ты учишься?</string>
@@ -49,6 +73,8 @@
     <string name="ios_docx_corrupt">Документ Word неполный или повреждён.</string>
     <string name="ios_docx_empty">В этом документе не найден текст.</string>
     <string name="ios_docx_notDocx">Этот файл не документ Word (.docx).</string>
+    <string name="ios_friend">Друг</string>
+    <string name="ios_friends_requestExists">Такой запрос уже есть.</string>
     <string name="ios_goalSub">Выбери сколько хочешь.</string>
     <string name="ios_goalTitle">Какие у тебя цели?</string>
     <string name="ios_goal_competition">Подготовка к конкурсному экзамену</string>
@@ -159,6 +185,8 @@
     <string name="ios_quiz_time_caption_15">Серьёзно</string>
     <string name="ios_quiz_time_caption_30">Безумно</string>
     <string name="ios_quiz_time_caption_5">Хорошее начало</string>
+    <string name="ios_sharedCourse">Общий курс</string>
+    <string name="ios_sharedNoSheet">У этого курса нет конспекта</string>
     <string name="ios_signOutMsg">Курсы останутся на этом устройстве и в аккаунте. Ты найдёшь их при следующем входе.</string>
     <string name="ios_signOutQ">Выйти?</string>
     <string name="ios_streak_bestLabel">Твой рекорд</string>
@@ -187,6 +215,14 @@
     <string name="ios_trialTodayDetail">Безлимит курсов, генерация карточек, повторения: всё открыто.</string>
     <string name="ios_unitWeek">неделю</string>
     <string name="ios_unitYear">год</string>
+    <string name="ios_usernameLabel">Имя пользователя</string>
+    <string name="ios_usernamePlaceholder">имя пользователя</string>
+    <string name="ios_usernameRules">От трёх до двадцати символов, начиная с буквы или цифры.</string>
+    <string name="ios_usernameSavedAs">Будет сохранено как %1$s.</string>
+    <string name="ios_username_empty">Выбери имя пользователя.</string>
+    <string name="ios_username_taken">%1$s уже занято.</string>
+    <string name="ios_username_tooLong">Максимум двадцать символов.</string>
+    <string name="ios_username_tooShort">Минимум три символа.</string>
     <string name="ios_yt_invalidLink">Эта ссылка не ведёт на видео YouTube.</string>
     <string name="ios_yt_noCaptions">Micabo не смог прочитать это видео. Попробуй ещё раз или вставь текст урока.</string>
     <string name="ios_yt_tooShort">Это видео слишком короткое для карточек.</string>
@@ -425,6 +461,7 @@
     <string name="lesson_theme_day">Светлая</string>
     <string name="lesson_theme_night">Тёмная</string>
     <string name="lesson_theme_system">Как на телефоне</string>
+    <string name="nav_friends">Друзья</string>
     <string name="onboarding_compteTitle">Сохрани свой прогресс</string>
     <string name="onboarding_continueGoogle">Продолжить с Google</string>
     <string name="onboarding_emailLabel">Твой email</string>
@@ -434,6 +471,8 @@
     <string name="onboarding_sendLink">Получить ссылку</string>
     <string name="x_account_deleteMsg">Твои курсы, карточки и история будут удалены везде. Подпиской управляют в Google Play.</string>
     <string name="x_auth_rateLimited">Слишком много попыток. Подожди минуту и попробуй снова.</string>
+    <string name="x_error_generic">Что-то пошло не так. Попробуй ещё раз.</string>
+    <string name="x_friends_adopt">Сделать из этого мой урок</string>
     <string name="x_onb_language">На каком языке ты учишься?</string>
     <string name="x_paywall_subscribe">Перейти на Pro</string>
     <string name="x_record_limit">До 90 минут. Мика превращает запись в текст, а затем пишет урок.</string>
