@@ -74,10 +74,31 @@ struct NotificationsStepView: View {
             }
             .frame(maxWidth: .infinity)
         } footer: {
-            // Le rond fléché, comme partout : c'est le sous-titre qui dit qu'avancer
-            // active le rappel, et la boîte du système qui le confirme.
-            OnboardingArrowButton(isEnabled: !isAsking, isLoading: isAsking) {
-                Task { await ask() }
+            // Le rond fléché active le rappel ; à gauche, une sortie franche pour qui n'en
+            // veut pas : on avance sans ouvrir la boîte du système, qu'iOS ne laisse poser
+            // qu'une fois — elle reste disponible pour plus tard, dans les réglages.
+            HStack(spacing: MicaboSpacing.md) {
+                Button {
+                    guard !isAsking else { return }
+                    model.advance()
+                } label: {
+                    Text(t("ios.notif.skip"))
+                        .font(MicaboFont.ui(15, weight: .bold))
+                        .foregroundStyle(OnboardingPalette.gray)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.8)
+                        .frame(minHeight: 44, alignment: .leading)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
+                .disabled(isAsking)
+
+                Spacer(minLength: 0)
+
+                OnboardingArrowButton(isEnabled: !isAsking, isLoading: isAsking, fillsWidth: false) {
+                    Task { await ask() }
+                }
             }
         }
         .task { await play() }
@@ -85,63 +106,83 @@ struct NotificationsStepView: View {
 
     // MARK: - La semaine
 
-    /// Sept ronds qui se cochent, et la flamme qui compte avec eux.
+    /// **La série, comme dans l'app** : la flamme 3D et le compte, puis sept jours qui
+    /// s'allument l'un après l'autre, chacun d'une petite flamme, aujourd'hui cerclé.
     private var weekCard: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(spacing: 16) {
+            HStack(spacing: 12) {
+                MicaboIconView(icon: .flame, size: 52)
+                    .scaleEffect(checked == Self.days ? 1.08 : 1)
+                    .animation(.spring(duration: 0.4, bounce: 0.5), value: checked)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(checked)")
+                        .font(MicaboFont.number(34))
+                        .foregroundStyle(MicaboColor.flameInk)
+                        .contentTransition(.numericText())
+                        .monospacedDigit()
+                    Text(i18n.t("ios.notif.streakUnit"))
+                        .font(MicaboFont.ui(13.5, weight: .bold))
+                        .foregroundStyle(MicaboColor.flameInk.opacity(0.8))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .animation(OnboardingMotion.select, value: checked)
+
             HStack(spacing: 6) {
                 ForEach(0..<Self.days, id: \.self) { index in
                     day(index)
                 }
             }
-
-            streakPill
         }
         .padding(18)
-        .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .background(
+            LinearGradient(colors: [MicaboColor.warmWashStart, MicaboColor.warmWashEnd], startPoint: .topLeading, endPoint: .bottomTrailing),
+            in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+        )
+        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(MicaboColor.warmWashStroke, lineWidth: 1.5))
+        .micaboElevation(.card)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(i18n.t("ios.notif.streak", ["count": "\(checked)"]))
     }
 
     private func day(_ index: Int) -> some View {
         let isChecked = index < checked
-        let fill: Color = isChecked ? OnboardingPalette.ink : OnboardingPalette.cardStrong
-        let pop: CGFloat = 1
+        let isToday = index == Self.days - 1
 
         return VStack(spacing: 7) {
             ZStack {
-                Circle().fill(fill)
+                Circle()
+                    .fill(isChecked
+                        ? AnyShapeStyle(LinearGradient(colors: [MicaboColor.flame.opacity(0.85), MicaboColor.flame], startPoint: .top, endPoint: .bottom))
+                        : AnyShapeStyle(MicaboColor.flameTrack))
 
                 if isChecked {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 13, weight: .heavy))
-                        .foregroundStyle(OnboardingPalette.white)
-                        .transition(.opacity)
+                    Image(systemName: "flame.fill")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(Color.white)
+                        .transition(.scale(scale: 0.3).combined(with: .opacity))
                 }
             }
-            .frame(width: 34, height: 34)
-            .scaleEffect(pop)
+            .frame(width: 36, height: 36)
+            .overlay {
+                if isToday {
+                    Circle()
+                        .strokeBorder(MicaboColor.flame, lineWidth: 2)
+                        .padding(-4)
+                }
+            }
+            .scaleEffect(isChecked ? 1 : 0.9)
 
             Text(dayInitials[index])
-                .font(MicaboFont.ui(11.5, weight: .semibold))
-                .foregroundStyle(isChecked ? OnboardingPalette.ink : OnboardingPalette.grayLight)
+                .font(MicaboFont.ui(11.5, weight: .bold))
+                .foregroundStyle(isChecked ? MicaboColor.flameInk : MicaboColor.warmProse)
         }
         .frame(maxWidth: .infinity)
-        .animation(OnboardingMotion.select, value: isChecked)
-    }
-
-    /// La flamme et le compte, qui grandissent avec la semaine.
-    private var streakPill: some View {
-        HStack(spacing: 7) {
-            Text("🔥")
-                .font(.system(size: 15))
-            Text(i18n.t("ios.notif.streak", ["count": "\(checked)"]))
-                .font(MicaboFont.ui(13.5, weight: .bold))
-                .foregroundStyle(OnboardingPalette.ink)
-                .contentTransition(.numericText())
-                .monospacedDigit()
-        }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 13)
-        .background(OnboardingPalette.white, in: Capsule())
-        .animation(OnboardingMotion.select, value: checked)
+        .animation(.spring(duration: 0.35, bounce: 0.5), value: isChecked)
     }
 
     // MARK: - La notification
@@ -182,9 +223,11 @@ struct NotificationsStepView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(OnboardingPalette.white, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .shadow(color: OnboardingPalette.ink.opacity(0.1), radius: 24, y: 10)
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .micaboElevation(.card)
         .opacity(hasLanded ? 1 : 0)
+        .offset(y: hasLanded ? 0 : -18)
         .animation(OnboardingMotion.enter, value: hasLanded)
         .accessibilityElement(children: .combine)
     }

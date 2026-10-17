@@ -517,7 +517,7 @@ function sentences(text: string): string[] {
  * Un point dans `$3.14$` n'est pas une fin de phrase, et une coupure au milieu d'un
  * `**terme**` laisserait deux étoiles orphelines dans chaque moitié.
  */
-function protectedSpans(text: string): [number, number][] {
+export function protectedSpans(text: string): [number, number][] {
   const spans: [number, number][] = [];
   for (const marker of ["$", "**", "=="]) {
     let index = 0;

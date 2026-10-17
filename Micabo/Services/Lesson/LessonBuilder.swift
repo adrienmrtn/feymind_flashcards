@@ -105,7 +105,7 @@ final class LessonBuilder {
         defer { background.end() }
 
         onStage(.reading)
-        let audience = audience()
+        let audience = audience().preparing(request.examDate.map { Self.examLine(name: nil, date: $0) })
         let result: LessonPlanResult
         do {
             result = try await service.plan(LessonPlanRequest(
@@ -170,7 +170,9 @@ final class LessonBuilder {
             groups: plan.groups,
             shortened: plan.shortened,
             singleQuiz: plan.singleQuiz,
-            status: .generating
+            status: .generating,
+            symbols: PathSymbol.unique(plan.themes.map { $0.symbol ?? "" }),
+            points: plan.themes.map { $0.points ?? [] }
         ).encoded()
         context.insert(course)
 
@@ -222,13 +224,17 @@ final class LessonBuilder {
         for chapter in chapters { writing.insert(chapter.id) }
 
         let titles = course.orderedChapters.map(\.title)
+        let path = course.lessonPath
         let base = ThemeJob.Base(
             lessonID: course.id,
             lessonTitle: course.title,
             themes: titles,
             context: course.contextText,
             subject: course.subject,
-            audience: audience()
+            audience: audience().preparing(Self.examLine(for: course, in: context)),
+            points: path?.points ?? [],
+            objectives: path?.intro.lines ?? [],
+            source: LessonSourceKind(courseSource: course.source).rawValue
         )
 
         var notified = false
@@ -311,15 +317,170 @@ final class LessonBuilder {
         try? context.save()
     }
 
-    /// Les flashcards d'un thème : recto/verso, rattachées au thème, à réviser dès aujourd'hui.
+    /// Les flashcards d'un thème : recto/verso ou à trou, rattachées au thème, à réviser dès
+    /// aujourd'hui.
     static func addCards(_ cards: [GeneratedCard], to chapter: Chapter, of course: Course, in context: ModelContext) {
         var position = course.cards.count
         for generated in cards {
-            let card = Flashcard(front: generated.front, back: generated.back, position: position, course: course)
+            let front = generated.kind == "cloze" ? ClozeGap.normalize(generated.front) : generated.front
+            let card = Flashcard(front: front, back: generated.back, position: position, course: course)
+            if generated.kind == "cloze", ClozeGap.isPresent(in: front) {
+                card.kindRaw = CardKind.cloze.rawValue
+            }
             card.chapter = chapter
             context.insert(card)
             position += 1
         }
+    }
+
+    // MARK: - De nouvelles questions
+
+    /// **Un lot de nouvelles questions d'entraînement**, écrit par Mika loin de celles déjà
+    /// posées et surtout sur les thèmes ratés. Les questions rejoignent la réserve de leur
+    /// thème : les quiz suivants les tirent aussi. Rend celles du lot, à jouer tout de suite.
+    func practice(_ course: Course, in context: ModelContext, count: Int = 10) async throws -> [QuizQuestion] {
+        let chapters = course.orderedChapters
+        let indexByChapter = Dictionary(uniqueKeysWithValues: chapters.enumerated().map { ($1.id.uuidString, $0) })
+        let progress = course.progress
+        let focus = Array(Set(progress.missed.compactMap { id in
+            indexByChapter[id.split(separator: ":").first.map(String.init) ?? ""]
+        })).sorted()
+        let avoid = chapters.flatMap { $0.quiz?.questions.map(\.prompt) ?? [] }
+        let request = LessonPracticeRequest(
+            lessonID: course.id,
+            lessonTitle: course.title,
+            subject: course.subject,
+            themes: chapters.map { .init(title: $0.title, notes: Self.flatNotes(of: $0)) },
+            focus: focus,
+            avoid: Array(avoid.suffix(80)),
+            count: count,
+            audience: audience().preparing(Self.examLine(for: course, in: context))
+        )
+        let generated: [GeneratedQuestion]
+        do {
+            generated = try await service.practice(request)
+        } catch {
+            throw LessonServiceError.from(error)
+        }
+
+        let stamp = String(Int(Date().timeIntervalSince1970) % 1_000_000, radix: 36)
+        var added: [QuizQuestion] = []
+        for (number, item) in generated.enumerated() {
+            let index = item.theme ?? 0
+            guard chapters.indices.contains(index) else { continue }
+            let chapter = chapters[index]
+            var quiz = chapter.quiz ?? ThemeQuiz(questions: [])
+            let question = item.question(id: "\(chapter.id.uuidString):p\(stamp)\(number)")
+            guard question.isValid else { continue }
+            quiz.questions.append(question)
+            chapter.setQuiz(quiz)
+            added.append(question)
+        }
+        course.updatedAt = Date()
+        try? context.save()
+        return added
+    }
+
+    // MARK: - L'examen blanc
+
+    /// Combien de questions pour une durée : une et demie par minute, entre six et trente.
+    static func examQuestionCount(minutes: Int) -> Int {
+        min(30, max(6, Int((Double(minutes) / 1.5).rounded())))
+    }
+
+    /// **Une copie d'examen blanc** sur ces leçons, écrite par Mika au format de l'examen visé.
+    /// Rien n'est enregistré : la copie se joue tout de suite, seul son résultat reste.
+    func examPaper(
+        title: String,
+        exam: Exam?,
+        courses: [Course],
+        minutes: Int,
+        in context: ModelContext
+    ) async throws -> ExamPaper {
+        let courses = Array(courses.filter(\.isLesson).prefix(8))
+        guard !courses.isEmpty else { throw LessonServiceError.failed(L10n.t("lesson.exam.noLessons", locale: .resolved())) }
+        let paperID = UUID()
+        let chapters = courses.map { Array($0.orderedChapters.prefix(14)) }
+        let request = LessonExamRequest(
+            paperID: paperID,
+            title: title,
+            minutes: minutes,
+            count: Self.examQuestionCount(minutes: minutes),
+            lessons: zip(courses, chapters).map { course, chapters in
+                .init(title: course.title, subject: course.subject, themes: chapters.map { .init(title: $0.title, notes: Self.flatNotes(of: $0)) })
+            },
+            audience: audience().preparing(exam.map { Self.examLine(name: $0.name, date: $0.date) })
+        )
+        let generated: GeneratedExam
+        do {
+            generated = try await service.exam(request)
+        } catch {
+            throw LessonServiceError.from(error)
+        }
+
+        var items: [ExamPaper.Item] = []
+        for (number, item) in generated.questions.enumerated() {
+            let lesson = item.lesson.flatMap { courses.indices.contains($0) ? $0 : nil } ?? 0
+            let theme = item.theme.flatMap { chapters[lesson].indices.contains($0) ? $0 : nil } ?? 0
+            let question = item.question(id: "\(paperID.uuidString):\(number)")
+            guard question.isValid else { continue }
+            items.append(.init(question: question, lesson: lesson, theme: theme))
+        }
+        return ExamPaper(
+            id: paperID,
+            examID: exam?.id,
+            title: generated.title.nilIfBlank ?? title,
+            minutes: minutes,
+            createdAt: Date(),
+            lessons: zip(courses, chapters).map { .init(courseID: $0.id, title: $0.title, chapterIDs: $1.map(\.id)) },
+            items: items
+        )
+    }
+
+    /// Les notes d'un thème, mises à plat pour le modèle : l'idée, les blocs, « À retenir ».
+    static func flatNotes(of chapter: Chapter) -> String {
+        guard let notes = chapter.notes else { return "" }
+        var lines = [notes.oneLiner]
+        for block in notes.blocks {
+            switch block {
+            case .subtitle(let text): lines.append("## \(text)")
+            case .paragraph(let text): lines.append(text)
+            case .list(let items): lines.append(contentsOf: items.map { "- \($0)" })
+            case .definition(let term, let text): lines.append("\(term) : \(text)")
+            case .dates(let items): lines.append(contentsOf: items.map { "\($0.date) : \($0.text)" })
+            case .formula(let latex, let caption): lines.append([latex, caption].compactMap { $0 }.joined(separator: " : "))
+            case .example(let text): lines.append("Exemple : \(text)")
+            case .steps(let items): lines.append(contentsOf: items.enumerated().map { "\($0.offset + 1). \($0.element)" })
+            case .table(let columns, let rows):
+                lines.append(columns.joined(separator: " | "))
+                lines.append(contentsOf: rows.map { $0.joined(separator: " | ") })
+            case .quote(let text, let author): lines.append(["« \(text) »", author].compactMap { $0 }.joined(separator: " — "))
+            case .callout(let kind, let title, let text):
+                let label = [kind.promptLabel, title].compactMap { $0 }.joined(separator: " · ")
+                lines.append(label + " : " + text)
+            }
+        }
+        lines.append(contentsOf: notes.takeaways.map { "À retenir : \($0)" })
+        return lines.joined(separator: "\n").replacingOccurrences(of: "**", with: "")
+    }
+
+    // MARK: - L'examen visé
+
+    /// L'examen, tel que la consigne le reprend : « Examen « La guerre froide », le 2027-06-15 ».
+    /// La date est écrite à l'ISO : le serveur la lit dans toutes les langues.
+    static func examLine(name: String?, date: Date) -> String {
+        let day = date.formatted(.iso8601.year().month().day())
+        let title = name?.nilIfBlank.map { "« \($0) »" } ?? ""
+        return title.isEmpty ? "un examen, le \(day)" : "l'examen \(title), le \(day)"
+    }
+
+    /// L'examen à venir qui porte sur cette leçon, s'il y en a un.
+    static func examLine(for course: Course, in context: ModelContext) -> String? {
+        let today = Calendar.current.startOfDay(for: Date())
+        let descriptor = FetchDescriptor<Exam>(sortBy: [SortDescriptor(\.date)])
+        guard let exam = (try? context.fetch(descriptor))?.first(where: { $0.date >= today && $0.courseIDs.contains(course.id) })
+        else { return nil }
+        return examLine(name: exam.name, date: exam.date)
     }
 
     // MARK: - Convertir un ancien cours
@@ -446,6 +607,9 @@ private struct ThemeJob: Sendable {
         var context: String
         var subject: String?
         var audience: LessonAudience
+        var points: [[String]] = []
+        var objectives: [String] = []
+        var source: String = ""
     }
 
     var base: Base
@@ -460,7 +624,10 @@ private struct ThemeJob: Sendable {
             themes: base.themes,
             context: base.context,
             subject: base.subject,
-            audience: base.audience
+            audience: base.audience,
+            points: base.points,
+            objectives: base.objectives,
+            source: base.source
         )
     }
 }

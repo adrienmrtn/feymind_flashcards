@@ -1,0 +1,159 @@
+# **L'app dans TestFlight, sans Xcode ni Xcode Cloud.** Un Mac de GitHub archive Micabo, la
+# signe et l'envoie à App Store Connect avec la clé d'API de la grille de prix ; le job attend
+# ensuite qu'Apple ait traité le build.
+#
+# Quand : à chaque push sur `main` qui touche l'app, à la demande (Actions → TestFlight → Run
+# workflow), ou depuis une autre branche avec « [testflight] » dans le message du commit.
+# Ailleurs, seul le job « Préparer » tourne, en lecture seule.
+#
+# Ce qu'il faut (déjà là pour la grille de prix) : les secrets ASC_KEY_ID, ASC_ISSUER_ID et
+# ASC_PRIVATE_KEY. L'équipe et le numéro de build se lisent chez Apple (store/testflight.mjs).
+# La signature est automatique : Xcode crée ou reprend le certificat et le profil dont il a
+# besoin, avec la clé.
+
+name: TestFlight
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "Micabo/**"
+      - "Micabo.xcodeproj/**"
+      - "ci_scripts/**"
+      - "store/testflight.mjs"
+      - "store/distribute.mjs"
+      - ".github/workflows/testflight.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+jobs:
+  # Lecture seule, à chaque déclenchement : l'équipe, le prochain numéro de build et ce que
+  # la clé voit des certificats. Sur une branche, c'est tout ce qui tourne.
+  prepare:
+    name: Préparer
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - run: node store/testflight.mjs
+
+  testflight:
+    name: Envoyer dans TestFlight
+    needs: prepare
+    if: >-
+      github.ref == 'refs/heads/main'
+      || github.event_name == 'workflow_dispatch'
+      || contains(github.event.head_commit.message, '[testflight]')
+    runs-on: macos-latest
+    timeout-minutes: 75
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Choisir Xcode
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -1)
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          # Les scripts n'ont aucune dépendance. Sans ça, setup-node v5 lit `packageManager`
+          # dans package.json et cherche pnpm, qui n'est pas installé.
+          package-manager-cache: false
+
+      - name: Préparer (équipe, numéro de build, clé)
+        id: prep
+        run: node store/testflight.mjs
+
+      # Comme Xcode Cloud : le commit court, affiché dans Profil → À propos.
+      - name: Graver le commit
+        env:
+          CI_COMMIT: ${{ github.sha }}
+          CI_PRIMARY_REPOSITORY_PATH: ${{ github.workspace }}
+        run: sh ci_scripts/ci_post_clone.sh
+
+      - name: Archiver
+        env:
+          TEAM: ${{ steps.prep.outputs.team }}
+          BUILD: ${{ steps.prep.outputs.build }}
+          KEY_PATH: ${{ steps.prep.outputs.key_path }}
+        run: |
+          auth=(-allowProvisioningUpdates -authenticationKeyPath "$KEY_PATH" -authenticationKeyID "$ASC_KEY_ID")
+          [ -n "$ASC_ISSUER_ID" ] && auth+=(-authenticationKeyIssuerID "$ASC_ISSUER_ID")
+          if ! xcodebuild archive \
+              -project Micabo.xcodeproj -scheme Micabo -configuration Release \
+              -destination 'generic/platform=iOS' \
+              -archivePath "$RUNNER_TEMP/Micabo.xcarchive" \
+              "${auth[@]}" \
+              DEVELOPMENT_TEAM="$TEAM" \
+              CURRENT_PROJECT_VERSION="$BUILD" \
+              INFOPLIST_KEY_ITSAppUsesNonExemptEncryption=NO \
+              > "$RUNNER_TEMP/archive.log" 2>&1; then
+            grep -E "error|Error|provisioning|Provisioning|certificate|Certificate" "$RUNNER_TEMP/archive.log" | grep -v "^\s*$" | tail -60
+            echo "::error::L'archive a échoué (voir les lignes ci-dessus)."
+            exit 1
+          fi
+          tail -5 "$RUNNER_TEMP/archive.log"
+          /usr/libexec/PlistBuddy -c "Print :ApplicationProperties" "$RUNNER_TEMP/Micabo.xcarchive/Info.plist"
+
+      - name: Envoyer à App Store Connect
+        env:
+          TEAM: ${{ steps.prep.outputs.team }}
+          KEY_PATH: ${{ steps.prep.outputs.key_path }}
+        run: |
+          date -u +%Y-%m-%dT%H:%M:%SZ > "$RUNNER_TEMP/sent-at"
+          cat > "$RUNNER_TEMP/export.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$TEAM</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>uploadSymbols</key><true/>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict>
+          </plist>
+          EOF
+          auth=(-allowProvisioningUpdates -authenticationKeyPath "$KEY_PATH" -authenticationKeyID "$ASC_KEY_ID")
+          [ -n "$ASC_ISSUER_ID" ] && auth+=(-authenticationKeyIssuerID "$ASC_ISSUER_ID")
+          if ! xcodebuild -exportArchive \
+              -archivePath "$RUNNER_TEMP/Micabo.xcarchive" \
+              -exportOptionsPlist "$RUNNER_TEMP/export.plist" \
+              -exportPath "$RUNNER_TEMP/export" \
+              "${auth[@]}" \
+              > "$RUNNER_TEMP/export.log" 2>&1; then
+            grep -E "error|Error|provisioning|Provisioning|certificate|Certificate|denied|permission" "$RUNNER_TEMP/export.log" | tail -60
+            echo "::error::L'envoi a échoué (voir les lignes ci-dessus)."
+            exit 1
+          fi
+          tail -15 "$RUNNER_TEMP/export.log"
+
+      - name: Attendre le traitement d'Apple
+        run: node store/builds.mjs "$GITHUB_SHA" "$(cat "$RUNNER_TEMP/sent-at")" --wait 40
+
+      - name: Donner le build aux testeurs
+        run: node store/distribute.mjs
+
+      - name: Effacer la clé
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/private_keys"

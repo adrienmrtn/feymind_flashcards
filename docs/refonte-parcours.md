@@ -1,7 +1,7 @@
 # Refonte « parcours »
 
 L'app passe d'un outil qui fabrique des fiches et des cartes à **un chemin façon Duolingo par
-leçon** : une intro, des cercles Notes, des Quiz, des Flashcards, une conclusion. Trois onglets,
+leçon** : une intro, des cercles Notes, des Quiz, des Flashcards, une conclusion. Quatre onglets,
 une police, une mascotte qui vit, et un gratuit qui tient en une phrase.
 
 Source : le PDF « Idées Micabo non promptées » (octobre 2026), et les décisions prises le
@@ -52,12 +52,13 @@ Un seul mot par concept, partout dans l'interface et dans les cinq langues.
 
 ## 2. Structure
 
-Trois onglets, et c'est tout. On ne balaye pas de l'un à l'autre.
+Quatre onglets, et c'est tout. On ne balaye pas de l'un à l'autre.
 
 | Onglet | Rôle |
 | --- | --- |
 | **Home** | Créer une leçon (sujet tapé ou supports), voir ses stats, reprendre la dernière leçon |
 | **Leçons** | Toutes les leçons, rangées dans des dossiers |
+| **Examen** | Le prochain examen et son compte à rebours (J-n), les autres à venir, les examens blancs chronométrés notés dans le barème du pays (un offert, puis Pro) |
 | **Profil** | La carte profil, Passer en Pro, amis et classement, réglages, support |
 
 La barre d'onglets est une pilule de verre flottante (Liquid Glass sur iOS 26, matériau

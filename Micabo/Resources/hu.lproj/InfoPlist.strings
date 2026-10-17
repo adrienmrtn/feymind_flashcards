@@ -1,0 +1,6 @@
+/* Les demandes d'accès d'iOS, dans la langue du téléphone (voir en.lproj). */
+
+"NSCameraUsageDescription" = "A Micabo a kamerát a kurzusoldalaid szkenneléséhez használja.";
+"NSPhotoLibraryUsageDescription" = "A Micabo hozzáfér a fotóidhoz, hogy kurzust vagy ábrát importálhass.";
+"NSMicrophoneUsageDescription" = "A Micabo a mikrofont óra vagy hangjegyzet felvételéhez használja, hogy leckét készítsen belőle.";
+"NSSpeechRecognitionUsageDescription" = "A Micabo a telefonodon írja át a felvételeidet, hogy leckét készítsen belőlük.";

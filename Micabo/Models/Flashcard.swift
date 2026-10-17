@@ -289,6 +289,8 @@ final class Flashcard {
         )
         // On ne renseigne qu'un seul côté : SwiftData maintient la relation inverse.
         logs = (logs ?? []) + [log]
+        // Une carte notée est une journée de travail : la série la compte.
+        StudyStreak.record(now: date)
     }
 
     /// Réinitialise la programmation sans supprimer la carte.

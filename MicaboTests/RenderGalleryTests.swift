@@ -138,31 +138,94 @@ final class RenderGalleryTests: XCTestCase {
             progress.done = ["intro", "notes:0", "notes:1"]
             progress.inCircle = 0.4
         }
+        let cards: [(String, String, CardState, Double)] = [
+            ("Gains de pouvoir d'achat", "Hausse du pouvoir d'achat permise par des prix plus bas.", .learning, 2),
+            ("Trilemme de Rodrik", "On ne peut avoir à la fois intégration, souveraineté et démocratie.", .new, 0),
+            ("GATT", "Accord de 1947 qui baisse peu à peu les droits de douane.", .review, 30),
+            ("Rideau de fer", "La frontière qui coupe l'Europe en deux blocs.", .new, 0),
+        ]
+        for (index, card) in cards.enumerated() {
+            let flashcard = Flashcard(front: card.0, back: card.1, position: index, course: course)
+            flashcard.state = card.2
+            flashcard.intervalDays = card.3
+            context.insert(flashcard)
+        }
+        let cloze = Flashcard(front: "La doctrine \(ClozeGap.marker) veut contenir le communisme.", back: "Truman", position: 9, course: course)
+        cloze.kindRaw = CardKind.cloze.rawValue
+        context.insert(cloze)
         try context.save()
 
         let session = LessonSession(course: course)
         try RenderGallery.render(
-            "lesson-path", night: true,
-            PathMapView(session: session, tone: course.tone, width: 393, onOpen: { _ in }, onRetry: { _ in })
-                .padding(.top, 40)
+            "lesson-cards", night: true,
+            LessonCardsHub(session: session)
+                .frame(height: 980)
         )
         try RenderGallery.render(
-            "lesson-notes", night: true,
-            VStack(alignment: .leading, spacing: 22) {
-                ThemeHeader(chapter: course.orderedChapters[0])
-                ThemeNotesView(notes: Self.sampleNotes, tone: course.tone)
-            }
-            .padding(20)
+            "lesson-notes-reader",
+            LessonNotesReader(session: session)
+                .frame(height: 900)
         )
+        try RenderGallery.render(
+            "lesson-path", night: true,
+            VStack(spacing: 0) {
+                LessonPathHeader(course: course, session: session, exam: nil)
+                    .padding(.top, 40)
+                    .padding(.bottom, 44)
+                PathMapView(session: session, tone: course.tone, width: 393, onOpen: { _ in }, onRetry: { _ in })
+                LessonNavbar(dueCount: 8) { _ in }
+            }
+        )
+        let chapter = course.orderedChapters[0]
+        try RenderGallery.render(
+            "lesson-notes", night: true,
+            VStack(spacing: 0) {
+                NotesSegments(count: 6, page: 2, tone: course.tone, onClose: {}, onBack: {})
+                NotesPageView(page: .opening, chapter: chapter, tone: course.tone, question: nil, answer: nil) { _ in }
+                    .frame(height: 420)
+                NotesPageView(page: .blocks(0..<2), chapter: chapter, tone: course.tone, question: nil, answer: nil) { _ in }
+                    .frame(height: 360)
+                NotesPageView(page: .takeaways, chapter: chapter, tone: course.tone, question: nil, answer: nil) { _ in }
+                    .frame(height: 460)
+            }
+        )
+        let question = Self.sampleQuestion(id: "b")
         try RenderGallery.render(
             "lesson-question",
             VStack(spacing: 24) {
-                QuestionCard(question: Self.sampleQuestion(id: "a"), tone: course.tone, answered: nil) { _ in }
-                QuestionCard(question: Self.sampleQuestion(id: "b"), tone: course.tone, answered: 2) { _ in }
-                LessonNavbar(dueCount: 8) { _ in }
+                QuestionCard(question: Self.sampleQuestion(id: "a"), tone: course.tone, answered: nil, shuffleSeed: 3) { _ in }
+                QuestionCard(question: question, tone: course.tone, answered: QuizAnswer(right: false, picked: 2), showsFeedback: false) { _ in }
+                AnswerPanel(question: question, right: false, isLast: false) {}
+                AnswerPanel(question: question, right: true, isLast: true) {}
+            }
+            .padding(.vertical, 20)
+        )
+        try RenderGallery.render(
+            "lesson-kinds", night: true,
+            VStack(alignment: .leading, spacing: 32) {
+                QuestionCard(question: Self.kindQuestion(.truefalse), tone: course.tone, answered: QuizAnswer(right: true, picked: 0), showsFeedback: false) { _ in }
+                QuestionCard(question: Self.kindQuestion(.gap), tone: course.tone, answered: nil, shuffleSeed: 5) { _ in }
+                QuestionCard(question: Self.kindQuestion(.order), tone: course.tone, answered: nil, shuffleSeed: 9) { _ in }
+                QuestionCard(question: Self.kindQuestion(.match), tone: course.tone, answered: nil, shuffleSeed: 2) { _ in }
+                StreakBadge(count: 4, tone: course.tone)
             }
             .padding(20)
         )
+    }
+
+    private static func kindQuestion(_ kind: QuizKind) -> QuizQuestion {
+        switch kind {
+        case .truefalse:
+            QuizQuestion(id: "tf", kind: .truefalse, prompt: "Le mur de Berlin tombe en 1989.", choices: ["Vrai", "Faux"], answer: 0, why: "Il tombe le 9 novembre 1989.")
+        case .gap:
+            QuizQuestion(id: "gap", kind: .gap, prompt: "La doctrine \(ClozeGap.marker) veut contenir le communisme.", choices: ["Truman", "Jdanov", "Monroe"], answer: 0, why: "Annoncée en mars 1947.", difficulty: 1)
+        case .order:
+            QuizQuestion(id: "order", kind: .order, prompt: "Remets ces événements dans l'ordre.", choices: ["Plan Marshall", "Blocus de Berlin", "Construction du mur", "Chute du mur"], answer: 0, why: "1947, 1948, 1961, 1989.")
+        case .match:
+            QuizQuestion(id: "match", kind: .match, prompt: "Associe chaque crise à son année.", choices: ["Blocus de Berlin", "Crise de Cuba", "Chute du mur"], answer: 0, why: ".", matches: ["1948", "1962", "1989"])
+        case .choice:
+            sampleQuestion(id: "choice")
+        }
     }
 
     /// Home : Mika et sa question, la barre avec deux supports, les chiffres, « Reprendre »,
@@ -214,7 +277,8 @@ final class RenderGalleryTests: XCTestCase {
         try RenderGallery.render(
             "home", night: true,
             VStack(alignment: .leading, spacing: 28) {
-                HomeGreeting()
+                HomeTitle()
+                    .padding(.bottom, HomePerch.height)
                 ComposerBarPreview(composer: composer)
                 HomeStatsRow(stats: HomeStats(seconds: 5_400, learnedLessons: 3, learnedCards: 42))
                 ResumeCard(course: resume.0, target: resume.1) {}
@@ -279,6 +343,164 @@ final class RenderGalleryTests: XCTestCase {
                 ProfileSupportGroup()
             }
             .padding(20)
+        )
+    }
+
+    func testExamScreens() throws {
+        guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
+        let container = try ModelContainer(
+            for: Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = ModelContext(container)
+        let course = Course(title: "La guerre froide", subject: "Histoire")
+        course.iconID = MicaboIcon.calculator.rawValue
+        context.insert(course)
+        let exam = Exam(name: "Bac d'histoire", date: Date().addingTimeInterval(12 * 86_400), courseIDs: [course.id])
+        let later = Exam(name: "Partiel de bio", date: Date().addingTimeInterval(40 * 86_400), courseIDs: [course.id])
+        context.insert(exam)
+        context.insert(later)
+        try context.save()
+        let result = ExamPaperResult(
+            id: UUID(), examID: exam.id, title: "Bac d'histoire", date: Date(), correct: 14, total: 20, seconds: 1_500, minutes: 30,
+            lessons: [.init(title: "La guerre froide", correct: 9, total: 12), .init(title: "La décolonisation", correct: 5, total: 8)]
+        )
+
+        try RenderGallery.render(
+            "exam-tab", night: true,
+            VStack(alignment: .leading, spacing: 18) {
+                MicaboPageHeading(title: "Examen", subtitle: "2 examens à venir")
+                ExamHero(exam: exam, lessons: [course], best: result, onMock: {}, onEdit: {})
+                ExamRow(exam: later, lessonCount: 1) {}
+                MockResultRow(result: result)
+            }
+            .padding(20)
+            .modelContainer(container)
+        )
+
+        let question = Self.sampleQuestion(id: "exam:0")
+        try RenderGallery.render(
+            "exam-run", night: true,
+            VStack(alignment: .leading, spacing: 18) {
+                HStack {
+                    TimerPill(remaining: 754, total: 1_800)
+                    TimerPill(remaining: 45, total: 1_800)
+                }
+                QuestionCard(question: question, tone: .blue, answered: QuizAnswer(right: false, picked: 2), showsFeedback: false, reveals: false) { _ in }
+            }
+            .padding(20)
+        )
+
+        try RenderGallery.render(
+            "exam-result", night: true,
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach([SchoolingCountry.fr, .de, .ch, .us, .uk, .tr], id: \.self) { country in
+                    Text("\(country.rawValue) : \(ExamGrade.label(0.7, country: country))")
+                        .font(MicaboFont.ui(15, weight: .bold))
+                }
+                CorrectionRow(number: 1, question: question, answer: QuizAnswer(right: false, picked: 2), seed: 0)
+                CorrectionRow(number: 2, question: question, answer: nil, seed: 0)
+            }
+            .padding(20)
+        )
+    }
+
+    /// Le parcours d'accueil : la leçon dans le téléphone, les six écrans de Mika, une
+    /// question avec Mika au pied de la page, la barre du haut.
+    func testOnboardingScreens() throws {
+        guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
+        let model = OnboardingModel()
+        model.displayName = "Lina"
+
+        try RenderGallery.render(
+            "onboarding-hook",
+            height: 560,
+            OnboardingHookMockup()
+                .environment(\.onboardingStill, true)
+        )
+        for page in MikaPage.allCases {
+            try RenderGallery.render(
+                "onboarding-mika-\(page.rawValue)",
+                height: 780,
+                MikaStepView(page: page)
+                    .environment(model)
+                    .environment(\.onboardingStill, true)
+            )
+        }
+        try RenderGallery.render(
+            "onboarding-question",
+            height: 780,
+            VStack(spacing: 0) {
+                OnboardingTopBar(progress: 0.42, showsBack: true, isVisible: true, onBack: {})
+                GoalStepView()
+            }
+            .environment(model)
+        )
+        try RenderGallery.render(
+            "onboarding-time",
+            height: 780,
+            DailyTimeStepView()
+                .environment(model)
+        )
+        try RenderGallery.render(
+            "onboarding-social",
+            height: 1_400,
+            SocialProofStepView()
+                .environment(model)
+                .environment(\.onboardingStill, true)
+        )
+        try RenderGallery.render(
+            "onboarding-social-support",
+            height: 780,
+            SupportUsStepView()
+                .environment(model)
+                .environment(\.onboardingStill, true)
+        )
+
+        // « Voici ce qui va changer pour toi » : un profil rempli, puis une moyenne sous le
+        // barème, dont l'étiquette est la plus longue.
+        let profiled = OnboardingModel()
+        profiled.displayName = "Lina"
+        profiled.subjects = ["Mathématiques", "Histoire", "Physique-chimie"]
+        profiled.worries = [.forgetting, .examStress]
+        profiled.currentScore = 12
+        profiled.targetScore = 16
+        profiled.dailyMinutes = 15
+        profiled.studyHour = 18
+        try RenderGallery.render(
+            "onboarding-social-profile",
+            height: 1_100,
+            ProfileSummaryStepView()
+                .environment(profiled)
+                .environment(\.onboardingStill, true)
+        )
+        profiled.currentScore = DesiredGradeScale.belowScore
+        profiled.worries = []
+        try RenderGallery.render(
+            "onboarding-social-profile-low",
+            height: 1_100,
+            ProfileSummaryStepView()
+                .environment(profiled)
+                .environment(\.onboardingStill, true)
+        )
+        try RenderGallery.render(
+            "onboarding-paywall",
+            height: 1_250,
+            PaywallOfferView(
+                plan: PaywallCatalog.recommended,
+                isPurchasing: false,
+                onClose: {},
+                onSeeAllPlans: {},
+                onSubscribe: {},
+                onRestore: {}
+            )
+            .environment(\.onboardingStill, true)
+        )
+        try RenderGallery.render(
+            "onboarding-plans",
+            height: 1_300,
+            PaywallPlansView(isPurchasing: false, onClose: {}, onSubscribe: { _ in }, onRestore: {})
+                .environment(\.onboardingStill, true)
         )
     }
 

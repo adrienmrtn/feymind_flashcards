@@ -10,7 +10,9 @@ import UIKit
 ///
 /// SwiftMath 1.7.3 compose sur une seule ligne. On mesure la taille intrinsèque et on
 /// coupe `clipsToBounds` : une équation trop large dépasse plutôt que de disparaître
-/// à moitié, sans le moindre signe.
+/// à moitié, sans le moindre signe. `MathFormula` ne la laisse pas dépasser pour autant :
+/// quand sa largeur naturelle excède la place offerte, il la pose dans un défilement
+/// horizontal, où elle reçoit sa largeur entière.
 struct MathLabel: UIViewRepresentable {
     let latex: String
     let fontSize: CGFloat

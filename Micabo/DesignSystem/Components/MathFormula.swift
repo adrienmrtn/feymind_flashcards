@@ -21,13 +21,17 @@ struct MathFormula: View {
     var body: some View {
         #if canImport(SwiftMath)
         if MathTypesetter.canTypeset(latex) {
-            MathLabel(
-                latex: latex,
-                fontSize: fontSize,
-                color: color,
-                isCentered: isCentered,
-                isDisplayMode: isDisplayMode
-            )
+            // Le moteur compose sur une seule ligne. Une formule qui tient reste posée (et
+            // centrée par son parent) ; une formule plus large que la place offerte glisse
+            // en travers, plutôt que de déborder de l'écran des deux côtés.
+            ViewThatFits(in: .horizontal) {
+                label
+                ScrollView(.horizontal, showsIndicators: false) {
+                    label
+                        .fixedSize()
+                        .padding(.vertical, 2)
+                }
+            }
         } else {
             transposed
         }
@@ -35,6 +39,18 @@ struct MathFormula: View {
         transposed
         #endif
     }
+
+    #if canImport(SwiftMath)
+    private var label: MathLabel {
+        MathLabel(
+            latex: latex,
+            fontSize: fontSize,
+            color: color,
+            isCentered: isCentered,
+            isDisplayMode: isDisplayMode
+        )
+    }
+    #endif
 
     /// Le plancher : le même rendu qu'avant le moteur.
     private var transposed: some View {

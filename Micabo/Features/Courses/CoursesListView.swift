@@ -434,7 +434,13 @@ struct CoursesListView: View {
         LessonCard(
             course: course,
             dueCount: census[course.id]?.dueCount ?? 0,
-            examDays: countdownDays(for: course)
+            examDays: countdownDays(for: course),
+            onRename: {
+                renamingCourse = course
+                courseName = course.title
+            },
+            onMove: { moving = .course(course) },
+            onDelete: { coursePendingDelete = course }
         ) {
             open(course)
         }

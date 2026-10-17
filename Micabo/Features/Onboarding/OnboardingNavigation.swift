@@ -100,21 +100,30 @@ struct OnboardingTopBar: View {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(OnboardingPalette.ink)
-                        .frame(width: 64, height: 40)
-                        .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-                        .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .frame(width: 44, height: 40)
+                        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+                        .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
                 .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
                 .accessibilityLabel(i18n.t("app.common.back"))
                 .transition(.opacity.combined(with: .scale(scale: 0.86)))
             }
 
-            MicaboProgressBar(
-                progress: progress,
-                tint: OnboardingPalette.ink,
-                track: OnboardingPalette.cardStrong
-            )
-            .frame(height: 4)
+            // La jauge de l'app : bleue, épaisse et arrondie, avec son reflet, comme la barre
+            // d'une leçon.
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(MicaboColor.track)
+                    Capsule()
+                        .fill(MicaboColor.accent)
+                        .frame(width: max(10, proxy.size.width * max(0, min(1, progress))))
+                        .overlay(alignment: .top) {
+                            Capsule().fill(.white.opacity(0.3)).frame(height: 2).padding(.horizontal, 4).padding(.top, 2)
+                        }
+                }
+            }
+            .frame(height: 10)
             .animation(OnboardingMotion.slide, value: progress)
         }
         .animation(OnboardingMotion.shift, value: showsBack)
@@ -190,11 +199,20 @@ struct OnboardingArrowButton: View {
 struct OnboardingArrowBar: View {
     var isEnabled: Bool = true
     var isLoading: Bool = false
+    /// Mika debout à gauche du rond, comme sur les écrans de questions.
+    var showsMika: Bool = false
     var action: () -> Void
 
     var body: some View {
         MicaboBottomBar(background: OnboardingPalette.white) {
             OnboardingArrowButton(isEnabled: isEnabled, isLoading: isLoading, action: action)
+        }
+        .overlay(alignment: .bottomLeading) {
+            if showsMika {
+                OnboardingFooterMika(cheers: 0)
+                    .padding(.leading, MicaboSpacing.screen - 8)
+                    .padding(.bottom, MicaboSpacing.sm - 4)
+            }
         }
     }
 }

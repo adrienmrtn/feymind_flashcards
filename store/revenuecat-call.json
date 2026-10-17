@@ -1,0 +1,9 @@
+{
+ "calls": [
+  {
+   "method": "POST",
+   "path": "/store_state/plans/763e9f60-0346-4128-9294-8f5ece381e9c/actions/apply",
+   "body": {}
+  }
+ ]
+}

@@ -1,0 +1,6 @@
+/* Les demandes d'accès d'iOS, dans la langue du téléphone (voir en.lproj). */
+
+"NSCameraUsageDescription" = "Το Micabo χρησιμοποιεί την κάμερα για να σαρώνει τις σελίδες του μαθήματός σου.";
+"NSPhotoLibraryUsageDescription" = "Το Micabo έχει πρόσβαση στις φωτογραφίες σου για να εισάγει ένα μάθημα ή ένα διάγραμμα.";
+"NSMicrophoneUsageDescription" = "Το Micabo χρησιμοποιεί το μικρόφωνο για να ηχογραφεί ένα μάθημα ή μια φωνητική σημείωση και να τα κάνει μάθημα.";
+"NSSpeechRecognitionUsageDescription" = "Το Micabo μεταγράφει τις ηχογραφήσεις σου στο κινητό για να τις κάνει μάθημα.";

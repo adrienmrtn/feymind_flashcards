@@ -9,7 +9,13 @@ struct LessonCard: View {
     var dueCount = 0
     /// Les jours avant l'examen le plus proche.
     var examDays: Int?
+    /// Le menu « ⋯ » : renommer, déplacer, supprimer. Sans eux, pas de menu.
+    var onRename: (() -> Void)?
+    var onMove: (() -> Void)?
+    var onDelete: (() -> Void)?
     let action: () -> Void
+
+    private var hasMenu: Bool { onRename != nil || onMove != nil || onDelete != nil }
 
     var body: some View {
         let summary = LessonCardSummary(course: course)
@@ -38,26 +44,29 @@ struct LessonCard: View {
                         }
                     }
                     .frame(height: 5)
-                }
-
-                VStack(alignment: .trailing, spacing: 6) {
-                    if dueCount > 0 {
-                        pill(
-                            L10n.t("lesson.lessons.due", locale: .resolved(), vars: ["count": String(dueCount)]),
-                            foreground: MicaboColor.onInk,
-                            background: MicaboColor.accent
-                        )
+                    if dueCount > 0 || (examDays ?? -1) >= 0 {
+                        HStack(spacing: 6) {
+                            if dueCount > 0 {
+                                pill(
+                                    L10n.t("lesson.lessons.due", locale: .resolved(), vars: ["count": String(dueCount)]),
+                                    foreground: MicaboColor.onInk,
+                                    background: MicaboColor.accent
+                                )
+                            }
+                            if let examDays, examDays >= 0 {
+                                pill(
+                                    examDays == 0
+                                        ? L10n.t("app.exams.countdown.today", locale: .resolved())
+                                        : L10n.t("lesson.lessons.examDays", locale: .resolved(), vars: ["days": String(examDays)]),
+                                    foreground: course.tone.ink,
+                                    background: course.tone.pale
+                                )
+                            }
+                        }
+                        .padding(.top, 2)
                     }
-                    if let examDays, examDays >= 0 {
-                        pill(
-                            examDays == 0
-                                ? L10n.t("app.exams.countdown.today", locale: .resolved())
-                                : L10n.t("lesson.lessons.examDays", locale: .resolved(), vars: ["days": String(examDays)]),
-                            foreground: course.tone.ink,
-                            background: course.tone.pale
-                        )
-                    }
                 }
+                Spacer(minLength: hasMenu ? 34 : 0)
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -66,6 +75,35 @@ struct LessonCard: View {
         }
         .buttonStyle(MicaboPressableButtonStyle(feedback: .soft))
         .accessibilityElement(children: .combine)
+        .overlay(alignment: .trailing) {
+            if hasMenu {
+                Menu {
+                    if let onRename {
+                        Button(action: onRename) {
+                            Label(L10n.t("lesson.menu.rename", locale: .resolved()), systemImage: "pencil")
+                        }
+                    }
+                    if let onMove {
+                        Button(action: onMove) {
+                            Label(L10n.t("app.folders.moveTo", locale: .resolved()), systemImage: "folder")
+                        }
+                    }
+                    if let onDelete {
+                        Button(role: .destructive, action: onDelete) {
+                            Label(L10n.t("lesson.menu.delete", locale: .resolved()), systemImage: "trash")
+                        }
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .padding(.trailing, 6)
+                .accessibilityLabel(Text(L10n.t("lesson.menu.more", locale: .resolved())))
+            }
+        }
     }
 
     private func pill(_ text: String, foreground: Color, background: Color) -> some View {

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
+<resources>
+    <plurals name="app_friends_friendCount">
+        <item quantity="one">صديق واحد</item>
+        <item quantity="other">عدد الأصدقاء: %1$d</item>
+    </plurals>
+    <plurals name="copy_cards">
+        <item quantity="one">بطاقة واحدة</item>
+        <item quantity="other">عدد البطاقات: %1$d</item>
+    </plurals>
+    <plurals name="ios_profile_streakDays">
+        <item quantity="one">يوم واحد متتالٍ</item>
+        <item quantity="other">أيام متتالية: %1$d</item>
+    </plurals>
+    <plurals name="ios_streak_bestValue">
+        <item quantity="one">يوم واحد</item>
+        <item quantity="other">عدد الأيام: %1$d</item>
+    </plurals>
+    <plurals name="ios_streak_unit">
+        <item quantity="one">يوم متتالٍ</item>
+        <item quantity="other">أيام متتالية</item>
+    </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">أضف خطئي إلى البطاقات</item>
+        <item quantity="other">أضف أخطائي إلى البطاقات (%1$d)</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">بقي سؤال واحد دون إجابة. هل تسلّم على أي حال؟</item>
+        <item quantity="other">أسئلة دون إجابة: %1$d. هل تسلّم على أي حال؟</item>
+    </plurals>
+</resources>

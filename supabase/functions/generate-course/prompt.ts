@@ -410,6 +410,10 @@ const READING_BRIEFS: Record<string, string> = {
     `Ce texte est une transcription automatique de sous-titres. Les noms propres, les chiffres et les termes techniques y sont souvent faux, et la ponctuation est approximative. Ne définis un terme que si la transcription le rend plusieurs fois de la même façon.`,
   text:
     `Ce texte a été saisi ou collé par l'étudiant. Il peut contenir des fautes de frappe et des abréviations de prise de notes.`,
+  // Un cours enregistré puis transcrit : `generate-lesson` reçoit « audio », et sans cette
+  // ligne la transcription était lue comme un texte propre.
+  audio:
+    `Ce texte est la transcription automatique d'un enregistrement (un cours oral, une explication). Les noms propres, les chiffres et les termes techniques y sont souvent mal entendus, la ponctuation est approximative, et l'oral se répète et digresse. Garde le fond, pas les hésitations ; ne définis un terme que si la transcription le rend plusieurs fois de la même façon.`,
 };
 
 /** En dessous, un seul mot mal lu emporte toute la fiche. */

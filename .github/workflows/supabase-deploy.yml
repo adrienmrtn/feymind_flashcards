@@ -1,0 +1,191 @@
+# **Supabase se déploie tout seul.** Plus de copier-coller dans le tableau de bord : à chaque
+# push sur `main` qui touche `supabase/`, ce workflow
+#   1. passe les nouvelles migrations (les fichiers ajoutés dans `supabase/migrations/`), une
+#      par une, dans l'ordre, par l'API de Supabase — elles sont écrites pour se rejouer sans
+#      casse (`if not exists`, `create or replace`) ;
+#   2. vérifie puis déploie les Edge Functions touchées — celles dont le dossier a changé,
+#      et celles qui importent un module de `_shared/` qui a changé —, avec la CLI. Une
+#      fonction qui n'a pas bougé n'est pas redéployée : elle garde le code qui tourne.
+#
+# À la demande aussi : Actions → « Supabase » → Run workflow, avec les fonctions à déployer
+# (par défaut `generate-lesson`) et la migration à passer. Et depuis une branche de travail,
+# avec « [supabase] » dans le message du commit : tout ce que la branche change par rapport à
+# `main` part alors en production, migrations et fonctions.
+#
+# `revenuecat-webhook` se déploie sans vérification de JWT : RevenueCat l'appelle sans
+# session. Toutes les autres la gardent.
+#
+# Ce qu'il faut, une fois : le secret SUPABASE_ACCESS_TOKEN, un jeton personnel Supabase
+# (supabase.com/dashboard/account/tokens) d'un compte membre du projet. Sans lui, le
+# workflow le dit et s'arrête sans rien toucher.
+
+name: Supabase
+
+on:
+  workflow_dispatch:
+    inputs:
+      functions:
+        description: "Fonctions à déployer, séparées par des espaces"
+        required: false
+        default: "generate-lesson"
+      migration:
+        description: "Migration à passer (nom du fichier dans supabase/migrations, vide pour aucune)"
+        required: false
+        default: ""
+  push:
+    branches: [main, "claude/**"]
+    paths:
+      - "supabase/functions/**"
+      - "supabase/migrations/**"
+      - ".github/workflows/supabase-deploy.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-deploy
+  cancel-in-progress: false
+
+env:
+  PROJECT_REF: khuzodsrznanzhwlbjbx
+
+jobs:
+  deploy:
+    name: Déployer Supabase
+    if: >-
+      github.ref == 'refs/heads/main'
+      || github.event_name == 'workflow_dispatch'
+      || contains(github.event.head_commit.message, '[supabase]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Le jeton est là ?
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "::error::Secret SUPABASE_ACCESS_TOKEN absent : rien n'est déployé. Voir l'en-tête du workflow."
+            exit 1
+          fi
+
+      # Ce qui est nouveau depuis le dernier déploiement : sur `main`, depuis le push
+      # d'avant ; sur une branche de travail, depuis `main`.
+      - name: Le point de départ
+        id: base
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "sha=${BEFORE:-}" >> "$GITHUB_OUTPUT"
+          else
+            git fetch --quiet origin main
+            echo "sha=$(git merge-base origin/main HEAD)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Les migrations nouvelles
+        env:
+          BEFORE: ${{ steps.base.outputs.sha }}
+          ASKED: ${{ github.event.inputs.migration }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            files=""
+            if [ -n "$ASKED" ]; then files="supabase/migrations/$ASKED"; fi
+          elif [ -n "${BEFORE:-}" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ]; then
+            files=$(git diff --name-only --diff-filter=A "$BEFORE" HEAD -- supabase/migrations | sort)
+          else
+            files=""
+          fi
+          if [ -z "$files" ]; then
+            echo "Aucune migration nouvelle."
+            exit 0
+          fi
+          for file in $files; do
+            [ -f "$file" ] || { echo "::error::$file introuvable"; exit 1; }
+            echo "Migration : $file"
+            body=$(python3 -c 'import json,sys; print(json.dumps({"query": open(sys.argv[1]).read()}))' "$file")
+            status=$(curl -sS -o response.json -w "%{http_code}" \
+              -X POST "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" \
+              -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+              -H "Content-Type: application/json" \
+              --data "$body")
+            if [ "$status" -ge 300 ]; then
+              echo "::error::$file a échoué ($status)"
+              cat response.json
+              exit 1
+            fi
+            echo "  passée."
+          done
+
+      - name: Les fonctions touchées
+        id: touched
+        env:
+          BEFORE: ${{ steps.base.outputs.sha }}
+          ASKED: ${{ github.event.inputs.functions }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            names="$ASKED"
+          elif [ -n "${BEFORE:-}" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ]; then
+            names=$(git diff --name-only "$BEFORE" HEAD -- supabase/functions | python3 -c '
+          import os, re, sys
+          root = "supabase/functions"
+          changed = [line.strip() for line in sys.stdin if line.strip()]
+          functions = sorted(d for d in os.listdir(root) if os.path.isfile(os.path.join(root, d, "index.ts")))
+          wanted = set()
+          shared = [os.path.basename(p) for p in changed if p.startswith(root + "/_shared/")]
+          for path in changed:
+              parts = path.split("/")
+              if len(parts) > 3 and parts[2] in functions:
+                  wanted.add(parts[2])
+          for name in functions:
+              folder = os.path.join(root, name)
+              for dirpath, _, files in os.walk(folder):
+                  for file in files:
+                      if not file.endswith(".ts"):
+                          continue
+                      text = open(os.path.join(dirpath, file), encoding="utf-8").read()
+                      if any(re.search(r"_shared/" + re.escape(module) + r"[\x27\"]", text) for module in shared):
+                          wanted.add(name)
+          print(" ".join(sorted(wanted)))
+          ')
+          else
+            names=""
+          fi
+          echo "names=$names" >> "$GITHUB_OUTPUT"
+          echo "Fonctions à déployer : ${names:-aucune}"
+
+      - uses: denoland/setup-deno@v2
+        if: steps.touched.outputs.names != ''
+        with:
+          deno-version: v2.x
+
+      - name: Vérifier les types
+        if: steps.touched.outputs.names != ''
+        working-directory: supabase/functions
+        run: |
+          for fn in ${{ steps.touched.outputs.names }}; do
+            deno check "$fn/index.ts"
+          done
+
+      - uses: supabase/setup-cli@v1
+        if: steps.touched.outputs.names != ''
+        with:
+          # Une version fixe : « latest » interroge l'API GitHub à chaque run, et une limite
+          # d'appels atteinte faisait tomber le déploiement avant qu'il ait commencé.
+          version: 2.119.0
+
+      - name: Déployer les fonctions
+        if: steps.touched.outputs.names != ''
+        run: |
+          set -euo pipefail
+          for fn in ${{ steps.touched.outputs.names }}; do
+            flags=""
+            if [ "$fn" = "revenuecat-webhook" ]; then flags="--no-verify-jwt"; fi
+            echo "Déploiement de $fn"
+            supabase functions deploy "$fn" --project-ref "$PROJECT_REF" $flags
+          done

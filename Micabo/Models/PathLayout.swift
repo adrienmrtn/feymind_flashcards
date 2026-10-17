@@ -2,17 +2,18 @@ import Foundation
 
 /// **Le chemin d'une leçon, toujours construit de la même façon.**
 ///
-/// Intro, un cercle Notes par thème, un cercle Quiz après chaque groupe de thèmes, un cercle
-/// Flashcards, la Conclusion. Les groupes font 2 thèmes, ou 3 quand la leçon en a plus de 8 ;
-/// un quiz ne couvre jamais plus de 3 thèmes. Voir `docs/refonte-parcours.md` § 5.1.
+/// Intro, une étape Notes par thème, un **Checkpoint** après chaque palier de thèmes (sauf le
+/// dernier), puis le **Quiz final**, qui reprend toute la leçon et la conclut. Les paliers font
+/// 2 thèmes, ou 3 quand la leçon en a plus de 8. Les flashcards se révisent depuis la barre du
+/// bas, à leur rythme : elles ne bloquent pas le chemin. Voir `docs/refonte-parcours.md` § 5.1.
 ///
-/// | Thèmes | Groupes | Cercles |
+/// | Thèmes | Paliers | Étapes |
 /// | --- | --- | --- |
-/// | 4 | 2 · 2 | 9 |
-/// | 5 | 2 · 3 | 10 |
-/// | 6 | 2 · 2 · 2 | 12 |
-/// | 10 | 3 · 3 · 2 · 2 | 17 |
-/// | 12 | 3 · 3 · 3 · 3 | 19 |
+/// | 4 | 2 · 2 | 7 |
+/// | 5 | 2 · 3 | 8 |
+/// | 6 | 2 · 2 · 2 | 10 |
+/// | 10 | 3 · 3 · 2 · 2 | 15 |
+/// | 12 | 3 · 3 · 3 · 3 | 17 |
 ///
 /// Une fonction pure, sans SwiftData : l'écran, l'app et les tests calculent le même chemin.
 enum PathLayout {
@@ -59,10 +60,9 @@ enum PathLayout {
         }
     }
 
-    /// Le chemin complet, dans l'ordre, avec les en-têtes de palier.
+    /// Le chemin complet, dans l'ordre.
     ///
-    /// `groupNames` vient du plan : le nom de chaque groupe, dans l'ordre. Un nom manquant
-    /// (plan d'avant, groupe que le modèle n'a pas nommé) laisse l'en-tête sans nom.
+    /// `groupNames` vient du plan : le nom de chaque palier, repris sous son Checkpoint.
     static func steps(
         themes: [PathTheme],
         groupNames: [String] = [],
@@ -71,23 +71,51 @@ enum PathLayout {
         guard !themes.isEmpty else { return [] }
         var steps: [PathStep] = []
         var number = 0
-        func add(_ circle: PathCircle.Kind, title: String, icon: MicaboIcon) {
+        func add(_ circle: PathCircle.Kind, title: String, icon: MicaboIcon, symbol: String, subtitle: String? = nil) {
             number += 1
-            steps.append(.circle(PathCircle(kind: circle, number: number, title: title, icon: icon)))
+            steps.append(.circle(PathCircle(kind: circle, number: number, title: title, icon: icon, symbol: symbol, subtitle: subtitle)))
         }
 
-        add(.intro, title: L10n.t("lesson.circle.intro", locale: .resolved()), icon: .star)
-        for (index, group) in groups(themeCount: themes.count, singleQuiz: singleQuiz).enumerated() {
-            let name = groupNames.indices.contains(index) ? groupNames[index] : ""
-            steps.append(.palier(number: index + 1, name: name))
+        add(.intro, title: L10n.t("lesson.circle.intro", locale: .resolved()), icon: .star, symbol: "play.fill")
+        let groups = groups(themeCount: themes.count, singleQuiz: singleQuiz)
+        for (index, group) in groups.enumerated() {
             for theme in group {
-                add(.notes(theme: theme), title: themes[theme].title, icon: themes[theme].icon)
+                add(.notes(theme: theme), title: themes[theme].title, icon: themes[theme].icon, symbol: themes[theme].symbol)
             }
-            add(.quiz(group: index, themes: group), title: L10n.t("lesson.circle.quiz", locale: .resolved()), icon: .quiz)
+            if index < groups.count - 1 {
+                let name = groupNames.indices.contains(index) ? groupNames[index].nilIfBlank : nil
+                add(
+                    .quiz(group: index, themes: group),
+                    title: L10n.t("lesson.circle.checkpoint", locale: .resolved()),
+                    icon: .quiz,
+                    symbol: checkpointSymbols[index % checkpointSymbols.count],
+                    subtitle: name
+                )
+            }
         }
-        add(.flashcards, title: L10n.t("lesson.circle.flashcards", locale: .resolved()), icon: .cards)
-        add(.conclusion, title: L10n.t("lesson.circle.conclusion", locale: .resolved()), icon: .trophy)
+        add(
+            .final(themes: Array(themes.indices)),
+            title: L10n.t("lesson.circle.final", locale: .resolved()),
+            icon: .trophy,
+            symbol: "trophy"
+        )
         return steps
+    }
+
+    /// Les pictogrammes des Checkpoints, un par palier : hors du catalogue des thèmes, pour
+    /// qu'aucun rond du chemin n'en répète un autre.
+    static let checkpointSymbols = ["rosette", "medal", "flag.checkered", "seal", "shield.checkered", "star.circle"]
+
+    /// **Une progression d'avant le Quiz final**, relue sans rien perdre : la Conclusion ou
+    /// le quiz du dernier palier valaient la fin de la leçon.
+    static func migrated(done: Set<String>, circles: [PathCircle], finished: Bool) -> Set<String> {
+        var out = done
+        guard let final = circles.last, case .final = final.kind else { return out }
+        let lastGroupQuiz = "quiz:\(max(0, circles.filter { if case .quiz = $0.kind { return true } else { return false } }.count))"
+        if finished || done.contains("conclusion") || done.contains(lastGroupQuiz) {
+            out.insert(final.id)
+        }
+        return out
     }
 
     /// Les seuls cercles, sans les en-têtes.
@@ -113,16 +141,16 @@ enum PathLayout {
 struct PathTheme: Equatable {
     var title: String
     var icon: MicaboIcon
+    /// Son pictogramme sur le chemin (`PathSymbol`).
+    var symbol: String = PathSymbol.fallback
 }
 
-/// Une ligne du chemin : un cercle, ou l'en-tête d'un palier.
+/// Une ligne du chemin : une étape.
 enum PathStep: Equatable, Identifiable {
-    case palier(number: Int, name: String)
     case circle(PathCircle)
 
     var id: String {
         switch self {
-        case .palier(let number, _): "palier:\(number)"
         case .circle(let circle): circle.id
         }
     }
@@ -139,10 +167,10 @@ struct PathCircle: Equatable, Identifiable {
         case intro
         /// Les notes d'un thème, par son rang.
         case notes(theme: Int)
-        /// Le quiz d'un groupe, et les thèmes qu'il couvre.
+        /// Le Checkpoint d'un palier, et les thèmes qu'il couvre.
         case quiz(group: Int, themes: [Int])
-        case flashcards
-        case conclusion
+        /// Le Quiz final : toute la leçon, puis « À retenir ».
+        case final(themes: [Int])
     }
 
     enum State: Equatable {
@@ -152,10 +180,15 @@ struct PathCircle: Equatable, Identifiable {
     }
 
     let kind: Kind
-    /// « CERCLE 4 » : le rang sur le chemin, à partir de 1.
+    /// « ÉTAPE 4 » : le rang sur le chemin, à partir de 1.
     let number: Int
     let title: String
+    /// L'icône 3D, pour l'en-tête de l'étape ouverte.
     let icon: MicaboIcon
+    /// Le pictogramme du rond, sur le chemin.
+    var symbol: String = PathSymbol.fallback
+    /// Sous le titre : le palier qu'un Checkpoint conclut.
+    var subtitle: String?
 
     /// Stable d'une version à l'autre : c'est la clé de la progression enregistrée.
     var id: String {
@@ -163,8 +196,15 @@ struct PathCircle: Equatable, Identifiable {
         case .intro: "intro"
         case .notes(let theme): "notes:\(theme)"
         case .quiz(let group, _): "quiz:\(group)"
-        case .flashcards: "flashcards"
-        case .conclusion: "conclusion"
+        case .final: "final"
+        }
+    }
+
+    /// Un Checkpoint ou le Quiz final : un palier franchi, qui se fête.
+    var isMilestone: Bool {
+        switch kind {
+        case .quiz, .final: true
+        case .intro, .notes: false
         }
     }
 
@@ -172,9 +212,8 @@ struct PathCircle: Equatable, Identifiable {
     var activity: LessonActivity? {
         switch kind {
         case .notes: .notes
-        case .quiz: .quiz
-        case .flashcards: .flashcards
-        case .intro, .conclusion: nil
+        case .quiz, .final: .quiz
+        case .intro: nil
         }
     }
 }

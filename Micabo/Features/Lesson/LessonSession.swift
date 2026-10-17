@@ -26,7 +26,9 @@ final class LessonSession {
         plan = course.lessonPath
         steps = course.pathSteps(plan: plan)
         circles = steps.compactMap(\.circle)
-        progress = course.progress
+        var progress = course.progress
+        progress.done = PathLayout.migrated(done: progress.done, circles: circles, finished: progress.finishedAt != nil)
+        self.progress = progress
     }
 
     // MARK: Où on en est
@@ -65,19 +67,14 @@ final class LessonSession {
         switch circle.kind {
         case .notes(let theme):
             return readiness(ofTheme: theme)
-        case .quiz(_, let themes):
+        case .quiz(_, let themes), .final(let themes):
             // Un quiz attend ses thèmes ; sans questions du tout (une leçon convertie hors
             // ligne), il se passe d'un appui plutôt que de bloquer le chemin.
             let states = themes.map(readiness(ofTheme:))
             if states.contains(.writing) { return .writing }
             if states.contains(.failed) && quizQuestions(themes: themes).isEmpty { return .failed }
             return .ready
-        case .flashcards:
-            if course.orderedChapters.contains(where: { $0.status == .pending }) && course.cards.isEmpty {
-                return .writing
-            }
-            return .ready
-        case .intro, .conclusion:
+        case .intro:
             return .ready
         }
     }
@@ -97,16 +94,40 @@ final class LessonSession {
         themes.compactMap { chapter(at: $0)?.quiz?.questions }.filter { !$0.isEmpty }
     }
 
-    /// Le quiz d'un palier : cinq questions.
+    /// **Les questions d'un Checkpoint ou du Quiz final**, du plus simple au plus exigeant.
+    ///
+    /// Un Checkpoint pose cinq questions sur son palier et deux sur les paliers d'avant :
+    /// revenir sur ce qu'on a vu plus tôt est ce qui le fait tenir. Le Quiz final reprend
+    /// toute la leçon, deux questions par thème.
     func circleQuiz(_ circle: PathCircle) -> [QuizQuestion] {
-        guard case .quiz(_, let themes) = circle.kind else { return [] }
         let attempt = progress.quizScores[circle.id] == nil ? 0 : 1 + progress.done.count
-        return LessonPicking.quiz(
-            themes: quizQuestions(themes: themes),
-            missed: progress.missed,
-            count: LessonPicking.circleQuizCount,
-            seed: LessonPicking.seed(course.id.uuidString, circle.id, String(attempt))
-        )
+        let seed = LessonPicking.seed(course.id.uuidString, circle.id, String(attempt))
+        switch circle.kind {
+        case .quiz(_, let themes):
+            let current = LessonPicking.quiz(
+                themes: quizQuestions(themes: themes),
+                missed: progress.missed,
+                count: LessonPicking.circleQuizCount,
+                seed: seed
+            )
+            let earlier = Array(0..<(themes.min() ?? 0))
+            let review = LessonPicking.quiz(
+                themes: quizQuestions(themes: earlier),
+                missed: progress.missed,
+                count: LessonPicking.checkpointReviewCount,
+                seed: seed &+ 1
+            ).filter { question in !current.contains { $0.id == question.id } }
+            return LessonPicking.progressive(current + review)
+        case .final(let themes):
+            return LessonPicking.progressive(LessonPicking.quiz(
+                themes: quizQuestions(themes: themes),
+                missed: progress.missed,
+                count: LessonPicking.finalQuizCount(themes: themes.count),
+                seed: seed
+            ))
+        case .intro, .notes:
+            return []
+        }
     }
 
     /// Le quiz complet (navbar, examen blanc) : dix questions sur toute la leçon. Change à
@@ -152,6 +173,16 @@ final class LessonSession {
         return ids.compactMap { byID[$0] }
     }
 
+    /// Une séance de révision : les cartes dues d'abord, puis des nouvelles, quinze au plus.
+    static let newCardsPerSession = 15
+
+    func studyQueue(now: Date = Date()) -> [Flashcard] {
+        let active = course.cards.filter { !$0.isSuspended }
+        let due = active.filter { $0.state != .new && $0.dueDate <= now }.sorted { $0.dueDate < $1.dueDate }
+        let fresh = active.filter { $0.state == .new }.sorted { $0.position < $1.position }.prefix(Self.newCardsPerSession)
+        return Array((due + fresh).prefix(30))
+    }
+
     /// Les cartes de la leçon à revoir aujourd'hui.
     func dueCards(now: Date = Date()) -> [Flashcard] {
         course.cards
@@ -161,14 +192,32 @@ final class LessonSession {
 
     // MARK: Écrire
 
-    /// Coche un cercle. La Conclusion coche aussi la leçon : elle passe en « apprise ».
+    /// Coche une étape. Le Quiz final coche aussi la leçon : elle passe en « apprise ».
+    ///
+    /// Une étape finie allume aussi la journée de la série (`StudyStreak`) : lire ses notes
+    /// jusqu'au bout est une vraie séance, même sans une seule carte notée.
     func complete(_ circle: PathCircle, in context: ModelContext) {
+        StudyStreak.record()
         course.updateProgress { progress in
             progress.done.insert(circle.id)
             progress.inCircle = 0
-            if case .conclusion = circle.kind, progress.finishedAt == nil {
+            if case .final = circle.kind, progress.finishedAt == nil {
                 progress.finishedAt = Date()
             }
+        }
+        try? context.save()
+        reload()
+    }
+
+    /// **Recommencer la leçon** : le chemin repart de l'Intro. Les flashcards gardent leur
+    /// rythme (elles se révisent à part) ; le temps passé reste compté.
+    func reset(in context: ModelContext) {
+        course.updateProgress { progress in
+            progress.done = []
+            progress.inCircle = 0
+            progress.quizScores = [:]
+            progress.missed = []
+            progress.finishedAt = nil
         }
         try? context.save()
         reload()
@@ -191,7 +240,11 @@ final class LessonSession {
     }
 
     /// Une réponse à un QCM. Ratée, la question devient une flashcard à revoir demain.
+    ///
+    /// Juste ou fausse, elle compte pour la série : on a travaillé, même si l'étape n'est pas
+    /// allée à son terme.
     func answered(_ question: QuizQuestion, right: Bool, in context: ModelContext) {
+        StudyStreak.record()
         course.updateProgress { progress in
             if right { progress.noteRight(question.id) } else { progress.noteMissed(question.id) }
         }

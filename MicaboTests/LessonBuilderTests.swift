@@ -21,7 +21,7 @@ private final class FakeLessonService: LessonGenerating, @unchecked Sendable {
                 title: "La guerre froide",
                 subject: "HISTOIRE",
                 icon: "parchemin",
-                themes: (0..<4).map { .init(title: "Thème \($0 + 1)", icon: "ampoule") },
+                themes: (0..<4).map { .init(title: "Thème \($0 + 1)", icon: "ampoule", symbol: $0 < 2 ? "flag" : nil, points: ["Notion \($0)"]) },
                 groups: [.init(name: "Les causes", themes: [0, 1]), .init(name: "Les suites", themes: [2, 3])],
                 intro: .init(lines: ["Un", "Deux", "Trois"], minutes: 25),
                 takeaways: ["A", "B", "C", "D", "E"],
@@ -44,6 +44,34 @@ private final class FakeLessonService: LessonGenerating, @unchecked Sendable {
                 GeneratedQuestion(prompt: "Q\($0) ?", choices: ["a", "b", "c", "d"], answer: 1, why: "Parce que.")
             },
             flashcards: (0..<3).map { GeneratedCard(front: "Recto \($0)", back: "Verso \($0)") }
+                + [GeneratedCard(kind: "cloze", front: "La ___ est rouge.", back: "pomme")]
+        )
+    }
+
+    private(set) var practiceRequests: [LessonPracticeRequest] = []
+    var practiceError: Error?
+
+    func practice(_ request: LessonPracticeRequest) async throws -> [GeneratedQuestion] {
+        lock.lock()
+        practiceRequests.append(request)
+        lock.unlock()
+        if let practiceError { throw practiceError }
+        return (0..<request.count).map {
+            GeneratedQuestion(kind: "truefalse", prompt: "Nouvelle \($0)", choices: ["Vrai", "Faux"], answer: 0, why: ".", difficulty: 3, theme: $0 % max(1, request.themes.count))
+        }
+    }
+
+    private(set) var examRequests: [LessonExamRequest] = []
+
+    func exam(_ request: LessonExamRequest) async throws -> GeneratedExam {
+        lock.lock()
+        examRequests.append(request)
+        lock.unlock()
+        return GeneratedExam(
+            title: "Blanc",
+            questions: (0..<request.count).map {
+                GeneratedQuestion(prompt: "Examen \($0)", choices: ["a", "b", "c", "d"], answer: 2, why: ".", theme: $0 % 3, lesson: $0 % 2)
+            }
         )
     }
 
@@ -109,13 +137,21 @@ final class LessonBuilderTests: XCTestCase {
         await waitUntilDone(builder, course)
         XCTAssertEqual(course.orderedChapters.map(\.status), [.ready, .ready, .ready, .ready])
         XCTAssertEqual(course.lessonPath?.status, .ready)
-        XCTAssertEqual(course.cards.count, 12, "trois flashcards par thème")
+        XCTAssertEqual(course.cards.count, 16, "quatre flashcards par thème")
         let first = try XCTUnwrap(course.orderedChapters.first)
         XCTAssertEqual(first.notes?.oneLiner.hasPrefix("Idée"), true)
         XCTAssertEqual(first.quiz?.questions.count, 4)
         XCTAssertEqual(first.quiz?.final?.id, "\(first.id.uuidString):0")
-        XCTAssertEqual(first.cards?.count, 3)
-        XCTAssertEqual(course.pathSteps().compactMap(\.circle).count, 9)
+        XCTAssertEqual(first.cards?.count, 4)
+        let cloze = try XCTUnwrap(first.cards?.first { $0.kind == .cloze }, "une carte à trou garde sa forme")
+        XCTAssertEqual(cloze.front, "La \(ClozeGap.marker) est rouge.")
+        let symbols = try XCTUnwrap(course.lessonPath?.symbols)
+        XCTAssertEqual(symbols.count, 4)
+        XCTAssertEqual(Set(symbols).count, 4, "jamais deux fois le même pictogramme")
+        XCTAssertEqual(symbols.first, "flag")
+        XCTAssertEqual(course.lessonPath?.points?.first, ["Notion 0"])
+        XCTAssertTrue(service.planRequests.first?.audience.exam.contains("un examen, le ") == true, "l'examen visé part avec le plan")
+        XCTAssertEqual(course.pathSteps().compactMap(\.circle).count, 7)
 
         let exams = try context.fetch(FetchDescriptor<Exam>())
         XCTAssertEqual(exams.first?.courseIDs, [course.id], "la date d'examen devient un examen de la leçon")
@@ -136,7 +172,92 @@ final class LessonBuilderTests: XCTestCase {
         service.failingThemes = []
         await builder.retry(course.orderedChapters[2], in: context)
         XCTAssertEqual(course.orderedChapters[2].status, .ready)
-        XCTAssertEqual(course.cards.count, 12)
+        XCTAssertEqual(course.cards.count, 16)
+    }
+
+    func testNewPracticeQuestionsJoinTheirThemesAndAvoidTheOldOnes() async throws {
+        let context = try makeContext()
+        let service = FakeLessonService()
+        let builder = builder(service)
+        let course = try await builder.create(LessonCreation(topic: "x", source: .topic), in: context)
+        await waitUntilDone(builder, course)
+        let second = course.orderedChapters[1]
+        course.updateProgress { $0.noteMissed("\(second.id.uuidString):2") }
+
+        let fresh = try await builder.practice(course, in: context, count: 8)
+
+        XCTAssertEqual(fresh.count, 8)
+        XCTAssertTrue(fresh.allSatisfy { $0.kind == .truefalse && $0.difficulty == 3 })
+        let request = try XCTUnwrap(service.practiceRequests.first)
+        XCTAssertEqual(request.focus, [1], "les thèmes ratés d'abord")
+        XCTAssertEqual(request.themes.count, 4)
+        XCTAssertTrue(request.themes[0].notes.contains("Idée 0"), "les notes partent à plat")
+        XCTAssertTrue(request.avoid.contains("Q0 ?"), "les questions déjà posées sont à éviter")
+        XCTAssertEqual(course.orderedChapters[0].quiz?.questions.count, 6, "deux nouvelles questions rejoignent le premier thème")
+        XCTAssertTrue(fresh.allSatisfy { $0.id.contains(":p") })
+    }
+
+    func testAMockExamCoversEveryLessonAndKeepsItsThemes() async throws {
+        let context = try makeContext()
+        let service = FakeLessonService()
+        let builder = builder(service)
+        let first = try await builder.create(LessonCreation(topic: "x", source: .topic), in: context)
+        let second = try await builder.create(LessonCreation(topic: "y", source: .topic), in: context)
+        await waitUntilDone(builder, first)
+        await waitUntilDone(builder, second)
+        let exam = try ExamRepository.create(
+            name: "Bac blanc", date: Date().addingTimeInterval(20 * 86_400), courseIDs: [first.id, second.id], intensity: .standard, in: context
+        )
+
+        let paper = try await builder.examPaper(title: "Bac blanc", exam: exam, courses: [first, second], minutes: 30, in: context)
+
+        let request = try XCTUnwrap(service.examRequests.first)
+        XCTAssertEqual(request.count, 20, "une question et demie par minute")
+        XCTAssertEqual(request.lessons.count, 2)
+        XCTAssertEqual(request.lessons[0].themes.count, 4)
+        XCTAssertTrue(request.audience.exam.contains("Bac blanc"), "l'examen visé part avec la copie")
+        XCTAssertEqual(paper.items.count, 20)
+        XCTAssertEqual(paper.examID, exam.id)
+        XCTAssertEqual(Set(paper.items.map(\.lesson)), [0, 1])
+        XCTAssertEqual(paper.lessons[1].chapterIDs, second.orderedChapters.map(\.id))
+        XCTAssertEqual(Set(paper.items.map(\.id)).count, 20, "chaque question a son identifiant")
+
+        var answers: [String: QuizAnswer] = [:]
+        for item in paper.items.prefix(15) { answers[item.id] = QuizAnswer(right: true, picked: 2) }
+        let result = paper.result(answers: answers, seconds: 600)
+        XCTAssertEqual(result.correct, 15)
+        XCTAssertEqual(result.total, 20, "une question sans réponse compte fausse")
+        XCTAssertEqual(result.lessons.map(\.total), [10, 10])
+    }
+
+    func testAMockExamGradeIsReadInTheCountryScale() {
+        let locale = UiLocale.fr
+        XCTAssertEqual(ExamGrade.label(0.675, country: .fr, locale: locale), "13,5/20")
+        XCTAssertEqual(ExamGrade.label(0.5, country: .de, locale: locale), "4,0")
+        XCTAssertEqual(ExamGrade.label(1, country: .de, locale: locale), "1,0")
+        XCTAssertEqual(ExamGrade.label(0.7, country: .ch, locale: locale), "4,5")
+        XCTAssertEqual(ExamGrade.label(0.85, country: .us, locale: locale), "B")
+        XCTAssertEqual(ExamGrade.label(0.78, country: .tr, locale: locale), "78 %")
+        XCTAssertEqual(ExamGrade.label(0.75, country: .it, locale: locale), "7,5/10")
+        XCTAssertEqual(ExamGrade.label(0.2, country: .uk, locale: locale), "U")
+        XCTAssertTrue(ExamGrade.passes(0.5))
+        XCTAssertFalse(ExamGrade.passes(0.45))
+    }
+
+    func testAnUsedFreePracticeOpensThePaywall() async throws {
+        let context = try makeContext()
+        let service = FakeLessonService()
+        let builder = builder(service)
+        let course = try await builder.create(LessonCreation(topic: "x", source: .topic), in: context)
+        await waitUntilDone(builder, course)
+        service.practiceError = SupabaseFunctionError.server(status: 402, message: "…", code: "pro_required")
+        do {
+            _ = try await builder.practice(course, in: context)
+            XCTFail("le lot aurait dû être refusé")
+        } catch let error as LessonServiceError {
+            XCTAssertEqual(error, .proRequired)
+            XCTAssertTrue(error.opensPaywall)
+        }
     }
 
     func testTheFreeLimitComesBackAsAPaywallError() async throws {

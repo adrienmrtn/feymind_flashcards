@@ -19,7 +19,7 @@ struct SupabaseDatabase {
             case .notConfigured: L10n.t("ios.cloud.notConfigured", locale: .resolved())
             case .notSignedIn: L10n.t("ios.cloud.notSignedIn", locale: .resolved())
             case .network(let detail): L10n.t("ios.ai.network", locale: .resolved(), vars: ["detail": detail])
-            case .server(_, let message, _): message
+            case .server(_, let message, _): ServerMessage.localized(message, fallback: "ios.cloud.unexpected")
             }
         }
 

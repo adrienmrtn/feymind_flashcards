@@ -17,6 +17,17 @@ describe("resolveLanguage", () => {
     assert.equal(resolveLanguage("fr_CA"), "fr");
   });
 
+  it("distingue le Brésil du Portugal et l'Amérique latine de l'Espagne", () => {
+    assert.equal(resolveLanguage("pt-BR"), "pt-BR");
+    assert.equal(resolveLanguage("pt"), "pt");
+    assert.equal(resolveLanguage("es-419"), "es-419");
+    assert.equal(resolveLanguage("es-MX"), "es-419");
+    assert.equal(resolveLanguage("es"), "es");
+    assert.equal(resolveLanguage("ar"), "ar");
+    assert.equal(resolveLanguage("ru"), "ru");
+    assert.ok(languageBrief("pt-BR").includes("BRÉSIL"));
+  });
+
   // Une version de l'application antérieure à la question n'envoie rien : les fiches déjà
   // écrites ne doivent pas changer de langue.
   it("retombe sur le français quand rien n'est demandé", () => {

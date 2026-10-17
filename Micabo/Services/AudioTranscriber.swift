@@ -38,9 +38,11 @@ enum AudioTranscriber {
     /// reconnaissance attend.
     static func locale(for language: ContentLanguage) -> Locale {
         let identifiers: [String: String] = [
-            "fr": "fr-FR", "en": "en-US", "de": "de-DE", "it": "it-IT", "es": "es-ES", "pt": "pt-BR",
-            "cs": "cs-CZ", "nl": "nl-NL", "el": "el-GR", "hu": "hu-HU", "pl": "pl-PL", "ro": "ro-RO",
-            "sv": "sv-SE", "tr": "tr-TR",
+            "fr": "fr-FR", "en": "en-US", "de": "de-DE", "it": "it-IT", "es": "es-ES", "es-419": "es-MX",
+            "pt": "pt-PT", "pt-BR": "pt-BR", "cs": "cs-CZ", "sk": "sk-SK", "nl": "nl-NL", "el": "el-GR",
+            "hu": "hu-HU", "pl": "pl-PL", "ro": "ro-RO", "sv": "sv-SE", "da": "da-DK", "fi": "fi-FI",
+            "et": "et-EE", "hr": "hr-HR", "sl": "sl-SI", "sr": "sr-RS", "bg": "bg-BG", "ru": "ru-RU",
+            "tr": "tr-TR", "ar": "ar-SA",
         ]
         return Locale(identifier: identifiers[language.rawValue] ?? language.rawValue)
     }

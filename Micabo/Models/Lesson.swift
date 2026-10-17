@@ -43,6 +43,12 @@ struct LessonPath: Codable, Equatable {
     /// Leçon très courte : un seul quiz pour tous les thèmes.
     var singleQuiz: Bool = false
     var status: Status = .generating
+    /// Le pictogramme de chaque thème sur le chemin (`PathSymbol`), dans l'ordre des thèmes,
+    /// tous différents. Absent sur une leçon d'avant : l'app en choisit.
+    var symbols: [String]?
+    /// Les notions que chaque thème doit couvrir, données par le plan : elles bornent
+    /// l'écriture du thème, et « Réessayer » les renvoie telles quelles.
+    var points: [[String]]?
 
     static func decode(from data: Data?) -> LessonPath? {
         guard let data, !data.isEmpty else { return nil }
@@ -54,8 +60,9 @@ struct LessonPath: Codable, Equatable {
     }
 }
 
-/// **Les notes d'un thème**, au format de la refonte (§ 6) : une idée en une phrase, deux à
-/// cinq blocs courts, des blocs spéciaux quand le contenu le demande, trois phrases à retenir.
+/// **Les notes d'un thème**, au format de la refonte (§ 6) : une idée en une phrase, des blocs
+/// courts (quatre à dix selon le niveau de l'élève), des blocs spéciaux et des encadrés quand
+/// le contenu le demande, trois phrases à retenir.
 ///
 /// Encodé en JSON dans `Chapter.notesData` et `chapters.notes`. Un ancien chapitre n'en a pas :
 /// il garde sa fiche (`Chapter.sheetData`), affichée avec la même typographie.
@@ -63,6 +70,10 @@ struct ThemeNotes: Codable, Equatable {
     var oneLiner: String
     var blocks: [NoteBlock]
     var takeaways: [String]
+
+    enum CodingKeys: String, CodingKey {
+        case oneLiner, blocks, takeaways
+    }
 
     static func decode(from data: Data?) -> ThemeNotes? {
         guard let data, !data.isEmpty else { return nil }
@@ -88,6 +99,15 @@ struct ThemeNotes: Codable, Equatable {
                 lines.append(contentsOf: items.map { "\($0.date) : \($0.text)" })
             case .formula(let latex, let caption):
                 lines.append([latex, caption].compactMap { $0 }.joined(separator: " — "))
+            case .steps(let items):
+                lines.append(contentsOf: items.enumerated().map { "\($0.offset + 1). \($0.element)" })
+            case .table(let columns, let rows):
+                lines.append(columns.joined(separator: " | "))
+                lines.append(contentsOf: rows.map { $0.joined(separator: " | ") })
+            case .quote(let text, let author):
+                lines.append(["« \(text) »", author].compactMap { $0 }.joined(separator: " — "))
+            case .callout(_, let title, let text):
+                lines.append([title, text].compactMap { $0 }.joined(separator: " : "))
             }
         }
         lines.append(contentsOf: takeaways)
@@ -95,8 +115,37 @@ struct ThemeNotes: Codable, Equatable {
     }
 }
 
+extension ThemeNotes {
+    /// Les blocs se lisent un par un : un bloc illisible (une forme inconnue sans texte de
+    /// repli, un champ manquant) disparaît, au lieu de laisser un trou blanc ou de faire
+    /// tomber toutes les notes du thème. Écrit dans une extension pour garder l'initialiseur
+    /// membre à membre.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        oneLiner = try container.decode(String.self, forKey: .oneLiner)
+        blocks = try container.decode([LossyNoteBlock].self, forKey: .blocks)
+            .compactMap(\.block)
+            .filter { !$0.isEmpty }
+        takeaways = try container.decode([String].self, forKey: .takeaways)
+    }
+}
+
+/// Un bloc qui se décode sans jamais échouer : `nil` quand il est illisible.
+private struct LossyNoteBlock: Decodable {
+    let block: NoteBlock?
+
+    init(from decoder: Decoder) throws {
+        block = try? NoteBlock(from: decoder)
+    }
+}
+
 /// Un bloc des notes. Le balisage en ligne ne garde que `**mot-clé**` (gras violet) et
 /// `$latex$`.
+///
+/// Les formes `steps`, `table` et `quote` arrivent avec un champ `text` de repli, pour les
+/// versions de l'app qui ne les connaissent pas : on l'ignore ici, sauf si le bloc est
+/// incomplet. L'encadré (`callout`) a son texte dans `text` : une version qui ne le connaît
+/// pas le lit en paragraphe.
 enum NoteBlock: Codable, Equatable {
     struct DateItem: Codable, Equatable {
         var date: String
@@ -110,9 +159,18 @@ enum NoteBlock: Codable, Equatable {
     case dates([DateItem])
     case formula(latex: String, caption: String?)
     case example(String)
+    /// Des étapes numérotées, dans l'ordre.
+    case steps([String])
+    /// Un petit tableau : deux à quatre colonnes, des cellules courtes.
+    case table(columns: [String], rows: [[String]])
+    /// Une citation, et qui l'a dite.
+    case quote(text: String, author: String?)
+    /// Un encadré qui enseigne : pourquoi ça compte, le piège, l'astuce, la règle à retenir.
+    /// L'app écrit toujours le nom de son genre ; le titre, facultatif, vient dessous.
+    case callout(kind: CalloutKind, title: String?, text: String)
 
     private enum CodingKeys: String, CodingKey {
-        case type, text, items, term, latex, caption
+        case type, text, items, term, latex, caption, columns, rows, author, kind, title
     }
 
     init(from decoder: Decoder) throws {
@@ -139,12 +197,47 @@ enum NoteBlock: Codable, Equatable {
             )
         case "example":
             self = .example(try container.decode(String.self, forKey: .text))
+        case "steps":
+            let items = (try? container.decode([String].self, forKey: .items)) ?? []
+            self = try items.isEmpty ? Self.fallback(in: container) : .steps(items)
+        case "table":
+            let columns = (try? container.decode([String].self, forKey: .columns)) ?? []
+            let rows = (try? container.decode([[String]].self, forKey: .rows)) ?? []
+            self = try columns.isEmpty || rows.isEmpty
+                ? Self.fallback(in: container)
+                : .table(columns: columns, rows: rows)
+        case "quote":
+            let text = try container.decode(String.self, forKey: .text)
+            let author = (try container.decodeIfPresent(String.self, forKey: .author))?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            self = .quote(text: text, author: (author?.isEmpty ?? true) ? nil : author)
+        case "callout":
+            let text = try container.decode(String.self, forKey: .text)
+            // Un genre inconnu (d'une version plus récente du serveur) se lit comme une astuce.
+            let rawKind = (try? container.decodeIfPresent(String.self, forKey: .kind)) ?? nil
+            let kind = rawKind.flatMap(CalloutKind.init(rawValue:)) ?? .tip
+            let rawTitle = (try? container.decodeIfPresent(String.self, forKey: .title)) ?? nil
+            let title = rawTitle?.trimmingCharacters(in: .whitespacesAndNewlines)
+            self = .callout(kind: kind, title: (title?.isEmpty ?? true) ? nil : title, text: text)
         default:
             // Un bloc d'une version plus récente du serveur se lit comme un paragraphe plutôt
             // que de faire tomber toutes les notes du thème.
-            let text = try container.decodeIfPresent(String.self, forKey: .text) ?? ""
-            self = .paragraph(text)
+            self = try Self.fallback(in: container)
         }
+    }
+
+    /// Le texte de repli d'un bloc, en paragraphe. Sans texte, le bloc est illisible :
+    /// `ThemeNotes` le retire plutôt que d'afficher un paragraphe vide.
+    private static func fallback(in container: KeyedDecodingContainer<CodingKeys>) throws -> NoteBlock {
+        let text = try? container.decodeIfPresent(String.self, forKey: .text)
+        guard let text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw DecodingError.dataCorruptedError(
+                forKey: .text,
+                in: container,
+                debugDescription: "Bloc sans contenu lisible."
+            )
+        }
+        return .paragraph(text)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -173,31 +266,165 @@ enum NoteBlock: Codable, Equatable {
         case .example(let text):
             try container.encode("example", forKey: .type)
             try container.encode(text, forKey: .text)
+        case .steps(let items):
+            try container.encode("steps", forKey: .type)
+            try container.encode(items, forKey: .items)
+        case .table(let columns, let rows):
+            try container.encode("table", forKey: .type)
+            try container.encode(columns, forKey: .columns)
+            try container.encode(rows, forKey: .rows)
+        case .quote(let text, let author):
+            try container.encode("quote", forKey: .type)
+            try container.encode(text, forKey: .text)
+            try container.encodeIfPresent(author, forKey: .author)
+        case .callout(let kind, let title, let text):
+            try container.encode("callout", forKey: .type)
+            try container.encode(kind.rawValue, forKey: .kind)
+            try container.encodeIfPresent(title, forKey: .title)
+            try container.encode(text, forKey: .text)
         }
     }
 
     /// Vrai pour les blocs qui se dessinent dans un encadré : deux encadrés ne se suivent pas.
     var isBoxed: Bool {
         switch self {
-        case .definition, .formula, .example: true
+        case .definition, .formula, .example, .steps, .table, .quote, .callout: true
         default: false
+        }
+    }
+
+    /// Vrai pour un bloc qui n'a rien à montrer : il laisserait un trou blanc.
+    var isEmpty: Bool {
+        switch self {
+        case .subtitle(let text), .paragraph(let text), .callout(_, _, let text):
+            text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        default:
+            false
         }
     }
 }
 
-/// **Un QCM** : la question de fin d'un thème, ou une des questions de réserve qui font les
-/// quiz. Quatre choix, une bonne réponse, une phrase qui explique.
+/// Le genre d'un encadré des notes. Voir `supabase/functions/generate-lesson/schema.ts`.
+enum CalloutKind: String, Codable, CaseIterable, Sendable {
+    /// Pourquoi ça compte : l'intuition derrière la règle.
+    case why
+    /// L'erreur classique, et comment l'éviter.
+    case mistake
+    /// Une astuce de méthode, un moyen mnémotechnique.
+    case tip
+    /// Une règle à savoir par cœur.
+    case remember
+
+    /// Le titre de l'encadré quand le serveur n'en donne pas (`lesson.notes.callout.*`).
+    var titleKey: String {
+        switch self {
+        case .why: "lesson.notes.callout.why"
+        case .mistake: "lesson.notes.callout.mistake"
+        case .tip: "lesson.notes.callout.tip"
+        case .remember: "lesson.notes.callout.remember"
+        }
+    }
+
+    /// Le nom du genre pour le modèle, quand les notes lui sont relues : en français, comme
+    /// toutes les consignes.
+    var promptLabel: String {
+        switch self {
+        case .why: "Pourquoi"
+        case .mistake: "Piège"
+        case .tip: "Astuce"
+        case .remember: "À retenir"
+        }
+    }
+}
+
+/// La forme d'une question. Voir `supabase/functions/generate-lesson/schema.ts`.
+enum QuizKind: String, Codable, CaseIterable, Sendable {
+    /// Un QCM : `choices`, une seule bonne (`answer`).
+    case choice
+    /// Une affirmation à juger : `choices` vaut « Vrai », « Faux » dans la langue des notes.
+    case truefalse
+    /// Une phrase à trou (`ClozeGap.marker`) et ses propositions.
+    case gap
+    /// Des éléments à remettre dans l'ordre : `choices` est dans le BON ordre, l'app mélange.
+    case order
+    /// Des paires à associer : `choices` à gauche, `matches` à droite, dans le même ordre.
+    case match
+}
+
+/// **Une question** : la question de fin d'un thème, une des questions de réserve qui font
+/// les quiz, ou une question d'entraînement écrite plus tard. Cinq formes (`QuizKind`), une
+/// difficulté de 1 (reconnaître) à 3 (appliquer), une phrase qui explique.
 struct QuizQuestion: Codable, Equatable, Identifiable {
-    /// Stable : `<id du thème>:<rang>`. C'est lui qu'on retient pour « ratée ».
+    /// Stable : `<id du thème>:<rang>`, ou `<id du thème>:p<n>` pour l'entraînement. C'est lui
+    /// qu'on retient pour « ratée ».
     var id: String
+    var kind: QuizKind
     var prompt: String
     var choices: [String]
     var answer: Int
     var why: String
+    var matches: [String]
+    var difficulty: Int
+
+    init(
+        id: String,
+        kind: QuizKind = .choice,
+        prompt: String,
+        choices: [String],
+        answer: Int,
+        why: String,
+        matches: [String] = [],
+        difficulty: Int = 2
+    ) {
+        self.id = id
+        self.kind = kind
+        self.prompt = prompt
+        self.choices = choices
+        self.answer = answer
+        self.why = why
+        self.matches = matches
+        self.difficulty = min(3, max(1, difficulty))
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, kind, prompt, choices, answer, why, matches, difficulty
+    }
+
+    /// Une question d'avant les formes est un QCM ; une forme inconnue aussi.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        kind = (try container.decodeIfPresent(String.self, forKey: .kind)).flatMap(QuizKind.init(rawValue:)) ?? .choice
+        prompt = try container.decode(String.self, forKey: .prompt)
+        choices = try container.decodeIfPresent([String].self, forKey: .choices) ?? []
+        answer = try container.decodeIfPresent(Int.self, forKey: .answer) ?? 0
+        why = try container.decodeIfPresent(String.self, forKey: .why) ?? ""
+        matches = try container.decodeIfPresent([String].self, forKey: .matches) ?? []
+        difficulty = min(3, max(1, try container.decodeIfPresent(Int.self, forKey: .difficulty) ?? 2))
+    }
 
     var isValid: Bool {
-        choices.count >= 2 && choices.indices.contains(answer)
-            && !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        guard !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        switch kind {
+        case .choice, .truefalse, .gap:
+            return choices.count >= 2 && choices.indices.contains(answer)
+        case .order:
+            return choices.count >= 3
+        case .match:
+            return choices.count >= 2 && matches.count == choices.count
+        }
+    }
+
+    /// La bonne réponse, en clair : pour le corrigé et pour une carte faite d'une question ratée.
+    var answerText: String {
+        switch kind {
+        case .choice, .truefalse, .gap:
+            return choices.indices.contains(answer) ? choices[answer] : ""
+        case .order:
+            return choices.joined(separator: " → ")
+        case .match:
+            return zip(choices, matches).map { "\($0) : \($1)" }.joined(separator: " · ")
+        }
     }
 }
 

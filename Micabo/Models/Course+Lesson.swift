@@ -36,16 +36,25 @@ extension Course {
         iconID.isEmpty ? MicaboIcon.guess(subject: subject, title: title) : MicaboIcon(id: iconID)
     }
 
-    /// Les thèmes, dans l'ordre du chemin.
-    var pathThemes: [PathTheme] {
-        orderedChapters.map { PathTheme(title: $0.title, icon: $0.icon) }
+    /// Les thèmes, dans l'ordre du chemin, chacun avec son pictogramme : celui du plan, sinon
+    /// celui qui va avec son icône 3D. Jamais deux fois le même.
+    func pathThemes(plan: LessonPath? = nil) -> [PathTheme] {
+        let chapters = orderedChapters
+        let planned = (plan ?? lessonPath)?.symbols ?? []
+        let wanted = chapters.enumerated().map { index, chapter in
+            planned.indices.contains(index) && !planned[index].isEmpty ? planned[index] : PathSymbol.forIcon(chapter.iconID)
+        }
+        let symbols = PathSymbol.unique(wanted)
+        return chapters.enumerated().map { index, chapter in
+            PathTheme(title: chapter.title, icon: chapter.icon, symbol: symbols[index])
+        }
     }
 
-    /// Le chemin, cercle par cercle, avec les en-têtes de palier. Vide sans plan.
+    /// Le chemin, étape par étape. Vide sans plan.
     func pathSteps(plan: LessonPath? = nil) -> [PathStep] {
         guard let plan = plan ?? lessonPath else { return [] }
         return PathLayout.steps(
-            themes: pathThemes,
+            themes: pathThemes(plan: plan),
             groupNames: plan.groups.map(\.name),
             singleQuiz: plan.singleQuiz
         )

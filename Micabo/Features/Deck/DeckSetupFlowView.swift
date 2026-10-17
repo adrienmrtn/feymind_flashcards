@@ -152,7 +152,6 @@ struct DeckSetupFlowView: View {
             }
         }
         .environment(\.onboardingSurface, .canvas)
-        .preferredColorScheme(.light)
         .micaboPaywall($paywall) {
             // Abonné à l'instant : ce qu'on demandait se fait.
             guard step.next(for: setup) == .building else { return }
