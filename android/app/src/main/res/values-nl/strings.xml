@@ -219,6 +219,10 @@
     <string name="ios_username_taken">%1$s is al bezet.</string>
     <string name="ios_username_tooLong">Maximaal twintig tekens.</string>
     <string name="ios_username_tooShort">Minimaal drie tekens.</string>
+    <string name="ios_vis_friends">Mijn vrienden</string>
+    <string name="ios_vis_friendsHelp">Alleen zichtbaar voor je vrienden.</string>
+    <string name="ios_vis_private">Privé</string>
+    <string name="ios_vis_privateHelp">Alleen zichtbaar voor jou.</string>
     <string name="ios_weekRanking">Ranglijst van de week</string>
     <string name="ios_weekRankingHint">kaarten herhaald sinds maandag</string>
     <string name="ios_youLower">jij</string>
@@ -463,6 +467,7 @@
     <string name="x_auth_rateLimited">Te veel pogingen. Wacht een minuut en probeer het opnieuw.</string>
     <string name="x_error_generic">Er ging iets mis. Probeer het opnieuw.</string>
     <string name="x_friends_adopt">Er mijn les van maken</string>
+    <string name="x_lesson_whoSees">Wie deze les ziet</string>
     <string name="x_onb_language">In welke taal studeer je?</string>
     <string name="x_paywall_subscribe">Word Pro</string>
     <string name="x_record_limit">Tot 90 minuten. Mika zet je opname om in tekst en schrijft dan je les.</string>

@@ -15,6 +15,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -185,6 +186,7 @@ private fun LessonPath(lesson: Lesson) {
     var banner by remember { mutableStateOf<String?>(null) }
     var menu by remember { mutableStateOf(false) }
     var confirm by remember { mutableStateOf<String?>(null) }
+    val signedIn = app.auth.account.collectAsState().value != null
     val listState = rememberLazyListState()
     var placedOnCurrent by remember { mutableStateOf(false) }
 
@@ -326,6 +328,13 @@ private fun LessonPath(lesson: Lesson) {
                     menu = false
                     confirm = "rename"
                 })
+                // Partager n'a de sens qu'avec un compte : les amis lisent la leçon sur le serveur.
+                if (signedIn) {
+                    DropdownMenuItem(text = { Text(stringResource(R.string.x_lesson_whoSees), style = nunito(16.sp, FontWeight.Bold)) }, onClick = {
+                        menu = false
+                        confirm = "visibility"
+                    })
+                }
                 DropdownMenuItem(text = { Text(stringResource(R.string.lesson_menu_reset), style = nunito(16.sp, FontWeight.Bold)) }, onClick = {
                     menu = false
                     confirm = "reset"
@@ -336,6 +345,46 @@ private fun LessonPath(lesson: Lesson) {
                 })
             }
         }
+    }
+    if (confirm == "visibility") {
+        val chosen = lesson.visibility.takeIf { it == "friends" } ?: "private"
+        AlertDialog(
+            onDismissRequest = { confirm = null },
+            containerColor = colors.surface,
+            title = { Text(stringResource(R.string.x_lesson_whoSees), style = nunito(20.sp, FontWeight.ExtraBold)) },
+            text = {
+                Column {
+                    listOf(
+                        Triple("friends", R.string.ios_vis_friends, R.string.ios_vis_friendsHelp),
+                        Triple("private", R.string.ios_vis_private, R.string.ios_vis_privateHelp),
+                    ).forEach { (value, title, help) ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable {
+                                    confirm = null
+                                    if (value != chosen) {
+                                        app.lessons.setVisibility(lesson.id, value)
+                                        app.syncSoon(force = true)
+                                    }
+                                }
+                                .padding(vertical = 10.dp, horizontal = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(stringResource(title), style = nunito(17.sp, FontWeight.ExtraBold), color = if (value == chosen) colors.accent else colors.ink)
+                                Text(stringResource(help), style = nunito(14.sp, FontWeight.SemiBold), color = colors.inkSecondary)
+                            }
+                            if (value == chosen) Icon(Icons.Filled.Check, null, tint = colors.accent)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { confirm = null }) { Text(stringResource(R.string.lesson_menu_cancel), style = nunito(16.sp, FontWeight.Bold)) }
+            },
+        )
     }
     if (confirm == "rename") {
         RenameDialog(lesson.title, onDismiss = { confirm = null }, onSave = { title ->

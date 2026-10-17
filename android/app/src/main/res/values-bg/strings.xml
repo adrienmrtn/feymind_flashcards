@@ -226,6 +226,10 @@
     <string name="ios_username_taken">%1$s вече е заето.</string>
     <string name="ios_username_tooLong">Максимум двайсет символа.</string>
     <string name="ios_username_tooShort">Минимум три символа.</string>
+    <string name="ios_vis_friends">Моите приятели</string>
+    <string name="ios_vis_friendsHelp">Видимо само за приятелите ти.</string>
+    <string name="ios_vis_private">Лично</string>
+    <string name="ios_vis_privateHelp">Видимо само за теб.</string>
     <string name="ios_weekRanking">Класация за седмицата</string>
     <string name="ios_weekRankingHint">прегледани карти от понеделник</string>
     <string name="ios_youLower">ти</string>

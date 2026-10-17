@@ -226,6 +226,10 @@
     <string name="ios_username_taken">%1$s már foglalt.</string>
     <string name="ios_username_tooLong">Legfeljebb húsz karakter.</string>
     <string name="ios_username_tooShort">Legalább három karakter.</string>
+    <string name="ios_vis_friends">Barátaim</string>
+    <string name="ios_vis_friendsHelp">Csak a barátaid látják.</string>
+    <string name="ios_vis_private">Privát</string>
+    <string name="ios_vis_privateHelp">Csak te látod.</string>
     <string name="ios_weekRanking">A hét ranglistája</string>
     <string name="ios_weekRankingHint">hétfő óta átnézett kártya</string>
     <string name="ios_youLower">te</string>

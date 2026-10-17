@@ -223,6 +223,10 @@
     <string name="ios_username_taken">%1$s on juba võetud.</string>
     <string name="ios_username_tooLong">Maksimaalselt kakskümmend tähemärki.</string>
     <string name="ios_username_tooShort">Vähemalt kolm tähemärki.</string>
+    <string name="ios_vis_friends">Minu sõbrad</string>
+    <string name="ios_vis_friendsHelp">Näevad ainult sinu sõbrad.</string>
+    <string name="ios_vis_private">Privaatne</string>
+    <string name="ios_vis_privateHelp">Näed ainult sina.</string>
     <string name="ios_weekRanking">Nädala edetabel</string>
     <string name="ios_weekRankingHint">esmaspäevast korratud kaarte</string>
     <string name="ios_youLower">sina</string>

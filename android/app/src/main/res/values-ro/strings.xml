@@ -219,6 +219,10 @@
     <string name="ios_username_taken">%1$s e deja folosit.</string>
     <string name="ios_username_tooLong">Maximum douăzeci de caractere.</string>
     <string name="ios_username_tooShort">Minimum trei caractere.</string>
+    <string name="ios_vis_friends">Prietenii mei</string>
+    <string name="ios_vis_friendsHelp">Vizibil doar pentru prietenii tăi.</string>
+    <string name="ios_vis_private">Privat</string>
+    <string name="ios_vis_privateHelp">Vizibil doar pentru tine.</string>
     <string name="ios_weekRanking">Clasamentul săptămânii</string>
     <string name="ios_weekRankingHint">carduri recapitulate de luni</string>
     <string name="ios_youLower">tu</string>

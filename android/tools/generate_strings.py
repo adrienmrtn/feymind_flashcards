@@ -273,6 +273,12 @@ CUSTOM: dict[str, dict[str, str]] = {
         "ru": "Сделать из этого мой урок",
         "ar": "اجعله درسي",
     },
+    "x_lesson_whoSees": {
+        "en": "Who sees this lesson", "fr": "Qui voit cette leçon", "de": "Wer diese Lektion sieht",
+        "es": "Quién ve esta lección", "es419": "Quién ve esta lección", "it": "Chi vede questa lezione",
+        "pt": "Quem vê esta lição", "ptBR": "Quem vê esta lição", "tr": "Bu dersi kim görür",
+        "nl": "Wie deze les ziet", "pl": "Kto widzi tę lekcję", "ru": "Кто видит этот урок", "ar": "من يرى هذا الدرس",
+    },
     "x_settings_level": {
         "en": "Level", "fr": "Niveau", "de": "Stufe", "es": "Nivel", "es419": "Nivel", "it": "Livello",
         "pt": "Nível", "ptBR": "Nível", "tr": "Seviye", "nl": "Niveau", "pl": "Poziom",

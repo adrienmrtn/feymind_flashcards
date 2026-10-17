@@ -208,6 +208,9 @@ class LessonRepository(
     /** Recommence le chemin ; le temps passé et la mémoire des cartes restent. */
     fun restart(id: String) = modify(id) { it.copy(progress = Progress(seconds = it.progress.seconds, cards = it.progress.cards)) }
 
+    /** Qui voit la leçon : ses amis, ou personne. */
+    fun setVisibility(id: String, visibility: String) = modify(id) { it.copy(visibility = visibility) }
+
     /** Une carte notée : son prochain rappel, et la journée de la série. */
     fun review(id: String, key: String, rating: Rating) {
         streak.record()

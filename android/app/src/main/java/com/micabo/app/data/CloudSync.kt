@@ -229,6 +229,7 @@ class CloudSync(
             progress = Progress(done = done, quizScores = scores, seconds = seconds, finishedAt = finishedAt, missed = missed, cards = cards),
             examDate = local?.examDate ?: 0,
             chat = local?.chat.orEmpty(),
+            visibility = row.str("visibility").ifEmpty { null },
         )
     }
 
@@ -317,6 +318,8 @@ class CloudSync(
         put("created_at", iso(lesson.createdAt.takeIf { it > 0 } ?: lesson.updatedAt))
         put("updated_at", iso(lesson.updatedAt))
         if (lesson.openedAt > 0) put("last_opened_at", iso(lesson.openedAt))
+        // Une visibilité jamais lue ni choisie ici ne part pas : celle de l'iPhone reste.
+        lesson.visibility?.let { put("visibility", it) }
         put("tone", TONES[((lesson.tone % 5) + 5) % 5])
         put("icon", lesson.icon)
         putJsonObject("path") {

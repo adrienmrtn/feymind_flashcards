@@ -252,6 +252,10 @@
     <string name="ios_username_taken">%1$s est déjà pris.</string>
     <string name="ios_username_tooLong">Vingt caractères au maximum.</string>
     <string name="ios_username_tooShort">Trois caractères au minimum.</string>
+    <string name="ios_vis_friends">Mes amis</string>
+    <string name="ios_vis_friendsHelp">Visible par tes amis seulement.</string>
+    <string name="ios_vis_private">Privé</string>
+    <string name="ios_vis_privateHelp">Visible par toi seul.</string>
     <string name="ios_weekRanking">Classement de la semaine</string>
     <string name="ios_weekRankingHint">cartes passées depuis lundi</string>
     <string name="ios_youLower">toi</string>
@@ -509,6 +513,7 @@
     <string name="x_error_generic">Quelque chose n\'a pas marché. Réessaie.</string>
     <string name="x_error_network">Pas de connexion. Vérifie ton internet et réessaie.</string>
     <string name="x_friends_adopt">En faire ma leçon</string>
+    <string name="x_lesson_whoSees">Qui voit cette leçon</string>
     <string name="x_onb_language">Dans quelle langue tu étudies ?</string>
     <string name="x_onb_language_sub">Mika écrit tes leçons, tes quiz et tes flashcards dans cette langue.</string>
     <string name="x_paste_tooShort">Encore quelques lignes, et Mika pourra s\'en servir.</string>

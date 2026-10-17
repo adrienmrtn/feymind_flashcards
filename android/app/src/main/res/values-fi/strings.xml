@@ -221,6 +221,10 @@
     <string name="ios_username_taken">%1$s on jo varattu.</string>
     <string name="ios_username_tooLong">Enintään kaksikymmentä merkkiä.</string>
     <string name="ios_username_tooShort">Vähintään kolme merkkiä.</string>
+    <string name="ios_vis_friends">Kaverini</string>
+    <string name="ios_vis_friendsHelp">Näkyy vain kavereillesi.</string>
+    <string name="ios_vis_private">Yksityinen</string>
+    <string name="ios_vis_privateHelp">Näkyy vain sinulle.</string>
     <string name="ios_weekRanking">Viikon kärkilista</string>
     <string name="ios_weekRankingHint">kerrattua korttia maanantaista asti</string>
     <string name="ios_youLower">sinä</string>

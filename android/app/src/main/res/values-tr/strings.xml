@@ -248,6 +248,10 @@
     <string name="ios_username_taken">%1$s zaten alınmış.</string>
     <string name="ios_username_tooLong">En fazla yirmi karakter.</string>
     <string name="ios_username_tooShort">En az üç karakter.</string>
+    <string name="ios_vis_friends">Arkadaşlarım</string>
+    <string name="ios_vis_friendsHelp">Yalnızca arkadaşların görür.</string>
+    <string name="ios_vis_private">Özel</string>
+    <string name="ios_vis_privateHelp">Yalnızca sen görürsün.</string>
     <string name="ios_weekRanking">Haftanın sıralaması</string>
     <string name="ios_weekRankingHint">pazartesiden beri geçilen kartlar</string>
     <string name="ios_youLower">sen</string>
@@ -501,6 +505,7 @@
     <string name="x_error_generic">Bir şeyler ters gitti. Tekrar dene.</string>
     <string name="x_error_network">Bağlantı yok. İnternetini kontrol edip tekrar dene.</string>
     <string name="x_friends_adopt">Bundan dersimi yap</string>
+    <string name="x_lesson_whoSees">Bu dersi kim görür</string>
     <string name="x_onb_language">Hangi dilde çalışıyorsun?</string>
     <string name="x_onb_language_sub">Mika derslerini, testlerini ve kartlarını bu dilde yazar.</string>
     <string name="x_paste_tooShort">Birkaç satır daha, Mika bununla çalışabilir.</string>

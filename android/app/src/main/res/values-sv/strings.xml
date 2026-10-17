@@ -223,6 +223,10 @@
     <string name="ios_username_taken">%1$s är redan upptaget.</string>
     <string name="ios_username_tooLong">Högst tjugo tecken.</string>
     <string name="ios_username_tooShort">Minst tre tecken.</string>
+    <string name="ios_vis_friends">Mina vänner</string>
+    <string name="ios_vis_friendsHelp">Synlig bara för dina vänner.</string>
+    <string name="ios_vis_private">Privat</string>
+    <string name="ios_vis_privateHelp">Synlig bara för dig.</string>
     <string name="ios_weekRanking">Veckans topplista</string>
     <string name="ios_weekRankingHint">repeterade kort sedan måndag</string>
     <string name="ios_youLower">du</string>

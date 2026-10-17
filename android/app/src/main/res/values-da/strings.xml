@@ -221,6 +221,10 @@
     <string name="ios_username_taken">%1$s er allerede taget.</string>
     <string name="ios_username_tooLong">Højst tyve tegn.</string>
     <string name="ios_username_tooShort">Mindst tre tegn.</string>
+    <string name="ios_vis_friends">Mine venner</string>
+    <string name="ios_vis_friendsHelp">Kun synlig for dine venner.</string>
+    <string name="ios_vis_private">Privat</string>
+    <string name="ios_vis_privateHelp">Kun synlig for dig.</string>
     <string name="ios_weekRanking">Ugens rangliste</string>
     <string name="ios_weekRankingHint">repeterede kort siden mandag</string>
     <string name="ios_youLower">dig</string>

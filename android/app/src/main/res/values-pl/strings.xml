@@ -224,6 +224,10 @@
     <string name="ios_username_taken">%1$s jest już zajęte.</string>
     <string name="ios_username_tooLong">Maksymalnie dwadzieścia znaków.</string>
     <string name="ios_username_tooShort">Minimum trzy znaki.</string>
+    <string name="ios_vis_friends">Moi znajomi</string>
+    <string name="ios_vis_friendsHelp">Widoczne tylko dla znajomych.</string>
+    <string name="ios_vis_private">Prywatne</string>
+    <string name="ios_vis_privateHelp">Widoczne tylko dla Ciebie.</string>
     <string name="ios_weekRanking">Ranking tygodnia</string>
     <string name="ios_weekRankingHint">fiszki powtórzone od poniedziałku</string>
     <string name="ios_youLower">ty</string>
@@ -473,6 +477,7 @@
     <string name="x_auth_rateLimited">Zbyt wiele prób. Odczekaj minutę i spróbuj ponownie.</string>
     <string name="x_error_generic">Coś poszło nie tak. Spróbuj ponownie.</string>
     <string name="x_friends_adopt">Zrób z tego moją lekcję</string>
+    <string name="x_lesson_whoSees">Kto widzi tę lekcję</string>
     <string name="x_onb_language">W jakim języku się uczysz?</string>
     <string name="x_paywall_subscribe">Przejdź na Pro</string>
     <string name="x_record_limit">Do 90 minut. Mika zamienia nagranie na tekst, a potem pisze twoją lekcję.</string>

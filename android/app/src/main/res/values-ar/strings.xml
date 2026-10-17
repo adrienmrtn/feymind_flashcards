@@ -227,6 +227,10 @@
     <string name="ios_username_taken">%1$s مستخدم بالفعل.</string>
     <string name="ios_username_tooLong">عشرون حرفًا كحد أقصى.</string>
     <string name="ios_username_tooShort">ثلاثة أحرف على الأقل.</string>
+    <string name="ios_vis_friends">أصدقائي</string>
+    <string name="ios_vis_friendsHelp">مرئي لأصدقائك فقط.</string>
+    <string name="ios_vis_private">خاص</string>
+    <string name="ios_vis_privateHelp">مرئي لك وحدك.</string>
     <string name="ios_weekRanking">ترتيب هذا الأسبوع</string>
     <string name="ios_weekRankingHint">بطاقات تمت مراجعتها منذ الإثنين</string>
     <string name="ios_youLower">أنت</string>
@@ -479,6 +483,7 @@
     <string name="x_auth_rateLimited">محاولات كثيرة جدًا. انتظر دقيقة ثم حاول مجددًا.</string>
     <string name="x_error_generic">حدث خطأ ما. حاول مجددًا.</string>
     <string name="x_friends_adopt">اجعله درسي</string>
+    <string name="x_lesson_whoSees">من يرى هذا الدرس</string>
     <string name="x_onb_language">بأي لغة تدرس؟</string>
     <string name="x_paywall_subscribe">اشترك في Pro</string>
     <string name="x_record_limit">حتى 90 دقيقة. يحوّل ميكا تسجيلك إلى نص ثم يكتب درسك.</string>

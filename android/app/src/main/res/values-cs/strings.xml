@@ -224,6 +224,10 @@
     <string name="ios_username_taken">%1$s už je obsazené.</string>
     <string name="ios_username_tooLong">Maximálně dvacet znaků.</string>
     <string name="ios_username_tooShort">Minimálně tři znaky.</string>
+    <string name="ios_vis_friends">Moji kamarádi</string>
+    <string name="ios_vis_friendsHelp">Vidí jen tvoji kamarádi.</string>
+    <string name="ios_vis_private">Soukromé</string>
+    <string name="ios_vis_privateHelp">Vidíš jen ty.</string>
     <string name="ios_weekRanking">Žebříček týdne</string>
     <string name="ios_weekRankingHint">kartičky zopakované od pondělí</string>
     <string name="ios_youLower">ty</string>

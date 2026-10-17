@@ -225,6 +225,10 @@
     <string name="ios_username_taken">%1$s je već zauzeto.</string>
     <string name="ios_username_tooLong">Najviše dvadeset znakova.</string>
     <string name="ios_username_tooShort">Najmanje tri znaka.</string>
+    <string name="ios_vis_friends">Moji prijatelji</string>
+    <string name="ios_vis_friendsHelp">Vidljivo samo tvojim prijateljima.</string>
+    <string name="ios_vis_private">Privatno</string>
+    <string name="ios_vis_privateHelp">Vidljivo samo tebi.</string>
     <string name="ios_weekRanking">Ljestvica tjedna</string>
     <string name="ios_weekRankingHint">kartica ponovljenih od ponedjeljka</string>
     <string name="ios_youLower">ti</string>

@@ -226,6 +226,10 @@
     <string name="ios_username_taken">Το %1$s χρησιμοποιείται ήδη.</string>
     <string name="ios_username_tooLong">Έως είκοσι χαρακτήρες.</string>
     <string name="ios_username_tooShort">Τουλάχιστον τρεις χαρακτήρες.</string>
+    <string name="ios_vis_friends">Οι φίλοι μου</string>
+    <string name="ios_vis_friendsHelp">Ορατό μόνο στους φίλους σου.</string>
+    <string name="ios_vis_private">Ιδιωτικό</string>
+    <string name="ios_vis_privateHelp">Ορατό μόνο σε σένα.</string>
     <string name="ios_weekRanking">Κατάταξη εβδομάδας</string>
     <string name="ios_weekRankingHint">κάρτες σε επανάληψη από τη Δευτέρα</string>
     <string name="ios_youLower">εσύ</string>

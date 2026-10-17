@@ -244,6 +244,10 @@
     <string name="ios_username_taken">%1$s ist schon vergeben.</string>
     <string name="ios_username_tooLong">Höchstens zwanzig Zeichen.</string>
     <string name="ios_username_tooShort">Mindestens drei Zeichen.</string>
+    <string name="ios_vis_friends">Meine Freunde</string>
+    <string name="ios_vis_friendsHelp">Nur für deine Freunde sichtbar.</string>
+    <string name="ios_vis_private">Privat</string>
+    <string name="ios_vis_privateHelp">Nur für dich sichtbar.</string>
     <string name="ios_weekRanking">Wochenrangliste</string>
     <string name="ios_weekRankingHint">Karten seit Montag</string>
     <string name="ios_youLower">du</string>
@@ -494,6 +498,7 @@
     <string name="x_error_generic">Etwas hat nicht geklappt. Versuch es erneut.</string>
     <string name="x_error_network">Keine Verbindung. Prüfe dein Internet und versuch es noch einmal.</string>
     <string name="x_friends_adopt">Meine Lektion daraus machen</string>
+    <string name="x_lesson_whoSees">Wer diese Lektion sieht</string>
     <string name="x_onb_language">In welcher Sprache lernst du?</string>
     <string name="x_onb_language_sub">Mika schreibt deine Lektionen, Quizze und Karteikarten in dieser Sprache.</string>
     <string name="x_paste_tooShort">Noch ein paar Zeilen, dann kann Mika damit arbeiten.</string>

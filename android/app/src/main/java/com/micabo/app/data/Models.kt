@@ -48,6 +48,8 @@ data class Lesson(
     val chat: List<ChatMessage> = emptyList(),
     /** La dernière modification, en millisecondes : la synchronisation garde la plus récente. */
     val updatedAt: Long = 0,
+    /** Qui voit la leçon (`CourseVisibility`) : `friends` ou `private` ; nul tant qu'on ne l'a pas lu ni choisi. */
+    val visibility: String? = null,
 ) {
     /**
      * La leçon avec un identifiant stable pour chaque thème et chaque carte : ce sont les
