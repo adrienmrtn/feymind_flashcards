@@ -91,6 +91,10 @@ final class ProAccess {
 
     private(set) var isPro: Bool
 
+    /// **La fin de l'essai gratuit en cours**, `nil` hors essai : jamais commencé, fini, ou
+    /// déjà payé. Le rappel du jour (`DailyReminder`) ne commence qu'après.
+    private(set) var trialEndsAt: Date?
+
     /// Même règle que le web (`ASSUME_PRO_WITHOUT_ROW`, à `false`) : pas de ligne, pas
     /// d'abonnement. Les deux clients doivent dire la même chose — un cours flouté sur le
     /// web et ouvert sur le téléphone, c'est le même produit qui dit deux choses.
@@ -184,12 +188,16 @@ final class ProAccess {
         // webhook a refermé la sienne : l'adresse l'emporte sur le SDK et
         // sur la table.
         if LifetimePro.matches(email?()) {
+            trialEndsAt = nil
             setPro(true)
             return
         }
 
-        let fromSDK = await PurchasesBridge.isPro()
+        let fromSDK = await PurchasesBridge.entitlement()
         let fromTable = await readEntitlementRow()
+        // L'essai selon le SDK quand il répond : il sait avant le webhook qu'un essai est
+        // devenu un abonnement. La table sinon, pour un achat fait ailleurs.
+        trialEndsAt = fromSDK.map(\.trialEndsAt) ?? fromTable?.trialEndsAt
 
         // Personne ne sait rien : le réglage tranche, et il dit non.
         guard fromSDK != nil || fromTable != nil else {
@@ -197,7 +205,7 @@ final class ProAccess {
             return
         }
 
-        setPro(fromSDK == true || fromTable == true)
+        setPro(fromSDK?.isPro == true || fromTable?.isPro == true)
     }
 
     /// S'abonne au flux du SDK : un abonnement résilié se referme **sans redémarrage**.
@@ -207,9 +215,11 @@ final class ProAccess {
     func observePurchases() {
         guard purchaseWatch == nil else { return }
         purchaseWatch = Task { [weak self] in
-            for await active in PurchasesBridge.proUpdates() {
+            for await state in PurchasesBridge.proUpdates() {
                 guard let self else { return }
-                if active {
+                if state.isPro {
+                    // Un essai qui commence, ou qui devient un abonnement, se lit ici.
+                    self.trialEndsAt = state.trialEndsAt
                     self.setPro(true)
                 } else {
                     await self.refresh()
@@ -219,7 +229,7 @@ final class ProAccess {
     }
 
     /// La ligne `entitlements`, ou `nil` quand on n'a pas pu la lire. `nil` n'est pas « non ».
-    private func readEntitlementRow() async -> Bool? {
+    private func readEntitlementRow() async -> (isPro: Bool, trialEndsAt: Date?)? {
         guard let token = await accessToken?(), let userID = userID?() else { return nil }
 
         do {
@@ -230,9 +240,11 @@ final class ProAccess {
                 filters: [URLQueryItem(name: "user_id", value: "eq.\(userID.uuidString.lowercased())")],
                 limit: 1
             )
-            guard let row = rows.first else { return false }
+            guard let row = rows.first else { return (false, nil) }
             let expired = row.expires_at.map { $0 < Date() } ?? false
-            return row.is_pro && !expired
+            let active = row.is_pro && !expired
+            let inTrial = active && row.period_type?.lowercased() == "trial"
+            return (active, inTrial ? (row.expires_at ?? .distantFuture) : nil)
         } catch {
             return nil
         }
