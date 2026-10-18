@@ -5,6 +5,8 @@ import {
   clampWords,
   calloutKind,
   cleanInline,
+  inlineSteps,
+  joinShortParagraphs,
   LIMITS,
   markdownBlocks,
   noteLimits,
@@ -110,6 +112,79 @@ describe("le Markdown d'un paragraphe", () => {
   it("laisse un paragraphe ordinaire tranquille", () => {
     assert.equal(markdownBlocks("Une phrase. Une autre."), null);
     assert.deepEqual(readBlock({ type: "paragraph", text: "# Titre seul" }), [{ type: "subtitle", text: "Titre seul" }]);
+  });
+});
+
+describe("des étapes écrites d'une traite", () => {
+  const photosynthesis =
+    "La photosynthèse se déroule en plusieurs étapes : 1. La lumière est absorbée par la chlorophylle. " +
+    "2. L'eau est décomposée. 3. Le dioxygène est libéré. 4. Le glucose est fabriqué.";
+
+  it("deviennent un paragraphe d'introduction suivi d'étapes", () => {
+    const blocks = readBlock({ type: "paragraph", text: photosynthesis });
+    assert.deepEqual(blocks.map((block) => block.type), ["paragraph", "steps"]);
+    assert.equal(blocks[0]!.type === "paragraph" && blocks[0]!.text, "La photosynthèse se déroule en plusieurs étapes :");
+    const steps = blocks[1]!;
+    assert(steps.type === "steps");
+    assert.deepEqual(steps.items, [
+      "La lumière est absorbée par la chlorophylle.",
+      "L'eau est décomposée.",
+      "Le dioxygène est libéré.",
+      "Le glucose est fabriqué.",
+    ]);
+  });
+
+  it("sans introduction, ce ne sont que des étapes", () => {
+    const blocks = readBlock({ type: "paragraph", text: "1. Poser l'opération. 2. Calculer. 3. Vérifier le signe." });
+    assert.deepEqual(blocks.map((block) => block.type), ["steps"]);
+  });
+
+  it("le point-virgule qui séparait les étapes ne les finit pas", () => {
+    assert.deepEqual(inlineSteps("Pour appliquer la loi : 1) vérifier l'unité ; 2) isoler U ; 3) conclure.")?.items, [
+      "vérifier l'unité",
+      "isoler U",
+      "conclure.",
+    ]);
+  });
+
+  it("une date, un nombre isolé ou une suite qui ne part pas de 1 laissent le paragraphe", () => {
+    assert.equal(inlineSteps("La guerre s'achève en 1945. Elle a duré 6 ans."), null);
+    assert.equal(inlineSteps("Il cite 2. puis 3. puis 4. exemples."), null);
+    assert.equal(inlineSteps("1. Seulement. 2. Deux étapes."), null, "deux étapes : un paragraphe suffit");
+    assert.equal(inlineSteps("Une valeur de 3.5 puis 1.2 et 2.4."), null);
+  });
+
+  it("des étapes trop longues ou trop nombreuses pour un bloc laissent le paragraphe", () => {
+    const long = Array.from({ length: 30 }, (_, i) => `mot${i}`).join(" ");
+    assert.equal(inlineSteps(`1. ${long}. 2. Court. 3. Court aussi.`), null);
+    const seven = Array.from({ length: LIMITS.stepsMax + 1 }, (_, i) => `${i + 1}. Étape ${i + 1}.`).join(" ");
+    assert.equal(inlineSteps(seven), null);
+  });
+});
+
+describe("les paragraphes trop courts", () => {
+  const p = (text: string): NoteBlock => ({ type: "paragraph", text });
+
+  it("se recollent tant qu'ils tiennent sous le plafond", () => {
+    const joined = joinShortParagraphs([p("Un deux trois."), p("Quatre cinq."), p("Six.")], 5);
+    assert.deepEqual(joined, [p("Un deux trois. Quatre cinq."), p("Six.")]);
+  });
+
+  it("un sous-titre ou un encadré entre eux les garde séparés", () => {
+    const callout: NoteBlock = { type: "callout", kind: "tip", text: "Astuce." };
+    const blocks = [p("A."), { type: "subtitle", text: "Suite" } as NoteBlock, p("B."), callout, p("C.")];
+    assert.deepEqual(joinShortParagraphs(blocks, 100), blocks);
+  });
+
+  it("dans les notes, deux paragraphes de quarante mots n'en font qu'un", () => {
+    const forty = Array.from({ length: 4 }, () => "Cette phrase compte exactement dix mots pour le test ici.").join(" ");
+    const notes = readNotes(
+      { oneLiner: "Une idée.", blocks: [{ type: "paragraph", text: forty }, { type: "paragraph", text: forty }] },
+      noteLimits(depthOf("upperSecondary")),
+    );
+    assert(notes);
+    assert.equal(notes.blocks.length, 1);
+    assert.equal(words(notes.blocks[0]!.type === "paragraph" ? notes.blocks[0]!.text : "").length, 80);
   });
 });
 
@@ -276,7 +351,8 @@ describe("la profondeur suit la marche", () => {
   });
 
   it("un étudiant garde plus de blocs qu'un collégien, et des puces plus longues", () => {
-    const raw = { oneLiner: "Une idée.", blocks: [{ type: "paragraph", text: paragraph }, ...many(14)] };
+    // Une liste après le long paragraphe : un paragraphe court qui le suivrait s'y recollerait.
+    const raw = { oneLiner: "Une idée.", blocks: [{ type: "paragraph", text: paragraph }, ...many(15).slice(1)] };
     const young = readNotes(raw, noteLimits(depthOf("lowerSecondary")))!;
     const old = readNotes(raw, noteLimits(depthOf("undergraduate")))!;
     const before = readNotes(raw)!;
@@ -315,15 +391,15 @@ describe("le fil d'enseignement du thème", () => {
       assert(THEME_SYSTEM_PROMPT.includes(part), part);
     }
     assert(!THEME_SYSTEM_PROMPT.includes("2 à 5 blocs"), "le nombre de blocs vient de la marche");
-    assert.equal(PROMPT_VERSION, "lesson-v4.1.0");
+    assert.equal(PROMPT_VERSION, "lesson-v4.2.0");
   });
 
   it("le volume des notes et la question d'examen suivent la marche", () => {
     const brief = (tier: Parameters<typeof depthOf>[0]) =>
       themeBrief({ lessonTitle: "L", themeTitle: "T", themeIndex: 0, themes: ["a"], questions: 6, flashcards: 5, kinds: ["choice"], depth: depthOf(tier) });
     // Un plancher et un plafond : un plafond seul donnait des paragraphes de deux phrases.
-    assert.match(brief("lowerSecondary"), /4 à 6 blocs .* paragraphes de 51 à 85 mots/);
-    assert.match(brief("graduate"), /4 à 8 blocs .* paragraphes de 57 à 95 mots, des listes de 8 puces au plus, de 28 mots/);
+    assert.match(brief("lowerSecondary"), /4 à 6 blocs .* paragraphes de 4 à 6 phrases \(51 à 85 mots/);
+    assert.match(brief("graduate"), /4 à 8 blocs .* paragraphes de 4 à 6 phrases \(57 à 95 mots.*\), des listes de 8 puces au plus, de 28 mots/);
     assert(brief("health").includes("format exact de son examen"));
     assert(!brief("lowerSecondary").includes("format exact de son examen"));
     assert.match(themeBrief({ lessonTitle: "L", themeTitle: "T", themeIndex: 0, themes: ["a"], questions: 6, flashcards: 5, kinds: ["choice"] }), /5 à 7 blocs/);

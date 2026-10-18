@@ -466,9 +466,49 @@ export function markdownBlocks(raw: unknown, limits: NoteLimits = DEFAULT_NOTE_L
   return out;
 }
 
+/** Un numéro d'étape dans le fil d'une phrase : « 1. », « 2) », en début de texte ou après un blanc. */
+const INLINE_STEP = /(?:^|(?<=[\s:;]))(\d{1,2})[.)]\s+/g;
+
+/**
+ * **Des étapes écrites d'une traite dans un paragraphe.** « 1. Le CO₂ entre… 2. La Rubisco
+ * fixe… 3. … » sur une seule ligne échappe à `markdownBlocks`, qui ne lit que des lignes, et
+ * l'élève recevait un pavé numéroté. Trois numéros au moins, qui se suivent depuis 1 : ce qui
+ * précède le premier reste un paragraphe d'introduction, le reste devient des étapes. `null`
+ * sinon — une date (« en 1945. ») ou un « 2 » isolé ne font pas une méthode.
+ */
+export function inlineSteps(raw: unknown): { lead: string; items: string[] } | null {
+  if (typeof raw !== "string") return null;
+  const marks = [...raw.matchAll(INLINE_STEP)];
+  const sequence: RegExpMatchArray[] = [];
+  for (const mark of marks) {
+    if (Number(mark[1]) === sequence.length + 1) sequence.push(mark);
+  }
+  // Plus d'étapes qu'un bloc n'en garde : les dernières seraient perdues, le paragraphe reste.
+  if (sequence.length < LIMITS.stepsMin + 1 || sequence.length > LIMITS.stepsMax) return null;
+  const items = sequence.map((mark, index) => {
+    const start = mark.index! + mark[0].length;
+    const end = index + 1 < sequence.length ? sequence[index + 1]!.index! : raw.length;
+    // « 1. poser l'opération ; 2. calculer » : le point-virgule séparait, il ne finit pas l'étape.
+    return raw.slice(start, end).trim().replace(/\s*[;,]$/, "");
+  });
+  // Une étape plus longue que ce qu'une étape peut porter serait coupée : le paragraphe reste.
+  if (items.some((item) => item.length < 2 || words(item).length > LIMITS.stepWords)) return null;
+  return { lead: raw.slice(0, sequence[0]!.index!).trim(), items };
+}
+
+function stepBlocks(raw: unknown, limits: NoteLimits): NoteBlock[] | null {
+  const steps = inlineSteps(raw);
+  if (!steps) return null;
+  return [
+    ...(steps.lead ? paragraphBlock(steps.lead, limits) : []),
+    ...readBlock({ type: "steps", items: steps.items }, limits),
+  ];
+}
+
 /**
  * **Un bloc du modèle, aux règles.** Rend zéro, un ou plusieurs blocs : un paragraphe écrit en
- * Markdown se déplie (`markdownBlocks`), un tableau trop maigre redevient une liste.
+ * Markdown se déplie (`markdownBlocks`), des étapes écrites d'une traite aussi (`inlineSteps`),
+ * un tableau trop maigre redevient une liste.
  */
 export function readBlock(raw: unknown, limits: NoteLimits = DEFAULT_NOTE_LIMITS): NoteBlock[] {
   if (!raw || typeof raw !== "object") return [];
@@ -484,8 +524,15 @@ export function readBlock(raw: unknown, limits: NoteLimits = DEFAULT_NOTE_LIMITS
       const text = subtitleText(block.text);
       return text ? [{ type, text }] : [];
     }
-    case "paragraph":
-      return markdownBlocks(block.text, limits) ?? paragraphBlock(block.text, limits);
+    case "paragraph": {
+      // Une ligne seule qui s'ouvre sur « 1. » serait lue par `markdownBlocks` comme une étape
+      // unique, les numéros suivants noyés dedans : les étapes d'une traite passent d'abord.
+      const oneLine = typeof block.text === "string" && !block.text.trim().includes("\n");
+      return (oneLine ? stepBlocks(block.text, limits) : null) ??
+        markdownBlocks(block.text, limits) ??
+        stepBlocks(block.text, limits) ??
+        paragraphBlock(block.text, limits);
+    }
     case "list":
       return listBlock(items, limits);
     case "steps": {
@@ -632,6 +679,8 @@ export function readNotes(raw: unknown, limits: NoteLimits = DEFAULT_NOTE_LIMITS
     block.type !== "subtitle" ||
     (index < blocks.length - 1 && blocks[index + 1]!.type !== "subtitle")
   );
+  // Avant que des encadrés ne se relisent en texte : un aparté reste un paragraphe à part.
+  blocks = joinShortParagraphs(blocks, limits.paragraphWords);
   // Des encadrés à chaque bloc n'en font plus ressortir aucun : au-delà du plafond, ils se
   // relisent en texte courant.
   let callouts = 0;
@@ -655,6 +704,28 @@ export function readNotes(raw: unknown, limits: NoteLimits = DEFAULT_NOTE_LIMITS
   const content = blocks.filter((block) => block.type !== "subtitle").length;
   if (!oneLiner || content < 1) return null;
   return { oneLiner, blocks, takeaways };
+}
+
+/**
+ * **Deux paragraphes courts qui se suivent n'en font qu'un.** Le modèle tient mal une longueur
+ * en mots : à qui l'on demande « soixante-six à cent dix mots », il rend deux paragraphes de
+ * quarante-cinq, et l'app en faisait deux écrans presque vides. Ils se recollent tant que le
+ * tout tient sous le plafond de la marche ; un sous-titre ou un encadré entre eux les sépare.
+ */
+export function joinShortParagraphs(blocks: NoteBlock[], maxWords: number): NoteBlock[] {
+  const out: NoteBlock[] = [];
+  for (const block of blocks) {
+    const last = out[out.length - 1];
+    if (
+      last?.type === "paragraph" && block.type === "paragraph" &&
+      words(last.text).length + words(block.text).length <= maxWords
+    ) {
+      out[out.length - 1] = { type: "paragraph", text: `${last.text} ${block.text}` };
+    } else {
+      out.push(block);
+    }
+  }
+  return out;
 }
 
 /**

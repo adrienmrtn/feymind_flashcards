@@ -125,6 +125,7 @@ extension ThemeNotes {
         oneLiner = try container.decode(String.self, forKey: .oneLiner)
         blocks = try container.decode([LossyNoteBlock].self, forKey: .blocks)
             .compactMap(\.block)
+            .flatMap(\.repaired)
             .filter { !$0.isEmpty }
         takeaways = try container.decode([String].self, forKey: .takeaways)
     }
@@ -191,10 +192,12 @@ enum NoteBlock: Codable, Equatable {
         case "dates":
             self = .dates(try container.decode([DateItem].self, forKey: .items))
         case "formula":
-            self = .formula(
-                latex: try container.decode(String.self, forKey: .latex),
-                caption: try container.decodeIfPresent(String.self, forKey: .caption)
-            )
+            let latex = try container.decode(String.self, forKey: .latex)
+            let caption = try container.decodeIfPresent(String.self, forKey: .caption)
+            // Le serveur ramène la formule à ce que le moteur compose ; une leçon écrite avant
+            // garde son `\xrightarrow{Lumière}`, affiché « xrightarrowLumière » : réparée ici.
+            let normalized = SheetText.normalizedFormula(latex, caption: caption)
+            self = .formula(latex: normalized?.latex ?? latex, caption: normalized?.caption ?? caption)
         case "example":
             self = .example(try container.decode(String.self, forKey: .text))
         case "steps":
@@ -301,6 +304,72 @@ enum NoteBlock: Codable, Equatable {
         default:
             false
         }
+    }
+
+    /// Le nombre de mots que le bloc donne à lire : ce qui remplit, ou non, un écran.
+    var wordCount: Int {
+        let pieces: [String]
+        switch self {
+        case .subtitle(let text), .paragraph(let text), .example(let text):
+            pieces = [text]
+        case .list(let items), .steps(let items):
+            pieces = items
+        case .definition(let term, let text):
+            pieces = [term, text]
+        case .dates(let items):
+            pieces = items.flatMap { [$0.date, $0.text] }
+        case .formula(_, let caption):
+            pieces = [caption ?? ""]
+        case .table(let columns, let rows):
+            pieces = columns + rows.flatMap { $0 }
+        case .quote(let text, let author):
+            pieces = [text, author ?? ""]
+        case .callout(_, let title, let text):
+            pieces = [title ?? "", text]
+        }
+        return pieces.reduce(0) { $0 + $1.split(whereSeparator: \.isWhitespace).count }
+    }
+
+    /// **Des étapes écrites d'une traite dans un paragraphe.** « 1. La lumière est absorbée…
+    /// 2. L'eau est décomposée… 3. … » arrivait en un pavé numéroté. Le serveur en fait des
+    /// étapes depuis ; les leçons écrites avant sont réparées ici, à la lecture : ce qui précède
+    /// le premier numéro reste un paragraphe d'introduction, le reste devient des étapes.
+    var repaired: [NoteBlock] {
+        guard case .paragraph(let text) = self, let split = Self.inlineSteps(in: text) else { return [self] }
+        return (split.lead.isEmpty ? [] : [.paragraph(split.lead)]) + [.steps(split.items)]
+    }
+
+    /// Trois numéros au moins, qui se suivent depuis 1, en début de texte ou après un blanc :
+    /// une date (« en 1945. ») ou un « 2 » isolé ne font pas une méthode.
+    ///
+    /// Jumeau de `inlineSteps` dans `supabase/functions/generate-lesson/schema.ts`, sans ses
+    /// plafonds de longueur : le serveur coupe ce qui dépasse, l'app ne coupe rien.
+    static func inlineSteps(in text: String) -> (lead: String, items: [String])? {
+        guard let marker = try? NSRegularExpression(pattern: "(?:^|(?<=[\\s:;]))(\\d{1,2})[.)]\\s+") else {
+            return nil
+        }
+        let source = text as NSString
+        var sequence: [NSRange] = []
+        for match in marker.matches(in: text, range: NSRange(location: 0, length: source.length)) {
+            if Int(source.substring(with: match.range(at: 1))) == sequence.count + 1 {
+                sequence.append(match.range)
+            }
+        }
+        guard sequence.count >= 3 else { return nil }
+        let items: [String] = sequence.enumerated().map { index, range in
+            let start = range.location + range.length
+            let end = index + 1 < sequence.count ? sequence[index + 1].location : source.length
+            // « 1. poser l'opération ; 2. calculer » : le point-virgule séparait, il ne finit pas l'étape.
+            var item = source.substring(with: NSRange(location: start, length: end - start))
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if item.last == ";" || item.last == "," {
+                item = String(item.dropLast()).trimmingCharacters(in: .whitespaces)
+            }
+            return item
+        }
+        guard items.allSatisfy({ $0.count >= 2 }) else { return nil }
+        let lead = source.substring(to: sequence[0].location).trimmingCharacters(in: .whitespacesAndNewlines)
+        return (lead, items)
     }
 }
 

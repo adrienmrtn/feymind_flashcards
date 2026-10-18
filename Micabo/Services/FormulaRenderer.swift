@@ -54,14 +54,38 @@ enum FormulaRenderer {
 
     // MARK: - Transposition
 
+    /// `\xrightarrow{Lumière}` (de l'amsmath, parfois sans son antislash dans une leçon écrite
+    /// avant la réparation des échappées) devient `→ (Lumière)` : l'étiquette dit quelque chose
+    /// de la réaction, elle reste. Rendue telle quelle, on lisait « xrightarrowLumière ».
+    static func replacingLabelledArrows(in source: String) -> String {
+        guard source.contains("arrow"),
+              let arrows = try? NSRegularExpression(pattern: SheetText.labelledArrow)
+        else { return source }
+        var out = ""
+        var cursor = source.startIndex
+        for match in arrows.matches(in: source, range: NSRange(source.startIndex..., in: source)) {
+            guard let whole = Range(match.range, in: source),
+                  let side = Range(match.range(at: 1), in: source),
+                  let label = Range(match.range(at: 2), in: source)
+            else { continue }
+            out += source[cursor..<whole.lowerBound]
+            out += source[side] == "right" ? "→" : "←"
+            let clean = source[label].trimmingCharacters(in: .whitespaces)
+            if !clean.isEmpty { out += " (\(clean))" }
+            cursor = whole.upperBound
+        }
+        out += source[cursor...]
+        return out
+    }
+
     /// Les commandes seules, sans toucher aux `_` et `^` d'une phrase.
     static func symbolsOnly(_ source: String) -> String {
-        replacingCommands(in: source)
+        replacingCommands(in: replacingLabelledArrows(in: source))
     }
 
     /// Transpose un fragment LaTeX en Unicode lisible.
     static func plain(_ latex: String) -> String {
-        var text = latex
+        var text = replacingLabelledArrows(in: latex)
         text = replacingFractions(in: text)
         text = replacingRoots(in: text)
 

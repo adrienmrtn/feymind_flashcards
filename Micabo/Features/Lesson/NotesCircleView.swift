@@ -166,12 +166,17 @@ enum NotesPage: Equatable {
     /// L'icône, le titre du thème et son idée en une phrase.
     case opening
     /// Des blocs des notes : un sous-titre et le bloc qu'il ouvre, ou un bloc seul ; un
-    /// encadré qui suit un bloc reste avec lui.
+    /// encadré qui suit un bloc reste avec lui, et un paragraphe court accueille le bloc suivant.
     case blocks(Range<Int>)
     case takeaways
     /// Un ancien chapitre : toute sa fiche d'un coup.
     case legacy
     case question
+
+    /// En deçà, un paragraphe seul laisse l'écran presque vide.
+    static let shortParagraphWords = 60
+    /// Ce qu'un écran porte sans qu'il faille faire défiler.
+    static let screenWords = 130
 
     static func pages(for chapter: Chapter, hasQuestion: Bool) -> [NotesPage] {
         var pages: [NotesPage] = []
@@ -179,12 +184,16 @@ enum NotesPage: Equatable {
             pages.append(.opening)
             var index = 0
             while index < notes.blocks.count {
-                var end = index + 1
-                if case .subtitle = notes.blocks[index], end < notes.blocks.count { end += 1 }
-                // Un encadré (le piège, l'astuce) commente le bloc qui le précède : il reste sur
-                // son écran, au lieu d'arriver seul, détaché de ce qu'il explique.
-                if end < notes.blocks.count, case .callout = notes.blocks[end], !notes.blocks[end - 1].isBoxed {
-                    end += 1
+                var end = screenEnd(in: notes.blocks, from: index)
+                // Un paragraphe de deux phrases, seul sous son sous-titre ou sans, faisait un
+                // écran presque blanc : il accueille le bloc suivant, tant que l'écran reste
+                // lisible d'un regard et qu'un sous-titre n'ouvre pas une autre partie.
+                let content = notes.blocks[index..<end].filter { !isSubtitle($0) }
+                if content.count == 1, case .paragraph = content[0], content[0].wordCount < shortParagraphWords,
+                   end < notes.blocks.count, !isSubtitle(notes.blocks[end]) {
+                    let next = screenEnd(in: notes.blocks, from: end)
+                    let words = notes.blocks[index..<next].reduce(0) { $0 + $1.wordCount }
+                    if words <= screenWords { end = next }
                 }
                 pages.append(.blocks(index..<end))
                 index = end
@@ -195,6 +204,24 @@ enum NotesPage: Equatable {
         }
         if hasQuestion { pages.append(.question) }
         return pages
+    }
+
+    private static func isSubtitle(_ block: NoteBlock) -> Bool {
+        if case .subtitle = block { return true }
+        return false
+    }
+
+    /// La fin d'un écran ouvert à `index` : le bloc, celui qu'ouvre un sous-titre, et
+    /// l'encadré qui les commente.
+    private static func screenEnd(in blocks: [NoteBlock], from index: Int) -> Int {
+        var end = index + 1
+        if case .subtitle = blocks[index], end < blocks.count { end += 1 }
+        // Un encadré (le piège, l'astuce) commente le bloc qui le précède : il reste sur
+        // son écran, au lieu d'arriver seul, détaché de ce qu'il explique.
+        if end < blocks.count, case .callout = blocks[end], !blocks[end - 1].isBoxed {
+            end += 1
+        }
+        return end
     }
 }
 
