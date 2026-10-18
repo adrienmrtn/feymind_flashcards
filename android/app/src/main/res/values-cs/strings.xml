@@ -200,13 +200,13 @@
     <string name="ios_quiz_time_caption_30">Šílenství</string>
     <string name="ios_quiz_time_caption_5">Dobrý začátek</string>
     <string name="ios_quiz_time_minutes">%1$s min denně</string>
-    <string name="ios_reminder_import1_body">Fotka, PDF nebo video z YouTube: Micabo z toho za pár minut udělá lekci a kartičky.</string>
-    <string name="ios_reminder_import1_title">Naimportuj svůj kurz</string>
-    <string name="ios_reminder_import2_body">Naimportuj svůj kurz a Micabo ti připraví vše k opakování.</string>
+    <string name="ios_reminder_import1_body">Fotka, PDF nebo video z YouTube: Mika z toho za pár minut udělá lekci a kartičky.</string>
+    <string name="ios_reminder_import1_title">Pojď se naučit svůj první kurz s Mikou!</string>
+    <string name="ios_reminder_import2_body">Naimportuj svůj kurz a Mika ti připraví vše k opakování.</string>
     <string name="ios_reminder_import2_title">Blíží se zkouška?</string>
     <string name="ios_reminder_practice_body1">Deset minut dnes a zapamatuješ si to natrvalo.</string>
     <string name="ios_reminder_practice_body2">Pár otázek a učivo ti zůstane v hlavě.</string>
-    <string name="ios_reminder_practice_title">Čas na procvičování: %1$s</string>
+    <string name="ios_reminder_practice_title">Pojď si s Mikou zopakovat %1$s!</string>
     <string name="ios_searchCourse">Kurz, předmět…</string>
     <string name="ios_sharedCourse">Sdílený kurz</string>
     <string name="ios_sharedNoSheet">Tento kurz nemá shrnutí</string>
@@ -233,8 +233,6 @@
     <string name="ios_trialDay2Detail">Upozorníme tě oznámením. Zrušíš za patnáct vteřin.</string>
     <string name="ios_trialLast">Den %1$s: konec zkušební doby</string>
     <string name="ios_trialLastDetail">Předplatné začne %1$s.</string>
-    <string name="ios_trialReminder_cardBody">Před %1$s se nic neúčtuje. Zrušit můžeš dvěma klepnutími.</string>
-    <string name="ios_trialReminder_cardTitle">Tvoje zkušební doba končí zítra</string>
     <string name="ios_trialToday">Dnes: vyzkoušej Micabo Pro</string>
     <string name="ios_trialTodayDetail">Neomezené kurzy, generované kartičky, opakování: všechno je otevřené.</string>
     <string name="ios_trial_noPayment">Teď nic neplatíš</string>

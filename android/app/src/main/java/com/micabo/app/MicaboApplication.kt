@@ -16,7 +16,6 @@ import com.micabo.app.data.Social
 import com.micabo.app.data.Streak
 import com.micabo.app.data.SupabaseAuth
 import com.micabo.app.data.SupabaseFunctions
-import com.micabo.app.data.TrialReminder
 import com.micabo.app.data.YouTubeImport
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -82,14 +81,14 @@ class MicaboApplication : Application() {
 
     /**
      * Les rappels du jour, reposés au lancement et en partant : c'est là que les leçons et le
-     * travail de la journée sont à jour. Pas pendant un essai gratuit (`DailyReminder`).
+     * travail de la journée sont à jour. Seulement pour qui n'a jamais activé l'essai gratuit.
      */
     fun rescheduleReminders() {
         scope.launch {
             lessons.ready()
             streak.refresh()
-            val trialEnd = billing.trialEndsAt.value ?: TrialReminder.storedEnd(this@MicaboApplication)
-            DailyReminder.reschedule(this@MicaboApplication, lessons.lessons.value.values, trialEnd, streak.status.value.studiedToday)
+            val eligible = !billing.isPro.value && !billing.everHadPro.value
+            DailyReminder.reschedule(this@MicaboApplication, lessons.lessons.value.values, eligible, streak.status.value.studiedToday)
         }
     }
 
@@ -160,9 +159,9 @@ class MicaboApplication : Application() {
             syncSoon(force = true)
             rescheduleReminders()
         }
-        // Un essai qui commence ou finit change le plan : pas de rappel pendant l'essai.
+        // Un essai ou un abonnement qui commence efface les rappels, pour de bon.
         scope.launch {
-            billing.trialEndsAt.drop(1).collect { rescheduleReminders() }
+            billing.everHadPro.drop(1).collect { rescheduleReminders() }
         }
     }
 

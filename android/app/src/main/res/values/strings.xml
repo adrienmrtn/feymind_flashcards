@@ -207,13 +207,13 @@
     <string name="ios_quiz_time_caption_30">Insane</string>
     <string name="ios_quiz_time_caption_5">A good start</string>
     <string name="ios_quiz_time_minutes">%1$s min a day</string>
-    <string name="ios_reminder_import1_body">A photo, a PDF or a YouTube video: Micabo turns it into a lesson and cards in minutes.</string>
-    <string name="ios_reminder_import1_title">Import your course</string>
-    <string name="ios_reminder_import2_body">Import your course and Micabo gets everything ready for you to revise it.</string>
+    <string name="ios_reminder_import1_body">A photo, a PDF or a YouTube video: Mika turns it into a lesson and cards in minutes.</string>
+    <string name="ios_reminder_import1_title">Come learn your first course with Mika!</string>
+    <string name="ios_reminder_import2_body">Import your course and Mika gets everything ready for you to revise it.</string>
     <string name="ios_reminder_import2_title">Exam coming up?</string>
     <string name="ios_reminder_practice_body1">Ten minutes today, and it sticks for good.</string>
     <string name="ios_reminder_practice_body2">A few questions, and what you\'ve learned stays put.</string>
-    <string name="ios_reminder_practice_title">Come and practise %1$s</string>
+    <string name="ios_reminder_practice_title">Come revise %1$s with Mika!</string>
     <string name="ios_searchCourse">A course, a subject…</string>
     <string name="ios_sharedCourse">Shared course</string>
     <string name="ios_sharedNoSheet">This course has no sheet</string>
@@ -240,8 +240,6 @@
     <string name="ios_trialDay2Detail">We\'ll warn you with a notification. Cancel in fifteen seconds.</string>
     <string name="ios_trialLast">Day %1$s: trial ends</string>
     <string name="ios_trialLastDetail">Your subscription will start on %1$s.</string>
-    <string name="ios_trialReminder_cardBody">Nothing is charged before %1$s. You can cancel in two taps.</string>
-    <string name="ios_trialReminder_cardTitle">Your trial ends tomorrow</string>
     <string name="ios_trialToday">Today: try Micabo Pro</string>
     <string name="ios_trialTodayDetail">Unlimited courses, generated cards, reviews: everything is open.</string>
     <string name="ios_trial_noPayment">No payment due now</string>

@@ -152,9 +152,9 @@ struct MicaboApp: App {
                 await Task.yield()
                 try? await Task.sleep(for: .milliseconds(180))
                 await sync.sync(context: container.mainContext)
-                // Après la synchro et l'abonnement : le rappel nomme un cours, et ne part
-                // pas pendant un essai.
-                await DailyReminder.reschedule(context: container.mainContext, trialEndsAt: pro.trialEndsAt)
+                // Après la synchro et l'abonnement : le rappel nomme un cours, et ne part que
+                // pour qui n'a jamais activé l'essai.
+                await DailyReminder.reschedule(context: container.mainContext, eligible: pro.receivesDailyReminder)
                 // L'annuaire et les amitiés viennent après la synchro : ils n'ont de sens
                 // qu'avec un compte, et la synchro est ce qui confirme qu'il y en a un.
                 await social.refresh()
@@ -204,7 +204,7 @@ struct MicaboApp: App {
     private func rescheduleRemindersInBackground() {
         let token = UIApplication.shared.beginBackgroundTask(withName: "DailyReminder")
         Task {
-            await DailyReminder.reschedule(context: container.mainContext, trialEndsAt: pro.trialEndsAt)
+            await DailyReminder.reschedule(context: container.mainContext, eligible: pro.receivesDailyReminder)
             UIApplication.shared.endBackgroundTask(token)
         }
     }

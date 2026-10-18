@@ -201,13 +201,13 @@
     <string name="ios_quiz_time_caption_30">Ludo</string>
     <string name="ios_quiz_time_caption_5">Dobar početak</string>
     <string name="ios_quiz_time_minutes">%1$s min dnevno</string>
-    <string name="ios_reminder_import1_body">Fotografija, PDF ili YouTube video: Micabo od toga za nekoliko minuta napravi lekciju i kartice.</string>
-    <string name="ios_reminder_import1_title">Uvezi svoj kurs</string>
-    <string name="ios_reminder_import2_body">Uvezi svoj kurs i Micabo će ti pripremiti sve za ponavljanje.</string>
+    <string name="ios_reminder_import1_body">Fotografija, PDF ili YouTube video: Mika od toga za nekoliko minuta napravi lekciju i kartice.</string>
+    <string name="ios_reminder_import1_title">Dođi da naučiš svoj prvi kurs sa Mikom!</string>
+    <string name="ios_reminder_import2_body">Uvezi svoj kurs i Mika će ti pripremiti sve za ponavljanje.</string>
     <string name="ios_reminder_import2_title">Bliži se ispit?</string>
     <string name="ios_reminder_practice_body1">Deset minuta danas i zapamtićeš to zauvek.</string>
     <string name="ios_reminder_practice_body2">Nekoliko pitanja i naučeno ostaje u glavi.</string>
-    <string name="ios_reminder_practice_title">Vreme je za vežbu: %1$s</string>
+    <string name="ios_reminder_practice_title">Dođi da ponoviš %1$s sa Mikom!</string>
     <string name="ios_searchCourse">Kurs, predmet…</string>
     <string name="ios_sharedCourse">Deljeni kurs</string>
     <string name="ios_sharedNoSheet">Ovaj kurs nema skriptu</string>
@@ -234,8 +234,6 @@
     <string name="ios_trialDay2Detail">Upozorićemo te obaveštenjem. Otkazivanje za petnaest sekundi.</string>
     <string name="ios_trialLast">%1$s. dan: kraj probnog perioda</string>
     <string name="ios_trialLastDetail">Tvoja pretplata počinje %1$s.</string>
-    <string name="ios_trialReminder_cardBody">Ništa se ne naplaćuje pre %1$s. Možeš da otkažeš u dva dodira.</string>
-    <string name="ios_trialReminder_cardTitle">Probni period ističe sutra</string>
     <string name="ios_trialToday">Danas: isprobaj Micabo Pro</string>
     <string name="ios_trialTodayDetail">Neograničeno kurseva, generisane kartice, ponavljanja: sve je otključano.</string>
     <string name="ios_trial_noPayment">Sada ne plaćaš ništa</string>

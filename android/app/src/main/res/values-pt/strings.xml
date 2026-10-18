@@ -200,13 +200,13 @@
     <string name="ios_quiz_time_caption_30">Brutal</string>
     <string name="ios_quiz_time_caption_5">Um bom começo</string>
     <string name="ios_quiz_time_minutes">%1$s min por dia</string>
-    <string name="ios_reminder_import1_body">Uma foto, um PDF ou um vídeo do YouTube: o Micabo transforma-o numa lição e em cartões em poucos minutos.</string>
-    <string name="ios_reminder_import1_title">Importa o teu curso</string>
-    <string name="ios_reminder_import2_body">Importa o teu curso e o Micabo prepara tudo para o reveres.</string>
+    <string name="ios_reminder_import1_body">Uma foto, um PDF ou um vídeo do YouTube: o Mika transforma-o numa lição e em cartões em poucos minutos.</string>
+    <string name="ios_reminder_import1_title">Vem aprender o teu primeiro curso com o Mika!</string>
+    <string name="ios_reminder_import2_body">Importa o teu curso e o Mika prepara tudo para o reveres.</string>
     <string name="ios_reminder_import2_title">Um exame a aproximar-se?</string>
     <string name="ios_reminder_practice_body1">Dez minutos hoje, e fica na memória para sempre.</string>
     <string name="ios_reminder_practice_body2">Algumas perguntas, e o que aprendeste fica no lugar.</string>
-    <string name="ios_reminder_practice_title">Vem praticar %1$s</string>
+    <string name="ios_reminder_practice_title">Vem rever %1$s com o Mika!</string>
     <string name="ios_searchCourse">Um curso, uma disciplina…</string>
     <string name="ios_sharedCourse">Curso partilhado</string>
     <string name="ios_sharedNoSheet">Este curso não tem ficha</string>
@@ -233,8 +233,6 @@
     <string name="ios_trialDay2Detail">Avisamos-te com uma notificação. Cancelas em quinze segundos.</string>
     <string name="ios_trialLast">Dia %1$s: fim do teste</string>
     <string name="ios_trialLastDetail">A tua subscrição começa a %1$s.</string>
-    <string name="ios_trialReminder_cardBody">Nada é cobrado antes de %1$s. Podes cancelar em dois toques.</string>
-    <string name="ios_trialReminder_cardTitle">O teu teste acaba amanhã</string>
     <string name="ios_trialToday">Hoje: experimenta o Micabo Pro</string>
     <string name="ios_trialTodayDetail">Cursos ilimitados, cartões gerados, revisões: está tudo desbloqueado.</string>
     <string name="ios_trial_noPayment">Nada a pagar hoje</string>

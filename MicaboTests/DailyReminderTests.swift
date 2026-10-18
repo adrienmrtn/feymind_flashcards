@@ -15,13 +15,11 @@ final class DailyReminderTests: XCTestCase {
 
     private func plan(
         courses: [String] = [],
-        trialEndsAt: Date? = nil,
         studiedToday: Bool = false,
         now: Date
     ) -> [DailyReminder.Planned] {
         DailyReminder.plan(
             courseTitles: courses,
-            trialEndsAt: trialEndsAt,
             studiedToday: studiedToday,
             hour: 18,
             now: now,
@@ -36,7 +34,7 @@ final class DailyReminderTests: XCTestCase {
         XCTAssertEqual(planned.count, DailyReminder.days)
         XCTAssertEqual(planned.first?.date.day, 18)
         XCTAssertEqual(planned.first?.date.hour, 18)
-        let titles = Set(["Viens importer ton cours", "Un examen qui approche ?"])
+        let titles = Set(["Viens apprendre ton premier cours avec Mika !", "Un examen qui approche ?"])
         XCTAssertTrue(planned.allSatisfy { titles.contains($0.title) })
         XCTAssertNotEqual(planned[0].title, planned[1].title, "le texte change d'un jour à l'autre")
         XCTAssertEqual(Set(planned.map(\.identifier)).count, planned.count)
@@ -57,22 +55,11 @@ final class DailyReminderTests: XCTestCase {
     func testWithCoursesItNamesThemInTurnMostPressingFirst() {
         let planned = plan(courses: ["Photosynthèse", "La Révolution"], now: date(18, 10))
         XCTAssertEqual(planned.map(\.title).prefix(3), [
-            "Viens t'entraîner sur Photosynthèse",
-            "Viens t'entraîner sur La Révolution",
-            "Viens t'entraîner sur Photosynthèse"
+            "Viens réviser Photosynthèse avec Mika !",
+            "Viens réviser La Révolution avec Mika !",
+            "Viens réviser Photosynthèse avec Mika !"
         ])
         XCTAssertNotEqual(planned[0].body, planned[1].body)
-    }
-
-    /// Pendant l'essai, rien ; les rappels commencent le jour où il finit.
-    func testNothingDuringTheTrialThenEveryDayAfterIt() {
-        let trialEnd = date(23, 12)
-        let planned = plan(trialEndsAt: trialEnd, now: date(18, 10))
-        XCTAssertEqual(planned.first?.date.day, 23)
-        XCTAssertTrue(planned.allSatisfy { calendar.date(from: $0.date)! >= trialEnd })
-
-        XCTAssertTrue(plan(trialEndsAt: .distantFuture, now: date(18, 10)).isEmpty, "un essai sans date de fin ne reçoit rien")
-        XCTAssertEqual(plan(trialEndsAt: date(17, 9), now: date(18, 10)).count, DailyReminder.days, "un essai fini ne retient plus rien")
     }
 
     /// Chaque langue a ses phrases, et le nom du cours y trouve sa place.
@@ -84,6 +71,6 @@ final class DailyReminderTests: XCTestCase {
                 XCTAssertNotEqual(L10n.t("ios.reminder.\(key)", locale: locale), "ios.reminder.\(key)", locale.rawValue)
             }
         }
-        XCTAssertEqual(L10n.t("ios.reminder.import1.title", locale: .it), "Importa il tuo corso")
+        XCTAssertEqual(L10n.t("ios.reminder.import1.title", locale: .it), "Vieni a imparare il tuo primo corso con Mika!")
     }
 }

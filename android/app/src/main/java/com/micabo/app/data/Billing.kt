@@ -7,7 +7,6 @@ import com.micabo.app.BuildConfig
 import com.revenuecat.purchases.CustomerInfo
 import com.revenuecat.purchases.Package
 import com.revenuecat.purchases.PackageType
-import com.revenuecat.purchases.PeriodType
 import com.revenuecat.purchases.PurchaseParams
 import com.revenuecat.purchases.Purchases
 import com.revenuecat.purchases.PurchasesConfiguration
@@ -143,18 +142,26 @@ class Billing(
         }.onFailure { Log.w("Billing", "RevenueCat indisponible", it) }
     }
 
-    /** La fin de l'essai gratuit en cours, `null` hors essai ; un essai sans date vaut « jamais ». */
-    private val _trialEndsAt = MutableStateFlow<Long?>(null)
-    val trialEndsAt: StateFlow<Long?> = _trialEndsAt.asStateFlow()
+    private val store = context.getSharedPreferences("micabo", Context.MODE_PRIVATE)
+
+    /**
+     * **Un essai ou un abonnement Pro a déjà existé sur ce compte**, fini ou non. Gardé une
+     * fois vrai : le rappel du jour n'est que pour qui n'a jamais activé l'essai, et un
+     * lancement hors ligne ne doit pas le rouvrir.
+     */
+    private val _everHadPro = MutableStateFlow(store.getBoolean(EVER_HAD_PRO, false) || store.contains("trial.end"))
+    val everHadPro: StateFlow<Boolean> = _everHadPro.asStateFlow()
+
+    private fun markEverHadPro() {
+        if (_everHadPro.value) return
+        _everHadPro.value = true
+        store.edit().putBoolean(EVER_HAD_PRO, true).apply()
+    }
 
     private fun read(info: CustomerInfo) {
         val pro = info.entitlements["pro"]
         _isPro.value = pro?.isActive == true
-        _trialEndsAt.value = if (pro?.isActive == true && pro.periodType == PeriodType.TRIAL) {
-            pro.expirationDate?.time ?: Long.MAX_VALUE
-        } else {
-            null
-        }
+        if (pro != null || info.entitlements.all.containsKey("pro")) markEverHadPro()
     }
 
     suspend fun plans(): List<StorePlan> {
@@ -193,8 +200,7 @@ class Billing(
                 },
                 onSuccess = { _, info ->
                     read(info)
-                    // Un essai commence : le rappel de la veille de la fin, comme promis.
-                    if (plan.trialDays > 0) TrialReminder.schedule(context, plan.trialDays)
+                    markEverHadPro()
                     if (continuation.isActive) continuation.resume(PurchaseOutcome.Success)
                 },
             )
@@ -215,3 +221,5 @@ class Billing(
         }
     }
 }
+
+private const val EVER_HAD_PRO = "pro.everHad"

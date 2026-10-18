@@ -193,13 +193,13 @@
     <string name="ios_quiz_time_caption_30">Pazzesco</string>
     <string name="ios_quiz_time_caption_5">Un buon inizio</string>
     <string name="ios_quiz_time_minutes">%1$s min al giorno</string>
-    <string name="ios_reminder_import1_body">Una foto, un PDF o un video di YouTube: Micabo lo trasforma in una lezione e in carte in pochi minuti.</string>
-    <string name="ios_reminder_import1_title">Importa il tuo corso</string>
-    <string name="ios_reminder_import2_body">Importa il tuo corso e Micabo ti prepara tutto per ripassarlo.</string>
+    <string name="ios_reminder_import1_body">Una foto, un PDF o un video di YouTube: Mika lo trasforma in una lezione e in carte in pochi minuti.</string>
+    <string name="ios_reminder_import1_title">Vieni a imparare il tuo primo corso con Mika!</string>
+    <string name="ios_reminder_import2_body">Importa il tuo corso e Mika ti prepara tutto per ripassarlo.</string>
     <string name="ios_reminder_import2_title">Un esame in arrivo?</string>
     <string name="ios_reminder_practice_body1">Dieci minuti oggi, e te lo ricordi per sempre.</string>
     <string name="ios_reminder_practice_body2">Qualche domanda, e quello che hai imparato resta.</string>
-    <string name="ios_reminder_practice_title">Vieni ad allenarti su %1$s</string>
+    <string name="ios_reminder_practice_title">Vieni a ripassare %1$s con Mika!</string>
     <string name="ios_searchCourse">Un corso, una materia…</string>
     <string name="ios_sharedCourse">Corso condiviso</string>
     <string name="ios_sharedNoSheet">Questo corso non ha una scheda</string>
@@ -226,8 +226,6 @@
     <string name="ios_trialDay2Detail">Ti avvisiamo con una notifica. Disdici in quindici secondi.</string>
     <string name="ios_trialLast">Giorno %1$s: fine della prova</string>
     <string name="ios_trialLastDetail">Il tuo abbonamento partirà il %1$s.</string>
-    <string name="ios_trialReminder_cardBody">Nessun addebito prima del %1$s. Puoi disdire in due tocchi.</string>
-    <string name="ios_trialReminder_cardTitle">La tua prova finisce domani</string>
     <string name="ios_trialToday">Oggi: prova Micabo Pro</string>
     <string name="ios_trialTodayDetail">Corsi illimitati, carte generate, ripassi: è tutto sbloccato.</string>
     <string name="ios_trial_noPayment">Nessun pagamento oggi</string>

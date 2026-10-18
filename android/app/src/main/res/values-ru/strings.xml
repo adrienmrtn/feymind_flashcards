@@ -202,13 +202,13 @@
     <string name="ios_quiz_time_caption_30">Безумно</string>
     <string name="ios_quiz_time_caption_5">Хорошее начало</string>
     <string name="ios_quiz_time_minutes">%1$s мин в день</string>
-    <string name="ios_reminder_import1_body">Фото, PDF или видео с YouTube: Micabo за пару минут превратит его в урок и карточки.</string>
-    <string name="ios_reminder_import1_title">Импортируй свой курс</string>
-    <string name="ios_reminder_import2_body">Импортируй свой курс, и Micabo подготовит всё для повторения.</string>
+    <string name="ios_reminder_import1_body">Фото, PDF или видео с YouTube: Mika за пару минут превратит его в урок и карточки.</string>
+    <string name="ios_reminder_import1_title">Приходи изучить свой первый курс с Mika!</string>
+    <string name="ios_reminder_import2_body">Импортируй свой курс, и Mika подготовит всё для повторения.</string>
     <string name="ios_reminder_import2_title">Скоро экзамен?</string>
     <string name="ios_reminder_practice_body1">Десять минут сегодня — и запомнишь надолго.</string>
     <string name="ios_reminder_practice_body2">Пара вопросов — и выученное останется в голове.</string>
-    <string name="ios_reminder_practice_title">Пора потренироваться: %1$s</string>
+    <string name="ios_reminder_practice_title">Приходи повторить %1$s с Mika!</string>
     <string name="ios_searchCourse">Курс, предмет…</string>
     <string name="ios_sharedCourse">Общий курс</string>
     <string name="ios_sharedNoSheet">У этого курса нет конспекта</string>
@@ -235,8 +235,6 @@
     <string name="ios_trialDay2Detail">Предупредим уведомлением. Отмена за пятнадцать секунд.</string>
     <string name="ios_trialLast">День %1$s: конец пробного периода</string>
     <string name="ios_trialLastDetail">Подписка начнётся %1$s.</string>
-    <string name="ios_trialReminder_cardBody">До %1$s ничего не списывается. Отменить можно в два касания.</string>
-    <string name="ios_trialReminder_cardTitle">Пробный период заканчивается завтра</string>
     <string name="ios_trialToday">Сегодня: попробуй Micabo Pro</string>
     <string name="ios_trialTodayDetail">Безлимит курсов, генерация карточек, повторения: всё открыто.</string>
     <string name="ios_trial_noPayment">Сейчас платить не нужно</string>

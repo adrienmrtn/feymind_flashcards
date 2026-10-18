@@ -199,13 +199,13 @@
     <string name="ios_quiz_time_caption_30">Galet</string>
     <string name="ios_quiz_time_caption_5">En bra start</string>
     <string name="ios_quiz_time_minutes">%1$s min om dagen</string>
-    <string name="ios_reminder_import1_body">Ett foto, en PDF eller en YouTube-video: Micabo gör det till en lektion och kort på några minuter.</string>
-    <string name="ios_reminder_import1_title">Importera din kurs</string>
-    <string name="ios_reminder_import2_body">Importera din kurs så förbereder Micabo allt du behöver för att repetera.</string>
+    <string name="ios_reminder_import1_body">Ett foto, en PDF eller en YouTube-video: Mika gör det till en lektion och kort på några minuter.</string>
+    <string name="ios_reminder_import1_title">Kom och lär dig din första kurs med Mika!</string>
+    <string name="ios_reminder_import2_body">Importera din kurs så förbereder Mika allt du behöver för att repetera.</string>
     <string name="ios_reminder_import2_title">Har du ett prov snart?</string>
     <string name="ios_reminder_practice_body1">Tio minuter i dag, så sitter det för gott.</string>
     <string name="ios_reminder_practice_body2">Några frågor, så sitter det du lärt dig kvar.</string>
-    <string name="ios_reminder_practice_title">Dags att öva: %1$s</string>
+    <string name="ios_reminder_practice_title">Kom och repetera %1$s med Mika!</string>
     <string name="ios_searchCourse">En kurs, ett ämne…</string>
     <string name="ios_sharedCourse">Delad kurs</string>
     <string name="ios_sharedNoSheet">Den här kursen har ingen sammanfattning</string>
@@ -232,8 +232,6 @@
     <string name="ios_trialDay2Detail">Vi varnar dig med en notis. Avsluta på femton sekunder.</string>
     <string name="ios_trialLast">Dag %1$s: provperioden slutar</string>
     <string name="ios_trialLastDetail">Din prenumeration startar den %1$s.</string>
-    <string name="ios_trialReminder_cardBody">Inget dras före %1$s. Du kan avsluta med två tryck.</string>
-    <string name="ios_trialReminder_cardTitle">Din provperiod slutar i morgon</string>
     <string name="ios_trialToday">I dag: testa Micabo Pro</string>
     <string name="ios_trialTodayDetail">Obegränsat med kurser, genererade kort, repetitioner: allt är öppet.</string>
     <string name="ios_trial_noPayment">Inget att betala nu</string>

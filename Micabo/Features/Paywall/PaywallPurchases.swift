@@ -230,6 +230,8 @@ enum PurchasesBridge {
         /// La fin de l'essai gratuit en cours, `nil` hors essai. Un essai dont la date
         /// manque vaut `.distantFuture` : il reste un essai.
         var trialEndsAt: Date?
+        /// Vrai dès qu'un essai ou un abonnement Pro a existé sur ce compte, fini ou non.
+        var everHadPro: Bool = false
     }
 
     /// L'état du droit selon le SDK, ou `nil` quand il n'a rien à dire.
@@ -281,7 +283,11 @@ private extension CustomerInfo {
     var entitlementState: PurchasesBridge.EntitlementState {
         let pro = entitlements[ProEntitlement.id]
         let inTrial = pro?.isActive == true && pro?.periodType == .trial
-        return .init(isPro: hasPro, trialEndsAt: inTrial ? (pro?.expirationDate ?? .distantFuture) : nil)
+        return .init(
+            isPro: hasPro,
+            trialEndsAt: inTrial ? (pro?.expirationDate ?? .distantFuture) : nil,
+            everHadPro: hasPro || entitlements.all[ProEntitlement.id] != nil
+        )
     }
 }
 #endif

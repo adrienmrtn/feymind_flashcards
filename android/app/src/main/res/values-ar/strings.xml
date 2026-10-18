@@ -203,13 +203,13 @@
     <string name="ios_quiz_time_caption_30">رهيب</string>
     <string name="ios_quiz_time_caption_5">بداية جيدة</string>
     <string name="ios_quiz_time_minutes">%1$s د يوميًا</string>
-    <string name="ios_reminder_import1_body">صورة أو ملف PDF أو فيديو على YouTube: يحوّله Micabo إلى درس وبطاقات في دقائق.</string>
-    <string name="ios_reminder_import1_title">استورد درسك</string>
-    <string name="ios_reminder_import2_body">استورد درسك وسيجهّز لك Micabo كل ما تحتاجه للمراجعة.</string>
+    <string name="ios_reminder_import1_body">صورة أو ملف PDF أو فيديو على YouTube: يحوّله Mika إلى درس وبطاقات في دقائق.</string>
+    <string name="ios_reminder_import1_title">تعال وتعلّم أول درس لك مع Mika!</string>
+    <string name="ios_reminder_import2_body">استورد درسك وسيجهّز لك Mika كل ما تحتاجه للمراجعة.</string>
     <string name="ios_reminder_import2_title">هل يقترب امتحان؟</string>
     <string name="ios_reminder_practice_body1">عشر دقائق اليوم، وسيبقى في ذاكرتك.</string>
     <string name="ios_reminder_practice_body2">بضعة أسئلة، وما تعلّمته يبقى راسخًا.</string>
-    <string name="ios_reminder_practice_title">حان وقت التدرّب على %1$s</string>
+    <string name="ios_reminder_practice_title">تعال وراجع %1$s مع Mika!</string>
     <string name="ios_searchCourse">دورة، مادة…</string>
     <string name="ios_sharedCourse">درس مشترك</string>
     <string name="ios_sharedNoSheet">هذا الدرس بلا ملخص</string>
@@ -236,8 +236,6 @@
     <string name="ios_trialDay2Detail">سننبّهك بإشعار. يمكنك الإلغاء في خمس عشرة ثانية.</string>
     <string name="ios_trialLast">اليوم %1$s: تنتهي الفترة التجريبية</string>
     <string name="ios_trialLastDetail">يبدأ اشتراكك في %1$s.</string>
-    <string name="ios_trialReminder_cardBody">لن يُخصم شيء قبل %1$s. يمكنك الإلغاء بنقرتين.</string>
-    <string name="ios_trialReminder_cardTitle">تنتهي فترتك التجريبية غدًا</string>
     <string name="ios_trialToday">اليوم: جرّب Micabo Pro</string>
     <string name="ios_trialTodayDetail">دروس غير محدودة، بطاقات مُنشأة، مراجعات: كل شيء متاح.</string>
     <string name="ios_trial_noPayment">لا دفع الآن</string>

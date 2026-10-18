@@ -28,10 +28,11 @@ import java.util.TimeZone
  * avec des leçons, elle nomme celle sur laquelle s'entraîner (celle qui a le plus de cartes
  * dues d'abord, puis chacune à son tour les jours suivants).
  *
- * **Personne en période d'essai ne la reçoit** : les rappels commencent le jour où l'essai
- * finit, qu'il devienne un abonnement ou non. Quatorze jours sont posés d'avance, et reposés
- * au lancement et à chaque passage en arrière-plan : le texte suit les leçons, et le rappel du
- * jour saute quand l'élève a déjà travaillé. Sans l'autorisation des notifications, rien.
+ * **Seul qui n'a jamais activé l'essai gratuit la reçoit** : ni pendant l'essai, ni après, ni
+ * un abonné. Aucune notification ne parle de la fin de l'essai. Quatorze jours sont posés
+ * d'avance, et reposés au lancement et à chaque passage en arrière-plan : le texte suit les
+ * leçons, et le rappel du jour saute quand l'élève a déjà travaillé. Sans l'autorisation des
+ * notifications, rien.
  */
 object DailyReminder {
     const val DAYS = 14
@@ -49,11 +50,10 @@ object DailyReminder {
 
     /**
      * **Le plan, sans rien toucher.** `courseTitles` du plus pressant au moins pressant (vide
-     * sans leçon) ; `trialEndsAt` la fin de l'essai en cours, `null` hors essai.
+     * sans leçon).
      */
     fun plan(
         courseTitles: List<String>,
-        trialEndsAt: Long?,
         studiedToday: Boolean,
         hour: Int,
         now: Long,
@@ -73,7 +73,6 @@ object DailyReminder {
             day.add(Calendar.DAY_OF_YEAR, 1)
             if (fire <= now) continue
             if (offset == 0 && studiedToday) continue
-            if (trialEndsAt != null && fire < trialEndsAt) continue
             // Le texte tourne avec le jour du calendrier : reposé le lendemain, le plan ne
             // recommence pas par la même phrase.
             val ordinal = ((dayStart + TimeZone.getDefault().getOffset(dayStart)) / Srs.DAY).toInt()
@@ -91,10 +90,13 @@ object DailyReminder {
         return planned
     }
 
-    /** **Repose les rappels** d'après les leçons, l'essai et le travail du jour. */
-    fun reschedule(context: Context, lessons: Collection<Lesson>, trialEndsAt: Long?, studiedToday: Boolean, now: Long = System.currentTimeMillis()) {
+    /**
+     * **Repose les rappels** d'après les leçons et le travail du jour. `eligible` faux (un essai
+     * activé un jour, ou un abonnement) : les rappels posés s'effacent, et rien ne part.
+     */
+    fun reschedule(context: Context, lessons: Collection<Lesson>, eligible: Boolean, studiedToday: Boolean, now: Long = System.currentTimeMillis()) {
         cancelAll(context)
-        if (!allowed(context)) {
+        if (!eligible || !allowed(context)) {
             store(context, emptyList())
             return
         }
@@ -103,7 +105,7 @@ object DailyReminder {
             .sortedWith(compareByDescending<Lesson> { it.dueCards(now) }.thenByDescending { maxOf(it.openedAt, it.createdAt) })
             .map { it.title }
         val localized = AppLocale.wrap(context, Prefs.storedLanguage(context))
-        val planned = plan(courses, trialEndsAt, studiedToday, DEFAULT_HOUR, now) { id, course ->
+        val planned = plan(courses, studiedToday, DEFAULT_HOUR, now) { id, course ->
             if (course != null) localized.getString(id, course) else localized.getString(id)
         }
         store(context, planned)
@@ -129,6 +131,9 @@ object DailyReminder {
     private fun cancelAll(context: Context) {
         val alarms = context.getSystemService(AlarmManager::class.java) ?: return
         repeat(DAYS) { index -> alarms.cancel(pending(context, index, null)) }
+        // L'ancien rappel de fin d'essai (retiré) : son alarme ne doit plus rien réveiller.
+        val legacy = Intent().setClassName(context, "com.micabo.app.data.TrialReminderReceiver")
+        alarms.cancel(PendingIntent.getBroadcast(context, 0, legacy, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
     }
 
     private fun pending(context: Context, index: Int, reminder: Planned?): PendingIntent {
@@ -181,5 +186,12 @@ object DailyReminder {
 class DailyReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         DailyReminder.show(context, intent)
+    }
+}
+
+/** Le redémarrage du téléphone efface les alarmes : les rappels du jour se reprogramment. */
+class ReminderBootReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED) DailyReminder.rearm(context)
     }
 }

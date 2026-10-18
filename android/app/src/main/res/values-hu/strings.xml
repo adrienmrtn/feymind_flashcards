@@ -202,13 +202,13 @@
     <string name="ios_quiz_time_caption_30">Őrület</string>
     <string name="ios_quiz_time_caption_5">Jó kezdet</string>
     <string name="ios_quiz_time_minutes">Napi %1$s perc</string>
-    <string name="ios_reminder_import1_body">Egy fotó, egy PDF vagy egy YouTube-videó: a Micabo pár perc alatt leckét és kártyákat készít belőle.</string>
-    <string name="ios_reminder_import1_title">Importáld a kurzusodat</string>
-    <string name="ios_reminder_import2_body">Importáld a kurzusodat, és a Micabo mindent előkészít az ismétléshez.</string>
+    <string name="ios_reminder_import1_body">Egy fotó, egy PDF vagy egy YouTube-videó: Mika pár perc alatt leckét és kártyákat készít belőle.</string>
+    <string name="ios_reminder_import1_title">Tanuld meg az első kurzusodat Mikával!</string>
+    <string name="ios_reminder_import2_body">Importáld a kurzusodat, és Mika mindent előkészít az ismétléshez.</string>
     <string name="ios_reminder_import2_title">Közeleg egy vizsga?</string>
     <string name="ios_reminder_practice_body1">Ma tíz perc, és örökre megmarad.</string>
     <string name="ios_reminder_practice_body2">Néhány kérdés, és amit megtanultál, a helyén marad.</string>
-    <string name="ios_reminder_practice_title">Ideje gyakorolni: %1$s</string>
+    <string name="ios_reminder_practice_title">Ismételd át a(z) %1$s anyagot Mikával!</string>
     <string name="ios_searchCourse">Egy kurzus, egy tantárgy…</string>
     <string name="ios_sharedCourse">Megosztott kurzus</string>
     <string name="ios_sharedNoSheet">Ennek a kurzusnak nincs jegyzete</string>
@@ -235,8 +235,6 @@
     <string name="ios_trialDay2Detail">Értesítéssel szólunk. Tizenöt másodperc alatt lemondhatod.</string>
     <string name="ios_trialLast">%1$s. nap: véget ér a próbaidő</string>
     <string name="ios_trialLastDetail">Az előfizetésed kezdete: %1$s.</string>
-    <string name="ios_trialReminder_cardBody">%1$s előtt semmit sem vonunk le. Két koppintással lemondhatod.</string>
-    <string name="ios_trialReminder_cardTitle">Holnap lejár a próbaidőd</string>
     <string name="ios_trialToday">Ma: próbáld ki a Micabo Prót</string>
     <string name="ios_trialTodayDetail">Korlátlan kurzus, generált kártyák, ismétlés: minden nyitva áll.</string>
     <string name="ios_trial_noPayment">Most nem kell fizetned</string>

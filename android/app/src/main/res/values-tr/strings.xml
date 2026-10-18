@@ -202,13 +202,13 @@
     <string name="ios_quiz_time_caption_30">Müthiş</string>
     <string name="ios_quiz_time_caption_5">İyi bir başlangıç</string>
     <string name="ios_quiz_time_minutes">Günde %1$s dk</string>
-    <string name="ios_reminder_import1_body">Bir fotoğraf, bir PDF ya da bir YouTube videosu: Micabo birkaç dakikada onu bir derse ve kartlara dönüştürür.</string>
-    <string name="ios_reminder_import1_title">Dersini içe aktar</string>
-    <string name="ios_reminder_import2_body">Dersini içe aktar, Micabo tekrar etmen için her şeyi hazırlasın.</string>
+    <string name="ios_reminder_import1_body">Bir fotoğraf, bir PDF ya da bir YouTube videosu: Mika birkaç dakikada onu bir derse ve kartlara dönüştürür.</string>
+    <string name="ios_reminder_import1_title">İlk dersini Mika ile öğrenmeye gel!</string>
+    <string name="ios_reminder_import2_body">Dersini içe aktar, Mika tekrar etmen için her şeyi hazırlasın.</string>
     <string name="ios_reminder_import2_title">Yaklaşan bir sınav mı var?</string>
     <string name="ios_reminder_practice_body1">Bugün on dakika ayır, kalıcı olarak aklında kalsın.</string>
     <string name="ios_reminder_practice_body2">Birkaç soru, ve öğrendiklerin yerine otursun.</string>
-    <string name="ios_reminder_practice_title">Çalışma zamanı: %1$s</string>
+    <string name="ios_reminder_practice_title">%1$s dersini Mika ile tekrar etmeye gel!</string>
     <string name="ios_searchCourse">Bir ders, bir konu…</string>
     <string name="ios_sharedCourse">Paylaşılan ders</string>
     <string name="ios_sharedNoSheet">Bu dersin özeti yok</string>
@@ -235,8 +235,6 @@
     <string name="ios_trialDay2Detail">Bildirimle hatırlatırız. On beş saniyede iptal edebilirsin.</string>
     <string name="ios_trialLast">%1$s. gün: deneme biter</string>
     <string name="ios_trialLastDetail">Aboneliğin %1$s tarihinde başlar.</string>
-    <string name="ios_trialReminder_cardBody">%1$s tarihinden önce ücret alınmaz. İki dokunuşla iptal edebilirsin.</string>
-    <string name="ios_trialReminder_cardTitle">Denemen yarın bitiyor</string>
     <string name="ios_trialToday">Bugün: Micabo Pro\'yu dene</string>
     <string name="ios_trialTodayDetail">Sınırsız ders, kart, tekrar: hepsi açık.</string>
     <string name="ios_trial_noPayment">Bugün ödeme yok</string>

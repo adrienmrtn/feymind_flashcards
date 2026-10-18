@@ -861,7 +861,7 @@ struct SettingsView: View {
             case .granted:
                 notificationReportOffersSettings = false
                 notificationReport = i18n.t("ios.debug.notifGranted")
-                await DailyReminder.reschedule(context: modelContext, trialEndsAt: pro?.trialEndsAt)
+                await DailyReminder.reschedule(context: modelContext, eligible: pro?.receivesDailyReminder ?? false)
             case .denied:
                 notificationReportOffersSettings = true
                 notificationReport = i18n.t("ios.debug.notifRefusedNow")
@@ -888,7 +888,7 @@ struct SettingsView: View {
     /// Repose les rappels comme au passage en arrière-plan, puis dit ce qui est prévu.
     private func showScheduledReminders() {
         Task { @MainActor in
-            await DailyReminder.reschedule(context: modelContext, trialEndsAt: pro?.trialEndsAt)
+            await DailyReminder.reschedule(context: modelContext, eligible: pro?.receivesDailyReminder ?? false)
             let pending = await DailyReminder.pending()
             notificationReportOffersSettings = false
             guard let next = pending.first else {

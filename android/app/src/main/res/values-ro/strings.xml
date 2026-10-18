@@ -195,13 +195,13 @@
     <string name="ios_quiz_time_caption_30">Nebunie</string>
     <string name="ios_quiz_time_caption_5">Un început bun</string>
     <string name="ios_quiz_time_minutes">%1$s min pe zi</string>
-    <string name="ios_reminder_import1_body">O poză, un PDF sau un video de pe YouTube: Micabo îl transformă în câteva minute într-o lecție și carduri.</string>
-    <string name="ios_reminder_import1_title">Importă-ți cursul</string>
-    <string name="ios_reminder_import2_body">Importă-ți cursul, iar Micabo îți pregătește tot ce-ți trebuie ca să-l recapitulezi.</string>
+    <string name="ios_reminder_import1_body">O poză, un PDF sau un video de pe YouTube: Mika îl transformă în câteva minute într-o lecție și carduri.</string>
+    <string name="ios_reminder_import1_title">Vino să înveți primul tău curs cu Mika!</string>
+    <string name="ios_reminder_import2_body">Importă-ți cursul, iar Mika îți pregătește tot ce-ți trebuie ca să-l recapitulezi.</string>
     <string name="ios_reminder_import2_title">Se apropie un examen?</string>
     <string name="ios_reminder_practice_body1">Zece minute azi și îl ții minte pentru totdeauna.</string>
     <string name="ios_reminder_practice_body2">Câteva întrebări și ce ai învățat rămâne la locul lui.</string>
-    <string name="ios_reminder_practice_title">E timpul să exersezi: %1$s</string>
+    <string name="ios_reminder_practice_title">Vino să recapitulezi %1$s cu Mika!</string>
     <string name="ios_searchCourse">Un curs, o materie…</string>
     <string name="ios_sharedCourse">Curs partajat</string>
     <string name="ios_sharedNoSheet">Cursul ăsta nu are fișă</string>
@@ -228,8 +228,6 @@
     <string name="ios_trialDay2Detail">Te anunțăm printr-o notificare. Anulezi în cincisprezece secunde.</string>
     <string name="ios_trialLast">Ziua %1$s: se termină perioada de probă</string>
     <string name="ios_trialLastDetail">Abonamentul tău începe pe %1$s.</string>
-    <string name="ios_trialReminder_cardBody">Nu se plătește nimic înainte de %1$s. Poți anula din două atingeri.</string>
-    <string name="ios_trialReminder_cardTitle">Perioada de probă se termină mâine</string>
     <string name="ios_trialToday">Azi: încearcă Micabo Pro</string>
     <string name="ios_trialTodayDetail">Cursuri nelimitate, carduri generate, recapitulări: totul e deschis.</string>
     <string name="ios_trial_noPayment">Nicio plată acum</string>
