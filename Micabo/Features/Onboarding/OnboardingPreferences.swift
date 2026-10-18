@@ -221,21 +221,53 @@ enum SchoolingCountry: String, CaseIterable, Identifiable {
 
     /// Le pays déduit des langues de l'appareil, pour ne plus pré-cocher la France
     /// sur un iPhone anglais, allemand, espagnol ou turc.
-    static func guessed(languages: [String] = Locale.preferredLanguages) -> SchoolingCountry {
-        for tag in languages {
-            let parts = tag.split(separator: "-").map { String($0).lowercased() }
-            guard let region = parts.last, region.count == 2 else { continue }
-            if region == "gb" || region == "uk" { return .uk }
-            if let match = SchoolingCountry(rawValue: region) { return match }
+    ///
+    /// **La langue décide avant la région.** Le pays coché donne la langue des cours : un
+    /// iPhone réglé en « fr-US » (le français, avec la région des États-Unis, comme un
+    /// simulateur ou un expatrié) cochait les États-Unis, et l'élève qui lit en français
+    /// recevait ses leçons en anglais. La région ne compte donc que quand son pays parle la
+    /// langue de l'appareil (« fr-BE », « fr-CA »), ou quand cette langue n'a pas de pays à
+    /// elle dans la liste (« ar-MA »). La langue choisie dans l'app, quand il y en a une,
+    /// passe avant celles du téléphone.
+    static func guessed(
+        languages: [String] = Locale.preferredLanguages,
+        chosen: String? = UserDefaults.standard.string(forKey: UiLocale.storageKey)
+    ) -> SchoolingCountry {
+        let tags = languages.map { $0.lowercased() }
+        if let chosen = chosen?.lowercased(), let language = primaryLanguage(of: chosen) {
+            let ordered = tags.filter { primaryLanguage(of: $0) == language } + [language]
+            if let match = firstMatch(in: ordered) { return match }
         }
+        return firstMatch(in: tags) ?? fallback
+    }
 
-        for tag in languages {
-            let language = tag.split(separator: "-").first.map { String($0).lowercased() }
-            if language == "en" { return .us }
-            if let language, let match = SchoolingCountry(rawValue: language) { return match }
+    /// Le pays de la première étiquette qui en désigne un : sa région quand ce pays parle sa
+    /// langue, sinon le pays de la langue seule.
+    private static func firstMatch(in tags: [String]) -> SchoolingCountry? {
+        for tag in tags {
+            guard let language = primaryLanguage(of: tag) else { continue }
+            for region in tag.split(separator: "-").dropFirst().map(String.init) where region.count == 2 {
+                let country: SchoolingCountry? = region == "gb" || region == "uk" ? .uk : SchoolingCountry(rawValue: region)
+                guard let country else { continue }
+                if byLanguage[language] == nil || country.language.rawValue.hasPrefix(language) {
+                    return country
+                }
+            }
         }
+        for tag in tags {
+            if let language = primaryLanguage(of: tag), let match = byLanguage[language] { return match }
+        }
+        return nil
+    }
 
-        return fallback
+    /// Le pays qui parle chaque langue de la liste : l'anglais sans région est américain.
+    private static let byLanguage: [String: SchoolingCountry] = [
+        "fr": .fr, "en": .us, "de": .de, "it": .it, "es": .es, "pt": .pt, "cs": .cz, "nl": .nl,
+        "el": .gr, "hu": .hu, "pl": .pl, "ro": .ro, "sv": .se, "tr": .tr
+    ]
+
+    private static func primaryLanguage(of tag: String) -> String? {
+        tag.split(separator: "-").first.map { String($0).lowercased() }
     }
 
     /// Code ISO de l'annuaire `institutions`. Le Royaume-Uni s'y écrit `GB`, pas `UK`.

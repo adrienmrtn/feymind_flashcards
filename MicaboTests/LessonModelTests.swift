@@ -400,16 +400,18 @@ final class CourseLessonTests: XCTestCase {
         context.insert(course)
         let chapter = Chapter(position: 0, title: "Thème", course: course)
         context.insert(chapter)
+        // Des blocs de vraie longueur : courts, ils partageraient leurs écrans.
+        let text = Array(repeating: "Une phrase courte de six mots.", count: 15).joined(separator: " ")
         chapter.notesData = ThemeNotes(
             oneLiner: "Une idée.",
             blocks: [
                 .callout(kind: .why, title: nil, text: "Pourquoi."),
-                .paragraph("Le mécanisme."),
+                .paragraph(text),
                 .callout(kind: .mistake, title: nil, text: "Le piège."),
                 .subtitle("Partie deux"),
-                .paragraph("La suite."),
+                .paragraph(text),
                 .callout(kind: .tip, title: nil, text: "L'astuce."),
-                .example("Un cas.")
+                .example(text)
             ],
             takeaways: ["Un"]
         ).encoded()
@@ -424,25 +426,26 @@ final class CourseLessonTests: XCTestCase {
         ])
     }
 
-    /// Un paragraphe de deux phrases, seul sur son écran, accueille le bloc qui le suit ; pas
-    /// au-delà d'un écran, ni par-dessus un sous-titre.
-    func testALoneShortParagraphSharesItsScreenWithTheNextBlock() throws {
+    /// Un bloc seul sur son écran accueille le suivant, sous-titre compris, tant que le tout
+    /// tient sans défiler ; resté seul, il rejoint l'écran d'avant s'il y tient.
+    func testALoneBlockSharesItsScreen() throws {
         let course = Course(title: "Leçon")
         context.insert(course)
         let chapter = Chapter(position: 0, title: "Thème", course: course)
         context.insert(chapter)
-        let short = Array(repeating: "Une phrase courte de six mots.", count: 4).joined(separator: " ")
-        let long = Array(repeating: "Une phrase courte de six mots.", count: 18).joined(separator: " ")
+        func sentences(_ count: Int) -> String {
+            Array(repeating: "Une phrase courte de six mots.", count: count).joined(separator: " ")
+        }
         chapter.notesData = ThemeNotes(
             oneLiner: "Une idée.",
             blocks: [
-                .paragraph(short),
+                .paragraph(sentences(4)),
                 .list(["un", "deux"]),
                 .subtitle("Partie deux"),
-                .paragraph(short),
+                .paragraph(sentences(4)),
                 .subtitle("Partie trois"),
-                .paragraph(short),
-                .paragraph(long),
+                .paragraph(sentences(4)),
+                .paragraph(sentences(18)),
                 .example("Un cas.")
             ],
             takeaways: ["Un"]
@@ -450,12 +453,16 @@ final class CourseLessonTests: XCTestCase {
         XCTAssertEqual(NotesPage.pages(for: chapter, hasQuestion: false), [
             .opening,
             .blocks(0..<2),
-            .blocks(2..<4),
-            .blocks(4..<6),
-            .blocks(6..<7),
-            .blocks(7..<8),
+            .blocks(2..<6),
+            .blocks(6..<8),
             .takeaways
         ])
+
+        // Au-delà d'un écran, chacun garde le sien.
+        let items = (0..<6).map { _ in "Un élément de liste qui compte bien dix mots ici." }
+        XCTAssertEqual(NotesPage.screens(of: [.paragraph(sentences(18)), .list(items)]), [0..<1, 1..<2])
+        // Le dernier paragraphe, seul, rejoint l'écran d'avant.
+        XCTAssertEqual(NotesPage.screens(of: [.paragraph(sentences(21)), .paragraph(sentences(2))]), [0..<2])
     }
 
     func testThePathOfALessonFollowsItsChapters() throws {

@@ -166,44 +166,87 @@ enum NotesPage: Equatable {
     /// L'icône, le titre du thème et son idée en une phrase.
     case opening
     /// Des blocs des notes : un sous-titre et le bloc qu'il ouvre, ou un bloc seul ; un
-    /// encadré qui suit un bloc reste avec lui, et un paragraphe court accueille le bloc suivant.
+    /// encadré qui suit un bloc reste avec lui, et un bloc seul partage son écran.
     case blocks(Range<Int>)
     case takeaways
     /// Un ancien chapitre : toute sa fiche d'un coup.
     case legacy
     case question
 
-    /// En deçà, un paragraphe seul laisse l'écran presque vide.
-    static let shortParagraphWords = 60
-    /// Ce qu'un écran porte sans qu'il faille faire défiler.
-    static let screenWords = 130
+    /// Ce qu'un écran porte sans qu'il faille faire défiler, en mots pondérés (`weight`).
+    static let screenWeight = 150
+    /// En deçà, un bloc seul laisse l'écran à moitié vide : il accueille le suivant.
+    static let thinWeight = 120
 
     static func pages(for chapter: Chapter, hasQuestion: Bool) -> [NotesPage] {
         var pages: [NotesPage] = []
         if let notes = chapter.notes {
             pages.append(.opening)
-            var index = 0
-            while index < notes.blocks.count {
-                var end = screenEnd(in: notes.blocks, from: index)
-                // Un paragraphe de deux phrases, seul sous son sous-titre ou sans, faisait un
-                // écran presque blanc : il accueille le bloc suivant, tant que l'écran reste
-                // lisible d'un regard et qu'un sous-titre n'ouvre pas une autre partie.
-                let content = notes.blocks[index..<end].filter { !isSubtitle($0) }
-                if content.count == 1, case .paragraph = content[0], content[0].wordCount < shortParagraphWords,
-                   end < notes.blocks.count, !isSubtitle(notes.blocks[end]) {
-                    let next = screenEnd(in: notes.blocks, from: end)
-                    let words = notes.blocks[index..<next].reduce(0) { $0 + $1.wordCount }
-                    if words <= screenWords { end = next }
-                }
-                pages.append(.blocks(index..<end))
-                index = end
-            }
+            pages += screens(of: notes.blocks).map { .blocks($0) }
             if !notes.takeaways.isEmpty { pages.append(.takeaways) }
         } else {
             pages.append(.legacy)
         }
         if hasQuestion { pages.append(.question) }
         return pages
+    }
+
+    /// **Les écrans des notes.** Un bloc par écran faisait des pages d'un paragraphe sur un
+    /// fond vide, qui se lisaient comme un mur de texte sans rien autour. Un écran qui n'a
+    /// qu'un bloc (le sous-titre qui l'ouvre ne compte pas) accueille donc le suivant, avec
+    /// son sous-titre et son encadré, tant que le tout tient sans défiler. Et un bloc resté
+    /// seul (le dernier du thème, ou trop long pour accueillir la suite) rejoint l'écran
+    /// d'avant s'il y tient.
+    ///
+    /// Un encadré en tête de thème garde son écran : il annonce ce qui suit, il ne commente
+    /// rien, et le noyer dans le bloc suivant lui ôterait sa raison d'être.
+    static func screens(of blocks: [NoteBlock]) -> [Range<Int>] {
+        var screens: [Range<Int>] = []
+        var index = 0
+        while index < blocks.count {
+            var end = screenEnd(in: blocks, from: index)
+            if isThin(blocks[index..<end]), end < blocks.count {
+                let next = screenEnd(in: blocks, from: end)
+                if weight(blocks[index..<next]) <= screenWeight { end = next }
+            }
+            screens.append(index..<end)
+            index = end
+        }
+
+        var packed: [Range<Int>] = []
+        for screen in screens {
+            if let last = packed.last, isThin(blocks[screen]),
+               weight(blocks[last.lowerBound..<screen.upperBound]) <= screenWeight {
+                packed[packed.count - 1] = last.lowerBound..<screen.upperBound
+            } else {
+                packed.append(screen)
+            }
+        }
+        return packed
+    }
+
+    /// Un seul bloc à lire, et assez court pour laisser de la place.
+    private static func isThin(_ screen: ArraySlice<NoteBlock>) -> Bool {
+        let content = screen.filter { !isSubtitle($0) }
+        guard content.count == 1, let block = content.first else { return false }
+        if case .callout = block { return false }
+        return weight([block][...]) < thinWeight
+    }
+
+    /// La place qu'un écran demande : ses mots, et le cadre de ce qui se dessine en encadré.
+    static func weight(_ blocks: ArraySlice<NoteBlock>) -> Int {
+        blocks.reduce(0) { total, block in
+            let frame: Int
+            switch block {
+            case .subtitle: frame = 6
+            case .paragraph: frame = 0
+            case .list(let items), .steps(let items): frame = 4 * items.count
+            case .table(_, let rows): frame = 18 + 6 * rows.count
+            case .dates(let items): frame = 18 + 4 * items.count
+            default: frame = 18
+            }
+            return total + block.wordCount + frame
+        }
     }
 
     private static func isSubtitle(_ block: NoteBlock) -> Bool {

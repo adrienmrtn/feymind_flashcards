@@ -38,6 +38,8 @@ struct SettingsView: View {
     @State private var discountOffer: DiscountPresentation?
     /// Ce que répondent les boutons de test des notifications.
     @State private var notificationReport: String?
+    /// Vrai quand la réponse se règle dans les Réglages d'iOS : l'alerte y mène.
+    @State private var notificationReportOffersSettings = false
     #if DEBUG
     @State private var debugCourseLanguage = DebugCourseCatalog.language
     #endif
@@ -127,6 +129,12 @@ struct SettingsView: View {
             i18n.t("ios.debug.notifTitle"),
             isPresented: Binding(get: { notificationReport != nil }, set: { if !$0 { notificationReport = nil } })
         ) {
+            if notificationReportOffersSettings {
+                Button(i18n.t("ios.debug.openSettings")) {
+                    guard let url = URL(string: UIApplication.openNotificationSettingsURLString) else { return }
+                    UIApplication.shared.open(url)
+                }
+            }
             Button(i18n.t("ios.ok"), role: .cancel) {}
         } message: {
             Text(notificationReport ?? "")
@@ -833,8 +841,37 @@ struct SettingsView: View {
                 subtitle: i18n.t("ios.debug.notifScheduledHelp"),
                 accessory: .chevron,
                 action: showScheduledReminders
+            ),
+            MicaboRow(
+                tile: MicaboTile(glyph: .symbol("bell.and.waves.left.and.right.fill"), background: MicaboColor.cautionSoft),
+                title: i18n.t("ios.debug.notifPermission"),
+                subtitle: i18n.t("ios.debug.notifPermissionHelp"),
+                accessory: .chevron,
+                action: replayNotificationPermission
             )
         ]
+    }
+
+    /// **La demande d'autorisation, rejouée.** iOS n'ouvre sa fenêtre qu'une fois par
+    /// installation : jamais posée, elle s'ouvre ; déjà tranchée, on dit la réponse et
+    /// comment la changer, plutôt qu'un bouton qui ne fait rien.
+    private func replayNotificationPermission() {
+        Task { @MainActor in
+            switch await NotificationPermission.request() {
+            case .granted:
+                notificationReportOffersSettings = false
+                notificationReport = i18n.t("ios.debug.notifGranted")
+                await DailyReminder.reschedule(context: modelContext, trialEndsAt: pro?.trialEndsAt)
+            case .denied:
+                notificationReportOffersSettings = true
+                notificationReport = i18n.t("ios.debug.notifRefusedNow")
+            case .alreadyAnswered(let isAuthorized):
+                notificationReportOffersSettings = true
+                notificationReport = i18n.t("ios.debug.notifPermissionAnswered", [
+                    "answer": i18n.t(isAuthorized ? "ios.debug.notifAllowed" : "ios.debug.notifRefused")
+                ])
+            }
+        }
     }
 
     private func sendTestNotification(_ kind: DailyReminder.TestKind) {
@@ -842,6 +879,7 @@ struct SettingsView: View {
             if await DailyReminder.sendTest(kind, context: modelContext) {
                 Haptics.success()
             } else {
+                notificationReportOffersSettings = true
                 notificationReport = i18n.t("ios.debug.notifDenied")
             }
         }
@@ -852,6 +890,7 @@ struct SettingsView: View {
         Task { @MainActor in
             await DailyReminder.reschedule(context: modelContext, trialEndsAt: pro?.trialEndsAt)
             let pending = await DailyReminder.pending()
+            notificationReportOffersSettings = false
             guard let next = pending.first else {
                 notificationReport = i18n.t("ios.debug.notifNone")
                 return

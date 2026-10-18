@@ -790,11 +790,20 @@ final class OnboardingFlowTests: XCTestCase {
         // Le brut est envoyé à la fonction : le renommer changerait la consigne de rédaction.
         XCTAssertEqual(SchoolingCountry.fr.rawValue, "fr")
 
-        XCTAssertEqual(SchoolingCountry.guessed(languages: ["en-US"]), .us)
-        XCTAssertEqual(SchoolingCountry.guessed(languages: ["en-GB"]), .uk)
-        XCTAssertEqual(SchoolingCountry.guessed(languages: ["en"]), .us)
-        XCTAssertEqual(SchoolingCountry.guessed(languages: ["de-DE"]), .de)
-        XCTAssertEqual(SchoolingCountry.guessed(languages: ["fr-FR"]), .fr)
+        XCTAssertEqual(SchoolingCountry.guessed(languages: ["en-US"], chosen: nil), .us)
+        XCTAssertEqual(SchoolingCountry.guessed(languages: ["en-GB"], chosen: nil), .uk)
+        XCTAssertEqual(SchoolingCountry.guessed(languages: ["en"], chosen: nil), .us)
+        XCTAssertEqual(SchoolingCountry.guessed(languages: ["de-DE"], chosen: nil), .de)
+        XCTAssertEqual(SchoolingCountry.guessed(languages: ["fr-FR"], chosen: nil), .fr)
+        // La langue décide avant la région : un iPhone en français réglé sur les États-Unis
+        // reçoit ses cours en français, un Belge francophone garde la Belgique.
+        XCTAssertEqual(SchoolingCountry.guessed(languages: ["fr-US"], chosen: nil), .fr)
+        XCTAssertEqual(SchoolingCountry.guessed(languages: ["fr-BE"], chosen: nil), .be)
+        XCTAssertEqual(SchoolingCountry.guessed(languages: ["nl-BE"], chosen: nil), .nl)
+        XCTAssertEqual(SchoolingCountry.guessed(languages: ["ar-MA"], chosen: nil), .ma)
+        // La langue choisie dans l'app passe avant celle du téléphone.
+        XCTAssertEqual(SchoolingCountry.guessed(languages: ["en-US"], chosen: "fr"), .fr)
+        XCTAssertEqual(SchoolingCountry.guessed(languages: ["en-US", "fr-CA"], chosen: "fr"), .ca)
         XCTAssertEqual(SchoolingCountry.fr.institutionSearchIso(uiLocale: nil), "FR")
         XCTAssertEqual(SchoolingCountry.fr.institutionSearchIso(uiLocale: .de), "DE")
         XCTAssertEqual(SchoolingCountry.us.institutionSearchIso(uiLocale: .de), "US")
