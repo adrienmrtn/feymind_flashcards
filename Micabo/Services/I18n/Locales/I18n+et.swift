@@ -345,7 +345,7 @@ extension IosI18nCatalogs {
         "ios.friend": "Sõber",
         "ios.friends.requestExists": "See kutse on juba olemas.",
         "ios.fromSchool": "Sinu koolist",
-        "ios.giftBody": "Sinu esimene kursus on kirjutatud. Ava see.",
+        "ios.giftBody": "Sees ootab üllatus. Ava see!",
         "ios.giftOpening": "Avaneb…",
         "ios.giftTapsLeft": "Veel {n}",
         "ios.giftTitle": "Meil on sulle kingitus",

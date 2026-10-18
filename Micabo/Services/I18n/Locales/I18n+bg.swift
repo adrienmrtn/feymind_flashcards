@@ -345,7 +345,7 @@ extension IosI18nCatalogs {
         "ios.friend": "Приятел",
         "ios.friends.requestExists": "Тази покана вече съществува.",
         "ios.fromSchool": "От твоето училище",
-        "ios.giftBody": "Първият ти курс е написан. Отвори го.",
+        "ios.giftBody": "Вътре те чака изненада. Отвори го!",
         "ios.giftOpening": "Отваряне…",
         "ios.giftTapsLeft": "Още {n}",
         "ios.giftTitle": "Имаме подарък за теб",

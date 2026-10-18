@@ -29,6 +29,9 @@
     <string name="app_friends_usernamePlaceholder">gebruikersnaam</string>
     <string name="app_friends_you">Jij</string>
     <string name="app_friends_yourAccount">Je account</string>
+    <string name="app_paywall_discountSubtitle">Sneller herhalen met Pro</string>
+    <string name="app_paywall_discountTitle">%1$s %% korting</string>
+    <string name="app_paywall_perMonthSlash">/ maand</string>
     <string name="common_continue">Doorgaan</string>
     <string name="common_signOut">Uitloggen</string>
     <string name="country_be">België</string>
@@ -61,6 +64,7 @@
     <string name="ios_averageLead">Niemand oordeelt. Dit is een startpunt, geen rapport.</string>
     <string name="ios_averageTitle">Wat is je gemiddelde\nop dit moment?</string>
     <string name="ios_backup">Back-up</string>
+    <string name="ios_billedYearly">%1$s per jaar gefactureerd</string>
     <string name="ios_build_done">Je plan is klaar</string>
     <string name="ios_build_step1">Je antwoorden lezen</string>
     <string name="ios_build_step2">Je tempo bepalen</string>
@@ -76,11 +80,16 @@
     <string name="ios_dataFootnote">Als je je cursussen wist, worden ze bij de volgende synchronisatie ook uit je account gewist. Je account verwijderen wist ze overal.</string>
     <string name="ios_deleteAccount">Account verwijderen</string>
     <string name="ios_deleteAccountQ">Account verwijderen?</string>
+    <string name="ios_discount">Korting</string>
     <string name="ios_docx_corrupt">Het Word-document is onvolledig of beschadigd.</string>
     <string name="ios_docx_empty">Er is geen tekst gevonden in dit document.</string>
     <string name="ios_docx_notDocx">Dit bestand is geen Word-document (.docx).</string>
     <string name="ios_friend">Vriend</string>
     <string name="ios_friends_requestExists">Dat verzoek bestaat al.</string>
+    <string name="ios_giftBody">Er zit een verrassing in. Maak het open!</string>
+    <string name="ios_giftOpening">Openen…</string>
+    <string name="ios_giftTapsLeft">Nog %1$s</string>
+    <string name="ios_giftTitle">We hebben een cadeau voor je</string>
     <string name="ios_goalSub">Kies er zoveel als je wilt.</string>
     <string name="ios_goalTitle">Wat zijn je doelen?</string>
     <string name="ios_goal_competition">Me voorbereiden op een toelatingsexamen</string>
@@ -103,6 +112,7 @@
     <string name="ios_level_other">Anders</string>
     <string name="ios_level_prepa">Voorbereidende klassen (prépa)</string>
     <string name="ios_libraryNoSearch">Geen cursus voor deze zoekopdracht</string>
+    <string name="ios_offerBadge">Aanbieding</string>
     <string name="ios_ok">Oké</string>
     <string name="ios_onb_mika_paths">… en maakt van elke les een **simpel pad**, speciaal voor jou.</string>
     <string name="ios_onb_mika_source_course">Lessen</string>
@@ -182,6 +192,8 @@
     <string name="ios_photo_unreadable">Deze foto’s konden niet worden gelezen.</string>
     <string name="ios_planWeekly">Wekelijks</string>
     <string name="ios_planYearly">Jaarlijks</string>
+    <string name="ios_pro_offer">Je welkomstaanbieding</string>
+    <string name="ios_pro_offerHelp">-%1$s%% op het jaar</string>
     <string name="ios_profile_streakBest">Dat is je record. Hou vol.</string>
     <string name="ios_profile_streakStart">Kom morgen terug en je reeks begint.</string>
     <string name="ios_proof_gotYou">**Wij helpen je.**</string>
@@ -208,6 +220,7 @@
     <string name="ios_sharedNoSheet">Deze cursus heeft geen samenvatting</string>
     <string name="ios_signOutMsg">Je cursussen blijven op dit apparaat en in je account. Je vindt ze terug zodra je weer inlogt.</string>
     <string name="ios_signOutQ">Uitloggen?</string>
+    <string name="ios_startCheaper">Start met %1$s%% korting</string>
     <string name="ios_streak_bestLabel">Je beste</string>
     <string name="ios_streak_celebrate_first">Je reeks begint! Kom morgen terug om hem te laten groeien.</string>
     <string name="ios_streak_celebrate_line">Je vlam brandt nog. Tot morgen!</string>
@@ -498,6 +511,7 @@
     <string name="x_onb_language">In welke taal studeer je?</string>
     <string name="x_onb_language_sub">Mika schrijft je lessen, quizzen en flashcards in deze taal.</string>
     <string name="x_paste_tooShort">Nog een paar regels, dan kan Mika ermee aan de slag.</string>
+    <string name="x_paywall_billedYearlyPlay">Eén keer per jaar gefactureerd, opzeggen via Google Play.</string>
     <string name="x_paywall_finePrint">%1$s dagen gratis, daarna %2$s per %3$s. Wordt automatisch verlengd, altijd op te zeggen in Google Play.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s per %2$s. Wordt automatisch verlengd, altijd op te zeggen in Google Play.</string>
     <string name="x_paywall_soon">Binnenkort op Android</string>

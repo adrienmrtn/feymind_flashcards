@@ -29,6 +29,9 @@
     <string name="app_friends_usernamePlaceholder">käyttäjänimi</string>
     <string name="app_friends_you">Sinä</string>
     <string name="app_friends_yourAccount">Tilisi</string>
+    <string name="app_paywall_discountSubtitle">Kertaa nopeammin Prolla</string>
+    <string name="app_paywall_discountTitle">-%1$s %%</string>
+    <string name="app_paywall_perMonthSlash">/ kk</string>
     <string name="common_continue">Jatka</string>
     <string name="common_privacy">Tietosuoja</string>
     <string name="common_signOut">Kirjaudu ulos</string>
@@ -62,6 +65,7 @@
     <string name="ios_averageLead">Kukaan ei arvostele. Tämä on lähtöpiste, ei todistus.</string>
     <string name="ios_averageTitle">Mikä on keskiarvosi\ntällä hetkellä?</string>
     <string name="ios_backup">Varmuuskopio</string>
+    <string name="ios_billedYearly">laskutetaan %1$s vuodessa</string>
     <string name="ios_build_done">Suunnitelmasi on valmis</string>
     <string name="ios_build_step1">Luetaan vastauksiasi</string>
     <string name="ios_build_step2">Lasketaan tahtiasi</string>
@@ -77,11 +81,16 @@
     <string name="ios_dataFootnote">Kun poistat kurssisi, ne poistuvat myös tililtäsi seuraavassa synkronoinnissa. Tilin poistaminen poistaa ne kaikkialta.</string>
     <string name="ios_deleteAccount">Poista tili</string>
     <string name="ios_deleteAccountQ">Poistetaanko tili?</string>
+    <string name="ios_discount">Alennus</string>
     <string name="ios_docx_corrupt">Word-asiakirja on vajaa tai vioittunut.</string>
     <string name="ios_docx_empty">Asiakirjasta ei löytynyt tekstiä.</string>
     <string name="ios_docx_notDocx">Tiedosto ei ole Word-asiakirja (.docx).</string>
     <string name="ios_friend">Kaveri</string>
     <string name="ios_friends_requestExists">Pyyntö on jo olemassa.</string>
+    <string name="ios_giftBody">Sisällä odottaa yllätys. Avaa se!</string>
+    <string name="ios_giftOpening">Avataan…</string>
+    <string name="ios_giftTapsLeft">%1$s jäljellä</string>
+    <string name="ios_giftTitle">Meillä on sinulle lahja</string>
     <string name="ios_goalSub">Valitse niin monta kuin haluat.</string>
     <string name="ios_goalTitle">Mitkä ovat tavoitteesi?</string>
     <string name="ios_goal_competition">Valmistautua pääsykokeeseen</string>
@@ -105,6 +114,7 @@
     <string name="ios_level_other">Muu</string>
     <string name="ios_level_prepa">Valmistavat luokat (prépa)</string>
     <string name="ios_libraryNoSearch">Ei kursseja tällä haulla</string>
+    <string name="ios_offerBadge">Tarjous</string>
     <string name="ios_onb_mika_paths">… ja tekee jokaisesta oppitunnista **selkeän polun**, juuri sinulle.</string>
     <string name="ios_onb_mika_source_course">Oppitunnit</string>
     <string name="ios_onb_mika_source_notes">Muistiinpanot</string>
@@ -183,6 +193,8 @@
     <string name="ios_photo_unreadable">Kuvia ei voitu lukea.</string>
     <string name="ios_planWeekly">Viikko</string>
     <string name="ios_planYearly">Vuosi</string>
+    <string name="ios_pro_offer">Tervetulotarjouksesi</string>
+    <string name="ios_pro_offerHelp">-%1$s %% vuositilauksesta</string>
     <string name="ios_profile_streakBest">Se on ennätyksesi. Älä päästä irti.</string>
     <string name="ios_profile_streakStart">Palaa huomenna, niin putki alkaa.</string>
     <string name="ios_proof_gotYou">**Olemme tukenasi.**</string>
@@ -209,6 +221,7 @@
     <string name="ios_sharedNoSheet">Tällä kurssilla ei ole tiivistelmää</string>
     <string name="ios_signOutMsg">Kurssisi säilyvät laitteella ja tililläsi. Löydät ne, kun kirjaudut seuraavan kerran.</string>
     <string name="ios_signOutQ">Kirjaudutaanko ulos?</string>
+    <string name="ios_startCheaper">Aloita %1$s %% alennuksella</string>
     <string name="ios_streak_bestLabel">Paras putkesi</string>
     <string name="ios_streak_celebrate_first">Putkesi alkoi! Palaa huomenna kasvattamaan sitä.</string>
     <string name="ios_streak_celebrate_line">Liekkisi palaa yhä. Nähdään huomenna!</string>
@@ -506,6 +519,7 @@
     <string name="x_onb_language">Millä kielellä opiskelet?</string>
     <string name="x_onb_language_sub">Mika kirjoittaa oppituntisi, visasi ja korttisi tällä kielellä.</string>
     <string name="x_paste_tooShort">Vielä muutama rivi, niin Mika voi työstää sitä.</string>
+    <string name="x_paywall_billedYearlyPlay">Laskutetaan kerran vuodessa, peru Google Playssa.</string>
     <string name="x_paywall_finePrint">%1$s päivää ilmaiseksi, sitten %2$s / %3$s. Uusiutuu automaattisesti, peru milloin tahansa Google Playssa.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s / %2$s. Uusiutuu automaattisesti, peru milloin tahansa Google Playssa.</string>
     <string name="x_paywall_soon">Tulossa pian Androidille</string>

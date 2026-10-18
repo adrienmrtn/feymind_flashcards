@@ -33,6 +33,8 @@ data class StorePlan(
     val monthly: String? = null,
     /** Les jours offerts par la boutique, 0 sans essai (ou s'il a déjà servi). */
     val trialDays: Int = 0,
+    /** Le prix en micro-unités de la devise : de quoi calculer une remise. */
+    val micros: Long = 0,
 )
 
 /** Les jours d'essai gratuit d'une offre, d'après Google Play. */
@@ -177,10 +179,29 @@ class Billing(
                     val weekly = packages.firstOrNull { it.packageType == PackageType.WEEKLY }
                         ?: packages.firstOrNull { it.product.id.contains("weekly") }
                     val out = listOfNotNull(
-                        yearly?.let { StorePlan(true, it.product.price.formatted, it, monthlyOf(it), trialDaysOf(it)) },
-                        weekly?.let { StorePlan(false, it.product.price.formatted, it, trialDays = trialDaysOf(it)) },
+                        yearly?.let { StorePlan(true, it.product.price.formatted, it, monthlyOf(it), trialDaysOf(it), it.product.price.amountMicros) },
+                        weekly?.let { StorePlan(false, it.product.price.formatted, it, trialDays = trialDaysOf(it), micros = it.product.price.amountMicros) },
                     )
                     if (continuation.isActive) continuation.resume(out)
+                },
+            )
+        }
+    }
+
+    /**
+     * **L'annuel à tarif réduit du cadeau** (offering `discount`, comme sur iPhone), ou `null`
+     * quand la boutique ne répond pas.
+     */
+    suspend fun discountPlan(): StorePlan? {
+        if (!enabled || !Purchases.isConfigured) return null
+        return suspendCancellableCoroutine { continuation ->
+            Purchases.sharedInstance.getOfferingsWith(
+                onError = { if (continuation.isActive) continuation.resume(null) },
+                onSuccess = { offerings ->
+                    val packages = offerings.all["discount"]?.availablePackages.orEmpty()
+                    val pkg = packages.firstOrNull { it.product.id.contains("discount") } ?: packages.firstOrNull()
+                    val plan = pkg?.let { StorePlan(true, it.product.price.formatted, it, monthlyOf(it), 0, it.product.price.amountMicros) }
+                    if (continuation.isActive) continuation.resume(plan)
                 },
             )
         }

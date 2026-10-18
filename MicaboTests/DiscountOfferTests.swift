@@ -65,13 +65,33 @@ final class DiscountOfferTests: XCTestCase {
 
     // MARK: - Quand l'offre se montre
 
-    func testTheGiftWaitsForTheFirstCourse() {
+    /// Le cadeau suit un paywall refermé : pas besoin d'avoir déjà un cours.
+    func testTheGiftNeedsNoCourse() {
         XCTAssertTrue(
             DiscountOffer.shouldPresentGift(isPro: false, courseCount: 1, seen: false, startedAt: nil)
         )
-        XCTAssertFalse(
+        XCTAssertTrue(
             DiscountOffer.shouldPresentGift(isPro: false, courseCount: 0, seen: false, startedAt: nil)
         )
+    }
+
+    /// Un paywall refermé laisse une demande, reprise une seule fois ; un abonné n'en laisse pas.
+    @MainActor
+    func testAClosedPaywallLeavesOneGiftRequest() throws {
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "micabo.tests.discount.pending"))
+        defaults.removePersistentDomain(forName: "micabo.tests.discount.pending")
+
+        DiscountOffer.paywallClosed(isPro: true, in: defaults)
+        XCTAssertFalse(DiscountOffer.takePendingGift(in: defaults))
+
+        DiscountOffer.paywallClosed(isPro: false, in: defaults)
+        XCTAssertTrue(DiscountOffer.takePendingGift(in: defaults))
+        XCTAssertFalse(DiscountOffer.takePendingGift(in: defaults), "le cadeau ne tombe qu'une fois")
+
+        // Déjà vu pendant la fenêtre en cours : la languette suffit.
+        DiscountOffer.markSeen(in: defaults)
+        DiscountOffer.paywallClosed(isPro: false, in: defaults)
+        XCTAssertFalse(DiscountOffer.takePendingGift(in: defaults))
     }
 
     /// On ne vend rien à quelqu'un qui paye déjà, et on ne déballe pas deux fois.

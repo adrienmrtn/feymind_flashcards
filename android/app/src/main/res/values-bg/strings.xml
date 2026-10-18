@@ -29,6 +29,9 @@
     <string name="app_friends_usernamePlaceholder">потребителско име</string>
     <string name="app_friends_you">Ти</string>
     <string name="app_friends_yourAccount">Твоят профил</string>
+    <string name="app_paywall_discountSubtitle">Преговаряй по-бързо с Pro</string>
+    <string name="app_paywall_discountTitle">%1$s %% отстъпка</string>
+    <string name="app_paywall_perMonthSlash">/ месец</string>
     <string name="common_continue">Продължи</string>
     <string name="common_privacy">Поверителност</string>
     <string name="common_signOut">Изход</string>
@@ -66,6 +69,7 @@
     <string name="ios_averageLead">Никой не съди. Това е отправна точка, не бележник.</string>
     <string name="ios_averageTitle">Какъв е средният ти успех\nв момента?</string>
     <string name="ios_backup">Резервно копие</string>
+    <string name="ios_billedYearly">%1$s на година</string>
     <string name="ios_build_done">Планът ти е готов</string>
     <string name="ios_build_step1">Четем отговорите ти</string>
     <string name="ios_build_step2">Изчисляваме темпото ти</string>
@@ -81,11 +85,16 @@
     <string name="ios_dataFootnote">Изтриването на курсовете ги изтрива и от профила ти при следващата синхронизация. Изтриването на профила ги изтрива навсякъде.</string>
     <string name="ios_deleteAccount">Изтрий профила</string>
     <string name="ios_deleteAccountQ">Да изтрием ли профила?</string>
+    <string name="ios_discount">Отстъпка</string>
     <string name="ios_docx_corrupt">Документът Word е непълен или повреден.</string>
     <string name="ios_docx_empty">В този документ не е намерен текст.</string>
     <string name="ios_docx_notDocx">Този файл не е документ Word (.docx).</string>
     <string name="ios_friend">Приятел</string>
     <string name="ios_friends_requestExists">Тази покана вече съществува.</string>
+    <string name="ios_giftBody">Вътре те чака изненада. Отвори го!</string>
+    <string name="ios_giftOpening">Отваряне…</string>
+    <string name="ios_giftTapsLeft">Още %1$s</string>
+    <string name="ios_giftTitle">Имаме подарък за теб</string>
     <string name="ios_goalSub">Избери колкото искаш.</string>
     <string name="ios_goalTitle">Какви са целите ти?</string>
     <string name="ios_goal_competition">Подготовка за конкурсен изпит</string>
@@ -110,6 +119,7 @@
     <string name="ios_level_prepa">Подготвителни класове (prépa)</string>
     <string name="ios_libraryNoSearch">Няма курс за това търсене</string>
     <string name="ios_minutesShort">мин</string>
+    <string name="ios_offerBadge">Оферта</string>
     <string name="ios_onb_mika_paths">… и превръща всеки урок в **лесен път**, направен за теб.</string>
     <string name="ios_onb_mika_source_course">Уроци</string>
     <string name="ios_onb_mika_source_notes">Бележки</string>
@@ -188,6 +198,8 @@
     <string name="ios_photo_unreadable">Тези снимки не можаха да се прочетат.</string>
     <string name="ios_planWeekly">Седмично</string>
     <string name="ios_planYearly">Годишно</string>
+    <string name="ios_pro_offer">Твоята приветствена оферта</string>
+    <string name="ios_pro_offerHelp">-%1$s%% за годината</string>
     <string name="ios_profile_streakBest">Това е рекордът ти. Не го изпускай.</string>
     <string name="ios_profile_streakStart">Върни се утре и серията започва.</string>
     <string name="ios_proof_gotYou">**Ние сме до теб.**</string>
@@ -214,6 +226,7 @@
     <string name="ios_sharedNoSheet">Този курс няма конспект</string>
     <string name="ios_signOutMsg">Курсовете ти остават на това устройство и в профила ти. Ще ги намериш отново при следващото влизане.</string>
     <string name="ios_signOutQ">Да излезеш ли?</string>
+    <string name="ios_startCheaper">Започни с %1$s%% отстъпка</string>
     <string name="ios_streak_bestLabel">Твоят рекорд</string>
     <string name="ios_streak_celebrate_first">Серията ти започва! Върни се утре, за да я продължиш.</string>
     <string name="ios_streak_celebrate_line">Пламъкът ти още гори. До утре!</string>
@@ -514,6 +527,7 @@
     <string name="x_onb_language">На какъв език учиш?</string>
     <string name="x_onb_language_sub">Mika пише уроците, тестовете и флашкартите ти на този език.</string>
     <string name="x_paste_tooShort">Още няколко реда и Mika ще може да работи с тях.</string>
+    <string name="x_paywall_billedYearlyPlay">Плащане веднъж годишно, отказ в Google Play.</string>
     <string name="x_paywall_finePrint">%1$s дни безплатно, след това %2$s на %3$s. Подновява се автоматично, можеш да се откажеш по всяко време в Google Play.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s на %2$s. Подновява се автоматично, можеш да се откажеш по всяко време в Google Play.</string>
     <string name="x_paywall_soon">Скоро на Android</string>

@@ -29,6 +29,9 @@
     <string name="app_friends_usernamePlaceholder">felhasználónév</string>
     <string name="app_friends_you">Te</string>
     <string name="app_friends_yourAccount">A fiókod</string>
+    <string name="app_paywall_discountSubtitle">Ismételj gyorsabban a Próval</string>
+    <string name="app_paywall_discountTitle">-%1$s%%</string>
+    <string name="app_paywall_perMonthSlash">/ hó</string>
     <string name="common_continue">Tovább</string>
     <string name="common_privacy">Adatvédelem</string>
     <string name="common_signOut">Kijelentkezés</string>
@@ -65,6 +68,7 @@
     <string name="ios_averageLead">Senki sem ítélkezik. Ez egy kiindulópont, nem bizonyítvány.</string>
     <string name="ios_averageTitle">Mennyi most\naz átlagod?</string>
     <string name="ios_backup">Biztonsági mentés</string>
+    <string name="ios_billedYearly">évi %1$s számlázással</string>
     <string name="ios_build_done">Kész a terved</string>
     <string name="ios_build_step1">Válaszaid olvasása</string>
     <string name="ios_build_step2">Tempód kiszámítása</string>
@@ -80,11 +84,16 @@
     <string name="ios_dataFootnote">Ha törlöd a kurzusaidat, a következő szinkronizáláskor a fiókodból is törlődnek. A fiók törlése mindenhonnan eltávolítja őket.</string>
     <string name="ios_deleteAccount">Fiók törlése</string>
     <string name="ios_deleteAccountQ">Törlöd a fiókot?</string>
+    <string name="ios_discount">Kedvezmény</string>
     <string name="ios_docx_corrupt">A Word-dokumentum hiányos vagy sérült.</string>
     <string name="ios_docx_empty">Ebben a dokumentumban nem található szöveg.</string>
     <string name="ios_docx_notDocx">Ez a fájl nem Word-dokumentum (.docx).</string>
     <string name="ios_friend">Barát</string>
     <string name="ios_friends_requestExists">Ez a kérés már létezik.</string>
+    <string name="ios_giftBody">Meglepetés vár benne. Nyisd ki!</string>
+    <string name="ios_giftOpening">Nyílik…</string>
+    <string name="ios_giftTapsLeft">Még %1$s</string>
+    <string name="ios_giftTitle">Ajándékunk van neked</string>
     <string name="ios_goalSub">Többet is választhatsz.</string>
     <string name="ios_goalTitle">Mik a céljaid?</string>
     <string name="ios_goal_competition">Felkészülés felvételire</string>
@@ -109,6 +118,7 @@
     <string name="ios_level_prepa">Előkészítő (prépa)</string>
     <string name="ios_libraryNoSearch">Nincs kurzus erre a keresésre</string>
     <string name="ios_minutesShort">perc</string>
+    <string name="ios_offerBadge">Ajánlat</string>
     <string name="ios_onb_mika_paths">… és minden leckét **egyszerű útvonallá** alakít, kifejezetten neked.</string>
     <string name="ios_onb_mika_source_course">Leckék</string>
     <string name="ios_onb_mika_source_notes">Jegyzetek</string>
@@ -188,6 +198,8 @@
     <string name="ios_photo_unreadable">Nem sikerült beolvasni ezeket a fotókat.</string>
     <string name="ios_planWeekly">Heti</string>
     <string name="ios_planYearly">Éves</string>
+    <string name="ios_pro_offer">Az üdvözlő ajánlatod</string>
+    <string name="ios_pro_offerHelp">-%1$s%% az éves csomagra</string>
     <string name="ios_profile_streakBest">Ez a rekordod. Ne engedd el!</string>
     <string name="ios_profile_streakStart">Gyere vissza holnap, és indul a széria.</string>
     <string name="ios_proof_gotYou">**Ebben segítünk.**</string>
@@ -214,6 +226,7 @@
     <string name="ios_sharedNoSheet">Ennek a kurzusnak nincs jegyzete</string>
     <string name="ios_signOutMsg">A kurzusaid ezen az eszközön és a fiókodban maradnak. A következő bejelentkezéskor újra megtalálod őket.</string>
     <string name="ios_signOutQ">Kijelentkezel?</string>
+    <string name="ios_startCheaper">Kezdd %1$s%% kedvezménnyel</string>
     <string name="ios_streak_bestLabel">A rekordod</string>
     <string name="ios_streak_celebrate_first">Indul a szériád! Gyere vissza holnap, hogy tovább nőjön.</string>
     <string name="ios_streak_celebrate_line">A lángod még ég. Holnap találkozunk!</string>
@@ -514,6 +527,7 @@
     <string name="x_onb_language">Milyen nyelven tanulsz?</string>
     <string name="x_onb_language_sub">Mika ezen a nyelven írja meg a leckéidet, kvízeidet és kártyáidat.</string>
     <string name="x_paste_tooShort">Még néhány sor, és Mika már tud vele dolgozni.</string>
+    <string name="x_paywall_billedYearlyPlay">Évente egyszer számlázva, lemondható a Google Playen.</string>
     <string name="x_paywall_finePrint">%1$s nap ingyen, utána %2$s / %3$s. Automatikusan megújul, bármikor lemondhatod a Google Playen.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s / %2$s. Automatikusan megújul, bármikor lemondhatod a Google Playen.</string>
     <string name="x_paywall_soon">Hamarosan Androidon</string>

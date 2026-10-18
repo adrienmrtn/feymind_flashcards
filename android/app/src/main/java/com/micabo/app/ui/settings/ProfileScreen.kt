@@ -63,6 +63,7 @@ import com.micabo.app.ui.components.Icon3D
 import com.micabo.app.ui.components.Mika
 import com.micabo.app.ui.components.MikaMood
 import com.micabo.app.ui.components.Pressable
+import com.micabo.app.ui.paywall.OfferRow
 import com.micabo.app.ui.onboarding.COUNTRIES
 import com.micabo.app.ui.onboarding.countryFlag
 import com.micabo.app.ui.onboarding.countryName
@@ -131,6 +132,9 @@ fun ProfileScreen() {
                     }
                 }
             }
+
+            // Le tarif réduit du cadeau reste atteignable d'ici tant qu'on n'est pas abonné.
+            if (!isPro && app.billing.enabled) OfferRow()
 
             AccountSection()
 

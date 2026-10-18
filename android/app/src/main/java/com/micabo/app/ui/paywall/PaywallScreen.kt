@@ -42,6 +42,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -118,6 +119,11 @@ fun PaywallScreen(reason: String) {
     // Une seule sortie : l'achat et la restauration allument Pro, qui referme l'écran. Sans
     // garde, l'achat refermait deux fois, et l'écran d'en dessous partait avec le paywall.
     LaunchedEffect(isPro) { if (isPro && navigator.current is Screen.Paywall) navigator.back() }
+    // **Refermé sans achat, le paywall fait tomber le cadeau** (`DiscountOffer.paywallClosed`) :
+    // les onglets le posent une fois l'écran parti (`GiftHost`).
+    DisposableEffect(Unit) {
+        onDispose { if (app.billing.enabled) app.gift.paywallClosed(app.billing.isPro.value) }
+    }
 
     val loaded = plans
     val available = app.billing.enabled && !loaded.isNullOrEmpty()
@@ -299,7 +305,7 @@ fun PaywallScreen(reason: String) {
 /** Restauration et mentions légales, en pied de page, comme sur iPhone (`PaywallLegalFooter`). */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun LegalFooter(restoreEnabled: Boolean, onRestore: () -> Unit, onOpen: (String) -> Unit) {
+internal fun LegalFooter(restoreEnabled: Boolean, onRestore: () -> Unit, onOpen: (String) -> Unit) {
     val colors = Micabo.colors
     FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalArrangement = Arrangement.Center) {
         TextButton(onClick = onRestore, enabled = restoreEnabled) {

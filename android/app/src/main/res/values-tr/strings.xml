@@ -29,6 +29,9 @@
     <string name="app_friends_usernamePlaceholder">kullanıcı adı</string>
     <string name="app_friends_you">Sen</string>
     <string name="app_friends_yourAccount">Hesabın</string>
+    <string name="app_paywall_discountSubtitle">Pro ile daha hızlı tekrar et</string>
+    <string name="app_paywall_discountTitle">%%%1$s indirim</string>
+    <string name="app_paywall_perMonthSlash">/ ay</string>
     <string name="common_continue">Devam</string>
     <string name="common_privacy">Gizlilik</string>
     <string name="common_signOut">Çıkış yap</string>
@@ -65,6 +68,7 @@
     <string name="ios_averageLead">Kimse seni yargılamıyor. Bu bir başlangıç noktası, karne değil.</string>
     <string name="ios_averageTitle">Şu anki ortalaman\nkaç?</string>
     <string name="ios_backup">Yedek</string>
+    <string name="ios_billedYearly">yılda %1$s faturalanır</string>
     <string name="ios_build_done">Planın hazır</string>
     <string name="ios_build_step1">Cevapların okunuyor</string>
     <string name="ios_build_step2">Tempon hesaplanıyor</string>
@@ -80,11 +84,16 @@
     <string name="ios_dataFootnote">Dersleri silmek, sonraki senkronizasyonda hesabından da siler. Hesabı silmek her yerden siler.</string>
     <string name="ios_deleteAccount">Hesabı sil</string>
     <string name="ios_deleteAccountQ">Hesap silinsin mi?</string>
+    <string name="ios_discount">İndirim</string>
     <string name="ios_docx_corrupt">Word belgesi eksik veya bozulmuş.</string>
     <string name="ios_docx_empty">Bu belgede metin bulunamadı.</string>
     <string name="ios_docx_notDocx">Bu dosya bir Word belgesi (.docx) değil.</string>
     <string name="ios_friend">Arkadaş</string>
     <string name="ios_friends_requestExists">Bu istek zaten var.</string>
+    <string name="ios_giftBody">İçinde bir sürpriz var. Aç onu!</string>
+    <string name="ios_giftOpening">Açılıyor…</string>
+    <string name="ios_giftTapsLeft">%1$s kaldı</string>
+    <string name="ios_giftTitle">Sana bir hediyemiz var</string>
     <string name="ios_goalSub">Birden fazla seçebilirsin.</string>
     <string name="ios_goalTitle">Hedeflerin neler?</string>
     <string name="ios_goal_competition">Bir giriş sınavına hazırlanmak</string>
@@ -108,6 +117,7 @@
     <string name="ios_level_prepa">Hazırlık</string>
     <string name="ios_libraryNoSearch">Bu aramada ders yok</string>
     <string name="ios_minutesShort">dk</string>
+    <string name="ios_offerBadge">Teklif</string>
     <string name="ios_ok">Tamam</string>
     <string name="ios_onb_mika_paths">… ve her dersi sana özel, **basit bir yola** dönüştürür.</string>
     <string name="ios_onb_mika_source_course">Dersler</string>
@@ -188,6 +198,8 @@
     <string name="ios_photo_unreadable">Bu fotoğraflar okunamadı.</string>
     <string name="ios_planWeekly">Haftalık</string>
     <string name="ios_planYearly">Yıllık</string>
+    <string name="ios_pro_offer">Hoş geldin teklifin</string>
+    <string name="ios_pro_offerHelp">Yıllıkta -%%%1$s</string>
     <string name="ios_profile_streakBest">Bu senin rekorun. Bırakma.</string>
     <string name="ios_profile_streakStart">Yarın gel, seri başlasın.</string>
     <string name="ios_proof_gotYou">**Biz hallederiz.**</string>
@@ -214,6 +226,7 @@
     <string name="ios_sharedNoSheet">Bu dersin özeti yok</string>
     <string name="ios_signOutMsg">Derslerin bu cihazda ve hesabında kalır. Sonraki girişte onları bulursun.</string>
     <string name="ios_signOutQ">Çıkış yapılsın mı?</string>
+    <string name="ios_startCheaper">%%%1$s daha ucuza başla</string>
     <string name="ios_streak_bestLabel">Rekorun</string>
     <string name="ios_streak_celebrate_first">Serin başladı! Büyütmek için yarın yine gel.</string>
     <string name="ios_streak_celebrate_line">Alevin hâlâ yanıyor. Yarın görüşürüz!</string>
@@ -513,6 +526,7 @@
     <string name="x_onb_language">Hangi dilde çalışıyorsun?</string>
     <string name="x_onb_language_sub">Mika derslerini, testlerini ve kartlarını bu dilde yazar.</string>
     <string name="x_paste_tooShort">Birkaç satır daha, Mika bununla çalışabilir.</string>
+    <string name="x_paywall_billedYearlyPlay">Yılda bir kez faturalanır, Google Play\'den iptal edilir.</string>
     <string name="x_paywall_finePrint">%1$s gün ücretsiz, ardından %3$s başına %2$s. Otomatik yenilenir, Google Play\'den istediğin zaman iptal et.</string>
     <string name="x_paywall_finePrintNoTrial">%2$s başına %1$s. Otomatik yenilenir, Google Play\'den istediğin zaman iptal et.</string>
     <string name="x_paywall_soon">Yakında Android\'de</string>

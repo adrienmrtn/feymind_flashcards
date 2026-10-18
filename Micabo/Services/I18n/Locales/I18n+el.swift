@@ -345,7 +345,7 @@ extension IosI18nCatalogs {
         "ios.friend": "Φίλος",
         "ios.friends.requestExists": "Αυτό το αίτημα υπάρχει ήδη.",
         "ios.fromSchool": "Από το σχολείο σου",
-        "ios.giftBody": "Το πρώτο σου μάθημα είναι γραμμένο. Άνοιξέ το.",
+        "ios.giftBody": "Μέσα σε περιμένει μια έκπληξη. Άνοιξέ το!",
         "ios.giftOpening": "Άνοιγμα…",
         "ios.giftTapsLeft": "Ακόμα {n}",
         "ios.giftTitle": "Έχουμε ένα δώρο για σένα",

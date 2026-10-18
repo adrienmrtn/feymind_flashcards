@@ -345,7 +345,7 @@ extension IosI18nCatalogs {
         "ios.friend": "Prijatelj",
         "ios.friends.requestExists": "Ta prošnja že obstaja.",
         "ios.fromSchool": "Iz tvoje šole",
-        "ios.giftBody": "Tvoj prvi tečaj je napisan. Odpri ga.",
+        "ios.giftBody": "Notri te čaka presenečenje. Odpri ga!",
         "ios.giftOpening": "Odpiram …",
         "ios.giftTapsLeft": "Še {n}",
         "ios.giftTitle": "Imamo darilo zate",

@@ -29,6 +29,9 @@
     <string name="app_friends_usernamePlaceholder">brugernavn</string>
     <string name="app_friends_you">Dig</string>
     <string name="app_friends_yourAccount">Din konto</string>
+    <string name="app_paywall_discountSubtitle">Repetér hurtigere med Pro</string>
+    <string name="app_paywall_discountTitle">%1$s %% rabat</string>
+    <string name="app_paywall_perMonthSlash">/ md.</string>
     <string name="common_continue">Fortsæt</string>
     <string name="common_privacy">Privatliv</string>
     <string name="common_signOut">Log ud</string>
@@ -61,6 +64,7 @@
     <string name="ios_auth_sessionExpired">Din session er udløbet. Log ind igen.</string>
     <string name="ios_averageLead">Ingen dømmer. Det er et udgangspunkt, ikke en karakterbog.</string>
     <string name="ios_averageTitle">Hvad er dit gennemsnit\nlige nu?</string>
+    <string name="ios_billedYearly">opkræves %1$s om året</string>
     <string name="ios_build_done">Din plan er klar</string>
     <string name="ios_build_step1">Læser dine svar</string>
     <string name="ios_build_step2">Beregner dit tempo</string>
@@ -76,11 +80,16 @@
     <string name="ios_dataFootnote">Sletter du dine kurser, slettes de også fra din konto ved næste synkronisering. Sletter du kontoen, forsvinder de overalt.</string>
     <string name="ios_deleteAccount">Slet konto</string>
     <string name="ios_deleteAccountQ">Slet kontoen?</string>
+    <string name="ios_discount">Rabat</string>
     <string name="ios_docx_corrupt">Word-dokumentet er ufuldstændigt eller beskadiget.</string>
     <string name="ios_docx_empty">Der blev ikke fundet tekst i dokumentet.</string>
     <string name="ios_docx_notDocx">Filen er ikke et Word-dokument (.docx).</string>
     <string name="ios_friend">Ven</string>
     <string name="ios_friends_requestExists">Den anmodning findes allerede.</string>
+    <string name="ios_giftBody">Der venter en overraskelse indeni. Åbn den!</string>
+    <string name="ios_giftOpening">Åbner…</string>
+    <string name="ios_giftTapsLeft">%1$s tilbage</string>
+    <string name="ios_giftTitle">Vi har en gave til dig</string>
     <string name="ios_goalSub">Vælg så mange, du vil.</string>
     <string name="ios_goalTitle">Hvad er dine mål?</string>
     <string name="ios_goal_competition">Forberede mig til en optagelsesprøve</string>
@@ -104,6 +113,7 @@
     <string name="ios_level_other">Andet</string>
     <string name="ios_level_prepa">Forberedende klasser (prépa)</string>
     <string name="ios_libraryNoSearch">Intet kursus til denne søgning</string>
+    <string name="ios_offerBadge">Tilbud</string>
     <string name="ios_onb_mika_paths">… og gør hver lektion til en **enkel vej**, lavet til dig.</string>
     <string name="ios_onb_mika_source_course">Lektioner</string>
     <string name="ios_onb_mika_source_notes">Noter</string>
@@ -183,6 +193,8 @@
     <string name="ios_photo_unreadable">Disse fotos kunne ikke læses.</string>
     <string name="ios_planWeekly">Ugentlig</string>
     <string name="ios_planYearly">Årlig</string>
+    <string name="ios_pro_offer">Dit velkomsttilbud</string>
+    <string name="ios_pro_offerHelp">-%1$s%% på året</string>
     <string name="ios_profile_streakBest">Det er din rekord. Slip den ikke.</string>
     <string name="ios_profile_streakStart">Kom igen i morgen, så starter din stime.</string>
     <string name="ios_proof_gotYou">**Vi har din ryg.**</string>
@@ -209,6 +221,7 @@
     <string name="ios_sharedNoSheet">Dette kursus har intet resumé</string>
     <string name="ios_signOutMsg">Dine kurser bliver på enheden og på din konto. Du finder dem igen, næste gang du logger ind.</string>
     <string name="ios_signOutQ">Log ud?</string>
+    <string name="ios_startCheaper">Start med %1$s%% rabat</string>
     <string name="ios_streak_bestLabel">Din bedste</string>
     <string name="ios_streak_celebrate_first">Din stime er begyndt! Kom igen i morgen for at bygge videre.</string>
     <string name="ios_streak_celebrate_line">Din flamme brænder stadig. Vi ses i morgen!</string>
@@ -500,6 +513,7 @@
     <string name="x_onb_language">Hvilket sprog studerer du på?</string>
     <string name="x_onb_language_sub">Mika skriver dine lektioner, quizzer og kort på dette sprog.</string>
     <string name="x_paste_tooShort">Et par linjer mere, så kan Mika arbejde med det.</string>
+    <string name="x_paywall_billedYearlyPlay">Opkræves én gang om året, opsig i Google Play.</string>
     <string name="x_paywall_finePrint">%1$s dage gratis, derefter %2$s pr. %3$s. Fornyes automatisk, opsig når som helst i Google Play.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s pr. %2$s. Fornyes automatisk, opsig når som helst i Google Play.</string>
     <string name="x_paywall_soon">Kommer snart på Android</string>

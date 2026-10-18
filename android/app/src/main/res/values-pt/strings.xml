@@ -29,6 +29,9 @@
     <string name="app_friends_usernamePlaceholder">nome de utilizador</string>
     <string name="app_friends_you">Tu</string>
     <string name="app_friends_yourAccount">A tua conta</string>
+    <string name="app_paywall_discountSubtitle">Revê mais depressa com o Pro</string>
+    <string name="app_paywall_discountTitle">%1$s%% de desconto</string>
+    <string name="app_paywall_perMonthSlash">/ mês</string>
     <string name="common_continue">Continuar</string>
     <string name="common_privacy">Privacidade</string>
     <string name="common_signOut">Terminar sessão</string>
@@ -64,6 +67,7 @@
     <string name="ios_averageLead">Ninguém te julga. É um ponto de partida, não uma pauta.</string>
     <string name="ios_averageTitle">Qual é a tua média\nneste momento?</string>
     <string name="ios_backup">Cópia de segurança</string>
+    <string name="ios_billedYearly">cobrado %1$s por ano</string>
     <string name="ios_build_done">O teu plano está pronto</string>
     <string name="ios_build_step1">A ler as tuas respostas</string>
     <string name="ios_build_step2">A calcular o teu ritmo</string>
@@ -79,11 +83,16 @@
     <string name="ios_dataFootnote">Apagar os teus cursos também os apaga da tua conta na próxima sincronização. Eliminar a conta apaga-os em todo o lado.</string>
     <string name="ios_deleteAccount">Eliminar a conta</string>
     <string name="ios_deleteAccountQ">Eliminar a conta?</string>
+    <string name="ios_discount">Desconto</string>
     <string name="ios_docx_corrupt">O documento Word está incompleto ou danificado.</string>
     <string name="ios_docx_empty">Não foi encontrado texto neste documento.</string>
     <string name="ios_docx_notDocx">Este ficheiro não é um documento Word (.docx).</string>
     <string name="ios_friend">Amigo</string>
     <string name="ios_friends_requestExists">Este pedido já existe.</string>
+    <string name="ios_giftBody">Há uma surpresa lá dentro. Abre-o!</string>
+    <string name="ios_giftOpening">A abrir…</string>
+    <string name="ios_giftTapsLeft">Faltam %1$s</string>
+    <string name="ios_giftTitle">Temos um presente para ti</string>
     <string name="ios_goalSub">Podes escolher várias.</string>
     <string name="ios_goalTitle">Quais são os teus objetivos?</string>
     <string name="ios_goal_competition">Preparar um exame de acesso</string>
@@ -107,6 +116,7 @@
     <string name="ios_level_other">Outro</string>
     <string name="ios_level_prepa">Preparatórias (prépa)</string>
     <string name="ios_libraryNoSearch">Nenhum curso para esta pesquisa</string>
+    <string name="ios_offerBadge">Oferta</string>
     <string name="ios_onb_mika_paths">… e transforma cada lição num **percurso simples**, feito para ti.</string>
     <string name="ios_onb_mika_source_course">Aulas</string>
     <string name="ios_onb_mika_source_notes">Apontamentos</string>
@@ -186,6 +196,8 @@
     <string name="ios_photo_unreadable">Não foi possível ler estas fotos.</string>
     <string name="ios_planWeekly">Semanal</string>
     <string name="ios_planYearly">Anual</string>
+    <string name="ios_pro_offer">A tua oferta de boas-vindas</string>
+    <string name="ios_pro_offerHelp">-%1$s%% no ano</string>
     <string name="ios_profile_streakBest">É o teu recorde. Não o percas.</string>
     <string name="ios_profile_streakStart">Volta amanhã e a sequência começa.</string>
     <string name="ios_proof_gotYou">**Nós tratamos disso.**</string>
@@ -212,6 +224,7 @@
     <string name="ios_sharedNoSheet">Este curso não tem ficha</string>
     <string name="ios_signOutMsg">Os teus cursos ficam neste dispositivo e na tua conta. Vais encontrá-los quando voltares a iniciar sessão.</string>
     <string name="ios_signOutQ">Terminar sessão?</string>
+    <string name="ios_startCheaper">Começa com %1$s%% de desconto</string>
     <string name="ios_streak_bestLabel">O teu recorde</string>
     <string name="ios_streak_celebrate_first">A tua sequência começa! Volta amanhã para a fazer crescer.</string>
     <string name="ios_streak_celebrate_line">A tua chama continua acesa. Até amanhã!</string>
@@ -507,6 +520,7 @@
     <string name="x_onb_language">Em que língua estudas?</string>
     <string name="x_onb_language_sub">O Mika escreve as tuas lições, quizzes e flashcards nesta língua.</string>
     <string name="x_paste_tooShort">Mais umas linhas e o Mika já consegue trabalhar.</string>
+    <string name="x_paywall_billedYearlyPlay">Cobrado uma vez por ano, cancela no Google Play.</string>
     <string name="x_paywall_finePrint">%1$s dias grátis, depois %2$s por %3$s. Renova automaticamente, cancela quando quiseres no Google Play.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s por %2$s. Renova automaticamente, cancela quando quiseres no Google Play.</string>
     <string name="x_paywall_soon">Brevemente no Android</string>

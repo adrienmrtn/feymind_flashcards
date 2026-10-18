@@ -65,7 +65,8 @@ data/
   Imports.kt           PDF (PDFBox + OCR ML Kit), Word, photos ; YouTube.kt ; AudioImport.kt
   LessonComposer.kt    la barre de l'accueil et ses supports
   Billing.kt           RevenueCat / Google Play Billing (entitlement « pro »)
-  Srs.kt, Streak.kt, Exams.kt, MikaChat.kt, Analytics.kt, TrialReminder.kt, Prefs.kt
+  GiftOffer.kt         le cadeau du paywall refermé et son tarif réduit (offering « discount »)
+  Srs.kt, Streak.kt, Exams.kt, MikaChat.kt, Analytics.kt, DailyReminder.kt, Prefs.kt
 ui/
   Root.kt              la pile d'écrans (Screen) et sa sauvegarde
   home/ lesson/ lessons/ exams/ friends/ settings/ onboarding/ paywall/ streak/

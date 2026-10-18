@@ -345,7 +345,7 @@ extension IosI18nCatalogs {
         "ios.friend": "Kamarád",
         "ios.friends.requestExists": "Tahle žádost už existuje.",
         "ios.fromSchool": "Z tvé školy",
-        "ios.giftBody": "Tvůj první kurz je napsaný. Otevři ho.",
+        "ios.giftBody": "Uvnitř čeká překvapení. Otevři ho!",
         "ios.giftOpening": "Otevírám…",
         "ios.giftTapsLeft": "Ještě: {n}",
         "ios.giftTitle": "Máme pro tebe dárek",

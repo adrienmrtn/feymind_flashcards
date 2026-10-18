@@ -345,7 +345,7 @@ extension IosI18nCatalogs {
         "ios.friend": "Kaveri",
         "ios.friends.requestExists": "Pyyntö on jo olemassa.",
         "ios.fromSchool": "Koulustasi",
-        "ios.giftBody": "Ensimmäinen kurssisi on kirjoitettu. Avaa se.",
+        "ios.giftBody": "Sisällä odottaa yllätys. Avaa se!",
         "ios.giftOpening": "Avataan…",
         "ios.giftTapsLeft": "{n} jäljellä",
         "ios.giftTitle": "Meillä on sinulle lahja",

@@ -345,7 +345,7 @@ extension IosI18nCatalogs {
         "ios.friend": "Barát",
         "ios.friends.requestExists": "Ez a kérés már létezik.",
         "ios.fromSchool": "Az iskoládból",
-        "ios.giftBody": "Elkészült az első kurzusod. Nyisd meg.",
+        "ios.giftBody": "Meglepetés vár benne. Nyisd ki!",
         "ios.giftOpening": "Nyílik…",
         "ios.giftTapsLeft": "Még {n}",
         "ios.giftTitle": "Ajándékunk van neked",

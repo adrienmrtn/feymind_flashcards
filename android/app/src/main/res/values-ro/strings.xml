@@ -29,6 +29,9 @@
     <string name="app_friends_usernamePlaceholder">utilizator</string>
     <string name="app_friends_you">Tu</string>
     <string name="app_friends_yourAccount">Contul tău</string>
+    <string name="app_paywall_discountSubtitle">Recapitulează mai repede cu Pro</string>
+    <string name="app_paywall_discountTitle">%1$s %% reducere</string>
+    <string name="app_paywall_perMonthSlash">/ lună</string>
     <string name="common_continue">Continuă</string>
     <string name="common_privacy">Confidențialitate</string>
     <string name="common_signOut">Deconectează-te</string>
@@ -61,6 +64,7 @@
     <string name="ios_auth_sessionExpired">Sesiunea ta a expirat. Conectează-te din nou.</string>
     <string name="ios_averageLead">Nimeni nu te judecă. E un punct de plecare, nu un carnet de note.</string>
     <string name="ios_averageTitle">Care e media ta\nchiar acum?</string>
+    <string name="ios_billedYearly">facturat %1$s pe an</string>
     <string name="ios_build_done">Planul tău e gata</string>
     <string name="ios_build_step1">Citim răspunsurile tale</string>
     <string name="ios_build_step2">Calculăm ritmul tău</string>
@@ -76,11 +80,16 @@
     <string name="ios_dataFootnote">Dacă ștergi cursurile, se șterg și din cont la următoarea sincronizare. Ștergerea contului le șterge peste tot.</string>
     <string name="ios_deleteAccount">Șterge contul</string>
     <string name="ios_deleteAccountQ">Ștergi contul?</string>
+    <string name="ios_discount">Reducere</string>
     <string name="ios_docx_corrupt">Documentul Word e incomplet sau corupt.</string>
     <string name="ios_docx_empty">N-am găsit text în documentul ăsta.</string>
     <string name="ios_docx_notDocx">Fișierul ăsta nu e un document Word (.docx).</string>
     <string name="ios_friend">Prieten</string>
     <string name="ios_friends_requestExists">Cererea asta există deja.</string>
+    <string name="ios_giftBody">Înăuntru te așteaptă o surpriză. Deschide-l!</string>
+    <string name="ios_giftOpening">Se deschide…</string>
+    <string name="ios_giftTapsLeft">Mai sunt %1$s</string>
+    <string name="ios_giftTitle">Avem un cadou pentru tine</string>
     <string name="ios_goalSub">Alege câte vrei.</string>
     <string name="ios_goalTitle">Care sunt obiectivele tale?</string>
     <string name="ios_goal_competition">Să mă pregătesc pentru un concurs</string>
@@ -103,6 +112,7 @@
     <string name="ios_level_other">Altele</string>
     <string name="ios_level_prepa">Clase pregătitoare (prépa)</string>
     <string name="ios_libraryNoSearch">Niciun curs pentru această căutare</string>
+    <string name="ios_offerBadge">Ofertă</string>
     <string name="ios_onb_mika_paths">… și transformă fiecare lecție într-un **traseu simplu**, făcut pentru tine.</string>
     <string name="ios_onb_mika_source_course">Lecții</string>
     <string name="ios_onb_mika_source_notes">Notițe</string>
@@ -181,6 +191,8 @@
     <string name="ios_photo_unreadable">Pozele astea n-au putut fi citite.</string>
     <string name="ios_planWeekly">Săptămânal</string>
     <string name="ios_planYearly">Anual</string>
+    <string name="ios_pro_offer">Oferta ta de bun venit</string>
+    <string name="ios_pro_offerHelp">-%1$s%% la abonamentul anual</string>
     <string name="ios_profile_streakBest">E recordul tău. Nu renunța.</string>
     <string name="ios_profile_streakStart">Revino mâine și începe seria.</string>
     <string name="ios_proof_gotYou">**Ne ocupăm noi.**</string>
@@ -207,6 +219,7 @@
     <string name="ios_sharedNoSheet">Cursul ăsta nu are fișă</string>
     <string name="ios_signOutMsg">Cursurile rămân pe dispozitiv și în cont. Le regăsești data viitoare când te conectezi.</string>
     <string name="ios_signOutQ">Te deconectezi?</string>
+    <string name="ios_startCheaper">Începe cu %1$s%% reducere</string>
     <string name="ios_streak_bestLabel">Cel mai bun</string>
     <string name="ios_streak_celebrate_first">Seria ta începe! Revino mâine ca s-o crești.</string>
     <string name="ios_streak_celebrate_line">Flacăra ta încă arde. Pe mâine!</string>
@@ -501,6 +514,7 @@
     <string name="x_onb_language">În ce limbă înveți?</string>
     <string name="x_onb_language_sub">Mika îți scrie lecțiile, quizurile și cardurile în această limbă.</string>
     <string name="x_paste_tooShort">Încă câteva rânduri și Mika se poate apuca de treabă.</string>
+    <string name="x_paywall_billedYearlyPlay">Facturat o dată pe an, anulezi din Google Play.</string>
     <string name="x_paywall_finePrint">%1$s zile gratuite, apoi %2$s pe %3$s. Se reînnoiește automat, anulezi oricând din Google Play.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s pe %2$s. Se reînnoiește automat, anulezi oricând din Google Play.</string>
     <string name="x_paywall_soon">În curând pe Android</string>

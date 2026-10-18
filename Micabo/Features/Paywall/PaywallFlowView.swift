@@ -141,6 +141,8 @@ struct PaywallFlowView: View {
         // balayage, et une sortie qui ne se compte pas fait un entonnoir qui fuit.
         .onDisappear {
             guard !didSubscribe else { return }
+            // Refermé sans achat : le cadeau du tarif réduit tombe (`DiscountOffer`).
+            DiscountOffer.paywallClosed(isPro: pro?.isPro ?? false)
             Analytics.track(.paywallDismissed, [
                 "trigger": .text(trigger?.rawValue ?? "inconnu"),
                 "stage": .text(stage == .plans ? "plans" : "offre"),

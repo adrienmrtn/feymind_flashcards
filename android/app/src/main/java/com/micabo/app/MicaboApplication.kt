@@ -8,6 +8,7 @@ import com.micabo.app.data.Billing
 import com.micabo.app.data.CloudSync
 import com.micabo.app.data.DailyReminder
 import com.micabo.app.data.ExamRepository
+import com.micabo.app.data.GiftOffer
 import com.micabo.app.data.LessonComposer
 import com.micabo.app.data.LessonRepository
 import com.micabo.app.data.MikaChat
@@ -36,6 +37,9 @@ class MicaboApplication : Application() {
     lateinit var lessons: LessonRepository
         private set
     lateinit var billing: Billing
+        private set
+    /** Le cadeau du paywall refermé, et le tarif réduit qu'il ouvre. */
+    lateinit var gift: GiftOffer
         private set
     lateinit var functions: SupabaseFunctions
         private set
@@ -146,6 +150,7 @@ class MicaboApplication : Application() {
             runCatching { auth.accessToken() }
             auth.userId.ifEmpty { null }
         }
+        gift = GiftOffer(this)
         analytics = Analytics(this, prefs, auth) { billing.isPro.value }
         sync = CloudSync(auth, lessons, exams, prefs)
         social = Social(auth)

@@ -29,6 +29,9 @@
     <string name="app_friends_usernamePlaceholder">kasutajanimi</string>
     <string name="app_friends_you">Sina</string>
     <string name="app_friends_yourAccount">Sinu konto</string>
+    <string name="app_paywall_discountSubtitle">Korda kiiremini Proga</string>
+    <string name="app_paywall_discountTitle">-%1$s %%</string>
+    <string name="app_paywall_perMonthSlash">/ kuu</string>
     <string name="common_continue">Jätka</string>
     <string name="common_privacy">Privaatsus</string>
     <string name="common_signOut">Logi välja</string>
@@ -64,6 +67,7 @@
     <string name="ios_averageLead">Keegi ei mõista hukka. See on alguspunkt, mitte tunnistus.</string>
     <string name="ios_averageTitle">Mis on sinu keskmine\npraegu?</string>
     <string name="ios_backup">Varundus</string>
+    <string name="ios_billedYearly">arveldus %1$s aastas</string>
     <string name="ios_build_done">Sinu plaan on valmis</string>
     <string name="ios_build_step1">Loeme sinu vastuseid</string>
     <string name="ios_build_step2">Arvutame sinu tempot</string>
@@ -79,11 +83,16 @@
     <string name="ios_dataFootnote">Kui kustutad oma kursused, kaovad need järgmisel sünkroonimisel ka kontolt. Konto kustutamine eemaldab need kõikjalt.</string>
     <string name="ios_deleteAccount">Kustuta konto</string>
     <string name="ios_deleteAccountQ">Kas kustutada konto?</string>
+    <string name="ios_discount">Allahindlus</string>
     <string name="ios_docx_corrupt">Wordi dokument on puudulik või rikutud.</string>
     <string name="ios_docx_empty">Selles dokumendis ei leitud teksti.</string>
     <string name="ios_docx_notDocx">See fail pole Wordi dokument (.docx).</string>
     <string name="ios_friend">Sõber</string>
     <string name="ios_friends_requestExists">See kutse on juba olemas.</string>
+    <string name="ios_giftBody">Sees ootab üllatus. Ava see!</string>
+    <string name="ios_giftOpening">Avaneb…</string>
+    <string name="ios_giftTapsLeft">Veel %1$s</string>
+    <string name="ios_giftTitle">Meil on sulle kingitus</string>
     <string name="ios_goalSub">Vali nii palju, kui soovid.</string>
     <string name="ios_goalTitle">Mis on sinu eesmärgid?</string>
     <string name="ios_goal_competition">Valmistu konkursieksamiks</string>
@@ -107,6 +116,7 @@
     <string name="ios_level_other">Muu</string>
     <string name="ios_level_prepa">Ettevalmistusklassid (prépa)</string>
     <string name="ios_libraryNoSearch">Selle otsingu järgi kursusi pole</string>
+    <string name="ios_offerBadge">Pakkumine</string>
     <string name="ios_onb_mika_paths">… ja muudab iga tunni **lihtsaks teekonnaks**, mis on tehtud just sulle.</string>
     <string name="ios_onb_mika_source_course">Tunnid</string>
     <string name="ios_onb_mika_source_notes">Märkmed</string>
@@ -185,6 +195,8 @@
     <string name="ios_photo_unreadable">Neid fotosid ei õnnestunud lugeda.</string>
     <string name="ios_planWeekly">Nädalane</string>
     <string name="ios_planYearly">Aastane</string>
+    <string name="ios_pro_offer">Sinu tervituspakkumine</string>
+    <string name="ios_pro_offerHelp">-%1$s%% aastatellimuselt</string>
     <string name="ios_profile_streakBest">See on sinu rekord. Ära lase sel käest minna.</string>
     <string name="ios_profile_streakStart">Tule homme tagasi ja seeria algab.</string>
     <string name="ios_proof_gotYou">**Me aitame sind.**</string>
@@ -211,6 +223,7 @@
     <string name="ios_sharedNoSheet">Sellel kursusel pole konspekti</string>
     <string name="ios_signOutMsg">Sinu kursused jäävad sellesse seadmesse ja sinu kontole. Leiad need järgmisel sisselogimisel uuesti.</string>
     <string name="ios_signOutQ">Kas logida välja?</string>
+    <string name="ios_startCheaper">Alusta %1$s%% soodsamalt</string>
     <string name="ios_streak_bestLabel">Sinu rekord</string>
     <string name="ios_streak_celebrate_first">Sinu seeria algab! Tule homme tagasi, et seda kasvatada.</string>
     <string name="ios_streak_celebrate_line">Sinu leek põleb endiselt. Homseni!</string>
@@ -509,6 +522,7 @@
     <string name="x_onb_language">Mis keeles sa õpid?</string>
     <string name="x_onb_language_sub">Mika kirjutab sinu tunnid, viktoriinid ja mälukaardid selles keeles.</string>
     <string name="x_paste_tooShort">Veel paar rida ja Mika saab sellega tööle hakata.</string>
+    <string name="x_paywall_billedYearlyPlay">Arveldus kord aastas, tühista Google Plays.</string>
     <string name="x_paywall_finePrint">%1$s päeva tasuta, seejärel %2$s / %3$s. Uueneb automaatselt, tühista igal ajal Google Plays.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s / %2$s. Uueneb automaatselt, tühista igal ajal Google Plays.</string>
     <string name="x_paywall_soon">Varsti Androidis</string>

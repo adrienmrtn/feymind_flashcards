@@ -24,9 +24,6 @@ struct CoursesListView: View {
     /// Une leçon ouvre son chemin (`LessonPathView`). Une leçon se crée depuis Home, pas ici.
     @State private var path = NavigationPath()
     @State private var paywall: PaywallTrigger?
-    /// Le deck qu'on vient de quitter, pour savoir si c'était le premier : c'est au retour
-    /// du premier cours que le cadeau se déballe. Voir `presentGiftIfEarned`.
-    @State private var lastOpenedCourseID: UUID?
     @State private var coursePendingDelete: Course?
     /// Totaux par cours, lus **une fois**. Le corps ne touche plus `course.cards`.
     @State private var census: [UUID: CourseStats] = [:]
@@ -768,47 +765,7 @@ struct CoursesListView: View {
             try? await Task.sleep(for: .milliseconds(400))
             guard path.isEmpty else { return }
             census = LibraryCensus.load(in: modelContext, key: censusKey)
-            await presentGiftIfEarned()
         }
-    }
-
-    /// **Le cadeau se déballe quand on quitte son premier cours.** Pas avant : il vient
-    /// après avoir vu le plan et buté sur le paywall, au moment où l'on revient à la liste
-    /// sans avoir acheté. Une fois par fenêtre de vingt-quatre heures, puis après le repos.
-    ///
-    /// **La liste le demande, la racine le présente** (`DiscountBadgeHost`, par le
-    /// routeur). Présenté d'ici, le pop-up n'assombrissait que la page : la barre du bas,
-    /// posée hors des onglets, restait claire sous un écran gris, et ça se lisait comme un
-    /// défaut plutôt que comme une carte posée sur l'app.
-    @MainActor
-    private func presentGiftIfEarned() async {
-        guard let left = lastOpenedCourseID else { return }
-        lastOpenedCourseID = nil
-        guard left == firstImportedCourseID else { return }
-        guard
-            DiscountOffer.shouldPresentGift(
-                isPro: pro?.isPro ?? true,
-                courseCount: CourseRepository.ownedCount(in: modelContext),
-                seen: DiscountOffer.isSeen(),
-                startedAt: DiscountOffer.start()
-            )
-        else { return }
-
-        // Le temps que la liste se pose : une boîte qui tombe pendant que la page glisse
-        // encore donne deux animations concurrentes.
-        try? await Task.sleep(for: .milliseconds(500))
-        guard path.isEmpty, paywall == nil else { return }
-        router?.requestGift()
-    }
-
-    /// Le plus ancien des decks importés : celui du parcours d'accueil.
-    private var firstImportedCourseID: UUID? {
-        var descriptor = FetchDescriptor<Course>(
-            predicate: #Predicate { !$0.isFromLibrary },
-            sortBy: [SortDescriptor(\.createdAt, order: .forward)]
-        )
-        descriptor.fetchLimit = 1
-        return (try? modelContext.fetch(descriptor))?.first?.id
     }
 
     private func handleImportRequest(_ oldValue: Int, _ newValue: Int) {
@@ -906,7 +863,6 @@ struct CoursesListView: View {
     /// et c'est en en touchant un que le paywall s'ouvre (`PaywallTrigger.openChapter`) :
     /// on voit ce qu'on a, on paie pour y entrer.
     private func open(_ course: Course) {
-        lastOpenedCourseID = course.id
         path.append(course)
     }
 

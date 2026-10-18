@@ -345,7 +345,7 @@ extension IosI18nCatalogs {
         "ios.friend": "Vän",
         "ios.friends.requestExists": "Den förfrågan finns redan.",
         "ios.fromSchool": "Från din skola",
-        "ios.giftBody": "Din första kurs är skriven. Öppna den.",
+        "ios.giftBody": "Det finns en överraskning inuti. Öppna den!",
         "ios.giftOpening": "Öppnar…",
         "ios.giftTapsLeft": "{n} kvar",
         "ios.giftTitle": "Vi har en present till dig",

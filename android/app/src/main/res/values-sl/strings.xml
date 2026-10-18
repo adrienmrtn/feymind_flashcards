@@ -29,6 +29,9 @@
     <string name="app_friends_usernamePlaceholder">uporabniško ime</string>
     <string name="app_friends_you">Ti</string>
     <string name="app_friends_yourAccount">Tvoj račun</string>
+    <string name="app_paywall_discountSubtitle">Ponavljaj hitreje s Pro</string>
+    <string name="app_paywall_discountTitle">%1$s %% popusta</string>
+    <string name="app_paywall_perMonthSlash">/ mesec</string>
     <string name="common_continue">Nadaljuj</string>
     <string name="common_privacy">Zasebnost</string>
     <string name="common_signOut">Odjava</string>
@@ -65,6 +68,7 @@
     <string name="ios_averageLead">Nihče ne sodi. To je izhodišče, ne spričevalo.</string>
     <string name="ios_averageTitle">Kakšno povprečje\nimaš trenutno?</string>
     <string name="ios_backup">Varnostna kopija</string>
+    <string name="ios_billedYearly">%1$s na leto</string>
     <string name="ios_build_done">Tvoj načrt je pripravljen</string>
     <string name="ios_build_step1">Beremo tvoje odgovore</string>
     <string name="ios_build_step2">Računamo tvoj tempo</string>
@@ -80,11 +84,16 @@
     <string name="ios_dataFootnote">Če izbrišeš tečaje, se ob naslednji sinhronizaciji izbrišejo tudi iz računa. Z izbrisom računa izginejo povsod.</string>
     <string name="ios_deleteAccount">Izbriši račun</string>
     <string name="ios_deleteAccountQ">Želiš izbrisati račun?</string>
+    <string name="ios_discount">Popust</string>
     <string name="ios_docx_corrupt">Dokument Word je nepopoln ali poškodovan.</string>
     <string name="ios_docx_empty">V tem dokumentu ni bilo najdenega besedila.</string>
     <string name="ios_docx_notDocx">Ta datoteka ni dokument Word (.docx).</string>
     <string name="ios_friend">Prijatelj</string>
     <string name="ios_friends_requestExists">Ta prošnja že obstaja.</string>
+    <string name="ios_giftBody">Notri te čaka presenečenje. Odpri ga!</string>
+    <string name="ios_giftOpening">Odpiram …</string>
+    <string name="ios_giftTapsLeft">Še %1$s</string>
+    <string name="ios_giftTitle">Imamo darilo zate</string>
     <string name="ios_goalSub">Izberi, kolikor želiš.</string>
     <string name="ios_goalTitle">Kakšni so tvoji cilji?</string>
     <string name="ios_goal_competition">Pripraviti se na sprejemni izpit</string>
@@ -108,6 +117,7 @@
     <string name="ios_level_other">Drugo</string>
     <string name="ios_level_prepa">Pripravljalni letniki (prépa)</string>
     <string name="ios_libraryNoSearch">Za to iskanje ni tečajev</string>
+    <string name="ios_offerBadge">Ponudba</string>
     <string name="ios_ok">V redu</string>
     <string name="ios_onb_mika_paths">… in vsako lekcijo spremeni v **preprosto pot**, narejeno zate.</string>
     <string name="ios_onb_mika_source_course">Lekcije</string>
@@ -188,6 +198,8 @@
     <string name="ios_photo_unreadable">Teh fotografij ni bilo mogoče prebrati.</string>
     <string name="ios_planWeekly">Tedensko</string>
     <string name="ios_planYearly">Letno</string>
+    <string name="ios_pro_offer">Tvoja pozdravna ponudba</string>
+    <string name="ios_pro_offerHelp">-%1$s %% na letno naročnino</string>
     <string name="ios_profile_streakBest">To je tvoj rekord. Ne popusti.</string>
     <string name="ios_profile_streakStart">Vrni se jutri in niz se začne.</string>
     <string name="ios_proof_gotYou">**Poskrbeli bomo zate.**</string>
@@ -214,6 +226,7 @@
     <string name="ios_sharedNoSheet">Ta tečaj nima povzetka</string>
     <string name="ios_signOutMsg">Tvoji tečaji ostanejo v tej napravi in v tvojem računu. Ob naslednji prijavi jih najdeš znova.</string>
     <string name="ios_signOutQ">Se želiš odjaviti?</string>
+    <string name="ios_startCheaper">Začni s %1$s %% popusta</string>
     <string name="ios_streak_bestLabel">Tvoj rekord</string>
     <string name="ios_streak_celebrate_first">Tvoj niz se začenja! Vrni se jutri, da ga podaljšaš.</string>
     <string name="ios_streak_celebrate_line">Tvoj plamen še vedno gori. Se vidiva jutri!</string>
@@ -512,6 +525,7 @@
     <string name="x_onb_language">V katerem jeziku se učiš?</string>
     <string name="x_onb_language_sub">Mika v tem jeziku napiše tvoje lekcije, kvize in kartice.</string>
     <string name="x_paste_tooShort">Še nekaj vrstic in Mika bo lahko delal s tem.</string>
+    <string name="x_paywall_billedYearlyPlay">Obračun enkrat na leto, prekličeš v Google Playu.</string>
     <string name="x_paywall_finePrint">%1$s-dnevni brezplačni preizkus, nato %2$s na %3$s. Samodejno se podaljša, prekličeš lahko kadar koli v Google Play.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s na %2$s. Samodejno se podaljša, prekličeš lahko kadar koli v Google Play.</string>
     <string name="x_paywall_soon">Kmalu na Androidu</string>

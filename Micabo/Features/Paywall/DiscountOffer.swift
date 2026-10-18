@@ -2,9 +2,10 @@ import Foundation
 
 /// **L'offre cadeau, et les mêmes nombres que le web.**
 ///
-/// Après le premier cours importé, Micabo offre l'annuel à tarif réduit. Le cadeau se
-/// présente à l'ouverture du premier chapitre de ce cours : trois appuis l'ouvrent, et le
-/// paywall qui suit vend le tarif. Refermé, il laisse une languette qui le rouvre d'un appui.
+/// **Un paywall refermé sans achat fait tomber le cadeau** : l'annuel à tarif réduit. Trois
+/// appuis l'ouvrent, et le paywall qui suit vend le tarif. Refermé, il laisse une languette
+/// qui le rouvre d'un appui. Tous les paywalls comptent, celui du parcours d'accueil compris
+/// (`paywallClosed`) ; le cadeau se pose par-dessus les onglets (`DiscountBadgeHost`).
 ///
 /// **Le paywall ne compte plus.** Il affichait les vingt-quatre heures au centième, et un
 /// décompte posé sur un prix demande de décider vite plutôt que de décider : l'offre tient
@@ -47,6 +48,9 @@ enum DiscountOffer {
         static let startedAt = "micabo.discount.startedAt"
         /// Le paywall s'est déjà présenté ; la pastille prend le relais.
         static let seen = "micabo.discount.seen"
+        /// Un paywall s'est refermé sans achat et le cadeau attend d'être posé : le
+        /// parcours d'accueil se referme avant que les onglets existent.
+        static let pending = "micabo.discount.pending"
         /// Le dernier nombre de cours importés connu.
         ///
         /// Il est gardé pour une seule raison : la languette est montée avant qu'aucune
@@ -174,12 +178,36 @@ enum DiscountOffer {
     static func forget(in defaults: UserDefaults = .standard) {
         defaults.removeObject(forKey: Key.startedAt)
         defaults.removeObject(forKey: Key.seen)
+        defaults.removeObject(forKey: Key.pending)
+    }
+
+    // MARK: - Le déclencheur
+
+    /// Ce que la racine écoute pour poser le cadeau.
+    static let giftRequested = Notification.Name("micabo.discount.giftRequested")
+
+    /// **Le paywall vient de se refermer sans achat** : le cadeau se pose, s'il est dû (pas
+    /// abonné, pas déjà vu pendant cette fenêtre, ou le repos passé). La demande est gardée :
+    /// les onglets la reprennent en arrivant si personne ne l'a encore entendue.
+    @MainActor
+    static func paywallClosed(isPro: Bool, in defaults: UserDefaults = .standard) {
+        guard shouldPresentGift(isPro: isPro, courseCount: giftAfterCourses, seen: isSeen(in: defaults), startedAt: start(in: defaults))
+        else { return }
+        defaults.set(true, forKey: Key.pending)
+        NotificationCenter.default.post(name: giftRequested, object: nil)
+    }
+
+    /// La demande en attente, retirée en la lisant : le cadeau ne tombe qu'une fois.
+    static func takePendingGift(in defaults: UserDefaults = .standard) -> Bool {
+        guard defaults.bool(forKey: Key.pending) else { return false }
+        defaults.removeObject(forKey: Key.pending)
+        return true
     }
 
     // MARK: - Les règles d'affichage
 
-    /// Le cadeau attend la première leçon : sans rien à soi, l'offre passe pour une réclame.
-    static let giftAfterCourses = 1
+    /// Aucun cours n'est demandé : c'est le paywall refermé qui fait tomber le cadeau.
+    static let giftAfterCourses = 0
 
     /// Faut-il poser le cadeau sur cette fiche ?
     ///
@@ -194,8 +222,6 @@ enum DiscountOffer {
         now: Date = Date()
     ) -> Bool {
         guard !isPro else { return false }
-        // Le cadeau vient après le premier cours. Sans cours importé, il n'y a rien à
-        // récompenser et l'offre passe pour une réclame.
         guard courseCount >= giftAfterCourses else { return false }
         // Un « déjà vu » sans instant d'ouverture est un état bâtard, laissé par une version
         // qui marquait le cadeau vu sans démarrer son décompte. On le représente : rien n'a

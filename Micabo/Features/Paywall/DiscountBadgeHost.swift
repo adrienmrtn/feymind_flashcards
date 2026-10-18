@@ -9,20 +9,15 @@ import SwiftUI
 ///
 /// Elle se colle au **bord droit**, à mi-hauteur, au-dessus de la barre et des boutons du
 /// bas : une pastille dans le coin bas-droit recouvrait le bouton de session, et c'est
-/// précisément ce qu'on ne veut plus. Le cadeau, lui, se présente en pop-up au retour du
-/// premier deck importé, à la demande de la liste (`TabRouter.requestGift`), et c'est
-/// d'ici qu'il se pose : par-dessus les onglets **et** la barre du bas.
+/// précisément ce qu'on ne veut plus.
+///
+/// **Le cadeau se pose d'ici**, en pop-up par-dessus les onglets **et** la barre du bas,
+/// quand un paywall vient de se refermer sans achat (`DiscountOffer.paywallClosed`). La
+/// demande est gardée : celle du paywall du parcours d'accueil attend que les onglets
+/// arrivent.
 ///
 /// Le `ZStack` ne prend **aucun appui** hors de la languette : une surface pleine qui
 /// avale les doigts rendrait l'app inerte.
-///
-/// **Elle n'ouvre plus rien d'elle-même.** L'offre se présentait ici à chaque lancement,
-/// une seconde et demie après la première image — et cette feuille, posée depuis la
-/// racine, refermait ce qui était déjà ouvert au-dessus des onglets : l'import du premier
-/// deck, qui s'ouvre tout seul après le parcours, se faisait couper sous les doigts. Le
-/// cadeau se présente désormais à l'ouverture du premier chapitre du premier deck importé,
-/// depuis cette page-là (`ChapterSheetView`), et l'abonnement reste trouvable sans rien
-/// chercher par la rangée des Réglages.
 struct DiscountBadgeHost: View {
     /// Air à laisser sous la languette. La barre d'onglets n'est pas toujours là.
     var bottomInset: CGFloat
@@ -74,6 +69,16 @@ struct DiscountBadgeHost: View {
         )
     }
 
+    /// Le cadeau demandé par un paywall refermé, une fois la feuille repliée : deux feuilles
+    /// qui se croisent, et iOS refuse la seconde.
+    @MainActor
+    private func presentPendingGift() async {
+        guard DiscountOffer.takePendingGift() else { return }
+        try? await Task.sleep(for: .milliseconds(700))
+        guard !(pro?.isPro ?? false), presentation == nil else { return }
+        presentation = .gift
+    }
+
     var body: some View {
         ZStack(alignment: .trailing) {
             Color.clear
@@ -90,10 +95,15 @@ struct DiscountBadgeHost: View {
         }
         .animation(OnboardingMotion.enter, value: shows)
         // **Le cadeau se pose ici, par-dessus tout** — les onglets et la barre du bas
-        // compris —, à la demande de la liste des decks, au retour du premier cours.
+        // compris —, quand un paywall vient de se refermer sans achat. La demande arrive
+        // tout de suite, ou attend l'arrivée des onglets (le paywall du parcours d'accueil).
         .onChange(of: router?.giftRequests ?? 0) { _, _ in
             presentation = .gift
         }
+        .onReceive(NotificationCenter.default.publisher(for: DiscountOffer.giftRequested)) { _ in
+            Task { await presentPendingGift() }
+        }
+        .task { await presentPendingGift() }
         .micaboDiscountOffer($presentation)
         // Le compte n'est réécrit que s'il a changé : `@AppStorage` écrit dans les réglages et
         // invalide la vue à chaque affectation, même quand la valeur est la même.

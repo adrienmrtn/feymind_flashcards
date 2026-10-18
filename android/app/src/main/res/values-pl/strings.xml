@@ -29,6 +29,9 @@
     <string name="app_friends_usernamePlaceholder">nazwa użytkownika</string>
     <string name="app_friends_you">Ty</string>
     <string name="app_friends_yourAccount">Twoje konto</string>
+    <string name="app_paywall_discountSubtitle">Powtarzaj szybciej z Pro</string>
+    <string name="app_paywall_discountTitle">-%1$s%%</string>
+    <string name="app_paywall_perMonthSlash">/ mies.</string>
     <string name="common_continue">Dalej</string>
     <string name="common_privacy">Prywatność</string>
     <string name="common_signOut">Wyloguj się</string>
@@ -65,6 +68,7 @@
     <string name="ios_averageLead">Nikt cię nie ocenia. To punkt wyjścia, a nie świadectwo.</string>
     <string name="ios_averageTitle">Jaką masz teraz\nśrednią?</string>
     <string name="ios_backup">Kopia zapasowa</string>
+    <string name="ios_billedYearly">%1$s płatne raz w roku</string>
     <string name="ios_build_done">Twój plan jest gotowy</string>
     <string name="ios_build_step1">Czytamy twoje odpowiedzi</string>
     <string name="ios_build_step2">Ustalamy twoje tempo</string>
@@ -80,11 +84,16 @@
     <string name="ios_dataFootnote">Usunięcie kursów usuwa je też z konta przy następnej synchronizacji. Usunięcie konta usuwa je wszędzie.</string>
     <string name="ios_deleteAccount">Usuń konto</string>
     <string name="ios_deleteAccountQ">Usunąć konto?</string>
+    <string name="ios_discount">Zniżka</string>
     <string name="ios_docx_corrupt">Dokument Word jest niekompletny lub uszkodzony.</string>
     <string name="ios_docx_empty">W tym dokumencie nie znaleziono tekstu.</string>
     <string name="ios_docx_notDocx">Ten plik nie jest dokumentem Word (.docx).</string>
     <string name="ios_friend">Znajomy</string>
     <string name="ios_friends_requestExists">To zaproszenie już istnieje.</string>
+    <string name="ios_giftBody">W środku czeka niespodzianka. Otwórz go!</string>
+    <string name="ios_giftOpening">Otwieram…</string>
+    <string name="ios_giftTapsLeft">Jeszcze: %1$s</string>
+    <string name="ios_giftTitle">Mamy dla Ciebie prezent</string>
     <string name="ios_goalSub">Wybierz, ile chcesz.</string>
     <string name="ios_goalTitle">Jakie masz cele?</string>
     <string name="ios_goal_competition">Przygotować się do egzaminu konkursowego</string>
@@ -108,6 +117,7 @@
     <string name="ios_level_other">Inne</string>
     <string name="ios_level_prepa">Klasy przygotowawcze (prépa)</string>
     <string name="ios_libraryNoSearch">Brak kursów dla tego wyszukiwania</string>
+    <string name="ios_offerBadge">Oferta</string>
     <string name="ios_onb_mika_paths">… i zamienia każdą lekcję w **prostą ścieżkę**, stworzoną dla Ciebie.</string>
     <string name="ios_onb_mika_source_course">Lekcje</string>
     <string name="ios_onb_mika_source_notes">Notatki</string>
@@ -186,6 +196,8 @@
     <string name="ios_photo_unreadable">Nie udało się odczytać tych zdjęć.</string>
     <string name="ios_planWeekly">Tygodniowy</string>
     <string name="ios_planYearly">Roczny</string>
+    <string name="ios_pro_offer">Twoja oferta powitalna</string>
+    <string name="ios_pro_offerHelp">-%1$s%% na rok</string>
     <string name="ios_profile_streakBest">To Twój rekord. Nie odpuszczaj.</string>
     <string name="ios_profile_streakStart">Wróć jutro, a seria się zacznie.</string>
     <string name="ios_proof_gotYou">**Mamy na to sposób.**</string>
@@ -212,6 +224,7 @@
     <string name="ios_sharedNoSheet">Ten kurs nie ma notatki</string>
     <string name="ios_signOutMsg">Twoje kursy zostają na tym urządzeniu i na koncie. Znajdziesz je przy następnym logowaniu.</string>
     <string name="ios_signOutQ">Wylogować się?</string>
+    <string name="ios_startCheaper">Zacznij z rabatem %1$s%%</string>
     <string name="ios_streak_bestLabel">Twój rekord</string>
     <string name="ios_streak_celebrate_first">Twoja seria się zaczyna! Wróć jutro, żeby ją przedłużyć.</string>
     <string name="ios_streak_celebrate_line">Twój płomień wciąż się pali. Do jutra!</string>
@@ -508,6 +521,7 @@
     <string name="x_onb_language">W jakim języku się uczysz?</string>
     <string name="x_onb_language_sub">Mika pisze twoje lekcje, quizy i fiszki w tym języku.</string>
     <string name="x_paste_tooShort">Jeszcze kilka linijek i Mika się tym zajmie.</string>
+    <string name="x_paywall_billedYearlyPlay">Płatne raz w roku, anulujesz w Google Play.</string>
     <string name="x_paywall_finePrint">%1$s dni za darmo, potem %2$s / %3$s. Odnawia się automatycznie, anulujesz w dowolnej chwili w Google Play.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s / %2$s. Odnawia się automatycznie, anulujesz w dowolnej chwili w Google Play.</string>
     <string name="x_paywall_soon">Wkrótce na Androidzie</string>

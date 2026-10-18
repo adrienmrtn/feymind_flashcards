@@ -345,7 +345,7 @@ extension IosI18nCatalogs {
         "ios.friend": "Prieten",
         "ios.friends.requestExists": "Cererea asta există deja.",
         "ios.fromSchool": "De la școala ta",
-        "ios.giftBody": "Primul tău curs e gata. Deschide-l.",
+        "ios.giftBody": "Înăuntru te așteaptă o surpriză. Deschide-l!",
         "ios.giftOpening": "Se deschide…",
         "ios.giftTapsLeft": "Mai sunt {n}",
         "ios.giftTitle": "Avem un cadou pentru tine",
