@@ -15,7 +15,9 @@
  *   (identifiant d'abonnement Play, deux-points, identifiant du base plan) existent chez
  *   RevenueCat, attachés à l'entitlement `pro` ;
  * - l'offering courante porte chacun dans son package (`$rc_weekly`, `$rc_annual`), à côté
- *   des produits App Store, qui ne bougent pas.
+ *   des produits App Store, qui ne bougent pas ;
+ * - l'annuel à tarif réduit du cadeau (`com.micabo.app.pro.yearly.discount:yearly`) est dans
+ *   l'offering `discount`, packages `$rc_annual` et `yearly_discount`, comme sur iPhone.
  *
  * Il imprime la clé publique Android (`goog_…`) : elle n'est pas secrète, l'app l'embarque.
  * Le compte de service Google (vérification des achats) et les abonnements eux-mêmes dans
@@ -30,6 +32,12 @@ const PACKAGE_NAME = "com.micabo.app";
 const PLANS = [
   { storeId: "com.micabo.app.pro.weekly:weekly", name: "Micabo Pro — semaine (Android)", pkg: "$rc_weekly" },
   { storeId: "com.micabo.app.pro.yearly:yearly", name: "Micabo Pro — année (Android)", pkg: "$rc_annual" },
+  {
+    storeId: "com.micabo.app.pro.yearly.discount:yearly",
+    name: "Micabo Pro — année, tarif réduit (Android)",
+    pkg: ["$rc_annual", "yearly_discount"],
+    offering: "discount",
+  },
 ];
 
 if (!key) {
@@ -127,23 +135,30 @@ if (missing.length) {
   });
 }
 
-// L'offering courante et ses packages.
+// Les offerings et leurs packages : la courante, et `discount` pour le cadeau.
 const offerings = await list(`${base}/offerings`);
 const current = offerings.find((o) => o.is_current) ?? offerings.find((o) => o.lookup_key === "default");
 if (!current) throw new Error("Aucune offering courante.");
-const packages = await list(`${base}/offerings/${current.id}/packages`);
 for (const plan of PLANS) {
-  const pkg = packages.find((p) => p.lookup_key === plan.pkg);
+  const offering = plan.offering ? offerings.find((o) => o.lookup_key === plan.offering) : current;
   const productId = productIds[plan.storeId];
-  if (!pkg || !productId) {
-    console.log(`Package ${plan.pkg} absent de ${current.lookup_key} : rien à attacher.`);
+  if (!offering || !productId) {
+    console.log(`Offering ${plan.offering ?? "courante"} ou produit ${plan.storeId} absent : rien à attacher.`);
     continue;
   }
-  const inside = await list(`${base}/packages/${pkg.id}/products`);
-  if (inside.some((p) => (p.product?.id ?? p.id) === productId)) continue;
-  await write(`mettre ${plan.storeId} dans ${current.lookup_key}/${plan.pkg}`, "POST", `${base}/packages/${pkg.id}/actions/attach_products`, {
-    products: [{ product_id: productId, eligibility_criteria: "all" }],
-  });
+  const packages = await list(`${base}/offerings/${offering.id}/packages`);
+  for (const lookup of [plan.pkg].flat()) {
+    const pkg = packages.find((p) => p.lookup_key === lookup);
+    if (!pkg) {
+      console.log(`Package ${lookup} absent de ${offering.lookup_key} : rien à attacher.`);
+      continue;
+    }
+    const inside = await list(`${base}/packages/${pkg.id}/products`);
+    if (inside.some((p) => (p.product?.id ?? p.id) === productId)) continue;
+    await write(`mettre ${plan.storeId} dans ${offering.lookup_key}/${lookup}`, "POST", `${base}/packages/${pkg.id}/actions/attach_products`, {
+      products: [{ product_id: productId, eligibility_criteria: "all" }],
+    });
+  }
 }
 
 console.log(apply ? "RevenueCat Android : prêt." : "Simulation finie.");
