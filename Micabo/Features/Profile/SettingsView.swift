@@ -36,6 +36,8 @@ struct SettingsView: View {
     @Environment(ProAccess.self) private var pro: ProAccess?
     @State private var paywall: PaywallTrigger?
     @State private var discountOffer: DiscountPresentation?
+    /// Ce que répondent les boutons de test des notifications.
+    @State private var notificationReport: String?
     #if DEBUG
     @State private var debugCourseLanguage = DebugCourseCatalog.language
     #endif
@@ -120,6 +122,14 @@ struct SettingsView: View {
             Button(i18n.t("ios.cancel"), role: .cancel) {}
         } message: {
             Text(i18n.t("ios.signOutMsg"))
+        }
+        .alert(
+            i18n.t("ios.debug.notifTitle"),
+            isPresented: Binding(get: { notificationReport != nil }, set: { if !$0 { notificationReport = nil } })
+        ) {
+            Button(i18n.t("ios.ok"), role: .cancel) {}
+        } message: {
+            Text(notificationReport ?? "")
         }
         .micaboPaywall($paywall)
         .micaboDiscountOffer($discountOffer)
@@ -772,6 +782,11 @@ struct SettingsView: View {
         )
         #endif
 
+        // **Les notifications, sans attendre le soir** : en développement et sur TestFlight.
+        if BuildChannel.isInternal {
+            rows.append(contentsOf: notificationTestRows)
+        }
+
         // **Les paywalls, à vue**, même abonné ou déjà en essai : sans cette rangée, un compte
         // qui a commencé son essai ne les revoyait plus jamais.
         rows.append(
@@ -794,6 +809,62 @@ struct SettingsView: View {
         )
 
         return rows
+    }
+
+    private var notificationTestRows: [MicaboRow] {
+        [
+            MicaboRow(
+                tile: MicaboTile(glyph: .symbol("bell.badge.fill"), background: MicaboColor.infoSoft),
+                title: i18n.t("ios.debug.notifImport"),
+                subtitle: i18n.t("ios.debug.notifHelp"),
+                accessory: .chevron,
+                action: { sendTestNotification(.importCourse) }
+            ),
+            MicaboRow(
+                tile: MicaboTile(glyph: .symbol("bell.badge.fill"), background: MicaboColor.tilePastels[1]),
+                title: i18n.t("ios.debug.notifPractice"),
+                subtitle: i18n.t("ios.debug.notifHelp"),
+                accessory: .chevron,
+                action: { sendTestNotification(.practice) }
+            ),
+            MicaboRow(
+                tile: MicaboTile(glyph: .symbol("calendar.badge.clock"), background: MicaboColor.tilePastels[3]),
+                title: i18n.t("ios.debug.notifScheduled"),
+                subtitle: i18n.t("ios.debug.notifScheduledHelp"),
+                accessory: .chevron,
+                action: showScheduledReminders
+            )
+        ]
+    }
+
+    private func sendTestNotification(_ kind: DailyReminder.TestKind) {
+        Task { @MainActor in
+            if await DailyReminder.sendTest(kind, context: modelContext) {
+                Haptics.success()
+            } else {
+                notificationReport = i18n.t("ios.debug.notifDenied")
+            }
+        }
+    }
+
+    /// Repose les rappels comme au passage en arrière-plan, puis dit ce qui est prévu.
+    private func showScheduledReminders() {
+        Task { @MainActor in
+            await DailyReminder.reschedule(context: modelContext, trialEndsAt: pro?.trialEndsAt)
+            let pending = await DailyReminder.pending()
+            guard let next = pending.first else {
+                notificationReport = i18n.t("ios.debug.notifNone")
+                return
+            }
+            let date = next.date.formatted(
+                Date.FormatStyle(date: .abbreviated, time: .shortened).locale(i18n.locale.foundation)
+            )
+            notificationReport = i18n.t("ios.debug.notifNext", [
+                "count": "\(pending.count)",
+                "date": date,
+                "title": next.title
+            ])
+        }
     }
 
     private var testFootnote: String {

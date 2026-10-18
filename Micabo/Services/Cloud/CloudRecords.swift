@@ -562,6 +562,8 @@ struct FlashcardRecord: Codable {
 struct EntitlementRecord: Decodable {
     var is_pro: Bool
     var expires_at: Date?
+    /// `trial` pendant l'essai gratuit, `normal` une fois payé ; absent sur une ligne offerte.
+    var period_type: String?
 }
 
 struct ReviewLogRecord: Codable {

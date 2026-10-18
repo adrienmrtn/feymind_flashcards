@@ -1,5 +1,7 @@
 import SwiftData
+import UIKit
 import SwiftUI
+import UserNotifications
 
 @main
 struct MicaboApp: App {
@@ -44,6 +46,9 @@ struct MicaboApp: App {
             // Avant tout le reste : le SDK doit être configuré avant qu'un écran ne puisse
             // demander une offre, et avant le premier `logIn`.
             PurchasesBridge.configureIfPossible()
+            // Avant la fin du lancement, comme iOS le demande : une notification qui ouvre
+            // l'app doit trouver son délégué en place.
+            UNUserNotificationCenter.current().delegate = ReminderPresenter.shared
             container = Self.makeContainer()
             SampleContentPurge.purgeIfNeeded(in: container.mainContext)
             SubjectCasePass.runIfNeeded(in: container.mainContext)
@@ -110,7 +115,9 @@ struct MicaboApp: App {
             // le seul moment où l'on sait que l'app risque de ne pas revenir.
             .onChange(of: scenePhase) { _, phase in
                 switch phase {
-                case .background: Analytics.flushForBackground()
+                case .background:
+                    Analytics.flushForBackground()
+                    rescheduleRemindersInBackground()
                 case .active: Analytics.enterForeground()
                 default: break
                 }
@@ -145,6 +152,9 @@ struct MicaboApp: App {
                 await Task.yield()
                 try? await Task.sleep(for: .milliseconds(180))
                 await sync.sync(context: container.mainContext)
+                // Après la synchro et l'abonnement : le rappel nomme un cours, et ne part
+                // pas pendant un essai.
+                await DailyReminder.reschedule(context: container.mainContext, trialEndsAt: pro.trialEndsAt)
                 // L'annuaire et les amitiés viennent après la synchro : ils n'ont de sens
                 // qu'avec un compte, et la synchro est ce qui confirme qu'il y en a un.
                 await social.refresh()
@@ -186,6 +196,17 @@ struct MicaboApp: App {
                     await social.refresh()
                 }
             }
+    }
+
+    /// **Les rappels du jour, reposés en partant** : c'est là que les cours et le travail de
+    /// la journée sont à jour. iOS laisse quelques secondes à l'app qui passe à l'arrière-plan,
+    /// et la tâche en demande le temps explicitement pour ne pas être coupée en route.
+    private func rescheduleRemindersInBackground() {
+        let token = UIApplication.shared.beginBackgroundTask(withName: "DailyReminder")
+        Task {
+            await DailyReminder.reschedule(context: container.mainContext, trialEndsAt: pro.trialEndsAt)
+            UIApplication.shared.endBackgroundTask(token)
+        }
     }
 
     // MARK: - Stockage

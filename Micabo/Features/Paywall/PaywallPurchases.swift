@@ -224,15 +224,23 @@ enum PurchasesBridge {
         #endif
     }
 
+    /// Ce que le SDK sait du droit : ouvert ou non, et la fin de l'essai quand c'en est un.
+    struct EntitlementState: Equatable, Sendable {
+        var isPro: Bool
+        /// La fin de l'essai gratuit en cours, `nil` hors essai. Un essai dont la date
+        /// manque vaut `.distantFuture` : il reste un essai.
+        var trialEndsAt: Date?
+    }
+
     /// L'état du droit selon le SDK, ou `nil` quand il n'a rien à dire.
     ///
     /// `nil` n'est pas « pas abonné » : c'est « je ne sais pas », et `ProAccess` retombe alors
     /// sur la table `entitlements`. Confondre les deux fermerait la porte à chaque avion.
-    static func isPro() async -> Bool? {
+    static func entitlement() async -> EntitlementState? {
         #if canImport(RevenueCat)
         guard isConfigured else { return nil }
         guard let info = try? await Purchases.shared.customerInfo() else { return nil }
-        return info.hasPro
+        return info.entitlementState
         #else
         return nil
         #endif
@@ -240,17 +248,17 @@ enum PurchasesBridge {
 
     /// Le flux qui fait qu'un abonnement résilié se referme **sans redémarrage**.
     ///
-    /// Un `Bool` et non un `CustomerInfo` : le type traverse les frontières d'acteur sans
-    /// question, et l'appelant n'a pas à connaître RevenueCat. Sans SDK, le flux se termine
+    /// Un `EntitlementState` et non un `CustomerInfo` : le type traverse les frontières
+    /// d'acteur sans question, et l'appelant n'a pas à connaître RevenueCat. Sans SDK, le flux se termine
     /// tout de suite — la boucle d'en face ne tourne donc pas dans le vide.
-    static func proUpdates() -> AsyncStream<Bool> {
+    static func proUpdates() -> AsyncStream<EntitlementState> {
         #if canImport(RevenueCat)
         guard isConfigured else { return AsyncStream { $0.finish() } }
 
         return AsyncStream { continuation in
             let task = Task {
                 for await info in Purchases.shared.customerInfoStream {
-                    continuation.yield(info.hasPro)
+                    continuation.yield(info.entitlementState)
                 }
                 continuation.finish()
             }
@@ -268,6 +276,12 @@ private extension CustomerInfo {
     /// trois App Store, trois Stripe, discount compris — l'ouvrent tous.
     var hasPro: Bool {
         entitlements[ProEntitlement.id]?.isActive == true
+    }
+
+    var entitlementState: PurchasesBridge.EntitlementState {
+        let pro = entitlements[ProEntitlement.id]
+        let inTrial = pro?.isActive == true && pro?.periodType == .trial
+        return .init(isPro: hasPro, trialEndsAt: inTrial ? (pro?.expirationDate ?? .distantFuture) : nil)
     }
 }
 #endif
