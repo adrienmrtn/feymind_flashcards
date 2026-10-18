@@ -590,6 +590,12 @@ enum SheetText {
         return text
     }
 
+    /// Les flèches étiquetées d'amsmath, avec leur étiquette. L'antislash est facultatif : une
+    /// leçon écrite avant la réparation des échappées l'a parfois perdu (« xrightarrow{Lumière} »).
+    ///
+    /// Jumeau de `LABELLED_ARROW` dans `supabase/functions/_shared/sheet.ts`.
+    static let labelledArrow = "\\\\?x(right|left)arrow\\s*(?:\\[[^\\]]*\\])?\\s*\\{([^{}]*)\\}"
+
     /// **La formule, ramenée à ce que l'application sait composer.**
     ///
     /// `\xrightarrow{Lumière}` est de l'amsmath ; le moteur ne l'analyse pas, la composition
@@ -605,9 +611,7 @@ enum SheetText {
         var labels: [String] = []
         var source = collapsingRepeatedFormula(restoringLatexCommands(latex))
 
-        if let arrows = try? NSRegularExpression(
-            pattern: "\\\\x(right|left)arrow\\s*(?:\\[[^\\]]*\\])?\\s*\\{([^{}]*)\\}"
-        ) {
+        if let arrows = try? NSRegularExpression(pattern: labelledArrow) {
             let full = NSRange(source.startIndex..., in: source)
             var out = ""
             var cursor = source.startIndex

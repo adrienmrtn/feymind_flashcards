@@ -222,6 +222,50 @@ final class LessonFormatTests: XCTestCase {
         XCTAssertEqual(notes.blocks, [.paragraph("Reste.")])
     }
 
+    /// Des étapes écrites d'une traite dans un paragraphe (une leçon d'avant la réparation
+    /// serveur) se relisent en introduction suivie d'étapes ; une date ne fait pas une méthode.
+    func testStepsWrittenInsideAParagraphAreReadAsSteps() throws {
+        let json = """
+        {"oneLiner":"Une idée.",
+         "blocks":[
+           {"type":"paragraph","text":"La photosynthèse se déroule en étapes : 1. La lumière est absorbée par la chlorophylle. 2. L'eau est décomposée ; 3. Le dioxygène est libéré."},
+           {"type":"paragraph","text":"La guerre s'achève en 1945. Elle a duré 6 ans."},
+           {"type":"paragraph","text":"1. Poser. 2. Calculer. 3. Vérifier."}
+         ],
+         "takeaways":[]}
+        """
+        let notes = try XCTUnwrap(ThemeNotes.decode(from: Data(json.utf8)))
+        XCTAssertEqual(notes.blocks, [
+            .paragraph("La photosynthèse se déroule en étapes :"),
+            .steps(["La lumière est absorbée par la chlorophylle.", "L'eau est décomposée", "Le dioxygène est libéré."]),
+            .paragraph("La guerre s'achève en 1945. Elle a duré 6 ans."),
+            .steps(["Poser.", "Calculer.", "Vérifier."])
+        ])
+        XCTAssertNil(NoteBlock.inlineSteps(in: "1. Une. 2. Deux étapes seulement."))
+    }
+
+    /// La flèche étiquetée d'amsmath, que le moteur ne compose pas, redevient une flèche ; son
+    /// étiquette passe en légende. Avec ou sans l'antislash qu'une ancienne leçon a pu perdre.
+    func testALabelledArrowBecomesAnArrowAndItsLabelACaption() throws {
+        let json = """
+        {"oneLiner":"Une idée.",
+         "blocks":[
+           {"type":"formula","latex":"6CO_2 + 6H_2O \\\\xrightarrow{Énergie lumineuse} C_6H_{12}O_6 + 6O_2"},
+           {"type":"formula","latex":"A xrightarrow{Lumière} B","caption":"La réaction"}
+         ],
+         "takeaways":[]}
+        """
+        let notes = try XCTUnwrap(ThemeNotes.decode(from: Data(json.utf8)))
+        XCTAssertEqual(notes.blocks, [
+            .formula(latex: "6CO_2 + 6H_2O \\rightarrow C_6H_{12}O_6 + 6O_2", caption: "Énergie lumineuse"),
+            .formula(latex: "A \\rightarrow B", caption: "La réaction · Lumière")
+        ])
+
+        let inline = FormulaRenderer.stripped("Bilan : $6CO_2 \\xrightarrow{Lumière} C_6H_{12}O_6$")
+        XCTAssertFalse(inline.contains("xrightarrow"))
+        XCTAssertTrue(inline.contains("→ (Lumière)"))
+    }
+
     @MainActor
     func testInlineFormulasAreTransposedInNotesText() {
         let text = String(KeywordText.attributed("L'aire vaut $\\pi r^2$ et **E = mc^2**.").characters)
@@ -377,6 +421,40 @@ final class CourseLessonTests: XCTestCase {
             .blocks(6..<7),
             .takeaways,
             .question
+        ])
+    }
+
+    /// Un paragraphe de deux phrases, seul sur son écran, accueille le bloc qui le suit ; pas
+    /// au-delà d'un écran, ni par-dessus un sous-titre.
+    func testALoneShortParagraphSharesItsScreenWithTheNextBlock() throws {
+        let course = Course(title: "Leçon")
+        context.insert(course)
+        let chapter = Chapter(position: 0, title: "Thème", course: course)
+        context.insert(chapter)
+        let short = Array(repeating: "Une phrase courte de six mots.", count: 4).joined(separator: " ")
+        let long = Array(repeating: "Une phrase courte de six mots.", count: 18).joined(separator: " ")
+        chapter.notesData = ThemeNotes(
+            oneLiner: "Une idée.",
+            blocks: [
+                .paragraph(short),
+                .list(["un", "deux"]),
+                .subtitle("Partie deux"),
+                .paragraph(short),
+                .subtitle("Partie trois"),
+                .paragraph(short),
+                .paragraph(long),
+                .example("Un cas.")
+            ],
+            takeaways: ["Un"]
+        ).encoded()
+        XCTAssertEqual(NotesPage.pages(for: chapter, hasQuestion: false), [
+            .opening,
+            .blocks(0..<2),
+            .blocks(2..<4),
+            .blocks(4..<6),
+            .blocks(6..<7),
+            .blocks(7..<8),
+            .takeaways
         ])
     }
 
