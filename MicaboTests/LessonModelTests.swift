@@ -266,40 +266,6 @@ final class LessonFormatTests: XCTestCase {
         XCTAssertTrue(inline.contains("→ (Lumière)"))
     }
 
-    /// Un paragraphe de deux phrases, seul sur son écran, accueille le bloc qui le suit ; pas
-    /// au-delà d'un écran, ni par-dessus un sous-titre.
-    func testALoneShortParagraphSharesItsScreenWithTheNextBlock() throws {
-        let course = Course(title: "Leçon")
-        context.insert(course)
-        let chapter = Chapter(position: 0, title: "Thème", course: course)
-        context.insert(chapter)
-        let short = Array(repeating: "Une phrase courte de six mots.", count: 4).joined(separator: " ")
-        let long = Array(repeating: "Une phrase courte de six mots.", count: 18).joined(separator: " ")
-        chapter.notesData = ThemeNotes(
-            oneLiner: "Une idée.",
-            blocks: [
-                .paragraph(short),
-                .list(["un", "deux"]),
-                .subtitle("Partie deux"),
-                .paragraph(short),
-                .subtitle("Partie trois"),
-                .paragraph(short),
-                .paragraph(long),
-                .example("Un cas.")
-            ],
-            takeaways: ["Un"]
-        ).encoded()
-        XCTAssertEqual(NotesPage.pages(for: chapter, hasQuestion: false), [
-            .opening,
-            .blocks(0..<2),
-            .blocks(2..<4),
-            .blocks(4..<6),
-            .blocks(6..<7),
-            .blocks(7..<8),
-            .takeaways
-        ])
-    }
-
     @MainActor
     func testInlineFormulasAreTransposedInNotesText() {
         let text = String(KeywordText.attributed("L'aire vaut $\\pi r^2$ et **E = mc^2**.").characters)
@@ -455,6 +421,40 @@ final class CourseLessonTests: XCTestCase {
             .blocks(6..<7),
             .takeaways,
             .question
+        ])
+    }
+
+    /// Un paragraphe de deux phrases, seul sur son écran, accueille le bloc qui le suit ; pas
+    /// au-delà d'un écran, ni par-dessus un sous-titre.
+    func testALoneShortParagraphSharesItsScreenWithTheNextBlock() throws {
+        let course = Course(title: "Leçon")
+        context.insert(course)
+        let chapter = Chapter(position: 0, title: "Thème", course: course)
+        context.insert(chapter)
+        let short = Array(repeating: "Une phrase courte de six mots.", count: 4).joined(separator: " ")
+        let long = Array(repeating: "Une phrase courte de six mots.", count: 18).joined(separator: " ")
+        chapter.notesData = ThemeNotes(
+            oneLiner: "Une idée.",
+            blocks: [
+                .paragraph(short),
+                .list(["un", "deux"]),
+                .subtitle("Partie deux"),
+                .paragraph(short),
+                .subtitle("Partie trois"),
+                .paragraph(short),
+                .paragraph(long),
+                .example("Un cas.")
+            ],
+            takeaways: ["Un"]
+        ).encoded()
+        XCTAssertEqual(NotesPage.pages(for: chapter, hasQuestion: false), [
+            .opening,
+            .blocks(0..<2),
+            .blocks(2..<4),
+            .blocks(4..<6),
+            .blocks(6..<7),
+            .blocks(7..<8),
+            .takeaways
         ])
     }
 
