@@ -667,6 +667,165 @@
      }
     }
    }
+  },
+  {
+   "product_id": "prod77128a3eb6",
+   "store": "play_store",
+   "common": {
+    "availability": {
+     "territories": {
+      "FR": true,
+      "BE": true,
+      "LU": true,
+      "DE": true,
+      "AT": true,
+      "NL": true,
+      "IE": true,
+      "FI": true,
+      "ES": true,
+      "IT": true,
+      "PT": true,
+      "GR": true,
+      "SK": true,
+      "SI": true,
+      "HR": true,
+      "EE": true,
+      "LV": true,
+      "LT": true,
+      "CY": true,
+      "MT": true,
+      "US": true,
+      "TR": true,
+      "BR": true,
+      "MX": true,
+      "IN": true
+     }
+    },
+    "pricing": {
+     "territory_prices": {
+      "FR": {
+       "amount_micros": 29990000,
+       "currency": "EUR"
+      },
+      "BE": {
+       "amount_micros": 29990000,
+       "currency": "EUR"
+      },
+      "LU": {
+       "amount_micros": 29990000,
+       "currency": "EUR"
+      },
+      "DE": {
+       "amount_micros": 29990000,
+       "currency": "EUR"
+      },
+      "AT": {
+       "amount_micros": 29990000,
+       "currency": "EUR"
+      },
+      "NL": {
+       "amount_micros": 29990000,
+       "currency": "EUR"
+      },
+      "IE": {
+       "amount_micros": 29990000,
+       "currency": "EUR"
+      },
+      "FI": {
+       "amount_micros": 29990000,
+       "currency": "EUR"
+      },
+      "ES": {
+       "amount_micros": 23990000,
+       "currency": "EUR"
+      },
+      "IT": {
+       "amount_micros": 23990000,
+       "currency": "EUR"
+      },
+      "PT": {
+       "amount_micros": 23990000,
+       "currency": "EUR"
+      },
+      "GR": {
+       "amount_micros": 23990000,
+       "currency": "EUR"
+      },
+      "SK": {
+       "amount_micros": 23990000,
+       "currency": "EUR"
+      },
+      "SI": {
+       "amount_micros": 23990000,
+       "currency": "EUR"
+      },
+      "HR": {
+       "amount_micros": 23990000,
+       "currency": "EUR"
+      },
+      "EE": {
+       "amount_micros": 23990000,
+       "currency": "EUR"
+      },
+      "LV": {
+       "amount_micros": 23990000,
+       "currency": "EUR"
+      },
+      "LT": {
+       "amount_micros": 23990000,
+       "currency": "EUR"
+      },
+      "CY": {
+       "amount_micros": 23990000,
+       "currency": "EUR"
+      },
+      "MT": {
+       "amount_micros": 23990000,
+       "currency": "EUR"
+      },
+      "US": {
+       "amount_micros": 35990000,
+       "currency": "USD"
+      },
+      "TR": {
+       "amount_micros": 899990000,
+       "currency": "TRY"
+      },
+      "BR": {
+       "amount_micros": 89900000,
+       "currency": "BRL"
+      },
+      "MX": {
+       "amount_micros": 359000000,
+       "currency": "MXN"
+      },
+      "IN": {
+       "amount_micros": 899000000,
+       "currency": "INR"
+      }
+     }
+    },
+    "localizations": {
+     "fr-FR": {
+      "name": "Micabo Pro — année, tarif réduit",
+      "description": "Tous les cours, quiz et examens blancs"
+     },
+     "en-US": {
+      "name": "Micabo Pro — yearly, special price",
+      "description": "All lessons, quizzes and mock exams"
+     }
+    }
+   },
+   "store_state": {
+    "base_plans": {
+     "yearly": {
+      "state": "ACTIVE",
+      "auto_renewing_base_plan_type": {
+       "billing_period_duration": "P1Y"
+      }
+     }
+    }
+   }
   }
  ]
 }
