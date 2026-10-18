@@ -202,6 +202,13 @@
     <string name="ios_quiz_time_caption_30">Müthiş</string>
     <string name="ios_quiz_time_caption_5">İyi bir başlangıç</string>
     <string name="ios_quiz_time_minutes">Günde %1$s dk</string>
+    <string name="ios_reminder_import1_body">Bir fotoğraf, bir PDF ya da bir YouTube videosu: Micabo birkaç dakikada onu bir derse ve kartlara dönüştürür.</string>
+    <string name="ios_reminder_import1_title">Dersini içe aktar</string>
+    <string name="ios_reminder_import2_body">Dersini içe aktar, Micabo tekrar etmen için her şeyi hazırlasın.</string>
+    <string name="ios_reminder_import2_title">Yaklaşan bir sınav mı var?</string>
+    <string name="ios_reminder_practice_body1">Bugün on dakika ayır, kalıcı olarak aklında kalsın.</string>
+    <string name="ios_reminder_practice_body2">Birkaç soru, ve öğrendiklerin yerine otursun.</string>
+    <string name="ios_reminder_practice_title">Çalışma zamanı: %1$s</string>
     <string name="ios_searchCourse">Bir ders, bir konu…</string>
     <string name="ios_sharedCourse">Paylaşılan ders</string>
     <string name="ios_sharedNoSheet">Bu dersin özeti yok</string>
@@ -514,6 +521,7 @@
     <string name="x_paywall_soonBody">Abonelikler çok yakında Android\'de. Bu arada ücretsiz dersin seni bekliyor.</string>
     <string name="x_paywall_subscribe">Pro\'ya geç</string>
     <string name="x_record_limit">90 dakikaya kadar. Mika kaydını metne çevirir, sonra dersini yazar.</string>
+    <string name="x_reminder_channel">Günlük hatırlatma</string>
     <string name="x_score_1">Zorlanıyorum</string>
     <string name="x_score_2">Ortalamanın biraz altında</string>
     <string name="x_score_3">Ortalama</string>

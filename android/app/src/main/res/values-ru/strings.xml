@@ -202,6 +202,13 @@
     <string name="ios_quiz_time_caption_30">Безумно</string>
     <string name="ios_quiz_time_caption_5">Хорошее начало</string>
     <string name="ios_quiz_time_minutes">%1$s мин в день</string>
+    <string name="ios_reminder_import1_body">Фото, PDF или видео с YouTube: Micabo за пару минут превратит его в урок и карточки.</string>
+    <string name="ios_reminder_import1_title">Импортируй свой курс</string>
+    <string name="ios_reminder_import2_body">Импортируй свой курс, и Micabo подготовит всё для повторения.</string>
+    <string name="ios_reminder_import2_title">Скоро экзамен?</string>
+    <string name="ios_reminder_practice_body1">Десять минут сегодня — и запомнишь надолго.</string>
+    <string name="ios_reminder_practice_body2">Пара вопросов — и выученное останется в голове.</string>
+    <string name="ios_reminder_practice_title">Пора потренироваться: %1$s</string>
     <string name="ios_searchCourse">Курс, предмет…</string>
     <string name="ios_sharedCourse">Общий курс</string>
     <string name="ios_sharedNoSheet">У этого курса нет конспекта</string>
@@ -516,6 +523,7 @@
     <string name="x_paywall_subscribe">Перейти на Pro</string>
     <string name="x_quoted">«%1$s»</string>
     <string name="x_record_limit">До 90 минут. Mika превращает запись в текст, а затем пишет урок.</string>
+    <string name="x_reminder_channel">Ежедневное напоминание</string>
     <string name="x_score_1">Мне тяжело</string>
     <string name="x_score_2">Чуть ниже среднего</string>
     <string name="x_score_3">Средне</string>

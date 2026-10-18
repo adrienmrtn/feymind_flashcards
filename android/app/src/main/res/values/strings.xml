@@ -207,6 +207,13 @@
     <string name="ios_quiz_time_caption_30">Insane</string>
     <string name="ios_quiz_time_caption_5">A good start</string>
     <string name="ios_quiz_time_minutes">%1$s min a day</string>
+    <string name="ios_reminder_import1_body">A photo, a PDF or a YouTube video: Micabo turns it into a lesson and cards in minutes.</string>
+    <string name="ios_reminder_import1_title">Import your course</string>
+    <string name="ios_reminder_import2_body">Import your course and Micabo gets everything ready for you to revise it.</string>
+    <string name="ios_reminder_import2_title">Exam coming up?</string>
+    <string name="ios_reminder_practice_body1">Ten minutes today, and it sticks for good.</string>
+    <string name="ios_reminder_practice_body2">A few questions, and what you\'ve learned stays put.</string>
+    <string name="ios_reminder_practice_title">Come and practise %1$s</string>
     <string name="ios_searchCourse">A course, a subject…</string>
     <string name="ios_sharedCourse">Shared course</string>
     <string name="ios_sharedNoSheet">This course has no sheet</string>
@@ -524,6 +531,7 @@
     <string name="x_paywall_subscribe">Go Pro</string>
     <string name="x_quoted">“%1$s”</string>
     <string name="x_record_limit">Up to 90 minutes. Mika turns your recording into text, then writes your lesson.</string>
+    <string name="x_reminder_channel">Daily reminder</string>
     <string name="x_score_1">I\'m struggling</string>
     <string name="x_score_2">Just below average</string>
     <string name="x_score_3">Average</string>

@@ -206,6 +206,13 @@
     <string name="ios_quiz_time_caption_30">Énorme</string>
     <string name="ios_quiz_time_caption_5">Un bon début</string>
     <string name="ios_quiz_time_minutes">%1$s min par jour</string>
+    <string name="ios_reminder_import1_body">Une photo, un PDF ou une vidéo YouTube : Micabo en fait une leçon et des cartes en quelques minutes.</string>
+    <string name="ios_reminder_import1_title">Viens importer ton cours</string>
+    <string name="ios_reminder_import2_body">Importe ton cours, Micabo te prépare de quoi le réviser.</string>
+    <string name="ios_reminder_import2_title">Un examen qui approche ?</string>
+    <string name="ios_reminder_practice_body1">Dix minutes aujourd\'hui, et tu le retiens pour de bon.</string>
+    <string name="ios_reminder_practice_body2">Quelques questions, et ce que tu as appris reste en place.</string>
+    <string name="ios_reminder_practice_title">Viens t\'entraîner sur %1$s</string>
     <string name="ios_searchCourse">Un cours, une matière…</string>
     <string name="ios_sharedCourse">Cours partagé</string>
     <string name="ios_sharedNoSheet">Ce cours n\'a pas de fiche</string>
@@ -523,6 +530,7 @@
     <string name="x_paywall_subscribe">Passer à Pro</string>
     <string name="x_quoted">« %1$s »</string>
     <string name="x_record_limit">Jusqu\'à 90 minutes. Mika met ton enregistrement en texte, puis écrit ta leçon.</string>
+    <string name="x_reminder_channel">Rappel du jour</string>
     <string name="x_score_1">J\'ai du mal</string>
     <string name="x_score_2">Un peu en dessous de la moyenne</string>
     <string name="x_score_3">Dans la moyenne</string>

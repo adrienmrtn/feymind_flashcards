@@ -7,6 +7,7 @@ import com.micabo.app.BuildConfig
 import com.revenuecat.purchases.CustomerInfo
 import com.revenuecat.purchases.Package
 import com.revenuecat.purchases.PackageType
+import com.revenuecat.purchases.PeriodType
 import com.revenuecat.purchases.PurchaseParams
 import com.revenuecat.purchases.Purchases
 import com.revenuecat.purchases.PurchasesConfiguration
@@ -142,8 +143,18 @@ class Billing(
         }.onFailure { Log.w("Billing", "RevenueCat indisponible", it) }
     }
 
+    /** La fin de l'essai gratuit en cours, `null` hors essai ; un essai sans date vaut « jamais ». */
+    private val _trialEndsAt = MutableStateFlow<Long?>(null)
+    val trialEndsAt: StateFlow<Long?> = _trialEndsAt.asStateFlow()
+
     private fun read(info: CustomerInfo) {
-        _isPro.value = info.entitlements["pro"]?.isActive == true
+        val pro = info.entitlements["pro"]
+        _isPro.value = pro?.isActive == true
+        _trialEndsAt.value = if (pro?.isActive == true && pro.periodType == PeriodType.TRIAL) {
+            pro.expirationDate?.time ?: Long.MAX_VALUE
+        } else {
+            null
+        }
     }
 
     suspend fun plans(): List<StorePlan> {

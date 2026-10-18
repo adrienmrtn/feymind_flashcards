@@ -201,6 +201,13 @@
     <string name="ios_quiz_time_caption_30">Ludo</string>
     <string name="ios_quiz_time_caption_5">Dobar početak</string>
     <string name="ios_quiz_time_minutes">%1$s min dnevno</string>
+    <string name="ios_reminder_import1_body">Fotografija, PDF ili YouTube video: Micabo od toga za nekoliko minuta napravi lekciju i kartice.</string>
+    <string name="ios_reminder_import1_title">Uvezi svoj tečaj</string>
+    <string name="ios_reminder_import2_body">Uvezi svoj tečaj i Micabo će ti pripremiti sve za ponavljanje.</string>
+    <string name="ios_reminder_import2_title">Bliži se ispit?</string>
+    <string name="ios_reminder_practice_body1">Deset minuta danas i zapamtit ćeš to zauvijek.</string>
+    <string name="ios_reminder_practice_body2">Nekoliko pitanja i naučeno ostaje u glavi.</string>
+    <string name="ios_reminder_practice_title">Vrijeme je za vježbu: %1$s</string>
     <string name="ios_searchCourse">Tečaj, predmet…</string>
     <string name="ios_sharedCourse">Dijeljeni tečaj</string>
     <string name="ios_sharedNoSheet">Ovaj tečaj nema skriptu</string>

@@ -44,6 +44,9 @@
         <receiver
             android:name=".data.TrialReminderReceiver"
             android:exported="false" />
+        <receiver
+            android:name=".data.DailyReminderReceiver"
+            android:exported="false" />
         <!-- Un redémarrage efface les alarmes : le rappel de fin d'essai se reprogramme. -->
         <receiver
             android:name=".data.TrialReminderBootReceiver"

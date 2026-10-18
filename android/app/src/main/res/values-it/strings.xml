@@ -193,6 +193,13 @@
     <string name="ios_quiz_time_caption_30">Pazzesco</string>
     <string name="ios_quiz_time_caption_5">Un buon inizio</string>
     <string name="ios_quiz_time_minutes">%1$s min al giorno</string>
+    <string name="ios_reminder_import1_body">Una foto, un PDF o un video di YouTube: Micabo lo trasforma in una lezione e in carte in pochi minuti.</string>
+    <string name="ios_reminder_import1_title">Importa il tuo corso</string>
+    <string name="ios_reminder_import2_body">Importa il tuo corso e Micabo ti prepara tutto per ripassarlo.</string>
+    <string name="ios_reminder_import2_title">Un esame in arrivo?</string>
+    <string name="ios_reminder_practice_body1">Dieci minuti oggi, e te lo ricordi per sempre.</string>
+    <string name="ios_reminder_practice_body2">Qualche domanda, e quello che hai imparato resta.</string>
+    <string name="ios_reminder_practice_title">Vieni ad allenarti su %1$s</string>
     <string name="ios_searchCourse">Un corso, una materia…</string>
     <string name="ios_sharedCourse">Corso condiviso</string>
     <string name="ios_sharedNoSheet">Questo corso non ha una scheda</string>
@@ -499,6 +506,7 @@
     <string name="x_paywall_subscribe">Passa a Pro</string>
     <string name="x_quoted">«%1$s»</string>
     <string name="x_record_limit">Fino a 90 minuti. Mika trasforma la registrazione in testo, poi scrive la tua lezione.</string>
+    <string name="x_reminder_channel">Promemoria quotidiano</string>
     <string name="x_score_1">Faccio fatica</string>
     <string name="x_score_2">Poco sotto la media</string>
     <string name="x_score_3">Nella media</string>

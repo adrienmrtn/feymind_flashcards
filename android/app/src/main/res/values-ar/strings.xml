@@ -203,6 +203,13 @@
     <string name="ios_quiz_time_caption_30">رهيب</string>
     <string name="ios_quiz_time_caption_5">بداية جيدة</string>
     <string name="ios_quiz_time_minutes">%1$s د يوميًا</string>
+    <string name="ios_reminder_import1_body">صورة أو ملف PDF أو فيديو على YouTube: يحوّله Micabo إلى درس وبطاقات في دقائق.</string>
+    <string name="ios_reminder_import1_title">استورد درسك</string>
+    <string name="ios_reminder_import2_body">استورد درسك وسيجهّز لك Micabo كل ما تحتاجه للمراجعة.</string>
+    <string name="ios_reminder_import2_title">هل يقترب امتحان؟</string>
+    <string name="ios_reminder_practice_body1">عشر دقائق اليوم، وسيبقى في ذاكرتك.</string>
+    <string name="ios_reminder_practice_body2">بضعة أسئلة، وما تعلّمته يبقى راسخًا.</string>
+    <string name="ios_reminder_practice_title">حان وقت التدرّب على %1$s</string>
     <string name="ios_searchCourse">دورة، مادة…</string>
     <string name="ios_sharedCourse">درس مشترك</string>
     <string name="ios_sharedNoSheet">هذا الدرس بلا ملخص</string>
@@ -516,6 +523,7 @@
     <string name="x_paywall_subscribe">اشترك في Pro</string>
     <string name="x_quoted">«%1$s»</string>
     <string name="x_record_limit">حتى 90 دقيقة. يحوّل Mika تسجيلك إلى نص ثم يكتب درسك.</string>
+    <string name="x_reminder_channel">تذكير يومي</string>
     <string name="x_score_1">أواجه صعوبة</string>
     <string name="x_score_2">أقل قليلًا من المتوسط</string>
     <string name="x_score_3">متوسط</string>

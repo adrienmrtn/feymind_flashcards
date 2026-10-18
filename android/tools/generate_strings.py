@@ -671,6 +671,12 @@ CUSTOM: dict[str, dict[str, str]] = {
         "tr": "Bu dersi kim görür",
         "ar": "من يرى هذا الدرس",
     },
+    "x_reminder_channel": {
+        "en": "Daily reminder", "fr": "Rappel du jour", "de": "Tägliche Erinnerung", "es": "Recordatorio diario",
+        "es419": "Recordatorio diario", "it": "Promemoria quotidiano", "pt": "Lembrete diário", "ptBR": "Lembrete diário",
+        "tr": "Günlük hatırlatma", "nl": "Dagelijkse herinnering", "pl": "Codzienne przypomnienie",
+        "ru": "Ежедневное напоминание", "ar": "تذكير يومي",
+    },
     "x_settings_level": {
         "en": "Level",
         "fr": "Niveau",

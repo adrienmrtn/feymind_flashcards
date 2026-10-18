@@ -6,6 +6,7 @@ import com.micabo.app.data.AudioImport
 import com.micabo.app.data.AuthException
 import com.micabo.app.data.Billing
 import com.micabo.app.data.CloudSync
+import com.micabo.app.data.DailyReminder
 import com.micabo.app.data.ExamRepository
 import com.micabo.app.data.LessonComposer
 import com.micabo.app.data.LessonRepository
@@ -15,6 +16,7 @@ import com.micabo.app.data.Social
 import com.micabo.app.data.Streak
 import com.micabo.app.data.SupabaseAuth
 import com.micabo.app.data.SupabaseFunctions
+import com.micabo.app.data.TrialReminder
 import com.micabo.app.data.YouTubeImport
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +24,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -75,6 +78,19 @@ class MicaboApplication : Application() {
         if (!force && now - lastSyncAttempt < 2 * 60_000L) return
         lastSyncAttempt = now
         scope.launch { sync.sync() }
+    }
+
+    /**
+     * Les rappels du jour, reposés au lancement et en partant : c'est là que les leçons et le
+     * travail de la journée sont à jour. Pas pendant un essai gratuit (`DailyReminder`).
+     */
+    fun rescheduleReminders() {
+        scope.launch {
+            lessons.ready()
+            streak.refresh()
+            val trialEnd = billing.trialEndsAt.value ?: TrialReminder.storedEnd(this@MicaboApplication)
+            DailyReminder.reschedule(this@MicaboApplication, lessons.lessons.value.values, trialEnd, streak.status.value.studiedToday)
+        }
     }
 
     /** Le retour de Google ou du lien du courriel (`micabo://auth-callback`). */
@@ -142,6 +158,11 @@ class MicaboApplication : Application() {
             runCatching { auth.accessToken() }
             withContext(Dispatchers.Main) { billing.start(auth.userId.ifEmpty { null }) }
             syncSoon(force = true)
+            rescheduleReminders()
+        }
+        // Un essai qui commence ou finit change le plan : pas de rappel pendant l'essai.
+        scope.launch {
+            billing.trialEndsAt.drop(1).collect { rescheduleReminders() }
         }
     }
 

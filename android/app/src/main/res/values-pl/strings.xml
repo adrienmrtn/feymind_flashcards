@@ -200,6 +200,13 @@
     <string name="ios_quiz_time_caption_30">Szaleństwo</string>
     <string name="ios_quiz_time_caption_5">Dobry początek</string>
     <string name="ios_quiz_time_minutes">%1$s min dziennie</string>
+    <string name="ios_reminder_import1_body">Zdjęcie, PDF albo film z YouTube: Micabo w kilka minut zrobi z niego lekcję i fiszki.</string>
+    <string name="ios_reminder_import1_title">Zaimportuj swój kurs</string>
+    <string name="ios_reminder_import2_body">Zaimportuj swój kurs, a Micabo przygotuje wszystko do powtórki.</string>
+    <string name="ios_reminder_import2_title">Zbliża się egzamin?</string>
+    <string name="ios_reminder_practice_body1">Dziesięć minut dziś i zapamiętasz to na dobre.</string>
+    <string name="ios_reminder_practice_body2">Kilka pytań i wiedza zostanie w głowie na dłużej.</string>
+    <string name="ios_reminder_practice_title">Czas na ćwiczenia: %1$s</string>
     <string name="ios_searchCourse">Kurs, przedmiot…</string>
     <string name="ios_sharedCourse">Udostępniony kurs</string>
     <string name="ios_sharedNoSheet">Ten kurs nie ma notatki</string>
@@ -510,6 +517,7 @@
     <string name="x_paywall_subscribe">Przejdź na Pro</string>
     <string name="x_quoted">„%1$s”</string>
     <string name="x_record_limit">Do 90 minut. Mika zamienia nagranie na tekst, a potem pisze twoją lekcję.</string>
+    <string name="x_reminder_channel">Codzienne przypomnienie</string>
     <string name="x_score_1">Mam trudności</string>
     <string name="x_score_2">Trochę poniżej średniej</string>
     <string name="x_score_3">Średnio</string>

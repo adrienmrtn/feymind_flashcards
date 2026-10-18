@@ -200,6 +200,13 @@
     <string name="ios_quiz_time_caption_30">Šialenstvo</string>
     <string name="ios_quiz_time_caption_5">Dobrý začiatok</string>
     <string name="ios_quiz_time_minutes">%1$s min denne</string>
+    <string name="ios_reminder_import1_body">Fotka, PDF alebo video z YouTube: Micabo z toho za pár minút urobí lekciu a kartičky.</string>
+    <string name="ios_reminder_import1_title">Naimportuj svoj kurz</string>
+    <string name="ios_reminder_import2_body">Naimportuj svoj kurz a Micabo ti pripraví všetko na opakovanie.</string>
+    <string name="ios_reminder_import2_title">Blíži sa skúška?</string>
+    <string name="ios_reminder_practice_body1">Desať minút dnes a zapamätáš si to natrvalo.</string>
+    <string name="ios_reminder_practice_body2">Pár otázok a učivo ti zostane v hlave.</string>
+    <string name="ios_reminder_practice_title">Čas na precvičovanie: %1$s</string>
     <string name="ios_searchCourse">Kurz, predmet…</string>
     <string name="ios_sharedCourse">Zdieľaný kurz</string>
     <string name="ios_sharedNoSheet">Tento kurz nemá zhrnutie</string>

@@ -240,7 +240,75 @@ sealed interface NoteBlock {
         get() = this is Definition || this is Formula || this is Example || this is Steps ||
             this is Table || this is Quote || this is Callout
 
+    /** Le nombre de mots que le bloc donne à lire : ce qui remplit, ou non, un écran. */
+    val wordCount: Int
+        get() {
+            val pieces = when (this) {
+                is Subtitle -> listOf(text)
+                is Paragraph -> listOf(text)
+                is Example -> listOf(text)
+                is Bullets -> items
+                is Steps -> items
+                is Definition -> listOf(term, text)
+                is Dates -> items.flatMap { listOf(it.first, it.second) }
+                is Formula -> listOf(caption.orEmpty())
+                is Table -> columns + rows.flatten()
+                is Quote -> listOf(text, author.orEmpty())
+                is Callout -> listOf(title.orEmpty(), text)
+            }
+            return pieces.sumOf { piece -> piece.split(WHITESPACE).count { it.isNotEmpty() } }
+        }
+
     companion object {
+        private val WHITESPACE = Regex("\\s+")
+        /** Un numéro d'étape dans le fil d'une phrase : « 1. », « 2) », en tête ou après un blanc. */
+        private val INLINE_STEP = Regex("(?:^|(?<=[\\s:;]))(\\d{1,2})[.)]\\s+")
+
+        /**
+         * Un bloc et sa réparation (`NoteBlock.repaired` sur iPhone) : des étapes écrites d'une
+         * traite dans un paragraphe (« 1. … 2. … 3. … ») deviennent un paragraphe d'introduction
+         * et des étapes. Le serveur le fait depuis ; les leçons écrites avant sont réparées ici.
+         */
+        fun parseAll(raw: JsonObject): List<NoteBlock> {
+            val block = parse(raw) ?: return emptyList()
+            val split = (block as? Paragraph)?.let { inlineSteps(it.text) } ?: return listOf(block)
+            return listOfNotNull(split.first.takeIf { it.isNotEmpty() }?.let { Paragraph(it) }, Steps(split.second))
+        }
+
+        /**
+         * Trois numéros au moins, qui se suivent depuis 1 : une date (« en 1945. ») ou un « 2 »
+         * isolé ne font pas une méthode. Jumeau de `inlineSteps` (iPhone et serveur).
+         */
+        fun inlineSteps(text: String): Pair<String, List<String>>? {
+            val sequence = mutableListOf<MatchResult>()
+            for (match in INLINE_STEP.findAll(text)) {
+                if (match.groupValues[1].toIntOrNull() == sequence.size + 1) sequence.add(match)
+            }
+            if (sequence.size < 3) return null
+            val items = sequence.mapIndexed { index, match ->
+                val start = match.range.last + 1
+                val end = if (index + 1 < sequence.size) sequence[index + 1].range.first else text.length
+                // « 1. poser l'opération ; 2. calculer » : le point-virgule séparait, il ne finit pas l'étape.
+                text.substring(start, end).trim().removeSuffix(";").removeSuffix(",").trim()
+            }
+            if (items.any { it.length < 2 }) return null
+            return text.substring(0, sequence[0].range.first).trim() to items
+        }
+
+        /**
+         * La formule ramenée à ce que le rendu compose (`SheetText.normalizedFormula`) : une
+         * flèche étiquetée devient `\\rightarrow`, et son étiquette rejoint la légende.
+         */
+        private fun normalizedFormula(latex: String, caption: String?): Pair<String, String?> {
+            val labels = mutableListOf<String>()
+            val source = com.micabo.app.ui.text.FormulaRenderer.LABELLED_ARROW.replace(latex) { match ->
+                match.groupValues[2].trim().takeIf { it.isNotEmpty() }?.let(labels::add)
+                if (match.groupValues[1] == "right") "\\rightarrow" else "\\leftarrow"
+            }.trim()
+            val parts = (listOfNotNull(caption?.trim()) + labels).filter { it.isNotEmpty() }
+            return source to parts.takeIf { it.isNotEmpty() }?.joinToString(" · ")
+        }
+
         fun parse(raw: JsonObject): NoteBlock? {
             val type = raw.str("type")
             val text = raw.str("text")
@@ -263,7 +331,12 @@ sealed interface NoteBlock {
                 }
                 "formula" -> {
                     val latex = raw.str("latex")
-                    if (latex.isNotBlank()) Formula(latex, raw.str("caption").ifBlank { null }) else fallback(text)
+                    if (latex.isNotBlank()) {
+                        val (normalized, caption) = normalizedFormula(latex, raw.str("caption").ifBlank { null })
+                        Formula(normalized.ifBlank { latex }, caption)
+                    } else {
+                        fallback(text)
+                    }
                 }
                 "example" -> text.takeIf { it.isNotBlank() }?.let { Example(it) }
                 "steps" -> raw.strings("items").takeIf { it.size >= 2 }?.let { Steps(it) } ?: fallback(text)

@@ -202,6 +202,13 @@
     <string name="ios_quiz_time_caption_30">Лудница</string>
     <string name="ios_quiz_time_caption_5">Добро начало</string>
     <string name="ios_quiz_time_minutes">%1$s мин на ден</string>
+    <string name="ios_reminder_import1_body">Снимка, PDF или видео от YouTube: Micabo го превръща в урок и карти за няколко минути.</string>
+    <string name="ios_reminder_import1_title">Импортирай курса си</string>
+    <string name="ios_reminder_import2_body">Импортирай курса си и Micabo ще ти подготви всичко за преговор.</string>
+    <string name="ios_reminder_import2_title">Наближава изпит?</string>
+    <string name="ios_reminder_practice_body1">Десет минути днес и ще го запомниш завинаги.</string>
+    <string name="ios_reminder_practice_body2">Няколко въпроса и наученото остава в главата ти.</string>
+    <string name="ios_reminder_practice_title">Време е за упражнение: %1$s</string>
     <string name="ios_searchCourse">Курс, предмет…</string>
     <string name="ios_sharedCourse">Споделен курс</string>
     <string name="ios_sharedNoSheet">Този курс няма конспект</string>

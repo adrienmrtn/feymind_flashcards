@@ -197,6 +197,13 @@
     <string name="ios_quiz_time_caption_30">Hullua</string>
     <string name="ios_quiz_time_caption_5">Hyvä alku</string>
     <string name="ios_quiz_time_minutes">%1$s min päivässä</string>
+    <string name="ios_reminder_import1_body">Kuva, PDF tai YouTube-video: Micabo tekee siitä oppitunnin ja kortit muutamassa minuutissa.</string>
+    <string name="ios_reminder_import1_title">Tuo kurssisi</string>
+    <string name="ios_reminder_import2_body">Tuo kurssisi, niin Micabo valmistelee kaiken kertausta varten.</string>
+    <string name="ios_reminder_import2_title">Onko koe tulossa?</string>
+    <string name="ios_reminder_practice_body1">Kymmenen minuuttia tänään, niin se jää mieleen pysyvästi.</string>
+    <string name="ios_reminder_practice_body2">Muutama kysymys, ja oppimasi pysyy muistissa.</string>
+    <string name="ios_reminder_practice_title">Aika harjoitella: %1$s</string>
     <string name="ios_searchCourse">Kurssi, oppiaine…</string>
     <string name="ios_sharedCourse">Jaettu kurssi</string>
     <string name="ios_sharedNoSheet">Tällä kurssilla ei ole tiivistelmää</string>

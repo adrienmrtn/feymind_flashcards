@@ -219,7 +219,7 @@ fun OnboardingScreen() {
     var forward by remember { mutableStateOf(true) }
     var name by rememberSaveable { mutableStateOf(app.prefs.profile.value.name) }
     var language by rememberSaveable { mutableStateOf(AppLocale.resolved(app.prefs.profile.value.language).code) }
-    var country by rememberSaveable { mutableStateOf(AppLocale.deviceCountry().takeIf { it in COUNTRIES } ?: "") }
+    var country by rememberSaveable { mutableStateOf(AppLocale.deviceCountry(app.prefs.profile.value.language).takeIf { it in COUNTRIES && it != "other" } ?: "") }
     var tier by rememberSaveable { mutableStateOf("") }
     var worries by rememberSaveable { mutableStateOf(listOf<String>()) }
     var goals by rememberSaveable { mutableStateOf(listOf<String>()) }

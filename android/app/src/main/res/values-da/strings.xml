@@ -197,6 +197,13 @@
     <string name="ios_quiz_time_caption_30">Vildt</string>
     <string name="ios_quiz_time_caption_5">En god start</string>
     <string name="ios_quiz_time_minutes">%1$s min om dagen</string>
+    <string name="ios_reminder_import1_body">Et foto, en PDF eller en YouTube-video: Micabo gør det til en lektion og kort på få minutter.</string>
+    <string name="ios_reminder_import1_title">Importér dit kursus</string>
+    <string name="ios_reminder_import2_body">Importér dit kursus, så gør Micabo alt klar til, at du kan repetere.</string>
+    <string name="ios_reminder_import2_title">Har du snart eksamen?</string>
+    <string name="ios_reminder_practice_body1">Ti minutter i dag, så sidder det fast for altid.</string>
+    <string name="ios_reminder_practice_body2">Et par spørgsmål, så bliver det, du har lært, siddende.</string>
+    <string name="ios_reminder_practice_title">Tid til at øve: %1$s</string>
     <string name="ios_searchCourse">Et kursus, et fag…</string>
     <string name="ios_sharedCourse">Delt kursus</string>
     <string name="ios_sharedNoSheet">Dette kursus har intet resumé</string>

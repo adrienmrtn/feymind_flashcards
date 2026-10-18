@@ -202,6 +202,13 @@
     <string name="ios_quiz_time_caption_30">Őrület</string>
     <string name="ios_quiz_time_caption_5">Jó kezdet</string>
     <string name="ios_quiz_time_minutes">Napi %1$s perc</string>
+    <string name="ios_reminder_import1_body">Egy fotó, egy PDF vagy egy YouTube-videó: a Micabo pár perc alatt leckét és kártyákat készít belőle.</string>
+    <string name="ios_reminder_import1_title">Importáld a kurzusodat</string>
+    <string name="ios_reminder_import2_body">Importáld a kurzusodat, és a Micabo mindent előkészít az ismétléshez.</string>
+    <string name="ios_reminder_import2_title">Közeleg egy vizsga?</string>
+    <string name="ios_reminder_practice_body1">Ma tíz perc, és örökre megmarad.</string>
+    <string name="ios_reminder_practice_body2">Néhány kérdés, és amit megtanultál, a helyén marad.</string>
+    <string name="ios_reminder_practice_title">Ideje gyakorolni: %1$s</string>
     <string name="ios_searchCourse">Egy kurzus, egy tantárgy…</string>
     <string name="ios_sharedCourse">Megosztott kurzus</string>
     <string name="ios_sharedNoSheet">Ennek a kurzusnak nincs jegyzete</string>

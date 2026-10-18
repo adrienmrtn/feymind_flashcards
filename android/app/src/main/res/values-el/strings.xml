@@ -202,6 +202,13 @@
     <string name="ios_quiz_time_caption_30">Τρέλα</string>
     <string name="ios_quiz_time_caption_5">Καλή αρχή</string>
     <string name="ios_quiz_time_minutes">%1$s λεπ. τη μέρα</string>
+    <string name="ios_reminder_import1_body">Μια φωτογραφία, ένα PDF ή ένα βίντεο στο YouTube: το Micabo το κάνει μάθημα και κάρτες σε λίγα λεπτά.</string>
+    <string name="ios_reminder_import1_title">Εισήγαγε το μάθημά σου</string>
+    <string name="ios_reminder_import2_body">Εισήγαγε το μάθημά σου και το Micabo σού ετοιμάζει ό,τι χρειάζεσαι για επανάληψη.</string>
+    <string name="ios_reminder_import2_title">Πλησιάζει εξέταση;</string>
+    <string name="ios_reminder_practice_body1">Δέκα λεπτά σήμερα, και το θυμάσαι για πάντα.</string>
+    <string name="ios_reminder_practice_body2">Λίγες ερωτήσεις, και όσα έμαθες μένουν στη θέση τους.</string>
+    <string name="ios_reminder_practice_title">Ώρα για εξάσκηση: %1$s</string>
     <string name="ios_searchCourse">Ένα μάθημα, ένα αντικείμενο…</string>
     <string name="ios_sharedCourse">Κοινόχρηστο μάθημα</string>
     <string name="ios_sharedNoSheet">Αυτό το μάθημα δεν έχει σύνοψη</string>

@@ -54,6 +54,10 @@ object TrialReminder {
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
 
+    /** La fin de l'essai pris sur ce téléphone, si elle n'est pas encore passée. */
+    fun storedEnd(context: Context, now: Long = System.currentTimeMillis()): Long? =
+        context.getSharedPreferences("micabo", Context.MODE_PRIVATE).getLong(END_KEY, 0).takeIf { it > now }
+
     private const val END_KEY = "trial.end"
     private const val SHOWN_KEY = "trial.reminded"
 
@@ -96,9 +100,11 @@ class TrialReminderReceiver : BroadcastReceiver() {
     }
 }
 
-/** Le redémarrage du téléphone : le rappel de l'essai se reprogramme. */
+/** Le redémarrage du téléphone : le rappel de l'essai et ceux du jour se reprogramment. */
 class TrialReminderBootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED) TrialReminder.rearm(context)
+        if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
+        TrialReminder.rearm(context)
+        DailyReminder.rearm(context)
     }
 }
