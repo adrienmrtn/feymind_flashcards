@@ -1,6 +1,7 @@
 import SwiftData
 import UIKit
 import SwiftUI
+import UserNotifications
 
 @main
 struct MicaboApp: App {
@@ -45,6 +46,9 @@ struct MicaboApp: App {
             // Avant tout le reste : le SDK doit être configuré avant qu'un écran ne puisse
             // demander une offre, et avant le premier `logIn`.
             PurchasesBridge.configureIfPossible()
+            // Avant la fin du lancement, comme iOS le demande : une notification qui ouvre
+            // l'app doit trouver son délégué en place.
+            UNUserNotificationCenter.current().delegate = ReminderPresenter.shared
             container = Self.makeContainer()
             SampleContentPurge.purgeIfNeeded(in: container.mainContext)
             SubjectCasePass.runIfNeeded(in: container.mainContext)

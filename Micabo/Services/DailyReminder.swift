@@ -99,13 +99,7 @@ enum DailyReminder {
 
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: now)
-        // Les cours de l'élève : ni ceux repris de la bibliothèque, ni la démonstration.
-        let courses = ((try? context.fetch(FetchDescriptor<Course>())) ?? [])
-            .filter { !$0.isFromLibrary && $0.source != .sample && !$0.title.isEmpty }
-            .sorted { lhs, rhs in
-                if lhs.dueCount != rhs.dueCount { return lhs.dueCount > rhs.dueCount }
-                return (lhs.lastOpenedAt ?? lhs.createdAt) > (rhs.lastOpenedAt ?? rhs.createdAt)
-            }
+        let courses = ownedCourses(in: context)
         var reviewedToday = FetchDescriptor<ReviewLog>(predicate: #Predicate { $0.reviewedAt >= today })
         reviewedToday.fetchLimit = 1
         let studiedToday = ((try? context.fetchCount(reviewedToday)) ?? 0) > 0
@@ -128,5 +122,93 @@ enum DailyReminder {
             let trigger = UNCalendarNotificationTrigger(dateMatching: reminder.date, repeats: false)
             try? await center.add(UNNotificationRequest(identifier: reminder.identifier, content: content, trigger: trigger))
         }
+    }
+
+    /// Les cours de l'élève, du plus pressant au moins pressant : ni ceux repris de la
+    /// bibliothèque, ni la démonstration.
+    @MainActor
+    private static func ownedCourses(in context: ModelContext) -> [Course] {
+        ((try? context.fetch(FetchDescriptor<Course>())) ?? [])
+            .filter { !$0.isFromLibrary && $0.source != .sample && !$0.title.isEmpty }
+            .sorted { lhs, rhs in
+                if lhs.dueCount != rhs.dueCount { return lhs.dueCount > rhs.dueCount }
+                return (lhs.lastOpenedAt ?? lhs.createdAt) > (rhs.lastOpenedAt ?? rhs.createdAt)
+            }
+    }
+
+    // MARK: - Les essais des réglages
+
+    /// Les notifications d'essai, que `ReminderPresenter` montre même l'app ouverte.
+    static let testPrefix = "micabo.test."
+
+    enum TestKind {
+        case importCourse
+        case practice
+    }
+
+    /// **Une notification dans quelques secondes**, avec le vrai texte, pour la voir sans
+    /// attendre le soir. Demande l'autorisation si elle n'a jamais été demandée ; `false`
+    /// quand elle est refusée.
+    @MainActor
+    static func sendTest(_ kind: TestKind, context: ModelContext, after seconds: TimeInterval = 5) async -> Bool {
+        switch await NotificationPermission.request() {
+        case .denied, .alreadyAnswered(isAuthorized: false): return false
+        case .granted, .alreadyAnswered(isAuthorized: true): break
+        }
+        let locale = UiLocale.resolved()
+        let content = UNMutableNotificationContent()
+        switch kind {
+        case .importCourse:
+            content.title = L10n.t("ios.reminder.import1.title", locale: locale)
+            content.body = L10n.t("ios.reminder.import1.body", locale: locale)
+        case .practice:
+            let course = ownedCourses(in: context).first?.title ?? "Biologie"
+            content.title = L10n.t("ios.reminder.practice.title", locale: locale, vars: ["course": course])
+            content.body = L10n.t("ios.reminder.practice.body1", locale: locale)
+        }
+        content.sound = .default
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, seconds), repeats: false)
+        try? await UNUserNotificationCenter.current()
+            .add(UNNotificationRequest(identifier: testPrefix + UUID().uuidString, content: content, trigger: trigger))
+        return true
+    }
+
+    /// Les rappels posés, dans l'ordre : de quoi vérifier ce que l'élève recevra.
+    static func pending() async -> [(date: Date, title: String)] {
+        await UNUserNotificationCenter.current().pendingNotificationRequests()
+            .filter { $0.identifier.hasPrefix(identifierPrefix) }
+            .compactMap { request -> (date: Date, title: String)? in
+                guard let date = (request.trigger as? UNCalendarNotificationTrigger)?.nextTriggerDate() else { return nil }
+                return (date, request.content.title)
+            }
+            .sorted { $0.date < $1.date }
+    }
+}
+
+/// **Les notifications d'essai s'affichent l'app ouverte.** Sans délégué, iOS ne montre rien
+/// quand Micabo est au premier plan, et le bouton des réglages semblait ne rien faire. Le
+/// rappel du jour garde le comportement d'iOS : qui est dans l'app n'a pas besoin qu'on l'y
+/// appelle.
+final class ReminderPresenter: NSObject, UNUserNotificationCenterDelegate {
+    static let shared = ReminderPresenter()
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification
+    ) async -> UNNotificationPresentationOptions {
+        notification.request.identifier.hasPrefix(DailyReminder.testPrefix) ? [.banner, .list, .sound] : []
+    }
+}
+
+/// **Où tourne cette construction.** Les outils de test des réglages se montrent en
+/// développement et sur TestFlight, jamais à qui a l'app de l'App Store.
+enum BuildChannel {
+    static var isInternal: Bool {
+        #if DEBUG
+        return true
+        #else
+        // TestFlight installe l'app avec un reçu de bac à sable ; l'App Store, jamais.
+        return Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
+        #endif
     }
 }
