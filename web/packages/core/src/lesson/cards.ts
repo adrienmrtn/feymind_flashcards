@@ -1,4 +1,5 @@
 import { CIRCLE_CARD_COUNT, pickCards, pickingSeed, type CardCandidate } from "./picking";
+import { ReviewRating } from "../srs/types";
 import { answerText, type QuizQuestion } from "./types";
 
 /**
@@ -141,3 +142,7 @@ export function tomorrowStart(now = new Date()): Date {
 export function isCardOfQuestion(card: Pick<LessonCard, "front" | "kind">, question: QuizQuestion): boolean {
   return card.front === question.prompt && (card.kind === "choice" || card.kind === "basic");
 }
+
+/** Les trois notes d'une flashcard de leçon : Encore · Bien · Facile. « Difficile » a disparu, ici aussi. */
+export const LESSON_RATINGS = [ReviewRating.again, ReviewRating.good, ReviewRating.easy] as const;
+export type LessonRating = (typeof LESSON_RATINGS)[number];

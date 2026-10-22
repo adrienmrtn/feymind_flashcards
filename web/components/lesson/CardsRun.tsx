@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { CLOZE_GAP, ReviewRating, type CardSnapshot, type LessonTone } from "@micabo/core";
+import { CLOZE_GAP, LESSON_RATINGS, ReviewRating, type CardSnapshot, type LessonTone } from "@micabo/core";
 
 import { CircleTopBar } from "@/components/lesson/CircleTopBar";
 import { KeywordText } from "@/components/lesson/KeywordText";
@@ -22,7 +22,7 @@ export interface RunCard {
 }
 
 /** Les trois notes d'une leçon : Encore, Bien, Facile. « Difficile » n'est pas dans l'interface. */
-export const LESSON_RATINGS = [ReviewRating.again, ReviewRating.good, ReviewRating.easy] as const;
+export { LESSON_RATINGS };
 
 /**
  * **Une série de flashcards** : on retourne, on note Encore / Bien / Facile, et l'écran de fin

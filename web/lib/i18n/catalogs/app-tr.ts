@@ -9,23 +9,8 @@ export const appTr = {
     accountFallback: "Hesap",
   },
   home: {
-    greeting: {
-      morning: "Günaydın",
-    },
       mastery: {
-      title: "Hâkimiyet",
-      of: "{count} kart üzerinden",
       empty: "Ölçmeye başlamak için bir ders içe aktar.",
-      solid: "Oturmuş",
-      fragile: "Kırılgan",
-      learning: "Sürüyor",
-      untouched: "Hiç görülmedi",
-      aria: "% {percent} öğrenildi: {solid} oturmuş, {fragile} kırılgan, {learning} sürüyor, {untouched} hiç görülmedi.",
-    },
-    stats: {
-      passes: "Geçiş",
-      accuracy: "İsabet",
-      streak: "Seri",
     },
     weak: {
       title: "Direnenler",
@@ -85,10 +70,6 @@ export const appTr = {
     undoAria: "Son notu geri al",
   },
   exams: {
-    hub: {
-      title: "Sınavlar",
-      lead: "Sınavların, kalan süre ve yetişip yetişmediği.",
-    },
     defaultName: "Sınav",
     countdown: {
       past: "geçti",
@@ -103,9 +84,6 @@ export const appTr = {
     },
   },
   plan: {
-    strip: {
-      today: "Bugün",
-    },
     kind: {
       exam: "Sınav",
       midterm: "Vize",
@@ -125,11 +103,9 @@ export const appTr = {
 
 
   mock: {
-    start: "Deneme yap",
     failed: "Deneme başlatılamadı.",
   },
   newPlan: {
-    add: "Plan oluştur",
     start: {
       cold: "Yeni tanışıyorum",
       seen: "Daha önce gördüm",
@@ -140,44 +116,6 @@ export const appTr = {
       seen: "Dersi izledin ama çalışmadın. Normal tempo.",
       solid: "Biliyorsun, korumak istiyorsun. Bir geçiş az.",
     },
-  },
-  chart: {
-    table: {
-      week: "Hafta",
-      cards: "Kart",
-      exam: "Sınav",
-      days: "Kalan gün",
-      readiness: "Öğrenilen",
-    },
-    timeline: {
-      aria: "Dönemdeki yaklaşan sınavlar",
-      hint: "Çubuk kalan süredir; dolu kısmı, zaten bildiklerin.",
-    },
-    load: {
-      peak: "en yoğun hafta",
-      aria: "Haftalık planlanan dakikalar, uygun dakikalara karşı",
-      week: "{day} haftası",
-      tooltip: "{minutes} dk · {cards} kart",
-      thisWeek: "bu hafta",
-      planned: "planlanan",
-      exam: "sınav",
-      mock: "deneme sınavı",
-      forExam: "{cards} kart",
-      mockLine: "Deneme sınavı · {exam} · {questions} soru, {minutes} dk",
-      examLine: "Sınav günü: {exam}",
-    },
-    readiness: {
-      now: "bugün",
-      measured: "son denemede",
-      target: "hedef: % {percent}",
-      aria: "Şu ana kadar % {now} öğrenildi",
-    },
-  },
-  progress: {
-    masteryLead: "Oturmuş olan, hâlâ sallanan ve henüz görülmemiş olan.",
-    days: "{count, plural, one {# gün} other {# gün}}",
-    title: "İlerleme",
-    lead: "Bildiklerin ve bunun bedeli.",
   },
   friends: {
     yourAccount: "Hesabın",
@@ -397,16 +335,7 @@ export const appTr = {
     reopenOffer: "Teklifi yeniden aç, {time}",
   },
   today: {
-    cardsMinutes: "{count, plural, one {kart planlandı} other {kart planlandı}} · yaklaşık {minutes} dk",
-    start: "Tekrar et · {minutes} dk",
-    forExam: "{exam} için",
-    block: "{cards, plural, one {# kart} other {# kart}} · {minutes} dk",
-    mockTitle: "Deneme sınavı · {exam}",
-    mock: "{questions} soru · {minutes} dk",
     streak: "{count, plural, one {üst üste # gün} other {üst üste # gün}}",
-    nextExam: "Sıradaki sınav",
-    otherExams: "Sonra",
-    known: "% {percent} öğrenildi",
   },
   knowledge: {
     new: "Yeni",

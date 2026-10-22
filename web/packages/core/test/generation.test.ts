@@ -2,28 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import {
   BLOCK_BOUNDS,
-  CONTENT_LANGUAGES,
-  DEFAULT_QUOTA,
   DEFAULT_SHEET_LENGTH,
   DEFAULT_VISIBILITY,
-  GENERATION_LANGUAGES,
-  LANGUAGE_LABELS,
-  PER_FORMAT_RANGE,
   SHEET_LENGTHS,
-  SOURCE_LANGUAGE,
-  TOTAL_RANGE,
   asChoosableVisibility,
   choosableVisibilities,
   clampBlocks,
-  clampQuota,
   defaultBlocks,
-  generationLanguageLabel,
-  isAtCap,
   isChoosableVisibility,
-  isGenerationLanguage,
   isShared,
   lengthContaining,
-  quotaTotal,
   readingHint,
 } from "../src/index";
 
@@ -32,59 +20,6 @@ import {
  * longueur partent à la **même fonction Edge** depuis les deux clients. Deux plafonds différents,
  * et la même demande donnerait deux paquets selon l'appareil.
  */
-
-describe("le quota par format", () => {
-  it("part sur vingt-quatre cartes en trois parts", () => {
-    expect(quotaTotal(DEFAULT_QUOTA)).toBe(24);
-    expect(DEFAULT_QUOTA).toEqual({ basic: 10, cloze: 7, choice: 7 });
-  });
-
-  it("retombe sur le recto verso quand on ne demande rien", () => {
-    // Zéro carte n'est pas une commande : plutôt que de dépenser un appel pour rien, on rend le
-    // seul format qui marche sur n'importe quel cours.
-    expect(clampQuota({ basic: 0, cloze: 0, choice: 0 })).toEqual({
-      basic: TOTAL_RANGE.min,
-      cloze: 0,
-      choice: 0,
-    });
-  });
-
-  it("borne chaque format avant de regarder le total", () => {
-    // L'ordre compte, et c'est celui de l'app : 40 recto verso deviennent 24, ce qui ramène le
-    // total à 28 - sous le plafond. Rien de plus n'est rogné.
-    expect(clampQuota({ basic: 40, cloze: 2, choice: 2 })).toEqual({
-      basic: PER_FORMAT_RANGE.max,
-      cloze: 2,
-      choice: 2,
-    });
-  });
-
-  it("rogne le format le plus nombreux d'abord", () => {
-    // La petite commande est respectée à la carte près : ce sont les recto verso qui tombent,
-    // pas les deux QCM qu'on a pris la peine de demander.
-    const clamped = clampQuota({ basic: 24, cloze: 24, choice: 2 });
-    expect(quotaTotal(clamped)).toBe(TOTAL_RANGE.max);
-    expect(clamped.choice).toBe(2);
-  });
-
-  it("complète en recto verso sous le plancher", () => {
-    expect(clampQuota({ basic: 0, cloze: 1, choice: 0 })).toEqual({
-      basic: 2,
-      cloze: 1,
-      choice: 0,
-    });
-  });
-
-  it("borne chaque format au plafond", () => {
-    const clamped = clampQuota({ basic: 99, cloze: 99, choice: 99 });
-    expect(quotaTotal(clamped)).toBe(TOTAL_RANGE.max);
-  });
-
-  it("éteint le bouton plus au plafond", () => {
-    expect(isAtCap({ basic: 16, cloze: 16, choice: 16 })).toBe(true);
-    expect(isAtCap(DEFAULT_QUOTA)).toBe(false);
-  });
-});
 
 describe("la longueur de fiche", () => {
   it("nomme chaque nombre de blocs, sur toute la plage", () => {
@@ -120,22 +55,6 @@ describe("la longueur de fiche", () => {
 
   it("part sur la fiche équilibrée", () => {
     expect(DEFAULT_SHEET_LENGTH).toBe("standard");
-  });
-});
-
-describe("la langue d'une génération", () => {
-  it("part sur la langue du document, pas une langue forcée", () => {
-    expect(GENERATION_LANGUAGES[0]).toBe(SOURCE_LANGUAGE);
-    expect(generationLanguageLabel(SOURCE_LANGUAGE)).toBe("Langue du document");
-    expect(isGenerationLanguage(SOURCE_LANGUAGE)).toBe(true);
-  });
-
-  it("connaît les mêmes langues que le profil", () => {
-    for (const language of CONTENT_LANGUAGES) {
-      expect(isGenerationLanguage(language)).toBe(true);
-      expect(generationLanguageLabel(language)).toBe(LANGUAGE_LABELS[language]);
-    }
-    expect(isGenerationLanguage("zz")).toBe(false);
   });
 });
 

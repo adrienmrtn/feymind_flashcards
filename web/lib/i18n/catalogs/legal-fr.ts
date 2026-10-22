@@ -1,7 +1,6 @@
 /** Les deux pages de droit. Le « vous » reste : ce n'est pas le tutoiement du site. */
 
 export const legalFr = {
-  backHome: "Retour à l'accueil",
   eyebrow: "Micabo · iPhone et site",
   updated: "Dernière mise à jour : {date}.",
   updatedDate: "2 septembre 2026",

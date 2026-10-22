@@ -9,23 +9,8 @@ export const appEn = {
     accountFallback: "Account",
   },
   home: {
-    greeting: {
-      morning: "Good morning",
-    },
       mastery: {
-      title: "Mastery",
-      of: "across {count} cards",
       empty: "Import a course to start measuring.",
-      solid: "Solid",
-      fragile: "Shaky",
-      learning: "In progress",
-      untouched: "Never seen",
-      aria: "Learned to {percent}%: {solid} solid, {fragile} shaky, {learning} in progress, {untouched} never seen.",
-    },
-    stats: {
-      passes: "Reviews",
-      accuracy: "Accuracy",
-      streak: "Streak",
     },
     weak: {
       title: "What resists",
@@ -85,10 +70,6 @@ export const appEn = {
     undoAria: "Undo the last grade",
   },
   exams: {
-    hub: {
-      title: "Exams",
-      lead: "Your exams, the time left, and whether it fits.",
-    },
     defaultName: "Exam",
     countdown: {
       past: "past",
@@ -103,9 +84,6 @@ export const appEn = {
     },
   },
   plan: {
-    strip: {
-      today: "Today",
-    },
     kind: {
       exam: "Exam",
       midterm: "Midterm",
@@ -125,11 +103,9 @@ export const appEn = {
 
 
   mock: {
-    start: "Sit a mock",
     failed: "The mock couldn't start.",
   },
   newPlan: {
-    add: "Build a plan",
     start: {
       cold: "It's new to me",
       seen: "I've seen it",
@@ -140,44 +116,6 @@ export const appEn = {
       seen: "You sat through it but haven't worked it. The normal pace.",
       solid: "You know it and mainly want to keep it. One pass fewer.",
     },
-  },
-  chart: {
-    table: {
-      week: "Week",
-      cards: "Cards",
-      exam: "Exam",
-      days: "Days left",
-      readiness: "Learned",
-    },
-    timeline: {
-      aria: "Upcoming exams over the period",
-      hint: "The bar is the time left; its filled part, what you already know.",
-    },
-    load: {
-      peak: "busiest week",
-      aria: "Minutes planned per week, against minutes available",
-      week: "Week of {day}",
-      tooltip: "{minutes} min · {cards} cards",
-      thisWeek: "this week",
-      planned: "planned",
-      exam: "exam",
-      mock: "mock exam",
-      forExam: "{cards} cards",
-      mockLine: "Mock exam · {exam} · {questions} questions, {minutes} min",
-      examLine: "Exam day: {exam}",
-    },
-    readiness: {
-      now: "today",
-      measured: "at the last mock",
-      target: "target: {percent}%",
-      aria: "{now}% learned so far",
-    },
-  },
-  progress: {
-    masteryLead: "What's solid, what's still shaky, what hasn't been seen.",
-    days: "{count, plural, one {# day} other {# days}}",
-    title: "Progress",
-    lead: "What you know, and what it took.",
   },
   friends: {
     yourAccount: "Your account",
@@ -395,16 +333,7 @@ export const appEn = {
     reopenOffer: "Reopen the offer, {time}",
   },
   today: {
-    cardsMinutes: "{count, plural, one {card planned} other {cards planned}} · about {minutes} min",
-    start: "Review · {minutes} min",
-    forExam: "for {exam}",
-    block: "{cards, plural, one {# card} other {# cards}} · {minutes} min",
-    mockTitle: "Mock exam · {exam}",
-    mock: "{questions} questions · {minutes} min",
     streak: "{count, plural, one {# day in a row} other {# days in a row}}",
-    nextExam: "Next exam",
-    otherExams: "Then",
-    known: "{percent}% learned",
   },
   knowledge: {
     new: "New",

@@ -73,13 +73,6 @@ export {
   dailyMinutesLabel,
 } from "./srs/daily-load";
 export {
-  buildQueue,
-  isDue,
-  studyCounts,
-  type QueueCard,
-  type StudyCounts,
-} from "./srs/queue";
-export {
   DEFAULT_TARGET_SCORE,
   TARGET_SCORE_MAX,
   TARGET_SCORE_MIN,
@@ -465,6 +458,8 @@ export {
   type CardMastery,
   type LessonCard,
   type MissedCardDraft,
+  LESSON_RATINGS,
+  type LessonRating,
 } from "./lesson/cards";
 export { choiceOrder, matchRightOrder, orderPool, randomSeed } from "./lesson/question-order";
 export { MIKA_LIMITS, dayStamp, mikaGate, mikaTurns, type MikaGate, type MikaRole, type MikaTurn } from "./lesson/mika";
@@ -552,13 +547,6 @@ export {
   type CountryCode,
 } from "./onboarding/countries";
 export {
-  GENERATION_LANGUAGES,
-  SOURCE_LANGUAGE,
-  generationLanguageLabel,
-  isGenerationLanguage,
-  type GenerationLanguage,
-} from "./generation/language";
-export {
   TIER_LADDER,
   isStudyLevel,
   resolveStage,
@@ -575,21 +563,6 @@ export {
 } from "./onboarding/subjects";
 export { FALLBACK_EMOJI, deriveEmoji, resolveEmoji } from "./emoji";
 
-// Les réglages de génération, portés depuis l'app : ce sont les mêmes bornes des deux côtés,
-// parce que c'est la même fonction Edge qui les reçoit.
-export {
-  CARD_KINDS,
-  DEFAULT_QUOTA,
-  PER_FORMAT_RANGE,
-  TOTAL_RANGE,
-  clampQuota,
-  countOf,
-  formatBounded,
-  isAtCap,
-  quotaTotal,
-  type CardKind,
-  type QuestionQuota,
-} from "./generation/quota";
 export {
   BLOCK_BOUNDS,
   DEFAULT_SHEET_LENGTH,

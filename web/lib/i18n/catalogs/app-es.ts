@@ -9,23 +9,8 @@ export const appEs = {
     accountFallback: "Cuenta",
   },
   home: {
-    greeting: {
-      morning: "Buenos días",
-    },
       mastery: {
-      title: "Dominio",
-      of: "sobre {count} tarjetas",
       empty: "Importa un curso para empezar a medir.",
-      solid: "Asentado",
-      fragile: "Frágil",
-      learning: "En curso",
-      untouched: "Nunca visto",
-      aria: "Aprendido al {percent} %: {solid} asentadas, {fragile} frágiles, {learning} en curso, {untouched} nunca vistas.",
-    },
-    stats: {
-      passes: "Pasadas",
-      accuracy: "Acierto",
-      streak: "Racha",
     },
     weak: {
       title: "Lo que se resiste",
@@ -85,10 +70,6 @@ export const appEs = {
     undoAria: "Deshacer la última nota",
   },
   exams: {
-    hub: {
-      title: "Exámenes",
-      lead: "Tus exámenes, el tiempo que queda, y si cabe.",
-    },
     defaultName: "Examen",
     countdown: {
       past: "pasado",
@@ -103,9 +84,6 @@ export const appEs = {
     },
   },
   plan: {
-    strip: {
-      today: "Hoy",
-    },
     kind: {
       exam: "Examen",
       midterm: "Parcial",
@@ -125,11 +103,9 @@ export const appEs = {
 
 
   mock: {
-    start: "Hacer un simulacro",
     failed: "El simulacro no ha podido empezar.",
   },
   newPlan: {
-    add: "Crear un plan",
     start: {
       cold: "Lo descubro",
       seen: "Ya lo he visto",
@@ -140,44 +116,6 @@ export const appEs = {
       seen: "Lo has seguido pero no trabajado. El ritmo normal.",
       solid: "Ya lo sabes y quieres mantenerlo. Una pasada menos.",
     },
-  },
-  chart: {
-    table: {
-      week: "Semana",
-      cards: "Tarjetas",
-      exam: "Examen",
-      days: "Días restantes",
-      readiness: "Aprendido",
-    },
-    timeline: {
-      aria: "Los exámenes que vienen en el periodo",
-      hint: "La barra es el tiempo que queda; su parte llena, lo que ya sabes.",
-    },
-    load: {
-      peak: "la semana más cargada",
-      aria: "Minutos previstos por semana, frente a los minutos disponibles",
-      week: "Semana del {day}",
-      tooltip: "{minutes} min · {cards} tarjetas",
-      thisWeek: "esta semana",
-      planned: "previsto",
-      exam: "examen",
-      mock: "simulacro",
-      forExam: "{cards} tarjetas",
-      mockLine: "Simulacro · {exam} · {questions} preguntas, {minutes} min",
-      examLine: "Día del examen: {exam}",
-    },
-    readiness: {
-      now: "hoy",
-      measured: "en el último simulacro",
-      target: "objetivo: {percent} %",
-      aria: "{now} % aprendido hasta ahora",
-    },
-  },
-  progress: {
-    masteryLead: "Lo que está afianzado, lo que aún flojea, lo que no has visto.",
-    days: "{count, plural, one {# día} other {# días}}",
-    title: "Progreso",
-    lead: "Lo que sabes, y lo que ha costado.",
   },
   friends: {
     yourAccount: "Tu cuenta",
@@ -396,16 +334,7 @@ export const appEs = {
     reopenOffer: "Reabrir la oferta, {time}",
   },
   today: {
-    cardsMinutes: "{count, plural, one {tarjeta prevista} other {tarjetas previstas}} · unos {minutes} min",
-    start: "Repasar · {minutes} min",
-    forExam: "para {exam}",
-    block: "{cards, plural, one {# tarjeta} other {# tarjetas}} · {minutes} min",
-    mockTitle: "Simulacro · {exam}",
-    mock: "{questions} preguntas · {minutes} min",
     streak: "{count, plural, one {# día seguido} other {# días seguidos}}",
-    nextExam: "Próximo examen",
-    otherExams: "Después",
-    known: "{percent} % aprendido",
   },
   knowledge: {
     new: "Nueva",

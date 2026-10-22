@@ -1,6 +1,6 @@
 "use client";
 
-import { youtubeTranscript } from "@/lib/actions/course";
+import { youtubeTranscript } from "@/lib/actions/youtube";
 import { readDocument, type ReadDocument } from "@/lib/import/read-document";
 import { preferredLanguages, readYouTubeInBrowser } from "@/lib/import/youtube";
 import { createClient } from "@/lib/supabase/client";

@@ -21,7 +21,6 @@ import {
   type MikaTurn,
 } from "@micabo/core";
 
-import { deleteCourse } from "@/lib/actions/course";
 import { revalidateUserData } from "@/lib/data/cache";
 import { actionT } from "@/lib/i18n/action";
 import { readUiLocale } from "@/lib/i18n/server";
@@ -321,4 +320,70 @@ export async function askMika(lessonId: string, rawTurns: MikaTurn[]): Promise<M
       ? { front: answer.card.front.trim(), back: answer.card.back.trim() }
       : undefined;
   return { status: "ok", reply: answer.reply.trim(), ...(card ? { card } : {}) };
+}
+
+/**
+ * **Supprimer une leçon**, et tout ce qui va avec : ses flashcards, et sa place dans les
+ * examens qui l'avaient au programme. Un examen qui n'a plus rien au programme part aussi,
+ * parce qu'il resterait à compter les jours pour rien.
+ */
+async function deleteCourse(courseId: string): Promise<{ status: "ok" | "error"; message?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
+
+  const { data: course } = await supabase
+    .from("courses")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("id", courseId)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (!course) return { status: "error", message: await actionT("app.errors.courseMissing") };
+
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("courses")
+    .update({ deleted_at: now, updated_at: now })
+    .eq("user_id", user.id)
+    .eq("id", courseId);
+
+  if (error) return { status: "error", message: error.message };
+
+  await supabase
+    .from("flashcards")
+    .update({ deleted_at: now, updated_at: now })
+    .eq("user_id", user.id)
+    .eq("course_id", courseId)
+    .is("deleted_at", null);
+
+  const { data: exams } = await supabase
+    .from("exams")
+    .select("id, course_ids")
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .contains("course_ids", [courseId]);
+
+  for (const exam of (exams as { id: string; course_ids: string[] | null }[] | null) ?? []) {
+    const remaining = (exam.course_ids ?? []).filter((id) => id !== courseId);
+    await supabase
+      .from("exams")
+      .update(
+        remaining.length > 0
+          ? { course_ids: remaining }
+          : { course_ids: remaining, deleted_at: now, is_planned: false },
+      )
+      .eq("user_id", user.id)
+      .eq("id", exam.id);
+  }
+
+  revalidateUserData(user.id, "all");
+  revalidatePath("/app");
+  revalidatePath("/app/lecons");
+  revalidatePath("/app/examen");
+  return { status: "ok" };
 }
