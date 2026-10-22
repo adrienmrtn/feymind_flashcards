@@ -487,6 +487,39 @@ export {
   type LessonGateVerdict,
   type LessonSource,
 } from "./lesson/allowance";
+// … ses étapes ouvertes : les écrans des notes, les cartes, l'ordre des propositions, Mika.
+export {
+  SCREEN_WEIGHT,
+  SWIPE_DISTANCE,
+  SWIPE_FLICK,
+  SWIPE_SLANT,
+  THIN_WEIGHT,
+  noteScreens,
+  notesPages,
+  screenWeight,
+  swipeDirection,
+  type NotesPage,
+  type SwipeDirection,
+} from "./lesson/notes-pages";
+export {
+  CARD_MASTERIES,
+  MASTERED_INTERVAL_DAYS,
+  NEW_CARDS_PER_SESSION,
+  SESSION_CAP,
+  cardMastery,
+  circleCards,
+  dueCards,
+  isCardOfQuestion,
+  masteryCounts,
+  missedCardDraft,
+  studyQueue,
+  tomorrowStart,
+  type CardMastery,
+  type LessonCard,
+  type MissedCardDraft,
+} from "./lesson/cards";
+export { choiceOrder, matchRightOrder, orderPool, randomSeed } from "./lesson/question-order";
+export { MIKA_LIMITS, dayStamp, mikaGate, mikaTurns, type MikaGate, type MikaRole, type MikaTurn } from "./lesson/mika";
 
 // Le verrou du gratuit - aligné sur `ProAccess.swift`, construit mais pas armé.
 export * as entitlement from "./entitlement";

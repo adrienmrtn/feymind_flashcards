@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 
 import type { CircleReadiness, LessonTone, PathCircle } from "@micabo/core";
@@ -14,7 +14,7 @@ import { PathMap } from "@/components/lesson/PathMap";
 import { MicaboIcon } from "@/components/lesson/MicaboIcon";
 import { openLesson } from "@/lib/actions/lesson";
 import { useI18n } from "@/lib/i18n/client";
-import { LESSONS_PATH, stepPath } from "@/lib/lesson/routes";
+import { LESSONS_PATH, mikaPath, stepPath } from "@/lib/lesson/routes";
 
 /**
  * **L'écran d'une leçon : son chemin.** Voir `docs/refonte-parcours.md` § 5.3.
@@ -47,6 +47,8 @@ export interface LessonScreenProps {
 export function LessonScreen(props: LessonScreenProps) {
   const { t } = useI18n();
   const router = useRouter();
+  // `?fait=<étape>` : on revient d'une étape qu'on vient de cocher, et son rond le fête.
+  const justDone = useSearchParams().get("fait");
   const [pastHeader, setPastHeader] = useState(false);
   const header = useRef<HTMLDivElement>(null);
   const opened = useRef(false);
@@ -89,14 +91,14 @@ export function LessonScreen(props: LessonScreenProps) {
           {props.title}
         </span>
         <LessonMenu lessonId={props.lessonId} title={props.title} canReset={props.done.length > 0} />
-        <span
+        <Link
+          href={mikaPath(props.lessonId)}
           aria-label={props.mikaLabel}
-          role="img"
-          className="flex size-10 items-center justify-center rounded-full bg-surface shadow-floating"
           title={props.mikaLabel}
+          className="pressable flex size-10 items-center justify-center rounded-full bg-surface shadow-floating"
         >
           <MicaboIcon id="mika" size={34} />
-        </span>
+        </Link>
       </div>
 
       <div ref={header} className="pb-11 pt-8">
@@ -118,6 +120,7 @@ export function LessonScreen(props: LessonScreenProps) {
           inCircle={props.inCircle}
           readiness={props.readiness}
           tone={props.tone}
+          justDone={justDone}
           onOpen={open}
         />
       </div>

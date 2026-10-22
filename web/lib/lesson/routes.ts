@@ -29,3 +29,8 @@ export function quizPath(id: string): Route {
 export function flashcardsPath(id: string): Route {
   return `/app/lecons/${id}/flashcards` as Route;
 }
+
+/** Mika, la leçon jointe : `/app/lecons/<id>/mika`. */
+export function mikaPath(id: string): Route {
+  return `/app/lecons/${id}/mika` as Route;
+}

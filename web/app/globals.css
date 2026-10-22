@@ -116,7 +116,14 @@
      Ce que la refonte « parcours » ajoute, porté de `MicaboPalette.day` : le violet des
      mots-clés (son seul usage), le vert et le rouge d'une réponse, le rail d'une barre, et
      les cinq tons d'une leçon en trois nuances — pâle pour un fond d'encadré, vive pour un
-     aplat sans texte (étape cochée, trait, barre), encre pour ce qui s'écrit sur le pâle. */
+     aplat sans texte (étape cochée, trait, barre), encre pour ce qui s'écrit sur le pâle.
+
+     Dans un bloc `static` : ces jetons se lisent surtout depuis des styles en ligne
+     (`var(--color-tone-blue-vivid)`), que Tailwind ne voit pas, et un jeton qu'aucune classe
+     n'emploie est retiré de la feuille. Ici, ils sont toujours écrits. */
+}
+
+@theme static {
   --color-keyword: #7c3aed;
   --color-correct: #16a34a;
   --color-correct-ink: #15803d;
@@ -140,7 +147,9 @@
   --color-tone-lilac-pale: #e4d9fb;
   --color-tone-lilac-vivid: #8b5cf6;
   --color-tone-lilac-ink: #5b21b6;
+}
 
+@theme {
   /* ---- Typographie ----
      Nunito partout, les mots comme les nombres : c'est la police de l'app depuis la refonte
      « parcours » (`MicaboFont`), et une interface qui lit et compte dans la même main se lit
@@ -2262,4 +2271,203 @@ html:not([data-appearance]) .app-shell {
   .path-trail {
     transition: none;
   }
+}
+
+/* --------------------------------------------------------------------------
+   Les étapes ouvertes d'une leçon : l'Intro, les Notes, un quiz, une série de cartes.
+
+   Les boutons de la leçon sont ceux de l'app (`LessonPrimaryButtonStyle`) : noir, plein,
+   un relief sous lui ; le secondaire est blanc, cerné. Les écrans des notes glissent en place,
+   le panneau de réponse monte du bas, la carte se retourne en 3D. « Réduire les animations »
+   coupe tout ce qui se déplace et garde ce qui change de couleur.
+   -------------------------------------------------------------------------- */
+.lesson-btn-primary {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 17px 20px;
+  border-radius: 18px;
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+  box-shadow: 0 6px 10px -2px color-mix(in srgb, var(--color-ink) 18%, transparent);
+  transition:
+    scale var(--duration-press) var(--ease-out-strong),
+    background-color 0.2s,
+    box-shadow 0.2s;
+}
+.lesson-btn-primary:active:not(:disabled) {
+  scale: 0.97;
+}
+.lesson-btn-primary:disabled {
+  background: var(--color-ink-tertiary);
+  box-shadow: none;
+  cursor: default;
+}
+
+.lesson-btn-secondary {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 20px;
+  border-radius: var(--radius-button);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: inset 0 0 0 1.5px var(--color-stroke-strong);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+  transition: scale var(--duration-press) var(--ease-out-strong);
+}
+.lesson-btn-secondary:active:not(:disabled) {
+  scale: 0.97;
+}
+
+/* Une proposition de quiz, et son relief de trois pixels tant qu'on n'a pas répondu. */
+.quiz-choice {
+  box-shadow:
+    inset 0 0 0 2px var(--color-stroke),
+    0 3px 0 var(--color-stroke);
+}
+
+@keyframes notes-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.notes-reveal {
+  animation: notes-reveal 0.5s var(--ease-out-strong) both;
+}
+
+@keyframes notes-page-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--from, 40px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.notes-page-in {
+  animation: notes-page-in 0.42s var(--ease-out-strong) both;
+}
+
+@keyframes panel-rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.panel-rise {
+  animation: panel-rise 0.4s var(--ease-out-strong) both;
+}
+
+@keyframes score-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.score-in {
+  animation: score-in 0.5s var(--ease-out-strong) both;
+}
+
+.score-ring {
+  transition: stroke-dashoffset 1.1s ease-out 0.2s;
+}
+
+/* La carte qui se retourne : deux faces sur le même carré, le dos tourné de 180°. */
+.flip-scene {
+  perspective: 1200px;
+}
+.flip-card {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.5s var(--ease-out-strong);
+}
+.flip-card[data-flipped="true"] {
+  transform: rotateY(180deg);
+}
+.flip-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.flip-face-back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+}
+
+.notes-segment-fill {
+  transition: width 0.45s ease-out;
+}
+
+@keyframes confetti-fall {
+  from {
+    transform: translateY(-20px) rotate(0deg);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(var(--drop, 100vh)) rotate(720deg);
+    opacity: 0;
+  }
+}
+.confetti-piece {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 5px;
+  border-radius: 1.5px;
+  animation: confetti-fall var(--duration, 3s) linear var(--delay, 0s) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notes-reveal,
+  .notes-page-in,
+  .panel-rise,
+  .score-in,
+  .confetti-piece {
+    animation: none;
+  }
+  .flip-card,
+  .score-ring,
+  .notes-segment-fill {
+    transition: none;
+  }
+}
+
+/* Ce qui colle en bas d'une étape (le bouton, le panneau de réponse, les notes de la
+   carte) s'arrête au-dessus de la barre d'onglets du téléphone, qui colle aussi. */
+.app-shell {
+  --tab-bar-space: 53px;
+}
+@media (min-width: 64rem) {
+  .app-shell {
+    --tab-bar-space: 0px;
+  }
+}
+.lesson-bottom-bar {
+  position: sticky;
+  bottom: var(--tab-bar-space, 0px);
+  z-index: 10;
 }

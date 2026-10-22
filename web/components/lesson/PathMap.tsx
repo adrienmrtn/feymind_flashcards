@@ -120,11 +120,13 @@ export interface PathMapProps {
   inCircle: number;
   readiness: Readonly<Record<string, CircleReadiness>>;
   tone: LessonTone;
+  /** L'étape qu'on vient de cocher : son rond se gonfle une fois à l'arrivée. */
+  justDone?: string | null;
   onOpen: (circle: PathCircle) => void;
   onRetry?: (circle: PathCircle) => void;
 }
 
-export function PathMap({ circles, done, inCircle, readiness, tone, onOpen, onRetry }: PathMapProps) {
+export function PathMap({ circles, done, inCircle, readiness, tone, justDone = null, onOpen, onRetry }: PathMapProps) {
   const { t } = useI18n();
   const container = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(390);
@@ -209,7 +211,7 @@ export function PathMap({ circles, done, inCircle, readiness, tone, onOpen, onRe
         return (
           <div key={circle.id} data-circle={circle.id} className="absolute inset-x-0" style={{ top: index * ROW_HEIGHT, height: ROW_HEIGHT }}>
             <div
-              className={`path-node absolute ${shaking === circle.id ? "path-shake" : ""}`}
+              className={`path-node absolute ${shaking === circle.id ? "path-shake" : justDone === circle.id ? "path-pop" : ""}`}
               style={{ left: center.x - outer / 2, top: ROW_HEIGHT / 2 - outer / 2, animationDelay: `${index * 50}ms` }}
             >
               <PathNode circle={circle} state={state} readiness={ready} tone={tone} ring={state === "current" ? inCircle : 0} onClick={() => tap(circle, state)} />

@@ -21,7 +21,7 @@ export function LessonNavbar({ lessonId, dueCount = 0 }: { lessonId: string; due
   return (
     <nav
       aria-label={t("lesson.nav.notes") + " · " + t("lesson.nav.quiz") + " · " + t("lesson.nav.flashcards")}
-      className="sticky bottom-0 z-20 -mx-4 mt-2 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-7 lg:-mx-10"
+      className="lesson-bottom-bar -mx-4 mt-2 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-7 lg:-mx-10"
       style={{ background: "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 0%, transparent), color-mix(in srgb, var(--color-canvas) 92%, transparent) 38%, var(--color-canvas))" }}
       data-print="hide"
     >

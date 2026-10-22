@@ -1,38 +1,44 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
-import { lessonCircles } from "@micabo/core";
+import { randomSeed } from "@micabo/core";
 
-import { MicaboIcon } from "@/components/lesson/MicaboIcon";
-import { getLesson, listThemes } from "@/lib/data/lessons";
-import { getTranslator } from "@/lib/i18n/server";
+import { StepScreen } from "@/components/lesson/StepScreen";
 import { lessonPath } from "@/lib/lesson/routes";
+import { lessonTakeaways, loadLessonContext, stepTheme } from "@/lib/lesson/load";
 
 /**
- * **Une étape du chemin.** Le lot 4 de `docs/refonte-web.md` écrit ici l'Intro, les Notes, le
- * Checkpoint et le Quiz final ; en attendant, l'étape se nomme et ramène au chemin.
+ * **Une étape du chemin**, ouverte en plein écran : l'Intro, des Notes, un Checkpoint ou le
+ * Quiz final. La page lit la leçon et ses thèmes, trouve l'étape, et passe à l'écran ce
+ * qu'elle a besoin de savoir. Une étape qui n'existe pas ramène au chemin.
  */
 export default async function StepPage({ params }: { params: Promise<{ id: string; circle: string }> }) {
-  const { id, circle } = await params;
-  const [{ t }, lesson] = await Promise.all([getTranslator(), getLesson(id)]);
-  if (!lesson?.path) notFound();
-  const themes = await listThemes(lesson.id);
-  const circles = lessonCircles(
-    lesson.path,
-    themes.map((theme) => ({ title: theme.title, icon: theme.icon })),
-    { intro: t("lesson.circle.intro"), checkpoint: t("lesson.circle.checkpoint"), final: t("lesson.circle.final") },
-  );
-  const step = circles.find((entry) => entry.id === decodeURIComponent(circle));
-  if (!step) notFound();
+  const { id, circle: rawCircle } = await params;
+  const context = await loadLessonContext(id);
+  if (!context) notFound();
+
+  const circleId = decodeURIComponent(rawCircle);
+  const circle = context.circles.find((entry) => entry.id === circleId);
+  if (!circle) redirect(lessonPath(context.lesson.id));
+
+  const { lesson, themes } = context;
+  const theme = circle.kind.type === "notes" ? themes[circle.kind.theme] : null;
+  if (circle.kind.type === "notes" && !theme) redirect(lessonPath(lesson.id));
 
   return (
-    <div className="mx-auto flex max-w-[520px] flex-col items-center gap-4 pt-10 text-center">
-      <MicaboIcon id={step.icon} size={64} />
-      <p className="text-[12px] font-extrabold uppercase tracking-caps text-ink-tertiary">{t("lesson.path.step", { n: step.number })}</p>
-      <h1 className="text-[26px] font-extrabold text-ink">{step.title}</h1>
-      <Link href={lessonPath(lesson.id)} className="underline-draw mt-4 text-[15px] font-semibold text-ink-secondary">
-        {t("common.back")}
-      </Link>
-    </div>
+    <StepScreen
+      lessonId={lesson.id}
+      tone={context.tone}
+      circle={circle}
+      progress={{ ...lesson.progress, done: context.done }}
+      intro={
+        circle.kind.type === "intro"
+          ? { lines: lesson.path.intro.lines, minutes: lesson.path.intro.minutes, themes: themes.map((entry) => ({ title: entry.title, icon: entry.icon })) }
+          : null
+      }
+      theme={theme ? stepTheme(theme) : null}
+      quizzes={circle.kind.type === "quiz" || circle.kind.type === "final" ? themes.map((entry) => entry.quiz) : []}
+      takeaways={circle.kind.type === "final" ? lessonTakeaways(context) : []}
+      seed={randomSeed().toString()}
+    />
   );
 }
