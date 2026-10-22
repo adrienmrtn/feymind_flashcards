@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AlertTriangle, Check, ChevronDown, Lightbulb, Pin, Sparkles } from "lucide-react";
 
 import type { CalloutKind, DateItem, LessonTone, NoteBlock, ThemeNotes } from "@micabo/core";
@@ -177,10 +177,18 @@ export function NoteBlockView({ block, tone }: { block: NoteBlock; tone: LessonT
   }
 }
 
-/** Une définition : le terme en violet, replié ; un appui l'ouvre. */
+/**
+ * Une définition : le terme en violet, replié ; un appui l'ouvre. Sur papier, tout est ouvert :
+ * une feuille ne se déplie pas, donc `beforeprint` révèle le texte avant que la page parte.
+ */
 function NoteDefinition({ term, text }: { term: string; text: string }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const reveal = () => setOpen(true);
+    window.addEventListener("beforeprint", reveal);
+    return () => window.removeEventListener("beforeprint", reveal);
+  }, []);
   return (
     <button
       type="button"

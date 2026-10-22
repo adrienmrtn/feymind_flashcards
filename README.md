@@ -784,11 +784,12 @@ Et **[`docs/data-flywheel.md`](docs/data-flywheel.md)** propose ce qu'il faudrai
 pour que ces données deviennent un avantage : rien n'y est implémenté, c'est une note de
 conception.
 
-**[`docs/web.md`](docs/web.md)** en est une autre, et elle part du même schéma : le site,
-l'iPhone est la poche et le web est le bureau, ce que le partage d'une fiche ouvre, et comment un
-abonnement acheté d'un côté se reconnaît de l'autre. Rien n'y est implémenté non plus, mais trois
-de ses décisions coûtent cher à changer après coup — l'identité de l'utilisateur au moment de
-l'achat, la clé qui autorise les Edge Functions, et la place du compte dans le parcours.
+**[`docs/web.md`](docs/web.md)** part du même schéma, et celui-là est construit : le site
+(`web/`, [`web/README.md`](web/README.md)), l'iPhone est la poche et le web est le bureau, et
+comment un abonnement acheté d'un côté se reconnaît de l'autre. Depuis octobre 2026 le site suit
+le parcours de l'app — Home, Leçons, Examen, Profil, la leçon en chemin, Mika, les flashcards par
+leçon — avec les mêmes colonnes, la même fonction `generate-lesson` et les mêmes portes
+serveur ; le plan de cette refonte est **[`docs/refonte-web.md`](docs/refonte-web.md)**.
 
 ## Import : extraire bien, sans faire exploser la facture
 
@@ -1039,10 +1040,12 @@ les couleurs, et l'étudiant recolore par-dessus. Les cinq noms vivent dans `SHE
 et le code dans le prompt de `generate-course` ; un test du prompt compare les deux listes,
 parce qu'une couleur inventée laisserait « framboise| » dans la phrase.
 
-**La même fiche des deux côtés.** Le site et l'app appellent la même Edge Function, avec le
-même prompt et les mêmes champs : `test/generation-parity.test.ts` relit le Swift et le
-TypeScript et échoue si l'un envoie un champ que l'autre ignore. C'est ce qui s'était produit
-avec les consignes libres de l'étudiant, envoyées par le site et pas par l'app.
+**La même leçon des deux côtés.** Le site et l'app appellent la même Edge Function
+`generate-lesson`, avec les mêmes champs : `kinds` déclare les cinq formes de question, sans quoi
+le serveur ne rend que des QCM, et les textes de la leçon sortent des mêmes catalogues
+(`lesson-catalogs.test.ts`, côté site, compare chaque clé au Swift). Un champ envoyé par un seul
+client s'est déjà produit — les consignes libres de l'étudiant, envoyées par le site et pas par
+l'app — et c'est pour ça que les deux requêtes se relisent côte à côte à chaque changement.
 
 **Le marquage se mesure, il ne se demande pas.** Le prompt réclame ces marques depuis
 `course-v2.0.0` ; pendant des semaines, les fiches sortaient nues et personne ne savait où ça
@@ -1282,19 +1285,12 @@ un doublon, puisque rien n'a été importé.
 
 ### Reprendre un paquet Anki
 
-Le web ouvre la même porte (`/app/paquet`, `lib/actions/decks.ts`), et il en ouvre une seconde que
-l'iPhone n'a pas : **un `.apkg` déposé dans la page**. C'est le seul import du produit qui ne
-dépense rien — les cartes sont déjà écrites, il n'y a personne à faire rédiger — et c'est ce qui
-permet d'arriver avec quatre ans de vocabulaire au lieu de recommencer.
-
-Un `.apkg` est un ZIP dont la collection **est une base SQLite**. Le réflexe serait `sql.js`, donc
-un mégaoctet et demi de WebAssembly pour exécuter des requêtes qu'on n'écrit pas : `lib/import/`
-relit quatre tables entières, sans jointure et sans index, donc le format de fichier est lu à la
-main (`sqlite.ts` : en-tête, `sqlite_master`, descente d'arbre B, pages de débordement, codage des
-enregistrements). Une seule dépendance s'ajoute, `fzstd`, et seulement en import dynamique : Anki
-moderne écrit `collection.anki21b`, compressé en zstd, et personne qui dépose un PDF n'a à payer
-ce décodeur. Les deux schémas d'Anki sont lus - les paquets vivent dans un JSON de la table `col`
-avant 2.1.28, dans une table `decks` après.
+Le site a ouvert la même porte (`/app/paquet`), et une seconde que l'iPhone n'avait pas : **un
+`.apkg` déposé dans la page**, lu dans le navigateur sans `sql.js` — le format SQLite relu à la
+main, `fzstd` en import dynamique pour les collections modernes. La refonte parcours l'a retirée
+avec les paquets (`docs/refonte-web.md` § 1) : `/app/paquet` redirige vers Home, et on crée
+depuis la barre de Home, qui n'a pas de support Anki. L'historique du dépôt garde `lib/import/`
+tel qu'il était si la porte doit rouvrir.
 
 Ce qui **ne suit pas** est aussi un choix. Les intervalles d'Anki sortent de ses propres options de
 paquet : recopiés ici, ils donneraient des échéances que la file d'étude ne sait pas expliquer, et

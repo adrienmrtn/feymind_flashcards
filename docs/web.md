@@ -5,11 +5,16 @@ délibérément **pas la même app**. Ce document est le plan : ce que le site e
 pas, à quoi il ressemble, comment il se déploie, et comment un abonnement acheté sur l'iPhone
 est reconnu dans le navigateur.
 
-Rien de ce qui suit n'est implémenté. C'est une note de conception, comme
-[`data-flywheel.md`](data-flywheel.md), et elle est écrite avant le code parce que trois des
-décisions qu'elle contient — l'identité de l'utilisateur au moment de l'achat, la clé qui
-autorise les Edge Functions, et la place du compte dans le parcours — coûtent cher à changer
-après.
+Ce document a été écrit avant le code, puis tenu à jour étape par étape. Les cinq étapes sont
+faites, et **en octobre 2026 le site a rejoint le parcours de l'app** : Home, Leçons, Examen,
+Profil, la leçon en chemin, Mika, les flashcards par leçon. Le plan de cette refonte, ses
+décisions et ses dix lots sont dans [`refonte-web.md`](refonte-web.md) ; l'état qui en résulte
+est en fin de document, sous [La refonte parcours](#la-refonte-parcours-et-létat-doctobre-2026).
+
+Ce qui suit reste vrai pour tout ce qui n'a pas bougé — le schéma, l'authentification, l'abonnement
+et sa mise en commun, le déploiement, le SEO — et vaut comme histoire pour le reste : les sections
+qui décrivent *Aujourd'hui*, *Réviser*, *Progrès* ou la fiche à 30 % parlent du site tel qu'il
+était, et sont marquées comme telles.
 
 ## Ce qui existe déjà, et qui décide de tout le reste
 
@@ -440,71 +445,77 @@ le débriefing. La migration `20260909160000_mock_paper.sql` ajoute `questions`,
 
 ## Le site connecté
 
-Un seul domaine, et ce n'est pas un détail de goût : le lien de partage d'une fiche, la page
-d'accueil et l'app doivent partager le domaine pour que le cookie de session soit simple et que
-le référencement profite au produit.
+Un seul domaine, et ce n'est pas un détail de goût : la page d'accueil et l'app doivent partager
+le domaine pour que le cookie de session soit simple et que le référencement profite au produit.
+
+Depuis la refonte parcours, l'app connectée a **les quatre onglets de l'iPhone**, dans le même
+ordre, et une leçon est un chemin :
 
 ```
-micabo.app/                 accueil, prix, questions
-micabo.app/f/<id>           une fiche partagée, lisible sans compte
-micabo.app/app              Aujourd'hui — ce qu'il y a à faire, et le bouton pour le faire
-micabo.app/app/reviser      la session, au clavier
-micabo.app/app/cours        les cours
-micabo.app/app/c/<id>       la fiche d'un cours
-micabo.app/app/c/<id>/cartes
-micabo.app/app/plan         Examens — la frise, la charge par semaine, les épreuves
-micabo.app/app/plan/<id>    une épreuve : préparation, plan jour par jour, blancs
-micabo.app/app/progres      Progrès — la seule page de mesure
-micabo.app/app/reglages     le compte (l'ancien /app/profil y renvoie)
-micabo.app/auth/callback    l'échange du code OAuth
+micabo.app/                         accueil, prix, questions, les articles
+micabo.app/app                      Home — Mika, la question, la barre et ses cinq supports, Reprendre
+micabo.app/app/lecons               Leçons — la liste, la recherche, les thèmes
+micabo.app/app/lecons/<id>          le chemin d'une leçon : Intro · Notes × N · Checkpoints · Quiz final
+micabo.app/app/lecons/<id>/etape/<étape>   une étape (notes:3, checkpoint:1, quiz, intro)
+micabo.app/app/lecons/<id>/notes    toutes les Notes d'une traite, imprimables
+micabo.app/app/lecons/<id>/quiz     le quiz de dix sur toute la leçon
+micabo.app/app/lecons/<id>/flashcards      la révision des flashcards de la leçon
+micabo.app/app/lecons/<id>/mika     Mika, la leçon jointe
+micabo.app/app/examen               Examen — le prochain, J-12, les autres, l'examen blanc
+micabo.app/app/profil               Profil — le compte, Pro, le classement, les amis, les réglages
+micabo.app/app/profil/amis          les amis
+micabo.app/auth/callback            l'échange du code OAuth
 ```
 
-### Cinq destinations, dans l'ordre de la journée
+Les anciennes adresses (`/app/c/<id>`, `/app/reviser`, `/app/cours`, `/app/plan`, `/app/progres`,
+`/app/importer`, `/app/paquets`, `/app/amis`, `/app/reglages`, `/app/examens`) **redirigent** :
+un lien dans un mail ou un onglet épinglé ne meurt pas.
 
-La barre latérale dit **Aujourd'hui · Réviser · Cours · Examens · Progrès**, puis Amis et
-Réglages à part. C'est l'ordre dans lequel une journée se passe, et chaque page ne répond qu'à
-une question :
+### Quatre destinations, celles de l'app
+
+La barre latérale sur grand écran et la barre d'onglets sous `lg` disent **Home · Leçons ·
+Examen · Profil**, avec les mêmes pictogrammes et les mêmes mots que `LessonI18nCatalogs.swift`.
+Chaque page répond à une question, et une seule :
 
 | Page | La question | Ce qui n'y est pas, et où c'est |
 | --- | --- | --- |
-| Aujourd'hui | qu'est-ce que j'ai à faire, et je le lance | le verdict du plan (Examens), la maîtrise (Progrès) |
-| Examens | lesquelles, quand, et est-ce que ça tient | le travail du jour (Aujourd'hui) |
-| Progrès | qu'est-ce que je sais, et qu'est-ce que je fais | la série et les cartes les plus passées y vivent, l'ancien Profil n'existe plus |
+| Home | qu'est-ce que je veux apprendre, et je le lance | la liste (Leçons), le verdict d'un examen (Examen) |
+| Leçons | où j'en suis dans chacune | la création (Home) |
+| Examen | lequel vient, dans combien de temps, et je m'entraîne | les leçons qu'il couvre, lisibles depuis leur chemin |
+| Profil | qui je suis, ce que j'ai payé, où j'en suis dans la semaine | — |
 
-Il n'y a plus d'en-tête sur grand écran : la page porte son titre, et une barre qui répète le
-nom de l'onglet courant ne disait rien de plus que la barre latérale juste à côté.
+Sous `lg`, l'en-tête de l'onglet s'efface dès qu'on entre dans une leçon : le chemin et chacune
+de ses étapes portent leur propre barre (retour, titre, menu, Mika, ou la croix et la
+progression), et deux barres l'une sur l'autre disaient deux fois la même chose.
 
-### Une seule façon de dessiner
+### Le bureau, ce qui reste du site d'avant
 
-Les graphes vivent dans `components/app/charts/` et partagent une palette de cinq couleurs,
-une par sens et jamais réattribuée : **bleu** = ce qui se travaille, **vert** = acquis,
-**ocre** = fragile ou à surveiller, **rouge** = dépassement, **gris** = pas encore vu. Elles
-sont posées en jetons `--chart-*` sur `.app-shell` (jour et nuit), et validées ensemble pour
-le daltonisme avec le validateur du skill dataviz (ΔE ≥ 8 sur chaque paire adjacente).
+Le clavier, l'impression, et le grand écran. **Espace** ou **Entrée** retourne une flashcard,
+**1 · 2 · 3** la notent (Encore · Bien · Facile) ; dans un quiz, **1 à 4** choisissent, Espace
+ou Entrée continue ; dans les Notes, **←** et **→** passent d'une page à l'autre ; chaque étape
+du chemin est un vrai bouton, qui se prend au Tab et s'ouvre à Entrée. Les Notes d'une leçon
+(`/app/lecons/<id>/notes`) s'impriment sans la charpente, le sommaire ni les boutons, les
+définitions ouvertes (`beforeprint`), les titres jamais seuls en bas de page (`@media print`,
+dans `globals.css`).
 
-| Graphe | Ce qu'il montre | Ce qu'il remplace |
-| --- | --- | --- |
-| `MasteryBar` | ce que je sais, en une barre segmentée, la même sur Progrès, un cours, une épreuve | la barre de Progrès, le camembert du Profil (autres parts, autres couleurs) |
-| `ExamTimeline` | une ligne par épreuve, une échelle de temps commune, la barre est le temps qu'il reste | la frise à un bâton par jour, aux points sans nom |
-| `WeeklyLoad` | les minutes prévues par semaine devant les minutes disponibles, rouge quand ça déborde | la même frise, lue à la semaine |
-| `ActivityChart` | un trait par jour sur six semaines, avec un axe et des dates | la semaine glissante et les 42 barres sans échelle |
-| `ReadinessBar` | aujourd'hui, le jour J et l'objectif sur une seule échelle | deux pourcentages de 34 points côte à côte |
-| `MockTrend` | les scores des blancs dans l'ordre, sur une ligne | une liste de barres |
+### Une seule façon de dessiner — *histoire*
 
-Les textes ne portent jamais la couleur d'une série ; chaque graphe a une légende dès deux
-séries, un survol qui donne la valeur, et un tableau caché pour un lecteur d'écran.
+Les six graphes de `components/app/charts/` (`MasteryBar`, `ExamTimeline`, `WeeklyLoad`,
+`ActivityChart`, `ReadinessBar`, `MockTrend`) et leur palette `--chart-*` sont sortis avec les
+pages Progrès et Examens qu'ils servaient. Ce qui se mesure aujourd'hui tient en trois chiffres
+sur Home — minutes de révision, leçons terminées, flashcards apprises — calculés par
+`homeStats` dans `@micabo/core`, les mêmes que sur l'iPhone.
 
 ### L'échelle typographique
 
-Cinq crans, écrits une fois dans `globals.css` et employés partout : `page-title` (22 px),
-`page-lead`, `section-title` (14 px), `section-lead`, et pour les nombres `stat-value` (22 px)
-et `hero-value` (36 px, un seul par écran). Un chiffre en 44 points gras n'est pas plus lisible
-qu'en 36 points demi-gras ; il est seulement plus bruyant.
+**Nunito partout**, comme sur l'iPhone ; Hanken Grotesk et Inter sont sortis. Les crans vivent
+dans `globals.css` et reprennent ceux de `MicaboTheme` : le titre d'un écran en 30 points
+extra-gras, le corps des Notes en 17, les libellés en capitales espacées en 12. Un chiffre en
+44 points gras n'est pas plus lisible qu'en 26 points extra-gras ; il est seulement plus bruyant.
 
-Le vocabulaire de `MicaboCopy.swift` vaut ici **sans exception** : un contenu importé est un
-*cours*, ce que Micabo en écrit est sa *fiche*, une question-réponse est une *carte*, un passage
-est une *session*, et l'action est *réviser*. Un bouton garde son nom du début à la fin d'un
-parcours, et « Réviser N cartes » s'appelle pareil sur le web.
+Le vocabulaire est celui de `LessonI18nCatalogs.swift`, copié sur le site avec un test de parité
+et **sans exception** : une *leçon*, ses *étapes*, un *checkpoint*, le *quiz final*, un *thème*,
+ses *notes*, ses *flashcards*. Un bouton garde son nom du début à la fin d'un parcours.
 
 ## La pile, et où le code vit
 
@@ -512,7 +523,7 @@ parcours, et « Réviser N cartes » s'appelle pareil sur le web.
 /Micabo              iOS, inchangé
 /supabase            partagé, inchangé
 /web
-  /app               Next.js 15, App Router, TypeScript, Tailwind
+  /app               Next.js 16, App Router, TypeScript, Tailwind 4
   /packages/core     le port TypeScript des règles pures
 ```
 
@@ -880,58 +891,37 @@ critique.**
 
 ## Le verrou du gratuit
 
-**Correction : il existe, et il n'est plus à concevoir.** Ce document a d'abord écrit que « même
-système freemium que sur iOS » décrivait ce qu'on voulait plutôt que ce qu'il y avait. C'était
-vrai du dépôt que j'avais sous les yeux ; la PR #37 a livré entre-temps `ProAccess.swift`,
-`SheetGate`, deux paywalls natifs enchaînés, un paywall de session, `FreemiumTests` qui verrouille
-les nombres, et **[`docs/revenuecat.md`](revenuecat.md)** qui détaille le branchement complet.
-
-C'est donc l'app qui fait foi, et le site s'y aligne au chiffre près. Un cours flouté aux sept
-dixièmes sur le téléphone et à la moitié sur le web serait le même produit qui dit deux choses.
+C'est l'app qui fait foi, et le site s'y aligne au chiffre près — un gratuit plus large sur le
+web et plus étroit sur le téléphone serait le même produit qui dit deux choses. Depuis la
+refonte parcours, le gratuit n'est plus une fiche floutée aux sept dixièmes ni quatre cartes
+par session : c'est **une leçon**.
 
 | | Gratuit | Pro |
 | --- | --- | --- |
-| **Cours importés** | **un**, et un seul. Un cours *repris* dans la bibliothèque ne consomme pas le quota : il n'a rien coûté à produire | sans limite |
-| **Fiche** | les **sept dixièmes de ses blocs**. La suite est composée, puis floutée et fondue dans le papier, avec le cadenas posé au bas du fondu | entière |
-| **Session** | **quatre cartes sur le web** (cinq sur l'app), puis le paywall — la session ne reprend pas | sans limite |
-| **Examen blanc** | la copie se passe, **la correction non** : « Remettre la copie » ouvre le paywall, et `finishMockSession` refuse de son côté | copie et correction |
-| **Entraînement libre** | fermé | ouvert |
+| **Leçons** | **une**, à vie, depuis un sujet tapé ou un texte collé | sans limite |
+| **PDF, Word, photo, audio, YouTube** | Pro, dès la première | ouverts |
+| **Mika** | **une** question, dans une leçon | sans limite |
+| **Questions d'entraînement** | **un** lot | sans limite |
+| **Examen blanc** | **un** | sans limite |
 
-Le seul chiffre où le site s'écarte de l'app est le plafond de session, et il est écrit là où on
-le voit : `WEB_FREE_TIER` dans `packages/core/src/entitlement.ts`. `FREE_TIER` reste le contrat
-que `freemium-parity.test.ts` compare au Swift ; un écart du web ne s'y glisse pas en douce.
+Les nombres vivent dans `FREE_LESSON_TIER` (`packages/core/src/entitlement.ts`) et dans
+`lesson/allowance.ts`, et `freemium-parity.test.ts` les compare au Swift. **La porte est tenue
+par le serveur** — `begin_lesson`, `begin_extra`, `mika-chat` refusent de leur côté — et
+seulement *annoncée* par le site : le refus tombe sur l'envoi d'une leçon, sur la question à
+Mika ou sur la demande d'un supplément, **jamais au milieu d'un chemin**. Une leçon commencée se
+finit.
 
-**Plus aucun mur n'enferme.** `isHardPaywall` rend `false` : toutes les portes du paywall, celle
-de l'accueil comprise, gardent une croix — après deux secondes, le temps que l'offre soit lue.
-Un mur sans sortie fait fermer l'onglet, et on perd alors la session *et* la vente.
-
-**Le cadeau arrive deux secondes après l'ouverture du premier cours**, pas à la seconde où la
-page se monte : le temps de voir la fiche s'afficher et de comprendre ce qu'on vient d'obtenir.
-
-La forme est celle qui convertit, et elle est déjà en place : **on génère, puis on floute.** Les
-blocs restants sont *bel et bien composés* avant d'être brouillés — c'est ce qui fait la
-différence entre « il y a une suite » et « ça s'arrête là ». Une fiche coupée net se lit comme une
-fiche courte, et une fiche courte ne donne envie de rien.
-
-Deux détails d'implémentation valent d'être repris tels quels, parce qu'ils sont justes :
-
-- **la coupure se compte en blocs, pas en caractères.** Couper un paragraphe au septième dixième
-  de son texte donnerait une phrase interrompue au milieu d'un mot, ce qui ressemble à un bug
-  d'affichage plutôt qu'à une limite assumée. Et il reste toujours au moins un bloc lisible ;
-- **le pourcentage restant est calculé**, pas écrit. « Il te reste 30 % de ce cours à lire » sort
-  du ratio, donc il suivra si le ratio bouge.
+Le paywall s'ouvre avec la raison du refus (`requestPaywall("send" | "mika" | "extra" |
+"upgrade")`, `app.paywall.reason.*`), et il garde sa croix : un mur sans sortie fait fermer
+l'onglet, et on perd alors la session *et* la vente. L'offre cadeau reste.
 
 ### Ce que le site en fait
 
-`packages/core/src/entitlement.ts` porte les mêmes nombres et la même coupure, et
-`test/entitlement.test.ts` reprend les valeurs de `MicaboTests/FreemiumTests.swift`. Mais
-**`ARMED` reste à `false`**, et la raison a changé : ce n'est plus « l'encaissement n'existe pas
-encore », c'est qu'il n'y a **rien à lire**. `ProAccess` s'appuie sur un drapeau dans les réglages
-de l'appareil ; il n'existe aucune table `entitlements`, donc le site ne peut pas savoir qui est
-abonné. Armer le verrou maintenant enfermerait dehors un étudiant qui vient de payer sur son
-téléphone — ce qui est exactement la panne que ce document met en garde contre depuis le début.
-
-L'interrupteur bascule à l'étape 5, quand le webhook écrira le droit en base.
+`lib/paywall.ts` lève l'événement, `PaywallHost` l'affiche, et `isPro` vient d'`entitlements`,
+écrite par le webhook RevenueCat ou par Stripe — le mécanisme de la section précédente n'a pas
+bougé. Les anciens `FREE_TIER` et `WEB_FREE_TIER` restent dans `entitlement.ts`, marqués
+dépréciés, parce que `freemium-parity.test.ts` les compare encore au Swift de l'ancien
+`ProAccess` ; ils ne gardent plus aucune porte.
 
 ## Les offres, et l'économie annoncée
 
@@ -959,6 +949,10 @@ Deux conséquences de forme sur l'écran 8 : le « prix ramené au mois » ne va
 mois à ramener. L'essai de **trois jours** ne porte que sur l'annuel.
 
 ## Le plan, en cinq étapes
+
+*Les cinq étapes sont faites. Ce qu'elles ont livré a ensuite été refondu en dix lots
+(octobre 2026, [`refonte-web.md`](refonte-web.md)) ; les comptes rendus ci-dessous décrivent le
+site entre les deux.*
 
 | Étape | Contenu | Ce qui est vrai à la fin |
 | --- | --- | --- |
@@ -1465,3 +1459,66 @@ graphe, et le code qui tourne est exactement celui qu'on relit avec `git show`. 
 ```bash
 cd supabase/functions && ./pin.sh && ./smoke.sh
 ```
+
+## La refonte parcours, et l'état d'octobre 2026
+
+Le site est resté un an l'app d'avant — Aujourd'hui, Réviser, la fiche à 30 %, le planificateur,
+les paquets — pendant que l'iPhone devenait une leçon en chemin. [`refonte-web.md`](refonte-web.md)
+dit comment il l'a rejoint, en dix lots livrés l'un après l'autre, chacun avec `pnpm verify` au
+vert et les cinq langues. Ce qu'il en reste à savoir tient ici.
+
+### Ce qui est vrai maintenant
+
+- **Un deuxième client de la même leçon.** Le site lit et écrit les colonnes de l'iPhone
+  (`courses.path`, `progress`, `tone`, `icon`, `last_opened_at` ; `chapters.notes`, `quiz`,
+  `icon`, `status`), appelle `generate-lesson` avec les mêmes champs — `kinds` déclare les cinq
+  formes de question — et passe par les mêmes portes serveur (`begin_lesson`, `begin_extra`,
+  `mika-chat`). Une étape cochée ici est cochée là-bas à la synchro suivante.
+- **Le navigateur conduit la génération** comme `LessonBuilder` : `/api/lesson/plan`, puis
+  `/api/lesson/theme` quatre à la fois, chaque appel écrit en base avant de répondre ; une page
+  rechargée retrouve les thèmes prêts et relance ceux en préparation. Un ancien cours est converti
+  à sa première ouverture, sur le site comme sur le téléphone, avec « Ouvrir sans attendre ».
+- **Les quatre onglets, la police, la palette, les icônes 3D et Mika** sont ceux de l'app, portés
+  valeur par valeur (`globals.css`, `public/icons3d/`, `design/mika/`). Les textes de la leçon
+  viennent de `LessonI18nCatalogs.swift` par copie stricte (`scripts/sync-lesson-catalogs.mjs`),
+  avec un test de parité ; les clés communes repartent vers `SharedI18nCatalogs.swift`.
+- **Le gratuit est une leçon** (voir [Le verrou du gratuit](#le-verrou-du-gratuit)) ; le refus
+  tombe sur l'envoi, jamais au milieu d'un chemin.
+- **La vitrine et le parcours d'accueil** montrent les vrais composants — Home, le chemin, une
+  question du quiz à laquelle on répond — et le parcours finit en installant une leçon de
+  démonstration (`lib/onboarding/demo-lesson.ts`), prête, dans la langue de l'étudiant.
+- **Le bureau reste** : le clavier, l'impression des Notes, le grand écran, le sombre.
+
+### Les finitions, vérifiées
+
+| Quoi | Comment c'est tenu |
+| --- | --- |
+| Les cinq langues | les tests de parité (`i18n.test.ts`, `lesson-catalogs.test.ts`) et une relecture des clés nouvelles ; les seules valeurs identiques au français sont des noms propres, « Quiz », « Sections » |
+| Le sombre | `data-appearance="night"` sur chaque écran neuf, capturé (`docs/captures/web/*-sombre.png`) ; les jetons de ton (`--color-tone-*`), de mot-clé et de réponse ont leur valeur de nuit |
+| Le clavier | Espace / Entrée et 1 · 2 · 3 sur les flashcards, 1 à 4 dans le quiz, ← → dans les Notes, les étapes du chemin au focus (`focus-visible:ring-4`) |
+| L'impression | `/app/lecons/[id]/notes` : la charpente, le sommaire et les boutons cachés (`data-print="hide"`), les définitions ouvertes par `beforeprint`, les titres jamais seuls en bas de page |
+| Sous `lg`, dans une leçon | l'en-tête de l'onglet s'efface (`insideLesson`) : le chemin et chaque étape portent leur propre barre |
+| Les captures | `docs/captures/web/`, refaites en une commande par `scripts/demo/captures.mjs` sur le faux Supabase |
+
+### Avant la production
+
+Rien de nouveau n'est à créer ; tout est à vérifier.
+
+1. **`generate-lesson` déployée** sur le projet de production, et **les trois migrations
+   `lesson_*`** passées (`lesson_paths`, `lesson_generations`, `lesson_onboarding`) :
+   `supabase/prod-check.sh`, lancé par `prod.yml`, le vérifie de l'extérieur avec la seule clé
+   `anon`. Sans elles, un ancien cours s'ouvre « sans attendre » et la barre dit que la création
+   est indisponible.
+2. **Les quatre fonctions que le site appelle** — `generate-lesson`, `mika-chat`,
+   `transcribe-audio`, `youtube-transcript` — doivent être déployées et épinglées
+   (`pin.sh`, `smoke.sh`). `explain-selection`, `generate-flashcards` et `generate-course` ne sont
+   plus appelées par le site.
+3. **Les origines CORS** de `_shared/caller.ts` acceptent déjà `localhost`, `micabo.app` et les
+   prévisualisations `micabo*.vercel.app` : rien à ajouter.
+4. **Aucune migration nouvelle** : `git diff main -- supabase` est vide sur la branche de la
+   refonte. Aucune variable d'environnement nouvelle non plus.
+5. **`/api/lesson/*` porte `maxDuration = 120`** — un thème prend dix à vingt secondes, un plan
+   cinq à dix — le même réglage que la génération d'avant, déjà accepté par le projet Vercel.
+6. **Les anciennes adresses redirigent** ; les Redirect URLs Supabase et le `noindex` de `/app` ne
+   bougent pas.
+7. **`web.yml`** fait tourner `pnpm verify` à chaque push ; un lot ne se fusionne pas rouge.

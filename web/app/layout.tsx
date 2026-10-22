@@ -107,6 +107,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       lang={UI_LOCALE_META[locale].html}
       data-appearance={appearance}
       className={`${nunito.variable}${appearanceIsDark(appearance) ? " dark" : ""}`}
+      // Le script d'amorçage pose le même `color-scheme` avant l'hydratation : le serveur doit
+      // l'écrire aussi, sinon React signale un attribut qu'il n'attendait pas.
+      style={{ colorScheme: appearanceIsDark(appearance) ? "dark" : "light" }}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: APPEARANCE_BOOT_SCRIPT }} />

@@ -39,3 +39,12 @@ export function flashcardsPath(id: string): Route {
 export function mikaPath(id: string): Route {
   return `/app/lecons/${id}/mika` as Route;
 }
+
+/**
+ * Vrai dans une leçon — son chemin ou l'une de ses pages. Sous `lg`, l'en-tête de l'onglet s'y
+ * efface : chaque écran de la leçon porte sa propre barre, et deux barres l'une sur l'autre
+ * disaient deux fois la même chose.
+ */
+export function insideLesson(pathname: string): boolean {
+  return /^\/app\/lecons\/[^/]+/.test(pathname);
+}

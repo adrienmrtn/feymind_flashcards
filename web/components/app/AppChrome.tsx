@@ -7,7 +7,7 @@ import { BookOpen, GraduationCap, Home, User } from "lucide-react";
 import { PastelWash } from "@/components/atmosphere/PastelWash";
 import { BrandMark } from "@/components/BrandMark";
 import { useI18n } from "@/lib/i18n/client";
-import { EXAMS_PATH, HOME_PATH, LESSONS_PATH, PROFILE_PATH } from "@/lib/lesson/routes";
+import { EXAMS_PATH, HOME_PATH, insideLesson, LESSONS_PATH, PROFILE_PATH } from "@/lib/lesson/routes";
 import { WEBSITE_PASTEL } from "@/lib/pastel";
 
 /**
@@ -71,11 +71,12 @@ export function AppChrome({ children, userName, userInitial }: { children: React
   );
 }
 
-/** Sous `lg` : le nom de l'onglet, et le compte. Rien d'autre. */
+/** Sous `lg` : le nom de l'onglet, et le compte. Rien d'autre — et rien du tout dans une leçon. */
 function MobileHeader({ userInitial }: { userInitial: string }) {
   const pathname = usePathname();
   const { t } = useI18n();
   const current = DESTINATIONS.find((item) => item.href === destinationOf(pathname)) ?? DESTINATIONS[0];
+  if (insideLesson(pathname)) return null;
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-sm lg:hidden" data-print="hide">
