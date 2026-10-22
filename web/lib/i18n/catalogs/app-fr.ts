@@ -410,7 +410,7 @@ export const appFr = {
         body: "Une intro, les notes thème par thème, un checkpoint après chaque palier, le quiz final. Touche l'étape allumée.",
       },
       bar: {
-        title: "Notes, Quiz, Flashcards",
+        title: "Notes · Quiz · Flashcards",
         body: "Toute la leçon à relire, dix questions à volonté, et les flashcards de cette leçon quand elles sont dues.",
       },
     },
@@ -487,7 +487,7 @@ export const appFr = {
     search: "Rechercher une leçon",
     sort: "Trier",
     sortRecent: "Récentes",
-    sortAlpha: "A → Z",
+    sortAlpha: "A à Z",
     sortDue: "À réviser",
     noResult: "Aucune leçon ne correspond.",
     allFolders: "Toutes",

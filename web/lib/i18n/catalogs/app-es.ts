@@ -486,7 +486,7 @@ export const appEs = {
     search: "Buscar una lección",
     sort: "Ordenar",
     sortRecent: "Recientes",
-    sortAlpha: "A → Z",
+    sortAlpha: "A a Z",
     sortDue: "Para repasar",
     noResult: "Ninguna lección coincide.",
     allFolders: "Todas",

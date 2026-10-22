@@ -487,7 +487,7 @@ export const appTr = {
     search: "Ders ara",
     sort: "Sırala",
     sortRecent: "Son",
-    sortAlpha: "A → Z",
+    sortAlpha: "A'dan Z'ye",
     sortDue: "Tekrar edilecek",
     noResult: "Eşleşen ders yok.",
     allFolders: "Tümü",

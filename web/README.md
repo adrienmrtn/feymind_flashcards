@@ -24,6 +24,13 @@ web/
   scripts/demo/        un faux Supabase pour regarder l'app sans compte, et les captures
 ```
 
+À la racine du dépôt, `app`, `components`, `lib`, `packages`, `public` et les fichiers de
+configuration sont des **liens** vers `web/` : Vercel compile depuis la racine, et
+`scripts/materialize-links.mjs` remplace les liens par de vrais dossiers juste avant
+`next build`. Les deux scripts que des tests importent (`sync-mika.mjs`,
+`sync-lesson-catalogs.mjs`) sont liés eux aussi dans `scripts/` à la racine ; sans ces liens, la
+vérification de types de la build Vercel ne les trouve pas et la mise en ligne échoue.
+
 `@micabo/core` est pur — pas de réseau, pas de base, pas de React — et ses tests reprennent
 les valeurs attendues de `MicaboTests/` : `lesson/` porte `PathLayout`, `LessonPicking` et
 `HomeStats`, `srs/sm2.ts` porte `SM2Scheduler`, et `freemium-parity.test.ts` compare les nombres

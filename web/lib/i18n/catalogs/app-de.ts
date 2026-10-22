@@ -485,7 +485,7 @@ export const appDe = {
     search: "Lektion suchen",
     sort: "Sortieren",
     sortRecent: "Zuletzt",
-    sortAlpha: "A → Z",
+    sortAlpha: "A bis Z",
     sortDue: "Zu wiederholen",
     noResult: "Keine Lektion passt.",
     allFolders: "Alle",

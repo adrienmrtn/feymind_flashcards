@@ -485,7 +485,7 @@ export const appEn = {
     search: "Search lessons",
     sort: "Sort",
     sortRecent: "Recent",
-    sortAlpha: "A → Z",
+    sortAlpha: "A to Z",
     sortDue: "To review",
     noResult: "No lesson matches.",
     allFolders: "All",
