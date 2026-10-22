@@ -15,7 +15,7 @@ import {
   type ThemeStatus,
 } from "@micabo/core";
 
-import { cachedRead, courseTag, coursesTag, dataClient, userTag } from "@/lib/data/cache";
+import { cachedRead, coursesTag, dataClient, userTag } from "@/lib/data/cache";
 import { type CourseRow } from "@/lib/data/courses";
 import { currentAccessToken, currentUserId } from "@/lib/data/user";
 
@@ -110,48 +110,39 @@ export async function listLessons(): Promise<LessonRow[]> {
   });
 }
 
-/** Une leçon, avec son plan et sa progression. */
+/**
+ * Une leçon, avec son plan et sa progression.
+ *
+ * **Pas de cache inter-requêtes**, mémoïsée par requête seulement : sa progression bouge à
+ * chaque étape cochée, son plan arrive pendant qu'on la regarde (conversion, thèmes qui
+ * s'écrivent), et un cache ici referait voir l'étape d'avant en revenant sur le chemin. C'est
+ * la règle déjà posée pour la file de révision. Les listes, elles, restent en cache.
+ */
 export const getLesson = cache(async (id: string): Promise<LessonRow | null> => {
   const auth = await reader();
   if (!auth) return null;
 
-  return cachedRead(
-    auth.userId,
-    `lesson:${id}`,
-    [userTag(auth.userId), coursesTag(auth.userId), courseTag(auth.userId, id)],
-    async () => {
-      const { data } = await dataClient(auth.token)
-        .from("courses")
-        .select(LESSON_COLUMNS)
-        .eq("user_id", auth.userId)
-        .eq("id", id)
-        .is("deleted_at", null)
-        .maybeSingle();
-      return data ? readLesson(data as unknown as RawLesson) : null;
-    },
-    60,
-  );
+  const { data } = await dataClient(auth.token)
+    .from("courses")
+    .select(LESSON_COLUMNS)
+    .eq("user_id", auth.userId)
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  return data ? readLesson(data as unknown as RawLesson) : null;
 });
 
-/** Les thèmes d'une leçon, dans l'ordre du chemin. */
+/** Les thèmes d'une leçon, dans l'ordre du chemin. Même règle : lus frais. */
 export const listThemes = cache(async (courseId: string): Promise<ThemeRow[]> => {
   const auth = await reader();
   if (!auth) return [];
 
-  return cachedRead(
-    auth.userId,
-    `themes:${courseId}`,
-    [userTag(auth.userId), coursesTag(auth.userId), courseTag(auth.userId, courseId)],
-    async () => {
-      const { data } = await dataClient(auth.token)
-        .from("chapters")
-        .select(THEME_COLUMNS)
-        .eq("user_id", auth.userId)
-        .eq("course_id", courseId)
-        .is("deleted_at", null)
-        .order("position", { ascending: true });
-      return ((data as unknown as RawTheme[] | null) ?? []).map(readTheme);
-    },
-    60,
-  );
+  const { data } = await dataClient(auth.token)
+    .from("chapters")
+    .select(THEME_COLUMNS)
+    .eq("user_id", auth.userId)
+    .eq("course_id", courseId)
+    .is("deleted_at", null)
+    .order("position", { ascending: true });
+  return ((data as unknown as RawTheme[] | null) ?? []).map(readTheme);
 });

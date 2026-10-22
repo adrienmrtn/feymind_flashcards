@@ -576,6 +576,12 @@ video {
   outline-offset: -1px;
 }
 
+/* Une icône 3D est une découpe sur fond transparent, pas une photo : le contour dessinerait
+   un carré fantôme autour d'elle. */
+img[data-icon] {
+  outline: none;
+}
+
 /* Le focus se voit, et il suit l'accent. L'anneau est une ombre : Safari ignorait
    le rayon d'un `outline` trop longtemps pour s'y fier seul. */
 :focus-visible {
@@ -2148,5 +2154,112 @@ html:not([data-appearance]) .app-shell {
 @media (max-width: 639px) {
   .story-figure > * {
     zoom: 0.84;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Le chemin d'une leçon (`components/lesson/PathMap.tsx`).
+
+   Les ronds apparaissent un à un à la première ouverture, l'étape en cours respire, un
+   rond à venir qu'on touche se secoue. « Réduire les animations » retire tout.
+   -------------------------------------------------------------------------- */
+@keyframes path-reveal {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes path-title-reveal {
+  from {
+    opacity: 0;
+    transform: translateX(var(--from, -12px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes path-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes path-halo {
+  0% {
+    transform: scale(0.94);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.08);
+    opacity: 0;
+  }
+}
+
+@keyframes path-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.14);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.path-node {
+  animation: path-reveal 0.5s var(--ease-out-strong) both;
+}
+
+.path-title {
+  animation: path-title-reveal 0.4s ease-out both;
+}
+
+.path-shake {
+  animation: path-shake 0.4s linear;
+}
+
+.path-halo {
+  animation: path-halo 1.8s ease-out infinite;
+}
+
+.path-pop {
+  animation: path-pop 0.5s var(--ease-out-strong);
+}
+
+.path-trail {
+  transition: stroke-dasharray 0.9s ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .path-node,
+  .path-title,
+  .path-shake,
+  .path-halo,
+  .path-pop {
+    animation: none;
+  }
+  .path-trail {
+    transition: none;
   }
 }

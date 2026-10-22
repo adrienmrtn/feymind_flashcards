@@ -67,6 +67,7 @@ export function MicaboIcon({
         aria-hidden={label ? undefined : true}
         draggable={false}
         decoding="async"
+        data-icon={resolved}
         className={className}
         style={{ width: size, height: size, objectFit: "contain" }}
       />

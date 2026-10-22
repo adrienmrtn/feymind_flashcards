@@ -255,6 +255,12 @@ export const tables = {
   entitlements,
   availability_exceptions,
   feedback: [],
+  // La refonte « parcours » : les thèmes d'une leçon, et les tables de la porte du gratuit.
+  // Vides au départ : un cours de démonstration est un ancien cours, qui se convertit à
+  // l'ouverture et remplit `chapters` en mémoire.
+  chapters: [],
+  lesson_generations: [],
+  lesson_extras: [],
 };
 
 export function rpc(name, args) {
@@ -313,6 +319,36 @@ export function rpc(name, args) {
  * débriefing écrits à la main, assez réalistes pour que les écrans se regardent.
  */
 export function edgeFunction(name, body) {
+  // `generate-lesson`, étape « convert » : ce qu'un ancien cours reçoit pour devenir une leçon.
+  // Le modèle n'est pas là ; on rend une conversion plausible, deux questions par chapitre.
+  if (name === "generate-lesson" && body?.stage === "convert") {
+    const chapters = Array.isArray(body.chapters) ? body.chapters : [];
+    const size = chapters.length > 8 ? 3 : 2;
+    const groups = [];
+    for (let start = 0; start < chapters.length; start += size) {
+      groups.push({ name: ["Les bases", "Les mécanismes", "Les chiffres", "Pour aller plus loin"][groups.length % 4], themes: chapters.slice(start, start + size).map((_, offset) => start + offset) });
+    }
+    return {
+      conversion: {
+        icon: "globe",
+        intro: { lines: ["D'où vient l'eau qui tombe.", "Comment elle circule.", "Où elle finit."], minutes: 5 + chapters.length * 3 },
+        takeaways: ["L'eau change d'état, jamais de quantité.", "Le Soleil est le moteur du cycle.", "Les océans portent 97 % de l'eau."],
+        groups,
+        chapters: chapters.map((chapter, index) => ({
+          icon: ["globe", "fiole", "ampoule", "loupe"][index % 4],
+          questions: CHOICES.slice(0, 3).map((question, number) => ({
+            kind: "choice",
+            prompt: `${chapter.title} — ${question.prompt}`,
+            choices: question.choices,
+            answer: question.answerIndex,
+            why: question.why,
+            difficulty: 1 + (number % 3),
+          })),
+          flashcards: chapter.needsCards ? [{ front: `Que retenir de « ${chapter.title} » ?`, back: "L'essentiel du chapitre, en une phrase." }] : [],
+        })),
+      },
+    };
+  }
   if (name === "generate-mock") {
     const quota = body?.quota ?? { choice: 9, truefalse: 5, gap: 3, feynman: 3 };
     const questions = [];
