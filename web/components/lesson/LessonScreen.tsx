@@ -15,6 +15,7 @@ import { MicaboIcon } from "@/components/lesson/MicaboIcon";
 import { openLesson } from "@/lib/actions/lesson";
 import { useI18n } from "@/lib/i18n/client";
 import { LESSONS_PATH, mikaPath, stepPath } from "@/lib/lesson/routes";
+import { subscribe, writeThemes } from "@/lib/lesson/theme-writer";
 
 /**
  * **L'écran d'une leçon : son chemin.** Voir `docs/refonte-parcours.md` § 5.3.
@@ -42,6 +43,8 @@ export interface LessonScreenProps {
   examLabel: string | null;
   dueCount: number;
   mikaLabel: string;
+  /** Les thèmes encore en préparation : la page les écrit, quatre à la fois. */
+  pendingThemes: number[];
 }
 
 export function LessonScreen(props: LessonScreenProps) {
@@ -59,6 +62,23 @@ export function LessonScreen(props: LessonScreenProps) {
     opened.current = true;
     void openLesson(props.lessonId);
   }, [props.lessonId]);
+
+  // Les thèmes en préparation s'écrivent d'ici (`docs/refonte-web.md` § 4) : ceux que
+  // l'écran de génération a déjà lancés ne repartent pas, et chaque arrivée relit la page.
+  const pendingKey = props.pendingThemes.join(",");
+  useEffect(() => {
+    const pending = pendingKey ? pendingKey.split(",").map(Number) : [];
+    if (pending.length > 0) void writeThemes(props.lessonId, pending);
+    return subscribe((event) => {
+      if (event.lessonId === props.lessonId) router.refresh();
+    });
+  }, [pendingKey, props.lessonId, router]);
+
+  function retry(circle: PathCircle) {
+    const themes =
+      circle.kind.type === "notes" ? [circle.kind.theme] : circle.kind.type === "quiz" || circle.kind.type === "final" ? circle.kind.themes : [];
+    if (themes.length > 0) void writeThemes(props.lessonId, themes, { retry: true });
+  }
 
   // Passé l'en-tête, son titre monte dans la barre du haut.
   useEffect(() => {
@@ -122,6 +142,7 @@ export function LessonScreen(props: LessonScreenProps) {
           tone={props.tone}
           justDone={justDone}
           onOpen={open}
+          onRetry={retry}
         />
       </div>
 

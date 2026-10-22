@@ -520,6 +520,33 @@ export {
 } from "./lesson/cards";
 export { choiceOrder, matchRightOrder, orderPool, randomSeed } from "./lesson/question-order";
 export { MIKA_LIMITS, dayStamp, mikaGate, mikaTurns, type MikaGate, type MikaRole, type MikaTurn } from "./lesson/mika";
+// … et sa naissance : la barre de Home, le plan du serveur.
+export {
+  MAX_COMPOSER_CHARACTERS,
+  MAX_COMPOSER_IMAGES,
+  MAX_SUPPORTS,
+  SUPPORT_ICONS,
+  SUPPORT_KINDS,
+  canSend,
+  composeCreation,
+  composerSource,
+  hasRoom,
+  isReading,
+  readySupports,
+  supportSource,
+  type ComposerSupport,
+  type LessonCreation,
+  type SupportKind,
+  type SupportState,
+} from "./lesson/composer";
+export {
+  GENERATION_STAGES,
+  pathFromPlan,
+  readPlanResponse,
+  type GenerationStage,
+  type LessonPlanPayload,
+  type PlanTheme,
+} from "./lesson/plan";
 
 // Le verrou du gratuit - aligné sur `ProAccess.swift`, construit mais pas armé.
 export * as entitlement from "./entitlement";

@@ -78,6 +78,7 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
       examLabel={examLabel}
       dueCount={dueCount}
       mikaLabel={t("lesson.mika.open")}
+      pendingThemes={themes.map((theme, index) => (theme.status === "pending" ? index : -1)).filter((index) => index >= 0)}
     />
   );
 }

@@ -508,6 +508,68 @@ export function edgeFunction(name, body) {
       },
     };
   }
+  // `generate-lesson`, étape « plan » : un plan plausible, quatre thèmes, depuis le sujet ou le texte.
+  if (name === "generate-lesson" && body?.stage === "plan") {
+    const topic = typeof body.topic === "string" && body.topic.trim() ? body.topic.trim() : null;
+    const title = topic ? topic.charAt(0).toUpperCase() + topic.slice(1) : "Le cycle de l'eau";
+    return {
+      plan: {
+        title,
+        subject: topic ? "Histoire" : "SVT",
+        icon: topic ? "parchemin" : "globe",
+        material: topic ? "topic" : "chapter",
+        themes: [
+          { title: "Les bases", icon: "livre-ouvert", symbol: "book.closed", points: ["Définitions", "Vocabulaire"], role: "ground" },
+          { title: "Les mécanismes", icon: "fiole", symbol: "testtube.2", points: ["Causes", "Effets"], role: "mechanism" },
+          { title: "Les chiffres", icon: "calculatrice", symbol: "number", points: ["Ordres de grandeur"], role: "ground" },
+          { title: "Pour aller plus loin", icon: "fusee", symbol: "sparkles", points: ["Limites", "Débats"], role: "synthesis" },
+        ],
+        groups: [{ name: "Comprendre", themes: [0, 1] }, { name: "Mesurer", themes: [2, 3] }],
+        intro: { lines: [`Ce que « ${title} » veut dire.`, "Comment ça marche, étape par étape.", "Les chiffres à retenir."], minutes: 22 },
+        takeaways: ["Une idée simple, à savoir redire.", "Les mécanismes expliquent les chiffres.", "Les limites comptent autant que le modèle."],
+        shortened: false,
+        singleQuiz: false,
+      },
+      contextText: topic ? "" : String(body.text ?? "").slice(0, 60_000),
+    };
+  }
+
+  // Étape « thème » : des notes courtes et quatre questions, avec un délai pour voir le chemin
+  // se remplir rond après rond.
+  if (name === "generate-lesson" && body?.stage === "theme") {
+    const index = Number(body.themeIndex ?? 0);
+    const titles = Array.isArray(body.themes) ? body.themes : [];
+    const themeTitle = titles[index] ?? `Thème ${index + 1}`;
+    const theme = {
+      notes: {
+        oneLiner: `**${themeTitle}** : l'idée en une phrase, pour commencer.`,
+        blocks: [
+          { type: "subtitle", text: "L'essentiel" },
+          { type: "paragraph", text: `Ce thème explique **${themeTitle.toLowerCase()}** avec des mots simples et un exemple à chaque fois.` },
+          { type: "list", items: ["Un premier point à retenir.", "Un deuxième, avec un **mot-clé**.", "Un troisième, plus court."] },
+          { type: "callout", kind: index % 2 ? "tip" : "remember", title: null, text: "La règle que l'on oublie le plus souvent." },
+        ],
+        takeaways: [`${themeTitle} tient en une idée.`, "Un exemple vaut mieux qu'une définition."],
+      },
+      questions: [
+        { kind: "choice", prompt: `Quelle idée résume « ${themeTitle} » ?`, choices: ["La bonne", "Une fausse", "Une autre fausse", "La dernière"], answer: 0, why: "C'est l'idée de la phrase d'ouverture.", difficulty: 1 },
+        { kind: "truefalse", prompt: `« ${themeTitle} » se résume en une phrase.`, choices: ["Vrai", "Faux"], answer: 0, why: "C'est le principe des notes.", difficulty: 1 },
+        { kind: "gap", prompt: "Un exemple vaut mieux qu'une ____.", choices: ["définition", "liste", "formule", "date"], answer: 0, why: "C'est la deuxième phrase à retenir.", difficulty: 2 },
+        { kind: "order", prompt: "Remets les points dans l'ordre des notes.", choices: ["Le premier point", "Le deuxième point", "Le troisième point"], answer: 0, why: "L'ordre de la liste.", difficulty: 3 },
+      ],
+      flashcards: [
+        { kind: "basic", front: `Que retenir de « ${themeTitle} » ?`, back: "Une idée simple, et un exemple." },
+        { kind: "cloze", front: "Un exemple vaut mieux qu'une ____.", back: "définition" },
+      ],
+    };
+    return new Promise((resolve) => setTimeout(() => resolve({ theme }), 1500 + index * 900));
+  }
+
+  // `transcribe-audio` : un enregistrement devient du texte.
+  if (name === "transcribe-audio") {
+    return { transcript: { text: "Bonjour à tous, aujourd'hui nous allons voir le cycle de l'eau. L'eau circule en permanence entre les océans, l'atmosphère et les continents, et ce cycle est alimenté par l'énergie du Soleil." } };
+  }
+
   // `mika-chat` : Mika répond, et propose une carte quand il y a quelque chose à retenir.
   if (name === "mika-chat") {
     const turns = Array.isArray(body?.messages) ? body.messages : [];

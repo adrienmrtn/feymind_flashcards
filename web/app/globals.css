@@ -2471,3 +2471,29 @@ html:not([data-appearance]) .app-shell {
   bottom: var(--tab-bar-space, 0px);
   z-index: 10;
 }
+
+/* La barre de Home : haute, bordée du dégradé de l'app, un halo bleu qui s'allume quand on
+   écrit. Le dégradé est peint dans la bordure, le blanc dans la boîte. */
+.home-bar {
+  border: 2px solid transparent;
+  border-radius: 30px;
+  background:
+    linear-gradient(var(--color-surface), var(--color-surface)) padding-box,
+    linear-gradient(135deg, var(--color-accent), var(--color-keyword)) border-box;
+  box-shadow: 0 8px 16px -4px color-mix(in srgb, var(--color-accent) 18%, transparent);
+  transition: box-shadow 0.25s ease-out, border-width 0.25s ease-out;
+}
+.home-bar-focused {
+  border-width: 3px;
+  box-shadow: 0 8px 22px -4px color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+.home-send {
+  background: linear-gradient(135deg, var(--color-accent), var(--color-keyword));
+  box-shadow: 0 5px 10px -2px color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+.home-gradient-text {
+  background: linear-gradient(90deg, var(--color-accent), var(--color-keyword));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
