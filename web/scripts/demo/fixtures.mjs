@@ -242,6 +242,165 @@ const course_folders = [
   updated_at: iso(day(-2)),
 }));
 
+// **Une leçon au nouveau format**, déjà écrite : son chemin, ses thèmes avec leurs notes et
+// leurs questions des cinq formes, une progression entamée. C'est elle qu'on ouvre pour voir
+// les étapes sans passer par une conversion.
+const LESSON_ID = uuid(6);
+const THEME_IDS = [uuid(61), uuid(62), uuid(63), uuid(64)];
+const lesson = {
+  id: LESSON_ID,
+  title: "La Guerre froide",
+  subject: "Histoire",
+  emoji: "🧊",
+  summary: "Deux blocs, un monde partagé, de 1947 à 1991.",
+  accent_hex: null,
+  source: "topic",
+  visibility: "private",
+  is_from_library: false,
+  folder_id: null,
+  view_count: 0,
+  adopt_count: 0,
+  user_id: USER_ID,
+  deleted_at: null,
+  created_at: iso(day(-4)),
+  updated_at: iso(day(-1)),
+  raw_text: "",
+  context_text: "",
+  sheet: null,
+  language: "fr",
+  tone: "blue",
+  icon: "globe",
+  last_opened_at: iso(day(-1)),
+  path: {
+    version: 1,
+    icon: "globe",
+    intro: {
+      lines: ["Pourquoi deux alliés de 1945 deviennent **ennemis** en deux ans.", "Comment le monde se partage en **deux blocs**, sans guerre directe.", "Ce qui fait tomber le mur, puis l'URSS."],
+      minutes: 25,
+    },
+    takeaways: [
+      "La Guerre froide oppose deux **modèles**, pas deux armées sur un champ de bataille.",
+      "La **dissuasion nucléaire** interdit l'affrontement direct : on se bat par alliés interposés.",
+      "Berlin est le **symbole** du partage, de 1948 à 1989.",
+      "La détente ne met pas fin à la rivalité : elle la rend vivable.",
+      "L'URSS s'effondre de l'intérieur, en 1991, sans un coup de feu.",
+    ],
+    groups: [
+      { name: "Les causes", themes: [0, 1] },
+      { name: "Les crises", themes: [2, 3] },
+    ],
+    shortened: false,
+    singleQuiz: false,
+    status: "ready",
+    symbols: ["globe", "flag", "wall", "handshake"],
+  },
+  progress: { done: ["intro", "notes:0"], inCircle: 0.4, quizScores: {}, missed: [], seconds: { notes: 540 }, finishedAt: null },
+};
+courses.push(lesson);
+
+function q(theme, rank, question) {
+  return { id: `${theme}:${rank}`, difficulty: 1 + (rank % 3), ...question };
+}
+
+const chapters = [
+  {
+    id: THEME_IDS[0], position: 0, title: "La rupture de 1947", icon: "globe", status: "ready",
+    notes: {
+      oneLiner: "En 1947, les **États-Unis** et l'**URSS** passent d'alliés à adversaires, chacun avec sa doctrine.",
+      blocks: [
+        { type: "subtitle", text: "Deux camps" },
+        { type: "paragraph", text: "Les États-Unis défendent le **capitalisme** et la démocratie libérale ; l'URSS, le **communisme** et le parti unique. Les deux veulent étendre leur modèle." },
+        { type: "callout", kind: "why", title: "Deux visions du monde", text: "Chacun croit que l'autre veut dominer l'Europe : la méfiance précède les actes." },
+        { type: "definition", term: "Endiguement", text: "La politique américaine qui vise à **contenir** l'expansion soviétique, sans attaquer l'URSS." },
+        { type: "dates", items: [{ date: "mars 1947", text: "Doctrine Truman : aide aux pays menacés" }, { date: "juin 1947", text: "Plan Marshall : 13 milliards pour l'Europe" }, { date: "oct. 1947", text: "Doctrine Jdanov : le monde en deux camps" }] },
+        { type: "list", items: ["La doctrine Truman répond à la crise grecque.", "Le plan Marshall est refusé par l'URSS et ses satellites.", "Le Kominform coordonne les partis communistes."] },
+      ],
+      takeaways: ["1947 : deux doctrines, deux camps, plus de retour en arrière.", "L'endiguement est une politique de **défense**, pas d'attaque."],
+    },
+    quiz: { questions: [
+      q(THEME_IDS[0], 0, { kind: "choice", prompt: "Que vise l'**endiguement** ?", choices: ["Envahir l'URSS", "Contenir l'expansion soviétique", "Partager Berlin", "Signer la paix"], answer: 1, why: "Contenir, pas attaquer : c'est toute la doctrine Truman." }),
+      q(THEME_IDS[0], 1, { kind: "truefalse", prompt: "Le plan Marshall est accepté par l'URSS.", choices: ["Vrai", "Faux"], answer: 1, why: "L'URSS le refuse et l'interdit à ses satellites." }),
+      q(THEME_IDS[0], 2, { kind: "gap", prompt: "La doctrine ____ affirme que le monde se partage en deux camps.", choices: ["Jdanov", "Truman", "Marshall", "Monroe"], answer: 0, why: "Jdanov, en octobre 1947, répond à Truman." }),
+      q(THEME_IDS[0], 3, { kind: "order", prompt: "Remets ces événements de 1947 dans l'ordre.", choices: ["Doctrine Truman", "Plan Marshall", "Doctrine Jdanov"], answer: 0, why: "Mars, juin, octobre." }),
+    ] },
+  },
+  {
+    id: THEME_IDS[1], position: 1, title: "Le blocus de Berlin", icon: "fiole", status: "ready",
+    notes: {
+      oneLiner: "En 1948, Staline **bloque** Berlin-Ouest ; les Occidentaux répondent par un **pont aérien** de onze mois.",
+      blocks: [
+        { type: "paragraph", text: "Berlin, enclavée en zone soviétique, est coupée en quatre. Quand les Occidentaux créent le **Deutsche Mark**, Staline ferme routes et voies ferrées." },
+        { type: "steps", items: ["Juin 1948 : réforme monétaire à l'Ouest.", "Blocus des accès terrestres à Berlin-Ouest.", "Pont aérien : un avion toutes les trois minutes.", "Mai 1949 : Staline lève le blocus."] },
+        { type: "table", columns: ["Camp", "Réponse"], rows: [["URSS", "Blocus terrestre"], ["Occidentaux", "Pont aérien"], ["Résultat", "Deux Allemagnes en 1949"]] },
+        { type: "quote", text: "Nous resterons à Berlin, quoi qu'il arrive.", author: "Harry Truman" },
+        { type: "formula", latex: "277\\,000 \\text{ vols} \\approx 2{,}3 \\text{ Mt de fret}", caption: "Le pont aérien en chiffres" },
+        { type: "callout", kind: "mistake", title: null, text: "Le **mur** ne date pas du blocus : il est construit en **1961**, treize ans plus tard." },
+      ],
+      takeaways: ["Le blocus échoue : le pont aérien tient onze mois.", "1949 : RFA à l'Ouest, RDA à l'Est."],
+    },
+    quiz: { questions: [
+      q(THEME_IDS[1], 0, { kind: "choice", prompt: "Comment les Occidentaux répondent-ils au blocus ?", choices: ["Par un pont aérien", "Par une invasion", "En quittant Berlin", "Par un nouveau blocus"], answer: 0, why: "Un avion toutes les trois minutes, pendant onze mois." }),
+      q(THEME_IDS[1], 1, { kind: "match", prompt: "Associe chaque date à son événement.", choices: ["1948", "1949", "1961"], matches: ["Blocus de Berlin", "Deux Allemagnes", "Construction du mur"], answer: 0, why: "Blocus, partition, puis le mur." }),
+      q(THEME_IDS[1], 2, { kind: "choice", prompt: "Qu'est-ce qui déclenche le blocus ?", choices: ["La réforme monétaire à l'Ouest", "La mort de Staline", "La création de l'OTAN", "Le plan Marshall"], answer: 0, why: "Le Deutsche Mark, en juin 1948." }),
+      q(THEME_IDS[1], 3, { kind: "truefalse", prompt: "Le blocus de Berlin dure onze mois.", choices: ["Vrai", "Faux"], answer: 0, why: "De juin 1948 à mai 1949." }),
+    ] },
+  },
+  {
+    id: THEME_IDS[2], position: 2, title: "La crise des missiles", icon: "ampoule", status: "ready",
+    notes: {
+      oneLiner: "En octobre 1962, des **missiles soviétiques à Cuba** mènent le monde au bord de la guerre nucléaire.",
+      blocks: [
+        { type: "paragraph", text: "Kennedy impose un **blocus naval** de Cuba. Treize jours de tension, puis Khrouchtchev retire les missiles contre la promesse de ne pas envahir l'île." },
+        { type: "callout", kind: "remember", title: "La dissuasion", text: "Quand chacun peut détruire l'autre, personne n'attaque : c'est l'**équilibre de la terreur**." },
+        { type: "example", text: "Le « téléphone rouge » entre Washington et Moscou est installé en 1963, pour éviter qu'un malentendu dégénère." },
+      ],
+      takeaways: ["Treize jours : le point le plus chaud de la Guerre froide.", "La crise ouvre la **détente**."],
+    },
+    quiz: { questions: [
+      q(THEME_IDS[2], 0, { kind: "choice", prompt: "Que fait Kennedy face aux missiles à Cuba ?", choices: ["Un blocus naval", "Une invasion", "Rien", "Un bombardement"], answer: 0, why: "La « quarantaine » de l'île, sans attaque directe." }),
+      q(THEME_IDS[2], 1, { kind: "gap", prompt: "La crise de Cuba a lieu en octobre ____.", choices: ["1962", "1956", "1968", "1973"], answer: 0, why: "Octobre 1962, treize jours." }),
+      q(THEME_IDS[2], 2, { kind: "truefalse", prompt: "La crise se termine par le retrait des missiles soviétiques.", choices: ["Vrai", "Faux"], answer: 0, why: "Contre la promesse de ne pas envahir Cuba." }),
+    ] },
+  },
+  {
+    id: THEME_IDS[3], position: 3, title: "La chute du mur", icon: "loupe", status: "ready",
+    notes: {
+      oneLiner: "Le 9 novembre 1989, le **mur de Berlin** s'ouvre ; deux ans plus tard, l'URSS disparaît.",
+      blocks: [
+        { type: "paragraph", text: "Gorbatchev réforme l'URSS (**glasnost**, **perestroïka**) et renonce à intervenir chez ses satellites. Les régimes communistes tombent l'un après l'autre en 1989." },
+        { type: "list", items: ["Juin 1989 : élections libres en Pologne.", "9 novembre 1989 : ouverture du mur.", "3 octobre 1990 : réunification allemande.", "25 décembre 1991 : dissolution de l'URSS."] },
+        { type: "callout", kind: "tip", title: "Pour retenir", text: "1989 pour le mur, 1991 pour l'URSS : deux ans d'écart." },
+      ],
+      takeaways: ["La fin vient de l'intérieur du bloc de l'Est.", "1991 : fin de la Guerre froide."],
+    },
+    quiz: { questions: [
+      q(THEME_IDS[3], 0, { kind: "choice", prompt: "Quand le mur de Berlin s'ouvre-t-il ?", choices: ["9 novembre 1989", "3 octobre 1990", "25 décembre 1991", "13 août 1961"], answer: 0, why: "Le 9 novembre 1989, un soir de conférence de presse ratée." }),
+      q(THEME_IDS[3], 1, { kind: "order", prompt: "Remets dans l'ordre.", choices: ["Ouverture du mur", "Réunification allemande", "Dissolution de l'URSS"], answer: 0, why: "1989, 1990, 1991." }),
+      q(THEME_IDS[3], 2, { kind: "choice", prompt: "Que signifie **glasnost** ?", choices: ["Transparence", "Reconstruction", "Révolution", "Endiguement"], answer: 0, why: "La transparence ; la perestroïka est la reconstruction." }),
+    ] },
+  },
+].map((chapter) => ({ ...chapter, user_id: USER_ID, course_id: LESSON_ID, sheet: null, deleted_at: null, created_at: iso(day(-4)), updated_at: iso(day(-4)) }));
+
+// Quelques cartes pour la leçon : trois neuves, deux dues, une question ratée.
+let lessonCardSeed = 800;
+for (const [index, [front, back, extra]] of [
+  ["Qui annonce la doctrine de l'endiguement ?", "Truman, en mars 1947.", { state: "review", interval: 30, due: day(-1) }],
+  ["Que vise l'**endiguement** ?", "Contenir, pas attaquer : c'est toute la doctrine Truman.", { kind: "choice", choices: ["Envahir l'URSS", "Contenir l'expansion soviétique", "Partager Berlin", "Signer la paix"], correct: 1, state: "learning", interval: 0, due: day(0) }],
+  ["Combien de temps dure le blocus de Berlin ?", "Onze mois, de juin 1948 à mai 1949.", { state: "review", interval: 6, due: day(-2) }],
+  ["Que signifie glasnost ?", "Transparence.", { state: "new" }],
+  ["En quelle année l'URSS disparaît-elle ?", "1991.", { state: "new" }],
+  ["Le téléphone rouge est installé en ____.", "1963", { kind: "cloze", state: "new" }],
+].entries()) {
+  cards.push({
+    id: uuid(lessonCardSeed++), user_id: USER_ID, course_id: LESSON_ID, chapter_id: THEME_IDS[index % 4],
+    front, back, hint: null, position: index,
+    kind: extra.kind ?? "basic", choices: extra.choices ?? [], correct_choice_index: extra.correct ?? 0,
+    is_suspended: false, state: extra.state, due_date: iso(extra.due ?? day(0)),
+    interval_days: extra.interval ?? 0, ease_factor: 2.5, repetitions: extra.state === "new" ? 0 : 3, lapses: 0, step_index: 0,
+    created_at: iso(day(-4)), mask_x: 0, mask_y: 0, mask_width: 0, mask_height: 0, group_id: null, image_path: null, is_reversed: false, deleted_at: null,
+  });
+}
+
 export const tables = {
   courses,
   course_folders,
@@ -255,6 +414,12 @@ export const tables = {
   entitlements,
   availability_exceptions,
   feedback: [],
+  // La refonte « parcours » : les thèmes d'une leçon, et les tables de la porte du gratuit.
+  // Vides au départ : un cours de démonstration est un ancien cours, qui se convertit à
+  // l'ouverture et remplit `chapters` en mémoire.
+  chapters,
+  lesson_generations: [],
+  lesson_extras: [],
 };
 
 export function rpc(name, args) {
@@ -301,6 +466,16 @@ export function rpc(name, args) {
     case "record_course_view":
     case "record_course_adopt":
       return null;
+    // Les portes du gratuit (`begin_lesson`, `begin_extra`) : la démonstration est Pro, tout
+    // passe. Le site ne les appelle pas lui-même, la fonction `generate-lesson` le fait.
+    case "begin_lesson":
+    case "begin_extra":
+      return "ok";
+    case "refund_extra":
+    case "lesson_theme_call":
+      return null;
+    case "is_pro":
+      return true;
     default:
       return [];
   }
@@ -313,6 +488,147 @@ export function rpc(name, args) {
  * débriefing écrits à la main, assez réalistes pour que les écrans se regardent.
  */
 export function edgeFunction(name, body) {
+  // `generate-lesson`, étape « convert » : ce qu'un ancien cours reçoit pour devenir une leçon.
+  // Le modèle n'est pas là ; on rend une conversion plausible, deux questions par chapitre.
+  if (name === "generate-lesson" && body?.stage === "convert") {
+    const chapters = Array.isArray(body.chapters) ? body.chapters : [];
+    const size = chapters.length > 8 ? 3 : 2;
+    const groups = [];
+    for (let start = 0; start < chapters.length; start += size) {
+      groups.push({ name: ["Les bases", "Les mécanismes", "Les chiffres", "Pour aller plus loin"][groups.length % 4], themes: chapters.slice(start, start + size).map((_, offset) => start + offset) });
+    }
+    return {
+      conversion: {
+        icon: "globe",
+        intro: { lines: ["D'où vient l'eau qui tombe.", "Comment elle circule.", "Où elle finit."], minutes: 5 + chapters.length * 3 },
+        takeaways: ["L'eau change d'état, jamais de quantité.", "Le Soleil est le moteur du cycle.", "Les océans portent 97 % de l'eau."],
+        groups,
+        chapters: chapters.map((chapter, index) => ({
+          icon: ["globe", "fiole", "ampoule", "loupe"][index % 4],
+          questions: CHOICES.slice(0, 3).map((question, number) => ({
+            kind: "choice",
+            prompt: `${chapter.title} — ${question.prompt}`,
+            choices: question.choices,
+            answer: question.answerIndex,
+            why: question.why,
+            difficulty: 1 + (number % 3),
+          })),
+          flashcards: chapter.needsCards ? [{ front: `Que retenir de « ${chapter.title} » ?`, back: "L'essentiel du chapitre, en une phrase." }] : [],
+        })),
+      },
+    };
+  }
+  // `generate-lesson`, étape « plan » : un plan plausible, quatre thèmes, depuis le sujet ou le texte.
+  if (name === "generate-lesson" && body?.stage === "plan") {
+    const topic = typeof body.topic === "string" && body.topic.trim() ? body.topic.trim() : null;
+    const title = topic ? topic.charAt(0).toUpperCase() + topic.slice(1) : "Le cycle de l'eau";
+    return {
+      plan: {
+        title,
+        subject: topic ? "Histoire" : "SVT",
+        icon: topic ? "parchemin" : "globe",
+        material: topic ? "topic" : "chapter",
+        themes: [
+          { title: "Les bases", icon: "livre-ouvert", symbol: "book.closed", points: ["Définitions", "Vocabulaire"], role: "ground" },
+          { title: "Les mécanismes", icon: "fiole", symbol: "testtube.2", points: ["Causes", "Effets"], role: "mechanism" },
+          { title: "Les chiffres", icon: "calculatrice", symbol: "number", points: ["Ordres de grandeur"], role: "ground" },
+          { title: "Pour aller plus loin", icon: "fusee", symbol: "sparkles", points: ["Limites", "Débats"], role: "synthesis" },
+        ],
+        groups: [{ name: "Comprendre", themes: [0, 1] }, { name: "Mesurer", themes: [2, 3] }],
+        intro: { lines: [`Ce que « ${title} » veut dire.`, "Comment ça marche, étape par étape.", "Les chiffres à retenir."], minutes: 22 },
+        takeaways: ["Une idée simple, à savoir redire.", "Les mécanismes expliquent les chiffres.", "Les limites comptent autant que le modèle."],
+        shortened: false,
+        singleQuiz: false,
+      },
+      contextText: topic ? "" : String(body.text ?? "").slice(0, 60_000),
+    };
+  }
+
+  // Étape « thème » : des notes courtes et quatre questions, avec un délai pour voir le chemin
+  // se remplir rond après rond.
+  if (name === "generate-lesson" && body?.stage === "theme") {
+    const index = Number(body.themeIndex ?? 0);
+    const titles = Array.isArray(body.themes) ? body.themes : [];
+    const themeTitle = titles[index] ?? `Thème ${index + 1}`;
+    const theme = {
+      notes: {
+        oneLiner: `**${themeTitle}** : l'idée en une phrase, pour commencer.`,
+        blocks: [
+          { type: "subtitle", text: "L'essentiel" },
+          { type: "paragraph", text: `Ce thème explique **${themeTitle.toLowerCase()}** avec des mots simples et un exemple à chaque fois.` },
+          { type: "list", items: ["Un premier point à retenir.", "Un deuxième, avec un **mot-clé**.", "Un troisième, plus court."] },
+          { type: "callout", kind: index % 2 ? "tip" : "remember", title: null, text: "La règle que l'on oublie le plus souvent." },
+        ],
+        takeaways: [`${themeTitle} tient en une idée.`, "Un exemple vaut mieux qu'une définition."],
+      },
+      questions: [
+        { kind: "choice", prompt: `Quelle idée résume « ${themeTitle} » ?`, choices: ["La bonne", "Une fausse", "Une autre fausse", "La dernière"], answer: 0, why: "C'est l'idée de la phrase d'ouverture.", difficulty: 1 },
+        { kind: "truefalse", prompt: `« ${themeTitle} » se résume en une phrase.`, choices: ["Vrai", "Faux"], answer: 0, why: "C'est le principe des notes.", difficulty: 1 },
+        { kind: "gap", prompt: "Un exemple vaut mieux qu'une ____.", choices: ["définition", "liste", "formule", "date"], answer: 0, why: "C'est la deuxième phrase à retenir.", difficulty: 2 },
+        { kind: "order", prompt: "Remets les points dans l'ordre des notes.", choices: ["Le premier point", "Le deuxième point", "Le troisième point"], answer: 0, why: "L'ordre de la liste.", difficulty: 3 },
+      ],
+      flashcards: [
+        { kind: "basic", front: `Que retenir de « ${themeTitle} » ?`, back: "Une idée simple, et un exemple." },
+        { kind: "cloze", front: "Un exemple vaut mieux qu'une ____.", back: "définition" },
+      ],
+    };
+    return new Promise((resolve) => setTimeout(() => resolve({ theme }), 1500 + index * 900));
+  }
+
+  // Étape « exam » : une copie de la taille demandée, qui alterne les leçons et les formes.
+  if (name === "generate-lesson" && body?.stage === "exam") {
+    const lessons = Array.isArray(body.lessons) ? body.lessons : [];
+    const count = Math.max(6, Math.min(30, Number(body.count ?? 10)));
+    const questions = [];
+    for (let i = 0; i < count; i++) {
+      const lesson = lessons.length ? i % lessons.length : 0;
+      const themes = Array.isArray(lessons[lesson]?.themes) ? lessons[lesson].themes.length : 1;
+      const theme = themes ? i % themes : 0;
+      const themeTitle = lessons[lesson]?.themes?.[theme]?.title ?? "ce thème";
+      const kind = ["choice", "truefalse", "gap", "choice", "order", "match"][i % 6];
+      const base = { lesson, theme, why: `C'est ce que disent les notes de « ${themeTitle} ».`, difficulty: 1 + (i % 3) };
+      if (kind === "truefalse") questions.push({ ...base, kind, prompt: `« ${themeTitle} » se résume en une idée.`, choices: ["Vrai", "Faux"], answer: 0 });
+      else if (kind === "gap") questions.push({ ...base, kind, prompt: `Le thème « ${themeTitle} » tient en une ____.`, choices: ["idée", "liste", "formule", "date"], answer: 0 });
+      else if (kind === "order") questions.push({ ...base, kind, prompt: "Remets les étapes dans l'ordre.", choices: ["Lire", "Comprendre", "Retenir"], answer: 0 });
+      else if (kind === "match") questions.push({ ...base, kind, prompt: "Associe chaque terme à sa définition.", choices: ["Lire", "Comprendre", "Retenir"], matches: ["Parcourir le texte", "Saisir l'idée", "Garder en mémoire"], answer: 0 });
+      else questions.push({ ...base, kind, prompt: `Question ${i + 1} sur « ${themeTitle} » : quelle idée la résume ?`, choices: ["La bonne", "Une fausse", "Une autre", "La dernière"], answer: 0 });
+    }
+    return new Promise((resolve) => setTimeout(() => resolve({ exam: { title: body.examTitle || "Examen blanc", questions } }), 1200));
+  }
+
+  // Étape « practice » : dix questions neuves, sur les thèmes demandés.
+  if (name === "generate-lesson" && body?.stage === "practice") {
+    const themes = Array.isArray(body.practiceThemes) ? body.practiceThemes : [];
+    const count = Math.max(4, Math.min(20, Number(body.count ?? 10)));
+    const stamp = Date.now() % 1000;
+    const questions = Array.from({ length: count }, (_, i) => {
+      const theme = themes.length ? i % themes.length : 0;
+      const title = themes[theme]?.title ?? "ce thème";
+      return i % 3 === 1
+        ? { kind: "truefalse", prompt: `Nouvelle question ${stamp}-${i + 1} : « ${title} » a une idée centrale.`, choices: ["Vrai", "Faux"], answer: 0, why: "Toujours.", theme, difficulty: 1 + (i % 3) }
+        : { kind: "choice", prompt: `Nouvelle question ${stamp}-${i + 1} sur « ${title} » ?`, choices: ["La bonne", "Une fausse", "Une autre", "La dernière"], answer: 0, why: "C'est dans les notes.", theme, difficulty: 1 + (i % 3) };
+    });
+    return new Promise((resolve) => setTimeout(() => resolve({ questions }), 1200));
+  }
+
+  // `transcribe-audio` : un enregistrement devient du texte.
+  if (name === "transcribe-audio") {
+    return { transcript: { text: "Bonjour à tous, aujourd'hui nous allons voir le cycle de l'eau. L'eau circule en permanence entre les océans, l'atmosphère et les continents, et ce cycle est alimenté par l'énergie du Soleil." } };
+  }
+
+  // `mika-chat` : Mika répond, et propose une carte quand il y a quelque chose à retenir.
+  if (name === "mika-chat") {
+    const turns = Array.isArray(body?.messages) ? body.messages : [];
+    const last = turns[turns.length - 1]?.text ?? "";
+    const title = body?.attachment?.title ?? "ta leçon";
+    return {
+      answer: {
+        reply: `Sur « ${title} », voici l'essentiel : le **Soleil** chauffe l'eau des océans, elle s'évapore, se condense en nuages, puis retombe en pluie.\n\nTu m'as demandé : « ${last.slice(0, 80)} ». Dis-moi si tu veux un exemple.`,
+        card: { front: "Qu'est-ce qui fournit l'énergie du cycle de l'eau ?", back: "Le rayonnement solaire : c'est lui qui provoque l'évaporation." },
+      },
+    };
+  }
+
   if (name === "generate-mock") {
     const quota = body?.quota ?? { choice: 9, truefalse: 5, gap: 3, feynman: 3 };
     const questions = [];

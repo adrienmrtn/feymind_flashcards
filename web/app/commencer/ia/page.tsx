@@ -1,11 +1,11 @@
 "use client";
 
 import { StoryScaffold } from "@/components/onboarding/Scaffold";
-import { AiStory } from "@/components/onboarding/stories/AiStory";
+import { MikaWritesStory } from "@/components/onboarding/stories/MikaWritesStory";
 import { useI18n } from "@/lib/i18n/client";
 
-/** Les quatre façons dont Micabo interroge : examen blanc, QCM, carte, texte à trou. */
-export default function AiStep() {
+/** Qui écrit : Mika, les notes thème par thème, puis les quiz et les flashcards. */
+export default function MikaStep() {
   const { t } = useI18n();
   return (
     <StoryScaffold
@@ -17,7 +17,7 @@ export default function AiStep() {
       }
       lead={t("onboarding.iaLead")}
     >
-      <AiStory />
+      <MikaWritesStory />
     </StoryScaffold>
   );
 }

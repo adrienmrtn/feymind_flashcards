@@ -23,7 +23,6 @@ import {
   languageFor,
   sheetLanguage,
 } from "../src/onboarding/countries";
-import { examStoryFor } from "../src/onboarding/exam-story";
 import {
   TIER_LADDER,
   resolveStage,
@@ -194,22 +193,6 @@ describe("les pays", () => {
     expect(isoFromFlagEmoji("🇫🇷")).toBe("fr");
     expect(isoFromFlagEmoji("🇬🇧")).toBe("gb");
     expect(isoFromFlagEmoji("🏺")).toBeNull();
-  });
-});
-
-describe("l'exemple d'examen du parcours", () => {
-  it("donne 17/20 en France, et l'équivalent ailleurs", () => {
-    expect(examStoryFor("fr").grade.score).toBe("17/20");
-    expect(examStoryFor("de").grade.score).toBe("1,3");
-    expect(examStoryFor("uk").grade.score).toBe("A");
-    expect(examStoryFor("us").grade.score).toBe("A");
-    expect(examStoryFor("it").grade.score).toBe("8,5/10");
-    expect(examStoryFor("pl").grade.score).toBe("5");
-  });
-
-  it("prend une langue vivante déjà choisie pour titrer l'examen", () => {
-    expect(examStoryFor("fr", ["Mathématiques", "Espagnol"]).examName).toMatch(/espagnol/i);
-    expect(examStoryFor("fr", ["Mathématiques", "Espagnol"]).courses).toContain("Espagnol");
   });
 });
 

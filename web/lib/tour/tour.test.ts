@@ -1,12 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  BUBBLE_GAP,
-  EDGE_MARGIN,
-  HOLE_PADDING,
-  bubblePlacement,
-  holeAround,
-} from "./place";
+import { BUBBLE_GAP, EDGE_MARGIN, HOLE_PADDING, bubblePlacement, holeAround } from "./place";
 import { shouldOpenTour } from "./state";
 import { TOURS, TOUR_IDS, isTourId, stepsForWidth, tourFor } from "./steps";
 import { fr } from "../i18n/catalogs/fr";
@@ -28,44 +22,24 @@ const OPEN = {
 };
 
 describe("tourFor", () => {
-  it("donne une visite à chacune des pages de l'app", () => {
-    const pages = [
-      "/app",
-      "/app/reviser",
-      "/app/cours",
-      "/app/progres",
-      "/app/amis",
-      "/app/plan",
-      "/app/reglages",
-      "/app/importer",
-      "/app/c/abc",
-      "/app/c/abc/cartes",
-    ];
-    for (const pathname of pages) {
-      expect(tourFor({ pathname, inSession: false })).not.toBeNull();
-    }
-  });
-
-  it("sépare la session de l'écran qui la précède", () => {
-    expect(tourFor({ pathname: "/app/reviser", inSession: false })?.id).toBe("reviser");
-    expect(tourFor({ pathname: "/app/reviser", inSession: true })?.id).toBe("session");
-  });
-
-  it("lit l'atelier des cartes avant la fiche", () => {
-    expect(tourFor({ pathname: "/app/c/abc/cartes", inSession: false })?.id).toBe("cours-cartes");
-    expect(tourFor({ pathname: "/app/c/abc", inSession: false })?.id).toBe("cours-fiche");
+  it("donne une visite aux quatre onglets, et au chemin d'une leçon", () => {
+    expect(tourFor({ pathname: "/app" })?.id).toBe("accueil");
+    expect(tourFor({ pathname: "/app/lecons" })?.id).toBe("lecons");
+    expect(tourFor({ pathname: "/app/lecons/abc" })?.id).toBe("lecon");
+    expect(tourFor({ pathname: "/app/examen" })?.id).toBe("examen");
+    expect(tourFor({ pathname: "/app/profil" })?.id).toBe("profil");
   });
 
   it("supporte la barre oblique finale", () => {
-    expect(tourFor({ pathname: "/app/cours/", inSession: false })?.id).toBe("cours");
-    expect(tourFor({ pathname: "/app", inSession: false })?.id).toBe("accueil");
-    expect(tourFor({ pathname: "/app/plan/", inSession: false })?.id).toBe("plan");
-    expect(tourFor({ pathname: "/app/progres/", inSession: false })?.id).toBe("progres");
+    expect(tourFor({ pathname: "/app/lecons/" })?.id).toBe("lecons");
+    expect(tourFor({ pathname: "/app/examen/" })?.id).toBe("examen");
   });
 
-  it("ne visite pas le profil public d'un ami ni un cours repris", () => {
-    expect(tourFor({ pathname: "/app/u/leo", inSession: false })).toBeNull();
-    expect(tourFor({ pathname: "/app/b/abc", inSession: false })).toBeNull();
+  it("ne visite ni une étape, ni les amis, ni le profil d'un camarade", () => {
+    expect(tourFor({ pathname: "/app/lecons/abc/etape/intro" })).toBeNull();
+    expect(tourFor({ pathname: "/app/lecons/abc/notes" })).toBeNull();
+    expect(tourFor({ pathname: "/app/profil/amis" })).toBeNull();
+    expect(tourFor({ pathname: "/app/u/leo" })).toBeNull();
   });
 });
 
@@ -82,6 +56,16 @@ describe("le catalogue des visites", () => {
       const anchors = tour.steps.map((step) => step.anchor);
       expect(new Set(anchors).size).toBe(anchors.length);
       expect(anchors.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("a une phrase pour chaque bulle", () => {
+    const tree = fr as unknown as MessageTree;
+    for (const tour of TOURS) {
+      for (const step of tour.steps) {
+        expect(lookup(tree, step.title), step.title).toBeTypeOf("string");
+        expect(lookup(tree, step.body), step.body).toBeTypeOf("string");
+      }
     }
   });
 
@@ -104,34 +88,25 @@ describe("le catalogue des visites", () => {
   it("ne parle pas de ce que le gratuit ferme", () => {
     for (const tour of TOURS) {
       for (const step of tour.steps) {
-        expect(stepCopy(step).toLowerCase()).not.toMatch(
-          /\bpro\b|abonn|gratuit|payant|essai|limite/,
-        );
+        expect(stepCopy(step).toLowerCase()).not.toMatch(/\bpro\b|abonn|gratuit|payant|essai|limite/);
       }
     }
-  });
-
-  it("garde la session sans voile, et à deux bulles", () => {
-    const session = TOURS.find((tour) => tour.id === "session");
-    expect(session?.mode).toBe("hint");
-    expect(session?.steps).toHaveLength(2);
   });
 });
 
 describe("stepsForWidth", () => {
   it("saute la barre latérale sur téléphone", () => {
-    const home = tourFor({ pathname: "/app", inSession: false })!;
+    const home = tourFor({ pathname: "/app" })!;
     const wide = stepsForWidth(home, 1280).map((step) => step.anchor);
     const narrow = stepsForWidth(home, 420).map((step) => step.anchor);
 
     expect(wide).toContain("nav");
     expect(narrow).not.toContain("nav");
-    expect(narrow).not.toContain("nav-importer");
-    expect(narrow).toContain("aujourdhui");
+    expect(narrow).toContain("home-barre");
   });
 
   it("garde toutes les bulles dès 1024 px", () => {
-    const home = tourFor({ pathname: "/app", inSession: false })!;
+    const home = tourFor({ pathname: "/app" })!;
     expect(stepsForWidth(home, 1024)).toHaveLength(home.steps.length);
   });
 });
@@ -156,7 +131,7 @@ describe("shouldOpenTour", () => {
 
   it("ne repasse pas sur une page déjà vue", () => {
     expect(shouldOpenTour({ ...OPEN, seen: ["accueil"] })).toBe(false);
-    expect(shouldOpenTour({ ...OPEN, seen: ["cours"] })).toBe(true);
+    expect(shouldOpenTour({ ...OPEN, seen: ["lecons"] })).toBe(true);
   });
 
   it("respecte un refus global", () => {
@@ -164,9 +139,7 @@ describe("shouldOpenTour", () => {
   });
 
   it("rejoue tout quand on le demande", () => {
-    expect(
-      shouldOpenTour({ ...OPEN, debug: true, skipped: true, seen: ["accueil"], isPaid: true }),
-    ).toBe(true);
+    expect(shouldOpenTour({ ...OPEN, debug: true, skipped: true, seen: ["accueil"], isPaid: true })).toBe(true);
   });
 });
 

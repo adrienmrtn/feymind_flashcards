@@ -51,9 +51,8 @@ export function TourHost({
   const pathname = usePathname();
   const params = useSearchParams();
   const debug = params.get("debug") === "visite";
-  const inSession = params.get("go") === "1";
 
-  const tour = useMemo(() => tourFor({ pathname, inSession }), [inSession, pathname]);
+  const tour = useMemo(() => tourFor({ pathname }), [pathname]);
 
   // Le serveur ne relit pas la colonne à chaque navigation interne : la liste
   // se complète donc ici, et le rechargement suivant la retrouve en base.

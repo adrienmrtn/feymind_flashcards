@@ -10,6 +10,8 @@ import { shouldPreserveRemoteProfile } from "@/lib/auth/existing-account";
 import { ONBOARDING_CREATE_COOKIE } from "@/lib/auth/onboarding-create";
 import { ONBOARDING_REPLAY_COOKIE } from "@/lib/auth/onboarding-replay";
 import { revalidateUserData } from "@/lib/data/cache";
+import { getTranslator } from "@/lib/i18n/server";
+import { installDemoLesson } from "@/lib/onboarding/demo-lesson";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -105,6 +107,12 @@ export async function saveOnboarding(payload: OnboardingPayload): Promise<SaveRe
 
   jar.delete(ONBOARDING_REPLAY_COOKIE);
   jar.delete(ONBOARDING_CREATE_COOKIE);
+
+  // **La leçon de démonstration**, pour qui arrive sans rien : le cycle de l'eau, prête, dans
+  // la langue du parcours. Elle attend dans « Reprendre » sur Home. Qui a déjà une leçon n'en
+  // reçoit pas une de plus.
+  const { t } = await getTranslator();
+  await installDemoLesson(user.id, t, payload.country ?? null).catch(() => false);
 
   // Une date encore présente dans les réponses (un ancien parcours) crée une vraie ligne
   // dans `exams`. Le parcours actuel n'en pose plus : il montre l'exemple, et l'examen

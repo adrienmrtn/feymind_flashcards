@@ -1,5 +1,4 @@
 export const legalDe = {
-  backHome: "Zurück zur Startseite",
   eyebrow: "Micabo · iPhone und Website",
   updated: "Zuletzt aktualisiert: {date}.",
   updatedDate: "2. September 2026",

@@ -1,10 +1,10 @@
 "use client";
 
 import { StoryScaffold } from "@/components/onboarding/Scaffold";
-import { FormatsStory } from "@/components/onboarding/stories/FormatsStory";
+import { SupportsStory } from "@/components/onboarding/stories/SupportsStory";
 import { useI18n } from "@/lib/i18n/client";
 
-/** Ce qu'on apporte, et ce que Micabo accepte : tout ce qui traîne autour d'un examen. */
+/** Ce qu'on apporte : un sujet tapé, ou un des cinq supports de la barre de Home. */
 export default function ImportStep() {
   const { t } = useI18n();
   return (
@@ -17,7 +17,7 @@ export default function ImportStep() {
       }
       lead={t("onboarding.importerLead")}
     >
-      <FormatsStory />
+      <SupportsStory />
     </StoryScaffold>
   );
 }

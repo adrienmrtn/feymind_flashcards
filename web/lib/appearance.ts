@@ -15,9 +15,10 @@ export const DEFAULT_APPEARANCE: Appearance = "day";
 export const APPEARANCE_COOKIE = "micabo.appearance";
 export const APPEARANCE_STORAGE = "micabo.appearance";
 
+/** Le papier de chaque mode : l'ivoire et la nuit de `MicaboPalette`, comme `--color-canvas`. */
 export const APPEARANCE_THEME_COLOR: Record<Appearance, string> = {
-  day: "#f6f7f9",
-  night: "#101216",
+  day: "#f6f4ed",
+  night: "#121317",
   twilight: "#1c1612",
 };
 
@@ -26,14 +27,14 @@ export const APPEARANCE_SHADER: Record<
   { mesh: string[]; grain: string[]; back: string }
 > = {
   day: {
-    mesh: ["#dbeafe", "#f6f7f9", "#3b82f6", "#2563eb"],
-    grain: ["#dbeafe", "#f6f7f9", "#3b82f6"],
-    back: "#f6f7f9",
+    mesh: ["#dbeafe", "#f6f4ed", "#3b82f6", "#2563eb"],
+    grain: ["#dbeafe", "#f6f4ed", "#3b82f6"],
+    back: "#f6f4ed",
   },
   night: {
-    mesh: ["#1e3a5f", "#121418", "#3b82f6", "#1d4ed8"],
-    grain: ["#1e3a5f", "#121418", "#3b82f6"],
-    back: "#101216",
+    mesh: ["#1d2a45", "#121317", "#3b82f6", "#1d4ed8"],
+    grain: ["#1d2a45", "#121317", "#3b82f6"],
+    back: "#121317",
   },
   twilight: {
     mesh: ["#3a2e48", "#1c1612", "#8bb0ff", "#c4a574"],
@@ -64,7 +65,7 @@ export const APPEARANCE_BOOT_SCRIPT = `(function(){
     root.classList.toggle("dark", a !== "day");
     root.style.colorScheme = a === "day" ? "light" : "dark";
     var meta = document.querySelector('meta[name="theme-color"]');
-    var colors = { day: "#f6f7f9", night: "#101216", twilight: "#1c1612" };
+    var colors = { day: "#f6f4ed", night: "#121317", twilight: "#1c1612" };
     if (meta) meta.setAttribute("content", colors[a]);
   } catch (e) {}
 })();`;

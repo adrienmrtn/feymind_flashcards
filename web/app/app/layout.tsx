@@ -7,26 +7,21 @@ import { PaywallHost } from "@/components/app/PaywallFlow";
 import { TourHost } from "@/components/app/Tour";
 import { entitlement } from "@micabo/core";
 
-import { canImportNow, ownedCourseCount, readEntitlement } from "@/lib/data/entitlement";
+import { ownedCourseCount, readEntitlement } from "@/lib/data/entitlement";
 import { readProfile } from "@/lib/data/profile";
 import { currentUser } from "@/lib/data/user";
-import { canReadInbox } from "@/lib/feedback";
 import { getTranslator } from "@/lib/i18n/server";
 import { PresentmentProvider } from "@/lib/presentment";
 
 /**
- * La charpente de l'app : le chrome de micabo OS.
- *
- * Sidebar, en-tête, page. Le compte se reconnaît en bas à gauche.
- *
- * Le nom et le droit d'importer partent **ensemble** : la charpente n'a pas besoin du premier
- * pour attendre le second, et les enchaîner ajoutait un aller-retour à chaque ouverture dure.
+ * La charpente de l'app : quatre onglets (Home, Leçons, Examen, Profil), la page, et les
+ * offres montées une fois pour toute l'app. Le compte se reconnaît en bas à gauche.
  */
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await currentUser();
   if (!user) redirect("/commencer/compte?suite=%2Fapp");
 
-  const [profile, canImport, { t }] = await Promise.all([readProfile(), canImportNow(), getTranslator()]);
+  const [profile, { t }] = await Promise.all([readProfile(), getTranslator()]);
 
   const userName =
     profile?.display_name?.trim() ||
@@ -34,12 +29,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const userInitial = userName.replace(/^@/, "").charAt(0).toUpperCase() || "M";
 
   return (
-    <AppChrome
-      userName={userName}
-      userInitial={userInitial}
-      canImport={canImport}
-      canReadInbox={canReadInbox(user.email)}
-    >
+    <AppChrome userName={userName} userInitial={userInitial}>
       <PresentmentProvider country={profile?.country_code}>
         {children}
         <Suspense fallback={null}>

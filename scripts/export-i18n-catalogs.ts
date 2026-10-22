@@ -20,6 +20,10 @@ const authOutDir = join(root, "Micabo/Services/Auth/Generated");
 
 function flatten(tree: Record<string, unknown>, prefix = "", into: Record<string, string> = {}) {
   for (const [key, value] of Object.entries(tree)) {
+    // Les phrases de la leçon font le chemin inverse : nées dans `LessonI18nCatalogs.swift`,
+    // recopiées sur le site par `web/scripts/sync-lesson-catalogs.mjs`. Les redescendre
+    // ici les écrirait deux fois dans l'app.
+    if (!prefix && key === "lesson") continue;
     const path = prefix ? `${prefix}.${key}` : key;
     if (value && typeof value === "object") flatten(value as Record<string, unknown>, path, into);
     else into[path] = String(value);

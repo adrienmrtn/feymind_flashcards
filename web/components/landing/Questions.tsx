@@ -27,7 +27,7 @@ export function Questions() {
     { question: t("landing.faq2q"), answer: t("landing.faq2a") },
     { question: t("landing.faq3q"), answer: t("landing.faq3a") },
     { question: t("landing.faq4q"), answer: t("landing.faq4a") },
-    { question: t("landing.faq6q"), answer: t("landing.faq6a") },
+    { question: t("landing.faq5q"), answer: t("landing.faq5a") },
   ];
   return (
     <div className="paper overflow-hidden rounded-sheet bg-surface">

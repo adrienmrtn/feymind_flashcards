@@ -18,31 +18,31 @@
 
 @theme {
   /* ---- Fonds ---- */
-  --color-canvas: #f6f7f9;
+  --color-canvas: #f6f4ed;
   --color-surface: #ffffff;
-  --color-surface-muted: #eef0f3;
-  --color-surface-sunken: #e5e7eb;
-  --color-stroke: #e8eaee;
-  --color-stroke-strong: #d4d7dd;
+  --color-surface-muted: #f0ede4;
+  --color-surface-sunken: #e9e5da;
+  --color-stroke: #e7e2d7;
+  --color-stroke-strong: #dad4c7;
 
   /* Filet de séparation d'une rangée à l'autre. Il reste une bordure : une ombre porte la
      profondeur, une bordure porte la structure, et un séparateur est de la structure. */
-  --color-hairline: #eef0f3;
-  --color-hairline-on-canvas: #e5e7eb;
+  --color-hairline: #ece8de;
+  --color-hairline-on-canvas: #e3ded2;
 
   /* ---- Encre ---- */
-  --color-ink: #191c20;
-  --color-ink-secondary: #6b7280;
-  --color-ink-tertiary: #737373;
+  --color-ink: #1b1e24;
+  --color-ink-secondary: #63676f;
+  --color-ink-tertiary: #85878c;
   /* Encre des longs paragraphes d'une fiche. Un noir de titre tenu sur trente lignes fatigue :
      celui-ci est à peine remonté. */
-  --color-ink-reading: #25282d;
+  --color-ink-reading: #2a2d33;
 
-  --color-on-ink: #f7f8fa;
-  --color-on-ink-muted: #9ca3af;
+  --color-on-ink: #ffffff;
+  --color-on-ink-muted: #a8abb3;
 
   /* Le gris teinté de vert, pour les écrans qui ne sont ni une liste ni une lecture. */
-  --color-canvas-sage: #e8eee9;
+  --color-canvas-sage: #f6f4ed;
 
   /* ---- Accent ----
      Deux bleus, et la distinction est fonctionnelle. `accent` est assez sombre pour porter du
@@ -55,39 +55,39 @@
   /* Toute progression porte cette couleur, sans exception. Une seule couleur pour « ça
      avance », sinon on cherche un sens derrière chaque nuance. */
   --color-progress: #2563eb;
-  --color-progress-track: #e5e7eb;
+  --color-progress-track: #e7e2d7;
 
   /* Le jaune du surligneur de la fiche. Le passage marqué a été de l'encre bleue pendant une
      version, parce qu'un fond posé derrière le texte se battait avec l'interligne. Mais du
      texte bleu au milieu d'un paragraphe se lit comme un lien, pas comme un surlignage,
      d'autant que le bleu est déjà l'accent de l'app. La bande est revenue, et son épaisseur
      est tenue en `em` par `.sheet-marker` : elle ne dépend plus de la hauteur de ligne. */
-  --color-sheet-marker: #f5d76e;
+  --color-sheet-marker: #fff0a6;
 
   /* Les cinq surligneurs, et le choix qui va avec : ils sont **pastel**, donc l'encre reste
      lisible dessus. Un feutre saturé oblige à alléger le texte pour qu'il ressorte, et une
      fiche qu'on a surlignée en entier devient alors moins lisible qu'avant de l'avoir
      travaillée. Cinq teintes parce qu'au-delà on ne les distingue plus en diagonale, et que
      le code couleur d'une fiche ne tient que s'il se retient. */
-  --color-hl-jaune: #f8e08e;
-  --color-hl-menthe: #bfe6cf;
-  --color-hl-bleu: #c3ddf7;
-  --color-hl-rose: #f7cdda;
-  --color-hl-lilas: #dcd0f5;
+  --color-hl-jaune: #fff0a6;
+  --color-hl-menthe: #c9ebd3;
+  --color-hl-bleu: #d6e7fb;
+  --color-hl-rose: #fbd9e4;
+  --color-hl-lilas: #dcc9fb;
 
   /* ---- Retours d'information ---- */
-  --color-positive: #3f7d53;
-  --color-caution: #b3872b;
+  --color-positive: #2f7d57;
+  --color-caution: #8a6410;
   /* Le jaune des **grandes** surfaces, et d'elles seules. Même partage que l'accent :
      `caution` est assombri pour porter du texte de onze points sur un fond pastel, ce qui en
      fait un ocre terne dès qu'on le tient sur cent points de haut. */
-  --color-caution-vivid: #e8b23c;
+  --color-caution-vivid: #ffc53d;
   --color-negative: #c93b2b;
   --color-info: #3a6fc4;
-  --color-positive-soft: #e3f1e2;
-  --color-caution-soft: #faf0d8;
-  --color-negative-soft: #fae6e1;
-  --color-info-soft: #e2ecf9;
+  --color-positive-soft: #def5e7;
+  --color-caution-soft: #fdf1d6;
+  --color-negative-soft: #fde8e2;
+  --color-info-soft: #e3edfc;
 
   /* ---- L'offre cadeau ----
      Les seules couleurs du produit qui ne sont ni le vert de Micabo ni son papier, et c'est
@@ -106,18 +106,55 @@
   --app-float-dock: 0px;
 
   /* Chrome de micabo OS, pour l'app connectée. */
-  --color-sidebar: #fafafa;
-  --color-sidebar-foreground: #727272;
-  --color-sidebar-accent: rgba(0, 0, 0, 0.04);
-  --color-sidebar-accent-foreground: #262626;
-  --color-sidebar-border: rgba(0, 0, 0, 0.06);
+  --color-sidebar: #f0ede4;
+  --color-sidebar-foreground: #63676f;
+  --color-sidebar-accent: rgba(27, 30, 36, 0.05);
+  --color-sidebar-accent-foreground: #1b1e24;
+  --color-sidebar-border: rgba(27, 30, 36, 0.08);
 
+  /* ---- La leçon ----
+     Ce que la refonte « parcours » ajoute, porté de `MicaboPalette.day` : le violet des
+     mots-clés (son seul usage), le vert et le rouge d'une réponse, le rail d'une barre, et
+     les cinq tons d'une leçon en trois nuances — pâle pour un fond d'encadré, vive pour un
+     aplat sans texte (étape cochée, trait, barre), encre pour ce qui s'écrit sur le pâle.
+
+     Dans un bloc `static` : ces jetons se lisent surtout depuis des styles en ligne
+     (`var(--color-tone-blue-vivid)`), que Tailwind ne voit pas, et un jeton qu'aucune classe
+     n'emploie est retiré de la feuille. Ici, ils sont toujours écrits. */
+}
+
+@theme static {
+  --color-keyword: #7c3aed;
+  --color-correct: #16a34a;
+  --color-correct-ink: #15803d;
+  --color-correct-soft: #dcfce7;
+  --color-wrong: #dc2626;
+  --color-wrong-ink: #b91c1c;
+  --color-wrong-soft: #fee2e2;
+  --color-track: #e3ded2;
+  --color-tone-yellow-pale: #fff1b8;
+  --color-tone-yellow-vivid: #f2b200;
+  --color-tone-yellow-ink: #7a5600;
+  --color-tone-mint-pale: #cdefdc;
+  --color-tone-mint-vivid: #22b573;
+  --color-tone-mint-ink: #146c45;
+  --color-tone-blue-pale: #d6e7fb;
+  --color-tone-blue-vivid: #3b82f6;
+  --color-tone-blue-ink: #1d4ed8;
+  --color-tone-pink-pale: #fbd9e4;
+  --color-tone-pink-vivid: #ec5b8f;
+  --color-tone-pink-ink: #a8204f;
+  --color-tone-lilac-pale: #e4d9fb;
+  --color-tone-lilac-vivid: #8b5cf6;
+  --color-tone-lilac-ink: #5b21b6;
+}
+
+@theme {
   /* ---- Typographie ----
-     Hanken Grotesk écrit les mots. Nunito écrit **les nombres**, et rien d'autre : un grand
-     nombre en grotesque serré ressemble à un indicateur de tableau de bord, le même en arrondi
-     ressemble à un score, et un élève doit avoir envie de le faire monter. C'est le report sur
-     le web du couple Hanken + SF Rounded de l'app, pas une nouvelle décision. */
-  --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+     Nunito partout, les mots comme les nombres : c'est la police de l'app depuis la refonte
+     « parcours » (`MicaboFont`), et une interface qui lit et compte dans la même main se lit
+     d'un trait. `--font-number` reste un nom : les nombres gardent leurs chiffres tabulaires. */
+  --font-sans: var(--font-nunito), ui-rounded, system-ui, sans-serif;
   --font-number: var(--font-nunito), ui-rounded, system-ui, sans-serif;
 
   --tracking-tight-title: -0.5px;
@@ -249,49 +286,49 @@
 
 [data-appearance="night"] {
   color-scheme: dark;
-  --color-canvas: #101216;
-  --color-surface: #1a1d24;
-  --color-surface-muted: #252830;
-  --color-surface-sunken: #0c0d10;
-  --color-stroke: rgba(255, 255, 255, 0.08);
-  --color-stroke-strong: rgba(255, 255, 255, 0.14);
-  --color-hairline: rgba(255, 255, 255, 0.08);
-  --color-hairline-on-canvas: rgba(255, 255, 255, 0.06);
-  --color-ink: #e8eaee;
-  --color-ink-secondary: #9aa1ab;
-  --color-ink-tertiary: #8b919a;
-  --color-ink-reading: #d5d8de;
-  --color-on-ink: #101216;
-  --color-on-ink-muted: #6b7280;
-  --color-canvas-sage: #141a16;
-  --color-accent: #60a5fa;
-  --color-accent-soft: #1e3a5f;
-  --color-accent-vivid: #3b82f6;
-  --color-progress: #60a5fa;
-  --color-progress-track: #2a2e36;
-  --color-sheet-marker: #c9a227;
+  --color-canvas: #121317;
+  --color-surface: #1c1e24;
+  --color-surface-muted: #23262d;
+  --color-surface-sunken: #2a2d35;
+  --color-stroke: #30333b;
+  --color-stroke-strong: #3b3f48;
+  --color-hairline: #2a2d34;
+  --color-hairline-on-canvas: #24272e;
+  --color-ink: #f3f1ea;
+  --color-ink-secondary: #a4a7ae;
+  --color-ink-tertiary: #8b8f97;
+  --color-ink-reading: #e7e5df;
+  --color-on-ink: #121317;
+  --color-on-ink-muted: #4d5058;
+  --color-canvas-sage: #121317;
+  --color-accent: #6b9bf2;
+  --color-accent-soft: #1d2a45;
+  --color-accent-vivid: #60a5fa;
+  --color-progress: #6b9bf2;
+  --color-progress-track: #30333b;
+  --color-sheet-marker: #5a4a12;
   /* De nuit, la bande est sombre et l'encre reste claire : un pastel de jour porterait du
      texte blanc sur du crème. */
-  --color-hl-jaune: #55491c;
-  --color-hl-menthe: #1f4034;
-  --color-hl-bleu: #1e3a56;
-  --color-hl-rose: #4d2733;
-  --color-hl-lilas: #382f57;
-  --color-positive: #6fbf86;
-  --color-caution: #d4a84b;
-  --color-caution-vivid: #e8b23c;
-  --color-negative: #e06a5a;
-  --color-info: #7eb0e8;
-  --color-positive-soft: #1a2a1e;
-  --color-caution-soft: #2e2614;
-  --color-negative-soft: #2f1a16;
-  --color-info-soft: #182433;
-  --color-offer-wash: #163247;
-  --color-offer-wash-soft: #12202c;
-  --color-sidebar: #14161b;
-  --color-sidebar-foreground: #9aa1ab;
+  --color-hl-jaune: #5a4a12;
+  --color-hl-menthe: #1f4a33;
+  --color-hl-bleu: #1e3a5f;
+  --color-hl-rose: #5a2235;
+  --color-hl-lilas: #3e2c66;
+  --color-positive: #4cc38a;
+  --color-caution: #e3b24c;
+  --color-caution-vivid: #ffc53d;
+  --color-negative: #f06a5a;
+  --color-info: #6e9bea;
+  --color-positive-soft: #18301f;
+  --color-caution-soft: #33280f;
+  --color-negative-soft: #3a1a16;
+  --color-info-soft: #1a2740;
+  --color-offer-wash: #3e2c66;
+  --color-offer-wash-soft: #261c3d;
+  --color-sidebar: #16181d;
+  --color-sidebar-foreground: #a4a7ae;
   --color-sidebar-accent: rgba(255, 255, 255, 0.06);
-  --color-sidebar-accent-foreground: #e8eaee;
+  --color-sidebar-accent-foreground: #f3f1ea;
   --color-sidebar-border: rgba(255, 255, 255, 0.08);
   --color-background: var(--color-canvas);
   --color-foreground: var(--color-ink);
@@ -309,7 +346,7 @@
   --color-destructive: var(--color-negative);
   --color-border: var(--color-stroke);
   --color-input: var(--color-stroke-strong);
-  --color-ring: #60a5fa;
+  --color-ring: #6b9bf2;
   --background: var(--color-canvas);
   --foreground: var(--color-ink);
   --card: var(--color-surface);
@@ -332,7 +369,7 @@
   --warning-foreground: var(--color-caution);
   --border: var(--color-stroke);
   --input: var(--color-stroke-strong);
-  --ring: #60a5fa;
+  --ring: #6b9bf2;
   --shadow-paper: 0 0 0 1px oklch(1 0 0 / 0.08), 0 1px 2px 0 oklch(0 0 0 / 0.35);
   --shadow-paper-hover: 0 0 0 1px oklch(1 0 0 / 0.12), 0 2px 6px 0 oklch(0 0 0 / 0.4);
   --shadow-floating: 0 0 0 1px oklch(1 0 0 / 0.08), 0 10px 28px -8px oklch(0 0 0 / 0.55);
@@ -429,6 +466,29 @@
   --shadow-floating: 0 0 0 1px oklch(0.95 0.04 70 / 0.08), 0 10px 28px -8px oklch(0 0 0 / 0.55);
 }
 
+/* Les jetons de la leçon, dans les deux modes sombres : `MicaboPalette.night`. */
+[data-appearance="night"],
+[data-appearance="twilight"] {
+  --color-keyword: #a78bfa;
+  --color-correct: #22c55e;
+  --color-correct-ink: #4ade80;
+  --color-correct-soft: #13301e;
+  --color-wrong: #ef4444;
+  --color-wrong-ink: #f87171;
+  --color-wrong-soft: #3a1717;
+  --color-track: #2c2f36;
+  --color-tone-yellow-pale: #3b3112;
+  --color-tone-yellow-ink: #f6cf5a;
+  --color-tone-mint-pale: #143326;
+  --color-tone-mint-ink: #5dd69b;
+  --color-tone-blue-pale: #182b45;
+  --color-tone-blue-ink: #8db8fa;
+  --color-tone-pink-pale: #3d1a29;
+  --color-tone-pink-ink: #f49ab9;
+  --color-tone-lilac-pale: #2a2148;
+  --color-tone-lilac-ink: #b9a0fa;
+}
+
 /* --------------------------------------------------------------------------
    Pastel — app connectée seulement
 
@@ -523,6 +583,12 @@ img,
 video {
   outline: 1px solid oklch(0 0 0 / 0.1);
   outline-offset: -1px;
+}
+
+/* Une icône 3D est une découpe sur fond transparent, pas une photo : le contour dessinerait
+   un carré fantôme autour d'elle. */
+img[data-icon] {
+  outline: none;
 }
 
 /* Le focus se voit, et il suit l'accent. L'anneau est une ombre : Safari ignorait
@@ -1661,8 +1727,7 @@ video {
    `page-title`, `page-lead`, `section-title`, `section-lead`, et pour les nombres
    `stat-value` (un chiffre parmi d'autres) et `hero-value` (le seul grand chiffre d'un écran). */
 .app-shell {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sans);
   --radius: 0.625rem;
   --radius-tile: 10px;
   --radius-button: 10px;
@@ -1670,48 +1735,25 @@ video {
   --radius-sheet: 16px;
   background: var(--color-canvas);
   color: var(--color-ink);
-  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
 [data-appearance="day"] .app-shell,
 html:not([data-appearance]) .app-shell {
-  --color-canvas: #f6f6f7;
-  --color-surface: #ffffff;
-  --color-surface-muted: #f3f3f4;
-  --color-surface-sunken: #ebebee;
-  --color-stroke: #e6e6e9;
-  --color-stroke-strong: #d6d6db;
-  --color-hairline: #ececef;
-  --color-hairline-on-canvas: #e3e3e7;
-  --color-ink: #1c1c1f;
-  --color-ink-secondary: #6b6b73;
-  --color-ink-tertiary: #8a8a93;
-  --color-ink-reading: #26262b;
-  --color-on-ink: #fafafa;
-  --background: #f6f6f7;
-  --foreground: #1c1c1f;
-  --card: #ffffff;
-  --card-foreground: #1c1c1f;
-  --popover: #ffffff;
-  --primary: #1c1c1f;
-  --primary-foreground: #fafafa;
-  --secondary: #f3f3f4;
-  --muted: #f3f3f4;
-  --muted-foreground: #6b6b73;
-  --accent: #f3f3f4;
-  --accent-foreground: #1c1c1f;
-  --border: #e6e6e9;
-  --input: #d6d6db;
-  --ring: #a3a3a3;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #5f5f67;
-  --sidebar-accent: #f1f1f3;
-  --sidebar-accent-foreground: #1c1c1f;
-  --sidebar-border: #e6e6e9;
+  --primary: var(--color-ink);
+  --primary-foreground: var(--color-on-ink);
+  --accent: var(--color-surface-muted);
+  --accent-foreground: var(--color-ink);
+  --ring: var(--color-ink-tertiary);
+  --sidebar: var(--color-sidebar);
+  --sidebar-foreground: var(--color-sidebar-foreground);
+  --sidebar-accent: var(--color-sidebar-accent);
+  --sidebar-accent-foreground: var(--color-sidebar-accent-foreground);
+  --sidebar-border: var(--color-sidebar-border);
   --shadow-paper: none;
   --shadow-paper-hover: none;
-  --shadow-floating: 0 1px 2px rgba(0, 0, 0, 0.04), 0 10px 28px rgba(0, 0, 0, 0.08);
+  --shadow-floating: 0 1px 2px rgba(27, 30, 36, 0.04), 0 10px 28px rgba(27, 30, 36, 0.08);
 }
 
 /* Les couleurs des graphes. Une seule par sens, et le sens ne change pas d'un écran à
@@ -2122,4 +2164,336 @@ html:not([data-appearance]) .app-shell {
   .story-figure > * {
     zoom: 0.84;
   }
+}
+
+/* --------------------------------------------------------------------------
+   Le chemin d'une leçon (`components/lesson/PathMap.tsx`).
+
+   Les ronds apparaissent un à un à la première ouverture, l'étape en cours respire, un
+   rond à venir qu'on touche se secoue. « Réduire les animations » retire tout.
+   -------------------------------------------------------------------------- */
+@keyframes path-reveal {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes path-title-reveal {
+  from {
+    opacity: 0;
+    transform: translateX(var(--from, -12px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes path-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes path-halo {
+  0% {
+    transform: scale(0.94);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.08);
+    opacity: 0;
+  }
+}
+
+@keyframes path-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.14);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.path-node {
+  animation: path-reveal 0.5s var(--ease-out-strong) both;
+}
+
+.path-title {
+  animation: path-title-reveal 0.4s ease-out both;
+}
+
+.path-shake {
+  animation: path-shake 0.4s linear;
+}
+
+.path-halo {
+  animation: path-halo 1.8s ease-out infinite;
+}
+
+.path-pop {
+  animation: path-pop 0.5s var(--ease-out-strong);
+}
+
+.path-trail {
+  transition: stroke-dasharray 0.9s ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .path-node,
+  .path-title,
+  .path-shake,
+  .path-halo,
+  .path-pop {
+    animation: none;
+  }
+  .path-trail {
+    transition: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Les étapes ouvertes d'une leçon : l'Intro, les Notes, un quiz, une série de cartes.
+
+   Les boutons de la leçon sont ceux de l'app (`LessonPrimaryButtonStyle`) : noir, plein,
+   un relief sous lui ; le secondaire est blanc, cerné. Les écrans des notes glissent en place,
+   le panneau de réponse monte du bas, la carte se retourne en 3D. « Réduire les animations »
+   coupe tout ce qui se déplace et garde ce qui change de couleur.
+   -------------------------------------------------------------------------- */
+.lesson-btn-primary {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 17px 20px;
+  border-radius: 18px;
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+  box-shadow: 0 6px 10px -2px color-mix(in srgb, var(--color-ink) 18%, transparent);
+  transition:
+    scale var(--duration-press) var(--ease-out-strong),
+    background-color 0.2s,
+    box-shadow 0.2s;
+}
+.lesson-btn-primary:active:not(:disabled) {
+  scale: 0.97;
+}
+.lesson-btn-primary:disabled {
+  background: var(--color-ink-tertiary);
+  box-shadow: none;
+  cursor: default;
+}
+
+.lesson-btn-secondary {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 20px;
+  border-radius: var(--radius-button);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: inset 0 0 0 1.5px var(--color-stroke-strong);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+  transition: scale var(--duration-press) var(--ease-out-strong);
+}
+.lesson-btn-secondary:active:not(:disabled) {
+  scale: 0.97;
+}
+
+/* Une proposition de quiz, et son relief de trois pixels tant qu'on n'a pas répondu. */
+.quiz-choice {
+  box-shadow:
+    inset 0 0 0 2px var(--color-stroke),
+    0 3px 0 var(--color-stroke);
+}
+
+@keyframes notes-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.notes-reveal {
+  animation: notes-reveal 0.5s var(--ease-out-strong) both;
+}
+
+@keyframes notes-page-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--from, 40px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.notes-page-in {
+  animation: notes-page-in 0.42s var(--ease-out-strong) both;
+}
+
+@keyframes panel-rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.panel-rise {
+  animation: panel-rise 0.4s var(--ease-out-strong) both;
+}
+
+@keyframes score-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.score-in {
+  animation: score-in 0.5s var(--ease-out-strong) both;
+}
+
+.score-ring {
+  transition: stroke-dashoffset 1.1s ease-out 0.2s;
+}
+
+/* La carte qui se retourne : deux faces sur le même carré, le dos tourné de 180°. */
+.flip-scene {
+  perspective: 1200px;
+}
+.flip-card {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.5s var(--ease-out-strong);
+}
+.flip-card[data-flipped="true"] {
+  transform: rotateY(180deg);
+}
+.flip-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.flip-face-back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+}
+
+.notes-segment-fill {
+  transition: width 0.45s ease-out;
+}
+
+@keyframes confetti-fall {
+  from {
+    transform: translateY(-20px) rotate(0deg);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(var(--drop, 100vh)) rotate(720deg);
+    opacity: 0;
+  }
+}
+.confetti-piece {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 5px;
+  border-radius: 1.5px;
+  animation: confetti-fall var(--duration, 3s) linear var(--delay, 0s) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notes-reveal,
+  .notes-page-in,
+  .panel-rise,
+  .score-in,
+  .confetti-piece {
+    animation: none;
+  }
+  .flip-card,
+  .score-ring,
+  .notes-segment-fill {
+    transition: none;
+  }
+}
+
+/* Ce qui colle en bas d'une étape (le bouton, le panneau de réponse, les notes de la
+   carte) s'arrête au-dessus de la barre d'onglets du téléphone, qui colle aussi. */
+.app-shell {
+  --tab-bar-space: 53px;
+}
+@media (min-width: 64rem) {
+  .app-shell {
+    --tab-bar-space: 0px;
+  }
+}
+.lesson-bottom-bar {
+  position: sticky;
+  bottom: var(--tab-bar-space, 0px);
+  z-index: 10;
+}
+
+/* La barre de Home : haute, bordée du dégradé de l'app, un halo bleu qui s'allume quand on
+   écrit. Le dégradé est peint dans la bordure, le blanc dans la boîte. */
+.home-bar {
+  border: 2px solid transparent;
+  border-radius: 30px;
+  background:
+    linear-gradient(var(--color-surface), var(--color-surface)) padding-box,
+    linear-gradient(135deg, var(--color-accent), var(--color-keyword)) border-box;
+  box-shadow: 0 8px 16px -4px color-mix(in srgb, var(--color-accent) 18%, transparent);
+  transition: box-shadow 0.25s ease-out, border-width 0.25s ease-out;
+}
+.home-bar-focused {
+  border-width: 3px;
+  box-shadow: 0 8px 22px -4px color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+.home-send {
+  background: linear-gradient(135deg, var(--color-accent), var(--color-keyword));
+  box-shadow: 0 5px 10px -2px color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+.home-gradient-text {
+  background: linear-gradient(90deg, var(--color-accent), var(--color-keyword));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }

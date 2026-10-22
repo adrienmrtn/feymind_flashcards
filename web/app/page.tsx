@@ -4,8 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { ClosingWash } from "@/components/landing/ClosingWash";
-import { DemoCards } from "@/components/landing/DemoCards";
-import { ExamMode } from "@/components/landing/ExamMode";
+import { ExamSection } from "@/components/landing/ExamSection";
 import { Footer } from "@/components/landing/Footer";
 import { Hero } from "@/components/landing/Hero";
 import { IphoneLanding } from "@/components/landing/IphoneLanding";
@@ -111,15 +110,6 @@ export default async function LandingPage({
         </Section>
 
         <Section
-          id={LANDING_SECTIONS.cards}
-          eyebrow="landing.cardsEyebrow"
-          title="landing.cardsTitle"
-          note="landing.cardsNote"
-        >
-          <DemoCards />
-        </Section>
-
-        <Section
           id={LANDING_SECTIONS.method}
           eyebrow="landing.methodEyebrow"
           title="landing.methodTitle"
@@ -136,7 +126,7 @@ export default async function LandingPage({
           note="landing.examNote"
           more={{ href: localizedHref(locale, EXAM_PAGE.path), label: "landing.examMore" }}
         >
-          <ExamMode />
+          <ExamSection />
         </Section>
 
         <section id={LANDING_SECTIONS.results} className="mx-auto mt-28 max-w-page scroll-mt-20 px-screen sm:mt-36">
