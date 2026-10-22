@@ -3,11 +3,13 @@ import type { Route } from "next";
 /**
  * **Les adresses de la leçon**, nommées une fois.
  *
- * `LESSONS_PATH` est l'onglet Leçons. Il pointe encore sur l'ancienne liste des cours tant
- * que la nouvelle n'est pas écrite (lot 6 de `docs/refonte-web.md`) : une seule constante à
- * changer ce jour-là, et aucun lien mort entre-temps.
+ * `LESSONS_PATH` est l'onglet Leçons ; l'ancienne liste des cours (`/app/cours`) y redirige.
  */
-export const LESSONS_PATH = "/app/cours" as Route;
+/** Home : la question, la barre, « Reprendre ». */
+export const HOME_PATH = "/app" as Route;
+export const LESSONS_PATH = "/app/lecons" as Route;
+/** L'onglet Examen. */
+export const EXAMS_PATH = "/app/examen" as Route;
 
 export function lessonPath(id: string): Route {
   return `/app/lecons/${id}` as Route;

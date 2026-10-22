@@ -1518,6 +1518,19 @@ export const appEn = {
     mockNotForKind: "This kind of exam isn't prepared with a mock.",
     mockTooFewCards: "More cards are needed before a draw means anything.",
   },
+  /** L'onglet Leçons du site : chercher, trier, ranger. Propre au site, donc hors du Swift. */
+  lessonsList: {
+    search: "Search lessons",
+    sort: "Sort",
+    sortRecent: "Recent",
+    sortAlpha: "A → Z",
+    sortDue: "To review",
+    noResult: "No lesson matches.",
+    allFolders: "All",
+    move: "Move to a folder",
+    noFolder: "No folder",
+    legacy: "Older course",
+  },
   common: {
     remove: "Remove",
     see: "See",

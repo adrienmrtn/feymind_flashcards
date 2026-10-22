@@ -146,3 +146,17 @@ export const listThemes = cache(async (courseId: string): Promise<ThemeRow[]> =>
     .order("position", { ascending: true });
   return ((data as unknown as RawTheme[] | null) ?? []).map(readTheme);
 });
+
+/** Le nombre de thèmes de chaque leçon : ce qu'il faut pour compter les étapes d'un chemin sans lire les thèmes. */
+export async function listThemeCounts(): Promise<Map<string, number>> {
+  const auth = await reader();
+  if (!auth) return new Map();
+
+  const rows = await cachedRead(auth.userId, "theme-counts", [userTag(auth.userId), coursesTag(auth.userId)], async () => {
+    const { data } = await dataClient(auth.token).from("chapters").select("course_id").eq("user_id", auth.userId).is("deleted_at", null);
+    return ((data as { course_id: string }[] | null) ?? []).map((row) => row.course_id);
+  });
+  const counts = new Map<string, number>();
+  for (const id of rows) counts.set(id, (counts.get(id) ?? 0) + 1);
+  return counts;
+}

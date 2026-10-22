@@ -1521,6 +1521,19 @@ export const appDe = {
     mockNotForKind: "Diese Art von Prüfung bereitet man nicht mit einer Probe vor.",
     mockTooFewCards: "Es braucht mehr Karten, damit eine Ziehung etwas heißt.",
   },
+  /** L'onglet Leçons du site : chercher, trier, ranger. Propre au site, donc hors du Swift. */
+  lessonsList: {
+    search: "Lektion suchen",
+    sort: "Sortieren",
+    sortRecent: "Zuletzt",
+    sortAlpha: "A → Z",
+    sortDue: "Zu wiederholen",
+    noResult: "Keine Lektion passt.",
+    allFolders: "Alle",
+    move: "In einen Ordner legen",
+    noFolder: "Ohne Ordner",
+    legacy: "Älterer Kurs",
+  },
   common: {
     remove: "Entfernen",
     see: "Ansehen",

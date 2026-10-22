@@ -138,7 +138,7 @@ export function QuizRun({
       ) : finished ? (
         <QuizScore right={right} total={total} tone={tone} doneTitle={nextTitle} onDone={done} onMore={onMore} />
       ) : question ? (
-        <div key={index} className="notes-page-in mx-auto flex w-full max-w-[560px] flex-1 flex-col gap-3.5 px-1 pb-[220px] pt-4" data-quiz-question>
+        <div key={index} className="notes-page-in mx-auto flex w-full max-w-[560px] flex-1 flex-col gap-3.5 px-1 pb-[220px] pt-4" data-quiz-question={question.kind}>
           {streak >= 3 ? (
             <span className="score-in inline-flex w-fit items-center gap-1.5 rounded-pill px-3 py-[7px] text-[14px] font-extrabold" style={{ background: "var(--color-tone-yellow-pale)", color: "var(--color-tone-yellow-ink)" }}>
               <Flame aria-hidden="true" className="size-4" strokeWidth={2.6} />

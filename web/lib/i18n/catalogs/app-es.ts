@@ -1522,6 +1522,19 @@ export const appEs = {
     mockNotForKind: "Este tipo de prueba no se prepara con un simulacro.",
     mockTooFewCards: "Hacen falta más tarjetas para que un sorteo signifique algo.",
   },
+  /** L'onglet Leçons du site : chercher, trier, ranger. Propre au site, donc hors du Swift. */
+  lessonsList: {
+    search: "Buscar una lección",
+    sort: "Ordenar",
+    sortRecent: "Recientes",
+    sortAlpha: "A → Z",
+    sortDue: "Para repasar",
+    noResult: "Ninguna lección coincide.",
+    allFolders: "Todas",
+    move: "Guardar en una carpeta",
+    noFolder: "Sin carpeta",
+    legacy: "Curso antiguo",
+  },
   common: {
     remove: "Quitar",
     see: "Ver",

@@ -565,6 +565,42 @@ export function edgeFunction(name, body) {
     return new Promise((resolve) => setTimeout(() => resolve({ theme }), 1500 + index * 900));
   }
 
+  // Étape « exam » : une copie de la taille demandée, qui alterne les leçons et les formes.
+  if (name === "generate-lesson" && body?.stage === "exam") {
+    const lessons = Array.isArray(body.lessons) ? body.lessons : [];
+    const count = Math.max(6, Math.min(30, Number(body.count ?? 10)));
+    const questions = [];
+    for (let i = 0; i < count; i++) {
+      const lesson = lessons.length ? i % lessons.length : 0;
+      const themes = Array.isArray(lessons[lesson]?.themes) ? lessons[lesson].themes.length : 1;
+      const theme = themes ? i % themes : 0;
+      const themeTitle = lessons[lesson]?.themes?.[theme]?.title ?? "ce thème";
+      const kind = ["choice", "truefalse", "gap", "choice", "order", "match"][i % 6];
+      const base = { lesson, theme, why: `C'est ce que disent les notes de « ${themeTitle} ».`, difficulty: 1 + (i % 3) };
+      if (kind === "truefalse") questions.push({ ...base, kind, prompt: `« ${themeTitle} » se résume en une idée.`, choices: ["Vrai", "Faux"], answer: 0 });
+      else if (kind === "gap") questions.push({ ...base, kind, prompt: `Le thème « ${themeTitle} » tient en une ____.`, choices: ["idée", "liste", "formule", "date"], answer: 0 });
+      else if (kind === "order") questions.push({ ...base, kind, prompt: "Remets les étapes dans l'ordre.", choices: ["Lire", "Comprendre", "Retenir"], answer: 0 });
+      else if (kind === "match") questions.push({ ...base, kind, prompt: "Associe chaque terme à sa définition.", choices: ["Lire", "Comprendre", "Retenir"], matches: ["Parcourir le texte", "Saisir l'idée", "Garder en mémoire"], answer: 0 });
+      else questions.push({ ...base, kind, prompt: `Question ${i + 1} sur « ${themeTitle} » : quelle idée la résume ?`, choices: ["La bonne", "Une fausse", "Une autre", "La dernière"], answer: 0 });
+    }
+    return new Promise((resolve) => setTimeout(() => resolve({ exam: { title: body.examTitle || "Examen blanc", questions } }), 1200));
+  }
+
+  // Étape « practice » : dix questions neuves, sur les thèmes demandés.
+  if (name === "generate-lesson" && body?.stage === "practice") {
+    const themes = Array.isArray(body.practiceThemes) ? body.practiceThemes : [];
+    const count = Math.max(4, Math.min(20, Number(body.count ?? 10)));
+    const stamp = Date.now() % 1000;
+    const questions = Array.from({ length: count }, (_, i) => {
+      const theme = themes.length ? i % themes.length : 0;
+      const title = themes[theme]?.title ?? "ce thème";
+      return i % 3 === 1
+        ? { kind: "truefalse", prompt: `Nouvelle question ${stamp}-${i + 1} : « ${title} » a une idée centrale.`, choices: ["Vrai", "Faux"], answer: 0, why: "Toujours.", theme, difficulty: 1 + (i % 3) }
+        : { kind: "choice", prompt: `Nouvelle question ${stamp}-${i + 1} sur « ${title} » ?`, choices: ["La bonne", "Une fausse", "Une autre", "La dernière"], answer: 0, why: "C'est dans les notes.", theme, difficulty: 1 + (i % 3) };
+    });
+    return new Promise((resolve) => setTimeout(() => resolve({ questions }), 1200));
+  }
+
   // `transcribe-audio` : un enregistrement devient du texte.
   if (name === "transcribe-audio") {
     return { transcript: { text: "Bonjour à tous, aujourd'hui nous allons voir le cycle de l'eau. L'eau circule en permanence entre les océans, l'atmosphère et les continents, et ce cycle est alimenté par l'énergie du Soleil." } };

@@ -547,6 +547,21 @@ export {
   type LessonPlanPayload,
   type PlanTheme,
 } from "./lesson/plan";
+export {
+  EXAM_DURATIONS,
+  examFraction,
+  examGradeLabel,
+  examPasses,
+  examQuestionCount,
+  examResult,
+  readExamPaper,
+  readExamResponse,
+  type ExamLessonScore,
+  type ExamPaper,
+  type ExamPaperItem,
+  type ExamPaperLesson,
+  type ExamPaperResult,
+} from "./lesson/exam";
 
 // Le verrou du gratuit - aligné sur `ProAccess.swift`, construit mais pas armé.
 export * as entitlement from "./entitlement";

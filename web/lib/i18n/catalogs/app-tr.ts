@@ -1521,6 +1521,19 @@ export const appTr = {
     mockNotForKind: "Bu tür bir sınav denemeyle hazırlanmaz.",
     mockTooFewCards: "Çekilişin anlam taşıması için daha çok kart gerekiyor.",
   },
+  /** L'onglet Leçons du site : chercher, trier, ranger. Propre au site, donc hors du Swift. */
+  lessonsList: {
+    search: "Ders ara",
+    sort: "Sırala",
+    sortRecent: "Son",
+    sortAlpha: "A → Z",
+    sortDue: "Tekrar edilecek",
+    noResult: "Eşleşen ders yok.",
+    allFolders: "Tümü",
+    move: "Bir klasöre koy",
+    noFolder: "Klasörsüz",
+    legacy: "Eski kurs",
+  },
   common: {
     remove: "Çıkar",
     see: "Gör",

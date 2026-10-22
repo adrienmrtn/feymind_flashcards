@@ -101,6 +101,7 @@ export async function listMeasuresDone(): Promise<AgendaDone[]> {
         .from("mock_sessions")
         .select("exam_id, kind, finished_at")
         .eq("user_id", userId)
+        .neq("kind", "lesson_exam")
         .not("exam_id", "is", null)
         .not("finished_at", "is", null)
         .order("finished_at", { ascending: false })
@@ -170,6 +171,8 @@ export async function listMockSessions(): Promise<MockSessionRow[]> {
         .from("mock_sessions")
         .select(MOCK_COLUMNS)
         .eq("user_id", userId)
+        // Les examens blancs de la refonte ont leur propre lecture (`lesson-exams.ts`).
+        .neq("kind", "lesson_exam")
         .order("started_at", { ascending: false })
         .limit(60);
       return (data as MockSessionRow[] | null) ?? [];
