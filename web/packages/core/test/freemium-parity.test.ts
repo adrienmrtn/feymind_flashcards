@@ -52,9 +52,12 @@ describe("le gratuit, des deux côtés", () => {
     expect(swiftConstant(proAccess, "assumeProWithoutRow")).toBe(String(ASSUME_PRO_WITHOUT_ROW));
   });
 
-  it("compte le même nombre de cours, de cartes et la même coupure", () => {
-    expect(swiftConstant(proAccess, "courses")).toBe(String(FREE_TIER.courses));
-    expect(swiftConstant(proAccess, "cardsPerSession")).toBe(String(FREE_TIER.cardsPerSession));
+  it("coupe la fiche et ferme l'entraînement pareil", () => {
+    // Le nombre de cours et de cartes ne se comparent plus : depuis la refonte « parcours »,
+    // l'app ne lit plus `FreeTier` (son gratuit est une leçon offerte, `LessonAllowance`), et
+    // ses deux constantes disent le gratuit d'avant la refonte du site. Le site rejoint la
+    // leçon offerte au lot 7 de `docs/refonte-web.md`, et ce test se réécrit alors sur
+    // `LessonAllowance`. Ce qui se compare encore se compare.
     expect(swiftConstant(proAccess, "readableSheetRatio")).toBe(
       String(FREE_TIER.readableSheetRatio),
     );

@@ -356,6 +356,16 @@ export {
   type CurvePoint,
 } from "./retention";
 
+// La leçon en chemin : les catalogues que le serveur donne au modèle, copiés à l'octet près.
+export { DEFAULT_ICON, LESSON_ICONS, iconBrief, normalizeIcon } from "./lesson/icons";
+export {
+  DEFAULT_SYMBOL,
+  PATH_SYMBOLS,
+  normalizeSymbol,
+  symbolBrief,
+  uniqueSymbols,
+} from "./lesson/symbols";
+
 // Le verrou du gratuit - aligné sur `ProAccess.swift`, construit mais pas armé.
 export * as entitlement from "./entitlement";
 

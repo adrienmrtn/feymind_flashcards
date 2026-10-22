@@ -1,6 +1,7 @@
 import { appFr, copyFr } from "./app-fr";
 import { articlesFr } from "./articles-fr";
 import { legalFr } from "./legal-fr";
+import { lessonFr } from "./lesson-fr";
 
 export const fr = {
   locale: {
@@ -528,6 +529,7 @@ export const fr = {
   copy: copyFr,
   legal: legalFr,
   articles: articlesFr,
+  lesson: lessonFr,
 } as const;
 
 type DeepString<T> = {

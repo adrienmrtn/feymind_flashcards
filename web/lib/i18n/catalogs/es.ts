@@ -2,6 +2,7 @@ import type { Catalog } from "./fr";
 import { appEs, copyEs } from "./app-es";
 import { articlesEs } from "./articles-es";
 import { legalEs } from "./legal-es";
+import { lessonEs } from "./lesson-es";
 
 export const es: Catalog = {
   locale: {
@@ -527,4 +528,5 @@ export const es: Catalog = {
   copy: copyEs,
   legal: legalEs,
   articles: articlesEs,
+  lesson: lessonEs,
 };

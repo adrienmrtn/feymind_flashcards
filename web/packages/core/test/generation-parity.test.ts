@@ -43,9 +43,11 @@ function keysBetween(source: string, start: string, end: string, pattern: RegExp
   return [...source.slice(from, to).matchAll(pattern)].map((match) => match[1]!);
 }
 
+// `var`, pas `let` : l'app complète le dictionnaire d'un sujet avant d'envoyer, voir le
+// commentaire au-dessus de `payload["topic"]` dans le Swift.
 const iosKeys = keysBetween(
   iosService,
-  'let payload: [String: Any] = [',
+  'var payload: [String: Any] = [',
   'post("generate-course"',
   /"([a-zA-Z]+)":/g,
 );

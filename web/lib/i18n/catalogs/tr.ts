@@ -2,6 +2,7 @@ import type { Catalog } from "./fr";
 import { appTr, copyTr } from "./app-tr";
 import { articlesTr } from "./articles-tr";
 import { legalTr } from "./legal-tr";
+import { lessonTr } from "./lesson-tr";
 
 export const tr: Catalog = {
   locale: {
@@ -527,4 +528,5 @@ export const tr: Catalog = {
   copy: copyTr,
   legal: legalTr,
   articles: articlesTr,
+  lesson: lessonTr,
 };

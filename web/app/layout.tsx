@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Hanken_Grotesk, Inter, Nunito } from "next/font/google";
+import { Nunito } from "next/font/google";
 
 import { Analytics } from "@vercel/analytics/next";
 
@@ -23,37 +23,17 @@ import { SiteStructuredData } from "@/components/landing/StructuredData";
 import "./globals.css";
 
 /**
- * Hanken Grotesk écrit les mots. C'est la police embarquée de l'app
- * (`Micabo/Resources/Fonts/`), reprise ici depuis Google Fonts en variable : `next/font`
- * l'héberge lui-même au moment de la compilation, donc aucun appel à un tiers à l'exécution.
- */
-const hanken = Hanken_Grotesk({
-  subsets: ["latin", "latin-ext"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-hanken",
-  display: "swap",
-});
-
-/**
- * Nunito écrit **les nombres**, et seulement eux.
+ * **Nunito partout**, les mots comme les nombres.
  *
- * SF Rounded n'existe pas sur le web, et « un grand nombre en arrondi ressemble à un score »
- * est un choix d'intention de l'app, pas un détail de goût. Nunito est la plus proche des
- * arrondies libres. Le reproche qu'on peut lui faire est d'être partout : il ne porte pas ici,
- * parce qu'elle ne compose jamais un mot - une police qu'on ne voit que sur des chiffres ne se
- * reconnaît pas.
+ * C'est la police de l'app depuis la refonte « parcours » (`MicaboFont`, `docs/refonte-parcours.md`
+ * § 10) : Hanken Grotesk et Inter en sont sortis, et le site les suit. `next/font` l'héberge
+ * lui-même au moment de la compilation, donc aucun appel à un tiers à l'exécution. Les cinq
+ * graisses sont celles que l'app embarque.
  */
 const nunito = Nunito({
   subsets: ["latin", "latin-ext"],
-  weight: ["600", "700", "800"],
+  weight: ["400", "500", "600", "700", "800"],
   variable: "--font-nunito",
-  display: "swap",
-});
-
-/** Inter porte l'app connectée — le même corps que micabo OS. */
-const inter = Inter({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-inter",
   display: "swap",
 });
 
@@ -126,7 +106,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html
       lang={UI_LOCALE_META[locale].html}
       data-appearance={appearance}
-      className={`${hanken.variable} ${inter.variable} ${nunito.variable}${appearanceIsDark(appearance) ? " dark" : ""}`}
+      className={`${nunito.variable}${appearanceIsDark(appearance) ? " dark" : ""}`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: APPEARANCE_BOOT_SCRIPT }} />
