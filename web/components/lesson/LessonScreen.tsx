@@ -133,7 +133,7 @@ export function LessonScreen(props: LessonScreenProps) {
         />
       </div>
 
-      <div className="mx-auto w-full max-w-[520px]">
+      <div className="mx-auto w-full max-w-[520px]" data-tour="lecon-chemin">
         <PathMap
           circles={props.circles}
           done={props.done}

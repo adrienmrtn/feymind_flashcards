@@ -74,7 +74,7 @@ export function ProfileScreen({
         <h1 className="text-[32px] font-extrabold leading-tight tracking-tight-title text-ink">{t("lesson.tab.profile")}</h1>
       </header>
 
-      <button type="button" onClick={() => setOpen(true)} className="pressable flex items-center gap-3.5 rounded-[24px] bg-surface p-4 text-left shadow-floating">
+      <button type="button" onClick={() => setOpen(true)} className="pressable flex items-center gap-3.5 rounded-[24px] bg-surface p-4 text-left shadow-floating" data-tour="profil-carte">
         <span className="numeral flex size-[60px] shrink-0 items-center justify-center rounded-full bg-accent text-[26px] font-extrabold text-on-ink">{name.charAt(0).toUpperCase()}</span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="truncate text-[19px] font-extrabold text-ink">{name}</span>
@@ -104,7 +104,7 @@ export function ProfileScreen({
         </Link>
       </section>
 
-      <ProfileGroup title={t("lesson.profile.settings")}>
+      <ProfileGroup title={t("lesson.profile.settings")} tour="profil-reglages">
         <LanguageRow />
         <ThemeRow />
         <ProfileRow icon={<Star aria-hidden="true" className="size-5" strokeWidth={2.4} />} title={t("lesson.profile.rate")} href={APP_STORE_URL} external last />
@@ -204,9 +204,9 @@ function WeekRankingCard({ rows }: { rows: RankingRow[] }) {
 }
 
 /** Un groupe de rangées, sous son petit titre. */
-function ProfileGroup({ title, children }: { title: string; children: ReactNode }) {
+function ProfileGroup({ title, tour, children }: { title: string; tour?: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-2">
+    <section className="flex flex-col gap-2" data-tour={tour}>
       <h2 className="pl-1 text-[12px] font-extrabold uppercase tracking-caps text-ink-secondary">{title}</h2>
       <div className="overflow-hidden rounded-[22px] bg-surface shadow-[inset_0_0_0_1.5px_var(--color-stroke)]">{children}</div>
     </section>

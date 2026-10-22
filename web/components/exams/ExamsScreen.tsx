@@ -72,7 +72,7 @@ export function ExamsScreen({ exams, lessons, results, country }: { exams: ExamI
       </header>
 
       {next ? (
-        <section className="relative overflow-hidden rounded-[28px] p-5 text-on-ink shadow-floating" style={{ background: "linear-gradient(135deg, var(--color-accent) 0%, var(--color-keyword) 100%)" }} aria-label={t("lesson.exam.upNext")}>
+        <section className="relative overflow-hidden rounded-[28px] p-5 text-on-ink shadow-floating" style={{ background: "linear-gradient(135deg, var(--color-accent) 0%, var(--color-keyword) 100%)" }} aria-label={t("lesson.exam.upNext")} data-tour="examen-prochain">
           <div className="flex items-start justify-between gap-3">
             <p className="text-[12px] font-extrabold uppercase tracking-caps opacity-85">{t("lesson.exam.upNext")}</p>
             <button type="button" onClick={() => edit(next)} aria-label={t("lesson.exam.edit")} className="pressable flex size-9 items-center justify-center rounded-full bg-white/20">
@@ -123,7 +123,7 @@ export function ExamsScreen({ exams, lessons, results, country }: { exams: ExamI
           </div>
         </section>
       ) : (
-        <section className="flex items-center gap-4 rounded-[28px] bg-surface p-5 shadow-floating">
+        <section className="flex items-center gap-4 rounded-[28px] bg-surface p-5 shadow-floating" data-tour="examen-prochain">
           <Mika mood="think" size={96} label="" />
           <div className="flex min-w-0 flex-1 flex-col gap-1.5">
             <h2 className="text-[20px] font-extrabold leading-tight text-ink">{t("lesson.exam.emptyTitle")}</h2>
@@ -135,7 +135,7 @@ export function ExamsScreen({ exams, lessons, results, country }: { exams: ExamI
         </section>
       )}
 
-      <section className="flex items-center gap-4 rounded-[24px] bg-surface p-4 shadow-[inset_0_0_0_1.5px_var(--color-stroke)]">
+      <section className="flex items-center gap-4 rounded-[24px] bg-surface p-4 shadow-[inset_0_0_0_1.5px_var(--color-stroke)]" data-tour="examen-blanc">
         <span className="flex size-[56px] shrink-0 items-center justify-center rounded-[16px] bg-accent-soft">
           <MicaboIcon id="quiz" size={40} />
         </span>

@@ -19,7 +19,7 @@ export function LessonNavbar({ lessonId, dueCount = 0 }: { lessonId: string; due
     { href: flashcardsPath(lessonId), icon: "cartes", label: t("lesson.nav.flashcards"), badge: dueCount },
   ];
   return (
-    <nav
+    <nav data-tour="lecon-barre"
       aria-label={t("lesson.nav.notes") + " · " + t("lesson.nav.quiz") + " · " + t("lesson.nav.flashcards")}
       className="lesson-bottom-bar -mx-4 mt-2 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-7 lg:-mx-10"
       style={{ background: "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 0%, transparent), color-mix(in srgb, var(--color-canvas) 92%, transparent) 38%, var(--color-canvas))" }}

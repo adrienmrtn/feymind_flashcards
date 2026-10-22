@@ -80,16 +80,6 @@ export {
   type StudyCounts,
 } from "./srs/queue";
 export {
-  LEARN_AHEAD_SECONDS,
-  advanceSession,
-  earliestAvailableAt,
-  earliestIndex,
-  enqueueInitial,
-  returnsInSession,
-  type SessionAdvance,
-  type SessionEntry,
-} from "./srs/session";
-export {
   DEFAULT_TARGET_SCORE,
   TARGET_SCORE_MAX,
   TARGET_SCORE_MIN,
@@ -180,33 +170,6 @@ export {
   type TermPlan,
 } from "./srs/term";
 
-// La copie d'examen blanc : vingt questions, aucune auto-notation.
-export {
-  MOCK_GAP,
-  MOCK_PAPER_SIZE,
-  PASS_MARK,
-  clampScore,
-  correctCount,
-  gradeClosed,
-  isClosedQuestion,
-  isMockDebrief,
-  normalizeAnswer,
-  paperMinutes,
-  paperQuota,
-  paperScore,
-  quotaSize,
-  sameAnswer,
-  type MockAnswer,
-  type MockChoiceQuestion,
-  type MockDebrief,
-  type MockFeynmanQuestion,
-  type MockGapQuestion,
-  type MockGrade,
-  type MockQuestion,
-  type MockQuestionKind,
-  type MockTrueFalseQuestion,
-  type PaperQuota,
-} from "./srs/mock-paper";
 
 // L'examen blanc : la seule mesure en conditions d'épreuve.
 export {
@@ -306,21 +269,6 @@ export {
   type StudyStats,
 } from "./srs/mastery";
 
-export {
-  EXAM_CHART_PAST_DAYS,
-  buildExamInsight,
-  cardKindLabel,
-  chartOffsets,
-  learnedPercent,
-  weakNote,
-  type ExamChart,
-  type ExamInsight,
-  type ExamInsightInput,
-  type ExamWeakPoint,
-  type InsightCard,
-  type InsightReview,
-  type WeakKind,
-} from "./srs/exam-insight";
 
 // Les séries, les niveaux de connaissance, et l'audience d'un cours.
 export {
@@ -625,7 +573,6 @@ export {
   subjectEmoji,
   type SubjectFamily,
 } from "./onboarding/subjects";
-export { examStoryFor, type ExamGrade, type ExamStory } from "./onboarding/exam-story";
 export { FALLBACK_EMOJI, deriveEmoji, resolveEmoji } from "./emoji";
 
 // Les réglages de génération, portés depuis l'app : ce sont les mêmes bornes des deux côtés,

@@ -92,7 +92,7 @@ export function LessonsScreen({ lessons, folders }: { lessons: LessonListItem[];
   ];
 
   return (
-    <div className="mx-auto flex w-full max-w-[640px] flex-col gap-5 pb-6">
+    <div className="mx-auto flex w-full max-w-[640px] flex-col gap-5 pb-6" data-tour="lecons-liste">
       <header className="flex items-end justify-between gap-3 pt-1">
         <div className="flex flex-col gap-0.5">
           <h1 className="text-[32px] font-extrabold leading-tight tracking-tight-title text-ink">{t("lesson.tab.lessons")}</h1>

@@ -120,7 +120,7 @@ export function HomeScreen(props: HomeScreenProps) {
         <div className="absolute left-1/2 top-0 z-10 -translate-x-1/2">
           <Mika mood={reading ? "think" : mood} size={96} label="" />
         </div>
-        <div className={`home-bar flex min-h-[132px] flex-col justify-end gap-2.5 py-3 pl-5 pr-2.5 ${focused ? "home-bar-focused" : ""}`}>
+        <div className={`home-bar flex min-h-[132px] flex-col justify-end gap-2.5 py-3 pl-5 pr-2.5 ${focused ? "home-bar-focused" : ""}`} data-tour="home-barre">
           {supports.length > 0 ? (
             <div className="flex flex-col gap-2">
               <ul className="-mx-1 flex gap-2 overflow-x-auto px-1 [scrollbar-width:none]">
@@ -166,7 +166,7 @@ export function HomeScreen(props: HomeScreenProps) {
       </div>
 
       <div className="flex flex-col gap-2">
-        <ul className="grid grid-cols-5 gap-2">
+        <ul className="grid grid-cols-5 gap-2" data-tour="home-supports">
           {SUPPORT_KINDS.map((kind) => (
             <li key={kind}>
               <button
@@ -189,7 +189,7 @@ export function HomeScreen(props: HomeScreenProps) {
         {!room ? <p className="text-center text-[13px] font-bold text-ink-secondary">{t("lesson.home.supportsFull", { n: 5 })}</p> : null}
       </div>
 
-      <ul className="grid grid-cols-3 gap-2">
+      <ul className="grid grid-cols-3 gap-2" data-tour="home-chiffres">
         <StatPill icon="sablier" value={time.unit === "minutes" ? t("lesson.home.minutes", { n: time.value }) : t("lesson.home.hours", { n: new Intl.NumberFormat(locale).format(time.value) })} label={t("lesson.home.statTime")} />
         <StatPill icon="diplome" value={String(props.stats.learnedLessons)} label={t("lesson.home.statLessons")} />
         <StatPill icon="cartes" value={String(props.stats.learnedCards)} label={t("lesson.home.statCards")} />

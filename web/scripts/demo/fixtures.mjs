@@ -466,6 +466,16 @@ export function rpc(name, args) {
     case "record_course_view":
     case "record_course_adopt":
       return null;
+    // Les portes du gratuit (`begin_lesson`, `begin_extra`) : la démonstration est Pro, tout
+    // passe. Le site ne les appelle pas lui-même, la fonction `generate-lesson` le fait.
+    case "begin_lesson":
+    case "begin_extra":
+      return "ok";
+    case "refund_extra":
+    case "lesson_theme_call":
+      return null;
+    case "is_pro":
+      return true;
     default:
       return [];
   }
