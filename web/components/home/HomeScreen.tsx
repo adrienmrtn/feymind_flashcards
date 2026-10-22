@@ -80,7 +80,7 @@ export function HomeScreen(props: HomeScreenProps) {
   function tapImport(kind: SupportKind) {
     if (kind !== "text" && !props.isPro) {
       field.current?.blur();
-      requestPaywall();
+      requestPaywall("upgrade");
       return;
     }
     setSheet(kind);
@@ -91,7 +91,7 @@ export function HomeScreen(props: HomeScreenProps) {
     const source = composerSource(supports);
     if (!props.isPro && (isImportSource(source) || props.hasUsedFreeLesson)) {
       field.current?.blur();
-      requestPaywall();
+      requestPaywall(isImportSource(source) ? "upgrade" : "send");
       return;
     }
     field.current?.blur();

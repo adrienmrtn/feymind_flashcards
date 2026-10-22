@@ -10,6 +10,9 @@ export const HOME_PATH = "/app" as Route;
 export const LESSONS_PATH = "/app/lecons" as Route;
 /** L'onglet Examen. */
 export const EXAMS_PATH = "/app/examen" as Route;
+/** L'onglet Profil ; les anciens Réglages et Amis y mènent. */
+export const PROFILE_PATH = "/app/profil" as Route;
+export const FRIENDS_PATH = "/app/profil/amis" as Route;
 
 export function lessonPath(id: string): Route {
   return `/app/lecons/${id}` as Route;

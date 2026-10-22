@@ -82,7 +82,7 @@ export function MockExamFlow({
       }
       if (outcome.code === "pro_required" || outcome.code === "daily_limit") {
         setPhase({ kind: "setup" });
-        requestPaywall();
+        requestPaywall("extra");
         return;
       }
       setPhase({ kind: "failed", message: outcome.message ?? t("lesson.exam.failed") });

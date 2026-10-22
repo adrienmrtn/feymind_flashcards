@@ -8,6 +8,7 @@ import { Check, ChevronRight, Ellipsis, Folder, FolderPlus, Pencil, Plus, Search
 import { folderPath, type FolderNode, type LessonTone } from "@micabo/core";
 
 import { LessonPrimaryButton, LessonSecondaryButton } from "@/components/lesson/LessonButtons";
+import { Sheet } from "@/components/lesson/Sheet";
 import { MicaboIcon } from "@/components/lesson/MicaboIcon";
 import { Mika } from "@/components/mika/Mika";
 import { createFolder, deleteFolder, moveCourse, renameFolder } from "@/lib/actions/folders";
@@ -417,30 +418,5 @@ function MenuRow({ icon: Icon, label, onClick, danger }: { icon: typeof Folder; 
       <Icon aria-hidden="true" className="size-[18px]" strokeWidth={2.4} />
       {label}
     </button>
-  );
-}
-
-/** Une feuille modale, basse sur téléphone et centrée sur grand écran. */
-export function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
-  const { t } = useI18n();
-  useEffect(() => {
-    function escape(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", escape);
-    return () => document.removeEventListener("keydown", escape);
-  }, [onClose]);
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-label={title} onClick={onClose}>
-      <div className="score-in flex w-full max-w-[480px] flex-col gap-4 rounded-t-[28px] bg-canvas p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-[28px]" onClick={(event) => event.stopPropagation()}>
-        <div className="flex items-center justify-between">
-          <h2 className="text-[20px] font-extrabold text-ink">{title}</h2>
-          <button type="button" onClick={onClose} aria-label={t("app.common.cancel")} className="pressable flex size-9 items-center justify-center rounded-full text-ink-secondary hover:bg-surface-muted">
-            <X aria-hidden="true" className="size-5" strokeWidth={2.6} />
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
   );
 }

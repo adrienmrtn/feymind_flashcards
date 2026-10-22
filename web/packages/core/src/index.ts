@@ -565,6 +565,7 @@ export {
 
 // Le verrou du gratuit - aligné sur `ProAccess.swift`, construit mais pas armé.
 export * as entitlement from "./entitlement";
+export { FREE_LESSON_TIER, PAYWALL_TRIGGERS, isPaywallTrigger, type PaywallTrigger } from "./entitlement";
 
 // Les offres, dont le pourcentage d'économie est calculé et jamais écrit.
 export * as pricing from "./pricing";

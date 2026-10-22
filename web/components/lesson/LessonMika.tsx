@@ -126,7 +126,7 @@ export function LessonMika({ lessonId, title, tone, isPro }: { lessonId: string;
     const gate = mikaGate({ isPro, freeQuestionUsed: read(KEYS.freeUsed) === "1", askedToday: askedToday() });
     if (gate === "paywall") {
       input.current?.blur();
-      requestPaywall();
+      requestPaywall("mika");
       return;
     }
     if (gate === "dailyCapReached") {

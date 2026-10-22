@@ -77,7 +77,7 @@ export function LessonQuizScreen({
       }
       if (outcome.code === "pro_required" || outcome.code === "daily_limit" || outcome.code === "free_limit") {
         setPractice("idle");
-        requestPaywall();
+        requestPaywall("extra");
         return;
       }
       setPractice("failed");

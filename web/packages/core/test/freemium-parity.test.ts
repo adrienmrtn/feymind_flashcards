@@ -1,12 +1,11 @@
 /**
  * **Le test qui empêche les deux clients de dire deux choses.**
  *
- * Le verrou du gratuit existe deux fois : `src/entitlement.ts` pour le web,
- * `Micabo/Services/ProAccess.swift` pour l'app. Les tests de chacun vérifient déjà leurs
- * propres nombres — mais ils les vérifient **séparément**, donc rien n'empêchait le web de
- * passer à `false` et l'iPhone de rester à `true`. C'est exactement ce qui est arrivé, et le
- * symptôme n'a rien d'évident : le même cours est flouté sur le site et entier sur le
- * téléphone, et personne ne signale un bug qui lui donne plus.
+ * Le gratuit existe deux fois : `src/entitlement.ts` et `src/lesson/allowance.ts` pour le
+ * web, `LessonAllowance`, `MikaAllowance` et `ProAccess` pour l'app. Les tests de chacun
+ * vérifient déjà leurs propres nombres — mais ils les vérifient **séparément**, donc rien
+ * n'empêchait le web d'offrir deux leçons et l'iPhone une seule. Le symptôme n'a rien
+ * d'évident : personne ne signale un bug qui lui donne plus.
  *
  * Ici on relit le Swift et on compare. Une divergence tombe au prochain `pnpm test`.
  */
@@ -18,31 +17,32 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import * as discount from "../src/discount";
-import { ASSUME_PRO_WITHOUT_ROW, ENTITLEMENT_ID, FREE_TIER, LIFETIME_PRO_EMAILS } from "../src/entitlement";
+import { ASSUME_PRO_WITHOUT_ROW, ENTITLEMENT_ID, FREE_LESSON_TIER, LIFETIME_PRO_EMAILS } from "../src/entitlement";
+import { EXTRA_ALLOWANCE, MIKA_ALLOWANCE, hasUsedFreeLesson, isImportSource, lessonGate } from "../src/lesson/allowance";
+import { MAX_COMPOSER_CHARACTERS, MAX_COMPOSER_IMAGES, MAX_SUPPORTS } from "../src/lesson/composer";
+import { MIKA_LIMITS } from "../src/lesson/mika";
 import { DISCOUNT_YEARLY } from "../src/pricing";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../../..");
 
-const proAccess = readFileSync(resolve(repoRoot, "Micabo/Services/ProAccess.swift"), "utf8");
-const purchases = readFileSync(
-  resolve(repoRoot, "Micabo/Features/Paywall/PaywallPurchases.swift"),
-  "utf8",
-);
-const catalog = readFileSync(
-  resolve(repoRoot, "Micabo/Features/Paywall/PaywallCatalog.swift"),
-  "utf8",
-);
-const discountOffer = readFileSync(
-  resolve(repoRoot, "Micabo/Features/Paywall/DiscountOffer.swift"),
-  "utf8",
-);
+const swift = (path: string) => readFileSync(resolve(repoRoot, "Micabo", path), "utf8");
+const proAccess = swift("Services/ProAccess.swift");
+const composer = swift("Features/Home/LessonComposer.swift");
+const purchases = swift("Features/Paywall/PaywallPurchases.swift");
+const catalog = swift("Features/Paywall/PaywallCatalog.swift");
+const discountOffer = swift("Features/Paywall/DiscountOffer.swift");
 
 /** La valeur d'un `static let` Swift, telle qu'elle est écrite. */
 function swiftConstant(source: string, name: string): string {
   const found = source.match(new RegExp(`static let ${name}[^=\\n]*=\\s*([^\\n]+)`));
   if (!found?.[1]) throw new Error(`\`${name}\` introuvable dans le Swift`);
   return found[1].trim().replace(/\s*\/\/.*$/, "");
+}
+
+/** Un nombre Swift, avec ses séparateurs de milliers (`60_000`). */
+function swiftNumber(source: string, name: string): number {
+  return Number(swiftConstant(source, name).replace(/_/g, ""));
 }
 
 describe("le gratuit, des deux côtés", () => {
@@ -52,16 +52,55 @@ describe("le gratuit, des deux côtés", () => {
     expect(swiftConstant(proAccess, "assumeProWithoutRow")).toBe(String(ASSUME_PRO_WITHOUT_ROW));
   });
 
-  it("coupe la fiche et ferme l'entraînement pareil", () => {
-    // Le nombre de cours et de cartes ne se comparent plus : depuis la refonte « parcours »,
-    // l'app ne lit plus `FreeTier` (son gratuit est une leçon offerte, `LessonAllowance`), et
-    // ses deux constantes disent le gratuit d'avant la refonte du site. Le site rejoint la
-    // leçon offerte au lot 7 de `docs/refonte-web.md`, et ce test se réécrit alors sur
-    // `LessonAllowance`. Ce qui se compare encore se compare.
-    expect(swiftConstant(proAccess, "readableSheetRatio")).toBe(
-      String(FREE_TIER.readableSheetRatio),
-    );
-    expect(swiftConstant(proAccess, "allowsPractice")).toBe(String(FREE_TIER.allowsPractice));
+  it("offre une leçon, depuis un sujet ou un texte collé, et pas depuis un import", () => {
+    // `LessonAllowance.gate` : Pro passe ; un import ouvre le paywall ; sinon la première
+    // leçon est offerte. Les cours de démonstration, de la bibliothèque et les paquets ne
+    // comptent pas, comme côté serveur (`begin_lesson`).
+    const allowance = composer.slice(composer.indexOf("enum LessonAllowance"));
+    expect(allowance).toContain("if isPro { return nil }");
+    expect(allowance).toContain("if source.isImport { return .generateCourse }");
+    expect(allowance).toContain("![.sample, .library, .deck].contains(course.source)");
+
+    expect(FREE_LESSON_TIER.lessons).toBe(1);
+    expect(FREE_LESSON_TIER.importsAllowed).toBe(false);
+    expect(lessonGate({ isPro: true, source: "pdf", courses: [] })).toBeNull();
+    expect(lessonGate({ isPro: false, source: "pdf", courses: [] })).toBe("import_pro");
+    expect(lessonGate({ isPro: false, source: "topic", courses: [] })).toBeNull();
+    expect(lessonGate({ isPro: false, source: "text", courses: [{ source: "text", isFromLibrary: false }] })).toBe("free_limit");
+    for (const source of ["sample", "library", "deck"]) {
+      expect(hasUsedFreeLesson([{ source, isFromLibrary: false }]), source).toBe(false);
+    }
+    expect(hasUsedFreeLesson([{ source: "pdf", isFromLibrary: true }])).toBe(false);
+    expect(isImportSource("topic")).toBe(false);
+    expect(isImportSource("text")).toBe(false);
+    for (const source of ["pdf", "photo", "audio", "youtube", "docx", "mixed"] as const) {
+      expect(isImportSource(source), source).toBe(true);
+    }
+  });
+
+  it("laisse Mika répondre au même nombre de questions", () => {
+    // Une question offerte, puis un plafond par jour pour Pro : le serveur tient les mêmes
+    // nombres (`_shared/mika.ts`), et chaque client refuse avant l'appel.
+    expect(swiftNumber(proAccess, "freeQuestions")).toBe(MIKA_ALLOWANCE.freeQuestions);
+    expect(swiftNumber(proAccess, "proMessagesPerDay")).toBe(MIKA_ALLOWANCE.proMessagesPerDay);
+    expect(FREE_LESSON_TIER.mikaQuestions).toBe(MIKA_ALLOWANCE.freeQuestions);
+    expect(MIKA_LIMITS.turns).toBeGreaterThan(0);
+  });
+
+  it("offre un entraînement et un examen blanc, puis Pro", () => {
+    // `begin_extra` tient la porte (migration `lesson_extras`) ; le site l'annonce.
+    expect(FREE_LESSON_TIER.practiceSets).toBe(EXTRA_ALLOWANCE.freePractice);
+    expect(FREE_LESSON_TIER.mockExams).toBe(EXTRA_ALLOWANCE.freeExams);
+    expect(EXTRA_ALLOWANCE.freePractice).toBe(1);
+    expect(EXTRA_ALLOWANCE.freeExams).toBe(1);
+  });
+
+  it("accepte autant de supports, de caractères et d'images que l'app", () => {
+    // La barre de Home : cinq supports, soixante mille caractères, six images. Un site qui
+    // accepterait un sixième PDF enverrait une demande que le serveur coupe sans le dire.
+    expect(swiftNumber(composer, "maximumSupports")).toBe(MAX_SUPPORTS);
+    expect(swiftNumber(composer, "maximumCharacters")).toBe(MAX_COMPOSER_CHARACTERS);
+    expect(swiftNumber(composer, "maximumImages")).toBe(MAX_COMPOSER_IMAGES);
   });
 
   it("lit le même entitlement RevenueCat", () => {
@@ -84,8 +123,7 @@ describe("le branchement RevenueCat de l'app", () => {
     // paywalls tant qu'aucune boutique n'existait. Le paywall de fin de session est parti
     // avec l'onglet Réviser (refonte « parcours ») : il reste celui de l'app.
     for (const file of ["Features/Paywall/PaywallFlowView.swift"]) {
-      const source = readFileSync(resolve(repoRoot, "Micabo", file), "utf8");
-      expect(source).not.toContain("case .purchased, .unavailable:");
+      expect(swift(file)).not.toContain("case .purchased, .unavailable:");
     }
   });
 
