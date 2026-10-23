@@ -92,7 +92,7 @@ describe("checkoutSessionFields", () => {
       cancelUrl: "https://micabo.app",
       locale: "fr",
       currency: "eur",
-      note: "Micabo Pro · 39,99 € par an.",
+      note: "Micabo Pro · 29,99 € par an.",
     };
     const fr = checkoutSessionFields(base);
 
@@ -107,7 +107,7 @@ describe("checkoutSessionFields", () => {
     const es = checkoutSessionFields({
       ...base,
       locale: "es",
-      note: "Micabo Pro · 39,99 € al año.",
+      note: "Micabo Pro · 29,99 € al año.",
     });
     expect(checkoutIdempotencyKey(es, now)).not.toBe(checkoutIdempotencyKey(fr, now));
 
@@ -318,11 +318,16 @@ describe("checkoutNote", () => {
     expect(note).toContain('"days":3');
     // Le prix annuel, pas le mensuel équivalent affiché sur la carte : c'est le montant
     // que Stripe va prélever, et l'écart entre les deux est ce qui fait fermer l'onglet.
-    expect(note).toContain(pricing.priceText(3899.99, "TRY"));
+    expect(note).toContain(pricing.priceText(1499.99, "TRY"));
+  });
+
+  it("annonce l'essai de l'hebdomadaire, comme l'app", () => {
+    const note = checkoutNote(t, pricing.WEEKLY, "EUR");
+    expect(note).toContain("app.paywall.stripeNote.trialWeekly");
+    expect(note).toContain(pricing.priceText(4.99, "EUR"));
   });
 
   it("ne promet pas d'essai là où il n'y en a pas", () => {
-    expect(checkoutNote(t, pricing.WEEKLY, "EUR")).toContain("app.paywall.stripeNote.weekly");
     expect(checkoutNote(t, pricing.DISCOUNT_YEARLY, "EUR")).toContain(
       "app.paywall.stripeNote.yearly",
     );

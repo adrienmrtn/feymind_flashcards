@@ -21,15 +21,16 @@ describe("pricing-copy", () => {
     expect(planTitle(tTr, pricing.YEARLY)).toBe("Yıllık");
     expect(planTitle(tTr, pricing.WEEKLY)).toBe("Haftalık");
     expect(trialBadge(tTr, pricing.YEARLY)).toBe("3 gün ücretsiz");
-    expect(trialBadge(tFr, pricing.WEEKLY)).toBeNull();
+    expect(trialBadge(tFr, pricing.WEEKLY)).toBe("3 jours gratuits");
+    expect(trialBadge(tFr, pricing.DISCOUNT_YEARLY)).toBeNull();
     expect(planRenewalCopy(tTr, pricing.WEEKLY, "TRY")).toBe("İstediğin an iptal");
-    expect(planRenewalCopy(tFr, pricing.YEARLY, "EUR")).toMatch(/69,99/);
+    expect(planRenewalCopy(tFr, pricing.YEARLY, "EUR")).toMatch(/49,99/);
   });
 
   it("montre la livre quand la langue est le turc", () => {
     expect(presentmentFor("tr")).toBe("TRY");
     expect(presentmentFor("fr")).toBe("EUR");
     expect(presentmentFor("fr", "tr")).toBe("TRY");
-    expect(planRenewalCopy(tTr, pricing.YEARLY, "TRY")).toMatch(/₺|TRY|3.?899/);
+    expect(planRenewalCopy(tTr, pricing.YEARLY, "TRY")).toMatch(/1.?499,99/);
   });
 });

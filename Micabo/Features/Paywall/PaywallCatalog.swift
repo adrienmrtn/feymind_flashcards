@@ -384,6 +384,6 @@ enum PaywallOutcome: Equatable {
 enum PaywallLinks {
     /// Adresses à confirmer avant la première soumission : un paywall dont les deux liens
     /// ne mènent nulle part se fait refuser à la relecture.
-    static let terms = "https://micabo.app/conditions"
-    static let privacy = "https://micabo.app/confidentialite"
+    static let terms = "https://www.micabo.app/conditions"
+    static let privacy = "https://www.micabo.app/confidentialite"
 }

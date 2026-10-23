@@ -1,10 +1,13 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { fetchProAccess, transferTargets } from "../_shared/revenuecat.ts";
 
 /**
  * Le webhook RevenueCat : **le seul endroit qui décide qui est abonné.**
  *
- * Il est volontairement autonome — aucune dépendance partagée — parce que c'est le code dont on
- * veut pouvoir relire l'intégralité d'un trait avant de croire ce qu'il écrit.
+ * Il est volontairement presque autonome — une seule dépendance partagée, la lecture d'un
+ * abonné chez RevenueCat (`_shared/revenuecat.ts`, testée), dont les transferts ont besoin —
+ * parce que c'est le code dont on veut pouvoir relire l'intégralité d'un trait avant de croire
+ * ce qu'il écrit.
  *
  * ## Ce qui fait qu'un droit multiplateforme marche
  *
@@ -88,7 +91,6 @@ function resolveAccess(event: RevenueCatEvent): { isPro: boolean; willRenew: boo
     case "RENEWAL":
     case "UNCANCELLATION":
     case "PRODUCT_CHANGE":
-    case "TRANSFER":
     case "SUBSCRIPTION_EXTENDED":
     case "TEMPORARY_ENTITLEMENT_GRANT":
       return { isPro: true, willRenew: true };
@@ -180,6 +182,9 @@ Deno.serve(async (request: Request) => {
   const type = (event.type ?? "").toUpperCase();
   if (type === "TEST") return reply({ ok: true, note: "Branchement vérifié." });
 
+  // Un transfert n'a pas d'`app_user_id` : il se lit sur ses deux listes, plus bas.
+  if (type === "TRANSFER") return await handleTransfer(event);
+
   const userId = event.app_user_id ?? "";
   if (!UUID_SHAPE.test(userId)) {
     // Le refus est bruyant **exprès** : c'est le symptôme d'un SDK configuré sans
@@ -231,33 +236,78 @@ Deno.serve(async (request: Request) => {
     return reply({ error: "Écriture refusée.", detail: applied.detail }, 502);
   }
 
-  // Un transfert déplace le droit : l'ancien identifiant ne doit plus rester abonné.
-  if (type === "TRANSFER") {
-    const sources = [
-      ...(event.transferred_from ?? []),
-      event.original_app_user_id ?? "",
-    ].filter((id) => UUID_SHAPE.test(id) && id !== userId);
-
-    for (const source of [...new Set(sources)]) {
-      const revoked = await applyEntitlement(url, serviceKey, {
-        userId: source,
-        isPro: false,
-        productId: event.product_id ?? null,
-        store: normalizeStore(event.store),
-        periodType: normalizePeriod(event.period_type),
-        expiresAt: eventAt,
-        willRenew: false,
-        eventAt,
-        eventId: event.id ? `${event.id}-revoke-${source}` : null,
-      });
-      if (!revoked.ok) {
-        return reply({ error: "Révocation du compte source refusée.", detail: revoked.detail }, 502);
-      }
-    }
-  }
-
   return reply({ ok: true, ...applied.row });
 });
+
+/**
+ * **Un transfert déplace les achats d'un compte à l'autre** — typiquement de l'invité vers le
+ * vrai compte, à la connexion, ou d'un compte à l'autre sur une restauration.
+ *
+ * L'événement ne dit ni le produit, ni l'échéance : appliquer « Pro » à partir de lui seul
+ * donnerait un droit sans fin à qui récupère un abonnement expiré depuis un an. Chaque compte
+ * concerné est donc **relu chez RevenueCat**, et sa ligne recopie ce que RevenueCat dit
+ * maintenant : Pro avec son échéance, ou fermé. RevenueCat qui ne répond pas rend 502, pour
+ * qu'il renvoie l'événement plus tard, plutôt que d'écrire au hasard.
+ */
+async function handleTransfer(event: RevenueCatEvent): Promise<Response> {
+  const ids = event.entitlement_ids ?? [];
+  if (ids.length > 0 && !ids.includes(ENTITLEMENT_ID)) {
+    return reply({ ok: true, note: "Événement TRANSFER ignoré." });
+  }
+
+  const { to, from } = transferTargets(event);
+  if (to.length === 0 && from.length === 0) {
+    // Même bruit que pour un `app_user_id` illisible : un transfert entre identifiants
+    // anonymes est le symptôme d'un SDK configuré sans `appUserID`.
+    return reply(
+      {
+        error: "TRANSFER sans identifiant Supabase, ni dans transferred_to ni dans transferred_from.",
+        received: [...(event.transferred_to ?? []), ...(event.transferred_from ?? [])]
+          .join(",").slice(0, 128),
+      },
+      422,
+    );
+  }
+
+  if (!event.event_timestamp_ms) return reply({ error: "Événement sans horodatage." }, 502);
+
+  const url = Deno.env.get("SUPABASE_URL");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !serviceKey) return reply({ error: "Environnement incomplet." }, 500);
+
+  const eventAt = new Date(event.event_timestamp_ms).toISOString();
+  const results: Record<string, unknown>[] = [];
+
+  // Ceux qui reçoivent d'abord : un échec à mi-chemin laisse un compte de trop ouvert, jamais
+  // l'acheteur fermé. RevenueCat renvoie l'événement, et le reste s'écrit au passage suivant.
+  for (const [userId, side] of [
+    ...to.map((id) => [id, "to"] as const),
+    ...from.map((id) => [id, "from"] as const),
+  ]) {
+    const access = await fetchProAccess(userId);
+    if (access === undefined) {
+      return reply({ error: "RevenueCat injoignable pour le transfert.", user: userId }, 502);
+    }
+
+    const applied = await applyEntitlement(url, serviceKey, {
+      userId,
+      isPro: access !== null,
+      productId: access?.productId ?? event.product_id ?? null,
+      store: access?.store ?? normalizeStore(event.store),
+      periodType: access?.periodType ?? null,
+      expiresAt: access ? access.expiresAt : eventAt,
+      willRenew: access?.willRenew ?? false,
+      eventAt,
+      eventId: event.id ? `${event.id}-transfer-${userId}` : null,
+    });
+    if (!applied.ok) {
+      return reply({ error: "Écriture du transfert refusée.", user: userId, detail: applied.detail }, 502);
+    }
+    results.push({ user: userId, side, ...applied.row });
+  }
+
+  return reply({ ok: true, transfer: results });
+}
 
 async function applyEntitlement(
   url: string,
