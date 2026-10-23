@@ -42,8 +42,8 @@ export async function SiteStructuredData() {
         "@id": `${CANONICAL_URL}/#website`,
         // Sitename Google (la ligne au-dessus de l'URL). Le domaine n'est
         // qu'un repli si Google n'est pas sûr du nom.
-        name: "micabo",
-        alternateName: ["Micabo", "micabo.app"],
+        name: "Micabo",
+        alternateName: ["micabo", "micabo.app"],
         url: `${CANONICAL_URL}/`,
         inLanguage: UI_LOCALE_META[locale].bcp47,
         publisher: { "@id": `${CANONICAL_URL}/#organization` },

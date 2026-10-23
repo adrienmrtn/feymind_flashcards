@@ -64,7 +64,7 @@ export async function generateMetadata(): Promise<Metadata> {
       template: "%s - Micabo",
     },
     description,
-    applicationName: "micabo",
+    applicationName: "Micabo",
     // Canonique et hreflang : chaque page indexable les pose elle-même.
     // Les poser ici, sur `/`, ferait de toutes les pages un doublon de l'accueil.
     robots: IS_INDEXABLE ? undefined : { index: false, follow: false },
@@ -84,7 +84,7 @@ export async function generateMetadata(): Promise<Metadata> {
     itunes: { appId: APP_STORE_ID },
     openGraph: {
       type: "website",
-      siteName: "micabo",
+      siteName: "Micabo",
       locale: UI_LOCALE_META[locale].og,
       url: "/",
       title,
