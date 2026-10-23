@@ -15,7 +15,7 @@ import {
   type ThemeStatus,
 } from "@micabo/core";
 
-import { cachedRead, coursesTag, dataClient, userTag } from "@/lib/data/cache";
+import { cachedRead, coursesTag, dataClient, userTag, rowsOrThrow } from "@/lib/data/cache";
 import { type CourseRow } from "@/lib/data/courses";
 import { currentAccessToken, currentUserId } from "@/lib/data/user";
 
@@ -100,12 +100,15 @@ export async function listLessons(): Promise<LessonRow[]> {
   if (!auth) return [];
 
   return cachedRead(auth.userId, "lessons", [userTag(auth.userId), coursesTag(auth.userId)], async () => {
-    const { data } = await dataClient(auth.token)
-      .from("courses")
-      .select(LESSON_COLUMNS)
-      .eq("user_id", auth.userId)
-      .is("deleted_at", null)
-      .order("updated_at", { ascending: false });
+    const data = rowsOrThrow(
+      await dataClient(auth.token)
+        .from("courses")
+        .select(LESSON_COLUMNS)
+        .eq("user_id", auth.userId)
+        .is("deleted_at", null)
+        .order("updated_at", { ascending: false }),
+      "lessons",
+    );
     return ((data as unknown as RawLesson[] | null) ?? []).map(readLesson);
   });
 }
@@ -153,7 +156,7 @@ export async function listThemeCounts(): Promise<Map<string, number>> {
   if (!auth) return new Map();
 
   const rows = await cachedRead(auth.userId, "theme-counts", [userTag(auth.userId), coursesTag(auth.userId)], async () => {
-    const { data } = await dataClient(auth.token).from("chapters").select("course_id").eq("user_id", auth.userId).is("deleted_at", null);
+    const data = rowsOrThrow(await dataClient(auth.token).from("chapters").select("course_id").eq("user_id", auth.userId).is("deleted_at", null), "theme-counts");
     return ((data as { course_id: string }[] | null) ?? []).map((row) => row.course_id);
   });
   const counts = new Map<string, number>();

@@ -4,7 +4,8 @@ import { cache } from "react";
 
 import { normalizeSheet, normalizeUsername, type SheetBlock } from "@micabo/core";
 
-import { cachedRead, dataClient, socialTag, userTag } from "@/lib/data/cache";
+import { cachedRead, dataClient, rowsOrThrow, socialTag, userTag } from "@/lib/data/cache";
+import { escapeLikePattern, ilikeContains } from "@/lib/data/postgrest";
 import { currentAccessToken, currentUserId } from "@/lib/data/user";
 import type { DirectoryPerson, Relation } from "@/lib/social";
 
@@ -99,7 +100,7 @@ export async function listSocialGraph(): Promise<{
 
   return cachedRead(auth.userId, "social-graph", [userTag(auth.userId), socialTag(auth.userId)], async () => {
     const supabase = dataClient(auth.token);
-    const [{ data: mine }, { data: links }] = await Promise.all([
+    const [mineResult, linksResult] = await Promise.all([
       supabase
         .from("directory")
         .select("id, username, institution_id, institution_name")
@@ -107,6 +108,9 @@ export async function listSocialGraph(): Promise<{
         .maybeSingle(),
       supabase.from("friendships").select("requester_id, addressee_id, status"),
     ]);
+    // Un graphe vide mis en cache, c'est « aucun ami » pendant trente secondes : on lève.
+    const mine = rowsOrThrow(mineResult, "directory");
+    const links = rowsOrThrow(linksResult, "friendships");
 
     const rows = (links as { requester_id: string; addressee_id: string; status: string }[] | null) ?? [];
     const otherIds = [...new Set(rows.map((link) => (link.requester_id === auth.userId ? link.addressee_id : link.requester_id)))];
@@ -154,7 +158,7 @@ export async function searchDirectory(query: string): Promise<DirectoryPerson[]>
   const { data } = await dataClient(auth.token)
     .from("directory")
     .select("id, username, institution_id, institution_name")
-    .ilike("username", `%${needle}%`)
+    .ilike("username", `%${escapeLikePattern(needle)}%`)
     .order("username", { ascending: true })
     .limit(25);
 
@@ -260,7 +264,9 @@ export async function listLibraryCourses(options: {
 
   const needle = options.search?.trim();
   if (needle && needle.length >= 2) {
-    query = query.or(`title.ilike.%${escapeLike(needle)}%,subject.ilike.%${escapeLike(needle)}%`);
+    // Entre guillemets : « Chimie (L1) » ne doit pas fermer la parenthèse du `.or()`.
+    const pattern = ilikeContains(needle);
+    query = query.or(`title.ilike.${pattern},subject.ilike.${pattern}`);
   }
   if (options.subject?.trim()) {
     query = query.eq("subject", options.subject.trim());
@@ -461,10 +467,6 @@ function relationMap(graph: {
   for (const person of graph.incoming) map.set(person.id, "awaitingMe");
   for (const person of graph.outgoing) map.set(person.id, "requested");
   return map;
-}
-
-function escapeLike(value: string): string {
-  return value.replace(/[%_,]/g, " ").replace(/\s+/g, " ").trim();
 }
 
 /** Cartes passées cette semaine, soi-même et ses amis. */

@@ -6,13 +6,24 @@
  * dans `docs/oauth-setup.md`.
  */
 
+/**
+ * Le traducteur de la page ou de la route. Ces messages s'affichent dans les vingt-six langues :
+ * une phrase écrite ici en dur, en français, tombait telle quelle sous les yeux d'un étudiant
+ * turc ou arabe, au moment précis où il ne comprend déjà pas pourquoi la connexion échoue.
+ */
+export type FailureTranslator = (key: string) => string;
+
 export function oauthCallbackUrl(next = "/app", provider?: "apple" | "google"): string {
   const from = provider ? `&provider=${provider}` : "";
   return `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}${from}`;
 }
 
 /** Apple web casse souvent sur le secret OAuth ou l'audience du Service ID. */
-export function oauthFailureMessage(provider: "apple" | "google", raw: string): string {
+export function oauthFailureMessage(
+  t: FailureTranslator,
+  provider: "apple" | "google",
+  raw: string,
+): string {
   const text = raw.toLowerCase();
   if (
     provider === "apple" &&
@@ -23,7 +34,7 @@ export function oauthFailureMessage(provider: "apple" | "google", raw: string): 
       text.includes("unsupported provider") ||
       text.includes("redirect"))
   ) {
-    return "Apple n'est pas encore branché pour le site (secret OAuth manquant dans Supabase). Utilise Google ou le lien par courriel.";
+    return t("app.errors.appleNotWired");
   }
   return raw;
 }
@@ -39,7 +50,11 @@ export function oauthFailureMessage(provider: "apple" | "google", raw: string): 
  * navigateur intégré d'une messagerie, le plus souvent) n'a pas le vérificateur PKCE gardé
  * au départ : l'échange échoue, et le message brut de Supabase ne dit pas quoi faire.
  */
-export function callbackFailureMessage(provider: string | null, raw: string): string {
+export function callbackFailureMessage(
+  t: FailureTranslator,
+  provider: string | null,
+  raw: string,
+): string {
   const text = raw.toLowerCase();
   if (
     text.includes("code verifier") ||
@@ -47,11 +62,11 @@ export function callbackFailureMessage(provider: string | null, raw: string): st
     text.includes("flow state") ||
     text.includes("both auth code and code verifier")
   ) {
-    return "Ce lien doit s'ouvrir dans le navigateur où tu l'as demandé. Redemande un lien depuis ce navigateur, ou connecte-toi avec Google ou Apple.";
+    return t("app.errors.linkOtherBrowser");
   }
-  if (provider === "apple" || provider === "google") return oauthFailureMessage(provider, raw);
+  if (provider === "apple" || provider === "google") return oauthFailureMessage(t, provider, raw);
   if (text.includes("audience") || text.includes("missing oauth secret")) {
-    return oauthFailureMessage("apple", raw);
+    return oauthFailureMessage(t, "apple", raw);
   }
   return raw;
 }

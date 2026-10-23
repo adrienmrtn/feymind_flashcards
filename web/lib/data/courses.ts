@@ -13,6 +13,7 @@ import {
   examsTag,
   socialTag,
   userTag,
+  rowsOrThrow,
 } from "@/lib/data/cache";
 import { currentAccessToken, currentUserId } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
@@ -138,12 +139,15 @@ export async function listCourses(): Promise<CourseRow[]> {
     "courses",
     [userTag(auth.userId), coursesTag(auth.userId)],
     async () => {
-      const { data } = await dataClient(auth.token)
-        .from("courses")
-        .select(COURSE_COLUMNS)
-        .eq("user_id", auth.userId)
-        .is("deleted_at", null)
-        .order("updated_at", { ascending: false });
+      const data = rowsOrThrow(
+        await dataClient(auth.token)
+          .from("courses")
+          .select(COURSE_COLUMNS)
+          .eq("user_id", auth.userId)
+          .is("deleted_at", null)
+          .order("updated_at", { ascending: false }),
+        "courses",
+      );
       return (data as CourseRow[] | null) ?? [];
     },
   );
@@ -166,13 +170,16 @@ export async function listFolders(): Promise<FolderRow[]> {
     "folders",
     [userTag(auth.userId), coursesTag(auth.userId)],
     async () => {
-      const { data } = await dataClient(auth.token)
-        .from("course_folders")
-        .select("id, parent_id, name, emoji, position")
-        .eq("user_id", auth.userId)
-        .is("deleted_at", null)
-        .order("position", { ascending: true })
-        .order("name", { ascending: true });
+      const data = rowsOrThrow(
+        await dataClient(auth.token)
+          .from("course_folders")
+          .select("id, parent_id, name, emoji, position")
+          .eq("user_id", auth.userId)
+          .is("deleted_at", null)
+          .order("position", { ascending: true })
+          .order("name", { ascending: true }),
+        "folders",
+      );
       return (data as FolderRow[] | null) ?? [];
     },
   );
@@ -188,13 +195,16 @@ export const getCourseMeta = cache(async (id: string): Promise<CourseRow | null>
     `course-meta:${id}`,
     [userTag(auth.userId), coursesTag(auth.userId), courseTag(auth.userId, id)],
     async () => {
-      const { data } = await dataClient(auth.token)
-        .from("courses")
-        .select(COURSE_COLUMNS)
-        .eq("user_id", auth.userId)
-        .eq("id", id)
-        .is("deleted_at", null)
-        .maybeSingle();
+      const data = rowsOrThrow(
+        await dataClient(auth.token)
+          .from("courses")
+          .select(COURSE_COLUMNS)
+          .eq("user_id", auth.userId)
+          .eq("id", id)
+          .is("deleted_at", null)
+          .maybeSingle(),
+        "course-meta",
+      );
       return (data as CourseRow | null) ?? null;
     },
     60,
@@ -210,13 +220,16 @@ export const getCourse = cache(async (id: string): Promise<CourseDetail | null> 
     `course:${id}`,
     [userTag(auth.userId), coursesTag(auth.userId), courseTag(auth.userId, id)],
     async () => {
-      const { data } = await dataClient(auth.token)
-        .from("courses")
-        .select(`${COURSE_COLUMNS}, raw_text, context_text, sheet`)
-        .eq("user_id", auth.userId)
-        .eq("id", id)
-        .is("deleted_at", null)
-        .maybeSingle();
+      const data = rowsOrThrow(
+        await dataClient(auth.token)
+          .from("courses")
+          .select(`${COURSE_COLUMNS}, raw_text, context_text, sheet`)
+          .eq("user_id", auth.userId)
+          .eq("id", id)
+          .is("deleted_at", null)
+          .maybeSingle(),
+        "course",
+      );
 
       if (!data) return null;
 
@@ -242,13 +255,16 @@ export async function listCards(courseId: string): Promise<CardRow[]> {
     `cards:${courseId}`,
     [userTag(auth.userId), cardsTag(auth.userId)],
     async () => {
-      const { data } = await dataClient(auth.token)
-        .from("flashcards")
-        .select(CARD_COLUMNS)
-        .eq("user_id", auth.userId)
-        .eq("course_id", courseId)
-        .is("deleted_at", null)
-        .order("position", { ascending: true });
+      const data = rowsOrThrow(
+        await dataClient(auth.token)
+          .from("flashcards")
+          .select(CARD_COLUMNS)
+          .eq("user_id", auth.userId)
+          .eq("course_id", courseId)
+          .is("deleted_at", null)
+          .order("position", { ascending: true }),
+        "cards",
+      );
       return (data as CardRow[] | null) ?? [];
     },
   );
@@ -283,12 +299,15 @@ export async function listCardSnapshots(): Promise<CardSnapshotRow[]> {
     "card-snapshots",
     [userTag(auth.userId), cardsTag(auth.userId)],
     async () => {
-      const { data } = await dataClient(auth.token)
-        .from("flashcards")
-        .select(CARD_SNAPSHOT_COLUMNS)
-        .eq("user_id", auth.userId)
-        .is("deleted_at", null)
-        .order("position", { ascending: true });
+      const data = rowsOrThrow(
+        await dataClient(auth.token)
+          .from("flashcards")
+          .select(CARD_SNAPSHOT_COLUMNS)
+          .eq("user_id", auth.userId)
+          .is("deleted_at", null)
+          .order("position", { ascending: true }),
+        "card-snapshots",
+      );
       return (data as CardSnapshotRow[] | null) ?? [];
     },
   );
@@ -332,7 +351,7 @@ export async function listPendingFriendRequests(): Promise<FriendRequestRow[]> {
       .eq("status", "pending")
       .order("created_at", { ascending: false });
 
-    if (error) return [];
+    rowsOrThrow({ data, error }, "friends");
 
     const rows = (data as { requester_id: string; created_at: string }[] | null) ?? [];
     if (rows.length === 0) return [];
@@ -359,14 +378,17 @@ export async function listExams(): Promise<ExamRow[]> {
   if (!auth) return [];
 
   return cachedRead(auth.userId, "exams", [userTag(auth.userId), examsTag(auth.userId)], async () => {
-    const { data } = await dataClient(auth.token)
-      .from("exams")
-      .select(
-        "id, name, exam_date, intensity, target_score, course_ids, is_planned, kind, formats, chapter_ids, starting_point",
-      )
-      .eq("user_id", auth.userId)
-      .is("deleted_at", null)
-      .order("exam_date", { ascending: true });
+    const data = rowsOrThrow(
+      await dataClient(auth.token)
+        .from("exams")
+        .select(
+          "id, name, exam_date, intensity, target_score, course_ids, is_planned, kind, formats, chapter_ids, starting_point",
+        )
+        .eq("user_id", auth.userId)
+        .is("deleted_at", null)
+        .order("exam_date", { ascending: true }),
+      "exams",
+    );
     return (data as ExamRow[] | null) ?? [];
   });
 }

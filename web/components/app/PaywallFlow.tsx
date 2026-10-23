@@ -25,16 +25,16 @@ import { usePresentment } from "@/lib/presentment";
 /**
  * Le paywall, **posé sur le tableau de bord**.
  *
- * Le court accueil (preuve, essai, rappel) précède l'offre — sauf quand
+ * Le court accueil (preuve, essai, conditions de l'essai) précède l'offre — sauf quand
  * une porte (deuxième cours, session) ouvre Pro tout de suite.
  *
  * `isPaid` - pas `isPro`. Sans ça, tout le monde sans ligne d'abonnement est
  * traité comme Pro, et cette carte ne s'ouvre jamais.
  */
 
-type Stage = "social" | "trial" | "reminder" | "plans";
+type Stage = "social" | "trial" | "terms" | "plans";
 
-const STAGES: Stage[] = ["social", "trial", "reminder", "plans"];
+const STAGES: Stage[] = ["social", "trial", "terms", "plans"];
 
 export function PaywallHost({ isPaid }: { isPaid: boolean }) {
   const params = useSearchParams();
@@ -280,7 +280,7 @@ export function PaywallCard({
         {/*
           Les quatre pages du court accueil partagent la même entrée : `rise`,
           comme un écran de parcours. L'offre se montait à part, sans
-          animation, et ça cassait la suite preuve → essai → rappel → Pro.
+          animation, et ça cassait la suite preuve → essai → conditions → Pro.
         */}
         <div key={stage} className="rise flex min-h-0 flex-1 flex-col">
           {stage === "plans" && trigger ? (
@@ -295,7 +295,7 @@ export function PaywallCard({
               <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2 pt-3">
                 {stage === "social" ? <SocialStep headingId={titleId} /> : null}
                 {stage === "trial" ? <TrialStep headingId={titleId} /> : null}
-                {stage === "reminder" ? <ReminderStep headingId={titleId} /> : null}
+                {stage === "terms" ? <TrialTermsStep headingId={titleId} /> : null}
               </div>
               <div className="px-6 pb-6 pt-3">
                 <button
@@ -381,20 +381,35 @@ function TrialStep({ headingId }: { headingId: string }) {
   );
 }
 
-function ReminderStep({ headingId }: { headingId: string }) {
+/**
+ * **Les conditions de l'essai, sans promesse qu'on ne tient pas.**
+ *
+ * Cet écran disait « On t'envoie un e-mail avant la fin de l'essai », sous une cloche qui
+ * sonnait. Aucun courriel de ce genre n'existe : rien ne l'envoie, ni ici, ni côté Stripe, ni
+ * côté App Store. Promettre un rappel qui ne vient pas, à l'instant où l'on demande une carte
+ * bancaire, c'est le genre de phrase qu'on relit dans un litige. L'écran dit donc ce qui est
+ * vrai : la durée offerte, le prix qui suit, et qu'on peut partir quand on veut - comme les
+ * apps.
+ */
+function TrialTermsStep({ headingId }: { headingId: string }) {
   const { t } = useI18n();
+  const presentment = usePresentment();
+  const plan = pricing.RECOMMENDED_PLAN;
   return (
     <div className="flex min-h-[360px] flex-col items-center justify-center py-6 text-center">
-      <span aria-hidden className="bell-sway mb-7 text-caution-vivid">
-        <Bell />
+      <span aria-hidden className="mb-7 text-accent">
+        <CalendarCheck />
       </span>
       <h2
         id={headingId}
         className="text-[24px] font-bold leading-[1.15] tracking-tight-title text-ink"
       >
-        {t("app.paywall.reminderTitle")}
+        {t("app.paywall.trialTermsTitle", {
+          days: pricing.trialDays(plan, presentment),
+          price: pricing.planPriceText(plan, presentment),
+        })}
       </h2>
-      <p className="mt-5 text-[17px] font-semibold text-ink">{t("app.paywall.reminderBody")}</p>
+      <p className="mt-5 text-[17px] font-semibold text-ink">{t("app.paywall.trialTermsBody")}</p>
     </div>
   );
 }
@@ -476,21 +491,22 @@ function Gift() {
   );
 }
 
-function Bell() {
+/** Un calendrier coché : une durée et une date, pas une notification qui n'arrivera pas. */
+function CalendarCheck() {
   return (
     <svg aria-hidden viewBox="0 0 88 88" className="h-[88px] w-[88px]">
+      <rect x="12" y="18" width="64" height="58" rx="12" fill="currentColor" opacity="0.18" />
+      <rect x="12" y="18" width="64" height="18" rx="9" fill="currentColor" />
+      <rect x="27" y="10" width="7" height="16" rx="3.5" fill="currentColor" />
+      <rect x="54" y="10" width="7" height="16" rx="3.5" fill="currentColor" />
       <path
-        d="M44 12c-11 0-20 9-20 22v10c0 6-3 11-8 14h56c-5-3-8-8-8-14V34c0-13-9-22-20-22z"
-        fill="currentColor"
-      />
-      <path
-        d="M34 70c2.6 6 7.2 10 10 10s7.4-4 10-10"
+        d="M31 55l9 9 17-19"
         fill="none"
         stroke="currentColor"
-        strokeWidth="6"
+        strokeWidth="7"
         strokeLinecap="round"
+        strokeLinejoin="round"
       />
-      <circle cx="62" cy="22" r="8" fill="#c93b2b" />
     </svg>
   );
 }

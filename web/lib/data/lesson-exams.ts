@@ -2,7 +2,7 @@ import "server-only";
 
 import { readExamPaper, type ExamLessonScore, type ExamPaperResult } from "@micabo/core";
 
-import { cachedRead, dataClient, examsTag, userTag } from "@/lib/data/cache";
+import { cachedRead, dataClient, examsTag, userTag, rowsOrThrow } from "@/lib/data/cache";
 import { currentAccessToken, currentUserId } from "@/lib/data/user";
 import { LESSON_EXAM_KIND } from "@/lib/lesson/exam";
 
@@ -30,14 +30,17 @@ export async function listLessonExamResults(): Promise<ExamPaperResult[]> {
   if (!userId || !token) return [];
 
   const rows = await cachedRead(userId, "lesson-exams", [userTag(userId), examsTag(userId)], async () => {
-    const { data } = await dataClient(token)
-      .from("mock_sessions")
-      .select("id, exam_id, minutes, question_count, correct_count, questions, debrief, finished_at")
-      .eq("user_id", userId)
-      .eq("kind", LESSON_EXAM_KIND)
-      .not("finished_at", "is", null)
-      .order("finished_at", { ascending: false })
-      .limit(EXAM_HISTORY_LIMIT);
+    const data = rowsOrThrow(
+      await dataClient(token)
+        .from("mock_sessions")
+        .select("id, exam_id, minutes, question_count, correct_count, questions, debrief, finished_at")
+        .eq("user_id", userId)
+        .eq("kind", LESSON_EXAM_KIND)
+        .not("finished_at", "is", null)
+        .order("finished_at", { ascending: false })
+        .limit(EXAM_HISTORY_LIMIT),
+      "lesson-exams",
+    );
     return (data as Row[] | null) ?? [];
   });
 

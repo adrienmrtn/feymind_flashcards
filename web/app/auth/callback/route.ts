@@ -2,8 +2,10 @@ import { createServerClient } from "@supabase/ssr";
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { safeAppPath } from "@/lib/auth/next-path";
 import { callbackFailureMessage } from "@/lib/auth/oauth";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
+import { getTranslator } from "@/lib/i18n/server";
 
 /**
  * Le retour d'un fournisseur ou d'un lien de courriel.
@@ -22,12 +24,15 @@ export async function GET(request: NextRequest) {
   const code = url.searchParams.get("code");
   const tokenHash = url.searchParams.get("token_hash");
   const type = url.searchParams.get("type");
-  const next = appNext(url.searchParams.get("next"));
+  const next = safeAppPath(url.searchParams.get("next"));
   const provider = url.searchParams.get("provider");
 
   if (!code && !(tokenHash && type)) {
     const error = url.searchParams.get("error_description") ?? url.searchParams.get("error");
-    const detail = callbackFailureMessage(provider, error ?? "manquant");
+    const { t } = await getTranslator();
+    // Ni code ni jeton : le lien est incomplet. Le mot « manquant » s'affichait tel quel, en
+    // français, dans toutes les langues ; la phrase du catalogue dit quoi faire.
+    const detail = error ? callbackFailureMessage(t, provider, error) : t("app.errors.linkExpired");
     return NextResponse.redirect(
       new URL(`/commencer/compte?erreur=${encodeURIComponent(detail)}`, url.origin),
     );
@@ -51,7 +56,8 @@ export async function GET(request: NextRequest) {
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
-      const detail = callbackFailureMessage(provider, error.message);
+      const { t } = await getTranslator();
+      const detail = callbackFailureMessage(t, provider, error.message);
       return NextResponse.redirect(
         new URL(`/commencer/compte?erreur=${encodeURIComponent(detail)}`, url.origin),
       );
@@ -69,17 +75,4 @@ export async function GET(request: NextRequest) {
   }
 
   return redirectTo;
-}
-
-function appNext(value: string | null): string {
-  if (
-    value &&
-    (value.startsWith("/app") || value === "/commencer/offre") &&
-    !value.startsWith("//") &&
-    !value.includes("\\") &&
-    !value.includes("@")
-  ) {
-    return value;
-  }
-  return "/app";
 }

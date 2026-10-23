@@ -145,25 +145,27 @@ export function countdown(seconds: number): string {
 
 
 /**
- * Ce que lit un lecteur d'écran, où « 23:14:07 » ne veut rien dire.
+ * Ce que lit un lecteur d'écran, où « 23:14:07 » ne veut rien dire - **en morceaux**.
  *
- * La phrase commence par « il reste » : l'accord du participe suivrait sinon le
- * nombre, et « 1 heure restantes » se lit comme une faute.
+ * La phrase était écrite ici, en français, et le site la lisait telle quelle dans ses
+ * vingt-six langues : « il reste 3 heures » sous un bouton en turc. Le noyau rend donc les
+ * nombres, et c'est le site qui compose la phrase depuis son catalogue (`lib/discount`),
+ * comme le fait déjà `DiscountOffer.countdownLabel` côté Swift.
+ *
+ * `ended` : l'offre est finie. `hours` et `minutes` sont entiers ; zéro heure et zéro minute
+ * avec `ended` faux, c'est « moins d'une minute ».
  */
-export function countdownLabel(seconds: number): string {
+export interface CountdownParts {
+  ended: boolean;
+  hours: number;
+  minutes: number;
+}
+
+export function countdownParts(seconds: number): CountdownParts {
   const total = Math.max(0, Math.floor(seconds));
-  if (total === 0) return "offre terminée";
-
-  const hours = Math.floor(total / 3600);
-  const minutes = Math.floor((total % 3600) / 60);
-
-  if (hours > 0) {
-    const heures = hours === 1 ? "1 heure" : `${hours} heures`;
-    if (minutes === 0) return `il reste ${heures}`;
-    const mots = minutes === 1 ? "1 minute" : `${minutes} minutes`;
-    return `il reste ${heures} et ${mots}`;
-  }
-
-  if (minutes === 0) return "il reste moins d'une minute";
-  return minutes === 1 ? "il reste 1 minute" : `il reste ${minutes} minutes`;
+  return {
+    ended: total === 0,
+    hours: Math.floor(total / 3600),
+    minutes: Math.floor((total % 3600) / 60),
+  };
 }

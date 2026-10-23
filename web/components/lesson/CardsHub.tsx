@@ -9,7 +9,7 @@ import { CARD_MASTERIES, CLOZE_GAP, SeededGenerator, cardMastery, masteryCounts,
 import { CardsRun, type LESSON_RATINGS, type RunCard } from "@/components/lesson/CardsRun";
 import { KeywordText } from "@/components/lesson/KeywordText";
 import { LessonPrimaryButton } from "@/components/lesson/LessonButtons";
-import { gradeLessonCard } from "@/lib/actions/review";
+import { gradeLessonCard, type GradeResult } from "@/lib/actions/review";
 import { useI18n } from "@/lib/i18n/client";
 import { useLessonClock } from "@/lib/lesson/use-lesson-clock";
 import { lessonPath } from "@/lib/lesson/routes";
@@ -31,8 +31,23 @@ const MASTERY_COLORS: Record<CardMastery, string> = {
  * toutes les cartes de la leçon finissent par entrer dans le rythme, sans tout déverser d'un
  * coup. Les notes partent au serveur au fil de l'eau, sans attendre.
  */
-export function CardsHub({ lessonId, tone, cards, autoStart = false }: { lessonId: string; tone: LessonTone; cards: HubCard[]; autoStart?: boolean }) {
+export function CardsHub({ lessonId, tone, cards: initialCards, autoStart = false }: { lessonId: string; tone: LessonTone; cards: HubCard[]; autoStart?: boolean }) {
   const { t } = useI18n();
+  /**
+   * **La copie locale des cartes, tenue à jour note après note.**
+   *
+   * Les cartes venaient du serveur une fois, à l'ouverture, et n'en bougeaient plus : après une
+   * série, « Ta progression » affichait l'état d'avant, et relancer la révision reprenait les
+   * mêmes cartes « dues » avec leurs échéances d'avant. Chaque note rend l'état écrit en base,
+   * et c'est lui qui remplace la carte ici. Un nouveau rendu du serveur (navigation, `refresh`)
+   * repart de ses cartes à lui, qui sont plus récentes.
+   */
+  const [cards, setCards] = useState<HubCard[]>(initialCards);
+  const [source, setSource] = useState(initialCards);
+  if (source !== initialCards) {
+    setSource(initialCards);
+    setCards(initialCards);
+  }
   const [running, setRunning] = useState<HubCard[] | null>(null);
   const [shown, setShown] = useState(false);
   const clock = useLessonClock(lessonId, "flashcards");
@@ -58,7 +73,11 @@ export function CardsHub({ lessonId, tone, cards, autoStart = false }: { lessonI
   }, [autoStart]);
 
   const grade = useCallback((card: RunCard, rating: (typeof LESSON_RATINGS)[number]) => {
-    void gradeLessonCard({ cardId: card.id, rating, snapshot: card.snapshot });
+    // Le serveur part de la ligne en base, pas de `card.snapshot` : seule la note voyage.
+    void gradeLessonCard({ cardId: card.id, rating }).then(
+      (result) => setCards((current) => withGrade(current, card.id, result)),
+      () => undefined,
+    );
   }, []);
 
   if (running) {
@@ -121,5 +140,22 @@ export function CardsHub({ lessonId, tone, cards, autoStart = false }: { lessonI
         </>
       ) : null}
     </div>
+  );
+}
+
+/** La carte notée, remplacée par l'état que le serveur vient d'écrire. Rien sur un échec. */
+function withGrade(cards: HubCard[], cardId: string, result: GradeResult): HubCard[] {
+  const written = result.status === "ok" ? result.snapshot : undefined;
+  if (!written) return cards;
+  return cards.map((card) =>
+    card.id === cardId
+      ? {
+          ...card,
+          state: written.state,
+          dueDate: typeof written.dueDate === "string" ? written.dueDate : card.dueDate,
+          intervalDays: written.intervalDays,
+          snapshot: written,
+        }
+      : card,
   );
 }

@@ -12,12 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { OrDivider, ProviderButton } from "@/components/auth/AuthButtons";
-import {
-  APP_STORE_REVIEW_EMAIL,
-  APP_STORE_REVIEW_PASSWORD,
-  isAppStoreReviewEmail,
-} from "@/lib/auth/app-store-review";
+import { signInForAppStoreReview } from "@/lib/actions/app-store-review";
+import { isAppStoreReviewEmail, isAppleAddress } from "@/lib/auth/app-store-review";
 import { inspectAddress } from "@/lib/auth/email";
+import { OFFER_PATH, safeAppPath } from "@/lib/auth/next-path";
 import { oauthCallbackUrl, oauthFailureMessage } from "@/lib/auth/oauth";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 import { markPaywallPending, persistStoredAnswers } from "@/lib/onboarding/persist";
@@ -46,7 +44,7 @@ export default function AccountStep() {
 type Pending = "apple" | "google" | "email" | null;
 
 /** L'offre qui suit le compte. Le tableau de bord la reprendra si elle n'a pas été vue. */
-const AFTER_ACCOUNT = "/commencer/offre";
+const AFTER_ACCOUNT = OFFER_PATH;
 
 /**
  * Où aller une fois la session ouverte : la `suite` demandée (une page de l'app qui renvoyait
@@ -55,7 +53,9 @@ const AFTER_ACCOUNT = "/commencer/offre";
  */
 function destination(suite: string | null): string {
   markPaywallPending();
-  return suite && suite.startsWith("/") && !suite.startsWith("//") ? suite : AFTER_ACCOUNT;
+  // `suite` vient de l'URL : `safeAppPath` n'y laisse passer qu'une page de l'app, jamais un
+  // `/\autre-site` que le navigateur relirait comme une autre origine.
+  return safeAppPath(suite, AFTER_ACCOUNT);
 }
 
 function AccountStepBody() {
@@ -95,7 +95,7 @@ function AccountStepBody() {
 
     if (error) {
       setPending(null);
-      setFailure(oauthFailureMessage(provider, error.message));
+      setFailure(oauthFailureMessage(t, provider, error.message));
     }
   }
 
@@ -139,14 +139,19 @@ function AccountStepBody() {
 
     const supabase = createClient();
 
-    if (isAppStoreReviewEmail(address)) {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: APP_STORE_REVIEW_EMAIL,
-        password: APP_STORE_REVIEW_PASSWORD,
-      });
+    // Le compte de relecture s'ouvre côté serveur : le mot de passe ne quitte jamais
+    // `APP_STORE_REVIEW_PASSWORD`. Une autre adresse d'Apple ne reçoit pas de lien
+    // non plus - il rebondirait - mais elle n'ouvre rien.
+    if (isAppleAddress(address)) {
+      if (!isAppStoreReviewEmail(address)) {
+        setPending(null);
+        setFailure(t("onboarding.emailUndeliverable"));
+        return;
+      }
+      const result = await signInForAppStoreReview(address);
       setPending(null);
-      if (error) {
-        setFailure(error.message);
+      if (result.status === "error") {
+        setFailure(result.message);
         return;
       }
       await persistStoredAnswers();

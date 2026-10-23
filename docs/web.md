@@ -755,7 +755,19 @@ Le projet existe déjà (`adriens-projects-145ae26c/micabo`). Les étapes, dans 
    STRIPE_WEBHOOK_SECRET          = (serveur uniquement)
    REVENUECAT_WEBHOOK_SECRET      = (serveur uniquement)
    REVENUECAT_SECRET_KEY          = (serveur uniquement, facultatif : clé secrète v1 sk_…)
+   APP_STORE_REVIEW_PASSWORD      = (serveur uniquement : le mot de passe du compte review@apple.com)
    ```
+
+   `APP_STORE_REVIEW_PASSWORD` sert à `lib/actions/app-store-review.ts` : le relecteur d'Apple
+   tape `review@apple.com` dans « Recevoir un lien », et une action serveur ouvre la session avec
+   ce mot de passe - il ne part jamais dans le navigateur. **Absente, le chemin de relecture est
+   fermé** (le relecteur lit « compte de démonstration indisponible ») : c'est voulu, un compte
+   partagé ne s'ouvre pas par défaut. Seule l'adresse exacte des notes ouvre la session ; une autre
+   adresse en `@apple.com` ne reçoit pas de lien (il rebondirait) et n'ouvre rien. Le mot de passe
+   a été dans le paquet JavaScript du site jusqu'en octobre 2026 : **il faut le changer** dans
+   Supabase (Authentication → Users) avant de poser la variable. Attention, l'app iPhone le porte
+   encore en dur (`Micabo/Services/Auth/AppStoreReview.swift`) : le changer sans la mettre à jour
+   ferme la relecture côté iOS. Les deux doivent bouger ensemble.
 
    `REVENUECAT_SECRET_KEY` sert à `lib/data/revenuecat.ts` : quand `entitlements` ne dit pas Pro
    (webhook perdu), le site relit l'abonné chez RevenueCat, une fois par requête, 1,5 s au plus,
