@@ -3,9 +3,13 @@ import type { UiLocale } from "./locales";
 /**
  * Libellés d'affichage des matières. La valeur stockée reste le français du
  * noyau : l'iPhone la lit telle quelle. Ici on ne traduit que ce qu'on montre.
+ *
+ * L'anglais et le français sont obligatoires ; les autres langues sont facultatives et
+ * retombent sur l'anglais (`it`, `pl`… tant que leur colonne n'est pas écrite).
  */
+type Localized = { en: string; fr: string } & Partial<Record<UiLocale, string>>;
 
-const FAMILIES: Record<string, Record<UiLocale, string>> = {
+const FAMILIES: Record<string, Localized> = {
   Sciences: {
     en: "Sciences",
     fr: "Sciences",
@@ -57,7 +61,7 @@ const FAMILIES: Record<string, Record<UiLocale, string>> = {
   },
 };
 
-const SUBJECTS: Record<string, Record<UiLocale, string>> = {
+const SUBJECTS: Record<string, Localized> = {
   Mathématiques: { en: "Mathematics", fr: "Mathématiques", de: "Mathematik", es: "Matemáticas", tr: "Matematik" },
   Physique: { en: "Physics", fr: "Physique", de: "Physik", es: "Física", tr: "Fizik" },
   Chimie: { en: "Chemistry", fr: "Chimie", de: "Chemie", es: "Química", tr: "Kimya" },
@@ -114,12 +118,16 @@ const SUBJECTS: Record<string, Record<UiLocale, string>> = {
   "Culture générale": { en: "General knowledge", fr: "Culture générale", de: "Allgemeinwissen", es: "Cultura general", tr: "Genel kültür" },
 };
 
+function pick(entry: Localized | undefined, locale: UiLocale): string | undefined {
+  return entry?.[locale] ?? entry?.en;
+}
+
 export function displayFamily(name: string, locale: UiLocale): string {
-  return FAMILIES[name]?.[locale] ?? name;
+  return pick(FAMILIES[name], locale) ?? name;
 }
 
 export function displaySubject(name: string, locale: UiLocale): string {
-  return SUBJECTS[name]?.[locale] ?? name;
+  return pick(SUBJECTS[name], locale) ?? name;
 }
 
 export function subjectDisplayCoverage() {

@@ -299,7 +299,7 @@ function LessonCard({
 
   return (
     <div ref={root} className="relative">
-      <Link href={lessonPath(lesson.id)} className="pressable flex items-center gap-3.5 rounded-[22px] bg-surface p-3.5 pr-12 shadow-floating">
+      <Link href={lessonPath(lesson.id)} className="pressable flex items-center gap-3.5 rounded-[22px] bg-surface p-3.5 pe-12 shadow-floating">
         <span className="flex size-[64px] shrink-0 items-center justify-center rounded-[18px]" style={{ background: `var(--color-tone-${tone}-pale)` }}>
           <MicaboIcon id={lesson.icon} size={44} />
         </span>
@@ -322,20 +322,20 @@ function LessonCard({
             </span>
           ) : null}
         </span>
-        <ChevronRight aria-hidden="true" className="absolute right-11 top-1/2 size-5 -translate-y-1/2 text-ink-tertiary" strokeWidth={2.6} />
+        <ChevronRight aria-hidden="true" className="absolute end-11 top-1/2 size-5 -translate-y-1/2 text-ink-tertiary" strokeWidth={2.6} />
       </Link>
       <button
         type="button"
         aria-label={t("lesson.menu.more")}
         aria-expanded={menu === "menu"}
         onClick={() => setMenu(menu === "menu" ? "closed" : "menu")}
-        className="pressable absolute right-2 top-2 flex size-9 items-center justify-center rounded-full text-ink-secondary hover:bg-surface-muted"
+        className="pressable absolute end-2 top-2 flex size-9 items-center justify-center rounded-full text-ink-secondary hover:bg-surface-muted"
       >
         <Ellipsis aria-hidden="true" className="size-5" strokeWidth={2.6} />
       </button>
 
       {menu === "menu" ? (
-        <div role="menu" className="score-in absolute right-2 top-11 z-20 flex w-[220px] flex-col rounded-[18px] bg-canvas p-1.5 shadow-floating">
+        <div role="menu" className="score-in absolute end-2 top-11 z-20 flex w-[220px] flex-col rounded-[18px] bg-canvas p-1.5 shadow-floating">
           <MenuRow icon={Folder} label={t("app.lessonsList.move")} onClick={() => setMenu("move")} />
           <MenuRow icon={Pencil} label={t("lesson.menu.rename")} onClick={() => setMenu("rename")} />
           <MenuRow icon={Trash2} label={t("lesson.menu.delete")} onClick={() => setMenu("delete")} danger />
@@ -356,7 +356,7 @@ function LessonCard({
                       setMenu("closed");
                       if (!on) run(() => moveCourse(lesson.id, target.id));
                     }}
-                    className={`pressable flex w-full items-center gap-2.5 rounded-[14px] px-3.5 py-3 text-left text-[15px] font-bold ${on ? "bg-accent-soft text-accent" : "text-ink hover:bg-surface-muted"}`}
+                    className={`pressable flex w-full items-center gap-2.5 rounded-[14px] px-3.5 py-3 text-start text-[15px] font-bold ${on ? "bg-accent-soft text-accent" : "text-ink hover:bg-surface-muted"}`}
                   >
                     <Folder aria-hidden="true" className="size-[18px]" strokeWidth={2.4} />
                     <span className="flex-1 truncate">{target.label}</span>
@@ -414,7 +414,7 @@ function LessonCard({
 
 function MenuRow({ icon: Icon, label, onClick, danger }: { icon: typeof Folder; label: string; onClick: () => void; danger?: boolean }) {
   return (
-    <button type="button" role="menuitem" onClick={onClick} className={`pressable flex items-center gap-2.5 rounded-[12px] px-3 py-2.5 text-left text-[15px] font-bold hover:bg-surface-muted ${danger ? "text-wrong-ink" : "text-ink"}`}>
+    <button type="button" role="menuitem" onClick={onClick} className={`pressable flex items-center gap-2.5 rounded-[12px] px-3 py-2.5 text-start text-[15px] font-bold hover:bg-surface-muted ${danger ? "text-wrong-ink" : "text-ink"}`}>
       <Icon aria-hidden="true" className="size-[18px]" strokeWidth={2.4} />
       {label}
     </button>

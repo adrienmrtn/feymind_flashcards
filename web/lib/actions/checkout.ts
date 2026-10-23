@@ -116,7 +116,11 @@ export async function startCheckout(kind: pricing.CatalogPlan): Promise<Checkout
   // l'interface, elle, doit bien afficher quelque chose et retombe sur l'anglais.
   const signals = await readLocaleSignals();
   const stripeLocale = pricing.checkoutLocale({ ...signals, country });
-  const noteLocale = isUiLocale(stripeLocale) ? stripeLocale : DEFAULT_UI_LOCALE;
+  // Stripe n'affiche pas toutes nos langues (l'arabe) : la phrase au-dessus du bouton, elle,
+  // reste dans celle qu'on lit.
+  const noteLocale = isUiLocale(stripeLocale)
+    ? stripeLocale
+    : (signals.chosen ?? signals.navigator ?? DEFAULT_UI_LOCALE);
 
   const key = stripeKey();
   const price = priceId(kind);

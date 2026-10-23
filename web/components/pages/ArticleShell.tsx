@@ -68,7 +68,7 @@ export async function ArticleShell({
           <h1 className="mt-3 text-balance text-[34px] font-bold leading-[1.06] tracking-tight-title text-ink sm:text-[48px]">
             {title}
           </h1>
-          <div className="mx-auto mt-6 max-w-reading space-y-4 text-left text-[16.5px] leading-relaxed text-ink-secondary sm:text-center">
+          <div className="mx-auto mt-6 max-w-reading space-y-4 text-start text-[16.5px] leading-relaxed text-ink-secondary sm:text-center">
             {lead}
           </div>
         </header>
@@ -141,7 +141,7 @@ export function ArticleSection({
 /** Un aparté : ce qu'il faut savoir avant d'en attendre trop. */
 export function ArticleNote({ children }: { children: ReactNode }) {
   return (
-    <aside className="mx-auto mt-8 max-w-reading rounded-group border-l-2 border-accent bg-accent-soft/45 px-5 py-4 text-[15px] leading-relaxed text-ink-secondary">
+    <aside className="mx-auto mt-8 max-w-reading rounded-group border-s-2 border-accent bg-accent-soft/45 px-5 py-4 text-[15px] leading-relaxed text-ink-secondary">
       {children}
     </aside>
   );
@@ -165,7 +165,7 @@ export function ArticleFigure({
         {children}
       </div>
       {caption ? (
-        <figcaption className="text-[15px] leading-relaxed text-ink-secondary lg:pr-4">{caption}</figcaption>
+        <figcaption className="text-[15px] leading-relaxed text-ink-secondary lg:pe-4">{caption}</figcaption>
       ) : null}
     </figure>
   );

@@ -59,11 +59,11 @@ function Devices() {
           <span className="size-2.5 rounded-full bg-[#ff5f57]" />
           <span className="size-2.5 rounded-full bg-[#febc2e]" />
           <span className="size-2.5 rounded-full bg-[#28c840]" />
-          <span className="ml-3 rounded-pill bg-surface px-3 py-0.5 text-[11px] font-bold text-ink-tertiary">micabo.app</span>
+          <span className="ms-3 rounded-pill bg-surface px-3 py-0.5 text-[11px] font-bold text-ink-tertiary">micabo.app</span>
         </div>
         <div className="p-4 sm:p-5">
           <p className="text-[15px] font-extrabold text-ink">{t("landing.demoLessonTitle")}</p>
-          <div className="mt-3 space-y-2 pr-[30%]">
+          <div className="mt-3 space-y-2 pe-[30%]">
             <MiniRow icon="fiche" tone="blue" label={t("landing.demoStepNotes")} done />
             <MiniRow icon="quiz" tone="mint" label={t("landing.demoStepQuiz")} syncDelay={700} />
             <MiniRow icon="cartes" tone="yellow" label={t("landing.demoStepCards")} />

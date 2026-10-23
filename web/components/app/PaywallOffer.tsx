@@ -208,7 +208,7 @@ export function PlanChoice({
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
-      className={`pressable relative flex w-full items-center justify-between gap-4 rounded-group px-5 py-4 text-left transition-[border-color,color,background-color] duration-hover ${
+      className={`pressable relative flex w-full items-center justify-between gap-4 rounded-group px-5 py-4 text-start transition-[border-color,color,background-color] duration-hover ${
         selected
           ? "border-2 border-accent bg-accent-soft/50 text-accent"
           : "border border-stroke-strong bg-surface text-ink"
@@ -231,7 +231,7 @@ export function PlanChoice({
           {planRenewalCopy(t, plan, currency)}
         </p>
       </div>
-      <div className="shrink-0 text-right">
+      <div className="shrink-0 text-end">
         <p
           className={`numeral text-[18px] font-bold leading-none ${
             selected ? "text-accent" : "text-ink"

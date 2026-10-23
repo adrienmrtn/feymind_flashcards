@@ -100,7 +100,7 @@ export function CardsRun({
             <div key={card.id} className="flip-scene notes-page-in">
               <button
                 type="button"
-                className="flip-card block w-full text-left"
+                className="flip-card block w-full text-start"
                 data-flipped={flipped}
                 onClick={() => setFlipped((value) => !value)}
                 aria-label={t("lesson.cards.flip")}

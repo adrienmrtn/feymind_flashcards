@@ -45,13 +45,13 @@ export function CircleTopBar({
         <div className="flex h-2 flex-1 items-center gap-1.5" role="progressbar" aria-valuemin={1} aria-valuemax={segments.count} aria-valuenow={segments.page + 1}>
           {Array.from({ length: Math.max(1, segments.count) }, (_, index) => (
             <span key={index} className="relative h-2 flex-1 overflow-hidden rounded-pill bg-track">
-              <span className="notes-segment-fill absolute inset-y-0 left-0 rounded-pill" style={{ width: index <= segments.page ? "100%" : "0%", background: vivid }} />
+              <span className="notes-segment-fill absolute inset-y-0 start-0 rounded-pill" style={{ width: index <= segments.page ? "100%" : "0%", background: vivid }} />
             </span>
           ))}
         </div>
       ) : typeof progress === "number" ? (
         <div className="relative h-2.5 flex-1 overflow-hidden rounded-pill bg-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}>
-          <div className="absolute inset-y-0 left-0 rounded-pill transition-[width] duration-300 ease-out" style={{ width: `max(8px, ${Math.min(100, Math.max(0, progress * 100))}%)`, background: vivid }} />
+          <div className="absolute inset-y-0 start-0 rounded-pill transition-[width] duration-300 ease-out" style={{ width: `max(8px, ${Math.min(100, Math.max(0, progress * 100))}%)`, background: vivid }} />
         </div>
       ) : (
         <span className="flex-1" />

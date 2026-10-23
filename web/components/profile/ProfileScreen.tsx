@@ -79,7 +79,7 @@ export function ProfileScreen({
         <h1 className="text-[32px] font-extrabold leading-tight tracking-tight-title text-ink">{t("lesson.tab.profile")}</h1>
       </header>
 
-      <button type="button" onClick={() => setOpen(true)} className="pressable flex items-center gap-3.5 rounded-[24px] bg-surface p-4 text-left shadow-floating" data-tour="profil-carte">
+      <button type="button" onClick={() => setOpen(true)} className="pressable flex items-center gap-3.5 rounded-[24px] bg-surface p-4 text-start shadow-floating" data-tour="profil-carte">
         <span className="numeral flex size-[60px] shrink-0 items-center justify-center rounded-full bg-accent text-[26px] font-extrabold text-on-ink">{name.charAt(0).toUpperCase()}</span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="truncate text-[19px] font-extrabold text-ink">{name}</span>
@@ -150,7 +150,7 @@ export function ProfileScreen({
 function ProUpgradeCard() {
   const { t } = useI18n();
   return (
-    <button type="button" onClick={() => requestPaywall("upgrade")} className="pressable flex items-center gap-3.5 rounded-[24px] bg-ink p-4 text-left">
+    <button type="button" onClick={() => requestPaywall("upgrade")} className="pressable flex items-center gap-3.5 rounded-[24px] bg-ink p-4 text-start">
       <span className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-white/10">
         <Crown aria-hidden="true" className="size-6 text-caution-vivid" strokeWidth={2.4} />
       </span>
@@ -185,7 +185,7 @@ function OfferRow() {
 
   const percent = t("app.profileTab.offerHelp", { percent: pricing.discountSavingsPercent() });
   return (
-    <button type="button" onClick={() => requestDiscount("paywall")} className="pressable -mt-3 flex items-center gap-3.5 rounded-[22px] bg-surface p-3.5 text-left shadow-[inset_0_0_0_1.5px_var(--color-stroke)]">
+    <button type="button" onClick={() => requestDiscount("paywall")} className="pressable -mt-3 flex items-center gap-3.5 rounded-[22px] bg-surface p-3.5 text-start shadow-[inset_0_0_0_1.5px_var(--color-stroke)]">
       <span className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-offer-wash text-offer-sky">
         <Gift aria-hidden="true" className="size-[22px]" strokeWidth={2.4} />
       </span>
@@ -317,7 +317,7 @@ function WeekRankingCard({ rows }: { rows: RankingRow[] }) {
 function ProfileGroup({ title, tour, children }: { title: string; tour?: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-2" data-tour={tour}>
-      <h2 className="pl-1 text-[12px] font-extrabold uppercase tracking-caps text-ink-secondary">{title}</h2>
+      <h2 className="ps-1 text-[12px] font-extrabold uppercase tracking-caps text-ink-secondary">{title}</h2>
       <div className="overflow-hidden rounded-[22px] bg-surface shadow-[inset_0_0_0_1.5px_var(--color-stroke)]">{children}</div>
     </section>
   );

@@ -213,6 +213,14 @@ describe("le pays deviné depuis la locale", () => {
     expect(guessCountry(["en-US"], "en")).toBe("us");
     // Le français d'interface, lui, ne recouvre pas une région claire.
     expect(guessCountry(["de-DE"], "fr")).toBe("de");
+    // Les nouvelles langues de l'interface désignent leur pays quand le parcours le connaît.
+    expect(guessCountry(["fr-FR"], "it")).toBe("it");
+    expect(guessCountry(["fr-FR"], "sv")).toBe("se");
+    expect(guessCountry(["fr-FR"], "cs")).toBe("cz");
+    expect(guessCountry(["fr-FR"], "el")).toBe("gr");
+    // Sinon, la région du navigateur décide.
+    expect(guessCountry(["es-MX"], "es-419")).toBe("es");
+    expect(guessCountry(["fr-BE"], "pt-BR")).toBe("be");
   });
 
   it("lit une langue seule quand il n'y a pas de région", () => {
@@ -251,6 +259,18 @@ describe("le code pays de l'annuaire", () => {
     expect(institutionSearchCountry(undefined, "en")).toBe("US");
     expect(institutionSearchCountry("fr", "fr")).toBe("FR");
     expect(institutionSearchCountry("other", "en")).toBe("US");
+  });
+
+  it("donne à chaque langue d'interface le pays de l'annuaire de l'app", () => {
+    expect(countryFromUiLocale("it")).toBe("it");
+    expect(countryFromUiLocale("pt-BR")).toBe(FALLBACK_COUNTRY);
+    expect(institutionSearchCountry(undefined, "pt-BR")).toBe("BR");
+    expect(institutionSearchCountry(undefined, "es-419")).toBe("MX");
+    expect(institutionSearchCountry(undefined, "ar")).toBe("AE");
+    expect(institutionSearchCountry(undefined, "da")).toBe("DK");
+    expect(institutionSearchCountry(undefined, "sr")).toBe("RS");
+    expect(institutionSearchCountry("de", "ru")).toBe("DE");
+    expect(institutionSearchCountry(undefined, null)).toBe("FR");
   });
 });
 

@@ -495,7 +495,7 @@ function Token({ name, value, note }: { name: string; value: string; note: strin
   return (
     <div className="flex items-baseline justify-between gap-4 border-b border-hairline py-1.5 last:border-0">
       <code className="text-[12px] text-ink-secondary">{name}</code>
-      <span className="shrink-0 text-right">
+      <span className="shrink-0 text-end">
         <span className="block text-[12px] text-ink">{value}</span>
         <span className="block text-[11px] text-ink-tertiary">{note}</span>
       </span>

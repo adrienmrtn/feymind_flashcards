@@ -157,7 +157,7 @@ function GenerationSteps({ current, hasSupports }: { current: GenerationStage | 
   const { t } = useI18n();
   const rank = (stage: GenerationStage) => GENERATION_STAGES.indexOf(stage);
   return (
-    <ol className="mt-2 flex w-full max-w-[360px] flex-col gap-4 text-left">
+    <ol className="mt-2 flex w-full max-w-[360px] flex-col gap-4 text-start">
       {GENERATION_STAGES.map((stage) => {
         const done = current !== null && rank(stage) < rank(current);
         const active = current === stage || (current === null && stage === "reading");

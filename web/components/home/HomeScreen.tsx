@@ -27,6 +27,7 @@ import { LessonCreationFlow } from "@/components/home/LessonCreation";
 import { MicaboIcon } from "@/components/lesson/MicaboIcon";
 import { Mika } from "@/components/mika/Mika";
 import { useI18n } from "@/lib/i18n/client";
+import { localeBcp47 } from "@/lib/i18n/copy";
 import { lessonPath } from "@/lib/lesson/routes";
 import { requestPaywall } from "@/lib/paywall";
 
@@ -120,7 +121,7 @@ export function HomeScreen(props: HomeScreenProps) {
         <div className="absolute left-1/2 top-0 z-10 -translate-x-1/2">
           <Mika mood={reading ? "think" : mood} size={96} label="" />
         </div>
-        <div className={`home-bar flex min-h-[132px] flex-col justify-end gap-2.5 py-3 pl-5 pr-2.5 ${focused ? "home-bar-focused" : ""}`} data-tour="home-barre">
+        <div className={`home-bar flex min-h-[132px] flex-col justify-end gap-2.5 py-3 ps-5 pe-2.5 ${focused ? "home-bar-focused" : ""}`} data-tour="home-barre">
           {supports.length > 0 ? (
             <div className="flex flex-col gap-2">
               <ul className="-mx-1 flex gap-2 overflow-x-auto px-1 [scrollbar-width:none]">
@@ -190,7 +191,7 @@ export function HomeScreen(props: HomeScreenProps) {
       </div>
 
       <ul className="grid grid-cols-3 gap-2" data-tour="home-chiffres">
-        <StatPill icon="sablier" value={time.unit === "minutes" ? t("lesson.home.minutes", { n: time.value }) : t("lesson.home.hours", { n: new Intl.NumberFormat(locale).format(time.value) })} label={t("lesson.home.statTime")} />
+        <StatPill icon="sablier" value={time.unit === "minutes" ? t("lesson.home.minutes", { n: time.value }) : t("lesson.home.hours", { n: new Intl.NumberFormat(localeBcp47(locale)).format(time.value) })} label={t("lesson.home.statTime")} />
         <StatPill icon="diplome" value={String(props.stats.learnedLessons)} label={t("lesson.home.statLessons")} />
         <StatPill icon="cartes" value={String(props.stats.learnedCards)} label={t("lesson.home.statCards")} />
       </ul>
@@ -247,7 +248,7 @@ function SupportChip({ support, onRemove, removeLabel }: { support: ComposerSupp
   const failed = support.state === "failed";
   return (
     <span
-      className={`flex items-center gap-2 rounded-pill py-[7px] pl-2.5 pr-2 ${failed ? "bg-wrong-soft shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-wrong)_40%,transparent)]" : "bg-canvas shadow-[inset_0_0_0_1px_var(--color-stroke)]"}`}
+      className={`flex items-center gap-2 rounded-pill py-[7px] ps-2.5 pe-2 ${failed ? "bg-wrong-soft shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-wrong)_40%,transparent)]" : "bg-canvas shadow-[inset_0_0_0_1px_var(--color-stroke)]"}`}
     >
       <span className="flex size-6 items-center justify-center">
         {support.state === "reading" ? <Loader2 aria-hidden="true" className="size-4 animate-spin text-ink-secondary" /> : <MicaboIcon id={SUPPORT_ICONS[support.kind]} size={22} />}

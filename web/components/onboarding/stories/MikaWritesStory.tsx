@@ -22,7 +22,7 @@ export function MikaWritesStory() {
       <div className="absolute -top-9 right-2 z-10">
         <Mika mood="think" size={76} label="" />
       </div>
-      <div className="paper rounded-[22px] bg-surface p-4 pt-7 text-left">
+      <div className="paper rounded-[22px] bg-surface p-4 pt-7 text-start">
         <NoteBlockList blocks={blocks} tone="blue" />
       </div>
     </div>

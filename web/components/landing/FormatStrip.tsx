@@ -33,7 +33,7 @@ export function FormatStrip() {
       <ul className="mx-auto mt-5 flex max-w-[52rem] flex-wrap items-center justify-center gap-2.5 sm:gap-3">
         {FORMATS.map((format, index) => (
           <Reveal as="li" key={format.kind} delay={index}>
-            <span className="inline-flex items-center gap-2.5 rounded-pill bg-surface/80 py-1.5 pl-1.5 pr-4 text-[14.5px] font-bold text-ink shadow-paper">
+            <span className="inline-flex items-center gap-2.5 rounded-pill bg-surface/80 py-1.5 ps-1.5 pe-4 text-[14.5px] font-bold text-ink shadow-paper">
               <SourceBadge kind={format.kind} size={30} />
               {t(format.key)}
             </span>
