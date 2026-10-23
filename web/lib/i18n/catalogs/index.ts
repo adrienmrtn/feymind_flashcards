@@ -20,6 +20,9 @@ import { fi } from "./fi";
 import { sr } from "./sr";
 import { sl } from "./sl";
 import { bg } from "./bg";
+import { el } from "./el";
+import { ru } from "./ru";
+import { ar } from "./ar";
 
 export { en, fr, de, es, tr };
 export type { Catalog };
@@ -58,10 +61,10 @@ export const CATALOGS: Record<UiLocale, Catalog> = {
   sl: sl,
   sr: sr,
   bg: bg,
-  el: en, // TODO(traduction) : import { el } from "./el";
-  ru: en, // TODO(traduction) : import { ru } from "./ru";
+  el: el,
+  ru: ru,
   tr,
-  ar: en, // TODO(traduction) : import { ar } from "./ar";
+  ar: ar,
 };
 
 export function catalogFor(locale: UiLocale): Catalog {
