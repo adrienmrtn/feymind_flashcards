@@ -73,6 +73,54 @@ describe("pour qui la leçon s'écrit", () => {
   });
 });
 
+describe("ce que le parcours demande en plus : la filière, l'année, les freins", () => {
+  it("envoie la filière et l'année, et leur marche l'emporte sur celle du palier", () => {
+    // Un collégien français : le pays n'a que « Lycée » comme palier, la filière dit collège.
+    const audience = buildAudience({
+      profile: { study_level: "lycee", country_code: "fr", sheet_language: null },
+      local: { stageId: "fr.lycee", tier: "upperSecondary", trackId: "fr.college", yearId: "fr.4e", worries: ["forgetting", "examStress", "inconnu"] },
+      uiLocale: "fr",
+    });
+    expect(audience.track).toBe("Collège");
+    expect(audience.year).toBe("Quatrième");
+    expect(audience.tier).toBe("lowerSecondary");
+    expect(audience.schoolStage).toBe("Lycée");
+    expect(audience.worries).toEqual(["examStress", "forgetting"]);
+  });
+
+  it("monte au master pour une année de master rangée à l'université", () => {
+    const audience = buildAudience({
+      profile: { study_level: "licence", country_code: "fr", sheet_language: null },
+      local: { trackId: "fr.universite", yearId: "fr.m1" },
+      uiLocale: "fr",
+    });
+    expect(audience.tier).toBe("graduate");
+    expect(audience.year).toBe("Master 1");
+  });
+
+  it("ignore une filière qui ne dit plus le registre ou le pays du profil", () => {
+    const changed = buildAudience({
+      profile: { study_level: "prepa", country_code: "fr", sheet_language: null },
+      local: { trackId: "fr.lyceeGeneral", yearId: "fr.terminale" },
+      uiLocale: "fr",
+    });
+    expect(changed).not.toHaveProperty("track");
+    expect(changed).not.toHaveProperty("year");
+    const moved = buildAudience({
+      profile: { study_level: "lycee", country_code: "us", sheet_language: null },
+      local: { trackId: "fr.lyceeGeneral", yearId: "fr.terminale" },
+      uiLocale: "en",
+    });
+    expect(moved).not.toHaveProperty("track");
+  });
+
+  it("garde la filière et l'année dans le cookie", () => {
+    const raw = writeLearnerCookie({ userId: USER, trackId: "tr.anadolu", yearId: "tr.anadolu.12", worries: ["noStart"] });
+    expect(readLearnerCookie(raw, USER)).toEqual({ userId: USER, trackId: "tr.anadolu", yearId: "tr.anadolu.12", worries: ["noStart"] });
+    expect(readLearnerCookie(JSON.stringify({ k: "pas une filière", y: 12 }), USER)).toEqual({});
+  });
+});
+
 describe("profiles.study_level, quelle que soit la main", () => {
   it("lit le registre de l'iPhone, la marche d'Android et le palier de l'ancien site", () => {
     expect(readStudyLevel("prepa")).toEqual({ level: "prepa", tier: null, stageId: null });

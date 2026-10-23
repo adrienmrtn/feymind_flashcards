@@ -29,12 +29,18 @@ export function GradeSlider({
   label,
   /** La position de départ, en rang dans la liste. Le milieu, sauf avis contraire. */
   fallbackIndex,
+  /** L'étiquette au-dessus du chiffre (« Aujourd'hui », « Ton objectif »). */
+  heading,
+  /** L'objectif s'écrit en accent : c'est le chiffre qui compte. */
+  tone = "ink",
 }: {
   choices: GradeChoice[];
   selected?: number;
   onSelect: (score: number) => void;
   label: string;
   fallbackIndex?: number;
+  heading?: string;
+  tone?: "ink" | "accent";
 }) {
   const known = choices.findIndex((choice) => choice.score === selected);
   const start = Math.min(
@@ -56,11 +62,21 @@ export function GradeSlider({
 
   return (
     <div>
-      <p className="numeral text-center text-[46px] font-bold leading-none tracking-display text-ink sm:text-[54px]">
+      {heading ? (
+        <p className={`text-center text-[13px] font-bold ${tone === "accent" ? "text-accent" : "text-ink-secondary"}`}>{heading}</p>
+      ) : null}
+      <p
+        key={current.label}
+        className={`numeral grade-pop mt-1 text-center text-[38px] font-extrabold leading-none tracking-display sm:text-[44px] ${
+          tone === "accent" ? "home-gradient-text" : "text-ink"
+        }`}
+      >
         {current.label}
       </p>
 
-      <div className="mt-6 px-1">
+      {/* Une échelle de notes se lit de gauche à droite, même en arabe : le remplissage du rail
+          est un dégradé qui part de la gauche, et le pouce le suivrait à l'envers. */}
+      <div className="mt-4 px-1" dir="ltr">
         <input
           type="range"
           className="grade-slider"

@@ -16,6 +16,8 @@ import {
 } from "@micabo/core";
 
 import { BELOW_SCORE, gradeChoices } from "@/lib/onboarding/grades";
+import { cleanWorries } from "@/lib/onboarding/questions";
+import { trackById, trackTier, yearById } from "@/lib/onboarding/school-system";
 
 /**
  * **Pour qui on écrit, calculé comme l'iPhone le calcule** (`LessonAudience.current`, dans
@@ -38,10 +40,13 @@ export interface LocalLearner {
   /** Le palier exact (`fr.lycee`, `us.middle`), quand il a été choisi sur ce navigateur. */
   stageId?: string;
   tier?: EducationTier;
+  /** La filière (`fr.lyceeGeneral`) et l'année (`fr.terminale`), pour les pays décrits en détail. */
+  trackId?: string;
+  yearId?: string;
   /** La moyenne d'aujourd'hui et celle qu'on vise, sur l'échelle 10-20 du produit (9 : en dessous). */
   currentScore?: number;
   targetScore?: number;
-  /** Ce qui l'inquiète (`StudyWorry.rawValue`). Le parcours du site ne le demande pas encore. */
+  /** Ce qui l'inquiète (`StudyWorry.rawValue`), demandé par le parcours (`/commencer/freins`). */
   worries?: string[];
 }
 
@@ -80,9 +85,6 @@ const TIERS: readonly EducationTier[] = [
   "competitive",
   "other",
 ];
-
-/** Les freins que le serveur connaît (`Worry`), les seuls qu'on lui envoie. */
-const WORRIES = ["examStress", "hardLessons", "homework", "forgetting", "noStart", "motivation"] as const;
 
 export function isEducationTier(value: unknown): value is EducationTier {
   return typeof value === "string" && TIERS.includes(value as EducationTier);
@@ -197,8 +199,10 @@ function readScore(value: unknown): number | undefined {
  * **La charge envoyée au serveur**, clé pour clé comme `LessonAudience.payload` : les champs
  * vides ne partent pas, et `kinds` dit les cinq formes de question que le site sait afficher.
  *
- * La filière et l'année ne partent pas : le parcours du site ne les demande pas, et l'iPhone
- * n'envoie rien non plus quand il ne les connaît pas.
+ * **La filière et l'année** partent quand le parcours les a demandées (France, Turquie,
+ * Allemagne, Espagne), et seulement si elles disent encore le registre du profil : la même règle
+ * que pour le palier. Leur marche l'emporte sur celle du palier - un collégien reste un collégien
+ * même là où le pays n'a que « Lycée » comme palier (`LessonAudience.tier(track:year:)`).
  *
  * **Les notes partent sur l'échelle 10-20 du produit**, comme l'iPhone les envoie, avec leur
  * libellé dans le barème du pays. Le serveur les lit sur cent (`readScore`) : voir le rapport —
@@ -223,7 +227,13 @@ export function buildAudience(input: {
     language: audienceLanguage(profile, input.uiLocale),
     kinds: [...QUIZ_KINDS],
   };
-  if (tier) audience.tier = tier;
+  const track = trackById(local?.trackId, country);
+  const trustedTrack = track && level && track.level === level ? track : null;
+  const year = yearById(local?.yearId, trustedTrack);
+  const marche = trustedTrack ? trackTier(trustedTrack, year) : tier;
+  if (marche) audience.tier = marche;
+  if (trustedTrack) audience.track = trustedTrack.title;
+  if (year) audience.year = year.title;
   if (input.exam) audience.exam = input.exam;
 
   const current = readScore(local?.currentScore);
@@ -236,8 +246,8 @@ export function buildAudience(input: {
     audience.targetScore = target;
     audience.targetLabel = audienceGradeLabel(target, country);
   }
-  const worries = (local?.worries ?? []).filter((worry): worry is (typeof WORRIES)[number] => (WORRIES as readonly string[]).includes(worry));
-  if (worries.length > 0) audience.worries = [...new Set(worries)];
+  const worries = cleanWorries(local?.worries);
+  if (worries.length > 0) audience.worries = worries;
   return audience;
 }
 
@@ -245,7 +255,7 @@ export function buildAudience(input: {
 
 /**
  * Le nom du cookie qui tient ce que l'iPhone garde dans `UserDefaults` : le palier exact, la
- * marche, les deux moyennes. Un cookie et pas une colonne : `profiles` ne transporte que le
+ * marche, la filière et l'année, les deux moyennes, les freins. Un cookie et pas une colonne : `profiles` ne transporte que le
  * registre, et ajouter une colonne demande une migration qu'aucun client ne lirait encore.
  */
 export const LEARNER_COOKIE = "micabo.learner";
@@ -266,6 +276,8 @@ export function readLearnerCookie(raw: string | null | undefined, userId: string
   if (typeof source.u === "string") out.userId = source.u;
   if (typeof source.s === "string" && stageById(source.s)) out.stageId = source.s;
   if (isEducationTier(source.t)) out.tier = source.t;
+  if (typeof source.k === "string" && /^[a-z]{2}\.[A-Za-z0-9]{1,32}$/.test(source.k)) out.trackId = source.k;
+  if (typeof source.y === "string" && /^[a-z]{2}\.[A-Za-z0-9.]{1,40}$/.test(source.y)) out.yearId = source.y;
   const current = readScore(source.c);
   const target = readScore(source.g);
   if (current !== undefined) out.currentScore = current;
@@ -280,6 +292,8 @@ export function writeLearnerCookie(learner: LocalLearner): string {
   if (learner.userId) out.u = learner.userId;
   if (learner.stageId) out.s = learner.stageId;
   if (learner.tier) out.t = learner.tier;
+  if (learner.trackId) out.k = learner.trackId;
+  if (learner.yearId) out.y = learner.yearId;
   if (learner.currentScore !== undefined) out.c = learner.currentScore;
   if (learner.targetScore !== undefined) out.g = learner.targetScore;
   if (learner.worries?.length) out.w = learner.worries;

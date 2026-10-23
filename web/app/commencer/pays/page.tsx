@@ -1,39 +1,33 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { COUNTRIES, countryFor, guessCountry, type CountryCode } from "@micabo/core";
 
-import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
+import { ChoiceGroup, ChoiceRow, ContinueButton, Scaffold, useAdvance } from "@/components/onboarding/Scaffold";
 import { Flag } from "@/components/onboarding/Flag";
+import { trackOnboardingAnswer } from "@/lib/analytics/funnel";
 import { useI18n } from "@/lib/i18n/client";
 import { useOnboarding } from "@/lib/onboarding/store";
 
 /**
  * Le pays de scolarisation.
  *
- * Il passe devant « qu'est-ce qui te décrit le mieux ? » parce qu'il **commande ses réponses**, et
- * il décide aussi de la langue dans laquelle Micabo écrit. La ligne qui annonçait le système retenu
- * a disparu : elle répétait en petit ce que l'écran suivant allait montrer en grand.
+ * Il passe en premier parce qu'il **commande les réponses suivantes** - les paliers, les
+ * filières, le barème des moyennes - et qu'il décide de la langue dans laquelle Micabo écrit.
+ *
+ * **Un appui suffit** : toucher un pays avance tout seul, après le temps de voir la coche.
+ * « Autre pays » ouvre un champ où l'on écrit son pays, et c'est Entrée ou le bouton qui
+ * avance. Un menu déroulant de deux cents entrées se parcourt moins vite qu'un mot tapé.
  *
  * L'ordre est celui du noyau, donc celui de l'app : les marchés visés d'abord, les pays
- * francophones historiques ensuite. Le pays détecté est **mis en évidence à sa place** plutôt que
- * remonté en tête - le remonter cassait un ordre qui veut dire quelque chose.
- *
- * « Autre pays » ouvre un champ où l'on **écrit** son pays. Un menu déroulant de deux cents entrées
- * se parcourt moins vite qu'un mot tapé, et c'est déjà le choix de l'app.
+ * francophones historiques ensuite. Le pays détecté est **mis en évidence à sa place** plutôt
+ * que remonté en tête - le remonter cassait un ordre qui veut dire quelque chose.
  */
 export default function CountryStep() {
-  return (
-    <Suspense fallback={null}>
-      <CountryStepBody />
-    </Suspense>
-  );
-}
-
-function CountryStepBody() {
   const { answers, set, ready } = useOnboarding();
   const { t, locale } = useI18n();
+  const advance = useAdvance();
   const [guessed, setGuessed] = useState<CountryCode | null>(null);
 
   function countryName(code: CountryCode, fallback: string) {
@@ -48,48 +42,55 @@ function CountryStepBody() {
 
   const selected = answers.country ?? null;
   const [typed, setTyped] = useState(answers.customCountry ?? "");
+  useEffect(() => {
+    if (ready) setTyped(answers.customCountry ?? "");
+    // Une fois, quand les réponses gardées arrivent.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready]);
 
   const listed = useMemo(() => COUNTRIES.filter((item) => item.code !== "other"), []);
   const elsewhere = countryFor("other");
-
   const answered = selected === "other" ? typed.trim().length >= 2 : Boolean(selected);
 
+  function choose(code: CountryCode) {
+    // Changer de pays invalide le palier, la filière et l'année : garder « Prépa » à
+    // quelqu'un qui étudie en Turquie serait une réponse fausse écrite à sa place.
+    const changed = code !== selected;
+    set({
+      country: code,
+      ...(changed ? { stageId: undefined, trackId: undefined, yearId: undefined } : {}),
+      ...(code !== "other" ? { customCountry: undefined } : {}),
+    });
+    trackOnboardingAnswer("country", code);
+    if (code !== "other") advance({ context: { country: code, trackId: changed ? undefined : answers.trackId }, auto: true });
+  }
+
   return (
-    <Scaffold
-      title={t("onboarding.paysTitle")}
-      footer={<ContinueButton enabled={answered && ready} />}
-      width="wide"
-    >
-      {/* Vingt-cinq pays en une colonne demandaient trois écrans de défilement. La carte est
-          large maintenant : deux colonnes tiennent, et la liste se lit d'un coup d'œil. */}
-      <div className="grid grid-cols-1 gap-2 pe-1 sm:grid-cols-2">
+    <Scaffold title={t("onboarding.paysTitle")} footer={<ContinueButton enabled={answered && ready} />} width="wide">
+      {/* Vingt-cinq pays : deux colonnes dès que la carte le permet, et la liste se lit d'un
+          coup d'œil. Sur un téléphone, une colonne qui défile dans la carte. */}
+      <ChoiceGroup label={t("onboarding.paysTitle")} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {listed.map((item) => (
-          <Row
+          <ChoiceRow
             key={item.code}
-            iso={item.iso}
-            emoji={item.flag}
-            name={countryName(item.code, item.name)}
+            icon={<Flag iso={item.iso} emoji={item.flag} label="" className="h-[20px] w-[28px] shrink-0" />}
+            title={countryName(item.code, item.name)}
             detail={item.code === guessed ? t("common.detected") : undefined}
             selected={selected === item.code}
-            onSelect={() =>
-              // Changer de pays invalide le palier : c'est l'écran suivant qui le retrouvera, et le
-              // garder ferait répondre « Prépa » à quelqu'un qui étudie en Turquie.
-              set({ country: item.code, stageId: undefined, customCountry: undefined })
-            }
+            onSelect={() => choose(item.code)}
           />
         ))}
 
-        <Row
-          iso=""
-          emoji={elsewhere.flag}
-          name={selected === "other" && typed.trim() ? typed.trim() : countryName("other", elsewhere.name)}
+        <ChoiceRow
+          icon={<Flag iso="" emoji={elsewhere.flag} label="" className="h-[20px] w-[28px] shrink-0" />}
+          title={selected === "other" && typed.trim() ? typed.trim() : countryName("other", elsewhere.name)}
           selected={selected === "other"}
-          onSelect={() => set({ country: "other", stageId: undefined })}
+          onSelect={() => choose("other")}
         />
 
         {selected === "other" ? (
-          <div className="rise ps-1 pt-1 sm:col-span-2">
-            <label htmlFor="pays-libre" className="sr-only">
+          <div className="rise pt-1 sm:col-span-2">
+            <label htmlFor="pays-libre" className="mb-1.5 block text-[13px] font-bold text-ink">
               {t("onboarding.customCountry")}
             </label>
             <input
@@ -97,81 +98,18 @@ function CountryStepBody() {
               type="text"
               autoFocus
               autoComplete="country-name"
+              enterKeyHint="next"
               value={typed}
               onChange={(event) => {
                 setTyped(event.target.value);
                 set({ customCountry: event.target.value.trim() || undefined });
               }}
               placeholder={t("onboarding.customPlaceholder")}
-              className="paper h-13 w-full rounded-button bg-surface px-4 py-3.5 text-[16px] text-ink outline-none placeholder:text-ink-tertiary"
+              className="h-12 w-full rounded-[14px] border-[1.5px] border-stroke bg-surface px-4 text-[16px] text-ink outline-none transition-colors duration-hover placeholder:text-ink-tertiary focus:border-accent"
             />
           </div>
         ) : null}
-      </div>
+      </ChoiceGroup>
     </Scaffold>
-  );
-}
-
-/**
- * Une réponse de cet écran-ci, et pas le `ChoiceRow` commun : celui-là porte un emoji à même la
- * ligne, or un drapeau n'est pas un emoji ici - c'est une image, et elle a son propre gabarit.
- */
-function Row({
-  iso,
-  emoji,
-  name,
-  detail,
-  selected,
-  onSelect,
-}: {
-  iso: string;
-  emoji: string;
-  name: string;
-  detail?: string;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      aria-pressed={selected}
-      className={`pressable flex w-full items-center gap-4 rounded-button px-4 py-3.5 text-start transition-colors duration-hover ${
-        selected
-          ? "bg-accent-soft"
-          : "bg-surface-muted shadow-[inset_0_0_0_1px_var(--color-stroke-strong)]"
-      }`}
-    >
-      <Flag iso={iso} emoji={emoji} label="" className="h-[22px] w-[30px]" />
-
-      <span className="min-w-0 flex-1">
-        <span className={`block truncate text-[16px] font-medium ${selected ? "text-accent" : "text-ink"}`}>
-          {name}
-        </span>
-        {detail ? (
-          <span className="mt-0.5 block text-[12.5px] text-ink-tertiary">{detail}</span>
-        ) : null}
-      </span>
-
-      <span
-        aria-hidden
-        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-hover ${
-          selected ? "border-accent bg-accent" : "border-stroke-strong"
-        }`}
-      >
-        {selected ? (
-          <svg viewBox="0 0 20 20" className="h-full w-full text-on-ink">
-            <path
-              d="M5 10.5l3.2 3.2L15 7"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        ) : null}
-      </span>
-    </button>
   );
 }

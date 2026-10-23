@@ -1,23 +1,10 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { StoryScaffold } from "@/components/onboarding/Scaffold";
-import { SupportsStory } from "@/components/onboarding/stories/SupportsStory";
-import { useI18n } from "@/lib/i18n/client";
-
-/** Ce qu'on apporte : un sujet tapé, ou un des cinq supports de la barre de Home. */
-export default function ImportStep() {
-  const { t } = useI18n();
-  return (
-    <StoryScaffold
-      title={
-        <>
-          {t("onboarding.importerTitleLead")}{" "}
-          <span className="text-accent">{t("onboarding.importerTitleStrong")}</span>
-        </>
-      }
-      lead={t("onboarding.importerLead")}
-    >
-      <SupportsStory />
-    </StoryScaffold>
-  );
+/**
+ * Un écran de démonstration qui a quitté le parcours : l'étudiant arrive de la vitrine, il a déjà
+ * vu le produit, et le parcours commence maintenant par les questions. Un ancien lien ne doit pas
+ * tomber dans le vide, il rejoint la première.
+ */
+export default function RetiredStoryStep() {
+  redirect("/commencer/pays");
 }

@@ -19,7 +19,8 @@ import { LOCALE_HEADER, forwardedUrlLocale, resolveLocaleRequest } from "@/lib/i
  *    préfixe. La réécriture relance le middleware sur le chemin nu : on
  *    garde le header de la première passe, sinon `/` écraserait `/fr`.
  * 4. La session se rafraîchit, ou s'efface quand GoTrue l'a oubliée.
- * 5. Une session ouverte n'a plus rien à faire sur le parcours.
+ * 5. Une session ouverte n'a plus rien à faire sur le parcours - sauf sur l'offre
+ *    (`/commencer/offre`), qui vient justement après le compte.
  */
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl;
@@ -38,7 +39,7 @@ export async function middleware(request: NextRequest) {
       const callback = url.clone();
       callback.pathname = "/auth/callback";
       const next = callback.searchParams.get("next");
-      if (!next || next.startsWith("/commencer") || next === "/") {
+      if (!next || (next.startsWith("/commencer") && !isOfferPath(next)) || next === "/") {
         callback.searchParams.set("next", "/app");
       }
       return NextResponse.redirect(callback);
@@ -101,7 +102,7 @@ export async function middleware(request: NextRequest) {
   }
 
   const replaying = request.cookies.get(ONBOARDING_REPLAY_COOKIE)?.value === "1";
-  if (session && !replaying && locale.pathname.startsWith("/commencer")) {
+  if (session && !replaying && locale.pathname.startsWith("/commencer") && !isOfferPath(locale.pathname)) {
     const redirect = NextResponse.redirect(new URL("/app", request.url));
     for (const cookie of response.cookies.getAll()) {
       redirect.cookies.set(cookie);
@@ -110,6 +111,11 @@ export async function middleware(request: NextRequest) {
   }
 
   return response;
+}
+
+/** L'offre d'après le compte : la seule page du parcours qui demande une session. */
+function isOfferPath(path: string): boolean {
+  return path === "/commencer/offre" || path.startsWith("/commencer/offre?");
 }
 
 function writeLocaleCookie(response: NextResponse, locale: UiLocale) {

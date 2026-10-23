@@ -25,7 +25,18 @@ export interface Answers {
   stageId?: string;
   studyLevel?: StudyLevel;
   tier?: EducationTier;
+  /**
+   * La filière (`SchoolTrack.id` : `fr.lyceeGeneral`, `tr.anadolu`), pour les quatre pays
+   * décrits en détail. Elle remplace le palier à l'écran, et le palier s'en déduit.
+   */
+  trackId?: string;
+  /** L'année dans la filière (`fr.terminale`, `de.klasse11`). */
+  yearId?: string;
   subjects?: string[];
+  /** Ce qui bloque (`StudyWorry.rawValue` de l'iPhone) : `examStress`, `forgetting`… */
+  worries?: string[];
+  /** Le temps par jour, en minutes : 5, 10, 15 ou 30. */
+  dailyMinutes?: number;
   /** La date de l'examen, en `AAAA-MM-JJ`. Absente si « je sais pas encore ». */
   examDate?: string;
   examName?: string;

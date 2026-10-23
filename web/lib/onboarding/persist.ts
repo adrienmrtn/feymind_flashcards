@@ -35,6 +35,9 @@ export function hasStoredAnswers(): boolean {
   return Boolean(
     answers.country ||
       answers.studyLevel ||
+      answers.trackId ||
+      answers.worries?.length ||
+      answers.dailyMinutes !== undefined ||
       answers.restDays?.length ||
       answers.currentScore !== undefined ||
       (answers.subjects && answers.subjects.length > 0) ||
@@ -129,7 +132,22 @@ export { isHardPaywall, shouldOpenPaywall } from "./paywall";
  *
  * Renvoie `anonymous` sans rien perdre : les réponses restent sur l'appareil.
  */
-export async function persistStoredAnswers(): Promise<SaveResult> {
+let inflight: Promise<SaveResult> | null = null;
+
+/**
+ * Un seul déversement à la fois. Le compte, l'offre et l'app l'appellent chacun en arrivant, et
+ * deux appels croisés écrivaient deux fois - deux leçons de démonstration, deux examens.
+ */
+export function persistStoredAnswers(): Promise<SaveResult> {
+  if (!inflight) {
+    inflight = persistOnce().finally(() => {
+      inflight = null;
+    });
+  }
+  return inflight;
+}
+
+async function persistOnce(): Promise<SaveResult> {
   const answers = readStoredAnswers();
   if (!answers || !hasStoredAnswers()) {
     return { status: "anonymous" };
@@ -139,7 +157,11 @@ export async function persistStoredAnswers(): Promise<SaveResult> {
     country: answers.country,
     studyLevel: answers.studyLevel,
     stageId: answers.stageId,
+    trackId: answers.trackId,
+    yearId: answers.yearId,
     subjects: answers.subjects,
+    worries: answers.worries,
+    dailyMinutes: answers.dailyMinutes,
     institutionId: answers.institutionId,
     institutionName: answers.institutionName,
     examDate: answers.examDate,

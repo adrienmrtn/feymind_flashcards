@@ -48,10 +48,10 @@ export default function SubjectsStep() {
       }
       width="wide"
     >
-      <div className="space-y-6 pe-1">
+      <div className="space-y-5">
         {SUBJECT_FAMILIES.map((family) => (
-          <div key={family.name}>
-            <p className="eyebrow mb-2.5 text-ink-tertiary">{displayFamily(family.name, locale)}</p>
+          <div key={family.name} role="group" aria-label={displayFamily(family.name, locale)}>
+            <p className="eyebrow mb-2 text-ink-tertiary">{displayFamily(family.name, locale)}</p>
             <div className="flex flex-wrap gap-2">
               {family.subjects.map((subject) => {
                 const selected = chosen.includes(subject);
@@ -61,10 +61,10 @@ export default function SubjectsStep() {
                     type="button"
                     onClick={() => toggle(subject)}
                     aria-pressed={selected}
-                    className={`pressable flex items-center gap-1.5 rounded-pill px-3.5 py-2 text-[14px] transition-colors duration-hover ${
+                    className={`pressable flex min-h-10 items-center gap-1.5 rounded-pill border-[1.5px] px-3.5 py-1.5 text-[14px] font-semibold transition-colors duration-hover ${
                       selected
-                        ? "bg-accent-soft font-medium text-accent"
-                        : "bg-surface-muted text-ink shadow-[inset_0_0_0_1px_var(--color-stroke-strong)]"
+                        ? "border-accent bg-accent-soft text-accent"
+                        : "border-stroke bg-surface text-ink hover:border-stroke-strong"
                     }`}
                   >
                     <SubjectMark subject={subject} />
