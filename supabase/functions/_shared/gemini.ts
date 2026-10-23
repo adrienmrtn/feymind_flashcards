@@ -55,7 +55,7 @@ export function readGeminiKey(): string {
  * sort tronquée ou en prose : le JSON ne se lit plus, et la fonction rend « Ce thème n'a pas
  * pu s'écrire ». Micabo ne demande que du JSON à remplir : il n'a rien à faire d'un
  * raisonnement. `reasoning_effort: "none"` le dit à Google ; un modèle qui n'accepte pas la
- * consigne répond 400 en la nommant, et l'appel repart une fois sans elle.
+ * consigne répond 400, et l'appel repart une fois sans elle.
  */
 export const geminiThinking = { off: { reasoning_effort: "none" } as Record<string, unknown> };
 
@@ -162,7 +162,10 @@ async function callGeminiOnce(options: {
       response.status,
       "provider",
     );
-    if (withoutThinking && response.status === 400 && /reasoning|thinking|thought/i.test(upstream)) {
+    // Tout 400 reçu avec la consigne de pensée vaut un second essai sans elle, quel que soit
+    // le mot que Google choisit pour le dire : la seule chose que cet appel ait de différent
+    // d'avant le 23 octobre, c'est cette consigne. Un 400 qui revient sans elle est le nôtre.
+    if (withoutThinking && response.status === 400) {
       refusedThinkingSetting.add(error);
     }
     throw error;

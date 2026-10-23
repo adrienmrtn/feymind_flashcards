@@ -81,9 +81,13 @@ Deno.test("callGemini essaie l'autre alias sur une panne du modèle", async () =
   );
 });
 
-/** Un 400 parle de la requête, un 403 de la clé : les rejouer coûte un appel pour rien. */
+/**
+ * Un 401 ou un 403 parle de la clé : le rejouer coûte un appel pour rien. Un 400 parle de la
+ * requête, et la seule chose que la requête ait de neuf est la consigne de pensée : il vaut un
+ * second essai sans elle, et pas un de plus.
+ */
 Deno.test("callGemini n'insiste pas quand le refus vient de nous", async () => {
-  for (const status of [400, 401, 403]) {
+  for (const status of [401, 403]) {
     await withGemini(
       () => new Response(JSON.stringify({ error: { message: "non" } }), { status }),
       async (models) => {
@@ -92,6 +96,13 @@ Deno.test("callGemini n'insiste pas quand le refus vient de nous", async () => {
       },
     );
   }
+  await withGemini(
+    () => new Response(JSON.stringify({ error: { message: "non" } }), { status: 400 }),
+    async (models) => {
+      await assertRejects(() => callGemini({ prompt: "écris" }, "clé"));
+      assertEquals(models, ["gemini-flash-lite-latest", "gemini-flash-lite-latest"], "avec puis sans la consigne, même alias");
+    },
+  );
 });
 
 /**
@@ -156,12 +167,13 @@ Deno.test("callGemini coupe la pensée, et la rend si le modèle refuse la consi
   assertEquals(bodies[1]!.model, bodies[0]!.model, "le même alias, sans la consigne");
 });
 
-Deno.test("callGemini n'enlève la consigne de pensée que si le 400 la nomme", async () => {
+Deno.test("callGemini retire la consigne de pensée sur tout 400, et n'insiste pas au-delà", async () => {
   await withGemini(
     () => new Response(JSON.stringify({ error: { message: "messages[0] is invalid" } }), { status: 400 }),
     async (models) => {
       await assertRejects(() => callGemini({ prompt: "écris" }, "clé"));
-      assertEquals(models.length, 1);
+      // Une fois avec la consigne, une fois sans : le second 400 est le nôtre, on s'arrête.
+      assertEquals(models.length, 2);
     },
   );
 });
