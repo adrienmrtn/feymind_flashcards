@@ -12,6 +12,7 @@ import { trackCheckoutStart, trackPaywallView } from "@/lib/analytics/funnel";
 import {
   DISCOUNT_EVENT,
   claimOffer,
+  countdownLabel,
   isDiscountSeen,
   markDiscountSeen,
   readDiscountStart,
@@ -24,6 +25,7 @@ import {
   type DiscountStage,
 } from "@/lib/discount";
 import { useI18n } from "@/lib/i18n/client";
+import { UI_LOCALE_META } from "@/lib/i18n/locales";
 import { usePresentment } from "@/lib/presentment";
 import { requestTourRecheck } from "@/lib/tour/signal";
 
@@ -294,10 +296,11 @@ function useCountdown(startedAt: number, span: number): number {
  */
 export function DiscountCard({ onClose }: { onClose: () => void }) {
   const { t } = useI18n();
-  const currency = usePresentment();
+  const presentment = usePresentment();
   const plan = pricing.DISCOUNT_YEARLY;
   const full = pricing.DISCOUNT_REFERENCE;
-  const saved = pricing.discountSavingsPercent();
+  // La remise se calcule sur les prix du pays, comme `PaywallCatalog.savings` dans l'app.
+  const saved = pricing.discountSavingsPercent(presentment);
   const [pending, setPending] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
 
@@ -375,7 +378,7 @@ export function DiscountCard({ onClose }: { onClose: () => void }) {
 
               <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
                 <span className="numeral text-[26px] font-bold leading-none text-ink">
-                  {pricing.priceText(pricing.presentmentAmount(plan, currency), currency)}
+                  {pricing.planPriceText(plan, presentment)}
                 </span>
                 <span className="text-[15px] font-medium text-ink-secondary">
                   {t("app.paywall.perYear")}
@@ -383,7 +386,7 @@ export function DiscountCard({ onClose }: { onClose: () => void }) {
               </p>
 
               <s className="mt-1 block text-[15.5px] font-medium text-ink-tertiary">
-                {pricing.priceText(pricing.presentmentAmount(full, currency), currency)}
+                {pricing.planPriceText(full, presentment)}
               </s>
             </div>
           </div>
@@ -410,7 +413,7 @@ export function DiscountCard({ onClose }: { onClose: () => void }) {
             // sous le bouton, jamais ailleurs qu'à côté de lui.
             <p className="mt-3 text-[12.5px] text-ink-tertiary">
               {t("app.paywall.discountYearly", {
-                price: pricing.priceText(pricing.presentmentAmount(plan, currency), currency),
+                price: pricing.planPriceText(plan, presentment),
               })}
             </p>
           )}
@@ -507,7 +510,7 @@ export function DiscountBadge({
   startedAt: number;
   onOpen: () => void;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const left = useCountdown(startedAt, discount.windowSeconds);
   if (left <= 0) return null;
 
@@ -516,7 +519,9 @@ export function DiscountBadge({
       <button
         type="button"
         onClick={onOpen}
-        aria-label={t("app.paywall.reopenOffer", { time: discount.countdownLabel(left) })}
+        aria-label={t("app.paywall.reopenOffer", {
+          time: countdownLabel(t, UI_LOCALE_META[locale].bcp47, left),
+        })}
         className="app-offer-badge pressable fixed right-4 z-40 flex items-center gap-2.5 rounded-pill bg-offer-sky px-4 py-3 text-white shadow-[0_16px_40px_-12px_rgba(11,143,220,0.6)] lg:right-8"
       >
         <span aria-hidden className="text-white">

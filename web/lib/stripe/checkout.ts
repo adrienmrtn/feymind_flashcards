@@ -25,24 +25,22 @@ import type { pricing } from "@micabo/core";
  */
 export const CHECKOUT_MAINTENANCE = true;
 
-export function envOrCatalogPrice(
-  fromEnv: string | undefined,
-  fallback: string,
-): string {
-  const trimmed = fromEnv?.trim();
-  return trimmed ? trimmed : fallback;
-}
-
+/**
+ * **Le `price_…` de cette offre pour ce pays**, lu dans l'environnement.
+ *
+ * Un prix par offre **et par groupe de la grille** (`pricing.STRIPE_PRICE_ENV`) : l'euro à
+ * 49,99 € et l'euro à 39,99 € ne tiennent pas dans un même objet Stripe. Il n'y a plus de
+ * repli sur le catalogue : les trois `price_…` de `STORE_PRODUCTS` sont ceux de l'ancienne
+ * grille (69,99 €), et encaisser avec eux ferait prélever un autre prix que celui affiché.
+ * Une variable absente rend la chaîne vide, que `priceIdProblem` refuse en clair.
+ */
 export function priceIdFor(
   plan: pricing.CatalogPlan,
-  env: { yearly?: string; weekly?: string; yearlyDiscount?: string },
-  catalog: (plan: pricing.CatalogPlan) => string,
+  presentment: pricing.Presentment,
+  env: Readonly<Record<string, string | undefined>>,
+  read: typeof pricing.stripePriceIdFromEnv,
 ): string {
-  if (plan === "yearly") return envOrCatalogPrice(env.yearly, catalog("yearly"));
-  if (plan === "yearly_discount") {
-    return envOrCatalogPrice(env.yearlyDiscount, catalog("yearly_discount"));
-  }
-  return envOrCatalogPrice(env.weekly, catalog("weekly"));
+  return read(plan, presentment.prices.stripeGroup, env) ?? "";
 }
 
 /** Un identifiant Apple, un `prod_…`, une chaîne vide : Stripe rend 400. */
@@ -76,9 +74,10 @@ export function checkoutSessionFields(input: {
   cancelUrl: string;
   locale?: string;
   /**
-   * La devise, **dite** et non devinée. Sans elle, Checkout la déduit de
-   * l'adresse IP et un Turc en déplacement paierait des euros après avoir
-   * lu des livres. Elle doit exister dans les `currency_options` du prix.
+   * La devise, **dite** et non devinée : celle du pays dont le paywall vient d'afficher les
+   * prix. Sans elle, Checkout la déduit de l'adresse IP et un Turc en déplacement paierait
+   * des euros après avoir lu des livres. Elle doit être la devise du prix ou exister dans
+   * ses `currency_options`.
    */
   currency?: string;
   /**

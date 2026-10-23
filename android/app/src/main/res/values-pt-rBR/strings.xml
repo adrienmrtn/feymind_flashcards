@@ -223,7 +223,7 @@
     <string name="ios_searchCourse">Um curso, uma matéria…</string>
     <string name="ios_sharedCourse">Curso compartilhado</string>
     <string name="ios_sharedNoSheet">Este curso não tem ficha</string>
-    <string name="ios_signOutMsg">Seus cursos ficam neste aparelho e na sua conta. Você vai encontrá-los no próximo login.</string>
+    <string name="ios_signOutMsg">Seus cursos ficam na sua conta e saem deste aparelho. Você vai encontrá-los no próximo login.</string>
     <string name="ios_signOutQ">Sair da conta?</string>
     <string name="ios_startCheaper">Comece com %1$s%% de desconto</string>
     <string name="ios_streak_bestLabel">Seu recorde</string>
@@ -243,8 +243,6 @@
     <string name="ios_tapToSync">Toque para sincronizar</string>
     <string name="ios_targetLead">Mire no que realmente te deixaria feliz, não no que parece razoável.</string>
     <string name="ios_targetTitle">E qual é\nsua meta?</string>
-    <string name="ios_trialDay2">Dia 2: lembrete antes do fim</string>
-    <string name="ios_trialDay2Detail">Avisamos você com uma notificação. Cancele em quinze segundos.</string>
     <string name="ios_trialLast">Dia %1$s: fim do teste</string>
     <string name="ios_trialLastDetail">Sua assinatura começa em %1$s.</string>
     <string name="ios_trialToday">Hoje: experimente o Micabo Pro</string>
@@ -252,8 +250,8 @@
     <string name="ios_trial_noPayment">Nada a pagar agora</string>
     <string name="ios_trial_price">Depois %1$s por ano, ou seja, %2$s por mês.</string>
     <string name="ios_trial_reminder_cta">Continuar de graça</string>
-    <string name="ios_trial_reminder_sub">No dia %1$s, uma notificação te avisa. Se quiser, cancele em dois toques.</string>
-    <string name="ios_trial_reminder_title">Vamos te mandar um **lembrete** antes do fim do teste.</string>
+    <string name="ios_trial_reminder_sub">Mesmo no dia %1$s, você ainda pode cancelar em dois toques. Nada é cobrado antes do fim do teste.</string>
+    <string name="ios_trial_reminder_title">Seu teste é **sem compromisso**.</string>
     <string name="ios_trial_title">Queremos que você experimente o Micabo **de graça**.</string>
     <string name="ios_unitWeek">semana</string>
     <string name="ios_unitYear">ano</string>
@@ -514,10 +512,12 @@
     <string name="onboarding_linkSent">Abra o link enviado para %1$s</string>
     <string name="onboarding_sendLink">Receber um link</string>
     <string name="x_account_deleteMsg">Seus cursos, cartões e histórico serão apagados em todos os lugares. A assinatura é gerenciada no Google Play.</string>
+    <string name="x_account_expired">Sua sessão expirou. Entre de novo para continuar sincronizando suas aulas.</string>
     <string name="x_auth_rateLimited">Muitas tentativas. Espere um minuto e tente de novo.</string>
     <string name="x_error_generic">Algo deu errado. Tente de novo.</string>
     <string name="x_error_network">Sem conexão. Verifique sua internet e tente de novo.</string>
     <string name="x_friends_adopt">Fazer minha aula com isto</string>
+    <string name="x_lesson_courseUnknown">Este curso ainda não foi sincronizado. Tente de novo em instantes.</string>
     <string name="x_lesson_whoSees">Quem vê esta aula</string>
     <string name="x_onb_language">Em que idioma você estuda?</string>
     <string name="x_onb_language_sub">O Mika escreve suas aulas, quizzes e flashcards neste idioma.</string>
@@ -530,7 +530,10 @@
     <string name="x_paywall_subscribe">Assinar o Pro</string>
     <string name="x_pro_gifted">Este acesso foi um presente: não há nada para gerenciar nem cancelar.</string>
     <string name="x_quoted">“%1$s”</string>
+    <string name="x_record_channel">Gravação da aula</string>
     <string name="x_record_limit">Até 90 minutos. O Mika transforma a gravação em texto e depois escreve sua aula.</string>
+    <string name="x_record_ongoing">Gravando sua aula</string>
+    <string name="x_record_ongoingBody">O Micabo continua gravando, mesmo com a tela bloqueada.</string>
     <string name="x_reminder_channel">Lembrete diário</string>
     <string name="x_score_1">Tenho dificuldade</string>
     <string name="x_score_2">Um pouco abaixo da média</string>

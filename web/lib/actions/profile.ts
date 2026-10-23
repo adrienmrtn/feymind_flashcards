@@ -88,17 +88,21 @@ export async function updateSettings(input: {
     const raw = input.studyLevel?.trim().slice(0, 40) ?? "";
     if (!raw) {
       patch.study_level = null;
-      learnerPatch = { stageId: null, tier: null };
+      learnerPatch = { stageId: null, tier: null, trackId: null, yearId: null };
     } else {
       const stage = stageById(raw);
       const level = stage?.level ?? readStudyLevel(raw).level;
       if (!level) return { status: "error", message: await actionT("app.common.errorGeneric") };
       patch.study_level = level;
-      learnerPatch = stage ? { stageId: stage.id, tier: stage.tier } : { stageId: null, tier: null };
+      // Un palier choisi ici efface la filière et l'année du parcours : elles diraient une
+      // autre classe que celle qu'on vient de choisir.
+      learnerPatch = stage
+        ? { stageId: stage.id, tier: stage.tier, trackId: null, yearId: null }
+        : { stageId: null, tier: null, trackId: null, yearId: null };
     }
   } else if (input.countryCode !== undefined) {
     // Un autre pays, d'autres paliers : celui d'avant ne veut plus rien dire ici.
-    learnerPatch = { stageId: null, tier: null };
+    learnerPatch = { stageId: null, tier: null, trackId: null, yearId: null };
   }
 
   // Le nombre de blocs commande, et le format n'en est que le nom : c'est ce que l'app a tranché en

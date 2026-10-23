@@ -12,6 +12,7 @@ import { readProfile } from "@/lib/data/profile";
 import { currentUser } from "@/lib/data/user";
 import { getTranslator } from "@/lib/i18n/server";
 import { PresentmentProvider } from "@/lib/presentment";
+import { readPricingCountry } from "@/lib/pricing-country";
 
 /**
  * La charpente de l'app : quatre onglets (Home, Leçons, Examen, Profil), la page, et les
@@ -22,6 +23,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!user) redirect("/commencer/compte?suite=%2Fapp");
 
   const [profile, { t }] = await Promise.all([readProfile(), getTranslator()]);
+  // Le pays des prix : celui du compte, sinon l'adresse IP — le même que `startCheckout`.
+  const pricingCountry = await readPricingCountry(profile?.country_code);
 
   const userName =
     profile?.display_name?.trim() ||
@@ -30,7 +33,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <AppChrome userName={userName} userInitial={userInitial}>
-      <PresentmentProvider country={profile?.country_code}>
+      <PresentmentProvider country={pricingCountry}>
         {children}
         <Suspense fallback={null}>
           <PaywallGate

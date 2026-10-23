@@ -6,8 +6,10 @@ import { SITE_URL } from "@/lib/config";
 import { readEntitlement } from "@/lib/data/entitlement";
 import { actionT } from "@/lib/i18n/action";
 import { DEFAULT_UI_LOCALE, isUiLocale } from "@/lib/i18n/locales";
-import { readLocaleSignals, readUiLocale, translatorFor } from "@/lib/i18n/server";
+import { readLocaleSignals, translatorFor } from "@/lib/i18n/server";
+import { localeBcp47 } from "@/lib/i18n/copy";
 import { checkoutNote } from "@/lib/pricing-copy";
+import { readPricingCountry } from "@/lib/pricing-country";
 import {
   CHECKOUT_MAINTENANCE,
   checkoutIdempotencyKey,
@@ -44,17 +46,16 @@ import { createClient } from "@/lib/supabase/server";
  *
  * ## Ce qu'il manque, précisément
  *
- * `STRIPE_SECRET_KEY`. Les trois `price_…` sont dans `pricing.STORE_PRODUCTS` ;
- * `STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_WEEKLY` et
- * `STRIPE_PRICE_YEARLY_DISCOUNT` les remplacent (test / live) si elles
- * sont posées.
+ * `STRIPE_SECRET_KEY`, et les `price_…` de la grille par pays : un par offre et par groupe,
+ * posés dans les variables de `pricing.STRIPE_PRICE_ENV` (`STRIPE_PRICE_YEARLY`,
+ * `STRIPE_PRICE_YEARLY_SOUTH`, …). La liste des prix à créer est dans `docs/revenuecat.md`,
+ * §16, et se déduit de `pricing.stripePriceSpecs()`.
  *
- * ## La livre turque
+ * ## La devise
  *
- * Un seul `price_…` par offre, et la livre dans ses `currency_options`.
- * Checkout devinerait la devise à l'adresse IP ; on la lui **dit**, pour
- * qu'elle suive la langue du site et le pays de scolarisation — c'est-à-dire
- * exactement ce que le paywall vient d'afficher.
+ * Celle du pays dont le paywall vient d'afficher les prix (`readPricingCountry` : le pays du
+ * compte, sinon l'adresse IP). Checkout devinerait la devise à l'adresse IP ; on la lui
+ * **dit**, et le prix choisi est celui du groupe de ce pays.
  */
 
 export interface CheckoutResult {
@@ -67,17 +68,37 @@ function stripeKey(): string | null {
   return process.env.STRIPE_SECRET_KEY ?? null;
 }
 
-/** L'identifiant de prix Stripe. L'env gagne s'il n'est pas vide ; sinon le catalogue. */
-function priceId(plan: pricing.CatalogPlan): string {
-  return priceIdFor(
-    plan,
-    {
-      yearly: process.env.STRIPE_PRICE_YEARLY,
-      weekly: process.env.STRIPE_PRICE_WEEKLY,
-      yearlyDiscount: process.env.STRIPE_PRICE_YEARLY_DISCOUNT,
-    },
-    pricing.stripePriceId,
-  );
+/** Les `price_…` déjà retrouvés par leur nom, pour cette instance du serveur. */
+const lookedUp = new Map<string, { id: string; at: number }>();
+const LOOKUP_TTL_MS = 10 * 60_000;
+
+/**
+ * L'identifiant de prix Stripe de cette offre, dans le groupe de prix du pays.
+ *
+ * La variable `STRIPE_PRICE_…` d'abord, quand elle est posée ; sinon le prix actif qui porte
+ * le nom `micabo_<offre>_<groupe>` chez Stripe (`pricing.stripeLookupKey`), tel que
+ * `store/stripe-prices.mjs` l'a créé. Introuvable : chaîne vide, que `priceIdProblem` refuse.
+ */
+async function priceId(
+  plan: pricing.CatalogPlan,
+  presentment: pricing.Presentment,
+  key: string | null,
+): Promise<string> {
+  const fromEnv = priceIdFor(plan, presentment, process.env, pricing.stripePriceIdFromEnv);
+  if (fromEnv || !key) return fromEnv;
+  const lookupKey = pricing.stripeLookupKey(plan, presentment.prices.stripeGroup);
+  const cached = lookedUp.get(lookupKey);
+  if (cached && Date.now() - cached.at < LOOKUP_TTL_MS) return cached.id;
+  const query = new URLSearchParams({ "lookup_keys[]": lookupKey, active: "true", limit: "1" });
+  const response = await fetch(`https://api.stripe.com/v1/prices?${query}`, {
+    headers: { Authorization: `Bearer ${key}` },
+    cache: "no-store",
+  }).catch(() => null);
+  if (!response?.ok) return "";
+  const body = (await response.json().catch(() => null)) as { data?: { id?: string }[] } | null;
+  const id = body?.data?.[0]?.id ?? "";
+  if (id) lookedUp.set(lookupKey, { id, at: Date.now() });
+  return id;
 }
 
 export async function startCheckout(kind: pricing.CatalogPlan): Promise<CheckoutResult> {
@@ -103,14 +124,14 @@ export async function startCheckout(kind: pricing.CatalogPlan): Promise<Checkout
   const already = await readEntitlement();
   if (entitlement.isPaid(already)) return { status: "already" };
 
-  const locale = await readUiLocale();
   const { data: profile } = await supabase
     .from("profiles")
     .select("country_code")
     .eq("id", user.id)
     .maybeSingle();
   const country = profile?.country_code;
-  const currency = pricing.presentmentCurrencyFor(locale, country);
+  // Le pays des prix, résolu comme pour le paywall qui vient de s'afficher.
+  const presentment = pricing.presentmentFor(await readPricingCountry(country));
 
   // La langue de la page de paiement se décide à part : elle a le pays à consulter là où
   // l'interface, elle, doit bien afficher quelque chose et retombe sur l'anglais.
@@ -123,7 +144,7 @@ export async function startCheckout(kind: pricing.CatalogPlan): Promise<Checkout
     : (signals.chosen ?? signals.navigator ?? DEFAULT_UI_LOCALE);
 
   const key = stripeKey();
-  const price = priceId(kind);
+  const price = await priceId(kind, presentment, key);
   const plan = pricing.catalogPlanFor(kind);
 
   if (!key) {
@@ -142,12 +163,16 @@ export async function startCheckout(kind: pricing.CatalogPlan): Promise<Checkout
     price,
     userId: user.id,
     email: user.email,
-    trialDays: pricing.hasTrial(plan) ? plan.trialDays : 0,
+    trialDays: pricing.trialDays(plan, presentment),
     successUrl: checkoutReturnUrl(SITE_URL, "/app?abonnement=ok"),
     cancelUrl: checkoutReturnUrl(SITE_URL, "/app"),
     locale: stripeLocale,
-    currency: pricing.checkoutCurrency(currency),
-    note: checkoutNote(translatorFor(noteLocale), plan, currency),
+    currency: pricing.checkoutCurrency(presentment),
+    note: checkoutNote(
+      translatorFor(noteLocale),
+      plan,
+      pricing.presentmentFor(presentment.country, localeBcp47(noteLocale)),
+    ),
   });
 
   const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
@@ -231,6 +256,13 @@ export async function manageSubscription(): Promise<CheckoutResult> {
     };
   }
 
+  // La langue du portail suit la même table que le paiement. `readUiLocale()` passait nos
+  // codes tels quels : Stripe ne connaît ni `ar` ni `sr`, refusait la session en 400, et un
+  // abonné arabophone ou serbe ne pouvait plus gérer son abonnement. Sans correspondance,
+  // `auto` laisse Stripe lire le navigateur.
+  const signals = await readLocaleSignals();
+  const portalLocale = pricing.checkoutLocale(signals) ?? "auto";
+
   const response = await fetch("https://api.stripe.com/v1/billing_portal/sessions", {
     method: "POST",
     headers: {
@@ -240,7 +272,7 @@ export async function manageSubscription(): Promise<CheckoutResult> {
     body: new URLSearchParams({
       customer: customerId,
       return_url: checkoutReturnUrl(SITE_URL, "/app/reglages"),
-      locale: await readUiLocale(),
+      locale: portalLocale,
     }),
   });
 

@@ -33,7 +33,7 @@ const ALLOWED = new Set([
   "compte",
   "demo",
   "fiches",
-  "parcours", // le chargement décide entre le compte et l'app, selon la session
+  "parcours", // le résumé décide entre le compte et l'offre, selon la session
   "retention",
   "reussir",
 ]);

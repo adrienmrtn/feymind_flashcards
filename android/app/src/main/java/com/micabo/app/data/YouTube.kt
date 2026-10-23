@@ -60,11 +60,18 @@ class YouTubeImport(private val functions: SupabaseFunctions) {
                 putJsonArray("languages") { languages.forEach { add(JsonPrimitive(it)) } }
             }, timeoutMs = 240_000)
         } catch (error: ApiException) {
+            // Un compte gratuit sans sa leçon offerte (402 `import_pro`) : le paywall s'ouvre
+            // (`LessonComposer`), au lieu d'un « pas de sous-titres » qui ne disait rien de vrai.
+            if (error.opensPaywall) throw error
+            // La porte injoignable (503) : une panne passagère, dite comme le réseau.
+            if (error.status == 503) throw NetworkException(error)
             throw ImportException(
                 when {
                     // Le plafond du jour des lectures par le modèle (code « quota », 429) : le dire
                     // tel quel, au lieu d'un « pas de sous-titres » qu'on réessaierait.
                     error.code == "quota" || error.isDailyLimit -> R.string.lesson_error_dailyLimit
+                    // Sans session (401) : rien à voir avec la vidéo.
+                    error.status == 401 -> R.string.x_error_generic
                     else -> when (error.code) {
                         "invalid_url" -> R.string.ios_yt_invalidLink
                         "unavailable" -> R.string.ios_yt_unavailable

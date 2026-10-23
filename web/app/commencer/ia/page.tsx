@@ -1,23 +1,10 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { StoryScaffold } from "@/components/onboarding/Scaffold";
-import { MikaWritesStory } from "@/components/onboarding/stories/MikaWritesStory";
-import { useI18n } from "@/lib/i18n/client";
-
-/** Qui écrit : Mika, les notes thème par thème, puis les quiz et les flashcards. */
-export default function MikaStep() {
-  const { t } = useI18n();
-  return (
-    <StoryScaffold
-      title={
-        <>
-          {t("onboarding.iaTitleLead")}{" "}
-          <span className="text-accent">{t("onboarding.iaTitleStrong")}</span>
-        </>
-      }
-      lead={t("onboarding.iaLead")}
-    >
-      <MikaWritesStory />
-    </StoryScaffold>
-  );
+/**
+ * Un écran de démonstration qui a quitté le parcours : l'étudiant arrive de la vitrine, il a déjà
+ * vu le produit, et le parcours commence maintenant par les questions. Un ancien lien ne doit pas
+ * tomber dans le vide, il rejoint la première.
+ */
+export default function RetiredStoryStep() {
+  redirect("/commencer/pays");
 }

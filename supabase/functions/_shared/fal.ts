@@ -20,6 +20,7 @@
  */
 
 import { checkCircuit, circuitIsOpen, recordFailure, recordSuccess } from "./circuit.ts";
+import { attemptTimeout, MIN_ATTEMPT_MS, remainingMs } from "./deadline.ts";
 import { callGemini, readGeminiKey, upstreamReason } from "./gemini.ts";
 import { describeModelOutput, parseModelJSON } from "./json.ts";
 import { FalError } from "./model-error.ts";
@@ -63,6 +64,12 @@ export interface CallOptions {
    * quoi. Facultatif, et les journaux reçoivent la ligne dans tous les cas.
    */
   meter?: ModelUsage[];
+  /**
+   * L'échéance de la requête entière (`deadline.ts`), en millisecondes depuis l'époque.
+   * Chaque essai, chaque repli et chaque pause la respecte : une fonction qui enchaîne
+   * plusieurs appels échoue elle-même avant que la plateforme ne la tue.
+   */
+  deadline?: number;
 }
 
 /**
@@ -154,8 +161,19 @@ async function callFal(options: CallOptions, key: string): Promise<string> {
     const model = models[attempt]!;
     if (attempt > 0) {
       const wait = skipWait ? 0 : delays[attempt - 1] ?? 0;
+      // Une pause qui mangerait le temps du dernier essai ne sert à rien : l'erreur précédente
+      // est la réponse.
+      if (remainingMs(options.deadline) < wait + MIN_ATTEMPT_MS) {
+        recordFailure();
+        throw lastError ?? timeoutError();
+      }
       if (wait > 0) await sleep(wait);
       console.warn(JSON.stringify({ fal: "retry", attempt: attempt + 1, model }));
+    }
+    // Plus le temps d'un essai : rien n'est lancé, et rien n'est compté contre fal — ce n'est
+    // pas lui qui a échoué, c'est la requête qui n'a plus de temps.
+    if (attemptTimeout(FAL_TIMEOUT_MS, options.deadline) === null) {
+      throw lastError ?? timeoutError();
     }
 
     try {
@@ -212,6 +230,10 @@ async function callFalOnce(
   if (typeof options.maxTokens === "number") body.max_tokens = options.maxTokens;
   if (useVision) body.image_urls = options.imageUrls;
 
+  // `callFal` a vérifié qu'il restait de quoi faire un essai ; le plancher ne sert qu'à ce que
+  // quelques millisecondes écoulées entre-temps ne deviennent pas un délai nul.
+  const timeout = attemptTimeout(FAL_TIMEOUT_MS, options.deadline) ?? MIN_ATTEMPT_MS;
+
   let response: Response;
   try {
     response = await fetch(useVision ? VISION_ENDPOINT : TEXT_ENDPOINT, {
@@ -221,7 +243,7 @@ async function callFalOnce(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(FAL_TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeout),
     });
   } catch (error) {
     if (error instanceof DOMException && error.name === "TimeoutError") {
@@ -310,6 +332,11 @@ function worthAnotherProvider(error: unknown): boolean {
   if (!(error instanceof FalError)) return true;
   if (error.status === 504) return false;
   return error.status >= 500;
+}
+
+/** Le refus d'un essai qui n'a plus le temps d'aboutir : le même qu'un délai dépassé. */
+function timeoutError(): FalError {
+  return new FalError("Le modèle a mis trop longtemps à répondre.", 504, undefined, "timeout");
 }
 
 function sleep(ms: number): Promise<void> {

@@ -21,10 +21,20 @@
  * texte de référence (`material.ts`). Les questions prennent cinq formes (`schema.ts`) ; une
  * app qui ne déclare pas les formes qu'elle sait afficher (`kinds`) ne reçoit que des QCM.
  *
- * Déployer : `supabase functions deploy generate-lesson`, après la migration
- * `lesson_generations` (la porte du gratuit), ou par `pin.sh`.
+ * Déployer : `supabase functions deploy generate-lesson`, après les migrations
+ * `lesson_generations` et `lesson_gate_hardening` (la porte du gratuit) et `anon_ai_budget`
+ * (le budget des appels sans compte), ou par `pin.sh`. La porte ferme quand la base ne
+ * répond pas : déployée avant ses migrations, elle refuserait en 503.
  */
-import { type Caller, consumeQuota, readCaller, withCors } from "../_shared/caller.ts";
+import {
+  ANON_DAILY_CEILING,
+  type Caller,
+  consumeQuota,
+  readCaller,
+  requireAccount,
+  withCors,
+} from "../_shared/caller.ts";
+import { deadlineIn, earliest } from "../_shared/deadline.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { callModel, errorResponse, FalError, jsonResponse } from "../_shared/fal.ts";
 import { CircuitOpenError } from "../_shared/circuit.ts";
@@ -179,6 +189,13 @@ const MAX_IMAGE_CHARS = 4_000_000;
 const MAX_TOPIC = 400;
 /** Le fusible des thèmes : une leçon en a douze au plus, « Réessayer » compris. */
 const THEME_DAILY_CEILING = 60;
+/**
+ * Le budget commun des thèmes sans compte (`consumeQuota`) : une leçon en coûte une dizaine,
+ * le plan une seule. Le même rapport qu'entre `THEME_DAILY_CEILING` et `DAILY_CEILING`.
+ */
+const ANON_THEME_CEILING = ANON_DAILY_CEILING * 3;
+/** La passe visuelle du plan : elle ne doit pas laisser le plan lui-même sans temps. */
+const VISION_BUDGET_MS = 60_000;
 const CONVERT_CHAPTER_TEXT = 3_000;
 const CONVERT_TOTAL_TEXT = 40_000;
 const PRACTICE_THEME_NOTES = 2_000;
@@ -225,6 +242,8 @@ async function ask(
     meter: ModelUsage[];
     model?: string;
     step?: string;
+    /** L'échéance de la requête : voir `_shared/deadline.ts`. */
+    deadline?: number;
   },
 ): Promise<Record<string, unknown> | null> {
   let output: string;
@@ -236,6 +255,7 @@ async function ask(
       maxTokens: options.maxTokens,
       meter: options.meter,
       model: options.model ?? WRITING_MODEL,
+      deadline: options.deadline,
     });
   } catch (error) {
     // Une panne du fournisseur n'est pas une réponse illisible : la retenter tout de suite
@@ -285,7 +305,7 @@ const SCRATCH_RULES =
 
 // MARK: - Le plan
 
-async function plan(request: Request, body: RequestBody): Promise<Response> {
+async function plan(request: Request, body: RequestBody, deadline: number): Promise<Response> {
   const caller = readCaller(request);
   if (!isLessonId(body.lessonId)) throw new FalError("Identifiant de leçon manquant.", 400);
 
@@ -312,11 +332,13 @@ async function plan(request: Request, body: RequestBody): Promise<Response> {
     onboarding: body.onboarding === true,
   });
   try {
-    return await writePlan(body, { caller, fromScratch, shortened, text, images, topic, source });
+    return await writePlan(body, { caller, fromScratch, shortened, text, images, topic, source, deadline });
   } catch (error) {
     // Aucun plan n'est parti : la leçon réservée est rendue. Sans cela, une panne du modèle
     // au premier essai coûtait la leçon offerte, et l'élève tombait sur le paywall sans
-    // avoir rien reçu.
+    // avoir rien reçu. L'échéance (`deadline`) est ce qui garantit qu'on arrive ici : sans
+    // elle, la passe visuelle, le plan et son second essai dépassaient l'horloge de la
+    // plateforme, qui tuait la fonction avant ce `catch`.
     await releaseLesson(caller, body.lessonId);
     throw error;
   }
@@ -333,9 +355,10 @@ async function writePlan(
     images: string[];
     topic: string;
     source: string;
+    deadline: number;
   },
 ): Promise<Response> {
-  const { caller, fromScratch, shortened, text, images, topic, source } = options;
+  const { caller, fromScratch, shortened, text, images, topic, source, deadline } = options;
   const lessonId = body.lessonId!;
   await consumeQuota(caller, "generate-lesson");
 
@@ -351,6 +374,9 @@ async function writePlan(
         temperature: 0.2,
         maxTokens: 1_600,
         meter,
+        // La passe visuelle est un complément : elle ne prend pas au plan le temps qu'il lui
+        // faut. Coupée, le plan s'écrit sur le texte seul, comme quand elle échoue.
+        deadline: earliest(deadline, Date.now() + VISION_BUDGET_MS),
       });
     } catch (_error) {
       visualNotes = "";
@@ -399,7 +425,7 @@ async function writePlan(
       })
       : null;
 
-  let parsedPlan = await ask({ prompt, system: PLAN_SYSTEM_PROMPT, temperature: 0.3, maxTokens: PLAN_TOKENS, meter, step: "plan" });
+  let parsedPlan = await ask({ prompt, system: PLAN_SYSTEM_PROMPT, temperature: 0.3, maxTokens: PLAN_TOKENS, meter, step: "plan", deadline });
   let lessonPlan = read(parsedPlan);
   if (!lessonPlan) {
     if (parsedPlan) console.error(JSON.stringify({ plan: "invalide", cles: Object.keys(parsedPlan).slice(0, 12) }));
@@ -410,6 +436,7 @@ async function writePlan(
       maxTokens: PLAN_TOKENS,
       meter,
       step: "plan",
+      deadline,
     });
     lessonPlan = read(parsedPlan);
   }
@@ -444,7 +471,7 @@ async function writePlan(
 
 // MARK: - Un thème
 
-async function theme(request: Request, body: RequestBody): Promise<Response> {
+async function theme(request: Request, body: RequestBody, deadline: number): Promise<Response> {
   const caller = readCaller(request);
   if (!isLessonId(body.lessonId)) throw new FalError("Identifiant de leçon manquant.", 400);
 
@@ -456,7 +483,7 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
   if (index < 0 || index >= themes.length) throw new FalError("Thème inconnu.", 400);
 
   await admitThemeCall(caller, body.lessonId);
-  await consumeQuota(caller, "generate-lesson-theme", 1, THEME_DAILY_CEILING);
+  await consumeQuota(caller, "generate-lesson-theme", 1, THEME_DAILY_CEILING, undefined, ANON_THEME_CEILING);
 
   // L'en-tête du texte de référence dit la nature du support et le rôle de chaque thème ; une
   // leçon d'avant n'en a pas, et les deux se devinent alors sur le texte et sur le titre.
@@ -561,7 +588,7 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
     return { notes, questions, flashcards: readFlashcards(parsed.flashcards, volume.flashcards) };
   };
 
-  let parsedTheme = await ask({ prompt, system: THEME_SYSTEM_PROMPT, temperature: 0.35, maxTokens: THEME_TOKENS, meter, step: "theme" });
+  let parsedTheme = await ask({ prompt, system: THEME_SYSTEM_PROMPT, temperature: 0.35, maxTokens: THEME_TOKENS, meter, step: "theme", deadline });
   let written = read(parsedTheme);
   if (!written) {
     parsedTheme = await ask({
@@ -571,6 +598,7 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
       maxTokens: THEME_TOKENS,
       meter,
       step: "theme",
+      deadline,
     });
     written = read(parsedTheme);
   }
@@ -591,8 +619,12 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
 
 // MARK: - La conversion
 
-async function convert(request: Request, body: RequestBody): Promise<Response> {
+async function convert(request: Request, body: RequestBody, deadline: number): Promise<Response> {
   const caller = readCaller(request);
+  // La conversion lit trente chapitres d'un coup : c'est une étape lourde, que la clé
+  // publiable ne paye pas. Le refus dit de mettre l'app à jour ; le cours reste ouvrable
+  // sans le modèle (`convertOffline` sur l'iPhone et le site).
+  requireAccount(caller);
   if (!isLessonId(body.lessonId)) throw new FalError("Identifiant de leçon manquant.", 400);
 
   let budget = CONVERT_TOTAL_TEXT;
@@ -665,7 +697,7 @@ async function convert(request: Request, body: RequestBody): Promise<Response> {
     };
   };
 
-  let conversion = read(await ask({ prompt, system: CONVERT_SYSTEM_PROMPT, temperature: 0.3, maxTokens: convertTokens(chapters.length), meter, step: "convert" }));
+  let conversion = read(await ask({ prompt, system: CONVERT_SYSTEM_PROMPT, temperature: 0.3, maxTokens: convertTokens(chapters.length), meter, step: "convert", deadline }));
   if (!conversion) {
     conversion = read(await ask({
       prompt: `${prompt}\n\nTa réponse précédente était illisible ou incomplète. Rends le JSON complet, une entrée par chapitre.`,
@@ -674,6 +706,7 @@ async function convert(request: Request, body: RequestBody): Promise<Response> {
       maxTokens: convertTokens(chapters.length),
       meter,
       step: "convert",
+      deadline,
     }));
   }
   if (!conversion) {
@@ -688,7 +721,7 @@ async function convert(request: Request, body: RequestBody): Promise<Response> {
 
 // MARK: - De nouvelles questions
 
-async function practice(request: Request, body: RequestBody): Promise<Response> {
+async function practice(request: Request, body: RequestBody, deadline: number): Promise<Response> {
   const caller = readCaller(request);
   if (!isLessonId(body.lessonId)) throw new FalError("Identifiant de leçon manquant.", 400);
 
@@ -746,7 +779,7 @@ async function practice(request: Request, body: RequestBody): Promise<Response> 
       return questions.length >= 3 ? questions : null;
     };
 
-    let questions = read(await ask({ prompt, system: PRACTICE_SYSTEM_PROMPT, temperature: 0.7, maxTokens: PRACTICE_TOKENS, meter, step: "practice" }));
+    let questions = read(await ask({ prompt, system: PRACTICE_SYSTEM_PROMPT, temperature: 0.7, maxTokens: PRACTICE_TOKENS, meter, step: "practice", deadline }));
     if (!questions) {
       questions = read(await ask({
         prompt: `${prompt}\n\nTa réponse précédente était illisible ou incomplète. Rends le JSON complet, avec ${count} questions.`,
@@ -755,6 +788,7 @@ async function practice(request: Request, body: RequestBody): Promise<Response> 
         maxTokens: PRACTICE_TOKENS,
         meter,
         step: "practice",
+        deadline,
       }));
     }
     if (!questions) {
@@ -777,7 +811,7 @@ async function practice(request: Request, body: RequestBody): Promise<Response> 
 const EXAM_LESSON_NOTES = 8_000;
 const EXAM_TOTAL_NOTES = 48_000;
 
-async function exam(request: Request, body: RequestBody): Promise<Response> {
+async function exam(request: Request, body: RequestBody, deadline: number): Promise<Response> {
   const caller = readCaller(request);
   if (!isLessonId(body.lessonId)) throw new FalError("Identifiant d'examen manquant.", 400);
 
@@ -857,7 +891,7 @@ async function exam(request: Request, body: RequestBody): Promise<Response> {
       };
     };
 
-    let written = read(await ask({ prompt, system: EXAM_SYSTEM_PROMPT, temperature: 0.5, maxTokens: EXAM_TOKENS, meter, step: "exam" }));
+    let written = read(await ask({ prompt, system: EXAM_SYSTEM_PROMPT, temperature: 0.5, maxTokens: EXAM_TOKENS, meter, step: "exam", deadline }));
     // Une copie illisible, ou qui ne fait que des QCM, se réécrit une fois. La seconde copie
     // ne remplace la première que si elle se lit.
     if (!written || !hasVariedKinds(written.questions.map((question) => question.kind), kinds.length)) {
@@ -871,6 +905,7 @@ async function exam(request: Request, body: RequestBody): Promise<Response> {
         maxTokens: EXAM_TOKENS,
         meter,
         step: "exam",
+        deadline,
       })) ?? written;
     }
     if (!written) {
@@ -890,19 +925,21 @@ async function exam(request: Request, body: RequestBody): Promise<Response> {
 
 Deno.serve((request: Request) =>
   withCors(request, async () => {
+    // L'échéance de toute la requête, posée à son entrée : voir `_shared/deadline.ts`.
+    const deadline = deadlineIn();
     try {
       const body = (await request.json()) as RequestBody;
       switch (body.stage) {
         case "plan":
-          return await plan(request, body);
+          return await plan(request, body, deadline);
         case "theme":
-          return await theme(request, body);
+          return await theme(request, body, deadline);
         case "convert":
-          return await convert(request, body);
+          return await convert(request, body, deadline);
         case "practice":
-          return await practice(request, body);
+          return await practice(request, body, deadline);
         case "exam":
-          return await exam(request, body);
+          return await exam(request, body, deadline);
         default:
           throw new FalError("Étape inconnue.", 400);
       }

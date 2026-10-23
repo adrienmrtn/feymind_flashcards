@@ -222,7 +222,7 @@
     <string name="ios_searchCourse">Kursus, aine…</string>
     <string name="ios_sharedCourse">Jagatud kursus</string>
     <string name="ios_sharedNoSheet">Sellel kursusel pole konspekti</string>
-    <string name="ios_signOutMsg">Sinu kursused jäävad sellesse seadmesse ja sinu kontole. Leiad need järgmisel sisselogimisel uuesti.</string>
+    <string name="ios_signOutMsg">Sinu kursused jäävad kontole ja kaovad sellest seadmest. Leiad need järgmisel sisselogimisel.</string>
     <string name="ios_signOutQ">Kas logida välja?</string>
     <string name="ios_startCheaper">Alusta %1$s%% soodsamalt</string>
     <string name="ios_streak_bestLabel">Sinu rekord</string>
@@ -242,8 +242,6 @@
     <string name="ios_tapToSync">Puuduta sünkroonimiseks</string>
     <string name="ios_targetLead">Sihi seda, mis sind päriselt rõõmustaks, mitte seda, mis kõlab mõistlikult.</string>
     <string name="ios_targetTitle">Ja mida sa\nsihid?</string>
-    <string name="ios_trialDay2">2. päev: meeldetuletus enne lõppu</string>
-    <string name="ios_trialDay2Detail">Hoiatame sind teavitusega. Tühistamine viieteistkümne sekundiga.</string>
     <string name="ios_trialLast">%1$s. päev: prooviperiood lõpeb</string>
     <string name="ios_trialLastDetail">Sinu tellimus algab: %1$s.</string>
     <string name="ios_trialToday">Täna: proovi Micabo Pro\'t</string>
@@ -251,8 +249,8 @@
     <string name="ios_trial_noPayment">Praegu ei tule midagi maksta</string>
     <string name="ios_trial_price">Seejärel %1$s aastas ehk %2$s kuus.</string>
     <string name="ios_trial_reminder_cta">Jätka tasuta</string>
-    <string name="ios_trial_reminder_sub">%1$s. päeval hoiatab sind teavitus. Soovi korral tühista kahe puudutusega.</string>
-    <string name="ios_trial_reminder_title">Saadame sulle enne prooviperioodi lõppu **meeldetuletuse**.</string>
+    <string name="ios_trial_reminder_sub">Ka %1$s. päeval saad veel kahe puudutusega tühistada. Enne prooviperioodi lõppu ei võeta midagi.</string>
+    <string name="ios_trial_reminder_title">Sinu prooviperiood on **kohustusteta**.</string>
     <string name="ios_trial_title">Tahame, et prooviksid Micabot **tasuta**.</string>
     <string name="ios_unitWeek">nädal</string>
     <string name="ios_unitYear">aasta</string>
@@ -516,10 +514,12 @@
     <string name="onboarding_linkSent">Ava link, mis saadeti aadressile %1$s</string>
     <string name="onboarding_sendLink">Saa link</string>
     <string name="x_account_deleteMsg">Sinu kursused, kaardid ja ajalugu kustutatakse kõikjalt. Tellimust hallatakse Google Plays.</string>
+    <string name="x_account_expired">Sinu seanss on aegunud. Logi uuesti sisse, et tunnid jääksid sünkrooni.</string>
     <string name="x_auth_rateLimited">Liiga palju katseid. Oota minut ja proovi uuesti.</string>
     <string name="x_error_generic">Midagi läks valesti. Proovi uuesti.</string>
     <string name="x_error_network">Ühendus puudub. Kontrolli internetti ja proovi uuesti.</string>
     <string name="x_friends_adopt">Tee sellest minu tund</string>
+    <string name="x_lesson_courseUnknown">Kursus pole veel sünkroonitud. Proovi kohe uuesti.</string>
     <string name="x_lesson_whoSees">Kes seda tundi näeb</string>
     <string name="x_onb_language">Mis keeles sa õpid?</string>
     <string name="x_onb_language_sub">Mika kirjutab sinu tunnid, viktoriinid ja mälukaardid selles keeles.</string>
@@ -532,7 +532,10 @@
     <string name="x_paywall_subscribe">Võta Pro</string>
     <string name="x_pro_gifted">Selle ligipääsu said kingituseks: midagi pole vaja hallata ega tühistada.</string>
     <string name="x_quoted">„%1$s“</string>
+    <string name="x_record_channel">Tunni salvestus</string>
     <string name="x_record_limit">Kuni 90 minutit. Mika teeb sinu salvestisest teksti ja kirjutab siis sinu tunni.</string>
+    <string name="x_record_ongoing">Sinu tundi salvestatakse</string>
+    <string name="x_record_ongoingBody">Micabo salvestab edasi ka lukustatud ekraaniga.</string>
     <string name="x_score_1">Mul on raske</string>
     <string name="x_score_2">Veidi alla keskmise</string>
     <string name="x_score_3">Keskmine</string>

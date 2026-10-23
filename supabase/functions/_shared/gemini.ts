@@ -5,6 +5,7 @@
  * (Edge Functions → Secrets). Le site Vercel n'en a pas besoin.
  */
 
+import { attemptTimeout } from "./deadline.ts";
 import { FalError } from "./model-error.ts";
 import { resolveModel } from "./models.ts";
 import { type ModelUsage, noteUsage, readUsage } from "./usage.ts";
@@ -67,6 +68,8 @@ export async function callGemini(options: {
   temperature?: number;
   maxTokens?: number;
   meter?: ModelUsage[];
+  /** L'échéance de la requête (`deadline.ts`) : aucun essai ne la dépasse. */
+  deadline?: number;
 }, key: string): Promise<string> {
   const first = resolveGeminiModel(options.model);
 
@@ -106,7 +109,14 @@ async function callGeminiOnce(options: {
   temperature?: number;
   maxTokens?: number;
   meter?: ModelUsage[];
+  deadline?: number;
 }, key: string, model: string, withoutThinking: boolean): Promise<string> {
+  // Le temps qui reste à la requête borne cet essai : au-delà, la plateforme tuerait la
+  // fonction avant qu'elle ne rende quoi que ce soit, `catch` compris.
+  const timeout = attemptTimeout(GEMINI_TIMEOUT_MS, options.deadline);
+  if (timeout === null) {
+    throw new FalError("Le modèle a mis trop longtemps à répondre.", 504, undefined, "timeout");
+  }
   const images = Array.isArray(options.imageUrls) ? options.imageUrls : [];
   const messages: Array<Record<string, unknown>> = [];
   if (options.systemPrompt) {
@@ -136,7 +146,7 @@ async function callGeminiOnce(options: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeout),
     });
   } catch (error) {
     if (error instanceof DOMException && error.name === "TimeoutError") {

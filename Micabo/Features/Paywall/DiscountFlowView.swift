@@ -31,6 +31,8 @@ struct DiscountFlowView: View {
     @State private var startedAt: Date?
     @State private var isPurchasing = false
     @State private var failure: String?
+    /// Vrai quand la boutique attend une validation : on le dit, sans parler d'échec.
+    @State private var showsPending = false
 
     init(
         startsAtPaywall: Bool = false,
@@ -68,6 +70,11 @@ struct DiscountFlowView: View {
         } message: {
             Text(failure ?? "")
         }
+        .alert(L10n.t("ios.paywallPendingTitle", locale: .resolved()), isPresented: $showsPending) {
+            Button(L10n.t("ios.ok", locale: .resolved()), role: .cancel) {}
+        } message: {
+            Text(L10n.t("ios.paywallPending", locale: .resolved()))
+        }
     }
 
     /// Le troisième appui. L'instant se pose ici — pas à l'import : un décompte qui a
@@ -100,6 +107,10 @@ struct DiscountFlowView: View {
             )
         case .cancelled:
             break
+        case .pending:
+            // Ni échec ni achat : la validation viendra d'ailleurs, et Pro s'ouvrira seul.
+            Analytics.track(.paywallPurchasePending, ["plan": .text(DiscountOffer.plan.productID)])
+            showsPending = true
         }
     }
 

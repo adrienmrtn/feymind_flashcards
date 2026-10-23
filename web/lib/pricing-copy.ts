@@ -1,6 +1,6 @@
 import { pricing } from "@micabo/core";
 
-import type { Translator } from "./i18n/copy";
+import { localeBcp47, type Translator } from "./i18n/copy";
 import type { UiLocale } from "./i18n/locales";
 
 /**
@@ -11,8 +11,12 @@ import type { UiLocale } from "./i18n/locales";
  * l'espagnol ne restent pas collés au français du catalogue.
  */
 
-export function presentmentFor(locale: UiLocale, country?: string | null): pricing.PresentmentCurrency {
-  return pricing.presentmentCurrencyFor(locale, country);
+/**
+ * Les prix du pays (`country`, déjà résolu par `readPricingCountry`), écrits dans la langue
+ * du site. Sans pays, la grille de base : la France.
+ */
+export function presentmentFor(locale: UiLocale, country?: string | null): pricing.Presentment {
+  return pricing.presentmentFor(country, localeBcp47(locale));
 }
 
 export function planTitle(t: Translator, plan: pricing.Plan): string {
@@ -29,19 +33,23 @@ export function planTitleFor(t: Translator, productId: string | null): string | 
   return null;
 }
 
-export function trialBadge(t: Translator, plan: pricing.Plan): string | null {
-  return pricing.hasTrial(plan) ? t("app.paywall.trialBadge", { days: plan.trialDays }) : null;
+export function trialBadge(
+  t: Translator,
+  plan: pricing.Plan,
+  presentment: pricing.Presentment = pricing.DEFAULT_PRESENTMENT,
+): string | null {
+  return pricing.hasTrial(plan, presentment)
+    ? t("app.paywall.trialBadge", { days: pricing.trialDays(plan, presentment) })
+    : null;
 }
 
 export function planRenewalCopy(
   t: Translator,
   plan: pricing.Plan,
-  currency: pricing.PresentmentCurrency,
+  presentment: pricing.Presentment,
 ): string {
   if (plan.period === "year") {
-    return t("app.paywall.renewalYearly", {
-      price: pricing.priceText(pricing.presentmentAmount(plan, currency), currency),
-    });
+    return t("app.paywall.renewalYearly", { price: pricing.planPriceText(plan, presentment) });
   }
   return t("app.paywall.cancelAnytime");
 }
@@ -53,9 +61,9 @@ export function planDisplayedUnit(t: Translator, plan: pricing.Plan): string {
 export function planCaption(
   t: Translator,
   plan: pricing.Plan,
-  currency: pricing.PresentmentCurrency,
+  presentment: pricing.Presentment,
 ): string {
-  const monthly = pricing.monthlyEquivalent(plan, currency);
+  const monthly = pricing.monthlyEquivalent(plan, presentment);
   if (monthly) return `${monthly} ${t("app.paywall.perMonthSlash")}`;
   const unit = t(plan.period === "year" ? "app.paywall.periodYear" : "app.paywall.periodWeek");
   return t("app.paywall.billedEach", { unit });
@@ -65,7 +73,7 @@ export function planCaption(
  * **La phrase qu'on écrit sur la page Stripe**, au-dessus du bouton de paiement.
  *
  * Checkout est une page blanche à bouton bleu : on y arrive depuis une carte Micabo qui
- * annonçait « 325 ₺ / ay », et on y lit « 3 899,99 ₺ » sans transition. Les deux chiffres sont
+ * annonçait « 125 ₺ / ay », et on y lit « 1 499,99 ₺ » sans transition. Les deux chiffres sont
  * vrais - l'un est le mensuel équivalent, l'autre ce qui sera prélevé -, mais celui qui les
  * découvre à cet instant-là n'a aucune raison de le savoir.
  *
@@ -75,12 +83,12 @@ export function planCaption(
 export function checkoutNote(
   t: Translator,
   plan: pricing.Plan,
-  currency: pricing.PresentmentCurrency,
+  presentment: pricing.Presentment,
 ): string {
   const period = plan.period === "year" ? "Yearly" : "Weekly";
-  const key = pricing.hasTrial(plan) ? `trial${period}` : period.toLowerCase();
+  const key = pricing.hasTrial(plan, presentment) ? `trial${period}` : period.toLowerCase();
   return t(`app.paywall.stripeNote.${key}`, {
-    price: pricing.priceText(pricing.presentmentAmount(plan, currency), currency),
-    days: plan.trialDays,
+    price: pricing.planPriceText(plan, presentment),
+    days: pricing.trialDays(plan, presentment),
   });
 }

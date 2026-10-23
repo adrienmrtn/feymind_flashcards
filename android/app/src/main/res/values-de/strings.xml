@@ -221,7 +221,7 @@
     <string name="ios_searchCourse">Ein Kurs, ein Fach…</string>
     <string name="ios_sharedCourse">Geteilter Kurs</string>
     <string name="ios_sharedNoSheet">Dieser Kurs hat keine Zusammenfassung</string>
-    <string name="ios_signOutMsg">Deine Kurse bleiben auf diesem Gerät und auf deinem Konto. Du findest sie beim nächsten Anmelden.</string>
+    <string name="ios_signOutMsg">Deine Kurse bleiben in deinem Konto und verschwinden von diesem Gerät. Du findest sie beim nächsten Anmelden wieder.</string>
     <string name="ios_signOutQ">Abmelden?</string>
     <string name="ios_startCheaper">Mit %1$s %% weniger starten</string>
     <string name="ios_streak_bestLabel">Dein Rekord</string>
@@ -241,8 +241,6 @@
     <string name="ios_tapToSync">Tippen zum Synchronisieren</string>
     <string name="ios_targetLead">Ziel auf das, was dich wirklich freuen würde, nicht auf das Vernünftige.</string>
     <string name="ios_targetTitle">Und was willst\ndu erreichen?</string>
-    <string name="ios_trialDay2">Tag 2: Erinnerung vor dem Ende</string>
-    <string name="ios_trialDay2Detail">Wir erinnern dich per Mitteilung. In fünfzehn Sekunden kündbar.</string>
     <string name="ios_trialLast">Tag %1$s: Ende der Testphase</string>
     <string name="ios_trialLastDetail">Dein Abo startet am %1$s.</string>
     <string name="ios_trialToday">Heute: teste Micabo Pro</string>
@@ -250,8 +248,8 @@
     <string name="ios_trial_noPayment">Heute keine Zahlung</string>
     <string name="ios_trial_price">Danach %1$s pro Jahr, also %2$s im Monat.</string>
     <string name="ios_trial_reminder_cta">Kostenlos weiter</string>
-    <string name="ios_trial_reminder_sub">An Tag %1$s warnt dich eine Mitteilung. Kündigen geht in zwei Tipps.</string>
-    <string name="ios_trial_reminder_title">Wir schicken dir eine **Erinnerung**, bevor dein Test endet.</string>
+    <string name="ios_trial_reminder_sub">Auch an Tag %1$s kannst du noch mit zwei Tipps kündigen. Vor Ende der Testphase wird nichts abgebucht.</string>
+    <string name="ios_trial_reminder_title">Deine Testphase ist **unverbindlich**.</string>
     <string name="ios_trial_title">Wir möchten, dass du Micabo **kostenlos** ausprobierst.</string>
     <string name="ios_unitWeek">Woche</string>
     <string name="ios_unitYear">Jahr</string>
@@ -513,10 +511,12 @@
     <string name="onboarding_linkSent">Öffne den Link an %1$s</string>
     <string name="onboarding_sendLink">Link schicken</string>
     <string name="x_account_deleteMsg">Kurse, Karten und Verlauf werden überall gelöscht. Ein Abo verwaltest du in Google Play.</string>
+    <string name="x_account_expired">Deine Sitzung ist abgelaufen. Melde dich wieder an, damit deine Lektionen synchron bleiben.</string>
     <string name="x_auth_rateLimited">Zu viele Versuche. Warte eine Minute und versuch es dann erneut.</string>
     <string name="x_error_generic">Etwas hat nicht geklappt. Versuch es erneut.</string>
     <string name="x_error_network">Keine Verbindung. Prüfe dein Internet und versuch es noch einmal.</string>
     <string name="x_friends_adopt">Meine Lektion daraus machen</string>
+    <string name="x_lesson_courseUnknown">Dieser Kurs ist noch nicht synchronisiert. Versuch es gleich noch einmal.</string>
     <string name="x_lesson_whoSees">Wer diese Lektion sieht</string>
     <string name="x_onb_language">In welcher Sprache lernst du?</string>
     <string name="x_onb_language_sub">Mika schreibt deine Lektionen, Quizze und Karteikarten in dieser Sprache.</string>
@@ -529,7 +529,10 @@
     <string name="x_paywall_subscribe">Pro holen</string>
     <string name="x_pro_gifted">Dieser Zugang wurde dir geschenkt: Es gibt nichts zu verwalten oder zu kündigen.</string>
     <string name="x_quoted">„%1$s“</string>
+    <string name="x_record_channel">Kursaufnahme</string>
     <string name="x_record_limit">Bis zu 90 Minuten. Mika macht aus deiner Aufnahme Text und schreibt dann deine Lektion.</string>
+    <string name="x_record_ongoing">Dein Kurs wird aufgenommen</string>
+    <string name="x_record_ongoingBody">Micabo nimmt weiter auf, auch bei gesperrtem Bildschirm.</string>
     <string name="x_reminder_channel">Tägliche Erinnerung</string>
     <string name="x_score_1">Ich tue mich schwer</string>
     <string name="x_score_2">Knapp unter dem Durchschnitt</string>

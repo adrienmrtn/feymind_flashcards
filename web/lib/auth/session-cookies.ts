@@ -32,13 +32,22 @@ export function sessionIsGone(error: { status?: number } | null): boolean {
   return typeof status === "number" && status >= 400 && status < 500;
 }
 
+/** Les noms des cookies de session que porte la requête. */
+export function sessionCookieNames(request: NextRequest): string[] {
+  return request.cookies
+    .getAll()
+    .map((cookie) => cookie.name)
+    .filter((name) => AUTH_COOKIE.test(name));
+}
+
+/** Expire ces cookies-là sur la réponse. */
+export function expireCookies(response: NextResponse, names: readonly string[]): void {
+  for (const name of names) response.cookies.set(name, "", { path: "/", maxAge: 0 });
+}
+
 /** Expire les cookies de session sur la réponse. Rend le nombre de cookies effacés. */
 export function expireSessionCookies(request: NextRequest, response: NextResponse): number {
-  let cleared = 0;
-  for (const cookie of request.cookies.getAll()) {
-    if (!AUTH_COOKIE.test(cookie.name)) continue;
-    response.cookies.set(cookie.name, "", { path: "/", maxAge: 0 });
-    cleared += 1;
-  }
-  return cleared;
+  const names = sessionCookieNames(request);
+  expireCookies(response, names);
+  return names.length;
 }

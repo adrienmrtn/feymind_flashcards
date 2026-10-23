@@ -229,7 +229,7 @@
     <string name="ios_searchCourse">Un cours, une matière…</string>
     <string name="ios_sharedCourse">Cours partagé</string>
     <string name="ios_sharedNoSheet">Ce cours n\'a pas de fiche</string>
-    <string name="ios_signOutMsg">Tes cours restent sur cet appareil et sur ton compte. Tu les retrouveras à la prochaine connexion.</string>
+    <string name="ios_signOutMsg">Tes cours restent sur ton compte et quittent cet appareil. Tu les retrouveras à la prochaine connexion.</string>
     <string name="ios_signOutQ">Se déconnecter ?</string>
     <string name="ios_startCheaper">Commencer avec %1$s %% de moins</string>
     <string name="ios_streak_bestLabel">Ton record</string>
@@ -249,8 +249,6 @@
     <string name="ios_tapToSync">Toucher pour synchroniser</string>
     <string name="ios_targetLead">Vise ce qui te ferait vraiment plaisir, pas ce qui te paraît raisonnable.</string>
     <string name="ios_targetTitle">Et tu vises\ncombien ?</string>
-    <string name="ios_trialDay2">Jour 2 : rappel avant la fin</string>
-    <string name="ios_trialDay2Detail">On te prévient par notification. Résiliable en quinze secondes.</string>
     <string name="ios_trialLast">Jour %1$s : fin de l\'essai</string>
     <string name="ios_trialLastDetail">Ton abonnement démarrera le %1$s.</string>
     <string name="ios_trialToday">Aujourd\'hui : essaie Micabo Pro</string>
@@ -258,8 +256,8 @@
     <string name="ios_trial_noPayment">Aucun paiement aujourd\'hui</string>
     <string name="ios_trial_price">Ensuite %1$s par an, soit %2$s par mois.</string>
     <string name="ios_trial_reminder_cta">Continuer gratuitement</string>
-    <string name="ios_trial_reminder_sub">Le jour %1$s, une notification te prévient. Tu annules en deux appuis si tu veux.</string>
-    <string name="ios_trial_reminder_title">On t\'enverra un **rappel** avant la fin de ton essai.</string>
+    <string name="ios_trial_reminder_sub">Même le jour %1$s, tu peux encore annuler en deux appuis. Rien n\'est prélevé avant la fin de l\'essai.</string>
+    <string name="ios_trial_reminder_title">Ton essai est **sans engagement**.</string>
     <string name="ios_trial_title">On veut que tu essaies Micabo **gratuitement**.</string>
     <string name="ios_unitWeek">semaine</string>
     <string name="ios_unitYear">an</string>
@@ -528,10 +526,12 @@
     <string name="onboarding_linkSent">Ouvre le lien envoyé à %1$s</string>
     <string name="onboarding_sendLink">Recevoir un lien</string>
     <string name="x_account_deleteMsg">Tes cours, tes cartes et ton historique seront effacés partout. L\'abonnement se gère dans Google Play.</string>
+    <string name="x_account_expired">Ta session a expiré. Reconnecte-toi pour continuer à synchroniser tes leçons.</string>
     <string name="x_auth_rateLimited">Trop d\'essais. Attends une minute, puis réessaie.</string>
     <string name="x_error_generic">Quelque chose n\'a pas marché. Réessaie.</string>
     <string name="x_error_network">Pas de connexion. Vérifie ton internet et réessaie.</string>
     <string name="x_friends_adopt">En faire ma leçon</string>
+    <string name="x_lesson_courseUnknown">Ce cours n\'est pas encore synchronisé. Réessaie dans un instant.</string>
     <string name="x_lesson_whoSees">Qui voit cette leçon</string>
     <string name="x_onb_language">Dans quelle langue tu étudies ?</string>
     <string name="x_onb_language_sub">Mika écrit tes leçons, tes quiz et tes flashcards dans cette langue.</string>
@@ -544,7 +544,10 @@
     <string name="x_paywall_subscribe">Passer à Pro</string>
     <string name="x_pro_gifted">Cet accès t\'a été offert : il n\'y a rien à gérer ni à résilier.</string>
     <string name="x_quoted">« %1$s »</string>
+    <string name="x_record_channel">Enregistrement du cours</string>
     <string name="x_record_limit">Jusqu\'à 90 minutes. Mika met ton enregistrement en texte, puis écrit ta leçon.</string>
+    <string name="x_record_ongoing">Enregistrement de ton cours</string>
+    <string name="x_record_ongoingBody">Micabo continue d\'enregistrer, même écran verrouillé.</string>
     <string name="x_reminder_channel">Rappel du jour</string>
     <string name="x_score_1">J\'ai du mal</string>
     <string name="x_score_2">Un peu en dessous de la moyenne</string>

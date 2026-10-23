@@ -1,6 +1,6 @@
 import "server-only";
 
-import { cachedRead, dataClient, profileTag, userTag } from "@/lib/data/cache";
+import { cachedRead, dataClient, profileTag, userTag, rowsOrThrow } from "@/lib/data/cache";
 import { currentAccessToken, currentUserId } from "@/lib/data/user";
 
 /**
@@ -44,11 +44,14 @@ export async function readProfile(): Promise<ProfileRow | null> {
   if (!userId || !token) return null;
 
   return cachedRead(userId, "profile", [userTag(userId), profileTag(userId)], async () => {
-    const { data } = await dataClient(token)
-      .from("profiles")
-      .select(PROFILE_COLUMNS)
-      .eq("id", userId)
-      .maybeSingle();
+    const data = rowsOrThrow(
+      await dataClient(token)
+        .from("profiles")
+        .select(PROFILE_COLUMNS)
+        .eq("id", userId)
+        .maybeSingle(),
+      "profile",
+    );
     return (data as ProfileRow | null) ?? null;
   });
 }

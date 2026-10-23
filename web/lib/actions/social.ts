@@ -11,6 +11,7 @@ import {
 } from "@micabo/core";
 
 import { revalidateUserData } from "@/lib/data/cache";
+import { isUuid } from "@/lib/data/postgrest";
 import { searchDirectory } from "@/lib/data/social";
 import type { DirectoryPerson } from "@/lib/social";
 import { actionT } from "@/lib/i18n/action";
@@ -55,7 +56,10 @@ export async function setUsername(raw: string): Promise<SocialResult> {
 
   if (error) {
     if (error.code === "23505") {
-      return { status: "error", message: `${displayUsername(parsed.value)} est déjà pris.` };
+      return {
+        status: "error",
+        message: await actionT("app.errors.usernameTaken", { username: displayUsername(parsed.value) }),
+      };
     }
     return { status: "error", message: error.message };
   }
@@ -126,6 +130,9 @@ export async function removeFriend(personId: string): Promise<SocialResult> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
+  // `personId` arrive du navigateur et finit dans la grammaire d'un `.or()` : un « identifiant »
+  // comme `x),and(requester_id.neq.0` y ajouterait ses propres conditions. Un UUID, sinon rien.
+  if (!isUuid(personId)) return { status: "error", message: await actionT("app.errors.personUnknown") };
 
   const { error } = await supabase
     .from("friendships")

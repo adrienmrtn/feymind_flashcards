@@ -21,6 +21,8 @@ import { LANDING_NAV, LANDING_SECTIONS } from "@/lib/landing-sections";
 import { indexableAlternates } from "@/lib/i18n/alternates";
 import { UI_LOCALE_META } from "@/lib/i18n/locales";
 import { localizedHref, localizedPath } from "@/lib/i18n/paths";
+import { readProfile } from "@/lib/data/profile";
+import { readPricingCountry } from "@/lib/pricing-country";
 import { getTranslator } from "@/lib/i18n/server";
 import { wantsIphoneLanding } from "@/lib/iphone";
 import { ANKI_PAGE, EXAM_PAGE, METHOD_PAGE } from "@/lib/site-pages";
@@ -90,6 +92,11 @@ export default async function LandingPage({
     return <IphoneLanding signedIn={signedIn} />;
   }
 
+  // Les prix du pays du visiteur, comme sur l'App Store : le pays du compte s'il est connecté,
+  // sinon l'adresse IP, sinon le navigateur.
+  const profile = signedIn ? await readProfile() : null;
+  const pricingCountry = await readPricingCountry(profile?.country_code);
+
   const nav = LANDING_NAV.map((item) => ({ href: item.href, label: t(item.key) }));
 
   return (
@@ -122,7 +129,7 @@ export default async function LandingPage({
 
         <section id={LANDING_SECTIONS.pricing} className="mx-auto mt-28 max-w-page scroll-mt-20 px-screen sm:mt-36">
           <SectionHeading eyebrow="landing.pricingEyebrow" title="landing.pricingTitle" note="landing.pricingNote" />
-          <Pricing signedIn={signedIn} />
+          <Pricing signedIn={signedIn} country={pricingCountry} />
         </section>
 
         <section

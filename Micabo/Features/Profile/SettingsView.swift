@@ -91,7 +91,9 @@ struct SettingsView: View {
             titleVisibility: .visible
         ) {
             Button(i18n.t("ios.deleteAccount"), role: .destructive) {
-                Task { await auth.deleteAccount() }
+                // Le compte part, et ce qu'il avait sur ce téléphone avec lui : le message
+                // promet « tes cours seront effacés ». Voir `CloudSync.leaveAccount`.
+                Task { await sync.leaveAccount(context: modelContext, deleting: true) }
             }
             Button(i18n.t("ios.cancel"), role: .cancel) {}
         } message: {
@@ -114,11 +116,10 @@ struct SettingsView: View {
         ) {
             Button(i18n.t("common.signOut"), role: .destructive) {
                 Task {
-                    // On remonte une dernière fois avant de partir : une révision faite dans
-                    // la minute qui précède ne doit pas être le prix d'une déconnexion.
-                    await sync.sync(context: modelContext)
-                    await auth.signOut()
-                    sync.forget()
+                    // Une dernière montée, puis le téléphone se vide et un invité neuf prend
+                    // la place : les cours restent sur le compte, ils ne restent plus ici à
+                    // remonter sous le compte suivant. Voir `CloudSync.leaveAccount`.
+                    await sync.leaveAccount(context: modelContext, deleting: false)
                 }
             }
             Button(i18n.t("ios.cancel"), role: .cancel) {}
@@ -1054,15 +1055,11 @@ struct SettingsView: View {
         UIApplication.shared.open(url)
     }
 
+    /// « Tout effacer », **ici et au serveur.** Chaque cours, thème et carte reçoit sa pierre
+    /// tombale avant de disparaître (`LocalWipe.eraseCourses`) : sans elles, la descente
+    /// suivante faisait tout revivre depuis le compte, et le site gardait tout.
     private func eraseEverything() {
-        try? modelContext.delete(model: ReviewLog.self)
-        try? modelContext.delete(model: Flashcard.self)
-        try? modelContext.delete(model: Course.self)
-        try? modelContext.save()
-        // La suppression en masse ne passe pas par `CourseRepository` : sans ce signal, les
-        // écrans qui ne tiennent plus la table des cours resteraient sur leurs anciens
-        // totaux derrière la feuille qui se referme.
-        CourseLedger.noteChange()
+        try? LocalWipe.eraseCourses(in: modelContext)
         dismiss()
     }
 }

@@ -10,6 +10,7 @@ import {
   FUNNEL_EVENTS,
   stepEvent,
   trackCheckoutStart,
+  trackOnboardingAnswer,
   trackOnboardingStep,
   trackPaywallView,
 } from "./funnel";
@@ -17,13 +18,15 @@ import {
 describe("stepEvent", () => {
   it("numbers every screen of the tunnel, first to last", () => {
     const first = stepEvent("/commencer/bienvenue");
-    const last = stepEvent("/commencer/compte");
+    const last = stepEvent("/commencer/offre");
     expect(first).toEqual({ step: "bienvenue", index: 1, of: STEPS.length });
+    // L'offre a maintenant son adresse, juste après le compte : elle est la dernière marche.
     expect(last).toEqual({
-      step: "compte",
+      step: "offre",
       index: STEPS.length,
       of: STEPS.length,
     });
+    expect(stepEvent("/commencer/compte")?.index).toBe(STEPS.length - 1);
   });
 
   it("keeps the order of the tunnel, so the funnel reads top to bottom", () => {
@@ -34,34 +37,42 @@ describe("stepEvent", () => {
   it("ignores addresses outside the tunnel", () => {
     expect(stepEvent("/app")).toBeNull();
     expect(stepEvent("/commencer")).toBeNull();
-    expect(stepEvent("/commencer/offre")).toBeNull();
+    expect(stepEvent("/commencer/repos")).toBeNull();
   });
 });
 
 describe("track helpers", () => {
   it("sends the step with its number, and nothing outside the tunnel", () => {
     vi.mocked(track).mockClear();
-    trackOnboardingStep("/commencer/repos");
+    trackOnboardingStep("/commencer/rythme");
     expect(track).toHaveBeenCalledWith(FUNNEL_EVENTS.step, {
-      step: "repos",
-      index: 12,
+      step: "rythme",
+      index: 8,
       of: STEPS.length,
     });
     trackOnboardingStep("/app");
     expect(track).toHaveBeenCalledTimes(1);
   });
 
+  it("sends a closed answer as an identifier, never typed text", () => {
+    vi.mocked(track).mockClear();
+    trackOnboardingAnswer("country", "fr");
+    trackOnboardingAnswer("dailyMinutes", 15);
+    expect(track).toHaveBeenNthCalledWith(1, FUNNEL_EVENTS.answer, { field: "country", value: "fr" });
+    expect(track).toHaveBeenNthCalledWith(2, FUNNEL_EVENTS.answer, { field: "dailyMinutes", value: 15 });
+  });
+
   it("names the door the paywall opened from, and the plan chosen", () => {
     vi.mocked(track).mockClear();
     trackPaywallView("session");
-    trackCheckoutStart("yearly", "home");
+    trackCheckoutStart("yearly", "onboarding");
     expect(track).toHaveBeenNthCalledWith(1, FUNNEL_EVENTS.paywall, {
       surface: "session",
       stage: "plans",
     });
     expect(track).toHaveBeenNthCalledWith(2, FUNNEL_EVENTS.checkout, {
       plan: "yearly",
-      surface: "home",
+      surface: "onboarding",
     });
   });
 });

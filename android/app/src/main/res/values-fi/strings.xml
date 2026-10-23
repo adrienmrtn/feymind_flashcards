@@ -220,7 +220,7 @@
     <string name="ios_searchCourse">Kurssi, oppiaine…</string>
     <string name="ios_sharedCourse">Jaettu kurssi</string>
     <string name="ios_sharedNoSheet">Tällä kurssilla ei ole tiivistelmää</string>
-    <string name="ios_signOutMsg">Kurssisi säilyvät laitteella ja tililläsi. Löydät ne, kun kirjaudut seuraavan kerran.</string>
+    <string name="ios_signOutMsg">Kurssisi pysyvät tililläsi ja poistuvat tältä laitteelta. Löydät ne, kun kirjaudut seuraavan kerran.</string>
     <string name="ios_signOutQ">Kirjaudutaanko ulos?</string>
     <string name="ios_startCheaper">Aloita %1$s %% alennuksella</string>
     <string name="ios_streak_bestLabel">Paras putkesi</string>
@@ -240,8 +240,6 @@
     <string name="ios_tapToSync">Synkronoi napauttamalla</string>
     <string name="ios_targetLead">Tähtää siihen, mikä oikeasti ilahduttaisi sinua, älä siihen, mikä kuulostaa järkevältä.</string>
     <string name="ios_targetTitle">Ja mihin\ntähtäät?</string>
-    <string name="ios_trialDay2">Päivä 2: muistutus ennen loppua</string>
-    <string name="ios_trialDay2Detail">Ilmoitamme sinulle etukäteen. Peruminen vie viisitoista sekuntia.</string>
     <string name="ios_trialLast">Päivä %1$s: kokeilu päättyy</string>
     <string name="ios_trialLastDetail">Tilauksesi alkaa %1$s.</string>
     <string name="ios_trialToday">Tänään: kokeile Micabo Prota</string>
@@ -249,8 +247,8 @@
     <string name="ios_trial_noPayment">Ei maksua nyt</string>
     <string name="ios_trial_price">Sen jälkeen %1$s vuodessa, eli %2$s kuukaudessa.</string>
     <string name="ios_trial_reminder_cta">Jatka ilmaiseksi</string>
-    <string name="ios_trial_reminder_sub">Päivänä %1$s saat ilmoituksen. Voit perua kahdella napautuksella.</string>
-    <string name="ios_trial_reminder_title">Lähetämme sinulle **muistutuksen** ennen kuin kokeilusi päättyy.</string>
+    <string name="ios_trial_reminder_sub">Vielä päivänä %1$s voit perua kahdella napautuksella. Mitään ei veloiteta ennen kokeilun loppua.</string>
+    <string name="ios_trial_reminder_title">Kokeilusi on **täysin sitoumukseton**.</string>
     <string name="ios_trial_title">Haluamme, että kokeilet Micaboa **ilmaiseksi**.</string>
     <string name="ios_unitWeek">viikko</string>
     <string name="ios_unitYear">vuosi</string>
@@ -513,10 +511,12 @@
     <string name="onboarding_linkSent">Avaa osoitteeseen %1$s lähetetty linkki</string>
     <string name="onboarding_sendLink">Lähetä linkki</string>
     <string name="x_account_deleteMsg">Kurssisi, korttisi ja historiasi poistetaan kaikkialta. Tilausta hallitaan Google Playssa.</string>
+    <string name="x_account_expired">Istuntosi on vanhentunut. Kirjaudu uudelleen, niin oppituntisi pysyvät synkronoituina.</string>
     <string name="x_auth_rateLimited">Liian monta yritystä. Odota minuutti ja yritä uudelleen.</string>
     <string name="x_error_generic">Jokin meni pieleen. Yritä uudelleen.</string>
     <string name="x_error_network">Ei yhteyttä. Tarkista nettiyhteys ja yritä uudelleen.</string>
     <string name="x_friends_adopt">Tee siitä oma oppituntini</string>
+    <string name="x_lesson_courseUnknown">Kurssia ei ole vielä synkronoitu. Yritä hetken päästä uudelleen.</string>
     <string name="x_lesson_whoSees">Kuka näkee tämän oppitunnin</string>
     <string name="x_onb_language">Millä kielellä opiskelet?</string>
     <string name="x_onb_language_sub">Mika kirjoittaa oppituntisi, visasi ja korttisi tällä kielellä.</string>
@@ -529,7 +529,10 @@
     <string name="x_paywall_subscribe">Hanki Pro</string>
     <string name="x_pro_gifted">Sait tämän käyttöoikeuden lahjaksi: hallittavaa tai peruttavaa ei ole.</string>
     <string name="x_quoted">”%1$s”</string>
+    <string name="x_record_channel">Tunnin äänitys</string>
     <string name="x_record_limit">Enintään 90 minuuttia. Mika muuttaa nauhoituksesi tekstiksi ja kirjoittaa sitten oppituntisi.</string>
+    <string name="x_record_ongoing">Tuntiasi äänitetään</string>
+    <string name="x_record_ongoingBody">Micabo jatkaa äänitystä, vaikka näyttö on lukittu.</string>
     <string name="x_score_1">Minulla on vaikeaa</string>
     <string name="x_score_2">Vähän keskiarvon alapuolella</string>
     <string name="x_score_3">Keskitasoa</string>

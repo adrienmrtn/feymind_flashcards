@@ -225,7 +225,7 @@
     <string name="ios_searchCourse">Ένα μάθημα, ένα αντικείμενο…</string>
     <string name="ios_sharedCourse">Κοινόχρηστο μάθημα</string>
     <string name="ios_sharedNoSheet">Αυτό το μάθημα δεν έχει σύνοψη</string>
-    <string name="ios_signOutMsg">Τα μαθήματά σου μένουν σε αυτή τη συσκευή και στον λογαριασμό σου. Θα τα βρεις ξανά την επόμενη φορά που θα συνδεθείς.</string>
+    <string name="ios_signOutMsg">Τα μαθήματά σου μένουν στον λογαριασμό σου και φεύγουν από αυτή τη συσκευή. Θα τα βρεις στην επόμενη σύνδεση.</string>
     <string name="ios_signOutQ">Αποσύνδεση;</string>
     <string name="ios_startCheaper">Ξεκίνα με %1$s%% έκπτωση</string>
     <string name="ios_streak_bestLabel">Το ρεκόρ σου</string>
@@ -245,8 +245,6 @@
     <string name="ios_tapToSync">Πάτα για συγχρονισμό</string>
     <string name="ios_targetLead">Στόχευσε σε ό,τι θα σε χαροποιούσε πραγματικά, όχι σε ό,τι ακούγεται λογικό.</string>
     <string name="ios_targetTitle">Και τι\nστοχεύεις;</string>
-    <string name="ios_trialDay2">Μέρα 2: υπενθύμιση πριν τη λήξη</string>
-    <string name="ios_trialDay2Detail">Θα σε ειδοποιήσουμε. Ακύρωση σε δεκαπέντε δευτερόλεπτα.</string>
     <string name="ios_trialLast">Μέρα %1$s: τέλος δοκιμής</string>
     <string name="ios_trialLastDetail">Η συνδρομή σου θα ξεκινήσει στις %1$s.</string>
     <string name="ios_trialToday">Σήμερα: δοκίμασε το Micabo Pro</string>
@@ -254,8 +252,8 @@
     <string name="ios_trial_noPayment">Καμία πληρωμή τώρα</string>
     <string name="ios_trial_price">Μετά %1$s τον χρόνο, δηλαδή %2$s τον μήνα.</string>
     <string name="ios_trial_reminder_cta">Συνέχισε δωρεάν</string>
-    <string name="ios_trial_reminder_sub">Τη μέρα %1$s θα λάβεις ειδοποίηση. Αν θες, ακυρώνεις με δύο πατήματα.</string>
-    <string name="ios_trial_reminder_title">Θα σου στείλουμε **υπενθύμιση** πριν λήξει η δοκιμή σου.</string>
+    <string name="ios_trial_reminder_sub">Ακόμα και τη μέρα %1$s μπορείς να ακυρώσεις με δύο πατήματα. Τίποτα δεν χρεώνεται πριν λήξει η δοκιμή.</string>
+    <string name="ios_trial_reminder_title">Η δοκιμή σου είναι **χωρίς δέσμευση**.</string>
     <string name="ios_trial_title">Θέλουμε να δοκιμάσεις το Micabo **δωρεάν**.</string>
     <string name="ios_unitWeek">εβδομάδα</string>
     <string name="ios_unitYear">έτος</string>
@@ -521,10 +519,12 @@
     <string name="onboarding_linkSent">Άνοιξε τον σύνδεσμο που στάλθηκε στο %1$s</string>
     <string name="onboarding_sendLink">Λήψη συνδέσμου</string>
     <string name="x_account_deleteMsg">Τα μαθήματα, οι κάρτες και το ιστορικό σου θα διαγραφούν παντού. Τη συνδρομή τη διαχειρίζεσαι στο Google Play.</string>
+    <string name="x_account_expired">Η σύνδεσή σου έληξε. Συνδέσου ξανά για να συνεχίσουν να συγχρονίζονται τα μαθήματά σου.</string>
     <string name="x_auth_rateLimited">Πάρα πολλές προσπάθειες. Περίμενε ένα λεπτό και δοκίμασε ξανά.</string>
     <string name="x_error_generic">Κάτι πήγε στραβά. Δοκίμασε ξανά.</string>
     <string name="x_error_network">Δεν υπάρχει σύνδεση. Έλεγξε το ίντερνετ και δοκίμασε ξανά.</string>
     <string name="x_friends_adopt">Κάν’ το δικό μου μάθημα</string>
+    <string name="x_lesson_courseUnknown">Αυτό το μάθημα δεν έχει συγχρονιστεί ακόμα. Δοκίμασε ξανά σε λίγο.</string>
     <string name="x_lesson_whoSees">Ποιος βλέπει αυτό το μάθημα</string>
     <string name="x_onb_language">Σε ποια γλώσσα διαβάζεις;</string>
     <string name="x_onb_language_sub">Ο Mika γράφει τα μαθήματα, τα κουίζ και τις κάρτες σου σε αυτή τη γλώσσα.</string>
@@ -537,7 +537,10 @@
     <string name="x_paywall_subscribe">Πάρε το Pro</string>
     <string name="x_pro_gifted">Αυτή η πρόσβαση σου δόθηκε δώρο: δεν υπάρχει τίποτα για διαχείριση ή ακύρωση.</string>
     <string name="x_quoted">«%1$s»</string>
+    <string name="x_record_channel">Ηχογράφηση μαθήματος</string>
     <string name="x_record_limit">Έως 90 λεπτά. Ο Mika μετατρέπει την ηχογράφησή σου σε κείμενο και μετά γράφει το μάθημά σου.</string>
+    <string name="x_record_ongoing">Ηχογραφείται το μάθημά σου</string>
+    <string name="x_record_ongoingBody">Το Micabo συνεχίζει την ηχογράφηση, ακόμα και με κλειδωμένη οθόνη.</string>
     <string name="x_score_1">Δυσκολεύομαι</string>
     <string name="x_score_2">Λίγο κάτω από τον μέσο όρο</string>
     <string name="x_score_3">Στον μέσο όρο</string>

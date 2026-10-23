@@ -48,8 +48,11 @@ final class AuthController {
     /// **Ce n'est pas un compte au sens de l'app** : `isSignedIn` reste faux, les réglages
     /// proposent toujours de se connecter. Mais ses leçons se synchronisent sous lui depuis le
     /// 23 octobre 2026 (`CloudSync.syncUserID`) : une réinstallation ne les perd plus. Une
-    /// connexion Apple ou Google ouvre le vrai compte à côté ; tout ce qui est local y monte à
-    /// la première synchro, le repère repartant de zéro pour ce nouveau compte.
+    /// connexion Apple ou Google ouvre le vrai compte à côté. Ses lignes au serveur ne peuvent
+    /// pas y monter telles quelles - elles sont à l'invité, et le cloisonnement refuse de les
+    /// réécrire sous un autre - : la connexion prend d'abord un jeton avec la session de
+    /// l'invité (`adoptAccount`), et la synchro qui suit le présente sous le compte
+    /// (`claim_guest`, voir `GuestClaimStore`).
     private(set) var guestUserID: UUID?
     @ObservationIgnored private var guestSession: AuthSession?
     @ObservationIgnored private var guestCreation: Task<AuthSession?, Never>?
@@ -142,6 +145,14 @@ final class AuthController {
         if session != nil, let token = await validAccessToken() {
             return token
         }
+        return await guestAccessToken()
+    }
+
+    /// **Un 401 d'une fonction** (`SupabaseFunctions.recoverIdentity`) : le jeton du compte,
+    /// rafraîchi au besoin, sinon celui de l'invité - ouvert maintenant si sa création avait
+    /// échoué. `nil` quand rien ne s'ouvre (hors ligne, connexion anonyme fermée).
+    func recoverFunctionsIdentity() async -> String? {
+        if session != nil { return await validAccessToken() }
         return await guestAccessToken()
     }
 
@@ -308,7 +319,7 @@ final class AuthController {
                 if session.user.displayName?.nilIfBlank == nil, let name = credential.fullName {
                     session.user.displayName = name
                 }
-                self.adopt(session)
+                await self.adoptAccount(session)
             }
         }
     }
@@ -317,7 +328,8 @@ final class AuthController {
         Analytics.track(.signInStarted, ["provider": "google"])
         await perform {
             let result = try await OAuthWebFlow().authorize(provider: "google")
-            self.adopt(try await self.client.exchange(code: result.code, verifier: result.verifier))
+            let session = try await self.client.exchange(code: result.code, verifier: result.verifier)
+            await self.adoptAccount(session)
         }
     }
 
@@ -372,10 +384,11 @@ final class AuthController {
     /// une phrase d'erreur qu'une app qui se croit connectée sans pouvoir rien lire.
     private func openReviewSession() async {
         await perform {
-            self.adopt(try await self.client.signInWithPassword(
+            let session = try await self.client.signInWithPassword(
                 email: AppStoreReview.email,
                 password: AppStoreReview.password
-            ))
+            )
+            await self.adoptAccount(session)
         }
     }
 
@@ -399,7 +412,8 @@ final class AuthController {
 
         if let refresh = value("refresh_token") {
             await perform {
-                self.adopt(try await self.client.refresh(refreshToken: refresh))
+                let session = try await self.client.refresh(refreshToken: refresh)
+                await self.adoptAccount(session)
             }
             return
         }
@@ -407,14 +421,16 @@ final class AuthController {
         if let tokenHash = value("token_hash") {
             let type = value("type") ?? "magiclink"
             await perform {
-                self.adopt(try await self.client.verify(tokenHash: tokenHash, type: type))
+                let session = try await self.client.verify(tokenHash: tokenHash, type: type)
+                await self.adoptAccount(session)
             }
             return
         }
 
         if let code = value("code"), let verifier = pendingVerifier {
             await perform {
-                self.adopt(try await self.client.exchange(code: code, verifier: verifier))
+                let session = try await self.client.exchange(code: code, verifier: verifier)
+                await self.adoptAccount(session)
                 self.pendingVerifier = nil
             }
         }
@@ -447,20 +463,34 @@ final class AuthController {
         forget()
     }
 
-    /// Efface le compte Auth. Le reste suit par cascade côté serveur.
-    func deleteAccount() async {
-        guard await validAccessToken() != nil else { return }
+    /// Efface le compte Auth. Le reste suit par cascade côté serveur. Rend vrai quand le
+    /// compte est bien parti : c'est seulement alors que le téléphone se vide.
+    @discardableResult
+    func deleteAccount() async -> Bool {
+        guard await validAccessToken() != nil else { return false }
         let database = SupabaseDatabase(accessToken: { await self.validAccessToken() })
         do {
             try await database.rpc("delete_own_account")
         } catch {
             message = .error(L10n.t("app.settings.delete.error", locale: .resolved()))
-            return
+            return false
         }
         // Pas de `logout` : l'utilisateur vient d'être supprimé, et GoTrue répond alors
         // `user_not_found`. Ça se lisait dans les journaux comme un incident
         // d'authentification, alors que c'était la suppression qui avait réussi.
         forget()
+        return true
+    }
+
+    /// **Un invité neuf, après la sortie d'un compte.** L'ancien invité a déjà cédé ses
+    /// lignes au compte (`claim_guest`) ou n'a plus rien à lui : le garder ferait remonter
+    /// sous lui ce que le téléphone aura de nouveau, mélangé à ce qu'il avait. Un jeton de
+    /// réclamation en attente part avec lui : il désignait l'ancien.
+    func startFreshGuest() async {
+        dropGuest()
+        GuestClaimStore.clear()
+        guard AppConfig.isConfigured else { return }
+        _ = await guestAccessToken()
     }
 
     func clearMessage() {
@@ -468,6 +498,69 @@ final class AuthController {
     }
 
     // MARK: - Rouages
+
+    /// **Passer de l'invité au compte.** Toutes les connexions passent par ici (Apple, Google,
+    /// lien par courriel, compte de relecture) ; le rafraîchissement d'une session déjà
+    /// ouverte, non.
+    ///
+    /// Avant d'adopter le compte, on prend le jeton de réclamation **avec la session de
+    /// l'invité**, si l'invité a monté des lignes. Huit secondes au plus : la connexion ne doit
+    /// pas attendre une réponse lente, et si le jeton manque, la synchro le redemandera
+    /// elle-même tant que la session de l'invité est là (`CloudSync.settleGuestClaim`).
+    private func adoptAccount(_ session: AuthSession) async {
+        if let guestID = guestUserID, guestID != session.user.id, GuestClaimStore.guestHasRows(guestID),
+           GuestClaimStore.validToken(for: guestID) == nil {
+            await withTaskGroup(of: Void.self) { group in
+                group.addTask { _ = await self.createGuestClaim(for: guestID) }
+                group.addTask { try? await Task.sleep(for: .seconds(8)) }
+                _ = await group.next()
+                group.cancelAll()
+            }
+        }
+        adopt(session)
+    }
+
+    /// **Demande un jeton de réclamation sous la session de l'invité** et le garde. `nil`
+    /// quand l'invité n'a plus de session (GoTrue l'a oublié) ou que le serveur ne répond pas.
+    ///
+    /// La session de l'invité est rafraîchie au besoin, mais jamais recréée : un invité neuf
+    /// n'aurait aucune ligne, et son jeton ne réclamerait rien.
+    func createGuestClaim(for guestID: UUID) async -> UUID? {
+        guard AppConfig.isConfigured, guestUserID == guestID, guestSession != nil else { return nil }
+        let database = SupabaseDatabase(accessToken: { await self.existingGuestAccessToken() })
+        guard let data = try? await database.rpcData("create_guest_claim"),
+              let token = GuestClaimStore.parseToken(data),
+              guestUserID == guestID
+        else { return nil }
+        GuestClaimStore.save(token: token, guestID: guestID)
+        return token
+    }
+
+    /// Vrai tant que cet appareil tient la session de cet invité : sans elle, plus personne ne
+    /// peut signer de jeton pour ses lignes.
+    func holdsGuestSession(_ guestID: UUID) -> Bool {
+        guestUserID == guestID && guestSession != nil
+    }
+
+    /// Le jeton de l'invité existant, rafraîchi au besoin. Contrairement à `guestAccessToken`,
+    /// n'ouvre jamais de nouvel invité.
+    private func existingGuestAccessToken() async -> String? {
+        guard let guest = guestSession else { return nil }
+        guard guest.isExpired else { return guest.accessToken }
+        do {
+            let renewed = try await client.refresh(refreshToken: guest.refreshToken)
+            keepGuest(renewed)
+            return renewed.accessToken
+        } catch AuthError.sessionExpired {
+            // GoTrue a oublié l'invité : plus personne ne signera de jeton pour ses lignes.
+            // L'oublier ici laisse la synchro renoncer à la réclamation au lieu de la retenter
+            // pour toujours (`CloudSync.settleGuestClaim`).
+            dropGuest()
+            return nil
+        } catch {
+            return nil
+        }
+    }
 
     private func adopt(_ session: AuthSession) {
         deferredAppleError?.cancel()

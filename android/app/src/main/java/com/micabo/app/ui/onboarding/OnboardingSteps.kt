@@ -662,11 +662,15 @@ fun TrialOffer(onNext: () -> Unit) {
 }
 
 /**
- * **Le rappel** : aujourd'hui tout s'ouvre, la veille de la fin une notification prévient, le
- * dernier jour l'abonnement commence. La permission des notifications se demande ici.
+ * **L'essai, jour par jour** : aujourd'hui tout s'ouvre, le dernier jour l'abonnement commence.
+ * Aucun rappel de fin d'essai n'est envoyé (décision du fondateur) : les textes viennent des
+ * catalogues de l'iPhone, reformulés sans cette promesse. La permission des notifications se
+ * demande encore ici (pour le rappel du jour), et sinon à la première visite de l'accueil :
+ * cette étape est sautée quand l'offre n'a pas d'essai.
  */
 @Composable
 fun TrialReminderStep(days: Int, onNext: () -> Unit) {
+    val app = LocalApp.current
     val colors = Micabo.colors
     val end = remember(days) { System.currentTimeMillis() + days * 86_400_000L }
     val date = remember(end) { DateFormat.getDateInstance(DateFormat.LONG).format(Date(end)) }
@@ -674,7 +678,12 @@ fun TrialReminderStep(days: Int, onNext: () -> Unit) {
     StepScaffold(
         stringResource(R.string.ios_trial_reminder_cta),
         onNext = {
-            if (Build.VERSION.SDK_INT >= 33) permission.launch(Manifest.permission.POST_NOTIFICATIONS) else onNext()
+            if (Build.VERSION.SDK_INT >= 33) {
+                app.prefs.notificationsAsked = true
+                permission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                onNext()
+            }
         },
     ) {
         Spacer(Modifier.height(16.dp))
@@ -702,7 +711,7 @@ fun TrialReminderStep(days: Int, onNext: () -> Unit) {
         )
         Spacer(Modifier.height(24.dp))
         Timeline("couronne", stringResource(R.string.ios_trialToday), stringResource(R.string.ios_trialTodayDetail), colors.accent, last = false)
-        Timeline("reveil", stringResource(R.string.ios_trialDay2), stringResource(R.string.ios_trialDay2Detail), colors.caution, last = false)
+        // Plus d'étape « Jour 2 : rappel avant la fin » : aucun rappel de fin d'essai ne part.
         Timeline("etoile", stringResource(R.string.ios_trialLast, days.toString()), stringResource(R.string.ios_trialLastDetail, date), colors.correct, last = true)
     }
 }

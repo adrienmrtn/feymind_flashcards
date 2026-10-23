@@ -331,6 +331,14 @@ enum LessonServiceError: LocalizedError, Equatable {
     /// Le plafond Pro du jour est atteint.
     case dailyLimit
     case forbidden
+    /// **Le serveur ne connaît pas encore ce cours** (409 `course_unknown`) : une conversion
+    /// d'un cours que la synchro n'a pas encore monté. Ce n'est pas un refus : on synchronise,
+    /// puis on redemande (`LessonBuilder.convert`).
+    case courseUnknown
+    /// **Pas de compte derrière l'appel** (401) : le compte invité n'a pas pu s'ouvrir, et la
+    /// clé publiable ne paye pas une conversion. `SupabaseFunctions` a déjà retenté avec un
+    /// invité neuf ; ce qui arrive ici est un 401 qui a résisté.
+    case accountRequired
     case notConfigured
     /// Une panne, avec sa phrase pour l'écran et, quand on la connaît, sa cause pour les
     /// statistiques : `provider`, `invalid_json`, `invalid_content`, `timeout`, `network`.
@@ -343,6 +351,8 @@ enum LessonServiceError: LocalizedError, Equatable {
         case .proRequired: L10n.t("lesson.error.proRequired", locale: .resolved())
         case .dailyLimit: L10n.t("lesson.error.dailyLimit", locale: .resolved())
         case .forbidden: L10n.t("lesson.error.forbidden", locale: .resolved())
+        case .courseUnknown: L10n.t("lesson.error.generic", locale: .resolved())
+        case .accountRequired: L10n.t("app.errors.signIn", locale: .resolved())
         case .notConfigured: L10n.t("ios.cloud.notConfigured", locale: .resolved())
         case .failed(let message, _): message
         }
@@ -366,6 +376,8 @@ enum LessonServiceError: LocalizedError, Equatable {
         case .proRequired: "pro_required"
         case .dailyLimit: "daily_limit"
         case .forbidden: "forbidden"
+        case .courseUnknown: "course_unknown"
+        case .accountRequired: "account_required"
         case .notConfigured: "not_configured"
         case .failed(_, let reason): reason ?? "failed"
         }
@@ -381,10 +393,21 @@ enum LessonServiceError: LocalizedError, Equatable {
             case "pro_required": return .proRequired
             case "daily_limit": return .dailyLimit
             case "forbidden": return .forbidden
+            case "course_unknown": return .courseUnknown
             default:
                 // Le plafond du jour (`consume_ai_quota`) arrive en 429 sans code : sans ce
                 // cas, il se lisait « la leçon n'a pas pu s'écrire, réessaie ».
                 if status == 429 { return .dailyLimit }
+                // Une 409 sans code est le même « cours inconnu », dit par une version du
+                // serveur qui ne le nommait pas.
+                if status == 409 { return .courseUnknown }
+                if status == 401 { return .accountRequired }
+                // **La porte ne répond pas** (503) : la base du serveur est muette. C'est une
+                // panne qu'on peut retenter, pas un refus - la phrase est celle d'une panne,
+                // et `isWorthRetrying` la refait une fois en silence.
+                if status == 503 {
+                    return .failed(L10n.t("lesson.error.generic", locale: .resolved()), reason: "unavailable")
+                }
                 return .failed(
                     ServerMessage.localized(message, fallback: "lesson.error.generic"),
                     reason: reason ?? "server_\(status)"

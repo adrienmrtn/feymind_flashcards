@@ -83,6 +83,43 @@ internal fun http(
 private fun post(url: String, body: String, bearer: String, timeoutMs: Int): HttpResult =
     http("POST", url, body, bearer, timeoutMs)
 
+/**
+ * **Un POST écrit au fil de l'eau** : le corps (`contentLength` octets exactement) est écrit
+ * directement sur la connexion par `write`, en mode de longueur fixe. Sans ce mode,
+ * `HttpURLConnection` garde tout le corps en mémoire avant de l'envoyer : un enregistrement
+ * d'une heure et demie (16 Mo, 22 Mo en base64, et autant pour la chaîne JSON) faisait manquer
+ * de mémoire les petits téléphones.
+ */
+internal fun httpStream(
+    url: String,
+    bearer: String,
+    timeoutMs: Int,
+    contentLength: Long,
+    write: (java.io.OutputStream) -> Unit,
+): HttpResult {
+    val connection = (URL(url).openConnection() as HttpURLConnection).apply {
+        requestMethod = "POST"
+        connectTimeout = 20_000
+        readTimeout = timeoutMs
+        doOutput = true
+        setFixedLengthStreamingMode(contentLength)
+        setRequestProperty("Content-Type", "application/json")
+        setRequestProperty("Accept", "application/json")
+        setRequestProperty("apikey", SupabaseConfig.ANON_KEY)
+        setRequestProperty("Authorization", "Bearer $bearer")
+        setRequestProperty("X-Client-Info", "micabo-android")
+    }
+    try {
+        connection.outputStream.buffered(64 * 1024).use { output -> write(output) }
+        val status = connection.responseCode
+        val stream = if (status in 200..299) connection.inputStream else connection.errorStream
+        val text = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
+        return HttpResult(status, text)
+    } finally {
+        connection.disconnect()
+    }
+}
+
 /** Le compte de l'élève, quand il s'est connecté : son adresse et son nom, pour le profil. */
 data class Account(val userId: String, val email: String, val name: String)
 
@@ -108,12 +145,33 @@ class SupabaseAuth(private val prefs: Prefs) {
 
     val guestId: String get() = prefs.userId
 
+    private val _lostAccount = MutableStateFlow(prefs.lostAccount)
+    /**
+     * Le compte dont GoTrue a refusé la session (vide sinon) : le profil invite à se reconnecter,
+     * et la synchronisation attend plutôt que de pousser ses leçons sous l'invité.
+     */
+    val lostAccount: StateFlow<String> = _lostAccount.asStateFlow()
+
+    /**
+     * Appelé avec l'identifiant du compte quand sa session est perdue : ce qui attendait de
+     * monter pour lui est mis de côté (`Prefs.park`), au lieu de partir sous l'invité.
+     */
+    var onAccountLost: (String) -> Unit = {}
+
     private fun readAccount(): Account? = prefs.accountUser.takeIf { it.isNotEmpty() && prefs.accountRefresh.isNotEmpty() }
         ?.let { Account(it, prefs.accountEmail, prefs.accountName) }
 
     /** À relire après « Tout effacer ». */
     fun reload() {
         _account.value = readAccount()
+        _lostAccount.value = prefs.lostAccount
+    }
+
+    /** L'élève a refait sa vie sans ce compte (ou s'est reconnecté) : on n'attend plus. */
+    fun clearLostAccount() {
+        prefs.lostAccount = ""
+        prefs.lostAccountAt = 0
+        _lostAccount.value = ""
     }
 
     suspend fun accessToken(forceRefresh: Boolean = false): String = mutex.withLock {
@@ -139,11 +197,41 @@ class SupabaseAuth(private val prefs: Prefs) {
         if (error is NetworkException) throw error
         if (error is ApiException && (error.status >= 500 || error.status == 429)) throw error
         // Une session que GoTrue ne connaît plus : le compte se déconnecte, l'invité reprend.
+        // Plus en silence : le compte est retenu (`lostAccount`), ses suppressions et ses notes
+        // en attente sont mises de côté pour sa reconnexion, et la synchronisation attend au lieu
+        // de pousser sous l'invité des leçons qui appartiennent au compte (refusées par RLS, ou
+        // recopiées en double).
+        val lost = prefs.accountUser.lowercase()
         forgetAccount()
+        if (lost.isNotEmpty()) {
+            prefs.lostAccount = lost
+            prefs.lostAccountAt = System.currentTimeMillis()
+            _lostAccount.value = lost
+            runCatching { onAccountLost(lost) }
+        }
         return null
     }
 
-    private fun guestToken(forceRefresh: Boolean): String {
+    /**
+     * **La session de l'invité seule**, même quand un compte est connecté : c'est elle qui
+     * demande le jeton de transfert (`create_guest_claim`, réservé aux comptes anonymes). Jamais
+     * de nouvel invité ici : un invité neuf n'aurait rien à transférer. `null` sans session
+     * invitée utilisable ; une panne réseau remonte, pour réessayer.
+     */
+    suspend fun guestSessionToken(): String? = mutex.withLock {
+        withContext(Dispatchers.IO) {
+            if (prefs.userId.isEmpty() || (prefs.accessToken.isEmpty() && prefs.refreshToken.isEmpty())) return@withContext null
+            try {
+                guestToken(forceRefresh = false, allowSignup = false)
+            } catch (error: NetworkException) {
+                throw error
+            } catch (error: Exception) {
+                null
+            }
+        }
+    }
+
+    private fun guestToken(forceRefresh: Boolean, allowSignup: Boolean = true): String {
         val now = System.currentTimeMillis()
         val access = prefs.accessToken
         if (!forceRefresh && access.isNotEmpty() && prefs.expiresAt - 60_000 > now) return access
@@ -159,8 +247,12 @@ class SupabaseAuth(private val prefs: Prefs) {
             // compte invité, et avec lui l'abonnement et la leçon offerte.
             if (error is NetworkException) throw error
             if (error is ApiException && (error.status >= 500 || error.status == 429)) throw error
+            if (!allowSignup) throw ApiException(401, "guest_gone", "")
             prefs.clearSession()
         }
+        if (!allowSignup) throw ApiException(401, "guest_gone", "")
+        // Une inscription sans adresse ni téléphone : GoTrue ouvre un compte **anonyme**
+        // (`is_anonymous`), le même que `signInAnonymously` de supabase-js.
         return keepGuest(request("signup", buildJsonObject { put("data", JsonObject(emptyMap())) }))
     }
 
@@ -183,6 +275,8 @@ class SupabaseAuth(private val prefs: Prefs) {
         payload.str("refresh_token").takeIf { it.isNotEmpty() }?.let { prefs.accountRefresh = it }
         prefs.accountExpiresAt = System.currentTimeMillis() + expiresIn(payload) * 1000
         prefs.accountUser = id
+        // Un compte reconnecté (le même ou un autre) : la synchronisation n'attend plus.
+        if (prefs.lostAccount.isNotEmpty()) clearLostAccount()
         if (user != null) {
             user.str("email").takeIf { it.isNotEmpty() }?.let { prefs.accountEmail = it }
             val metadata = user["user_metadata"] as? JsonObject
@@ -287,10 +381,14 @@ class SupabaseAuth(private val prefs: Prefs) {
         mutex.withLock { forgetAccount() }
     }
 
-    /** Supprimer son compte (`delete_own_account`) : tout part en cascade côté serveur. */
+    /**
+     * Supprimer son compte (`delete_own_account`) : tout part en cascade côté serveur. Lève une
+     * erreur quand le compte n'est pas parti - y compris une session perdue en route : le
+     * téléphone ne se vide qu'après une suppression réussie (`CloudSync.leaveAccount`).
+     */
     suspend fun deleteAccount() = withContext(Dispatchers.IO) {
         val token = accessToken()
-        if (_account.value == null) return@withContext
+        if (_account.value == null) throw AuthException("invalid", "No account session")
         val result = try {
             http("POST", "${SupabaseConfig.URL}/rest/v1/rpc/delete_own_account", "{}", token)
         } catch (error: IOException) {
@@ -298,6 +396,17 @@ class SupabaseAuth(private val prefs: Prefs) {
         }
         if (result.status !in 200..299) throw ApiException(result.status, "delete", result.body.take(200))
         mutex.withLock { forgetAccount() }
+    }
+
+    /**
+     * **Un invité neuf** (`AuthController.startFreshGuest`), à la sortie d'un compte : l'ancien a
+     * cédé ses lignes au compte (`claim_guest`), et un invité neuf n'a rien à transférer. Son
+     * jeton de transfert s'oublie aussi. Sans réseau, l'invité s'ouvrira au premier appel.
+     */
+    suspend fun startFreshGuest() {
+        mutex.withLock { prefs.clearSession() }
+        prefs.clearGuestClaim()
+        runCatching { accessToken() }
     }
 
     /** Les erreurs de GoTrue, lues comme sur iPhone (`SupabaseAuthClient.mapError`). */
@@ -350,7 +459,17 @@ object Pkce {
 
 /** L'appel à une fonction Edge, avec le jeton de l'invité ; un 401 rafraîchit et réessaie une fois. */
 class SupabaseFunctions(private val auth: SupabaseAuth) {
-    suspend fun call(function: String, payload: JsonObject, timeoutMs: Int = 150_000): JsonObject = withContext(Dispatchers.IO) {
+    suspend fun call(function: String, payload: JsonObject, timeoutMs: Int = 150_000): JsonObject =
+        send { token -> post("${SupabaseConfig.URL}/functions/v1/$function", payload.toString(), token, timeoutMs) }
+
+    /**
+     * **Un appel dont le corps s'écrit au fil de l'eau** (`httpStream`) : `write` écrit
+     * exactement `contentLength` octets de JSON, et peut être rejoué (un 401 réessaie une fois).
+     */
+    suspend fun callStreaming(function: String, contentLength: Long, timeoutMs: Int, write: (java.io.OutputStream) -> Unit): JsonObject =
+        send { token -> httpStream("${SupabaseConfig.URL}/functions/v1/$function", token, timeoutMs, contentLength, write) }
+
+    private suspend fun send(exchange: (String) -> HttpResult): JsonObject = withContext(Dispatchers.IO) {
         var token = runCatching { auth.accessToken() }.getOrElse { error ->
             if (error is NetworkException) throw error
             // GoTrue en panne passagère : réessayer plus tard, pas appeler en anonyme (le
@@ -361,7 +480,7 @@ class SupabaseFunctions(private val auth: SupabaseAuth) {
         var attempt = 0
         while (true) {
             val result = try {
-                post("${SupabaseConfig.URL}/functions/v1/$function", payload.toString(), token, timeoutMs)
+                exchange(token)
             } catch (error: IOException) {
                 throw NetworkException(error)
             }

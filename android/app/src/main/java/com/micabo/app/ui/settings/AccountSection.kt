@@ -89,6 +89,8 @@ fun AccountSection() {
     val scope = rememberCoroutineScope()
     val account by app.auth.account.collectAsState()
     val sync by app.sync.state.collectAsState()
+    // Une session perdue (GoTrue a refusé le jeton) : on le dit, au lieu de déconnecter en silence.
+    val lost by app.auth.lostAccount.collectAsState()
     val event by app.signIn.collectAsState()
     var sheet by rememberSaveable { mutableStateOf(false) }
     var confirmSignOut by remember { mutableStateOf(false) }
@@ -126,7 +128,11 @@ fun AccountSection() {
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.ios_createOrSignIn), style = nunito(16.sp, FontWeight.ExtraBold), color = colors.ink)
-                    Text(stringResource(R.string.ios_createOrSignInHelp), style = nunito(14.sp, FontWeight.SemiBold, lineHeight = 19.sp), color = colors.inkSecondary)
+                    Text(
+                        stringResource(if (lost.isNotEmpty()) R.string.x_account_expired else R.string.ios_createOrSignInHelp),
+                        style = nunito(14.sp, FontWeight.SemiBold, lineHeight = 19.sp),
+                        color = if (lost.isNotEmpty()) colors.wrongInk else colors.inkSecondary,
+                    )
                 }
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = colors.inkTertiary)
             }

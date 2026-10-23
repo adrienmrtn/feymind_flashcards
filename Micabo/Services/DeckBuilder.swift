@@ -219,6 +219,7 @@ enum DeckBuilder {
         case .emptySource: return "source_vide"
         case .notConfigured, .missingProviderKey: return "configuration"
         case .quotaExhausted: return "quota"
+        case .proRequired: return "pro"
         }
     }
 

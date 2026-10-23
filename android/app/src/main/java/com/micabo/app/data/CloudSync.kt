@@ -73,21 +73,45 @@ class CloudSync(
     private val _state = MutableStateFlow(SyncState(lastSuccess = prefs.syncWatermark))
     val state: StateFlow<SyncState> = _state.asStateFlow()
 
-    /** Un passage complet ; rend vrai s'il a abouti. Sans compte ni invité, il ne fait rien. */
+    /**
+     * Un passage complet ; rend vrai s'il a abouti sans aucun refus. Sans compte ni invité, il ne
+     * fait rien.
+     *
+     * **Un refus n'arrête plus tout.** Une leçon que le serveur rejette (le plus souvent la RLS,
+     * 42501 : ses identifiants appartiennent à l'invité d'avant) faisait échouer le passage
+     * entier : le repère restait à zéro et plus rien ne montait, ni les leçons suivantes, ni le
+     * profil, ni les notes, ni les examens. Chaque leçon monte maintenant à part ; celle qui est
+     * refusée reste à pousser (`Lesson.dirty`), les autres passent, et le refus est dit
+     * (`onFailure`, `SyncState.failed`).
+     */
     suspend fun sync(): Boolean = mutex.withLock {
         // Le compte, sinon l'invité : le même choix que pour les fonctions et les événements.
         val user = auth.userId.lowercase()
         if (user.isEmpty()) return@withLock false
+        // Une session de compte perdue : on attend sa reconnexion plutôt que de pousser ses
+        // leçons sous l'invité. Au-delà de deux semaines, l'élève a refait sa vie en invité.
+        if (prefs.lostAccount.isNotEmpty() && auth.account.value == null) {
+            if (System.currentTimeMillis() - prefs.lostAccountAt < LOST_ACCOUNT_WAIT) return@withLock false
+            auth.clearLostAccount()
+        }
         _state.value = _state.value.copy(running = true, failed = false)
         var pushedLessons = 0
+        var refused = 0
         val ok = withContext(Dispatchers.IO) {
             runCatching {
                 lessons.ready()
                 exams.ready()
+                val isAccount = auth.account.value != null
+                val previous = prefs.syncUser
                 // Un autre compte que la dernière fois - l'invité qui vient de se connecter,
                 // un camarade sur le même téléphone : le repère ne vaut plus rien. Tout ce qui
                 // est ici monte sous lui, tout ce qu'il a redescend.
-                val switched = prefs.syncUser != user
+                val switched = previous != user
+                val oldWatermark = prefs.syncWatermark
+                // Un compte qui laisse place à l'invité (déconnexion) : ses leçons sont déjà sous
+                // le compte, elles ne remontent pas sous l'invité (elles y seraient recopiées en
+                // double) ; seules celles qui changeront ici monteront.
+                val accountToGuest = switched && previous.isNotEmpty() && prefs.syncUserKind == "account" && !isAccount
                 if (switched) {
                     prefs.syncWatermark = 0
                     prefs.profileSignature = ""
@@ -96,20 +120,41 @@ class CloudSync(
                 val started = System.currentTimeMillis()
                 val since = prefs.syncWatermark
                 val token = auth.accessToken()
-                val pulled = pull(token, user, since, switched)
-                pushedLessons = push(token, user, since, pulled)
-                pushProfile(token, user)
+                // La session du compte a pu se perdre en route (`accessToken` retombe alors sur
+                // l'invité) : pousser sous `user` avec le jeton d'un autre serait refusé partout.
+                if (auth.userId.lowercase() != user) throw IOException("user changed")
+                // Ce qui avait été mis de côté pour ce compte revient dans la file : les
+                // suppressions et les notes, puis les leçons et les examens qui n'avaient pas pu
+                // monter avant son départ (`leaveAccount`). La descente qui suit départage.
+                prefs.unpark(user)
+                lessons.unpark(user)
+                exams.unpark(user)
+                if (isAccount && switched) claimGuest(token, user, previous)
+                if (switched && !accountToGuest) lessons.markDirty(lessons.lessons.value.keys)
+                pull(token, user, since, switched, isAccount)
+                val pushed = push(token, user, if (accountToGuest) oldWatermark else since)
+                pushedLessons = pushed.first
+                refused = pushed.second
+                runCatching { pushProfile(token, user) }.onFailure {
+                    if (it is NetworkException) throw it
+                    refused += 1
+                    Log.w(TAG, "Profil non monté", it)
+                }
+                // Le repère avance même après un refus : ce qui a été refusé reste dans sa file
+                // (leçons à pousser, pierres tombales, notes) et repartira de toute façon.
                 prefs.syncWatermark = started
                 prefs.syncUser = user
+                prefs.syncUserKind = if (isAccount) "account" else "guest"
                 started
             }.onFailure {
                 Log.w(TAG, "Synchronisation interrompue", it)
                 onFailure(describe(it))
             }.getOrNull()
         }
-        _state.value = if (ok != null) SyncState(running = false, lastSuccess = ok) else _state.value.copy(running = false, failed = true)
+        if (ok != null && refused > 0) onFailure("refused")
+        _state.value = if (ok != null) SyncState(running = false, lastSuccess = ok, failed = refused > 0) else _state.value.copy(running = false, failed = true)
         if (ok != null) onSuccess(pushedLessons)
-        ok != null
+        ok != null && refused == 0
     }
 
     /** L'échec en un mot, sans texte d'élève : la famille, puis le statut HTTP s'il y en a. */
@@ -117,19 +162,180 @@ class CloudSync(
         is NetworkException -> "network"
         is IOException -> error.message?.let { message ->
             // « POST chapters 400: … » : on garde le verbe, la table et le statut.
-            Regex("""^(GET|POST|PATCH) (\w+) (\d{3})""").find(message)?.let { "${it.groupValues[1].lowercase()}_${it.groupValues[2]}_${it.groupValues[3]}" }
+            Regex("""^(GET|POST|PATCH) ([\w/]+) (\d{3})""").find(message)?.let {
+                "${it.groupValues[1].lowercase()}_${it.groupValues[2].replace('/', '_')}_${it.groupValues[3]}"
+            }
         } ?: "io"
         else -> error.javaClass.simpleName.lowercase().take(40)
     }
 
-    /** Après une déconnexion : le prochain compte repartira de zéro. Les leçons restent ici. */
-    fun forget() {
+    /**
+     * **La déconnexion et la suppression du compte, de bout en bout** (`CloudSync.leaveAccount`
+     * sur l'iPhone). Jusqu'au 23 octobre 2026, se déconnecter laissait les leçons ici : elles
+     * restaient affichées, et un passage suivant pouvait les remonter sous l'invité, puis sous
+     * le compte d'après (un camarade sur le même téléphone). Désormais :
+     *
+     * 1. une dernière montée (déconnexion seulement) : une révision de la minute d'avant ne doit
+     *    pas être le prix du départ ;
+     * 2. la session du compte se ferme, ou le compte est supprimé (`close`) ; une suppression
+     *    qui échoue lève son erreur, et **rien** n'a changé ici ;
+     * 3. déconnexion : ce que la dernière montée n'a pas pu pousser (hors ligne, un refus) est
+     *    mis de côté sous l'identifiant du compte - suppressions, notes, leçons à pousser,
+     *    examens changés - et revient à sa prochaine connexion (`sync`, `unpark`), avec ce que
+     *    le serveur avait déjà. Suppression : rien à garder ;
+     * 4. le téléphone se vide de ce qui appartient à l'élève (leçons, examens, examens blancs,
+     *    série), sans pierre tombale ; le repère, la file et le dernier utilisateur s'oublient
+     *    (`forget`) ;
+     * 5. un invité neuf prend la place de l'ancien, qui a cédé ses lignes au compte : il n'a
+     *    rien à transférer, et ne remonte rien de l'ancien compte.
+     *
+     * Aucun passage ne part entre la fermeture de la session et le téléphone vidé : tout se
+     * fait sous le verrou de la synchronisation. Le profil (l'accueil fini, la langue, le pays)
+     * reste, comme sur l'iPhone : l'élève reste accueilli sur ce téléphone.
+     *
+     * Rend vrai quand la dernière montée a tout poussé (toujours vrai pour une suppression).
+     */
+    suspend fun leaveAccount(deleting: Boolean, close: suspend () -> Unit): Boolean {
+        val account = auth.account.value?.userId?.lowercase().orEmpty()
+        val clean = if (deleting) true else runCatching { sync() }.getOrDefault(false)
+        return mutex.withLock {
+            // Une suppression ratée lève ici : rien n'est encore effacé.
+            close()
+            withContext(Dispatchers.IO) {
+                lessons.ready()
+                exams.ready()
+                if (deleting || account.isEmpty()) {
+                    lessons.leaveAccount(parkFor = null)
+                    exams.leaveAccount(parkFor = null, since = 0L)
+                    if (account.isNotEmpty()) {
+                        prefs.dropParked(account)
+                        lessons.dropParked(account)
+                        exams.dropParked(account)
+                    }
+                } else {
+                    // Le premier passage sous ce compte n'a jamais abouti (connecté puis parti
+                    // hors ligne) : rien d'ici n'est encore confirmé chez lui, tout est mis de côté.
+                    val confirmed = prefs.syncUser == account
+                    prefs.park(account)
+                    lessons.leaveAccount(parkFor = account, everything = !confirmed)
+                    exams.leaveAccount(parkFor = account, since = if (confirmed) prefs.syncWatermark else 0L, everything = !confirmed)
+                }
+                streak?.reset()
+                // L'examen blanc offert se compte par compte au serveur, comme sur l'iPhone.
+                prefs.mockFreeUsed = false
+                forget()
+                auth.startFreshGuest()
+            }
+            clean
+        }
+    }
+
+    /**
+     * Efface le repère, la file et le dernier utilisateur (`CloudSync.forget` sur l'iPhone) : le
+     * compte suivant n'hérite ni du repère du précédent, ni de ce qui attendait de monter pour lui
+     * (déjà mis de côté par `leaveAccount` quand il le fallait).
+     */
+    private fun forget() {
         prefs.syncWatermark = 0
         prefs.syncUser = ""
-        prefs.profileSignature = ""
+        prefs.syncUserKind = ""
         prefs.removeTombstones(prefs.tombstones)
         prefs.removeReviews(prefs.pendingReviews)
+        prefs.profileSignature = ""
         _state.value = SyncState()
+    }
+
+    /**
+     * Met de côté ce qui attendait de monter pour ce compte : sa session vient d'être perdue, ou
+     * l'élève efface tout. Seulement si la file est bien la sienne (le dernier synchronisé).
+     */
+    fun park(user: String) {
+        val id = user.lowercase()
+        if (prefs.syncUser == id || prefs.syncUser.isEmpty()) prefs.park(id)
+    }
+
+    /** Après « Tout effacer » : l'état affiché repart ; la file et le repère restent. */
+    fun erased() {
+        _state.value = SyncState(lastSuccess = prefs.syncWatermark)
+    }
+
+    // MARK: - Le transfert de l'invité
+
+    /**
+     * **Le jeton de transfert, pris avec la session de l'invité** (`create_guest_claim`), juste
+     * avant la connexion d'un compte. Sans lui, les leçons de l'invité montaient sous le compte
+     * avec des identifiants qui appartenaient encore à l'invité au serveur : refus RLS, et plus
+     * rien ne se synchronisait. Sans réseau ou sans la fonction, rien : le transfert se tentera
+     * encore au premier passage sous le compte, tant que la session invitée est là.
+     */
+    suspend fun prepareGuestClaim() {
+        if (auth.account.value != null) return
+        val guest = auth.guestId.lowercase()
+        if (guest.isEmpty()) return
+        runCatching { withContext(Dispatchers.IO) { createClaim(guest) } }.onFailure { Log.w(TAG, "Jeton de transfert non pris", it) }
+    }
+
+    /** Le jeton, s'il n'y en a pas déjà un frais pour cet invité. Rend vrai s'il y en a un. */
+    private suspend fun createClaim(guest: String): Boolean {
+        val now = System.currentTimeMillis()
+        if (prefs.guestClaimToken.isNotEmpty() && prefs.guestClaimFrom == guest && now - prefs.guestClaimAt < CLAIM_VALIDITY) return true
+        val guestToken = auth.guestSessionToken() ?: return false
+        val result = request("POST", "rpc/create_guest_claim", "{}", guestToken)
+        if (result.status !in 200..299) {
+            Log.w(TAG, "create_guest_claim ${result.status}: ${result.body.take(160)}")
+            return false
+        }
+        val token = claimTokenOf(result.body) ?: return false
+        prefs.guestClaimToken = token
+        prefs.guestClaimAt = now
+        prefs.guestClaimFrom = guest
+        return true
+    }
+
+    /**
+     * **Les lignes de l'invité passent au compte** (`claim_guest`), avant toute montée : cours,
+     * thèmes, cartes, examens, historique changent de propriétaire au serveur, et les leçons
+     * d'ici remontent ensuite sous le compte sans refus. Le jeton est pris maintenant avec la
+     * session invitée s'il ne l'a pas été avant la connexion.
+     *
+     * Une panne (réseau, 5xx) arrête le passage : pousser maintenant ferait recopier les leçons
+     * sous de nouveaux identifiants (`rekey`), puis le transfert les doublerait. Un jeton refusé
+     * (périmé, déjà servi) est oublié ; les refus restants se règlent alors un par un (`rekey`).
+     */
+    private suspend fun claimGuest(token: String, user: String, previous: String) {
+        if (previous.isNotEmpty() && previous == auth.guestId.lowercase() && previous != user) createClaim(previous)
+        val claim = prefs.guestClaimToken
+        if (claim.isEmpty()) return
+        if (System.currentTimeMillis() - prefs.guestClaimAt >= CLAIM_VALIDITY || prefs.guestClaimFrom == user) {
+            prefs.clearGuestClaim()
+            return
+        }
+        val result = request("POST", "rpc/claim_guest", buildJsonObject { put("p_token", claim) }.toString(), token)
+        when {
+            result.status in 200..299 -> {
+                Log.i(TAG, "Invité transféré : ${result.body.take(200)}")
+                prefs.clearGuestClaim()
+            }
+            result.status >= 500 || result.status == 429 -> throw PostgrestError("POST", "rpc/claim_guest", result.status, result.body)
+            else -> {
+                Log.w(TAG, "claim_guest ${result.status}: ${result.body.take(160)}")
+                prefs.clearGuestClaim()
+            }
+        }
+    }
+
+    /** Le jeton rendu par `create_guest_claim` : un uuid nu (`"…"`), ou rangé dans un objet. */
+    private fun claimTokenOf(body: String): String? {
+        val element = runCatching { MicaboJson.parseToJsonElement(body) }.getOrNull() ?: return null
+        val single = if (element is JsonArray) element.firstOrNull() else element
+        val raw: String? = if (single is JsonObject) {
+            single.str("token").ifEmpty { single.str("create_guest_claim") }.ifEmpty {
+                (single.values.firstOrNull() as? JsonPrimitive)?.contentOrNull.orEmpty()
+            }
+        } else {
+            (single as? JsonPrimitive)?.contentOrNull
+        }
+        return raw?.trim()?.lowercase()?.takeIf { UUID_PATTERN.matches(it) }
     }
 
     // MARK: - Le profil
@@ -145,6 +351,12 @@ class CloudSync(
      */
     private fun pushProfile(token: String, user: String) {
         val profile = prefs.profile.value
+        // Juste après « Tout effacer » : un profil vide ne remonte pas écraser les buts et les
+        // matières du serveur ; il remontera une fois l'accueil refait.
+        if (prefs.profileErased) {
+            if (!profile.onboarded) return
+            prefs.profileErased = false
+        }
         val signature = signature(profile)
         if (signature == prefs.profileSignature) return
         val row = buildJsonObject {
@@ -191,7 +403,11 @@ class CloudSync(
      * l'élève est aussi celle de ses leçons. Elle ne la remplit que si elle n'a jamais été
      * choisie sur ce téléphone.
      */
-    private fun pullProfile(token: String, user: String, switched: Boolean) {
+    private fun pullProfile(token: String, user: String, switched: Boolean, isAccount: Boolean) {
+        // « Tout effacer » : l'accueil se refait, le profil du serveur ne le referme pas en plein
+        // milieu (son `onboarding_completed_at` valait accueil fini). Seul un compte qui se
+        // connecte pendant l'accueil est reconnu, comme avant.
+        if (prefs.profileErased && !prefs.profile.value.onboarded && !(switched && isAccount)) return
         val row = selectAll(token, "profiles", "id=eq.$user").firstOrNull() ?: return
         if (row.str("onboarding_completed_at").isEmpty()) return
         val remoteUpdated = row.str("updated_at").takeIf { it.isNotEmpty() }?.let(::time) ?: 0
@@ -218,6 +434,7 @@ class CloudSync(
                 language = if (profile.language.isBlank() && language != null) language else profile.language,
             )
         }
+        if (prefs.profileErased) prefs.profileErased = false
         // Le compte a gagné : ce qui vient de descendre n'a pas à remonter. Plus vieux que le
         // téléphone, il a seulement rempli les vides, et la montée qui suit publie le reste.
         if (newer) prefs.profileSignature = signature(prefs.profile.value)
@@ -226,10 +443,18 @@ class CloudSync(
     // MARK: - Tirer
 
     /**
-     * Tire ce qui a changé ; rend les leçons recopiées en entier, avec leur date, pour que la
-     * montée ne les renvoie pas telles quelles.
+     * Tire ce qui a changé ; rend les leçons recopiées en entier, avec leur date.
+     *
+     * **Qui gagne, pour une leçon** : on ne compare plus l'horloge du téléphone à celle du
+     * serveur (un téléphone en avance gardait sa version, un en retard perdait la sienne, et
+     * chaque leçon poussée redescendait au passage suivant, le serveur posant lui-même son
+     * `updated_at`). Une ligne qui n'a pas bougé depuis la dernière fois qu'on l'a vue
+     * (`Lesson.serverUpdatedAt`) est sautée ; une leçon sans changement ici à pousser
+     * (`Lesson.dirty` faux) prend la version du serveur ; seules deux modifications des deux
+     * côtés se départagent à la date. Et la version descendue n'entre que si la leçon d'ici n'a
+     * pas changé pendant le téléchargement (`applyFromCloud`).
      */
-    private fun pull(token: String, user: String, since: Long, switched: Boolean): Map<String, Long> {
+    private fun pull(token: String, user: String, since: Long, switched: Boolean, isAccount: Boolean): Map<String, Long> {
         val from = iso(maxOf(0, since - OVERLAP))
         val applied = HashMap<String, Long>()
         val courses = selectAll(token, "courses", "user_id=eq.$user&updated_at=gt.${encode(from)}&order=updated_at.asc")
@@ -241,18 +466,26 @@ class CloudSync(
             val remoteUpdated = time(row.str("updated_at"))
             val deletedAt = row.str("deleted_at").takeIf { it.isNotEmpty() }?.let(::time)
             if (deletedAt != null) {
-                if (local != null && deletedAt >= local.updatedAt) lessons.removeFromCloud(id)
+                // Supprimée ailleurs : elle part, sauf si elle a été changée ici après.
+                if (local != null && (!local.dirty || deletedAt >= local.updatedAt)) lessons.removeFromCloud(id)
                 continue
             }
             // Un cours sans chemin (une ancienne fiche, un paquet de cartes) s'affiche aussi : il
             // était sauté, et ses cartes n'existaient pas sur Android.
             val path = row["path"] as? JsonObject
-            if (local != null && local.updatedAt >= remoteUpdated) continue
+            if (local != null) {
+                // Rien de neuf au serveur depuis qu'on a vu la ligne (montée ou descendue).
+                if (local.serverUpdatedAt > 0 && remoteUpdated <= local.serverUpdatedAt) continue
+                // Une leçon d'avant ces repères : l'ancienne règle, la plus récente gagne.
+                if (local.serverUpdatedAt == 0L && local.updatedAt >= remoteUpdated) continue
+                // Changée des deux côtés : la plus récente gagne.
+                if (local.dirty && local.updatedAt >= remoteUpdated) continue
+            }
             val chapters = selectAll(token, "chapters", "course_id=eq.$id&user_id=eq.$user&deleted_at=is.null&order=position.asc")
             val cards = selectAll(token, "flashcards", "course_id=eq.$id&user_id=eq.$user&deleted_at=is.null&order=position.asc")
             val lesson = (if (path != null) lessonFrom(row, path, chapters, cards, local) else legacyLessonFrom(row, chapters, cards, local)) ?: continue
-            lessons.applyFromCloud(lesson.copy(updatedAt = remoteUpdated))
-            applied[id] = remoteUpdated
+            val fresh = lesson.copy(updatedAt = remoteUpdated, serverUpdatedAt = remoteUpdated, dirty = false)
+            if (lessons.applyFromCloud(fresh, expectedUpdatedAt = local?.updatedAt)) applied[id] = remoteUpdated
         }
 
         pullCards(token, user, from, applied.keys)
@@ -288,7 +521,7 @@ class CloudSync(
 
         // Ni la série ni le profil ne font échouer le passage : les leçons sont déjà là.
         runCatching { pullReviewDays(token, user, from) }.onFailure { Log.w(TAG, "Série non relue", it) }
-        runCatching { pullProfile(token, user, switched) }.onFailure { Log.w(TAG, "Profil non relu", it) }
+        runCatching { pullProfile(token, user, switched, isAccount) }.onFailure { Log.w(TAG, "Profil non relu", it) }
         return applied
     }
 
@@ -582,11 +815,18 @@ class CloudSync(
     // MARK: - Pousser
 
     /**
-     * Pousse ce qui a changé ; rend le nombre de leçons montées. Une leçon qui vient de
-     * descendre en entier (`pulled`), et n'a pas bougé depuis, ne remonte pas : elle serait
-     * renvoyée telle qu'Android la décrit, et ce qu'il ne tient pas de sa progression s'y perdrait.
+     * Pousse ce qui a changé ; rend le nombre de leçons montées et le nombre de refus.
+     *
+     * Ce qui monte : les leçons à pousser (`Lesson.dirty`), et celles d'avant ce drapeau que
+     * seule leur date repère (`pushSince`). Une leçon qui vient de descendre est propre : elle ne
+     * remonte pas telle qu'Android la décrit, ce qu'il ne tient pas de sa progression s'y perdrait.
+     *
+     * Chaque leçon, chaque pierre tombale, chaque lot de notes et chaque examen passe ou échoue
+     * seul : un refus ne bloque plus le reste. Seule une coupure du réseau arrête le passage.
      */
-    private fun push(token: String, user: String, since: Long, pulled: Map<String, Long>): Int {
+    private fun push(token: String, user: String, pushSince: Long): Pair<Int, Int> {
+        var refused = 0
+
         // Les suppressions d'abord : un cours supprimé ne doit pas revenir.
         val tombstones = prefs.tombstones
         if (tombstones.isNotEmpty()) {
@@ -608,59 +848,182 @@ class CloudSync(
                     put("deleted_at", now)
                     put("updated_at", now)
                 }.toString(), token, mapOf("Prefer" to "return=minimal"))
-                if (result.status in 200..299) done.add(entry) else throw IOException("PATCH $table ${result.status}")
+                when {
+                    result.status in 200..299 -> done.add(entry)
+                    // Un refus du serveur ne passera pas mieux plus tard (un identifiant invalide) :
+                    // la pierre tombale est abandonnée. Une panne la garde pour le passage suivant.
+                    result.status in 400..499 && result.status != 429 -> {
+                        Log.w(TAG, "PATCH $table ${result.status}: ${result.body.take(160)}")
+                        done.add(entry)
+                    }
+                    else -> refused += 1
+                }
             }
             prefs.removeTombstones(done)
         }
 
-        val changed = lessons.lessons.value.values.filter { it.updatedAt > since && pulled[it.id] != it.updatedAt }
+        // Les leçons d'avant le drapeau, repérées par leur date, deviennent « à pousser » : un
+        // refus ne les perd plus quand le repère avance.
+        lessons.markDirty(lessons.lessons.value.values.filter { !it.dirty && it.serverUpdatedAt == 0L && it.updatedAt > pushSince }.map { it.id })
+        val changed = lessons.lessons.value.values.filter { it.dirty }
+        var pushed = 0
         for (lesson in changed) {
-            val stamped = lesson.stamped()
-            // Un ancien cours ou un paquet : seules ses cartes remontent (`Lesson.legacy`).
-            if (!stamped.legacy) {
-                upsert(token, "courses", listOf(courseRow(stamped, user)))
-                upsert(token, "chapters", stamped.themes.mapIndexed { index, theme -> chapterRow(stamped, theme, index, user) })
-            }
-            upsert(token, "flashcards", cardRows(stamped, user))
-        }
-
-        // Les cartes notées, après les cartes elles-mêmes (`card_id` y renvoie).
-        val reviews = prefs.pendingReviews.toList()
-        reviews.chunked(200).forEach { chunk ->
-            val rows = chunk.mapNotNull { line ->
-                (runCatching { MicaboJson.parseToJsonElement(line) }.getOrNull() as? JsonObject)?.let { JsonObject(it + ("user_id" to JsonPrimitive(user))) }
-            }
-            val result = if (rows.isEmpty()) null else request(
-                "POST",
-                "review_logs",
-                JsonArray(rows).toString(),
-                token,
-                mapOf("Prefer" to "resolution=ignore-duplicates,return=minimal"),
-            )
-            // Un refus (une carte supprimée entre-temps) ne passera pas mieux plus tard : le lot est laissé.
-            if (result != null && result.status >= 500) throw IOException("POST review_logs ${result.status}")
-            prefs.removeReviews(chunk)
-        }
-
-        val changedExams = exams.exams.value.filter { it.updatedAt > since }
-        if (changedExams.isNotEmpty()) {
-            upsert(token, "exams", changedExams.map { exam ->
-                buildJsonObject {
-                    put("id", exam.id.lowercase())
-                    put("user_id", user)
-                    put("name", exam.name)
-                    put("exam_date", Instant.ofEpochMilli(exam.date).atZone(ZoneId.systemDefault()).toLocalDate().toString())
-                    putJsonArray("course_ids") { exam.lessonIds.forEach { add(JsonPrimitive(it.lowercase())) } }
-                    // Rendus tels qu'ils sont descendus ; absents, la base garde les siens.
-                    exam.kind?.let { put("kind", it) }
-                    exam.intensity?.let { put("intensity", it) }
-                    exam.targetScore?.let { put("target_score", it) }
-                    exam.startingPoint?.let { put("starting_point", it) }
-                    put("updated_at", iso(exam.updatedAt))
+            try {
+                pushLesson(token, user, lesson)
+                pushed += 1
+            } catch (error: PostgrestError) {
+                if (error.rlsDenied && !lesson.legacy) {
+                    // Les identifiants appartiennent à un autre utilisateur au serveur (l'invité
+                    // d'avant, sans transfert possible) : la leçon prend des identifiants neufs,
+                    // garde son contenu et la mémoire de ses cartes, et remonte une fois.
+                    val retried = rekeyAndPush(token, user, lesson)
+                    if (retried) pushed += 1 else refused += 1
+                } else if (error.rlsDenied) {
+                    // Un ancien cours d'un autre : seules ses cartes montaient, et elles ne
+                    // peuvent pas changer de cours. Rien à réessayer.
+                    Log.w(TAG, "Ancien cours refusé : ${error.message}")
+                    lessons.markPushed(lesson.id, lesson.updatedAt, null)
+                    refused += 1
+                } else {
+                    Log.w(TAG, "Leçon refusée", error)
+                    refused += 1
                 }
-            })
+            }
         }
-        return changed.size
+
+        refused += pushReviews(token, user)
+        refused += pushExams(token, user, pushSince)
+        return pushed to refused
+    }
+
+    /**
+     * Une leçon : son cours et ses thèmes (sauf un ancien cours), puis ses cartes. Le cours rend
+     * son `updated_at` (posé par le serveur) : c'est lui qui dira, au passage suivant, si la
+     * ligne a changé ailleurs.
+     */
+    private fun pushLesson(token: String, user: String, lesson: Lesson) {
+        val stamped = lesson.stamped()
+        var serverUpdated: Long? = null
+        // Un ancien cours ou un paquet : seules ses cartes remontent (`Lesson.legacy`).
+        if (!stamped.legacy) {
+            val rows = upsert(token, "courses", listOf(courseRow(stamped, user)), returning = "id,updated_at")
+            serverUpdated = rows.firstOrNull()?.str("updated_at")?.takeIf { it.isNotEmpty() }?.let(::time)?.takeIf { it > 0 }
+            upsert(token, "chapters", stamped.themes.mapIndexed { index, theme -> chapterRow(stamped, theme, index, user) })
+        }
+        upsert(token, "flashcards", cardRows(stamped, user))
+        lessons.markPushed(lesson.id, lesson.updatedAt, serverUpdated)
+    }
+
+    /** La leçon refusée, sous des identifiants neufs ; les examens et les notes en attente suivent. */
+    private fun rekeyAndPush(token: String, user: String, lesson: Lesson): Boolean {
+        val (fresh, cardIds) = lessons.rekey(lesson.id) ?: return false
+        Log.w(TAG, "Leçon ${lesson.id} refusée (RLS) : nouveaux identifiants ${fresh.id}")
+        exams.replaceLesson(lesson.id, fresh.id)
+        prefs.remapReviews(cardIds)
+        return try {
+            pushLesson(token, user, fresh)
+            true
+        } catch (error: PostgrestError) {
+            Log.w(TAG, "Leçon refusée même sous de nouveaux identifiants", error)
+            false
+        }
+    }
+
+    /**
+     * **Les cartes notées**, après les cartes elles-mêmes (`card_id` y renvoie), par lots de deux
+     * cents. Un lot refusé (une carte supprimée entre-temps, une ligne invalide) n'est plus jeté
+     * en entier : il repart ligne par ligne, et seules les lignes refusées sont laissées. Rend le
+     * nombre de lots qui n'ont pas pu partir (panne du serveur) : ils restent dans la file.
+     */
+    private fun pushReviews(token: String, user: String): Int {
+        var refused = 0
+        val reviews = prefs.pendingReviews.toList()
+        for (chunk in reviews.chunked(200)) {
+            val parsed = chunk.map { line ->
+                line to (runCatching { MicaboJson.parseToJsonElement(line) }.getOrNull() as? JsonObject)?.let { JsonObject(it + ("user_id" to JsonPrimitive(user))) }
+            }
+            // Une ligne illisible ne passera jamais : elle part de la file.
+            val unreadable = parsed.filter { it.second == null }.map { it.first }
+            val rows = parsed.mapNotNull { (line, row) -> row?.let { line to it } }
+            if (unreadable.isNotEmpty()) prefs.removeReviews(unreadable)
+            if (rows.isEmpty()) continue
+            val result = postReviews(token, rows.map { it.second })
+            when {
+                result.status in 200..299 -> prefs.removeReviews(rows.map { it.first })
+                result.status in 400..499 && result.status != 429 -> {
+                    // Ligne par ligne : seules les lignes refusées sont laissées.
+                    val sent = mutableListOf<String>()
+                    for ((line, row) in rows) {
+                        val single = postReviews(token, listOf(row))
+                        when {
+                            single.status in 200..299 -> sent.add(line)
+                            single.status in 400..499 && single.status != 429 -> {
+                                Log.w(TAG, "Note refusée ${single.status}: ${single.body.take(160)}")
+                                sent.add(line)
+                            }
+                            else -> refused += 1
+                        }
+                    }
+                    prefs.removeReviews(sent)
+                }
+                else -> refused += 1
+            }
+        }
+        return refused
+    }
+
+    private fun postReviews(token: String, rows: List<JsonObject>): HttpResult = request(
+        "POST",
+        "review_logs",
+        JsonArray(rows).toString(),
+        token,
+        mapOf("Prefer" to "resolution=ignore-duplicates,return=minimal"),
+    )
+
+    /**
+     * **Les examens** changés depuis le repère. Un lot refusé repart examen par examen ; un
+     * examen refusé par la RLS (son identifiant appartient à un autre utilisateur) prend un
+     * identifiant neuf et repart une fois. Une panne du serveur arrête le passage : les examens
+     * ne sont repérés que par leur date, et le repère ne doit pas les dépasser.
+     */
+    private fun pushExams(token: String, user: String, pushSince: Long): Int {
+        val changedExams = exams.exams.value.filter { it.updatedAt > pushSince }
+        if (changedExams.isEmpty()) return 0
+        try {
+            upsert(token, "exams", changedExams.map { examRow(it, user) })
+            return 0
+        } catch (error: PostgrestError) {
+            if (error.serverSide) throw error
+        }
+        var refused = 0
+        for (exam in changedExams) {
+            try {
+                upsert(token, "exams", listOf(examRow(exam, user)))
+            } catch (error: PostgrestError) {
+                if (error.serverSide) throw error
+                val fresh = if (error.rlsDenied) exams.rekey(exam.id) else null
+                val retried = fresh != null && runCatching { upsert(token, "exams", listOf(examRow(fresh, user))) }.isSuccess
+                if (!retried) {
+                    Log.w(TAG, "Examen refusé", error)
+                    refused += 1
+                }
+            }
+        }
+        return refused
+    }
+
+    private fun examRow(exam: Exam, user: String): JsonObject = buildJsonObject {
+        put("id", exam.id.lowercase())
+        put("user_id", user)
+        put("name", exam.name)
+        put("exam_date", Instant.ofEpochMilli(exam.date).atZone(ZoneId.systemDefault()).toLocalDate().toString())
+        putJsonArray("course_ids") { exam.lessonIds.forEach { add(JsonPrimitive(it.lowercase())) } }
+        // Rendus tels qu'ils sont descendus ; absents, la base garde les siens.
+        exam.kind?.let { put("kind", it) }
+        exam.intensity?.let { put("intensity", it) }
+        exam.targetScore?.let { put("target_score", it) }
+        exam.startingPoint?.let { put("starting_point", it) }
+        put("updated_at", iso(exam.updatedAt))
     }
 
     /**
@@ -674,7 +1037,10 @@ class CloudSync(
         put("subject", lesson.subject.ifBlank { null })
         put("source", sourceForCourse(lesson.source))
         put("language", lesson.language.takeIf { LANGUAGE.matches(it) } ?: "en")
-        put("raw_text", lesson.topic)
+        // Le texte d'origine n'est gardé ici que pour un sujet tapé : vide, il ne part pas. Il
+        // partait vide et effaçait au serveur le document d'une leçon faite sur l'iPhone ou le
+        // site (`raw_text`), à chaque montée. Absent, la base garde le sien (`merge-duplicates`).
+        lesson.topic.takeIf { it.isNotBlank() }?.let { put("raw_text", it) }
         put("context_text", lesson.contextText)
         put("created_at", iso(lesson.createdAt.takeIf { it > 0 } ?: lesson.updatedAt))
         put("updated_at", iso(lesson.updatedAt))
@@ -824,21 +1190,29 @@ class CloudSync(
         }
     }
 
-    /** Un upsert par lots de mêmes clés : PostgREST refuse un tableau aux clés mêlées (PGRST102). */
-    private fun upsert(token: String, table: String, rows: List<JsonObject>) {
-        if (rows.isEmpty()) return
+    /**
+     * Un upsert par lots de mêmes clés : PostgREST refuse un tableau aux clés mêlées (PGRST102).
+     * Avec `returning` (des colonnes), rend les lignes écrites telles que le serveur les a gardées.
+     */
+    private fun upsert(token: String, table: String, rows: List<JsonObject>, returning: String? = null): List<JsonObject> {
+        if (rows.isEmpty()) return emptyList()
+        val out = mutableListOf<JsonObject>()
         rows.groupBy { it.keys.sorted() }.values.forEach { group ->
             group.chunked(200).forEach { chunk ->
                 val result = request(
                     "POST",
-                    table,
+                    if (returning != null) "$table?select=$returning" else table,
                     JsonArray(chunk).toString(),
                     token,
-                    mapOf("Prefer" to "resolution=merge-duplicates,return=minimal"),
+                    mapOf("Prefer" to if (returning != null) "resolution=merge-duplicates,return=representation" else "resolution=merge-duplicates,return=minimal"),
                 )
-                if (result.status !in 200..299) throw IOException("POST $table ${result.status}: ${result.body.take(160)}")
+                if (result.status !in 200..299) throw PostgrestError("POST", table, result.status, result.body)
+                if (returning != null) {
+                    runCatching { MicaboJson.parseToJsonElement(result.body).jsonArray.mapNotNull { it as? JsonObject } }.getOrNull()?.let(out::addAll)
+                }
             }
         }
+        return out
     }
 
     private fun request(method: String, path: String, body: String?, token: String, headers: Map<String, String> = emptyMap()): HttpResult =
@@ -857,6 +1231,11 @@ class CloudSync(
         val TONES = listOf("yellow", "mint", "blue", "pink", "lilac")
         val LANGUAGE = Regex("^[a-z]{2}(-[A-Za-z0-9]{2,3})?$")
         val COUNTRY = Regex("^[a-z]{2}$")
+        /** Le jeton de transfert de l'invité vaut vingt-quatre heures (`create_guest_claim`). */
+        const val CLAIM_VALIDITY = 24 * 3_600_000L
+        /** Combien de temps la synchronisation attend la reconnexion d'un compte perdu. */
+        const val LOST_ACCOUNT_WAIT = 14 * 86_400_000L
+        val UUID_PATTERN = Regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
         /** Les formes de carte de l'iPhone et du site (`CardKind`) : une autre repart en recto verso. */
         val CARD_KINDS = setOf("basic", "cloze", "choice", "occlusion")
 
@@ -882,6 +1261,18 @@ class CloudSync(
             else -> "text"
         }
     }
+}
+
+/**
+ * **Un refus de PostgREST**, avec son statut et son corps. C'est une `IOException` : le passage
+ * le décrit comme avant (« POST courses 403 »). `rlsDenied` reconnaît le refus de la RLS
+ * (403, ou le code Postgres 42501) : la ligne appartient à un autre utilisateur.
+ */
+internal class PostgrestError(val method: String, val table: String, val status: Int, val body: String) :
+    IOException("$method $table $status: ${body.take(160)}") {
+    val rlsDenied: Boolean get() = status == 403 || body.contains("42501")
+    /** Une panne du serveur, pas un refus de la ligne : à réessayer plus tard. */
+    val serverSide: Boolean get() = status >= 500 || status == 429
 }
 
 private fun JsonObject.bool(key: String): Boolean? = (this[key] as? JsonPrimitive)?.contentOrNull?.toBooleanStrictOrNull()

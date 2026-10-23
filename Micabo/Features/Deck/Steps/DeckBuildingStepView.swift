@@ -24,6 +24,9 @@ struct DeckBuildingStepView: View {
     /// Appelé quand la construction a échoué **avant** d'avoir rien créé : l'étudiant est
     /// renvoyé à l'écran des supports plutôt que laissé sur une jauge morte.
     var onFailed: () -> Void
+    /// Appelé quand le serveur répond que générer un cours est Pro (`pro_required`) : le
+    /// parcours revient en arrière et ouvre le paywall, au lieu d'une phrase d'erreur.
+    var onProRequired: () -> Void = {}
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.aiService) private var aiService
@@ -198,6 +201,8 @@ struct DeckBuildingStepView: View {
 
             built = outcome.course
             await finishGauge()
+        } catch AIServiceError.proRequired {
+            onProRequired()
         } catch {
             failure = error.localizedDescription
         }

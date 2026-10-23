@@ -18,8 +18,10 @@ Rappel de ce qu'on vend :
 | Annuel discount | `com.micabo.app.pro.yearly.discount` | 29,99 € / an | aucun | **non** sur le paywall ordinaire — il a son propre écran, l'offre cadeau (§13) |
 
 Ce sont les prix **iOS, en France**. Chaque pays a le sien : la grille complète est dans
-`store/pricing.json`, et une action GitHub la pose dans App Store Connect (§15). Le web
-(Stripe) garde ses prix d'avant — 69,99 €, 7,99 €, 39,99 € — tant qu'il n'est pas repris.
+`store/pricing.json`, et une action GitHub la pose dans App Store Connect (§15). Le site
+**affiche** la même grille, pays par pays (§16) ; ses `price_…` Stripe sont encore ceux de
+l'ancienne grille — 69,99 €, 7,99 €, 39,99 € —, et le paiement web reste fermé tant que les
+douze prix du §16 ne sont pas créés.
 
 Identifiant de l'app : `com.micabo.ios`.
 
@@ -286,6 +288,9 @@ relecture en `DEBUG` aussi.
 
 ## 11. Stripe — les trois offres web (trois `price_…`)
 
+> **Ancienne grille.** Les montants et les `price_…` de cette section sont ceux d'avant la
+> grille par pays ; les prix à créer pour rouvrir le paiement web sont au §16.
+
 Stripe n'écrit jamais dans `entitlements`. Il encaisse. RevenueCat voit l'abonnement Stripe
 via l'intégration officielle, et **son** webhook (`supabase/functions/revenuecat-webhook`)
 écrit la ligne. Une seule plume.
@@ -442,6 +447,12 @@ Elle ne se présente qu'une fois par appareil.
 
 ## 14. La livre turque
 
+> **Remplacé par la grille par pays (§16).** Ce qui suit décrit les trois `price_…` de
+> l'ancienne grille (69,99 € / 7,99 € / 39,99 €), gardés dans `STORE_PRODUCTS` pour
+> reconnaître un abonné web d'avant, et plus jamais vendus. La livre est désormais une ligne
+> de `REGIONAL_PRICES` (1 499,99 ₺ / 149,99 ₺ / 899,99 ₺, ceux de l'App Store), et c'est le
+> **pays** qui la décide (`resolvePricingCountry`), plus la langue.
+
 **Une devise de plus, pas un produit de plus.** Les trois `price_…` du
 compte live portent la livre dans leurs `currency_options`. Il n'y a
 donc rien à créer chez RevenueCat, rien à rattacher à `pro`, et rien à
@@ -461,12 +472,12 @@ false`) ; rien ne les référence.
 **Ce qui est en place**
 
 1. **Un catalogue figé**, dans `web/packages/core/src/pricing.ts`
-   (`TRY_AMOUNTS`). Cours de référence : 1 € ≈ 56 ₺ (3 sept. 2026). Les
+   (anciennement `TRY_AMOUNTS`, aujourd'hui la ligne Turquie de `REGIONAL_PRICES`). Cours de référence : 1 € ≈ 56 ₺ (3 sept. 2026). Les
    montants sont **écrits**, arrondis, pas calculés à l'affichage. Les
    `currency_options` Stripe portent exactement ces chiffres — ce
    fichier et Stripe doivent dire le même nombre.
-2. **Quand facturer en ₺.** Langue du site `tr`, ou pays de scolarisation
-   `tr` (`presentmentCurrencyFor`). `startCheckout` pose alors
+2. **Quand facturer en ₺.** Pays du compte `tr`, sinon adresse IP turque
+   (`resolvePricingCountry`, §16) — la langue du site ne décide plus de la devise. `startCheckout` pose alors
    `currency=try` sur la session. **Sans ce champ, Checkout devine la
    devise à l'adresse IP** : un Turc en déplacement lirait des livres et
    paierait des euros. La clé d'idempotence porte la devise, donc un
@@ -496,7 +507,7 @@ Les trois montants sont posés sur `price_1UAqB5…`, `price_1UAqBI…` et
    TRY reste le repli jusqu'à ce que le SDK réponde. Pas de nouveau
    Product ID Apple : Turkey est un palier du même `com.micabo…`.
 3. **App Store Connect** — vérifier le palier Turkey généré par Apple
-   sur les trois produits. S'il s'écarte de `TRY_AMOUNTS`, **c'est Apple
+   sur les trois produits. S'il s'écarte de `REGIONAL_PRICES`, **c'est Apple
    qui gagne** — on réécrit le catalogue, on ne force pas le palier.
 4. **Preview Vercel** — si la clé est `sk_test_…`, les prix sandbox
    doivent porter la même `currency_option` TRY, sinon Checkout retombe
@@ -587,3 +598,75 @@ Ce qu'elle ne fait **pas** : créer les produits (§2), ajouter l'app chez Reven
 imposer une hausse aux abonnés en place (`preserveCurrentPrice`), remplacer une offre
 d'introduction différente déjà posée — elle la signale. Rien n'est écrit si un seul pays
 nommé ne trouve pas son palier.
+
+---
+
+## 16. Le web aux prix des apps, pays par pays
+
+**Le site affiche, dans chaque pays, les prix de l'App Store.** `REGIONAL_PRICES`
+(`web/packages/core/src/pricing.ts`) reprend `store/pricing.json` palier par palier ;
+`freemium-parity.test.ts` relit la grille et le repli de `PaywallCatalog.swift`, et tombe si le
+web diverge — ou si Google Play diverge ailleurs qu'à Chypre et Malte (palier C sur Play,
+absents de la grille App Store, donc 49,99 € : le site suit l'App Store).
+
+**Le pays** : `profiles.country_code` pour un compte connecté, sinon `x-vercel-ip-country`,
+sinon la région du navigateur (`Accept-Language`), sinon la langue quand elle ne désigne qu'un
+pays (`resolvePricingCountry`, lu côté serveur par `web/lib/pricing-country.ts`). Un pays que
+la grille ne nomme pas reçoit la grille France, en euros. Les sommes s'écrivent dans la langue
+du site (`Intl.NumberFormat`), le mensuel est l'annuel ÷ 12 dans la même devise, et la remise
+du cadeau se calcule sur les prix du pays, comme `PaywallCatalog.savings`.
+
+**Limite connue.** Pour les pays « alignés » de la grille (Canada, Australie, Suisse → prix
+américain ; Pologne, Tchéquie, Hongrie, Roumanie, Bulgarie → prix espagnol ; Amérique latine et
+palier E → prix en dollars), l'App Store vend l'équivalent **en devise locale** qu'Apple choisit ;
+ce montant n'est écrit nulle part dans le dépôt. Le site affiche la référence (USD ou EUR) et
+Stripe l'encaisserait dans cette devise.
+
+### Les prix Stripe à créer pour rouvrir le paiement web
+
+Un prix Stripe ne porte **qu'un montant par devise** : l'euro à 49,99 € et l'euro à 39,99 €
+sont deux objets, comme le dollar à 59,99 $, 29,99 $ et 19,99 $. D'où **quatre groupes**
+(`stripeGroup`) × trois offres = **douze prix**. Chaque prix est **récurrent, TVA incluse,
+sans essai** (l'essai part de `startCheckout`), et vit sur **son propre produit** Stripe :
+RevenueCat ne retient qu'un prix par produit à l'import (§14). La table se déduit de
+`pricing.stripePriceSpecs()` ; un test vérifie qu'elle tient.
+
+| Groupe | Offre | Rythme | Devise et montant par défaut | `currency_options` | Variable d'environnement |
+| --- | --- | --- | --- | --- | --- |
+| `standard` | Annuel | an | EUR 49,99 | USD 59,99 · TRY 1 499,99 · BRL 149,90 · MXN 599,00 · INR 1 499,00 | `STRIPE_PRICE_YEARLY` |
+| `standard` | Hebdomadaire | semaine | EUR 4,99 | USD 7,99 · TRY 149,99 · BRL 14,90 · MXN 59,00 · INR 149,00 | `STRIPE_PRICE_WEEKLY` |
+| `standard` | Annuel discount | an | EUR 29,99 | USD 35,99 · TRY 899,99 · BRL 89,90 · MXN 359,00 · INR 899,00 | `STRIPE_PRICE_YEARLY_DISCOUNT` |
+| `south` | Annuel | an | EUR 39,99 | — | `STRIPE_PRICE_YEARLY_SOUTH` |
+| `south` | Hebdomadaire | semaine | EUR 3,99 | — | `STRIPE_PRICE_WEEKLY_SOUTH` |
+| `south` | Annuel discount | an | EUR 23,99 | — | `STRIPE_PRICE_YEARLY_DISCOUNT_SOUTH` |
+| `latam` | Annuel | an | USD 29,99 | — | `STRIPE_PRICE_YEARLY_LATAM` |
+| `latam` | Hebdomadaire | semaine | USD 2,99 | — | `STRIPE_PRICE_WEEKLY_LATAM` |
+| `latam` | Annuel discount | an | USD 17,99 | — | `STRIPE_PRICE_YEARLY_DISCOUNT_LATAM` |
+| `emerging` | Annuel | an | USD 19,99 | — | `STRIPE_PRICE_YEARLY_EMERGING` |
+| `emerging` | Hebdomadaire | semaine | USD 1,99 | — | `STRIPE_PRICE_WEEKLY_EMERGING` |
+| `emerging` | Annuel discount | an | USD 11,99 | — | `STRIPE_PRICE_YEARLY_DISCOUNT_EMERGING` |
+
+Les pays de chaque groupe :
+
+- `standard` — France, Belgique, Luxembourg, Allemagne, Autriche, Pays-Bas, Irlande, Finlande
+  (EUR) ; États-Unis, Canada, Australie, Suisse (USD) ; Turquie (TRY) ; Brésil (BRL) ;
+  Mexique (MXN) ; Inde (INR) ; et **tout pays non nommé** (EUR).
+- `south` — Espagne, Italie, Portugal, Grèce, Slovaquie, Slovénie, Croatie, Estonie, Lettonie,
+  Lituanie, Pologne, Tchéquie, Hongrie, Roumanie, Bulgarie (EUR).
+- `latam` — Argentine, Colombie, Chili, Pérou (USD).
+- `emerging` — Maroc, Algérie, Tunisie, Sénégal, Côte d'Ivoire, Égypte, Indonésie, Philippines,
+  Viêt Nam, Pakistan, Nigeria (USD).
+
+**Pour rouvrir**, dans l'ordre :
+
+1. Créer les douze produits/prix ci-dessus (live, puis sandbox pour Preview), chacun avec la
+   metadata `product_id` de son offre Apple (`com.micabo.app.pro.yearly`, `.weekly`,
+   `.yearly.discount`).
+2. Poser les douze `price_…` dans Vercel, sous les noms de la dernière colonne
+   (`STRIPE_PRICE_ENV`). Il n'y a **plus de repli sur le catalogue** : une variable absente
+   fait refuser la session (« Le tarif Stripe n'est pas renseigné »), plutôt que d'encaisser un
+   prix de l'ancienne grille.
+3. Chez RevenueCat, importer les douze produits Stripe et les rattacher à `pro` (§12).
+4. Ajouter les douze `price_…` à `STORE_PRODUCTS` (`store: "stripe"`, sans `legacy`) pour que
+   la carte Abonnement nomme l'offre d'un abonné web.
+5. Passer `CHECKOUT_MAINTENANCE` à `false` (`web/lib/stripe/checkout.ts`), dans un commit.

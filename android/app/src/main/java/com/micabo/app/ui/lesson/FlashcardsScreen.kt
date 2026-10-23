@@ -260,7 +260,10 @@ private fun CardsRun(lesson: Lesson, cards: List<CardEntry>, onClose: () -> Unit
     fun rate(rating: Rating) {
         if (finished) return
         if (rating == Rating.AGAIN) haptics.tap() else haptics.success()
-        app.lessons.review(lesson.id, cards[index].key, rating)
+        // Par l'identifiant de la carte : sa clé `thème:rang` a pu changer depuis le début de la
+        // séance (une synchronisation qui retire ou ajoute une carte), et la note partait sur la voisine.
+        val entry = cards[index]
+        app.lessons.review(lesson.id, entry.card.id, entry.key, rating)
         flipped = false
         index += 1
     }

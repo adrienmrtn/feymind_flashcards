@@ -40,7 +40,7 @@ import {
   PLANS,
   RECOMMENDED_PLAN,
   STORE_PRODUCTS,
-  TRY_AMOUNTS,
+  STRIPE_PRICE_ENV,
   WEEKLY,
   YEARLY,
   annualCost,
@@ -53,13 +53,18 @@ import {
   planDisplayedPrice,
   planDisplayedUnit,
   planFor,
+  planPriceText,
   planRenewalCopy,
+  legacyStripePriceId,
   presentmentAmount,
-  presentmentCurrencyFor,
+  presentmentFor,
   presentmentMonthly,
   priceText,
+  regionalPricesFor,
+  resolvePricingCountry,
   savingsPercent,
-  stripePriceId,
+  stripePriceIdFromEnv,
+  stripePriceSpecs,
   trialBadge,
 } from "../src/pricing";
 
@@ -335,40 +340,95 @@ describe("les offres", () => {
     expect(DISCOUNT_YEARLY.productId).toBe("com.micabo.app.pro.yearly.discount");
   });
 
-  it("affichent la livre turque sans lire Stripe ni RevenueCat", () => {
-    expect(presentmentCurrencyFor("tr")).toBe("TRY");
-    expect(presentmentCurrencyFor("fr", "tr")).toBe("TRY");
-    expect(presentmentCurrencyFor("tr-TR", "fr")).toBe("TRY");
-    expect(presentmentCurrencyFor("fr", "TR")).toBe("TRY");
-    expect(presentmentCurrencyFor("fr")).toBe("EUR");
-    expect(presentmentCurrencyFor("de")).toBe("EUR");
-    expect(presentmentAmount(YEARLY, "TRY")).toBe(TRY_AMOUNTS.yearly);
-    expect(presentmentAmount(WEEKLY, "TRY")).toBe(TRY_AMOUNTS.weekly);
-    expect(presentmentMonthly(DISCOUNT_YEARLY, "TRY")).toBe(TRY_AMOUNTS.yearly_discount_monthly);
-    expect(priceText(TRY_AMOUNTS.weekly, "TRY")).toMatch(/₺|TRY/);
-    expect(planDisplayedPrice(YEARLY, "TRY")).toBe(monthlyEquivalent(YEARLY, "TRY"));
+  it("affichent le prix du pays, pas celui de la langue", () => {
+    const turkey = presentmentFor("tr", "tr");
+    expect(turkey.prices.currency).toBe("TRY");
+    expect(presentmentAmount(YEARLY, turkey)).toBe(1499.99);
+    expect(presentmentAmount(WEEKLY, turkey)).toBe(149.99);
+    expect(presentmentAmount(DISCOUNT_YEARLY, turkey)).toBe(899.99);
+    expect(presentmentMonthly(DISCOUNT_YEARLY, turkey)).toBeCloseTo(75, 2);
+    expect(priceText(149.99, turkey)).toMatch(/₺|TRY/);
+    expect(planDisplayedPrice(YEARLY, turkey)).toBe(monthlyEquivalent(YEARLY, turkey));
+
+    // L'Espagne et l'Italie paient le palier C, comme dans l'app — plus 49,99 €.
+    const spain = presentmentFor("ES", "es");
+    expect(presentmentAmount(YEARLY, spain)).toBe(39.99);
+    expect(presentmentAmount(WEEKLY, spain)).toBe(3.99);
+    expect(presentmentAmount(DISCOUNT_YEARLY, presentmentFor("it"))).toBe(23.99);
+    expect(monthlyEquivalent(YEARLY, presentmentFor("it", "fr"))).toBe("3,33\u00a0€");
+
+    // Les États-Unis en dollars, et leur remise propre : −86 %, pas −81 %.
+    const us = presentmentFor("us", "en");
+    expect(planPriceText(YEARLY, us)).toBe("$59.99");
+    expect(monthlyEquivalent(YEARLY, us)).toBe("$5.00");
+    expect(savingsPercent(YEARLY, WEEKLY, us)).toBe(86);
+    expect(discountSavingsPercent(us)).toBe(40);
+
+    // Un pays que la grille ne nomme pas, ou aucun : la France.
+    expect(regionalPricesFor("jp")).toBe(regionalPricesFor(null));
+    expect(regionalPricesFor("other").currency).toBe("EUR");
+    expect(regionalPricesFor("uk").amounts.yearly).toBe(49.99);
     expect(YEARLY.price).toBe(49.99);
-    // La ligne turque de `store/pricing.json`, celle qu'Apple prélève.
-    expect(TRY_AMOUNTS.yearly).toBe(1499.99);
-    expect(TRY_AMOUNTS.weekly).toBe(149.99);
-    expect(TRY_AMOUNTS.yearly_discount).toBe(899.99);
   });
 
-  it("sont six chez RevenueCat, tous sur pro — la livre n'ajoute pas de ligne", () => {
-    // Un `price_…` par offre et par magasin. La livre vit dans les
-    // `currency_options` du prix euro : un second prix TRY forcerait un
-    // réimport chez RevenueCat et couperait les graphiques en deux.
+  it("écrivent la somme dans la langue du lecteur", () => {
+    expect(priceText(39.99, presentmentFor("es", "fr"))).toBe("39,99\u00a0€");
+    expect(priceText(39.99, presentmentFor("es", "en"))).toBe("€39.99");
+    expect(priceText(149.9, presentmentFor("br", "pt-BR"))).toMatch(/^R\$\u00a0?149,90$/);
+  });
+
+  it("trouvent le pays : le compte, puis l'adresse IP, puis le navigateur", () => {
+    expect(resolvePricingCountry({ profile: "es", geo: "US" })).toBe("ES");
+    expect(resolvePricingCountry({ profile: "uk" })).toBe("GB");
+    expect(resolvePricingCountry({ profile: "other", geo: "MX" })).toBe("MX");
+    expect(resolvePricingCountry({ geo: "it", acceptLanguage: "en-US" })).toBe("IT");
+    expect(resolvePricingCountry({ acceptLanguage: "en;q=0.5, pt-BR;q=0.9" })).toBe("BR");
+    expect(resolvePricingCountry({ acceptLanguage: "es-419,es;q=0.9" })).toBe("MX");
+    expect(resolvePricingCountry({ acceptLanguage: "tr" })).toBe("TR");
+    expect(resolvePricingCountry({ uiLocale: "it" })).toBe("IT");
+    // L'anglais et le français ne désignent aucun pays : la grille de base.
+    expect(resolvePricingCountry({ uiLocale: "en", acceptLanguage: "en" })).toBeNull();
+    expect(resolvePricingCountry({ geo: "T1" })).toBeNull();
+  });
+
+  it("sont six chez RevenueCat, tous sur pro — les anciens prix Stripe reconnus, plus vendus", () => {
     expect(STORE_PRODUCTS).toHaveLength(6);
     expect(STORE_PRODUCTS.filter((product) => product.store === "app_store")).toHaveLength(3);
     expect(STORE_PRODUCTS.filter((product) => product.store === "stripe")).toHaveLength(3);
+    expect(STORE_PRODUCTS.filter((product) => product.store === "stripe").every((product) => product.legacy)).toBe(true);
     expect(new Set(STORE_PRODUCTS.map((product) => product.id)).size).toBe(6);
-    expect(stripePriceId("yearly")).toBe("price_1UAqB547TFrcO0lvSacZ91Pp");
-    expect(stripePriceId("weekly")).toBe("price_1UAqBI47TFrcO0lvTLjtkffx");
-    expect(stripePriceId("yearly_discount")).toBe("price_1UAqBJ47TFrcO0lvb1vDYAPj");
+    expect(legacyStripePriceId("yearly")).toBe("price_1UAqB547TFrcO0lvSacZ91Pp");
+    expect(legacyStripePriceId("weekly")).toBe("price_1UAqBI47TFrcO0lvTLjtkffx");
+    expect(legacyStripePriceId("yearly_discount")).toBe("price_1UAqBJ47TFrcO0lvb1vDYAPj");
+  });
+
+  it("prennent les prix Stripe de la grille dans l'environnement", () => {
+    expect(STRIPE_PRICE_ENV.standard.yearly).toBe("STRIPE_PRICE_YEARLY");
+    expect(stripePriceIdFromEnv("yearly", "south", { STRIPE_PRICE_YEARLY_SOUTH: " price_s " })).toBe("price_s");
+    expect(stripePriceIdFromEnv("weekly", "standard", { STRIPE_PRICE_WEEKLY: "" })).toBeNull();
+    expect(stripePriceIdFromEnv("yearly_discount", "latam", {})).toBeNull();
+
+    const specs = stripePriceSpecs();
+    expect(specs).toHaveLength(12);
+    expect(new Set(specs.map((spec) => spec.env)).size).toBe(12);
+    const standardYearly = specs.find((spec) => spec.group === "standard" && spec.plan === "yearly");
+    expect(standardYearly).toMatchObject({
+      currency: "eur",
+      amount: 49.99,
+      interval: "year",
+      currencyOptions: { usd: 59.99, try: 1499.99, brl: 149.9, mxn: 599, inr: 1499 },
+    });
+    expect(specs.find((spec) => spec.group === "south" && spec.plan === "weekly")).toMatchObject({
+      currency: "eur",
+      amount: 3.99,
+      interval: "week",
+      currencyOptions: {},
+    });
   });
 
   it("dit la devise à Stripe en minuscules, comme il l'attend", () => {
-    expect(checkoutCurrency("TRY")).toBe("try");
-    expect(checkoutCurrency("EUR")).toBe("eur");
+    expect(checkoutCurrency(presentmentFor("tr"))).toBe("try");
+    expect(checkoutCurrency(presentmentFor("fr"))).toBe("eur");
+    expect(checkoutCurrency(presentmentFor("in"))).toBe("inr");
   });
 });

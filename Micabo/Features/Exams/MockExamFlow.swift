@@ -214,10 +214,15 @@ struct MockExamFlow: View {
         Task {
             do {
                 let paper = try await builder.examPaper(title: title, exam: start.exam, courses: chosen, minutes: minutes, in: modelContext)
-                if !isPro { ExamAllowance.freeMockUsed = true }
+                // **Une copie vide ne consomme pas l'examen offert.** Le drapeau se posait
+                // avant ce contrôle : une génération ratée (aucune question valide) coûtait
+                // le seul examen gratuit, et « Réessayer » ouvrait le paywall.
                 guard !paper.items.isEmpty else {
                     withAnimation { phase = .failed(L10n.t("lesson.exam.failed", locale: .resolved())) }
                     return
+                }
+                if ExamAllowance.consumesFreeMock(isPro: isPro, questionCount: paper.items.count) {
+                    ExamAllowance.freeMockUsed = true
                 }
                 Haptics.success()
                 withAnimation(.spring(duration: 0.5)) { phase = .run(paper) }

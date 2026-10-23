@@ -5,8 +5,6 @@ import type { Route } from "next";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { BrandLockup } from "@/components/BrandMark";
-import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { useI18n } from "@/lib/i18n/client";
 import { useLocalizedHref } from "@/lib/i18n/href";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -14,12 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { OrDivider, ProviderButton } from "@/components/auth/AuthButtons";
-import {
-  APP_STORE_REVIEW_EMAIL,
-  APP_STORE_REVIEW_PASSWORD,
-  isAppStoreReviewEmail,
-} from "@/lib/auth/app-store-review";
+import { signInForAppStoreReview } from "@/lib/actions/app-store-review";
+import { isAppStoreReviewEmail, isAppleAddress } from "@/lib/auth/app-store-review";
 import { inspectAddress } from "@/lib/auth/email";
+import { OFFER_PATH, safeAppPath } from "@/lib/auth/next-path";
 import { oauthCallbackUrl, oauthFailureMessage } from "@/lib/auth/oauth";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 import { markPaywallPending, persistStoredAnswers } from "@/lib/onboarding/persist";
@@ -29,12 +25,13 @@ import { EmailSuggestion } from "@/components/auth/EmailSuggestion";
 /**
  * La création du compte : **une vraie page**, posée à la **fin** du parcours.
  *
- * Les réponses sont déjà sur l'appareil. Ici on ouvre la session, on les déverse,
- * et on entre dans l'app. Le paywall n'est pas ici : il se posera sur le tableau
- * de bord, une fois qu'on a vu l'étagère.
+ * Les réponses sont déjà sur l'appareil. Ici on ouvre la session, on les déverse, et
+ * **l'offre suit tout de suite** (`/commencer/offre`) : c'est le moment où l'étudiant vient de
+ * dire ce qu'il vise. Elle se referme d'une croix, et l'app s'ouvre derrière.
  *
  * Apple et Google d'abord : un appui, aucun mot de passe à inventer. Le courriel
- * en dernier, parce qu'il demande d'aller lire une boîte.
+ * en dernier, parce qu'il demande d'aller lire une boîte. Le lien du courriel, le retour
+ * d'Apple ou de Google ramènent tous trois à l'offre (`?next=/commencer/offre`).
  */
 export default function AccountStep() {
   return (
@@ -46,9 +43,19 @@ export default function AccountStep() {
 
 type Pending = "apple" | "google" | "email" | null;
 
-function destination(): string {
+/** L'offre qui suit le compte. Le tableau de bord la reprendra si elle n'a pas été vue. */
+const AFTER_ACCOUNT = OFFER_PATH;
+
+/**
+ * Où aller une fois la session ouverte : la `suite` demandée (une page de l'app qui renvoyait
+ * ici faute de session), sinon l'offre. `markPaywallPending` garde l'offre en réserve pour le
+ * tableau de bord, au cas où l'étudiant n'y passerait pas.
+ */
+function destination(suite: string | null): string {
   markPaywallPending();
-  return "/app";
+  // `suite` vient de l'URL : `safeAppPath` n'y laisse passer qu'une page de l'app, jamais un
+  // `/\autre-site` que le navigateur relirait comme une autre origine.
+  return safeAppPath(suite, AFTER_ACCOUNT);
 }
 
 function AccountStepBody() {
@@ -68,17 +75,12 @@ function AccountStepBody() {
     void supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return;
       await persistStoredAnswers();
-      const suite = params.get("suite");
-      const next =
-        suite && suite.startsWith("/") && !suite.startsWith("//")
-          ? suite
-          : destination();
-      router.replace(next as Route);
+      router.replace(destination(params.get("suite")) as Route);
     });
   }, [params, router]);
 
   function callbackUrl() {
-    return oauthCallbackUrl(destination());
+    return oauthCallbackUrl(destination(params.get("suite")));
   }
 
   async function signInWith(provider: "apple" | "google") {
@@ -93,7 +95,7 @@ function AccountStepBody() {
 
     if (error) {
       setPending(null);
-      setFailure(oauthFailureMessage(provider, error.message));
+      setFailure(oauthFailureMessage(t, provider, error.message));
     }
   }
 
@@ -137,19 +139,23 @@ function AccountStepBody() {
 
     const supabase = createClient();
 
-    if (isAppStoreReviewEmail(address)) {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: APP_STORE_REVIEW_EMAIL,
-        password: APP_STORE_REVIEW_PASSWORD,
-      });
+    // Le compte de relecture s'ouvre côté serveur : le mot de passe ne quitte jamais
+    // `APP_STORE_REVIEW_PASSWORD`. Une autre adresse d'Apple ne reçoit pas de lien
+    // non plus - il rebondirait - mais elle n'ouvre rien.
+    if (isAppleAddress(address)) {
+      if (!isAppStoreReviewEmail(address)) {
+        setPending(null);
+        setFailure(t("onboarding.emailUndeliverable"));
+        return;
+      }
+      const result = await signInForAppStoreReview(address);
       setPending(null);
-      if (error) {
-        setFailure(error.message);
+      if (result.status === "error") {
+        setFailure(result.message);
         return;
       }
       await persistStoredAnswers();
-      router.replace(destination() as Route);
-      router.refresh();
+      router.replace(destination(params.get("suite")) as Route);
       return;
     }
 
@@ -166,24 +172,22 @@ function AccountStepBody() {
     }
   }
 
-  // La carte fait 760 px de haut sur tous les écrans, et cette page-ci doit tenir dedans sans
-  // ascenseur : c'est la dernière du parcours, celle où l'on s'engage, et une page qui défile à
-  // ce moment-là cache la moitié des façons de créer un compte. Tout y est donc réglé au plus
-  // serré - un titre, deux boutons, un champ, la mention légale - et elle se centre.
+  // La carte a la même hauteur sur tous les écrans, et cette page-ci doit tenir dedans sans
+  // ascenseur : c'est celle où l'on s'engage, et une page qui défile à ce moment-là cache la
+  // moitié des façons de créer un compte. Un titre, deux boutons, un champ, la mention légale.
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-6 sm:px-10 sm:py-8">
-      <div className="rise mx-auto my-auto w-full max-w-[400px]">
-        <div className="flex items-center justify-between gap-3">
-          <BrandLockup
-            href="/commencer/parcours"
-            size={28}
-            className="text-ink"
-            wordClassName="text-[15px] font-bold text-ink"
-          />
-          <LanguageSwitcher />
-        </div>
-
-        <h1 className="mt-7 text-[28px] font-bold leading-[1.1] tracking-display text-ink sm:text-[32px] text-balance">
+      <div className="step-part mx-auto my-auto w-full max-w-[400px]">
+        <Link
+          href={"/commencer/parcours" as Route}
+          className="pressable -ms-1 mb-3 inline-flex min-h-10 items-center gap-1.5 rounded-pill pe-2 text-[14.5px] font-semibold text-ink-tertiary transition-colors duration-hover hover:text-ink"
+        >
+          <svg aria-hidden viewBox="0 0 20 20" className="h-4 w-4 rtl:-scale-x-100">
+            <path d="M12 4l-6 6 6 6" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          {t("common.back")}
+        </Link>
+        <h1 className="text-balance text-center text-[26px] font-extrabold leading-[1.12] tracking-tight-title text-ink sm:text-[29px]">
           {t("onboarding.compteTitle")}
         </h1>
 
@@ -227,7 +231,7 @@ function AccountStepBody() {
                   setFailure(null);
                 }}
                 placeholder={t("onboarding.emailPlaceholder")}
-                className="h-12 rounded-button text-[16px] sm:text-[16px] [&_[data-slot=input]]:h-12 [&_[data-slot=input]]:text-[16px] [&_[data-slot=input]]:leading-[3rem]"
+                className="h-12 rounded-[14px] text-[16px] sm:text-[16px] [&_[data-slot=input]]:h-12 [&_[data-slot=input]]:text-[16px] [&_[data-slot=input]]:leading-[3rem]"
               />
             </Field>
             <Button
@@ -235,7 +239,7 @@ function AccountStepBody() {
               size="xl"
               loading={pending === "email"}
               disabled={email.trim().length === 0}
-              className="h-12 w-full text-[16px] sm:h-12 sm:text-[16px]"
+              className="h-12 w-full rounded-[14px] text-[15.5px] font-extrabold sm:h-12 sm:text-[15.5px]"
             >
               {t("onboarding.sendLink")}
             </Button>
@@ -257,7 +261,7 @@ function AccountStepBody() {
           </Alert>
         ) : null}
 
-        <p className="mt-6 text-[12px] leading-relaxed text-ink-tertiary">
+        <p className="mt-6 text-center text-[12px] leading-relaxed text-ink-tertiary">
           {t("onboarding.legalPrefix")}{" "}
           <Link href={termsHref} className="underline-draw text-ink-secondary">
             {t("onboarding.legalTerms")}

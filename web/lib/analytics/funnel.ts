@@ -7,17 +7,19 @@ import { stepIndex, STEPS } from "../onboarding/steps";
  *
  * Les pages vues de Vercel disent déjà combien de gens ont chargé `/commencer/repos`. Elles
  * ne disent pas dans quel **ordre** une même personne les a traversées, ni où le paywall se
- * trouve : il n'a pas d'adresse, c'est une carte posée sur `/app`, et Vercel ne voit qu'un
- * chargement de `/app` de plus. Sans événement, l'entonnoir s'arrête au compte.
+ * trouve : c'est une carte, et Vercel ne voit qu'un chargement de page de plus. Sans
+ * événement, l'entonnoir s'arrête au compte.
  *
- * Quatre événements suffisent, et ils portent tous une **marche numérotée** : dans Vercel,
- * on filtre `onboarding_step` par `step` et on lit les nombres dans l'ordre. La marche où
- * ça s'effondre est l'écran qui perd les gens.
+ * Les marches portent un **numéro** : dans Vercel, on filtre `onboarding_step` par `step` et
+ * on lit les nombres dans l'ordre. La marche où ça s'effondre est l'écran qui perd les gens.
+ * `onboarding_answer` dit **qui** les traverse - le pays, le niveau, ce qui bloque - comme
+ * `onboardingAnswer` sur l'iPhone : jamais de texte libre, seulement des identifiants.
  *
  * | Événement          | Quand                                             | Propriétés                    |
  * | ------------------ | ------------------------------------------------- | ----------------------------- |
  * | `onboarding_step`  | à chaque écran du parcours `/commencer/*`         | `step`, `index`, `of`         |
- * | `paywall_view`     | la carte de l'offre s'ouvre (accueil, séance, cadeau) | `surface`, `stage`        |
+ * | `onboarding_answer`| une réponse fermée du parcours (pays, niveau…)    | `field`, `value`              |
+ * | `paywall_view`     | la carte de l'offre s'ouvre (parcours, accueil, séance, cadeau) | `surface`, `stage` |
  * | `checkout_start`   | clic sur « S'abonner », avant le départ vers Stripe | `plan`, `surface`           |
  * | `checkout_success` | retour de Stripe sur `/app?abonnement=ok`         | -                             |
  *
@@ -27,13 +29,17 @@ import { stepIndex, STEPS } from "../onboarding/steps";
 
 export const FUNNEL_EVENTS = {
   step: "onboarding_step",
+  answer: "onboarding_answer",
   paywall: "paywall_view",
   checkout: "checkout_start",
   paid: "checkout_success",
 } as const;
 
-/** D'où l'offre s'est ouverte. Le même écran, trois portes, et elles ne convertissent pas pareil. */
-export type PaywallSurface = "home" | "session" | "discount";
+/**
+ * D'où l'offre s'est ouverte. Le même écran, quatre portes, et elles ne convertissent pas pareil :
+ * `onboarding` est l'offre posée juste après la création du compte (`/commencer/offre`).
+ */
+export type PaywallSurface = "home" | "session" | "discount" | "onboarding";
 
 export interface StepEvent {
   /** Le dernier segment de l'adresse : `bienvenue`, `repos`, `compte`… */
@@ -60,6 +66,14 @@ export function trackOnboardingStep(pathname: string): void {
   const event = stepEvent(pathname);
   if (!event) return;
   track(FUNNEL_EVENTS.step, { ...event });
+}
+
+/** Les questions fermées du parcours, nommées comme sur l'iPhone. */
+export type OnboardingField = "country" | "stage" | "track" | "year" | "worries" | "dailyMinutes" | "examDate";
+
+/** Une réponse fermée. `value` est un identifiant ou un nombre, jamais ce que l'étudiant a tapé. */
+export function trackOnboardingAnswer(field: OnboardingField, value: string | number): void {
+  track(FUNNEL_EVENTS.answer, { field, value });
 }
 
 export function trackPaywallView(

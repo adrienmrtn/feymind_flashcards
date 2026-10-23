@@ -86,17 +86,46 @@ class Prefs(context: Context) {
     /**
      * Efface le profil et les réglages, **pas le compte invité** : c'est lui qui porte
      * l'abonnement et la leçon offerte. Un compte neuf perdait Pro.
+     *
+     * **Ni l'état de la synchronisation** (`sync.*`) ni le transfert de l'invité (`claim.*`) :
+     * les pierres tombales que « Tout effacer » vient de poser doivent encore monter, et le
+     * repère comme le dernier utilisateur restent ceux du serveur. Les effacer faisait tout
+     * redescendre au passage suivant, sous le même invité.
      */
     fun reset() {
-        val session = listOf("auth.access", "auth.refresh", "auth.user").associateWith { prefs.getString(it, "").orEmpty() }
-        val expiresAt = this.expiresAt
+        val kept = prefs.all.filterKeys { key ->
+            key in setOf("auth.access", "auth.refresh", "auth.user", "auth.expiresAt") || key.startsWith("sync.") || key.startsWith("claim.")
+        }
         prefs.edit {
             clear()
-            session.forEach { (key, value) -> putString(key, value) }
-            putLong("auth.expiresAt", expiresAt)
+            kept.forEach { (key, value) ->
+                when (value) {
+                    is String -> putString(key, value)
+                    is Long -> putLong(key, value)
+                    is Int -> putInt(key, value)
+                    is Boolean -> putBoolean(key, value)
+                    is Float -> putFloat(key, value)
+                    is Set<*> -> putStringSet(key, value.filterIsInstance<String>().toSet())
+                    else -> Unit
+                }
+            }
         }
         _profile.value = read()
     }
+
+    /**
+     * **Le profil vient d'être effacé** (« Tout effacer ») et l'accueil n'est pas refait : le
+     * profil du serveur ne redescend pas, sinon son `onboarding_completed_at` refermait l'accueil
+     * en plein milieu. Retiré quand l'accueil est fini ici, ou à la connexion d'un compte.
+     */
+    var profileErased: Boolean
+        get() = prefs.getBoolean("sync.profileErased", false)
+        set(value) = prefs.edit { putBoolean("sync.profileErased", value) }
+
+    /** La permission des notifications a déjà été demandée (Android 13 et plus). */
+    var notificationsAsked: Boolean
+        get() = prefs.getBoolean("notifications.asked", false)
+        set(value) = prefs.edit { putBoolean("notifications.asked", value) }
 
     /** Le lot de nouvelles questions offert, une fois (`PracticeAllowance`). */
     var practiceFreeUsed: Boolean
@@ -192,6 +221,69 @@ class Prefs(context: Context) {
         prefs.edit { putStringSet("sync.reviews", pendingReviews - rows.toSet()) }
     }
 
+    /** Les notes en attente dont la carte a changé d'identifiant (`LessonRepository.rekey`). */
+    fun remapReviews(cardIds: Map<String, String>) {
+        if (cardIds.isEmpty()) return
+        val current = pendingReviews
+        val next = current.map { line ->
+            val row = runCatching { MicaboJson.parseToJsonElement(line) }.getOrNull() as? kotlinx.serialization.json.JsonObject
+            val card = row?.str("card_id")?.lowercase().orEmpty()
+            val replaced = cardIds[card]
+            if (row == null || replaced == null) line else kotlinx.serialization.json.JsonObject(row + ("card_id" to kotlinx.serialization.json.JsonPrimitive(replaced))).toString()
+        }.toSet()
+        if (next != current) prefs.edit { putStringSet("sync.reviews", next) }
+    }
+
+    /**
+     * **Ce qui attendait de monter pour un compte**, mis de côté quand il s'en va (déconnexion,
+     * session perdue, « Tout effacer ») : poussées sous l'invité, ses suppressions ne
+     * touchaient aucune ligne et ses notes étaient refusées, puis tout était jeté. Elles
+     * reviennent dans la file à sa prochaine connexion (`unpark`).
+     */
+    fun park(user: String) {
+        if (user.isEmpty()) return
+        val tombstones = this.tombstones
+        val reviews = pendingReviews
+        if (tombstones.isEmpty() && reviews.isEmpty()) return
+        val tombKey = "sync.parked.tombstones.$user"
+        val reviewKey = "sync.parked.reviews.$user"
+        val parkedTombstones = prefs.getStringSet(tombKey, emptySet()).orEmpty().toSet()
+        val parkedReviews = prefs.getStringSet(reviewKey, emptySet()).orEmpty().toSet()
+        prefs.edit {
+            putStringSet(tombKey, parkedTombstones + tombstones)
+            putStringSet(reviewKey, (parkedReviews + reviews).take(500).toSet())
+            putStringSet("sync.tombstones", emptySet())
+            putStringSet("sync.reviews", emptySet())
+        }
+    }
+
+    /** Ce qui avait été mis de côté pour ce compte revient dans la file. */
+    fun unpark(user: String) {
+        if (user.isEmpty()) return
+        val tombKey = "sync.parked.tombstones.$user"
+        val reviewKey = "sync.parked.reviews.$user"
+        val parkedTombstones = prefs.getStringSet(tombKey, null)
+        val parkedReviews = prefs.getStringSet(reviewKey, null)
+        if (parkedTombstones == null && parkedReviews == null) return
+        val tombstones = this.tombstones + parkedTombstones.orEmpty()
+        val reviews = (pendingReviews + parkedReviews.orEmpty()).take(500).toSet()
+        prefs.edit {
+            putStringSet("sync.tombstones", tombstones)
+            putStringSet("sync.reviews", reviews)
+            remove(tombKey)
+            remove(reviewKey)
+        }
+    }
+
+    /** Le compte a été supprimé : ce qui était mis de côté pour lui n'a plus où aller. */
+    fun dropParked(user: String) {
+        if (user.isEmpty()) return
+        prefs.edit {
+            remove("sync.parked.tombstones.$user")
+            remove("sync.parked.reviews.$user")
+        }
+    }
+
     /** La dernière synchronisation réussie, en millisecondes ; 0 pour tout reprendre. */
     var syncWatermark: Long
         get() = prefs.getLong("sync.watermark", 0)
@@ -201,6 +293,52 @@ class Prefs(context: Context) {
     var syncUser: String
         get() = prefs.getString("sync.user", "").orEmpty()
         set(value) = prefs.edit { putString("sync.user", value) }
+
+    /**
+     * Ce qu'était le dernier utilisateur synchronisé : `account`, `guest`, ou vide (avant cette
+     * date). Un compte qui laisse place à l'invité (déconnexion) ne fait pas remonter ses leçons
+     * sous l'invité ; un invité qui en remplace un autre (une sauvegarde restaurée, un invité
+     * recréé), si.
+     */
+    var syncUserKind: String
+        get() = prefs.getString("sync.userKind", "").orEmpty()
+        set(value) = prefs.edit { putString("sync.userKind", value) }
+
+    /**
+     * **Le transfert de l'invité vers le compte** (`create_guest_claim`, puis `claim_guest`) : le
+     * jeton, valable vingt-quatre heures, pris avec la session de l'invité juste avant la
+     * connexion, l'heure où il a été pris, et l'invité qu'il transfère. Gardé tant que le
+     * transfert n'a pas abouti : il se réessaie au passage suivant.
+     */
+    var guestClaimToken: String
+        get() = prefs.getString("claim.token", "").orEmpty()
+        set(value) = prefs.edit { putString("claim.token", value) }
+    var guestClaimAt: Long
+        get() = prefs.getLong("claim.at", 0)
+        set(value) = prefs.edit { putLong("claim.at", value) }
+    var guestClaimFrom: String
+        get() = prefs.getString("claim.from", "").orEmpty()
+        set(value) = prefs.edit { putString("claim.from", value) }
+
+    fun clearGuestClaim() {
+        prefs.edit {
+            remove("claim.token")
+            remove("claim.at")
+            remove("claim.from")
+        }
+    }
+
+    /**
+     * **Le compte dont la session a été perdue** (GoTrue a refusé son jeton) et l'heure : la
+     * synchronisation attend qu'il se reconnecte plutôt que de pousser ses leçons sous l'invité.
+     * Effacé par « Tout effacer » (le préfixe `account.` n'est pas gardé), et par une connexion.
+     */
+    var lostAccount: String
+        get() = prefs.getString("account.lost", "").orEmpty()
+        set(value) = prefs.edit { putString("account.lost", value) }
+    var lostAccountAt: Long
+        get() = prefs.getLong("account.lostAt", 0)
+        set(value) = prefs.edit { putLong("account.lostAt", value) }
 
     /** Le dernier changement du profil fait ici, en millisecondes ; 0 avant cette date. */
     var profileUpdatedAt: Long

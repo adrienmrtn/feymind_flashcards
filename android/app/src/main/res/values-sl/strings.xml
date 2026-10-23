@@ -225,7 +225,7 @@
     <string name="ios_searchCourse">Tečaj, predmet…</string>
     <string name="ios_sharedCourse">Deljen tečaj</string>
     <string name="ios_sharedNoSheet">Ta tečaj nima povzetka</string>
-    <string name="ios_signOutMsg">Tvoji tečaji ostanejo v tej napravi in v tvojem računu. Ob naslednji prijavi jih najdeš znova.</string>
+    <string name="ios_signOutMsg">Tvoji tečaji ostanejo v računu in izginejo s te naprave. Znova jih najdeš ob naslednji prijavi.</string>
     <string name="ios_signOutQ">Se želiš odjaviti?</string>
     <string name="ios_startCheaper">Začni s %1$s %% popusta</string>
     <string name="ios_streak_bestLabel">Tvoj rekord</string>
@@ -245,8 +245,6 @@
     <string name="ios_tapToSync">Tapni za sinhronizacijo</string>
     <string name="ios_targetLead">Ciljaj na tisto, kar bi te res razveselilo, ne na tisto, kar se sliši razumno.</string>
     <string name="ios_targetTitle">Pa na kaj\nciljaš?</string>
-    <string name="ios_trialDay2">2. dan: opomnik pred koncem</string>
-    <string name="ios_trialDay2Detail">Opozorili te bomo z obvestilom. Preklic v petnajstih sekundah.</string>
     <string name="ios_trialLast">%1$s. dan: konec preizkusa</string>
     <string name="ios_trialLastDetail">Tvoja naročnina se začne %1$s.</string>
     <string name="ios_trialToday">Danes: preizkusi Micabo Pro</string>
@@ -254,8 +252,8 @@
     <string name="ios_trial_noPayment">Zdaj ne plačaš nič</string>
     <string name="ios_trial_price">Nato %1$s na leto, torej %2$s na mesec.</string>
     <string name="ios_trial_reminder_cta">Nadaljuj brezplačno</string>
-    <string name="ios_trial_reminder_sub">%1$s. dan te opozori obvestilo. Če želiš, prekličeš z dvema dotikoma.</string>
-    <string name="ios_trial_reminder_title">Pred koncem preizkusa ti pošljemo **opomnik**.</string>
+    <string name="ios_trial_reminder_sub">Tudi %1$s. dan lahko še prekličeš z dvema dotikoma. Pred koncem preizkusa se nič ne zaračuna.</string>
+    <string name="ios_trial_reminder_title">Tvoj preizkus je **brez obveznosti**.</string>
     <string name="ios_trial_title">Želimo, da Micabo preizkusiš **brezplačno**.</string>
     <string name="ios_unitWeek">teden</string>
     <string name="ios_unitYear">leto</string>
@@ -519,10 +517,12 @@
     <string name="onboarding_linkSent">Odpri povezavo, poslano na %1$s</string>
     <string name="onboarding_sendLink">Pošlji mi povezavo</string>
     <string name="x_account_deleteMsg">Tvoji tečaji, kartice in zgodovina bodo izbrisani povsod. Naročnino upravljaš v Google Play.</string>
+    <string name="x_account_expired">Tvoja seja je potekla. Znova se prijavi, da se bodo lekcije še naprej sinhronizirale.</string>
     <string name="x_auth_rateLimited">Preveč poskusov. Počakaj minuto in poskusi znova.</string>
     <string name="x_error_generic">Nekaj je šlo narobe. Poskusi znova.</string>
     <string name="x_error_network">Ni povezave. Preveri internet in poskusi znova.</string>
     <string name="x_friends_adopt">Naredi iz tega mojo lekcijo</string>
+    <string name="x_lesson_courseUnknown">Ta tečaj še ni sinhroniziran. Poskusi znova čez trenutek.</string>
     <string name="x_lesson_whoSees">Kdo vidi to lekcijo</string>
     <string name="x_onb_language">V katerem jeziku se učiš?</string>
     <string name="x_onb_language_sub">Mika v tem jeziku napiše tvoje lekcije, kvize in kartice.</string>
@@ -535,7 +535,10 @@
     <string name="x_paywall_subscribe">Nadgradi na Pro</string>
     <string name="x_pro_gifted">Ta dostop si dobil v dar: ničesar ni treba upravljati ali preklicati.</string>
     <string name="x_quoted">„%1$s“</string>
+    <string name="x_record_channel">Snemanje predavanja</string>
     <string name="x_record_limit">Do 90 minut. Mika tvoj posnetek pretvori v besedilo in nato napiše tvojo lekcijo.</string>
+    <string name="x_record_ongoing">Snemam tvoje predavanje</string>
+    <string name="x_record_ongoingBody">Micabo snema naprej, tudi ko je zaslon zaklenjen.</string>
     <string name="x_score_1">Težko mi gre</string>
     <string name="x_score_2">Malo pod povprečjem</string>
     <string name="x_score_3">Povprečno</string>

@@ -226,7 +226,7 @@
     <string name="ios_searchCourse">دورة، مادة…</string>
     <string name="ios_sharedCourse">درس مشترك</string>
     <string name="ios_sharedNoSheet">هذا الدرس بلا ملخص</string>
-    <string name="ios_signOutMsg">تبقى دروسك على هذا الجهاز وفي حسابك. ستجدها عند تسجيل الدخول المرة القادمة.</string>
+    <string name="ios_signOutMsg">تبقى دروسك في حسابك وتُزال من هذا الجهاز. ستجدها عند تسجيل الدخول مرة أخرى.</string>
     <string name="ios_signOutQ">تسجيل الخروج؟</string>
     <string name="ios_startCheaper">ابدأ بخصم %1$s%%</string>
     <string name="ios_streak_bestLabel">رقمك القياسي</string>
@@ -246,8 +246,6 @@
     <string name="ios_tapToSync">انقر للمزامنة</string>
     <string name="ios_targetLead">استهدف ما سيسعدك حقًا، لا ما يبدو معقولًا.</string>
     <string name="ios_targetTitle">وما الذي\nتطمح إليه؟</string>
-    <string name="ios_trialDay2">اليوم 2: تذكير قبل الانتهاء</string>
-    <string name="ios_trialDay2Detail">سننبّهك بإشعار. يمكنك الإلغاء في خمس عشرة ثانية.</string>
     <string name="ios_trialLast">اليوم %1$s: تنتهي الفترة التجريبية</string>
     <string name="ios_trialLastDetail">يبدأ اشتراكك في %1$s.</string>
     <string name="ios_trialToday">اليوم: جرّب Micabo Pro</string>
@@ -255,8 +253,8 @@
     <string name="ios_trial_noPayment">لا دفع الآن</string>
     <string name="ios_trial_price">ثم %1$s سنويًا، أي %2$s شهريًا.</string>
     <string name="ios_trial_reminder_cta">تابع مجانًا</string>
-    <string name="ios_trial_reminder_sub">في اليوم %1$s يصلك إشعار للتنبيه. يمكنك الإلغاء بنقرتين إن أردت.</string>
-    <string name="ios_trial_reminder_title">سنرسل لك **تذكيرًا** قبل انتهاء فترتك التجريبية.</string>
+    <string name="ios_trial_reminder_sub">حتى في اليوم %1$s يمكنك الإلغاء بنقرتين. لا يُدفع شيء قبل انتهاء الفترة التجريبية.</string>
+    <string name="ios_trial_reminder_title">فترتك التجريبية **بلا أي التزام**.</string>
     <string name="ios_trial_title">نريدك أن تجرّب Micabo **مجانًا**.</string>
     <string name="ios_unitWeek">أسبوع</string>
     <string name="ios_unitYear">سنة</string>
@@ -521,10 +519,12 @@
     <string name="onboarding_linkSent">افتح الرابط المرسل إلى %1$s</string>
     <string name="onboarding_sendLink">احصل على رابط</string>
     <string name="x_account_deleteMsg">ستُحذف دوراتك وبطاقاتك وسجلك في كل مكان. يُدار الاشتراك من Google Play.</string>
+    <string name="x_account_expired">انتهت صلاحية جلستك. سجّل الدخول مجددًا لمواصلة مزامنة دروسك.</string>
     <string name="x_auth_rateLimited">محاولات كثيرة جدًا. انتظر دقيقة ثم حاول مجددًا.</string>
     <string name="x_error_generic">حدث خطأ ما. حاول مجددًا.</string>
     <string name="x_error_network">لا يوجد اتصال. تحقّق من الإنترنت وحاول مجددًا.</string>
     <string name="x_friends_adopt">اجعله درسي</string>
+    <string name="x_lesson_courseUnknown">لم تتم مزامنة هذه الدورة بعد. حاول مجددًا بعد لحظة.</string>
     <string name="x_lesson_whoSees">من يرى هذا الدرس</string>
     <string name="x_onb_language">بأي لغة تدرس؟</string>
     <string name="x_onb_language_sub">يكتب Mika دروسك واختباراتك وبطاقاتك بهذه اللغة.</string>
@@ -537,7 +537,10 @@
     <string name="x_paywall_subscribe">اشترك في Pro</string>
     <string name="x_pro_gifted">هذا الوصول هدية لك: لا يوجد ما تديره أو تلغيه.</string>
     <string name="x_quoted">«%1$s»</string>
+    <string name="x_record_channel">تسجيل الدرس</string>
     <string name="x_record_limit">حتى 90 دقيقة. يحوّل Mika تسجيلك إلى نص ثم يكتب درسك.</string>
+    <string name="x_record_ongoing">جارٍ تسجيل درسك</string>
+    <string name="x_record_ongoingBody">يواصل Micabo التسجيل حتى عندما تكون الشاشة مقفلة.</string>
     <string name="x_reminder_channel">تذكير يومي</string>
     <string name="x_score_1">أواجه صعوبة</string>
     <string name="x_score_2">أقل قليلًا من المتوسط</string>

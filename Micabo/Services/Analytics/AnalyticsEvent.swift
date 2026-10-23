@@ -57,6 +57,8 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     case paywallPurchased = "paywall_purchased"
     case paywallPurchaseFailed = "paywall_purchase_failed"
     case paywallPurchaseCancelled = "paywall_purchase_cancelled"
+    /// L'achat attend une validation (partage familial, banque) : ni acheté, ni refusé.
+    case paywallPurchasePending = "paywall_purchase_pending"
     case paywallRestored = "paywall_restored"
     /// Refermé sans rien acheter. Avec la durée passée dessus : un paywall refermé en
     /// deux secondes et un paywall lu pendant une minute ne se corrigent pas pareil.
@@ -118,6 +120,10 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     case syncFinished = "sync_finished"
     /// Un aller-retour de synchro interrompu, et sa raison en quelques mots.
     case syncFailed = "sync_failed"
+    /// Les lignes de l'invité passées au compte (`claim_guest`), avec ce qui a bougé.
+    case guestClaimed = "guest_claimed"
+    /// Une réclamation refusée ou tombée, et pourquoi. Le passage suivant la retente.
+    case guestClaimFailed = "guest_claim_failed"
 }
 
 /// **Ce qu'une étiquette a le droit d'être.**

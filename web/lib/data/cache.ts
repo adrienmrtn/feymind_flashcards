@@ -1,4 +1,4 @@
-import { revalidateTag, unstable_cache } from "next/cache";
+import { revalidateTag, unstable_cache, updateTag } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
 
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
@@ -66,10 +66,31 @@ export function cachedRead<T>(
 
 export type UserDataKind = "courses" | "cards" | "exams" | "entitlement" | "profile" | "social" | "all";
 
+/**
+ * **Expirer un tag tout de suite**, pas « à la prochaine occasion ».
+ *
+ * `revalidateTag(tag, "max")` est, dans Next 16, un *stale-while-revalidate* : la requête
+ * suivante reçoit encore l'ancienne valeur, et la nouvelle n'est calculée qu'en arrière-plan.
+ * Pour un cache de lecture c'est raisonnable ; pour l'écran qui suit une écriture, c'est un
+ * cours supprimé qui réapparaît, un titre renommé qui revient à l'ancien, un import qui « n'a
+ * rien donné » - et une carte notée dont l'état d'avant repart en base à la note suivante.
+ *
+ * `updateTag` donne la lecture de ses propres écritures, mais seulement dans une action
+ * serveur : il lève ailleurs. Les routes (l'import en flux, les webhooks) passent donc par
+ * `revalidateTag(tag, { expire: 0 })`, qui expire l'entrée sur-le-champ elle aussi.
+ */
+function expireTag(tag: string): void {
+  try {
+    updateTag(tag);
+  } catch {
+    revalidateTag(tag, { expire: 0 });
+  }
+}
+
 /** Invalide le cache serveur de l'étudiant, sans toucher à la session en cours. */
 export function revalidateUserData(userId: string, kind: UserDataKind = "all"): void {
   if (kind === "all") {
-    revalidateTag(userTag(userId), "max");
+    expireTag(userTag(userId));
     return;
   }
   const tag =
@@ -84,5 +105,24 @@ export function revalidateUserData(userId: string, kind: UserDataKind = "all"): 
             : kind === "social"
               ? socialTag(userId)
               : profileTag(userId);
-  revalidateTag(tag, "max");
+  expireTag(tag);
+}
+
+/**
+ * **Une lecture qui échoue ne se met pas en cache.**
+ *
+ * `const { data } = await …` jetait l'erreur et rendait `data ?? []` : une coupure de trois
+ * secondes devenait « aucune leçon », gardée trente secondes par `unstable_cache` et servie à
+ * chaque écran - de quoi faire croire à un étudiant que ses cours ont disparu, ou lui faire
+ * réimporter ce qu'il a déjà. Une exception levée dans la fonction mise en cache, elle, n'est
+ * pas retenue : la requête suivante réessaie.
+ */
+export function rowsOrThrow<T>(
+  result: { data: T | null; error: { message: string; code?: string } | null },
+  what: string,
+): T | null {
+  if (result.error) {
+    throw new Error(`lecture ${what} : ${result.error.code ?? ""} ${result.error.message}`.trim());
+  }
+  return result.data;
 }

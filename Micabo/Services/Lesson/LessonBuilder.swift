@@ -88,6 +88,16 @@ final class LessonBuilder {
     private(set) var writing: Set<UUID> = []
     /// Les leçons en cours de conversion, par identifiant de cours.
     private(set) var converting: Set<UUID> = []
+    /// **Les leçons effacées pendant que leurs thèmes s'écrivaient.** Le groupe de tâches les
+    /// lit à chaque thème rendu : il s'arrête au lieu d'écrire dans un cours qui n'existe plus.
+    /// Hors observation : aucun écran n'en affiche rien.
+    @ObservationIgnored private var abandoned: Set<UUID> = []
+    @ObservationIgnored private var deletionObserver: NSObjectProtocol?
+    /// **Une synchro, attendue.** Posée par `MicaboApp` : une conversion refusée parce que le
+    /// serveur ne connaît pas encore le cours (`course_unknown`) le fait monter, puis
+    /// redemande. Une fermeture plutôt qu'une référence à `CloudSync` : le constructeur n'a
+    /// pas à connaître la synchro, ni les tests à en construire une.
+    @ObservationIgnored var syncNow: (@MainActor () async -> Void)?
 
     init(
         service: LessonGenerating = SupabaseLessonService(),
@@ -97,6 +107,30 @@ final class LessonBuilder {
         self.service = service
         self.audience = audience
         self.themeRetryDelay = themeRetryDelay
+        // `CourseRepository.delete` prévient ici, quel que soit l'écran qui efface : le chemin
+        // de la leçon, la liste des cours, « Tout effacer ». Une notification plutôt qu'une
+        // référence, pour que le dépôt n'ait pas à connaître le constructeur.
+        deletionObserver = NotificationCenter.default.addObserver(
+            forName: CourseRepository.courseDeleted,
+            object: nil,
+            queue: .main
+        ) { [weak self] note in
+            guard let id = note.object as? UUID else { return }
+            MainActor.assumeIsolated { self?.abandonThemes(ofLesson: id) }
+        }
+    }
+
+    /// Arrête l'écriture des thèmes d'une leçon effacée. Les thèmes déjà demandés finissent
+    /// leur aller-retour réseau, mais rien de ce qu'ils rendent n'est plus écrit.
+    func abandonThemes(ofLesson id: UUID) {
+        abandoned.insert(id)
+    }
+
+    /// Vrai quand le cours n'est plus là : effacé du contexte, ou abandonné. Lire un attribut
+    /// d'un modèle supprimé puis enregistré fait planter SwiftData ; c'est donc la première
+    /// chose qu'on regarde, avant même `orderedChapters`.
+    private func isGone(_ course: Course, lessonID: UUID) -> Bool {
+        abandoned.contains(lessonID) || course.isDeleted || course.modelContext == nil
     }
 
     // MARK: - Créer
@@ -225,13 +259,20 @@ final class LessonBuilder {
         let background = BackgroundWork(name: "lesson-themes")
         defer { background.end() }
 
+        guard !course.isDeleted, course.modelContext != nil else { return }
+        let lessonID = course.id
+        guard !abandoned.contains(lessonID) else { return }
         let wanted: Set<ThemeStatus> = retryFailed ? [.pending, .failed] : [.pending]
         let chapters = course.orderedChapters.filter { wanted.contains($0.status) && !writing.contains($0.id) }
         guard !chapters.isEmpty else {
             finishIfComplete(course, in: context)
             return
         }
-        for chapter in chapters { writing.insert(chapter.id) }
+        let chapterIDs = chapters.map(\.id)
+        for id in chapterIDs { writing.insert(id) }
+        // Quoi qu'il arrive - groupe fini, leçon effacée en route - plus aucun de ces thèmes
+        // n'est « en cours d'écriture ».
+        defer { for id in chapterIDs { writing.remove(id) } }
 
         let titles = course.orderedChapters.map(\.title)
         let path = course.lessonPath
@@ -275,7 +316,15 @@ final class LessonBuilder {
             }
             for _ in 0..<Self.parallelThemes { launch() }
             while let (chapterID, result) = await group.next() {
-                if let chapter = course.orderedChapters.first(where: { $0.id == chapterID }) {
+                // **La leçon a pu être effacée pendant l'attente.** Écrire ses notes et insérer
+                // ses cartes dans un cours supprimé faisait planter SwiftData, ou laissait des
+                // cartes orphelines qui remontaient au serveur. On coupe tout le groupe : les
+                // thèmes encore en file ne partent pas, ceux en vol sont annulés.
+                if isGone(course, lessonID: lessonID) {
+                    group.cancelAll()
+                    break
+                }
+                if let chapter = course.orderedChapters.first(where: { $0.id == chapterID }), !chapter.isDeleted {
                     applyTheme(result, to: chapter, of: course, in: context)
                 }
                 writing.remove(chapterID)
@@ -286,6 +335,7 @@ final class LessonBuilder {
                 launch()
             }
         }
+        guard !isGone(course, lessonID: lessonID) else { return }
         finishIfComplete(course, in: context)
     }
 
@@ -314,6 +364,12 @@ final class LessonBuilder {
         of course: Course,
         in context: ModelContext
     ) {
+        // Dernier filet, au cas où l'effacement tombe entre la lecture du groupe et ici.
+        guard !course.isDeleted, course.modelContext != nil, !chapter.isDeleted else { return }
+        // Le thème est arrivé prêt par la synchro pendant qu'il s'écrivait ici (un autre
+        // appareil l'a fini avant) : réécrire ses notes et ajouter un second jeu de cartes le
+        // doublerait. Ce qui est déjà là gagne.
+        if case .success = result, chapter.status == .ready { return }
         switch result {
         case .success(let theme):
             chapter.setNotes(theme.notes)
@@ -545,7 +601,17 @@ final class LessonBuilder {
         do {
             conversion = try await service.convert(request)
         } catch {
-            throw LessonServiceError.from(error)
+            let failure = LessonServiceError.from(error)
+            // Le serveur ne connaît pas encore ce cours : il n'a jamais été synchronisé (un
+            // ancien cours, une synchro restée bloquée). On le fait monter, puis on redemande
+            // **une fois** ; un second refus remonte, et l'écran ouvre le cours sans le modèle.
+            guard failure == .courseUnknown, let syncNow else { throw failure }
+            await syncNow()
+            do {
+                conversion = try await service.convert(request)
+            } catch {
+                throw LessonServiceError.from(error)
+            }
         }
         Self.apply(conversion, to: course, in: context)
         try? context.save()
