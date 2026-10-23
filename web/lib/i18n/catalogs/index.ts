@@ -5,6 +5,9 @@ import { de } from "./de";
 import { es } from "./es";
 import { tr } from "./tr";
 import { DEFAULT_UI_LOCALE, UI_LOCALES, type UiLocale } from "../locales";
+import { es419 } from "./es-419";
+import { nl } from "./nl";
+import { ro } from "./ro";
 
 export { en, fr, de, es, tr };
 export type { Catalog };
@@ -25,13 +28,13 @@ export const CATALOGS: Record<UiLocale, Catalog> = {
   fr,
   de,
   es,
-  "es-419": en, // TODO(traduction) : import { es419 } from "./es-419";
+  "es-419": es419,
   it: en, // TODO(traduction) : import { it } from "./it";
   pt: en, // TODO(traduction) : import { pt } from "./pt";
   "pt-BR": en, // TODO(traduction) : import { ptBR } from "./pt-br";
-  nl: en, // TODO(traduction) : import { nl } from "./nl";
+  nl: nl,
   pl: en, // TODO(traduction) : import { pl } from "./pl";
-  ro: en, // TODO(traduction) : import { ro } from "./ro";
+  ro: ro,
   sv: en, // TODO(traduction) : import { sv } from "./sv";
   da: en, // TODO(traduction) : import { da } from "./da";
   fi: en, // TODO(traduction) : import { fi } from "./fi";
