@@ -145,6 +145,123 @@ export function transferTargets(event: {
   return { to: [...to], from: [...from] };
 }
 
+// MARK: - Ce qu'un événement du webhook dit de l'accès
+
+/** Ce que `resolveEventAccess` rend : l'accès que l'événement annonce. */
+export type EventAccess = { isPro: boolean; willRenew: boolean };
+
+/**
+ * Ce que l'événement dit de l'accès. Sorti du webhook pour être testé.
+ *
+ * `null` veut dire « ne touche à rien » : un événement qu'on ne comprend pas ne doit pas
+ * décider à la place de celui qu'on comprenait.
+ */
+export function resolveEventAccess(event: {
+  type?: string;
+  entitlement_ids?: string[];
+}): EventAccess | null {
+  const type = (event.type ?? "").toUpperCase();
+
+  // Un droit qui ne nous concerne pas ne dit rien de celui qui nous concerne.
+  const ids = event.entitlement_ids ?? [];
+  if (ids.length > 0 && !ids.includes(ENTITLEMENT)) return null;
+
+  switch (type) {
+    case "INITIAL_PURCHASE":
+    case "RENEWAL":
+    case "UNCANCELLATION":
+    case "PRODUCT_CHANGE":
+    case "SUBSCRIPTION_EXTENDED":
+    case "TEMPORARY_ENTITLEMENT_GRANT":
+      return { isPro: true, willRenew: true };
+
+    // Achat sans renouvellement : l'accès reste jusqu'à l'échéance, rien après.
+    case "NON_RENEWING_PURCHASE":
+      return { isPro: true, willRenew: false };
+
+    // Résilié, mais payé jusqu'au bout : l'accès reste, le renouvellement non.
+    case "CANCELLATION":
+      return { isPro: true, willRenew: false };
+
+    // **Une pause annoncée n'est pas une pause commencée.** Google Play envoie
+    // `SUBSCRIPTION_PAUSED` quand l'abonné programme la pause, qui ne commence qu'à la fin
+    // de la période payée ; c'est `EXPIRATION` qui arrive quand elle commence. Fermer ici
+    // retirait à l'abonné les jours qu'il avait payés.
+    case "SUBSCRIPTION_PAUSED":
+      return { isPro: true, willRenew: false };
+
+    case "REFUND":
+    case "REVOKED":
+      return { isPro: false, willRenew: false };
+
+    // Incident de paiement : RevenueCat gère une période de grâce, on ne ferme pas.
+    case "BILLING_ISSUE":
+      return { isPro: true, willRenew: false };
+
+    case "EXPIRATION":
+      return { isPro: false, willRenew: false };
+
+    // `TEST` sert à vérifier le branchement depuis le tableau de bord, et ne doit rien écrire.
+    default:
+      return null;
+  }
+}
+
+/**
+ * **Les événements qui retirent quelque chose** : l'accès, le renouvellement, ou l'échéance.
+ *
+ * Chacun parle d'**un** abonnement, dans **un** magasin. Un compte qui en a deux — l'App Store
+ * et le Play Store, ou un mensuel remplacé par un annuel — recevait l'expiration de l'ancien
+ * et perdait Pro alors que le nouveau courait. Pour ceux-là, le webhook relit donc l'abonné
+ * chez RevenueCat, comme il le fait déjà pour un transfert : c'est RevenueCat qui sait si un
+ * autre droit `pro` reste actif.
+ */
+const RECHECK_TYPES = new Set([
+  "CANCELLATION",
+  "EXPIRATION",
+  "SUBSCRIPTION_PAUSED",
+  "BILLING_ISSUE",
+  "REFUND",
+  "REVOKED",
+]);
+
+export function needsRevenueCatRecheck(type: string | undefined): boolean {
+  return RECHECK_TYPES.has((type ?? "").toUpperCase());
+}
+
+/** La ligne que le webhook écrit, avant l'horodatage et l'identifiant d'événement. */
+export type AccessRow = {
+  isPro: boolean;
+  willRenew: boolean;
+  productId: string | null;
+  store: string | null;
+  periodType: string | null;
+  expiresAt: string | null;
+};
+
+/**
+ * Ce qu'on écrit après avoir relu RevenueCat sur un événement qui retire quelque chose.
+ *
+ * Si RevenueCat dit qu'un droit `pro` reste actif, c'est **lui** qu'on recopie — son produit,
+ * son magasin, son échéance —, quel que soit l'abonnement dont l'événement parlait. Sinon,
+ * l'événement fait foi, tel qu'il était appliqué avant. RevenueCat injoignable (`undefined`)
+ * ne se décide pas ici : le webhook rend 502, et RevenueCat renvoie l'événement.
+ */
+export function reconcileAccess(
+  fromEvent: AccessRow,
+  current: RevenueCatAccess | null,
+): AccessRow {
+  if (!current) return fromEvent;
+  return {
+    isPro: true,
+    willRenew: current.willRenew,
+    productId: current.productId ?? fromEvent.productId,
+    store: current.store ?? fromEvent.store,
+    periodType: current.periodType ?? fromEvent.periodType,
+    expiresAt: current.expiresAt,
+  };
+}
+
 /**
  * Vrai si RevenueCat dit Pro pour ce compte **et** que la ligne `entitlements` a bien été
  * écrite. Ne lève jamais.

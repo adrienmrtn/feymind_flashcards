@@ -1,11 +1,19 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { fetchProAccess, transferTargets } from "../_shared/revenuecat.ts";
+import {
+  type AccessRow,
+  fetchProAccess,
+  needsRevenueCatRecheck,
+  reconcileAccess,
+  resolveEventAccess,
+  transferTargets,
+} from "../_shared/revenuecat.ts";
 
 /**
  * Le webhook RevenueCat : **le seul endroit qui décide qui est abonné.**
  *
- * Il est volontairement presque autonome — une seule dépendance partagée, la lecture d'un
- * abonné chez RevenueCat (`_shared/revenuecat.ts`, testée), dont les transferts ont besoin —
+ * Il est volontairement presque autonome — une seule dépendance partagée,
+ * `_shared/revenuecat.ts` (testée) : la lecture d'un abonné chez RevenueCat, dont les
+ * transferts et les fermetures ont besoin, et la traduction d'un événement en accès —
  * parce que c'est le code dont on veut pouvoir relire l'intégralité d'un trait avant de croire
  * ce qu'il écrit.
  *
@@ -32,7 +40,12 @@ import { fetchProAccess, transferTargets } from "../_shared/revenuecat.ts";
  * lui retirer ce qu'il a acheté. C'est `EXPIRATION` qui ferme.
  *
  * Et un incident de paiement ne ferme pas non plus : RevenueCat gère une période de grâce, et
- * couper l'accès pendant qu'une banque réessaie punit quelqu'un qui n'a rien fait.
+ * couper l'accès pendant qu'une banque réessaie punit quelqu'un qui n'a rien fait. Une pause
+ * programmée sur le Play Store non plus : elle commence à l'échéance, avec son `EXPIRATION`.
+ *
+ * Enfin, un événement ne parle que d'**un** abonnement. Sur ceux qui retirent quelque chose
+ * (`needsRevenueCatRecheck`), l'abonné est relu chez RevenueCat avant d'écrire : l'expiration
+ * d'un magasin ne ferme pas la ligne d'un compte abonné dans l'autre.
  */
 
 interface RevenueCatEvent {
@@ -71,54 +84,6 @@ function authorizationMatches(header: string, expected: string): boolean {
   const trimmed = header.trim();
   const bearer = trimmed.match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
   return sameSecret(bearer ?? trimmed, expected);
-}
-
-/**
- * Ce que l'événement dit de l'accès.
- *
- * `null` veut dire « ne touche à rien » : un événement qu'on ne comprend pas ne doit pas décider à
- * la place de celui qu'on comprenait.
- */
-function resolveAccess(event: RevenueCatEvent): { isPro: boolean; willRenew: boolean } | null {
-  const type = (event.type ?? "").toUpperCase();
-
-  // Un droit qui ne nous concerne pas ne dit rien de celui qui nous concerne.
-  const ids = event.entitlement_ids ?? [];
-  if (ids.length > 0 && !ids.includes(ENTITLEMENT_ID)) return null;
-
-  switch (type) {
-    case "INITIAL_PURCHASE":
-    case "RENEWAL":
-    case "UNCANCELLATION":
-    case "PRODUCT_CHANGE":
-    case "SUBSCRIPTION_EXTENDED":
-    case "TEMPORARY_ENTITLEMENT_GRANT":
-      return { isPro: true, willRenew: true };
-
-    // Achat sans renouvellement : l'accès reste jusqu'à l'échéance, rien après.
-    case "NON_RENEWING_PURCHASE":
-      return { isPro: true, willRenew: false };
-
-    // Résilié, mais payé jusqu'au bout : l'accès reste, le renouvellement non.
-    case "CANCELLATION":
-      return { isPro: true, willRenew: false };
-
-    case "REFUND":
-    case "REVOKED":
-      return { isPro: false, willRenew: false };
-
-    // Incident de paiement : RevenueCat gère une période de grâce, on ne ferme pas.
-    case "BILLING_ISSUE":
-      return { isPro: true, willRenew: false };
-
-    case "EXPIRATION":
-    case "SUBSCRIPTION_PAUSED":
-      return { isPro: false, willRenew: false };
-
-    // `TEST` sert à vérifier le branchement depuis le tableau de bord, et ne doit rien écrire.
-    default:
-      return null;
-  }
 }
 
 function normalizeStore(store: string | undefined): string | null {
@@ -207,7 +172,7 @@ Deno.serve(async (request: Request) => {
     return reply({ error: "Événement sans horodatage." }, 502);
   }
 
-  const access = resolveAccess(event);
+  const access = resolveEventAccess(event);
   if (!access) return reply({ ok: true, note: `Événement ${type} ignoré.` });
 
   const url = Deno.env.get("SUPABASE_URL");
@@ -220,14 +185,30 @@ Deno.serve(async (request: Request) => {
   const expired = expiresAt !== null && expiresAt.getTime() < Date.now();
   const eventAt = new Date(event.event_timestamp_ms).toISOString();
 
-  const applied = await applyEntitlement(url, serviceKey, {
-    userId,
+  let row: AccessRow = {
     isPro: access.isPro && !expired,
     productId: event.product_id ?? null,
     store: normalizeStore(event.store),
     periodType: normalizePeriod(event.period_type),
     expiresAt: expiresAt?.toISOString() ?? null,
     willRenew: access.willRenew,
+  };
+
+  // **Un événement qui retire quelque chose parle d'un seul abonnement.** L'expiration de
+  // l'App Store ne dit rien de l'abonnement Play Store qui court encore : on relit l'abonné
+  // chez RevenueCat, comme pour un transfert, et un droit `pro` encore actif l'emporte.
+  // RevenueCat injoignable rend 502 : il renverra l'événement, plutôt que d'écrire au hasard.
+  if (needsRevenueCatRecheck(type)) {
+    const current = await fetchProAccess(userId);
+    if (current === undefined) {
+      return reply({ error: "RevenueCat injoignable pour vérifier l'accès.", user: userId }, 502);
+    }
+    row = reconcileAccess(row, current);
+  }
+
+  const applied = await applyEntitlement(url, serviceKey, {
+    userId,
+    ...row,
     eventAt,
     eventId: event.id ?? null,
   });

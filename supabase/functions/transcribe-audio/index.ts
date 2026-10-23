@@ -1,8 +1,15 @@
-import { authorize, CallerError, withCors } from "../_shared/caller.ts";
+import {
+  authorize,
+  CallerError,
+  consumeQuota,
+  requireAccount,
+  withCors,
+} from "../_shared/caller.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { attemptTimeout, deadlineIn } from "../_shared/deadline.ts";
 import { errorResponse, jsonResponse } from "../_shared/fal.ts";
 import { readGeminiKey, upstreamReason } from "../_shared/gemini.ts";
-import { syncProFromRevenueCat } from "../_shared/revenuecat.ts";
+import { hasPro } from "../_shared/pro.ts";
 
 interface RequestBody {
   /** L'enregistrement, en base64, sans préfixe `data:`. */
@@ -27,10 +34,15 @@ interface RequestBody {
  */
 Deno.serve((request: Request) =>
   withCors(request, async () => {
+    // L'échéance de la requête, posée à son entrée : voir `_shared/deadline.ts`.
+    const deadline = deadlineIn();
     try {
-      const caller = await authorize(request, "transcribe-audio", { ceiling: 4, proCeiling: 40 });
-      if (!caller.userId) throw new CallerError("Connecte-toi pour utiliser Micabo.", 401);
-      if (!(await isPro(caller.userId)) && !(await syncProFromRevenueCat(caller.userId))) {
+      const caller = await authorize(request, "transcribe-audio", { meter: false });
+      // Une transcription est une étape lourde : jamais sur la clé publiable. Le refus vient
+      // avant le décompte, qui n'aurait sinon rien d'autre à faire que vider le budget commun.
+      requireAccount(caller);
+      await consumeQuota(caller, "transcribe-audio", 1, 4, 40);
+      if (!(await hasPro(caller.userId))) {
         return jsonResponse({ error: "Importer un enregistrement, c'est avec Pro.", code: "import_pro" }, 402);
       }
 
@@ -46,7 +58,7 @@ Deno.serve((request: Request) =>
         return jsonResponse({ error: "L'enregistrement est trop long.", code: "too_long" }, 413);
       }
 
-      const text = await transcribe(audio, mimeType, languageName(body.language));
+      const text = await transcribe(audio, mimeType, languageName(body.language), deadline);
       if (text.length < MIN_CHARACTERS) {
         return jsonResponse({ error: "Rien de lisible dans cet enregistrement.", code: "too_short" }, 422);
       }
@@ -63,7 +75,15 @@ const MAX_TRANSCRIPT = 120_000;
 const MIN_CHARACTERS = 40;
 const MODELS = ["gemini-flash-lite-latest", "gemini-flash-latest"];
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models";
+/**
+ * Le délai d'un essai, **borné par l'échéance de la requête** (`deadline.ts`). Seul, il
+ * faisait 150 secondes par modèle, deux modèles : trois cents secondes au pire, pour une
+ * fonction que la plateforme coupe bien avant. Le second modèle n'est tenté que s'il reste
+ * du temps.
+ */
 const ATTEMPT_MS = 150_000;
+/** En deçà, le second modèle n'aurait pas le temps de transcrire quoi que ce soit. */
+const SECOND_ATTEMPT_MIN_MS = 25_000;
 
 const ALLOWED_TYPES = new Set([
   "audio/mp4",
@@ -101,29 +121,17 @@ function languageName(code: unknown): string | null {
   return LANGUAGES[code.slice(0, 2).toLowerCase()] ?? null;
 }
 
-/** Vrai quand la base connaît un abonnement en cours (`is_pro`). */
-async function isPro(userId: string): Promise<boolean> {
-  const url = Deno.env.get("SUPABASE_URL");
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!url || !serviceKey) return false;
-  try {
-    const response = await fetch(`${url}/rest/v1/rpc/is_pro`, {
-      method: "POST",
-      headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ p_user: userId }),
-    });
-    return response.ok && (await response.json()) === true;
-  } catch {
-    return false;
-  }
-}
-
 /**
  * La transcription. **Fidèle, pas résumée** : c'est le cours de l'élève, enregistré par lui ;
  * le modèle ne répète pas une œuvre publiée, il met en texte une classe. Les hésitations et
  * les bruits partent, les exemples et les chiffres restent.
  */
-async function transcribe(audio: string, mimeType: string, language: string | null): Promise<string> {
+async function transcribe(
+  audio: string,
+  mimeType: string,
+  language: string | null,
+  deadline: number,
+): Promise<string> {
   const key = readGeminiKey();
   if (!key) throw new CallerError("La transcription n'est pas configurée.", 503);
   const prompt = [
@@ -136,7 +144,12 @@ async function transcribe(audio: string, mimeType: string, language: string | nu
   ].join(" ");
 
   let lastReason = "";
-  for (const model of MODELS) {
+  for (const [rank, model] of MODELS.entries()) {
+    const timeout = attemptTimeout(ATTEMPT_MS, deadline);
+    if (timeout === null || (rank > 0 && timeout < SECOND_ATTEMPT_MIN_MS)) {
+      lastReason = lastReason || "timeout";
+      break;
+    }
     let response: Response;
     try {
       response = await fetch(`${GEMINI}/${model}:generateContent?key=${key}`, {
@@ -146,7 +159,7 @@ async function transcribe(audio: string, mimeType: string, language: string | nu
           contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mimeType, data: audio } }] }],
           generationConfig: { temperature: 0.1, maxOutputTokens: 32_768 },
         }),
-        signal: AbortSignal.timeout(ATTEMPT_MS),
+        signal: AbortSignal.timeout(timeout),
       });
     } catch (error) {
       lastReason = error instanceof DOMException && error.name === "TimeoutError" ? "timeout" : "injoignable";

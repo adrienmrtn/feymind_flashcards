@@ -5,6 +5,7 @@
  * sur « Micabo écrit la fiche… ».
  */
 import { consumeQuota, readCaller, withCors } from "../_shared/caller.ts";
+import { hasPro } from "../_shared/pro.ts";
 import { CircuitOpenError } from "../_shared/circuit.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import {
@@ -241,6 +242,19 @@ Deno.serve((request: Request) =>
 
       if (!fromScratch && text.length < 40 && images.length === 0) {
         throw new FalError("Le document ne contient pas assez de contenu à analyser.", 400);
+      }
+
+      // **Générer un cours est Pro**, et le serveur le tient. Depuis la refonte « parcours »,
+      // le gratuit est la leçon offerte de `generate-lesson` ; l'iPhone n'appelle plus cette
+      // fonction que pour un abonné (`DeckSetupFlowView.advance`), et ni le site ni Android
+      // ne l'appellent. Sans cette porte, un compte gratuit écrivait ici vingt fiches par
+      // jour, depuis n'importe quel support, à côté de la leçon offerte qu'on lui comptait.
+      // La clé publiable des versions anciennes passe, sur le budget commun (`consumeQuota`).
+      if (caller.userId && !(await hasPro(caller.userId))) {
+        return jsonResponse(
+          { error: "Générer un cours, c'est avec Micabo Pro.", code: "pro_required" },
+          402,
+        );
       }
 
       await consumeQuota(caller, "generate-course");
