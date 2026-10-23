@@ -4,7 +4,7 @@ import { useEffect, useId, useState } from "react";
 import type { Route } from "next";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { pricing } from "@micabo/core";
+import { pricing, type PaywallTrigger } from "@micabo/core";
 
 import { PaywallOffer } from "@/components/app/PaywallOffer";
 import { trackCheckoutSuccess, trackPaywallView } from "@/lib/analytics/funnel";
@@ -17,7 +17,7 @@ import {
   persistStoredAnswers,
   shouldOpenPaywall,
 } from "@/lib/onboarding/persist";
-import { PAYWALL_EVENT } from "@/lib/paywall";
+import { PAYWALL_EVENT, type PaywallRequest } from "@/lib/paywall";
 import { useI18n } from "@/lib/i18n/client";
 import { requestTourRecheck } from "@/lib/tour/signal";
 import { usePresentment } from "@/lib/presentment";
@@ -44,11 +44,15 @@ export function PaywallHost({ isPaid }: { isPaid: boolean }) {
   const [startAt, setStartAt] = useState<Stage>("social");
   /** Voir `isHardPaywall` : plus aucun mur n'enferme, la croix est partout. */
   const [hard, setHard] = useState(false);
+  /** La porte qui a ouvert l'offre, pour le dire en une ligne. `null` : l'offre d'elle-même. */
+  const [trigger, setTrigger] = useState<PaywallTrigger | null>(null);
   const debugReplay = params.get("debug") === "paywall";
 
   useEffect(() => {
-    function onRequest() {
+    function onRequest(event: Event) {
       if (isPaid && !debugReplay) return;
+      const detail = (event as CustomEvent<PaywallRequest>).detail;
+      setTrigger(detail?.trigger ?? "upgrade");
       setStartAt("plans");
       setHard(isHardPaywall({ force: false, demand: true, debug: debugReplay }));
       setOpen(true);
@@ -101,6 +105,7 @@ export function PaywallHost({ isPaid }: { isPaid: boolean }) {
         return;
       }
 
+      setTrigger(null);
       setStartAt(force && !debugReplay ? "plans" : "social");
       setHard(isHardPaywall({ force, debug: debugReplay }));
       const delay = force || debugReplay ? 0 : 980;
@@ -133,6 +138,7 @@ export function PaywallHost({ isPaid }: { isPaid: boolean }) {
       key={`${debugReplay ? "debug" : "live"}-${startAt}`}
       startAt={startAt}
       hard={hard}
+      trigger={trigger}
       onClose={close}
     />
   );
@@ -142,11 +148,14 @@ export function PaywallCard({
   onClose,
   startAt = "social",
   hard = false,
+  trigger = null,
 }: {
   onClose: () => void;
   startAt?: Stage;
   /** Gardé pour le jour où un mur sans sortie reviendrait ; `isHardPaywall` rend `false`. */
   hard?: boolean;
+  /** La porte qui a ouvert l'offre : une ligne au-dessus des formules dit laquelle. */
+  trigger?: PaywallTrigger | null;
 }) {
   const { t } = useI18n();
   /**
@@ -266,6 +275,11 @@ export function PaywallCard({
           animation, et ça cassait la suite preuve → essai → rappel → Pro.
         */}
         <div key={stage} className="rise flex min-h-0 flex-1 flex-col">
+          {stage === "plans" && trigger ? (
+            <p role="status" className="mx-6 mb-1 rounded-[14px] bg-accent-soft px-3.5 py-2.5 text-center text-[13.5px] font-bold text-accent">
+              {t(`app.paywall.reason.${trigger}`)}
+            </p>
+          ) : null}
           {stage === "plans" ? (
             <PaywallOffer headingId={titleId} />
           ) : (

@@ -1,5 +1,5 @@
 /**
- * Repli quand fal.ai refuse : l'API Gemini, sans intermédiaire.
+ * L'API Gemini, sans intermédiaire : le premier chemin du texte, le repli de la vision.
  *
  * La clé vit dans le secret `GEMINI_API_KEY` du projet Supabase
  * (Edge Functions → Secrets). Le site Vercel n'en a pas besoin.
@@ -47,6 +47,18 @@ export function readGeminiKey(): string {
   return Deno.env.get("GEMINI_API_KEY")?.trim() ?? "";
 }
 
+/**
+ * **La pensée est coupée**, et c'est le point qui a coûté les thèmes du 21 octobre.
+ *
+ * Les alias `-latest` ont atterri sur la génération 3.5, qui réfléchit avant d'écrire. Sur
+ * l'endpoint compatible OpenAI, ces pensées comptent dans `max_tokens` et la réponse en
+ * sort tronquée ou en prose : le JSON ne se lit plus, et la fonction rend « Ce thème n'a pas
+ * pu s'écrire ». Micabo ne demande que du JSON à remplir : il n'a rien à faire d'un
+ * raisonnement. `reasoning_effort: "none"` le dit à Google ; un modèle qui n'accepte pas la
+ * consigne répond 400, et l'appel repart une fois sans elle.
+ */
+export const geminiThinking = { off: { reasoning_effort: "none" } as Record<string, unknown> };
+
 export async function callGemini(options: {
   prompt: string;
   systemPrompt?: string;
@@ -59,16 +71,33 @@ export async function callGemini(options: {
   const first = resolveGeminiModel(options.model);
 
   try {
-    return await callGeminiOnce(options, key, first);
+    return await callGeminiModel(options, key, first);
   } catch (error) {
-    // Gemini est le dernier chemin : quand il tombe, la génération finit en 502. Un second
-    // alias coûte un appel et rattrape le refus le plus fréquent, la file d'attente.
+    // Un second alias coûte un appel et rattrape le refus le plus fréquent, la file d'attente.
     if (!(error instanceof FalError) || !worthTheOtherModel(error.upstreamStatus ?? 0)) throw error;
     const second = otherGeminiModel(first);
     console.warn(JSON.stringify({ gemini: "autre_modele", model: second }));
-    return await callGeminiOnce(options, key, second);
+    return await callGeminiModel(options, key, second);
   }
 }
+
+/** Un modèle, sans pensée ; puis une fois avec, si c'est la consigne qu'il a refusée. */
+async function callGeminiModel(
+  options: Parameters<typeof callGeminiOnce>[0],
+  key: string,
+  model: string,
+): Promise<string> {
+  try {
+    return await callGeminiOnce(options, key, model, true);
+  } catch (error) {
+    if (!(error instanceof FalError) || !refusedThinkingSetting.has(error)) throw error;
+    console.warn(JSON.stringify({ gemini: "pensee_non_reglable", model }));
+    return await callGeminiOnce(options, key, model, false);
+  }
+}
+
+/** Les 400 qui parlent de la consigne de pensée, et pas de la demande elle-même. */
+const refusedThinkingSetting = new WeakSet<FalError>();
 
 async function callGeminiOnce(options: {
   prompt: string;
@@ -77,7 +106,7 @@ async function callGeminiOnce(options: {
   temperature?: number;
   maxTokens?: number;
   meter?: ModelUsage[];
-}, key: string, model: string): Promise<string> {
+}, key: string, model: string, withoutThinking: boolean): Promise<string> {
   const images = Array.isArray(options.imageUrls) ? options.imageUrls : [];
   const messages: Array<Record<string, unknown>> = [];
   if (options.systemPrompt) {
@@ -96,6 +125,7 @@ async function callGeminiOnce(options: {
   const body: Record<string, unknown> = { model, messages };
   if (typeof options.temperature === "number") body.temperature = options.temperature;
   if (typeof options.maxTokens === "number") body.max_tokens = options.maxTokens;
+  if (withoutThinking) Object.assign(body, geminiThinking.off);
 
   let response: Response;
   try {
@@ -110,41 +140,65 @@ async function callGeminiOnce(options: {
     });
   } catch (error) {
     if (error instanceof DOMException && error.name === "TimeoutError") {
-      throw new FalError("Le modèle a mis trop longtemps à répondre.", 504);
+      throw new FalError("Le modèle a mis trop longtemps à répondre.", 504, undefined, "timeout");
     }
-    throw new FalError("Le modèle est injoignable.", 502);
+    throw new FalError("Le modèle est injoignable.", 502, undefined, "provider");
   }
 
   const raw = await response.text();
   if (!response.ok) {
     // Le statut seul ne dit pas si c'est la clé, le modèle ou le quota. Sans le
     // message amont, le 404 des modèles numérotés a coûté une journée d'enquête.
+    const upstream = upstreamReason(raw);
     console.error(JSON.stringify({
       gemini: "http_error",
       status: response.status,
       model,
-      upstream: upstreamReason(raw),
+      upstream,
     }));
-    throw new FalError(
+    const error = new FalError(
       "L'écriture a échoué. Réessaie, le document n'a rien perdu.",
       502,
       response.status,
+      "provider",
     );
+    // Tout 400 reçu avec la consigne de pensée vaut un second essai sans elle, quel que soit
+    // le mot que Google choisit pour le dire : la seule chose que cet appel ait de différent
+    // d'avant le 23 octobre, c'est cette consigne. Un 400 qui revient sans elle est le nôtre.
+    if (withoutThinking && response.status === 400) {
+      refusedThinkingSetting.add(error);
+    }
+    throw error;
   }
 
-  let parsed: { choices?: Array<{ message?: { content?: unknown } }> };
+  let parsed: {
+    choices?: Array<{ message?: { content?: unknown }; finish_reason?: unknown }>;
+  };
   try {
-    parsed = JSON.parse(raw) as { choices?: Array<{ message?: { content?: unknown } }> };
+    parsed = JSON.parse(raw) as typeof parsed;
   } catch {
-    throw new FalError("Réponse illisible de Gemini.", 502);
+    throw new FalError("Réponse illisible de Gemini.", 502, undefined, "provider");
   }
 
   // Le `model` que Google renvoie est la seule façon de savoir sur quelle génération l'alias
   // `-latest` a atterri, et donc à quel tarif ce repli se facture.
-  noteUsage(readUsage(parsed, "gemini", model), options.meter);
+  const usage = readUsage(parsed, "gemini", model);
+  noteUsage(usage, options.meter);
 
-  const content = flattenContent(parsed.choices?.[0]?.message?.content);
-  if (!content) throw new FalError("Le modèle n'a renvoyé aucun contenu.", 502);
+  const choice = parsed.choices?.[0];
+  // Une réponse coupée par `max_tokens` finit en JSON invalide deux appels plus loin, sous
+  // une phrase qui ne dit pas d'où elle vient. Le dire ici, avec ce que la sortie a coûté.
+  if (choice?.finish_reason === "length") {
+    console.warn(JSON.stringify({
+      gemini: "tronque",
+      model: usage.served || model,
+      output: usage.output,
+      max_tokens: options.maxTokens ?? null,
+    }));
+  }
+
+  const content = flattenContent(choice?.message?.content);
+  if (!content) throw new FalError("Le modèle n'a renvoyé aucun contenu.", 502, undefined, "provider");
   return content;
 }
 

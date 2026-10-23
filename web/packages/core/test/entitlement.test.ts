@@ -15,7 +15,9 @@ import {
   ASSUME_PRO_WITHOUT_ROW,
   ENTITLEMENT_ID,
   FREE,
+  FREE_LESSON_TIER,
   FREE_TIER,
+  isPaywallTrigger,
   WEB_FREE_TIER,
   LIFETIME_PRO,
   LIFETIME_PRO_EMAILS,
@@ -111,7 +113,26 @@ describe("le droit", () => {
   });
 });
 
-describe("les limites", () => {
+describe("le gratuit de la refonte", () => {
+  it("une leçon, une question à Mika, un entraînement, un examen blanc", () => {
+    expect(FREE_LESSON_TIER.lessons).toBe(1);
+    expect(FREE_LESSON_TIER.importsAllowed).toBe(false);
+    expect(FREE_LESSON_TIER.mikaQuestions).toBe(1);
+    expect(FREE_LESSON_TIER.practiceSets).toBe(1);
+    expect(FREE_LESSON_TIER.mockExams).toBe(1);
+  });
+
+  it("connaît ses trois portes, et « Passer en Pro »", () => {
+    expect(isPaywallTrigger("send")).toBe(true);
+    expect(isPaywallTrigger("mika")).toBe(true);
+    expect(isPaywallTrigger("extra")).toBe(true);
+    expect(isPaywallTrigger("upgrade")).toBe(true);
+    expect(isPaywallTrigger("session")).toBe(false);
+    expect(isPaywallTrigger(undefined)).toBe(false);
+  });
+});
+
+describe("les anciennes portes, le temps que leurs écrans partent", () => {
   it("un cours, trois dixièmes de la fiche, cinq cartes", () => {
     expect(FREE_TIER.courses).toBe(1);
     expect(FREE_TIER.readableSheetRatio).toBeCloseTo(0.3, 4);

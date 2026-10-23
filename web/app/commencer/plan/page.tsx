@@ -1,11 +1,11 @@
 "use client";
 
 import { StoryScaffold } from "@/components/onboarding/Scaffold";
-import { PlanStory } from "@/components/onboarding/stories/PlanStory";
+import { PathStory } from "@/components/onboarding/stories/PathStory";
 import { useI18n } from "@/lib/i18n/client";
 
-/** Ce que les documents deviennent : une suite de journées, chacune avec son travail nommé. */
-export default function PlanStep() {
+/** Ce que le cours devient : un chemin, étape par étape, jusqu'au quiz final. */
+export default function PathStep() {
   const { t } = useI18n();
   return (
     <StoryScaffold
@@ -17,7 +17,7 @@ export default function PlanStep() {
       }
       lead={t("onboarding.planLead")}
     >
-      <PlanStory />
+      <PathStory />
     </StoryScaffold>
   );
 }

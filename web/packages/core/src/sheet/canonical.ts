@@ -399,8 +399,11 @@ export function collapseRepeatedFormula(latex: string): string {
   return text;
 }
 
-/** Les flèches étiquetées d'amsmath, avec leur étiquette. */
-const LABELLED_ARROW = /\\x(right|left)arrow\s*(?:\[[^\]]*\])?\s*\{([^{}]*)\}/g;
+/**
+ * Les flèches étiquetées d'amsmath, avec leur étiquette. L'antislash est facultatif : une
+ * leçon écrite avant la réparation des échappées l'a parfois perdu (« xrightarrow{Lumière} »).
+ */
+const LABELLED_ARROW = /\\?x(right|left)arrow\s*(?:\[[^\]]*\])?\s*\{([^{}]*)\}/g;
 
 /**
  * **La formule, ramenée à ce que l'application sait composer.**
@@ -527,7 +530,7 @@ function sentences(text: string): string[] {
  * Un point dans `$3.14$` n'est pas une fin de phrase, et une coupure au milieu d'un
  * `**terme**` laisserait deux étoiles orphelines dans chaque moitié.
  */
-function protectedSpans(text: string): [number, number][] {
+export function protectedSpans(text: string): [number, number][] {
   const spans: [number, number][] = [];
   for (const marker of ["$", "**", "=="]) {
     let index = 0;

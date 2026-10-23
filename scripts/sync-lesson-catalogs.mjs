@@ -1,0 +1,1 @@
+../web/scripts/sync-lesson-catalogs.mjs

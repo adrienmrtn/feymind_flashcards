@@ -296,8 +296,15 @@ fun OnboardingScreen() {
     // Pendant le chargement, le retour ne fait rien : il ne doit pas fermer l'app en plein parcours.
     BackHandler(enabled = index > 0) { if (step != Step.BUILDING) back() }
 
+    // Le parcours a commencé : dit une fois, sur le premier écran réellement affiché. Avant,
+    // seul l'index 0 de l'accroche le disait, et un parcours repris plus loin (rotation,
+    // app relancée) ne comptait jamais son début : 17 appareils à l'accroche contre 60 au pays.
+    var started by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(step) {
-        if (step == Step.HOOK && index == 0) app.analytics.track("onboarding_started")
+        if (!started) {
+            started = true
+            app.analytics.track("onboarding_started", mapOf("resumed" to (step != Step.HOOK || index != 0)))
+        }
         app.analytics.track("onboarding_step", mapOf("step" to step.name.lowercase(), "index" to index))
     }
 

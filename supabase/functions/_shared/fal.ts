@@ -1,13 +1,22 @@
 /**
  * Client modèle partagé par les Edge Functions de Micabo.
  *
- * fal.ai d'abord (`FAL_KEY`), l'API Gemini en repli (`GEMINI_API_KEY`). Les deux clés
- * vivent dans les secrets du projet Supabase.
+ * **L'API Gemini d'abord pour le texte, fal.ai en repli** ; fal d'abord pour la vision, Gemini
+ * en repli. Les deux clés vivent dans les secrets du projet Supabase (`GEMINI_API_KEY`,
+ * `FAL_KEY`).
  *
- * Le repli existe parce que fal.ai refuse parfois **au niveau du compte** : le 8 septembre
- * 2026, il a répondu 403 sur Gemini Flash comme sur Flash-Lite, pour toutes les requêtes.
- * Un 403 de compte ne se retente pas — c'est ce qui rendait les trois essais inutiles avant
- * d'arriver au repli, et faisait attendre dix secondes de plus pour le même échec.
+ * L'ordre s'est inversé le 23 octobre 2026, et voici pourquoi. fal servait Gemini par son
+ * endpoint `any-llm`, que fal a marqué déprécié et dont la liste s'arrête à Gemini 2.5 ; or
+ * Google ferme ses versions numérotées, et répond 404 « gemini-2.5-flash is no longer
+ * available » derrière fal, par intermittence depuis le 20 octobre. Le même jour, le compte
+ * fal s'est trouvé à sec (403 « User is locked. Reason: TOP_UP ») : quarante-cinq thèmes de
+ * leçon ont fini en 502 en une journée. L'API Gemini directe, elle, suit les alias `-latest`
+ * de Google et ne dépend d'aucun intermédiaire. fal reste derrière, pour une panne ou un
+ * quota chez Google, avec une échelle qui change de **famille** de modèle quand Google
+ * refuse : un modèle retiré ne se rattrape pas en le redemandant.
+ *
+ * La vision garde fal devant : c'est le chemin éprouvé pour les photos de cours, et Gemini
+ * direct le double déjà.
  */
 
 import { checkCircuit, circuitIsOpen, recordFailure, recordSuccess } from "./circuit.ts";
@@ -24,6 +33,12 @@ const FAL_TIMEOUT_MS = 120_000;
 /** Pauses entre deux essais fal, en texte seulement : la vision échoue tout de suite. */
 export const falRetry = { delaysMs: [2_000, 8_000] };
 const FLASH = "google/gemini-2.5-flash";
+/**
+ * Le barreau d'une autre famille. Quand Google, derrière fal, dit qu'un modèle n'existe
+ * plus, redemander un autre Gemini à fal rend le même 404 : il faut changer de fournisseur
+ * amont, pas de taille.
+ */
+export const OTHER_FAMILY = "openai/gpt-5-mini";
 
 export { DEFAULT_MODEL };
 export { FalError } from "./model-error.ts";
@@ -60,10 +75,28 @@ export async function callModel(options: CallOptions): Promise<string> {
   const falKey = Deno.env.get("FAL_KEY")?.trim() ?? "";
   const geminiKey = readGeminiKey();
   if (!falKey && !geminiKey) {
-    throw new FalError("Configuration serveur incomplète.", 500);
+    throw new FalError("Configuration serveur incomplète.", 500, undefined, "config");
   }
 
-  if (falKey && !circuitIsOpen()) {
+  const useVision = Array.isArray(options.imageUrls) && options.imageUrls.length > 0;
+  const falReady = falKey.length > 0 && !circuitIsOpen();
+
+  // Le texte : Gemini direct, puis fal.
+  if (!useVision && geminiKey) {
+    try {
+      return await callGemini(options, geminiKey);
+    } catch (error) {
+      if (falReady && worthAnotherProvider(error)) {
+        const status = error instanceof FalError ? error.upstreamStatus ?? error.status : 502;
+        console.warn(JSON.stringify({ gemini: "fallback_fal", status }));
+        return await callFal(options, falKey);
+      }
+      throw error;
+    }
+  }
+
+  // La vision, ou un texte sans clé Gemini : fal, puis Gemini.
+  if (falReady) {
     try {
       return await callFal(options, falKey);
     } catch (error) {
@@ -82,29 +115,45 @@ export async function callModel(options: CallOptions): Promise<string> {
   }
 
   checkCircuit();
-  throw new FalError("Configuration serveur incomplète.", 500);
+  throw new FalError("Configuration serveur incomplète.", 500, undefined, "config");
 }
 
 /**
- * fal, avec deux secondes chances.
+ * L'échelle des modèles chez fal, sans doublon.
  *
- * Le modèle change au deuxième essai : un refus sur Flash-Lite n'est pas forcément un refus
- * sur Flash. Le troisième reprend le modèle demandé, après la pause longue. Un refus qui
- * vient du compte (401, 403, 429) ne passe pas par là : il sort tout de suite pour laisser
- * la main au repli.
+ * Avant, elle était `[demandé, Flash, demandé]` : avec Flash demandé, c'était trois fois le
+ * même modèle, et un modèle retiré par Google l'était trois fois. Un barreau d'une autre
+ * famille termine l'échelle : c'est le seul qui ait une chance quand Google a fermé la porte.
+ */
+export function falLadder(primary: string, useVision: boolean): string[] {
+  if (useVision) return [primary];
+  const rungs = [primary, FLASH, OTHER_FAMILY];
+  return rungs.filter((model, index) => rungs.indexOf(model) === index);
+}
+
+/**
+ * fal, avec ses secondes chances.
+ *
+ * Une panne passagère (5xx) attend deux puis huit secondes et change de modèle. Un refus qui
+ * vient du compte (401, 403, 429) sort tout de suite pour laisser la main au repli. Un
+ * modèle que Google ne sert plus (400 ou 404 amont) saute **sans attendre** au barreau
+ * d'une autre famille : attendre dix secondes pour redemander un Gemini mort, c'est ce qui
+ * a rallongé chaque thème du 21 octobre.
  */
 async function callFal(options: CallOptions, key: string): Promise<string> {
   const useVision = Array.isArray(options.imageUrls) && options.imageUrls.length > 0;
   const primary = resolveModel(options.model);
-  const models = useVision ? [primary] : [primary, FLASH, primary];
+  const models = falLadder(primary, useVision);
   const delays = useVision ? [] : falRetry.delaysMs;
 
   let lastError: FalError | null = null;
+  let attempt = 0;
+  let skipWait = false;
 
-  for (let attempt = 0; attempt < models.length; attempt += 1) {
+  while (attempt < models.length) {
     const model = models[attempt]!;
     if (attempt > 0) {
-      const wait = delays[attempt - 1] ?? 0;
+      const wait = skipWait ? 0 : delays[attempt - 1] ?? 0;
       if (wait > 0) await sleep(wait);
       console.warn(JSON.stringify({ fal: "retry", attempt: attempt + 1, model }));
     }
@@ -116,16 +165,33 @@ async function callFal(options: CallOptions, key: string): Promise<string> {
     } catch (error) {
       lastError = error instanceof FalError
         ? error
-        : new FalError("L'écriture a échoué. Réessaie, le document n'a rien perdu.", 502);
-      if (attempt === models.length - 1 || !worthAnotherFalAttempt(lastError)) {
+        : new FalError("L'écriture a échoué. Réessaie, le document n'a rien perdu.", 502, undefined, "provider");
+      if (!worthAnotherFalAttempt(lastError)) {
         recordFailure();
         throw lastError;
       }
+      if (isModelGone(lastError)) {
+        // Le modèle n'existe plus chez l'amont : droit au barreau d'une autre famille.
+        const next = models.findIndex((candidate, index) => index > attempt && !sameFamily(candidate, model));
+        if (next === -1) {
+          recordFailure();
+          throw lastError;
+        }
+        attempt = next;
+        skipWait = true;
+        continue;
+      }
+      attempt += 1;
+      skipWait = false;
     }
   }
 
   recordFailure();
-  throw lastError ?? new FalError("L'écriture a échoué. Réessaie, le document n'a rien perdu.", 502);
+  throw lastError ?? new FalError("L'écriture a échoué. Réessaie, le document n'a rien perdu.", 502, undefined, "provider");
+}
+
+function sameFamily(a: string, b: string): boolean {
+  return a.split("/")[0] === b.split("/")[0];
 }
 
 async function callFalOnce(
@@ -159,9 +225,9 @@ async function callFalOnce(
     });
   } catch (error) {
     if (error instanceof DOMException && error.name === "TimeoutError") {
-      throw new FalError("Le modèle a mis trop longtemps à répondre.", 504);
+      throw new FalError("Le modèle a mis trop longtemps à répondre.", 504, undefined, "timeout");
     }
-    throw new FalError("Le modèle est injoignable.", 502);
+    throw new FalError("Le modèle est injoignable.", 502, undefined, "provider");
   }
 
   const raw = await response.text();
@@ -169,24 +235,30 @@ async function callFalOnce(
   if (!response.ok) {
     // Le statut seul ne dit pas si c'est le compte, le modèle ou le débit. Le 8 septembre,
     // les 403 n'ont laissé que leur nombre dans les journaux, et il a fallu deviner.
+    const upstream = upstreamReason(raw);
     console.error(JSON.stringify({
       fal: "http_error",
       status: response.status,
       model,
-      upstream: upstreamReason(raw),
+      upstream,
     }));
-    throw new FalError(
+    const error = new FalError(
       "L'écriture a échoué. Réessaie, le document n'a rien perdu.",
       502,
       response.status,
+      "provider",
     );
+    if (/no longer available|not found|does not exist|unknown model|is not supported/i.test(upstream)) {
+      modelGone.add(error);
+    }
+    throw error;
   }
 
   let parsed: { output?: string; error?: string; model?: string; usage?: unknown };
   try {
     parsed = JSON.parse(raw);
   } catch {
-    throw new FalError("Réponse illisible de fal.ai.", 502);
+    throw new FalError("Réponse illisible de fal.ai.", 502, undefined, "provider");
   }
 
   // fal ne documente pas de décompte sur `any-llm`. On le lit quand même : s'il en renvoie un,
@@ -196,11 +268,22 @@ async function callFalOnce(
 
   if (parsed.error) {
     console.error(JSON.stringify({ fal: "model_error", model }));
-    throw new FalError("L'écriture a échoué. Réessaie, le document n'a rien perdu.", 502);
+    throw new FalError("L'écriture a échoué. Réessaie, le document n'a rien perdu.", 502, undefined, "provider");
   }
-  if (!parsed.output) throw new FalError("Le modèle n'a renvoyé aucun contenu.", 502);
+  if (!parsed.output) throw new FalError("Le modèle n'a renvoyé aucun contenu.", 502, undefined, "provider");
 
   return parsed.output;
+}
+
+/**
+ * Les erreurs dont l'amont a dit « ce modèle n'existe plus ». Un ensemble faible plutôt
+ * qu'un champ : l'erreur garde sa forme, et rien d'autre n'a à connaître ce détail.
+ */
+const modelGone = new WeakSet<FalError>();
+
+function isModelGone(error: FalError): boolean {
+  if (modelGone.has(error)) return true;
+  return error.upstreamStatus === 404;
 }
 
 /**
@@ -220,7 +303,7 @@ function worthAnotherFalAttempt(error: FalError): boolean {
 /**
  * Est-ce que **l'autre fournisseur** a une chance ?
  *
- * Oui pour une panne ou un refus de compte, non pour un dépassement de délai : Gemini
+ * Oui pour une panne ou un refus de compte, non pour un dépassement de délai : l'autre
  * mettrait aussi deux minutes, et le client a déjà raccroché.
  */
 function worthAnotherProvider(error: unknown): boolean {
@@ -246,11 +329,13 @@ export function extractJSON<T>(output: string): T {
       ...describeModelOutput(output, error),
     }));
     if (detail.includes("n'a pas renvoyé de JSON")) {
-      throw new FalError("Le modèle n'a pas renvoyé de JSON.", 502);
+      throw new FalError("Le modèle n'a pas renvoyé de JSON.", 502, undefined, "invalid_json");
     }
     throw new FalError(
       "L'écriture de la fiche a échoué. Réessaie, le document n'a rien perdu.",
       502,
+      undefined,
+      "invalid_json",
     );
   }
 }
@@ -294,12 +379,17 @@ export function errorResponse(error: unknown): Response {
     ? (error as { status: number }).status
     : 500;
   const message = error instanceof Error ? error.message : "Erreur inconnue.";
+  const reason = error instanceof FalError ? error.reason : undefined;
   // **Toute réponse 5xx laisse sa raison.** Les journaux ne gardaient que le statut : un
   // 502 de `generate-flashcards` ne disait pas s'il venait du fournisseur, d'un JSON
   // illisible ou d'un lot sans carte exploitable. Les 4xx sont des refus attendus (quota,
   // cours trop court) et restent silencieux.
   if (status >= 500) {
-    console.error(JSON.stringify({ reponse: status, raison: message.slice(0, 200) }));
+    console.error(JSON.stringify({
+      reponse: status,
+      raison: message.slice(0, 200),
+      ...(reason ? { cause: reason } : {}),
+    }));
   }
-  return jsonResponse({ error: message }, status);
+  return jsonResponse(reason ? { error: message, reason } : { error: message }, status);
 }

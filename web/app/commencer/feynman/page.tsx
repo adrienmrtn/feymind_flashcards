@@ -1,23 +1,23 @@
 "use client";
 
 import { StoryScaffold } from "@/components/onboarding/Scaffold";
-import { FeynmanStory } from "@/components/onboarding/stories/FeynmanStory";
+import { QuizStory } from "@/components/onboarding/stories/QuizStory";
 import { useI18n } from "@/lib/i18n/client";
 
-/** La seule mesure honnête de ce qu'on sait : l'expliquer à voix haute, et se faire reprendre. */
-export default function FeynmanStep() {
+/** Comment on apprend : on répond, la leçon dit si c'est juste et pourquoi. */
+export default function QuizStep() {
   const { t } = useI18n();
   return (
     <StoryScaffold
       title={
         <>
-          {t("onboarding.feynmanTitleLead")}{" "}
-          <span className="text-accent">{t("onboarding.feynmanTitleStrong")}</span>
+          {t("onboarding.quizTitleLead")}{" "}
+          <span className="text-accent">{t("onboarding.quizTitleStrong")}</span>
         </>
       }
-      lead={t("onboarding.feynmanLead")}
+      lead={t("onboarding.quizLead")}
     >
-      <FeynmanStory />
+      <QuizStory />
     </StoryScaffold>
   );
 }

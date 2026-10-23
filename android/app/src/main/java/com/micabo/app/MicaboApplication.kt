@@ -73,10 +73,11 @@ class MicaboApplication : Application() {
 
     /**
      * Synchronise bientôt, sans insister : au retour au premier plan, au plus toutes les deux
-     * minutes. Sans compte connecté, rien ne part.
+     * minutes. Sous le compte, sinon sous l'invité ; sans l'un ni l'autre (pas encore de
+     * réseau au tout premier lancement), rien ne part.
      */
     fun syncSoon(force: Boolean = false) {
-        if (auth.account.value == null) return
+        if (auth.userId.isEmpty()) return
         val now = System.currentTimeMillis()
         if (!force && now - lastSyncAttempt < 2 * 60_000L) return
         lastSyncAttempt = now
@@ -152,7 +153,13 @@ class MicaboApplication : Application() {
         }
         gift = GiftOffer(this)
         analytics = Analytics(this, prefs, auth) { billing.isPro.value }
-        sync = CloudSync(auth, lessons, exams, prefs)
+        // Une synchro qui échoue se compte : avant, elle finissait dans un `Log.w` que personne
+        // ne lit, et l'app Android n'avait poussé aucun cours en base sans que rien le dise.
+        sync = CloudSync(
+            auth, lessons, exams, prefs,
+            onFailure = { reason -> analytics.track("sync_failed", mapOf("reason" to reason, "user" to if (auth.account.value == null) "guest" else "account")) },
+            onSuccess = { pushed -> analytics.track("sync_finished", mapOf("courses" to pushed, "user" to if (auth.account.value == null) "guest" else "account")) },
+        )
         social = Social(auth)
         composer = LessonComposer(this, YouTubeImport(functions), AudioImport(functions)) { name, props -> analytics.track(name, props) }
         analytics.start()

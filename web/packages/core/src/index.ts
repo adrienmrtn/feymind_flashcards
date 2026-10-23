@@ -73,23 +73,6 @@ export {
   dailyMinutesLabel,
 } from "./srs/daily-load";
 export {
-  buildQueue,
-  isDue,
-  studyCounts,
-  type QueueCard,
-  type StudyCounts,
-} from "./srs/queue";
-export {
-  LEARN_AHEAD_SECONDS,
-  advanceSession,
-  earliestAvailableAt,
-  earliestIndex,
-  enqueueInitial,
-  returnsInSession,
-  type SessionAdvance,
-  type SessionEntry,
-} from "./srs/session";
-export {
   DEFAULT_TARGET_SCORE,
   TARGET_SCORE_MAX,
   TARGET_SCORE_MIN,
@@ -180,33 +163,6 @@ export {
   type TermPlan,
 } from "./srs/term";
 
-// La copie d'examen blanc : vingt questions, aucune auto-notation.
-export {
-  MOCK_GAP,
-  MOCK_PAPER_SIZE,
-  PASS_MARK,
-  clampScore,
-  correctCount,
-  gradeClosed,
-  isClosedQuestion,
-  isMockDebrief,
-  normalizeAnswer,
-  paperMinutes,
-  paperQuota,
-  paperScore,
-  quotaSize,
-  sameAnswer,
-  type MockAnswer,
-  type MockChoiceQuestion,
-  type MockDebrief,
-  type MockFeynmanQuestion,
-  type MockGapQuestion,
-  type MockGrade,
-  type MockQuestion,
-  type MockQuestionKind,
-  type MockTrueFalseQuestion,
-  type PaperQuota,
-} from "./srs/mock-paper";
 
 // L'examen blanc : la seule mesure en conditions d'épreuve.
 export {
@@ -306,21 +262,6 @@ export {
   type StudyStats,
 } from "./srs/mastery";
 
-export {
-  EXAM_CHART_PAST_DAYS,
-  buildExamInsight,
-  cardKindLabel,
-  chartOffsets,
-  learnedPercent,
-  weakNote,
-  type ExamChart,
-  type ExamInsight,
-  type ExamInsightInput,
-  type ExamWeakPoint,
-  type InsightCard,
-  type InsightReview,
-  type WeakKind,
-} from "./srs/exam-insight";
 
 // Les séries, les niveaux de connaissance, et l'audience d'un cours.
 export {
@@ -356,8 +297,218 @@ export {
   type CurvePoint,
 } from "./retention";
 
+// La leçon en chemin : les catalogues que le serveur donne au modèle, copiés à l'octet près.
+export { DEFAULT_ICON, LESSON_ICONS, iconBrief, normalizeIcon } from "./lesson/icons";
+export {
+  DEFAULT_SYMBOL,
+  PATH_SYMBOLS,
+  normalizeSymbol,
+  symbolBrief,
+  uniqueSymbols,
+} from "./lesson/symbols";
+// … ses formats, portés de `Micabo/Models/Lesson.swift` …
+export {
+  CALLOUT_KINDS,
+  CLOZE_GAP,
+  LESSON_ACTIVITIES,
+  MISSED_CAP,
+  QUIZ_KINDS,
+  addTime,
+  answerText,
+  averageQuizPercent,
+  blockIsBoxed,
+  blockIsEmpty,
+  blockWordCount,
+  emptyProgress,
+  finalQuestion,
+  inlineSteps,
+  isFinished,
+  markDone,
+  normalizeFormula,
+  noteMissed,
+  noteRight,
+  notesPlainText,
+  questionIsValid,
+  readLessonPath,
+  readLessonProgress,
+  readNoteBlock,
+  readQuizQuestion,
+  readThemeNotes,
+  readThemeQuiz,
+  readThemeStatus,
+  recordQuiz,
+  reserveQuestions,
+  resetProgress,
+  totalSeconds,
+  type CalloutKind,
+  type DateItem,
+  type LessonActivity,
+  type LessonGroup,
+  type LessonIntro,
+  type LessonPath,
+  type LessonPathStatus,
+  type LessonProgress,
+  type NoteBlock,
+  type QuizKind,
+  type QuizQuestion,
+  type ThemeNotes,
+  type ThemeQuiz,
+  type ThemeStatus,
+} from "./lesson/types";
+// … son chemin, toujours construit de la même façon …
+export {
+  CHECKPOINT_SYMBOLS,
+  FINAL_ICON,
+  FINAL_SYMBOL,
+  INTRO_ICON,
+  INTRO_SYMBOL,
+  QUIZ_ICON,
+  circleState,
+  currentCircle,
+  groupSize,
+  lessonCircles,
+  migratedDone,
+  pathCircles,
+  pathProgress,
+  pathThemes,
+  symbolForIcon,
+  themeGroups,
+  type PathCircle,
+  type PathCircleKind,
+  type PathCircleState,
+  type PathLabels,
+  type PathTheme,
+} from "./lesson/path-layout";
+// … ses tirages, avec le générateur de l'app …
+export {
+  CHECKPOINT_REVIEW_COUNT,
+  CIRCLE_CARD_COUNT,
+  CIRCLE_QUIZ_COUNT,
+  FULL_QUIZ_COUNT,
+  SeededGenerator,
+  finalQuizCount,
+  pickCards,
+  pickQuiz,
+  pickingSeed,
+  progressive,
+  shuffled,
+  stableHash,
+  type CardCandidate,
+} from "./lesson/picking";
+export {
+  circleQuiz,
+  circleReadiness,
+  fullQuiz,
+  themeOfQuestion,
+  themeQuestions,
+  type CircleReadiness,
+} from "./lesson/session";
+// … ses tons, ses chiffres, et sa porte.
+export { LESSON_TONES, lessonTone, nextTone, readTone, stableTone, toneVars, type LessonTone } from "./lesson/tone";
+export {
+  LEARNED_CARD_DAYS,
+  homeStats,
+  learnedCardCount,
+  resumeTarget,
+  studyTime,
+  type HomeStats,
+  type ResumeCandidate,
+  type ResumeTarget,
+  type StatsCard,
+} from "./lesson/stats";
+export {
+  EXTRA_ALLOWANCE,
+  LESSON_SOURCES,
+  MIKA_ALLOWANCE,
+  courseSourceFor,
+  hasUsedFreeLesson,
+  isImportSource,
+  lessonGate,
+  type CountedLesson,
+  type LessonGateVerdict,
+  type LessonSource,
+} from "./lesson/allowance";
+// … ses étapes ouvertes : les écrans des notes, les cartes, l'ordre des propositions, Mika.
+export {
+  SCREEN_WEIGHT,
+  SWIPE_DISTANCE,
+  SWIPE_FLICK,
+  SWIPE_SLANT,
+  THIN_WEIGHT,
+  noteScreens,
+  notesPages,
+  screenWeight,
+  swipeDirection,
+  type NotesPage,
+  type SwipeDirection,
+} from "./lesson/notes-pages";
+export {
+  CARD_MASTERIES,
+  MASTERED_INTERVAL_DAYS,
+  NEW_CARDS_PER_SESSION,
+  SESSION_CAP,
+  cardMastery,
+  circleCards,
+  dueCards,
+  isCardOfQuestion,
+  masteryCounts,
+  missedCardDraft,
+  studyQueue,
+  tomorrowStart,
+  type CardMastery,
+  type LessonCard,
+  type MissedCardDraft,
+  LESSON_RATINGS,
+  type LessonRating,
+} from "./lesson/cards";
+export { choiceOrder, matchRightOrder, orderPool, randomSeed } from "./lesson/question-order";
+export { MIKA_LIMITS, dayStamp, mikaGate, mikaTurns, type MikaGate, type MikaRole, type MikaTurn } from "./lesson/mika";
+// … et sa naissance : la barre de Home, le plan du serveur.
+export {
+  MAX_COMPOSER_CHARACTERS,
+  MAX_COMPOSER_IMAGES,
+  MAX_SUPPORTS,
+  SUPPORT_ICONS,
+  SUPPORT_KINDS,
+  canSend,
+  composeCreation,
+  composerSource,
+  hasRoom,
+  isReading,
+  readySupports,
+  supportSource,
+  type ComposerSupport,
+  type LessonCreation,
+  type SupportKind,
+  type SupportState,
+} from "./lesson/composer";
+export {
+  GENERATION_STAGES,
+  pathFromPlan,
+  readPlanResponse,
+  type GenerationStage,
+  type LessonPlanPayload,
+  type PlanTheme,
+} from "./lesson/plan";
+export {
+  EXAM_DURATIONS,
+  examFraction,
+  examGradeLabel,
+  examPasses,
+  examQuestionCount,
+  examResult,
+  readExamPaper,
+  readExamResponse,
+  type ExamLessonScore,
+  type ExamPaper,
+  type ExamPaperItem,
+  type ExamPaperLesson,
+  type ExamPaperResult,
+} from "./lesson/exam";
+
 // Le verrou du gratuit - aligné sur `ProAccess.swift`, construit mais pas armé.
 export * as entitlement from "./entitlement";
+export { FREE_LESSON_TIER, PAYWALL_TRIGGERS, isPaywallTrigger, type PaywallTrigger } from "./entitlement";
 
 // Les offres, dont le pourcentage d'économie est calculé et jamais écrit.
 export * as pricing from "./pricing";
@@ -396,13 +547,6 @@ export {
   type CountryCode,
 } from "./onboarding/countries";
 export {
-  GENERATION_LANGUAGES,
-  SOURCE_LANGUAGE,
-  generationLanguageLabel,
-  isGenerationLanguage,
-  type GenerationLanguage,
-} from "./generation/language";
-export {
   TIER_LADDER,
   isStudyLevel,
   resolveStage,
@@ -417,24 +561,8 @@ export {
   subjectEmoji,
   type SubjectFamily,
 } from "./onboarding/subjects";
-export { examStoryFor, type ExamGrade, type ExamStory } from "./onboarding/exam-story";
 export { FALLBACK_EMOJI, deriveEmoji, resolveEmoji } from "./emoji";
 
-// Les réglages de génération, portés depuis l'app : ce sont les mêmes bornes des deux côtés,
-// parce que c'est la même fonction Edge qui les reçoit.
-export {
-  CARD_KINDS,
-  DEFAULT_QUOTA,
-  PER_FORMAT_RANGE,
-  TOTAL_RANGE,
-  clampQuota,
-  countOf,
-  formatBounded,
-  isAtCap,
-  quotaTotal,
-  type CardKind,
-  type QuestionQuota,
-} from "./generation/quota";
 export {
   BLOCK_BOUNDS,
   DEFAULT_SHEET_LENGTH,

@@ -1,5 +1,4 @@
 export const legalTr = {
-  backHome: "Ana sayfaya dön",
   eyebrow: "Micabo · iPhone ve site",
   updated: "Son güncelleme: {date}.",
   updatedDate: "2 Eylül 2026",

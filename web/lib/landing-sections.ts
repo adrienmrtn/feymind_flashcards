@@ -15,7 +15,6 @@
 export const LANDING_SECTIONS = {
   app: "dans-l-app",
   how: "comment-ca-marche",
-  cards: "cartes",
   method: "methode",
   exam: "mode-examen",
   results: "resultats",

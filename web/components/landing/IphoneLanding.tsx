@@ -2,16 +2,17 @@
 
 import type { Route } from "next";
 import Link from "next/link";
-import { BookOpen, CalendarSync, Repeat, TrendingUp, Zap } from "lucide-react";
+import { BookOpen, CalendarSync, GraduationCap, Home, User, Zap } from "lucide-react";
 
-import { REVIEW_RATINGS, type ReviewRating } from "@micabo/core";
 
 import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { BrandLockup, BrandMark } from "@/components/BrandMark";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { MicaboIcon } from "@/components/lesson/MicaboIcon";
+import { PathStory } from "@/components/onboarding/stories/PathStory";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n/client";
-import { copyExamCountdown, reviewRatingLabel, type Translator } from "@/lib/i18n/copy";
+import type { Translator } from "@/lib/i18n/copy";
 import { localizedHref } from "@/lib/i18n/paths";
 import { APP_STORE_URL, FULL_SITE_PARAM } from "@/lib/iphone";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
@@ -244,63 +245,37 @@ function PhoneFrame() {
           <span className="h-[26px] w-[86px] rounded-pill bg-[#22242a]" />
         </div>
 
-        <div className="space-y-3 px-3.5 pb-3">
+        <div className="px-3.5 pb-2">
           <div className="flex items-center justify-between gap-2">
-            <p className="truncate text-[13.5px] font-semibold text-ink">{t("landing.appExam1")}</p>
-            <span className="numeral shrink-0 rounded-pill bg-caution-soft px-2 py-0.5 text-[11px] font-semibold text-caution">
-              {copyExamCountdown(t, 5)}
-            </span>
+            <p className="truncate text-[14px] font-extrabold text-ink">{t("landing.iosLessonTitle")}</p>
+            <span className="numeral shrink-0 rounded-pill bg-accent-soft px-2 py-0.5 text-[11px] font-extrabold text-accent">3 / 7</span>
           </div>
-
-          <div>
-            <div className="flex items-baseline justify-between text-[10.5px] text-ink-tertiary">
-              <span className="numeral">12 / 48</span>
-              <span className="numeral">25 %</span>
-            </div>
-            <div className="mt-1 h-1 overflow-hidden rounded-full bg-progress-track">
-              <div className="h-full w-1/4 rounded-full bg-progress" />
-            </div>
-          </div>
-
-          <div className="rounded-[18px] bg-surface p-3.5 text-left shadow-paper">
-            <span className="inline-flex rounded-pill bg-surface-muted px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-caps text-ink-tertiary">
-              {t("demo.card1Kind")}
-            </span>
-            <p className="mt-2 text-[13px] font-medium leading-snug text-ink">
-              {t("landing.appCard1Front")}
-            </p>
-            <p className="mt-2.5 border-t border-hairline pt-2.5 text-[11.5px] leading-relaxed text-ink-secondary">
-              {t("landing.appCard1Back")}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-4 gap-1.5">
-            {REVIEW_RATINGS.map((rating) => (
-              <span
-                key={rating}
-                className={`rounded-[10px] px-1 py-2 text-center ${ratingTone(rating)}`}
-              >
-                <span className="block truncate text-[10.5px] font-semibold">
-                  {reviewRatingLabel(t, rating)}
-                </span>
-                <span className="numeral mt-0.5 block text-[9.5px] opacity-80">
-                  {t(INTERVAL_KEYS[rating])}
-                </span>
-              </span>
-            ))}
+          <div className="mt-1.5 h-1.5 overflow-hidden rounded-pill bg-track">
+            <div className="h-full w-[43%] rounded-pill bg-accent" />
           </div>
         </div>
 
-        {/* Les trois onglets de l'app, Réviser au milieu et plein — c'est la règle de la
-            barre d'onglets iOS, et c'est ce que le visiteur retrouvera. */}
-        <div className="border-t border-hairline bg-surface px-2 pb-2 pt-2">
+        <div className="h-[250px] overflow-hidden">
+          <PathStory scale={0.56} height={250} />
+        </div>
+
+        <div className="mx-3 grid grid-cols-3 gap-1.5 rounded-[16px] bg-surface p-1.5 shadow-paper">
+          {(["notes", "quiz", "flashcards"] as const).map((item, index) => (
+            <span key={item} className="flex flex-col items-center gap-0.5 py-1">
+              <MicaboIcon id={["fiche", "quiz", "cartes"][index]!} size={24} />
+              <span className="text-[9.5px] font-extrabold text-ink">{t(`lesson.nav.${item}`)}</span>
+            </span>
+          ))}
+        </div>
+
+        {/* Les quatre onglets de l'app : Home, Leçons, Examen, Profil. */}
+        <div className="mt-2 border-t border-hairline bg-surface px-2 pb-2 pt-2">
           <div className="flex items-center justify-around">
-            <Tab icon={BookOpen} label={t("nav.courses")} />
-            <Tab icon={Repeat} label={t("nav.review")} active />
-            <Tab icon={TrendingUp} label={t("nav.progress")} />
+            <Tab icon={Home} label={t("lesson.tab.home")} />
+            <Tab icon={BookOpen} label={t("lesson.tab.lessons")} active />
+            <Tab icon={GraduationCap} label={t("lesson.tab.exams")} />
+            <Tab icon={User} label={t("lesson.tab.profile")} />
           </div>
-          {/* La barre d'accueil. Trois pixels qui coûtent zéro et qui achèvent de faire lire
-              « iPhone » plutôt que « écran rectangulaire ». */}
           <span className="mx-auto mb-1.5 mt-2.5 block h-[4px] w-[108px] rounded-full bg-ink/25" />
         </div>
       </div>
@@ -325,21 +300,6 @@ function Tab({
       <span className="truncate text-[9.5px] font-medium">{label}</span>
     </span>
   );
-}
-
-/** Les intervalles d'une carte sous examen actif : courts, rien ne repart au-delà du jour J. */
-const INTERVAL_KEYS: Record<ReviewRating, string> = {
-  1: "landing.appIntervalAgain",
-  2: "landing.appIntervalHard",
-  3: "landing.appIntervalGood",
-  4: "landing.appIntervalEasy",
-};
-
-function ratingTone(rating: ReviewRating): string {
-  if (rating === 1) return "bg-negative-soft text-negative";
-  if (rating === 2) return "bg-caution-soft text-caution";
-  if (rating === 3) return "bg-accent-soft text-accent";
-  return "bg-positive-soft text-positive";
 }
 
 /**

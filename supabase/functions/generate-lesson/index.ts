@@ -28,7 +28,7 @@ import { type Caller, consumeQuota, readCaller, withCors } from "../_shared/call
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { callModel, errorResponse, FalError, jsonResponse } from "../_shared/fal.ts";
 import { CircuitOpenError } from "../_shared/circuit.ts";
-import { parseModelJSON } from "../_shared/json.ts";
+import { describeModelOutput, parseModelJSON } from "../_shared/json.ts";
 import { type ModelUsage, totalUsage } from "../_shared/usage.ts";
 import { detectDiscipline, disciplineBrief, lessonShapesBrief } from "../_shared/discipline.ts";
 import { languageBrief } from "../_shared/language.ts";
@@ -208,12 +208,28 @@ function acceptedImages(raw: unknown): string[] {
   return out;
 }
 
-/** Un appel au modèle qui rend un objet JSON, ou `null` quand la réponse est illisible. */
+/**
+ * Un appel au modèle qui rend un objet JSON, ou `null` quand la réponse est illisible.
+ *
+ * **Une réponse illisible laisse sa forme dans les journaux.** Le 21 octobre 2026,
+ * quarante-cinq thèmes ont fini en « Ce thème n'a pas pu s'écrire » sans qu'une ligne dise si
+ * le modèle avait répondu en prose, tronqué son JSON ou rendu un tableau : ce chemin-ci ne
+ * passait pas par `extractJSON`, le seul qui décrivait la sortie. `etape` nomme l'appel.
+ */
 async function ask(
-  options: { prompt: string; system: string; temperature: number; maxTokens: number; meter: ModelUsage[]; model?: string },
+  options: {
+    prompt: string;
+    system: string;
+    temperature: number;
+    maxTokens: number;
+    meter: ModelUsage[];
+    model?: string;
+    step?: string;
+  },
 ): Promise<Record<string, unknown> | null> {
+  let output: string;
   try {
-    const output = await callModel({
+    output = await callModel({
       prompt: options.prompt,
       systemPrompt: options.system,
       temperature: options.temperature,
@@ -221,16 +237,35 @@ async function ask(
       meter: options.meter,
       model: options.model ?? WRITING_MODEL,
     });
-    const parsed = parseModelJSON<unknown>(output);
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? parsed as Record<string, unknown>
-      : null;
   } catch (error) {
     // Une panne du fournisseur n'est pas une réponse illisible : la retenter tout de suite
     // paierait un second appel pour le même refus.
     if (error instanceof FalError || error instanceof CircuitOpenError) throw error;
+    console.error(JSON.stringify({ json: "panne", etape: options.step ?? null }));
     return null;
   }
+
+  let parsed: unknown;
+  try {
+    parsed = parseModelJSON<unknown>(output);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "";
+    console.error(JSON.stringify({
+      json: detail.includes("n'a pas renvoyé de JSON") ? "absent" : "illisible",
+      etape: options.step ?? null,
+      ...describeModelOutput(output, error),
+    }));
+    return null;
+  }
+  if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+    return parsed as Record<string, unknown>;
+  }
+  console.error(JSON.stringify({
+    json: "forme",
+    etape: options.step ?? null,
+    type: Array.isArray(parsed) ? "tableau" : typeof parsed,
+  }));
+  return null;
 }
 
 /** Ce qui précède toujours : la langue d'abord, puis pour qui on écrit. */
@@ -364,18 +399,28 @@ async function writePlan(
       })
       : null;
 
-  let lessonPlan = read(await ask({ prompt, system: PLAN_SYSTEM_PROMPT, temperature: 0.3, maxTokens: PLAN_TOKENS, meter }));
+  let parsedPlan = await ask({ prompt, system: PLAN_SYSTEM_PROMPT, temperature: 0.3, maxTokens: PLAN_TOKENS, meter, step: "plan" });
+  let lessonPlan = read(parsedPlan);
   if (!lessonPlan) {
-    lessonPlan = read(await ask({
+    if (parsedPlan) console.error(JSON.stringify({ plan: "invalide", cles: Object.keys(parsedPlan).slice(0, 12) }));
+    parsedPlan = await ask({
       prompt: `${prompt}\n\nTa réponse précédente était illisible ou incomplète. Rends le JSON complet, avec au moins 4 thèmes.`,
       system: PLAN_SYSTEM_PROMPT,
       temperature: 0.15,
       maxTokens: PLAN_TOKENS,
       meter,
-    }));
+      step: "plan",
+    });
+    lessonPlan = read(parsedPlan);
   }
   if (!lessonPlan) {
-    throw new FalError("Le plan de la leçon n'a pas pu s'écrire. Réessaie.", 502);
+    if (parsedPlan) console.error(JSON.stringify({ plan: "invalide", cles: Object.keys(parsedPlan).slice(0, 12) }));
+    throw new FalError(
+      "Le plan de la leçon n'a pas pu s'écrire. Réessaie.",
+      502,
+      undefined,
+      parsedPlan ? "invalid_content" : "invalid_json",
+    );
   }
 
   // La leçon connaît maintenant son nombre de thèmes : c'est lui qui borne les « Réessayer ».
@@ -501,22 +546,41 @@ async function theme(request: Request, body: RequestBody): Promise<Response> {
     if (!parsed) return null;
     const notes = readNotes(parsed, limits);
     const questions = finalFirst(readQuestions(parsed.questions, seed, { kinds, language: body.language, max: volume.questions }));
-    if (!notes || questions.length < LIMITS.minQuestions) return null;
+    if (!notes || questions.length < LIMITS.minQuestions) {
+      // Le JSON se lisait, c'est son contenu qui ne passe pas : des notes vides, ou trop peu
+      // de questions. Le dire sépare ce cas de la réponse illisible, que `ask` a déjà décrite.
+      console.error(JSON.stringify({
+        theme: "invalide",
+        index,
+        notes: Boolean(notes),
+        questions: questions.length,
+        cles: Object.keys(parsed).slice(0, 12),
+      }));
+      return null;
+    }
     return { notes, questions, flashcards: readFlashcards(parsed.flashcards, volume.flashcards) };
   };
 
-  let written = read(await ask({ prompt, system: THEME_SYSTEM_PROMPT, temperature: 0.35, maxTokens: THEME_TOKENS, meter }));
+  let parsedTheme = await ask({ prompt, system: THEME_SYSTEM_PROMPT, temperature: 0.35, maxTokens: THEME_TOKENS, meter, step: "theme" });
+  let written = read(parsedTheme);
   if (!written) {
-    written = read(await ask({
+    parsedTheme = await ask({
       prompt: `${prompt}\n\nTa réponse précédente était illisible ou incomplète. Rends le JSON complet : notes, ${volume.questions} questions, ${volume.flashcards} flashcards.`,
       system: THEME_SYSTEM_PROMPT,
       temperature: 0.2,
       maxTokens: THEME_TOKENS,
       meter,
-    }));
+      step: "theme",
+    });
+    written = read(parsedTheme);
   }
   if (!written) {
-    throw new FalError("Ce thème n'a pas pu s'écrire. Réessaie.", 502);
+    throw new FalError(
+      "Ce thème n'a pas pu s'écrire. Réessaie.",
+      502,
+      undefined,
+      parsedTheme ? "invalid_content" : "invalid_json",
+    );
   }
 
   return jsonResponse({
@@ -601,7 +665,7 @@ async function convert(request: Request, body: RequestBody): Promise<Response> {
     };
   };
 
-  let conversion = read(await ask({ prompt, system: CONVERT_SYSTEM_PROMPT, temperature: 0.3, maxTokens: convertTokens(chapters.length), meter }));
+  let conversion = read(await ask({ prompt, system: CONVERT_SYSTEM_PROMPT, temperature: 0.3, maxTokens: convertTokens(chapters.length), meter, step: "convert" }));
   if (!conversion) {
     conversion = read(await ask({
       prompt: `${prompt}\n\nTa réponse précédente était illisible ou incomplète. Rends le JSON complet, une entrée par chapitre.`,
@@ -609,6 +673,7 @@ async function convert(request: Request, body: RequestBody): Promise<Response> {
       temperature: 0.15,
       maxTokens: convertTokens(chapters.length),
       meter,
+      step: "convert",
     }));
   }
   if (!conversion) {
@@ -681,7 +746,7 @@ async function practice(request: Request, body: RequestBody): Promise<Response> 
       return questions.length >= 3 ? questions : null;
     };
 
-    let questions = read(await ask({ prompt, system: PRACTICE_SYSTEM_PROMPT, temperature: 0.7, maxTokens: PRACTICE_TOKENS, meter }));
+    let questions = read(await ask({ prompt, system: PRACTICE_SYSTEM_PROMPT, temperature: 0.7, maxTokens: PRACTICE_TOKENS, meter, step: "practice" }));
     if (!questions) {
       questions = read(await ask({
         prompt: `${prompt}\n\nTa réponse précédente était illisible ou incomplète. Rends le JSON complet, avec ${count} questions.`,
@@ -689,6 +754,7 @@ async function practice(request: Request, body: RequestBody): Promise<Response> 
         temperature: 0.5,
         maxTokens: PRACTICE_TOKENS,
         meter,
+        step: "practice",
       }));
     }
     if (!questions) {
@@ -791,7 +857,7 @@ async function exam(request: Request, body: RequestBody): Promise<Response> {
       };
     };
 
-    let written = read(await ask({ prompt, system: EXAM_SYSTEM_PROMPT, temperature: 0.5, maxTokens: EXAM_TOKENS, meter }));
+    let written = read(await ask({ prompt, system: EXAM_SYSTEM_PROMPT, temperature: 0.5, maxTokens: EXAM_TOKENS, meter, step: "exam" }));
     // Une copie illisible, ou qui ne fait que des QCM, se réécrit une fois. La seconde copie
     // ne remplace la première que si elle se lit.
     if (!written || !hasVariedKinds(written.questions.map((question) => question.kind), kinds.length)) {
@@ -804,6 +870,7 @@ async function exam(request: Request, body: RequestBody): Promise<Response> {
         temperature: 0.4,
         maxTokens: EXAM_TOKENS,
         meter,
+        step: "exam",
       })) ?? written;
     }
     if (!written) {

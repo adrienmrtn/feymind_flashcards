@@ -81,9 +81,13 @@ Deno.test("callGemini essaie l'autre alias sur une panne du modèle", async () =
   );
 });
 
-/** Un 400 parle de la requête, un 403 de la clé : les rejouer coûte un appel pour rien. */
+/**
+ * Un 401 ou un 403 parle de la clé : le rejouer coûte un appel pour rien. Un 400 parle de la
+ * requête, et la seule chose que la requête ait de neuf est la consigne de pensée : il vaut un
+ * second essai sans elle, et pas un de plus.
+ */
 Deno.test("callGemini n'insiste pas quand le refus vient de nous", async () => {
-  for (const status of [400, 401, 403]) {
+  for (const status of [401, 403]) {
     await withGemini(
       () => new Response(JSON.stringify({ error: { message: "non" } }), { status }),
       async (models) => {
@@ -92,6 +96,13 @@ Deno.test("callGemini n'insiste pas quand le refus vient de nous", async () => {
       },
     );
   }
+  await withGemini(
+    () => new Response(JSON.stringify({ error: { message: "non" } }), { status: 400 }),
+    async (models) => {
+      await assertRejects(() => callGemini({ prompt: "écris" }, "clé"));
+      assertEquals(models, ["gemini-flash-lite-latest", "gemini-flash-lite-latest"], "avec puis sans la consigne, même alias");
+    },
+  );
 });
 
 /**
@@ -121,4 +132,71 @@ Deno.test("callGemini consigne le modèle servi et ce que l'appel a coûté", as
       assertEquals(meter[0]!.cached, 2_048);
     },
   );
+});
+
+/**
+ * Les alias `-latest` ont atterri sur une génération qui réfléchit avant d'écrire, et dont
+ * les pensées comptent dans `max_tokens` : le JSON des thèmes sortait tronqué le 21 octobre
+ * 2026. Micabo ne demande que du JSON à remplir, donc la pensée est coupée ; un modèle qui
+ * refuse la consigne en la nommant est rappelé une fois sans elle.
+ */
+Deno.test("callGemini coupe la pensée, et la rend si le modèle refuse la consigne", async () => {
+  const bodies: Array<Record<string, unknown>> = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (_input, init) => {
+    const body = JSON.parse(String(init?.body ?? "{}")) as Record<string, unknown>;
+    bodies.push(body);
+    if ("reasoning_effort" in body) {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({ error: { message: "reasoning_effort is not supported for this model" } }),
+          { status: 400 },
+        ),
+      );
+    }
+    return Promise.resolve(new Response(JSON.stringify({ choices: [{ message: { content: "ok" } }] })));
+  };
+  try {
+    assertEquals(await callGemini({ prompt: "écris" }, "clé"), "ok");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+  assertEquals(bodies.length, 2);
+  assertEquals(bodies[0]!.reasoning_effort, "none");
+  assertEquals("reasoning_effort" in bodies[1]!, false);
+  assertEquals(bodies[1]!.model, bodies[0]!.model, "le même alias, sans la consigne");
+});
+
+Deno.test("callGemini retire la consigne de pensée sur tout 400, et n'insiste pas au-delà", async () => {
+  await withGemini(
+    () => new Response(JSON.stringify({ error: { message: "messages[0] is invalid" } }), { status: 400 }),
+    async (models) => {
+      await assertRejects(() => callGemini({ prompt: "écris" }, "clé"));
+      // Une fois avec la consigne, une fois sans : le second 400 est le nôtre, on s'arrête.
+      assertEquals(models.length, 2);
+    },
+  );
+});
+
+Deno.test("callGemini signale une réponse coupée par max_tokens", async () => {
+  const warned: string[] = [];
+  const warn = console.warn;
+  console.warn = (line: string) => warned.push(line);
+  try {
+    await withGemini(
+      () =>
+        new Response(JSON.stringify({
+          model: "gemini-3.5-flash",
+          choices: [{ message: { content: "{\"notes\": " }, finish_reason: "length" }],
+          usage: { prompt_tokens: 100, completion_tokens: 8_192 },
+        })),
+      async () => {
+        assertEquals(await callGemini({ prompt: "écris", maxTokens: 8_192 }, "clé"), "{\"notes\": ");
+      },
+    );
+  } finally {
+    console.warn = warn;
+  }
+  const truncated = warned.map((line) => JSON.parse(line)).find((line) => line.gemini === "tronque");
+  assertEquals(truncated, { gemini: "tronque", model: "gemini-3.5-flash", output: 8_192, max_tokens: 8_192 });
 });

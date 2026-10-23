@@ -76,19 +76,45 @@ export async function gradeCard(input: {
     }
   }
 
+  return writeGrade(supabase, user.id, input, rating);
+}
+
+/**
+ * **Une note posée depuis une leçon** : Encore, Bien, Facile. Le même calcul, le même journal,
+ * sans le plafond de la session : les flashcards d'une leçon se révisent à leur rythme
+ * (`docs/refonte-parcours.md` § 7, « les anciennes portes disparaissent »).
+ */
+export async function gradeLessonCard(input: { cardId: string; rating: number; snapshot: CardSnapshot }): Promise<GradeResult> {
+  const rating = asRating(input.rating);
+  if (!rating) return { status: "error", message: await actionT("app.errors.unknownRating") };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { status: "error", message: await actionT("app.errors.sessionExpired") };
+  return writeGrade(supabase, user.id, input, rating);
+}
+
+async function writeGrade(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  input: { cardId: string; snapshot: CardSnapshot },
+  rating: Rating,
+): Promise<GradeResult> {
   const now = new Date();
 
   const [{ data: card }, { data: exams }] = await Promise.all([
     supabase
       .from("flashcards")
       .select("id, course_id, is_suspended")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("id", input.cardId)
       .maybeSingle(),
     supabase
       .from("exams")
       .select("exam_date, is_planned, course_ids")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .is("deleted_at", null),
   ]);
 
@@ -134,12 +160,12 @@ export async function gradeCard(input: {
       step_index: outcome.stepIndex,
       last_reviewed_at: now.toISOString(),
     })
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("id", input.cardId);
 
   if (error) return { status: "error", message: error.message };
 
-  revalidateUserData(user.id, "cards");
+  revalidateUserData(userId, "cards");
   // L'accueil doit se recaler sans rechargement dur. On ne touche pas à
   // `/app/reviser` : ça reconstruirait la file en pleine session.
   revalidatePath("/app");
@@ -148,7 +174,7 @@ export async function gradeCard(input: {
   // ligne de statistiques est moins grave que faire repasser une carte qu'on vient de noter.
   await supabase.from("review_logs").insert({
     id: crypto.randomUUID(),
-    user_id: user.id,
+    user_id: userId,
     card_id: input.cardId,
     reviewed_at: now.toISOString(),
     rating,

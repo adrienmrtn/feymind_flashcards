@@ -1,5 +1,7 @@
 "use server";
 
+import { redirect } from "next/navigation";
+
 import { revalidatePath } from "next/cache";
 
 import {
@@ -11,6 +13,7 @@ import {
   type ContentLanguage,
   type CourseVisibility,
   type SheetLength,
+  COUNTRIES,
 } from "@micabo/core";
 
 import { revalidateUserData } from "@/lib/data/cache";
@@ -36,6 +39,10 @@ export interface SavedSettings {
 
 export async function updateSettings(input: {
   displayName?: string;
+  /** Le pays (`CountryCode`) : il décide du barème des notes et des paliers proposés. */
+  countryCode?: string;
+  /** Le palier d'études (`EducationStage.id`), ou `null` pour « non précisé ». */
+  studyLevel?: string | null;
   sheetLength?: SheetLength;
   sheetBlocks?: number;
   subjects?: string[];
@@ -54,6 +61,18 @@ export async function updateSettings(input: {
   if (input.displayName !== undefined) {
     const name = input.displayName.trim().slice(0, 60);
     patch.display_name = name.length > 0 ? name : null;
+  }
+
+  if (input.countryCode !== undefined) {
+    if (!COUNTRIES.some((country) => country.code === input.countryCode)) {
+      return { status: "error", message: await actionT("app.common.errorGeneric") };
+    }
+    patch.country_code = input.countryCode;
+  }
+
+  if (input.studyLevel !== undefined) {
+    const level = input.studyLevel?.trim().slice(0, 40) ?? "";
+    patch.study_level = level.length > 0 ? level : null;
   }
 
   // Le nombre de blocs commande, et le format n'en est que le nom : c'est ce que l'app a tranché en
@@ -231,4 +250,14 @@ export async function exportAccountData(): Promise<AccountExport> {
       feedback: feedback.data ?? [],
     },
   };
+}
+
+/**
+ * **Se déconnecter.** La session part partout (`scope: "global"`), les cours restent : on se
+ * reconnecte avec la même adresse. Puis la vitrine.
+ */
+export async function signOut(): Promise<never> {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect("/");
 }

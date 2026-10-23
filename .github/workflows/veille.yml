@@ -1,0 +1,133 @@
+# **La veille des Edge Functions** : toutes les heures, on compte les 502 de l'heure écoulée.
+#
+# Le 21 octobre 2026, quarante-cinq thèmes de leçon ont fini en « Ce thème n'a pas pu
+# s'écrire » dans la journée, et personne ne l'a vu avant le lendemain : les journaux
+# Supabase ne préviennent pas, ils attendent qu'on les ouvre. Ce workflow les ouvre à notre
+# place, par l'endpoint `logs` de l'API de gestion, avec le même jeton que le déploiement.
+#
+# Au-delà du seuil, il ouvre une issue « Veille : les fonctions rendent des 502 » - ou
+# commente celle qui est déjà ouverte - avec le détail par raison. En dessous, il ne fait
+# rien : une veille qui parle tous les jours finit par ne plus être lue.
+#
+# Ce qu'il ne surveille pas : le solde fal.ai. fal n'expose pas de solde par API ; l'alerte
+# de solde se règle dans son tableau de bord (Billing → Notifications).
+
+name: Veille
+
+on:
+  schedule:
+    # Toutes les heures, à la vingt-troisième minute : hors des heures pleines, où GitHub
+    # retarde les tâches planifiées.
+    - cron: "23 * * * *"
+  workflow_dispatch:
+    inputs:
+      hours:
+        description: "Fenêtre à relire, en heures (24 au plus)"
+        required: false
+        default: "1"
+      threshold:
+        description: "Nombre de 502 à partir duquel on prévient"
+        required: false
+        default: "5"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: veille
+  cancel-in-progress: true
+
+env:
+  PROJECT_REF: khuzodsrznanzhwlbjbx
+
+jobs:
+  check:
+    name: Compter les 502
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Interroger les journaux
+        id: logs
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          HOURS: ${{ github.event.inputs.hours || '1' }}
+          THRESHOLD: ${{ github.event.inputs.threshold || '5' }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "::error::SUPABASE_ACCESS_TOKEN manque : la veille ne peut pas lire les journaux."
+            exit 1
+          fi
+          end=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          start=$(date -u -d "$HOURS hours ago" +%Y-%m-%dT%H:%M:%SZ)
+          sql="select coalesce(nullif(JSONExtractString(event_message, 'cause'), ''), 'sans cause') as cause, substring(JSONExtractString(event_message, 'raison'), 1, 80) as raison, count(*) as n from logs where source = 'function_logs' and event_message like '{\"reponse\":5%' group by 1, 2 order by 3 desc limit 20"
+          response=$(curl -sS --fail-with-body -G "https://api.supabase.com/v1/projects/$PROJECT_REF/analytics/endpoints/logs" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            --data-urlencode "sql=$sql" \
+            --data-urlencode "iso_timestamp_start=$start" \
+            --data-urlencode "iso_timestamp_end=$end")
+          total=$(printf '%s' "$response" | jq '[.result[]?.n // 0] | add // 0')
+          echo "Fenêtre : $start → $end"
+          echo "502 et 5xx des fonctions : $total (seuil $THRESHOLD)"
+          printf '%s' "$response" | jq -r '.result[]? | "\(.n)\t\(.cause)\t\(.raison)"' || true
+          {
+            echo "total=$total"
+            echo "start=$start"
+            echo "end=$end"
+            echo "alert=$([ "$total" -ge "$THRESHOLD" ] && echo true || echo false)"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo 'table<<EOF'
+            echo '| Combien | Cause | Raison |'
+            echo '| --- | --- | --- |'
+            printf '%s' "$response" | jq -r '.result[]? | "| \(.n) | `\(.cause)` | \(.raison) |"'
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Prévenir
+        if: steps.logs.outputs.alert == 'true'
+        uses: actions/github-script@v7
+        env:
+          TOTAL: ${{ steps.logs.outputs.total }}
+          START: ${{ steps.logs.outputs.start }}
+          END: ${{ steps.logs.outputs.end }}
+          TABLE: ${{ steps.logs.outputs.table }}
+        with:
+          script: |
+            const title = "Veille : les fonctions rendent des 502";
+            const body = [
+              `**${process.env.TOTAL} réponses 5xx** des Edge Functions entre ${process.env.START} et ${process.env.END}.`,
+              "",
+              process.env.TABLE,
+              "",
+              "Où regarder : Supabase → Edge Functions → Logs, puis `fal.ts` et `gemini.ts` pour le fournisseur, " +
+                "`generate-lesson/index.ts` pour un JSON illisible (`json`) ou un contenu invalide (`theme: invalide`).",
+              "",
+              `_[Exécution de la veille](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})_`,
+            ].join("\n");
+
+            const { data: open } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: "veille",
+              per_page: 5,
+            });
+            const existing = open.find((issue) => issue.title === title);
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ["veille"],
+              });
+            }

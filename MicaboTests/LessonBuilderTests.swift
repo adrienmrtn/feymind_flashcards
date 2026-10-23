@@ -6,6 +6,10 @@ import XCTest
 /// flashcards par thème — et un thème qui échoue quand on le lui demande.
 private final class FakeLessonService: LessonGenerating, @unchecked Sendable {
     var failingThemes: Set<Int> = []
+    /// Les thèmes qui échouent à leur premier appel seulement : la panne d'une seconde.
+    var failingOnce: Set<Int> = []
+    /// Un refus du serveur sur chaque thème, à la place de la panne.
+    var themeError: Error?
     var planError: Error?
     private(set) var themeCalls: [Int] = []
     private(set) var planRequests: [LessonPlanRequest] = []
@@ -35,8 +39,11 @@ private final class FakeLessonService: LessonGenerating, @unchecked Sendable {
     func theme(_ request: LessonThemeRequest) async throws -> LessonThemeResult {
         lock.lock()
         themeCalls.append(request.themeIndex)
-        let fails = failingThemes.contains(request.themeIndex)
+        let fails = failingThemes.contains(request.themeIndex) || failingOnce.contains(request.themeIndex)
+        failingOnce.remove(request.themeIndex)
+        let refusal = themeError
         lock.unlock()
+        if let refusal { throw refusal }
         if fails { throw LessonServiceError.failed("panne") }
         return LessonThemeResult(
             notes: ThemeNotes(oneLiner: "Idée \(request.themeIndex)", blocks: [.paragraph("Texte.")], takeaways: ["R"]),
@@ -103,9 +110,12 @@ final class LessonBuilderTests: XCTestCase {
     }
 
     private func builder(_ service: FakeLessonService) -> LessonBuilder {
-        LessonBuilder(service: service, audience: {
-            LessonAudience(level: "lycee", country: "fr", schoolStage: "Terminale", language: "fr")
-        })
+        LessonBuilder(
+            service: service,
+            audience: { LessonAudience(level: "lycee", country: "fr", schoolStage: "Terminale", language: "fr") },
+            // Le réessai silencieux attend trois secondes dans l'app ; ici, rien.
+            themeRetryDelay: .zero
+        )
     }
 
     private func waitUntilDone(_ builder: LessonBuilder, _ course: Course) async {
@@ -168,11 +178,43 @@ final class LessonBuilderTests: XCTestCase {
 
         XCTAssertEqual(course.orderedChapters.map(\.status), [.ready, .ready, .failed, .ready])
         XCTAssertEqual(course.lessonPath?.status, .ready, "la leçon est prête, un cercle propose « Réessayer »")
+        XCTAssertEqual(service.themeCalls.filter { $0 == 2 }.count, 2, "le thème en panne a été redemandé une fois, en silence")
 
         service.failingThemes = []
         await builder.retry(course.orderedChapters[2], in: context)
         XCTAssertEqual(course.orderedChapters[2].status, .ready)
         XCTAssertEqual(course.cards.count, 16)
+    }
+
+    /// Le 21 octobre 2026, des thèmes ont échoué sur une panne d'une seconde du fournisseur,
+    /// et chaque élève a dû appuyer sur « Réessayer ». La panne d'une seconde se rattrape seule.
+    func testAThemeThatFailsOnceIsRewrittenWithoutAsking() async throws {
+        let context = try makeContext()
+        let service = FakeLessonService()
+        service.failingOnce = [1]
+        let builder = builder(service)
+
+        let course = try await builder.create(LessonCreation(topic: "x", source: .topic), in: context)
+        await waitUntilDone(builder, course)
+
+        XCTAssertEqual(course.orderedChapters.map(\.status), [.ready, .ready, .ready, .ready])
+        XCTAssertEqual(service.themeCalls.filter { $0 == 1 }.count, 2)
+        XCTAssertEqual(course.cards.count, 16)
+    }
+
+    /// Un refus n'est pas une panne : la leçon offerte prise ou l'import Pro reviendraient à
+    /// l'identique, et redemander coûterait un appel pour rien.
+    func testARefusalIsNotRetried() async throws {
+        let context = try makeContext()
+        let service = FakeLessonService()
+        service.themeError = LessonServiceError.freeLimit
+        let builder = builder(service)
+
+        let course = try await builder.create(LessonCreation(topic: "x", source: .topic), in: context)
+        await waitUntilDone(builder, course)
+
+        XCTAssertEqual(course.orderedChapters.map(\.status), [.failed, .failed, .failed, .failed])
+        XCTAssertEqual(service.themeCalls.count, 4, "un appel par thème, aucun second essai")
     }
 
     func testNewPracticeQuestionsJoinTheirThemesAndAvoidTheOldOnes() async throws {

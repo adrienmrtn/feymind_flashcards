@@ -1,23 +1,53 @@
 /**
- * Le verrou du gratuit, **aligné sur celui de l'app**.
+ * **Le droit, et le gratuit de la refonte « parcours ».**
  *
- * Il existe côté iOS - `Micabo/Services/ProAccess.swift` - et c'est lui qui fait foi. Les trois
- * nombres et la coupure de la fiche sont donc portés depuis `FreeTier` et `SheetGate`, pas décidés
- * ici : un cours flouté aux sept dixièmes sur le téléphone et à la moitié sur le web serait le même
- * produit qui dit deux choses. `test/entitlement.test.ts` reprend les valeurs de
- * `MicaboTests/FreemiumTests.swift`.
+ * Le droit se **lit dans `entitlements`**, écrite par le webhook RevenueCat : un achat fait sur
+ * l'iPhone ferme la porte du gratuit sur le web dans la seconde. Sans ligne, pas d'abonnement
+ * (`ASSUME_PRO_WITHOUT_ROW`), comme dans l'app (`ProAccess.assumeProWithoutRow`).
  *
- * ## Ce qui a changé à l'étape 5
+ * Le gratuit est celui de `docs/refonte-parcours.md` § 7, tenu par le serveur et annoncé ici
+ * (`FREE_LESSON_TIER`) : **une** leçon à vie depuis un sujet tapé ou un texte collé ; PDF,
+ * photo, audio et YouTube sont Pro ; une question à Mika ; un lot de questions d'entraînement
+ * et un examen blanc. Les portes elles-mêmes vivent dans `lesson/allowance.ts` (`lessonGate`,
+ * `MIKA_ALLOWANCE`, `EXTRA_ALLOWANCE`) et `lesson/mika.ts` (`mikaGate`) ; le refus tombe sur
+ * l'envoi, jamais au milieu d'un chemin. `test/freemium-parity.test.ts` relit le Swift
+ * (`LessonAllowance`, `MikaAllowance`, `LessonComposer`, `ProAccess`) et tombe si les deux
+ * clients divergent.
  *
- * Le droit ne se devine plus : il se **lit dans `entitlements`**, écrite par le webhook RevenueCat.
- * Le verrou est donc vivant pour quiconque a une ligne - un achat fait sur l'iPhone ferme la porte
- * du gratuit sur le web dans la seconde, et c'est exactement ce qu'on voulait.
- *
- * Reste le cas de **l'absence de ligne**. `ASSUME_PRO_WITHOUT_ROW` dit ce qu'on
- * fait de quelqu'un dont on ne sait rien. Il est à `false` : pas de ligne, pas
- * d'abonnement, le gratuit s'applique — un cours, sept dixièmes de sa fiche,
- * cinq cartes par session. C'est le même verrou que l'iPhone.
+ * Les anciennes portes (un cours offert, la fiche coupée, les cartes par session) sont en bas
+ * du fichier, le temps que les écrans qui les lisent partent (lot 8 de `docs/refonte-web.md`).
  */
+
+import { EXTRA_ALLOWANCE, MIKA_ALLOWANCE } from "./lesson/allowance";
+
+/**
+ * Ce que la version gratuite laisse faire, et rien de plus. Les nombres viennent des portes
+ * du serveur (`begin_lesson`, `begin_extra`, `mika-chat`) et de leurs jumeaux Swift.
+ */
+export const FREE_LESSON_TIER = {
+  /** Une leçon offerte, à vie, depuis un sujet ou un texte collé. */
+  lessons: 1,
+  /** PDF, photo, audio, YouTube : Pro, dès la première. */
+  importsAllowed: false,
+  /** Une question à Mika, dans une leçon. */
+  mikaQuestions: MIKA_ALLOWANCE.freeQuestions,
+  /** Un lot de nouvelles questions d'entraînement. */
+  practiceSets: EXTRA_ALLOWANCE.freePractice,
+  /** Un examen blanc. */
+  mockExams: EXTRA_ALLOWANCE.freeExams,
+} as const;
+
+/**
+ * **Les trois portes qui ouvrent le paywall**, et « Passer en Pro » depuis le Profil :
+ * l'envoi d'une leçon (`send`), une question à Mika (`mika`), un supplément — questions
+ * d'entraînement ou examen blanc (`extra`). Jumeau de `PaywallTrigger` côté Swift.
+ */
+export type PaywallTrigger = "send" | "mika" | "extra" | "upgrade";
+export const PAYWALL_TRIGGERS: readonly PaywallTrigger[] = ["send", "mika", "extra", "upgrade"];
+
+export function isPaywallTrigger(value: unknown): value is PaywallTrigger {
+  return typeof value === "string" && (PAYWALL_TRIGGERS as readonly string[]).includes(value);
+}
 
 /**
  * Ce qu'on fait de quelqu'un qui n'a pas de ligne dans `entitlements`.
@@ -30,11 +60,14 @@ export const ASSUME_PRO_WITHOUT_ROW = false;
 /** Le nom de l'entitlement chez RevenueCat. Il est déjà fixé par `docs/revenuecat.md`. */
 export const ENTITLEMENT_ID = "pro";
 
+// MARK: - Les anciennes portes (retirées au lot 8 avec les écrans qui les lisent)
+
 /**
- * Ce que la version gratuite laisse faire, et rien de plus.
+ * **Le gratuit d'avant la refonte** : un cours offert, la fiche coupée, cinq cartes par
+ * session, l'entraînement fermé. Plus aucun écran neuf ne le lit ; les anciens (la session de
+ * révision, la fiche, l'import, l'atelier) partent au lot 8, et ces constantes avec eux.
  *
- * Les nombres se répondent : un cours qu'on lit aux sept dixièmes, cinq cartes par session, un
- * seul import. Éparpillés dans les écrans, ils dériveraient au premier ajustement.
+ * @deprecated Lire `FREE_LESSON_TIER` et `lesson/allowance.ts`.
  */
 export const FREE_TIER = {
   /**

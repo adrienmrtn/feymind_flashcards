@@ -119,6 +119,9 @@ enum AuthError: LocalizedError, Equatable {
     /// 8 septembre 2026 de `refresh_token_not_found`.
     case sessionExpired
     case cancelled
+    /// Une erreur qu'Apple rend tout de suite et qui, presque toujours, précède la vraie
+    /// autorisation : on ne l'affiche pas, on attend de voir si la connexion suit.
+    case transient
     case server(String)
 
     var errorDescription: String? {
@@ -139,6 +142,9 @@ enum AuthError: LocalizedError, Equatable {
             L10n.t("ios.auth.sessionExpired", locale: .resolved())
         case .cancelled:
             // Annuler n'est pas une erreur : l'écran ne doit rien afficher.
+            nil
+        case .transient:
+            // Pas tout de suite : `AuthController` l'affiche si rien ne suit.
             nil
         case .server(let message):
             message

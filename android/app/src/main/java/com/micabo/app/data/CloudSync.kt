@@ -34,56 +34,132 @@ import java.time.ZoneId
 data class SyncState(val running: Boolean = false, val lastSuccess: Long = 0, val failed: Boolean = false)
 
 /**
- * **La synchronisation des leçons** (`CloudSync` sur iPhone), quand l'élève est connecté.
+ * **La synchronisation des leçons** (`CloudSync` sur iPhone), sous le compte de l'élève, ou
+ * sous son compte invité tant qu'il ne s'est pas connecté.
  *
  * Les mêmes tables et les mêmes encodages que l'iPhone : une leçon est une ligne `courses`
  * (son chemin dans `path`, sa progression dans `progress`), ses thèmes des lignes `chapters`
  * (`notes`, `quiz`), ses cartes des lignes `flashcards` avec leur mémoire SM-2. Une leçon
  * écrite sur Android s'ouvre donc sur l'iPhone, et l'inverse.
  *
+ * **L'invité synchronise aussi**, depuis le 23 octobre 2026. Jusque-là, rien ne partait sans
+ * compte connecté - et presque personne ne se connecte sur Android : 116 invités en quatorze
+ * jours, 32 leçons générées, zéro en base, un seul appareil connecté. Or le compte invité est
+ * un vrai `auth.users` : le cloisonnement marche avec son jeton, et `begin_lesson` compte déjà
+ * sa leçon offerte sous cet identifiant. Un élève qui réinstalle ou change de téléphone ne
+ * perd plus rien. Quand il ouvre un vrai compte, le repère repart de zéro et tout ce qui est
+ * ici remonte sous le compte (voir `sync`).
+ *
  * Un passage tire d'abord ce qui a changé depuis la dernière fois (cinq minutes de marge pour
  * les horloges), puis pousse ce qui a changé ici ; la plus récente des deux versions gagne.
- * Une erreur laisse le repère où il était : tout repart au passage suivant.
+ * Une erreur laisse le repère où il était : tout repart au passage suivant - et elle est
+ * **dite** (`onFailure`), parce qu'une synchro qui échoue dans un `Log.w` est une synchro dont
+ * personne n'apprend l'échec.
  */
 class CloudSync(
     private val auth: SupabaseAuth,
     private val lessons: LessonRepository,
     private val exams: ExamRepository,
     private val prefs: Prefs,
+    /** Appelé avec un mot court quand un passage échoue : la statistique `sync_failed`. */
+    private val onFailure: (String) -> Unit = {},
+    /** Appelé quand un passage aboutit, avec le nombre de leçons poussées : `sync_finished`. */
+    private val onSuccess: (Int) -> Unit = {},
 ) {
     private val mutex = Mutex()
     private val _state = MutableStateFlow(SyncState(lastSuccess = prefs.syncWatermark))
     val state: StateFlow<SyncState> = _state.asStateFlow()
 
-    /** Un passage complet ; rend vrai s'il a abouti. Sans compte connecté, il ne fait rien. */
+    /** Un passage complet ; rend vrai s'il a abouti. Sans compte ni invité, il ne fait rien. */
     suspend fun sync(): Boolean = mutex.withLock {
-        val account = auth.account.value ?: return@withLock false
+        // Le compte, sinon l'invité : le même choix que pour les fonctions et les événements.
+        val user = auth.userId.lowercase()
+        if (user.isEmpty()) return@withLock false
         _state.value = _state.value.copy(running = true, failed = false)
+        var pushedLessons = 0
         val ok = withContext(Dispatchers.IO) {
             runCatching {
                 lessons.ready()
                 exams.ready()
+                // Un autre compte que la dernière fois - l'invité qui vient de se connecter,
+                // un camarade sur le même téléphone : le repère ne vaut plus rien. Tout ce qui
+                // est ici monte sous lui, tout ce qu'il a redescend.
+                if (prefs.syncUser != user) {
+                    prefs.syncWatermark = 0
+                    prefs.profileSignature = ""
+                }
                 // Le repère est pris avant les requêtes : ce qui change pendant le passage repartira.
                 val started = System.currentTimeMillis()
                 val since = prefs.syncWatermark
                 val token = auth.accessToken()
-                val user = account.userId.lowercase()
                 pull(token, user, since)
-                push(token, user, since)
+                pushedLessons = push(token, user, since)
+                pushProfile(token, user)
                 prefs.syncWatermark = started
+                prefs.syncUser = user
                 started
-            }.onFailure { Log.w(TAG, "Synchronisation interrompue", it) }.getOrNull()
+            }.onFailure {
+                Log.w(TAG, "Synchronisation interrompue", it)
+                onFailure(describe(it))
+            }.getOrNull()
         }
         _state.value = if (ok != null) SyncState(running = false, lastSuccess = ok) else _state.value.copy(running = false, failed = true)
+        if (ok != null) onSuccess(pushedLessons)
         ok != null
+    }
+
+    /** L'échec en un mot, sans texte d'élève : la famille, puis le statut HTTP s'il y en a. */
+    private fun describe(error: Throwable): String = when (error) {
+        is NetworkException -> "network"
+        is IOException -> error.message?.let { message ->
+            // « POST chapters 400: … » : on garde le verbe, la table et le statut.
+            Regex("""^(GET|POST|PATCH) (\w+) (\d{3})""").find(message)?.let { "${it.groupValues[1].lowercase()}_${it.groupValues[2]}_${it.groupValues[3]}" }
+        } ?: "io"
+        else -> error.javaClass.simpleName.lowercase().take(40)
     }
 
     /** Après une déconnexion : le prochain compte repartira de zéro. Les leçons restent ici. */
     fun forget() {
         prefs.syncWatermark = 0
+        prefs.syncUser = ""
+        prefs.profileSignature = ""
         prefs.removeTombstones(prefs.tombstones)
         prefs.removeReviews(prefs.pendingReviews)
         _state.value = SyncState()
+    }
+
+    // MARK: - Le profil
+
+    /**
+     * **Le profil monte avec les leçons**, comme sur l'iPhone (`ProfileRecord`).
+     *
+     * Android n'écrivait jamais `profiles` : 95 comptes Android en quatorze jours, et pas un
+     * `onboarding_completed_at`, pas un pays, pas un niveau en base. Seules les colonnes
+     * qu'Android connaît partent, et seulement quand elles ont changé depuis la dernière
+     * montée : un upsert de ces colonnes-là laisse le reste de la ligne - le nom d'utilisateur,
+     * la langue des fiches choisie sur l'iPhone - tel quel.
+     */
+    private fun pushProfile(token: String, user: String) {
+        val profile = prefs.profile.value
+        val signature = listOf(
+            profile.onboarded.toString(), profile.name, profile.tier, profile.country,
+            profile.goals.sorted().joinToString(","), profile.subjects.sorted().joinToString(","),
+            profile.dailyMinutes.toString(),
+        ).joinToString("|")
+        if (signature == prefs.profileSignature) return
+        val row = buildJsonObject {
+            put("id", user)
+            profile.name.trim().takeIf { it.isNotEmpty() }?.let { put("display_name", it.take(80)) }
+            profile.tier.takeIf { it.isNotEmpty() }?.let { put("study_level", it) }
+            profile.country.takeIf { it.isNotEmpty() }?.let { put("country_code", it) }
+            putJsonArray("learning_goals") { profile.goals.forEach { add(JsonPrimitive(it)) } }
+            putJsonArray("subjects") { profile.subjects.forEach { add(JsonPrimitive(it)) } }
+            put("daily_minutes", profile.dailyMinutes)
+            if (profile.onboarded) put("onboarding_completed_at", iso(System.currentTimeMillis()))
+            put("updated_at", iso(System.currentTimeMillis()))
+        }
+        upsert(token, "profiles", listOf(row))
+        prefs.profileSignature = signature
     }
 
     // MARK: - Tirer
@@ -235,7 +311,8 @@ class CloudSync(
 
     // MARK: - Pousser
 
-    private fun push(token: String, user: String, since: Long) {
+    /** Pousse ce qui a changé ; rend le nombre de leçons montées. */
+    private fun push(token: String, user: String, since: Long): Int {
         // Les suppressions d'abord : un cours supprimé ne doit pas revenir.
         val tombstones = prefs.tombstones
         if (tombstones.isNotEmpty()) {
@@ -262,7 +339,8 @@ class CloudSync(
             prefs.removeTombstones(done)
         }
 
-        for (lesson in lessons.lessons.value.values.filter { it.updatedAt > since }) {
+        val changed = lessons.lessons.value.values.filter { it.updatedAt > since }
+        for (lesson in changed) {
             val stamped = lesson.stamped()
             upsert(token, "courses", listOf(courseRow(stamped, user)))
             upsert(token, "chapters", stamped.themes.mapIndexed { index, theme -> chapterRow(stamped, theme, index, user) })
@@ -300,6 +378,7 @@ class CloudSync(
                 }
             })
         }
+        return changed.size
     }
 
     /**

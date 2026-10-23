@@ -1,0 +1,70 @@
+# Le site, vérifié à chaque push : personne n'a besoin d'ouvrir Vercel pour savoir si une
+# branche tient debout.
+#
+# `pnpm verify` enchaîne les trois vérifications dans l'ordre où elles échouent le mieux :
+# les tests (le noyau partagé et le site), le typage, puis la compilation Next. Ce que Vercel
+# refuserait à la mise en ligne est refusé ici d'abord, et dit par son nom.
+
+name: Web
+
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths:
+      - "web/**"
+      - "design/mika/**"
+      - "supabase/functions/_shared/icons.ts"
+      - "supabase/functions/_shared/symbols.ts"
+      - "supabase/functions/_shared/sheet.ts"
+      - "Micabo/Services/I18n/LessonI18nCatalogs.swift"
+      - ".github/workflows/web.yml"
+  pull_request:
+    paths:
+      - "web/**"
+      - ".github/workflows/web.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Tester, typer, compiler
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+        with:
+          # La version épinglée par `packageManager` dans web/package.json.
+          version: 10.33.3
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Installer
+        run: pnpm install --frozen-lockfile
+
+      - name: Tester
+        run: pnpm test
+
+      - name: Typer
+        run: pnpm typecheck
+
+      - name: Compiler
+        env:
+          # Sans ces variables, Next compile avec les valeurs en clair de `lib/config.ts`,
+          # exactement comme un déploiement sans tableau de bord.
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: pnpm build

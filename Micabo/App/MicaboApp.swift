@@ -1,3 +1,4 @@
+import Combine
 import SwiftData
 import UIKit
 import SwiftUI
@@ -118,9 +119,20 @@ struct MicaboApp: App {
                 case .background:
                     Analytics.flushForBackground()
                     rescheduleRemindersInBackground()
+                    syncInBackground()
                 case .active: Analytics.enterForeground()
                 default: break
                 }
+            }
+            // Une leçon qui naît, un thème qui arrive, une leçon prête : elle monte dans les
+            // deux secondes, groupée avec ce qui suit. Jusqu'au 23 octobre 2026, une leçon
+            // créée après la connexion n'était poussée qu'au lancement suivant - s'il venait :
+            // trente leçons sur cinquante-quatre n'étaient jamais arrivées en base.
+            .onReceive(
+                NotificationCenter.default.publisher(for: CloudSync.lessonChanged)
+                    .debounce(for: .seconds(2), scheduler: RunLoop.main)
+            ) { _ in
+                Task { await sync.sync(context: container.mainContext) }
             }
             .task {
                 #if DEBUG
@@ -205,6 +217,18 @@ struct MicaboApp: App {
         let token = UIApplication.shared.beginBackgroundTask(withName: "DailyReminder")
         Task {
             await DailyReminder.reschedule(context: container.mainContext, eligible: pro.receivesDailyReminder)
+            UIApplication.shared.endBackgroundTask(token)
+        }
+    }
+
+    /// **Une dernière montée en partant.** L'élève qui ferme l'app juste après sa leçon est le
+    /// cas le plus courant, et c'était celui qui ne synchronisait jamais. iOS laisse quelques
+    /// secondes ; la tâche en demande le temps pour qu'une montée commencée aboutisse.
+    private func syncInBackground() {
+        guard !Self.isHostingTests else { return }
+        let token = UIApplication.shared.beginBackgroundTask(withName: "CloudSync")
+        Task {
+            await sync.sync(context: container.mainContext)
             UIApplication.shared.endBackgroundTask(token)
         }
     }

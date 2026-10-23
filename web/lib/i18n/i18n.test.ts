@@ -122,8 +122,8 @@ describe("catalogues", () => {
   it("couvre le lexique app et copy", () => {
     for (const locale of UI_LOCALES) {
       expect(lookup(CATALOGS[locale] as unknown as MessageTree, "copy.cards")).toContain("plural");
-      expect(lookup(CATALOGS[locale] as unknown as MessageTree, "app.home.tasks.title")).toBeTruthy();
-      expect(lookup(CATALOGS[locale] as unknown as MessageTree, "nav.feedback")).toBeTruthy();
+      expect(lookup(CATALOGS[locale] as unknown as MessageTree, "app.profileTab.info")).toBeTruthy();
+      expect(lookup(CATALOGS[locale] as unknown as MessageTree, "app.tour.home.bar.title")).toBeTruthy();
       expect(lookup(CATALOGS[locale] as unknown as MessageTree, "demo.legendWith")).toBeTruthy();
       expect(lookup(CATALOGS[locale] as unknown as MessageTree, "app.paywall.yearly")).toBeTruthy();
       expect(lookup(CATALOGS[locale] as unknown as MessageTree, "locale.choose")).toBeTruthy();
@@ -151,18 +151,14 @@ describe("catalogues", () => {
 
   it("ne laisse plus le chrome signalé en français hors fr", () => {
     const leftovers = [
-      "app.brand.tagline",
       "demo.card1Kind",
       "demo.card1Front",
       "demo.card1Back",
       "demo.card1Note",
-      "app.course.visibility.label",
-      "app.course.lockedTitle",
-      "app.workshop.emptyTitle",
-      "app.workshop.emptyHint",
-      "app.import.documentLanguage",
       "app.institution.university",
       "app.institution.lycee",
+      "app.tour.home.bar.body",
+      "app.profileTab.exportData",
     ] as const;
     const french = leftovers.map((key) => lookup(fr as unknown as MessageTree, key));
     for (const locale of UI_LOCALES.filter((item) => item !== "fr")) {

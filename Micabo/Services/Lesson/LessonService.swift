@@ -332,7 +332,9 @@ enum LessonServiceError: LocalizedError, Equatable {
     case dailyLimit
     case forbidden
     case notConfigured
-    case failed(String)
+    /// Une panne, avec sa phrase pour l'écran et, quand on la connaît, sa cause pour les
+    /// statistiques : `provider`, `invalid_json`, `invalid_content`, `timeout`, `network`.
+    case failed(String, reason: String? = nil)
 
     var errorDescription: String? {
         switch self {
@@ -342,17 +344,37 @@ enum LessonServiceError: LocalizedError, Equatable {
         case .dailyLimit: L10n.t("lesson.error.dailyLimit", locale: .resolved())
         case .forbidden: L10n.t("lesson.error.forbidden", locale: .resolved())
         case .notConfigured: L10n.t("ios.cloud.notConfigured", locale: .resolved())
-        case .failed(let message): message
+        case .failed(let message, _): message
         }
     }
 
     /// Vrai pour les refus qui se règlent en passant à Pro.
     var opensPaywall: Bool { self == .freeLimit || self == .importPro || self == .proRequired }
 
+    /// Vrai quand redemander la même chose dans trois secondes a une chance : une panne, pas
+    /// un refus. Un refus (leçon offerte prise, import Pro, plafond) reviendrait à l'identique.
+    var isWorthRetrying: Bool {
+        if case .failed = self { return true }
+        return false
+    }
+
+    /// Le mot que les statistiques comptent (`lesson_theme_failed`, `reason`).
+    var analyticsReason: String {
+        switch self {
+        case .freeLimit: "free_limit"
+        case .importPro: "import_pro"
+        case .proRequired: "pro_required"
+        case .dailyLimit: "daily_limit"
+        case .forbidden: "forbidden"
+        case .notConfigured: "not_configured"
+        case .failed(_, let reason): reason ?? "failed"
+        }
+    }
+
     static func from(_ error: Error) -> LessonServiceError {
         if let error = error as? LessonServiceError { return error }
         switch error as? SupabaseFunctionError {
-        case .server(let status, let message, let code):
+        case .server(let status, let message, let code, let reason):
             switch code {
             case "free_limit": return .freeLimit
             case "import_pro": return .importPro
@@ -363,14 +385,17 @@ enum LessonServiceError: LocalizedError, Equatable {
                 // Le plafond du jour (`consume_ai_quota`) arrive en 429 sans code : sans ce
                 // cas, il se lisait « la leçon n'a pas pu s'écrire, réessaie ».
                 if status == 429 { return .dailyLimit }
-                return .failed(ServerMessage.localized(message, fallback: "lesson.error.generic"))
+                return .failed(
+                    ServerMessage.localized(message, fallback: "lesson.error.generic"),
+                    reason: reason ?? "server_\(status)"
+                )
             }
         case .notConfigured:
             return .notConfigured
         case .network(let detail):
-            return .failed(L10n.t("ios.ai.network", locale: .resolved(), vars: ["detail": detail]))
+            return .failed(L10n.t("ios.ai.network", locale: .resolved(), vars: ["detail": detail]), reason: "network")
         default:
-            return .failed(L10n.t("lesson.error.generic", locale: .resolved()))
+            return .failed(L10n.t("lesson.error.generic", locale: .resolved()), reason: "unknown")
         }
     }
 }

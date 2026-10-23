@@ -353,6 +353,28 @@ la création : par `saveOnboarding` côté site (`web/lib/actions/onboarding.ts`
 
 ---
 
+### Ce que l'app dit, depuis le 23 octobre 2026, de sa synchro et de ses thèmes
+
+Trois événements de plus dans `app_events`, parce que deux pannes de ce mois-là n'ont laissé
+aucune courbe : deux leçons sur trois n'arrivaient pas en base, et quarante-cinq thèmes ont
+échoué le 21 octobre sans qu'on le sache avant le lendemain.
+
+| Événement | Quand | Étiquettes |
+|---|---|---|
+| `sync_finished` | un aller-retour de synchro réussi | `courses`, `chapters`, `cards` poussés ; `user` : `account` ou `guest` ; `refused` |
+| `sync_failed` | un aller-retour interrompu | `reason` : `network`, `server_<statut>_<code>`, `post_chapters_400`… ; `user` |
+| `lesson_theme_failed` | un thème que le serveur n'a pas pu écrire | `reason` : `provider`, `invalid_json`, `invalid_content`, `timeout`, `free_limit`… ; `retry` : l'app va le redemander seule |
+
+Les invités (comptes anonymes) synchronisent aussi depuis cette date, sur iPhone comme sur
+Android : les requêtes qui joignent `courses` à `auth.users` doivent compter avec
+`is_anonymous`. Android écrit maintenant `profiles` (pays, niveau, `onboarding_completed_at`).
+
+Côté serveur, chaque réponse 5xx des fonctions laisse sa cause dans les journaux
+(`{"reponse":502,"raison":…,"cause":"invalid_json"}`), et le workflow **Veille**
+(`.github/workflows/veille.yml`) les compte toutes les heures : au-delà de cinq, il ouvre ou
+commente l'issue « Veille : les fonctions rendent des 502 ». Ce qu'il ne voit pas : le solde
+fal.ai, qui ne s'expose pas par API — son alerte se règle dans le tableau de bord fal.
+
 ## 6. Dans quel ordre je le ferais
 
 1. **Activer Web Analytics dans Vercel.** Le code est posé, il manque le clic. Un jour de

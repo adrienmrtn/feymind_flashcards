@@ -461,37 +461,20 @@ struct SignInProviderButtons: View {
 
     /// Le bouton d'Apple est dessiné par le système, et ce n'est pas négociable : ses règles
     /// d'interface imposent sa forme, son libellé et sa hauteur dès qu'on propose sa
-    /// connexion. Il construit aussi sa propre requête ; c'est le contrôleur qui la remplit et
-    /// qui garde son nonce, pas la vue.
+    /// connexion.
+    ///
+    /// **Il n'est plus lié à `isWorking`.** Un `.disabled` ou une `.opacity` qui changent
+    /// pendant que la feuille d'Apple se présente font redessiner le bouton, et le bouton
+    /// SwiftUI lâchait alors son contrôleur : erreur 1000 immédiate, puis la vraie réponse sur
+    /// le suivant. La requête vit maintenant dans `AuthController`, qui refuse lui-même un
+    /// second appui tant qu'un travail est en cours.
     private var appleButton: some View {
-        ZStack {
-            SignInWithAppleButton(.continue) { request in
-                auth.prepareAppleRequest(request)
-            } onCompletion: { result in
-                Haptics.medium()
-                Task { await auth.signInWithApple(result: result) }
-            }
-            .signInWithAppleButtonStyle(.black)
-            .opacity(0.02)
-
-            HStack(spacing: 10) {
-                Image(systemName: "apple.logo")
-                    .font(.system(size: 18, weight: .medium))
-                Text(SignInProvider.apple.title(t: t))
-                    .font(MicaboFont.cardTitle)
-            }
-            .foregroundStyle(Color.white)
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background(Color.black, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
-            .allowsHitTesting(false)
+        AppleSignInButton(cornerRadius: MicaboRadius.button) {
+            Haptics.medium()
+            auth.startAppleSignIn()
         }
         .frame(height: 56)
-        .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
-        .disabled(auth.isWorking)
-        .opacity(auth.isWorking ? 0.5 : 1)
-        .accessibilityElement(children: .ignore)
-        .accessibilityAddTraits(.isButton)
+        .frame(maxWidth: .infinity)
         .accessibilityLabel(t("onboarding.continueApple"))
     }
 

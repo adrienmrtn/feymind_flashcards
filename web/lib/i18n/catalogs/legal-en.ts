@@ -1,7 +1,6 @@
 /** The two legal pages. Legal “you” — not the informal voice of the rest of the site. */
 
 export const legalEn = {
-  backHome: "Back to home",
   eyebrow: "Micabo · iPhone and site",
   updated: "Last updated: {date}.",
   updatedDate: "2 September 2026",

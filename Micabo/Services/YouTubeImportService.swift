@@ -232,7 +232,7 @@ enum YouTubeImportError: LocalizedError, Equatable {
         case .invalidResponse:
             self = .server(L10n.t("ios.yt.responseUnread", locale: .resolved()))
             return
-        case .server(let status, let message, let code):
+        case .server(let status, let message, let code, _):
             switch code {
             case "invalid_url":
                 self = .invalidLink

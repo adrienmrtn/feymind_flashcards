@@ -33,7 +33,7 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
   const product = [
     { href: `${home}#${LANDING_SECTIONS.how}`, label: t("site.how") },
     { href: `${home}#${LANDING_SECTIONS.app}`, label: t("landing.footerApp") },
-    { href: `${home}#${LANDING_SECTIONS.cards}`, label: t("landing.footerCards") },
+    { href: `${home}#${LANDING_SECTIONS.exam}`, label: t("site.exam") },
     { href: `${home}#${LANDING_SECTIONS.questions}`, label: t("site.questions") },
   ];
   const pages = SITE_PAGES.map((page) => ({

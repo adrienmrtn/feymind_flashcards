@@ -78,6 +78,11 @@ final class LessonBuilder {
 
     private let service: LessonGenerating
     private let audience: () -> LessonAudience
+    /// **Un thème qui échoue est redemandé une fois, sans rien dire**, après cette pause. Un
+    /// fournisseur qui bute une seconde répond souvent la seconde d'après ; « Réessayer »
+    /// coûtait un geste à l'élève pour ce que l'app peut faire seule. Les tests la mettent à
+    /// zéro.
+    private let themeRetryDelay: Duration
 
     /// Les thèmes en cours d'écriture, par identifiant de chapitre.
     private(set) var writing: Set<UUID> = []
@@ -86,10 +91,12 @@ final class LessonBuilder {
 
     init(
         service: LessonGenerating = SupabaseLessonService(),
-        audience: @escaping () -> LessonAudience = { .current }
+        audience: @escaping () -> LessonAudience = { .current },
+        themeRetryDelay: Duration = .seconds(3)
     ) {
         self.service = service
         self.audience = audience
+        self.themeRetryDelay = themeRetryDelay
     }
 
     // MARK: - Créer
@@ -126,6 +133,9 @@ final class LessonBuilder {
         let course = insertLesson(request, plan: result, language: audience.language, in: context)
         try? context.save()
         CourseLedger.noteChange()
+        // La leçon existe : elle monte tout de suite, en `generating`. Avant, rien ne poussait
+        // une leçon créée avant le lancement suivant, et deux sur trois n'arrivaient jamais.
+        CloudSync.nudge()
 
         onStage(.writing)
         let firstThemeArrived = AsyncSignal()
@@ -244,11 +254,22 @@ final class LessonBuilder {
                 guard let chapter = queue.next() else { return }
                 let job = ThemeJob(base: base, chapterID: chapter.id, index: chapter.position)
                 let service = self.service
+                let retryDelay = self.themeRetryDelay
                 group.addTask {
                     do {
                         return (job.chapterID, .success(try await service.theme(job.request)))
                     } catch {
-                        return (job.chapterID, .failure(error))
+                        let first = LessonServiceError.from(error)
+                        // Une panne se retente une fois, en silence ; un refus (leçon offerte
+                        // prise, import Pro, plafond du jour) reviendrait à l'identique.
+                        guard first.isWorthRetrying else { return (job.chapterID, .failure(first)) }
+                        Analytics.track(.lessonThemeFailed, ["reason": .text(first.analyticsReason), "retry": true])
+                        try? await Task.sleep(for: retryDelay)
+                        do {
+                            return (job.chapterID, .success(try await service.theme(job.request)))
+                        } catch {
+                            return (job.chapterID, .failure(LessonServiceError.from(error)))
+                        }
                     }
                 }
             }
@@ -301,11 +322,17 @@ final class LessonBuilder {
             }))
             Self.addCards(theme.flashcards, to: chapter, of: course, in: context)
             chapter.status = .ready
-        case .failure:
+        case .failure(let error):
             chapter.status = .failed
+            Analytics.track(.lessonThemeFailed, [
+                "reason": .text(LessonServiceError.from(error).analyticsReason),
+                "retry": false,
+            ])
         }
         course.updatedAt = Date()
         try? context.save()
+        // Chaque thème monte quand il arrive : une app tuée en route ne perd que le dernier.
+        CloudSync.nudge()
     }
 
     private func finishIfComplete(_ course: Course, in context: ModelContext) {
@@ -315,6 +342,7 @@ final class LessonBuilder {
         path.status = .ready
         course.setLessonPath(path)
         try? context.save()
+        CloudSync.nudge()
     }
 
     /// Les flashcards d'un thème : recto/verso ou à trou, rattachées au thème, à réviser dès

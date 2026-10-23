@@ -153,7 +153,7 @@ createServer(async (req, res) => {
   if (path.startsWith("/functions/v1/")) {
     const name = path.slice("/functions/v1/".length);
     const body = await readBody(req);
-    return send(res, 200, edgeFunction(name, body));
+    return send(res, 200, await edgeFunction(name, body));
   }
 
   if (path.startsWith("/rest/v1/rpc/")) {
