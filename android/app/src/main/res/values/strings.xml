@@ -230,7 +230,7 @@
     <string name="ios_searchCourse">A course, a subject…</string>
     <string name="ios_sharedCourse">Shared course</string>
     <string name="ios_sharedNoSheet">This course has no sheet</string>
-    <string name="ios_signOutMsg">Your courses stay on this device and on your account. You\'ll find them again next time you sign in.</string>
+    <string name="ios_signOutMsg">Your courses stay on your account and leave this device. You\'ll find them again next time you sign in.</string>
     <string name="ios_signOutQ">Sign out?</string>
     <string name="ios_startCheaper">Start with %1$s%% off</string>
     <string name="ios_streak_bestLabel">Your best</string>
@@ -250,8 +250,8 @@
     <string name="ios_tapToSync">Tap to sync</string>
     <string name="ios_targetLead">Aim at what would genuinely make you happy, not at what sounds reasonable.</string>
     <string name="ios_targetTitle">And what are you\naiming for?</string>
-    <string name="ios_trialDay2">Day 2: reminder before it ends</string>
-    <string name="ios_trialDay2Detail">We\'ll warn you with a notification. Cancel in fifteen seconds.</string>
+    <string name="ios_trialDay2">Day 2: you stay in control</string>
+    <string name="ios_trialDay2Detail">Nothing is charged during the trial. You can cancel in two taps, anytime.</string>
     <string name="ios_trialLast">Day %1$s: trial ends</string>
     <string name="ios_trialLastDetail">Your subscription will start on %1$s.</string>
     <string name="ios_trialToday">Today: try Micabo Pro</string>
@@ -259,8 +259,8 @@
     <string name="ios_trial_noPayment">No payment due now</string>
     <string name="ios_trial_price">Then %1$s per year, that\'s %2$s a month.</string>
     <string name="ios_trial_reminder_cta">Continue for free</string>
-    <string name="ios_trial_reminder_sub">On day %1$s, a notification warns you. Cancel in two taps if you want.</string>
-    <string name="ios_trial_reminder_title">We\'ll send you a **reminder** before your trial ends.</string>
+    <string name="ios_trial_reminder_sub">Even on day %1$s, you can still cancel in two taps. Nothing is charged before the trial ends.</string>
+    <string name="ios_trial_reminder_title">Your trial comes with **no commitment**.</string>
     <string name="ios_trial_title">We want you to try Micabo **for free**.</string>
     <string name="ios_unitWeek">week</string>
     <string name="ios_unitYear">year</string>

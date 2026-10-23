@@ -110,7 +110,7 @@ extension AIServiceError {
         switch self {
         case .notConfigured, .missingProviderKey, .network, .server, .invalidResponse, .quotaExhausted:
             true
-        case .emptySource:
+        case .emptySource, .proRequired:
             false
         }
     }

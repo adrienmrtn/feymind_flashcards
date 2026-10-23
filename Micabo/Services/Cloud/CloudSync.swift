@@ -95,14 +95,16 @@ final class CloudSync {
     /// `auth.users`, le cloisonnement marche avec son jeton, et `begin_lesson` compte déjà sa
     /// leçon offerte sous cet identifiant : 178 invités iPhone et 116 invités Android en
     /// quatorze jours, zéro cours en base. Les lignes montent donc sous l'invité ; quand il
-    /// ouvre un vrai compte, tout remonte sous celui-ci (voir `sync`, le repère par compte).
+    /// ouvre un vrai compte, elles passent d'abord au compte (`settleGuestClaim`), puis tout
+    /// remonte sous celui-ci (voir `sync`, le repère par compte).
     private var syncUserID: UUID? {
         auth.user?.id ?? auth.guestUserID
     }
 
     /// Le compte pour lequel le repère de synchro a été pris. Un autre compte - l'invité qui
-    /// vient de se connecter, un camarade sur le même téléphone - repart de zéro : tout ce
-    /// qui est local monte sous lui, et tout ce qu'il a redescend.
+    /// vient de se connecter - repart de zéro : tout ce qui est local monte sous lui, et tout
+    /// ce qu'il a redescend. (Un camarade sur le même téléphone ne trouve plus rien : la
+    /// déconnexion vide l'appareil, voir `leaveAccount`.)
     private static let userKey = "micabo.cloud.lastSyncedUser"
     private var lastSyncedUserID: UUID? {
         get { UserDefaults.standard.string(forKey: Self.userKey).flatMap(UUID.init(uuidString:)) }
@@ -116,6 +118,14 @@ final class CloudSync {
 
     /// Ce que la dernière montée a envoyé, pour la statistique `sync_finished`.
     private var pushed = PushCounts()
+
+    /// Les horodatages que le serveur a rendus à nos envois. Voir `PushEchoes`.
+    @ObservationIgnored private var echoes = PushEchoes.load()
+
+    /// Vrai pendant la sortie d'un compte (`leaveAccount`) : aucun passage ne part entre la
+    /// déconnexion et le téléphone vidé, sinon il remonterait sous l'invité ce qui appartient
+    /// au compte qui s'en va, ou redescendrait le compte dans un téléphone qu'on vide.
+    @ObservationIgnored private var isLeaving = false
 
     private struct PushCounts {
         var courses = 0
@@ -150,7 +160,54 @@ final class CloudSync {
         UserDefaults.standard.removeObject(forKey: Self.pendingCoursesKey)
         UserDefaults.standard.removeObject(forKey: Self.userKey)
         CloudTombstones.removeAll()
+        PushEchoes.removeAll()
+        echoes = PushEchoes()
         state = .idle
+    }
+
+    // MARK: - Sortir d'un compte
+
+    /// **La déconnexion et la suppression du compte, de bout en bout.**
+    ///
+    /// Jusqu'au 23 octobre 2026, se déconnecter laissait tout sur le téléphone : les cours du
+    /// compte restaient affichés, et la synchro suivante les remontait sous l'invité, puis sous
+    /// le compte d'après (un camarade sur le même iPhone). Supprimer son compte faisait de
+    /// même, alors que le message promettait « tes cours seront effacés ». Désormais :
+    ///
+    /// 1. une dernière montée (déconnexion seulement) : une révision de la minute d'avant ne
+    ///    doit pas être le prix du départ ;
+    /// 2. la session du compte se ferme (ou le compte est supprimé) ;
+    /// 3. le téléphone se vide de tout ce qui appartient à l'élève (`LocalWipe`), le repère de
+    ///    synchro et les pierres tombales s'oublient ;
+    /// 4. un invité neuf prend la place de l'ancien, qui a cédé ses lignes au compte.
+    ///
+    /// Rend faux quand la suppression du compte a échoué : rien n'est alors effacé ici, et le
+    /// message d'erreur est déjà posé par `AuthController`.
+    @discardableResult
+    func leaveAccount(context: ModelContext, deleting: Bool) async -> Bool {
+        if !deleting {
+            await sync(context: context)
+        }
+        isLeaving = true
+        defer { isLeaving = false }
+
+        if deleting {
+            guard await auth.deleteAccount() else { return false }
+        } else {
+            await auth.signOut()
+        }
+        do {
+            try LocalWipe.eraseAccountData(in: context)
+        } catch {
+            // Un enregistrement raté ne doit pas laisser le compte suivant hériter des lignes :
+            // le contexte est vidé de ses changements, et le passage suivant ne montera rien
+            // de ce qui reste, faute de repère (`forget`).
+            context.rollback()
+        }
+        forget()
+        await auth.startFreshGuest()
+        epoch += 1
+        return true
     }
 
     /// Une session Supabase, c'est le compte.
@@ -177,6 +234,9 @@ final class CloudSync {
     /// une version locale plus vieille ; remonter ensuite publie ce que cet appareil a de neuf.
     func sync(context: ModelContext) async {
         guard let userID = syncUserID, AppConfig.isConfigured else { return }
+        // La base tourne en mémoire (`LocalStore`) : rien de ce qui descendrait ne serait
+        // écrit sur disque, et le repère avancé ferait manquer ces lignes au lancement suivant.
+        guard !LocalStore.isVolatile, !isLeaving else { return }
         guard state != .syncing else {
             needsAnotherPass = true
             return
@@ -187,7 +247,8 @@ final class CloudSync {
         pushed = PushCounts()
         // Un autre compte que la dernière fois : le repère ne vaut plus rien. Tout ce qui est
         // ici monte sous lui, tout ce qu'il a redescend. C'est le chemin de l'invité qui se
-        // connecte : ses leçons suivent le compte sans qu'on ait rien à transférer.
+        // connecte : ce qu'il avait déjà monté passe d'abord au compte (`settleGuestClaim`),
+        // sans quoi le cloisonnement refuserait de réécrire ses lignes sous un autre.
         if lastSyncedUserID != userID {
             lastSyncedAt = nil
             lastPushedProfileSignature = nil
@@ -205,8 +266,25 @@ final class CloudSync {
         let repaired = UserDefaults.standard.integer(forKey: Self.repairKey) >= Self.repairVersion
         do {
             await CloudSchema.probe(database)
-            try await pull(context: context, since: pullSince)
-            try await push(context: context, since: repaired ? since : nil)
+            // **Les lignes de l'invité passent d'abord au compte**, avant toute montée : sans
+            // ça, chaque ligne déjà montée sous l'invité était refusée par le cloisonnement, et
+            // l'envoi groupé avec elle, à chaque passage. Voir `settleGuestClaim`.
+            if try await settleGuestClaim() {
+                // Le compte est désormais celui de ces lignes : un passage qui tomberait plus
+                // bas ne doit pas faire réclamer de nouveau (le repère reste à zéro, le
+                // suivant refait tout).
+                lastSyncedUserID = userID
+                // Les lignes réclamées portent l'heure du serveur (`touch_updated_at`), plus
+                // récente que tout ce qui est ici : descendre d'abord écraserait ce que
+                // l'invité n'avait pas encore monté. Ce qui est ici monte donc en entier, puis
+                // tout redescend - nos propres envois reconnus comme des échos.
+                lastSyncedAt = nil
+                try await push(context: context, since: nil)
+                try await pull(context: context, since: nil)
+            } else {
+                try await pull(context: context, since: pullSince)
+                try await push(context: context, since: repaired ? since : nil)
+            }
             lastSyncedAt = checkpoint
             lastSyncedUserID = userID
             // Fait même si un cours a encore été refusé : il est dans `pendingCourseIDs`, et
@@ -250,6 +328,59 @@ final class CloudSync {
         }
     }
 
+    /// **Fait passer au compte les lignes que l'invité de ce téléphone a montées.** Rend vrai
+    /// quand des lignes viennent de changer de propriétaire.
+    ///
+    /// Le jeton a normalement été pris à la connexion (`AuthController.adoptAccount`) ; s'il
+    /// manque - connexion faite avec une version d'avant, réseau tombé à ce moment-là, jeton
+    /// expiré - on en redemande un tant que la session de l'invité est là. Un échec fait
+    /// échouer le passage (rien ne monte, pour ne pas faire refuser l'envoi groupé), et le
+    /// suivant retente : le jeton reste dans `GuestClaimStore` jusqu'à réussir ou expirer.
+    ///
+    /// Deux cas laissent passer la synchro sans réclamation : plus de session d'invité pour
+    /// signer un jeton (GoTrue l'a oublié), et une base où la fonction n'existe pas encore
+    /// (`PGRST202`) - mieux vaut l'ancien comportement qu'une synchro arrêtée net.
+    private func settleGuestClaim() async throws -> Bool {
+        guard let account = auth.user?.id,
+              let guestID = GuestClaimStore.pendingGuest(current: auth.guestUserID, account: account)
+        else { return false }
+
+        var candidate = GuestClaimStore.validToken(for: guestID)
+        if candidate == nil {
+            guard auth.holdsGuestSession(guestID) else {
+                GuestClaimStore.clear()
+                return false
+            }
+            candidate = await auth.createGuestClaim(for: guestID)
+        }
+        guard let token = candidate else {
+            throw SupabaseDatabase.Failure.network(L10n.t("ios.cloud.unexpected", locale: .resolved()))
+        }
+
+        do {
+            let data = try await database.rpcData(
+                "claim_guest",
+                arguments: ["p_token": token.uuidString.lowercased()]
+            )
+            GuestClaimStore.clear()
+            let moved = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+            Analytics.track(.guestClaimed, [
+                "courses": .number((moved?["courses"] as? NSNumber)?.doubleValue ?? 0),
+                "cards": .number((moved?["flashcards"] as? NSNumber)?.doubleValue ?? 0),
+            ])
+            return true
+        } catch let failure as SupabaseDatabase.Failure {
+            if case .server(let status, _, let code) = failure {
+                // La fonction n'est pas (encore) déployée : on n'arrête pas la synchro pour ça.
+                if code == "PGRST202" || status == 404 { return false }
+                // Jeton inconnu ou expiré : oublié, le passage suivant en redemande un.
+                if code == "P0002" { GuestClaimStore.forgetToken() }
+            }
+            Analytics.track(.guestClaimFailed, ["reason": .text(Self.failureLabel(failure))])
+            throw failure
+        }
+    }
+
     /// L'échec en un mot, sans texte d'élève : le statut HTTP et le code Postgres quand il y en
     /// a, la famille de l'erreur sinon.
     private static func failureLabel(_ error: Error) -> String {
@@ -268,6 +399,14 @@ final class CloudSync {
 
     private func push(context: ModelContext, since: Date?) async throws {
         guard let userID = syncUserID else { throw SupabaseDatabase.Failure.notSignedIn }
+        // Un invité qui monte quelque chose aura des lignes à céder à son compte : la connexion
+        // le lira (`GuestClaimStore.guestHasRows`). Posé avant l'envoi, qui peut réussir à
+        // moitié.
+        if auth.user == nil { GuestClaimStore.noteRows(of: userID) }
+        defer {
+            echoes.prune()
+            echoes.save()
+        }
 
         let profile = ProfileRecord.fromLocalPreferences(userID: userID, displayName: auth.user?.displayName)
         try await database.upsert([profile], into: CloudTable.profiles)
@@ -283,17 +422,14 @@ final class CloudSync {
             .filter {
                 !CloudTombstones.contains(CloudTable.courseFolders, id: $0.id)
             }
-        try await database.upsert(
-            folders.map { record(for: $0, userID: userID) },
-            into: CloudTable.courseFolders
-        )
+        try await upsertRemembering(folders.map { record(for: $0, userID: userID) }, into: CloudTable.courseFolders)
 
         let courses = try fetchChangedCourses(in: context, since: since)
             .filter {
                 !CloudTombstones.contains(CloudTable.courses, id: $0.id) && !Self.isLocalOnly($0)
             }
         pushed.courses = courses.count
-        try await database.upsert(courses.map { record(for: $0, userID: userID) }, into: CloudTable.courses)
+        try await upsertRemembering(courses.map { record(for: $0, userID: userID) }, into: CloudTable.courses)
 
         // **Les chapitres montent entre les cours et les cartes.** Ils référencent un cours
         // (`chapters.course_id`, en `cascade`) et sont référencés par les cartes
@@ -303,10 +439,7 @@ final class CloudSync {
         let chapters = try fetchChangedChapters(in: context, since: since)
             .filter { !CloudTombstones.contains(CloudTable.chapters, id: $0.id) && !Self.isLocalOnly($0.course) }
         pushed.chapters = chapters.count
-        try await database.upsert(
-            chapters.compactMap { record(for: $0, userID: userID) },
-            into: CloudTable.chapters
-        )
+        try await upsertRemembering(chapters.compactMap { record(for: $0, userID: userID) }, into: CloudTable.chapters)
 
         // Les cartes changent indépendamment de leur cours : noter une carte ne touche pas
         // `Course.updatedAt`. Il faut donc les lire directement, pas seulement sous les cours
@@ -350,9 +483,17 @@ final class CloudSync {
                 !CloudTombstones.contains(CloudTable.exams, id: $0.id)
                     && !$0.courseIDs.contains(where: localOnly.contains)
             }
-        try await database.upsert(exams.map { record(for: $0, userID: userID) }, into: CloudTable.exams)
+        try await upsertRemembering(exams.map { record(for: $0, userID: userID) }, into: CloudTable.exams)
 
         try await pushOffDays(context: context, userID: userID)
+    }
+
+    /// Envoie, et retient l'horodatage que le serveur a posé sur chaque ligne : c'est ce qui
+    /// permet à la descente suivante de reconnaître nos propres lignes. Voir `PushEchoes`.
+    private func upsertRemembering<T: Encodable>(_ rows: [T], into table: String) async throws {
+        guard !rows.isEmpty else { return }
+        let stamps = try await database.upsertReturningStamps(rows, into: table)
+        echoes.record(stamps, in: table)
     }
 
     // MARK: - Ce qui ne monte pas
@@ -418,9 +559,9 @@ final class CloudSync {
             }
             do {
                 if !known.contains(courseID) {
-                    try await database.upsert([record(for: course, userID: userID)], into: CloudTable.courses)
+                    try await upsertRemembering([record(for: course, userID: userID)], into: CloudTable.courses)
                 }
-                try await database.upsert(group.map { record(for: $0, userID: userID) }, into: CloudTable.flashcards)
+                try await upsertRemembering(group.map { record(for: $0, userID: userID) }, into: CloudTable.flashcards)
                 pending.remove(courseID)
             } catch {
                 refusedCourses.append(course.title)
@@ -615,7 +756,8 @@ final class CloudSync {
             if let deleted = remote.deleted_at, deleted > local.updatedAt {
                 CloudTombstones.mark(CloudTable.courseFolders, id: remote.id)
                 context.delete(local)
-            } else if remote.updated_at > local.updatedAt {
+            } else if remote.updated_at > local.updatedAt,
+                      !echoes.isEcho(CloudTable.courseFolders, id: remote.id, updatedAt: remote.updated_at) {
                 apply(remote, to: local)
             }
         }
@@ -647,7 +789,8 @@ final class CloudSync {
                     CloudTombstones.mark(CloudTable.flashcards, id: card.id)
                 }
                 context.delete(local)
-            } else if remote.updated_at > local.updatedAt {
+            } else if remote.updated_at > local.updatedAt,
+                      !echoes.isEcho(CloudTable.courses, id: remote.id, updatedAt: remote.updated_at) {
                 apply(remote, to: local)
             }
         }
@@ -692,7 +835,8 @@ final class CloudSync {
                 if let deleted = remote.deleted_at, deleted > local.updatedAt {
                     CloudTombstones.mark(CloudTable.chapters, id: remote.id)
                     context.delete(local)
-                } else if remote.updated_at > local.updatedAt {
+                } else if remote.updated_at > local.updatedAt,
+                          !echoes.isEcho(CloudTable.chapters, id: remote.id, updatedAt: remote.updated_at) {
                     apply(remote, to: local, course: deck)
                 }
             }
@@ -745,7 +889,8 @@ final class CloudSync {
             if let deleted = remote.deleted_at, deleted > local.updatedAt {
                 CloudTombstones.mark(CloudTable.flashcards, id: remote.id)
                 context.delete(local)
-            } else if remote.updated_at > local.updatedAt {
+            } else if remote.updated_at > local.updatedAt,
+                      !echoes.isEcho(CloudTable.flashcards, id: remote.id, updatedAt: remote.updated_at) {
                 apply(remote, to: local)
                 // Le rattachement se rejoue à chaque descente : c'est lui qui rattrape les
                 // cartes montées avant que leur chapitre n'existe côté serveur.
@@ -781,7 +926,8 @@ final class CloudSync {
             if let deleted = remote.deleted_at, deleted > local.updatedAt {
                 CloudTombstones.mark(CloudTable.exams, id: remote.id)
                 context.delete(local)
-            } else if remote.updated_at > local.updatedAt {
+            } else if remote.updated_at > local.updatedAt,
+                      !echoes.isEcho(CloudTable.exams, id: remote.id, updatedAt: remote.updated_at) {
                 apply(remote, to: local)
             }
         }
@@ -1080,7 +1226,7 @@ final class CloudSync {
             course: course
         )
         chapter.sheetData = remote.sheet?.data
-        applyLesson(remote, to: chapter)
+        applyLesson(remote, to: chapter, isNew: true)
         chapter.createdAt = remote.created_at
         chapter.updatedAt = remote.updated_at
         return chapter
@@ -1088,11 +1234,30 @@ final class CloudSync {
 
     /// Ce que la leçon ajoute à un chapitre. Une colonne vide ne vide rien : une ligne écrite
     /// par une version d'avant la refonte (ou par le site) n'efface pas les notes d'un thème.
-    private func applyLesson(_ remote: ChapterRecord, to chapter: Chapter) {
+    /// `isNew` : un thème qui arrive tout juste n'a pas d'état local à protéger, il prend
+    /// celui du serveur tel quel.
+    private func applyLesson(_ remote: ChapterRecord, to chapter: Chapter, isNew: Bool = false) {
         if let icon = remote.icon?.nilIfBlank { chapter.iconID = icon }
         if let notes = remote.notes?.data { chapter.notesData = notes }
         if let quiz = remote.quiz?.data { chapter.quizData = quiz }
-        if let status = remote.status, ThemeStatus(rawValue: status) != nil { chapter.statusRaw = status }
+        if let status = remote.status.flatMap(ThemeStatus.init(rawValue:)),
+           isNew || Self.acceptsRemoteStatus(status, over: chapter.status) {
+            chapter.statusRaw = status.rawValue
+        }
+    }
+
+    /// **Un thème écrit ne recule jamais par la descente.**
+    ///
+    /// Un thème `pending` relance son écriture à l'ouverture de la leçon (`resumeIfNeeded`), un
+    /// thème `failed` propose « Réessayer », et les deux ajoutent des cartes en s'écrivant :
+    /// une ligne distante restée sur `pending` (montée avant que le thème n'arrive) faisait
+    /// réécrire un thème prêt, et doublait ses flashcards. Seul cet appareil fait passer un
+    /// thème à `pending` (création, « Réessayer ») ; ce qu'il reçoit d'ailleurs ne peut que le
+    /// faire avancer : `ready` ne se quitte pas, `pending` ne s'atteint pas.
+    nonisolated static func acceptsRemoteStatus(_ remote: ThemeStatus, over local: ThemeStatus) -> Bool {
+        if local == .ready { return remote == .ready }
+        if remote == .pending { return local == .pending }
+        return true
     }
 
     private func apply(_ remote: ChapterRecord, to chapter: Chapter, course: Course?) {

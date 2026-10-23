@@ -223,7 +223,7 @@
     <string name="ios_searchCourse">Um curso, uma disciplina…</string>
     <string name="ios_sharedCourse">Curso partilhado</string>
     <string name="ios_sharedNoSheet">Este curso não tem ficha</string>
-    <string name="ios_signOutMsg">Os teus cursos ficam neste dispositivo e na tua conta. Vais encontrá-los quando voltares a iniciar sessão.</string>
+    <string name="ios_signOutMsg">Os teus cursos ficam na tua conta e saem deste dispositivo. Vais encontrá-los no próximo início de sessão.</string>
     <string name="ios_signOutQ">Terminar sessão?</string>
     <string name="ios_startCheaper">Começa com %1$s%% de desconto</string>
     <string name="ios_streak_bestLabel">O teu recorde</string>
@@ -243,8 +243,8 @@
     <string name="ios_tapToSync">Toca para sincronizar</string>
     <string name="ios_targetLead">Aponta para o que te faria mesmo feliz, não para o que parece razoável.</string>
     <string name="ios_targetTitle">E qual é\no teu objetivo?</string>
-    <string name="ios_trialDay2">Dia 2: lembrete antes do fim</string>
-    <string name="ios_trialDay2Detail">Avisamos-te com uma notificação. Cancelas em quinze segundos.</string>
+    <string name="ios_trialDay2">Dia 2: decides tu</string>
+    <string name="ios_trialDay2Detail">Nada é cobrado durante o teste. Podes cancelar em dois toques, a qualquer momento.</string>
     <string name="ios_trialLast">Dia %1$s: fim do teste</string>
     <string name="ios_trialLastDetail">A tua subscrição começa a %1$s.</string>
     <string name="ios_trialToday">Hoje: experimenta o Micabo Pro</string>
@@ -252,8 +252,8 @@
     <string name="ios_trial_noPayment">Nada a pagar hoje</string>
     <string name="ios_trial_price">Depois %1$s por ano, ou seja, %2$s por mês.</string>
     <string name="ios_trial_reminder_cta">Continuar grátis</string>
-    <string name="ios_trial_reminder_sub">No dia %1$s, uma notificação avisa-te. Se quiseres, cancelas em dois toques.</string>
-    <string name="ios_trial_reminder_title">Vamos enviar-te um **lembrete** antes de o teste acabar.</string>
+    <string name="ios_trial_reminder_sub">Mesmo no dia %1$s, ainda podes cancelar em dois toques. Nada é cobrado antes do fim do teste.</string>
+    <string name="ios_trial_reminder_title">O teu teste é **sem compromisso**.</string>
     <string name="ios_trial_title">Queremos que experimentes o Micabo **gratuitamente**.</string>
     <string name="ios_unitWeek">semana</string>
     <string name="ios_unitYear">ano</string>

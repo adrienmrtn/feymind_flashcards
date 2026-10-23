@@ -223,7 +223,7 @@
     <string name="ios_searchCourse">Kurz, předmět…</string>
     <string name="ios_sharedCourse">Sdílený kurz</string>
     <string name="ios_sharedNoSheet">Tento kurz nemá shrnutí</string>
-    <string name="ios_signOutMsg">Tvoje kurzy zůstanou v tomto zařízení i na účtu. Najdeš je při dalším přihlášení.</string>
+    <string name="ios_signOutMsg">Tvoje kurzy zůstanou na účtu a z tohoto zařízení zmizí. Najdeš je při dalším přihlášení.</string>
     <string name="ios_signOutQ">Odhlásit se?</string>
     <string name="ios_startCheaper">Začni se slevou %1$s %%</string>
     <string name="ios_streak_bestLabel">Tvůj rekord</string>
@@ -243,8 +243,8 @@
     <string name="ios_tapToSync">Klepni pro synchronizaci</string>
     <string name="ios_targetLead">Miř na to, co by tě opravdu potěšilo, ne na to, co zní rozumně.</string>
     <string name="ios_targetTitle">A na co\nmíříš?</string>
-    <string name="ios_trialDay2">Den 2: připomínka před koncem</string>
-    <string name="ios_trialDay2Detail">Upozorníme tě oznámením. Zrušíš za patnáct vteřin.</string>
+    <string name="ios_trialDay2">Den 2: rozhoduješ ty</string>
+    <string name="ios_trialDay2Detail">Během zkušební doby se nic neplatí. Zrušit můžeš kdykoli dvěma klepnutími.</string>
     <string name="ios_trialLast">Den %1$s: konec zkušební doby</string>
     <string name="ios_trialLastDetail">Předplatné začne %1$s.</string>
     <string name="ios_trialToday">Dnes: vyzkoušej Micabo Pro</string>
@@ -252,8 +252,8 @@
     <string name="ios_trial_noPayment">Teď nic neplatíš</string>
     <string name="ios_trial_price">Potom %1$s za rok, tedy %2$s měsíčně.</string>
     <string name="ios_trial_reminder_cta">Pokračovat zdarma</string>
-    <string name="ios_trial_reminder_sub">%1$s. den tě upozorní oznámení. Když budeš chtít, zrušíš to dvěma klepnutími.</string>
-    <string name="ios_trial_reminder_title">Před koncem zkušební doby ti pošleme **připomínku**.</string>
+    <string name="ios_trial_reminder_sub">I %1$s. den můžeš ještě zrušit dvěma klepnutími. Před koncem zkušební doby se nic neplatí.</string>
+    <string name="ios_trial_reminder_title">Zkušební doba je **bez závazků**.</string>
     <string name="ios_trial_title">Chceme ti dát možnost vyzkoušet si Micabo **zdarma**.</string>
     <string name="ios_unitWeek">týden</string>
     <string name="ios_unitYear">rok</string>

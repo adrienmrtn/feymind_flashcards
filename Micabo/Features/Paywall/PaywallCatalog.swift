@@ -378,6 +378,21 @@ enum PaywallOutcome: Equatable {
     /// **La boutique n'a pas pu vendre** : aucun produit publié, aucun SDK branché, ou le
     /// réseau est tombé. Ce n'est jamais un achat, et les paywalls ne l'ouvrent pas.
     case unavailable
+    /// **L'achat attend une validation** : « Demander l'autorisation » du partage familial,
+    /// une banque qui confirme à part (SCA). Ce n'est ni un échec ni un refus : Pro s'ouvrira
+    /// tout seul quand la boutique confirmera (`ProAccess.observePurchases`). Le montrer comme
+    /// une panne faisait racheter, et le compter comme une fermeture offrait le cadeau à
+    /// quelqu'un qui venait d'acheter au prix fort.
+    case pending
+
+    /// Vrai quand refermer le paywall après cette issue est une vraie fermeture sans achat,
+    /// celle qui fait tomber le cadeau du tarif réduit (`DiscountOffer.paywallClosed`).
+    var countsAsDismissal: Bool {
+        switch self {
+        case .purchased, .pending: false
+        case .cancelled, .unavailable: true
+        }
+    }
 }
 
 /// Les deux liens qu'Apple exige sur un écran d'abonnement.

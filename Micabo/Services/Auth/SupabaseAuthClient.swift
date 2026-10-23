@@ -13,6 +13,10 @@ struct SupabaseAuthClient {
     var session: URLSession = {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 30
+        // `waitsForConnectivity` sans plafond attendait le réseau indéfiniment : hors ligne,
+        // le bouton de connexion tournait pour toujours. `timeoutIntervalForRequest` ne compte
+        // pas l'attente de connectivité ; seul `timeoutIntervalForResource` la borne.
+        configuration.timeoutIntervalForResource = 60
         configuration.waitsForConnectivity = true
         return URLSession(configuration: configuration)
     }()

@@ -41,9 +41,12 @@ struct LessonImportPickers: ViewModifier {
     @State private var showText = false
 
     private let youtube = YouTubeImportService()
+    /// Le paywall de l'import, quand le serveur refuse de lire une vidéo (`import_pro`).
+    @State private var paywall: PaywallTrigger?
 
     func body(content: Content) -> some View {
         content
+            .micaboPaywall($paywall)
             .onChange(of: request) { _, kind in
                 guard let kind else { return }
                 request = nil
@@ -249,6 +252,11 @@ struct LessonImportPickers: ViewModifier {
                 let transcript = try await youtube.transcript(link: link)
                 let cover = await youtube.cover(for: video)
                 composer.finish(id, with: YouTubeImportService.document(video: video, transcript: transcript, cover: cover))
+            } catch YouTubeImportError.importPro {
+                // Un refus commercial, pas une panne : la case le dit, et le paywall de
+                // l'import s'ouvre, comme pour un PDF importé sans abonnement.
+                composer.fail(id, message: YouTubeImportError.importPro.localizedDescription)
+                paywall = .generateCourse
             } catch {
                 composer.fail(id, message: error.localizedDescription)
             }

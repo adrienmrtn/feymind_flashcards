@@ -49,10 +49,12 @@ enum TrialTimeline {
                 systemImage: "lock.open.fill",
                 tone: .current
             ),
+            // Pas de cloche : Micabo n'envoie aucun rappel de fin d'essai (choix du 23 octobre
+            // 2026). L'étape dit ce qui est vrai - on peut annuler à tout moment.
             Milestone(
                 title: L10n.t("ios.trialDay2", locale: locale),
                 detail: L10n.t("ios.trialDay2Detail", locale: locale),
-                systemImage: "bell.fill",
+                systemImage: "hand.tap.fill",
                 tone: .upcoming
             ),
             Milestone(
@@ -244,20 +246,28 @@ private struct TrialMilestoneRow: View {
     }
 }
 
-/// **La promesse du rappel, montrée telle qu'elle arrivera.**
+/// **Ce que coûte l'essai, et comment en sortir.**
 ///
-/// Le réveil 3D vacille sur son halo, ses ondes battent ; dessous, la notification de la
-/// veille tombe sur l'écran — « Ton essai se termine demain », avec la date du premier
-/// prélèvement —, puis la phrase se lit mot à mot et les deux garanties se posent. On ne
-/// promet pas un rappel : on le fait voir. Le bouton n'arrive qu'une fois la phrase lue.
+/// Cet écran promettait un rappel la veille de la fin de l'essai, et montrait la notification
+/// telle qu'elle arriverait. Aucune ne partait : rien dans l'app ne la programmait. Le choix
+/// du 23 octobre 2026 est de ne pas en envoyer du tout ; l'écran ne promet donc plus rien
+/// qu'il ne tienne. Il dit le prix après l'essai et qu'on annule en deux appuis depuis l'App
+/// Store, à tout moment - ce que la relecture d'Apple demande, et ce qui rassure vraiment.
+///
+/// Le réveil reste, pour le geste de la page ; la phrase se lit mot à mot, puis les deux
+/// garanties se posent. Le bouton n'arrive qu'une fois la phrase lue.
 struct TrialReminderStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @Environment(\.onboardingStill) private var still
 
-    @State private var bannerIn = false
     @State private var chipsIn = false
     @State private var showsAction = false
+
+    /// Le prix de l'annuel tel que la boutique du pays l'annonce, sinon celui du catalogue.
+    private var yearlyPrice: String {
+        PaywallCatalog.plan(.yearly).displayPrice
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -265,16 +275,14 @@ struct TrialReminderStepView: View {
                 VStack(spacing: 24) {
                     ReminderAlarm()
 
-                    ReminderBanner(dateText: TrialTimeline.billingDateText(locale: i18n.locale))
-                        .opacity(bannerIn || still ? 1 : 0)
-                        .offset(y: bannerIn || still ? 0 : -26)
-                        .scaleEffect(bannerIn || still ? 1 : 0.94)
-
                     OnboardingReadingText(
-                        template: i18n.t("ios.trialReminder"),
-                        size: 26,
-                        wordDelay: 0.13,
-                        startDelay: 0.9,
+                        template: i18n.t("ios.trialReminder", [
+                            "n": "\(TrialTimeline.freeDays)",
+                            "price": yearlyPrice,
+                        ]),
+                        size: 24,
+                        wordDelay: 0.11,
+                        startDelay: 0.6,
                         onFinish: {
                             withAnimation(OnboardingMotion.enter) { chipsIn = true }
                             withAnimation(OnboardingMotion.enter.delay(0.25)) { showsAction = true }
@@ -302,12 +310,6 @@ struct TrialReminderStepView: View {
         }
         .onboardingChromeInset()
         .background(OnboardingPalette.white.ignoresSafeArea())
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-                withAnimation(.spring(duration: 0.55, bounce: 0.35)) { bannerIn = true }
-                Haptics.light()
-            }
-        }
     }
 
     @ViewBuilder
@@ -335,7 +337,7 @@ struct TrialReminderStepView: View {
 }
 
 /// Le réveil 3D, sur son halo, avec deux ondes de chaque côté qui battent doucement : il
-/// vacille sur sa base, il ne sonne pas — le rappel est pour dans deux jours.
+/// vacille sur sa base, il ne sonne pas - le temps de l'essai, pas une alarme.
 private struct ReminderAlarm: View {
     @State private var shown = false
     @State private var sway = false
@@ -377,49 +379,5 @@ private struct ReminderAlarm: View {
             withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true).delay(0.3)) { sway = true }
             withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true).delay(0.3)) { wave = true }
         }
-    }
-}
-
-/// **La notification de la veille**, telle qu'iOS l'affichera : l'icône de l'app, « dans
-/// 2 j », le titre et la date du premier prélèvement.
-private struct ReminderBanner: View {
-    let dateText: String
-
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            MicaboBrandMark(size: 40)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
-                    Text("MICABO")
-                        .font(MicaboFont.ui(11.5, weight: .bold))
-                        .tracking(MicaboTracking.caps)
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                    Spacer(minLength: 0)
-                    Text(i18n.t("ios.trialReminder.when"))
-                        .font(MicaboFont.ui(11.5, weight: .medium))
-                        .foregroundStyle(MicaboColor.inkTertiary)
-                }
-
-                Text(i18n.t("ios.trialReminder.cardTitle"))
-                    .font(MicaboFont.ui(15.5, weight: .heavy))
-                    .foregroundStyle(MicaboColor.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Text(i18n.t("ios.trialReminder.cardBody", ["date": dateText]))
-                    .font(MicaboFont.ui(14, weight: .medium))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
-        .micaboElevation(.card)
-        .accessibilityElement(children: .combine)
     }
 }

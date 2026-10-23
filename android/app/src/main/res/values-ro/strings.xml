@@ -218,7 +218,7 @@
     <string name="ios_searchCourse">Un curs, o materie…</string>
     <string name="ios_sharedCourse">Curs partajat</string>
     <string name="ios_sharedNoSheet">Cursul ăsta nu are fișă</string>
-    <string name="ios_signOutMsg">Cursurile rămân pe dispozitiv și în cont. Le regăsești data viitoare când te conectezi.</string>
+    <string name="ios_signOutMsg">Cursurile tale rămân în cont și dispar de pe acest dispozitiv. Le regăsești la următoarea conectare.</string>
     <string name="ios_signOutQ">Te deconectezi?</string>
     <string name="ios_startCheaper">Începe cu %1$s%% reducere</string>
     <string name="ios_streak_bestLabel">Cel mai bun</string>
@@ -238,8 +238,8 @@
     <string name="ios_tapToSync">Atinge ca să sincronizezi</string>
     <string name="ios_targetLead">Țintește spre ce te-ar bucura cu adevărat, nu spre ce pare rezonabil.</string>
     <string name="ios_targetTitle">Și ce notă\nvrei să atingi?</string>
-    <string name="ios_trialDay2">Ziua 2: reminder înainte de final</string>
-    <string name="ios_trialDay2Detail">Te anunțăm printr-o notificare. Anulezi în cincisprezece secunde.</string>
+    <string name="ios_trialDay2">Ziua 2: tu decizi</string>
+    <string name="ios_trialDay2Detail">Nu plătești nimic în perioada de probă. Poți anula din două atingeri, oricând.</string>
     <string name="ios_trialLast">Ziua %1$s: se termină perioada de probă</string>
     <string name="ios_trialLastDetail">Abonamentul tău începe pe %1$s.</string>
     <string name="ios_trialToday">Azi: încearcă Micabo Pro</string>
@@ -247,8 +247,8 @@
     <string name="ios_trial_noPayment">Nicio plată acum</string>
     <string name="ios_trial_price">Apoi %1$s pe an, adică %2$s pe lună.</string>
     <string name="ios_trial_reminder_cta">Continuă gratuit</string>
-    <string name="ios_trial_reminder_sub">În ziua %1$s, o notificare te anunță. Dacă vrei, anulezi din două atingeri.</string>
-    <string name="ios_trial_reminder_title">Îți trimitem un **reminder** înainte să se termine perioada de probă.</string>
+    <string name="ios_trial_reminder_sub">Chiar și în ziua %1$s poți încă anula din două atingeri. Nu se încasează nimic înainte de finalul perioadei de probă.</string>
+    <string name="ios_trial_reminder_title">Perioada de probă e **fără obligații**.</string>
     <string name="ios_trial_title">Vrem să încerci Micabo **gratuit**.</string>
     <string name="ios_unitWeek">săptămână</string>
     <string name="ios_unitYear">an</string>

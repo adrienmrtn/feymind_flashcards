@@ -30,6 +30,13 @@ struct SupabaseFunctions {
     /// fermeture posée après coup sur l'instance copiée n'arriverait jamais.
     static var accessToken: (() async -> String?)?
 
+    /// **Rouvrir une identité après un 401.** Posée au lancement (`AuthController`) : rend un
+    /// jeton neuf - la session rafraîchie, ou un compte invité ouvert maintenant s'il avait
+    /// échoué au lancement. Le serveur refuse désormais la clé publiable pour les étapes
+    /// lourdes (`requireAccount`) : sans ce second essai, un invité dont la création avait
+    /// buté une fois restait refusé jusqu'au lancement suivant.
+    static var recoverIdentity: (() async -> String?)?
+
     /// Les délais sont longs à dessein : une transcription puis une génération se comptent
     /// en dizaines de secondes, et couper à trente ferait échouer les appels qui allaient
     /// aboutir.
@@ -47,9 +54,22 @@ struct SupabaseFunctions {
             throw SupabaseFunctionError.notConfigured
         }
 
+        let token = await Self.accessToken?() ?? AppConfig.supabaseAnonKey
+        do {
+            return try await send(url: url, payload: payload, token: token)
+        } catch SupabaseFunctionError.server(let status, let message, let code, let reason) where status == 401 {
+            // Un seul second essai, et seulement avec un autre jeton : redemander avec le même
+            // reviendrait au même refus.
+            guard let fresh = await Self.recoverIdentity?(), fresh != token else {
+                throw SupabaseFunctionError.server(status: status, message: message, code: code, reason: reason)
+            }
+            return try await send(url: url, payload: payload, token: fresh)
+        }
+    }
+
+    private func send(url: URL, payload: [String: Any], token: String) async throws -> [String: Any] {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        let token = await Self.accessToken?() ?? AppConfig.supabaseAnonKey
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(AppConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")

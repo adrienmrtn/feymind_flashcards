@@ -217,6 +217,10 @@ enum YouTubeImportError: LocalizedError, Equatable {
     /// Le plafond du jour des lectures de vidéo par le modèle : réessayer ne servira à rien
     /// avant demain.
     case dailyLimit
+    /// **Lire la vidéo par le modèle est Pro** (402 `import_pro`) : un compte gratuit dont la
+    /// leçon offerte a servi. Même refus que l'import d'un support dans `generate-lesson`, et
+    /// même réponse de l'écran : le paywall de l'import.
+    case importPro
     case server(String)
 
     /// Traduit un refus du serveur. Un code inconnu retombe sur le message du serveur en
@@ -246,11 +250,15 @@ enum YouTubeImportError: LocalizedError, Equatable {
                 self = .tooLong(duration: 0, limit: YouTubeLimits.maximumDuration)
             case "quota":
                 self = .dailyLimit
+            case "import_pro", "pro_required":
+                self = .importPro
             default:
                 // Un 429 sans code est le même plafond, dit par une version du serveur qui
                 // ne le nommait pas encore.
                 self = status == 429
                     ? .dailyLimit
+                    : status == 402
+                    ? .importPro
                     : .server(YouTubeImportError.transportMessage(status: status, message: message))
             }
         }
@@ -274,6 +282,8 @@ enum YouTubeImportError: LocalizedError, Equatable {
             L10n.t("ios.ai.network", locale: .resolved(), vars: ["detail": detail])
         case .dailyLimit:
             L10n.t("ios.ai.quota", locale: .resolved())
+        case .importPro:
+            L10n.t("lesson.error.importPro", locale: .resolved())
         case .server(let message):
             message
         }
@@ -288,7 +298,7 @@ enum YouTubeImportError: LocalizedError, Equatable {
         case .noCaptions: L10n.t("ios.yt.titleNoCaptions", locale: .resolved())
         case .transcriptTooShort: L10n.t("ios.yt.titleTooShort", locale: .resolved())
         case .tooLong: L10n.t("ios.yt.titleTooLong", locale: .resolved())
-        case .notConfigured, .network, .dailyLimit, .server: L10n.t("ios.err.readFailed", locale: .resolved())
+        case .notConfigured, .network, .dailyLimit, .importPro, .server: L10n.t("ios.err.readFailed", locale: .resolved())
         }
     }
 
@@ -300,7 +310,7 @@ enum YouTubeImportError: LocalizedError, Equatable {
     var allowsRetry: Bool {
         switch self {
         case .network, .server, .unavailable, .noCaptions: true
-        case .invalidLink, .transcriptTooShort, .tooLong, .notConfigured, .dailyLimit: false
+        case .invalidLink, .transcriptTooShort, .tooLong, .notConfigured, .dailyLimit, .importPro: false
         }
     }
 

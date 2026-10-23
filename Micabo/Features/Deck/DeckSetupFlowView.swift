@@ -255,6 +255,11 @@ struct DeckSetupFlowView: View {
             DeckBuildingStepView(setup: setup, onCreated: onCreated, onFailed: {
                 history.removeAll()
                 step = setup.source == .generated ? .topic : .materials
+            }, onProRequired: {
+                // Le droit local disait Pro, le serveur non : on revient à l'étape d'avant
+                // et le paywall s'ouvre, comme pour qui n'a jamais été abonné.
+                if let previous = history.popLast() { step = previous }
+                paywall = .generateCourse
             })
         }
     }

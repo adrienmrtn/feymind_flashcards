@@ -225,7 +225,7 @@
     <string name="ios_searchCourse">Egy kurzus, egy tantárgy…</string>
     <string name="ios_sharedCourse">Megosztott kurzus</string>
     <string name="ios_sharedNoSheet">Ennek a kurzusnak nincs jegyzete</string>
-    <string name="ios_signOutMsg">A kurzusaid ezen az eszközön és a fiókodban maradnak. A következő bejelentkezéskor újra megtalálod őket.</string>
+    <string name="ios_signOutMsg">A kurzusaid a fiókodban maradnak, erről az eszközről pedig eltűnnek. A következő bejelentkezéskor újra megtalálod őket.</string>
     <string name="ios_signOutQ">Kijelentkezel?</string>
     <string name="ios_startCheaper">Kezdd %1$s%% kedvezménnyel</string>
     <string name="ios_streak_bestLabel">A rekordod</string>
@@ -245,8 +245,8 @@
     <string name="ios_tapToSync">Koppints a szinkronizáláshoz</string>
     <string name="ios_targetLead">Arra célozz, ami tényleg boldoggá tenne, ne arra, ami észszerűnek hangzik.</string>
     <string name="ios_targetTitle">És mennyit\nszeretnél elérni?</string>
-    <string name="ios_trialDay2">2. nap: emlékeztető a vége előtt</string>
-    <string name="ios_trialDay2Detail">Értesítéssel szólunk. Tizenöt másodperc alatt lemondhatod.</string>
+    <string name="ios_trialDay2">2. nap: te döntesz</string>
+    <string name="ios_trialDay2Detail">A próbaidő alatt nem fizetsz semmit. Bármikor lemondhatod két koppintással.</string>
     <string name="ios_trialLast">%1$s. nap: véget ér a próbaidő</string>
     <string name="ios_trialLastDetail">Az előfizetésed kezdete: %1$s.</string>
     <string name="ios_trialToday">Ma: próbáld ki a Micabo Prót</string>
@@ -254,8 +254,8 @@
     <string name="ios_trial_noPayment">Most nem kell fizetned</string>
     <string name="ios_trial_price">Utána évi %1$s, vagyis havi %2$s.</string>
     <string name="ios_trial_reminder_cta">Folytatás ingyen</string>
-    <string name="ios_trial_reminder_sub">A próbaidő %1$s. napján értesítést kapsz. Ha szeretnéd, két koppintással lemondhatod.</string>
-    <string name="ios_trial_reminder_title">A próbaidő vége előtt küldünk egy **emlékeztetőt**.</string>
+    <string name="ios_trial_reminder_sub">A próbaidő %1$s. napján is lemondhatod két koppintással. A próbaidő vége előtt semmit sem vonunk le.</string>
+    <string name="ios_trial_reminder_title">A próbaidő **kötelezettségmentes**.</string>
     <string name="ios_trial_title">Szeretnénk, ha **ingyen** kipróbálnád a Micabót.</string>
     <string name="ios_unitWeek">hét</string>
     <string name="ios_unitYear">év</string>

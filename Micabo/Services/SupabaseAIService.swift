@@ -157,8 +157,11 @@ extension AIServiceError {
             self = .network(detail)
         case .invalidResponse:
             self = .invalidResponse
-        case .server(let status, let message, _, _):
-            if message.localizedCaseInsensitiveContains("FAL_KEY") {
+        case .server(let status, let message, let code, _):
+            if code == "pro_required" || code == "import_pro" || status == 402 {
+                // Un refus commercial, pas une panne : l'écran ouvre le paywall.
+                self = .proRequired
+            } else if message.localizedCaseInsensitiveContains("FAL_KEY") {
                 self = .missingProviderKey
             } else if status == 429 {
                 // Le quota du jour, dans les mots de l'app : la phrase du serveur parle de

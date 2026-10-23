@@ -224,7 +224,7 @@
     <string name="ios_searchCourse">Tečaj, predmet…</string>
     <string name="ios_sharedCourse">Dijeljeni tečaj</string>
     <string name="ios_sharedNoSheet">Ovaj tečaj nema skriptu</string>
-    <string name="ios_signOutMsg">Tvoji tečajevi ostaju na ovom uređaju i na tvom računu. Naći ćeš ih opet pri sljedećoj prijavi.</string>
+    <string name="ios_signOutMsg">Tvoji tečajevi ostaju na računu i nestaju s ovog uređaja. Pronaći ćeš ih pri sljedećoj prijavi.</string>
     <string name="ios_signOutQ">Odjaviti se?</string>
     <string name="ios_startCheaper">Počni uz %1$s %% popusta</string>
     <string name="ios_streak_bestLabel">Tvoj rekord</string>
@@ -244,8 +244,8 @@
     <string name="ios_tapToSync">Dodirni za sinkronizaciju</string>
     <string name="ios_targetLead">Ciljaj na ono što bi te stvarno razveselilo, a ne na ono što zvuči razumno.</string>
     <string name="ios_targetTitle">A čemu\nciljaš?</string>
-    <string name="ios_trialDay2">2. dan: podsjetnik prije kraja</string>
-    <string name="ios_trialDay2Detail">Upozorit ćemo te obavijesti. Otkazivanje za petnaest sekundi.</string>
+    <string name="ios_trialDay2">Dan 2: ti odlučuješ</string>
+    <string name="ios_trialDay2Detail">Tijekom probnog razdoblja ništa se ne naplaćuje. Možeš otkazati s dva dodira, bilo kada.</string>
     <string name="ios_trialLast">%1$s. dan: kraj probnog razdoblja</string>
     <string name="ios_trialLastDetail">Tvoja pretplata počinje %1$s.</string>
     <string name="ios_trialToday">Danas: isprobaj Micabo Pro</string>
@@ -253,8 +253,8 @@
     <string name="ios_trial_noPayment">Sada ne plaćaš ništa</string>
     <string name="ios_trial_price">Zatim %1$s godišnje, odnosno %2$s mjesečno.</string>
     <string name="ios_trial_reminder_cta">Nastavi besplatno</string>
-    <string name="ios_trial_reminder_sub">%1$s. dan upozorit će te obavijest. Ako želiš, otkazuješ s dva dodira.</string>
-    <string name="ios_trial_reminder_title">Poslat ćemo ti **podsjetnik** prije kraja probnog razdoblja.</string>
+    <string name="ios_trial_reminder_sub">Čak i %1$s. dan možeš otkazati s dva dodira. Ništa se ne naplaćuje prije kraja probnog razdoblja.</string>
+    <string name="ios_trial_reminder_title">Probno razdoblje je **bez obveza**.</string>
     <string name="ios_trial_title">Želimo da Micabo isprobaš **besplatno**.</string>
     <string name="ios_unitWeek">tjedan</string>
     <string name="ios_unitYear">godina</string>

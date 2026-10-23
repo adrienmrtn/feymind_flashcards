@@ -220,7 +220,7 @@
     <string name="ios_searchCourse">Kurssi, oppiaine…</string>
     <string name="ios_sharedCourse">Jaettu kurssi</string>
     <string name="ios_sharedNoSheet">Tällä kurssilla ei ole tiivistelmää</string>
-    <string name="ios_signOutMsg">Kurssisi säilyvät laitteella ja tililläsi. Löydät ne, kun kirjaudut seuraavan kerran.</string>
+    <string name="ios_signOutMsg">Kurssisi pysyvät tililläsi ja poistuvat tältä laitteelta. Löydät ne, kun kirjaudut seuraavan kerran.</string>
     <string name="ios_signOutQ">Kirjaudutaanko ulos?</string>
     <string name="ios_startCheaper">Aloita %1$s %% alennuksella</string>
     <string name="ios_streak_bestLabel">Paras putkesi</string>
@@ -240,8 +240,8 @@
     <string name="ios_tapToSync">Synkronoi napauttamalla</string>
     <string name="ios_targetLead">Tähtää siihen, mikä oikeasti ilahduttaisi sinua, älä siihen, mikä kuulostaa järkevältä.</string>
     <string name="ios_targetTitle">Ja mihin\ntähtäät?</string>
-    <string name="ios_trialDay2">Päivä 2: muistutus ennen loppua</string>
-    <string name="ios_trialDay2Detail">Ilmoitamme sinulle etukäteen. Peruminen vie viisitoista sekuntia.</string>
+    <string name="ios_trialDay2">Päivä 2: sinä päätät</string>
+    <string name="ios_trialDay2Detail">Kokeilun aikana mitään ei veloiteta. Voit perua kahdella napautuksella milloin tahansa.</string>
     <string name="ios_trialLast">Päivä %1$s: kokeilu päättyy</string>
     <string name="ios_trialLastDetail">Tilauksesi alkaa %1$s.</string>
     <string name="ios_trialToday">Tänään: kokeile Micabo Prota</string>
@@ -249,8 +249,8 @@
     <string name="ios_trial_noPayment">Ei maksua nyt</string>
     <string name="ios_trial_price">Sen jälkeen %1$s vuodessa, eli %2$s kuukaudessa.</string>
     <string name="ios_trial_reminder_cta">Jatka ilmaiseksi</string>
-    <string name="ios_trial_reminder_sub">Päivänä %1$s saat ilmoituksen. Voit perua kahdella napautuksella.</string>
-    <string name="ios_trial_reminder_title">Lähetämme sinulle **muistutuksen** ennen kuin kokeilusi päättyy.</string>
+    <string name="ios_trial_reminder_sub">Vielä päivänä %1$s voit perua kahdella napautuksella. Mitään ei veloiteta ennen kokeilun loppua.</string>
+    <string name="ios_trial_reminder_title">Kokeilusi on **täysin sitoumukseton**.</string>
     <string name="ios_trial_title">Haluamme, että kokeilet Micaboa **ilmaiseksi**.</string>
     <string name="ios_unitWeek">viikko</string>
     <string name="ios_unitYear">vuosi</string>

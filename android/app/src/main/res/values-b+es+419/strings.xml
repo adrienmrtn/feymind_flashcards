@@ -222,7 +222,7 @@
     <string name="ios_searchCourse">Un curso, una materia…</string>
     <string name="ios_sharedCourse">Curso compartido</string>
     <string name="ios_sharedNoSheet">Este curso no tiene ficha</string>
-    <string name="ios_signOutMsg">Tus cursos se quedan en este dispositivo y en tu cuenta. Los volverás a encontrar la próxima vez que inicies sesión.</string>
+    <string name="ios_signOutMsg">Tus cursos se quedan en tu cuenta y salen de este dispositivo. Los verás al volver a iniciar sesión.</string>
     <string name="ios_signOutQ">¿Cerrar sesión?</string>
     <string name="ios_startCheaper">Empieza con %1$s%% de descuento</string>
     <string name="ios_streak_bestLabel">Tu mejor racha</string>
@@ -242,8 +242,8 @@
     <string name="ios_tapToSync">Toca para sincronizar</string>
     <string name="ios_targetLead">Apunta a lo que de verdad te haría feliz, no a lo que suena razonable.</string>
     <string name="ios_targetTitle">¿Y a qué nota\naspiras?</string>
-    <string name="ios_trialDay2">Día 2: recordatorio antes de que termine</string>
-    <string name="ios_trialDay2Detail">Te avisaremos con una notificación. Cancelas en quince segundos.</string>
+    <string name="ios_trialDay2">Día 2: tú decides</string>
+    <string name="ios_trialDay2Detail">No se cobra nada durante la prueba. Puedes cancelar con dos toques, cuando quieras.</string>
     <string name="ios_trialLast">Día %1$s: termina la prueba</string>
     <string name="ios_trialLastDetail">Tu suscripción comenzará el %1$s.</string>
     <string name="ios_trialToday">Hoy: prueba Micabo Pro</string>
@@ -251,8 +251,8 @@
     <string name="ios_trial_noPayment">Hoy no pagas nada</string>
     <string name="ios_trial_price">Luego %1$s al año, o sea %2$s al mes.</string>
     <string name="ios_trial_reminder_cta">Continuar gratis</string>
-    <string name="ios_trial_reminder_sub">El día %1$s, una notificación te avisa. Si quieres, cancelas en dos toques.</string>
-    <string name="ios_trial_reminder_title">Te enviaremos un **recordatorio** antes de que termine tu prueba.</string>
+    <string name="ios_trial_reminder_sub">Incluso el día %1$s puedes cancelar con dos toques. No se cobra nada antes de que termine la prueba.</string>
+    <string name="ios_trial_reminder_title">Tu prueba es **sin compromiso**.</string>
     <string name="ios_trial_title">Queremos que pruebes Micabo **gratis**.</string>
     <string name="ios_unitWeek">semana</string>
     <string name="ios_unitYear">año</string>

@@ -299,6 +299,11 @@ struct LessonPathView: View {
         } catch LessonServiceError.notConfigured {
             // Sans compte ni serveur, rien à attendre : le cours s'ouvre tel qu'il est.
             openOffline()
+        } catch let error as LessonServiceError where error == .courseUnknown || error == .accountRequired {
+            // La synchro puis un second essai n'ont pas suffi (`LessonBuilder.convert`), ou
+            // aucun compte ne peut payer la conversion : l'élève n'est pas bloqué devant son
+            // propre cours, il s'ouvre sans le modèle.
+            openOffline()
         } catch {
             conversionError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
