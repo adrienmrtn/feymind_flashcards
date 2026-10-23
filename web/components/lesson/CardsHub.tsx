@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Lightbulb, X } from "lucide-react";
 
-import { CARD_MASTERIES, CLOZE_GAP, SeededGenerator, cardMastery, masteryCounts, shuffled, studyQueue, type CardMastery, type LessonCard, type LessonTone } from "@micabo/core";
+import { CARD_MASTERIES, CLOZE_GAP, SeededGenerator, cardMastery, masteryCounts, normalizeClozeGap, shuffled, studyQueue, type CardMastery, type LessonCard, type LessonTone } from "@micabo/core";
 
 import { CardsRun, type LESSON_RATINGS, type RunCard } from "@/components/lesson/CardsRun";
 import { KeywordText } from "@/components/lesson/KeywordText";
@@ -108,7 +108,7 @@ export function CardsHub({ lessonId, tone, cards, autoStart = false }: { lessonI
               <li key={card.id} className="flex items-center gap-3.5 rounded-[22px] bg-surface p-[18px] shadow-[inset_0_0_0_1.5px_var(--color-stroke)]">
                 <div className="flex min-w-0 flex-1 flex-col gap-2">
                   <p className="line-clamp-2 text-[18px] font-extrabold leading-snug" style={{ color: `var(--color-tone-${tone}-ink)` }}>
-                    <KeywordText text={card.kind === "cloze" ? card.front.replaceAll(CLOZE_GAP, "____") : card.front} tints={false} />
+                    <KeywordText text={card.kind === "cloze" ? normalizeClozeGap(card.front).replaceAll(CLOZE_GAP, "____") : card.front} tints={false} />
                   </p>
                   <p className="line-clamp-3 text-[16px] font-medium leading-snug text-ink-secondary">
                     <KeywordText text={card.kind === "choice" && card.choices[card.correctChoiceIndex] ? card.choices[card.correctChoiceIndex]! : card.back} tints={false} />

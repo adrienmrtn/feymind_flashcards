@@ -1,15 +1,15 @@
 export const legalDe = {
-  eyebrow: "Micabo · iPhone und Website",
+  eyebrow: "Micabo · iPhone, Android und Website",
   updated: "Zuletzt aktualisiert: {date}.",
-  updatedDate: "2. September 2026",
+  updatedDate: "23. Oktober 2026",
   privacy: {
     metaTitle: "Datenschutz",
     metaDescription:
-      "Was Micabo von Ihnen behält, auf dem iPhone und auf der Website, und was Sie damit tun können.",
+      "Was Micabo von Ihnen behält, auf dem iPhone, auf Android und auf der Website, und was Sie damit tun können.",
     heading: "Datenschutzrichtlinie",
     linkLabel: "Datenschutzrichtlinie",
     intro1:
-      "Diese Richtlinie beschreibt die Daten, die Micabo verarbeitet, wenn Sie die Website [[site]] oder die iPhone-App (Kennung {bundle}) nutzen. Beide Clients teilen dasselbe Konto und dieselbe Datenbank. Sie gilt auch, wenn Sie noch kein Konto haben und die Website nur ansehen.",
+      "Diese Richtlinie beschreibt die Daten, die Micabo verarbeitet, wenn Sie die Website [[site]], die iPhone-App (Kennung {bundle}, im App Store) oder die Android-App (Paket {package}, bei Google Play) nutzen. Die drei Clients teilen dasselbe Konto und dieselbe Datenbank. Sie gilt auch, wenn Sie noch kein Konto haben und die Website nur ansehen.",
     intro2:
       "Verantwortlich für die Verarbeitung ist {editor}. Für Fragen, Berichtigungen oder Löschungen: [[contact]].",
     whatTitle: "Was Micabo ist",
@@ -25,7 +25,7 @@ export const legalDe = {
     dataFriends:
       "**Die Freunde.** Freundschaftsanfragen, Ihre Freundesliste und die Sichtbarkeit, die Sie jedem Kurs beim Import geben: nur Sie, Ihre Freunde oder die Kommilitonen Ihrer Einrichtung. Es gibt keinen öffentlichen Katalog, in dem ein Unbekannter auf Ihre Merkblätter stoßen würde.",
     dataSubscription:
-      "**Das Abo.** Der Stand Ihres Pro-Zugangs (aktiv, Testphase, gekündigt), nicht Ihre Kartennummer. Die Zahlung nimmt Apple auf dem iPhone entgegen, Stripe auf der Website. RevenueCat hält das Recht, damit iPhone und Browser übereinstimmen.",
+      "**Das Abo.** Der Stand Ihres Pro-Zugangs (aktiv, Testphase, gekündigt), nicht Ihre Kartennummer. Die Zahlung nimmt Apple auf dem iPhone entgegen (App Store), Google auf Android (Google Play), Stripe auf der Website. RevenueCat hält das Recht, damit iPhone, Android und Browser übereinstimmen.",
     dataWaitlist:
       "**Die Warteliste.** Wenn Sie Ihre Adresse hinterlassen, bevor Sie ein Konto haben, behalten wir sie, um Sie über die Öffnung zu informieren, zusammen mit der Seite, von der Sie kommen. Sie ist an kein Konto gebunden und in der App nicht sichtbar.",
     dataFeedback:
@@ -35,13 +35,13 @@ export const legalDe = {
     dataDirectory:
       "**Das Verzeichnis.** Ihr Benutzername und, wenn Sie es angegeben haben, Ihre Einrichtung. Das sieht ein Freund oder ein Kommilitone, nicht Ihre E-Mail und nicht Ihre Einstellungen.",
     dataDevice:
-      "**Was auf dem Gerät bleibt.** Auf dem iPhone können manche Teile (Okklusionsbilder, Audio einer Karte) das Telefon nie verlassen. Die Antworten des Begrüßungswegs bleiben zuerst auf dem Gerät und werden erst nach der Kontoeröffnung in die Datenbank geschrieben.",
+      "**Was auf dem Gerät bleibt.** Auf dem iPhone und auf Android können manche Teile (Okklusionsbilder, Audio einer Karte) das Telefon nie verlassen. Die Antworten des Begrüßungswegs bleiben zuerst auf dem Gerät und werden erst nach der Kontoeröffnung in die Datenbank geschrieben.",
     dataNoSell:
       "Wir verkaufen Ihre Daten nicht. Wir zeigen keine Werbung. Wir trainieren kein Sprachmodell auf Ihren Kursen, außer wenn eine ausdrückliche Einstellung das eines Tages anbietet — und diese Einstellung gibt es heute nicht.",
     whyTitle: "Warum wir sie verarbeiten",
     whyLead: "Die Rechtsgrundlagen im Sinne der DSGVO:",
     whyContract:
-      "**Die Vertragserfüllung** — das Konto anlegen, einen Kurs importieren, Merkblatt und Karten schreiben, sie wiederholen, iPhone und Website synchronisieren, das Abo verwalten.",
+      "**Die Vertragserfüllung** — das Konto anlegen, einen Kurs importieren, Merkblatt und Karten schreiben, sie wiederholen, die iPhone- und Android-Apps und die Website synchronisieren, das Abo verwalten.",
     whyLegitimate:
       "**Das berechtigte Interesse** — den Dienst sichern, Missbrauch verhindern, eine Störung diagnostizieren, die Reichweite der Website in aggregierter Form messen und die Rückmeldungen lesen, die Sie uns senden. Dieses Interesse geht nicht vor Ihrem: die Trennung liegt in der Datenbank, nicht nur in der Anwendung.",
     whyLegal:
@@ -58,10 +58,10 @@ export const legalDe = {
     accessVercel:
       "**Vercel** — Hosting der Website, technische Protokolle (IP-Adresse, URL) und Reichweitenmessung: die Zahl der Seitenaufrufe, die Seite, von der Sie kommen, das Land und die Geräteart, ohne Cookie und ohne Kennung, die Ihnen folgt. Die Verarbeitung kann außerhalb der Europäischen Union stattfinden, unter den Standardvertragsklauseln des Anbieters.",
     accessApple:
-      "**Apple und Google** — wenn Sie sich über sie anmelden oder im App Store zahlen.",
+      "**Apple und Google** — wenn Sie sich über sie anmelden oder im App Store (Apple) oder bei Google Play (Google) zahlen.",
     accessStripe: "**Stripe** — Zahlung auf der Website.",
     accessRevenuecat:
-      "**RevenueCat** — Abo-Stand, geteilt zwischen iPhone und Website.",
+      "**RevenueCat** — Abo-Stand, geteilt zwischen iPhone, Android und Website.",
     accessFal:
       "**fal.ai und die Modelle, die es aufruft** (heute Sprachmodelle, insbesondere von Google) — der Text oder das Bild Ihres Kurses, für die Zeit, das Merkblatt oder die Karten zu schreiben. Sie dürfen sie für nichts anderes als diese Generierung verwenden.",
     accessYoutube:
@@ -70,27 +70,27 @@ export const legalDe = {
       "Einige dieser Dienstleister sind außerhalb der Europäischen Union niedergelassen. Die Übermittlung erfolgt dann nur, um den Dienst zu erbringen, und stützt sich auf die von der DSGVO vorgesehenen Garantien (Angemessenheitsbeschluss oder Standardvertragsklauseln des Anbieters).",
     cookiesTitle: "Cookies und Tracker",
     cookiesWeb:
-      "Die Website setzt die für die Sitzung nötigen Cookies (Sie von einer Seite zur nächsten wiedererkennen, sobald Sie angemeldet sind) und ein Cookie für die Oberflächensprache (`micabo.ui_locale`), ein Jahr gültig, das Englisch, Französisch, Deutsch, Spanisch oder Türkisch merkt. Wir setzen kein Audience-Cookie, keine Werbung und kein standortübergreifendes Tracking. Die Website zählt ihre Besuche durchaus, schreibt dafür aber nichts auf Ihr Gerät: die Messung behält einen Seitenaufruf, dessen Herkunft, ein Land, eine Geräteart — und nichts, womit man Sie von einem Besuch zum nächsten oder auf einer anderen Website wiedererkennen könnte. Deshalb gibt es kein Einwilligungsbanner: auf dieser Seite gibt es nichts abzulehnen.",
+      "Die Website setzt die für die Sitzung nötigen Cookies (Sie von einer Seite zur nächsten wiedererkennen, sobald Sie angemeldet sind) und ein Cookie für die Oberflächensprache (`micabo.ui_locale`), ein Jahr gültig, das Englisch, Französisch, Deutsch, Spanisch oder Türkisch merkt. Nach der Anmeldung merkt ein Cookie `micabo.learner`, ein Jahr gültig, in diesem Browser Ihre genaue Stufe und die beim Begrüßungsweg angegebenen Noten: er dient nur dazu, Ihre Lektionen auf dem richtigen Niveau zu schreiben. Wir setzen kein Audience-Cookie, keine Werbung und kein standortübergreifendes Tracking. Die Website zählt ihre Besuche durchaus, schreibt dafür aber nichts auf Ihr Gerät: die Messung behält einen Seitenaufruf, dessen Herkunft, ein Land, eine Geräteart — und nichts, womit man Sie von einem Besuch zum nächsten oder auf einer anderen Website wiedererkennen könnte. Deshalb gibt es kein Einwilligungsbanner: auf dieser Seite gibt es nichts abzulehnen.",
     cookiesIos:
-      "Das iPhone verwendet keine Cookies. Es bewahrt ein Sitzungstoken im Schlüsselbund des Geräts.",
+      "Die iPhone- und Android-Apps verwenden keine Cookies. Sie bewahren ein Sitzungstoken im geschützten Speicher des Geräts: im Schlüsselbund auf dem iPhone, im privaten Speicher der App auf Android.",
     retentionTitle: "Wie lange wir sie behalten",
     retentionWhile:
-      "Solange das Konto besteht. Rückmeldungen gehen spätestens nach 24 Monaten. Wenn Sie es löschen, unter Einstellungen auf der Website oder in der iPhone-App oder indem Sie uns schreiben, löschen wir das Profil, die Kurse (einschließlich des gelesenen Texts), die Merkblätter, die Karten, den Verlauf, die Prüfungen, die Freundschaften, die Nutzungszähler, die Rückmeldungen und die Adresse, die Sie gegebenenfalls auf der Warteliste hinterlassen haben.",
+      "Solange das Konto besteht. Rückmeldungen gehen spätestens nach 24 Monaten. Wenn Sie es löschen, unter Einstellungen auf der Website oder in den iPhone- und Android-Apps oder indem Sie uns schreiben, löschen wir das Profil, die Kurse (einschließlich des gelesenen Texts), die Merkblätter, die Karten, den Verlauf, die Prüfungen, die Freundschaften, die Nutzungszähler, die Rückmeldungen und die Adresse, die Sie gegebenenfalls auf der Warteliste hinterlassen haben.",
     retentionShared:
       "Ein Kurs, den Sie geteilt haben, verschwindet für Ihre Freunde, wenn Sie ihn löschen. Ein Freund, der Ihre Karten schon wiederholt hat, behält seinen eigenen Verlauf, nicht Ihr Dokument.",
     retentionAfter:
-      "Nach der Löschung bleibt bei Dienstleistern, was das Gesetz oder ihr Vertrag verlangt: Stripe- oder Apple-Rechnungen, RevenueCat-Abo-Kennung, technische Protokolle (Vercel, Supabase) einige Wochen. fal.ai erhält den Text für die Zeit, das Merkblatt zu schreiben; wir verlangen nicht, dass es ihn behält.",
+      "Nach der Löschung bleibt bei Dienstleistern, was das Gesetz oder ihr Vertrag verlangt: Rechnungen von Stripe, Apple oder Google, RevenueCat-Abo-Kennung, technische Protokolle (Vercel, Supabase) einige Wochen. fal.ai erhält den Text für die Zeit, das Merkblatt zu schreiben; wir verlangen nicht, dass es ihn behält.",
     rightsTitle: "Ihre Rechte",
     rightsBody:
-      "Sie können auf Ihre Daten zugreifen, sie berichtigen, sie exportieren, einer Verarbeitung widersprechen oder die Löschung verlangen. Eine Kopie herunterladen: Einstellungen → „Meine Daten herunterladen“. Das Konto löschen: Einstellungen → „Konto löschen“, auf der Website oder in der iPhone-App. Sie können auch an [[contact]] schreiben. Wir antworten innerhalb eines Monats.",
+      "Sie können auf Ihre Daten zugreifen, sie berichtigen, sie exportieren, einer Verarbeitung widersprechen oder die Löschung verlangen. Eine Kopie herunterladen: Einstellungen → „Meine Daten herunterladen“. Das Konto löschen: Einstellungen → „Konto löschen“, auf der Website oder in den iPhone- und Android-Apps. Sie können auch an [[contact]] schreiben. Wir antworten innerhalb eines Monats.",
     rightsCnil:
       "Sie können auch eine Beschwerde bei der CNIL einreichen (cnil.fr).",
     minorsTitle: "Minderjährige",
     minorsBody:
       "Micabo richtet sich an Studierende, auch in der Oberstufe. Wir fragen nicht nach dem Geburtsdatum. Wenn Sie unter fünfzehn sind, muss die Nutzung mit Zustimmung eines Sorgeberechtigten erfolgen. Wir verwenden die Daten eines Minderjährigen nicht für Werbung und nicht für ein kommerzielles Profiling.",
-    iosTitle: "Das iPhone, zusätzlich zur Website",
+    iosTitle: "Die iPhone- und Android-Apps, zusätzlich zur Website",
     iosBody:
-      "Die App kann den Zugriff auf Ihre Fotos oder die Kamera verlangen, um einen Kurs zu importieren. Das ist nicht Pflicht: die Website nimmt eine abgelegte Datei an. Benachrichtigungen, wenn Sie sie erlauben, dienen nur dazu, Sie an eine Wiederholung zu erinnern. Dasselbe Konto öffnet die App und die Website.",
+      "Die Apps können den Zugriff auf Ihre Fotos, Ihre Dateien oder die Kamera verlangen, um einen Kurs zu importieren. Das ist nicht Pflicht: die Website nimmt eine abgelegte Datei an. Benachrichtigungen, wenn Sie sie erlauben, dienen nur dazu, Sie an eine Wiederholung zu erinnern. Dasselbe Konto öffnet die iPhone-App, die Android-App und die Website.",
     changesTitle: "Änderungen",
     changesBody:
       "Ändert sich diese Richtlinie wesentlich, aktualisieren wir das Datum am Seitenanfang. Die weitere Nutzung nach diesem Datum gilt für die neue Fassung, außer das Gesetz verlangt eine gesonderte Zustimmung.",
@@ -99,22 +99,22 @@ export const legalDe = {
   terms: {
     metaTitle: "Nutzungsbedingungen",
     metaDescription:
-      "Die Regeln des Micabo-Dienstes für iPhone und Website: Konto, Kurse, Abo, Haftung.",
+      "Die Regeln des Micabo-Dienstes für iPhone, Android und Website: Konto, Kurse, Abo, Haftung.",
     heading: "Nutzungsbedingungen",
     linkLabel: "Nutzungsbedingungen",
     intro1:
-      "Diese Bedingungen regeln die Nutzung von Micabo — der Website [[site]] und der iPhone-App ({bundle}). Indem Sie ein Konto anlegen oder den Dienst nutzen, akzeptieren Sie sie. Wenn Sie nicht einverstanden sind, legen Sie kein Konto an.",
+      "Diese Bedingungen regeln die Nutzung von Micabo — der Website [[site]], der iPhone-App ({bundle}, im App Store) und der Android-App ({package}, bei Google Play). Indem Sie ein Konto anlegen oder den Dienst nutzen, akzeptieren Sie sie. Wenn Sie nicht einverstanden sind, legen Sie kein Konto an.",
     intro2: "Herausgeber ist {editor}. Kontakt: [[contact]].",
     serviceTitle: "Der Dienst",
     serviceBody:
-      "Micabo liest ein Kursdokument, das Sie ablegen, und schreibt daraus ein Merkblatt und Karteikarten. Es lässt sie nach einer verteilten Wiederholung zurückkehren (dieselbe SM-2-Regel auf iPhone und Website). Sie können das Datum einer Prüfung setzen: der Wiederholungsplan verdichtet sich dann auf diesen Tag. Ein und dasselbe Konto öffnet beide Clients.",
+      "Micabo liest ein Kursdokument, das Sie ablegen, und schreibt daraus ein Merkblatt und Karteikarten. Es lässt sie nach einer verteilten Wiederholung zurückkehren (dieselbe SM-2-Regel auf dem iPhone, auf Android und auf der Website). Sie können das Datum einer Prüfung setzen: der Wiederholungsplan verdichtet sich dann auf diesen Tag. Ein und dasselbe Konto öffnet alle drei Clients.",
     servicePro:
       "Ein Teil des Dienstes ist ohne Abo zugänglich. Der Pro-Zugang (Kurse und Karten über die kostenlose Grenze hinaus, gemäß dem Angebot zum Zeitpunkt des Kaufs) ist kostenpflichtig.",
     accountTitle: "Das Konto",
     accountBody:
       "Sie können sich mit Apple, Google oder einem per E-Mail gesendeten Link anmelden. Sie sind für den Zugang zu Ihrem Postfach und zu diesen Drittkonten verantwortlich. Ein Konto pro Person.",
     accountDelete:
-      "Sie können das Konto unter Einstellungen löschen, auf der Website oder in der iPhone-App. Das löscht Ihre Kurse, Ihre Karten und Ihren Verlauf. Bereits von Apple oder Stripe eingenommene Käufe bleiben deren Erstattungsregeln unterworfen.",
+      "Sie können das Konto unter Einstellungen löschen, auf der Website oder in den iPhone- und Android-Apps. Das löscht Ihre Kurse, Ihre Karten und Ihren Verlauf. Das Löschen des Kontos kündigt kein Abo, das im App Store oder bei Google Play abgeschlossen wurde: Kündigen Sie es im Store. Bereits von Apple, Google oder Stripe eingenommene Käufe bleiben deren Erstattungsregeln unterworfen.",
     coursesTitle: "Ihre Kurse",
     coursesOwn:
       "Sie behalten das Eigentum an dem, was Sie ablegen. Sie geben uns nur das begrenzte und widerrufliche Recht, es zu lesen, zu speichern und in ein Merkblatt und in Karten zu verwandeln, um Ihnen den Dienst zu erbringen — einschließlich der Weitergabe an ein Sprachmodell für die Dauer der Generierung.",
@@ -131,11 +131,11 @@ export const legalDe = {
     subPrices:
       "Preise, Laufzeit und eine etwaige Probezeit sind die vor der Zahlung angezeigten. Sie können sich für neue Käufe ändern; ein laufendes Abo behält seine Bedingungen bis zur Verlängerung.",
     subIos:
-      "**Auf dem iPhone** läuft die Zahlung über den App Store. Kündigung, Verlängerung und Erstattungen folgen den Regeln von Apple. Verwalten Sie das Abo in den Einstellungen Ihres Apple-Kontos.",
+      "**Auf dem iPhone** läuft die Zahlung über den App Store: Kündigung, Verlängerung und Erstattungen folgen den Regeln von Apple, und Sie verwalten oder kündigen das Abo in den Einstellungen Ihres Apple-Kontos (Einstellungen → Ihr Name → Abonnements). **Auf Android** läuft die Zahlung über Google Play: Kündigung, Verlängerung und Erstattungen folgen den Regeln von Google Play, und Sie verwalten oder kündigen das Abo in der Google-Play-App (Zahlungen und Abos → Abos).",
     subWeb:
       "**Auf der Website** läuft die Zahlung über Stripe. Die Kündigung erfolgt über den im Profil angegebenen Abrechnungsbereich oder indem Sie uns schreiben. Eine Probezeit, wenn sie angeboten wird, wird nur dann zur Zahlung, wenn Sie sie auslaufen lassen.",
     subBoth:
-      "Der auf der einen Seite gekaufte Pro-Zugang gilt auf der anderen: dasselbe Konto ist Pro auf dem iPhone und auf der Website. Ein Zahlungsvorfall kann eine Schonfrist öffnen; wir schließen den Zugang nicht in der ersten Stunde.",
+      "Der auf einer Seite gekaufte Pro-Zugang gilt auf den anderen: dasselbe Konto ist Pro auf dem iPhone, auf Android und auf der Website. Ein Zahlungsvorfall kann eine Schonfrist öffnen; wir schließen den Zugang nicht in der ersten Stunde.",
     forbidTitle: "Was Sie nicht tun",
     forbidHarm:
       "Den Dienst nutzen, um jemandem zu schaden, zu belästigen oder auf eine Weise zu schummeln, die die Ordnung Ihrer Einrichtung verletzt.",
@@ -147,7 +147,7 @@ export const legalDe = {
       "Rechtswidrige, hasserfüllte Inhalte ablegen oder solche, die die Privatsphäre anderer verletzen.",
     availTitle: "Verfügbarkeit",
     availBody:
-      "Wir tun unser Möglichstes, damit iPhone und Website erreichbar bleiben. Eine Wartung, der Ausfall eines Dienstleisters (Hoster, Modell, Store) oder ein Generierungsfehler kann den Dienst unterbrechen. Wir bieten keine Garantie für schulische Ergebnisse und keine ununterbrochene Verfügbarkeit.",
+      "Wir tun unser Möglichstes, damit die Apps und die Website erreichbar bleiben. Eine Wartung, der Ausfall eines Dienstleisters (Hoster, Modell, Store) oder ein Generierungsfehler kann den Dienst unterbrechen. Wir bieten keine Garantie für schulische Ergebnisse und keine ununterbrochene Verfügbarkeit.",
     liabilityTitle: "Haftung",
     liabilityConsumer:
       "Wenn Sie Verbraucher sind, gelten Ihre gesetzlichen Rechte (Gewährleistung, Mediation, missbräuchliche Klauseln), und diese Bedingungen schließen sie nicht aus.",

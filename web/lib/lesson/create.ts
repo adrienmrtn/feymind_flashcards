@@ -3,11 +3,13 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
+  CLOZE_GAP,
   DEFAULT_VISIBILITY,
   LESSON_SOURCES,
   courseSourceFor,
   emptyProgress,
   nextTone,
+  normalizeClozeGap,
   pathFromPlan,
   readLessonPath,
   readPlanResponse,
@@ -42,7 +44,10 @@ import { createClient } from "@/lib/supabase/server";
  */
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const MAX_TEXT = 60_000;
+/** Le texte envoyé au plan, coupé comme l'iPhone le coupe (`SupabaseLessonService.plan`). */
+const MAX_TEXT = 120_000;
+/** Le texte de référence d'un thème, même coupe que `SupabaseLessonService.theme`. */
+const MAX_CONTEXT = 60_000;
 const MAX_TOPIC = 400;
 const MAX_IMAGES = 6;
 const MAX_IMAGE_CHARS = 4_000_000;
@@ -113,6 +118,23 @@ export function examLine(name: string | null, date: string): string {
   return title ? `l'examen ${title}, le ${date}` : `un examen, le ${date}`;
 }
 
+/**
+ * D'où vient le texte d'un thème, **dans les mots du serveur** : `LessonSourceKind(courseSource:)`
+ * côté Swift. Un cours de bibliothèque, d'exemple ou un paquet se lit comme du texte ; envoyer
+ * `library` ou `deck` tel quel laissait le serveur sans consigne de lecture connue.
+ */
+export function themeSource(source: string | null | undefined): string {
+  switch (source) {
+    case "pdf":
+    case "photo":
+    case "docx":
+    case "youtube":
+      return source;
+    default:
+      return "text";
+  }
+}
+
 function refuse(message: string, code?: string): PlanOutcome {
   return { status: "error", message, ...(code ? { code } : {}) };
 }
@@ -136,13 +158,14 @@ export async function planLesson(input: PlanInput): Promise<PlanOutcome> {
 
   const { data, error } = await supabase.functions.invoke("generate-lesson", {
     body: {
+      ...audience,
       stage: "plan",
       lessonId: input.lessonId,
       ...(fromScratch ? { topic } : { text, images: images.length > 0 ? images : undefined }),
       source,
-      sourceName: input.sourceName?.trim().slice(0, 200) || undefined,
-      onboarding: input.onboarding === true,
-      ...audience,
+      sourceName: input.sourceName?.trim().slice(0, 200) ?? "",
+      // Le drapeau ne part que vrai, comme `SupabaseLessonService.plan`.
+      ...(input.onboarding === true ? { onboarding: true } : {}),
     },
   });
   if (error) {
@@ -227,7 +250,8 @@ interface ChapterForTheme {
   status: string | null;
 }
 
-async function examLineFor(supabase: SupabaseClient, userId: string, lessonId: string): Promise<string | undefined> {
+/** L'examen à venir qui porte sur cette leçon (`LessonBuilder.examLine(for:in:)`). */
+export async function examLineFor(supabase: SupabaseClient, userId: string, lessonId: string): Promise<string | undefined> {
   const today = new Date().toISOString().slice(0, 10);
   const { data } = await supabase
     .from("exams")
@@ -275,20 +299,25 @@ export async function writeTheme(lessonId: string, themeIndex: number, options: 
   if (chapter.status === "failed" && !options.retry) return { status: "ok" };
 
   const path = readLessonPath(lesson.path);
-  const audience = await lessonAudience({ language: lesson.language, exam: await examLineFor(supabase, user.id, lessonId) });
+  // L'audience est relue à chaque thème, comme `LessonBuilder` relit `audience()` : la langue
+  // est celle du profil, pas celle gardée sur la leçon.
+  const audience = await lessonAudience({ exam: await examLineFor(supabase, user.id, lessonId) });
+  const points = path?.points ?? [];
+  const objectives = path?.intro.lines ?? [];
   const { data, error } = await supabase.functions.invoke("generate-lesson", {
     body: {
+      ...audience,
       stage: "theme",
       lessonId,
       lessonTitle: lesson.title,
       themeIndex,
       themes: chapters.map((entry) => entry.title),
-      context: lesson.context_text,
-      subject: lesson.subject ?? undefined,
-      points: path?.points ?? [],
-      objectives: path?.intro.lines ?? [],
-      source: lesson.source,
-      ...audience,
+      context: (lesson.context_text ?? "").slice(0, MAX_CONTEXT),
+      subject: lesson.subject ?? "",
+      // Comme l'app : les notions, les objectifs et la source ne partent que s'il y en a.
+      ...(points.length > 0 ? { points } : {}),
+      ...(objectives.length > 0 ? { objectives } : {}),
+      source: themeSource(lesson.source),
     },
   });
 
@@ -320,8 +349,14 @@ export async function writeTheme(lessonId: string, themeIndex: number, options: 
   if (updateError) return { status: "error", message: updateError.message };
 
   const cards = (Array.isArray(theme?.flashcards) ? theme!.flashcards : []) as { front?: unknown; back?: unknown; kind?: unknown }[];
+  // Comme `LessonBuilder` : le recto d'une carte à trou est ramené à « … », et elle ne reste à
+  // trou que si le trou y est. C'est ce marqueur que l'iPhone et Android relisent.
   const drafts = cards
-    .map((card) => ({ front: typeof card.front === "string" ? card.front.trim() : "", back: typeof card.back === "string" ? card.back.trim() : "", kind: card.kind === "cloze" ? "cloze" : "basic" }))
+    .map((card) => {
+      const raw = typeof card.front === "string" ? card.front.trim() : "";
+      const front = card.kind === "cloze" ? normalizeClozeGap(raw) : raw;
+      return { front, back: typeof card.back === "string" ? card.back.trim() : "", kind: card.kind === "cloze" && front.includes(CLOZE_GAP) ? "cloze" : "basic" };
+    })
     .filter((card) => card.front && card.back);
   if (drafts.length > 0) {
     const { count } = await supabase
@@ -339,7 +374,7 @@ export async function writeTheme(lessonId: string, themeIndex: number, options: 
         front: card.front,
         back: card.back,
         position: (count ?? 0) + offset,
-        kind: card.kind === "cloze" && card.front.includes("____") ? "cloze" : "basic",
+        kind: card.kind,
         state: "new",
         due_date: now,
       })),

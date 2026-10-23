@@ -313,6 +313,8 @@ export {
   LESSON_ACTIVITIES,
   MISSED_CAP,
   QUIZ_KINDS,
+  hasClozeGap,
+  normalizeClozeGap,
   addTime,
   answerText,
   averageQuizPercent,

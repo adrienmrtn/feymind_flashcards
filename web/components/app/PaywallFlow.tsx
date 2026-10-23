@@ -8,7 +8,7 @@ import { pricing, type PaywallTrigger } from "@micabo/core";
 
 import { PaywallOffer } from "@/components/app/PaywallOffer";
 import { trackCheckoutSuccess, trackPaywallView } from "@/lib/analytics/funnel";
-import { isOfferClaimed } from "@/lib/discount";
+import { isOfferClaimed, paywallClosed } from "@/lib/discount";
 import {
   isHardPaywall,
   isPaywallDismissed,
@@ -125,8 +125,13 @@ export function PaywallHost({ isPaid }: { isPaid: boolean }) {
   function close() {
     markPaywallDismissed();
     setOpen(false);
+    // **Refermé sans achat, le paywall fait tomber le cadeau** (`DiscountOffer.paywallClosed`
+    // sur l'iPhone, `GiftOffer` sur Android) : tous les paywalls comptent, celui de l'accueil
+    // compris. Un achat, lui, quitte la page pour Stripe et n'arrive jamais ici. Le cadeau
+    // lève son drapeau avant que la visite guidée ne relise l'écran.
+    const gift = paywallClosed(isPaid);
     // L'écran vient de se libérer : la visite guidée attendait exactement ça.
-    requestTourRecheck();
+    if (!gift) requestTourRecheck();
     if (params.get("bienvenue") || params.get("offre") || params.get("debug")) {
       router.replace(pathname as Route);
     }

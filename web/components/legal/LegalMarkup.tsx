@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useI18n } from "@/lib/i18n/client";
 import { useLocalizedHref } from "@/lib/i18n/href";
 import {
+  LEGAL_ANDROID_PACKAGE,
   LEGAL_CONTACT,
   LEGAL_EDITOR,
   LEGAL_IOS_BUNDLE,
@@ -108,5 +109,6 @@ export function legalVars(): Record<string, string> {
   return {
     editor: LEGAL_EDITOR,
     bundle: LEGAL_IOS_BUNDLE,
+    package: LEGAL_ANDROID_PACKAGE,
   };
 }

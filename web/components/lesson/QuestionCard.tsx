@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Check, CheckCircle2, X, XCircle } from "lucide-react";
 
-import { CLOZE_GAP, LESSON_TONES, answerText, choiceOrder, matchRightOrder, orderPool, type LessonTone, type QuizQuestion } from "@micabo/core";
+import { CLOZE_GAP, LESSON_TONES, answerText, choiceOrder, matchRightOrder, normalizeClozeGap, orderPool, type LessonTone, type QuizQuestion } from "@micabo/core";
 
 import { KeywordText, plainKeywordText } from "@/components/lesson/KeywordText";
 import { LessonPrimaryButton } from "@/components/lesson/LessonButtons";
@@ -163,7 +163,8 @@ function ChoiceList({
 
 /** **La phrase à trou** : le trou en pointillés tant qu'on n'a pas répondu, puis le bon mot, en vert, à sa place. */
 function GapSentence({ question, tone, answered }: { question: QuizQuestion; tone: LessonTone; answered: QuizAnswer | null }) {
-  const parts = question.prompt.split(CLOZE_GAP);
+  // Le trou du serveur et des apps (« … »), ou celui d'une ancienne leçon du site (« ____ »).
+  const parts = normalizeClozeGap(question.prompt).split(CLOZE_GAP);
   const word = question.choices[question.answer] ?? "";
   const filled = answered !== null;
   return (

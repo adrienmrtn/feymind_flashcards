@@ -183,6 +183,18 @@ describe("l'offre cadeau, des deux côtés", () => {
     expect(DISCOUNT_YEARLY.productId).toBe("com.micabo.app.pro.yearly.discount");
   });
 
+  it("fait tomber le cadeau quand un paywall se referme sans achat, sans attendre de cours", () => {
+    // Le déclencheur a changé de place des deux côtés : ce n'est plus le premier import mais
+    // la croix du paywall (`paywallClosed`). Un seuil de cours qui divergerait ferait offrir
+    // le tarif réduit sur le téléphone et pas sur le site, au même compte.
+    expect(swiftNumber(discountOffer, "giftAfterCourses")).toBe(discount.giftAfterCourses);
+    expect(discountOffer).toContain("static func paywallClosed(");
+    expect(discountOffer).toContain('static let pending = "micabo.discount.pending"');
+    expect(swift("Features/Paywall/PaywallFlowView.swift")).toContain("DiscountOffer.paywallClosed(");
+    expect(discount.shouldPresentGift({ isPaid: false, courseCount: 0, seen: false, startedAt: null, now: 0 })).toBe(true);
+    expect(discount.shouldPresentGift({ isPaid: true, courseCount: 0, seen: false, startedAt: null, now: 0 })).toBe(false);
+  });
+
   it("n'ouvre Pro que sur un achat confirmé, comme les autres paywalls", () => {
     const flow = readFileSync(
       resolve(repoRoot, "Micabo/Features/Paywall/DiscountFlowView.swift"),

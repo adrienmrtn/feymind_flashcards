@@ -48,6 +48,12 @@ export type CountryCode =
  * Les codes sont ceux d'ISO 639-1 et ne suivent pas toujours le pays : la Tchéquie écrit `cs`, la
  * Grèce `el`, la Suède `sv`. C'est cette table qui fait la traduction, et c'est la même liste que
  * `supabase/functions/_shared/language.ts`.
+ *
+ * **Les vingt-six langues des apps**, dans l'ordre de `ContentLanguage` côté Swift et
+ * d'`AppLocale` côté Android. Le site n'en proposait que quatorze : une fiche choisie en danois
+ * sur le téléphone revenait ici comme une valeur inconnue, et le réglage du site la retombait
+ * sur la langue du pays sans le dire. Deux variantes régionales y figurent (`es-419`, `pt-BR`) :
+ * la contrainte de `profiles.sheet_language` les accepte depuis `20261017100000_more_languages`.
  */
 export type ContentLanguage =
   | "fr"
@@ -55,32 +61,60 @@ export type ContentLanguage =
   | "de"
   | "it"
   | "es"
+  | "es-419"
   | "pt"
+  | "pt-BR"
   | "cs"
+  | "sk"
   | "nl"
   | "el"
   | "hu"
   | "pl"
   | "ro"
   | "sv"
-  | "tr";
+  | "da"
+  | "fi"
+  | "et"
+  | "hr"
+  | "sl"
+  | "sr"
+  | "bg"
+  | "ru"
+  | "tr"
+  | "ar";
 
-/** Le nom de la langue, écrit dans cette langue : c'est ainsi qu'on choisit une langue. */
+/**
+ * Le nom de la langue, écrit dans cette langue : c'est ainsi qu'on choisit une langue. Les
+ * libellés sont ceux de l'app (`ContentLanguage.label`) : l'espagnol et le portugais disent leur
+ * variante, puisque les deux existent.
+ */
 export const LANGUAGE_LABELS: Record<ContentLanguage, string> = {
   fr: "Français",
   en: "English",
   de: "Deutsch",
   it: "Italiano",
-  es: "Español",
-  pt: "Português",
+  es: "Español (España)",
+  "es-419": "Español (Latinoamérica)",
+  pt: "Português (Portugal)",
+  "pt-BR": "Português (Brasil)",
   cs: "Čeština",
+  sk: "Slovenčina",
   nl: "Nederlands",
   el: "Ελληνικά",
   hu: "Magyar",
   pl: "Polski",
   ro: "Română",
   sv: "Svenska",
+  da: "Dansk",
+  fi: "Suomi",
+  et: "Eesti",
+  hr: "Hrvatski",
+  sl: "Slovenščina",
+  sr: "Srpski",
+  bg: "Български",
+  ru: "Русский",
   tr: "Türkçe",
+  ar: "العربية",
 };
 
 export interface Country {
@@ -153,7 +187,7 @@ export function languageLabel(code: string | null | undefined): string {
 export const CONTENT_LANGUAGES = Object.keys(LANGUAGE_LABELS) as ContentLanguage[];
 
 export function isContentLanguage(value: string | null | undefined): value is ContentLanguage {
-  return Boolean(value && value in LANGUAGE_LABELS);
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(LANGUAGE_LABELS, value);
 }
 
 /**

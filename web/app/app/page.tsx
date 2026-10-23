@@ -3,9 +3,11 @@ import { currentStreak, hasUsedFreeLesson, homeStats, lessonCircles, lessonTone,
 import { HomeScreen } from "@/components/home/HomeScreen";
 import { listAllCards } from "@/lib/data/courses";
 import { readEntitlement } from "@/lib/data/entitlement";
+import { listLessonExamResults } from "@/lib/data/lesson-exams";
 import { listLessons, listThemes } from "@/lib/data/lessons";
 import { loadProfileStats } from "@/lib/data/reviews";
 import { getTranslator } from "@/lib/i18n/server";
+import { studyDays } from "@/lib/lesson/study-days";
 
 /**
  * **Home** : Mika, la question, la barre et ses cinq supports, trois chiffres mesurés, et
@@ -13,7 +15,14 @@ import { getTranslator } from "@/lib/i18n/server";
  * et passe à l'écran ce qu'il montre.
  */
 export default async function HomePage() {
-  const [{ t }, lessons, cards, right, stats] = await Promise.all([getTranslator(), listLessons(), listAllCards(), readEntitlement(), loadProfileStats()]);
+  const [{ t }, lessons, cards, right, stats, papers] = await Promise.all([
+    getTranslator(),
+    listLessons(),
+    listAllCards(),
+    readEntitlement(),
+    loadProfileStats(),
+    listLessonExamResults(),
+  ]);
   const now = new Date();
 
   // « Reprendre » : la dernière leçon ouverte, et l'étape où elle attend. Les thèmes de cette
@@ -50,8 +59,14 @@ export default async function HomePage() {
         cards.map((card) => ({ state: card.state, dueDate: new Date(card.due_date), isSuspended: card.is_suspended })),
         now,
       )}
+      // La série compte les journées d'étude, pas seulement les cartes notées : la règle de
+      // `StudyStreak` sur l'iPhone (voir `studyDays`).
       streak={currentStreak(
-        stats.reviewDays.map((day) => new Date(day)),
+        studyDays({
+          reviewDays: stats.reviewDays,
+          lessons,
+          paperDates: papers.map((paper) => paper.date),
+        }),
         now,
       )}
       resume={resume}
