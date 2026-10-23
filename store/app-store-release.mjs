@@ -7,7 +7,8 @@
  *     ASC_KEY_ID=… ASC_ISSUER_ID=… ASC_PRIVATE_KEY=… \
  *       node store/app-store-release.mjs --version 1.10 [--build 157] [--apply]
  *
- * Sans `--apply`, il dit seulement ce qu'il ferait. Les secrets sont ceux de la grille de prix
+ * Sans `--apply`, il dit seulement ce qu'il ferait. Workflow : « Version App Store ». Les
+ * secrets sont ceux de la grille de prix
  * (docs/revenuecat.md, §15).
  */
 import { appendFileSync } from "node:fs";
