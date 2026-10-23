@@ -14,6 +14,9 @@ import { ptBR } from "./pt-br";
 import { pl } from "./pl";
 import { cs } from "./cs";
 import { sk } from "./sk";
+import { sv } from "./sv";
+import { da } from "./da";
+import { fi } from "./fi";
 
 export { en, fr, de, es, tr };
 export type { Catalog };
@@ -41,9 +44,9 @@ export const CATALOGS: Record<UiLocale, Catalog> = {
   nl: nl,
   pl: pl,
   ro: ro,
-  sv: en, // TODO(traduction) : import { sv } from "./sv";
-  da: en, // TODO(traduction) : import { da } from "./da";
-  fi: en, // TODO(traduction) : import { fi } from "./fi";
+  sv: sv,
+  da: da,
+  fi: fi,
   et: en, // TODO(traduction) : import { et } from "./et";
   cs: cs,
   sk: sk,
