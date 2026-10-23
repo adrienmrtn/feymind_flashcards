@@ -96,7 +96,7 @@ function Sidebar({ userName, userInitial }: { userName: string; userInitial: str
   const current = destinationOf(pathname);
 
   return (
-    <aside aria-label={t("app.a11y.navigation")} className="sticky top-0 hidden h-svh w-60 shrink-0 flex-col self-start border-r border-sidebar-border bg-sidebar lg:flex" data-print="hide">
+    <aside aria-label={t("app.a11y.navigation")} className="sticky top-0 hidden h-svh w-60 shrink-0 flex-col self-start border-e border-sidebar-border bg-sidebar lg:flex" data-print="hide">
       <Link href={HOME_PATH} className="flex items-center gap-2.5 px-5 pb-4 pt-5" aria-label="Micabo">
         <BrandMark size={28} />
         <span className="text-[15px] font-extrabold tracking-tight text-sidebar-accent-foreground">micabo</span>

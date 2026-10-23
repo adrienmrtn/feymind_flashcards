@@ -30,6 +30,10 @@ import "./globals.css";
  * § 10) : Hanken Grotesk et Inter en sont sortis, et le site les suit. `next/font` l'héberge
  * lui-même au moment de la compilation, donc aucun appel à un tiers à l'exécution. Les cinq
  * graisses sont celles que l'app embarque.
+ *
+ * Seuls le latin et le latin étendu sont préchargés ; le cyrillique (russe, bulgare) est
+ * déclaré aussi et ne se télécharge que sur une page qui en affiche. Le grec et l'arabe, que
+ * Nunito n'a pas, retombent sur la police du système.
  */
 const nunito = Nunito({
   subsets: ["latin", "latin-ext"],
@@ -109,6 +113,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang={UI_LOCALE_META[locale].html}
+      // L'arabe se lit de droite à gauche : tout le site se retourne avec lui (voir la fin de
+      // `globals.css`, et les propriétés logiques `ps-` / `pe-` / `text-start`).
+      dir={UI_LOCALE_META[locale].dir}
       data-appearance={appearance}
       className={`${nunito.variable}${appearanceIsDark(appearance) ? " dark" : ""}`}
       // Le script d'amorçage pose le même `color-scheme` avant l'hydratation : le serveur doit

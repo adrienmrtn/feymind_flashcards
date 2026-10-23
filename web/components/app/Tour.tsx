@@ -287,7 +287,7 @@ function TourRun({
               type="button"
               onClick={onFinish}
               aria-label={t("app.tour.skipPage")}
-              className="pressable -mr-1.5 -mt-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-tertiary hover:bg-canvas"
+              className="pressable -me-1.5 -mt-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-tertiary hover:bg-canvas"
             >
               <svg aria-hidden viewBox="0 0 20 20" className="h-4 w-4">
                 <path

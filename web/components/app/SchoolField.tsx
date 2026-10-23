@@ -120,7 +120,7 @@ export function SchoolField({
                   setResults([]);
                   onChange({ name: item.name, id: item.id });
                 }}
-                className={`pressable flex w-full items-center gap-2 rounded-button px-3 py-2.5 text-left ${
+                className={`pressable flex w-full items-center gap-2 rounded-button px-3 py-2.5 text-start ${
                   selected ? "bg-accent-soft" : "bg-surface-muted"
                 }`}
               >

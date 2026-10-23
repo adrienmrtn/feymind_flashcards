@@ -23,7 +23,7 @@ export function Hero({ signedIn = false }: { signedIn?: boolean }) {
   return (
     <section className="relative">
       <div className="mx-auto grid max-w-page items-center gap-4 px-screen sm:gap-12 pb-6 pt-10 sm:pt-14 lg:grid-cols-[1.05fr_1fr] lg:gap-8 lg:pb-10 lg:pt-16">
-        <div className="text-center lg:text-left">
+        <div className="text-center lg:text-start">
           <p
             className="lp-enter inline-flex items-center gap-2 rounded-pill bg-surface/75 px-3.5 py-1.5 text-[13px] font-bold text-ink-secondary shadow-paper backdrop-blur-sm"
             style={{ ["--i" as string]: 0 }}

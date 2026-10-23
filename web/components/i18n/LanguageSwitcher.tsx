@@ -43,8 +43,9 @@ export function LanguageSwitcher({
   }
 
   // Cinq gros boutons à drapeau tenaient une carte entière pour un réglage qu'on touche
-  // une fois. Dans une ligne, la liste déroulante dit la même chose sur un dixième de la
-  // hauteur, et le drapeau reste devant le nom.
+  // une fois ; vingt-six ne tiendraient nulle part. La liste déroulante native dit la même
+  // chose sur une ligne, défile d'elle-même sur téléphone comme sur ordinateur, et garde le
+  // drapeau devant le nom, écrit dans sa langue (`UI_LOCALE_META.native`).
   if (variant === "row") {
     return (
       <SettingsRow

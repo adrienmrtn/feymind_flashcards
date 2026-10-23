@@ -44,7 +44,7 @@ export function FriendSearch() {
     <section>
       <p className="eyebrow mb-3 text-ink-tertiary">{t("app.friends.addSomeone")}</p>
       <div className="flex h-12 items-center rounded-button bg-surface-muted px-4">
-        <span className="pr-1 text-[15px] font-semibold text-ink-tertiary">@</span>
+        <span className="pe-1 text-[15px] font-semibold text-ink-tertiary">@</span>
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}

@@ -27,7 +27,7 @@ export function QuizStory() {
   };
 
   return (
-    <div className="w-full max-w-[340px] text-left">
+    <div className="w-full max-w-[340px] text-start">
       <div key={round} className="notes-page-in">
         <QuestionCard question={question} tone="blue" answered={answered} shuffleSeed={0n} showsFeedback reveals onAnswer={setAnswered} />
       </div>

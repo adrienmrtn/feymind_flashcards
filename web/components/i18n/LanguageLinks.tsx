@@ -7,7 +7,7 @@ import { UI_LOCALES, UI_LOCALE_META } from "@/lib/i18n/locales";
 import { localeSwitchHref } from "@/lib/i18n/paths";
 
 /**
- * **Les quatre autres langues de la page, en vrais liens.**
+ * **Les autres langues de la page, en vrais liens.**
  *
  * Le sélecteur de la barre (`LanguageSwitcher`) est un `<select>` : il change la langue sur
  * un `onChange`, en JavaScript. Un robot ne déclenche pas d'`onChange`, et un `<option>`
@@ -21,8 +21,11 @@ import { localeSwitchHref } from "@/lib/i18n/paths";
  * Search Console appelle « détectée, actuellement non indexée » : l'adresse est connue, mais
  * rien dans le site ne dit qu'elle vaut le déplacement, alors le robot la remet à plus tard.
  *
- * Ces liens-là réparent ça : chacune des 30 adresses en reçoit quatre, depuis le pied de
- * page de toutes les autres langues, et le maillage devient complet.
+ * Ces liens-là réparent ça : chaque adresse traduite reçoit un lien depuis le pied de page de
+ * toutes les autres langues, et le maillage devient complet.
+ *
+ * Vingt-cinq langues ne tiennent plus en colonne : elles se rangent en grille, le nom de
+ * chacune écrit dans sa langue (et dans son sens de lecture, pour l'arabe).
  *
  * **Une balise `<a>` nue, pas un `Link`.** Changer de langue doit recharger le document :
  * `/fr/methode` est réécrit en `/methode`, et une navigation client resservirait le cache
@@ -51,13 +54,14 @@ export function LanguageLinks({ className }: { className?: string }) {
   return (
     <div className={className}>
       <p className="eyebrow mb-3 text-ink-tertiary">{t("locale.choose")}</p>
-      <ul className="space-y-1.5 text-ink-secondary">
+      <ul className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-ink-secondary sm:grid-cols-3">
         {links.map(({ code, href }) => (
           <li key={code}>
             <a
               href={href}
-              hrefLang={code}
+              hrefLang={UI_LOCALE_META[code].hreflang}
               lang={UI_LOCALE_META[code].html}
+              dir={UI_LOCALE_META[code].dir}
               className="underline-draw"
               data-print="bare"
             >

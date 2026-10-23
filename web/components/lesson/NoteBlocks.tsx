@@ -163,7 +163,7 @@ export function NoteBlockView({ block, tone }: { block: NoteBlock; tone: LessonT
 
     case "quote":
       return (
-        <blockquote className="relative rounded-[18px] bg-surface-muted p-[18px] pl-[34px]">
+        <blockquote className="relative rounded-[18px] bg-surface-muted p-[18px] ps-[34px]">
           <span aria-hidden="true" className="absolute bottom-[18px] left-[18px] top-[18px] w-1 rounded-pill" style={{ background: vivid }} />
           <p className="text-[18px] font-medium italic leading-snug text-ink">
             <KeywordText text={block.text} />
@@ -194,7 +194,7 @@ function NoteDefinition({ term, text }: { term: string; text: string }) {
       type="button"
       aria-expanded={open}
       onClick={() => setOpen((value) => !value)}
-      className="pressable flex w-full flex-col gap-2 rounded-[18px] bg-surface p-4 text-left shadow-[inset_0_0_0_1.5px_color-mix(in_srgb,var(--color-keyword)_35%,transparent)]"
+      className="pressable flex w-full flex-col gap-2 rounded-[18px] bg-surface p-4 text-start shadow-[inset_0_0_0_1.5px_color-mix(in_srgb,var(--color-keyword)_35%,transparent)]"
     >
       <span className="flex items-center justify-between">
         <span className="text-[12px] font-bold uppercase tracking-caps text-ink-secondary">{t("lesson.notes.definition")}</span>
@@ -270,7 +270,7 @@ function NoteTable({ columns, rows, tone }: { columns: string[]; rows: string[][
         <thead>
           <tr style={{ background: `var(--color-tone-${tone}-pale)` }}>
             {columns.map((column, index) => (
-              <th key={index} className="px-3 py-2.5 text-left align-top font-extrabold" style={{ color: `var(--color-tone-${tone}-ink)` }}>
+              <th key={index} className="px-3 py-2.5 text-start align-top font-extrabold" style={{ color: `var(--color-tone-${tone}-ink)` }}>
                 <KeywordText text={column} tints={false} />
               </th>
             ))}

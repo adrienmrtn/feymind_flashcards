@@ -257,7 +257,7 @@ export function PaywallCard({
               type="button"
               aria-label={t("app.a11y.close")}
               onClick={onClose}
-              className="pressable -mr-1 flex h-9 w-9 items-center justify-center rounded-full text-ink-tertiary hover:bg-canvas"
+              className="pressable -me-1 flex h-9 w-9 items-center justify-center rounded-full text-ink-tertiary hover:bg-canvas"
             >
               <svg aria-hidden viewBox="0 0 20 20" className="h-5 w-5">
                 <path

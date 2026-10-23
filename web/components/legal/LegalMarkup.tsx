@@ -95,7 +95,7 @@ export function LegalP({ k, vars }: { k: string; vars?: Record<string, string | 
 export function LegalList({ keys, vars }: { keys: string[]; vars?: Record<string, string | number> }) {
   const { t } = useI18n();
   return (
-    <ul className="list-disc space-y-2 pl-5">
+    <ul className="list-disc space-y-2 ps-5">
       {keys.map((key) => (
         <li key={key}>
           <LegalMarkup text={t(key, vars)} />

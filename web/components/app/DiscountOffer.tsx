@@ -195,7 +195,7 @@ export function DiscountGift({ onOpened, onDismiss }: { onOpened: () => void; on
             type="button"
             aria-label={t("app.a11y.close")}
             onClick={onDismiss}
-            className="pressable -mr-1 flex h-10 w-10 items-center justify-center rounded-full text-offer-sky"
+            className="pressable -me-1 flex h-10 w-10 items-center justify-center rounded-full text-offer-sky"
           >
             <svg aria-hidden viewBox="0 0 20 20" className="h-[22px] w-[22px]">
               <path d="M5 5l10 10M15 5L5 15" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
@@ -365,7 +365,7 @@ export function DiscountCard({ onClose }: { onClose: () => void }) {
             {t("app.paywall.discountSubtitle")}
           </h2>
 
-          <div className="mt-6 flex w-full items-center gap-4 rounded-[22px] bg-surface px-4 py-4 text-left shadow-[0_14px_34px_-18px_rgba(11,143,220,0.55)] sm:px-5">
+          <div className="mt-6 flex w-full items-center gap-4 rounded-[22px] bg-surface px-4 py-4 text-start shadow-[0_14px_34px_-18px_rgba(11,143,220,0.55)] sm:px-5">
             <SaleSeal percent={saved} />
 
             <div className="min-w-0">
@@ -522,7 +522,7 @@ export function DiscountBadge({
         <span aria-hidden className="text-white">
           <GiftGlyph />
         </span>
-        <span className="text-left">
+        <span className="text-start">
           <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-white/80">
             {t("app.paywall.yourOffer")}
           </span>

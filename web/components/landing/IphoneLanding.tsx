@@ -138,7 +138,7 @@ export function IphoneLanding({ signedIn = false }: { signedIn?: boolean }) {
             </p>
           </div>
 
-          <ul className="rise space-y-7 text-left" style={{ animationDelay: "320ms" }}>
+          <ul className="rise space-y-7 text-start" style={{ animationDelay: "320ms" }}>
             {points(t).map((point) => (
               <li key={point.title} className="flex gap-4">
                 <span className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-tile bg-accent-soft text-accent">

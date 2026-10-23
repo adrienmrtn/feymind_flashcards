@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { UI_LOCALES } from "./locales";
+import { UI_LOCALES, UI_LOCALE_META } from "./locales";
 import {
   INDEXABLE_PATHS,
+  URL_PREFIX_LOCALES,
   forwardedUrlLocale,
   languageAlternatePaths,
   localeSwitchHref,
@@ -27,6 +28,21 @@ describe("localizedPath", () => {
     expect(localizedPath("de", "/mode-examen")).toBe("/de/mode-examen");
     expect(localizedPath("es", "/confidentialite")).toBe("/es/confidentialite");
   });
+
+  it("préfixe les vingt-cinq autres langues, en minuscules", () => {
+    expect(URL_PREFIX_LOCALES).toHaveLength(25);
+    expect(URL_PREFIX_LOCALES).not.toContain("en");
+    expect(localizedPath("pt-BR", "/")).toBe("/pt-br");
+    expect(localizedPath("pt-BR", "/methode")).toBe("/pt-br/methode");
+    expect(localizedPath("es-419", "/mode-examen")).toBe("/es-419/mode-examen");
+    expect(localizedPath("ar", "/conditions")).toBe("/ar/conditions");
+    expect(localizedPath("it", "/pt-br/methode")).toBe("/it/methode");
+    for (const locale of URL_PREFIX_LOCALES) {
+      const path = localizedPath(locale, "/methode");
+      expect(path, locale).toBe(`/${locale.toLowerCase()}/methode`);
+      expect(splitLocalePrefix(path), locale).toEqual({ prefix: locale, rest: "/methode" });
+    }
+  });
 });
 
 describe("splitLocalePrefix", () => {
@@ -36,6 +52,10 @@ describe("splitLocalePrefix", () => {
     expect(splitLocalePrefix("/methode")).toEqual({ prefix: null, rest: "/methode" });
     expect(splitLocalePrefix("/fr/methode")).toEqual({ prefix: "fr", rest: "/methode" });
     expect(splitLocalePrefix("/en/methode")).toEqual({ prefix: "en", rest: "/methode" });
+    expect(splitLocalePrefix("/pt-br/methode")).toEqual({ prefix: "pt-BR", rest: "/methode" });
+    expect(splitLocalePrefix("/pt-BR")).toEqual({ prefix: "pt-BR", rest: "/" });
+    expect(splitLocalePrefix("/es-419/conditions")).toEqual({ prefix: "es-419", rest: "/conditions" });
+    expect(splitLocalePrefix("/pt-pt/methode")).toEqual({ prefix: null, rest: "/pt-pt/methode" });
   });
 });
 
@@ -75,6 +95,36 @@ describe("resolveLocaleRequest", () => {
       urlLocale: "tr",
       setCookie: "tr",
     });
+  });
+
+  it("sert les nouvelles langues sous leur préfixe en minuscules", () => {
+    expect(resolveLocaleRequest("/pt-br/methode")).toEqual({
+      action: "continue",
+      pathname: "/methode",
+      urlLocale: "pt-BR",
+      setCookie: "pt-BR",
+    });
+    expect(resolveLocaleRequest("/ar")).toEqual({
+      action: "continue",
+      pathname: "/",
+      urlLocale: "ar",
+      setCookie: "ar",
+    });
+    expect(resolveLocaleRequest("/es-419/app")).toEqual({
+      action: "redirect",
+      location: "/app",
+      status: 302,
+      setCookie: "es-419",
+    });
+  });
+
+  it("ramène une autre casse du préfixe à l'adresse unique", () => {
+    expect(resolveLocaleRequest("/pt-BR/methode")).toEqual({
+      action: "redirect",
+      location: "/pt-br/methode",
+      status: 301,
+    });
+    expect(resolveLocaleRequest("/FR")).toEqual({ action: "redirect", location: "/fr", status: 301 });
   });
 
   it("force l'anglais sur une page publique sans préfixe", () => {
@@ -131,7 +181,9 @@ describe("forwardedUrlLocale", () => {
     expect(forwardedUrlLocale("tr", "en")).toBe("tr");
     expect(forwardedUrlLocale(null, "en")).toBe("en");
     expect(forwardedUrlLocale(null, "fr")).toBe("fr");
-    expect(forwardedUrlLocale("it", "en")).toBe("en");
+    expect(forwardedUrlLocale("it", "en")).toBe("it");
+    expect(forwardedUrlLocale("pt-BR", "en")).toBe("pt-BR");
+    expect(forwardedUrlLocale("ja", "en")).toBe("en");
   });
 });
 
@@ -144,6 +196,9 @@ describe("localeSwitchHref", () => {
     expect(localeSwitchHref("/tr", "de")).toBe("/de");
     expect(localeSwitchHref("/app", "tr")).toBeNull();
     expect(localeSwitchHref("/commencer/compte", "de")).toBeNull();
+    expect(localeSwitchHref("/methode", "pt-BR")).toBe("/pt-br/methode");
+    expect(localeSwitchHref("/pt-br/methode", "es-419")).toBe("/es-419/methode");
+    expect(localeSwitchHref("/ar", "en")).toBe("/");
   });
 });
 
@@ -151,15 +206,28 @@ describe("hreflang", () => {
   it("est réciproque sur chaque page indexable", () => {
     for (const path of INDEXABLE_PATHS) {
       const map = languageAlternatePaths(path);
-      expect(Object.keys(map).sort()).toEqual(["de", "en", "es", "fr", "tr", "x-default"].sort());
+      expect(Object.keys(map).sort()).toEqual(
+        [...UI_LOCALES.map((locale) => UI_LOCALE_META[locale].hreflang), "x-default"].sort(),
+      );
       expect(map["x-default"]).toBe(map.en);
       expect(map.en).toBe(localizedPath("en", path));
       expect(map.fr).toBe(localizedPath("fr", path));
-      expect(stripLocalePrefix(map.tr)).toBe(path === "/" ? "/" : path);
+      expect(map["pt-BR"]).toBe(localizedPath("pt-BR", path));
+      expect(map["es-419"]).toBe(localizedPath("es-419", path));
+      expect(map.sr).toBe(localizedPath("sr", path));
+      expect(stripLocalePrefix(map.tr!)).toBe(path === "/" ? "/" : path);
       for (const locale of UI_LOCALES) {
         const again = languageAlternatePaths(localizedPath(locale, path));
         expect(again).toEqual(map);
       }
     }
+  });
+
+  it("n'annonce que les langues demandées, et toujours x-default", () => {
+    expect(languageAlternatePaths("/methode", ["en", "fr"])).toEqual({
+      en: "/methode",
+      fr: "/fr/methode",
+      "x-default": "/methode",
+    });
   });
 });

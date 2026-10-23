@@ -38,7 +38,7 @@ export default function LevelStep() {
       footer={<ContinueButton enabled={Boolean(selectedId) && ready} />}
       center
     >
-      <div className="space-y-2 pr-1">
+      <div className="space-y-2 pe-1">
         {stages.map((stage) => (
           <ChoiceRow
             key={stage.id}

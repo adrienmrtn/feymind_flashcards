@@ -1,6 +1,6 @@
 import { CANONICAL_URL } from "../config";
 import { SITE_PAGES } from "../site-pages";
-import { UI_LOCALES } from "./locales";
+import { TRANSLATED_UI_LOCALES } from "./catalogs";
 import {
   INDEXABLE_PATHS,
   type IndexablePath,
@@ -50,10 +50,13 @@ function absolute(path: string): string {
 }
 
 /**
- * Les pages publiques, **dans les cinq langues**.
+ * Les pages publiques, **dans chaque langue traduite**.
  *
  * Chaque URL a son jeu `hreflang`, le même que dans le HTML.
  * `x-default` est l'anglais, la version sans préfixe.
+ *
+ * Une langue dont le catalogue n'est encore que l'anglais (`CATALOGS.it === en`) n'y figure
+ * pas : son adresse sert l'anglais et canonise vers lui. Brancher la traduction l'ajoute.
  */
 export function indexableSitemap(): SitemapEntry[] {
   const priorityOf = (path: string): number => {
@@ -68,14 +71,14 @@ export function indexableSitemap(): SitemapEntry[] {
   };
 
   return INDEXABLE_PATHS.flatMap((path) => {
-    const languages = languageAlternatePaths(path);
+    const languages = languageAlternatePaths(path, TRANSLATED_UI_LOCALES);
     const alternates = {
       languages: Object.fromEntries(
         Object.entries(languages).map(([lang, href]) => [lang, absolute(href)]),
       ),
     };
     const lastModified = new Date(`${PAGE_UPDATED[path]}T00:00:00.000Z`);
-    return UI_LOCALES.map((locale) => {
+    return TRANSLATED_UI_LOCALES.map((locale) => {
       const href = localizedPath(locale, path);
       return {
         url: absolute(href),
@@ -88,7 +91,7 @@ export function indexableSitemap(): SitemapEntry[] {
   });
 }
 
-/** Les 30 adresses à coller dans Search Console, dans le même ordre que le sitemap. */
+/** Les adresses (pages × langues traduites) à coller dans Search Console, dans le même ordre que le sitemap. */
 export function searchConsoleUrls(): string[] {
   return indexableSitemap().map((entry) => entry.url);
 }

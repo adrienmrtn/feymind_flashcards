@@ -263,12 +263,69 @@ export function institutionCountryIso(code: string | null | undefined): string |
 }
 
 /**
+ * La langue d'interface → le pays du parcours qu'elle désigne sans discussion, quand la liste
+ * le connaît. Le français n'y est pas : la Belgique, la Suisse, le Québec le parlent aussi, et
+ * la région du navigateur le dit mieux. L'espagnol d'Amérique et le portugais du Brésil non
+ * plus : ni le Mexique ni le Brésil ne sont dans la liste du parcours.
+ *
+ * Les clés sont en minuscules : `UiLocale` (`pt-BR`) passe par `toLowerCase()`.
+ */
+const UI_LOCALE_COUNTRY: Readonly<Record<string, CountryCode>> = {
+  de: "de",
+  es: "es",
+  tr: "tr",
+  it: "it",
+  pt: "pt",
+  nl: "nl",
+  pl: "pl",
+  ro: "ro",
+  sv: "se",
+  cs: "cz",
+  hu: "hu",
+  el: "gr",
+};
+
+/**
+ * La langue d'interface → le pays de l'annuaire d'établissements, faute de mieux. La même
+ * table que `UiLocale.institutionCountryIso` côté iPhone : l'anglais renvoie aux États-Unis,
+ * l'espagnol d'Amérique latine au Mexique, l'arabe aux Émirats.
+ */
+const UI_LOCALE_INSTITUTION_ISO: Readonly<Record<string, string>> = {
+  en: "US",
+  fr: "FR",
+  de: "DE",
+  es: "ES",
+  "es-419": "MX",
+  it: "IT",
+  pt: "PT",
+  "pt-br": "BR",
+  nl: "NL",
+  pl: "PL",
+  ro: "RO",
+  sv: "SE",
+  da: "DK",
+  fi: "FI",
+  et: "EE",
+  cs: "CZ",
+  sk: "SK",
+  hu: "HU",
+  hr: "HR",
+  sl: "SI",
+  sr: "RS",
+  bg: "BG",
+  el: "GR",
+  ru: "RU",
+  tr: "TR",
+  ar: "AE",
+};
+
+/**
  * Le pays que l'interface implique, quand le parcours n'en a pas encore nommé
  * un. L'anglais est la langue de base du site : ce n'est plus la France.
  */
 export function countryFromUiLocale(locale: string | null | undefined): CountryCode {
   const hint = locale?.trim().toLowerCase();
-  if (hint === "de" || hint === "es" || hint === "tr") return hint;
+  if (hint && UI_LOCALE_COUNTRY[hint]) return UI_LOCALE_COUNTRY[hint]!;
   if (hint === "en") return "us";
   return FALLBACK_COUNTRY;
 }
@@ -287,7 +344,9 @@ export function institutionSearchCountry(
 ): string | null {
   const chosen = institutionCountryIso(country);
   const locale = uiLocale?.trim().toLowerCase() || null;
-  const fromLocale = institutionCountryIso(countryFromUiLocale(locale));
+  const fromLocale =
+    (locale ? UI_LOCALE_INSTITUTION_ISO[locale] : undefined) ??
+    institutionCountryIso(countryFromUiLocale(locale));
 
   if (locale === "en" && chosen === "FR") return fromLocale;
   return chosen ?? fromLocale;
@@ -310,7 +369,7 @@ export function guessCountry(
   languageHint?: string | null,
 ): CountryCode {
   const hint = languageHint?.trim().toLowerCase();
-  if (hint === "de" || hint === "es" || hint === "tr") return hint;
+  if (hint && UI_LOCALE_COUNTRY[hint]) return UI_LOCALE_COUNTRY[hint]!;
   if (hint === "en") return englishSpeakingCountry(locales) ?? "us";
 
   for (const locale of locales) {

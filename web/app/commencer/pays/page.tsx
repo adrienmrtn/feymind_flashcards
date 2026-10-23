@@ -62,7 +62,7 @@ function CountryStepBody() {
     >
       {/* Vingt-cinq pays en une colonne demandaient trois écrans de défilement. La carte est
           large maintenant : deux colonnes tiennent, et la liste se lit d'un coup d'œil. */}
-      <div className="grid grid-cols-1 gap-2 pr-1 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2 pe-1 sm:grid-cols-2">
         {listed.map((item) => (
           <Row
             key={item.code}
@@ -88,7 +88,7 @@ function CountryStepBody() {
         />
 
         {selected === "other" ? (
-          <div className="rise pl-1 pt-1 sm:col-span-2">
+          <div className="rise ps-1 pt-1 sm:col-span-2">
             <label htmlFor="pays-libre" className="sr-only">
               {t("onboarding.customCountry")}
             </label>
@@ -136,7 +136,7 @@ function Row({
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
-      className={`pressable flex w-full items-center gap-4 rounded-button px-4 py-3.5 text-left transition-colors duration-hover ${
+      className={`pressable flex w-full items-center gap-4 rounded-button px-4 py-3.5 text-start transition-colors duration-hover ${
         selected
           ? "bg-accent-soft"
           : "bg-surface-muted shadow-[inset_0_0_0_1px_var(--color-stroke-strong)]"

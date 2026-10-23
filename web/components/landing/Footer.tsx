@@ -138,8 +138,8 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
               </ul>
             </div>
 
-            {/* Les quatre autres langues de cette page. Sans elles, `/fr/methode` et ses
-                vingt-trois sœurs ne sont liées depuis aucune page du site. */}
+            {/* Les autres langues de cette page. Sans elles, `/fr/methode` et ses sœurs ne
+                sont liées depuis aucune page du site. */}
             <LanguageLinks />
           </div>
         </div>

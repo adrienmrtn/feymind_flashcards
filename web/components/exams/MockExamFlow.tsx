@@ -252,7 +252,7 @@ function MockExamRun({ paper, tone, onQuit, onSubmit }: { paper: ExamPaper; tone
           </span>
         </span>
         <span className="flex-1" />
-        <span className="numeral w-14 text-right text-[16px] font-extrabold text-ink-secondary">
+        <span className="numeral w-14 text-end text-[16px] font-extrabold text-ink-secondary">
           {answeredCount}/{paper.items.length}
         </span>
       </div>

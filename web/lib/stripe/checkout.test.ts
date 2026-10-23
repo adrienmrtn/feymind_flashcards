@@ -290,7 +290,22 @@ describe("checkoutLocale", () => {
     // prix en livres — et une page Stripe en anglais.
     expect(pricing.checkoutLocale({ chosen: null, navigator: null, country: "TR" })).toBe("tr");
     expect(pricing.checkoutLocale({ country: "at" })).toBe("de");
-    expect(pricing.checkoutLocale({ country: "mx" })).toBe("es");
+    expect(pricing.checkoutLocale({ country: "mx" })).toBe("es-419");
+    expect(pricing.checkoutLocale({ country: "br" })).toBe("pt-BR");
+    expect(pricing.checkoutLocale({ country: "pl" })).toBe("pl");
+  });
+
+  it("garde les variantes régionales que Stripe sait afficher", () => {
+    expect(pricing.checkoutLocale({ chosen: "pt-BR" })).toBe("pt-BR");
+    expect(pricing.checkoutLocale({ chosen: "es-419" })).toBe("es-419");
+    expect(pricing.checkoutLocale({ chosen: "pt" })).toBe("pt");
+    expect(pricing.checkoutLocale({ navigator: "fr-CA" })).toBe("fr");
+  });
+
+  it("se tait sur une langue que Stripe n'affiche pas, plutôt que d'en changer", () => {
+    // Une locale inconnue de Stripe fait refuser la session : l'arabe et le serbe n'y sont pas.
+    expect(pricing.checkoutLocale({ chosen: "ar", country: "fr" })).toBeUndefined();
+    expect(pricing.checkoutLocale({ chosen: "sr" })).toBeUndefined();
   });
 
   it("préfère se taire que d'inventer", () => {

@@ -78,12 +78,50 @@ const COUNTRY_LANGUAGE: Record<string, string> = {
   de: "de",
   at: "de",
   es: "es",
-  mx: "es",
-  ar: "es",
-  co: "es",
-  cl: "es",
-  pe: "es",
+  mx: "es-419",
+  ar: "es-419",
+  co: "es-419",
+  cl: "es-419",
+  pe: "es-419",
+  it: "it",
+  pt: "pt",
+  br: "pt-BR",
+  nl: "nl",
+  pl: "pl",
+  ro: "ro",
+  se: "sv",
+  dk: "da",
+  fi: "fi",
+  ee: "et",
+  cz: "cs",
+  sk: "sk",
+  hu: "hu",
+  hr: "hr",
+  si: "sl",
+  bg: "bg",
+  gr: "el",
+  ru: "ru",
 };
+
+/**
+ * Les langues que Stripe Checkout sait afficher (`locale` de la session), parmi les nôtres.
+ * Une locale hors de cette liste fait refuser la session : l'arabe et le serbe n'y sont pas,
+ * et se taire laisse Stripe lire l'en-tête du navigateur.
+ */
+const STRIPE_CHECKOUT_LOCALES = new Set([
+  "bg", "cs", "da", "de", "el", "en", "es", "es-419", "et", "fi", "fr", "hr", "hu", "it",
+  "nl", "pl", "pt", "pt-BR", "ro", "ru", "sk", "sl", "sv", "tr",
+]);
+
+/** Une langue dite (`pt-BR`, `es-MX`, `fr-CA`) → la locale Stripe qui la sert, ou rien. */
+function stripeLocaleOf(value: string | null | undefined): string | undefined {
+  const tag = value?.trim().replace(/_/g, "-").toLowerCase();
+  if (!tag) return undefined;
+  if (tag === "pt-br") return "pt-BR";
+  if (tag === "es-419") return "es-419";
+  const primary = tag.split("-")[0]!;
+  return STRIPE_CHECKOUT_LOCALES.has(primary) ? primary : undefined;
+}
 
 /**
  * **La langue de la page de paiement.**
@@ -114,10 +152,10 @@ export function checkoutLocale(input: {
   /** Le pays de scolarisation, `profiles.country_code`. */
   country?: string | null;
 }): string | undefined {
-  const said = [input.chosen, input.navigator]
-    .map((value) => value?.trim().toLowerCase().split("-")[0])
-    .find((value) => Boolean(value));
-  if (said) return said;
+  const said = [input.chosen, input.navigator].find((value) => Boolean(value?.trim()));
+  // Une langue dite mais que Stripe n'affiche pas (l'arabe) : on se tait plutôt que de
+  // traduire la page de paiement dans une autre langue que celle qu'on lit.
+  if (said) return stripeLocaleOf(said);
 
   const land = input.country?.trim().toLowerCase();
   return land ? COUNTRY_LANGUAGE[land] : undefined;

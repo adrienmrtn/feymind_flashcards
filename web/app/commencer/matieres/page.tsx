@@ -48,7 +48,7 @@ export default function SubjectsStep() {
       }
       width="wide"
     >
-      <div className="space-y-6 pr-1">
+      <div className="space-y-6 pe-1">
         {SUBJECT_FAMILIES.map((family) => (
           <div key={family.name}>
             <p className="eyebrow mb-2.5 text-ink-tertiary">{displayFamily(family.name, locale)}</p>

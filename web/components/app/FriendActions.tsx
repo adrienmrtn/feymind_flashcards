@@ -90,7 +90,7 @@ export function FriendActions({
     <span className="flex flex-col items-end gap-1">
       {buttons}
       {error ? (
-        <span className="max-w-[16ch] text-right text-[11px] text-negative" role="alert">
+        <span className="max-w-[16ch] text-end text-[11px] text-negative" role="alert">
           {error}
         </span>
       ) : null}
