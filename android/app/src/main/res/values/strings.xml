@@ -30,6 +30,7 @@
     <string name="app_friends_usernamePlaceholder">username</string>
     <string name="app_friends_you">You</string>
     <string name="app_friends_yourAccount">Your account</string>
+    <string name="common_alreadyAccount">I already have an account</string>
     <string name="common_continue">Continue</string>
     <string name="common_privacy">Privacy</string>
     <string name="common_signOut">Sign out</string>
@@ -502,6 +503,7 @@
     <string name="lesson_theme_system">Same as phone</string>
     <string name="nav_friends">Friends</string>
     <string name="onboarding_compteTitle">Keep your progress</string>
+    <string name="onboarding_continueApple">Continue with Apple</string>
     <string name="onboarding_continueGoogle">Continue with Google</string>
     <string name="onboarding_emailLabel">Your email address</string>
     <string name="onboarding_emailNote">We send you a link, no password to remember.</string>
@@ -522,6 +524,7 @@
     <string name="x_paywall_soon">Coming soon on Android</string>
     <string name="x_paywall_soonBody">Subscriptions open on Android very soon. Your free lesson is waiting for you in the meantime.</string>
     <string name="x_paywall_subscribe">Go Pro</string>
+    <string name="x_pro_gifted">This access was gifted to you: there\'s nothing to manage or cancel.</string>
     <string name="x_quoted">“%1$s”</string>
     <string name="x_record_limit">Up to 90 minutes. Mika turns your recording into text, then writes your lesson.</string>
     <string name="x_score_1">I\'m struggling</string>
@@ -529,6 +532,8 @@
     <string name="x_score_3">Average</string>
     <string name="x_score_4">Good</string>
     <string name="x_score_5">Top of the class</string>
+    <string name="x_settings_computer">Micabo on your computer</string>
+    <string name="x_settings_computerSite">www.micabo.app</string>
     <string name="x_settings_level">Level</string>
     <string name="x_settings_reset">Erase everything</string>
     <string name="x_settings_resetBody">Your lessons and your profile leave this phone. This can\'t be undone.</string>

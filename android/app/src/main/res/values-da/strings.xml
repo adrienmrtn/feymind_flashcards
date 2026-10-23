@@ -29,6 +29,7 @@
     <string name="app_friends_usernamePlaceholder">brugernavn</string>
     <string name="app_friends_you">Dig</string>
     <string name="app_friends_yourAccount">Din konto</string>
+    <string name="common_alreadyAccount">Jeg har allerede en konto</string>
     <string name="common_continue">Fortsæt</string>
     <string name="common_privacy">Privatliv</string>
     <string name="common_signOut">Log ud</string>
@@ -480,6 +481,7 @@
     <string name="lesson_theme_system">Som telefonen</string>
     <string name="nav_friends">Venner</string>
     <string name="onboarding_compteTitle">Behold dine fremskridt</string>
+    <string name="onboarding_continueApple">Fortsæt med Apple</string>
     <string name="onboarding_continueGoogle">Fortsæt med Google</string>
     <string name="onboarding_emailLabel">Din e-mailadresse</string>
     <string name="onboarding_emailNote">Vi sender dig et link, ingen adgangskode at huske.</string>
@@ -500,6 +502,7 @@
     <string name="x_paywall_soon">Kommer snart på Android</string>
     <string name="x_paywall_soonBody">Abonnementer kommer til Android meget snart. Indtil da venter din gratis lektion på dig.</string>
     <string name="x_paywall_subscribe">Få Pro</string>
+    <string name="x_pro_gifted">Denne adgang har du fået i gave: der er intet at administrere eller opsige.</string>
     <string name="x_quoted">»%1$s«</string>
     <string name="x_record_limit">Op til 90 minutter. Mika laver din optagelse om til tekst og skriver så din lektion.</string>
     <string name="x_score_1">Jeg har det svært</string>
@@ -507,6 +510,7 @@
     <string name="x_score_3">Gennemsnitlig</string>
     <string name="x_score_4">God</string>
     <string name="x_score_5">Blandt de bedste</string>
+    <string name="x_settings_computer">Micabo på din computer</string>
     <string name="x_settings_level">Niveau</string>
     <string name="x_settings_reset">Slet alt</string>
     <string name="x_settings_resetBody">Dine lektioner og din profil forsvinder fra denne telefon. Det kan ikke fortrydes.</string>

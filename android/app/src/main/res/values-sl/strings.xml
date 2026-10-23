@@ -29,6 +29,7 @@
     <string name="app_friends_usernamePlaceholder">uporabniško ime</string>
     <string name="app_friends_you">Ti</string>
     <string name="app_friends_yourAccount">Tvoj račun</string>
+    <string name="common_alreadyAccount">Že imam račun</string>
     <string name="common_continue">Nadaljuj</string>
     <string name="common_privacy">Zasebnost</string>
     <string name="common_signOut">Odjava</string>
@@ -492,6 +493,7 @@
     <string name="lesson_theme_system">Kot v telefonu</string>
     <string name="nav_friends">Prijatelji</string>
     <string name="onboarding_compteTitle">Ohrani svoj napredek</string>
+    <string name="onboarding_continueApple">Nadaljuj z Apple</string>
     <string name="onboarding_continueGoogle">Nadaljuj z Google</string>
     <string name="onboarding_emailLabel">Tvoj e-poštni naslov</string>
     <string name="onboarding_emailNote">Pošljemo ti povezavo, gesla si ni treba zapomniti.</string>
@@ -512,6 +514,7 @@
     <string name="x_paywall_soon">Kmalu na Androidu</string>
     <string name="x_paywall_soonBody">Naročnine bodo na Androidu na voljo zelo kmalu. Medtem te čaka tvoja brezplačna lekcija.</string>
     <string name="x_paywall_subscribe">Nadgradi na Pro</string>
+    <string name="x_pro_gifted">Ta dostop si dobil v dar: ničesar ni treba upravljati ali preklicati.</string>
     <string name="x_quoted">„%1$s“</string>
     <string name="x_record_limit">Do 90 minut. Mika tvoj posnetek pretvori v besedilo in nato napiše tvojo lekcijo.</string>
     <string name="x_score_1">Težko mi gre</string>
@@ -519,6 +522,7 @@
     <string name="x_score_3">Povprečno</string>
     <string name="x_score_4">Dobro</string>
     <string name="x_score_5">Med najboljšimi</string>
+    <string name="x_settings_computer">Micabo na tvojem računalniku</string>
     <string name="x_settings_level">Raven</string>
     <string name="x_settings_reset">Izbriši vse</string>
     <string name="x_settings_resetBody">Tvoje lekcije in profil izginejo s tega telefona. Tega ni mogoče razveljaviti.</string>

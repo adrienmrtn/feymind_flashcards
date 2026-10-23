@@ -50,6 +50,13 @@ data class Lesson(
     val updatedAt: Long = 0,
     /** Qui voit la leçon (`CourseVisibility`) : `friends` ou `private` ; nul tant qu'on ne l'a pas lu ni choisi. */
     val visibility: String? = null,
+    /**
+     * **Un cours d'avant les leçons**, ou un paquet de cartes : une ligne `courses` sans `path`,
+     * écrite sur l'iPhone ou le site. Il se lit et ses cartes se révisent ici, mais seule leur
+     * mémoire remonte : réécrire sa ligne lui donnerait un chemin inventé par Android, et
+     * l'iPhone comme le site le prendraient pour une leçon.
+     */
+    val legacy: Boolean = false,
 ) {
     /**
      * La leçon avec un identifiant stable pour chaque thème et chaque carte : ce sont les
@@ -79,6 +86,13 @@ data class Lesson(
             .flatMap { (index, theme) -> theme.questions.map { index to it } }
 
     val flashcards: List<Flashcard> get() = themes.flatMap { it.flashcards }
+
+    /**
+     * Compte pour la leçon offerte, comme `begin_lesson` : un paquet fait à la main, un cours
+     * d'exemple ou repris de la bibliothèque ne la consomment pas. Sans ça, un paquet venu de
+     * l'iPhone fermait ici la porte d'une leçon que le serveur aurait accordée.
+     */
+    val usesFreeLesson: Boolean get() = source !in setOf("sample", "library", "deck")
 }
 
 @Serializable
@@ -140,6 +154,11 @@ data class Question(
         }
 }
 
+/**
+ * Une carte. Son `kind` est gardé **tel que le serveur l'a écrit** (`basic`, `cloze`, `choice`,
+ * `occlusion`) : Android ne sait pas tout afficher, mais il ne réécrit jamais un QCM de
+ * l'iPhone en recto verso. La synchronisation le faisait, et la carte revenait cassée partout.
+ */
 @Serializable
 data class Flashcard(
     val kind: String = "basic",
@@ -147,7 +166,25 @@ data class Flashcard(
     val back: String = "",
     /** L'identifiant de la carte, celui de sa ligne `flashcards`. */
     val id: String = "",
-)
+    /** Les propositions d'un QCM (`choices`), écrit sur l'iPhone ou le site ; vides ailleurs. */
+    val choices: List<String> = emptyList(),
+    /** Le rang de la bonne proposition (`correct_choice_index`). */
+    val correctChoice: Int = 0,
+) {
+    /** Un QCM affichable (`Flashcard.format` sur iPhone) : deux propositions au moins, la bonne parmi elles. */
+    val isChoice: Boolean get() = kind == "choice" && choices.size >= 2 && correctChoice in choices.indices
+
+    /**
+     * Le verso à montrer. Un QCM se révise ici en recto verso : la bonne proposition, puis son
+     * explication s'il y en a une. Seul l'affichage change, la carte reste un QCM.
+     */
+    val answer: String
+        get() {
+            if (!isChoice) return back
+            val right = choices[correctChoice]
+            return if (back.isBlank() || back.trim() == right.trim()) right else "$right\n\n$back"
+        }
+}
 
 /** Un identifiant neuf, au format que Postgres et l'iPhone attendent. */
 fun newId(): String = java.util.UUID.randomUUID().toString().lowercase()

@@ -314,7 +314,7 @@ private fun Avatar(account: Account?) {
 /** La phrase d'un échec de connexion, comme sur iPhone (`AuthError.localizedDescription`). */
 @Composable
 private fun authMessage(error: Throwable): String = when {
-    error is AuthException && error.code == "providerNotEnabled" -> stringResource(R.string.ios_auth_providerNotEnabled, "Google")
+    error is AuthException && error.code == "providerNotEnabled" -> stringResource(R.string.ios_auth_providerNotEnabled, "Google / Apple")
     error is AuthException && error.code == "emailNotConfirmed" -> stringResource(R.string.ios_auth_emailNotConfirmed)
     error is AuthException && error.code == "rateLimited" -> stringResource(R.string.x_auth_rateLimited)
     error is AuthException && (error.code == "otp_expired" || error.code == "flow_state_expired" || error.code == "flow_state_not_found") ->
@@ -331,11 +331,12 @@ private fun openAuthPage(context: Context, url: String) {
 }
 
 /**
- * **Créer un compte ou se connecter** (`AuthSheet`) : Google, ou un lien par courriel, sans mot
- * de passe. Le retour arrive par `micabo://auth-callback`, que l'activité passe à l'app.
+ * **Créer un compte ou se connecter** (`AuthSheet`) : Google, Apple, ou un lien par courriel,
+ * sans mot de passe. Le retour arrive par `micabo://auth-callback`, que l'activité passe à
+ * l'app. Ouverte aussi depuis l'accroche du parcours d'accueil, pour qui a déjà un compte.
  */
 @Composable
-private fun SignInSheet(failure: Throwable?, onDismiss: () -> Unit) {
+internal fun SignInSheet(failure: Throwable?, onDismiss: () -> Unit) {
     val app = LocalApp.current
     val colors = Micabo.colors
     val context = LocalContext.current
@@ -394,6 +395,19 @@ private fun SignInSheet(failure: Throwable?, onDismiss: () -> Unit) {
                     error = null
                     app.signInSeen()
                     openAuthPage(context, app.auth.googleUrl())
+                },
+            )
+            Spacer(Modifier.height(10.dp))
+            // Le même chemin que Google (PKCE, `micabo://auth-callback`) : c'est par lui qu'un
+            // compte ouvert avec Apple sur l'iPhone retrouve ses leçons ici.
+            MicaboButton(
+                stringResource(R.string.onboarding_continueApple),
+                color = colors.ink,
+                contentColor = colors.canvas,
+                onClick = {
+                    error = null
+                    app.signInSeen()
+                    openAuthPage(context, app.auth.appleUrl())
                 },
             )
             Spacer(Modifier.height(18.dp))

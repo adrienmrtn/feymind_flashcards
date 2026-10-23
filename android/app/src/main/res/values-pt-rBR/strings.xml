@@ -29,6 +29,7 @@
     <string name="app_friends_usernamePlaceholder">nome de usuário</string>
     <string name="app_friends_you">Você</string>
     <string name="app_friends_yourAccount">Sua conta</string>
+    <string name="common_alreadyAccount">Já tenho uma conta</string>
     <string name="common_continue">Continuar</string>
     <string name="common_privacy">Privacidade</string>
     <string name="common_signOut">Sair</string>
@@ -487,6 +488,7 @@
     <string name="lesson_theme_system">Igual ao celular</string>
     <string name="nav_friends">Amigos</string>
     <string name="onboarding_compteTitle">Salve seu progresso</string>
+    <string name="onboarding_continueApple">Continuar com a Apple</string>
     <string name="onboarding_continueGoogle">Continuar com o Google</string>
     <string name="onboarding_emailLabel">Seu endereço de e-mail</string>
     <string name="onboarding_emailNote">Enviamos um link, sem senha para lembrar.</string>
@@ -507,6 +509,7 @@
     <string name="x_paywall_soon">Em breve no Android</string>
     <string name="x_paywall_soonBody">As assinaturas chegam muito em breve ao Android. Enquanto isso, sua aula grátis te espera.</string>
     <string name="x_paywall_subscribe">Assinar o Pro</string>
+    <string name="x_pro_gifted">Este acesso foi um presente: não há nada para gerenciar nem cancelar.</string>
     <string name="x_quoted">“%1$s”</string>
     <string name="x_record_limit">Até 90 minutos. O Mika transforma a gravação em texto e depois escreve sua aula.</string>
     <string name="x_score_1">Tenho dificuldade</string>
@@ -514,6 +517,7 @@
     <string name="x_score_3">Na média</string>
     <string name="x_score_4">Bom</string>
     <string name="x_score_5">Entre os melhores</string>
+    <string name="x_settings_computer">Micabo no seu computador</string>
     <string name="x_settings_level">Nível</string>
     <string name="x_settings_reset">Apagar tudo</string>
     <string name="x_settings_resetBody">Suas aulas e seu perfil saem deste celular. Não dá para desfazer.</string>

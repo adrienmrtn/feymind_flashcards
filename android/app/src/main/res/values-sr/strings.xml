@@ -29,6 +29,7 @@
     <string name="app_friends_usernamePlaceholder">korisničko ime</string>
     <string name="app_friends_you">Ti</string>
     <string name="app_friends_yourAccount">Tvoj nalog</string>
+    <string name="common_alreadyAccount">Već imam nalog</string>
     <string name="common_continue">Nastavi</string>
     <string name="common_privacy">Privatnost</string>
     <string name="common_signOut">Odjavi se</string>
@@ -490,6 +491,7 @@
     <string name="lesson_theme_system">Kao na telefonu</string>
     <string name="nav_friends">Prijatelji</string>
     <string name="onboarding_compteTitle">Sačuvaj svoj napredak</string>
+    <string name="onboarding_continueApple">Nastavi sa Apple-om</string>
     <string name="onboarding_continueGoogle">Nastavi sa Google-om</string>
     <string name="onboarding_emailLabel">Tvoja imejl adresa</string>
     <string name="onboarding_emailNote">Šaljemo ti link, nema lozinke za pamćenje.</string>
@@ -510,6 +512,7 @@
     <string name="x_paywall_soon">Uskoro na Androidu</string>
     <string name="x_paywall_soonBody">Pretplate na Androidu stižu vrlo brzo. U međuvremenu te čeka tvoja besplatna lekcija.</string>
     <string name="x_paywall_subscribe">Pređi na Pro</string>
+    <string name="x_pro_gifted">Ovaj pristup si dobio na poklon: nema čime da se upravlja ni šta da se otkaže.</string>
     <string name="x_quoted">„%1$s“</string>
     <string name="x_record_limit">Do 90 minuta. Mika pretvara tvoj snimak u tekst, a zatim piše tvoju lekciju.</string>
     <string name="x_score_1">Teško mi ide</string>
@@ -517,6 +520,7 @@
     <string name="x_score_3">Prosečno</string>
     <string name="x_score_4">Dobro</string>
     <string name="x_score_5">Među najboljima</string>
+    <string name="x_settings_computer">Micabo na tvom računaru</string>
     <string name="x_settings_level">Nivo</string>
     <string name="x_settings_reset">Obriši sve</string>
     <string name="x_settings_resetBody">Tvoje lekcije i profil nestaju sa ovog telefona. Ovo ne može da se poništi.</string>

@@ -29,6 +29,7 @@
     <string name="app_friends_usernamePlaceholder">gebruikersnaam</string>
     <string name="app_friends_you">Jij</string>
     <string name="app_friends_yourAccount">Je account</string>
+    <string name="common_alreadyAccount">Ik heb al een account</string>
     <string name="common_continue">Doorgaan</string>
     <string name="common_signOut">Uitloggen</string>
     <string name="country_be">België</string>
@@ -478,6 +479,7 @@
     <string name="lesson_theme_system">Zoals telefoon</string>
     <string name="nav_friends">Vrienden</string>
     <string name="onboarding_compteTitle">Bewaar je voortgang</string>
+    <string name="onboarding_continueApple">Doorgaan met Apple</string>
     <string name="onboarding_continueGoogle">Doorgaan met Google</string>
     <string name="onboarding_emailLabel">Je e-mailadres</string>
     <string name="onboarding_emailNote">We sturen je een link, geen wachtwoord om te onthouden.</string>
@@ -498,12 +500,14 @@
     <string name="x_paywall_soon">Binnenkort op Android</string>
     <string name="x_paywall_soonBody">Abonnementen komen heel binnenkort naar Android. Je gratis les wacht intussen op je.</string>
     <string name="x_paywall_subscribe">Word Pro</string>
+    <string name="x_pro_gifted">Deze toegang heb je cadeau gekregen: er valt niets te beheren of op te zeggen.</string>
     <string name="x_record_limit">Tot 90 minuten. Mika zet je opname om in tekst en schrijft dan je les.</string>
     <string name="x_score_1">Ik heb het moeilijk</string>
     <string name="x_score_2">Net onder het gemiddelde</string>
     <string name="x_score_3">Gemiddeld</string>
     <string name="x_score_4">Goed</string>
     <string name="x_score_5">Bij de besten</string>
+    <string name="x_settings_computer">Micabo op je computer</string>
     <string name="x_settings_level">Niveau</string>
     <string name="x_settings_reset">Alles wissen</string>
     <string name="x_settings_resetBody">Je lessen en je profiel verdwijnen van deze telefoon. Dit kan niet ongedaan worden gemaakt.</string>

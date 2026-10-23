@@ -29,6 +29,7 @@
     <string name="app_friends_usernamePlaceholder">nom d\'utilisateur</string>
     <string name="app_friends_you">Toi</string>
     <string name="app_friends_yourAccount">Ton compte</string>
+    <string name="common_alreadyAccount">J\'ai déjà un compte</string>
     <string name="common_continue">Continuer</string>
     <string name="common_privacy">Confidentialité</string>
     <string name="common_signOut">Se déconnecter</string>
@@ -501,6 +502,7 @@
     <string name="lesson_theme_system">Comme le téléphone</string>
     <string name="nav_friends">Amis</string>
     <string name="onboarding_compteTitle">Garde ta progression</string>
+    <string name="onboarding_continueApple">Continuer avec Apple</string>
     <string name="onboarding_continueGoogle">Continuer avec Google</string>
     <string name="onboarding_emailLabel">Ton adresse électronique</string>
     <string name="onboarding_emailNote">On t\'envoie un lien, pas de mot de passe à retenir.</string>
@@ -521,6 +523,7 @@
     <string name="x_paywall_soon">Bientôt disponible sur Android</string>
     <string name="x_paywall_soonBody">Les abonnements arrivent très bientôt sur Android. En attendant, ta leçon offerte t\'attend.</string>
     <string name="x_paywall_subscribe">Passer à Pro</string>
+    <string name="x_pro_gifted">Cet accès t\'a été offert : il n\'y a rien à gérer ni à résilier.</string>
     <string name="x_quoted">« %1$s »</string>
     <string name="x_record_limit">Jusqu\'à 90 minutes. Mika met ton enregistrement en texte, puis écrit ta leçon.</string>
     <string name="x_score_1">J\'ai du mal</string>
@@ -528,6 +531,8 @@
     <string name="x_score_3">Dans la moyenne</string>
     <string name="x_score_4">Bien</string>
     <string name="x_score_5">Parmi les meilleurs</string>
+    <string name="x_settings_computer">Micabo sur ton ordinateur</string>
+    <string name="x_settings_computerSite">www.micabo.app</string>
     <string name="x_settings_level">Niveau</string>
     <string name="x_settings_reset">Tout effacer</string>
     <string name="x_settings_resetBody">Tes leçons et ton profil quittent ce téléphone. C\'est définitif.</string>

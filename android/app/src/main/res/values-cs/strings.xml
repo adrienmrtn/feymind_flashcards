@@ -29,6 +29,7 @@
     <string name="app_friends_usernamePlaceholder">uživatelské jméno</string>
     <string name="app_friends_you">Ty</string>
     <string name="app_friends_yourAccount">Tvůj účet</string>
+    <string name="common_alreadyAccount">Už mám účet</string>
     <string name="common_continue">Pokračovat</string>
     <string name="common_privacy">Soukromí</string>
     <string name="common_signOut">Odhlásit se</string>
@@ -487,6 +488,7 @@
     <string name="lesson_theme_system">Podle telefonu</string>
     <string name="nav_friends">Kamarádi</string>
     <string name="onboarding_compteTitle">Uchovej si svůj pokrok</string>
+    <string name="onboarding_continueApple">Pokračovat přes Apple</string>
     <string name="onboarding_continueGoogle">Pokračovat přes Google</string>
     <string name="onboarding_emailLabel">Tvoje e-mailová adresa</string>
     <string name="onboarding_emailNote">Pošleme ti odkaz, žádné heslo si nemusíš pamatovat.</string>
@@ -507,6 +509,7 @@
     <string name="x_paywall_soon">Brzy na Androidu</string>
     <string name="x_paywall_soonBody">Předplatné bude na Androidu už brzy. Mezitím na tebe čeká tvoje lekce zdarma.</string>
     <string name="x_paywall_subscribe">Přejít na Pro</string>
+    <string name="x_pro_gifted">Tenhle přístup jsi dostal darem: není co spravovat ani rušit.</string>
     <string name="x_quoted">„%1$s“</string>
     <string name="x_record_limit">Až 90 minut. Mika převede tvoji nahrávku na text a pak napíše tvou lekci.</string>
     <string name="x_score_1">Moc mi to nejde</string>
@@ -514,6 +517,7 @@
     <string name="x_score_3">Průměr</string>
     <string name="x_score_4">Dobře</string>
     <string name="x_score_5">Mezi nejlepšími</string>
+    <string name="x_settings_computer">Micabo na tvém počítači</string>
     <string name="x_settings_level">Úroveň</string>
     <string name="x_settings_reset">Smazat vše</string>
     <string name="x_settings_resetBody">Tvoje lekce a profil z tohoto telefonu zmizí. Nejde to vrátit.</string>

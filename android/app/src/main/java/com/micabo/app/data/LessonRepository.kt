@@ -47,6 +47,11 @@ data class LessonRequest(
      * comme une seconde leçon, et la leçon offerte finissait sur le paywall.
      */
     val id: String = UUID.randomUUID().toString().lowercase(),
+    /**
+     * La leçon du parcours d'accueil (`LessonCreation.onboarding`) : le serveur l'accorde comme
+     * leçon offerte même depuis un PDF ou des photos, une fois (`begin_lesson`, `p_onboarding`).
+     */
+    val onboarding: Boolean = false,
 )
 
 /** Les étapes de l'écran de génération, reliées au vrai travail (`LessonBuilder.Stage`). */
@@ -82,7 +87,7 @@ private data class WrittenTheme(
  * peut quitter la leçon, les thèmes continuent de s'écrire.
  */
 class LessonRepository(
-    context: Context,
+    private val context: Context,
     private val functions: SupabaseFunctions,
     private val prefs: Prefs,
     private val streak: Streak,
@@ -137,6 +142,22 @@ class LessonRepository(
             map + (lesson.id to lesson.copy(chat = local?.chat ?: lesson.chat))
         }
         persist(lesson.id)
+    }
+
+    /**
+     * **Des cartes revues, ajoutées ou retirées ailleurs**, sur une leçon que le serveur n'a pas
+     * renvoyée en entier : la leçon change sans changer de date. Elle n'a rien de neuf à
+     * remonter, et la redater la ferait renvoyer telle quelle, cours compris, à chaque passage.
+     */
+    fun mergeFromCloud(id: String, change: (Lesson) -> Lesson) {
+        var changed = false
+        _lessons.update { map ->
+            val current = map[id]
+            val next = current?.let(change)
+            changed = next != null && next != current
+            if (next == null || !changed) map else map + (id to next)
+        }
+        if (changed) persist(id)
     }
 
     /** Une leçon supprimée sur un autre appareil. */
@@ -217,16 +238,21 @@ class LessonRepository(
         val before = lesson(id)?.progress?.cards?.get(key) ?: CardReview()
         modify(id) { lesson ->
             val card = lesson.progress.cards[key] ?: CardReview()
-            lesson.copy(progress = lesson.progress.copy(cards = lesson.progress.cards + (key to Srs.schedule(card, rating))))
+            // Datée : c'est la note la plus récente, ici ou ailleurs, que la synchronisation garde.
+            val next = Srs.schedule(card, rating).copy(updatedAt = System.currentTimeMillis())
+            lesson.copy(progress = lesson.progress.copy(cards = lesson.progress.cards + (key to next)))
         }
         // Hors de `modify` : sa transformation peut être rejouée, la note ne doit partir qu'une fois.
         val lesson = lesson(id) ?: return
         logReview(lesson, key, before, lesson.progress.cards[key] ?: return, rating)
     }
 
-    /** La note, pour `review_logs` : elle montera à la prochaine synchronisation, compte ouvert. */
+    /**
+     * La note, pour `review_logs` : elle montera à la prochaine synchronisation, sous le compte
+     * ou sous l'invité. Jusqu'ici, seul un compte ouvert la gardait ; or l'invité synchronise
+     * depuis le 23 octobre 2026, et ses notes manquaient au classement et à la série du compte.
+     */
     private fun logReview(lesson: Lesson, key: String, before: CardReview, after: CardReview, rating: Rating) {
-        if (prefs.accountUser.isEmpty()) return
         val theme = key.substringBefore(':').toIntOrNull() ?: return
         val index = key.substringAfter(':').toIntOrNull() ?: return
         val cardId = lesson.themes.getOrNull(theme)?.flashcards?.getOrNull(index)?.id?.takeIf { it.isNotEmpty() } ?: return
@@ -389,10 +415,13 @@ class LessonRepository(
             putJsonArray("images") { request.images.forEach { add(JsonPrimitive(it)) } }
             put("sourceName", request.sourceName.orEmpty())
             if (request.topic != null) put("topic", request.topic.take(400))
+            if (request.onboarding) put("onboarding", true)
         }
         val envelope = functions.call("generate-lesson", payload)
         val plan = MicaboJson.decodeFromJsonElement<Plan>(envelope["plan"] ?: throw ApiException(502, "invalid", ""))
         if (plan.themes.isEmpty()) throw ApiException(502, "invalid", "")
+        // Le plan est accordé : la leçon offerte du parcours a servi.
+        if (request.onboarding) prefs.onboardingLessonPending = false
         onStage(CreationStage.CUTTING)
 
         val previousTone = _lessons.value.values.maxByOrNull { it.createdAt }?.tone ?: -1
@@ -543,28 +572,50 @@ class LessonRepository(
         return if (name.isNullOrBlank()) "un examen, le $day" else "l'examen « $name », le $day"
     }
 
+    /**
+     * **Pour qui on écrit** (`LessonAudience.payload`), avec ce qu'Android sait de l'élève. Le
+     * palier part dans la langue de l'élève, comme l'iPhone l'écrit (« Lycée », pas « High
+     * school ») ; les notes partent aussi dans le barème du pays (« 12/20 », « B+ »), que le
+     * serveur cite tel quel. La filière et la classe exacte (`track`, `year`) ne sont pas
+     * demandées ici : elles restent absentes, et le serveur s'en tient au palier.
+     */
     private fun JsonObjectBuilder.audience(profile: Profile, language: String = contentLanguage(profile), exam: String? = null) {
+        val country = profile.country.ifBlank { "other" }
         if (!exam.isNullOrBlank()) put("exam", exam)
         put("level", levelOf(profile.tier))
-        put("country", profile.country.ifBlank { "other" })
-        put("schoolStage", Tiers.englishName(profile.tier))
+        put("country", country)
+        put("schoolStage", stageName(profile))
         put("language", language)
         if (profile.tier.isNotBlank()) put("tier", profile.tier)
-        profile.currentScore?.let { put("currentScore", it) }
-        profile.targetScore?.let { put("targetScore", it) }
+        profile.currentScore?.let {
+            put("currentScore", it)
+            put("scoreLabel", ExamGrade.label(it / 100.0, country))
+        }
+        profile.targetScore?.let {
+            put("targetScore", it)
+            put("targetLabel", ExamGrade.label(it / 100.0, country))
+        }
         if (profile.worries.isNotEmpty()) putJsonArray("worries") { profile.worries.forEach { add(JsonPrimitive(it)) } }
         putJsonArray("kinds") { listOf("choice", "truefalse", "gap", "order", "match").forEach { add(JsonPrimitive(it)) } }
     }
 
-    fun levelOf(tier: String): String = when (tier) {
-        "lowerSecondary", "upperSecondary" -> "lycee"
-        "preUniversity" -> "prepa"
-        "undergraduate" -> "licence"
-        "graduate" -> "master"
-        "health" -> "sante"
-        "competitive" -> "concours"
-        else -> "other"
+    /** Le palier dans la langue de l'élève (`tierName`) ; l'anglais si la chaîne manque. */
+    private fun stageName(profile: Profile): String {
+        val res = when (profile.tier) {
+            "lowerSecondary" -> com.micabo.app.R.string.ios_level_generic_middle
+            "upperSecondary" -> com.micabo.app.R.string.ios_level_generic_high
+            "preUniversity" -> com.micabo.app.R.string.ios_level_prepa
+            "undergraduate" -> com.micabo.app.R.string.ios_level_generic_college
+            "graduate" -> com.micabo.app.R.string.ios_level_master
+            "health" -> com.micabo.app.R.string.ios_level_medicine
+            "competitive" -> com.micabo.app.R.string.ios_level_concours
+            else -> return ""
+        }
+        return runCatching { com.micabo.app.i18n.AppLocale.wrap(context, profile.language).getString(res) }
+            .getOrDefault(Tiers.englishName(profile.tier))
     }
+
+    fun levelOf(tier: String): String = Tiers.level(tier)
 
     suspend fun flush() = withContext(Dispatchers.IO) { diskLock.withLock { } }
 
@@ -578,6 +629,33 @@ class LessonRepository(
 /** Les marches d'études (`EducationTier`), dans l'ordre de l'échelle. */
 object Tiers {
     val all = listOf("lowerSecondary", "upperSecondary", "preUniversity", "undergraduate", "graduate", "health", "competitive", "other")
+
+    /** Le registre (`StudyLevel`) d'une marche : c'est lui que `profiles.study_level` et le serveur lisent. */
+    fun level(tier: String): String = when (tier) {
+        "lowerSecondary", "upperSecondary" -> "lycee"
+        "preUniversity" -> "prepa"
+        "undergraduate" -> "licence"
+        "graduate" -> "master"
+        "health" -> "sante"
+        "competitive" -> "concours"
+        else -> "other"
+    }
+
+    /**
+     * La marche d'un `study_level` descendu du compte : le registre de l'iPhone et du site, ou
+     * une marche qu'une version précédente d'Android y avait écrite. Vide pour l'inconnu.
+     */
+    fun fromLevel(level: String): String = when (level) {
+        in all -> level
+        "lycee" -> "upperSecondary"
+        "prepa" -> "preUniversity"
+        "licence" -> "undergraduate"
+        "master" -> "graduate"
+        "sante" -> "health"
+        "concours" -> "competitive"
+        "other" -> "other"
+        else -> ""
+    }
 
     fun englishName(tier: String): String = when (tier) {
         "lowerSecondary" -> "Middle school"

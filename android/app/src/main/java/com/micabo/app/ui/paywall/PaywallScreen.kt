@@ -64,6 +64,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.micabo.app.R
 import com.micabo.app.data.PurchaseOutcome
+import com.micabo.app.data.SiteConfig
 import com.micabo.app.data.StorePlan
 import com.micabo.app.ui.LocalApp
 import com.micabo.app.ui.LocalNavigator
@@ -305,10 +306,10 @@ private fun LegalFooter(restoreEnabled: Boolean, onRestore: () -> Unit, onOpen: 
         TextButton(onClick = onRestore, enabled = restoreEnabled) {
             Text(stringResource(R.string.ios_paywallRestore), style = nunito(13.sp, FontWeight.Bold), color = colors.inkSecondary)
         }
-        TextButton(onClick = { onOpen("https://micabo.app/conditions") }) {
+        TextButton(onClick = { onOpen("${SiteConfig.URL}/conditions") }) {
             Text(stringResource(R.string.ios_paywallTerms), style = nunito(13.sp, FontWeight.Bold), color = colors.inkSecondary)
         }
-        TextButton(onClick = { onOpen("https://micabo.app/confidentialite") }) {
+        TextButton(onClick = { onOpen("${SiteConfig.URL}/confidentialite") }) {
             Text(stringResource(R.string.common_privacy), style = nunito(13.sp, FontWeight.Bold), color = colors.inkSecondary)
         }
     }

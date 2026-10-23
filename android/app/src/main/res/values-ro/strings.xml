@@ -29,6 +29,7 @@
     <string name="app_friends_usernamePlaceholder">utilizator</string>
     <string name="app_friends_you">Tu</string>
     <string name="app_friends_yourAccount">Contul tău</string>
+    <string name="common_alreadyAccount">Am deja cont</string>
     <string name="common_continue">Continuă</string>
     <string name="common_privacy">Confidențialitate</string>
     <string name="common_signOut">Deconectează-te</string>
@@ -481,6 +482,7 @@
     <string name="lesson_theme_system">Ca telefonul</string>
     <string name="nav_friends">Prieteni</string>
     <string name="onboarding_compteTitle">Păstrează-ți progresul</string>
+    <string name="onboarding_continueApple">Continuă cu Apple</string>
     <string name="onboarding_continueGoogle">Continuă cu Google</string>
     <string name="onboarding_emailLabel">Adresa ta de e-mail</string>
     <string name="onboarding_emailNote">Îți trimitem un link, fără parolă de ținut minte.</string>
@@ -501,6 +503,7 @@
     <string name="x_paywall_soon">În curând pe Android</string>
     <string name="x_paywall_soonBody">Abonamentele ajung foarte curând pe Android. Între timp, lecția ta gratuită te așteaptă.</string>
     <string name="x_paywall_subscribe">Treci la Pro</string>
+    <string name="x_pro_gifted">Acest acces ți-a fost oferit cadou: nu e nimic de gestionat sau de anulat.</string>
     <string name="x_quoted">„%1$s”</string>
     <string name="x_record_limit">Până la 90 de minute. Mika transformă înregistrarea ta în text, apoi îți scrie lecția.</string>
     <string name="x_score_1">Mi-e greu</string>
@@ -508,6 +511,7 @@
     <string name="x_score_3">În medie</string>
     <string name="x_score_4">Bine</string>
     <string name="x_score_5">Printre cei mai buni</string>
+    <string name="x_settings_computer">Micabo pe calculatorul tău</string>
     <string name="x_settings_level">Nivel</string>
     <string name="x_settings_reset">Șterge tot</string>
     <string name="x_settings_resetBody">Lecțiile și profilul tău dispar de pe acest telefon. Nu se poate anula.</string>

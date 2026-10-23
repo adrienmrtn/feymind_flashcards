@@ -29,6 +29,7 @@
     <string name="app_friends_usernamePlaceholder">имя пользователя</string>
     <string name="app_friends_you">Ты</string>
     <string name="app_friends_yourAccount">Твой аккаунт</string>
+    <string name="common_alreadyAccount">У меня уже есть аккаунт</string>
     <string name="common_continue">Продолжить</string>
     <string name="common_privacy">Конфиденциальность</string>
     <string name="common_signOut">Выйти</string>
@@ -494,6 +495,7 @@
     <string name="lesson_theme_system">Как на телефоне</string>
     <string name="nav_friends">Друзья</string>
     <string name="onboarding_compteTitle">Сохрани свой прогресс</string>
+    <string name="onboarding_continueApple">Продолжить с Apple</string>
     <string name="onboarding_continueGoogle">Продолжить с Google</string>
     <string name="onboarding_emailLabel">Твой email</string>
     <string name="onboarding_emailNote">Мы пришлём ссылку — никаких паролей.</string>
@@ -514,6 +516,7 @@
     <string name="x_paywall_soon">Скоро на Android</string>
     <string name="x_paywall_soonBody">Подписки совсем скоро появятся на Android. А пока тебя ждёт бесплатный урок.</string>
     <string name="x_paywall_subscribe">Перейти на Pro</string>
+    <string name="x_pro_gifted">Этот доступ тебе подарили: управлять или отменять ничего не нужно.</string>
     <string name="x_quoted">«%1$s»</string>
     <string name="x_record_limit">До 90 минут. Mika превращает запись в текст, а затем пишет урок.</string>
     <string name="x_score_1">Мне тяжело</string>
@@ -521,6 +524,7 @@
     <string name="x_score_3">Средне</string>
     <string name="x_score_4">Хорошо</string>
     <string name="x_score_5">Среди лучших</string>
+    <string name="x_settings_computer">Micabo на твоём компьютере</string>
     <string name="x_settings_level">Уровень</string>
     <string name="x_settings_reset">Стереть всё</string>
     <string name="x_settings_resetBody">Твои уроки и профиль будут удалены с этого телефона. Это нельзя отменить.</string>

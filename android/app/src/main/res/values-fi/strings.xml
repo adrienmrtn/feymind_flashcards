@@ -29,6 +29,7 @@
     <string name="app_friends_usernamePlaceholder">käyttäjänimi</string>
     <string name="app_friends_you">Sinä</string>
     <string name="app_friends_yourAccount">Tilisi</string>
+    <string name="common_alreadyAccount">Minulla on jo tili</string>
     <string name="common_continue">Jatka</string>
     <string name="common_privacy">Tietosuoja</string>
     <string name="common_signOut">Kirjaudu ulos</string>
@@ -486,6 +487,7 @@
     <string name="lesson_theme_system">Kuten puhelin</string>
     <string name="nav_friends">Kaverit</string>
     <string name="onboarding_compteTitle">Säilytä edistymisesi</string>
+    <string name="onboarding_continueApple">Jatka Applella</string>
     <string name="onboarding_continueGoogle">Jatka Googlella</string>
     <string name="onboarding_emailLabel">Sähköpostiosoitteesi</string>
     <string name="onboarding_emailNote">Lähetämme linkin, ei salasanaa muistettavaksi.</string>
@@ -506,6 +508,7 @@
     <string name="x_paywall_soon">Tulossa pian Androidille</string>
     <string name="x_paywall_soonBody">Tilaukset tulevat Androidille aivan pian. Sillä välin ilmainen oppituntisi odottaa sinua.</string>
     <string name="x_paywall_subscribe">Hanki Pro</string>
+    <string name="x_pro_gifted">Sait tämän käyttöoikeuden lahjaksi: hallittavaa tai peruttavaa ei ole.</string>
     <string name="x_quoted">”%1$s”</string>
     <string name="x_record_limit">Enintään 90 minuuttia. Mika muuttaa nauhoituksesi tekstiksi ja kirjoittaa sitten oppituntisi.</string>
     <string name="x_score_1">Minulla on vaikeaa</string>
@@ -513,6 +516,7 @@
     <string name="x_score_3">Keskitasoa</string>
     <string name="x_score_4">Hyvä</string>
     <string name="x_score_5">Parhaiden joukossa</string>
+    <string name="x_settings_computer">Micabo tietokoneellasi</string>
     <string name="x_settings_level">Taso</string>
     <string name="x_settings_reset">Poista kaikki</string>
     <string name="x_settings_resetBody">Oppituntisi ja profiilisi poistetaan tästä puhelimesta. Tätä ei voi perua.</string>

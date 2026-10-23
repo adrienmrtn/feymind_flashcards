@@ -29,6 +29,7 @@
     <string name="app_friends_usernamePlaceholder">όνομα χρήστη</string>
     <string name="app_friends_you">Εσύ</string>
     <string name="app_friends_yourAccount">Ο λογαριασμός σου</string>
+    <string name="common_alreadyAccount">Έχω ήδη λογαριασμό</string>
     <string name="common_continue">Συνέχεια</string>
     <string name="common_privacy">Απόρρητο</string>
     <string name="common_signOut">Αποσύνδεση</string>
@@ -494,6 +495,7 @@
     <string name="lesson_theme_system">Όπως το κινητό</string>
     <string name="nav_friends">Φίλοι</string>
     <string name="onboarding_compteTitle">Κράτα την πρόοδό σου</string>
+    <string name="onboarding_continueApple">Συνέχεια με Apple</string>
     <string name="onboarding_continueGoogle">Συνέχεια με Google</string>
     <string name="onboarding_emailLabel">Η διεύθυνση email σου</string>
     <string name="onboarding_emailNote">Σου στέλνουμε έναν σύνδεσμο, χωρίς κωδικό για να θυμάσαι.</string>
@@ -514,6 +516,7 @@
     <string name="x_paywall_soon">Σύντομα στο Android</string>
     <string name="x_paywall_soonBody">Οι συνδρομές έρχονται πολύ σύντομα στο Android. Μέχρι τότε, το δωρεάν μάθημά σου σε περιμένει.</string>
     <string name="x_paywall_subscribe">Πάρε το Pro</string>
+    <string name="x_pro_gifted">Αυτή η πρόσβαση σου δόθηκε δώρο: δεν υπάρχει τίποτα για διαχείριση ή ακύρωση.</string>
     <string name="x_quoted">«%1$s»</string>
     <string name="x_record_limit">Έως 90 λεπτά. Ο Mika μετατρέπει την ηχογράφησή σου σε κείμενο και μετά γράφει το μάθημά σου.</string>
     <string name="x_score_1">Δυσκολεύομαι</string>
@@ -521,6 +524,7 @@
     <string name="x_score_3">Στον μέσο όρο</string>
     <string name="x_score_4">Καλά</string>
     <string name="x_score_5">Στους καλύτερους</string>
+    <string name="x_settings_computer">Το Micabo στον υπολογιστή σου</string>
     <string name="x_settings_level">Επίπεδο</string>
     <string name="x_settings_reset">Διαγραφή όλων</string>
     <string name="x_settings_resetBody">Τα μαθήματα και το προφίλ σου φεύγουν από αυτό το κινητό. Δεν αναιρείται.</string>

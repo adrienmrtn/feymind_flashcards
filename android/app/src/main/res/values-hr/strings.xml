@@ -29,6 +29,7 @@
     <string name="app_friends_usernamePlaceholder">korisničko ime</string>
     <string name="app_friends_you">Ti</string>
     <string name="app_friends_yourAccount">Tvoj račun</string>
+    <string name="common_alreadyAccount">Već imam račun</string>
     <string name="common_continue">Nastavi</string>
     <string name="common_privacy">Privatnost</string>
     <string name="common_signOut">Odjavi se</string>
@@ -491,6 +492,7 @@
     <string name="lesson_theme_system">Kao na mobitelu</string>
     <string name="nav_friends">Prijatelji</string>
     <string name="onboarding_compteTitle">Sačuvaj svoj napredak</string>
+    <string name="onboarding_continueApple">Nastavi s Appleom</string>
     <string name="onboarding_continueGoogle">Nastavi s Googleom</string>
     <string name="onboarding_emailLabel">Tvoja e-mail adresa</string>
     <string name="onboarding_emailNote">Šaljemo ti poveznicu, nema lozinke za pamćenje.</string>
@@ -511,6 +513,7 @@
     <string name="x_paywall_soon">Uskoro na Androidu</string>
     <string name="x_paywall_soonBody">Pretplate na Androidu stižu vrlo brzo. U međuvremenu te čeka tvoja besplatna lekcija.</string>
     <string name="x_paywall_subscribe">Prijeđi na Pro</string>
+    <string name="x_pro_gifted">Ovaj pristup dobio si na dar: nema se čime upravljati ni što otkazati.</string>
     <string name="x_quoted">„%1$s“</string>
     <string name="x_record_limit">Do 90 minuta. Mika pretvara tvoju snimku u tekst, a zatim piše tvoju lekciju.</string>
     <string name="x_score_1">Teško mi ide</string>
@@ -518,6 +521,7 @@
     <string name="x_score_3">Prosječno</string>
     <string name="x_score_4">Dobro</string>
     <string name="x_score_5">Među najboljima</string>
+    <string name="x_settings_computer">Micabo na tvom računalu</string>
     <string name="x_settings_level">Razina</string>
     <string name="x_settings_reset">Izbriši sve</string>
     <string name="x_settings_resetBody">Tvoje lekcije i profil nestaju s ovog telefona. Ovo se ne može poništiti.</string>

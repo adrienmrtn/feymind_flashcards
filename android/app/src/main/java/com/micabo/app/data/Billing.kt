@@ -54,6 +54,20 @@ private fun monthlyOf(pkg: Package): String? = runCatching {
     format.format(price.amountMicros / 1_000_000.0 / 12.0)
 }.getOrNull()
 
+/**
+ * **Où l'abonnement a été pris**, donc où il se gère (`EntitlementInfo.store`). Un compte payé
+ * sur l'iPhone ou sur le site est Pro ici aussi, et la page de Google Play n'y pouvait rien.
+ */
+enum class ProStore {
+    PLAY,
+    APP_STORE,
+    /** Le site : Stripe, par RevenueCat. */
+    WEB,
+    /** Offert : il n'y a rien à résilier. */
+    GIFT,
+    OTHER,
+}
+
 sealed interface PurchaseOutcome {
     data object Success : PurchaseOutcome
     data object Cancelled : PurchaseOutcome
@@ -76,6 +90,10 @@ class Billing(
 
     private val _isPro = MutableStateFlow(false)
     val isPro: StateFlow<Boolean> = _isPro.asStateFlow()
+
+    private val _store = MutableStateFlow<ProStore?>(null)
+    /** La boutique de l'abonnement actif ; `null` sans abonnement. */
+    val store: StateFlow<ProStore?> = _store.asStateFlow()
 
     fun start(userId: String?) {
         if (!enabled) return
@@ -143,7 +161,18 @@ class Billing(
     }
 
     private fun read(info: CustomerInfo) {
-        _isPro.value = info.entitlements["pro"]?.isActive == true
+        val pro = info.entitlements["pro"]?.takeIf { it.isActive }
+        _isPro.value = pro != null
+        // Par le nom : une boutique ajoutée au SDK (`RC_BILLING`, `PADDLE`…) ne casse rien ici.
+        _store.value = pro?.let {
+            when (it.store.name) {
+                "PLAY_STORE" -> ProStore.PLAY
+                "APP_STORE", "MAC_APP_STORE" -> ProStore.APP_STORE
+                "STRIPE", "RC_BILLING", "PADDLE" -> ProStore.WEB
+                "PROMOTIONAL" -> ProStore.GIFT
+                else -> ProStore.OTHER
+            }
+        }
     }
 
     suspend fun plans(): List<StorePlan> {

@@ -29,6 +29,7 @@
     <string name="app_friends_usernamePlaceholder">používateľské meno</string>
     <string name="app_friends_you">Ty</string>
     <string name="app_friends_yourAccount">Tvoj účet</string>
+    <string name="common_alreadyAccount">Už mám účet</string>
     <string name="common_continue">Pokračovať</string>
     <string name="common_privacy">Súkromie</string>
     <string name="common_signOut">Odhlásiť sa</string>
@@ -487,6 +488,7 @@
     <string name="lesson_theme_system">Podľa telefónu</string>
     <string name="nav_friends">Kamaráti</string>
     <string name="onboarding_compteTitle">Uchovaj si svoj pokrok</string>
+    <string name="onboarding_continueApple">Pokračovať cez Apple</string>
     <string name="onboarding_continueGoogle">Pokračovať cez Google</string>
     <string name="onboarding_emailLabel">Tvoja e-mailová adresa</string>
     <string name="onboarding_emailNote">Pošleme ti odkaz, žiadne heslo si nemusíš pamätať.</string>
@@ -507,6 +509,7 @@
     <string name="x_paywall_soon">Čoskoro na Androide</string>
     <string name="x_paywall_soonBody">Predplatné bude na Androide už čoskoro. Medzitým na teba čaká tvoja lekcia zadarmo.</string>
     <string name="x_paywall_subscribe">Prejsť na Pro</string>
+    <string name="x_pro_gifted">Tento prístup si dostal darom: nie je čo spravovať ani rušiť.</string>
     <string name="x_quoted">„%1$s“</string>
     <string name="x_record_limit">Až 90 minút. Mika prevedie tvoju nahrávku na text a potom napíše tvoju lekciu.</string>
     <string name="x_score_1">Veľmi mi to nejde</string>
@@ -514,6 +517,7 @@
     <string name="x_score_3">Priemer</string>
     <string name="x_score_4">Dobre</string>
     <string name="x_score_5">Medzi najlepšími</string>
+    <string name="x_settings_computer">Micabo na tvojom počítači</string>
     <string name="x_settings_level">Úroveň</string>
     <string name="x_settings_reset">Vymazať všetko</string>
     <string name="x_settings_resetBody">Tvoje lekcie a profil z tohto telefónu zmiznú. Nedá sa to vrátiť.</string>
