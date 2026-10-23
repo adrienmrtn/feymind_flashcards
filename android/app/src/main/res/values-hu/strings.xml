@@ -32,6 +32,7 @@
     <string name="app_paywall_discountSubtitle">Ismételj gyorsabban a Próval</string>
     <string name="app_paywall_discountTitle">-%1$s%%</string>
     <string name="app_paywall_perMonthSlash">/ hó</string>
+    <string name="common_alreadyAccount">Már van fiókom</string>
     <string name="common_continue">Tovább</string>
     <string name="common_privacy">Adatvédelem</string>
     <string name="common_signOut">Kijelentkezés</string>
@@ -512,6 +513,7 @@
     <string name="lesson_theme_system">Mint a telefonon</string>
     <string name="nav_friends">Barátok</string>
     <string name="onboarding_compteTitle">Őrizd meg a haladásod</string>
+    <string name="onboarding_continueApple">Folytatás Apple-lel</string>
     <string name="onboarding_continueGoogle">Folytatás Google-lel</string>
     <string name="onboarding_emailLabel">Az e-mail-címed</string>
     <string name="onboarding_emailNote">Küldünk egy linket, nem kell jelszót megjegyezned.</string>
@@ -533,6 +535,7 @@
     <string name="x_paywall_soon">Hamarosan Androidon</string>
     <string name="x_paywall_soonBody">Az előfizetés hamarosan elérhető Androidon. Addig is vár az ingyenes leckéd.</string>
     <string name="x_paywall_subscribe">Válts Próra</string>
+    <string name="x_pro_gifted">Ezt a hozzáférést ajándékba kaptad: nincs mit kezelni vagy lemondani.</string>
     <string name="x_quoted">„%1$s”</string>
     <string name="x_record_limit">Legfeljebb 90 perc. Mika szöveggé alakítja a felvételedet, aztán megírja a leckédet.</string>
     <string name="x_score_1">Nehezen megy</string>
@@ -540,6 +543,7 @@
     <string name="x_score_3">Átlagos</string>
     <string name="x_score_4">Jó</string>
     <string name="x_score_5">A legjobbak között</string>
+    <string name="x_settings_computer">Micabo a számítógépeden</string>
     <string name="x_settings_level">Szint</string>
     <string name="x_settings_reset">Minden törlése</string>
     <string name="x_settings_resetBody">A leckéid és a profilod törlődik erről a telefonról. Ez nem vonható vissza.</string>

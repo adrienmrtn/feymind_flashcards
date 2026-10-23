@@ -32,6 +32,7 @@
     <string name="app_paywall_discountSubtitle">Wiederhol schneller mit Pro</string>
     <string name="app_paywall_discountTitle">%1$s %% Rabatt</string>
     <string name="app_paywall_perMonthSlash">/ Monat</string>
+    <string name="common_alreadyAccount">Schon ein Konto</string>
     <string name="common_continue">Weiter</string>
     <string name="common_privacy">Datenschutz</string>
     <string name="common_signOut">Abmelden</string>
@@ -504,6 +505,7 @@
     <string name="lesson_theme_system">Wie das Handy</string>
     <string name="nav_friends">Freunde</string>
     <string name="onboarding_compteTitle">Behalt deinen Fortschritt</string>
+    <string name="onboarding_continueApple">Mit Apple weiter</string>
     <string name="onboarding_continueGoogle">Mit Google weiter</string>
     <string name="onboarding_emailLabel">Deine E-Mail-Adresse</string>
     <string name="onboarding_emailNote">Wir schicken dir einen Link, kein Passwort zu merken.</string>
@@ -525,6 +527,7 @@
     <string name="x_paywall_soon">Bald auf Android verfügbar</string>
     <string name="x_paywall_soonBody">Abos gibt es sehr bald auf Android. Bis dahin wartet deine kostenlose Lektion auf dich.</string>
     <string name="x_paywall_subscribe">Pro holen</string>
+    <string name="x_pro_gifted">Dieser Zugang wurde dir geschenkt: Es gibt nichts zu verwalten oder zu kündigen.</string>
     <string name="x_quoted">„%1$s“</string>
     <string name="x_record_limit">Bis zu 90 Minuten. Mika macht aus deiner Aufnahme Text und schreibt dann deine Lektion.</string>
     <string name="x_reminder_channel">Tägliche Erinnerung</string>
@@ -533,6 +536,7 @@
     <string name="x_score_3">Durchschnittlich</string>
     <string name="x_score_4">Gut</string>
     <string name="x_score_5">Unter den Besten</string>
+    <string name="x_settings_computer">Micabo auf deinem Computer</string>
     <string name="x_settings_level">Stufe</string>
     <string name="x_settings_reset">Alles löschen</string>
     <string name="x_settings_resetBody">Deine Lektionen und dein Profil werden von diesem Handy gelöscht. Das lässt sich nicht rückgängig machen.</string>

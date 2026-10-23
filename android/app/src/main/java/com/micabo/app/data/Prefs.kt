@@ -30,6 +30,9 @@ data class Profile(
     val theme: String = "system",
 )
 
+/** Ce que la ligne `profiles` transporte : le reste (la langue, l'apparence, les notes) reste ici. */
+private fun Profile.synced(): List<Any> = listOf(onboarded, name, country, tier, goals, subjects, dailyMinutes)
+
 class Prefs(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("micabo", Context.MODE_PRIVATE)
 
@@ -51,8 +54,18 @@ class Prefs(context: Context) {
         theme = prefs.getString("theme", "system").orEmpty().ifEmpty { "system" },
     )
 
-    fun update(change: (Profile) -> Profile) {
-        val next = change(_profile.value)
+    /**
+     * Change le profil. Un changement de ce que `profiles` transporte (le nom, le pays, la
+     * marche, les buts, le temps par jour, l'accueil fini) est daté : la synchronisation garde
+     * la plus récente des deux versions, celle d'ici ou celle du compte.
+     */
+    fun update(change: (Profile) -> Profile) = write(change(_profile.value), stamp = true)
+
+    /** Le profil descendu du compte : il ne se date pas, il n'a rien à remonter. */
+    fun updateFromCloud(change: (Profile) -> Profile) = write(change(_profile.value), stamp = false)
+
+    private fun write(next: Profile, stamp: Boolean) {
+        if (stamp && next.synced() != _profile.value.synced()) profileUpdatedAt = System.currentTimeMillis()
         prefs.edit {
             putBoolean("onboarded", next.onboarded)
             putString("name", next.name)
@@ -181,6 +194,20 @@ class Prefs(context: Context) {
     var syncUser: String
         get() = prefs.getString("sync.user", "").orEmpty()
         set(value) = prefs.edit { putString("sync.user", value) }
+
+    /** Le dernier changement du profil fait ici, en millisecondes ; 0 avant cette date. */
+    var profileUpdatedAt: Long
+        get() = prefs.getLong("profile.updatedAt", 0)
+        set(value) = prefs.edit { putLong("profile.updatedAt", value) }
+
+    /**
+     * **La leçon du parcours d'accueil reste à écrire** (`LessonCreation.onboarding`). Posé à la
+     * fin du parcours, retiré à la première leçon : celle-là part avec `onboarding: true`, et le
+     * serveur l'accorde même depuis un PDF ou des photos, une fois (`begin_lesson`).
+     */
+    var onboardingLessonPending: Boolean
+        get() = prefs.getBoolean("onboarding.lessonPending", false)
+        set(value) = prefs.edit { putBoolean("onboarding.lessonPending", value) }
 
     /** L'empreinte du profil tel qu'il est monté la dernière fois (`CloudSync.pushProfile`). */
     var profileSignature: String

@@ -28,6 +28,12 @@ data class CardReview(
     val step: Int = 0,
     /** Le prochain rappel, en millisecondes. */
     val due: Long = 0,
+    /**
+     * Quand cette mémoire a changé, en millisecondes : la note posée ici, ou le `updated_at` de
+     * la carte descendue. La synchronisation garde la plus récente des deux, carte par carte ;
+     * 0 pour une mémoire d'avant cette date.
+     */
+    val updatedAt: Long = 0,
 )
 
 /** Nouvelle, en cours, maîtrisée (`CardMastery`) : maîtrisée à trois semaines d'intervalle. */
@@ -48,6 +54,21 @@ fun Lesson.cardEntries(): List<CardEntry> = themes.withIndex().flatMap { (theme,
         val key = "$theme:$index"
         CardEntry(key, card, progress.cards[key] ?: CardReview())
     }
+}
+
+/**
+ * La leçon avec d'autres cartes, thème par thème, chacune avec sa mémoire : les clés
+ * `thème:rang` sont refaites, pour qu'une carte retirée ou ajoutée ne décale pas la mémoire
+ * de ses voisines sur la mauvaise carte.
+ */
+fun Lesson.withCards(cards: List<List<Pair<Flashcard, CardReview?>>>): Lesson {
+    val reviews = mutableMapOf<String, CardReview>()
+    val filled = themes.mapIndexed { index, theme ->
+        val entries = cards.getOrNull(index).orEmpty()
+        entries.forEachIndexed { position, (_, review) -> if (review != null) reviews["$index:$position"] = review }
+        theme.copy(flashcards = entries.map { it.first })
+    }
+    return copy(themes = filled, progress = progress.copy(cards = reviews))
 }
 
 /**

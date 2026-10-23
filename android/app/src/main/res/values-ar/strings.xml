@@ -32,6 +32,7 @@
     <string name="app_paywall_discountSubtitle">راجع أسرع مع Pro</string>
     <string name="app_paywall_discountTitle">خصم %1$s%%</string>
     <string name="app_paywall_perMonthSlash">/ شهر</string>
+    <string name="common_alreadyAccount">لدي حساب بالفعل</string>
     <string name="common_continue">متابعة</string>
     <string name="common_privacy">الخصوصية</string>
     <string name="common_signOut">تسجيل الخروج</string>
@@ -513,6 +514,7 @@
     <string name="lesson_theme_system">مثل الهاتف</string>
     <string name="nav_friends">الأصدقاء</string>
     <string name="onboarding_compteTitle">احتفظ بتقدّمك</string>
+    <string name="onboarding_continueApple">المتابعة باستخدام Apple</string>
     <string name="onboarding_continueGoogle">المتابعة باستخدام Google</string>
     <string name="onboarding_emailLabel">بريدك الإلكتروني</string>
     <string name="onboarding_emailNote">نرسل لك رابطًا، دون كلمة مرور لتتذكّرها.</string>
@@ -533,6 +535,7 @@
     <string name="x_paywall_soon">قريبًا على Android</string>
     <string name="x_paywall_soonBody">الاشتراكات قادمة قريبًا جدًا على Android. وفي الأثناء، درسك المجاني بانتظارك.</string>
     <string name="x_paywall_subscribe">اشترك في Pro</string>
+    <string name="x_pro_gifted">هذا الوصول هدية لك: لا يوجد ما تديره أو تلغيه.</string>
     <string name="x_quoted">«%1$s»</string>
     <string name="x_record_limit">حتى 90 دقيقة. يحوّل Mika تسجيلك إلى نص ثم يكتب درسك.</string>
     <string name="x_reminder_channel">تذكير يومي</string>
@@ -541,6 +544,7 @@
     <string name="x_score_3">متوسط</string>
     <string name="x_score_4">جيد</string>
     <string name="x_score_5">من الأوائل</string>
+    <string name="x_settings_computer">Micabo على حاسوبك</string>
     <string name="x_settings_level">المستوى</string>
     <string name="x_settings_reset">مسح كل شيء</string>
     <string name="x_settings_resetBody">ستُحذف دروسك وملفك الشخصي من هذا الهاتف. لا يمكن التراجع عن ذلك.</string>

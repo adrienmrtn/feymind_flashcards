@@ -32,6 +32,7 @@
     <string name="app_paywall_discountSubtitle">Powtarzaj szybciej z Pro</string>
     <string name="app_paywall_discountTitle">-%1$s%%</string>
     <string name="app_paywall_perMonthSlash">/ mies.</string>
+    <string name="common_alreadyAccount">Mam już konto</string>
     <string name="common_continue">Dalej</string>
     <string name="common_privacy">Prywatność</string>
     <string name="common_signOut">Wyloguj się</string>
@@ -506,6 +507,7 @@
     <string name="lesson_theme_system">Jak w telefonie</string>
     <string name="nav_friends">Znajomi</string>
     <string name="onboarding_compteTitle">Zachowaj swoje postępy</string>
+    <string name="onboarding_continueApple">Kontynuuj z Apple</string>
     <string name="onboarding_continueGoogle">Kontynuuj z Google</string>
     <string name="onboarding_emailLabel">Twój adres e-mail</string>
     <string name="onboarding_emailNote">Wyślemy Ci link, żadnego hasła do zapamiętania.</string>
@@ -527,6 +529,7 @@
     <string name="x_paywall_soon">Wkrótce na Androidzie</string>
     <string name="x_paywall_soonBody">Subskrypcje już wkrótce na Androidzie. W międzyczasie czeka na ciebie darmowa lekcja.</string>
     <string name="x_paywall_subscribe">Przejdź na Pro</string>
+    <string name="x_pro_gifted">Ten dostęp dostałeś w prezencie: nie ma czym zarządzać ani czego anulować.</string>
     <string name="x_quoted">„%1$s”</string>
     <string name="x_record_limit">Do 90 minut. Mika zamienia nagranie na tekst, a potem pisze twoją lekcję.</string>
     <string name="x_reminder_channel">Codzienne przypomnienie</string>
@@ -535,6 +538,7 @@
     <string name="x_score_3">Średnio</string>
     <string name="x_score_4">Dobrze</string>
     <string name="x_score_5">W czołówce</string>
+    <string name="x_settings_computer">Micabo na twoim komputerze</string>
     <string name="x_settings_level">Poziom</string>
     <string name="x_settings_reset">Usuń wszystko</string>
     <string name="x_settings_resetBody">Twoje lekcje i profil znikną z tego telefonu. Tego nie da się cofnąć.</string>

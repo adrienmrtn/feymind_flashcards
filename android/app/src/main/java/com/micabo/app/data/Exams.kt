@@ -31,6 +31,16 @@ data class Exam(
     val lessonIds: List<String> = emptyList(),
     /** La dernière modification, pour la synchronisation. */
     val updatedAt: Long = 0,
+    /**
+     * **Ce que l'iPhone et le site règlent et qu'Android ne demande pas** : le type d'épreuve
+     * (`kind`), l'intensité du plan, la note visée, le point de départ. Gardés tels qu'ils sont
+     * descendus et renvoyés tels quels : un examen modifié ici ne retombe pas sur les défauts
+     * du serveur. Nuls pour un examen né ici, qui prend alors ceux de la base.
+     */
+    val kind: String? = null,
+    val intensity: String? = null,
+    val targetScore: Int? = null,
+    val startingPoint: String? = null,
 )
 
 /** Le score d'une leçon dans une copie. */

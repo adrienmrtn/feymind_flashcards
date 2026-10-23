@@ -28,6 +28,14 @@ object SupabaseConfig {
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtodXpvZHNyem5hbnpod2xiamJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5NDg1MzIsImV4cCI6MjEwMTUyNDUzMn0.-PBadJI6rdYgoHisEfP54CN126IiT9DNIXR4J-vNYLw"
 }
 
+/**
+ * **L'adresse du site**, celle de `web/lib/config.ts` (`SITE_URL`). `micabo.app` redirige vers
+ * `www` : chaque page légale ouverte sur l'hôte court coûtait une redirection de plus.
+ */
+object SiteConfig {
+    const val URL = "https://www.micabo.app"
+}
+
 /** Un refus du serveur : son statut, son `code` (`free_limit`, `daily_limit`…), sa phrase. */
 class ApiException(val status: Int, val code: String, message: String) : Exception(message) {
     /** Les refus qui se règlent en passant à Pro : ils ouvrent le paywall. */
@@ -196,10 +204,19 @@ class SupabaseAuth(private val prefs: Prefs) {
     // MARK: - Se connecter (`SupabaseAuthClient`, `OAuthFlows`)
 
     /** La page Google de Supabase, en PKCE : le vérificateur ne quitte pas le téléphone. */
-    fun googleUrl(): String {
+    fun googleUrl(): String = oauthUrl("google")
+
+    /**
+     * **La page Apple**, par le même chemin que Google. Un compte ouvert sur l'iPhone avec Apple
+     * porte souvent une adresse relais (`…@privaterelay.appleid.com`) : sans ce bouton, ni le
+     * lien par courriel ni Google ne le retrouvaient, et ses leçons restaient hors d'Android.
+     */
+    fun appleUrl(): String = oauthUrl("apple")
+
+    private fun oauthUrl(provider: String): String {
         val verifier = Pkce.verifier()
         prefs.pkceVerifier = verifier
-        return "${SupabaseConfig.URL}/auth/v1/authorize?provider=google" +
+        return "${SupabaseConfig.URL}/auth/v1/authorize?provider=$provider" +
             "&redirect_to=" + java.net.URLEncoder.encode(REDIRECT, "UTF-8") +
             "&code_challenge=" + Pkce.challenge(verifier) +
             "&code_challenge_method=s256"

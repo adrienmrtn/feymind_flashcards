@@ -229,7 +229,8 @@ private fun CardsHub(lesson: Lesson, onClose: () -> Unit, onStart: (List<CardEnt
                         )
                         Spacer(Modifier.height(6.dp))
                         Text(
-                            plainText(entry.card.back),
+                            // Un QCM venu de l'iPhone se lit ici en recto verso : sa bonne réponse.
+                            plainText(entry.card.answer),
                             style = nunito(15.sp, FontWeight.Medium, lineHeight = 20.sp),
                             color = colors.inkSecondary,
                             maxLines = 3,
@@ -370,7 +371,7 @@ private fun CardView(card: Flashcard, tone: Tone, flipped: Boolean, onFlip: () -
                     Eyebrow(stringResource(if (back) R.string.lesson_cards_answer else R.string.lesson_cards_question), tone.ink)
                     Spacer(Modifier.height(16.dp))
                     val text = if (back) {
-                        if (card.isCloze) card.front.replace(GAP, "**${card.back}**") else card.back
+                        if (card.isCloze) card.front.replace(GAP, "**${card.back}**") else card.answer
                     } else {
                         if (card.isCloze) card.front.replace(GAP, "_____") else card.front
                     }

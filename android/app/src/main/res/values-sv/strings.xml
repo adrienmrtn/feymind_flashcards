@@ -32,6 +32,7 @@
     <string name="app_paywall_discountSubtitle">Repetera snabbare med Pro</string>
     <string name="app_paywall_discountTitle">%1$s %% rabatt</string>
     <string name="app_paywall_perMonthSlash">/ mån</string>
+    <string name="common_alreadyAccount">Jag har redan ett konto</string>
     <string name="common_continue">Fortsätt</string>
     <string name="common_privacy">Integritet</string>
     <string name="common_signOut">Logga ut</string>
@@ -503,6 +504,7 @@
     <string name="lesson_theme_system">Som telefonen</string>
     <string name="nav_friends">Vänner</string>
     <string name="onboarding_compteTitle">Behåll dina framsteg</string>
+    <string name="onboarding_continueApple">Fortsätt med Apple</string>
     <string name="onboarding_continueGoogle">Fortsätt med Google</string>
     <string name="onboarding_emailLabel">Din e-postadress</string>
     <string name="onboarding_emailNote">Vi skickar en länk, inget lösenord att komma ihåg.</string>
@@ -524,6 +526,7 @@
     <string name="x_paywall_soon">Kommer snart till Android</string>
     <string name="x_paywall_soonBody">Prenumerationer kommer till Android väldigt snart. Under tiden väntar din gratislektion på dig.</string>
     <string name="x_paywall_subscribe">Skaffa Pro</string>
+    <string name="x_pro_gifted">Den här åtkomsten fick du i present: det finns inget att hantera eller säga upp.</string>
     <string name="x_quoted">”%1$s”</string>
     <string name="x_record_limit">Upp till 90 minuter. Mika gör om din inspelning till text och skriver sedan din lektion.</string>
     <string name="x_score_1">Jag kämpar</string>
@@ -531,6 +534,7 @@
     <string name="x_score_3">Medel</string>
     <string name="x_score_4">Bra</string>
     <string name="x_score_5">Bland de bästa</string>
+    <string name="x_settings_computer">Micabo på din dator</string>
     <string name="x_settings_level">Nivå</string>
     <string name="x_settings_reset">Radera allt</string>
     <string name="x_settings_resetBody">Dina lektioner och din profil försvinner från den här telefonen. Det går inte att ångra.</string>

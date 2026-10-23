@@ -32,6 +32,7 @@
     <string name="app_paywall_discountSubtitle">Преговаряй по-бързо с Pro</string>
     <string name="app_paywall_discountTitle">%1$s %% отстъпка</string>
     <string name="app_paywall_perMonthSlash">/ месец</string>
+    <string name="common_alreadyAccount">Вече имам профил</string>
     <string name="common_continue">Продължи</string>
     <string name="common_privacy">Поверителност</string>
     <string name="common_signOut">Изход</string>
@@ -512,6 +513,7 @@
     <string name="lesson_theme_system">Като телефона</string>
     <string name="nav_friends">Приятели</string>
     <string name="onboarding_compteTitle">Запази напредъка си</string>
+    <string name="onboarding_continueApple">Продължи с Apple</string>
     <string name="onboarding_continueGoogle">Продължи с Google</string>
     <string name="onboarding_emailLabel">Твоят имейл</string>
     <string name="onboarding_emailNote">Изпращаме ти линк – без парола за помнене.</string>
@@ -533,6 +535,7 @@
     <string name="x_paywall_soon">Скоро на Android</string>
     <string name="x_paywall_soonBody">Абонаментите идват съвсем скоро на Android. Дотогава безплатният ти урок те чака.</string>
     <string name="x_paywall_subscribe">Мини на Pro</string>
+    <string name="x_pro_gifted">Този достъп ти е подарен: няма какво да управляваш или прекратяваш.</string>
     <string name="x_quoted">„%1$s“</string>
     <string name="x_record_limit">До 90 минути. Mika превръща записа ти в текст, после пише урока ти.</string>
     <string name="x_score_1">Трудно ми е</string>
@@ -540,6 +543,7 @@
     <string name="x_score_3">Средно</string>
     <string name="x_score_4">Добре</string>
     <string name="x_score_5">Сред най-добрите</string>
+    <string name="x_settings_computer">Micabo на компютъра ти</string>
     <string name="x_settings_level">Ниво</string>
     <string name="x_settings_reset">Изтрий всичко</string>
     <string name="x_settings_resetBody">Уроците и профилът ти ще изчезнат от този телефон. Това не може да се отмени.</string>

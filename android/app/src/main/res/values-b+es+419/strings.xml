@@ -32,6 +32,7 @@
     <string name="app_paywall_discountSubtitle">Repasa más rápido con Pro</string>
     <string name="app_paywall_discountTitle">%1$s %% de descuento</string>
     <string name="app_paywall_perMonthSlash">/ mes</string>
+    <string name="common_alreadyAccount">Ya tengo una cuenta</string>
     <string name="common_continue">Continuar</string>
     <string name="common_privacy">Privacidad</string>
     <string name="common_signOut">Cerrar sesión</string>
@@ -504,6 +505,7 @@
     <string name="lesson_theme_system">Como el celular</string>
     <string name="nav_friends">Amigos</string>
     <string name="onboarding_compteTitle">Guarda tu progreso</string>
+    <string name="onboarding_continueApple">Continuar con Apple</string>
     <string name="onboarding_continueGoogle">Continuar con Google</string>
     <string name="onboarding_emailLabel">Tu correo electrónico</string>
     <string name="onboarding_emailNote">Te enviamos un enlace, sin contraseña que recordar.</string>
@@ -525,6 +527,7 @@
     <string name="x_paywall_soon">Muy pronto en Android</string>
     <string name="x_paywall_soonBody">Las suscripciones llegan muy pronto a Android. Mientras tanto, tu lección gratis te espera.</string>
     <string name="x_paywall_subscribe">Hazte Pro</string>
+    <string name="x_pro_gifted">Este acceso te lo regalaron: no hay nada que gestionar ni cancelar.</string>
     <string name="x_quoted">“%1$s”</string>
     <string name="x_record_limit">Hasta 90 minutos. Mika convierte tu grabación en texto y luego escribe tu lección.</string>
     <string name="x_reminder_channel">Recordatorio diario</string>
@@ -533,6 +536,7 @@
     <string name="x_score_3">En el promedio</string>
     <string name="x_score_4">Bien</string>
     <string name="x_score_5">Entre los mejores</string>
+    <string name="x_settings_computer">Micabo en tu computadora</string>
     <string name="x_settings_level">Nivel</string>
     <string name="x_settings_reset">Borrar todo</string>
     <string name="x_settings_resetBody">Tus lecciones y tu perfil se borran de este teléfono. No se puede deshacer.</string>

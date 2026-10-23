@@ -157,6 +157,7 @@ class MicaboApplication : Application() {
         // ne lit, et l'app Android n'avait poussé aucun cours en base sans que rien le dise.
         sync = CloudSync(
             auth, lessons, exams, prefs,
+            streak = streak,
             onFailure = { reason -> analytics.track("sync_failed", mapOf("reason" to reason, "user" to if (auth.account.value == null) "guest" else "account")) },
             onSuccess = { pushed -> analytics.track("sync_finished", mapOf("courses" to pushed, "user" to if (auth.account.value == null) "guest" else "account")) },
         )

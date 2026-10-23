@@ -32,6 +32,7 @@
     <string name="app_paywall_discountSubtitle">Korda kiiremini Proga</string>
     <string name="app_paywall_discountTitle">-%1$s %%</string>
     <string name="app_paywall_perMonthSlash">/ kuu</string>
+    <string name="common_alreadyAccount">Mul on juba konto</string>
     <string name="common_continue">Jätka</string>
     <string name="common_privacy">Privaatsus</string>
     <string name="common_signOut">Logi välja</string>
@@ -507,6 +508,7 @@
     <string name="lesson_theme_system">Nagu telefonis</string>
     <string name="nav_friends">Sõbrad</string>
     <string name="onboarding_compteTitle">Hoia oma edusamme alles</string>
+    <string name="onboarding_continueApple">Jätka Apple\'iga</string>
     <string name="onboarding_continueGoogle">Jätka Google\'iga</string>
     <string name="onboarding_emailLabel">Sinu e-posti aadress</string>
     <string name="onboarding_emailNote">Saadame sulle lingi, parooli pole vaja meeles pidada.</string>
@@ -528,6 +530,7 @@
     <string name="x_paywall_soon">Varsti Androidis</string>
     <string name="x_paywall_soonBody">Tellimused jõuavad Androidi väga varsti. Seni ootab sind sinu tasuta tund.</string>
     <string name="x_paywall_subscribe">Võta Pro</string>
+    <string name="x_pro_gifted">Selle ligipääsu said kingituseks: midagi pole vaja hallata ega tühistada.</string>
     <string name="x_quoted">„%1$s“</string>
     <string name="x_record_limit">Kuni 90 minutit. Mika teeb sinu salvestisest teksti ja kirjutab siis sinu tunni.</string>
     <string name="x_score_1">Mul on raske</string>
@@ -535,6 +538,7 @@
     <string name="x_score_3">Keskmine</string>
     <string name="x_score_4">Hea</string>
     <string name="x_score_5">Parimate seas</string>
+    <string name="x_settings_computer">Micabo sinu arvutis</string>
     <string name="x_settings_level">Tase</string>
     <string name="x_settings_reset">Kustuta kõik</string>
     <string name="x_settings_resetBody">Sinu tunnid ja profiil kustutatakse sellest telefonist. Seda ei saa tagasi võtta.</string>

@@ -54,6 +54,25 @@ class Streak(context: Context) {
         return true
     }
 
+    /**
+     * Les jours étudiés ailleurs, sur l'iPhone ou le site (`review_logs`), au format
+     * `yyyy-MM-dd` du jour local : la série du compte est la même partout. Sans célébration,
+     * ce n'est pas un geste fait ici.
+     */
+    fun merge(stamps: Collection<String>, now: Long = System.currentTimeMillis()) {
+        val days = days()
+        val added = stamps.filter { it.length == 10 && it !in days && it <= stamp(now) }
+        if (added.isEmpty()) return
+        val kept = (days + added).sorted().takeLast(KEPT_DAYS).toSet()
+        prefs.edit { putStringSet(DAYS, kept) }
+        val next = compute(now)
+        if (next.best > prefs.getInt(BEST, 0)) prefs.edit { putInt(BEST, next.best) }
+        _status.value = next
+    }
+
+    /** Le jour local d'un instant, au format du registre. */
+    fun stampOf(time: Long): String = stamp(time)
+
     /** À relire au retour dans l'app : minuit a pu passer. */
     fun refresh() {
         _status.value = compute()

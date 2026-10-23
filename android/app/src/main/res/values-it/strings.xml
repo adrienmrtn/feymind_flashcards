@@ -32,6 +32,7 @@
     <string name="app_paywall_discountSubtitle">Ripassa più veloce con Pro</string>
     <string name="app_paywall_discountTitle">%1$s%% di sconto</string>
     <string name="app_paywall_perMonthSlash">/ mese</string>
+    <string name="common_alreadyAccount">Ho già un account</string>
     <string name="common_continue">Continua</string>
     <string name="common_signOut">Esci</string>
     <string name="country_be">Belgio</string>
@@ -495,6 +496,7 @@
     <string name="lesson_theme_system">Come il telefono</string>
     <string name="nav_friends">Amici</string>
     <string name="onboarding_compteTitle">Conserva i tuoi progressi</string>
+    <string name="onboarding_continueApple">Continua con Apple</string>
     <string name="onboarding_continueGoogle">Continua con Google</string>
     <string name="onboarding_emailLabel">Il tuo indirizzo email</string>
     <string name="onboarding_emailNote">Ti inviamo un link, nessuna password da ricordare.</string>
@@ -516,6 +518,7 @@
     <string name="x_paywall_soon">Presto disponibile su Android</string>
     <string name="x_paywall_soonBody">Gli abbonamenti arrivano prestissimo su Android. Intanto, la tua lezione gratuita ti aspetta.</string>
     <string name="x_paywall_subscribe">Passa a Pro</string>
+    <string name="x_pro_gifted">Questo accesso ti è stato regalato: non c\'è niente da gestire né da disdire.</string>
     <string name="x_quoted">«%1$s»</string>
     <string name="x_record_limit">Fino a 90 minuti. Mika trasforma la registrazione in testo, poi scrive la tua lezione.</string>
     <string name="x_reminder_channel">Promemoria quotidiano</string>
@@ -524,6 +527,7 @@
     <string name="x_score_3">Nella media</string>
     <string name="x_score_4">Bene</string>
     <string name="x_score_5">Tra i migliori</string>
+    <string name="x_settings_computer">Micabo sul tuo computer</string>
     <string name="x_settings_level">Livello</string>
     <string name="x_settings_reset">Cancella tutto</string>
     <string name="x_settings_resetBody">Lezioni e profilo spariscono da questo telefono. Non si può annullare.</string>

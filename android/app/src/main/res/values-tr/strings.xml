@@ -32,6 +32,7 @@
     <string name="app_paywall_discountSubtitle">Pro ile daha hızlı tekrar et</string>
     <string name="app_paywall_discountTitle">%%%1$s indirim</string>
     <string name="app_paywall_perMonthSlash">/ ay</string>
+    <string name="common_alreadyAccount">Zaten hesabım var</string>
     <string name="common_continue">Devam</string>
     <string name="common_privacy">Gizlilik</string>
     <string name="common_signOut">Çıkış yap</string>
@@ -511,6 +512,7 @@
     <string name="lesson_theme_system">Telefonla aynı</string>
     <string name="nav_friends">Arkadaşlar</string>
     <string name="onboarding_compteTitle">İlerlemeni sakla</string>
+    <string name="onboarding_continueApple">Apple ile devam</string>
     <string name="onboarding_continueGoogle">Google ile devam</string>
     <string name="onboarding_emailLabel">E-posta adresin</string>
     <string name="onboarding_emailNote">Sana bir bağlantı yolluyoruz, akılda tutulacak parola yok.</string>
@@ -532,6 +534,7 @@
     <string name="x_paywall_soon">Yakında Android\'de</string>
     <string name="x_paywall_soonBody">Abonelikler çok yakında Android\'de. Bu arada ücretsiz dersin seni bekliyor.</string>
     <string name="x_paywall_subscribe">Pro\'ya geç</string>
+    <string name="x_pro_gifted">Bu erişim sana hediye edildi: yönetecek ya da iptal edecek bir şey yok.</string>
     <string name="x_record_limit">90 dakikaya kadar. Mika kaydını metne çevirir, sonra dersini yazar.</string>
     <string name="x_reminder_channel">Günlük hatırlatma</string>
     <string name="x_score_1">Zorlanıyorum</string>
@@ -539,6 +542,7 @@
     <string name="x_score_3">Ortalama</string>
     <string name="x_score_4">İyi</string>
     <string name="x_score_5">En iyiler arasında</string>
+    <string name="x_settings_computer">Micabo bilgisayarında</string>
     <string name="x_settings_level">Seviye</string>
     <string name="x_settings_reset">Her şeyi sil</string>
     <string name="x_settings_resetBody">Derslerin ve profilin bu telefondan silinir. Geri alınamaz.</string>
