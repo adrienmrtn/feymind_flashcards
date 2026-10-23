@@ -1,5 +1,13 @@
-import { authorize, CallerError, consumeQuota, withCors } from "../_shared/caller.ts";
+import {
+  authorize,
+  type Caller,
+  CallerError,
+  consumeQuota,
+  requireAccount,
+  withCors,
+} from "../_shared/caller.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { freeLessonAvailable, hasPro } from "../_shared/pro.ts";
 import {
   extractVideoId,
   fetchVideoMetadata,
@@ -91,7 +99,7 @@ Deno.serve((request: Request) =>
         videoId,
         metadata.captions,
         languages,
-        () => consumeQuota(caller, "youtube-video", 1, VIDEO_FREE_CEILING, VIDEO_PRO_CEILING),
+        () => admitVideoReading(caller),
       );
       const text = stripEmDashes(transcript.text).slice(0, YOUTUBE_LIMITS.maxTranscriptCharacters);
 
@@ -110,6 +118,14 @@ Deno.serve((request: Request) =>
       if (error instanceof CallerError && error.status === 429) {
         return json({ error: error.message, code: "quota" }, 429);
       }
+      if (error instanceof VideoImportProError) {
+        return json({ error: error.message, code: "import_pro" }, 402);
+      }
+      // Un refus d'identité (401) ou une porte muette (503) gardent leur statut : ce ne sont
+      // pas des pannes de la fonction.
+      if (error instanceof CallerError) {
+        return json({ error: error.message }, error.status);
+      }
       if (error instanceof YouTubeError) {
         // Un refus sans trace ne se corrige pas : les 19 refus du 8 septembre
         // n'ont laissé dans les journaux que leur statut, et il a fallu rejouer
@@ -126,6 +142,32 @@ Deno.serve((request: Request) =>
     }
   })
 );
+
+/** Un compte gratuit dont la leçon offerte a servi : lire une vidéo par le modèle est Pro. */
+class VideoImportProError extends Error {
+  constructor() {
+    super("Importer une vidéo, c'est avec Micabo Pro.");
+  }
+}
+
+/**
+ * **La porte de la lecture par le modèle**, juste avant l'appel qui coûte.
+ *
+ * Le décompte seul (`VIDEO_FREE_CEILING`) laissait un compte gratuit lire deux vidéos par
+ * jour, tous les jours, alors que l'import est Pro. La règle est maintenant celle de
+ * `generate-lesson` : un abonné lit, un compte gratuit lit **tant que sa leçon offerte reste
+ * à prendre** — c'est le parcours d'accueil, qui peut partir d'une vidéo avant toute offre —,
+ * et la clé publiable ne lit jamais : c'est l'appel le plus cher de Micabo, et le budget
+ * commun des versions anciennes ne le couvre pas. Les sous-titres, eux, ne coûtent rien et
+ * ne passent pas par ici.
+ */
+async function admitVideoReading(caller: Caller): Promise<void> {
+  requireAccount(caller);
+  if (!(await hasPro(caller.userId)) && !(await freeLessonAvailable(caller.userId))) {
+    throw new VideoImportProError();
+  }
+  await consumeQuota(caller, "youtube-video", 1, VIDEO_FREE_CEILING, VIDEO_PRO_CEILING);
+}
 
 function stripEmDashes(value: string): string {
   return value.replace(/\s+[—–―]\s+/g, ", ").replace(/[—–―]/g, "-");

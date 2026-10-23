@@ -1,9 +1,15 @@
-import { assertEquals, assertThrows } from "jsr:@std/assert@1";
+import { assertEquals, assertRejects, assertThrows } from "jsr:@std/assert@1";
 
 import {
+  ANON_DAILY_CEILING,
+  ANON_GRACE_UNTIL,
+  ANON_UPDATE_MESSAGE,
+  anonGraceOpen,
   CallerError,
+  consumeQuota,
   QUOTA_EXHAUSTED_MESSAGE,
   readCaller,
+  requireAccount,
   withCors,
 } from "./caller.ts";
 
@@ -55,10 +61,38 @@ Deno.test("l'appelant", async (t) => {
     // C'est le cœur du sujet : la clé publiable est un jeton **valide** du projet, donc la
     // passerelle la laisse passer. Ce qui la distingue d'un utilisateur, c'est son rôle et
     // l'absence de sujet — et rien d'autre.
-    const caller = readCaller(request({ Authorization: `Bearer ${token({ role: "anon" })}` }));
+    const caller = readCaller(
+      request({ Authorization: `Bearer ${token({ role: "anon" })}` }),
+      new Date("2026-10-23T12:00:00Z"),
+    );
 
     assertEquals(caller.userId, null);
     assertEquals(caller.legacy, true);
+  });
+
+  await t.step("refuse la clé publiable passé la fin de la transition", () => {
+    // La date n'était qu'un commentaire : rien ne la lisait. Le lendemain, la clé publiable
+    // doit tomber d'elle-même, avec une phrase qui dit de mettre l'app à jour.
+    const after = new Date(`${ANON_GRACE_UNTIL}T00:00:00Z`);
+    const error = assertThrows(
+      () => readCaller(request({ Authorization: `Bearer ${token({ role: "anon" })}` }), after),
+      CallerError,
+    );
+    assertEquals(error.status, 401);
+    assertEquals(error.message, ANON_UPDATE_MESSAGE);
+  });
+
+  await t.step("la transition est ouverte la veille et fermée le jour dit", () => {
+    const until = Date.parse(`${ANON_GRACE_UNTIL}T00:00:00Z`);
+    assertEquals(anonGraceOpen(new Date(until - 1)), true);
+    assertEquals(anonGraceOpen(new Date(until)), false);
+  });
+
+  await t.step("une étape lourde exige un compte", () => {
+    const legacy = { userId: null, legacy: true };
+    const error = assertThrows(() => requireAccount(legacy), CallerError);
+    assertEquals(error.status, 401);
+    requireAccount({ userId: "abc-123", legacy: false });
   });
 
   await t.step("refuse un rôle de service", () => {
@@ -138,5 +172,91 @@ Deno.test("les origines", async (t) => {
     assertEquals(called, false);
     assertEquals(response.status, 200);
     assertEquals(response.headers.get("Access-Control-Allow-Origin"), "https://micabo.app");
+  });
+});
+
+/**
+ * Le décompte, vu de la fonction : quel RPC part, avec quoi, et ce qu'on fait de la réponse.
+ * Le compteur lui-même vit en base ; ici, `fetch` est remplacé et les secrets sont posés le
+ * temps du test.
+ */
+async function withQuotaServer(
+  answer: (url: string, body: Record<string, unknown>) => Response,
+  run: (calls: { url: string; body: Record<string, unknown> }[]) => Promise<void>,
+): Promise<void> {
+  const original = globalThis.fetch;
+  const previousUrl = Deno.env.get("SUPABASE_URL");
+  const previousKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const calls: { url: string; body: Record<string, unknown> }[] = [];
+  Deno.env.set("SUPABASE_URL", "https://projet.test");
+  Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "service");
+  globalThis.fetch = ((input: string | URL | Request, init?: RequestInit) => {
+    const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+    const body = JSON.parse(String(init?.body ?? "{}")) as Record<string, unknown>;
+    calls.push({ url, body });
+    return Promise.resolve(answer(url, body));
+  }) as typeof fetch;
+  try {
+    await run(calls);
+  } finally {
+    globalThis.fetch = original;
+    if (previousUrl === undefined) Deno.env.delete("SUPABASE_URL");
+    else Deno.env.set("SUPABASE_URL", previousUrl);
+    if (previousKey === undefined) Deno.env.delete("SUPABASE_SERVICE_ROLE_KEY");
+    else Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", previousKey);
+  }
+}
+
+const rows = (allowed: boolean) => new Response(JSON.stringify([{ allowed, used: 1, ceiling: 1 }]));
+
+Deno.test("le décompte", async (t) => {
+  const legacy = { userId: null, legacy: true };
+  const someone = { userId: "abc-123", legacy: false };
+
+  await t.step("prend l'appel sans compte sur le budget commun", async () => {
+    // Avant, un appel sans compte ne décomptait rien : la clé publiable lue dans un IPA
+    // ouvrait le modèle sans plafond.
+    await withQuotaServer(() => rows(true), async (calls) => {
+      await consumeQuota(legacy, "generate-lesson");
+      assertEquals(calls.length, 1);
+      assertEquals(calls[0]!.url, "https://projet.test/rest/v1/rpc/consume_anon_ai_quota");
+      assertEquals(calls[0]!.body, { p_fn: "generate-lesson", p_ceiling: ANON_DAILY_CEILING, p_units: 1 });
+    });
+  });
+
+  await t.step("refuse l'appel sans compte quand le budget commun est vide", async () => {
+    await withQuotaServer(() => rows(false), async () => {
+      const error = await assertRejects(() => consumeQuota(legacy, "generate-lesson"), CallerError);
+      assertEquals(error.status, 429);
+    });
+  });
+
+  await t.step("garde le plafond propre à la fonction pour le budget commun", async () => {
+    await withQuotaServer(() => rows(true), async (calls) => {
+      await consumeQuota(legacy, "generate-lesson-theme", 1, 60, undefined, 900);
+      assertEquals(calls[0]!.body.p_ceiling, 900);
+      assertEquals("p_user" in calls[0]!.body, false);
+    });
+  });
+
+  await t.step("compte un utilisateur sur son propre compteur", async () => {
+    await withQuotaServer(() => rows(true), async (calls) => {
+      await consumeQuota(someone, "mika-chat", 1, 20, 400);
+      assertEquals(calls[0]!.url, "https://projet.test/rest/v1/rpc/consume_ai_quota");
+      assertEquals(calls[0]!.body, {
+        p_user: "abc-123",
+        p_fn: "mika-chat",
+        p_ceiling: 20,
+        p_units: 1,
+        p_pro_ceiling: 400,
+      });
+    });
+  });
+
+  await t.step("ferme quand la base ne répond pas", async () => {
+    await withQuotaServer(() => new Response("panne", { status: 500 }), async () => {
+      const error = await assertRejects(() => consumeQuota(legacy, "generate-lesson"), CallerError);
+      assertEquals(error.status, 503);
+    });
   });
 });

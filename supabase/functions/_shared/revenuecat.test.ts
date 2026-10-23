@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import { it } from "node:test";
-import { activeProFrom, syncEventId, transferTargets, wasApplied } from "./revenuecat.ts";
+import {
+  type AccessRow,
+  activeProFrom,
+  needsRevenueCatRecheck,
+  reconcileAccess,
+  resolveEventAccess,
+  syncEventId,
+  transferTargets,
+  wasApplied,
+} from "./revenuecat.ts";
 
 const now = Date.parse("2026-10-16T12:00:00Z");
 
@@ -106,4 +115,91 @@ it("un app_user_id présent reçoit, sauf s'il est parmi ceux qui perdent", () =
     transferTargets({ transferred_from: [ACCOUNT, GUEST], transferred_to: [ACCOUNT] }),
     { to: [ACCOUNT], from: [GUEST] },
   );
+});
+
+// MARK: - Ce qu'un événement du webhook dit de l'accès
+
+it("une pause programmée garde l'accès jusqu'à l'échéance, sans renouvellement", () => {
+  // Google Play annonce la pause quand l'abonné la programme ; elle ne commence qu'à la fin
+  // de la période payée, avec son `EXPIRATION`. Fermer ici retirait des jours payés.
+  assert.deepEqual(resolveEventAccess({ type: "SUBSCRIPTION_PAUSED" }), {
+    isPro: true,
+    willRenew: false,
+  });
+});
+
+it("l'expiration ferme, la résiliation et l'incident de paiement non", () => {
+  assert.deepEqual(resolveEventAccess({ type: "EXPIRATION" }), { isPro: false, willRenew: false });
+  assert.deepEqual(resolveEventAccess({ type: "CANCELLATION" }), { isPro: true, willRenew: false });
+  assert.deepEqual(resolveEventAccess({ type: "BILLING_ISSUE" }), { isPro: true, willRenew: false });
+  assert.deepEqual(resolveEventAccess({ type: "renewal" }), { isPro: true, willRenew: true });
+});
+
+it("un événement qui ne concerne pas le droit pro, ou inconnu, ne touche à rien", () => {
+  assert.equal(resolveEventAccess({ type: "EXPIRATION", entitlement_ids: ["autre"] }), null);
+  assert.equal(resolveEventAccess({ type: "TEST" }), null);
+  assert.equal(resolveEventAccess({}), null);
+});
+
+it("seuls les événements qui retirent quelque chose relisent RevenueCat", () => {
+  for (
+    const type of ["EXPIRATION", "cancellation", "SUBSCRIPTION_PAUSED", "BILLING_ISSUE", "REFUND", "REVOKED"]
+  ) {
+    assert.equal(needsRevenueCatRecheck(type), true, type);
+  }
+  for (const type of ["INITIAL_PURCHASE", "RENEWAL", "TRANSFER", "TEST", undefined]) {
+    assert.equal(needsRevenueCatRecheck(type), false, String(type));
+  }
+});
+
+const expiringAppStore: AccessRow = {
+  isPro: false,
+  willRenew: false,
+  productId: "com.micabo.app.pro.monthly",
+  store: "app_store",
+  periodType: "normal",
+  expiresAt: "2026-10-16T11:00:00.000Z",
+};
+
+it("l'expiration d'un magasin ne ferme pas un abonnement actif dans l'autre", () => {
+  const playStore = {
+    productId: "micabo_pro_annual",
+    store: "play_store",
+    periodType: "normal",
+    expiresAt: "2027-10-01T00:00:00Z",
+    willRenew: true,
+  };
+  assert.deepEqual(reconcileAccess(expiringAppStore, playStore), {
+    isPro: true,
+    willRenew: true,
+    productId: "micabo_pro_annual",
+    store: "play_store",
+    periodType: "normal",
+    expiresAt: "2027-10-01T00:00:00Z",
+  });
+});
+
+it("sans droit actif chez RevenueCat, l'événement fait foi", () => {
+  assert.deepEqual(reconcileAccess(expiringAppStore, null), expiringAppStore);
+});
+
+it("une résiliation recopie l'échéance du droit qui court encore", () => {
+  // Le mensuel résilié expire demain, l'annuel pris à côté court un an : la ligne ne doit pas
+  // se fermer demain.
+  const cancelled: AccessRow = {
+    ...expiringAppStore,
+    isPro: true,
+    expiresAt: "2026-10-17T00:00:00.000Z",
+  };
+  const annual = {
+    productId: "com.micabo.app.pro.annual",
+    store: "app_store",
+    periodType: "normal",
+    expiresAt: "2027-10-16T00:00:00Z",
+    willRenew: true,
+  };
+  const row = reconcileAccess(cancelled, annual);
+  assert.equal(row.isPro, true);
+  assert.equal(row.expiresAt, "2027-10-16T00:00:00Z");
+  assert.equal(row.productId, "com.micabo.app.pro.annual");
 });
