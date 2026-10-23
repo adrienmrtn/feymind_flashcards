@@ -1,0 +1,38 @@
+# **Les prix Stripe du site**, posés d'après la grille des apps. Voir store/stripe-prices.mjs.
+#
+# À la demande seulement : Actions → « Stripe : prix » → Run workflow. Sans cocher « appliquer »,
+# il dit ce qu'il ferait. La clé est le secret STRIPE_RESTRICTED_KEY (clé restreinte Stripe,
+# écriture sur Products et Prices).
+name: "Stripe : prix"
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Appliquer (sinon simulation)"
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  prices:
+    name: Poser les prix Stripe
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Plan, vérification, application
+        env:
+          STRIPE_RESTRICTED_KEY: ${{ secrets.STRIPE_RESTRICTED_KEY }}
+          APPLY: ${{ inputs.apply }}
+        run: |
+          args=""
+          if [ "$APPLY" = "true" ]; then args="--apply"; fi
+          node --experimental-strip-types --import ./scripts/ts-extensions.mjs store/stripe-prices.mjs $args

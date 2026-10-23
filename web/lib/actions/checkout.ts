@@ -68,9 +68,37 @@ function stripeKey(): string | null {
   return process.env.STRIPE_SECRET_KEY ?? null;
 }
 
-/** L'identifiant de prix Stripe de cette offre, dans le groupe de prix du pays. */
-function priceId(plan: pricing.CatalogPlan, presentment: pricing.Presentment): string {
-  return priceIdFor(plan, presentment, process.env, pricing.stripePriceIdFromEnv);
+/** Les `price_…` déjà retrouvés par leur nom, pour cette instance du serveur. */
+const lookedUp = new Map<string, { id: string; at: number }>();
+const LOOKUP_TTL_MS = 10 * 60_000;
+
+/**
+ * L'identifiant de prix Stripe de cette offre, dans le groupe de prix du pays.
+ *
+ * La variable `STRIPE_PRICE_…` d'abord, quand elle est posée ; sinon le prix actif qui porte
+ * le nom `micabo_<offre>_<groupe>` chez Stripe (`pricing.stripeLookupKey`), tel que
+ * `store/stripe-prices.mjs` l'a créé. Introuvable : chaîne vide, que `priceIdProblem` refuse.
+ */
+async function priceId(
+  plan: pricing.CatalogPlan,
+  presentment: pricing.Presentment,
+  key: string | null,
+): Promise<string> {
+  const fromEnv = priceIdFor(plan, presentment, process.env, pricing.stripePriceIdFromEnv);
+  if (fromEnv || !key) return fromEnv;
+  const lookupKey = pricing.stripeLookupKey(plan, presentment.prices.stripeGroup);
+  const cached = lookedUp.get(lookupKey);
+  if (cached && Date.now() - cached.at < LOOKUP_TTL_MS) return cached.id;
+  const query = new URLSearchParams({ "lookup_keys[]": lookupKey, active: "true", limit: "1" });
+  const response = await fetch(`https://api.stripe.com/v1/prices?${query}`, {
+    headers: { Authorization: `Bearer ${key}` },
+    cache: "no-store",
+  }).catch(() => null);
+  if (!response?.ok) return "";
+  const body = (await response.json().catch(() => null)) as { data?: { id?: string }[] } | null;
+  const id = body?.data?.[0]?.id ?? "";
+  if (id) lookedUp.set(lookupKey, { id, at: Date.now() });
+  return id;
 }
 
 export async function startCheckout(kind: pricing.CatalogPlan): Promise<CheckoutResult> {
@@ -116,7 +144,7 @@ export async function startCheckout(kind: pricing.CatalogPlan): Promise<Checkout
     : (signals.chosen ?? signals.navigator ?? DEFAULT_UI_LOCALE);
 
   const key = stripeKey();
-  const price = priceId(kind, presentment);
+  const price = await priceId(kind, presentment, key);
   const plan = pricing.catalogPlanFor(kind);
 
   if (!key) {

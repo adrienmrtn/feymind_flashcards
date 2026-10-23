@@ -502,11 +502,24 @@ export function stripePriceIdFromEnv(
   return value ? value : null;
 }
 
+/**
+ * **Le nom stable d'un prix Stripe** (`lookup_key`) : `micabo_yearly_standard`, …
+ *
+ * C'est par lui que le site retrouve le `price_…` à vendre, sans douze variables à recopier
+ * dans Vercel : `store/stripe-prices.mjs` crée les prix avec ce nom, et un prix remplacé
+ * passe le nom au nouveau (`transfer_lookup_key`). Une variable `STRIPE_PRICE_…` posée reste
+ * prioritaire.
+ */
+export function stripeLookupKey(plan: CatalogPlan, group: StripePriceGroup): string {
+  return `micabo_${plan}_${group}`;
+}
+
 /** Un prix Stripe à créer : la devise par défaut, son montant, et les autres devises. */
 export interface StripePriceSpec {
   group: StripePriceGroup;
   plan: CatalogPlan;
   env: string;
+  lookupKey: string;
   interval: "year" | "week";
   currency: string;
   amount: number;
@@ -549,6 +562,7 @@ export function stripePriceSpecs(): StripePriceSpec[] {
         group,
         plan,
         env: STRIPE_PRICE_ENV[group][plan],
+        lookupKey: stripeLookupKey(plan, group),
         interval: PLAN_INTERVAL[plan],
         currency: currency.toLowerCase(),
         amount,
