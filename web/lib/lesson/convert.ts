@@ -3,6 +3,8 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
+  CLOZE_GAP,
+  normalizeClozeGap,
   normalizeIcon,
   readLessonPath,
   sheetToPlainText,
@@ -223,18 +225,22 @@ async function apply(
     if (converted.flashcards.length > 0) {
       const start = cardCounts.get(chapter.id) ?? 0;
       const { error: cardsError } = await supabase.from("flashcards").insert(
-        converted.flashcards.map((card, offset) => ({
-          id: crypto.randomUUID(),
-          user_id: userId,
-          course_id: course.id,
-          chapter_id: chapter.id,
-          front: card.front,
-          back: card.back,
-          position: start + offset,
-          kind: card.kind === "cloze" ? "cloze" : "basic",
-          state: "new",
-          due_date: now,
-        })),
+        converted.flashcards.map((card, offset) => {
+          // Le trou en « … », et une carte à trou seulement s'il y est : la règle de l'app.
+          const front = card.kind === "cloze" ? normalizeClozeGap(card.front) : card.front;
+          return {
+            id: crypto.randomUUID(),
+            user_id: userId,
+            course_id: course.id,
+            chapter_id: chapter.id,
+            front,
+            back: card.back,
+            position: start + offset,
+            kind: card.kind === "cloze" && front.includes(CLOZE_GAP) ? "cloze" : "basic",
+            state: "new",
+            due_date: now,
+          };
+        }),
       );
       if (cardsError) throw new Error(cardsError.message);
     }
@@ -309,19 +315,21 @@ export async function convertLesson(lessonId: string): Promise<ConvertResult> {
     cardCounts.set(chapter.id, (byChapter.get(chapter.id)?.length ?? 0) + (chapters.length === 1 ? loose.length : 0));
   }
 
-  const audience = await lessonAudience({ language: course.language });
+  // Sans examen, comme `LessonBuilder.convert` : la conversion reprend un cours, elle ne le
+  // prépare pas pour une date.
+  const audience = await lessonAudience();
   const { data, error } = await supabase.functions.invoke("generate-lesson", {
     body: {
+      ...audience,
       stage: "convert",
       lessonId: course.id,
       title: course.title,
-      subject: course.subject ?? undefined,
+      subject: course.subject ?? "",
       chapters: chapters.map((chapter) => ({
         title: chapter.title,
         text: conversionText(chapter, [...(byChapter.get(chapter.id) ?? []), ...(chapters.length === 1 ? loose : [])], course),
         needsCards: (cardCounts.get(chapter.id) ?? 0) < 3,
       })),
-      ...audience,
     },
   });
 

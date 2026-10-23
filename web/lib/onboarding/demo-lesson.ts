@@ -1,6 +1,6 @@
 import "server-only";
 
-import { DEFAULT_VISIBILITY, emptyProgress, languageFor, type LessonPath, type QuizQuestion, type SheetBlock, type ThemeQuiz } from "@micabo/core";
+import { DEFAULT_VISIBILITY, emptyProgress, languageFor, normalizeClozeGap, type LessonPath, type QuizQuestion, type SheetBlock, type ThemeQuiz } from "@micabo/core";
 
 import { revalidateUserData } from "@/lib/data/cache";
 import type { Translator } from "@/lib/i18n/copy";
@@ -33,9 +33,13 @@ function paragraph(text: string): SheetBlock {
   return { type: "paragraph", text };
 }
 
-/** Le texte à trou attend `____` ; le catalogue écrit des points de suspension. */
+/**
+ * Le texte à trou porte « … », le marqueur du serveur et des apps (`CLOZE_GAP`) : le catalogue
+ * l'écrit parfois en trois points, ramenés ici à un seul caractère. Le site écrivait `____`, que
+ * l'iPhone et Android ne lisent pas comme un trou.
+ */
 function gapPrompt(text: string): string {
-  return text.replace(/(\.\.\.|…)/, "____");
+  return normalizeClozeGap(text);
 }
 
 export function demoThemes(t: Translator): DemoTheme[] {

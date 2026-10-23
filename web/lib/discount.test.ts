@@ -20,8 +20,11 @@ describe("shouldOpenDiscount", () => {
     expect(shouldOpenDiscount({ ...base, seen: true, startedAt: null })).toBe(true);
   });
 
-  it("ne s'ouvre pas sans cours importé", () => {
-    expect(shouldOpenDiscount({ ...base, courseCount: 0 })).toBe(false);
+  it("n'attend plus de cours : c'est le paywall refermé qui le fait tomber", () => {
+    // `DiscountOffer.giftAfterCourses = 0` : le cadeau suit la fermeture d'un paywall, celui
+    // du parcours d'accueil compris, avant même la première leçon.
+    expect(discount.giftAfterCourses).toBe(0);
+    expect(shouldOpenDiscount({ ...base, courseCount: 0 })).toBe(true);
   });
 
   it("ne vend rien à un abonné", () => {
@@ -58,6 +61,14 @@ describe("shouldShowDiscountBadge", () => {
 
   it("n'apparaît jamais pour un abonné", () => {
     expect(shouldShowDiscountBadge({ ...base, isPaid: true })).toBe(false);
+  });
+});
+
+describe("la rangée du profil", () => {
+  it("garde le tarif atteignable pour qui n'est pas abonné, fenêtre ou pas", () => {
+    // `DiscountOffer.isReachable` : le cadeau surgit une fois, la rangée reste.
+    expect(discount.isReachable({ isPaid: false, courseCount: 0 })).toBe(true);
+    expect(discount.isReachable({ isPaid: true, courseCount: 3 })).toBe(false);
   });
 });
 

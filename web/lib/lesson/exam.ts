@@ -1,6 +1,6 @@
 import "server-only";
 
-import { examQuestionCount, normalizeSheet, notesPlainText, readExamResponse, readThemeNotes, sheetToPlainText, type ExamPaper, type ExamPaperLesson } from "@micabo/core";
+import { examQuestionCount, normalizeSheet, readExamResponse, readThemeNotes, sheetToPlainText, type CalloutKind, type ExamPaper, type ExamPaperLesson } from "@micabo/core";
 
 import { revalidateUserData } from "@/lib/data/cache";
 import { actionT } from "@/lib/i18n/action";
@@ -21,6 +21,7 @@ import { createClient } from "@/lib/supabase/server";
 export const LESSON_EXAM_KIND = "lesson_exam";
 const MAX_LESSONS = 8;
 const MAX_THEMES = 14;
+const NOTES_CHARS = 2_000;
 
 export interface ExamPaperOutcome {
   status: "ok" | "error";
@@ -45,11 +46,68 @@ interface ChapterRowForExam {
   sheet: unknown;
 }
 
-/** Les notes d'un thème, mises à plat pour le modèle. */
+/** Le nom d'un encadré dans la consigne : `CalloutKind.promptLabel` côté Swift. */
+const CALLOUT_PROMPT: Record<CalloutKind, string> = {
+  why: "Pourquoi",
+  mistake: "Piège",
+  tip: "Astuce",
+  remember: "À retenir",
+};
+
+/**
+ * Les notes d'un thème, mises à plat pour le modèle, **dans la forme de `LessonBuilder.flatNotes`**.
+ *
+ * `notesPlainText` sert l'écran (la recherche, Mika) : il perd les sous-titres, le mot
+ * « Exemple » et le genre d'un encadré. Le modèle s'en sert pour savoir ce qui est un piège et
+ * ce qui est une règle ; lui donner un autre texte que l'iPhone, c'était lui faire écrire
+ * d'autres questions sur la même leçon.
+ */
 export function flatNotes(chapter: Pick<ChapterRowForExam, "notes" | "sheet">): string {
   const notes = readThemeNotes(chapter.notes);
-  if (notes) return notesPlainText(notes);
-  return chapter.sheet ? sheetToPlainText(normalizeSheet(chapter.sheet)) : "";
+  if (!notes) return chapter.sheet ? sheetToPlainText(normalizeSheet(chapter.sheet)) : "";
+  const lines: string[] = [notes.oneLiner];
+  for (const block of notes.blocks) {
+    switch (block.type) {
+      case "subtitle":
+        lines.push(`## ${block.text}`);
+        break;
+      case "paragraph":
+        lines.push(block.text);
+        break;
+      case "list":
+        lines.push(...block.items.map((item) => `- ${item}`));
+        break;
+      case "definition":
+        lines.push(`${block.term} : ${block.text}`);
+        break;
+      case "dates":
+        lines.push(...block.items.map((item) => `${item.date} : ${item.text}`));
+        break;
+      case "formula":
+        lines.push([block.latex, block.caption].filter((part): part is string => Boolean(part)).join(" : "));
+        break;
+      case "example":
+        lines.push(`Exemple : ${block.text}`);
+        break;
+      case "steps":
+        lines.push(...block.items.map((item, index) => `${index + 1}. ${item}`));
+        break;
+      case "table":
+        lines.push(block.columns.join(" | "));
+        lines.push(...block.rows.map((row) => row.join(" | ")));
+        break;
+      case "quote":
+        lines.push([`« ${block.text} »`, block.author].filter((part): part is string => Boolean(part)).join(" — "));
+        break;
+      case "callout": {
+        const label = [CALLOUT_PROMPT[block.kind], block.title].filter((part): part is string => Boolean(part)).join(" · ");
+        lines.push(`${label} : ${block.text}`);
+        break;
+      }
+    }
+  }
+  lines.push(...notes.takeaways.map((line) => `À retenir : ${line}`));
+  return lines.join("\n").replaceAll("**", "");
 }
 
 export async function writeExamPaper(input: { title: string; examId: string | null; lessonIds: string[]; minutes: number }): Promise<ExamPaperOutcome> {
@@ -77,12 +135,13 @@ export async function writeExamPaper(input: { title: string; examId: string | nu
   const chaptersOf = (lessonId: string) => chapters.filter((chapter) => chapter.course_id === lessonId).slice(0, MAX_THEMES);
 
   const exam = (examRow as { data?: { name: string; exam_date: string } | null } | null)?.data ?? null;
-  const audience = await lessonAudience({ language: lessons[0]!.language, exam: exam ? examLine(exam.name, exam.exam_date) : undefined });
+  const audience = await lessonAudience({ exam: exam ? examLine(exam.name, exam.exam_date) : undefined });
   const paperId = crypto.randomUUID();
   const paperLessons: ExamPaperLesson[] = lessons.map((lesson) => ({ courseId: lesson.id, title: lesson.title, chapterIds: chaptersOf(lesson.id).map((chapter) => chapter.id) }));
 
   const { data, error } = await supabase.functions.invoke("generate-lesson", {
     body: {
+      ...audience,
       stage: "exam",
       lessonId: paperId,
       examTitle: input.title,
@@ -90,10 +149,10 @@ export async function writeExamPaper(input: { title: string; examId: string | nu
       count: examQuestionCount(minutes),
       lessons: lessons.map((lesson) => ({
         title: lesson.title,
-        subject: lesson.subject ?? undefined,
-        themes: chaptersOf(lesson.id).map((chapter) => ({ title: chapter.title, notes: flatNotes(chapter) })),
+        subject: lesson.subject ?? "",
+        // Deux mille caractères de notes par thème, comme `SupabaseLessonService.exam`.
+        themes: chaptersOf(lesson.id).map((chapter) => ({ title: chapter.title, notes: flatNotes(chapter).slice(0, NOTES_CHARS) })),
       })),
-      ...audience,
     },
   });
   if (error) {

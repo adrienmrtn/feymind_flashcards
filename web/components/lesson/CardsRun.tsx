@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { CLOZE_GAP, LESSON_RATINGS, ReviewRating, type CardSnapshot, type LessonTone } from "@micabo/core";
+import { CLOZE_GAP, LESSON_RATINGS, ReviewRating, normalizeClozeGap, type CardSnapshot, type LessonTone } from "@micabo/core";
 
 import { CircleTopBar } from "@/components/lesson/CircleTopBar";
 import { KeywordText } from "@/components/lesson/KeywordText";
@@ -163,7 +163,11 @@ function EndState({ mood, big, tone, title, button, onLeave }: { mood: "sleep" |
 /** Une flashcard, recto puis verso. Une question de quiz ratée garde ses propositions ; le verso montre la bonne et l'explication. */
 export function FlashcardFace({ card, flipped, tone }: { card: RunCard; flipped: boolean; tone: LessonTone }) {
   const { t } = useI18n();
-  const isCloze = card.kind === "cloze";
+  // Une carte à trou d'où qu'elle vienne : « … » de l'app et du serveur, « ____ » des
+  // anciennes cartes du site. Sans trou lisible, elle se retourne comme une carte simple et
+  // montre sa réponse — c'est ce que font l'iPhone et Android (`ClozeGap.isPresent`).
+  const front = card.kind === "cloze" ? normalizeClozeGap(card.front) : card.front;
+  const isCloze = card.kind === "cloze" && front.includes(CLOZE_GAP);
   const isChoice = card.kind === "choice" && card.choices.length > 1;
   const correct = isChoice ? card.choices[card.correctChoiceIndex] : null;
   return (
@@ -177,7 +181,7 @@ export function FlashcardFace({ card, flipped, tone }: { card: RunCard; flipped:
 
       {isCloze ? (
         <p className="text-[24px] font-extrabold leading-snug text-ink">
-          <KeywordText text={flipped ? card.front.replaceAll(CLOZE_GAP, `**${card.back}**`) : card.front.replaceAll(CLOZE_GAP, "_____")} />
+          <KeywordText text={flipped ? front.replaceAll(CLOZE_GAP, `**${card.back}**`) : front.replaceAll(CLOZE_GAP, "_____")} />
         </p>
       ) : (
         <p className={flipped ? "text-[18px] font-extrabold leading-snug text-ink-secondary" : "text-[24px] font-extrabold leading-snug text-ink"}>
