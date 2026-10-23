@@ -14,7 +14,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
+import { OrDivider, ProviderButton } from "@/components/auth/AuthButtons";
+import { Atmosphere } from "@/components/landing/Atmosphere";
+import { Mika } from "@/components/mika/Mika";
 import {
   APP_STORE_REVIEW_EMAIL,
   APP_STORE_REVIEW_PASSWORD,
@@ -32,8 +34,10 @@ import { EmailSuggestion } from "@/components/auth/EmailSuggestion";
  * Apple, Google, ou un lien. Après l'échange, on ouvre l'app : la session
  * Supabase *est* le compte. On ne recréera plus un parcours par-dessus.
  *
- * La page porte la carte du parcours d'inscription : fond sauge, carte blanche, titre
- * centré. Celui qui revient et celui qui arrive passent par la même porte.
+ * Une carte centrée sur le lavage de la vitrine, Mika perché dessus : Apple et Google en
+ * haut, « ou », l'adresse, le bouton, le lien vers l'inscription et la ligne des conditions.
+ * Les mêmes trois portes que dans l'app, dans le même ordre. La carte est une surface du
+ * thème : blanche le jour, sombre la nuit.
  */
 export default function ConnexionPage() {
   return (
@@ -146,173 +150,130 @@ function ConnexionBody() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-canvas-sage px-3 py-3 sm:px-6 sm:py-6">
-      <div className="rise relative w-full max-w-[520px] rounded-[28px] bg-surface px-6 py-8 shadow-floating sm:px-12 sm:py-12">
-        <div className="flex items-center justify-between gap-3">
-          <BrandLockup
-            href={homeHref}
-            size={28}
-            className="text-ink"
-            wordClassName="text-[15px] font-bold text-ink"
-          />
-          <div className="flex items-center gap-2">
-            <AppearanceSwitcher variant="compact" />
-            <LanguageSwitcher />
+    <div className="lp relative isolate flex min-h-svh flex-col overflow-hidden">
+      <Atmosphere boxed />
+
+      <header className="mx-auto flex w-full max-w-page items-center justify-between gap-3 px-screen py-4">
+        <BrandLockup
+          href={homeHref}
+          size={28}
+          className="text-ink"
+          wordClassName="text-[15px] font-bold text-ink"
+        />
+        <div className="flex items-center gap-1.5">
+          <AppearanceSwitcher variant="compact" />
+          <LanguageSwitcher />
+        </div>
+      </header>
+
+      <main id="contenu" className="flex flex-1 items-center justify-center px-3 pb-12 pt-16 sm:px-6">
+        <div className="lp-enter relative w-full max-w-[440px]">
+          {/* Mika, perché sur le bord de la carte, comme sur la carte de la vitrine. */}
+          <div aria-hidden className="absolute left-1/2 top-[-66px] z-10 w-[72px] -translate-x-1/2">
+            <Mika mood="wave" label="" />
           </div>
-        </div>
 
-        <h1 className="mt-9 text-balance text-center text-[28px] font-bold leading-[1.12] tracking-tight-title text-ink sm:text-[32px]">
-          {t("onboarding.connexionTitle")}
-        </h1>
-        <p className="mx-auto mt-3 max-w-[40ch] text-center text-[15px] text-ink-secondary">
-          {t("onboarding.connexionSubtitle")}
-        </p>
+          <div className="lp-demo-card rounded-[28px] bg-surface px-6 pb-7 pt-9 sm:px-9 sm:pb-9 sm:pt-11">
+            <h1 className="text-balance text-center text-[26px] font-extrabold leading-[1.12] tracking-tight-title text-ink sm:text-[28px]">
+              {t("onboarding.connexionTitle")}
+            </h1>
+            <p className="mx-auto mt-2.5 max-w-[34ch] text-center text-[14.5px] leading-relaxed text-ink-secondary">
+              {t("onboarding.connexionSubtitle")}
+            </p>
 
-        <div className="mt-8 space-y-2.5">
-          <ProviderButton
-            label={t("onboarding.continueApple")}
-            dark
-            pending={pending === "apple"}
-            onPress={() => signInWith("apple")}
-            icon={
-              <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-                <path d="M16.5 12.6c0-2 1.6-3 1.7-3.1-.9-1.4-2.4-1.5-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.3 2-1.4 2.4-.4 6 1 7.9.7.9 1.5 2 2.5 2 1 0 1.3-.6 2.5-.6s1.5.6 2.5.6 1.7-.9 2.4-1.9c.5-.7.7-1.1.9-1.6-2.3-.9-2.2-3.6-2.2-3.7zM14.6 5.9c.5-.6.9-1.5.8-2.4-.8 0-1.7.5-2.3 1.2-.5.6-.9 1.5-.8 2.3.9.1 1.8-.4 2.3-1.1z" />
-              </svg>
-            }
-          />
-
-          <ProviderButton
-            label={t("onboarding.continueGoogle")}
-            pending={pending === "google"}
-            onPress={() => signInWith("google")}
-            icon={
-              <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5">
-                <path
-                  fill="#4285F4"
-                  d="M23 12.2c0-.8-.1-1.6-.2-2.3H12v4.4h6.2a5.3 5.3 0 0 1-2.3 3.5v2.9h3.7c2.2-2 3.4-5 3.4-8.5z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23.5c3 0 5.5-1 7.3-2.7l-3.6-2.8a6.9 6.9 0 0 1-10.3-3.6H1.6v3A11.5 11.5 0 0 0 12 23.5z"
-                />
-                <path fill="#FBBC05" d="M5.4 14.4a6.9 6.9 0 0 1 0-4.4v-3H1.6a11.5 11.5 0 0 0 0 10.4z" />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.2-3.2A11.5 11.5 0 0 0 1.6 7l3.8 3a6.9 6.9 0 0 1 6.6-4.6z"
-                />
-              </svg>
-            }
-          />
-        </div>
-
-        <div className="my-6 flex items-center gap-3">
-          <Separator className="flex-1" />
-          <span className="text-[12px] text-ink-tertiary">{t("onboarding.or")}</span>
-          <Separator className="flex-1" />
-        </div>
-
-        {sent ? (
-          <Alert variant="success" className="rise" role="status">
-            <AlertDescription className="text-[14.5px] font-medium text-accent">
-              {t("onboarding.linkSent", { email: email.trim() })}
-            </AlertDescription>
-          </Alert>
-        ) : (
-          <form onSubmit={sendLink} className="space-y-2.5">
-            <Field>
-              <FieldLabel className="sr-only">{t("onboarding.emailLabel")}</FieldLabel>
-              <Input
-                id="login-email"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(event) => {
-                  setEmail(event.target.value);
-                  setSuggestion(null);
-                  setFailure(null);
-                }}
-                placeholder={t("onboarding.emailPlaceholder")}
-                className="h-14 rounded-button text-[16px] sm:text-[16px] [&_[data-slot=input]]:h-14 [&_[data-slot=input]]:text-[16px] [&_[data-slot=input]]:leading-[3.5rem]"
+            <div className="mt-7 space-y-2.5">
+              <ProviderButton
+                provider="apple"
+                label={t("onboarding.continueApple")}
+                pending={pending === "apple"}
+                onPress={() => signInWith("apple")}
               />
-            </Field>
-            <Button
-              type="submit"
-              size="xl"
-              loading={pending === "email"}
-              disabled={email.trim().length === 0}
-              className="h-14 w-full text-[16px] sm:h-14 sm:text-[16px]"
-            >
-              {t("onboarding.sendLink")}
-            </Button>
-          </form>
-        )}
+              <ProviderButton
+                provider="google"
+                label={t("onboarding.continueGoogle")}
+                pending={pending === "google"}
+                onPress={() => signInWith("google")}
+              />
+            </div>
 
-        {suggestion ? (
-          <EmailSuggestion
-            typed={suggestion.typed}
-            corrected={suggestion.corrected}
-            onAccept={() => void deliver(suggestion.corrected)}
-            onKeep={() => void deliver(suggestion.typed)}
-          />
-        ) : null}
+            <OrDivider label={t("onboarding.or")} />
 
-        {failure ? (
-          <Alert variant="error" className="mt-3">
-            <AlertDescription className="text-[13.5px] text-negative">{failure}</AlertDescription>
-          </Alert>
-        ) : null}
+            {sent ? (
+              <Alert variant="success" className="rise" role="status">
+                <AlertDescription className="text-[14.5px] font-medium text-accent">
+                  {t("onboarding.linkSent", { email: email.trim() })}
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <form onSubmit={sendLink} className="space-y-3">
+                <Field>
+                  <FieldLabel className="text-[13.5px] font-bold text-ink">
+                    {t("onboarding.emailLabel")}
+                  </FieldLabel>
+                  <Input
+                    id="login-email"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                      setSuggestion(null);
+                      setFailure(null);
+                    }}
+                    placeholder={t("onboarding.emailPlaceholder")}
+                    className="h-12 rounded-[14px] text-[16px] sm:text-[16px] [&_[data-slot=input]]:h-12 [&_[data-slot=input]]:text-[16px] [&_[data-slot=input]]:leading-[3rem]"
+                  />
+                </Field>
+                <Button
+                  type="submit"
+                  size="xl"
+                  loading={pending === "email"}
+                  disabled={email.trim().length === 0}
+                  className="h-12 w-full rounded-[14px] text-[15.5px] font-extrabold sm:h-12 sm:text-[15.5px]"
+                >
+                  {t("onboarding.sendLink")}
+                </Button>
+              </form>
+            )}
 
-        <p className="mt-8 text-center text-[12.5px] leading-relaxed text-ink-tertiary">
-          {t("onboarding.legalPrefix")}{" "}
-          <Link href={termsHref} className="underline-draw text-ink-secondary">
-            {t("onboarding.legalTerms")}
-          </Link>{" "}
-          {t("onboarding.legalAnd")}{" "}
-          <Link href={privacyHref} className="underline-draw text-ink-secondary">
-            {t("onboarding.legalPrivacy")}
-          </Link>
-          .
-        </p>
+            {suggestion ? (
+              <EmailSuggestion
+                typed={suggestion.typed}
+                corrected={suggestion.corrected}
+                onAccept={() => void deliver(suggestion.corrected)}
+                onKeep={() => void deliver(suggestion.typed)}
+              />
+            ) : null}
 
-        <p className="mt-6 text-center text-[13.5px] text-ink-tertiary">
-          {t("onboarding.noAccount")}{" "}
-          <Link href="/commencer" className="underline-draw font-medium text-ink">
-            {t("onboarding.createIt")}
-          </Link>
-        </p>
-      </div>
+            {failure ? (
+              <Alert variant="error" className="mt-3">
+                <AlertDescription className="text-[13.5px] text-negative">{failure}</AlertDescription>
+              </Alert>
+            ) : null}
+
+            <p className="mt-6 text-center text-[14px] text-ink-secondary">
+              {t("onboarding.noAccount")}{" "}
+              <Link href="/commencer" className="underline-draw font-bold text-accent">
+                {t("onboarding.createIt")}
+              </Link>
+            </p>
+          </div>
+
+          <p className="mx-auto mt-6 max-w-[40ch] text-center text-[12.5px] leading-relaxed text-ink-tertiary">
+            {t("onboarding.legalPrefix")}{" "}
+            <Link href={termsHref} className="underline-draw text-ink-secondary">
+              {t("onboarding.legalTerms")}
+            </Link>{" "}
+            {t("onboarding.legalAnd")}{" "}
+            <Link href={privacyHref} className="underline-draw text-ink-secondary">
+              {t("onboarding.legalPrivacy")}
+            </Link>
+            .
+          </p>
+        </div>
+      </main>
     </div>
-  );
-}
-
-function ProviderButton({
-  label,
-  icon,
-  dark = false,
-  pending,
-  onPress,
-}: {
-  label: string;
-  icon: React.ReactNode;
-  dark?: boolean;
-  pending: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Button
-      type="button"
-      size="xl"
-      variant={dark ? "default" : "outline"}
-      loading={pending}
-      onClick={onPress}
-      className={`h-14 w-full text-[16px] sm:h-14 sm:text-[16px] ${
-        dark ? "shiny" : "btn-fill hover:bg-transparent"
-      }`}
-    >
-      {icon}
-      {label}
-    </Button>
   );
 }

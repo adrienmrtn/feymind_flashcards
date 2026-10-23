@@ -12,30 +12,25 @@ import {
 /**
  * Les questions, et de vraies questions.
  *
- * Cinq, pas quinze. Une foire aux questions qui répond à des questions que personne ne pose est
+ * Sept, pas quinze. Une foire aux questions qui répond à des questions que personne ne pose est
  * un bloc de texte pour le référencement, et ça se lit. Celles-ci sont celles qu'on se pose
  * devant un outil qui lit ses cours : est-ce que c'est privé, est-ce que ça invente, est-ce
- * que ça marche dans ma langue, combien de temps par jour, et ce que devient Anki.
- *
- * La liste saute `faq5` : c'était « Ça marche sur iPhone ? », retirée avec les mentions de
- * l'app. Les suivantes gardent leur numéro pour que le retour en arrière soit une addition.
+ * que ça marche dans ma langue, combien de temps, ce que devient Anki — et, maintenant que
+ * les apps sont publiques et le prix écrit, le téléphone et la fin de l'essai.
  */
 export function Questions() {
   const { t } = useI18n();
-  const questions = [
-    { question: t("landing.faq1q"), answer: t("landing.faq1a") },
-    { question: t("landing.faq2q"), answer: t("landing.faq2a") },
-    { question: t("landing.faq3q"), answer: t("landing.faq3a") },
-    { question: t("landing.faq4q"), answer: t("landing.faq4a") },
-    { question: t("landing.faq5q"), answer: t("landing.faq5a") },
-  ];
+  const questions = [1, 2, 3, 4, 5, 6, 7].map((n) => ({
+    question: t(`landing.faq${n}q`),
+    answer: t(`landing.faq${n}a`),
+  }));
   return (
-    <div className="paper overflow-hidden rounded-sheet bg-surface">
-      <Accordion className="px-6 sm:px-8">
+    <div className="overflow-hidden rounded-[28px] bg-surface lp-surface-shadow">
+      <Accordion className="px-5 sm:px-8">
         {questions.map((item) => (
           <AccordionItem key={item.question} value={item.question}>
-            <AccordionTrigger className="text-[15.5px] font-medium text-ink">{item.question}</AccordionTrigger>
-            <AccordionPanel className="max-w-reading text-[14.5px] leading-relaxed text-ink-secondary">
+            <AccordionTrigger className="py-5 text-[16px] font-bold text-ink">{item.question}</AccordionTrigger>
+            <AccordionPanel className="max-w-reading text-[15px] leading-relaxed text-ink-secondary">
               {item.answer}
             </AccordionPanel>
           </AccordionItem>

@@ -3,20 +3,21 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { ClosingWash } from "@/components/landing/ClosingWash";
-import { ExamSection } from "@/components/landing/ExamSection";
+import { AppsSection } from "@/components/landing/AppsSection";
+import { Atmosphere } from "@/components/landing/Atmosphere";
+import { Closing } from "@/components/landing/Closing";
 import { Footer } from "@/components/landing/Footer";
+import { FormatStrip } from "@/components/landing/FormatStrip";
 import { Hero } from "@/components/landing/Hero";
 import { IphoneLanding } from "@/components/landing/IphoneLanding";
-import { Proof } from "@/components/landing/Proof";
+import { LessonFeatures } from "@/components/landing/LessonFeatures";
+import { Pricing } from "@/components/landing/Pricing";
 import { Questions } from "@/components/landing/Questions";
-import { RetentionChart } from "@/components/landing/RetentionChart";
-import { Reveal } from "@/components/landing/Reveal";
+import { SectionHeading } from "@/components/landing/SectionHeading";
 import { Steps } from "@/components/landing/Steps";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { currentUser } from "@/lib/data/user";
-import { T } from "@/components/i18n/T";
-import { LANDING_SECTIONS } from "@/lib/landing-sections";
+import { LANDING_NAV, LANDING_SECTIONS } from "@/lib/landing-sections";
 import { indexableAlternates } from "@/lib/i18n/alternates";
 import { UI_LOCALE_META } from "@/lib/i18n/locales";
 import { localizedHref, localizedPath } from "@/lib/i18n/paths";
@@ -44,9 +45,11 @@ export async function generateMetadata(): Promise<Metadata> {
 /**
  * La vitrine. Elle montre le produit. Elle ne pose aucune question.
  *
- * Elle se lit dans l'ordre du produit : l'app telle qu'elle s'ouvre, puis les six étapes qui
- * y mènent, les cartes qu'on retourne, la raison pour laquelle ça tient, le mode examen, ce
- * que ça donne, et les questions qu'on se pose avant de commencer.
+ * Elle se lit dans l'ordre du produit : ce qu'on dépose et la leçon qui en sort (la carte du
+ * héros, qui le joue en boucle), ce que Mika sait lire, les trois étapes, ce qu'il y a dans
+ * une leçon, le même compte sur iPhone, Android et le web, le prix, les questions, et un
+ * dernier appel. Un lavage d'ambiance dérive derrière le haut de page ; tout le reste est du
+ * papier, des cartes blanches, et des entrées au défilement sur une seule courbe.
  *
  * Un lien de confirmation qui retombe ici (Site URL) n'y reste pas : s'il y a un code,
  * on reprend le callback. Une session déjà ouverte laisse la vitrine : le bouton
@@ -87,124 +90,72 @@ export default async function LandingPage({
     return <IphoneLanding signedIn={signedIn} />;
   }
 
-  const nav = [
-    { href: `#${LANDING_SECTIONS.how}`, label: t("site.how") },
-    { href: `#${LANDING_SECTIONS.method}`, label: t("site.method") },
-    { href: `#${LANDING_SECTIONS.exam}`, label: t("site.exam") },
-    { href: `#${LANDING_SECTIONS.questions}`, label: t("site.questions") },
-  ];
+  const nav = LANDING_NAV.map((item) => ({ href: item.href, label: t(item.key) }));
 
   return (
-    <>
-      <SiteHeader nav={nav} signedIn={signedIn} />
+    <div className="lp relative">
+      <Atmosphere />
+      <SiteHeader nav={nav} signedIn={signedIn} overlay />
       <main id="contenu">
         <Hero signedIn={signedIn} />
+        <FormatStrip />
 
-        <Section
-          id={LANDING_SECTIONS.how}
-          eyebrow="landing.howEyebrow"
-          title="landing.howTitle"
-          note="landing.howNote"
-        >
+        <section id={LANDING_SECTIONS.how} className="mx-auto mt-28 max-w-page scroll-mt-20 px-screen sm:mt-36">
+          <SectionHeading eyebrow="landing.howEyebrow" title="landing.howTitle" note="landing.howNote" />
           <Steps />
-        </Section>
-
-        <Section
-          id={LANDING_SECTIONS.method}
-          eyebrow="landing.methodEyebrow"
-          title="landing.methodTitle"
-          note="landing.methodNote"
-          more={{ href: localizedHref(locale, METHOD_PAGE.path), label: "landing.methodMore" }}
-        >
-          <RetentionChart />
-        </Section>
-
-        <Section
-          id={LANDING_SECTIONS.exam}
-          eyebrow="landing.examEyebrow"
-          title="landing.examTitle"
-          note="landing.examNote"
-          more={{ href: localizedHref(locale, EXAM_PAGE.path), label: "landing.examMore" }}
-        >
-          <ExamSection />
-        </Section>
-
-        <section id={LANDING_SECTIONS.results} className="mx-auto mt-28 max-w-page scroll-mt-20 px-screen sm:mt-36">
-          <Proof />
         </section>
 
-        <Section
-          id={LANDING_SECTIONS.questions}
-          eyebrow="landing.questionsEyebrow"
-          title="landing.questionsTitle"
-          note="landing.questionsNote"
-          more={{ href: localizedHref(locale, ANKI_PAGE.path), label: "landing.questionsMore" }}
-        >
-          <Questions />
-        </Section>
+        <section id={LANDING_SECTIONS.lesson} className="mx-auto mt-28 max-w-page scroll-mt-20 px-screen sm:mt-36">
+          <SectionHeading
+            eyebrow="landing.lessonEyebrow"
+            title="landing.lessonTitle"
+            note="landing.lessonNote"
+            more={{ href: localizedHref(locale, METHOD_PAGE.path), label: "landing.methodMore" }}
+          />
+          <LessonFeatures />
+          <SectionLinks
+            links={[{ href: localizedHref(locale, EXAM_PAGE.path), label: t("landing.examMore") }]}
+          />
+        </section>
 
-        <ClosingWash signedIn={signedIn} />
+        <AppsSection id={LANDING_SECTIONS.apps} />
+
+        <section id={LANDING_SECTIONS.pricing} className="mx-auto mt-28 max-w-page scroll-mt-20 px-screen sm:mt-36">
+          <SectionHeading eyebrow="landing.pricingEyebrow" title="landing.pricingTitle" note="landing.pricingNote" />
+          <Pricing signedIn={signedIn} />
+        </section>
+
+        <section
+          id={LANDING_SECTIONS.questions}
+          className="mx-auto mt-28 grid max-w-page scroll-mt-20 gap-10 px-screen sm:mt-36 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14"
+        >
+          <SectionHeading
+            align="left"
+            eyebrow="landing.questionsEyebrow"
+            title="landing.questionsTitle"
+            note="landing.questionsNote"
+            more={{ href: localizedHref(locale, ANKI_PAGE.path), label: "landing.questionsMore" }}
+          />
+          <Questions />
+        </section>
+
+        <Closing signedIn={signedIn} />
       </main>
 
       <Footer signedIn={signedIn} />
-    </>
+    </div>
   );
 }
 
-/**
- * Une section de la vitrine : un sur-titre, un titre centré, une phrase, et ce qu'elle montre.
- *
- * Le titre est centré comme ceux du parcours d'inscription : sur 1100 px, un titre calé à
- * gauche fait chercher la suite à droite, et il n'y a rien.
- */
-function Section({
-  id,
-  eyebrow,
-  title,
-  note,
-  more,
-  children,
-}: {
-  id?: string;
-  eyebrow: string;
-  title: string;
-  note: string;
-  /**
-   * La page qui développe la section.
-   *
-   * Ces liens ne sont pas décoratifs : une page que rien ne cite depuis l'accueil est une page
-   * que Google explore en dernier, et qu'il ne proposera jamais sous le résultat de la marque.
-   */
-  more?: { href: Route; label: string };
-  children: React.ReactNode;
-}) {
+/** Les pages de fond que la section cite en plus de son lien principal. */
+function SectionLinks({ links }: { links: { href: Route; label: string }[] }) {
   return (
-    // `scroll-mt` : la barre de la vitrine est collante, et une ancre sans marge
-    // dépose le titre derrière elle.
-    <section id={id} className="mx-auto mt-28 max-w-page scroll-mt-20 px-screen sm:mt-36">
-      <Reveal className="mx-auto max-w-[60ch] text-center">
-        <p className="eyebrow text-ink-tertiary">
-          <T k={eyebrow} />
-        </p>
-        <h2 className="mt-2.5 text-balance text-[30px] font-bold leading-[1.08] tracking-tight-title text-ink sm:text-[40px]">
-          <T k={title} />
-        </h2>
-        {note ? (
-          <p className="mx-auto mt-4 max-w-reading text-[16px] leading-relaxed text-ink-secondary">
-            <T k={note} />
-          </p>
-        ) : null}
-        {more ? (
-          <p className="mt-4">
-            <Link href={more.href} className="underline-draw text-[14.5px] font-medium text-ink">
-              <T k={more.label} />
-            </Link>
-          </p>
-        ) : null}
-      </Reveal>
-      <Reveal delay={1} className="mt-9">
-        {children}
-      </Reveal>
-    </section>
+    <p className="mt-8 text-center">
+      {links.map((link) => (
+        <Link key={link.href} href={link.href} className="underline-draw text-[14.5px] font-bold text-ink">
+          {link.label}
+        </Link>
+      ))}
+    </p>
   );
 }

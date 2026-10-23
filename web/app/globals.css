@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* La vitrine et sa carte de connexion : leurs effets, préfixés `lp-`. */
+@import "./landing.css";
 
 @custom-variant dark (&:is(.dark *));
 

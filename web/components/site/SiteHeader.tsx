@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { Route } from "next";
 import Link from "next/link";
 
@@ -31,16 +32,38 @@ export function SiteHeader({
   nav,
   signedIn = false,
   ariaLabel,
+  overlay = false,
 }: {
   nav: readonly SiteNavItem[];
   signedIn?: boolean;
   ariaLabel?: string;
+  /**
+   * La vitrine : la barre est transparente au-dessus du lavage du héros, et son fond (le
+   * papier voilé, le filet) se fond dès qu'on défile. Le fond est un calque dont seule
+   * l'opacité change : rien ne se repeint, rien ne bouge.
+   */
+  overlay?: boolean;
 }) {
   const { t } = useI18n();
   const homeHref = useLocalizedHref("/");
+  const scrolled = useScrolled(overlay);
 
   return (
-    <header className="sticky top-0 z-20 border-b border-hairline-on-canvas bg-canvas/80 backdrop-blur-md">
+    <header
+      className={
+        overlay
+          ? "sticky top-0 z-20"
+          : "sticky top-0 z-20 border-b border-hairline-on-canvas bg-canvas/80 backdrop-blur-md"
+      }
+    >
+      {overlay ? (
+        <span
+          aria-hidden
+          className={`pointer-events-none absolute inset-0 -z-10 border-b border-hairline-on-canvas bg-canvas/80 backdrop-blur-md transition-opacity duration-300 ease-out-strong ${
+            scrolled ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      ) : null}
       <a
         href="#contenu"
         className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:left-screen focus-visible:top-3 focus-visible:z-30 focus-visible:rounded-button focus-visible:bg-accent focus-visible:px-3 focus-visible:py-2 focus-visible:text-[13px] focus-visible:font-medium focus-visible:text-on-ink"
@@ -92,4 +115,17 @@ export function SiteHeader({
       </div>
     </header>
   );
+}
+
+/** Vrai dès que la page a quitté son tout premier écran de quelques points. */
+function useScrolled(active: boolean) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    if (!active) return;
+    const update = () => setScrolled(window.scrollY > 8);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, [active]);
+  return scrolled;
 }

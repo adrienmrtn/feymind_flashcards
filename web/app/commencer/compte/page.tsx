@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
+import { OrDivider, ProviderButton } from "@/components/auth/AuthButtons";
 import {
   APP_STORE_REVIEW_EMAIL,
   APP_STORE_REVIEW_PASSWORD,
@@ -189,46 +189,20 @@ function AccountStepBody() {
 
         <div className="mt-6 space-y-2.5">
           <ProviderButton
+            provider="apple"
             label={t("onboarding.continueApple")}
-            dark
             pending={pending === "apple"}
             onPress={() => signInWith("apple")}
-            icon={
-              <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-                <path d="M16.5 12.6c0-2 1.6-3 1.7-3.1-.9-1.4-2.4-1.5-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.3 2-1.4 2.4-.4 6 1 7.9.7.9 1.5 2 2.5 2 1 0 1.3-.6 2.5-.6s1.5.6 2.5.6 1.7-.9 2.4-1.9c.5-.7.7-1.1.9-1.6-2.3-.9-2.2-3.6-2.2-3.7zM14.6 5.9c.5-.6.9-1.5.8-2.4-.8 0-1.7.5-2.3 1.2-.5.6-.9 1.5-.8 2.3.9.1 1.8-.4 2.3-1.1z" />
-              </svg>
-            }
           />
-
           <ProviderButton
+            provider="google"
             label={t("onboarding.continueGoogle")}
             pending={pending === "google"}
             onPress={() => signInWith("google")}
-            icon={
-              <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5">
-                <path
-                  fill="#4285F4"
-                  d="M23 12.2c0-.8-.1-1.6-.2-2.3H12v4.4h6.2a5.3 5.3 0 0 1-2.3 3.5v2.9h3.7c2.2-2 3.4-5 3.4-8.5z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23.5c3 0 5.5-1 7.3-2.7l-3.6-2.8a6.9 6.9 0 0 1-10.3-3.6H1.6v3A11.5 11.5 0 0 0 12 23.5z"
-                />
-                <path fill="#FBBC05" d="M5.4 14.4a6.9 6.9 0 0 1 0-4.4v-3H1.6a11.5 11.5 0 0 0 0 10.4z" />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.2-3.2A11.5 11.5 0 0 0 1.6 7l3.8 3a6.9 6.9 0 0 1 6.6-4.6z"
-                />
-              </svg>
-            }
           />
         </div>
 
-        <div className="my-5 flex items-center gap-3">
-          <Separator className="flex-1" />
-          <span className="text-[12px] text-ink-tertiary">{t("onboarding.or")}</span>
-          <Separator className="flex-1" />
-        </div>
+        <OrDivider label={t("onboarding.or")} />
 
         {sent ? (
           <Alert variant="success" className="rise" role="status">
@@ -296,35 +270,5 @@ function AccountStepBody() {
         </p>
       </div>
     </div>
-  );
-}
-
-function ProviderButton({
-  label,
-  icon,
-  dark = false,
-  pending,
-  onPress,
-}: {
-  label: string;
-  icon: React.ReactNode;
-  dark?: boolean;
-  pending: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Button
-      type="button"
-      size="xl"
-      variant={dark ? "default" : "outline"}
-      loading={pending}
-      onClick={onPress}
-      className={`h-12 w-full text-[16px] sm:h-12 sm:text-[16px] ${
-        dark ? "shiny" : "btn-fill hover:bg-transparent"
-      }`}
-    >
-      {icon}
-      {label}
-    </Button>
   );
 }
