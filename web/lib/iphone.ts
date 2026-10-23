@@ -12,8 +12,8 @@
  * enverrait les deux pages dans le même document et ferait clignoter l'une avant l'autre.
  */
 
-/** La fiche de Micabo sur l'App Store. Un seul endroit à changer. */
-export const APP_STORE_URL = "https://apps.apple.com/my/app/micabo/id6806651497";
+/** La fiche de Micabo sur l'App Store : elle vit dans `stores.ts`, avec celle de Google Play. */
+export { APP_STORE_URL } from "./stores";
 
 /**
  * Le paramètre qui redonne la vitrine complète depuis un iPhone.

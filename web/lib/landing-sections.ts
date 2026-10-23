@@ -9,21 +9,25 @@
  * page. Il ne les prend pas parce qu'on les déclare, mais parce qu'un titre de section
  * répond à une question : d'où des noms qui disent le sujet, pas la position.
  *
- * La vitrine se lit dans l'ordre du produit : l'app telle qu'elle s'ouvre, puis les six
- * étapes qui y mènent, puis ce qui les justifie.
+ * La vitrine se lit dans l'ordre du produit : ce qu'on dépose et la leçon qui en sort (le
+ * héros), les trois étapes, ce qu'il y a dans une leçon, les applis, le prix, les questions.
+ * Les apps iPhone et Android sont publiques, et le prix est écrit : la page les annonce.
  */
 export const LANDING_SECTIONS = {
-  app: "dans-l-app",
   how: "comment-ca-marche",
-  method: "methode",
-  exam: "mode-examen",
-  results: "resultats",
+  lesson: "la-lecon",
+  apps: "applis",
+  pricing: "prix",
   questions: "questions",
 } as const;
 
+/**
+ * La barre de la vitrine : la clé de catalogue de chaque lien, et son libellé français pour
+ * les tests. Les applis n'y sont pas : la section est courte, et le pied de page la porte.
+ */
 export const LANDING_NAV = [
-  { href: `#${LANDING_SECTIONS.how}`, label: "Comment ça marche" },
-  { href: `#${LANDING_SECTIONS.method}`, label: "La méthode" },
-  { href: `#${LANDING_SECTIONS.exam}`, label: "Mode examen" },
-  { href: `#${LANDING_SECTIONS.questions}`, label: "Questions" },
+  { href: `#${LANDING_SECTIONS.how}`, key: "site.how", label: "Comment ça marche" },
+  { href: `#${LANDING_SECTIONS.lesson}`, key: "landing.navLesson", label: "La leçon" },
+  { href: `#${LANDING_SECTIONS.pricing}`, key: "landing.navPricing", label: "Prix" },
+  { href: `#${LANDING_SECTIONS.questions}`, key: "site.questions", label: "Questions" },
 ] as const;

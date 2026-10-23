@@ -18,6 +18,7 @@ import { UI_LOCALE_META } from "@/lib/i18n/locales";
 import { getTranslator, readUiLocale } from "@/lib/i18n/server";
 import type { MessageTree } from "@/lib/i18n/format";
 import { CANONICAL_URL, IS_INDEXABLE, SITE_URL } from "@/lib/config";
+import { APP_STORE_ID } from "@/lib/stores";
 import { SiteStructuredData } from "@/components/landing/StructuredData";
 
 import "./globals.css";
@@ -74,6 +75,9 @@ export async function generateMetadata(): Promise<Metadata> {
       apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
     },
     manifest: "/manifest.webmanifest",
+    // La bannière de Safari sur iPhone : `<meta name="apple-itunes-app" content="app-id=…">`.
+    // Elle propose d'ouvrir l'app (ou de l'installer) sans qu'on dessine rien.
+    itunes: { appId: APP_STORE_ID },
     openGraph: {
       type: "website",
       siteName: "micabo",

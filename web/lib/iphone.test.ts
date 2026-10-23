@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { APP_STORE_URL, isIphoneUserAgent, wantsIphoneLanding } from "./iphone";
+import { PLAY_STORE_URL } from "./stores";
 
 /** Les agents tels qu'ils arrivent, un par appareil qui nous intéresse. */
 const AGENTS = {
@@ -71,5 +72,14 @@ describe("l'adresse de l'app", () => {
   it("pointe la fiche App Store de Micabo, en HTTPS", () => {
     expect(APP_STORE_URL).toMatch(/^https:\/\/apps\.apple\.com\//);
     expect(APP_STORE_URL).toContain("id6806651497");
+  });
+
+  it("laisse Apple choisir la boutique du pays : aucun segment de pays dans l'adresse", () => {
+    expect(APP_STORE_URL).toBe("https://apps.apple.com/app/micabo/id6806651497");
+    expect(new URL(APP_STORE_URL).pathname).not.toMatch(/^\/[a-z]{2}\//);
+  });
+
+  it("pointe la fiche Google Play du même identifiant que l'app Android", () => {
+    expect(PLAY_STORE_URL).toBe("https://play.google.com/store/apps/details?id=com.micabo.app");
   });
 });
