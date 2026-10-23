@@ -17,6 +17,9 @@ import { sk } from "./sk";
 import { sv } from "./sv";
 import { da } from "./da";
 import { fi } from "./fi";
+import { sr } from "./sr";
+import { sl } from "./sl";
+import { bg } from "./bg";
 
 export { en, fr, de, es, tr };
 export type { Catalog };
@@ -52,9 +55,9 @@ export const CATALOGS: Record<UiLocale, Catalog> = {
   sk: sk,
   hu: en, // TODO(traduction) : import { hu } from "./hu";
   hr: en, // TODO(traduction) : import { hr } from "./hr";
-  sl: en, // TODO(traduction) : import { sl } from "./sl";
-  sr: en, // TODO(traduction) : import { sr } from "./sr";
-  bg: en, // TODO(traduction) : import { bg } from "./bg";
+  sl: sl,
+  sr: sr,
+  bg: bg,
   el: en, // TODO(traduction) : import { el } from "./el";
   ru: en, // TODO(traduction) : import { ru } from "./ru";
   tr,
