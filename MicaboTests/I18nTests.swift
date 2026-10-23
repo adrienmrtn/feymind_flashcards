@@ -169,6 +169,8 @@ final class I18nTests: XCTestCase {
             "app.profile.streak.record", "app.deck.pouringCount", "app.import.readingMins",
             "app.paywall.study1Source", "app.paywall.study2Source", "app.paywall.study3Source",
             "app.today.mock", "app.today.minutesCourses", "app.common.delayUnderMin",
+            // La carte animée de la vitrine : un format et une taille, pareils dans les deux langues.
+            "landing.demoFile1Meta", "landing.demoFile2Meta", "landing.demoFile3Meta", "landing.demoFile4Meta",
         ]
         assertNotCopiedFromFrench(
             french: SharedI18nCatalogs.fr,
