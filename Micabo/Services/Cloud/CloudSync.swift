@@ -84,13 +84,62 @@ final class CloudSync {
     /// Vrai quand les réglages ont changé sur cet appareil depuis la dernière montée : le
     /// profil distant est alors plus vieux que le local, et il ne doit pas l'écraser.
     private var hasLocalProfileChanges: Bool {
-        guard let userID = auth.user?.id, let pushed = lastPushedProfileSignature else { return false }
+        guard let userID = syncUserID, let pushed = lastPushedProfileSignature else { return false }
         return ProfileRecord.fromLocalPreferences(userID: userID, displayName: nil).signature != pushed
+    }
+
+    /// **Sous quel identifiant on synchronise : le compte, sinon le compte invité.**
+    ///
+    /// Jusqu'au 23 octobre 2026, un invité ne synchronisait rien : ses leçons vivaient sur le
+    /// téléphone, et une réinstallation les perdait. Or le compte invité est un vrai
+    /// `auth.users`, le cloisonnement marche avec son jeton, et `begin_lesson` compte déjà sa
+    /// leçon offerte sous cet identifiant : 178 invités iPhone et 116 invités Android en
+    /// quatorze jours, zéro cours en base. Les lignes montent donc sous l'invité ; quand il
+    /// ouvre un vrai compte, tout remonte sous celui-ci (voir `sync`, le repère par compte).
+    private var syncUserID: UUID? {
+        auth.user?.id ?? auth.guestUserID
+    }
+
+    /// Le compte pour lequel le repère de synchro a été pris. Un autre compte - l'invité qui
+    /// vient de se connecter, un camarade sur le même téléphone - repart de zéro : tout ce
+    /// qui est local monte sous lui, et tout ce qu'il a redescend.
+    private static let userKey = "micabo.cloud.lastSyncedUser"
+    private var lastSyncedUserID: UUID? {
+        get { UserDefaults.standard.string(forKey: Self.userKey).flatMap(UUID.init(uuidString:)) }
+        set { UserDefaults.standard.set(newValue?.uuidString, forKey: Self.userKey) }
+    }
+
+    /// Un passage demandé pendant qu'un autre tourne : on le fait juste après, au lieu de le
+    /// perdre. C'est ce qui garantit qu'un thème arrivé pendant la montée ne reste pas sur le
+    /// téléphone jusqu'au lancement suivant.
+    private var needsAnotherPass = false
+
+    /// Ce que la dernière montée a envoyé, pour la statistique `sync_finished`.
+    private var pushed = PushCounts()
+
+    private struct PushCounts {
+        var courses = 0
+        var chapters = 0
+        var cards = 0
     }
 
     init(auth: AuthController) {
         self.auth = auth
-        database = SupabaseDatabase(accessToken: { await auth.validAccessToken() })
+        // Le jeton du compte, sinon celui de l'invité : le même choix que les Edge Functions.
+        database = SupabaseDatabase(accessToken: { await auth.functionsAccessToken() })
+    }
+
+    // MARK: - Demander un passage
+
+    /// Le nom de la notification que `LessonBuilder` poste quand une leçon naît, qu'un thème
+    /// arrive ou que la leçon est prête. `MicaboApp` l'écoute, groupe les demandes sur deux
+    /// secondes et lance `sync`. Une notification plutôt qu'une référence : le constructeur de
+    /// leçons n'a pas à connaître la synchro, ni les tests à en construire une.
+    nonisolated static let lessonChanged = Notification.Name("micabo.cloud.lessonChanged")
+
+    /// « Quelque chose à monter. » Rend la main tout de suite.
+    nonisolated static func nudge() {
+        NotificationCenter.default.post(name: lessonChanged, object: nil)
     }
 
     /// Efface le repère de synchro. À appeler à la déconnexion : le compte suivant ne doit pas
@@ -99,6 +148,7 @@ final class CloudSync {
         UserDefaults.standard.removeObject(forKey: Self.watermarkKey)
         UserDefaults.standard.removeObject(forKey: Self.profileSignatureKey)
         UserDefaults.standard.removeObject(forKey: Self.pendingCoursesKey)
+        UserDefaults.standard.removeObject(forKey: Self.userKey)
         CloudTombstones.removeAll()
         state = .idle
     }
@@ -126,11 +176,22 @@ final class CloudSync {
     /// L'ordre compte. Descendre d'abord évite d'écraser une modification faite ailleurs avec
     /// une version locale plus vieille ; remonter ensuite publie ce que cet appareil a de neuf.
     func sync(context: ModelContext) async {
-        guard auth.isSignedIn, AppConfig.isConfigured else { return }
-        guard state != .syncing else { return }
+        guard let userID = syncUserID, AppConfig.isConfigured else { return }
+        guard state != .syncing else {
+            needsAnotherPass = true
+            return
+        }
 
         state = .syncing
         refusedCourses = []
+        pushed = PushCounts()
+        // Un autre compte que la dernière fois : le repère ne vaut plus rien. Tout ce qui est
+        // ici monte sous lui, tout ce qu'il a redescend. C'est le chemin de l'invité qui se
+        // connecte : ses leçons suivent le compte sans qu'on ait rien à transférer.
+        if lastSyncedUserID != userID {
+            lastSyncedAt = nil
+            lastPushedProfileSignature = nil
+        }
         let since = lastSyncedAt
         // Le nouveau repère est pris **avant** les requêtes. Si une carte est notée pendant
         // qu'un envoi réseau est suspendu, sa date sera postérieure à ce repère et le passage
@@ -147,11 +208,19 @@ final class CloudSync {
             try await pull(context: context, since: pullSince)
             try await push(context: context, since: repaired ? since : nil)
             lastSyncedAt = checkpoint
+            lastSyncedUserID = userID
             // Fait même si un cours a encore été refusé : il est dans `pendingCourseIDs`, et
             // c'est par là qu'il sera retenté, sans refaire toute la montée.
             UserDefaults.standard.set(Self.repairVersion, forKey: Self.repairKey)
             epoch += 1
             LibraryCensus.forget()
+            Analytics.track(.syncFinished, [
+                "courses": .number(Double(pushed.courses)),
+                "chapters": .number(Double(pushed.chapters)),
+                "cards": .number(Double(pushed.cards)),
+                "user": .text(auth.user == nil ? "guest" : "account"),
+                "refused": .number(Double(refusedCourses.count)),
+            ])
             // Un cours dont les cartes ont été refusées ne bloque plus le reste, mais il ne
             // doit pas passer pour synchronisé : on le nomme, et le prochain passage retentera.
             if refusedCourses.isEmpty {
@@ -165,14 +234,40 @@ final class CloudSync {
             // Une panne de synchro ne casse rien : les données locales sont intactes et le
             // prochain passage renverra tout. On la garde visible dans les réglages, sans
             // interrompre ce que l'utilisateur faisait.
-            state = .failed((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+            let description = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            state = .failed(description)
+            // Et on la compte : une synchro qui échoue en silence est celle qui a laissé deux
+            // leçons sur trois hors de la base sans qu'une courbe le montre.
+            Analytics.track(.syncFailed, [
+                "reason": .text(Self.failureLabel(error)),
+                "user": .text(auth.user == nil ? "guest" : "account"),
+            ])
         }
+
+        if needsAnotherPass {
+            needsAnotherPass = false
+            await sync(context: context)
+        }
+    }
+
+    /// L'échec en un mot, sans texte d'élève : le statut HTTP et le code Postgres quand il y en
+    /// a, la famille de l'erreur sinon.
+    private static func failureLabel(_ error: Error) -> String {
+        if let failure = error as? SupabaseDatabase.Failure {
+            switch failure {
+            case .notConfigured: return "not_configured"
+            case .notSignedIn: return "not_signed_in"
+            case .network: return "network"
+            case .server(let status, _, let code): return "server_\(status)" + (code.map { "_\($0)" } ?? "")
+            }
+        }
+        return String(describing: type(of: error)).prefix(40).lowercased()
     }
 
     // MARK: - Montée
 
     private func push(context: ModelContext, since: Date?) async throws {
-        guard let userID = auth.user?.id else { throw SupabaseDatabase.Failure.notSignedIn }
+        guard let userID = syncUserID else { throw SupabaseDatabase.Failure.notSignedIn }
 
         let profile = ProfileRecord.fromLocalPreferences(userID: userID, displayName: auth.user?.displayName)
         try await database.upsert([profile], into: CloudTable.profiles)
@@ -197,6 +292,7 @@ final class CloudSync {
             .filter {
                 !CloudTombstones.contains(CloudTable.courses, id: $0.id) && !Self.isLocalOnly($0)
             }
+        pushed.courses = courses.count
         try await database.upsert(courses.map { record(for: $0, userID: userID) }, into: CloudTable.courses)
 
         // **Les chapitres montent entre les cours et les cartes.** Ils référencent un cours
@@ -206,6 +302,7 @@ final class CloudSync {
         // qui se retrouveraient non classées côté serveur jusqu'à la synchro suivante.
         let chapters = try fetchChangedChapters(in: context, since: since)
             .filter { !CloudTombstones.contains(CloudTable.chapters, id: $0.id) && !Self.isLocalOnly($0.course) }
+        pushed.chapters = chapters.count
         try await database.upsert(
             chapters.compactMap { record(for: $0, userID: userID) },
             into: CloudTable.chapters
@@ -230,6 +327,7 @@ final class CloudSync {
 
         cards = cards.filter { !CloudTombstones.contains(CloudTable.flashcards, id: $0.id) && !Self.isLocalOnly($0.course) }
         logs = logs.filter { !Self.isLocalOnly($0.card?.course) }
+        pushed.cards = cards.count
         let refused = try await pushCards(cards, userID: userID)
 
         // L'historique est en ajout seul. Renvoyer les milliers d'anciennes lignes à chaque
@@ -476,7 +574,7 @@ final class CloudSync {
     /// d'apprendre qu'un cours a disparu ailleurs, puisqu'une ligne effacée ne lui apprendrait
     /// rien.
     private func pull(context: ModelContext, since: Date?) async throws {
-        guard let userID = auth.user?.id else { throw SupabaseDatabase.Failure.notSignedIn }
+        guard let userID = syncUserID else { throw SupabaseDatabase.Failure.notSignedIn }
         let mine = URLQueryItem(name: "user_id", value: "eq.\(userID.uuidString.lowercased())")
 
         // **Le filtre est indispensable depuis que la bibliothèque existe.**
@@ -771,7 +869,7 @@ final class CloudSync {
         // montée, le profil distant est celui d'avant, et le recopier annulerait le choix.
         // La montée qui suit publiera le nouveau.
         if !hasLocalProfileChanges,
-           let userID = auth.user?.id,
+           let userID = syncUserID,
            let profile = try? await database.fetch(ProfileRecord.self, from: CloudTable.profiles).first,
            profile.id == userID {
             profile.applyToLocalPreferences()

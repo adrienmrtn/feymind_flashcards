@@ -177,6 +177,16 @@ class Prefs(context: Context) {
         get() = prefs.getLong("sync.watermark", 0)
         set(value) = prefs.edit { putLong("sync.watermark", value) }
 
+    /** Le compte (ou l'invité) pour lequel le repère a été pris : un autre repart de zéro. */
+    var syncUser: String
+        get() = prefs.getString("sync.user", "").orEmpty()
+        set(value) = prefs.edit { putString("sync.user", value) }
+
+    /** L'empreinte du profil tel qu'il est monté la dernière fois (`CloudSync.pushProfile`). */
+    var profileSignature: String
+        get() = prefs.getString("sync.profile", "").orEmpty()
+        set(value) = prefs.edit { putString("sync.profile", value) }
+
     fun clearAccount() {
         prefs.edit {
             listOf("account.access", "account.refresh", "account.expiresAt", "account.user", "account.email", "account.name").forEach(::remove)

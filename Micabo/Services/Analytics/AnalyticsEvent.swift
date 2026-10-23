@@ -104,6 +104,20 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     case mikaBlocked = "mika_blocked"
     /// Une carte proposée par Mika, rangée dans un cours.
     case mikaCardAdded = "mika_card_added"
+
+    // MARK: Leçons et synchro
+
+    /// Un thème de leçon que le serveur n'a pas pu écrire : `reason` dit pourquoi
+    /// (`provider`, `invalid_json`, `invalid_content`, `network`, `free_limit`…), `retry` si
+    /// l'app va le redemander seule. Le 21 octobre 2026, quarante-cinq thèmes ont échoué sans
+    /// qu'aucune courbe de l'app ne le montre.
+    case lessonThemeFailed = "lesson_theme_failed"
+    /// Un aller-retour de synchro réussi, avec ce qu'il a poussé (`courses`, `cards`) et
+    /// sous quel compte (`user` : `account` ou `guest`). Sans lui, deux leçons sur trois
+    /// manquaient en base et rien ne le disait.
+    case syncFinished = "sync_finished"
+    /// Un aller-retour de synchro interrompu, et sa raison en quelques mots.
+    case syncFailed = "sync_failed"
 }
 
 /// **Ce qu'une étiquette a le droit d'être.**
