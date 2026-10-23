@@ -129,19 +129,139 @@ class LessonRepository(
 
     fun lesson(id: String): Lesson? = _lessons.value[id]
 
+    /**
+     * Appelé quand le serveur ne connaît pas encore le cours (`course_unknown`) : la synchronisation
+     * part tout de suite, pour que « Réessayer » trouve le cours (`MicaboApplication`).
+     */
+    var onCourseUnknown: () -> Unit = {}
+
+    /**
+     * **`generate-lesson`, avec les refus du serveur durci.** Une porte de quota injoignable
+     * (503) est une panne passagère : elle se dit comme le réseau, avec « Réessayer », et non
+     * comme un échec de la leçon. Un cours pas encore synchronisé (409 `course_unknown`) n'ouvre
+     * pas le paywall : la synchronisation est relancée, et la phrase invite à réessayer.
+     */
+    private suspend fun generateLesson(payload: JsonObject, timeoutMs: Int = 150_000): JsonObject = try {
+        functions.call("generate-lesson", payload, timeoutMs)
+    } catch (error: ApiException) {
+        if (error.status == 503) throw NetworkException(error)
+        if (error.code == "course_unknown") runCatching { onCourseUnknown() }
+        throw error
+    }
+
     private fun save(lesson: Lesson) {
-        val stamped = lesson.stamped().copy(updatedAt = System.currentTimeMillis())
+        val stamped = lesson.stamped().copy(updatedAt = System.currentTimeMillis(), dirty = true)
         _lessons.update { it + (stamped.id to stamped) }
         persist(stamped.id)
     }
 
-    /** Une leçon venue du serveur : gardée telle quelle, avec sa date ; la conversation locale reste. */
-    fun applyFromCloud(lesson: Lesson) {
+    /**
+     * **Une leçon venue du serveur**, gardée telle quelle avec sa date ; la conversation locale
+     * reste. Elle n'entre que si la leçon d'ici n'a pas bougé depuis qu'on l'a lue avant les
+     * requêtes (`expectedUpdatedAt`, `null` pour une leçon absente) : une carte notée ou un
+     * thème écrit pendant le téléchargement n'est plus écrasé par la version d'avant. Rend vrai
+     * si elle est entrée.
+     */
+    fun applyFromCloud(lesson: Lesson, expectedUpdatedAt: Long?): Boolean {
+        var applied = false
         _lessons.update { map ->
             val local = map[lesson.id]
-            map + (lesson.id to lesson.copy(chat = local?.chat ?: lesson.chat))
+            applied = if (expectedUpdatedAt == null) local == null else local?.updatedAt == expectedUpdatedAt
+            if (!applied) map else map + (lesson.id to lesson.copy(chat = local?.chat ?: lesson.chat))
         }
-        persist(lesson.id)
+        if (applied) persist(lesson.id)
+        return applied
+    }
+
+    /**
+     * **La leçon est montée** telle qu'elle était à `pushedUpdatedAt` : elle n'a plus rien à
+     * pousser, sauf si elle a changé pendant la montée (elle reste alors à pousser). La date du
+     * serveur (`serverUpdatedAt`) est gardée quand on la connaît ; la date d'ici ne bouge pas.
+     */
+    fun markPushed(id: String, pushedUpdatedAt: Long, serverUpdatedAt: Long?) {
+        var changed = false
+        _lessons.update { map ->
+            val current = map[id]
+            if (current == null) {
+                changed = false
+                map
+            } else {
+                val clean = current.updatedAt == pushedUpdatedAt
+                val next = current.copy(
+                    dirty = current.dirty && !clean,
+                    serverUpdatedAt = serverUpdatedAt ?: current.serverUpdatedAt,
+                )
+                changed = next != current
+                if (changed) map + (id to next) else map
+            }
+        }
+        if (changed) persist(id)
+    }
+
+    /**
+     * **Ces leçons sont à pousser**, sans changer leur date : après un changement de compte (tout
+     * ce qui est ici monte sous le nouveau), ou une leçon d'avant les drapeaux qui n'était
+     * repérée que par sa date. Gardé sur le disque : un refus ne la perd plus.
+     */
+    fun markDirty(ids: Collection<String>) {
+        if (ids.isEmpty()) return
+        val wanted = ids.toSet()
+        val touched = mutableListOf<String>()
+        _lessons.update { map ->
+            touched.clear()
+            map.mapValues { (id, lesson) ->
+                if (id in wanted && !lesson.dirty) {
+                    touched.add(id)
+                    lesson.copy(dirty = true)
+                } else lesson
+            }
+        }
+        touched.forEach(::persist)
+    }
+
+    /**
+     * **La leçon change d'identifiants** (`rekey`) : la leçon, ses thèmes et ses cartes reçoivent
+     * des UUID neufs, le contenu et la mémoire des cartes restent (`progress.cards` est rangé par
+     * `thème:rang`, pas par identifiant). C'est le dernier recours quand le serveur refuse la
+     * leçon (RLS, 42501) parce que ses identifiants appartiennent à un autre utilisateur - le
+     * compte invité d'avant, un camarade sur le même téléphone - et qu'aucun transfert
+     * (`claim_guest`) n'est possible. Rend la nouvelle leçon et la table ancienne → nouvelle
+     * carte, ou `null` si la leçon n'existe plus.
+     */
+    fun rekey(id: String): Pair<Lesson, Map<String, String>>? {
+        var created: Lesson? = null
+        var cardIds: Map<String, String> = emptyMap()
+        _lessons.update { map ->
+            val current = map[id]
+            if (current == null) {
+                created = null
+                map
+            } else {
+                val ids = HashMap<String, String>()
+                val fresh = current.copy(
+                    id = newId(),
+                    themes = current.themes.map { theme ->
+                        theme.copy(
+                            id = newId(),
+                            flashcards = theme.flashcards.map { card ->
+                                val next = newId()
+                                if (card.id.isNotEmpty()) ids[card.id.lowercase()] = next
+                                card.copy(id = next)
+                            },
+                        )
+                    },
+                    dirty = true,
+                    serverUpdatedAt = 0,
+                )
+                created = fresh
+                cardIds = ids
+                map - id + (fresh.id to fresh)
+            }
+        }
+        val fresh = created ?: return null
+        persist(fresh.id)
+        scope.launch(Dispatchers.IO) { diskLock.withLock { File(directory, "$id.json").delete() } }
+        return fresh to cardIds
     }
 
     /**
@@ -195,7 +315,7 @@ class LessonRepository(
         _lessons.update { map ->
             val current = map[id]
             found = current != null
-            if (current == null) map else map + (id to change(current).stamped().copy(updatedAt = System.currentTimeMillis()))
+            if (current == null) map else map + (id to change(current).stamped().copy(updatedAt = System.currentTimeMillis(), dirty = true))
         }
         if (found) persist(id)
     }
@@ -207,7 +327,14 @@ class LessonRepository(
         scope.launch(Dispatchers.IO) { diskLock.withLock { File(directory, "$id.json").delete() } }
     }
 
+    /**
+     * **Tout effacer** : chaque leçon et chaque carte part aussi au serveur (une pierre tombale
+     * par ligne). Sans elles, la synchronisation suivante redescendait tout ce que l'élève venait
+     * d'effacer : rien n'était supprimé côté serveur.
+     */
     fun deleteAll() {
+        val all = _lessons.value.values
+        prefs.addTombstones(all.flatMap { lesson -> listOf("course:${lesson.id}") + lesson.themes.flatMap { it.flashcards }.filter { it.id.isNotEmpty() }.map { "card:${it.id}" } })
         _lessons.value = emptyMap()
         scope.launch(Dispatchers.IO) { diskLock.withLock { directory.listFiles().orEmpty().forEach { it.delete() } } }
     }
@@ -232,17 +359,45 @@ class LessonRepository(
     /** Qui voit la leçon : ses amis, ou personne. */
     fun setVisibility(id: String, visibility: String) = modify(id) { it.copy(visibility = visibility) }
 
-    /** Une carte notée : son prochain rappel, et la journée de la série. */
-    fun review(id: String, key: String, rating: Rating) {
+    /**
+     * **Une carte notée**, retrouvée par son identifiant au moment de la note : son prochain
+     * rappel, et la journée de la série.
+     *
+     * La séance garde ses cartes avec leur clé `thème:rang` d'au moment où elle a commencé. Une
+     * synchronisation pendant la séance (une carte retirée ou ajoutée sur l'iPhone) refait ces
+     * clés : la note partait alors sur la voisine. La clé n'est donc résolue qu'ici, dans la
+     * leçon telle qu'elle est ; `fallbackKey` ne sert qu'à une carte sans identifiant.
+     */
+    fun review(id: String, cardId: String, fallbackKey: String, rating: Rating) {
         streak.record()
-        val before = lesson(id)?.progress?.cards?.get(key) ?: CardReview()
+        val wanted = cardId.lowercase()
+        fun keyIn(lesson: Lesson): String? {
+            if (wanted.isEmpty()) return fallbackKey.takeIf { lesson.cardAt(it) != null }
+            lesson.themes.forEachIndexed { theme, value ->
+                val index = value.flashcards.indexOfFirst { it.id.lowercase() == wanted }
+                if (index >= 0) return "$theme:$index"
+            }
+            return null
+        }
+        val start = lesson(id) ?: return
+        val startKey = keyIn(start) ?: return
+        val before = start.progress.cards[startKey] ?: CardReview()
+        var gradedKey: String? = null
         modify(id) { lesson ->
-            val card = lesson.progress.cards[key] ?: CardReview()
-            // Datée : c'est la note la plus récente, ici ou ailleurs, que la synchronisation garde.
-            val next = Srs.schedule(card, rating).copy(updatedAt = System.currentTimeMillis())
-            lesson.copy(progress = lesson.progress.copy(cards = lesson.progress.cards + (key to next)))
+            // Rejouable : la clé est recherchée dans la version courante à chaque essai.
+            val key = keyIn(lesson)
+            gradedKey = key
+            if (key == null) {
+                lesson
+            } else {
+                val card = lesson.progress.cards[key] ?: CardReview()
+                // Datée : c'est la note la plus récente, ici ou ailleurs, que la synchronisation garde.
+                val next = Srs.schedule(card, rating).copy(updatedAt = System.currentTimeMillis())
+                lesson.copy(progress = lesson.progress.copy(cards = lesson.progress.cards + (key to next)))
+            }
         }
         // Hors de `modify` : sa transformation peut être rejouée, la note ne doit partir qu'une fois.
+        val key = gradedKey ?: return
         val lesson = lesson(id) ?: return
         logReview(lesson, key, before, lesson.progress.cards[key] ?: return, rating)
     }
@@ -253,9 +408,7 @@ class LessonRepository(
      * depuis le 23 octobre 2026, et ses notes manquaient au classement et à la série du compte.
      */
     private fun logReview(lesson: Lesson, key: String, before: CardReview, after: CardReview, rating: Rating) {
-        val theme = key.substringBefore(':').toIntOrNull() ?: return
-        val index = key.substringAfter(':').toIntOrNull() ?: return
-        val cardId = lesson.themes.getOrNull(theme)?.flashcards?.getOrNull(index)?.id?.takeIf { it.isNotEmpty() } ?: return
+        val cardId = lesson.cardAt(key)?.id?.takeIf { it.isNotEmpty() } ?: return
         prefs.queueReview(buildJsonObject {
             put("id", newId())
             put("card_id", cardId.lowercase())
@@ -297,7 +450,7 @@ class LessonRepository(
             putJsonArray("avoid") { lesson.themes.flatMap { it.questions }.map { it.prompt.take(200) }.takeLast(80).forEach { add(JsonPrimitive(it)) } }
             put("count", count)
         }
-        val envelope = functions.call("generate-lesson", payload)
+        val envelope = generateLesson(payload)
         val generated = (envelope["questions"] as? JsonArray).orEmpty().mapNotNull { item ->
             val raw = item as? JsonObject ?: return@mapNotNull null
             val theme = raw.int("theme") ?: 0
@@ -348,7 +501,7 @@ class LessonRepository(
                 }
             }
         }
-        val envelope = functions.call("generate-lesson", payload, timeoutMs = 180_000)
+        val envelope = generateLesson(payload, timeoutMs = 180_000)
         val generated = envelope["exam"] as? JsonObject ?: throw ApiException(502, "invalid", "")
         val items = (generated["questions"] as? JsonArray).orEmpty().mapNotNull { item ->
             val raw = item as? JsonObject ?: return@mapNotNull null
@@ -417,7 +570,7 @@ class LessonRepository(
             if (request.topic != null) put("topic", request.topic.take(400))
             if (request.onboarding) put("onboarding", true)
         }
-        val envelope = functions.call("generate-lesson", payload)
+        val envelope = generateLesson(payload)
         val plan = MicaboJson.decodeFromJsonElement<Plan>(envelope["plan"] ?: throw ApiException(502, "invalid", ""))
         if (plan.themes.isEmpty()) throw ApiException(502, "invalid", "")
         // Le plan est accordé : la leçon offerte du parcours a servi.
@@ -545,7 +698,7 @@ class LessonRepository(
         var lastError: Throwable? = null
         repeat(2) { attempt ->
             try {
-                val envelope = functions.call("generate-lesson", payload)
+                val envelope = generateLesson(payload)
                 val theme = envelope["theme"] ?: throw ApiException(502, "invalid", "")
                 val written = MicaboJson.decodeFromJsonElement<WrittenTheme>(theme)
                 if (written.notes == null) throw ApiException(502, "invalid", "")

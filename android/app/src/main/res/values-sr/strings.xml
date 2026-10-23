@@ -244,8 +244,6 @@
     <string name="ios_tapToSync">Dodirni za sinhronizaciju</string>
     <string name="ios_targetLead">Ciljaj na ono što bi te stvarno obradovalo, a ne na ono što zvuči razumno.</string>
     <string name="ios_targetTitle">A čemu\nciljaš?</string>
-    <string name="ios_trialDay2">2. dan: podsetnik pre kraja</string>
-    <string name="ios_trialDay2Detail">Upozorićemo te obaveštenjem. Otkazivanje za petnaest sekundi.</string>
     <string name="ios_trialLast">%1$s. dan: kraj probnog perioda</string>
     <string name="ios_trialLastDetail">Tvoja pretplata počinje %1$s.</string>
     <string name="ios_trialToday">Danas: isprobaj Micabo Pro</string>
@@ -253,8 +251,7 @@
     <string name="ios_trial_noPayment">Sada ne plaćaš ništa</string>
     <string name="ios_trial_price">Zatim %1$s godišnje, odnosno %2$s mesečno.</string>
     <string name="ios_trial_reminder_cta">Nastavi besplatno</string>
-    <string name="ios_trial_reminder_sub">%1$s. dana upozoriće te obaveštenje. Ako želiš, otkazuješ sa dva dodira.</string>
-    <string name="ios_trial_reminder_title">Poslaćemo ti **podsetnik** pre kraja probnog perioda.</string>
+    <string name="ios_trial_reminder_title">Isprobaj Micabo **besplatno**, bez obaveza.</string>
     <string name="ios_trial_title">Želimo da Micabo isprobaš **besplatno**.</string>
     <string name="ios_unitWeek">nedelja</string>
     <string name="ios_unitYear">godina</string>
@@ -517,10 +514,12 @@
     <string name="onboarding_linkSent">Otvori link poslat na %1$s</string>
     <string name="onboarding_sendLink">Pošalji mi link</string>
     <string name="x_account_deleteMsg">Tvoji kursevi, kartice i istorija biće obrisani svuda. Pretplatom se upravlja na Google Play-u.</string>
+    <string name="x_account_expired">Sesija ti je istekla. Ponovo se prijavi da bi se lekcije i dalje sinhronizovale.</string>
     <string name="x_auth_rateLimited">Previše pokušaja. Sačekaj minut pa pokušaj ponovo.</string>
     <string name="x_error_generic">Nešto je pošlo naopako. Pokušaj ponovo.</string>
     <string name="x_error_network">Nema veze. Proveri internet i pokušaj ponovo.</string>
     <string name="x_friends_adopt">Napravi od toga moju lekciju</string>
+    <string name="x_lesson_courseUnknown">Ovaj kurs još nije sinhronizovan. Pokušaj ponovo za trenutak.</string>
     <string name="x_lesson_whoSees">Ko vidi ovu lekciju</string>
     <string name="x_onb_language">Na kom jeziku učiš?</string>
     <string name="x_onb_language_sub">Mika na ovom jeziku piše tvoje lekcije, kvizove i kartice.</string>
@@ -533,7 +532,10 @@
     <string name="x_paywall_subscribe">Pređi na Pro</string>
     <string name="x_pro_gifted">Ovaj pristup si dobio na poklon: nema čime da se upravlja ni šta da se otkaže.</string>
     <string name="x_quoted">„%1$s“</string>
+    <string name="x_record_channel">Snimanje predavanja</string>
     <string name="x_record_limit">Do 90 minuta. Mika pretvara tvoj snimak u tekst, a zatim piše tvoju lekciju.</string>
+    <string name="x_record_ongoing">Snimam tvoje predavanje</string>
+    <string name="x_record_ongoingBody">Micabo nastavlja da snima, čak i dok je ekran zaključan.</string>
     <string name="x_score_1">Teško mi ide</string>
     <string name="x_score_2">Malo ispod proseka</string>
     <string name="x_score_3">Prosečno</string>

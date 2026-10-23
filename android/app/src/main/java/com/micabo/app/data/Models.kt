@@ -57,6 +57,19 @@ data class Lesson(
      * l'iPhone comme le site le prendraient pour une leçon.
      */
     val legacy: Boolean = false,
+    /**
+     * **Changée ici depuis la dernière montée réussie.** C'est elle, et non plus la seule date,
+     * qui dit ce qui doit monter : une leçon refusée par le serveur reste à pousser même quand
+     * le repère avance, et une leçon descendue (propre) n'est plus renvoyée telle quelle.
+     */
+    val dirty: Boolean = false,
+    /**
+     * Le `updated_at` du serveur la dernière fois qu'on a vu la ligne (montée ou descendue), en
+     * millisecondes ; 0 avant cette date. Le serveur pose lui-même `updated_at` (`touch_updated_at`) :
+     * comparer sa date à l'horloge du téléphone faisait redescendre chaque leçon qu'on venait de
+     * pousser, et un téléphone en avance écrasait l'iPhone. On compare donc serveur contre serveur.
+     */
+    val serverUpdatedAt: Long = 0,
 ) {
     /**
      * La leçon avec un identifiant stable pour chaque thème et chaque carte : ce sont les

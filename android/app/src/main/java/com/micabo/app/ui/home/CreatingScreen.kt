@@ -89,6 +89,8 @@ fun errorMessage(error: Throwable): String = when {
     error is ApiException && error.code == "import_pro" -> stringResource(R.string.lesson_error_importPro)
     error is ApiException && error.code == "pro_required" -> stringResource(R.string.lesson_error_proRequired)
     error is ApiException && error.code == "forbidden" -> stringResource(R.string.lesson_error_forbidden)
+    // Le cours n'est pas encore au serveur (409) : la synchronisation est relancée, on réessaie.
+    error is ApiException && error.code == "course_unknown" -> stringResource(R.string.x_lesson_courseUnknown)
     else -> stringResource(R.string.lesson_error_generic)
 }
 

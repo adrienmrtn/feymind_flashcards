@@ -245,8 +245,6 @@
     <string name="ios_tapToSync">Докосни за синхронизация</string>
     <string name="ios_targetLead">Цели се в това, което наистина би те зарадвало, а не в това, което звучи разумно.</string>
     <string name="ios_targetTitle">А към какво\nсе стремиш?</string>
-    <string name="ios_trialDay2">Ден 2: напомняне преди края</string>
-    <string name="ios_trialDay2Detail">Ще те предупредим с известие. Отказ за петнайсет секунди.</string>
     <string name="ios_trialLast">Ден %1$s: краят на пробния период</string>
     <string name="ios_trialLastDetail">Абонаментът ти започва на %1$s.</string>
     <string name="ios_trialToday">Днес: пробвай Micabo Pro</string>
@@ -254,8 +252,7 @@
     <string name="ios_trial_noPayment">Сега не плащаш нищо</string>
     <string name="ios_trial_price">След това %1$s на година, тоест %2$s на месец.</string>
     <string name="ios_trial_reminder_cta">Продължи безплатно</string>
-    <string name="ios_trial_reminder_sub">На ден %1$s ще получиш известие. Ако искаш, се отказваш с две докосвания.</string>
-    <string name="ios_trial_reminder_title">Ще ти изпратим **напомняне** преди края на пробния период.</string>
+    <string name="ios_trial_reminder_title">Пробвай Micabo **безплатно**, без ангажимент.</string>
     <string name="ios_trial_title">Искаме да пробваш Micabo **безплатно**.</string>
     <string name="ios_unitWeek">седмица</string>
     <string name="ios_unitYear">година</string>
@@ -521,10 +518,12 @@
     <string name="onboarding_linkSent">Отвори линка, изпратен до %1$s</string>
     <string name="onboarding_sendLink">Получи линк</string>
     <string name="x_account_deleteMsg">Курсовете, картите и историята ти ще бъдат изтрити навсякъде. Абонаментът се управлява от Google Play.</string>
+    <string name="x_account_expired">Сесията ти изтече. Влез отново, за да продължат да се синхронизират уроците ти.</string>
     <string name="x_auth_rateLimited">Твърде много опити. Изчакай минута и опитай пак.</string>
     <string name="x_error_generic">Нещо се обърка. Опитай пак.</string>
     <string name="x_error_network">Няма връзка. Провери интернета си и опитай пак.</string>
     <string name="x_friends_adopt">Направи го мой урок</string>
+    <string name="x_lesson_courseUnknown">Този курс още не е синхронизиран. Опитай отново след малко.</string>
     <string name="x_lesson_whoSees">Кой вижда този урок</string>
     <string name="x_onb_language">На какъв език учиш?</string>
     <string name="x_onb_language_sub">Mika пише уроците, тестовете и флашкартите ти на този език.</string>
@@ -537,7 +536,10 @@
     <string name="x_paywall_subscribe">Мини на Pro</string>
     <string name="x_pro_gifted">Този достъп ти е подарен: няма какво да управляваш или прекратяваш.</string>
     <string name="x_quoted">„%1$s“</string>
+    <string name="x_record_channel">Запис на урока</string>
     <string name="x_record_limit">До 90 минути. Mika превръща записа ти в текст, после пише урока ти.</string>
+    <string name="x_record_ongoing">Записвам урока ти</string>
+    <string name="x_record_ongoingBody">Micabo продължава да записва, дори при заключен екран.</string>
     <string name="x_score_1">Трудно ми е</string>
     <string name="x_score_2">Малко под средното</string>
     <string name="x_score_3">Средно</string>

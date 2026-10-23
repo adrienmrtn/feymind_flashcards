@@ -56,6 +56,13 @@ fun Lesson.cardEntries(): List<CardEntry> = themes.withIndex().flatMap { (theme,
     }
 }
 
+/** La carte rangée sous une clé `thème:rang`, si elle existe encore. */
+fun Lesson.cardAt(key: String): Flashcard? {
+    val theme = key.substringBefore(':').toIntOrNull() ?: return null
+    val index = key.substringAfter(':').toIntOrNull() ?: return null
+    return themes.getOrNull(theme)?.flashcards?.getOrNull(index)
+}
+
 /**
  * La leçon avec d'autres cartes, thème par thème, chacune avec sa mémoire : les clés
  * `thème:rang` sont refaites, pour qu'une carte retirée ou ajoutée ne décale pas la mémoire

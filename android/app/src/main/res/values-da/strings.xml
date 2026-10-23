@@ -240,8 +240,6 @@
     <string name="ios_tapToSync">Tryk for at synkronisere</string>
     <string name="ios_targetLead">Sigt efter det, der virkelig ville gøre dig glad, ikke det, der lyder fornuftigt.</string>
     <string name="ios_targetTitle">Og hvad sigter\ndu efter?</string>
-    <string name="ios_trialDay2">Dag 2: påmindelse før den slutter</string>
-    <string name="ios_trialDay2Detail">Vi giver dig besked med en notifikation. Opsig på femten sekunder.</string>
     <string name="ios_trialLast">Dag %1$s: prøveperioden slutter</string>
     <string name="ios_trialLastDetail">Dit abonnement starter den %1$s.</string>
     <string name="ios_trialToday">I dag: prøv Micabo Pro</string>
@@ -249,8 +247,7 @@
     <string name="ios_trial_noPayment">Intet at betale nu</string>
     <string name="ios_trial_price">Derefter %1$s om året, altså %2$s om måneden.</string>
     <string name="ios_trial_reminder_cta">Fortsæt gratis</string>
-    <string name="ios_trial_reminder_sub">På dag %1$s får du en notifikation. Opsig med to tryk, hvis du vil.</string>
-    <string name="ios_trial_reminder_title">Vi sender dig en **påmindelse**, før din prøveperiode slutter.</string>
+    <string name="ios_trial_reminder_title">Prøv Micabo **gratis**, uden binding.</string>
     <string name="ios_trial_title">Vi vil gerne have, at du prøver Micabo **gratis**.</string>
     <string name="ios_unitWeek">uge</string>
     <string name="ios_unitYear">år</string>
@@ -507,10 +504,12 @@
     <string name="onboarding_linkSent">Åbn linket, der er sendt til %1$s</string>
     <string name="onboarding_sendLink">Få et link</string>
     <string name="x_account_deleteMsg">Dine kurser, kort og din historik slettes overalt. Et abonnement styres i Google Play.</string>
+    <string name="x_account_expired">Din session er udløbet. Log ind igen for at blive ved med at synkronisere dine lektioner.</string>
     <string name="x_auth_rateLimited">For mange forsøg. Vent et minut, og prøv igen.</string>
     <string name="x_error_generic">Noget gik galt. Prøv igen.</string>
     <string name="x_error_network">Ingen forbindelse. Tjek dit internet, og prøv igen.</string>
     <string name="x_friends_adopt">Gør det til min lektion</string>
+    <string name="x_lesson_courseUnknown">Kurset er ikke synkroniseret endnu. Prøv igen om et øjeblik.</string>
     <string name="x_lesson_whoSees">Hvem kan se denne lektion</string>
     <string name="x_onb_language">Hvilket sprog studerer du på?</string>
     <string name="x_onb_language_sub">Mika skriver dine lektioner, quizzer og kort på dette sprog.</string>
@@ -523,7 +522,10 @@
     <string name="x_paywall_subscribe">Få Pro</string>
     <string name="x_pro_gifted">Denne adgang har du fået i gave: der er intet at administrere eller opsige.</string>
     <string name="x_quoted">»%1$s«</string>
+    <string name="x_record_channel">Optagelse af undervisning</string>
     <string name="x_record_limit">Op til 90 minutter. Mika laver din optagelse om til tekst og skriver så din lektion.</string>
+    <string name="x_record_ongoing">Din undervisning optages</string>
+    <string name="x_record_ongoingBody">Micabo bliver ved med at optage, også når skærmen er låst.</string>
     <string name="x_score_1">Jeg har det svært</string>
     <string name="x_score_2">Lige under gennemsnittet</string>
     <string name="x_score_3">Gennemsnitlig</string>

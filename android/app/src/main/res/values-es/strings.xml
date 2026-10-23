@@ -241,8 +241,6 @@
     <string name="ios_tapToSync">Toca para sincronizar</string>
     <string name="ios_targetLead">Apunta a lo que de verdad te haría feliz, no a lo que suena razonable.</string>
     <string name="ios_targetTitle">¿Y a cuánto\naspiras?</string>
-    <string name="ios_trialDay2">Día 2: aviso antes del final</string>
-    <string name="ios_trialDay2Detail">Te avisamos con una notificación. Cancelas en quince segundos.</string>
     <string name="ios_trialLast">Día %1$s: fin de la prueba</string>
     <string name="ios_trialLastDetail">Tu suscripción empezará el %1$s.</string>
     <string name="ios_trialToday">Hoy: prueba Micabo Pro</string>
@@ -512,10 +510,12 @@
     <string name="onboarding_linkSent">Abre el enlace enviado a %1$s</string>
     <string name="onboarding_sendLink">Recibir un enlace</string>
     <string name="x_account_deleteMsg">Tus cursos, tarjetas e historial se borrarán en todas partes. La suscripción se gestiona en Google Play.</string>
+    <string name="x_account_expired">Tu sesión ha caducado. Vuelve a iniciar sesión para seguir sincronizando tus lecciones.</string>
     <string name="x_auth_rateLimited">Demasiados intentos. Espera un minuto y vuelve a intentarlo.</string>
     <string name="x_error_generic">Algo salió mal. Inténtalo de nuevo.</string>
     <string name="x_error_network">Sin conexión. Revisa tu internet e inténtalo de nuevo.</string>
     <string name="x_friends_adopt">Hacer mi lección con esto</string>
+    <string name="x_lesson_courseUnknown">Este curso aún no está sincronizado. Vuelve a intentarlo en un momento.</string>
     <string name="x_lesson_whoSees">Quién ve esta lección</string>
     <string name="x_onb_language">¿En qué idioma estudias?</string>
     <string name="x_onb_language_sub">Mika escribe tus lecciones, quizzes y tarjetas en este idioma.</string>
@@ -528,7 +528,10 @@
     <string name="x_paywall_subscribe">Hazte Pro</string>
     <string name="x_pro_gifted">Este acceso te lo han regalado: no hay nada que gestionar ni cancelar.</string>
     <string name="x_quoted">«%1$s»</string>
+    <string name="x_record_channel">Grabación de clase</string>
     <string name="x_record_limit">Hasta 90 minutos. Mika convierte tu grabación en texto y luego escribe tu lección.</string>
+    <string name="x_record_ongoing">Grabando tu clase</string>
+    <string name="x_record_ongoingBody">Micabo sigue grabando, incluso con la pantalla bloqueada.</string>
     <string name="x_reminder_channel">Recordatorio diario</string>
     <string name="x_score_1">Me cuesta</string>
     <string name="x_score_2">Un poco por debajo de la media</string>

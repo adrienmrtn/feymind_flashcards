@@ -26,6 +26,11 @@ data class Support(
     val document: ImportedDocument? = null,
     /** La phrase de l'échec, si le support n'a pas pu être lu. */
     val failure: Int? = null,
+    /**
+     * Le refus commercial du serveur (`import_pro`…), tant que le paywall ne s'est pas ouvert
+     * pour lui : l'accueil l'ouvre une fois (`paywallShown`).
+     */
+    val paywall: String? = null,
 ) {
     val isReading: Boolean get() = document == null && failure == null
     val isReady: Boolean get() = document != null
@@ -103,17 +108,30 @@ class LessonComposer(
             } else {
                 track("import_document_failed", mapOf("kind" to kind.name.lowercase()))
             }
+            val refusal = (outcome.exceptionOrNull() as? ApiException)?.takeIf { it.opensPaywall }
             supports[index] = when {
                 document != null && document.isUsable -> supports[index].copy(title = document.name, document = document)
-                else -> supports[index].copy(failure = failureMessage(outcome.exceptionOrNull()))
+                else -> supports[index].copy(failure = failureMessage(outcome.exceptionOrNull()), paywall = refusal?.code)
             }
         }
     }
 
-    /** La phrase d'un échec : celle de l'import, le réseau, ou « illisible ». */
+    /** Le paywall s'est ouvert pour ce support : il ne se rouvre pas. */
+    fun paywallShown(id: String) {
+        val index = supports.indexOfFirst { it.id == id }
+        if (index >= 0) supports[index] = supports[index].copy(paywall = null)
+    }
+
+    /** La phrase d'un échec : celle de l'import, le réseau, le refus Pro, ou « illisible ». */
     private fun failureMessage(error: Throwable?): Int = when (error) {
         is ImportException -> error.messageRes
         is NetworkException -> R.string.x_error_network
+        is ApiException -> when (error.code) {
+            "import_pro" -> R.string.lesson_error_importPro
+            "free_limit" -> R.string.lesson_error_freeLimit
+            "pro_required" -> R.string.lesson_error_proRequired
+            else -> if (error.isDailyLimit) R.string.lesson_error_dailyLimit else R.string.lesson_import_unreadable
+        }
         else -> R.string.lesson_import_unreadable
     }
 

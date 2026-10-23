@@ -118,7 +118,7 @@ private fun StreakHeadline(status: StreakStatus) {
         Text(stringResource(R.string.ios_streak_zeroTitle), style = nunito(26.sp, FontWeight.Black), color = colors.ink, textAlign = TextAlign.Center)
     } else {
         Text(status.current.toString(), style = nunito(64.sp, FontWeight.Black, lineHeight = 66.sp), color = colors.flame)
-        Text(pluralStringResource(R.plurals.ios_streak_unit, status.current, status.current), style = nunito(20.sp, FontWeight.ExtraBold), color = colors.ink)
+        Text(pluralStringResource(R.plurals.ios_streak_unit, status.current), style = nunito(20.sp, FontWeight.ExtraBold), color = colors.ink)
     }
 }
 
@@ -253,7 +253,7 @@ fun StreakCelebration(status: StreakStatus, onDismiss: () -> Unit) {
                 Icon3D("flamme", 120.dp, Modifier.graphicsLayer { scaleX = pop.value; scaleY = pop.value })
             }
             Text(status.current.toString(), style = nunito(72.sp, FontWeight.Black, lineHeight = 74.sp), color = colors.flame)
-            Text(pluralStringResource(R.plurals.ios_streak_unit, status.current, status.current), style = nunito(21.sp, FontWeight.ExtraBold), color = colors.ink)
+            Text(pluralStringResource(R.plurals.ios_streak_unit, status.current), style = nunito(21.sp, FontWeight.ExtraBold), color = colors.ink)
             Spacer(Modifier.height(10.dp))
             Text(
                 stringResource(
