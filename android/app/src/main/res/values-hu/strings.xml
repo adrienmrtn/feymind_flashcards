@@ -225,7 +225,7 @@
     <string name="ios_searchCourse">Egy kurzus, egy tantárgy…</string>
     <string name="ios_sharedCourse">Megosztott kurzus</string>
     <string name="ios_sharedNoSheet">Ennek a kurzusnak nincs jegyzete</string>
-    <string name="ios_signOutMsg">A kurzusaid ezen az eszközön és a fiókodban maradnak. A következő bejelentkezéskor újra megtalálod őket.</string>
+    <string name="ios_signOutMsg">A kurzusaid a fiókodban maradnak, erről az eszközről pedig eltűnnek. A következő bejelentkezéskor újra megtalálod őket.</string>
     <string name="ios_signOutQ">Kijelentkezel?</string>
     <string name="ios_startCheaper">Kezdd %1$s%% kedvezménnyel</string>
     <string name="ios_streak_bestLabel">A rekordod</string>
@@ -252,7 +252,8 @@
     <string name="ios_trial_noPayment">Most nem kell fizetned</string>
     <string name="ios_trial_price">Utána évi %1$s, vagyis havi %2$s.</string>
     <string name="ios_trial_reminder_cta">Folytatás ingyen</string>
-    <string name="ios_trial_reminder_title">Próbáld ki a Micabót **ingyen**, kötelezettség nélkül.</string>
+    <string name="ios_trial_reminder_sub">A próbaidő %1$s. napján is lemondhatod két koppintással. A próbaidő vége előtt semmit sem vonunk le.</string>
+    <string name="ios_trial_reminder_title">A próbaidő **kötelezettségmentes**.</string>
     <string name="ios_trial_title">Szeretnénk, ha **ingyen** kipróbálnád a Micabót.</string>
     <string name="ios_unitWeek">hét</string>
     <string name="ios_unitYear">év</string>

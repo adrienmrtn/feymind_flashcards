@@ -220,7 +220,7 @@
     <string name="ios_searchCourse">Et kursus, et fag…</string>
     <string name="ios_sharedCourse">Delt kursus</string>
     <string name="ios_sharedNoSheet">Dette kursus har intet resumé</string>
-    <string name="ios_signOutMsg">Dine kurser bliver på enheden og på din konto. Du finder dem igen, næste gang du logger ind.</string>
+    <string name="ios_signOutMsg">Dine kurser bliver på din konto og forsvinder fra denne enhed. Du finder dem igen, næste gang du logger ind.</string>
     <string name="ios_signOutQ">Log ud?</string>
     <string name="ios_startCheaper">Start med %1$s%% rabat</string>
     <string name="ios_streak_bestLabel">Din bedste</string>
@@ -247,7 +247,8 @@
     <string name="ios_trial_noPayment">Intet at betale nu</string>
     <string name="ios_trial_price">Derefter %1$s om året, altså %2$s om måneden.</string>
     <string name="ios_trial_reminder_cta">Fortsæt gratis</string>
-    <string name="ios_trial_reminder_title">Prøv Micabo **gratis**, uden binding.</string>
+    <string name="ios_trial_reminder_sub">Selv på dag %1$s kan du stadig opsige med to tryk. Der trækkes intet, før prøveperioden slutter.</string>
+    <string name="ios_trial_reminder_title">Din prøveperiode er **uden binding**.</string>
     <string name="ios_trial_title">Vi vil gerne have, at du prøver Micabo **gratis**.</string>
     <string name="ios_unitWeek">uge</string>
     <string name="ios_unitYear">år</string>

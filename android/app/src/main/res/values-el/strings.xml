@@ -225,7 +225,7 @@
     <string name="ios_searchCourse">Ένα μάθημα, ένα αντικείμενο…</string>
     <string name="ios_sharedCourse">Κοινόχρηστο μάθημα</string>
     <string name="ios_sharedNoSheet">Αυτό το μάθημα δεν έχει σύνοψη</string>
-    <string name="ios_signOutMsg">Τα μαθήματά σου μένουν σε αυτή τη συσκευή και στον λογαριασμό σου. Θα τα βρεις ξανά την επόμενη φορά που θα συνδεθείς.</string>
+    <string name="ios_signOutMsg">Τα μαθήματά σου μένουν στον λογαριασμό σου και φεύγουν από αυτή τη συσκευή. Θα τα βρεις στην επόμενη σύνδεση.</string>
     <string name="ios_signOutQ">Αποσύνδεση;</string>
     <string name="ios_startCheaper">Ξεκίνα με %1$s%% έκπτωση</string>
     <string name="ios_streak_bestLabel">Το ρεκόρ σου</string>
@@ -252,7 +252,8 @@
     <string name="ios_trial_noPayment">Καμία πληρωμή τώρα</string>
     <string name="ios_trial_price">Μετά %1$s τον χρόνο, δηλαδή %2$s τον μήνα.</string>
     <string name="ios_trial_reminder_cta">Συνέχισε δωρεάν</string>
-    <string name="ios_trial_reminder_title">Δοκίμασε το Micabo **δωρεάν**, χωρίς δέσμευση.</string>
+    <string name="ios_trial_reminder_sub">Ακόμα και τη μέρα %1$s μπορείς να ακυρώσεις με δύο πατήματα. Τίποτα δεν χρεώνεται πριν λήξει η δοκιμή.</string>
+    <string name="ios_trial_reminder_title">Η δοκιμή σου είναι **χωρίς δέσμευση**.</string>
     <string name="ios_trial_title">Θέλουμε να δοκιμάσεις το Micabo **δωρεάν**.</string>
     <string name="ios_unitWeek">εβδομάδα</string>
     <string name="ios_unitYear">έτος</string>

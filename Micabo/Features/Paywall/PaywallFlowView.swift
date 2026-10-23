@@ -74,8 +74,13 @@ struct PaywallFlowView: View {
     /// une fermeture.
     @State private var openedAt = Date()
     @State private var didSubscribe = false
+    /// La dernière issue d'achat. Un achat en attente de validation n'est pas une fermeture :
+    /// le cadeau ne tombe pas derrière lui (`PaywallOutcome.countsAsDismissal`).
+    @State private var lastOutcome: PaywallOutcome?
     /// Ce que la boutique n'a pas pu faire. Un bouton qui ne répond rien passe pour cassé.
     @State private var failure: String?
+    /// Vrai quand la boutique attend une validation : on le dit, sans parler d'échec.
+    @State private var showsPending = false
     /// La dernière réponse de la boutique qu'on a vue. Le cache des prix n'est pas
     /// observable : c'est ce numéro, relu après `refreshPrices()`, qui redessine les deux
     /// écrans quand le prix du pays ou l'essai arrivent après l'ouverture.
@@ -140,7 +145,7 @@ struct PaywallFlowView: View {
         // `onDisappear` et non le bouton de fermeture : la feuille se referme aussi d'un
         // balayage, et une sortie qui ne se compte pas fait un entonnoir qui fuit.
         .onDisappear {
-            guard !didSubscribe else { return }
+            guard !didSubscribe, lastOutcome?.countsAsDismissal != false else { return }
             // Refermé sans achat : le cadeau du tarif réduit tombe (`DiscountOffer`).
             DiscountOffer.paywallClosed(isPro: pro?.isPro ?? false)
             Analytics.track(.paywallDismissed, [
@@ -153,6 +158,11 @@ struct PaywallFlowView: View {
             Button(L10n.t("app.a11y.close", locale: .resolved()), role: .cancel) { failure = nil }
         } message: {
             Text(failure ?? "")
+        }
+        .alert(L10n.t("ios.paywallPendingTitle", locale: .resolved()), isPresented: $showsPending) {
+            Button(L10n.t("ios.ok", locale: .resolved()), role: .cancel) {}
+        } message: {
+            Text(L10n.t("ios.paywallPending", locale: .resolved()))
         }
     }
 
@@ -179,6 +189,7 @@ struct PaywallFlowView: View {
 
         let outcome = await PaywallPurchases.buy(plan)
         isPurchasing = false
+        lastOutcome = outcome
 
         switch outcome {
         case .purchased:
@@ -203,6 +214,9 @@ struct PaywallFlowView: View {
                 : L10n.t("ios.paywallNotOpen", locale: .resolved())
         case .cancelled:
             Analytics.track(.paywallPurchaseCancelled, ["plan": .text(plan.productID)])
+        case .pending:
+            Analytics.track(.paywallPurchasePending, ["plan": .text(plan.productID)])
+            showsPending = true
         }
     }
 

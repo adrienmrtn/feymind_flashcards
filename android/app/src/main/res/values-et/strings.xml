@@ -222,7 +222,7 @@
     <string name="ios_searchCourse">Kursus, aine…</string>
     <string name="ios_sharedCourse">Jagatud kursus</string>
     <string name="ios_sharedNoSheet">Sellel kursusel pole konspekti</string>
-    <string name="ios_signOutMsg">Sinu kursused jäävad sellesse seadmesse ja sinu kontole. Leiad need järgmisel sisselogimisel uuesti.</string>
+    <string name="ios_signOutMsg">Sinu kursused jäävad kontole ja kaovad sellest seadmest. Leiad need järgmisel sisselogimisel.</string>
     <string name="ios_signOutQ">Kas logida välja?</string>
     <string name="ios_startCheaper">Alusta %1$s%% soodsamalt</string>
     <string name="ios_streak_bestLabel">Sinu rekord</string>
@@ -249,7 +249,8 @@
     <string name="ios_trial_noPayment">Praegu ei tule midagi maksta</string>
     <string name="ios_trial_price">Seejärel %1$s aastas ehk %2$s kuus.</string>
     <string name="ios_trial_reminder_cta">Jätka tasuta</string>
-    <string name="ios_trial_reminder_title">Proovi Micabot **tasuta**, ilma kohustusteta.</string>
+    <string name="ios_trial_reminder_sub">Ka %1$s. päeval saad veel kahe puudutusega tühistada. Enne prooviperioodi lõppu ei võeta midagi.</string>
+    <string name="ios_trial_reminder_title">Sinu prooviperiood on **kohustusteta**.</string>
     <string name="ios_trial_title">Tahame, et prooviksid Micabot **tasuta**.</string>
     <string name="ios_unitWeek">nädal</string>
     <string name="ios_unitYear">aasta</string>

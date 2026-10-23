@@ -105,7 +105,7 @@ struct LessonCreationFlow: View {
 
     private var closeBar: some View {
         HStack {
-            Button(action: onCancel) {
+            Button(action: close) {
                 Image(systemName: "xmark")
                     .font(.system(size: 17, weight: .bold))
                     .foregroundStyle(MicaboColor.inkSecondary)
@@ -123,7 +123,10 @@ struct LessonCreationFlow: View {
 
     private var generating: some View {
         VStack(spacing: 0) {
-            if failure != nil { closeBar } else { Color.clear.frame(height: 56) }
+            // **La croix reste là pendant la génération**, pas seulement après un échec. Hors
+            // ligne, la requête attendait le réseau sans fin et l'écran n'offrait aucune sortie :
+            // il fallait tuer l'app. Fermer ici abandonne l'attente (voir `close`).
+            closeBar
             Spacer()
             MikaMascot(mood: failure == nil ? .think : .sad, size: 170)
             Text(failure == nil
@@ -154,7 +157,7 @@ struct LessonCreationFlow: View {
                         start(examDate: pendingExamDate)
                     }
                     .buttonStyle(LessonPrimaryButtonStyle())
-                    Button(L10n.t("lesson.create.cancel", locale: .resolved()), action: onCancel)
+                    Button(L10n.t("lesson.create.cancel", locale: .resolved()), action: close)
                         .buttonStyle(MicaboSecondaryButtonStyle())
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
@@ -169,6 +172,16 @@ struct LessonCreationFlow: View {
     /// comme une seconde leçon, et un élève sans abonnement dont le premier plan avait échoué
     /// tombait sur le paywall.
     @State private var lessonID = UUID()
+    /// La génération en vol, gardée pour pouvoir l'abandonner quand l'élève ferme l'écran.
+    @State private var generation: Task<Void, Never>?
+
+    /// Ferme l'écran, en abandonnant la génération en cours. Sans l'annulation, une leçon
+    /// arrivée après la fermeture rouvrait un écran que l'élève venait de quitter.
+    private func close() {
+        generation?.cancel()
+        generation = nil
+        onCancel()
+    }
 
     private func start(examDate: Date?) {
         pendingExamDate = examDate
@@ -184,14 +197,21 @@ struct LessonCreationFlow: View {
             "lesson": .flag(true),
         ]
         Analytics.track(.courseGenerationStarted, properties)
-        Task {
+        generation?.cancel()
+        generation = Task {
             do {
                 let course = try await builder.create(request, in: modelContext) { stage in
                     withAnimation(.spring(duration: 0.35)) { self.stage = stage }
                 }
+                // Fermé pendant l'attente : la leçon reste dans la liste, mais on ne rouvre
+                // pas un écran que l'élève a quitté.
+                guard !Task.isCancelled else { return }
                 Haptics.success()
                 Analytics.track(.courseImported, properties)
                 onCreated(course)
+            } catch _ where Task.isCancelled {
+                // Abandonné par la croix : ni haptique, ni message, ni échec compté.
+                return
             } catch let error as LessonServiceError where error.opensPaywall {
                 failure = error.errorDescription
                 paywall = error == .importPro ? .generateCourse : .secondCourse

@@ -220,7 +220,7 @@
     <string name="ios_searchCourse">Kurssi, oppiaine…</string>
     <string name="ios_sharedCourse">Jaettu kurssi</string>
     <string name="ios_sharedNoSheet">Tällä kurssilla ei ole tiivistelmää</string>
-    <string name="ios_signOutMsg">Kurssisi säilyvät laitteella ja tililläsi. Löydät ne, kun kirjaudut seuraavan kerran.</string>
+    <string name="ios_signOutMsg">Kurssisi pysyvät tililläsi ja poistuvat tältä laitteelta. Löydät ne, kun kirjaudut seuraavan kerran.</string>
     <string name="ios_signOutQ">Kirjaudutaanko ulos?</string>
     <string name="ios_startCheaper">Aloita %1$s %% alennuksella</string>
     <string name="ios_streak_bestLabel">Paras putkesi</string>
@@ -247,7 +247,8 @@
     <string name="ios_trial_noPayment">Ei maksua nyt</string>
     <string name="ios_trial_price">Sen jälkeen %1$s vuodessa, eli %2$s kuukaudessa.</string>
     <string name="ios_trial_reminder_cta">Jatka ilmaiseksi</string>
-    <string name="ios_trial_reminder_title">Kokeile Micaboa **ilmaiseksi**, ilman sitoumusta.</string>
+    <string name="ios_trial_reminder_sub">Vielä päivänä %1$s voit perua kahdella napautuksella. Mitään ei veloiteta ennen kokeilun loppua.</string>
+    <string name="ios_trial_reminder_title">Kokeilusi on **täysin sitoumukseton**.</string>
     <string name="ios_trial_title">Haluamme, että kokeilet Micaboa **ilmaiseksi**.</string>
     <string name="ios_unitWeek">viikko</string>
     <string name="ios_unitYear">vuosi</string>

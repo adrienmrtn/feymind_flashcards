@@ -219,7 +219,7 @@
     <string name="ios_searchCourse">Een cursus, een vak…</string>
     <string name="ios_sharedCourse">Gedeelde cursus</string>
     <string name="ios_sharedNoSheet">Deze cursus heeft geen samenvatting</string>
-    <string name="ios_signOutMsg">Je cursussen blijven op dit apparaat en in je account. Je vindt ze terug zodra je weer inlogt.</string>
+    <string name="ios_signOutMsg">Je cursussen blijven in je account en verdwijnen van dit apparaat. Je vindt ze terug als je weer inlogt.</string>
     <string name="ios_signOutQ">Uitloggen?</string>
     <string name="ios_startCheaper">Start met %1$s%% korting</string>
     <string name="ios_streak_bestLabel">Je beste</string>
@@ -246,7 +246,8 @@
     <string name="ios_trial_noPayment">Nu niets te betalen</string>
     <string name="ios_trial_price">Daarna %1$s per jaar, dat is %2$s per maand.</string>
     <string name="ios_trial_reminder_cta">Gratis verder</string>
-    <string name="ios_trial_reminder_title">Probeer Micabo **gratis**, zonder verplichtingen.</string>
+    <string name="ios_trial_reminder_sub">Zelfs op dag %1$s kun je nog opzeggen met twee tikken. Er wordt niets afgeschreven voor het einde van je proefperiode.</string>
+    <string name="ios_trial_reminder_title">Je proefperiode is **vrijblijvend**.</string>
     <string name="ios_trial_title">We willen dat je Micabo **gratis** uitprobeert.</string>
     <string name="ios_unitYear">jaar</string>
     <string name="ios_usernameLabel">Gebruikersnaam</string>

@@ -221,7 +221,7 @@
     <string name="ios_searchCourse">Ein Kurs, ein Fach…</string>
     <string name="ios_sharedCourse">Geteilter Kurs</string>
     <string name="ios_sharedNoSheet">Dieser Kurs hat keine Zusammenfassung</string>
-    <string name="ios_signOutMsg">Deine Kurse bleiben auf diesem Gerät und auf deinem Konto. Du findest sie beim nächsten Anmelden.</string>
+    <string name="ios_signOutMsg">Deine Kurse bleiben in deinem Konto und verschwinden von diesem Gerät. Du findest sie beim nächsten Anmelden wieder.</string>
     <string name="ios_signOutQ">Abmelden?</string>
     <string name="ios_startCheaper">Mit %1$s %% weniger starten</string>
     <string name="ios_streak_bestLabel">Dein Rekord</string>
@@ -248,8 +248,8 @@
     <string name="ios_trial_noPayment">Heute keine Zahlung</string>
     <string name="ios_trial_price">Danach %1$s pro Jahr, also %2$s im Monat.</string>
     <string name="ios_trial_reminder_cta">Kostenlos weiter</string>
-    <string name="ios_trial_reminder_sub">An Tag %1$s warnt dich eine Mitteilung. Kündigen geht in zwei Tipps.</string>
-    <string name="ios_trial_reminder_title">Wir schicken dir eine **Erinnerung**, bevor dein Test endet.</string>
+    <string name="ios_trial_reminder_sub">Auch an Tag %1$s kannst du noch mit zwei Tipps kündigen. Vor Ende der Testphase wird nichts abgebucht.</string>
+    <string name="ios_trial_reminder_title">Deine Testphase ist **unverbindlich**.</string>
     <string name="ios_trial_title">Wir möchten, dass du Micabo **kostenlos** ausprobierst.</string>
     <string name="ios_unitWeek">Woche</string>
     <string name="ios_unitYear">Jahr</string>

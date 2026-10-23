@@ -216,7 +216,7 @@
     <string name="ios_searchCourse">Un corso, una materia…</string>
     <string name="ios_sharedCourse">Corso condiviso</string>
     <string name="ios_sharedNoSheet">Questo corso non ha una scheda</string>
-    <string name="ios_signOutMsg">I tuoi corsi restano su questo dispositivo e sul tuo account. Li ritroverai al prossimo accesso.</string>
+    <string name="ios_signOutMsg">I tuoi corsi restano sul tuo account e lasciano questo dispositivo. Li ritroverai al prossimo accesso.</string>
     <string name="ios_signOutQ">Vuoi uscire?</string>
     <string name="ios_startCheaper">Inizia con il %1$s%% di sconto</string>
     <string name="ios_streak_bestLabel">Il tuo record</string>
@@ -243,7 +243,8 @@
     <string name="ios_trial_noPayment">Nessun pagamento oggi</string>
     <string name="ios_trial_price">Poi %1$s all’anno, cioè %2$s al mese.</string>
     <string name="ios_trial_reminder_cta">Continua gratis</string>
-    <string name="ios_trial_reminder_title">Prova Micabo **gratis**, senza impegno.</string>
+    <string name="ios_trial_reminder_sub">Anche il giorno %1$s puoi ancora disdire in due tocchi. Nulla viene addebitato prima della fine della prova.</string>
+    <string name="ios_trial_reminder_title">La tua prova è **senza impegno**.</string>
     <string name="ios_trial_title">Vogliamo che provi Micabo **gratis**.</string>
     <string name="ios_unitWeek">settimana</string>
     <string name="ios_unitYear">anno</string>

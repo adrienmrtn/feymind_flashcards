@@ -505,6 +505,10 @@ enum AIServiceError: LocalizedError {
     /// Le quota du jour est atteint, côté serveur. Sans chiffre : le plafond n'est pas un
     /// argument de vente.
     case quotaExhausted
+    /// **Le serveur dit que c'est Pro** (`generate-course` : 402 `pro_required`). L'app avait
+    /// cru le compte abonné (un droit en cache, un achat rendu) : on ouvre le paywall au lieu
+    /// de tailler une fiche hors ligne, qui aurait fait passer le refus pour une panne.
+    case proRequired
 
     var errorDescription: String? {
         switch self {
@@ -522,6 +526,8 @@ enum AIServiceError: LocalizedError {
             L10n.t("ios.ai.missingFal", locale: .resolved())
         case .quotaExhausted:
             L10n.t("ios.ai.quota", locale: .resolved())
+        case .proRequired:
+            L10n.t("ios.paywallGenerateHeadline", locale: .resolved())
         }
     }
 }

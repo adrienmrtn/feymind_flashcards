@@ -225,7 +225,7 @@
     <string name="ios_searchCourse">Tečaj, predmet…</string>
     <string name="ios_sharedCourse">Deljen tečaj</string>
     <string name="ios_sharedNoSheet">Ta tečaj nima povzetka</string>
-    <string name="ios_signOutMsg">Tvoji tečaji ostanejo v tej napravi in v tvojem računu. Ob naslednji prijavi jih najdeš znova.</string>
+    <string name="ios_signOutMsg">Tvoji tečaji ostanejo v računu in izginejo s te naprave. Znova jih najdeš ob naslednji prijavi.</string>
     <string name="ios_signOutQ">Se želiš odjaviti?</string>
     <string name="ios_startCheaper">Začni s %1$s %% popusta</string>
     <string name="ios_streak_bestLabel">Tvoj rekord</string>
@@ -252,7 +252,8 @@
     <string name="ios_trial_noPayment">Zdaj ne plačaš nič</string>
     <string name="ios_trial_price">Nato %1$s na leto, torej %2$s na mesec.</string>
     <string name="ios_trial_reminder_cta">Nadaljuj brezplačno</string>
-    <string name="ios_trial_reminder_title">Preizkusi Micabo **brezplačno**, brez obveznosti.</string>
+    <string name="ios_trial_reminder_sub">Tudi %1$s. dan lahko še prekličeš z dvema dotikoma. Pred koncem preizkusa se nič ne zaračuna.</string>
+    <string name="ios_trial_reminder_title">Tvoj preizkus je **brez obveznosti**.</string>
     <string name="ios_trial_title">Želimo, da Micabo preizkusiš **brezplačno**.</string>
     <string name="ios_unitWeek">teden</string>
     <string name="ios_unitYear">leto</string>

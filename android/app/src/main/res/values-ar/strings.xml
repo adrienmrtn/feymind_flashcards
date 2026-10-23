@@ -226,7 +226,7 @@
     <string name="ios_searchCourse">دورة، مادة…</string>
     <string name="ios_sharedCourse">درس مشترك</string>
     <string name="ios_sharedNoSheet">هذا الدرس بلا ملخص</string>
-    <string name="ios_signOutMsg">تبقى دروسك على هذا الجهاز وفي حسابك. ستجدها عند تسجيل الدخول المرة القادمة.</string>
+    <string name="ios_signOutMsg">تبقى دروسك في حسابك وتُزال من هذا الجهاز. ستجدها عند تسجيل الدخول مرة أخرى.</string>
     <string name="ios_signOutQ">تسجيل الخروج؟</string>
     <string name="ios_startCheaper">ابدأ بخصم %1$s%%</string>
     <string name="ios_streak_bestLabel">رقمك القياسي</string>
@@ -253,7 +253,8 @@
     <string name="ios_trial_noPayment">لا دفع الآن</string>
     <string name="ios_trial_price">ثم %1$s سنويًا، أي %2$s شهريًا.</string>
     <string name="ios_trial_reminder_cta">تابع مجانًا</string>
-    <string name="ios_trial_reminder_title">جرّب Micabo **مجانًا** ودون أي التزام.</string>
+    <string name="ios_trial_reminder_sub">حتى في اليوم %1$s يمكنك الإلغاء بنقرتين. لا يُدفع شيء قبل انتهاء الفترة التجريبية.</string>
+    <string name="ios_trial_reminder_title">فترتك التجريبية **بلا أي التزام**.</string>
     <string name="ios_trial_title">نريدك أن تجرّب Micabo **مجانًا**.</string>
     <string name="ios_unitWeek">أسبوع</string>
     <string name="ios_unitYear">سنة</string>

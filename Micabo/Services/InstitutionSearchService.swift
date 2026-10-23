@@ -7,6 +7,9 @@ actor InstitutionSearchService {
     private let session: URLSession = {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 8
+        // Hors ligne, l'attente du réseau n'a sinon pas de fin : la recherche retombe sur le
+        // catalogue embarqué au lieu de rester suspendue.
+        configuration.timeoutIntervalForResource = 20
         configuration.waitsForConnectivity = true
         return URLSession(configuration: configuration)
     }()

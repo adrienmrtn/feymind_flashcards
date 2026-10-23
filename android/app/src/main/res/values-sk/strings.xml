@@ -223,7 +223,7 @@
     <string name="ios_searchCourse">Kurz, predmet…</string>
     <string name="ios_sharedCourse">Zdieľaný kurz</string>
     <string name="ios_sharedNoSheet">Tento kurz nemá zhrnutie</string>
-    <string name="ios_signOutMsg">Tvoje kurzy zostanú v tomto zariadení aj na účte. Nájdeš ich pri ďalšom prihlásení.</string>
+    <string name="ios_signOutMsg">Tvoje kurzy zostanú na účte a z tohto zariadenia zmiznú. Nájdeš ich pri ďalšom prihlásení.</string>
     <string name="ios_signOutQ">Odhlásiť sa?</string>
     <string name="ios_startCheaper">Začni so zľavou %1$s %%</string>
     <string name="ios_streak_bestLabel">Tvoj rekord</string>
@@ -250,7 +250,8 @@
     <string name="ios_trial_noPayment">Teraz nič neplatíš</string>
     <string name="ios_trial_price">Potom %1$s za rok, teda %2$s mesačne.</string>
     <string name="ios_trial_reminder_cta">Pokračovať zadarmo</string>
-    <string name="ios_trial_reminder_title">Vyskúšaj Micabo **zadarmo**, bez záväzkov.</string>
+    <string name="ios_trial_reminder_sub">Aj %1$s. deň môžeš ešte zrušiť dvoma ťuknutiami. Pred koncom skúšobnej doby sa nič neplatí.</string>
+    <string name="ios_trial_reminder_title">Skúšobná doba je **bez záväzkov**.</string>
     <string name="ios_trial_title">Chceme ti dať možnosť vyskúšať si Micabo **zadarmo**.</string>
     <string name="ios_unitWeek">týždeň</string>
     <string name="ios_unitYear">rok</string>

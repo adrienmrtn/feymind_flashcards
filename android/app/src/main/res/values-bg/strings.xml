@@ -225,7 +225,7 @@
     <string name="ios_searchCourse">Курс, предмет…</string>
     <string name="ios_sharedCourse">Споделен курс</string>
     <string name="ios_sharedNoSheet">Този курс няма конспект</string>
-    <string name="ios_signOutMsg">Курсовете ти остават на това устройство и в профила ти. Ще ги намериш отново при следващото влизане.</string>
+    <string name="ios_signOutMsg">Курсовете ти остават в профила ти и изчезват от това устройство. Ще ги намериш при следващото влизане.</string>
     <string name="ios_signOutQ">Да излезеш ли?</string>
     <string name="ios_startCheaper">Започни с %1$s%% отстъпка</string>
     <string name="ios_streak_bestLabel">Твоят рекорд</string>
@@ -252,7 +252,8 @@
     <string name="ios_trial_noPayment">Сега не плащаш нищо</string>
     <string name="ios_trial_price">След това %1$s на година, тоест %2$s на месец.</string>
     <string name="ios_trial_reminder_cta">Продължи безплатно</string>
-    <string name="ios_trial_reminder_title">Пробвай Micabo **безплатно**, без ангажимент.</string>
+    <string name="ios_trial_reminder_sub">Дори на ден %1$s още можеш да се откажеш с две докосвания. Нищо не се таксува преди края на пробния период.</string>
+    <string name="ios_trial_reminder_title">Пробният период е **без обвързване**.</string>
     <string name="ios_trial_title">Искаме да пробваш Micabo **безплатно**.</string>
     <string name="ios_unitWeek">седмица</string>
     <string name="ios_unitYear">година</string>

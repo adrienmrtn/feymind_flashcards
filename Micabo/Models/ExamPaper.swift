@@ -102,6 +102,11 @@ enum ExamHistory {
         }
     }
 
+    /// Oublie l'historique, à la sortie d'un compte : ces copies sont les siennes.
+    static func clear(defaults: UserDefaults = .standard) {
+        defaults.removeObject(forKey: key)
+    }
+
     static func results(for examID: UUID, defaults: UserDefaults = .standard) -> [ExamPaperResult] {
         all(defaults: defaults).filter { $0.examID == examID }
     }
@@ -114,6 +119,13 @@ enum ExamAllowance {
     static var freeMockUsed: Bool {
         get { UserDefaults.standard.bool(forKey: key) }
         set { UserDefaults.standard.set(newValue, forKey: key) }
+    }
+
+    /// Vrai quand une copie fraîchement écrite doit consommer l'examen offert : seulement
+    /// hors Pro, et seulement si elle a des questions à jouer. Une copie vide est un échec de
+    /// génération, pas un examen passé.
+    static func consumesFreeMock(isPro: Bool, questionCount: Int) -> Bool {
+        !isPro && questionCount > 0
     }
 }
 

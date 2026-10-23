@@ -229,7 +229,7 @@
     <string name="ios_searchCourse">Un cours, une matière…</string>
     <string name="ios_sharedCourse">Cours partagé</string>
     <string name="ios_sharedNoSheet">Ce cours n\'a pas de fiche</string>
-    <string name="ios_signOutMsg">Tes cours restent sur cet appareil et sur ton compte. Tu les retrouveras à la prochaine connexion.</string>
+    <string name="ios_signOutMsg">Tes cours restent sur ton compte et quittent cet appareil. Tu les retrouveras à la prochaine connexion.</string>
     <string name="ios_signOutQ">Se déconnecter ?</string>
     <string name="ios_startCheaper">Commencer avec %1$s %% de moins</string>
     <string name="ios_streak_bestLabel">Ton record</string>
@@ -256,8 +256,8 @@
     <string name="ios_trial_noPayment">Aucun paiement aujourd\'hui</string>
     <string name="ios_trial_price">Ensuite %1$s par an, soit %2$s par mois.</string>
     <string name="ios_trial_reminder_cta">Continuer gratuitement</string>
-    <string name="ios_trial_reminder_sub">Le jour %1$s, une notification te prévient. Tu annules en deux appuis si tu veux.</string>
-    <string name="ios_trial_reminder_title">On t\'enverra un **rappel** avant la fin de ton essai.</string>
+    <string name="ios_trial_reminder_sub">Même le jour %1$s, tu peux encore annuler en deux appuis. Rien n\'est prélevé avant la fin de l\'essai.</string>
+    <string name="ios_trial_reminder_title">Ton essai est **sans engagement**.</string>
     <string name="ios_trial_title">On veut que tu essaies Micabo **gratuitement**.</string>
     <string name="ios_unitWeek">semaine</string>
     <string name="ios_unitYear">an</string>

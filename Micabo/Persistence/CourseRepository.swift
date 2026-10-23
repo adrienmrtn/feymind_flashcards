@@ -480,8 +480,14 @@ enum CourseRepository {
         }
     }
 
+    /// Posté avec l'identifiant du cours, juste avant son effacement. `LessonBuilder` l'écoute
+    /// pour arrêter l'écriture des thèmes d'une leçon qu'on efface pendant sa génération.
+    static let courseDeleted = Notification.Name("micabo.course.deleted")
+
     static func delete(_ course: Course, in context: ModelContext) throws {
-        CloudTombstones.mark(CloudTable.courses, id: course.id)
+        let id = course.id
+        NotificationCenter.default.post(name: courseDeleted, object: id)
+        CloudTombstones.mark(CloudTable.courses, id: id)
         for card in course.cards {
             CloudTombstones.mark(CloudTable.flashcards, id: card.id)
         }

@@ -225,7 +225,7 @@
     <string name="ios_searchCourse">Bir ders, bir konu…</string>
     <string name="ios_sharedCourse">Paylaşılan ders</string>
     <string name="ios_sharedNoSheet">Bu dersin özeti yok</string>
-    <string name="ios_signOutMsg">Derslerin bu cihazda ve hesabında kalır. Sonraki girişte onları bulursun.</string>
+    <string name="ios_signOutMsg">Derslerin hesabında kalır ve bu cihazdan kaldırılır. Bir sonraki girişte onları yine bulursun.</string>
     <string name="ios_signOutQ">Çıkış yapılsın mı?</string>
     <string name="ios_startCheaper">%%%1$s daha ucuza başla</string>
     <string name="ios_streak_bestLabel">Rekorun</string>
@@ -252,8 +252,8 @@
     <string name="ios_trial_noPayment">Bugün ödeme yok</string>
     <string name="ios_trial_price">Sonra yılda %1$s, yani ayda %2$s.</string>
     <string name="ios_trial_reminder_cta">Ücretsiz devam et</string>
-    <string name="ios_trial_reminder_sub">%1$s. gün bir bildirim seni uyarır. İstersen iki dokunuşla iptal edersin.</string>
-    <string name="ios_trial_reminder_title">Denemen bitmeden önce sana bir **hatırlatma** göndereceğiz.</string>
+    <string name="ios_trial_reminder_sub">%1$s. gün bile iki dokunuşla iptal edebilirsin. Deneme bitmeden ücret alınmaz.</string>
+    <string name="ios_trial_reminder_title">Denemen **taahhütsüz**.</string>
     <string name="ios_trial_title">Micabo\'yu **ücretsiz** denemeni istiyoruz.</string>
     <string name="ios_unitWeek">hafta</string>
     <string name="ios_unitYear">yıl</string>

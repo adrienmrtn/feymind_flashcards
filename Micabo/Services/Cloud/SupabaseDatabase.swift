@@ -35,6 +35,10 @@ struct SupabaseDatabase {
     var session: URLSession = {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 45
+        // Le plafond de l'attente du réseau. Sans lui, `waitsForConnectivity` gardait une
+        // requête suspendue tant que le téléphone restait hors ligne : la synchro restait
+        // « en cours » pour toujours, et les passages suivants s'empilaient derrière elle.
+        configuration.timeoutIntervalForResource = 60
         configuration.waitsForConnectivity = true
         return URLSession(configuration: configuration)
     }()
@@ -61,6 +65,39 @@ struct SupabaseDatabase {
                 prefer: "resolution=merge-duplicates,return=minimal"
             )
         }
+    }
+
+    /// L'horodatage qu'une ligne a reçu du serveur en s'écrivant. Voir `upsertReturningStamps`.
+    struct RowStamp: Decodable, Equatable {
+        let id: UUID
+        let updated_at: Date
+    }
+
+    /// **Le même envoi, en relisant le `updated_at` que la base a posé.**
+    ///
+    /// Les déclencheurs `*_touch` réécrivent `updated_at` à l'heure du serveur. Une ligne
+    /// envoyée par cet appareil revenait donc à la descente suivante « plus récente » que la
+    /// copie locale, et l'écrasait - y compris une modification faite ici pendant l'envoi : un
+    /// thème arrivé pendant la montée repassait « en préparation », se réécrivait, et doublait
+    /// ses cartes. Avec l'horodatage rendu, `CloudSync` reconnaît son propre écho et l'ignore.
+    ///
+    /// Une réponse illisible ne fait pas échouer l'envoi, qui a réussi : elle rend moins
+    /// d'horodatages, et la descente retombe sur la règle ordinaire.
+    func upsertReturningStamps<T: Encodable>(_ rows: [T], into table: String) async throws -> [RowStamp] {
+        var stamps: [RowStamp] = []
+        for body in try uniformBatches(rows) {
+            let data = try await send(
+                method: "POST",
+                path: table,
+                query: [URLQueryItem(name: "select", value: "id,updated_at")],
+                body: body,
+                prefer: "resolution=merge-duplicates,return=representation"
+            )
+            if let batch = try? decoder.decode([RowStamp].self, from: data) {
+                stamps.append(contentsOf: batch)
+            }
+        }
+        return stamps
     }
 
     /// **Un envoi par jeu de clés.**
@@ -236,6 +273,13 @@ struct SupabaseDatabase {
                 message: L10n.t("ios.cloud.unreadableFor", locale: .resolved(), vars: ["what": name])
             )
         }
+    }
+
+    /// Même appel, en rendant les octets tels quels. Pour une fonction qui rend un scalaire
+    /// (`create_guest_claim` rend un `uuid`, que PostgREST écrit en chaîne JSON nue) : le
+    /// décodeur n'a pas à deviner s'il accepte un fragment au premier niveau.
+    func rpcData(_ name: String, arguments: [String: String] = [:]) async throws -> Data {
+        try await invokeRPC(name, arguments: arguments, prefer: nil)
     }
 
     private func invokeRPC(

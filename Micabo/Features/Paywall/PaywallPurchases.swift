@@ -12,8 +12,8 @@ import RevenueCat
 /// le dépôt ne compilerait plus entre le moment où ce fichier est écrit et celui où quelqu'un
 /// ouvre Xcode. Avec, les deux états sont valides et **le second s'allume tout seul**.
 ///
-/// Ce qui n'est *pas* conditionnel : le contrat. `buy` rend `purchased`, `cancelled` ou
-/// `unavailable`, et les deux paywalls ne connaissent que ces trois cas.
+/// Ce qui n'est *pas* conditionnel : le contrat. `buy` rend `purchased`, `cancelled`,
+/// `unavailable` ou `pending`, et les deux paywalls ne connaissent que ces quatre cas.
 enum PaywallPurchases {
     /// Vrai quand le SDK est là **et** configuré. Les écrans s'en servent pour ne pas
     /// promettre un achat qu'aucune boutique ne peut honorer.
@@ -136,13 +136,29 @@ enum PaywallPurchases {
             if result.userCancelled { return .cancelled }
             return result.customerInfo.hasPro ? .purchased : .unavailable
         } catch {
-            return .unavailable
+            return outcome(for: error)
         }
         #else
         _ = plan
         return .unavailable
         #endif
     }
+
+    #if canImport(RevenueCat)
+    /// **Ce qu'une erreur d'achat veut dire.** RevenueCat rend `paymentPendingError` quand
+    /// l'achat attend une validation (partage familial, banque) : ce n'est pas un échec, et
+    /// le paywall ne doit pas dire « l'achat n'a pas abouti » à quelqu'un qui vient d'acheter.
+    static func outcome(for error: Error) -> PaywallOutcome {
+        if let code = error as? RevenueCat.ErrorCode {
+            switch code {
+            case .paymentPendingError: return .pending
+            case .purchaseCancelledError: return .cancelled
+            default: return .unavailable
+            }
+        }
+        return .unavailable
+    }
+    #endif
 
     static func restore() async -> PaywallOutcome {
         #if canImport(RevenueCat)
