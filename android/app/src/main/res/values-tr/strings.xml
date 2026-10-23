@@ -245,8 +245,6 @@
     <string name="ios_tapToSync">Eşitlemek için dokun</string>
     <string name="ios_targetLead">Makul olana değil, seni gerçekten mutlu edecek olana nişan al.</string>
     <string name="ios_targetTitle">Peki hedefin\nkaç?</string>
-    <string name="ios_trialDay2">2. gün: bitmeden hatırlatma</string>
-    <string name="ios_trialDay2Detail">Bildirimle hatırlatırız. On beş saniyede iptal edebilirsin.</string>
     <string name="ios_trialLast">%1$s. gün: deneme biter</string>
     <string name="ios_trialLastDetail">Aboneliğin %1$s tarihinde başlar.</string>
     <string name="ios_trialToday">Bugün: Micabo Pro\'yu dene</string>
@@ -520,10 +518,12 @@
     <string name="onboarding_linkSent">%1$s adresine giden bağlantıyı aç</string>
     <string name="onboarding_sendLink">Bağlantı al</string>
     <string name="x_account_deleteMsg">Kursların, kartların ve geçmişin her yerden silinecek. Abonelik Google Play\'den yönetilir.</string>
+    <string name="x_account_expired">Oturumunun süresi doldu. Derslerinin senkronize kalması için tekrar giriş yap.</string>
     <string name="x_auth_rateLimited">Çok fazla deneme. Bir dakika bekle, sonra tekrar dene.</string>
     <string name="x_error_generic">Bir şeyler ters gitti. Tekrar dene.</string>
     <string name="x_error_network">Bağlantı yok. İnternetini kontrol edip tekrar dene.</string>
     <string name="x_friends_adopt">Bundan dersimi yap</string>
+    <string name="x_lesson_courseUnknown">Bu kurs henüz senkronize edilmedi. Birazdan tekrar dene.</string>
     <string name="x_lesson_whoSees">Bu dersi kim görür</string>
     <string name="x_onb_language">Hangi dilde çalışıyorsun?</string>
     <string name="x_onb_language_sub">Mika derslerini, testlerini ve kartlarını bu dilde yazar.</string>
@@ -535,7 +535,10 @@
     <string name="x_paywall_soonBody">Abonelikler çok yakında Android\'de. Bu arada ücretsiz dersin seni bekliyor.</string>
     <string name="x_paywall_subscribe">Pro\'ya geç</string>
     <string name="x_pro_gifted">Bu erişim sana hediye edildi: yönetecek ya da iptal edecek bir şey yok.</string>
+    <string name="x_record_channel">Ders kaydı</string>
     <string name="x_record_limit">90 dakikaya kadar. Mika kaydını metne çevirir, sonra dersini yazar.</string>
+    <string name="x_record_ongoing">Dersin kaydediliyor</string>
+    <string name="x_record_ongoingBody">Micabo ekran kilitliyken bile kaydetmeye devam eder.</string>
     <string name="x_reminder_channel">Günlük hatırlatma</string>
     <string name="x_score_1">Zorlanıyorum</string>
     <string name="x_score_2">Ortalamanın biraz altında</string>

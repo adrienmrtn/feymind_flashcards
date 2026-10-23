@@ -13,6 +13,7 @@ import com.micabo.app.data.LessonComposer
 import com.micabo.app.data.LessonRepository
 import com.micabo.app.data.MikaChat
 import com.micabo.app.data.Prefs
+import com.micabo.app.data.RecordingService
 import com.micabo.app.data.Social
 import com.micabo.app.data.Streak
 import com.micabo.app.data.SupabaseAuth
@@ -101,6 +102,10 @@ class MicaboApplication : Application() {
     fun completeSignIn(query: Map<String, String>) {
         scope.launch {
             val guest = auth.guestId
+            // Avant de quitter l'invité : le jeton qui fera passer ses lignes au compte
+            // (`create_guest_claim`, avec la session invitée). Le transfert lui-même ouvre le
+            // premier passage sous le compte (`CloudSync.claimGuest`), puis tout remonte.
+            sync.prepareGuestClaim()
             _signIn.value = runCatching { auth.handleCallback(query) }.fold(
                 onSuccess = { account ->
                     analytics.track("signed_in", mapOf("provider" to if (query.containsKey("code")) "pkce" else "link"))
@@ -118,14 +123,45 @@ class MicaboApplication : Application() {
         }
     }
 
-    /** Se déconnecter : une dernière synchronisation, puis l'invité reprend. Les leçons restent. */
+    /**
+     * Se déconnecter : une dernière synchronisation, puis l'invité reprend. Les leçons restent.
+     * Ce que cette dernière synchronisation n'a pas pu monter (hors ligne) n'est plus jeté : il
+     * est mis de côté pour ce compte, et repart à sa prochaine connexion (`CloudSync.forget`).
+     */
     suspend fun signOut() {
+        val account = auth.account.value?.userId
         runCatching { sync.sync() }
         auth.signOut()
-        sync.forget()
+        sync.forget(parkFor = account)
         social.reset()
         analytics.track("signed_out")
         withContext(Dispatchers.Main) { billing.follow(auth.guestId, fromGuest = false) }
+    }
+
+    /**
+     * **Tout effacer** (le profil) : les leçons, les examens, le profil et les réglages quittent
+     * ce téléphone. Un compte connecté se déconnecte, et ses leçons restent sur le serveur ; ce
+     * qui attendait de monter pour lui est mis de côté pour sa prochaine connexion.
+     *
+     * Chaque leçon, carte et examen laisse une pierre tombale : sous l'invité, la suppression
+     * part au serveur, et la synchronisation suivante ne redescend plus ce qui vient d'être
+     * effacé. Le dernier utilisateur synchronisé reste connu (`Prefs.reset` garde `sync.*`), et
+     * le profil du serveur ne referme pas l'accueil qui recommence (`Prefs.profileErased`).
+     */
+    fun eraseEverything() {
+        auth.account.value?.userId?.let { sync.park(it) }
+        lessons.deleteAll()
+        exams.reset(tombstones = true)
+        val language = prefs.profile.value.language
+        val theme = prefs.profile.value.theme
+        prefs.reset()
+        prefs.profileErased = true
+        auth.reload()
+        sync.erased()
+        billing.follow(auth.guestId, fromGuest = false)
+        prefs.update { it.copy(language = language, theme = theme) }
+        streak.reset()
+        composer.reset()
     }
 
     /** Supprimer son compte : tout part côté serveur, l'invité reprend. */
@@ -161,8 +197,15 @@ class MicaboApplication : Application() {
             onFailure = { reason -> analytics.track("sync_failed", mapOf("reason" to reason, "user" to if (auth.account.value == null) "guest" else "account")) },
             onSuccess = { pushed -> analytics.track("sync_finished", mapOf("courses" to pushed, "user" to if (auth.account.value == null) "guest" else "account")) },
         )
+        // Un cours que le serveur ne connaît pas encore (`course_unknown`) : synchroniser tout de suite.
+        lessons.onCourseUnknown = { syncSoon(force = true) }
+        // Une session de compte perdue : ce qui attendait de monter pour lui est mis de côté.
+        auth.onAccountLost = { account -> sync.park(account) }
         social = Social(auth)
         composer = LessonComposer(this, YouTubeImport(functions), AudioImport(functions)) { name, props -> analytics.track(name, props) }
+        // L'enregistrement du micro, fini (le bouton, la notification, la limite) : il rejoint la
+        // barre comme un support, même écran verrouillé ou feuille refermée.
+        RecordingService.onRecorded = { file -> composer.addAudio(android.net.Uri.fromFile(file), fromRecorder = true) }
         analytics.start()
         // Le compte invité s'ouvre tout de suite : il doit exister avant un achat, pour que
         // l'abonnement ait un propriétaire. Sans réseau, il s'ouvrira au premier appel.

@@ -315,7 +315,7 @@ fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit, onLo
         )
         "audio" -> AudioSheet(
             onDismiss = { dialog = null },
-            onRecorded = { file -> dialog = null; composer.addAudio(android.net.Uri.fromFile(file), fromRecorder = true) },
+            // L'enregistrement fini rejoint la barre par le service (`RecordingService.onRecorded`).
             onPickFile = { dialog = null; audioFiles.launch(arrayOf("audio/*")) },
         )
         "youtube" -> YouTubeDialog(

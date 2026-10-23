@@ -239,8 +239,6 @@
     <string name="ios_tapToSync">Tik om te synchroniseren</string>
     <string name="ios_targetLead">Mik op wat je echt blij zou maken, niet op wat redelijk klinkt.</string>
     <string name="ios_targetTitle">En waar ga je\nvoor?</string>
-    <string name="ios_trialDay2">Dag 2: herinnering voor het einde</string>
-    <string name="ios_trialDay2Detail">We waarschuwen je met een melding. Opzeggen in vijftien seconden.</string>
     <string name="ios_trialLast">Dag %1$s: einde proefperiode</string>
     <string name="ios_trialLastDetail">Je abonnement start op %1$s.</string>
     <string name="ios_trialToday">Vandaag: probeer Micabo Pro</string>
@@ -248,8 +246,7 @@
     <string name="ios_trial_noPayment">Nu niets te betalen</string>
     <string name="ios_trial_price">Daarna %1$s per jaar, dat is %2$s per maand.</string>
     <string name="ios_trial_reminder_cta">Gratis verder</string>
-    <string name="ios_trial_reminder_sub">Op dag %1$s krijg je een melding. Opzeggen kan in twee tikken.</string>
-    <string name="ios_trial_reminder_title">We sturen je een **herinnering** voordat je proefperiode eindigt.</string>
+    <string name="ios_trial_reminder_title">Probeer Micabo **gratis**, zonder verplichtingen.</string>
     <string name="ios_trial_title">We willen dat je Micabo **gratis** uitprobeert.</string>
     <string name="ios_unitYear">jaar</string>
     <string name="ios_usernameLabel">Gebruikersnaam</string>
@@ -505,10 +502,12 @@
     <string name="onboarding_linkSent">Open de link die naar %1$s is gestuurd</string>
     <string name="onboarding_sendLink">Link ontvangen</string>
     <string name="x_account_deleteMsg">Je cursussen, kaarten en geschiedenis worden overal gewist. Een abonnement beheer je in Google Play.</string>
+    <string name="x_account_expired">Je sessie is verlopen. Log opnieuw in om je lessen te blijven synchroniseren.</string>
     <string name="x_auth_rateLimited">Te veel pogingen. Wacht een minuut en probeer het opnieuw.</string>
     <string name="x_error_generic">Er ging iets mis. Probeer het opnieuw.</string>
     <string name="x_error_network">Geen verbinding. Controleer je internet en probeer het opnieuw.</string>
     <string name="x_friends_adopt">Er mijn les van maken</string>
+    <string name="x_lesson_courseUnknown">Deze cursus is nog niet gesynchroniseerd. Probeer het zo meteen opnieuw.</string>
     <string name="x_lesson_whoSees">Wie deze les ziet</string>
     <string name="x_onb_language">In welke taal studeer je?</string>
     <string name="x_onb_language_sub">Mika schrijft je lessen, quizzen en flashcards in deze taal.</string>
@@ -520,7 +519,10 @@
     <string name="x_paywall_soonBody">Abonnementen komen heel binnenkort naar Android. Je gratis les wacht intussen op je.</string>
     <string name="x_paywall_subscribe">Word Pro</string>
     <string name="x_pro_gifted">Deze toegang heb je cadeau gekregen: er valt niets te beheren of op te zeggen.</string>
+    <string name="x_record_channel">Lesopname</string>
     <string name="x_record_limit">Tot 90 minuten. Mika zet je opname om in tekst en schrijft dan je les.</string>
+    <string name="x_record_ongoing">Je les wordt opgenomen</string>
+    <string name="x_record_ongoingBody">Micabo blijft opnemen, ook als je scherm vergrendeld is.</string>
     <string name="x_reminder_channel">Dagelijkse herinnering</string>
     <string name="x_score_1">Ik heb het moeilijk</string>
     <string name="x_score_2">Net onder het gemiddelde</string>

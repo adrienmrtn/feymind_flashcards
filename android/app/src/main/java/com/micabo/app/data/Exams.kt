@@ -182,6 +182,27 @@ class ExamRepository(context: Context, private val prefs: Prefs? = null) {
     /** Attend la lecture du fichier : la synchronisation ne compare qu'une liste complète. */
     suspend fun ready() = loaded.await()
 
+    /**
+     * **L'examen change d'identifiant** : le serveur le refuse (RLS) parce que l'identifiant
+     * appartient à un autre utilisateur, l'invité d'avant par exemple. Rend l'examen neuf.
+     */
+    fun rekey(id: String): Exam? {
+        val current = exam(id) ?: return null
+        val fresh = current.copy(id = newId(), updatedAt = System.currentTimeMillis())
+        _exams.value = (_exams.value.filter { it.id != id } + fresh).sortedBy { it.date }
+        persist()
+        return fresh
+    }
+
+    /** Une leçon qui a changé d'identifiant (`LessonRepository.rekey`) : les examens la suivent. */
+    fun replaceLesson(oldId: String, replacement: String) {
+        if (_exams.value.none { oldId in it.lessonIds }) return
+        _exams.value = _exams.value.map { exam ->
+            if (oldId in exam.lessonIds) exam.copy(lessonIds = exam.lessonIds.map { if (it == oldId) replacement else it }, updatedAt = System.currentTimeMillis()) else exam
+        }
+        persist()
+    }
+
     /** Une leçon supprimée sort des examens qui la couvraient. */
     fun forgetLesson(lessonId: String) {
         if (_exams.value.none { lessonId in it.lessonIds }) return
@@ -194,7 +215,12 @@ class ExamRepository(context: Context, private val prefs: Prefs? = null) {
         persist()
     }
 
-    fun reset() {
+    /**
+     * Vide les examens. Pour « Tout effacer » (`tombstones`), chacun part aussi au serveur : sans
+     * pierre tombale, la synchronisation suivante les faisait redescendre.
+     */
+    fun reset(tombstones: Boolean = false) {
+        if (tombstones) prefs?.addTombstones(_exams.value.map { "exam:${it.id}" })
         _exams.value = emptyList()
         _results.value = emptyList()
         persist()

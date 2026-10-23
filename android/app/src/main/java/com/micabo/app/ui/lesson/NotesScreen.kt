@@ -388,7 +388,7 @@ fun FailedTheme(code: String, onRetry: () -> Unit) {
     val error = when (code) {
         "network" -> NetworkException(Exception())
         "generic", "", "invalid" -> Exception()
-        else -> ApiException(if (code == "daily_limit") 429 else 402, code, "")
+        else -> ApiException(if (code == "daily_limit") 429 else if (code == "course_unknown") 409 else 402, code, "")
     }
     Column(Modifier.fillMaxWidth().padding(vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Mika(MikaMood.SAD, 120.dp)

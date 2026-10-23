@@ -243,8 +243,6 @@
     <string name="ios_tapToSync">Ťukni na synchronizáciu</string>
     <string name="ios_targetLead">Mier na to, čo by ťa naozaj potešilo, nie na to, čo znie rozumne.</string>
     <string name="ios_targetTitle">A na čo\nmieriš?</string>
-    <string name="ios_trialDay2">Deň 2: pripomienka pred koncom</string>
-    <string name="ios_trialDay2Detail">Upozorníme ťa notifikáciou. Zrušíš za pätnásť sekúnd.</string>
     <string name="ios_trialLast">Deň %1$s: koniec skúšobnej doby</string>
     <string name="ios_trialLastDetail">Predplatné začne %1$s.</string>
     <string name="ios_trialToday">Dnes: vyskúšaj Micabo Pro</string>
@@ -252,8 +250,7 @@
     <string name="ios_trial_noPayment">Teraz nič neplatíš</string>
     <string name="ios_trial_price">Potom %1$s za rok, teda %2$s mesačne.</string>
     <string name="ios_trial_reminder_cta">Pokračovať zadarmo</string>
-    <string name="ios_trial_reminder_sub">%1$s. deň ťa upozorní notifikácia. Ak chceš, zrušíš to dvoma ťuknutiami.</string>
-    <string name="ios_trial_reminder_title">Pred koncom skúšobnej doby ti pošleme **pripomienku**.</string>
+    <string name="ios_trial_reminder_title">Vyskúšaj Micabo **zadarmo**, bez záväzkov.</string>
     <string name="ios_trial_title">Chceme ti dať možnosť vyskúšať si Micabo **zadarmo**.</string>
     <string name="ios_unitWeek">týždeň</string>
     <string name="ios_unitYear">rok</string>
@@ -514,10 +511,12 @@
     <string name="onboarding_linkSent">Otvor odkaz poslaný na %1$s</string>
     <string name="onboarding_sendLink">Poslať odkaz</string>
     <string name="x_account_deleteMsg">Tvoje kurzy, kartičky a história sa všade vymažú. Predplatné sa spravuje v Google Play.</string>
+    <string name="x_account_expired">Tvoje prihlásenie vypršalo. Prihlás sa znova, aby sa lekcie ďalej synchronizovali.</string>
     <string name="x_auth_rateLimited">Príliš veľa pokusov. Počkaj minútu a skús to znova.</string>
     <string name="x_error_generic">Niečo sa pokazilo. Skús to znova.</string>
     <string name="x_error_network">Žiadne pripojenie. Skontroluj internet a skús to znova.</string>
     <string name="x_friends_adopt">Urobiť z toho moju lekciu</string>
+    <string name="x_lesson_courseUnknown">Kurz ešte nie je synchronizovaný. Skús to o chvíľu znova.</string>
     <string name="x_lesson_whoSees">Kto vidí túto lekciu</string>
     <string name="x_onb_language">V akom jazyku študuješ?</string>
     <string name="x_onb_language_sub">Mika ti v tomto jazyku napíše lekcie, kvízy a kartičky.</string>
@@ -530,7 +529,10 @@
     <string name="x_paywall_subscribe">Prejsť na Pro</string>
     <string name="x_pro_gifted">Tento prístup si dostal darom: nie je čo spravovať ani rušiť.</string>
     <string name="x_quoted">„%1$s“</string>
+    <string name="x_record_channel">Nahrávanie hodiny</string>
     <string name="x_record_limit">Až 90 minút. Mika prevedie tvoju nahrávku na text a potom napíše tvoju lekciu.</string>
+    <string name="x_record_ongoing">Nahrávam tvoju hodinu</string>
+    <string name="x_record_ongoingBody">Micabo nahráva ďalej, aj so zamknutou obrazovkou.</string>
     <string name="x_score_1">Veľmi mi to nejde</string>
     <string name="x_score_2">Trochu pod priemerom</string>
     <string name="x_score_3">Priemer</string>

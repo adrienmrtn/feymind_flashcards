@@ -264,18 +264,9 @@ fun ProfileScreen() {
             confirmButton = {
                 TextButton(onClick = {
                     confirmReset = false
-                    app.lessons.deleteAll()
-                    val language = app.prefs.profile.value.language
-                    val theme = app.prefs.profile.value.theme
-                    // Tout effacer déconnecte aussi : les leçons du compte restent sur le serveur.
-                    app.prefs.reset()
-                    app.auth.reload()
-                    app.sync.forget()
-                    app.billing.follow(app.auth.guestId, fromGuest = false)
-                    app.prefs.update { it.copy(language = language, theme = theme) }
-                    app.streak.reset()
-                    app.exams.reset()
-                    app.composer.reset()
+                    // Tout effacer déconnecte aussi : les leçons du compte restent sur le serveur ;
+                    // celles de l'invité y sont supprimées (voir `eraseEverything`).
+                    app.eraseEverything()
                     navigator.home()
                 }) { Text(stringResource(R.string.x_settings_reset), color = colors.wrong, style = nunito(16.sp, FontWeight.ExtraBold)) }
             },

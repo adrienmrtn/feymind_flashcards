@@ -1,5 +1,10 @@
 package com.micabo.app.ui.home
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
@@ -44,6 +49,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,6 +60,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -65,6 +72,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.ContextCompat
 import com.micabo.app.R
 import com.micabo.app.data.Lesson
 import com.micabo.app.data.LessonComposer
@@ -128,6 +136,33 @@ fun HomeScreen() {
             !isPro && lessons.values.any { it.usesFreeLesson } -> navigator.push(Screen.Paywall("free_limit"))
             else -> navigator.push(Screen.Creating(composer.request(examDate = null).copy(onboarding = onboardingLesson)))
         }
+    }
+
+    // **Les notifications** (Android 13 et plus) : demandées ici, à la première visite de
+    // l'accueil. La seule demande était dans l'étape du rappel de l'accueil, sautée quand l'offre
+    // n'a pas d'essai : ces élèves ne recevaient jamais le rappel du jour, ni la notification de
+    // l'enregistrement en cours. Une fois, jamais en boucle.
+    val context = LocalContext.current
+    val notifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { app.rescheduleReminders() }
+    val onHome = navigator.current == Screen.Home
+    LaunchedEffect(onHome) {
+        if (onHome && Build.VERSION.SDK_INT >= 33 && !app.prefs.notificationsAsked &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            app.prefs.notificationsAsked = true
+            notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    // Un support refusé parce qu'il faut Pro (une vidéo ou un enregistrement, 402 `import_pro`) :
+    // le paywall s'ouvre une fois, au lieu d'une pastille « illisible » sans issue.
+    val refused = composer.supports.firstOrNull { it.paywall != null }
+    LaunchedEffect(refused?.id, onHome) {
+        val support = refused ?: return@LaunchedEffect
+        val code = support.paywall ?: return@LaunchedEffect
+        if (!onHome) return@LaunchedEffect
+        composer.paywallShown(support.id)
+        navigator.push(Screen.Paywall(code))
     }
 
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()

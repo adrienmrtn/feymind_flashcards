@@ -242,8 +242,6 @@
     <string name="ios_tapToSync">Tryck för att synka</string>
     <string name="ios_targetLead">Sikta på det som verkligen skulle göra dig glad, inte på det som låter rimligt.</string>
     <string name="ios_targetTitle">Och vad siktar\ndu på?</string>
-    <string name="ios_trialDay2">Dag 2: påminnelse innan den slutar</string>
-    <string name="ios_trialDay2Detail">Vi varnar dig med en notis. Avsluta på femton sekunder.</string>
     <string name="ios_trialLast">Dag %1$s: provperioden slutar</string>
     <string name="ios_trialLastDetail">Din prenumeration startar den %1$s.</string>
     <string name="ios_trialToday">I dag: testa Micabo Pro</string>
@@ -251,8 +249,7 @@
     <string name="ios_trial_noPayment">Inget att betala nu</string>
     <string name="ios_trial_price">Sedan %1$s per år, alltså %2$s i månaden.</string>
     <string name="ios_trial_reminder_cta">Fortsätt gratis</string>
-    <string name="ios_trial_reminder_sub">Dag %1$s får du en notis. Avsluta med två tryck om du vill.</string>
-    <string name="ios_trial_reminder_title">Vi skickar en **påminnelse** innan din provperiod slutar.</string>
+    <string name="ios_trial_reminder_title">Testa Micabo **gratis**, utan bindningstid.</string>
     <string name="ios_trial_title">Vi vill att du testar Micabo **gratis**.</string>
     <string name="ios_unitWeek">vecka</string>
     <string name="ios_unitYear">år</string>
@@ -512,10 +509,12 @@
     <string name="onboarding_linkSent">Öppna länken som skickades till %1$s</string>
     <string name="onboarding_sendLink">Få en länk</string>
     <string name="x_account_deleteMsg">Dina kurser, kort och din historik raderas överallt. En prenumeration hanteras i Google Play.</string>
+    <string name="x_account_expired">Din session har gått ut. Logga in igen för att fortsätta synka dina lektioner.</string>
     <string name="x_auth_rateLimited">För många försök. Vänta en minut och försök igen.</string>
     <string name="x_error_generic">Något gick fel. Försök igen.</string>
     <string name="x_error_network">Ingen anslutning. Kolla ditt internet och försök igen.</string>
     <string name="x_friends_adopt">Gör det till min lektion</string>
+    <string name="x_lesson_courseUnknown">Kursen är inte synkad än. Försök igen om en stund.</string>
     <string name="x_lesson_whoSees">Vem ser den här lektionen</string>
     <string name="x_onb_language">Vilket språk pluggar du på?</string>
     <string name="x_onb_language_sub">Mika skriver dina lektioner, quizzar och kort på det här språket.</string>
@@ -528,7 +527,10 @@
     <string name="x_paywall_subscribe">Skaffa Pro</string>
     <string name="x_pro_gifted">Den här åtkomsten fick du i present: det finns inget att hantera eller säga upp.</string>
     <string name="x_quoted">”%1$s”</string>
+    <string name="x_record_channel">Inspelning av lektion</string>
     <string name="x_record_limit">Upp till 90 minuter. Mika gör om din inspelning till text och skriver sedan din lektion.</string>
+    <string name="x_record_ongoing">Din lektion spelas in</string>
+    <string name="x_record_ongoingBody">Micabo fortsätter spela in, även när skärmen är låst.</string>
     <string name="x_score_1">Jag kämpar</string>
     <string name="x_score_2">Strax under snittet</string>
     <string name="x_score_3">Medel</string>

@@ -243,8 +243,6 @@
     <string name="ios_tapToSync">Toca para sincronizar</string>
     <string name="ios_targetLead">Aponta para o que te faria mesmo feliz, não para o que parece razoável.</string>
     <string name="ios_targetTitle">E qual é\no teu objetivo?</string>
-    <string name="ios_trialDay2">Dia 2: lembrete antes do fim</string>
-    <string name="ios_trialDay2Detail">Avisamos-te com uma notificação. Cancelas em quinze segundos.</string>
     <string name="ios_trialLast">Dia %1$s: fim do teste</string>
     <string name="ios_trialLastDetail">A tua subscrição começa a %1$s.</string>
     <string name="ios_trialToday">Hoje: experimenta o Micabo Pro</string>
@@ -252,8 +250,7 @@
     <string name="ios_trial_noPayment">Nada a pagar hoje</string>
     <string name="ios_trial_price">Depois %1$s por ano, ou seja, %2$s por mês.</string>
     <string name="ios_trial_reminder_cta">Continuar grátis</string>
-    <string name="ios_trial_reminder_sub">No dia %1$s, uma notificação avisa-te. Se quiseres, cancelas em dois toques.</string>
-    <string name="ios_trial_reminder_title">Vamos enviar-te um **lembrete** antes de o teste acabar.</string>
+    <string name="ios_trial_reminder_title">Experimenta o Micabo **grátis**, sem compromisso.</string>
     <string name="ios_trial_title">Queremos que experimentes o Micabo **gratuitamente**.</string>
     <string name="ios_unitWeek">semana</string>
     <string name="ios_unitYear">ano</string>
@@ -514,10 +511,12 @@
     <string name="onboarding_linkSent">Abre o link enviado para %1$s</string>
     <string name="onboarding_sendLink">Receber um link</string>
     <string name="x_account_deleteMsg">Os teus cursos, cartões e histórico serão apagados em todo o lado. A subscrição gere-se no Google Play.</string>
+    <string name="x_account_expired">A tua sessão expirou. Inicia sessão outra vez para continuar a sincronizar as tuas lições.</string>
     <string name="x_auth_rateLimited">Demasiadas tentativas. Espera um minuto e tenta outra vez.</string>
     <string name="x_error_generic">Algo correu mal. Tenta outra vez.</string>
     <string name="x_error_network">Sem ligação. Verifica a internet e tenta de novo.</string>
     <string name="x_friends_adopt">Fazer a minha lição com isto</string>
+    <string name="x_lesson_courseUnknown">Este curso ainda não está sincronizado. Tenta outra vez daqui a pouco.</string>
     <string name="x_lesson_whoSees">Quem vê esta lição</string>
     <string name="x_onb_language">Em que língua estudas?</string>
     <string name="x_onb_language_sub">O Mika escreve as tuas lições, quizzes e flashcards nesta língua.</string>
@@ -530,7 +529,10 @@
     <string name="x_paywall_subscribe">Passar a Pro</string>
     <string name="x_pro_gifted">Este acesso foi-te oferecido: não há nada para gerir nem cancelar.</string>
     <string name="x_quoted">«%1$s»</string>
+    <string name="x_record_channel">Gravação da aula</string>
     <string name="x_record_limit">Até 90 minutos. O Mika passa a gravação a texto e depois escreve a tua lição.</string>
+    <string name="x_record_ongoing">A gravar a tua aula</string>
+    <string name="x_record_ongoingBody">O Micabo continua a gravar, mesmo com o ecrã bloqueado.</string>
     <string name="x_reminder_channel">Lembrete diário</string>
     <string name="x_score_1">Tenho dificuldades</string>
     <string name="x_score_2">Um pouco abaixo da média</string>
