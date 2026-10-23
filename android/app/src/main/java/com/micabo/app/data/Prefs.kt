@@ -156,6 +156,13 @@ class Prefs(context: Context) {
     var pkceVerifier: String
         get() = prefs.getString("account.pkce", "").orEmpty()
         set(value) = prefs.edit { putString("account.pkce", value) }
+    /**
+     * Celui de la page Google ou Apple, à part : un seul vérificateur pour les deux chemins
+     * faisait échouer le lien du courriel dès qu'on essayait Google entre-temps, et l'inverse.
+     */
+    var pkceOAuthVerifier: String
+        get() = prefs.getString("account.pkce.oauth", "").orEmpty()
+        set(value) = prefs.edit { putString("account.pkce.oauth", value) }
 
     /** Les suppressions qui attendent la synchronisation : `course:<id>`, `card:<id>`, `exam:<id>`. */
     val tombstones: Set<String> get() = prefs.getStringSet("sync.tombstones", emptySet()).orEmpty().toSet()
