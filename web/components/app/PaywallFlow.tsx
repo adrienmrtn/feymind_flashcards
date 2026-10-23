@@ -170,7 +170,7 @@ export function PaywallCard({
    * du réglage d'usine. C'est le premier prix que voit quelqu'un qui paiera en livres, et il
    * annonçait une monnaie qu'on ne lui prélèvera jamais.
    */
-  const currency = usePresentment();
+  const presentment = usePresentment();
   const titleId = useId();
   const [stage, setStage] = useState<Stage>(startAt);
   const index = STAGES.indexOf(stage);
@@ -303,7 +303,7 @@ export function PaywallCard({
                   {stage === "social"
                     ? t("app.common.continue")
                     : stage === "trial"
-                      ? t("app.paywall.continueFor", { price: pricing.priceText(0, currency) })
+                      ? t("app.paywall.continueFor", { price: pricing.priceText(0, presentment) })
                       : t("app.paywall.continueFree")}
                 </button>
               </div>

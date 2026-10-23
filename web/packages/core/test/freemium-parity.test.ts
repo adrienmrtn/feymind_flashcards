@@ -21,7 +21,17 @@ import { ASSUME_PRO_WITHOUT_ROW, ENTITLEMENT_ID, FREE_LESSON_TIER, LIFETIME_PRO_
 import { EXTRA_ALLOWANCE, MIKA_ALLOWANCE, hasUsedFreeLesson, isImportSource, lessonGate } from "../src/lesson/allowance";
 import { MAX_COMPOSER_CHARACTERS, MAX_COMPOSER_IMAGES, MAX_SUPPORTS } from "../src/lesson/composer";
 import { MIKA_LIMITS } from "../src/lesson/mika";
-import { DISCOUNT_YEARLY, FREE_TRIAL_DAYS, TRY_AMOUNTS, WEEKLY, YEARLY } from "../src/pricing";
+import {
+  BASE_PRICES,
+  DISCOUNT_YEARLY,
+  FREE_TRIAL_DAYS,
+  REGIONAL_PRICES,
+  WEEKLY,
+  YEARLY,
+  discountSavingsPercent,
+  presentmentFor,
+  regionalPricesFor,
+} from "../src/pricing";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../../..");
@@ -214,14 +224,13 @@ describe("l'offre cadeau, des deux côtés", () => {
       });
     }
 
-    // Et la Turquie, telle que `store/pricing.json` la pose dans App Store Connect.
-    const grid = JSON.parse(readFileSync(resolve(repoRoot, "store/pricing.json"), "utf8")) as {
-      tiers: { territories: string[]; currency?: string; prices?: Record<string, string> }[];
-    };
-    const turkey = grid.tiers.find((tier) => tier.territories.includes("TUR"))?.prices ?? {};
-    expect(Number(turkey.yearly)).toBe(TRY_AMOUNTS.yearly);
-    expect(Number(turkey.weekly)).toBe(TRY_AMOUNTS.weekly);
-    expect(Number(turkey.discount)).toBe(TRY_AMOUNTS.yearly_discount);
+    // Le repli de l'app est la grille de base du site : la France, et tout pays non nommé.
+    expect({ ...BASE_PRICES.amounts, currency: BASE_PRICES.currency }).toEqual({
+      yearly: swiftPlan("yearly").price,
+      weekly: swiftPlan("weekly").price,
+      yearly_discount: swiftPlan("discount").price,
+      currency: "EUR",
+    });
   });
 
   it("vend le même produit, sur le même entitlement", () => {
@@ -247,5 +256,133 @@ describe("l'offre cadeau, des deux côtés", () => {
       "utf8",
     );
     expect(flow).not.toContain("case .purchased, .unavailable:");
+  });
+});
+
+/**
+ * **La grille pays par pays.** `PaywallCatalog.swift` n'écrit que la France : chaque autre
+ * pays vient de `store/pricing.json`, que l'action « Grille de prix iOS » pose dans App Store
+ * Connect et que `store/grid.test.mjs` relie au Swift. Le site doit dire, pour chaque pays
+ * nommé, la devise et les trois montants de cette grille.
+ */
+describe("les prix pays par pays, des deux côtés", () => {
+  type Tier = {
+    tier: string;
+    label: string;
+    rule?: "price" | "usd" | "equalize";
+    from?: string;
+    territory?: string;
+    territories?: string[];
+    currency?: string;
+    prices?: Record<"weekly" | "yearly" | "discount", string>;
+  };
+  const grid = JSON.parse(readFileSync(resolve(repoRoot, "store/pricing.json"), "utf8")) as {
+    products: Record<"weekly" | "yearly" | "discount", { trial: string | null }>;
+    base: Tier;
+    tiers: Tier[];
+  };
+
+  /** App Store Connect parle ISO alpha-3 ; le site, Vercel et les navigateurs alpha-2. */
+  const ALPHA2: Record<string, string> = {
+    FRA: "FR", USA: "US", CAN: "CA", AUS: "AU", CHE: "CH", BEL: "BE", LUX: "LU", DEU: "DE",
+    AUT: "AT", NLD: "NL", IRL: "IE", FIN: "FI", ESP: "ES", ITA: "IT", PRT: "PT", GRC: "GR",
+    SVK: "SK", SVN: "SI", HRV: "HR", EST: "EE", LVA: "LV", LTU: "LT", POL: "PL", CZE: "CZ",
+    HUN: "HU", ROU: "RO", BGR: "BG", TUR: "TR", BRA: "BR", MEX: "MX", ARG: "AR", COL: "CO",
+    CHL: "CL", PER: "PE", MAR: "MA", DZA: "DZ", TUN: "TN", SEN: "SN", CIV: "CI", EGY: "EG",
+    IDN: "ID", PHL: "PH", VNM: "VN", PAK: "PK", NGA: "NG", IND: "IN",
+  };
+  const alpha2 = (code: string) => {
+    const found = ALPHA2[code];
+    if (!found) throw new Error(`${code} : pays de store/pricing.json inconnu du test, à ajouter`);
+    return found;
+  };
+
+  const trialDays = (key: "weekly" | "yearly" | "discount") =>
+    grid.products[key].trial === "THREE_DAYS" ? 3 : grid.products[key].trial === null ? 0 : NaN;
+
+  const priced = (territory: string): Tier =>
+    territory === grid.base.territory
+      ? grid.base
+      : grid.tiers.find((tier) => tier.territories?.includes(territory)) ?? grid.base;
+
+  /**
+   * Ce que le site doit afficher dans un pays : les montants écrits ; pour un pays aligné sur
+   * un équivalent Apple (`equalize`), ceux du pays de référence ; pour un prix en dollars
+   * (`usd`), ces dollars-là.
+   */
+  function expected(territory: string) {
+    let tier = priced(territory);
+    if (tier.rule === "equalize") tier = priced(tier.from!);
+    const currency = tier.rule === "usd" ? "USD" : tier.currency!;
+    return {
+      currency,
+      amounts: {
+        yearly: Number(tier.prices!.yearly),
+        weekly: Number(tier.prices!.weekly),
+        yearly_discount: Number(tier.prices!.discount),
+      },
+    };
+  }
+
+  const named = [grid.base.territory!, ...grid.tiers.flatMap((tier) => tier.territories ?? [])];
+
+  it("affiche, dans chaque pays nommé, la devise et les trois prix de l'App Store", () => {
+    for (const territory of named) {
+      const web = regionalPricesFor(alpha2(territory));
+      expect({ currency: web.currency, amounts: web.amounts }, territory).toEqual(expected(territory));
+    }
+  });
+
+  it("ne nomme pas un pays que la grille ignore, et retombe sur la France ailleurs", () => {
+    const webCountries = REGIONAL_PRICES.flatMap((prices) => prices.countries).sort();
+    expect(webCountries).toEqual(named.map(alpha2).sort());
+    expect(new Set(webCountries).size).toBe(webCountries.length);
+    for (const elsewhere of ["JP", "GB", "SE", "DK", "CY", "MT", null]) {
+      expect(regionalPricesFor(elsewhere)).toBe(BASE_PRICES);
+    }
+    expect(expected("XXX")).toEqual({ currency: "EUR", amounts: BASE_PRICES.amounts });
+  });
+
+  it("offre l'essai de l'app, et rien au tarif réduit", () => {
+    expect(trialDays("yearly")).toBe(FREE_TRIAL_DAYS);
+    expect(trialDays("weekly")).toBe(FREE_TRIAL_DAYS);
+    expect(trialDays("discount")).toBe(DISCOUNT_YEARLY.trialDays);
+    for (const prices of REGIONAL_PRICES) expect(prices.trialDays, prices.label).toBe(FREE_TRIAL_DAYS);
+  });
+
+  it("annonce la remise du cadeau calculée sur les prix du pays : −40 % partout", () => {
+    // `DiscountOffer.swift` passe par `PaywallCatalog.savings`, sur les prix de la boutique.
+    expect(discountOffer).toContain("PaywallCatalog.savings(of: plan, against: reference)");
+    for (const prices of REGIONAL_PRICES) {
+      expect(discountSavingsPercent(presentmentFor(prices.countries[0])), prices.label).toBe(40);
+    }
+  });
+
+  it("et Google Play dit pareil, à deux pays près", () => {
+    type PlayState = {
+      common: { pricing: { territory_prices: Record<string, { amount_micros: number; currency: string }> } };
+      store_state: { base_plans: Record<string, { auto_renewing_base_plan_type: { billing_period_duration: string }; offers?: object }> };
+    };
+    const play = JSON.parse(readFileSync(resolve(repoRoot, "store/play-subscriptions.json"), "utf8")) as {
+      desired_states: PlayState[];
+    };
+    const planOf = (state: PlayState) => {
+      const [key, plan] = Object.entries(state.store_state.base_plans)[0]!;
+      if (plan.auto_renewing_base_plan_type.billing_period_duration === "P1W") return "weekly";
+      return key === "yearly" && plan.offers ? "yearly" : "yearly_discount";
+    };
+    const diverging = new Set<string>();
+    for (const state of play.desired_states) {
+      const plan = planOf(state);
+      for (const [country, price] of Object.entries(state.common.pricing.territory_prices)) {
+        const web = regionalPricesFor(country);
+        const same = web.currency === price.currency && web.amounts[plan] === price.amount_micros / 1e6;
+        if (!same) diverging.add(country);
+      }
+    }
+    // **Chypre et Malte** sont au palier C sur Play (39,99 €) mais absents de la grille
+    // App Store, qui leur vend donc l'équivalent du prix français (49,99 €). Le site suit
+    // l'App Store. Toute autre divergence est une erreur de grille.
+    expect([...diverging].sort()).toEqual(["CY", "MT"]);
   });
 });
