@@ -49,6 +49,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -97,6 +98,9 @@ private fun StepScaffold(
     onNext: () -> Unit,
     enabled: Boolean = true,
     centered: Boolean = false,
+    /** Sous le bouton : un lien discret, comme « J'ai déjà un compte » sur l'accroche. */
+    secondary: String? = null,
+    onSecondary: () -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
@@ -112,8 +116,13 @@ private fun StepScaffold(
             content()
             Spacer(Modifier.height(24.dp))
         }
-        Box(Modifier.padding(horizontal = 20.dp, vertical = 12.dp)) {
+        Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             MicaboButton(cta, onClick = onNext, enabled = enabled)
+            if (secondary != null) {
+                TextButton(onClick = onSecondary, modifier = Modifier.padding(top = 6.dp)) {
+                    Text(secondary, style = nunito(15.sp, FontWeight.ExtraBold), color = Micabo.colors.inkSecondary)
+                }
+            }
         }
     }
 }
@@ -141,11 +150,19 @@ private fun MikaSays(text: String, mood: MikaMood = MikaMood.IDLE, size: Dp = 64
 
 /** **L'accroche** : le logo, « Apprends 2× plus vite », Mika qui salue. */
 @Composable
-fun Hook(onNext: () -> Unit) {
+fun Hook(onNext: () -> Unit, onSignIn: (() -> Unit)? = null) {
     val colors = Micabo.colors
     val pop = remember { Animatable(0.6f) }
     LaunchedEffect(Unit) { pop.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = 180f)) }
-    StepScaffold(stringResource(R.string.ios_hook_next), onNext, centered = true) {
+    // **Qui a déjà un compte se connecte d'emblée**, comme sur l'iPhone et le site : le profil
+    // descend avec ses leçons, et un accueil fini ailleurs ne se refait pas ici.
+    StepScaffold(
+        stringResource(R.string.ios_hook_next),
+        onNext,
+        centered = true,
+        secondary = if (onSignIn != null) stringResource(R.string.common_alreadyAccount) else null,
+        onSecondary = { onSignIn?.invoke() },
+    ) {
         Spacer(Modifier.height(40.dp))
         Image(
             painterResource(R.mipmap.ic_launcher_foreground_art),

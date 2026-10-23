@@ -91,7 +91,7 @@ export function ExamsScreen({ exams, lessons, results, country }: { exams: ExamI
                 {dateLabel(next.examDate)}
               </p>
             </div>
-            <div className="-mb-3 -mr-2 shrink-0">
+            <div className="-mb-3 -me-2 shrink-0">
               <Mika mood="idle" size={76} label="" />
             </div>
           </div>
@@ -100,7 +100,7 @@ export function ExamsScreen({ exams, lessons, results, country }: { exams: ExamI
               {next.courseIds.map((id) => {
                 const lesson = byId.get(id);
                 return lesson ? (
-                  <li key={id} className="flex items-center gap-1.5 rounded-pill bg-white/20 py-1 pl-1.5 pr-3 text-[13px] font-bold">
+                  <li key={id} className="flex items-center gap-1.5 rounded-pill bg-white/20 py-1 ps-1.5 pe-3 text-[13px] font-bold">
                     <MicaboIcon id={lesson.icon} size={20} />
                     <span className="max-w-[180px] truncate">{lesson.title}</span>
                   </li>
@@ -214,7 +214,7 @@ export function ExamsScreen({ exams, lessons, results, country }: { exams: ExamI
 function ExamRow({ exam, days, date, best, country, onClick }: { exam: ExamItem; days: number; date: string; best: number | null; country: string | null; onClick: () => void }) {
   const { t, locale } = useI18n();
   return (
-    <button type="button" onClick={onClick} className="pressable flex w-full items-center gap-3.5 rounded-[20px] bg-surface p-3.5 text-left shadow-[inset_0_0_0_1.5px_var(--color-stroke)]">
+    <button type="button" onClick={onClick} className="pressable flex w-full items-center gap-3.5 rounded-[20px] bg-surface p-3.5 text-start shadow-[inset_0_0_0_1.5px_var(--color-stroke)]">
       <span className={`numeral flex h-12 min-w-12 flex-col items-center justify-center rounded-[14px] px-2 leading-none ${days >= 0 ? "bg-accent-soft text-accent" : "bg-surface-muted text-ink-secondary"}`}>
         {days >= 0 ? (
           <>

@@ -39,7 +39,7 @@ export default async function AnkiPage() {
       <ArticleSection id="tableau" title={t("articles.anki.tableTitle")} wide>
         <ArticleP k="articles.anki.tableLead" className="mx-auto max-w-reading" />
         <div className="paper mx-auto mt-8 max-w-[900px] overflow-x-auto rounded-sheet bg-surface">
-          <table className="w-full border-collapse text-left text-[14.5px]">
+          <table className="w-full border-collapse text-start text-[14.5px]">
             <caption className="sr-only">{t("articles.anki.tableCaption")}</caption>
             <thead>
               <tr className="border-b border-hairline">

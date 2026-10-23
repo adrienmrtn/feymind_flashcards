@@ -1,9 +1,9 @@
 /**
  * Une URL publique = une langue.
  *
- * L'anglais n'a pas de préfixe (`/methode`). Le français, l'allemand,
- * l'espagnol et le turc ont le leur (`/fr/methode`, `/tr/methode`). Sans ça,
- * Google n'indexe qu'une version — celle que le robot a vue.
+ * L'anglais n'a pas de préfixe (`/methode`). Les vingt-cinq autres langues ont le leur, le
+ * code en minuscules (`/fr/methode`, `/pt-br/methode`, `/es-419/methode`). Sans ça, Google
+ * n'indexe qu'une version — celle que le robot a vue.
  *
  * Les écrans privés (`/app`, `/commencer`, …) n'ont pas de préfixe : ils sont
  * `noindex`, le cookie suffit.
@@ -11,11 +11,21 @@
 
 import type { Route } from "next";
 
-import { DEFAULT_UI_LOCALE, isUiLocale, type UiLocale } from "./locales";
+import {
+  DEFAULT_UI_LOCALE,
+  UI_LOCALES,
+  UI_LOCALE_META,
+  isUiLocale,
+  localeFromUrlSegment,
+  urlSegment,
+  type UiLocale,
+} from "./locales";
 
-/** Préfixes visibles dans l'adresse. L'anglais n'en a pas. */
-export const URL_PREFIX_LOCALES = ["fr", "de", "es", "tr"] as const;
-export type UrlPrefixLocale = (typeof URL_PREFIX_LOCALES)[number];
+/** Les langues qui ont un préfixe dans l'adresse : toutes, sauf l'anglais. */
+export type UrlPrefixLocale = Exclude<UiLocale, "en">;
+export const URL_PREFIX_LOCALES = UI_LOCALES.filter(
+  (locale): locale is UrlPrefixLocale => locale !== DEFAULT_UI_LOCALE,
+);
 
 /** Header posé par le middleware : la langue de l'URL, pas celle du cookie. */
 export const LOCALE_HEADER = "x-micabo-locale";
@@ -58,21 +68,30 @@ export function splitLocalePrefix(pathname: string): {
   const clean = normalizePath(pathname);
   if (clean === "/") return { prefix: null, rest: "/" };
   const segments = clean.slice(1).split("/");
-  const first = segments[0];
-  if (!isUiLocale(first)) return { prefix: null, rest: clean };
+  const prefix = localeFromUrlSegment(segments[0]);
+  if (!prefix) return { prefix: null, rest: clean };
   const rest = segments.length === 1 ? "/" : `/${segments.slice(1).join("/")}`;
-  return { prefix: first, rest };
+  return { prefix, rest };
+}
+
+/** Le préfixe est-il écrit comme on l'écrit (`/pt-br`), et pas `/pt-BR` ou `/FR` ? */
+function hasCanonicalPrefix(pathname: string, prefix: UiLocale): boolean {
+  return normalizePath(pathname).slice(1).split("/")[0] === urlSegment(prefix);
 }
 
 export function stripLocalePrefix(pathname: string): string {
   return splitLocalePrefix(pathname).rest;
 }
 
-/** Chemin public dans une langue. `en` + `/methode` → `/methode`. `fr` + `/` → `/fr`. */
+/**
+ * Chemin public dans une langue. `en` + `/methode` → `/methode`. `fr` + `/` → `/fr`.
+ * `pt-BR` + `/methode` → `/pt-br/methode` : l'adresse s'écrit en minuscules.
+ */
 export function localizedPath(locale: UiLocale, path: string): string {
   const rest = normalizePath(stripLocalePrefix(path));
   if (locale === DEFAULT_UI_LOCALE) return rest;
-  return rest === "/" ? `/${locale}` : `/${locale}${rest}`;
+  const segment = urlSegment(locale);
+  return rest === "/" ? `/${segment}` : `/${segment}${rest}`;
 }
 
 export function localizedHref(locale: UiLocale, path: string): Route {
@@ -118,6 +137,11 @@ export function resolveLocaleRequest(pathname: string): LocaleResolution {
     if (isPrivatePath(rest) || isLocaleBlindPath(rest)) {
       return { action: "redirect", location: rest, status: 302, setCookie: prefix };
     }
+    // `/pt-BR/methode` et `/FR` mènent à la bonne page, mais sous une seule adresse :
+    // deux casses du même préfixe seraient deux URL du même contenu.
+    if (!hasCanonicalPrefix(pathname, prefix)) {
+      return { action: "redirect", location: localizedPath(prefix, rest), status: 301 };
+    }
     return { action: "continue", pathname: rest, urlLocale: prefix, setCookie: prefix };
   }
 
@@ -155,24 +179,24 @@ export function localeSwitchHref(pathname: string, next: UiLocale): string | nul
   return localizedPath(next, rest);
 }
 
-export type LanguageAlternateMap = {
-  en: string;
-  fr: string;
-  de: string;
-  es: string;
-  tr: string;
-  "x-default": string;
-};
+/** `hreflang` → chemin. Les clés sont `UI_LOCALE_META[…].hreflang` (`pt-BR`, `sr`), plus `x-default`. */
+export type LanguageAlternateMap = Record<string, string> & { "x-default": string };
 
-/** Jeu `hreflang` réciproque + `x-default` = anglais. */
-export function languageAlternatePaths(path: string): LanguageAlternateMap {
+/**
+ * Jeu `hreflang` réciproque + `x-default` = anglais.
+ *
+ * `locales` : les langues à annoncer. Toutes par défaut ; le sitemap et les métadonnées ne
+ * passent que celles qui ont leur traduction (`TRANSLATED_UI_LOCALES`) — l'anglais servi
+ * sous `/it` n'est pas une version italienne.
+ */
+export function languageAlternatePaths(
+  path: string,
+  locales: readonly UiLocale[] = UI_LOCALES,
+): LanguageAlternateMap {
   const rest = stripLocalePrefix(path);
-  return {
-    en: localizedPath("en", rest),
-    fr: localizedPath("fr", rest),
-    de: localizedPath("de", rest),
-    es: localizedPath("es", rest),
-    tr: localizedPath("tr", rest),
-    "x-default": localizedPath("en", rest),
-  };
+  const map: Record<string, string> = {};
+  for (const locale of locales) {
+    map[UI_LOCALE_META[locale].hreflang] = localizedPath(locale, rest);
+  }
+  return { ...map, "x-default": localizedPath(DEFAULT_UI_LOCALE, rest) };
 }

@@ -48,6 +48,12 @@ export type CountryCode =
  * Les codes sont ceux d'ISO 639-1 et ne suivent pas toujours le pays : la Tchéquie écrit `cs`, la
  * Grèce `el`, la Suède `sv`. C'est cette table qui fait la traduction, et c'est la même liste que
  * `supabase/functions/_shared/language.ts`.
+ *
+ * **Les vingt-six langues des apps**, dans l'ordre de `ContentLanguage` côté Swift et
+ * d'`AppLocale` côté Android. Le site n'en proposait que quatorze : une fiche choisie en danois
+ * sur le téléphone revenait ici comme une valeur inconnue, et le réglage du site la retombait
+ * sur la langue du pays sans le dire. Deux variantes régionales y figurent (`es-419`, `pt-BR`) :
+ * la contrainte de `profiles.sheet_language` les accepte depuis `20261017100000_more_languages`.
  */
 export type ContentLanguage =
   | "fr"
@@ -55,32 +61,60 @@ export type ContentLanguage =
   | "de"
   | "it"
   | "es"
+  | "es-419"
   | "pt"
+  | "pt-BR"
   | "cs"
+  | "sk"
   | "nl"
   | "el"
   | "hu"
   | "pl"
   | "ro"
   | "sv"
-  | "tr";
+  | "da"
+  | "fi"
+  | "et"
+  | "hr"
+  | "sl"
+  | "sr"
+  | "bg"
+  | "ru"
+  | "tr"
+  | "ar";
 
-/** Le nom de la langue, écrit dans cette langue : c'est ainsi qu'on choisit une langue. */
+/**
+ * Le nom de la langue, écrit dans cette langue : c'est ainsi qu'on choisit une langue. Les
+ * libellés sont ceux de l'app (`ContentLanguage.label`) : l'espagnol et le portugais disent leur
+ * variante, puisque les deux existent.
+ */
 export const LANGUAGE_LABELS: Record<ContentLanguage, string> = {
   fr: "Français",
   en: "English",
   de: "Deutsch",
   it: "Italiano",
-  es: "Español",
-  pt: "Português",
+  es: "Español (España)",
+  "es-419": "Español (Latinoamérica)",
+  pt: "Português (Portugal)",
+  "pt-BR": "Português (Brasil)",
   cs: "Čeština",
+  sk: "Slovenčina",
   nl: "Nederlands",
   el: "Ελληνικά",
   hu: "Magyar",
   pl: "Polski",
   ro: "Română",
   sv: "Svenska",
+  da: "Dansk",
+  fi: "Suomi",
+  et: "Eesti",
+  hr: "Hrvatski",
+  sl: "Slovenščina",
+  sr: "Srpski",
+  bg: "Български",
+  ru: "Русский",
   tr: "Türkçe",
+  ar: "العربية",
 };
 
 export interface Country {
@@ -153,7 +187,7 @@ export function languageLabel(code: string | null | undefined): string {
 export const CONTENT_LANGUAGES = Object.keys(LANGUAGE_LABELS) as ContentLanguage[];
 
 export function isContentLanguage(value: string | null | undefined): value is ContentLanguage {
-  return Boolean(value && value in LANGUAGE_LABELS);
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(LANGUAGE_LABELS, value);
 }
 
 /**
@@ -229,12 +263,69 @@ export function institutionCountryIso(code: string | null | undefined): string |
 }
 
 /**
+ * La langue d'interface → le pays du parcours qu'elle désigne sans discussion, quand la liste
+ * le connaît. Le français n'y est pas : la Belgique, la Suisse, le Québec le parlent aussi, et
+ * la région du navigateur le dit mieux. L'espagnol d'Amérique et le portugais du Brésil non
+ * plus : ni le Mexique ni le Brésil ne sont dans la liste du parcours.
+ *
+ * Les clés sont en minuscules : `UiLocale` (`pt-BR`) passe par `toLowerCase()`.
+ */
+const UI_LOCALE_COUNTRY: Readonly<Record<string, CountryCode>> = {
+  de: "de",
+  es: "es",
+  tr: "tr",
+  it: "it",
+  pt: "pt",
+  nl: "nl",
+  pl: "pl",
+  ro: "ro",
+  sv: "se",
+  cs: "cz",
+  hu: "hu",
+  el: "gr",
+};
+
+/**
+ * La langue d'interface → le pays de l'annuaire d'établissements, faute de mieux. La même
+ * table que `UiLocale.institutionCountryIso` côté iPhone : l'anglais renvoie aux États-Unis,
+ * l'espagnol d'Amérique latine au Mexique, l'arabe aux Émirats.
+ */
+const UI_LOCALE_INSTITUTION_ISO: Readonly<Record<string, string>> = {
+  en: "US",
+  fr: "FR",
+  de: "DE",
+  es: "ES",
+  "es-419": "MX",
+  it: "IT",
+  pt: "PT",
+  "pt-br": "BR",
+  nl: "NL",
+  pl: "PL",
+  ro: "RO",
+  sv: "SE",
+  da: "DK",
+  fi: "FI",
+  et: "EE",
+  cs: "CZ",
+  sk: "SK",
+  hu: "HU",
+  hr: "HR",
+  sl: "SI",
+  sr: "RS",
+  bg: "BG",
+  el: "GR",
+  ru: "RU",
+  tr: "TR",
+  ar: "AE",
+};
+
+/**
  * Le pays que l'interface implique, quand le parcours n'en a pas encore nommé
  * un. L'anglais est la langue de base du site : ce n'est plus la France.
  */
 export function countryFromUiLocale(locale: string | null | undefined): CountryCode {
   const hint = locale?.trim().toLowerCase();
-  if (hint === "de" || hint === "es" || hint === "tr") return hint;
+  if (hint && UI_LOCALE_COUNTRY[hint]) return UI_LOCALE_COUNTRY[hint]!;
   if (hint === "en") return "us";
   return FALLBACK_COUNTRY;
 }
@@ -253,7 +344,9 @@ export function institutionSearchCountry(
 ): string | null {
   const chosen = institutionCountryIso(country);
   const locale = uiLocale?.trim().toLowerCase() || null;
-  const fromLocale = institutionCountryIso(countryFromUiLocale(locale));
+  const fromLocale =
+    (locale ? UI_LOCALE_INSTITUTION_ISO[locale] : undefined) ??
+    institutionCountryIso(countryFromUiLocale(locale));
 
   if (locale === "en" && chosen === "FR") return fromLocale;
   return chosen ?? fromLocale;
@@ -276,7 +369,7 @@ export function guessCountry(
   languageHint?: string | null,
 ): CountryCode {
   const hint = languageHint?.trim().toLowerCase();
-  if (hint === "de" || hint === "es" || hint === "tr") return hint;
+  if (hint && UI_LOCALE_COUNTRY[hint]) return UI_LOCALE_COUNTRY[hint]!;
   if (hint === "en") return englishSpeakingCountry(locales) ?? "us";
 
   for (const locale of locales) {

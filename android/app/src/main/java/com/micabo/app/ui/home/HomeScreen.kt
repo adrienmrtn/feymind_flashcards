@@ -111,16 +111,22 @@ fun HomeScreen() {
     val stats = remember(lessons) { HomeStats.of(lessons.values) }
     val resume = remember(lessons) { lessons.values.filter { it.openedAt > 0 }.maxByOrNull { it.openedAt } }
 
+    // La leçon du parcours d'accueil (`LessonCreation.onboarding`) : la première après l'accueil,
+    // tant qu'aucune leçon ne compte. Comme sur l'iPhone et le site, elle peut partir d'un PDF ou
+    // de photos sans abonnement : le serveur l'accorde une fois (`begin_lesson`, `p_onboarding`).
+    val onboardingLesson = app.prefs.onboardingLessonPending && lessons.values.none { it.usesFreeLesson }
+
     // La porte du gratuit, côté app (`LessonAllowance.gate`) : les imports sont Pro, et la leçon
     // offerte ne se crée qu'une fois. Le serveur tient la même porte ; celle-ci évite un appel refusé.
+    // Un paquet ou un cours d'exemple venu de l'iPhone ne la ferme pas (`Lesson.usesFreeLesson`).
     fun send() {
         // Un double toucher n'empile pas deux écrans (création ou paywall) l'un sur l'autre.
         if (!composer.canSend || navigator.current != Screen.Home) return
         focus.clearFocus()
         when {
-            !isPro && composer.needsPro -> navigator.push(Screen.Paywall("import_pro"))
-            !isPro && lessons.isNotEmpty() -> navigator.push(Screen.Paywall("free_limit"))
-            else -> navigator.push(Screen.Creating(composer.request(examDate = null)))
+            !isPro && composer.needsPro && !onboardingLesson -> navigator.push(Screen.Paywall("import_pro"))
+            !isPro && lessons.values.any { it.usesFreeLesson } -> navigator.push(Screen.Paywall("free_limit"))
+            else -> navigator.push(Screen.Creating(composer.request(examDate = null).copy(onboarding = onboardingLesson)))
         }
     }
 
@@ -161,7 +167,7 @@ fun HomeScreen() {
         item {
             SourceRow(
                 composer,
-                isPro = isPro,
+                isPro = isPro || onboardingLesson,
                 onFull = { full = true },
                 onLocked = {
                     focus.clearFocus()

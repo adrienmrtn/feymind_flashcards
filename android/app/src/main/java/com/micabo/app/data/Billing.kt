@@ -33,6 +33,8 @@ data class StorePlan(
     val monthly: String? = null,
     /** Les jours offerts par la boutique, 0 sans essai (ou s'il a déjà servi). */
     val trialDays: Int = 0,
+    /** Le prix en micro-unités de la devise : de quoi calculer une remise. */
+    val micros: Long = 0,
 )
 
 /** Les jours d'essai gratuit d'une offre, d'après Google Play. */
@@ -53,6 +55,20 @@ private fun monthlyOf(pkg: Package): String? = runCatching {
     format.currency = java.util.Currency.getInstance(price.currencyCode)
     format.format(price.amountMicros / 1_000_000.0 / 12.0)
 }.getOrNull()
+
+/**
+ * **Où l'abonnement a été pris**, donc où il se gère (`EntitlementInfo.store`). Un compte payé
+ * sur l'iPhone ou sur le site est Pro ici aussi, et la page de Google Play n'y pouvait rien.
+ */
+enum class ProStore {
+    PLAY,
+    APP_STORE,
+    /** Le site : Stripe, par RevenueCat. */
+    WEB,
+    /** Offert : il n'y a rien à résilier. */
+    GIFT,
+    OTHER,
+}
 
 sealed interface PurchaseOutcome {
     data object Success : PurchaseOutcome
@@ -76,6 +92,10 @@ class Billing(
 
     private val _isPro = MutableStateFlow(false)
     val isPro: StateFlow<Boolean> = _isPro.asStateFlow()
+
+    private val _store = MutableStateFlow<ProStore?>(null)
+    /** La boutique de l'abonnement actif ; `null` sans abonnement. */
+    val store: StateFlow<ProStore?> = _store.asStateFlow()
 
     fun start(userId: String?) {
         if (!enabled) return
@@ -142,8 +162,36 @@ class Billing(
         }.onFailure { Log.w("Billing", "RevenueCat indisponible", it) }
     }
 
+    private val prefs = context.getSharedPreferences("micabo", Context.MODE_PRIVATE)
+
+    /**
+     * **Un essai ou un abonnement Pro a déjà existé sur ce compte**, fini ou non. Gardé une
+     * fois vrai : le rappel du jour n'est que pour qui n'a jamais activé l'essai, et un
+     * lancement hors ligne ne doit pas le rouvrir.
+     */
+    private val _everHadPro = MutableStateFlow(prefs.getBoolean(EVER_HAD_PRO, false) || prefs.contains("trial.end"))
+    val everHadPro: StateFlow<Boolean> = _everHadPro.asStateFlow()
+
+    private fun markEverHadPro() {
+        if (_everHadPro.value) return
+        _everHadPro.value = true
+        prefs.edit().putBoolean(EVER_HAD_PRO, true).apply()
+    }
+
     private fun read(info: CustomerInfo) {
-        _isPro.value = info.entitlements["pro"]?.isActive == true
+        val pro = info.entitlements["pro"]?.takeIf { it.isActive }
+        _isPro.value = pro != null
+        if (pro != null || info.entitlements.all.containsKey("pro")) markEverHadPro()
+        // Par le nom : une boutique ajoutée au SDK (`RC_BILLING`, `PADDLE`…) ne casse rien ici.
+        _store.value = pro?.let {
+            when (it.store.name) {
+                "PLAY_STORE" -> ProStore.PLAY
+                "APP_STORE", "MAC_APP_STORE" -> ProStore.APP_STORE
+                "STRIPE", "RC_BILLING", "PADDLE" -> ProStore.WEB
+                "PROMOTIONAL" -> ProStore.GIFT
+                else -> ProStore.OTHER
+            }
+        }
     }
 
     suspend fun plans(): List<StorePlan> {
@@ -159,10 +207,29 @@ class Billing(
                     val weekly = packages.firstOrNull { it.packageType == PackageType.WEEKLY }
                         ?: packages.firstOrNull { it.product.id.contains("weekly") }
                     val out = listOfNotNull(
-                        yearly?.let { StorePlan(true, it.product.price.formatted, it, monthlyOf(it), trialDaysOf(it)) },
-                        weekly?.let { StorePlan(false, it.product.price.formatted, it, trialDays = trialDaysOf(it)) },
+                        yearly?.let { StorePlan(true, it.product.price.formatted, it, monthlyOf(it), trialDaysOf(it), it.product.price.amountMicros) },
+                        weekly?.let { StorePlan(false, it.product.price.formatted, it, trialDays = trialDaysOf(it), micros = it.product.price.amountMicros) },
                     )
                     if (continuation.isActive) continuation.resume(out)
+                },
+            )
+        }
+    }
+
+    /**
+     * **L'annuel à tarif réduit du cadeau** (offering `discount`, comme sur iPhone), ou `null`
+     * quand la boutique ne répond pas.
+     */
+    suspend fun discountPlan(): StorePlan? {
+        if (!enabled || !Purchases.isConfigured) return null
+        return suspendCancellableCoroutine { continuation ->
+            Purchases.sharedInstance.getOfferingsWith(
+                onError = { if (continuation.isActive) continuation.resume(null) },
+                onSuccess = { offerings ->
+                    val packages = offerings.all["discount"]?.availablePackages.orEmpty()
+                    val pkg = packages.firstOrNull { it.product.id.contains("discount") } ?: packages.firstOrNull()
+                    val plan = pkg?.let { StorePlan(true, it.product.price.formatted, it, monthlyOf(it), 0, it.product.price.amountMicros) }
+                    if (continuation.isActive) continuation.resume(plan)
                 },
             )
         }
@@ -182,8 +249,7 @@ class Billing(
                 },
                 onSuccess = { _, info ->
                     read(info)
-                    // Un essai commence : le rappel de la veille de la fin, comme promis.
-                    if (plan.trialDays > 0) TrialReminder.schedule(context, plan.trialDays)
+                    markEverHadPro()
                     if (continuation.isActive) continuation.resume(PurchaseOutcome.Success)
                 },
             )
@@ -204,3 +270,5 @@ class Billing(
         }
     }
 }
+
+private const val EVER_HAD_PRO = "pro.everHad"

@@ -96,6 +96,13 @@ function clean(value: unknown, max: number): string {
  * pas : elle reste un libellé, sans seuil.
  */
 export function readScore(value: unknown, label?: unknown): number | undefined {
+  // Le libellé d'abord quand il porte son barème : les apps et le site envoient la note sur
+  // l'échelle du pays (9 à 20 en France) avec « 15/20 » à côté, et lue sur 100, un 15/20
+  // passait pour un élève en difficulté.
+  if (label !== undefined && value !== undefined) {
+    const fromLabel = readScore(undefined, label);
+    if (fromLabel !== undefined) return fromLabel;
+  }
   if (typeof value === "number" && Number.isFinite(value)) return Math.round(Math.min(100, Math.max(0, value)));
   if (typeof value === "string" && /^\s*\d+(?:[.,]\d+)?\s*$/.test(value)) return readScore(Number(value.replace(",", ".")));
   if (typeof label !== "string") return undefined;

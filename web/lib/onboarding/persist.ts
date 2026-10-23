@@ -138,6 +138,7 @@ export async function persistStoredAnswers(): Promise<SaveResult> {
   const result = await saveOnboarding({
     country: answers.country,
     studyLevel: answers.studyLevel,
+    stageId: answers.stageId,
     subjects: answers.subjects,
     institutionId: answers.institutionId,
     institutionName: answers.institutionName,

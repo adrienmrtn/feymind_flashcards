@@ -12,9 +12,8 @@ import UserNotifications
 ///   cartes dues d'abord, puis chacun à son tour les jours suivants, pour qu'aucun ne soit
 ///   oublié et que le texte ne se répète pas d'un jour à l'autre.
 ///
-/// **Personne en période d'essai ne la reçoit.** Les rappels commencent le jour où l'essai
-/// finit, qu'il se transforme en abonnement ou non ; qui n'a jamais commencé d'essai les
-/// reçoit dès maintenant.
+/// **Seul qui n'a jamais activé l'essai gratuit la reçoit** (`ProAccess.receivesDailyReminder`) :
+/// ni pendant l'essai, ni après, ni un abonné. Et aucun rappel ne parle de la fin de l'essai.
 ///
 /// **Des notifications posées d'avance, pas un rappel qui se répète.** Un rappel répété
 /// garderait le même texte pour toujours. On en pose donc `days`, un par jour, et on les
@@ -42,12 +41,9 @@ enum DailyReminder {
     ///
     /// - `courseTitles` : les cours de l'élève, du plus pressant au moins pressant ; vide
     ///   s'il n'en a importé aucun.
-    /// - `trialEndsAt` : la fin de l'essai en cours, `nil` hors essai. Un essai sans date
-    ///   de fin connue se passe en `.distantFuture`, et ne reçoit donc rien.
     /// - `studiedToday` : le rappel d'aujourd'hui saute quand l'élève a déjà travaillé.
     static func plan(
         courseTitles: [String],
-        trialEndsAt: Date?,
         studiedToday: Bool,
         hour: Int,
         now: Date,
@@ -62,7 +58,6 @@ enum DailyReminder {
                   fire > now
             else { continue }
             if offset == 0, studiedToday { continue }
-            if let trialEndsAt, fire < trialEndsAt { continue }
 
             // Le texte tourne avec le jour du calendrier, et non avec le rang dans la liste :
             // reposé le lendemain, le plan ne recommence pas par la même phrase.
@@ -86,16 +81,17 @@ enum DailyReminder {
         return planned
     }
 
-    /// **Repose les rappels** d'après les cours, l'essai et l'heure choisie.
+    /// **Repose les rappels** d'après les cours et l'heure choisie. `eligible` faux (un essai
+    /// activé un jour, ou un abonnement) : les rappels posés s'effacent, et rien ne part.
     @MainActor
-    static func reschedule(context: ModelContext, trialEndsAt: Date?, now: Date = Date()) async {
+    static func reschedule(context: ModelContext, eligible: Bool, now: Date = Date()) async {
         let center = UNUserNotificationCenter.current()
         let status = await center.notificationSettings().authorizationStatus
         let pending = await center.pendingNotificationRequests()
             .map(\.identifier)
             .filter { $0.hasPrefix(identifierPrefix) }
         center.removePendingNotificationRequests(withIdentifiers: pending)
-        guard status == .authorized || status == .provisional || status == .ephemeral else { return }
+        guard eligible, status == .authorized || status == .provisional || status == .ephemeral else { return }
 
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: now)
@@ -107,7 +103,6 @@ enum DailyReminder {
 
         let planned = plan(
             courseTitles: courses.map(\.title),
-            trialEndsAt: trialEndsAt,
             studiedToday: studiedToday,
             hour: OnboardingPreferences.studyHour ?? defaultHour,
             now: now,

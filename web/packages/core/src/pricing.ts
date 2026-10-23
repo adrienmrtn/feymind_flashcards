@@ -5,16 +5,24 @@
  * colonnes au lieu de faire choisir : l'annuel est celui qu'on recommande, l'hebdomadaire
  * existe pour celui qui a un partiel dans dix jours et ne veut pas s'engager plus loin que ça.
  *
- * Un troisième produit existe déjà dans ce fichier — l'annuel discount, 39,99 €, sans essai —
- * mais il n'est pas affiché. Le chemin pour l'ouvrir (lien, code, éligibilité) n'est pas encore
- * décidé : le garder ici évite de l'inventer le jour où on l'allumera.
+ * Un troisième produit existe déjà dans ce fichier — l'annuel discount, 29,99 €, sans essai —
+ * mais il n'est pas sur le paywall ordinaire : on y entre par l'offre cadeau.
+ *
+ * **La grille est celle des apps** : la ligne France de `store/pricing.json` (49,99 € l'an,
+ * 4,99 € la semaine, 29,99 € le tarif réduit, trois jours d'essai sur l'annuel et
+ * l'hebdomadaire), celle que `PaywallCatalog.swift` garde en repli et que
+ * `store/play-subscriptions.json` pose sur Google Play. Un site qui annonce un autre prix que
+ * l'app pour le même abonnement se lit comme une erreur — ou comme une arnaque.
+ * `freemium-parity.test.ts` relit le Swift et tombe si les deux divergent.
+ *
+ * **Le paiement web reste fermé** (`CHECKOUT_MAINTENANCE`, `web/lib/stripe/checkout.ts`) : les
+ * trois `price_…` Stripe de `STORE_PRODUCTS` sont encore ceux de l'ancienne grille (69,99 € /
+ * 7,99 € / 39,99 €). Rouvrir demande de créer trois prix Stripe à la nouvelle grille, de les
+ * rattacher à `pro` chez RevenueCat, et de remplacer leurs identifiants ici.
  *
  * Le point qui compte pour le site : **le pourcentage d'économie est calculé, jamais écrit.**
  * Une remise annoncée à côté de deux prix qui la contredisent est une allégation commerciale
  * fausse, et sur un site public elle est indexée.
- *
- * Les prix sont ici et pas lus depuis une boutique : aucun produit n'est encore publié. Quand
- * RevenueCat sera branché, ce sont ces objets-là qui se construiront depuis un `Package`.
  */
 
 export type PlanKind = "yearly" | "weekly";
@@ -23,27 +31,25 @@ export type BillingPeriod = "year" | "week";
 /**
  * Devise d'affichage **et** d'encaissement web.
  *
- * Les montants TRY sont écrits, pas convertis au cours du jour. Convertir
- * 69,99 € chaque matin donnerait un chiffre qui bouge, et une allégation
- * qu'on ne facture pas. Les mêmes montants sont posés dans les
- * `currency_options` des trois `price_…` Stripe : ce fichier et Stripe
- * doivent dire le même nombre. iOS n'a pas encore `localizedPriceString` :
- * le catalogue reste le repli App Store Turkey jusqu'à l'étape 8 de
- * `docs/revenuecat.md`.
+ * Les montants TRY sont écrits, pas convertis au cours du jour : ce sont ceux
+ * de la Turquie dans `store/pricing.json` (tier D), ceux qu'Apple prélève à un
+ * élève turc. Convertir l'euro chaque matin donnerait un chiffre qui bouge, et
+ * un prix que l'app ne facture pas.
  *
- * Cours de référence (3 sept. 2026) : 1 € ≈ 56 ₺.
- * 69,99 × 56 ≈ 3 919 → 3 899,99 ₺. 7,99 × 56 ≈ 447 → 449,99 ₺.
- * 39,99 × 56 ≈ 2 239 → 2 199,99 ₺.
+ * Les `currency_options` des `price_…` Stripe portent encore l'ancienne grille
+ * (3 899,99 ₺ / 449,99 ₺ / 2 199,99 ₺) : à refaire avec les nouveaux prix Stripe
+ * avant de rouvrir le paiement web.
  */
 export type PresentmentCurrency = "EUR" | "TRY";
 
 export const DEFAULT_PRESENTMENT: PresentmentCurrency = "EUR";
 
 export const TRY_AMOUNTS = {
-  yearly: 3899.99,
-  weekly: 449.99,
-  yearly_discount: 2199.99,
-  yearly_discount_monthly: 183.3,
+  yearly: 1499.99,
+  weekly: 149.99,
+  yearly_discount: 899.99,
+  /** 899,99 ÷ 12 = 74,999… : écrit pour ne pas dépendre d'un arrondi. */
+  yearly_discount_monthly: 75,
 } as const;
 
 const CURRENCY_LOCALE: Record<PresentmentCurrency, string> = {
@@ -72,12 +78,50 @@ const COUNTRY_LANGUAGE: Record<string, string> = {
   de: "de",
   at: "de",
   es: "es",
-  mx: "es",
-  ar: "es",
-  co: "es",
-  cl: "es",
-  pe: "es",
+  mx: "es-419",
+  ar: "es-419",
+  co: "es-419",
+  cl: "es-419",
+  pe: "es-419",
+  it: "it",
+  pt: "pt",
+  br: "pt-BR",
+  nl: "nl",
+  pl: "pl",
+  ro: "ro",
+  se: "sv",
+  dk: "da",
+  fi: "fi",
+  ee: "et",
+  cz: "cs",
+  sk: "sk",
+  hu: "hu",
+  hr: "hr",
+  si: "sl",
+  bg: "bg",
+  gr: "el",
+  ru: "ru",
 };
+
+/**
+ * Les langues que Stripe Checkout sait afficher (`locale` de la session), parmi les nôtres.
+ * Une locale hors de cette liste fait refuser la session : l'arabe et le serbe n'y sont pas,
+ * et se taire laisse Stripe lire l'en-tête du navigateur.
+ */
+const STRIPE_CHECKOUT_LOCALES = new Set([
+  "bg", "cs", "da", "de", "el", "en", "es", "es-419", "et", "fi", "fr", "hr", "hu", "it",
+  "nl", "pl", "pt", "pt-BR", "ro", "ru", "sk", "sl", "sv", "tr",
+]);
+
+/** Une langue dite (`pt-BR`, `es-MX`, `fr-CA`) → la locale Stripe qui la sert, ou rien. */
+function stripeLocaleOf(value: string | null | undefined): string | undefined {
+  const tag = value?.trim().replace(/_/g, "-").toLowerCase();
+  if (!tag) return undefined;
+  if (tag === "pt-br") return "pt-BR";
+  if (tag === "es-419") return "es-419";
+  const primary = tag.split("-")[0]!;
+  return STRIPE_CHECKOUT_LOCALES.has(primary) ? primary : undefined;
+}
 
 /**
  * **La langue de la page de paiement.**
@@ -108,20 +152,20 @@ export function checkoutLocale(input: {
   /** Le pays de scolarisation, `profiles.country_code`. */
   country?: string | null;
 }): string | undefined {
-  const said = [input.chosen, input.navigator]
-    .map((value) => value?.trim().toLowerCase().split("-")[0])
-    .find((value) => Boolean(value));
-  if (said) return said;
+  const said = [input.chosen, input.navigator].find((value) => Boolean(value?.trim()));
+  // Une langue dite mais que Stripe n'affiche pas (l'arabe) : on se tait plutôt que de
+  // traduire la page de paiement dans une autre langue que celle qu'on lit.
+  if (said) return stripeLocaleOf(said);
 
   const land = input.country?.trim().toLowerCase();
   return land ? COUNTRY_LANGUAGE[land] : undefined;
 }
 
-/** Combien de fois par an la somme est prélevée. Sans ce ramené à l'année, « 7,99 € » a
- * l'air moins cher que « 69,99 € ». */
+/** Combien de fois par an la somme est prélevée. Sans ce ramené à l'année, « 4,99 € » a
+ * l'air moins cher que « 49,99 € ». */
 const OCCURRENCES_PER_YEAR: Record<BillingPeriod, number> = { year: 1, week: 52 };
 
-/** Le mot qui suit la barre oblique : « 7,99 € / semaine ». */
+/** Le mot qui suit la barre oblique : « 4,99 € / semaine ». */
 const PERIOD_UNIT: Record<BillingPeriod, string> = { year: "an", week: "semaine" };
 
 export interface Plan {
@@ -133,47 +177,54 @@ export interface Plan {
   period: BillingPeriod;
   /**
    * Le prix ramené au mois, **écrit** seulement si le calcul arrondirait autrement que
-   * ce qu'on annonce. 69,99 ÷ 12 fait 5,8325, que `Intl` rend « 5,83 € » : rien à forcer.
+   * ce qu'on annonce. 49,99 ÷ 12 fait 4,1658, que `Intl` rend « 4,17 € » : rien à forcer.
    */
   monthlyPrice?: number;
   /** Jours d'essai. Zéro : rien n'est offert, et le bouton ne doit pas le dire. */
   trialDays: number;
 }
 
+/** Les jours d'essai des apps (`TrialTimeline.freeDays`), sur l'annuel comme sur la semaine. */
+const TRIAL_DAYS = 3;
+
 export const YEARLY: Plan = {
   kind: "yearly",
   productId: "com.micabo.app.pro.yearly",
   title: "Annuel",
-  price: 69.99,
+  price: 49.99,
   period: "year",
-  trialDays: 3,
+  trialDays: TRIAL_DAYS,
 };
 
 /**
  * Le tarif réduit, celui de l'offre cadeau.
  *
  * Il n'est **pas** sur le paywall ordinaire : on y entre par le cadeau posé
- * après le premier cours, et par lui seul. `monthlyPrice` est écrit et non
- * calculé — 39,99 ÷ 12 fait 3,3325, qu'`Intl` rendrait « 3,33 € ». Le paywall
- * affiche donc 3,30 € / mois **et** la somme réellement prélevée juste à côté :
- * un prix mensuel sans son annuel serait une allégation qu'on ne facture pas.
+ * après le premier cours, et par lui seul. Il n'annonce pas de mensuel : son
+ * paywall écrit la somme réellement prélevée, 29,99 € par an — 40 % de moins
+ * que l'annuel, comme dans l'app.
  */
 export const DISCOUNT_YEARLY: Plan = {
   kind: "yearly",
   productId: "com.micabo.app.pro.yearly.discount",
   title: "Annuel",
-  price: 39.99,
+  price: 29.99,
   period: "year",
   trialDays: 0,
 };
 
+/**
+ * **Trois jours offerts, comme l'annuel**, comme dans l'app (`PaywallCatalog.weekly`).
+ * Apple et Google ne donnent qu'un essai par groupe : ces trois jours-là ne s'ajoutent jamais
+ * à ceux de l'annuel.
+ */
 export const WEEKLY: Plan = {
   kind: "weekly",
   productId: "com.micabo.app.pro.weekly",
   title: "Hebdomadaire",
-  price: 7.99,
+  price: 4.99,
   period: "week",
-  trialDays: 0,
+  trialDays: TRIAL_DAYS,
 };
 
 /**
@@ -232,7 +283,7 @@ export const PLANS: readonly Plan[] = [YEARLY, WEEKLY];
 /** Celle qui est cochée d'avance, et la seule que le premier paywall met en avant. */
 export const RECOMMENDED_PLAN = YEARLY;
 
-/** La durée de l'essai de l'annuel. L'hebdomadaire et le discount n'en ont pas. */
+/** La durée de l'essai de l'annuel, la même que celle de l'hebdomadaire. Le discount n'en a pas. */
 export const FREE_TRIAL_DAYS = YEARLY.trialDays;
 
 export function planFor(kind: PlanKind): Plan {
@@ -284,7 +335,7 @@ export function savingsPercent(
 }
 
 /**
- * « 69,99 € », dans la seule forme qu'on affiche.
+ * « 49,99 € », dans la seule forme qu'on affiche.
  *
  * L'espace avant l'euro est **insécable**, parce que la typographie française l'exige : un prix
  * ne se coupe pas en fin de ligne entre le nombre et son symbole. Elle est ramenée à U+00A0 de
@@ -328,8 +379,8 @@ export function priceText(
 /**
  * Le prix ramené au mois, pour les offres qui se paient d'un bloc.
  *
- * C'est **le seul chiffre qu'on sait comparer** : personne ne divise mentalement 69,99
- * par douze devant un paywall, et personne ne multiplie 7,99 par cinquante-deux. Le mois est
+ * C'est **le seul chiffre qu'on sait comparer** : personne ne divise mentalement 49,99
+ * par douze devant un paywall, et personne ne multiplie 4,99 par cinquante-deux. Le mois est
  * l'unité dans laquelle un budget se pense.
  */
 export function monthlyEquivalent(

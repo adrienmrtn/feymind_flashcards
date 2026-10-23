@@ -230,6 +230,10 @@ enum PurchasesBridge {
         /// La fin de l'essai gratuit en cours, `nil` hors essai. Un essai dont la date
         /// manque vaut `.distantFuture` : il reste un essai.
         var trialEndsAt: Date?
+        /// Vrai dès qu'un essai ou un abonnement Pro a existé sur ce compte, fini ou non.
+        var everHadPro: Bool = false
+        /// D'où vient le droit ouvert, `nil` quand il est fermé ou que le SDK ne le dit pas.
+        var store: SubscriptionStore? = nil
     }
 
     /// L'état du droit selon le SDK, ou `nil` quand il n'a rien à dire.
@@ -281,7 +285,26 @@ private extension CustomerInfo {
     var entitlementState: PurchasesBridge.EntitlementState {
         let pro = entitlements[ProEntitlement.id]
         let inTrial = pro?.isActive == true && pro?.periodType == .trial
-        return .init(isPro: hasPro, trialEndsAt: inTrial ? (pro?.expirationDate ?? .distantFuture) : nil)
+        return .init(
+            isPro: hasPro,
+            trialEndsAt: inTrial ? (pro?.expirationDate ?? .distantFuture) : nil,
+            everHadPro: hasPro || entitlements.all[ProEntitlement.id] != nil,
+            store: hasPro ? pro.flatMap { SubscriptionStore(revenueCat: $0.store) } : nil
+        )
+    }
+}
+
+private extension SubscriptionStore {
+    /// Les magasins que RevenueCat nomme, ramenés aux quatre que la table connaît. Un magasin
+    /// qu'on ne vend pas (Amazon, Paddle…) ne dit pas où gérer : `nil`.
+    init?(revenueCat store: Store) {
+        switch store {
+        case .appStore, .macAppStore: self = .appStore
+        case .playStore: self = .playStore
+        case .stripe, .rcBilling: self = .stripe
+        case .promotional: self = .promotional
+        default: return nil
+        }
     }
 }
 #endif

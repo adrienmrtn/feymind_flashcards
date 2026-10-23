@@ -564,6 +564,9 @@ struct EntitlementRecord: Decodable {
     var expires_at: Date?
     /// `trial` pendant l'essai gratuit, `normal` une fois payé ; absent sur une ligne offerte.
     var period_type: String?
+    /// `app_store`, `play_store`, `stripe` ou `promotional` : d'où vient l'achat, donc où il
+    /// se gère. Absent sur une ligne ancienne.
+    var store: String?
 }
 
 struct ReviewLogRecord: Codable {

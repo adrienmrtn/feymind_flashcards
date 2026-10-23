@@ -158,7 +158,7 @@ export function LessonChecklist({ lessons, selected, onToggle }: { lessons: Exam
               type="button"
               aria-pressed={on}
               onClick={() => onToggle(lesson.id)}
-              className={`pressable flex w-full items-center gap-3 rounded-[18px] p-3 text-left ${on ? "bg-accent-soft shadow-[inset_0_0_0_2px_var(--color-accent)]" : "bg-surface shadow-[inset_0_0_0_1.5px_var(--color-stroke)]"}`}
+              className={`pressable flex w-full items-center gap-3 rounded-[18px] p-3 text-start ${on ? "bg-accent-soft shadow-[inset_0_0_0_2px_var(--color-accent)]" : "bg-surface shadow-[inset_0_0_0_1.5px_var(--color-stroke)]"}`}
             >
               <MicaboIcon id={lesson.icon} size={38} />
               <span className="line-clamp-2 flex-1 text-[16px] font-bold text-ink">{lesson.title}</span>

@@ -120,17 +120,77 @@ private sealed interface NotesPage {
 
 private fun notesPages(blocks: List<NoteBlock>, hasTakeaways: Boolean, hasQuestion: Boolean): List<NotesPage> {
     val pages = mutableListOf<NotesPage>(NotesPage.Opening)
-    var index = 0
-    while (index < blocks.size) {
-        var end = index + 1
-        if (blocks[index] is NoteBlock.Subtitle && end < blocks.size) end += 1
-        if (end < blocks.size && blocks[end] is NoteBlock.Callout && !blocks[end - 1].isBoxed) end += 1
-        pages.add(NotesPage.Blocks(index, end))
-        index = end
-    }
+    noteScreens(blocks).forEach { (start, end) -> pages.add(NotesPage.Blocks(start, end)) }
     if (hasTakeaways) pages.add(NotesPage.Takeaways)
     if (hasQuestion) pages.add(NotesPage.Question)
     return pages
+}
+
+/** Ce qu'un écran porte sans qu'il faille faire défiler, en mots pondérés (`noteWeight`). */
+private const val SCREEN_WEIGHT = 150
+/** En deçà, un bloc seul laisse l'écran à moitié vide : il accueille le suivant. */
+private const val THIN_WEIGHT = 120
+
+/**
+ * **Les écrans des notes** (`NotesPage.screens` sur iPhone). Un écran qui n'a qu'un bloc (le
+ * sous-titre qui l'ouvre ne compte pas) accueille le suivant, avec son sous-titre et son
+ * encadré, tant que le tout tient sans défiler ; un bloc resté seul rejoint l'écran d'avant
+ * s'il y tient. Un encadré en tête de thème garde son écran : il annonce ce qui suit.
+ */
+internal fun noteScreens(blocks: List<NoteBlock>): List<Pair<Int, Int>> {
+    val screens = mutableListOf<Pair<Int, Int>>()
+    var index = 0
+    while (index < blocks.size) {
+        var end = screenEnd(blocks, index)
+        if (isThin(blocks.subList(index, end)) && end < blocks.size) {
+            val next = screenEnd(blocks, end)
+            if (noteWeight(blocks.subList(index, next)) <= SCREEN_WEIGHT) end = next
+        }
+        screens.add(index to end)
+        index = end
+    }
+    val packed = mutableListOf<Pair<Int, Int>>()
+    for (screen in screens) {
+        val last = packed.lastOrNull()
+        if (last != null && isThin(blocks.subList(screen.first, screen.second)) &&
+            noteWeight(blocks.subList(last.first, screen.second)) <= SCREEN_WEIGHT
+        ) {
+            packed[packed.lastIndex] = last.first to screen.second
+        } else {
+            packed.add(screen)
+        }
+    }
+    return packed
+}
+
+/** La fin d'un écran ouvert à `index` : le bloc, celui qu'ouvre un sous-titre, et l'encadré qui les commente. */
+private fun screenEnd(blocks: List<NoteBlock>, index: Int): Int {
+    var end = index + 1
+    if (blocks[index] is NoteBlock.Subtitle && end < blocks.size) end += 1
+    if (end < blocks.size && blocks[end] is NoteBlock.Callout && !blocks[end - 1].isBoxed) end += 1
+    return end
+}
+
+/** Un seul bloc à lire, et assez court pour laisser de la place. */
+private fun isThin(screen: List<NoteBlock>): Boolean {
+    val content = screen.filter { it !is NoteBlock.Subtitle }
+    val block = content.singleOrNull() ?: return false
+    if (block is NoteBlock.Callout) return false
+    return noteWeight(listOf(block)) < THIN_WEIGHT
+}
+
+/** La place qu'un écran demande : ses mots, et le cadre de ce qui se dessine en encadré. */
+private fun noteWeight(blocks: List<NoteBlock>): Int = blocks.sumOf { block ->
+    val frame = when (block) {
+        is NoteBlock.Subtitle -> 6
+        is NoteBlock.Paragraph -> 0
+        is NoteBlock.Bullets -> 4 * block.items.size
+        is NoteBlock.Steps -> 4 * block.items.size
+        is NoteBlock.Table -> 18 + 6 * block.rows.size
+        is NoteBlock.Dates -> 18 + 4 * block.items.size
+        else -> 18
+    }
+    block.wordCount + frame
 }
 
 /**
@@ -161,7 +221,7 @@ fun NotesScreen(id: String, theme: Int) {
     // Une question de fin mal formée (sans propositions) bloquerait « Terminer » : on s'en passe.
     val final = item.questions.firstOrNull()?.takeIf { it.isValid }
     val notes = item.notes
-    val blocks = remember(notes) { notes?.blocks.orEmpty().mapNotNull { NoteBlock.parse(it) } }
+    val blocks = remember(notes) { notes?.blocks.orEmpty().flatMap { NoteBlock.parseAll(it) } }
     val pages = remember(blocks, notes, final) { notesPages(blocks, notes?.takeaways.orEmpty().isNotEmpty(), final != null) }
     TrackTime(id)
 

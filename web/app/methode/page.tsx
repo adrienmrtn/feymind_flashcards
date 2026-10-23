@@ -6,7 +6,7 @@ import { QuizStory } from "@/components/onboarding/stories/QuizStory";
 import { ArticleMarkup, ArticleP } from "@/components/pages/ArticleMarkup";
 import { ArticleFigure, ArticleNote, ArticleSection, ArticleShell } from "@/components/pages/ArticleShell";
 import { articleMetadata } from "@/lib/articles";
-import { previewLabelsLocalized, reviewRatingLabel } from "@/lib/i18n/copy";
+import { localeBcp47, previewLabelsLocalized, reviewRatingLabel } from "@/lib/i18n/copy";
 import { getTranslator } from "@/lib/i18n/server";
 import { METHOD_PAGE } from "@/lib/site-pages";
 
@@ -22,7 +22,7 @@ export default async function MethodPage() {
   const { t, locale } = await getTranslator();
   const steps = DEFAULT_CONFIG.learningStepsMinutes;
   const stepsLabel = steps.map((minutes) => t("articles.method.stepMinutes", { n: minutes })).join(t("articles.method.stepJoin"));
-  const ease = new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(DEFAULT_CONFIG.startingEase);
+  const ease = new Intl.NumberFormat(localeBcp47(locale), { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(DEFAULT_CONFIG.startingEase);
   const labels = previewLabelsLocalized(t, newCardSnapshot(), { now: new Date() });
 
   return (

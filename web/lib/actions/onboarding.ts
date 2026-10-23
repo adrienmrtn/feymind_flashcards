@@ -4,13 +4,15 @@ import type { Route } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { countryFor } from "@micabo/core";
+import { COUNTRIES, TARGET_SCORE_MIN, countryFor, isStudyLevel, type EducationStage } from "@micabo/core";
 
 import { shouldPreserveRemoteProfile } from "@/lib/auth/existing-account";
 import { ONBOARDING_CREATE_COOKIE } from "@/lib/auth/onboarding-create";
 import { ONBOARDING_REPLAY_COOKIE } from "@/lib/auth/onboarding-replay";
 import { revalidateUserData } from "@/lib/data/cache";
 import { getTranslator } from "@/lib/i18n/server";
+import { stageAnswer } from "@/lib/lesson/learner";
+import { updateLocalLearner } from "@/lib/lesson/learner-cookie";
 import { installDemoLesson } from "@/lib/onboarding/demo-lesson";
 import { createClient } from "@/lib/supabase/server";
 
@@ -34,7 +36,10 @@ import { createClient } from "@/lib/supabase/server";
 
 export interface OnboardingPayload {
   country?: string;
+  /** Le registre (`StudyLevel`), ce que `profiles.study_level` porte. */
   studyLevel?: string;
+  /** Le palier exact (`EducationStage.id`) : il reste sur l'appareil, comme sur l'iPhone. */
+  stageId?: string;
   subjects?: string[];
   institutionId?: string;
   institutionName?: string;
@@ -68,6 +73,10 @@ export async function saveOnboarding(payload: OnboardingPayload): Promise<SaveRe
   const replaying = jar.get(ONBOARDING_REPLAY_COOKIE)?.value === "1";
   if (!replaying && (await shouldPreserveRemoteProfile(supabase, user.id))) {
     jar.delete(ONBOARDING_CREATE_COOKIE);
+    // Le profil distant gagne, mais les moyennes répondues ici ne sont nulle part ailleurs :
+    // elles restent sur cet appareil, comme sur l'iPhone. Le palier, lui, suivrait un registre
+    // qui n'est peut-être plus le sien : il n'est pas gardé.
+    await rememberLearner(user.id, payload, null);
     return { status: "saved" };
   }
 
@@ -76,8 +85,13 @@ export async function saveOnboarding(payload: OnboardingPayload): Promise<SaveRe
     onboarding_completed_at: new Date().toISOString(),
   };
 
-  if (payload.country) profile.country_code = payload.country;
-  if (payload.studyLevel) profile.study_level = payload.studyLevel;
+  // **Le registre, pas le palier** : `study_level` porte `StudyLevel` (`lycee`, `prepa`…), le
+  // vocabulaire que l'iPhone relit. Le palier exact, lui, reste sur l'appareil (le cookie, plus
+  // bas), comme `micabo.onboarding.stage` sur l'iPhone.
+  const stage = stageAnswer(payload.stageId, payload.country);
+  const studyLevel = stage?.level ?? (isStudyLevel(payload.studyLevel) ? payload.studyLevel : null);
+  if (payload.country && COUNTRIES.some((entry) => entry.code === payload.country)) profile.country_code = payload.country;
+  if (studyLevel) profile.study_level = studyLevel;
   if (payload.subjects?.length) profile.subjects = payload.subjects;
   if (payload.institutionId) profile.institution_id = payload.institutionId;
   if (payload.institutionName) profile.institution_name = payload.institutionName;
@@ -107,6 +121,7 @@ export async function saveOnboarding(payload: OnboardingPayload): Promise<SaveRe
 
   jar.delete(ONBOARDING_REPLAY_COOKIE);
   jar.delete(ONBOARDING_CREATE_COOKIE);
+  await rememberLearner(user.id, payload, stage);
 
   // **La leçon de démonstration**, pour qui arrive sans rien : le cycle de l'eau, prête, dans
   // la langue du parcours. Elle attend dans « Reprendre » sur Home. Qui a déjà une leçon n'en
@@ -144,6 +159,22 @@ export async function saveOnboarding(payload: OnboardingPayload): Promise<SaveRe
   return { status: "saved", examCreated };
 }
 
+
+/**
+ * **Ce que l'iPhone garde sur l'appareil**, gardé ici dans le cookie `micabo.learner` : le
+ * palier exact et sa marche, les deux moyennes. `generate-lesson` en tire le registre, le volume
+ * et le niveau des exemples (`lessonAudience`). Sans lui, la moyenne demandée au parcours ne
+ * servait à rien d'autre qu'à être demandée.
+ */
+async function rememberLearner(userId: string, payload: OnboardingPayload, stage: EducationStage | null): Promise<void> {
+  const score = (value: number | undefined) =>
+    typeof value === "number" && Number.isInteger(value) && value >= TARGET_SCORE_MIN - 1 && value <= 20 ? value : undefined;
+  await updateLocalLearner(userId, {
+    ...(stage ? { stageId: stage.id, tier: stage.tier } : {}),
+    currentScore: score(payload.currentScore),
+    targetScore: score(payload.targetScore),
+  }).catch(() => undefined);
+}
 
 /** Le rythme quotidien déjà déclaré, ou le défaut de la colonne. */
 async function dailyMinutesOf(

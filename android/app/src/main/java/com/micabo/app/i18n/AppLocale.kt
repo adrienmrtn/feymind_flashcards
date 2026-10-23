@@ -66,14 +66,47 @@ enum class AppLocale(val code: String, val label: String, val content: String) {
 
         fun resolved(stored: String): AppLocale = of(stored) ?: fromDevice()
 
-        /** Le pays de scolarisation le plus probable, d'après le téléphone. */
-        fun deviceCountry(): String {
-            val region = Locale.getDefault().country.lowercase()
-            return when (region) {
-                "gb" -> "uk"
-                else -> region
+        /**
+         * **Le pays de scolarisation le plus probable** (`SchoolingCountry.guessed` sur iPhone).
+         * La langue décide avant la région : un téléphone en « fr-US » (français, région des
+         * États-Unis, comme à l'étranger) cochait les États-Unis. La région ne compte que quand
+         * son pays parle la langue (« fr-BE », « fr-CA »), ou quand cette langue n'a pas de pays
+         * à elle dans la liste (« ar-MA »). La langue choisie dans l'app passe avant le téléphone.
+         */
+        fun deviceCountry(chosen: String = ""): String {
+            val device = LocaleList.getDefault()
+            val tags = (0 until device.size()).map { device[it].language.lowercase() to device[it].country.lowercase() }
+            val language = chosen.lowercase().substringBefore('-').takeIf { it.isNotEmpty() }
+            if (language != null) {
+                val ordered = tags.filter { it.first == language } + (language to "")
+                firstMatch(ordered)?.let { return it }
             }
+            return firstMatch(tags) ?: "other"
         }
+
+        /** Le pays de la première langue qui en désigne un : sa région quand ce pays la parle, sinon le pays de la langue. */
+        private fun firstMatch(tags: List<Pair<String, String>>): String? {
+            for ((language, rawRegion) in tags) {
+                val region = if (rawRegion == "gb") "uk" else rawRegion
+                val speaks = COUNTRY_LANGUAGE[region] ?: continue
+                if (BY_LANGUAGE[language] == null || speaks == language) return region
+            }
+            return tags.firstNotNullOfOrNull { BY_LANGUAGE[it.first] }
+        }
+
+        /** La langue des cours de chaque pays de la liste (`SchoolingCountry.language`). */
+        private val COUNTRY_LANGUAGE = mapOf(
+            "fr" to "fr", "be" to "fr", "ch" to "fr", "ca" to "fr", "lu" to "fr", "ma" to "fr", "dz" to "fr",
+            "tn" to "fr", "sn" to "fr", "ci" to "fr", "uk" to "en", "us" to "en", "de" to "de", "it" to "it",
+            "es" to "es", "pt" to "pt", "cz" to "cs", "nl" to "nl", "gr" to "el", "hu" to "hu", "pl" to "pl",
+            "ro" to "ro", "se" to "sv", "tr" to "tr",
+        )
+
+        /** Le pays qui parle chaque langue de la liste : l'anglais sans région est américain. */
+        private val BY_LANGUAGE = mapOf(
+            "fr" to "fr", "en" to "us", "de" to "de", "it" to "it", "es" to "es", "pt" to "pt", "cs" to "cz",
+            "nl" to "nl", "el" to "gr", "hu" to "hu", "pl" to "pl", "ro" to "ro", "sv" to "se", "tr" to "tr",
+        )
 
         /**
          * Le contexte de l'activité, dans la langue choisie : textes et sens de lecture.

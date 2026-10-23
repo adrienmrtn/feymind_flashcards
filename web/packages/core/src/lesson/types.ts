@@ -367,8 +367,35 @@ export function notesPlainText(notes: ThemeNotes): string {
 export type QuizKind = "choice" | "truefalse" | "gap" | "order" | "match";
 export const QUIZ_KINDS: readonly QuizKind[] = ["choice", "truefalse", "gap", "order", "match"];
 
-/** Le marqueur du trou d'une phrase à compléter, le même que sur le serveur et l'app. */
-export const CLOZE_GAP = "____";
+/**
+ * Le marqueur du trou d'une phrase à compléter, **le même que sur le serveur et les apps** :
+ * `GAP` dans `generate-lesson/schema.ts`, `ClozeGap.marker` côté Swift, `GAP_MARK` côté
+ * Android — des points de suspension, un seul caractère.
+ *
+ * Le site attendait `____`. Le serveur n'en écrit jamais : chaque carte à trou arrivait donc
+ * en carte simple, et une carte à trou écrite sur le téléphone se retournait ici sans montrer
+ * sa réponse. Les anciens blancs se relisent par `normalizeClozeGap`.
+ */
+export const CLOZE_GAP = "…";
+
+/** Les blancs que le modèle — ou une ancienne version du site — écrit à sa façon. */
+const GAP_SPELLINGS = ["[...]", "(...)", "[…]", "(…)", "_____", "____", "___", "__", "..."];
+
+/**
+ * Ramène un texte à notre graphie du trou, comme `ClozeGap.normalize` : plusieurs blancs
+ * collés ne font qu'un seul trou.
+ */
+export function normalizeClozeGap(text: string): string {
+  let out = text;
+  for (const candidate of GAP_SPELLINGS) out = out.split(candidate).join(CLOZE_GAP);
+  while (out.includes(CLOZE_GAP + CLOZE_GAP)) out = out.split(CLOZE_GAP + CLOZE_GAP).join(CLOZE_GAP);
+  return out;
+}
+
+/** Vrai quand le texte porte un trou, sous l'une de ses graphies. */
+export function hasClozeGap(text: string): boolean {
+  return normalizeClozeGap(text).includes(CLOZE_GAP);
+}
 
 /**
  * **Une question** : la question de fin d'un thème, une de réserve qui fait les quiz, ou une

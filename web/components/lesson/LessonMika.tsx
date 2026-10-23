@@ -197,7 +197,7 @@ export function LessonMika({ lessonId, title, tone, isPro }: { lessonId: string;
         {messages.map((message) => {
           const mine = message.role === "user";
           return (
-            <div key={message.id} className={`flex flex-col gap-2 ${mine ? "items-end pl-10" : "items-start pr-10"}`}>
+            <div key={message.id} className={`flex flex-col gap-2 ${mine ? "items-end ps-10" : "items-start pe-10"}`}>
               <div className={`whitespace-pre-wrap rounded-[18px] px-3.5 py-[11px] text-[16px] font-medium leading-snug ${mine ? "bg-ink text-on-ink" : "bg-surface text-ink shadow-[inset_0_0_0_1px_var(--color-hairline)]"}`}>
                 <KeywordText text={message.text} tints={!mine} />
               </div>

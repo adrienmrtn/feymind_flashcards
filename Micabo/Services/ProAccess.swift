@@ -68,6 +68,31 @@ enum LifetimePro {
     }
 }
 
+/// **D'où vient l'abonnement**, donc où il se gère. Les valeurs sont celles de la colonne
+/// `entitlements.store`, que le webhook normalise.
+enum SubscriptionStore: String, Equatable, Sendable {
+    case appStore = "app_store"
+    case playStore = "play_store"
+    case stripe
+    case promotional
+
+    /// La page où l'on gère cet abonnement, chez celui qui l'encaisse. `nil` pour un accès
+    /// offert : il n'y a rien à gérer, et un bouton qui ouvrirait l'App Store vide mentirait.
+    var manageURL: URL? {
+        switch self {
+        case .appStore:
+            URL(string: "https://apps.apple.com/account/subscriptions")
+        case .playStore:
+            URL(string: "https://play.google.com/store/account/subscriptions?package=com.micabo.app")
+        case .stripe:
+            // Le portail Stripe s'ouvre depuis le profil du site, connecté au même compte.
+            URL(string: "https://www.micabo.app/app/profil")
+        case .promotional:
+            nil
+        }
+    }
+}
+
 /// **L'abonnement, tel que l'app le lit.**
 ///
 /// Un seul objet répond à « est-ce que cette personne est abonnée ? », et tout ce qui se
@@ -87,13 +112,26 @@ enum LifetimePro {
 final class ProAccess {
     enum Key {
         static let isPro = "micabo.pro.active"
+        static let everHadPro = "micabo.pro.everHad"
     }
 
     private(set) var isPro: Bool
 
     /// **La fin de l'essai gratuit en cours**, `nil` hors essai : jamais commencé, fini, ou
-    /// déjà payé. Le rappel du jour (`DailyReminder`) ne commence qu'après.
+    /// déjà payé.
     private(set) var trialEndsAt: Date?
+
+    /// **Un essai ou un abonnement Pro a déjà existé sur ce compte**, fini ou non. Gardé sur
+    /// l'appareil une fois vrai : un lancement hors ligne ne doit pas rouvrir les rappels.
+    private(set) var hasEverHadPro: Bool
+
+    /// **Le rappel du jour n'est que pour qui n'a jamais activé l'essai gratuit** : ni pendant
+    /// l'essai, ni après, ni pour un abonné.
+    var receivesDailyReminder: Bool { !isPro && !hasEverHadPro }
+
+    /// **D'où vient l'abonnement ouvert**, `nil` quand on ne le sait pas : « Gérer
+    /// l'abonnement » ouvre alors l'App Store, comme avant.
+    private(set) var store: SubscriptionStore?
 
     /// Même règle que le web (`ASSUME_PRO_WITHOUT_ROW`, à `false`) : pas de ligne, pas
     /// d'abonnement. Les deux clients doivent dire la même chose — un cours flouté sur le
@@ -111,6 +149,14 @@ final class ProAccess {
         self.userID = userID
         self.email = email
         self.isPro = defaults.bool(forKey: Key.isPro)
+        self.hasEverHadPro = defaults.bool(forKey: Key.everHadPro) || defaults.bool(forKey: Key.isPro)
+    }
+
+    /// Un essai ou un abonnement vu une fois l'est pour de bon.
+    private func markEverHadPro() {
+        guard !hasEverHadPro else { return }
+        hasEverHadPro = true
+        defaults.set(true, forKey: Key.everHadPro)
     }
 
     private let defaults: UserDefaults
@@ -123,6 +169,7 @@ final class ProAccess {
     /// Ouvre tout. Appelé quand le serveur confirme un achat ou une restauration — jamais
     /// sur un `unavailable`, qui veut dire « je n'ai pas pu vendre ».
     func unlock() {
+        markEverHadPro()
         guard !isPro else { return }
         isPro = true
         defaults.set(true, forKey: Key.isPro)
@@ -189,6 +236,7 @@ final class ProAccess {
         // sur la table.
         if LifetimePro.matches(email?()) {
             trialEndsAt = nil
+            store = .promotional
             setPro(true)
             return
         }
@@ -198,6 +246,10 @@ final class ProAccess {
         // L'essai selon le SDK quand il répond : il sait avant le webhook qu'un essai est
         // devenu un abonnement. La table sinon, pour un achat fait ailleurs.
         trialEndsAt = fromSDK.map(\.trialEndsAt) ?? fromTable?.trialEndsAt
+        if fromSDK?.everHadPro == true || fromTable?.exists == true { markEverHadPro() }
+        // Le magasin du droit ouvert : le SDK d'abord, la table pour un achat fait ailleurs.
+        store = (fromSDK?.isPro == true ? fromSDK?.store : nil)
+            ?? (fromTable?.isPro == true ? fromTable?.store : nil)
 
         // Personne ne sait rien : le réglage tranche, et il dit non.
         guard fromSDK != nil || fromTable != nil else {
@@ -220,6 +272,7 @@ final class ProAccess {
                 if state.isPro {
                     // Un essai qui commence, ou qui devient un abonnement, se lit ici.
                     self.trialEndsAt = state.trialEndsAt
+                    if let store = state.store { self.store = store }
                     self.setPro(true)
                 } else {
                     await self.refresh()
@@ -229,7 +282,7 @@ final class ProAccess {
     }
 
     /// La ligne `entitlements`, ou `nil` quand on n'a pas pu la lire. `nil` n'est pas « non ».
-    private func readEntitlementRow() async -> (isPro: Bool, trialEndsAt: Date?)? {
+    private func readEntitlementRow() async -> (isPro: Bool, trialEndsAt: Date?, exists: Bool, store: SubscriptionStore?)? {
         guard let token = await accessToken?(), let userID = userID?() else { return nil }
 
         do {
@@ -240,11 +293,16 @@ final class ProAccess {
                 filters: [URLQueryItem(name: "user_id", value: "eq.\(userID.uuidString.lowercased())")],
                 limit: 1
             )
-            guard let row = rows.first else { return (false, nil) }
+            guard let row = rows.first else { return (false, nil, false, nil) }
             let expired = row.expires_at.map { $0 < Date() } ?? false
             let active = row.is_pro && !expired
             let inTrial = active && row.period_type?.lowercased() == "trial"
-            return (active, inTrial ? (row.expires_at ?? .distantFuture) : nil)
+            return (
+                active,
+                inTrial ? (row.expires_at ?? .distantFuture) : nil,
+                true,
+                row.store.flatMap { SubscriptionStore(rawValue: $0.lowercased()) }
+            )
         } catch {
             return nil
         }

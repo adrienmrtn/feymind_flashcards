@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { oauthFailureMessage } from "@/lib/auth/oauth";
+import { callbackFailureMessage } from "@/lib/auth/oauth";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
 
 /**
@@ -22,10 +22,11 @@ export async function GET(request: NextRequest) {
   const tokenHash = url.searchParams.get("token_hash");
   const type = url.searchParams.get("type");
   const next = appNext(url.searchParams.get("next"));
+  const provider = url.searchParams.get("provider");
 
   if (!code && !(tokenHash && type)) {
     const error = url.searchParams.get("error_description") ?? url.searchParams.get("error");
-    const detail = oauthFailureMessage("apple", error ?? "manquant");
+    const detail = callbackFailureMessage(provider, error ?? "manquant");
     return NextResponse.redirect(
       new URL(`/commencer/compte?erreur=${encodeURIComponent(detail)}`, url.origin),
     );
@@ -49,8 +50,9 @@ export async function GET(request: NextRequest) {
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
+      const detail = callbackFailureMessage(provider, error.message);
       return NextResponse.redirect(
-        new URL(`/commencer/compte?erreur=${encodeURIComponent(error.message)}`, url.origin),
+        new URL(`/commencer/compte?erreur=${encodeURIComponent(detail)}`, url.origin),
       );
     }
   } else {

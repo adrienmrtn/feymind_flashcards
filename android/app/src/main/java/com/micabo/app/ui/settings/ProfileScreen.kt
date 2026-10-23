@@ -63,10 +63,13 @@ import com.micabo.app.ui.components.Icon3D
 import com.micabo.app.ui.components.Mika
 import com.micabo.app.ui.components.MikaMood
 import com.micabo.app.ui.components.Pressable
+import com.micabo.app.ui.paywall.OfferRow
 import com.micabo.app.ui.onboarding.COUNTRIES
 import com.micabo.app.ui.onboarding.countryFlag
 import com.micabo.app.ui.onboarding.countryName
 import com.micabo.app.ui.onboarding.tierName
+import com.micabo.app.data.ProStore
+import com.micabo.app.data.SiteConfig
 import com.micabo.app.data.Tiers
 import com.micabo.app.ui.theme.Micabo
 import com.micabo.app.ui.theme.nunito
@@ -83,12 +86,28 @@ fun ProfileScreen() {
     val colors = Micabo.colors
     val profile by app.prefs.profile.collectAsState()
     val isPro by app.billing.isPro.collectAsState()
+    val store by app.billing.store.collectAsState()
     var picker by remember { mutableStateOf<String?>(null) }
     var confirmReset by remember { mutableStateOf(false) }
+    var gifted by remember { mutableStateOf(false) }
     val language = AppLocale.resolved(profile.language)
 
     fun open(url: String) {
         runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+    }
+
+    /**
+     * **L'abonnement se gère là où il a été pris** (`EntitlementInfo.store`) : Google Play pour
+     * un achat fait ici, l'App Store pour l'iPhone, le profil du site pour Stripe. Un accès
+     * offert n'a rien à résilier : on le dit, au lieu d'ouvrir une page vide.
+     */
+    fun manageSubscription() {
+        when (store) {
+            ProStore.APP_STORE -> open("https://apps.apple.com/account/subscriptions")
+            ProStore.WEB -> open("${SiteConfig.URL}/app/profil")
+            ProStore.GIFT -> gifted = true
+            else -> open("https://play.google.com/store/account/subscriptions?package=${context.packageName}")
+        }
     }
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
@@ -103,9 +122,9 @@ fun ProfileScreen() {
             Text(stringResource(R.string.lesson_profile_me), style = nunito(34.sp, FontWeight.Black), color = colors.ink)
             StreakPanel()
             // Pro.
-            // Abonné : la gestion de l'abonnement est chez Google Play.
+            // Abonné : la gestion de l'abonnement est chez la boutique qui l'a vendu.
             Pressable(onClick = {
-                if (isPro) open("https://play.google.com/store/account/subscriptions?package=${context.packageName}") else navigator.push(Screen.Paywall(""))
+                if (isPro) manageSubscription() else navigator.push(Screen.Paywall(""))
             }) {
                 Row(
                     Modifier
@@ -132,6 +151,9 @@ fun ProfileScreen() {
                 }
             }
 
+            // Le tarif réduit du cadeau reste atteignable d'ici tant qu'on n'est pas abonné.
+            if (!isPro && app.billing.enabled) OfferRow()
+
             AccountSection()
 
             Group {
@@ -144,6 +166,11 @@ fun ProfileScreen() {
                 Item(stringResource(R.string.lesson_profile_theme), themeName(profile.theme)) { picker = "theme" }
             }
 
+            // Le même compte sur le site : les leçons, les cartes et les examens y sont déjà.
+            Group {
+                Item(stringResource(R.string.x_settings_computer), stringResource(R.string.x_settings_computerSite)) { open(SiteConfig.URL) }
+            }
+
             Group {
                 Item(stringResource(R.string.lesson_profile_rate), null) {
                     val id = context.packageName
@@ -153,9 +180,9 @@ fun ProfileScreen() {
             }
 
             Group {
-                Item(stringResource(R.string.lesson_profile_privacy), null) { open("https://micabo.app/confidentialite") }
+                Item(stringResource(R.string.lesson_profile_privacy), null) { open("${SiteConfig.URL}/confidentialite") }
                 Divider()
-                Item(stringResource(R.string.lesson_profile_terms), null) { open("https://micabo.app/conditions") }
+                Item(stringResource(R.string.lesson_profile_terms), null) { open("${SiteConfig.URL}/conditions") }
                 Divider()
                 Item(stringResource(R.string.lesson_profile_contact), null) { open("mailto:team@micabo.app") }
             }
@@ -213,6 +240,17 @@ fun ProfileScreen() {
             onPick = { tier ->
                 picker = null
                 app.prefs.update { it.copy(tier = tier) }
+            },
+        )
+    }
+
+    if (gifted) {
+        AlertDialog(
+            onDismissRequest = { gifted = false },
+            containerColor = colors.surface,
+            text = { Text(stringResource(R.string.x_pro_gifted), style = nunito(16.sp)) },
+            confirmButton = {
+                TextButton(onClick = { gifted = false }) { Text(stringResource(R.string.ios_ok), style = nunito(16.sp, FontWeight.ExtraBold)) }
             },
         )
     }

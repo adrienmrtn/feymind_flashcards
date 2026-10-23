@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Check, CheckCircle2, X, XCircle } from "lucide-react";
 
-import { CLOZE_GAP, LESSON_TONES, answerText, choiceOrder, matchRightOrder, orderPool, type LessonTone, type QuizQuestion } from "@micabo/core";
+import { CLOZE_GAP, LESSON_TONES, answerText, choiceOrder, matchRightOrder, normalizeClozeGap, orderPool, type LessonTone, type QuizQuestion } from "@micabo/core";
 
 import { KeywordText, plainKeywordText } from "@/components/lesson/KeywordText";
 import { LessonPrimaryButton } from "@/components/lesson/LessonButtons";
@@ -140,7 +140,7 @@ function ChoiceList({
             type="button"
             disabled={answered !== null}
             onClick={() => onAnswer({ right: original === question.answer, picked: shown })}
-            className={`pressable flex items-center gap-3 rounded-[16px] text-left transition-colors duration-300 ${compact ? "px-4 py-3" : "w-full px-4 py-[15px]"} ${style.box} ${
+            className={`pressable flex items-center gap-3 rounded-[16px] text-start transition-colors duration-300 ${compact ? "px-4 py-3" : "w-full px-4 py-[15px]"} ${style.box} ${
               isPicked(shown) ? "scale-[1.02]" : ""
             }`}
           >
@@ -163,7 +163,8 @@ function ChoiceList({
 
 /** **La phrase à trou** : le trou en pointillés tant qu'on n'a pas répondu, puis le bon mot, en vert, à sa place. */
 function GapSentence({ question, tone, answered }: { question: QuizQuestion; tone: LessonTone; answered: QuizAnswer | null }) {
-  const parts = question.prompt.split(CLOZE_GAP);
+  // Le trou du serveur et des apps (« … »), ou celui d'une ancienne leçon du site (« ____ »).
+  const parts = normalizeClozeGap(question.prompt).split(CLOZE_GAP);
   const word = question.choices[question.answer] ?? "";
   const filled = answered !== null;
   return (
@@ -280,7 +281,7 @@ function OrderBuilder({
                 type="button"
                 disabled={answered !== null}
                 onClick={() => setPlaced((current) => current.filter((value) => value !== item))}
-                className="pressable flex w-full items-center gap-3 rounded-[16px] bg-surface p-3 text-left"
+                className="pressable flex w-full items-center gap-3 rounded-[16px] bg-surface p-3 text-start"
                 style={{ boxShadow: `inset 0 0 0 2px ${ring}` }}
               >
                 <span
@@ -299,7 +300,7 @@ function OrderBuilder({
         {Array.from({ length: Math.max(0, question.choices.length - placed.length) }, (_, offset) => {
           const slot = placed.length + offset;
           return (
-            <li key={`slot-${slot}`} className="flex h-[54px] items-center rounded-[16px] border-2 border-dashed border-stroke pl-[22px]">
+            <li key={`slot-${slot}`} className="flex h-[54px] items-center rounded-[16px] border-2 border-dashed border-stroke ps-[22px]">
               <span className="numeral text-[17px] font-extrabold text-ink-tertiary">{slot + 1}</span>
             </li>
           );
@@ -316,7 +317,7 @@ function OrderBuilder({
                   key={item}
                   type="button"
                   onClick={() => setPlaced((current) => [...current, item])}
-                  className="pressable rounded-[14px] bg-surface px-3.5 py-[11px] text-left text-[16px] font-bold text-ink shadow-[inset_0_0_0_2px_var(--color-stroke)]"
+                  className="pressable rounded-[14px] bg-surface px-3.5 py-[11px] text-start text-[16px] font-bold text-ink shadow-[inset_0_0_0_2px_var(--color-stroke)]"
                 >
                   <KeywordText text={question.choices[item] ?? ""} tints={false} />
                 </button>

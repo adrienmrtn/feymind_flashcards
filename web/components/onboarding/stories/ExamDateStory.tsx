@@ -84,7 +84,7 @@ export function ExamDateStory() {
           </span>
           <span className="relative h-1 min-w-0 flex-1 rounded-pill bg-surface-sunken">
             <span
-              className="absolute inset-y-0 left-0 rounded-pill bg-accent transition-[width] duration-slow ease-out-strong"
+              className="absolute inset-y-0 start-0 rounded-pill bg-accent transition-[width] duration-slow ease-out-strong"
               style={{ width: `${filled * 100}%` }}
             />
             <span

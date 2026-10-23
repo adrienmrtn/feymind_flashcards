@@ -177,7 +177,7 @@ function MenuRow({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex h-11 items-center gap-3 rounded-tile px-3 text-left text-[15px] font-semibold hover:bg-surface-muted disabled:opacity-40 ${
+      className={`flex h-11 items-center gap-3 rounded-tile px-3 text-start text-[15px] font-semibold hover:bg-surface-muted disabled:opacity-40 ${
         destructive ? "text-negative" : "text-ink"
       }`}
     >

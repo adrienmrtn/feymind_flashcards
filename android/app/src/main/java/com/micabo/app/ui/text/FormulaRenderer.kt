@@ -26,10 +26,10 @@ object FormulaRenderer {
 
     fun stripped(source: String): String = segments(source).joinToString("") { it.text }
 
-    fun symbolsOnly(source: String): String = replacingCommands(source)
+    fun symbolsOnly(source: String): String = replacingCommands(replacingLabelledArrows(source))
 
     fun plain(latex: String): String {
-        var text = latex
+        var text = replacingLabelledArrows(latex)
         text = replacingFractions(text)
         text = replacingRoots(text)
         text = replacingCommands(text)
@@ -38,6 +38,23 @@ object FormulaRenderer {
         text = replacingScripts(text, '_', SUBSCRIPTS)
         text = strippingMarkup(text)
         return text.replace("  ", " ").trim()
+    }
+
+    /**
+     * Les flèches étiquetées d'amsmath, l'antislash facultatif : une leçon écrite avant la
+     * réparation des échappées l'a parfois perdu (« xrightarrow{Lumière} »). Jumeau de
+     * `SheetText.labelledArrow` sur iPhone et de `LABELLED_ARROW` côté serveur.
+     */
+    val LABELLED_ARROW = Regex("\\\\?x(right|left)arrow\\s*(?:\\[[^\\]]*\\])?\\s*\\{([^{}]*)\\}")
+
+    /** `\xrightarrow{Lumière}` devient `→ (Lumière)` : on lisait « xrightarrowLumière ». */
+    fun replacingLabelledArrows(source: String): String {
+        if (!source.contains("arrow")) return source
+        return LABELLED_ARROW.replace(source) { match ->
+            val arrow = if (match.groupValues[1] == "right") "→" else "←"
+            val label = match.groupValues[2].trim()
+            if (label.isEmpty()) arrow else "$arrow ($label)"
+        }
     }
 
     private fun replacingFractions(source: String): String {

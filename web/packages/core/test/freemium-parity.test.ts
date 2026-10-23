@@ -10,7 +10,7 @@
  * Ici on relit le Swift et on compare. Une divergence tombe au prochain `pnpm test`.
  */
 
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -21,7 +21,7 @@ import { ASSUME_PRO_WITHOUT_ROW, ENTITLEMENT_ID, FREE_LESSON_TIER, LIFETIME_PRO_
 import { EXTRA_ALLOWANCE, MIKA_ALLOWANCE, hasUsedFreeLesson, isImportSource, lessonGate } from "../src/lesson/allowance";
 import { MAX_COMPOSER_CHARACTERS, MAX_COMPOSER_IMAGES, MAX_SUPPORTS } from "../src/lesson/composer";
 import { MIKA_LIMITS } from "../src/lesson/mika";
-import { DISCOUNT_YEARLY } from "../src/pricing";
+import { DISCOUNT_YEARLY, FREE_TRIAL_DAYS, TRY_AMOUNTS, WEEKLY, YEARLY } from "../src/pricing";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../../..");
@@ -114,6 +114,21 @@ describe("le gratuit, des deux côtés", () => {
       expect(proAccess).toContain(`"${email}"`);
     }
   });
+
+  it("et le serveur les reconnaît aussi, dans la porte SQL", () => {
+    // Sans elle, l'app ouvrait Pro et `begin_lesson` répondait `import_pro`. La dernière
+    // définition de `is_lifetime_pro` doit nommer chaque adresse des clients, et rien de plus.
+    const migrations = resolve(repoRoot, "supabase/migrations");
+    const latest = readdirSync(migrations)
+      .filter((name) => name.endsWith(".sql"))
+      .sort()
+      .map((name) => readFileSync(resolve(migrations, name), "utf8"))
+      .filter((sql) => sql.includes("function public.is_lifetime_pro"))
+      .at(-1);
+    expect(latest).toBeDefined();
+    const listed = [...(latest ?? "").matchAll(/'([^']+@[^']+)'/g)].map((match) => match[1]);
+    expect([...listed].sort()).toEqual([...LIFETIME_PRO_EMAILS].sort());
+  });
 });
 
 describe("le branchement RevenueCat de l'app", () => {
@@ -168,19 +183,62 @@ describe("l'offre cadeau, des deux côtés", () => {
     // une seule somme, dont celui qu'on retenait n'était pas celui qui part. Chaque client
     // écrit sa somme annuelle, et rien d'autre.
     //
-    // **Les montants ne sont plus les mêmes, et c'est voulu.** iOS suit la grille par pays
-    // de `store/pricing.json` (29,99 € en France, −40 % sur l'annuel à 49,99 €) ; le web
-    // garde 39,99 € tant que Stripe n'est pas repris. Ce test fige les deux, pour qu'un
-    // changement d'un côté ne passe pas pour un oubli de l'autre.
+    // Les deux clients affichent la même somme : 29,99 € en France, −40 % sur l'annuel.
     expect(catalog).toContain("price: 29.99");
-    expect(DISCOUNT_YEARLY.price).toBe(39.99);
+    expect(DISCOUNT_YEARLY.price).toBe(29.99);
     expect(discountOffer).not.toContain("monthlyPrice");
     expect(DISCOUNT_YEARLY).not.toHaveProperty("monthlyPrice");
+  });
+
+  it("affiche la grille de l'app, prix et essais compris", () => {
+    // Le site annonçait 69,99 € / 7,99 € / 39,99 € pendant que l'app vendait 49,99 € /
+    // 4,99 € / 29,99 €. Chaque offre web doit dire le prix et l'essai du `PaywallCatalog`.
+    const swiftPlan = (name: string) => {
+      const block = catalog.match(new RegExp(`static let ${name} = PaywallPlan\\(([\\s\\S]*?)\\n    \\)`))?.[1] ?? "";
+      const trial = block.match(/trialDays: (\w+)/)?.[1];
+      return {
+        productId: block.match(/productID: "([^"]+)"/)?.[1],
+        price: Number(block.match(/price: ([\d.]+)/)?.[1]),
+        trialDays: trial === "freeTrialDays" ? FREE_TRIAL_DAYS : Number(trial),
+      };
+    };
+    for (const [name, plan] of [
+      ["yearly", YEARLY],
+      ["weekly", WEEKLY],
+      ["discount", DISCOUNT_YEARLY],
+    ] as const) {
+      expect(swiftPlan(name)).toEqual({
+        productId: plan.productId,
+        price: plan.price,
+        trialDays: plan.trialDays,
+      });
+    }
+
+    // Et la Turquie, telle que `store/pricing.json` la pose dans App Store Connect.
+    const grid = JSON.parse(readFileSync(resolve(repoRoot, "store/pricing.json"), "utf8")) as {
+      tiers: { territories: string[]; currency?: string; prices?: Record<string, string> }[];
+    };
+    const turkey = grid.tiers.find((tier) => tier.territories.includes("TUR"))?.prices ?? {};
+    expect(Number(turkey.yearly)).toBe(TRY_AMOUNTS.yearly);
+    expect(Number(turkey.weekly)).toBe(TRY_AMOUNTS.weekly);
+    expect(Number(turkey.discount)).toBe(TRY_AMOUNTS.yearly_discount);
   });
 
   it("vend le même produit, sur le même entitlement", () => {
     expect(discountOffer).toContain("PaywallCatalog.discount");
     expect(DISCOUNT_YEARLY.productId).toBe("com.micabo.app.pro.yearly.discount");
+  });
+
+  it("fait tomber le cadeau quand un paywall se referme sans achat, sans attendre de cours", () => {
+    // Le déclencheur a changé de place des deux côtés : ce n'est plus le premier import mais
+    // la croix du paywall (`paywallClosed`). Un seuil de cours qui divergerait ferait offrir
+    // le tarif réduit sur le téléphone et pas sur le site, au même compte.
+    expect(swiftNumber(discountOffer, "giftAfterCourses")).toBe(discount.giftAfterCourses);
+    expect(discountOffer).toContain("static func paywallClosed(");
+    expect(discountOffer).toContain('static let pending = "micabo.discount.pending"');
+    expect(swift("Features/Paywall/PaywallFlowView.swift")).toContain("DiscountOffer.paywallClosed(");
+    expect(discount.shouldPresentGift({ isPaid: false, courseCount: 0, seen: false, startedAt: null, now: 0 })).toBe(true);
+    expect(discount.shouldPresentGift({ isPaid: true, courseCount: 0, seen: false, startedAt: null, now: 0 })).toBe(false);
   });
 
   it("n'ouvre Pro que sur un achat confirmé, comme les autres paywalls", () => {

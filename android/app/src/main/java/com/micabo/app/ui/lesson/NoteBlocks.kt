@@ -68,7 +68,7 @@ private val NOTES = nunito(17.sp, FontWeight.Normal, lineHeight = 26.sp)
 @Composable
 fun ThemeNotesView(notes: ThemeNotes, tone: Tone) {
     val colors = Micabo.colors
-    val blocks = remember(notes) { notes.blocks.mapNotNull { NoteBlock.parse(it) } }
+    val blocks = remember(notes) { notes.blocks.flatMap { NoteBlock.parseAll(it) } }
     Column {
         if (notes.oneLiner.isNotBlank()) {
             ToneBox(stringResource(R.string.lesson_notes_oneLiner), tone) {

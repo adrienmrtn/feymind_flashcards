@@ -1,13 +1,20 @@
 import { describe, expect, it } from "vitest";
 
-import { UI_LOCALES } from "./i18n/locales";
+import { indexableAlternates } from "./i18n/alternates";
+import { TRANSLATED_UI_LOCALES, isTranslatedLocale } from "./i18n/catalogs";
+import { UI_LOCALES, UI_LOCALE_META } from "./i18n/locales";
 import { INDEXABLE_PATHS, localizedPath } from "./i18n/paths";
 import { indexableSitemap, searchConsoleUrls } from "./i18n/sitemap";
 
+function absolute(href: string): string {
+  return href === "/" ? "https://www.micabo.app/" : `https://www.micabo.app${href}`;
+}
+
 describe("sitemap", () => {
-  it("émet chaque page indexable dans les cinq langues", () => {
+  it("émet chaque page indexable dans chaque langue traduite", () => {
     const entries = indexableSitemap();
-    expect(entries).toHaveLength(INDEXABLE_PATHS.length * 5);
+    expect(TRANSLATED_UI_LOCALES.length).toBeGreaterThanOrEqual(5);
+    expect(entries).toHaveLength(INDEXABLE_PATHS.length * TRANSLATED_UI_LOCALES.length);
     const urls = entries.map((entry) => entry.url);
     expect(urls).toContain("https://www.micabo.app/");
     expect(urls).toContain("https://www.micabo.app/fr");
@@ -23,8 +30,22 @@ describe("sitemap", () => {
     );
   });
 
-  it("liste les 30 URL que Search Console doit lire, sans /en ni l'app", () => {
-    expect(searchConsoleUrls()).toEqual([
+  it("tient hors du sitemap une langue qui n'est encore que l'anglais", () => {
+    const urls = indexableSitemap().map((entry) => entry.url);
+    for (const locale of UI_LOCALES) {
+      const url = absolute(localizedPath(locale, "/methode"));
+      expect(urls.includes(url), locale).toBe(isTranslatedLocale(locale));
+    }
+  });
+
+  it("liste les URL que Search Console doit lire, sans /en ni l'app", () => {
+    expect(searchConsoleUrls()).toEqual(
+      INDEXABLE_PATHS.flatMap((path) =>
+        TRANSLATED_UI_LOCALES.map((locale) => absolute(localizedPath(locale, path))),
+      ),
+    );
+    const urls = searchConsoleUrls();
+    for (const url of [
       "https://www.micabo.app/",
       "https://www.micabo.app/fr",
       "https://www.micabo.app/de",
@@ -55,9 +76,11 @@ describe("sitemap", () => {
       "https://www.micabo.app/de/conditions",
       "https://www.micabo.app/es/conditions",
       "https://www.micabo.app/tr/conditions",
-    ]);
+    ]) {
+      expect(urls).toContain(url);
+    }
     for (const path of INDEXABLE_PATHS) {
-      for (const locale of UI_LOCALES) {
+      for (const locale of TRANSLATED_UI_LOCALES) {
         const href = localizedPath(locale, path);
         const url = href === "/" ? "https://www.micabo.app/" : `https://www.micabo.app${href}`;
         expect(searchConsoleUrls()).toContain(url);
@@ -72,6 +95,23 @@ describe("sitemap", () => {
       expect(languages.fr).toBeTruthy();
       expect(languages.tr).toBeTruthy();
       expect(languages["x-default"]).toBe(languages.en);
+      expect(Object.keys(languages).sort()).toEqual(
+        [...TRANSLATED_UI_LOCALES.map((locale) => UI_LOCALE_META[locale].hreflang), "x-default"].sort(),
+      );
+    }
+  });
+
+  it("pose dans le HTML le même jeu hreflang que dans le sitemap", () => {
+    for (const path of INDEXABLE_PATHS) {
+      const fromSitemap = indexableSitemap().find((entry) => entry.url === absolute(localizedPath("en", path)));
+      for (const locale of UI_LOCALES) {
+        const alternates = indexableAlternates(locale, path);
+        expect(alternates.languages, `${locale} ${path}`).toEqual(fromSitemap?.alternates.languages);
+        // Une langue sans traduction sert l'anglais sous son préfixe : elle canonise vers lui.
+        expect(alternates.canonical, `${locale} ${path}`).toBe(
+          localizedPath(isTranslatedLocale(locale) ? locale : "en", path),
+        );
+      }
     }
   });
 
@@ -88,11 +128,11 @@ describe("sitemap", () => {
     const distinct = new Set(entries.map((entry) => entry.lastModified.toISOString()));
     expect(distinct.size).toBeGreaterThan(1);
 
-    // Les cinq langues d'une page changent dans le même commit : elles partagent sa date.
+    // Les langues d'une page changent dans le même commit : elles partagent sa date.
     const byPath = (suffix: string) =>
       entries.filter((entry) => entry.url.endsWith(suffix)).map((e) => e.lastModified.getTime());
     const method = byPath("/methode");
-    expect(method).toHaveLength(5);
+    expect(method).toHaveLength(TRANSLATED_UI_LOCALES.length);
     expect(new Set(method).size).toBe(1);
 
     // Et une page n'emprunte pas la date d'une autre : la méthode et l'accueil ont bougé

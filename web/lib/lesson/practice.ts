@@ -5,6 +5,7 @@ import { progressive, questionIsValid, readLessonProgress, readQuizQuestion, rea
 import { revalidateUserData } from "@/lib/data/cache";
 import { actionT } from "@/lib/i18n/action";
 import { lessonAudience } from "@/lib/lesson/audience";
+import { examLineFor } from "@/lib/lesson/create";
 import { readableFunctionError } from "@/lib/lesson/errors";
 import { flatNotes } from "@/lib/lesson/exam";
 import { createClient } from "@/lib/supabase/server";
@@ -26,6 +27,8 @@ export interface PracticeOutcome {
 
 const PRACTICE_COUNT = 10;
 const AVOID = 80;
+const AVOID_CHARS = 200;
+const NOTES_CHARS = 2_000;
 
 export async function writePractice(lessonId: string): Promise<PracticeOutcome> {
   const supabase = await createClient();
@@ -46,20 +49,26 @@ export async function writePractice(lessonId: string): Promise<PracticeOutcome> 
   const progress = readLessonProgress(lesson.progress);
   const themeIds = chapters.map((chapter) => chapter.id);
   const focus = [...new Set(progress.missed.map((id) => themeOfQuestion(id, themeIds)).filter((index) => index >= 0))].sort((a, b) => a - b);
-  const avoid = quizzes.flatMap((quiz) => quiz?.questions.map((question) => question.prompt) ?? []).slice(-AVOID);
-  const audience = await lessonAudience({ language: lesson.language });
+  // Les mêmes coupes que `SupabaseLessonService.practice` : les quatre-vingts dernières
+  // questions, deux cents caractères chacune, et deux mille caractères de notes par thème.
+  const avoid = quizzes
+    .flatMap((quiz) => quiz?.questions.map((question) => question.prompt) ?? [])
+    .slice(-AVOID)
+    .map((prompt) => prompt.slice(0, AVOID_CHARS));
+  // L'examen à venir qui porte sur cette leçon, comme `LessonBuilder.practice` le passe.
+  const audience = await lessonAudience({ exam: await examLineFor(supabase, user.id, lessonId) });
 
   const { data, error } = await supabase.functions.invoke("generate-lesson", {
     body: {
+      ...audience,
       stage: "practice",
       lessonId,
       lessonTitle: lesson.title,
-      subject: lesson.subject ?? undefined,
-      practiceThemes: chapters.map((chapter) => ({ title: chapter.title, notes: flatNotes(chapter) })),
+      subject: lesson.subject ?? "",
+      practiceThemes: chapters.map((chapter) => ({ title: chapter.title, notes: flatNotes(chapter).slice(0, NOTES_CHARS) })),
       focus,
       avoid,
       count: PRACTICE_COUNT,
-      ...audience,
     },
   });
   if (error) {

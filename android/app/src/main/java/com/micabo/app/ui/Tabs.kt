@@ -45,6 +45,7 @@ import com.micabo.app.ui.components.Pressable
 import com.micabo.app.ui.exams.ExamsScreen
 import com.micabo.app.ui.home.HomeScreen
 import com.micabo.app.ui.lessons.LessonsScreen
+import com.micabo.app.ui.paywall.OfferTab
 import com.micabo.app.ui.settings.ProfileScreen
 import com.micabo.app.ui.theme.Micabo
 import com.micabo.app.ui.theme.nunito
@@ -85,6 +86,8 @@ fun TabsScreen(navigator: Navigator) {
             }
         }
         TabBar(navigator.tab, onSelect = { navigator.tab = it }, modifier = Modifier.align(Alignment.BottomCenter))
+        // La languette de l'offre, au bord droit, au-dessus de la barre et des boutons du bas.
+        OfferTab(Modifier.align(Alignment.CenterEnd).padding(bottom = 120.dp))
     }
 }
 

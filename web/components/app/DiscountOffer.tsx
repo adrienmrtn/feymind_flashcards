@@ -10,29 +10,36 @@ import { Float } from "@/components/app/Float";
 import { startCheckout } from "@/lib/actions/checkout";
 import { trackCheckoutStart, trackPaywallView } from "@/lib/analytics/funnel";
 import {
+  DISCOUNT_EVENT,
   claimOffer,
   isDiscountSeen,
   markDiscountSeen,
   readDiscountStart,
   releaseOffer,
-  shouldOpenDiscount,
+  requestDiscount,
   shouldShowDiscountBadge,
   startDiscount,
+  takePendingGift,
+  type DiscountRequest,
+  type DiscountStage,
 } from "@/lib/discount";
 import { useI18n } from "@/lib/i18n/client";
 import { usePresentment } from "@/lib/presentment";
 import { requestTourRecheck } from "@/lib/tour/signal";
 
 /**
- * **L'offre cadeau du web**, et sa pastille.
+ * **L'offre cadeau du web**, sa boîte à déballer et sa pastille. Jumeau de
+ * `DiscountBadgeHost` + `DiscountFlowView` côté Swift.
  *
- * Elle se présente une fois, dès le premier cours importé, en grand. Refermée,
- * elle ne disparaît pas : une pastille garde le décompte des vingt-quatre
- * heures et la rouvre d'un clic. C'est la différence entre une offre qu'on
- * refuse et une offre qu'on remet à plus tard, et seule la seconde se vend.
+ * **Un paywall refermé sans achat fait tomber le cadeau** (`paywallClosed`) : une boîte qui
+ * ne dit pas de prix, trois appuis pour l'ouvrir, puis le tarif réduit et rien qu'un prix.
+ * Refermée, l'offre ne disparaît pas : une pastille garde le décompte des vingt-quatre heures
+ * et rouvre le tarif d'un clic — on ne fait pas déballer deux fois. La rangée du profil
+ * l'ouvre aussi (`requestDiscount("paywall")`).
  *
- * Une minuterie, un seul instant d'origine — voir `@micabo/core/discount`.
- * Le pop-up et la pastille montrent les mêmes vingt-quatre heures.
+ * Une minuterie, un seul instant d'origine — voir `@micabo/core/discount`. L'instant se pose
+ * au troisième appui, pas à la fermeture du paywall : un décompte qui a commencé sans témoin
+ * est un décompte déjà perdu.
  *
  * `isPaid`, pas `isPro` : sans ligne d'abonnement, tout le monde serait traité
  * comme abonné et ce cadeau ne s'ouvrirait jamais.
@@ -47,7 +54,7 @@ export function DiscountHost({
   const params = useSearchParams();
   const debug = params.get("debug") === "cadeau";
 
-  const [open, setOpen] = useState(false);
+  const [presentation, setPresentation] = useState<DiscountStage | null>(null);
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [seen, setSeen] = useState(false);
 
@@ -56,53 +63,66 @@ export function DiscountHost({
     setSeen(isDiscountSeen());
   }, []);
 
+  /**
+   * Le cadeau demandé par un paywall refermé, **une fois la carte repliée** : 700 ms, comme
+   * `presentPendingGift` sur l'iPhone. Deux cartes qui se croisent ne se lisent pas, et le
+   * drapeau `claimOffer` empêche le paywall différé de se poser par-dessus.
+   */
   useEffect(() => {
-    if (
-      !shouldOpenDiscount({
-        isPaid,
-        courseCount,
-        seen: isDiscountSeen(),
-        startedAt: readDiscountStart(),
-        now: Date.now(),
-        debug,
-      })
-    ) {
-      return;
+    let timer = 0;
+    function present() {
+      window.clearTimeout(timer);
+      if (isPaid && !debug) return;
+      claimOffer();
+      timer = window.setTimeout(() => setPresentation((current) => current ?? "gift"), 700);
     }
 
-    // **Le drapeau se lève tout de suite, la carte arrive deux secondes plus tard.**
-    //
-    // Deux secondes après l'ouverture du premier cours : le temps de voir la fiche
-    // s'afficher et de comprendre ce qu'on vient d'obtenir. Une offre posée sur un écran
-    // encore vide se lit comme une réclame, pas comme une récompense.
-    //
-    // Le drapeau, lui, ne peut pas attendre : le paywall ordinaire s'ouvre à 980 ms et le
-    // lit dans sa propre minuterie. Levé trop tard, les deux cartes se superposeraient.
-    claimOffer();
-    const timer = window.setTimeout(() => {
+    if (debug || takePendingGift()) present();
+
+    function onRequest(event: Event) {
+      const stage = (event as CustomEvent<DiscountRequest>).detail?.stage ?? "gift";
+      if (stage === "gift") {
+        takePendingGift();
+        present();
+        return;
+      }
+      if (isPaid && !debug) return;
+      // Le tarif, sans boîte : depuis la pastille ou le profil. L'ouvrir relance une fenêtre
+      // si la précédente est finie (`startDiscount`), comme `DiscountFlowView(startsAtPaywall:)`.
+      claimOffer();
       setStartedAt(startDiscount());
-      setOpen(true);
-    }, 2_000);
-    return () => window.clearTimeout(timer);
-  }, [courseCount, debug, isPaid]);
+      setPresentation("paywall");
+    }
+
+    window.addEventListener(DISCOUNT_EVENT, onRequest);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener(DISCOUNT_EVENT, onRequest);
+    };
+  }, [debug, isPaid]);
 
   const close = useCallback(() => {
-    // L'instant vient de `markDiscountSeen` : fermer la carte démarre la fenêtre si elle
-    // n'avait pas commencé, et la pastille a besoin de cet instant pour s'afficher.
+    // L'instant vient de `markDiscountSeen` : refermer le cadeau avant le troisième appui
+    // démarre la fenêtre aussi, et la pastille a besoin de cet instant pour s'afficher.
     setStartedAt(markDiscountSeen());
     releaseOffer();
     setSeen(true);
-    setOpen(false);
+    setPresentation(null);
     requestTourRecheck();
   }, []);
 
-  const reopen = useCallback(() => {
-    claimOffer();
+  const opened = useCallback(() => {
     setStartedAt(startDiscount());
-    setOpen(true);
+    setPresentation("paywall");
   }, []);
 
-  if (open && startedAt !== null) {
+  const reopen = useCallback(() => requestDiscount("paywall"), []);
+
+  if (presentation === "gift") {
+    return <DiscountGift onOpened={opened} onDismiss={close} />;
+  }
+
+  if (presentation === "paywall" && startedAt !== null) {
     return <DiscountCard onClose={close} />;
   }
 
@@ -113,6 +133,136 @@ export function DiscountHost({
   }
 
   return null;
+}
+
+/**
+ * **Le cadeau, en pop-up** : la carte, pas l'écran. `DiscountGiftStage` côté Swift.
+ *
+ * Chaque appui fait deux choses : la boîte encaisse le coup (elle s'écrase puis rebondit,
+ * en penchant d'un côté puis de l'autre), et une pastille de plus se remplit sous elle. Au
+ * troisième, la main passe au tarif — après une demi-seconde, le temps que la boîte s'ouvre.
+ * Sans ces retours, appuyer trois fois sur une image ressemble à une image qui ne répond pas.
+ */
+export function DiscountGift({ onOpened, onDismiss }: { onOpened: () => void; onDismiss: () => void }) {
+  const { t } = useI18n();
+  const [taps, setTaps] = useState(0);
+  const [squash, setSquash] = useState(false);
+  const remaining = Math.max(0, discount.taps - taps);
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      onDismiss();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onDismiss]);
+
+  useEffect(() => {
+    if (!squash) return;
+    const timer = window.setTimeout(() => setSquash(false), 130);
+    return () => window.clearTimeout(timer);
+  }, [squash, taps]);
+
+  useEffect(() => {
+    if (taps < discount.taps) return;
+    const timer = window.setTimeout(onOpened, 500);
+    return () => window.clearTimeout(timer);
+  }, [onOpened, taps]);
+
+  function tap() {
+    if (taps >= discount.taps) return;
+    setTaps((count) => count + 1);
+    setSquash(true);
+  }
+
+  const wobble = squash ? (taps % 2 === 0 ? -5 : 5) : 0;
+  const lift = Math.min(taps, discount.taps) * 4;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+      <div aria-hidden className="paywall-veil absolute inset-0 bg-ink/40 backdrop-blur-[6px]" />
+
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cadeau-boite-title"
+        className="paywall-card relative w-full max-w-[400px] rounded-[28px] bg-gradient-to-b from-offer-wash via-offer-wash-soft to-surface px-5 pb-6 pt-3 shadow-[0_34px_110px_-24px_rgba(11,143,220,0.55)]"
+      >
+        <div className="flex justify-end">
+          <button
+            type="button"
+            aria-label={t("app.a11y.close")}
+            onClick={onDismiss}
+            className="pressable -me-1 flex h-10 w-10 items-center justify-center rounded-full text-offer-sky"
+          >
+            <svg aria-hidden viewBox="0 0 20 20" className="h-[22px] w-[22px]">
+              <path d="M5 5l10 10M15 5L5 15" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex flex-col items-center text-center">
+          <h2 id="cadeau-boite-title" className="px-2 text-[26px] font-bold leading-[1.12] tracking-tight-title text-ink">
+            {t("app.paywall.giftTitle")}
+          </h2>
+          <p className="mt-2 px-2 text-[15px] text-ink-secondary">{t("app.paywall.giftBody")}</p>
+
+          <button
+            type="button"
+            onClick={tap}
+            aria-label={t("app.paywall.openGift")}
+            aria-describedby="cadeau-boite-hint"
+            className="mt-6 flex h-[176px] w-[176px] items-center justify-center rounded-[32px] text-offer-sky outline-none focus-visible:shadow-[0_0_0_3px_var(--color-offer-sky)]"
+            style={{
+              transform: `scale(${squash ? 0.9 : 1}) rotate(${wobble}deg)`,
+              transition: "transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+            }}
+          >
+            <GiftBox lift={lift} open={taps >= discount.taps} />
+          </button>
+          <span id="cadeau-boite-hint" className="sr-only">
+            {t("app.paywall.tapGiftHint", { n: discount.taps })}
+          </span>
+
+          <div className="mt-6 flex items-center gap-2" aria-hidden>
+            {Array.from({ length: discount.taps }, (_, index) => (
+              <span
+                key={index}
+                className="h-[9px] rounded-pill bg-offer-sky transition-all duration-200"
+                style={{ width: index < taps ? 26 : 9, opacity: index < taps ? 1 : 0.25 }}
+              />
+            ))}
+          </div>
+          <p role="status" aria-live="polite" className="mt-3 text-[14px] font-semibold text-ink-secondary">
+            {remaining === 0 ? t("app.paywall.giftOpening") : t("app.paywall.giftTapsLeft", { n: remaining })}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** La boîte : un corps, un couvercle qui remonte d'un cran à chaque appui, un nœud. */
+function GiftBox({ lift, open }: { lift: number; open: boolean }) {
+  return (
+    <svg aria-hidden viewBox="0 0 120 120" className="h-[150px] w-[150px] overflow-visible">
+      <rect x="20" y="52" width="80" height="56" rx="10" fill="currentColor" />
+      <rect x="55" y="52" width="10" height="56" fill="white" opacity="0.55" />
+      <g
+        style={{
+          transform: `translateY(${-lift - (open ? 18 : 0)}px) rotate(${open ? -12 : 0}deg)`,
+          transformOrigin: "60px 46px",
+          transition: "transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+        }}
+      >
+        <rect x="14" y="38" width="92" height="20" rx="7" fill="currentColor" opacity="0.9" />
+        <rect x="55" y="38" width="10" height="20" fill="white" opacity="0.55" />
+        <path d="M60 38c-9-15-25-15-25-3 0 9 15 11 25 11s25-2 25-11c0-12-16-12-25 3z" fill="currentColor" opacity="0.75" />
+      </g>
+    </svg>
+  );
 }
 
 /** Une seconde qui tombe, et rien d'autre. Le rendu suit, le calcul est ailleurs. */
@@ -215,7 +365,7 @@ export function DiscountCard({ onClose }: { onClose: () => void }) {
             {t("app.paywall.discountSubtitle")}
           </h2>
 
-          <div className="mt-6 flex w-full items-center gap-4 rounded-[22px] bg-surface px-4 py-4 text-left shadow-[0_14px_34px_-18px_rgba(11,143,220,0.55)] sm:px-5">
+          <div className="mt-6 flex w-full items-center gap-4 rounded-[22px] bg-surface px-4 py-4 text-start shadow-[0_14px_34px_-18px_rgba(11,143,220,0.55)] sm:px-5">
             <SaleSeal percent={saved} />
 
             <div className="min-w-0">
@@ -372,7 +522,7 @@ export function DiscountBadge({
         <span aria-hidden className="text-white">
           <GiftGlyph />
         </span>
-        <span className="text-left">
+        <span className="text-start">
           <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-white/80">
             {t("app.paywall.yourOffer")}
           </span>

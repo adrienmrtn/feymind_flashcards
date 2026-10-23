@@ -35,7 +35,7 @@ export function MockExamStory() {
   ];
 
   return (
-    <div className="paper w-full max-w-[320px] rounded-[22px] bg-surface p-4 text-left">
+    <div className="paper w-full max-w-[320px] rounded-[22px] bg-surface p-4 text-start">
       <div className="flex items-center gap-4">
         <div className="relative shrink-0" style={{ width: size, height: size }}>
           <svg aria-hidden="true" width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
@@ -62,7 +62,7 @@ export function MockExamStory() {
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <p className="text-[16px] font-extrabold leading-tight text-ink">{t("lesson.exam.passed")}</p>
           <p className="text-[12px] font-semibold text-ink-secondary">{t("lesson.exam.time", { used: 22, total: 30 })}</p>
-          <div className="mt-1 -mr-2 self-end">
+          <div className="mt-1 -me-2 self-end">
             <Mika mood="celebrate" size={56} label="" />
           </div>
         </div>

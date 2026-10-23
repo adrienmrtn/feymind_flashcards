@@ -79,6 +79,19 @@ export async function updateProgress(
   lessonId: string,
   change: (progress: LessonProgress) => LessonProgress,
 ): Promise<LessonActionResult & { progress?: LessonProgress }> {
+  return writeProgress(lessonId, change, false);
+}
+
+/**
+ * La même écriture, **et un vrai geste d'étude** quand `studied` : une étape cochée, un quiz
+ * noté, une réponse donnée. Ce sont les gestes qui allument la journée de `StudyStreak.record`
+ * sur l'iPhone ; ici ils posent `last_opened_at`, que la série du site relit (`studyDays`).
+ */
+async function writeProgress(
+  lessonId: string,
+  change: (progress: LessonProgress) => LessonProgress,
+  studied: boolean,
+): Promise<LessonActionResult & { progress?: LessonProgress }> {
   const { supabase, user } = await session();
   if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
 
@@ -92,9 +105,10 @@ export async function updateProgress(
   if (!data) return { status: "error", message: await actionT("app.errors.courseMissing") };
 
   const next = change(readLessonProgress((data as { progress: unknown }).progress) ?? emptyProgress());
+  const now = new Date().toISOString();
   const { error } = await supabase
     .from("courses")
-    .update({ progress: next, updated_at: new Date().toISOString() })
+    .update(studied ? { progress: next, updated_at: now, last_opened_at: now } : { progress: next, updated_at: now })
     .eq("user_id", user.id)
     .eq("id", lessonId);
   if (error) return { status: "error", message: error.message };
@@ -145,11 +159,15 @@ export async function openLessonOffline(lessonId: string): Promise<LessonActionR
  * (`finishedAt`). L'anneau de l'étape en cours repart de zéro.
  */
 export async function completeCircle(lessonId: string, circleId: string, isFinal: boolean) {
-  return updateProgress(lessonId, (progress) => {
-    const next = { ...markDone(progress, circleId), inCircle: 0 };
-    if (isFinal && !next.finishedAt) next.finishedAt = new Date().toISOString();
-    return next;
-  });
+  return writeProgress(
+    lessonId,
+    (progress) => {
+      const next = { ...markDone(progress, circleId), inCircle: 0 };
+      if (isFinal && !next.finishedAt) next.finishedAt = new Date().toISOString();
+      return next;
+    },
+    true,
+  );
 }
 
 /** Où on en est dans l'étape en cours : l'anneau autour d'elle. */
@@ -166,7 +184,7 @@ export async function addStudyTime(lessonId: string, seconds: number, activity: 
 }
 
 export async function recordQuizScore(lessonId: string, circleId: string, right: number, total: number) {
-  return updateProgress(lessonId, (progress) => recordQuiz(progress, circleId, Math.max(0, right), Math.max(0, total)));
+  return writeProgress(lessonId, (progress) => recordQuiz(progress, circleId, Math.max(0, right), Math.max(0, total)), true);
 }
 
 /**
@@ -179,7 +197,7 @@ export async function answerQuestion(lessonId: string, rawQuestion: unknown, rig
   const question = readQuizQuestion(rawQuestion);
   if (!question) return { status: "error", message: await actionT("app.common.errorGeneric") };
 
-  const result = await updateProgress(lessonId, (progress) => (right ? noteRight(progress, question.id) : noteMissed(progress, question.id)));
+  const result = await writeProgress(lessonId, (progress) => (right ? noteRight(progress, question.id) : noteMissed(progress, question.id)), true);
   if (result.status === "error" || right) return result;
 
   const { supabase, user } = await session();

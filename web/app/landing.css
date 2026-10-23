@@ -1,0 +1,891 @@
+/* ==========================================================================
+   La vitrine, refonte d'octobre 2026
+
+   Une seule courbe, une poignée d'effets, et rien d'autre que `transform` et `opacity` :
+   - l'entrée du héros, orchestrée (titre, phrase, boutons, carte), 70 ms d'écart ;
+   - la carte produit, en boucle : les supports, « Générer », le chemin, Mika qui réagit ;
+   - les sections qui montent au défilement (`Reveal`), sur la même courbe ;
+   - un lavage d'ambiance qui dérive très lentement derrière le héros.
+
+   Tout est préfixé `lp-` et ne vit que sur la vitrine et la carte de connexion : le produit
+   garde ses propres durées, plus courtes. « Réduire les animations » garde les fondus et
+   retire tout déplacement ; la carte produit s'arrête sur son état final.
+
+   Importé par `globals.css`, juste après Tailwind : les jetons de couleur y sont lus par
+   `var()`, donc le clair, la nuit et le crépuscule suivent sans une ligne de plus.
+   ========================================================================== */
+
+:root {
+  --ease-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Les sections de la vitrine montent sur la courbe douce, un peu plus loin et plus lentement
+   que les écrans du produit. Le `Reveal` reste le même composant. */
+.lp .reveal {
+  translate: 0 18px;
+  transition-duration: 680ms;
+  transition-timing-function: var(--ease-soft);
+}
+
+.lp .reveal[data-shown="true"] {
+  translate: 0 0;
+}
+
+/* ---- L'entrée du héros ---- */
+@keyframes lp-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes lp-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.lp-enter {
+  animation: lp-enter 720ms var(--ease-soft) both;
+  animation-delay: calc(var(--i, 0) * 70ms + 60ms);
+}
+
+/* Les trois points de « Mika écrit ta leçon » : ils respirent l'un après l'autre. */
+@keyframes lp-dot {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+.lp-dot {
+  animation: lp-dot 900ms var(--ease-in-out-strong) infinite;
+}
+
+/* ---- L'ambiance ----
+   Trois taches de couleur en dégradé radial (aucun flou, donc aucun coût de rendu), qui
+   dérivent sur une trentaine de secondes, et un grain fixe par-dessus. Le bas se fond dans
+   le papier par un masque : pas de bord visible entre le héros et la suite. */
+.lp-atmos {
+  pointer-events: none;
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1180px;
+  overflow: hidden;
+  z-index: -1;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklch, var(--color-accent-soft) 70%, var(--color-canvas)) 0%,
+    var(--color-canvas) 82%
+  );
+  -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 60%, transparent 100%);
+}
+
+/* La même ambiance, tenue dans une boîte (l'appel final, la connexion). */
+.lp-atmos-box {
+  height: auto;
+  inset: 0;
+  -webkit-mask-image: none;
+  mask-image: none;
+  background: color-mix(in oklch, var(--color-accent-soft) 55%, var(--color-canvas));
+}
+
+.lp-blob {
+  position: absolute;
+  border-radius: 999px;
+  will-change: transform;
+  animation: lp-drift-a 26s var(--ease-in-out-strong) infinite alternate;
+}
+
+.lp-blob-a {
+  width: 860px;
+  height: 860px;
+  left: -280px;
+  top: -340px;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklch, var(--color-accent-vivid) 30%, transparent),
+    transparent
+  );
+}
+
+.lp-blob-b {
+  width: 780px;
+  height: 780px;
+  right: -260px;
+  top: -160px;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklch, var(--color-tone-lilac-vivid) 22%, transparent),
+    transparent
+  );
+  animation-name: lp-drift-b;
+  animation-duration: 30s;
+}
+
+.lp-blob-c {
+  width: 700px;
+  height: 700px;
+  left: 28%;
+  top: 360px;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklch, var(--color-tone-mint-vivid) 14%, transparent),
+    transparent
+  );
+  animation-name: lp-drift-c;
+  animation-duration: 34s;
+}
+
+@keyframes lp-drift-a {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(140px, 70px, 0) scale(1.08);
+  }
+}
+
+@keyframes lp-drift-b {
+  from {
+    transform: translate3d(0, 0, 0) scale(1.05);
+  }
+  to {
+    transform: translate3d(-120px, 90px, 0) scale(0.94);
+  }
+}
+
+@keyframes lp-drift-c {
+  from {
+    transform: translate3d(0, 0, 0) scale(0.95);
+  }
+  to {
+    transform: translate3d(-100px, -70px, 0) scale(1.06);
+  }
+}
+
+/* Le grain : un bruit SVG posé une fois, immobile. Il casse le dégradé, qui sans lui se
+   lit comme une capture d'écran. */
+.lp-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.dark .lp-grain {
+  opacity: 0.08;
+  mix-blend-mode: soft-light;
+}
+
+/* ---- Le bouton principal ----
+   Il monte d'un point au survol, son ombre s'approfondit (en fondu d'un calque, pas en
+   animant l'ombre), et la flèche avance. */
+.lp-cta {
+  position: relative;
+  isolation: isolate;
+  transition: transform 220ms var(--ease-soft);
+}
+
+.lp-cta::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  box-shadow: 0 16px 32px -12px color-mix(in oklch, var(--color-accent) 75%, transparent);
+  opacity: 0.5;
+  transition: opacity 220ms var(--ease-soft);
+}
+
+.lp-cta .lp-arrow {
+  transition: transform 220ms var(--ease-soft);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .lp-cta:hover {
+    transform: translateY(-1px);
+  }
+
+  .lp-cta:hover::after {
+    opacity: 1;
+  }
+
+  .lp-cta:hover .lp-arrow {
+    transform: translateX(3px);
+  }
+}
+
+.lp-cta:active {
+  transform: scale(0.97);
+}
+
+/* Une carte de la vitrine : elle monte de trois points au survol, son ombre s'approfondit. */
+.lp-card {
+  position: relative;
+  isolation: isolate;
+  transition: transform 280ms var(--ease-soft);
+}
+
+.lp-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  box-shadow: 0 24px 48px -24px oklch(0 0 0 / 0.22);
+  opacity: 0;
+  transition: opacity 280ms var(--ease-soft);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .lp-card:hover {
+    transform: translateY(-3px);
+  }
+
+  .lp-card:hover::after {
+    opacity: 1;
+  }
+}
+
+/* Le bord en dégradé de l'app (bleu vers violet), pour ce qui est recommandé. */
+.lp-gradient-ring {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--color-surface), var(--color-surface)) padding-box,
+    linear-gradient(135deg, var(--color-accent), var(--color-keyword)) border-box;
+}
+
+.lp-gradient-fill {
+  background: linear-gradient(135deg, var(--color-accent), var(--color-keyword));
+}
+
+.lp-surface-shadow {
+  box-shadow:
+    0 0 0 1px oklch(0 0 0 / 0.04),
+    0 18px 40px -26px oklch(0 0 0 / 0.25);
+}
+
+.dark .lp-surface-shadow {
+  box-shadow:
+    0 0 0 1px oklch(1 0 0 / 0.07),
+    0 18px 40px -26px oklch(0 0 0 / 0.7);
+}
+
+/* ---- La carte produit du héros ---- */
+.lp-demo-card {
+  box-shadow:
+    0 0 0 1px oklch(0 0 0 / 0.04),
+    0 34px 70px -28px color-mix(in oklch, var(--color-accent) 34%, oklch(0 0 0 / 0.4)),
+    0 12px 24px -14px oklch(0 0 0 / 0.12);
+}
+
+.dark .lp-demo-card {
+  box-shadow:
+    0 0 0 1px oklch(1 0 0 / 0.07),
+    0 34px 70px -28px oklch(0 0 0 / 0.75);
+}
+
+@keyframes lp-hover-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -7px, 0);
+  }
+}
+
+.lp-float {
+  animation: lp-hover-float 7s var(--ease-in-out-strong) infinite;
+}
+
+/* Deux vues dans le même rectangle : les supports, puis la leçon. Elles se fondent l'une
+   dans l'autre ; la hauteur ne bouge jamais. */
+.lp-view {
+  position: absolute;
+  inset: 0;
+  transition:
+    opacity 520ms var(--ease-soft),
+    transform 640ms var(--ease-soft);
+}
+
+.lp-demo[data-view="inputs"] .lp-view-path,
+.lp-demo[data-view="path"] .lp-view-inputs {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.lp-demo[data-view="path"] .lp-view-inputs {
+  transform: translate3d(0, -14px, 0) scale(0.98);
+}
+
+.lp-demo[data-view="inputs"] .lp-view-path {
+  transform: translate3d(0, 14px, 0) scale(0.98);
+}
+
+/* Une ligne de support entre, puis sa coche se pose. */
+.lp-row {
+  opacity: 0;
+  transform: translate3d(0, 10px, 0) scale(0.98);
+  transition:
+    opacity 520ms var(--ease-soft),
+    transform 640ms var(--ease-soft);
+}
+
+.lp-row[data-on="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+.lp-row-check {
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity 260ms var(--ease-soft) 340ms,
+    transform 460ms cubic-bezier(0.34, 1.4, 0.64, 1) 340ms;
+}
+
+.lp-row[data-on="true"] .lp-row-check {
+  opacity: 1;
+  transform: none;
+}
+
+/* Au retour au début, tout se remet en place d'un coup, sous une vue déjà effacée. */
+.lp-demo[data-phase="0"] .lp-row,
+.lp-demo[data-phase="0"] .lp-row-check {
+  transition-duration: 0s;
+  transition-delay: 0s;
+}
+
+/* Le bouton « Générer » : terne tant que tout n'est pas là, puis il appelle (une onde qui
+   s'élargit), puis il travaille (le libellé change, une barre se remplit). */
+.lp-generate {
+  transition: opacity 360ms var(--ease-soft);
+}
+
+.lp-demo[data-ready="false"] .lp-generate {
+  opacity: 0.42;
+}
+
+.lp-generate-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0 5px color-mix(in oklch, var(--color-accent) 34%, transparent);
+  opacity: 0;
+}
+
+@keyframes lp-ring {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.97);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.06, 1.4);
+  }
+}
+
+.lp-demo[data-phase="5"] .lp-generate-ring {
+  animation: lp-ring 1100ms var(--ease-soft) 120ms 2 both;
+}
+
+@keyframes lp-press {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(0.965);
+  }
+}
+
+.lp-demo[data-phase="6"] .lp-generate-press {
+  animation: lp-press 380ms var(--ease-soft);
+}
+
+.lp-label {
+  transition:
+    opacity 300ms var(--ease-soft),
+    transform 400ms var(--ease-soft);
+}
+
+.lp-label-busy {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: translate3d(0, 8px, 0);
+}
+
+.lp-demo[data-busy="true"] .lp-label-idle {
+  opacity: 0;
+  transform: translate3d(0, -8px, 0);
+}
+
+.lp-demo[data-busy="true"] .lp-label-busy {
+  opacity: 1;
+  transform: none;
+}
+
+.lp-progress {
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.lp-demo[data-phase="6"] .lp-progress {
+  transform: scaleX(1);
+  transition: transform 1350ms cubic-bezier(0.4, 0, 0.2, 1) 140ms;
+}
+
+/* Les étapes du chemin, l'une après l'autre. En quittant la vue, elles attendent que la
+   vue soit effacée pour se remettre en place. */
+.lp-step {
+  opacity: 0;
+  transform: translate3d(0, 12px, 0);
+  transition:
+    opacity 0s linear 640ms,
+    transform 0s linear 640ms;
+}
+
+.lp-demo[data-view="path"] .lp-step {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 520ms var(--ease-soft),
+    transform 640ms var(--ease-soft);
+  transition-delay: calc(var(--i, 0) * 110ms + 220ms);
+}
+
+.lp-path-head {
+  opacity: 0;
+  transform: translate3d(0, 8px, 0);
+  transition:
+    opacity 0s linear 640ms,
+    transform 0s linear 640ms;
+}
+
+.lp-demo[data-view="path"] .lp-path-head {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 520ms var(--ease-soft) 80ms,
+    transform 640ms var(--ease-soft) 80ms;
+}
+
+/* Le rail se déroule avec les étapes, au lieu d'attendre, nu, qu'elles arrivent. */
+.lp-rail {
+  transform: scaleY(0);
+  transform-origin: top center;
+  transition: transform 0s linear 640ms;
+}
+
+.lp-demo[data-view="path"] .lp-rail {
+  transform: none;
+  transition: transform 760ms var(--ease-soft) 260ms;
+}
+
+.lp-rail-fill {
+  transform: scaleY(0);
+  transform-origin: top center;
+  transition: transform 0s linear 640ms;
+}
+
+.lp-demo[data-done="1"] .lp-rail-fill {
+  transform: scaleY(0.333);
+  transition: transform 700ms var(--ease-soft);
+}
+
+.lp-demo[data-done="2"] .lp-rail-fill {
+  transform: scaleY(0.666);
+  transition: transform 700ms var(--ease-soft);
+}
+
+.lp-step-done {
+  opacity: 0;
+  transform: scale(0.5);
+  transition:
+    opacity 0s linear 640ms,
+    transform 0s linear 640ms;
+}
+
+.lp-step[data-done="true"] .lp-step-done {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 240ms var(--ease-soft),
+    transform 460ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.lp-step-current {
+  opacity: 0;
+  transition: opacity 360ms var(--ease-soft);
+}
+
+.lp-step[data-current="true"] .lp-step-current {
+  opacity: 1;
+}
+
+@keyframes lp-halo {
+  0% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.45);
+  }
+}
+
+.lp-step-halo {
+  opacity: 0;
+}
+
+.lp-step[data-current="true"] .lp-step-halo {
+  animation: lp-halo 1700ms var(--ease-soft) infinite;
+}
+
+.lp-path-bar {
+  transform: scaleX(0.04);
+  transform-origin: left center;
+  transition: transform 700ms var(--ease-soft);
+}
+
+.lp-demo[data-done="1"] .lp-path-bar {
+  transform: scaleX(0.25);
+}
+
+.lp-demo[data-done="2"] .lp-path-bar {
+  transform: scaleX(0.5);
+}
+
+/* ---- Les vignettes de la leçon ----
+   Chacune joue sa petite boucle, et seulement une fois à l'écran : en dehors, l'animation
+   est suspendue (`Reveal` pose `data-shown`). */
+.lp-mock * {
+  animation-play-state: paused;
+}
+
+[data-shown="true"] .lp-mock *,
+.lp-mock[data-shown="true"] * {
+  animation-play-state: running;
+}
+
+/* Notes : les lignes s'écrivent, puis le mot-clé s'allume. */
+@keyframes lp-line {
+  0%,
+  6% {
+    transform: scaleX(0);
+    opacity: 1;
+  }
+  22%,
+  86% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  96%,
+  100% {
+    transform: scaleX(1);
+    opacity: 0;
+  }
+}
+
+.lp-note-line {
+  transform-origin: left center;
+  animation: lp-line 7s var(--ease-soft) infinite both;
+  animation-delay: calc(var(--i, 0) * 160ms);
+}
+
+@keyframes lp-keyword {
+  0%,
+  32% {
+    transform: scaleX(0);
+    opacity: 1;
+  }
+  42%,
+  86% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  96%,
+  100% {
+    transform: scaleX(1);
+    opacity: 0;
+  }
+}
+
+.lp-keyword-mark {
+  transform-origin: left center;
+  animation: lp-keyword 7s var(--ease-soft) infinite both;
+}
+
+/* Quiz : une réponse se choisit, devient juste, puis la question se repose. */
+@keyframes lp-choice-press {
+  0%,
+  22% {
+    transform: scale(1);
+  }
+  26% {
+    transform: scale(0.97);
+  }
+  31%,
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes lp-choice-right {
+  0%,
+  27% {
+    opacity: 0;
+  }
+  33%,
+  84% {
+    opacity: 1;
+  }
+  92%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes lp-choice-dim {
+  0%,
+  27% {
+    opacity: 1;
+  }
+  33%,
+  84% {
+    opacity: 0.45;
+  }
+  92%,
+  100% {
+    opacity: 1;
+  }
+}
+
+.lp-choice-pick {
+  animation: lp-choice-press 6s var(--ease-soft) infinite both;
+}
+
+.lp-choice-right {
+  animation: lp-choice-right 6s var(--ease-soft) infinite both;
+}
+
+.lp-choice-dim {
+  animation: lp-choice-dim 6s var(--ease-soft) infinite both;
+}
+
+/* Flashcards : la carte se retourne, « Bien » s'allume, elle revient. */
+.lp-flip-scene {
+  perspective: 900px;
+}
+
+.lp-flip {
+  position: relative;
+  transform-style: preserve-3d;
+  animation: lp-flip 6s var(--ease-in-out-strong) infinite both;
+}
+
+.lp-flip-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.lp-flip-back {
+  transform: rotateY(180deg);
+}
+
+@keyframes lp-flip {
+  0%,
+  28% {
+    transform: rotateY(0deg);
+  }
+  38%,
+  84% {
+    transform: rotateY(180deg);
+  }
+  94%,
+  100% {
+    transform: rotateY(360deg);
+  }
+}
+
+@keyframes lp-grade {
+  0%,
+  50% {
+    opacity: 0;
+  }
+  56%,
+  82% {
+    opacity: 1;
+  }
+  90%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.lp-grade-on {
+  animation: lp-grade 6s var(--ease-soft) infinite both;
+}
+
+/* Examen blanc : l'aiguille tourne, les barres se remplissent, la note se pose. */
+@keyframes lp-hand {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.lp-clock-hand {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: lp-hand 4s linear infinite;
+}
+
+@keyframes lp-bar {
+  0%,
+  8% {
+    transform: scaleX(0);
+    opacity: 1;
+  }
+  34%,
+  86% {
+    transform: scaleX(var(--w, 1));
+    opacity: 1;
+  }
+  96%,
+  100% {
+    transform: scaleX(var(--w, 1));
+    opacity: 0;
+  }
+}
+
+.lp-exam-bar {
+  transform-origin: left center;
+  animation: lp-bar 7s var(--ease-soft) infinite both;
+  animation-delay: calc(var(--i, 0) * 160ms);
+}
+
+@keyframes lp-score {
+  0%,
+  40% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  48%,
+  86% {
+    opacity: 1;
+    transform: none;
+  }
+  96%,
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}
+
+.lp-exam-score {
+  animation: lp-score 7s var(--ease-soft) infinite both;
+}
+
+/* Les applis : la coche se pose sur le téléphone, puis sur le web. */
+@keyframes lp-sync {
+  0%,
+  20% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  28%,
+  86% {
+    opacity: 1;
+    transform: none;
+  }
+  94%,
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}
+
+.lp-sync-check {
+  animation: lp-sync 5s var(--ease-soft) infinite both;
+  animation-delay: var(--d, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp .reveal {
+    translate: none;
+  }
+
+  .lp .reveal[data-shown="true"] {
+    translate: none;
+  }
+
+  .lp-enter {
+    animation-name: lp-fade;
+    animation-duration: 400ms;
+  }
+
+  .lp-dot,
+  .lp-blob,
+  .lp-float,
+  .lp-mock *,
+  .lp-step-halo,
+  .lp-generate-ring {
+    animation: none !important;
+  }
+
+  .lp-cta,
+  .lp-card,
+  .lp-view,
+  .lp-row,
+  .lp-step,
+  .lp-rail,
+  .lp-path-head {
+    transform: none !important;
+  }
+
+  .lp-exam-bar {
+    transform: scaleX(var(--w, 1));
+  }
+
+  .lp-exam-score,
+  .lp-sync-check,
+  .lp-choice-right,
+  .lp-grade-on {
+    opacity: 1;
+  }
+
+  .lp-choice-dim {
+    opacity: 0.45;
+  }
+}
+
+/* En arabe, « suivant » pointe vers la gauche, et le survol le pousse vers la gauche. */
+[dir="rtl"] .lp-arrow {
+  transform: scaleX(-1);
+}
+@media (hover: hover) and (pointer: fine) {
+  [dir="rtl"] .lp-cta:hover .lp-arrow {
+    transform: scaleX(-1) translateX(3px);
+  }
+}

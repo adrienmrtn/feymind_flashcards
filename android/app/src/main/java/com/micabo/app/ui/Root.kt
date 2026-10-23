@@ -43,6 +43,7 @@ import com.micabo.app.ui.lesson.LessonScreen
 import com.micabo.app.ui.lesson.NotesScreen
 import com.micabo.app.ui.lesson.QuizScreen
 import com.micabo.app.ui.onboarding.OnboardingScreen
+import com.micabo.app.ui.paywall.GiftHost
 import com.micabo.app.ui.paywall.PaywallScreen
 import com.micabo.app.ui.streak.StreakCelebration
 import com.micabo.app.ui.theme.Micabo
@@ -142,6 +143,8 @@ fun MicaboRoot(app: MicaboApplication) {
             } else {
                 MainScreens(navigator)
                 StreakCelebrationHost(navigator)
+                // Le cadeau d'un paywall refermé, et le tarif réduit : par-dessus tout.
+                GiftHost(navigator)
             }
         }
     }

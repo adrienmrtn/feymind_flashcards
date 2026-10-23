@@ -52,7 +52,7 @@ export function LessonHeader({
         </div>
         <div className="relative h-3.5 w-full overflow-hidden rounded-pill" style={{ background: "var(--color-track)" }}>
           <div
-            className="absolute inset-y-0 left-0 rounded-pill transition-[width] duration-700 ease-out-strong"
+            className="absolute inset-y-0 start-0 rounded-pill transition-[width] duration-700 ease-out-strong"
             style={{
               width: `max(14px, ${percent}%)`,
               background: `linear-gradient(to right, ${vivid}, color-mix(in srgb, ${vivid} 85%, transparent))`,

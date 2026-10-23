@@ -18,6 +18,8 @@ import {
 
 import { revalidateUserData } from "@/lib/data/cache";
 import { actionT } from "@/lib/i18n/action";
+import { readStudyLevel, stageById } from "@/lib/lesson/learner";
+import { forgetLocalLearner, updateLocalLearner } from "@/lib/lesson/learner-cookie";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -41,14 +43,18 @@ export async function updateSettings(input: {
   displayName?: string;
   /** Le pays (`CountryCode`) : il décide du barème des notes et des paliers proposés. */
   countryCode?: string;
-  /** Le palier d'études (`EducationStage.id`), ou `null` pour « non précisé ». */
+  /**
+   * Le palier d'études (`EducationStage.id`) ou un registre (`StudyLevel`), ou `null` pour
+   * « non précisé ». La colonne n'en garde que le registre.
+   */
   studyLevel?: string | null;
   sheetLength?: SheetLength;
   sheetBlocks?: number;
   subjects?: string[];
   institutionName?: string | null;
   institutionId?: string | null;
-  sheetLanguage?: ContentLanguage;
+  /** La langue des prochaines fiches ; `null` la rend au pays. */
+  sheetLanguage?: ContentLanguage | null;
 }): Promise<SavedSettings> {
   const supabase = await createClient();
   const {
@@ -70,9 +76,29 @@ export async function updateSettings(input: {
     patch.country_code = input.countryCode;
   }
 
+  /**
+   * **Le palier se choisit, le registre s'écrit.** `study_level` porte le registre
+   * (`StudyLevel` : `lycee`, `master`…), seul mot que l'iPhone relit : le réglage du site y
+   * écrivait l'identifiant du palier (`fr.lycee`), que l'app ne reconnaissait pas, et que le
+   * serveur lisait comme « niveau inconnu ». Le palier exact reste sur cet appareil (cookie
+   * `micabo.learner`), comme `micabo.onboarding.stage` sur l'iPhone.
+   */
+  let learnerPatch: Parameters<typeof updateLocalLearner>[1] | null = null;
   if (input.studyLevel !== undefined) {
-    const level = input.studyLevel?.trim().slice(0, 40) ?? "";
-    patch.study_level = level.length > 0 ? level : null;
+    const raw = input.studyLevel?.trim().slice(0, 40) ?? "";
+    if (!raw) {
+      patch.study_level = null;
+      learnerPatch = { stageId: null, tier: null };
+    } else {
+      const stage = stageById(raw);
+      const level = stage?.level ?? readStudyLevel(raw).level;
+      if (!level) return { status: "error", message: await actionT("app.common.errorGeneric") };
+      patch.study_level = level;
+      learnerPatch = stage ? { stageId: stage.id, tier: stage.tier } : { stageId: null, tier: null };
+    }
+  } else if (input.countryCode !== undefined) {
+    // Un autre pays, d'autres paliers : celui d'avant ne veut plus rien dire ici.
+    learnerPatch = { stageId: null, tier: null };
   }
 
   // Le nombre de blocs commande, et le format n'en est que le nom : c'est ce que l'app a tranché en
@@ -99,8 +125,10 @@ export async function updateSettings(input: {
     patch.institution_id = id.length > 0 ? id : null;
   }
 
+  // `null` rend la langue des fiches au pays, comme « Celle du pays » sur l'iPhone : la colonne
+  // vide, c'est ce que `ProfileRecord` lit comme « personne ne l'a choisie ».
   if (input.sheetLanguage !== undefined) {
-    if (!isContentLanguage(input.sheetLanguage)) {
+    if (input.sheetLanguage !== null && !isContentLanguage(input.sheetLanguage)) {
       return { status: "error", message: await actionT("app.errors.unknownLanguage") };
     }
     patch.sheet_language = input.sheetLanguage;
@@ -113,6 +141,8 @@ export async function updateSettings(input: {
     .upsert({ id: user.id, ...patch }, { onConflict: "id" });
 
   if (error) return { status: "error", message: error.message };
+
+  if (learnerPatch) await updateLocalLearner(user.id, learnerPatch).catch(() => undefined);
 
   revalidateUserData(user.id, "profile");
   revalidatePath("/app");
@@ -178,6 +208,8 @@ export async function deleteAccount(): Promise<SavedSettings> {
   // les journaux comme un incident d'authentification alors que c'était la suppression qui
   // avait réussi. Effacer les cookies suffit, et c'est tout ce qui reste à faire.
   await supabase.auth.signOut({ scope: "local" });
+  // Le palier et les moyennes gardés sur ce navigateur partent avec le compte.
+  await forgetLocalLearner();
   return { status: "ok" };
 }
 

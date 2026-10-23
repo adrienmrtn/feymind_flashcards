@@ -61,7 +61,9 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
-        (application as MicaboApplication).analytics.backgrounded()
+        val app = application as MicaboApplication
+        app.analytics.backgrounded()
+        app.rescheduleReminders()
         super.onStop()
     }
 

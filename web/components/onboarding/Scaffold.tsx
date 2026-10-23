@@ -281,7 +281,7 @@ export function ChoiceRow({
       aria-pressed={selected}
       /* Le fond de la carte est blanc : une réponse blanche dessus ne se voyait
          qu'à son ombre. Le gris la détache, et le filet tient sa forme. */
-      className={`pressable flex w-full items-center gap-4 rounded-button px-4 py-3 text-left transition-colors duration-hover ${
+      className={`pressable flex w-full items-center gap-4 rounded-button px-4 py-3 text-start transition-colors duration-hover ${
         selected
           ? "bg-accent-soft"
           : "bg-surface-muted shadow-[inset_0_0_0_1px_var(--color-stroke-strong)]"

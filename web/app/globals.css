@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* La vitrine et sa carte de connexion : leurs effets, préfixés `lp-`. */
+@import "./landing.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -1439,7 +1441,7 @@ img[data-icon] {
 
 .sheet-doc ul,
 .sheet-doc ol {
-  padding-left: 1.35em;
+  padding-inline-start: 1.35em;
 }
 
 .sheet-doc ul {
@@ -2496,4 +2498,27 @@ html:not([data-appearance]) .app-shell {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+/*
+ * **L'arabe se lit de droite à gauche** (`<html dir="rtl">`, voir `UI_LOCALE_META.dir`).
+ * Marges et alignements sont écrits en propriétés logiques (`ps-`, `pe-`, `text-start`…) et
+ * se retournent seuls. Les flèches, elles, sont des dessins : « suivant » pointe vers la
+ * gauche quand on lit vers la gauche.
+ */
+[dir="rtl"] :is(.lucide-chevron-left, .lucide-chevron-right, .lucide-arrow-left, .lucide-arrow-right) {
+  transform: scaleX(-1);
+}
+
+/* La flèche des boutons, retournée en arabe, avance vers la gauche. */
+[dir="rtl"] .btn-arrow {
+  scale: -1 1;
+}
+[dir="rtl"] :is(.btn-rise, .btn-fill):active:not(:disabled) .btn-arrow {
+  translate: -5px 0;
+}
+@media (any-hover: hover) {
+  [dir="rtl"] :is(.btn-rise, .btn-fill):hover:not(:disabled) .btn-arrow {
+    translate: -5px 0;
+  }
 }

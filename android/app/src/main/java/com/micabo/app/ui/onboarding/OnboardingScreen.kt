@@ -35,6 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -51,6 +52,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.micabo.app.R
+import com.micabo.app.SignInEvent
 import com.micabo.app.data.Tiers
 import com.micabo.app.i18n.AppLocale
 import com.micabo.app.ui.LocalApp
@@ -62,6 +64,7 @@ import com.micabo.app.ui.components.MikaMood
 import com.micabo.app.ui.components.MicaboButton
 import com.micabo.app.ui.components.Pressable
 import com.micabo.app.ui.components.ProgressBar
+import com.micabo.app.ui.settings.SignInSheet
 import com.micabo.app.ui.text.RichText
 import com.micabo.app.ui.theme.Micabo
 import com.micabo.app.ui.theme.nunito
@@ -219,13 +222,27 @@ fun OnboardingScreen() {
     var forward by remember { mutableStateOf(true) }
     var name by rememberSaveable { mutableStateOf(app.prefs.profile.value.name) }
     var language by rememberSaveable { mutableStateOf(AppLocale.resolved(app.prefs.profile.value.language).code) }
-    var country by rememberSaveable { mutableStateOf(AppLocale.deviceCountry().takeIf { it in COUNTRIES } ?: "") }
+    var country by rememberSaveable { mutableStateOf(AppLocale.deviceCountry(app.prefs.profile.value.language).takeIf { it in COUNTRIES && it != "other" } ?: "") }
     var tier by rememberSaveable { mutableStateOf("") }
     var worries by rememberSaveable { mutableStateOf(listOf<String>()) }
     var goals by rememberSaveable { mutableStateOf(listOf<String>()) }
     var current by rememberSaveable { mutableIntStateOf(-1) }
     var target by rememberSaveable { mutableIntStateOf(-1) }
     var daily by rememberSaveable { mutableIntStateOf(-1) }
+    // « J'ai déjà un compte » : la feuille de connexion du profil. Réussie, la synchronisation
+    // descend le profil, et un accueil fini ailleurs (`onboarding_completed_at`) ouvre l'app.
+    var signIn by rememberSaveable { mutableStateOf(false) }
+    val signInEvent by app.signIn.collectAsState()
+    LaunchedEffect(signInEvent) {
+        when (signInEvent) {
+            SignInEvent.Success -> {
+                signIn = false
+                app.signInSeen()
+            }
+            is SignInEvent.Failure -> signIn = true
+            null -> Unit
+        }
+    }
     // Les jours d'essai que Google Play accordera à ce compte : null tant qu'il n'a pas répondu.
     var trialDays by rememberSaveable { mutableStateOf<Int?>(null) }
     LaunchedEffect(Unit) {
@@ -284,6 +301,9 @@ fun OnboardingScreen() {
                 dailyMinutes = daily.coerceAtLeast(0),
             )
         }
+        // La première leçon sera celle du parcours, l'offerte : elle pourra partir d'un PDF ou de
+        // photos, comme sur l'iPhone (`LessonCreation.onboarding`). Qui en a déjà une n'en a pas.
+        app.prefs.onboardingLessonPending = app.lessons.lessons.value.values.none { it.usesFreeLesson }
         app.analytics.track("onboarding_finished", mapOf("tier" to tier, "worries" to worries.size, "daily" to daily))
         // Le parcours se termine sur le paywall de l'essai ; le refermer ouvre l'accueil. Sans
         // abonnements à vendre (ou déjà Pro), on va droit à l'accueil.
@@ -329,7 +349,7 @@ fun OnboardingScreen() {
             label = "onboarding",
         ) { shown ->
             when (shown) {
-                Step.HOOK -> Hook(onNext = ::next)
+                Step.HOOK -> Hook(onNext = ::next, onSignIn = { signIn = true })
                 Step.NAME -> NameStep(name, onName = { name = it.take(40) }, onNext = ::next)
                 Step.WELCOME -> Welcome(name.trim(), onNext = ::next)
                 Step.LANGUAGE -> Choices(
@@ -417,6 +437,16 @@ fun OnboardingScreen() {
                 Step.REMINDER -> TrialReminderStep(days = trialDays ?: 3, onNext = ::next)
             }
         }
+    }
+
+    if (signIn) {
+        SignInSheet(
+            failure = (signInEvent as? SignInEvent.Failure)?.error,
+            onDismiss = {
+                signIn = false
+                app.signInSeen()
+            },
+        )
     }
 }
 

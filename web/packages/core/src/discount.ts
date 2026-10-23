@@ -1,8 +1,10 @@
 /**
  * L'offre cadeau, et **les mêmes nombres des deux côtés.**
  *
- * Après le premier cours importé, Micabo offre l'annuel à tarif réduit. L'offre
- * se présente une fois, puis se replie sur une pastille qui garde le décompte.
+ * **Un paywall refermé sans achat fait tomber le cadeau** (`DiscountOffer.paywallClosed`
+ * côté Swift, `GiftOffer` côté Android) : l'annuel à tarif réduit, derrière trois appuis.
+ * L'offre se présente une fois, puis se replie sur une pastille qui garde le décompte, et une
+ * rangée du profil la garde atteignable. Le premier cours importé ne la déclenche plus.
  *
  * Une seule durée, une seule origine. Le pop-up et la pastille montrent le même
  * temps restant : vingt-quatre heures depuis l'instant où le cadeau a été
@@ -49,6 +51,58 @@ export function remaining(startedAt: number, now: number, span: number): number 
 
 
 
+
+/**
+ * **Aucun cours n'est demandé** : c'est le paywall refermé qui fait tomber le cadeau. Le
+ * nombre reste écrit, comme `DiscountOffer.giftAfterCourses`, pour que le test de parité le
+ * compare au Swift.
+ */
+export const giftAfterCourses = 0;
+
+/**
+ * Faut-il poser le cadeau ? `DiscountOffer.shouldPresentGift`, ligne pour ligne. `startedAt`
+ * à `null` veut dire « le cadeau n'a pas encore été ouvert ici » : il se présente, et c'est
+ * son ouverture qui pose l'instant.
+ */
+export function shouldPresentGift(input: {
+  isPaid: boolean;
+  courseCount: number;
+  seen: boolean;
+  startedAt: number | null;
+  now: number;
+}): boolean {
+  if (input.isPaid) return false;
+  if (input.courseCount < giftAfterCourses) return false;
+  // Un « déjà vu » sans instant d'ouverture est un état bâtard, laissé par une version qui
+  // marquait le cadeau vu sans démarrer son décompte. On le représente.
+  if (input.startedAt === null) return true;
+  // Fenêtre en cours : une seule fois, la pastille prend ensuite le relais.
+  if (isLive(input.startedAt, input.now)) return !input.seen;
+  // Fenêtre finie : l'offre revient, après son repos.
+  return hasRested(input.startedAt, input.now);
+}
+
+/**
+ * **Le tarif réduit est-il atteignable ?** La question de la rangée du profil, pas celle du
+ * cadeau : elle ne demande ni que la fenêtre coure ni que le cadeau n'ait pas été vu — l'ouvrir
+ * depuis là relance une fenêtre. Sans ce chemin, une offre en repos n'était atteignable nulle part.
+ */
+export function isReachable(input: { isPaid: boolean; courseCount: number }): boolean {
+  return !input.isPaid && input.courseCount >= giftAfterCourses;
+}
+
+/** Faut-il garder la pastille et son décompte ? `DiscountOffer.shouldShowBadge`. */
+export function shouldShowBadge(input: {
+  isPaid: boolean;
+  courseCount: number;
+  seen: boolean;
+  startedAt: number | null;
+  now: number;
+}): boolean {
+  if (input.isPaid || !input.seen || input.courseCount < giftAfterCourses) return false;
+  if (input.startedAt === null) return false;
+  return isLive(input.startedAt, input.now);
+}
 
 /** Ce que la pastille affiche. */
 export function windowRemaining(startedAt: number, now: number): number {

@@ -42,11 +42,11 @@
             </intent-filter>
         </activity>
         <receiver
-            android:name=".data.TrialReminderReceiver"
+            android:name=".data.DailyReminderReceiver"
             android:exported="false" />
-        <!-- Un redémarrage efface les alarmes : le rappel de fin d'essai se reprogramme. -->
+        <!-- Un redémarrage efface les alarmes : les rappels du jour se reprogramment. -->
         <receiver
-            android:name=".data.TrialReminderBootReceiver"
+            android:name=".data.ReminderBootReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

@@ -12,10 +12,13 @@ import { LANDING_SECTIONS } from "@/lib/landing-sections";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 import { SITE_PAGES, siteNavKey } from "@/lib/site-pages";
 
+import { StoreBadges } from "./StoreBadges";
+
 /**
  * Le pied de page de toutes les pages publiques.
  *
- * Pas de badge App Store tant que le lien n'est pas public : un badge mort se voit.
+ * Les deux boutiques sous la marque : les apps iPhone et Android sont publiques, et c'est
+ * le pied de page qui les porte sur toutes les pages publiques, pas seulement sur l'accueil.
  * Confidentialité et conditions sont les adresses que l'iPhone ouvre déjà. Le parcours
  * s'ouvre par **Commencer**. Une session déjà ouverte remplace ça par Ouvrir l'app.
  *
@@ -32,8 +35,9 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
   const home = localizedHref(locale, "/");
   const product = [
     { href: `${home}#${LANDING_SECTIONS.how}`, label: t("site.how") },
-    { href: `${home}#${LANDING_SECTIONS.app}`, label: t("landing.footerApp") },
-    { href: `${home}#${LANDING_SECTIONS.exam}`, label: t("site.exam") },
+    { href: `${home}#${LANDING_SECTIONS.lesson}`, label: t("landing.navLesson") },
+    { href: `${home}#${LANDING_SECTIONS.apps}`, label: t("landing.footerApp") },
+    { href: `${home}#${LANDING_SECTIONS.pricing}`, label: t("landing.navPricing") },
     { href: `${home}#${LANDING_SECTIONS.questions}`, label: t("site.questions") },
   ];
   const pages = SITE_PAGES.map((page) => ({
@@ -54,6 +58,7 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
             <p className="mt-2.5 text-[13.5px] leading-relaxed text-ink-secondary">
               {t("landing.footerTagline")}
             </p>
+            <StoreBadges size="small" className="mt-5" />
             <div className="mt-4">
               <AppearanceSwitcher variant="compact" />
             </div>
@@ -133,8 +138,8 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
               </ul>
             </div>
 
-            {/* Les quatre autres langues de cette page. Sans elles, `/fr/methode` et ses
-                vingt-trois sœurs ne sont liées depuis aucune page du site. */}
+            {/* Les autres langues de cette page. Sans elles, `/fr/methode` et ses sœurs ne
+                sont liées depuis aucune page du site. */}
             <LanguageLinks />
           </div>
         </div>

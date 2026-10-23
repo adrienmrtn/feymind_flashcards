@@ -541,6 +541,8 @@ final class AppleSignInFlow: NSObject, ASAuthorizationControllerDelegate, ASAuth
     private let controller: ASAuthorizationController
     private let completion: (Result<ASAuthorization, Error>) -> Void
     private var finished = false
+    /// L'erreur inconnue mise de côté, le temps de voir si un succès la suit.
+    private var pendingFailure: Task<Void, Never>?
 
     init(requests: [ASAuthorizationRequest], completion: @escaping (Result<ASAuthorization, Error>) -> Void) {
         controller = ASAuthorizationController(authorizationRequests: requests)
@@ -577,8 +579,26 @@ final class AppleSignInFlow: NSObject, ASAuthorizationControllerDelegate, ASAuth
 
     /// Une seule réponse par requête : Apple a parfois rendu deux retours pour un appui, et
     /// c'est le second qui comptait.
+    ///
+    /// Le premier retour gagnait pourtant : une erreur inconnue (1000) arrivée juste avant le
+    /// succès faisait perdre le succès, puis s'affichait dix secondes plus tard. Un succès passe
+    /// donc toujours tout de suite ; une erreur inconnue attend une seconde et demie qu'un
+    /// succès la remplace. Les autres erreurs (annulation comprise) passent sans attendre.
     private func finish(_ result: Result<ASAuthorization, Error>) {
         guard !finished else { return }
+        if case .failure(let error) = result,
+           (error as? ASAuthorizationError)?.code == .unknown,
+           pendingFailure == nil {
+            pendingFailure = Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .milliseconds(1500))
+                guard let self, !Task.isCancelled, !self.finished else { return }
+                self.finished = true
+                self.completion(result)
+            }
+            return
+        }
+        pendingFailure?.cancel()
+        pendingFailure = nil
         finished = true
         completion(result)
     }
