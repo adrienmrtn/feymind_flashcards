@@ -45,9 +45,11 @@ final class AuthController {
     /// générer de cours ni parler à Mika. Un compte anonyme porte leur quota, et
     /// l'identifiant RevenueCat de qui s'abonne sans compte.
     ///
-    /// **Ce n'est pas un compte au sens de l'app** : `isSignedIn` reste faux, rien ne se
-    /// synchronise, les réglages proposent toujours de se connecter. Une connexion Apple ou
-    /// Google ouvre le vrai compte à côté ; les cours locaux y montent à la première synchro.
+    /// **Ce n'est pas un compte au sens de l'app** : `isSignedIn` reste faux, les réglages
+    /// proposent toujours de se connecter. Mais ses leçons se synchronisent sous lui depuis le
+    /// 23 octobre 2026 (`CloudSync.syncUserID`) : une réinstallation ne les perd plus. Une
+    /// connexion Apple ou Google ouvre le vrai compte à côté ; tout ce qui est local y monte à
+    /// la première synchro, le repère repartant de zéro pour ce nouveau compte.
     private(set) var guestUserID: UUID?
     @ObservationIgnored private var guestSession: AuthSession?
     @ObservationIgnored private var guestCreation: Task<AuthSession?, Never>?
@@ -55,6 +57,10 @@ final class AuthController {
     /// autant que l'app, et aucun retour d'Apple ne peut plus renouveler celui d'un autre.
     /// Hors observation : émettre un nonce ne change rien à ce que l'écran montre.
     @ObservationIgnored private var appleNonces = AppleNonceLedger()
+    /// **Le contrôleur d'autorisation Apple en vol, tenu ici.** Voir `startAppleSignIn`.
+    @ObservationIgnored private var appleFlow: AppleSignInFlow?
+    /// L'erreur immédiate d'Apple, mise en attente : affichée seulement si rien ne suit.
+    @ObservationIgnored private var deferredAppleError: Task<Void, Never>?
 
     init(client: SupabaseAuthClient = .shared) {
         self.client = client
@@ -206,14 +212,41 @@ final class AuthController {
         request.nonce = appleNonces.issue()
     }
 
-    /// Ouvre la session depuis ce que le bouton d'Apple vient de rendre.
+    /// **Lance la connexion Apple**, et garde son contrôleur jusqu'au retour.
     ///
-    /// Le résultat arrive de la vue parce que `SignInWithAppleButton` construit sa requête
-    /// lui-même : c'est la seule façon de l'utiliser, et ses règles d'interface imposent ce
-    /// bouton-là dès qu'on propose la connexion Apple.
+    /// Jusqu'au 23 octobre 2026, c'était `SignInWithAppleButton` de SwiftUI qui tenait le
+    /// contrôleur d'autorisation. Le bouton était lié à `isWorking` par `.disabled` et
+    /// `.opacity` : quand l'état changeait pendant que la feuille d'Apple se présentait, SwiftUI
+    /// redessinait le bouton et son contrôleur disparaissait sous la feuille. Apple rendait
+    /// alors `AuthorizationError 1000` tout de suite, puis la vraie réponse arrivait sur le
+    /// contrôleur suivant : 135 appareils en quatorze jours, 2,4 retours par appareil, 92 %
+    /// connectés sept secondes plus tard. Le contrôleur vit maintenant ici, aussi longtemps que
+    /// la requête, et rien de ce que l'écran redessine ne peut le lâcher.
     ///
-    /// Le nonce ne vient plus de la vue : il se retrouve par l'empreinte que porte le jeton.
-    /// Un retour d'Apple, erreur comprise, ne peut donc plus fausser celui du suivant.
+    /// Le bouton reste celui d'Apple (`ASAuthorizationAppleIDButton`, dans `AppleSignInButton`),
+    /// comme ses règles l'exigent ; il ne fait plus que nous appeler.
+    func startAppleSignIn() {
+        guard !isWorking, appleFlow == nil else { return }
+        deferredAppleError?.cancel()
+        deferredAppleError = nil
+
+        let request = ASAuthorizationAppleIDProvider().createRequest()
+        prepareAppleRequest(request)
+        let flow = AppleSignInFlow(requests: [request]) { [weak self] result in
+            Task { @MainActor in
+                guard let self else { return }
+                self.appleFlow = nil
+                await self.signInWithApple(result: result)
+            }
+        }
+        appleFlow = flow
+        flow.start()
+    }
+
+    /// Ouvre la session depuis ce qu'Apple vient de rendre.
+    ///
+    /// Le nonce ne vient pas de la vue : il se retrouve par l'empreinte que porte le jeton.
+    /// Un retour d'Apple, erreur comprise, ne peut donc pas fausser celui du suivant.
     func signInWithApple(result: Result<ASAuthorization, Error>) async {
         Analytics.track(.signInStarted, ["provider": "apple"])
         await perform {
@@ -222,14 +255,26 @@ final class AuthController {
                 if (error as? ASAuthorizationError)?.code == .canceled {
                     throw AuthError.cancelled
                 }
-                // Le code, et pas seulement le message traduit : c'est lui qui dira ce qu'est
-                // l'erreur immédiate qui précède parfois la vraie autorisation.
+                // Le code, et celui de l'erreur en dessous (`AKAuthenticationError`) : c'est
+                // lui qui dit si c'est une annulation du système, un compte iCloud absent ou
+                // un contrôleur perdu. Le message traduit ne dit rien de tout ça.
                 let nsError = error as NSError
+                let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? NSError
                 Analytics.track(.appleSignInError, [
                     "stage": "autorisation",
                     "domain": .text(nsError.domain),
                     "code": .number(Double(nsError.code)),
+                    "underlying_domain": .text(underlying?.domain ?? ""),
+                    "underlying_code": .number(Double(underlying?.code ?? 0)),
                 ])
+                // **Le 1000 ne s'affiche pas tout de suite.** Neuf fois sur dix, la connexion
+                // suit dans les secondes ; montrer une erreur à ce moment-là, c'est faire
+                // douter quelqu'un qui est en train de réussir. Si rien ne suit en dix
+                // secondes, le message vient, avec les mêmes mots qu'avant.
+                if nsError.code == ASAuthorizationError.unknown.rawValue {
+                    self.deferAppleError(error.localizedDescription)
+                    throw AuthError.transient
+                }
                 throw AuthError.server(error.localizedDescription)
 
             case .success(let authorization):
@@ -425,10 +470,23 @@ final class AuthController {
     // MARK: - Rouages
 
     private func adopt(_ session: AuthSession) {
+        deferredAppleError?.cancel()
+        deferredAppleError = nil
         self.session = session
         AuthTokenStore.save(session)
         state = .signedIn(session.user)
         message = nil
+    }
+
+    /// Montre l'erreur immédiate d'Apple dans dix secondes, sauf si une connexion l'a rendue
+    /// sans objet entre-temps.
+    private func deferAppleError(_ description: String) {
+        deferredAppleError?.cancel()
+        deferredAppleError = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(10))
+            guard !Task.isCancelled, let self, !self.isSignedIn, !self.isWorking else { return }
+            self.message = .error(description)
+        }
     }
 
     /// Oublie la session, sans rien demander au serveur. C'est le geste commun à la
@@ -452,8 +510,10 @@ final class AuthController {
             try await work()
         } catch let error as AuthError {
             // Annuler n'est pas échouer, ici non plus : le compter ferait passer chaque
-            // retour en arrière pour une panne de connexion.
-            if case .cancelled = error {} else {
+            // retour en arrière pour une panne de connexion. L'erreur immédiate d'Apple non
+            // plus : elle a sa propre ligne (`apple_sign_in_error`), et presque toujours une
+            // connexion qui suit.
+            if case .cancelled = error {} else if case .transient = error {} else {
                 Analytics.track(.signInFailed, ["reason": "refus"])
             }
             if let description = error.errorDescription {
@@ -469,3 +529,57 @@ final class AuthController {
 // L'objet est posé dans l'environnement par `MicaboApp`, comme `TabRouter` et
 // `OnboardingModel` : c'est le mécanisme d'observation d'iOS 17, et il évite d'inventer une
 // clé d'environnement pour un objet qui est déjà observable.
+
+// MARK: - Le contrôleur Apple, tenu le temps de la requête
+
+/// **Une requête Apple, du `performRequests` au retour**, tenue par `AuthController` et par
+/// rien d'autre. Le délégué et le fournisseur de fenêtre sont le même objet, et il se garde
+/// lui-même en vie tant qu'Apple n'a pas répondu : c'est précisément ce que le bouton SwiftUI
+/// ne garantissait pas.
+@MainActor
+final class AppleSignInFlow: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
+    private let controller: ASAuthorizationController
+    private let completion: (Result<ASAuthorization, Error>) -> Void
+    private var finished = false
+
+    init(requests: [ASAuthorizationRequest], completion: @escaping (Result<ASAuthorization, Error>) -> Void) {
+        controller = ASAuthorizationController(authorizationRequests: requests)
+        self.completion = completion
+        super.init()
+        controller.delegate = self
+        controller.presentationContextProvider = self
+    }
+
+    func start() {
+        controller.performRequests()
+    }
+
+    nonisolated func authorizationController(
+        controller: ASAuthorizationController,
+        didCompleteWithAuthorization authorization: ASAuthorization
+    ) {
+        Task { @MainActor in self.finish(.success(authorization)) }
+    }
+
+    nonisolated func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+        Task { @MainActor in self.finish(.failure(error)) }
+    }
+
+    /// La fenêtre clé, celle qui porte l'écran de connexion. Sans elle, Apple présente sa
+    /// feuille sur une fenêtre quelconque, ou pas du tout.
+    nonisolated func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        MainActor.assumeIsolated {
+            let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+            let windows = scenes.flatMap(\.windows)
+            return windows.first(where: \.isKeyWindow) ?? windows.first ?? ASPresentationAnchor()
+        }
+    }
+
+    /// Une seule réponse par requête : Apple a parfois rendu deux retours pour un appui, et
+    /// c'est le second qui comptait.
+    private func finish(_ result: Result<ASAuthorization, Error>) {
+        guard !finished else { return }
+        finished = true
+        completion(result)
+    }
+}

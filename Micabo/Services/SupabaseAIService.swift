@@ -157,7 +157,7 @@ extension AIServiceError {
             self = .network(detail)
         case .invalidResponse:
             self = .invalidResponse
-        case .server(let status, let message, _):
+        case .server(let status, let message, _, _):
             if message.localizedCaseInsensitiveContains("FAL_KEY") {
                 self = .missingProviderKey
             } else if status == 429 {

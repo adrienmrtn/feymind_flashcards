@@ -9,7 +9,9 @@ import Foundation
 enum SupabaseFunctionError: Error {
     case notConfigured
     case network(String)
-    case server(status: Int, message: String, code: String?)
+    /// `code` est le refus (`free_limit`, `import_pro`…) ; `reason` la cause d'une panne
+    /// (`provider`, `invalid_json`, `invalid_content`, `timeout`), quand le serveur la donne.
+    case server(status: Int, message: String, code: String?, reason: String? = nil)
     case invalidResponse
 }
 
@@ -71,7 +73,8 @@ struct SupabaseFunctions {
             throw SupabaseFunctionError.server(
                 status: http.statusCode,
                 message: (envelope?["error"] as? String) ?? String(data: data, encoding: .utf8) ?? "",
-                code: envelope?["code"] as? String
+                code: envelope?["code"] as? String,
+                reason: envelope?["reason"] as? String
             )
         }
 
@@ -84,7 +87,8 @@ struct SupabaseFunctions {
             throw SupabaseFunctionError.server(
                 status: http.statusCode,
                 message: message,
-                code: envelope["code"] as? String
+                code: envelope["code"] as? String,
+                reason: envelope["reason"] as? String
             )
         }
 
