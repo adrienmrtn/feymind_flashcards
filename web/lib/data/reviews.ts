@@ -2,7 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 
-import { cachedRead, cardsTag, dataClient, profileTag, userTag } from "@/lib/data/cache";
+import { cachedRead, cardsTag, dataClient, profileTag, userTag, rowsOrThrow } from "@/lib/data/cache";
 import { currentAccessToken, currentUserId } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 
@@ -40,11 +40,14 @@ export async function loadReviewDatesSince(from: Date): Promise<Date[]> {
     `review-days:${since.slice(0, 10)}`,
     [userTag(auth.userId), cardsTag(auth.userId)],
     async () => {
-      const { data } = await dataClient(auth.token)
-        .from("review_logs")
-        .select("reviewed_at")
-        .eq("user_id", auth.userId)
-        .gte("reviewed_at", since);
+      const data = rowsOrThrow(
+        await dataClient(auth.token)
+          .from("review_logs")
+          .select("reviewed_at")
+          .eq("user_id", auth.userId)
+          .gte("reviewed_at", since),
+        "review-days",
+      );
       return ((data as { reviewed_at: string }[] | null) ?? []).map((row) => row.reviewed_at);
     },
   );
@@ -100,12 +103,15 @@ export const loadProfileStats = cache(async (): Promise<ProfileStats> => {
     "profile-stats",
     [userTag(auth.userId), cardsTag(auth.userId)],
     async () => {
-      const { data } = await dataClient(auth.token)
-        .from("review_logs")
-        .select("card_id, reviewed_at")
-        .eq("user_id", auth.userId)
-        .order("reviewed_at", { ascending: false })
-        .limit(20000);
+      const data = rowsOrThrow(
+        await dataClient(auth.token)
+          .from("review_logs")
+          .select("card_id, reviewed_at")
+          .eq("user_id", auth.userId)
+          .order("reviewed_at", { ascending: false })
+          .limit(20000),
+        "profile-stats",
+      );
 
       const rows = (data as { card_id: string | null; reviewed_at: string }[] | null) ?? [];
 

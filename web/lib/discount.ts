@@ -204,3 +204,42 @@ export function shouldShowDiscountBadge(input: {
 }): boolean {
   return discount.shouldShowBadge(input);
 }
+
+/**
+ * **« il reste 3 heures et 2 minutes », dans la langue de la page** : ce que lit un lecteur
+ * d'écran sur la languette de l'offre.
+ *
+ * La tournure (« il reste {time} », « {time} left ») vient du catalogue ; les durées et la
+ * conjonction viennent d'`Intl`, qui connaît les pluriels de chaque langue - le russe en a
+ * trois, l'arabe six - mieux qu'un `n === 1` écrit à la main.
+ */
+export function countdownLabel(
+  t: (key: string, vars?: Record<string, string | number>) => string,
+  bcp47: string,
+  seconds: number,
+): string {
+  const parts = discount.countdownParts(seconds);
+  if (parts.ended) return t("app.paywall.offerEnded");
+  if (parts.hours === 0 && parts.minutes === 0) return t("app.paywall.countdownUnderMinute");
+
+  const pieces: string[] = [];
+  if (parts.hours > 0) pieces.push(spellDuration(bcp47, parts.hours, "hour"));
+  if (parts.minutes > 0) pieces.push(spellDuration(bcp47, parts.minutes, "minute"));
+  return t("app.paywall.countdownLeft", { time: joinAnd(bcp47, pieces) });
+}
+
+function spellDuration(bcp47: string, value: number, unit: "hour" | "minute"): string {
+  try {
+    return new Intl.NumberFormat(bcp47, { style: "unit", unit, unitDisplay: "long" }).format(value);
+  } catch {
+    return new Intl.NumberFormat("en", { style: "unit", unit, unitDisplay: "long" }).format(value);
+  }
+}
+
+function joinAnd(bcp47: string, pieces: string[]): string {
+  try {
+    return new Intl.ListFormat(bcp47, { type: "conjunction", style: "long" }).format(pieces);
+  } catch {
+    return pieces.join(" ");
+  }
+}

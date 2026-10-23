@@ -52,3 +52,36 @@ export async function userFromToken(
     return data.user ? { id: data.user.id, email: data.user.email ?? null } : null;
   }
 }
+
+/** Ce qu'on sait d'un jeton : bon, refusé pour de bon, ou rien de sûr (réseau, GoTrue muet). */
+export type TokenVerdict = "valid" | "refused" | "unknown";
+
+/**
+ * **Le même verdict que `userFromToken`, mais qui sait dire « je ne sais pas ».**
+ *
+ * Le middleware décidait sur `getSession()`, qui lit le cookie sans rien vérifier, pendant que
+ * l'app décidait sur `getClaims()`. Après une déconnexion globale depuis l'iPhone, un compte
+ * supprimé ou une clé de signature tournée, les deux n'étaient plus d'accord : l'app renvoyait
+ * vers `/commencer/compte` (personne), le middleware renvoyait vers `/app` (un cookie), et le
+ * navigateur tournait jusqu'à `ERR_TOO_MANY_REDIRECTS`.
+ *
+ * Le middleware pose donc la même question que l'app. Il a seulement besoin d'une nuance de
+ * plus : un refus définitif (4xx : signature fausse, jeton expiré, session inconnue de GoTrue)
+ * autorise à effacer les cookies ; une panne ne l'autorise pas - effacer une session pour trois
+ * secondes de réseau coupé déconnecterait quelqu'un pour rien.
+ */
+export async function verifyAccessToken(
+  auth: Pick<ClaimsSource, "getClaims">,
+  token: string,
+): Promise<TokenVerdict> {
+  try {
+    const { data, error } = await auth.getClaims(token);
+    if (error) {
+      const status = (error as { status?: unknown }).status;
+      return typeof status === "number" && status >= 400 && status < 500 ? "refused" : "unknown";
+    }
+    return data?.claims?.sub ? "valid" : "refused";
+  } catch {
+    return "unknown";
+  }
+}

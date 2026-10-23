@@ -6,7 +6,7 @@ import { SITE_URL } from "@/lib/config";
 import { readEntitlement } from "@/lib/data/entitlement";
 import { actionT } from "@/lib/i18n/action";
 import { DEFAULT_UI_LOCALE, isUiLocale } from "@/lib/i18n/locales";
-import { readLocaleSignals, readUiLocale, translatorFor } from "@/lib/i18n/server";
+import { readLocaleSignals, translatorFor } from "@/lib/i18n/server";
 import { localeBcp47 } from "@/lib/i18n/copy";
 import { checkoutNote } from "@/lib/pricing-copy";
 import { readPricingCountry } from "@/lib/pricing-country";
@@ -228,6 +228,13 @@ export async function manageSubscription(): Promise<CheckoutResult> {
     };
   }
 
+  // La langue du portail suit la même table que le paiement. `readUiLocale()` passait nos
+  // codes tels quels : Stripe ne connaît ni `ar` ni `sr`, refusait la session en 400, et un
+  // abonné arabophone ou serbe ne pouvait plus gérer son abonnement. Sans correspondance,
+  // `auto` laisse Stripe lire le navigateur.
+  const signals = await readLocaleSignals();
+  const portalLocale = pricing.checkoutLocale(signals) ?? "auto";
+
   const response = await fetch("https://api.stripe.com/v1/billing_portal/sessions", {
     method: "POST",
     headers: {
@@ -237,7 +244,7 @@ export async function manageSubscription(): Promise<CheckoutResult> {
     body: new URLSearchParams({
       customer: customerId,
       return_url: checkoutReturnUrl(SITE_URL, "/app/reglages"),
-      locale: await readUiLocale(),
+      locale: portalLocale,
     }),
   });
 

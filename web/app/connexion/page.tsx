@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import type { Route } from "next";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { BrandLockup } from "@/components/BrandMark";
@@ -17,11 +17,9 @@ import { Input } from "@/components/ui/input";
 import { OrDivider, ProviderButton } from "@/components/auth/AuthButtons";
 import { Atmosphere } from "@/components/landing/Atmosphere";
 import { Mika } from "@/components/mika/Mika";
-import {
-  APP_STORE_REVIEW_EMAIL,
-  APP_STORE_REVIEW_PASSWORD,
-  isAppStoreReviewEmail,
-} from "@/lib/auth/app-store-review";
+import { LINK_EXPIRED_REASON } from "@/components/landing/AuthReturnCatcher";
+import { signInForAppStoreReview } from "@/lib/actions/app-store-review";
+import { isAppStoreReviewEmail, isAppleAddress } from "@/lib/auth/app-store-review";
 import { inspectAddress } from "@/lib/auth/email";
 import { oauthCallbackUrl, oauthFailureMessage } from "@/lib/auth/oauth";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
@@ -58,7 +56,13 @@ function ConnexionBody() {
   const [pending, setPending] = useState<Pending>(null);
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
-  const [failure, setFailure] = useState<string | null>(null);
+  const params = useSearchParams();
+  // `?raison=lien` : un lien de courriel au format implicite, que `AuthReturnCatcher` a
+  // intercepté. Un motif et pas un texte dans l'URL : la phrase vient du catalogue, dans la
+  // langue de la page, et personne ne peut faire afficher la sienne ici.
+  const [failure, setFailure] = useState<string | null>(() =>
+    params.get("raison") === LINK_EXPIRED_REASON ? t("app.errors.linkExpired") : null,
+  );
   const [suggestion, setSuggestion] = useState<{ typed: string; corrected: string } | null>(null);
 
   function callbackUrl() {
@@ -77,7 +81,7 @@ function ConnexionBody() {
 
     if (error) {
       setPending(null);
-      setFailure(oauthFailureMessage(provider, error.message));
+      setFailure(oauthFailureMessage(t, provider, error.message));
     }
   }
 
@@ -121,14 +125,19 @@ function ConnexionBody() {
 
     const supabase = createClient();
 
-    if (isAppStoreReviewEmail(address)) {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: APP_STORE_REVIEW_EMAIL,
-        password: APP_STORE_REVIEW_PASSWORD,
-      });
+    // Le compte de relecture s'ouvre côté serveur : le mot de passe ne quitte jamais
+    // `APP_STORE_REVIEW_PASSWORD`. Une autre adresse d'Apple ne reçoit pas de lien
+    // non plus - il rebondirait - mais elle n'ouvre rien.
+    if (isAppleAddress(address)) {
+      if (!isAppStoreReviewEmail(address)) {
+        setPending(null);
+        setFailure(t("onboarding.emailUndeliverable"));
+        return;
+      }
+      const result = await signInForAppStoreReview(address);
       setPending(null);
-      if (error) {
-        setFailure(error.message);
+      if (result.status === "error") {
+        setFailure(result.message);
         return;
       }
       router.replace("/app" as Route);

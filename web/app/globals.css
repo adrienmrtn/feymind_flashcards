@@ -1525,20 +1525,6 @@ img[data-icon] {
   }
 }
 
-@keyframes micabo-sway {
-  from {
-    rotate: -11deg;
-  }
-  to {
-    rotate: 11deg;
-  }
-}
-
-@utility bell-sway {
-  transform-origin: 50% 12%;
-  animation: micabo-sway 1.15s var(--ease-in-out-strong) infinite alternate;
-}
-
 @keyframes micabo-count {
   from {
     opacity: 0;

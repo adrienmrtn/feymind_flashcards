@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { discount } from "@micabo/core";
 
-import { shouldOpenDiscount, shouldShowDiscountBadge } from "./discount";
+import { countdownLabel, shouldOpenDiscount, shouldShowDiscountBadge } from "./discount";
 
 const HOUR = 3_600_000;
 
@@ -119,12 +119,28 @@ describe("le décompte de la languette", () => {
     expect(discount).not.toHaveProperty("urgencySeconds");
   });
 
-  it("se lisent à voix haute, sans faute d'accord", () => {
-    expect(discount.countdownLabel(0)).toBe("offre terminée");
-    expect(discount.countdownLabel(30)).toBe("il reste moins d'une minute");
-    expect(discount.countdownLabel(90)).toBe("il reste 1 minute");
-    expect(discount.countdownLabel(3600)).toBe("il reste 1 heure");
-    expect(discount.countdownLabel(86_400)).toBe("il reste 24 heures");
-    expect(discount.countdownLabel(3600 + 120)).toBe("il reste 1 heure et 2 minutes");
+  it("se lisent à voix haute, sans faute d'accord, dans la langue de la page", () => {
+    const fr = (key: string, vars?: Record<string, string | number>) =>
+      ({
+        "app.paywall.offerEnded": "offre terminée",
+        "app.paywall.countdownUnderMinute": "il reste moins d'une minute",
+        "app.paywall.countdownLeft": `il reste ${vars?.time}`,
+      })[key] ?? key;
+    // `Intl` sépare le nombre de son unité par une espace insécable : c'est voulu, on la
+    // ramène à une espace pour comparer.
+    const said = (bcp47: string, seconds: number, t = fr) =>
+      countdownLabel(t, bcp47, seconds).replace(/[\u00a0\u202f]/g, " ");
+    expect(countdownLabel(fr, "fr-FR", 0)).toBe("offre terminée");
+    expect(countdownLabel(fr, "fr-FR", 30)).toBe("il reste moins d'une minute");
+    expect(said("fr-FR", 90)).toBe("il reste 1 minute");
+    expect(said("fr-FR", 3600)).toBe("il reste 1 heure");
+    expect(said("fr-FR", 86_400)).toBe("il reste 24 heures");
+    expect(said("fr-FR", 3600 + 120)).toBe("il reste 1 heure et 2 minutes");
+
+    // Le noyau ne parle plus français : il rend des nombres.
+    expect(discount).not.toHaveProperty("countdownLabel");
+    const tr = (key: string, vars?: Record<string, string | number>) =>
+      key === "app.paywall.countdownLeft" ? `${vars?.time} kaldı` : key;
+    expect(said("tr-TR", 7200 + 60, tr)).toBe("2 saat ve 1 dakika kaldı");
   });
 });

@@ -40,14 +40,28 @@ export interface GradeResult {
   /** L'état écrit, pour que le client puisse suivre sans recharger. */
   dueDate?: string;
   intervalDays?: number;
-  state?: string;
+  state?: CardSnapshot["state"];
+  /** L'état complet écrit en base : le client remplace sa copie par celle-ci. */
+  snapshot?: CardSnapshot;
 }
 
-export async function gradeCard(input: {
+/**
+ * Ce que le navigateur envoie : **quelle carte, quelle note**. Rien de son état.
+ *
+ * Le navigateur envoyait aussi son instantané de la carte, et c'est lui qui servait de point de
+ * départ à SM-2. Un instantané a l'âge de la page : noter deux fois la même carte sans recharger
+ * (la révision relancée depuis le même écran), ou la noter ici après l'iPhone, repartait d'un
+ * état périmé et **écrasait** la progression faite entre-temps. Le serveur relit la ligne.
+ * `snapshot` reste accepté pour ne pas casser une page déjà ouverte, et il est ignoré.
+ */
+export interface GradeInput {
   cardId: string;
   rating: number;
-  snapshot: CardSnapshot;
-}): Promise<GradeResult> {
+  /** @deprecated Ignoré : l'état de départ est relu en base. */
+  snapshot?: CardSnapshot;
+}
+
+export async function gradeCard(input: GradeInput): Promise<GradeResult> {
   const rating = asRating(input.rating);
   if (!rating) return { status: "error", message: await actionT("app.errors.unknownRating") };
 
@@ -84,7 +98,7 @@ export async function gradeCard(input: {
  * sans le plafond de la session : les flashcards d'une leçon se révisent à leur rythme
  * (`docs/refonte-parcours.md` § 7, « les anciennes portes disparaissent »).
  */
-export async function gradeLessonCard(input: { cardId: string; rating: number; snapshot: CardSnapshot }): Promise<GradeResult> {
+export async function gradeLessonCard(input: GradeInput): Promise<GradeResult> {
   const rating = asRating(input.rating);
   if (!rating) return { status: "error", message: await actionT("app.errors.unknownRating") };
 
@@ -99,17 +113,20 @@ export async function gradeLessonCard(input: { cardId: string; rating: number; s
 async function writeGrade(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
-  input: { cardId: string; snapshot: CardSnapshot },
+  input: { cardId: string },
   rating: Rating,
 ): Promise<GradeResult> {
   const now = new Date();
 
-  const [{ data: card }, { data: exams }] = await Promise.all([
+  const [{ data: card, error: cardError }, { data: exams }] = await Promise.all([
     supabase
       .from("flashcards")
-      .select("id, course_id, is_suspended")
+      .select(
+        "id, course_id, is_suspended, state, interval_days, ease_factor, repetitions, lapses, step_index, due_date",
+      )
       .eq("user_id", userId)
       .eq("id", input.cardId)
+      .is("deleted_at", null)
       .maybeSingle(),
     supabase
       .from("exams")
@@ -118,31 +135,43 @@ async function writeGrade(
       .is("deleted_at", null),
   ]);
 
-  const deadline = card
-    ? activeDeadlines(
-        (exams ?? []).map((exam) => ({
-          date: new Date(`${exam.exam_date}T12:00:00`),
-          isPlanned: exam.is_planned,
-          courseIds: exam.course_ids ?? [],
-        })),
-        [
-          {
-            id: card.id,
-            courseId: card.course_id,
-            isSuspended: card.is_suspended,
-          },
-        ],
-        now,
-      ).get(card.id)
-    : undefined;
+  if (cardError) return { status: "error", message: cardError.message };
+  if (!card) return { status: "error", message: await actionT("app.errors.cardMissing") };
+
+  // L'état de départ, **tel qu'il est en base** à cet instant - pas tel que la page l'a vu.
+  const before: CardSnapshot = {
+    state: card.state as CardSnapshot["state"],
+    intervalDays: card.interval_days,
+    easeFactor: card.ease_factor,
+    repetitions: card.repetitions,
+    lapses: card.lapses,
+    stepIndex: card.step_index,
+    dueDate: card.due_date,
+  };
+
+  const deadline = activeDeadlines(
+    (exams ?? []).map((exam) => ({
+      date: new Date(`${exam.exam_date}T12:00:00`),
+      isPlanned: exam.is_planned,
+      courseIds: exam.course_ids ?? [],
+    })),
+    [
+      {
+        id: card.id,
+        courseId: card.course_id,
+        isSuspended: card.is_suspended,
+      },
+    ],
+    now,
+  ).get(card.id);
 
   // SM-2 d'Anki (dispersion comprise), puis le plafond d'examen. L'aperçu
   // sous les boutons reste déterministe.
   const outcome = clampedToDeadline(
-    schedule(input.snapshot, rating, {
+    schedule(before, rating, {
       now,
       config: DEFAULT_CONFIG,
-      dueDate: input.snapshot.dueDate,
+      dueDate: before.dueDate,
     }),
     deadline,
     now,
@@ -165,6 +194,16 @@ async function writeGrade(
 
   if (error) return { status: "error", message: error.message };
 
+  const after: CardSnapshot = {
+    state: outcome.state,
+    intervalDays: outcome.intervalDays,
+    easeFactor: outcome.easeFactor,
+    repetitions: outcome.repetitions,
+    lapses: outcome.lapses,
+    stepIndex: outcome.stepIndex,
+    dueDate: outcome.dueDate.toISOString(),
+  };
+
   revalidateUserData(userId, "cards");
   // L'accueil doit se recaler sans rechargement dur. On ne touche pas à
   // `/app/reviser` : ça reconstruirait la file en pleine session.
@@ -178,8 +217,8 @@ async function writeGrade(
     card_id: input.cardId,
     reviewed_at: now.toISOString(),
     rating,
-    state_before: input.snapshot.state,
-    previous_interval_days: input.snapshot.intervalDays,
+    state_before: before.state,
+    previous_interval_days: before.intervalDays,
     new_interval_days: outcome.intervalDays,
     ease_after: outcome.easeFactor,
   });
@@ -198,6 +237,7 @@ async function writeGrade(
     dueDate: outcome.dueDate.toISOString(),
     intervalDays: outcome.intervalDays,
     state: outcome.state,
+    snapshot: after,
   };
 }
 
