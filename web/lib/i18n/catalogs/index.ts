@@ -23,6 +23,9 @@ import { bg } from "./bg";
 import { el } from "./el";
 import { ru } from "./ru";
 import { ar } from "./ar";
+import { et } from "./et";
+import { hu } from "./hu";
+import { hr } from "./hr";
 
 export { en, fr, de, es, tr };
 export type { Catalog };
@@ -53,11 +56,11 @@ export const CATALOGS: Record<UiLocale, Catalog> = {
   sv: sv,
   da: da,
   fi: fi,
-  et: en, // TODO(traduction) : import { et } from "./et";
+  et: et,
   cs: cs,
   sk: sk,
-  hu: en, // TODO(traduction) : import { hu } from "./hu";
-  hr: en, // TODO(traduction) : import { hr } from "./hr";
+  hu: hu,
+  hr: hr,
   sl: sl,
   sr: sr,
   bg: bg,
