@@ -11,6 +11,9 @@ import { ro } from "./ro";
 import { it } from "./it";
 import { pt } from "./pt";
 import { ptBR } from "./pt-br";
+import { pl } from "./pl";
+import { cs } from "./cs";
+import { sk } from "./sk";
 
 export { en, fr, de, es, tr };
 export type { Catalog };
@@ -36,14 +39,14 @@ export const CATALOGS: Record<UiLocale, Catalog> = {
   pt: pt,
   "pt-BR": ptBR,
   nl: nl,
-  pl: en, // TODO(traduction) : import { pl } from "./pl";
+  pl: pl,
   ro: ro,
   sv: en, // TODO(traduction) : import { sv } from "./sv";
   da: en, // TODO(traduction) : import { da } from "./da";
   fi: en, // TODO(traduction) : import { fi } from "./fi";
   et: en, // TODO(traduction) : import { et } from "./et";
-  cs: en, // TODO(traduction) : import { cs } from "./cs";
-  sk: en, // TODO(traduction) : import { sk } from "./sk";
+  cs: cs,
+  sk: sk,
   hu: en, // TODO(traduction) : import { hu } from "./hu";
   hr: en, // TODO(traduction) : import { hr } from "./hr";
   sl: en, // TODO(traduction) : import { sl } from "./sl";
