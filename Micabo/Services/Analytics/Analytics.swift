@@ -266,6 +266,16 @@ actor AnalyticsQueue {
         do {
             try await database.insert(batch, into: "app_events")
         } catch {
+            // Un refus du serveur sur le contenu (4xx hors session, droits et débit) ne passera
+            // jamais : garder le lot le renverrait sans fin, et plus aucun événement de
+            // l'appareil n'arriverait. Il tombe, comme sur Android ; le reste réessaie.
+            if case SupabaseDatabase.Failure.server(let status, _, _) = error,
+               (400 ..< 500).contains(status), ![401, 403, 408, 429].contains(status) {
+                pending.removeFirst(min(batch.count, pending.count))
+                writeToDisk()
+                if !pending.isEmpty { schedule(after: .zero) }
+                return
+            }
             // Rien à dire à l'utilisateur, et rien à réessayer tout de suite : les lignes
             // restent, le prochain essai est plus loin, et le disque garde la trace au cas
             // où l'app ne reviendrait pas.
