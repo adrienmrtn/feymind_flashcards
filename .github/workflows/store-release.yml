@@ -1,0 +1,64 @@
+# **Préparer une version de l'App Store** : la version, son build, « Nouveautés » dans chaque
+# langue. Ne soumet jamais : la soumission reste un clic dans App Store Connect.
+# Voir store/app-store-release.mjs.
+#
+# Lancement : Actions → « Version App Store » → Run workflow. Sans cocher « Appliquer », c'est
+# une simulation. Depuis une branche de travail, un commit qui touche le script ou ce fichier
+# le lance aussi : en simulation, ou pour de bon avec « [app-store] » dans son message.
+#
+# Secrets du dépôt : ASC_KEY_ID, ASC_ISSUER_ID, ASC_PRIVATE_KEY (docs/revenuecat.md, §15).
+
+name: Version App Store
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Numéro de version, par ex. 1.10"
+        type: string
+        required: true
+      build:
+        description: "Numéro de build (vide : le dernier traité de cette version)"
+        type: string
+        required: false
+      apply:
+        description: "Appliquer (sinon : simulation)"
+        type: boolean
+        default: false
+  push:
+    branches: ["claude/**"]
+    paths:
+      - "store/app-store-release.mjs"
+      - ".github/workflows/store-release.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: store-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Préparer la version
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Version, build, nouveautés
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+          VERSION: ${{ inputs.version || '1.10' }}
+          BUILD: ${{ inputs.build }}
+          APPLY: ${{ inputs.apply || contains(github.event.head_commit.message, '[app-store]') }}
+        run: |
+          args=(--version "$VERSION")
+          if [ -n "$BUILD" ]; then args+=(--build "$BUILD"); fi
+          if [ "$APPLY" = "true" ]; then args+=(--apply); fi
+          node store/app-store-release.mjs "${args[@]}"

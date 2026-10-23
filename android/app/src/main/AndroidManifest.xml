@@ -4,14 +4,9 @@
     <!-- Le réseau : RevenueCat, Supabase. La permission BILLING (Google Play Billing) est
          ajoutée par le SDK RevenueCat, à la fusion des manifestes. -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Le rappel du jour, et la notification de l'enregistrement en cours (Android 13 et plus
-         le demande). Aucun rappel ne parle de la fin de l'essai. -->
+    <!-- Le rappel du jour (Android 13 et plus le demande). Aucun rappel ne parle de la fin de
+         l'essai. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- Enregistrer son cours, pour en faire une leçon : le micro tient écran verrouillé grâce
-         à un service de premier plan de type « microphone » (`RecordingService`). -->
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
@@ -45,11 +40,6 @@
                 <data android:scheme="micabo" android:host="auth-callback" />
             </intent-filter>
         </activity>
-        <!-- L'enregistrement d'un cours, jusqu'à quatre-vingt-dix minutes, écran verrouillé. -->
-        <service
-            android:name=".data.RecordingService"
-            android:exported="false"
-            android:foregroundServiceType="microphone" />
         <receiver
             android:name=".data.DailyReminderReceiver"
             android:exported="false" />

@@ -62,7 +62,7 @@ data/
   CloudSync.kt         la synchronisation avec l'iPhone (tables courses, chapters,
                        flashcards, exams, review_logs ; mêmes formats que l'iPhone)
   Social.kt            amis, annuaire, classement de la semaine, cours partagés
-  Imports.kt           PDF (PDFBox + OCR ML Kit), Word, photos ; YouTube.kt ; AudioImport.kt
+  Imports.kt           PDF (PDFBox + OCR ML Kit), Word, photos ; YouTube.kt (pas d'audio sur Android)
   LessonComposer.kt    la barre de l'accueil et ses supports
   Billing.kt           RevenueCat / Google Play Billing (entitlement « pro »)
   GiftOffer.kt         le cadeau du paywall refermé et son tarif réduit (offering « discount »)
