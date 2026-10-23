@@ -8,7 +8,6 @@ import {
   checkoutIdempotencyKey,
   checkoutReturnUrl,
   checkoutSessionFields,
-  envOrCatalogPrice,
   extractStripeMessage,
   priceIdFor,
   priceIdProblem,
@@ -22,33 +21,30 @@ describe("CHECKOUT_MAINTENANCE", () => {
   });
 });
 
-describe("envOrCatalogPrice", () => {
-  it("laisse l'env gagner, et ignore une chaîne vide", () => {
-    expect(envOrCatalogPrice("price_from_env", "price_catalog")).toBe("price_from_env");
-    expect(envOrCatalogPrice("  price_from_env  ", "price_catalog")).toBe("price_from_env");
-    expect(envOrCatalogPrice("", "price_catalog")).toBe("price_catalog");
-    expect(envOrCatalogPrice("   ", "price_catalog")).toBe("price_catalog");
-    expect(envOrCatalogPrice(undefined, "price_catalog")).toBe("price_catalog");
-  });
-});
-
 describe("priceIdFor", () => {
-  const catalog = (plan: "yearly" | "weekly" | "yearly_discount") =>
-    plan === "yearly" ? "price_year" : plan === "weekly" ? "price_week" : "price_discount";
+  const spain = pricing.presentmentFor("es");
+  const france = pricing.presentmentFor("fr");
+  const mexico = pricing.presentmentFor("mx");
 
-  it("prend le weekly d'env, pas le catalogue, dès qu'il est posé", () => {
-    expect(
-      priceIdFor("weekly", { yearly: "price_y", weekly: "price_w" }, catalog),
-    ).toBe("price_w");
+  it("prend le prix du groupe du pays, dans l'environnement", () => {
+    const env = {
+      STRIPE_PRICE_YEARLY: "price_y",
+      STRIPE_PRICE_YEARLY_SOUTH: "price_y_south",
+      STRIPE_PRICE_WEEKLY: "price_w",
+    };
+    expect(priceIdFor("yearly", france, env, pricing.stripePriceIdFromEnv)).toBe("price_y");
+    expect(priceIdFor("yearly", spain, env, pricing.stripePriceIdFromEnv)).toBe("price_y_south");
+    // Le Mexique paie en pesos, dans les `currency_options` du prix standard.
+    expect(priceIdFor("weekly", mexico, env, pricing.stripePriceIdFromEnv)).toBe("price_w");
   });
 
-  it("ne laisse pas un STRIPE_PRICE_WEEKLY vide masquer le catalogue", () => {
-    expect(priceIdFor("weekly", { weekly: "" }, catalog)).toBe("price_week");
-  });
-
-  it("sert le tarif réduit, par env puis par catalogue", () => {
-    expect(priceIdFor("yearly_discount", { yearlyDiscount: "price_d" }, catalog)).toBe("price_d");
-    expect(priceIdFor("yearly_discount", {}, catalog)).toBe("price_discount");
+  it("ne retombe jamais sur un prix de l'ancienne grille", () => {
+    // Les `price_…` de `STORE_PRODUCTS` prélèveraient 69,99 € sous un paywall à 49,99 €.
+    expect(priceIdFor("weekly", france, { STRIPE_PRICE_WEEKLY: " " }, pricing.stripePriceIdFromEnv)).toBe("");
+    expect(priceIdFor("yearly_discount", spain, {}, pricing.stripePriceIdFromEnv)).toBe("");
+    expect(priceIdProblem(priceIdFor("yearly", spain, {}, pricing.stripePriceIdFromEnv))).toMatch(
+      /pas renseigné/,
+    );
   });
 });
 
@@ -319,7 +315,7 @@ describe("checkoutLocale", () => {
     // Deux règles distinctes, et c'est voulu : un Turc qui lit Micabo en anglais voit une
     // page anglaise, et il paie quand même en livres.
     expect(pricing.checkoutLocale({ navigator: "en", country: "tr" })).toBe("en");
-    expect(pricing.presentmentCurrencyFor("en", "tr")).toBe("TRY");
+    expect(pricing.checkoutCurrency(pricing.presentmentFor("tr", "en"))).toBe("try");
   });
 });
 
@@ -328,22 +324,25 @@ describe("checkoutNote", () => {
     `${key}|${JSON.stringify(vars)}`) as Parameters<typeof checkoutNote>[0];
 
   it("annonce l'essai, puis la somme réellement prélevée", () => {
-    const note = checkoutNote(t, pricing.YEARLY, "TRY");
+    const turkey = pricing.presentmentFor("tr", "tr");
+    const note = checkoutNote(t, pricing.YEARLY, turkey);
     expect(note).toContain("app.paywall.stripeNote.trialYearly");
     expect(note).toContain('"days":3');
     // Le prix annuel, pas le mensuel équivalent affiché sur la carte : c'est le montant
     // que Stripe va prélever, et l'écart entre les deux est ce qui fait fermer l'onglet.
-    expect(note).toContain(pricing.priceText(1499.99, "TRY"));
+    expect(note).toContain(pricing.priceText(1499.99, turkey));
   });
 
   it("annonce l'essai de l'hebdomadaire, comme l'app", () => {
-    const note = checkoutNote(t, pricing.WEEKLY, "EUR");
+    const italy = pricing.presentmentFor("it", "it");
+    const note = checkoutNote(t, pricing.WEEKLY, italy);
     expect(note).toContain("app.paywall.stripeNote.trialWeekly");
-    expect(note).toContain(pricing.priceText(4.99, "EUR"));
+    // L'Italie paie 3,99 € la semaine, comme dans l'app.
+    expect(note).toContain(pricing.priceText(3.99, italy));
   });
 
   it("ne promet pas d'essai là où il n'y en a pas", () => {
-    expect(checkoutNote(t, pricing.DISCOUNT_YEARLY, "EUR")).toContain(
+    expect(checkoutNote(t, pricing.DISCOUNT_YEARLY, pricing.DEFAULT_PRESENTMENT)).toContain(
       "app.paywall.stripeNote.yearly",
     );
   });

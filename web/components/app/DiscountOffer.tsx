@@ -294,10 +294,11 @@ function useCountdown(startedAt: number, span: number): number {
  */
 export function DiscountCard({ onClose }: { onClose: () => void }) {
   const { t } = useI18n();
-  const currency = usePresentment();
+  const presentment = usePresentment();
   const plan = pricing.DISCOUNT_YEARLY;
   const full = pricing.DISCOUNT_REFERENCE;
-  const saved = pricing.discountSavingsPercent();
+  // La remise se calcule sur les prix du pays, comme `PaywallCatalog.savings` dans l'app.
+  const saved = pricing.discountSavingsPercent(presentment);
   const [pending, setPending] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
 
@@ -375,7 +376,7 @@ export function DiscountCard({ onClose }: { onClose: () => void }) {
 
               <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
                 <span className="numeral text-[26px] font-bold leading-none text-ink">
-                  {pricing.priceText(pricing.presentmentAmount(plan, currency), currency)}
+                  {pricing.planPriceText(plan, presentment)}
                 </span>
                 <span className="text-[15px] font-medium text-ink-secondary">
                   {t("app.paywall.perYear")}
@@ -383,7 +384,7 @@ export function DiscountCard({ onClose }: { onClose: () => void }) {
               </p>
 
               <s className="mt-1 block text-[15.5px] font-medium text-ink-tertiary">
-                {pricing.priceText(pricing.presentmentAmount(full, currency), currency)}
+                {pricing.planPriceText(full, presentment)}
               </s>
             </div>
           </div>
@@ -410,7 +411,7 @@ export function DiscountCard({ onClose }: { onClose: () => void }) {
             // sous le bouton, jamais ailleurs qu'à côté de lui.
             <p className="mt-3 text-[12.5px] text-ink-tertiary">
               {t("app.paywall.discountYearly", {
-                price: pricing.priceText(pricing.presentmentAmount(plan, currency), currency),
+                price: pricing.planPriceText(plan, presentment),
               })}
             </p>
           )}

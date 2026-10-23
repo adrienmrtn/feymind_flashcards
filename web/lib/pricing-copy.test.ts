@@ -6,6 +6,7 @@ import { fr } from "./i18n/catalogs/fr";
 import type { MessageTree } from "./i18n/format";
 import { makeTranslator } from "./i18n/translate";
 import {
+  planCaption,
   planRenewalCopy,
   planTitle,
   presentmentFor,
@@ -23,14 +24,19 @@ describe("pricing-copy", () => {
     expect(trialBadge(tTr, pricing.YEARLY)).toBe("3 gün ücretsiz");
     expect(trialBadge(tFr, pricing.WEEKLY)).toBe("3 jours gratuits");
     expect(trialBadge(tFr, pricing.DISCOUNT_YEARLY)).toBeNull();
-    expect(planRenewalCopy(tTr, pricing.WEEKLY, "TRY")).toBe("İstediğin an iptal");
-    expect(planRenewalCopy(tFr, pricing.YEARLY, "EUR")).toMatch(/49,99/);
+    expect(planRenewalCopy(tTr, pricing.WEEKLY, presentmentFor("tr", "TR"))).toBe("İstediğin an iptal");
+    expect(planRenewalCopy(tFr, pricing.YEARLY, presentmentFor("fr", "FR"))).toMatch(/49,99\u00a0€/);
   });
 
-  it("montre la livre quand la langue est le turc", () => {
-    expect(presentmentFor("tr")).toBe("TRY");
-    expect(presentmentFor("fr")).toBe("EUR");
-    expect(presentmentFor("fr", "tr")).toBe("TRY");
-    expect(planRenewalCopy(tTr, pricing.YEARLY, "TRY")).toMatch(/1.?499,99/);
+  it("montre les prix du pays, écrits dans la langue du site", () => {
+    expect(presentmentFor("tr", "tr").prices.currency).toBe("TRY");
+    expect(presentmentFor("fr").prices.currency).toBe("EUR");
+    // Le pays décide de la devise, pas la langue : un Turc en interface française paie en
+    // livres, un Français en interface turque en euros.
+    expect(presentmentFor("fr", "tr").prices.currency).toBe("TRY");
+    expect(presentmentFor("tr", "fr").prices.currency).toBe("EUR");
+    expect(planRenewalCopy(tTr, pricing.YEARLY, presentmentFor("tr", "tr"))).toMatch(/1.?499,99/);
+    expect(planRenewalCopy(tFr, pricing.YEARLY, presentmentFor("fr", "es"))).toMatch(/39,99\u00a0€/);
+    expect(planCaption(tFr, pricing.YEARLY, presentmentFor("fr", "es"))).toMatch(/^3,33\u00a0€/);
   });
 });

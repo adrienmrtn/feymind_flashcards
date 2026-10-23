@@ -14,14 +14,22 @@ import { Reveal } from "./Reveal";
  *
  * Aucun montant n'est recopié ici : tout vient de `@micabo/core/pricing` (le catalogue que
  * l'app et Stripe partagent), et les mots de `pricing-copy`. Quand le catalogue change, la
- * vitrine change avec lui, dans la devise du visiteur (l'euro, la livre en turc).
+ * vitrine change avec lui, **aux prix du pays du visiteur** — ceux que l'App Store lui
+ * vendrait (39,99 € en Espagne, $59.99 aux États-Unis) —, écrits dans la langue du site.
  *
  * Une grille de prix qui cache son prix se lit comme un tunnel de vente : le prix est donc
  * le plus gros texte de la carte, et l'essai est dit à côté, pas en petit dessous.
  */
-export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
+export function Pricing({
+  signedIn = false,
+  country = null,
+}: {
+  signedIn?: boolean;
+  /** Le pays des prix, résolu côté serveur (`readPricingCountry`). */
+  country?: string | null;
+}) {
   const { t, locale } = useI18n();
-  const currency = presentmentFor(locale);
+  const presentment = presentmentFor(locale, country);
   const [yearly, weekly] = pricing.offers();
   const features = [
     t("landing.pricingFeature1"),
@@ -32,10 +40,10 @@ export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
   const href = signedIn ? "/app" : "/commencer";
 
   const card = (plan: pricing.Plan, recommended: boolean) => {
-    const amount = pricing.priceText(pricing.presentmentAmount(plan, currency), currency);
-    const monthly = pricing.monthlyEquivalent(plan, currency);
+    const amount = pricing.planPriceText(plan, presentment);
+    const monthly = pricing.monthlyEquivalent(plan, presentment);
     const unit = t(plan.period === "year" ? "app.paywall.periodYear" : "app.paywall.periodWeek");
-    const badge = trialBadge(t, plan);
+    const badge = trialBadge(t, plan, presentment);
     return (
       <div
         className={`lp-card flex h-full flex-col rounded-[30px] p-6 sm:p-8 ${
@@ -58,10 +66,10 @@ export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
           <span className="text-[15px] font-bold text-ink-tertiary">/ {unit}</span>
         </p>
         <p className="mt-2 min-h-[22px] text-[14.5px] font-semibold text-ink-secondary">
-          {monthly ? t("landing.pricingMonthly", { price: monthly }) : planRenewalCopy(t, plan, currency)}
+          {monthly ? t("landing.pricingMonthly", { price: monthly }) : planRenewalCopy(t, plan, presentment)}
         </p>
         {monthly ? (
-          <p className="mt-1 text-[13px] text-ink-tertiary">{planRenewalCopy(t, plan, currency)}</p>
+          <p className="mt-1 text-[13px] text-ink-tertiary">{planRenewalCopy(t, plan, presentment)}</p>
         ) : (
           <p className="mt-1 text-[13px] text-ink-tertiary">&nbsp;</p>
         )}
@@ -71,7 +79,7 @@ export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
             recommended ? "lp-cta bg-accent text-on-ink" : "lp-card bg-surface-muted text-ink"
           }`}
         >
-          {recommended && badge ? t("landing.pricingTrialCta", { days: plan.trialDays }) : t("landing.heroCta")}
+          {recommended && badge ? t("landing.pricingTrialCta", { days: pricing.trialDays(plan, presentment) }) : t("landing.heroCta")}
         </Link>
       </div>
     );

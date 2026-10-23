@@ -21,6 +21,7 @@ import { UI_LOCALES, UI_LOCALE_META, type UiLocale } from "@/lib/i18n/locales";
 import { localeSwitchHref } from "@/lib/i18n/paths";
 import { FRIENDS_PATH } from "@/lib/lesson/routes";
 import { requestPaywall } from "@/lib/paywall";
+import { usePresentment } from "@/lib/presentment";
 import { manageLabel, subscriptionDetail, subscriptionHeadline, type SubscriptionView } from "@/lib/subscription-copy";
 
 /** Où l'on écrit, et nos autres apps : les mêmes adresses que `ProfileLinks` côté Swift. */
@@ -183,7 +184,10 @@ function OfferRow() {
     return () => window.clearInterval(timer);
   }, []);
 
-  const percent = t("app.profileTab.offerHelp", { percent: pricing.discountSavingsPercent() });
+  const presentment = usePresentment();
+  const percent = t("app.profileTab.offerHelp", {
+    percent: pricing.discountSavingsPercent(presentment),
+  });
   return (
     <button type="button" onClick={() => requestDiscount("paywall")} className="pressable -mt-3 flex items-center gap-3.5 rounded-[22px] bg-surface p-3.5 text-start shadow-[inset_0_0_0_1.5px_var(--color-stroke)]">
       <span className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-offer-wash text-offer-sky">

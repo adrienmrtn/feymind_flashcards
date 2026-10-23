@@ -39,7 +39,7 @@ describe("subscription-copy", () => {
       periodType: "normal",
       expiresAt: "2026-10-12T12:00:00.000Z",
       willRenew: true,
-      productId: pricing.stripePriceId("yearly"),
+      productId: pricing.legacyStripePriceId("yearly"),
     };
     expect(subscriptionHeadline(t, view)).toBe("Micabo Pro");
     expect(planTitleFor(t, view.productId)).toBe("Annuel");
@@ -81,7 +81,7 @@ describe("subscription-copy", () => {
       periodType: "trial",
       expiresAt: "2026-09-04T12:00:00.000Z",
       willRenew: true,
-      productId: pricing.stripePriceId("yearly"),
+      productId: pricing.legacyStripePriceId("yearly"),
     };
     expect(subscriptionHeadline(t, view)).toBe("Essai Micabo Pro");
     expect(subscriptionDetail(t, locale, view)).toMatch(/Jusqu'au 4 septembre/);

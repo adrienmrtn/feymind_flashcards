@@ -27,7 +27,7 @@ import { usePresentment } from "@/lib/presentment";
  * examen. Pas de mock exam, pas de dictée vocale.
  *
  * **Les prix sont sous le pli, et c'est délibéré.** Tout tenait sur un écran, donc l'œil
- * tombait sur « 4,99 » avant d'avoir lu ce qu'on achète, et un prix lu avant sa raison est
+ * tombait sur « 4,99 € » avant d'avoir lu ce qu'on achète, et un prix lu avant sa raison est
  * toujours trop cher. Les quatre arguments prennent donc la hauteur visible entière - ils sont
  * la page - et les formules arrivent au défilement, pour qui a fini de lire. Un indicateur
  * dit qu'elles sont là : cacher le prix ne doit pas donner l'impression qu'on le cache.
@@ -55,6 +55,7 @@ export function PaywallOffer({
   const [pending, setPending] = useState(false);
 
   const selected = pricing.planFor(chosen);
+  const presentment = usePresentment();
 
   // L'offre est la dernière marche de l'entonnoir, et elle n'a pas d'adresse : sans cet
   // événement, Vercel ne voit qu'un chargement de `/app` de plus.
@@ -158,8 +159,8 @@ export function PaywallOffer({
           className="pressable shiny flex h-14 w-full items-center justify-center gap-2 rounded-button bg-accent text-[16px] font-semibold text-on-ink disabled:opacity-70"
         >
           {pending ? <ThinkingOrb state="connecting" size={20} theme="dark" /> : null}
-          {pricing.hasTrial(selected)
-            ? t("app.paywall.startTrial", { days: selected.trialDays })
+          {pricing.hasTrial(selected, presentment)
+            ? t("app.paywall.startTrial", { days: pricing.trialDays(selected, presentment) })
             : t("app.paywall.subscribe")}
         </button>
 
@@ -200,8 +201,8 @@ export function PlanChoice({
   onSelect: () => void;
 }) {
   const { t } = useI18n();
-  const currency = usePresentment();
-  const badge = trialBadge(t, plan);
+  const presentment = usePresentment();
+  const badge = trialBadge(t, plan, presentment);
 
   return (
     <button
@@ -228,7 +229,7 @@ export function PlanChoice({
           {planTitle(t, plan)}
         </p>
         <p className="mt-0.5 text-[12.5px] leading-snug text-ink-tertiary">
-          {planRenewalCopy(t, plan, currency)}
+          {planRenewalCopy(t, plan, presentment)}
         </p>
       </div>
       <div className="shrink-0 text-end">
@@ -237,7 +238,7 @@ export function PlanChoice({
             selected ? "text-accent" : "text-ink"
           }`}
         >
-          {pricing.planDisplayedPrice(plan, currency)}
+          {pricing.planDisplayedPrice(plan, presentment)}
         </p>
         <p className="mt-1 text-[11.5px] text-ink-tertiary">{planDisplayedUnit(t, plan)}</p>
       </div>
