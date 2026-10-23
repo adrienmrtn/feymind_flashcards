@@ -123,8 +123,12 @@ class CloudSync(
                 // La session du compte a pu se perdre en route (`accessToken` retombe alors sur
                 // l'invité) : pousser sous `user` avec le jeton d'un autre serait refusé partout.
                 if (auth.userId.lowercase() != user) throw IOException("user changed")
-                // Ce qui avait été mis de côté pour ce compte revient dans la file.
+                // Ce qui avait été mis de côté pour ce compte revient dans la file : les
+                // suppressions et les notes, puis les leçons et les examens qui n'avaient pas pu
+                // monter avant son départ (`leaveAccount`). La descente qui suit départage.
                 prefs.unpark(user)
+                lessons.unpark(user)
+                exams.unpark(user)
                 if (isAccount && switched) claimGuest(token, user, previous)
                 if (switched && !accountToGuest) lessons.markDirty(lessons.lessons.value.keys)
                 pull(token, user, since, switched, isAccount)
@@ -166,28 +170,77 @@ class CloudSync(
     }
 
     /**
-     * Après une déconnexion (`parkFor`, le compte qui s'en va) ou la suppression du compte. Les
-     * leçons restent ici.
+     * **La déconnexion et la suppression du compte, de bout en bout** (`CloudSync.leaveAccount`
+     * sur l'iPhone). Jusqu'au 23 octobre 2026, se déconnecter laissait les leçons ici : elles
+     * restaient affichées, et un passage suivant pouvait les remonter sous l'invité, puis sous
+     * le compte d'après (un camarade sur le même téléphone). Désormais :
      *
-     * **Déconnexion** : ce qui n'a pas pu monter pour le compte n'est plus jeté. Poussé sous
-     * l'invité, il ne servait à rien (aucune ligne touchée, notes refusées) : il est mis de côté
-     * sous l'identifiant du compte, et repart à sa prochaine connexion. Le dernier utilisateur
-     * et le repère restent ceux du compte : le passage suivant sait que c'est un compte qui
-     * laisse place à l'invité, et ne recopie pas ses leçons sous l'invité.
+     * 1. une dernière montée (déconnexion seulement) : une révision de la minute d'avant ne doit
+     *    pas être le prix du départ ;
+     * 2. la session du compte se ferme, ou le compte est supprimé (`close`) ; une suppression
+     *    qui échoue lève son erreur, et **rien** n'a changé ici ;
+     * 3. déconnexion : ce que la dernière montée n'a pas pu pousser (hors ligne, un refus) est
+     *    mis de côté sous l'identifiant du compte - suppressions, notes, leçons à pousser,
+     *    examens changés - et revient à sa prochaine connexion (`sync`, `unpark`), avec ce que
+     *    le serveur avait déjà. Suppression : rien à garder ;
+     * 4. le téléphone se vide de ce qui appartient à l'élève (leçons, examens, examens blancs,
+     *    série), sans pierre tombale ; le repère, la file et le dernier utilisateur s'oublient
+     *    (`forget`) ;
+     * 5. un invité neuf prend la place de l'ancien, qui a cédé ses lignes au compte : il n'a
+     *    rien à transférer, et ne remonte rien de l'ancien compte.
      *
-     * **Compte supprimé** : ses lignes n'existent plus au serveur, sa file non plus ; tout
-     * repart de zéro, et les leçons d'ici remontent sous l'invité.
+     * Aucun passage ne part entre la fermeture de la session et le téléphone vidé : tout se
+     * fait sous le verrou de la synchronisation. Le profil (l'accueil fini, la langue, le pays)
+     * reste, comme sur l'iPhone : l'élève reste accueilli sur ce téléphone.
+     *
+     * Rend vrai quand la dernière montée a tout poussé (toujours vrai pour une suppression).
      */
-    fun forget(parkFor: String? = null) {
-        if (!parkFor.isNullOrEmpty()) {
-            prefs.park(parkFor.lowercase())
-        } else {
-            prefs.syncWatermark = 0
-            prefs.syncUser = ""
-            prefs.syncUserKind = ""
-            prefs.removeTombstones(prefs.tombstones)
-            prefs.removeReviews(prefs.pendingReviews)
+    suspend fun leaveAccount(deleting: Boolean, close: suspend () -> Unit): Boolean {
+        val account = auth.account.value?.userId?.lowercase().orEmpty()
+        val clean = if (deleting) true else runCatching { sync() }.getOrDefault(false)
+        return mutex.withLock {
+            // Une suppression ratée lève ici : rien n'est encore effacé.
+            close()
+            withContext(Dispatchers.IO) {
+                lessons.ready()
+                exams.ready()
+                if (deleting || account.isEmpty()) {
+                    lessons.leaveAccount(parkFor = null)
+                    exams.leaveAccount(parkFor = null, since = 0L)
+                    if (account.isNotEmpty()) {
+                        prefs.dropParked(account)
+                        lessons.dropParked(account)
+                        exams.dropParked(account)
+                    }
+                } else {
+                    // Le premier passage sous ce compte n'a jamais abouti (connecté puis parti
+                    // hors ligne) : rien d'ici n'est encore confirmé chez lui, tout est mis de côté.
+                    val confirmed = prefs.syncUser == account
+                    prefs.park(account)
+                    lessons.leaveAccount(parkFor = account, everything = !confirmed)
+                    exams.leaveAccount(parkFor = account, since = if (confirmed) prefs.syncWatermark else 0L, everything = !confirmed)
+                }
+                streak?.reset()
+                // L'examen blanc offert se compte par compte au serveur, comme sur l'iPhone.
+                prefs.mockFreeUsed = false
+                forget()
+                auth.startFreshGuest()
+            }
+            clean
         }
+    }
+
+    /**
+     * Efface le repère, la file et le dernier utilisateur (`CloudSync.forget` sur l'iPhone) : le
+     * compte suivant n'hérite ni du repère du précédent, ni de ce qui attendait de monter pour lui
+     * (déjà mis de côté par `leaveAccount` quand il le fallait).
+     */
+    private fun forget() {
+        prefs.syncWatermark = 0
+        prefs.syncUser = ""
+        prefs.syncUserKind = ""
+        prefs.removeTombstones(prefs.tombstones)
+        prefs.removeReviews(prefs.pendingReviews)
         prefs.profileSignature = ""
         _state.value = SyncState()
     }

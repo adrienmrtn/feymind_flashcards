@@ -93,6 +93,8 @@ class LessonRepository(
     private val streak: Streak,
 ) {
     private val directory = File(context.filesDir, "lessons").apply { mkdirs() }
+    /** Les leçons mises de côté pour un compte qui s'en va, un dossier par compte (`leaveAccount`). */
+    private val parkedRoot = File(context.filesDir, "parked-lessons")
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val diskLock = Mutex()
     private val writing = MutableStateFlow<Set<String>>(emptySet())
@@ -337,6 +339,93 @@ class LessonRepository(
         prefs.addTombstones(all.flatMap { lesson -> listOf("course:${lesson.id}") + lesson.themes.flatMap { it.flashcards }.filter { it.id.isNotEmpty() }.map { "card:${it.id}" } })
         _lessons.value = emptyMap()
         scope.launch(Dispatchers.IO) { diskLock.withLock { directory.listFiles().orEmpty().forEach { it.delete() } } }
+    }
+
+    /**
+     * **La sortie d'un compte** (déconnexion, suppression), comme `LocalWipe.eraseAccountData`
+     * sur l'iPhone : toutes les leçons quittent ce téléphone, **sans pierre tombale** (elles
+     * restent sur le compte, ou partent avec lui par la cascade du serveur). Avant, elles
+     * restaient ici, et la synchronisation suivante les remontait sous l'invité, puis sous le
+     * compte d'après.
+     *
+     * `parkFor` (déconnexion) : ce que la dernière montée n'a pas pu pousser pour ce compte est
+     * mis de côté sous son identifiant (`files/parked-lessons/<compte>/`), et revient à sa
+     * prochaine connexion (`unpark`). `everything` : la file de ce compte n'a jamais été
+     * confirmée par un passage sous lui (le premier passage après la connexion n'a pas abouti) ;
+     * toutes les leçons sont alors mises de côté, pas seulement celles à pousser.
+     */
+    suspend fun leaveAccount(parkFor: String?, everything: Boolean = false) {
+        ready()
+        val all = _lessons.value.values.toList()
+        _lessons.value = emptyMap()
+        withContext(Dispatchers.IO) {
+            diskLock.withLock {
+                val account = parkFor?.lowercase().orEmpty()
+                val kept = if (account.isEmpty()) emptyList() else all.filter { everything || it.dirty }
+                if (kept.isNotEmpty()) {
+                    val parked = File(parkedRoot, account).apply { mkdirs() }
+                    kept.forEach { lesson ->
+                        runCatching {
+                            File(parked, "${lesson.id}.json").writeText(MicaboJson.encodeToString(Lesson.serializer(), lesson.copy(dirty = true)))
+                        }.onFailure { Log.w(TAG, "Leçon non mise de côté", it) }
+                    }
+                }
+                directory.listFiles().orEmpty().forEach { it.delete() }
+            }
+        }
+    }
+
+    /**
+     * **Ce qui avait été mis de côté pour ce compte revient**, à sa reconnexion (`CloudSync.sync`,
+     * avant la descente) : chaque leçon reprend sa place, à pousser, sauf si une version plus
+     * récente est déjà ici. La descente qui suit départage avec le serveur, comme d'habitude.
+     */
+    suspend fun unpark(user: String) {
+        val parked = File(parkedRoot, user.lowercase())
+        if (user.isEmpty() || !parked.isDirectory) return
+        val restored = withContext(Dispatchers.IO) {
+            parked.listFiles { file -> file.extension == "json" }.orEmpty().mapNotNull { file ->
+                runCatching { MicaboJson.decodeFromString(Lesson.serializer(), file.readText()) }.getOrNull()
+            }
+        }
+        val touched = mutableListOf<String>()
+        _lessons.update { map ->
+            touched.clear()
+            val next = map.toMutableMap()
+            for (lesson in restored) {
+                val local = next[lesson.id]
+                if (local != null && local.updatedAt >= lesson.updatedAt) continue
+                next[lesson.id] = lesson.copy(dirty = true, chat = local?.chat ?: lesson.chat)
+                touched.add(lesson.id)
+            }
+            next
+        }
+        // Écrites tout de suite, avant que le dossier mis de côté ne parte : une app tuée entre
+        // les deux ne perd rien.
+        withContext(Dispatchers.IO) {
+            diskLock.withLock {
+                var written = true
+                for (id in touched) {
+                    val latest = _lessons.value[id] ?: continue
+                    runCatching {
+                        val temp = File(directory, "$id.json.tmp")
+                        temp.writeText(MicaboJson.encodeToString(Lesson.serializer(), latest))
+                        if (!temp.renameTo(File(directory, "$id.json"))) throw java.io.IOException("rename")
+                    }.onFailure {
+                        written = false
+                        Log.w(TAG, "Leçon non rendue", it)
+                    }
+                }
+                // Une écriture ratée garde le dossier : la leçon reviendra au passage suivant.
+                if (written) parked.deleteRecursively()
+            }
+        }
+    }
+
+    /** Le compte a été supprimé : ce qui attendait de monter pour lui n'a plus où aller. */
+    suspend fun dropParked(user: String) {
+        if (user.isEmpty()) return
+        withContext(Dispatchers.IO) { File(parkedRoot, user.lowercase()).deleteRecursively() }
     }
 
     fun markOpened(id: String) = modify(id) { it.copy(openedAt = System.currentTimeMillis()) }

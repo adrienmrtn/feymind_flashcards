@@ -124,18 +124,28 @@ class MicaboApplication : Application() {
     }
 
     /**
-     * Se déconnecter : une dernière synchronisation, puis l'invité reprend. Les leçons restent.
-     * Ce que cette dernière synchronisation n'a pas pu monter (hors ligne) n'est plus jeté : il
-     * est mis de côté pour ce compte, et repart à sa prochaine connexion (`CloudSync.forget`).
+     * **Se déconnecter**, comme sur l'iPhone : une dernière montée, la session se ferme, le
+     * téléphone se vide des leçons, examens et de la série du compte, et un invité neuf prend
+     * la place (`CloudSync.leaveAccount`). Les cours restent sur le compte, ils ne restent plus
+     * ici à remonter sous l'invité, puis sous le compte suivant (`ios_signOutMsg`). Ce que la
+     * dernière montée n'a pas pu pousser (hors ligne) est mis de côté pour ce compte et revient
+     * à sa prochaine connexion. Le profil reste : l'accueil ne se rouvre pas.
      */
     suspend fun signOut() {
-        val account = auth.account.value?.userId
-        runCatching { sync.sync() }
-        auth.signOut()
-        sync.forget(parkFor = account)
+        val pushed = sync.leaveAccount(deleting = false) { auth.signOut() }
+        afterLeaving()
+        analytics.track("signed_out", mapOf("pushed" to pushed))
+    }
+
+    /** Ce qui suit la sortie d'un compte, hors synchronisation : l'écran repart d'un invité neuf. */
+    private suspend fun afterLeaving() {
         social.reset()
-        analytics.track("signed_out")
-        withContext(Dispatchers.Main) { billing.follow(auth.guestId, fromGuest = false) }
+        withContext(Dispatchers.Main) {
+            composer.reset()
+            billing.follow(auth.guestId, fromGuest = false)
+        }
+        rescheduleReminders()
+        syncSoon(force = true)
     }
 
     /**
@@ -164,12 +174,16 @@ class MicaboApplication : Application() {
         composer.reset()
     }
 
-    /** Supprimer son compte : tout part côté serveur, l'invité reprend. */
+    /**
+     * **Supprimer son compte** : tout part côté serveur, puis le téléphone se vide comme à la
+     * déconnexion et un invité neuf prend la place (`CloudSync.leaveAccount`) - le message
+     * promet « tes cours seront effacés ». Une suppression qui échoue lève son erreur, et rien
+     * n'a changé ici.
+     */
     suspend fun deleteAccount() {
-        auth.deleteAccount()
-        sync.forget()
-        social.reset()
-        withContext(Dispatchers.Main) { billing.follow(auth.guestId, fromGuest = false) }
+        sync.leaveAccount(deleting = true) { auth.deleteAccount() }
+        afterLeaving()
+        analytics.track("account_deleted")
     }
 
     override fun onCreate() {

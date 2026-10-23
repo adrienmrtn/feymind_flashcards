@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import java.io.File
 import java.text.NumberFormat
@@ -225,6 +226,69 @@ class ExamRepository(context: Context, private val prefs: Prefs? = null) {
         _results.value = emptyList()
         persist()
     }
+
+    /**
+     * **La sortie d'un compte** (déconnexion, suppression) : les examens et les examens blancs
+     * quittent ce téléphone, sans pierre tombale (ils restent sur le compte). Ceux qui ont changé
+     * depuis la dernière synchronisation réussie (`since`), ou tous (`everything`), sont mis de
+     * côté pour ce compte (`parkFor`) et reviennent à sa prochaine connexion (`unpark`).
+     */
+    suspend fun leaveAccount(parkFor: String?, since: Long, everything: Boolean = false) {
+        loaded.await()
+        val all = _exams.value
+        val kept = if (parkFor.isNullOrEmpty()) emptyList() else all.filter { everything || it.updatedAt > since }
+        _exams.value = emptyList()
+        _results.value = emptyList()
+        withContext(Dispatchers.IO) { lock.withLock {
+            if (kept.isNotEmpty()) {
+                runCatching {
+                    val target = parkedFile(parkFor.orEmpty())
+                    target.parentFile?.mkdirs()
+                    val previous = runCatching { MicaboJson.decodeFromString(ExamStore.serializer(), target.readText()).exams }.getOrNull().orEmpty()
+                    val merged = previous.filter { old -> kept.none { it.id == old.id } } + kept
+                    target.writeText(MicaboJson.encodeToString(ExamStore.serializer(), ExamStore(merged)))
+                }.onFailure { Log.w("Exams", "Examens non mis de côté", it) }
+            }
+            runCatching {
+                val temp = File(file.parentFile, "exams.json.tmp")
+                temp.writeText(MicaboJson.encodeToString(ExamStore.serializer(), ExamStore()))
+                temp.renameTo(file)
+            }.onFailure { Log.w("Exams", "Examens non effacés", it) }
+        } }
+    }
+
+    /** Les examens mis de côté pour ce compte reviennent, sauf si une version plus récente est ici. */
+    suspend fun unpark(user: String) {
+        if (user.isEmpty()) return
+        val target = parkedFile(user)
+        if (!target.exists()) return
+        loaded.await()
+        val parked = withContext(Dispatchers.IO) {
+            runCatching { MicaboJson.decodeFromString(ExamStore.serializer(), target.readText()).exams }.getOrNull().orEmpty()
+        }
+        val current = _exams.value
+        val back = parked.filter { exam -> current.none { it.id == exam.id && it.updatedAt >= exam.updatedAt } }
+        if (back.isNotEmpty()) _exams.value = (current.filter { local -> back.none { it.id == local.id } } + back).sortedBy { it.date }
+        // Écrits tout de suite, avant que la copie mise de côté ne parte.
+        withContext(Dispatchers.IO) {
+            lock.withLock {
+                val written = back.isEmpty() || runCatching {
+                    val temp = File(file.parentFile, "exams.json.tmp")
+                    temp.writeText(MicaboJson.encodeToString(ExamStore.serializer(), ExamStore(_exams.value, _results.value)))
+                    temp.renameTo(file)
+                }.getOrDefault(false)
+                if (written) target.delete()
+            }
+        }
+    }
+
+    /** Le compte a été supprimé : ses examens mis de côté n'ont plus où aller. */
+    fun dropParked(user: String) {
+        if (user.isEmpty()) return
+        parkedFile(user).delete()
+    }
+
+    private fun parkedFile(user: String) = File(File(file.parentFile, "parked-exams"), "${user.lowercase()}.json")
 
     /** Les examens d'aujourd'hui et après, le plus proche d'abord. */
     fun upcoming(now: Long = System.currentTimeMillis()): List<Exam> =

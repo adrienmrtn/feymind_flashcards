@@ -381,10 +381,14 @@ class SupabaseAuth(private val prefs: Prefs) {
         mutex.withLock { forgetAccount() }
     }
 
-    /** Supprimer son compte (`delete_own_account`) : tout part en cascade côté serveur. */
+    /**
+     * Supprimer son compte (`delete_own_account`) : tout part en cascade côté serveur. Lève une
+     * erreur quand le compte n'est pas parti - y compris une session perdue en route : le
+     * téléphone ne se vide qu'après une suppression réussie (`CloudSync.leaveAccount`).
+     */
     suspend fun deleteAccount() = withContext(Dispatchers.IO) {
         val token = accessToken()
-        if (_account.value == null) return@withContext
+        if (_account.value == null) throw AuthException("invalid", "No account session")
         val result = try {
             http("POST", "${SupabaseConfig.URL}/rest/v1/rpc/delete_own_account", "{}", token)
         } catch (error: IOException) {
@@ -392,6 +396,17 @@ class SupabaseAuth(private val prefs: Prefs) {
         }
         if (result.status !in 200..299) throw ApiException(result.status, "delete", result.body.take(200))
         mutex.withLock { forgetAccount() }
+    }
+
+    /**
+     * **Un invité neuf** (`AuthController.startFreshGuest`), à la sortie d'un compte : l'ancien a
+     * cédé ses lignes au compte (`claim_guest`), et un invité neuf n'a rien à transférer. Son
+     * jeton de transfert s'oublie aussi. Sans réseau, l'invité s'ouvrira au premier appel.
+     */
+    suspend fun startFreshGuest() {
+        mutex.withLock { prefs.clearSession() }
+        prefs.clearGuestClaim()
+        runCatching { accessToken() }
     }
 
     /** Les erreurs de GoTrue, lues comme sur iPhone (`SupabaseAuthClient.mapError`). */

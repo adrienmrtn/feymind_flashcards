@@ -275,6 +275,15 @@ class Prefs(context: Context) {
         }
     }
 
+    /** Le compte a été supprimé : ce qui était mis de côté pour lui n'a plus où aller. */
+    fun dropParked(user: String) {
+        if (user.isEmpty()) return
+        prefs.edit {
+            remove("sync.parked.tombstones.$user")
+            remove("sync.parked.reviews.$user")
+        }
+    }
+
     /** La dernière synchronisation réussie, en millisecondes ; 0 pour tout reprendre. */
     var syncWatermark: Long
         get() = prefs.getLong("sync.watermark", 0)
