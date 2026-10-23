@@ -225,9 +225,6 @@ fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit, onLo
     val files = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) composer.addFile(uri)
     }
-    val audioFiles = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) composer.addAudio(uri, fromRecorder = false)
-    }
     val photos = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(PhotoImport.MAX_PAGES)) { uris ->
         composer.addPhotos(uris)
     }
@@ -258,7 +255,6 @@ fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit, onLo
     val chips = listOf(
         SourceChip(SupportKind.PDF, R.string.lesson_import_pdf, R.string.lesson_import_pdfSub),
         SourceChip(SupportKind.PHOTO, R.string.lesson_import_photo, R.string.lesson_import_photoSub),
-        SourceChip(SupportKind.AUDIO, R.string.lesson_import_audio, R.string.lesson_import_audioSub),
         SourceChip(SupportKind.YOUTUBE, R.string.lesson_import_youtube, R.string.lesson_import_youtubeSub),
         SourceChip(SupportKind.TEXT, R.string.lesson_import_text, R.string.lesson_import_textSub),
     )
@@ -271,7 +267,7 @@ fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit, onLo
                 when (chip.kind) {
                     SupportKind.PDF -> files.launch(arrayOf("application/pdf", WORD_TYPE))
                     SupportKind.PHOTO -> dialog = "photo"
-                    SupportKind.AUDIO -> dialog = "audio"
+                    SupportKind.AUDIO -> Unit // pas d'import audio sur Android
                     SupportKind.YOUTUBE -> dialog = "youtube"
                     SupportKind.TEXT -> dialog = "text"
                 }
@@ -312,11 +308,6 @@ fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit, onLo
             onDismiss = { dialog = null },
             onScan = { dialog = null; scan() },
             onLibrary = { dialog = null; pickPhotos() },
-        )
-        "audio" -> AudioSheet(
-            onDismiss = { dialog = null },
-            // L'enregistrement fini rejoint la barre par le service (`RecordingService.onRecorded`).
-            onPickFile = { dialog = null; audioFiles.launch(arrayOf("audio/*")) },
         )
         "youtube" -> YouTubeDialog(
             onDismiss = { dialog = null },

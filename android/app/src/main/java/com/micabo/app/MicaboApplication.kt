@@ -2,7 +2,6 @@ package com.micabo.app
 
 import android.app.Application
 import com.micabo.app.data.Analytics
-import com.micabo.app.data.AudioImport
 import com.micabo.app.data.AuthException
 import com.micabo.app.data.Billing
 import com.micabo.app.data.CloudSync
@@ -13,7 +12,6 @@ import com.micabo.app.data.LessonComposer
 import com.micabo.app.data.LessonRepository
 import com.micabo.app.data.MikaChat
 import com.micabo.app.data.Prefs
-import com.micabo.app.data.RecordingService
 import com.micabo.app.data.Social
 import com.micabo.app.data.Streak
 import com.micabo.app.data.SupabaseAuth
@@ -216,10 +214,7 @@ class MicaboApplication : Application() {
         // Une session de compte perdue : ce qui attendait de monter pour lui est mis de côté.
         auth.onAccountLost = { account -> sync.park(account) }
         social = Social(auth)
-        composer = LessonComposer(this, YouTubeImport(functions), AudioImport(functions)) { name, props -> analytics.track(name, props) }
-        // L'enregistrement du micro, fini (le bouton, la notification, la limite) : il rejoint la
-        // barre comme un support, même écran verrouillé ou feuille refermée.
-        RecordingService.onRecorded = { file -> composer.addAudio(android.net.Uri.fromFile(file), fromRecorder = true) }
+        composer = LessonComposer(this, YouTubeImport(functions)) { name, props -> analytics.track(name, props) }
         analytics.start()
         // Le compte invité s'ouvre tout de suite : il doit exister avant un achat, pour que
         // l'abonnement ait un propriétaire. Sans réseau, il s'ouvrira au premier appel.
