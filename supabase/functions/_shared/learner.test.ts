@@ -76,3 +76,10 @@ Deno.test("la profondeur des notes suit la marche, sous les plafonds du serveur"
   assert(depthOf("health").examFormat && depthOf("competitive").examFormat && depthOf("upperSecondary").examFormat);
   assert(!depthOf("lowerSecondary").examFormat && !depthOf("graduate").examFormat);
 });
+
+Deno.test("une note envoyée sur le barème du pays se lit par son libellé, pas sur 100", () => {
+  const learner = readLearner({ tier: "upperSecondary", country: "fr", currentScore: 15, scoreLabel: "15/20", targetScore: 18, targetLabel: "18/20" });
+  assertEquals(learner.currentScore, 75);
+  assertEquals(learner.targetScore, 90);
+  assertEquals(readLearner({ currentScore: 62 }).currentScore, 62);
+});
