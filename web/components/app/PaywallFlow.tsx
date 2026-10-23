@@ -7,7 +7,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { pricing, type PaywallTrigger } from "@micabo/core";
 
 import { PaywallOffer } from "@/components/app/PaywallOffer";
-import { trackCheckoutSuccess, trackPaywallView } from "@/lib/analytics/funnel";
+import { trackCheckoutSuccess, trackPaywallView, type PaywallSurface } from "@/lib/analytics/funnel";
 import { isOfferClaimed, paywallClosed } from "@/lib/discount";
 import {
   isHardPaywall,
@@ -154,6 +154,7 @@ export function PaywallCard({
   startAt = "social",
   hard = false,
   trigger = null,
+  surface = "home",
 }: {
   onClose: () => void;
   startAt?: Stage;
@@ -161,6 +162,8 @@ export function PaywallCard({
   hard?: boolean;
   /** La porte qui a ouvert l'offre : une ligne au-dessus des formules dit laquelle. */
   trigger?: PaywallTrigger | null;
+  /** La porte, pour l'entonnoir : le tableau de bord, ou la fin du parcours (`/commencer/offre`). */
+  surface?: PaywallSurface;
 }) {
   const { t } = useI18n();
   /**
@@ -183,8 +186,8 @@ export function PaywallCard({
   // Les pages du court accueil (preuve, essai, rappel) n'ont pas d'adresse non plus : chacune
   // est une marche, et l'offre elle-même se signale depuis `PaywallOffer`.
   useEffect(() => {
-    if (stage !== "plans") trackPaywallView("home", stage);
-  }, [stage]);
+    if (stage !== "plans") trackPaywallView(surface, stage);
+  }, [stage, surface]);
 
   useEffect(() => {
     setCanClose(false);
@@ -286,7 +289,7 @@ export function PaywallCard({
             </p>
           ) : null}
           {stage === "plans" ? (
-            <PaywallOffer headingId={titleId} />
+            <PaywallOffer headingId={titleId} surface={surface} />
           ) : (
             <>
               <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2 pt-3">

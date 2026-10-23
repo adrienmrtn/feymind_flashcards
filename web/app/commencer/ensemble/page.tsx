@@ -1,38 +1,10 @@
-"use client";
-
-import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
-import { ReviewCarousel } from "@/components/onboarding/ReviewCarousel";
-import { useI18n } from "@/lib/i18n/client";
-import { useOnboarding } from "@/lib/onboarding/store";
+import { redirect } from "next/navigation";
 
 /**
- * **« On va y arriver ensemble. »**
- *
- * L'écran qui suit les deux moyennes ne demande rien. Il vient de faire écrire un chiffre bas
- * et un chiffre haut ; entre les deux, il y a un écart, et l'écart tout seul décourage. Ce que
- * cet écran ajoute, c'est que d'autres l'ont franchi.
- *
- * Il ne répète pas l'objectif : le chiffre vient d'être posé deux écrans plus tôt, et le
- * relire une troisième fois sonne comme une leçon. Une phrase, les avis, le bouton.
+ * Un écran de démonstration qui a quitté le parcours : l'étudiant arrive de la vitrine, il a déjà
+ * vu le produit, et le parcours commence maintenant par les questions. Un ancien lien ne doit pas
+ * tomber dans le vide, il rejoint la première.
  */
-export default function TogetherStep() {
-  const { ready } = useOnboarding();
-  const { t } = useI18n();
-
-  return (
-    <Scaffold
-      title={t("onboarding.togetherTitle")}
-      footer={<ContinueButton enabled={ready} />}
-      width="wide"
-      center
-    >
-      <p className="text-center text-[15px] leading-relaxed text-ink-secondary">
-        {t("onboarding.togetherLead")}
-      </p>
-
-      <div className="mt-7">
-        <ReviewCarousel />
-      </div>
-    </Scaffold>
-  );
+export default function RetiredStoryStep() {
+  redirect("/commencer/pays");
 }

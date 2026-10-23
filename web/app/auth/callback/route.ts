@@ -12,7 +12,8 @@ import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
  * de Next : un `NextResponse.redirect` tout neuf les perdait, `getUser()`
  * suivant voyait personne, et on renvoyait au pays.
  *
- * Après un échange réussi, on ouvre l'app. **Supabase est le compte.** On ne
+ * Après un échange réussi, on ouvre l'app - ou l'offre qui suit la création du compte
+ * (`/commencer/offre`), quand c'est elle que le parcours a demandée. **Supabase est le compte.** On ne
  * tranche plus « session GoTrue / compte Micabo » : c'est ce tri qui recréait
  * un parcours, puis un profil, pour une adresse déjà authentifiée.
  */
@@ -73,7 +74,7 @@ export async function GET(request: NextRequest) {
 function appNext(value: string | null): string {
   if (
     value &&
-    value.startsWith("/app") &&
+    (value.startsWith("/app") || value === "/commencer/offre") &&
     !value.startsWith("//") &&
     !value.includes("\\") &&
     !value.includes("@")

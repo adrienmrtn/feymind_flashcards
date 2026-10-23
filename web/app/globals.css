@@ -1660,7 +1660,7 @@ img[data-icon] {
 @keyframes micabo-step-forward {
   from {
     opacity: 0;
-    translate: 22px 0;
+    translate: 16px 0;
   }
   to {
     opacity: 1;
@@ -1671,7 +1671,7 @@ img[data-icon] {
 @keyframes micabo-step-back {
   from {
     opacity: 0;
-    translate: -22px 0;
+    translate: -16px 0;
   }
   to {
     opacity: 1;
@@ -1679,8 +1679,19 @@ img[data-icon] {
   }
 }
 
+/* Un écran de parcours entre en 240 ms, en trois temps de 35 ms : le titre, la réponse, le
+   bouton. Il en prenait 410 ; c'est ce qui donnait au parcours son air de lenteur, bien plus
+   que le réseau. Rien ne bouge que `translate` et `opacity`. */
 .step-part {
-  animation: micabo-step-forward 320ms var(--ease-out-strong) both;
+  animation: micabo-step-forward 240ms var(--ease-out-strong) both;
+}
+
+/* La réponse qui défile dans la carte : un fondu en haut et en bas dit qu'il y a une suite,
+   sans barre ni ombre qui mangent la place. */
+.step-scroll {
+  scrollbar-width: thin;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 10px, #000 calc(100% - 14px), transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 10px, #000 calc(100% - 14px), transparent 100%);
 }
 
 [data-step-dir="back"] .step-part {
@@ -2142,30 +2153,6 @@ html:not([data-appearance]) .app-shell {
 
 .grade-slider:focus-visible::-moz-range-thumb {
   box-shadow: 0 0 0 4px var(--color-accent-soft);
-}
-
-/**
- * **Le rail des avis : on le fait glisser.**
- *
- * L'accrochage est natif. Une reconstruction au `pointermove` refait moins bien l'inertie du
- * doigt, le rebond du bord et le respect du sens de lecture, et se trompe une fois sur dix sur
- * un pavé tactile. La barre de défilement, elle, n'a rien à faire là : le rail fait la largeur
- * d'une carte et les pastilles disent déjà où l'on en est.
- */
-.slider-rail {
-  scrollbar-width: none;
-}
-
-.slider-rail::-webkit-scrollbar {
-  display: none;
-}
-
-/* Voir `StoryScaffold` : la vignette d'un écran de démonstration se réduit pour tenir dans la
-   carte d'un téléphone, en emportant sa place avec elle. */
-@media (max-width: 639px) {
-  .story-figure > * {
-    zoom: 0.84;
-  }
 }
 
 /* --------------------------------------------------------------------------

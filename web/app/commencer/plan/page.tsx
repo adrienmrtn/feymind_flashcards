@@ -1,23 +1,10 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { StoryScaffold } from "@/components/onboarding/Scaffold";
-import { PathStory } from "@/components/onboarding/stories/PathStory";
-import { useI18n } from "@/lib/i18n/client";
-
-/** Ce que le cours devient : un chemin, étape par étape, jusqu'au quiz final. */
-export default function PathStep() {
-  const { t } = useI18n();
-  return (
-    <StoryScaffold
-      title={
-        <>
-          {t("onboarding.planTitleLead")}{" "}
-          <span className="text-accent">{t("onboarding.planTitleStrong")}</span>
-        </>
-      }
-      lead={t("onboarding.planLead")}
-    >
-      <PathStory />
-    </StoryScaffold>
-  );
+/**
+ * Un écran de démonstration qui a quitté le parcours : l'étudiant arrive de la vitrine, il a déjà
+ * vu le produit, et le parcours commence maintenant par les questions. Un ancien lien ne doit pas
+ * tomber dans le vide, il rejoint la première.
+ */
+export default function RetiredStoryStep() {
+  redirect("/commencer/pays");
 }
