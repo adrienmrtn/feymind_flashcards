@@ -70,15 +70,33 @@ export function activeProFrom(body: unknown, now = Date.now()): RevenueCatAccess
 }
 
 /**
- * Vrai si RevenueCat dit Pro pour ce compte ; la ligne `entitlements` est alors écrite.
+ * **L'identifiant d'événement d'une recopie.** `apply_entitlement` ignore un `p_event_id` déjà
+ * vu, et un index unique le tient sur toute la table : un identifiant fixe n'écrivait que pour
+ * le premier compte recopié, puis plus rien pour personne — en rendant quand même `true`.
+ * Chaque recopie porte donc le sien.
+ */
+export function syncEventId(userId: string, now = Date.now()): string {
+  return `revenuecat-sync-${userId}-${now}`;
+}
+
+/**
+ * Ce que `apply_entitlement` a répondu : vrai seulement si la ligne a été écrite. Un tableau
+ * vide, un objet inattendu, un `applied` à faux : rien n'a été écrit.
+ */
+export function wasApplied(body: unknown): boolean {
+  const row = Array.isArray(body) ? body[0] : body;
+  return (row as { applied?: unknown } | null | undefined)?.applied === true;
+}
+
+/**
+ * **Ce que RevenueCat sait de ce compte, maintenant** : le droit `pro` actif, `null` s'il n'y en
+ * a pas, `undefined` quand RevenueCat n'a pas pu répondre. `undefined` n'est pas « non ».
  * Ne lève jamais.
  */
-export async function syncProFromRevenueCat(userId: string): Promise<boolean> {
-  const url = Deno.env.get("SUPABASE_URL");
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!url || !serviceKey) return false;
+export async function fetchProAccess(
+  userId: string,
+): Promise<RevenueCatAccess | null | undefined> {
   const key = Deno.env.get("REVENUECAT_PUBLIC_KEY")?.trim() || PUBLIC_IOS_KEY;
-
   try {
     const response = await fetch(SUBSCRIBERS_URL + encodeURIComponent(userId), {
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -86,11 +104,61 @@ export async function syncProFromRevenueCat(userId: string): Promise<boolean> {
     });
     if (!response.ok) {
       console.warn(JSON.stringify({ revenuecat: "subscriber", status: response.status }));
-      return false;
+      return undefined;
     }
-    const access = activeProFrom(await response.json());
+    return activeProFrom(await response.json());
+  } catch (_error) {
+    console.warn(JSON.stringify({ revenuecat: "subscriber", status: "network" }));
+    return undefined;
+  }
+}
+
+const UUID_SHAPE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * **Les comptes qu'un `TRANSFER` concerne.**
+ *
+ * RevenueCat envoie un transfert sans `app_user_id` : il porte `transferred_from` (qui perd les
+ * achats) et `transferred_to` (qui les reçoit). C'est le cas d'un achat fait sur le compte
+ * invité, puis rattaché au vrai compte à la connexion. Seuls les identifiants Supabase (des
+ * UUID) comptent : un `$RCAnonymousID` n'a pas de ligne `entitlements`. Un compte présent des
+ * deux côtés reste du côté qui reçoit. `app_user_id`, quand il est là, est rangé avec ceux qui
+ * reçoivent, sauf s'il est déjà parmi ceux qui perdent.
+ */
+export function transferTargets(event: {
+  app_user_id?: unknown;
+  transferred_from?: unknown;
+  transferred_to?: unknown;
+}): { to: string[]; from: string[] } {
+  const uuids = (value: unknown): string[] =>
+    Array.isArray(value)
+      ? value.filter((id): id is string => typeof id === "string" && UUID_SHAPE.test(id))
+        .map((id) => id.toLowerCase())
+      : [];
+
+  const from = new Set(uuids(event.transferred_from));
+  const to = new Set(uuids(event.transferred_to));
+  for (const id of uuids([event.app_user_id])) {
+    if (!from.has(id)) to.add(id);
+  }
+  for (const id of to) from.delete(id);
+  return { to: [...to], from: [...from] };
+}
+
+/**
+ * Vrai si RevenueCat dit Pro pour ce compte **et** que la ligne `entitlements` a bien été
+ * écrite. Ne lève jamais.
+ */
+export async function syncProFromRevenueCat(userId: string): Promise<boolean> {
+  const url = Deno.env.get("SUPABASE_URL");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !serviceKey) return false;
+
+  try {
+    const access = await fetchProAccess(userId);
     if (!access) return false;
 
+    const now = Date.now();
     const written = await fetch(`${url}/rest/v1/rpc/apply_entitlement`, {
       method: "POST",
       headers: {
@@ -106,17 +174,25 @@ export async function syncProFromRevenueCat(userId: string): Promise<boolean> {
         p_period_type: access.periodType,
         p_expires_at: access.expiresAt,
         p_will_renew: access.willRenew,
-        p_event_at: new Date().toISOString(),
-        p_event_id: "revenuecat-sync",
+        p_event_at: new Date(now).toISOString(),
+        p_event_id: syncEventId(userId, now),
       }),
+      signal: AbortSignal.timeout(6000),
     });
     if (!written.ok) {
       console.warn(JSON.stringify({ revenuecat: "apply", status: written.status }));
+      return false;
+    }
+    // Une recopie que la base n'a pas appliquée ne rend pas `true` : la porte redemanderait à
+    // une base qui n'a pas changé, et refuserait quand même.
+    if (!wasApplied(await written.json())) {
+      console.warn(JSON.stringify({ revenuecat: "apply", status: "not_applied", user: userId }));
+      return false;
     }
     console.log(JSON.stringify({ revenuecat: "synced", user: userId }));
     return true;
   } catch (_error) {
-    console.warn(JSON.stringify({ revenuecat: "subscriber", status: "network" }));
+    console.warn(JSON.stringify({ revenuecat: "apply", status: "network" }));
     return false;
   }
 }

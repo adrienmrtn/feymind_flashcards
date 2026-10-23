@@ -269,24 +269,24 @@ describe("les offres", () => {
   });
 
   it("se comparent sur douze mois", () => {
-    expect(annualCost(YEARLY)).toBeCloseTo(69.99, 2);
-    expect(annualCost(DISCOUNT_YEARLY)).toBeCloseTo(39.99, 2);
-    // 7,99 € par semaine sur cinquante-deux semaines.
-    expect(annualCost(WEEKLY)).toBeCloseTo(415.48, 2);
+    expect(annualCost(YEARLY)).toBeCloseTo(49.99, 2);
+    expect(annualCost(DISCOUNT_YEARLY)).toBeCloseTo(29.99, 2);
+    // 4,99 € par semaine sur cinquante-deux semaines.
+    expect(annualCost(WEEKLY)).toBeCloseTo(259.48, 2);
   });
 
-  it("**calculent** leur pourcentage d'économie, et il vaut 83 au tarif plein", () => {
-    // 69,99 contre 415,48. Le chiffre sort des deux prix, et il suivra le jour où l'un des deux
-    // bouge. Le discount, lui, économise davantage — 90 — parce que son annuel est plus bas.
-    expect(savingsPercent()).toBe(83);
-    expect(savingsPercent(DISCOUNT_YEARLY)).toBe(90);
+  it("**calculent** leur pourcentage d'économie, et il vaut 81 au tarif plein", () => {
+    // 49,99 contre 259,48. Le chiffre sort des deux prix, et il suivra le jour où l'un des deux
+    // bouge. Le discount, lui, économise davantage — 88 — parce que son annuel est plus bas.
+    expect(savingsPercent()).toBe(81);
+    expect(savingsPercent(DISCOUNT_YEARLY)).toBe(88);
   });
 
   it("comparent le cadeau à l'annuel plein, pas aux cinquante-deux semaines", () => {
-    // 43 %, et non 90 : le paywall du cadeau barre 69,99 € juste au-dessus. Comparer la
+    // 40 %, et non 88 : le paywall du cadeau barre 49,99 € juste au-dessus. Comparer la
     // remise à l'offre la plus chère du catalogue gonflerait le chiffre à côté du prix
-    // qu'on montre, ce qui se lit comme une remise inventée.
-    expect(discountSavingsPercent()).toBe(43);
+    // qu'on montre, ce qui se lit comme une remise inventée. C'est aussi le −40 % de l'app.
+    expect(discountSavingsPercent()).toBe(40);
     expect(DISCOUNT_REFERENCE).toBe(YEARLY);
   });
 
@@ -296,12 +296,12 @@ describe("les offres", () => {
     // U+00A0 par `priceText`, parce que `Intl` rend tantôt U+00A0 tantôt U+202F selon la version
     // d'ICU - et un prix qui ne s'espace pas pareil selon la machine est une différence qu'on
     // finit par chercher longtemps.
-    const yearlyPerMonth = "5,83\u00a0€";
-    // Le cadeau **n'annonce plus de mensuel** : son paywall écrit le prix prélevé, 39,99 €
+    const yearlyPerMonth = "4,17\u00a0€";
+    // Le cadeau **n'annonce plus de mensuel** : son paywall écrit le prix prélevé, 29,99 €
     // par an. Le plan ne porte donc plus de `monthlyPrice` écrit, et la division ordinaire
-    // reprend ses droits — 39,99 ÷ 12 fait 3,3325, soit « 3,33 € ». Personne ne l'affiche ;
+    // reprend ses droits — 29,99 ÷ 12 fait 2,4992, soit « 2,50 € ». Personne ne l'affiche ;
     // ce que ce test tient, c'est qu'aucun nombre écrit à la main ne traîne derrière.
-    const discountPerMonth = "3,33\u00a0€";
+    const discountPerMonth = "2,50\u00a0€";
 
     expect(monthlyEquivalent(YEARLY)).toBe(yearlyPerMonth);
     expect(monthlyEquivalent(DISCOUNT_YEARLY)).toBe(discountPerMonth);
@@ -317,19 +317,20 @@ describe("les offres", () => {
     );
     expect(planRenewalCopy(WEEKLY)).toBe("Résiliable à tout moment");
     expect(trialBadge(YEARLY)).toBe("3 jours gratuits");
-    expect(trialBadge(WEEKLY)).toBeNull();
+    expect(trialBadge(WEEKLY)).toBe("3 jours gratuits");
   });
 
-  it("offrent trois jours d'essai à l'annuel, et rien aux autres", () => {
+  it("offrent trois jours d'essai à l'annuel et à la semaine, comme l'app, et rien au cadeau", () => {
     expect(FREE_TRIAL_DAYS).toBe(3);
     expect(hasTrial(YEARLY)).toBe(true);
     expect(hasTrial(DISCOUNT_YEARLY)).toBe(false);
-    expect(hasTrial(WEEKLY)).toBe(false);
+    expect(hasTrial(WEEKLY)).toBe(true);
+    expect(WEEKLY.trialDays).toBe(YEARLY.trialDays);
   });
 
   it("gardent le discount hors du paywall", () => {
     expect(offers().map((plan) => plan.kind)).toEqual(["yearly", "weekly"]);
-    expect(offers().map((plan) => plan.price)).toEqual([69.99, 7.99]);
+    expect(offers().map((plan) => plan.price)).toEqual([49.99, 4.99]);
     expect(PLANS).not.toContainEqual(DISCOUNT_YEARLY);
     expect(DISCOUNT_YEARLY.productId).toBe("com.micabo.app.pro.yearly.discount");
   });
@@ -346,7 +347,11 @@ describe("les offres", () => {
     expect(presentmentMonthly(DISCOUNT_YEARLY, "TRY")).toBe(TRY_AMOUNTS.yearly_discount_monthly);
     expect(priceText(TRY_AMOUNTS.weekly, "TRY")).toMatch(/₺|TRY/);
     expect(planDisplayedPrice(YEARLY, "TRY")).toBe(monthlyEquivalent(YEARLY, "TRY"));
-    expect(YEARLY.price).toBe(69.99);
+    expect(YEARLY.price).toBe(49.99);
+    // La ligne turque de `store/pricing.json`, celle qu'Apple prélève.
+    expect(TRY_AMOUNTS.yearly).toBe(1499.99);
+    expect(TRY_AMOUNTS.weekly).toBe(149.99);
+    expect(TRY_AMOUNTS.yearly_discount).toBe(899.99);
   });
 
   it("sont six chez RevenueCat, tous sur pro — la livre n'ajoute pas de ligne", () => {

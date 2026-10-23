@@ -68,6 +68,31 @@ enum LifetimePro {
     }
 }
 
+/// **D'où vient l'abonnement**, donc où il se gère. Les valeurs sont celles de la colonne
+/// `entitlements.store`, que le webhook normalise.
+enum SubscriptionStore: String, Equatable, Sendable {
+    case appStore = "app_store"
+    case playStore = "play_store"
+    case stripe
+    case promotional
+
+    /// La page où l'on gère cet abonnement, chez celui qui l'encaisse. `nil` pour un accès
+    /// offert : il n'y a rien à gérer, et un bouton qui ouvrirait l'App Store vide mentirait.
+    var manageURL: URL? {
+        switch self {
+        case .appStore:
+            URL(string: "https://apps.apple.com/account/subscriptions")
+        case .playStore:
+            URL(string: "https://play.google.com/store/account/subscriptions?package=com.micabo.app")
+        case .stripe:
+            // Le portail Stripe s'ouvre depuis le profil du site, connecté au même compte.
+            URL(string: "https://www.micabo.app/app/profil")
+        case .promotional:
+            nil
+        }
+    }
+}
+
 /// **L'abonnement, tel que l'app le lit.**
 ///
 /// Un seul objet répond à « est-ce que cette personne est abonnée ? », et tout ce qui se
@@ -103,6 +128,10 @@ final class ProAccess {
     /// **Le rappel du jour n'est que pour qui n'a jamais activé l'essai gratuit** : ni pendant
     /// l'essai, ni après, ni pour un abonné.
     var receivesDailyReminder: Bool { !isPro && !hasEverHadPro }
+
+    /// **D'où vient l'abonnement ouvert**, `nil` quand on ne le sait pas : « Gérer
+    /// l'abonnement » ouvre alors l'App Store, comme avant.
+    private(set) var store: SubscriptionStore?
 
     /// Même règle que le web (`ASSUME_PRO_WITHOUT_ROW`, à `false`) : pas de ligne, pas
     /// d'abonnement. Les deux clients doivent dire la même chose — un cours flouté sur le
@@ -207,6 +236,7 @@ final class ProAccess {
         // sur la table.
         if LifetimePro.matches(email?()) {
             trialEndsAt = nil
+            store = .promotional
             setPro(true)
             return
         }
@@ -217,6 +247,9 @@ final class ProAccess {
         // devenu un abonnement. La table sinon, pour un achat fait ailleurs.
         trialEndsAt = fromSDK.map(\.trialEndsAt) ?? fromTable?.trialEndsAt
         if fromSDK?.everHadPro == true || fromTable?.exists == true { markEverHadPro() }
+        // Le magasin du droit ouvert : le SDK d'abord, la table pour un achat fait ailleurs.
+        store = (fromSDK?.isPro == true ? fromSDK?.store : nil)
+            ?? (fromTable?.isPro == true ? fromTable?.store : nil)
 
         // Personne ne sait rien : le réglage tranche, et il dit non.
         guard fromSDK != nil || fromTable != nil else {
@@ -239,6 +272,7 @@ final class ProAccess {
                 if state.isPro {
                     // Un essai qui commence, ou qui devient un abonnement, se lit ici.
                     self.trialEndsAt = state.trialEndsAt
+                    if let store = state.store { self.store = store }
                     self.setPro(true)
                 } else {
                     await self.refresh()
@@ -248,7 +282,7 @@ final class ProAccess {
     }
 
     /// La ligne `entitlements`, ou `nil` quand on n'a pas pu la lire. `nil` n'est pas « non ».
-    private func readEntitlementRow() async -> (isPro: Bool, trialEndsAt: Date?, exists: Bool)? {
+    private func readEntitlementRow() async -> (isPro: Bool, trialEndsAt: Date?, exists: Bool, store: SubscriptionStore?)? {
         guard let token = await accessToken?(), let userID = userID?() else { return nil }
 
         do {
@@ -259,11 +293,16 @@ final class ProAccess {
                 filters: [URLQueryItem(name: "user_id", value: "eq.\(userID.uuidString.lowercased())")],
                 limit: 1
             )
-            guard let row = rows.first else { return (false, nil, false) }
+            guard let row = rows.first else { return (false, nil, false, nil) }
             let expired = row.expires_at.map { $0 < Date() } ?? false
             let active = row.is_pro && !expired
             let inTrial = active && row.period_type?.lowercased() == "trial"
-            return (active, inTrial ? (row.expires_at ?? .distantFuture) : nil, true)
+            return (
+                active,
+                inTrial ? (row.expires_at ?? .distantFuture) : nil,
+                true,
+                row.store.flatMap { SubscriptionStore(rawValue: $0.lowercased()) }
+            )
         } catch {
             return nil
         }

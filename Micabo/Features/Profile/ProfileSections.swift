@@ -5,7 +5,7 @@ import SwiftUI
 /// Pro », puis deux groupes de rangées — les réglages (langue, nous noter) et le support.
 /// Les amis et le classement de la semaine restent ceux de `ProfileView`.
 enum ProfileLinks {
-    static let supportEmail = "maximilien@vikstudios.com"
+    static let supportEmail = "team@micabo.app"
     static let otherApps = "https://vikstudios.com"
 
     static var supportURL: URL? {

@@ -23,7 +23,7 @@ import { requestPaywall } from "@/lib/paywall";
 import { manageLabel, subscriptionDetail, subscriptionHeadline, type SubscriptionView } from "@/lib/subscription-copy";
 
 /** Où l'on écrit, et nos autres apps : les mêmes adresses que `ProfileLinks` côté Swift. */
-export const SUPPORT_EMAIL = "maximilien@vikstudios.com";
+export const SUPPORT_EMAIL = "team@micabo.app";
 export const OTHER_APPS_URL = "https://vikstudios.com";
 
 export interface RankingRow {

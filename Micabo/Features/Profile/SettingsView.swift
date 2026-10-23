@@ -194,17 +194,21 @@ struct SettingsView: View {
                         accessory: .none
                     )
 
-                    MicaboHairline(inset: 72)
+                    // La gestion d'un abonnement se fait chez celui qui l'encaisse — Apple,
+                    // Google, ou le site pour un achat Stripe — et nulle part ailleurs : une app
+                    // qui prétendrait résilier à sa place mentirait. Un accès offert n'a rien à
+                    // gérer, et la rangée disparaît.
+                    if let manageURL {
+                        MicaboHairline(inset: 72)
 
-                    // La gestion d'un abonnement App Store se fait chez Apple, et nulle part
-                    // ailleurs : une app qui prétendrait résilier à sa place mentirait.
-                    MicaboRow(
-                        tile: MicaboTile(glyph: .symbol("doc.plaintext.fill"), background: MicaboColor.surfaceMuted),
-                        title: i18n.t("ios.pro.manage"),
-                        subtitle: i18n.t("ios.pro.manageHelp"),
-                        accessory: .chevron,
-                        action: openStoreSubscriptions
-                    )
+                        MicaboRow(
+                            tile: MicaboTile(glyph: .symbol("doc.plaintext.fill"), background: MicaboColor.surfaceMuted),
+                            title: i18n.t("ios.pro.manage"),
+                            subtitle: manageHelp,
+                            accessory: .chevron,
+                            action: { UIApplication.shared.open(manageURL) }
+                        )
+                    }
                 } else {
                     MicaboRow(
                         tile: MicaboTile(glyph: .symbol("star.fill"), background: MicaboColor.accentSoft),
@@ -261,10 +265,21 @@ struct SettingsView: View {
         return "\(percent) · \(DiscountOffer.countdown(left))"
     }
 
-    /// La page des abonnements de l'App Store. L'adresse est celle d'Apple, pas la nôtre.
-    private func openStoreSubscriptions() {
-        guard let url = URL(string: "https://apps.apple.com/account/subscriptions") else { return }
-        UIApplication.shared.open(url)
+    /// Où gérer l'abonnement en cours : la page du magasin qui l'encaisse. Un magasin inconnu
+    /// (une ligne ancienne, un SDK muet) retombe sur l'App Store, comme avant ; un accès offert
+    /// n'a pas de page.
+    private var manageURL: URL? {
+        (pro?.store ?? .appStore).manageURL
+    }
+
+    /// La petite ligne sous « Gérer l'abonnement » : elle dit où l'on va. « Chez Apple »
+    /// posé sur un abonnement pris sur Google Play enverrait chercher au mauvais endroit.
+    private var manageHelp: String {
+        switch pro?.store ?? .appStore {
+        case .playStore: i18n.t("app.subscription.fromPlay")
+        case .stripe: i18n.t("app.subscription.fromWeb")
+        case .appStore, .promotional: i18n.t("ios.pro.manageHelp")
+        }
     }
 
     /// Le compte, et l'état de la synchro.

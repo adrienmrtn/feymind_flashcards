@@ -5,6 +5,7 @@ import { cache } from "react";
 import { entitlement } from "@micabo/core";
 
 import { listCourses } from "@/lib/data/courses";
+import { lookupRevenueCatPro } from "@/lib/data/revenuecat";
 import { currentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 
@@ -42,19 +43,29 @@ export const readEntitlement = cache(async (): Promise<entitlement.Entitlement> 
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (!data) return entitlement.resolve();
+  const fromTable: entitlement.Entitlement | null = data
+    ? (() => {
+        const expiresAt = data.expires_at ? new Date(data.expires_at) : null;
+        const expired = expiresAt !== null && expiresAt.getTime() < Date.now();
+        return {
+          isPro: Boolean(data.is_pro) && !expired,
+          productId: data.product_id,
+          store: data.store,
+          periodType: data.period_type,
+          expiresAt,
+          willRenew: Boolean(data.will_renew),
+        };
+      })()
+    : null;
 
-  const expiresAt = data.expires_at ? new Date(data.expires_at) : null;
-  const expired = expiresAt !== null && expiresAt.getTime() < Date.now();
+  if (fromTable?.isPro) return entitlement.resolve(fromTable);
 
-  return entitlement.resolve({
-    isPro: Boolean(data.is_pro) && !expired,
-    productId: data.product_id,
-    store: data.store,
-    periodType: data.period_type,
-    expiresAt,
-    willRenew: Boolean(data.will_renew),
-  });
+  // La table dit « gratuit », ou ne dit rien : un webhook perdu laisserait un abonné App Store
+  // ou Google Play devant le paywall du site. On demande à RevenueCat — une fois par requête
+  // (ce `cache`), avec un délai court et un cache par compte (`lib/data/revenuecat.ts`).
+  // Le plus généreux gagne, comme dans l'app.
+  const fromRevenueCat = await lookupRevenueCatPro(user.id);
+  return entitlement.resolve(fromRevenueCat, fromTable);
 });
 
 /** Le premier cours est offert. Le suivant ouvre le paywall, comme sur l'iPhone. */

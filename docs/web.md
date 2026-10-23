@@ -754,7 +754,14 @@ Le projet existe déjà (`adriens-projects-145ae26c/micabo`). Les étapes, dans 
    STRIPE_SECRET_KEY              = (serveur uniquement)
    STRIPE_WEBHOOK_SECRET          = (serveur uniquement)
    REVENUECAT_WEBHOOK_SECRET      = (serveur uniquement)
+   REVENUECAT_SECRET_KEY          = (serveur uniquement, facultatif : clé secrète v1 sk_…)
    ```
+
+   `REVENUECAT_SECRET_KEY` sert à `lib/data/revenuecat.ts` : quand `entitlements` ne dit pas Pro
+   (webhook perdu), le site relit l'abonné chez RevenueCat, une fois par requête, 1,5 s au plus,
+   avec un cache de cinq minutes par compte. Sans elle, la relecture utilise la clé publique iOS
+   (`REVENUECAT_PUBLIC_KEY`, sinon celle de l'app), comme les fonctions Edge ;
+   `REVENUECAT_WEB_FALLBACK=off` la coupe.
 
    **La clé de service ne porte jamais le préfixe `NEXT_PUBLIC_`** et ne se lit que dans une route
    serveur. Un préfixe `NEXT_PUBLIC_` sur cette clé publie un accès total à la base dans le
