@@ -1,6 +1,6 @@
 /**
  * **Le trou d'une phrase, le même partout.** Le serveur l'écrit (`GAP`), l'iPhone et Android le
- * relisent (`ClozeGap.marker`, `GAP_MARK`) : un autre marqueur sur le site faisait de chaque carte
+ * relisent (`ClozeGap.marker`, `GAP`) : un autre marqueur sur le site faisait de chaque carte
  * à trou une carte simple, et d'une carte à trou venue du téléphone une carte sans réponse.
  */
 
@@ -20,7 +20,7 @@ describe("le trou d'une phrase", () => {
   it("est celui du serveur, de l'iPhone et d'Android", () => {
     expect(read("supabase/functions/generate-lesson/schema.ts")).toContain(`export const GAP = "${CLOZE_GAP}";`);
     expect(read("Micabo/Models/Flashcard.swift")).toContain(`static let marker = "${CLOZE_GAP}"`);
-    expect(read("android/app/src/main/java/com/micabo/app/data/CloudSync.kt")).toContain(`const val GAP_MARK = "${CLOZE_GAP}"`);
+    expect(read("android/app/src/main/java/com/micabo/app/ui/lesson/QuestionCard.kt")).toContain(`const val GAP = "${CLOZE_GAP}"`);
   });
 
   it("ramène les autres graphies à un seul trou", () => {
