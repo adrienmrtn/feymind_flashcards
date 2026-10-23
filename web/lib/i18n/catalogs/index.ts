@@ -8,6 +8,9 @@ import { DEFAULT_UI_LOCALE, UI_LOCALES, type UiLocale } from "../locales";
 import { es419 } from "./es-419";
 import { nl } from "./nl";
 import { ro } from "./ro";
+import { it } from "./it";
+import { pt } from "./pt";
+import { ptBR } from "./pt-br";
 
 export { en, fr, de, es, tr };
 export type { Catalog };
@@ -29,9 +32,9 @@ export const CATALOGS: Record<UiLocale, Catalog> = {
   de,
   es,
   "es-419": es419,
-  it: en, // TODO(traduction) : import { it } from "./it";
-  pt: en, // TODO(traduction) : import { pt } from "./pt";
-  "pt-BR": en, // TODO(traduction) : import { ptBR } from "./pt-br";
+  it: it,
+  pt: pt,
+  "pt-BR": ptBR,
   nl: nl,
   pl: en, // TODO(traduction) : import { pl } from "./pl";
   ro: ro,
