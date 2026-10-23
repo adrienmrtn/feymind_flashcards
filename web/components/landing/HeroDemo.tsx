@@ -157,7 +157,7 @@ export function HeroDemo() {
                   <span className="lp-generate-ring" />
                   <span className="lp-label lp-label-idle flex items-center gap-2">
                     {t("landing.demoGenerate")}
-                    <ArrowRight className="size-4" />
+                    <ArrowRight className="size-4 lp-arrow" />
                   </span>
                   <span className="lp-label lp-label-busy flex items-center justify-center gap-2">
                     <Dots />

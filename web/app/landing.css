@@ -879,3 +879,13 @@
     opacity: 0.45;
   }
 }
+
+/* En arabe, « suivant » pointe vers la gauche, et le survol le pousse vers la gauche. */
+[dir="rtl"] .lp-arrow {
+  transform: scaleX(-1);
+}
+@media (hover: hover) and (pointer: fine) {
+  [dir="rtl"] .lp-cta:hover .lp-arrow {
+    transform: scaleX(-1) translateX(3px);
+  }
+}

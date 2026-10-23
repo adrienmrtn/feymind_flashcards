@@ -2509,3 +2509,16 @@ html:not([data-appearance]) .app-shell {
 [dir="rtl"] :is(.lucide-chevron-left, .lucide-chevron-right, .lucide-arrow-left, .lucide-arrow-right) {
   transform: scaleX(-1);
 }
+
+/* La flèche des boutons, retournée en arabe, avance vers la gauche. */
+[dir="rtl"] .btn-arrow {
+  scale: -1 1;
+}
+[dir="rtl"] :is(.btn-rise, .btn-fill):active:not(:disabled) .btn-arrow {
+  translate: -5px 0;
+}
+@media (any-hover: hover) {
+  [dir="rtl"] :is(.btn-rise, .btn-fill):hover:not(:disabled) .btn-arrow {
+    translate: -5px 0;
+  }
+}
