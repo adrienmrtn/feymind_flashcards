@@ -70,7 +70,7 @@ export const da: Catalog = {
     faq2q: "Finder Mika på ting?",
     faq2a: "Det er den risiko, vi tager allermest alvorligt, for en forkert note ligner ikke en fejl. Ud fra en kilde skriver Mika kun det, kilden siger, og når teksten ikke afgør et punkt, kommer det tvivlsomme punkt ikke med. Ud fra et skrevet emne er noterne dem fra et referencekursus, og quizzen får dig til at tjekke dem.",
     faq3q: "Virker det på andre sprog? I andre skolesystemer?",
-    faq3a: "Ja. Dit land bestemmer karakterskalaen og lektionernes sprog. Selve siden findes på engelsk, fransk, tysk, spansk eller tyrkisk: skift sprog øverst på siden, under introduktionen eller i din profil.",
+    faq3a: "Ja. Dit land bestemmer karakterskalaen og lektionernes sprog. Selve siden findes på 26 sprog: skift sprog øverst på siden, under introduktionen eller i din profil.",
     faq4q: "Hvor lang tid tager en lektion?",
     faq4a: "Introen siger det: ofte ti til femogtyve minutter frem til den afsluttende quiz, mere for et stort kapitel. Du kan stoppe ved et hvilket som helst trin, ruten venter på dig der.",
     faq5q: "Hvad hvis jeg allerede bruger Anki?",

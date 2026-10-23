@@ -70,7 +70,7 @@ export const nl: Catalog = {
     faq2q: "Verzint Mika dingen?",
     faq2a: "Dat is het risico dat we het serieust nemen, want een foute aantekening ziet er niet uit als een fout. Vanuit een bron schrijft Mika alleen wat de bron zegt, en als de tekst een punt niet beslist, verschijnt dat twijfelachtige punt niet. Vanuit een getypt onderwerp zijn de aantekeningen die van een standaardcursus, en de quiz laat je ze controleren.",
     faq3q: "Werkt het in andere talen? Met andere schoolsystemen?",
-    faq3a: "Ja. Je land bepaalt de cijferschaal en de taal van de lessen. De site zelf is er in het Engels, Frans, Duits, Spaans of Turks: je wijzigt de taal bovenaan de pagina, tijdens het traject of in je profiel.",
+    faq3a: "Ja. Je land bepaalt de cijferschaal en de taal van de lessen. De site zelf is er in 26 talen: je wijzigt de taal bovenaan de pagina, tijdens het traject of in je profiel.",
     faq4q: "Hoe lang duurt een les?",
     faq4a: "De intro zegt het je: vaak tien tot vijfentwintig minuten tot de eindquiz, langer bij een groot hoofdstuk. Je kunt bij elke stap stoppen, het pad wacht daar op je.",
     faq5q: "En als ik Anki al gebruik?",

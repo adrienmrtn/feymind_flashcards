@@ -69,7 +69,7 @@ export const fr = {
     faq2q: "Est-ce que Mika invente des choses ?",
     faq2a: "C'est le risque qu'on prend le plus au sérieux, parce qu'une note fausse ne ressemble pas à une erreur. Depuis un support, Mika n'écrit que ce que le support dit, et quand le texte ne tranche pas, le point douteux n'apparaît pas. Depuis un sujet tapé, les notes sont celles d'un cours de référence, et le quiz te le fait vérifier.",
     faq3q: "Ça marche dans d'autres langues ? D'autres systèmes scolaires ?",
-    faq3a: "Oui. Ton pays décide du barème des notes et de la langue des leçons. Le site, lui, se lit en anglais, français, allemand, espagnol ou turc : tu changes la langue en haut de la page, dans le parcours, ou dans ton profil.",
+    faq3a: "Oui. Ton pays décide du barème des notes et de la langue des leçons. Le site, lui, est disponible en 26 langues : tu changes la langue en haut de la page, dans le parcours, ou dans ton profil.",
     faq4q: "Combien de temps prend une leçon ?",
     faq4a: "L'intro l'annonce : souvent dix à vingt-cinq minutes pour aller jusqu'au quiz final, davantage sur un gros chapitre. Tu peux t'arrêter à n'importe quelle étape, le chemin t'attend là.",
     faq5q: "Et si j'utilise déjà Anki ?",

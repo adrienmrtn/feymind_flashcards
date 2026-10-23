@@ -70,7 +70,7 @@ export const et: Catalog = {
     faq2q: "Kas Mika mõtleb asju välja?",
     faq2a: "See on risk, mida me võtame kõige tõsisemalt, sest vale märge ei näe välja nagu viga. Materjali põhjal kirjutab Mika ainult seda, mida materjal ütleb, ja kui tekst mõnda punkti ei selgita, siis kahtlast punkti ei ilmu. Sisestatud teema puhul on märkmed nagu usaldusväärses õpikus ja viktoriin laseb sul neid kontrollida.",
     faq3q: "Kas see töötab ka teistes keeltes? Teistes koolisüsteemides?",
-    faq3a: "Jah. Sinu riik määrab hindamisskaala ja tundide keele. Saiti ennast saab lugeda inglise, prantsuse, saksa, hispaania või türgi keeles: keelt saad muuta lehe ülaosas, alustamise käigus või oma profiilis.",
+    faq3a: "Jah. Sinu riik määrab hindamisskaala ja tundide keele. Saiti ennast saab lugeda 26 keeles: keelt saad muuta lehe ülaosas, alustamise käigus või oma profiilis.",
     faq4q: "Kui kaua üks tund aega võtab?",
     faq4a: "Sissejuhatus ütleb selle ära: lõpuviktoriinini jõudmiseks sageli kümme kuni kakskümmend viis minutit, suure peatüki puhul rohkem. Võid peatuda ükskõik millise sammu juures, teekond ootab sind seal.",
     faq5q: "Mis siis, kui ma juba kasutan Ankit?",

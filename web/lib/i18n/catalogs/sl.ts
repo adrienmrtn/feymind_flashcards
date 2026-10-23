@@ -70,7 +70,7 @@ export const sl: Catalog = {
     faq2q: "Si Mika kaj izmišljuje?",
     faq2a: "To je tveganje, ki ga jemljemo najresneje, saj napačen zapisek ni videti kot napaka. Iz gradiva Mika napiše le to, kar gradivo pove, in ko besedilo neke točke ne razjasni, se dvomljiva točka ne pojavi. Iz natipkane teme so zapiski kot iz referenčnega tečaja, kviz pa te prisili, da jih preveriš.",
     faq3q: "Deluje tudi v drugih jezikih? V drugih šolskih sistemih?",
-    faq3a: "Da. Tvoja država določa lestvico ocenjevanja in jezik lekcij. Sama stran se bere v angleščini, francoščini, nemščini, španščini ali turščini: jezik zamenjaš na vrhu strani, med uvodnim delom ali v svojem profilu.",
+    faq3a: "Da. Tvoja država določa lestvico ocenjevanja in jezik lekcij. Sama stran je na voljo v 26 jezikih: jezik zamenjaš na vrhu strani, med uvodnim delom ali v svojem profilu.",
     faq4q: "Koliko časa traja lekcija?",
     faq4a: "Uvod to pove: pogosto deset do petindvajset minut do končnega kviza, pri velikem poglavju več. Ustaviš se lahko pri katerem koli koraku, pot te tam počaka.",
     faq5q: "Kaj pa, če že uporabljam Anki?",

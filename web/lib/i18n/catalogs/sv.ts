@@ -70,7 +70,7 @@ export const sv: Catalog = {
     faq2q: "Hittar Mika på saker?",
     faq2a: "Det är den risk vi tar allra mest på allvar, för en felaktig anteckning ser inte ut som ett fel. Från en källa skriver Mika bara det källan säger, och när texten inte avgör en punkt finns den osäkra punkten inte med. Från ett inskrivet ämne är anteckningarna de från en referenskurs, och quizet låter dig kontrollera dem.",
     faq3q: "Funkar det på andra språk? I andra skolsystem?",
-    faq3a: "Ja. Ditt land avgör betygsskalan och lektionernas språk. Själva webbplatsen finns på engelska, franska, tyska, spanska eller turkiska: byt språk högst upp på sidan, under introduktionen eller i din profil.",
+    faq3a: "Ja. Ditt land avgör betygsskalan och lektionernas språk. Själva webbplatsen finns på 26 språk: byt språk högst upp på sidan, under introduktionen eller i din profil.",
     faq4q: "Hur lång tid tar en lektion?",
     faq4a: "Introt säger det: ofta tio till tjugofem minuter fram till slutquizet, mer för ett stort kapitel. Du kan stanna vid vilket steg som helst, vägen väntar på dig där.",
     faq5q: "Och om jag redan använder Anki?",

@@ -70,7 +70,7 @@ export const hu: Catalog = {
     faq2q: "Kitalál dolgokat Mika?",
     faq2a: "Ezt a kockázatot vesszük a legkomolyabban, mert egy hibás jegyzet nem néz ki hibának. Egy anyagból Mika csak azt írja le, amit az anyag mond, és ha a szöveg nem dönt el egy kérdést, a kétes pont nem jelenik meg. Begépelt témánál a jegyzetek egy megbízható tananyagéi, és a kvíz ellenőrizteti veled őket.",
     faq3q: "Működik más nyelveken? Más iskolarendszerekben?",
-    faq3a: "Igen. Az országod határozza meg az osztályzási skálát és a leckék nyelvét. Magát az oldalt angolul, franciául, németül, spanyolul vagy törökül olvashatod: a nyelvet az oldal tetején, a kezdő lépések során vagy a profilodban változtathatod meg.",
+    faq3a: "Igen. Az országod határozza meg az osztályzási skálát és a leckék nyelvét. Magát az oldalt 26 nyelven olvashatod: a nyelvet az oldal tetején, a kezdő lépések során vagy a profilodban változtathatod meg.",
     faq4q: "Mennyi ideig tart egy lecke?",
     faq4a: "A bevezető megmondja: gyakran tíz-huszonöt perc a záró kvízig, egy nagy fejezetnél több. Bármelyik lépésnél megállhatsz, az útvonal ott vár rád.",
     faq5q: "Mi van, ha már használom az Ankit?",

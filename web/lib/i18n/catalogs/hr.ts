@@ -70,7 +70,7 @@ export const hr: Catalog = {
     faq2q: "Izmišlja li Mika stvari?",
     faq2a: "To je rizik koji shvaćamo najozbiljnije, jer pogrešna bilješka ne izgleda kao greška. Iz materijala Mika piše samo ono što materijal kaže, a kad tekst ne razjašnjava neku točku, sporna točka se ne pojavljuje. Kod upisane teme bilješke su kao iz pouzdanog udžbenika, a kviz te tjera da ih provjeriš.",
     faq3q: "Radi li na drugim jezicima? U drugim školskim sustavima?",
-    faq3a: "Da. Tvoja zemlja određuje ljestvicu ocjenjivanja i jezik lekcija. Samu stranicu možeš čitati na engleskom, francuskom, njemačkom, španjolskom ili turskom: jezik mijenjaš na vrhu stranice, tijekom uvodnih koraka ili u svom profilu.",
+    faq3a: "Da. Tvoja zemlja određuje ljestvicu ocjenjivanja i jezik lekcija. Samu stranicu možeš čitati na 26 jezika: jezik mijenjaš na vrhu stranice, tijekom uvodnih koraka ili u svom profilu.",
     faq4q: "Koliko traje jedna lekcija?",
     faq4a: "Uvod to kaže: često deset do dvadeset pet minuta do završnog kviza, više za veliko poglavlje. Možeš stati na bilo kojem koraku, put te ondje čeka.",
     faq5q: "Što ako već koristim Anki?",

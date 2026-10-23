@@ -70,7 +70,7 @@ export const fi: Catalog = {
     faq2q: "Keksiikö Mika asioita omasta päästään?",
     faq2a: "Se on riski, jonka otamme kaikkein vakavimmin, koska virheellinen muistiinpano ei näytä virheeltä. Lähteestä Mika kirjoittaa vain sen, mitä lähde sanoo, ja kun teksti ei ratkaise jotain kohtaa, epävarma kohta jää pois. Kirjoitetusta aiheesta muistiinpanot ovat kuin vertailukurssilta, ja visa saa sinut tarkistamaan ne.",
     faq3q: "Toimiiko se muilla kielillä? Muissa koulujärjestelmissä?",
-    faq3a: "Toimii. Maasi ratkaisee arvosteluasteikon ja oppituntien kielen. Itse sivusto toimii englanniksi, ranskaksi, saksaksi, espanjaksi tai turkiksi: vaihda kieli sivun yläreunasta, käyttöönoton aikana tai profiilistasi.",
+    faq3a: "Toimii. Maasi ratkaisee arvosteluasteikon ja oppituntien kielen. Itse sivusto on saatavilla 26 kielellä: vaihda kieli sivun yläreunasta, käyttöönoton aikana tai profiilistasi.",
     faq4q: "Kuinka kauan oppitunti kestää?",
     faq4a: "Intro kertoo sen: usein kymmenestä kahteenkymmeneenviiteen minuuttiin loppuvisaan asti, isossa luvussa enemmän. Voit pysähtyä mihin tahansa vaiheeseen, polku odottaa sinua siellä.",
     faq5q: "Entä jos käytän jo Ankia?",

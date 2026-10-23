@@ -70,7 +70,7 @@ export const ro: Catalog = {
     faq2q: "Mika inventează lucruri?",
     faq2a: "E riscul pe care îl luăm cel mai în serios, pentru că o notiță greșită nu arată ca o greșeală. Dintr-un material, Mika scrie doar ce spune materialul, iar când textul nu lămurește un punct, punctul îndoielnic nu apare. Dintr-un subiect scris, notițele sunt cele ale unui curs de referință, iar quizul te pune să le verifici.",
     faq3q: "Merge și în alte limbi? Cu alte sisteme școlare?",
-    faq3a: "Da. Țara ta decide scala de notare și limba lecțiilor. Site-ul în sine se citește în engleză, franceză, germană, spaniolă sau turcă: schimbi limba în partea de sus a paginii, pe parcurs sau în profil.",
+    faq3a: "Da. Țara ta decide scala de notare și limba lecțiilor. Site-ul în sine este disponibil în 26 de limbi: schimbi limba în partea de sus a paginii, pe parcurs sau în profil.",
     faq4q: "Cât durează o lecție?",
     faq4a: "Intro-ul îți spune: de multe ori între zece și douăzeci și cinci de minute până la quizul final, mai mult la un capitol mare. Te poți opri la orice pas, traseul te așteaptă acolo.",
     faq5q: "Și dacă folosesc deja Anki?",

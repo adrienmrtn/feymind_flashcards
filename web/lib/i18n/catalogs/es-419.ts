@@ -70,7 +70,7 @@ export const es419: Catalog = {
     faq2q: "¿Mika se inventa cosas?",
     faq2a: "Es el riesgo que más en serio nos tomamos, porque un apunte falso no parece un error. A partir de un material, Mika escribe solo lo que dice el material, y cuando el texto no deja claro un punto, el punto dudoso no aparece. A partir de un tema escrito, los apuntes son los de un curso de referencia, y el quiz te hace comprobarlos.",
     faq3q: "¿Funciona en otros idiomas? ¿Con otros sistemas escolares?",
-    faq3a: "Sí. Tu país decide la escala de calificaciones y el idioma de las lecciones. El sitio en sí se lee en inglés, francés, alemán, español o turco: cambia el idioma arriba en la página, durante el recorrido o en tu perfil.",
+    faq3a: "Sí. Tu país decide la escala de calificaciones y el idioma de las lecciones. El sitio en sí está disponible en 26 idiomas: cambia el idioma arriba en la página, durante el recorrido o en tu perfil.",
     faq4q: "¿Cuánto dura una lección?",
     faq4a: "La intro te lo dice: muchas veces de diez a veinticinco minutos para llegar al quiz final, más en un capítulo grande. Puedes parar en cualquier paso, el camino te espera ahí.",
     faq5q: "¿Y si ya uso Anki?",

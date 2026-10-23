@@ -70,7 +70,7 @@ export const tr: Catalog = {
     faq2q: "Mika uydurur mu?",
     faq2a: "En ciddiye aldığımız risk bu, çünkü yanlış bir not hataya benzemez. Bir kaynaktan Mika yalnızca kaynağın söylediğini yazar; metin bir noktayı netleştirmiyorsa o nokta görünmez. Yazılan bir konudan notlar bir referans dersinkidir ve quiz bunları kontrol ettirir.",
     faq3q: "Başka dillerde çalışır mı? Başka okul sistemlerinde?",
-    faq3a: "Evet. Ülken not sistemini ve derslerin dilini belirler. Site İngilizce, Fransızca, Almanca, İspanyolca ya da Türkçe okunur: dili sayfanın üstünden, akışta ya da profilinden değiştirirsin.",
+    faq3a: "Evet. Ülken not sistemini ve derslerin dilini belirler. Sitenin kendisi 26 dilde kullanılabilir: dili sayfanın üstünden, akışta ya da profilinden değiştirirsin.",
     faq4q: "Bir ders ne kadar sürer?",
     faq4a: "Giriş söyler: final quize kadar genellikle on ila yirmi beş dakika, büyük bir bölümde daha fazla. Herhangi bir adımda durabilirsin, yol seni orada bekler.",
     faq5q: "Zaten Anki kullanıyorsam?",

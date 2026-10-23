@@ -70,7 +70,7 @@ export const en: Catalog = {
     faq2q: "Does Mika make things up?",
     faq2a: "It's the risk we take most seriously, because a wrong note doesn't look like a mistake. From a source, Mika writes only what the source says, and when the text doesn't settle a point, the doubtful point doesn't appear. From a typed topic, the notes are those of a reference course, and the quiz makes you check them.",
     faq3q: "Does it work in other languages? Other school systems?",
-    faq3a: "Yes. Your country decides the grading scale and the language of the lessons. The site itself reads in English, French, German, Spanish or Turkish: change the language at the top of the page, in the flow, or in your profile.",
+    faq3a: "Yes. Your country decides the grading scale and the language of the lessons. The site itself is available in 26 languages: change the language at the top of the page, in the flow, or in your profile.",
     faq4q: "How long does a lesson take?",
     faq4a: "The intro says so: often ten to twenty-five minutes to reach the final quiz, more on a big chapter. You can stop at any step, the path waits for you there.",
     faq5q: "What if I already use Anki?",

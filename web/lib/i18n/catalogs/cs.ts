@@ -70,7 +70,7 @@ export const cs: Catalog = {
     faq2q: "Vymýšlí si Mika?",
     faq2a: "To riziko bereme nejvážněji, protože chybná poznámka nevypadá jako chyba. Z materiálu Mika píše jen to, co v něm stojí, a když text nějaký bod nerozhodne, sporný bod se neobjeví. Z napsaného tématu vzniknou poznámky jako z kvalitní učebnice a kvíz tě nechá si je ověřit.",
     faq3q: "Funguje to i v jiných jazycích? V jiných školských systémech?",
-    faq3a: "Ano. Tvoje země určuje stupnici hodnocení i jazyk lekcí. Samotný web je v angličtině, francouzštině, němčině, španělštině nebo turečtině: jazyk změníš nahoře na stránce, během úvodního průvodce nebo v profilu.",
+    faq3a: "Ano. Tvoje země určuje stupnici hodnocení i jazyk lekcí. Samotný web je dostupný ve 26 jazycích: jazyk změníš nahoře na stránce, během úvodního průvodce nebo v profilu.",
     faq4q: "Jak dlouho trvá lekce?",
     faq4a: "Řekne ti to úvod: obvykle deset až pětadvacet minut k závěrečnému kvízu, u velké kapitoly víc. Můžeš skončit u kteréhokoli kroku, cesta na tebe počká.",
     faq5q: "A když už používám Anki?",

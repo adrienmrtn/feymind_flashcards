@@ -70,7 +70,7 @@ export const pl: Catalog = {
     faq2q: "Czy Mika coś zmyśla?",
     faq2a: "To ryzyko traktujemy najpoważniej, bo błędna notatka nie wygląda na błąd. Z materiału Mika pisze tylko to, co w nim jest, a gdy tekst czegoś nie rozstrzyga, wątpliwy punkt się nie pojawia. Z wpisanego tematu powstają notatki jak z porządnego podręcznika, a quiz każe Ci je sprawdzić.",
     faq3q: "Czy działa w innych językach? W innych systemach szkolnych?",
-    faq3a: "Tak. Twój kraj decyduje o skali ocen i języku lekcji. Sama strona jest dostępna po angielsku, francusku, niemiecku, hiszpańsku i turecku: zmień język u góry strony, podczas rejestracji albo w profilu.",
+    faq3a: "Tak. Twój kraj decyduje o skali ocen i języku lekcji. Sama strona jest dostępna w 26 językach: zmień język u góry strony, podczas rejestracji albo w profilu.",
     faq4q: "Ile trwa lekcja?",
     faq4a: "Mówi o tym wstęp: zwykle od dziesięciu do dwudziestu pięciu minut do quizu końcowego, więcej przy dużym rozdziale. Możesz przerwać na dowolnym kroku, ścieżka na Ciebie poczeka.",
     faq5q: "A jeśli już używam Anki?",

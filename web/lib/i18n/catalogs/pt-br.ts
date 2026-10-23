@@ -70,7 +70,7 @@ export const ptBR: Catalog = {
     faq2q: "O Mika inventa coisas?",
     faq2a: "É o risco que levamos mais a sério, porque uma anotação errada não parece um erro. A partir de um material, o Mika só escreve o que o material diz, e quando o texto não esclarece um ponto, o ponto duvidoso não aparece. A partir de um tema digitado, as anotações são as de um curso de referência, e o quiz faz você conferir.",
     faq3q: "Funciona em outros idiomas? Em outros sistemas de ensino?",
-    faq3a: "Sim. Seu país define a escala de notas e o idioma das aulas. Já o site pode ser lido em inglês, francês, alemão, espanhol ou turco: você troca o idioma no topo da página, no fluxo inicial ou no seu perfil.",
+    faq3a: "Sim. Seu país define a escala de notas e o idioma das aulas. Já o site está disponível em 26 idiomas: você troca o idioma no topo da página, no fluxo inicial ou no seu perfil.",
     faq4q: "Quanto tempo leva uma aula?",
     faq4a: "A intro já avisa: muitas vezes de dez a vinte e cinco minutos até o quiz final, mais em um capítulo grande. Você pode parar em qualquer etapa, a trilha fica esperando você ali.",
     faq5q: "E se eu já uso o Anki?",

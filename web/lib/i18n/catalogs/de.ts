@@ -70,7 +70,7 @@ export const de: Catalog = {
     faq2q: "Erfindet Mika Dinge?",
     faq2a: "Das Risiko nehmen wir am ernstesten, weil eine falsche Notiz nicht wie ein Fehler aussieht. Aus einer Quelle schreibt Mika nur, was die Quelle sagt, und wo der Text nichts entscheidet, taucht der zweifelhafte Punkt nicht auf. Aus einem getippten Thema sind die Notizen die eines Referenzkurses, und das Quiz lässt dich sie prüfen.",
     faq3q: "Geht das in anderen Sprachen? Anderen Schulsystemen?",
-    faq3a: "Ja. Dein Land bestimmt das Notensystem und die Sprache der Lektionen. Die Seite liest sich auf Englisch, Französisch, Deutsch, Spanisch oder Türkisch: Sprache oben auf der Seite, im Ablauf oder im Profil wechseln.",
+    faq3a: "Ja. Dein Land bestimmt das Notensystem und die Sprache der Lektionen. Die Seite selbst gibt es in 26 Sprachen: Sprache oben auf der Seite, im Ablauf oder im Profil wechseln.",
     faq4q: "Wie lange dauert eine Lektion?",
     faq4a: "Das Intro sagt es: oft zehn bis fünfundzwanzig Minuten bis zum Abschlussquiz, mehr bei einem großen Kapitel. Du kannst bei jedem Schritt aufhören, der Weg wartet dort auf dich.",
     faq5q: "Und wenn ich schon Anki nutze?",
