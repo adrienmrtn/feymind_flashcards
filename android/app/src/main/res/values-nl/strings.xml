@@ -269,10 +269,6 @@
     <string name="ios_yt_noCaptions">Micabo kon deze video niet lezen. Probeer het opnieuw of plak de tekst van de cursus.</string>
     <string name="ios_yt_tooShort">Deze video is te kort om kaarten te maken.</string>
     <string name="ios_yt_unavailable">Deze video is niet bereikbaar.</string>
-    <string name="lesson_audio_empty">Ik kon bijna niets horen in deze opname.</string>
-    <string name="lesson_audio_micDenied">Sta de microfoon toe in Instellingen om je les op te nemen.</string>
-    <string name="lesson_audio_tooLong">Deze opname is langer dan 90 minuten: splits hem in tweeën.</string>
-    <string name="lesson_audio_unreadable">Dit audiobestand kan niet worden gelezen.</string>
     <string name="lesson_cards_again">Opnieuw</string>
     <string name="lesson_cards_all">Alle kaarten (%1$s)</string>
     <string name="lesson_cards_answer">Antwoord</string>
@@ -379,8 +375,6 @@
     <string name="lesson_home_supportsFull">Tot %1$s materialen per les.</string>
     <string name="lesson_home_title">Wat wil je vandaag **leren**?</string>
     <string name="lesson_import_add">Toevoegen</string>
-    <string name="lesson_import_audioFile">Kies een audiobestand</string>
-    <string name="lesson_import_audioSub">Een opgenomen les</string>
     <string name="lesson_import_instruction">Wat de leerling eruit wil halen: %1$s</string>
     <string name="lesson_import_library">Foto’s kiezen</string>
     <string name="lesson_import_paste">Plakken</string>
@@ -388,10 +382,6 @@
     <string name="lesson_import_pdfSub">Een cursus, hand-out of samenvatting</string>
     <string name="lesson_import_photo">Foto</string>
     <string name="lesson_import_photoSub">Je schrift, het bord, een lesboek</string>
-    <string name="lesson_import_record">Opnemen</string>
-    <string name="lesson_import_recordStop">Opname stoppen</string>
-    <string name="lesson_import_recordTitle">Neem je les op</string>
-    <string name="lesson_import_recordingName">Opname</string>
     <string name="lesson_import_scan">Pagina’s scannen</string>
     <string name="lesson_import_text">Tekst</string>
     <string name="lesson_import_textPlaceholder">Je lesaantekeningen, een artikel…</string>
@@ -520,10 +510,6 @@
     <string name="x_paywall_soonBody">Abonnementen komen heel binnenkort naar Android. Je gratis les wacht intussen op je.</string>
     <string name="x_paywall_subscribe">Word Pro</string>
     <string name="x_pro_gifted">Deze toegang heb je cadeau gekregen: er valt niets te beheren of op te zeggen.</string>
-    <string name="x_record_channel">Lesopname</string>
-    <string name="x_record_limit">Tot 90 minuten. Mika zet je opname om in tekst en schrijft dan je les.</string>
-    <string name="x_record_ongoing">Je les wordt opgenomen</string>
-    <string name="x_record_ongoingBody">Micabo blijft opnemen, ook als je scherm vergrendeld is.</string>
     <string name="x_reminder_channel">Dagelijkse herinnering</string>
     <string name="x_score_1">Ik heb het moeilijk</string>
     <string name="x_score_2">Net onder het gemiddelde</string>

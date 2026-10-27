@@ -276,10 +276,6 @@
     <string name="ios_yt_noCaptions">Micabo не успя да прочете това видео. Опитай пак или постави текста на урока.</string>
     <string name="ios_yt_tooShort">Това видео е твърде кратко за карти.</string>
     <string name="ios_yt_unavailable">Това видео е недостъпно.</string>
-    <string name="lesson_audio_empty">Почти нищо не чух в този запис.</string>
-    <string name="lesson_audio_micDenied">Разреши микрофона в Настройки, за да записваш часа.</string>
-    <string name="lesson_audio_tooLong">Записът е над 90 минути: раздели го на две.</string>
-    <string name="lesson_audio_unreadable">Този аудиофайл не може да се прочете.</string>
     <string name="lesson_cards_again">Отново</string>
     <string name="lesson_cards_all">Всички карти (%1$s)</string>
     <string name="lesson_cards_answer">Отговор</string>
@@ -390,9 +386,6 @@
     <string name="lesson_home_supportsFull">До %1$s материала на урок.</string>
     <string name="lesson_home_title">Какво искаш да **научиш** днес?</string>
     <string name="lesson_import_add">Добави</string>
-    <string name="lesson_import_audio">Аудио</string>
-    <string name="lesson_import_audioFile">Избери аудиофайл</string>
-    <string name="lesson_import_audioSub">Записан час</string>
     <string name="lesson_import_instruction">Какво иска да извлече ученикът: %1$s</string>
     <string name="lesson_import_library">Избери снимки</string>
     <string name="lesson_import_paste">Постави</string>
@@ -400,10 +393,6 @@
     <string name="lesson_import_pdfSub">Курс, раздатка или конспект</string>
     <string name="lesson_import_photo">Снимка</string>
     <string name="lesson_import_photoSub">Тетрадката, дъската, учебник</string>
-    <string name="lesson_import_record">Запис</string>
-    <string name="lesson_import_recordStop">Спри записа</string>
-    <string name="lesson_import_recordTitle">Запиши часа</string>
-    <string name="lesson_import_recordingName">Запис</string>
     <string name="lesson_import_scan">Сканирай страници</string>
     <string name="lesson_import_text">Текст</string>
     <string name="lesson_import_textPlaceholder">Бележките от часа, статия…</string>
@@ -537,10 +526,7 @@
     <string name="x_paywall_subscribe">Мини на Pro</string>
     <string name="x_pro_gifted">Този достъп ти е подарен: няма какво да управляваш или прекратяваш.</string>
     <string name="x_quoted">„%1$s“</string>
-    <string name="x_record_channel">Запис на урока</string>
-    <string name="x_record_limit">До 90 минути. Mika превръща записа ти в текст, после пише урока ти.</string>
-    <string name="x_record_ongoing">Записвам урока ти</string>
-    <string name="x_record_ongoingBody">Micabo продължава да записва, дори при заключен екран.</string>
+    <string name="x_reminder_channel">Ежедневно напомняне</string>
     <string name="x_score_1">Трудно ми е</string>
     <string name="x_score_2">Малко под средното</string>
     <string name="x_score_3">Средно</string>

@@ -36,6 +36,7 @@ export const appEs = {
       adopted: "Añadido",
       photos: "Fotos",
       video: "Vídeo",
+      youtubeVideo: "Vídeo de YouTube",
       word: "Word",
       deck: "Mazo",
       text: "Texto",

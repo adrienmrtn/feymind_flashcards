@@ -36,6 +36,7 @@ export const appSl = {
       adopted: "Prevzeto",
       photos: "Fotografije",
       video: "Video",
+      youtubeVideo: "Videoposnetek YouTube",
       word: "Word",
       deck: "Komplet",
       text: "Besedilo",

@@ -274,10 +274,6 @@
     <string name="ios_yt_noCaptions">Micabo tohle video nedokázalo přečíst. Zkus to znovu, nebo vlož text kurzu.</string>
     <string name="ios_yt_tooShort">Tohle video je na kartičky moc krátké.</string>
     <string name="ios_yt_unavailable">Tohle video není dostupné.</string>
-    <string name="lesson_audio_empty">V téhle nahrávce skoro nic neslyším.</string>
-    <string name="lesson_audio_micDenied">Povol v Nastavení mikrofon, ať můžeš nahrát hodinu.</string>
-    <string name="lesson_audio_tooLong">Tahle nahrávka je delší než 90 minut: rozděl ji na dvě.</string>
-    <string name="lesson_audio_unreadable">Tenhle zvukový soubor nejde přečíst.</string>
     <string name="lesson_cards_again">Znovu</string>
     <string name="lesson_cards_all">Všechny kartičky (%1$s)</string>
     <string name="lesson_cards_answer">Odpověď</string>
@@ -386,8 +382,6 @@
     <string name="lesson_home_supportsFull">Max. %1$s materiálů na lekci.</string>
     <string name="lesson_home_title">Co se chceš dnes **naučit**?</string>
     <string name="lesson_import_add">Přidat</string>
-    <string name="lesson_import_audioFile">Vybrat zvukový soubor</string>
-    <string name="lesson_import_audioSub">Nahraná hodina</string>
     <string name="lesson_import_instruction">Co si z toho student chce odnést: %1$s</string>
     <string name="lesson_import_library">Vybrat fotky</string>
     <string name="lesson_import_paste">Vložit</string>
@@ -395,10 +389,6 @@
     <string name="lesson_import_pdfSub">Kurz, podklady nebo výpisky</string>
     <string name="lesson_import_photo">Fotka</string>
     <string name="lesson_import_photoSub">Sešit, tabule, učebnice</string>
-    <string name="lesson_import_record">Nahrát</string>
-    <string name="lesson_import_recordStop">Zastavit nahrávání</string>
-    <string name="lesson_import_recordTitle">Nahraj hodinu</string>
-    <string name="lesson_import_recordingName">Nahrávka</string>
     <string name="lesson_import_scan">Skenovat stránky</string>
     <string name="lesson_import_textPlaceholder">Poznámky z hodiny, článek…</string>
     <string name="lesson_import_textSub">Vlož své poznámky</string>
@@ -530,10 +520,7 @@
     <string name="x_paywall_subscribe">Přejít na Pro</string>
     <string name="x_pro_gifted">Tenhle přístup jsi dostal darem: není co spravovat ani rušit.</string>
     <string name="x_quoted">„%1$s“</string>
-    <string name="x_record_channel">Nahrávání hodiny</string>
-    <string name="x_record_limit">Až 90 minut. Mika převede tvoji nahrávku na text a pak napíše tvou lekci.</string>
-    <string name="x_record_ongoing">Nahrávám tvoji hodinu</string>
-    <string name="x_record_ongoingBody">Micabo nahrává dál, i se zamčenou obrazovkou.</string>
+    <string name="x_reminder_channel">Denní připomínka</string>
     <string name="x_score_1">Moc mi to nejde</string>
     <string name="x_score_2">Trochu pod průměrem</string>
     <string name="x_score_3">Průměr</string>

@@ -271,10 +271,6 @@
     <string name="ios_yt_noCaptions">Micabo ei pystynyt lukemaan videota. Yritä uudelleen tai liitä kurssin teksti.</string>
     <string name="ios_yt_tooShort">Video on liian lyhyt korttien luomiseen.</string>
     <string name="ios_yt_unavailable">Videota ei saada auki.</string>
-    <string name="lesson_audio_empty">Tallenteesta ei kuulunut juuri mitään.</string>
-    <string name="lesson_audio_micDenied">Salli mikrofoni asetuksissa, jotta voit tallentaa tunnin.</string>
-    <string name="lesson_audio_tooLong">Tallenne on yli 90 minuuttia: jaa se kahteen osaan.</string>
-    <string name="lesson_audio_unreadable">Äänitiedostoa ei voi lukea.</string>
     <string name="lesson_cards_again">Uudelleen</string>
     <string name="lesson_cards_all">Kaikki kortit (%1$s)</string>
     <string name="lesson_cards_answer">Vastaus</string>
@@ -382,9 +378,6 @@
     <string name="lesson_home_supportsFull">Enintään %1$s materiaalia oppituntia kohden.</string>
     <string name="lesson_home_title">Mitä haluat **oppia** tänään?</string>
     <string name="lesson_import_add">Lisää</string>
-    <string name="lesson_import_audio">Ääni</string>
-    <string name="lesson_import_audioFile">Valitse äänitiedosto</string>
-    <string name="lesson_import_audioSub">Tallennettu tunti</string>
     <string name="lesson_import_instruction">Mitä opiskelija haluaa siitä irti: %1$s</string>
     <string name="lesson_import_library">Valitse kuvat</string>
     <string name="lesson_import_paste">Liitä</string>
@@ -392,10 +385,6 @@
     <string name="lesson_import_pdfSub">Kurssi, moniste tai tiivistelmä</string>
     <string name="lesson_import_photo">Kuva</string>
     <string name="lesson_import_photoSub">Vihkosi, taulu, oppikirja</string>
-    <string name="lesson_import_record">Tallenna</string>
-    <string name="lesson_import_recordStop">Lopeta tallennus</string>
-    <string name="lesson_import_recordTitle">Tallenna tuntisi</string>
-    <string name="lesson_import_recordingName">Tallenne</string>
     <string name="lesson_import_scan">Skannaa sivuja</string>
     <string name="lesson_import_text">Teksti</string>
     <string name="lesson_import_textPlaceholder">Tuntimuistiinpanosi, artikkeli…</string>
@@ -529,10 +518,7 @@
     <string name="x_paywall_subscribe">Hanki Pro</string>
     <string name="x_pro_gifted">Sait tämän käyttöoikeuden lahjaksi: hallittavaa tai peruttavaa ei ole.</string>
     <string name="x_quoted">”%1$s”</string>
-    <string name="x_record_channel">Tunnin äänitys</string>
-    <string name="x_record_limit">Enintään 90 minuuttia. Mika muuttaa nauhoituksesi tekstiksi ja kirjoittaa sitten oppituntisi.</string>
-    <string name="x_record_ongoing">Tuntiasi äänitetään</string>
-    <string name="x_record_ongoingBody">Micabo jatkaa äänitystä, vaikka näyttö on lukittu.</string>
+    <string name="x_reminder_channel">Päivittäinen muistutus</string>
     <string name="x_score_1">Minulla on vaikeaa</string>
     <string name="x_score_2">Vähän keskiarvon alapuolella</string>
     <string name="x_score_3">Keskitasoa</string>

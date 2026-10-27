@@ -36,6 +36,7 @@ export const appRo = {
       adopted: "Preluat",
       photos: "Poze",
       video: "Videoclip",
+      youtubeVideo: "Video YouTube",
       word: "Word",
       deck: "Pachet",
       text: "Text",

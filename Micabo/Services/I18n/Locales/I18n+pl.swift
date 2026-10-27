@@ -141,6 +141,8 @@ extension IosI18nCatalogs {
         "app.sheet.size.label": "Rozmiar tekstu",
         "app.sheet.size.normal": "Normalny",
         "app.sheet.size.petit": "Mały",
+        "app.subscription.fromPlay": "Kupione w Sklepie Play.",
+        "app.subscription.fromWeb": "Kupione w przeglądarce.",
         "articles.exam.intensityIntense": "Intensywnie",
         "articles.exam.intensityLight": "Lekko",
         "articles.exam.intensityStandard": "Normalnie",

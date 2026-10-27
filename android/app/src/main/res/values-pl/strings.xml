@@ -274,10 +274,6 @@
     <string name="ios_yt_noCaptions">Micabo nie mogło odczytać tego filmu. Spróbuj ponownie albo wklej tekst kursu.</string>
     <string name="ios_yt_tooShort">Ten film jest za krótki, by zrobić fiszki.</string>
     <string name="ios_yt_unavailable">Ten film jest niedostępny.</string>
-    <string name="lesson_audio_empty">W tym nagraniu prawie nic nie słychać.</string>
-    <string name="lesson_audio_micDenied">Zezwól na mikrofon w Ustawieniach, żeby nagrać zajęcia.</string>
-    <string name="lesson_audio_tooLong">To nagranie trwa ponad 90 minut: podziel je na dwie części.</string>
-    <string name="lesson_audio_unreadable">Nie da się odczytać tego pliku audio.</string>
     <string name="lesson_cards_again">Jeszcze raz</string>
     <string name="lesson_cards_all">Wszystkie fiszki (%1$s)</string>
     <string name="lesson_cards_answer">Odpowiedź</string>
@@ -387,8 +383,6 @@
     <string name="lesson_home_supportsFull">Maksymalnie %1$s materiałów na lekcję.</string>
     <string name="lesson_home_title">Czego chcesz się dziś **nauczyć**?</string>
     <string name="lesson_import_add">Dodaj</string>
-    <string name="lesson_import_audioFile">Wybierz plik audio</string>
-    <string name="lesson_import_audioSub">Nagrane zajęcia</string>
     <string name="lesson_import_instruction">Co uczeń chce z tego wynieść: %1$s</string>
     <string name="lesson_import_library">Wybierz zdjęcia</string>
     <string name="lesson_import_paste">Wklej</string>
@@ -396,10 +390,6 @@
     <string name="lesson_import_pdfSub">Kurs, materiały lub notatka</string>
     <string name="lesson_import_photo">Zdjęcie</string>
     <string name="lesson_import_photoSub">Zeszyt, tablica, podręcznik</string>
-    <string name="lesson_import_record">Nagraj</string>
-    <string name="lesson_import_recordStop">Zatrzymaj nagrywanie</string>
-    <string name="lesson_import_recordTitle">Nagraj zajęcia</string>
-    <string name="lesson_import_recordingName">Nagranie</string>
     <string name="lesson_import_scan">Skanuj strony</string>
     <string name="lesson_import_text">Tekst</string>
     <string name="lesson_import_textPlaceholder">Notatki z zajęć, artykuł…</string>
@@ -531,10 +521,6 @@
     <string name="x_paywall_subscribe">Przejdź na Pro</string>
     <string name="x_pro_gifted">Ten dostęp dostałeś w prezencie: nie ma czym zarządzać ani czego anulować.</string>
     <string name="x_quoted">„%1$s”</string>
-    <string name="x_record_channel">Nagrywanie zajęć</string>
-    <string name="x_record_limit">Do 90 minut. Mika zamienia nagranie na tekst, a potem pisze twoją lekcję.</string>
-    <string name="x_record_ongoing">Nagrywam twoje zajęcia</string>
-    <string name="x_record_ongoingBody">Micabo nagrywa dalej, nawet przy zablokowanym ekranie.</string>
     <string name="x_reminder_channel">Codzienne przypomnienie</string>
     <string name="x_score_1">Mam trudności</string>
     <string name="x_score_2">Trochę poniżej średniej</string>

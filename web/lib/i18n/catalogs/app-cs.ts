@@ -36,6 +36,7 @@ export const appCs = {
       adopted: "Převzatý",
       photos: "Fotky",
       video: "Video",
+      youtubeVideo: "Video z YouTube",
       word: "Word",
       deck: "Balíček",
       text: "Text",

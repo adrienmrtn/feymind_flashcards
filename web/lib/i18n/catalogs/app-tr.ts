@@ -36,6 +36,7 @@ export const appTr = {
       adopted: "Alındı",
       photos: "Fotoğraflar",
       video: "Video",
+      youtubeVideo: "YouTube videosu",
       word: "Word",
       deck: "Deste",
       text: "Metin",
