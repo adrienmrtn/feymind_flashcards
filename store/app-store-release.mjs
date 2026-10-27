@@ -5,7 +5,7 @@
  * dans chaque langue de la fiche. Il ne reste qu'à relire et à appuyer sur « Soumettre ».
  *
  *     ASC_KEY_ID=… ASC_ISSUER_ID=… ASC_PRIVATE_KEY=… \
- *       node store/app-store-release.mjs --version 1.10 [--build 157] [--apply]
+ *       node store/app-store-release.mjs --version 1.11 [--build 158] [--apply]
  *
  * Sans `--apply`, il dit seulement ce qu'il ferait. Workflow : « Version App Store ». Les
  * secrets sont ceux de la grille de prix
@@ -26,37 +26,37 @@ const bundleId = "com.micabo.ios";
 const log = (...parts) => console.log(...parts);
 
 if (!versionString) {
-  console.error("--version manque, par ex. --version 1.10");
+  console.error("--version manque, par ex. --version 1.11");
   process.exit(1);
 }
 
 /** « Nouveautés » par langue de fiche ; une langue absente d'ici reçoit l'anglais. */
 const WHATS_NEW = {
-  fr: "Tes cours te suivent partout : iPhone, Android et micabo.app, avec le même compte. Un cours commencé sans compte te suit quand tu en crées un. Corrections et améliorations.",
-  en: "Your courses follow you everywhere: iPhone, Android and micabo.app, with the same account. A course started without an account comes with you when you sign up. Fixes and improvements.",
-  es: "Tus cursos te siguen a todas partes: iPhone, Android y micabo.app, con la misma cuenta. Un curso empezado sin cuenta te sigue cuando creas una. Correcciones y mejoras.",
-  de: "Deine Kurse begleiten dich überall: iPhone, Android und micabo.app, mit demselben Konto. Ein ohne Konto begonnener Kurs bleibt erhalten, wenn du eines erstellst. Fehlerbehebungen und Verbesserungen.",
-  it: "I tuoi corsi ti seguono ovunque: iPhone, Android e micabo.app, con lo stesso account. Un corso iniziato senza account ti segue quando ne crei uno. Correzioni e miglioramenti.",
-  pt: "Os teus cursos acompanham-te em todo o lado: iPhone, Android e micabo.app, com a mesma conta. Um curso começado sem conta acompanha-te quando crias uma. Correções e melhorias.",
-  "pt-BR": "Seus cursos te acompanham em todo lugar: iPhone, Android e micabo.app, com a mesma conta. Um curso começado sem conta vem junto quando você cria uma. Correções e melhorias.",
-  nl: "Je cursussen gaan overal mee: iPhone, Android en micabo.app, met hetzelfde account. Een cursus die je zonder account begon, gaat mee als je er een aanmaakt. Verbeteringen en oplossingen.",
-  tr: "Derslerin her yerde seninle: iPhone, Android ve micabo.app, aynı hesapla. Hesapsız başladığın bir ders, hesap oluşturduğunda seninle gelir. Düzeltmeler ve iyileştirmeler.",
-  hr: "Tvoji tečajevi prate te posvuda: iPhone, Android i micabo.app, s istim računom. Tečaj započet bez računa ide s tobom kad ga izradiš. Ispravci i poboljšanja.",
-  ru: "Твои курсы всегда с тобой: iPhone, Android и micabo.app, с одним аккаунтом. Курс, начатый без аккаунта, сохранится, когда ты его создашь. Исправления и улучшения.",
-  fi: "Kurssisi kulkevat mukanasi: iPhone, Android ja micabo.app samalla tilillä. Ilman tiliä aloitettu kurssi säilyy, kun luot tilin. Korjauksia ja parannuksia.",
-  cs: "Tvoje kurzy tě provází všude: iPhone, Android i micabo.app, se stejným účtem. Kurz začatý bez účtu ti zůstane, když si účet vytvoříš. Opravy a vylepšení.",
-  pl: "Twoje kursy są z tobą wszędzie: iPhone, Android i micabo.app, na jednym koncie. Kurs zaczęty bez konta zostaje z tobą, gdy je założysz. Poprawki i ulepszenia.",
-  el: "Τα μαθήματά σου σε ακολουθούν παντού: iPhone, Android και micabo.app, με τον ίδιο λογαριασμό. Ένα μάθημα που ξεκίνησες χωρίς λογαριασμό έρχεται μαζί σου όταν δημιουργήσεις έναν. Διορθώσεις και βελτιώσεις.",
-  ro: "Cursurile tale te urmează peste tot: iPhone, Android și micabo.app, cu același cont. Un curs început fără cont rămâne cu tine când îți faci unul. Corecturi și îmbunătățiri.",
-  no: "Fagene dine følger deg overalt: iPhone, Android og micabo.app, med samme konto. Et fag du startet uten konto blir med når du lager en. Rettelser og forbedringer.",
-  uk: "Твої курси завжди з тобою: iPhone, Android і micabo.app, з одним акаунтом. Курс, розпочатий без акаунта, залишиться, коли ти його створиш. Виправлення та покращення.",
-  sv: "Dina kurser följer med dig överallt: iPhone, Android och micabo.app, med samma konto. En kurs du började utan konto följer med när du skapar ett. Rättningar och förbättringar.",
-  da: "Dine fag følger dig overalt: iPhone, Android og micabo.app, med samme konto. Et fag, du startede uden konto, følger med, når du opretter en. Rettelser og forbedringer.",
-  ar: "دروسك ترافقك في كل مكان: iPhone وAndroid وmicabo.app، بالحساب نفسه. الدرس الذي بدأته دون حساب يبقى معك عندما تنشئ حسابًا. إصلاحات وتحسينات.",
-  sl: "Tvoji tečaji so s tabo povsod: iPhone, Android in micabo.app, z istim računom. Tečaj, začet brez računa, ostane s tabo, ko ga ustvariš. Popravki in izboljšave.",
-  sk: "Tvoje kurzy ťa sprevádzajú všade: iPhone, Android aj micabo.app, s rovnakým účtom. Kurz začatý bez účtu ti zostane, keď si účet vytvoríš. Opravy a vylepšenia.",
-  hu: "A kurzusaid mindenhová elkísérnek: iPhone, Android és micabo.app, ugyanazzal a fiókkal. A fiók nélkül elkezdett kurzus megmarad, amikor fiókot hozol létre. Javítások és fejlesztések.",
-  he: "הקורסים שלך איתך בכל מקום: iPhone, Android ו-micabo.app, עם אותו חשבון. קורס שהתחלת בלי חשבון נשאר איתך כשאתה יוצר חשבון. תיקונים ושיפורים.",
+  fr: "Tes leçons, tes quiz et tes flashcards s'écrivent maintenant toujours dans la langue de l'app. Traductions revues dans toutes les langues, corrections et améliorations.",
+  en: "Your lessons, quizzes and flashcards are now always written in the app's language. Translations reviewed in every language, plus fixes and improvements.",
+  es: "Tus lecciones, cuestionarios y flashcards ahora se escriben siempre en el idioma de la app. Traducciones revisadas en todos los idiomas, correcciones y mejoras.",
+  de: "Deine Lektionen, Quiz und Karteikarten werden jetzt immer in der Sprache der App geschrieben. Übersetzungen in allen Sprachen überarbeitet, Fehlerbehebungen und Verbesserungen.",
+  it: "Le tue lezioni, i quiz e le flashcard ora sono sempre scritti nella lingua dell'app. Traduzioni riviste in tutte le lingue, correzioni e miglioramenti.",
+  pt: "As tuas lições, quizzes e flashcards passam a ser sempre escritos na língua da app. Traduções revistas em todas as línguas, correções e melhorias.",
+  "pt-BR": "Suas lições, quizzes e flashcards agora são sempre escritos no idioma do app. Traduções revisadas em todos os idiomas, correções e melhorias.",
+  nl: "Je lessen, quizzen en flashcards worden nu altijd in de taal van de app geschreven. Vertalingen in alle talen nagekeken, verbeteringen en oplossingen.",
+  tr: "Derslerin, testlerin ve bilgi kartların artık her zaman uygulamanın dilinde yazılıyor. Tüm dillerde çeviriler gözden geçirildi, düzeltmeler ve iyileştirmeler.",
+  hr: "Tvoje lekcije, kvizovi i kartice sada su uvijek napisani na jeziku aplikacije. Prijevodi provjereni na svim jezicima, ispravci i poboljšanja.",
+  ru: "Твои уроки, тесты и карточки теперь всегда пишутся на языке приложения. Переводы проверены на всех языках, исправления и улучшения.",
+  fi: "Oppituntisi, visasi ja muistikorttisi kirjoitetaan nyt aina sovelluksen kielellä. Käännökset tarkistettu kaikilla kielillä, korjauksia ja parannuksia.",
+  cs: "Tvoje lekce, kvízy a kartičky se teď vždy píšou v jazyce aplikace. Překlady zkontrolované ve všech jazycích, opravy a vylepšení.",
+  pl: "Twoje lekcje, quizy i fiszki są teraz zawsze pisane w języku aplikacji. Tłumaczenia sprawdzone we wszystkich językach, poprawki i ulepszenia.",
+  el: "Τα μαθήματα, τα κουίζ και οι κάρτες σου γράφονται πλέον πάντα στη γλώσσα της εφαρμογής. Αναθεωρημένες μεταφράσεις σε όλες τις γλώσσες, διορθώσεις και βελτιώσεις.",
+  ro: "Lecțiile, testele și cardurile tale sunt acum scrise mereu în limba aplicației. Traduceri revizuite în toate limbile, corecturi și îmbunătățiri.",
+  no: "Leksjonene, quizene og kortene dine skrives nå alltid på appens språk. Oversettelser gjennomgått på alle språk, rettelser og forbedringer.",
+  uk: "Твої уроки, тести й картки тепер завжди пишуться мовою застосунку. Переклади перевірено всіма мовами, виправлення та покращення.",
+  sv: "Dina lektioner, quiz och flashcards skrivs nu alltid på appens språk. Översättningar granskade på alla språk, rättningar och förbättringar.",
+  da: "Dine lektioner, quizzer og flashcards skrives nu altid på appens sprog. Oversættelser gennemgået på alle sprog, rettelser og forbedringer.",
+  ar: "دروسك واختباراتك وبطاقاتك تُكتب الآن دائمًا بلغة التطبيق. مراجعة الترجمات في كل اللغات، مع إصلاحات وتحسينات.",
+  sl: "Tvoje lekcije, kvizi in kartice so zdaj vedno napisani v jeziku aplikacije. Prevodi pregledani v vseh jezikih, popravki in izboljšave.",
+  sk: "Tvoje lekcie, kvízy a kartičky sa teraz vždy píšu v jazyku aplikácie. Preklady skontrolované vo všetkých jazykoch, opravy a vylepšenia.",
+  hu: "A leckéid, kvízeid és kártyáid mostantól mindig az alkalmazás nyelvén készülnek. Átnézett fordítások minden nyelven, javítások és fejlesztések.",
+  he: "השיעורים, החידונים והכרטיסיות שלך נכתבים עכשיו תמיד בשפת האפליקציה. תרגומים נבדקו בכל השפות, תיקונים ושיפורים.",
 };
 
 function whatsNewFor(locale) {
