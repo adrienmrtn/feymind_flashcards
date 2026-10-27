@@ -281,10 +281,6 @@
     <string name="ios_yt_noCaptions">Micabo couldn\'t read this video. Try again, or paste the text of the course.</string>
     <string name="ios_yt_tooShort">This video is too short to generate cards.</string>
     <string name="ios_yt_unavailable">This video isn\'t reachable.</string>
-    <string name="lesson_audio_empty">I could barely hear anything in this recording.</string>
-    <string name="lesson_audio_micDenied">Allow the microphone in Settings to record your class.</string>
-    <string name="lesson_audio_tooLong">This recording is longer than 90 minutes: split it in two.</string>
-    <string name="lesson_audio_unreadable">This audio file can\'t be read.</string>
     <string name="lesson_cards_again">Again</string>
     <string name="lesson_cards_all">All cards (%1$s)</string>
     <string name="lesson_cards_answer">Answer</string>
@@ -395,9 +391,6 @@
     <string name="lesson_home_supportsFull">Up to %1$s materials per lesson.</string>
     <string name="lesson_home_title">What do you want to **learn** today?</string>
     <string name="lesson_import_add">Add</string>
-    <string name="lesson_import_audio">Audio</string>
-    <string name="lesson_import_audioFile">Choose an audio file</string>
-    <string name="lesson_import_audioSub">A recorded class</string>
     <string name="lesson_import_instruction">What the student wants to get out of it: %1$s</string>
     <string name="lesson_import_library">Choose photos</string>
     <string name="lesson_import_paste">Paste</string>
@@ -406,10 +399,6 @@
     <string name="lesson_import_pdfSub">A course, handout or sheet</string>
     <string name="lesson_import_photo">Photo</string>
     <string name="lesson_import_photoSub">Your notebook, the board, a textbook</string>
-    <string name="lesson_import_record">Record</string>
-    <string name="lesson_import_recordStop">Stop recording</string>
-    <string name="lesson_import_recordTitle">Record your class</string>
-    <string name="lesson_import_recordingName">Recording</string>
     <string name="lesson_import_scan">Scan pages</string>
     <string name="lesson_import_text">Text</string>
     <string name="lesson_import_textPlaceholder">Your class notes, an article…</string>
@@ -545,10 +534,6 @@
     <string name="x_paywall_subscribe">Go Pro</string>
     <string name="x_pro_gifted">This access was gifted to you: there\'s nothing to manage or cancel.</string>
     <string name="x_quoted">“%1$s”</string>
-    <string name="x_record_channel">Class recording</string>
-    <string name="x_record_limit">Up to 90 minutes. Mika turns your recording into text, then writes your lesson.</string>
-    <string name="x_record_ongoing">Recording your class</string>
-    <string name="x_record_ongoingBody">Micabo keeps recording, even with the screen locked.</string>
     <string name="x_reminder_channel">Daily reminder</string>
     <string name="x_score_1">I\'m struggling</string>
     <string name="x_score_2">Just below average</string>

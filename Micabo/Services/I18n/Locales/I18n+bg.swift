@@ -141,6 +141,8 @@ extension IosI18nCatalogs {
         "app.sheet.size.label": "Размер на текста",
         "app.sheet.size.normal": "Нормален",
         "app.sheet.size.petit": "Малък",
+        "app.subscription.fromPlay": "Закупено от Play Store.",
+        "app.subscription.fromWeb": "Закупено в уеб.",
         "articles.exam.intensityIntense": "Интензивно",
         "articles.exam.intensityLight": "Леко",
         "articles.exam.intensityStandard": "Нормално",

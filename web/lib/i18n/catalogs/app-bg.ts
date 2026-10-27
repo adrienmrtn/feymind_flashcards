@@ -36,6 +36,7 @@ export const appBg = {
       adopted: "Взет",
       photos: "Снимки",
       video: "Видео",
+      youtubeVideo: "Видео в YouTube",
       word: "Word",
       deck: "Тесте",
       text: "Текст",

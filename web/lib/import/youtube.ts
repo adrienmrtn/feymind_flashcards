@@ -175,6 +175,8 @@ export async function previewYouTubeInBrowser(
 
 export async function readYouTubeInBrowser(
   url: string,
+  /** Le nom du cours quand la page de la vidéo n'a pas donné son titre, dans la langue de l'interface. */
+  fallbackTitle = "Vidéo YouTube",
 ): Promise<{ status: "ok"; text: string; title: string } | { status: "error"; message: string }> {
   const id = extractVideoId(url);
   if (!id) {
@@ -183,7 +185,7 @@ export async function readYouTubeInBrowser(
 
   const languages = preferredLanguages();
   const preview = await previewYouTubeInBrowser(url);
-  const title = preview.status === "ok" ? preview.video.title : "Vidéo YouTube";
+  const title = preview.status === "ok" ? preview.video.title : fallbackTitle;
 
   if (preview.status === "ok") {
     const fromTracks = await transcriptFromTracks(preview.video.captions, languages, id);

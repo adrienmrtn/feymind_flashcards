@@ -36,6 +36,7 @@ export const appSk = {
       adopted: "Prevzatý",
       photos: "Fotky",
       video: "Video",
+      youtubeVideo: "Video z YouTube",
       word: "Word",
       deck: "Balíček",
       text: "Text",

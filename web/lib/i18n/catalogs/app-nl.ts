@@ -36,6 +36,7 @@ export const appNl = {
       adopted: "Overgenomen",
       photos: "Foto’s",
       video: "Video",
+      youtubeVideo: "YouTube-video",
       word: "Word",
       deck: "Set",
       text: "Tekst",

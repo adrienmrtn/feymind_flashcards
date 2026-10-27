@@ -36,6 +36,7 @@ export const appEs419 = {
       adopted: "Retomado",
       photos: "Fotos",
       video: "Video",
+      youtubeVideo: "Video de YouTube",
       word: "Word",
       deck: "Mazo",
       text: "Texto",

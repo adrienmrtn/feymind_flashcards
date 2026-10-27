@@ -36,6 +36,7 @@ export const appEn = {
       adopted: "Adopted",
       photos: "Photos",
       video: "Video",
+      youtubeVideo: "YouTube video",
       word: "Word",
       deck: "Deck",
       text: "Text",

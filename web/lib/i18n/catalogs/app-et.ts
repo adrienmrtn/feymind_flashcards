@@ -35,6 +35,7 @@ export const appEt = {
       adopted: "Üle võetud",
       photos: "Fotod",
       video: "Video",
+      youtubeVideo: "YouTube'i video",
       word: "Word",
       deck: "Pakk",
       text: "Tekst",

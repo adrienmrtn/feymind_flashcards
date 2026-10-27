@@ -33,7 +33,8 @@ export async function youtubeTranscript(url: string, languages?: string[]) {
   return {
     status: "ok" as const,
     text,
-    title: payload?.video?.title ?? "Vidéo YouTube",
+    // Le titre de repli devient le nom du cours : dans la langue de l'interface, pas en français.
+    title: payload?.video?.title ?? (await actionT("app.course.source.youtubeVideo")),
   };
 }
 

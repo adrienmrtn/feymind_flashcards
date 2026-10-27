@@ -36,6 +36,7 @@ export const appIt = {
       adopted: "Ripreso",
       photos: "Foto",
       video: "Video",
+      youtubeVideo: "Video YouTube",
       word: "Word",
       deck: "Mazzo",
       text: "Testo",

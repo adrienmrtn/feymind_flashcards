@@ -103,8 +103,8 @@ export async function transcribeAudio(blob: Blob, language: string): Promise<Sup
   return { text, images: [] };
 }
 
-export async function readYouTube(url: string): Promise<SupportContent & { title: string }> {
-  const local = await readYouTubeInBrowser(url);
+export async function readYouTube(url: string, fallbackTitle?: string): Promise<SupportContent & { title: string }> {
+  const local = await readYouTubeInBrowser(url, fallbackTitle);
   if (local.status === "ok") return { text: local.text, images: [], title: local.title };
   const remote = await youtubeTranscript(url, preferredLanguages());
   if (remote.status === "ok") return { text: remote.text, images: [], title: remote.title };

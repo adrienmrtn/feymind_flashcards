@@ -36,6 +36,7 @@ export const appFr = {
       adopted: "Repris",
       photos: "Photos",
       video: "Vidéo",
+      youtubeVideo: "Vidéo YouTube",
       word: "Word",
       deck: "Paquet",
       text: "Texte",

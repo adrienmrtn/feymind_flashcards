@@ -35,6 +35,7 @@ export const appHu = {
       adopted: "Átvett",
       photos: "Fotók",
       video: "Videó",
+      youtubeVideo: "YouTube-videó",
       word: "Word",
       deck: "Pakli",
       text: "Szöveg",
