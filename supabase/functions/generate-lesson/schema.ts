@@ -11,6 +11,7 @@ import { DEFAULT_ICON, LESSON_ICONS, normalizeIcon } from "../_shared/icons.ts";
 import { uniqueSymbols } from "../_shared/symbols.ts";
 import { normalizeFormula, protectedSpans } from "../_shared/sheet.ts";
 import { allowedRole, type Material, readMaterial, readRole, type ThemeRole } from "./material.ts";
+import { type ContentLanguage, resolveLanguage } from "../_shared/language.ts";
 
 // MARK: - Les nombres de la leçon
 
@@ -158,15 +159,16 @@ export function clampWords(text: string, max: number): string {
 }
 
 /**
- * Les phrases d'un texte, ponctuation comprise. Une phrase finit sur « . », « ! », « ? » ou
- * « … » SUIVI D'UN BLANC, et jamais dans une formule : « 3.14 », « $g = 9.81$ » et « e.g. »
- * restent entiers. Couper sur chaque point rendait « 3. 14 » une fois les phrases recollées.
+ * Les phrases d'un texte, ponctuation comprise. Une phrase finit sur « . », « ! », « ? »,
+ * « … » ou le « ؟ » de l'arabe SUIVI D'UN BLANC, et jamais dans une formule : « 3.14 »,
+ * « $g = 9.81$ » et « e.g. » restent entiers. Couper sur chaque point rendait « 3. 14 » une
+ * fois les phrases recollées.
  */
 export function sentences(text: string): string[] {
   const spans = protectedSpans(text);
   const out: string[] = [];
   let start = 0;
-  for (const match of text.matchAll(/[.!?…]+["»”)]*(?=\s)/g)) {
+  for (const match of text.matchAll(/[.!?…؟]+["»”)]*(?=\s)/g)) {
     if (insideSpans(spans, match.index!)) continue;
     const end = match.index! + match[0].length;
     const sentence = text.slice(start, end).trim();
@@ -815,6 +817,45 @@ const TRUE_FALSE: Record<string, [string, string]> = {
   ar: ["صحيح", "خطأ"],
 };
 
+/**
+ * **Le titre de repli d'une leçon**, quand le modèle n'en a pas donné : il s'affiche en tête du
+ * chemin, dans la langue de l'app. « Ma leçon » arrivait tel quel chez un élève qui a l'app en
+ * turc. Une langue inconnue, ou « celle du document », retombe sur le français, comme
+ * `resolveLanguage`.
+ */
+const FALLBACK_LESSON_TITLES: Record<ContentLanguage, string> = {
+  fr: "Ma leçon",
+  en: "My lesson",
+  de: "Meine Lektion",
+  it: "La mia lezione",
+  es: "Mi lección",
+  "es-419": "Mi lección",
+  pt: "A minha lição",
+  "pt-BR": "Minha lição",
+  cs: "Moje lekce",
+  sk: "Moja lekcia",
+  nl: "Mijn les",
+  el: "Το μάθημά μου",
+  hu: "Az én leckém",
+  pl: "Moja lekcja",
+  ro: "Lecția mea",
+  sv: "Min lektion",
+  da: "Min lektion",
+  fi: "Oma oppitunti",
+  et: "Minu õppetund",
+  hr: "Moja lekcija",
+  sl: "Moja lekcija",
+  sr: "Moja lekcija",
+  bg: "Моят урок",
+  ru: "Мой урок",
+  tr: "Dersim",
+  ar: "درسي",
+};
+
+export function fallbackLessonTitle(language: string | undefined): string {
+  return FALLBACK_LESSON_TITLES[resolveLanguage(language)];
+}
+
 export function trueFalseLabels(language: string | undefined): [string, string] {
   return TRUE_FALSE[(language ?? "").trim().toLowerCase().slice(0, 2)] ?? TRUE_FALSE.fr!;
 }
@@ -1114,9 +1155,16 @@ export function readQuestions(
   return out.slice(0, options.max ?? LIMITS.questionsPerTheme);
 }
 
-/** La clé d'un énoncé : sans casse, sans ponctuation, pour repérer une question déjà posée. */
+/**
+ * La clé d'un énoncé : sans casse, sans ponctuation, pour repérer une question déjà posée.
+ *
+ * Tous les signes diacritiques partent, pas seulement ceux du latin : les voyelles brèves de
+ * l'arabe (« صَحِيح ») coupaient le mot en lettres isolées, et la clé ne valait plus « صحيح ». Le
+ * « ı » sans point du turc se lit « i » : « YANLIŞ » en capitales devient « yanlis » une fois en
+ * minuscules, et ne retrouvait pas « Yanlış » — le vrai/faux partait.
+ */
 export function promptKey(prompt: string): string {
-  return prompt.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  return prompt.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").replace(/ı/g, "i").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 }
 
 // MARK: - Flashcards

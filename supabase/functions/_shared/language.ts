@@ -51,6 +51,13 @@ const NAMES = {
   ar: "arabe standard moderne",
 } as const;
 
+/**
+ * Les vingt-six langues servies, dans l'ordre de `NAMES`. Exportées pour que chaque table
+ * écrite à la main ailleurs (« Vrai » et « Faux », le titre de repli d'une leçon) se teste
+ * contre la même liste : une langue ajoutée ici et oubliée là-bas se voit au test.
+ */
+export const CONTENT_LANGUAGES = Object.keys(NAMES) as ContentLanguage[];
+
 /** Ce que le modèle appelle la langue quand il l'écrit lui-même, dans cette langue. */
 const ENDONYMS: Record<ContentLanguage, string> = {
   fr: "français",

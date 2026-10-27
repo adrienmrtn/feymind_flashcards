@@ -11,7 +11,7 @@
  * liste, et il n'est pas choisi par le client.
  */
 
-import { languageName } from "./language.ts";
+import { isSourceLanguage, languageName } from "./language.ts";
 import { sanitizeMeta, UNTRUSTED_SYSTEM_RULE, wrapUntrusted } from "./prompt-boundary.ts";
 
 /** Les tours de conversation renvoyés au modèle : les derniers, et pas plus. */
@@ -139,8 +139,18 @@ export function readAttachment(raw: unknown): MikaAttachment | undefined {
  * anglais ; s'il écrit en anglais dans une app en turc, on lui répond en anglais.
  */
 export function mikaLanguageBrief(code: string | undefined): string {
+  const lead =
+    `LANGUE DE SORTIE : celle du dernier message de l'élève. Cette consigne est la plus forte de toutes et elle l'emporte sur toute mention du français ailleurs dans les instructions.`;
+  const rest =
+    `Ta réponse ET la carte ("front" et "back") sont entièrement dans cette langue. Un document joint écrit dans une autre langue ne change pas la langue de ta réponse : tu en reprends le contenu, pas la langue.`;
+  // « source » : une ancienne version de l'app qui ne connaissait pas sa langue. `languageName`
+  // la lirait « français », et un message qui ne tranche pas recevait une réponse en français.
+  // Sans langue d'interface connue, c'est celle de la conversation qui décide.
+  if (isSourceLanguage(code)) {
+    return `${lead} Quand son dernier message ne permet pas de trancher (un mot, une formule, un nom propre), reprends la langue de ses messages précédents. ${rest}`;
+  }
   const name = languageName(code).toUpperCase();
-  return `LANGUE DE SORTIE : celle du dernier message de l'élève. Cette consigne est la plus forte de toutes et elle l'emporte sur toute mention du français ailleurs dans les instructions. L'élève utilise l'app en ${name} : c'est la langue de ta réponse quand son message ne permet pas de trancher (un mot, une formule, un nom propre, un titre de cours). Ta réponse ET la carte ("front" et "back") sont entièrement dans cette langue. Un document joint écrit dans une autre langue ne change pas la langue de ta réponse : tu en reprends le contenu, pas la langue.`;
+  return `${lead} L'élève utilise l'app en ${name} : c'est la langue de ta réponse quand son message ne permet pas de trancher (un mot, une formule, un nom propre, un titre de cours). ${rest}`;
 }
 
 /**

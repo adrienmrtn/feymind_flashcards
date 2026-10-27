@@ -352,7 +352,7 @@ Les formes :
 - {"kind":"match","prompt":"Associe …","pairs":[["…","…"],["…","…"],["…","…"]],"why":"…","difficulty":2,"lesson":0,"theme":0}
 Les propositions fausses sont les erreurs que font vraiment les élèves à cet examen. "why" (35 mots au plus) dit pourquoi c'est juste et ce qui piège : c'est le corrigé.
 
-Puis "title" : le titre de l'épreuve, 8 mots au plus (« Examen blanc · La guerre froide »).
+Puis "title" : le titre de l'épreuve, 8 mots au plus, dans la langue de sortie (en français : « Examen blanc · La guerre froide »).
 
 ${UNTRUSTED_SYSTEM_RULE}
 
@@ -372,7 +372,9 @@ export function examBrief(options: {
     )
     .join("\n");
   return [
-    `ÉPREUVE : ${options.title || "Examen blanc"}, ${options.minutes} minutes.`,
+    // Sans titre donné, la consigne n'en propose pas un en français : le modèle le recopiait
+    // tel quel dans une épreuve écrite en turc.
+    `ÉPREUVE : ${options.title || "(sans titre : donne-lui le sien, dans la langue de sortie)"}, ${options.minutes} minutes.`,
     `\nLEÇONS AU PROGRAMME\n${lessons}`,
     `\nVOLUME : ${options.count} questions.`,
     `FORMES PERMISES : ${options.kinds.join(", ")}.`,

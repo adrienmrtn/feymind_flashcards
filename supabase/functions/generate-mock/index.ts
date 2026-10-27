@@ -44,7 +44,7 @@ const TOTAL_MINIMUM = 4;
 const GAP = "…";
 
 const SYSTEM_PROMPT =
-  `Tu écris une copie d'examen blanc en français pour l'application Micabo. Une copie, pas des flashcards.
+  `Tu écris une copie d'examen blanc pour l'application Micabo, dans la langue de sortie donnée en tête du message (« LANGUE DE SORTIE »). Une copie, pas des flashcards.
 
 CE QUI DISTINGUE UNE COPIE D'UN PAQUET DE CARTES
 Une carte demande un rappel isolé, et l'étudiant se corrige lui-même. Une copie est notée par quelqu'un d'autre : chaque question doit donc avoir UNE réponse vérifiable, que deux correcteurs trancheraient pareil.

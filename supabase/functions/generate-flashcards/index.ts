@@ -23,7 +23,7 @@ interface RequestBody {
   quota?: Record<string, number>;
   /** Matière du cours, quand elle est connue : elle change ce qu'une carte doit demander. */
   subject?: string;
-  /** Langue des cartes, la même que celle de la fiche : « fr » ou « en ». */
+  /** Langue des cartes, celle de l'app : un code de `_shared/language.ts` (« fr », « tr »…). */
   language?: string;
   /**
    * Le plan du deck, dans l'ordre. Les titres seuls : le modèle a déjà le texte entier
@@ -48,7 +48,7 @@ interface GeneratedCard {
 }
 
 const SYSTEM_PROMPT =
-  `Tu conçois des flashcards de révision en français pour l'application Micabo, dans l'esprit d'Anki.
+  `Tu conçois des flashcards de révision pour l'application Micabo, dans l'esprit d'Anki. Elles sont écrites dans la langue de sortie donnée en tête du message (« LANGUE DE SORTIE »), quelle que soit celle du cours.
 
 CONCISION, AVANT TOUT LE RESTE
 Une carte se lit en trois secondes et se répond de mémoire. Une carte bavarde ne se révise pas : elle se relit, ce qui n'est pas la même chose et n'apprend rien.
