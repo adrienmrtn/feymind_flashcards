@@ -168,6 +168,20 @@ Deno.test("la passe visuelle ne demande plus de données que personne ne lit", (
   assertEquals(VISION_SYSTEM_PROMPT.includes("Relève les valeurs chiffrées"), true);
 });
 
+// MARK: - La langue
+
+Deno.test("aucune consigne n'impose le français : c'est la langue de sortie qui décide", () => {
+  // La passe visuelle écrivait en français : sur des photos seules, c'était le seul texte
+  // joint, et une fiche « dans la langue du document » sortait en français pour un cours turc.
+  assertEquals(VISION_SYSTEM_PROMPT.includes("en français"), false);
+  assertEquals(VISION_SYSTEM_PROMPT.includes("langue du texte de ces pages"), true);
+  // La fiche disait « Tout en français » et « écris la fiche en français » pour un document
+  // étranger : deux ordres contraires à la consigne de langue placée en tête du message.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("Tout en français"), false);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("écris la fiche en français"), false);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("LANGUE DE SORTIE"), true);
+});
+
 // MARK: - Le plafond de sortie
 
 Deno.test("le plafond de sortie couvre la fiche la plus longue", () => {

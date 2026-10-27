@@ -74,6 +74,7 @@ import {
   clampWords,
   estimateMinutes,
   fairShares,
+  fallbackLessonTitle,
   finalFirst,
   groupThemes,
   LIMITS,
@@ -411,7 +412,8 @@ async function writePlan(
   sections.push("Écris maintenant le JSON du plan.");
   const prompt = sections.join("\n\n");
 
-  const fallbackTitle = fromScratch ? clampWords(topic, LIMITS.lessonTitleWords) : "Ma leçon";
+  // Le titre de repli s'affiche en tête du chemin : il est dans la langue de l'app.
+  const fallbackTitle = fromScratch ? clampWords(topic, LIMITS.lessonTitleWords) : fallbackLessonTitle(body.language);
   const read = (parsed: Record<string, unknown> | null) =>
     parsed
       ? readPlan(parsed, {

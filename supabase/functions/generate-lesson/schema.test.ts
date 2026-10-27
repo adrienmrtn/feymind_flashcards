@@ -20,10 +20,15 @@ import {
   readQuestion,
   readQuestions,
   readTrueFalse,
+  promptKey,
+  sentences,
   separateBoxes,
   subtitleText,
+  fallbackLessonTitle,
+  trueFalseLabels,
   words,
 } from "./schema.ts";
+import { CONTENT_LANGUAGES } from "../_shared/language.ts";
 
 Deno.test("le découpage des paliers est celui de l'app", () => {
   const sizes = (n: number) => groupThemes(n).map((g) => g.length);
@@ -294,6 +299,45 @@ Deno.test("un vrai/faux : la réponse dans toutes les langues, « vrai » toujou
   assertEquals(arabic?.choices, ["صحيح", "خطأ"]);
   const brazil = readQuestion({ kind: "truefalse", prompt: "O muro caiu em 1989.", answer: true, why: "." }, "s", { kinds: all, language: "pt-BR" });
   assertEquals(brazil?.choices, ["Verdadeiro", "Falso"]);
+});
+
+Deno.test("« vrai » et « faux », et le titre de repli, existent dans les vingt-six langues", () => {
+  const all = ["choice", "truefalse"] as const;
+  for (const language of CONTENT_LANGUAGES) {
+    const [yes, no] = trueFalseLabels(language);
+    // Le français est le repli : seule la langue française a le droit de le rendre.
+    if (language !== "fr") {
+      assert(yes !== "Vrai", `${language} : « Vrai » en repli`);
+      assert(fallbackLessonTitle(language) !== "Ma leçon", `${language} : « Ma leçon » en repli`);
+    }
+    // Les libellés de la langue sont ceux qui sortent, même quand le modèle en écrit d'autres.
+    const question = readQuestion(
+      { kind: "truefalse", prompt: "1989.", choices: ["Faux", "Vrai"], answer: false, why: "." },
+      "s",
+      { kinds: all, language },
+    );
+    assertEquals(question?.choices, [yes, no], language);
+    assertEquals(question?.answer, 1, language);
+  }
+  assertEquals(trueFalseLabels("tr"), ["Doğru", "Yanlış"]);
+  assertEquals(fallbackLessonTitle("tr"), "Dersim");
+  assertEquals(fallbackLessonTitle("pt-BR"), "Minha lição");
+  assertEquals(fallbackLessonTitle(undefined), "Ma leçon");
+});
+
+Deno.test("un vrai/faux turc en capitales, ou arabe avec ses voyelles, se lit encore", () => {
+  // « YANLIŞ » en minuscules devient « yanliş » : sans repli du « ı », la question partait.
+  assertEquals(readTrueFalse("YANLIŞ"), false);
+  assertEquals(readTrueFalse("yanlış"), false);
+  assertEquals(readTrueFalse("DOĞRU"), true);
+  // Les voyelles brèves de l'arabe ne coupent plus le mot.
+  assertEquals(readTrueFalse("صَحِيح"), true);
+  assertEquals(readTrueFalse("خَطَأ"), false);
+  assertEquals(promptKey("İstanbul'un FETHİ"), promptKey("istanbul'un fethi"));
+});
+
+Deno.test("une phrase arabe finit sur « ؟ »", () => {
+  assertEquals(sentences("ما هو التمثيل الضوئي؟ إنه عملية حيوية."), ["ما هو التمثيل الضوئي؟", "إنه عملية حيوية."]);
 });
 
 Deno.test("une phrase à trou ne donne pas sa réponse, et garde son trou au-delà de 30 mots", () => {

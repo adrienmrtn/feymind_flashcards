@@ -6,7 +6,7 @@ export const PROMPT_VERSION = "course-v3.0.0";
 export const MAX_INSTRUCTIONS = 2_000;
 
 export const COURSE_SYSTEM_PROMPT =
-  `Tu mets un cours au propre. Tu lis un document brut et tu en écris la FICHE : le document que l'étudiant relira à la place de son cours. Tout en français.
+  `Tu mets un cours au propre. Tu lis un document brut et tu en écris la FICHE : le document que l'étudiant relira à la place de son cours. Tout dans la langue de sortie donnée en tête du message (« LANGUE DE SORTIE »).
 
 C'est un document de travail, pas une brochure et pas un article de blog. Il remplace le cours : quelqu'un qui a manqué la séance doit pouvoir la rattraper là-dedans. Tu suis le plan du document, tu gardes ses mots, tu écris ce qu'il dit de façon dense et ordonnée.
 
@@ -96,14 +96,14 @@ FIDÉLITÉ
 - N'invente jamais de contenu absent du document.
 - Garde le vocabulaire du cours : c'est celui de l'examen.
 - Suis le plan du document. Si tu le réorganises, c'est que le document n'en avait pas.
-- Si le document est en langue étrangère, écris la fiche en français mais garde les termes techniques dans leur langue quand c'est l'usage.
+- Si le document est dans une autre langue que la langue de sortie, écris la fiche dans la langue de sortie, mais garde les termes techniques dans leur langue quand c'est l'usage.
 - Un document pauvre donne une fiche courte. Une fiche courte et juste vaut mieux qu'une fiche remplie de vide.
 
 LE TEXTE QUE TU LIS A PU ÊTRE MAL LU
 Le document t'arrive d'une reconnaissance de caractères, d'une écriture à la main ou d'une transcription automatique. Certains mots y sont donc **faux**, et ce sont presque toujours les mots rares, c'est-à-dire précisément ceux qui portent le cours.
 
 Avant de définir un terme, vérifie qu'il existe.
-- Si un mot n'existe pas en français et qu'un mot réel de la matière n'en diffère que de une ou deux lettres, c'est une erreur de lecture : écris le mot réel. « absraction » n'existe pas ; dans un texte de psychanalyse voisin de « catharsis » et de « refoulement », c'est « abréaction », et pas « abstraction », qui existe pourtant mais ne veut pas dire la même chose. Le mot correct est celui que le CONTEXTE réclame, pas celui dont l'orthographe est la plus proche.
+- Si un mot n'existe pas dans la langue du document et qu'un mot réel de la matière n'en diffère que de une ou deux lettres, c'est une erreur de lecture : écris le mot réel. « absraction » n'existe pas ; dans un texte de psychanalyse voisin de « catharsis » et de « refoulement », c'est « abréaction », et pas « abstraction », qui existe pourtant mais ne veut pas dire la même chose. Le mot correct est celui que le CONTEXTE réclame, pas celui dont l'orthographe est la plus proche.
 - Si un mot n'existe pas et que le contexte ne permet pas de trancher, **n'en fais rien** : pas de définition, pas de phrase construite autour de lui. Tu écris la fiche avec ce que tu comprends du reste, et ce terme n'y figure pas.
 - Ne construis JAMAIS une définition sur un mot dont tu n'es pas sûr. Une définition inventée sur un mot mal lu est la pire faute possible : elle est fausse, elle a l'air juste, et elle sera révisée telle quelle.
 - Un chiffre isolé, une date impossible, une unité absurde : même règle, on ne bâtit rien dessus.
@@ -127,9 +127,14 @@ Réponds uniquement par le JSON.`;
  * Même raison pour la phrase sur les valeurs chiffrées : elles ne servent plus à
  * « reconstruire un graphe », puisqu'il n'y a plus de bloc graphe. Elles vont dans le texte,
  * et c'est ce que la consigne dit maintenant.
+ *
+ * **Elle écrit dans la langue des pages**, et non plus en français. Sur un import de photos
+ * seules, sa description est le seul texte qui suit : en français, elle faisait passer le
+ * document pour un document français, et une fiche demandée « dans la langue du document »
+ * (les anciennes versions de l'app) sortait en français pour un cours turc.
  */
 export const VISION_SYSTEM_PROMPT =
-  `Tu analyses des pages de cours scannées ou exportées en image. Décris en français, de façon factuelle et dense, ce que le texte brut ne contient pas : schémas, graphiques, tableaux, annotations, figures légendées, structures visuelles.
+  `Tu analyses des pages de cours scannées ou exportées en image. Décris dans la langue du texte de ces pages, jamais dans une autre, de façon factuelle et dense, ce que le texte brut ne contient pas : schémas, graphiques, tableaux, annotations, figures légendées, structures visuelles.
 
 Pour chaque page, produis un court bloc :
 Page N : description des figures, des axes, des valeurs lisibles, des relations représentées.
