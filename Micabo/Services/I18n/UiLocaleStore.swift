@@ -7,12 +7,8 @@ final class UiLocaleStore {
     var locale: UiLocale {
         didSet {
             guard locale != oldValue else { return }
+            // Les cours suivent : `OnboardingPreferences.contentLanguage` est la langue de l'app.
             UserDefaults.standard.set(locale.rawValue, forKey: UiLocale.storageKey)
-            // **Les cours suivent la langue choisie.** Passer l'app de l'italien au français
-            // laissait les leçons s'écrire en italien : la langue des notes restait celle du
-            // pays, ou d'un ancien réglage. Un changement de langue d'interface la remplace ;
-            // le réglage « langue des fiches » permet toujours d'en choisir une autre ensuite.
-            OnboardingPreferences.sheetLanguage = locale.contentLanguage
         }
     }
 

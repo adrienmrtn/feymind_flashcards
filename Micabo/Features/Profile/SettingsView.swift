@@ -21,8 +21,6 @@ struct SettingsView: View {
 
     @State private var stage = OnboardingPreferences.educationStage
     @State private var country = OnboardingPreferences.schoolingCountry
-    /// La langue des fiches, quand elle n'est pas celle du pays. `nil` : celle du pays.
-    @State private var sheetLanguage = OnboardingPreferences.sheetLanguage
     @State private var showResetConfirmation = false
     @State private var showDeleteAccountConfirmation = false
     @State private var showSignOutConfirmation = false
@@ -475,31 +473,7 @@ struct SettingsView: View {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji(country.flag), background: MicaboColor.tilePastels[2]),
                         title: i18n.t("ios.country"),
-                        subtitle: i18n.t("ios.writesIn", ["language": country.language.label]),
                         accessory: .value(country.localizedName(locale: i18n.locale))
-                    )
-                }
-
-                MicaboHairline(inset: 72)
-
-                // **La langue des fiches se choisit.** Elle suit le pays par défaut, et
-                // un élève scolarisé en France qui révise en anglais, ou l'inverse, la
-                // change ici : « changer la langue de l'app » ne la changeait pas, et il
-                // n'y avait nulle part où le faire.
-                Menu {
-                    Picker(i18n.t("ios.sheetLanguageCaption"), selection: $sheetLanguage) {
-                        Text(i18n.t("ios.sheetLanguage.auto", ["language": country.language.label]))
-                            .tag(Optional<ContentLanguage>.none)
-                        ForEach(ContentLanguage.allCases) { value in
-                            Text(value.label).tag(Optional(value))
-                        }
-                    }
-                } label: {
-                    MicaboRow(
-                        tile: MicaboTile(glyph: .symbol("pencil"), background: MicaboColor.tilePastels[1]),
-                        title: i18n.t("ios.sheetLanguageCaption"),
-                        subtitle: i18n.t("settings.sheetLanguageHelp"),
-                        accessory: .value((sheetLanguage ?? country.language).label)
                     )
                 }
 
@@ -563,11 +537,6 @@ struct SettingsView: View {
             Haptics.selection()
             // Le changement monte tout de suite : sans ça, la descente du prochain
             // lancement pouvait le recouvrir avec le profil de la veille.
-            Task { await sync.sync(context: modelContext) }
-        }
-        .onChange(of: sheetLanguage) { _, newValue in
-            OnboardingPreferences.sheetLanguage = newValue
-            Haptics.selection()
             Task { await sync.sync(context: modelContext) }
         }
         .sheet(isPresented: $showSubjects, onDismiss: { subjects = OnboardingPreferences.subjects }) {

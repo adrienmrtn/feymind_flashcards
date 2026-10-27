@@ -17,8 +17,8 @@ describe("pour qui la leçon s'écrit", () => {
       level: "lycee",
       country: "fr",
       schoolStage: "Lycée",
-      // La langue du pays, pas celle de l'interface : `OnboardingPreferences.contentLanguage`.
-      language: "fr",
+      // La langue de l'interface, pas celle du pays : `OnboardingPreferences.contentLanguage`.
+      language: "en",
       kinds: ["choice", "truefalse", "gap", "order", "match"],
       tier: "upperSecondary",
       exam: "un examen, le 2027-06-15",
@@ -29,9 +29,9 @@ describe("pour qui la leçon s'écrit", () => {
     });
   });
 
-  it("prend la langue des fiches choisie, dans les vingt-six de l'app", () => {
-    const audience = buildAudience({ profile: { study_level: null, country_code: "fr", sheet_language: "pt-BR" }, local: null, uiLocale: "fr" });
-    expect(audience.language).toBe("pt-BR");
+  it("écrit dans la langue de l'interface, pas dans celle d'un ancien choix ni du pays", () => {
+    const audience = buildAudience({ profile: { study_level: null, country_code: "fr", sheet_language: "pt-BR" }, local: null, uiLocale: "tr" });
+    expect(audience.language).toBe("tr");
     expect(audience.level).toBe("");
     expect(audience.schoolStage).toBe("");
     expect(audience).not.toHaveProperty("tier");
@@ -47,7 +47,7 @@ describe("pour qui la leçon s'écrit", () => {
     expect(below.scoreLabel).toBe("< 10/20");
     const german = buildAudience({ profile: { study_level: "lycee", country_code: "de", sheet_language: null }, local: { targetScore: 20 }, uiLocale: "fr" });
     expect(german.targetLabel).toBe("1,0");
-    expect(german.language).toBe("de");
+    expect(german.language).toBe("fr");
   });
 
   it("ignore un palier local qui ne dit plus le registre du profil", () => {
@@ -131,7 +131,7 @@ describe("profiles.study_level, quelle que soit la main", () => {
   });
 
   it("envoie la marche qu'Android a écrite", () => {
-    const audience = buildAudience({ profile: { study_level: "graduate", country_code: "tr", sheet_language: null }, local: null, uiLocale: "en" });
+    const audience = buildAudience({ profile: { study_level: "graduate", country_code: "tr", sheet_language: null }, local: null, uiLocale: "tr" });
     expect(audience.level).toBe("master");
     expect(audience.tier).toBe("graduate");
     expect(audience.language).toBe("tr");

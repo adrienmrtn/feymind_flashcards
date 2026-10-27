@@ -573,7 +573,8 @@ enum OnboardingPreferences {
         }
     }
 
-    /// La langue choisie pour les fiches, quand elle n'est plus celle du pays.
+    /// L'ancien réglage « langue des fiches ». Il n'est plus relu pour écrire : il ne sert qu'à
+    /// garder en mémoire ce qu'un ancien appareil a pu poser.
     static var sheetLanguage: ContentLanguage? {
         get { defaults.string(forKey: Key.sheetLanguage).flatMap(ContentLanguage.init(rawValue:)) }
         set {
@@ -585,12 +586,14 @@ enum OnboardingPreferences {
         }
     }
 
-    /// La langue dans laquelle Micabo écrit.
+    /// La langue dans laquelle Micabo écrit : **toujours celle de l'app.**
     ///
-    /// Un réglage explicite (web ou iOS) gagne. Sinon on retombe sur celle du pays
-    /// de scolarisation, comme avant qu'on puisse la changer.
+    /// Elle se déduisait du pays de scolarisation, la France par défaut : un élève qui lisait
+    /// l'app en turc recevait ses leçons en français. Le pays ne décide plus que du système
+    /// scolaire (paliers, barème) ; la langue des notes, des quiz et des flashcards est celle
+    /// dans laquelle l'élève lit l'app.
     static var contentLanguage: ContentLanguage {
-        sheetLanguage ?? schoolingCountry.language
+        UiLocale.resolved().contentLanguage
     }
 
     /// Le pays de scolarisation. Absent, on suppose la France : c'est ce que l'app faisait
