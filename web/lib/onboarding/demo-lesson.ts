@@ -1,6 +1,6 @@
 import "server-only";
 
-import { DEFAULT_VISIBILITY, emptyProgress, languageFor, normalizeClozeGap, type LessonPath, type QuizQuestion, type SheetBlock, type ThemeQuiz } from "@micabo/core";
+import { DEFAULT_VISIBILITY, emptyProgress, normalizeClozeGap, type LessonPath, type QuizQuestion, type SheetBlock, type ThemeQuiz } from "@micabo/core";
 
 import { revalidateUserData } from "@/lib/data/cache";
 import type { Translator } from "@/lib/i18n/copy";
@@ -91,7 +91,7 @@ export function demoPath(t: Translator, themes: DemoTheme[]): LessonPath {
  * Écrit la leçon de démonstration pour `userId`, si elle n'a encore aucune leçon à elle.
  * Rend `true` quand une leçon a été écrite.
  */
-export async function installDemoLesson(userId: string, t: Translator, countryCode: string | null | undefined): Promise<boolean> {
+export async function installDemoLesson(userId: string, t: Translator, language: string): Promise<boolean> {
   const supabase = await createClient();
   const { count } = await supabase.from("courses").select("id", { count: "exact", head: true }).eq("user_id", userId).is("deleted_at", null);
   if ((count ?? 0) > 0) return false;
@@ -115,7 +115,7 @@ export async function installDemoLesson(userId: string, t: Translator, countryCo
     sheet: null,
     context_text: null,
     visibility: DEFAULT_VISIBILITY,
-    language: languageFor(countryCode),
+    language,
     tone: "blue",
     icon: "globe",
     last_opened_at: now,

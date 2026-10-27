@@ -79,7 +79,7 @@ export function ImportSheet({
           <LinkBody
             onPick={(url) =>
               begin(url, async () => {
-                const video = await readYouTube(url);
+                const video = await readYouTube(url, t("app.course.source.youtubeVideo"));
                 return { text: video.text, images: [], title: video.title };
               })
             }

@@ -280,10 +280,6 @@
     <string name="ios_yt_noCaptions">Micabo n\'a pas pu lire cette vidéo. Réessaie, ou colle le texte du cours.</string>
     <string name="ios_yt_tooShort">Cette vidéo est trop courte pour générer des cartes.</string>
     <string name="ios_yt_unavailable">Cette vidéo n\'est pas accessible.</string>
-    <string name="lesson_audio_empty">Je n\'ai presque rien entendu dans cet enregistrement.</string>
-    <string name="lesson_audio_micDenied">Autorise le micro dans les Réglages pour enregistrer ton cours.</string>
-    <string name="lesson_audio_tooLong">Cet enregistrement dépasse 90 minutes : coupe-le en deux.</string>
-    <string name="lesson_audio_unreadable">Ce fichier audio ne se lit pas.</string>
     <string name="lesson_cards_again">Encore</string>
     <string name="lesson_cards_all">Toutes les cartes (%1$s)</string>
     <string name="lesson_cards_answer">Réponse</string>
@@ -394,9 +390,6 @@
     <string name="lesson_home_supportsFull">%1$s supports au plus pour une leçon.</string>
     <string name="lesson_home_title">Qu\'est-ce que tu veux **apprendre** aujourd\'hui ?</string>
     <string name="lesson_import_add">Ajouter</string>
-    <string name="lesson_import_audio">Audio</string>
-    <string name="lesson_import_audioFile">Choisir un fichier audio</string>
-    <string name="lesson_import_audioSub">Un cours enregistré</string>
     <string name="lesson_import_instruction">Ce que l\'élève veut en retenir : %1$s</string>
     <string name="lesson_import_library">Choisir des photos</string>
     <string name="lesson_import_paste">Coller</string>
@@ -405,10 +398,6 @@
     <string name="lesson_import_pdfSub">Un cours, un poly, une fiche</string>
     <string name="lesson_import_photo">Photo</string>
     <string name="lesson_import_photoSub">Ton cahier, le tableau, un manuel</string>
-    <string name="lesson_import_record">Enregistrer</string>
-    <string name="lesson_import_recordStop">Arrêter l\'enregistrement</string>
-    <string name="lesson_import_recordTitle">Enregistre ton cours</string>
-    <string name="lesson_import_recordingName">Enregistrement</string>
     <string name="lesson_import_scan">Scanner des pages</string>
     <string name="lesson_import_text">Texte</string>
     <string name="lesson_import_textPlaceholder">Ton cours, tes notes, un article…</string>
@@ -544,10 +533,6 @@
     <string name="x_paywall_subscribe">Passer à Pro</string>
     <string name="x_pro_gifted">Cet accès t\'a été offert : il n\'y a rien à gérer ni à résilier.</string>
     <string name="x_quoted">« %1$s »</string>
-    <string name="x_record_channel">Enregistrement du cours</string>
-    <string name="x_record_limit">Jusqu\'à 90 minutes. Mika met ton enregistrement en texte, puis écrit ta leçon.</string>
-    <string name="x_record_ongoing">Enregistrement de ton cours</string>
-    <string name="x_record_ongoingBody">Micabo continue d\'enregistrer, même écran verrouillé.</string>
     <string name="x_reminder_channel">Rappel du jour</string>
     <string name="x_score_1">J\'ai du mal</string>
     <string name="x_score_2">Un peu en dessous de la moyenne</string>

@@ -36,6 +36,7 @@ export const appSv = {
       adopted: "Tillagd",
       photos: "Foton",
       video: "Video",
+      youtubeVideo: "YouTube-video",
       word: "Word",
       deck: "Kortlek",
       text: "Text",

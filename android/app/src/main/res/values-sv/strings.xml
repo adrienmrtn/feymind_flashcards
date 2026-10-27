@@ -273,10 +273,6 @@
     <string name="ios_yt_noCaptions">Micabo kunde inte läsa videon. Försök igen, eller klistra in kursens text.</string>
     <string name="ios_yt_tooShort">Videon är för kort för att skapa kort.</string>
     <string name="ios_yt_unavailable">Videon går inte att nå.</string>
-    <string name="lesson_audio_empty">Jag hörde knappt något i den här inspelningen.</string>
-    <string name="lesson_audio_micDenied">Tillåt mikrofonen i Inställningar för att spela in din lektion.</string>
-    <string name="lesson_audio_tooLong">Inspelningen är längre än 90 minuter: dela upp den i två.</string>
-    <string name="lesson_audio_unreadable">Ljudfilen går inte att läsa.</string>
     <string name="lesson_cards_again">Igen</string>
     <string name="lesson_cards_all">Alla kort (%1$s)</string>
     <string name="lesson_cards_answer">Svar</string>
@@ -384,9 +380,6 @@
     <string name="lesson_home_supportsFull">Upp till %1$s material per lektion.</string>
     <string name="lesson_home_title">Vad vill du **lära dig** i dag?</string>
     <string name="lesson_import_add">Lägg till</string>
-    <string name="lesson_import_audio">Ljud</string>
-    <string name="lesson_import_audioFile">Välj en ljudfil</string>
-    <string name="lesson_import_audioSub">En inspelad lektion</string>
     <string name="lesson_import_instruction">Det eleven vill få ut av det: %1$s</string>
     <string name="lesson_import_library">Välj foton</string>
     <string name="lesson_import_paste">Klistra in</string>
@@ -394,10 +387,6 @@
     <string name="lesson_import_pdfSub">En kurs, ett utdelat blad eller en sammanfattning</string>
     <string name="lesson_import_photo">Foto</string>
     <string name="lesson_import_photoSub">Ditt anteckningsblock, tavlan, en lärobok</string>
-    <string name="lesson_import_record">Spela in</string>
-    <string name="lesson_import_recordStop">Stoppa inspelningen</string>
-    <string name="lesson_import_recordTitle">Spela in din lektion</string>
-    <string name="lesson_import_recordingName">Inspelning</string>
     <string name="lesson_import_scan">Skanna sidor</string>
     <string name="lesson_import_textPlaceholder">Dina lektionsanteckningar, en artikel…</string>
     <string name="lesson_import_textSub">Klistra in dina anteckningar</string>
@@ -528,10 +517,7 @@
     <string name="x_paywall_subscribe">Skaffa Pro</string>
     <string name="x_pro_gifted">Den här åtkomsten fick du i present: det finns inget att hantera eller säga upp.</string>
     <string name="x_quoted">”%1$s”</string>
-    <string name="x_record_channel">Inspelning av lektion</string>
-    <string name="x_record_limit">Upp till 90 minuter. Mika gör om din inspelning till text och skriver sedan din lektion.</string>
-    <string name="x_record_ongoing">Din lektion spelas in</string>
-    <string name="x_record_ongoingBody">Micabo fortsätter spela in, även när skärmen är låst.</string>
+    <string name="x_reminder_channel">Daglig påminnelse</string>
     <string name="x_score_1">Jag kämpar</string>
     <string name="x_score_2">Strax under snittet</string>
     <string name="x_score_3">Medel</string>

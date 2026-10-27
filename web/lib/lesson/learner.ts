@@ -171,12 +171,14 @@ export function learnerStage(
 }
 
 /**
- * La langue des notes : **la langue des fiches choisie, sinon celle du pays.** C'est
- * `OnboardingPreferences.contentLanguage`. La langue de l'interface n'entre en jeu que sans
- * profil du tout : un Allemand qui lit le site en anglais reçoit ses fiches en allemand, comme
- * sur son téléphone.
+ * La langue des notes : **toujours celle de l'interface**, comme
+ * `OnboardingPreferences.contentLanguage` sur l'iPhone. Elle se déduisait du pays (la France
+ * par défaut) : un élève qui lisait le site en turc recevait ses leçons en français. Les codes
+ * d'interface sont ceux des langues de rédaction ; l'ancien choix du profil, puis le pays, ne
+ * servent qu'à une locale inconnue.
  */
 export function audienceLanguage(profile: Pick<AudienceProfile, "sheet_language" | "country_code"> | null, uiLocale: string): string {
+  if (isContentLanguage(uiLocale)) return uiLocale;
   if (!profile) return uiLocale;
   if (isContentLanguage(profile.sheet_language)) return profile.sheet_language;
   return languageFor(audienceCountry(profile.country_code));

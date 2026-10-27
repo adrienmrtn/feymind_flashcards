@@ -138,7 +138,9 @@ struct ProfileRecord: Codable {
             // *résolue* — celle du pays — et redescendait en langue *explicite* : après une
             // seule synchro, un Allemand passé en France par défaut avait ses fiches
             // épinglées en français, et changer de pays n'y changeait plus rien.
-            sheet_language: OnboardingPreferences.sheetLanguage?.rawValue,
+            // La langue dans laquelle on écrit, c'est-à-dire celle de l'app : un ancien appareil
+            // du même compte, qui relit encore ce champ, écrit alors dans la même langue.
+            sheet_language: OnboardingPreferences.contentLanguage.rawValue,
             onboarding_completed_at: OnboardingPreferences.isCompleted ? Date() : nil
         )
     }

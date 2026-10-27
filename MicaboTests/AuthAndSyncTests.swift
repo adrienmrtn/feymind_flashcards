@@ -250,7 +250,8 @@ final class CloudRecordTests: XCTestCase {
         // termes du pays. Un étudiant en santé en Belgique lit « Médecine, santé », pas
         // « PASS, santé ».
         XCTAssertEqual(OnboardingPreferences.educationStage?.id, "be.medecine")
-        XCTAssertEqual(OnboardingPreferences.contentLanguage, .fr)
+        // La langue d'écriture est celle de l'app, pas celle de la Belgique.
+        XCTAssertEqual(OnboardingPreferences.contentLanguage, UiLocale.resolved().contentLanguage)
         XCTAssertEqual(OnboardingPreferences.dailyMinutes, 30)
         XCTAssertEqual(OnboardingPreferences.subjects, ["Médecine"])
         XCTAssertEqual(SheetPreferences.length, .deep)
@@ -260,15 +261,14 @@ final class CloudRecordTests: XCTestCase {
         XCTAssertEqual(sent.study_level, "sante")
         XCTAssertEqual(sent.country_code, "be")
         XCTAssertEqual(sent.sheet_length, "deep")
-        // La langue ne monte que si elle a été choisie à la main : celle du pays reste
-        // implicite, sinon elle redescendait épinglée et un changement de pays n'y
-        // changeait plus rien.
-        XCTAssertNil(sent.sheet_language)
+        // La langue qui monte est celle de l'app : un ancien appareil du même compte, qui
+        // relit encore ce champ, écrit alors dans la même langue.
+        XCTAssertEqual(sent.sheet_language, UiLocale.resolved().contentLanguage.rawValue)
         XCTAssertNotEqual(sent.signature, "")
     }
 
-    /// Un profil distant sans langue explicite efface celle qui était posée ici : la
-    /// langue des fiches redevient celle du pays.
+    /// Un profil distant sans langue explicite efface l'ancien réglage posé ici ; la langue
+    /// d'écriture reste celle de l'app, quel que soit le pays.
     func testAProfileWithoutASheetLanguageClearsTheLocalOne() throws {
         OnboardingPreferences.reset()
         defer { OnboardingPreferences.reset() }
@@ -288,7 +288,7 @@ final class CloudRecordTests: XCTestCase {
         profile.applyToLocalPreferences()
 
         XCTAssertNil(OnboardingPreferences.sheetLanguage)
-        XCTAssertEqual(OnboardingPreferences.contentLanguage, .de)
+        XCTAssertEqual(OnboardingPreferences.contentLanguage, UiLocale.resolved().contentLanguage)
     }
 
     /// L'empreinte change avec le pays : c'est elle qui protège un réglage changé ici
@@ -306,8 +306,8 @@ final class CloudRecordTests: XCTestCase {
         XCTAssertNotEqual(before, after)
     }
 
-    /// Une langue de fiche posée sur le web doit revenir sur le téléphone, même si
-    /// le pays dirait autre chose.
+    /// Une langue de fiche posée par un ancien appareil redescend, mais n'écrit plus : la
+    /// langue d'écriture est celle de l'app (un élève qui lit l'app en turc écrit en turc).
     func testTheSheetLanguageComesBackWithTheProfile() throws {
         OnboardingPreferences.reset()
         defer { OnboardingPreferences.reset() }
@@ -328,7 +328,7 @@ final class CloudRecordTests: XCTestCase {
         profile.applyToLocalPreferences()
 
         XCTAssertEqual(OnboardingPreferences.sheetLanguage, .pl)
-        XCTAssertEqual(OnboardingPreferences.contentLanguage, .pl)
+        XCTAssertEqual(OnboardingPreferences.contentLanguage, UiLocale.resolved().contentLanguage)
     }
 
     /// `deleted_at: null` ressusciterait une carte tombstonée sur le web. On l'omet.

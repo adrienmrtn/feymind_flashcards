@@ -371,6 +371,9 @@ class CloudSync(
             // La base refuse hors de 1 à 240 minutes : un temps jamais choisi (0) faisait échouer
             // la montée du profil, et avec elle tout le passage, à chaque fois.
             profile.dailyMinutes.takeIf { it in 1..240 }?.let { put("daily_minutes", it) }
+            // La langue dans laquelle on écrit, celle de l'app : un iPhone du même compte resté
+            // sur une ancienne version, qui relit ce champ, écrit alors dans la même langue.
+            put("sheet_language", AppLocale.resolved(profile.language).content)
             if (profile.onboarded) put("onboarding_completed_at", iso(System.currentTimeMillis()))
             put("updated_at", iso(System.currentTimeMillis()))
         }
@@ -382,7 +385,7 @@ class CloudSync(
     private fun signature(profile: Profile): String = listOf(
         profile.onboarded.toString(), profile.name, profile.tier, profile.country,
         profile.goals.sorted().joinToString(","), profile.subjects.sorted().joinToString(","),
-        profile.dailyMinutes.toString(),
+        profile.dailyMinutes.toString(), AppLocale.resolved(profile.language).content,
     ).joinToString("|")
 
     /**
@@ -399,9 +402,9 @@ class CloudSync(
      * défaut - n'apprend rien et ne change rien. L'accueil fini ailleurs
      * (`onboarding_completed_at`) vaut accueil fini ici.
      *
-     * La langue des fiches (`sheet_language`) n'a pas d'équivalent séparé ici : la langue de
-     * l'élève est aussi celle de ses leçons. Elle ne la remplit que si elle n'a jamais été
-     * choisie sur ce téléphone.
+     * La langue des fiches (`sheet_language`) ne descend pas : Micabo écrit dans la langue de
+     * l'app, celle que l'élève lit ici. Elle changeait la langue de toute l'app (un téléphone en
+     * turc passait en français parce que le compte disait « fr »).
      */
     private fun pullProfile(token: String, user: String, switched: Boolean, isAccount: Boolean) {
         // « Tout effacer » : l'accueil se refait, le profil du serveur ne le referme pas en plein
@@ -419,8 +422,6 @@ class CloudSync(
         val goals = row.strings("learning_goals").toSet().takeIf { it.isNotEmpty() }
         val subjects = row.strings("subjects").toSet().takeIf { it.isNotEmpty() }
         val daily = row.int("daily_minutes")?.takeIf { it in 1..240 }
-        val sheet = row.str("sheet_language")
-        val language = AppLocale.entries.firstOrNull { sheet.isNotEmpty() && (it.content == sheet || it.code == sheet) }?.code
         fun <T> pick(local: T, empty: Boolean, remote: T?): T = if (remote != null && (empty || newer)) remote else local
         prefs.updateFromCloud { profile ->
             profile.copy(
@@ -431,7 +432,6 @@ class CloudSync(
                 goals = pick(profile.goals, profile.goals.isEmpty(), goals),
                 subjects = pick(profile.subjects, profile.subjects.isEmpty(), subjects),
                 dailyMinutes = pick(profile.dailyMinutes, profile.dailyMinutes <= 0, daily),
-                language = if (profile.language.isBlank() && language != null) language else profile.language,
             )
         }
         if (prefs.profileErased) prefs.profileErased = false

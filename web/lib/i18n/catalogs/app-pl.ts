@@ -36,6 +36,7 @@ export const appPl = {
       adopted: "Dodany",
       photos: "Zdjęcia",
       video: "Film",
+      youtubeVideo: "Film z YouTube",
       word: "Word",
       deck: "Zestaw",
       text: "Tekst",

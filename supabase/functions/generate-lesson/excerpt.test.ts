@@ -144,6 +144,53 @@ Deno.test("les mots du titre : sans accents, sans mots-outils, ramenés à leur 
   assertEquals(termsOf("Partie 2 : introduction"), []);
 });
 
+Deno.test("les mots du titre, dans toutes les écritures servies", () => {
+  // Turc : le « ı » sans point se lit « i », les cédilles et les brèves partent.
+  assertEquals(termsOf("Kılıç ve Kurtuluş Savaşı"), ["kilic", "kurtu", "savas"]);
+  assertEquals(termsOf("KURTULUŞ SAVAŞI"), termsOf("Kurtuluş Savaşı"));
+  // Grec, russe, arabe : ils ne rendaient aucun mot.
+  assertEquals(termsOf("Η φωτοσύνθεση"), ["φωτοσ"]);
+  assertEquals(termsOf("Фотосинтез растений"), ["фотос", "расте"]);
+  // La hamza portée (« ئ ») est un signe diacritique : elle part, comme un accent.
+  assertEquals(termsOf("التمثيل الضوئي"), ["التمث", "الضوي"]);
+  assertEquals(termsOf("التَّمْثِيل"), termsOf("التمثيل"));
+});
+
+/** Le même cours d'essai, en turc : chaque chapitre a son vocabulaire. */
+const TURKISH_CHAPTERS = [
+  { title: "Fotosentez", words: ["fotosentez", "klorofil", "ışık", "kloroplast"] },
+  { title: "Hücresel solunum", words: ["solunum", "mitokondri", "glikoz", "oksijen"] },
+  { title: "Hücre bölünmesi", words: ["mitoz", "kromozom", "sentromer", "iğ ipliği"] },
+  { title: "DNA ve genler", words: ["DNA", "genler", "nükleotit", "sarmal"] },
+  { title: "Protein sentezi", words: ["protein", "ribozom", "amino asit", "çeviri"] },
+  { title: "Bağışıklık sistemi", words: ["antikor", "lenfosit", "antijen", "aşı"] },
+  { title: "Sinir sistemi", words: ["nöron", "sinaps", "uyartı", "akson"] },
+  { title: "Türlerin evrimi", words: ["evrim", "doğal seçilim", "Darwin", "türler"] },
+];
+
+function turkishChapter(index: number): string {
+  const { title, words } = TURKISH_CHAPTERS[index]!;
+  const paragraphs = [0, 1, 2, 3].map((p) =>
+    Array.from({ length: 5 }, (_, s) => {
+      const word = words[(p + s) % words.length]!;
+      return `Bu bölümde ${index + 1}.${p + 1}, ${word} belirli bir rol oynar. Öğretmen bu konuyu sınıfta bir şema ile tekrar anlatır.`;
+    }).join(" ")
+  );
+  return [`Bölüm ${index + 1} : ${title}`, ...paragraphs].join("\n\n");
+}
+
+Deno.test("un cours turc : le thème retrouve son passage par ses mots, pas seulement par sa place", () => {
+  const course = TURKISH_CHAPTERS.map((_, index) => turkishChapter(index)).join("\n\n");
+  assert(course.length > WHOLE_SOURCE);
+  const themes = TURKISH_CHAPTERS.map((entry) => entry.title);
+  // Le dernier thème parle de la chlorophylle : seul le vocabulaire peut ramener le début.
+  themes[7] = "Klorofil ve evrim";
+  const excerpt = excerptForTheme(course, themes, 7);
+  assert(excerpt.includes("klorofil"), "le passage sur la chlorophylle manque");
+  assert(excerpt.includes("Darwin"));
+  assert(excerpt.includes(GAP), "le passage du début devrait être séparé du reste");
+});
+
 Deno.test("les points du plan désignent les passages mieux que le titre", () => {
   const themes = THEMES.map((_, index) => `Partie ${index + 1}`);
   const points = themes.map(() => [] as string[]);

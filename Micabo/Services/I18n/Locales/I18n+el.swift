@@ -141,6 +141,8 @@ extension IosI18nCatalogs {
         "app.sheet.size.label": "Μέγεθος κειμένου",
         "app.sheet.size.normal": "Κανονικό",
         "app.sheet.size.petit": "Μικρό",
+        "app.subscription.fromPlay": "Αγοράστηκε στο Play Store.",
+        "app.subscription.fromWeb": "Αγοράστηκε στο web.",
         "articles.exam.intensityIntense": "Εντατικό",
         "articles.exam.intensityLight": "Ελαφρύ",
         "articles.exam.intensityStandard": "Κανονικό",

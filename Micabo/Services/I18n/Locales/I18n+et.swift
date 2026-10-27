@@ -141,6 +141,8 @@ extension IosI18nCatalogs {
         "app.sheet.size.label": "Teksti suurus",
         "app.sheet.size.normal": "Tavaline",
         "app.sheet.size.petit": "Väike",
+        "app.subscription.fromPlay": "Ostetud Play poest.",
+        "app.subscription.fromWeb": "Ostetud veebis.",
         "articles.exam.intensityIntense": "Intensiivne",
         "articles.exam.intensityLight": "Kerge",
         "articles.exam.intensityStandard": "Tavaline",

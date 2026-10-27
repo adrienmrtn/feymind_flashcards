@@ -36,6 +36,7 @@ export const appRu = {
       adopted: "Добавлен",
       photos: "Фото",
       video: "Видео",
+      youtubeVideo: "Видео YouTube",
       word: "Word",
       deck: "Колода",
       text: "Текст",

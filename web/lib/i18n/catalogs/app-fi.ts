@@ -36,6 +36,7 @@ export const appFi = {
       adopted: "Lisätty",
       photos: "Kuvat",
       video: "Video",
+      youtubeVideo: "YouTube-video",
       word: "Word",
       deck: "Pakka",
       text: "Teksti",

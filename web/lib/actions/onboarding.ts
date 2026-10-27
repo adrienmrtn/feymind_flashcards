@@ -145,8 +145,8 @@ export async function saveOnboarding(payload: OnboardingPayload): Promise<SaveRe
   // **La leçon de démonstration**, pour qui arrive sans rien : le cycle de l'eau, prête, dans
   // la langue du parcours. Elle attend dans « Reprendre » sur Home. Qui a déjà une leçon n'en
   // reçoit pas une de plus.
-  const { t } = await getTranslator();
-  await installDemoLesson(user.id, t, payload.country ?? null).catch(() => false);
+  const { t, locale } = await getTranslator();
+  await installDemoLesson(user.id, t, locale).catch(() => false);
 
   // **La date d'examen devient une vraie ligne `exams`** : c'est elle que le mode examen
   // compte à rebours et que le plan vise, avec la moyenne visée comme objectif.

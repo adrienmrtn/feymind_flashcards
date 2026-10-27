@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 
-import { countryFor, entitlement, isContentLanguage } from "@micabo/core";
+import { countryFor, entitlement } from "@micabo/core";
 
 import { ProfileScreen } from "@/components/profile/ProfileScreen";
 import { storePlatform } from "@/components/profile/stores";
@@ -63,7 +63,6 @@ export default async function ProfilePage() {
         username: profile?.username ?? "",
         countryCode: country.code,
         studyLevel: stage?.id ?? null,
-        sheetLanguage: isContentLanguage(profile?.sheet_language) ? profile.sheet_language : null,
         school: profile?.institution_name ?? "",
         schoolId: profile?.institution_id ?? null,
         subjects: Array.isArray(profile?.subjects) ? profile.subjects : [],

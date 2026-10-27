@@ -183,7 +183,7 @@ export function splitPassages(text: string): Passage[] {
 function sentences(line: string): string[] {
   const out: string[] = [];
   let current = "";
-  for (const sentence of line.split(/(?<=[.!?;:])\s+/)) {
+  for (const sentence of line.split(/(?<=[.!?;:؟])\s+/)) {
     if (current && current.length + sentence.length + 1 > PASSAGE) {
       out.push(current);
       current = "";
@@ -239,13 +239,19 @@ function scorePassages(
  * Les mots qui portent du sens, ramenés à une racine grossière : en minuscules, sans
  * accents, sans les mots-outils, et coupés à cinq lettres pour que « crise » et « crises »,
  * « révolution » et « révolutionnaire » se retrouvent.
+ *
+ * **Toutes les écritures comptent**, pas seulement l'alphabet latin : coupé sur `[^a-z0-9]`, un
+ * cours en grec, en russe, en bulgare ou en arabe ne rendait aucun mot, et un cours turc
+ * perdait chaque mot qui porte un « ı » (« kılıç » devenait « k », « l », « c »). Le thème
+ * ne se choisissait plus alors que sur sa place dans le document.
  */
 export function termsOf(text: string): string[] {
   return text
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .split(/[^a-z0-9]+/)
+    .replace(/\p{M}/gu, "")
+    .replace(/ı/g, "i")
+    .split(/[^\p{L}\p{N}]+/u)
     .filter((word) => word.length >= 3 && !STOPWORDS.has(word))
     .map((word) => (word.length > 5 ? word.slice(0, 5) : word));
 }

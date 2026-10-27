@@ -271,10 +271,6 @@
     <string name="ios_yt_noCaptions">Micabo kunne ikke læse videoen. Prøv igen, eller indsæt kursets tekst.</string>
     <string name="ios_yt_tooShort">Videoen er for kort til at lave kort.</string>
     <string name="ios_yt_unavailable">Videoen kan ikke nås.</string>
-    <string name="lesson_audio_empty">Jeg kunne næsten ikke høre noget i denne optagelse.</string>
-    <string name="lesson_audio_micDenied">Tillad mikrofonen i Indstillinger for at optage din time.</string>
-    <string name="lesson_audio_tooLong">Optagelsen er længere end 90 minutter: del den i to.</string>
-    <string name="lesson_audio_unreadable">Lydfilen kan ikke læses.</string>
     <string name="lesson_cards_again">Igen</string>
     <string name="lesson_cards_all">Alle kort (%1$s)</string>
     <string name="lesson_cards_answer">Svar</string>
@@ -381,9 +377,6 @@
     <string name="lesson_home_supportsFull">Op til %1$s materialer pr. lektion.</string>
     <string name="lesson_home_title">Hvad vil du **lære** i dag?</string>
     <string name="lesson_import_add">Tilføj</string>
-    <string name="lesson_import_audio">Lyd</string>
-    <string name="lesson_import_audioFile">Vælg en lydfil</string>
-    <string name="lesson_import_audioSub">En optaget time</string>
     <string name="lesson_import_instruction">Det, eleven vil have ud af det: %1$s</string>
     <string name="lesson_import_library">Vælg fotos</string>
     <string name="lesson_import_paste">Indsæt</string>
@@ -391,10 +384,6 @@
     <string name="lesson_import_pdfSub">Et kursus, et handout eller et resumé</string>
     <string name="lesson_import_photo">Foto</string>
     <string name="lesson_import_photoSub">Dit kollegiehæfte, tavlen, en lærebog</string>
-    <string name="lesson_import_record">Optag</string>
-    <string name="lesson_import_recordStop">Stop optagelsen</string>
-    <string name="lesson_import_recordTitle">Optag din time</string>
-    <string name="lesson_import_recordingName">Optagelse</string>
     <string name="lesson_import_scan">Scan sider</string>
     <string name="lesson_import_text">Tekst</string>
     <string name="lesson_import_textPlaceholder">Dine noter fra timen, en artikel…</string>
@@ -523,10 +512,7 @@
     <string name="x_paywall_subscribe">Få Pro</string>
     <string name="x_pro_gifted">Denne adgang har du fået i gave: der er intet at administrere eller opsige.</string>
     <string name="x_quoted">»%1$s«</string>
-    <string name="x_record_channel">Optagelse af undervisning</string>
-    <string name="x_record_limit">Op til 90 minutter. Mika laver din optagelse om til tekst og skriver så din lektion.</string>
-    <string name="x_record_ongoing">Din undervisning optages</string>
-    <string name="x_record_ongoingBody">Micabo bliver ved med at optage, også når skærmen er låst.</string>
+    <string name="x_reminder_channel">Daglig påmindelse</string>
     <string name="x_score_1">Jeg har det svært</string>
     <string name="x_score_2">Lige under gennemsnittet</string>
     <string name="x_score_3">Gennemsnitlig</string>

@@ -141,6 +141,8 @@ extension IosI18nCatalogs {
         "app.sheet.size.label": "Tekstikoko",
         "app.sheet.size.normal": "Normaali",
         "app.sheet.size.petit": "Pieni",
+        "app.subscription.fromPlay": "Ostettu Play Kaupasta.",
+        "app.subscription.fromWeb": "Ostettu verkossa.",
         "articles.exam.intensityIntense": "Tehokas",
         "articles.exam.intensityLight": "Kevyt",
         "articles.exam.intensityStandard": "Normaali",

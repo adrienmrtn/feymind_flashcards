@@ -141,6 +141,8 @@ extension IosI18nCatalogs {
         "app.sheet.size.label": "Betűméret",
         "app.sheet.size.normal": "Normál",
         "app.sheet.size.petit": "Kicsi",
+        "app.subscription.fromPlay": "A Play Áruházban vásárolva.",
+        "app.subscription.fromWeb": "A weben vásárolva.",
         "articles.exam.intensityIntense": "Intenzív",
         "articles.exam.intensityLight": "Könnyű",
         "articles.exam.intensityStandard": "Normál",

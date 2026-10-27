@@ -18,7 +18,7 @@ interface RequestBody {
   subject?: string;
   /** La fiche à plat : c'est elle qui ancre l'explication dans LE cours de l'étudiant. */
   context?: string;
-  /** Langue de l'explication, la même que celle de la fiche : « fr » ou « en ». */
+  /** Langue de l'explication, celle de l'app : un code de `_shared/language.ts` (« fr », « tr »…). */
   language?: string;
 }
 
@@ -26,7 +26,7 @@ const MAX_SELECTION = 600;
 const MAX_CONTEXT = 16_000;
 
 const SYSTEM_PROMPT =
-  `Un étudiant lit sa fiche de cours dans Micabo. Il a sélectionné un passage et il te demande ce que ça veut dire. Tu réponds en français, en le tutoyant.
+  `Un étudiant lit sa fiche de cours dans Micabo. Il a sélectionné un passage et il te demande ce que ça veut dire. Tu réponds dans la langue de sortie donnée en tête du message (« LANGUE DE SORTIE »), en le tutoyant (ou dans le registre familier de cette langue).
 
 CE QU'IL ATTEND
 - Une réponse, tout de suite. Pas de reformulation de la question, pas de "bonne question", pas de "ce passage signifie que".

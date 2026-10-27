@@ -138,6 +138,10 @@ async function transcribe(
     "Voici l'enregistrement d'un cours, fait par un élève pour réviser.",
     "Transcris fidèlement ce qui est enseigné, dans la langue parlée" +
     (language ? ` (probablement le ${language})` : "") + ".",
+    // La langue envoyée est celle de l'app, pas forcément celle du cours : un élève qui a
+    // l'app en turc peut enregistrer un cours donné en français. C'est la leçon écrite
+    // ensuite qui passe dans la langue de l'app, pas la transcription.
+    "Ne traduis rien : si la langue parlée est une autre, transcris-la telle qu'elle est.",
     "Retire les hésitations, les répétitions et ce qui n'est pas le cours (bruits, discussions à côté).",
     "Garde tous les exemples, les définitions, les dates, les chiffres et les formules.",
     "Va à la ligne à chaque changement d'idée. Rends uniquement le texte, sans titre ni commentaire.",

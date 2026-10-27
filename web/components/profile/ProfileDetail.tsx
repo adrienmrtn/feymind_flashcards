@@ -4,17 +4,12 @@ import { useState, useTransition, type ReactNode } from "react";
 import { Download, LogOut } from "lucide-react";
 
 import {
-  CONTENT_LANGUAGES,
   COUNTRIES,
-  LANGUAGE_LABELS,
   SUBJECT_FAMILIES,
   displayUsername,
-  isContentLanguage,
-  languageFor,
   normalizeUsername,
   stagesFor,
   subjectEmoji,
-  type ContentLanguage,
   type CountryCode,
 } from "@micabo/core";
 
@@ -37,8 +32,6 @@ export interface ProfileDetailProps {
    * que le registre dans `profiles.study_level`, et garde le palier sur ce navigateur.
    */
   studyLevel: string | null;
-  /** La langue des fiches choisie, ou `null` quand elle suit le pays. */
-  sheetLanguage: ContentLanguage | null;
   school: string;
   schoolId: string | null;
   subjects: string[];
@@ -59,7 +52,6 @@ export function ProfileDetail({ email, onClose, ...initial }: ProfileDetailProps
   const [usernameNote, setUsernameNote] = useState<string | null>(null);
   const [country, setCountry] = useState<CountryCode>(initial.countryCode);
   const [level, setLevel] = useState<string | null>(initial.studyLevel);
-  const [sheetLanguage, setSheetLanguage] = useState<ContentLanguage | null>(initial.sheetLanguage);
   const [subjects, setSubjects] = useState(initial.subjects);
   const [subjectsOpen, setSubjectsOpen] = useState(false);
   const [saved, setSaved] = useState<"idle" | "ok" | "error">("idle");
@@ -196,32 +188,6 @@ export function ProfileDetail({ email, onClose, ...initial }: ProfileDetailProps
           </select>
         </Field>
       </div>
-
-      {/*
-        **La langue des fiches se choisit**, comme dans les Réglages de l'iPhone : elle suit le
-        pays par défaut (la colonne reste vide), et un élève scolarisé en France qui révise en
-        anglais la change ici. La langue de l'interface, plus bas dans Profil, ne la change pas.
-      */}
-      <Field label={t("app.profileTab.sheetLanguage")} htmlFor="profile-sheet-language" hint={t("app.profileTab.sheetLanguageHelp")}>
-        <select
-          id="profile-sheet-language"
-          value={sheetLanguage ?? ""}
-          onChange={(event) => {
-            const value = event.target.value;
-            const next = isContentLanguage(value) ? value : null;
-            setSheetLanguage(next);
-            save({ sheetLanguage: next });
-          }}
-          className={FIELD}
-        >
-          <option value="">{t("app.profileTab.sheetLanguageAuto", { language: LANGUAGE_LABELS[languageFor(country)] })}</option>
-          {CONTENT_LANGUAGES.map((code) => (
-            <option key={code} value={code}>
-              {LANGUAGE_LABELS[code]}
-            </option>
-          ))}
-        </select>
-      </Field>
 
       <Field label={t("app.profileTab.school")}>
         <SchoolField initialName={initial.school} initialId={initial.schoolId} countryCode={country} onChange={(next) => save({ institutionName: next.name || null, institutionId: next.id })} />

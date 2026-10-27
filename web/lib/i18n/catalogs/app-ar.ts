@@ -36,6 +36,7 @@ export const appAr = {
       adopted: "مُضاف",
       photos: "صور",
       video: "فيديو",
+      youtubeVideo: "فيديو YouTube",
       word: "Word",
       deck: "مجموعة",
       text: "نص",

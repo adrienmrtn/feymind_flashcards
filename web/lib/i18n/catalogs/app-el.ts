@@ -36,6 +36,7 @@ export const appEl = {
       adopted: "Υιοθετημένο",
       photos: "Φωτογραφίες",
       video: "Βίντεο",
+      youtubeVideo: "Βίντεο YouTube",
       word: "Word",
       deck: "Τράπουλα",
       text: "Κείμενο",

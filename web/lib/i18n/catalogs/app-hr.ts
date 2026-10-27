@@ -35,6 +35,7 @@ export const appHr = {
       adopted: "Preuzeto",
       photos: "Fotografije",
       video: "Videozapis",
+      youtubeVideo: "YouTube videozapis",
       word: "Word",
       deck: "Špil",
       text: "Tekst",

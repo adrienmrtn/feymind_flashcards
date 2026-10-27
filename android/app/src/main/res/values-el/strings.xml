@@ -276,10 +276,6 @@
     <string name="ios_yt_noCaptions">Το Micabo δεν μπόρεσε να διαβάσει αυτό το βίντεο. Δοκίμασε ξανά ή επικόλλησε το κείμενο του μαθήματος.</string>
     <string name="ios_yt_tooShort">Αυτό το βίντεο είναι πολύ μικρό για να φτιαχτούν κάρτες.</string>
     <string name="ios_yt_unavailable">Αυτό το βίντεο δεν είναι προσβάσιμο.</string>
-    <string name="lesson_audio_empty">Δεν άκουσα σχεδόν τίποτα σε αυτή την ηχογράφηση.</string>
-    <string name="lesson_audio_micDenied">Επίτρεψε το μικρόφωνο στις Ρυθμίσεις για να ηχογραφείς το μάθημα.</string>
-    <string name="lesson_audio_tooLong">Η ηχογράφηση ξεπερνά τα 90 λεπτά: χώρισέ τη στα δύο.</string>
-    <string name="lesson_audio_unreadable">Αυτό το αρχείο ήχου δεν διαβάζεται.</string>
     <string name="lesson_cards_again">Ξανά</string>
     <string name="lesson_cards_all">Όλες οι κάρτες (%1$s)</string>
     <string name="lesson_cards_answer">Απάντηση</string>
@@ -390,9 +386,6 @@
     <string name="lesson_home_supportsFull">Έως %1$s υλικά ανά μάθημα.</string>
     <string name="lesson_home_title">Τι θέλεις να **μάθεις** σήμερα;</string>
     <string name="lesson_import_add">Προσθήκη</string>
-    <string name="lesson_import_audio">Ήχος</string>
-    <string name="lesson_import_audioFile">Διάλεξε αρχείο ήχου</string>
-    <string name="lesson_import_audioSub">Ηχογραφημένο μάθημα</string>
     <string name="lesson_import_instruction">Τι θέλει να κρατήσει ο μαθητής: %1$s</string>
     <string name="lesson_import_library">Διάλεξε φωτογραφίες</string>
     <string name="lesson_import_paste">Επικόλληση</string>
@@ -400,10 +393,6 @@
     <string name="lesson_import_pdfSub">Μάθημα, φυλλάδιο ή σύνοψη</string>
     <string name="lesson_import_photo">Φωτογραφία</string>
     <string name="lesson_import_photoSub">Το τετράδιο, ο πίνακας, ένα βιβλίο</string>
-    <string name="lesson_import_record">Ηχογράφηση</string>
-    <string name="lesson_import_recordStop">Διακοπή ηχογράφησης</string>
-    <string name="lesson_import_recordTitle">Ηχογράφησε το μάθημα</string>
-    <string name="lesson_import_recordingName">Ηχογράφηση</string>
     <string name="lesson_import_scan">Σάρωση σελίδων</string>
     <string name="lesson_import_text">Κείμενο</string>
     <string name="lesson_import_textPlaceholder">Οι σημειώσεις σου, ένα άρθρο…</string>
@@ -537,10 +526,7 @@
     <string name="x_paywall_subscribe">Πάρε το Pro</string>
     <string name="x_pro_gifted">Αυτή η πρόσβαση σου δόθηκε δώρο: δεν υπάρχει τίποτα για διαχείριση ή ακύρωση.</string>
     <string name="x_quoted">«%1$s»</string>
-    <string name="x_record_channel">Ηχογράφηση μαθήματος</string>
-    <string name="x_record_limit">Έως 90 λεπτά. Ο Mika μετατρέπει την ηχογράφησή σου σε κείμενο και μετά γράφει το μάθημά σου.</string>
-    <string name="x_record_ongoing">Ηχογραφείται το μάθημά σου</string>
-    <string name="x_record_ongoingBody">Το Micabo συνεχίζει την ηχογράφηση, ακόμα και με κλειδωμένη οθόνη.</string>
+    <string name="x_reminder_channel">Καθημερινή υπενθύμιση</string>
     <string name="x_score_1">Δυσκολεύομαι</string>
     <string name="x_score_2">Λίγο κάτω από τον μέσο όρο</string>
     <string name="x_score_3">Στον μέσο όρο</string>

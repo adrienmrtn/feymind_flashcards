@@ -139,9 +139,9 @@ final class OnboardingModel {
         stage?.level
     }
 
-    /// La langue de rédaction : celle du pays, et elle ne se demande pas séparément.
+    /// La langue de rédaction : celle de l'app, et elle ne se demande pas séparément.
     var language: ContentLanguage {
-        country.language
+        OnboardingPreferences.contentLanguage
     }
 
     /// Changer de pays change les réponses de la question suivante.

@@ -269,10 +269,6 @@
     <string name="ios_yt_noCaptions">Micabo n-a putut citi videoclipul. Încearcă din nou sau lipește textul cursului.</string>
     <string name="ios_yt_tooShort">Videoclipul e prea scurt ca să generez carduri.</string>
     <string name="ios_yt_unavailable">Videoclipul nu e accesibil.</string>
-    <string name="lesson_audio_empty">Abia am auzit ceva în înregistrarea asta.</string>
-    <string name="lesson_audio_micDenied">Permite microfonul în Setări ca să-ți înregistrezi ora.</string>
-    <string name="lesson_audio_tooLong">Înregistrarea depășește 90 de minute: împarte-o în două.</string>
-    <string name="lesson_audio_unreadable">Fișierul audio nu poate fi citit.</string>
     <string name="lesson_cards_again">Din nou</string>
     <string name="lesson_cards_all">Toate cardurile (%1$s)</string>
     <string name="lesson_cards_answer">Răspuns</string>
@@ -380,8 +376,6 @@
     <string name="lesson_home_supportsFull">Până la %1$s materiale pe lecție.</string>
     <string name="lesson_home_title">Ce vrei să **înveți** azi?</string>
     <string name="lesson_import_add">Adaugă</string>
-    <string name="lesson_import_audioFile">Alege un fișier audio</string>
-    <string name="lesson_import_audioSub">O oră înregistrată</string>
     <string name="lesson_import_instruction">Ce vrea elevul să obțină: %1$s</string>
     <string name="lesson_import_library">Alege poze</string>
     <string name="lesson_import_paste">Lipește</string>
@@ -389,10 +383,6 @@
     <string name="lesson_import_pdfSub">Un curs, un suport sau o fișă</string>
     <string name="lesson_import_photo">Poză</string>
     <string name="lesson_import_photoSub">Caietul, tabla, un manual</string>
-    <string name="lesson_import_record">Înregistrează</string>
-    <string name="lesson_import_recordStop">Oprește înregistrarea</string>
-    <string name="lesson_import_recordTitle">Înregistrează-ți ora</string>
-    <string name="lesson_import_recordingName">Înregistrare</string>
     <string name="lesson_import_scan">Scanează pagini</string>
     <string name="lesson_import_textPlaceholder">Notițele de la oră, un articol…</string>
     <string name="lesson_import_textSub">Lipește-ți notițele</string>
@@ -524,10 +514,7 @@
     <string name="x_paywall_subscribe">Treci la Pro</string>
     <string name="x_pro_gifted">Acest acces ți-a fost oferit cadou: nu e nimic de gestionat sau de anulat.</string>
     <string name="x_quoted">„%1$s”</string>
-    <string name="x_record_channel">Înregistrarea cursului</string>
-    <string name="x_record_limit">Până la 90 de minute. Mika transformă înregistrarea ta în text, apoi îți scrie lecția.</string>
-    <string name="x_record_ongoing">Se înregistrează cursul tău</string>
-    <string name="x_record_ongoingBody">Micabo continuă să înregistreze, chiar și cu ecranul blocat.</string>
+    <string name="x_reminder_channel">Memento zilnic</string>
     <string name="x_score_1">Mi-e greu</string>
     <string name="x_score_2">Puțin sub medie</string>
     <string name="x_score_3">În medie</string>

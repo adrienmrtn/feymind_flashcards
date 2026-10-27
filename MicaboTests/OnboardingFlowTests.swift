@@ -477,9 +477,9 @@ final class OnboardingFlowTests: XCTestCase {
         )
     }
 
-    /// La langue vient du pays, et de nulle part ailleurs : c'est ce qui a permis de retirer
-    /// l'écran qui la demandait.
-    func testTheLanguageComesFromTheCountry() {
+    /// Le pays garde sa langue (le système scolaire), mais Micabo écrit dans la langue de
+    /// l'app : un élève scolarisé au Royaume-Uni qui lit l'app en turc reçoit du turc.
+    func testTheLanguageComesFromTheApp() {
         XCTAssertEqual(SchoolingCountry.fr.language, .fr)
         XCTAssertEqual(SchoolingCountry.ca.language, .fr)
         XCTAssertEqual(SchoolingCountry.us.language, .en)
@@ -490,7 +490,7 @@ final class OnboardingFlowTests: XCTestCase {
         defer { OnboardingPreferences.reset() }
 
         OnboardingPreferences.schoolingCountry = .uk
-        XCTAssertEqual(OnboardingPreferences.contentLanguage, .en)
+        XCTAssertEqual(OnboardingPreferences.contentLanguage, UiLocale.resolved().contentLanguage)
     }
 
     /// Changer de pays reporte la réponse sur le palier **équivalent**, pas sur le premier
@@ -505,7 +505,7 @@ final class OnboardingFlowTests: XCTestCase {
         model.stage = try XCTUnwrap(SchoolingCountry.fr.stages.first { $0.id == "fr.lycee" })
         model.select(country: .us)
         XCTAssertEqual(model.stage?.id, "us.high", "Un lycéen n'est pas un collégien")
-        XCTAssertEqual(model.language, .en)
+        XCTAssertEqual(model.language, UiLocale.resolved().contentLanguage, "La langue reste celle de l'app")
 
         model.select(country: .uk)
         XCTAssertEqual(model.stage?.id, "uk.alevels", "A-Levels, pas GCSE")

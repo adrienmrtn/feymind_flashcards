@@ -141,6 +141,8 @@ extension IosI18nCatalogs {
         "app.sheet.size.label": "Tekstgrootte",
         "app.sheet.size.normal": "Normaal",
         "app.sheet.size.petit": "Klein",
+        "app.subscription.fromPlay": "Afgesloten in de Play Store.",
+        "app.subscription.fromWeb": "Afgesloten op het web.",
         "articles.exam.intensityIntense": "Intensief",
         "articles.exam.intensityLight": "Licht",
         "articles.exam.intensityStandard": "Normaal",

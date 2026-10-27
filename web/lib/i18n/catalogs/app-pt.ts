@@ -36,6 +36,7 @@ export const appPt = {
       adopted: "Adotado",
       photos: "Fotos",
       video: "Vídeo",
+      youtubeVideo: "Vídeo do YouTube",
       word: "Word",
       deck: "Baralho",
       text: "Texto",

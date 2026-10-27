@@ -36,6 +36,7 @@ export const appDa = {
       adopted: "Tilføjet",
       photos: "Fotos",
       video: "Video",
+      youtubeVideo: "YouTube-video",
       word: "Word",
       deck: "Bunke",
       text: "Tekst",
