@@ -1,6 +1,7 @@
 import "server-only";
 
 import { actionT } from "@/lib/i18n/action";
+import { readUiLocale } from "@/lib/i18n/server";
 
 /**
  * **Le refus du serveur, avec son code.**
@@ -30,7 +31,13 @@ export async function readableFunctionError(error: unknown): Promise<FunctionRef
       const body = (await context.json()) as { error?: string; code?: string };
       const key = body?.code ? CODE_KEYS[body.code] : undefined;
       if (key) return { message: await actionT(key), code: body.code };
-      if (body?.error) return { message: body.error, ...(body.code ? { code: body.code } : {}) };
+      // Le serveur écrit ses messages en français : ils ne s'affichent tels quels que sur un site
+      // en français. Ailleurs, la phrase générique de la langue de l'interface les remplace,
+      // comme sur l'iPhone.
+      if (body?.error) {
+        const message = (await readUiLocale()) === "fr" ? body.error : await actionT("lesson.error.generic");
+        return { message, ...(body.code ? { code: body.code } : {}) };
+      }
     } catch {
       // Un corps illisible : on retombe sur le message du transport, qui vaut mieux que rien.
     }
