@@ -97,16 +97,22 @@ class MicaboApplication : Application() {
     }
 
     /** Le retour de Google ou du lien du courriel (`micabo://auth-callback`). */
-    fun completeSignIn(query: Map<String, String>) {
+    fun completeSignIn(query: Map<String, String>) =
+        signIn(if (query.containsKey("code")) "pkce" else "link") { auth.handleCallback(query) }
+
+    /** **La relecture des stores** : l'adresse de démonstration ouvre la session tout de suite. */
+    fun completeReviewSignIn() = signIn("review") { auth.signInForReview() }
+
+    private fun signIn(provider: String, open: suspend () -> com.micabo.app.data.Account) {
         scope.launch {
             val guest = auth.guestId
             // Avant de quitter l'invité : le jeton qui fera passer ses lignes au compte
             // (`create_guest_claim`, avec la session invitée). Le transfert lui-même ouvre le
             // premier passage sous le compte (`CloudSync.claimGuest`), puis tout remonte.
             sync.prepareGuestClaim()
-            _signIn.value = runCatching { auth.handleCallback(query) }.fold(
+            _signIn.value = runCatching { open() }.fold(
                 onSuccess = { account ->
-                    analytics.track("signed_in", mapOf("provider" to if (query.containsKey("code")) "pkce" else "link"))
+                    analytics.track("signed_in", mapOf("provider" to provider))
                     withContext(Dispatchers.Main) { billing.follow(account.userId, fromGuest = guest.isNotEmpty()) }
                     // Les leçons de ce téléphone montent sous le compte, celles du compte descendent.
                     prefs.syncWatermark = 0

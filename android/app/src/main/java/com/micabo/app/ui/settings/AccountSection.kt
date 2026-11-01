@@ -62,6 +62,7 @@ import com.micabo.app.SignInEvent
 import com.micabo.app.data.Account
 import com.micabo.app.data.AuthException
 import com.micabo.app.data.NetworkException
+import com.micabo.app.data.StoreReview
 import com.micabo.app.ui.LocalApp
 import com.micabo.app.ui.LocalNavigator
 import com.micabo.app.ui.Screen
@@ -356,6 +357,12 @@ internal fun SignInSheet(failure: Throwable?, onDismiss: () -> Unit) {
 
     fun send() {
         if (!valid || sending) return
+        // L'adresse des relecteurs (Google Play, App Store) n'a pas de boîte : elle ouvre le
+        // compte de démonstration tout de suite, sans lien (`StoreReview`).
+        if (StoreReview.matches(email)) {
+            app.completeReviewSignIn()
+            return
+        }
         sending = true
         error = null
         scope.launch {

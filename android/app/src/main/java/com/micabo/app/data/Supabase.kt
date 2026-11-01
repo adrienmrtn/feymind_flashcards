@@ -316,6 +316,22 @@ class SupabaseAuth(private val prefs: Prefs) {
             "&code_challenge_method=s256"
     }
 
+    /**
+     * **La session des relecteurs** (Google Play, App Store) : le compte de démonstration
+     * s'ouvre par mot de passe, sans courriel. Ils n'ont pas la boîte de l'adresse qu'on leur
+     * donne ; c'est le même compte que celui de la relecture sur l'iPhone (`AppStoreReview`).
+     */
+    suspend fun signInForReview(): Account = mutex.withLock {
+        withContext(Dispatchers.IO) {
+            val payload = authRequest("token?grant_type=password", buildJsonObject {
+                put("email", StoreReview.EMAIL)
+                put("password", StoreReview.PASSWORD)
+            })
+            keepAccount(payload)
+            _account.value ?: throw AuthException("invalid", "")
+        }
+    }
+
     /** Envoie le lien de connexion ; il rouvre l'app par `micabo://auth-callback`. */
     suspend fun sendMagicLink(email: String) = withContext(Dispatchers.IO) {
         val verifier = Pkce.verifier()
