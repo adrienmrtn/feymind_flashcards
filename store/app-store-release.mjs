@@ -5,7 +5,7 @@
  * dans chaque langue de la fiche. Il ne reste qu'à relire et à appuyer sur « Soumettre ».
  *
  *     ASC_KEY_ID=… ASC_ISSUER_ID=… ASC_PRIVATE_KEY=… \
- *       node store/app-store-release.mjs --version 1.11 [--build 158] [--apply]
+ *       node store/app-store-release.mjs --version 1.12 [--apply]
  *
  * Sans `--apply`, il dit seulement ce qu'il ferait. Workflow : « Version App Store ». Les
  * secrets sont ceux de la grille de prix
@@ -26,37 +26,37 @@ const bundleId = "com.micabo.ios";
 const log = (...parts) => console.log(...parts);
 
 if (!versionString) {
-  console.error("--version manque, par ex. --version 1.11");
+  console.error("--version manque, par ex. --version 1.12");
   process.exit(1);
 }
 
 /** « Nouveautés » par langue de fiche ; une langue absente d'ici reçoit l'anglais. */
 const WHATS_NEW = {
-  fr: "Tes leçons, tes quiz et tes flashcards s'écrivent maintenant toujours dans la langue de l'app. Traductions revues dans toutes les langues, corrections et améliorations.",
-  en: "Your lessons, quizzes and flashcards are now always written in the app's language. Translations reviewed in every language, plus fixes and improvements.",
-  es: "Tus lecciones, cuestionarios y flashcards ahora se escriben siempre en el idioma de la app. Traducciones revisadas en todos los idiomas, correcciones y mejoras.",
-  de: "Deine Lektionen, Quiz und Karteikarten werden jetzt immer in der Sprache der App geschrieben. Übersetzungen in allen Sprachen überarbeitet, Fehlerbehebungen und Verbesserungen.",
-  it: "Le tue lezioni, i quiz e le flashcard ora sono sempre scritti nella lingua dell'app. Traduzioni riviste in tutte le lingue, correzioni e miglioramenti.",
-  pt: "As tuas lições, quizzes e flashcards passam a ser sempre escritos na língua da app. Traduções revistas em todas as línguas, correções e melhorias.",
-  "pt-BR": "Suas lições, quizzes e flashcards agora são sempre escritos no idioma do app. Traduções revisadas em todos os idiomas, correções e melhorias.",
-  nl: "Je lessen, quizzen en flashcards worden nu altijd in de taal van de app geschreven. Vertalingen in alle talen nagekeken, verbeteringen en oplossingen.",
-  tr: "Derslerin, testlerin ve bilgi kartların artık her zaman uygulamanın dilinde yazılıyor. Tüm dillerde çeviriler gözden geçirildi, düzeltmeler ve iyileştirmeler.",
-  hr: "Tvoje lekcije, kvizovi i kartice sada su uvijek napisani na jeziku aplikacije. Prijevodi provjereni na svim jezicima, ispravci i poboljšanja.",
-  ru: "Твои уроки, тесты и карточки теперь всегда пишутся на языке приложения. Переводы проверены на всех языках, исправления и улучшения.",
-  fi: "Oppituntisi, visasi ja muistikorttisi kirjoitetaan nyt aina sovelluksen kielellä. Käännökset tarkistettu kaikilla kielillä, korjauksia ja parannuksia.",
-  cs: "Tvoje lekce, kvízy a kartičky se teď vždy píšou v jazyce aplikace. Překlady zkontrolované ve všech jazycích, opravy a vylepšení.",
-  pl: "Twoje lekcje, quizy i fiszki są teraz zawsze pisane w języku aplikacji. Tłumaczenia sprawdzone we wszystkich językach, poprawki i ulepszenia.",
-  el: "Τα μαθήματα, τα κουίζ και οι κάρτες σου γράφονται πλέον πάντα στη γλώσσα της εφαρμογής. Αναθεωρημένες μεταφράσεις σε όλες τις γλώσσες, διορθώσεις και βελτιώσεις.",
-  ro: "Lecțiile, testele și cardurile tale sunt acum scrise mereu în limba aplicației. Traduceri revizuite în toate limbile, corecturi și îmbunătățiri.",
-  no: "Leksjonene, quizene og kortene dine skrives nå alltid på appens språk. Oversettelser gjennomgått på alle språk, rettelser og forbedringer.",
-  uk: "Твої уроки, тести й картки тепер завжди пишуться мовою застосунку. Переклади перевірено всіма мовами, виправлення та покращення.",
-  sv: "Dina lektioner, quiz och flashcards skrivs nu alltid på appens språk. Översättningar granskade på alla språk, rättningar och förbättringar.",
-  da: "Dine lektioner, quizzer og flashcards skrives nu altid på appens sprog. Oversættelser gennemgået på alle sprog, rettelser og forbedringer.",
-  ar: "دروسك واختباراتك وبطاقاتك تُكتب الآن دائمًا بلغة التطبيق. مراجعة الترجمات في كل اللغات، مع إصلاحات وتحسينات.",
-  sl: "Tvoje lekcije, kvizi in kartice so zdaj vedno napisani v jeziku aplikacije. Prevodi pregledani v vseh jezikih, popravki in izboljšave.",
-  sk: "Tvoje lekcie, kvízy a kartičky sa teraz vždy píšu v jazyku aplikácie. Preklady skontrolované vo všetkých jazykoch, opravy a vylepšenia.",
-  hu: "A leckéid, kvízeid és kártyáid mostantól mindig az alkalmazás nyelvén készülnek. Átnézett fordítások minden nyelven, javítások és fejlesztések.",
-  he: "השיעורים, החידונים והכרטיסיות שלך נכתבים עכשיו תמיד בשפת האפליקציה. תרגומים נבדקו בכל השפות, תיקונים ושיפורים.",
+  fr: "Un démarrage plus fluide, des prix toujours affichés dans ta devise, et une connexion plus fiable (lien par e-mail, Apple, Google). Ta leçon offerte n'est plus perdue si la création est interrompue. Corrections et améliorations.",
+  en: "A smoother start, prices always shown in your currency, and more reliable sign-in (email link, Apple, Google). Your free lesson is no longer lost if creating it is interrupted. Fixes and improvements.",
+  es: "Un inicio más fluido, precios siempre en tu moneda y un inicio de sesión más fiable (enlace por correo, Apple, Google). Tu lección gratis ya no se pierde si se interrumpe su creación. Correcciones y mejoras.",
+  de: "Ein flüssigerer Start, Preise immer in deiner Währung und eine zuverlässigere Anmeldung (E-Mail-Link, Apple, Google). Deine kostenlose Lektion geht nicht mehr verloren, wenn die Erstellung unterbrochen wird. Fehlerbehebungen und Verbesserungen.",
+  it: "Un avvio più fluido, prezzi sempre nella tua valuta e un accesso più affidabile (link via email, Apple, Google). La tua lezione gratuita non si perde più se la creazione viene interrotta. Correzioni e miglioramenti.",
+  pt: "Um início mais fluido, preços sempre na tua moeda e um início de sessão mais fiável (link por email, Apple, Google). A tua lição grátis já não se perde se a criação for interrompida. Correções e melhorias.",
+  "pt-BR": "Um início mais fluido, preços sempre na sua moeda e um login mais confiável (link por e-mail, Apple, Google). Sua lição grátis não se perde mais se a criação for interrompida. Correções e melhorias.",
+  nl: "Een soepelere start, prijzen altijd in je eigen valuta en betrouwbaarder inloggen (e-maillink, Apple, Google). Je gratis les gaat niet meer verloren als het maken wordt onderbroken. Verbeteringen en oplossingen.",
+  tr: "Daha akıcı bir başlangıç, fiyatlar her zaman kendi para biriminde ve daha güvenilir giriş (e-posta bağlantısı, Apple, Google). Oluşturma yarıda kalırsa ücretsiz dersin artık kaybolmuyor. Düzeltmeler ve iyileştirmeler.",
+  hr: "Glađi početak, cijene uvijek u tvojoj valuti i pouzdanija prijava (poveznica e-poštom, Apple, Google). Tvoja besplatna lekcija više se ne gubi ako se izrada prekine. Ispravci i poboljšanja.",
+  ru: "Более плавный старт, цены всегда в твоей валюте и более надёжный вход (ссылка по почте, Apple, Google). Бесплатный урок больше не теряется, если создание прервалось. Исправления и улучшения.",
+  fi: "Sujuvampi aloitus, hinnat aina omassa valuutassasi ja luotettavampi kirjautuminen (sähköpostilinkki, Apple, Google). Ilmainen oppituntisi ei enää katoa, jos sen luominen keskeytyy. Korjauksia ja parannuksia.",
+  cs: "Plynulejší start, ceny vždy ve tvé měně a spolehlivější přihlášení (odkaz e-mailem, Apple, Google). Tvoje lekce zdarma se už neztratí, když se vytváření přeruší. Opravy a vylepšení.",
+  pl: "Płynniejszy start, ceny zawsze w twojej walucie i pewniejsze logowanie (link e-mailem, Apple, Google). Darmowa lekcja nie przepada już, gdy tworzenie zostanie przerwane. Poprawki i ulepszenia.",
+  el: "Πιο ομαλή αρχή, τιμές πάντα στο νόμισμά σου και πιο αξιόπιστη σύνδεση (σύνδεσμος email, Apple, Google). Το δωρεάν μάθημά σου δεν χάνεται πια αν διακοπεί η δημιουργία του. Διορθώσεις και βελτιώσεις.",
+  ro: "Un început mai fluid, prețuri mereu în moneda ta și o conectare mai sigură (link pe e-mail, Apple, Google). Lecția ta gratuită nu se mai pierde dacă crearea ei e întreruptă. Corecturi și îmbunătățiri.",
+  no: "En jevnere start, priser alltid i din valuta og mer pålitelig innlogging (e-postlenke, Apple, Google). Gratisleksjonen din går ikke lenger tapt hvis opprettelsen avbrytes. Rettelser og forbedringer.",
+  uk: "Плавніший старт, ціни завжди у твоїй валюті та надійніший вхід (посилання поштою, Apple, Google). Безкоштовний урок більше не губиться, якщо створення перервалося. Виправлення та покращення.",
+  sv: "En smidigare start, priser alltid i din valuta och säkrare inloggning (e-postlänk, Apple, Google). Din gratislektion försvinner inte längre om skapandet avbryts. Rättningar och förbättringar.",
+  da: "En glattere start, priser altid i din valuta og mere pålidelig login (link på mail, Apple, Google). Din gratis lektion går ikke længere tabt, hvis oprettelsen afbrydes. Rettelser og forbedringer.",
+  ar: "بداية أكثر سلاسة، وأسعار تظهر دائمًا بعملتك، وتسجيل دخول أكثر موثوقية (رابط بالبريد، Apple، Google). لم يعد درسك المجاني يضيع إذا انقطع إنشاؤه. إصلاحات وتحسينات.",
+  sl: "Bolj gladek začetek, cene vedno v tvoji valuti in zanesljivejša prijava (povezava po e-pošti, Apple, Google). Brezplačna lekcija se ne izgubi več, če se ustvarjanje prekine. Popravki in izboljšave.",
+  sk: "Plynulejší štart, ceny vždy v tvojej mene a spoľahlivejšie prihlásenie (odkaz e-mailom, Apple, Google). Tvoja lekcia zadarmo sa už nestratí, keď sa vytváranie preruší. Opravy a vylepšenia.",
+  hu: "Gördülékenyebb kezdés, árak mindig a saját pénznemedben, és megbízhatóbb bejelentkezés (e-mailes link, Apple, Google). Az ingyenes leckéd már nem vész el, ha a létrehozás megszakad. Javítások és fejlesztések.",
+  he: "התחלה חלקה יותר, מחירים תמיד במטבע שלך והתחברות אמינה יותר (קישור במייל, Apple, Google). השיעור החינמי שלך כבר לא הולך לאיבוד אם היצירה נקטעת. תיקונים ושיפורים.",
 };
 
 function whatsNewFor(locale) {
