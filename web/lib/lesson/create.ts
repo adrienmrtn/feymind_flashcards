@@ -145,7 +145,28 @@ export async function planLesson(input: PlanInput): Promise<PlanOutcome> {
   if (!user) return refuse(await actionT("app.errors.signIn"));
   if (!UUID.test(input.lessonId)) return refuse(await actionT("app.common.errorGeneric"));
 
-  const topic = typeof input.topic === "string" ? input.topic.trim().slice(0, MAX_TOPIC) : undefined;
+  // **Un plan déjà écrit ne se redemande pas.** L'identifiant survit à un rechargement
+  // (`lessonIdForCreation`) : un « Réessayer » après une réponse perdue peut arriver alors que
+  // la leçon a bien été créée. Elle s'ouvre telle quelle ; sans ce retour, le plan repartait
+  // au modèle et l'insertion du cours tombait sur sa clé primaire.
+  const { data: existing } = await supabase
+    .from("courses")
+    .select("id")
+    .eq("id", input.lessonId)
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (existing) {
+    const { count } = await supabase
+      .from("chapters")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("course_id", input.lessonId)
+      .is("deleted_at", null);
+    if (count) return { status: "ok", lessonId: input.lessonId, themes: count };
+  }
+
+  const topic =typeof input.topic === "string" ? input.topic.trim().slice(0, MAX_TOPIC) : undefined;
   const text = (input.text ?? "").trim().slice(0, MAX_TEXT);
   const images = acceptedImages(input.images);
   const fromScratch = topic !== undefined && text.length === 0 && images.length === 0;

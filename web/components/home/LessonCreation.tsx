@@ -9,6 +9,7 @@ import { GENERATION_STAGES, type GenerationStage, type LessonCreation } from "@m
 import { LessonPrimaryButton, LessonSecondaryButton } from "@/components/lesson/LessonButtons";
 import { Mika } from "@/components/mika/Mika";
 import { useI18n } from "@/lib/i18n/client";
+import { forgetCreation, lessonIdForCreation } from "@/lib/lesson/creation-id";
 import { lessonPath } from "@/lib/lesson/routes";
 import { firstCompletion, writeThemes } from "@/lib/lesson/theme-writer";
 import { requestPaywall } from "@/lib/paywall";
@@ -21,7 +22,8 @@ import { requestPaywall } from "@/lib/paywall";
  *
  * L'identifiant de la leçon est gardé d'un essai à l'autre : le serveur réserve la leçon sous
  * cet identifiant (`begin_lesson`), et « Réessayer » avec un identifiant neuf la compterait
- * comme une seconde leçon.
+ * comme une seconde leçon. Il survit aussi à un rechargement (`lessonIdForCreation`) : le même
+ * brouillon, renvoyé après un plan trop long, reprend la même réservation.
  */
 export function LessonCreationFlow({
   creation,
@@ -40,7 +42,7 @@ export function LessonCreationFlow({
   const [examDate, setExamDate] = useState(() => defaultExamDate());
   const [stage, setStage] = useState<GenerationStage | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
-  const [lessonId] = useState(() => crypto.randomUUID());
+  const [lessonId] = useState(() => lessonIdForCreation(creation));
   const pending = useRef<string | null>(null);
   const alive = useRef(true);
 
@@ -83,6 +85,8 @@ export function LessonCreationFlow({
     await firstCompletion(outcome.lessonId);
     if (!alive.current) return;
     setStage("questions");
+    // La leçon existe : le même sujet, demandé plus tard, en sera une autre.
+    forgetCreation(creation);
     onCreated();
     router.push(lessonPath(outcome.lessonId));
   }
