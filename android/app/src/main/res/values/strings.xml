@@ -71,7 +71,6 @@
     <string name="ios_averageLead">Nobody is judging. This is a starting point, not a report card.</string>
     <string name="ios_averageTitle">What is your average\nright now?</string>
     <string name="ios_backup">Backup</string>
-    <string name="ios_billedYearly">billed %1$s a year</string>
     <string name="ios_build_done">Your plan is ready</string>
     <string name="ios_build_step1">Reading your answers</string>
     <string name="ios_build_step2">Working out your pace</string>
@@ -187,12 +186,17 @@
     <string name="ios_paywallIncluded">With Micabo Pro</string>
     <string name="ios_paywallNoRestore">No subscription to restore on this account.</string>
     <string name="ios_paywallOnly">Only %1$s / month</string>
+    <string name="ios_paywallPending">Your purchase is waiting for approval, for example from a parent. Pro will unlock on its own as soon as it\'s approved.</string>
+    <string name="ios_paywallPendingTitle">Purchase pending</string>
     <string name="ios_paywallPlansTitle">**Choose** your plan</string>
     <string name="ios_paywallPracticeHeadline">Your free set is used: endless questions with Pro</string>
     <string name="ios_paywallReassurance">Two taps to start, cancel in fifteen seconds.</string>
     <string name="ios_paywallRestore">Restore</string>
+    <string name="ios_paywallSeeAll">See all plans</string>
     <string name="ios_paywallStartTrial">Start my %1$s free days</string>
     <string name="ios_paywallTerms">Terms of use</string>
+    <string name="ios_paywallTry_free">%1$s days for free</string>
+    <string name="ios_paywallTry_lead">Try </string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, no limits</string>
     <string name="ios_paywall_badge_free">%1$s days free</string>
     <string name="ios_pdf_empty">This PDF holds neither text nor a usable page.</string>
@@ -529,6 +533,7 @@
     <string name="x_paywall_billedYearlyPlay">Billed once a year, cancel anytime in Google Play.</string>
     <string name="x_paywall_finePrint">%1$s days free, then %2$s per %3$s. Renews automatically, cancel anytime in Google Play.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s per %2$s. Renews automatically, cancel anytime in Google Play.</string>
+    <string name="x_paywall_playUnavailable">Google Play isn\'t responding. Check that you\'re signed in to your Google account in the Play Store, then try again.</string>
     <string name="x_paywall_soon">Coming soon on Android</string>
     <string name="x_paywall_soonBody">Subscriptions open on Android very soon. Your free lesson is waiting for you in the meantime.</string>
     <string name="x_paywall_subscribe">Go Pro</string>

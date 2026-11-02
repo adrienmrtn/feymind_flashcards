@@ -21,6 +21,7 @@ import { PAYWALL_EVENT, type PaywallRequest } from "@/lib/paywall";
 import { useI18n } from "@/lib/i18n/client";
 import { requestTourRecheck } from "@/lib/tour/signal";
 import { usePresentment } from "@/lib/presentment";
+import { CHECKOUT_MAINTENANCE } from "@/lib/stripe/maintenance";
 
 /**
  * Le paywall, **posé sur le tableau de bord**.
@@ -128,8 +129,9 @@ export function PaywallHost({ isPaid }: { isPaid: boolean }) {
     // **Refermé sans achat, le paywall fait tomber le cadeau** (`DiscountOffer.paywallClosed`
     // sur l'iPhone, `GiftOffer` sur Android) : tous les paywalls comptent, celui de l'accueil
     // compris. Un achat, lui, quitte la page pour Stripe et n'arrive jamais ici. Le cadeau
-    // lève son drapeau avant que la visite guidée ne relise l'écran.
-    const gift = paywallClosed(isPaid);
+    // lève son drapeau avant que la visite guidée ne relise l'écran. Paiement web fermé : pas
+    // de cadeau - une remise qu'on ne peut pas payer ici est une promesse qu'on ne tient pas.
+    const gift = CHECKOUT_MAINTENANCE ? false : paywallClosed(isPaid);
     // L'écran vient de se libérer : la visite guidée attendait exactement ça.
     if (!gift) requestTourRecheck();
     if (params.get("bienvenue") || params.get("offre") || params.get("debug")) {
@@ -289,7 +291,12 @@ export function PaywallCard({
             </p>
           ) : null}
           {stage === "plans" ? (
-            <PaywallOffer headingId={titleId} surface={surface} />
+            <PaywallOffer
+              headingId={titleId}
+              surface={surface}
+              // Paiement web fermé : « Continuer gratuitement » referme l'offre, comme la croix.
+              onContinue={hard ? undefined : onClose}
+            />
           ) : (
             <>
               <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2 pt-3">

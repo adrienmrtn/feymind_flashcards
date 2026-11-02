@@ -122,6 +122,13 @@ enum AuthError: LocalizedError, Equatable {
     /// Une erreur qu'Apple rend tout de suite et qui, presque toujours, précède la vraie
     /// autorisation : on ne l'affiche pas, on attend de voir si la connexion suit.
     case transient
+    /// **GoTrue fait patienter** (429, `over_email_send_rate_limit`) : un lien redemandé
+    /// moins d'une minute après le précédent. Sa phrase à lui, « For security purposes… »,
+    /// arrivait telle quelle à l'écran, en anglais.
+    case rateLimited
+    /// **Le lien reçu par courriel n'ouvre plus de session** : expiré, déjà ouvert
+    /// (`otp_expired`), ou demandé ailleurs. La phrase dit de le redemander.
+    case linkExpired
     case server(String)
 
     var errorDescription: String? {
@@ -146,6 +153,10 @@ enum AuthError: LocalizedError, Equatable {
         case .transient:
             // Pas tout de suite : `AuthController` l'affiche si rien ne suit.
             nil
+        case .rateLimited:
+            L10n.t("ios.auth.rateLimited", locale: .resolved())
+        case .linkExpired:
+            L10n.t("ios.auth.linkExpired", locale: .resolved())
         case .server(let message):
             message
         }

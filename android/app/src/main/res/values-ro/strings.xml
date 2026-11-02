@@ -65,7 +65,6 @@
     <string name="ios_auth_sessionExpired">Sesiunea ta a expirat. Conectează-te din nou.</string>
     <string name="ios_averageLead">Nimeni nu te judecă. E un punct de plecare, nu un carnet de note.</string>
     <string name="ios_averageTitle">Care e media ta\nchiar acum?</string>
-    <string name="ios_billedYearly">facturat %1$s pe an</string>
     <string name="ios_build_done">Planul tău e gata</string>
     <string name="ios_build_step1">Citim răspunsurile tale</string>
     <string name="ios_build_step2">Calculăm ritmul tău</string>
@@ -175,12 +174,17 @@
     <string name="ios_paywallIncluded">Cu Micabo Pro</string>
     <string name="ios_paywallNoRestore">Niciun abonament de restaurat pe contul ăsta.</string>
     <string name="ios_paywallOnly">Doar %1$s / lună</string>
+    <string name="ios_paywallPending">Achiziția ta așteaptă o aprobare, de exemplu de la un părinte. Pro se deblochează singur imediat ce vine.</string>
+    <string name="ios_paywallPendingTitle">Achiziție în așteptare</string>
     <string name="ios_paywallPlansTitle">**Alege** planul tău</string>
     <string name="ios_paywallPracticeHeadline">Setul gratuit s-a terminat: întrebări nelimitate cu Pro</string>
     <string name="ios_paywallReassurance">Două atingeri ca să începi, anulezi în cincisprezece secunde.</string>
     <string name="ios_paywallRestore">Restaurează</string>
+    <string name="ios_paywallSeeAll">Vezi toate planurile</string>
     <string name="ios_paywallStartTrial">Încep cele %1$s zile gratuite</string>
     <string name="ios_paywallTerms">Termeni de utilizare</string>
+    <string name="ios_paywallTry_free">%1$s zile gratuit</string>
+    <string name="ios_paywallTry_lead">Încearcă </string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, fără limite</string>
     <string name="ios_paywall_badge_free">%1$s zile gratuite</string>
     <string name="ios_pdf_empty">PDF-ul ăsta nu conține nici text, nici o pagină utilizabilă.</string>
@@ -509,6 +513,7 @@
     <string name="x_paywall_billedYearlyPlay">Facturat o dată pe an, anulezi din Google Play.</string>
     <string name="x_paywall_finePrint">%1$s zile gratuite, apoi %2$s pe %3$s. Se reînnoiește automat, anulezi oricând din Google Play.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s pe %2$s. Se reînnoiește automat, anulezi oricând din Google Play.</string>
+    <string name="x_paywall_playUnavailable">Google Play nu răspunde. Verifică dacă ești conectat la contul tău Google în Magazin Play, apoi încearcă din nou.</string>
     <string name="x_paywall_soon">În curând pe Android</string>
     <string name="x_paywall_soonBody">Abonamentele ajung foarte curând pe Android. Între timp, lecția ta gratuită te așteaptă.</string>
     <string name="x_paywall_subscribe">Treci la Pro</string>

@@ -1,6 +1,7 @@
 package com.micabo.app.data
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -17,6 +18,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * **Le backend de Micabo** : le projet Supabase de l'app iPhone (`AppConfig.swift`), sa clé
@@ -44,7 +46,16 @@ class ApiException(val status: Int, val code: String, message: String) : Excepti
 }
 
 /** Pas de réseau, ou une réponse coupée. */
-class NetworkException(cause: Throwable) : Exception(cause.message, cause)
+open class NetworkException(cause: Throwable) : Exception(cause.message, cause)
+
+/**
+ * **GoTrue n'a pas ouvert la session de l'invité** (429, 5xx), même après plusieurs essais.
+ * Passager comme le réseau (la synchronisation et les leçons réessaient de même), mais dit
+ * autrement : un 429 n'est pas « pas de connexion ».
+ */
+class GuestUnavailableException(val status: Int, cause: Throwable) : NetworkException(cause) {
+    val rateLimited: Boolean get() = status == 429
+}
 
 internal data class HttpResult(val status: Int, val body: String)
 
@@ -183,6 +194,29 @@ class SupabaseAuth(private val prefs: Prefs) {
         }
     }
 
+    /**
+     * **Le jeton, avec patience** : un 429 ou un 5xx de GoTrue (l'inscription anonyme est
+     * limitée par adresse IP), ou le réseau qui tombe, se réessaient deux fois, après une puis
+     * trois secondes. Une panne de GoTrue qui dure remonte en `GuestUnavailableException`, le
+     * réseau en `NetworkException` ; les autres refus remontent tels quels.
+     */
+    suspend fun accessTokenWithRetry(): String {
+        var wait = 1_000L
+        for (attempt in 1..TOKEN_ATTEMPTS) {
+            try {
+                return accessToken()
+            } catch (error: ApiException) {
+                if (error.status < 500 && error.status != 429) throw error
+                if (attempt == TOKEN_ATTEMPTS) throw GuestUnavailableException(error.status, error)
+            } catch (error: NetworkException) {
+                if (attempt == TOKEN_ATTEMPTS) throw error
+            }
+            delay(wait)
+            wait *= 3
+        }
+        throw IllegalStateException()
+    }
+
     /** Le jeton du compte ; `null` quand GoTrue l'a oublié (le compte est alors déconnecté). */
     private fun accountToken(forceRefresh: Boolean): String? {
         val now = System.currentTimeMillis()
@@ -316,6 +350,22 @@ class SupabaseAuth(private val prefs: Prefs) {
             "&code_challenge_method=s256"
     }
 
+    /**
+     * **La session des relecteurs** (Google Play, App Store) : le compte de démonstration
+     * s'ouvre par mot de passe, sans courriel. Ils n'ont pas la boîte de l'adresse qu'on leur
+     * donne ; c'est le même compte que celui de la relecture sur l'iPhone (`AppStoreReview`).
+     */
+    suspend fun signInForReview(): Account = mutex.withLock {
+        withContext(Dispatchers.IO) {
+            val payload = authRequest("token?grant_type=password", buildJsonObject {
+                put("email", StoreReview.EMAIL)
+                put("password", StoreReview.PASSWORD)
+            })
+            keepAccount(payload)
+            _account.value ?: throw AuthException("invalid", "")
+        }
+    }
+
     /** Envoie le lien de connexion ; il rouvre l'app par `micabo://auth-callback`. */
     suspend fun sendMagicLink(email: String) = withContext(Dispatchers.IO) {
         val verifier = Pkce.verifier()
@@ -441,6 +491,8 @@ class SupabaseAuth(private val prefs: Prefs) {
     companion object {
         /** Le retour des connexions, le même que sur iPhone (déjà autorisé chez Supabase). */
         const val REDIRECT = "micabo://auth-callback"
+
+        private const val TOKEN_ATTEMPTS = 3
     }
 }
 
@@ -470,11 +522,16 @@ class SupabaseFunctions(private val auth: SupabaseAuth) {
         send { token -> httpStream("${SupabaseConfig.URL}/functions/v1/$function", token, timeoutMs, contentLength, write) }
 
     private suspend fun send(exchange: (String) -> HttpResult): JsonObject = withContext(Dispatchers.IO) {
-        var token = runCatching { auth.accessToken() }.getOrElse { error ->
-            if (error is NetworkException) throw error
-            // GoTrue en panne passagère : réessayer plus tard, pas appeler en anonyme (le
-            // serveur y verrait un compte sans abonnement et ouvrirait le paywall).
-            if (error is ApiException && (error.status >= 500 || error.status == 429)) throw NetworkException(error)
+        // GoTrue en panne passagère : réessayé quelques fois avant chaque appel, puis remonté
+        // (`GuestUnavailableException`), jamais un appel en anonyme (le serveur y verrait un
+        // compte sans abonnement et ouvrirait le paywall).
+        var token = try {
+            auth.accessTokenWithRetry()
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: NetworkException) {
+            throw error
+        } catch (error: Exception) {
             SupabaseConfig.ANON_KEY
         }
         var attempt = 0

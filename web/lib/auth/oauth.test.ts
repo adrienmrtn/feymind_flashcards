@@ -5,7 +5,7 @@ import type { MessageTree } from "@/lib/i18n/format";
 import type { UiLocale } from "@/lib/i18n/locales";
 import { makeTranslator } from "@/lib/i18n/translate";
 
-import { callbackFailureMessage, oauthFailureMessage } from "./oauth";
+import { callbackFailureMessage, emailLinkFailureMessage, oauthFailureMessage } from "./oauth";
 
 function translatorFor(locale: UiLocale) {
   return makeTranslator(locale, catalogFor(locale) as unknown as MessageTree, en as unknown as MessageTree);
@@ -59,5 +59,50 @@ describe("messages d'échec traduits", () => {
     expect(apple).not.toMatch(/courriel/);
     expect(apple).toBe(tr("app.errors.appleNotWired"));
     expect(callbackFailureMessage(tr, null, "code verifier missing")).toBe(tr("app.errors.linkOtherBrowser"));
+  });
+});
+
+describe("emailLinkFailureMessage", () => {
+  it("traduit la limite de débit de GoTrue, par code ou par phrase", () => {
+    const rate = fr("app.errors.emailRateLimit");
+    expect(
+      emailLinkFailureMessage(fr, {
+        code: "over_email_send_rate_limit",
+        message: "Email rate limit exceeded",
+        status: 429,
+      }),
+    ).toBe(rate);
+    expect(
+      emailLinkFailureMessage(fr, {
+        message: "For security purposes, you can only request this after 38 seconds.",
+      }),
+    ).toBe(rate);
+    expect(emailLinkFailureMessage(fr, { message: "Too many requests", status: 429 })).toBe(rate);
+    expect(rate).not.toMatch(/security purposes/i);
+  });
+
+  it("traduit un lien périmé", () => {
+    expect(
+      emailLinkFailureMessage(fr, { code: "otp_expired", message: "Email link is invalid or has expired" }),
+    ).toBe(fr("app.errors.linkExpired"));
+    expect(emailLinkFailureMessage(tr, { message: "Token has expired or is invalid" })).toBe(
+      tr("app.errors.linkExpired"),
+    );
+  });
+
+  it("laisse passer un refus inconnu, et ne rend jamais une chaîne vide", () => {
+    expect(emailLinkFailureMessage(fr, { message: "Signups not allowed for otp" })).toBe(
+      "Signups not allowed for otp",
+    );
+    expect(emailLinkFailureMessage(fr, { message: "" })).toBe(fr("app.errors.tryAgain"));
+  });
+
+  it("vaut aussi au retour du lien, par `error_code`", () => {
+    expect(
+      callbackFailureMessage(tr, null, "Email link is invalid or has expired", "otp_expired"),
+    ).toBe(tr("app.errors.linkExpired"));
+    expect(callbackFailureMessage(fr, null, "access_denied", "otp_expired")).toBe(
+      fr("app.errors.linkExpired"),
+    );
   });
 });

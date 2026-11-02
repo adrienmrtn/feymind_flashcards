@@ -112,7 +112,7 @@ fun MockExamScreen(examId: String?) {
         lastLessons = lessonIds
         lastMinutes = minutes
         if (!isPro && app.prefs.mockFreeUsed) {
-            navigator.push(Screen.Paywall("pro_required"))
+            navigator.push(Screen.Paywall("pro_required", trigger = "mockExam"))
             return
         }
         phase = "writing"
@@ -133,7 +133,7 @@ fun MockExamScreen(examId: String?) {
                 if (error is ApiException && error.opensPaywall) {
                     app.prefs.mockFreeUsed = true
                     phase = "setup"
-                    navigator.push(Screen.Paywall("pro_required"))
+                    navigator.push(Screen.Paywall("pro_required", trigger = "mockExam"))
                 } else {
                     failure = error
                     phase = "failed"

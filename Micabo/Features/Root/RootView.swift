@@ -11,13 +11,22 @@ enum AccountGate {
     static let skippedKey = "micabo.auth.skipped"
 }
 
-/// **La seconde demande de note**, à la première arrivée dans l'app.
+/// **La demande de note, après la première leçon terminée.**
 ///
-/// Armée par la fin du parcours d'accueil (`OnboardingFlowView.finish`), levée à la première
-/// apparition des onglets : une fois, et seulement pour qui sort du parcours. Un compte déjà
-/// installé avant cette version n'a pas le drapeau, et n'est pas redemandé.
+/// Elle venait deux fois avant tout usage : sur la page « Soutiens-nous » du parcours, et à la
+/// première apparition des onglets - au même moment que l'offre cadeau. Une note demandée à
+/// quelqu'un qui n'a encore rien appris ne dit rien de l'app, et iOS n'accorde que trois
+/// demandes par an. Elle vient maintenant une fois, à la fin de la première leçon
+/// (`LessonPathView`), quand l'élève sait ce qu'il note.
 enum InAppReviewPrompt {
-    static let pendingKey = "micabo.review.pendingFirstArrival"
+    static let askedAfterFirstLessonKey = "micabo.review.askedAfterFirstLesson"
+
+    /// Vrai la première fois seulement : la demande est réservée, et ne revient pas.
+    static func claimAfterFirstLesson(defaults: UserDefaults = .standard) -> Bool {
+        guard !defaults.bool(forKey: askedAfterFirstLessonKey) else { return false }
+        defaults.set(true, forKey: askedAfterFirstLessonKey)
+        return true
+    }
 }
 
 /// Aiguillage au lancement : parcours d'accueil, puis l'application.
@@ -45,10 +54,7 @@ struct RootView: View {
     /// ton premier cours », puis la création elle-même, sans croix.
     @AppStorage(OnboardingPreferences.Key.pendingFirstImport) private var pendingFirstImport = false
 
-    @AppStorage(InAppReviewPrompt.pendingKey) private var pendingReview = false
-
     @Environment(AuthController.self) private var auth
-    @Environment(\.requestReview) private var requestReview
     @Environment(\.modelContext) private var modelContext
 
     private var showsAccountGate: Bool {
@@ -69,13 +75,10 @@ struct RootView: View {
                 FirstDeckFlowView()
                     .transition(.opacity)
             } else {
+                // Pas de demande de note ici : elle tombait avec l'offre cadeau, avant toute
+                // leçon. Elle vient après la première leçon terminée (`InAppReviewPrompt`).
                 RootTabView()
                     .transition(.opacity)
-                    .onAppear {
-                        guard pendingReview else { return }
-                        pendingReview = false
-                        requestReview()
-                    }
             }
         }
         .animation(.easeInOut(duration: 0.45), value: didCompleteOnboarding)

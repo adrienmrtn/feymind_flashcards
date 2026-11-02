@@ -426,7 +426,8 @@ enum LessonServiceError: LocalizedError, Equatable {
 // MARK: - Le transport
 
 struct SupabaseLessonService: LessonGenerating {
-    var functions = SupabaseFunctions.shared
+    /// Le transport aux délais des générations : plus longs que le budget du serveur.
+    var functions = SupabaseFunctions.generation
 
     func plan(_ request: LessonPlanRequest) async throws -> LessonPlanResult {
         var payload = request.audience.payload

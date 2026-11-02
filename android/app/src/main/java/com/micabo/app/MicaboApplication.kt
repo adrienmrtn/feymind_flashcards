@@ -97,16 +97,22 @@ class MicaboApplication : Application() {
     }
 
     /** Le retour de Google ou du lien du courriel (`micabo://auth-callback`). */
-    fun completeSignIn(query: Map<String, String>) {
+    fun completeSignIn(query: Map<String, String>) =
+        signIn(if (query.containsKey("code")) "pkce" else "link") { auth.handleCallback(query) }
+
+    /** **La relecture des stores** : l'adresse de démonstration ouvre la session tout de suite. */
+    fun completeReviewSignIn() = signIn("review") { auth.signInForReview() }
+
+    private fun signIn(provider: String, open: suspend () -> com.micabo.app.data.Account) {
         scope.launch {
             val guest = auth.guestId
             // Avant de quitter l'invité : le jeton qui fera passer ses lignes au compte
             // (`create_guest_claim`, avec la session invitée). Le transfert lui-même ouvre le
             // premier passage sous le compte (`CloudSync.claimGuest`), puis tout remonte.
             sync.prepareGuestClaim()
-            _signIn.value = runCatching { auth.handleCallback(query) }.fold(
+            _signIn.value = runCatching { open() }.fold(
                 onSuccess = { account ->
-                    analytics.track("signed_in", mapOf("provider" to if (query.containsKey("code")) "pkce" else "link"))
+                    analytics.track("signed_in", mapOf("provider" to provider))
                     withContext(Dispatchers.Main) { billing.follow(account.userId, fromGuest = guest.isNotEmpty()) }
                     // Les leçons de ce téléphone montent sous le compte, celles du compte descendent.
                     prefs.syncWatermark = 0
@@ -196,9 +202,13 @@ class MicaboApplication : Application() {
         exams = ExamRepository(this, prefs)
         // Avant les événements : chacun lit `isPro`, et un `lateinit` encore vide ferait planter.
         billing = Billing(this) {
-            runCatching { auth.accessToken() }
+            runCatching { auth.accessTokenWithRetry() }
             auth.userId.ifEmpty { null }
         }
+        // **RevenueCat tout de suite**, sans attendre l'invité du réseau : sous l'identifiant déjà
+        // gardé, ou anonyme au tout premier lancement. Le paywall a ses prix dès qu'il s'ouvre ;
+        // l'invité suit par `logIn` plus bas, et l'achat ne part que sous lui (`Billing.identify`).
+        billing.start(auth.userId.ifEmpty { null })
         gift = GiftOffer(this)
         analytics = Analytics(this, prefs, auth) { billing.isPro.value }
         // Une synchro qui échoue se compte : avant, elle finissait dans un `Log.w` que personne
@@ -217,9 +227,10 @@ class MicaboApplication : Application() {
         composer = LessonComposer(this, YouTubeImport(functions)) { name, props -> analytics.track(name, props) }
         analytics.start()
         // Le compte invité s'ouvre tout de suite : il doit exister avant un achat, pour que
-        // l'abonnement ait un propriétaire. Sans réseau, il s'ouvrira au premier appel.
+        // l'abonnement ait un propriétaire. Sans réseau, il s'ouvrira au premier appel ; une fois
+        // là, RevenueCat passe sous lui (`Billing.start`, `logIn`).
         scope.launch {
-            runCatching { auth.accessToken() }
+            runCatching { auth.accessTokenWithRetry() }
             withContext(Dispatchers.Main) { billing.start(auth.userId.ifEmpty { null }) }
             syncSoon(force = true)
             rescheduleReminders()

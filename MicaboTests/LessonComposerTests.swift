@@ -78,6 +78,27 @@ final class LessonComposerTests: XCTestCase {
         XCTAssertTrue(composer.supports.isEmpty)
     }
 
+    /// **Une leçon, une réservation** : « Réessayer », ou l'écran de génération refermé puis
+    /// rouvert, reprennent l'identifiant que le serveur a réservé (`begin_lesson`). Seule une
+    /// leçon arrivée, ou une demande d'une autre nature, en tire un neuf.
+    func testTheLessonIDSurvivesUntilTheLessonArrives() {
+        let composer = LessonComposer()
+        composer.draft = "La guerre froide"
+        let first = composer.reserveLessonID(for: .topic)
+        XCTAssertEqual(composer.reserveLessonID(for: .topic), first, "Un second essai reprend la même réservation")
+
+        let pdf = composer.reserveLessonID(for: .pdf)
+        XCTAssertNotEqual(pdf, first, "Une autre source, une autre leçon")
+        XCTAssertEqual(composer.reserveLessonID(for: .pdf), pdf)
+
+        composer.lessonDelivered()
+        let next = composer.reserveLessonID(for: .pdf)
+        XCTAssertNotEqual(next, pdf, "La leçon est arrivée : la suivante en est une autre")
+
+        composer.reset()
+        XCTAssertNotEqual(composer.reserveLessonID(for: .pdf), next)
+    }
+
     func testFiveSupportsAtMost() {
         let composer = LessonComposer()
         for index in 0..<LessonComposer.maximumSupports {

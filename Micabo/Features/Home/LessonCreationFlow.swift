@@ -167,11 +167,9 @@ struct LessonCreationFlow: View {
     }
 
     @State private var pendingExamDate: Date?
-    /// L'identifiant de la leçon, gardé d'un essai à l'autre. Le serveur réserve la leçon sous
-    /// cet identifiant (`begin_lesson`) : « Réessayer » avec un identifiant neuf la comptait
-    /// comme une seconde leçon, et un élève sans abonnement dont le premier plan avait échoué
-    /// tombait sur le paywall.
-    @State private var lessonID = UUID()
+    // L'identifiant de la leçon n'est plus ici : un `@State` renaissait à chaque ouverture de
+    // l'écran, et un écran refermé pendant la génération puis rouvert réservait une seconde
+    // leçon. Le compositeur le garde jusqu'à l'arrivée de la leçon (`LessonComposer.lessonID`).
     /// La génération en vol, gardée pour pouvoir l'abandonner quand l'élève ferme l'écran.
     @State private var generation: Task<Void, Never>?
 
@@ -189,7 +187,7 @@ struct LessonCreationFlow: View {
         stage = nil
         step = .generating
         var request = composer.creation(examDate: examDate)
-        request.lessonID = lessonID
+        request.lessonID = composer.reserveLessonID(for: request.source)
         let properties: [String: AnalyticsValue] = [
             "source": .text(request.source.rawValue),
             "chars": .number(Double(request.text.count)),
@@ -203,6 +201,9 @@ struct LessonCreationFlow: View {
                 let course = try await builder.create(request, in: modelContext) { stage in
                     withAnimation(.spring(duration: 0.35)) { self.stage = stage }
                 }
+                // La leçon existe sous cet identifiant, écran fermé ou non : la prochaine
+                // demande en prend un neuf.
+                composer.lessonDelivered()
                 // Fermé pendant l'attente : la leçon reste dans la liste, mais on ne rouvre
                 // pas un écran que l'élève a quitté.
                 guard !Task.isCancelled else { return }

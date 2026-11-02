@@ -11,6 +11,7 @@ import { markPaywallDismissed, persistStoredAnswers } from "@/lib/onboarding/per
 import { prefetchStep } from "@/lib/onboarding/prefetch";
 import { useOnboarding } from "@/lib/onboarding/store";
 import { PresentmentProvider } from "@/lib/presentment";
+import { CHECKOUT_MAINTENANCE } from "@/lib/stripe/maintenance";
 
 /**
  * L'offre posée sur la dernière carte du parcours.
@@ -63,7 +64,8 @@ export function OnboardingOffer({ country }: { country: string | null }) {
     // Refermé sans achat, le paywall fait tomber le cadeau (`DiscountOffer.paywallClosed` sur
     // l'iPhone, `GiftOffer` sur Android). L'achat, lui, part chez Stripe et ne revient pas ici.
     // Le compte vient d'être créé : il n'est pas abonné, sinon la page l'aurait fait entrer.
-    paywallClosed(false);
+    // Paiement web fermé : pas de remise à promettre, l'offre a montré les boutiques.
+    if (!CHECKOUT_MAINTENANCE) paywallClosed(false);
     void enter();
   }, [enter]);
 

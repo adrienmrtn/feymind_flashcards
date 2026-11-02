@@ -69,7 +69,6 @@
     <string name="ios_averageLead">Niko ne sudi. Ovo je polazna tačka, a ne svedočanstvo.</string>
     <string name="ios_averageTitle">Koji ti je prosek\ntrenutno?</string>
     <string name="ios_backup">Rezervna kopija</string>
-    <string name="ios_billedYearly">%1$s godišnje</string>
     <string name="ios_build_done">Tvoj plan je spreman</string>
     <string name="ios_build_step1">Čitamo tvoje odgovore</string>
     <string name="ios_build_step2">Računamo tvoj tempo</string>
@@ -181,12 +180,17 @@
     <string name="ios_paywallIncluded">Uz Micabo Pro</string>
     <string name="ios_paywallNoRestore">Na ovom nalogu nema pretplate za vraćanje.</string>
     <string name="ios_paywallOnly">Samo %1$s / mesečno</string>
+    <string name="ios_paywallPending">Tvoja kupovina čeka odobrenje, na primer roditelja. Pro će se sam otključati čim stigne.</string>
+    <string name="ios_paywallPendingTitle">Kupovina na čekanju</string>
     <string name="ios_paywallPlansTitle">**Izaberi** svoj paket</string>
     <string name="ios_paywallPracticeHeadline">Tvoj besplatni set je iskorišćen: beskrajno pitanja uz Pro</string>
     <string name="ios_paywallReassurance">Dva dodira za početak, otkazivanje za petnaest sekundi.</string>
     <string name="ios_paywallRestore">Vrati kupovine</string>
+    <string name="ios_paywallSeeAll">Pogledaj sve pakete</string>
     <string name="ios_paywallStartTrial">Počni besplatno: %1$s dana</string>
     <string name="ios_paywallTerms">Uslovi korišćenja</string>
+    <string name="ios_paywallTry_free">%1$s dana besplatno</string>
+    <string name="ios_paywallTry_lead">Isprobaj </string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, bez ograničenja</string>
     <string name="ios_paywall_badge_free">%1$s dana besplatno</string>
     <string name="ios_pdf_empty">Ovaj PDF nema ni teksta ni upotrebljive strane.</string>
@@ -518,6 +522,7 @@
     <string name="x_paywall_billedYearlyPlay">Naplata jednom godišnje, otkaži na Google Play-u.</string>
     <string name="x_paywall_finePrint">%1$s dana besplatno, zatim %2$s / %3$s. Automatski se obnavlja, otkaži bilo kada na Google Play-u.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s / %2$s. Automatski se obnavlja, otkaži bilo kada na Google Play-u.</string>
+    <string name="x_paywall_playUnavailable">Google Play ne odgovara. Proveri da li si prijavljen na svoj Google nalog u Play prodavnici, pa pokušaj ponovo.</string>
     <string name="x_paywall_soon">Uskoro na Androidu</string>
     <string name="x_paywall_soonBody">Pretplate na Androidu stižu vrlo brzo. U međuvremenu te čeka tvoja besplatna lekcija.</string>
     <string name="x_paywall_subscribe">Pređi na Pro</string>

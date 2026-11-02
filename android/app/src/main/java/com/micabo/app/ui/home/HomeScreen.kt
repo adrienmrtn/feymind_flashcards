@@ -100,6 +100,7 @@ import com.micabo.app.ui.text.plainText
 import com.micabo.app.ui.theme.Micabo
 import com.micabo.app.ui.theme.nunito
 import com.micabo.app.ui.theme.tone
+import kotlinx.coroutines.delay
 
 /**
  * **L'accueil** (`HomeView`) : la série en haut, la grande question, la barre et ses supports,
@@ -138,20 +139,26 @@ fun HomeScreen() {
         }
     }
 
-    // **Les notifications** (Android 13 et plus) : demandées ici, à la première visite de
-    // l'accueil. La seule demande était dans l'étape du rappel de l'accueil, sautée quand l'offre
-    // n'a pas d'essai : ces élèves ne recevaient jamais le rappel du jour, ni la notification de
-    // l'enregistrement en cours. Une fois, jamais en boucle.
+    // **Les notifications** (Android 13 et plus) : demandées ici, et seulement ici. Plus juste
+    // avant le paywall (l'étape du rappel de l'accueil), où la fenêtre du système coupait l'élan
+    // vers l'essai. Pas tant que le cadeau du paywall attend ou s'affiche, ni avant la première
+    // leçon : le rappel du jour n'a rien à rappeler sans elle. Une fois, jamais en boucle.
     val context = LocalContext.current
     val notifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { app.rescheduleReminders() }
     val onHome = navigator.current == Screen.Home
-    LaunchedEffect(onHome) {
-        if (onHome && Build.VERSION.SDK_INT >= 33 && !app.prefs.notificationsAsked &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        ) {
-            app.prefs.notificationsAsked = true
-            notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
+    val giftPending by app.gift.pending.collectAsState()
+    val giftShown by app.gift.presentation.collectAsState()
+    val hasLesson = lessons.isNotEmpty()
+    LaunchedEffect(onHome, giftPending, giftShown, hasLesson) {
+        if (!onHome || giftPending || giftShown != null || !hasLesson) return@LaunchedEffect
+        if (Build.VERSION.SDK_INT < 33 || app.prefs.notificationsAsked) return@LaunchedEffect
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return@LaunchedEffect
+        // Le paywall refermé pose le cadeau un instant après l'arrivée sur l'accueil (`GiftHost`) :
+        // on lui laisse le temps de tomber, puis on revérifie.
+        delay(1_500)
+        if (navigator.current != Screen.Home || app.gift.pending.value || app.gift.presentation.value != null) return@LaunchedEffect
+        app.prefs.notificationsAsked = true
+        notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 
     // Un support refusé parce qu'il faut Pro (une vidéo ou un enregistrement, 402 `import_pro`) :

@@ -23,8 +23,9 @@ enum SupabaseFunctionError: Error {
 struct SupabaseFunctions {
     static let shared = SupabaseFunctions()
 
-    /// Jeton de l'utilisateur, posé au lancement. Sans lui, l'appel part en anonyme :
-    /// les fonctions qui regardent `auth.uid()` refusent, et c'est voulu.
+    /// Jeton de l'utilisateur, posé au lancement. Quand elle rend `nil` (ni compte ni invité),
+    /// l'appel ne part pas (`identityToken`) ; sans fermeture posée, il part sous la clé
+    /// publique, et les fonctions qui regardent `auth.uid()` refusent.
     ///
     /// Statique : `SupabaseAIService` recopie `shared` à la construction, et une
     /// fermeture posée après coup sur l'instance copiée n'arriverait jamais.
@@ -37,16 +38,30 @@ struct SupabaseFunctions {
     /// buté une fois restait refusé jusqu'au lancement suivant.
     static var recoverIdentity: (() async -> String?)?
 
+    /// **Le transport des leçons** (`generate-lesson`), aux délais plus longs que ceux du
+    /// serveur.
+    ///
+    /// Le serveur se donne 130 secondes (`REQUEST_BUDGET_MS`, `_shared/deadline.ts`), plus
+    /// l'aller-retour : couper à 120 côté app abandonnait un plan qui allait arriver. La leçon
+    /// offerte était réservée (`begin_lesson`), le plan écrit, et l'élève ne recevait qu'une
+    /// erreur. 170 secondes laissent au serveur le temps d'aboutir, ou d'échouer lui-même et de
+    /// rendre la leçon (`releaseLesson`).
+    static let generation = SupabaseFunctions(
+        session: SupabaseFunctions.makeSession(requestTimeout: 170, resourceTimeout: 240)
+    )
+
     /// Les délais sont longs à dessein : une transcription puis une génération se comptent
     /// en dizaines de secondes, et couper à trente ferait échouer les appels qui allaient
     /// aboutir.
-    var session: URLSession = {
+    var session: URLSession = SupabaseFunctions.makeSession(requestTimeout: 120, resourceTimeout: 180)
+
+    static func makeSession(requestTimeout: TimeInterval, resourceTimeout: TimeInterval) -> URLSession {
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 120
-        configuration.timeoutIntervalForResource = 180
+        configuration.timeoutIntervalForRequest = requestTimeout
+        configuration.timeoutIntervalForResource = resourceTimeout
         configuration.waitsForConnectivity = true
         return URLSession(configuration: configuration)
-    }()
+    }
 
     /// Appelle une fonction et rend l'enveloppe JSON de la réponse.
     func post(_ function: String, payload: [String: Any]) async throws -> [String: Any] {
@@ -54,7 +69,7 @@ struct SupabaseFunctions {
             throw SupabaseFunctionError.notConfigured
         }
 
-        let token = await Self.accessToken?() ?? AppConfig.supabaseAnonKey
+        let token = try await identityToken()
         do {
             return try await send(url: url, payload: payload, token: token)
         } catch SupabaseFunctionError.server(let status, let message, let code, let reason) where status == 401 {
@@ -65,6 +80,24 @@ struct SupabaseFunctions {
             }
             return try await send(url: url, payload: payload, token: fresh)
         }
+    }
+
+    /// **Le jeton de l'appel, jamais la clé publique en silence.**
+    ///
+    /// Quand l'app sait ouvrir une identité (`accessToken` posé au lancement), un appel sans
+    /// compte ni invité ne part pas : sous la clé publiable, il tombait sur le budget du jour
+    /// partagé par tous les appareils sans identité - « reviens demain » à un élève neuf -, et
+    /// le serveur la refuse aux étapes lourdes. `AuthController.functionsAccessToken` a déjà
+    /// retenté d'ouvrir l'invité ; ce qui arrive ici est une panne qu'on peut retenter, et elle
+    /// se dit comme une panne de réseau.
+    ///
+    /// Sans fermeture posée (les tests, un aperçu), la clé publique reste le jeton.
+    private func identityToken() async throws -> String {
+        guard let provider = Self.accessToken else { return AppConfig.supabaseAnonKey }
+        guard let token = await provider() else {
+            throw SupabaseFunctionError.network("")
+        }
+        return token
     }
 
     private func send(url: URL, payload: [String: Any], token: String) async throws -> [String: Any] {

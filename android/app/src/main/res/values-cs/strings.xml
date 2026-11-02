@@ -69,7 +69,6 @@
     <string name="ios_averageLead">Nikdo tě nesoudí. Je to výchozí bod, ne vysvědčení.</string>
     <string name="ios_averageTitle">Jaký máš teď\nprůměr?</string>
     <string name="ios_backup">Záloha</string>
-    <string name="ios_billedYearly">%1$s účtováno ročně</string>
     <string name="ios_build_done">Tvůj plán je hotový</string>
     <string name="ios_build_step1">Čteme tvoje odpovědi</string>
     <string name="ios_build_step2">Počítáme tvoje tempo</string>
@@ -180,12 +179,17 @@
     <string name="ios_paywallIncluded">S Micabo Pro</string>
     <string name="ios_paywallNoRestore">Na tomto účtu není žádné předplatné k obnovení.</string>
     <string name="ios_paywallOnly">Jen %1$s / měs.</string>
+    <string name="ios_paywallPending">Tvůj nákup čeká na schválení, třeba od rodiče. Pro se odemkne samo, jakmile přijde.</string>
+    <string name="ios_paywallPendingTitle">Nákup čeká</string>
     <string name="ios_paywallPlansTitle">**Vyber** si plán</string>
     <string name="ios_paywallPracticeHeadline">Sadu zdarma už máš za sebou: s Pro máš otázek nekonečno</string>
     <string name="ios_paywallReassurance">Dvě klepnutí a jedeš, zrušíš za patnáct vteřin.</string>
     <string name="ios_paywallRestore">Obnovit</string>
+    <string name="ios_paywallSeeAll">Všechny plány</string>
     <string name="ios_paywallStartTrial">Začít %1$sdenní zkoušku zdarma</string>
     <string name="ios_paywallTerms">Podmínky použití</string>
+    <string name="ios_paywallTry_free">%1$sdenní verzi zdarma</string>
+    <string name="ios_paywallTry_lead">Vyzkoušej </string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, bez limitů</string>
     <string name="ios_paywall_badge_free">Dní zdarma: %1$s</string>
     <string name="ios_pdf_empty">Tohle PDF neobsahuje text ani použitelnou stránku.</string>
@@ -515,6 +519,7 @@
     <string name="x_paywall_billedYearlyPlay">Účtováno jednou ročně, zrušíš v Google Play.</string>
     <string name="x_paywall_finePrint">%1$sdenní zkouška zdarma, potom %2$s za %3$s. Obnovuje se automaticky, zrušit můžeš kdykoli v Google Play.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s za %2$s. Obnovuje se automaticky, zrušit můžeš kdykoli v Google Play.</string>
+    <string name="x_paywall_playUnavailable">Google Play neodpovídá. Zkontroluj, že jsi v Obchodě Play přihlášený ke svému účtu Google, a zkus to znovu.</string>
     <string name="x_paywall_soon">Brzy na Androidu</string>
     <string name="x_paywall_soonBody">Předplatné bude na Androidu už brzy. Mezitím na tebe čeká tvoje lekce zdarma.</string>
     <string name="x_paywall_subscribe">Přejít na Pro</string>

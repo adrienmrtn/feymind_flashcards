@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 import StoreKit
 
 #if canImport(RevenueCat)
@@ -25,19 +26,31 @@ enum PaywallPurchases {
         #endif
     }
 
+    /// **Qui achète**, posé au lancement (`MicaboApp`) : le compte, sinon l'invité, ouvert à
+    /// la demande (`AuthController.ensureBillingIdentity`). Sans fermeture posée (les tests),
+    /// l'achat part sous l'identité que RevenueCat a déjà.
+    static var billingIdentity: (() async -> (userID: UUID?, guestID: UUID?))?
+
     /// **Relit les prix de la boutique** et les pose dans `PaywallStorePrices`.
     ///
     /// Appelée au lancement et à l'ouverture de chaque paywall. Elle ne rend rien et
-    /// n'échoue jamais bruyamment : sans réseau, sans SDK ou sans produit publié, les
-    /// écrans gardent les prix écrits en dur, ce qui vaut mieux qu'un paywall vide.
+    /// n'échoue jamais bruyamment ; c'est le paywall qui attend les prix du pays et retente
+    /// (`PaywallPriceGate`, avec `fetchPrices`).
+    @MainActor
+    static func refreshPrices() async {
+        _ = await fetchPrices()
+    }
+
+    /// **Relit les prix, et dit pourquoi ils ne sont pas venus.** `nil` quand la boutique a
+    /// répondu ; les produits qu'elle a rendus sont dans `PaywallStorePrices`.
     ///
     /// C'est le même parcours d'offerings que `buy` — l'offering courant puis tous les
     /// autres — pour que le tarif du cadeau, qui vit dans son propre offering, soit lu
     /// comme les deux offres ordinaires.
     @MainActor
-    static func refreshPrices() async {
+    static func fetchPrices() async -> PaywallFailure? {
         #if canImport(RevenueCat)
-        guard PurchasesBridge.isConfigured else { return }
+        guard PurchasesBridge.isConfigured else { return .productUnavailable }
 
         do {
             let offerings = try await Purchases.shared.offerings()
@@ -91,9 +104,12 @@ enum PaywallPurchases {
             let storefront = await StoreKit.Storefront.current
             statuses["storefront"] = .text(storefront?.countryCode ?? "inconnu")
             Analytics.track(.paywallTrialStatus, statuses)
+            return nil
         } catch {
-            // Rien à dire : les prix écrits restent affichés.
+            return failure(for: error)
         }
+        #else
+        return .productUnavailable
         #endif
     }
 
@@ -114,9 +130,21 @@ enum PaywallPurchases {
     }
     #endif
 
+    /// **L'acheteur, identifié avant l'achat.** Un achat parti sous `$RCAnonymousID` n'a pas de
+    /// propriétaire côté serveur (le webhook le refuse) : l'élève paie, et Pro ne s'ouvre
+    /// nulle part ailleurs. On ouvre donc l'invité s'il n'existe pas encore, on passe
+    /// RevenueCat sous son identifiant, et on n'achète que si c'est fait.
+    private static func prepareIdentity() async -> Bool {
+        guard let billingIdentity else { return true }
+        let identity = await billingIdentity()
+        guard let userID = identity.userID else { return false }
+        return await PurchasesBridge.identify(userID, guestID: identity.guestID)
+    }
+
     static func buy(_ plan: PaywallPlan) async -> PaywallOutcome {
         #if canImport(RevenueCat)
         guard PurchasesBridge.isConfigured else { return .unavailable }
+        guard await prepareIdentity() else { return .failed(.identity) }
 
         do {
             let offerings = try await Purchases.shared.offerings()
@@ -134,7 +162,15 @@ enum PaywallPurchases {
 
             let result = try await Purchases.shared.purchase(package: package)
             if result.userCancelled { return .cancelled }
-            return result.customerInfo.hasPro ? .purchased : .unavailable
+            if result.customerInfo.hasPro { return .purchased }
+            // **Acheté, mais le droit ne se voit pas encore** : la boutique a encaissé, et le
+            // reçu n'est pas encore passé par RevenueCat. Ce n'est pas un échec - le dire
+            // faisait racheter. On relit une fois le serveur ; sinon, l'achat est en attente,
+            // et `ProAccess.observePurchases` ouvrira Pro quand le flux le confirmera.
+            if let fresh = try? await Purchases.shared.customerInfo(fetchPolicy: .fetchCurrent), fresh.hasPro {
+                return .purchased
+            }
+            return .pending
         } catch {
             return outcome(for: error)
         }
@@ -148,27 +184,52 @@ enum PaywallPurchases {
     /// **Ce qu'une erreur d'achat veut dire.** RevenueCat rend `paymentPendingError` quand
     /// l'achat attend une validation (partage familial, banque) : ce n'est pas un échec, et
     /// le paywall ne doit pas dire « l'achat n'a pas abouti » à quelqu'un qui vient d'acheter.
+    ///
+    /// Un produit que la boutique ne vend pas n'est pas une panne : l'offre n'est pas ouverte
+    /// (`unavailable`). Le reste se dit selon sa cause (`failure(for:)`).
     static func outcome(for error: Error) -> PaywallOutcome {
         if let code = error as? RevenueCat.ErrorCode {
             switch code {
             case .paymentPendingError: return .pending
             case .purchaseCancelledError: return .cancelled
-            default: return .unavailable
+            case .productNotAvailableForPurchaseError, .configurationError: return .unavailable
+            default: break
             }
         }
-        return .unavailable
+        return .failed(failure(for: error))
+    }
+
+    /// **Le réseau, ou la boutique.** Les deux ne se disent pas pareil : « vérifie ta
+    /// connexion » à qui a du réseau et un achat refusé par l'App Store le fait chercher au
+    /// mauvais endroit.
+    static func failure(for error: Error) -> PaywallFailure {
+        if let code = error as? RevenueCat.ErrorCode {
+            switch code {
+            case .networkError, .offlineConnectionError, .productRequestTimedOut:
+                return .network
+            case .productNotAvailableForPurchaseError, .configurationError:
+                return .productUnavailable
+            default:
+                return .store
+            }
+        }
+        if error is URLError { return .network }
+        return .store
     }
     #endif
 
     static func restore() async -> PaywallOutcome {
         #if canImport(RevenueCat)
         guard PurchasesBridge.isConfigured else { return .unavailable }
+        // Une restauration sous l'identifiant anonyme rattacherait l'abonnement retrouvé à
+        // personne : même règle que l'achat.
+        guard await prepareIdentity() else { return .failed(.identity) }
 
         do {
             let info = try await Purchases.shared.restorePurchases()
             return info.hasPro ? .purchased : .unavailable
         } catch {
-            return .unavailable
+            return .failed(failure(for: error))
         }
         #else
         return .unavailable
@@ -213,32 +274,59 @@ enum PurchasesBridge {
         #endif
     }
 
-    /// Attache — ou détache — l'identifiant Supabase. Appelé à chaque changement de compte.
+    /// Attache — ou détache — l'identifiant Supabase. Appelé à chaque changement de compte,
+    /// et avant chaque achat (`PaywallPurchases.buy`).
     ///
     /// `guestID` est le compte invité de qui a passé la connexion. **Un abonnement pris sous
     /// lui doit suivre l'élève quand il se connecte** : passer de l'invité au vrai compte
     /// renvoie donc les achats de l'appareil à RevenueCat, qui les transfère au compte.
-    static func identify(_ userID: UUID?, guestID: UUID? = nil) async {
+    ///
+    /// Rend vrai quand RevenueCat est bien sous l'identifiant demandé. Un `logIn` qui échouait
+    /// se taisait (`try?`), et l'achat qui suivait partait sous l'identifiant anonyme : il est
+    /// maintenant retenté une fois, et journalisé.
+    @discardableResult
+    static func identify(_ userID: UUID?, guestID: UUID? = nil) async -> Bool {
         #if canImport(RevenueCat)
-        guard isConfigured else { return }
+        guard isConfigured else { return false }
 
         if let userID {
             let wanted = userID.uuidString.lowercased()
             let previous = Purchases.shared.appUserID
-            guard previous != wanted else { return }
-            guard let result = try? await Purchases.shared.logIn(wanted) else { return }
+            guard previous != wanted else { return true }
+            guard let customerInfo = await logIn(wanted) else { return false }
             let leftGuest = guestID.map { previous == $0.uuidString.lowercased() } ?? false
-            if leftGuest, result.customerInfo.entitlements[ProEntitlement.id]?.isActive != true {
+            if leftGuest, customerInfo.entitlements[ProEntitlement.id]?.isActive != true {
                 _ = try? await Purchases.shared.syncPurchases()
             }
+            return Purchases.shared.appUserID == wanted
         } else if !Purchases.shared.isAnonymous {
             _ = try? await Purchases.shared.logOut()
         }
+        return true
         #else
         _ = userID
         _ = guestID
+        return false
         #endif
     }
+
+    private static let log = Logger(subsystem: "app.micabo", category: "store")
+
+    #if canImport(RevenueCat)
+    /// `logIn`, retenté une fois après une seconde : un réseau qui se réveille ne doit pas
+    /// laisser l'achat suivant sous l'identifiant anonyme.
+    private static func logIn(_ appUserID: String) async -> CustomerInfo? {
+        for attempt in 1...2 {
+            do {
+                return try await Purchases.shared.logIn(appUserID).customerInfo
+            } catch {
+                log.error("RevenueCat logIn, essai \(attempt, privacy: .public) : \(error.localizedDescription, privacy: .public)")
+                if attempt == 1 { try? await Task.sleep(for: .seconds(1)) }
+            }
+        }
+        return nil
+    }
+    #endif
 
     /// Ce que le SDK sait du droit : ouvert ou non, et la fin de l'essai quand c'en est un.
     struct EntitlementState: Equatable, Sendable {

@@ -112,7 +112,7 @@ fun MikaScreen(id: String) {
             } catch (error: Throwable) {
                 if (error is ApiException && error.opensPaywall) {
                     app.prefs.mikaFreeUsed = true
-                    navigator.push(Screen.Paywall("pro_required"))
+                    navigator.push(Screen.Paywall("pro_required", trigger = "mika"))
                 } else if (error is ApiException && error.isDailyLimit) {
                     capped = true
                 } else {
@@ -129,7 +129,7 @@ fun MikaScreen(id: String) {
         when (app.mika.gate(isPro)) {
             MikaGate.PAYWALL -> {
                 app.analytics.track("mika_blocked", mapOf("reason" to "paywall"))
-                navigator.push(Screen.Paywall("pro_required"))
+                navigator.push(Screen.Paywall("pro_required", trigger = "mika"))
             }
             MikaGate.DAILY_CAP -> {
                 app.analytics.track("mika_blocked", mapOf("reason" to "cap"))

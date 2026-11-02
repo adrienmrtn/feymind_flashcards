@@ -60,6 +60,18 @@ final class LessonComposer {
     var draft = ""
     private(set) var supports: [Support] = []
 
+    /// **L'identifiant de la leçon en préparation**, gardé jusqu'à ce qu'elle arrive.
+    ///
+    /// Le serveur réserve la leçon sous cet identifiant (`begin_lesson`). Il vivait dans
+    /// l'écran de génération, et un écran fermé pendant l'attente puis rouvert en tirait un
+    /// neuf : la réservation du premier essai comptait encore, et un élève sans abonnement
+    /// tombait sur le paywall avant d'avoir reçu sa leçon offerte. Le compositeur vit autant
+    /// que Home : « Réessayer », comme un écran rouvert, reprend la même réservation.
+    @ObservationIgnored private(set) var lessonID = UUID()
+    /// La source sous laquelle `lessonID` a été demandé. Le serveur garde la source d'une
+    /// réservation : une demande d'une autre nature part sous un identifiant neuf.
+    @ObservationIgnored private var reservedSource: LessonSourceKind?
+
     var hasRoom: Bool { supports.count < Self.maximumSupports }
     var isReading: Bool { supports.contains { $0.state == .reading } }
     var readySupports: [Support] { supports.filter { $0.state == .ready && $0.document != nil } }
@@ -113,6 +125,24 @@ final class LessonComposer {
     func reset() {
         draft = ""
         supports = []
+        lessonDelivered()
+    }
+
+    /// L'identifiant sous lequel envoyer la demande : celui de l'essai précédent tant que la
+    /// leçon n'est pas arrivée, un neuf si la source a changé de nature.
+    func reserveLessonID(for source: LessonSourceKind) -> UUID {
+        if let reservedSource, reservedSource != source {
+            lessonID = UUID()
+        }
+        reservedSource = source
+        return lessonID
+    }
+
+    /// **La leçon existe** : son plan est arrivé et elle est dans la liste. La demande
+    /// suivante en est une autre, et ne doit pas reprendre l'identifiant d'un cours déjà créé.
+    func lessonDelivered() {
+        lessonID = UUID()
+        reservedSource = nil
     }
 
     // MARK: La demande

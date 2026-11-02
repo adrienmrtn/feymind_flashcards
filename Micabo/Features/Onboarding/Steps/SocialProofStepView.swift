@@ -111,15 +111,16 @@ struct SocialProofStepView: View {
 
 // MARK: - « Soutiens-nous »
 
-/// **La demande de note, annoncée.** Juste après les avis : l'élève vient de lire ce que
-/// d'autres pensent de Micabo, la page lui demande d'en dire autant, et le rond ouvre la
-/// fenêtre de note du système, puis passe à la suite. Le système garde la main — trois
-/// demandes par an au plus, jamais deux fois pour la même version — : si la fenêtre ne vient
-/// pas, la page avance quand même.
+/// **Soutiens-nous**, juste après les avis : l'élève vient de lire ce que d'autres pensent de
+/// Micabo, et la page lui dit ce qu'une note change pour une petite équipe.
+///
+/// **Le rond ne demande plus la note.** Il ouvrait la fenêtre de note du système à quelqu'un
+/// qui n'avait encore rien appris avec Micabo : une note sans usage, et l'une des trois
+/// demandes qu'iOS accorde par an, dépensée avant la première leçon. La demande vient
+/// maintenant après la première leçon terminée (`InAppReviewPrompt`) ; ici, le rond avance.
 struct SupportUsStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-    @Environment(\.requestReview) private var requestReview
     @Environment(\.onboardingStill) private var still
 
     @State private var shown = false
@@ -176,18 +177,13 @@ struct SupportUsStepView: View {
         }
     }
 
-    /// La fenêtre de note d'abord, la suite un instant après : passer à l'écran suivant au
-    /// même moment la ferait apparaître sur une page qui défile.
+    /// La suite, sans fenêtre de note : elle attend la première leçon terminée.
     private func ask() {
         guard !isAsking else { return }
         isAsking = true
         Haptics.selection()
-        requestReview()
-        Task {
-            try? await Task.sleep(for: .milliseconds(900))
-            model.advance()
-            isAsking = false
-        }
+        // Un appui refusé (la page glissait encore) rend le rond.
+        if !model.advance() { isAsking = false }
     }
 }
 

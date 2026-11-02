@@ -16,7 +16,7 @@
  * comme une arnaque. `freemium-parity.test.ts` relit la grille et le Swift, et tombe si le web
  * diverge.
  *
- * **Le paiement web reste fermé** (`CHECKOUT_MAINTENANCE`, `web/lib/stripe/checkout.ts`). Les
+ * **Le paiement web reste fermé** (`CHECKOUT_MAINTENANCE`, `web/lib/stripe/maintenance.ts`). Les
  * prix Stripe à créer pour le rouvrir sont décrits par `stripePriceSpecs()` et listés dans
  * `docs/revenuecat.md` (§16) ; leurs identifiants arrivent par l'environnement
  * (`STRIPE_PRICE_ENV`).

@@ -62,7 +62,6 @@
     <string name="ios_auth_sessionExpired">La tua sessione è scaduta. Accedi di nuovo.</string>
     <string name="ios_averageLead">Nessuno ti giudica. È un punto di partenza, non una pagella.</string>
     <string name="ios_averageTitle">Qual è la tua media\nin questo momento?</string>
-    <string name="ios_billedYearly">fatturato %1$s all\'anno</string>
     <string name="ios_build_done">Il tuo piano è pronto</string>
     <string name="ios_build_step1">Lettura delle tue risposte</string>
     <string name="ios_build_step2">Calcolo del tuo ritmo</string>
@@ -173,12 +172,17 @@
     <string name="ios_paywallIncluded">Con Micabo Pro</string>
     <string name="ios_paywallNoRestore">Nessun abbonamento da ripristinare su questo account.</string>
     <string name="ios_paywallOnly">Solo %1$s / mese</string>
+    <string name="ios_paywallPending">Il tuo acquisto aspetta un\'approvazione, per esempio quella di un genitore. Pro si sbloccherà da solo appena arriva.</string>
+    <string name="ios_paywallPendingTitle">Acquisto in attesa</string>
     <string name="ios_paywallPlansTitle">**Scegli** il tuo piano</string>
     <string name="ios_paywallPracticeHeadline">La tua serie gratuita è finita: domande all\'infinito con Pro</string>
     <string name="ios_paywallReassurance">Due tocchi per iniziare, disdici in quindici secondi.</string>
     <string name="ios_paywallRestore">Ripristina</string>
+    <string name="ios_paywallSeeAll">Vedi tutti i piani</string>
     <string name="ios_paywallStartTrial">Inizia i miei %1$s giorni gratis</string>
     <string name="ios_paywallTerms">Termini di utilizzo</string>
+    <string name="ios_paywallTry_free">%1$s giorni gratis</string>
+    <string name="ios_paywallTry_lead">Prova </string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, senza limiti</string>
     <string name="ios_paywall_badge_free">%1$s giorni gratis</string>
     <string name="ios_pdf_empty">Questo PDF non contiene né testo né pagine utilizzabili.</string>
@@ -505,6 +509,7 @@
     <string name="x_paywall_billedYearlyPlay">Fatturato una volta all\'anno, disdici da Google Play.</string>
     <string name="x_paywall_finePrint">%1$s giorni gratis, poi %2$s ogni %3$s. Rinnovo automatico, disdici quando vuoi su Google Play.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s ogni %2$s. Rinnovo automatico, disdici quando vuoi su Google Play.</string>
+    <string name="x_paywall_playUnavailable">Google Play non risponde. Controlla di aver effettuato l\'accesso al tuo account Google nel Play Store, poi riprova.</string>
     <string name="x_paywall_soon">Presto disponibile su Android</string>
     <string name="x_paywall_soonBody">Gli abbonamenti arrivano prestissimo su Android. Intanto, la tua lezione gratuita ti aspetta.</string>
     <string name="x_paywall_subscribe">Passa a Pro</string>

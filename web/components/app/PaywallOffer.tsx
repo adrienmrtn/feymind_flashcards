@@ -7,6 +7,7 @@ import { ThinkingOrb } from "thinking-orbs";
 import { pricing } from "@micabo/core";
 
 import { BrandMark } from "@/components/BrandMark";
+import { StoreCheckout } from "@/components/app/StoreCheckout";
 import { startCheckout } from "@/lib/actions/checkout";
 import { trackCheckoutStart, trackPaywallView, type PaywallSurface } from "@/lib/analytics/funnel";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
@@ -19,6 +20,7 @@ import {
   trialBadge,
 } from "@/lib/pricing-copy";
 import { usePresentment } from "@/lib/presentment";
+import { CHECKOUT_MAINTENANCE } from "@/lib/stripe/maintenance";
 
 /**
  * L'offre, en deux écrans : ce que Pro ouvre, puis les deux formules.
@@ -31,6 +33,10 @@ import { usePresentment } from "@/lib/presentment";
  * toujours trop cher. Les quatre arguments prennent donc la hauteur visible entière - ils sont
  * la page - et les formules arrivent au défilement, pour qui a fini de lire. Un indicateur
  * dit qu'elles sont là : cacher le prix ne doit pas donner l'impression qu'on le cache.
+ *
+ * **Paiement web fermé** (`CHECKOUT_MAINTENANCE`) : les prix restent - ce sont ceux de l'app -,
+ * mais le bouton d'achat laisse la place aux boutiques et à « Continuer gratuitement »
+ * (`StoreCheckout`). Un bouton qui ne sait répondre que « en maintenance » n'est pas une offre.
  */
 
 export const PAYWALL_FEATURE_ICONS = ["cards", "sheet", "repeat", "exam"] as const;
@@ -39,11 +45,14 @@ export function PaywallOffer({
   headingId,
   onSubscribed,
   extraAction,
+  onContinue,
   surface = "home",
 }: {
   headingId: string;
   onSubscribed?: () => void;
   extraAction?: ReactNode;
+  /** Entrer dans l'app web sans acheter : le bouton du pied quand le paiement web est fermé. */
+  onContinue?: () => void;
   /** La porte par laquelle l'offre s'est ouverte, pour l'entonnoir. */
   surface?: PaywallSurface;
 }) {
@@ -151,42 +160,49 @@ export function PaywallOffer({
         </div>
       </div>
 
-      <div className="px-6 pb-6 pt-4">
-        <button
-          type="button"
-          onClick={() => void subscribe()}
-          disabled={pending}
-          className="pressable shiny flex h-14 w-full items-center justify-center gap-2 rounded-button bg-accent text-[16px] font-semibold text-on-ink disabled:opacity-70"
-        >
-          {pending ? <ThinkingOrb state="connecting" size={20} theme="dark" /> : null}
-          {pricing.hasTrial(selected, presentment)
-            ? t("app.paywall.startTrial", { days: pricing.trialDays(selected, presentment) })
-            : t("app.paywall.subscribe")}
-        </button>
-
-        {extraAction}
-
-        {checkout ? (
-          <p
-            className="mt-3 rounded-button bg-canvas px-4 py-3 text-[13.5px] text-ink-secondary"
-            role="status"
+      {CHECKOUT_MAINTENANCE ? (
+        <div className="px-6 pb-6 pt-4">
+          <StoreCheckout onContinue={onContinue} />
+          {extraAction}
+        </div>
+      ) : (
+        <div className="px-6 pb-6 pt-4">
+          <button
+            type="button"
+            onClick={() => void subscribe()}
+            disabled={pending}
+            className="pressable shiny flex h-14 w-full items-center justify-center gap-2 rounded-button bg-accent text-[16px] font-semibold text-on-ink disabled:opacity-70"
           >
-            {checkout}
-          </p>
-        ) : (
-          <p className="mt-3 text-center text-[12px] leading-relaxed text-ink-tertiary">
-            {t("app.paywall.legalLead")}{" "}
-            <Link href={termsHref} className="underline underline-offset-2">
-              {t("app.paywall.legalTerms")}
-            </Link>{" "}
-            {t("app.paywall.legalAnd")}{" "}
-            <Link href={privacyHref} className="underline underline-offset-2">
-              {t("app.paywall.legalPrivacy")}
-            </Link>
-            .
-          </p>
-        )}
-      </div>
+            {pending ? <ThinkingOrb state="connecting" size={20} theme="dark" /> : null}
+            {pricing.hasTrial(selected, presentment)
+              ? t("app.paywall.startTrial", { days: pricing.trialDays(selected, presentment) })
+              : t("app.paywall.subscribe")}
+          </button>
+
+          {extraAction}
+
+          {checkout ? (
+            <p
+              className="mt-3 rounded-button bg-canvas px-4 py-3 text-[13.5px] text-ink-secondary"
+              role="status"
+            >
+              {checkout}
+            </p>
+          ) : (
+            <p className="mt-3 text-center text-[12px] leading-relaxed text-ink-tertiary">
+              {t("app.paywall.legalLead")}{" "}
+              <Link href={termsHref} className="underline underline-offset-2">
+                {t("app.paywall.legalTerms")}
+              </Link>{" "}
+              {t("app.paywall.legalAnd")}{" "}
+              <Link href={privacyHref} className="underline underline-offset-2">
+                {t("app.paywall.legalPrivacy")}
+              </Link>
+              .
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

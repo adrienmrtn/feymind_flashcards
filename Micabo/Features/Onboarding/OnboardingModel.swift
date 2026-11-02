@@ -13,6 +13,7 @@ final class OnboardingModel {
     private(set) var step: OnboardingStep = .hookLogo {
         didSet {
             arrivedAt = Date()
+            hasQueuedAdvance = false
             guard !isRestoring else { return }
             OnboardingPreferences.resumeStep = step
         }
@@ -21,8 +22,13 @@ final class OnboardingModel {
     /// **Le temps minimal sur une page avant de la quitter.** Un second appui sur le rond, un
     /// doigt resté posé à la fin du chargement : la page suivante se passait avant d'avoir été
     /// vue. Posé par la vue du parcours ; les tests, sans vue, avancent librement.
+    ///
+    /// Un appui arrivé avant la fin de ce temps n'est plus perdu : il attend, et la page
+    /// avance dès qu'il est écoulé (`queueAdvance`).
     @ObservationIgnored var minimumDwell: TimeInterval = 0
     @ObservationIgnored private var arrivedAt = Date.distantPast
+    /// Vrai quand un appui trop précoce attend la fin de `minimumDwell` sur la page actuelle.
+    @ObservationIgnored private var hasQueuedAdvance = false
 
     /// Vrai quand le parcours reprend là où une app fermée l'avait laissé.
     private(set) var isResumed = false
@@ -215,14 +221,23 @@ final class OnboardingModel {
         advance()
     }
 
-    func advance() {
-        guard !transitionLock else { return }
-        guard Date().timeIntervalSince(arrivedAt) >= minimumDwell else { return }
+    /// Passe à l'écran suivant. Rend vrai quand l'appui est pris - la page avance, la
+    /// languette du compte monte, ou l'appui attend la fin du temps minimal - et faux quand il
+    /// est refusé (une page qui glisse encore, ou plus rien après) : l'écran qui a désactivé
+    /// son bouton doit alors le rendre.
+    @discardableResult
+    func advance() -> Bool {
+        let waited = Date().timeIntervalSince(arrivedAt)
+        guard waited >= minimumDwell else {
+            queueAdvance(after: minimumDwell - waited)
+            return true
+        }
+        guard !transitionLock else { return false }
         // Le compte se demande en quittant le dernier écran de Mika, juste avant l'offre :
         // c'est là qu'il protège quelque chose — le profil qu'on vient de construire.
         if step == .mikaRelief, !didAnswerAccount, !hasAccount {
             isAccountSheetPresented = true
-            return
+            return true
         }
         persist()
         var next = step.next
@@ -231,8 +246,25 @@ final class OnboardingModel {
         while let candidate = next, isSkipped(candidate) {
             next = candidate.next
         }
-        guard let next else { return }
+        guard let next else { return false }
         step = next
+        return true
+    }
+
+    /// **Un appui trop tôt attend au lieu de se perdre.** Jusqu'au 2 novembre 2026, un appui
+    /// dans la seconde qui suivait l'arrivée d'une page ne faisait rien, sans rien montrer :
+    /// l'élève tapait une seconde fois, ou croyait l'app figée. Il avance maintenant la page
+    /// dès que le temps minimal est écoulé - une seule fois, quel que soit le nombre d'appuis,
+    /// et seulement si l'on est encore sur la page où il a été fait.
+    private func queueAdvance(after delay: TimeInterval) {
+        guard !hasQueuedAdvance else { return }
+        hasQueuedAdvance = true
+        let arrival = arrivedAt
+        DispatchQueue.main.asyncAfter(deadline: .now() + max(0, delay) + 0.02) { [weak self] in
+            guard let self, self.hasQueuedAdvance, self.arrivedAt == arrival else { return }
+            self.hasQueuedAdvance = false
+            self.advance()
+        }
     }
 
     /// **Revenir d'un écran.**
