@@ -75,8 +75,9 @@ struct BuildingStepView: View {
 
             OnboardingArrowBar {
                 guard !didAdvance else { return }
-                didAdvance = true
-                model.advance()
+                // Posé seulement si l'appui est pris : posé avant, un appui refusé (une page
+                // qui glissait encore) laissait le rond mort pour de bon.
+                didAdvance = model.advance()
             }
             .opacity(showsAction ? 1 : 0)
             .allowsHitTesting(showsAction)

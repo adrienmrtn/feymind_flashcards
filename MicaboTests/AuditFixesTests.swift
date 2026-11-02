@@ -49,6 +49,17 @@ final class AuditFixesTests: XCTestCase {
         }
     }
 
+    /// **La note se demande une fois, après la première leçon terminée** - plus pendant le
+    /// parcours ni à l'arrivée dans l'app, avant tout usage.
+    func testTheReviewIsAskedOnceAfterTheFirstLesson() throws {
+        let suite = "micabo.tests.review.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        XCTAssertTrue(InAppReviewPrompt.claimAfterFirstLesson(defaults: defaults))
+        XCTAssertFalse(InAppReviewPrompt.claimAfterFirstLesson(defaults: defaults), "Une fois, pas à chaque leçon")
+    }
+
     /// Sans boutique branchée (les tests, les aperçus), le paywall n'attend aucun prix : rien
     /// ne viendrait, et il garde ses prix écrits.
     func testWithoutAStoreThePaywallDoesNotWaitForPrices() throws {
