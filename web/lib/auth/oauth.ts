@@ -54,7 +54,12 @@ export function callbackFailureMessage(
   t: FailureTranslator,
   provider: string | null,
   raw: string,
+  code?: string | null,
 ): string {
+  // Un lien de courriel périmé ou des demandes trop rapprochées : la phrase du catalogue, pas
+  // l'anglais de GoTrue. GoTrue les renvoie dans `error_code`, à côté de sa description.
+  const email = emailLinkFailureKey({ message: raw, code });
+  if (email) return t(email);
   const text = raw.toLowerCase();
   if (
     text.includes("code verifier") ||
@@ -69,4 +74,60 @@ export function callbackFailureMessage(
     return oauthFailureMessage(t, "apple", raw);
   }
   return raw;
+}
+
+/** Ce que GoTrue rend d'un refus : un message anglais, parfois un code et un statut HTTP. */
+export interface AuthFailure {
+  message?: string | null;
+  code?: string | null;
+  status?: number | null;
+}
+
+/** Les codes GoTrue d'une limite de débit : par adresse, par IP, ou pour tout le projet. */
+const RATE_LIMIT_CODES = new Set([
+  "over_email_send_rate_limit",
+  "over_request_rate_limit",
+  "over_sms_send_rate_limit",
+]);
+
+/**
+ * **La clé du catalogue pour un refus de lien par courriel**, ou `null` s'il n'en a pas.
+ *
+ * GoTrue répond en anglais, et la page affichait sa phrase telle quelle : « For security
+ * purposes, you can only request this after 38 seconds. » sous les yeux d'un lycéen turc, ou
+ * « Email link is invalid or has expired » au retour d'un lien ouvert deux fois (le premier
+ * clic, souvent, est celui de l'antivirus de la messagerie). Deux familles se reconnaissent :
+ *
+ * - **la limite de débit** (`over_email_send_rate_limit`, un 429, « For security purposes… ») :
+ *   un lien vient de partir, ou le projet a envoyé son quota de l'heure ;
+ * - **le lien périmé** (`otp_expired`, « invalid or has expired ») : on en redemande un.
+ */
+export function emailLinkFailureKey(failure: AuthFailure): string | null {
+  const code = failure.code?.toLowerCase() ?? "";
+  const text = failure.message?.toLowerCase() ?? "";
+  if (
+    RATE_LIMIT_CODES.has(code) ||
+    failure.status === 429 ||
+    text.includes("for security purposes") ||
+    text.includes("rate limit") ||
+    text.includes("too many requests")
+  ) {
+    return "app.errors.emailRateLimit";
+  }
+  if (
+    code === "otp_expired" ||
+    text.includes("otp_expired") ||
+    text.includes("invalid or has expired") ||
+    text.includes("token has expired")
+  ) {
+    return "app.errors.linkExpired";
+  }
+  return null;
+}
+
+/** Le refus d'un envoi ou d'une vérification de lien, dans la langue de la page. */
+export function emailLinkFailureMessage(t: FailureTranslator, failure: AuthFailure): string {
+  const key = emailLinkFailureKey(failure);
+  if (key) return t(key);
+  return failure.message?.trim() || t("app.errors.tryAgain");
 }

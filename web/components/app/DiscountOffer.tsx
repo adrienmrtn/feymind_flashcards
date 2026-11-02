@@ -7,6 +7,7 @@ import { ThinkingOrb } from "thinking-orbs";
 import { discount, pricing } from "@micabo/core";
 
 import { Float } from "@/components/app/Float";
+import { StoreCheckout } from "@/components/app/StoreCheckout";
 import { startCheckout } from "@/lib/actions/checkout";
 import { trackCheckoutStart, trackPaywallView } from "@/lib/analytics/funnel";
 import {
@@ -27,6 +28,7 @@ import {
 import { useI18n } from "@/lib/i18n/client";
 import { UI_LOCALE_META } from "@/lib/i18n/locales";
 import { usePresentment } from "@/lib/presentment";
+import { CHECKOUT_MAINTENANCE } from "@/lib/stripe/maintenance";
 import { requestTourRecheck } from "@/lib/tour/signal";
 
 /**
@@ -391,31 +393,41 @@ export function DiscountCard({ onClose }: { onClose: () => void }) {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => void subscribe()}
-            disabled={pending}
-            className="pressable shiny mt-5 flex h-[58px] w-full items-center justify-center gap-2 rounded-[16px] bg-offer-sky text-[17px] font-semibold text-white disabled:opacity-70"
-          >
-            {pending ? <ThinkingOrb state="connecting" size={20} theme="dark" /> : null}
-            {t("app.paywall.discountCta", { pct: saved })}
-          </button>
-
-          {failure ? (
-            <p
-              role="status"
-              className="mt-3 w-full rounded-button bg-negative-soft px-4 py-3 text-[13.5px] text-negative"
-            >
-              {failure}
-            </p>
+          {CHECKOUT_MAINTENANCE ? (
+            // Paiement web fermé : la remise déjà ouverte (sa pastille la rouvre) ne finit plus
+            // sur « en maintenance ». Les boutiques, et l'app web derrière.
+            <div className="mt-5 w-full">
+              <StoreCheckout onContinue={onClose} tone="offer" />
+            </div>
           ) : (
-            // Le mensuel vend, l'annuel engage : le montant réellement prélevé est écrit
-            // sous le bouton, jamais ailleurs qu'à côté de lui.
-            <p className="mt-3 text-[12.5px] text-ink-tertiary">
-              {t("app.paywall.discountYearly", {
-                price: pricing.planPriceText(plan, presentment),
-              })}
-            </p>
+            <>
+              <button
+                type="button"
+                onClick={() => void subscribe()}
+                disabled={pending}
+                className="pressable shiny mt-5 flex h-[58px] w-full items-center justify-center gap-2 rounded-[16px] bg-offer-sky text-[17px] font-semibold text-white disabled:opacity-70"
+              >
+                {pending ? <ThinkingOrb state="connecting" size={20} theme="dark" /> : null}
+                {t("app.paywall.discountCta", { pct: saved })}
+              </button>
+
+              {failure ? (
+                <p
+                  role="status"
+                  className="mt-3 w-full rounded-button bg-negative-soft px-4 py-3 text-[13.5px] text-negative"
+                >
+                  {failure}
+                </p>
+              ) : (
+                // Le mensuel vend, l'annuel engage : le montant réellement prélevé est écrit
+                // sous le bouton, jamais ailleurs qu'à côté de lui.
+                <p className="mt-3 text-[12.5px] text-ink-tertiary">
+                  {t("app.paywall.discountYearly", {
+                    price: pricing.planPriceText(plan, presentment),
+                  })}
+                </p>
+              )}
+            </>
           )}
         </div>
       </div>

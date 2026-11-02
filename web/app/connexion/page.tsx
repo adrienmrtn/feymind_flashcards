@@ -21,7 +21,7 @@ import { LINK_EXPIRED_REASON } from "@/components/landing/AuthReturnCatcher";
 import { signInForAppStoreReview } from "@/lib/actions/app-store-review";
 import { isAppStoreReviewEmail, isAppleAddress } from "@/lib/auth/app-store-review";
 import { inspectAddress } from "@/lib/auth/email";
-import { oauthCallbackUrl, oauthFailureMessage } from "@/lib/auth/oauth";
+import { emailLinkFailureMessage, oauthCallbackUrl, oauthFailureMessage } from "@/lib/auth/oauth";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 import { createClient } from "@/lib/supabase/client";
 import { EmailSuggestion } from "@/components/auth/EmailSuggestion";
@@ -151,7 +151,8 @@ function ConnexionBody() {
     });
 
     setPending(null);
-    if (error) setFailure(error.message);
+    // La limite de débit et le lien périmé de GoTrue, dans la langue de la page.
+    if (error) setFailure(emailLinkFailureMessage(t, error));
     else {
       setEmail(address);
       setSent(true);

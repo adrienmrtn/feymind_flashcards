@@ -3,7 +3,7 @@ import { type EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { safeAppPath } from "@/lib/auth/next-path";
-import { callbackFailureMessage } from "@/lib/auth/oauth";
+import { callbackFailureMessage, emailLinkFailureMessage } from "@/lib/auth/oauth";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
 import { getTranslator } from "@/lib/i18n/server";
 
@@ -31,8 +31,11 @@ export async function GET(request: NextRequest) {
     const error = url.searchParams.get("error_description") ?? url.searchParams.get("error");
     const { t } = await getTranslator();
     // Ni code ni jeton : le lien est incomplet. Le mot « manquant » s'affichait tel quel, en
-    // français, dans toutes les langues ; la phrase du catalogue dit quoi faire.
-    const detail = error ? callbackFailureMessage(t, provider, error) : t("app.errors.linkExpired");
+    // français, dans toutes les langues ; la phrase du catalogue dit quoi faire. Un lien périmé
+    // arrive ici aussi, avec `error_code=otp_expired` à côté de sa description anglaise.
+    const detail = error
+      ? callbackFailureMessage(t, provider, error, url.searchParams.get("error_code"))
+      : t("app.errors.linkExpired");
     return NextResponse.redirect(
       new URL(`/commencer/compte?erreur=${encodeURIComponent(detail)}`, url.origin),
     );
@@ -68,8 +71,11 @@ export async function GET(request: NextRequest) {
       token_hash: tokenHash!,
     });
     if (error) {
+      // « Email link is invalid or has expired » s'affichait en anglais dans toutes les langues.
+      const { t } = await getTranslator();
+      const detail = emailLinkFailureMessage(t, error);
       return NextResponse.redirect(
-        new URL(`/commencer/compte?erreur=${encodeURIComponent(error.message)}`, url.origin),
+        new URL(`/commencer/compte?erreur=${encodeURIComponent(detail)}`, url.origin),
       );
     }
   }
