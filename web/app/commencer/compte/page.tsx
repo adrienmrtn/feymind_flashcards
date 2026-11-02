@@ -16,7 +16,7 @@ import { signInForAppStoreReview } from "@/lib/actions/app-store-review";
 import { isAppStoreReviewEmail, isAppleAddress } from "@/lib/auth/app-store-review";
 import { inspectAddress } from "@/lib/auth/email";
 import { OFFER_PATH, safeAppPath } from "@/lib/auth/next-path";
-import { oauthCallbackUrl, oauthFailureMessage } from "@/lib/auth/oauth";
+import { emailLinkFailureMessage, oauthCallbackUrl, oauthFailureMessage } from "@/lib/auth/oauth";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 import { markPaywallPending, persistStoredAnswers } from "@/lib/onboarding/persist";
 import { createClient } from "@/lib/supabase/client";
@@ -165,7 +165,8 @@ function AccountStepBody() {
     });
 
     setPending(null);
-    if (error) setFailure(error.message);
+    // La limite de débit et le lien périmé de GoTrue, dans la langue de la page.
+    if (error) setFailure(emailLinkFailureMessage(t, error));
     else {
       setEmail(address);
       setSent(true);
