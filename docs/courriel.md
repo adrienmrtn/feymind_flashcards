@@ -95,7 +95,7 @@ SendGrid et ZeptoMail conviennent tous. Il faut l'hôte, le port, l'utilisateur,
 passe et une adresse d'expédition.
 
 Après l'activation, Supabase repose un plafond bas (30 messages par heure) qu'il faut
-remonter dans *Authentication → Rate Limits*.
+remonter dans *Authentication → Rate Limits* (voir §2).
 
 À faire dans la foulée, chez l'envoyeur choisi :
 
@@ -106,15 +106,48 @@ remonter dans *Authentication → Rate Limits*.
 - **Les rebonds durs sur le tableau de bord de l'envoyeur.** C'est là qu'on verra la
   prochaine adresse morte, adresse par adresse — ce que la lettre de Supabase ne donne pas.
 
-### 2. Poser un CAPTCHA
+### 2. Remonter les plafonds (*Authentication → Rate Limits*)
+
+Une case à cocher par ligne, dans cet ordre :
+
+- [ ] **« Rate limit for anonymous users »** (connexions invitées, **par adresse IP** et par
+  heure ; 30 par défaut). L'iPhone et Android ouvrent un compte invité au premier lancement
+  (`signInAnonymously`) : une classe entière derrière le Wi-Fi du lycée, ou des milliers
+  d'abonnés mobiles derrière la même IP d'opérateur (CGNAT), épuisent les 30 en une récréation,
+  et le trente et unième élève reste devant un écran qui ne se connecte pas. Viser plusieurs
+  centaines par heure.
+- [ ] **« Rate limit for sign ups and sign ins »** (par IP, par tranche de cinq minutes) : même
+  raisonnement pour les liens par courriel et les connexions Google/Apple demandés depuis un
+  même réseau.
+- [ ] **« Rate limit for sending emails »** (pour tout le projet, par heure), **une fois
+  l'envoyeur du §1 branché** — Brevo, en l'occurrence. Avant, le plafond de l'envoyeur
+  mutualisé ne se remonte pas ; juste après l'activation, Supabase le repose à 30 par heure.
+  Le régler sur ce que le forfait Brevo envoie réellement. Au-delà, GoTrue répond
+  `over_email_send_rate_limit`, que le site traduit (« Trop de liens demandés d'un coup… »,
+  `emailLinkFailureMessage`) au lieu d'afficher l'anglais.
+- [ ] Laisser l'intervalle entre deux liens à la même adresse (« For security purposes, you
+  can only request this after N seconds ») : il protège la boîte de l'élève, et le site le
+  traduit aussi.
+
+### 3. Le CAPTCHA : pas tant que les apps ne l'envoient pas
 
 *Dashboard → Authentication → Attack Protection.* Le garde-fou du code arrête les fautes de
 frappe ; il n'arrête pas un robot qui déroule une liste d'adresses connues. Supabase décrit
 ce scénario comme la source d'abus la plus courante, et le CAPTCHA invisible comme la parade
-la plus efficace. Rien à faire tant que le trafic reste ce qu'il est, tout à faire le jour où
-l'app est mise en avant.
+la plus efficace.
 
-### 3. Ne pas toucher aux confirmations
+> **Attention : activer la protection CAPTCHA casse la connexion invitée des apps.** Une fois
+> activée, GoTrue exige un `captcha_token` sur **toutes** les inscriptions, connexions
+> anonymes comprises. Ni l'iPhone (`SupabaseAuthClient.signInAnonymously`) ni Android
+> (`Supabase.kt`) n'en envoient : chaque premier lancement échouerait, et personne ne
+> passerait l'accueil. Le site non plus n'en envoie pas sur le lien par courriel. Le CAPTCHA
+> ne s'active qu'après avoir livré, dans les trois clients, un jeton (hCaptcha ou Turnstile)
+> sur `signInAnonymously` et `signInWithOtp` — et une version des apps installée assez
+> largement pour que les anciennes ne comptent plus.
+
+D'ici là, la défense contre les robots reste les plafonds par IP du §2.
+
+### 4. Ne pas toucher aux confirmations
 
 `mailer_autoconfirm` reste à `false`. Le désactiver ferait taire les rebonds en supprimant
 les courriels — et ouvrirait la création de comptes au nom de n'importe qui.
