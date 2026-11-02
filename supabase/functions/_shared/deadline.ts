@@ -13,8 +13,20 @@
  * a le temps de faire son travail.
  */
 
-/** Le temps qu'une requête peut passer à attendre le modèle : sous l'horloge de 150 s. */
-export const REQUEST_BUDGET_MS = 130_000;
+/**
+ * Le temps qu'une requête peut passer à attendre le modèle.
+ *
+ * **Sous l'attente des clients, pas seulement sous l'horloge de la plateforme.** À 130 s, la
+ * fonction tenait sous ses 150 s, mais le site (`maxDuration = 120` sur `/api/lesson/*`) et
+ * l'app (`timeoutIntervalForRequest = 120`) raccrochaient avant elle : le plan s'écrivait, la
+ * leçon offerte était réservée sous son nombre de thèmes, et la réponse partait dans le vide.
+ * À 110 s, la fonction répond — plan ou refus — pendant qu'on l'écoute encore, et il reste au
+ * site de quoi écrire le cours avant sa propre échéance.
+ */
+export const REQUEST_BUDGET_MS = 110_000;
+
+/** L'attente la plus courte d'un client : le site et l'app coupent à 120 s. */
+export const CLIENT_TIMEOUT_MS = 120_000;
 
 /** En deçà, un appel n'a aucune chance d'aboutir : autant rendre le refus tout de suite. */
 export const MIN_ATTEMPT_MS = 5_000;

@@ -2,6 +2,7 @@ import { assertEquals } from "jsr:@std/assert@1";
 
 import {
   attemptTimeout,
+  CLIENT_TIMEOUT_MS,
   deadlineIn,
   earliest,
   MIN_ATTEMPT_MS,
@@ -21,10 +22,19 @@ Deno.test("l'échéance d'une requête tient sous l'horloge de la plateforme", (
   assertEquals(deadlineIn(REQUEST_BUDGET_MS, 1_000), 1_000 + REQUEST_BUDGET_MS);
 });
 
+Deno.test("l'échéance d'une requête tient sous l'attente des clients", () => {
+  // Le site et l'app raccrochent à 120 s : la réponse doit partir avant, avec de quoi rendre
+  // la leçon réservée, répondre, et laisser au site le temps d'écrire le cours.
+  assertEquals(CLIENT_TIMEOUT_MS, 120_000);
+  assertEquals(REQUEST_BUDGET_MS <= CLIENT_TIMEOUT_MS - 10_000, true);
+  // Pas au point d'empêcher un plan et son second essai : chacun prend dix à quarante secondes.
+  assertEquals(REQUEST_BUDGET_MS >= 90_000, true);
+});
+
 Deno.test("un essai prend le plus court de son délai et du temps qui reste", () => {
   const now = 1_000_000;
   // Au début de la requête : son propre délai.
-  assertEquals(attemptTimeout(120_000, now + 130_000, now), 120_000);
+  assertEquals(attemptTimeout(100_000, now + REQUEST_BUDGET_MS, now), 100_000);
   // Après la passe visuelle et un premier plan : ce qui reste, pas deux minutes de plus.
   assertEquals(attemptTimeout(120_000, now + 40_000, now), 40_000);
   // Sans échéance, rien ne change.
