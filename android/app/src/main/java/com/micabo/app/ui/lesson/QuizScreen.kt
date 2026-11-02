@@ -272,7 +272,7 @@ private fun Results(lesson: Lesson, circle: String, right: Int, total: Int, onFr
     // porte (`begin_extra`) : celle-ci évite un appel pour rien.
     fun more() {
         if (!isPro && app.prefs.practiceFreeUsed) {
-            navigator.push(Screen.Paywall("pro_required"))
+            navigator.push(Screen.Paywall("pro_required", trigger = "practice"))
             return
         }
         writing = true
@@ -292,7 +292,7 @@ private fun Results(lesson: Lesson, circle: String, right: Int, total: Int, onFr
                 writing = false
                 if (error is ApiException && error.opensPaywall) {
                     app.prefs.practiceFreeUsed = true
-                    navigator.push(Screen.Paywall("pro_required"))
+                    navigator.push(Screen.Paywall("pro_required", trigger = "practice"))
                 } else {
                     failed = true
                 }

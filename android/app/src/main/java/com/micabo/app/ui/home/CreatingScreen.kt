@@ -63,6 +63,7 @@ import com.micabo.app.R
 import com.micabo.app.data.ApiException
 import com.micabo.app.data.CreationStage
 import com.micabo.app.data.Exam
+import com.micabo.app.data.GuestUnavailableException
 import com.micabo.app.data.LessonRequest
 import com.micabo.app.data.NetworkException
 import com.micabo.app.ui.LocalApp
@@ -83,6 +84,9 @@ import kotlin.coroutines.cancellation.CancellationException
 /** Le message d'un échec, dans la langue de l'app. */
 @Composable
 fun errorMessage(error: Throwable): String = when {
+    // GoTrue a refusé d'ouvrir l'invité (trop d'essais) : ce n'est pas la connexion.
+    error is GuestUnavailableException && error.rateLimited -> stringResource(R.string.x_auth_rateLimited)
+    error is GuestUnavailableException -> stringResource(R.string.x_error_generic)
     error is NetworkException -> stringResource(R.string.x_error_network)
     error is ApiException && error.isDailyLimit -> stringResource(R.string.lesson_error_dailyLimit)
     error is ApiException && error.code == "free_limit" -> stringResource(R.string.lesson_error_freeLimit)

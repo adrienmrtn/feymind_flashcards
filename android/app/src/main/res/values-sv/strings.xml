@@ -68,7 +68,6 @@
     <string name="ios_averageLead">Ingen dömer. Det här är en startpunkt, inte ett betyg.</string>
     <string name="ios_averageTitle">Vilket snitt har du\njust nu?</string>
     <string name="ios_backup">Säkerhetskopia</string>
-    <string name="ios_billedYearly">debiteras %1$s per år</string>
     <string name="ios_build_done">Din plan är klar</string>
     <string name="ios_build_step1">Läser dina svar</string>
     <string name="ios_build_step2">Räknar ut din takt</string>
@@ -179,12 +178,17 @@
     <string name="ios_paywallIncluded">Med Micabo Pro</string>
     <string name="ios_paywallNoRestore">Ingen prenumeration att återställa på det här kontot.</string>
     <string name="ios_paywallOnly">Bara %1$s / mån</string>
+    <string name="ios_paywallPending">Ditt köp väntar på godkännande, till exempel från en förälder. Pro låses upp av sig självt så fort det kommer.</string>
+    <string name="ios_paywallPendingTitle">Köpet väntar</string>
     <string name="ios_paywallPlansTitle">**Välj** din plan</string>
     <string name="ios_paywallPracticeHeadline">Din gratis omgång är använd: oändligt med frågor med Pro</string>
     <string name="ios_paywallReassurance">Två tryck för att börja, avsluta på femton sekunder.</string>
     <string name="ios_paywallRestore">Återställ</string>
+    <string name="ios_paywallSeeAll">Se alla planer</string>
     <string name="ios_paywallStartTrial">Starta mina %1$s gratisdagar</string>
     <string name="ios_paywallTerms">Användarvillkor</string>
+    <string name="ios_paywallTry_free">%1$s dagar gratis</string>
+    <string name="ios_paywallTry_lead">Testa </string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, utan gränser</string>
     <string name="ios_paywall_badge_free">%1$s dagar gratis</string>
     <string name="ios_pdf_empty">Den här PDF:en innehåller varken text eller någon användbar sida.</string>
@@ -512,6 +516,7 @@
     <string name="x_paywall_billedYearlyPlay">Debiteras en gång per år, avsluta i Google Play.</string>
     <string name="x_paywall_finePrint">%1$s dagar gratis, sedan %2$s per %3$s. Förnyas automatiskt, avsluta när du vill i Google Play.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s per %2$s. Förnyas automatiskt, avsluta när du vill i Google Play.</string>
+    <string name="x_paywall_playUnavailable">Google Play svarar inte. Kontrollera att du är inloggad med ditt Google-konto i Play Butik och försök igen.</string>
     <string name="x_paywall_soon">Kommer snart till Android</string>
     <string name="x_paywall_soonBody">Prenumerationer kommer till Android väldigt snart. Under tiden väntar din gratislektion på dig.</string>
     <string name="x_paywall_subscribe">Skaffa Pro</string>

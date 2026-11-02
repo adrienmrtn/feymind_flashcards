@@ -1,9 +1,5 @@
 package com.micabo.app.ui.onboarding
 
-import android.Manifest
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
@@ -664,28 +660,17 @@ fun TrialOffer(onNext: () -> Unit) {
 /**
  * **L'essai, jour par jour** : aujourd'hui tout s'ouvre, le dernier jour l'abonnement commence.
  * Aucun rappel de fin d'essai n'est envoyé (décision du fondateur) : les textes viennent des
- * catalogues de l'iPhone, reformulés sans cette promesse. La permission des notifications se
- * demande encore ici (pour le rappel du jour), et sinon à la première visite de l'accueil :
- * cette étape est sautée quand l'offre n'a pas d'essai.
+ * catalogues de l'iPhone, reformulés sans cette promesse. **La permission des notifications ne
+ * se demande plus ici** : posée juste avant le paywall, la fenêtre du système coupait l'élan vers
+ * l'essai. Elle se demande à l'accueil, une fois la première leçon créée et le cadeau parti
+ * (`HomeScreen`).
  */
 @Composable
 fun TrialReminderStep(days: Int, onNext: () -> Unit) {
-    val app = LocalApp.current
     val colors = Micabo.colors
     val end = remember(days) { System.currentTimeMillis() + days * 86_400_000L }
     val date = remember(end) { DateFormat.getDateInstance(DateFormat.LONG).format(Date(end)) }
-    val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { onNext() }
-    StepScaffold(
-        stringResource(R.string.ios_trial_reminder_cta),
-        onNext = {
-            if (Build.VERSION.SDK_INT >= 33) {
-                app.prefs.notificationsAsked = true
-                permission.launch(Manifest.permission.POST_NOTIFICATIONS)
-            } else {
-                onNext()
-            }
-        },
-    ) {
+    StepScaffold(stringResource(R.string.ios_trial_reminder_cta), onNext = onNext) {
         Spacer(Modifier.height(16.dp))
         Box(
             Modifier.size(84.dp).clip(CircleShape).background(colors.accentWash).align(Alignment.CenterHorizontally),

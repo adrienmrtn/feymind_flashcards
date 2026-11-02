@@ -30,17 +30,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
@@ -320,13 +324,23 @@ fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit, onLo
     }
 }
 
-/** Une feuille simple, au bas de l'écran ; toucher au-dessus la ferme. */
+/**
+ * Une feuille simple, au bas de l'écran ; toucher au-dessus la ferme. **Elle monte avec le
+ * clavier** : la fenêtre reçoit les marges du système (`decorFitsSystemWindows = false`) et la
+ * feuille se pose au-dessus du clavier (`imePadding`). Avant, le clavier de l'adresse couvrait
+ * « Recevoir un lien » dans la feuille de connexion. Trop haute, elle défile.
+ */
 @Composable
 internal fun Sheet(onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
     val colors = Micabo.colors
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         Box(
-            Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures(onTap = { onDismiss() }) }.padding(16.dp),
+            Modifier
+                .fillMaxSize()
+                .pointerInput(Unit) { detectTapGestures(onTap = { onDismiss() }) }
+                .systemBarsPadding()
+                .imePadding()
+                .padding(16.dp),
             contentAlignment = Alignment.BottomCenter,
         ) {
             Column(
@@ -336,6 +350,7 @@ internal fun Sheet(onDismiss: () -> Unit, content: @Composable ColumnScope.() ->
                     .pointerInput(Unit) { detectTapGestures() }
                     .clip(RoundedCornerShape(28.dp))
                     .background(colors.canvas)
+                    .verticalScroll(rememberScrollState())
                     .padding(20.dp),
             ) { content() }
         }

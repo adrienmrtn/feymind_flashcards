@@ -202,9 +202,13 @@ class MicaboApplication : Application() {
         exams = ExamRepository(this, prefs)
         // Avant les événements : chacun lit `isPro`, et un `lateinit` encore vide ferait planter.
         billing = Billing(this) {
-            runCatching { auth.accessToken() }
+            runCatching { auth.accessTokenWithRetry() }
             auth.userId.ifEmpty { null }
         }
+        // **RevenueCat tout de suite**, sans attendre l'invité du réseau : sous l'identifiant déjà
+        // gardé, ou anonyme au tout premier lancement. Le paywall a ses prix dès qu'il s'ouvre ;
+        // l'invité suit par `logIn` plus bas, et l'achat ne part que sous lui (`Billing.identify`).
+        billing.start(auth.userId.ifEmpty { null })
         gift = GiftOffer(this)
         analytics = Analytics(this, prefs, auth) { billing.isPro.value }
         // Une synchro qui échoue se compte : avant, elle finissait dans un `Log.w` que personne
@@ -223,9 +227,10 @@ class MicaboApplication : Application() {
         composer = LessonComposer(this, YouTubeImport(functions)) { name, props -> analytics.track(name, props) }
         analytics.start()
         // Le compte invité s'ouvre tout de suite : il doit exister avant un achat, pour que
-        // l'abonnement ait un propriétaire. Sans réseau, il s'ouvrira au premier appel.
+        // l'abonnement ait un propriétaire. Sans réseau, il s'ouvrira au premier appel ; une fois
+        // là, RevenueCat passe sous lui (`Billing.start`, `logIn`).
         scope.launch {
-            runCatching { auth.accessToken() }
+            runCatching { auth.accessTokenWithRetry() }
             withContext(Dispatchers.Main) { billing.start(auth.userId.ifEmpty { null }) }
             syncSoon(force = true)
             rescheduleReminders()

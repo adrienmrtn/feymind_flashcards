@@ -10,6 +10,8 @@ import com.revenuecat.purchases.PackageType
 import com.revenuecat.purchases.PurchaseParams
 import com.revenuecat.purchases.Purchases
 import com.revenuecat.purchases.PurchasesConfiguration
+import com.revenuecat.purchases.PurchasesError
+import com.revenuecat.purchases.PurchasesErrorCode
 import com.revenuecat.purchases.getCustomerInfoWith
 import com.revenuecat.purchases.interfaces.UpdatedCustomerInfoListener
 import com.revenuecat.purchases.getOfferingsWith
@@ -35,7 +37,28 @@ data class StorePlan(
     val trialDays: Int = 0,
     /** Le prix en micro-unités de la devise : de quoi calculer une remise. */
     val micros: Long = 0,
+    /**
+     * L'offre dans les événements : l'identifiant produit de l'iPhone (`PaywallPlan.productID`),
+     * pour que les deux apps se lisent dans les mêmes colonnes.
+     */
+    val analyticsId: String = if (yearly) PLAN_YEARLY else PLAN_WEEKLY,
 )
+
+const val PLAN_YEARLY = "com.micabo.app.pro.yearly"
+const val PLAN_WEEKLY = "com.micabo.app.pro.weekly"
+const val PLAN_DISCOUNT = "com.micabo.app.pro.yearly.discount"
+
+/** Pourquoi Google Play n'a pas donné d'offres. */
+enum class PlanProblem {
+    /** Pas de réseau. */
+    NETWORK,
+    /** Google Play lui-même : service absent ou en panne, compte Google manquant, offres introuvables. */
+    STORE,
+    OTHER,
+}
+
+/** Ce que Google Play a répondu au paywall : les offres, ou pourquoi il n'y en a pas (et son code). */
+data class PlanLoad(val plans: List<StorePlan>, val problem: PlanProblem? = null, val code: String? = null)
 
 /** Les jours d'essai gratuit d'une offre, d'après Google Play. */
 private fun trialDaysOf(pkg: Package): Int = runCatching {
@@ -74,7 +97,13 @@ sealed interface PurchaseOutcome {
     data object Success : PurchaseOutcome
     data object Cancelled : PurchaseOutcome
     data object Unavailable : PurchaseOutcome
-    data class Failed(val message: String) : PurchaseOutcome
+    /**
+     * **L'achat attend une validation** (`PaymentPendingError`) : un parent par Family Link, un
+     * paiement en espèces. Ni acheté, ni refusé ; Pro s'ouvrira seul quand Google Play confirmera
+     * (`updatedCustomerInfoListener`).
+     */
+    data object Pending : PurchaseOutcome
+    data class Failed(val message: String, val code: String = "") : PurchaseOutcome
 }
 
 /**
@@ -116,26 +145,25 @@ class Billing(
     }
 
     /**
-     * Avant un achat ou une restauration : RevenueCat doit connaître l'invité. Lancée hors
-     * ligne, l'app a configuré un identifiant anonyme, et l'abonnement n'aurait eu aucun
-     * propriétaire côté serveur (la porte du gratuit ne l'aurait jamais vu).
+     * Avant un achat ou une restauration : RevenueCat doit connaître l'invité. Configurée au
+     * lancement sans attendre le réseau, l'app peut tourner sous un identifiant anonyme, et
+     * l'abonnement n'aurait eu aucun propriétaire côté serveur (la porte du gratuit ne l'aurait
+     * jamais vu). Vrai quand RevenueCat parle bien sous l'identifiant de l'invité (ou du compte).
      */
-    private suspend fun identify() {
-        if (!enabled) return
-        val id = runCatching { guestId() }.getOrNull()?.takeIf { it.isNotEmpty() } ?: return
-        withContext<Unit>(Dispatchers.Main) {
-            if (!Purchases.isConfigured) {
-                start(id)
-                return@withContext
-            }
-            if (Purchases.sharedInstance.appUserID == id) return@withContext
-            suspendCancellableCoroutine<Unit> { continuation ->
+    private suspend fun identify(): Boolean {
+        if (!enabled) return false
+        val id = runCatching { guestId() }.getOrNull()?.takeIf { it.isNotEmpty() } ?: return false
+        return withContext<Boolean>(Dispatchers.Main) {
+            if (!Purchases.isConfigured) start(id)
+            if (!Purchases.isConfigured) return@withContext false
+            if (Purchases.sharedInstance.appUserID == id) return@withContext true
+            suspendCancellableCoroutine<Boolean> { continuation ->
                 Purchases.sharedInstance.logInWith(
                     id,
-                    onError = { if (continuation.isActive) continuation.resume(Unit) },
+                    onError = { if (continuation.isActive) continuation.resume(false) },
                     onSuccess = { info, _ ->
                         read(info)
-                        if (continuation.isActive) continuation.resume(Unit)
+                        if (continuation.isActive) continuation.resume(true)
                     },
                 )
             }
@@ -194,11 +222,23 @@ class Billing(
         }
     }
 
-    suspend fun plans(): List<StorePlan> {
-        if (!enabled || !Purchases.isConfigured) return emptyList()
+    suspend fun plans(): List<StorePlan> = loadPlans().plans
+
+    /**
+     * **Les offres du paywall, ou pourquoi il n'y en a pas** : le réseau, Google Play lui-même,
+     * ou autre chose, avec le code de RevenueCat pour les événements.
+     */
+    suspend fun loadPlans(): PlanLoad {
+        if (!enabled) return PlanLoad(emptyList(), PlanProblem.OTHER, "disabled")
+        // Configurée au lancement ; une configuration tombée se retente ici, sous un identifiant
+        // anonyme : l'achat, lui, passe toujours par `identify`.
+        if (!Purchases.isConfigured) withContext(Dispatchers.Main) { start(null) }
+        if (!Purchases.isConfigured) return PlanLoad(emptyList(), PlanProblem.STORE, "not_configured")
         return suspendCancellableCoroutine { continuation ->
             Purchases.sharedInstance.getOfferingsWith(
-                onError = { if (continuation.isActive) continuation.resume(emptyList()) },
+                onError = { error ->
+                    if (continuation.isActive) continuation.resume(PlanLoad(emptyList(), problemOf(error), error.code.name))
+                },
                 onSuccess = { offerings ->
                     val packages = (offerings.current?.availablePackages.orEmpty() +
                         offerings.all.values.flatMap { it.availablePackages })
@@ -210,11 +250,24 @@ class Billing(
                         yearly?.let { StorePlan(true, it.product.price.formatted, it, monthlyOf(it), trialDaysOf(it), it.product.price.amountMicros) },
                         weekly?.let { StorePlan(false, it.product.price.formatted, it, trialDays = trialDaysOf(it), micros = it.product.price.amountMicros) },
                     )
-                    if (continuation.isActive) continuation.resume(out)
+                    val load = if (out.isEmpty()) PlanLoad(out, PlanProblem.OTHER, "no_packages") else PlanLoad(out)
+                    if (continuation.isActive) continuation.resume(load)
                 },
             )
         }
     }
+
+    private fun problemOf(error: PurchasesError): PlanProblem = when (error.code) {
+        PurchasesErrorCode.NetworkError -> PlanProblem.NETWORK
+        // `BILLING_UNAVAILABLE` arrive en `PurchaseNotAllowedError`, un service Play en panne en
+        // `StoreProblemError`, des produits que Play ne rend pas en `ConfigurationError`.
+        PurchasesErrorCode.StoreProblemError, PurchasesErrorCode.PurchaseNotAllowedError, PurchasesErrorCode.ConfigurationError -> PlanProblem.STORE
+        else -> PlanProblem.OTHER
+    }
+
+    /** Le pays de la boutique Google Play, quand RevenueCat le connaît déjà. */
+    fun storefront(): String? =
+        if (enabled && Purchases.isConfigured) runCatching { Purchases.sharedInstance.storefrontCountryCode }.getOrNull() else null
 
     /**
      * **L'annuel à tarif réduit du cadeau** (offering `discount`, comme sur iPhone), ou `null`
@@ -228,7 +281,7 @@ class Billing(
                 onSuccess = { offerings ->
                     val packages = offerings.all["discount"]?.availablePackages.orEmpty()
                     val pkg = packages.firstOrNull { it.product.id.contains("discount") } ?: packages.firstOrNull()
-                    val plan = pkg?.let { StorePlan(true, it.product.price.formatted, it, monthlyOf(it), 0, it.product.price.amountMicros) }
+                    val plan = pkg?.let { StorePlan(true, it.product.price.formatted, it, monthlyOf(it), 0, it.product.price.amountMicros, PLAN_DISCOUNT) }
                     if (continuation.isActive) continuation.resume(plan)
                 },
             )
@@ -237,14 +290,21 @@ class Billing(
 
     suspend fun purchase(activity: Activity, plan: StorePlan): PurchaseOutcome {
         val pkg = plan.pkg ?: return PurchaseOutcome.Unavailable
-        identify()
+        // Sans l'identifiant de l'invité, pas d'achat : il partirait sous un identifiant anonyme.
+        if (!identify()) return PurchaseOutcome.Unavailable
         if (!Purchases.isConfigured) return PurchaseOutcome.Unavailable
         return suspendCancellableCoroutine { continuation ->
             Purchases.sharedInstance.purchaseWith(
                 PurchaseParams.Builder(activity, pkg).build(),
                 onError = { error, cancelled ->
                     if (continuation.isActive) {
-                        continuation.resume(if (cancelled) PurchaseOutcome.Cancelled else PurchaseOutcome.Failed(error.message))
+                        continuation.resume(
+                            when {
+                                cancelled -> PurchaseOutcome.Cancelled
+                                error.code == PurchasesErrorCode.PaymentPendingError -> PurchaseOutcome.Pending
+                                else -> PurchaseOutcome.Failed(error.message, error.code.name)
+                            },
+                        )
                     }
                 },
                 onSuccess = { _, info ->
@@ -257,8 +317,10 @@ class Billing(
     }
 
     suspend fun restore(): Boolean {
-        identify()
+        val identified = identify()
         if (!enabled || !Purchases.isConfigured) return false
+        // Restaurer sous un identifiant anonyme y déplacerait l'abonnement, loin de l'invité.
+        if (!identified && Purchases.sharedInstance.isAnonymous) return false
         return suspendCancellableCoroutine { continuation ->
             Purchases.sharedInstance.restorePurchasesWith(
                 onError = { if (continuation.isActive) continuation.resume(false) },

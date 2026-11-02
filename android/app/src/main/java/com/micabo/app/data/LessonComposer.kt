@@ -124,6 +124,8 @@ class LessonComposer(
     /** La phrase d'un échec : celle de l'import, le réseau, le refus Pro, ou « illisible ». */
     private fun failureMessage(error: Throwable?): Int = when (error) {
         is ImportException -> error.messageRes
+        // GoTrue a refusé d'ouvrir l'invité : « trop d'essais », pas « pas de connexion ».
+        is GuestUnavailableException -> if (error.rateLimited) R.string.x_auth_rateLimited else R.string.x_error_generic
         is NetworkException -> R.string.x_error_network
         is ApiException -> when (error.code) {
             "import_pro" -> R.string.lesson_error_importPro

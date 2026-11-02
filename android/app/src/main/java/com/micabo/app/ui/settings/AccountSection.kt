@@ -360,9 +360,13 @@ internal fun SignInSheet(failure: Throwable?, onDismiss: () -> Unit) {
         // L'adresse des relecteurs (Google Play, App Store) n'a pas de boîte : elle ouvre le
         // compte de démonstration tout de suite, sans lien (`StoreReview`).
         if (StoreReview.matches(email)) {
+            app.analytics.track("sign_in_started", mapOf("provider" to "review"))
             app.completeReviewSignIn()
             return
         }
+        // Le début d'une connexion, comme sur iPhone (`sign_in_started`) : avec `signed_in` et
+        // `sign_in_failed`, l'entonnoir de la connexion se lit en entier.
+        app.analytics.track("sign_in_started", mapOf("provider" to "lien"))
         sending = true
         error = null
         scope.launch {
@@ -407,6 +411,7 @@ internal fun SignInSheet(failure: Throwable?, onDismiss: () -> Unit) {
                 onClick = {
                     error = null
                     app.signInSeen()
+                    app.analytics.track("sign_in_started", mapOf("provider" to "google"))
                     openAuthPage(context, app.auth.googleUrl())
                 },
             )
@@ -420,6 +425,7 @@ internal fun SignInSheet(failure: Throwable?, onDismiss: () -> Unit) {
                 onClick = {
                     error = null
                     app.signInSeen()
+                    app.analytics.track("sign_in_started", mapOf("provider" to "apple"))
                     openAuthPage(context, app.auth.appleUrl())
                 },
             )

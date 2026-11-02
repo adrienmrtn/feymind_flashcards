@@ -65,7 +65,6 @@
     <string name="ios_averageLead">Niemand oordeelt. Dit is een startpunt, geen rapport.</string>
     <string name="ios_averageTitle">Wat is je gemiddelde\nop dit moment?</string>
     <string name="ios_backup">Back-up</string>
-    <string name="ios_billedYearly">%1$s per jaar gefactureerd</string>
     <string name="ios_build_done">Je plan is klaar</string>
     <string name="ios_build_step1">Je antwoorden lezen</string>
     <string name="ios_build_step2">Je tempo bepalen</string>
@@ -176,12 +175,17 @@
     <string name="ios_paywallIncluded">Met Micabo Pro</string>
     <string name="ios_paywallNoRestore">Geen abonnement om te herstellen op dit account.</string>
     <string name="ios_paywallOnly">Maar %1$s / maand</string>
+    <string name="ios_paywallPending">Je aankoop wacht op goedkeuring, bijvoorbeeld van een ouder. Pro gaat vanzelf open zodra die er is.</string>
+    <string name="ios_paywallPendingTitle">Aankoop in behandeling</string>
     <string name="ios_paywallPlansTitle">**Kies** je abonnement</string>
     <string name="ios_paywallPracticeHeadline">Je gratis set is op: eindeloos vragen met Pro</string>
     <string name="ios_paywallReassurance">Twee tikken om te starten, opzeggen in vijftien seconden.</string>
     <string name="ios_paywallRestore">Herstellen</string>
+    <string name="ios_paywallSeeAll">Alle abonnementen bekijken</string>
     <string name="ios_paywallStartTrial">Start mijn %1$s gratis dagen</string>
     <string name="ios_paywallTerms">Gebruiksvoorwaarden</string>
+    <string name="ios_paywallTry_free">%1$s dagen gratis</string>
+    <string name="ios_paywallTry_lead">Probeer </string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, zonder grenzen</string>
     <string name="ios_paywall_badge_free">%1$s dagen gratis</string>
     <string name="ios_pdf_empty">Deze PDF bevat geen tekst en geen bruikbare pagina.</string>
@@ -506,6 +510,7 @@
     <string name="x_paywall_billedYearlyPlay">Eén keer per jaar gefactureerd, opzeggen via Google Play.</string>
     <string name="x_paywall_finePrint">%1$s dagen gratis, daarna %2$s per %3$s. Wordt automatisch verlengd, altijd op te zeggen in Google Play.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s per %2$s. Wordt automatisch verlengd, altijd op te zeggen in Google Play.</string>
+    <string name="x_paywall_playUnavailable">Google Play reageert niet. Controleer of je in de Play Store bent ingelogd met je Google-account en probeer het opnieuw.</string>
     <string name="x_paywall_soon">Binnenkort op Android</string>
     <string name="x_paywall_soonBody">Abonnementen komen heel binnenkort naar Android. Je gratis les wacht intussen op je.</string>
     <string name="x_paywall_subscribe">Word Pro</string>

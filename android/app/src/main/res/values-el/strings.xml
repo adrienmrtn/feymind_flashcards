@@ -70,7 +70,6 @@
     <string name="ios_averageLead">Κανείς δεν σε κρίνει. Είναι ένα σημείο εκκίνησης, όχι έλεγχος.</string>
     <string name="ios_averageTitle">Ποιος είναι ο μέσος όρος σου\nαυτή τη στιγμή;</string>
     <string name="ios_backup">Αντίγραφο ασφαλείας</string>
-    <string name="ios_billedYearly">χρέωση %1$s τον χρόνο</string>
     <string name="ios_build_done">Το πρόγραμμά σου είναι έτοιμο</string>
     <string name="ios_build_step1">Διαβάζουμε τις απαντήσεις σου</string>
     <string name="ios_build_step2">Υπολογίζουμε τον ρυθμό σου</string>
@@ -182,12 +181,17 @@
     <string name="ios_paywallIncluded">Με το Micabo Pro</string>
     <string name="ios_paywallNoRestore">Καμία συνδρομή για επαναφορά σε αυτόν τον λογαριασμό.</string>
     <string name="ios_paywallOnly">Μόνο %1$s / μήνα</string>
+    <string name="ios_paywallPending">Η αγορά σου περιμένει έγκριση, για παράδειγμα από γονέα. Το Pro θα ξεκλειδώσει μόνο του μόλις έρθει.</string>
+    <string name="ios_paywallPendingTitle">Αγορά σε αναμονή</string>
     <string name="ios_paywallPlansTitle">**Διάλεξε** το πρόγραμμά σου</string>
     <string name="ios_paywallPracticeHeadline">Το δωρεάν σετ σου τελείωσε: ατελείωτες ερωτήσεις με το Pro</string>
     <string name="ios_paywallReassurance">Δύο πατήματα για να ξεκινήσεις, ακύρωση σε δεκαπέντε δευτερόλεπτα.</string>
     <string name="ios_paywallRestore">Επαναφορά</string>
+    <string name="ios_paywallSeeAll">Όλα τα προγράμματα</string>
     <string name="ios_paywallStartTrial">Ξεκίνα τις %1$s δωρεάν μέρες μου</string>
     <string name="ios_paywallTerms">Όροι χρήσης</string>
+    <string name="ios_paywallTry_free">%1$s μέρες δωρεάν</string>
+    <string name="ios_paywallTry_lead">Δοκίμασε </string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, χωρίς όρια</string>
     <string name="ios_paywall_badge_free">%1$s μέρες δωρεάν</string>
     <string name="ios_pdf_empty">Αυτό το PDF δεν έχει ούτε κείμενο ούτε αξιοποιήσιμη σελίδα.</string>
@@ -521,6 +525,7 @@
     <string name="x_paywall_billedYearlyPlay">Χρέωση μία φορά τον χρόνο, ακύρωση στο Google Play.</string>
     <string name="x_paywall_finePrint">%1$s μέρες δωρεάν, μετά %2$s / %3$s. Ανανεώνεται αυτόματα, ακύρωσε όποτε θες στο Google Play.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s / %2$s. Ανανεώνεται αυτόματα, ακύρωσε όποτε θες στο Google Play.</string>
+    <string name="x_paywall_playUnavailable">Το Google Play δεν αποκρίνεται. Έλεγξε ότι έχεις συνδεθεί στον λογαριασμό σου Google στο Play Store και δοκίμασε ξανά.</string>
     <string name="x_paywall_soon">Σύντομα στο Android</string>
     <string name="x_paywall_soonBody">Οι συνδρομές έρχονται πολύ σύντομα στο Android. Μέχρι τότε, το δωρεάν μάθημά σου σε περιμένει.</string>
     <string name="x_paywall_subscribe">Πάρε το Pro</string>

@@ -246,7 +246,7 @@ fun OnboardingScreen() {
     // Les jours d'essai que Google Play accordera à ce compte : null tant qu'il n'a pas répondu.
     var trialDays by rememberSaveable { mutableStateOf<Int?>(null) }
     LaunchedEffect(Unit) {
-        // RevenueCat se configure après la session invitée : on redemande quelques fois.
+        // Google Play peut tarder (service qui se connecte, réseau) : on redemande quelques fois.
         repeat(5) {
             val plans = app.billing.plans()
             if (plans.isNotEmpty()) {
@@ -256,9 +256,11 @@ fun OnboardingScreen() {
             delay(3_000)
         }
     }
-    // Pas d'abonnement, ou un essai déjà consommé sur ce compte Google : on ne promet ni
-    // l'essai gratuit ni son rappel.
-    val offersTrial = app.billing.enabled && trialDays != 0
+    // **L'essai ne se promet que quand Google Play l'a confirmé.** Pas d'abonnement, un essai déjà
+    // consommé sur ce compte Google, ou Google Play qui n'a pas (encore) répondu : ni l'essai
+    // gratuit ni son rappel. Les deux étapes sont les dernières : arrivées en route, elles
+    // s'ajoutent au bout sans déplacer l'écran ouvert.
+    val offersTrial = app.billing.enabled && (trialDays ?: 0) > 0
     val steps = Step.entries.filter { offersTrial || (it != Step.TRIAL && it != Step.REMINDER) }
     val step = steps[index.coerceAtMost(steps.lastIndex)]
     val asking = steps.filter { it.asks }

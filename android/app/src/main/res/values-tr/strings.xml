@@ -69,7 +69,6 @@
     <string name="ios_averageLead">Kimse seni yargılamıyor. Bu bir başlangıç noktası, karne değil.</string>
     <string name="ios_averageTitle">Şu anki ortalaman\nkaç?</string>
     <string name="ios_backup">Yedek</string>
-    <string name="ios_billedYearly">yılda %1$s faturalanır</string>
     <string name="ios_build_done">Planın hazır</string>
     <string name="ios_build_step1">Cevapların okunuyor</string>
     <string name="ios_build_step2">Tempon hesaplanıyor</string>
@@ -182,12 +181,17 @@
     <string name="ios_paywallIncluded">Micabo Pro ile</string>
     <string name="ios_paywallNoRestore">Bu hesapta geri yüklenecek abonelik yok.</string>
     <string name="ios_paywallOnly">Ayda yalnızca %1$s</string>
+    <string name="ios_paywallPending">Satın alman onay bekliyor, örneğin bir ebeveynin onayı. Onay gelir gelmez Pro kendiliğinden açılır.</string>
+    <string name="ios_paywallPendingTitle">Satın alma bekliyor</string>
     <string name="ios_paywallPlansTitle">Planını **seç**</string>
     <string name="ios_paywallPracticeHeadline">Ücretsiz setin bitti: Pro ile sınırsız soru</string>
     <string name="ios_paywallReassurance">İki dokunuşla başla, on beş saniyede iptal et.</string>
     <string name="ios_paywallRestore">Geri yükle</string>
+    <string name="ios_paywallSeeAll">Tüm teklifleri gör</string>
     <string name="ios_paywallStartTrial">%1$s günlük denememi başlat</string>
     <string name="ios_paywallTerms">Kullanım koşulları</string>
+    <string name="ios_paywallTry_free">%1$s gün ücretsiz dene</string>
+    <string name="ios_paywallTry_lead">Şimdi </string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, sınırsız</string>
     <string name="ios_paywall_badge_free">%1$s gün ücretsiz</string>
     <string name="ios_pdf_empty">Bu PDF\'te ne metin ne kullanılabilir sayfa var.</string>
@@ -520,6 +524,7 @@
     <string name="x_paywall_billedYearlyPlay">Yılda bir kez faturalanır, Google Play\'den iptal edilir.</string>
     <string name="x_paywall_finePrint">%1$s gün ücretsiz, ardından %3$s başına %2$s. Otomatik yenilenir, Google Play\'den istediğin zaman iptal et.</string>
     <string name="x_paywall_finePrintNoTrial">%2$s başına %1$s. Otomatik yenilenir, Google Play\'den istediğin zaman iptal et.</string>
+    <string name="x_paywall_playUnavailable">Google Play yanıt vermiyor. Play Store\'da Google hesabınla oturum açtığından emin ol ve tekrar dene.</string>
     <string name="x_paywall_soon">Yakında Android\'de</string>
     <string name="x_paywall_soonBody">Abonelikler çok yakında Android\'de. Bu arada ücretsiz dersin seni bekliyor.</string>
     <string name="x_paywall_subscribe">Pro\'ya geç</string>

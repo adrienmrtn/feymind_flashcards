@@ -44,6 +44,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -364,8 +365,8 @@ private fun OfferClose(onClick: () -> Unit) {
 
 /**
  * **Le paywall du cadeau** (`DiscountPaywallStage`), en feuille qui monte du bas : le taux, un
- * prix, un bouton. Le mois en grand, et dessous ce qui est réellement prélevé, à côté du tarif
- * barré d'où l'on vient.
+ * prix, un bouton. Ce qui est réellement prélevé en grand (Google Play l'exige), et dessous
+ * l'équivalent mensuel, à côté du tarif barré d'où l'on vient.
  */
 @Composable
 private fun DiscountSheet(onDismiss: () -> Unit, onSubscribed: () -> Unit) {
@@ -381,10 +382,25 @@ private fun DiscountSheet(onDismiss: () -> Unit, onSubscribed: () -> Unit) {
     var attempt by remember { mutableIntStateOf(0) }
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
+    var subscribed by remember { mutableStateOf(false) }
+    var awaitingApproval by remember { mutableStateOf(false) }
+    var showsPending by remember { mutableStateOf(false) }
+    val openedAt = remember { System.currentTimeMillis() }
     val failText = stringResource(R.string.ios_paywallBuyFail)
     val noRestoreText = stringResource(R.string.ios_paywallNoRestore)
 
     LaunchedEffect(Unit) { app.analytics.track("paywall_opened", mapOf("trigger" to "gift")) }
+    // Refermé sans achat (la croix, le retour, le voile) : compté comme le paywall, avec son temps.
+    DisposableEffect(Unit) {
+        onDispose {
+            if (!subscribed && !awaitingApproval && !app.billing.isPro.value) {
+                app.analytics.track(
+                    "paywall_dismissed",
+                    mapOf("trigger" to "gift", "stage" to "tarif_reduit", "seconds" to (System.currentTimeMillis() - openedAt) / 100 / 10.0),
+                )
+            }
+        }
+    }
     LaunchedEffect(attempt) {
         loading = true
         discount = app.billing.discountPlan()
@@ -432,18 +448,29 @@ private fun DiscountSheet(onDismiss: () -> Unit, onSubscribed: () -> Unit) {
                     val activity = context as? Activity ?: return@MicaboButton
                     busy = true
                     message = null
-                    app.analytics.track("paywall_purchase_started", mapOf("plan" to "yearly_discount"))
+                    val props: Map<String, Any?> = mapOf("trigger" to "gift", "plan" to plan.analyticsId)
+                    app.analytics.track("paywall_purchase_started", props)
                     scope.launch {
-                        when (app.billing.purchase(activity, plan)) {
+                        when (val outcome = app.billing.purchase(activity, plan)) {
                             PurchaseOutcome.Success -> {
-                                app.analytics.track("paywall_purchased", mapOf("plan" to "yearly_discount", "trial" to 0))
+                                subscribed = true
+                                app.analytics.track("paywall_purchased", props + ("trial" to 0))
                                 haptics.success()
                                 onSubscribed()
                             }
-                            PurchaseOutcome.Cancelled -> app.analytics.track("paywall_purchase_cancelled")
-                            PurchaseOutcome.Unavailable -> message = failText
+                            PurchaseOutcome.Cancelled -> app.analytics.track("paywall_purchase_cancelled", props)
+                            // Ni échec ni achat : la validation (un parent) viendra d'ailleurs.
+                            PurchaseOutcome.Pending -> {
+                                awaitingApproval = true
+                                app.analytics.track("paywall_purchase_pending", props)
+                                showsPending = true
+                            }
+                            PurchaseOutcome.Unavailable -> {
+                                app.analytics.track("paywall_purchase_failed", props + ("reason" to "boutique_fermee"))
+                                message = failText
+                            }
                             is PurchaseOutcome.Failed -> {
-                                app.analytics.track("paywall_purchase_failed")
+                                app.analytics.track("paywall_purchase_failed", props + ("reason" to outcome.code.ifEmpty { "refus" }))
                                 message = failText
                             }
                         }
@@ -477,13 +504,20 @@ private fun DiscountSheet(onDismiss: () -> Unit, onSubscribed: () -> Unit) {
                     busy = true
                     message = null
                     val restored = app.billing.restore()
-                    if (restored) app.analytics.track("paywall_restored")
+                    if (restored) {
+                        subscribed = true
+                        app.analytics.track("paywall_restored", mapOf("trigger" to "gift"))
+                    }
                     busy = false
                     if (restored) onSubscribed() else message = noRestoreText
                 }
             },
             onOpen = { url -> runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } },
         )
+    }
+
+    if (showsPending) {
+        PendingPurchaseDialog(onDismiss = { showsPending = false })
     }
 }
 
@@ -539,34 +573,45 @@ private fun PriceCard(percent: Int, discount: StorePlan?, reference: StorePlan?)
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(stringResource(R.string.ios_planYearly), style = nunito(14.5.sp, FontWeight.Bold), color = OfferSky)
+            // **Google Play : la somme prélevée est le prix le plus visible.** Le montant de l'année
+            // en grand, « par an » à côté ; l'équivalent mensuel et le tarif barré viennent dessous.
             Row(verticalAlignment = Alignment.Bottom) {
-                Text(discount?.monthly ?: discount?.price ?: "—", style = nunito(26.sp, FontWeight.Black), color = colors.ink)
-                if (discount?.monthly != null) {
+                Text(
+                    discount?.price ?: "—",
+                    style = nunito(26.sp, FontWeight.Black),
+                    color = colors.ink,
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                if (discount != null) {
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        stringResource(R.string.app_paywall_perMonthSlash),
+                        // « / an » : l'unité des vingt-six langues (`app.paywall.perYear` n'en a que cinq).
+                        "/ ${stringResource(R.string.ios_unitYear)}",
                         style = nunito(15.sp, FontWeight.SemiBold),
                         color = colors.inkSecondary,
+                        maxLines = 1,
                         modifier = Modifier.padding(bottom = 4.dp),
                     )
                 }
             }
-            // Ce qui part du compte, et le tarif d'où l'on vient, sur une ligne.
             if (discount != null) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        stringResource(R.string.ios_billedYearly, discount.price),
-                        style = nunito(14.sp, FontWeight.SemiBold),
-                        color = colors.inkSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false),
-                    )
-                    reference?.let {
+                    discount.monthly?.let { monthly ->
+                        Text(
+                            "$monthly ${stringResource(R.string.app_paywall_perMonthSlash)}",
+                            style = nunito(13.sp, FontWeight.SemiBold),
+                            color = colors.inkSecondary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
                         Spacer(Modifier.width(7.dp))
+                    }
+                    reference?.let {
                         Text(
                             it.price,
-                            style = nunito(14.sp, FontWeight.SemiBold).copy(textDecoration = TextDecoration.LineThrough),
+                            style = nunito(13.sp, FontWeight.SemiBold).copy(textDecoration = TextDecoration.LineThrough),
                             color = colors.inkTertiary,
                             maxLines = 1,
                         )

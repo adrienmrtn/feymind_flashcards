@@ -64,8 +64,12 @@ sealed interface Screen {
     data class ExamEdit(val id: String?) : Screen
     /** Un examen blanc, sur un examen déclaré ou non. */
     data class Mock(val examId: String?) : Screen
-    /** `reason` : le code du refus (`free_limit`, `import_pro`…), vide depuis les réglages. */
-    data class Paywall(val reason: String) : Screen
+    /**
+     * `reason` : le code du refus (`free_limit`, `import_pro`…), vide depuis les réglages.
+     * `trigger` : la porte dans les événements quand l'écran la connaît (`mika`, `mockExam`…),
+     * le vocabulaire de l'iPhone (`PaywallTrigger`) ; sinon elle se déduit de `reason`.
+     */
+    data class Paywall(val reason: String, val trigger: String = "") : Screen
     /** Les amis, le profil d'un ami, et le cours qu'il partage. */
     data object Friends : Screen
     data class FriendProfile(val person: Person) : Screen
@@ -188,7 +192,7 @@ private fun MainScreens(navigator: Navigator) {
                         is Screen.Mika -> MikaScreen(screen.id)
                         is Screen.ExamEdit -> ExamEditScreen(screen.id)
                         is Screen.Mock -> MockExamScreen(screen.examId)
-                        is Screen.Paywall -> PaywallScreen(screen.reason)
+                        is Screen.Paywall -> PaywallScreen(screen.reason, screen.trigger)
                         Screen.Friends -> FriendsScreen()
                         is Screen.FriendProfile -> FriendProfileScreen(screen.person)
                         is Screen.SharedCourse -> SharedCourseScreen(screen.course, screen.author)

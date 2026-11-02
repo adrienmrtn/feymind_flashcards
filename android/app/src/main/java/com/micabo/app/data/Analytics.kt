@@ -16,6 +16,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.put
 import java.net.HttpURLConnection
 import java.net.URL
@@ -40,8 +41,28 @@ class Analytics(context: Context, private val prefs: Prefs, private val auth: Su
     private var sessionId = UUID.randomUUID().toString()
     private var lastSeen = System.currentTimeMillis()
 
+    /** Le lot parti au serveur, sans réponse encore : gardé sur le disque avec la file. */
+    private val inFlight = mutableListOf<JsonObject>()
+
     private val deviceId: String = store.getString("device", null) ?: UUID.randomUUID().toString().also { id ->
         store.edit { putString("device", id) }
+    }
+
+    init {
+        // **La file survit à une app tuée**, comme sur iPhone : les lignes qui n'étaient pas
+        // parties (Android tue l'app en arrière-plan, le paywall ouvre Google Play) repartent au
+        // lancement suivant, avec leur heure d'origine.
+        store.getString(QUEUE, null)?.let { saved ->
+            runCatching { MicaboJson.parseToJsonElement(saved).jsonArray.mapNotNull { it as? JsonObject } }
+                .getOrNull()
+                ?.let { pending.addAll(it.takeLast(MAX_PENDING)) }
+        }
+    }
+
+    /** La file sur le disque : ce qui attend, et le lot en route. Appelé sous `lock`. */
+    private fun persist() {
+        val rows = (inFlight + pending).takeLast(MAX_PENDING)
+        store.edit { if (rows.isEmpty()) remove(QUEUE) else putString(QUEUE, JsonArray(rows).toString()) }
     }
 
     /** Au lancement : l'installation la toute première fois, puis l'ouverture. */
@@ -110,6 +131,7 @@ class Analytics(context: Context, private val prefs: Prefs, private val auth: Su
             lock.withLock {
                 pending.add(row)
                 if (pending.size > MAX_PENDING) pending.subList(0, pending.size - MAX_PENDING).clear()
+                persist()
             }
             flushSoon(if (pending.size >= BATCH) 0 else 8_000)
         }
@@ -124,7 +146,12 @@ class Analytics(context: Context, private val prefs: Prefs, private val auth: Su
     }
 
     private suspend fun flush() {
-        val batch = lock.withLock { pending.toList().also { pending.clear() } }
+        val batch = lock.withLock {
+            pending.toList().also {
+                pending.clear()
+                inFlight.addAll(it)
+            }
+        }
         if (batch.isEmpty()) return
         val sent = runCatching {
             val token = runCatching { auth.accessToken() }.getOrDefault(SupabaseConfig.ANON_KEY)
@@ -146,12 +173,16 @@ class Analytics(context: Context, private val prefs: Prefs, private val auth: Su
             }
         }
         val status = sent.getOrNull()
-        when {
-            status != null && status in 200..299 -> Unit
-            // Un refus du serveur (4xx) ne passera pas mieux plus tard : le lot est laissé.
-            status != null && status in 400..499 -> Log.w(TAG, "Événements refusés : $status")
-            // Pas de réseau : les lignes reviennent dans la file, pour le prochain envoi.
-            else -> lock.withLock { pending.addAll(0, batch.takeLast(MAX_PENDING - pending.size.coerceAtMost(MAX_PENDING))) }
+        lock.withLock {
+            batch.forEach { inFlight.remove(it) }
+            when {
+                status != null && status in 200..299 -> Unit
+                // Un refus du serveur (4xx) ne passera pas mieux plus tard : le lot est laissé.
+                status != null && status in 400..499 -> Log.w(TAG, "Événements refusés : $status")
+                // Pas de réseau : les lignes reviennent dans la file, pour le prochain envoi.
+                else -> pending.addAll(0, batch.takeLast(MAX_PENDING - pending.size.coerceAtMost(MAX_PENDING)))
+            }
+            persist()
         }
     }
 
@@ -165,6 +196,7 @@ class Analytics(context: Context, private val prefs: Prefs, private val auth: Su
         const val BATCH = 20
         const val MAX_PENDING = 200
         const val MAX_PROPS = 1_900
+        const val QUEUE = "queue"
         val NAME = Regex("^[a-z][a-z0-9_]{1,46}[a-z0-9]$")
     }
 }

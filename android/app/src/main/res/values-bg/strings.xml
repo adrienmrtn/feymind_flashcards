@@ -70,7 +70,6 @@
     <string name="ios_averageLead">Никой не съди. Това е отправна точка, не бележник.</string>
     <string name="ios_averageTitle">Какъв е средният ти успех\nв момента?</string>
     <string name="ios_backup">Резервно копие</string>
-    <string name="ios_billedYearly">%1$s на година</string>
     <string name="ios_build_done">Планът ти е готов</string>
     <string name="ios_build_step1">Четем отговорите ти</string>
     <string name="ios_build_step2">Изчисляваме темпото ти</string>
@@ -182,12 +181,17 @@
     <string name="ios_paywallIncluded">С Micabo Pro</string>
     <string name="ios_paywallNoRestore">Няма абонамент за възстановяване в този профил.</string>
     <string name="ios_paywallOnly">Само %1$s / месец</string>
+    <string name="ios_paywallPending">Покупката ти чака одобрение, например от родител. Pro ще се отключи сам веднага щом пристигне.</string>
+    <string name="ios_paywallPendingTitle">Покупката чака</string>
     <string name="ios_paywallPlansTitle">**Избери** своя план</string>
     <string name="ios_paywallPracticeHeadline">Безплатният ти комплект е използван: безкрайно въпроси с Pro</string>
     <string name="ios_paywallReassurance">Две докосвания за старт, отказ за петнайсет секунди.</string>
     <string name="ios_paywallRestore">Възстанови</string>
+    <string name="ios_paywallSeeAll">Всички планове</string>
     <string name="ios_paywallStartTrial">Започни безплатните %1$s дни</string>
     <string name="ios_paywallTerms">Условия за ползване</string>
+    <string name="ios_paywallTry_free">%1$s дни безплатно</string>
+    <string name="ios_paywallTry_lead">Опитай </string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, без ограничения</string>
     <string name="ios_paywall_badge_free">%1$s дни безплатно</string>
     <string name="ios_pdf_empty">Този PDF няма нито текст, нито използваема страница.</string>
@@ -521,6 +525,7 @@
     <string name="x_paywall_billedYearlyPlay">Плащане веднъж годишно, отказ в Google Play.</string>
     <string name="x_paywall_finePrint">%1$s дни безплатно, след това %2$s на %3$s. Подновява се автоматично, можеш да се откажеш по всяко време в Google Play.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s на %2$s. Подновява се автоматично, можеш да се откажеш по всяко време в Google Play.</string>
+    <string name="x_paywall_playUnavailable">Google Play не отговаря. Провери дали си влязъл в профила си в Google в Play Магазин и опитай отново.</string>
     <string name="x_paywall_soon">Скоро на Android</string>
     <string name="x_paywall_soonBody">Абонаментите идват съвсем скоро на Android. Дотогава безплатният ти урок те чака.</string>
     <string name="x_paywall_subscribe">Мини на Pro</string>

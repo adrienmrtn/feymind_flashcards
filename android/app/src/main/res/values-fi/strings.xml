@@ -66,7 +66,6 @@
     <string name="ios_averageLead">Kukaan ei arvostele. Tämä on lähtöpiste, ei todistus.</string>
     <string name="ios_averageTitle">Mikä on keskiarvosi\ntällä hetkellä?</string>
     <string name="ios_backup">Varmuuskopio</string>
-    <string name="ios_billedYearly">laskutetaan %1$s vuodessa</string>
     <string name="ios_build_done">Suunnitelmasi on valmis</string>
     <string name="ios_build_step1">Luetaan vastauksiasi</string>
     <string name="ios_build_step2">Lasketaan tahtiasi</string>
@@ -177,12 +176,17 @@
     <string name="ios_paywallIncluded">Micabo Prolla</string>
     <string name="ios_paywallNoRestore">Tällä tilillä ei ole palautettavaa tilausta.</string>
     <string name="ios_paywallOnly">Vain %1$s / kk</string>
+    <string name="ios_paywallPending">Ostoksesi odottaa hyväksyntää, esimerkiksi vanhemmalta. Pro avautuu itsestään heti, kun se tulee.</string>
+    <string name="ios_paywallPendingTitle">Osto odottaa</string>
     <string name="ios_paywallPlansTitle">**Valitse** tilauksesi</string>
     <string name="ios_paywallPracticeHeadline">Ilmainen sarjasi on käytetty: Prolla loputtomasti kysymyksiä</string>
     <string name="ios_paywallReassurance">Kaksi napautusta alkuun, peruminen vie viisitoista sekuntia.</string>
     <string name="ios_paywallRestore">Palauta</string>
+    <string name="ios_paywallSeeAll">Näytä kaikki tilaukset</string>
     <string name="ios_paywallStartTrial">Aloita %1$s ilmaista päivää</string>
     <string name="ios_paywallTerms">Käyttöehdot</string>
+    <string name="ios_paywallTry_free">%1$s päivää ilmaiseksi</string>
+    <string name="ios_paywallTry_lead">Kokeile </string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro ilman rajoja</string>
     <string name="ios_paywall_badge_free">%1$s päivää ilmaiseksi</string>
     <string name="ios_pdf_empty">Tässä PDF:ssä ei ole tekstiä eikä käyttökelpoista sivua.</string>
@@ -513,6 +517,7 @@
     <string name="x_paywall_billedYearlyPlay">Laskutetaan kerran vuodessa, peru Google Playssa.</string>
     <string name="x_paywall_finePrint">%1$s päivää ilmaiseksi, sitten %2$s / %3$s. Uusiutuu automaattisesti, peru milloin tahansa Google Playssa.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s / %2$s. Uusiutuu automaattisesti, peru milloin tahansa Google Playssa.</string>
+    <string name="x_paywall_playUnavailable">Google Play ei vastaa. Tarkista, että olet kirjautunut Google-tilillesi Play Kaupassa, ja yritä uudelleen.</string>
     <string name="x_paywall_soon">Tulossa pian Androidille</string>
     <string name="x_paywall_soonBody">Tilaukset tulevat Androidille aivan pian. Sillä välin ilmainen oppituntisi odottaa sinua.</string>
     <string name="x_paywall_subscribe">Hanki Pro</string>

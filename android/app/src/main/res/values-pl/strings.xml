@@ -69,7 +69,6 @@
     <string name="ios_averageLead">Nikt cię nie ocenia. To punkt wyjścia, a nie świadectwo.</string>
     <string name="ios_averageTitle">Jaką masz teraz\nśrednią?</string>
     <string name="ios_backup">Kopia zapasowa</string>
-    <string name="ios_billedYearly">%1$s płatne raz w roku</string>
     <string name="ios_build_done">Twój plan jest gotowy</string>
     <string name="ios_build_step1">Czytamy twoje odpowiedzi</string>
     <string name="ios_build_step2">Ustalamy twoje tempo</string>
@@ -180,12 +179,17 @@
     <string name="ios_paywallIncluded">Z Micabo Pro</string>
     <string name="ios_paywallNoRestore">Brak subskrypcji do przywrócenia na tym koncie.</string>
     <string name="ios_paywallOnly">Tylko %1$s / mies.</string>
+    <string name="ios_paywallPending">Twój zakup czeka na zatwierdzenie, na przykład przez rodzica. Pro odblokuje się samo, gdy tylko nadejdzie.</string>
+    <string name="ios_paywallPendingTitle">Zakup oczekuje</string>
     <string name="ios_paywallPlansTitle">**Wybierz** swój plan</string>
     <string name="ios_paywallPracticeHeadline">Darmowy zestaw wykorzystany: z Pro pytań jest bez końca</string>
     <string name="ios_paywallReassurance">Dwa stuknięcia, by zacząć, anulujesz w piętnaście sekund.</string>
     <string name="ios_paywallRestore">Przywróć</string>
+    <string name="ios_paywallSeeAll">Zobacz wszystkie plany</string>
     <string name="ios_paywallStartTrial">Zacznij %1$s dni za darmo</string>
     <string name="ios_paywallTerms">Warunki korzystania</string>
+    <string name="ios_paywallTry_free">%1$s dni za darmo</string>
+    <string name="ios_paywallTry_lead">Wypróbuj </string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, bez limitów</string>
     <string name="ios_paywall_badge_free">%1$s dni za darmo</string>
     <string name="ios_pdf_empty">Ten PDF nie zawiera ani tekstu, ani strony do wykorzystania.</string>
@@ -516,6 +520,7 @@
     <string name="x_paywall_billedYearlyPlay">Płatne raz w roku, anulujesz w Google Play.</string>
     <string name="x_paywall_finePrint">%1$s dni za darmo, potem %2$s / %3$s. Odnawia się automatycznie, anulujesz w dowolnej chwili w Google Play.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s / %2$s. Odnawia się automatycznie, anulujesz w dowolnej chwili w Google Play.</string>
+    <string name="x_paywall_playUnavailable">Google Play nie odpowiada. Sprawdź, czy jesteś zalogowany na konto Google w Sklepie Play, i spróbuj ponownie.</string>
     <string name="x_paywall_soon">Wkrótce na Androidzie</string>
     <string name="x_paywall_soonBody">Subskrypcje już wkrótce na Androidzie. W międzyczasie czeka na ciebie darmowa lekcja.</string>
     <string name="x_paywall_subscribe">Przejdź na Pro</string>

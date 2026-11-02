@@ -68,7 +68,6 @@
     <string name="ios_averageLead">Keegi ei mõista hukka. See on alguspunkt, mitte tunnistus.</string>
     <string name="ios_averageTitle">Mis on sinu keskmine\npraegu?</string>
     <string name="ios_backup">Varundus</string>
-    <string name="ios_billedYearly">arveldus %1$s aastas</string>
     <string name="ios_build_done">Sinu plaan on valmis</string>
     <string name="ios_build_step1">Loeme sinu vastuseid</string>
     <string name="ios_build_step2">Arvutame sinu tempot</string>
@@ -179,12 +178,17 @@
     <string name="ios_paywallIncluded">Micabo Proga</string>
     <string name="ios_paywallNoRestore">Sellel kontol pole taastatavat tellimust.</string>
     <string name="ios_paywallOnly">Ainult %1$s / kuu</string>
+    <string name="ios_paywallPending">Sinu ost ootab kinnitust, näiteks vanemalt. Pro avaneb ise kohe, kui see saabub.</string>
+    <string name="ios_paywallPendingTitle">Ost ootel</string>
     <string name="ios_paywallPlansTitle">**Vali** oma pakett</string>
     <string name="ios_paywallPracticeHeadline">Sinu tasuta komplekt on kasutatud: Proga lõputult küsimusi</string>
     <string name="ios_paywallReassurance">Kaks puudutust alustamiseks, tühistamine viieteistkümne sekundiga.</string>
     <string name="ios_paywallRestore">Taasta</string>
+    <string name="ios_paywallSeeAll">Vaata kõiki pakette</string>
     <string name="ios_paywallStartTrial">Alusta %1$s tasuta päeva</string>
     <string name="ios_paywallTerms">Kasutustingimused</string>
+    <string name="ios_paywallTry_free">%1$s päeva tasuta</string>
+    <string name="ios_paywallTry_lead">Proovi </string>
     <string name="ios_paywallUpgradeHeadline">Micabo Pro, ilma piiranguteta</string>
     <string name="ios_paywall_badge_free">%1$s päeva tasuta</string>
     <string name="ios_pdf_empty">Selles PDF-is pole ei teksti ega kasutatavat lehte.</string>
@@ -516,6 +520,7 @@
     <string name="x_paywall_billedYearlyPlay">Arveldus kord aastas, tühista Google Plays.</string>
     <string name="x_paywall_finePrint">%1$s päeva tasuta, seejärel %2$s / %3$s. Uueneb automaatselt, tühista igal ajal Google Plays.</string>
     <string name="x_paywall_finePrintNoTrial">%1$s / %2$s. Uueneb automaatselt, tühista igal ajal Google Plays.</string>
+    <string name="x_paywall_playUnavailable">Google Play ei vasta. Kontrolli, et oled Play poes oma Google\'i kontoga sisse logitud, ja proovi uuesti.</string>
     <string name="x_paywall_soon">Varsti Androidis</string>
     <string name="x_paywall_soonBody">Tellimused jõuavad Androidi väga varsti. Seni ootab sind sinu tasuta tund.</string>
     <string name="x_paywall_subscribe">Võta Pro</string>
