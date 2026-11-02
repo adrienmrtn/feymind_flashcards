@@ -161,7 +161,10 @@ describe("le branchement RevenueCat de l'app", () => {
   it("identifie par l'auth.users.id de Supabase, jamais un anonyme", () => {
     // C'est **la** ligne du droit multiplateforme : un achat parti sous un
     // `$RCAnonymousID` se fait refuser par le webhook (422).
-    expect(purchases).toContain("Purchases.shared.logIn(wanted)");
+    // `logIn` est retenté une fois (`PurchasesBridge.logIn`) : l'identifiant passé reste
+    // celui du compte ou de l'invité Supabase.
+    expect(purchases).toContain("await logIn(wanted)");
+    expect(purchases).toContain("Purchases.shared.logIn(appUserID)");
     expect(purchases).toContain("uuidString.lowercased()");
   });
 });
