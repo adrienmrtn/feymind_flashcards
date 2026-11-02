@@ -790,6 +790,9 @@ enum IosI18nCatalogs {
         "ios.auth.emailNotConfirmed": "Ton adresse n'est pas encore confirmée. Ouvre le lien qu'on vient de t'envoyer.",
         "ios.auth.providerNotEnabled": "La connexion avec {provider} n'est pas encore activée sur ce projet Supabase.",
         "ios.auth.sessionExpired": "Ta session a expiré. Reconnecte-toi.",
+        "ios.auth.rateLimited": "Trop d'essais. Attends une minute, puis réessaie.",
+        "ios.auth.linkExpired": "Ce lien ne peut plus ouvrir de session. Connecte-toi ci-dessous, ou redemande un lien.",
+        "ios.error.network": "Pas de connexion. Vérifie ton internet et réessaie.",
         // Le cloud, quand il refuse. Ces phrases remontent jusqu'à l'écran.
         "ios.cloud.notConfigured": "L'accès au cloud n'est pas configuré.",
         "ios.cloud.notSignedIn": "Aucun compte connecté.",
@@ -1824,6 +1827,9 @@ enum IosI18nCatalogs {
         "ios.auth.emailNotConfirmed": "Deine Adresse ist noch nicht bestätigt. Öffne den Link, den wir dir geschickt haben.",
         "ios.auth.providerNotEnabled": "Die Anmeldung mit {provider} ist in diesem Supabase-Projekt noch nicht aktiviert.",
         "ios.auth.sessionExpired": "Deine Sitzung ist abgelaufen. Melde dich erneut an.",
+        "ios.auth.rateLimited": "Zu viele Versuche. Warte eine Minute und versuch es dann erneut.",
+        "ios.auth.linkExpired": "Mit diesem Link kannst du dich nicht mehr anmelden. Melde dich unten an oder fordere einen neuen Link an.",
+        "ios.error.network": "Keine Verbindung. Prüfe dein Internet und versuch es noch einmal.",
         // Le cloud, quand il refuse. Ces phrases remontent jusqu'à l'écran.
         "ios.cloud.notConfigured": "Der Cloud-Zugang ist nicht konfiguriert.",
         "ios.cloud.notSignedIn": "Kein Konto angemeldet.",
@@ -2995,6 +3001,9 @@ enum IosI18nCatalogs {
         "ios.auth.emailNotConfirmed": "Tu dirección aún no está confirmada. Abre el enlace que acabamos de enviarte.",
         "ios.auth.providerNotEnabled": "El inicio de sesión con {provider} aún no está activado en este proyecto de Supabase.",
         "ios.auth.sessionExpired": "Tu sesión ha caducado. Vuelve a iniciar sesión.",
+        "ios.auth.rateLimited": "Demasiados intentos. Espera un minuto y vuelve a intentarlo.",
+        "ios.auth.linkExpired": "Este enlace ya no puede iniciar tu sesión. Inicia sesión abajo o pide un enlace nuevo.",
+        "ios.error.network": "Sin conexión. Revisa tu internet e inténtalo de nuevo.",
         // Le cloud, quand il refuse. Ces phrases remontent jusqu'à l'écran.
         "ios.cloud.notConfigured": "El acceso a la nube no está configurado.",
         "ios.cloud.notSignedIn": "Ninguna cuenta conectada.",
@@ -4166,6 +4175,9 @@ enum IosI18nCatalogs {
         "ios.auth.emailNotConfirmed": "Adresin henüz onaylanmadı. Az önce gönderdiğimiz bağlantıyı aç.",
         "ios.auth.providerNotEnabled": "{provider} ile giriş bu Supabase projesinde henüz açık değil.",
         "ios.auth.sessionExpired": "Oturumun sona erdi. Tekrar giriş yap.",
+        "ios.auth.rateLimited": "Çok fazla deneme. Bir dakika bekle, sonra tekrar dene.",
+        "ios.auth.linkExpired": "Bu bağlantıyla artık giriş yapılamıyor. Aşağıdan giriş yap ya da yeni bir bağlantı iste.",
+        "ios.error.network": "Bağlantı yok. İnternetini kontrol edip tekrar dene.",
         // Le cloud, quand il refuse. Ces phrases remontent jusqu'à l'écran.
         "ios.cloud.notConfigured": "Bulut erişimi yapılandırılmamış.",
         "ios.cloud.notSignedIn": "Bağlı hesap yok.",
@@ -5483,6 +5495,9 @@ enum IosI18nCatalogs {
         "ios.auth.emailNotConfirmed": "Your address isn't confirmed yet. Open the link we just sent you.",
         "ios.auth.providerNotEnabled": "Signing in with {provider} isn't enabled on this Supabase project yet.",
         "ios.auth.sessionExpired": "Your session has expired. Sign in again.",
+        "ios.auth.rateLimited": "Too many tries. Wait a minute, then try again.",
+        "ios.auth.linkExpired": "This link can no longer sign you in. Sign in below, or request a new link.",
+        "ios.error.network": "No connection. Check your internet and try again.",
         // Le cloud, quand il refuse. Ces phrases remontent jusqu'à l'écran.
         "ios.cloud.notConfigured": "Cloud access isn't configured.",
         "ios.cloud.notSignedIn": "No account signed in.",

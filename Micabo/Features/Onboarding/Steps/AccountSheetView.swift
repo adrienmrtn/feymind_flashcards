@@ -54,6 +54,10 @@ struct OnboardingAccountSheet: View {
                     .padding(.top, 8)
             }
             .padding(.top, 22)
+            // Les portes seules attendent la fin d'une connexion en cours : pas deux à la fois.
+            // « Passer », juste en dessous, reste vivant - posé sur toute la languette, ce
+            // verrou laissait l'élève sans sortie tant qu'Apple ou Google n'avait pas répondu.
+            .allowsHitTesting(!auth.isWorking)
 
             VStack(spacing: 6) {
                 Button(action: skip) {
@@ -79,7 +83,6 @@ struct OnboardingAccountSheet: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(OnboardingPalette.white.ignoresSafeArea())
         .animation(.easeOut(duration: 0.22), value: auth.message)
-        .allowsHitTesting(!auth.isWorking)
         // La connexion se termine dans le contrôleur, pas dans le bouton : c'est le passage à
         // l'état « connecté » qui referme, quel que soit le fournisseur emprunté.
         .onChange(of: auth.isSignedIn) { _, isSignedIn in

@@ -26,9 +26,12 @@ struct OnboardingFlowView: View {
     init(library: ModelContext, onFinish: @escaping () -> Void) {
         self.onFinish = onFinish
         let model = OnboardingModel.resuming(in: library)
-        // Une page se regarde avant de se quitter : moins d'une seconde après son arrivée,
-        // le rond ne fait rien (voir `OnboardingModel.minimumDwell`).
-        model.minimumDwell = 0.9
+        // Une page se pose avant de se quitter : le temps du glissement, et un souffle. Un
+        // appui plus précoce n'est plus perdu, il attend la fin de ce temps (voir
+        // `OnboardingModel.minimumDwell`). C'était 0,9 s d'appuis ignorés sans rien dire ;
+        // le glissement verrouille déjà le double appui (`transitionLock`, et les pages ne
+        // répondent pas au doigt pendant qu'elles glissent).
+        model.minimumDwell = OnboardingMotion.slideDuration + 0.15
         _model = State(initialValue: model)
         _pager = State(initialValue: OnboardingPager(current: model.step))
     }
@@ -229,8 +232,8 @@ struct OnboardingFlowView: View {
         // L'app s'ouvre sur Home, dont la barre crée la première leçon : le parcours n'en
         // écrit plus. Ce dernier écran n'a pas de croix : on n'y enferme personne.
         OnboardingPreferences.pendingFirstImport = false
-        // La note se redemande une fois, à la première arrivée dans l'app (`RootView`).
-        UserDefaults.standard.set(true, forKey: InAppReviewPrompt.pendingKey)
+        // La note ne se demande plus à l'arrivée dans l'app : elle attend la première leçon
+        // terminée (`InAppReviewPrompt`).
         onFinish()
     }
 }

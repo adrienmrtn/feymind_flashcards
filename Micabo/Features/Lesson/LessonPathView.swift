@@ -1,3 +1,4 @@
+import StoreKit
 import SwiftData
 import SwiftUI
 
@@ -13,6 +14,7 @@ struct LessonPathView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.requestReview) private var requestReview
     @Environment(LessonBuilder.self) private var builder
     @Query(sort: \Exam.date) private var exams: [Exam]
 
@@ -378,11 +380,25 @@ struct LessonPathView: View {
     }
 
     private func leave(to destination: LessonFinishedView.Destination) {
+        askForReviewAfterFirstLesson()
         switch destination {
         case .flashcards:
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { sheet = .cards }
         case .lessons:
             dismiss()
+        }
+    }
+
+    /// **La note, une fois, après la première leçon terminée** (`InAppReviewPrompt`) : « Leçon
+    /// terminée » et la série ont eu leur moment, l'élève sait maintenant ce qu'il note. Un
+    /// instant après la sortie, pour que la fenêtre du système ne se pose pas sur un écran qui
+    /// descend.
+    private func askForReviewAfterFirstLesson() {
+        guard InAppReviewPrompt.claimAfterFirstLesson() else { return }
+        let requestReview = requestReview
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(800))
+            requestReview()
         }
     }
 

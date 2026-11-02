@@ -298,7 +298,7 @@ final class OnboardingFlowTests: XCTestCase {
     func testTheTransitionLockHoldsTheStep() {
         let model = self.model(advancingTo: .country)
         model.transitionLock = true
-        model.advance()
+        XCTAssertFalse(model.advance(), "L'appui refusé le dit : l'écran rend son bouton")
         XCTAssertEqual(model.step, .country, "Un appui pendant le glissement n'empile pas de page")
         model.transitionLock = false
         model.advance()
@@ -345,6 +345,23 @@ final class OnboardingFlowTests: XCTestCase {
         model.minimumDwell = 0
         model.advance()
         XCTAssertEqual(model.step, .proofRetention)
+    }
+
+    /// **Un appui trop tôt n'est plus perdu** : il attend la fin du temps minimal, puis la
+    /// page avance - une seule fois, même après deux appuis.
+    func testAnEarlyTapWaitsInsteadOfBeingDropped() {
+        let model = self.model(advancingTo: .goal)
+        model.minimumDwell = 0.2
+        XCTAssertTrue(model.advance(), "L'appui est pris, pour plus tard")
+        XCTAssertTrue(model.advance())
+        XCTAssertEqual(model.step, .goal, "Trop tôt : la page reste, pour l'instant")
+
+        let advanced = expectation(description: "la page avance à la fin du temps minimal")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            XCTAssertEqual(model.step, .proofRetention, "Une seule page, malgré deux appuis")
+            advanced.fulfill()
+        }
+        wait(for: [advanced], timeout: 3)
     }
 
     /// Les clés des demandes retirées restent listées : sur un appareil qui a fait l'ancien

@@ -24,6 +24,47 @@ final class AuditFixesTests: XCTestCase {
         XCTAssertFalse(PaywallOutcome.purchased.countsAsDismissal)
         XCTAssertTrue(PaywallOutcome.cancelled.countsAsDismissal)
         XCTAssertTrue(PaywallOutcome.unavailable.countsAsDismissal)
+        XCTAssertTrue(PaywallOutcome.failed(.network).countsAsDismissal)
+    }
+
+    // MARK: - Les pannes de la boutique (audit du 2 novembre 2026)
+
+    /// Le réseau, la boutique et une offre fermée ne se disent pas pareil : « l'achat n'a pas
+    /// abouti » à qui n'a pas de réseau le fait chercher du côté de sa carte. Chaque phrase
+    /// existe dans toutes les langues.
+    func testEachStoreFailureHasItsOwnTranslatedMessage() {
+        let messages = [PaywallFailure.network, .store, .productUnavailable].map(\.message)
+        XCTAssertEqual(Set(messages).count, 3)
+        XCTAssertEqual(PaywallFailure.identity.message, PaywallFailure.network.message)
+        XCTAssertEqual(PaywallOutcome.unavailable.failureMessage, PaywallFailure.productUnavailable.message)
+        XCTAssertEqual(PaywallOutcome.failed(.store).failureMessage, PaywallFailure.store.message)
+        XCTAssertNil(PaywallOutcome.pending.failureMessage)
+        XCTAssertNil(PaywallOutcome.cancelled.failureMessage)
+
+        for locale in UiLocale.allCases {
+            let table = IosI18nCatalogs.table(for: locale.rawValue)
+            for key in ["ios.error.network", "ios.auth.rateLimited", "ios.auth.linkExpired"] {
+                XCTAssertNotNil(table[key], "\(locale.rawValue) \(key)")
+            }
+        }
+    }
+
+    /// **La note se demande une fois, après la première leçon terminée** - plus pendant le
+    /// parcours ni à l'arrivée dans l'app, avant tout usage.
+    func testTheReviewIsAskedOnceAfterTheFirstLesson() throws {
+        let suite = "micabo.tests.review.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        XCTAssertTrue(InAppReviewPrompt.claimAfterFirstLesson(defaults: defaults))
+        XCTAssertFalse(InAppReviewPrompt.claimAfterFirstLesson(defaults: defaults), "Une fois, pas à chaque leçon")
+    }
+
+    /// Sans boutique branchée (les tests, les aperçus), le paywall n'attend aucun prix : rien
+    /// ne viendrait, et il garde ses prix écrits.
+    func testWithoutAStoreThePaywallDoesNotWaitForPrices() throws {
+        try XCTSkipIf(PaywallPurchases.isReady, "La boutique est branchée sur cet hôte de test")
+        XCTAssertTrue(PaywallPriceLoading.hasPrices(for: PaywallCatalog.all.map(\.productID)))
     }
 
     func testThePendingMessageIsTranslatedEverywhere() {

@@ -94,6 +94,51 @@ final class AuthDecodingTests: XCTestCase {
         XCTAssertNotNil(AuthError.sessionExpired.errorDescription)
     }
 
+    /// **Les refus de GoTrue qu'un élève rencontre se disent dans sa langue** : le délai entre
+    /// deux liens et le lien expiré arrivaient à l'écran avec la phrase anglaise du serveur.
+    /// Ils sont reconnus à leur code, et à leur phrase pour un serveur qui ne les nommerait pas.
+    func testGoTrueRefusalsAreTranslated() {
+        XCTAssertEqual(
+            SupabaseAuthClient.error(status: 429, payload: [
+                "error_code": "over_email_send_rate_limit",
+                "msg": "For security purposes, you can only request this after 53 seconds.",
+            ]),
+            .rateLimited
+        )
+        XCTAssertEqual(
+            SupabaseAuthClient.error(status: 400, payload: [
+                "msg": "For security purposes, you can only request this after 60 seconds.",
+            ]),
+            .rateLimited
+        )
+        XCTAssertEqual(
+            SupabaseAuthClient.error(status: 403, payload: [
+                "error_code": "otp_expired",
+                "msg": "Email link is invalid or has expired",
+            ]),
+            .linkExpired
+        )
+        XCTAssertEqual(
+            SupabaseAuthClient.error(status: 404, payload: [
+                "error_code": "flow_state_not_found",
+                "msg": "invalid flow state, no valid flow state found",
+            ]),
+            .linkExpired
+        )
+        XCTAssertEqual(
+            SupabaseAuthClient.error(status: 400, payload: ["error_code": "invalid_grant"]),
+            .invalidCredentials,
+            "Les autres refus gardent leur sens"
+        )
+
+        let rateLimited = AuthError.rateLimited.errorDescription ?? ""
+        let linkExpired = AuthError.linkExpired.errorDescription ?? ""
+        XCTAssertFalse(rateLimited.isEmpty)
+        XCTAssertFalse(linkExpired.isEmpty)
+        XCTAssertNotEqual(rateLimited, linkExpired)
+        XCTAssertFalse(rateLimited.contains("security purposes"))
+    }
+
     /// Le schéma de retour est écrit à deux endroits, l'`Info.plist` et le code. S'ils
     /// divergent, la connexion Google échoue à son retour et rien ne le dit.
     func testAPlausibleEmailHasALocalPartAndADottedDomain() {

@@ -87,6 +87,72 @@ struct PaywallFlowView: View {
     @State private var storeRevision = PaywallStorePrices.revision
 
     var body: some View {
+        // **Les prix du pays, ou l'attente** : tant que la boutique n'a pas répondu, ni l'offre
+        // ni les formules ne s'affichent avec les prix écrits en euros (`PaywallPriceGate`).
+        PaywallPriceGate(
+            productIDs: PaywallCatalog.all.map(\.productID),
+            onClose: onDismiss,
+            onRevision: { storeRevision = $0 }
+        ) {
+            stages
+        }
+        // **Un balayage vers le bas sur l'offre ne referme pas : il montre les formules**,
+        // comme la croix. Sans ça, la feuille se refermait d'un geste sur le premier écran,
+        // et l'élève ne voyait jamais la comparaison ni l'offre annuelle. Sur les formules,
+        // le geste referme pour de bon.
+        .interactiveDismissDisabled(stage == .offer)
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 24).onEnded { value in
+                guard stage == .offer,
+                      value.translation.height > 90,
+                      value.translation.height > abs(value.translation.width) * 1.5 else { return }
+                Haptics.selection()
+                showPlans()
+            }
+        )
+        .micaboScreenBackground()
+        // Le blanc du parcours d'accueil, en pleine page comme en feuille : le paywall en
+        // est la dernière page, et il en garde la charte.
+        .background(OnboardingPalette.white.ignoresSafeArea())
+        .onAppear {
+            openedAt = Date()
+            Analytics.track(.paywallOpened, ["trigger": .text(trigger?.rawValue ?? "inconnu")])
+        }
+        // **Un achat confirmé après coup ferme le paywall.** Un achat en attente (une
+        // validation parentale, un droit que RevenueCat n'a pas encore vu) s'ouvre plus tard,
+        // par le flux du SDK (`ProAccess.observePurchases`) : le paywall encore ouvert se
+        // referme alors comme après un achat, au lieu de rester devant quelqu'un d'abonné.
+        .onChange(of: pro?.isPro == true) { _, isPro in
+            guard isPro, !didSubscribe else { return }
+            didSubscribe = true
+            onSubscribed()
+        }
+        // `onDisappear` et non le bouton de fermeture : la feuille se referme aussi d'un
+        // balayage, et une sortie qui ne se compte pas fait un entonnoir qui fuit.
+        .onDisappear {
+            guard !didSubscribe, lastOutcome?.countsAsDismissal != false else { return }
+            // Refermé sans achat : le cadeau du tarif réduit tombe (`DiscountOffer`).
+            DiscountOffer.paywallClosed(isPro: pro?.isPro ?? false)
+            Analytics.track(.paywallDismissed, [
+                "trigger": .text(trigger?.rawValue ?? "inconnu"),
+                "stage": .text(stage == .plans ? "plans" : "offre"),
+                "seconds": .number((Date().timeIntervalSince(openedAt) * 10).rounded() / 10),
+            ])
+        }
+        .alert(L10n.t("app.common.oops", locale: .resolved()), isPresented: .constant(failure != nil)) {
+            Button(L10n.t("app.a11y.close", locale: .resolved()), role: .cancel) { failure = nil }
+        } message: {
+            Text(failure ?? "")
+        }
+        .alert(L10n.t("ios.paywallPendingTitle", locale: .resolved()), isPresented: $showsPending) {
+            Button(L10n.t("ios.ok", locale: .resolved()), role: .cancel) {}
+        } message: {
+            Text(L10n.t("ios.paywallPending", locale: .resolved()))
+        }
+    }
+
+    /// L'offre, puis les formules.
+    private var stages: some View {
         ZStack {
             switch stage {
             case .offer:
@@ -114,56 +180,6 @@ struct PaywallFlowView: View {
             }
         }
         .animation(OnboardingMotion.page, value: stage)
-        // **Un balayage vers le bas sur l'offre ne referme pas : il montre les formules**,
-        // comme la croix. Sans ça, la feuille se refermait d'un geste sur le premier écran,
-        // et l'élève ne voyait jamais la comparaison ni l'offre annuelle. Sur les formules,
-        // le geste referme pour de bon.
-        .interactiveDismissDisabled(stage == .offer)
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 24).onEnded { value in
-                guard stage == .offer,
-                      value.translation.height > 90,
-                      value.translation.height > abs(value.translation.width) * 1.5 else { return }
-                Haptics.selection()
-                showPlans()
-            }
-        )
-        .micaboScreenBackground()
-        // Le lancement les a déjà demandés ; on repasse ici parce qu'un premier appel
-        // tombé sans réseau laisserait ce paywall-là sur les prix de la France.
-        // Le blanc du parcours d'accueil, en pleine page comme en feuille : le paywall en
-        // est la dernière page, et il en garde la charte.
-        .background(OnboardingPalette.white.ignoresSafeArea())
-        .task {
-            await PaywallPurchases.refreshPrices()
-            storeRevision = PaywallStorePrices.revision
-        }
-        .onAppear {
-            openedAt = Date()
-            Analytics.track(.paywallOpened, ["trigger": .text(trigger?.rawValue ?? "inconnu")])
-        }
-        // `onDisappear` et non le bouton de fermeture : la feuille se referme aussi d'un
-        // balayage, et une sortie qui ne se compte pas fait un entonnoir qui fuit.
-        .onDisappear {
-            guard !didSubscribe, lastOutcome?.countsAsDismissal != false else { return }
-            // Refermé sans achat : le cadeau du tarif réduit tombe (`DiscountOffer`).
-            DiscountOffer.paywallClosed(isPro: pro?.isPro ?? false)
-            Analytics.track(.paywallDismissed, [
-                "trigger": .text(trigger?.rawValue ?? "inconnu"),
-                "stage": .text(stage == .plans ? "plans" : "offre"),
-                "seconds": .number((Date().timeIntervalSince(openedAt) * 10).rounded() / 10),
-            ])
-        }
-        .alert(L10n.t("app.common.oops", locale: .resolved()), isPresented: .constant(failure != nil)) {
-            Button(L10n.t("app.a11y.close", locale: .resolved()), role: .cancel) { failure = nil }
-        } message: {
-            Text(failure ?? "")
-        }
-        .alert(L10n.t("ios.paywallPendingTitle", locale: .resolved()), isPresented: $showsPending) {
-            Button(L10n.t("ios.ok", locale: .resolved()), role: .cancel) {}
-        } message: {
-            Text(L10n.t("ios.paywallPending", locale: .resolved()))
-        }
     }
 
     private func showPlans() {
@@ -201,17 +217,21 @@ struct PaywallFlowView: View {
             pro?.unlock()
             Haptics.success()
             onSubscribed()
-        case .unavailable:
+        case .unavailable, .failed:
             // Le motif distingue « la boutique a dit non » de « la boutique n'a pas
-            // répondu » : le premier est un problème d'offre, le second de configuration,
-            // et confondre les deux fait chercher au mauvais endroit.
+            // répondu », et le réseau de l'App Store : confondre les trois fait chercher au
+            // mauvais endroit. La phrase suit la même cause.
+            let reason: String
+            if case .failed(let cause) = outcome {
+                reason = cause.analyticsReason
+            } else {
+                reason = PaywallPurchases.isReady ? "refus" : "boutique_fermee"
+            }
             Analytics.track(.paywallPurchaseFailed, [
                 "plan": .text(plan.productID),
-                "reason": .text(PaywallPurchases.isReady ? "refus" : "boutique_fermee"),
+                "reason": .text(reason),
             ])
-            failure = PaywallPurchases.isReady
-                ? L10n.t("ios.paywallBuyFail", locale: .resolved())
-                : L10n.t("ios.paywallNotOpen", locale: .resolved())
+            failure = outcome.failureMessage
         case .cancelled:
             Analytics.track(.paywallPurchaseCancelled, ["plan": .text(plan.productID)])
         case .pending:
@@ -231,7 +251,12 @@ struct PaywallFlowView: View {
         isPurchasing = false
 
         guard outcome == .purchased else {
-            failure = L10n.t("ios.paywallNoRestore", locale: .resolved())
+            // Une panne (le réseau, la boutique) n'est pas « rien à restaurer ».
+            if case .failed(let cause) = outcome {
+                failure = cause.message
+            } else {
+                failure = L10n.t("ios.paywallNoRestore", locale: .resolved())
+            }
             return
         }
         didSubscribe = true

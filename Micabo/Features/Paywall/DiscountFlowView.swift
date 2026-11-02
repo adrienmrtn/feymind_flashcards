@@ -54,12 +54,16 @@ struct DiscountFlowView: View {
                     .transition(.paywallStage)
 
             case .paywall:
-                DiscountPaywallStage(
-                    isPurchasing: isPurchasing,
-                    onClose: onDismiss,
-                    onSubscribe: { Task { await buy() } },
-                    onRestore: { Task { await restore() } }
-                )
+                // Le tarif réduit au prix du pays, ou l'attente : jamais les 29,99 € écrits
+                // en dur à quelqu'un qu'Apple prélèvera dans une autre monnaie.
+                PaywallPriceGate(productIDs: [DiscountOffer.plan.productID], onClose: onDismiss) {
+                    DiscountPaywallStage(
+                        isPurchasing: isPurchasing,
+                        onClose: onDismiss,
+                        onSubscribe: { Task { await buy() } },
+                        onRestore: { Task { await restore() } }
+                    )
+                }
                 .transition(.paywallStage)
             }
         }
@@ -100,11 +104,9 @@ struct DiscountFlowView: View {
             pro?.unlock()
             Haptics.success()
             onSubscribed()
-        case .unavailable:
-            failure = L10n.t(
-                PaywallPurchases.isReady ? "ios.paywallBuyFail" : "ios.paywallNotOpen",
-                locale: .resolved()
-            )
+        case .unavailable, .failed:
+            // Chaque cause sa phrase : le réseau, la boutique, une offre pas encore ouverte.
+            failure = outcome.failureMessage
         case .cancelled:
             break
         case .pending:
@@ -124,7 +126,12 @@ struct DiscountFlowView: View {
         isPurchasing = false
 
         guard outcome == .purchased else {
-            failure = L10n.t("ios.paywallNoRestore", locale: .resolved())
+            // Une panne (le réseau, la boutique) n'est pas « rien à restaurer ».
+            if case .failed(let cause) = outcome {
+                failure = cause.message
+            } else {
+                failure = L10n.t("ios.paywallNoRestore", locale: .resolved())
+            }
             return
         }
         pro?.unlock()

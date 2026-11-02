@@ -139,13 +139,58 @@ final class AuthController {
     // MARK: - Sans compte
 
     /// Le jeton des fonctions : celui du compte, sinon celui du compte invité, ouvert à la
-    /// première demande. `nil` quand ni l'un ni l'autre n'est possible — hors ligne, ou
-    /// connexion anonyme fermée côté Supabase : l'appel part alors sous la clé publique.
+    /// première demande.
+    ///
+    /// `nil` quand aucune identité ne s'ouvre, et l'appel ne part pas (`SupabaseFunctions`) :
+    /// **plus jamais sous la clé publique**. Elle porte un budget du jour partagé par tous les
+    /// appareils sans identité, et un élève neuf lisait « reviens demain » avant sa première
+    /// leçon - puis, la transition finie côté serveur, un refus pur et simple.
+    ///
+    /// **Un compte dont le jeton ne se rafraîchit pas ne prend pas celui de l'invité.** Ce n'est
+    /// presque toujours qu'une panne passagère (l'avion, un réseau lent) : passer sous l'invité
+    /// aurait compté la leçon et le quota à un autre que l'élève connecté. On rend `nil`, et
+    /// l'appel échoue comme une panne de réseau, qu'on peut retenter. Seul un compte que
+    /// GoTrue a oublié (`forget()`) laisse la place à l'invité : on n'est alors plus connecté.
     func functionsAccessToken() async -> String? {
-        if session != nil, let token = await validAccessToken() {
-            return token
+        if session != nil {
+            if let token = await validAccessToken() { return token }
+            guard session == nil else { return nil }
         }
-        return await guestAccessToken()
+        return await ensureGuestAccessToken()
+    }
+
+    /// Les pauses avant chaque nouvel essai d'ouverture de l'invité.
+    static let guestRetryDelays: [Duration] = [.milliseconds(500), .milliseconds(1500)]
+    /// Au-delà, on ne relance plus : hors ligne, chaque essai attend déjà le réseau, et
+    /// l'élève ne doit pas regarder tourner l'écran pendant trois minutes.
+    static let guestRetryBudget: Duration = .seconds(12)
+
+    /// **Le jeton de l'invité, quitte à réessayer de l'ouvrir.** Une création qui a buté au
+    /// lancement (un réseau qui se réveille, GoTrue lent une seconde) se retente ici, juste
+    /// avant l'appel qui en a besoin, deux fois avec une courte pause.
+    private func ensureGuestAccessToken() async -> String? {
+        guard AppConfig.isConfigured else { return nil }
+        let clock = ContinuousClock()
+        let start = clock.now
+        if let token = await guestAccessToken() { return token }
+        for delay in Self.guestRetryDelays {
+            guard !Task.isCancelled, start.duration(to: clock.now) < Self.guestRetryBudget else { return nil }
+            try? await Task.sleep(for: delay)
+            if let token = await guestAccessToken() { return token }
+        }
+        return nil
+    }
+
+    /// **Qui achète, ouvert avant l'achat** (`PaywallPurchases.buy`). Le compte, sinon
+    /// l'invité, ouvert maintenant s'il n'existe pas encore. `nil` quand aucun ne s'ouvre :
+    /// l'achat ne part pas, plutôt que sous l'identifiant anonyme de RevenueCat, que le
+    /// webhook refuse.
+    func ensureBillingIdentity() async -> (userID: UUID?, guestID: UUID?) {
+        if let user { return (user.id, guestUserID) }
+        if guestUserID == nil {
+            _ = await ensureGuestAccessToken()
+        }
+        return (billingUserID, guestUserID)
     }
 
     /// **Un 401 d'une fonction** (`SupabaseFunctions.recoverIdentity`) : le jeton du compte,
@@ -243,10 +288,13 @@ final class AuthController {
 
         let request = ASAuthorizationAppleIDProvider().createRequest()
         prepareAppleRequest(request)
-        let flow = AppleSignInFlow(requests: [request]) { [weak self] result in
+        let flow = AppleSignInFlow(requests: [request]) { [weak self] source, result in
             Task { @MainActor in
                 guard let self else { return }
-                self.appleFlow = nil
+                // Seulement si c'est encore lui : un succès tardif (voir `AppleSignInFlow`)
+                // peut arriver quand l'élève a déjà relancé une connexion, et lâcher le
+                // contrôleur de celle-ci la ferait échouer.
+                if self.appleFlow === source { self.appleFlow = nil }
                 await self.signInWithApple(result: result)
             }
         }
@@ -280,8 +328,8 @@ final class AuthController {
                 ])
                 // **Le 1000 ne s'affiche pas tout de suite.** Neuf fois sur dix, la connexion
                 // suit dans les secondes ; montrer une erreur à ce moment-là, c'est faire
-                // douter quelqu'un qui est en train de réussir. Si rien ne suit en dix
-                // secondes, le message vient, avec les mêmes mots qu'avant.
+                // douter quelqu'un qui est en train de réussir. Si rien ne suit en une
+                // douzaine de secondes, le message vient, avec les mêmes mots qu'avant.
                 if nsError.code == ASAuthorizationError.unknown.rawValue {
                     self.deferAppleError(error.localizedDescription)
                     throw AuthError.transient
@@ -370,12 +418,15 @@ final class AuthController {
         }
         await perform {
             let pkce = PKCEPair()
-            self.pendingVerifier = pkce.verifier
             try await self.client.sendMagicLink(
                 email: address,
                 redirectTo: AuthRedirect.url,
                 challenge: pkce.challenge
             )
+            // **Gardé seulement une fois le lien parti.** Posé avant l'envoi, le vérificateur
+            // d'un renvoi que GoTrue refusait (une minute entre deux liens) écrasait celui du
+            // lien réellement reçu : ce lien-là ne pouvait plus ouvrir de session.
+            self.rememberVerifier(pkce.verifier)
             self.message = .sent(address)
         }
     }
@@ -410,6 +461,18 @@ final class AuthController {
             items.first { $0.name == name }?.value
         }
 
+        // **Un lien refusé revient avec son erreur** (`error`, `error_code`,
+        // `error_description`) : un lien expiré ou déjà ouvert (`otp_expired`). L'app ne
+        // faisait rien, et l'élève restait devant l'écran de connexion sans savoir pourquoi.
+        // On le dit, avec la suite : redemander un lien depuis le même écran.
+        // Déjà connecté (un vieux lien rouvert), il n'y a rien à dire.
+        if value("error") != nil || value("error_code") != nil || value("error_description") != nil {
+            guard !isSignedIn else { return }
+            Analytics.track(.signInFailed, ["reason": .text(value("error_code") ?? value("error") ?? "lien")])
+            message = .error(AuthError.linkExpired.errorDescription ?? "")
+            return
+        }
+
         if let refresh = value("refresh_token") {
             await perform {
                 let session = try await self.client.refresh(refreshToken: refresh)
@@ -427,32 +490,79 @@ final class AuthController {
             return
         }
 
-        if let code = value("code"), let verifier = pendingVerifier {
+        if let code = value("code") {
+            // Un code sans vérificateur : le lien a été demandé sur un autre appareil, ou
+            // avant une réinstallation. Il ne peut rien ouvrir ici ; on le dit au lieu de se
+            // taire.
+            let verifiers = pendingVerifiers
+            guard !verifiers.isEmpty else {
+                guard !isSignedIn else { return }
+                Analytics.track(.signInFailed, ["reason": "lien_sans_verificateur"])
+                message = .error(AuthError.linkExpired.errorDescription ?? "")
+                return
+            }
             await perform {
-                let session = try await self.client.exchange(code: code, verifier: verifier)
+                let session = try await self.exchange(code: code, verifiers: verifiers)
                 await self.adoptAccount(session)
-                self.pendingVerifier = nil
+                self.pendingVerifiers = []
             }
         }
     }
 
-    /// Vérificateur du dernier flux PKCE lancé hors de l'app (lien par courriel).
+    /// **Échange le code avec le bon vérificateur.** Le lien ouvert n'est pas forcément le
+    /// dernier demandé : on essaie les vérificateurs gardés, du plus récent au plus ancien,
+    /// comme Android. Une panne de réseau s'arrête au premier essai : les suivants buteraient
+    /// sur la même, et l'élève pourra rouvrir le lien.
+    private func exchange(code: String, verifiers: [String]) async throws -> AuthSession {
+        for verifier in verifiers {
+            do {
+                return try await client.exchange(code: code, verifier: verifier)
+            } catch AuthError.network(let detail) {
+                throw AuthError.network(detail)
+            } catch {
+                continue
+            }
+        }
+        throw AuthError.linkExpired
+    }
+
+    /// Les vérificateurs des derniers liens envoyés par courriel, du plus récent au plus
+    /// ancien.
     ///
     /// `OAuthWebFlow` garde le sien en mémoire parce qu'il attend son retour dans la même
     /// fonction. Un lien reçu par courriel, lui, peut être ouvert deux jours plus tard : son
-    /// vérificateur doit survivre au lancement suivant.
-    private var pendingVerifier: String? {
-        get { UserDefaults.standard.string(forKey: Self.verifierKey) }
+    /// vérificateur doit survivre au lancement suivant. Et il y en a plusieurs : l'élève qui
+    /// redemande un lien peut ouvrir le premier.
+    private var pendingVerifiers: [String] {
+        get {
+            let defaults = UserDefaults.standard
+            var verifiers = defaults.stringArray(forKey: Self.verifiersKey) ?? []
+            // L'ancienne clé, à un seul vérificateur : un lien demandé avant la mise à jour.
+            if let legacy = defaults.string(forKey: Self.legacyVerifierKey), !verifiers.contains(legacy) {
+                verifiers.append(legacy)
+            }
+            return verifiers
+        }
         set {
-            if let newValue {
-                UserDefaults.standard.set(newValue, forKey: Self.verifierKey)
+            let defaults = UserDefaults.standard
+            defaults.removeObject(forKey: Self.legacyVerifierKey)
+            if newValue.isEmpty {
+                defaults.removeObject(forKey: Self.verifiersKey)
             } else {
-                UserDefaults.standard.removeObject(forKey: Self.verifierKey)
+                defaults.set(Array(newValue.prefix(Self.keptVerifiers)), forKey: Self.verifiersKey)
             }
         }
     }
 
-    private static let verifierKey = "micabo.auth.pkceVerifier"
+    /// Le vérificateur d'un lien qui vient de partir, en tête de la liste.
+    private func rememberVerifier(_ verifier: String) {
+        pendingVerifiers = [verifier] + pendingVerifiers.filter { $0 != verifier }
+    }
+
+    /// Trois liens gardés : c'est déjà plus que ce qu'un élève redemande avant d'en ouvrir un.
+    static let keptVerifiers = 3
+    private static let verifiersKey = "micabo.auth.pkceVerifiers"
+    private static let legacyVerifierKey = "micabo.auth.pkceVerifier"
 
     // MARK: - Sortie
 
@@ -571,12 +681,13 @@ final class AuthController {
         message = nil
     }
 
-    /// Montre l'erreur immédiate d'Apple dans dix secondes, sauf si une connexion l'a rendue
-    /// sans objet entre-temps.
+    /// Montre l'erreur immédiate d'Apple un peu après la fin de l'attente d'un succès tardif
+    /// (`AppleSignInFlow.lateSuccessWindow`), sauf si une connexion l'a rendue sans objet
+    /// entre-temps.
     private func deferAppleError(_ description: String) {
         deferredAppleError?.cancel()
         deferredAppleError = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(10))
+            try? await Task.sleep(for: AppleSignInFlow.lateSuccessWindow)
             guard !Task.isCancelled, let self, !self.isSignedIn, !self.isWorking else { return }
             self.message = .error(description)
         }
@@ -631,13 +742,28 @@ final class AuthController {
 /// ne garantissait pas.
 @MainActor
 final class AppleSignInFlow: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
+    /// **Combien de temps un succès reste attendu après l'erreur inconnue (1000).** Les
+    /// mesures du 23 octobre 2026 : la vraie réponse suit le 1000 jusqu'à sept secondes plus
+    /// tard. Une seconde et demie n'en laissait passer qu'une partie ; douze les couvrent.
+    static let lateSuccessWindow: Duration = .seconds(12)
+    /// Le temps avant de rendre l'erreur inconnue à l'appelant, qui la garde pour lui
+    /// (`AuthController.deferAppleError`) : elle ne s'affiche que si aucun succès ne suit.
+    static let unknownErrorDelay: Duration = .milliseconds(1500)
+
     private let controller: ASAuthorizationController
-    private let completion: (Result<ASAuthorization, Error>) -> Void
+    private let completion: (AppleSignInFlow, Result<ASAuthorization, Error>) -> Void
+    /// Vrai une fois la réponse définitive rendue : un succès, une autre erreur, ou la fin de
+    /// l'attente d'un succès tardif.
     private var finished = false
+    /// Vrai quand l'erreur inconnue a été rendue : un succès peut encore la remplacer.
+    private var deliveredUnknownFailure = false
     /// L'erreur inconnue mise de côté, le temps de voir si un succès la suit.
     private var pendingFailure: Task<Void, Never>?
+    /// **Le flux se tient en vie** pendant `lateSuccessWindow` après le 1000 : c'est lui qui
+    /// garde le contrôleur d'Apple, et un contrôleur lâché ne rend jamais le succès qui suit.
+    private var keepAlive: Task<Void, Never>?
 
-    init(requests: [ASAuthorizationRequest], completion: @escaping (Result<ASAuthorization, Error>) -> Void) {
+    init(requests: [ASAuthorizationRequest], completion: @escaping (AppleSignInFlow, Result<ASAuthorization, Error>) -> Void) {
         controller = ASAuthorizationController(authorizationRequests: requests)
         self.completion = completion
         super.init()
@@ -675,24 +801,53 @@ final class AppleSignInFlow: NSObject, ASAuthorizationControllerDelegate, ASAuth
     ///
     /// Le premier retour gagnait pourtant : une erreur inconnue (1000) arrivée juste avant le
     /// succès faisait perdre le succès, puis s'affichait dix secondes plus tard. Un succès passe
-    /// donc toujours tout de suite ; une erreur inconnue attend une seconde et demie qu'un
-    /// succès la remplace. Les autres erreurs (annulation comprise) passent sans attendre.
+    /// donc toujours tout de suite. Une erreur inconnue est rendue au bout d'une seconde et
+    /// demie - l'appelant la tait - mais **le flux reste ouvert douze secondes** : un succès
+    /// qui arrive après passe encore, et c'est lui qui ouvre la session. Jusqu'au 2 novembre
+    /// 2026, le flux se refermait avec l'erreur, et un succès arrivé à la deuxième seconde
+    /// était perdu. Les autres erreurs (annulation comprise) passent sans attendre.
     private func finish(_ result: Result<ASAuthorization, Error>) {
         guard !finished else { return }
-        if case .failure(let error) = result,
-           (error as? ASAuthorizationError)?.code == .unknown,
-           pendingFailure == nil {
+        switch result {
+        case .success:
+            pendingFailure?.cancel()
+            pendingFailure = nil
+            close()
+            completion(self, result)
+
+        case .failure(let error) where (error as? ASAuthorizationError)?.code == .unknown:
+            guard pendingFailure == nil, !deliveredUnknownFailure else { return }
             pendingFailure = Task { @MainActor [weak self] in
-                try? await Task.sleep(for: .milliseconds(1500))
+                try? await Task.sleep(for: Self.unknownErrorDelay)
                 guard let self, !Task.isCancelled, !self.finished else { return }
-                self.finished = true
-                self.completion(result)
+                self.deliveredUnknownFailure = true
+                self.completion(self, result)
             }
-            return
+            // Une référence forte, à dessein : personne d'autre ne garde le flux une fois
+            // l'erreur rendue, et c'est lui qui tient le contrôleur d'Apple.
+            keepAlive = Task { @MainActor in
+                try? await Task.sleep(for: Self.lateSuccessWindow)
+                self.close()
+            }
+
+        case .failure:
+            // Une autre erreur après un 1000 déjà rendu n'ajoute rien : l'appelant attend
+            // déjà de voir si un succès suit, et affichera le 1000 sinon.
+            guard !deliveredUnknownFailure else {
+                close()
+                return
+            }
+            pendingFailure?.cancel()
+            pendingFailure = nil
+            close()
+            completion(self, result)
         }
-        pendingFailure?.cancel()
-        pendingFailure = nil
+    }
+
+    /// Plus aucune réponse n'est attendue : le flux peut partir.
+    private func close() {
         finished = true
-        completion(result)
+        keepAlive?.cancel()
+        keepAlive = nil
     }
 }

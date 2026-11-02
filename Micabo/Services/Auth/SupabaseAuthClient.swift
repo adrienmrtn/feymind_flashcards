@@ -180,7 +180,13 @@ struct SupabaseAuthClient {
     }
 
     /// GoTrue nomme ses refus : c'est le code qu'on lit, pas la phrase, qui peut changer.
-    private static func error(status: Int, payload: [String: Any]) -> AuthError {
+    ///
+    /// **Aucune phrase de GoTrue n'arrive plus à l'écran pour les refus qu'un élève
+    /// rencontre** : le délai entre deux liens (« For security purposes, you can only request
+    /// this after 60 seconds. ») et le lien expiré (« Email link is invalid or has expired »)
+    /// s'affichaient en anglais, quelle que soit la langue de l'app. Les deux phrases sont
+    /// aussi reconnues sans code, pour un serveur qui ne les nommerait pas.
+    static func error(status: Int, payload: [String: Any]) -> AuthError {
         let code = (payload["error_code"] as? String) ?? (payload["error"] as? String) ?? ""
         let message = (payload["msg"] as? String)
             ?? (payload["error_description"] as? String)
@@ -195,11 +201,21 @@ struct SupabaseAuthClient {
             return .invalidCredentials
         case "email_not_confirmed":
             return .emailNotConfirmed
+        case "over_email_send_rate_limit", "over_request_rate_limit", "over_sms_send_rate_limit":
+            return .rateLimited
+        case "otp_expired", "flow_state_expired", "flow_state_not_found", "bad_code_verifier":
+            return .linkExpired
         case "validation_failed" where message.localizedCaseInsensitiveContains("provider"):
             return .providerNotEnabled("ce fournisseur")
         default:
             if status == 400, message.localizedCaseInsensitiveContains("provider is not enabled") {
                 return .providerNotEnabled("ce fournisseur")
+            }
+            if status == 429 || message.localizedCaseInsensitiveContains("for security purposes") {
+                return .rateLimited
+            }
+            if message.localizedCaseInsensitiveContains("invalid or has expired") {
+                return .linkExpired
             }
             return .server(message)
         }
