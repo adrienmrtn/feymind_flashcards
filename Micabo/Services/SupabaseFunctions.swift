@@ -37,16 +37,30 @@ struct SupabaseFunctions {
     /// buté une fois restait refusé jusqu'au lancement suivant.
     static var recoverIdentity: (() async -> String?)?
 
+    /// **Le transport des leçons** (`generate-lesson`), aux délais plus longs que ceux du
+    /// serveur.
+    ///
+    /// Le serveur se donne 130 secondes (`REQUEST_BUDGET_MS`, `_shared/deadline.ts`), plus
+    /// l'aller-retour : couper à 120 côté app abandonnait un plan qui allait arriver. La leçon
+    /// offerte était réservée (`begin_lesson`), le plan écrit, et l'élève ne recevait qu'une
+    /// erreur. 170 secondes laissent au serveur le temps d'aboutir, ou d'échouer lui-même et de
+    /// rendre la leçon (`releaseLesson`).
+    static let generation = SupabaseFunctions(
+        session: SupabaseFunctions.makeSession(requestTimeout: 170, resourceTimeout: 240)
+    )
+
     /// Les délais sont longs à dessein : une transcription puis une génération se comptent
     /// en dizaines de secondes, et couper à trente ferait échouer les appels qui allaient
     /// aboutir.
-    var session: URLSession = {
+    var session: URLSession = SupabaseFunctions.makeSession(requestTimeout: 120, resourceTimeout: 180)
+
+    static func makeSession(requestTimeout: TimeInterval, resourceTimeout: TimeInterval) -> URLSession {
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 120
-        configuration.timeoutIntervalForResource = 180
+        configuration.timeoutIntervalForRequest = requestTimeout
+        configuration.timeoutIntervalForResource = resourceTimeout
         configuration.waitsForConnectivity = true
         return URLSession(configuration: configuration)
-    }()
+    }
 
     /// Appelle une fonction et rend l'enveloppe JSON de la réponse.
     func post(_ function: String, payload: [String: Any]) async throws -> [String: Any] {
