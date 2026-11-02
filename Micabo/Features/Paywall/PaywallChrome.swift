@@ -268,3 +268,128 @@ enum PaywallPitch {
         L10n.t("ios.paywallReassurance", locale: .resolved())
     }
 }
+
+// MARK: - Les prix du pays, ou l'attente
+
+/// Ce que `PaywallPriceGate` règle sans dépendre de son contenu : un type générique ne peut
+/// pas porter de constantes.
+enum PaywallPriceLoading {
+    /// Les pauses avant chaque demande des prix : la première part tout de suite, les
+    /// suivantes s'espacent. Sept secondes en tout, puis « Réessayer ».
+    static let retryDelays: [Duration] = [.zero, .seconds(1), .seconds(2), .seconds(4)]
+
+    /// Vrai quand le paywall peut montrer ses prix : la boutique a répondu pour chacun de ses
+    /// produits, ou il n'y a pas de boutique branchée (aperçus, constructions sans clé), et
+    /// rien ne viendra.
+    static func hasPrices(for productIDs: [String]) -> Bool {
+        !PaywallPurchases.isReady || productIDs.allSatisfy { PaywallStorePrices.price(for: $0) != nil }
+    }
+}
+
+/// **Les prix du pays, ou rien.**
+///
+/// Quand la boutique n'avait pas encore répondu - un premier lancement sur un réseau lent,
+/// un App Store qui tarde -, le paywall montrait les prix écrits en dur : ceux de la France,
+/// en euros, à tout le monde. Un prix faux à côté d'un bouton d'achat. Le paywall attend
+/// maintenant la réponse, la redemande en espaçant (`PaywallPriceLoading.retryDelays`), puis
+/// propose « Réessayer » avec la cause.
+///
+/// **La croix est là tout de suite** pendant l'attente : on ne retient personne derrière un
+/// chargement.
+struct PaywallPriceGate<Content: View>: View {
+    /// Les produits dont le paywall affiche le prix.
+    let productIDs: [String]
+    var onClose: () -> Void
+    /// Rappelé à chaque réponse de la boutique, avec `PaywallStorePrices.revision` : les
+    /// écrans redessinent l'essai et les prix qui arrivent après leur ouverture.
+    var onRevision: (Int) -> Void
+    let content: () -> Content
+
+    private enum Phase: Equatable {
+        case loading
+        case failed(String)
+        case ready
+    }
+
+    @State private var phase: Phase
+
+    init(
+        productIDs: [String],
+        onClose: @escaping () -> Void,
+        onRevision: @escaping (Int) -> Void = { _ in },
+        @ViewBuilder content: @escaping () -> Content
+    ) {
+        self.productIDs = productIDs
+        self.onClose = onClose
+        self.onRevision = onRevision
+        self.content = content
+        _phase = State(initialValue: PaywallPriceLoading.hasPrices(for: productIDs) ? .ready : .loading)
+    }
+
+    var body: some View {
+        Group {
+            if phase == .ready {
+                content()
+            } else {
+                waiting
+            }
+        }
+        .task { await load() }
+    }
+
+    private var waiting: some View {
+        VStack(spacing: 0) {
+            PaywallHeader(onClose: onClose)
+            Spacer(minLength: 0)
+            VStack(spacing: 18) {
+                if case .failed(let message) = phase {
+                    Text(message)
+                        .font(MicaboFont.ui(16, weight: .medium))
+                        .foregroundStyle(OnboardingPalette.gray)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button(L10n.t("ios.retry", locale: .resolved())) {
+                        Task { await load() }
+                    }
+                    .buttonStyle(MicaboSecondaryButtonStyle())
+                } else {
+                    ProgressView()
+                        .controlSize(.large)
+                        .tint(OnboardingPalette.accent)
+                }
+            }
+            .padding(.horizontal, MicaboSpacing.screen)
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// Demande les prix jusqu'à ce qu'ils soient là, ou que les essais soient épuisés.
+    ///
+    /// Déjà là, ils sont relus quand même, sans rien cacher : l'essai d'un compte et un prix
+    /// changé dans App Store Connect arrivent par la même réponse.
+    @MainActor
+    private func load() async {
+        if phase == .ready {
+            await PaywallPurchases.refreshPrices()
+            onRevision(PaywallStorePrices.revision)
+            return
+        }
+        phase = .loading
+        var failure: PaywallFailure?
+        for delay in PaywallPriceLoading.retryDelays {
+            if delay > .zero {
+                try? await Task.sleep(for: delay)
+            }
+            if Task.isCancelled { return }
+            failure = await PaywallPurchases.fetchPrices()
+            onRevision(PaywallStorePrices.revision)
+            if PaywallPriceLoading.hasPrices(for: productIDs) {
+                phase = .ready
+                return
+            }
+        }
+        // La boutique a répondu sans ces produits : l'offre n'est pas ouverte dans ce pays.
+        phase = .failed((failure ?? .productUnavailable).message)
+    }
+}

@@ -80,8 +80,9 @@ struct PaywallPlan: Identifiable, Equatable {
     /// **Le prix écrit n'est plus qu'un repli.** Il est celui de la France, et un étudiant
     /// turc à qui l'on annonce des euros pendant qu'Apple lui prélève des livres lit un
     /// chiffre faux — pas approximatif, faux. `PaywallStorePrices` garde ce que
-    /// l'offering a répondu, dans la devise et le format du pays ; le nombre d'ici ne sert
-    /// plus qu'avant la réponse du réseau, pour qu'un paywall ne s'ouvre jamais vide.
+    /// l'offering a répondu, dans la devise et le format du pays. Quand la boutique est
+    /// branchée, le paywall attend sa réponse (`PaywallPriceGate`) au lieu de montrer ce
+    /// nombre ; il ne sert plus qu'aux aperçus et aux constructions sans boutique.
     var displayPrice: String {
         PaywallStorePrices.price(for: productID)?.localized ?? PaywallPrice.text(price)
     }
@@ -383,14 +384,63 @@ enum PaywallOutcome: Equatable {
     /// tout seul quand la boutique confirmera (`ProAccess.observePurchases`). Le montrer comme
     /// une panne faisait racheter, et le compter comme une fermeture offrait le cadeau à
     /// quelqu'un qui venait d'acheter au prix fort.
+    ///
+    /// C'est aussi l'issue d'un achat que la boutique a encaissé sans que le droit se voie
+    /// encore : ni un échec (le dire faisait racheter), ni un Pro ouvert sans confirmation.
     case pending
+    /// **La boutique a buté**, et l'on sait pourquoi : le réseau, l'App Store, ou une identité
+    /// qui n'a pas pu s'ouvrir avant l'achat. Ce n'est jamais un achat.
+    case failed(PaywallFailure)
 
     /// Vrai quand refermer le paywall après cette issue est une vraie fermeture sans achat,
     /// celle qui fait tomber le cadeau du tarif réduit (`DiscountOffer.paywallClosed`).
     var countsAsDismissal: Bool {
         switch self {
         case .purchased, .pending: false
-        case .cancelled, .unavailable: true
+        case .cancelled, .unavailable, .failed: true
+        }
+    }
+
+    /// La phrase d'un achat qui n'a pas abouti, `nil` pour les issues qui n'en ont pas.
+    var failureMessage: String? {
+        switch self {
+        case .unavailable: PaywallFailure.productUnavailable.message
+        case .failed(let failure): failure.message
+        case .purchased, .cancelled, .pending: nil
+        }
+    }
+}
+
+/// **Pourquoi la boutique n'a pas vendu**, ou pas répondu : chaque cause a sa phrase.
+///
+/// Toutes disaient « l'achat n'a pas abouti », et l'élève sans réseau cherchait du côté de
+/// sa carte bancaire. Les phrases sont celles du catalogue, dans les 26 langues.
+enum PaywallFailure: Equatable {
+    /// Rien n'est arrivé jusqu'à la boutique, ou rien n'en est revenu.
+    case network
+    /// La boutique a refusé ou buté : StoreKit, l'App Store, des achats interdits.
+    case store
+    /// L'offre n'est pas en vente : aucun produit publié, ou aucun SDK branché.
+    case productUnavailable
+    /// L'acheteur n'a pas pu être identifié avant l'achat (`PaywallPurchases.buy`) : presque
+    /// toujours le réseau, et ça se dit comme lui.
+    case identity
+
+    var message: String {
+        switch self {
+        case .network, .identity: L10n.t("ios.error.network", locale: .resolved())
+        case .store: L10n.t("ios.paywallBuyFail", locale: .resolved())
+        case .productUnavailable: L10n.t("ios.paywallNotOpen", locale: .resolved())
+        }
+    }
+
+    /// Le motif que les statistiques comptent (`paywall_purchase_failed`).
+    var analyticsReason: String {
+        switch self {
+        case .network: "reseau"
+        case .store: "refus"
+        case .productUnavailable: "boutique_fermee"
+        case .identity: "identite"
         }
     }
 }

@@ -79,6 +79,9 @@ struct MicaboApp: App {
         // Un 401 d'une fonction : un invité qui n'avait pas pu s'ouvrir s'ouvre maintenant, et
         // l'appel repart une fois avec son jeton.
         SupabaseFunctions.recoverIdentity = { await auth.recoverFunctionsIdentity() }
+        // Un achat n'a lieu qu'au nom de quelqu'un : l'invité s'ouvre au besoin, et RevenueCat
+        // passe sous son identifiant avant la boutique (`PaywallPurchases.buy`).
+        PaywallPurchases.billingIdentity = { await auth.ensureBillingIdentity() }
         // Les statistiques partent avec le jeton du compte quand il y en a un, et sous la
         // clé publique sinon : le parcours d'accueil se mesure **avant** qu'il y ait
         // quelqu'un de connecté, et c'est justement la moitié qui intéresse.
