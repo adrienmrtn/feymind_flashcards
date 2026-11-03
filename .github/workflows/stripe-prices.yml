@@ -28,6 +28,14 @@ jobs:
         with:
           node-version: 22
           package-manager-cache: false
+      - name: Compte et mode de la clé (sonde temporaire, n'imprime jamais la clé)
+        env:
+          KEY: ${{ secrets.STRIPE_RESTRICTED_KEY }}
+        run: |
+          echo "compte : $(curl -s -u "$KEY:" https://api.stripe.com/v1/account | jq -c '{id, name: (.settings.dashboard.display_name // .business_profile.name // "?"), error: .error.message}')"
+          for p in price_1UXjeTQzdoFeOog0wsMCtwBa price_1UAqB547TFrcO0lvSacZ91Pp price_1UA59JQMgx8zg1703xvj1Cgk; do
+            echo "$p : $(curl -s -u "$KEY:" https://api.stripe.com/v1/prices/$p | jq -c '{livemode, active, currency, lookup_key, unit_amount, error: .error.message}')"
+          done
       - name: Plan, vérification, application
         env:
           STRIPE_RESTRICTED_KEY: ${{ secrets.STRIPE_RESTRICTED_KEY }}
