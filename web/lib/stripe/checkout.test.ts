@@ -15,9 +15,9 @@ import {
 } from "./checkout";
 
 describe("CHECKOUT_MAINTENANCE", () => {
-  it("le paiement web est fermé : aucune session Stripe ne se crée", () => {
-    // Rouvrir le paiement est une décision : elle passe par ce test, pas par un réglage.
-    expect(CHECKOUT_MAINTENANCE).toBe(true);
+  it("le paiement web est ouvert : les sessions Stripe se créent", () => {
+    // Fermer ou rouvrir le paiement est une décision : elle passe par ce test, pas par un réglage.
+    expect(CHECKOUT_MAINTENANCE).toBe(false);
   });
 });
 

@@ -138,6 +138,9 @@ ne porte le préfixe `NEXT_PUBLIC_`** : ce préfixe sur la clé de service publi
 - La refonte n'ajoute **aucune migration** et aucune variable d'environnement.
 - `/api/lesson/*` porte `maxDuration = 120` : un thème prend dix à vingt secondes, un plan cinq
   à dix.
+- Le paiement web s'ouvre et se ferme par `CHECKOUT_MAINTENANCE` (`lib/stripe/checkout.ts`), une
+  constante relue par un test : c'est un commit, pas un réglage. Stripe encaisse, RevenueCat
+  détient le droit (`docs/revenuecat.md`, § 11).
 
 Le site s'indexe **en production seulement** (`lib/config.ts`, `IS_INDEXABLE`) : une
 prévisualisation indexée se présenterait dans les résultats à la place du site, avec une URL

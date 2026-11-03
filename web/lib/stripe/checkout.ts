@@ -11,7 +11,7 @@ import type { pricing } from "@micabo/core";
  * Stripe est lu, et les champs vides ne partent plus.
  */
 
-/** Le paiement web est fermé : voir `./maintenance`, lisible aussi par le navigateur. */
+/** L'interrupteur du paiement web : voir `./maintenance`, lisible aussi par le navigateur. */
 export { CHECKOUT_MAINTENANCE } from "./maintenance";
 
 /**

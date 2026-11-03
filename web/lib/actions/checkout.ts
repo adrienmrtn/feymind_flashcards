@@ -25,9 +25,9 @@ import { createClient } from "@/lib/supabase/server";
 /**
  * L'encaissement web : Stripe Checkout, puis RevenueCat écrit le droit.
  *
- * **Fermé pour l'instant.** `CHECKOUT_MAINTENANCE` fait refuser l'action avant toute
- * lecture : le site répond « en maintenance » et ne crée aucune session. Tout ce qui suit
- * dans cette fonction décrit le fonctionnement quand il rouvrira.
+ * **L'interrupteur.** `CHECKOUT_MAINTENANCE` à `true` fait refuser l'action avant toute
+ * lecture : le site répond « en maintenance » et ne crée aucune session. Il est à `false`
+ * depuis le 3 novembre 2026 ; tout ce qui suit décrit le fonctionnement, ouvert.
  *
  * Tant que `STRIPE_SECRET_KEY` manque, le bouton dit que l'abonnement n'est
  * pas ouvert. Un 400 de Stripe affiche désormais le motif réel — un `price_…`
