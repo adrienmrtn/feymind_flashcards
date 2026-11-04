@@ -391,12 +391,16 @@ describe("les offres", () => {
     expect(resolvePricingCountry({ geo: "T1" })).toBeNull();
   });
 
-  it("sont six chez RevenueCat, tous sur pro — les anciens prix Stripe reconnus, plus vendus", () => {
-    expect(STORE_PRODUCTS).toHaveLength(6);
+  it("sont dix-huit chez RevenueCat, tous sur pro — les anciens prix Stripe reconnus, plus vendus", () => {
+    expect(STORE_PRODUCTS).toHaveLength(18);
     expect(STORE_PRODUCTS.filter((product) => product.store === "app_store")).toHaveLength(3);
-    expect(STORE_PRODUCTS.filter((product) => product.store === "stripe")).toHaveLength(3);
-    expect(STORE_PRODUCTS.filter((product) => product.store === "stripe").every((product) => product.legacy)).toBe(true);
-    expect(new Set(STORE_PRODUCTS.map((product) => product.id)).size).toBe(6);
+    const stripe = STORE_PRODUCTS.filter((product) => product.store === "stripe");
+    expect(stripe).toHaveLength(15);
+    expect(stripe.filter((product) => product.legacy)).toHaveLength(3);
+    // Un prix vendu par offre et par groupe de la grille : les douze de `stripePriceSpecs()`.
+    expect(stripe.filter((product) => !product.legacy)).toHaveLength(stripePriceSpecs().length);
+    expect(stripe.every((product) => /^price_[A-Za-z0-9]+$/.test(product.id))).toBe(true);
+    expect(new Set(STORE_PRODUCTS.map((product) => product.id)).size).toBe(18);
     expect(legacyStripePriceId("yearly")).toBe("price_1UAqB547TFrcO0lvSacZ91Pp");
     expect(legacyStripePriceId("weekly")).toBe("price_1UAqBI47TFrcO0lvTLjtkffx");
     expect(legacyStripePriceId("yearly_discount")).toBe("price_1UAqBJ47TFrcO0lvb1vDYAPj");

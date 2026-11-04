@@ -19,9 +19,9 @@ Rappel de ce qu'on vend :
 
 Ce sont les prix **iOS, en France**. Chaque pays a le sien : la grille complète est dans
 `store/pricing.json`, et une action GitHub la pose dans App Store Connect (§15). Le site
-**affiche** la même grille, pays par pays (§16) ; ses `price_…` Stripe sont encore ceux de
-l'ancienne grille — 69,99 €, 7,99 €, 39,99 € —, et le paiement web reste fermé tant que les
-douze prix du §16 ne sont pas créés.
+**affiche** la même grille, pays par pays (§16), et **la vend** : les douze prix Stripe du §16
+existent depuis le 4 novembre 2026 et le paiement web est ouvert. Les trois `price_…` de
+l'ancienne grille — 69,99 €, 7,99 €, 39,99 € — ne servent plus qu'à reconnaître un abonné d'avant.
 
 Identifiant de l'app : `com.micabo.ios`.
 
@@ -657,7 +657,27 @@ Les pays de chaque groupe :
 - `emerging` — Maroc, Algérie, Tunisie, Sénégal, Côte d'Ivoire, Égypte, Indonésie, Philippines,
   Viêt Nam, Pakistan, Nigeria (USD).
 
-**Pour rouvrir**, dans l'ordre :
+**Rouvert le 4 novembre 2026.** Les douze prix ont été créés par `store/stripe-prices.mjs` (action
+« Stripe : prix ») dans le compte Micabo (`acct_1UA51847TFrcO0lv`, celui que RevenueCat écoute et
+dont la clé est sur Vercel), enregistrés chez RevenueCat et rattachés à `pro`, puis listés dans
+`STORE_PRODUCTS`. Le site les retrouve par leur nom ; aucune variable `STRIPE_PRICE_…` n'est posée.
+
+| Nom (`lookup_key`) | `price_…` | Montant |
+| --- | --- | --- |
+| `micabo_yearly_standard` | `price_1UY10W47TFrcO0lvXprWgOx7` | EUR 49,99 |
+| `micabo_weekly_standard` | `price_1UY10X47TFrcO0lv6JKeLQEx` | EUR 4,99 |
+| `micabo_yearly_discount_standard` | `price_1UY10X47TFrcO0lvBrDbYmo5` | EUR 29,99 |
+| `micabo_yearly_south` | `price_1UY10X47TFrcO0lvC53IljPj` | EUR 39,99 |
+| `micabo_weekly_south` | `price_1UY10Y47TFrcO0lvB2w8Vd5X` | EUR 3,99 |
+| `micabo_yearly_discount_south` | `price_1UY10Y47TFrcO0lvEToXJ3tg` | EUR 23,99 |
+| `micabo_yearly_latam` | `price_1UY10Y47TFrcO0lvkhnznZZW` | USD 29,99 |
+| `micabo_weekly_latam` | `price_1UY10Z47TFrcO0lvzp5ovCxw` | USD 2,99 |
+| `micabo_yearly_discount_latam` | `price_1UY10Z47TFrcO0lvDL0WY3u4` | USD 17,99 |
+| `micabo_yearly_emerging` | `price_1UY10Z47TFrcO0lvAYPrH5Ln` | USD 19,99 |
+| `micabo_weekly_emerging` | `price_1UY10a47TFrcO0lvMFdLYQkG` | USD 1,99 |
+| `micabo_yearly_discount_emerging` | `price_1UY10a47TFrcO0lvneE7DkHJ` | USD 11,99 |
+
+Ce qu'il avait fallu faire, dans l'ordre :
 
 1. Créer les douze produits/prix ci-dessus (live, puis sandbox pour Preview), chacun avec la
    metadata `product_id` de son offre Apple (`com.micabo.app.pro.yearly`, `.weekly`,

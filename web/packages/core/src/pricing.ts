@@ -16,10 +16,10 @@
  * comme une arnaque. `freemium-parity.test.ts` relit la grille et le Swift, et tombe si le web
  * diverge.
  *
- * **Le paiement web reste fermé** (`CHECKOUT_MAINTENANCE`, `web/lib/stripe/maintenance.ts`). Les
- * prix Stripe à créer pour le rouvrir sont décrits par `stripePriceSpecs()` et listés dans
- * `docs/revenuecat.md` (§16) ; leurs identifiants arrivent par l'environnement
- * (`STRIPE_PRICE_ENV`).
+ * **Le paiement web est ouvert** depuis le 4 novembre 2026 (`CHECKOUT_MAINTENANCE`,
+ * `web/lib/stripe/maintenance.ts`). Les douze prix Stripe de la grille sont décrits par
+ * `stripePriceSpecs()`, créés par `store/stripe-prices.mjs`, et le site les retrouve chez Stripe
+ * par leur nom (`stripeLookupKey`) — ou par l'environnement (`STRIPE_PRICE_ENV`) s'il est posé.
  *
  * Le point qui compte pour le site : **le pourcentage d'économie est calculé, jamais écrit**,
  * et il l'est sur les prix du pays qu'on affiche. Une remise annoncée à côté de deux prix qui
@@ -431,10 +431,12 @@ export function catalogPlanOf(plan: Plan): CatalogPlan {
 /**
  * Les produits chez RevenueCat, tous attachés à l'entitlement `pro`.
  *
- * Les trois `price_…` Stripe listés ici sont ceux de **l'ancienne grille** (69,99 € / 7,99 € /
- * 39,99 €) : gardés pour reconnaître un abonnement web déjà pris, **jamais vendus**. Les prix
- * de la grille actuelle n'ont pas encore d'identifiant : ils arrivent par l'environnement
- * (`STRIPE_PRICE_ENV`), le jour où le paiement web rouvre.
+ * Les trois `price_…` Stripe marqués `legacy` sont ceux de **l'ancienne grille** (69,99 € /
+ * 7,99 € / 39,99 €) : gardés pour reconnaître un abonnement web déjà pris, **jamais vendus**.
+ * Les douze autres sont ceux de la grille par pays (`stripePriceSpecs()`), créés le
+ * 4 novembre 2026 par `store/stripe-prices.mjs` dans le compte Micabo et rattachés à `pro`
+ * chez RevenueCat : le site ne vend que par leur nom (`stripeLookupKey`), et cette liste sert
+ * à nommer l'offre d'un abonné web (`pricing-copy.ts`).
  */
 export type StoreKind = "app_store" | "stripe";
 
@@ -454,12 +456,24 @@ export const STORE_PRODUCTS: readonly StoreProduct[] = [
   { store: "stripe", id: "price_1UAqB547TFrcO0lvSacZ91Pp", plan: "yearly", legacy: true },
   { store: "stripe", id: "price_1UAqBI47TFrcO0lvTLjtkffx", plan: "weekly", legacy: true },
   { store: "stripe", id: "price_1UAqBJ47TFrcO0lvb1vDYAPj", plan: "yearly_discount", legacy: true },
+  { store: "stripe", id: "price_1UY10W47TFrcO0lvXprWgOx7", plan: "yearly" }, // micabo_yearly_standard
+  { store: "stripe", id: "price_1UY10X47TFrcO0lv6JKeLQEx", plan: "weekly" }, // micabo_weekly_standard
+  { store: "stripe", id: "price_1UY10X47TFrcO0lvBrDbYmo5", plan: "yearly_discount" }, // micabo_yearly_discount_standard
+  { store: "stripe", id: "price_1UY10X47TFrcO0lvC53IljPj", plan: "yearly" }, // micabo_yearly_south
+  { store: "stripe", id: "price_1UY10Y47TFrcO0lvB2w8Vd5X", plan: "weekly" }, // micabo_weekly_south
+  { store: "stripe", id: "price_1UY10Y47TFrcO0lvEToXJ3tg", plan: "yearly_discount" }, // micabo_yearly_discount_south
+  { store: "stripe", id: "price_1UY10Y47TFrcO0lvkhnznZZW", plan: "yearly" }, // micabo_yearly_latam
+  { store: "stripe", id: "price_1UY10Z47TFrcO0lvzp5ovCxw", plan: "weekly" }, // micabo_weekly_latam
+  { store: "stripe", id: "price_1UY10Z47TFrcO0lvDL0WY3u4", plan: "yearly_discount" }, // micabo_yearly_discount_latam
+  { store: "stripe", id: "price_1UY10Z47TFrcO0lvAYPrH5Ln", plan: "yearly" }, // micabo_yearly_emerging
+  { store: "stripe", id: "price_1UY10a47TFrcO0lvMFdLYQkG", plan: "weekly" }, // micabo_weekly_emerging
+  { store: "stripe", id: "price_1UY10a47TFrcO0lvneE7DkHJ", plan: "yearly_discount" }, // micabo_yearly_discount_emerging
 ];
 
 /** Le `price_…` de l'ancienne grille, pour reconnaître un abonné web d'avant. */
 export function legacyStripePriceId(plan: CatalogPlan): string {
   const found = STORE_PRODUCTS.find(
-    (product) => product.store === "stripe" && product.plan === plan,
+    (product) => product.store === "stripe" && product.legacy && product.plan === plan,
   );
   if (!found) throw new Error(`Prix Stripe manquant pour ${plan}`);
   return found.id;
