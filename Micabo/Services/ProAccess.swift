@@ -175,8 +175,8 @@ final class ProAccess {
         defaults.set(true, forKey: Key.isPro)
     }
 
-    /// Referme tout. La réponse du serveur passe par ici, et l'interrupteur de relecture
-    /// des réglages aussi — il n'existe qu'en `DEBUG`.
+    /// Referme tout. La réponse du serveur passe par ici, et l'interrupteur « Forcer Pro »
+    /// des réglages aussi — il n'existe qu'en développement et sur TestFlight.
     func lock() {
         guard isPro else { return }
         isPro = false
@@ -184,7 +184,6 @@ final class ProAccess {
     }
 
     func setPro(_ value: Bool) {
-        #if DEBUG
         // Un forçage tient contre tout le reste. Sans ce passage obligé, l'interrupteur des
         // réglages se défaisait tout seul : `refresh()` relit le SDK et la table à chaque
         // lancement et à chaque retour au premier plan, et remettait l'abonnement réel.
@@ -192,12 +191,11 @@ final class ProAccess {
             forced ? unlock() : lock()
             return
         }
-        #endif
         value ? unlock() : lock()
     }
 
-    #if DEBUG
-    /// **L'interrupteur Pro des constructions de développement.**
+    /// **L'interrupteur Pro des constructions de développement, de TestFlight, et du compte
+    /// développeur.**
     ///
     /// Un mur d'abonnement se règle en le regardant : la moitié floutée d'une fiche, le
     /// cadenas sur l'entraînement libre, le cadeau du premier cours. Les voir demandait de
@@ -207,11 +205,52 @@ final class ProAccess {
     /// `nil` veut dire « rien n'est forcé » : l'abonnement réel décide, comme partout
     /// ailleurs. C'est bien un triple état, et pas un booléen, sans quoi on ne pourrait
     /// plus revenir à la vérité du compte une fois l'interrupteur touché.
+    ///
+    /// Le compte développeur (`LifetimePro`) l'a **aussi dans la version de l'App Store** :
+    /// il est Pro à vie, et sans l'interrupteur il ne verrait jamais l'app gratuite — le
+    /// mur, les cadenas, le cadeau — telle que la voient ceux à qui on la vend. Le forçage
+    /// passe avant l'adresse : `refresh()` rend la main au compte développeur par `setPro`.
+    ///
+    /// **Il n'existe pas ailleurs, et ce n'est pas qu'une question d'écran.** Hors de ces
+    /// cas, la valeur rangée n'est même pas lue : un testeur qui a forcé Pro sur TestFlight
+    /// puis installe la version de l'App Store garde ses réglages d'appareil, et ce
+    /// forçage-là ne doit rien ouvrir. Hors construction de développement, jamais non plus
+    /// pour le compte de relecture d'Apple : sa relecture tourne elle aussi sur un reçu de
+    /// bac à sable, et un Pro ouvert d'un geste, sans achat, se refuse (règle 3.1.1).
     static let debugProOverrideKey = "micabo.debug.proOverride"
 
+    /// Vrai là où l'interrupteur existe.
+    var canForcePro: Bool {
+        Self.canForcePro(email: email?(), isDebugBuild: Self.isDebugBuild, isInternalBuild: BuildChannel.isInternal)
+    }
+
+    /// **Où l'interrupteur existe**, sans dépendre de la construction qui fait tourner les tests.
+    ///
+    /// - Toute construction de développement (`DEBUG`, lancée depuis Xcode) : pour tout
+    ///   compte, sans exception — aucun relecteur n'y touche.
+    /// - TestFlight : pour tout compte sauf celui de relecture d'Apple.
+    /// - L'App Store : pour le compte développeur seulement.
+    nonisolated static func canForcePro(email: String?, isDebugBuild: Bool, isInternalBuild: Bool) -> Bool {
+        if isDebugBuild { return true }
+        guard !AppStoreReview.matches(email) else { return false }
+        return isInternalBuild || LifetimePro.matches(email)
+    }
+
+    private nonisolated static var isDebugBuild: Bool {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
+    }
+
     var debugProOverride: Bool? {
-        get { defaults.object(forKey: Self.debugProOverrideKey) as? Bool }
+        get {
+            guard canForcePro else { return nil }
+            return defaults.object(forKey: Self.debugProOverrideKey) as? Bool
+        }
         set {
+            guard canForcePro else { return }
             if let newValue {
                 defaults.set(newValue, forKey: Self.debugProOverrideKey)
                 newValue ? unlock() : lock()
@@ -220,7 +259,6 @@ final class ProAccess {
             }
         }
     }
-    #endif
 
     /// Relit l'état de l'abonnement.
     ///

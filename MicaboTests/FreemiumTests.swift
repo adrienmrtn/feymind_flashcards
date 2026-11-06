@@ -162,6 +162,70 @@ final class FreemiumTests: XCTestCase {
         XCTAssertTrue(pro.isPro)
     }
 
+    /// **Forcer Pro, dans les deux sens, pour le compte développeur.** Il est Pro à vie :
+    /// sans l'interrupteur, il ne verrait jamais l'app gratuite. Le forçage tient contre
+    /// `refresh()`, qui rouvrirait sinon tout à chaque retour au premier plan, et rendre la
+    /// main au compte le remet Pro.
+    @MainActor
+    func testTheDeveloperAccountCanForceTheFreeAppAndBack() async {
+        let pro = ProAccess(defaults: isolatedDefaults(), email: { "adrien.not@gmail.com" })
+        XCTAssertTrue(pro.canForcePro)
+
+        await pro.refresh()
+        XCTAssertTrue(pro.isPro)
+
+        pro.debugProOverride = false
+        XCTAssertFalse(pro.isPro)
+        await pro.refresh()
+        XCTAssertFalse(pro.isPro, "Le compte développeur ne doit pas rouvrir ce que l'interrupteur a fermé")
+
+        pro.debugProOverride = true
+        XCTAssertTrue(pro.isPro)
+
+        pro.debugProOverride = nil
+        await pro.refresh()
+        XCTAssertTrue(pro.isPro, "Rendu au compte, le compte développeur est Pro à vie")
+    }
+
+    /// **Où l'interrupteur existe.** Toute construction Xcode, pour tout compte ; TestFlight,
+    /// pour tout compte sauf celui de relecture d'Apple — un Pro ouvert d'un geste, sans
+    /// achat, se refuse à la relecture ; l'App Store, pour le compte développeur seulement.
+    func testWhereForceProExists() {
+        let student = "eleve@micabo.app"
+        let developer = "adrien.not@gmail.com"
+        let reviewer = AppStoreReview.email
+
+        // Xcode : tout le monde.
+        for email in [student, developer, reviewer, nil] {
+            XCTAssertTrue(ProAccess.canForcePro(email: email, isDebugBuild: true, isInternalBuild: true))
+        }
+
+        // TestFlight : tout le monde sauf le relecteur.
+        XCTAssertTrue(ProAccess.canForcePro(email: student, isDebugBuild: false, isInternalBuild: true))
+        XCTAssertTrue(ProAccess.canForcePro(email: nil, isDebugBuild: false, isInternalBuild: true))
+        XCTAssertFalse(ProAccess.canForcePro(email: reviewer, isDebugBuild: false, isInternalBuild: true))
+
+        // App Store : le compte développeur seulement.
+        XCTAssertTrue(ProAccess.canForcePro(email: developer, isDebugBuild: false, isInternalBuild: false))
+        XCTAssertFalse(ProAccess.canForcePro(email: student, isDebugBuild: false, isInternalBuild: false))
+        XCTAssertFalse(ProAccess.canForcePro(email: nil, isDebugBuild: false, isInternalBuild: false))
+    }
+
+    /// Dans une construction Xcode, n'importe quel compte force le gratuit et le Pro.
+    @MainActor
+    func testAnyAccountCanForceProInADebugBuild() async {
+        let pro = ProAccess(defaults: isolatedDefaults(), email: { "eleve@micabo.app" })
+        XCTAssertTrue(pro.canForcePro)
+
+        pro.debugProOverride = true
+        await pro.refresh()
+        XCTAssertTrue(pro.isPro, "Sans abonnement, l'interrupteur ouvre Pro et `refresh()` ne le referme pas")
+
+        pro.debugProOverride = nil
+        await pro.refresh()
+        XCTAssertFalse(pro.isPro)
+    }
+
     // MARK: - Outillage
 
     /// Un domaine par test : les réglages partagés feraient dépendre un test de l'ordre
