@@ -698,9 +698,9 @@ struct SettingsView: View {
         )
     }
 
-    /// Outils de relecture. L'interrupteur « Forcer Pro » n'y paraît qu'en développement, sur
-    /// TestFlight et pour le compte développeur, jamais pour le compte de relecture d'Apple
-    /// (`ProAccess.canForcePro`).
+    /// Outils de relecture. L'interrupteur « Forcer Pro » y paraît dans toute construction
+    /// Xcode, sur TestFlight (sauf pour le compte de relecture d'Apple) et pour le compte
+    /// développeur (`ProAccess.canForcePro`).
     private var testSection: some View {
         MicaboSettingsSection(
             caption: i18n.t("ios.debug.test"),
@@ -744,11 +744,11 @@ struct SettingsView: View {
         )
         #endif
 
-        // **Forcer Pro**, en développement, sur TestFlight et pour le compte développeur — qui
-        // est Pro à vie et ne verrait sinon jamais l'app gratuite. Le mur d'abonnement se règle en
+        // **Forcer Pro**, dans toute construction Xcode, sur TestFlight et pour le compte
+        // développeur — Pro à vie, il ne verrait sinon jamais l'app gratuite. Le mur d'abonnement se règle en
         // le regardant : la moitié floutée d'une fiche, le cadenas sur l'entraînement libre,
         // le cadeau du premier cours. Sans cet interrupteur, les voir demandait deux comptes
-        // et un webhook coopératif. Jamais pour le compte de relecture d'Apple.
+        // et un webhook coopératif. Hors Xcode, jamais pour le compte de relecture d'Apple.
         if pro?.canForcePro == true {
             rows.append(contentsOf: forceProRows)
         }

@@ -214,17 +214,34 @@ final class ProAccess {
     /// **Il n'existe pas ailleurs, et ce n'est pas qu'une question d'écran.** Hors de ces
     /// cas, la valeur rangée n'est même pas lue : un testeur qui a forcé Pro sur TestFlight
     /// puis installe la version de l'App Store garde ses réglages d'appareil, et ce
-    /// forçage-là ne doit rien ouvrir. Jamais non plus pour le compte de relecture d'Apple :
-    /// sa relecture tourne elle aussi sur un reçu de bac à sable, et un Pro ouvert d'un
-    /// geste, sans achat, se refuse (règle 3.1.1).
+    /// forçage-là ne doit rien ouvrir. Hors construction de développement, jamais non plus
+    /// pour le compte de relecture d'Apple : sa relecture tourne elle aussi sur un reçu de
+    /// bac à sable, et un Pro ouvert d'un geste, sans achat, se refuse (règle 3.1.1).
     static let debugProOverrideKey = "micabo.debug.proOverride"
 
-    /// Vrai là où l'interrupteur existe : développement, TestFlight et compte développeur,
-    /// jamais pour le compte de relecture.
+    /// Vrai là où l'interrupteur existe.
     var canForcePro: Bool {
-        let address = email?()
-        guard !AppStoreReview.matches(address) else { return false }
-        return BuildChannel.isInternal || LifetimePro.matches(address)
+        Self.canForcePro(email: email?(), isDebugBuild: Self.isDebugBuild, isInternalBuild: BuildChannel.isInternal)
+    }
+
+    /// **Où l'interrupteur existe**, sans dépendre de la construction qui fait tourner les tests.
+    ///
+    /// - Toute construction de développement (`DEBUG`, lancée depuis Xcode) : pour tout
+    ///   compte, sans exception — aucun relecteur n'y touche.
+    /// - TestFlight : pour tout compte sauf celui de relecture d'Apple.
+    /// - L'App Store : pour le compte développeur seulement.
+    nonisolated static func canForcePro(email: String?, isDebugBuild: Bool, isInternalBuild: Bool) -> Bool {
+        if isDebugBuild { return true }
+        guard !AppStoreReview.matches(email) else { return false }
+        return isInternalBuild || LifetimePro.matches(email)
+    }
+
+    private nonisolated static var isDebugBuild: Bool {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
     }
 
     var debugProOverride: Bool? {

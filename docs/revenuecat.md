@@ -262,11 +262,11 @@ Ce qui a changé avec le branchement :
 - `observePurchases()` suit `customerInfoStream`, donc un abonnement résilié se referme sans
   redémarrage ;
 - `unavailable` n'appelle plus `unlock()` dans les deux paywalls ;
-- l'interrupteur « Forcer Pro » de `Réglages → Test` n'existe qu'en développement, sur
-  TestFlight, et pour le compte développeur (`LifetimePro`), y compris dans la version de
-  l'App Store — Pro à vie, ce compte ne verrait sinon jamais l'app gratuite. Jamais pour le
-  compte de relecture d'Apple, ni pour un client : hors de ces cas, la valeur forcée n'est
-  même pas lue (`ProAccess.canForcePro`).
+- l'interrupteur « Forcer Pro » de `Réglages → Test` existe dans toute construction Xcode
+  (`DEBUG`) pour tout compte, sur TestFlight pour tout compte sauf celui de relecture
+  d'Apple, et dans la version de l'App Store pour le compte développeur (`LifetimePro`)
+  seulement — Pro à vie, il ne verrait sinon jamais l'app gratuite. Jamais pour un client :
+  hors de ces cas, la valeur forcée n'est même pas lue (`ProAccess.canForcePro`).
 
 `lock()` et `setPro(_:)` restent : la réponse du serveur passe par là, et l'interrupteur
 aussi — un forçage tient contre `refresh()`, Pro à vie compris.
