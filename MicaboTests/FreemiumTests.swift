@@ -162,6 +162,48 @@ final class FreemiumTests: XCTestCase {
         XCTAssertTrue(pro.isPro)
     }
 
+    /// **Forcer Pro, dans les deux sens, pour le compte développeur.** Il est Pro à vie :
+    /// sans l'interrupteur, il ne verrait jamais l'app gratuite. Le forçage tient contre
+    /// `refresh()`, qui rouvrirait sinon tout à chaque retour au premier plan, et rendre la
+    /// main au compte le remet Pro.
+    @MainActor
+    func testTheDeveloperAccountCanForceTheFreeAppAndBack() async {
+        let pro = ProAccess(defaults: isolatedDefaults(), email: { "adrien.not@gmail.com" })
+        XCTAssertTrue(pro.canForcePro)
+
+        await pro.refresh()
+        XCTAssertTrue(pro.isPro)
+
+        pro.debugProOverride = false
+        XCTAssertFalse(pro.isPro)
+        await pro.refresh()
+        XCTAssertFalse(pro.isPro, "Le compte développeur ne doit pas rouvrir ce que l'interrupteur a fermé")
+
+        pro.debugProOverride = true
+        XCTAssertTrue(pro.isPro)
+
+        pro.debugProOverride = nil
+        await pro.refresh()
+        XCTAssertTrue(pro.isPro, "Rendu au compte, le compte développeur est Pro à vie")
+    }
+
+    /// **Jamais pour le compte de relecture d'Apple**, même sur un reçu de bac à sable : un
+    /// Pro ouvert d'un geste, sans achat, se refuse à la relecture. Une valeur forcée restée
+    /// sur l'appareil n'est même pas lue.
+    @MainActor
+    func testTheReviewAccountCannotForcePro() async {
+        let defaults = isolatedDefaults()
+        defaults.set(true, forKey: ProAccess.debugProOverrideKey)
+        let pro = ProAccess(defaults: defaults, email: { AppStoreReview.email })
+
+        XCTAssertFalse(pro.canForcePro)
+        XCTAssertNil(pro.debugProOverride)
+        pro.debugProOverride = true
+        XCTAssertNil(pro.debugProOverride)
+        await pro.refresh()
+        XCTAssertFalse(pro.isPro)
+    }
+
     // MARK: - Outillage
 
     /// Un domaine par test : les réglages partagés feraient dépendre un test de l'ordre

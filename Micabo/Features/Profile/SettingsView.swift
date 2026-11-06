@@ -698,8 +698,9 @@ struct SettingsView: View {
         )
     }
 
-    /// Outils de relecture. Plus d'interrupteur Pro : un interrupteur qui ment
-    /// sur l'abonnement, même en `DEBUG`, se prend pour le vrai droit.
+    /// Outils de relecture. L'interrupteur « Forcer Pro » n'y paraît qu'en développement, sur
+    /// TestFlight et pour le compte développeur, jamais pour le compte de relecture d'Apple
+    /// (`ProAccess.canForcePro`).
     private var testSection: some View {
         MicaboSettingsSection(
             caption: i18n.t("ios.debug.test"),
@@ -724,38 +725,6 @@ struct SettingsView: View {
             )
         )
 
-        // Le mur d'abonnement se règle en le regardant : la moitié floutée d'une fiche, le
-        // cadenas sur l'entraînement libre, le cadeau du premier cours. Sans cet
-        // interrupteur, les voir demandait deux comptes et un webhook coopératif.
-        rows.append(
-            MicaboRow(
-                tile: MicaboTile(glyph: .symbol("crown.fill"), background: MicaboColor.cautionSoft),
-                title: i18n.t("ios.debug.forcePro"),
-                subtitle: i18n.t(pro?.debugProOverride == nil ? "ios.debug.forceProOff" : "ios.debug.forceProOn"),
-                accessory: .toggle(Binding(
-                    get: { pro?.isPro ?? false },
-                    set: { value in pro?.debugProOverride = value }
-                ))
-            )
-        )
-
-        // Rendre la main au compte. C'est ce qui manque à un interrupteur à deux positions :
-        // une fois touché, il n'y a plus moyen de redemander la vérité de l'abonnement, et
-        // on finit par tester un mur qu'on a soi-même posé.
-        if pro?.debugProOverride != nil {
-            rows.append(
-                MicaboRow(
-                    tile: MicaboTile(glyph: .symbol("arrow.uturn.backward"), background: MicaboColor.surfaceMuted),
-                    title: i18n.t("ios.debug.forceProClear"),
-                    accessory: .chevron,
-                    action: {
-                        pro?.debugProOverride = nil
-                        Task { await pro?.refresh() }
-                    }
-                )
-            )
-        }
-
         // Le cours d'essai arrive au premier lancement. Ce bouton le remet : après l'avoir
         // supprimé, ou pour en avoir deux et comparer deux fiches du même document écrites
         // avec deux réglages de longueur.
@@ -774,6 +743,15 @@ struct SettingsView: View {
             )
         )
         #endif
+
+        // **Forcer Pro**, en développement, sur TestFlight et pour le compte développeur — qui
+        // est Pro à vie et ne verrait sinon jamais l'app gratuite. Le mur d'abonnement se règle en
+        // le regardant : la moitié floutée d'une fiche, le cadenas sur l'entraînement libre,
+        // le cadeau du premier cours. Sans cet interrupteur, les voir demandait deux comptes
+        // et un webhook coopératif. Jamais pour le compte de relecture d'Apple.
+        if pro?.canForcePro == true {
+            rows.append(contentsOf: forceProRows)
+        }
 
         // **Les notifications, sans attendre le soir** : en développement et sur TestFlight.
         if BuildChannel.isInternal {
@@ -889,6 +867,38 @@ struct SettingsView: View {
                 "title": next.title
             ])
         }
+    }
+
+    private var forceProRows: [MicaboRow] {
+        var rows = [
+            MicaboRow(
+                tile: MicaboTile(glyph: .symbol("crown.fill"), background: MicaboColor.cautionSoft),
+                title: i18n.t("ios.debug.forcePro"),
+                subtitle: i18n.t(pro?.debugProOverride == nil ? "ios.debug.forceProOff" : "ios.debug.forceProOn"),
+                accessory: .toggle(Binding(
+                    get: { pro?.isPro ?? false },
+                    set: { value in pro?.debugProOverride = value }
+                ))
+            )
+        ]
+
+        // Rendre la main au compte. C'est ce qui manque à un interrupteur à deux positions :
+        // une fois touché, il n'y a plus moyen de redemander la vérité de l'abonnement, et
+        // on finit par tester un mur qu'on a soi-même posé.
+        if pro?.debugProOverride != nil {
+            rows.append(
+                MicaboRow(
+                    tile: MicaboTile(glyph: .symbol("arrow.uturn.backward"), background: MicaboColor.surfaceMuted),
+                    title: i18n.t("ios.debug.forceProClear"),
+                    accessory: .chevron,
+                    action: {
+                        pro?.debugProOverride = nil
+                        Task { await pro?.refresh() }
+                    }
+                )
+            )
+        }
+        return rows
     }
 
     private var testFootnote: String {

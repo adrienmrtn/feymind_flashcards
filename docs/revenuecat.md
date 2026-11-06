@@ -262,12 +262,14 @@ Ce qui a changé avec le branchement :
 - `observePurchases()` suit `customerInfoStream`, donc un abonnement résilié se referme sans
   redémarrage ;
 - `unavailable` n'appelle plus `unlock()` dans les deux paywalls ;
-- l'interrupteur « Micabo Pro » de `Réglages → Test` n'existe qu'en `DEBUG`. Dans une version
-  livrée, un interrupteur qui mentirait sur l'état réel d'un abonnement payé est pire que pas
-  d'interrupteur du tout.
+- l'interrupteur « Forcer Pro » de `Réglages → Test` n'existe qu'en développement, sur
+  TestFlight, et pour le compte développeur (`LifetimePro`), y compris dans la version de
+  l'App Store — Pro à vie, ce compte ne verrait sinon jamais l'app gratuite. Jamais pour le
+  compte de relecture d'Apple, ni pour un client : hors de ces cas, la valeur forcée n'est
+  même pas lue (`ProAccess.canForcePro`).
 
-`lock()` et `setPro(_:)` restent : la réponse du serveur passe par là, et l'interrupteur de
-relecture en `DEBUG` aussi.
+`lock()` et `setPro(_:)` restent : la réponse du serveur passe par là, et l'interrupteur
+aussi — un forçage tient contre `refresh()`, Pro à vie compris.
 
 ## 10. Tester
 
