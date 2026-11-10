@@ -31,6 +31,18 @@ export function quizPath(id: string): Route {
   return `/app/lecons/${id}/quiz` as Route;
 }
 
+/** Le « Quiz éclair » des Outils de Home : le quiz de la leçon, en cinq questions. */
+export const QUICK_QUIZ_QUESTIONS = 5;
+
+export function quickQuizPath(id: string): Route {
+  return `/app/lecons/${id}/quiz?eclair=1` as Route;
+}
+
+/** La ligue de la semaine (`docs/refonte-knowunity.md` § 3). */
+export const LEAGUE_PATH = "/app/ligue" as Route;
+/** Le minuteur plein écran (`docs/refonte-knowunity.md` § 5). */
+export const FOCUS_PATH = "/app/minuteur" as Route;
+
 export function flashcardsPath(id: string): Route {
   return `/app/lecons/${id}/flashcards` as Route;
 }

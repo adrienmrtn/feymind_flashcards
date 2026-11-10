@@ -1,3 +1,5 @@
+import { kxRo } from "./kx-ro";
+
 /** Catalogue roumain (ro). L'arbre suit `fr.ts` ; les clés partagées avec l'iPhone reprennent la traduction de `I18n+ro.swift`. */
 export const appRo = {
   a11y: {
@@ -572,6 +574,7 @@ export const appRo = {
     delayMonths: "{n} luni",
     delayYears: "{n, plural, one {# an} other {# ani}}",
   },
+  kx: kxRo,
 } as const;
 
 export const copyRo = {

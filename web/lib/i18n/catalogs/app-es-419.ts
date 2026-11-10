@@ -1,3 +1,5 @@
+import { kxEs419 } from "./kx-es-419";
+
 /** Catalogue español latinoamericano (es-419). L'arbre suit `fr.ts` ; les clés partagées avec l'iPhone reprennent la traduction de `I18n+es419.swift`. */
 export const appEs419 = {
   a11y: {
@@ -572,6 +574,7 @@ export const appEs419 = {
     delayMonths: "{n} m",
     delayYears: "{n, plural, one {# año} other {# años}}",
   },
+  kx: kxEs419,
 } as const;
 
 export const copyEs419 = {

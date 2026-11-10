@@ -1,3 +1,5 @@
+import { kxEt } from "./kx-et";
+
 export const appEt = {
   a11y: {
     skipToContent: "Mine sisu juurde",
@@ -571,6 +573,7 @@ export const appEt = {
     delayMonths: "{n} k",
     delayYears: "{n, plural, one {# aasta} other {# aastat}}",
   },
+  kx: kxEt,
 } as const;
 
 export const copyEt = {

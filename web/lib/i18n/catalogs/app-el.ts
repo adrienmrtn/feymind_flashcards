@@ -1,3 +1,5 @@
+import { kxEl } from "./kx-el";
+
 /** Connected-app copy (Greek). Keys shared with the iOS app reuse I18n+el.swift. */
 export const appEl = {
   a11y: {
@@ -572,6 +574,7 @@ export const appEl = {
     delayMonths: "{n} μήν.",
     delayYears: "{n, plural, one {# χρόνος} other {# χρόνια}}",
   },
+  kx: kxEl,
 } as const;
 
 /** Shared short copy. */

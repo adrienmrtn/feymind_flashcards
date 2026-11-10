@@ -1,3 +1,5 @@
+import { kxRu } from "./kx-ru";
+
 /** Connected-app copy (Russian). Keys shared with the iOS app reuse I18n+ru.swift. */
 export const appRu = {
   a11y: {
@@ -572,6 +574,7 @@ export const appRu = {
     delayMonths: "{n} мес.",
     delayYears: "{n, plural, one {# год} few {# года} many {# лет} other {# года}}",
   },
+  kx: kxRu,
 } as const;
 
 /** Shared short copy. */

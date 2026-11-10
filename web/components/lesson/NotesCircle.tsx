@@ -14,6 +14,7 @@ import { QuestionCard, type QuizAnswer } from "@/components/lesson/QuestionCard"
 import { SheetBlocks } from "@/components/sheet/SheetBlocks";
 import { Spinner } from "@/components/ui/spinner";
 import { useI18n } from "@/lib/i18n/client";
+import { awardXp } from "@/lib/xp/client";
 
 export interface StepTheme {
   id: string;
@@ -110,6 +111,7 @@ export function NotesCircle({
   function answered(result: QuizAnswer) {
     if (!question) return;
     setAnswer(result);
+    awardXp(result.right ? "correctAnswer" : "wrongAnswer");
     onAnswer(question, result.right);
   }
 
@@ -241,7 +243,7 @@ function NotesPageView({
       if (!question) return null;
       return (
         <div {...reveal(0)} className="notes-reveal pt-4">
-          <QuestionCard question={question} tone={tone} answered={answer} shuffleSeed={pickingSeed(question.id, "notes")} onAnswer={onAnswer} />
+          <QuestionCard question={question} tone={tone} answered={answer} shuffleSeed={pickingSeed(question.id, "notes")} rewards onAnswer={onAnswer} />
         </div>
       );
   }

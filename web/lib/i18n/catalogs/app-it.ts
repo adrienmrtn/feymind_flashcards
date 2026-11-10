@@ -1,3 +1,5 @@
+import { kxIt } from "./kx-it";
+
 /** Connected-app copy (not landing or onboarding), Italian. */
 export const appIt = {
   a11y: {
@@ -572,6 +574,7 @@ export const appIt = {
     delayMonths: "{n} mesi",
     delayYears: "{n, plural, one {# anno} other {# anni}}",
   },
+  kx: kxIt,
 };
 
 export const copyIt = {

@@ -13,6 +13,7 @@ import { forgetCreation, lessonIdForCreation } from "@/lib/lesson/creation-id";
 import { lessonPath } from "@/lib/lesson/routes";
 import { firstCompletion, writeThemes } from "@/lib/lesson/theme-writer";
 import { requestPaywall } from "@/lib/paywall";
+import { awardXp } from "@/lib/xp/client";
 
 /**
  * **Créer une leçon, après l'envoi** (`docs/refonte-parcours.md` § 4) : « As-tu un examen ? »,
@@ -28,11 +29,17 @@ import { requestPaywall } from "@/lib/paywall";
 export function LessonCreationFlow({
   creation,
   hasSupports,
+  onboarding = false,
   onCancel,
   onCreated,
 }: {
   creation: LessonCreation;
   hasSupports: boolean;
+  /**
+   * La leçon offerte, créée depuis un import (`docs/refonte-knowunity.md` § 7) : la demande porte
+   * `onboarding: true`, que `begin_lesson(p_onboarding)` accepte pour un élève qui n'est pas Pro.
+   */
+  onboarding?: boolean;
   onCancel: () => void;
   onCreated: () => void;
 }) {
@@ -64,7 +71,7 @@ export function LessonCreationFlow({
       const response = await fetch("/api/lesson/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lessonId, ...creation, examDate: date }),
+        body: JSON.stringify({ lessonId, ...creation, examDate: date, ...(onboarding ? { onboarding: true } : {}) }),
       });
       outcome = (await response.json()) as typeof outcome;
     } catch {
@@ -85,6 +92,7 @@ export function LessonCreationFlow({
     await firstCompletion(outcome.lessonId);
     if (!alive.current) return;
     setStage("questions");
+    awardXp("lessonCreated");
     // La leçon existe : le même sujet, demandé plus tard, en sera une autre.
     forgetCreation(creation);
     onCreated();

@@ -1,3 +1,5 @@
+import { kxPtBR } from "./kx-pt-br";
+
 /** Connected-app copy (not landing or onboarding), Brazilian Portuguese. */
 export const appPtBR = {
   a11y: {
@@ -572,6 +574,7 @@ export const appPtBR = {
     delayMonths: "{n} meses",
     delayYears: "{n, plural, one {# ano} other {# anos}}",
   },
+  kx: kxPtBR,
 };
 
 export const copyPtBR = {

@@ -1,3 +1,5 @@
+import { kxHr } from "./kx-hr";
+
 export const appHr = {
   a11y: {
     skipToContent: "Prijeđi na sadržaj",
@@ -571,6 +573,7 @@ export const appHr = {
     delayMonths: "{n} mj.",
     delayYears: "{n, plural, one {# godina} few {# godine} other {# godina}}",
   },
+  kx: kxHr,
 } as const;
 
 export const copyHr = {

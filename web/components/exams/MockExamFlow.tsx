@@ -28,6 +28,7 @@ import { Mika } from "@/components/mika/Mika";
 import { addExamMissedCards, finishExamPaper } from "@/lib/actions/exam-paper";
 import { useI18n } from "@/lib/i18n/client";
 import { requestPaywall } from "@/lib/paywall";
+import { awardXp } from "@/lib/xp/client";
 
 /**
  * **Un examen blanc, du début à la fin** : on choisit les leçons et la durée, Mika écrit la
@@ -93,6 +94,7 @@ export function MockExamFlow({
 
   async function submit(paper: ExamPaper, answers: Record<string, QuizAnswer>, seconds: number) {
     const local = examResult(paper, answers, seconds);
+    awardXp("mockExamFinished");
     setPhase({ kind: "result", paper, answers, result: local });
     const outcome = await finishExamPaper(
       paper.id,

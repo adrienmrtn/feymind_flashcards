@@ -1,3 +1,5 @@
+import { kxPt } from "./kx-pt";
+
 /** Connected-app copy (not landing or onboarding), European Portuguese. */
 export const appPt = {
   a11y: {
@@ -572,6 +574,7 @@ export const appPt = {
     delayMonths: "{n} meses",
     delayYears: "{n, plural, one {# ano} other {# anos}}",
   },
+  kx: kxPt,
 };
 
 export const copyPt = {

@@ -1,3 +1,5 @@
+import { kxDa } from "./kx-da";
+
 /** Dansk (da) : textes de l'app connectée (hors vitrine et onboarding). */
 export const appDa = {
   a11y: {
@@ -572,6 +574,7 @@ export const appDa = {
     delayMonths: "{n} md",
     delayYears: "{n, plural, one {# år} other {# år}}",
   },
+  kx: kxDa,
 } as const;
 
 export const copyDa = {

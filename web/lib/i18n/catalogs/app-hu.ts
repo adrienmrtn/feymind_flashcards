@@ -1,3 +1,5 @@
+import { kxHu } from "./kx-hu";
+
 export const appHu = {
   a11y: {
     skipToContent: "Ugrás a tartalomra",
@@ -571,6 +573,7 @@ export const appHu = {
     delayMonths: "{n} hó",
     delayYears: "{n, plural, one {# év} other {# év}}",
   },
+  kx: kxHu,
 } as const;
 
 export const copyHu = {

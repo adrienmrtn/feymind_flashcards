@@ -1,3 +1,5 @@
+import { kxEn } from "./kx-en";
+
 /** Connected-app copy (not landing or onboarding). */
 export const appEn = {
   a11y: {
@@ -568,6 +570,7 @@ export const appEn = {
     delayMonths: "{n} mo",
     delayYears: "{n, plural, one {# year} other {# years}}",
   },
+  kx: kxEn,
 } as const;
 
 export const copyEn = {

@@ -1,3 +1,5 @@
+import { kxFr } from "./kx-fr";
+
 /** Textes de l'app connectée (hors landing et onboarding). */
 export const appFr = {
   a11y: {
@@ -571,6 +573,7 @@ export const appFr = {
     delayMonths: "{n} mois",
     delayYears: "{n, plural, one {# an} other {# ans}}",
   },
+  kx: kxFr,
 } as const;
 
 export const copyFr = {

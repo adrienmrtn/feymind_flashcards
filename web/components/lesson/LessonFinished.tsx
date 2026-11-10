@@ -55,7 +55,7 @@ function Stat({ value, label, tone }: { value: string; label: string; tone: Less
 }
 
 /** Des confettis légers, qui tombent une fois : soixante pièces aux couleurs des cinq tons. */
-function Confetti() {
+export function Confetti() {
   const pieces = useMemo(() => {
     const generator = new SeededGenerator(7n);
     const unit = () => generator.below(1000) / 1000;

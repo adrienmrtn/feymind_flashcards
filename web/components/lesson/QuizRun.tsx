@@ -10,7 +10,9 @@ import { KeywordText } from "@/components/lesson/KeywordText";
 import { LessonPrimaryButton, LessonSecondaryButton } from "@/components/lesson/LessonButtons";
 import { QuestionCard, type QuizAnswer } from "@/components/lesson/QuestionCard";
 import { Mika } from "@/components/mika/Mika";
+import { AnswerReward } from "@/components/xp/XpBadge";
 import { useI18n } from "@/lib/i18n/client";
+import { awardXp } from "@/lib/xp/client";
 
 /**
  * **Un quiz** : une question par écran, quelle que soit sa forme, la barre qui se remplit, et
@@ -74,6 +76,7 @@ export function QuizRun({
       } else {
         setStreak(0);
       }
+      awardXp(result.right ? "correctAnswer" : "wrongAnswer");
       onAnswer(question, result.right);
     },
     [answer, onAnswer, question],
@@ -173,6 +176,7 @@ function AnswerPanel({ question, right, isLast, onNext }: { question: QuizQuesti
           <p className={`flex-1 text-[21px] font-extrabold ${right ? "text-correct-ink" : "text-wrong-ink"}`}>{right ? t("lesson.question.right") : t("lesson.question.wrong")}</p>
           <Mika mood={right ? "happy" : "sad"} size={52} label="" />
         </div>
+        <AnswerReward right={right} />
         {!right && (question.kind === "order" || question.kind === "match" || question.kind === "gap") ? (
           <p className="text-[16px] font-bold leading-snug text-ink">
             <KeywordText text={answerText(question)} tints={false} />

@@ -1,4 +1,4 @@
-import { currentStreak, hasUsedFreeLesson, homeStats, lessonCircles, lessonTone, migratedDone, resumeTarget } from "@micabo/core";
+import { currentStreak, dueCards, hasUsedFreeLesson, homeStats, lessonCircles, lessonTone, migratedDone, resumeTarget } from "@micabo/core";
 
 import { HomeScreen } from "@/components/home/HomeScreen";
 import { listAllCards } from "@/lib/data/courses";
@@ -12,7 +12,8 @@ import { studyDays } from "@/lib/lesson/study-days";
 /**
  * **Home** : Mika, la question, la barre et ses cinq supports, trois chiffres mesurés, et
  * « Reprendre ». Voir `docs/refonte-parcours.md` § 3. La page lit tout, calcule avec le noyau,
- * et passe à l'écran ce qu'il montre.
+ * et passe à l'écran ce qu'il montre. La carte « Aujourd'hui » et les « Outils »
+ * (`docs/refonte-knowunity.md` § 1) y ajoutent les cartes dues et la dernière leçon ouverte.
  */
 export default async function HomePage() {
   const [{ t }, lessons, cards, right, stats, papers] = await Promise.all([
@@ -50,8 +51,36 @@ export default async function HomePage() {
     resume = target ? { ...target, icon: latest.icon || latest.path.icon, tone: lessonTone(latest.id, latest.tone) } : null;
   }
 
+  // « {n} cartes à réviser » : les cartes dues des leçons qui ont un chemin (la révision se fait
+  // dans la leçon), et la leçon qui en a le plus, que la ligne ouvre.
+  const pathLessons = new Set(lessons.filter((lesson) => lesson.path).map((lesson) => lesson.id));
+  const dueByLesson = new Map<string, number>();
+  for (const card of dueCards(
+    cards
+      .filter((card) => card.course_id && pathLessons.has(card.course_id))
+      .map((card) => ({
+        id: card.id,
+        front: card.front,
+        kind: card.kind,
+        isSuspended: card.is_suspended,
+        state: card.state,
+        dueDate: card.due_date,
+        intervalDays: card.interval_days,
+        position: card.position,
+        lessonId: card.course_id!,
+      })),
+    now,
+  )) {
+    dueByLesson.set(card.lessonId, (dueByLesson.get(card.lessonId) ?? 0) + 1);
+  }
+  const dueTotal = [...dueByLesson.values()].reduce((sum, count) => sum + count, 0);
+  const dueLesson = [...dueByLesson.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+
   return (
     <HomeScreen
+      dueCards={dueLesson ? { count: dueTotal, lessonId: dueLesson } : null}
+      quizLessonId={latest?.id ?? null}
+      hasLessons={lessons.length > 0}
       isPro={right.isPro}
       hasUsedFreeLesson={hasUsedFreeLesson(lessons.map((lesson) => ({ source: lesson.source, isFromLibrary: lesson.is_from_library })))}
       stats={homeStats(

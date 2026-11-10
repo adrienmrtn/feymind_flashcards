@@ -1,34 +1,32 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { ArrowUp, Crown, Flame, Loader2, Play, X, AlertCircle } from "lucide-react";
+import { ArrowUp, Crown, Loader2, X, AlertCircle } from "lucide-react";
 
 import {
   SUPPORT_ICONS,
   SUPPORT_KINDS,
   canSend,
   composeCreation,
+  composerGate,
   composerSource,
   hasRoom,
-  isImportSource,
+  importLocked,
   isReading,
   studyTime,
   type ComposerSupport,
   type HomeStats,
   type LessonCreation,
-  type LessonTone,
-  type ResumeTarget,
   type SupportKind,
 } from "@micabo/core";
 
+import { HomeTopRow, ScanSheet, TodayCard, ToolsGrid, type HomeResume } from "@/components/home/HomeKx";
 import { ImportSheet } from "@/components/home/ImportSheet";
 import { LessonCreationFlow } from "@/components/home/LessonCreation";
 import { MicaboIcon } from "@/components/lesson/MicaboIcon";
 import { Mika } from "@/components/mika/Mika";
 import { useI18n } from "@/lib/i18n/client";
 import { localeBcp47 } from "@/lib/i18n/copy";
-import { lessonPath } from "@/lib/lesson/routes";
 import { requestPaywall } from "@/lib/paywall";
 
 /**
@@ -39,15 +37,26 @@ import { requestPaywall } from "@/lib/paywall";
  *
  * Les supports se lisent dès qu'on les dépose, dans l'onglet : un PDF illisible le dit sur sa
  * pastille, pas trente secondes plus tard sur l'écran de génération. Envoyer assemble le tout
- * en une seule demande. La porte du gratuit se tient avant d'envoyer : PDF, Photo, Audio et
- * YouTube sont Pro, et un texte collé est la leçon offerte.
+ * en une seule demande. La porte du gratuit se tient avant d'envoyer : la leçon offerte peut
+ * venir d'un sujet, d'un texte collé ou d'un import (elle part alors avec `onboarding: true`) ;
+ * une fois offerte, PDF, Photo, Audio et YouTube sont Pro (`composerGate`).
+ *
+ * Le lot « Knowunity » (`docs/refonte-knowunity.md` § 1) ajoute la rangée du haut (Pro, XP,
+ * série), la carte « Aujourd'hui » — où « Reprendre » est fondue — et les quatre « Outils »,
+ * entre la barre et les trois chiffres.
  */
 export interface HomeScreenProps {
   isPro: boolean;
   hasUsedFreeLesson: boolean;
   stats: HomeStats;
   streak: number;
-  resume: (ResumeTarget & { icon: string | null; tone: LessonTone }) | null;
+  resume: HomeResume | null;
+  /** Les cartes dues, et la leçon qui en a le plus : « {n} cartes à réviser » l'ouvre. */
+  dueCards: { count: number; lessonId: string } | null;
+  /** La dernière leçon ouverte, pour le « Quiz éclair ». */
+  quizLessonId: string | null;
+  /** L'élève a-t-il déjà une leçon ? Sans : « Crée ta première leçon ». */
+  hasLessons: boolean;
 }
 
 export function HomeScreen(props: HomeScreenProps) {
@@ -55,7 +64,8 @@ export function HomeScreen(props: HomeScreenProps) {
   const [draft, setDraft] = useState("");
   const [supports, setSupports] = useState<ComposerSupport[]>([]);
   const [sheet, setSheet] = useState<SupportKind | null>(null);
-  const [creating, setCreating] = useState<{ creation: LessonCreation; hasSupports: boolean } | null>(null);
+  const [creating, setCreating] = useState<{ creation: LessonCreation; hasSupports: boolean; onboarding: boolean } | null>(null);
+  const [scanning, setScanning] = useState(false);
   const [focused, setFocused] = useState(false);
   const [mood, setMood] = useState<"wave" | "idle">("wave");
   const field = useRef<HTMLTextAreaElement>(null);
@@ -77,9 +87,10 @@ export function HomeScreen(props: HomeScreenProps) {
   }, []);
   const removeSupport = (id: string) => setSupports((current) => current.filter((support) => support.id !== id));
 
-  /** PDF, Photo, Audio et YouTube sont Pro ; un texte collé est la leçon offerte. */
+  /** PDF, Photo, Audio et YouTube sont Pro, sauf pour la leçon offerte ; un texte collé l'est toujours. */
+  const importsLocked = importLocked({ isPro: props.isPro, hasUsedFreeLesson: props.hasUsedFreeLesson });
   function tapImport(kind: SupportKind) {
-    if (kind !== "text" && !props.isPro) {
+    if (kind !== "text" && importsLocked) {
       field.current?.blur();
       requestPaywall("upgrade");
       return;
@@ -90,14 +101,21 @@ export function HomeScreen(props: HomeScreenProps) {
   function send() {
     if (!sendable) return;
     const source = composerSource(supports);
-    if (!props.isPro && (isImportSource(source) || props.hasUsedFreeLesson)) {
+    const gate = composerGate({ isPro: props.isPro, source, hasUsedFreeLesson: props.hasUsedFreeLesson });
+    if (gate.verdict) {
       field.current?.blur();
-      requestPaywall(isImportSource(source) ? "upgrade" : "send");
+      requestPaywall(gate.verdict === "import_pro" ? "upgrade" : "send");
       return;
     }
     field.current?.blur();
     const creation = composeCreation(draft, supports, (text) => t("lesson.import.instruction", { text }));
-    setCreating({ creation, hasSupports: creation.source !== "topic" });
+    setCreating({ creation, hasSupports: creation.source !== "topic", onboarding: gate.onboarding });
+  }
+
+  /** « Crée ta première leçon » : le curseur dans la barre. */
+  function focusBar() {
+    field.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    field.current?.focus({ preventScroll: true });
   }
 
   const failure = supports.map((support) => support.failure).filter(Boolean).pop() ?? null;
@@ -106,14 +124,7 @@ export function HomeScreen(props: HomeScreenProps) {
   return (
     <div className="mx-auto flex w-full max-w-[640px] flex-col gap-[26px] pb-6">
       <div className="flex flex-col gap-2">
-        <div className="flex justify-end">
-          {props.streak > 1 ? (
-            <span className="inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-[13px] font-extrabold" style={{ background: "var(--color-tone-yellow-pale)", color: "var(--color-tone-yellow-ink)" }}>
-              <Flame aria-hidden="true" className="size-4" strokeWidth={2.6} />
-              {t("app.today.streak", { count: props.streak })}
-            </span>
-          ) : null}
-        </div>
+        <HomeTopRow isPro={props.isPro} streak={props.streak} />
         <HomeTitle text={t("lesson.home.title")} />
       </div>
 
@@ -178,7 +189,7 @@ export function HomeScreen(props: HomeScreenProps) {
               >
                 <MicaboIcon id={SUPPORT_ICONS[kind]} size={30} />
                 <span className="max-w-full truncate px-1 text-[12px] font-extrabold text-ink-secondary">{t(`lesson.import.${kind}`)}</span>
-                {kind !== "text" && !props.isPro ? (
+                {kind !== "text" && importsLocked ? (
                   <span aria-label="Pro" className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full" style={{ background: "var(--color-tone-yellow-pale)", color: "var(--color-tone-yellow-ink)" }}>
                     <Crown aria-hidden="true" className="size-2.5" strokeWidth={3} />
                   </span>
@@ -190,13 +201,17 @@ export function HomeScreen(props: HomeScreenProps) {
         {!room ? <p className="text-center text-[13px] font-bold text-ink-secondary">{t("lesson.home.supportsFull", { n: 5 })}</p> : null}
       </div>
 
+      <TodayCard dueCards={props.dueCards} resume={props.resume} hasLessons={props.hasLessons} onFirstLesson={focusBar} />
+
+      <ToolsGrid quizLessonId={props.quizLessonId} onScan={() => setScanning(true)} onFirstLesson={focusBar} />
+
       <ul className="grid grid-cols-3 gap-2" data-tour="home-chiffres">
         <StatPill icon="sablier" value={time.unit === "minutes" ? t("lesson.home.minutes", { n: time.value }) : t("lesson.home.hours", { n: new Intl.NumberFormat(localeBcp47(locale)).format(time.value) })} label={t("lesson.home.statTime")} />
         <StatPill icon="diplome" value={String(props.stats.learnedLessons)} label={t("lesson.home.statLessons")} />
         <StatPill icon="cartes" value={String(props.stats.learnedCards)} label={t("lesson.home.statCards")} />
       </ul>
 
-      {props.resume ? <ResumeCard resume={props.resume} /> : null}
+      {scanning ? <ScanSheet onClose={() => setScanning(false)} /> : null}
 
       {sheet ? (
         <ImportSheet
@@ -214,6 +229,7 @@ export function HomeScreen(props: HomeScreenProps) {
         <LessonCreationFlow
           creation={creating.creation}
           hasSupports={creating.hasSupports}
+          onboarding={creating.onboarding}
           onCancel={() => setCreating(null)}
           onCreated={() => {
             setDraft("");
@@ -271,48 +287,5 @@ function StatPill({ icon, value, label }: { icon: string; value: string; label: 
         <span className="line-clamp-2 text-[11px] font-bold leading-tight text-ink-secondary">{label}</span>
       </span>
     </li>
-  );
-}
-
-/** La dernière leçon ouverte : son anneau, son titre, l'étape où elle attend. */
-function ResumeCard({ resume }: { resume: NonNullable<HomeScreenProps["resume"]> }) {
-  const { t } = useI18n();
-  const size = 60;
-  const radius = (size - 5) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const subtitle =
-    resume.circleNumber !== null && resume.circleTitle !== null
-      ? t("lesson.home.resumeCircle", { n: resume.circleNumber, title: resume.circleTitle })
-      : t("lesson.home.resumeDone");
-  return (
-    <Link href={lessonPath(resume.lessonId)} className="pressable flex items-center gap-3.5 rounded-[24px] bg-surface p-4 shadow-floating">
-      <span className="relative flex shrink-0 items-center justify-center" style={{ width: size, height: size }}>
-        <svg aria-hidden="true" className="absolute inset-0" width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-          <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--color-track)" strokeWidth={5} />
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="none"
-            stroke={`var(--color-tone-${resume.tone}-vivid)`}
-            strokeWidth={5}
-            strokeLinecap="round"
-            strokeDasharray={`${Math.max(0.02, resume.percent / 100) * circumference} ${circumference}`}
-            transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          />
-        </svg>
-        <MicaboIcon id={resume.icon} size={36} />
-      </span>
-      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="text-[12px] font-bold uppercase tracking-caps" style={{ color: `var(--color-tone-${resume.tone}-ink)` }}>
-          {t("lesson.home.resume")}
-        </span>
-        <span className="line-clamp-2 text-[17px] font-bold leading-snug text-ink">{resume.title}</span>
-        <span className="truncate text-[14px] font-semibold text-ink-secondary">{subtitle}</span>
-      </span>
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-ink text-on-ink">
-        <Play aria-hidden="true" className="size-4 fill-current" strokeWidth={2.4} />
-      </span>
-    </Link>
   );
 }

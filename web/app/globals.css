@@ -2473,6 +2473,45 @@ html:not([data-appearance]) .app-shell {
   color: transparent;
 }
 
+/* Le lot « Knowunity » (`docs/refonte-knowunity.md`) : la pilule Pro, le « +10 XP » qui monte
+   et s'efface, l'anneau du minuteur. Le dégradé est celui de la barre de Home. */
+.kx-gradient {
+  background: linear-gradient(135deg, var(--color-accent), var(--color-keyword));
+}
+@keyframes xp-toast {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  75% {
+    opacity: 1;
+    transform: translateY(-6px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+}
+.xp-toast {
+  background: linear-gradient(135deg, var(--color-accent), var(--color-keyword));
+  animation: xp-toast 1.5s var(--ease-out-strong) both;
+}
+.focus-ring {
+  transition: stroke-dashoffset 1s linear;
+}
+@media (prefers-reduced-motion: reduce) {
+  .xp-toast {
+    animation: none;
+  }
+  .focus-ring {
+    transition: none;
+  }
+}
+
 /*
  * **L'arabe se lit de droite à gauche** (`<html dir="rtl">`, voir `UI_LOCALE_META.dir`).
  * Marges et alignements sont écrits en propriétés logiques (`ps-`, `pe-`, `text-start`…) et

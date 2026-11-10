@@ -1,3 +1,5 @@
+import { kxNl } from "./kx-nl";
+
 /** Catalogue néerlandais (nl). L'arbre suit `fr.ts` ; les clés partagées avec l'iPhone reprennent la traduction de `I18n+nl.swift`. */
 export const appNl = {
   a11y: {
@@ -572,6 +574,7 @@ export const appNl = {
     delayMonths: "{n} mnd",
     delayYears: "{n, plural, one {# jaar} other {# jaar}}",
   },
+  kx: kxNl,
 } as const;
 
 export const copyNl = {
