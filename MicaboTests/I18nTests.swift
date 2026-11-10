@@ -102,6 +102,26 @@ final class I18nTests: XCTestCase {
         }
     }
 
+    /// **Le lot « Knowunity » parle toutes les langues de l'app** (`docs/refonte-knowunity.md`
+    /// § 8) : chaque phrase `ios.kx.*` existe dans chaque table, régionales comprises, sans
+    /// retomber sur l'anglais.
+    func testKnowunityCopyExistsInEveryLanguage() {
+        let keys = IosI18nCatalogs.fr.keys.filter { $0.hasPrefix("ios.kx.") }
+        XCTAssertEqual(keys.count, 70)
+        for locale in UiLocale.allCases {
+            let table = IosI18nCatalogs.table(for: locale.rawValue)
+            for key in keys {
+                XCTAssertNotNil(table[key], "\(locale.rawValue) \(key)")
+            }
+        }
+        for league in XPRules.leagues {
+            XCTAssertNotNil(IosI18nCatalogs.fr["ios.kx.league.\(league.id)"], league.id)
+        }
+        XCTAssertEqual(L10n.t("ios.kx.today.due", locale: .fr, vars: ["count": "1"]), "1 carte à réviser")
+        XCTAssertEqual(L10n.t("ios.kx.today.due", locale: .en, vars: ["count": "3"]), "3 cards to review")
+        XCTAssertEqual(L10n.t("ios.kx.league.name", locale: .de, vars: ["name": "Gold"]), "Gold-Liga")
+    }
+
     func testWelcomeDeckAndRetentionCopyFollowLocale() {
         XCTAssertEqual(
             L10n.t("ios.deck.history.subject", locale: .de),
@@ -148,6 +168,8 @@ final class I18nTests: XCTestCase {
             "ios.rankingAria", "ios.photo.scanName", "ios.mail.subject.bug", "ios.offer.minutes",
             "ios.durationHm", "ios.readingApprox", "ios.deck.count", "ios.deck.percentAndCards",
             "ios.journey.source", "ios.today.approxMinutes",
+            // Deux formats chiffrés du lot « Knowunity » : « 30 / 50 XP », « Or · 120 XP ».
+            "ios.kx.today.goalProgress", "ios.kx.league.rowSub",
         ]
         assertNotCopiedFromFrench(
             french: IosI18nCatalogs.fr,

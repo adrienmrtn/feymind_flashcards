@@ -198,6 +198,11 @@ final class LessonSession {
     /// jusqu'au bout est une vraie séance, même sans une seule carte notée.
     func complete(_ circle: PathCircle, in context: ModelContext) {
         StudyStreak.record()
+        // Un cercle terminé rapporte son XP la première fois qu'il se coche (§ 2 du lot
+        // « Knowunity ») : rouvrir une étape déjà faite ne fait pas gonfler le compteur.
+        if !progress.done.contains(circle.id) {
+            XPStore.shared.award(.circleCompleted)
+        }
         course.updateProgress { progress in
             progress.done.insert(circle.id)
             progress.inCircle = 0
@@ -245,6 +250,8 @@ final class LessonSession {
     /// allée à son terme.
     func answered(_ question: QuizQuestion, right: Bool, in context: ModelContext) {
         StudyStreak.record()
+        // L'effort compte : une mauvaise réponse rapporte un peu (`XPRules`).
+        XPStore.shared.award(right ? .correctAnswer : .wrongAnswer)
         course.updateProgress { progress in
             if right { progress.noteRight(question.id) } else { progress.noteMissed(question.id) }
         }

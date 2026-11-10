@@ -93,11 +93,16 @@ struct QuestionFeedback: View {
         HStack(alignment: .center, spacing: 12) {
             MikaMascot(mood: right ? .happy : .sad, size: 64)
             VStack(alignment: .leading, spacing: 4) {
-                Text(right
-                    ? L10n.t("lesson.question.right", locale: .resolved())
-                    : L10n.t("lesson.question.wrong", locale: .resolved()))
-                    .font(MicaboFont.ui(18, weight: .heavy))
-                    .foregroundStyle(right ? MicaboColor.correctInk : MicaboColor.wrongInk)
+                // Le verdict, et l'XP qu'il rapporte (`docs/refonte-knowunity.md` § 6) ; sur une
+                // bonne réponse, un mot qui félicite.
+                HStack(spacing: 8) {
+                    Text(right
+                        ? XPCheer.word(for: question.id)
+                        : L10n.t("lesson.question.wrong", locale: .resolved()))
+                        .font(MicaboFont.ui(18, weight: .heavy))
+                        .foregroundStyle(right ? MicaboColor.correctInk : MicaboColor.wrongInk)
+                    XPBadge(points: right ? XPRules.correctAnswer : XPRules.wrongAnswer, tint: right ? MicaboColor.correctInk : MicaboColor.wrongInk)
+                }
                 if !right, question.kind == .order || question.kind == .match {
                     KeywordText(question.answerText, size: 15, weight: .bold, tintsKeywords: false)
                         .font(MicaboFont.ui(15, weight: .bold))

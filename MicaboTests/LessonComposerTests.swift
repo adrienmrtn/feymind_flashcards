@@ -118,8 +118,9 @@ final class LessonComposerTests: XCTestCase {
         return ModelContext(container)
     }
 
-    /// Une leçon offerte depuis un sujet ou un texte ; les imports sont Pro ; un cours à soi
-    /// consomme l'offre, pas un cours de démonstration ni un paquet fait à la main.
+    /// Une leçon offerte, depuis un sujet, un texte **ou un import** (`docs/refonte-knowunity.md`
+    /// § 7) ; une fois servie, les imports sont Pro ; un cours à soi consomme l'offre, pas un
+    /// cours de démonstration ni un paquet fait à la main.
     func testTheFreeGateMirrorsTheServer() throws {
         let context = try makeContext()
         let sample = Course(title: "Démo", source: .sample)
@@ -129,12 +130,19 @@ final class LessonComposerTests: XCTestCase {
 
         XCTAssertNil(LessonAllowance.gate(isPro: false, source: .topic, courses: [sample, deck, library]))
         XCTAssertNil(LessonAllowance.gate(isPro: false, source: .text, courses: []))
-        XCTAssertEqual(LessonAllowance.gate(isPro: false, source: .pdf, courses: []), .generateCourse)
-        XCTAssertEqual(LessonAllowance.gate(isPro: false, source: .audio, courses: []), .generateCourse)
+        // La leçon offerte peut venir d'un import : elle part avec `onboarding: true`.
+        XCTAssertNil(LessonAllowance.gate(isPro: false, source: .pdf, courses: []))
+        XCTAssertNil(LessonAllowance.gate(isPro: false, source: .audio, courses: [sample, deck, library]))
+        XCTAssertTrue(LessonAllowance.sendsAsFreeLesson(isPro: false, source: .youtube, courses: []))
+        XCTAssertFalse(LessonAllowance.sendsAsFreeLesson(isPro: false, source: .topic, courses: []))
+        XCTAssertFalse(LessonAllowance.sendsAsFreeLesson(isPro: true, source: .pdf, courses: []))
 
         let own = Course(title: "Mon cours", source: .pdf)
         context.insert(own)
         XCTAssertEqual(LessonAllowance.gate(isPro: false, source: .topic, courses: [own]), .secondCourse)
+        XCTAssertEqual(LessonAllowance.gate(isPro: false, source: .pdf, courses: [own]), .generateCourse)
+        XCTAssertEqual(LessonAllowance.gate(isPro: false, source: .audio, courses: [own]), .generateCourse)
+        XCTAssertFalse(LessonAllowance.sendsAsFreeLesson(isPro: false, source: .photo, courses: [own]))
         XCTAssertNil(LessonAllowance.gate(isPro: true, source: .pdf, courses: [own]))
     }
 

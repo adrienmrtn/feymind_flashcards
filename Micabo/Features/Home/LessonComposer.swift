@@ -188,8 +188,10 @@ final class LessonComposer {
 }
 
 /// **La porte du gratuit, côté app** (`docs/refonte-parcours.md` § 7) : une leçon offerte, à vie,
-/// depuis un sujet ou un texte collé ; les imports sont Pro. Le serveur tient la même porte
-/// (`begin_lesson`) : celle-ci évite seulement un appel qui serait refusé.
+/// depuis un sujet, un texte collé **ou un import** (`docs/refonte-knowunity.md` § 7 : la leçon
+/// offerte importée part avec `onboarding: true`, que `begin_lesson(p_onboarding)` accepte) ;
+/// une fois servie, les imports sont Pro. Le serveur tient la même porte (`begin_lesson`) :
+/// celle-ci évite seulement un appel qui serait refusé.
 enum LessonAllowance {
     /// Vrai quand l'élève a déjà un cours à lui : une leçon créée, un ancien cours importé ou
     /// généré. Les cours de démonstration, de la bibliothèque et les paquets faits à la main
@@ -203,7 +205,15 @@ enum LessonAllowance {
     /// Le paywall à ouvrir avant d'envoyer, ou `nil` si la demande peut partir.
     static func gate(isPro: Bool, source: LessonSourceKind, courses: [Course]) -> PaywallTrigger? {
         if isPro { return nil }
+        // La leçon offerte n'a pas servi : elle part, d'un sujet comme d'un import.
+        guard hasUsedFreeLesson(courses: courses) else { return nil }
         if source.isImport { return .generateCourse }
-        return hasUsedFreeLesson(courses: courses) ? .secondCourse : nil
+        return .secondCourse
+    }
+
+    /// Vrai quand cette demande est la leçon offerte **depuis un import** : elle part avec
+    /// `onboarding: true`. Un sujet ou un texte n'en a pas besoin, le serveur les offre déjà.
+    static func sendsAsFreeLesson(isPro: Bool, source: LessonSourceKind, courses: [Course]) -> Bool {
+        !isPro && source.isImport && !hasUsedFreeLesson(courses: courses)
     }
 }

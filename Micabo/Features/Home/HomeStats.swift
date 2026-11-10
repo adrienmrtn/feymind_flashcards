@@ -16,7 +16,10 @@ struct HomeStats: Equatable {
         self.learnedCards = learnedCards
     }
 
-    init(courses: [Course], now: Date = Date()) {
+    /// `extraSeconds` : le temps passé ailleurs que dans une leçon, les séances du minuteur
+    /// menées au bout (`FocusLog`).
+    init(courses: [Course], extraSeconds: Double = 0, now: Date = Date()) {
+        seconds = max(0, extraSeconds)
         for course in courses {
             let progress = course.progress
             seconds += progress.totalSeconds

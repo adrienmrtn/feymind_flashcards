@@ -176,10 +176,14 @@ struct AnswerPanel: View {
                     .foregroundStyle(right ? MicaboColor.correct : MicaboColor.wrong)
                     .symbolEffect(.bounce, value: right)
                 Text(right
-                    ? L10n.t("lesson.question.right", locale: .resolved())
+                    ? XPCheer.word(for: question.id)
                     : L10n.t("lesson.question.wrong", locale: .resolved()))
                     .font(MicaboFont.ui(21, weight: .heavy))
                     .foregroundStyle(right ? MicaboColor.correctInk : MicaboColor.wrongInk)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                // L'XP de la réponse (`docs/refonte-knowunity.md` § 6), à côté du verdict.
+                XPBadge(points: right ? XPRules.correctAnswer : XPRules.wrongAnswer, tint: right ? MicaboColor.correctInk : MicaboColor.wrongInk)
                 Spacer(minLength: 0)
                 MikaMascot(mood: right ? .happy : .sad, size: 52)
             }

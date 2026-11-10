@@ -119,10 +119,18 @@ struct ProfileRecord: Codable {
     /// Langue des prochaines fiches, quand elle n'est plus celle du pays.
     var sheet_language: String?
     var onboarding_completed_at: Date?
+    /// **L'XP** (`docs/refonte-knowunity.md` § 2, migration `xp_league`) : le total, celle de
+    /// la semaine et son lundi (`AAAA-MM-JJ`). Optionnels : absents, ils ne partent pas
+    /// (`encodeIfPresent`), et c'est ce que fait `withoutXP` quand la colonne n'existe pas
+    /// encore au serveur. Ils n'entrent pas dans `signature` : ce ne sont pas des réglages.
+    var xp_total: Int?
+    var xp_week: Int?
+    var xp_week_start: String?
 
     /// Le profil tel que les réglages locaux le décrivent.
     static func fromLocalPreferences(userID: UUID, displayName: String?) -> ProfileRecord {
-        ProfileRecord(
+        let xp = XPStore.shared.syncValues
+        return ProfileRecord(
             id: userID,
             display_name: displayName,
             study_level: OnboardingPreferences.level,
@@ -141,8 +149,21 @@ struct ProfileRecord: Codable {
             // La langue dans laquelle on écrit, c'est-à-dire celle de l'app : un ancien appareil
             // du même compte, qui relit encore ce champ, écrit alors dans la même langue.
             sheet_language: OnboardingPreferences.contentLanguage.rawValue,
-            onboarding_completed_at: OnboardingPreferences.isCompleted ? Date() : nil
+            onboarding_completed_at: OnboardingPreferences.isCompleted ? Date() : nil,
+            xp_total: xp.total,
+            xp_week: xp.week,
+            xp_week_start: xp.weekStart
         )
+    }
+
+    /// Le même profil sans les trois champs d'XP : ce qui repart quand le serveur refuse une
+    /// colonne `xp_*` (migration pas encore déployée). La synchro ne casse jamais à cause de l'XP.
+    var withoutXP: ProfileRecord {
+        var copy = self
+        copy.xp_total = nil
+        copy.xp_week = nil
+        copy.xp_week_start = nil
+        return copy
     }
 
     /// **L'empreinte de ce que le profil transporte**, telle que cet appareil la voit.

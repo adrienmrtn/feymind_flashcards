@@ -535,6 +535,8 @@ struct MockExamRunView: View {
         guard !submitted else { return }
         submitted = true
         Haptics.success()
+        // Un examen blanc rendu : la plus grosse part d'XP.
+        XPStore.shared.award(.mockExamFinished)
         onSubmit(answers, elapsed)
     }
 }

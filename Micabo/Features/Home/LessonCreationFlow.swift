@@ -6,6 +6,9 @@ import SwiftUI
 /// `LessonBuilder`. La leçon s'ouvre dès que son plan est là et que son premier thème est écrit.
 struct LessonCreationFlow: View {
     let composer: LessonComposer
+    /// **La leçon offerte, depuis un import** (`docs/refonte-knowunity.md` § 7) : la demande
+    /// part avec `onboarding: true`, que `begin_lesson` accepte pour la leçon offerte.
+    var sendsAsFreeLesson = false
     let onCreated: (Course) -> Void
     let onCancel: () -> Void
 
@@ -188,6 +191,7 @@ struct LessonCreationFlow: View {
         step = .generating
         var request = composer.creation(examDate: examDate)
         request.lessonID = composer.reserveLessonID(for: request.source)
+        request.onboarding = sendsAsFreeLesson && request.source.isImport
         let properties: [String: AnalyticsValue] = [
             "source": .text(request.source.rawValue),
             "chars": .number(Double(request.text.count)),
@@ -206,6 +210,8 @@ struct LessonCreationFlow: View {
                 composer.lessonDelivered()
                 // Fermé pendant l'attente : la leçon reste dans la liste, mais on ne rouvre
                 // pas un écran que l'élève a quitté.
+                // Une leçon créée et livrée rapporte son XP, écran fermé ou non.
+                XPStore.shared.award(.lessonCreated)
                 guard !Task.isCancelled else { return }
                 Haptics.success()
                 Analytics.track(.courseImported, properties)
