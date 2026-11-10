@@ -35,6 +35,9 @@ struct LessonPathView: View {
     @State private var streakCelebration = false
     /// Où l'on allait en quittant « Leçon terminée », quand la série passe entre les deux.
     @State private var afterStreak: LessonFinishedView.Destination?
+    /// **« Cette leçon t'a aidé ? »**, posée sous le chemin après la première étape de contenu
+    /// terminée, une fois par leçon (`LessonRating`). Elle ne bloque rien.
+    @State private var showsRating = false
 
     init(course: Course) {
         self.course = course
@@ -61,6 +64,16 @@ struct LessonPathView: View {
                     .id(celebration)
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
+            }
+        }
+        .overlay(alignment: .bottom) {
+            if showsRating {
+                LessonRatingCard(course: course, moment: .firstCircle) {
+                    withAnimation(.spring(duration: 0.35)) { showsRating = false }
+                }
+                .padding(.horizontal, MicaboSpacing.screen)
+                .padding(.bottom, 12)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
@@ -336,9 +349,11 @@ struct LessonPathView: View {
         // Le chemin s'anime une fois l'écran du cercle refermé : le cercle se remplit, le
         // trait avance, le suivant reçoit « Continuer ».
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            let firstContent = LessonRating.isFirstContentCircle(circle, doneBefore: session.progress.done, circles: session.circles)
             withAnimation(.spring(duration: 0.6)) {
                 session.complete(circle, in: modelContext)
             }
+            offerRatingIfDue(afterFirstContent: firstContent, circle: circle)
             Haptics.success()
             if circle.isMilestone {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -355,6 +370,18 @@ struct LessonPathView: View {
                     celebrateStreakIfNeeded()
                 }
             }
+        }
+    }
+
+    /// **L'avis sur la leçon, après sa première étape de contenu**, une fois. Pas sur le Quiz
+    /// final : « Leçon terminée » pose la question à sa place.
+    private func offerRatingIfDue(afterFirstContent: Bool, circle: PathCircle) {
+        guard afterFirstContent else { return }
+        if case .final = circle.kind { return }
+        guard LessonRating.shouldOffer(course.id, at: .firstCircle) else { return }
+        LessonRating.markOffered(course.id, at: .firstCircle)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+            withAnimation(.spring(duration: 0.45)) { showsRating = true }
         }
     }
 

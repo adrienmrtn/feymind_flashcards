@@ -33,6 +33,9 @@ struct SettingsView: View {
 
     @Environment(ProAccess.self) private var pro: ProAccess?
     @State private var paywall: PaywallTrigger?
+    /// La variante du test de prix montrée par les paywalls (`PriceDisplay`), relue pour que
+    /// la rangée de test suive l'appui.
+    @State private var priceDisplay = PriceDisplay.current
     @State private var discountOffer: DiscountPresentation?
     /// Ce que répondent les boutons de test des notifications.
     @State private var notificationReport: String?
@@ -756,6 +759,22 @@ struct SettingsView: View {
         // **Les notifications, sans attendre le soir** : en développement et sur TestFlight.
         if BuildChannel.isInternal {
             rows.append(contentsOf: notificationTestRows)
+            // **Le test de prix**, forcé d'un appui : le mois ou la semaine, pour relire les
+            // deux paywalls sans réinstaller l'app.
+            rows.append(
+                MicaboRow(
+                    tile: MicaboTile(glyph: .symbol("eurosign.circle.fill"), background: MicaboColor.tilePastels[1]),
+                    title: i18n.t("ios.conv.debugPrice"),
+                    subtitle: i18n.t(priceDisplay == .weekly ? "ios.conv.debugPriceWeekly" : "ios.conv.debugPriceMonthly"),
+                    accessory: .chevron,
+                    action: {
+                        let next: PriceDisplay = priceDisplay == .weekly ? .monthly : .weekly
+                        PriceDisplay.setOverride(next)
+                        priceDisplay = next
+                        Haptics.selection()
+                    }
+                )
+            )
         }
 
         // **Les paywalls, à vue**, même abonné ou déjà en essai : sans cette rangée, un compte

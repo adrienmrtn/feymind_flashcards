@@ -101,6 +101,13 @@ struct DiscountFlowView: View {
 
         switch outcome {
         case .purchased:
+            // Le tarif réduit n'a pas d'essai : un achat, sans `paywall_trial_started`.
+            Analytics.track(.paywallPurchased, [
+                "trigger": "discount",
+                "plan": .text(DiscountOffer.plan.productID),
+                "trial": .flag(false),
+                "price_display": PriceDisplay.current.analyticsValue,
+            ])
             pro?.unlock()
             Haptics.success()
             onSubscribed()
@@ -477,11 +484,11 @@ private struct DiscountPaywallStage: View {
                     .foregroundStyle(MicaboColor.offerSky)
 
                 HStack(alignment: .lastTextBaseline, spacing: 6) {
-                    Text(plan.headlinePrice)
+                    Text(plan.priceHeadline(for: .current))
                         .font(MicaboFont.number(26, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
 
-                    Text(plan.headlineUnit)
+                    Text(plan.priceHeadlineUnit(for: .current))
                         .font(MicaboFont.ui(15, weight: .medium))
                         .foregroundStyle(MicaboColor.inkSecondary)
                 }

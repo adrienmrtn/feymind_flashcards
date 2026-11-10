@@ -4,6 +4,12 @@ import SwiftUI
 /// **Créer une leçon, après l'envoi** (`docs/refonte-parcours.md` § 4) : « As-tu un examen ? »,
 /// « Quelle date ? » si oui, puis l'écran de génération, relié au vrai travail de
 /// `LessonBuilder`. La leçon s'ouvre dès que son plan est là et que son premier thème est écrit.
+///
+/// **La leçon verrouillée.** Un élève sans abonnement dont la leçon offerte a servi, et qui a
+/// déposé des supports, ne tombe plus sur le paywall au moment d'envoyer : il répond aux mêmes
+/// questions, voit ce que Mika a lu (`LockedLessonPreview`), puis le paywall `lessonReady`
+/// s'ouvre au moment de débloquer la leçon. Abonné, la génération part aussitôt avec les mêmes
+/// supports ; rien n'est demandé au serveur avant, qui refuserait.
 struct LessonCreationFlow: View {
     let composer: LessonComposer
     /// **La leçon offerte, depuis un import** (`docs/refonte-knowunity.md` § 7) : la demande
@@ -14,10 +20,16 @@ struct LessonCreationFlow: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(LessonBuilder.self) private var builder
+    /// Optionnel, comme dans Home : sans lui, la demande part et le serveur tient la porte.
+    @Environment(ProAccess.self) private var pro: ProAccess?
+    /// Les cours de l'élève : ce sont eux qui disent si la leçon offerte a servi.
+    @Query private var courses: [Course]
 
     private enum Step: Equatable {
         case exam
         case date
+        /// Ce que Mika a lu, sous cadenas, et le paywall par-dessus.
+        case locked
         case generating
     }
 
@@ -35,11 +47,40 @@ struct LessonCreationFlow: View {
             switch step {
             case .exam: examQuestion.transition(.push(from: .trailing))
             case .date: dateQuestion.transition(.push(from: .trailing))
+            case .locked: lockedPreview.transition(.opacity)
             case .generating: generating.transition(.opacity)
             }
         }
         .animation(.spring(duration: 0.4), value: step)
-        .micaboPaywall($paywall)
+        .micaboPaywall($paywall, onSubscribed: subscribed)
+    }
+
+    // MARK: La leçon verrouillée
+
+    private var lockedPreview: some View {
+        LockedLessonPreview(
+            summary: readSummary,
+            onUnlock: { paywall = .lessonReady },
+            onClose: close,
+            onRevealed: {
+                guard step == .locked, paywall == nil else { return }
+                paywall = .lessonReady
+            }
+        )
+    }
+
+    private var readSummary: LessonReadSummary {
+        LessonReadSummary(documents: composer.readySupports.compactMap(\.document))
+    }
+
+    /// Abonné depuis l'aperçu, ou depuis le paywall d'un refus du serveur : la génération
+    /// part tout de suite, avec les mêmes supports et la même date d'examen.
+    private func subscribed() {
+        guard step == .locked || failure != nil else { return }
+        // Le temps que la feuille du paywall descende : la génération se lit sans elle.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            start(examDate: pendingExamDate)
+        }
     }
 
     // MARK: Les deux questions
@@ -188,6 +229,22 @@ struct LessonCreationFlow: View {
         pendingExamDate = examDate
         failure = nil
         stage = nil
+        // La leçon offerte a servi et des supports sont lus : l'aperçu verrouillé, pas le
+        // serveur, qui refuserait (`LessonAllowance.sendRoute`).
+        if LessonAllowance.sendRoute(isPro: pro?.isPro ?? true, source: composer.source, courses: courses) == .lockedPreview {
+            if step != .locked {
+                let summary = readSummary
+                Analytics.track(.lessonLockedPreview, [
+                    "source": .text(composer.source.rawValue),
+                    "supports": .number(Double(summary.supports)),
+                    "pages": .number(Double(summary.pages)),
+                    "words": .number(Double(summary.words)),
+                    "exam": .flag(examDate != nil),
+                ])
+            }
+            step = .locked
+            return
+        }
         step = .generating
         var request = composer.creation(examDate: examDate)
         request.lessonID = composer.reserveLessonID(for: request.source)

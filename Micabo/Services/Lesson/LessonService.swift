@@ -444,10 +444,18 @@ struct SupabaseLessonService: LessonGenerating {
             payload["topic"] = String(topic.prefix(400))
         }
         return try await call(payload) { envelope in
-            LessonPlanResult(
+            let result = LessonPlanResult(
                 plan: try functions.decode(LessonPlanResult.Plan.self, from: envelope, key: "plan"),
                 contextText: envelope["contextText"] as? String ?? ""
             )
+            // La version d'écriture et la source exacte, pour l'avis sur la leçon
+            // (`lesson_rated`) : le cours ne les garde pas.
+            LessonGenerationLog.record(
+                lessonID: request.lessonID,
+                source: request.source,
+                promptVersion: LessonGenerationLog.promptVersion(in: envelope)
+            )
+            return result
         }
     }
 

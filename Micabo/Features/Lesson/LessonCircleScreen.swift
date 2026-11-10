@@ -293,30 +293,50 @@ struct LessonFinishedView: View {
     let session: LessonSession
     let onLeave: (Destination) -> Void
 
+    /// « Cette leçon t'a aidé ? », si l'élève n'a pas encore donné son avis sur cette leçon
+    /// (`LessonRating`). Décidé une fois, à l'apparition.
+    @State private var showsRating = false
+
     var body: some View {
         ZStack {
             MicaboColor.canvas.ignoresSafeArea()
             ConfettiView(colors: LessonTone.allCases.map(\.vivid))
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
-            VStack(spacing: 22) {
-                Spacer()
-                MikaMascot(mood: .celebrate, size: 200, reactsToTap: true)
-                Text(L10n.t("lesson.finished.title", locale: .resolved()))
-                    .font(MicaboFont.display(32))
-                    .foregroundStyle(MicaboColor.ink)
-                    .multilineTextAlignment(.center)
-                HStack(spacing: 14) {
-                    stat(
-                        value: session.progress.averageQuizPercent.map { "\($0) %" } ?? "-",
-                        label: L10n.t("lesson.finished.score", locale: .resolved())
-                    )
-                    stat(
-                        value: minutes,
-                        label: L10n.t("lesson.finished.time", locale: .resolved())
-                    )
+            VStack(spacing: 0) {
+                // Le contenu défile s'il le faut : les raisons d'un 👎 ne doivent pas pousser
+                // les deux boutons hors de l'écran d'un petit iPhone.
+                GeometryReader { proxy in
+                    ScrollView {
+                        VStack(spacing: 22) {
+                            MikaMascot(mood: .celebrate, size: showsRating ? 140 : 200, reactsToTap: true)
+                            Text(L10n.t("lesson.finished.title", locale: .resolved()))
+                                .font(MicaboFont.display(32))
+                                .foregroundStyle(MicaboColor.ink)
+                                .multilineTextAlignment(.center)
+                            HStack(spacing: 14) {
+                                stat(
+                                    value: session.progress.averageQuizPercent.map { "\($0) %" } ?? "-",
+                                    label: L10n.t("lesson.finished.score", locale: .resolved())
+                                )
+                                stat(
+                                    value: minutes,
+                                    label: L10n.t("lesson.finished.time", locale: .resolved())
+                                )
+                            }
+                            if showsRating {
+                                LessonRatingCard(course: session.course, moment: .finished) {
+                                    withAnimation(.spring(duration: 0.35)) { showsRating = false }
+                                }
+                                .padding(.horizontal, MicaboSpacing.screen)
+                                .transition(.opacity.combined(with: .move(edge: .bottom)))
+                            }
+                        }
+                        .frame(maxWidth: .infinity, minHeight: proxy.size.height)
+                    }
+                    .scrollBounceBehavior(.basedOnSize)
+                    .scrollDismissesKeyboard(.interactively)
                 }
-                Spacer()
                 VStack(spacing: 12) {
                     Button(L10n.t("lesson.finished.cards", locale: .resolved())) { onLeave(.flashcards) }
                         .buttonStyle(LessonPrimaryButtonStyle())
@@ -327,7 +347,16 @@ struct LessonFinishedView: View {
                 .padding(.bottom, 12)
             }
         }
-        .onAppear { Haptics.burst(count: 4, over: 0.6) }
+        .onAppear {
+            Haptics.burst(count: 4, over: 0.6)
+            let id = session.course.id
+            guard LessonRating.shouldOffer(id, at: .finished) else { return }
+            LessonRating.markOffered(id, at: .finished)
+            // Après la fête : la question vient une fois les confettis tombés.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                withAnimation(.spring(duration: 0.45)) { showsRating = true }
+            }
+        }
     }
 
     private var minutes: String {

@@ -190,6 +190,10 @@ struct PaywallLegalFooter: View {
 }
 
 /// La phrase qui dit le prix, et la seule de l'app qui le dise.
+///
+/// **Le test de prix** (`PriceDisplay`) : chaque phrase prend la variante de l'installation,
+/// le mois (« 4,17 € / mois ») ou la semaine (« 0,96 € / semaine »), toujours avec la somme
+/// prélevée d'un bloc. Le prix, lui, est le même.
 enum PaywallPitch {
     /// « Essaie 3 jours gratuitement, puis 4,17 € / mois (facturé 49,99 € par an). »
     ///
@@ -198,9 +202,9 @@ enum PaywallPitch {
     ///
     /// Sans essai — déjà consommé, ou absent dans ce pays —, il reste le prix, et rien
     /// d'autre : la moitié verte ne s'écrit que si Apple l'honorera.
-    static func text(for plan: PaywallPlan) -> Text {
+    static func text(for plan: PaywallPlan, display: PriceDisplay = .current) -> Text {
         let locale = UiLocale.resolved()
-        let price = Text(sentence(for: plan, locale: locale))
+        let price = Text(sentence(for: plan, locale: locale, display: display))
             .foregroundStyle(OnboardingPalette.ink)
         guard plan.hasTrial else { return price }
         let free = Text(L10n.t("ios.paywallTryDays", locale: locale, vars: ["n": "\(PaywallCatalog.freeTrialDays)"]))
@@ -210,8 +214,15 @@ enum PaywallPitch {
 
     /// La moitié « prix » de la phrase. Derrière l'essai elle commence par « puis » ; seule,
     /// elle commence par le prix.
-    static func sentence(for plan: PaywallPlan, locale: UiLocale = .resolved()) -> String {
+    static func sentence(for plan: PaywallPlan, locale: UiLocale = .resolved(), display: PriceDisplay = .current) -> String {
         let afterTrial = plan.hasTrial
+        if display == .weekly, let weekly = plan.weeklyEquivalent {
+            return L10n.t(
+                afterTrial ? "ios.conv.paywallThenYearWeekly" : "ios.conv.paywallPriceYearWeekly",
+                locale: locale,
+                vars: ["weekly": weekly, "yearly": plan.displayPrice]
+            )
+        }
         if let monthly = plan.monthlyEquivalent {
             return L10n.t(
                 afterTrial ? "ios.paywallThenYear" : "ios.paywallPriceYear",
@@ -232,9 +243,9 @@ enum PaywallPitch {
     ///
     /// Sans essai — déjà utilisé par ce compte, ou absent dans ce pays —, il reste
     /// « Seulement 4,17 € / mois » : la moitié verte ne s'écrit que si Apple l'honorera.
-    static func headline(for plan: PaywallPlan, locale: UiLocale = .resolved()) -> Text {
+    static func headline(for plan: PaywallPlan, locale: UiLocale = .resolved(), display: PriceDisplay = .current) -> Text {
         guard plan.hasTrial else {
-            return Text(headlineSentence(for: plan, locale: locale)).foregroundStyle(OnboardingPalette.ink)
+            return Text(headlineSentence(for: plan, locale: locale, display: display)).foregroundStyle(OnboardingPalette.ink)
         }
         // « Essaie **3 jours gratuitement**, puis seulement 4,17 €/mois » : les jours offerts
         // sont surlignés, comme au marqueur.
@@ -244,15 +255,23 @@ enum PaywallPitch {
         var free = AttributedString(L10n.t("ios.paywallTry.free", locale: locale, vars: ["n": days]))
         free.foregroundColor = MicaboColor.correctInk
         free.backgroundColor = MicaboColor.correctSoft
-        let monthly = plan.monthlyEquivalent ?? plan.displayPrice
-        var then = AttributedString(L10n.t("ios.paywallTry.then", locale: locale, vars: ["monthly": monthly]))
+        var then: AttributedString
+        if display == .weekly, let weekly = plan.weeklyEquivalent {
+            then = AttributedString(L10n.t("ios.conv.paywallTryThenWeekly", locale: locale, vars: ["weekly": weekly]))
+        } else {
+            let monthly = plan.monthlyEquivalent ?? plan.displayPrice
+            then = AttributedString(L10n.t("ios.paywallTry.then", locale: locale, vars: ["monthly": monthly]))
+        }
         then.foregroundColor = OnboardingPalette.ink
         return Text(lead + free + then)
     }
 
     /// La moitié « prix » de la phrase du premier paywall, sans la somme annuelle.
-    static func headlineSentence(for plan: PaywallPlan, locale: UiLocale = .resolved()) -> String {
+    static func headlineSentence(for plan: PaywallPlan, locale: UiLocale = .resolved(), display: PriceDisplay = .current) -> String {
         let afterTrial = plan.hasTrial
+        if display == .weekly, let weekly = plan.weeklyEquivalent {
+            return L10n.t(afterTrial ? "ios.conv.paywallThenOnlyWeekly" : "ios.conv.paywallOnlyWeekly", locale: locale, vars: ["weekly": weekly])
+        }
         if let monthly = plan.monthlyEquivalent {
             return L10n.t(afterTrial ? "ios.paywallThenOnly" : "ios.paywallOnly", locale: locale, vars: ["monthly": monthly])
         }

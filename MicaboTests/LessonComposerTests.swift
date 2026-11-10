@@ -156,4 +156,101 @@ final class LessonComposerTests: XCTestCase {
         XCTAssertEqual(GenerationSteps.key(for: .reading, hasSupports: false), "lesson.create.stageTopic")
         XCTAssertEqual(LessonBuilder.Stage.allCases.count, 4)
     }
+
+    // MARK: - La leçon verrouillée
+
+    /// **La règle ne change pas, le moment du paywall si.** La leçon offerte et Pro partent
+    /// toujours ; une fois l'offre servie, un sujet seul ouvre son paywall tout de suite, des
+    /// supports lus passent par l'aperçu verrouillé (et le paywall `lessonReady`).
+    func testTheLockedPreviewOnlyCatchesReadSupportsAfterTheFreeLesson() throws {
+        let context = try makeContext()
+        let sample = Course(title: "Démo", source: .sample)
+        context.insert(sample)
+
+        // La leçon offerte n'a pas servi : tout part, l'écran de création est inchangé.
+        for source in LessonSourceKind.allCases {
+            XCTAssertEqual(LessonAllowance.sendRoute(isPro: false, source: source, courses: [sample]), .create, source.rawValue)
+        }
+
+        let own = Course(title: "Mon cours", source: .pdf)
+        context.insert(own)
+        // Pro : tout part.
+        for source in LessonSourceKind.allCases {
+            XCTAssertEqual(LessonAllowance.sendRoute(isPro: true, source: source, courses: [own]), .create, source.rawValue)
+            XCTAssertNil(LessonAllowance.immediatePaywall(isPro: true, source: source, courses: [own]))
+        }
+        // Offre servie : un sujet seul, paywall immédiat, celui d'avant.
+        XCTAssertEqual(LessonAllowance.sendRoute(isPro: false, source: .topic, courses: [own]), .paywall(.secondCourse))
+        XCTAssertEqual(LessonAllowance.immediatePaywall(isPro: false, source: .topic, courses: [own]), .secondCourse)
+        // Des supports lus : l'aperçu, et aucun paywall avant l'écran de création.
+        for source in LessonSourceKind.allCases where source != .topic {
+            XCTAssertEqual(LessonAllowance.sendRoute(isPro: false, source: source, courses: [own]), .lockedPreview, source.rawValue)
+            XCTAssertNil(LessonAllowance.immediatePaywall(isPro: false, source: source, courses: [own]), source.rawValue)
+        }
+        // La porte, elle, n'a pas bougé (le serveur refuserait la leçon).
+        XCTAssertEqual(LessonAllowance.gate(isPro: false, source: .pdf, courses: [own]), .generateCourse)
+    }
+
+    /// Plus de couronne ni de paywall sur un import : le lire est gratuit et se fait sur
+    /// l'appareil.
+    func testImportsAreNeverLocked() {
+        for kind in LessonComposer.Kind.allCases {
+            XCTAssertFalse(LessonAllowance.locksImport(kind, isPro: false, freeLessonLeft: false), kind.rawValue)
+            XCTAssertFalse(LessonAllowance.locksImport(kind, isPro: false, freeLessonLeft: true), kind.rawValue)
+            XCTAssertFalse(LessonAllowance.locksImport(kind, isPro: true, freeLessonLeft: false), kind.rawValue)
+        }
+    }
+
+    /// **L'aperçu ne dit que ce qui a été lu** : les supports, les pages d'un PDF ou de
+    /// photos, les mots, la première vraie ligne pour titre, et les lignes suivantes à flouter.
+    func testTheReadSummaryComesFromWhatWasRead() {
+        let pdf = ImportedDocument(
+            text: "12\n\nLa Guerre froide (1947-1991)\nUn monde coupé en deux blocs.\n---\nLa doctrine Truman, 1947.\nLe plan Marshall.\nLe blocus de Berlin.\nLa crise de Cuba.",
+            pageImages: [],
+            coverImage: nil,
+            pageCount: 7,
+            fileName: "histoire.pdf",
+            source: .pdf,
+            extractionNote: nil
+        )
+        let video = ImportedDocument(
+            text: "bonjour à tous aujourd'hui on parle de la guerre froide",
+            pageImages: [],
+            coverImage: nil,
+            pageCount: 1,
+            fileName: "La guerre froide en 10 minutes",
+            source: .youtube,
+            extractionNote: nil
+        )
+
+        let summary = LessonReadSummary(documents: [pdf, video])
+        XCTAssertEqual(summary.supports, 2)
+        XCTAssertEqual(summary.pages, 7, "La vidéo n'a pas de pages")
+        XCTAssertEqual(summary.title, "La Guerre froide (1947-1991)", "« 12 » et « --- » ne sont pas des lignes")
+        XCTAssertEqual(summary.previewLines.first, "Un monde coupé en deux blocs.")
+        XCTAssertEqual(summary.previewLines.count, LessonReadSummary.previewLineCount)
+        XCTAssertEqual(
+            summary.words,
+            LessonReadSummary.wordCount(pdf.text) + LessonReadSummary.wordCount(video.text)
+        )
+        XCTAssertEqual(LessonReadSummary.wordCount("Le plan Marshall — 1947 !"), 4, "Un tiret seul n'est pas un mot")
+
+        // Une vidéo d'abord : son titre, pas la première ligne de sa transcription.
+        let videoFirst = LessonReadSummary(documents: [video])
+        XCTAssertEqual(videoFirst.title, "La guerre froide en 10 minutes")
+        XCTAssertEqual(videoFirst.pages, 0)
+
+        // Rien de lisible : le nom du fichier.
+        let blank = ImportedDocument(text: "12\n--", pageImages: [], coverImage: nil, pageCount: 2, fileName: "scan.jpg", source: .photo, extractionNote: nil)
+        XCTAssertEqual(LessonReadSummary(documents: [blank]).title, "scan.jpg")
+        XCTAssertTrue(LessonReadSummary(documents: [blank]).previewLines.isEmpty)
+    }
+
+    /// Le paywall de la leçon lue a sa phrase, dans chaque langue.
+    func testTheLessonReadyPaywallHasItsHeadline() {
+        XCTAssertEqual(PaywallTrigger.lessonReady.rawValue, "lessonReady")
+        for locale in UiLocale.allCases {
+            XCTAssertNotNil(IosI18nCatalogs.table(for: locale.rawValue)["ios.conv.paywallLessonReady"], locale.rawValue)
+        }
+    }
 }
