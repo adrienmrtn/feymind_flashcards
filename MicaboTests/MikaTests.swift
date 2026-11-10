@@ -173,6 +173,33 @@ final class MikaTests: XCTestCase {
         XCTAssertNil(chat.attachment)
         XCTAssertFalse(chat.quota.hasFreeQuestion, "La question offerte ne revient pas")
     }
+
+    /// **Un exercice scanné rapporte `exerciseSolved` à la première réponse**, puis
+    /// `mikaAnswer` aux suivantes (`docs/refonte-knowunity.md` § 4).
+    @MainActor
+    func testAScannedExerciseEarnsItsXPThenMikaXP() async {
+        let suite = "micabo.tests.mika.xp"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let xp = XPStore(defaults: defaults)
+        let chat = MikaChat(
+            conversation: MikaConversation(),
+            quota: MikaQuota(defaults: freshDefaults()),
+            store: { _ in },
+            firstReward: .exerciseSolved,
+            xp: xp
+        )
+        let service = CannedAIService(reply: MikaChatReply(reply: "Pas à pas.", card: nil))
+
+        chat.draft = "Explique-moi cet exercice."
+        await chat.send(isPro: true, level: nil, language: .fr, using: service)
+        XCTAssertEqual(xp.today, XPRules.exerciseSolved)
+
+        chat.draft = "Et l'étape deux ?"
+        await chat.send(isPro: true, level: nil, language: .fr, using: service)
+        XCTAssertEqual(xp.today, XPRules.exerciseSolved + XPRules.mikaAnswer)
+    }
 }
 
 // MARK: - Les doublures

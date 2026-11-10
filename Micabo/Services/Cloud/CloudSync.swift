@@ -409,7 +409,13 @@ final class CloudSync {
         }
 
         let profile = ProfileRecord.fromLocalPreferences(userID: userID, displayName: auth.user?.displayName)
-        try await database.upsert([profile], into: CloudTable.profiles)
+        do {
+            try await database.upsert([profile], into: CloudTable.profiles)
+        } catch let failure as SupabaseDatabase.Failure where failure.concernsXPColumns {
+            // **La migration de l'XP n'est peut-être pas encore déployée** : le profil repart
+            // une fois sans ses trois champs `xp_*`. La synchro ne casse jamais pour l'XP.
+            try await database.upsert([profile.withoutXP], into: CloudTable.profiles)
+        }
         lastPushedProfileSignature = profile.signature
 
         await flushTombstones()
@@ -1014,11 +1020,15 @@ final class CloudSync {
         // avant la montée ; si le pays a été changé dans les Réglages depuis la dernière
         // montée, le profil distant est celui d'avant, et le recopier annulerait le choix.
         // La montée qui suit publiera le nouveau.
-        if !hasLocalProfileChanges,
-           let userID = syncUserID,
+        if let userID = syncUserID,
            let profile = try? await database.fetch(ProfileRecord.self, from: CloudTable.profiles).first,
            profile.id == userID {
-            profile.applyToLocalPreferences()
+            if !hasLocalProfileChanges {
+                profile.applyToLocalPreferences()
+            }
+            // Le total d'XP d'un autre appareil, ou d'avant une réinstallation : le plus grand
+            // reste, et la montée qui suit ne le remet pas à zéro.
+            XPStore.shared.adoptRemote(total: profile.xp_total)
         }
     }
 

@@ -63,6 +63,8 @@ enum LocalWipe {
         OffDayTombstones.clear(OffDayTombstones.all())
         ExamHistory.clear()
         ExamAllowance.freeMockUsed = false
+        // L'XP monte avec le profil : le compte suivant ne doit pas hériter de celle-ci.
+        XPStore.shared.reset()
         LibraryCensus.forget()
         CourseLedger.noteChange()
     }

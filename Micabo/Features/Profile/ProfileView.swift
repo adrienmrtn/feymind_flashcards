@@ -35,6 +35,8 @@ struct ProfileView: View {
     @State private var path = NavigationPath()
     @State private var metrics = Metrics.empty
     @State private var showsStreak = false
+    /// La ligue de la semaine (`docs/refonte-knowunity.md` § 3), au-dessus des amis.
+    @State private var showsLeague = false
 
     /// Les statistiques sont calculées une seule fois par rendu. Avant, `streak`,
     /// `bestStreak`, la répartition et les cartes les plus passées reparcouraient le même
@@ -316,6 +318,9 @@ struct ProfileView: View {
             }
             .sheet(isPresented: $showsStreak) {
                 StreakSheet()
+            }
+            .sheet(isPresented: $showsLeague) {
+                LeagueSheet()
             }
             .micaboPaywall($paywall)
         }
@@ -774,6 +779,17 @@ struct ProfileView: View {
     private var friendsRow: some View {
         MicaboRowGroup(
             rows: [
+                MicaboRow(
+                    tile: MicaboTile(glyph: .emoji(XPStore.shared.league.emoji), background: LessonTone.yellow.pale),
+                    title: i18n.t("ios.kx.league.title"),
+                    subtitle: i18n.t("ios.kx.league.rowSub", [
+                        "league": XPStore.shared.league.name,
+                        "xp": "\(XPStore.shared.week)",
+                    ]),
+                    accessory: .chevron
+                ) {
+                    showsLeague = true
+                },
                 MicaboRow(
                     tile: MicaboTile(glyph: .symbol("person.2.fill"), background: MicaboColor.tilePastels[2]),
                     title: i18n.t("nav.friends"),

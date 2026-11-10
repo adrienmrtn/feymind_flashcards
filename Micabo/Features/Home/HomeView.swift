@@ -21,11 +21,23 @@ struct HomeView: View {
     @State private var creating = false
     @State private var paywall: PaywallTrigger?
     @State private var showsStreak = false
+    /// La ligue de la semaine (`docs/refonte-knowunity.md` § 3) : la pastille XP et la tuile.
+    @State private var showsLeague = false
+    @State private var showsTimer = false
+    @State private var showsScanner = false
+    @State private var showsDueReview = false
+    @State private var quickQuizCourse: Course?
     @FocusState private var focused: Bool
 
     private var isPro: Bool { pro?.isPro ?? true }
 
+    /// La leçon offerte n'a pas encore servi : un import peut l'écrire (§ 7).
+    private var freeLessonLeft: Bool {
+        !isPro && !LessonAllowance.hasUsedFreeLesson(courses: courses)
+    }
+
     var body: some View {
+        let resume = ResumeTarget.pick(from: courses)
         NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 26) {
@@ -34,19 +46,34 @@ struct HomeView: View {
                         composer: composer,
                         focused: $focused,
                         isPro: isPro,
+                        freeLessonLeft: freeLessonLeft,
                         isThinking: composer.isReading,
                         onImport: tapImport,
                         onSend: send
                     )
                     .padding(.top, HomePerch.height)
-                    HomeStatsRow(stats: HomeStats(courses: courses))
+                    // « Aujourd'hui » : l'objectif du jour, les cartes dues, la leçon en cours (la
+                    // carte « Reprendre » s'y est fondue).
+                    HomeTodayCard(
+                        dueCount: courses.reduce(0) { $0 + DueReview.dueCount(of: $1) },
+                        resumeCourse: resume?.0,
+                        resumeTarget: resume?.1,
+                        hasCourses: !courses.isEmpty,
+                        onReview: {
+                            dismissKeyboard()
+                            showsDueReview = true
+                        },
+                        onContinue: {
+                            if let course = resume?.0 { path.append(course) }
+                        },
+                        onCreate: { focused = true }
+                    )
+                    HomeToolsGrid(hasLesson: resume != nil) { tool in
+                        open(tool, resume: resume?.0)
+                    }
+                    HomeStatsRow(stats: HomeStats(courses: courses, extraSeconds: FocusLog.totalSeconds))
                         .contentShape(Rectangle())
                         .onTapGesture(perform: dismissKeyboard)
-                    if let resume = ResumeTarget.pick(from: courses) {
-                        ResumeCard(course: resume.0, target: resume.1) {
-                            path.append(resume.0)
-                        }
-                    }
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.top, 8)
@@ -70,7 +97,7 @@ struct HomeView: View {
             }
             .lessonImportPickers(composer, request: $importRequest)
             .fullScreenCover(isPresented: $creating) {
-                LessonCreationFlow(composer: composer) { course in
+                LessonCreationFlow(composer: composer, sendsAsFreeLesson: LessonAllowance.sendsAsFreeLesson(isPro: isPro, source: composer.source, courses: courses)) { course in
                     creating = false
                     composer.reset()
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { path.append(course) }
@@ -82,6 +109,21 @@ struct HomeView: View {
             .sheet(isPresented: $showsStreak) {
                 StreakSheet(onStudy: study)
             }
+            .sheet(isPresented: $showsLeague) {
+                LeagueSheet()
+            }
+            .sheet(isPresented: $showsDueReview) {
+                DueCardsReview(courses: DueReview.courses(courses))
+            }
+            .sheet(item: $quickQuizCourse) { course in
+                QuickQuizSheet(course: course)
+            }
+            .fullScreenCover(isPresented: $showsTimer) {
+                FocusTimerView()
+            }
+            .fullScreenCover(isPresented: $showsScanner) {
+                ScanExerciseView()
+            }
             // Le journal des cartes rejoint la série une fois : un ancien compte retrouve la
             // sienne dans la pastille dès l'ouverture.
             .task { StudyStreak.adoptReviewHistoryIfNeeded(in: modelContext) }
@@ -90,12 +132,23 @@ struct HomeView: View {
         .returnsHome(path: $path)
     }
 
-    /// **La rangée du haut et la question**, centrées l'une sur l'autre. La série se pose à
-    /// droite, sur sa propre ligne : elle ne pousse ni le titre ni Mika.
+    /// **La rangée du haut et la question**, centrées l'une sur l'autre. La rangée a sa propre
+    /// ligne : elle ne pousse ni le titre ni Mika. À gauche, « ✦ Pro » pour qui n'est pas
+    /// abonné ; à droite, l'XP de la semaine (la ligue) puis la série.
     private var header: some View {
         VStack(spacing: 8) {
-            HStack {
+            HStack(spacing: 8) {
+                if !isPro {
+                    ProPill {
+                        dismissKeyboard()
+                        paywall = .upgrade
+                    }
+                }
                 Spacer(minLength: 0)
+                XPPill {
+                    dismissKeyboard()
+                    showsLeague = true
+                }
                 StreakPill {
                     dismissKeyboard()
                     showsStreak = true
@@ -124,14 +177,41 @@ struct HomeView: View {
         }
     }
 
-    /// PDF, Photo, Audio et YouTube sont Pro ; un texte collé est la leçon offerte.
+    /// PDF, Photo, Audio et YouTube sont Pro ; la leçon offerte, elle, peut venir de n'importe
+    /// quel support (`docs/refonte-knowunity.md` § 7). Une fois servie, les imports ouvrent le
+    /// paywall comme avant.
     private func tapImport(_ kind: LessonComposer.Kind) {
-        if kind != .text && !isPro {
+        if kind != .text && !isPro && !freeLessonLeft {
             focused = false
             paywall = .generateCourse
             return
         }
         importRequest = kind
+    }
+
+    /// Une tuile d'« Outils ».
+    private func open(_ tool: HomeToolsGrid.Tool, resume: Course?) {
+        dismissKeyboard()
+        switch tool {
+        case .scan:
+            // La porte de Mika avant l'appareil photo : scanner pour tomber sur le paywall
+            // serait un geste pour rien.
+            if MikaQuota().gate(isPro: isPro) == .paywall {
+                paywall = .mika
+            } else {
+                showsScanner = true
+            }
+        case .quiz:
+            if let resume {
+                quickQuizCourse = resume
+            } else {
+                focused = true
+            }
+        case .timer:
+            showsTimer = true
+        case .league:
+            showsLeague = true
+        }
     }
 
     private func send() {
@@ -217,6 +297,8 @@ struct HomeComposerBar: View {
     let composer: LessonComposer
     var focused: FocusState<Bool>.Binding
     let isPro: Bool
+    /// La leçon offerte reste : les imports n'ont pas de couronne (§ 7).
+    var freeLessonLeft = false
     var isThinking = false
     let onImport: (LessonComposer.Kind) -> Void
     let onSend: () -> Void
@@ -305,7 +387,7 @@ struct HomeComposerBar: View {
             }
             .animation(.spring(duration: 0.3), value: composer.supports.count)
 
-            ImportGrid(isPro: isPro, enabled: composer.hasRoom, onImport: onImport)
+            ImportGrid(isPro: isPro, freeLessonLeft: freeLessonLeft, enabled: composer.hasRoom, onImport: onImport)
 
             if !composer.hasRoom {
                 Text(L10n.t("lesson.home.supportsFull", locale: .resolved(), vars: ["n": String(LessonComposer.maximumSupports)]))
@@ -326,9 +408,11 @@ private extension LessonComposer.Support {
 
 /// **Les cinq supports, en petit, sous la barre** : une ligne de pastilles, l'icône 3D et
 /// son nom. La barre reste ce qu'on voit d'abord ; un support Pro porte sa petite couronne
-/// pour qui n'est pas abonné.
+/// pour qui n'est pas abonné, une fois la leçon offerte servie (`docs/refonte-knowunity.md`
+/// § 7 : tant qu'elle reste, elle peut venir d'un import).
 struct ImportGrid: View {
     let isPro: Bool
+    var freeLessonLeft = false
     var enabled = true
     let onImport: (LessonComposer.Kind) -> Void
 
@@ -337,7 +421,7 @@ struct ImportGrid: View {
     var body: some View {
         HStack(spacing: 8) {
             ForEach(Self.kinds, id: \.self) { kind in
-                ImportChip(kind: kind, locked: kind != .text && !isPro, enabled: enabled) { onImport(kind) }
+                ImportChip(kind: kind, locked: kind != .text && !isPro && !freeLessonLeft, enabled: enabled) { onImport(kind) }
             }
         }
     }

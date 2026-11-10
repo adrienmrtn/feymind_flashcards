@@ -141,6 +141,14 @@ final class SocialService {
         weekRanking = await loadWeekRanking(me: me)
     }
 
+    /// **La ligue de la semaine** (`friends_league()`, migration `xp_league`) : l'élève et ses
+    /// amis acceptés, triés par XP de la semaine. Lève sans compte, ou si la fonction n'est
+    /// pas encore déployée : l'écran retombe alors sur la seule ligne de l'élève.
+    func friendsLeague() async throws -> [FriendsLeague.Record] {
+        guard isReady else { throw SupabaseDatabase.Failure.notSignedIn }
+        return try await database.rpc([FriendsLeague.Record].self, "friends_league")
+    }
+
     private func loadWeekRanking(me: UUID) async -> [WeekReviewRanking.Row] {
         do {
             let records = try await database.rpc(

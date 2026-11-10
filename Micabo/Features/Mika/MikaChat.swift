@@ -148,15 +148,25 @@ final class MikaChat {
 
     let quota: MikaQuota
     private let store: (MikaConversation) -> Void
+    /// L'XP de la première réponse de cette conversation : `mikaAnswer` dans une leçon,
+    /// `exerciseSolved` pour un exercice scanné. Les suivantes rapportent `mikaAnswer`.
+    private let firstReward: XPReason
+    private var rewarded = false
+    /// Où l'XP se compte : `XPStore.shared` dans l'app, un magasin à part dans les tests.
+    private let xp: XPStore?
 
     init(
         conversation: MikaConversation = MikaConversationStore.load(),
         quota: MikaQuota = MikaQuota(),
-        store: @escaping (MikaConversation) -> Void = { MikaConversationStore.save($0) }
+        store: @escaping (MikaConversation) -> Void = { MikaConversationStore.save($0) },
+        firstReward: XPReason = .mikaAnswer,
+        xp: XPStore? = .shared
     ) {
         self.conversation = conversation
         self.quota = quota
         self.store = store
+        self.firstReward = firstReward
+        self.xp = xp
     }
 
     var messages: [MikaMessage] { conversation.messages }
@@ -229,6 +239,8 @@ final class MikaChat {
             quota.noteAnswered()
             persist()
             Haptics.tick()
+            xp?.award(rewarded ? .mikaAnswer : firstReward)
+            rewarded = true
         } catch {
             failure = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }

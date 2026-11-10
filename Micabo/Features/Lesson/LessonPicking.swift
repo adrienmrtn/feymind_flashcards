@@ -148,6 +148,8 @@ enum LessonReview {
         )
         card.logs = (card.logs ?? []) + [log]
         StudyStreak.record(now: now)
+        // Une carte révisée, quelle que soit la note.
+        XPStore.shared.award(.cardReviewed)
     }
 
     /// **Une question ratée devient une flashcard à revoir demain.** Une carte QCM, rattachée
