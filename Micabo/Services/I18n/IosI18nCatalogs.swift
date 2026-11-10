@@ -1457,7 +1457,7 @@ enum IosI18nCatalogs {
         "ios.focus.cycleLength": "Durée d'un cycle de travail",
         "ios.focus.cycleOf": "Cycle {n} sur {total}",
         "ios.focus.cycles": "Nombre de cycles",
-        "ios.focus.cyclesA11y": "{count, plural, one {# cycle} other {# cycles}}",
+        "ios.focus.cyclesA11y": "{count, plural, one {# cycle de travail} other {# cycles de travail}}",
         "ios.focus.deleteTask": "Supprimer la tâche",
         "ios.focus.done": "Terminées",
         "ios.focus.dueDate": "Échéance",

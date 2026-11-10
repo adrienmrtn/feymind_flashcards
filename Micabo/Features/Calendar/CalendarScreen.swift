@@ -588,12 +588,17 @@ struct AgendaRow: View {
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                         }
+                        // Le texte passe avant l'espace : mesuré sur une largeur et posé sur
+                        // une autre, il débordait de sa ligne.
+                        .layoutPriority(1)
                         Spacer(minLength: 4)
                     }
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(HomePressStyle(scale: 0.98, feedback: item.kind == .task ? .selection : .light))
+                .layoutPriority(1)
                 trailing
+                    .fixedSize()
             }
             .padding(.vertical, 10)
             .padding(.leading, 10)
@@ -675,10 +680,16 @@ struct AgendaRow: View {
             .buttonStyle(HomePressStyle(scale: 0.9, feedback: .medium))
             .accessibilityLabel(Text(loc("ios.cal.startSession")))
         case .milestone where !item.isDone:
-            Text(loc("ios.cal.go"))
-                .font(MicaboFont.ui(13, weight: .black))
-                .foregroundStyle(tint.color)
-                .lineLimit(1)
+            Button(action: onTap) {
+                Text(loc("ios.cal.go"))
+                    .font(MicaboFont.ui(13, weight: .black))
+                    .foregroundStyle(Color.white)
+                    .lineLimit(1)
+                    .padding(.horizontal, 10)
+                    .frame(minHeight: 30)
+                    .background(tint.color, in: Capsule())
+            }
+            .buttonStyle(HomePressStyle(scale: 0.92, feedback: .medium))
         case .focus:
             Image(systemName: "checkmark.seal.fill")
                 .font(.system(size: 17, weight: .bold))

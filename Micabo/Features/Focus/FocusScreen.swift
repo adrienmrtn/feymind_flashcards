@@ -19,7 +19,7 @@ struct FocusHeroCard: View {
 
     static let mikaSize: CGFloat = 116
     /// Ce qui passe derrière le bouton : le bas du buste.
-    static let mikaSink: CGFloat = 30
+    static let mikaSink: CGFloat = 24
     /// La place que le buste prend à droite de la colonne de texte.
     static let mikaReserve: CGFloat = 88
 
