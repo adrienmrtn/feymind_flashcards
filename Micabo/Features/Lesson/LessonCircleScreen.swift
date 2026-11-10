@@ -254,7 +254,7 @@ struct ConclusionCircleView: View {
                                 .font(MicaboFont.label)
                                 .foregroundStyle(MicaboColor.ink)
                             Spacer()
-                            Text("\(score) %")
+                            Text(L10n.percent(score, locale: .resolved()))
                                 .font(MicaboFont.number(28))
                                 .foregroundStyle(session.course.tone.ink)
                         }

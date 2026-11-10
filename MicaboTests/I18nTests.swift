@@ -354,6 +354,20 @@ final class I18nTests: XCTestCase {
         XCTAssertEqual(DiscountHeadline.split(percent: 30, locale: .tr).rest, " indirim")
     }
 
+    /// **Un pourcentage s'écrit comme la langue l'écrit.** Les écrans posaient `"\(n) %"` à la
+    /// main : l'espace française partout, et le signe du mauvais côté en turc.
+    func testPercentFollowsTheLocale() {
+        XCTAssertEqual(L10n.percent(42, locale: .en), "42%")
+        XCTAssertEqual(L10n.percent(42, locale: .tr), "%42")
+        let french = L10n.percent(42, locale: .fr)
+        XCTAssertTrue(french.hasPrefix("42"), french)
+        XCTAssertTrue(french.hasSuffix("%"), french)
+        XCTAssertNotEqual(french, "42%")
+        for locale in UiLocale.allCases {
+            XCTAssertTrue(L10n.percent(100, locale: locale).contains("%") || L10n.percent(100, locale: locale).contains("٪"), locale.rawValue)
+        }
+    }
+
     func testUiLocaleStorePersists() {
         let defaults = UserDefaults(suiteName: "micabo.i18n.test")!
         defaults.removePersistentDomain(forName: "micabo.i18n.test")

@@ -276,7 +276,7 @@ private struct OnboardingCountingPercent: View, Animatable {
     }
 
     var body: some View {
-        Text("\(Int(value.rounded())) %")
+        Text(L10n.percent(Int(value.rounded()), locale: .resolved()))
             .font(MicaboFont.ui(22, weight: .bold))
             .foregroundStyle(ink)
             .monospacedDigit()

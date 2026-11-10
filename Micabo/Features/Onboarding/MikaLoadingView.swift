@@ -91,7 +91,7 @@ struct MikaLoadingView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title). \(stepLabel)")
-        .accessibilityValue("\(percent) %")
+        .accessibilityValue(Text(L10n.percent(percent, locale: .resolved())))
     }
 
     // MARK: - Le pourcentage
@@ -108,13 +108,13 @@ struct MikaLoadingView: View {
     /// moment où la page suivante venait le recouvrir.
     private var percentLabel: some View {
         ZStack(alignment: .trailing) {
-            Text("100 %")
+            Text(L10n.percent(100, locale: .resolved()))
                 .hidden()
 
             if isDone {
-                Text("100 %")
+                Text(L10n.percent(100, locale: .resolved()))
             } else {
-                Text("\(percent) %")
+                Text(L10n.percent(percent, locale: .resolved()))
                     .contentTransition(.numericText(value: Double(percent)))
                     .animation(.easeOut(duration: 0.2), value: percent)
             }

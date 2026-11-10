@@ -502,7 +502,7 @@ struct LessonPathHeader: View {
     private var progressLine: some View {
         VStack(spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
-                Text("\(session.percent) %")
+                Text(L10n.percent(session.percent, locale: .resolved()))
                     .font(MicaboFont.number(26))
                     .foregroundStyle(tone.ink)
                     .contentTransition(.numericText(value: Double(session.percent)))

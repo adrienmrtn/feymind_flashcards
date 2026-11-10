@@ -1389,7 +1389,7 @@ private struct OnboardingLessonScreen: View {
                 .minimumScaleFactor(0.7)
             VStack(spacing: 9) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text("40 %")
+                    Text(L10n.percent(40, locale: .resolved()))
                         .font(MicaboFont.number(24))
                         .foregroundStyle(tone.ink)
                     Spacer(minLength: 8)
