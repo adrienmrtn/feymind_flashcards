@@ -81,6 +81,25 @@ final class CloudSync {
         set { UserDefaults.standard.set(newValue, forKey: Self.profileSignatureKey) }
     }
 
+    /// **Les réponses du parcours, à monter avant toute descente du profil.**
+    ///
+    /// Posé à la fin du parcours (`noteOnboardingAnswers`), levé par la première montée du
+    /// profil qui réussit. Entre les deux, le profil distant ne redescend pas : sur une
+    /// réinstallation dont la session a survécu dans le trousseau, il est celui de l'ancienne
+    /// installation, et il écraserait ce que l'élève vient de répondre.
+    private static let onboardingAnswersKey = "micabo.cloud.onboardingAnswersPending"
+
+    /// À appeler quand le parcours se termine : ce que l'élève y a répondu gagne contre le
+    /// profil du serveur, et monte au prochain passage.
+    static func noteOnboardingAnswers(defaults: UserDefaults = .standard) {
+        defaults.set(true, forKey: onboardingAnswersKey)
+    }
+
+    private var onboardingAnswersPending: Bool {
+        get { UserDefaults.standard.bool(forKey: Self.onboardingAnswersKey) }
+        set { UserDefaults.standard.set(newValue, forKey: Self.onboardingAnswersKey) }
+    }
+
     /// Vrai quand les réglages ont changé sur cet appareil depuis la dernière montée : le
     /// profil distant est alors plus vieux que le local, et il ne doit pas l'écraser.
     private var hasLocalProfileChanges: Bool {
@@ -221,7 +240,10 @@ final class CloudSync {
 
         let profile = try? await database.fetch(ProfileRecord.self, from: CloudTable.profiles).first
         profile?.applyToLocalPreferences()
+        // « J'ai déjà un compte » : c'est le seul chemin où le profil du serveur remplace le
+        // parcours, et le seul où le parcours se marque fini sans avoir été fait.
         OnboardingPreferences.markCompleted()
+        onboardingAnswersPending = false
         if let userID = auth.user?.id {
             lastPushedProfileSignature = ProfileRecord.fromLocalPreferences(userID: userID, displayName: nil).signature
         }
@@ -408,15 +430,23 @@ final class CloudSync {
             echoes.save()
         }
 
-        let profile = ProfileRecord.fromLocalPreferences(userID: userID, displayName: auth.user?.displayName)
-        do {
-            try await database.upsert([profile], into: CloudTable.profiles)
-        } catch let failure as SupabaseDatabase.Failure where failure.concernsXPColumns {
-            // **La migration de l'XP n'est peut-être pas encore déployée** : le profil repart
-            // une fois sans ses trois champs `xp_*`. La synchro ne casse jamais pour l'XP.
-            try await database.upsert([profile.withoutXP], into: CloudTable.profiles)
+        // **Pas de profil pendant le parcours.** Une session qui a survécu à la réinstallation
+        // (le trousseau n'est pas effacé avec l'app) synchronise dès le lancement : monter
+        // ici des réglages par défaut écraserait le profil du compte, et son
+        // `onboarding_completed_at`, avant même la première réponse. Les réponses montent à
+        // la fin du parcours (`noteOnboardingAnswers`).
+        if OnboardingPreferences.isCompleted {
+            let profile = ProfileRecord.fromLocalPreferences(userID: userID, displayName: auth.user?.displayName)
+            do {
+                try await database.upsert([profile], into: CloudTable.profiles)
+            } catch let failure as SupabaseDatabase.Failure where failure.concernsXPColumns {
+                // **La migration de l'XP n'est peut-être pas encore déployée** : le profil repart
+                // une fois sans ses trois champs `xp_*`. La synchro ne casse jamais pour l'XP.
+                try await database.upsert([profile.withoutXP], into: CloudTable.profiles)
+            }
+            lastPushedProfileSignature = profile.signature
+            onboardingAnswersPending = false
         }
-        lastPushedProfileSignature = profile.signature
 
         await flushTombstones()
 
@@ -1023,7 +1053,10 @@ final class CloudSync {
         if let userID = syncUserID,
            let profile = try? await database.fetch(ProfileRecord.self, from: CloudTable.profiles).first,
            profile.id == userID {
-            if !hasLocalProfileChanges {
+            // Seulement une fois le parcours fini **sur cette installation**, et ses réponses
+            // montées : pendant le parcours, l'élève répond de nouveau, et le profil distant
+            // ne décide plus de rien - en particulier pas de sauter le parcours.
+            if OnboardingPreferences.isCompleted, !onboardingAnswersPending, !hasLocalProfileChanges {
                 profile.applyToLocalPreferences()
             }
             // Le total d'XP d'un autre appareil, ou d'avant une réinstallation : le plus grand

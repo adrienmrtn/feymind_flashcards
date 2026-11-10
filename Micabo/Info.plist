@@ -13,19 +13,15 @@
 	<key>MicaboCommit</key>
 	<string>dev</string>
 	<!--
-	L'écran de lancement : l'icône de Micabo (Mika dans sa pastille bleue) au centre, sur le
-	blanc le jour et le presque-noir `#0B0D14` la nuit — les deux fonds du kit de marque
-	(`design/micabo-kit-mika/marque/tokens.json`, `ecranLancement`). Les deux vivent dans le
-	catalogue : `LaunchBackground` (couleur, deux apparences) et `LaunchMark` (120 points).
+	L'écran de lancement : un aplat bleu Micabo `#3870FE`, le jour comme la nuit, sans image
+	(`LaunchBackground` dans le catalogue). La première image SwiftUI est ce même bleu
+	(`LaunchCurtain` dans `RootView`, puis le premier écran du parcours, d'où Mika monte) :
+	le passage ne se voit pas, et la marque ne s'affiche plus deux fois de suite.
 	-->
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>
 		<string>LaunchBackground</string>
-		<key>UIImageName</key>
-		<string>LaunchMark</string>
-		<key>UIImageRespectsSafeAreaInsets</key>
-		<true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Micabo uses the camera to scan your course pages.</string>

@@ -228,6 +228,9 @@ struct OnboardingFlowView: View {
 
     private func finish() {
         Analytics.track(.onboardingFinished)
+        // Avant le drapeau : dès qu'il est posé, une synchro peut relire le profil du
+        // serveur, et ce sont les réponses qu'on vient de donner qui doivent gagner.
+        CloudSync.noteOnboardingAnswers()
         OnboardingPreferences.markCompleted()
         // L'app s'ouvre sur Home, dont la barre crée la première leçon : le parcours n'en
         // écrit plus. Ce dernier écran n'a pas de croix : on n'y enferme personne.

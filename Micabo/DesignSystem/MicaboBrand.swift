@@ -31,9 +31,10 @@ enum MicaboBrand {
     static let blue800 = Color(hex: 0x1C387F)
     static let blue900 = Color(hex: 0x132656)
 
-    /// Les fonds de l'écran de lancement (aussi dans `LaunchBackground.colorset`).
-    static let launchLight = Color.white
-    static let launchDark = Color(hex: 0x0B0D14)
+    /// **Le fond de l'écran de lancement** (aussi dans `LaunchBackground.colorset`) : le bleu
+    /// Micabo, le jour comme la nuit, sans image. Le premier écran SwiftUI part de ce même
+    /// aplat (`LaunchCurtain`, `HookLogoStepView`) : le passage ne se voit pas.
+    static let launch = blue
 
     /// **Le dégradé de marque**, en aplat sous du texte blanc : du bleu Micabo au 700.
     /// Il remplace l'ancien bleu → violet : une seule teinte, un seul monde.
