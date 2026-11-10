@@ -31,6 +31,18 @@
         <item quantity="few">dnevi zapored</item>
         <item quantity="other">dni zapored</item>
     </plurals>
+    <plurals name="kx_league_endsIn">
+        <item quantity="one">Konča se čez %1$d dan</item>
+        <item quantity="two">Konča se čez %1$d dneva</item>
+        <item quantity="few">Konča se čez %1$d dni</item>
+        <item quantity="other">Konča se čez %1$d dni</item>
+    </plurals>
+    <plurals name="kx_today_due">
+        <item quantity="one">%1$d kartica za ponavljanje</item>
+        <item quantity="two">%1$d kartici za ponavljanje</item>
+        <item quantity="few">%1$d kartice za ponavljanje</item>
+        <item quantity="other">%1$d kartic za ponavljanje</item>
+    </plurals>
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Dodaj mojo napako med kartice</item>
         <item quantity="other">Dodaj moje napake med kartice (%1$d)</item>

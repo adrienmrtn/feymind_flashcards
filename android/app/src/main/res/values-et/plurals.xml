@@ -25,6 +25,14 @@
         <item quantity="one">päev järjest</item>
         <item quantity="other">päeva järjest</item>
     </plurals>
+    <plurals name="kx_league_endsIn">
+        <item quantity="one">Lõpeb %1$d päeva pärast</item>
+        <item quantity="other">Lõpeb %1$d päeva pärast</item>
+    </plurals>
+    <plurals name="kx_today_due">
+        <item quantity="one">%1$d kaart kordamiseks</item>
+        <item quantity="other">%1$d kaarti kordamiseks</item>
+    </plurals>
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Lisa minu viga mälukaartidele</item>
         <item quantity="other">Lisa minu %1$d viga mälukaartidele</item>

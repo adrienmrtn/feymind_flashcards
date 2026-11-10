@@ -68,6 +68,7 @@ import com.micabo.app.ui.text.richText
 import com.micabo.app.ui.theme.Micabo
 import com.micabo.app.ui.theme.Tone
 import com.micabo.app.ui.theme.nunito
+import com.micabo.app.ui.xp.XpBadge
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
@@ -90,6 +91,8 @@ fun QuestionCard(
     modifier: Modifier = Modifier,
     /** Faux pendant un examen blanc : ni retour ni vibration qui trahirait la réponse. */
     reveal: Boolean = true,
+    /** L'XP que la réponse a rapportée, montrée dans le retour (« +10 XP ») ; rien sans XP. */
+    xp: Int? = null,
 ) {
     val haptics = rememberHaptics()
     val answer: (QuizAnswer) -> Unit = {
@@ -121,10 +124,13 @@ fun QuestionCard(
             }
         }
         AnimatedVisibility(visible = reveal && answered != null, enter = fadeIn(tween(250)) + slideInVertically { it / 3 }) {
-            Feedback(question, answered?.right == true)
+            Feedback(question, answered?.right == true, xp)
         }
     }
 }
+
+/** Les mots qui félicitent une bonne réponse, tirés au hasard. */
+private val PRAISES = listOf(R.string.kx_praise_wellDone, R.string.kx_praise_exact, R.string.kx_praise_perfect)
 
 fun kindLabel(kind: String): Int = when (kind) {
     "truefalse" -> R.string.lesson_question_kind_truefalse
@@ -140,8 +146,10 @@ private fun Prompt(text: String) {
 }
 
 @Composable
-fun Feedback(question: Question, right: Boolean) {
+fun Feedback(question: Question, right: Boolean, xp: Int? = null) {
     val colors = Micabo.colors
+    // Tiré une fois par question : le mot ne change pas à chaque recomposition.
+    val praise = remember(question) { PRAISES.random() }
     Row(
         Modifier
             .fillMaxWidth()
@@ -153,11 +161,21 @@ fun Feedback(question: Question, right: Boolean) {
         Mika(if (right) MikaMood.HAPPY else MikaMood.SAD, 64.dp)
         Spacer(Modifier.width(12.dp))
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                stringResource(if (right) R.string.lesson_question_right else R.string.lesson_question_wrong),
-                style = nunito(18.sp, FontWeight.ExtraBold),
-                color = if (right) colors.correctInk else colors.wrongInk,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(if (right) R.string.lesson_question_right else R.string.lesson_question_wrong),
+                    style = nunito(18.sp, FontWeight.ExtraBold),
+                    color = if (right) colors.correctInk else colors.wrongInk,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                if (xp != null && xp > 0) {
+                    Spacer(Modifier.width(8.dp))
+                    XpBadge(xp)
+                }
+            }
+            if (right) {
+                Text(stringResource(praise), style = nunito(15.sp, FontWeight.Black), color = colors.correctInk)
+            }
             if (!right && (question.kind == "order" || question.kind == "match")) {
                 RichText(question.answerText, style = nunito(15.sp, FontWeight.Bold, lineHeight = 20.sp), tintsKeywords = false)
             }

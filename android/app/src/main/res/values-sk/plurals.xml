@@ -26,6 +26,18 @@
         <item quantity="few">dni v rade</item>
         <item quantity="other">dní v rade</item>
     </plurals>
+    <plurals name="kx_league_endsIn">
+        <item quantity="one">Končí o %1$d deň</item>
+        <item quantity="few">Končí o %1$d dni</item>
+        <item quantity="many">Končí o %1$d dňa</item>
+        <item quantity="other">Končí o %1$d dní</item>
+    </plurals>
+    <plurals name="kx_today_due">
+        <item quantity="one">%1$d kartička na opakovanie</item>
+        <item quantity="few">%1$d kartičky na opakovanie</item>
+        <item quantity="many">%1$d kartičky na opakovanie</item>
+        <item quantity="other">%1$d kartičiek na opakovanie</item>
+    </plurals>
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Pridať moju chybu do kartičiek</item>
         <item quantity="other">Pridať moje chyby (%1$d) do kartičiek</item>

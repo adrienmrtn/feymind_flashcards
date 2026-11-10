@@ -25,6 +25,14 @@
         <item quantity="one">Tag in Folge</item>
         <item quantity="other">Tage in Folge</item>
     </plurals>
+    <plurals name="kx_league_endsIn">
+        <item quantity="one">Endet in %1$d Tag</item>
+        <item quantity="other">Endet in %1$d Tagen</item>
+    </plurals>
+    <plurals name="kx_today_due">
+        <item quantity="one">%1$d Karte zum Wiederholen</item>
+        <item quantity="other">%1$d Karten zum Wiederholen</item>
+    </plurals>
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Meinen Fehler als Karte speichern</item>
         <item quantity="other">Meine %1$d Fehler als Karten speichern</item>

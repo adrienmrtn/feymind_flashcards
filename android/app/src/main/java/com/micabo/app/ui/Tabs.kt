@@ -71,7 +71,10 @@ private val Tab.title: Int
 fun TabsScreen(navigator: Navigator) {
     val app = LocalApp.current
     // Minuit a pu passer depuis la dernière ouverture : la série se relit.
-    LaunchedEffect(Unit) { app.streak.refresh() }
+    LaunchedEffect(Unit) {
+        app.streak.refresh()
+        app.xp.refresh()
+    }
     Box(Modifier.fillMaxSize()) {
         AnimatedContent(
             targetState = navigator.tab,

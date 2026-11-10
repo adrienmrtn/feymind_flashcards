@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.micabo.app.R
 import com.micabo.app.data.ThemeStatus
+import com.micabo.app.data.XpReason
 import com.micabo.app.ui.LocalApp
 import com.micabo.app.ui.LocalNavigator
 import com.micabo.app.ui.components.CloseButton
@@ -215,6 +216,7 @@ fun NotesScreen(id: String, theme: Int) {
     val haptics = rememberHaptics()
     var answeredRight by rememberSaveable(id, theme) { mutableStateOf<Boolean?>(null) }
     var picked by rememberSaveable(id, theme) { mutableStateOf(-1) }
+    var gained by rememberSaveable(id, theme) { mutableStateOf(0) }
     var page by rememberSaveable(id, theme) { mutableIntStateOf(0) }
     var forward by remember { mutableStateOf(true) }
     val answered = answeredRight?.let { QuizAnswer(it, picked.takeIf { index -> index >= 0 }) }
@@ -312,9 +314,11 @@ fun NotesScreen(id: String, theme: Int) {
                             tone = tone,
                             seed = (id.hashCode() + theme).toLong(),
                             answered = answered,
+                            xp = gained.takeIf { answered != null },
                             onAnswer = {
                                 picked = it.picked ?: -1
                                 answeredRight = it.right
+                                gained = app.xp.award(if (it.right) XpReason.CORRECT_ANSWER else XpReason.WRONG_ANSWER, toast = false)
                                 if (it.right) haptics.success() else {
                                     haptics.error()
                                     app.lessons.missed(id, theme)

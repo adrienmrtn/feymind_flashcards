@@ -25,6 +25,14 @@
         <item quantity="one">päivä putkeen</item>
         <item quantity="other">päivää putkeen</item>
     </plurals>
+    <plurals name="kx_league_endsIn">
+        <item quantity="one">Päättyy %1$d päivän päästä</item>
+        <item quantity="other">Päättyy %1$d päivän päästä</item>
+    </plurals>
+    <plurals name="kx_today_due">
+        <item quantity="one">%1$d kortti kerrattavana</item>
+        <item quantity="other">%1$d korttia kerrattavana</item>
+    </plurals>
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Lisää virheeni kortteihin</item>
         <item quantity="other">Lisää %1$d virhettäni kortteihin</item>

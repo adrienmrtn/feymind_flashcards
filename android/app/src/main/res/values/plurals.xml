@@ -25,6 +25,14 @@
         <item quantity="one">day in a row</item>
         <item quantity="other">days in a row</item>
     </plurals>
+    <plurals name="kx_league_endsIn">
+        <item quantity="one">Ends in %1$d day</item>
+        <item quantity="other">Ends in %1$d days</item>
+    </plurals>
+    <plurals name="kx_today_due">
+        <item quantity="one">%1$d card to review</item>
+        <item quantity="other">%1$d cards to review</item>
+    </plurals>
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Add my mistake to flashcards</item>
         <item quantity="other">Add my %1$d mistakes to flashcards</item>

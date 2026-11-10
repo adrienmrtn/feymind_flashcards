@@ -25,6 +25,14 @@
         <item quantity="one">jour de suite</item>
         <item quantity="other">jours de suite</item>
     </plurals>
+    <plurals name="kx_league_endsIn">
+        <item quantity="one">Fin dans %1$d j</item>
+        <item quantity="other">Fin dans %1$d j</item>
+    </plurals>
+    <plurals name="kx_today_due">
+        <item quantity="one">%1$d carte à réviser</item>
+        <item quantity="other">%1$d cartes à réviser</item>
+    </plurals>
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Ajouter mon erreur aux flashcards</item>
         <item quantity="other">Ajouter mes %1$d erreurs aux flashcards</item>

@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.sp
 import com.micabo.app.R
 import com.micabo.app.data.Lesson
 import com.micabo.app.data.PathCircle
+import com.micabo.app.data.XpReason
 import com.micabo.app.data.pathCircles
 import com.micabo.app.ui.LocalApp
 import com.micabo.app.ui.LocalNavigator
@@ -121,9 +122,15 @@ fun quizQuestions(lesson: Lesson, circle: String, seed: Long): List<Pair<Int, Qu
             (current + review).sortedBy { it.second.difficulty }
         }
         is PathCircle.FinalCircle -> pick(target.themes, (target.themes.size * 2).coerceIn(8, 12), emptySet()).sortedBy { it.second.difficulty }
-        else -> pick(lesson.themes.indices.toList(), 10, emptySet())
+        else -> pick(lesson.themes.indices.toList(), if (circle == QUICK_QUIZ) 5 else 10, emptySet())
     }
 }
+
+/** **Le quiz éclair** de l'accueil : cinq questions sur la leçon, hors du chemin (rien ne s'y coche). */
+const val QUICK_QUIZ = "quick"
+
+/** Un quiz d'entraînement, hors du chemin : tout le quiz, ou le quiz éclair. */
+private fun isPractice(circle: String): Boolean = circle.isEmpty() || circle == QUICK_QUIZ
 
 /** **Un quiz** : celui d'un palier, le quiz final, ou tout le quiz de la leçon. */
 @Composable
@@ -156,6 +163,8 @@ fun QuizScreen(id: String, circle: String) {
     var streak by rememberSaveable { mutableIntStateOf(0) }
     var answeredRight by rememberSaveable { mutableStateOf<Boolean?>(null) }
     var picked by rememberSaveable { mutableIntStateOf(-1) }
+    // L'XP de la réponse en cours, montrée dans son retour plutôt qu'en pastille qui monte.
+    var gained by rememberSaveable { mutableIntStateOf(0) }
     TrackTime(id)
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
@@ -187,9 +196,9 @@ fun QuizScreen(id: String, circle: String) {
                 Text(stringResource(R.string.lesson_quiz_empty), style = nunito(20.sp, FontWeight.ExtraBold, lineHeight = 26.sp), color = colors.ink, textAlign = TextAlign.Center)
                 Spacer(Modifier.weight(1f))
                 MicaboButton(
-                    stringResource(if (circle.isEmpty()) R.string.lesson_quiz_finish else R.string.lesson_circle_next),
+                    stringResource(if (isPractice(circle)) R.string.lesson_quiz_finish else R.string.lesson_circle_next),
                     onClick = {
-                        if (circle.isNotEmpty()) app.lessons.complete(id, circle)
+                        if (!isPractice(circle)) app.lessons.complete(id, circle)
                         navigator.back()
                     },
                 )
@@ -224,9 +233,11 @@ fun QuizScreen(id: String, circle: String) {
                     tone = tone,
                     seed = seed + shown,
                     answered = if (shown == index) answeredRight?.let { QuizAnswer(it, picked.takeIf { p -> p >= 0 }) } else null,
+                    xp = if (shown == index && answeredRight != null) gained else null,
                     onAnswer = { answer ->
                         picked = answer.picked ?: -1
                         answeredRight = answer.right
+                        gained = app.xp.award(if (answer.right) XpReason.CORRECT_ANSWER else XpReason.WRONG_ANSWER, toast = false)
                         if (answer.right) {
                             right += 1
                             streak += 1
@@ -248,6 +259,7 @@ fun QuizScreen(id: String, circle: String) {
                         haptics.tap()
                         answeredRight = null
                         picked = -1
+                        gained = 0
                         index += 1
                     },
                 )
@@ -319,7 +331,7 @@ private fun Results(lesson: Lesson, circle: String, right: Int, total: Int, onFr
     val final = circle == "final"
     LaunchedEffect(Unit) {
         haptics.success()
-        if (circle.isNotEmpty()) app.lessons.complete(lesson.id, circle, listOf(right, total))
+        if (!isPractice(circle)) app.lessons.complete(lesson.id, circle, listOf(right, total))
     }
     val message = when {
         percent >= 80 -> R.string.lesson_quiz_great
@@ -375,7 +387,7 @@ private fun Results(lesson: Lesson, circle: String, right: Int, total: Int, onFr
             if (final && lesson.flashcards.isNotEmpty()) {
                 MicaboButton(stringResource(R.string.lesson_finished_cards), onClick = { navigator.replace(Screen.Flashcards(lesson.id)) })
                 MicaboSecondaryButton(stringResource(R.string.lesson_finished_back), onClick = { navigator.home() })
-            } else if (circle.isEmpty()) {
+            } else if (isPractice(circle)) {
                 if (failed) {
                     Text(stringResource(R.string.lesson_practice_failed), style = nunito(14.sp, FontWeight.Bold), color = colors.wrongInk, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 }
