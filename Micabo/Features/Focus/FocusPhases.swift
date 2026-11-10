@@ -47,6 +47,19 @@ struct FocusPlan: Equatable, Identifiable {
     /// L'XP qu'on gagne en allant au bout : `XPRules.focusSession` par bloc de 25 minutes de
     /// travail terminé.
     var xpToEarn: Int { FocusPhases.xp(forWorkSeconds: TimeInterval(totalWorkMinutes * 60)) }
+
+    /// **Une séance de révision du calendrier, lancée telle quelle** : d'une traite, de sa durée
+    /// prévue (cinq minutes au moins), sur sa leçon, et rattachée à son événement pour le cocher
+    /// une fois menée. Le calendrier, Concentration et Home la lancent tous par ici.
+    static func revision(eventID: UUID?, startMinute: Int, endMinute: Int, courseID: UUID?, courseTitle: String?) -> FocusPlan {
+        FocusPlan(
+            mode: .simple,
+            workMinutes: max(5, min(simpleRange.upperBound, endMinute - startMinute)),
+            courseID: courseID,
+            courseTitle: courseTitle,
+            eventID: eventID
+        )
+    }
 }
 
 /// Une phase de la séance : du travail, ou une pause.

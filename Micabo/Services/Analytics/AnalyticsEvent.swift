@@ -168,6 +168,13 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     case focusStopped = "focus_stopped"
     case taskAdded = "task_added"
     case taskDone = "task_done"
+
+    // MARK: Home
+
+    /// Un geste du plan du jour : `step` (`session`, `lesson`, `cards`, `create`), `slot`
+    /// (`hero` pour le grand bouton, `secondary` pour la ligne dessous) et `exam` (un examen
+    /// est à venir). Rien d'écrit par l'élève.
+    case homePlanTapped = "home_plan_tapped"
 }
 
 /// **Ce qu'une étiquette a le droit d'être.**

@@ -133,12 +133,12 @@ struct FocusView: View {
 
     private func startRevision(_ occurrence: CalendarOccurrence) {
         let course = lessons.first { $0.id == occurrence.event.courseID }
-        running = FocusPlan(
-            mode: .simple,
-            workMinutes: max(5, min(FocusPlan.simpleRange.upperBound, occurrence.event.endMinute - occurrence.event.startMinute)),
+        running = .revision(
+            eventID: occurrence.event.id,
+            startMinute: occurrence.event.startMinute,
+            endMinute: occurrence.event.endMinute,
             courseID: course?.id,
-            courseTitle: course?.title,
-            eventID: occurrence.event.id
+            courseTitle: course?.title
         )
     }
 

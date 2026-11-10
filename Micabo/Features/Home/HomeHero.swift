@@ -236,6 +236,16 @@ enum HomeGreeting {
         }
         return [hello, imports, goal, L10n.t("ios.home2.line.streak", locale: locale)]
     }
+
+    /// **Le bonjour court** du plan du jour : « Bonjour Léa », « Salut Léa », « Bonsoir Léa ».
+    /// La nuit dit encore bonsoir.
+    static func hello(name: String?, moment: Moment, locale: UiLocale = .resolved()) -> String {
+        let part = moment == .night ? Moment.evening : moment
+        if let name {
+            return L10n.t("ios.home4.hello.\(part.rawValue)", locale: locale, vars: ["name": name])
+        }
+        return L10n.t("ios.home4.helloAnon.\(part.rawValue)", locale: locale)
+    }
 }
 
 // MARK: - La scène
@@ -432,6 +442,9 @@ struct HomeComposerBar: View {
     let onSend: () -> Void
     /// Le « + » : la feuille des supports.
     let onSources: () -> Void
+    /// **Sur une seule ligne**, posée sur la page : le « + », le champ, l'envoi. C'est la barre
+    /// de l'élève qui a déjà ses leçons, sous son plan du jour.
+    var compact = false
 
     @Environment(\.homeStill) private var still
 
@@ -449,31 +462,45 @@ struct HomeComposerBar: View {
                         .padding(.horizontal, 6)
                 }
             }
-            // Le champ sur toute la largeur — la consigne tient sur une ligne —, puis le « + »
-            // et l'envoi, aux deux bouts.
-            field(draft: $composer.draft)
-                .padding(.horizontal, 8)
-            HStack(spacing: 8) {
-                plusButton
-                Spacer(minLength: 0)
-                sendButton
+            if compact {
+                HStack(alignment: .bottom, spacing: 8) {
+                    plusButton
+                    field(draft: $composer.draft)
+                    sendButton
+                }
+            } else {
+                // Le champ sur toute la largeur — la consigne tient sur une ligne —, puis le
+                // « + » et l'envoi, aux deux bouts.
+                field(draft: $composer.draft)
+                    .padding(.horizontal, 8)
+                HStack(spacing: 8) {
+                    plusButton
+                    Spacer(minLength: 0)
+                    sendButton
+                }
             }
         }
         .padding(8)
         .background(HomePalette.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .strokeBorder(MicaboBrand.blue200.opacity(isFocused ? 1 : 0), lineWidth: 2)
+                .strokeBorder(
+                    compact && !isFocused ? HomePalette.cardStroke : MicaboBrand.blue200.opacity(isFocused ? 1 : 0),
+                    lineWidth: compact && !isFocused ? 1 : 2
+                )
         )
-        .shadow(color: MicaboBrand.blue900.opacity(0.18), radius: 14, y: 6)
+        .shadow(color: MicaboBrand.blue900.opacity(compact ? 0.06 : 0.18), radius: compact ? 16 : 14, y: compact ? 8 : 6)
         .animation(.easeOut(duration: 0.2), value: isFocused)
         .animation(.spring(duration: 0.3), value: composer.supports.count)
     }
 
     private var placeholder: String {
-        composer.supports.isEmpty
-            ? L10n.t("lesson.home.placeholder", locale: .resolved())
-            : L10n.t("lesson.home.placeholderWithSupports", locale: .resolved())
+        if !composer.supports.isEmpty {
+            return L10n.t("lesson.home.placeholderWithSupports", locale: .resolved())
+        }
+        return compact
+            ? L10n.t("ios.home4.create.placeholder", locale: .resolved())
+            : L10n.t("lesson.home.placeholder", locale: .resolved())
     }
 
     @ViewBuilder
@@ -523,10 +550,10 @@ struct HomeComposerBar: View {
                 .onSubmit(onSend)
             }
         }
-        .font(MicaboFont.ui(17, weight: .semibold))
-        .padding(.top, 8)
-        .padding(.bottom, 2)
-        .frame(minHeight: 34, alignment: .leading)
+        .font(MicaboFont.ui(compact ? 16 : 17, weight: .semibold))
+        .padding(.top, compact ? 10 : 8)
+        .padding(.bottom, compact ? 10 : 2)
+        .frame(minHeight: compact ? 42 : 34, alignment: .leading)
     }
 
     private var plusButton: some View {

@@ -328,13 +328,7 @@ struct CalendarView: View {
     private func start(_ item: AgendaItem) {
         guard let start = item.startMinute, let end = item.endMinute else { return }
         let course = lessons.first { $0.id == item.courseID }
-        focusPlan = FocusPlan(
-            mode: .simple,
-            workMinutes: max(5, min(FocusPlan.simpleRange.upperBound, end - start)),
-            courseID: course?.id,
-            courseTitle: course?.title,
-            eventID: item.eventID
-        )
+        focusPlan = .revision(eventID: item.eventID, startMinute: start, endMinute: end, courseID: course?.id, courseTitle: course?.title)
     }
 
     private func toggleTask(_ item: AgendaItem) {

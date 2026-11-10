@@ -4,8 +4,8 @@ import SwiftUI
 // MARK: - Aujourd'hui
 
 /// Ce que l'app sait de la journée, et la seule chose qu'on en tire : **la prochaine étape**.
-/// Tout se lit dans ce que l'app sait déjà — les cartes dues, la leçon en cours, la série —,
-/// rien ne vient d'un serveur.
+/// Tout se lit dans ce que l'app sait déjà — la séance de révision du calendrier, les cartes
+/// dues, la leçon en cours, la série —, rien ne vient d'un serveur.
 struct HomeDay: Equatable {
     /// Les cartes dues, toutes leçons confondues.
     var dueCount = 0
@@ -19,8 +19,10 @@ struct HomeDay: Equatable {
     var lessonAdvancedToday = false
     /// Un vrai geste d'étude a allumé la journée (`StudyStreak`).
     var studiedToday = false
+    /// La séance de révision du calendrier qui reste à faire aujourd'hui (`HomeSession.next`).
+    var session: HomeSession?
 
-    /// Une étape de la journée.
+    /// Une étape de la journée. Les noms partent tels quels dans `home_plan_tapped`.
     enum Step: String, Equatable {
         /// Écrire une leçon : la première, ou la suivante.
         case create
@@ -28,15 +30,19 @@ struct HomeDay: Equatable {
         case lesson
         /// Réviser les cartes dues.
         case cards
+        /// Mener la séance de révision que le calendrier a posée aujourd'hui.
+        case session
     }
 
     private var hasOpenLesson: Bool { lessonTitle != nil && lessonCircle != nil }
 
-    /// **La prochaine chose à faire**, et la seule que la carte met en avant : la leçon en
-    /// cours tant qu'elle n'a pas avancé aujourd'hui, puis les cartes dues, puis la leçon ;
-    /// sans leçon, en écrire une.
+    /// **La prochaine chose à faire**, et la seule que le plan du jour met en avant : la séance
+    /// prévue au calendrier d'abord — c'est le plan de l'élève —, puis la leçon en cours tant
+    /// qu'elle n'a pas avancé aujourd'hui, puis les cartes dues, puis la leçon ; sans leçon,
+    /// en écrire une.
     var primary: Step {
         guard hasCourses else { return .create }
+        if session != nil { return .session }
         if hasOpenLesson && !lessonAdvancedToday { return .lesson }
         if dueCount > 0 { return .cards }
         if hasOpenLesson { return .lesson }
@@ -46,6 +52,7 @@ struct HomeDay: Equatable {
     /// **Une seconde ligne, au plus** : ce qui reste d'utile à côté de l'étape mise en avant.
     var secondary: Step? {
         switch primary {
+        case .session: dueCount > 0 ? .cards : (hasOpenLesson ? .lesson : nil)
         case .lesson: dueCount > 0 ? .cards : nil
         case .cards: hasOpenLesson ? .lesson : nil
         case .create: dueCount > 0 ? .cards : nil
@@ -53,202 +60,93 @@ struct HomeDay: Equatable {
     }
 }
 
-/// **« Aujourd'hui »** (`docs/refonte-knowunity.md` § 1.3) : en tête, l'anneau de l'objectif
-/// du jour (`xpToday / 50`) qui se remplit à l'arrivée ; dessous, **une seule** étape, avec
-/// son bouton — reprendre la leçon, réviser les cartes, ou écrire une leçon — et au plus une
-/// ligne de plus. Une carte, une décision.
-struct HomeTodayCard: View {
-    let day: HomeDay
-    let resume: (Course, ResumeTarget)?
-    let motion: HomeMotion
-    let onStep: (HomeDay.Step) -> Void
+/// Où un geste du plan a été fait : le grand bouton, ou la ligne dessous.
+enum HomeSlot: String {
+    case hero
+    case secondary
+}
 
-    @Environment(XPStore.self) private var injected: XPStore?
+/// **La séance de révision d'aujourd'hui** que Home propose : une ligne `revision` de l'agenda
+/// (`StudyPlan.today`), pas faite, pas encore finie.
+struct HomeSession: Equatable {
+    var eventID: UUID?
+    var courseID: UUID?
+    var title: String
+    var startMinute: Int
+    var endMinute: Int
+    /// L'examen que la séance prépare, s'il y en a un.
+    var examName: String?
 
-    private var xp: XPStore { injected ?? .shared }
+    var minutes: Int { max(0, endMinute - startMinute) }
 
-    var body: some View {
-        let primary = day.primary
-        VStack(alignment: .leading, spacing: 16) {
-            goalHeader(today: xp.today)
-            stepBlock(primary)
-            Button { onStep(primary) } label: {
-                Text(cta(primary))
+    /// La première séance de révision du jour qui n'est ni faite ni passée.
+    static func next(in items: [AgendaItem], now: Date, examNames: [UUID: String] = [:], calendar: Calendar = MicaboCalendar.shared) -> HomeSession? {
+        let minute = CalendarTime.minute(of: now, calendar: calendar)
+        guard let item = items.first(where: { item in
+            item.kind == .revision && !item.isDone && item.startMinute != nil && (item.endMinute ?? 0) > minute
+        }), let start = item.startMinute, let end = item.endMinute else { return nil }
+        return HomeSession(
+            eventID: item.eventID,
+            courseID: item.courseID,
+            title: item.title,
+            startMinute: start,
+            endMinute: end,
+            examName: item.examID.flatMap { examNames[$0] }
+        )
+    }
+}
+
+/// **Le prochain examen**, tel que le plan du jour l'annonce.
+struct HomeExam: Equatable {
+    var name: String
+    var daysLeft: Int
+    /// La maîtrise des cartes de l'examen, sur cent ; `nil` sans carte.
+    var readiness: Int?
+}
+
+/// Une leçon récente, pour la rangée « Mes leçons ».
+struct HomeLessonCard: Equatable, Identifiable {
+    var id: UUID
+    var title: String
+    var icon: MicaboIcon
+    var tone: LessonTone
+    var percent: Int
+
+    /// Les leçons ouvertes le plus récemment, puis les plus récentes.
+    static func recent(_ courses: [Course], limit: Int = 5) -> [HomeLessonCard] {
+        courses
+            .filter(\.isLesson)
+            .sorted { ($0.lastOpenedAt ?? $0.createdAt) > ($1.lastOpenedAt ?? $1.createdAt) }
+            .prefix(limit)
+            .map { course in
+                HomeLessonCard(
+                    id: course.id,
+                    title: course.title,
+                    icon: course.icon,
+                    tone: course.tone,
+                    percent: ResumeTarget.target(for: course).percent
+                )
             }
-            .buttonStyle(MicaboBrandButtonStyle(minHeight: 52))
-            if let secondary = day.secondary {
-                secondaryRow(secondary)
-            }
-        }
-        .padding(18)
-        .homeCard()
     }
+}
 
-    // MARK: L'objectif
+/// **Ce que le plan du jour lit du calendrier** : le prochain examen, ce qui reste à l'agenda
+/// d'aujourd'hui, et les leçons récentes.
+struct HomePlan: Equatable {
+    var exam: HomeExam?
+    /// Ce qui reste à faire aujourd'hui, la séance du plan mise à part (`upcoming`).
+    var agenda: [AgendaItem] = []
+    var lessons: [HomeLessonCard] = []
 
-    private func goalHeader(today: Int) -> some View {
-        let reached = today >= XPRules.dailyGoal
-        let progress = L10n.t("ios.kx.today.goalProgress", locale: .resolved(), vars: [
-            "xp": "\(min(today, XPRules.dailyGoal))",
-            "goal": "\(XPRules.dailyGoal)",
-        ])
-        let detail = reached
-            ? "\(L10n.t("ios.kx.today.goalReached", locale: .resolved())) · \(progress)"
-            : "\(progress) · \(L10n.t("ios.home2.goalLeft", locale: .resolved(), vars: ["n": "\(XPRules.dailyGoal - today)"]))"
-        return HStack(spacing: 14) {
-            HomeGoalRing(progress: Double(today) / Double(XPRules.dailyGoal), motion: motion)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(L10n.t("ios.kx.today.title", locale: .resolved()))
-                    .font(MicaboFont.ui(21, weight: .black))
-                    .foregroundStyle(HomePalette.ink)
-                    .accessibilityAddTraits(.isHeader)
-                Text(detail)
-                    .font(MicaboFont.ui(14, weight: .bold))
-                    .foregroundStyle(reached ? HomePalette.done : HomePalette.inkSecondary)
-                    .monospacedDigit()
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 0)
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    // MARK: L'étape
-
-    @ViewBuilder
-    private func stepBlock(_ step: HomeDay.Step) -> some View {
-        HStack(alignment: .center, spacing: 14) {
-            stepIcon(step)
-            VStack(alignment: .leading, spacing: 3) {
-                if let eyebrow = eyebrow(step) {
-                    Text(eyebrow)
-                        .font(MicaboFont.ui(12, weight: .black))
-                        .tracking(MicaboTracking.caps)
-                        .textCase(.uppercase)
-                        .foregroundStyle(MicaboColor.accentInk)
-                        .lineLimit(1)
-                }
-                Text(title(step))
-                    .font(MicaboFont.ui(17, weight: .black))
-                    .foregroundStyle(HomePalette.ink)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text(subtitle(step))
-                    .font(MicaboFont.ui(14, weight: .semibold))
-                    .foregroundStyle(HomePalette.inkSecondary)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-                if step == .lesson, let resume {
-                    lessonProgress(resume.1, tone: resume.0.tone)
-                        .padding(.top, 5)
-                }
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(12)
-        .background(MicaboColor.canvas.opacity(0.7), in: RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous))
-        .accessibilityElement(children: .combine)
-    }
-
-    @ViewBuilder
-    private func stepIcon(_ step: HomeDay.Step) -> some View {
-        ZStack {
-            switch step {
-            case .lesson:
-                let tone = resume?.0.tone ?? .blue
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(LinearGradient(colors: [tone.vivid.opacity(0.95), tone.vivid.opacity(0.65)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                MicaboIconView(icon: resume?.0.icon ?? .book, size: 38)
-            case .cards:
-                RoundedRectangle(cornerRadius: 18, style: .continuous).fill(LessonTone.lilac.pale)
-                MicaboIconView(icon: .cards, size: 36)
-            case .create:
-                RoundedRectangle(cornerRadius: 18, style: .continuous).fill(MicaboColor.accentSoft)
-                MicaboIconView(icon: .quill, size: 36)
-            }
-        }
-        .frame(width: 60, height: 60)
-    }
-
-    private func lessonProgress(_ target: ResumeTarget, tone: LessonTone) -> some View {
-        HStack(spacing: 8) {
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(HomePalette.track)
-                    Capsule()
-                        .fill(MicaboColor.accent)
-                        .frame(width: max(7, proxy.size.width * CGFloat(target.percent) / 100))
-                }
-            }
-            .frame(height: 7)
-            Text(L10n.percent(target.percent, locale: .resolved()))
-                .font(MicaboFont.ui(12, weight: .black))
-                .foregroundStyle(MicaboColor.accentInk)
-                .monospacedDigit()
-                .fixedSize()
-        }
-    }
-
-    private func eyebrow(_ step: HomeDay.Step) -> String? {
-        switch step {
-        case .lesson: L10n.t("lesson.home.resume", locale: .resolved())
-        case .cards: L10n.t("ios.home2.tool.due", locale: .resolved())
-        case .create: nil
-        }
-    }
-
-    private func title(_ step: HomeDay.Step) -> String {
-        switch step {
-        case .lesson: resume?.1.title ?? day.lessonTitle ?? ""
-        case .cards: L10n.t("ios.kx.today.due", locale: .resolved(), vars: ["count": "\(day.dueCount)"])
-        case .create: day.hasCourses
-            ? L10n.t("ios.home3.create.next", locale: .resolved())
-            : L10n.t("ios.kx.today.createFirst", locale: .resolved())
-        }
-    }
-
-    private func subtitle(_ step: HomeDay.Step) -> String {
-        switch step {
-        case .lesson:
-            guard let target = resume?.1, let number = target.circleNumber, let title = target.circleTitle else {
-                return day.lessonCircle ?? ""
-            }
-            return L10n.t("lesson.home.resumeCircle", locale: .resolved(), vars: ["n": String(number), "title": title])
-        case .cards: return L10n.t("ios.home3.cards.sub", locale: .resolved())
-        case .create: return L10n.t("ios.home2.mission.createSub", locale: .resolved())
-        }
-    }
-
-    private func cta(_ step: HomeDay.Step) -> String {
-        switch step {
-        case .lesson: L10n.t("ios.home3.cta.continue", locale: .resolved())
-        case .cards: L10n.t("ios.home3.cta.review", locale: .resolved())
-        case .create: L10n.t("ios.home3.cta.create", locale: .resolved())
-        }
-    }
-
-    // MARK: La seconde ligne
-
-    private func secondaryRow(_ step: HomeDay.Step) -> some View {
-        Button { onStep(step) } label: {
-            HStack(spacing: 10) {
-                MicaboIconView(icon: step == .cards ? .cards : (resume?.0.icon ?? .book), size: 24)
-                Text(step == .cards
-                    ? L10n.t("ios.kx.today.due", locale: .resolved(), vars: ["count": "\(day.dueCount)"])
-                    : L10n.t("ios.kx.today.continue", locale: .resolved(), vars: ["lesson": resume?.1.title ?? day.lessonTitle ?? ""]))
-                    .font(MicaboFont.ui(15, weight: .heavy))
-                    .foregroundStyle(HomePalette.ink)
-                    .lineLimit(1)
-                Spacer(minLength: 4)
-                Image(systemName: "chevron.forward")
-                    .font(.system(size: 13, weight: .black))
-                    .foregroundStyle(HomePalette.inkTertiary)
-            }
-            .padding(.horizontal, 4)
-            .frame(minHeight: 36)
-        }
-        .buttonStyle(HomePressStyle(scale: 0.98, feedback: .soft))
+    /// Trois lignes au plus : ce qui dure toute la journée et n'est pas fait, puis ce qui n'est
+    /// pas encore fini, sans les séances de concentration menées ni la séance déjà proposée.
+    static func upcoming(_ items: [AgendaItem], now: Date, excluding session: HomeSession?, limit: Int = 3, calendar: Calendar = MicaboCalendar.shared) -> [AgendaItem] {
+        let minute = CalendarTime.minute(of: now, calendar: calendar)
+        return Array(items.filter { item in
+            guard item.kind != .focus, !item.isDone else { return false }
+            if let session, item.kind == .revision, item.eventID == session.eventID { return false }
+            return item.isAllDay || (item.endMinute ?? 0) > minute
+        }.prefix(limit))
     }
 }
 
@@ -326,42 +224,40 @@ enum HomeTool: CaseIterable {
     }
 }
 
-/// **Les outils, en quatre tuiles** : Scanner un exo, Quiz éclair, Minuteur, Ligue. Une icône
-/// sur sa pastille de couleur, le nom dessous, sur deux lignes au plus : les quatre tiennent
-/// sur la largeur dans toutes les langues, sans rien faire défiler.
-struct HomeToolsRow: View {
+/// **Les outils, en raccourcis légers** : une seule carte, quatre icônes sur leur pastille et
+/// leur nom dessous, sur deux lignes au plus. Ils restent sous la main sans peser autant que
+/// le plan du jour.
+struct HomeToolsCard: View {
     let onTool: (HomeTool) -> Void
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .top, spacing: 2) {
             ForEach(HomeTool.allCases, id: \.self) { tool in
-                Button { onTool(tool) } label: { tile(tool) }
-                    .buttonStyle(HomePressStyle(scale: 0.94, feedback: .soft))
+                Button { onTool(tool) } label: { shortcut(tool) }
+                    .buttonStyle(HomePressStyle(scale: 0.92, feedback: .soft))
                     .accessibilityLabel(Text(tool.title))
             }
         }
-        .fixedSize(horizontal: false, vertical: true)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 14)
+        .homeCard(radius: MicaboStage.tileRadius)
     }
 
-    private func tile(_ tool: HomeTool) -> some View {
+    private func shortcut(_ tool: HomeTool) -> some View {
         VStack(spacing: 7) {
-            MicaboIconView(icon: tool.icon, size: 28)
-                .frame(width: 46, height: 46)
+            MicaboIconView(icon: tool.icon, size: 26)
+                .frame(width: 44, height: 44)
                 .background(tool.tone.pale, in: Circle())
             Text(tool.title)
-                .font(MicaboFont.ui(13, weight: .heavy))
+                .font(MicaboFont.ui(12.5, weight: .heavy))
                 .foregroundStyle(HomePalette.ink)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
                 .minimumScaleFactor(0.8)
                 .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 4)
-        .padding(.top, 12)
-        .padding(.bottom, 10)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .homeCard(radius: MicaboStage.tileRadius)
+        .padding(.horizontal, 2)
+        .frame(maxWidth: .infinity)
     }
 }
 

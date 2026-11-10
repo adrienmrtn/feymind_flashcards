@@ -1,12 +1,20 @@
 import SwiftData
 import SwiftUI
 
-/// **Home**, calme et dans l'ordre où on la lit (`docs/refonte-knowunity.md`) :
-/// 1. la rangée du haut — l'initiale (le Profil), « ✦ Pro », la série et l'XP ;
-/// 2. la scène bleue de la marque — Mika en buste qui parle dans sa bulle, et la barre
-///    « comme une conversation » avec son « + » pour les supports ;
-/// 3. quatre outils ;
-/// 4. « Aujourd'hui » — l'objectif du jour et **une seule** prochaine étape.
+/// **Home**, dans l'ordre où un élève la lit (`docs/refonte-knowunity.md` § 1). Elle n'a pas la
+/// même tête selon qu'il a déjà ses leçons ou non.
+///
+/// **L'élève qui a ses leçons** vient réviser : la rangée du haut ; le bonjour et l'objectif du
+/// jour ; **« Ton plan du jour »** sur la scène bleue — le prochain examen, **la** chose à faire
+/// maintenant (la séance du calendrier, la leçon en cours ou les cartes dues) et un seul grand
+/// bouton ; ce qui reste à l'agenda d'aujourd'hui ; ses leçons récentes ; la barre « Nouvelle
+/// leçon », en second ; les outils.
+///
+/// **L'élève tout neuf** vient écrire sa première leçon, celle qui est offerte : la scène bleue
+/// garde Mika qui parle dans sa bulle et la barre « comme une conversation », puis « Comment ça
+/// marche » et les outils.
+///
+/// La barre, dans les deux cas, passe par la même porte du gratuit (`send`, `tapImport`).
 ///
 /// **Un appui à côté du champ range le clavier.** La rangée du haut, Mika et tout le vide
 /// entre les blocs le rendent ; les boutons gardent leur appui, parce qu'un geste posé sur un
@@ -19,6 +27,10 @@ struct HomeView: View {
     @Environment(ProAccess.self) private var pro: ProAccess?
     @Environment(TabRouter.self) private var router: TabRouter?
     @Query(sort: \Course.createdAt, order: .reverse) private var courses: [Course]
+    /// Ce que le plan du jour lit du calendrier : relu quand l'un d'eux change.
+    @Query private var events: [CalendarEvent]
+    @Query(sort: \Exam.date) private var exams: [Exam]
+    @Query private var tasks: [StudyTask]
 
     @State private var path = NavigationPath()
     @State private var composer = LessonComposer()
@@ -40,6 +52,13 @@ struct HomeView: View {
     /// Les blocs sont entrés : l'entrée ne se rejoue pas à chaque retour sur l'onglet.
     @State private var appeared = false
     @State private var streak = StudyStreak.status()
+    /// L'agenda d'aujourd'hui (`StudyPlan.today`) et le prochain examen, relus à l'arrivée.
+    @State private var agenda: [AgendaItem] = []
+    @State private var nextExam: HomeExam?
+    @State private var now = Date()
+    /// Une séance de révision du calendrier, lancée d'ici comme du calendrier.
+    @State private var focusPlan: FocusPlan?
+    @State private var editingExam: ExamEditTarget?
     @FocusState private var focused: Bool
 
     private var isPro: Bool { pro?.isPro ?? true }
@@ -49,45 +68,89 @@ struct HomeView: View {
         !isPro && !LessonAllowance.hasUsedFreeLesson(courses: courses)
     }
 
+    private var lessons: [Course] { courses.filter { $0.isLesson && $0.source != .deck } }
+
     var body: some View {
+        presentations
+            .task(id: planKey) { refreshPlan() }
+            // Le journal des cartes rejoint la série une fois : un ancien compte retrouve la
+            // sienne dans la pastille dès l'ouverture.
+            .task { StudyStreak.adoptReviewHistoryIfNeeded(in: modelContext) }
+            .onAppear {
+                refreshStreak()
+                refreshPlan()
+                guard !appeared else { return }
+                Haptics.prepare()
+                DispatchQueue.main.async { appeared = true }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .micaboStreakDidChange)) { _ in refreshStreak() }
+            .onChange(of: scenePhase) { _, phase in
+                guard phase == .active else { return }
+                refreshStreak()
+                refreshPlan()
+            }
+            .reportsNavigationDepth(for: .today, depth: path.count)
+            .returnsHome(path: $path)
+    }
+
+    // MARK: La page
+
+    private var page: some View {
         let resume = ResumeTarget.pick(from: courses)
         let day = today(resume: resume)
         let name = HomeGreeting.firstName(OnboardingPreferences.displayName)
-        let moment = HomeGreeting.moment(hour: Calendar.current.component(.hour, from: Date()))
+        let moment = HomeGreeting.moment(hour: Calendar.current.component(.hour, from: now))
+        return ScrollView {
+            HomeScreen(
+                composer: composer,
+                focused: $focused,
+                isPro: isPro,
+                name: name,
+                hello: HomeGreeting.hello(name: name, moment: moment),
+                greeting: HomeGreeting.lines(name: name, moment: moment, dueCount: day.dueCount),
+                day: day,
+                resume: resume,
+                plan: HomePlan(
+                    exam: nextExam,
+                    agenda: HomePlan.upcoming(agenda, now: now, excluding: day.session),
+                    lessons: HomeLessonCard.recent(courses)
+                ),
+                motion: HomeMotion(still: false, reduceMotion: reduceMotion),
+                appeared: appeared,
+                actions: actions(day: day, resume: resume?.0)
+            )
+        }
+        .scrollDismissesKeyboard(.interactively)
+        .scrollIndicators(.hidden)
+        .background(HomePalette.canvas.ignoresSafeArea())
+        .tabBarClearance()
+        .toolbar(.hidden, for: .navigationBar)
+    }
+
+    private var navigation: some View {
         NavigationStack(path: $path) {
-            ScrollView {
-                HomeScreen(
-                    composer: composer,
-                    focused: $focused,
-                    isPro: isPro,
-                    name: name,
-                    greeting: HomeGreeting.lines(name: name, moment: moment, dueCount: day.dueCount),
-                    day: day,
-                    resume: resume,
-                    motion: HomeMotion(still: false, reduceMotion: reduceMotion),
-                    appeared: appeared,
-                    actions: actions(resume: resume?.0)
-                )
-            }
-            .scrollDismissesKeyboard(.interactively)
-            .scrollIndicators(.hidden)
-            .background(HomePalette.canvas.ignoresSafeArea())
-            .tabBarClearance()
-            .toolbar(.hidden, for: .navigationBar)
-            .navigationDestination(for: Course.self) { course in
-                LessonPathView(course: course)
-            }
-            .lessonImportPickers(composer, request: $importRequest)
-            .fullScreenCover(isPresented: $creating) {
-                LessonCreationFlow(composer: composer, sendsAsFreeLesson: LessonAllowance.sendsAsFreeLesson(isPro: isPro, source: composer.source, courses: courses)) { course in
-                    creating = false
-                    composer.reset()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { path.append(course) }
-                } onCancel: {
-                    creating = false
+            page
+                .navigationDestination(for: Course.self) { course in
+                    LessonPathView(course: course)
                 }
-            }
-            .micaboPaywall($paywall)
+                .lessonImportPickers(composer, request: $importRequest)
+                .fullScreenCover(isPresented: $creating) {
+                    LessonCreationFlow(composer: composer, sendsAsFreeLesson: LessonAllowance.sendsAsFreeLesson(isPro: isPro, source: composer.source, courses: courses)) { course in
+                        creating = false
+                        composer.reset()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { path.append(course) }
+                    } onCancel: {
+                        creating = false
+                    }
+                }
+                .micaboPaywall($paywall)
+        }
+    }
+
+    /// Le compilateur type mal d'un seul tenant la pile, les feuilles et les couvertures :
+    /// chaque morceau se type de son côté, comme dans `CalendarView`.
+    private var sheets: some View {
+        navigation
             .sheet(isPresented: $showsSources, onDismiss: openPendingImport) {
                 HomeSourcesSheet(isPro: isPro, freeLessonLeft: freeLessonLeft, enabled: composer.hasRoom) { kind in
                     pendingImport = kind
@@ -100,40 +163,35 @@ struct HomeView: View {
             .sheet(isPresented: $showsLeague) {
                 LeagueSheet()
             }
-            .sheet(isPresented: $showsDueReview) {
+            .sheet(isPresented: $showsDueReview, onDismiss: refreshPlan) {
                 DueCardsReview(courses: DueReview.courses(courses))
             }
             .sheet(item: $quickQuizCourse) { course in
                 QuickQuizSheet(course: course)
             }
+            .sheet(item: $editingExam, onDismiss: refreshPlan) { target in
+                ExamEditSheet(target: target, lessons: lessons)
+            }
+    }
+
+    private var presentations: some View {
+        sheets
             .fullScreenCover(isPresented: $showsTimer) {
                 FocusTimerView()
+            }
+            .fullScreenCover(item: $focusPlan, onDismiss: refreshPlan) { plan in
+                FocusTimerView(plan: plan)
             }
             .fullScreenCover(isPresented: $showsScanner) {
                 ScanExerciseView()
             }
-            // Le journal des cartes rejoint la série une fois : un ancien compte retrouve la
-            // sienne dans la pastille dès l'ouverture.
-            .task { StudyStreak.adoptReviewHistoryIfNeeded(in: modelContext) }
-            .onAppear {
-                refreshStreak()
-                guard !appeared else { return }
-                Haptics.prepare()
-                DispatchQueue.main.async { appeared = true }
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .micaboStreakDidChange)) { _ in refreshStreak() }
-            .onChange(of: scenePhase) { _, phase in
-                if phase == .active { refreshStreak() }
-            }
-        }
-        .reportsNavigationDepth(for: .today, depth: path.count)
-        .returnsHome(path: $path)
     }
 
-    /// Ce que l'app sait de la journée, pour la carte « Aujourd'hui ».
+    // MARK: Ce que Home lit
+
+    /// Ce que l'app sait de la journée, pour le plan du jour.
     private func today(resume: (Course, ResumeTarget)?) -> HomeDay {
         let calendar = Calendar.current
-        let now = Date()
         var day = HomeDay()
         day.hasCourses = !courses.isEmpty
         day.studiedToday = streak.studiedToday
@@ -151,10 +209,46 @@ struct HomeView: View {
             let openedToday = course.lastOpenedAt.map { calendar.isDate($0, inSameDayAs: now) } ?? false
             day.lessonAdvancedToday = finishedToday || (openedToday && streak.studiedToday)
         }
+        let examNames = Dictionary(exams.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
+        day.session = HomeSession.next(in: agenda, now: now, examNames: examNames)
         return day
     }
 
-    private func actions(resume: Course?) -> HomeActions {
+    /// Ce qui fait relire le plan : une séance cochée ou déplacée, un examen ajouté, une tâche
+    /// faite, une leçon de plus.
+    private var planKey: String {
+        let eventStamp = events.map(\.updatedAt).max()?.timeIntervalSince1970 ?? 0
+        let examStamp = exams.map(\.updatedAt).max()?.timeIntervalSince1970 ?? 0
+        let done = tasks.filter(\.isDone).count
+        return "\(courses.count)-\(events.count)-\(eventStamp)-\(exams.count)-\(examStamp)-\(tasks.count)-\(done)"
+    }
+
+    /// **Le plan du jour, relu** : l'agenda d'aujourd'hui (`StudyPlan.today`), le prochain
+    /// examen (`NextExam.current`) et sa préparation. Rien pour l'élève tout neuf : sa Home
+    /// n'en montre rien.
+    private func refreshPlan() {
+        let current = Date()
+        now = current
+        guard !courses.isEmpty else {
+            agenda = []
+            nextExam = nil
+            return
+        }
+        agenda = StudyPlan.today(in: modelContext, now: current)
+        guard let exam = NextExam.current(in: modelContext, now: current) else {
+            nextExam = nil
+            return
+        }
+        let cards = ExamRepository.cards(of: exam, in: modelContext)
+        let readiness = cards.isEmpty
+            ? nil
+            : ExamReadiness.masteryPercent(of: cards, logs: ExamReadiness.recentLogsByCard(in: modelContext, now: current), now: current)
+        nextExam = HomeExam(name: exam.name, daysLeft: max(0, exam.daysRemaining(from: current)), readiness: readiness)
+    }
+
+    // MARK: Les gestes
+
+    private func actions(day: HomeDay, resume: Course?) -> HomeActions {
         var profile: (() -> Void)?
         if let router {
             profile = {
@@ -181,17 +275,88 @@ struct HomeView: View {
                 showsSources = true
             },
             send: send,
-            step: { step in
+            step: { step, slot in
                 dismissKeyboard()
+                Analytics.track(.homePlanTapped, [
+                    "step": .text(step.rawValue),
+                    "slot": .text(slot.rawValue),
+                    "exam": .flag(nextExam != nil),
+                ])
                 switch step {
+                case .session: if let session = day.session { start(session) }
                 case .cards: showsDueReview = true
                 case .lesson: if let resume { path.append(resume) } else { focused = true }
                 case .create: focused = true
                 }
             },
             tool: { tool in open(tool, resume: resume) },
+            exam: {
+                dismissKeyboard()
+                router?.showCalendar()
+            },
+            addExam: {
+                dismissKeyboard()
+                editingExam = .new
+            },
+            calendar: {
+                dismissKeyboard()
+                router?.showCalendar(day: now)
+            },
+            agendaTap: { item in
+                dismissKeyboard()
+                if item.kind == .task {
+                    toggleTask(item)
+                } else {
+                    router?.showCalendar(day: now)
+                }
+            },
+            agendaStart: { item in
+                dismissKeyboard()
+                start(item)
+            },
+            agendaToggle: toggleTask,
+            lesson: { id in
+                dismissKeyboard()
+                if let course = courses.first(where: { $0.id == id }) { path.append(course) }
+            },
+            allLessons: {
+                dismissKeyboard()
+                router?.selection = .decks
+            },
             dismissKeyboard: dismissKeyboard
         )
+    }
+
+    /// La séance du plan, lancée comme le calendrier la lance (`FocusPlan.revision`).
+    private func start(_ session: HomeSession) {
+        let course = courses.first { $0.id == session.courseID }
+        focusPlan = .revision(eventID: session.eventID, startMinute: session.startMinute, endMinute: session.endMinute, courseID: course?.id, courseTitle: course?.title)
+    }
+
+    /// Le ▶ d'une ligne de l'agenda : une séance de révision part d'ici ; le reste s'ouvre dans
+    /// le calendrier, où vivent l'examen blanc et ses réglages.
+    private func start(_ item: AgendaItem) {
+        guard item.kind == .revision, let startMinute = item.startMinute, let endMinute = item.endMinute else {
+            router?.showCalendar(day: now)
+            return
+        }
+        let course = courses.first { $0.id == item.courseID }
+        focusPlan = .revision(eventID: item.eventID, startMinute: startMinute, endMinute: endMinute, courseID: course?.id, courseTitle: course?.title)
+    }
+
+    /// Une tâche à rendre, cochée d'ici comme dans Concentration.
+    private func toggleTask(_ item: AgendaItem) {
+        guard let task = tasks.first(where: { $0.id == item.taskID }) else { return }
+        withAnimation(.spring(duration: 0.3)) {
+            task.isDone.toggle()
+            task.doneAt = task.isDone ? Date() : nil
+        }
+        try? modelContext.save()
+        if task.isDone {
+            Haptics.success()
+            Analytics.track(.taskDone)
+        }
+        refreshPlan()
     }
 
     private func refreshStreak() {
@@ -234,7 +399,7 @@ struct HomeView: View {
         tapImport(kind)
     }
 
-    /// Un outil, depuis sa tuile.
+    /// Un outil, depuis son raccourci.
     private func open(_ tool: HomeTool, resume: Course?) {
         dismissKeyboard()
         switch tool {
@@ -253,7 +418,13 @@ struct HomeView: View {
                 focused = true
             }
         case .timer:
-            showsTimer = true
+            // L'onglet Concentration prépare la séance ; le minuteur seul reste pour un écran
+            // sans barre d'onglets.
+            if let router {
+                router.requestFocusSession()
+            } else {
+                showsTimer = true
+            }
         case .league:
             showsLeague = true
         }
@@ -282,8 +453,16 @@ struct HomeActions {
     var streak: () -> Void = {}
     var sources: () -> Void = {}
     var send: () -> Void = {}
-    var step: (HomeDay.Step) -> Void = { _ in }
+    var step: (HomeDay.Step, HomeSlot) -> Void = { _, _ in }
     var tool: (HomeTool) -> Void = { _ in }
+    var exam: () -> Void = {}
+    var addExam: () -> Void = {}
+    var calendar: () -> Void = {}
+    var agendaTap: (AgendaItem) -> Void = { _ in }
+    var agendaStart: (AgendaItem) -> Void = { _ in }
+    var agendaToggle: (AgendaItem) -> Void = { _ in }
+    var lesson: (UUID) -> Void = { _ in }
+    var allLessons: () -> Void = {}
     var dismissKeyboard: () -> Void = {}
 }
 
@@ -294,9 +473,13 @@ struct HomeScreen: View {
     var focused: FocusState<Bool>.Binding
     let isPro: Bool
     let name: String?
+    /// Le bonjour court du plan du jour (`HomeGreeting.hello`).
+    let hello: String
+    /// Les phrases de la bulle de Mika, pour l'élève tout neuf (`HomeGreeting.lines`).
     let greeting: [String]
     let day: HomeDay
     let resume: (Course, ResumeTarget)?
+    let plan: HomePlan
     let motion: HomeMotion
     let appeared: Bool
     var streakPreview: StudyStreak.Status?
@@ -315,25 +498,11 @@ struct HomeScreen: View {
             )
             .homeEntrance(0, shown: appeared, motion: motion)
 
-            HomeHeroCard(
-                composer: composer,
-                focused: focused,
-                lines: greeting,
-                motion: motion,
-                onSend: actions.send,
-                onSources: actions.sources,
-                onDismissKeyboard: actions.dismissKeyboard
-            )
-            .padding(.top, 14)
-            .homeEntrance(1, shown: appeared, motion: motion)
-
-            HomeToolsRow(onTool: actions.tool)
-                .padding(.top, 16)
-                .homeEntrance(2, shown: appeared, motion: motion)
-
-            HomeTodayCard(day: day, resume: resume, motion: motion, onStep: actions.step)
-                .padding(.top, 16)
-                .homeEntrance(3, shown: appeared, motion: motion)
+            if day.hasCourses {
+                returning
+            } else {
+                newcomer
+            }
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, 8)
@@ -345,6 +514,76 @@ struct HomeScreen: View {
                 .contentShape(Rectangle())
                 .onTapGesture(perform: actions.dismissKeyboard)
         )
+    }
+
+    /// L'élève qui a ses leçons : son plan d'abord, écrire ensuite.
+    @ViewBuilder
+    private var returning: some View {
+        HomeGreetingRow(title: hello, motion: motion)
+            .padding(.top, 18)
+            .homeEntrance(1, shown: appeared, motion: motion)
+
+        HomePlanHero(
+            day: day,
+            resume: resume,
+            exam: plan.exam,
+            motion: motion,
+            onStep: actions.step,
+            onExam: actions.exam,
+            onAddExam: actions.addExam
+        )
+        .padding(.top, 14)
+        .homeEntrance(2, shown: appeared, motion: motion)
+
+        if !plan.agenda.isEmpty {
+            HomeAgendaSection(
+                items: plan.agenda,
+                onTap: actions.agendaTap,
+                onStart: actions.agendaStart,
+                onToggle: actions.agendaToggle,
+                onCalendar: actions.calendar
+            )
+            .padding(.top, 26)
+            .homeEntrance(3, shown: appeared, motion: motion)
+        }
+
+        if !plan.lessons.isEmpty {
+            HomeLessonsSection(lessons: plan.lessons, onOpen: actions.lesson, onAll: actions.allLessons)
+                .padding(.top, 26)
+                .homeEntrance(4, shown: appeared, motion: motion)
+        }
+
+        HomeCreateSection(composer: composer, focused: focused, onSend: actions.send, onSources: actions.sources)
+            .padding(.top, 26)
+            .homeEntrance(5, shown: appeared, motion: motion)
+
+        HomeToolsCard(onTool: actions.tool)
+            .padding(.top, 16)
+            .homeEntrance(6, shown: appeared, motion: motion)
+    }
+
+    /// L'élève tout neuf : écrire sa première leçon, la leçon offerte.
+    @ViewBuilder
+    private var newcomer: some View {
+        HomeHeroCard(
+            composer: composer,
+            focused: focused,
+            lines: greeting,
+            motion: motion,
+            onSend: actions.send,
+            onSources: actions.sources,
+            onDismissKeyboard: actions.dismissKeyboard
+        )
+        .padding(.top, 14)
+        .homeEntrance(1, shown: appeared, motion: motion)
+
+        HomeHowItWorks()
+            .padding(.top, 16)
+            .homeEntrance(2, shown: appeared, motion: motion)
+
+        HomeToolsCard(onTool: actions.tool)
+            .padding(.top, 16)
+            .homeEntrance(3, shown: appeared, motion: motion)
     }
 }
 

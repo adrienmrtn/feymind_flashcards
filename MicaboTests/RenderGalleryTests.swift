@@ -340,7 +340,37 @@ final class RenderGalleryTests: XCTestCase {
         emptyDefaults.removePersistentDomain(forName: suite + ".empty")
         let freshXP = XPStore(defaults: emptyDefaults)
 
-        func busyHome(composer: LessonComposer? = nil) -> AnyView {
+        // **Le plan du jour d'un élève de terminale** : le bac d'histoire dans douze jours,
+        // préparé à 64 %, et à 17 h 55 la séance de 18 h sur la guerre froide. L'agenda garde
+        // l'examen blanc conseillé, le DM de maths et une seconde séance ce soir ; les cours du
+        // matin et la séance de concentration menée sont passés.
+        let today = MicaboCalendar.shared.startOfDay(for: Date())
+        let examID = UUID()
+        let agenda = [
+            AgendaItem(id: "m", kind: .milestone, title: "Bac blanc d'histoire", day: today, tintIndex: StudyAgenda.examTint, examID: examID, milestone: .mock, minutes: 15),
+            AgendaItem(id: "t", kind: .task, title: "Rendre le DM de maths", day: today, tintIndex: StudyAgenda.taskTint, taskID: UUID()),
+            AgendaItem(id: "a", kind: .lesson, title: "Mathématiques", day: today, startMinute: 8 * 60, endMinute: 9 * 60 + 30, tintIndex: CalendarTint.classesIndex, emoji: "🏫", calendarName: "Cours", room: "B12"),
+            AgendaItem(id: "f", kind: .focus, title: "", day: today, startMinute: 14 * 60, endMinute: 14 * 60 + 25, tintIndex: StudyAgenda.focusTint, minutes: 25, isDone: true),
+            AgendaItem(id: "r", kind: .revision, title: "La guerre froide", day: today, startMinute: 18 * 60, endMinute: 18 * 60 + 30, tintIndex: CalendarTint.revisionIndex, emoji: "📚", calendarName: "Révisions", examID: examID, eventID: UUID()),
+            AgendaItem(id: "r2", kind: .revision, title: "La décolonisation", day: today, startMinute: 20 * 60 + 30, endMinute: 21 * 60, tintIndex: CalendarTint.revisionIndex, emoji: "📚", calendarName: "Révisions", examID: examID, eventID: UUID()),
+        ]
+        let evening = CalendarTime.date(minute: 17 * 60 + 55, on: today)
+        let session = HomeSession.next(in: agenda, now: evening, examNames: [examID: "Bac d'histoire"])
+        XCTAssertEqual(session?.title, "La guerre froide")
+        let lessons = [
+            HomeLessonCard(id: course.id, title: "La photosynthèse", icon: .flask, tone: .yellow, percent: resume.1.percent),
+            HomeLessonCard(id: UUID(), title: "La guerre froide", icon: .globe, tone: .pink, percent: 70),
+            HomeLessonCard(id: UUID(), title: "Les fonctions affines", icon: .calculator, tone: .blue, percent: 15),
+            HomeLessonCard(id: UUID(), title: "Le passé composé", icon: .quill, tone: .mint, percent: 100),
+        ]
+        let examPlan = HomePlan(
+            exam: HomeExam(name: "Bac d'histoire", daysLeft: 12, readiness: 64),
+            agenda: HomePlan.upcoming(agenda, now: evening, excluding: session),
+            lessons: lessons
+        )
+        XCTAssertEqual(examPlan.agenda.map(\.id), ["m", "t", "r2"])
+
+        func busyHome(composer: LessonComposer? = nil, session: HomeSession? = session, plan: HomePlan = examPlan, moment: HomeGreeting.Moment = .evening) -> AnyView {
             let day = HomeDay(
                 dueCount: 8,
                 reviewedToday: 0,
@@ -348,28 +378,48 @@ final class RenderGalleryTests: XCTestCase {
                 lessonTitle: resume.1.title,
                 lessonCircle: resume.1.circleNumber.map { L10n.t("lesson.path.circleNumber", locale: .resolved(), vars: ["n": String($0)]) },
                 lessonAdvancedToday: false,
-                studiedToday: true
+                studiedToday: true,
+                session: session
             )
             return AnyView(HomeScreenPreview(
                 composer: composer ?? LessonComposer(),
                 isPro: false,
                 name: "Léa",
+                moment: moment,
                 day: day,
                 resume: resume,
+                plan: plan,
                 streak: StudyStreak.Status(current: 12, best: 18, studiedToday: true)
             )
             .environment(busyXP))
         }
 
+        /// Ce qu'on voit en ouvrant l'app : le premier écran, coupé à la hauteur d'un iPhone.
+        func fold(_ view: AnyView) -> some View {
+            view
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(height: 852, alignment: .top)
+                .clipped()
+        }
+
         try RenderGallery.render("home", night: true, busyHome())
+        try RenderGallery.render("home-top", night: true, fold(busyHome()))
+        // Sans examen ni séance : la leçon en cours, les cartes en seconde ligne, « Ajouter
+        // un examen » dans le haut de la scène.
+        try RenderGallery.render(
+            "home-noexam",
+            busyHome(session: nil, plan: HomePlan(exam: nil, agenda: [], lessons: lessons), moment: .morning)
+        )
         try RenderGallery.render(
             "home-new", night: true,
             HomeScreenPreview(
                 composer: LessonComposer(),
                 isPro: false,
                 name: nil,
+                moment: .day,
                 day: HomeDay(hasCourses: false, studiedToday: false),
                 resume: nil,
+                plan: HomePlan(),
                 streak: StudyStreak.Status(current: 0, best: 0, studiedToday: false)
             )
             .environment(freshXP)
@@ -397,7 +447,8 @@ final class RenderGalleryTests: XCTestCase {
                 .environment(\.homeStill, true)
         )
 
-        // Les phrases longues : l'allemand, sur le même élève.
+        // Les phrases longues : l'allemand et le finnois, sur le même élève ; l'arabe, de
+        // droite à gauche.
         do {
             let localeDefaults = UserDefaults.standard
             let previousLocale = localeDefaults.string(forKey: UiLocale.storageKey)
@@ -407,8 +458,9 @@ final class RenderGalleryTests: XCTestCase {
                 else { localeDefaults.removeObject(forKey: UiLocale.storageKey) }
             }
             try RenderGallery.render("home-de", busyHome())
-            localeDefaults.set(UiLocale.tr.rawValue, forKey: UiLocale.storageKey)
-            try RenderGallery.render("home-tr", busyHome())
+            try RenderGallery.render("home-noexam-de", fold(busyHome(session: nil, plan: HomePlan(exam: nil, agenda: [], lessons: lessons), moment: .morning)))
+            localeDefaults.set(UiLocale.fi.rawValue, forKey: UiLocale.storageKey)
+            try RenderGallery.render("home-fi", fold(busyHome()))
             localeDefaults.set(UiLocale.ar.rawValue, forKey: UiLocale.storageKey)
             try RenderGallery.render("home-ar", busyHome().environment(\.layoutDirection, .rightToLeft))
         }
@@ -769,8 +821,10 @@ private struct HomeScreenPreview: View {
     let composer: LessonComposer
     let isPro: Bool
     let name: String?
+    var moment: HomeGreeting.Moment = .day
     let day: HomeDay
     let resume: (Course, ResumeTarget)?
+    var plan = HomePlan()
     let streak: StudyStreak.Status
     @FocusState private var focused: Bool
 
@@ -780,9 +834,11 @@ private struct HomeScreenPreview: View {
             focused: $focused,
             isPro: isPro,
             name: name,
-            greeting: HomeGreeting.lines(name: name, moment: .day, dueCount: day.dueCount),
+            hello: HomeGreeting.hello(name: name, moment: moment),
+            greeting: HomeGreeting.lines(name: name, moment: moment, dueCount: day.dueCount),
             day: day,
             resume: resume,
+            plan: plan,
             motion: HomeMotion(still: true, reduceMotion: false),
             appeared: true,
             streakPreview: streak,

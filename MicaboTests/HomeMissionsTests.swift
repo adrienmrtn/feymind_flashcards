@@ -65,6 +65,68 @@ final class HomeMissionsTests: XCTestCase {
         XCTAssertNil(HomeDay(dueCount: 3, hasCourses: true).secondary)
     }
 
+    /// **La séance que le calendrier a posée passe devant tout** : c'est le plan de l'élève. Les
+    /// cartes dues restent en seconde ligne, sinon la leçon en cours. L'élève sans leçon, lui,
+    /// écrit d'abord la sienne.
+    func testPlannedSessionComesFirst() {
+        let session = HomeSession(eventID: UUID(), courseID: nil, title: "La guerre froide", startMinute: 18 * 60, endMinute: 18 * 60 + 30, examName: "Bac d'histoire")
+        var day = HomeDay(dueCount: 8, hasCourses: true, lessonTitle: "La photosynthèse", lessonCircle: "Cercle 4", session: session)
+        XCTAssertEqual(day.primary, .session)
+        XCTAssertEqual(day.secondary, .cards)
+        day.dueCount = 0
+        XCTAssertEqual(day.secondary, .lesson)
+        XCTAssertEqual(HomeDay(hasCourses: false, session: session).primary, .create)
+        XCTAssertEqual(session.minutes, 30)
+    }
+
+    /// La séance proposée est la première du jour qui n'est ni faite ni finie ; l'agenda de Home
+    /// garde ce qui reste, sans elle, sans ce qui est passé ni les séances menées.
+    func testSessionAndAgendaFollowTheClock() {
+        let calendar = MicaboCalendar.shared
+        let today = calendar.startOfDay(for: Date())
+        let examID = UUID()
+        let first = UUID()
+        let items = [
+            AgendaItem(id: "t", kind: .task, title: "DM", day: today, tintIndex: 0, taskID: UUID()),
+            AgendaItem(id: "a", kind: .lesson, title: "Maths", day: today, startMinute: 8 * 60, endMinute: 9 * 60, tintIndex: 0),
+            AgendaItem(id: "f", kind: .focus, title: "", day: today, startMinute: 14 * 60, endMinute: 14 * 60 + 25, tintIndex: 0, minutes: 25, isDone: true),
+            AgendaItem(id: "r", kind: .revision, title: "La guerre froide", day: today, startMinute: 18 * 60, endMinute: 18 * 60 + 30, tintIndex: 0, examID: examID, eventID: first),
+            AgendaItem(id: "d", kind: .revision, title: "Fait", day: today, startMinute: 19 * 60, endMinute: 19 * 60 + 30, tintIndex: 0, eventID: UUID(), isDone: true),
+            AgendaItem(id: "r2", kind: .revision, title: "La décolonisation", day: today, startMinute: 20 * 60, endMinute: 20 * 60 + 30, tintIndex: 0, eventID: UUID()),
+        ]
+        let evening = CalendarTime.date(minute: 17 * 60 + 55, on: today, calendar: calendar)
+        let session = HomeSession.next(in: items, now: evening, examNames: [examID: "Bac"], calendar: calendar)
+        XCTAssertEqual(session?.eventID, first)
+        XCTAssertEqual(session?.examName, "Bac")
+        XCTAssertEqual(HomePlan.upcoming(items, now: evening, excluding: session, calendar: calendar).map(\.id), ["t", "r2"])
+
+        let later = CalendarTime.date(minute: 18 * 60 + 40, on: today, calendar: calendar)
+        XCTAssertEqual(HomeSession.next(in: items, now: later, calendar: calendar)?.title, "La décolonisation")
+        let night = CalendarTime.date(minute: 22 * 60, on: today, calendar: calendar)
+        XCTAssertNil(HomeSession.next(in: items, now: night, calendar: calendar))
+    }
+
+    /// Le plan du jour parle toutes les langues de l'app, avec le prénom là où il le faut.
+    func testHome4CopyExistsInEveryLanguage() {
+        let keys = IosI18nCatalogs.fr.keys.filter { $0.hasPrefix("ios.home4.") }
+        XCTAssertEqual(keys.count, 18)
+        for locale in UiLocale.allCases {
+            let table = IosI18nCatalogs.table(for: locale.rawValue)
+            for key in keys {
+                XCTAssertNotNil(table[key], "\(locale.rawValue) \(key)")
+            }
+            for moment in [HomeGreeting.Moment.morning, .day, .evening, .night] {
+                XCTAssertTrue(HomeGreeting.hello(name: "Lina", moment: moment, locale: locale).contains("Lina"), "\(locale.rawValue) \(moment)")
+                XCTAssertFalse(HomeGreeting.hello(name: nil, moment: moment, locale: locale).contains("{"), "\(locale.rawValue) \(moment)")
+            }
+            for step in 1...3 {
+                XCTAssertNotNil(table["ios.home4.how.step\(step)"], "\(locale.rawValue) \(step)")
+                XCTAssertNotNil(table["ios.home4.how.step\(step)Sub"], "\(locale.rawValue) \(step)")
+            }
+        }
+        XCTAssertEqual(HomeGreeting.hello(name: "Léa", moment: .night, locale: .fr), "Bonsoir Léa")
+    }
+
     /// Chaque phrase de la Home calme et du paywall existe dans chaque langue, sans retomber
     /// sur l'anglais, et sans variable perdue.
     func testHome3AndPaywallCopyExistsInEveryLanguage() {

@@ -12,24 +12,52 @@ ligues, semaine). Les jumeaux sont `Micabo/Services/XP/XPRules.swift` et
 
 ## 1. Home, de haut en bas
 
-Home a été rendue plus calme (lot « Home 3 », clés `ios.home3.*`) : quatre blocs, rien d'autre.
+Home n'a pas la même tête selon l'élève (lot « Home 4 », clés `ios.home4.*`). Celui qui a
+déjà ses leçons vient **réviser** : son plan passe devant tout. Celui qui n'en a pas vient
+**écrire sa première leçon**, la leçon offerte : c'est le moment d'activation et de
+conversion, la barre reste la scène.
+
+**L'élève qui a ses leçons** (`HomeDay.hasCourses`) :
 
 1. **La rangée du haut**, sur la page : l'initiale (ouvre le Profil) ; pour un élève qui
    n'est pas Pro, la pilule « ✦ Pro » bleue (déclencheur `upgrade`, hauteur minimale de
-   40 points pour les grandes tailles de texte) ; à droite, **une seule pastille** pour la
-   série (🔥, ouvre la feuille de la série) et l'XP de la semaine (⚡, ouvre la ligue).
-2. **La scène bleue de la marque** (`MicaboStage`) : la bulle de Mika (le salut à l'heure
-   et au prénom, qui s'écrit lettre après lettre), Mika en buste qui sort de derrière la
-   barre, et la barre « comme une conversation » : le « + » (la feuille des supports), le
-   champ, l'envoi.
-3. **Quatre outils** en tuiles : Scanner un exo, Quiz éclair, Minuteur, Ligue.
-4. **« Aujourd'hui »**, une carte : l'anneau `xpToday / DAILY_XP_GOAL` (50), puis **une
-   seule** prochaine étape avec son bouton (`HomeDay.primary`) — la leçon en cours tant
-   qu'elle n'a pas avancé aujourd'hui, sinon les cartes dues, sinon la leçon ; sans leçon,
-   en écrire une —, et au plus une seconde ligne (`HomeDay.secondary`).
+   40 points pour les grandes tailles de texte) — la seule surface d'abonnement de Home ; à
+   droite, **une seule pastille** pour la série (🔥, ouvre la feuille de la série) et l'XP de
+   la semaine (⚡, ouvre la ligue).
+2. **Le bonjour** (« Bonsoir Léa », la nuit dit encore bonsoir) et l'objectif du jour :
+   `xpToday / DAILY_XP_GOAL` (50) en texte et **un seul anneau**.
+3. **« Ton plan du jour »**, sur la scène bleue de la marque (`HomePlanHero`) :
+   - en haut, le **prochain examen** (`NextExam.current`) : le compte à rebours dans sa tuile
+     blanche, le nom, la préparation (`ExamReadiness`) ; un appui ouvre le Calendrier. Sans
+     examen : « Ton plan du jour » et une pilule discrète « Ajouter un examen » qui ouvre
+     `ExamEditSheet` ;
+   - **la** chose à faire maintenant (`HomeDay.primary`) : la séance de révision posée au
+     calendrier aujourd'hui, ni faite ni finie (`StudyPlan.today` → `HomeSession.next`), puis
+     la leçon en cours tant qu'elle n'a pas avancé aujourd'hui, puis les cartes dues, puis la
+     leçon ; sinon, écrire la suivante ;
+   - **un** grand bouton blanc — « Démarrer la séance », « Continuer », « Réviser
+     maintenant » —, Mika en buste qui regarde par-dessus (comme sur Concentration). La séance
+     part comme du calendrier (`FocusPlan.revision`) ;
+   - au plus une seconde ligne (`HomeDay.secondary`) : les cartes dues, ou la leçon en cours.
+4. **« Aujourd'hui »** : ce qui reste à l'agenda du jour, trois lignes au plus, dessinées
+   comme dans le calendrier (`AgendaRow`) — l'examen blanc conseillé, les tâches (cochées
+   d'ici), les autres séances (▶) ; « Voir le calendrier ». Rien s'il ne reste rien.
+5. **« Mes leçons »** : les leçons récentes en cartes qu'on fait glisser, avec leur
+   progression ; « Tout voir » ouvre l'onglet Leçons.
+6. **« Nouvelle leçon »**, en second : la même barre (`HomeComposerBar`, sur une ligne), le
+   « + » des supports, l'envoi — par la même porte du gratuit (`LessonAllowance.sendRoute`,
+   `immediatePaywall`, l'aperçu verrouillé).
+7. **Les outils**, en raccourcis légers dans une seule carte : Scanner un exo, Quiz éclair,
+   Minuteur (ouvre Concentration et « Préparer ma session »), Ligue.
 
-Les missions, la carte « Reprendre » et les trois chiffres ont quitté Home ; le Profil garde
-les statistiques.
+**L'élève tout neuf** : la rangée du haut ; la scène bleue avec la bulle de Mika (le salut à
+l'heure et au prénom, qui s'écrit lettre après lettre), Mika en buste qui sort de derrière la
+barre, et la barre « comme une conversation » ; « Comment ça marche » en trois pas ; les
+outils.
+
+Les gestes du plan partent dans `home_plan_tapped` (`step`, `slot`, `exam`), sans texte de
+l'élève. Les missions, la carte « Reprendre » et les trois chiffres ont quitté Home ; le
+Profil garde les statistiques.
 
 ## 2. L'XP
 
