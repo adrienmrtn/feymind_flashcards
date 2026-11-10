@@ -404,14 +404,17 @@ struct HomeSourcesSheet: View {
                 .background(HomePalette.doneSoft, in: Capsule())
             }
             VStack(spacing: 12) {
+                // Les deux tuiles d'une rangée ont la hauteur de la plus haute.
                 HStack(spacing: 12) {
                     tile(.pdf)
                     tile(.photo)
                 }
+                .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 12) {
                     tile(.youtube)
                     tile(.audio)
                 }
+                .fixedSize(horizontal: false, vertical: true)
             }
             HomeSourceTile(kind: .text, locked: false, enabled: enabled, wide: true) { onPick(.text) }
             if !enabled {
@@ -460,7 +463,7 @@ struct HomeSourceTile: View {
                         labels
                         Spacer(minLength: 0)
                     }
-                    .frame(maxWidth: .infinity, minHeight: 128, alignment: .topLeading)
+                    .frame(maxWidth: .infinity, minHeight: 128, maxHeight: .infinity, alignment: .topLeading)
                 }
             }
             .padding(14)
@@ -493,8 +496,8 @@ struct HomeSourceTile: View {
             Text(L10n.t(kind.titleKey, locale: .resolved()))
                 .font(MicaboFont.ui(17, weight: .black))
                 .foregroundStyle(HomePalette.ink)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
             Text(L10n.t(kind.titleKey + "Sub", locale: .resolved()))
                 .font(MicaboFont.ui(13, weight: .semibold))
                 .foregroundStyle(HomePalette.inkSecondary)
