@@ -1,3 +1,4 @@
+import SwiftData
 import XCTest
 @testable import Micabo
 
@@ -199,5 +200,37 @@ final class AuditFixesTests: XCTestCase {
         let refusal = SupabaseFunctionError.server(status: 402, message: "Importer une vidéo, c'est avec Micabo Pro.", code: "import_pro")
         XCTAssertEqual(YouTubeImportError(refusal), .importPro)
         XCTAssertFalse(YouTubeImportError.importPro.allowsRetry)
+    }
+}
+
+/// **L'audit du 10 novembre 2026 : ce qu'un compte laisse derrière lui.**
+final class AccountLeaveTests: XCTestCase {
+    /// Se déconnecter vidait les cours, l'XP et l'examen offert, mais pas ce que Mika et
+    /// l'entraînement gardaient : les conversations de leçon (les questions d'un autre élève),
+    /// la question et le lot de questions offerts, que le serveur rend pourtant à chaque
+    /// compte, et les minutes de concentration ajoutées aux heures de Home.
+    @MainActor
+    func testLeavingAnAccountForgetsMikaPracticeAndFocus() throws {
+        let container = try ModelContainer(
+            for: Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = ModelContext(container)
+
+        let lesson = LessonMikaView.storeURL(for: UUID())
+        MikaConversationStore.save(MikaConversation(), to: lesson)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: lesson.path))
+        MikaQuota().noteAnswered()
+        XCTAssertFalse(MikaQuota().hasFreeQuestion)
+        PracticeAllowance.freeBatchUsed = true
+        FocusLog.add(25 * 60)
+
+        try LocalWipe.eraseAccountData(in: context)
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: lesson.path))
+        XCTAssertTrue(MikaQuota().hasFreeQuestion)
+        XCTAssertEqual(MikaQuota().askedToday, 0)
+        XCTAssertFalse(PracticeAllowance.freeBatchUsed)
+        XCTAssertEqual(FocusLog.totalSeconds, 0)
     }
 }

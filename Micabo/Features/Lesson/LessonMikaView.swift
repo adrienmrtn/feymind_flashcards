@@ -31,9 +31,7 @@ struct LessonMikaView: View {
 
     /// Un fichier par leçon, à côté de la conversation de l'ancien onglet.
     static func storeURL(for id: UUID) -> URL {
-        MikaConversationStore.defaultURL
-            .deletingLastPathComponent()
-            .appendingPathComponent("mika-lessons", isDirectory: true)
+        MikaConversationStore.lessonsDirectory
             .appendingPathComponent("\(id.uuidString).json")
     }
 
