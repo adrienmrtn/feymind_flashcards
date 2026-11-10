@@ -72,13 +72,23 @@ enum MicaboColor {
 
     /// Accent unique de l'app : sélection, onglet actif, éléments interactifs.
     ///
-    /// Assez sombre pour qu'une pastille de onze points reste lisible sur `accentSoft`.
+    /// Le bleu Micabo. Un libellé gras se lit dessus et en dessous ; une pastille de onze
+    /// points sur `accentSoft` prend `accentInk`.
     static var accent: Color { palette.accent }
     static var accentSoft: Color { palette.accentSoft }
 
     /// Le bleu des **grandes** surfaces, et d'elles seules : un curseur, un histogramme,
     /// un remplissage. Il ne porte jamais de texte.
     static var accentVivid: Color { palette.accentVivid }
+
+    /// L'accent pour du **petit texte** sur un lavis bleu (`accentSoft`, `accentWash`) :
+    /// le 600 de la gamme le jour, le 300 la nuit.
+    static var accentInk: Color { palette.accentInk }
+
+    /// **Le dégradé de marque** : le bleu Micabo vers son 700 (la nuit, du 400 au 500).
+    /// Il remplace l'ancien bleu → violet partout où un aplat porte la marque.
+    static var accentDeep: Color { palette.accentDeep }
+    static var brandGradient: [Color] { [accent, accentDeep] }
 
     /// Toute progression porte cette couleur, sans exception : jauge du parcours
     /// d'accueil, barre de session, anneaux, curseurs, indicateurs d'attente.

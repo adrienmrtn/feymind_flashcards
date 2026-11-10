@@ -144,7 +144,7 @@ struct LeagueSheet: View {
             ZStack(alignment: .leading) {
                 Capsule().fill(MicaboColor.track)
                 Capsule()
-                    .fill(LinearGradient(colors: [MicaboColor.accent, MicaboColor.keyword], startPoint: .leading, endPoint: .trailing))
+                    .fill(LinearGradient(colors: MicaboColor.brandGradient, startPoint: .leading, endPoint: .trailing))
                     .frame(width: max(10, proxy.size.width * min(1, max(0, ratio))))
             }
         }
@@ -197,7 +197,7 @@ struct LeagueSheet: View {
                 if row.isMe && row.name != L10n.t("ios.kx.league.you", locale: .resolved()) {
                     Text(L10n.t("ios.kx.league.you", locale: .resolved()))
                         .font(MicaboFont.ui(12, weight: .heavy))
-                        .foregroundStyle(MicaboColor.accent)
+                        .foregroundStyle(MicaboColor.accentInk)
                         .padding(.horizontal, 7)
                         .padding(.vertical, 2)
                         .background(MicaboColor.accentSoft, in: Capsule())

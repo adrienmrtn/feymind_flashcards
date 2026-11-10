@@ -5,8 +5,9 @@ import UIKit
 
 /// **Les couleurs de Home, et d'elle seule.**
 ///
-/// Home a son propre décor : un ciel de nuit bleu marine qui tourne à l'indigo, avec deux
-/// lueurs, bleue et violette, qui dérivent lentement derrière Mika. C'est l'écran qu'on ouvre
+/// Home a son propre décor : un ciel de nuit bleu marine qui descend vers le bleu profond de
+/// la marque (le 900), avec deux lueurs bleues et une touche de rose gomme, qui dérivent
+/// lentement derrière Mika. C'est l'écran qu'on ouvre
 /// tous les jours, celui qui doit donner envie ; les autres écrans gardent le papier de
 /// Micabo. D'où un jeu de jetons à part, plutôt qu'un `MicaboColor` qui bougerait partout.
 ///
@@ -20,11 +21,11 @@ enum HomePalette {
     // MARK: La scène (toujours sombre)
 
     static let heroTop = Color(hex: 0x080C27)
-    static let heroMid = Color(hex: 0x111743)
-    static let heroBottom = Color(hex: 0x23196A)
-    static let glowBlue = Color(hex: 0x2F6BFF)
-    static let glowViolet = Color(hex: 0x8B5CF6)
-    static let glowPink = Color(hex: 0xD946EF)
+    static let heroMid = Color(hex: 0x0E1A45)
+    static let heroBottom = Color(hex: 0x132656)
+    static let glowBlue = Color(hex: 0x3870FE)
+    static let glowViolet = Color(hex: 0x608DFE)
+    static let glowPink = Color(hex: 0xE3596C)
     static let heroInk = Color.white
     static let heroInkSecondary = Color(hex: 0xC5C9F2)
     static let heroInkTertiary = Color(hex: 0x8E93C7)
@@ -38,11 +39,11 @@ enum HomePalette {
 
     // MARK: Le dégradé de Micabo
 
-    /// **Le bleu-violet de Micabo, en aplat sous du texte blanc.** Ce sont les valeurs du
-    /// jour de `MicaboColor.accent` et `MicaboColor.keyword` : la nuit, ces deux jetons
-    /// s'éclaircissent pour se lire sur le noir, et un « Pro » blanc ne se lirait plus dessus.
-    static let brandStart = Color(hex: 0x2563EB)
-    static let brandEnd = Color(hex: 0x7C3AED)
+    /// **Le dégradé de marque, en aplat sous du texte blanc** : le bleu Micabo vers son 700
+    /// (`MicaboBrand`). Des constantes, pas `MicaboColor.accent` : la nuit, l'accent
+    /// s'éclaircit pour se lire sur le noir, et un « Pro » blanc ne se lirait plus dessus.
+    static let brandStart = MicaboBrand.blue500
+    static let brandEnd = MicaboBrand.blue700
     static var brand: LinearGradient {
         LinearGradient(colors: [brandStart, brandEnd], startPoint: .topLeading, endPoint: .bottomTrailing)
     }
@@ -59,7 +60,7 @@ enum HomePalette {
     static let rowFill = adaptive(0xF7F5FF, 0x1C2252)
     static let done = adaptive(0x16A34A, 0x34D399)
     static let doneSoft = adaptive(0xDCFCE7, 0x123A2E)
-    static let cardShadow = adaptive(0x4C3BCF, 0x000000)
+    static let cardShadow = adaptive(0x264CAD, 0x000000)
 
     private static func adaptive(_ light: UInt32, _ dark: UInt32) -> Color {
         let light = UIColor(Color(hex: light))

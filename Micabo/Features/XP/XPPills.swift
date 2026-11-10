@@ -150,7 +150,7 @@ struct XPGoalRing: View {
             Circle()
                 .trim(from: 0, to: max(0, min(1, progress)))
                 .stroke(
-                    LinearGradient(colors: [MicaboColor.accent, MicaboColor.keyword], startPoint: .topLeading, endPoint: .bottomTrailing),
+                    LinearGradient(colors: MicaboColor.brandGradient, startPoint: .topLeading, endPoint: .bottomTrailing),
                     style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))

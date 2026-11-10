@@ -22,7 +22,7 @@ struct ResearchQuoteCard: View {
                     .font(MicaboFont.ui(12, weight: .heavy))
                     .tracking(1.4)
                     .textCase(.uppercase)
-                    .foregroundStyle(MicaboColor.accent)
+                    .foregroundStyle(MicaboColor.accentInk)
             }
 
             HStack(alignment: .center, spacing: compact ? 12 : 16) {

@@ -59,7 +59,7 @@ struct DailyTimeStepView: View {
                     Text(selection.caption(locale: i18n.locale))
                         .font(MicaboFont.ui(20, weight: .heavy))
                         .tracking(-0.4)
-                        .foregroundStyle(MicaboColor.accent)
+                        .foregroundStyle(MicaboColor.accentInk)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
                         .minimumScaleFactor(0.85)

@@ -166,7 +166,7 @@ struct SettingsView: View {
         MicaboScreenHeader(title: i18n.t("settings.title"), back: MicaboHeaderBack.back(saveAndClose)) {
             Button(i18n.t("ios.done"), action: saveAndClose)
                 .font(MicaboFont.ui(15, weight: .semibold))
-                .foregroundStyle(MicaboColor.accent)
+                .foregroundStyle(MicaboColor.accentInk)
                 .buttonStyle(MicaboPressableButtonStyle())
         }
         .padding(.top, MicaboSpacing.xs)
@@ -396,7 +396,7 @@ struct SettingsView: View {
                     } else if hasUsernameChange {
                         Button(i18n.t("app.common.save"), action: commitUsername)
                             .font(MicaboFont.ui(13, weight: .semibold))
-                            .foregroundStyle(MicaboColor.accent)
+                            .foregroundStyle(MicaboColor.accentInk)
                             .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
                     }
                 }

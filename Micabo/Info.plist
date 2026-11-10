@@ -12,6 +12,21 @@
 	-->
 	<key>MicaboCommit</key>
 	<string>dev</string>
+	<!--
+	L'écran de lancement : l'icône de Micabo (Mika dans sa pastille bleue) au centre, sur le
+	blanc le jour et le presque-noir `#0B0D14` la nuit — les deux fonds du kit de marque
+	(`design/micabo-kit-mika/marque/tokens.json`, `ecranLancement`). Les deux vivent dans le
+	catalogue : `LaunchBackground` (couleur, deux apparences) et `LaunchMark` (120 points).
+	-->
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+		<key>UIImageName</key>
+		<string>LaunchMark</string>
+		<key>UIImageRespectsSafeAreaInsets</key>
+		<true/>
+	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Micabo uses the camera to scan your course pages.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

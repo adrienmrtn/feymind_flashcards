@@ -41,7 +41,7 @@ struct ProfileCard: View {
                     if let identity {
                         Text(identity)
                             .font(MicaboFont.ui(14, weight: .bold))
-                            .foregroundStyle(MicaboColor.accent)
+                            .foregroundStyle(MicaboColor.accentInk)
                             .lineLimit(1)
                     }
                     if let studies {

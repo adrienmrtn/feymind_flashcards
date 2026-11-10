@@ -196,12 +196,12 @@ struct NewLessonRow: View {
             HStack(spacing: 14) {
                 Image(systemName: "plus")
                     .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(MicaboColor.accent)
+                    .foregroundStyle(MicaboColor.accentInk)
                     .frame(width: 60, height: 60)
                     .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                 Text(L10n.t("lesson.lessons.new", locale: .resolved()))
                     .font(MicaboFont.label)
-                    .foregroundStyle(MicaboColor.accent)
+                    .foregroundStyle(MicaboColor.accentInk)
                 Spacer(minLength: 0)
             }
             .padding(14)

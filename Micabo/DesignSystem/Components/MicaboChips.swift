@@ -81,7 +81,7 @@ struct MicaboSectionHeader: View {
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
                     .font(MicaboFont.ui(13, weight: .semibold))
-                    .foregroundStyle(MicaboColor.accent)
+                    .foregroundStyle(MicaboColor.accentInk)
                     .buttonStyle(MicaboPressableButtonStyle())
             }
         }

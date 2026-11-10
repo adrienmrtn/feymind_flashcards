@@ -73,7 +73,7 @@ struct FriendProfileView: View {
         HStack(spacing: 12) {
             Image(systemName: "books.vertical")
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(MicaboColor.accent)
+                .foregroundStyle(MicaboColor.accentInk)
 
             Text(countLabel)
                 .font(MicaboFont.bodyEmphasis)

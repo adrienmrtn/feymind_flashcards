@@ -597,7 +597,7 @@ struct CoursesListView: View {
                 )
                 .font(MicaboFont.ui(13.5, weight: .medium))
                 .labelStyle(.titleAndIcon)
-                .foregroundStyle(MicaboColor.accent)
+                .foregroundStyle(MicaboColor.accentInk)
             }
         }
         .padding(.horizontal, MicaboSpacing.screen)

@@ -63,6 +63,11 @@ struct MicaboPalette: Equatable {
     var accent: Color
     var accentSoft: Color
     var accentVivid: Color
+    /// Le bleu de l'accent, assez sombre (le jour) ou assez clair (la nuit) pour du petit
+    /// texte sur un lavis : une pastille de onze points sur `accentSoft`.
+    var accentInk: Color
+    /// Le bout sombre du dégradé de marque (`accent` → `accentDeep`).
+    var accentDeep: Color
     var progressTrack: Color
     var positive: Color
     var caution: Color
@@ -139,8 +144,8 @@ struct MicaboPalette: Equatable {
     /// **Le jour de la refonte « parcours » : ivoire, encre, bleu.**
     ///
     /// Le fond redevient l'ivoire de Micabo, et les surfaces restent blanches : une carte se
-    /// détache du papier par sa clarté, sans bordure. L'accent revient au bleu `#2563EB`, celui
-    /// du site — le violet a été l'accent de l'app pendant une version, mais la refonte le
+    /// détache du papier par sa clarté, sans bordure. L'accent est le bleu Micabo `#3870FE`, celui
+    /// de l'icône et de Mika — le violet a été l'accent de l'app pendant une version, mais la refonte le
     /// réserve aux mots-clés des notes, et un violet qui voudrait dire « bouton » et « à
     /// retenir » ne dirait plus rien.
     ///
@@ -178,9 +183,14 @@ struct MicaboPalette: Equatable {
         onInk: .white,
         onInkMuted: Color(hex: 0xA8ABB3),
         canvasSage: Color(hex: 0xF6F4ED),
-        accent: Color(hex: 0x2563EB),
-        accentSoft: Color(hex: 0xDBEAFE),
-        accentVivid: Color(hex: 0x3B82F6),
+        // Le bleu Micabo (`MicaboBrand.blue`) : 4,3:1 sur le blanc, assez pour un libellé
+        // gras ; le petit texte sur un lavis prend `accentInk` (le 600, 4,7:1 sur
+        // `accentSoft`).
+        accent: Color(hex: 0x3870FE),
+        accentSoft: Color(hex: 0xDFE8FF),
+        accentVivid: Color(hex: 0x3870FE),
+        accentInk: Color(hex: 0x2F5ED5),
+        accentDeep: Color(hex: 0x264CAD),
         progressTrack: Color(hex: 0xE7E2D7),
         // À partir d'ici, et jusqu'à `infoSoft` : les couleurs des notes de révision,
         // reprises telles quelles de l'ancienne palette. Voir le commentaire du type.
@@ -201,8 +211,8 @@ struct MicaboPalette: Equatable {
         gradeNear: Color(hex: 0xB9B9C2),
         gradeMid: Color(hex: 0xD3D3DA),
         gradeFar: Color(hex: 0xE6E6EB),
-        accentWash: Color(hex: 0xEEF4FE),
-        accentPale: Color(hex: 0xBFD5FA),
+        accentWash: Color(hex: 0xEFF4FF),
+        accentPale: Color(hex: 0xBBCEFF),
         track: Color(hex: 0xE3DED2),
         flame: Color(hex: 0xFF5440),
         flameInk: Color(hex: 0xC0341F),
@@ -236,21 +246,21 @@ struct MicaboPalette: Equatable {
         tonePale: [
             Color(hex: 0xFFF1B8),
             Color(hex: 0xCDEFDC),
-            Color(hex: 0xD6E7FB),
+            Color(hex: 0xDFE8FF),
             Color(hex: 0xFBD9E4),
             Color(hex: 0xE4D9FB)
         ],
         toneVivid: [
             Color(hex: 0xF2B200),
             Color(hex: 0x22B573),
-            Color(hex: 0x3B82F6),
+            Color(hex: 0x3870FE),
             Color(hex: 0xEC5B8F),
             Color(hex: 0x8B5CF6)
         ],
         toneInk: [
             Color(hex: 0x7A5600),
             Color(hex: 0x146C45),
-            Color(hex: 0x1D4ED8),
+            Color(hex: 0x264CAD),
             Color(hex: 0xA8204F),
             Color(hex: 0x5B21B6)
         ],
@@ -288,9 +298,12 @@ struct MicaboPalette: Equatable {
         onInk: Color(hex: 0x121317),
         onInkMuted: Color(hex: 0x4D5058),
         canvasSage: Color(hex: 0x121317),
-        accent: Color(hex: 0x6B9BF2),
+        // Le 400 de la gamme : 5,4:1 sur la carte de nuit, 4,6:1 sur `accentSoft`.
+        accent: Color(hex: 0x608DFE),
         accentSoft: Color(hex: 0x1D2A45),
-        accentVivid: Color(hex: 0x60A5FA),
+        accentVivid: Color(hex: 0x3870FE),
+        accentInk: Color(hex: 0x90AFFE),
+        accentDeep: Color(hex: 0x3870FE),
         progressTrack: Color(hex: 0x30333B),
         positive: Color(hex: 0x4CC38A),
         caution: Color(hex: 0xE3B24C),
@@ -310,7 +323,7 @@ struct MicaboPalette: Equatable {
         gradeMid: Color(hex: 0x40414A),
         gradeFar: Color(hex: 0x31323A),
         accentWash: Color(hex: 0x17213A),
-        accentPale: Color(hex: 0x2B4677),
+        accentPale: Color(hex: 0x1C387F),
         track: Color(hex: 0x2C2F36),
         flame: Color(hex: 0xFF6B57),
         flameInk: Color(hex: 0xFF8A78),
@@ -349,14 +362,14 @@ struct MicaboPalette: Equatable {
         toneVivid: [
             Color(hex: 0xF2B200),
             Color(hex: 0x22B573),
-            Color(hex: 0x3B82F6),
+            Color(hex: 0x3870FE),
             Color(hex: 0xEC5B8F),
             Color(hex: 0x8B5CF6)
         ],
         toneInk: [
             Color(hex: 0xF6CF5A),
             Color(hex: 0x5DD69B),
-            Color(hex: 0x8DB8FA),
+            Color(hex: 0x90AFFE),
             Color(hex: 0xF49AB9),
             Color(hex: 0xB9A0FA)
         ],
@@ -391,6 +404,8 @@ struct MicaboPalette: Equatable {
         accent: blend(day.accent, night.accent),
         accentSoft: blend(day.accentSoft, night.accentSoft),
         accentVivid: blend(day.accentVivid, night.accentVivid),
+        accentInk: blend(day.accentInk, night.accentInk),
+        accentDeep: blend(day.accentDeep, night.accentDeep),
         progressTrack: blend(day.progressTrack, night.progressTrack),
         positive: blend(day.positive, night.positive),
         caution: blend(day.caution, night.caution),

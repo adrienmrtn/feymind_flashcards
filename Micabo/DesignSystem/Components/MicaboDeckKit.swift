@@ -173,7 +173,7 @@ struct MicaboSlimProgress: View {
             if showsLabel {
                 Text("\(percent) %")
                     .font(MicaboFont.ui(11.5, weight: .bold))
-                    .foregroundStyle(MicaboColor.accent)
+                    .foregroundStyle(MicaboColor.accentInk)
                     .monospacedDigit()
                     .fixedSize()
             }
@@ -796,7 +796,7 @@ struct MicaboSeeAllLink: View {
         Button(action: action) {
             Text("\(title) ›")
                 .font(MicaboFont.ui(13.5, weight: .bold))
-                .foregroundStyle(MicaboColor.accent)
+                .foregroundStyle(MicaboColor.accentInk)
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
     }
@@ -950,7 +950,7 @@ struct MicaboMasteryRow: View {
 
                 Text("\(percent) %")
                     .font(MicaboFont.ui(13, weight: .bold))
-                    .foregroundStyle(MicaboColor.accent)
+                    .foregroundStyle(MicaboColor.accentInk)
                     .monospacedDigit()
                     .fixedSize()
             }
@@ -1012,7 +1012,7 @@ struct MicaboFactLine: View {
                     Text(fact.text.uppercased())
                         .font(MicaboFont.ui(11, weight: .bold))
                         .tracking(1.2)
-                        .foregroundStyle(MicaboColor.accent)
+                        .foregroundStyle(MicaboColor.accentInk)
                 } else {
                     Text(fact.text)
                         .font(MicaboFont.ui(12.5, weight: .medium))
