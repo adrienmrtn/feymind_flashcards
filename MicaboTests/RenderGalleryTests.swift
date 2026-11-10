@@ -278,7 +278,7 @@ final class RenderGalleryTests: XCTestCase {
         emptyDefaults.removePersistentDomain(forName: suite + ".empty")
         let freshXP = XPStore(defaults: emptyDefaults)
 
-        func busyHome(composer: LessonComposer = LessonComposer()) -> AnyView {
+        func busyHome(composer: LessonComposer? = nil) -> AnyView {
             let day = HomeDay(
                 dueCount: 8,
                 reviewedToday: 0,
@@ -289,7 +289,7 @@ final class RenderGalleryTests: XCTestCase {
                 studiedToday: true
             )
             return AnyView(HomeScreenPreview(
-                composer: composer,
+                composer: composer ?? LessonComposer(),
                 isPro: false,
                 freeLessonLeft: false,
                 name: "Léa",
