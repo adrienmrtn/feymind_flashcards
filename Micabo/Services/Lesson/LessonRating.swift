@@ -171,9 +171,8 @@ enum LessonRating {
         }
         if value == .down {
             props["reasons"] = .text(Reason.allCases.filter { reasons.contains($0) }.map(\.rawValue).joined(separator: ","))
-            if let comment = comment.nilIfBlank {
-                props["comment"] = .text(String(comment.prefix(commentLimit)))
-            }
+            // Le commentaire libre ne part pas : `app_events` ne garde jamais de texte tapé par
+            // l'élève (souvent mineur). Les raisons cochées suffisent à trier les leçons.
         }
         return props
     }

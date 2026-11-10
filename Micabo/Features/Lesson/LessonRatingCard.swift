@@ -79,25 +79,6 @@ struct LessonRatingCard: View {
                     }
                 }
             }
-            TextField(
-                L10n.t("ios.conv.rate.placeholder", locale: .resolved()),
-                text: $comment,
-                axis: .vertical
-            )
-            .font(MicaboFont.ui(15, weight: .medium))
-            .foregroundStyle(MicaboColor.ink)
-            .lineLimit(1...3)
-            .focused($commentFocused)
-            .submitLabel(.done)
-            .onChange(of: comment) { _, value in
-                if value.count > LessonRating.commentLimit {
-                    comment = String(value.prefix(LessonRating.commentLimit))
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(MicaboColor.surfaceSunken, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-
             Button(L10n.t("ios.conv.rate.send", locale: .resolved())) {
                 commentFocused = false
                 rate(.down)

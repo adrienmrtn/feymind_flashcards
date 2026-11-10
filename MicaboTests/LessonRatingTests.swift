@@ -72,7 +72,7 @@ final class LessonRatingTests: XCTestCase {
         XCTAssertEqual(text("lesson_id"), lesson.uuidString.lowercased())
         XCTAssertEqual(text("rating"), "down")
         XCTAssertEqual(text("reasons"), "too_long,wrong_language", "Dans l'ordre des pastilles")
-        XCTAssertEqual(text("comment")?.count, LessonRating.commentLimit)
+        XCTAssertNil(text("comment"))
         XCTAssertEqual(text("prompt_version"), "lesson-v4.2.0")
         XCTAssertEqual(text("source"), "pdf")
         XCTAssertEqual(text("app_language"), "de")
