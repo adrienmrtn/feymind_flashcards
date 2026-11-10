@@ -228,8 +228,10 @@ final class RenderGalleryTests: XCTestCase {
         }
     }
 
-    /// Home : Mika et sa question, la barre avec deux supports, les chiffres, « Reprendre »,
-    /// l'écran de génération et la barre d'onglets.
+    /// Home : la scène de Mika (rangée du haut, bulle, barre, outils), les missions du jour, la
+    /// leçon en cours et les chiffres — pour un élève qui avance (une leçon, des cartes dues,
+    /// de l'XP, une série) et pour un élève tout neuf, gratuit, sans leçon ; la barre avec deux
+    /// supports, la feuille du « + », l'allemand, l'écran de génération et la barre d'onglets.
     func testHomeScreens() throws {
         guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
         let container = try ModelContainer(
@@ -256,7 +258,64 @@ final class RenderGalleryTests: XCTestCase {
             progress.addTime(2_700, to: .notes)
         }
         course.lastOpenedAt = Date()
+        for index in 0..<8 {
+            let card = Flashcard(front: "Question \(index)", back: "Réponse", position: index, course: course)
+            card.state = .review
+            card.dueDate = Date().addingTimeInterval(-3_600)
+            context.insert(card)
+        }
         try context.save()
+        let resume = try XCTUnwrap(ResumeTarget.pick(from: [course]))
+
+        // L'XP vit dans une suite à part : les rendus ne touchent pas aux réglages de l'app.
+        let suite = "micabo.render.home"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defaults.removePersistentDomain(forName: suite)
+        let busyXP = XPStore(defaults: defaults)
+        busyXP.award(points: 30)
+        busyXP.award(points: 85)
+        let emptyDefaults = try XCTUnwrap(UserDefaults(suiteName: suite + ".empty"))
+        emptyDefaults.removePersistentDomain(forName: suite + ".empty")
+        let freshXP = XPStore(defaults: emptyDefaults)
+
+        func busyHome(composer: LessonComposer = LessonComposer()) -> AnyView {
+            let day = HomeDay(
+                dueCount: 8,
+                reviewedToday: 0,
+                hasCourses: true,
+                lessonTitle: resume.1.title,
+                lessonCircle: resume.1.circleNumber.map { L10n.t("lesson.path.circleNumber", locale: .resolved(), vars: ["n": String($0)]) },
+                lessonAdvancedToday: false,
+                studiedToday: true
+            )
+            return AnyView(HomeScreenPreview(
+                composer: composer,
+                isPro: false,
+                freeLessonLeft: false,
+                name: "Léa",
+                day: day,
+                resume: resume,
+                stats: HomeStats(seconds: 5_400, learnedLessons: 3, learnedCards: 42),
+                streak: StudyStreak.Status(current: 12, best: 18, studiedToday: true)
+            )
+            .environment(busyXP))
+        }
+
+        try RenderGallery.render("home", night: true, busyHome())
+        try RenderGallery.render(
+            "home-new", night: true,
+            HomeScreenPreview(
+                composer: LessonComposer(),
+                isPro: false,
+                freeLessonLeft: true,
+                name: nil,
+                day: HomeDay(hasCourses: false, studiedToday: false),
+                resume: nil,
+                stats: HomeStats(),
+                streak: StudyStreak.Status(current: 0, best: 0, studiedToday: false)
+            )
+            .environment(freshXP)
+        )
 
         let composer = LessonComposer()
         composer.draft = "Les étapes clés"
@@ -272,19 +331,30 @@ final class RenderGalleryTests: XCTestCase {
             ))
         }
         composer.begin(.youtube, title: "YouTube")
+        try RenderGallery.render("home-composer", night: true, busyHome(composer: composer))
 
-        let resume = try XCTUnwrap(ResumeTarget.pick(from: [course]))
         try RenderGallery.render(
-            "home", night: true,
-            VStack(alignment: .leading, spacing: 28) {
-                HomeTitle()
-                    .padding(.bottom, HomePerch.height)
-                ComposerBarPreview(composer: composer)
-                HomeStatsRow(stats: HomeStats(seconds: 5_400, learnedLessons: 3, learnedCards: 42))
-                ResumeCard(course: resume.0, target: resume.1) {}
-                MicaboTabBar().environment(TabRouter())
+            "home-sources", night: true,
+            HomeSourcesSheet(isPro: false, freeLessonLeft: true) { _ in }
+                .environment(\.homeStill, true)
+        )
+
+        // Les phrases longues : l'allemand, sur le même élève.
+        do {
+            let localeDefaults = UserDefaults.standard
+            let previousLocale = localeDefaults.string(forKey: UiLocale.storageKey)
+            localeDefaults.set(UiLocale.de.rawValue, forKey: UiLocale.storageKey)
+            defer {
+                if let previousLocale { localeDefaults.set(previousLocale, forKey: UiLocale.storageKey) }
+                else { localeDefaults.removeObject(forKey: UiLocale.storageKey) }
             }
-            .padding(20)
+            try RenderGallery.render("home-de", busyHome())
+        }
+
+        try RenderGallery.render(
+            "home-tabbar", night: true,
+            MicaboTabBar().environment(TabRouter())
+                .padding(20)
         )
         try RenderGallery.render(
             "home-generating",
@@ -585,12 +655,35 @@ enum RenderGallery {
     }
 }
 
-/// La barre de Home a besoin d'un focus : une vue le porte, le temps du rendu.
-private struct ComposerBarPreview: View {
+/// Home a besoin d'un focus pour sa barre : une vue le porte, le temps du rendu. L'écran est
+/// posé immobile (`homeStill`) : ni entrée, ni frappe, ni dérive, tout dans son état final.
+private struct HomeScreenPreview: View {
     let composer: LessonComposer
+    let isPro: Bool
+    let freeLessonLeft: Bool
+    let name: String?
+    let day: HomeDay
+    let resume: (Course, ResumeTarget)?
+    let stats: HomeStats
+    let streak: StudyStreak.Status
     @FocusState private var focused: Bool
 
     var body: some View {
-        HomeComposerBar(composer: composer, focused: $focused, isPro: true, onImport: { _ in }, onSend: {})
+        HomeScreen(
+            composer: composer,
+            focused: $focused,
+            isPro: isPro,
+            freeLessonLeft: freeLessonLeft,
+            name: name,
+            greeting: HomeGreeting.lines(name: name, moment: .day, dueCount: day.dueCount),
+            day: day,
+            resume: resume,
+            stats: stats,
+            motion: HomeMotion(still: true, reduceMotion: false),
+            appeared: true,
+            streakPreview: streak,
+            actions: HomeActions()
+        )
+        .environment(\.homeStill, true)
     }
 }

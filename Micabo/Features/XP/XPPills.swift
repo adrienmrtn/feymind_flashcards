@@ -1,46 +1,68 @@
 import SwiftUI
 
 /// **L'XP de la semaine, en haut de Home** (`docs/refonte-knowunity.md` § 1) : l'emoji de la
-/// ligue, l'éclair et le nombre. Un appui ouvre la ligue.
+/// ligue, l'éclair et le nombre, en verre sur le ciel de Home. Un appui ouvre la ligue.
+///
+/// Le nombre roule : à la première apparition de la session, il monte de zéro à l'XP de la
+/// semaine ; ensuite, chaque gain le fait tourner chiffre par chiffre.
 struct XPPill: View {
     let action: () -> Void
 
     @Environment(XPStore.self) private var injected: XPStore?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.homeStill) private var still
+
+    /// Le compteur n'a roulé qu'une fois par lancement : revenir sur Home ne le remet pas à zéro.
+    private static var hasRolled = false
+    @State private var rolling = false
 
     private var xp: XPStore { injected ?? .shared }
 
     var body: some View {
         let week = xp.week
         let league = xp.league
+        let shown = rolling ? 0 : week
         Button(action: action) {
             HStack(spacing: 5) {
                 Text(league.emoji)
                     .font(.system(size: 17))
                 Image(systemName: "bolt.fill")
                     .font(.system(size: 13, weight: .black))
-                    .foregroundStyle(LessonTone.yellow.ink)
-                Text("\(week)")
+                    .foregroundStyle(HomePalette.bolt)
+                Text("\(shown)")
                     .font(MicaboFont.number(18))
-                    .foregroundStyle(MicaboColor.ink)
+                    .foregroundStyle(HomePalette.heroInk)
                     .monospacedDigit()
-                    .contentTransition(.numericText(value: Double(week)))
+                    .contentTransition(.numericText(value: Double(shown)))
             }
             .padding(.leading, 10)
             .padding(.trailing, 13)
             .frame(height: 40)
-            .background(MicaboColor.surface, in: Capsule())
-            .overlay(Capsule().strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+            .homeGlass(Capsule())
             .animation(.spring(duration: 0.4), value: week)
         }
-        .buttonStyle(MicaboPressableButtonStyle(feedback: .light))
+        .buttonStyle(HomePressStyle(scale: 0.92))
         .accessibilityLabel(Text(L10n.t("ios.kx.xp.pillA11y", locale: .resolved(), vars: ["xp": "\(week)", "league": league.name])))
+        .onAppear {
+            guard !Self.hasRolled, !still, !reduceMotion, week > 0 else { return }
+            Self.hasRolled = true
+            rolling = true
+            withAnimation(.spring(response: 0.9, dampingFraction: 0.85).delay(0.45)) {
+                rolling = false
+            }
+        }
     }
 }
 
 /// **« ✦ Pro »**, pour qui n'est pas abonné : la pilule dans le dégradé de l'app, qui ouvre le
-/// paywall (déclencheur `upgrade`, celui de « Passer en Pro » dans le Profil).
+/// paywall (déclencheur `upgrade`, celui de « Passer en Pro » dans le Profil). Un reflet la
+/// traverse de temps en temps.
 struct ProPill: View {
     let action: () -> Void
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.homeStill) private var still
+    @State private var sweep = false
 
     var body: some View {
         Button(action: action) {
@@ -53,14 +75,32 @@ struct ProPill: View {
             .foregroundStyle(Color.white)
             .padding(.horizontal, 14)
             .frame(height: 40)
-            .background(
-                LinearGradient(colors: [MicaboColor.accent, MicaboColor.keyword], startPoint: .leading, endPoint: .trailing),
-                in: Capsule()
-            )
-            .shadow(color: MicaboColor.accent.opacity(0.3), radius: 8, y: 4)
+            .background(HomePalette.brand, in: Capsule())
+            .overlay {
+                GeometryReader { proxy in
+                    LinearGradient(
+                        colors: [.white.opacity(0), .white.opacity(0.55), .white.opacity(0)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .frame(width: 34)
+                    .rotationEffect(.degrees(18))
+                    .offset(x: sweep ? proxy.size.width + 20 : -54)
+                }
+                .clipShape(Capsule())
+                .allowsHitTesting(false)
+            }
+            .overlay(Capsule().strokeBorder(Color.white.opacity(0.3), lineWidth: 1))
+            .shadow(color: HomePalette.glowViolet.opacity(0.5), radius: 10, y: 4)
         }
-        .buttonStyle(MicaboPressableButtonStyle(feedback: .light))
+        .buttonStyle(HomePressStyle(scale: 0.92))
         .accessibilityLabel(Text(L10n.t("ios.kx.pro.a11y", locale: .resolved())))
+        .onAppear {
+            guard !reduceMotion, !still else { return }
+            withAnimation(.easeInOut(duration: 1.3).delay(1.6).repeatForever(autoreverses: false)) {
+                sweep = true
+            }
+        }
     }
 }
 
