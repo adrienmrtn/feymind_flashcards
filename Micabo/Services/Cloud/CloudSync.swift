@@ -1446,7 +1446,7 @@ final class CloudSync {
         let exam = Exam(
             id: remote.id,
             name: remote.name,
-            date: remote.exam_date,
+            date: ExamRecord.localDay(fromColumn: remote.exam_date),
             courseIDs: remote.course_ids,
             intensity: ExamIntensity(rawValue: remote.intensity) ?? .standard,
             targetScore: remote.target_score,
@@ -1459,7 +1459,7 @@ final class CloudSync {
 
     private func apply(_ remote: ExamRecord, to exam: Exam) {
         exam.name = remote.name
-        exam.date = remote.exam_date
+        exam.date = ExamRecord.localDay(fromColumn: remote.exam_date)
         exam.intensityRaw = remote.intensity
         if let score = remote.target_score { exam.targetScore = score }
         // Une ligne écrite avant que ces colonnes existent ne les porte pas : on garde alors
