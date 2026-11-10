@@ -434,6 +434,7 @@ struct ExamEditSheet: View {
     @State private var selected: Set<UUID> = []
     @State private var confirmDelete = false
     @State private var loaded = false
+    @State private var saved = false
 
     private var existing: Exam? {
         if case .edit(let exam) = target { return exam }
@@ -538,6 +539,9 @@ struct ExamEditSheet: View {
     }
 
     private func save() {
+        // La feuille met un instant à descendre : un second appui créait un second examen.
+        guard !saved, canSave else { return }
+        saved = true
         let ids = lessons.map(\.id).filter(selected.contains)
         if let existing {
             try? ExamRepository.update(existing, name: name, date: date, courseIDs: ids, intensity: existing.intensity, in: modelContext)

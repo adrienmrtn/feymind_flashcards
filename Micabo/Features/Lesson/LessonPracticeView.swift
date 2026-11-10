@@ -74,6 +74,9 @@ struct LessonPracticeView: View {
     // MARK: Écrire un lot
 
     private func generate() {
+        // Un second appui pendant l'écriture lançait un second lot : deux appels payés, et le
+        // lot offert consommé deux fois.
+        guard phase != .writing else { return }
         let isPro = pro?.isPro == true
         if !isPro && PracticeAllowance.freeBatchUsed {
             paywall = .practice
