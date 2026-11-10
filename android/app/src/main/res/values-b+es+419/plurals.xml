@@ -25,6 +25,14 @@
         <item quantity="one">día seguido</item>
         <item quantity="other">días seguidos</item>
     </plurals>
+    <plurals name="kx_league_endsIn">
+        <item quantity="one">Termina en %1$d día</item>
+        <item quantity="other">Termina en %1$d días</item>
+    </plurals>
+    <plurals name="kx_today_due">
+        <item quantity="one">%1$d tarjeta por repasar</item>
+        <item quantity="other">%1$d tarjetas por repasar</item>
+    </plurals>
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Agregar mi error a las tarjetas</item>
         <item quantity="other">Agregar mis %1$d errores a las tarjetas</item>

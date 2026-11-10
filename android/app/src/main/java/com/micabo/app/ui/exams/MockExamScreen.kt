@@ -58,6 +58,7 @@ import com.micabo.app.R
 import com.micabo.app.data.ApiException
 import com.micabo.app.data.ExamGrade
 import com.micabo.app.data.MockResult
+import com.micabo.app.data.XpReason
 import com.micabo.app.data.Paper
 import com.micabo.app.ui.LocalApp
 import com.micabo.app.ui.LocalNavigator
@@ -161,6 +162,7 @@ fun MockExamScreen(examId: String?) {
                     val graded = current.result(answers.toMap(), seconds)
                     app.exams.record(graded)
                     app.streak.record()
+                    app.xp.award(XpReason.MOCK_EXAM_FINISHED)
                     result = graded
                     phase = "result"
                 })

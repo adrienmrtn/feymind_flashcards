@@ -45,8 +45,13 @@ import com.micabo.app.ui.lesson.QuizScreen
 import com.micabo.app.ui.onboarding.OnboardingScreen
 import com.micabo.app.ui.paywall.GiftHost
 import com.micabo.app.ui.paywall.PaywallScreen
+import com.micabo.app.ui.exercise.ExerciseScreen
+import com.micabo.app.ui.focus.FocusScreen
+import com.micabo.app.ui.league.LeagueScreen
 import com.micabo.app.ui.streak.StreakCelebration
 import com.micabo.app.ui.theme.Micabo
+import com.micabo.app.ui.xp.XpGoalCelebration
+import com.micabo.app.ui.xp.XpToastHost
 
 /** Les écrans de l'app. */
 sealed interface Screen {
@@ -74,6 +79,10 @@ sealed interface Screen {
     data object Friends : Screen
     data class FriendProfile(val person: Person) : Screen
     data class SharedCourse(val course: com.micabo.app.data.SharedCourse, val author: Person) : Screen
+    /** La ligue de la semaine, l'exercice scanné expliqué par Mika, et le minuteur. */
+    data object League : Screen
+    data object Exercise : Screen
+    data object Focus : Screen
 
     /** Les écrans qui montent du bas, comme une feuille. */
     val isModal: Boolean get() = this is Paywall || this is Creating
@@ -147,8 +156,11 @@ fun MicaboRoot(app: MicaboApplication) {
             } else {
                 MainScreens(navigator)
                 StreakCelebrationHost(navigator)
+                XpGoalHost(navigator)
                 // Le cadeau d'un paywall refermé, et le tarif réduit : par-dessus tout.
                 GiftHost(navigator)
+                // Le « +10 XP » qui monte à chaque gain, au-dessus de tous les écrans.
+                XpToastHost()
             }
         }
     }
@@ -196,6 +208,9 @@ private fun MainScreens(navigator: Navigator) {
                         Screen.Friends -> FriendsScreen()
                         is Screen.FriendProfile -> FriendProfileScreen(screen.person)
                         is Screen.SharedCourse -> SharedCourseScreen(screen.course, screen.author)
+                        Screen.League -> LeagueScreen()
+                        Screen.Exercise -> ExerciseScreen()
+                        Screen.Focus -> FocusScreen()
                     }
                 }
             }
@@ -217,6 +232,24 @@ private fun StreakCelebrationHost(navigator: Navigator) {
 }
 
 /**
+ * **L'objectif du jour atteint**, fêté une fois, au calme comme la flamme et après elle : la
+ * flamme du premier geste du jour passe d'abord.
+ */
+@Composable
+private fun XpGoalHost(navigator: Navigator) {
+    val app = LocalApp.current
+    val pending by app.xp.celebrate.collectAsState()
+    val streakPending by app.streak.celebrate.collectAsState()
+    val streakStatus by app.streak.status.collectAsState()
+    val status by app.xp.status.collectAsState()
+    val calm = navigator.current is Screen.Home || navigator.current is Screen.LessonPath
+    val streakFirst = streakPending && streakStatus.current > 0
+    if (pending && calm && !streakFirst) {
+        XpGoalCelebration(status, onDismiss = { app.xp.celebrated() })
+    }
+}
+
+/**
  * Un écran en une ligne, pour la sauvegarde de la pile. Seuls ceux qui se rouvrent d'un
  * identifiant y entrent : une génération en cours ou le profil d'un ami ne reviennent pas.
  */
@@ -229,6 +262,9 @@ private fun encodeScreen(screen: Screen): String? = when (screen) {
     is Screen.Mika -> "mika\u0000${screen.id}"
     is Screen.ExamEdit -> "exam\u0000${screen.id.orEmpty()}"
     Screen.Friends -> "friends"
+    Screen.League -> "league"
+    // La séance du minuteur est gardée à part (`FocusTimer`) : l'écran se rouvre sur elle.
+    Screen.Focus -> "focus"
     else -> null
 }
 
@@ -244,6 +280,8 @@ private fun decodeScreen(line: String): Screen? {
         "mika" -> Screen.Mika(id)
         "exam" -> Screen.ExamEdit(id.ifEmpty { null })
         "friends" -> Screen.Friends
+        "league" -> Screen.League
+        "focus" -> Screen.Focus
         else -> null
     }
 }

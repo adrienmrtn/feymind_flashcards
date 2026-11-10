@@ -1656,6 +1656,16 @@ PARENT = {"es419": "es", "ptBR": "pt"}
 # porte plusieurs variables. Une phrase à une seule variable n'a pas besoin d'être citée.
 PLURAL_COUNT = {"ios_profile_streakToBeat": "days"}
 
+# **Les phrases du lot « Knowunity »** (préfixe `kx_`, `docs/refonte-knowunity.md`) : rangées
+# langue par langue dans `strings_knowunity.py`, à côté de ce script. Elles rejoignent `CUSTOM` ;
+# leurs pluriels, propres à Android, vont dans `CUSTOM_PLURALS` (`{clé: {langue: {catégorie:
+# phrase}}}`, le nombre en `{count}`).
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from strings_knowunity import by_key as knowunity_by_key  # noqa: E402
+
+_KNOWUNITY_STRINGS, CUSTOM_PLURALS = knowunity_by_key()
+CUSTOM.update(_KNOWUNITY_STRINGS)
+
 LINE = re.compile(r'^\s*"([^"\\]+)"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,?\s*(//.*)?$')
 TABLE = re.compile(r'^\s*static let (\w+): \[String: String\] = \[\s*$')
 EXTENSION = re.compile(r'^\s*(?:extension|enum) (\w+)')
@@ -1825,6 +1835,16 @@ def check_tables(catalogs, by_name: dict[str, str]) -> list[str]:
             problems.append(f"{name} (clé inconnue)")
         for loc, forms in by_locale.items():
             problems += [f"{name} [{loc}/{q}]" for q in forms if loc not in LOCALES or q not in ("zero", "one", "two", "few", "many", "other")]
+    for name, by_locale in CUSTOM_PLURALS.items():
+        if "en" not in by_locale:
+            problems.append(f"{name} (pas d'anglais)")
+        for loc, forms in by_locale.items():
+            if loc not in LOCALES or "other" not in forms:
+                problems.append(f"{name} [{loc}]")
+            problems += [
+                f"{name} [{loc}/{q}]" for q, text in forms.items()
+                if q not in ("zero", "one", "two", "few", "many", "other") or not variables(text) <= {"count"}
+            ]
     return problems
 
 
@@ -1833,6 +1853,13 @@ def write_plurals(catalogs, by_name: dict[str, str], names: list[str]) -> list[s
     missing = []
     entries: dict[str, dict[str, dict[str, str]]] = {folder: {} for folder in LOCALES.values()}
     for name in names:
+        if name in CUSTOM_PLURALS:
+            # Un pluriel propre à Android : chaque langue écrite, la langue absente lit l'anglais.
+            for locale, folder in LOCALES.items():
+                forms = CUSTOM_PLURALS[name].get(locale)
+                if forms:
+                    entries[folder][name] = {q: xml_value(text.replace("%", "%%").replace("{count}", "%1$d")) for q, text in forms.items()}
+            continue
         key = by_name.get(name)
         if key is None:
             missing.append(name)

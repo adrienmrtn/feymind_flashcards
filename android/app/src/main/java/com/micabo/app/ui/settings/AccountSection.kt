@@ -73,6 +73,8 @@ import com.micabo.app.ui.components.MikaMood
 import com.micabo.app.ui.home.Sheet
 import com.micabo.app.ui.theme.Micabo
 import com.micabo.app.ui.theme.nunito
+import com.micabo.app.ui.xp.leagueEmoji
+import com.micabo.app.ui.xp.leagueName
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -113,6 +115,7 @@ fun AccountSection() {
 
     val friends by app.social.friends.collectAsState()
     val incoming by app.social.incoming.collectAsState()
+    val xpStatus by app.xp.status.collectAsState()
     LaunchedEffect(account?.userId) { if (account != null) app.social.refresh() }
 
     val current = account
@@ -202,6 +205,26 @@ fun AccountSection() {
                 Text(authMessage(it), style = nunito(13.sp, FontWeight.SemiBold), color = colors.wrongInk, modifier = Modifier.padding(horizontal = 6.dp))
             }
             Text(stringResource(R.string.ios_dataFootnote), style = nunito(13.sp, FontWeight.SemiBold, lineHeight = 18.sp), color = colors.inkTertiary, modifier = Modifier.padding(horizontal = 6.dp))
+        }
+    }
+
+    // La ligue de la semaine, au-dessus des amis : elle se lit aussi sans compte (sa seule ligne).
+    Group {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 56.dp)
+                .clickable { navigator.push(Screen.League) }
+                .padding(horizontal = 18.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(leagueEmoji(xpStatus.league.id), style = nunito(24.sp))
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.kx_league_name, leagueName(xpStatus.league.id)), style = nunito(16.sp, FontWeight.Bold), color = colors.ink)
+                Text(stringResource(R.string.kx_league_weekLine, xpStatus.week.toString()), style = nunito(13.sp, FontWeight.SemiBold), color = colors.inkSecondary)
+            }
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = colors.inkTertiary)
         }
     }
 

@@ -225,44 +225,57 @@ fun MikaScreen(id: String) {
                 }
             }
         }
-        Row(
-            Modifier
-                .navigationBarsPadding()
-                .padding(16.dp)
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
-                .background(colors.surface)
-                .border(1.5.dp, colors.stroke, RoundedCornerShape(24.dp))
-                .padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(Modifier.weight(1f).padding(vertical = 10.dp)) {
-                if (draft.isEmpty()) Text(stringResource(R.string.lesson_mika_placeholder), style = nunito(16.sp, FontWeight.Medium), color = colors.inkTertiary)
-                BasicTextField(
-                    value = draft,
-                    onValueChange = { draft = it.take(MikaChat.MESSAGE_CHARACTERS) },
-                    textStyle = nunito(16.sp, FontWeight.SemiBold, lineHeight = 22.sp).copy(color = colors.ink),
-                    cursorBrush = SolidColor(colors.accent),
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                    maxLines = 5,
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 22.dp),
-                )
-            }
-            val canSend = draft.isNotBlank() && !thinking
-            Pressable(onClick = { send(draft) }, enabled = canSend) {
-                Box(
-                    Modifier.size(44.dp).clip(CircleShape).background(if (canSend) colors.accent else colors.surfaceSunken),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.Send, stringResource(R.string.lesson_mika_send), tint = if (canSend) colors.onInk else colors.inkTertiary, modifier = Modifier.size(20.dp))
-                }
+        MikaInput(
+            draft = draft,
+            placeholder = stringResource(R.string.lesson_mika_placeholder),
+            enabled = !thinking,
+            onDraft = { draft = it },
+            onSend = { send(draft) },
+        )
+    }
+}
+
+/** **La barre où l'on écrit à Mika**, et son bouton d'envoi : la leçon et l'exercice scanné. */
+@Composable
+internal fun MikaInput(draft: String, placeholder: String, enabled: Boolean, onDraft: (String) -> Unit, onSend: () -> Unit) {
+    val colors = Micabo.colors
+    Row(
+        Modifier
+            .navigationBarsPadding()
+            .padding(16.dp)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(colors.surface)
+            .border(1.5.dp, colors.stroke, RoundedCornerShape(24.dp))
+            .padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.weight(1f).padding(vertical = 10.dp)) {
+            if (draft.isEmpty()) Text(placeholder, style = nunito(16.sp, FontWeight.Medium), color = colors.inkTertiary)
+            BasicTextField(
+                value = draft,
+                onValueChange = { onDraft(it.take(MikaChat.MESSAGE_CHARACTERS)) },
+                textStyle = nunito(16.sp, FontWeight.SemiBold, lineHeight = 22.sp).copy(color = colors.ink),
+                cursorBrush = SolidColor(colors.accent),
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                maxLines = 5,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 22.dp),
+            )
+        }
+        val canSend = draft.isNotBlank() && enabled
+        Pressable(onClick = onSend, enabled = canSend) {
+            Box(
+                Modifier.size(44.dp).clip(CircleShape).background(if (canSend) colors.accent else colors.surfaceSunken),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.AutoMirrored.Filled.Send, stringResource(R.string.lesson_mika_send), tint = if (canSend) colors.onInk else colors.inkTertiary, modifier = Modifier.size(20.dp))
             }
         }
     }
 }
 
 @Composable
-private fun Bubble(fromMika: Boolean, content: @Composable () -> Unit) {
+internal fun Bubble(fromMika: Boolean, content: @Composable () -> Unit) {
     val colors = Micabo.colors
     Row(Modifier.fillMaxWidth(), horizontalArrangement = if (fromMika) Arrangement.Start else Arrangement.End) {
         Box(
@@ -284,7 +297,7 @@ private fun Bubble(fromMika: Boolean, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun Message(message: ChatMessage, toneInk: androidx.compose.ui.graphics.Color, onAddCard: () -> Unit) {
+internal fun Message(message: ChatMessage, toneInk: androidx.compose.ui.graphics.Color, onAddCard: () -> Unit) {
     val colors = Micabo.colors
     val fromMika = message.role != "user"
     Column(Modifier.fillMaxWidth()) {
