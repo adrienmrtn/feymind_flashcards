@@ -12,26 +12,24 @@ ligues, semaine). Les jumeaux sont `Micabo/Services/XP/XPRules.swift` et
 
 ## 1. Home, de haut en bas
 
-1. **La rangée du haut.**
-   - À gauche, pour un élève qui n'est pas Pro : une pilule « ✦ Pro » en dégradé de l'app,
-     qui ouvre le paywall (déclencheur `upgrade`). Rien pour un abonné.
-   - À droite : la pastille XP (« ⚡ 120 », l'XP de la semaine, avec l'emoji de la ligue),
-     qui ouvre la ligue ; puis la pastille de série, qui existe déjà.
-2. **La question, Mika perché, la barre et les imports** : inchangés.
-3. **« Aujourd'hui »**, une carte :
-   - un anneau `xpToday / DAILY_XP_GOAL` (50) et le titre « Objectif du jour » ;
-   - « {n} cartes à réviser », qui ouvre la révision des cartes dues (ou disparaît à 0) ;
-   - « Continuer {leçon} », qui ouvre la leçon en cours (la carte « Reprendre » actuelle peut
-     y être fondue) ;
-   - sans aucune leçon : « Crée ta première leçon », qui met le curseur dans la barre ;
-   - objectif atteint : « Objectif atteint ! » et l'anneau plein.
-4. **« Outils »**, une grille 2 × 2 de tuiles (icône colorée, nom, une ligne) :
-   - **Scanner un exo** : « Mika t'explique pas à pas » (§ 4) ;
-   - **Quiz éclair** : « 5 questions sur tes leçons ». Ouvre l'entraînement de la dernière
-     leçon ouverte ; sans leçon, la tuile invite à en créer une ;
-   - **Minuteur** : « 25 min de concentration » (§ 5) ;
-   - **Ligue** : « Ton classement de la semaine » (§ 3).
-5. **Les trois chiffres**, inchangés.
+Home a été rendue plus calme (lot « Home 3 », clés `ios.home3.*`) : quatre blocs, rien d'autre.
+
+1. **La rangée du haut**, sur la page : l'initiale (ouvre le Profil) ; pour un élève qui
+   n'est pas Pro, la pilule « ✦ Pro » bleue (déclencheur `upgrade`, hauteur minimale de
+   40 points pour les grandes tailles de texte) ; à droite, **une seule pastille** pour la
+   série (🔥, ouvre la feuille de la série) et l'XP de la semaine (⚡, ouvre la ligue).
+2. **La scène bleue de la marque** (`MicaboStage`) : la bulle de Mika (le salut à l'heure
+   et au prénom, qui s'écrit lettre après lettre), Mika en buste qui sort de derrière la
+   barre, et la barre « comme une conversation » : le « + » (la feuille des supports), le
+   champ, l'envoi.
+3. **Quatre outils** en tuiles : Scanner un exo, Quiz éclair, Minuteur, Ligue.
+4. **« Aujourd'hui »**, une carte : l'anneau `xpToday / DAILY_XP_GOAL` (50), puis **une
+   seule** prochaine étape avec son bouton (`HomeDay.primary`) — la leçon en cours tant
+   qu'elle n'a pas avancé aujourd'hui, sinon les cartes dues, sinon la leçon ; sans leçon,
+   en écrire une —, et au plus une seconde ligne (`HomeDay.secondary`).
+
+Les missions, la carte « Reprendre » et les trois chiffres ont quitté Home ; le Profil garde
+les statistiques.
 
 ## 2. L'XP
 

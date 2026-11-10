@@ -435,8 +435,8 @@ struct HomeSourcesSheet: View {
     }
 }
 
-/// Une grande tuile de support : un aplat de couleur vive, l'icône 3D dans un rond de verre,
-/// le nom et ce qu'on y met.
+/// Une grande tuile de support, comme les outils de Home : une carte de la page, l'icône 3D
+/// sur sa pastille de couleur, le nom et ce qu'on y met.
 struct HomeSourceTile: View {
     let kind: LessonComposer.Kind
     var locked = false
@@ -453,76 +453,65 @@ struct HomeSourceTile: View {
                         labels
                         Spacer(minLength: 0)
                     }
-                    .frame(maxWidth: .infinity, minHeight: 78, alignment: .leading)
+                    .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
                 } else {
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 12) {
                         icon
                         labels
                         Spacer(minLength: 0)
                     }
-                    .frame(maxWidth: .infinity, minHeight: 142, alignment: .topLeading)
+                    .frame(maxWidth: .infinity, minHeight: 128, alignment: .topLeading)
                 }
             }
             .padding(14)
-            .background {
-                ZStack {
-                    LinearGradient(colors: Self.colors(kind), startPoint: .topLeading, endPoint: .bottomTrailing)
-                    Circle()
-                        .fill(Color.white.opacity(0.14))
-                        .frame(width: 120, height: 120)
-                        .offset(x: 70, y: -50)
-                }
-                .clipShape(RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous))
-            }
-            .shadow(color: Self.colors(kind)[1].opacity(0.35), radius: 12, y: 6)
+            .homeCard(radius: MicaboStage.tileRadius)
             .overlay(alignment: .topTrailing) {
                 if locked {
                     Image(systemName: "crown.fill")
                         .font(.system(size: 11, weight: .bold))
                         .foregroundStyle(LessonTone.yellow.ink)
                         .padding(6)
-                        .background(Color(hex: 0xFFF1B8), in: Circle())
+                        .background(LessonTone.yellow.pale, in: Circle())
                         .padding(10)
                         .accessibilityLabel(Text("Pro"))
                 }
             }
             .opacity(enabled ? 1 : 0.5)
         }
-        .buttonStyle(HomePressStyle(scale: 0.95, feedback: .soft))
+        .buttonStyle(HomePressStyle(scale: 0.96, feedback: .soft))
         .disabled(!enabled)
     }
 
     private var icon: some View {
-        MicaboIconView(icon: kind.icon, size: 34)
+        MicaboIconView(icon: kind.icon, size: 32)
             .frame(width: 52, height: 52)
-            .background(Color.white.opacity(0.24), in: Circle())
-            .overlay(Circle().strokeBorder(Color.white.opacity(0.35), lineWidth: 1))
+            .background(Self.tone(kind).pale, in: Circle())
     }
 
     private var labels: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(L10n.t(kind.titleKey, locale: .resolved()))
-                .font(MicaboFont.ui(18, weight: .black))
+                .font(MicaboFont.ui(17, weight: .black))
+                .foregroundStyle(HomePalette.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
             Text(L10n.t(kind.titleKey + "Sub", locale: .resolved()))
-                .font(MicaboFont.ui(13, weight: .bold))
-                .opacity(0.92)
+                .font(MicaboFont.ui(13, weight: .semibold))
+                .foregroundStyle(HomePalette.inkSecondary)
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .foregroundStyle(Color.white)
     }
 
-    /// Des aplats assez sombres pour porter du blanc, dans les deux apparences.
-    static func colors(_ kind: LessonComposer.Kind) -> [Color] {
+    /// La pastille de chaque support, dans les tons de l'app.
+    static func tone(_ kind: LessonComposer.Kind) -> LessonTone {
         switch kind {
-        case .pdf: [Color(hex: 0x4F7DF5), Color(hex: 0x1D4ED8)]
-        case .photo: [Color(hex: 0xEC4F96), Color(hex: 0xBE185D)]
-        case .youtube: [Color(hex: 0xF0524F), Color(hex: 0xC81E1E)]
-        case .audio: [Color(hex: 0x17A774), Color(hex: 0x047857)]
-        case .text: [Color(hex: 0x1FA6B8), Color(hex: 0x0E7490)]
+        case .pdf: .blue
+        case .photo: .pink
+        case .youtube: .yellow
+        case .audio: .mint
+        case .text: .lilac
         }
     }
 }

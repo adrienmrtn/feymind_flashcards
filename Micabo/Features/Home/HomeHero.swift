@@ -257,7 +257,7 @@ struct HomeHeroCard: View {
 
     static let mikaSize: CGFloat = 164
     /// Ce que la barre cache du buste : la coupe, et un peu de corps.
-    static let mikaSink: CGFloat = 26
+    static let mikaSink: CGFloat = 8
 
     @State private var index = 0
     @State private var mood: MikaMood = .wave
@@ -327,7 +327,7 @@ struct HomeHeroCard: View {
         .padding(.trailing, 6)
         .padding(.top, 18)
         .padding(.bottom, 26)
-        .frame(maxWidth: .infinity, minHeight: Self.mikaSize - Self.mikaSink + 8, alignment: .topLeading)
+        .frame(maxWidth: .infinity, minHeight: Self.mikaSize - Self.mikaSink + 2, alignment: .topLeading)
         .overlay(alignment: .bottomTrailing) {
             MikaMascot(
                 mood: composer.isReading ? .think : mood,
@@ -421,8 +421,8 @@ struct HomeBubbleTail: Shape {
 
 // MARK: - La barre
 
-/// **La barre, comme une conversation** : les supports déposés en pastilles au-dessus, puis
-/// une seule ligne — le « + » qui ouvre tous les supports, le champ, la flèche d'envoi.
+/// **La barre, comme une conversation** : les supports déposés en pastilles au-dessus, le
+/// champ, puis le « + » qui ouvre tous les supports et la flèche d'envoi.
 ///
 /// Ce qui compte n'a pas bougé : les pastilles, le texte d'échec, le plafond de supports,
 /// `canSend`, le focus ; la porte du gratuit reste dans `HomeView.send()` et `tapImport`.
@@ -449,9 +449,13 @@ struct HomeComposerBar: View {
                         .padding(.horizontal, 6)
                 }
             }
-            HStack(alignment: .bottom, spacing: 8) {
+            // Le champ sur toute la largeur — la consigne tient sur une ligne —, puis le « + »
+            // et l'envoi, aux deux bouts.
+            field(draft: $composer.draft)
+                .padding(.horizontal, 8)
+            HStack(spacing: 8) {
                 plusButton
-                field(draft: $composer.draft)
+                Spacer(minLength: 0)
                 sendButton
             }
         }
@@ -501,7 +505,7 @@ struct HomeComposerBar: View {
             if still {
                 Text(draft.wrappedValue.isEmpty ? placeholder : draft.wrappedValue)
                     .foregroundStyle(draft.wrappedValue.isEmpty ? HomePalette.inkTertiary : HomePalette.ink)
-                    .lineLimit(2)
+                    .lineLimit(3)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 TextField(
@@ -520,8 +524,9 @@ struct HomeComposerBar: View {
             }
         }
         .font(MicaboFont.ui(17, weight: .semibold))
-        .padding(.vertical, 9)
-        .frame(minHeight: 42, alignment: .leading)
+        .padding(.top, 8)
+        .padding(.bottom, 2)
+        .frame(minHeight: 34, alignment: .leading)
     }
 
     private var plusButton: some View {

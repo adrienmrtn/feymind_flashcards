@@ -72,7 +72,7 @@ struct PaywallScreen: View {
         VStack(spacing: 0) {
             PaywallBrandHero(
                 title: title,
-                subtitle: trigger?.headline ?? L10n.t("ios.pay3.sub", locale: .resolved()),
+                subtitle: subtitle,
                 mood: trigger == .lessonReady ? .happy : .celebrate,
                 onClose: onClose
             )
@@ -106,6 +106,13 @@ struct PaywallScreen: View {
             .padding(.top, 22)
             .padding(.bottom, MicaboSpacing.lg)
         }
+    }
+
+    /// Ce qui a ouvert l'écran, en une ligne ; « Passer en Pro » n'a rien buté, il garde la
+    /// ligne générale (son accroche redirait « Micabo Pro » sous la pastille du même nom).
+    private var subtitle: String {
+        guard let trigger, trigger != .upgrade else { return L10n.t("ios.pay3.sub", locale: .resolved()) }
+        return trigger.headline
     }
 
     private var title: String {
