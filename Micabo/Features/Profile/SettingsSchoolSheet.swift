@@ -45,6 +45,7 @@ struct SettingsSchoolSheet: View {
                                     .foregroundStyle(MicaboColor.inkTertiary)
                             }
                             .buttonStyle(MicaboPressableButtonStyle())
+                            .accessibilityLabel(Text(L10n.t("ios.clearSearch", locale: .resolved())))
                         }
                     }
                     .padding(.horizontal, 14)

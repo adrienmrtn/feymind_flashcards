@@ -230,7 +230,7 @@ struct LessonPathView: View {
 
     private var topBar: some View {
         HStack(spacing: 12) {
-            MicaboCircleButton(systemImage: "chevron.left", style: .light, size: 40) {
+            MicaboCircleButton(systemImage: "chevron.backward", style: .light, size: 40) {
                 dismiss()
             }
             Spacer(minLength: 0)

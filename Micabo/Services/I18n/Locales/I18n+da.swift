@@ -230,6 +230,7 @@ extension IosI18nCatalogs {
         "ios.cardsSection": "Kort · {count}",
         "ios.chapter.intro": "Indledning",
         "ios.clearSearch": "Ryd søgningen",
+        "ios.clearText": "Ryd teksten",
         "ios.cloud.notConfigured": "Cloud-adgang er ikke sat op.",
         "ios.cloud.notSignedIn": "Ingen konto er logget ind.",
         "ios.cloud.unexpected": "Uventet svar.",

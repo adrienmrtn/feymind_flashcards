@@ -52,7 +52,7 @@ struct ProfileCard: View {
                     }
                 }
                 Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
+                Image(systemName: "chevron.forward")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(MicaboColor.inkTertiary)
             }
@@ -83,7 +83,7 @@ struct ProUpgradeCard: View {
                         .multilineTextAlignment(.leading)
                 }
                 Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
+                Image(systemName: "chevron.forward")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(MicaboColor.onInkMuted)
             }
@@ -146,7 +146,7 @@ struct ProfileRow: View {
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .lineLimit(1)
                 }
-                Image(systemName: "chevron.right")
+                Image(systemName: "chevron.forward")
                     .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(MicaboColor.inkTertiary)
             }

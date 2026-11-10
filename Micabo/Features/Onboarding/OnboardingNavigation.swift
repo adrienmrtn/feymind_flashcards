@@ -97,7 +97,7 @@ struct OnboardingTopBar: View {
         HStack(spacing: 14) {
             if showsBack {
                 Button(action: onBack) {
-                    Image(systemName: "chevron.left")
+                    Image(systemName: "chevron.backward")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(OnboardingPalette.ink)
                         .frame(width: 44, height: 40)
@@ -177,7 +177,7 @@ struct OnboardingArrowButton: View {
                         .controlSize(.regular)
                         .tint(surface.buttonForeground)
                 } else {
-                    Image(systemName: "arrow.right")
+                    Image(systemName: "arrow.forward")
                         .font(.system(size: 23, weight: .bold))
                 }
             }

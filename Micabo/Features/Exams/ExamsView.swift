@@ -186,7 +186,7 @@ struct ExamsView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
+                Image(systemName: "chevron.forward")
                     .font(.system(size: 16, weight: .heavy))
                     .foregroundStyle(MicaboColor.inkTertiary)
             }
@@ -364,7 +364,7 @@ struct ExamRow: View {
                         .lineLimit(1)
                 }
                 Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
+                Image(systemName: "chevron.forward")
                     .font(.system(size: 14, weight: .heavy))
                     .foregroundStyle(MicaboColor.inkTertiary)
             }

@@ -230,6 +230,7 @@ extension IosI18nCatalogs {
         "ios.cardsSection": "Kortit · {count}",
         "ios.chapter.intro": "Johdanto",
         "ios.clearSearch": "Tyhjennä haku",
+        "ios.clearText": "Tyhjennä teksti",
         "ios.cloud.notConfigured": "Pilvipalvelua ei ole määritetty.",
         "ios.cloud.notSignedIn": "Et ole kirjautunut tilille.",
         "ios.cloud.unexpected": "Odottamaton vastaus.",

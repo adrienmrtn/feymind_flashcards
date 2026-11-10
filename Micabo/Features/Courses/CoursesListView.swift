@@ -559,7 +559,7 @@ struct CoursesListView: View {
                     }
                 } label: {
                     HStack(spacing: 4) {
-                        Image(systemName: "chevron.left")
+                        Image(systemName: "chevron.backward")
                             .font(.system(size: 12, weight: .semibold))
                         Text(
                             trail.count > 1

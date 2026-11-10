@@ -230,6 +230,7 @@ extension IosI18nCatalogs {
         "ios.cardsSection": "Carduri · {count}",
         "ios.chapter.intro": "Introducere",
         "ios.clearSearch": "Șterge căutarea",
+        "ios.clearText": "Șterge textul",
         "ios.cloud.notConfigured": "Accesul la cloud nu e configurat.",
         "ios.cloud.notSignedIn": "Niciun cont conectat.",
         "ios.cloud.unexpected": "Răspuns neașteptat.",

@@ -494,7 +494,7 @@ struct MockExamRunView: View {
             Button {
                 go(to: index - 1)
             } label: {
-                Image(systemName: "chevron.left")
+                Image(systemName: "chevron.backward")
                     .font(.system(size: 18, weight: .heavy))
                     .foregroundStyle(MicaboColor.ink)
                     .frame(width: 58, height: 58)

@@ -230,6 +230,7 @@ extension IosI18nCatalogs {
         "ios.cardsSection": "Kartice · {count}",
         "ios.chapter.intro": "Uvod",
         "ios.clearSearch": "Očisti pretragu",
+        "ios.clearText": "Izbriši tekst",
         "ios.cloud.notConfigured": "Pristup oblaku nije postavljen.",
         "ios.cloud.notSignedIn": "Nijedan račun nije prijavljen.",
         "ios.cloud.unexpected": "Neočekivan odgovor.",
