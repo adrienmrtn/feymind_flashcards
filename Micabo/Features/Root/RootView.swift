@@ -55,7 +55,25 @@ struct RootView: View {
     @AppStorage(OnboardingPreferences.Key.pendingFirstImport) private var pendingFirstImport = false
 
     @Environment(AuthController.self) private var auth
+    @Environment(CloudSync.self) private var sync
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// **Le rideau bleu du lancement**, levé une fois la première image posée. Voir
+    /// `LaunchCurtain`.
+    @State private var showsCurtain = !LaunchCurtain.hasLifted
+
+    /// Parcours ou app : la règle est dans `LaunchGate`. Une session restaurée du trousseau
+    /// n'en décide pas — seul le parcours fini sur cette installation, ou « J'ai déjà un
+    /// compte » (qui le marque fini), ouvre l'app.
+    private var route: LaunchRoute {
+        LaunchGate.route(
+            installMarked: LaunchGate.isInstallMarked(),
+            onboardingDoneLocally: didCompleteOnboarding,
+            hasSession: auth.isSignedIn,
+            tappedHaveAccount: false
+        )
+    }
 
     private var showsAccountGate: Bool {
         didCompleteOnboarding && !auth.isSignedIn && !didSkipAccount && auth.state != .restoring
@@ -63,9 +81,13 @@ struct RootView: View {
 
     var body: some View {
         ZStack {
-            if !didCompleteOnboarding {
+            if route == .onboarding {
                 OnboardingFlowView(library: modelContext) {
                     didCompleteOnboarding = true
+                    // Les réponses du parcours montent tout de suite (`noteOnboardingAnswers`,
+                    // posé par le parcours), avant que le profil du serveur - celui d'une
+                    // ancienne installation, si la session a survécu - ne redescende.
+                    Task { await sync.sync(context: modelContext) }
                 }
                 .transition(.opacity.combined(with: .scale(scale: 1.03)))
             } else if showsAccountGate {
@@ -81,6 +103,27 @@ struct RootView: View {
                     .transition(.opacity)
             }
         }
+        .overlay {
+            if showsCurtain {
+                LaunchCurtain()
+                    .transition(.opacity)
+            }
+        }
+        // **Le rideau se lève au tour suivant de la boucle**, une fois la première image de
+        // l'écran posée dessous : l'écran de lancement (le même bleu) cède la place sans
+        // blanc intermédiaire, par un fondu court. Sur le parcours, le premier écran est
+        // lui-même ce bleu, et le fondu ne se voit pas.
+        .task {
+            guard showsCurtain else { return }
+            // Une seule fois par lancement : changer de langue recrée `RootView`
+            // (`.id(uiLocale.locale)`), et le bleu n'a pas à repasser sur l'app.
+            LaunchCurtain.hasLifted = true
+            await Task.yield()
+            try? await Task.sleep(for: .milliseconds(60))
+            withAnimation(reduceMotion ? .linear(duration: 0.2) : .easeOut(duration: 0.32)) {
+                showsCurtain = false
+            }
+        }
         .animation(.easeInOut(duration: 0.45), value: didCompleteOnboarding)
         .animation(.easeInOut(duration: 0.35), value: showsAccountGate)
         .animation(.easeInOut(duration: 0.45), value: pendingFirstImport)
@@ -90,5 +133,24 @@ struct RootView: View {
         .onChange(of: auth.isSignedIn) { _, isSignedIn in
             if isSignedIn { didSkipAccount = false }
         }
+    }
+}
+
+/// **Le bleu de l'écran de lancement, recopié en SwiftUI.**
+///
+/// L'écran de lancement (`UILaunchScreen` dans `Info.plist`) est un aplat
+/// `LaunchBackground` - le bleu Micabo, jour comme nuit - sans image. La première image de
+/// SwiftUI doit lui être identique au pixel près : ce rideau la recouvre, puis s'efface en
+/// fondu sur l'écran qui suit. Il n'y a qu'un seul logo, et c'est Mika qui le porte, sur le
+/// premier écran du parcours : la marque ne s'affiche plus deux fois de suite.
+struct LaunchCurtain: View {
+    /// Vrai une fois le rideau levé pendant ce lancement.
+    nonisolated(unsafe) static var hasLifted = false
+
+    var body: some View {
+        MicaboBrand.launch
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
     }
 }

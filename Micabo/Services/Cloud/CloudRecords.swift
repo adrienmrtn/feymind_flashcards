@@ -184,7 +184,8 @@ struct ProfileRecord: Codable {
     /// Recopie le profil distant dans les réglages locaux.
     ///
     /// C'est ce qui fait qu'une réinstallation retrouve un étudiant en PASS au Maroc et non un
-    /// lycéen français par défaut, sans lui refaire passer l'inscription.
+    /// lycéen français par défaut, quand il choisit « J'ai déjà un compte »
+    /// (`CloudSync.recognizeExistingAccount`).
     func applyToLocalPreferences() {
         if let country = SchoolingCountry(rawValue: country_code) {
             OnboardingPreferences.schoolingCountry = country
@@ -211,9 +212,11 @@ struct ProfileRecord: Codable {
         // Absente à distance, elle s'efface aussi ici : la langue des fiches redevient celle
         // du pays, ce qui est la réponse quand personne ne l'a choisie.
         OnboardingPreferences.sheetLanguage = sheet_language.flatMap(ContentLanguage.init(rawValue:))
-        if onboarding_completed_at != nil {
-            OnboardingPreferences.markCompleted()
-        }
+        // `onboarding_completed_at` ne redescend plus dans le drapeau local. Il le faisait, et
+        // c'est ce qui empêchait de faire le parcours après une réinstallation : la session
+        // survit dans le trousseau, la première synchro relisait « parcours fini » sur le
+        // serveur, et l'app quittait le parcours sous les doigts de l'élève. Le parcours se
+        // fait sur chaque installation, sauf « J'ai déjà un compte » (`LaunchGate`).
     }
 }
 

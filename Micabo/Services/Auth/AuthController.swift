@@ -21,6 +21,15 @@ final class AuthController {
     /// Vrai pendant une opération : l'écran grise ses boutons plutôt que d'en accepter deux.
     private(set) var isWorking = false
     private(set) var message: AuthMessage?
+    /// **Le nombre de connexions abouties pendant ce lancement** : Apple, Google, lien par
+    /// courriel, compte de relecture. Le rafraîchissement d'une session déjà ouverte n'y
+    /// compte pas.
+    ///
+    /// `isSignedIn` ne suffit pas à dire « la connexion vient de réussir » : après une
+    /// réinstallation, la session du trousseau est déjà là, et se reconnecter au même compte
+    /// depuis « J'ai déjà un compte » ne le fait pas changer. L'écran qui attend une
+    /// connexion guette ce compteur.
+    private(set) var completedSignIns = 0
 
     /// Ce que l'écran de connexion a à dire.
     ///
@@ -628,6 +637,7 @@ final class AuthController {
             }
         }
         adopt(session)
+        completedSignIns += 1
     }
 
     /// **Demande un jeton de réclamation sous la session de l'invité** et le garde. `nil`

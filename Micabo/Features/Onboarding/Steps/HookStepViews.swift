@@ -1,22 +1,28 @@
 import SwiftData
 import SwiftUI
 
-// MARK: - Le splash, puis la première page
+// MARK: - Le premier écran
 
-/// **Le premier écran : un splash simple, puis une page.**
+/// **Le premier écran : le bleu du lancement, d'où Mika monte.**
 ///
-/// Le monogramme et le mot apparaissent au milieu du blanc, en fondu, un peu plus grands
-/// qu'à l'arrivée pour se poser ; ils tiennent une seconde ; puis le splash s'efface et la
-/// page prend sa place, en fondu elle aussi. Rien ne voyage, rien ne se transforme : un
-/// logo qui traverse l'écran pour aller se ranger dans un coin attire l'œil sur lui-même,
-/// et c'est la page qu'on veut regarder.
+/// Il partait d'un blanc avec le monogramme et le mot « Micabo » qui se posaient en fondu,
+/// juste après un écran de lancement qui montrait déjà l'icône : deux logos à la suite, et un
+/// saut entre les deux. L'écran de lancement est maintenant un aplat bleu Micabo
+/// (`LaunchBackground`), et cet écran **commence sur ce même aplat**, sans rien dessus : la
+/// première image SwiftUI est identique au lancement, au pixel près.
 ///
-/// **La page** : le nom en haut, centré ; un téléphone qui montre une leçon de l'app au
-/// milieu ; un titre en gros, une ligne dessous ; le bouton, en pilule, centré. Le menu de
-/// langue reste en haut à droite.
+/// Puis, d'un seul mouvement :
 ///
-/// C'est aussi le seul écran qui porte une sortie : « j'ai déjà un compte ». Quelqu'un qui
-/// réinstalle l'app n'a aucune raison de traverser trente écrans pour retrouver ses decks.
+/// 1. le panneau du bas monte du bord de l'écran, Mika assis derrière lui ;
+/// 2. Mika sort de derrière le panneau (`appear`), puis fait coucou (`wave`) — un buste,
+///    collé au bord du panneau comme le veut le kit (règle 1) ;
+/// 3. le titre, le bouton et « J'ai déjà un compte » se posent sur le panneau, en fondu.
+///
+/// Avec « Réduire les animations », tout est là d'emblée, Mika en image fixe.
+///
+/// C'est aussi le seul écran qui porte une sortie : « J'ai déjà un compte ». C'est **la seule
+/// façon de sauter le parcours** sur une installation neuve (`LaunchGate`) : une connexion
+/// qui aboutit depuis ici ouvre l'app sur les cours du compte.
 struct HookLogoStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(AuthController.self) private var auth
@@ -24,135 +30,187 @@ struct HookLogoStepView: View {
     @Environment(CloudSync.self) private var sync
     @Environment(\.modelContext) private var modelContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.onboardingStill) private var still
 
     @State private var showLogin = false
     @State private var checkingAccount = false
-    /// Faux pendant le splash, vrai quand la page est posée.
-    @State private var isReady = false
-    /// Le logo s'est posé au milieu.
-    @State private var hasLanded = false
+    /// L'élève a choisi « J'ai déjà un compte » : la prochaine connexion qui aboutit ouvre
+    /// l'app. Levé s'il choisit finalement de créer un compte.
+    @State private var wantsExistingAccount = false
 
-    /// Le temps du splash, avant que la page ne se pose.
-    private static let splashDuration = 1.4
+    /// Le panneau du bas est monté.
+    @State private var panelUp = HookIntro.played
+    /// Mika est posé derrière le panneau. Il n'entre qu'après la première image : son
+    /// animation n'a pas à peser sur elle.
+    @State private var showsMika = HookIntro.played
+    @State private var mikaMood: MikaMood = HookIntro.played ? .idle : .appear
+    /// Le titre et les boutons se sont posés.
+    @State private var contentVisible = HookIntro.played
+
+    /// Ce qui dépasse de Mika sous le bord du panneau : la coupe du buste se cache derrière.
+    private static let mikaTuck: CGFloat = 6
 
     var body: some View {
-        ZStack {
-            if isReady {
-                page
-                    .transition(.opacity)
-            } else {
-                splash
-                    .transition(.opacity)
+        GeometryReader { proxy in
+            ZStack(alignment: .top) {
+                MicaboBrand.launch
+                    .ignoresSafeArea()
+
+                VStack(spacing: 0) {
+                    Spacer(minLength: 0)
+                    mika(width: proxy.size.width)
+                        .padding(.bottom, -Self.mikaTuck)
+                    panel
+                        .zIndex(1)
+                }
+                // Le panneau part du bas de l'écran, Mika avec lui.
+                .offset(y: isPanelUp ? 0 : proxy.size.height + proxy.safeAreaInsets.bottom)
+
+                topBar
             }
         }
-        .background(OnboardingPalette.white.ignoresSafeArea())
         .environment(\.onboardingSurface, .canvas)
-        .task { await land() }
+        .task { await enter() }
         .sheet(isPresented: $showLogin) {
             loginSheet
         }
-        .onChange(of: auth.isSignedIn) { _, signedIn in
-            guard signedIn, showLogin else { return }
+        .onChange(of: auth.completedSignIns) { _, _ in
+            guard wantsExistingAccount else { return }
             Task { await resolveLogin() }
         }
     }
 
-    // MARK: - Le splash
+    private var isPanelUp: Bool { panelUp || still }
+    private var isContentVisible: Bool { contentVisible || still }
 
-    /// Le monogramme et le mot, seuls, qui se posent en fondu.
-    private var splash: some View {
-        VStack(spacing: 18) {
-            MicaboBrandMark(size: 120)
-                .shadow(color: OnboardingPalette.ink.opacity(0.12), radius: 24, y: 12)
+    // MARK: - Mika
 
-            Text("Micabo")
-                .font(MicaboFont.ui(30, weight: .bold))
-                .tracking(-1)
-                .foregroundStyle(OnboardingPalette.ink)
+    /// Mika, en buste, posé sur le bord haut du panneau. La place est tenue avant son
+    /// arrivée : rien ne bouge quand il entre.
+    private func mika(width: CGFloat) -> some View {
+        let size = min(width * 0.74, 320)
+        return ZStack {
+            if showsMika || still {
+                MikaMascot(
+                    mood: still ? .wave : mikaMood,
+                    size: size,
+                    reactsToTap: true,
+                    backdrop: .blue
+                ) {
+                    // `appear` le sort de derrière le panneau, `wave` fait coucou, puis il
+                    // revient au repos de lui-même.
+                    if mikaMood == .appear { mikaMood = .wave }
+                }
+            }
         }
-        .scaleEffect(hasLanded ? 1 : 1.08)
-        .opacity(hasLanded ? 1 : 0)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(width: size, height: size)
+        .frame(maxWidth: .infinity)
         .accessibilityHidden(true)
     }
 
-    // MARK: - La page
+    // MARK: - Le haut
 
-    private var page: some View {
+    /// Le menu de langue, en blanc sur le bleu.
+    private var topBar: some View {
+        HStack {
+            Spacer(minLength: 0)
+            LanguageSwitcher(variant: .menu)
+                .environment(\.onboardingSurface, .ink)
+        }
+        .padding(.horizontal, MicaboSpacing.screen)
+        .padding(.top, MicaboSpacing.sm)
+        .opacity(isContentVisible ? 1 : 0)
+        .animation(reveal(index: 3), value: isContentVisible)
+    }
+
+    // MARK: - Le panneau
+
+    private var panel: some View {
         VStack(spacing: 0) {
-            // Plus de logo en tête : la leçon dans le téléphone et la phrase suffisent. Le
-            // menu de langue reste en haut à droite.
-            HStack {
-                Spacer(minLength: 0)
-                LanguageSwitcher(variant: .menu)
-            }
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.top, MicaboSpacing.sm)
-            .onboardingAppear(index: 1)
+            // « Apprends » prend le dégradé de l'app, sur le blanc du panneau.
+            OnboardingAccentText(template: i18n.t("ios.hook.title"), size: 36, alignment: .center)
+                .padding(.horizontal, MicaboSpacing.md)
+                .padding(.top, MicaboSpacing.xl)
+                .modifier(HookReveal(isVisible: isContentVisible, animation: reveal(index: 0)))
 
-            // Le téléphone prend toute la place libre : le titre descend vers le bouton.
-            OnboardingHookMockup()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.top, MicaboSpacing.md)
-                .onboardingAppear(index: 2)
-
-            // La phrase, posée bas, juste au-dessus du bouton : « Apprends » prend le dégradé
-            // de l'app.
-            OnboardingAccentText(template: i18n.t("ios.hook.title"), size: 40, alignment: .center)
-                .padding(.horizontal, MicaboSpacing.xl)
-                .padding(.top, MicaboSpacing.sm)
-                .onboardingAppear(index: 3)
-
-            Spacer(minLength: MicaboSpacing.md)
-                .frame(maxHeight: MicaboSpacing.lg)
-
-            MicaboBottomBar(background: OnboardingPalette.white) {
-                VStack(spacing: 14) {
-                    // La pilule, centrée et pas pleine largeur : c'est la seule page où
-                    // le bouton est un objet au milieu de la composition et non une barre.
-                    OnboardingContinueButton(title: i18n.t("ios.hook.next")) {
-                        model.advance()
-                    }
-                    .frame(width: 168)
-
-                    Button {
-                        showLogin = true
-                    } label: {
-                        Text(i18n.t("common.alreadyAccount"))
-                            .font(MicaboFont.ui(14, weight: .medium))
-                            .foregroundStyle(OnboardingPalette.gray)
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: 32)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
-                    .disabled(auth.isWorking || checkingAccount)
+            VStack(spacing: 12) {
+                OnboardingContinueButton(title: i18n.t("ios.hook.next")) {
+                    model.advance()
                 }
-                .onboardingAppear(index: 4)
+
+                Button {
+                    wantsExistingAccount = true
+                    showLogin = true
+                } label: {
+                    Text(i18n.t("common.alreadyAccount"))
+                        .font(MicaboFont.ui(15, weight: .semibold))
+                        .foregroundStyle(OnboardingPalette.gray)
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: 36)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
+                .disabled(auth.isWorking || checkingAccount)
             }
+            .padding(.top, MicaboSpacing.lg)
+            .modifier(HookReveal(isVisible: isContentVisible, animation: reveal(index: 1)))
+        }
+        .padding(.horizontal, MicaboSpacing.screen)
+        .padding(.bottom, MicaboSpacing.sm)
+        .frame(maxWidth: .infinity)
+        .background(alignment: .top) {
+            UnevenRoundedRectangle(
+                topLeadingRadius: MicaboRadius.sheet,
+                topTrailingRadius: MicaboRadius.sheet,
+                style: .continuous
+            )
+            .fill(OnboardingPalette.white)
+            .ignoresSafeArea(edges: .bottom)
         }
     }
 
-    /// **Le logo se pose, tient, puis la page arrive.** Deux vibrations : une douce quand
-    /// le logo apparaît, un coup quand la page se pose.
+    /// L'entrée d'un élément du panneau : un fondu qui monte, décalé du précédent.
+    private func reveal(index: Int) -> Animation {
+        if reduceMotion { return .easeOut(duration: 0.2) }
+        return .easeOut(duration: 0.45).delay(0.12 + Double(index) * 0.08)
+    }
+
+    // MARK: - Le mouvement
+
+    /// **Un seul mouvement, depuis le bleu du lancement.** Une seule fois par lancement :
+    /// changer de langue recrée l'écran, et revenir en arrière aussi — l'écran y est alors
+    /// posé d'emblée.
     @MainActor
-    private func land() async {
+    private func enter() async {
+        guard !HookIntro.played, !still else { return }
+        HookIntro.played = true
+
         if reduceMotion {
-            hasLanded = true
-            isReady = true
+            mikaMood = .wave
+            showsMika = true
+            withAnimation(.easeOut(duration: 0.25)) {
+                panelUp = true
+                contentVisible = true
+            }
             return
         }
 
+        // Le temps que la première image soit posée et que le rideau du lancement se lève
+        // (`LaunchCurtain`) : jusque-là, l'écran est l'aplat bleu, comme le lancement.
+        try? await Task.sleep(for: .milliseconds(280))
+        guard !Task.isCancelled else {
+            panelUp = true
+            showsMika = true
+            contentVisible = true
+            return
+        }
+
+        withAnimation(.spring(duration: 0.65, bounce: 0.16)) { panelUp = true }
+        try? await Task.sleep(for: .milliseconds(300))
+
         Haptics.soft()
-        withAnimation(.easeOut(duration: 0.7)) { hasLanded = true }
-
-        try? await Task.sleep(for: .seconds(Self.splashDuration))
-        guard !Task.isCancelled else { return }
-        withAnimation(.easeInOut(duration: 0.55)) { isReady = true }
-
-        try? await Task.sleep(for: .milliseconds(450))
-        guard !Task.isCancelled else { return }
-        Haptics.tick()
+        showsMika = true
+        contentVisible = true
     }
 
     private var loginSheet: some View {
@@ -160,6 +218,7 @@ struct HookLogoStepView: View {
             placement: .sheet,
             onDismiss: { showLogin = false },
             onCreateAccount: {
+                wantsExistingAccount = false
                 showLogin = false
                 model.advance()
             },
@@ -172,14 +231,49 @@ struct HookLogoStepView: View {
         .interactiveDismissDisabled(auth.isWorking || checkingAccount)
     }
 
+    /// **« J'ai déjà un compte », et la connexion a abouti** : le profil du compte remplace
+    /// le parcours, le parcours est marqué fini sur cette installation, et l'app s'ouvre sur
+    /// les cours du compte, synchronisés.
+    ///
+    /// La connexion se guette par `completedSignIns` et non par `isSignedIn` : une session
+    /// restée dans le trousseau depuis l'installation précédente est déjà ouverte, et se
+    /// reconnecter au même compte ne ferait pas changer `isSignedIn`.
     @MainActor
     private func resolveLogin() async {
+        guard !checkingAccount else { return }
+        let route = LaunchGate.route(
+            installMarked: LaunchGate.isInstallMarked(),
+            onboardingDoneLocally: OnboardingPreferences.isCompleted,
+            hasSession: auth.isSignedIn,
+            tappedHaveAccount: wantsExistingAccount
+        )
+        guard route == .home else { return }
         checkingAccount = true
         _ = await sync.recognizeExistingAccount()
         OnboardingPreferences.markCompleted()
         checkingAccount = false
+        wantsExistingAccount = false
         showLogin = false
         await sync.sync(context: modelContext)
+    }
+}
+
+/// L'entrée du premier écran ne se joue qu'une fois par lancement.
+enum HookIntro {
+    /// Lu et écrit depuis le fil principal seulement (la vue).
+    nonisolated(unsafe) static var played = false
+}
+
+/// Un élément du panneau qui se pose : un fondu, et une petite montée.
+private struct HookReveal: ViewModifier {
+    let isVisible: Bool
+    let animation: Animation
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(isVisible ? 1 : 0)
+            .offset(y: isVisible ? 0 : 12)
+            .animation(animation, value: isVisible)
     }
 }
 

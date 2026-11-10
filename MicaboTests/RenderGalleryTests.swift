@@ -86,9 +86,10 @@ final class RenderGalleryTests: XCTestCase {
         )
         try RenderGallery.render(
             "mika-launch", width: 300, height: 650, night: true,
-            Image("LaunchMark")
+            // L'écran de lancement n'a plus d'image : l'aplat bleu, que le premier écran
+            // reprend tel quel (`LaunchCurtain`).
+            Color("LaunchBackground")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color("LaunchBackground"))
         )
         try RenderGallery.render(
             "mika-brand",
