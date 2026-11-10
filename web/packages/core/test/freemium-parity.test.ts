@@ -18,7 +18,7 @@ import { describe, expect, it } from "vitest";
 
 import * as discount from "../src/discount";
 import { ASSUME_PRO_WITHOUT_ROW, ENTITLEMENT_ID, FREE_LESSON_TIER, LIFETIME_PRO_EMAILS } from "../src/entitlement";
-import { EXTRA_ALLOWANCE, MIKA_ALLOWANCE, hasUsedFreeLesson, isImportSource, lessonGate } from "../src/lesson/allowance";
+import { EXTRA_ALLOWANCE, MIKA_ALLOWANCE, composerGate, hasUsedFreeLesson, isImportSource, lessonGate } from "../src/lesson/allowance";
 import { MAX_COMPOSER_CHARACTERS, MAX_COMPOSER_IMAGES, MAX_SUPPORTS } from "../src/lesson/composer";
 import { MIKA_LIMITS } from "../src/lesson/mika";
 import {
@@ -62,21 +62,28 @@ describe("le gratuit, des deux côtés", () => {
     expect(swiftConstant(proAccess, "assumeProWithoutRow")).toBe(String(ASSUME_PRO_WITHOUT_ROW));
   });
 
-  it("offre une leçon, depuis un sujet ou un texte collé, et pas depuis un import", () => {
-    // `LessonAllowance.gate` : Pro passe ; un import ouvre le paywall ; sinon la première
-    // leçon est offerte. Les cours de démonstration, de la bibliothèque et les paquets ne
-    // comptent pas, comme côté serveur (`begin_lesson`).
+  it("offre une leçon, depuis un sujet, un texte ou un import (envoyé avec onboarding)", () => {
+    // `LessonAllowance.gate` : Pro passe ; la leçon offerte part d'un sujet comme d'un import ;
+    // une fois servie, un import ouvre le paywall des imports, un sujet celui de la deuxième
+    // leçon. Un import offert part avec `onboarding: true` (`sendsAsFreeLesson`), seul drapeau
+    // que `begin_lesson` accepte pour un import sans abonnement. Les cours de démonstration, de
+    // la bibliothèque et les paquets ne comptent pas, comme côté serveur.
     const allowance = composer.slice(composer.indexOf("enum LessonAllowance"));
     expect(allowance).toContain("if isPro { return nil }");
+    expect(allowance).toContain("guard hasUsedFreeLesson(courses: courses) else { return nil }");
     expect(allowance).toContain("if source.isImport { return .generateCourse }");
+    expect(allowance).toContain("!isPro && source.isImport && !hasUsedFreeLesson(courses: courses)");
     expect(allowance).toContain("![.sample, .library, .deck].contains(course.source)");
 
     expect(FREE_LESSON_TIER.lessons).toBe(1);
-    expect(FREE_LESSON_TIER.importsAllowed).toBe(false);
-    expect(lessonGate({ isPro: true, source: "pdf", courses: [] })).toBeNull();
-    expect(lessonGate({ isPro: false, source: "pdf", courses: [] })).toBe("import_pro");
-    expect(lessonGate({ isPro: false, source: "topic", courses: [] })).toBeNull();
-    expect(lessonGate({ isPro: false, source: "text", courses: [{ source: "text", isFromLibrary: false }] })).toBe("free_limit");
+    expect(FREE_LESSON_TIER.freeLessonFromImport).toBe(true);
+    const unused = { isPro: false, hasUsedFreeLesson: false };
+    const used = { isPro: false, hasUsedFreeLesson: true };
+    expect(composerGate({ ...unused, source: "pdf" })).toEqual({ verdict: null, onboarding: true });
+    expect(composerGate({ ...unused, source: "topic" })).toEqual({ verdict: null, onboarding: false });
+    expect(composerGate({ ...used, source: "pdf" })).toEqual({ verdict: "import_pro", onboarding: false });
+    expect(composerGate({ ...used, source: "text" })).toEqual({ verdict: "free_limit", onboarding: false });
+    expect(composerGate({ isPro: true, hasUsedFreeLesson: true, source: "pdf" })).toEqual({ verdict: null, onboarding: false });
     for (const source of ["sample", "library", "deck"]) {
       expect(hasUsedFreeLesson([{ source, isFromLibrary: false }]), source).toBe(false);
     }
