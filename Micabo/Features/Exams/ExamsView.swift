@@ -1,13 +1,16 @@
 import SwiftData
 import SwiftUI
 
-/// **L'onglet Examen** : le prochain examen en grand, avec son compte à rebours, les autres en
-/// dessous, et l'examen blanc chronométré, sur une ou plusieurs leçons, noté dans le barème du
-/// pays.
+/// **« Mes examens »** : tous les examens, le prochain en grand avec son compte à rebours, les
+/// autres en dessous, l'examen blanc chronométré, les copies rendues et les examens passés.
 ///
-/// Un examen se déclare ici ou à la création d'une leçon (sa date). Un examen blanc se lance
-/// depuis un examen (ses leçons sont déjà choisies) ou seul. Le premier est offert, les
-/// suivants sont dans Pro (`ExamAllowance`, `begin_extra` côté serveur).
+/// C'était l'onglet Examen ; les examens ont déménagé dans le Calendrier, qui annonce le
+/// prochain et pousse cette page pour le reste. Rien n'a disparu : elle garde tout ce que
+/// l'onglet montrait.
+///
+/// Un examen se déclare ici, depuis le Calendrier ou à la création d'une leçon (sa date). Un
+/// examen blanc se lance depuis un examen (ses leçons sont déjà choisies) ou seul. Le premier
+/// est offert, les suivants sont dans Pro (`ExamAllowance`, `begin_extra` côté serveur).
 struct ExamsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -15,7 +18,6 @@ struct ExamsView: View {
     @Query(sort: \Exam.date) private var exams: [Exam]
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
 
-    @State private var path = NavigationPath()
     @State private var editing: ExamEditTarget?
     @State private var mock: MockExamStart?
     @State private var history: [ExamPaperResult] = []
@@ -26,71 +28,66 @@ struct ExamsView: View {
     private var past: [Exam] { exams.filter { $0.isPast() }.reversed() }
 
     var body: some View {
-        NavigationStack(path: $path) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    MicaboPageHeading(title: i18n.t("lesson.tab.exams"), subtitle: subtitle) {
-                        MicaboCircleButton(systemImage: "plus", style: .dark, size: 44, accessibilityTitle: i18n.t("lesson.exam.new")) {
-                            editing = .new
-                        }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                MicaboPageHeading(title: i18n.t("ios.cal.myExams"), subtitle: subtitle) {
+                    MicaboCircleButton(systemImage: "plus", style: .dark, size: 44, accessibilityTitle: i18n.t("lesson.exam.new")) {
+                        editing = .new
                     }
-                    .padding(.top, MicaboSpacing.xs)
+                }
+                .padding(.top, MicaboSpacing.xs)
 
-                    if let next = upcoming.first {
-                        ExamHero(exam: next, lessons: lessonsOf(next), best: bestResult(for: next)) {
-                            mock = MockExamStart(exam: next)
-                        } onEdit: {
-                            editing = .edit(next)
-                        }
+                if let next = upcoming.first {
+                    ExamHero(exam: next, lessons: lessonsOf(next), best: bestResult(for: next)) {
+                        mock = MockExamStart(exam: next)
+                    } onEdit: {
+                        editing = .edit(next)
+                    }
+                    .slideIn(shown, delay: 0.05)
+                } else {
+                    emptyCard
                         .slideIn(shown, delay: 0.05)
-                    } else {
-                        emptyCard
-                            .slideIn(shown, delay: 0.05)
-                    }
+                }
 
-                    mockCard
-                        .slideIn(shown, delay: 0.12)
+                mockCard
+                    .slideIn(shown, delay: 0.12)
 
-                    if upcoming.count > 1 {
-                        section(i18n.t("lesson.exam.upcoming"))
-                        VStack(spacing: 12) {
-                            ForEach(Array(upcoming.dropFirst())) { exam in
-                                ExamRow(exam: exam, lessonCount: lessonsOf(exam).count) { editing = .edit(exam) }
-                            }
+                if upcoming.count > 1 {
+                    section(i18n.t("lesson.exam.upcoming"))
+                    VStack(spacing: 12) {
+                        ForEach(Array(upcoming.dropFirst())) { exam in
+                            ExamRow(exam: exam, lessonCount: lessonsOf(exam).count) { editing = .edit(exam) }
                         }
-                        .slideIn(shown, delay: 0.18)
                     }
+                    .slideIn(shown, delay: 0.18)
+                }
 
-                    if !history.isEmpty {
-                        section(i18n.t("lesson.exam.history"))
-                        VStack(spacing: 10) {
-                            ForEach(history.prefix(8)) { result in
-                                MockResultRow(result: result)
-                            }
+                if !history.isEmpty {
+                    section(i18n.t("lesson.exam.history"))
+                    VStack(spacing: 10) {
+                        ForEach(history.prefix(8)) { result in
+                            MockResultRow(result: result)
                         }
-                        .slideIn(shown, delay: 0.22)
                     }
+                    .slideIn(shown, delay: 0.22)
+                }
 
-                    if !past.isEmpty {
-                        section(i18n.t("lesson.exam.past"))
-                        VStack(spacing: 10) {
-                            ForEach(past.prefix(6)) { exam in
-                                ExamRow(exam: exam, lessonCount: lessonsOf(exam).count) { editing = .edit(exam) }
-                                    .opacity(0.6)
-                            }
+                if !past.isEmpty {
+                    section(i18n.t("lesson.exam.past"))
+                    VStack(spacing: 10) {
+                        ForEach(past.prefix(6)) { exam in
+                            ExamRow(exam: exam, lessonCount: lessonsOf(exam).count) { editing = .edit(exam) }
+                                .opacity(0.6)
                         }
                     }
                 }
-                .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.bottom, MicaboSpacing.lg)
             }
-            .scrollIndicators(.hidden)
-            .micaboScreenBackground()
-            .tabBarClearance()
-            .toolbar(.hidden, for: .navigationBar)
-            .reportsNavigationDepth(for: .exams, depth: path.count)
-            .returnsHome(path: $path)
+            .padding(.horizontal, MicaboSpacing.screen)
+            .padding(.bottom, MicaboSpacing.lg)
         }
+        .scrollIndicators(.hidden)
+        .micaboScreenBackground()
+        .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $editing) { target in
             ExamEditSheet(target: target, lessons: lessons)
         }
@@ -425,6 +422,8 @@ enum ExamEditTarget: Identifiable {
 struct ExamEditSheet: View {
     let target: ExamEditTarget
     let lessons: [Course]
+    /// Le jour proposé pour un nouvel examen : celui qu'on regardait dans le calendrier.
+    var initialDate: Date? = nil
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -505,7 +504,12 @@ struct ExamEditSheet: View {
                 titleVisibility: .visible
             ) {
                 Button(L10n.t("lesson.exam.delete", locale: .resolved()), role: .destructive) {
-                    if let existing { try? ExamRepository.delete(existing, in: modelContext) }
+                    if let existing {
+                        // Son planning de révisions part avec lui.
+                        StudyPlanStore.forget(examID: existing.id, in: modelContext)
+                        try? ExamRepository.delete(existing, in: modelContext)
+                    }
+                    StudyNotifications.refresh(in: modelContext)
                     dismiss()
                 }
             }
@@ -533,8 +537,13 @@ struct ExamEditSheet: View {
             name = existing.name
             date = existing.date
             selected = Set(existing.courseIDs)
-        } else if let first = lessons.first {
-            selected = [first.id]
+        } else {
+            if let initialDate, initialDate > Date() {
+                date = initialDate
+            }
+            if let first = lessons.first {
+                selected = [first.id]
+            }
         }
     }
 
@@ -545,9 +554,12 @@ struct ExamEditSheet: View {
         let ids = lessons.map(\.id).filter(selected.contains)
         if let existing {
             try? ExamRepository.update(existing, name: name, date: date, courseIDs: ids, intensity: existing.intensity, in: modelContext)
+            // Une autre date, d'autres leçons : le planning de Mika se refait sur elles.
+            StudyPlanStore.refreshIfPlanned(existing, in: modelContext)
         } else {
             _ = try? ExamRepository.create(name: name, date: date, courseIDs: ids, intensity: .standard, in: modelContext)
         }
+        StudyNotifications.refresh(in: modelContext)
         Haptics.success()
         dismiss()
     }

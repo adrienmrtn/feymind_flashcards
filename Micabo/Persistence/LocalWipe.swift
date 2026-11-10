@@ -57,6 +57,16 @@ enum LocalWipe {
         try deleteAll(CourseFolder.self, in: context)
         try deleteAll(Exam.self, in: context)
         try deleteAll(OffDay.self, in: context)
+        // Le calendrier, les tâches et les séances de concentration : tout ce qui vit dans
+        // les onglets Calendrier et Concentration est local, et appartient au compte qui part.
+        try deleteAll(CalendarEvent.self, in: context)
+        try deleteAll(StudyCalendar.self, in: context)
+        try deleteAll(StudyTask.self, in: context)
+        try deleteAll(FocusSession.self, in: context)
+        CalendarDefaults.forget()
+        RevisionPlanAllowance.forget()
+        StudyNotifications.cancelAll()
+        FocusPhaseAlerts.cancel()
         // Ce qui vit hors de la base mais appartient au compte qui part : les journées
         // décochées (sinon effacées au serveur du compte suivant), les examens blancs rendus,
         // et l'examen offert, que le serveur compte par compte.

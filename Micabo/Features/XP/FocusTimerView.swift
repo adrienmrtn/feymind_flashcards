@@ -1,8 +1,10 @@
+import SwiftData
 import SwiftUI
 import UIKit
 
 /// Le temps de concentration mené au bout, toutes séances confondues : il s'ajoute aux heures
-/// de révision de Home (`HomeStats`).
+/// de révision de Home (`HomeStats`). Chaque séance a aussi sa ligne (`FocusSession`), pour la
+/// journée, la semaine et le calendrier.
 enum FocusLog {
     static let key = "micabo.focus.seconds"
 
@@ -21,191 +23,420 @@ enum FocusLog {
     }
 }
 
-/// **Le minuteur** (`docs/refonte-knowunity.md` § 5) : Mika au centre d'un anneau qui se vide,
-/// 25:00, Pause / Reprendre, Arrêter (avec confirmation). Au bout, la fête, `focusSession`
-/// (40 XP), et le temps compte dans les heures de révision.
+/// **La séance en cours** (`docs/refonte-knowunity.md` § 5, puis l'onglet Concentration) : Mika
+/// au centre d'un anneau qui se vide, le temps, Pause / Reprendre, Arrêter (avec confirmation).
+/// En Pomodoro, les cycles de travail et les pauses s'enchaînent seuls, et une pause peut se
+/// passer. Au bout, la fête, l'XP de chaque bloc de 25 minutes, et le temps compte dans les
+/// heures de révision.
 ///
-/// **Le temps se calcule depuis l'heure de fin**, jamais en comptant des secondes : l'app
-/// peut passer en arrière-plan, l'écran peut se verrouiller, la séance continue de courir et
-/// se termine à la bonne minute. L'écran reste allumé tant que la séance est ouverte.
+/// **Le temps se calcule depuis l'heure de départ**, jamais en comptant des secondes : l'app
+/// peut passer en arrière-plan, l'écran peut se verrouiller, la séance continue de courir et la
+/// phase tombe juste au retour. Une notification annonce chaque fin de phase pendant que l'app
+/// dort. L'écran reste allumé tant que la séance est ouverte.
 struct FocusTimerView: View {
-    static let duration = TimeInterval(XPRules.focusMinutes * 60)
+    let plan: FocusPlan
+
+    init(plan: FocusPlan = .default) {
+        self.plan = plan
+    }
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.modelContext) private var modelContext
 
-    /// L'heure où la séance se termine, tant qu'elle court ; nil en pause.
-    @State private var endDate: Date?
-    @State private var remainingWhenPaused = FocusTimerView.duration
+    @Query(sort: \StudyTask.createdAt) private var allTasks: [StudyTask]
+    @Query private var courses: [Course]
+
+    /// Le premier départ de la séance.
+    @State private var startedAt: Date?
+    /// Le départ du morceau en cours ; nil en pause.
+    @State private var segmentStart: Date?
+    /// Le temps déjà couru avant le morceau en cours.
+    @State private var elapsedBefore: TimeInterval = 0
     @State private var finished = false
     @State private var award: XPAward?
+    @State private var workDone: TimeInterval = 0
     @State private var confirmsStop = false
-    @State private var started = false
+    @State private var openLesson: Course?
+    @State private var lastPhase = 0
 
-    private var isPaused: Bool { endDate == nil && !finished }
+    private var phases: [FocusPhase] { plan.phases }
+    private var isPaused: Bool { segmentStart == nil && !finished }
+    private var goalTasks: [StudyTask] { allTasks.filter { plan.taskIDs.contains($0.id) } }
+    private var goalCourse: Course? { courses.first { $0.id == plan.courseID } }
 
     var body: some View {
         ZStack {
             MicaboColor.canvas.ignoresSafeArea()
             if finished {
-                finishedView
-                    .transition(.scale(scale: 0.94).combined(with: .opacity))
+                FocusFinishedScreen(
+                    minutes: Int(workDone / 60),
+                    award: award,
+                    tasks: goalTasks.map(\.spec),
+                    onToggleTask: toggleTask,
+                    onContinue: { dismiss() }
+                )
+                .transition(.scale(scale: 0.94).combined(with: .opacity))
             } else {
                 TimelineView(.periodic(from: .now, by: 1)) { context in
-                    session(remaining: remaining(at: context.date))
+                    let position = FocusPhases.position(in: phases, elapsed: elapsed(at: context.date))
+                    FocusSessionScreen(
+                        plan: plan,
+                        position: position,
+                        isPaused: isPaused,
+                        lessonTitle: goalCourse?.title ?? plan.courseTitle,
+                        tasks: goalTasks.map(\.spec),
+                        onToggleTask: toggleTask,
+                        onOpenLesson: openLessonAction,
+                        onPauseResume: { isPaused ? resume() : pause() },
+                        onSkipBreak: skipBreak,
+                        onStop: { confirmsStop = true }
+                    )
+                    .onChange(of: position.finished) { _, done in
+                        if done { finish() }
+                    }
+                    .onChange(of: position.index) { _, index in
+                        guard index != lastPhase else { return }
+                        lastPhase = index
+                        Haptics.success()
+                    }
                 }
             }
         }
         .animation(.spring(duration: 0.5), value: finished)
         .onAppear {
             UIApplication.shared.isIdleTimerDisabled = true
-            guard !started else { return }
-            started = true
-            resume()
+            guard startedAt == nil else { return }
+            startedAt = Date()
+            segmentStart = Date()
+            Analytics.track(.focusStarted, [
+                "mode": .text(plan.mode.rawValue),
+                "minutes": .number(Double(plan.totalWorkMinutes)),
+                "goal": .flag(plan.courseID != nil),
+                "planned": .flag(plan.eventID != nil),
+            ])
         }
         .onDisappear {
             UIApplication.shared.isIdleTimerDisabled = false
+            FocusPhaseAlerts.cancel()
         }
-        // Au retour dans l'app : la séance a pu se terminer pendant l'absence.
+        // En arrière-plan, les fins de phase s'annoncent ; au retour, elles se retirent, et la
+        // séance a pu se terminer pendant l'absence.
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { finishIfDue() }
+            switch phase {
+            case .background:
+                if !isPaused && !finished { FocusPhaseAlerts.schedule(plan: plan, elapsed: elapsed(at: Date())) }
+            case .active:
+                FocusPhaseAlerts.cancel()
+                finishIfDue()
+            default:
+                break
+            }
+        }
+        .sheet(item: $openLesson) { course in
+            NavigationStack {
+                LessonPathView(course: course)
+            }
         }
         .confirmationDialog(
             L10n.t("ios.kx.timer.stopQ", locale: .resolved()),
             isPresented: $confirmsStop,
             titleVisibility: .visible
         ) {
-            Button(L10n.t("ios.kx.timer.stop", locale: .resolved()), role: .destructive) { dismiss() }
+            Button(L10n.t("ios.kx.timer.stop", locale: .resolved()), role: .destructive, action: stop)
             Button(L10n.t("ios.kx.timer.keepGoing", locale: .resolved()), role: .cancel) {}
         } message: {
-            Text(L10n.t("ios.kx.timer.stopMsg", locale: .resolved()))
+            Text(loc("ios.focus.stopMsg"))
         }
     }
 
-    // MARK: La séance
-
-    private func session(remaining: TimeInterval) -> some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text(L10n.t("ios.kx.tools.timer.title", locale: .resolved()))
-                    .font(MicaboFont.ui(20, weight: .heavy))
-                    .foregroundStyle(MicaboColor.ink)
-                    .accessibilityAddTraits(.isHeader)
-                Spacer()
-            }
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.top, 12)
-
-            Spacer(minLength: 16)
-
-            ZStack {
-                Circle()
-                    .stroke(MicaboColor.track, lineWidth: 16)
-                Circle()
-                    .trim(from: 0, to: max(0, min(1, remaining / Self.duration)))
-                    .stroke(
-                        LinearGradient(colors: MicaboColor.brandGradient, startPoint: .topLeading, endPoint: .bottomTrailing),
-                        style: StrokeStyle(lineWidth: 16, lineCap: .round)
-                    )
-                    .rotationEffect(.degrees(-90))
-                    .animation(.linear(duration: 1), value: remaining)
-                MikaMascot(mood: isPaused ? .sleep : .idle, size: 150, frame: .circle)
-            }
-            .frame(width: 264, height: 264)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(Text(L10n.t("ios.kx.timer.remainingA11y", locale: .resolved(), vars: ["time": Self.format(remaining)])))
-
-            Text(Self.format(remaining))
-                .font(MicaboFont.number(64))
-                .foregroundStyle(MicaboColor.ink)
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
-                .contentTransition(.numericText(countsDown: true))
-                .padding(.top, 26)
-                .accessibilityHidden(true)
-            Text(isPaused
-                ? L10n.t("ios.kx.timer.paused", locale: .resolved())
-                : L10n.t("ios.kx.timer.focus", locale: .resolved()))
-                .font(MicaboFont.ui(17, weight: .semibold))
-                .foregroundStyle(MicaboColor.inkSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.top, 6)
-                .padding(.horizontal, 32)
-
-            Spacer(minLength: 16)
-
-            VStack(spacing: 12) {
-                Button {
-                    if isPaused { resume() } else { pause() }
-                } label: {
-                    Label(
-                        isPaused ? L10n.t("ios.kx.timer.resume", locale: .resolved()) : L10n.t("ios.kx.timer.pause", locale: .resolved()),
-                        systemImage: isPaused ? "play.fill" : "pause.fill"
-                    )
-                }
-                .buttonStyle(LessonPrimaryButtonStyle())
-                Button {
-                    confirmsStop = true
-                } label: {
-                    Label(L10n.t("ios.kx.timer.stop", locale: .resolved()), systemImage: "stop.fill")
-                }
-                .buttonStyle(MicaboSecondaryButtonStyle())
-            }
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.bottom, 16)
-        }
-        .onChange(of: remaining <= 0) { _, done in
-            if done { finish() }
-        }
+    /// Ouvrir la leçon de l'objectif, par-dessus la séance qui continue de courir.
+    private var openLessonAction: (() -> Void)? {
+        guard let course = goalCourse else { return nil }
+        return { openLesson = course }
     }
 
-    private func remaining(at date: Date) -> TimeInterval {
-        guard let endDate else { return remainingWhenPaused }
-        return max(0, endDate.timeIntervalSince(date))
+    // MARK: Le temps
+
+    private func elapsed(at date: Date) -> TimeInterval {
+        elapsedBefore + (segmentStart.map { max(0, date.timeIntervalSince($0)) } ?? 0)
     }
 
     private func pause() {
-        guard let endDate else { return }
-        remainingWhenPaused = max(0, endDate.timeIntervalSinceNow)
-        self.endDate = nil
+        guard let segmentStart else { return }
+        elapsedBefore += max(0, Date().timeIntervalSince(segmentStart))
+        self.segmentStart = nil
         Haptics.light()
     }
 
     private func resume() {
-        endDate = Date().addingTimeInterval(remainingWhenPaused)
+        segmentStart = Date()
+        Haptics.light()
+    }
+
+    private func skipBreak() {
+        let now = Date()
+        let next = FocusPhases.elapsedAtNextPhase(in: phases, elapsed: elapsed(at: now))
+        elapsedBefore = next
+        if segmentStart != nil { segmentStart = now }
+        Haptics.medium()
     }
 
     private func finishIfDue() {
-        guard let endDate, endDate <= Date() else { return }
+        guard !finished, FocusPhases.position(in: phases, elapsed: elapsed(at: Date())).finished else { return }
         finish()
     }
 
     private func finish() {
         guard !finished else { return }
-        endDate = nil
-        remainingWhenPaused = 0
-        FocusLog.add(Self.duration)
+        let total = FocusPhases.total(phases)
+        elapsedBefore = total
+        segmentStart = nil
+        workDone = FocusPhases.position(in: phases, elapsed: total).workDone
         // La fête du jour se montre ici, dans l'écran de fin : pas de seconde fête par-dessus.
-        award = XPStore.shared.award(.focusSession, celebrates: false)
+        award = FocusRecorder.record(
+            plan: plan,
+            startedAt: startedAt ?? Date().addingTimeInterval(-total),
+            workSeconds: workDone,
+            completed: true,
+            in: modelContext
+        )
         finished = true
         UIApplication.shared.isIdleTimerDisabled = false
         Haptics.success()
         Haptics.burst(count: 3, over: 0.45)
     }
 
-    static func format(_ seconds: TimeInterval) -> String {
-        let total = Int(seconds.rounded(.up))
-        return String(format: "%d:%02d", total / 60, total % 60)
+    /// Arrêter en route : les minutes de travail faites comptent, et chaque bloc de 25 minutes
+    /// terminé rapporte son XP.
+    private func stop() {
+        let done = FocusPhases.position(in: phases, elapsed: elapsed(at: Date())).workDone
+        FocusRecorder.record(plan: plan, startedAt: startedAt ?? Date(), workSeconds: done, completed: false, in: modelContext)
+        dismiss()
     }
 
-    // MARK: La fin
+    private func toggleTask(_ id: UUID) {
+        guard let task = allTasks.first(where: { $0.id == id }) else { return }
+        task.isDone.toggle()
+        task.doneAt = task.isDone ? Date() : nil
+        try? modelContext.save()
+        if task.isDone { Haptics.success() }
+    }
 
-    private var finishedView: some View {
+    static func format(_ seconds: TimeInterval) -> String {
+        FocusPhases.clock(seconds)
+    }
+}
+
+// MARK: - L'écran de la séance
+
+/// **La séance, dessinée** sans horloge : la position vient de qui l'appelle (`TimelineView`
+/// dans l'app, une valeur figée dans les rendus).
+struct FocusSessionScreen: View {
+    let plan: FocusPlan
+    let position: FocusPosition
+    let isPaused: Bool
+    let lessonTitle: String?
+    let tasks: [StudyTaskSpec]
+    let onToggleTask: (UUID) -> Void
+    let onOpenLesson: (() -> Void)?
+    let onPauseResume: () -> Void
+    let onSkipBreak: () -> Void
+    let onStop: () -> Void
+
+    private var isRest: Bool { position.phase.kind == .rest }
+
+    private var mood: MikaMood {
+        if isPaused { return .idle }
+        return isRest ? .sleep : .write
+    }
+
+    private var ringColors: [Color] {
+        isRest ? [LessonTone.mint.vivid, LessonTone.mint.vivid.opacity(0.7)] : MicaboColor.brandGradient
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            header
+                .padding(.horizontal, MicaboSpacing.screen)
+                .padding(.top, 12)
+
+            Spacer(minLength: 12)
+
+            ZStack {
+                Circle()
+                    .stroke(MicaboColor.track, lineWidth: 16)
+                Circle()
+                    .trim(from: 0, to: max(0, min(1, position.remaining / max(1, position.phase.seconds))))
+                    .stroke(
+                        LinearGradient(colors: ringColors, startPoint: .topLeading, endPoint: .bottomTrailing),
+                        style: StrokeStyle(lineWidth: 16, lineCap: .round)
+                    )
+                    .rotationEffect(.degrees(-90))
+                    .animation(.linear(duration: 1), value: position.remaining)
+                MikaMascot(mood: mood, size: 150, frame: .circle)
+            }
+            .frame(width: 250, height: 250)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text(L10n.t("ios.kx.timer.remainingA11y", locale: .resolved(), vars: ["time": FocusPhases.clock(position.remaining)])))
+
+            Text(FocusPhases.clock(position.remaining))
+                .font(MicaboFont.number(60))
+                .foregroundStyle(MicaboColor.ink)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .contentTransition(.numericText(countsDown: true))
+                .padding(.top, 20)
+                .accessibilityHidden(true)
+            Text(message)
+                .font(MicaboFont.ui(17, weight: .semibold))
+                .foregroundStyle(MicaboColor.inkSecondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 4)
+                .padding(.horizontal, 32)
+
+            goals
+                .padding(.horizontal, MicaboSpacing.screen)
+                .padding(.top, 16)
+
+            Spacer(minLength: 12)
+
+            buttons
+                .padding(.horizontal, MicaboSpacing.screen)
+                .padding(.bottom, 16)
+        }
+    }
+
+    private var header: some View {
+        HStack(spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: isRest ? "cup.and.saucer.fill" : "brain.head.profile")
+                    .font(.system(size: 13, weight: .bold))
+                Text(loc(isRest ? "ios.focus.phaseRest" : "ios.focus.phaseWork"))
+                    .font(MicaboFont.ui(14, weight: .black))
+            }
+            .foregroundStyle(isRest ? LessonTone.mint.ink : MicaboColor.accentInk)
+            .padding(.horizontal, 12)
+            .frame(minHeight: 32)
+            .background(isRest ? LessonTone.mint.pale : MicaboColor.accentSoft, in: Capsule())
+
+            if plan.mode == .pomodoro {
+                Text(loc("ios.focus.cycleOf", ["n": "\(position.phase.cycle)", "total": "\(plan.effectiveCycles)"]))
+                    .font(MicaboFont.ui(14, weight: .black))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .padding(.horizontal, 12)
+                    .frame(minHeight: 32)
+                    .background(MicaboColor.surface, in: Capsule())
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
+    private var message: String {
+        if isPaused { return L10n.t("ios.kx.timer.paused", locale: .resolved()) }
+        if isRest { return loc("ios.focus.restMessage") }
+        return L10n.t("ios.kx.timer.focus", locale: .resolved())
+    }
+
+    @ViewBuilder
+    private var goals: some View {
+        if lessonTitle != nil || !tasks.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                if let lessonTitle {
+                    HStack(spacing: 10) {
+                        Image(systemName: "book.fill")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(MicaboColor.accentInk)
+                        Text(lessonTitle)
+                            .font(MicaboFont.ui(15, weight: .black))
+                            .foregroundStyle(MicaboColor.ink)
+                            .lineLimit(1)
+                        Spacer(minLength: 4)
+                        if let onOpenLesson {
+                            Button(action: onOpenLesson) {
+                                Text(loc("ios.focus.openLesson"))
+                                    .font(MicaboFont.ui(13.5, weight: .black))
+                                    .foregroundStyle(MicaboColor.accentInk)
+                                    .padding(.horizontal, 12)
+                                    .frame(minHeight: 32)
+                                    .background(MicaboColor.accentSoft, in: Capsule())
+                            }
+                            .buttonStyle(HomePressStyle(scale: 0.94))
+                        }
+                    }
+                }
+                ForEach(tasks.prefix(3)) { task in
+                    Button {
+                        onToggleTask(task.id)
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: task.isDone ? "checkmark.circle.fill" : "circle")
+                                .font(.system(size: 19, weight: .semibold))
+                                .foregroundStyle(task.isDone ? MicaboColor.correctInk : MicaboColor.inkTertiary)
+                            Text(task.title)
+                                .font(MicaboFont.ui(15, weight: .bold))
+                                .foregroundStyle(task.isDone ? MicaboColor.inkSecondary : MicaboColor.ink)
+                                .strikethrough(task.isDone, color: MicaboColor.inkTertiary)
+                                .lineLimit(1)
+                            Spacer(minLength: 0)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(HomePressStyle(scale: 0.98, feedback: .selection))
+                }
+            }
+            .padding(14)
+            .homeCard(radius: MicaboStage.tileRadius)
+        }
+    }
+
+    private var buttons: some View {
+        VStack(spacing: 10) {
+            Button(action: onPauseResume) {
+                Label(
+                    isPaused ? L10n.t("ios.kx.timer.resume", locale: .resolved()) : L10n.t("ios.kx.timer.pause", locale: .resolved()),
+                    systemImage: isPaused ? "play.fill" : "pause.fill"
+                )
+            }
+            .buttonStyle(MicaboBrandButtonStyle())
+            HStack(spacing: 10) {
+                if isRest && !isPaused {
+                    Button(action: onSkipBreak) {
+                        Label(loc("ios.focus.skipBreak"), systemImage: "forward.fill")
+                    }
+                    .buttonStyle(MicaboSecondaryButtonStyle())
+                }
+                Button(action: onStop) {
+                    Label(L10n.t("ios.kx.timer.stop", locale: .resolved()), systemImage: "stop.fill")
+                }
+                .buttonStyle(MicaboSecondaryButtonStyle())
+            }
+        }
+    }
+}
+
+// MARK: - La fin
+
+/// **La séance terminée** : les confettis, Mika qui fête, les minutes, l'XP gagnée, les tâches
+/// de la séance à cocher.
+struct FocusFinishedScreen: View {
+    let minutes: Int
+    let award: XPAward?
+    let tasks: [StudyTaskSpec]
+    let onToggleTask: (UUID) -> Void
+    let onContinue: () -> Void
+
+    @Environment(\.homeStill) private var still
+
+    var body: some View {
         ZStack {
-            ConfettiView(colors: [MicaboColor.accent, MicaboColor.accentDeep, LessonTone.mint.vivid, MicaboBrand.pencil])
-                .ignoresSafeArea()
-                .allowsHitTesting(false)
+            if !still {
+                ConfettiView(colors: [MicaboColor.accent, MicaboColor.accentDeep, LessonTone.mint.vivid, MicaboBrand.pencil])
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+            }
             ScrollView {
                 VStack(spacing: 16) {
                     if award?.reachedGoal == true {
@@ -222,7 +453,7 @@ struct FocusTimerView: View {
                         .foregroundStyle(MicaboColor.ink)
                         .multilineTextAlignment(.center)
                         .accessibilityAddTraits(.isHeader)
-                    Text(L10n.t("ios.kx.timer.doneBody", locale: .resolved(), vars: ["n": "\(XPRules.focusMinutes)"]))
+                    Text(L10n.t("ios.kx.timer.doneBody", locale: .resolved(), vars: ["n": "\(minutes)"]))
                         .font(MicaboFont.ui(17, weight: .semibold))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .multilineTextAlignment(.center)
@@ -231,18 +462,53 @@ struct FocusTimerView: View {
                             .scaleEffect(1.25)
                             .padding(.top, 4)
                     }
+                    if !tasks.isEmpty {
+                        taskList
+                            .padding(.top, 8)
+                    }
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, MicaboSpacing.screen)
             }
             .scrollIndicators(.hidden)
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                Button(L10n.t("ios.kx.continue", locale: .resolved())) { dismiss() }
-                    .buttonStyle(LessonPrimaryButtonStyle())
+                Button(L10n.t("ios.kx.continue", locale: .resolved()), action: onContinue)
+                    .buttonStyle(MicaboBrandButtonStyle())
                     .padding(.horizontal, MicaboSpacing.screen)
                     .padding(.vertical, 12)
                     .background(MicaboColor.canvas)
             }
         }
+    }
+
+    private var taskList: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(loc("ios.focus.sessionTasks"))
+                .font(MicaboFont.ui(15, weight: .black))
+                .foregroundStyle(MicaboColor.ink)
+            ForEach(tasks) { task in
+                Button {
+                    onToggleTask(task.id)
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: task.isDone ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 21, weight: .semibold))
+                            .foregroundStyle(task.isDone ? MicaboColor.correctInk : MicaboColor.inkTertiary)
+                            .contentTransition(.symbolEffect(.replace))
+                        Text(task.title)
+                            .font(MicaboFont.ui(15.5, weight: .bold))
+                            .foregroundStyle(task.isDone ? MicaboColor.inkSecondary : MicaboColor.ink)
+                            .strikethrough(task.isDone, color: MicaboColor.inkTertiary)
+                            .multilineTextAlignment(.leading)
+                        Spacer(minLength: 0)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(HomePressStyle(scale: 0.98, feedback: .selection))
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .homeCard(radius: MicaboStage.tileRadius)
     }
 }

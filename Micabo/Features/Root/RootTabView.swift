@@ -1,9 +1,8 @@
 import SwiftUI
 import UIKit
 
-/// Les quatre pages de l'app — **Decks**, **Réviser**, **Mika**, **Profil** — et la barre du
-/// bas qui les commande. Réviser est en deuxième : c'est le geste quotidien, donc celui qui
-/// doit tomber sous le pouce ; Mika, l'assistant du parcours, est juste à côté.
+/// Les cinq pages de l'app — **Home**, **Leçons**, **Calendrier**, **Concentration**,
+/// **Profil** — et la barre du bas qui les commande (`RootTab.tabs`).
 ///
 /// **On ne balaye plus d'une page à l'autre.** Le carrousel qui vivait ici était un
 /// `TabView` en style page : les écrans montés côte à côte, qui suivaient le doigt. Ça
@@ -39,9 +38,12 @@ struct RootTabView: View {
                 CoursesListView()
                     .toolbar(.hidden, for: .tabBar)
                     .tag(RootTab.decks)
-                ExamsView()
+                CalendarView()
                     .toolbar(.hidden, for: .tabBar)
-                    .tag(RootTab.exams)
+                    .tag(RootTab.calendar)
+                FocusView()
+                    .toolbar(.hidden, for: .tabBar)
+                    .tag(RootTab.focus)
                 ProfileView()
                     .toolbar(.hidden, for: .tabBar)
                     .tag(RootTab.profile)

@@ -32,7 +32,13 @@ struct MicaboApp: App {
     @AppStorage(OnboardingPreferences.Key.pendingFirstImport) private var pendingFirstImport = false
     @Environment(\.scenePhase) private var scenePhase
 
-    private static let schema = Schema([Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self])
+    /// Les modèles du Calendrier et de la Concentration (`StudyCalendar`, `CalendarEvent`,
+    /// `StudyTask`, `FocusSession`) s'ajoutent à la fin, sans toucher aux autres : SwiftData
+    /// migre en ajoutant leurs tables.
+    private static let schema = Schema([
+        Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self,
+        StudyCalendar.self, CalendarEvent.self, StudyTask.self, FocusSession.self,
+    ])
 
     /// Vrai quand l'app ne sert que d'hôte aux tests unitaires : elle ne lance alors ni
     /// réseau, ni achats, ni synchro, ni cours de démonstration. Les tests construisent ce
@@ -242,6 +248,8 @@ struct MicaboApp: App {
         let token = UIApplication.shared.beginBackgroundTask(withName: "DailyReminder")
         Task {
             await DailyReminder.reschedule(context: container.mainContext, eligible: pro.receivesDailyReminder)
+            // Les rappels du calendrier aussi : une séance passée ne doit plus sonner.
+            StudyNotifications.refresh(in: container.mainContext)
             UIApplication.shared.endBackgroundTask(token)
         }
     }

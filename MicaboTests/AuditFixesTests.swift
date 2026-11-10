@@ -213,6 +213,7 @@ final class AccountLeaveTests: XCTestCase {
     func testLeavingAnAccountForgetsMikaPracticeAndFocus() throws {
         let container = try ModelContainer(
             for: Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self,
+            StudyCalendar.self, CalendarEvent.self, StudyTask.self, FocusSession.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
         let context = ModelContext(container)
@@ -224,8 +225,19 @@ final class AccountLeaveTests: XCTestCase {
         XCTAssertFalse(MikaQuota().hasFreeQuestion)
         PracticeAllowance.freeBatchUsed = true
         FocusLog.add(25 * 60)
+        // Le calendrier, les tâches et les séances partent aussi.
+        context.insert(StudyCalendar(name: "Cours", emoji: "🏫", colorIndex: 9, kind: .classes))
+        context.insert(CalendarEvent(calendarID: UUID(), title: "Maths", day: Date(), startMinute: 480, endMinute: 540, repeatsWeekly: true))
+        context.insert(StudyTask(title: "DM"))
+        context.insert(FocusSession(startedAt: Date(), endedAt: Date(), focusedSeconds: 1_500, mode: .simple, plannedMinutes: 25, cycles: 1, completed: true))
+        try context.save()
 
         try LocalWipe.eraseAccountData(in: context)
+
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<StudyCalendar>()), 0)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<CalendarEvent>()), 0)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<StudyTask>()), 0)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<FocusSession>()), 0)
 
         XCTAssertFalse(FileManager.default.fileExists(atPath: lesson.path))
         XCTAssertTrue(MikaQuota().hasFreeQuestion)

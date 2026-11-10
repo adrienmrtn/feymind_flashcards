@@ -47,6 +47,51 @@ enum OnDeviceOCR {
         }
     }
 
+    /// **Le texte d'une page, avec la place de chaque ligne** : « x y | texte », x et y en
+    /// pourcentage de la largeur et de la hauteur, depuis le coin haut gauche, triés de haut en
+    /// bas puis de gauche à droite.
+    ///
+    /// C'est ce que demande un emploi du temps : lu ligne à ligne, un tableau perd ses
+    /// colonnes, et « Maths » ne dit plus s'il tombe le lundi ou le jeudi. Avec sa place, Mika
+    /// retrouve la colonne du jour et la rangée de l'heure.
+    static func recognizeLayout(in image: UIImage) async -> String {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                let prepared = rasterized(image, maxDimension: 2400)
+                guard let cgImage = prepared.cgImage else {
+                    continuation.resume(returning: "")
+                    return
+                }
+                let request = VNRecognizeTextRequest { request, _ in
+                    let observations = (request.results as? [VNRecognizedTextObservation]) ?? []
+                    let placed = observations.compactMap { observation -> (x: Int, y: Int, text: String)? in
+                        guard let text = observation.topCandidates(1).first?.string,
+                              !text.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
+                        // Vision compte depuis le bas : on retourne l'axe vertical.
+                        let box = observation.boundingBox
+                        return (Int((box.minX * 100).rounded()), Int(((1 - box.maxY) * 100).rounded()), text)
+                    }
+                    let lines = placed
+                        .sorted { $0.y != $1.y ? $0.y < $1.y : $0.x < $1.x }
+                        .map { "\($0.x) \($0.y) | \($0.text)" }
+                    continuation.resume(returning: lines.joined(separator: "\n"))
+                }
+                request.recognitionLevel = .accurate
+                request.usesLanguageCorrection = true
+                request.recognitionLanguages = ["fr-FR", "en-US", "de-DE", "es-ES", "it-IT", "pt-BR"]
+                if #available(iOS 16.0, *) {
+                    request.automaticallyDetectsLanguage = true
+                }
+                let handler = VNImageRequestHandler(cgImage: cgImage, orientation: .up)
+                do {
+                    try handler.perform([request])
+                } catch {
+                    continuation.resume(returning: "")
+                }
+            }
+        }
+    }
+
     static func recognize(images: [UIImage]) async -> String {
         var pages: [String] = []
         for image in images.prefix(pageLimit) {

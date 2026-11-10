@@ -138,6 +138,36 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     case guestClaimed = "guest_claimed"
     /// Une réclamation refusée ou tombée, et pourquoi. Le passage suivant la retente.
     case guestClaimFailed = "guest_claim_failed"
+
+    // MARK: Calendrier
+
+    /// Un calendrier créé à la main ou par le scanner, avec sa couleur.
+    case calendarCreated = "calendar_created"
+    /// Un événement ajouté à la main, avec `weekly`.
+    case calendarEventAdded = "calendar_event_added"
+    /// Une photo d'emploi du temps lue : `result` (`ok`, `empty`, `unreadable`, `failed`) et
+    /// `count`, le nombre de cours trouvés.
+    case timetableScanned = "timetable_scanned"
+    /// Les cours relus et enregistrés, avec `count`.
+    case timetableSaved = "timetable_saved"
+    /// Mika a planifié les révisions d'un examen : `count` séances, `days` jours restants.
+    case planGenerated = "plan_generated"
+    case planCleared = "plan_cleared"
+    /// Un planning demandé pour un second examen, sans Pro : le paywall s'ouvre.
+    case planBlocked = "plan_blocked"
+
+    // MARK: Concentration
+
+    /// « Commencer la session », avec `mode` et `minutes`.
+    case focusPrepared = "focus_prepared"
+    /// Une séance lancée : `mode`, `minutes`, `goal` (une leçon visée), `planned` (une
+    /// séance du calendrier).
+    case focusStarted = "focus_started"
+    case focusCompleted = "focus_completed"
+    /// Une séance arrêtée en route, avec les minutes faites.
+    case focusStopped = "focus_stopped"
+    case taskAdded = "task_added"
+    case taskDone = "task_done"
 }
 
 /// **Ce qu'une étiquette a le droit d'être.**

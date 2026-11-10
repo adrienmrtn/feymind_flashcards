@@ -22,7 +22,7 @@ struct MicaboTabBar: View {
     }
 
     private func bar(_ router: TabRouter) -> some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 2) {
             ForEach(RootTab.tabs) { tab in
                 let label = tab.label(t: { i18n.t($0) })
                 let isSelected = tab == router.selection
@@ -37,7 +37,10 @@ struct MicaboTabBar: View {
                         Text(label)
                             .font(MicaboFont.ui(11, weight: .heavy))
                             .lineLimit(1)
-                            .minimumScaleFactor(0.75)
+                            // Cinq onglets : « Konzentration », « Keskittyminen » se
+                            // resserrent au lieu de se couper.
+                            .minimumScaleFactor(0.62)
+                            .padding(.horizontal, 2)
                     }
                     .foregroundStyle(isSelected ? MicaboColor.accent : MicaboColor.inkSecondary)
                     .frame(maxWidth: .infinity)
@@ -57,8 +60,9 @@ struct MicaboTabBar: View {
         .padding(5)
         .frame(height: MicaboLayout.tabBarHeight)
         .micaboGlass(in: Capsule(), interactive: true)
-        // Quatre onglets : la pilule s'élargit pour que chaque libellé tienne.
-        .padding(.horizontal, 24)
+        // Cinq onglets : la pilule prend presque toute la largeur pour que chaque libellé
+        // tienne.
+        .padding(.horizontal, 12)
     }
 }
 
