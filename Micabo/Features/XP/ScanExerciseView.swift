@@ -109,7 +109,7 @@ struct ScanExerciseView: View {
             Spacer(minLength: 12)
             MicaboSpeechBubble(text: L10n.t("ios.kx.scan.prompt", locale: .resolved()), tail: .bottom)
                 .padding(.horizontal, 28)
-            MikaMascot(mood: .wave, size: 150, reactsToTap: true)
+            MikaMascot(mood: .wave, size: 150, reactsToTap: true, frame: .circle)
                 .padding(.top, 16)
             Spacer(minLength: 12)
             VStack(spacing: 12) {
@@ -135,7 +135,7 @@ struct ScanExerciseView: View {
     private var reading: some View {
         VStack(spacing: 18) {
             Spacer()
-            MikaMascot(mood: .think, size: 150)
+            MikaMascot(mood: .think, size: 150, frame: .circle)
             Text(L10n.t("ios.kx.scan.reading", locale: .resolved()))
                 .font(MicaboFont.subtitle)
                 .foregroundStyle(MicaboColor.ink)
@@ -155,7 +155,7 @@ struct ScanExerciseView: View {
             Spacer(minLength: 12)
             MicaboSpeechBubble(text: L10n.t("ios.kx.scan.unreadable", locale: .resolved()), tail: .bottom)
                 .padding(.horizontal, 28)
-            MikaMascot(mood: .sad, size: 140)
+            MikaMascot(mood: .sad, size: 140, frame: .circle)
                 .padding(.top, 16)
             Spacer(minLength: 12)
             Button(action: startOver) {
@@ -248,7 +248,7 @@ struct ScanExerciseView: View {
                         }
                         if chat.isThinking {
                             HStack {
-                                MikaMascot(mood: .think, size: 72)
+                                MikaMascot(mood: .think, size: 64, frame: .circle)
                                 Spacer()
                             }
                             .id("thinking")

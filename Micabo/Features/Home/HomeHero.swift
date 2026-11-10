@@ -192,7 +192,10 @@ struct HomeMikaStage: View {
                 mood: isThinking ? .think : mood,
                 size: Self.mikaSize,
                 reactsToTap: true,
-                frozenAt: motion.still ? 0.55 : nil
+                frozenAt: motion.still ? 0.55 : nil,
+                // Sur le ciel sombre de Home, le corps noir se perdrait : Mika sort de sa
+                // pastille bleue, comme sur l'icône.
+                frame: .circle
             )
             .offset(y: bob ? -6 : 4)
             .frame(width: Self.mikaSize, height: Self.mikaSize)

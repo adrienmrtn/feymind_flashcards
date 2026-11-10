@@ -45,7 +45,7 @@ struct SignInFailureNote: View {
             case .sent(let email) where includeSent:
                 Text(i18n.t("onboarding.linkSent", ["email": email]))
                     .font(MicaboFont.ui(14.5, weight: .medium))
-                    .foregroundStyle(MicaboColor.accent)
+                    .foregroundStyle(MicaboColor.accentInk)
                     .fixedSize(horizontal: false, vertical: true)
                     .transition(.opacity)
             default:
@@ -297,21 +297,23 @@ private struct SignInStage: View {
         let leftTurn: Double = drift ? -7 : 7
         let rightTurn: Double = drift ? 6 : -6
 
-        return ZStack {
+        // Mika est un buste : il sort du bord bas de la carte, qui le coupe.
+        return ZStack(alignment: .bottom) {
             RoundedRectangle(cornerRadius: 30, style: .continuous)
                 .fill(MicaboColor.pastel(at: 3))
 
             tile("🏛️", pastel: 0)
                 .rotationEffect(.degrees(leftTurn))
-                .offset(x: -112, y: -34 + lift)
+                .offset(x: -112, y: -60 + lift)
 
             tile("🧬", pastel: 1)
                 .rotationEffect(.degrees(rightTurn))
-                .offset(x: 116, y: 30 - lift)
+                .offset(x: 116, y: -96 - lift)
 
-            MicaboMascot(mood: .celebrating, size: 112)
+            MikaMascot(mood: .celebrate, size: 170)
         }
         .frame(height: 188)
+        .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
         .frame(maxWidth: .infinity)
         .animation(.easeInOut(duration: 2.8).repeatForever(autoreverses: true), value: drift)
         .accessibilityHidden(true)

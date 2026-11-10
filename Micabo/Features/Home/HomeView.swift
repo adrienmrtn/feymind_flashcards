@@ -448,7 +448,7 @@ struct HomeTitle: View {
         for (index, part) in parts.enumerated() where !part.isEmpty {
             if index % 2 == 1 {
                 out = out + Text(part).foregroundStyle(
-                    LinearGradient(colors: [MicaboColor.accent, MicaboColor.keyword], startPoint: .leading, endPoint: .trailing)
+                    LinearGradient(colors: MicaboColor.brandGradient, startPoint: .leading, endPoint: .trailing)
                 )
             } else {
                 out = out + Text(part)
@@ -1014,7 +1014,7 @@ struct HomeSourcesSheet: View {
     private var content: some View {
         VStack(alignment: .leading, spacing: 18) {
             HStack(spacing: 12) {
-                MikaMascot(mood: .happy, size: 64)
+                MikaMascot(mood: .happy, size: 64, frame: .circle)
                     .frame(width: 64, height: 64)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(L10n.t("ios.home2.sources.title", locale: .resolved()))

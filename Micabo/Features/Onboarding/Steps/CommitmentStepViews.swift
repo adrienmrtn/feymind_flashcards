@@ -139,7 +139,7 @@ struct ProfileSummaryStepView: View {
 
             Image(systemName: "arrow.right")
                 .font(.system(size: 18, weight: .heavy))
-                .foregroundStyle(MicaboColor.accent)
+                .foregroundStyle(MicaboColor.accentInk)
                 .frame(width: 40, height: 40)
                 .background(MicaboColor.accentSoft, in: Circle())
                 .flipsForRightToLeftLayoutDirection(true)
@@ -312,7 +312,7 @@ struct FreeTrialIntroStepView: View {
                             Circle()
                                 .fill(RadialGradient(colors: [MicaboColor.correct.opacity(0.22), MicaboColor.correct.opacity(0)], center: .center, startRadius: 4, endRadius: 120))
                                 .frame(width: 240, height: 240)
-                            MikaMascot(mood: .celebrate, size: 150, reactsToTap: true)
+                            MikaMascot(mood: .celebrate, size: 150, reactsToTap: true, frame: .circle)
                             MicaboIconView(icon: .crown, size: 54)
                                 .rotationEffect(.degrees(14))
                                 .offset(x: 64, y: -66)

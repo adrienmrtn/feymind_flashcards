@@ -12,30 +12,72 @@ import XCTest
 /// Rien ne se dessine hors de la CI : sans `MICABO_RENDER_DIR`, chaque test s'arrête aussitôt.
 @MainActor
 final class RenderGalleryTests: XCTestCase {
-    /// Mika dans ses huit humeurs, à trois instants de chaque animation.
+    /// Mika dans ses treize humeurs (images fixes : les rendus ne dessinent pas Lottie), sur
+    /// le papier de l'app (étincelle bleue) et sur le bleu Micabo (étincelle blanche) ; ses
+    /// trois cadres ; et l'écran de lancement, de jour et de nuit.
     func testMika() throws {
-        let instants: [Double] = [0.25, 0.7, 1.4]
         try RenderGallery.render(
-            "mika-moods",
-            VStack(spacing: 4) {
+            "mika-moods", night: true,
+            VStack(spacing: 10) {
                 ForEach(MikaMood.allCases) { mood in
-                    HStack(spacing: 12) {
+                    HStack(spacing: 10) {
                         Text(mood.rawValue)
-                            .font(MicaboFont.ui(11, weight: .bold))
+                            .font(MicaboFont.ui(12, weight: .bold))
                             .foregroundStyle(MicaboColor.inkSecondary)
-                            .frame(width: 64, alignment: .leading)
-                        ForEach(instants, id: \.self) { instant in
-                            MikaMascot(mood: mood, size: 84, frozenAt: instant)
-                        }
+                            .frame(width: 70, alignment: .leading)
+                        // Le buste collé au bas de sa carte, sur le papier.
+                        MikaMascot(mood: mood, size: 76, frozenAt: 0)
+                            .frame(width: 96, height: 76, alignment: .bottom)
+                            .background(MicaboColor.surface)
+                            .clipShape(UnevenRoundedRectangle(topLeadingRadius: 14, topTrailingRadius: 14))
+                        // Sur le bleu : l'étincelle blanche.
+                        MikaMascot(mood: mood, size: 76, frozenAt: 0, backdrop: .blue)
+                            .frame(width: 96, height: 76, alignment: .bottom)
+                            .background(MicaboBrand.blue)
+                            .clipShape(UnevenRoundedRectangle(topLeadingRadius: 14, topTrailingRadius: 14))
+                        MikaMascot(mood: mood, size: 64, frozenAt: 0, frame: .circle)
+                        MikaMascot(mood: mood, size: 40, frame: .circle)
                     }
                 }
             }
             .padding(16)
         )
         try RenderGallery.render(
-            "mika-large",
-            MikaMascot(mood: .wave, size: 300, frozenAt: 0.5)
-                .padding(40)
+            "mika-frames", night: true,
+            VStack(spacing: 24) {
+                HStack(alignment: .bottom, spacing: 18) {
+                    MikaMascot(mood: .wave, size: 150, frozenAt: 0, frame: .rounded)
+                    MikaMascot(mood: .happy, size: 150, frozenAt: 0, frame: .circle)
+                }
+                // Le buste sans cadre, sorti du bas d'une carte.
+                ZStack(alignment: .bottomTrailing) {
+                    RoundedRectangle(cornerRadius: 24, style: .continuous).fill(MicaboColor.surface)
+                    Text("Objectif du jour")
+                        .font(MicaboFont.ui(20, weight: .heavy))
+                        .foregroundStyle(MicaboColor.ink)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .padding(18)
+                    MikaMascot(mood: .celebrate, size: 120, frozenAt: 0)
+                        .padding(.trailing, 12)
+                }
+                .frame(height: 130)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            }
+            .padding(24)
+        )
+        try RenderGallery.render(
+            "mika-launch", width: 300, height: 650, night: true,
+            Image("LaunchMark")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color("LaunchBackground"))
+        )
+        try RenderGallery.render(
+            "mika-brand",
+            HStack(spacing: 16) {
+                MicaboBrandMark(size: 96)
+                MicaboBrandLockup(size: 40)
+            }
+            .padding(24)
         )
     }
 
@@ -358,7 +400,7 @@ final class RenderGalleryTests: XCTestCase {
         try RenderGallery.render(
             "home-generating",
             VStack(spacing: 28) {
-                MikaMascot(mood: .think, size: 170, frozenAt: 0.6)
+                MikaMascot(mood: .write, size: 160, frozenAt: 0.6, frame: .circle)
                 GenerationSteps(current: .writing, hasSupports: true)
             }
             .padding(40)

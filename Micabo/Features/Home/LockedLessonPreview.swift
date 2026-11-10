@@ -40,7 +40,7 @@ struct LockedLessonPreview: View {
             closeBar
             ScrollView {
                 VStack(spacing: 22) {
-                    MikaMascot(mood: revealed ? .happy : .think, size: revealed ? 120 : 150)
+                    MikaMascot(mood: revealed ? .happy : .think, size: revealed ? 120 : 150, frame: .circle)
                         .animation(.spring(duration: 0.45), value: revealed)
                     Text(revealed
                         ? L10n.t("ios.conv.locked.title", locale: .resolved())

@@ -1,58 +1,59 @@
+import Lottie
+import UIKit
 import XCTest
 @testable import Micabo
 
-/// La mascotte : la scène traduite du design se lit, et ses courbes se calculent comme en CSS.
+/// La mascotte : chaque humeur a son animation dans l'app, et son image fixe dans les deux
+/// versions de l'étincelle.
 final class MikaMascotTests: XCTestCase {
-    func testTheSceneDecodesFromTheBundle() throws {
-        let scene = try XCTUnwrap(MikaScene.shared, "mika.json manque ou ne se décode pas")
-        XCTAssertEqual(scene.viewBox, [-10, -24, 220, 220])
-        XCTAssertGreaterThan(scene.nodes.count, 3)
-        XCTAssertEqual(scene.fade, 0.18, accuracy: 0.001)
-    }
-
-    /// Chaque humeur fait bouger le corps : un Mika figé dans une humeur serait un bug.
-    func testEveryMoodAnimatesTheBody() throws {
-        let scene = try XCTUnwrap(MikaScene.shared)
-        func find(_ cls: String, in nodes: [MikaNode]) -> MikaNode? {
-            for node in nodes {
-                if node.c?.contains(cls) == true { return node }
-                if let found = find(cls, in: node.kids ?? []) { return found }
-            }
-            return nil
-        }
-        let squash = try XCTUnwrap(find("squash", in: scene.nodes))
+    /// Les treize animations du kit sont dans le paquet, et Lottie les décode.
+    func testEveryMoodHasItsAnimation() throws {
         for mood in MikaMood.allCases {
-            let animation = try XCTUnwrap(squash.st?[mood.rawValue]?.anim, "\(mood) ne respire pas")
-            XCTAssertNotNil(scene.keyframes[animation.name], "\(animation.name) sans images clés")
+            let url = try XCTUnwrap(
+                Bundle.main.url(forResource: mood.animationName, withExtension: "json"),
+                "\(mood.animationName).json manque"
+            )
+            let animation = try LottieAnimation.from(data: Data(contentsOf: url))
+            XCTAssertEqual(animation.size.width, 1024, accuracy: 0.5, "\(mood) n'est pas en 1024")
+            XCTAssertEqual(animation.duration, mood.duration, accuracy: 0.05, "\(mood) : durée")
         }
     }
 
-    /// Toute animation nommée a ses images clés.
-    func testEveryAnimationHasItsKeyframes() throws {
-        let scene = try XCTUnwrap(MikaScene.shared)
-        var missing: [String] = []
-        func walk(_ nodes: [MikaNode]) {
-            for node in nodes {
-                for style in (node.st ?? [:]).values {
-                    if let name = style.anim?.name, scene.keyframes[name] == nil { missing.append(name) }
-                }
-                walk(node.kids ?? [])
+    /// Chaque animation a l'étincelle que `MikaMascot` recolore sur un fond clair : un calque
+    /// de forme nommé « sparkle ». Sans lui, l'étincelle resterait blanche sur le blanc.
+    func testEveryAnimationHasASparkleLayer() throws {
+        for mood in MikaMood.allCases {
+            let url = try XCTUnwrap(Bundle.main.url(forResource: mood.animationName, withExtension: "json"))
+            let json = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
+            let layers = try XCTUnwrap(json["layers"] as? [[String: Any]])
+            let sparkles = layers.filter { $0["nm"] as? String == "sparkle" }
+            XCTAssertFalse(sparkles.isEmpty, "\(mood) sans étincelle")
+            XCTAssertTrue(sparkles.allSatisfy { $0["ty"] as? Int == 4 }, "\(mood) : l'étincelle n'est pas une forme")
+        }
+    }
+
+    /// Les images fixes : dix expressions, deux étincelles, toutes dans le catalogue.
+    func testEveryStillExistsInBothSparkles() {
+        for still in MikaStill.allCases {
+            for sparkle in [MikaSparkle.white, .blue] {
+                let name = still.imageName(sparkle: sparkle)
+                XCTAssertNotNil(UIImage(named: name), "\(name) manque au catalogue")
             }
         }
-        walk(scene.nodes)
-        XCTAssertEqual(missing, [])
+        for mood in MikaMood.allCases {
+            XCTAssertNotNil(UIImage(named: mood.still.imageName(sparkle: .blue)), "\(mood) sans image fixe")
+        }
     }
 
-    func testCubicBezierMatchesCSS() {
-        let linear: [Double] = [0, 0, 1, 1]
-        XCTAssertEqual(CubicBezier.value(linear, at: 0.3), 0.3, accuracy: 1e-6)
-        let easeInOut: [Double] = [0.42, 0, 0.58, 1]
-        XCTAssertEqual(CubicBezier.value(easeInOut, at: 0), 0, accuracy: 1e-4)
-        XCTAssertEqual(CubicBezier.value(easeInOut, at: 0.5), 0.5, accuracy: 1e-3)
-        XCTAssertEqual(CubicBezier.value(easeInOut, at: 1), 1, accuracy: 1e-4)
-        XCTAssertLessThan(CubicBezier.value(easeInOut, at: 0.2), 0.2, "ease-in-out démarre lentement")
-        // Une courbe qui dépasse 1 (le « pop » de la surprise) doit dépasser.
-        let overshoot: [Double] = [0.3, 1.6, 0.5, 1]
-        XCTAssertGreaterThan(CubicBezier.value(overshoot, at: 0.5), 1)
+    /// Les boucles du kit : repos, réflexion, écriture, tristesse, sommeil. Le reste se joue
+    /// une fois et revient au repos.
+    func testLoopingMoodsFollowTheKit() {
+        let loops = Set(MikaMood.allCases.filter(\.loops))
+        XCTAssertEqual(loops, [.idle, .think, .write, .sad, .sleep])
+    }
+
+    /// Sous XCTest, Mika ne lance pas Lottie : les rendus restent des images.
+    func testTestsUseStills() {
+        XCTAssertTrue(MikaLibrary.isRunningTests)
     }
 }

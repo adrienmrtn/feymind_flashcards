@@ -51,6 +51,8 @@ struct MicaboApp: App {
             // Avant tout le reste : le SDK doit être configuré avant qu'un écran ne puisse
             // demander une offre, et avant le premier `logIn`.
             PurchasesBridge.configureIfPossible()
+            // Les treize animations de Mika, décodées en tâche de fond pendant le lancement.
+            MikaLibrary.preload()
             // Avant la fin du lancement, comme iOS le demande : une notification qui ouvre
             // l'app doit trouver son délégué en place.
             UNUserNotificationCenter.current().delegate = ReminderPresenter.shared

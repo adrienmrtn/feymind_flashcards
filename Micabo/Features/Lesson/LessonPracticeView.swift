@@ -108,7 +108,7 @@ struct LessonPracticeView: View {
     private var writing: some View {
         VStack(spacing: 20) {
             Spacer()
-            MikaMascot(mood: .think, size: 170)
+            MikaMascot(mood: .write, size: 160, frame: .circle)
             Text(L10n.t("lesson.practice.writing", locale: .resolved()))
                 .font(MicaboFont.subtitle)
                 .foregroundStyle(MicaboColor.ink)
@@ -130,7 +130,7 @@ struct LessonPracticeView: View {
     private func failed(_ message: String) -> some View {
         VStack(spacing: 18) {
             Spacer()
-            MikaMascot(mood: .sad, size: 150)
+            MikaMascot(mood: .sad, size: 150, frame: .circle)
             Text(message)
                 .font(MicaboFont.subtitle)
                 .foregroundStyle(MicaboColor.ink)

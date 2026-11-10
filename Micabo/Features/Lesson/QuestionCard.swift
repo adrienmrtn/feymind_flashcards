@@ -91,7 +91,7 @@ struct QuestionFeedback: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
-            MikaMascot(mood: right ? .happy : .sad, size: 64)
+            MikaMascot(mood: right ? .happy : .shake, size: 64, frame: .circle)
             VStack(alignment: .leading, spacing: 4) {
                 // Le verdict, et l'XP qu'il rapporte (`docs/refonte-knowunity.md` § 6) ; sur une
                 // bonne réponse, un mot qui félicite.

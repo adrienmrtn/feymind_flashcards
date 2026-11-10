@@ -170,12 +170,23 @@ struct HomeTodayCard: View {
                 }
             }
             Spacer(minLength: 0)
-            MikaMascot(mood: reached ? .celebrate : .idle, size: 64, frozenAt: motion.ambient ? nil : 0.4)
-                .frame(width: 64, height: 64)
+            // La place de Mika : il est posé plus bas, collé au bord de la carte.
+            Color.clear.frame(width: 64, height: 64)
         }
         .padding(.leading, 16)
         .padding(.trailing, 10)
         .padding(.vertical, 14)
+        // Mika est un buste : il sort du bord bas de l'en-tête bleu, qui le coupe.
+        .overlay(alignment: .bottomTrailing) {
+            MikaMascot(
+                mood: reached ? .celebrate : .idle,
+                size: 76,
+                frozenAt: motion.ambient ? nil : 0.4,
+                backdrop: .blue
+            )
+            .padding(.trailing, 4)
+        }
+        .clipShape(UnevenRoundedRectangle(topLeadingRadius: 27, bottomLeadingRadius: 20, bottomTrailingRadius: 20, topTrailingRadius: 27, style: .continuous))
         .background {
             // La lueur est posée par-dessus l'aplat, pas à côté : dans une pile, ses 180 points
             // agrandiraient le fond au-delà de l'en-tête.

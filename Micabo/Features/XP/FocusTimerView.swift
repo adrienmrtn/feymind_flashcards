@@ -98,12 +98,12 @@ struct FocusTimerView: View {
                 Circle()
                     .trim(from: 0, to: max(0, min(1, remaining / Self.duration)))
                     .stroke(
-                        LinearGradient(colors: [MicaboColor.accent, MicaboColor.keyword], startPoint: .topLeading, endPoint: .bottomTrailing),
+                        LinearGradient(colors: MicaboColor.brandGradient, startPoint: .topLeading, endPoint: .bottomTrailing),
                         style: StrokeStyle(lineWidth: 16, lineCap: .round)
                     )
                     .rotationEffect(.degrees(-90))
                     .animation(.linear(duration: 1), value: remaining)
-                MikaMascot(mood: isPaused ? .sleep : .idle, size: 150)
+                MikaMascot(mood: isPaused ? .sleep : .idle, size: 150, frame: .circle)
             }
             .frame(width: 264, height: 264)
             .accessibilityElement(children: .ignore)
@@ -195,7 +195,7 @@ struct FocusTimerView: View {
 
     private var finishedView: some View {
         ZStack {
-            ConfettiView(colors: [MicaboColor.accent, MicaboColor.keyword, LessonTone.mint.vivid, LessonTone.yellow.vivid])
+            ConfettiView(colors: [MicaboColor.accent, MicaboColor.accentDeep, LessonTone.mint.vivid, MicaboBrand.pencil])
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
             ScrollView {
@@ -207,7 +207,7 @@ struct FocusTimerView: View {
                         MicaboSpeechBubble(text: L10n.t("ios.kx.timer.mika", locale: .resolved()), tail: .bottom)
                             .padding(.top, 40)
                             .padding(.horizontal, 12)
-                        MikaMascot(mood: .celebrate, size: 150, reactsToTap: true)
+                        MikaMascot(mood: .celebrate, size: 150, reactsToTap: true, frame: .circle)
                     }
                     Text(L10n.t("ios.kx.timer.done", locale: .resolved()))
                         .font(MicaboFont.display(30))

@@ -115,7 +115,7 @@ struct MockExamFlow: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         Spacer(minLength: 0)
-                        MikaMascot(mood: .think, size: 84)
+                        MikaMascot(mood: .think, size: 84, frame: .circle)
                     }
 
                     VStack(alignment: .leading, spacing: 12) {
@@ -192,7 +192,7 @@ struct MockExamFlow: View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: symbol)
                 .font(.system(size: 17, weight: .bold))
-                .foregroundStyle(MicaboColor.accent)
+                .foregroundStyle(MicaboColor.accentInk)
                 .frame(width: 24)
             Text(L10n.t(key, locale: .resolved()))
                 .font(MicaboFont.ui(15, weight: .medium))
@@ -241,7 +241,7 @@ struct MockExamFlow: View {
     private var writing: some View {
         VStack(spacing: 20) {
             Spacer()
-            MikaMascot(mood: .think, size: 170)
+            MikaMascot(mood: .write, size: 160, frame: .circle)
             Text(L10n.t("lesson.exam.writing", locale: .resolved()))
                 .font(MicaboFont.subtitle)
                 .foregroundStyle(MicaboColor.ink)
@@ -263,7 +263,7 @@ struct MockExamFlow: View {
     private func failed(_ message: String) -> some View {
         VStack(spacing: 18) {
             Spacer()
-            MikaMascot(mood: .sad, size: 150)
+            MikaMascot(mood: .sad, size: 150, frame: .circle)
             Text(message)
                 .font(MicaboFont.subtitle)
                 .foregroundStyle(MicaboColor.ink)
@@ -467,7 +467,7 @@ struct MockExamRunView: View {
         HStack(spacing: 10) {
             Label(L10n.t("lesson.exam.saved", locale: .resolved()), systemImage: "checkmark.circle.fill")
                 .font(MicaboFont.ui(15, weight: .bold))
-                .foregroundStyle(MicaboColor.accent)
+                .foregroundStyle(MicaboColor.accentInk)
             Spacer()
             Button {
                 Haptics.selection()
@@ -648,7 +648,7 @@ struct MockExamResultView: View {
                 }
                 .frame(width: 220, height: 220)
                 .overlay(alignment: .bottomTrailing) {
-                    MikaMascot(mood: passes ? .celebrate : .sad, size: 86)
+                    MikaMascot(mood: passes ? .celebrate : .sad, size: 86, frame: .circle)
                         .offset(x: 36, y: 12)
                         .opacity(shown ? 1 : 0)
                 }

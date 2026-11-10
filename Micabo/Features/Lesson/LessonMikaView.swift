@@ -67,7 +67,7 @@ struct LessonMikaView: View {
                         }
                         if chat.isThinking {
                             HStack {
-                                MikaMascot(mood: .think, size: 72)
+                                MikaMascot(mood: .think, size: 64, frame: .circle)
                                 Spacer()
                             }
                             .id("thinking")
@@ -134,7 +134,7 @@ struct LessonMikaView: View {
 
     private var welcome: some View {
         VStack(spacing: 14) {
-            MikaMascot(mood: .wave, size: 130)
+            MikaMascot(mood: .wave, size: 130, frame: .circle)
             Text(L10n.t("lesson.mika.welcome", locale: .resolved(), vars: ["lesson": course.title]))
                 .font(MicaboFont.subtitle)
                 .foregroundStyle(MicaboColor.ink)

@@ -39,7 +39,7 @@ struct MikaLoadingView: View {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
 
-            MikaMascot(mood: isDone ? .happy : .think, size: 180)
+            MikaMascot(mood: isDone ? .happy : .think, size: 170, frame: .rounded)
                 .scaleEffect(isDone ? 0.88 : 1)
                 .animation(.easeInOut(duration: 0.6), value: isDone)
                 .padding(.bottom, 26)

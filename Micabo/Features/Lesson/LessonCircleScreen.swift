@@ -153,7 +153,7 @@ struct IntroCircleView: View {
                 VStack(alignment: .leading, spacing: 22) {
                     HStack {
                         Spacer()
-                        MikaMascot(mood: .wave, size: 130)
+                        MikaMascot(mood: .wave, size: 130, frame: .circle)
                         Spacer()
                     }
                     Text(L10n.t("lesson.intro.title", locale: .resolved()))
@@ -309,7 +309,7 @@ struct LessonFinishedView: View {
                 GeometryReader { proxy in
                     ScrollView {
                         VStack(spacing: 22) {
-                            MikaMascot(mood: .celebrate, size: showsRating ? 140 : 200, reactsToTap: true)
+                            MikaMascot(mood: .celebrate, size: showsRating ? 140 : 190, reactsToTap: true, frame: .circle)
                             Text(L10n.t("lesson.finished.title", locale: .resolved()))
                                 .font(MicaboFont.display(32))
                                 .foregroundStyle(MicaboColor.ink)

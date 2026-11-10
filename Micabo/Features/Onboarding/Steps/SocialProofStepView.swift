@@ -33,7 +33,7 @@ struct SocialProofStepView: View {
                     VStack(spacing: 0) {
                         VStack(spacing: 4) {
                             if showsMika {
-                                MikaMascot(mood: .celebrate, size: 104, reactsToTap: true)
+                                MikaMascot(mood: .celebrate, size: 104, reactsToTap: true, frame: .circle)
                                     .padding(.bottom, 6)
                                     .accessibilityHidden(true)
                             }
@@ -134,7 +134,7 @@ struct SupportUsStepView: View {
                         Circle()
                             .fill(RadialGradient(colors: [MicaboColor.cautionVivid.opacity(0.24), MicaboColor.cautionVivid.opacity(0)], center: .center, startRadius: 4, endRadius: 110))
                             .frame(width: 220, height: 220)
-                        MikaMascot(mood: .happy, size: 132, reactsToTap: true)
+                        MikaMascot(mood: .happy, size: 132, reactsToTap: true, frame: .circle)
                         MicaboIconView(icon: .star, size: 50)
                             .rotationEffect(.degrees(-12))
                             .offset(x: -70, y: -58)

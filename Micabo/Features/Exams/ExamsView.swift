@@ -135,7 +135,7 @@ struct ExamsView: View {
 
     private var emptyCard: some View {
         VStack(spacing: 14) {
-            MikaMascot(mood: .wave, size: 120)
+            MikaMascot(mood: .wave, size: 120, frame: .circle)
             Text(i18n.t("lesson.exam.emptyTitle"))
                 .font(MicaboFont.ui(22, weight: .heavy))
                 .foregroundStyle(MicaboColor.ink)
@@ -171,7 +171,7 @@ struct ExamsView: View {
                     Circle().fill(MicaboColor.accentSoft)
                     Image(systemName: "stopwatch.fill")
                         .font(.system(size: 30, weight: .bold))
-                        .foregroundStyle(MicaboColor.accent)
+                        .foregroundStyle(MicaboColor.accentInk)
                         .symbolEffect(.bounce, value: shown)
                 }
                 .frame(width: 64, height: 64)
@@ -308,7 +308,7 @@ struct ExamHero: View {
             Button(action: onMock) {
                 Label(L10n.t("lesson.exam.startMock", locale: .resolved()), systemImage: "stopwatch")
                     .font(MicaboFont.ui(18, weight: .heavy))
-                    .foregroundStyle(MicaboColor.accent)
+                    .foregroundStyle(MicaboColor.accentInk)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
                     .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
@@ -348,7 +348,7 @@ struct ExamRow: View {
             HStack(spacing: 14) {
                 Text(exam.countdownLabel())
                     .font(MicaboFont.number(15))
-                    .foregroundStyle(MicaboColor.accent)
+                    .foregroundStyle(MicaboColor.accentInk)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                     .frame(width: 70, height: 50)

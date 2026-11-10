@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "Mika-sommeil-clair.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

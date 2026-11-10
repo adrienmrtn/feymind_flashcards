@@ -100,7 +100,7 @@ struct WelcomeStepView: View {
                 Spacer(minLength: 0)
 
                 // Mika accueille : il arrive en ressort et fait coucou, au-dessus du prénom.
-                MikaMascot(mood: .wave, size: 150, reactsToTap: true)
+                MikaMascot(mood: .wave, size: 150, reactsToTap: true, frame: .rounded)
                     .scaleEffect(mikaShown ? 1 : 0.4)
                     .opacity(mikaShown ? 1 : 0)
                     .padding(.bottom, MicaboSpacing.lg)

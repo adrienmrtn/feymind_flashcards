@@ -53,7 +53,7 @@ struct StreakCelebrationView: View {
             VStack(spacing: 0) {
                 Spacer(minLength: 12)
                 HStack(alignment: .bottom, spacing: -8) {
-                    MikaMascot(mood: .celebrate, size: 124, reactsToTap: true)
+                    MikaMascot(mood: .celebrate, size: 124, reactsToTap: true, frame: .circle)
                     StreakFlame(lit: lit, size: 84)
                 }
                 Text("\(shownCount)")

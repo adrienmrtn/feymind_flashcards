@@ -131,7 +131,7 @@ struct MikaSpeaksStepView: View {
             VStack(spacing: 0) {
                 Spacer(minLength: 0)
 
-                MikaMascot(mood: .wave, size: 170, reactsToTap: true)
+                MikaMascot(mood: .wave, size: 160, reactsToTap: true, frame: .rounded)
                     .scaleEffect(mikaShown ? 1 : 0.4)
                     .opacity(mikaShown ? 1 : 0)
                     .padding(.bottom, 26)

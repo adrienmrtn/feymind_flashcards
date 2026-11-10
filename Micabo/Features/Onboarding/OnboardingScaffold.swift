@@ -32,9 +32,8 @@ enum OnboardingPalette {
     /// L'or des étoiles.
     static let star = Color(hex: 0xF5B942)
 
-    /// Le dégradé des mots mis en avant : le bleu de l'accent vers le violet des mots-clés,
-    /// celui du titre de Home.
-    static let mikaGradient: [Color] = [MicaboColor.accent, MicaboColor.keyword]
+    /// Le dégradé des mots mis en avant : le dégradé de marque, du bleu Micabo à son 700.
+    static let mikaGradient: [Color] = MicaboColor.brandGradient
 
     // MARK: Les tailles de texte
 
@@ -167,7 +166,7 @@ extension EnvironmentValues {
 struct OnboardingFooterMika: View {
     var cheers: Int
 
-    static let size: CGFloat = 78
+    static let size: CGFloat = 64
 
     @State private var mood: MikaMood = .wave
     @State private var hop = false
@@ -175,7 +174,7 @@ struct OnboardingFooterMika: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        MikaMascot(mood: mood, size: Self.size, reactsToTap: true)
+        MikaMascot(mood: mood, size: Self.size, reactsToTap: true, frame: .circle)
             .frame(width: Self.size, height: Self.size)
             .offset(y: hop ? -10 : 0)
             .accessibilityHidden(true)

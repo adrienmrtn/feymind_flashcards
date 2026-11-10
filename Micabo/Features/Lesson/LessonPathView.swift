@@ -581,7 +581,7 @@ struct LessonPreparingView: View {
     var body: some View {
         VStack(spacing: 20) {
             Spacer()
-            MikaMascot(mood: error == nil ? .think : .sad, size: 180)
+            MikaMascot(mood: error == nil ? .write : .sad, size: 170, frame: .circle)
             Text(error == nil
                 ? L10n.t("lesson.convert.title", locale: .resolved())
                 : L10n.t("lesson.convert.failed", locale: .resolved()))

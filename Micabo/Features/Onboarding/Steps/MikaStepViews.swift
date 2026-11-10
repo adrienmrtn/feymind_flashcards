@@ -292,7 +292,7 @@ private struct MikaMissionScene: View {
                         .position(x: proxy.size.width * item.1, y: proxy.size.height * item.2)
                 }
 
-                MikaMascot(mood: .happy, size: min(170, proxy.size.height * 0.5), reactsToTap: true)
+                MikaMascot(mood: .happy, size: min(170, proxy.size.height * 0.5), reactsToTap: true, frame: .circle)
                     .popIn(shown || still, delay: 0.05)
                     .position(x: proxy.size.width / 2, y: proxy.size.height * 0.52)
 
@@ -355,7 +355,7 @@ private struct MikaSourcesScene: View {
                         .position(home)
                 }
 
-                MikaMascot(mood: mood, size: min(150, proxy.size.height * 0.42))
+                MikaMascot(mood: mood, size: min(150, proxy.size.height * 0.42), frame: .circle)
                     .scaleEffect(munch ? 1.08 : 1)
                     .popIn(shown || still)
                     .position(mika)
@@ -430,7 +430,7 @@ private struct MikaPathsScene: View {
                 OnboardingLessonPhone(fades: true, animated: true, widthRatio: 0.74)
                     .frame(width: proxy.size.width, height: proxy.size.height)
 
-                MikaMascot(mood: .wave, size: min(110, proxy.size.height * 0.3))
+                MikaMascot(mood: .wave, size: min(110, proxy.size.height * 0.3), frame: .circle)
                     .bobbing(4, period: 2.4)
                     .popIn(shown || still, delay: 0.9)
                     .padding(.leading, proxy.size.width * 0.04)
@@ -467,9 +467,11 @@ private struct MikaDesignScene: View {
                     .position(x: proxy.size.width / 2, y: proxy.size.height * 0.55)
 
                 card(width: cardWidth)
-                    .overlay(alignment: .topTrailing) {
+                    // Mika regarde par-dessus la carte : il est derrière elle, et le bord haut
+                    // de la carte cache la coupe du buste.
+                    .background(alignment: .topTrailing) {
                         MikaMascot(mood: picked || still ? .celebrate : .idle, size: 92)
-                            .offset(x: 6, y: -74)
+                            .offset(x: -10, y: -84)
                     }
                     .overlay(alignment: .topLeading) { streakBadge.offset(x: -10, y: -16) }
                     .overlay { confetti }
@@ -614,14 +616,14 @@ private struct MikaSolutionScene: View {
                 Circle()
                     .trim(from: 0, to: still ? 1 : fill)
                     .stroke(
-                        AngularGradient(colors: [MicaboColor.accent, MicaboColor.keyword, MicaboColor.accent], center: .center),
+                        AngularGradient(colors: [MicaboColor.accent, MicaboColor.accentDeep, MicaboColor.accent], center: .center),
                         style: StrokeStyle(lineWidth: 16, lineCap: .round)
                     )
                     .rotationEffect(.degrees(-90))
                     .frame(width: ring, height: ring)
                     .position(center)
 
-                MikaMascot(mood: checked >= Self.items.count || still ? .celebrate : .happy, size: ring * 0.62)
+                MikaMascot(mood: checked >= Self.items.count || still ? .celebrate : .happy, size: ring * 0.62, frame: .circle)
                     .popIn(shown || still)
                     .position(center)
 
@@ -714,7 +716,7 @@ private struct MikaReliefScene: View {
                     .animation(.spring(duration: 0.55, bounce: 0.45).delay(0.25), value: tidy)
                     .position(base)
 
-                MikaMascot(mood: tidy ? .happy : .surprise, size: 104)
+                MikaMascot(mood: tidy ? .happy : .surprise, size: 104, frame: .circle)
                     .offset(y: tidy ? -96 : -150)
                     .opacity(shown || still ? 1 : 0)
                     .animation(.spring(duration: 0.6, bounce: 0.4).delay(tidy ? 0.4 : 0.3), value: tidy)
@@ -925,9 +927,10 @@ private struct MikaCompanionScene: View {
                 HStack(alignment: .bottom, spacing: proxy.size.width * 0.12) {
                     bar(label: i18n.t("ios.onb.companion.class"), height: chart * 0.42, width: barWidth, colors: [MicaboColor.inkTertiary.opacity(0.55), MicaboColor.inkTertiary.opacity(0.75)], delay: 0)
                     bar(label: i18n.t("ios.onb.companion.ai"), height: chart * 0.88, width: barWidth, colors: OnboardingPalette.mikaGradient, delay: 0.25)
-                        .overlay(alignment: .top) {
+                        // Mika sort de derrière la grande barre : son bord haut cache la coupe.
+                        .background(alignment: .top) {
                             MikaMascot(mood: isGrown ? .celebrate : .think, size: 76)
-                                .offset(y: -66)
+                                .offset(y: -68)
                                 .popIn(isGrown, delay: 0.9)
                         }
                 }
@@ -1030,7 +1033,7 @@ private struct MikaStartScene: View {
                 .animation(.spring(duration: 0.55, bounce: 0.5).delay(0.1), value: shown)
                 .position(x: a.x, y: a.y - 30)
 
-                MikaMascot(mood: .wave, size: min(92, size.height * 0.3))
+                MikaMascot(mood: .wave, size: min(92, size.height * 0.3), frame: .circle)
                     .popIn(shown || still, delay: 0.5)
                     .position(x: size.width * 0.16, y: size.height * 0.36)
             }
@@ -1134,7 +1137,7 @@ private struct MikaTutorScene: View {
     private func phone(width: CGFloat, height: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
-                MikaMascot(mood: stage >= 3 ? .happy : .idle, size: 30)
+                MikaMascot(mood: stage >= 3 ? .happy : .idle, size: 30, frame: .circle)
                 Text("Mika")
                     .font(MicaboFont.ui(14, weight: .heavy))
                     .foregroundStyle(MicaboColor.ink)

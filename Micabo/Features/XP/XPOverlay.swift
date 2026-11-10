@@ -172,7 +172,7 @@ struct XPToast: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 9)
         .background(
-            LinearGradient(colors: [MicaboColor.accent, MicaboColor.keyword], startPoint: .leading, endPoint: .trailing),
+            LinearGradient(colors: MicaboColor.brandGradient, startPoint: .leading, endPoint: .trailing),
             in: Capsule()
         )
         .overlay(Capsule().strokeBorder(Color.white.opacity(0.35), lineWidth: 1))
@@ -191,7 +191,7 @@ struct XPGoalCelebration: View {
             Color.black.opacity(0.45)
                 .ignoresSafeArea()
             if appeared {
-                ConfettiView(colors: [MicaboColor.accent, MicaboColor.keyword, LessonTone.yellow.vivid, LessonTone.mint.vivid, LessonTone.pink.vivid])
+                ConfettiView(colors: [MicaboColor.accent, MicaboColor.accentDeep, MicaboBrand.pencil, LessonTone.mint.vivid, MicaboBrand.eraser])
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
             }
@@ -218,7 +218,7 @@ struct XPGoalCard: View {
         VStack(spacing: 14) {
             MicaboSpeechBubble(text: L10n.t("ios.kx.goal.mika", locale: .resolved()), tail: .bottom)
                 .padding(.horizontal, 8)
-            MikaMascot(mood: .celebrate, size: 120, reactsToTap: true)
+            MikaMascot(mood: .celebrate, size: 120, reactsToTap: true, frame: .circle)
             Text(L10n.t("ios.kx.goal.title", locale: .resolved()))
                 .font(MicaboFont.display(26))
                 .foregroundStyle(MicaboColor.ink)

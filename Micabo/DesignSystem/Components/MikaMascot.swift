@@ -1,484 +1,449 @@
+import Lottie
 import SwiftUI
+import UIKit
 
-/// Les huit humeurs de Mika, celles du design.
+/// **Les treize humeurs de Mika**, celles du kit de marque (`design/micabo-kit-mika/`).
+///
+/// Chacune a son animation Lottie (`Resources/Mika/mika-<humeur>.json`) et une image fixe
+/// (`Mika-<expression>-bleu|clair` dans le catalogue) : les dix expressions fixes du kit
+/// couvrent les treize humeurs, les trois sans image prennent la plus proche.
 enum MikaMood: String, CaseIterable, Identifiable {
-    /// Au repos : il respire, cligne, regarde autour de lui. Les écrans calmes.
+    /// Au repos : il respire, cligne des yeux, l'étincelle scintille. Les écrans calmes.
     case idle
-    /// Coucou : l'aile qui salue. Accueil.
+    /// Coucou : il agite le crayon. Accueil, premier lancement.
     case wave
-    /// Joie : il saute, des cœurs. Une bonne réponse, une action réussie.
+    /// Sourire : les yeux rieurs, un petit rebond. Bonne réponse, action réussie.
     case happy
-    /// Dodo : les yeux fermés, des « z ». Une liste vide.
+    /// Sommeil : yeux fermés, « z z z ». Inactivité, liste vide, rappel.
     case sleep
-    /// Réflexion : une bulle à trois points. Les chargements.
+    /// Réflexion : il regarde l'étincelle qui tourne. Chargement, l'IA lit le cours.
     case think
-    /// Surprise : un point d'exclamation. Une nouveauté.
+    /// Surprise : grands yeux, un sursaut. Nouveauté, récompense.
     case surprise
-    /// Fête : il saute, des confettis. Une leçon terminée.
+    /// Célébration : il saute avec des étincelles. Leçon finie, objectif atteint.
     case celebrate
-    /// Oups : une larme. Une erreur, une mauvaise réponse.
+    /// Tristesse : regard baissé, étincelle éteinte. Erreur, hors-ligne.
     case sad
+    /// Écriture : il gribouille, des étincelles s'envolent. Génération en cours.
+    case write
+    /// Clin d'œil : encouragement, astuce.
+    case wink
+    /// Curiosité : il regarde à gauche, à droite, en haut. Écran vide, attente.
+    case look
+    /// Non : il secoue la tête, un « non » doux. Mauvaise réponse.
+    case shake
+    /// Entrée : il surgit du bas. Arrivée sur un écran.
+    case appear
 
     var id: String { rawValue }
+
+    /// Les humeurs qui bouclent ; les autres se jouent une fois puis rendent la main au
+    /// repos (`idle`), dont elles partent et où elles finissent toutes.
+    var loops: Bool {
+        switch self {
+        case .idle, .think, .write, .sad, .sleep: true
+        default: false
+        }
+    }
+
+    /// Le nom du fichier Lottie, sans extension.
+    var animationName: String { "mika-\(rawValue)" }
+
+    /// Durée de l'animation, en secondes (`tokens.json`).
+    var duration: Double {
+        switch self {
+        case .idle, .sleep: 5
+        case .happy, .write: 2
+        case .wave: 2.5
+        case .think, .celebrate: 3
+        case .surprise, .shake: 1.67
+        case .sad: 4
+        case .look: 3.33
+        case .appear, .wink: 1.5
+        }
+    }
+
+    /// L'expression fixe la plus proche.
+    var still: MikaStill {
+        switch self {
+        case .idle, .appear, .look: .neutral
+        case .wave: .wave
+        case .happy: .smile
+        case .sleep: .sleep
+        case .think: .think
+        case .surprise: .surprise
+        case .celebrate: .celebrate
+        case .sad, .shake: .sad
+        case .write: .write
+        case .wink: .wink
+        }
+    }
 }
 
-/// **Mika, la mascotte, dessinée et animée nativement.**
+/// Les dix expressions fixes du kit, dans les deux versions de l'étincelle.
+enum MikaStill: String, CaseIterable {
+    case neutral = "neutre"
+    case wave = "coucou"
+    case smile = "sourire"
+    case sleep = "sommeil"
+    case think = "reflexion"
+    case surprise
+    case celebrate = "celebration"
+    case sad = "triste"
+    case write = "ecriture"
+    case wink = "clin-doeil"
+
+    /// Le nom de l'image dans le catalogue : étincelle blanche (`bleu`, pour un fond bleu ou
+    /// sombre) ou bleue (`clair`, pour un fond clair).
+    func imageName(sparkle: MikaSparkle) -> String {
+        "Mika-\(rawValue)-\(sparkle == .white ? "bleu" : "clair")"
+    }
+}
+
+/// La couleur de l'étincelle au bout du crayon. Blanche sur le bleu, elle disparaîtrait sur
+/// un fond clair : elle y devient bleue (règle 3 du kit).
+enum MikaSparkle: Equatable {
+    case white
+    case blue
+}
+
+/// Ce qu'il y a derrière Mika, d'où se déduit son étincelle.
+enum MikaBackdrop: Equatable {
+    /// Le papier de l'app, qui suit le thème : étincelle bleue le jour, blanche la nuit.
+    case surface
+    /// Un fond clair quel que soit le thème : étincelle bleue.
+    case light
+    /// Le bleu Micabo, ou un fond sombre et saturé : étincelle blanche.
+    case blue
+}
+
+/// Le cadre de Mika. **Mika est un buste** (règle 1 du kit) : sans cadre, il doit être collé
+/// au bord bas de ce qui le porte — une carte, l'écran — et coupé par lui. Pour le poser
+/// n'importe où, on le met dans sa pastille bleue (règle 2), d'où il sort par le bas.
+enum MikaFrame: Equatable {
+    /// Aucun cadre : le bas de l'image est la coupe du buste, à poser sur un bord bas.
+    case none
+    /// Une pastille ronde bleu Micabo.
+    case circle
+    /// Un carré arrondi bleu Micabo, comme l'icône de l'app.
+    case rounded
+}
+
+/// **Mika, la mascotte** : le personnage noir aux yeux blancs, crayon à la main.
 ///
-/// Le dessin et le mouvement viennent du design (`design/mika/`), traduits une fois pour toutes
-/// par `scripts/generate-mika.py` dans `mika.json` : chaque calque (ailes, houppette, yeux,
-/// queue…), et pour chaque humeur ce qui bouge, autour de quel point, sur quelles images clés.
-/// Cette vue rejoue ces animations comme le ferait un navigateur, dans un `Canvas`, sans
-/// WebView : autant de Mika qu'on veut à l'écran, et le même dessin dans les rendus de la CI.
+/// Animé par Lottie (`mika-<humeur>.json`, les treize animations du kit), ou fixe — une
+/// image du catalogue — quand l'animation n'a pas sa place :
+/// - `frozenAt` est donné (les rendus de la CI : `ImageRenderer` ne dessine pas Lottie),
+///   ou `animates` est faux (règle 5 : deux Mika animés au plus par écran) ;
+/// - « Réduire les animations » est actif, ou `\.mikaStill` est posé ;
+/// - Mika fait moins de 64 points (règle 4) ;
+/// - on tourne sous XCTest.
 ///
-/// Changer d'humeur fond les yeux, la bouche et les effets en 0,18 s, comme le design.
-/// « Réduire les animations » fige Mika dans la pose de son humeur.
+/// Les humeurs qui bouclent (`idle`, `think`, `write`, `sad`, `sleep`) bouclent ; les autres
+/// se jouent une fois puis Mika revient au repos, et `onDone` est appelé. Un appui, si
+/// `reactsToTap`, lui fait un sourire puis il revient à son humeur.
 struct MikaMascot: View {
-    var mood: MikaMood = .idle
-    var size: CGFloat = 120
-    /// Un appui le fait sauter de joie, puis il revient à son humeur.
-    var reactsToTap = false
-    /// Fige l'animation à un instant donné, en secondes (rendus, aperçus).
+    var mood: MikaMood
+    var size: CGFloat
+    var reactsToTap: Bool
+    /// Fige Mika sur l'image de son humeur (rendus, aperçus). La valeur n'est plus lue :
+    /// une image fixe n'a pas d'instant.
     var frozenAt: Double?
+    var backdrop: MikaBackdrop
+    var frame: MikaFrame
+    /// Faux pour un Mika de plus sur un écran qui en anime déjà deux.
+    var animates: Bool
+    var onDone: (() -> Void)?
+
+    init(
+        mood: MikaMood = .idle,
+        size: CGFloat = 120,
+        reactsToTap: Bool = false,
+        frozenAt: Double? = nil,
+        backdrop: MikaBackdrop = .surface,
+        frame: MikaFrame = .none,
+        animates: Bool = true,
+        onDone: (() -> Void)? = nil
+    ) {
+        self.mood = mood
+        self.size = size
+        self.reactsToTap = reactsToTap
+        self.frozenAt = frozenAt
+        self.backdrop = backdrop
+        self.frame = frame
+        self.animates = animates
+        self.onDone = onDone
+    }
+
+    /// Sous cette taille, une image fixe (règle 4 du kit).
+    static let minimumAnimatedSize: CGFloat = 64
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var start = Date()
-    @State private var previousMood: MikaMood?
-    @State private var moodChangedAt = Date.distantPast
-    @State private var tapUntil = Date.distantPast
+    @Environment(\.mikaStill) private var forcedStill
+    @Environment(\.colorScheme) private var colorScheme
+
+    /// Le sourire d'un appui, joué par-dessus l'humeur.
+    @State private var reaction: MikaMood?
+    /// L'humeur ponctuelle a fini de se jouer : Mika est revenu au repos.
+    @State private var settled = false
+    /// Change à chaque nouvelle lecture, pour rejouer la même humeur.
+    @State private var take = 0
+    @State private var stillTask: Task<Void, Never>?
+
+    private var isAnimated: Bool {
+        animates && frozenAt == nil && !reduceMotion && !forcedStill
+            && size >= Self.minimumAnimatedSize && !MikaLibrary.isRunningTests
+    }
+
+    /// Ce que Mika joue en ce moment.
+    private var shown: MikaMood {
+        if let reaction { return reaction }
+        return settled && !mood.loops ? .idle : mood
+    }
+
+    private var sparkle: MikaSparkle {
+        if frame != .none { return .white }
+        switch backdrop {
+        case .blue: return .white
+        case .light: return .blue
+        case .surface: return colorScheme == .dark ? .white : .blue
+        }
+    }
 
     var body: some View {
-        let animated = frozenAt == nil && !reduceMotion
-        TimelineView(.animation(minimumInterval: 1 / 60, paused: !animated)) { timeline in
-            let now = timeline.date
-            let shown: MikaMood = now < tapUntil ? .happy : mood
-            Canvas { context, canvasSize in
-                guard let scene = MikaScene.shared else { return }
-                let time = frozenAt ?? (animated ? now.timeIntervalSince(start) : 0)
-                let fade = animated ? min(1, now.timeIntervalSince(moodChangedAt) / scene.fade) : 1
-                MikaRenderer(
-                    scene: scene,
-                    mood: shown,
-                    previous: fade < 1 ? previousMood : nil,
-                    fade: fade,
-                    time: time,
-                    still: !animated && frozenAt == nil
-                )
-                .draw(in: context, size: canvasSize)
+        framed
+            .frame(width: size, height: size)
+            .contentShape(Rectangle())
+            .onTapGesture { react() }
+            .allowsHitTesting(reactsToTap)
+            .onChange(of: mood) { _, _ in
+                reaction = nil
+                settled = false
+                take += 1
+                scheduleStillDone()
             }
-        }
-        // Les effets (confettis, cœurs, bulle) débordent de la boîte du dessin, comme dans
-        // le design : la toile est plus grande que la place que Mika occupe.
-        .frame(width: size * MikaRenderer.overflow, height: size * MikaRenderer.overflow)
-        .frame(width: size, height: size)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            guard reactsToTap else { return }
-            Haptics.selection()
-            tapUntil = Date().addingTimeInterval(1.15)
-        }
-        .allowsHitTesting(reactsToTap)
-        .onChange(of: mood) { old, _ in
-            previousMood = old
-            moodChangedAt = Date()
-        }
-        .accessibilityHidden(true)
-    }
-}
-
-// MARK: - La scène
-
-/// `mika.json`, décodé une fois.
-final class MikaScene: Decodable {
-    let viewBox: [Double]
-    let fade: Double
-    let keyframes: [String: MikaKeyframes]
-    let nodes: [MikaNode]
-
-    static let shared: MikaScene? = {
-        guard let url = Bundle.main.url(forResource: "mika", withExtension: "json"),
-              let data = try? Data(contentsOf: url)
-        else { return nil }
-        return try? JSONDecoder().decode(MikaScene.self, from: data)
-    }()
-}
-
-struct MikaKeyframes: Decodable {
-    /// [décalage, tx, ty, rotation (degrés), sx, sy]
-    let transform: [[Double]]?
-    /// [décalage, opacité]
-    let opacity: [[Double]]?
-}
-
-struct MikaAnimation: Decodable {
-    let name: String
-    let dur: Double
-    /// Les quatre nombres d'une courbe `cubic-bezier`.
-    let ease: [Double]
-    let alternate: Bool
-    let delay: Double
-}
-
-struct MikaStyle: Decodable {
-    let anim: MikaAnimation?
-    /// [tx, ty, rotation (degrés), sx, sy]
-    let tf: [Double]?
-    let op: Double?
-    let origin: [Double]?
-}
-
-final class MikaNode: Decodable {
-    let t: String
-    let c: [String]?
-    let m: [Double]?
-    let o: Double?
-    let kids: [MikaNode]?
-    let d: [MikaCommand]?
-    let bb: [Double]?
-    let fill: MikaPaint?
-    let stroke: MikaPaint?
-    let sw: Double?
-    let cap: String?
-    let join: String?
-    let st: [String: MikaStyle]?
-    let fade: Bool?
-
-    private enum CodingKeys: String, CodingKey {
-        case t, c, m, o, kids, d, bb, fill, stroke, sw, cap, join, st, fade
+            .onAppear { scheduleStillDone() }
+            .onDisappear { stillTask?.cancel() }
+            .accessibilityHidden(true)
     }
 
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        t = try container.decode(String.self, forKey: .t)
-        c = try container.decodeIfPresent([String].self, forKey: .c)
-        m = try container.decodeIfPresent([Double].self, forKey: .m)
-        o = try container.decodeIfPresent(Double.self, forKey: .o)
-        kids = try container.decodeIfPresent([MikaNode].self, forKey: .kids)
-        let commands = try container.decodeIfPresent([MikaCommand].self, forKey: .d)
-        d = commands
-        bb = try container.decodeIfPresent([Double].self, forKey: .bb)
-        fill = try container.decodeIfPresent(MikaPaint.self, forKey: .fill)
-        stroke = try container.decodeIfPresent(MikaPaint.self, forKey: .stroke)
-        sw = try container.decodeIfPresent(Double.self, forKey: .sw)
-        cap = try container.decodeIfPresent(String.self, forKey: .cap)
-        join = try container.decodeIfPresent(String.self, forKey: .join)
-        st = try container.decodeIfPresent([String: MikaStyle].self, forKey: .st)
-        fade = try container.decodeIfPresent(Bool.self, forKey: .fade)
-        path = commands.map(MikaNode.makePath)
-    }
+    // MARK: Le cadre
 
-    /// Le tracé, construit une fois au décodage.
-    let path: Path?
-
-    private static func makePath(_ commands: [MikaCommand]) -> Path {
-        var path = Path()
-        for command in commands {
-            let v = command.values.map { CGFloat($0) }
-            switch command.op {
-            case "M": path.move(to: CGPoint(x: v[0], y: v[1]))
-            case "L": path.addLine(to: CGPoint(x: v[0], y: v[1]))
-            case "C":
-                path.addCurve(
-                    to: CGPoint(x: v[4], y: v[5]),
-                    control1: CGPoint(x: v[0], y: v[1]),
-                    control2: CGPoint(x: v[2], y: v[3])
-                )
-            default: path.closeSubpath()
-            }
-        }
-        return path
-    }
-
-    var box: CGRect {
-        guard let bb, bb.count == 4 else { return .zero }
-        return CGRect(x: bb[0], y: bb[1], width: bb[2], height: bb[3])
-    }
-}
-
-/// Une commande de tracé : `["C", x1, y1, x2, y2, x, y]`.
-struct MikaCommand: Decodable {
-    let op: String
-    let values: [Double]
-
-    init(from decoder: Decoder) throws {
-        var container = try decoder.unkeyedContainer()
-        op = try container.decode(String.self)
-        var values: [Double] = []
-        while !container.isAtEnd {
-            values.append(try container.decode(Double.self))
-        }
-        self.values = values
-    }
-}
-
-/// Une couleur pleine ou un dégradé, en coordonnées de l'objet (`bbox`) ou de la scène.
-struct MikaPaint: Decodable {
-    struct Stop: Decodable {
-        let offset: Double
-        let color: Color
-
-        init(from decoder: Decoder) throws {
-            var container = try decoder.unkeyedContainer()
-            offset = try container.decode(Double.self)
-            let hex = try container.decode(String.self)
-            let alpha = try container.decode(Double.self)
-            color = Color(hex: UInt32(hex, radix: 16) ?? 0).opacity(alpha)
-        }
-    }
-
-    let k: String
-    let rgb: String?
-    let units: String?
-    let stops: [Stop]?
-    let x1: Double?
-    let y1: Double?
-    let x2: Double?
-    let y2: Double?
-    let cx: Double?
-    let cy: Double?
-    let r: Double?
-
-    var solid: Color { Color(hex: UInt32(rgb ?? "000000", radix: 16) ?? 0) }
-
-    var gradient: Gradient {
-        Gradient(stops: (stops ?? []).map { Gradient.Stop(color: $0.color, location: $0.offset) })
-    }
-}
-
-// MARK: - Le rendu
-
-/// Rejoue la scène à un instant donné, pour une humeur donnée.
-struct MikaRenderer {
-    /// La toile déborde de la boîte du dessin de 20 % : 10 % de chaque côté.
-    static let overflow: CGFloat = 1.2
-
-    let scene: MikaScene
-    let mood: MikaMood
-    /// L'humeur qu'on quitte, pendant le fondu.
-    let previous: MikaMood?
-    let fade: Double
-    let time: Double
-    /// Réduire les animations : la pose fixe de l'humeur, sans aucune animation.
-    var still = false
-
-    func draw(in context: GraphicsContext, size: CGSize) {
-        let box = scene.viewBox
-        guard box.count == 4 else { return }
-        let side = min(size.width, size.height) / Self.overflow
-        let scale = side / box[2]
-        var context = context
-        context.translateBy(x: (size.width - side) / 2, y: (size.height - side) / 2)
-        context.scaleBy(x: scale, y: scale)
-        context.translateBy(x: -box[0], y: -box[1])
-        for node in scene.nodes {
-            draw(node, in: context)
-        }
-    }
-
-    private func draw(_ node: MikaNode, in parent: GraphicsContext) {
-        let opacity = opacity(of: node)
-        guard opacity > 0.002 else { return }
-        var context = parent
-        context.concatenate(transform(of: node))
-
-        if node.t == "g" {
-            let kids = node.kids ?? []
-            if opacity < 0.999 {
-                context.drawLayer { layer in
-                    layer.opacity = opacity
-                    for kid in kids { draw(kid, in: layer) }
+    @ViewBuilder
+    private var framed: some View {
+        switch frame {
+        case .none:
+            figure(side: size)
+                .background {
+                    // La nuit, le corps noir se fondrait dans le fond : un halo bleu, derrière
+                    // lui et non sur lui, garde sa silhouette lisible.
+                    if sparkle == .white, backdrop == .surface {
+                        RadialGradient(
+                            colors: [MicaboBrand.blue.opacity(0.32), MicaboBrand.blue.opacity(0)],
+                            center: UnitPoint(x: 0.45, y: 0.78),
+                            startRadius: 0,
+                            endRadius: size * 0.5
+                        )
+                    }
                 }
-            } else {
-                for kid in kids { draw(kid, in: context) }
+        case .circle:
+            pastille(Circle(), scale: 0.86)
+        case .rounded:
+            pastille(RoundedRectangle(cornerRadius: size * 0.2237, style: .continuous), scale: 1)
+        }
+    }
+
+    /// Mika dans sa pastille bleue, sorti de son bord bas et coupé par elle.
+    private func pastille<S: Shape>(_ shape: S, scale: CGFloat) -> some View {
+        ZStack(alignment: .bottom) {
+            shape.fill(MicaboBrand.blue)
+            figure(side: size * scale)
+                // Mika est un peu à gauche dans son image (le crayon est à droite) : dans un
+                // rond, on le recentre d'un cheveu pour que le crayon ne touche pas le bord.
+                .offset(x: frame == .circle ? -size * 0.02 : 0)
+        }
+        .frame(width: size, height: size)
+        .clipShape(shape)
+    }
+
+    // MARK: Le dessin
+
+    @ViewBuilder
+    private func figure(side: CGFloat) -> some View {
+        if isAnimated {
+            MikaLottieView(
+                mood: shown,
+                take: take,
+                sparkle: sparkle == .white ? .white : UIColor(MicaboBrand.blue)
+            ) { finished in
+                finish(finished)
             }
+            .frame(width: side, height: side)
+        } else {
+            Image(shown.still.imageName(sparkle: sparkle))
+                .resizable()
+                .interpolation(.high)
+                .scaledToFit()
+                .frame(width: side, height: side)
+        }
+    }
+
+    // MARK: Le temps
+
+    private func react() {
+        guard reactsToTap else { return }
+        Haptics.selection()
+        reaction = .happy
+        take += 1
+        guard !isAnimated else { return }
+        // Fixe : le sourire reste le temps de l'animation, puis Mika revient.
+        stillTask?.cancel()
+        let current = take
+        stillTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.2))
+            guard !Task.isCancelled, current == take else { return }
+            reaction = nil
+        }
+    }
+
+    /// La fin d'une lecture ponctuelle.
+    private func finish(_ mood: MikaMood) {
+        if reaction != nil, mood == reaction {
+            reaction = nil
             return
         }
-
-        guard let path = node.path else { return }
-        context.opacity *= opacity
-        if let fill = node.fill {
-            paint(path, with: fill, box: node.box, in: context)
-        }
-        if let stroke = node.stroke {
-            let style = StrokeStyle(
-                lineWidth: node.sw ?? 1,
-                lineCap: lineCap(node.cap),
-                lineJoin: lineJoin(node.join)
-            )
-            paint(path.strokedPath(style), with: stroke, box: node.box, in: context)
-        }
+        guard mood == self.mood, !mood.loops else { return }
+        settled = true
+        onDone?()
     }
 
-    // MARK: Peinture
-
-    private func paint(_ path: Path, with paint: MikaPaint, box: CGRect, in context: GraphicsContext) {
-        switch paint.k {
-        case "solid":
-            context.fill(path, with: .color(paint.solid))
-        case "lin", "rad":
-            if paint.units == "user" {
-                context.fill(path, with: shading(paint))
-            } else {
-                // Un dégradé en coordonnées de l'objet s'étire avec sa boîte, comme en SVG :
-                // on le peint dans un carré unité posé sur la boîte, sous le tracé.
-                guard box.width > 0, box.height > 0 else { return }
-                var clipped = context
-                clipped.clip(to: path)
-                clipped.concatenate(
-                    CGAffineTransform(a: box.width, b: 0, c: 0, d: box.height, tx: box.minX, ty: box.minY)
-                )
-                clipped.fill(Path(CGRect(x: -2, y: -2, width: 5, height: 5)), with: shading(paint))
-            }
-        default:
-            break
+    /// Fixe, une humeur ponctuelle n'a pas de fin à guetter : `onDone` arrive après sa durée,
+    /// comme si elle s'était jouée.
+    private func scheduleStillDone() {
+        guard !isAnimated, let onDone, !mood.loops else { return }
+        stillTask?.cancel()
+        let duration = mood.duration
+        stillTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(duration))
+            guard !Task.isCancelled else { return }
+            onDone()
         }
-    }
-
-    private func shading(_ paint: MikaPaint) -> GraphicsContext.Shading {
-        if paint.k == "rad" {
-            return .radialGradient(
-                paint.gradient,
-                center: CGPoint(x: paint.cx ?? 0.5, y: paint.cy ?? 0.5),
-                startRadius: 0,
-                endRadius: paint.r ?? 0.5
-            )
-        }
-        return .linearGradient(
-            paint.gradient,
-            startPoint: CGPoint(x: paint.x1 ?? 0, y: paint.y1 ?? 0),
-            endPoint: CGPoint(x: paint.x2 ?? 1, y: paint.y2 ?? 0)
-        )
-    }
-
-    private func lineCap(_ value: String?) -> CGLineCap {
-        switch value {
-        case "round": .round
-        case "square": .square
-        default: .butt
-        }
-    }
-
-    private func lineJoin(_ value: String?) -> CGLineJoin {
-        switch value {
-        case "round": .round
-        case "bevel": .bevel
-        default: .miter
-        }
-    }
-
-    // MARK: Mouvement
-
-    private func style(of node: MikaNode, in mood: MikaMood) -> MikaStyle? {
-        node.st?[mood.rawValue]
-    }
-
-    /// La transformation d'un calque : celle de son animation si elle bouge, sa pose fixe de
-    /// l'humeur sinon, et, à défaut de tout style, son attribut `transform` d'origine.
-    private func transform(of node: MikaNode) -> CGAffineTransform {
-        let style = style(of: node, in: mood)
-        var components: [Double]?
-        if !still, let animation = style?.anim,
-           let track = scene.keyframes[animation.name]?.transform,
-           let progress = progress(of: animation) {
-            components = sample(track, at: progress, ease: animation.ease)
-        }
-        if components == nil { components = style?.tf }
-
-        guard let components, components.count == 5 else {
-            if let m = node.m, m.count == 6 {
-                return CGAffineTransform(a: m[0], b: m[1], c: m[2], d: m[3], tx: m[4], ty: m[5])
-            }
-            return .identity
-        }
-        let origin = style?.origin ?? [0, 0]
-        return CGAffineTransform(translationX: origin[0], y: origin[1])
-            .translatedBy(x: components[0], y: components[1])
-            .rotated(by: components[2] * .pi / 180)
-            .scaledBy(x: components[3], y: components[4])
-            .translatedBy(x: -origin[0], y: -origin[1])
-    }
-
-    private func opacity(of node: MikaNode) -> Double {
-        let current = opacity(of: node, in: mood)
-        guard node.fade == true, let previous, previous != mood else { return current }
-        let before = opacity(of: node, in: previous)
-        return before + (current - before) * fade
-    }
-
-    private func opacity(of node: MikaNode, in mood: MikaMood) -> Double {
-        let style = style(of: node, in: mood)
-        if !still, let animation = style?.anim,
-           let track = scene.keyframes[animation.name]?.opacity,
-           let progress = progress(of: animation) {
-            return sample(track, at: progress, ease: animation.ease).first ?? 1
-        }
-        return style?.op ?? node.o ?? 1
-    }
-
-    /// Où en est une animation qui boucle, entre 0 et 1 ; `nil` avant son délai, où elle ne
-    /// s'applique pas encore.
-    private func progress(of animation: MikaAnimation) -> Double? {
-        let local = time - animation.delay
-        guard local >= 0, animation.dur > 0 else { return nil }
-        let cycles = local / animation.dur
-        let iteration = floor(cycles)
-        var progress = cycles - iteration
-        if animation.alternate, Int(iteration) % 2 == 1 {
-            progress = 1 - progress
-        }
-        return progress
-    }
-
-    /// Les valeurs d'une piste d'images clés à un instant, la courbe appliquée à chaque
-    /// intervalle comme en CSS.
-    private func sample(_ track: [[Double]], at progress: Double, ease: [Double]) -> [Double] {
-        guard let first = track.first, let last = track.last else { return [] }
-        if progress <= first[0] { return Array(first.dropFirst()) }
-        if progress >= last[0] { return Array(last.dropFirst()) }
-        for index in 0..<(track.count - 1) {
-            let a = track[index]
-            let b = track[index + 1]
-            guard progress >= a[0], progress <= b[0] else { continue }
-            let span = b[0] - a[0]
-            let local = span > 0 ? (progress - a[0]) / span : 1
-            let eased = CubicBezier.value(ease, at: local)
-            return zip(a.dropFirst(), b.dropFirst()).map { $0 + ($1 - $0) * eased }
-        }
-        return Array(last.dropFirst())
     }
 }
 
-/// Une courbe `cubic-bezier(x1, y1, x2, y2)` évaluée comme en CSS : on cherche le paramètre
-/// dont l'abscisse vaut la progression, et on rend son ordonnée.
-enum CubicBezier {
-    static func value(_ points: [Double], at x: Double) -> Double {
-        guard points.count == 4 else { return x }
-        let (x1, y1, x2, y2) = (points[0], points[1], points[2], points[3])
-        if x1 == y1, x2 == y2 { return x }
-        func coord(_ t: Double, _ p1: Double, _ p2: Double) -> Double {
-            let mt = 1 - t
-            return 3 * mt * mt * t * p1 + 3 * mt * t * t * p2 + t * t * t
+// MARK: - Le figé
+
+private struct MikaStillKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+extension EnvironmentValues {
+    /// **Mika en images fixes**, partout dessous : les rendus de la CI le posent, comme un
+    /// écran qui veut retenir son mouvement.
+    var mikaStill: Bool {
+        get { self[MikaStillKey.self] }
+        set { self[MikaStillKey.self] = newValue }
+    }
+}
+
+// MARK: - Les animations
+
+/// Les treize animations, décodées une fois et gardées par le cache de Lottie : changer
+/// d'humeur ne repasse pas par le disque, et rien ne clignote.
+enum MikaLibrary {
+    /// Vrai dans le processus des tests : ni Lottie, ni minuterie, des images fixes.
+    static let isRunningTests: Bool =
+        NSClassFromString("XCTestCase") != nil
+            || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+
+    static func animation(for mood: MikaMood) -> LottieAnimation? {
+        LottieAnimation.named(mood.animationName)
+    }
+
+    /// Décode les animations en tâche de fond, au lancement : la première apparition de Mika
+    /// n'attend pas le décodage de son fichier.
+    static func preload() {
+        guard !isRunningTests else { return }
+        Task.detached(priority: .utility) {
+            for mood in MikaMood.allCases {
+                _ = LottieAnimation.named(mood.animationName)
+            }
         }
-        func slope(_ t: Double, _ p1: Double, _ p2: Double) -> Double {
-            let mt = 1 - t
-            return 3 * mt * mt * p1 + 6 * mt * t * (p2 - p1) + 3 * t * t * (1 - p2)
+    }
+}
+
+/// Le lecteur Lottie. Une humeur (ou une nouvelle `take`) recharge l'animation et la joue :
+/// en boucle si elle boucle, une fois sinon, et la fin est signalée à `onFinish`.
+private struct MikaLottieView: UIViewRepresentable {
+    let mood: MikaMood
+    let take: Int
+    let sparkle: UIColor
+    let onFinish: (MikaMood) -> Void
+
+    /// Les étincelles du kit sont des calques de forme nommés « sparkle », à remplissage plein.
+    private static let sparkleKeypath = AnimationKeypath(keypath: "sparkle.**.Color")
+
+    final class Coordinator {
+        var mood: MikaMood?
+        var take = -1
+        var sparkle: UIColor?
+        var onFinish: (MikaMood) -> Void = { _ in }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeUIView(context: Context) -> UIView {
+        let container = UIView()
+        container.backgroundColor = .clear
+        container.isUserInteractionEnabled = false
+        let animationView = LottieAnimationView(configuration: .shared)
+        animationView.contentMode = .scaleAspectFit
+        animationView.backgroundBehavior = .pauseAndRestore
+        animationView.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(animationView)
+        NSLayoutConstraint.activate([
+            animationView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            animationView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            animationView.topAnchor.constraint(equalTo: container.topAnchor),
+            animationView.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+        ])
+        return container
+    }
+
+    func updateUIView(_ container: UIView, context: Context) {
+        guard let animationView = container.subviews.first as? LottieAnimationView else { return }
+        let coordinator = context.coordinator
+        coordinator.onFinish = onFinish
+
+        if coordinator.sparkle != sparkle {
+            coordinator.sparkle = sparkle
+            animationView.setValueProvider(
+                ColorValueProvider(sparkle.lottieColorValue),
+                keypath: Self.sparkleKeypath
+            )
         }
-        var t = x
-        for _ in 0..<8 {
-            let error = coord(t, x1, x2) - x
-            if abs(error) < 1e-5 { return coord(t, y1, y2) }
-            let d = slope(t, x1, x2)
-            if abs(d) < 1e-6 { break }
-            t -= error / d
+
+        guard coordinator.mood != mood || coordinator.take != take else { return }
+        coordinator.mood = mood
+        coordinator.take = take
+        // L'animation vient du cache : elle remplace la précédente dans la même passe,
+        // sans image vide entre les deux.
+        animationView.animation = MikaLibrary.animation(for: mood)
+        let played = mood
+        let playedTake = take
+        animationView.play(
+            fromProgress: 0,
+            toProgress: 1,
+            loopMode: mood.loops ? .loop : .playOnce
+        ) { [weak coordinator] completed in
+            guard completed, let coordinator,
+                  coordinator.mood == played, coordinator.take == playedTake
+            else { return }
+            coordinator.onFinish(played)
         }
-        var low = 0.0
-        var high = 1.0
-        t = x
-        for _ in 0..<30 {
-            let value = coord(t, x1, x2)
-            if abs(value - x) < 1e-5 { break }
-            if value < x { low = t } else { high = t }
-            t = (low + high) / 2
-        }
-        return coord(t, y1, y2)
+    }
+
+    static func dismantleUIView(_ container: UIView, coordinator: Coordinator) {
+        (container.subviews.first as? LottieAnimationView)?.stop()
     }
 }
