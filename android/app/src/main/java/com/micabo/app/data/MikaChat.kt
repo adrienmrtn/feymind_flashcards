@@ -1,5 +1,9 @@
 package com.micabo.app.data
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -20,6 +24,8 @@ class MikaChat(
     private val functions: SupabaseFunctions,
     private val lessons: LessonRepository,
     private val prefs: Prefs,
+    /** Une réponse de Mika rapporte `mikaAnswer` ; un exercice expliqué, `exerciseSolved`. */
+    private val xp: Xp? = null,
 ) {
     private fun today(): String = SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(System.currentTimeMillis())
 
@@ -50,10 +56,44 @@ class MikaChat(
         val lesson = lessons.lesson(id) ?: return
         val turns = lesson.chat.takeLast(TURNS)
         if (turns.lastOrNull()?.role != "user") return
-        val profile = prefs.profile.value
         val attachment = lesson.themes.joinToString("\n\n") { "${it.title}\n${it.flatNotes()}" }
             .ifBlank { lesson.contextText }
-            .take(ATTACHMENT_CHARACTERS)
+        val reply = ask(turns, lesson.language, lesson.title, attachment)
+        val text = reply.str("reply")
+        val card = (reply["card"] as? JsonObject)?.let { raw ->
+            val front = raw.str("front")
+            val back = raw.str("back")
+            if (front.isBlank() || back.isBlank()) null else Flashcard(kind = raw.str("kind").ifBlank { "basic" }.takeIf { it == "cloze" } ?: "basic", front = front, back = back) to raw.int("chapter")
+        }
+        counted(isPro)
+        lessons.modify(id) {
+            it.copy(chat = it.chat + ChatMessage(role = "assistant", text = text, card = card?.first, cardTheme = card?.second))
+        }
+        xp?.award(XpReason.MIKA_ANSWER)
+    }
+
+    /**
+     * **Mika sur un exercice scanné** (« Mika · Exercice ») : la même fonction `mika-chat`, la
+     * même porte et le même compte du jour, mais la conversation vit dans `ExerciseSession`, hors
+     * de toute leçon. Le texte lu par l'OCR part comme document joint. Rend la réponse.
+     */
+    suspend fun answerExercise(session: ExerciseSession, isPro: Boolean): String {
+        val turns = session.messages.takeLast(TURNS)
+        check(turns.lastOrNull()?.role == "user")
+        val language = com.micabo.app.i18n.AppLocale.resolved(prefs.profile.value.language).content
+        val reply = ask(turns, language, session.title, session.text)
+        val text = reply.str("reply")
+        counted(isPro)
+        session.messages.add(ChatMessage(role = "assistant", text = text))
+        // La première explication est l'exercice résolu ; les suivantes, des réponses de Mika.
+        xp?.award(if (session.solved) XpReason.MIKA_ANSWER else XpReason.EXERCISE_SOLVED)
+        session.solved = true
+        return text
+    }
+
+    /** L'appel lui-même : les derniers tours, la langue, le niveau et le document joint. */
+    private suspend fun ask(turns: List<ChatMessage>, language: String, title: String, attachment: String): JsonObject {
+        val profile = prefs.profile.value
         val payload = buildJsonObject {
             putJsonArray("messages") {
                 turns.forEach { turn ->
@@ -65,26 +105,17 @@ class MikaChat(
                     })
                 }
             }
-            put("language", lesson.language)
+            put("language", language)
             put("level", lessons.levelOf(profile.tier))
             putJsonObject("attachment") {
-                put("title", lesson.title)
-                put("text", attachment)
+                put("title", title)
+                put("text", attachment.take(ATTACHMENT_CHARACTERS))
             }
         }
         val envelope = functions.call("mika-chat", payload, timeoutMs = 90_000)
         val reply = envelope["answer"] as? JsonObject ?: throw ApiException(502, "invalid", "")
-        val text = reply.str("reply")
-        if (text.isBlank()) throw ApiException(502, "invalid", "")
-        val card = (reply["card"] as? JsonObject)?.let { raw ->
-            val front = raw.str("front")
-            val back = raw.str("back")
-            if (front.isBlank() || back.isBlank()) null else Flashcard(kind = raw.str("kind").ifBlank { "basic" }.takeIf { it == "cloze" } ?: "basic", front = front, back = back) to raw.int("chapter")
-        }
-        counted(isPro)
-        lessons.modify(id) {
-            it.copy(chat = it.chat + ChatMessage(role = "assistant", text = text, card = card?.first, cardTheme = card?.second))
-        }
+        if (reply.str("reply").isBlank()) throw ApiException(502, "invalid", "")
+        return reply
     }
 
     /** Range la carte proposée par Mika dans la leçon : elle entre dans les flashcards. */
@@ -103,10 +134,44 @@ class MikaChat(
 
     fun reset(id: String) = lessons.modify(id) { it.copy(chat = emptyList()) }
 
+    /** L'exercice scanné en cours : il survit à l'écran (le paywall, une rotation), pas à l'app. */
+    val exercise = ExerciseSession()
+
     companion object {
         const val TURNS = 8
         const val MESSAGE_CHARACTERS = 1_500
         const val ATTACHMENT_CHARACTERS = 16_000
         const val PRO_PER_DAY = 30
     }
+}
+
+/**
+ * **Un exercice scanné et sa conversation** : le texte lu sur la photo, sous un titre, et les
+ * échanges avec Mika. Rien ne va dans une leçon : la conversation d'une leçon ne s'écrase pas.
+ */
+class ExerciseSession {
+    var title by mutableStateOf("")
+        private set
+    var text by mutableStateOf("")
+        private set
+    val messages = mutableStateListOf<ChatMessage>()
+    /** La première explication a été donnée (et son XP comptée). */
+    var solved = false
+
+    val isEmpty: Boolean get() = text.isBlank()
+
+    /** Un nouvel exercice : l'ancien et sa conversation s'effacent. */
+    fun start(title: String, text: String) {
+        this.title = title
+        this.text = text
+        messages.clear()
+        solved = false
+    }
+
+    fun ask(text: String) {
+        val clean = text.trim().take(MikaChat.MESSAGE_CHARACTERS)
+        if (clean.isNotEmpty()) messages.add(ChatMessage(role = "user", text = clean))
+    }
+
+    fun clear() = start("", "")
 }

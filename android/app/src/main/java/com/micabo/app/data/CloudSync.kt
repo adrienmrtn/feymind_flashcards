@@ -68,8 +68,17 @@ class CloudSync(
     private val onFailure: (String) -> Unit = {},
     /** Appelé quand un passage aboutit, avec le nombre de leçons poussées : `sync_finished`. */
     private val onSuccess: (Int) -> Unit = {},
+    /** L'XP : elle monte avec le profil (`xp_total`, `xp_week`, `xp_week_start`). */
+    private val xp: Xp? = null,
 ) {
     private val mutex = Mutex()
+
+    /**
+     * **Les colonnes `xp_*` manquent au serveur** (la migration n'est pas encore déployée) :
+     * jusqu'à cette heure, le profil monte sans elles, sans nouvel essai à chaque passage.
+     */
+    @Volatile
+    private var xpColumnsMissingUntil = 0L
     private val _state = MutableStateFlow(SyncState(lastSuccess = prefs.syncWatermark))
     val state: StateFlow<SyncState> = _state.asStateFlow()
 
@@ -115,6 +124,7 @@ class CloudSync(
                 if (switched) {
                     prefs.syncWatermark = 0
                     prefs.profileSignature = ""
+                    prefs.xpSignature = ""
                 }
                 // Le repère est pris avant les requêtes : ce qui change pendant le passage repartira.
                 val started = System.currentTimeMillis()
@@ -221,6 +231,8 @@ class CloudSync(
                     exams.leaveAccount(parkFor = account, since = if (confirmed) prefs.syncWatermark else 0L, everything = !confirmed)
                 }
                 streak?.reset()
+                // L'XP est celle du compte : elle reste sur le serveur et ne passe pas à l'invité.
+                xp?.reset()
                 // L'examen blanc offert se compte par compte au serveur, comme sur l'iPhone.
                 prefs.mockFreeUsed = false
                 forget()
@@ -242,6 +254,7 @@ class CloudSync(
         prefs.removeTombstones(prefs.tombstones)
         prefs.removeReviews(prefs.pendingReviews)
         prefs.profileSignature = ""
+        prefs.xpSignature = ""
         _state.value = SyncState()
     }
 
@@ -358,27 +371,67 @@ class CloudSync(
             prefs.profileErased = false
         }
         val signature = signature(profile)
-        if (signature == prefs.profileSignature) return
+        val profileChanged = signature != prefs.profileSignature
+        // L'XP a sa propre empreinte : elle monte au rythme des passages, jamais à chaque gain.
+        val xpPart = xpColumns()
+        val xpChanged = xpPart != null && xpPart.first != prefs.xpSignature
+        if (!profileChanged && !xpChanged) return
         val row = buildJsonObject {
             put("id", user)
-            profile.name.trim().takeIf { it.isNotEmpty() }?.let { put("display_name", it.take(80)) }
-            // Le registre, pas la marche : `study_level` est le `StudyLevel` de l'iPhone et du
-            // site (« lycee », « licence »). Une marche (« upperSecondary ») n'y était lue par personne.
-            profile.tier.takeIf { it.isNotEmpty() }?.let { put("study_level", Tiers.level(it)) }
-            profile.country.takeIf { it.isNotEmpty() }?.let { put("country_code", it) }
-            putJsonArray("learning_goals") { profile.goals.forEach { add(JsonPrimitive(it)) } }
-            putJsonArray("subjects") { profile.subjects.forEach { add(JsonPrimitive(it)) } }
-            // La base refuse hors de 1 à 240 minutes : un temps jamais choisi (0) faisait échouer
-            // la montée du profil, et avec elle tout le passage, à chaque fois.
-            profile.dailyMinutes.takeIf { it in 1..240 }?.let { put("daily_minutes", it) }
-            // La langue dans laquelle on écrit, celle de l'app : un iPhone du même compte resté
-            // sur une ancienne version, qui relit ce champ, écrit alors dans la même langue.
-            put("sheet_language", AppLocale.resolved(profile.language).content)
-            if (profile.onboarded) put("onboarding_completed_at", iso(System.currentTimeMillis()))
-            put("updated_at", iso(System.currentTimeMillis()))
+            if (profileChanged) {
+                profile.name.trim().takeIf { it.isNotEmpty() }?.let { put("display_name", it.take(80)) }
+                // Le registre, pas la marche : `study_level` est le `StudyLevel` de l'iPhone et du
+                // site (« lycee », « licence »). Une marche (« upperSecondary ») n'y était lue par personne.
+                profile.tier.takeIf { it.isNotEmpty() }?.let { put("study_level", Tiers.level(it)) }
+                profile.country.takeIf { it.isNotEmpty() }?.let { put("country_code", it) }
+                putJsonArray("learning_goals") { profile.goals.forEach { add(JsonPrimitive(it)) } }
+                putJsonArray("subjects") { profile.subjects.forEach { add(JsonPrimitive(it)) } }
+                // La base refuse hors de 1 à 240 minutes : un temps jamais choisi (0) faisait échouer
+                // la montée du profil, et avec elle tout le passage, à chaque fois.
+                profile.dailyMinutes.takeIf { it in 1..240 }?.let { put("daily_minutes", it) }
+                // La langue dans laquelle on écrit, celle de l'app : un iPhone du même compte resté
+                // sur une ancienne version, qui relit ce champ, écrit alors dans la même langue.
+                put("sheet_language", AppLocale.resolved(profile.language).content)
+                if (profile.onboarded) put("onboarding_completed_at", iso(System.currentTimeMillis()))
+                put("updated_at", iso(System.currentTimeMillis()))
+            }
         }
-        upsert(token, "profiles", listOf(row))
-        prefs.profileSignature = signature
+        if (xpPart == null) {
+            upsert(token, "profiles", listOf(row))
+        } else {
+            try {
+                upsert(token, "profiles", listOf(JsonObject(row + xpPart.second)))
+                prefs.xpSignature = xpPart.first
+            } catch (error: PostgrestError) {
+                // **La migration de l'XP n'est pas encore déployée** (`xp_total` inconnue, ou sa
+                // contrainte) : le profil remonte sans les trois champs. La synchro ne casse
+                // jamais à cause de l'XP ; elle réessaiera plus tard.
+                if (!error.body.contains("xp_")) throw error
+                Log.w(TAG, "Colonnes xp_* refusées, profil monté sans elles : ${error.body.take(160)}")
+                xpColumnsMissingUntil = System.currentTimeMillis() + XP_COLUMNS_RETRY
+                if (profileChanged) upsert(token, "profiles", listOf(row))
+            }
+        }
+        if (profileChanged) prefs.profileSignature = signature
+    }
+
+    /**
+     * Les trois champs de l'XP et leur empreinte (`total|semaine|lundi`), ou rien sans XP, ou
+     * tant que le serveur ne connaît pas encore les colonnes.
+     */
+    private fun xpColumns(): Pair<String, JsonObject>? {
+        val store = xp ?: return null
+        if (System.currentTimeMillis() < xpColumnsMissingUntil) return null
+        store.refresh()
+        val status = store.status.value
+        val total = status.total.coerceIn(0L, Xp.MAX_TOTAL)
+        val week = status.week.coerceIn(0, Xp.MAX_WEEK)
+        val fields = buildJsonObject {
+            put("xp_total", total)
+            put("xp_week", week)
+            put("xp_week_start", status.weekStart)
+        }
+        return "$total|$week|${status.weekStart}" to fields
     }
 
     /** L'empreinte de ce que le profil transporte (`ProfileRecord.signature`). */
@@ -412,6 +465,15 @@ class CloudSync(
         // connecte pendant l'accueil est reconnu, comme avant.
         if (prefs.profileErased && !prefs.profile.value.onboarded && !(switched && isAccount)) return
         val row = selectAll(token, "profiles", "id=eq.$user").firstOrNull() ?: return
+        // L'XP du compte, montée d'un autre appareil : le total et la semaine ne redescendent
+        // pas. Pas juste après « Tout effacer » : l'XP effacée ici doit monter à zéro.
+        if (!prefs.profileErased && row.containsKey("xp_total")) {
+            xp?.mergeRemote(
+                total = (row["xp_total"] as? JsonPrimitive)?.contentOrNull?.toLongOrNull(),
+                week = row.int("xp_week"),
+                weekStart = row.str("xp_week_start").take(10).ifEmpty { null },
+            )
+        }
         if (row.str("onboarding_completed_at").isEmpty()) return
         val remoteUpdated = row.str("updated_at").takeIf { it.isNotEmpty() }?.let(::time) ?: 0
         val unpushed = prefs.profileSignature.isNotEmpty() && signature(prefs.profile.value) != prefs.profileSignature
@@ -1235,6 +1297,8 @@ class CloudSync(
         const val CLAIM_VALIDITY = 24 * 3_600_000L
         /** Combien de temps la synchronisation attend la reconnexion d'un compte perdu. */
         const val LOST_ACCOUNT_WAIT = 14 * 86_400_000L
+        /** Combien de temps le profil monte sans l'XP quand ses colonnes manquent au serveur. */
+        const val XP_COLUMNS_RETRY = 6 * 3_600_000L
         val UUID_PATTERN = Regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
         /** Les formes de carte de l'iPhone et du site (`CardKind`) : une autre repart en recto verso. */
         val CARD_KINDS = setOf("basic", "cloze", "choice", "occlusion")

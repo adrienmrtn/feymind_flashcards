@@ -7,6 +7,7 @@ import com.micabo.app.data.Billing
 import com.micabo.app.data.CloudSync
 import com.micabo.app.data.DailyReminder
 import com.micabo.app.data.ExamRepository
+import com.micabo.app.data.FocusTimer
 import com.micabo.app.data.GiftOffer
 import com.micabo.app.data.LessonComposer
 import com.micabo.app.data.LessonRepository
@@ -16,6 +17,7 @@ import com.micabo.app.data.Social
 import com.micabo.app.data.Streak
 import com.micabo.app.data.SupabaseAuth
 import com.micabo.app.data.SupabaseFunctions
+import com.micabo.app.data.Xp
 import com.micabo.app.data.YouTubeImport
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,6 +45,12 @@ class MicaboApplication : Application() {
     lateinit var functions: SupabaseFunctions
         private set
     lateinit var streak: Streak
+        private set
+    /** L'XP, l'objectif du jour et la semaine de la ligue (`docs/refonte-knowunity.md`). */
+    lateinit var xp: Xp
+        private set
+    /** Le minuteur de concentration de l'accueil. */
+    lateinit var focus: FocusTimer
         private set
     lateinit var mika: MikaChat
         private set
@@ -175,6 +183,9 @@ class MicaboApplication : Application() {
         billing.follow(auth.guestId, fromGuest = false)
         prefs.update { it.copy(language = language, theme = theme) }
         streak.reset()
+        xp.reset()
+        focus.reload()
+        mika.exercise.clear()
         composer.reset()
     }
 
@@ -197,8 +208,10 @@ class MicaboApplication : Application() {
         auth = SupabaseAuth(prefs)
         functions = SupabaseFunctions(auth)
         streak = Streak(this)
-        lessons = LessonRepository(this, functions, prefs, streak)
-        mika = MikaChat(functions, lessons, prefs)
+        xp = Xp(this)
+        focus = FocusTimer(this, xp)
+        lessons = LessonRepository(this, functions, prefs, streak, xp)
+        mika = MikaChat(functions, lessons, prefs, xp)
         exams = ExamRepository(this, prefs)
         // Avant les événements : chacun lit `isPro`, et un `lateinit` encore vide ferait planter.
         billing = Billing(this) {
@@ -218,6 +231,7 @@ class MicaboApplication : Application() {
             streak = streak,
             onFailure = { reason -> analytics.track("sync_failed", mapOf("reason" to reason, "user" to if (auth.account.value == null) "guest" else "account")) },
             onSuccess = { pushed -> analytics.track("sync_finished", mapOf("courses" to pushed, "user" to if (auth.account.value == null) "guest" else "account")) },
+            xp = xp,
         )
         // Un cours que le serveur ne connaît pas encore (`course_unknown`) : synchroniser tout de suite.
         lessons.onCourseUnknown = { syncSoon(force = true) }

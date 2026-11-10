@@ -91,6 +91,8 @@ class LessonRepository(
     private val functions: SupabaseFunctions,
     private val prefs: Prefs,
     private val streak: Streak,
+    /** L'XP : un cercle terminé, une carte révisée, une leçon livrée. */
+    private val xp: Xp? = null,
 ) {
     private val directory = File(context.filesDir, "lessons").apply { mkdirs() }
     /** Les leçons mises de côté pour un compte qui s'en va, un dossier par compte (`leaveAccount`). */
@@ -433,6 +435,8 @@ class LessonRepository(
     /** Une étape finie : elle allume aussi la journée de la série (`LessonSession.complete`). */
     fun complete(id: String, circle: String, score: List<Int>? = null) {
         streak.record()
+        // Un cercle rapporte son XP la première fois : refaire l'intro d'un toucher n'en gagne pas.
+        val first = lesson(id)?.progress?.done?.contains(circle) == false
         modify(id) { lesson ->
             val progress = lesson.progress
             val scores = if (score != null) progress.quizScores + (circle to score) else progress.quizScores
@@ -440,6 +444,7 @@ class LessonRepository(
             val finished = circle == "final" && progress.finishedAt == 0L
             lesson.copy(progress = progress.copy(done = done, quizScores = scores, finishedAt = if (finished) System.currentTimeMillis() else progress.finishedAt))
         }
+        if (first) xp?.award(XpReason.CIRCLE_COMPLETED)
     }
 
     /** Recommence le chemin ; le temps passé et la mémoire des cartes restent. */
@@ -487,6 +492,7 @@ class LessonRepository(
         }
         // Hors de `modify` : sa transformation peut être rejouée, la note ne doit partir qu'une fois.
         val key = gradedKey ?: return
+        xp?.award(XpReason.CARD_REVIEWED)
         val lesson = lesson(id) ?: return
         logReview(lesson, key, before, lesson.progress.cards[key] ?: return, rating)
     }
@@ -699,6 +705,8 @@ class LessonRepository(
         // Au plus deux minutes d'attente : le chemin s'ouvre de toute façon.
         withTimeoutOrNull(120_000) { first.await() }
         onStage(CreationStage.QUESTIONS)
+        // La leçon est livrée : son chemin s'ouvre.
+        xp?.award(XpReason.LESSON_CREATED)
         return id
     }
 
