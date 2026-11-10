@@ -302,4 +302,24 @@ final class MikaChat {
     private func persist() {
         store(conversation)
     }
+
+    // MARK: Les statistiques
+
+    /// **Ce que Mika répond, et ce qu'il refuse**, compté au même endroit pour la leçon et le
+    /// scanner. `mika_asked` et `mika_blocked` sont partis avec l'ancien onglet Mika, qui était
+    /// seul à les envoyer : depuis, aucune courbe ne disait qui parle à Mika.
+    static func track(_ gate: MikaQuota.Gate?, isPro: Bool, chat: MikaChat) {
+        switch gate {
+        case .allowed:
+            // Posée **et répondue** : une panne n'est pas une question.
+            guard chat.failure == nil else { return }
+            Analytics.track(.mikaAsked, ["pro": .flag(isPro), "attached": .flag(chat.attachment != nil)])
+        case .paywall:
+            Analytics.track(.mikaBlocked, ["reason": .text("paywall")])
+        case .dailyCapReached:
+            Analytics.track(.mikaBlocked, ["reason": .text("cap")])
+        case nil:
+            break
+        }
+    }
 }

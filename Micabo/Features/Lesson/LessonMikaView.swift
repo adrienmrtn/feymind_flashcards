@@ -255,7 +255,9 @@ struct LessonMikaView: View {
 
     private func send() {
         Task {
-            let gate = await chat.send(isPro: pro?.isPro ?? false, level: level, language: language, using: aiService)
+            let isPro = pro?.isPro ?? false
+            let gate = await chat.send(isPro: isPro, level: level, language: language, using: aiService)
+            MikaChat.track(gate, isPro: isPro, chat: chat)
             switch gate {
             case .paywall:
                 focused = false
@@ -277,12 +279,16 @@ struct LessonMikaView: View {
         course.language ?? ContentLanguage(rawValue: UiLocale.resolved().rawValue) ?? DeckSetup.defaultLanguage()
     }
 
+    /// La carte proposée rejoint la leçon, par le même chemin que les cartes générées : texte
+    /// nettoyé, format vérifié, rang après la dernière carte. Une seule fois : `.disabled` ne
+    /// suit qu'au rendu suivant, et un double appui la rangeait deux fois.
     private func addCard(_ card: GeneratedFlashcard, messageID: UUID) {
-        let flashcard = Flashcard(front: card.front, back: card.back, position: course.cards.count, course: course)
-        modelContext.insert(flashcard)
-        course.updatedAt = Date()
-        try? modelContext.save()
+        guard chat.messages.first(where: { $0.id == messageID })?.cardAdded != true else { return }
+        guard let inserted = try? CourseRepository.addFlashcards([card], to: course, in: modelContext),
+              !inserted.isEmpty
+        else { return }
         chat.markCardAdded(messageID)
         Haptics.success()
+        Analytics.track(.mikaCardAdded)
     }
 }

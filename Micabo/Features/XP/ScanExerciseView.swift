@@ -359,7 +359,9 @@ struct ScanExerciseView: View {
     private func send() {
         guard let chat else { return }
         Task {
-            let gate = await chat.send(isPro: pro?.isPro ?? false, level: level, language: language, using: aiService)
+            let isPro = pro?.isPro ?? false
+            let gate = await chat.send(isPro: isPro, level: level, language: language, using: aiService)
+            MikaChat.track(gate, isPro: isPro, chat: chat)
             switch gate {
             case .paywall:
                 focused = false
