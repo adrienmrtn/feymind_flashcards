@@ -65,6 +65,25 @@ final class RenderGalleryTests: XCTestCase {
             }
             .padding(24)
         )
+        // Quelques places de Mika dans l'app : la fête de l'objectif, les deux retours d'une
+        // question, l'attente du parcours d'accueil, Mika au pied d'une page.
+        try RenderGallery.render(
+            "mika-places", night: true,
+            VStack(spacing: 18) {
+                XPGoalCard(showsButton: false)
+                QuestionFeedback(question: Self.sampleQuestion(id: "mika-right"), right: true)
+                QuestionFeedback(question: Self.sampleQuestion(id: "mika-wrong"), right: false)
+                HStack {
+                    OnboardingFooterMika(cheers: 0)
+                    Spacer()
+                }
+            }
+            .padding(20)
+        )
+        try RenderGallery.render(
+            "mika-loading", height: 700,
+            MikaLoadingView(progress: 0.6, title: "Mika prépare ton plan", subtitle: "Calibrage de ton niveau", stepLabel: "Étape 3")
+        )
         try RenderGallery.render(
             "mika-launch", width: 300, height: 650, night: true,
             Image("LaunchMark")
@@ -532,6 +551,16 @@ final class RenderGalleryTests: XCTestCase {
             OnboardingHookMockup()
                 .environment(\.onboardingStill, true)
         )
+        // Les scènes seules : la page entière défile, et un `ScrollView` ne se dessine pas.
+        for page in MikaPage.allCases {
+            try RenderGallery.render(
+                "onboarding-mika-scene-\(page.rawValue)",
+                height: 360,
+                MikaPageScene(page: page)
+                    .environment(model)
+                    .environment(\.onboardingStill, true)
+            )
+        }
         for page in MikaPage.allCases {
             try RenderGallery.render(
                 "onboarding-mika-\(page.rawValue)",

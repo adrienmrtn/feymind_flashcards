@@ -114,6 +114,18 @@ struct MikaStepView: View {
 
     @ViewBuilder
     private var scene: some View {
+        MikaPageScene(page: page)
+    }
+}
+
+/// **La scène d'une page de Mika, seule** : ce que `MikaStepView` pose au-dessus de sa phrase.
+/// Les rendus la dessinent à part — la page entière défile, et `ImageRenderer` ne dessine pas
+/// un `ScrollView`.
+struct MikaPageScene: View {
+    let page: MikaPage
+
+    @ViewBuilder
+    var body: some View {
         switch page {
         case .founders: MikaFoundersScene()
         case .companion: MikaCompanionScene()

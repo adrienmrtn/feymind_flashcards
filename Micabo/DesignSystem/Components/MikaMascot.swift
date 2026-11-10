@@ -247,7 +247,7 @@ struct MikaMascot: View {
                     }
                 }
         case .circle:
-            pastille(Circle(), scale: 0.86)
+            pastille(Circle(), scale: 0.94)
         case .rounded:
             pastille(RoundedRectangle(cornerRadius: size * 0.2237, style: .continuous), scale: 1)
         }
