@@ -3,6 +3,11 @@ enum IosI18nCatalogs {
     static let fr: [String: String] = [
         // Le rappel quotidien, montré puis demandé pour de bon.
         "ios.notifTitle": "Ne loupe jamais un jour.",
+        // L'intensité de révision d'un examen (`ExamIntensity.label`). Le site range ces
+        // clés dans ses articles, que la table partagée n'exporte pas.
+        "articles.exam.intensityLight": "Légère",
+        "articles.exam.intensityStandard": "Normale",
+        "articles.exam.intensityIntense": "Intense",
         "ios.notifCardTitle": "Il te reste {count} cartes à réviser",
         "ios.notifCardBody": "Dix minutes, et ta série tient.",
         "ios.reminder.import1.title": "Viens apprendre ton premier cours avec Mika !",
@@ -1312,6 +1317,9 @@ enum IosI18nCatalogs {
     static let de: [String: String] = [
         // Le rappel quotidien, montré puis demandé pour de bon.
         "ios.notifTitle": "Verpass keinen Tag.",
+        "articles.exam.intensityLight": "Leicht",
+        "articles.exam.intensityStandard": "Normal",
+        "articles.exam.intensityIntense": "Intensiv",
         "ios.notifCardTitle": "Noch {count} Karten zum Wiederholen",
         "ios.notifCardBody": "Zehn Minuten, und deine Serie hält.",
         "ios.reminder.import1.title": "Lerne deinen ersten Kurs mit Mika!",
@@ -2619,6 +2627,9 @@ enum IosI18nCatalogs {
     static let es: [String: String] = [
         // Le rappel quotidien, montré puis demandé pour de bon.
         "ios.notifTitle": "No te saltes ni un día.",
+        "articles.exam.intensityLight": "Ligera",
+        "articles.exam.intensityStandard": "Normal",
+        "articles.exam.intensityIntense": "Intensa",
         "ios.notifCardTitle": "Te quedan {count} tarjetas por repasar",
         "ios.notifCardBody": "Diez minutos, y tu racha aguanta.",
         "ios.reminder.import1.title": "¡Ven a aprender tu primer curso con Mika!",
@@ -3926,6 +3937,9 @@ enum IosI18nCatalogs {
     static let tr: [String: String] = [
         // Le rappel quotidien, montré puis demandé pour de bon.
         "ios.notifTitle": "Hiçbir günü kaçırma.",
+        "articles.exam.intensityLight": "Hafif",
+        "articles.exam.intensityStandard": "Normal",
+        "articles.exam.intensityIntense": "Yoğun",
         "ios.notifCardTitle": "Tekrar edecek {count} kartın kaldı",
         "ios.notifCardBody": "On dakika yeter, serin bozulmaz.",
         "ios.reminder.import1.title": "İlk dersini Mika ile öğrenmeye gel!",
@@ -5241,6 +5255,9 @@ enum IosI18nCatalogs {
     static let en: [String: String] = [
         // Le rappel quotidien, montré puis demandé pour de bon.
         "ios.notifTitle": "Never miss a day.",
+        "articles.exam.intensityLight": "Light",
+        "articles.exam.intensityStandard": "Standard",
+        "articles.exam.intensityIntense": "Intense",
         "ios.notifCardTitle": "You have {count} cards left to review",
         "ios.notifCardBody": "Ten minutes, and your streak holds.",
         "ios.reminder.import1.title": "Come learn your first course with Mika!",
