@@ -13,6 +13,12 @@ enum FocusLog {
     static func add(_ seconds: Double) {
         UserDefaults.standard.set(totalSeconds + max(0, seconds), forKey: key)
     }
+
+    /// Un compte qui s'en va (`LocalWipe`) : ses heures de concentration ne s'ajoutent pas à
+    /// celles du compte suivant.
+    static func reset() {
+        UserDefaults.standard.removeObject(forKey: key)
+    }
 }
 
 /// **Le minuteur** (`docs/refonte-knowunity.md` § 5) : Mika au centre d'un anneau qui se vide,
@@ -113,6 +119,8 @@ struct FocusTimerView: View {
                 .font(MicaboFont.number(64))
                 .foregroundStyle(MicaboColor.ink)
                 .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
                 .contentTransition(.numericText(countsDown: true))
                 .padding(.top, 26)
                 .accessibilityHidden(true)

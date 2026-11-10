@@ -416,7 +416,7 @@ private struct DeckMaterialSlot: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 118)
+            .frame(minHeight: 118)
             .padding(.horizontal, 10)
             .background(background)
             .overlay(border)

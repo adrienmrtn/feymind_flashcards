@@ -111,6 +111,9 @@ struct LessonQuizView: View {
     }
 
     private func record(_ result: QuizAnswer) {
+        // Deux appuis dans la même image passent tous deux la garde de la carte, qui relit
+        // une valeur figée au rendu : la seconde réponse compterait deux fois l'XP et le score.
+        guard answer == nil, !finished, questions.indices.contains(index) else { return }
         answer = result
         let question = questions[index]
         if result.right {
@@ -125,7 +128,7 @@ struct LessonQuizView: View {
     }
 
     private func next() {
-        guard answer != nil else { return }
+        guard answer != nil, !finished else { return }
         if index + 1 < questions.count {
             withAnimation(.spring(duration: 0.35)) {
                 index += 1
@@ -286,7 +289,7 @@ struct QuizScoreView: View {
                         .foregroundStyle(tone.ink)
                         .monospacedDigit()
                         .contentTransition(.numericText(value: shown))
-                    Text("\(Int((shown * 100).rounded())) %")
+                    Text(L10n.percent(Int((shown * 100).rounded()), locale: .resolved()))
                         .font(MicaboFont.ui(16, weight: .bold))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .monospacedDigit()
@@ -426,6 +429,8 @@ struct LessonCardsRun: View {
     }
 
     private func rate(_ rating: ReviewRating) {
+        // Un double appui sur une note notait aussi la carte suivante, sans qu'on l'ait vue.
+        guard flipped, !finished, cards.indices.contains(index) else { return }
         LessonReview.rate(cards[index], rating)
         session.course.updatedAt = Date()
         try? modelContext.save()

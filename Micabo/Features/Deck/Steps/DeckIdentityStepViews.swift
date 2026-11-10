@@ -221,6 +221,7 @@ struct DeckSearchField: View {
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
                 .buttonStyle(MicaboPressableButtonStyle())
+                .accessibilityLabel(Text(L10n.t("ios.clearText", locale: .resolved())))
             }
         }
         .padding(.horizontal, 14)

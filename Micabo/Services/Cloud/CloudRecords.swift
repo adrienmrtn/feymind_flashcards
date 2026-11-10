@@ -635,7 +635,10 @@ struct ExamRecord: Codable {
         try container.encode(id, forKey: .id)
         try container.encode(user_id, forKey: .user_id)
         try container.encode(name, forKey: .name)
-        try container.encode(exam_date, forKey: .exam_date)
+        // **Le jour, pas un instant.** La colonne est un `date` nu : un horodatage
+        // (« 2027-06-14T22:00:00Z » pour le 15 juin à minuit à Paris) y perdait son heure et
+        // son fuseau, et l'examen arrivait la veille sur le site et sur l'appareil suivant.
+        try container.encode(ExamDayStamp.string(from: exam_date), forKey: .exam_date)
         try container.encode(intensity, forKey: .intensity)
         try container.encodeIfPresent(target_score, forKey: .target_score)
         try container.encodeIfPresent(kind, forKey: .kind)
@@ -647,6 +650,16 @@ struct ExamRecord: Codable {
         try container.encode(updated_at, forKey: .updated_at)
         try container.encodeIfPresent(deleted_at, forKey: .deleted_at)
         try container.encodeIfPresent(schedule_backup, forKey: .schedule_backup)
+    }
+
+    /// **Le jour d'une colonne `date`, ramené à minuit chez l'élève.** La descente lit
+    /// « 2027-06-15 » comme minuit UTC : à l'ouest de Greenwich, c'était encore le 14, et
+    /// l'examen reculait d'un jour à chaque appareil qui le recevait.
+    static func localDay(fromColumn date: Date, calendar: Calendar = MicaboCalendar.shared) -> Date {
+        var utc = Calendar(identifier: .gregorian)
+        utc.timeZone = TimeZone(secondsFromGMT: 0) ?? utc.timeZone
+        let parts = utc.dateComponents([.year, .month, .day], from: date)
+        return calendar.date(from: parts).map { calendar.startOfDay(for: $0) } ?? date
     }
 }
 

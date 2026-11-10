@@ -230,6 +230,7 @@ extension IosI18nCatalogs {
         "ios.cardsSection": "البطاقات · {count}",
         "ios.chapter.intro": "مقدمة",
         "ios.clearSearch": "مسح البحث",
+        "ios.clearText": "مسح النص",
         "ios.cloud.notConfigured": "الوصول إلى السحابة غير مُعدّ.",
         "ios.cloud.notSignedIn": "لا يوجد حساب مسجّل الدخول.",
         "ios.cloud.unexpected": "استجابة غير متوقعة.",

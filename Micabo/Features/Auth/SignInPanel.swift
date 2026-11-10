@@ -544,7 +544,7 @@ struct SignInProviderButtons: View {
                     .accessibilityLabel(t("onboarding.emailLabel"))
 
                 Button(action: sendLink) {
-                    Image(systemName: "arrow.right")
+                    Image(systemName: "arrow.forward")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(MicaboColor.onInk)
                         .frame(width: 42, height: 42)

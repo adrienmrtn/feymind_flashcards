@@ -270,6 +270,7 @@ private struct FriendRow: View {
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .frame(width: 30, height: 30)
             }
+            .accessibilityLabel(Text(i18n.t("lesson.menu.more")))
 
         case .me:
             Text(i18n.t("app.friends.you"))

@@ -1130,17 +1130,25 @@ private struct MikaTutorScene: View {
                     .popIn(stage >= 0)
                     .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
 
+                // **Les pastilles s'appuient sur un bord, elles ne s'y centrent plus.** Centrées
+                // à 17 % et 83 % de la largeur, une étiquette un peu longue (« Todas as tuas
+                // disciplinas », et déjà « Toutes tes matières ») sortait de l'écran. Ancrées
+                // à la marge, elles restent où elles étaient quand elles sont courtes, et
+                // grandissent vers le téléphone quand la langue est longue.
+                let badgeWidth = proxy.size.width * Self.badgeShare
                 badge(icon: .alarm, text: i18n.t("ios.onb.tutor.anytime"))
                     .rotationEffect(.degrees(-6))
                     .bobbing(5, period: 2.2, delay: 0.2)
                     .popIn(stage >= 1, delay: 0.2)
-                    .position(x: proxy.size.width * 0.17, y: proxy.size.height * 0.24)
+                    .frame(width: badgeWidth, alignment: .leading)
+                    .position(x: Self.badgeInset + badgeWidth / 2, y: proxy.size.height * 0.24)
 
                 badge(icon: .book, text: i18n.t("ios.onb.tutor.subjects"))
                     .rotationEffect(.degrees(5))
                     .bobbing(5, period: 2.5, delay: 0.4)
                     .popIn(stage >= 3, delay: 0.2)
-                    .position(x: proxy.size.width * 0.83, y: proxy.size.height * 0.78)
+                    .frame(width: badgeWidth, alignment: .trailing)
+                    .position(x: proxy.size.width - Self.badgeInset - badgeWidth / 2, y: proxy.size.height * 0.78)
             }
         }
         .task { await run() }
@@ -1215,14 +1223,19 @@ private struct MikaTutorScene: View {
         .animation(.spring(duration: 0.45, bounce: 0.35), value: stage)
     }
 
+    /// La part de la largeur qu'une pastille peut prendre, et sa marge au bord de l'écran.
+    private static let badgeShare: CGFloat = 0.55
+    private static let badgeInset: CGFloat = 12
+
     private func badge(icon: MicaboIcon, text: String) -> some View {
         HStack(spacing: 6) {
             MicaboIconView(icon: icon, size: 28)
             Text(text)
                 .font(MicaboFont.ui(13, weight: .heavy))
                 .foregroundStyle(MicaboColor.ink)
-                .lineLimit(1)
-                .fixedSize()
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.vertical, 8)
         .padding(.leading, 8)
@@ -1404,7 +1417,7 @@ private struct OnboardingLessonScreen: View {
                 .minimumScaleFactor(0.7)
             VStack(spacing: 9) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text("40 %")
+                    Text(L10n.percent(40, locale: .resolved()))
                         .font(MicaboFont.number(24))
                         .foregroundStyle(tone.ink)
                     Spacer(minLength: 8)

@@ -65,6 +65,14 @@ enum LocalWipe {
         ExamAllowance.freeMockUsed = false
         // L'XP monte avec le profil : le compte suivant ne doit pas hériter de celle-ci.
         XPStore.shared.reset()
+        // Ce que Mika et l'entraînement gardaient sur l'appareil : les conversations, dont les
+        // questions appartiennent au compte qui part ; la question et le lot de questions
+        // offerts, que le serveur compte par compte comme l'examen offert ; et le temps de
+        // concentration, qui s'ajoute aux heures de révision de Home.
+        MikaConversationStore.eraseAll()
+        MikaQuota().forget()
+        PracticeAllowance.freeBatchUsed = false
+        FocusLog.reset()
         LibraryCensus.forget()
         CourseLedger.noteChange()
     }

@@ -230,6 +230,7 @@ extension IosI18nCatalogs {
         "ios.cardsSection": "Kártyák · {count}",
         "ios.chapter.intro": "Bevezetés",
         "ios.clearSearch": "Keresés törlése",
+        "ios.clearText": "Szöveg törlése",
         "ios.cloud.notConfigured": "A felhőhozzáférés nincs beállítva.",
         "ios.cloud.notSignedIn": "Nincs bejelentkezett fiók.",
         "ios.cloud.unexpected": "Váratlan válasz.",

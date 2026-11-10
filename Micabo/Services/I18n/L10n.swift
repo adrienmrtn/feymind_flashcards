@@ -37,6 +37,15 @@ enum L10n {
             : SharedI18nCatalogs.en
     }
 
+    /// **Un pourcentage, écrit comme la langue l'écrit** : « 42 % » en français et en
+    /// allemand, « 42% » en anglais, « %42 » en turc. Un `"\(n) %"` écrit à la main posait
+    /// l'espace française dans toutes les langues, et le signe du mauvais côté en turc.
+    static func percent(_ value: Int, locale: UiLocale) -> String {
+        (Double(value) / 100).formatted(
+            .percent.precision(.fractionLength(0)).locale(locale.foundation)
+        )
+    }
+
     /// Le français met zéro au singulier (« 0 vue »), l'anglais, l'allemand, l'espagnol et le
     /// turc au pluriel.
     static func isSingular(_ count: Int, locale: UiLocale) -> Bool {

@@ -297,7 +297,7 @@ struct NotesSegments: View {
 
             if let onBack {
                 Button(action: onBack) {
-                    Image(systemName: "chevron.left")
+                    Image(systemName: "chevron.backward")
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .frame(width: 32, height: 36)

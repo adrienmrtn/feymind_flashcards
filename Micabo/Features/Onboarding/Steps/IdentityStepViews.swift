@@ -42,6 +42,7 @@ struct NameStepView: View {
                             .foregroundStyle(OnboardingPalette.gray)
                     }
                     .buttonStyle(MicaboPressableButtonStyle())
+                    .accessibilityLabel(Text(i18n.t("ios.clearText")))
                 }
             }
             .padding(.horizontal, 18)

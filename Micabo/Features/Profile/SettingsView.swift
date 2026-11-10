@@ -24,6 +24,11 @@ struct SettingsView: View {
     @State private var showResetConfirmation = false
     @State private var showDeleteAccountConfirmation = false
     @State private var showSignOutConfirmation = false
+    /// Vrai pendant une déconnexion ou une suppression : un second appui n'en lance pas une
+    /// seconde par-dessus.
+    @State private var isLeavingAccount = false
+    /// Ce qui a empêché la suppression du compte, à dire dans une alerte.
+    @State private var leaveFailure: String?
     @State private var showAuth = false
     @State private var showSubjects = false
     @State private var showSchool = false
@@ -94,7 +99,18 @@ struct SettingsView: View {
             Button(i18n.t("ios.deleteAccount"), role: .destructive) {
                 // Le compte part, et ce qu'il avait sur ce téléphone avec lui : le message
                 // promet « tes cours seront effacés ». Voir `CloudSync.leaveAccount`.
-                Task { await sync.leaveAccount(context: modelContext, deleting: true) }
+                //
+                // **Un refus se dit.** L'erreur restait dans `auth.message`, que cet écran ne
+                // montre pas : sans réseau, « Supprimer mon compte » ne faisait rien, sans un mot.
+                guard !isLeavingAccount else { return }
+                isLeavingAccount = true
+                Task {
+                    let left = await sync.leaveAccount(context: modelContext, deleting: true)
+                    isLeavingAccount = false
+                    guard !left else { return }
+                    auth.clearMessage()
+                    leaveFailure = i18n.t("app.settings.delete.error")
+                }
             }
             Button(i18n.t("ios.cancel"), role: .cancel) {}
         } message: {
@@ -116,7 +132,10 @@ struct SettingsView: View {
             titleVisibility: .visible
         ) {
             Button(i18n.t("common.signOut"), role: .destructive) {
+                guard !isLeavingAccount else { return }
+                isLeavingAccount = true
                 Task {
+                    defer { isLeavingAccount = false }
                     // Une dernière montée, puis le téléphone se vide et un invité neuf prend
                     // la place : les cours restent sur le compte, ils ne restent plus ici à
                     // remonter sous le compte suivant. Voir `CloudSync.leaveAccount`.
@@ -140,6 +159,14 @@ struct SettingsView: View {
             Button(i18n.t("ios.ok"), role: .cancel) {}
         } message: {
             Text(notificationReport ?? "")
+        }
+        .alert(
+            i18n.t("app.common.oops"),
+            isPresented: Binding(get: { leaveFailure != nil }, set: { if !$0 { leaveFailure = nil } })
+        ) {
+            Button(i18n.t("ios.ok"), role: .cancel) {}
+        } message: {
+            Text(leaveFailure ?? "")
         }
         .micaboPaywall($paywall)
         .micaboDiscountOffer($discountOffer)

@@ -230,6 +230,7 @@ extension IosI18nCatalogs {
         "ios.cardsSection": "Cartões · {count}",
         "ios.chapter.intro": "Introdução",
         "ios.clearSearch": "Limpar a busca",
+        "ios.clearText": "Apagar o texto",
         "ios.cloud.notConfigured": "O acesso à nuvem não está configurado.",
         "ios.cloud.notSignedIn": "Nenhuma conta conectada.",
         "ios.cloud.unexpected": "Resposta inesperada.",

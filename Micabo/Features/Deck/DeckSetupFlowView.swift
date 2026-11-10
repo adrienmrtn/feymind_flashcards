@@ -196,7 +196,7 @@ struct DeckSetupFlowView: View {
 
             HStack(alignment: .center, spacing: 10) {
                 Button(action: goBack) {
-                    Image(systemName: "arrow.left")
+                    Image(systemName: "arrow.backward")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(OnboardingPalette.ink)
                         .frame(width: 40, height: 40)

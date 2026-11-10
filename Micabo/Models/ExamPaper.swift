@@ -149,7 +149,7 @@ enum ExamGrade {
         case .lu:
             return "\(Int((value * 60).rounded()))/60"
         case .ca, .tr:
-            return "\(Int((value * 100).rounded())) %"
+            return L10n.percent(Int((value * 100).rounded()), locale: locale)
         case .ch:
             return number(((value * 5 + 1) * 2).rounded() / 2, 1)
         case .nl:

@@ -354,6 +354,145 @@ final class I18nTests: XCTestCase {
         XCTAssertEqual(DiscountHeadline.split(percent: 30, locale: .tr).rest, " indirim")
     }
 
+    /// **Chaque clé écrite dans le code a sa phrase dans chacune des vingt-six langues.**
+    ///
+    /// La parité des tables ne le prouve pas : une clé appelée par un écran mais rangée dans
+    /// une seule table (les intensités d'examen n'existaient qu'en langues régionales)
+    /// s'affichait telle quelle en français et en anglais, et une langue régionale à qui il
+    /// manque une clé retombe sur l'anglais sans rien dire. Le test relit les sources :
+    /// les littéraux `ios.*` et `lesson.*`, et tout ce qui est passé à `t("…")`.
+    func testEveryKeyUsedInTheCodeExistsInEveryLanguage() throws {
+        let sources = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Micabo", isDirectory: true)
+        guard let files = FileManager.default.enumerator(at: sources, includingPropertiesForKeys: nil) else {
+            throw XCTSkip("les sources ne sont pas lisibles depuis ce simulateur")
+        }
+        let patterns = try [
+            NSRegularExpression(pattern: #""((?:ios|lesson)\.[A-Za-z0-9_.\-]*[A-Za-z0-9])""#),
+            NSRegularExpression(pattern: #"\bt\(\s*"([a-z][A-Za-z0-9]*(?:\.[A-Za-z0-9_\-]+)+)""#),
+        ]
+        var used: Set<String> = []
+        var read = 0
+        for case let url as URL in files where url.pathExtension == "swift" {
+            // Les catalogues eux-mêmes ne sont pas des appels.
+            guard !url.path.contains("/Services/I18n/"),
+                  let text = try? String(contentsOf: url, encoding: .utf8)
+            else { continue }
+            read += 1
+            for line in text.components(separatedBy: "\n") {
+                guard !line.trimmingCharacters(in: .whitespaces).hasPrefix("//") else { continue }
+                let range = NSRange(line.startIndex..., in: line)
+                for pattern in patterns {
+                    for match in pattern.matches(in: line, range: range) {
+                        guard let keyRange = Range(match.range(at: 1), in: line) else { continue }
+                        used.insert(String(line[keyRange]))
+                    }
+                }
+            }
+        }
+        guard read > 0 else { throw XCTSkip("aucune source lue") }
+        XCTAssertGreaterThan(used.count, 500, "la lecture des sources a raté des clés")
+
+        var missing: [String] = []
+        for key in used.sorted() {
+            // Les réglages de développement restent derrière `#if DEBUG` : le français et
+            // l'anglais leur suffisent.
+            let locales: [UiLocale] = key.hasPrefix("ios.debug.") ? [.fr, .en] : UiLocale.allCases
+            for locale in locales where !Self.speaks(key, locale) {
+                missing.append("\(locale.rawValue) \(key)")
+            }
+        }
+        XCTAssertEqual(missing, [], "clés absentes d'une langue : elles s'afficheraient en anglais, ou telles quelles")
+    }
+
+    /// Vrai quand la langue a sa propre phrase pour la clé, sans retomber sur une autre.
+    private static func speaks(_ key: String, _ locale: UiLocale) -> Bool {
+        if key.hasPrefix("lesson.") {
+            return LessonI18nCatalogs.table(for: locale.rawValue)[key] != nil
+        }
+        if IosI18nCatalogs.table(for: locale.rawValue)[key] != nil { return true }
+        return SharedI18nCatalogs.sharedLocales.contains(locale.rawValue)
+            && SharedI18nCatalogs.table(for: locale.rawValue)[key] != nil
+    }
+
+    /// **Les mêmes `{variables}` dans toutes les langues.** Une traduction qui renomme
+    /// `{count}` en `{n}`, ou l'oublie, affiche l'accolade telle quelle, ou un chiffre manquant.
+    func testPlaceholdersMatchFrenchInEveryLanguage() {
+        var mismatched: [String] = []
+        for locale in UiLocale.allCases {
+            for (key, value) in IosI18nCatalogs.table(for: locale.rawValue) {
+                guard let french = IosI18nCatalogs.fr[key] ?? SharedI18nCatalogs.fr[key] else { continue }
+                if Self.placeholders(in: value) != Self.placeholders(in: french) {
+                    mismatched.append("\(locale.rawValue) \(key)")
+                }
+                if value.components(separatedBy: "**").count % 2 == 0 {
+                    mismatched.append("\(locale.rawValue) \(key) : un ** sans son pendant")
+                }
+            }
+            for (key, value) in LessonI18nCatalogs.table(for: locale.rawValue) {
+                guard let french = LessonI18nCatalogs.fr[key] else { continue }
+                if Self.placeholders(in: value) != Self.placeholders(in: french) {
+                    mismatched.append("\(locale.rawValue) \(key)")
+                }
+            }
+        }
+        XCTAssertEqual(mismatched.sorted(), [])
+    }
+
+    /// Les noms des variables du premier niveau : `{name}`, et le `count` de
+    /// `{count, plural, one {…} other {…}}` — pas les mots des deux branches.
+    static func placeholders(in template: String) -> Set<String> {
+        var names: Set<String> = []
+        var depth = 0
+        var name = ""
+        var reading = false
+        for character in template {
+            if character == "{" {
+                depth += 1
+                if depth == 1 {
+                    name = ""
+                    reading = true
+                }
+                continue
+            }
+            if character == "}" {
+                if depth == 1, reading { names.insert(name) }
+                if depth == 1 { reading = false }
+                depth = max(0, depth - 1)
+                continue
+            }
+            guard depth == 1, reading else { continue }
+            if character == "," {
+                names.insert(name)
+                reading = false
+            } else {
+                name.append(character)
+            }
+        }
+        return names
+    }
+
+    func testPlaceholderReaderSkipsPluralBranches() {
+        XCTAssertEqual(I18nTests.placeholders(in: "{count, plural, one {cours} other {cours}}"), ["count"])
+        XCTAssertEqual(I18nTests.placeholders(in: "{used} min sur {total}"), ["used", "total"])
+    }
+
+    /// **Un pourcentage s'écrit comme la langue l'écrit.** Les écrans posaient `"\(n) %"` à la
+    /// main : l'espace française partout, et le signe du mauvais côté en turc.
+    func testPercentFollowsTheLocale() {
+        XCTAssertEqual(L10n.percent(42, locale: .en), "42%")
+        XCTAssertEqual(L10n.percent(42, locale: .tr), "%42")
+        let french = L10n.percent(42, locale: .fr)
+        XCTAssertTrue(french.hasPrefix("42"), french)
+        XCTAssertTrue(french.hasSuffix("%"), french)
+        XCTAssertNotEqual(french, "42%")
+        for locale in UiLocale.allCases {
+            XCTAssertTrue(L10n.percent(100, locale: locale).contains("%") || L10n.percent(100, locale: locale).contains("٪"), locale.rawValue)
+        }
+    }
+
     func testUiLocaleStorePersists() {
         let defaults = UserDefaults(suiteName: "micabo.i18n.test")!
         defaults.removePersistentDomain(forName: "micabo.i18n.test")

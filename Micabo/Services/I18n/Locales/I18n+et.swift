@@ -230,6 +230,7 @@ extension IosI18nCatalogs {
         "ios.cardsSection": "Kaardid · {count}",
         "ios.chapter.intro": "Sissejuhatus",
         "ios.clearSearch": "Tühjenda otsing",
+        "ios.clearText": "Tühjenda tekst",
         "ios.cloud.notConfigured": "Pilve ligipääs pole seadistatud.",
         "ios.cloud.notSignedIn": "Ükski konto pole sisse logitud.",
         "ios.cloud.unexpected": "Ootamatu vastus.",

@@ -230,6 +230,7 @@ extension IosI18nCatalogs {
         "ios.cardsSection": "Κάρτες · {count}",
         "ios.chapter.intro": "Εισαγωγή",
         "ios.clearSearch": "Καθαρισμός αναζήτησης",
+        "ios.clearText": "Διαγραφή κειμένου",
         "ios.cloud.notConfigured": "Η πρόσβαση στο cloud δεν έχει ρυθμιστεί.",
         "ios.cloud.notSignedIn": "Κανένας συνδεδεμένος λογαριασμός.",
         "ios.cloud.unexpected": "Απρόσμενη απάντηση.",

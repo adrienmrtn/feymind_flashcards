@@ -191,6 +191,7 @@ struct CountryStepView: View {
                         .foregroundStyle(OnboardingPalette.gray)
                 }
                 .buttonStyle(MicaboPressableButtonStyle())
+                .accessibilityLabel(Text(i18n.t("ios.clearSearch")))
             }
         }
         .padding(.horizontal, 16)

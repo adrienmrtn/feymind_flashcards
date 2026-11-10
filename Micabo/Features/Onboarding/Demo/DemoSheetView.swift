@@ -392,7 +392,7 @@ struct DemoCycleFigure: View {
                     let point = CGPoint(x: center.x + radius * CGFloat(cos(angle)), y: center.y + radius * CGFloat(sin(angle)))
                     let arrow = CGPoint(x: center.x + radius * CGFloat(cos(next)), y: center.y + radius * CGFloat(sin(next)))
 
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "chevron.forward")
                         .font(.system(size: 11, weight: .bold))
                         .foregroundStyle(tint)
                         .rotationEffect(.radians(next + .pi / 2))

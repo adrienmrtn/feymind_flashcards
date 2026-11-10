@@ -230,6 +230,7 @@ extension IosI18nCatalogs {
         "ios.cardsSection": "Kaarten · {count}",
         "ios.chapter.intro": "Inleiding",
         "ios.clearSearch": "Zoekopdracht wissen",
+        "ios.clearText": "Tekst wissen",
         "ios.cloud.notConfigured": "Cloudtoegang is niet ingesteld.",
         "ios.cloud.notSignedIn": "Er is geen account ingelogd.",
         "ios.cloud.unexpected": "Onverwacht antwoord.",

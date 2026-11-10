@@ -204,6 +204,9 @@ struct MockExamFlow: View {
     // MARK: Écrire la copie
 
     private func begin() {
+        // Un double appui sur « Commencer » écrivait deux copies : deux appels payés, et
+        // l'examen offert compté deux fois.
+        if case .writing = phase { return }
         let isPro = pro?.isPro == true
         if !isPro && ExamAllowance.freeMockUsed {
             paywall = .mockExam
@@ -491,7 +494,7 @@ struct MockExamRunView: View {
             Button {
                 go(to: index - 1)
             } label: {
-                Image(systemName: "chevron.left")
+                Image(systemName: "chevron.backward")
                     .font(.system(size: 18, weight: .heavy))
                     .foregroundStyle(MicaboColor.ink)
                     .frame(width: 58, height: 58)
@@ -757,6 +760,9 @@ struct MockExamResultView: View {
     /// Chaque question ratée devient une flashcard de sa leçon, dans le bon thème, à revoir
     /// dès demain.
     private func addCards() {
+        // `.disabled` ne suit qu'au rendu suivant : deux appuis dans la même image doublaient
+        // chaque carte.
+        guard !cardsAdded else { return }
         let byID = Dictionary(lessons.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         for item in missed {
             guard paper.lessons.indices.contains(item.lesson), let course = byID[paper.lessons[item.lesson].courseID] else { continue }

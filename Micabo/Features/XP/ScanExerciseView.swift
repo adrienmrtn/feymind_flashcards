@@ -32,6 +32,8 @@ struct ScanExerciseView: View {
     @State private var showPhotoPicker = false
     @State private var photoItems: [PhotosPickerItem] = []
     @State private var paywall: PaywallTrigger?
+    /// La lecture de la page en cours, annulée quand l'écran se ferme.
+    @State private var reader: Task<Void, Never>?
     @FocusState private var focused: Bool
 
     var body: some View {
@@ -63,6 +65,7 @@ struct ScanExerciseView: View {
             .ignoresSafeArea()
         }
         .micaboPaywall($paywall)
+        .onDisappear { reader?.cancel() }
     }
 
     // MARK: L'en-tête
@@ -190,8 +193,11 @@ struct ScanExerciseView: View {
 
     private func readPhoto(_ item: PhotosPickerItem) {
         phase = .reading
-        Task {
-            if let data = try? await item.loadTransferable(type: Data.self), let image = UIImage(data: data) {
+        reader?.cancel()
+        reader = Task {
+            let data = try? await item.loadTransferable(type: Data.self)
+            guard !Task.isCancelled else { return }
+            if let data, let image = UIImage(data: data) {
                 read([image])
             } else {
                 phase = .unreadable
@@ -203,8 +209,12 @@ struct ScanExerciseView: View {
     private func read(_ images: [UIImage]) {
         guard let page = images.first else { return }
         phase = .reading
-        Task {
+        reader?.cancel()
+        reader = Task {
             let text = await OnDeviceOCR.recognize(images: [page])
+            // L'élève a pu fermer l'écran pendant la lecture : la page n'ouvre plus de
+            // conversation dans son dos, et ne consomme pas la question offerte.
+            guard !Task.isCancelled, phase == .reading else { return }
             let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard trimmed.count >= Self.minimumCharacters else {
                 Haptics.warning()
@@ -349,7 +359,9 @@ struct ScanExerciseView: View {
     private func send() {
         guard let chat else { return }
         Task {
-            let gate = await chat.send(isPro: pro?.isPro ?? false, level: level, language: language, using: aiService)
+            let isPro = pro?.isPro ?? false
+            let gate = await chat.send(isPro: isPro, level: level, language: language, using: aiService)
+            MikaChat.track(gate, isPro: isPro, chat: chat)
             switch gate {
             case .paywall:
                 focused = false

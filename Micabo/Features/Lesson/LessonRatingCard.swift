@@ -129,6 +129,8 @@ struct LessonRatingCard: View {
     }
 
     private func rate(_ value: LessonRating.Value) {
+        // Un double appui sur 👍 envoyait deux notes : la statistique comptait l'élève deux fois.
+        guard phase != .thanks else { return }
         LessonRating.send(value, reasons: Array(reasons), comment: comment, course: course, moment: moment)
         Haptics.success()
         phase = .thanks

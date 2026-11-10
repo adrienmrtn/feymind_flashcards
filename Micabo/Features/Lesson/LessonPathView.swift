@@ -230,7 +230,7 @@ struct LessonPathView: View {
 
     private var topBar: some View {
         HStack(spacing: 12) {
-            MicaboCircleButton(systemImage: "chevron.left", style: .light, size: 40) {
+            MicaboCircleButton(systemImage: "chevron.backward", style: .light, size: 40) {
                 dismiss()
             }
             Spacer(minLength: 0)
@@ -502,7 +502,7 @@ struct LessonPathHeader: View {
     private var progressLine: some View {
         VStack(spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
-                Text("\(session.percent) %")
+                Text(L10n.percent(session.percent, locale: .resolved()))
                     .font(MicaboFont.number(26))
                     .foregroundStyle(tone.ink)
                     .contentTransition(.numericText(value: Double(session.percent)))

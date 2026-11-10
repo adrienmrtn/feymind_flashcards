@@ -230,6 +230,7 @@ extension IosI18nCatalogs {
         "ios.cardsSection": "Kartičky · {count}",
         "ios.chapter.intro": "Úvod",
         "ios.clearSearch": "Vymazat hledání",
+        "ios.clearText": "Vymazat text",
         "ios.cloud.notConfigured": "Přístup ke cloudu není nastavený.",
         "ios.cloud.notSignedIn": "Žádný účet není přihlášený.",
         "ios.cloud.unexpected": "Neočekávaná odpověď.",
