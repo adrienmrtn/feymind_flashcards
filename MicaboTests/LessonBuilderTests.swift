@@ -279,11 +279,21 @@ final class LessonBuilderTests: XCTestCase {
         XCTAssertEqual(ExamGrade.label(1, country: .de, locale: locale), "1,0")
         XCTAssertEqual(ExamGrade.label(0.7, country: .ch, locale: locale), "4,5")
         XCTAssertEqual(ExamGrade.label(0.85, country: .us, locale: locale), "B")
-        XCTAssertEqual(ExamGrade.label(0.78, country: .tr, locale: locale), "78 %")
+        // Le pourcentage s'écrit comme la langue l'écrit : « 78 % » en français, « %78 » en turc.
+        XCTAssertEqual(ExamGrade.label(0.78, country: .tr, locale: locale), L10n.percent(78, locale: .fr))
+        XCTAssertEqual(ExamGrade.label(0.78, country: .tr, locale: .tr), "%78")
         XCTAssertEqual(ExamGrade.label(0.75, country: .it, locale: locale), "7,5/10")
         XCTAssertEqual(ExamGrade.label(0.2, country: .uk, locale: locale), "U")
         XCTAssertTrue(ExamGrade.passes(0.5))
         XCTAssertFalse(ExamGrade.passes(0.45))
+    }
+
+    /// La consigne reçoit le jour de l'examen tel que l'élève l'a choisi : `.iso8601` formate
+    /// en UTC, et un examen enregistré à minuit à Paris y devenait celui de la veille.
+    func testTheExamLineCarriesTheStudentsDay() throws {
+        let day = try XCTUnwrap(MicaboCalendar.shared.date(from: DateComponents(year: 2027, month: 6, day: 15)))
+        XCTAssertTrue(LessonBuilder.examLine(name: nil, date: day).hasSuffix("2027-06-15"))
+        XCTAssertTrue(LessonBuilder.examLine(name: "Bac", date: day).contains("2027-06-15"))
     }
 
     func testAnUsedFreePracticeOpensThePaywall() async throws {
