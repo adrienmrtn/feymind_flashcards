@@ -225,11 +225,10 @@ struct HomeView: View {
         }
     }
 
-    /// PDF, Photo, Audio et YouTube sont Pro ; la leçon offerte, elle, peut venir de n'importe
-    /// quel support (`docs/refonte-knowunity.md` § 7). Une fois servie, les imports ouvrent le
-    /// paywall comme avant.
+    /// Un import s'ouvre toujours : la lecture se fait sur l'appareil, et c'est l'écriture de la
+    /// leçon qui passe par la porte du gratuit (`LessonAllowance.locksImport`, `sendRoute`).
     private func tapImport(_ kind: LessonComposer.Kind) {
-        if kind != .text && !isPro && !freeLessonLeft {
+        if LessonAllowance.locksImport(kind, isPro: isPro, freeLessonLeft: freeLessonLeft) {
             focused = false
             paywall = .generateCourse
             return
@@ -271,7 +270,7 @@ struct HomeView: View {
 
     private func send() {
         guard composer.canSend else { return }
-        if let trigger = LessonAllowance.gate(isPro: isPro, source: composer.source, courses: courses) {
+        if let trigger = LessonAllowance.immediatePaywall(isPro: isPro, source: composer.source, courses: courses) {
             focused = false
             paywall = trigger
             return
@@ -643,7 +642,7 @@ struct HomeComposerBar: View {
     }
 
     private func shortcut(_ kind: LessonComposer.Kind) -> some View {
-        let locked = kind != .text && !isPro && !freeLessonLeft
+        let locked = LessonAllowance.locksImport(kind, isPro: isPro, freeLessonLeft: freeLessonLeft)
         return Button { onImport(kind) } label: {
             MicaboIconView(icon: kind.icon, size: 24, dimmed: !composer.hasRoom)
                 .frame(width: 38, height: 38)
@@ -711,7 +710,7 @@ struct ImportGrid: View {
     var body: some View {
         HStack(spacing: 8) {
             ForEach(Self.kinds, id: \.self) { kind in
-                ImportChip(kind: kind, locked: kind != .text && !isPro && !freeLessonLeft, enabled: enabled) { onImport(kind) }
+                ImportChip(kind: kind, locked: LessonAllowance.locksImport(kind, isPro: isPro, freeLessonLeft: freeLessonLeft), enabled: enabled) { onImport(kind) }
             }
         }
     }
@@ -1064,7 +1063,7 @@ struct HomeSourcesSheet: View {
     }
 
     private func locked(_ kind: LessonComposer.Kind) -> Bool {
-        kind != .text && !isPro && !freeLessonLeft
+        LessonAllowance.locksImport(kind, isPro: isPro, freeLessonLeft: freeLessonLeft)
     }
 }
 
