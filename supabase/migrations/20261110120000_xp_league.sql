@@ -70,3 +70,33 @@ $$;
 
 revoke all on function public.friends_league() from public, anon;
 grant execute on function public.friends_league() to authenticated;
+
+-- **Deux appareils, une seule ligne.** L'iPhone, Android et le site écrivent chacun leurs
+-- nombres ; sans garde, le dernier qui synchronise ferait redescendre l'XP gagnée sur l'autre.
+-- L'XP ne redescend donc jamais : le total garde le plus grand, la semaine aussi tant que c'est
+-- la même semaine. Une nouvelle semaine repart de ce que l'appareil envoie.
+create or replace function public.profiles_xp_monotonic()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.xp_total := greatest(coalesce(old.xp_total, 0), coalesce(new.xp_total, 0));
+  if new.xp_week_start is null then
+    new.xp_week_start := old.xp_week_start;
+    new.xp_week := old.xp_week;
+  elsif old.xp_week_start is not null and new.xp_week_start = old.xp_week_start then
+    new.xp_week := greatest(coalesce(old.xp_week, 0), coalesce(new.xp_week, 0));
+  elsif old.xp_week_start is not null and new.xp_week_start < old.xp_week_start then
+    -- Un appareil resté sur la semaine d'avant n'écrase pas la semaine en cours.
+    new.xp_week_start := old.xp_week_start;
+    new.xp_week := old.xp_week;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists profiles_xp_monotonic on public.profiles;
+create trigger profiles_xp_monotonic
+  before update of xp_total, xp_week, xp_week_start on public.profiles
+  for each row execute function public.profiles_xp_monotonic();
