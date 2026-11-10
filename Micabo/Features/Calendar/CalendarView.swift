@@ -138,7 +138,7 @@ struct CalendarView: View {
                 )
 
                 if !hasTimetable {
-                    TimetableScanPromo { editingCalendar = .new(scan: true) }
+                    TimetableScanPromo { scanTimetable() }
                 }
 
                 calendarsSection(snapshot)
@@ -164,7 +164,7 @@ struct CalendarView: View {
             Button(loc("ios.cal.newEvent"), systemImage: "calendar.badge.plus") { editingEvent = .new(day: selectedDay) }
             Button(loc("ios.cal.newExam"), systemImage: "graduationcap") { editingExam = .new }
             Button(loc("ios.cal.newCalendar"), systemImage: "square.stack") { editingCalendar = .new(scan: false) }
-            Button(loc("ios.cal.scan"), systemImage: "camera.viewfinder") { editingCalendar = .new(scan: true) }
+            Button(loc("ios.cal.scan"), systemImage: "camera.viewfinder") { scanTimetable() }
         } label: {
             CalendarAddLabel()
         }
@@ -200,7 +200,7 @@ struct CalendarView: View {
                 }
                 if hasTimetable {
                     Button {
-                        editingCalendar = .new(scan: true)
+                        scanTimetable()
                     } label: {
                         Label(loc("ios.cal.scan"), systemImage: "camera.viewfinder")
                             .font(MicaboFont.ui(15, weight: .black))
@@ -287,6 +287,15 @@ struct CalendarView: View {
         withAnimation(.spring(duration: 0.3)) {
             selectedDay = start
             if movesWeek { weekOffset = WeekPager.offset(of: start) }
+        }
+    }
+
+    /// Le scanner remplit « Cours » s'il existe, plutôt que d'ouvrir un second calendrier.
+    private func scanTimetable() {
+        if let classes = calendars.first(where: { $0.kind == .classes }) {
+            editingCalendar = .edit(classes, scan: true)
+        } else {
+            editingCalendar = .new(scan: true)
         }
     }
 

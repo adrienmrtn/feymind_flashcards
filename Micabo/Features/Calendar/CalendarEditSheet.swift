@@ -153,12 +153,20 @@ struct TimetableScanButtons: View {
 /// Ce que la feuille d'un calendrier modifie.
 enum CalendarEditTarget: Identifiable {
     case new(scan: Bool)
-    case edit(StudyCalendar)
+    /// Un calendrier existant ; `scan` ouvre l'appareil photo d'emblée, pour remplir
+    /// « Cours » plutôt que d'en créer un second.
+    case edit(StudyCalendar, scan: Bool = false)
 
     var id: String {
         switch self {
         case .new(let scan): scan ? "new-scan" : "new"
-        case .edit(let calendar): calendar.id.uuidString
+        case .edit(let calendar, let scan): calendar.id.uuidString + (scan ? "-scan" : "")
+        }
+    }
+
+    var scans: Bool {
+        switch self {
+        case .new(let scan), .edit(_, let scan): scan
         }
     }
 }
@@ -185,7 +193,7 @@ struct CalendarEditSheet: View {
     @State private var scanImage: ScanImage?
 
     private var existing: StudyCalendar? {
-        if case .edit(let calendar) = target { return calendar }
+        if case .edit(let calendar, _) = target { return calendar }
         return nil
     }
 
@@ -296,6 +304,11 @@ struct CalendarEditSheet: View {
     private func load() {
         guard !loaded else { return }
         loaded = true
+        if target.scans {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                if canUseCamera { openCamera() } else { showPhotoPicker = true }
+            }
+        }
         if let existing {
             name = existing.name
             emoji = existing.emoji
@@ -306,12 +319,9 @@ struct CalendarEditSheet: View {
             let used = Set(((try? modelContext.fetch(FetchDescriptor<StudyCalendar>())) ?? []).map(\.colorIndex))
             color = CalendarTint.all.first { !used.contains($0.id) }?.id ?? 1
             emoji = "🗓️"
-            if case .new(scan: true) = target {
+            if target.scans {
                 name = loc("ios.cal.default.classes")
                 emoji = "🏫"
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-                    if canUseCamera { openCamera() } else { showPhotoPicker = true }
-                }
             }
         }
     }
@@ -361,10 +371,18 @@ struct CalendarEditSheet: View {
         saved = true
         let calendar = store()
         let now = Date()
+        // Une photo relue deux fois ne double pas les cours : ce qui est déjà là, au même
+        // jour, aux mêmes heures et sous le même titre, n'est pas reposé.
+        let existing = ((try? modelContext.fetch(FetchDescriptor<CalendarEvent>())) ?? [])
+            .filter { $0.calendarID == calendar.id && $0.repeatsWeekly }
+            .map { "\(MicaboCalendar.isoWeekday(of: $0.day))-\($0.startMinute)-\($0.endMinute)-\($0.title.lowercased())" }
+        var seen = Set(existing)
         for entry in entries where entry.isValid {
+            let title = entry.title.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard seen.insert("\(entry.weekday)-\(entry.startMinute)-\(entry.endMinute)-\(title.lowercased())").inserted else { continue }
             modelContext.insert(CalendarEvent(
                 calendarID: calendar.id,
-                title: entry.title.trimmingCharacters(in: .whitespacesAndNewlines),
+                title: title,
                 day: TimetableParser.firstDay(for: entry.weekday, from: now),
                 startMinute: entry.startMinute,
                 endMinute: entry.endMinute,

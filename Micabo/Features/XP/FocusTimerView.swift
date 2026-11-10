@@ -392,27 +392,38 @@ struct FocusSessionScreen: View {
         }
     }
 
+    /// Pendant une pause, le geste principal est de la passer : « Pause » sur un écran qui
+    /// dit déjà « Pause » se lirait de travers.
     private var buttons: some View {
         VStack(spacing: 10) {
-            Button(action: onPauseResume) {
-                Label(
-                    isPaused ? L10n.t("ios.kx.timer.resume", locale: .resolved()) : L10n.t("ios.kx.timer.pause", locale: .resolved()),
-                    systemImage: isPaused ? "play.fill" : "pause.fill"
-                )
+            if isRest && !isPaused {
+                Button(action: onSkipBreak) {
+                    Label(loc("ios.focus.skipBreak"), systemImage: "forward.fill")
+                }
+                .buttonStyle(MicaboBrandButtonStyle())
+            } else {
+                pauseButton
+                    .buttonStyle(MicaboBrandButtonStyle())
             }
-            .buttonStyle(MicaboBrandButtonStyle())
             HStack(spacing: 10) {
                 if isRest && !isPaused {
-                    Button(action: onSkipBreak) {
-                        Label(loc("ios.focus.skipBreak"), systemImage: "forward.fill")
-                    }
-                    .buttonStyle(MicaboSecondaryButtonStyle())
+                    pauseButton
+                        .buttonStyle(MicaboSecondaryButtonStyle())
                 }
                 Button(action: onStop) {
                     Label(L10n.t("ios.kx.timer.stop", locale: .resolved()), systemImage: "stop.fill")
                 }
                 .buttonStyle(MicaboSecondaryButtonStyle())
             }
+        }
+    }
+
+    private var pauseButton: some View {
+        Button(action: onPauseResume) {
+            Label(
+                isPaused ? L10n.t("ios.kx.timer.resume", locale: .resolved()) : L10n.t("ios.kx.timer.pause", locale: .resolved()),
+                systemImage: isPaused ? "play.fill" : "pause.fill"
+            )
         }
     }
 }

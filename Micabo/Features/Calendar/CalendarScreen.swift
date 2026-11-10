@@ -583,9 +583,8 @@ struct AgendaRow: View {
                                 Text(subtitle)
                                     .font(MicaboFont.ui(13, weight: .bold))
                                     .foregroundStyle(MicaboColor.inkSecondary)
-                                    .lineLimit(2)
-                                    .multilineTextAlignment(.leading)
-                                    .fixedSize(horizontal: false, vertical: true)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.85)
                             }
                         }
                         // Le texte passe avant l'espace : mesuré sur une largeur et posé sur
@@ -681,15 +680,14 @@ struct AgendaRow: View {
             .accessibilityLabel(Text(loc("ios.cal.startSession")))
         case .milestone where !item.isDone:
             Button(action: onTap) {
-                Text(loc("ios.cal.go"))
-                    .font(MicaboFont.ui(13, weight: .black))
+                Image(systemName: "play.fill")
+                    .font(.system(size: 13, weight: .black))
                     .foregroundStyle(Color.white)
-                    .lineLimit(1)
-                    .padding(.horizontal, 10)
-                    .frame(minHeight: 30)
-                    .background(tint.color, in: Capsule())
+                    .frame(width: 34, height: 34)
+                    .background(tint.color, in: Circle())
             }
-            .buttonStyle(HomePressStyle(scale: 0.92, feedback: .medium))
+            .buttonStyle(HomePressStyle(scale: 0.9, feedback: .medium))
+            .accessibilityLabel(Text(loc("ios.cal.go")))
         case .focus:
             Image(systemName: "checkmark.seal.fill")
                 .font(.system(size: 17, weight: .bold))
