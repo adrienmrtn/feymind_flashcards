@@ -177,14 +177,16 @@ struct HomeTodayCard: View {
         .padding(.trailing, 10)
         .padding(.vertical, 14)
         .background {
-            ZStack {
-                HomePalette.brand
-                Circle()
-                    .fill(RadialGradient(colors: [Color.white.opacity(0.28), .clear], center: .center, startRadius: 0, endRadius: 90))
-                    .frame(width: 180, height: 180)
-                    .offset(x: 120, y: -40)
-            }
-            .clipShape(UnevenRoundedRectangle(topLeadingRadius: 27, bottomLeadingRadius: 20, bottomTrailingRadius: 20, topTrailingRadius: 27, style: .continuous))
+            // La lueur est posée par-dessus l'aplat, pas à côté : dans une pile, ses 180 points
+            // agrandiraient le fond au-delà de l'en-tête.
+            HomePalette.brand
+                .overlay(alignment: .topTrailing) {
+                    Circle()
+                        .fill(RadialGradient(colors: [Color.white.opacity(0.3), .clear], center: .center, startRadius: 0, endRadius: 90))
+                        .frame(width: 180, height: 180)
+                        .offset(x: 50, y: -80)
+                }
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 27, bottomLeadingRadius: 20, bottomTrailingRadius: 20, topTrailingRadius: 27, style: .continuous))
         }
         .padding([.horizontal, .top], 1)
         .accessibilityElement(children: .combine)
@@ -223,7 +225,8 @@ struct HomeTodayCard: View {
                     Text(subtitle)
                         .font(MicaboFont.ui(13, weight: .semibold))
                         .foregroundStyle(HomePalette.inkSecondary)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             Spacer(minLength: 4)

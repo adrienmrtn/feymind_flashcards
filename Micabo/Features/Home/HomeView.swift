@@ -646,7 +646,7 @@ struct HomeComposerBar: View {
         return Button { onImport(kind) } label: {
             MicaboIconView(icon: kind.icon, size: 24, dimmed: !composer.hasRoom)
                 .frame(width: 38, height: 38)
-                .homeGlass(Circle())
+                .homeGlass(Circle(), fill: HomePalette.glassStrong)
                 .overlay(alignment: .topTrailing) {
                     if locked {
                         Image(systemName: "crown.fill")
@@ -862,11 +862,14 @@ struct HomeStatsRow: View {
     let stats: HomeStats
 
     var body: some View {
+        // Les trois pastilles prennent la hauteur de la plus haute : un libellé sur deux lignes
+        // ne rétrécit plus son chiffre.
         HStack(spacing: 8) {
             pill(stats.formattedTime(), L10n.t("lesson.home.statTime", locale: .resolved()), icon: .hourglass, tone: .blue)
             pill(String(stats.learnedLessons), L10n.t("lesson.home.statLessons", locale: .resolved()), icon: .diploma, tone: .mint)
             pill(String(stats.learnedCards), L10n.t("lesson.home.statCards", locale: .resolved()), icon: .cards, tone: .pink)
         }
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private func pill(_ value: String, _ label: String, icon: MicaboIcon, tone: LessonTone) -> some View {
@@ -890,7 +893,7 @@ struct HomeStatsRow: View {
         }
         .padding(.horizontal, 11)
         .padding(.vertical, 10)
-        .frame(maxWidth: .infinity, minHeight: 78, maxHeight: 78, alignment: .topLeading)
+        .frame(maxWidth: .infinity, minHeight: 78, maxHeight: .infinity, alignment: .topLeading)
         .background(tone.pale, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(tone.vivid.opacity(0.18), lineWidth: 1))
         .accessibilityElement(children: .combine)

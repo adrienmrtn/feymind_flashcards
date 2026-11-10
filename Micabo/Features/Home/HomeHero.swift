@@ -180,7 +180,7 @@ struct HomeMikaStage: View {
     var isThinking = false
     let motion: HomeMotion
 
-    static let mikaSize: CGFloat = 142
+    static let mikaSize: CGFloat = 152
 
     @State private var index = 0
     @State private var mood: MikaMood = .wave

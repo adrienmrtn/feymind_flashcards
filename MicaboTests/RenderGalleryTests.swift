@@ -273,7 +273,6 @@ final class RenderGalleryTests: XCTestCase {
         defaults.removePersistentDomain(forName: suite)
         let busyXP = XPStore(defaults: defaults)
         busyXP.award(points: 30)
-        busyXP.award(points: 85)
         let emptyDefaults = try XCTUnwrap(UserDefaults(suiteName: suite + ".empty"))
         emptyDefaults.removePersistentDomain(forName: suite + ".empty")
         let freshXP = XPStore(defaults: emptyDefaults)
