@@ -483,7 +483,7 @@ private struct MikaDesignScene: View {
                     // de la carte cache la coupe du buste.
                     .background(alignment: .topTrailing) {
                         MikaMascot(mood: picked || still ? .celebrate : .idle, size: 92)
-                            .offset(x: -10, y: -84)
+                            .offset(x: -10, y: -76)
                     }
                     .overlay(alignment: .topLeading) { streakBadge.offset(x: -10, y: -16) }
                     .overlay { confetti }
