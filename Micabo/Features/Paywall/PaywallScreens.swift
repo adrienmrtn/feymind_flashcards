@@ -366,11 +366,11 @@ private struct PaywallPlanCard: View {
                     // Le mois en gras, son unité juste à côté sur la même ligne de base :
                     // c'est le chiffre qu'on compare, et il ne se lit qu'avec son unité.
                     HStack(alignment: .lastTextBaseline, spacing: 3) {
-                        Text(plan.headlinePrice)
+                        Text(plan.priceHeadline(for: .current))
                             .font(MicaboFont.number(20))
                             .foregroundStyle(OnboardingPalette.ink)
 
-                        Text(plan.headlineUnit)
+                        Text(plan.priceHeadlineUnit(for: .current))
                             .font(MicaboFont.ui(12, weight: .medium))
                             .foregroundStyle(OnboardingPalette.gray)
                     }
@@ -405,7 +405,7 @@ private struct PaywallPlanCard: View {
             }
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-        .accessibilityLabel("\(plan.title), \(plan.headlinePrice) \(plan.headlineUnit), \(plan.caption), \(trialLine)")
+        .accessibilityLabel("\(plan.title), \(plan.priceHeadline(for: .current)) \(plan.priceHeadlineUnit(for: .current)), \(plan.caption), \(trialLine)")
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 

@@ -25,6 +25,10 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
     case generateCourse
     /// Le deuxième examen blanc : le premier est offert.
     case mockExam
+    /// **La leçon lue, à débloquer** : la leçon offerte a servi, Mika vient de lire les
+    /// supports déposés sur l'appareil, et l'écriture de la leçon est dans Pro
+    /// (`LessonAllowance.sendRoute`, `LockedLessonPreview`).
+    case lessonReady
 
     var id: String { rawValue }
 
@@ -39,6 +43,7 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
         case .mika: L10n.t("ios.paywallMikaHeadline", locale: .resolved())
         case .generateCourse: L10n.t("ios.paywallGenerateHeadline", locale: .resolved())
         case .mockExam: L10n.t("ios.paywallMockHeadline", locale: .resolved())
+        case .lessonReady: L10n.t("ios.conv.paywallLessonReady", locale: .resolved())
         }
     }
 }
@@ -116,7 +121,10 @@ struct PaywallFlowView: View {
         .background(OnboardingPalette.white.ignoresSafeArea())
         .onAppear {
             openedAt = Date()
-            Analytics.track(.paywallOpened, ["trigger": .text(trigger?.rawValue ?? "inconnu")])
+            Analytics.track(.paywallOpened, [
+                "trigger": .text(trigger?.rawValue ?? "inconnu"),
+                "price_display": PriceDisplay.current.analyticsValue,
+            ])
         }
         // **Un achat confirmé après coup ferme le paywall.** Un achat en attente (une
         // validation parentale, un droit que RevenueCat n'a pas encore vu) s'ouvre plus tard,
@@ -137,6 +145,7 @@ struct PaywallFlowView: View {
                 "trigger": .text(trigger?.rawValue ?? "inconnu"),
                 "stage": .text(stage == .plans ? "plans" : "offre"),
                 "seconds": .number((Date().timeIntervalSince(openedAt) * 10).rounded() / 10),
+                "price_display": PriceDisplay.current.analyticsValue,
             ])
         }
         .alert(L10n.t("app.common.oops", locale: .resolved()), isPresented: .constant(failure != nil)) {
@@ -185,7 +194,10 @@ struct PaywallFlowView: View {
     private func showPlans() {
         guard stage != .plans else { return }
         stage = .plans
-        Analytics.track(.paywallPlansSeen, ["trigger": .text(trigger?.rawValue ?? "inconnu")])
+        Analytics.track(.paywallPlansSeen, [
+            "trigger": .text(trigger?.rawValue ?? "inconnu"),
+            "price_display": PriceDisplay.current.analyticsValue,
+        ])
     }
 
     /// **Seul un achat confirmé ouvre l'app.** `unavailable` veut dire « je n'ai pas pu
@@ -198,9 +210,14 @@ struct PaywallFlowView: View {
         guard !isPurchasing else { return }
         isPurchasing = true
         failure = nil
+        // L'essai tel qu'il était promis au moment d'acheter : la boutique peut répondre
+        // autrement après coup, et c'est la promesse qu'on mesure.
+        let promisedTrial = plan.hasTrial
         Analytics.track(.paywallPurchaseStarted, [
             "trigger": .text(trigger?.rawValue ?? "inconnu"),
             "plan": .text(plan.productID),
+            "trial": .flag(promisedTrial),
+            "price_display": PriceDisplay.current.analyticsValue,
         ])
 
         let outcome = await PaywallPurchases.buy(plan)
@@ -213,7 +230,16 @@ struct PaywallFlowView: View {
             Analytics.track(.paywallPurchased, [
                 "trigger": .text(trigger?.rawValue ?? "inconnu"),
                 "plan": .text(plan.productID),
+                "trial": .flag(promisedTrial),
+                "price_display": PriceDisplay.current.analyticsValue,
             ])
+            if promisedTrial {
+                Analytics.track(.paywallTrialStarted, [
+                    "trigger": .text(trigger?.rawValue ?? "inconnu"),
+                    "plan": .text(plan.productID),
+                    "price_display": PriceDisplay.current.analyticsValue,
+                ])
+            }
             pro?.unlock()
             Haptics.success()
             onSubscribed()
@@ -233,7 +259,10 @@ struct PaywallFlowView: View {
             ])
             failure = outcome.failureMessage
         case .cancelled:
-            Analytics.track(.paywallPurchaseCancelled, ["plan": .text(plan.productID)])
+            Analytics.track(.paywallPurchaseCancelled, [
+                "plan": .text(plan.productID),
+                "price_display": PriceDisplay.current.analyticsValue,
+            ])
         case .pending:
             Analytics.track(.paywallPurchasePending, ["plan": .text(plan.productID)])
             showsPending = true

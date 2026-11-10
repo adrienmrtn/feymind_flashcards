@@ -122,6 +122,43 @@ struct PaywallPlan: Identifiable, Equatable {
         return PaywallPrice.text(price / 12)
     }
 
+    /// **Le prix ramené à la semaine**, pour la variante B du test de prix (`PriceDisplay`).
+    ///
+    /// Calculé exactement comme `monthlyEquivalent` : la somme **de la boutique du pays**,
+    /// divisée dans sa devise, arrondie par le formateur d'Apple pour ce pays (« 0,96 € »
+    /// pour 49,99 €). Le prix, le produit et l'essai ne changent pas : seule l'écriture change.
+    var weeklyEquivalent: String? {
+        guard period == .year else { return nil }
+        if let store = PaywallStorePrices.price(for: productID),
+           let text = store.formatted(store.amount / 52) {
+            return text
+        }
+        return PaywallPrice.text(price / 52)
+    }
+
+    /// L'équivalent que la variante annonce : le mois (A) ou la semaine (B). `nil` pour une
+    /// offre qui se paie déjà à la semaine.
+    func equivalent(for display: PriceDisplay) -> String? {
+        switch display {
+        case .monthly: monthlyEquivalent
+        case .weekly: weeklyEquivalent
+        }
+    }
+
+    /// Le grand chiffre d'une carte d'offre, dans la variante du test : `headlinePrice` pour
+    /// le mois, l'équivalent hebdomadaire pour la semaine.
+    func priceHeadline(for display: PriceDisplay) -> String {
+        equivalent(for: display) ?? displayPrice
+    }
+
+    /// L'unité qui accompagne `priceHeadline(for:)`.
+    func priceHeadlineUnit(for display: PriceDisplay) -> String {
+        switch (period, display) {
+        case (.year, .monthly): L10n.t("app.paywall.perMonthSlash", locale: .resolved())
+        case (.year, .weekly), (.week, _): L10n.t("app.paywall.perWeekSlash", locale: .resolved())
+        }
+    }
+
     /// **Le grand chiffre du paywall, et c'est le mois.**
     ///
     /// Les deux nombres d'une offre annuelle ne pèsent pas pareil : « 49,99 € » est la

@@ -216,4 +216,102 @@ enum LessonAllowance {
     static func sendsAsFreeLesson(isPro: Bool, source: LessonSourceKind, courses: [Course]) -> Bool {
         !isPro && source.isImport && !hasUsedFreeLesson(courses: courses)
     }
+
+    // MARK: Quand le paywall s'ouvre
+
+    /// **Où mène l'envoi.** La règle reste celle de `gate` ; seul le moment du paywall change :
+    /// un élève qui a déposé des supports les voit lus, puis le paywall s'ouvre au moment de
+    /// débloquer la leçon. Un sujet seul n'a rien à lire : son paywall s'ouvre tout de suite,
+    /// comme avant.
+    enum SendRoute: Equatable {
+        /// La demande part au serveur.
+        case create
+        /// Le paywall tout de suite, sans rien d'autre.
+        case paywall(PaywallTrigger)
+        /// La lecture (déjà faite sur l'appareil), l'aperçu de ce qui a été lu, puis le paywall
+        /// `lessonReady`. Rien ne part au serveur avant l'achat : il refuserait la leçon.
+        case lockedPreview
+    }
+
+    static func sendRoute(isPro: Bool, source: LessonSourceKind, courses: [Course]) -> SendRoute {
+        guard let trigger = gate(isPro: isPro, source: source, courses: courses) else { return .create }
+        return source == .topic ? .paywall(trigger) : .lockedPreview
+    }
+
+    /// Le paywall que Home ouvre **avant** l'écran de création : seulement celui d'un sujet
+    /// seul. Les supports déposés passent par l'aperçu verrouillé (`LessonCreationFlow`).
+    static func immediatePaywall(isPro: Bool, source: LessonSourceKind, courses: [Course]) -> PaywallTrigger? {
+        if case .paywall(let trigger) = sendRoute(isPro: isPro, source: source, courses: courses) {
+            return trigger
+        }
+        return nil
+    }
+
+    /// **Un import n'est jamais fermé, et ne porte plus de couronne.** Lire un PDF, des
+    /// photos, un audio ou une vidéo se fait sur l'appareil ; c'est l'écriture de la leçon qui
+    /// est dans Pro, et son paywall vient à la fin de la lecture (`sendRoute`). Home lit cette
+    /// fonction pour la couronne d'`ImportGrid` comme pour le paywall de `tapImport`.
+    static func locksImport(_ kind: LessonComposer.Kind, isPro: Bool, freeLessonLeft: Bool) -> Bool {
+        false
+    }
+}
+
+/// **Ce que Mika a vraiment lu**, pour l'aperçu verrouillé : rien d'inventé, tout vient des
+/// supports lus sur l'appareil.
+struct LessonReadSummary: Equatable {
+    /// Les supports lus.
+    var supports: Int
+    /// Les pages d'un PDF, d'un Word ou de photos ; zéro pour une vidéo, un audio ou un texte
+    /// collé, qui n'en ont pas (la ligne ne s'affiche alors pas).
+    var pages: Int
+    var words: Int
+    /// Le titre deviné : le titre d'une vidéo, sinon la première vraie ligne du texte, sinon
+    /// le nom du fichier.
+    var title: String
+    /// Les premières lignes du texte, floutées derrière le cadenas.
+    var previewLines: [String]
+
+    static let previewLineCount = 4
+    static let maximumLineLength = 90
+
+    init(documents: [ImportedDocument]) {
+        supports = documents.count
+        pages = documents
+            .filter { [.pdf, .photo, .docx].contains($0.source) }
+            .reduce(0) { $0 + max(1, $1.pageCount) }
+        words = documents.reduce(0) { $0 + Self.wordCount($1.text) }
+
+        let first = documents.first
+        let lines = first.map { Self.meaningfulLines($0.text) } ?? []
+        if let first, first.source == .youtube, let name = first.fileName.nilIfBlank {
+            title = name
+            previewLines = Array(lines.prefix(Self.previewLineCount))
+        } else if let line = lines.first {
+            title = Self.clip(line, to: 80)
+            previewLines = Array(lines.dropFirst().prefix(Self.previewLineCount))
+        } else {
+            title = first?.fileName ?? ""
+            previewLines = []
+        }
+        previewLines = previewLines.map { Self.clip($0, to: Self.maximumLineLength) }
+    }
+
+    /// Les mots : ce qui, entre deux blancs, contient une lettre ou un chiffre.
+    static func wordCount(_ text: String) -> Int {
+        text.split(whereSeparator: { $0.isWhitespace || $0.isNewline })
+            .filter { $0.contains(where: { $0.isLetter || $0.isNumber }) }
+            .count
+    }
+
+    /// Les lignes qui disent quelque chose : au moins trois lettres, pas un numéro de page,
+    /// pas une rangée de tirets.
+    static func meaningfulLines(_ text: String) -> [String] {
+        text.components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { line in line.filter(\.isLetter).count >= 3 }
+    }
+
+    private static func clip(_ line: String, to length: Int) -> String {
+        line.count > length ? String(line.prefix(length - 1)) + "…" : line
+    }
 }

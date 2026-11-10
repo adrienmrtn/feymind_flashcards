@@ -94,9 +94,17 @@ Le retour qui existe (vert, rouge, « pourquoi ») reste. On y ajoute la pastill
 Le serveur l'accepte déjà (`begin_lesson(p_onboarding)`, `generate-lesson` lit
 `onboarding: true`). Un élève qui n'est pas Pro et n'a pas encore utilisé sa leçon offerte
 peut créer cette leçon depuis un PDF, des photos ou YouTube : l'app envoie `onboarding: true`
-avec cette génération-là. Une fois la leçon offerte utilisée, les imports ouvrent le paywall
-comme avant. Les pastilles d'import n'affichent plus la couronne tant que la leçon offerte
-reste.
+avec cette génération-là. Les pastilles d'import n'affichent plus la couronne tant que la leçon
+offerte reste.
+
+**Depuis, sur iPhone : le paywall à la fin de la lecture.** Une fois la leçon offerte utilisée,
+les imports restent ouverts et sans couronne (`LessonAllowance.locksImport`) : la lecture se
+fait sur l'appareil. À l'envoi, des supports lus mènent à l'aperçu verrouillé
+(`LessonAllowance.sendRoute`, `LockedLessonPreview`) : ce que Mika a vraiment lu (supports,
+pages, mots, titre deviné, premières lignes floutées), « Écriture de ta leçon : avec Pro », puis
+le paywall `lessonReady`. Abonné, la génération part avec les mêmes supports ; rien n'est
+demandé au serveur avant, qui refuserait (`free_limit`, `import_pro`). Un sujet seul ouvre son
+paywall tout de suite, comme avant (`LessonAllowance.immediatePaywall`).
 
 ## 8. Ce qui ne bouge pas
 

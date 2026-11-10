@@ -63,6 +63,10 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     /// Refermé sans rien acheter. Avec la durée passée dessus : un paywall refermé en
     /// deux secondes et un paywall lu pendant une minute ne se corrigent pas pareil.
     case paywallDismissed = "paywall_dismissed"
+    /// **Un achat qui ouvre un essai gratuit** : posé avec `paywall_purchased` quand l'offre
+    /// achetée promettait l'essai à ce compte. Les deux portent `price_display`, la variante
+    /// du test de prix (`PriceDisplay`).
+    case paywallTrialStarted = "paywall_trial_started"
 
     // MARK: Import
 
@@ -76,6 +80,10 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     /// n'est qu'une tentative.
     case courseImported = "course_imported"
     case courseGenerationFailed = "course_generation_failed"
+    /// **La leçon verrouillée** : la leçon offerte a servi, Mika a lu les supports sur
+    /// l'appareil, et l'aperçu s'affiche avant le paywall `lessonReady`. Avec `source`,
+    /// `supports`, `pages`, `words`. Le dénominateur de la conversion de ce moment-là.
+    case lessonLockedPreview = "lesson_locked_preview"
     /// Un écran du parcours de création d'un deck. C'est l'entonnoir de l'import : le
     /// parcours pose sept questions avant la première dépense, et c'est là que se perdent
     /// les decks qui ne seront jamais créés.
@@ -114,6 +122,12 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     /// l'app va le redemander seule. Le 21 octobre 2026, quarante-cinq thèmes ont échoué sans
     /// qu'aucune courbe de l'app ne le montre.
     case lessonThemeFailed = "lesson_theme_failed"
+    /// **« Cette leçon t'a aidé ? »** : 👍 ou 👎, une fois par leçon. Avec `lesson_id`,
+    /// `rating` (`up`, `down`), `reasons` (séparées par des virgules), `comment` (facultatif,
+    /// coupé à 120 caractères), `prompt_version` (celle du serveur qui a écrit le plan, ou
+    /// `inconnue`), `path_version`, `source`, `app_language`, `level`, `moment`
+    /// (`first_circle`, `finished`) et `created` (le jour de la leçon).
+    case lessonRated = "lesson_rated"
     /// Un aller-retour de synchro réussi, avec ce qu'il a poussé (`courses`, `cards`) et
     /// sous quel compte (`user` : `account` ou `guest`). Sans lui, deux leçons sur trois
     /// manquaient en base et rien ne le disait.
