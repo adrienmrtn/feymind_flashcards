@@ -435,7 +435,8 @@ struct NextExamCard: View {
                             Text(next)
                                 .font(MicaboFont.ui(13, weight: .bold))
                                 .foregroundStyle(MicaboStage.inkSecondary)
-                                .lineLimit(1)
+                                .lineLimit(2)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                     Spacer(minLength: 4)
@@ -881,7 +882,9 @@ struct TimetableScanPromo: View {
                         .fixedSize(horizontal: false, vertical: true)
                     HStack(spacing: 6) {
                         Image(systemName: "camera.fill")
-                        Text(loc("ios.cal.scan"))
+                        Text(loc("ios.cal.scanCta"))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     }
                     .font(MicaboFont.ui(14.5, weight: .black))
                     .foregroundStyle(MicaboBrand.blue700)
@@ -898,7 +901,7 @@ struct TimetableScanPromo: View {
                     .padding(.trailing, 4)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(MicaboBrandBackdrop(sparkles: true))
+            .background(MicaboBrandBackdrop(sparkles: false))
             .clipShape(RoundedRectangle(cornerRadius: MicaboStage.cardRadius, style: .continuous))
             .shadow(color: MicaboBrand.blue.opacity(0.22), radius: 14, y: 8)
         }

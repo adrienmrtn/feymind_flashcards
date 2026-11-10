@@ -257,8 +257,10 @@ struct CalendarView: View {
             .sorted { ($0.day, $0.startMinute) < ($1.day, $1.startMinute) }
         var next: String?
         if let first = planned.first {
-            let day = MicaboCalendar.shared.isDateInToday(first.day) ? loc("ios.cal.today") : MicaboCalendar.shortWeekday(first.day).capitalizedFirstLetter
-            next = loc("ios.cal.nextSession", ["day": day, "time": CalendarTime.label(minute: first.startMinute)])
+            let time = CalendarTime.label(minute: first.startMinute)
+            next = MicaboCalendar.shared.isDateInToday(first.day)
+                ? loc("ios.cal.nextSessionToday", ["time": time])
+                : loc("ios.cal.nextSession", ["day": MicaboCalendar.dayLabel(first.day), "time": time])
         }
         return NextExamSummary(
             examID: exam.id,

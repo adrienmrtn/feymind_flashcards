@@ -17,9 +17,11 @@ struct FocusHeroCard: View {
     @Environment(\.homeStill) private var still
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    static let mikaSize: CGFloat = 132
-    /// Ce qui passe sous le panneau blanc : le bas du buste.
-    static let mikaSink: CGFloat = 26
+    static let mikaSize: CGFloat = 116
+    /// Ce qui passe derrière le bouton : le bas du buste.
+    static let mikaSink: CGFloat = 30
+    /// La place que le buste prend à droite de la colonne de texte.
+    static let mikaReserve: CGFloat = 88
 
     private var progress: Double {
         goalMinutes > 0 ? min(1, Double(minutesToday) / Double(goalMinutes)) : 0
@@ -28,52 +30,55 @@ struct FocusHeroCard: View {
     private var reached: Bool { minutesToday >= goalMinutes && goalMinutes > 0 }
 
     var body: some View {
-        VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack {
-                    Text(loc("ios.focus.today"))
-                        .font(MicaboFont.ui(12.5, weight: .black))
-                        .tracking(MicaboTracking.caps)
-                        .textCase(.uppercase)
-                        .foregroundStyle(MicaboStage.inkSecondary)
-                    Spacer()
-                    streakPill
-                }
-                HStack(alignment: .center, spacing: 14) {
-                    ring
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(loc("ios.focus.minutesToday"))
-                            .font(MicaboFont.ui(16, weight: .black))
-                            .foregroundStyle(MicaboStage.ink)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Text(reached ? loc("ios.focus.goalReached") : loc("ios.focus.goalLeft", ["minutes": CalendarTime.duration(minutes: goalMinutes - minutesToday)]))
-                            .font(MicaboFont.ui(13.5, weight: .bold))
-                            .foregroundStyle(reached ? MicaboBrand.pencil : MicaboStage.inkSecondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    Color.clear.frame(width: Self.mikaSize - 40, height: 1)
-                }
-                .padding(.bottom, 6)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text(loc("ios.focus.today"))
+                    .font(MicaboFont.ui(12.5, weight: .black))
+                    .tracking(MicaboTracking.caps)
+                    .textCase(.uppercase)
+                    .foregroundStyle(MicaboStage.inkSecondary)
+                Spacer()
+                streakPill
             }
-            .padding(.horizontal, 18)
-            .padding(.top, 18)
-            .padding(.bottom, 12)
-            .overlay(alignment: .bottomTrailing) {
-                MikaMascot(mood: reached ? .happy : .idle, size: Self.mikaSize, frozenAt: still ? 0.5 : nil, backdrop: .blue)
-                    .offset(x: 6, y: Self.mikaSink)
-                    .accessibilityHidden(true)
+            HStack(alignment: .center, spacing: 12) {
+                ring
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(loc("ios.focus.minutesToday"))
+                        .font(MicaboFont.ui(15, weight: .black))
+                        .foregroundStyle(MicaboStage.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(reached ? loc("ios.focus.goalReached") : loc("ios.focus.goalLeft", ["minutes": CalendarTime.duration(minutes: goalMinutes - minutesToday)]))
+                        .font(MicaboFont.ui(13, weight: .bold))
+                        .foregroundStyle(reached ? MicaboBrand.pencil : MicaboStage.inkSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Color.clear.frame(width: Self.mikaReserve - 12, height: 1)
             }
+            .padding(.top, 10)
+            .padding(.bottom, 18)
 
+            // Le bouton blanc passe devant le bas du buste : Mika regarde par-dessus.
             Button(action: onStart) {
                 Label(loc("ios.focus.start"), systemImage: "play.fill")
+                    .font(MicaboFont.ui(17, weight: .heavy))
+                    .foregroundStyle(MicaboBrand.blue700)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.85)
+                    .padding(.horizontal, 16)
+                    .frame(maxWidth: .infinity, minHeight: 54)
+                    .background(Color.white, in: RoundedRectangle(cornerRadius: MicaboStage.buttonRadius, style: .continuous))
+                    .shadow(color: MicaboBrand.blue900.opacity(0.18), radius: 10, y: 5)
             }
-            .buttonStyle(MicaboBrandButtonStyle(minHeight: 54))
-            .padding(10)
-            .background(Color.white, in: RoundedRectangle(cornerRadius: MicaboStage.buttonRadius + 8, style: .continuous))
-            .padding(.horizontal, 10)
-            .padding(.bottom, 10)
+            .buttonStyle(HomePressStyle(scale: 0.97, feedback: .medium))
+            .background(alignment: .topTrailing) {
+                MikaMascot(mood: reached ? .happy : .idle, size: Self.mikaSize, frozenAt: still ? 0.5 : nil, backdrop: .blue)
+                    .offset(x: 2, y: -Self.mikaSize + Self.mikaSink)
+                    .accessibilityHidden(true)
+            }
         }
+        .padding(18)
         .background(MicaboBrandBackdrop(sparkles: true))
         .clipShape(RoundedRectangle(cornerRadius: MicaboStage.heroRadius, style: .continuous))
         .shadow(color: MicaboBrand.blue.opacity(0.3), radius: 20, y: 10)
@@ -102,7 +107,7 @@ struct FocusHeroCard: View {
             }
             .padding(14)
         }
-        .frame(width: 96, height: 96)
+        .frame(width: 88, height: 88)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(loc("ios.focus.ringA11y", ["minutes": "\(minutesToday)", "goal": "\(goalMinutes)"])))
     }

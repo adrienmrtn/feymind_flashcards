@@ -50,7 +50,7 @@ final class CalendarFocusRenderTests: XCTestCase {
             lessonTitles: ["La guerre froide", "La décolonisation", "La Ve République", "L'Europe"],
             readiness: 64,
             plannedCount: 9,
-            nextSession: loc("ios.cal.nextSession", ["day": loc("ios.cal.today"), "time": CalendarTime.label(minute: 18 * 60)]),
+            nextSession: loc("ios.cal.nextSessionToday", ["time": CalendarTime.label(minute: 18 * 60)]),
             hasLessons: true
         )
         return VStack(alignment: .leading, spacing: 18) {

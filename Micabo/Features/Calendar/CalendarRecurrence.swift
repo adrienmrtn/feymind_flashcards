@@ -125,17 +125,30 @@ enum CalendarTime {
         "\(label(minute: start, locale: locale)) – \(label(minute: end, locale: locale))"
     }
 
-    /// Une durée : « 45 min », « 1 h 30 », « 2 h ». Le formateur du système, dans la langue
-    /// de l'app.
+    /// Une durée : « 45 min », « 1 h 30 min », « 2 Std. » — chaque unité écrite par le système,
+    /// dans la langue de l'app. Le style court du formateur, unité par unité : son style
+    /// abrégé colle les unités au nombre en français (« 15min »), et son style court les relie
+    /// par une virgule en anglais (« 1 hr, 30 min »).
     static func duration(minutes: Int, locale: UiLocale = .resolved()) -> String {
+        let total = max(0, minutes)
+        let hours = total / 60
+        let rest = total % 60
+        var parts: [String] = []
+        if hours > 0 { parts.append(unit(hours, .hour, locale: locale)) }
+        if rest > 0 || hours == 0 { parts.append(unit(rest, .minute, locale: locale)) }
+        return parts.joined(separator: " ")
+    }
+
+    private static func unit(_ value: Int, _ unit: NSCalendar.Unit, locale: UiLocale) -> String {
         let formatter = DateComponentsFormatter()
         var calendar = Calendar(identifier: .gregorian)
         calendar.locale = locale.foundation
         formatter.calendar = calendar
-        formatter.unitsStyle = .abbreviated
-        formatter.allowedUnits = minutes >= 60 ? [.hour, .minute] : [.minute]
-        formatter.zeroFormattingBehavior = .dropAll
-        return formatter.string(from: TimeInterval(max(0, minutes) * 60)) ?? "\(minutes)"
+        formatter.unitsStyle = .short
+        formatter.allowedUnits = [unit]
+        formatter.zeroFormattingBehavior = .pad
+        let seconds = unit == .hour ? value * 3600 : value * 60
+        return formatter.string(from: TimeInterval(seconds)) ?? "\(value)"
     }
 
     /// « HH:mm » strict, tel que Mika l'écrit dans un emploi du temps, ou ses variantes
