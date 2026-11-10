@@ -113,6 +113,8 @@ struct FocusTimerView: View {
                 .font(MicaboFont.number(64))
                 .foregroundStyle(MicaboColor.ink)
                 .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
                 .contentTransition(.numericText(countsDown: true))
                 .padding(.top, 26)
                 .accessibilityHidden(true)
