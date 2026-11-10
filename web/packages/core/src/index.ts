@@ -601,3 +601,23 @@ export {
   validateUsername,
   type UsernameProblem,
 } from "./username";
+
+export {
+  addXp,
+  DAILY_XP_CAP,
+  DAILY_XP_GOAL,
+  dayKey,
+  FOCUS_MINUTES,
+  LEAGUES,
+  leagueFor,
+  pruneLedger,
+  weekStart,
+  XP_REWARDS,
+  xpThisWeek,
+  xpToday,
+  xpToNextLeague,
+  xpTotal,
+  type LeagueId,
+  type XpLedger,
+  type XpReason,
+} from "./xp";
