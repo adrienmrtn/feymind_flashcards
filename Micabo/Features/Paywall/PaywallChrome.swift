@@ -16,14 +16,18 @@ import SwiftUI
 /// le premier paywall elle ouvre le second, sur celui d'une session elle demande confirmation
 /// — mais elle réagit toujours au premier appui.
 struct PaywallCloseButton: View {
+    /// La couleur de la croix : le gris de l'encre sur la page, le blanc sur la scène bleue.
+    var tint: Color = OnboardingPalette.gray
     var action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Image(systemName: "xmark")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(OnboardingPalette.gray)
-                // La zone touchable fait 44 points, le signe reste calé sur la marge.
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(tint)
+                .frame(width: 34, height: 34)
+                .background(tint.opacity(0.16), in: Circle())
+                // La zone touchable fait 44 points, le rond reste calé sur la marge.
                 .frame(width: 44, height: 44, alignment: .leading)
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false))
@@ -50,7 +54,7 @@ struct PaywallCallToAction: View {
     var isPurchasing: Bool
     /// Absent : l'écran ne vend que l'annuel. Présent : le libellé suit l'offre.
     var plan: PaywallPlan? = nil
-    /// Voir `PaywallOfferView.storeRevision` : l'essai peut se révéler consommé après
+    /// Voir `PaywallScreen.storeRevision` : l'essai peut se révéler consommé après
     /// l'ouverture, et le bouton ne doit plus le promettre.
     var storeRevision: Int = 0
     var action: () -> Void
@@ -59,11 +63,9 @@ struct PaywallCallToAction: View {
     /// suivi d'un prélèvement immédiat est la pire façon de découvrir la règle d'Apple.
     private var hasTrial: Bool { (plan ?? PaywallCatalog.recommended).hasTrial }
 
-    @Environment(\.colorScheme) private var scheme
-
     var body: some View {
-        // **Le bouton de l'offre** : une pilule pleine largeur au dégradé de l'app, du bleu au
-        // violet, la même sur tous les paywalls.
+        // **Le bouton de l'offre** : le grand bouton de la marque (`MicaboBrandButtonStyle`),
+        // le même sur tous les paywalls, sur Home et sur l'aperçu verrouillé.
         Button {
             guard !isPurchasing else { return }
             action()
@@ -77,36 +79,16 @@ struct PaywallCallToAction: View {
                     : (hasTrial
                         ? L10n.t("ios.paywallStartTrial", locale: .resolved(), vars: ["n": "\(PaywallCatalog.freeTrialDays)"])
                         : L10n.t("app.paywall.subscribe", locale: .resolved())))
-                    .font(MicaboFont.ui(19, weight: .heavy))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
             }
-            .foregroundStyle(Color.white)
-            .frame(maxWidth: .infinity)
-            .frame(height: 60)
-            .background(
-                LinearGradient(colors: OnboardingPalette.mikaGradient, startPoint: .leading, endPoint: .trailing),
-                in: RoundedRectangle(cornerRadius: 20, style: .continuous)
-            )
-            .overlay(alignment: .top) {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(.white.opacity(0.18))
-                    .frame(height: 24)
-                    .padding(.horizontal, 10)
-                    .padding(.top, 4)
-                    .blur(radius: 6)
-                    .allowsHitTesting(false)
-            }
-            .shadow(color: MicaboColor.accent.opacity(scheme == .dark ? 0.35 : 0.3), radius: 16, y: 8)
         }
-        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .medium))
+        .buttonStyle(MicaboBrandButtonStyle(minHeight: 58, fontSize: 18))
         .disabled(isPurchasing)
     }
 }
 
-/// **Le pied des paywalls**, le même sur les deux : « rien à payer aujourd'hui » avec son
-/// bouclier, le bouton, ce qui sera prélevé, puis les mentions. Posé sur une carte qui monte
-/// du bas, il reste visible pendant qu'on lit l'offre.
+/// **Le pied du paywall**, fixe sous la page : la phrase du prix (`PaywallPitch`, dans
+/// l'écriture du test `PriceDisplay`), le bouton, la promesse — le rappel avant la fin de
+/// l'essai, l'annulation à tout moment — puis les mentions.
 struct PaywallFooter: View {
     let plan: PaywallPlan
     var isPurchasing: Bool
@@ -115,35 +97,35 @@ struct PaywallFooter: View {
     var onRestore: () -> Void
 
     var body: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 7) {
-                Image(systemName: "checkmark.shield.fill")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(MicaboColor.correct)
-                Text(L10n.t(plan.hasTrial ? "ios.paywallNoCharge" : "ios.paywallCancelAnytime", locale: .resolved()))
-                    .font(MicaboFont.ui(14.5, weight: .bold))
-                    .foregroundStyle(MicaboColor.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
+        VStack(spacing: 10) {
+            PaywallPitch.text(for: plan)
+                .font(MicaboFont.ui(13.5, weight: .semibold))
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
 
             PaywallCallToAction(isPurchasing: isPurchasing, plan: plan, storeRevision: storeRevision, action: onSubscribe)
 
-            Text(plan.billedLine(locale: .resolved()))
-                .font(MicaboFont.ui(13, weight: .medium))
-                .foregroundStyle(MicaboColor.inkSecondary)
-                .multilineTextAlignment(.center)
+            HStack(spacing: 6) {
+                Image(systemName: plan.hasTrial ? "bell.badge.fill" : "checkmark.shield.fill")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(MicaboColor.correct)
+                Text(L10n.t(plan.hasTrial ? "ios.pay3.reassure" : "ios.paywallCancelAnytime", locale: .resolved()))
+                    .font(MicaboFont.ui(13, weight: .bold))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
             PaywallLegalFooter(onRestore: onRestore)
         }
         .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.top, 18)
-        .padding(.bottom, MicaboSpacing.sm)
+        .padding(.top, 14)
+        .padding(.bottom, MicaboSpacing.xs)
         .frame(maxWidth: .infinity)
         .background {
-            UnevenRoundedRectangle(topLeadingRadius: 30, topTrailingRadius: 30, style: .continuous)
+            UnevenRoundedRectangle(topLeadingRadius: MicaboRadius.sheet, topTrailingRadius: MicaboRadius.sheet, style: .continuous)
                 .fill(MicaboColor.surface)
-                .shadow(color: .black.opacity(0.08), radius: 18, y: -6)
+                .shadow(color: .black.opacity(0.07), radius: 16, y: -6)
                 .ignoresSafeArea(edges: .bottom)
         }
     }
@@ -381,6 +363,8 @@ struct PaywallPriceGate<Content: View>: View {
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Opaque : le fond du paywall, bleu en haut, est celui de la page prête.
+        .background(MicaboColor.canvas.ignoresSafeArea())
     }
 
     /// Demande les prix jusqu'à ce qu'ils soient là, ou que les essais soient épuisés.

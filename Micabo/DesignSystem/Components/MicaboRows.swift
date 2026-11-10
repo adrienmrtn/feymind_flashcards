@@ -242,7 +242,7 @@ struct MicaboRow: View {
         case .none:
             EmptyView()
         case .chevron:
-            Image(systemName: "chevron.right")
+            Image(systemName: "chevron.forward")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(MicaboColor.inkTertiary.opacity(0.8))
         case .value(let text):

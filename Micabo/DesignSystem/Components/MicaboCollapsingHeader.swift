@@ -270,7 +270,7 @@ struct MicaboCollapsingHeader<Trailing: View>: View {
 
             HStack(spacing: Self.gap) {
                 MicaboBannerButton(circleAlpha: circleAlpha, action: onBack) {
-                    Image(systemName: "chevron.left")
+                    Image(systemName: "chevron.backward")
                         .font(.system(size: 17, weight: .semibold))
                 }
                 .accessibilityLabel(L10n.t("app.common.back", locale: .resolved()))

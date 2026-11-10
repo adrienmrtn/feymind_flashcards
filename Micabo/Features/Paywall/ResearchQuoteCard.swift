@@ -81,36 +81,3 @@ struct ResearchQuoteCard: View {
         return result
     }
 }
-
-/// **Ce que Pro ouvre**, en rangées : une icône 3D, une ligne, une coche. Les mêmes lignes que
-/// la grille du second paywall, dans le même ordre.
-struct PaywallFeatureList: View {
-    static let icons: [MicaboIcon] = [.lightbulb, .pdf, .quiz, .exam, .mika]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(L10n.t("ios.paywallIncluded", locale: .resolved()))
-                .font(MicaboFont.ui(13, weight: .heavy))
-                .tracking(1.2)
-                .textCase(.uppercase)
-                .foregroundStyle(MicaboColor.inkSecondary)
-            ForEach(Array(Self.icons.enumerated()), id: \.offset) { index, icon in
-                HStack(spacing: 12) {
-                    MicaboIconView(icon: icon, size: 34)
-                    Text(L10n.t("ios.paywallFeat\(index + 1)", locale: .resolved()))
-                        .font(MicaboFont.ui(16, weight: .bold))
-                        .foregroundStyle(MicaboColor.ink)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Spacer(minLength: 0)
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundStyle(MicaboColor.onInk, MicaboColor.correct)
-                }
-            }
-        }
-        .padding(18)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
-        .micaboElevation(.card)
-    }
-}

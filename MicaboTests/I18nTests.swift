@@ -348,7 +348,8 @@ final class I18nTests: XCTestCase {
         XCTAssertEqual(DiscountOffer.countdownLabel(3600 + 60, locale: .en), "1 hour and 1 minute left")
         XCTAssertEqual(DiscountOffer.countdownLabel(3600 + 60, locale: .fr), "il reste 1 heure et 1 minute")
 
-        XCTAssertEqual(DiscountHeadline.split(percent: 30, locale: .en).rate, "30\u{00a0}%")
+        XCTAssertEqual(DiscountHeadline.split(percent: 30, locale: .en).rate, "30%")
+        XCTAssertEqual(DiscountHeadline.split(percent: 30, locale: .fr).rate, L10n.percent(30, locale: .fr))
         XCTAssertEqual(DiscountHeadline.split(percent: 30, locale: .en).rest, " off")
         XCTAssertEqual(DiscountHeadline.split(percent: 30, locale: .tr).rate, "%30")
         XCTAssertEqual(DiscountHeadline.split(percent: 30, locale: .tr).rest, " indirim")

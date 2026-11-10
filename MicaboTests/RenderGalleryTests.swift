@@ -289,10 +289,11 @@ final class RenderGalleryTests: XCTestCase {
         }
     }
 
-    /// Home : la scène de Mika (rangée du haut, bulle, barre, outils), les missions du jour, la
-    /// leçon en cours et les chiffres — pour un élève qui avance (une leçon, des cartes dues,
-    /// de l'XP, une série) et pour un élève tout neuf, gratuit, sans leçon ; la barre avec deux
-    /// supports, la feuille du « + », l'allemand, l'écran de génération et la barre d'onglets.
+    /// Home : la rangée du haut, la scène bleue (Mika, sa bulle, la barre), les outils et
+    /// « Aujourd'hui » — pour un élève qui avance (une leçon, des cartes dues, de l'XP, une
+    /// série) et pour un élève tout neuf, gratuit, sans leçon ; la barre avec deux supports,
+    /// la feuille du « + », l'allemand, le turc, l'arabe, l'écran de génération, la barre
+    /// d'onglets et l'aperçu de la leçon verrouillée.
     func testHomeScreens() throws {
         guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
         let container = try ModelContainer(
@@ -351,11 +352,9 @@ final class RenderGalleryTests: XCTestCase {
             return AnyView(HomeScreenPreview(
                 composer: composer ?? LessonComposer(),
                 isPro: false,
-                freeLessonLeft: false,
                 name: "Léa",
                 day: day,
                 resume: resume,
-                stats: HomeStats(seconds: 5_400, learnedLessons: 3, learnedCards: 42),
                 streak: StudyStreak.Status(current: 12, best: 18, studiedToday: true)
             )
             .environment(busyXP))
@@ -367,11 +366,9 @@ final class RenderGalleryTests: XCTestCase {
             HomeScreenPreview(
                 composer: LessonComposer(),
                 isPro: false,
-                freeLessonLeft: true,
                 name: nil,
                 day: HomeDay(hasCourses: false, studiedToday: false),
                 resume: nil,
-                stats: HomeStats(),
                 streak: StudyStreak.Status(current: 0, best: 0, studiedToday: false)
             )
             .environment(freshXP)
@@ -409,7 +406,32 @@ final class RenderGalleryTests: XCTestCase {
                 else { localeDefaults.removeObject(forKey: UiLocale.storageKey) }
             }
             try RenderGallery.render("home-de", busyHome())
+            localeDefaults.set(UiLocale.tr.rawValue, forKey: UiLocale.storageKey)
+            try RenderGallery.render("home-tr", busyHome())
+            localeDefaults.set(UiLocale.ar.rawValue, forKey: UiLocale.storageKey)
+            try RenderGallery.render("home-ar", busyHome().environment(\.layoutDirection, .rightToLeft))
         }
+
+        // La leçon lue, sous cadenas : l'aperçu dans son état final, puis pendant la lecture.
+        let summary = LessonReadSummary(documents: [ImportedDocument(
+            text: "La photosynthèse\nLa lumière est captée par la chlorophylle des feuilles.\nElle sert à fabriquer du glucose à partir d'eau et de CO2.\nLe dioxygène est rejeté dans l'air.",
+            pageImages: [],
+            coverImage: nil,
+            pageCount: 4,
+            fileName: "Chapitre 3",
+            source: .pdf,
+            extractionNote: nil
+        )])
+        try RenderGallery.render(
+            "home-locked", night: true,
+            LockedLessonPreview(summary: summary, revealed: true, onUnlock: {}, onClose: {}, onRevealed: {})
+                .environment(\.homeStill, true)
+        )
+        try RenderGallery.render(
+            "home-locked-reading",
+            LockedLessonPreview(summary: summary, onUnlock: {}, onClose: {}, onRevealed: {})
+                .environment(\.homeStill, true)
+        )
 
         try RenderGallery.render(
             "home-tabbar", night: true,
@@ -626,25 +648,40 @@ final class RenderGalleryTests: XCTestCase {
                 .environment(profiled)
                 .environment(\.onboardingStill, true)
         )
+        // La fin du parcours : le même paywall que dans l'app, au prénom de l'élève.
         try RenderGallery.render(
             "onboarding-paywall",
-            height: 1_250,
-            PaywallOfferView(
-                plan: PaywallCatalog.recommended,
-                isPurchasing: false,
-                onClose: {},
-                onSeeAllPlans: {},
-                onSubscribe: {},
-                onRestore: {}
-            )
-            .environment(\.onboardingStill, true)
-        )
-        try RenderGallery.render(
-            "onboarding-plans",
-            height: 1_300,
-            PaywallPlansView(isPurchasing: false, onClose: {}, onSubscribe: { _ in }, onRestore: {})
+            PaywallScreen(name: "Lina", isPurchasing: false, onClose: {}, onSubscribe: { _ in }, onRestore: {})
                 .environment(\.onboardingStill, true)
         )
+    }
+
+    /// Le paywall, en un écran : de jour et de nuit, ouvert par « Passer en Pro » ; ouvert par
+    /// la leçon lue ; en allemand ; et dans la variante « à la semaine » du test de prix.
+    func testPaywallScreens() throws {
+        guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
+        func paywall(_ trigger: PaywallTrigger?, name: String?) -> some View {
+            PaywallScreen(trigger: trigger, name: name, isPurchasing: false, onClose: {}, onSubscribe: { _ in }, onRestore: {})
+                .environment(\.onboardingStill, true)
+        }
+        try RenderGallery.render("paywall", night: true, paywall(.upgrade, name: "Léa"))
+        try RenderGallery.render("paywall-lesson", paywall(.lessonReady, name: nil))
+
+        let previousDisplay = PriceDisplay.forced(in: .standard)
+        PriceDisplay.setOverride(.weekly)
+        try RenderGallery.render("paywall-weekly", paywall(nil, name: "Léa"))
+        PriceDisplay.setOverride(previousDisplay)
+
+        let localeDefaults = UserDefaults.standard
+        let previousLocale = localeDefaults.string(forKey: UiLocale.storageKey)
+        defer {
+            if let previousLocale { localeDefaults.set(previousLocale, forKey: UiLocale.storageKey) }
+            else { localeDefaults.removeObject(forKey: UiLocale.storageKey) }
+        }
+        localeDefaults.set(UiLocale.de.rawValue, forKey: UiLocale.storageKey)
+        try RenderGallery.render("paywall-de", paywall(.mika, name: "Léa"))
+        localeDefaults.set(UiLocale.ar.rawValue, forKey: UiLocale.storageKey)
+        try RenderGallery.render("paywall-ar", paywall(nil, name: nil).environment(\.layoutDirection, .rightToLeft))
     }
 
     private static let sampleNotes = ThemeNotes(
@@ -730,11 +767,9 @@ enum RenderGallery {
 private struct HomeScreenPreview: View {
     let composer: LessonComposer
     let isPro: Bool
-    let freeLessonLeft: Bool
     let name: String?
     let day: HomeDay
     let resume: (Course, ResumeTarget)?
-    let stats: HomeStats
     let streak: StudyStreak.Status
     @FocusState private var focused: Bool
 
@@ -743,12 +778,10 @@ private struct HomeScreenPreview: View {
             composer: composer,
             focused: $focused,
             isPro: isPro,
-            freeLessonLeft: freeLessonLeft,
             name: name,
             greeting: HomeGreeting.lines(name: name, moment: .day, dueCount: day.dueCount),
             day: day,
             resume: resume,
-            stats: stats,
             motion: HomeMotion(still: true, reduceMotion: false),
             appeared: true,
             streakPreview: streak,

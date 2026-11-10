@@ -250,7 +250,7 @@ enum LessonAllowance {
     /// **Un import n'est jamais fermé, et ne porte plus de couronne.** Lire un PDF, des
     /// photos, un audio ou une vidéo se fait sur l'appareil ; c'est l'écriture de la leçon qui
     /// est dans Pro, et son paywall vient à la fin de la lecture (`sendRoute`). Home lit cette
-    /// fonction pour la couronne d'`ImportGrid` comme pour le paywall de `tapImport`.
+    /// fonction pour la couronne des tuiles de supports comme pour le paywall de `tapImport`.
     static func locksImport(_ kind: LessonComposer.Kind, isPro: Bool, freeLessonLeft: Bool) -> Bool {
         false
     }

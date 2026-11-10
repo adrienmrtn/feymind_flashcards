@@ -853,13 +853,13 @@ enum DiscountHeadline {
         let trailing = after.drop { $0 == " " || $0 == "\u{00a0}" }
         if trailing.first == "%" {
             after = String(trailing.dropFirst())
-            return ("\(percent)\u{00a0}%", before + after)
+            return (L10n.percent(percent, locale: locale), before + after)
         }
 
         // « %30 » : le turc pose le signe devant, et sans espace.
         if before.hasSuffix("%") {
             before = String(before.dropLast())
-            return ("%\(percent)", before + after)
+            return (L10n.percent(percent, locale: locale), before + after)
         }
 
         return ("\(percent)", before + after)

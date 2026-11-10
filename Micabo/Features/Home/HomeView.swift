@@ -1,15 +1,17 @@
 import SwiftData
 import SwiftUI
 
-/// **Home** : une scène de nuit en haut — l'initiale de l'élève, « ✦ Pro », l'XP et la série ;
-/// Mika en grand qui parle dans sa bulle ; la barre « comme une conversation » avec son « + »
-/// pour les supports ; les outils en pastilles —, puis sur la page, les missions du jour,
-/// la leçon en cours et les trois chiffres (`docs/refonte-knowunity.md`).
+/// **Home**, calme et dans l'ordre où on la lit (`docs/refonte-knowunity.md`) :
+/// 1. la rangée du haut — l'initiale (le Profil), « ✦ Pro », la série et l'XP ;
+/// 2. la scène bleue de la marque — Mika en buste qui parle dans sa bulle, et la barre
+///    « comme une conversation » avec son « + » pour les supports ;
+/// 3. quatre outils ;
+/// 4. « Aujourd'hui » — l'objectif du jour et **une seule** prochaine étape.
 ///
-/// **Un appui à côté du champ range le clavier.** La rangée du haut, Mika, les chiffres et
-/// tout le vide entre les blocs le rendent ; les boutons gardent leur appui, parce qu'un geste
-/// posé sur un parent passe après ceux de ses enfants. Le geste n'est jamais posé sur la barre
-/// elle-même : un appui dans le champ doit l'ouvrir, pas le refermer aussitôt.
+/// **Un appui à côté du champ range le clavier.** La rangée du haut, Mika et tout le vide
+/// entre les blocs le rendent ; les boutons gardent leur appui, parce qu'un geste posé sur un
+/// parent passe après ceux de ses enfants. Le geste n'est jamais posé sur la barre elle-même :
+/// un appui dans le champ doit l'ouvrir, pas le refermer aussitôt.
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
@@ -24,7 +26,7 @@ struct HomeView: View {
     @State private var creating = false
     @State private var paywall: PaywallTrigger?
     @State private var showsStreak = false
-    /// La ligue de la semaine (`docs/refonte-knowunity.md` § 3) : la pastille XP et la pastille.
+    /// La ligue de la semaine (`docs/refonte-knowunity.md` § 3) : la pastille XP et l'outil.
     @State private var showsLeague = false
     @State private var showsTimer = false
     @State private var showsScanner = false
@@ -58,12 +60,10 @@ struct HomeView: View {
                     composer: composer,
                     focused: $focused,
                     isPro: isPro,
-                    freeLessonLeft: freeLessonLeft,
                     name: name,
                     greeting: HomeGreeting.lines(name: name, moment: moment, dueCount: day.dueCount),
                     day: day,
                     resume: resume,
-                    stats: HomeStats(courses: courses, extraSeconds: FocusLog.totalSeconds),
                     motion: HomeMotion(still: false, reduceMotion: reduceMotion),
                     appeared: appeared,
                     actions: actions(resume: resume?.0)
@@ -71,7 +71,7 @@ struct HomeView: View {
             }
             .scrollDismissesKeyboard(.interactively)
             .scrollIndicators(.hidden)
-            .background(HomeScreen.pageBackground.ignoresSafeArea())
+            .background(HomePalette.canvas.ignoresSafeArea())
             .tabBarClearance()
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: Course.self) { course in
@@ -130,7 +130,7 @@ struct HomeView: View {
         .returnsHome(path: $path)
     }
 
-    /// Ce que l'app sait de la journée, pour les missions.
+    /// Ce que l'app sait de la journée, pour la carte « Aujourd'hui ».
     private func today(resume: (Course, ResumeTarget)?) -> HomeDay {
         let calendar = Calendar.current
         let now = Date()
@@ -180,23 +180,14 @@ struct HomeView: View {
                 dismissKeyboard()
                 showsSources = true
             },
-            importKind: tapImport,
             send: send,
-            mission: { kind in
+            step: { step in
                 dismissKeyboard()
-                switch kind {
+                switch step {
                 case .cards: showsDueReview = true
-                case .lesson: if let resume { path.append(resume) }
+                case .lesson: if let resume { path.append(resume) } else { focused = true }
                 case .create: focused = true
-                case .streak: break
                 }
-            },
-            review: {
-                dismissKeyboard()
-                showsDueReview = true
-            },
-            continueLesson: {
-                if let resume { path.append(resume) }
             },
             tool: { tool in open(tool, resume: resume) },
             dismissKeyboard: dismissKeyboard
@@ -243,8 +234,8 @@ struct HomeView: View {
         tapImport(kind)
     }
 
-    /// Un outil, depuis sa pastille.
-    private func open(_ tool: HomeToolsGrid.Tool, resume: Course?) {
+    /// Un outil, depuis sa tuile.
+    private func open(_ tool: HomeTool, resume: Course?) {
         dismissKeyboard()
         switch tool {
         case .scan:
@@ -290,12 +281,9 @@ struct HomeActions {
     var league: () -> Void = {}
     var streak: () -> Void = {}
     var sources: () -> Void = {}
-    var importKind: (LessonComposer.Kind) -> Void = { _ in }
     var send: () -> Void = {}
-    var mission: (HomeMission.Kind) -> Void = { _ in }
-    var review: () -> Void = {}
-    var continueLesson: () -> Void = {}
-    var tool: (HomeToolsGrid.Tool) -> Void = { _ in }
+    var step: (HomeDay.Step) -> Void = { _ in }
+    var tool: (HomeTool) -> Void = { _ in }
     var dismissKeyboard: () -> Void = {}
 }
 
@@ -305,39 +293,17 @@ struct HomeScreen: View {
     let composer: LessonComposer
     var focused: FocusState<Bool>.Binding
     let isPro: Bool
-    let freeLessonLeft: Bool
     let name: String?
     let greeting: [String]
     let day: HomeDay
     let resume: (Course, ResumeTarget)?
-    let stats: HomeStats
     let motion: HomeMotion
     let appeared: Bool
     var streakPreview: StudyStreak.Status?
     let actions: HomeActions
 
-    /// Le fond de la page, derrière le défilement : le haut du ciel sous l'heure et la batterie,
-    /// la page dessous — c'est elle qu'on voit quand on tire la liste vers le haut.
-    static var pageBackground: some View {
-        VStack(spacing: 0) {
-            HomePalette.heroTop.frame(height: 160)
-            HomePalette.canvas
-        }
-    }
-
     var body: some View {
-        VStack(spacing: 0) {
-            hero
-            page
-        }
-        .frame(maxWidth: .infinity)
-        .background(HomePalette.canvas)
-    }
-
-    // MARK: La scène
-
-    private var hero: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 0) {
             HomeTopBar(
                 name: name,
                 isPro: isPro,
@@ -347,639 +313,38 @@ struct HomeScreen: View {
                 onStreak: actions.streak,
                 streakPreview: streakPreview
             )
-            .padding(.horizontal, MicaboSpacing.screen)
             .homeEntrance(0, shown: appeared, motion: motion)
-            .background(dismissArea)
 
-            HomeMikaStage(lines: greeting, isThinking: composer.isReading, motion: motion)
-                .padding(.horizontal, MicaboSpacing.screen - 6)
-                .homeEntrance(1, shown: appeared, motion: motion)
-                // Le toucher fait aussi ranger le clavier : Mika est au-dessus de la barre,
-                // là où l'on appuie pour sortir du champ.
-                .simultaneousGesture(TapGesture().onEnded { actions.dismissKeyboard() })
-
-            HomeComposerBar(
+            HomeHeroCard(
                 composer: composer,
                 focused: focused,
-                isPro: isPro,
-                freeLessonLeft: freeLessonLeft,
-                isThinking: composer.isReading,
-                onImport: actions.importKind,
+                lines: greeting,
+                motion: motion,
                 onSend: actions.send,
-                onSources: actions.sources
+                onSources: actions.sources,
+                onDismissKeyboard: actions.dismissKeyboard
             )
-            .padding(.horizontal, MicaboSpacing.screen)
-            .homeEntrance(2, shown: appeared, motion: motion)
+            .padding(.top, 14)
+            .homeEntrance(1, shown: appeared, motion: motion)
 
-            HomeToolChips(dueCount: day.dueCount, motion: motion, onReview: actions.review, onTool: actions.tool)
-                .padding(.top, 4)
+            HomeToolsRow(onTool: actions.tool)
+                .padding(.top, 16)
+                .homeEntrance(2, shown: appeared, motion: motion)
+
+            HomeTodayCard(day: day, resume: resume, motion: motion, onStep: actions.step)
+                .padding(.top, 16)
                 .homeEntrance(3, shown: appeared, motion: motion)
         }
-        .padding(.top, 8)
-        .padding(.bottom, 28)
-        .background {
-            // Le ciel monte sous l'heure et la batterie, et au-delà quand on tire la page.
-            VStack(spacing: 0) {
-                HomePalette.heroTop.frame(height: 600)
-                HomeSky(motion: motion)
-            }
-            .padding(.top, -600)
-            .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 36, bottomTrailingRadius: 36, style: .continuous))
-            .onTapGesture(perform: actions.dismissKeyboard)
-        }
-    }
-
-    // MARK: La page
-
-    private var page: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            HomeTodayCard(day: day, motion: motion, onMission: actions.mission)
-                .homeEntrance(4, shown: appeared, motion: motion)
-            if let resume {
-                ResumeCard(course: resume.0, target: resume.1, action: actions.continueLesson)
-                    .homeEntrance(5, shown: appeared, motion: motion)
-            }
-            HomeStatsRow(stats: stats)
-                .homeEntrance(6, shown: appeared, motion: motion)
-                .contentShape(Rectangle())
-                .onTapGesture(perform: actions.dismissKeyboard)
-        }
         .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.top, 24)
+        .padding(.top, 8)
         .padding(.bottom, 24)
         .frame(maxWidth: .infinity, alignment: .leading)
         // Le vide entre les blocs : rien n'y est touchable, l'appui tombe sur ce fond.
-        .background(dismissArea)
-    }
-
-    private var dismissArea: some View {
-        Color.clear
-            .contentShape(Rectangle())
-            .onTapGesture(perform: actions.dismissKeyboard)
-    }
-}
-
-// MARK: - La question
-
-/// **« Qu'est-ce que tu veux apprendre aujourd'hui ? »**, en grand, le mot « apprendre » dans
-/// une couleur qui ressort. Le mot est marqué `**…**` dans le catalogue, dans chaque langue.
-///
-/// **Centrée, sur toute la largeur de la barre.** Calée à gauche, avec Mika perché à droite
-/// en dessous, la question avait l'air poussée de côté : deux lignes de longueurs inégales
-/// contre un bord, un personnage contre l'autre, et un grand vide entre les deux. Centrée,
-/// elle tombe dans l'axe de Mika et de la barre, et l'écran se lit de haut en bas sur une
-/// seule ligne.
-struct HomeTitle: View {
-    var body: some View {
-        Self.text(L10n.t("lesson.home.title", locale: .resolved()))
-            .font(MicaboFont.display(34))
-            .tracking(MicaboTracking.tight)
-            .foregroundStyle(MicaboColor.ink)
-            .multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity)
-            .fixedSize(horizontal: false, vertical: true)
-            .accessibilityAddTraits(.isHeader)
-    }
-
-    /// Le texte, le mot marqué en dégradé bleu-violet.
-    static func text(_ source: String) -> Text {
-        let parts = source.components(separatedBy: "**")
-        var out = Text("")
-        for (index, part) in parts.enumerated() where !part.isEmpty {
-            if index % 2 == 1 {
-                out = out + Text(part).foregroundStyle(
-                    LinearGradient(colors: MicaboColor.brandGradient, startPoint: .leading, endPoint: .trailing)
-                )
-            } else {
-                out = out + Text(part)
-            }
-        }
-        return out
-    }
-}
-
-/// **Mika, perché sur la barre** : ses pattes et son ombre posées sur le bord haut, au milieu,
-/// sous la question. Il fait coucou, puis attend ; il réfléchit pendant qu'un support se lit.
-struct HomePerch: View {
-    var isThinking = false
-
-    static let size: CGFloat = 96
-    /// La place qu'il prend au-dessus de la barre : sa taille, moins ce qui se pose dessus.
-    static let height: CGFloat = size - sink
-    /// Ce qui descend sous le bord : les pattes et l'ombre, pour qu'il soit assis, pas posé à
-    /// côté.
-    static let sink: CGFloat = 10
-
-    @State private var mood: MikaMood = .wave
-
-    var body: some View {
-        MikaMascot(mood: isThinking ? .think : mood, size: Self.size, reactsToTap: true)
-            .frame(width: Self.size, height: Self.size)
-            .task {
-                try? await Task.sleep(for: .seconds(2.4))
-                mood = .idle
-            }
-    }
-}
-
-// MARK: - La barre
-
-/// **La barre, comme une conversation** : les supports déposés en pastilles au-dessus, le
-/// champ, puis une rangée — le « + » qui ouvre tous les supports en grandes tuiles, quatre
-/// raccourcis (PDF, photo, YouTube, audio) et la flèche d'envoi dans le dégradé de Micabo.
-///
-/// Posée en verre sur le ciel de Home. Ce qui compte n'a pas bougé : les pastilles, le texte
-/// d'échec, le plafond de supports, `canSend`, le focus ; la porte du gratuit reste dans
-/// `HomeView.send()` et `tapImport`.
-struct HomeComposerBar: View {
-    let composer: LessonComposer
-    var focused: FocusState<Bool>.Binding
-    let isPro: Bool
-    /// La leçon offerte reste : les imports n'ont pas de couronne (§ 7).
-    var freeLessonLeft = false
-    var isThinking = false
-    let onImport: (LessonComposer.Kind) -> Void
-    let onSend: () -> Void
-    /// Le « + » : la feuille des supports. Sans elle, il ouvre le texte collé.
-    var onSources: (() -> Void)?
-
-    @Environment(\.homeStill) private var still
-
-    /// Les raccourcis de la rangée ; le texte collé est dans la feuille du « + ».
-    static let shortcuts: [LessonComposer.Kind] = [.pdf, .photo, .youtube, .audio]
-
-    var body: some View {
-        @Bindable var composer = composer
-        let isFocused = focused.wrappedValue
-        VStack(alignment: .leading, spacing: 10) {
-            VStack(alignment: .leading, spacing: 8) {
-                if !composer.supports.isEmpty {
-                    supportsRow
-                    if let failure = composer.supports.compactMap(\.failure).last {
-                        Text(failure)
-                            .font(MicaboFont.ui(13, weight: .bold))
-                            .foregroundStyle(HomePalette.heroError)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-
-                field(draft: $composer.draft)
-
-                HStack(spacing: 6) {
-                    plusButton
-                    ForEach(Self.shortcuts, id: \.self) { kind in
-                        shortcut(kind)
-                    }
-                    Spacer(minLength: 4)
-                    sendButton
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.top, 12)
-            .padding(.bottom, 10)
-            .background(Color.white.opacity(isFocused ? 0.13 : 0.09), in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: [Color(hex: 0x7AA2FF).opacity(isFocused ? 1 : 0.75), Color(hex: 0xB78CFF).opacity(isFocused ? 1 : 0.6)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: isFocused ? 2 : 1.2
-                    )
-            )
-            .shadow(color: HomePalette.glowBlue.opacity(isFocused ? 0.5 : 0.28), radius: isFocused ? 24 : 18, y: 8)
-            .animation(.easeOut(duration: 0.25), value: isFocused)
-            .animation(.spring(duration: 0.3), value: composer.supports.count)
-
-            if !composer.hasRoom {
-                Text(L10n.t("lesson.home.supportsFull", locale: .resolved(), vars: ["n": String(LessonComposer.maximumSupports)]))
-                    .font(MicaboFont.ui(13, weight: .bold))
-                    .foregroundStyle(HomePalette.heroInkSecondary)
-                    .frame(maxWidth: .infinity)
-            }
-        }
-    }
-
-    private var placeholder: String {
-        composer.supports.isEmpty
-            ? L10n.t("lesson.home.placeholder", locale: .resolved())
-            : L10n.t("lesson.home.placeholderWithSupports", locale: .resolved())
-    }
-
-    @ViewBuilder
-    private var supportsRow: some View {
-        let chips = HStack(spacing: 8) {
-            ForEach(composer.supports) { support in
-                SupportChip(support: support) {
-                    withAnimation(.spring(duration: 0.3)) { composer.remove(support.id) }
-                }
-            }
-        }
-        if still {
-            // Les rendus ne dessinent pas ce qui défile : la même rangée, coupée au bord.
+        .background(
             Color.clear
-                .frame(height: 38)
-                .overlay(alignment: .leading) { chips.fixedSize() }
-                .clipped()
-        } else {
-            ScrollView(.horizontal, showsIndicators: false) {
-                chips.padding(.horizontal, 2)
-            }
-            .scrollClipDisabled()
-        }
-    }
-
-    @ViewBuilder
-    private func field(draft: Binding<String>) -> some View {
-        Group {
-            if still {
-                Text(draft.wrappedValue.isEmpty ? placeholder : draft.wrappedValue)
-                    .foregroundStyle(draft.wrappedValue.isEmpty ? HomePalette.heroInkTertiary : HomePalette.heroInk)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            } else {
-                TextField(
-                    text: draft,
-                    prompt: Text(placeholder).foregroundStyle(HomePalette.heroInkTertiary),
-                    axis: .vertical
-                ) {
-                    Text(placeholder)
-                }
-                .foregroundStyle(HomePalette.heroInk)
-                .tint(Color.white)
-                .lineLimit(1...5)
-                .focused(focused)
-                .submitLabel(.send)
-                .onSubmit(onSend)
-            }
-        }
-        .font(MicaboFont.ui(18, weight: .semibold))
-        .padding(.horizontal, 6)
-        .padding(.vertical, 8)
-        .frame(minHeight: 46, alignment: .topLeading)
-    }
-
-    private var plusButton: some View {
-        Button {
-            if let onSources {
-                onSources()
-            } else {
-                onImport(.text)
-            }
-        } label: {
-            Image(systemName: "plus")
-                .font(.system(size: 19, weight: .black))
-                .foregroundStyle(HomePalette.brand)
-                .frame(width: 40, height: 40)
-                .background(Color.white, in: Circle())
-                .shadow(color: Color.black.opacity(0.2), radius: 6, y: 3)
-        }
-        .buttonStyle(HomePressStyle(scale: 0.88, feedback: .soft))
-        .disabled(!composer.hasRoom)
-        .opacity(composer.hasRoom ? 1 : 0.45)
-        .accessibilityLabel(Text(L10n.t("ios.home2.addSource", locale: .resolved())))
-    }
-
-    private func shortcut(_ kind: LessonComposer.Kind) -> some View {
-        let locked = LessonAllowance.locksImport(kind, isPro: isPro, freeLessonLeft: freeLessonLeft)
-        return Button { onImport(kind) } label: {
-            MicaboIconView(icon: kind.icon, size: 24, dimmed: !composer.hasRoom)
-                .frame(width: 38, height: 38)
-                .homeGlass(Circle(), fill: HomePalette.glassStrong)
-                .overlay(alignment: .topTrailing) {
-                    if locked {
-                        Image(systemName: "crown.fill")
-                            .font(.system(size: 7, weight: .bold))
-                            .foregroundStyle(LessonTone.yellow.ink)
-                            .padding(3)
-                            .background(Color(hex: 0xFFF1B8), in: Circle())
-                            .offset(x: 3, y: -2)
-                    }
-                }
-        }
-        .buttonStyle(HomePressStyle(scale: 0.86))
-        .disabled(!composer.hasRoom)
-        .accessibilityLabel(Text(L10n.t(kind.titleKey, locale: .resolved())))
-        .accessibilityValue(locked ? Text("Pro") : Text(""))
-    }
-
-    private var sendButton: some View {
-        Button(action: onSend) {
-            Image(systemName: "arrow.up")
-                .font(.system(size: 19, weight: .black))
-                .foregroundStyle(Color.white.opacity(composer.canSend ? 1 : 0.5))
-                .frame(width: 46, height: 46)
-                .background {
-                    if composer.canSend {
-                        Circle().fill(HomePalette.brand)
-                    } else {
-                        Circle().fill(Color.white.opacity(0.14))
-                    }
-                }
-                .overlay(Circle().strokeBorder(Color.white.opacity(composer.canSend ? 0.3 : 0.12), lineWidth: 1))
-                .shadow(color: HomePalette.glowViolet.opacity(composer.canSend ? 0.6 : 0), radius: 12, y: 4)
-                .scaleEffect(composer.canSend ? 1 : 0.94)
-                .animation(.spring(response: 0.35, dampingFraction: 0.6), value: composer.canSend)
-        }
-        .buttonStyle(HomePressStyle(scale: 0.88, feedback: .medium))
-        .disabled(!composer.canSend)
-        .accessibilityLabel(Text(L10n.t("lesson.home.send", locale: .resolved())))
-    }
-}
-
-private extension LessonComposer.Support {
-    var failure: String? {
-        if case .failed(let message) = state { return message }
-        return nil
-    }
-}
-
-/// **Les cinq supports, en petit, sous la barre** : une ligne de pastilles, l'icône 3D et
-/// son nom. La barre reste ce qu'on voit d'abord ; un support Pro porte sa petite couronne
-/// pour qui n'est pas abonné, une fois la leçon offerte servie (`docs/refonte-knowunity.md`
-/// § 7 : tant qu'elle reste, elle peut venir d'un import).
-struct ImportGrid: View {
-    let isPro: Bool
-    var freeLessonLeft = false
-    var enabled = true
-    let onImport: (LessonComposer.Kind) -> Void
-
-    private static let kinds: [LessonComposer.Kind] = [.pdf, .photo, .audio, .youtube, .text]
-
-    var body: some View {
-        HStack(spacing: 8) {
-            ForEach(Self.kinds, id: \.self) { kind in
-                ImportChip(kind: kind, locked: LessonAllowance.locksImport(kind, isPro: isPro, freeLessonLeft: freeLessonLeft), enabled: enabled) { onImport(kind) }
-            }
-        }
-    }
-}
-
-/// Une pastille d'import : l'icône 3D, le nom dessous, en petit.
-struct ImportChip: View {
-    let kind: LessonComposer.Kind
-    var locked = false
-    var enabled = true
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                MicaboIconView(icon: kind.icon, size: 30, dimmed: !enabled)
-                Text(L10n.t(kind.titleKey, locale: .resolved()))
-                    .font(MicaboFont.ui(12, weight: .heavy))
-                    .foregroundStyle(enabled ? MicaboColor.inkSecondary : MicaboColor.inkTertiary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .background(MicaboColor.surface.opacity(0.7), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
-            .overlay(alignment: .topTrailing) {
-                if locked {
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 8, weight: .bold))
-                        .foregroundStyle(LessonTone.yellow.ink)
-                        .padding(4)
-                        .background(LessonTone.yellow.pale, in: Circle())
-                        .offset(x: 3, y: -3)
-                        .accessibilityLabel(Text("Pro"))
-                }
-            }
-        }
-        .buttonStyle(MicaboPressableButtonStyle(feedback: .soft))
-        .disabled(!enabled)
-    }
-}
-
-/// Une tuile d'import : son icône 3D, son nom, et pour les grandes, ce qu'on y met.
-struct ImportButton: View {
-    enum Size {
-        case large
-        case medium
-    }
-
-    let kind: LessonComposer.Kind
-    var size: Size = .medium
-    var locked = false
-    var enabled = true
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(alignment: size == .large ? .leading : .center, spacing: size == .large ? 10 : 8) {
-                MicaboIconView(icon: kind.icon, size: size == .large ? 58 : 46, dimmed: !enabled)
-                VStack(alignment: size == .large ? .leading : .center, spacing: 2) {
-                    Text(L10n.t(kind.titleKey, locale: .resolved()))
-                        .font(MicaboFont.ui(size == .large ? 19 : 16, weight: .heavy))
-                        .foregroundStyle(enabled ? MicaboColor.ink : MicaboColor.inkTertiary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                    if size == .large {
-                        Text(L10n.t(kind.titleKey + "Sub", locale: .resolved()))
-                            .font(MicaboFont.ui(13, weight: .semibold))
-                            .foregroundStyle(MicaboColor.inkSecondary)
-                            .lineLimit(2)
-                            .multilineTextAlignment(.leading)
-                    }
-                }
-            }
-            .padding(size == .large ? 16 : 12)
-            .frame(maxWidth: .infinity, minHeight: size == .large ? 150 : 112, alignment: size == .large ? .topLeading : .center)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
-            .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(MicaboColor.stroke)
-                    .offset(y: 4)
-            )
-            .overlay(alignment: .topTrailing) {
-                if locked {
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(LessonTone.yellow.ink)
-                        .padding(6)
-                        .background(LessonTone.yellow.pale, in: Circle())
-                        .padding(10)
-                        .accessibilityLabel(Text("Pro"))
-                }
-            }
-        }
-        .buttonStyle(MicaboPressableButtonStyle(feedback: .soft))
-        .disabled(!enabled)
-    }
-}
-
-/// Un support déposé : son icône, son nom, et où en est sa lecture.
-struct SupportChip: View {
-    let support: LessonComposer.Support
-    let onRemove: () -> Void
-
-    var body: some View {
-        HStack(spacing: 8) {
-            ZStack {
-                if support.state == .reading {
-                    ProgressView().controlSize(.small)
-                } else {
-                    MicaboIconView(icon: support.kind.icon, size: 22)
-                }
-            }
-            .frame(width: 24, height: 24)
-            Text(support.title)
-                .font(MicaboFont.ui(14, weight: .bold))
-                .foregroundStyle(isFailed ? MicaboColor.wrongInk : MicaboColor.ink)
-                .lineLimit(1)
-                .frame(maxWidth: 150, alignment: .leading)
-            Button(action: onRemove) {
-                Image(systemName: isFailed ? "exclamationmark.circle.fill" : "xmark.circle.fill")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(isFailed ? MicaboColor.wrong : MicaboColor.inkTertiary)
-            }
-            .buttonStyle(MicaboPressableButtonStyle())
-            .accessibilityLabel(Text(L10n.t("lesson.home.removeSupport", locale: .resolved())))
-        }
-        .padding(.leading, 10)
-        .padding(.trailing, 8)
-        .padding(.vertical, 7)
-        .background(isFailed ? MicaboColor.wrongSoft : MicaboColor.canvas, in: Capsule())
-        .overlay(Capsule().strokeBorder(isFailed ? MicaboColor.wrong.opacity(0.4) : MicaboColor.stroke, lineWidth: 1))
-        .transition(.scale.combined(with: .opacity))
-    }
-
-    private var isFailed: Bool {
-        if case .failed = support.state { return true }
-        return false
-    }
-}
-
-// MARK: - Les chiffres
-
-/// X h de révision · X leçons apprises · X flashcards apprises : trois pastilles colorées de
-/// la même taille, au bas de Home. Elles disent où on en est sans prendre la place.
-struct HomeStatsRow: View {
-    let stats: HomeStats
-
-    var body: some View {
-        // Les trois pastilles prennent la hauteur de la plus haute : un libellé sur deux lignes
-        // ne rétrécit plus son chiffre.
-        HStack(spacing: 8) {
-            pill(stats.formattedTime(), L10n.t("lesson.home.statTime", locale: .resolved()), icon: .hourglass, tone: .blue)
-            pill(String(stats.learnedLessons), L10n.t("lesson.home.statLessons", locale: .resolved()), icon: .diploma, tone: .mint)
-            pill(String(stats.learnedCards), L10n.t("lesson.home.statCards", locale: .resolved()), icon: .cards, tone: .pink)
-        }
-        .fixedSize(horizontal: false, vertical: true)
-    }
-
-    private func pill(_ value: String, _ label: String, icon: MicaboIcon, tone: LessonTone) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
-                MicaboIconView(icon: icon, size: 24)
-                Text(value)
-                    .font(MicaboFont.number(19, weight: .black))
-                    .foregroundStyle(tone.ink)
-                    .monospacedDigit()
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-            }
-            Text(label)
-                .font(MicaboFont.ui(12, weight: .bold))
-                .foregroundStyle(HomePalette.inkSecondary)
-                .lineLimit(2)
-                .minimumScaleFactor(0.85)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 11)
-        .padding(.vertical, 10)
-        .frame(maxWidth: .infinity, minHeight: 78, maxHeight: .infinity, alignment: .topLeading)
-        .background(tone.pale, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(tone.vivid.opacity(0.18), lineWidth: 1))
-        .accessibilityElement(children: .combine)
-    }
-}
-
-// MARK: - Reprendre
-
-/// **La leçon en cours** : son icône sur une tuile de sa couleur, son titre, le cercle où elle
-/// attend, une barre qui dit où on en est, et la lecture dans le dégradé de Micabo.
-struct ResumeCard: View {
-    let course: Course
-    let target: ResumeTarget
-    let action: () -> Void
-
-    var body: some View {
-        let tone = course.tone
-        Button(action: action) {
-            HStack(spacing: 14) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(LinearGradient(colors: [tone.vivid.opacity(0.95), tone.vivid.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.35), lineWidth: 1)
-                    MicaboIconView(icon: course.icon, size: 42)
-                }
-                .frame(width: 66, height: 66)
-                .shadow(color: tone.vivid.opacity(0.35), radius: 10, y: 5)
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(L10n.t("lesson.home.resume", locale: .resolved()))
-                        .font(MicaboFont.ui(12, weight: .black))
-                        .tracking(MicaboTracking.caps)
-                        .textCase(.uppercase)
-                        .foregroundStyle(tone.ink)
-                    Text(target.title)
-                        .font(MicaboFont.ui(17, weight: .black))
-                        .foregroundStyle(HomePalette.ink)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                    Text(subtitle)
-                        .font(MicaboFont.ui(13, weight: .semibold))
-                        .foregroundStyle(HomePalette.inkSecondary)
-                        .lineLimit(1)
-                    HStack(spacing: 8) {
-                        GeometryReader { proxy in
-                            ZStack(alignment: .leading) {
-                                Capsule().fill(HomePalette.track)
-                                Capsule()
-                                    .fill(LinearGradient(colors: [tone.vivid, tone.vivid.opacity(0.75)], startPoint: .leading, endPoint: .trailing))
-                                    .frame(width: max(8, proxy.size.width * CGFloat(target.percent) / 100))
-                            }
-                        }
-                        .frame(height: 7)
-                        Text(percent)
-                            .font(MicaboFont.ui(12, weight: .black))
-                            .foregroundStyle(tone.ink)
-                            .monospacedDigit()
-                            .fixedSize()
-                    }
-                    .padding(.top, 4)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "play.fill")
-                    .font(.system(size: 16, weight: .black))
-                    .foregroundStyle(Color.white)
-                    .offset(x: 1)
-                    .frame(width: 46, height: 46)
-                    .background(HomePalette.brand, in: Circle())
-                    .shadow(color: HomePalette.glowViolet.opacity(0.4), radius: 10, y: 4)
-            }
-            .padding(14)
-            .homeCard(radius: 26)
-        }
-        .buttonStyle(HomePressStyle(scale: 0.97, feedback: .soft))
-    }
-
-    private var subtitle: String {
-        guard let number = target.circleNumber, let title = target.circleTitle else {
-            return L10n.t("lesson.home.resumeDone", locale: .resolved())
-        }
-        return L10n.t("lesson.home.resumeCircle", locale: .resolved(), vars: ["n": String(number), "title": title])
-    }
-
-    private var percent: String {
-        (Double(target.percent) / 100).formatted(.percent.precision(.fractionLength(0)).locale(Locale(identifier: UiLocale.resolved().rawValue)))
+                .contentShape(Rectangle())
+                .onTapGesture(perform: actions.dismissKeyboard)
+        )
     }
 }
 
@@ -1008,7 +373,7 @@ struct HomeSourcesSheet: View {
         .background(HomePalette.canvas.ignoresSafeArea())
         .presentationDetents([.fraction(0.72), .large])
         .presentationDragIndicator(.visible)
-        .presentationCornerRadius(32)
+        .presentationCornerRadius(MicaboRadius.sheet)
     }
 
     private var content: some View {
@@ -1107,7 +472,7 @@ struct HomeSourceTile: View {
                         .frame(width: 120, height: 120)
                         .offset(x: 70, y: -50)
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous))
             }
             .shadow(color: Self.colors(kind)[1].opacity(0.35), radius: 12, y: 6)
             .overlay(alignment: .topTrailing) {
@@ -1157,7 +522,7 @@ struct HomeSourceTile: View {
         case .photo: [Color(hex: 0xEC4F96), Color(hex: 0xBE185D)]
         case .youtube: [Color(hex: 0xF0524F), Color(hex: 0xC81E1E)]
         case .audio: [Color(hex: 0x17A774), Color(hex: 0x047857)]
-        case .text: [Color(hex: 0x9061F9), Color(hex: 0x6D28D9)]
+        case .text: [Color(hex: 0x1FA6B8), Color(hex: 0x0E7490)]
         }
     }
 }

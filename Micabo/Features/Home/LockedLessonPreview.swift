@@ -19,8 +19,24 @@ struct LockedLessonPreview: View {
     let onRevealed: () -> Void
 
     /// Les lignes cochées, une à une.
-    @State private var ticked = 0
-    @State private var revealed = false
+    @State private var ticked: Int
+    @State private var revealed: Bool
+
+    /// `revealed` : l'aperçu posé dans son état final, la lecture déjà cochée (les rendus).
+    init(
+        summary: LessonReadSummary,
+        revealed: Bool = false,
+        onUnlock: @escaping () -> Void,
+        onClose: @escaping () -> Void,
+        onRevealed: @escaping () -> Void
+    ) {
+        self.summary = summary
+        self.onUnlock = onUnlock
+        self.onClose = onClose
+        self.onRevealed = onRevealed
+        _ticked = State(initialValue: revealed ? Int.max : 0)
+        _revealed = State(initialValue: revealed)
+    }
 
     /// Ce qui a été lu, dans l'ordre où on le coche. Une vidéo, un audio ou un texte collé
     /// n'ont pas de pages : la ligne ne s'écrit pas.
@@ -35,48 +51,24 @@ struct LockedLessonPreview: View {
         return rows
     }
 
+    @Environment(\.homeStill) private var still
+
     var body: some View {
         VStack(spacing: 0) {
-            closeBar
-            ScrollView {
-                VStack(spacing: 22) {
-                    MikaMascot(mood: revealed ? .happy : .think, size: revealed ? 120 : 150, frame: .circle)
-                        .animation(.spring(duration: 0.45), value: revealed)
-                    Text(revealed
-                        ? L10n.t("ios.conv.locked.title", locale: .resolved())
-                        : L10n.t("ios.conv.locked.reading", locale: .resolved()))
-                        .font(MicaboFont.title)
-                        .foregroundStyle(MicaboColor.ink)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.horizontal, 12)
-                        .contentTransition(.opacity)
-
-                    VStack(alignment: .leading, spacing: 14) {
-                        ForEach(Array(rows.enumerated()), id: \.offset) { index, text in
-                            stepRow(text, done: index < ticked, active: index == ticked && !revealed)
-                        }
-                        lockedRow
-                    }
-                    .padding(.horizontal, 20)
-
-                    if revealed {
-                        previewCard
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                    }
-                }
-                .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.top, 8)
-                .padding(.bottom, 24)
+            if still {
+                // Les rendus ne dessinent pas ce qui défile : la page entière, posée.
+                page
+            } else {
+                ScrollView { page }
+                    .scrollIndicators(.hidden)
             }
-            .scrollIndicators(.hidden)
 
             if revealed {
                 VStack(spacing: 10) {
                     Button(action: onUnlock) {
                         Label(L10n.t("ios.conv.locked.unlock", locale: .resolved()), systemImage: "lock.open.fill")
                     }
-                    .buttonStyle(LessonPrimaryButtonStyle())
+                    .buttonStyle(MicaboBrandButtonStyle(minHeight: 58, fontSize: 18))
                     Text(L10n.t("ios.conv.locked.note", locale: .resolved()))
                         .font(MicaboFont.ui(13, weight: .semibold))
                         .foregroundStyle(MicaboColor.inkSecondary)
@@ -93,20 +85,59 @@ struct LockedLessonPreview: View {
 
     // MARK: Les morceaux
 
-    private var closeBar: some View {
-        HStack {
-            Button(action: onClose) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 17, weight: .bold))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .frame(width: 40, height: 40)
+    /// La page : la scène, le titre, ce qui a été lu, et l'aperçu une fois la lecture cochée.
+    private var page: some View {
+        VStack(spacing: 20) {
+            stage
+
+            Text(revealed
+                ? L10n.t("ios.conv.locked.title", locale: .resolved())
+                : L10n.t("ios.conv.locked.reading", locale: .resolved()))
+                .font(MicaboFont.ui(24, weight: .black))
+                .tracking(MicaboTracking.tight)
+                .foregroundStyle(MicaboColor.ink)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 12)
+                .contentTransition(.opacity)
+
+            VStack(alignment: .leading, spacing: 14) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { index, text in
+                    stepRow(text, done: index < ticked, active: index == ticked && !revealed)
+                }
+                lockedRow
             }
-            .buttonStyle(MicaboPressableButtonStyle())
-            .accessibilityLabel(Text(L10n.t("lesson.circle.close", locale: .resolved())))
-            Spacer()
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboStage.cardRadius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: MicaboStage.cardRadius, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+
+            if revealed {
+                previewCard
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, 8)
+        .padding(.bottom, 24)
+    }
+
+    /// **La scène de marque**, comme sur Home et le paywall : la croix blanche, et Mika en
+    /// buste qui sort du bord bas — il lit, puis il sourit.
+    private var stage: some View {
+        ZStack(alignment: .bottom) {
+            MicaboBrandBackdrop()
+            MikaMascot(mood: revealed ? .happy : .think, size: 156, backdrop: .blue)
+        }
+        .frame(height: 176)
+        .frame(maxWidth: .infinity)
+        .overlay(alignment: .topLeading) {
+            PaywallCloseButton(tint: .white, action: onClose)
+                .padding(.leading, 12)
+                .padding(.top, 6)
+                .accessibilityLabel(Text(L10n.t("lesson.circle.close", locale: .resolved())))
+        }
+        .clipShape(RoundedRectangle(cornerRadius: MicaboStage.heroRadius, style: .continuous))
     }
 
     private func stepRow(_ text: String, done: Bool, active: Bool) -> some View {
@@ -197,8 +228,8 @@ struct LockedLessonPreview: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .micaboElevation(.card)
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboStage.cardRadius, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboStage.cardRadius, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
     }
 
     // MARK: Le déroulé

@@ -171,7 +171,7 @@ struct MicaboSlimProgress: View {
             .frame(height: height)
 
             if showsLabel {
-                Text("\(percent) %")
+                Text(L10n.percent(percent, locale: .resolved()))
                     .font(MicaboFont.ui(11.5, weight: .bold))
                     .foregroundStyle(MicaboColor.accentInk)
                     .monospacedDigit()
@@ -622,7 +622,7 @@ extension MicaboFlatRow where Trailing == EmptyView {
 /// chaque écran pour qu'il ne se mette pas à varier d'un point d'un écran à l'autre.
 struct MicaboRowChevron: View {
     var body: some View {
-        Image(systemName: "chevron.right")
+        Image(systemName: "chevron.forward")
             .font(.system(size: 14, weight: .semibold))
             .foregroundStyle(MicaboColor.inkTertiary)
     }
@@ -948,7 +948,7 @@ struct MicaboMasteryRow: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                Text("\(percent) %")
+                Text(L10n.percent(percent, locale: .resolved()))
                     .font(MicaboFont.ui(13, weight: .bold))
                     .foregroundStyle(MicaboColor.accentInk)
                     .monospacedDigit()

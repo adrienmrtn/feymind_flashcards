@@ -3,29 +3,9 @@ import SwiftUI
 
 // MARK: - Aujourd'hui
 
-/// **Une mission du jour** : ce qu'il y a à faire, ce que ça rapporte, et si c'est fait.
+/// Ce que l'app sait de la journée, et la seule chose qu'on en tire : **la prochaine étape**.
 /// Tout se lit dans ce que l'app sait déjà — les cartes dues, la leçon en cours, la série —,
 /// rien ne vient d'un serveur.
-struct HomeMission: Identifiable, Equatable {
-    enum Kind: String {
-        case cards
-        case lesson
-        case create
-        case streak
-    }
-
-    let kind: Kind
-    var title: String
-    var subtitle: String?
-    var icon: MicaboIcon
-    var tone: LessonTone
-    var reward: HomeRewardChip.Reward
-    var done: Bool
-
-    var id: String { kind.rawValue }
-}
-
-/// Ce que l'app sait de la journée, et les missions qu'on en tire.
 struct HomeDay: Equatable {
     /// Les cartes dues, toutes leçons confondues.
     var dueCount = 0
@@ -40,230 +20,246 @@ struct HomeDay: Equatable {
     /// Un vrai geste d'étude a allumé la journée (`StudyStreak`).
     var studiedToday = false
 
-    func missions(locale: UiLocale = .resolved()) -> [HomeMission] {
-        var missions: [HomeMission] = []
-        if dueCount > 0 {
-            missions.append(HomeMission(
-                kind: .cards,
-                title: L10n.t("ios.home2.mission.cards", locale: locale),
-                subtitle: L10n.t("ios.kx.today.due", locale: locale, vars: ["count": "\(dueCount)"]),
-                icon: .cards,
-                tone: .lilac,
-                reward: .xp(dueCount * XPRules.cardReviewed),
-                done: false
-            ))
-        } else if reviewedToday > 0 {
-            missions.append(HomeMission(
-                kind: .cards,
-                title: L10n.t("ios.home2.mission.cardsDone", locale: locale),
-                subtitle: nil,
-                icon: .cards,
-                tone: .lilac,
-                reward: .xp(reviewedToday * XPRules.cardReviewed),
-                done: true
-            ))
+    /// Une étape de la journée.
+    enum Step: String, Equatable {
+        /// Écrire une leçon : la première, ou la suivante.
+        case create
+        /// Reprendre la leçon en cours, au cercle où elle attend.
+        case lesson
+        /// Réviser les cartes dues.
+        case cards
+    }
+
+    private var hasOpenLesson: Bool { lessonTitle != nil && lessonCircle != nil }
+
+    /// **La prochaine chose à faire**, et la seule que la carte met en avant : la leçon en
+    /// cours tant qu'elle n'a pas avancé aujourd'hui, puis les cartes dues, puis la leçon ;
+    /// sans leçon, en écrire une.
+    var primary: Step {
+        guard hasCourses else { return .create }
+        if hasOpenLesson && !lessonAdvancedToday { return .lesson }
+        if dueCount > 0 { return .cards }
+        if hasOpenLesson { return .lesson }
+        return .create
+    }
+
+    /// **Une seconde ligne, au plus** : ce qui reste d'utile à côté de l'étape mise en avant.
+    var secondary: Step? {
+        switch primary {
+        case .lesson: dueCount > 0 ? .cards : nil
+        case .cards: hasOpenLesson ? .lesson : nil
+        case .create: dueCount > 0 ? .cards : nil
         }
-        if !hasCourses {
-            missions.append(HomeMission(
-                kind: .create,
-                title: L10n.t("ios.kx.today.createFirst", locale: locale),
-                subtitle: L10n.t("ios.home2.mission.createSub", locale: locale),
-                icon: .quill,
-                tone: .blue,
-                reward: .xp(XPRules.lessonCreated),
-                done: false
-            ))
-        } else if let lessonTitle, let lessonCircle {
-            missions.append(HomeMission(
-                kind: .lesson,
-                title: lessonAdvancedToday
-                    ? L10n.t("ios.home2.mission.circleDone", locale: locale)
-                    : L10n.t("ios.home2.mission.circle", locale: locale),
-                subtitle: "\(lessonTitle) · \(lessonCircle)",
-                icon: .flag,
-                tone: .mint,
-                reward: .xp(XPRules.circleCompleted),
-                done: lessonAdvancedToday
-            ))
-        }
-        missions.append(HomeMission(
-            kind: .streak,
-            title: studiedToday
-                ? L10n.t("ios.home2.mission.streakDone", locale: locale)
-                : L10n.t("ios.home2.mission.streak", locale: locale),
-            subtitle: studiedToday ? nil : L10n.t("ios.home2.mission.streakSub", locale: locale),
-            icon: .flame,
-            tone: .pink,
-            reward: .streak,
-            done: studiedToday
-        ))
-        return missions
     }
 }
 
-/// **« Aujourd'hui », en missions** (`docs/refonte-knowunity.md` § 1.3) : en tête, dans le
-/// dégradé de Micabo, l'anneau de l'objectif du jour (`xpToday / 50`) qui se remplit à
-/// l'arrivée ; dessous, deux ou trois missions avec leur récompense, cochées une fois faites.
+/// **« Aujourd'hui »** (`docs/refonte-knowunity.md` § 1.3) : en tête, l'anneau de l'objectif
+/// du jour (`xpToday / 50`) qui se remplit à l'arrivée ; dessous, **une seule** étape, avec
+/// son bouton — reprendre la leçon, réviser les cartes, ou écrire une leçon — et au plus une
+/// ligne de plus. Une carte, une décision.
 struct HomeTodayCard: View {
     let day: HomeDay
+    let resume: (Course, ResumeTarget)?
     let motion: HomeMotion
-    let onMission: (HomeMission.Kind) -> Void
+    let onStep: (HomeDay.Step) -> Void
 
     @Environment(XPStore.self) private var injected: XPStore?
 
     private var xp: XPStore { injected ?? .shared }
 
     var body: some View {
-        let today = xp.today
-        let missions = day.missions()
-        let doneCount = missions.filter(\.done).count
-        VStack(alignment: .leading, spacing: 12) {
-            HomeSectionHeader(title: L10n.t("ios.kx.today.title", locale: .resolved())) {
-                Text("\(doneCount)/\(missions.count)")
-                    .font(MicaboFont.ui(13, weight: .black))
-                    .monospacedDigit()
-                    .foregroundStyle(HomePalette.inkSecondary)
-                    .padding(.horizontal, 9)
-                    .padding(.vertical, 3)
-                    .background(HomePalette.track, in: Capsule())
-                    .accessibilityLabel(Text(L10n.t("ios.home2.missions.a11y", locale: .resolved(), vars: ["done": "\(doneCount)", "total": "\(missions.count)"])))
+        let primary = day.primary
+        VStack(alignment: .leading, spacing: 16) {
+            goalHeader(today: xp.today)
+            stepBlock(primary)
+            Button { onStep(primary) } label: {
+                Text(cta(primary))
             }
-            VStack(spacing: 0) {
-                goalHeader(today: today)
-                VStack(spacing: 8) {
-                    ForEach(missions) { mission in
-                        missionRow(mission)
-                    }
-                }
-                .padding(10)
+            .buttonStyle(MicaboBrandButtonStyle(minHeight: 52))
+            if let secondary = day.secondary {
+                secondaryRow(secondary)
             }
-            .homeCard(radius: 28)
         }
+        .padding(18)
+        .homeCard()
     }
+
+    // MARK: L'objectif
 
     private func goalHeader(today: Int) -> some View {
         let reached = today >= XPRules.dailyGoal
+        let progress = L10n.t("ios.kx.today.goalProgress", locale: .resolved(), vars: [
+            "xp": "\(min(today, XPRules.dailyGoal))",
+            "goal": "\(XPRules.dailyGoal)",
+        ])
+        let detail = reached
+            ? "\(L10n.t("ios.kx.today.goalReached", locale: .resolved())) · \(progress)"
+            : "\(progress) · \(L10n.t("ios.home2.goalLeft", locale: .resolved(), vars: ["n": "\(XPRules.dailyGoal - today)"]))"
         return HStack(spacing: 14) {
             HomeGoalRing(progress: Double(today) / Double(XPRules.dailyGoal), motion: motion)
             VStack(alignment: .leading, spacing: 2) {
-                Text(reached
-                    ? L10n.t("ios.kx.today.goalReached", locale: .resolved())
-                    : L10n.t("ios.kx.today.goal", locale: .resolved()))
-                    .font(MicaboFont.ui(19, weight: .black))
-                    .foregroundStyle(Color.white)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.85)
-                Text(L10n.t("ios.kx.today.goalProgress", locale: .resolved(), vars: [
-                    "xp": "\(min(today, XPRules.dailyGoal))",
-                    "goal": "\(XPRules.dailyGoal)",
-                ]))
-                    .font(MicaboFont.ui(15, weight: .heavy))
-                    .foregroundStyle(Color.white.opacity(0.85))
+                Text(L10n.t("ios.kx.today.title", locale: .resolved()))
+                    .font(MicaboFont.ui(21, weight: .black))
+                    .foregroundStyle(HomePalette.ink)
+                    .accessibilityAddTraits(.isHeader)
+                Text(detail)
+                    .font(MicaboFont.ui(14, weight: .bold))
+                    .foregroundStyle(reached ? HomePalette.done : HomePalette.inkSecondary)
                     .monospacedDigit()
-                    .contentTransition(.numericText(value: Double(today)))
-                if !reached {
-                    Text(L10n.t("ios.home2.goalLeft", locale: .resolved(), vars: ["n": "\(XPRules.dailyGoal - today)"]))
-                        .font(MicaboFont.ui(13, weight: .bold))
-                        .foregroundStyle(Color.white.opacity(0.75))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: L'étape
+
+    @ViewBuilder
+    private func stepBlock(_ step: HomeDay.Step) -> some View {
+        HStack(alignment: .center, spacing: 14) {
+            stepIcon(step)
+            VStack(alignment: .leading, spacing: 3) {
+                if let eyebrow = eyebrow(step) {
+                    Text(eyebrow)
+                        .font(MicaboFont.ui(12, weight: .black))
+                        .tracking(MicaboTracking.caps)
+                        .textCase(.uppercase)
+                        .foregroundStyle(MicaboColor.accentInk)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+                }
+                Text(title(step))
+                    .font(MicaboFont.ui(17, weight: .black))
+                    .foregroundStyle(HomePalette.ink)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(subtitle(step))
+                    .font(MicaboFont.ui(14, weight: .semibold))
+                    .foregroundStyle(HomePalette.inkSecondary)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                if step == .lesson, let resume {
+                    lessonProgress(resume.1, tone: resume.0.tone)
+                        .padding(.top, 5)
                 }
             }
             Spacer(minLength: 0)
-            // La place de Mika : il est posé plus bas, collé au bord de la carte.
-            Color.clear.frame(width: 64, height: 64)
         }
-        .padding(.leading, 16)
-        .padding(.trailing, 10)
-        .padding(.vertical, 14)
-        // Mika est un buste : il sort du bord bas de l'en-tête bleu, qui le coupe.
-        .overlay(alignment: .bottomTrailing) {
-            MikaMascot(
-                mood: reached ? .celebrate : .idle,
-                size: 76,
-                frozenAt: motion.ambient ? nil : 0.4,
-                backdrop: .blue
-            )
-            .padding(.trailing, 4)
-        }
-        .clipShape(UnevenRoundedRectangle(topLeadingRadius: 27, bottomLeadingRadius: 20, bottomTrailingRadius: 20, topTrailingRadius: 27, style: .continuous))
-        .background {
-            // La lueur est posée par-dessus l'aplat, pas à côté : dans une pile, ses 180 points
-            // agrandiraient le fond au-delà de l'en-tête.
-            HomePalette.brand
-                .overlay(alignment: .topTrailing) {
-                    Circle()
-                        .fill(RadialGradient(colors: [Color.white.opacity(0.3), .clear], center: .center, startRadius: 0, endRadius: 90))
-                        .frame(width: 180, height: 180)
-                        .offset(x: 50, y: -80)
-                }
-                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 27, bottomLeadingRadius: 20, bottomTrailingRadius: 20, topTrailingRadius: 27, style: .continuous))
-        }
-        .padding([.horizontal, .top], 1)
+        .padding(12)
+        .background(MicaboColor.canvas.opacity(0.7), in: RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 
     @ViewBuilder
-    private func missionRow(_ mission: HomeMission) -> some View {
-        let row = HStack(spacing: 12) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(mission.tone.pale)
-                MicaboIconView(icon: mission.icon, size: 30)
+    private func stepIcon(_ step: HomeDay.Step) -> some View {
+        ZStack {
+            switch step {
+            case .lesson:
+                let tone = resume?.0.tone ?? .blue
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(LinearGradient(colors: [tone.vivid.opacity(0.95), tone.vivid.opacity(0.65)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                MicaboIconView(icon: resume?.0.icon ?? .book, size: 38)
+            case .cards:
+                RoundedRectangle(cornerRadius: 18, style: .continuous).fill(LessonTone.lilac.pale)
+                MicaboIconView(icon: .cards, size: 36)
+            case .create:
+                RoundedRectangle(cornerRadius: 18, style: .continuous).fill(MicaboColor.accentSoft)
+                MicaboIconView(icon: .quill, size: 36)
             }
-            .frame(width: 46, height: 46)
-            .overlay(alignment: .bottomTrailing) {
-                if mission.done {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 10, weight: .black))
-                        .foregroundStyle(Color.white)
-                        .frame(width: 20, height: 20)
-                        .background(HomePalette.done, in: Circle())
-                        .overlay(Circle().strokeBorder(HomePalette.card, lineWidth: 2))
-                        .offset(x: 5, y: 5)
-                        .transition(.scale.combined(with: .opacity))
-                }
-            }
-            VStack(alignment: .leading, spacing: 1) {
-                Text(mission.title)
-                    .font(MicaboFont.ui(16, weight: .heavy))
-                    .foregroundStyle(mission.done ? HomePalette.inkSecondary : HomePalette.ink)
-                    .strikethrough(mission.done, color: HomePalette.inkTertiary)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                if let subtitle = mission.subtitle {
-                    Text(subtitle)
-                        .font(MicaboFont.ui(13, weight: .semibold))
-                        .foregroundStyle(HomePalette.inkSecondary)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            Spacer(minLength: 4)
-            HomeRewardChip(reward: mission.reward, done: mission.done)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 9)
-        .background(HomePalette.rowFill, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .accessibilityElement(children: .combine)
+        .frame(width: 60, height: 60)
+    }
 
-        if mission.done || mission.kind == .streak {
-            row
-        } else {
-            Button { onMission(mission.kind) } label: { row }
-                .buttonStyle(HomePressStyle(scale: 0.97, feedback: .soft))
+    private func lessonProgress(_ target: ResumeTarget, tone: LessonTone) -> some View {
+        HStack(spacing: 8) {
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(HomePalette.track)
+                    Capsule()
+                        .fill(MicaboColor.accent)
+                        .frame(width: max(7, proxy.size.width * CGFloat(target.percent) / 100))
+                }
+            }
+            .frame(height: 7)
+            Text(L10n.percent(target.percent, locale: .resolved()))
+                .font(MicaboFont.ui(12, weight: .black))
+                .foregroundStyle(MicaboColor.accentInk)
+                .monospacedDigit()
+                .fixedSize()
         }
+    }
+
+    private func eyebrow(_ step: HomeDay.Step) -> String? {
+        switch step {
+        case .lesson: L10n.t("lesson.home.resume", locale: .resolved())
+        case .cards: L10n.t("ios.home2.tool.due", locale: .resolved())
+        case .create: nil
+        }
+    }
+
+    private func title(_ step: HomeDay.Step) -> String {
+        switch step {
+        case .lesson: resume?.1.title ?? day.lessonTitle ?? ""
+        case .cards: L10n.t("ios.kx.today.due", locale: .resolved(), vars: ["count": "\(day.dueCount)"])
+        case .create: day.hasCourses
+            ? L10n.t("ios.home3.create.next", locale: .resolved())
+            : L10n.t("ios.kx.today.createFirst", locale: .resolved())
+        }
+    }
+
+    private func subtitle(_ step: HomeDay.Step) -> String {
+        switch step {
+        case .lesson:
+            guard let target = resume?.1, let number = target.circleNumber, let title = target.circleTitle else {
+                return day.lessonCircle ?? ""
+            }
+            return L10n.t("lesson.home.resumeCircle", locale: .resolved(), vars: ["n": String(number), "title": title])
+        case .cards: return L10n.t("ios.home3.cards.sub", locale: .resolved())
+        case .create: return L10n.t("ios.home2.mission.createSub", locale: .resolved())
+        }
+    }
+
+    private func cta(_ step: HomeDay.Step) -> String {
+        switch step {
+        case .lesson: L10n.t("ios.home3.cta.continue", locale: .resolved())
+        case .cards: L10n.t("ios.home3.cta.review", locale: .resolved())
+        case .create: L10n.t("ios.home3.cta.create", locale: .resolved())
+        }
+    }
+
+    // MARK: La seconde ligne
+
+    private func secondaryRow(_ step: HomeDay.Step) -> some View {
+        Button { onStep(step) } label: {
+            HStack(spacing: 10) {
+                MicaboIconView(icon: step == .cards ? .cards : (resume?.0.icon ?? .book), size: 24)
+                Text(step == .cards
+                    ? L10n.t("ios.kx.today.due", locale: .resolved(), vars: ["count": "\(day.dueCount)"])
+                    : L10n.t("ios.kx.today.continue", locale: .resolved(), vars: ["lesson": resume?.1.title ?? day.lessonTitle ?? ""]))
+                    .font(MicaboFont.ui(15, weight: .heavy))
+                    .foregroundStyle(HomePalette.ink)
+                    .lineLimit(1)
+                Spacer(minLength: 4)
+                Image(systemName: "chevron.forward")
+                    .font(.system(size: 13, weight: .black))
+                    .foregroundStyle(HomePalette.inkTertiary)
+            }
+            .padding(.horizontal, 4)
+            .frame(minHeight: 36)
+        }
+        .buttonStyle(HomePressStyle(scale: 0.98, feedback: .soft))
     }
 }
 
-/// **L'anneau de l'objectif du jour**, sur le dégradé : blanc sur un creux translucide. Il se
-/// remplit à l'arrivée, puis suit chaque gain.
+/// **L'anneau de l'objectif du jour** : le bleu de la marque sur un creux, l'éclair jaune du
+/// crayon au milieu, une coche une fois atteint. Il se remplit à l'arrivée, puis suit chaque
+/// gain.
 struct HomeGoalRing: View {
     let progress: Double
     let motion: HomeMotion
-    var size: CGFloat = 66
-    var lineWidth: CGFloat = 8
+    var size: CGFloat = 58
+    var lineWidth: CGFloat = 7
 
     @State private var filled = false
 
@@ -271,18 +267,17 @@ struct HomeGoalRing: View {
         let target = max(0, min(1, progress))
         let shown = filled || !motion.entrance ? target : 0
         ZStack {
-            Circle().stroke(Color.white.opacity(0.22), lineWidth: lineWidth)
+            Circle().stroke(HomePalette.track, lineWidth: lineWidth)
             Circle()
                 .trim(from: 0, to: shown)
                 .stroke(
-                    LinearGradient(colors: [Color(hex: 0xFFE27A), Color.white], startPoint: .topLeading, endPoint: .bottomTrailing),
+                    target >= 1 ? AnyShapeStyle(MicaboColor.correct) : AnyShapeStyle(MicaboStage.buttonFill),
                     style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
-                .shadow(color: Color.white.opacity(0.35), radius: 4)
             Image(systemName: target >= 1 ? "checkmark" : "bolt.fill")
                 .font(.system(size: size * 0.32, weight: .black))
-                .foregroundStyle(target >= 1 ? Color.white : HomePalette.bolt)
+                .foregroundStyle(target >= 1 ? MicaboColor.correct : HomePalette.bolt)
         }
         .frame(width: size, height: size)
         .animation(.spring(response: 1.0, dampingFraction: 0.8), value: shown)
@@ -294,83 +289,17 @@ struct HomeGoalRing: View {
     }
 }
 
-// MARK: - Les raccourcis
+// MARK: - Les outils
 
-/// **Les outils, en pastilles sous la barre** : « Cartes du jour » quand il y en a, puis
-/// Scanner un exo, Quiz éclair, Minuteur, Ligue. Une ligne qui défile, posée sur le ciel.
-struct HomeToolChips: View {
-    let dueCount: Int
-    let motion: HomeMotion
-    let onReview: () -> Void
-    let onTool: (HomeToolsGrid.Tool) -> Void
+/// Les outils de Home, hors de la leçon.
+enum HomeTool: CaseIterable {
+    case scan
+    case quiz
+    case timer
+    case league
 
-    var body: some View {
-        if motion.still {
-            // Les rendus ne dessinent pas une ligne qui défile : la même ligne, coupée au bord.
-            Color.clear
-                .frame(height: 46)
-                .overlay(alignment: .leading) {
-                    chips.fixedSize().padding(.horizontal, MicaboSpacing.screen)
-                }
-                .clipped()
-        } else {
-            ScrollView(.horizontal, showsIndicators: false) {
-                chips.padding(.horizontal, MicaboSpacing.screen)
-            }
-            .scrollClipDisabled()
-        }
-    }
-
-    private var chips: some View {
-        HStack(spacing: 8) {
-            if dueCount > 0 {
-                chip(
-                    icon: .cards,
-                    tone: .lilac,
-                    title: L10n.t("ios.home2.tool.due", locale: .resolved()),
-                    badge: dueCount,
-                    action: onReview
-                )
-            }
-            ForEach(HomeToolsGrid.Tool.allCases, id: \.self) { tool in
-                chip(icon: Self.icon(tool), tone: Self.tone(tool), title: Self.title(tool), badge: nil) { onTool(tool) }
-            }
-        }
-    }
-
-    private func chip(icon: MicaboIcon, tone: LessonTone, title: String, badge: Int?, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                MicaboIconView(icon: icon, size: 22)
-                    .frame(width: 32, height: 32)
-                    .background(
-                        LinearGradient(colors: [tone.vivid.opacity(0.95), tone.vivid.opacity(0.55)], startPoint: .topLeading, endPoint: .bottomTrailing),
-                        in: Circle()
-                    )
-                Text(title)
-                    .font(MicaboFont.ui(15, weight: .heavy))
-                    .foregroundStyle(HomePalette.heroInk)
-                    .lineLimit(1)
-                if let badge {
-                    Text("\(badge)")
-                        .font(MicaboFont.ui(12, weight: .black))
-                        .monospacedDigit()
-                        .foregroundStyle(Color.white)
-                        .padding(.horizontal, 7)
-                        .frame(minWidth: 22, minHeight: 22)
-                        .background(MicaboColor.flame, in: Capsule())
-                }
-            }
-            .padding(.leading, 6)
-            .padding(.trailing, 14)
-            .frame(height: 44)
-            .homeGlass(Capsule())
-        }
-        .buttonStyle(HomePressStyle(scale: 0.93))
-    }
-
-    static func icon(_ tool: HomeToolsGrid.Tool) -> MicaboIcon {
-        switch tool {
+    var icon: MicaboIcon {
+        switch self {
         case .scan: .photo
         case .quiz: .quiz
         case .timer: .alarm
@@ -378,8 +307,8 @@ struct HomeToolChips: View {
         }
     }
 
-    static func tone(_ tool: HomeToolsGrid.Tool) -> LessonTone {
-        switch tool {
+    var tone: LessonTone {
+        switch self {
         case .scan: .blue
         case .quiz: .pink
         case .timer: .mint
@@ -387,8 +316,8 @@ struct HomeToolChips: View {
         }
     }
 
-    static func title(_ tool: HomeToolsGrid.Tool) -> String {
-        switch tool {
+    var title: String {
+        switch self {
         case .scan: L10n.t("ios.kx.tools.scan.title", locale: .resolved())
         case .quiz: L10n.t("ios.kx.tools.quiz.title", locale: .resolved())
         case .timer: L10n.t("ios.kx.tools.timer.title", locale: .resolved())
@@ -397,103 +326,42 @@ struct HomeToolChips: View {
     }
 }
 
-// MARK: - Outils
-
-/// **« Outils »** (§ 1.4) : quatre tuiles, une icône colorée, un nom, une ligne.
-struct HomeToolsGrid: View {
-    enum Tool: CaseIterable {
-        case scan
-        case quiz
-        case timer
-        case league
-    }
-
-    let hasLesson: Bool
-    let onTool: (Tool) -> Void
+/// **Les outils, en quatre tuiles** : Scanner un exo, Quiz éclair, Minuteur, Ligue. Une icône
+/// sur sa pastille de couleur, le nom dessous, sur deux lignes au plus : les quatre tiennent
+/// sur la largeur dans toutes les langues, sans rien faire défiler.
+struct HomeToolsRow: View {
+    let onTool: (HomeTool) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(L10n.t("ios.kx.tools.title", locale: .resolved()))
-                .font(MicaboFont.sectionTitle)
-                .foregroundStyle(MicaboColor.ink)
-                .accessibilityAddTraits(.isHeader)
-            VStack(spacing: 10) {
-                HStack(spacing: 10) {
-                    tile(.scan)
-                    tile(.quiz)
-                }
-                HStack(spacing: 10) {
-                    tile(.timer)
-                    tile(.league)
-                }
+        HStack(alignment: .top, spacing: 10) {
+            ForEach(HomeTool.allCases, id: \.self) { tool in
+                Button { onTool(tool) } label: { tile(tool) }
+                    .buttonStyle(HomePressStyle(scale: 0.94, feedback: .soft))
+                    .accessibilityLabel(Text(tool.title))
             }
         }
+        .fixedSize(horizontal: false, vertical: true)
     }
 
-    private func tile(_ tool: Tool) -> some View {
-        Button { onTool(tool) } label: {
-            VStack(alignment: .leading, spacing: 8) {
-                MicaboIconView(icon: icon(tool), size: 30)
-                    .frame(width: 46, height: 46)
-                    .background(tone(tool).pale, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                Text(title(tool))
-                    .font(MicaboFont.ui(16, weight: .heavy))
-                    .foregroundStyle(MicaboColor.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                Text(subtitle(tool))
-                    .font(MicaboFont.ui(13, weight: .semibold))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: 0)
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity, minHeight: 132, alignment: .topLeading)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+    private func tile(_ tool: HomeTool) -> some View {
+        VStack(spacing: 7) {
+            MicaboIconView(icon: tool.icon, size: 28)
+                .frame(width: 46, height: 46)
+                .background(tool.tone.pale, in: Circle())
+            Text(tool.title)
+                .font(MicaboFont.ui(13, weight: .heavy))
+                .foregroundStyle(HomePalette.ink)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
         }
-        .buttonStyle(MicaboPressableButtonStyle(feedback: .soft))
-        .accessibilityElement(children: .combine)
-    }
-
-    private func icon(_ tool: Tool) -> MicaboIcon {
-        switch tool {
-        case .scan: .photo
-        case .quiz: .quiz
-        case .timer: .alarm
-        case .league: .trophy
-        }
-    }
-
-    private func tone(_ tool: Tool) -> LessonTone {
-        switch tool {
-        case .scan: .blue
-        case .quiz: .pink
-        case .timer: .mint
-        case .league: .yellow
-        }
-    }
-
-    private func title(_ tool: Tool) -> String {
-        switch tool {
-        case .scan: L10n.t("ios.kx.tools.scan.title", locale: .resolved())
-        case .quiz: L10n.t("ios.kx.tools.quiz.title", locale: .resolved())
-        case .timer: L10n.t("ios.kx.tools.timer.title", locale: .resolved())
-        case .league: L10n.t("ios.kx.tools.league.title", locale: .resolved())
-        }
-    }
-
-    private func subtitle(_ tool: Tool) -> String {
-        switch tool {
-        case .scan: L10n.t("ios.kx.tools.scan.sub", locale: .resolved())
-        case .quiz: hasLesson
-            ? L10n.t("ios.kx.tools.quiz.sub", locale: .resolved())
-            : L10n.t("ios.kx.tools.quiz.subEmpty", locale: .resolved())
-        case .timer: L10n.t("ios.kx.tools.timer.sub", locale: .resolved(), vars: ["n": "\(XPRules.focusMinutes)"])
-        case .league: L10n.t("ios.kx.tools.league.sub", locale: .resolved())
-        }
+        .padding(.horizontal, 4)
+        .padding(.top, 12)
+        .padding(.bottom, 10)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .homeCard(radius: MicaboStage.tileRadius)
     }
 }
 

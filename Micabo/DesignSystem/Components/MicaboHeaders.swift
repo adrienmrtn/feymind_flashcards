@@ -19,7 +19,7 @@ struct MicaboEyebrow: View {
 /// le reste : un bouton dont l'étiquette reste en français sur une app en anglais n'est
 /// pas un détail pour qui ne voit que cette étiquette.
 struct MicaboHeaderBack {
-    var systemImage: String = "chevron.left"
+    var systemImage: String = "chevron.backward"
     var accessibilityTitle: String = L10n.t("app.common.back", locale: .resolved())
     var action: () -> Void
 

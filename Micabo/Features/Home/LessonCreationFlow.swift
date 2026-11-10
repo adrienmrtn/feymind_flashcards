@@ -226,6 +226,9 @@ struct LessonCreationFlow: View {
     }
 
     private func start(examDate: Date?) {
+        // Un double appui sur « Non » lançait deux générations : une seule à la fois, sauf
+        // pour réessayer après un échec.
+        guard step != .generating || failure != nil else { return }
         pendingExamDate = examDate
         failure = nil
         stage = nil

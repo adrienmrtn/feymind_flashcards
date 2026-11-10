@@ -38,7 +38,7 @@ struct HomeStats: Equatable {
         let value: String
         if hours < 10 {
             let formatter = NumberFormatter()
-            formatter.locale = Locale(identifier: locale.rawValue)
+            formatter.locale = locale.foundation
             formatter.minimumFractionDigits = 0
             formatter.maximumFractionDigits = 1
             value = formatter.string(from: NSNumber(value: (hours * 10).rounded() / 10)) ?? String(format: "%.1f", hours)

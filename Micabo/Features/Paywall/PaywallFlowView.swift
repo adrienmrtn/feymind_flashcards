@@ -48,15 +48,14 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
     }
 }
 
-/// **Les deux paywalls, et la mécanique qui les enchaîne.**
-///
-/// Le premier ne montre qu'une offre et qu'un prix ; sa croix n'annule pas, elle ouvre le
-/// second, qui compare ce que Pro ouvre et met les deux offres côte à côte. C'est la croix
-/// du second qui referme pour de bon.
+/// **Le paywall, et sa mécanique** : un seul écran (`PaywallScreen`), les deux offres côte à
+/// côte, la croix là dès l'ouverture.
 ///
 /// La règle : **une croix ne ment jamais.** Elle est présente d'emblée, elle réagit au
-/// premier appui, et le second appui sort. Un paywall dont la sortie se dérobe se ferme en
-/// fermant l'app, ce qui ne fait pas un abonné de plus mais un utilisateur de moins.
+/// premier appui, et elle sort. Un paywall dont la sortie se dérobe se ferme en fermant
+/// l'app, ce qui ne fait pas un abonné de plus mais un utilisateur de moins. Refermé sans
+/// achat — par la croix ou d'un balayage —, il fait tomber le cadeau du tarif réduit
+/// (`DiscountOffer.paywallClosed`, dans `onDisappear`).
 struct PaywallFlowView: View {
     var trigger: PaywallTrigger?
     var onDismiss: () -> Void
@@ -66,12 +65,10 @@ struct PaywallFlowView: View {
     /// la chaîne d'injection soit montée.
     @Environment(ProAccess.self) private var pro: ProAccess?
 
-    private enum Stage {
-        case offer
-        case plans
-    }
-
-    @State private var stage: Stage = .offer
+    /// L'élève a coché une autre offre que celle recommandée : la comparaison a eu lieu.
+    /// C'est ce que `paywall_plans_seen` compte depuis que les offres sont sur le même écran,
+    /// et le `stage` de `paywall_dismissed` (« plans » ou « offre ») le suit.
+    @State private var comparedPlans = false
     @State private var isPurchasing = false
     /// Quand le paywall s'est ouvert, et s'il a abouti. Les deux servent la même ligne :
     /// un paywall refermé en deux secondes et un paywall lu pendant une minute ne se
@@ -99,26 +96,26 @@ struct PaywallFlowView: View {
             onClose: onDismiss,
             onRevision: { storeRevision = $0 }
         ) {
-            stages
+            PaywallScreen(
+                trigger: trigger,
+                name: HomeGreeting.firstName(OnboardingPreferences.displayName),
+                isPurchasing: isPurchasing,
+                storeRevision: storeRevision,
+                onClose: onDismiss,
+                onSubscribe: { plan in Task { await buy(plan) } },
+                onRestore: { Task { await restore() } },
+                onSelect: { _ in plansCompared() }
+            )
         }
-        // **Un balayage vers le bas sur l'offre ne referme pas : il montre les formules**,
-        // comme la croix. Sans ça, la feuille se refermait d'un geste sur le premier écran,
-        // et l'élève ne voyait jamais la comparaison ni l'offre annuelle. Sur les formules,
-        // le geste referme pour de bon.
-        .interactiveDismissDisabled(stage == .offer)
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 24).onEnded { value in
-                guard stage == .offer,
-                      value.translation.height > 90,
-                      value.translation.height > abs(value.translation.width) * 1.5 else { return }
-                Haptics.selection()
-                showPlans()
+        // Le bleu de la scène sous la barre d'état et sous la poignée de la feuille, le papier
+        // de l'app dessous : c'est ce qu'on voit quand on tire la page.
+        .background {
+            VStack(spacing: 0) {
+                MicaboBrand.blue.frame(height: 320)
+                MicaboColor.canvas
             }
-        )
-        .micaboScreenBackground()
-        // Le blanc du parcours d'accueil, en pleine page comme en feuille : le paywall en
-        // est la dernière page, et il en garde la charte.
-        .background(OnboardingPalette.white.ignoresSafeArea())
+            .ignoresSafeArea()
+        }
         .onAppear {
             openedAt = Date()
             Analytics.track(.paywallOpened, [
@@ -143,7 +140,7 @@ struct PaywallFlowView: View {
             DiscountOffer.paywallClosed(isPro: pro?.isPro ?? false)
             Analytics.track(.paywallDismissed, [
                 "trigger": .text(trigger?.rawValue ?? "inconnu"),
-                "stage": .text(stage == .plans ? "plans" : "offre"),
+                "stage": .text(comparedPlans ? "plans" : "offre"),
                 "seconds": .number((Date().timeIntervalSince(openedAt) * 10).rounded() / 10),
                 "price_display": PriceDisplay.current.analyticsValue,
             ])
@@ -160,40 +157,10 @@ struct PaywallFlowView: View {
         }
     }
 
-    /// L'offre, puis les formules.
-    private var stages: some View {
-        ZStack {
-            switch stage {
-            case .offer:
-                PaywallOfferView(
-                    plan: PaywallCatalog.recommended,
-                    headline: trigger?.headline,
-                    isPurchasing: isPurchasing,
-                    storeRevision: storeRevision,
-                    onClose: showPlans,
-                    onSeeAllPlans: showPlans,
-                    onSubscribe: { Task { await buy(PaywallCatalog.recommended) } },
-                    onRestore: { Task { await restore() } }
-                )
-                .transition(.paywallStage)
-
-            case .plans:
-                PaywallPlansView(
-                    isPurchasing: isPurchasing,
-                    storeRevision: storeRevision,
-                    onClose: onDismiss,
-                    onSubscribe: { plan in Task { await buy(plan) } },
-                    onRestore: { Task { await restore() } }
-                )
-                .transition(.paywallStage)
-            }
-        }
-        .animation(OnboardingMotion.page, value: stage)
-    }
-
-    private func showPlans() {
-        guard stage != .plans else { return }
-        stage = .plans
+    /// La première fois qu'une autre offre est cochée.
+    private func plansCompared() {
+        guard !comparedPlans else { return }
+        comparedPlans = true
         Analytics.track(.paywallPlansSeen, [
             "trigger": .text(trigger?.rawValue ?? "inconnu"),
             "price_display": PriceDisplay.current.analyticsValue,
@@ -297,9 +264,8 @@ struct PaywallFlowView: View {
 }
 
 extension AnyTransition {
-    /// Le passage d'un paywall à l'autre. Un fondu et six points de montée : les deux
-    /// écrans partagent leur croix et leur bouton, et les faire glisser latéralement
-    /// donnerait l'impression d'avoir changé d'écran alors qu'on a déplié le même.
+    /// Le passage d'un temps d'un paywall à l'autre (le cadeau, puis son offre). Un fondu et
+    /// six points de montée : on déplie le même écran, on n'en change pas.
     static var paywallStage: AnyTransition {
         .opacity.combined(with: .offset(y: 6))
     }
