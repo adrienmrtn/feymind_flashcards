@@ -6,8 +6,9 @@
  * (`ASSUME_PRO_WITHOUT_ROW`), comme dans l'app (`ProAccess.assumeProWithoutRow`).
  *
  * Le gratuit est celui de `docs/refonte-parcours.md` § 7, tenu par le serveur et annoncé ici
- * (`FREE_LESSON_TIER`) : **une** leçon à vie depuis un sujet tapé ou un texte collé ; PDF,
- * photo, audio et YouTube sont Pro ; une question à Mika ; un lot de questions d'entraînement
+ * (`FREE_LESSON_TIER`) : **une** leçon à vie depuis un sujet tapé, un texte collé, ou — depuis
+ * le lot « Knowunity » — un import ; au-delà, PDF, photo, audio et YouTube sont Pro ; une
+ * question à Mika ; un lot de questions d'entraînement
  * et un examen blanc. Les portes elles-mêmes vivent dans `lesson/allowance.ts` (`lessonGate`,
  * `MIKA_ALLOWANCE`, `EXTRA_ALLOWANCE`) et `lesson/mika.ts` (`mikaGate`) ; le refus tombe sur
  * l'envoi, jamais au milieu d'un chemin. `test/freemium-parity.test.ts` relit le Swift
@@ -27,8 +28,17 @@ import { EXTRA_ALLOWANCE, MIKA_ALLOWANCE } from "./lesson/allowance";
 export const FREE_LESSON_TIER = {
   /** Une leçon offerte, à vie, depuis un sujet ou un texte collé. */
   lessons: 1,
-  /** PDF, photo, audio, YouTube : Pro, dès la première. */
+  /**
+   * PDF, photo, audio, YouTube : Pro… sauf pour la leçon offerte (voir
+   * `freeLessonFromImport`). Une fois celle-ci utilisée, un import ouvre le paywall.
+   */
   importsAllowed: false,
+  /**
+   * La leçon offerte peut venir d'un import (`docs/refonte-knowunity.md` § 7) : la demande
+   * porte alors `onboarding: true`, que `begin_lesson(p_onboarding)` accepte déjà. Voir
+   * `composerGate` dans `lesson/allowance.ts`.
+   */
+  freeLessonFromImport: true,
   /** Une question à Mika, dans une leçon. */
   mikaQuestions: MIKA_ALLOWANCE.freeQuestions,
   /** Un lot de nouvelles questions d'entraînement. */
