@@ -60,23 +60,23 @@ enum SolverSubject: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .math: .calculator
         case .physics: .atom
-        case .biology: .brain
-        case .languages: .flag
+        // Les mêmes icônes que les leçons de ces matières (`MicaboIcon.subjectIcon`) : la SVT
+        // est une fiole partout, les langues un livre (lot 7).
+        case .biology: .flask
+        case .languages: .book
         case .humanities: .scroll
         case .other: .book
         }
     }
 
-    /// La teinte de la pastille : le bleu de la marque, le jaune du crayon, un vert, un violet,
-    /// un ambre, le rose. Une pastille, jamais un aplat : la couleur range, elle ne décore pas.
+    /// La teinte de la pastille : **la couleur de la matière**, celle de ses leçons
+    /// (`LessonTone.forSubject`) — maths bleu, physique lilas, SVT menthe, langues rose,
+    /// histoire-géo jaune — et un gris pour « Autres ». Une pastille, jamais un aplat : la
+    /// couleur range, elle ne décore pas.
     var tint: Color {
         switch self {
-        case .math: MicaboBrand.blue
-        case .physics: MicaboBrand.pencil
-        case .biology: Color(hex: 0x22A06B)
-        case .languages: Color(hex: 0x7C5CE0)
-        case .humanities: Color(hex: 0xC27A2C)
-        case .other: MicaboBrand.eraser
+        case .other: MicaboColor.inkTertiary
+        default: LessonTone.forSubject(icon).vivid
         }
     }
 
