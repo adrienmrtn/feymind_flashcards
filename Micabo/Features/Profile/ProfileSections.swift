@@ -205,7 +205,7 @@ struct ProfileSettingsGroup: View {
             Menu {
                 ForEach(MicaboAppearance.allCases) { mode in
                     Button {
-                        appearance.appearance = mode
+                        appearance.choose(mode)
                         Haptics.selection()
                     } label: {
                         if mode == appearance.appearance {
