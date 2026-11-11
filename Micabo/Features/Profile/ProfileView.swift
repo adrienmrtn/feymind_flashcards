@@ -412,13 +412,22 @@ struct ProfileView: View {
     @ViewBuilder
     private func streakPanel(_ metrics: Metrics) -> some View {
         if !metrics.hasReviews {
-            MicaboOutlineCard { firstReviewInvitation }
+            // Avant le premier jour : Mika fait coucou depuis le bord bas de la carte.
+            HStack(alignment: .bottom, spacing: 0) {
+                firstReviewInvitation
+                    .padding(16)
+                Spacer(minLength: 0)
+                MikaMascot(mood: .wave, size: MicaboStreakCard.mikaSize)
+                    .padding(.trailing, 6)
+            }
+            .homeCardClipped(radius: MicaboStage.tileRadius)
         } else {
             MicaboStreakCard(
                 days: metrics.streak,
                 best: max(metrics.bestStreak, metrics.streak),
                 title: i18n.t("ios.profile.streakDays", ["count": "\(metrics.streak)"]),
-                note: streakNote(metrics)
+                note: streakNote(metrics),
+                mika: .happy
             )
         }
     }
@@ -623,7 +632,7 @@ struct ProfileView: View {
             }
             .padding(18)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .micaboGroup()
+            .homeCard(radius: MicaboStage.tileRadius)
         }
     }
 
@@ -692,7 +701,7 @@ struct ProfileView: View {
             }
             .padding(18)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .micaboGroup()
+            .homeCard(radius: MicaboStage.tileRadius)
         }
     }
 

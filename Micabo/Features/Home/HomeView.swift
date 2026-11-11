@@ -5,14 +5,14 @@ import SwiftUI
 /// même tête selon qu'il a déjà ses leçons ou non.
 ///
 /// **L'élève qui a ses leçons** vient réviser : la rangée du haut ; le bonjour et l'objectif du
-/// jour ; **« Ton plan du jour »** sur la scène bleue — le prochain examen, **la** chose à faire
-/// maintenant (la séance du calendrier, la leçon en cours ou les cartes dues) et un seul grand
-/// bouton ; ce qui reste à l'agenda d'aujourd'hui ; ses leçons récentes ; la barre « Nouvelle
-/// leçon », en second ; les outils.
+/// jour ; **« Ton plan du jour »** sur une carte claire — le prochain examen, **la** chose à
+/// faire maintenant (la séance du calendrier, la leçon en cours ou les cartes dues) et un seul
+/// grand bouton bleu, Mika qui dépasse de son bord ; ce qui reste à l'agenda d'aujourd'hui ;
+/// ses leçons récentes ; la barre « Nouvelle leçon », en second ; les outils.
 ///
-/// **L'élève tout neuf** vient écrire sa première leçon, celle qui est offerte : la scène bleue
-/// garde Mika qui parle dans sa bulle et la barre « comme une conversation », puis « Comment ça
-/// marche » et les outils.
+/// **L'élève tout neuf** vient écrire sa première leçon, celle qui est offerte : Mika, sur le
+/// papier de la page, parle dans sa bulle au-dessus de la barre « comme une conversation »,
+/// puis « Comment ça marche » et les outils.
 ///
 /// La barre, dans les deux cas, passe par la même porte du gratuit (`send`, `tapImport`).
 ///
