@@ -80,9 +80,8 @@ struct SolverSubjectChip: View {
 
 // MARK: - Mika
 
-/// **Mika en buste, sur fond clair** : une carte de la surface de l'app avec Mika collé à son
-/// bord bas, coupé par lui (règle 1 du kit), et ce qu'il dit à côté. Pas de scène bleue : le
-/// buste vit sur le papier, l'étincelle passe au bleu le jour (`MikaBackdrop.surface`).
+/// **Mika sur fond clair** : une carte de la surface de l'app avec Mika debout sur son bord bas,
+/// et ce qu'il dit à côté. Pas de scène bleue : Mika vit sur le papier (`MikaBackdrop.surface`).
 struct SolverMikaCard<Content: View>: View {
     var mood: MikaMood = .idle
     var mikaSize: CGFloat = 104
@@ -124,23 +123,14 @@ struct SolverMikaNote<Content: View>: View {
     }
 }
 
-/// La tête de Mika dans un rond de la surface : le buste coupé par le bas du rond, sur clair.
+/// Mika dans un petit rond clair, à côté de ce qu'il dit.
 struct SolverMikaAvatar: View {
     var size: CGFloat = 34
     var mood: MikaMood = .idle
 
     var body: some View {
-        // Le buste agrandi et posé sur le bord bas du rond : la tête le remplit, les épaules
-        // sont coupées par lui, comme sur une carte.
-        Circle()
-            .fill(MicaboColor.accentWash)
-            .frame(width: size, height: size)
-            .overlay(alignment: .bottom) {
-                MikaMascot(mood: mood, size: size * 1.5, backdrop: .light, animates: false)
-                    .offset(x: size * 0.12)
-            }
-            .clipShape(Circle())
-        .overlay(Circle().strokeBorder(MicaboColor.stroke, lineWidth: 1))
+        // Mika dans son nid, la pastille claire du kit (pas la bleue) : en entier au milieu.
+        MikaMascot(mood: mood, size: size, backdrop: .surface, frame: .circle, animates: false)
         .accessibilityHidden(true)
     }
 }
