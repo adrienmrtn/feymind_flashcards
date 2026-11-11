@@ -303,9 +303,16 @@ final class PolishHomeTests: XCTestCase {
         guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
         try withLocale(.fr) {
             try RenderGallery.render("pol-cal-late", night: true, lateDay())
+            // La feuille de la série défile (et le rendu ne dessine pas un défilement) : sa
+            // flamme posée, et la semaine.
             try RenderGallery.render(
-                "pol-streak", height: 852, night: true,
-                StreakSheet(onStudy: {}).environment(\.homeStill, true)
+                "pol-streak", night: true,
+                VStack(spacing: 22) {
+                    StreakFlame(lit: true, size: 84)
+                    StreakWeekCard(days: StudyStreak.week())
+                }
+                .padding(20)
+                .environment(\.homeStill, true)
             )
         }
         try withLocale(.de) {

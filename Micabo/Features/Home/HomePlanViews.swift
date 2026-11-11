@@ -170,7 +170,7 @@ struct HomePlanHero: View {
                     .padding(.top, 6)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: MikaPeek.height(for: Self.mikaSize) + 4, alignment: .bottomLeading)
+        .frame(maxWidth: .infinity, minHeight: MikaPeek.height(for: Self.mikaSize) - 8, alignment: .bottomLeading)
         .padding(.trailing, Self.mikaReserve)
         .accessibilityElement(children: .combine)
     }
@@ -326,6 +326,11 @@ struct HomeExamMeta: View {
     static func line(for exam: HomeExam, locale: UiLocale = .resolved()) -> String {
         var parts = [exam.name, countdown(daysLeft: exam.daysLeft, locale: locale)]
         if let readiness = exam.readiness { parts.append(L10n.percent(readiness, locale: locale)) }
+        // De droite à gauche, un nom en lettres latines et un pourcentage se mélangent avec
+        // l'arabe : chaque morceau est isolé (FSI … PDI) et garde son ordre.
+        if locale.isRightToLeft {
+            parts = parts.map { "\u{2068}\($0)\u{2069}" }
+        }
         return parts.joined(separator: " · ")
     }
 
