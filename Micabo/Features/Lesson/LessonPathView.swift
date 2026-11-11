@@ -38,6 +38,10 @@ struct LessonPathView: View {
     /// **« Cette leçon t'a aidé ? »**, posée sous le chemin après la première étape de contenu
     /// terminée, une fois par leçon (`LessonRating`). Elle ne bloque rien.
     @State private var showsRating = false
+    /// Un mode de révision ouvert depuis la rangée sous l'en-tête (`RevisionModesRow`).
+    @State private var revision: RevisionMode?
+    @State private var paywall: PaywallTrigger?
+    @Environment(ProAccess.self) private var pro: ProAccess?
 
     init(course: Course) {
         self.course = course
@@ -145,6 +149,21 @@ struct LessonPathView: View {
         .fullScreenCover(isPresented: $streakCelebration, onDismiss: leaveAfterStreak) {
             StreakCelebrationView { streakCelebration = false }
         }
+        .sheet(item: $revision) { mode in
+            switch mode {
+            case .listen:
+                ListenView(course: course)
+            case .voice:
+                VoiceRecallView(session: session) { revision = nil }
+                    .interactiveDismissDisabled()
+            case .mindMap:
+                MindMapView(course: course)
+            case .export:
+                SheetExportView(digest: LessonDigest(course: course), tone: course.tone)
+                    .presentationDetents([.medium, .large])
+            }
+        }
+        .micaboPaywall($paywall)
         .sheet(item: $sheet) { sheet in
             switch sheet {
             case .notes:
@@ -176,7 +195,9 @@ struct LessonPathView: View {
                     VStack(spacing: 0) {
                         LessonPathHeader(course: course, session: session, exam: nextExam)
                             .padding(.top, 60)
-                            .padding(.bottom, 44)
+                            .padding(.bottom, 26)
+                        RevisionModesRow(isPro: pro?.isPro ?? true, onSelect: openRevision)
+                            .padding(.bottom, 36)
                         PathMapView(
                             session: session,
                             tone: tone,
@@ -296,6 +317,17 @@ struct LessonPathView: View {
     }
 
     // MARK: Agir
+
+    /// Un mode de révision, par sa porte (`RevisionModeAllowance`) : écouter et la carte
+    /// mentale s'ouvrent toujours ; à voix haute après sa séance offerte, et la fiche en PDF,
+    /// passent par le paywall sans abonnement.
+    private func openRevision(_ mode: RevisionMode) {
+        if let trigger = RevisionModeAllowance.gate(mode, isPro: pro?.isPro ?? true) {
+            paywall = trigger
+            return
+        }
+        revision = mode
+    }
 
     private func open() async {
         session.markOpened(in: modelContext)

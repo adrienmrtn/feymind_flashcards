@@ -16,13 +16,27 @@ final class LessonComposer {
     /// Les pages envoyées à la passe visuelle.
     static let maximumImages = 6
 
-    /// Une icône d'import sous la barre.
+    /// **Un support**, dans la feuille du « + » et sur sa pastille sous la barre
+    /// (`docs/supports.md`). Les cinq premiers sont ceux d'avant ; les suivants lisent sur
+    /// l'appareil de nouvelles sources et envoient leur texte par le même chemin. `flashcards`
+    /// est à part : un paquet repris tel quel devient un deck, sans passer par la génération
+    /// (`DeckLessonBuilder`).
     enum Kind: String, CaseIterable, Identifiable {
         case pdf
         case photo
         case audio
         case youtube
         case text
+        /// Une page web, récupérée et nettoyée sur l'appareil (`WebPageImportService`).
+        case web
+        /// Des diapositives PowerPoint : le texte de chaque diapo et ses notes (`SlidesImportService`).
+        case slides
+        /// Des notes écrites à la main : le scanner, puis l'OCR de Vision en mode précis.
+        case handwriting
+        /// Un cours enregistré en direct, transcrit sur l'appareil (`AudioTranscriber`).
+        case lecture
+        /// Un paquet de flashcards (Anki, Quizlet) : un deck tout de suite, sans génération.
+        case flashcards
 
         var id: String { rawValue }
 
@@ -33,10 +47,43 @@ final class LessonComposer {
             case .audio: .audio
             case .youtube: .link
             case .text: .text
+            case .web: .globe
+            case .slides: .palette
+            case .handwriting: .quill
+            case .lecture: .audio
+            case .flashcards: .cards
             }
         }
 
-        var titleKey: String { "lesson.import.\(rawValue)" }
+        var titleKey: String {
+            switch self {
+            case .pdf: "ios.sup.source.pdf"
+            case .photo: "ios.sup.source.photo"
+            case .audio: "ios.sup.source.audio"
+            case .youtube: "ios.sup.source.youtube"
+            case .text: "ios.sup.source.text"
+            case .web: "ios.sup.source.web"
+            case .slides: "ios.sup.source.slides"
+            case .handwriting: "ios.sup.source.handwriting"
+            case .lecture: "ios.sup.source.lecture"
+            case .flashcards: "ios.sup.source.flashcards"
+            }
+        }
+
+        var subtitleKey: String {
+            switch self {
+            case .pdf: "ios.sup.source.pdfSub"
+            case .photo: "ios.sup.source.photoSub"
+            case .audio: "ios.sup.source.audioSub"
+            case .youtube: "ios.sup.source.youtubeSub"
+            case .text: "ios.sup.source.textSub"
+            case .web: "ios.sup.source.webSub"
+            case .slides: "ios.sup.source.slidesSub"
+            case .handwriting: "ios.sup.source.handwritingSub"
+            case .lecture: "ios.sup.source.lectureSub"
+            case .flashcards: "ios.sup.source.flashcardsSub"
+            }
+        }
     }
 
     struct Support: Identifiable, Equatable {
@@ -179,10 +226,16 @@ final class LessonComposer {
     static func sourceKind(of support: Support) -> LessonSourceKind {
         switch support.kind {
         case .pdf: support.document?.source == .docx ? .docx : .pdf
-        case .photo: .photo
-        case .audio: .audio
+        case .photo, .handwriting: .photo
+        case .audio, .lecture: .audio
         case .youtube: .youtube
-        case .text: .text
+        // Une page web se lit comme un texte collé : le serveur ne connaît que ces sources
+        // (`normalizeSource`, `supabase/functions/generate-lesson/gate.ts`).
+        case .text, .web: .text
+        // Des diapositives sont un document, comme un PDF.
+        case .slides: .pdf
+        // Un paquet de cartes ne passe jamais par la barre (`LessonImportPickers`).
+        case .flashcards: .text
         }
     }
 }

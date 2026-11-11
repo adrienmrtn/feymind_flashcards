@@ -12,5 +12,5 @@
 
 "NSCameraUsageDescription" = "Micabo uses the camera to scan your course pages.";
 "NSPhotoLibraryUsageDescription" = "Micabo accesses your photos to import a course or a diagram.";
-"NSMicrophoneUsageDescription" = "Micabo uses the microphone to record a class or a voice note and turn it into a lesson.";
-"NSSpeechRecognitionUsageDescription" = "Micabo transcribes your recordings on your phone to turn them into a lesson.";
+"NSMicrophoneUsageDescription" = "Micabo uses the microphone to record a class or a voice note, and to hear your spoken answers.";
+"NSSpeechRecognitionUsageDescription" = "Micabo transcribes your recordings and your spoken answers on your phone.";
