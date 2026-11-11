@@ -118,7 +118,20 @@ final class OnboardingModel {
     var gradeScale: StudentGradeScale {
         StudentGradeScale.for(region: regionCode, country: country, track: track)
     }
+    /// Les objectifs d'un parcours d'avant le lot 7, relus à la reprise. La question n'est
+    /// plus posée : voir `learningGoals`.
     var goals: Set<LearningGoal> = []
+
+    /// **Pourquoi il apprend, déduit de l'examen** plutôt que redemandé. « Et pourquoi tu
+    /// apprends ? » arrivait trois écrans après « Quel est ton prochain gros examen ? », avec
+    /// des réponses (« monter en compétences pour le travail ») qui ne parlaient pas à un
+    /// collégien. Un examen daté dit « réviser pour un examen » ; « pas d'examen en vue »,
+    /// « retenir mes cours ». C'est ce que le cloud garde (`learning_goals`).
+    var learningGoals: Set<LearningGoal> {
+        if !goals.isEmpty { return goals }
+        guard let examChoice else { return [] }
+        return examChoice.hasDate ? [.exam] : [.lectures]
+    }
     var subjects: Set<String> = []
 
     /// **Ce qui l'inquiète dans ses études.** Plusieurs réponses ; la première, dans l'ordre
@@ -370,7 +383,7 @@ final class OnboardingModel {
         OnboardingPreferences.schoolingCountry = country
         OnboardingPreferences.customCountry = customCountry
         OnboardingPreferences.educationStage = stage
-        OnboardingPreferences.goals = goals.map(\.rawValue).sorted()
+        OnboardingPreferences.goals = learningGoals.map(\.rawValue).sorted()
         OnboardingPreferences.subjects = subjects.sorted()
         OnboardingPreferences.worries = StudyWorry.allCases.filter { worries.contains($0) }.map(\.rawValue)
         OnboardingPreferences.currentScore = currentScore

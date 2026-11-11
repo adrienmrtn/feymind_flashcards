@@ -123,8 +123,7 @@ final class OnboardingV2RenderTests: XCTestCase {
                                  page(.worries, lina, reaction: true) { WorriesStepView() })
         try RenderGallery.render("onb5-fr-target", height: 852, night: true,
                                  page(.targetAverage, lina) { TargetAverageStepView() })
-        try RenderGallery.render("onb5-fr-proof", height: 1_000,
-                                 page(.socialProof, lina) { SocialProofStepView() })
+        // La page de preuve est partie au lot 7 : voir `OnboardingLot7RenderTests` (`onb7-*`).
         try RenderGallery.render("onb5-fr-plan", height: 1_120, night: true,
                                  page(.profileSummary, lina) { ProfileSummaryStepView() })
         try RenderGallery.render("onb5-fr-trial", height: 852, night: true,

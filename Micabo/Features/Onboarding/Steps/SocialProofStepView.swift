@@ -2,70 +2,10 @@ import StoreKit
 import SwiftUI
 import UIKit
 
-// MARK: - La preuve
-
-/// **La preuve, sans un chiffre inventé.** Mika vient de se présenter ; l'écran répond à la
-/// seule question qui reste — est-ce que ça marche ? — par ce qui est publié et sourcé :
-///
-/// - l'essai de Harvard (Kestin et al., Scientific Reports, 2025), dans sa carte ;
-/// - ce qu'il reste d'un cours une semaine après, relu ou travaillé en se testant
-///   (Karpicke & Roediger, Science, 2008) — la méthode de Mika.
-///
-/// **Ce qui en est parti** (version 2) : « On a aidé 45 000 élèves », « 4,8 », « #1 des
-/// assistants d'étude IA » et les avis signés d'un prénom et d'une ville. Rien dans le dépôt
-/// ne les sourçait (seulement les maquettes des captures de l'App Store) : un chiffre qu'on
-/// ne peut pas montrer ne se montre pas. Les avis restent dans le code
-/// (`OnboardingReviews`), prêts pour de vrais avis.
-struct SocialProofStepView: View {
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    var body: some View {
-        VStack(spacing: 0) {
-            OnboardingCenteredScroll {
-                VStack(spacing: 22) {
-                    VStack(spacing: 14) {
-                        OnboardingMikaOnLine(mood: .happy, size: MikaPeek.hero)
-                            .onboardingAppear(index: 0)
-
-                        OnboardingAccentText(template: i18n.t("ios.onb5.proof.title"), size: 28, alignment: .center)
-                            .padding(.horizontal, MicaboSpacing.sm)
-                            .onboardingAppear(index: 1)
-                    }
-
-                    ResearchQuoteCard(compact: true)
-                        .onboardingAppear(index: 2)
-
-                    VStack(alignment: .leading, spacing: 10) {
-                        OnboardingBarsChart(
-                            title: i18n.t("ios.proof.retention.caption"),
-                            bars: [
-                                .init(label: i18n.t("ios.proof.retention.reread"), value: OnboardingProofFigures.retainedByRereading, tint: OnboardingPalette.chartBad),
-                                .init(label: i18n.t("ios.proof.retention.testing"), value: OnboardingProofFigures.retainedByTesting, tint: OnboardingPalette.chartGood),
-                            ]
-                        )
-                        Text(i18n.t("ios.journey.source"))
-                            .font(MicaboFont.ui(11.5, weight: .semibold))
-                            .foregroundStyle(MicaboColor.inkTertiary)
-                    }
-                    .padding(16)
-                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
-                    .onboardingAppear(index: 3)
-                }
-                .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.vertical, MicaboSpacing.md)
-            }
-
-            OnboardingArrowBar {
-                model.advance()
-            }
-        }
-        .onboardingChromeInset()
-        .background(OnboardingPalette.white.ignoresSafeArea())
-        .environment(\.onboardingSurface, .canvas)
-    }
-}
+// La page « Ce n'est pas de la magie : c'est prouvé » (`socialProof`) est partie au lot 7 :
+// l'étude de Harvard y répétait le « 2x » de l'accroche, et celle de Karpicke la ligne du
+// paywall. La seule étude du parcours est maintenant dite une fois, juste après que l'élève
+// s'est testé (`SampleCardStepView`).
 
 // MARK: - Les avis
 

@@ -679,10 +679,18 @@ private struct MicaboElevationStyle: ViewModifier {
         let contact = level.contact
         let ambient = level.ambient
         return content
-            // Du noir, pas l'encre : la nuit, l'encre est ivoire, et une ombre claire serait un halo.
-            .shadow(color: Color.black.opacity(contact.opacity), radius: contact.radius, x: 0, y: contact.y)
-            .shadow(color: Color.black.opacity(level.ambientOpacity), radius: ambient.radius, x: 0, y: ambient.y)
+            // Un bleu nuit, pas l'encre : la nuit, l'encre est claire, et une ombre claire serait
+            // un halo. Le jour, une ombre teintée du bleu de l'accent reste fraîche là où le noir
+            // grisait le blanc des cartes (lot 7).
+            .shadow(color: MicaboShadow.tint.opacity(contact.opacity), radius: contact.radius, x: 0, y: contact.y)
+            .shadow(color: MicaboShadow.tint.opacity(level.ambientOpacity), radius: ambient.radius, x: 0, y: ambient.y)
     }
+}
+
+/// **La teinte des ombres de l'app** : un bleu nuit très sombre. Assez proche du noir pour
+/// tenir la nuit, assez bleu pour que l'ombre d'une carte blanche ne paraisse pas sale.
+enum MicaboShadow {
+    static let tint = Color(hex: 0x1A2340)
 }
 
 /// **La carte de l'app** : une surface, un filet d'un point, une ombre légère.
@@ -737,7 +745,7 @@ extension View {
 
     /// Ombre douce des éléments posés sur le fond, sans passer par une carte complète.
     func micaboSoftShadow(strength: Double = 0.06) -> some View {
-        shadow(color: Color.black.opacity(strength), radius: 16, x: 0, y: 8)
+        shadow(color: MicaboShadow.tint.opacity(strength), radius: 16, x: 0, y: 8)
     }
 
     /// Applique le fond de l'application et masque le fond système du conteneur.

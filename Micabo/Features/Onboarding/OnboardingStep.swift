@@ -16,14 +16,20 @@ import Foundation
 /// 1. **L'accroche** : le logo, le prénom, la bienvenue.
 /// 2. **Le profil scolaire** : pays, niveau (ou filière et année), le prochain examen et sa
 ///    date, les matières.
-/// 3. **Les objectifs** : ce qui l'inquiète, pourquoi il apprend, les deux moyennes, le temps
-///    par jour, l'heure de révision, les rappels.
-/// 4. **Mika** : le profil se prépare, puis trois écrans de démonstration — les documents, les
-///    parcours, le prof particulier. Le compte se propose en quittant le dernier.
-/// 5. **Le plan et l'offre** : la preuve, Mika calcule, **la révélation du plan** (« Ton plan
-///    pour le Bac est prêt »), la chronologie de l'essai, le paywall.
+/// 3. **Les objectifs** : ce qui l'inquiète, les deux moyennes, le temps par jour, l'heure de
+///    révision, les rappels.
+/// 4. **Mika** : le profil se prépare, puis les documents, les parcours, **une vraie question
+///    sur sa matière** (la preuve par l'essai, et la seule étude citée du parcours), le prof
+///    particulier. Le compte se propose en quittant le dernier.
+/// 5. **Le plan et l'offre** : Mika calcule, **la révélation du plan** (« Ton plan est prêt »,
+///    et sa courbe jusqu'au jour de l'examen), la chronologie de l'essai, le paywall.
 ///
-/// **Avant / après** : 36 écrans (35 vus en France), maintenant 25 (24 vus en France).
+/// **Avant / après** : 36 écrans (35 vus en France), 25 en v2, maintenant 24 (23 vus en
+/// France). Lot 7 : `goal` est parti (« pourquoi tu apprends ? » redemandait ce que l'examen
+/// venait de dire, avec des réponses comme « monter en compétences pour le travail » posées à
+/// un collégien) ; `socialProof` est remplacé par `sampleCard` (l'étude de Harvard et celle de
+/// Karpicke revenaient sur trois écrans : il n'en reste qu'une, une fois, là où l'élève vient
+/// de se tester).
 /// Retirés : `proofRetention` (devenu la réaction de Mika aux inquiétudes), `founders`,
 /// `aiCompanion` (l'étude de Harvard est passée sur l'écran de preuve), `startingPoint` (Mika
 /// pose déjà les questions), `featuresIntro`, `mikaMission`, `mikaDesign`, `mikaSolution`,
@@ -55,7 +61,6 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     // Les objectifs.
     /// Ce qui l'inquiète dans ses études. Plusieurs réponses ; Mika y répond.
     case worries
-    case goal
     case currentAverage
     case targetAverage
     /// « Combien de temps par jour ? », sur un curseur qui dessine la progression estimée.
@@ -71,12 +76,14 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case mikaSources
     /// … et il en fait des parcours simples, faits pour toi.
     case mikaPaths
+    /// **Une vraie question de parcours, sur sa matière** : il répond, Mika réagit, et la
+    /// recherche dit pourquoi se tester fait retenir (Karpicke & Roediger, 2008) — la seule
+    /// étude du parcours, citée une fois.
+    case sampleCard
     /// « Mika, c'est ton prof particulier, disponible à tout moment, dans ta poche. »
     case mikaTutor
 
     // Le plan, puis l'offre.
-    /// La preuve, sourcée : l'étude de Harvard et ce qu'il reste d'un cours relu ou testé.
-    case socialProof
     /// Mika calcule le plan : le chargement d'avant la révélation.
     case planBuilding
     /// **La révélation du plan** (« Ton plan pour le Bac est prêt ») : pays, classe, examen,
@@ -148,6 +155,10 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         case "featuresIntro", "mikaMission": .mikaSources
         case "mikaDesign", "mikaSolution", "mikaRelief": .mikaTutor
         case "supportUs": .planBuilding
+        // Lot 7 : la question des objectifs redemandait l'examen ; la preuve est devenue
+        // la question d'essai.
+        case "goal": .currentAverage
+        case "socialProof": .planBuilding
         case "freeTrialIntro", "trialReminder": .trialOffer
         default: nil
         }
@@ -163,7 +174,6 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         case .exam: .exam
         case .subjects: .lightbulb
         case .worries: .brain
-        case .goal: .rocket
         case .currentAverage: .exam
         case .targetAverage: .trophy
         case .dailyTime: .hourglass
@@ -176,7 +186,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// Vrai pour les écrans qui posent une question.
     var isQuestion: Bool {
         switch self {
-        case .name, .country, .level, .schoolType, .year, .exam, .subjects, .worries, .goal,
+        case .name, .country, .level, .schoolType, .year, .exam, .subjects, .worries,
              .currentAverage, .targetAverage, .dailyTime, .studyTime:
             true
         default:
@@ -194,7 +204,8 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         case .level, .schoolType, .year, .currentAverage: .think
         case .exam: .surprise
         case .subjects: .write
-        case .goal, .notifications: .wink
+        case .notifications: .wink
+        case .sampleCard: .write
         case .targetAverage: .happy
         default: .idle
         }

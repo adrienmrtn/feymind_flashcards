@@ -93,11 +93,14 @@ struct MicaboEmptyState: View {
                 MikaMascot(mood: mika, size: 120)
                     .padding(.bottom, 8)
             } else {
+                // Le pictogramme dans le bleu de l'app, sur son lavis : un gris sur gris disait
+                // « rien », alors qu'un écran vide invite à commencer (lot 7).
                 Image(systemName: systemImage)
-                    .font(.system(size: 20, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-                    .frame(width: 48, height: 48)
-                    .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(MicaboColor.accent)
+                    .frame(width: 56, height: 56)
+                    .background(MicaboColor.accentWash, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .padding(.bottom, 4)
             }
 
             Text(title)

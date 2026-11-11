@@ -44,6 +44,7 @@ enum TrialTimeline {
         remindersOn: Bool = true
     ) -> [Milestone] {
         let dateText = billingDateText(from: date, calendar: calendar, locale: locale)
+        let reminderText = dayText(reminderDay, from: date, calendar: calendar, locale: locale)
         return [
             Milestone(
                 title: L10n.t("ios.onb5.trial.today", locale: locale),
@@ -52,14 +53,16 @@ enum TrialTimeline {
                 tone: .current
             ),
             Milestone(
-                title: L10n.t("ios.onb5.trial.reminder", locale: locale, vars: ["n": "\(reminderDay)"]),
+                // **Des dates, plus des « jour 2 / jour 3 »** (lot 7) : « Jour 2 » se lisait le
+                // lendemain, alors que le rappel part le surlendemain, la veille de la fin.
+                title: L10n.t("ios.onb7.trial.reminder", locale: locale, vars: ["date": reminderText]),
                 detail: L10n.t(remindersOn ? "ios.onb5.trial.reminderDetail" : "ios.onb5.trial.reminderOff", locale: locale),
                 systemImage: "bell.fill",
                 tone: .upcoming
             ),
             Milestone(
-                title: L10n.t("ios.onb5.trial.billing", locale: locale, vars: ["n": "\(freeDays)"]),
-                detail: L10n.t("ios.onb5.trial.billingDetail", locale: locale, vars: ["date": dateText]),
+                title: L10n.t("ios.onb7.trial.billing", locale: locale, vars: ["date": dateText]),
+                detail: L10n.t("ios.onb7.trial.billingDetail", locale: locale),
                 systemImage: "star.fill",
                 tone: .upcoming
             ),
@@ -72,7 +75,26 @@ enum TrialTimeline {
         calendar: Calendar = .current,
         locale: UiLocale = .fr
     ) -> String {
-        let billingDate = calendar.date(byAdding: .day, value: freeDays, to: date) ?? date
+        dayText(freeDays, from: date, calendar: calendar, locale: locale)
+    }
+
+    /// Le jour du rappel, la veille de la fin : « 27 août ».
+    static func reminderDateText(
+        from date: Date = .now,
+        calendar: Calendar = .current,
+        locale: UiLocale = .fr
+    ) -> String {
+        dayText(reminderDay, from: date, calendar: calendar, locale: locale)
+    }
+
+    /// Un jour, `days` jours après `date`, écrit comme on le dirait.
+    private static func dayText(
+        _ days: Int,
+        from date: Date,
+        calendar: Calendar,
+        locale: UiLocale
+    ) -> String {
+        let billingDate = calendar.date(byAdding: .day, value: days, to: date) ?? date
         let formatter = DateFormatter()
         formatter.locale = locale.foundation
         formatter.calendar = calendar

@@ -7,6 +7,10 @@ import UIKit
 /// Les couleurs ne changent pas de palette en route : `MicaboPalette.adaptive` porte les deux,
 /// et chaque jeton se résout au moment de peindre. Le réglage ne fait que fixer l'apparence de
 /// la fenêtre (`colorScheme`) ; en « Système », c'est le téléphone qui décide.
+///
+/// **Micabo s'ouvre en clair** (lot 7) : un iPhone réglé en sombre voyait toute l'app en
+/// graphite, et l'élève la trouvait « trop sombre ». La nuit et « Comme le téléphone » restent
+/// au choix dans le Profil ; elles ne s'imposent plus d'elles-mêmes.
 enum MicaboAppearance: String, CaseIterable, Identifiable {
     case system
     case day
@@ -25,17 +29,46 @@ enum MicaboAppearance: String, CaseIterable, Identifiable {
 
     var titleKey: String { "lesson.theme.\(rawValue)" }
 
+    /// L'ancienne clé, écrite jusqu'au lot 7. Elle n'est plus que lue, pour la migration.
     static let storageKey = "micabo.appearance"
 
-    /// Le réglage enregistré. Les anciens appareils ont « day », « night » ou « twilight » :
-    /// le crépuscule était une nuit douce, il redevient la nuit. Sans réglage, le téléphone
-    /// décide.
+    /// **Le choix de l'élève**, écrit seulement quand il touche au sélecteur du Profil. C'est
+    /// la seule source de vérité à partir du lot 7 : sans elle, l'app est en clair.
+    static let choiceKey = "micabo.appearance.choice"
+
+    /// Le thème d'un élève qui n'a rien choisi.
+    static let defaultAppearance: MicaboAppearance = .day
+
+    /// Un choix enregistré, lu tel quel. Un nom inconnu retombe sur le clair.
     static func fromUnknown(_ value: String?) -> MicaboAppearance {
         switch value {
-        case "day": .day
+        case "system": .system
         case "night", "twilight": .night
-        default: .system
+        default: defaultAppearance
         }
+    }
+
+    /// **Le thème d'un appareil qui n'a pas encore de choix enregistré** (`choiceKey`), lu
+    /// dans l'ancienne clé.
+    ///
+    /// Seule la nuit y est sûrement un choix : aucune version n'a écrit « night » ou
+    /// « twilight » d'elle-même, c'est l'élève qui l'a demandée (le crépuscule était une nuit
+    /// douce, il redevient la nuit). « system » a pu être écrit sans que l'élève y touche, et
+    /// rien ne permet de le distinguer d'un vrai choix : il passe en clair, comme un appareil
+    /// neuf. Il retrouve « Comme le téléphone » en un geste dans le Profil.
+    static func migrated(legacy value: String?) -> MicaboAppearance {
+        switch value {
+        case "night", "twilight": .night
+        default: defaultAppearance
+        }
+    }
+
+    /// Le thème au lancement : le choix enregistré, sinon la migration de l'ancienne clé.
+    static func stored(in defaults: UserDefaults) -> MicaboAppearance {
+        if let choice = defaults.string(forKey: choiceKey) {
+            return fromUnknown(choice)
+        }
+        return migrated(legacy: defaults.string(forKey: storageKey))
     }
 }
 
@@ -141,10 +174,13 @@ struct MicaboPalette: Equatable {
     var cardShadow: Double
     var groupShadow: Double
 
-    /// **Le jour de la refonte « parcours » : ivoire, encre, bleu.**
+    /// **Le jour : blanc frais, encre, bleu** (lot 7).
     ///
-    /// Le fond redevient l'ivoire de Micabo, et les surfaces restent blanches : une carte se
-    /// détache du papier par sa clarté, sans bordure. L'accent est le bleu Micabo `#3870FE`, celui
+    /// Le fond est un blanc cassé à peine bleuté (`#F5F7FB`), et les surfaces sont blanches :
+    /// une carte se détache par sa clarté, un filet froid très léger et une ombre douce.
+    /// L'ivoire d'avant (`#F6F4ED`) et ses filets beiges faisaient paraître l'app jaunie et
+    /// terne à côté du bleu ; tous les gris du jour sont maintenant de la même famille froide
+    /// que l'accent. L'accent est le bleu Micabo `#3870FE`, celui
     /// de l'icône et de Mika — le violet a été l'accent de l'app pendant une version, mais la refonte le
     /// réserve aux mots-clés des notes, et un violet qui voudrait dire « bouton » et « à
     /// retenir » ne dirait plus rien.
@@ -156,22 +192,22 @@ struct MicaboPalette: Equatable {
     /// **Les couleurs des notes de révision ne bougent pas** (`ratingAgain`, `caution`,
     /// `positive`, `info` et leurs fonds) : le bilan de fin de session les rejoue.
     static let day = MicaboPalette(
-        canvas: Color(hex: 0xF6F4ED),
+        canvas: Color(hex: 0xF5F7FB),
         surface: .white,
-        surfaceMuted: Color(hex: 0xF0EDE4),
-        surfaceSunken: Color(hex: 0xE9E5DA),
-        stroke: Color(hex: 0xE7E2D7),
-        strokeStrong: Color(hex: 0xDAD4C7),
-        hairline: Color(hex: 0xECE8DE),
-        hairlineOnCanvas: Color(hex: 0xE3DED2),
+        surfaceMuted: Color(hex: 0xEFF2F7),
+        surfaceSunken: Color(hex: 0xE7EBF2),
+        stroke: Color(hex: 0xE8EBF1),
+        strokeStrong: Color(hex: 0xD6DBE4),
+        hairline: Color(hex: 0xEEF0F5),
+        hairlineOnCanvas: Color(hex: 0xE4E8EF),
         // Un noir à peine bleuté : 16:1 sur l'ivoire. C'est aussi le fond des boutons
         // d'action principaux.
-        ink: Color(hex: 0x1B1E24),
+        ink: Color(hex: 0x161A22),
         // 5,2:1 sur l'ivoire — au-dessus du seuil, y compris à douze points.
-        inkSecondary: Color(hex: 0x63676F),
-        inkTertiary: Color(hex: 0x9C9C96),
-        inkReading: Color(hex: 0x2A2D33),
-        inkBody: Color(hex: 0x464A52),
+        inkSecondary: Color(hex: 0x5E6573),
+        inkTertiary: Color(hex: 0x9AA1AE),
+        inkReading: Color(hex: 0x262A33),
+        inkBody: Color(hex: 0x434957),
         sheetMarker: Color(hex: 0xFFF0A6),
         sheetHighlights: [
             Color(hex: 0xFFF0A6),
@@ -182,7 +218,7 @@ struct MicaboPalette: Equatable {
         ],
         onInk: .white,
         onInkMuted: Color(hex: 0xA8ABB3),
-        canvasSage: Color(hex: 0xF6F4ED),
+        canvasSage: Color(hex: 0xF5F7FB),
         // Le bleu Micabo (`MicaboBrand.blue`) : 4,3:1 sur le blanc, assez pour un libellé
         // gras ; le petit texte sur un lavis prend `accentInk` (le 600, 4,7:1 sur
         // `accentSoft`).
@@ -191,7 +227,7 @@ struct MicaboPalette: Equatable {
         accentVivid: Color(hex: 0x3870FE),
         accentInk: Color(hex: 0x2F5ED5),
         accentDeep: Color(hex: 0x264CAD),
-        progressTrack: Color(hex: 0xE7E2D7),
+        progressTrack: Color(hex: 0xE6E9F0),
         // À partir d'ici, et jusqu'à `infoSoft` : les couleurs des notes de révision,
         // reprises telles quelles de l'ancienne palette. Voir le commentaire du type.
         positive: Color(hex: 0x2F7D57),
@@ -208,12 +244,12 @@ struct MicaboPalette: Equatable {
         infoSoft: Color(hex: 0xE3EDFC),
         offerWash: Color(hex: 0xDCC9FB),
         offerWashSoft: Color(hex: 0xF4EEFE),
-        gradeNear: Color(hex: 0xB9B9C2),
-        gradeMid: Color(hex: 0xD3D3DA),
-        gradeFar: Color(hex: 0xE6E6EB),
+        gradeNear: Color(hex: 0xB7BCC7),
+        gradeMid: Color(hex: 0xD2D6DE),
+        gradeFar: Color(hex: 0xE5E8EE),
         accentWash: Color(hex: 0xEFF4FF),
         accentPale: Color(hex: 0xBBCEFF),
-        track: Color(hex: 0xE3DED2),
+        track: Color(hex: 0xE3E7EE),
         // **La série est dans le jaune du crayon**, pas dans le rouge : le rouge de l'app dit
         // « erreur » ou « en retard », et une série tenue n'est ni l'un ni l'autre. L'encre
         // reste assez sombre pour un texte de treize points sur le lavis (5:1).
@@ -231,12 +267,12 @@ struct MicaboPalette: Equatable {
         dayWashStroke: Color(hex: 0xE4DDFA),
         // Les tuiles : les cinq tons pâles, et un gris de papier.
         tilePastels: [
-            Color(hex: 0xFFF1B8),
-            Color(hex: 0xCDEFDC),
-            Color(hex: 0xD6E7FB),
-            Color(hex: 0xFBD9E4),
-            Color(hex: 0xE4D9FB),
-            Color(hex: 0xF0EDE4)
+            Color(hex: 0xFFF3C4),
+            Color(hex: 0xD3F2E2),
+            Color(hex: 0xE0E9FF),
+            Color(hex: 0xFCE1EB),
+            Color(hex: 0xECE3FD),
+            Color(hex: 0xEEF1F6)
         ],
         keyword: Color(hex: 0x7C3AED),
         correct: Color(hex: 0x16A34A),
@@ -247,11 +283,11 @@ struct MicaboPalette: Equatable {
         wrongSoft: Color(hex: 0xFEE2E2),
         // jaune, menthe, bleu, rose, lilas
         tonePale: [
-            Color(hex: 0xFFF1B8),
-            Color(hex: 0xCDEFDC),
-            Color(hex: 0xDFE8FF),
-            Color(hex: 0xFBD9E4),
-            Color(hex: 0xE4D9FB)
+            Color(hex: 0xFFF3C4),
+            Color(hex: 0xD3F2E2),
+            Color(hex: 0xE0E9FF),
+            Color(hex: 0xFCE1EB),
+            Color(hex: 0xECE3FD)
         ],
         toneVivid: [
             Color(hex: 0xF2B200),
@@ -267,29 +303,30 @@ struct MicaboPalette: Equatable {
             Color(hex: 0xA8204F),
             Color(hex: 0x5B21B6)
         ],
-        cardShadow: 0.04,
-        groupShadow: 0.0
+        cardShadow: 0.05,
+        groupShadow: 0.035
     )
 
 
-    /// **La nuit** : le même papier retourné. Un fond presque noir, à peine bleuté, des surfaces
-    /// un cran plus claires, l'encre devient l'ivoire. Les boutons d'action restent « d'encre » :
-    /// ivoire sur la nuit, texte sombre dessus. Les tons d'une leçon gardent leur vif ; leur pâle
+    /// **La nuit** : le même papier retourné. Un graphite doux (`#17181D`, plus un noir qui
+    /// écrase), des cartes nettement plus claires (`#22242B`) et cerclées d'un filet, l'encre
+    /// devient un blanc à peine chaud. Les boutons d'action restent « d'encre » :
+    /// clairs sur la nuit, texte sombre dessus. Les tons d'une leçon gardent leur vif ; leur pâle
     /// passe en lavis sombre, et leur encre s'éclaircit pour se lire dessus.
     static let night = MicaboPalette(
-        canvas: Color(hex: 0x121317),
-        surface: Color(hex: 0x1C1E24),
-        surfaceMuted: Color(hex: 0x23262D),
-        surfaceSunken: Color(hex: 0x2A2D35),
-        stroke: Color(hex: 0x30333B),
-        strokeStrong: Color(hex: 0x3B3F48),
-        hairline: Color(hex: 0x2A2D34),
-        hairlineOnCanvas: Color(hex: 0x24272E),
-        ink: Color(hex: 0xF3F1EA),
-        inkSecondary: Color(hex: 0xA4A7AE),
-        inkTertiary: Color(hex: 0x6F737B),
-        inkReading: Color(hex: 0xE7E5DF),
-        inkBody: Color(hex: 0xC9CAC6),
+        canvas: Color(hex: 0x17181D),
+        surface: Color(hex: 0x22242B),
+        surfaceMuted: Color(hex: 0x2A2D35),
+        surfaceSunken: Color(hex: 0x31343C),
+        stroke: Color(hex: 0x33363F),
+        strokeStrong: Color(hex: 0x3F434D),
+        hairline: Color(hex: 0x2E3139),
+        hairlineOnCanvas: Color(hex: 0x282A31),
+        ink: Color(hex: 0xF1F2F4),
+        inkSecondary: Color(hex: 0xA9ADB6),
+        inkTertiary: Color(hex: 0x787D87),
+        inkReading: Color(hex: 0xE6E7EA),
+        inkBody: Color(hex: 0xC8CAD0),
         sheetMarker: Color(hex: 0x5A4A12),
         sheetHighlights: [
             Color(hex: 0x5A4A12),
@@ -298,16 +335,16 @@ struct MicaboPalette: Equatable {
             Color(hex: 0x5A2235),
             Color(hex: 0x3E2C66)
         ],
-        onInk: Color(hex: 0x121317),
-        onInkMuted: Color(hex: 0x4D5058),
-        canvasSage: Color(hex: 0x121317),
+        onInk: Color(hex: 0x17181D),
+        onInkMuted: Color(hex: 0x50535C),
+        canvasSage: Color(hex: 0x17181D),
         // Le 400 de la gamme : 5,4:1 sur la carte de nuit, 4,6:1 sur `accentSoft`.
         accent: Color(hex: 0x608DFE),
         accentSoft: Color(hex: 0x1D2A45),
         accentVivid: Color(hex: 0x3870FE),
         accentInk: Color(hex: 0x90AFFE),
         accentDeep: Color(hex: 0x3870FE),
-        progressTrack: Color(hex: 0x30333B),
+        progressTrack: Color(hex: 0x343741),
         positive: Color(hex: 0x4CC38A),
         caution: Color(hex: 0xE3B24C),
         cautionVivid: Color(hex: 0xFFC53D),
@@ -322,12 +359,12 @@ struct MicaboPalette: Equatable {
         infoSoft: Color(hex: 0x1A2740),
         offerWash: Color(hex: 0x3E2C66),
         offerWashSoft: Color(hex: 0x261C3D),
-        gradeNear: Color(hex: 0x56575F),
-        gradeMid: Color(hex: 0x40414A),
-        gradeFar: Color(hex: 0x31323A),
+        gradeNear: Color(hex: 0x5A5C65),
+        gradeMid: Color(hex: 0x44464F),
+        gradeFar: Color(hex: 0x35373F),
         accentWash: Color(hex: 0x17213A),
         accentPale: Color(hex: 0x1C387F),
-        track: Color(hex: 0x2C2F36),
+        track: Color(hex: 0x30333B),
         flame: Color(hex: 0xFFB547),
         flameInk: Color(hex: 0xFFC76E),
         flameSoft: Color(hex: 0x33270F),
@@ -346,7 +383,7 @@ struct MicaboPalette: Equatable {
             Color(hex: 0x1C3352),
             Color(hex: 0x4A1F30),
             Color(hex: 0x33275A),
-            Color(hex: 0x23262D)
+            Color(hex: 0x2A2D35)
         ],
         keyword: Color(hex: 0xA78BFA),
         correct: Color(hex: 0x22C55E),
@@ -469,9 +506,9 @@ struct MicaboPalette: Equatable {
 final class AppearanceStore {
     static let shared = AppearanceStore()
 
-    var appearance: MicaboAppearance {
-        didSet { defaults.set(appearance.rawValue, forKey: MicaboAppearance.storageKey) }
-    }
+    /// Le thème appliqué. Il ne s'écrit que par `choose(_:)` : un thème posé au lancement
+    /// n'est pas un choix, et ne doit pas en devenir un sur le disque.
+    private(set) var appearance: MicaboAppearance
 
     private let defaults: UserDefaults
 
@@ -482,6 +519,13 @@ final class AppearanceStore {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        appearance = MicaboAppearance.fromUnknown(defaults.string(forKey: MicaboAppearance.storageKey))
+        appearance = MicaboAppearance.stored(in: defaults)
+    }
+
+    /// **L'élève choisit un thème dans le Profil** : appliqué tout de suite, et retenu comme
+    /// un choix, qui ne sera plus jamais migré.
+    func choose(_ mode: MicaboAppearance) {
+        appearance = mode
+        defaults.set(mode.rawValue, forKey: MicaboAppearance.choiceKey)
     }
 }

@@ -121,7 +121,7 @@ struct HookLogoStepView: View {
     private var panel: some View {
         VStack(spacing: 0) {
             // « Apprends » prend le dégradé de l'app, sur le blanc du panneau.
-            OnboardingAccentText(template: i18n.t("ios.hook.title"), size: 36, alignment: .center)
+            OnboardingAccentText(template: i18n.t("ios.onb7.hook.title"), size: 36, alignment: .center)
                 .padding(.horizontal, MicaboSpacing.md)
                 .padding(.top, MicaboSpacing.xl)
                 .modifier(HookReveal(isVisible: isContentVisible, animation: reveal(index: 0)))
