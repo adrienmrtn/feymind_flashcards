@@ -26,17 +26,17 @@ conversion, la barre reste la scène.
    la semaine (⚡, ouvre la ligue).
 2. **Le bonjour** (« Bonsoir Léa », la nuit dit encore bonsoir) et l'objectif du jour :
    `xpToday / DAILY_XP_GOAL` (50) en texte et **un seul anneau**.
-3. **« Ton plan du jour »**, sur la scène bleue de la marque (`HomePlanHero`) :
-   - en haut, le **prochain examen** (`NextExam.current`) : le compte à rebours dans sa tuile
-     blanche, le nom, la préparation (`ExamReadiness`) ; un appui ouvre le Calendrier. Sans
+3. **« Ton plan du jour »**, sur une carte claire de la page (`HomePlanHero`) :
+   - en haut, le **prochain examen** (`NextExam.current`) : le compte à rebours dans sa pastille
+     bleue, le nom, la préparation (`ExamReadiness`) ; un appui ouvre le Calendrier. Sans
      examen : « Ton plan du jour » et une pilule discrète « Ajouter un examen » qui ouvre
      `ExamEditSheet` ;
    - **la** chose à faire maintenant (`HomeDay.primary`) : la séance de révision posée au
      calendrier aujourd'hui, ni faite ni finie (`StudyPlan.today` → `HomeSession.next`), puis
      la leçon en cours tant qu'elle n'a pas avancé aujourd'hui, puis les cartes dues, puis la
      leçon ; sinon, écrire la suivante ;
-   - **un** grand bouton blanc — « Démarrer la séance », « Continuer », « Réviser
-     maintenant » —, Mika en buste qui regarde par-dessus (comme sur Concentration). La séance
+   - **un** grand bouton bleu — « Démarrer la séance », « Continuer », « Réviser
+     maintenant » —, Mika en buste qui dépasse de son bord (comme sur Concentration). La séance
      part comme du calendrier (`FocusPlan.revision`) ;
    - au plus une seconde ligne (`HomeDay.secondary`) : les cartes dues, ou la leçon en cours.
 4. **« Aujourd'hui »** : ce qui reste à l'agenda du jour, trois lignes au plus, dessinées
@@ -50,7 +50,7 @@ conversion, la barre reste la scène.
 7. **Les outils**, en raccourcis légers dans une seule carte : Scanner un exo, Quiz éclair,
    Minuteur (ouvre Concentration et « Préparer ma session »), Ligue.
 
-**L'élève tout neuf** : la rangée du haut ; la scène bleue avec la bulle de Mika (le salut à
+**L'élève tout neuf** : la rangée du haut ; sur le papier de la page, la bulle de Mika (le salut à
 l'heure et au prénom, qui s'écrit lettre après lettre), Mika en buste qui sort de derrière la
 barre, et la barre « comme une conversation » ; « Comment ça marche » en trois pas ; les
 outils.
@@ -90,17 +90,64 @@ Une feuille ou un écran :
 
 ## 4. Scanner un exo
 
-- L'appareil photo (scanner de document là où il existe) ou la photothèque, une seule page.
-- L'OCR **sur l'appareil**, celui des imports.
-- Un écran de conversation avec Mika, hors leçon (« Mika · Exercice »), qui reprend le chat de
-  la leçon : la pièce jointe `{ title: "Exercice scanné", text: <OCR> }` et un premier message
-  envoyé tout seul : « Explique-moi cet exercice pas à pas, sans me donner seulement la
-  réponse. » On peut poser des questions ensuite.
-- La porte est celle de Mika : une question offerte à vie, puis le paywall (`mika`).
-- Une réponse rapporte `exerciseSolved` (15) la première fois, puis `mikaAnswer`.
-- Une photo illisible : « Je n'arrive pas à lire la photo. Reprends-la bien à plat, avec de la
-  lumière. »
-- Aucun appel serveur nouveau : `mika-chat` accepte déjà un document joint en texte.
+Le scanner d'exercices (`Micabo/Features/Solver`, clés `ios.solve.*`, 26 langues), ouvert par
+la tuile « Scanner un exo » de Home (`ScanExerciseView` ne fait plus que l'ouvrir). Toujours
+ouvert : l'énoncé se lit sur l'appareil, et l'historique comme les fils de Mika restent à
+l'élève ; la porte vient à la demande de solution.
+
+1. **La capture**, plein écran sur fond noir : la visée (AVFoundation, pas le scanner de
+   documents de VisionKit, qui cherche une page entière), un **cadre réglable** (coins pour
+   l'agrandir, glisser pour le déplacer, extérieur assombri) et la consigne « Cadre une seule
+   question » ; la lampe ; « Photos » (la photothèque, le cadre posé sur toute l'image) ;
+   « Écrire » (taper ou coller l'énoncé) ; « Mes exercices » et « Demande à Mika ». Après la
+   photo, l'image se fige, on ajuste le cadre, « Lire l'énoncé ». Le cadre est ramené dans la
+   photo (`SolverCrop`) et seul ce morceau est lu, **sur l'appareil**
+   (`OnDeviceOCR.recognizeExercise` : la langue de l'app d'abord, puis la détection de Vision ;
+   `recognize(in:)` ne change pas pour les imports). Moins de douze caractères lus : « Je
+   n'arrive pas à lire », Mika triste en buste, « Reprendre » ou « Écrire ».
+2. **La matière** est devinée sur l'appareil (`SolverSubjectGuess` : mots et unités dans les
+   langues les plus parlées, signes de calcul) parmi Maths, Physique-chimie, SVT, Autres
+   matières ; l'élève la change d'un appui ; Mika la confirme dans sa réponse (`[SUBJECT]`)
+   tant que l'élève ne l'a pas choisie.
+3. **La solution pas à pas** (`SolverSolutionView`) : l'énoncé reconnu (corrigeable ; une
+   solution déjà là s'efface alors), puis, sur « Résoudre pas à pas », les **étapes en cartes
+   numérotées** qui se dévoilent une à une (« Étape suivante (2/3) » en bas, la carte suivante
+   en pointillés, « Tout afficher »), les formules composées (`SolverFormula` : le moteur de
+   `MathTypesetter` dessiné en image, repli sur la transposition), la **réponse encadrée**.
+   Sous chaque étape, « Je ne comprends pas cette étape » : Mika la réexplique dans une bulle
+   sous la carte. Puis « Un exercice similaire pour m'entraîner » : Mika invente l'énoncé,
+   l'élève répond, la correction dit juste ou faux et pourquoi, « Voir la réponse »,
+   « Un autre exercice ». Enfin « Une question sur cet exercice ? » ouvre le fil de la matière.
+4. **Le protocole**, sans fonction nouvelle : `mika-chat`, l'énoncé en document joint (texte
+   seulement), la consigne en message de l'élève **écrite dans la langue de l'app** (la
+   fonction répond dans la langue du dernier message). Mika écrit des balises en anglais
+   (`[SUBJECT]`, `[STEP]` titre puis explication, `[ANSWER]` ; `[EXERCISE]` ; `[RIGHT]` /
+   `[WRONG]`), lues par `SolverParser` : balises en gras, numérotées ou traduites acceptées,
+   repli sur les lignes numérotées puis les paragraphes, et sinon le texte tel quel ; les
+   échappées LaTeX perdues dans le JSON (`\frac` lu comme un saut de page) sont réparées. La
+   réponse brute est gardée et relue à chaque ouverture.
+5. **La porte** est celle de Mika (`MikaQuota`) pour **chaque** appel (solution, étape
+   réexpliquée, exercice similaire, correction, fil) : une question offerte à vie, puis le
+   paywall `mika` ; pour un abonné, le plafond du jour. Le premier scan d'un élève qui a sa
+   question offerte reçoit la solution entière (la valeur avant le paywall) ; la question
+   suivante ouvre le paywall. Sans question offerte, l'énoncé reconnu reste à l'écran et les
+   étapes, floutées, attendent Pro (« Débloquer la solution ») ; un abonnement pris là lance la
+   solution tout seul. Rien n'est consommé avant que la réponse n'arrive.
+6. **L'XP** : `exerciseSolved` (15) à la première solution d'un exercice, `mikaAnswer` pour
+   tout le reste (`XPRules` ne change pas).
+7. **Mes exercices** : les exercices demandés (vignette de la photo recadrée, matière, date,
+   « À résoudre » s'ils attendent Pro), filtre par matière, appui long pour supprimer,
+   réouverture de la solution.
+8. **Demande à Mika** (`TutorChatView`) : Mika en buste sur le papier de l'app, **un fil par
+   matière** ; un exercice résolu y arrive (l'énoncé, puis la réponse, avec « Voir la
+   solution ») ; le fil part avec ses huit derniers tours et, en document joint, le dernier
+   exercice du fil et sa solution. Deux idées de questions par matière dans un fil vide.
+9. **Ce qui se garde** : `SolvedExercise` et `TutorMessage` (SwiftData, en fin de schéma),
+   sur le téléphone seulement, effacés par `LocalWipe` à la sortie d'un compte.
+10. **Les statistiques** : `solver_captured` (`source`, `subject`), `solver_unreadable`,
+    `solver_solved` (`subject`, `steps`, `structured`, `source`), `solver_step_help`,
+    `solver_practice_checked` (`result`), `tutor_asked` (`subject`), plus `mika_asked` et
+    `mika_blocked` comme le chat de la leçon. Jamais un énoncé ni un message.
 
 ## 5. Le minuteur
 
@@ -137,3 +184,49 @@ paywall tout de suite, comme avant (`LessonAllowance.immediatePaywall`).
 L'onboarding (ses écrans et leur ordre), le paywall et les achats, les prix, les thèmes
 jour et nuit, Mika et ses humeurs. Chaque nouvelle phrase existe dans **toutes** les langues
 de la plateforme.
+
+## 9. Mika hors du fond bleu, et un seul langage pour les onglets
+
+« La mascotte est toujours sur fond bleu. » Les grandes apps d'étude à mascotte font l'inverse :
+la mascotte vit **sur le fond de l'app** (Knowunity la pose au centre de sa page, sa bulle
+au-dessus, et sur ses feuilles ; les autres la font sortir d'une carte claire ou la montrent
+dans un écran vide), et la couleur de marque reste aux boutons, aux barres, aux pastilles. La
+règle de Micabo, écrite aussi en tête de `MikaMascot.swift` :
+
+1. **Mika vit sur le clair** : la crème et le blanc des cartes le jour, le graphite la nuit.
+   Le jour, une ombre très douce suit sa silhouette ; **la nuit, un halo clair** (`MikaHalo`)
+   garde le corps noir lisible. L'étincelle du crayon est bleue sur le clair, blanche sur le
+   sombre et sur le bleu.
+2. **Le bleu redevient un accent** : le grand bouton (`MicaboBrandButtonStyle`), l'anneau, le
+   compte à rebours (`HomeCountdownBadge`), les pastilles, et **une carte forte par écran au
+   plus** (« Passer en Pro » sur le Profil). Plus de scène bleue sous Mika.
+3. **Trois moments, à varier** :
+   - **Mika qui dépasse** d'une carte blanche ou d'un bouton, la coupe du buste cachée par le
+     bord : le plan du jour de Home et la journée de Concentration (au-dessus du bouton bleu),
+     la barre du nouvel élève ;
+   - **Mika dans son nid**, le petit rond clair (`MikaFrame.circle` — blanc bleuté le jour,
+     graphite éclairé la nuit, un filet fin), à côté d'une phrase : la journée vide du
+     Calendrier, la feuille des supports, les écrans vides de Leçons, le minuteur. La pastille
+     bleue reste possible, explicitement (`MikaFrame.blueCircle`, `.rounded` pour l'icône) ;
+   - **Mika assis sur le bord bas** d'une carte, à côté de ce qu'elle dit : la série du Profil
+     (`MicaboStreakCard(mika:)`), « Aucun examen » et « Scanne ton emploi du temps » dans le
+     Calendrier.
+4. **Tailles** : 100 à 170 points en héros, 52 à 88 dans un nid, jamais moins de 30 ; **deux
+   Mika animés au plus par écran**.
+
+**Le même langage dans tous les onglets** :
+
+- **Le titre de page** : 26 points, le plus gras (`MicaboPageHeading`, le mois du Calendrier,
+  le bonjour de Home) ;
+- **Les titres de section** : `StudySectionTitle` partout (19 points), y compris les groupes
+  de réglages du Profil, qui ne sont plus en petites capitales ;
+- **Les cartes** : `homeCard` — blanche le jour, anthracite la nuit, un filet, la même ombre
+  douce ; 26 points de rayon pour une grande carte (`MicaboStage.cardRadius`), 20 pour une
+  tuile ou une rangée-carte (`tileRadius`) ; `homeCardClipped` quand Mika sort du bord bas ;
+- **Le grand bouton** : bleu, texte blanc, un seul par écran.
+
+Home garde exactement sa hiérarchie et sa logique (§ 1, `HomeDay`, `StudyPlan`,
+`home_plan_tapped`) : seul le dessin change — le plan du jour sur une carte claire, l'examen
+dans sa tuile bleu pâle, le bouton bleu, Mika noir sur le blanc. La carte de l'examen du
+Calendrier, la journée de Concentration, la carte profil et les cartes de Leçons prennent les
+mêmes mesures.

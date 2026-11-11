@@ -48,13 +48,15 @@ struct HomeGreetingRow: View {
 
 // MARK: - Le plan du jour
 
-/// **« Ton plan du jour »**, sur la scène bleue de la marque, pour l'élève qui a déjà ses
-/// leçons (`docs/refonte-knowunity.md` § 1) :
-/// 1. en haut, le prochain examen — le compte à rebours, le nom, la préparation —, ou, sans
-///    examen, « Ton plan du jour » et une pilule discrète « Ajouter un examen » ;
+/// **« Ton plan du jour »**, sur une carte claire de la page, pour l'élève qui a déjà ses
+/// leçons (`docs/refonte-knowunity.md` § 1 et § 9) :
+/// 1. en haut, le prochain examen dans sa tuile bleu pâle — le compte à rebours dans sa
+///    pastille bleue, le nom, la préparation —, ou, sans examen, « Ton plan du jour » et une
+///    pilule discrète « Ajouter un examen » ;
 /// 2. **la** chose à faire maintenant (`HomeDay.primary`) : la séance du calendrier, la leçon
 ///    en cours ou les cartes dues ;
-/// 3. **un** grand bouton blanc, Mika qui regarde par-dessus ;
+/// 3. **un** grand bouton bleu, le seul de l'écran, et Mika qui dépasse de son bord, noir sur
+///    le blanc de la carte ;
 /// 4. au plus une seconde ligne (`HomeDay.secondary`).
 struct HomePlanHero: View {
     let day: HomeDay
@@ -68,7 +70,7 @@ struct HomePlanHero: View {
     static let mikaSize: CGFloat = 104
     /// Ce qui passe derrière le bouton : le bas du buste. Assez peu pour que ses yeux
     /// dépassent.
-    static let mikaSink: CGFloat = 10
+    static let mikaSink: CGFloat = 12
     /// La place que le buste prend à droite du texte.
     static let mikaReserve: CGFloat = 86
 
@@ -77,13 +79,13 @@ struct HomePlanHero: View {
         VStack(alignment: .leading, spacing: 0) {
             if let exam {
                 examPanel(exam)
-                    .padding(.bottom, 18)
+                    .padding(.bottom, 16)
             } else {
                 planHeader
-                    .padding(.bottom, 14)
+                    .padding(.bottom, 12)
             }
             stepBlock(primary)
-                .padding(.bottom, 16)
+                .padding(.bottom, 14)
             cta(primary)
             if let secondary = day.secondary {
                 secondaryRow(secondary)
@@ -91,10 +93,7 @@ struct HomePlanHero: View {
             }
         }
         .padding(16)
-        // Sans étincelles : la scène est pleine de texte, elles tombaient dessus.
-        .background(MicaboBrandBackdrop(sparkles: false))
-        .clipShape(RoundedRectangle(cornerRadius: MicaboStage.heroRadius, style: .continuous))
-        .shadow(color: MicaboBrand.blue.opacity(0.26), radius: 20, y: 10)
+        .homeCard(radius: MicaboStage.cardRadius)
     }
 
     // MARK: L'examen
@@ -102,18 +101,18 @@ struct HomePlanHero: View {
     private func examPanel(_ exam: HomeExam) -> some View {
         Button(action: onExam) {
             HStack(spacing: 12) {
-                countdown(exam.daysLeft)
+                HomeCountdownBadge(daysLeft: exam.daysLeft, side: 58)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(L10n.t("ios.cal.nextExam", locale: .resolved()))
                         .font(MicaboFont.ui(11.5, weight: .black))
                         .tracking(MicaboTracking.caps)
                         .textCase(.uppercase)
-                        .foregroundStyle(MicaboStage.inkSecondary)
+                        .foregroundStyle(MicaboColor.accentInk)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                     Text(exam.name)
                         .font(MicaboFont.ui(17, weight: .black))
-                        .foregroundStyle(MicaboStage.ink)
+                        .foregroundStyle(HomePalette.ink)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
@@ -125,11 +124,11 @@ struct HomePlanHero: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 Image(systemName: "chevron.forward")
                     .font(.system(size: 13, weight: .heavy))
-                    .foregroundStyle(MicaboStage.inkSecondary)
+                    .foregroundStyle(HomePalette.inkTertiary)
             }
             .padding(10)
             .padding(.trailing, 4)
-            .background(Color.white.opacity(0.14), in: RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous))
+            .background(MicaboColor.accentWash, in: RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous))
             .contentShape(RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous))
         }
         .buttonStyle(HomePressStyle(scale: 0.98, feedback: .selection))
@@ -137,53 +136,17 @@ struct HomePlanHero: View {
         .accessibilityHint(Text(L10n.t("ios.home4.agenda.calendar", locale: .resolved())))
     }
 
-    private func countdown(_ daysLeft: Int) -> some View {
-        VStack(spacing: -1) {
-            if daysLeft <= 0 {
-                Text(L10n.t("ios.cal.examToday", locale: .resolved()))
-                    .font(MicaboFont.ui(12, weight: .black))
-                    .foregroundStyle(MicaboBrand.blue700)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(3)
-                    .minimumScaleFactor(0.6)
-            } else {
-                Text("\(daysLeft)")
-                    .font(MicaboFont.number(24))
-                    .foregroundStyle(MicaboBrand.blue700)
-                    .monospacedDigit()
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                Text(L10n.t(daysLeft == 1 ? "ios.cal.dayLeft" : "ios.cal.daysLeft", locale: .resolved()))
-                    .font(MicaboFont.ui(10.5, weight: .black))
-                    .foregroundStyle(MicaboBrand.blue700.opacity(0.8))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-            }
-        }
-        .padding(.horizontal, 4)
-        .frame(width: 60, height: 60)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-    }
-
     private func readinessBar(_ value: Int) -> some View {
         HStack(spacing: 8) {
             Text(L10n.t("ios.cal.readiness", locale: .resolved()))
                 .font(MicaboFont.ui(12, weight: .heavy))
-                .foregroundStyle(MicaboStage.inkSecondary)
+                .foregroundStyle(HomePalette.inkSecondary)
                 .lineLimit(1)
                 .fixedSize()
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Color.white.opacity(0.24))
-                    Capsule()
-                        .fill(Color.white)
-                        .frame(width: max(6, proxy.size.width * CGFloat(min(100, max(0, value))) / 100))
-                }
-            }
-            .frame(height: 6)
+            HomeBar(percent: value, track: MicaboColor.accent.opacity(0.16))
             Text(L10n.percent(value, locale: .resolved()))
                 .font(MicaboFont.ui(12, weight: .black))
-                .foregroundStyle(MicaboStage.ink)
+                .foregroundStyle(MicaboColor.accentInk)
                 .monospacedDigit()
                 .fixedSize()
         }
@@ -208,7 +171,7 @@ struct HomePlanHero: View {
     private var planTitle: some View {
         Text(L10n.t("ios.home4.plan.title", locale: .resolved()))
             .font(MicaboFont.ui(15, weight: .black))
-            .foregroundStyle(MicaboStage.inkSecondary)
+            .foregroundStyle(HomePalette.inkSecondary)
             .accessibilityAddTraits(.isHeader)
     }
 
@@ -221,11 +184,10 @@ struct HomePlanHero: View {
                     .font(MicaboFont.ui(13.5, weight: .heavy))
                     .lineLimit(1)
             }
-            .foregroundStyle(MicaboStage.ink)
+            .foregroundStyle(MicaboColor.accentInk)
             .padding(.horizontal, 12)
             .frame(minHeight: 32)
-            .background(Color.white.opacity(0.18), in: Capsule())
-            .overlay(Capsule().strokeBorder(Color.white.opacity(0.3), lineWidth: 1))
+            .background(MicaboColor.accentSoft, in: Capsule())
             .fixedSize()
         }
         .buttonStyle(HomePressStyle(scale: 0.94, feedback: .selection))
@@ -239,19 +201,19 @@ struct HomePlanHero: View {
                 .font(MicaboFont.ui(12, weight: .black))
                 .tracking(MicaboTracking.caps)
                 .textCase(.uppercase)
-                .foregroundStyle(MicaboStage.inkSecondary)
+                .foregroundStyle(MicaboColor.accentInk)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
             Text(title(step))
                 .font(MicaboFont.ui(23, weight: .black))
-                .foregroundStyle(MicaboStage.ink)
+                .foregroundStyle(HomePalette.ink)
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
             if let subtitle = subtitle(step) {
                 Text(subtitle)
                     .font(MicaboFont.ui(14.5, weight: .bold))
-                    .foregroundStyle(MicaboStage.inkSecondary)
+                    .foregroundStyle(HomePalette.inkSecondary)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -260,25 +222,17 @@ struct HomePlanHero: View {
                     .padding(.top, 6)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: Self.mikaSize - Self.mikaSink - 16, alignment: .bottomLeading)
+        .frame(maxWidth: .infinity, minHeight: Self.mikaSize - Self.mikaSink - 14, alignment: .bottomLeading)
         .padding(.trailing, Self.mikaReserve)
         .accessibilityElement(children: .combine)
     }
 
     private func lessonProgress(_ target: ResumeTarget) -> some View {
         HStack(spacing: 8) {
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Color.white.opacity(0.24))
-                    Capsule()
-                        .fill(Color.white)
-                        .frame(width: max(6, proxy.size.width * CGFloat(target.percent) / 100))
-                }
-            }
-            .frame(height: 6)
+            HomeBar(percent: target.percent, track: HomePalette.track)
             Text(L10n.percent(target.percent, locale: .resolved()))
                 .font(MicaboFont.ui(12, weight: .black))
-                .foregroundStyle(MicaboStage.ink)
+                .foregroundStyle(MicaboColor.accentInk)
                 .monospacedDigit()
                 .fixedSize()
         }
@@ -322,30 +276,20 @@ struct HomePlanHero: View {
 
     // MARK: Le bouton
 
-    /// Le bouton blanc passe devant le bas du buste : Mika regarde par-dessus, comme sur la
-    /// scène de Concentration.
+    /// Le bouton bleu passe devant le bas du buste : Mika dépasse de son bord, sur le blanc de
+    /// la carte, comme sur Concentration.
     private func cta(_ step: HomeDay.Step) -> some View {
         Button { onStep(step, .hero) } label: {
             Label(ctaTitle(step), systemImage: ctaIcon(step))
-                .font(MicaboFont.ui(17, weight: .heavy))
-                .foregroundStyle(MicaboBrand.blue700)
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
-                .minimumScaleFactor(0.85)
-                .padding(.horizontal, 16)
-                .frame(maxWidth: .infinity, minHeight: 54)
-                .background(Color.white, in: RoundedRectangle(cornerRadius: MicaboStage.buttonRadius, style: .continuous))
-                .shadow(color: MicaboBrand.blue900.opacity(0.18), radius: 10, y: 5)
         }
-        .buttonStyle(HomePressStyle(scale: 0.97, feedback: .medium))
+        .buttonStyle(MicaboBrandButtonStyle(minHeight: 54))
         .background(alignment: .topTrailing) {
             MikaMascot(
                 mood: step == .session ? .wave : .idle,
                 size: Self.mikaSize,
-                frozenAt: motion.still ? 0.5 : nil,
-                backdrop: .blue
+                frozenAt: motion.still ? 0.5 : nil
             )
-            .offset(x: 2, y: -Self.mikaSize + Self.mikaSink)
+            .offset(x: -2, y: -Self.mikaSize + Self.mikaSink)
             .accessibilityHidden(true)
         }
     }
@@ -377,19 +321,74 @@ struct HomePlanHero: View {
                     ? L10n.t("ios.kx.today.due", locale: .resolved(), vars: ["count": "\(day.dueCount)"])
                     : L10n.t("ios.kx.today.continue", locale: .resolved(), vars: ["lesson": resume?.1.title ?? day.lessonTitle ?? ""]))
                     .font(MicaboFont.ui(15, weight: .heavy))
-                    .foregroundStyle(MicaboStage.ink)
+                    .foregroundStyle(HomePalette.ink)
                     .lineLimit(1)
                 Spacer(minLength: 4)
                 Image(systemName: "chevron.forward")
                     .font(.system(size: 13, weight: .black))
-                    .foregroundStyle(MicaboStage.inkSecondary)
+                    .foregroundStyle(HomePalette.inkTertiary)
             }
             .padding(.horizontal, 14)
             .frame(minHeight: 46)
-            .background(Color.white.opacity(0.14), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background(HomePalette.canvas, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(HomePressStyle(scale: 0.98, feedback: .soft))
+    }
+}
+
+/// **Le compte à rebours d'un examen**, dans sa pastille bleue : le nombre de jours en blanc,
+/// « jours » dessous. Le même sur Home et dans le Calendrier.
+struct HomeCountdownBadge: View {
+    let daysLeft: Int
+    var side: CGFloat = 58
+
+    var body: some View {
+        VStack(spacing: -1) {
+            if daysLeft <= 0 {
+                Text(L10n.t("ios.cal.examToday", locale: .resolved()))
+                    .font(MicaboFont.ui(side * 0.21, weight: .black))
+                    .multilineTextAlignment(.center)
+                    .lineLimit(3)
+                    .minimumScaleFactor(0.6)
+            } else {
+                Text("\(daysLeft)")
+                    .font(MicaboFont.number(side * 0.41))
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                Text(L10n.t(daysLeft == 1 ? "ios.cal.dayLeft" : "ios.cal.daysLeft", locale: .resolved()))
+                    .font(MicaboFont.ui(side * 0.18, weight: .black))
+                    .opacity(0.88)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+            }
+        }
+        .foregroundStyle(Color.white)
+        .padding(.horizontal, 4)
+        .frame(width: side, height: side)
+        .background(MicaboStage.fill, in: RoundedRectangle(cornerRadius: side * 0.28, style: .continuous))
+        .shadow(color: MicaboBrand.blue.opacity(0.25), radius: 8, y: 4)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// Une barre de progression fine : la piste, et le bleu de l'accent jusqu'au pourcentage.
+struct HomeBar: View {
+    let percent: Int
+    var track: Color = HomePalette.track
+    var height: CGFloat = 6
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Capsule().fill(track)
+                Capsule()
+                    .fill(MicaboColor.accent)
+                    .frame(width: max(height, proxy.size.width * CGFloat(min(100, max(0, percent))) / 100))
+            }
+        }
+        .frame(height: height)
     }
 }
 

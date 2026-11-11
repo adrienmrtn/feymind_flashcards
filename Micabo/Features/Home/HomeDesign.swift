@@ -2,11 +2,12 @@ import SwiftUI
 
 // MARK: - Les couleurs de Home
 
-/// **Les couleurs de Home : celles de l'app, et la scène de marque.**
+/// **Les couleurs de Home : celles de l'app.**
 ///
 /// La page suit le papier de Micabo (`MicaboColor`) : l'ivoire le jour, le graphite la nuit,
-/// des cartes blanches ou anthracite. La scène de Mika, elle, reste le bleu de la marque
-/// (`MicaboStage`) dans les deux apparences : c'est là que le corps noir de Mika se lit.
+/// des cartes blanches ou anthracite. Mika y vit, noir sur le clair (la règle de mise en scène,
+/// en tête de `MikaMascot.swift`) ; le bleu de la marque (`MicaboStage`) n'est plus qu'un
+/// accent : le grand bouton, l'anneau, les pastilles.
 enum HomePalette {
     static var canvas: Color { MicaboColor.canvas }
     static var card: Color { MicaboColor.surface }
@@ -102,6 +103,15 @@ extension View {
     /// La carte de la page : blanche le jour, anthracite la nuit, un filet et une ombre douce.
     func homeCard(radius: CGFloat = MicaboStage.cardRadius) -> some View {
         background(HomePalette.card, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(HomePalette.cardStroke, lineWidth: 1))
+            .shadow(color: MicaboBrand.blue900.opacity(0.06), radius: 16, y: 8)
+    }
+
+    /// **La même carte, qui coupe ce qu'elle porte** : pour un Mika qui sort de son bord bas.
+    /// La coupe passe avant l'ombre, qui reste visible.
+    func homeCardClipped(radius: CGFloat = MicaboStage.cardRadius) -> some View {
+        background(HomePalette.card)
+            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(HomePalette.cardStroke, lineWidth: 1))
             .shadow(color: MicaboBrand.blue900.opacity(0.06), radius: 16, y: 8)
     }

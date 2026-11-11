@@ -214,6 +214,7 @@ final class AccountLeaveTests: XCTestCase {
         let container = try ModelContainer(
             for: Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self,
             StudyCalendar.self, CalendarEvent.self, StudyTask.self, FocusSession.self,
+            SolvedExercise.self, TutorMessage.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
         let context = ModelContext(container)

@@ -57,7 +57,7 @@ struct CalendarHeader<Accessory: View>: View {
             Button(action: onMonth) {
                 HStack(spacing: 6) {
                     Text(MicaboCalendar.monthLabel(month))
-                        .font(MicaboFont.ui(24, weight: .black))
+                        .font(MicaboFont.ui(26, weight: .black))
                         .foregroundStyle(MicaboColor.ink)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
@@ -270,11 +270,9 @@ struct NextExamCard: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            MicaboBrandBackdrop(sparkles: true)
-                .clipShape(RoundedRectangle(cornerRadius: MicaboStage.cardRadius, style: .continuous))
-        }
-        .shadow(color: MicaboBrand.blue.opacity(0.28), radius: 18, y: 10)
+        // Une carte claire, comme le plan du jour de Home : le bleu reste aux pastilles et au
+        // bouton « Réviser ».
+        .homeCard()
     }
 
     private var top: some View {
@@ -285,81 +283,50 @@ struct NextExamCard: View {
             .buttonStyle(HomePressStyle(scale: 0.98))
             .accessibilityHint(Text(loc("ios.cal.editExam")))
             Spacer(minLength: 4)
-            countdown
+            HomeCountdownBadge(daysLeft: summary.daysLeft, side: 72)
         }
     }
 
     private var titleBlock: some View {
         VStack(alignment: .leading, spacing: 4) {
-                Text(loc("ios.cal.nextExam"))
-                    .font(MicaboFont.ui(12, weight: .black))
-                    .tracking(MicaboTracking.caps)
-                    .textCase(.uppercase)
-                    .foregroundStyle(MicaboStage.inkSecondary)
-                Text(summary.name)
-                    .font(MicaboFont.ui(23, weight: .black))
-                    .foregroundStyle(MicaboStage.ink)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text(MicaboCalendar.dayLabel(summary.date).capitalizedFirstLetter)
-                    .font(MicaboFont.ui(14.5, weight: .bold))
-                    .foregroundStyle(MicaboStage.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
+            Text(loc("ios.cal.nextExam"))
+                .font(MicaboFont.ui(12, weight: .black))
+                .tracking(MicaboTracking.caps)
+                .textCase(.uppercase)
+                .foregroundStyle(MicaboColor.accentInk)
+            Text(summary.name)
+                .font(MicaboFont.ui(23, weight: .black))
+                .foregroundStyle(MicaboColor.ink)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(MicaboCalendar.dayLabel(summary.date).capitalizedFirstLetter)
+                .font(MicaboFont.ui(14.5, weight: .bold))
+                .foregroundStyle(MicaboColor.inkSecondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .multilineTextAlignment(.leading)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var countdown: some View {
-        VStack(spacing: 0) {
-            if summary.daysLeft <= 0 {
-                Text(loc("ios.cal.examToday"))
-                    .font(MicaboFont.ui(17, weight: .black))
-                    .foregroundStyle(MicaboBrand.blue700)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.7)
-            } else {
-                Text("\(summary.daysLeft)")
-                    .font(MicaboFont.number(30))
-                    .foregroundStyle(MicaboBrand.blue700)
-                    .monospacedDigit()
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                Text(loc(summary.daysLeft == 1 ? "ios.cal.dayLeft" : "ios.cal.daysLeft"))
-                    .font(MicaboFont.ui(11, weight: .black))
-                    .foregroundStyle(MicaboBrand.blue700.opacity(0.8))
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.7)
-            }
-        }
-        .padding(.horizontal, 6)
-        .frame(width: 76, height: 76)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .accessibilityElement(children: .combine)
-    }
-
     private var lessons: some View {
         MicaboFlowLayout(spacing: 6, lineSpacing: 6) {
             ForEach(Array(summary.lessonTitles.prefix(3).enumerated()), id: \.offset) { _, title in
-                Text(title)
-                    .font(MicaboFont.ui(13, weight: .heavy))
-                    .foregroundStyle(MicaboStage.ink)
-                    .lineLimit(1)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color.white.opacity(0.18), in: Capsule())
+                chip(title)
             }
             if summary.lessonTitles.count > 3 {
-                Text("+\(summary.lessonTitles.count - 3)")
-                    .font(MicaboFont.ui(13, weight: .heavy))
-                    .foregroundStyle(MicaboStage.ink)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color.white.opacity(0.18), in: Capsule())
+                chip("+\(summary.lessonTitles.count - 3)")
             }
         }
+    }
+
+    private func chip(_ title: String) -> some View {
+        Text(title)
+            .font(MicaboFont.ui(13, weight: .heavy))
+            .foregroundStyle(MicaboColor.accentInk)
+            .lineLimit(1)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(MicaboColor.accentWash, in: Capsule())
     }
 
     private func readinessBar(_ value: Int) -> some View {
@@ -367,22 +334,14 @@ struct NextExamCard: View {
             HStack {
                 Text(loc("ios.cal.readiness"))
                     .font(MicaboFont.ui(13, weight: .heavy))
-                    .foregroundStyle(MicaboStage.inkSecondary)
+                    .foregroundStyle(MicaboColor.inkSecondary)
                 Spacer()
                 Text(L10n.percent(value, locale: .resolved()))
                     .font(MicaboFont.ui(13, weight: .black))
-                    .foregroundStyle(MicaboStage.ink)
+                    .foregroundStyle(MicaboColor.accentInk)
                     .monospacedDigit()
             }
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Color.white.opacity(0.22))
-                    Capsule()
-                        .fill(Color.white)
-                        .frame(width: max(8, proxy.size.width * CGFloat(min(100, max(0, value))) / 100))
-                }
-            }
-            .frame(height: 7)
+            HomeBar(percent: value, height: 7)
         }
         .accessibilityElement(children: .combine)
     }
@@ -391,26 +350,21 @@ struct NextExamCard: View {
         HStack(spacing: 10) {
             Button(action: onRevise) {
                 Label(loc("ios.cal.revise"), systemImage: "brain.head.profile")
-                    .font(MicaboFont.ui(15.5, weight: .black))
-                    .foregroundStyle(MicaboBrand.blue700)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
-                    .frame(maxWidth: .infinity, minHeight: 46)
-                    .background(Color.white, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
             }
-            .buttonStyle(HomePressStyle(scale: 0.96, feedback: .medium))
+            .buttonStyle(MicaboBrandButtonStyle(minHeight: 46, fontSize: 15.5))
             .disabled(!summary.hasLessons)
-            .opacity(summary.hasLessons ? 1 : 0.6)
 
             Button(action: onMock) {
                 Label(loc("ios.cal.mock"), systemImage: "stopwatch")
                     .font(MicaboFont.ui(15.5, weight: .black))
-                    .foregroundStyle(Color.white)
+                    .foregroundStyle(MicaboColor.accentInk)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
+                    .padding(.horizontal, 10)
                     .frame(maxWidth: .infinity, minHeight: 46)
-                    .background(Color.white.opacity(0.18), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).strokeBorder(Color.white.opacity(0.35), lineWidth: 1))
+                    .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: MicaboStage.buttonRadius, style: .continuous))
             }
             .buttonStyle(HomePressStyle(scale: 0.96, feedback: .medium))
             .disabled(!summary.hasLessons)
@@ -422,59 +376,48 @@ struct NextExamCard: View {
     private var planRow: some View {
         if summary.plannedCount > 0 {
             Button(action: onPlanMenu) {
-                HStack(spacing: 10) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(MicaboBrand.pencil)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(loc("ios.cal.planned", ["count": "\(summary.plannedCount)"]))
-                            .font(MicaboFont.ui(14.5, weight: .black))
-                            .foregroundStyle(MicaboStage.ink)
-                            .fixedSize(horizontal: false, vertical: true)
-                        if let next = summary.nextSession {
-                            Text(next)
-                                .font(MicaboFont.ui(13, weight: .bold))
-                                .foregroundStyle(MicaboStage.inkSecondary)
-                                .lineLimit(2)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                    Spacer(minLength: 4)
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 15, weight: .heavy))
-                        .foregroundStyle(MicaboStage.ink)
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 11)
-                .background(Color.white.opacity(0.14), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                planLabel(
+                    title: loc("ios.cal.planned", ["count": "\(summary.plannedCount)"]),
+                    detail: summary.nextSession,
+                    trailing: "ellipsis"
+                )
             }
             .buttonStyle(HomePressStyle(scale: 0.98, feedback: .light))
         } else {
             Button(action: onPlan) {
-                HStack(spacing: 10) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(MicaboBrand.pencil)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(loc("ios.cal.plan"))
-                            .font(MicaboFont.ui(14.5, weight: .black))
-                            .foregroundStyle(MicaboStage.ink)
-                        Text(loc("ios.cal.planSub"))
-                            .font(MicaboFont.ui(12.5, weight: .bold))
-                            .foregroundStyle(MicaboStage.inkSecondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    Spacer(minLength: 4)
-                    Image(systemName: "chevron.forward")
-                        .font(.system(size: 13, weight: .heavy))
-                        .foregroundStyle(MicaboStage.ink)
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 11)
-                .background(Color.white.opacity(0.14), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                planLabel(title: loc("ios.cal.plan"), detail: loc("ios.cal.planSub"), trailing: "chevron.forward")
             }
             .buttonStyle(HomePressStyle(scale: 0.98, feedback: .medium))
         }
+    }
+
+    private func planLabel(title: String, detail: String?, trailing: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "sparkles")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(MicaboBrand.pencil)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(MicaboFont.ui(14.5, weight: .black))
+                    .foregroundStyle(MicaboColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let detail {
+                    Text(detail)
+                        .font(MicaboFont.ui(13, weight: .bold))
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .multilineTextAlignment(.leading)
+            Spacer(minLength: 4)
+            Image(systemName: trailing)
+                .font(.system(size: trailing == "ellipsis" ? 15 : 13, weight: .heavy))
+                .foregroundStyle(MicaboColor.inkTertiary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
+        .background(MicaboColor.canvas, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
     }
 }
 
@@ -809,8 +752,7 @@ struct NoExamCard: View {
             MikaMascot(mood: .wave, size: 108)
                 .padding(.trailing, 6)
         }
-        .homeCard()
-        .clipShape(RoundedRectangle(cornerRadius: MicaboStage.cardRadius, style: .continuous))
+        .homeCardClipped()
     }
 }
 
@@ -870,8 +812,8 @@ struct CalendarListRow: View {
     }
 }
 
-/// **« Scanne ton emploi du temps »** : la carte bleue de la marque, Mika qui sort de son
-/// bord bas, et le geste qui remplit le calendrier « Cours » d'un coup.
+/// **« Scanne ton emploi du temps »** : une carte claire, Mika qui sort de son bord bas et
+/// regarde, et le geste qui remplit le calendrier « Cours » d'un coup.
 struct TimetableScanPromo: View {
     let onScan: () -> Void
 
@@ -883,11 +825,11 @@ struct TimetableScanPromo: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(loc("ios.cal.scanPromoTitle"))
                         .font(MicaboFont.ui(18, weight: .black))
-                        .foregroundStyle(MicaboStage.ink)
+                        .foregroundStyle(MicaboColor.ink)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(loc("ios.cal.scanPromoBody"))
                         .font(MicaboFont.ui(14, weight: .semibold))
-                        .foregroundStyle(MicaboStage.inkSecondary)
+                        .foregroundStyle(MicaboColor.inkSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                     HStack(spacing: 6) {
                         Image(systemName: "camera.fill")
@@ -896,23 +838,22 @@ struct TimetableScanPromo: View {
                             .minimumScaleFactor(0.8)
                     }
                     .font(MicaboFont.ui(14.5, weight: .black))
-                    .foregroundStyle(MicaboBrand.blue700)
+                    .foregroundStyle(MicaboColor.accentInk)
                     .padding(.horizontal, 14)
                     .frame(minHeight: 40)
-                    .background(Color.white, in: Capsule())
+                    .background(MicaboColor.accentSoft, in: Capsule())
                     .padding(.top, 4)
                 }
                 .multilineTextAlignment(.leading)
                 .padding(.vertical, 18)
                 .padding(.leading, 18)
                 Spacer(minLength: 0)
-                MikaMascot(mood: .look, size: 112, frozenAt: still ? 0.4 : nil, backdrop: .blue)
-                    .padding(.trailing, 4)
+                // Mika sort du bas de la carte (règle 1 du kit), noir sur le blanc.
+                MikaMascot(mood: .look, size: 108, frozenAt: still ? 0.4 : nil)
+                    .padding(.trailing, 6)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(MicaboBrandBackdrop(sparkles: false))
-            .clipShape(RoundedRectangle(cornerRadius: MicaboStage.cardRadius, style: .continuous))
-            .shadow(color: MicaboBrand.blue.opacity(0.22), radius: 14, y: 8)
+            .homeCardClipped()
         }
         .buttonStyle(HomePressStyle(scale: 0.98, feedback: .medium))
     }
