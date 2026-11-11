@@ -114,7 +114,7 @@ extension IosI18nCatalogs {
         "app.errors.mockTooFewCards": "تحتاج إلى بطاقات أكثر ليكون السحب ذا معنى.",
         "app.errors.pickACourse": "اختر درسًا واحدًا على الأقل.",
         "app.errors.signIn": "سجّل الدخول.",
-        "app.exams.countdown.inDays": "ي-{days}",
+        "app.exams.countdown.inDays": "الأيام المتبقية: {days}",
         "app.exams.countdown.past": "انتهى",
         "app.exams.countdown.today": "اليوم",
         "app.exams.countdown.tomorrow": "غدًا",
