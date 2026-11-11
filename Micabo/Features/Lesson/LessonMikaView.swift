@@ -96,6 +96,13 @@ struct LessonMikaView: View {
                     guard let last = chat.messages.last else { return }
                     withAnimation(LearnMotion.standard) { proxy.scrollTo(last.id, anchor: .bottom) }
                 }
+                // Le clavier monte : la dernière réponse remonte avec lui, au-dessus du champ.
+                .onChange(of: focused) { _, isFocused in
+                    guard isFocused, let last = chat.messages.last else { return }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        withAnimation(LearnMotion.standard) { proxy.scrollTo(last.id, anchor: .bottom) }
+                    }
+                }
             }
             input(draft: $chat.draft)
         }

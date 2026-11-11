@@ -270,6 +270,7 @@ struct QuizScoreView: View {
     var onMore: (() -> Void)?
 
     @State private var shown: Double = 0
+    @Environment(\.homeStill) private var still
 
     private var ratio: Double { Double(right) / Double(max(1, total)) }
 
@@ -305,11 +306,13 @@ struct QuizScoreView: View {
                 .font(MicaboFont.subtitle)
                 .foregroundStyle(MicaboColor.ink)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
             if right < total {
                 Text(L10n.t("lesson.quiz.missedBecomeCards", locale: .resolved()))
                     .font(MicaboFont.ui(15, weight: .medium))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
             VStack(spacing: 12) {
@@ -326,7 +329,12 @@ struct QuizScoreView: View {
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.bottom, 12)
         .onAppear {
-            withAnimation(LearnMotion.gentle(delay: 0.2)) { shown = ratio }
+            // Avec « Réduire les animations » (ou dans un rendu), le score est là d'emblée.
+            if still || LearnMotion.reduceMotion {
+                shown = ratio
+            } else {
+                withAnimation(LearnMotion.gentle(delay: 0.2)) { shown = ratio }
+            }
             if ratio >= 0.8 { Haptics.burst(count: 3, over: 0.4) }
         }
     }
