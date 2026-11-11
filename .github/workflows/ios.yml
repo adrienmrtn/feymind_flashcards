@@ -35,8 +35,10 @@ on:
 permissions:
   contents: read
 
+# Sur main, un push annule le run précédent. Sur une branche claude/**, plusieurs agents poussent
+# en parallèle et chacun attend les rendus de son commit : chaque commit garde son run.
 concurrency:
-  group: ios-${{ github.ref }}
+  group: ios-${{ github.ref }}-${{ startsWith(github.ref, 'refs/heads/claude/') && github.sha || 'latest' }}
   cancel-in-progress: true
 
 jobs:
