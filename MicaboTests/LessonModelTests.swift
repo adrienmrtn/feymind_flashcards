@@ -358,8 +358,44 @@ final class CourseLessonTests: XCTestCase {
         XCTAssertEqual(course.icon, .scroll)
         course.iconID = "globe"
         course.toneRaw = LessonTone.mint.rawValue
-        XCTAssertEqual(course.icon, .globe)
+        XCTAssertEqual(course.icon, .scroll, "la matière l'emporte sur le globe du modèle")
+        XCTAssertEqual(course.tone, .yellow, "l'histoire est jaune")
+        course.subject = "Un atelier inconnu"
+        XCTAssertEqual(course.icon, .globe, "matière inconnue : l'icône du modèle")
         XCTAssertEqual(course.tone, .mint)
+    }
+
+    /// **Lot 7 : chaque matière a son icône et sa couleur**, dans les langues de l'app.
+    func testEachSubjectHasItsIconAndTone() {
+        let expected: [(String, MicaboIcon, LessonTone)] = [
+            ("Mathématiques", .calculator, .blue),
+            ("Mathematik", .calculator, .blue),
+            ("Physique-chimie", .atom, .lilac),
+            ("SVT", .flask, .mint),
+            ("Biologie", .flask, .mint),
+            ("Histoire-géographie", .scroll, .yellow),
+            ("Geschichte", .scroll, .yellow),
+            ("Géographie", .globe, .mint),
+            ("Erdkunde", .globe, .mint),
+            ("Philosophie", .brain, .lilac),
+            ("Français", .quill, .pink),
+            ("Deutsch", .quill, .pink),
+            ("Anglais", .book, .pink),
+            ("Englisch", .book, .pink),
+            ("Informatique", .rocket, .blue),
+            ("Économie", .diploma, .yellow),
+            ("الرياضيات", .calculator, .blue),
+            ("التاريخ", .scroll, .yellow),
+            ("الأحياء", .flask, .mint),
+            ("Физика", .atom, .lilac),
+        ]
+        for (subject, icon, tone) in expected {
+            XCTAssertEqual(MicaboIcon.subjectIcon(subject), icon, subject)
+            XCTAssertEqual(LessonTone.forSubject(icon), tone, subject)
+        }
+        XCTAssertNil(MicaboIcon.subjectIcon(nil))
+        XCTAssertNil(MicaboIcon.subjectIcon("  "))
+        XCTAssertNil(MicaboIcon.subjectIcon("Atelier"))
     }
 
     func testIconGuessesTheSubject() {

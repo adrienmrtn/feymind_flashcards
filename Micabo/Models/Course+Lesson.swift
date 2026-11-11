@@ -26,14 +26,21 @@ extension Course {
         updatedAt = Date()
     }
 
-    /// La couleur de la leçon. Un ancien cours en reçoit une stable, tirée de son identifiant.
+    /// **La couleur de la leçon : celle de sa matière** (lot 7). Toutes les leçons de maths
+    /// sont bleues, toutes celles d'histoire jaunes : la liste se lit d'un coup d'œil. Une
+    /// matière que l'app ne reconnaît pas garde le ton reçu à la création ; un ancien cours en
+    /// reçoit un stable, tiré de son identifiant.
     var tone: LessonTone {
-        toneRaw.isEmpty ? LessonTone.stable(for: id) : LessonTone(raw: toneRaw)
+        if let subjectIcon = MicaboIcon.subjectIcon(subject) { return LessonTone.forSubject(subjectIcon) }
+        return toneRaw.isEmpty ? LessonTone.stable(for: id) : LessonTone(raw: toneRaw)
     }
 
-    /// L'icône de la leçon : celle que le modèle a choisie, sinon celle de sa matière.
+    /// **L'icône de la leçon : celle de sa matière** (lot 7), sinon celle que le modèle a
+    /// choisie, sinon une déduite du titre. Le modèle donnait le globe à presque tout ce qui
+    /// parlait « du monde » : une liste de leçons portait le même globe partout.
     var icon: MicaboIcon {
-        iconID.isEmpty ? MicaboIcon.guess(subject: subject, title: title) : MicaboIcon(id: iconID)
+        if let subjectIcon = MicaboIcon.subjectIcon(subject) { return subjectIcon }
+        return iconID.isEmpty ? MicaboIcon.guess(subject: subject, title: title) : MicaboIcon(id: iconID)
     }
 
     /// Les thèmes, dans l'ordre du chemin, chacun avec son pictogramme : celui du plan, sinon
@@ -120,18 +127,67 @@ extension MicaboIcon {
         return .book
     }
 
+    /// **L'icône d'une matière**, lue dans le nom de la matière seul (pas dans le titre), ou
+    /// `nil` quand la matière n'est pas reconnue. C'est elle qui donne à une leçon son icône et
+    /// sa couleur (`Course.icon`, `Course.tone`) : deux leçons de maths se ressemblent.
+    static func subjectIcon(_ subject: String?) -> MicaboIcon? {
+        guard let subject, !subject.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+        let text = folded(subject)
+        // Les mots-clés passent par le même pliage que le texte : un hamza arabe ou un « й »
+        // russe plié d'un côté et pas de l'autre ne se retrouveraient plus.
+        let matches: (String) -> Bool = { text.contains(folded($0)) }
+        for (icon, keys) in subjectKeywords where keys.contains(where: matches) {
+            return icon
+        }
+        return languageKeywords.contains(where: matches) ? .book : nil
+    }
+
+    private static func folded(_ text: String) -> String {
+        text.lowercased().folding(options: .diacriticInsensitive, locale: nil)
+    }
+
     /// Dans l'ordre : la première matière reconnue gagne. Les maths passent avant la physique
-    /// (« physique mathématique » reste des maths), la chimie avant la biologie.
+    /// (« physique mathématique » reste des maths), la chimie avant la biologie, l'histoire
+    /// avant la géographie (« Histoire-géographie » prend le parchemin). Les mots-clés couvrent
+    /// les langues de l'app les plus parlées, sans accents.
     private static let subjectKeywords: [(MicaboIcon, [String])] = [
-        (.calculator, ["math", "algebr", "geometr", "statisti", "calcul", "matemat", "probabil"]),
-        (.atom, ["physi", "fizik", "fisica", "mecaniq", "electric", "optique", "quantum"]),
-        (.flask, ["chimi", "chemi", "kimya", "quimic", "biolog", "svt", "biyoloji", "life science"]),
-        (.globe, ["geograph", "geografi", "cografya", "erdkunde", "environnement", "climat"]),
-        (.scroll, ["histoir", "history", "histori", "tarih", "geschicht", "droit", "law", "recht"]),
-        (.brain, ["philo", "psycho", "socio", "neuro"]),
-        (.palette, ["arts", "dessin", "design", "musique", "music", "muzik"]),
-        (.quill, ["litter", "literat", "francais", "french", "edebiyat", "poesie", "lettres"]),
+        (.calculator, ["math", "algebr", "geometr", "statisti", "calcul", "matemat", "probabil", "wiskunde", "matma", "математ", "رياضيات"]),
+        (.atom, ["physi", "fizik", "fisica", "fysik", "fyzik", "fizyk", "natuurkunde", "mecaniq", "electric", "optique", "quantum", "физик", "فيزياء"]),
+        (.flask, ["chimi", "chemi", "kimya", "quimic", "kemi", "biolog", "svt", "biyoloji", "life science", "scienze naturali", "ciencias naturales", "хими", "биолог", "كيمياء", "أحياء", "احياء", "علوم"]),
+        (.scroll, ["histoir", "history", "histori", "tarih", "geschicht", "storia", "dejepis", "droit", "law", "recht", "derecho", "diritto", "истори", "تاريخ"]),
+        (.globe, ["geograph", "geografi", "cografya", "erdkunde", "aardrijkskunde", "maantieto", "environnement", "climat", "географ", "جغرافيا"]),
+        (.brain, ["philo", "psycho", "socio", "neuro", "filosof", "felsefe", "ethik", "ethique", "философ", "فلسفة"]),
+        (.palette, ["arts", "dessin", "design", "musique", "music", "muzik", "musik", "musica", "kunst"]),
+        (.quill, ["litter", "literat", "francais", "french", "edebiyat", "poesie", "lettres", "deutsch", "turkce", "lengua castellana", "عربية"]),
         (.diploma, ["econom", "finance", "gestion", "ekonomi", "wirtschaft"]),
-        (.rocket, ["informati", "computer", "program", "bilgisayar"]),
+        (.rocket, ["informati", "computer", "program", "bilgisayar", "numerique"]),
     ]
+
+    /// Les langues étrangères : le livre, comme la lecture. Seulement pour une matière : dans
+    /// un titre, « anglais » ne dit rien du sujet de la leçon.
+    private static let languageKeywords = [
+        "anglais", "english", "englisch", "ingles", "inglese", "engels", "ingilizce",
+        "espagnol", "spanish", "spanisch", "espanol", "spagnolo",
+        "allemand", "german", "aleman", "tedesco", "almanca",
+        "italien", "italian", "italiano", "latin", "latein", "grec", "greek",
+        "langue", "language", "sprache", "idioma", "lingua", "langues vivantes",
+        "английск", "إنجليزية", "انجليزية", "فرنسية",
+    ]
+}
+
+extension LessonTone {
+    /// **La couleur d'une matière**, tirée de son icône : des teintes douces qui se répondent
+    /// (bleu pour les maths et l'informatique, lilas pour la physique et la philosophie, menthe
+    /// pour le vivant et la Terre, jaune pour l'histoire et l'économie, rose pour les lettres,
+    /// les langues et les arts).
+    static func forSubject(_ icon: MicaboIcon) -> LessonTone {
+        switch icon {
+        case .calculator, .rocket: .blue
+        case .atom, .brain: .lilac
+        case .flask, .globe: .mint
+        case .scroll, .diploma: .yellow
+        case .quill, .book, .palette: .pink
+        default: .blue
+        }
+    }
 }
