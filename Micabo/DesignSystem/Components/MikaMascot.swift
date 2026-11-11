@@ -746,16 +746,30 @@ enum MikaClipStore {
         let height = max(1, Int((info.rect.height * resolution).rounded()))
         let space = CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB()
         let bitmap = CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
-        var images: [CGImage] = []
-        images.reserveCapacity(count / stride + 1)
-        for index in Swift.stride(from: 0, to: count, by: stride) {
-            guard let frame = CGImageSourceCreateImageAtIndex(source, index, [kCGImageSourceShouldCache: false] as CFDictionary),
-                  let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0, space: space, bitmapInfo: bitmap)
-            else { continue }
-            context.interpolationQuality = .high
-            context.draw(frame, in: CGRect(x: 0, y: 0, width: width, height: height))
-            if let image = context.makeImage() { images.append(image) }
+        let indices = Array(Swift.stride(from: 0, to: count, by: stride))
+        // Les images sont toutes des images clés : plusieurs cœurs les décodent ensemble, chacun
+        // avec sa propre source.
+        let lanes = max(1, min(3, ProcessInfo.processInfo.activeProcessorCount - 1, indices.count))
+        var decoded = [CGImage?](repeating: nil, count: indices.count)
+        let lock = NSLock()
+        DispatchQueue.concurrentPerform(iterations: lanes) { lane in
+            let laneSource: CGImageSource? = lane == 0
+                ? source
+                : CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary)
+            guard let laneSource else { return }
+            for slot in Swift.stride(from: lane, to: indices.count, by: lanes) {
+                guard let frame = CGImageSourceCreateImageAtIndex(laneSource, indices[slot], [kCGImageSourceShouldCache: false] as CFDictionary),
+                      let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0, space: space, bitmapInfo: bitmap)
+                else { continue }
+                context.interpolationQuality = .high
+                context.draw(frame, in: CGRect(x: 0, y: 0, width: width, height: height))
+                let image = context.makeImage()
+                lock.lock()
+                decoded[slot] = image
+                lock.unlock()
+            }
         }
+        let images = decoded.compactMap { $0 }
         guard !images.isEmpty else { return nil }
         return MikaFrames(images: images, fps: info.fps / Double(stride), rect: info.rect)
     }
