@@ -15,6 +15,7 @@ struct NameStepView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @FocusState private var isFocused: Bool
+    @Environment(\.onboardingStill) private var still
 
     var body: some View {
         @Bindable var model = model
@@ -23,15 +24,23 @@ struct NameStepView: View {
             title: i18n.t("ios.onb5.q.name")
         ) {
             HStack(spacing: 10) {
-                TextField(i18n.t("ios.onb.name.placeholder"), text: $model.displayName)
-                    .font(MicaboFont.ui(20, weight: .semibold))
-                    .foregroundStyle(OnboardingPalette.ink)
-                    .textInputAutocapitalization(.words)
-                    .textContentType(.givenName)
-                    .autocorrectionDisabled()
-                    .focused($isFocused)
-                    .submitLabel(.done)
-                    .onSubmit { advance(fromKeyboard: true) }
+                if still {
+                    // Les rendus ne dessinent pas un champ UIKit : le prénom, écrit.
+                    Text(model.displayName.nilIfBlank ?? i18n.t("ios.onb.name.placeholder"))
+                        .font(MicaboFont.ui(20, weight: .semibold))
+                        .foregroundStyle(OnboardingPalette.ink)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    TextField(i18n.t("ios.onb.name.placeholder"), text: $model.displayName)
+                        .font(MicaboFont.ui(20, weight: .semibold))
+                        .foregroundStyle(OnboardingPalette.ink)
+                        .textInputAutocapitalization(.words)
+                        .textContentType(.givenName)
+                        .autocorrectionDisabled()
+                        .focused($isFocused)
+                        .submitLabel(.done)
+                        .onSubmit { advance(fromKeyboard: true) }
+                }
 
                 if !model.displayName.isEmpty {
                     Button {

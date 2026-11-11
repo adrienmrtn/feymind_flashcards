@@ -245,6 +245,14 @@ enum DeckLessonBuilder {
         try context.save()
         CourseLedger.noteChange()
         CloudSync.nudge()
+        // Le même événement qu'un deck écrit par Mika, marqué « non généré » : des nombres et
+        // des drapeaux, jamais le contenu des cartes.
+        Analytics.track(.courseImported, [
+            "source": .text(CourseSource.deck.rawValue),
+            "deck": .flag(true),
+            "generated": .flag(false),
+            "cards": .number(Double(cards.count)),
+        ])
         return course
     }
 }
