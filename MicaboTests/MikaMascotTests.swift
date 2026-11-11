@@ -62,7 +62,20 @@ final class MikaMascotTests: XCTestCase {
     @MainActor
     func testPreparingAnAnimationIsFastAndOffTheMainThread() throws {
         var lines: [String] = []
-        let resolution = MikaClipStore.resolution(MikaPlacement.standing(side: 120).scale * 3)
+        // La finesse de l'app : 2 pixels par point au plus (`MikaPlayerView`).
+        let resolution = MikaClipStore.resolution(MikaPlacement.standing(side: 120).scale * 2)
+        // Pour comparer : une image du WebP à pleine résolution, ce que l'ancien lecteur
+        // décodait 24 fois par seconde et par Mika, sans fin.
+        var full = 0.0
+        var fullFrames = 0
+        for name in ["coucou", "reflexion", "sommeil"] {
+            let start = CFAbsoluteTimeGetCurrent()
+            let clip = try XCTUnwrap(decodeOffMain(name, resolution: 1))
+            full += (CFAbsoluteTimeGetCurrent() - start) * 1000
+            fullFrames += clip.images.count
+        }
+        lines.append(String(format: "Ancien lecteur (au moins : ses images faisaient 512 px) : %.1f ms par image, %.0f ms de calcul par seconde et par Mika à 24 i/s",
+                            full / Double(fullFrames), full / Double(fullFrames) * 24))
         var total = 0.0
         var frames = 0
         for name in MikaArt.clips.keys.sorted() {
@@ -83,7 +96,7 @@ final class MikaMascotTests: XCTestCase {
         // Les chiffres, en image : la CI ne publie que les rendus.
         if RenderGallery.directory != nil {
             try RenderGallery.render("mika-perf", VStack(alignment: .leading, spacing: 6) {
-                Text("Préparer une animation (Mika de 120 pt, écran 3x, hors fil principal)")
+                Text("Préparer une animation, une fois (Mika de 120 pt, 2 px/pt, hors fil principal) ; puis 0 ms par image : Core Animation la joue")
                     .font(.system(size: 13, weight: .bold))
                 ForEach(lines, id: \.self) { Text($0).font(.system(size: 12, design: .monospaced)) }
             }

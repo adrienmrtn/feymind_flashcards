@@ -100,7 +100,7 @@ enum MikaMood: String, CaseIterable, Identifiable {
     }
 
     /// Les humeurs qui bouclent : l'attente d'une génération, et elle seule. Les autres se
-    /// jouent une fois, puis Mika reste sur sa dernière image.
+    /// jouent une fois, puis Mika revient à sa pose de repos, fixe (`restStill`).
     var loops: Bool {
         switch self {
         case .think, .write: true
@@ -119,6 +119,20 @@ enum MikaMood: String, CaseIterable, Identifiable {
         case .surprise, .wink, .shake: 1.5
         case .celebrate: 2.67
         case .appear: 1.33
+        }
+    }
+
+    /// **La pose où commence et finit son animation** : le repos pour les gestes, sa propre
+    /// pose pour la tristesse, le sommeil, l'attente. Un Mika qui va jouer, ou qui a joué,
+    /// montre celle-ci : l'image fixe et l'animation se relaient sans saut.
+    var restStill: MikaStill {
+        switch self {
+        case .sad: .sad
+        case .sleep: .sleep
+        case .think: .think
+        case .write: .write
+        case .idle, .shake: still
+        default: .neutral
         }
     }
 
@@ -232,7 +246,7 @@ struct MikaPlacement: Equatable {
 /// Fixe — la pose de son humeur — quand l'animation n'a pas sa place : `frozenAt` donné (les
 /// rendus), `animates` faux, « Réduire les animations », `\.mikaStill`, moins de 64 points,
 /// sous XCTest. Sinon il joue son humeur **une fois** en arrivant, puis à chaque changement
-/// d'humeur, et reste sur sa dernière image ; la réflexion et l'écriture bouclent. Un appui,
+/// d'humeur, puis revient à sa pose de repos, fixe ; la réflexion et l'écriture bouclent. Un appui,
 /// si `reactsToTap`, lui fait un saut de joie. `onDone` arrive à la fin d'une humeur jouée une
 /// fois (fixe : après sa durée).
 ///
@@ -444,7 +458,8 @@ struct MikaAvatar: View {
 // MARK: - Le cœur : la pose, l'animation, le temps
 
 /// La pose fixe, et par-dessus, quand l'animation a sa place, le lecteur Core Animation. La
-/// pose s'efface dès que le lecteur montre sa première image et revient quand il se vide.
+/// pose s'efface dès que le lecteur montre sa première image et revient, nette, quand il se
+/// vide à la fin de la lecture.
 private struct MikaCore: View {
     let mood: MikaMood
     let placement: MikaPlacement
@@ -480,7 +495,7 @@ private struct MikaCore: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            still(shown.still)
+            still(isAnimated && shown.clip != nil ? shown.restStill : shown.still)
                 .opacity(showsPlayer ? 0 : 1)
             if isAnimated {
                 MikaPlayer(request: request, placement: placement) { event in
@@ -541,7 +556,7 @@ private struct MikaCore: View {
         }
     }
 
-    /// La fin d'une lecture « une fois ». La dernière image reste : Mika est revenu à sa pose.
+    /// La fin d'une lecture « une fois » : Mika est revenu à sa pose de repos.
     private func finish(_ played: MikaMood) {
         if let reaction, played == reaction {
             self.reaction = nil
@@ -752,7 +767,7 @@ enum MikaClipStore {
 }
 
 /// **La scène** : un seul Mika animé à la fois dans l'app. Le dernier qui commence à jouer
-/// arrête le précédent, qui reste sur sa dernière image.
+/// arrête le précédent, qui revient à sa pose fixe.
 final class MikaStage {
     static let shared = MikaStage()
 
@@ -827,6 +842,8 @@ final class MikaPlayerView: UIView, CAAnimationDelegate {
     private var rect: CGRect?
     private var playing: (frames: MikaFrames, loops: Bool, mood: MikaMood)?
     private var pending: (frames: MikaFrames, request: MikaPlayRequest)?
+    /// Une attente coupée par l'arrière-plan ou un changement d'écran.
+    private var resumable: (frames: MikaFrames, mood: MikaMood)?
     private var delayTask: DispatchWorkItem?
 
     override init(frame: CGRect) {
@@ -838,6 +855,7 @@ final class MikaPlayerView: UIView, CAAnimationDelegate {
         figure.actions = ["contents": NSNull(), "bounds": NSNull(), "position": NSNull()]
         layer.addSublayer(figure)
         NotificationCenter.default.addObserver(self, selector: #selector(background), name: UIApplication.didEnterBackgroundNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(foreground), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
 
     @available(*, unavailable)
@@ -850,9 +868,12 @@ final class MikaPlayerView: UIView, CAAnimationDelegate {
     /// Une animation tourne sur ce lecteur.
     var isPlaying: Bool { playing != nil }
 
+    /// La finesse des images d'une animation : 2 pixels par point au plus, même sur un écran
+    /// 3x. En mouvement, l'œil ne voit pas la différence ; la mémoire et le décodage sont plus
+    /// de deux fois plus légers. Au repos, c'est la pose fixe, nette, qui revient.
     private var pixelsPerUnit: CGFloat {
         let scale = traitCollection.displayScale > 0 ? traitCollection.displayScale : 3
-        return placement.scale * scale
+        return placement.scale * min(scale, 2)
     }
 
     func apply(_ request: MikaPlayRequest?) {
@@ -860,6 +881,7 @@ final class MikaPlayerView: UIView, CAAnimationDelegate {
             guard take != nil else { return }
             take = nil
             token += 1
+            resumable = nil
             stop()
             figure.contents = nil
             onEvent?(.showing(false))
@@ -868,6 +890,7 @@ final class MikaPlayerView: UIView, CAAnimationDelegate {
         guard request.take != take else { return }
         take = request.take
         token += 1
+        resumable = nil
         let token = token
         delayTask?.cancel()
         MikaClipStore.load(request.clip, pixelsPerUnit: pixelsPerUnit) { [weak self] frames in
@@ -920,30 +943,50 @@ final class MikaPlayerView: UIView, CAAnimationDelegate {
         onEvent?(.showing(true))
     }
 
-    /// Arrête la lecture : Mika reste sur l'image du modèle (la dernière, ou la première d'une
-    /// boucle), et la mémoire des autres images est rendue au cache.
-    func stop() {
+    /// Arrête la lecture. `resumes` : une attente (la réflexion, l'écriture) reprendra quand
+    /// la vue revient à l'écran ou l'app au premier plan.
+    func stop(resumes: Bool = false) {
         delayTask?.cancel()
         pending = nil
-        guard playing != nil else { return }
+        guard let playing else { return }
+        if resumes, playing.loops {
+            resumable = (playing.frames, playing.mood)
+        }
         figure.removeAnimation(forKey: "mika")
     }
 
+    /// **La fin d'une lecture** : le lecteur se vide et rend ses images au cache ; la pose
+    /// fixe de repos, nette, reprend sa place (`MikaMood.restStill`).
     func animationDidStop(_ anim: CAAnimation, finished flag: Bool) {
         guard let playing, (anim.value(forKey: "mikaID") as? Int) == animationID else { return }
         self.playing = nil
         MikaStage.shared.end(self)
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        figure.contents = nil
+        CATransaction.commit()
+        onEvent?(.showing(false))
         if !playing.loops { onEvent?(.finished(playing.mood)) }
     }
 
-    @objc private func background() { stop() }
+    @objc private func background() { stop(resumes: true) }
+
+    @objc private func foreground() { resume() }
+
+    private func resume() {
+        guard let resumable, window != nil, playing == nil else { return }
+        self.resumable = nil
+        play(resumable.frames, loops: true, mood: resumable.mood)
+    }
 
     override func didMoveToWindow() {
         super.didMoveToWindow()
         if window == nil {
-            stop()
+            stop(resumes: true)
         } else if let pending {
             start(pending.frames, request: pending.request, token: token)
+        } else {
+            resume()
         }
     }
 

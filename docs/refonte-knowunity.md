@@ -237,11 +237,12 @@ règle, écrite aussi en tête de `MikaMascot.swift` :
   halo de nuit était un flou recalculé ; Home ajoutait un flottement `repeatForever` et un
   coucou toutes les 14 secondes ; le lancement lisait les seize fichiers sur le fil principal.
 - **Maintenant** : Mika est **fixe** la plupart du temps (une image du catalogue). Une
-  animation se prépare **une fois, hors du fil principal**, à la taille où elle s'affiche,
-  sous un budget de 14 Mo (au-delà : 12 images par seconde, puis plus petit), et reste dans un
+  animation se prépare **une fois, hors du fil principal**, à la taille où elle s'affiche
+  (2 pixels par point au plus : en mouvement, l'œil ne voit pas la différence), sous un budget de 14 Mo (au-delà : 12 images par seconde, puis plus petit), et reste dans un
   `NSCache` vidé si la mémoire manque. **Core Animation la joue** (`CAKeyframeAnimation` sur
   `contents`) dans une vue sans taille propre : aucun calcul par image sur le fil principal.
-  Elle se joue **une fois** (l'arrivée, une réponse, une réussite) ; seules la réflexion et
+  Elle se joue **une fois** (l'arrivée, une réponse, une réussite), puis le lecteur se vide et la
+  pose de repos, nette, revient (`MikaMood.restStill`) ; seules la réflexion et
   l'écriture bouclent, le temps d'une génération. **Un seul Mika joue à la fois** dans l'app
   (`MikaStage`) ; quitter l'écran ou passer en arrière-plan arrête la lecture ; « Réduire les
   animations », `\.mikaStill` et moins de 64 points : fixe.
