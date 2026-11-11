@@ -76,27 +76,28 @@ final class AuditFixesTests: XCTestCase {
         }
     }
 
-    // MARK: - Aucun rappel de fin d'essai
+    // MARK: - Le rappel de fin d'essai, tenu
 
-    /// L'app n'envoie aucun rappel de fin d'essai : aucune phrase de l'accueil ne doit en
-    /// promettre un, dans aucune langue.
-    func testTheTrialScreensPromiseNoReminder() {
-        let keys = ["ios.trialReminder", "ios.trialDay2", "ios.trialDay2Detail"]
-        let promises = ["rappel", "notification", "reminder", "erinnerung", "mitteilung", "recordatorio", "aviso", "hatırlatma", "bildirim"]
-        for locale in [UiLocale.fr, .en, .de, .es, .tr] {
+    /// **Le rappel de fin d'essai est promis parce qu'il est posé** (parcours v2,
+    /// `TrialEndReminder`) : la chronologie le promet quand les notifications sont permises,
+    /// et dit comment l'avoir sinon ; un essai de trois jours a bien sa veille, et la
+    /// notification parle dans chaque langue.
+    func testTheTrialReminderIsPromisedOnlyBecauseItIsScheduled() throws {
+        let start = Date(timeIntervalSince1970: 1_800_000_000)
+        XCTAssertNotNil(TrialEndReminder.fireDate(purchasedAt: start, trialDays: TrialTimeline.freeDays))
+        for locale in UiLocale.allCases {
             let table = IosI18nCatalogs.table(for: locale.rawValue)
-            for key in keys {
-                let text = (table[key] ?? "").lowercased()
-                XCTAssertFalse(text.isEmpty, "\(locale.rawValue) \(key)")
-                for word in promises {
-                    XCTAssertFalse(text.contains(word), "\(locale.rawValue) \(key) promet encore : \(word)")
-                }
+            for key in ["ios.onb5.trial.reminderDetail", "ios.onb5.trial.reminderOff",
+                        "ios.onb5.reminder.title", "ios.onb5.reminder.body"] {
+                XCTAssertFalse((table[key] ?? "").isEmpty, "\(locale.rawValue) \(key)")
             }
-            XCTAssertNil(table["ios.trialReminder.cardTitle"], locale.rawValue)
+            let on = TrialTimeline.milestones(locale: locale, remindersOn: true)
+            let off = TrialTimeline.milestones(locale: locale, remindersOn: false)
+            XCTAssertNotEqual(on[1].detail, off[1].detail, locale.rawValue)
         }
-        let french = L10n.t("ios.trialReminder", locale: .fr, vars: ["n": "3", "price": "49,99 €"])
-        XCTAssertTrue(french.contains("49,99 €"))
-        XCTAssertTrue(french.contains("3 jours"))
+        // L'ancienne carte du rappel, qui montrait une notification jamais envoyée, ne
+        // revient pas.
+        XCTAssertNil(IosI18nCatalogs.table(for: "fr")["ios.trialReminder.cardTitle"])
     }
 
     // MARK: - La réclamation de l'invité
