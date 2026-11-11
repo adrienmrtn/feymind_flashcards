@@ -277,7 +277,7 @@ struct QuizScoreView: View {
     var body: some View {
         VStack(spacing: 18) {
             Spacer()
-            MikaMascot(mood: ratio >= 0.8 ? .celebrate : ratio >= 0.5 ? .happy : .think, size: 128)
+            MikaMascot(mood: ratio >= 0.8 ? .celebrate : ratio >= 0.5 ? .happy : .wink, size: 128)
             ZStack {
                 Circle().stroke(MicaboColor.track, lineWidth: 14)
                 Circle()

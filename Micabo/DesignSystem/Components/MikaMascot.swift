@@ -61,7 +61,7 @@ import UIKit
 /// Chacune a une pose fixe (`Mika-<pose>` dans le catalogue) et, sauf le repos et le « non »,
 /// une animation (`Resources/Mika/mika-<nom>.mov`).
 enum MikaMood: String, CaseIterable, Identifiable {
-    /// Au repos. Toujours fixe.
+    /// Au repos : son sourire, les yeux plissés. Toujours fixe.
     case idle
     /// Coucou : il salue d'un tentacule. Accueil, premier lancement.
     case wave
@@ -145,7 +145,9 @@ enum MikaMood: String, CaseIterable, Identifiable {
     /// les animations », petit Mika).
     var still: MikaStill {
         switch self {
-        case .idle, .appear, .look: .neutral
+        // Au repos, il sourit : jamais un regard vide.
+        case .idle: .smile
+        case .appear, .look: .neutral
         case .wave: .wave
         // La fête, fixe, est un grand sourire debout : la pose du saut est en l'air.
         case .happy, .celebrate: .smile
@@ -396,6 +398,8 @@ struct MikaPeek: View {
     static let window = CGRect(x: 99, y: 174, width: 312, height: 260)
     /// L'air au-dessus de lui pour un saut, en unités du canevas.
     static let headroom: CGFloat = 130
+    /// Ce que sa lueur déborde sur les côtés, en unités du canevas.
+    static let bleed: CGFloat = 48
 
     static func height(for width: CGFloat) -> CGFloat { width * window.height / window.width }
 
@@ -432,7 +436,10 @@ struct MikaPeek: View {
             .offset(y: risen || !moves ? 0 : height * 0.92)
         }
         .frame(width: width, height: height + air, alignment: .bottom)
-        .clipped()
+        // Coupé net en bas, par son bord ; sur les côtés, sa lueur déborde librement.
+        .mask(alignment: .bottom) {
+            Rectangle().frame(width: width + Self.bleed * scale * 2, height: height + air)
+        }
         .frame(width: width, height: height, alignment: .bottom)
         .onAppear {
             guard moves, !risen else { return }

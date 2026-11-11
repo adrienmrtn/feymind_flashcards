@@ -10,6 +10,10 @@ import XCTest
 /// hors du fil principal, une fois ; elle se décode avec sa transparence ; un seul Mika joue
 /// à la fois.
 final class MikaMascotTests: XCTestCase {
+    /// Les mesures du lecteur à l'écran, reprises dans le rendu `mika-perf` (qui passe après :
+    /// les tests d'une classe tournent dans l'ordre alphabétique).
+    static var playerLines: [String] = []
+
     override func setUp() {
         super.setUp()
         MikaClipStore.purge()
@@ -29,7 +33,9 @@ final class MikaMascotTests: XCTestCase {
             XCTAssertEqual(clip.samples.count, info.frames, "\(name) : images")
             let format = try XCTUnwrap(CMSampleBufferGetFormatDescription(clip.samples[0]))
             let size = CMVideoFormatDescriptionGetDimensions(format)
-            XCTAssertEqual(CMFormatDescriptionGetMediaSubType(format), kCMVideoCodecType_HEVCWithAlpha, "\(name) : HEVC avec alpha")
+            // Le fichier dit « hvc1 » ; la transparence se vérifie au décodage
+            // (`testVideosDecodeWithAlphaAndFast`).
+            XCTAssertEqual(CMFormatDescriptionGetMediaSubType(format), kCMVideoCodecType_HEVC, "\(name) : HEVC")
             XCTAssertEqual(Int(size.width), Int((info.rect.width * MikaArt.pixelsPerUnit).rounded()), "\(name) : largeur")
             XCTAssertEqual(Int(size.height), Int((info.rect.height * MikaArt.pixelsPerUnit).rounded()), "\(name) : hauteur")
             if let mood = MikaMood.allCases.first(where: { $0.clip == name }) {
@@ -80,6 +86,9 @@ final class MikaMascotTests: XCTestCase {
         var totalRead = 0.0, totalDecode = 0.0, totalFrames = 0, totalBytes = 0
         var shots: [(String, [CGImage])] = []
         for name in MikaClipStore.warmOrder {
+            let cold = CFAbsoluteTimeGetCurrent()
+            _ = try XCTUnwrap(readOffMain(name))
+            let first = (CFAbsoluteTimeGetCurrent() - cold) * 1000
             let start = CFAbsoluteTimeGetCurrent()
             let clip = try XCTUnwrap(readOffMain(name))
             let read = (CFAbsoluteTimeGetCurrent() - start) * 1000
@@ -93,11 +102,12 @@ final class MikaMascotTests: XCTestCase {
             totalFrames += decoded.count
             totalBytes += clip.bytes
             shots.append((name, decoded.images))
-            lines.append(String(format: "%@ : %d images, %d Ko compressés, lue en %.1f ms, décodée %.2f ms/image",
-                                name, clip.samples.count, clip.bytes / 1024, read, decoded.milliseconds / Double(decoded.count)))
+            lines.append(String(format: "%@ : %d images, %d Ko, lue %.0f ms (1re fois %.0f), décodée %.1f ms/image",
+                                name, clip.samples.count, clip.bytes / 1024, read, first, decoded.milliseconds / Double(decoded.count)))
         }
-        lines.append(String(format: "Total : %d images, %d Ko en mémoire, lecture %.0f ms (une fois, en tâche de fond), décodage %.2f ms/image (budget d'une image à 24 i/s : 41,7 ms)",
+        lines.append(String(format: "Total : %d images, %d Ko en mémoire, lecture %.0f ms (une fois, en tâche de fond), décodage %.1f ms/image (budget d'une image à 24 i/s : 41,7 ms)",
                             totalFrames, totalBytes / 1024, totalRead, totalDecode / Double(totalFrames)))
+        lines.append(contentsOf: Self.playerLines)
         lines.forEach { print("MIKA-PERF \($0)") }
         guard RenderGallery.directory != nil else { return }
         do {
@@ -170,7 +180,9 @@ final class MikaMascotTests: XCTestCase {
         player.apply(MikaPlayRequest(clip: "coucou", loops: false, take: 1, mood: .wave))
         try waitUntil("le coucou ne démarre pas") { started }
         let latency = try XCTUnwrap(MikaPerf.startLatencies.dropFirst(before).first)
-        print(String(format: "MIKA-PERF démarrage %.0f ms (dont %.0f ms laissés au décodeur)", latency * 1000, MikaPlayerView.decodeLead * 1000))
+        let line = String(format: "Lecteur : du geste demandé à la première image qui bouge, %.0f ms (dont %.0f ms laissés au décodeur)", latency * 1000, MikaPlayerView.decodeLead * 1000)
+        print("MIKA-PERF \(line)")
+        Self.playerLines.append(line)
         XCTAssertLessThan(latency, 0.25, "le coucou met trop longtemps à démarrer")
         // Au milieu du geste.
         RunLoop.main.run(until: Date().addingTimeInterval(0.9))

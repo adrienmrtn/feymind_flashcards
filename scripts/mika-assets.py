@@ -65,7 +65,7 @@ CANVAS = 512            # le canevas du kit, en unités
 SCALE = 1.5             # pixels par unité : poses, premières images et vidéos
 PAD = 2                 # unités d'air autour de Mika (en plus de la lueur)
 # L'avatar : un carré du canevas autour de son visage (la tête, les yeux, le haut du crayon).
-HEAD = (138, 200, 374, 436)
+HEAD = (118, 182, 394, 458)
 HEAD_POSE = "sourire"
 HEAD_PIXELS = 216
 

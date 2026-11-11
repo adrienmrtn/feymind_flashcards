@@ -89,7 +89,7 @@ struct LessonCreationFlow: View {
         VStack(spacing: 0) {
             closeBar
             Spacer()
-            MikaMascot(mood: .think, size: 120)
+            MikaMascot(mood: .wink, size: 120)
             Text(L10n.t("lesson.create.examQuestion", locale: .resolved()))
                 .font(MicaboFont.title)
                 .foregroundStyle(MicaboColor.ink)
