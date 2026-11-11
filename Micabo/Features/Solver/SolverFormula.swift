@@ -67,6 +67,10 @@ struct SolverFormula: View {
         format.scale = scale
         format.opaque = false
         let image = UIGraphicsImageRenderer(size: bounds.size, format: format).image { context in
+            // Le label compose dans le repère de Core Text, tête en bas une fois rendu hors
+            // d'une fenêtre : on retourne le contexte.
+            context.cgContext.translateBy(x: 0, y: bounds.height)
+            context.cgContext.scaleBy(x: 1, y: -1)
             label.layer.render(in: context.cgContext)
         }
         cache.setObject(image, forKey: key)
