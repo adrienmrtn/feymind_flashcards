@@ -26,7 +26,7 @@ final class LessonSpeaker: NSObject, AVSpeechSynthesizerDelegate {
     private(set) var finished = false
     private(set) var rate: Double = 1
 
-    @ObservationIgnored private let synthesizer = AVSpeechSynthesizer()
+    private let synthesizer = AVSpeechSynthesizer()
     @ObservationIgnored private var voice: AVSpeechSynthesisVoice?
     /// L'énoncé en cours : un énoncé annulé (changement de vitesse, de chapitre) ne doit pas
     /// faire avancer la lecture en finissant.

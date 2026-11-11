@@ -24,8 +24,8 @@ final class VoiceRecallListener {
     /// Le niveau du micro, de 0 à 1, pour l'onde.
     private(set) var level: Double = 0
 
-    @ObservationIgnored private let recognizer: SFSpeechRecognizer?
-    @ObservationIgnored private let engine = AVAudioEngine()
+    private let recognizer: SFSpeechRecognizer?
+    private let engine = AVAudioEngine()
     @ObservationIgnored private var request: SFSpeechAudioBufferRecognitionRequest?
     @ObservationIgnored private var task: SFSpeechRecognitionTask?
     @ObservationIgnored private var silence: Task<Void, Never>?
