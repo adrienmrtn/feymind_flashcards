@@ -22,9 +22,14 @@ enum OnDeviceOCR {
                     let lines = observations.compactMap { $0.topCandidates(1).first?.string }
                     continuation.resume(returning: lines.joined(separator: "\n"))
                 }
+                // **Le mode précis lit aussi l'écriture à la main** (Vision, iOS 14 et plus) : des
+                // notes manuscrites passent par le même chemin que les photos de cours. La langue
+                // de l'élève d'abord, l'anglais ensuite, et la détection automatique pour le reste :
+                // avec le seul français, un cahier allemand ou espagnol se lisait mot à mot de travers.
                 request.recognitionLevel = .accurate
                 request.usesLanguageCorrection = true
-                request.recognitionLanguages = ["fr-FR", "en-US"]
+                request.recognitionLanguages = recognitionLanguages(for: request)
+                request.automaticallyDetectsLanguage = true
 
                 let handler = VNImageRequestHandler(cgImage: cgImage, orientation: .up)
                 do {
@@ -34,6 +39,31 @@ enum OnDeviceOCR {
                 }
             }
         }
+    }
+
+    /// **Les langues que Vision lit**, dans l'ordre : celle des cours de l'élève, l'anglais, le
+    /// français. Seules celles que cette version de Vision connaît sont gardées : une langue
+    /// inconnue fait échouer toute la requête.
+    static func recognitionLanguages(for request: VNRecognizeTextRequest) -> [String] {
+        let wanted = preferredRecognitionLanguages(content: OnboardingPreferences.contentLanguage)
+        guard let supported = try? request.supportedRecognitionLanguages() else { return ["fr-FR", "en-US"] }
+        var kept: [String] = []
+        for language in wanted {
+            let base = String(language.prefix(2))
+            let match = supported.contains(language) ? language : supported.first { $0.hasPrefix(base + "-") || $0 == base }
+            if let match, !kept.contains(match) { kept.append(match) }
+        }
+        return kept.isEmpty ? ["en-US"] : kept
+    }
+
+    /// La langue des cours en tête, puis l'anglais et le français, sans doublon.
+    static func preferredRecognitionLanguages(content: ContentLanguage) -> [String] {
+        let first = AudioTranscriber.locale(for: content).identifier.replacingOccurrences(of: "_", with: "-")
+        var languages: [String] = []
+        for language in [first, "en-US", "fr-FR"] where !languages.contains(language) {
+            languages.append(language)
+        }
+        return languages
     }
 
     /// Réduit les photos 12 Mpx et fige l'orientation EXIF avant Vision.

@@ -2,5 +2,5 @@
 
 "NSCameraUsageDescription" = "A Micabo a kamerát a kurzusoldalaid szkenneléséhez használja.";
 "NSPhotoLibraryUsageDescription" = "A Micabo hozzáfér a fotóidhoz, hogy kurzust vagy ábrát importálhass.";
-"NSMicrophoneUsageDescription" = "A Micabo a mikrofont óra vagy hangjegyzet felvételéhez használja, hogy leckét készítsen belőle.";
-"NSSpeechRecognitionUsageDescription" = "A Micabo a telefonodon írja át a felvételeidet, hogy leckét készítsen belőlük.";
+"NSMicrophoneUsageDescription" = "A Micabo a mikrofonnal órát vagy hangjegyzetet vesz fel, és meghallgatja a hangosan adott válaszaidat.";
+"NSSpeechRecognitionUsageDescription" = "A Micabo a telefonodon írja le a felvételeidet és a hangosan adott válaszaidat.";

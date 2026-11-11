@@ -12,5 +12,5 @@
 
 "NSCameraUsageDescription" = "Micabo, ders sayfalarını taramak için kamerayı kullanır.";
 "NSPhotoLibraryUsageDescription" = "Micabo, bir ders ya da şema içe aktarmak için fotoğraflarına erişir.";
-"NSMicrophoneUsageDescription" = "Micabo, bir dersi veya sesli notu kaydedip derse dönüştürmek için mikrofonu kullanır.";
-"NSSpeechRecognitionUsageDescription" = "Micabo, kayıtlarını derse dönüştürmek için telefonunda yazıya döker.";
+"NSMicrophoneUsageDescription" = "Micabo mikrofonu bir dersi veya sesli notu kaydetmek ve sesli cevaplarını duymak için kullanır.";
+"NSSpeechRecognitionUsageDescription" = "Micabo kayıtlarını ve sesli cevaplarını telefonunda yazıya döker.";

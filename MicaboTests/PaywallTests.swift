@@ -166,14 +166,36 @@ final class PaywallTests: XCTestCase {
         XCTAssertTrue(PaywallCatalog.yearly.hasTrial)
     }
 
-    /// Quatre étapes, et une seule est « aujourd'hui » : une chronologie qui aurait deux
-    /// présents ne se lirait plus comme une chronologie.
-    func testTheTimelineRunsFromTheAccountToTheFirstCharge() {
+    /// Trois étapes — aujourd'hui, le rappel, le premier prélèvement —, et une seule est
+    /// « aujourd'hui » : une chronologie qui aurait deux présents ne se lirait plus comme une
+    /// chronologie. Le rappel tombe la veille de la fin.
+    func testTheTimelineRunsFromTodayToTheFirstCharge() {
         let milestones = TrialTimeline.milestones()
 
-        XCTAssertEqual(milestones.count, 4)
-        XCTAssertEqual(milestones.map(\.tone), [.done, .current, .upcoming, .upcoming])
+        XCTAssertEqual(milestones.count, 3)
+        XCTAssertEqual(milestones.map(\.tone), [.current, .upcoming, .upcoming])
         XCTAssertEqual(Set(milestones.map(\.id)).count, milestones.count, "Deux étapes ne peuvent pas porter le même libellé")
+        XCTAssertEqual(TrialTimeline.reminderDay, TrialTimeline.freeDays - 1)
+        XCTAssertTrue(milestones[1].title.contains("\(TrialTimeline.reminderDay)"))
+
+        // Sans notifications, l'étape du rappel dit comment l'avoir, au lieu de le promettre.
+        let off = TrialTimeline.milestones(remindersOn: false)
+        XCTAssertNotEqual(off[1].detail, milestones[1].detail)
+    }
+
+    /// **Le rappel de fin d'essai part la veille de la fin**, à l'heure de l'achat ; un essai
+    /// d'un jour n'a pas de veille.
+    func testTheTrialReminderFiresTheDayBeforeTheEnd() throws {
+        let start = try XCTUnwrap(ISO8601DateFormatter().date(from: "2026-11-11T18:30:00Z"))
+        let fire = try XCTUnwrap(TrialEndReminder.fireDate(purchasedAt: start, trialDays: 3))
+        XCTAssertEqual(fire.timeIntervalSince(start), 2 * 86_400, accuracy: 1)
+        XCTAssertNil(TrialEndReminder.fireDate(purchasedAt: start, trialDays: 1))
+        XCTAssertNil(TrialEndReminder.fireDate(purchasedAt: start, trialDays: 0))
+        for locale in UiLocale.allCases {
+            let text = TrialEndReminder.content(locale: locale)
+            XCTAssertFalse(text.title.hasPrefix("ios."), locale.rawValue)
+            XCTAssertFalse(text.body.hasPrefix("ios."), locale.rawValue)
+        }
     }
 
     /// La dernière étape dit la date du premier prélèvement, et elle la dit juste : c'est

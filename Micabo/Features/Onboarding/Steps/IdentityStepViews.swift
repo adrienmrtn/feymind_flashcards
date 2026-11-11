@@ -20,7 +20,7 @@ struct NameStepView: View {
         @Bindable var model = model
 
         return OnboardingScaffold(
-            title: i18n.t("ios.onb.name")
+            title: i18n.t("ios.onb5.q.name")
         ) {
             HStack(spacing: 10) {
                 TextField(i18n.t("ios.onb.name.placeholder"), text: $model.displayName)
@@ -90,6 +90,7 @@ struct WelcomeStepView: View {
     @State private var titleRead = false
     @State private var isReady = false
     @State private var mikaShown = false
+    @Environment(\.onboardingStill) private var still
 
     private var name: String {
         model.displayName.nilIfBlank ?? OnboardingPreferences.displayName ?? ""
@@ -101,9 +102,17 @@ struct WelcomeStepView: View {
                 Spacer(minLength: 0)
 
                 // Mika accueille : il arrive en ressort et fait coucou, au-dessus du prénom.
-                MikaMascot(mood: .wave, size: 150, reactsToTap: true, frame: .rounded)
-                    .scaleEffect(mikaShown ? 1 : 0.4)
-                    .opacity(mikaShown ? 1 : 0)
+                // Mika accueille sur le papier de l'app, posé sur sa ligne : le buste coupé
+                // par elle, comme sur les questions qui suivent (plus de pastille bleue).
+                VStack(spacing: 0) {
+                    MikaMascot(mood: .wave, size: 170, reactsToTap: true, frozenAt: still ? 0 : nil, backdrop: .surface)
+                        .frame(width: 170, height: 170 * 0.74, alignment: .bottom)
+                    Capsule()
+                        .fill(MicaboColor.stroke)
+                        .frame(width: 220, height: 2)
+                }
+                    .scaleEffect(mikaShown || still ? 1 : 0.4, anchor: .bottom)
+                    .opacity(mikaShown || still ? 1 : 0)
                     .padding(.bottom, MicaboSpacing.lg)
                     .accessibilityHidden(true)
                     .onAppear {
@@ -111,7 +120,7 @@ struct WelcomeStepView: View {
                     }
 
                 OnboardingReadingText(
-                    template: i18n.t("ios.onb.welcome.title", ["name": name]),
+                    template: i18n.t("ios.onb5.welcome.title", ["name": name]),
                     size: 38,
                     wordDelay: 0.22,
                     startDelay: 0.55,
@@ -122,7 +131,7 @@ struct WelcomeStepView: View {
 
                 if titleRead {
                     OnboardingReadingText(
-                        template: i18n.t("ios.onb.welcome.sub"),
+                        template: i18n.t("ios.onb5.welcome.sub"),
                         size: 22,
                         wordDelay: 0.14,
                         startDelay: 0.25,
@@ -172,7 +181,7 @@ struct SchoolTypeStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n.t("ios.onb.schoolType")
+            title: i18n.t("ios.onb5.q.schoolType")
         ) {
             VStack(spacing: 10) {
                 ForEach(Array(model.tracks.enumerated()), id: \.element.id) { rank, track in
@@ -207,8 +216,7 @@ struct SchoolYearStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n.t("ios.onb.year"),
-            subtitle: model.track?.title
+            title: i18n.t("ios.onb5.q.year")
         ) {
             VStack(spacing: 10) {
                 ForEach(Array(years.enumerated()), id: \.element.id) { rank, year in

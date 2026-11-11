@@ -2,30 +2,50 @@ import PhotosUI
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// **Les cinq imports de Home**, et ce qu'ils lisent. Un appui sur une icône pose
-/// `request` ; ce modificateur ouvre le bon sélecteur, lit le support sur l'appareil et le
+/// **Les supports de Home**, et ce qu'ils lisent (`docs/supports.md`). Un appui sur une tuile
+/// pose `request` ; ce modificateur ouvre le bon sélecteur, lit le support sur l'appareil et le
 /// dépose dans le `LessonComposer`, sur une pastille qui dit où il en est.
 ///
-/// - PDF : un PDF ou un Word (`.docx`), texte puis OCR si la page est une image.
+/// - PDF : un PDF ou un Word (`.docx`), texte puis OCR si la page est une image ; un `.pptx`
+///   déposé ici passe par les diapositives.
+/// - Diapos : un PowerPoint (`.pptx`), le texte de chaque diapo et ses notes (`SlidesImportService`).
 /// - Photo : l'appareil (scan de document) ou la photothèque, OCR sur l'appareil.
-/// - Audio : un fichier ou un enregistrement, transcrit sur l'appareil (`AudioTranscriber`).
+/// - Notes manuscrites : le scanner d'abord, puis le même OCR, en mode précis (`OnDeviceOCR`).
+/// - Page web : un lien, la page récupérée et nettoyée sur l'appareil (`WebPageImportService`).
 /// - YouTube : un lien, sous-titres puis repli serveur (`YouTubeImportService`).
+/// - Cours en direct : l'enregistreur, puis la transcription sur l'appareil (`AudioTranscriber`).
+/// - Audio : un enregistrement ou un fichier, transcrit de même.
 /// - Texte : un texte collé.
+/// - Flashcards : un paquet Anki ou un copier-coller Quizlet, qui devient un deck tout de suite,
+///   sans génération (`DeckLessonBuilder`) ; le deck s'ouvre ensuite par-dessus Home.
 struct LessonImportPickers: ViewModifier {
     let composer: LessonComposer
     @Binding var request: LessonComposer.Kind?
 
     private enum FileTarget {
         case document
+        case slides
         case audio
 
         var types: [UTType] {
             switch self {
             case .document:
-                [.pdf, UTType("org.openxmlformats.wordprocessingml.document") ?? .data]
+                [.pdf, UTType("org.openxmlformats.wordprocessingml.document") ?? .data] + Self.slideTypes
+            case .slides:
+                Self.slideTypes
             case .audio:
                 [.audio, .mpeg4Audio, .mp3, .wav]
             }
+        }
+
+        /// PowerPoint, et Keynote ou l'ancien `.ppt` pour leur dire comment les exporter.
+        static var slideTypes: [UTType] {
+            [
+                UTType("org.openxmlformats.presentationml.presentation"),
+                UTType("com.microsoft.powerpoint.ppt"),
+                UTType("com.apple.iwork.keynote.key"),
+                UTType("com.apple.keynote.key"),
+            ].compactMap { $0 }
         }
     }
 
@@ -34,11 +54,19 @@ struct LessonImportPickers: ViewModifier {
     @State private var showPhotoChoice = false
     @State private var showPhotoPicker = false
     @State private var photoItems: [PhotosPickerItem] = []
+    /// La pastille que prennent les images choisies : des photos de cours ou des notes manuscrites.
+    @State private var imageKind: LessonComposer.Kind = .photo
     @State private var showScanner = false
     @State private var showAudioChoice = false
     @State private var showRecorder = false
+    /// La pastille d'un enregistrement : un cours en direct ou une note vocale.
+    @State private var recordingKind: LessonComposer.Kind = .audio
     @State private var showLink = false
+    @State private var showWeb = false
     @State private var showText = false
+    @State private var showFlashcards = false
+    /// Le deck tout juste créé depuis des flashcards, ouvert par-dessus Home.
+    @State private var openedDeck: Course?
 
     private let youtube = YouTubeImportService()
     /// Le paywall de l'import, quand le serveur refuse de lire une vidéo (`import_pro`).
@@ -55,7 +83,7 @@ struct LessonImportPickers: ViewModifier {
             .fileImporter(isPresented: $showFiles, allowedContentTypes: fileTarget.types, allowsMultipleSelection: false) { result in
                 guard case .success(let urls) = result, let url = urls.first else { return }
                 switch fileTarget {
-                case .document: readDocument(url)
+                case .document, .slides: readDocument(url)
                 case .audio: readAudioFile(url)
                 }
             }
@@ -74,7 +102,10 @@ struct LessonImportPickers: ViewModifier {
                 Button(L10n.t("lesson.import.library", locale: .resolved())) { showPhotoPicker = true }
             }
             .confirmationDialog(L10n.t("lesson.import.audio", locale: .resolved()), isPresented: $showAudioChoice, titleVisibility: .hidden) {
-                Button(L10n.t("lesson.import.record", locale: .resolved())) { showRecorder = true }
+                Button(L10n.t("lesson.import.record", locale: .resolved())) {
+                    recordingKind = .audio
+                    showRecorder = true
+                }
                 Button(L10n.t("lesson.import.audioFile", locale: .resolved())) {
                     fileTarget = .audio
                     showFiles = true
@@ -96,11 +127,11 @@ struct LessonImportPickers: ViewModifier {
                 .ignoresSafeArea()
             }
             .sheet(isPresented: $showRecorder) {
-                VoiceRecorderSheet { url in
+                VoiceRecorderSheet(isLecture: recordingKind == .lecture) { url in
                     showRecorder = false
                     readRecording(url)
                 }
-                .presentationDetents([.height(420)])
+                .presentationDetents([.height(recordingKind == .lecture ? 470 : 420)])
                 .presentationDragIndicator(.visible)
                 .interactiveDismissDisabled()
             }
@@ -112,6 +143,14 @@ struct LessonImportPickers: ViewModifier {
                 .presentationDetents([.height(300)])
                 .presentationDragIndicator(.visible)
             }
+            .sheet(isPresented: $showWeb) {
+                WebLinkSheet { link in
+                    showWeb = false
+                    readWebPage(link)
+                }
+                .presentationDetents([.height(360), .medium])
+                .presentationDragIndicator(.visible)
+            }
             .sheet(isPresented: $showText) {
                 TextEntrySheet { text in
                     showText = false
@@ -120,9 +159,28 @@ struct LessonImportPickers: ViewModifier {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
             }
+            .sheet(isPresented: $showFlashcards) {
+                FlashcardImportSheet { deck in
+                    showFlashcards = false
+                    // Le temps que la feuille descende : deux présentations ne se croisent pas.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { openedDeck = deck }
+                }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+            }
+            .fullScreenCover(item: $openedDeck) { deck in
+                NavigationStack {
+                    LessonPathView(course: deck)
+                }
+            }
     }
 
     private func open(_ kind: LessonComposer.Kind) {
+        // Un paquet de flashcards ne prend pas de place sous la barre : il devient un deck.
+        if kind == .flashcards {
+            showFlashcards = true
+            return
+        }
         guard composer.hasRoom else {
             Haptics.warning()
             return
@@ -131,21 +189,43 @@ struct LessonImportPickers: ViewModifier {
         case .pdf:
             fileTarget = .document
             showFiles = true
-        case .photo:
+        case .slides:
+            fileTarget = .slides
+            showFiles = true
+        case .photo, .handwriting:
+            imageKind = kind
             // Une caméra refusée n'ouvre pas le scanner : VisionKit afficherait sa propre
             // impasse vers les Réglages, que l'App Store a déjà refusée (règle 5.1.1(iv)). On
-            // va droit à la photothèque.
+            // va droit à la photothèque. Des notes manuscrites se scannent d'abord : la page
+            // à plat et bien éclairée est ce qui fait lire l'écriture à la main.
             if DocumentCameraView.isSupported, CameraAccess.allowsScanner(CameraAccess.status) {
-                showPhotoChoice = true
+                if kind == .handwriting {
+                    Task {
+                        if await CameraAccess.request() {
+                            showScanner = true
+                        } else {
+                            showPhotoPicker = true
+                        }
+                    }
+                } else {
+                    showPhotoChoice = true
+                }
             } else {
                 showPhotoPicker = true
             }
         case .audio:
             showAudioChoice = true
+        case .lecture:
+            recordingKind = .lecture
+            showRecorder = true
         case .youtube:
             showLink = true
+        case .web:
+            showWeb = true
         case .text:
             showText = true
+        case .flashcards:
+            break
         }
     }
 
@@ -153,12 +233,19 @@ struct LessonImportPickers: ViewModifier {
 
     private func readDocument(_ url: URL) {
         let name = url.deletingPathExtension().lastPathComponent
-        guard let id = composer.begin(.pdf, title: name) else { return }
+        let fileExtension = url.pathExtension.lowercased()
+        let isSlides = ["pptx", "ppt", "pps", "key"].contains(fileExtension)
+        guard let id = composer.begin(isSlides ? .slides : .pdf, title: name) else { return }
         Task {
             do {
-                let document = url.pathExtension.lowercased() == "docx"
-                    ? try DocxImportService.extract(from: url)
-                    : try await PDFImportService.extractWithOCR(from: url)
+                let document: ImportedDocument
+                if isSlides {
+                    document = try SlidesImportService.extract(from: url)
+                } else if fileExtension == "docx" {
+                    document = try DocxImportService.extract(from: url)
+                } else {
+                    document = try await PDFImportService.extractWithOCR(from: url)
+                }
                 composer.finish(id, with: document)
             } catch {
                 composer.fail(id, message: error.localizedDescription)
@@ -166,8 +253,14 @@ struct LessonImportPickers: ViewModifier {
         }
     }
 
+    private var imageTitle: String {
+        imageKind == .handwriting
+            ? L10n.t("ios.sup.handwriting.name", locale: .resolved())
+            : L10n.t("lesson.import.photo", locale: .resolved())
+    }
+
     private func readPhotos(_ items: [PhotosPickerItem]) {
-        guard let id = composer.begin(.photo, title: L10n.t("lesson.import.photo", locale: .resolved())) else { return }
+        guard let id = composer.begin(imageKind, title: imageTitle) else { return }
         Task {
             var images: [UIImage] = []
             for item in items.prefix(OnDeviceOCR.pageLimit) {
@@ -181,13 +274,17 @@ struct LessonImportPickers: ViewModifier {
 
     private func readScanned(_ images: [UIImage]) {
         guard !images.isEmpty,
-              let id = composer.begin(.photo, title: L10n.t("lesson.import.photo", locale: .resolved())) else { return }
+              let id = composer.begin(imageKind, title: imageTitle) else { return }
         Task { await read(images, into: id) }
     }
 
     private func read(_ images: [UIImage], into id: UUID) async {
         do {
-            composer.finish(id, with: try await PhotoImportService.importImages(images))
+            var document = try await PhotoImportService.importImages(images)
+            if imageKind == .handwriting {
+                document.fileName = imageTitle
+            }
+            composer.finish(id, with: document)
         } catch {
             composer.fail(id, message: error.localizedDescription)
         }
@@ -210,15 +307,22 @@ struct LessonImportPickers: ViewModifier {
             }
             return
         }
-        transcribe(copy, title: name)
+        transcribe(copy, title: name, kind: .audio)
     }
 
     private func readRecording(_ url: URL) {
-        transcribe(url, title: L10n.t("lesson.import.recordingName", locale: .resolved()))
+        let lecture = recordingKind == .lecture
+        transcribe(
+            url,
+            title: lecture
+                ? L10n.t("ios.sup.lecture.name", locale: .resolved())
+                : L10n.t("lesson.import.recordingName", locale: .resolved()),
+            kind: lecture ? .lecture : .audio
+        )
     }
 
-    private func transcribe(_ url: URL, title: String) {
-        guard let id = composer.begin(.audio, title: title) else { return }
+    private func transcribe(_ url: URL, title: String, kind: LessonComposer.Kind) {
+        guard let id = composer.begin(kind, title: title) else { return }
         Task {
             defer { try? FileManager.default.removeItem(at: url) }
             do {
@@ -257,6 +361,24 @@ struct LessonImportPickers: ViewModifier {
                 // l'import s'ouvre, comme pour un PDF importé sans abonnement.
                 composer.fail(id, message: YouTubeImportError.importPro.localizedDescription)
                 paywall = .generateCourse
+            } catch {
+                composer.fail(id, message: error.localizedDescription)
+            }
+        }
+    }
+
+    /// Une page web. Un lien YouTube collé ici part par le support YouTube, qui lit les
+    /// sous-titres au lieu de la page du lecteur.
+    private func readWebPage(_ link: String) {
+        if YouTubeLink.isValid(link) {
+            readVideo(link)
+            return
+        }
+        let host = WebPageImportService.url(from: link)?.host?.replacingOccurrences(of: "www.", with: "")
+        guard let id = composer.begin(.web, title: host ?? L10n.t("ios.sup.source.web", locale: .resolved())) else { return }
+        Task {
+            do {
+                composer.finish(id, with: try await WebPageImportService.read(link))
             } catch {
                 composer.fail(id, message: error.localizedDescription)
             }
@@ -370,8 +492,10 @@ struct TextEntrySheet: View {
     }
 }
 
-/// Enregistrer un cours ou une note vocale.
+/// Enregistrer un cours ou une note vocale. Un cours en direct dit en plus où poser le
+/// téléphone : près du professeur, écran verrouillé s'il le faut.
 struct VoiceRecorderSheet: View {
+    var isLecture = false
     let onDone: (URL) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -379,10 +503,21 @@ struct VoiceRecorderSheet: View {
 
     var body: some View {
         VStack(spacing: 18) {
-            Text(L10n.t("lesson.import.recordTitle", locale: .resolved()))
+            Text(isLecture
+                ? L10n.t("ios.sup.lecture.title", locale: .resolved())
+                : L10n.t("lesson.import.recordTitle", locale: .resolved()))
                 .font(MicaboFont.subtitle)
                 .foregroundStyle(MicaboColor.ink)
+                .multilineTextAlignment(.center)
                 .padding(.top, 24)
+
+            if isLecture {
+                Text(L10n.t("ios.sup.lecture.tip", locale: .resolved()))
+                    .font(MicaboFont.ui(14, weight: .semibold))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
             TimelineView(.periodic(from: .now, by: 1)) { timeline in
                 Text(elapsed(at: timeline.date))

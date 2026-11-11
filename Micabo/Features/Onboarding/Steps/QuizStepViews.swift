@@ -10,7 +10,7 @@ struct LevelStepView: View {
 
     var body: some View {
         OnboardingSingleChoiceStep(
-            title: i18n.t("ios.quiz.level"),
+            title: i18n.t("ios.onb5.q.level"),
             items: model.country.stages,
             selection: model.stage,
             label: { $0.localizedTitle },
@@ -31,8 +31,8 @@ struct WorriesStepView: View {
 
     var body: some View {
         OnboardingMultiChoiceStep(
-            title: i18n.t("ios.onb.worries.title"),
-            subtitle: i18n.t("ios.onb.worries.sub"),
+            title: i18n.t("ios.onb5.q.worries"),
+            reaction: model.leadWorry.map { i18n.t("ios.onb5.react.worries", ["worry": $0.echo(locale: i18n.locale)]) },
             items: StudyWorry.allCases,
             selection: model.worries,
             label: { $0.title(locale: i18n.locale) },

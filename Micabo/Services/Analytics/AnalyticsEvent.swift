@@ -67,6 +67,9 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     /// achetée promettait l'essai à ce compte. Les deux portent `price_display`, la variante
     /// du test de prix (`PriceDisplay`).
     case paywallTrialStarted = "paywall_trial_started"
+    /// **Le rappel de fin d'essai est posé** (`TrialEndReminder`) : la veille de la fin, si les
+    /// notifications sont permises. Sans propriété.
+    case paywallTrialReminder = "paywall_trial_reminder"
 
     // MARK: Import
 

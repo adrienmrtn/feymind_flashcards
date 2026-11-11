@@ -23,7 +23,10 @@ struct OnboardingFlowView: View {
     @State private var model: OnboardingModel
     @State private var pager: OnboardingPager
 
+    private let library: ModelContext
+
     init(library: ModelContext, onFinish: @escaping () -> Void) {
+        self.library = library
         self.onFinish = onFinish
         let model = OnboardingModel.resuming(in: library)
         // Une page se pose avant de se quitter : le temps du glissement, et un souffle. Un
@@ -194,34 +197,23 @@ struct OnboardingFlowView: View {
         case .level: LevelStepView()
         case .schoolType: SchoolTypeStepView()
         case .year: SchoolYearStepView()
+        case .exam: ExamStepView()
         case .subjects: SubjectsStepView()
         case .worries: WorriesStepView()
         case .goal: GoalStepView()
-        case .proofRetention: ProofRetentionStepView()
-        case .founders: MikaStepView(page: .founders)
-        case .aiCompanion: MikaStepView(page: .companion)
-        case .startingPoint: MikaStepView(page: .start)
         case .currentAverage: CurrentAverageStepView()
         case .targetAverage: TargetAverageStepView()
         case .dailyTime: DailyTimeStepView()
         case .studyTime: StudyTimeStepView()
         case .notifications: NotificationsStepView()
         case .building: BuildingStepView()
-        case .featuresIntro: MikaSpeaksStepView(text: i18n.t("ios.onb.features.intro"))
-        case .mikaMission: MikaStepView(page: .mission)
         case .mikaSources: MikaStepView(page: .sources)
         case .mikaPaths: MikaStepView(page: .paths)
-        case .mikaDesign: MikaStepView(page: .design)
-        case .mikaSolution: MikaStepView(page: .solution)
         case .mikaTutor: MikaStepView(page: .tutor)
-        case .mikaRelief: MikaStepView(page: .relief)
         case .socialProof: SocialProofStepView()
-        case .supportUs: SupportUsStepView()
         case .planBuilding: PlanBuildingStepView()
         case .profileSummary: ProfileSummaryStepView()
-        case .freeTrialIntro: FreeTrialIntroStepView()
         case .trialOffer: TrialOfferStepView()
-        case .trialReminder: TrialReminderStepView()
         case .paywall: PaywallStepView(onFinish: finish)
         }
     }
@@ -235,6 +227,10 @@ struct OnboardingFlowView: View {
         // L'app s'ouvre sur Home, dont la barre crée la première leçon : le parcours n'en
         // écrit plus. Ce dernier écran n'a pas de croix : on n'y enferme personne.
         OnboardingPreferences.pendingFirstImport = false
+        // Le prochain examen choisi devient un examen du Calendrier, et ses rappels suivent.
+        if OnboardingExamPlacement.placeIfNeeded(in: library) != nil {
+            StudyNotifications.refresh(in: library)
+        }
         // La note ne se demande plus à l'arrivée dans l'app : elle attend la première leçon
         // terminée (`InAppReviewPrompt`).
         onFinish()

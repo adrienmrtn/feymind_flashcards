@@ -29,6 +29,10 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
     /// supports déposés sur l'appareil, et l'écriture de la leçon est dans Pro
     /// (`LessonAllowance.sendRoute`, `LockedLessonPreview`).
     case lessonReady
+    /// **Réviser à voix haute**, après la séance offerte (`RevisionModeAllowance`, `docs/supports.md`).
+    case voiceRecall
+    /// **La fiche d'une leçon en PDF** (`RevisionModeAllowance`, `docs/supports.md`).
+    case exportSheet
 
     var id: String { rawValue }
 
@@ -44,6 +48,8 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
         case .generateCourse: L10n.t("ios.paywallGenerateHeadline", locale: .resolved())
         case .mockExam: L10n.t("ios.paywallMockHeadline", locale: .resolved())
         case .lessonReady: L10n.t("ios.conv.paywallLessonReady", locale: .resolved())
+        case .voiceRecall: L10n.t("ios.sup.paywall.voice", locale: .resolved())
+        case .exportSheet: L10n.t("ios.sup.paywall.export", locale: .resolved())
         }
     }
 }
@@ -107,11 +113,11 @@ struct PaywallFlowView: View {
                 onSelect: { _ in plansCompared() }
             )
         }
-        // Le bleu de la scène sous la barre d'état et sous la poignée de la feuille, le papier
+        // Le blanc de la scène sous la barre d'état et sous la poignée de la feuille, le papier
         // de l'app dessous : c'est ce qu'on voit quand on tire la page.
         .background {
             VStack(spacing: 0) {
-                MicaboBrand.blue.frame(height: 320)
+                MicaboColor.surface.frame(height: 320)
                 MicaboColor.canvas
             }
             .ignoresSafeArea()
@@ -201,6 +207,9 @@ struct PaywallFlowView: View {
                 "price_display": PriceDisplay.current.analyticsValue,
             ])
             if promisedTrial {
+                // **Le rappel promis est posé** : la veille de la fin de l'essai, si les
+                // notifications sont permises (`TrialEndReminder`).
+                Task { await TrialEndReminder.schedule(trialDays: plan.trialDays) }
                 Analytics.track(.paywallTrialStarted, [
                     "trigger": .text(trigger?.rawValue ?? "inconnu"),
                     "plan": .text(plan.productID),

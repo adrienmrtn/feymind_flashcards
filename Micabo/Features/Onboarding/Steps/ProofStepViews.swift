@@ -80,92 +80,6 @@ struct OnboardingAccentText: View {
     }
 }
 
-// MARK: - « On s'en occupe. »
-
-/// **La réponse à ce qui inquiète**, juste après l'avoir demandé : l'inquiétude mise en
-/// avant en titre, puis les deux barres — ce qu'il reste d'un cours une semaine après, en
-/// le relisant et en se testant dessus. Le rouge et le vert n'existent que là.
-struct ProofRetentionStepView: View {
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    private var headline: String {
-        if let worry = model.leadWorry {
-            return i18n.t("ios.proof.gotYou.named", ["worry": worry.echo(locale: i18n.locale)])
-        }
-        return i18n.t("ios.proof.gotYou")
-    }
-
-    var body: some View {
-        OnboardingProofPage(
-            headline: headline,
-            caption: i18n.t("ios.journey.source")
-        ) {
-            OnboardingBarsChart(
-                title: i18n.t("ios.proof.retention.caption"),
-                bars: [
-                    .init(label: i18n.t("ios.proof.retention.reread"), value: OnboardingProofFigures.retainedByRereading, tint: OnboardingPalette.chartBad),
-                    .init(label: i18n.t("ios.proof.retention.testing"), value: OnboardingProofFigures.retainedByTesting, tint: OnboardingPalette.chartGood),
-                ]
-            )
-        } onContinue: {
-            model.advance()
-        }
-    }
-}
-
-// MARK: - La page de preuve
-
-/// **Une phrase, une image, un rond.** Toutes les preuves ont cette forme : le titre
-/// centré avec son passage en violet, la figure au milieu de ce qui reste, la légende grise
-/// dessous.
-struct OnboardingProofPage<Figure: View>: View {
-    let headline: String
-    var caption: String?
-    @ViewBuilder var figure: () -> Figure
-    var onContinue: () -> Void
-
-    var body: some View {
-        VStack(spacing: 0) {
-            // Centrée quand elle tient, défilante quand elle ne tient pas : la figure ne passe
-            // plus jamais sous le rond.
-            OnboardingCenteredScroll {
-                VStack(spacing: 0) {
-                    OnboardingAccentText(template: headline)
-                        .padding(.horizontal, MicaboSpacing.screen)
-                        .onboardingAppear(index: 1)
-
-                    figure()
-                        .padding(.horizontal, MicaboSpacing.screen)
-                        .padding(.top, MicaboSpacing.xl)
-                        .onboardingAppear(index: 3)
-
-                    if let caption {
-                        Text(caption)
-                            .font(MicaboFont.ui(14, weight: .regular))
-                            .foregroundStyle(OnboardingPalette.gray)
-                            .multilineTextAlignment(.center)
-                            .lineSpacing(3)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .padding(.horizontal, MicaboSpacing.xl)
-                            .padding(.top, MicaboSpacing.lg)
-                            .onboardingAppear(index: 4)
-                    }
-                }
-                .padding(.vertical, MicaboSpacing.lg)
-            }
-
-            OnboardingArrowBar(action: onContinue)
-                .onboardingAppear(index: 5)
-        }
-        .onboardingChromeInset()
-        .background(OnboardingPalette.white.ignoresSafeArea())
-        .environment(\.onboardingSurface, .canvas)
-    }
-}
-
-// MARK: - Les figures
-
 /// Deux ou trois barres verticales, leur valeur écrite dedans, leur libellé dessous.
 struct OnboardingBarsChart: View {
     struct Bar: Identifiable {
@@ -192,6 +106,9 @@ struct OnboardingBarsChart: View {
     /// De zéro à un : la part du chemin que les barres ont faite. Une seule valeur animée
     /// pour la hauteur **et** le chiffre, qui montent donc ensemble.
     @State private var drawn: CGFloat = 0
+    @Environment(\.onboardingStill) private var still
+    /// Les rendus figés montrent les barres montées.
+    private var shown: CGFloat { still ? 1 : drawn }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -207,7 +124,7 @@ struct OnboardingBarsChart: View {
                         ZStack(alignment: .bottom) {
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(bar.tint)
-                                .frame(height: Self.restingHeight + (height(for: bar) - Self.restingHeight) * drawn)
+                                .frame(height: Self.restingHeight + (height(for: bar) - Self.restingHeight) * shown)
 
                             if showsValues {
                                 if let text = bar.valueText {
@@ -216,11 +133,11 @@ struct OnboardingBarsChart: View {
                                         .foregroundStyle(bar.valueInk)
                                         .monospacedDigit()
                                         .padding(.bottom, 14)
-                                        .opacity(drawn > 0.15 ? 1 : 0)
+                                        .opacity(shown > 0.15 ? 1 : 0)
                                 } else {
-                                    OnboardingCountingPercent(value: Double(bar.value) * Double(drawn), ink: bar.valueInk)
+                                    OnboardingCountingPercent(value: Double(bar.value) * Double(shown), ink: bar.valueInk)
                                         .padding(.bottom, 14)
-                                        .opacity(drawn > 0.15 ? 1 : 0)
+                                        .opacity(shown > 0.15 ? 1 : 0)
                                 }
                             }
                         }

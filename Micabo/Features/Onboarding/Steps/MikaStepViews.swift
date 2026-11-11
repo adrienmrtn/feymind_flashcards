@@ -1,31 +1,21 @@
 import SwiftUI
 
-// MARK: - Mika se présente, en six écrans
+// MARK: - Mika se présente, en trois écrans
 
-/// Les six écrans où Mika dit ce qu'il fait, dans l'ordre : sa mission, les documents qu'il
-/// prend, les parcours qu'il en tire, des leçons qui donnent envie, la solution, la fin de la
-/// pression.
+/// Les trois écrans où Mika dit ce qu'il fait (parcours v2) : les documents qu'il prend, les
+/// parcours qu'il en tire, le prof particulier dans la poche.
 enum MikaPage: String, CaseIterable, Identifiable {
-    /// Avant le quiz des moyennes : l'histoire, la recherche, le point de départ.
-    case founders
-    case companion
-    case start
-    case mission
     case sources
     case paths
-    case design
-    case solution
     case tutor
-    case relief
 
     var id: String { rawValue }
 
     /// La phrase de l'écran ; les mots entre `**` se peignent du dégradé de l'app.
     var titleKey: String { "ios.onb.mika.\(rawValue)" }
 
-    /// **La part de la page que prend la scène.** L'écran de la recherche porte en plus la
-    /// carte de Harvard sous sa phrase : sa scène se fait plus petite pour lui laisser la place.
-    var sceneShare: CGFloat { self == .companion ? 0.4 : 0.6 }
+    /// **La part de la page que prend la scène.**
+    var sceneShare: CGFloat { 0.6 }
 }
 
 /// **Une scène animée en haut, une phrase en dessous, le rond.** Dix écrans de la même
@@ -72,10 +62,6 @@ struct MikaStepView: View {
                             OnboardingAccentText(template: i18n.t(page.titleKey), size: 27, alignment: .center)
                                 .padding(.horizontal, 26)
 
-                            if page == .companion {
-                                ResearchQuoteCard(compact: true)
-                                    .padding(.horizontal, MicaboSpacing.screen)
-                            }
                         }
                         .padding(.top, 6)
                         .padding(.bottom, MicaboSpacing.md)
@@ -127,16 +113,9 @@ struct MikaPageScene: View {
     @ViewBuilder
     var body: some View {
         switch page {
-        case .founders: MikaFoundersScene()
-        case .companion: MikaCompanionScene()
-        case .start: MikaStartScene()
-        case .tutor: MikaTutorScene()
-        case .mission: MikaMissionScene()
         case .sources: MikaSourcesScene()
         case .paths: MikaPathsScene()
-        case .design: MikaDesignScene()
-        case .solution: MikaSolutionScene()
-        case .relief: MikaReliefScene()
+        case .tutor: MikaTutorScene()
         }
     }
 }
@@ -277,44 +256,6 @@ private struct Sparkles: View {
     }
 }
 
-// MARK: - 1. La mission
-
-/// **Mika au centre, et ce qu'il fabrique autour de lui** : des notes, un quiz, des cartes,
-/// un trophée, une flamme — chacun arrive en ressort, puis flotte à son rythme.
-private struct MikaMissionScene: View {
-    @State private var shown = false
-    @Environment(\.onboardingStill) private var still
-
-    private static let orbit: [(MicaboIcon, CGFloat, CGFloat)] = [
-        (.notes, 0.17, 0.26), (.quiz, 0.83, 0.22), (.cards, 0.12, 0.66),
-        (.trophy, 0.88, 0.62), (.flame, 0.34, 0.9), (.lightbulb, 0.68, 0.92),
-    ]
-
-    var body: some View {
-        GeometryReader { proxy in
-            ZStack {
-                MikaGlow(size: min(min(proxy.size.width, proxy.size.height) * 0.9, MikaGlow.room(CGPoint(x: 0, y: proxy.size.height * 0.52), in: proxy.size)))
-                    .position(x: proxy.size.width / 2, y: proxy.size.height * 0.52)
-
-                ForEach(Array(Self.orbit.enumerated()), id: \.offset) { index, item in
-                    MikaTile(icon: item.0, size: 64)
-                        .rotationEffect(.degrees(index.isMultiple(of: 2) ? -7 : 6))
-                        .bobbing(7, period: 1.9 + Double(index) * 0.23, delay: Double(index) * 0.1)
-                        .popIn(shown || still, delay: 0.25 + Double(index) * 0.09)
-                        .position(x: proxy.size.width * item.1, y: proxy.size.height * item.2)
-                }
-
-                MikaMascot(mood: .happy, size: min(170, proxy.size.height * 0.5), reactsToTap: true, frame: .circle)
-                    .popIn(shown || still, delay: 0.05)
-                    .position(x: proxy.size.width / 2, y: proxy.size.height * 0.52)
-
-                Sparkles(points: [CGPoint(x: 0.3, y: 0.12), CGPoint(x: 0.72, y: 0.4), CGPoint(x: 0.24, y: 0.46), CGPoint(x: 0.6, y: 0.1)])
-            }
-        }
-        .onAppear { shown = true }
-    }
-}
-
 // MARK: - 2. Les documents
 
 /// **Les documents arrivent, et Mika les avale** : cours, PDF, notes, YouTube, photos,
@@ -367,10 +308,13 @@ private struct MikaSourcesScene: View {
                         .position(home)
                 }
 
-                MikaMascot(mood: mood, size: min(150, proxy.size.height * 0.42), frame: .circle)
-                    .scaleEffect(munch ? 1.08 : 1)
+                // Mika en buste, posé sur le bas de la scène et coupé par sa ligne : sur le
+                // papier de l'app, plus dans une pastille bleue.
+                let side = min(150, proxy.size.height * 0.42)
+                OnboardingMikaOnLine(mood: mood, size: side)
+                    .scaleEffect(munch ? 1.06 : 1, anchor: .bottom)
                     .popIn(shown || still)
-                    .position(mika)
+                    .position(x: mika.x, y: proxy.size.height - OnboardingMikaOnLine.height(for: side) / 2)
 
                 if full {
                     Sparkles(points: [CGPoint(x: 0.3, y: 0.55), CGPoint(x: 0.7, y: 0.5), CGPoint(x: 0.36, y: 0.88), CGPoint(x: 0.66, y: 0.9)])
@@ -442,662 +386,13 @@ private struct MikaPathsScene: View {
                 OnboardingLessonPhone(fades: true, animated: true, widthRatio: 0.74)
                     .frame(width: proxy.size.width, height: proxy.size.height)
 
-                MikaMascot(mood: .wave, size: min(110, proxy.size.height * 0.3), frame: .circle)
-                    .bobbing(4, period: 2.4)
+                // Mika regarde depuis le bord bas de la scène, en buste sur sa ligne.
+                OnboardingMikaOnLine(mood: .wave, size: min(120, proxy.size.height * 0.32))
                     .popIn(shown || still, delay: 0.9)
-                    .padding(.leading, proxy.size.width * 0.04)
-                    .padding(.bottom, proxy.size.height * 0.08)
+                    .padding(.leading, proxy.size.width * 0.02)
             }
         }
         .onAppear { shown = true }
-    }
-}
-
-// MARK: - 4. Des leçons qui donnent envie
-
-/// **Une question de l'app, et la joie d'avoir juste** : la carte arrive, une réponse se
-/// choisit, passe au vert, « +10 XP » s'envole, la série monte, et Mika, assis sur la carte,
-/// saute de joie. La scène recommence.
-private struct MikaDesignScene: View {
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    @State private var shown = false
-    @Environment(\.onboardingStill) private var still
-    @State private var picked = false
-    @State private var streak = 2
-    @State private var burst = false
-
-    private static let choices = ["1961", "1989", "1991"]
-    private static let answer = 1
-
-    var body: some View {
-        GeometryReader { proxy in
-            let cardWidth = min(330, proxy.size.width - 56)
-            ZStack {
-                MikaGlow(size: min(proxy.size.width * 0.9, MikaGlow.room(CGPoint(x: 0, y: proxy.size.height * 0.55), in: proxy.size)), color: MicaboColor.correct)
-                    .position(x: proxy.size.width / 2, y: proxy.size.height * 0.55)
-
-                card(width: cardWidth)
-                    // Mika regarde par-dessus la carte : il est derrière elle, et le bord haut
-                    // de la carte cache la coupe du buste.
-                    .background(alignment: .topTrailing) {
-                        MikaMascot(mood: picked || still ? .celebrate : .idle, size: 92)
-                            .offset(x: -10, y: -76)
-                    }
-                    .overlay(alignment: .topLeading) { streakBadge.offset(x: -10, y: -16) }
-                    .overlay { confetti }
-                    .popIn(shown || still, delay: 0.1)
-                    .position(x: proxy.size.width / 2, y: proxy.size.height * 0.6)
-            }
-        }
-        .onAppear { shown = true }
-        .task { await play() }
-    }
-
-    private func card(width: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(L10n.t("lesson.question.kind.choice", locale: .resolved()))
-                .font(MicaboFont.ui(12, weight: .heavy))
-                .tracking(1.2)
-                .textCase(.uppercase)
-                .foregroundStyle(LessonTone.blue.ink)
-            Text(i18n.t("ios.onb.mika.design.question"))
-                .font(MicaboFont.ui(19, weight: .heavy))
-                .foregroundStyle(MicaboColor.ink)
-                .fixedSize(horizontal: false, vertical: true)
-            ForEach(Array(Self.choices.enumerated()), id: \.offset) { index, choice in
-                choiceRow(choice, isAnswer: index == Self.answer)
-            }
-        }
-        .padding(18)
-        .frame(width: width, alignment: .leading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
-        .micaboElevation(.card)
-    }
-
-    private func choiceRow(_ choice: String, isAnswer: Bool) -> some View {
-        let lit = (picked || still) && isAnswer
-        return HStack {
-            Text(choice)
-                .font(MicaboFont.ui(17, weight: .bold))
-                .foregroundStyle(lit ? MicaboColor.onInk : MicaboColor.ink)
-            Spacer()
-            if lit {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(MicaboColor.onInk)
-                    .transition(.scale.combined(with: .opacity))
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(lit ? MicaboColor.correct : MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(lit ? Color.clear : MicaboColor.stroke, lineWidth: 1.5))
-        .scaleEffect(lit ? 1.03 : 1)
-    }
-
-    private var streakBadge: some View {
-        HStack(spacing: 4) {
-            MicaboIconView(icon: .flame, size: 22)
-            Text("\(streak)")
-                .font(MicaboFont.number(17))
-                .foregroundStyle(MicaboColor.flameInk)
-                .contentTransition(.numericText(value: Double(streak)))
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(MicaboColor.flameSoft, in: Capsule())
-        .overlay(Capsule().strokeBorder(MicaboColor.surface, lineWidth: 2))
-        .scaleEffect(burst ? 1.15 : 1)
-    }
-
-    /// « +10 XP » qui s'envole, et une poignée de confettis.
-    private var confetti: some View {
-        ZStack {
-            Text("+10 XP")
-                .font(MicaboFont.ui(16, weight: .black))
-                .foregroundStyle(MicaboColor.correctInk)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(MicaboColor.correctSoft, in: Capsule())
-                .offset(y: burst ? -120 : -40)
-                .opacity(burst ? 0 : (picked ? 1 : 0))
-            ForEach(0..<10, id: \.self) { index in
-                let angle = CGFloat(index) / 10 * 2 * .pi
-                Circle()
-                    .fill(LessonTone.allCases[index % LessonTone.allCases.count].vivid)
-                    .frame(width: 9, height: 9)
-                    .offset(x: burst ? cos(angle) * 150 : 0, y: burst ? sin(angle) * 110 : 0)
-                    .opacity(burst ? 0 : (picked ? 1 : 0))
-            }
-        }
-        .allowsHitTesting(false)
-    }
-
-    @MainActor
-    private func play() async {
-        guard !reduceMotion else {
-            picked = true
-            return
-        }
-        while !Task.isCancelled {
-            try? await Task.sleep(for: .seconds(1.2))
-            withAnimation(.spring(duration: 0.35, bounce: 0.5)) { picked = true }
-            Haptics.success()
-            try? await Task.sleep(for: .seconds(0.15))
-            withAnimation(.easeOut(duration: 0.9)) { burst = true }
-            withAnimation(.spring(duration: 0.4, bounce: 0.6)) { streak += 1 }
-            try? await Task.sleep(for: .seconds(2.2))
-            withAnimation(.easeInOut(duration: 0.3)) { picked = false }
-            burst = false
-            if streak > 8 { streak = 2 }
-        }
-    }
-}
-
-// MARK: - 5. La solution
-
-/// **Tout ce qu'il faut, en un seul endroit** : un anneau qui se remplit autour de Mika, et
-/// les quatre portes de l'app — notes, quiz, flashcards, examen — qui se cochent une à une.
-private struct MikaSolutionScene: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    @State private var shown = false
-    @Environment(\.onboardingStill) private var still
-    @State private var fill: CGFloat = 0
-    @State private var checked = 0
-
-    private static let items: [(MicaboIcon, String, CGFloat, CGFloat)] = [
-        (.notes, "lesson.nav.notes", 0.16, 0.2),
-        (.quiz, "lesson.nav.quiz", 0.84, 0.2),
-        (.cards, "lesson.nav.flashcards", 0.16, 0.82),
-        (.exam, "lesson.tab.exams", 0.84, 0.82),
-    ]
-
-    var body: some View {
-        GeometryReader { proxy in
-            let ring = min(proxy.size.width * 0.56, proxy.size.height * 0.72)
-            let center = CGPoint(x: proxy.size.width / 2, y: proxy.size.height * 0.52)
-            ZStack {
-                Circle()
-                    .stroke(MicaboColor.track, lineWidth: 16)
-                    .frame(width: ring, height: ring)
-                    .position(center)
-                Circle()
-                    .trim(from: 0, to: still ? 1 : fill)
-                    .stroke(
-                        AngularGradient(colors: [MicaboColor.accent, MicaboColor.accentDeep, MicaboColor.accent], center: .center),
-                        style: StrokeStyle(lineWidth: 16, lineCap: .round)
-                    )
-                    .rotationEffect(.degrees(-90))
-                    .frame(width: ring, height: ring)
-                    .position(center)
-
-                MikaMascot(mood: checked >= Self.items.count || still ? .celebrate : .happy, size: ring * 0.62, frame: .circle)
-                    .popIn(shown || still)
-                    .position(center)
-
-                ForEach(Array(Self.items.enumerated()), id: \.offset) { index, item in
-                    MikaTile(icon: item.0, size: 58, label: L10n.t(item.1, locale: .resolved()))
-                        .overlay(alignment: .topTrailing) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 24, weight: .bold))
-                                .foregroundStyle(MicaboColor.onInk, MicaboColor.correct)
-                                .background(Circle().fill(MicaboColor.surface).padding(2))
-                                .offset(x: 8, y: -8)
-                                .scaleEffect(index < checked || still ? 1 : 0.2)
-                                .opacity(index < checked || still ? 1 : 0)
-                        }
-                        .bobbing(4, period: 2.1 + Double(index) * 0.2)
-                        .popIn(shown || still, delay: 0.2 + Double(index) * 0.1)
-                        .position(x: proxy.size.width * item.2, y: proxy.size.height * item.3)
-                }
-            }
-        }
-        .onAppear { shown = true }
-        .task { await run() }
-    }
-
-    @MainActor
-    private func run() async {
-        if reduceMotion {
-            fill = 1
-            checked = Self.items.count
-            return
-        }
-        try? await Task.sleep(for: .seconds(0.6))
-        for index in Self.items.indices {
-            withAnimation(.easeInOut(duration: 0.55)) { fill = CGFloat(index + 1) / CGFloat(Self.items.count) }
-            try? await Task.sleep(for: .seconds(0.5))
-            withAnimation(.spring(duration: 0.4, bounce: 0.55)) { checked = index + 1 }
-            Haptics.tick()
-            try? await Task.sleep(for: .seconds(0.15))
-        }
-        Haptics.success()
-    }
-}
-
-// MARK: - 6. La fin de la pression
-
-/// **La montagne de choses à revoir, puis plus rien** : une pile de feuilles de travers, un
-/// point rouge d'alerte ; elle s'effondre en une seule leçon bien rangée, cochée, et Mika s'y
-/// pose, tranquille.
-private struct MikaReliefScene: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    @State private var shown = false
-    @Environment(\.onboardingStill) private var still
-    @State private var tidy = false
-
-    /// La pile : décalage, rotation, de bas en haut.
-    private static let sheets: [(CGFloat, CGFloat, Double)] = [
-        (-70, 70, -9), (40, 76, 7), (-20, 40, 4), (60, 28, -12), (-56, 4, 10), (12, -18, -5), (-6, -50, 8),
-    ]
-
-    var body: some View {
-        GeometryReader { proxy in
-            let base = CGPoint(x: proxy.size.width / 2, y: proxy.size.height * 0.62)
-            ZStack {
-                MikaGlow(size: min(proxy.size.width * 0.85, MikaGlow.room(base, in: proxy.size)), color: tidy ? MicaboColor.correct : MicaboColor.wrong)
-                    .position(base)
-                    .animation(.easeInOut(duration: 0.8), value: tidy)
-
-                ForEach(Array(Self.sheets.enumerated()), id: \.offset) { index, sheet in
-                    paper(index: index)
-                        .rotationEffect(.degrees(tidy ? 0 : sheet.2))
-                        .offset(x: tidy ? 0 : sheet.0, y: tidy ? 0 : sheet.1)
-                        .scaleEffect(tidy ? 0.6 : 1)
-                        .opacity(tidy ? 0 : 1)
-                        .popIn(shown || still, delay: 0.05 * Double(index))
-                        .animation(.spring(duration: 0.6, bounce: 0.2).delay(tidy ? 0.03 * Double(Self.sheets.count - index) : 0), value: tidy)
-                        .position(base)
-                }
-
-                alert
-                    .opacity(tidy ? 0 : 1)
-                    .scaleEffect(tidy ? 0.3 : 1)
-                    .popIn(shown || still, delay: 0.45)
-                    .position(x: base.x + 92, y: base.y - 96)
-                    .animation(.spring(duration: 0.4), value: tidy)
-
-                lesson
-                    .scaleEffect(tidy ? 1 : 0.4)
-                    .opacity(tidy ? 1 : 0)
-                    .animation(.spring(duration: 0.55, bounce: 0.45).delay(0.25), value: tidy)
-                    .position(base)
-
-                MikaMascot(mood: tidy ? .happy : .surprise, size: 104, frame: .circle)
-                    .offset(y: tidy ? -96 : -150)
-                    .opacity(shown || still ? 1 : 0)
-                    .animation(.spring(duration: 0.6, bounce: 0.4).delay(tidy ? 0.4 : 0.3), value: tidy)
-                    .animation(.easeOut(duration: 0.3).delay(0.3), value: shown)
-                    .position(base)
-            }
-        }
-        .onAppear { shown = true }
-        .task { await settle() }
-    }
-
-    /// Une feuille de cours : des lignes grises, un surlignage, parfois une note rouge.
-    private func paper(index: Int) -> some View {
-        VStack(alignment: .leading, spacing: 7) {
-            Capsule().fill(MicaboColor.ink.opacity(0.75)).frame(width: 70, height: 7)
-            ForEach(0..<4, id: \.self) { line in
-                Capsule()
-                    .fill(line == 1 && index.isMultiple(of: 2) ? MicaboColor.cautionSoft : MicaboColor.track)
-                    .frame(width: line == 3 ? 62 : 104, height: 5)
-            }
-        }
-        .padding(14)
-        .frame(width: 134, height: 96, alignment: .topLeading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.2))
-        .overlay(alignment: .bottomTrailing) {
-            if index % 3 == 1 {
-                Text("?!")
-                    .font(MicaboFont.ui(16, weight: .black))
-                    .foregroundStyle(MicaboColor.wrongInk)
-                    .padding(8)
-            }
-        }
-        .shadow(color: .black.opacity(0.06), radius: 6, y: 3)
-    }
-
-    private var alert: some View {
-        Image(systemName: "exclamationmark")
-            .font(.system(size: 22, weight: .black))
-            .foregroundStyle(MicaboColor.onInk)
-            .frame(width: 44, height: 44)
-            .background(MicaboColor.wrong, in: Circle())
-            .overlay(Circle().strokeBorder(MicaboColor.surface, lineWidth: 3))
-            .bobbing(3, period: 0.9)
-    }
-
-    /// La leçon rangée : une icône, une barre pleine, une coche.
-    private var lesson: some View {
-        HStack(spacing: 14) {
-            MicaboIconView(icon: .check, size: 54)
-            VStack(alignment: .leading, spacing: 8) {
-                Capsule().fill(MicaboColor.ink.opacity(0.8)).frame(width: 110, height: 9)
-                Capsule().fill(MicaboColor.correct).frame(width: 140, height: 10)
-                    .overlay(alignment: .leading) { Capsule().fill(.white.opacity(0.3)).frame(height: 3).padding(.horizontal, 5).offset(y: -1) }
-            }
-        }
-        .padding(18)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(MicaboColor.correct.opacity(0.5), lineWidth: 2))
-        .micaboElevation(.card)
-    }
-
-    @MainActor
-    private func settle() async {
-        if reduceMotion {
-            tidy = true
-            return
-        }
-        try? await Task.sleep(for: .seconds(1.5))
-        tidy = true
-        Haptics.success()
-    }
-}
-
-// MARK: - Avant les moyennes : l'histoire
-
-/// **Deux étudiants, une montagne de cours, puis l'idée.** Les deux étudiants arrivent, une
-/// bulle « ? » au-dessus de chacun ; entre eux, leurs documents s'entassent de travers. Puis
-/// l'ampoule s'allume, les bulles deviennent des « ! », la pile se range — et Micabo naît
-/// au milieu, dans ses éclats.
-private struct MikaFoundersScene: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.onboardingStill) private var still
-
-    /// 0 : rien ; 1 : les étudiants, perdus ; 2 : l'idée ; 3 : Micabo.
-    @State private var phase = 0
-
-    private static let pile: [(MicaboIcon, CGFloat, CGFloat, Double)] = [
-        (.book, -34, 14, -14), (.pdf, 30, 8, 12), (.notes, -4, -18, -4),
-    ]
-
-    private var stage: Int { still ? 3 : phase }
-
-    var body: some View {
-        GeometryReader { proxy in
-            let w = proxy.size.width
-            let h = proxy.size.height
-            let center = CGPoint(x: w / 2, y: h * 0.6)
-            ZStack {
-                MikaGlow(size: min(min(w, h) * 0.95, MikaGlow.room(center, in: proxy.size)), color: stage >= 2 ? MicaboColor.cautionVivid : MicaboColor.accent)
-                    .position(center)
-                    .animation(.easeInOut(duration: 0.8), value: stage)
-
-                ForEach(0..<2, id: \.self) { side in
-                    let x = side == 0 ? w * 0.18 : w * 0.82
-                    student(side)
-                        .bobbing(4, period: 2.1 + Double(side) * 0.3)
-                        .popIn(stage >= 1, delay: Double(side) * 0.15)
-                        .position(x: x, y: h * 0.66)
-
-                    bubble(stage >= 2 ? "!" : "?", lit: stage >= 2)
-                        .popIn(stage >= 1, delay: 0.35 + Double(side) * 0.15)
-                        .position(x: x + (side == 0 ? 18 : -18), y: h * 0.66 - 70)
-                        .animation(.spring(duration: 0.4, bounce: 0.5), value: stage)
-                }
-
-                ForEach(Array(Self.pile.enumerated()), id: \.offset) { index, item in
-                    MikaTile(icon: item.0, size: 54)
-                        .rotationEffect(.degrees(stage >= 3 ? 0 : item.3))
-                        .offset(x: stage >= 3 ? 0 : item.1, y: stage >= 3 ? 0 : item.2)
-                        .scaleEffect(stage >= 3 ? 0.4 : 1)
-                        .opacity(stage >= 3 ? 0 : 1)
-                        .popIn(stage >= 1, delay: 0.2 + Double(index) * 0.1)
-                        .animation(.spring(duration: 0.55, bounce: 0.25), value: stage)
-                        .position(x: center.x, y: center.y + 18)
-                }
-
-                MicaboIconView(icon: .lightbulb, size: 62)
-                    .shadow(color: MicaboColor.cautionVivid.opacity(0.45), radius: stage >= 2 ? 22 : 0)
-                    .bobbing(5, period: 1.8)
-                    .popIn(stage >= 2)
-                    .position(x: center.x, y: h * 0.2)
-
-                MicaboBrandMark(size: 70)
-                    .shadow(color: MicaboColor.accent.opacity(0.3), radius: 18, y: 8)
-                    .popIn(stage >= 3)
-                    .position(x: center.x, y: center.y + 12)
-
-                if stage >= 3 {
-                    Sparkles(points: [CGPoint(x: 0.36, y: 0.46), CGPoint(x: 0.64, y: 0.44), CGPoint(x: 0.4, y: 0.8), CGPoint(x: 0.62, y: 0.78)])
-                        .transition(.opacity)
-                }
-            }
-        }
-        .task { await run() }
-    }
-
-    private func student(_ side: Int) -> some View {
-        Text(side == 0 ? "🧑‍🎓" : "👩‍🎓")
-            .font(.system(size: 44))
-            .frame(width: 84, height: 84)
-            .background(MicaboColor.surface, in: Circle())
-            .overlay(Circle().strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
-            .micaboElevation(.card)
-    }
-
-    private func bubble(_ mark: String, lit: Bool) -> some View {
-        Text(mark)
-            .font(MicaboFont.display(22))
-            .foregroundStyle(lit ? MicaboColor.onInk : MicaboColor.inkSecondary)
-            .frame(width: 40, height: 40)
-            .background(lit ? MicaboColor.accent : MicaboColor.surface, in: Circle())
-            .overlay(Circle().strokeBorder(lit ? Color.clear : MicaboColor.stroke, lineWidth: 1.5))
-            .micaboElevation(.card)
-    }
-
-    @MainActor
-    private func run() async {
-        guard !reduceMotion else {
-            phase = 3
-            return
-        }
-        try? await Task.sleep(for: .seconds(0.25))
-        phase = 1
-        try? await Task.sleep(for: .seconds(1.3))
-        guard !Task.isCancelled else { return }
-        phase = 2
-        Haptics.light()
-        try? await Task.sleep(for: .seconds(0.9))
-        guard !Task.isCancelled else { return }
-        phase = 3
-        Haptics.success()
-    }
-}
-
-/// **Ce que dit la recherche, en deux barres** : un cours en classe, puis le même cours avec
-/// un tuteur IA, deux fois plus haut. Mika arrive sur la seconde, et s'en réjouit. Les
-/// chiffres exacts sont dans la carte, sous la phrase.
-private struct MikaCompanionScene: View {
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.onboardingStill) private var still
-
-    @State private var grown = false
-
-    private var isGrown: Bool { grown || still }
-
-    var body: some View {
-        GeometryReader { proxy in
-            // La place de Mika au-dessus de la grande barre est prise sur la hauteur : rien ne
-            // dépasse du haut de la scène.
-            let chart = max(90, min(proxy.size.height - 120, 200))
-            let barWidth = min(96, proxy.size.width * 0.24)
-            ZStack {
-                MikaGlow(size: min(proxy.size.width * 0.8, MikaGlow.room(CGPoint(x: 0, y: proxy.size.height * 0.45), in: proxy.size)))
-                    .position(x: proxy.size.width * 0.62, y: proxy.size.height * 0.45)
-
-                HStack(alignment: .bottom, spacing: proxy.size.width * 0.12) {
-                    bar(label: i18n.t("ios.onb.companion.class"), height: chart * 0.42, width: barWidth, colors: [MicaboColor.inkTertiary.opacity(0.55), MicaboColor.inkTertiary.opacity(0.75)], delay: 0)
-                    bar(label: i18n.t("ios.onb.companion.ai"), height: chart * 0.88, width: barWidth, colors: OnboardingPalette.mikaGradient, delay: 0.25)
-                        // Mika sort de derrière la grande barre : son bord haut cache la coupe.
-                        .background(alignment: .top) {
-                            MikaMascot(mood: isGrown ? .celebrate : .think, size: 76)
-                                .offset(y: -68)
-                                .popIn(isGrown, delay: 0.9)
-                        }
-                }
-                .position(x: proxy.size.width / 2, y: proxy.size.height - (chart * 0.88 + 42) / 2 - 4)
-            }
-        }
-        .onAppear {
-            guard !reduceMotion else {
-                grown = true
-                return
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                grown = true
-                Haptics.soft()
-            }
-        }
-    }
-
-    private func bar(label: String, height: CGFloat, width: CGFloat, colors: [Color], delay: Double) -> some View {
-        VStack(spacing: 8) {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(LinearGradient(colors: colors, startPoint: .bottom, endPoint: .top))
-                .frame(width: width, height: isGrown ? height : 14)
-                .overlay(alignment: .top) {
-                    Capsule().fill(.white.opacity(0.3)).frame(height: 4).padding(.horizontal, 10).padding(.top, 6)
-                }
-                .animation(.spring(duration: 1.1, bounce: 0.2).delay(delay), value: isGrown)
-            Text(label)
-                .font(MicaboFont.ui(13, weight: .heavy))
-                .foregroundStyle(MicaboColor.ink)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .minimumScaleFactor(0.8)
-                .frame(width: width + 40, height: 34, alignment: .top)
-        }
-        .frame(height: height + 42, alignment: .bottom)
-    }
-}
-
-/// **D'où tu pars, et jusqu'où on va.** Un chemin pointillé se trace du bas à gauche vers le
-/// haut à droite ; l'épingle « Tu es ici » tombe au départ, deux étapes s'allument en route,
-/// et le trophée attend au bout, sur son halo. Mika regarde vers le haut.
-private struct MikaStartScene: View {
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.onboardingStill) private var still
-
-    @State private var drawn: CGFloat = 0
-    @State private var shown = false
-
-    private static let start = CGPoint(x: 0.2, y: 0.8)
-    private static let end = CGPoint(x: 0.8, y: 0.26)
-    private static let stops: [(CGFloat, CGFloat)] = [(0.42, 0.62), (0.6, 0.42)]
-
-    private var progress: CGFloat { still ? 1 : drawn }
-
-    var body: some View {
-        GeometryReader { proxy in
-            let size = proxy.size
-            let a = CGPoint(x: size.width * Self.start.x, y: size.height * Self.start.y)
-            let b = CGPoint(x: size.width * Self.end.x, y: size.height * Self.end.y)
-            ZStack {
-                MikaGlow(size: min(size.width * 0.6, MikaGlow.room(b, in: size)), color: MicaboColor.cautionVivid)
-                    .position(b)
-
-                StartTrail(from: a, to: b)
-                    .stroke(MicaboColor.strokeStrong, style: StrokeStyle(lineWidth: 4, lineCap: .round, dash: [2, 10]))
-                StartTrail(from: a, to: b)
-                    .trim(from: 0, to: progress)
-                    .stroke(MicaboColor.accent, style: StrokeStyle(lineWidth: 5, lineCap: .round, dash: [2, 10]))
-
-                ForEach(Array(Self.stops.enumerated()), id: \.offset) { index, stop in
-                    let lit = progress >= stop.0 + 0.05
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 13, weight: .black))
-                        .foregroundStyle(lit ? MicaboColor.onInk : MicaboColor.inkTertiary)
-                        .frame(width: 34, height: 34)
-                        .background(lit ? MicaboColor.correct : MicaboColor.surface, in: Circle())
-                        .overlay(Circle().strokeBorder(lit ? Color.clear : MicaboColor.stroke, lineWidth: 1.5))
-                        .scaleEffect(lit ? 1.08 : 1)
-                        .animation(.spring(duration: 0.35, bounce: 0.55), value: lit)
-                        .position(StartTrail.point(at: stop.0, from: a, to: b))
-                        .popIn(shown || still, delay: 0.15 + Double(index) * 0.1)
-                }
-
-                VStack(spacing: 6) {
-                    MicaboIconView(icon: .trophy, size: 64)
-                        .bobbing(5, period: 2)
-                    label(i18n.t("ios.onb.start.goal"), tint: MicaboColor.caution, fill: MicaboColor.cautionSoft)
-                }
-                .popIn(shown || still, delay: 0.3)
-                .position(x: b.x, y: b.y + 8)
-
-                VStack(spacing: 4) {
-                    label(i18n.t("ios.onb.start.here"), tint: MicaboColor.onInk, fill: MicaboColor.accent)
-                    MicaboIconView(icon: .pin, size: 46)
-                }
-                .offset(y: shown || still ? 0 : -60)
-                .opacity(shown || still ? 1 : 0)
-                .animation(.spring(duration: 0.55, bounce: 0.5).delay(0.1), value: shown)
-                .position(x: a.x, y: a.y - 30)
-
-                MikaMascot(mood: .wave, size: min(92, size.height * 0.3), frame: .circle)
-                    .popIn(shown || still, delay: 0.5)
-                    .position(x: size.width * 0.16, y: size.height * 0.36)
-            }
-        }
-        .onAppear {
-            shown = true
-            guard !reduceMotion else {
-                drawn = 1
-                return
-            }
-            withAnimation(.easeInOut(duration: 1.6).delay(0.5)) { drawn = 1 }
-        }
-    }
-
-    private func label(_ text: String, tint: Color, fill: Color) -> some View {
-        Text(text)
-            .font(MicaboFont.ui(12.5, weight: .heavy))
-            .foregroundStyle(tint)
-            .lineLimit(1)
-            .fixedSize()
-            .padding(.vertical, 5)
-            .padding(.horizontal, 10)
-            .background(fill, in: Capsule())
-    }
-}
-
-/// Le chemin de la scène du départ : une courbe en S douce, du départ vers le but.
-private struct StartTrail: Shape {
-    let from: CGPoint
-    let to: CGPoint
-
-    private static func controls(from: CGPoint, to: CGPoint) -> (CGPoint, CGPoint) {
-        let dx = to.x - from.x
-        let dy = to.y - from.y
-        return (CGPoint(x: from.x + dx * 0.9, y: from.y + dy * 0.1), CGPoint(x: from.x + dx * 0.1, y: from.y + dy * 0.9))
-    }
-
-    /// Le point de la courbe à une fraction donnée de sa longueur, à peu près.
-    static func point(at t: CGFloat, from: CGPoint, to: CGPoint) -> CGPoint {
-        let (c1, c2) = controls(from: from, to: to)
-        let u = 1 - t
-        let x = u * u * u * from.x + 3 * u * u * t * c1.x + 3 * u * t * t * c2.x + t * t * t * to.x
-        let y = u * u * u * from.y + 3 * u * u * t * c1.y + 3 * u * t * t * c2.y + t * t * t * to.y
-        return CGPoint(x: x, y: y)
-    }
-
-    func path(in rect: CGRect) -> Path {
-        let (c1, c2) = Self.controls(from: from, to: to)
-        var path = Path()
-        path.move(to: from)
-        path.addCurve(to: to, control1: c1, control2: c2)
-        return path
     }
 }
 
@@ -1482,5 +777,33 @@ private struct OnboardingLessonScreen: View {
                 .offset(x: shown ? 0 : (titleOnRight ? -12 : 12))
                 .position(x: titleX, y: y)
         }
+    }
+}
+
+
+// MARK: - Mika sur sa ligne
+
+/// **Mika en buste, posé sur une ligne** : la coupe du buste repose sur un trait du filet de
+/// l'app (règle 1 du kit). C'est la forme de Mika sur le papier — crème le jour, nuit la nuit
+/// —, celle des questions du parcours (`OnboardingMikaPrompt`), sans pastille bleue.
+struct OnboardingMikaOnLine: View {
+    var mood: MikaMood = .idle
+    var size: CGFloat = 120
+    var animates = true
+
+    @Environment(\.onboardingStill) private var still
+
+    /// La part visible du buste : l'image garde de l'air au-dessus de lui pour ses effets.
+    static func height(for size: CGFloat) -> CGFloat { size * 0.74 + 2 }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            MikaMascot(mood: mood, size: size, reactsToTap: true, frozenAt: still ? 0 : nil, backdrop: .surface, animates: animates)
+                .frame(width: size, height: size * 0.74, alignment: .bottom)
+            Capsule()
+                .fill(MicaboColor.stroke)
+                .frame(width: size * 1.3, height: 2)
+        }
+        .accessibilityHidden(true)
     }
 }
