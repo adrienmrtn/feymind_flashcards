@@ -163,6 +163,7 @@ struct MicaboBadge: View {
             .padding(.horizontal, 9)
             .background(tone.background, in: Capsule())
             .lineLimit(1)
+            .fixedSize()
     }
 }
 
@@ -217,13 +218,14 @@ struct MicaboRow: View {
                     .foregroundStyle(titleColor)
                     .multilineTextAlignment(.leading)
                     .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 if let subtitle {
                     Text(subtitle)
                         .font(MicaboFont.rowSubtitle)
                         .foregroundStyle(MicaboColor.inkTertiary)
                         .multilineTextAlignment(.leading)
-                        .lineLimit(1)
+                        .lineLimit(2)
                 }
             }
 
@@ -250,6 +252,7 @@ struct MicaboRow: View {
                 .font(MicaboFont.ui(14, weight: .regular))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .lineLimit(1)
+                .minimumScaleFactor(0.85)
         case .badge(let text, let tone):
             MicaboBadge(text: text, tone: tone)
         case .toggle(let binding):
@@ -275,7 +278,7 @@ struct MicaboRowButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .background(configuration.isPressed ? MicaboColor.surfaceMuted.opacity(0.7) : Color.clear)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+            .animation(MicaboPress.animation(isPressed: configuration.isPressed), value: configuration.isPressed)
             .micaboPressFeedback(isPressed: configuration.isPressed, feedback: feedback)
             .hoverEffect(.highlight)
     }

@@ -42,7 +42,7 @@ struct MikaLoadingView: View {
             // Mika en entier, qui réfléchit le temps de préparer le plan, sur le papier de l'app.
             OnboardingMikaOnLine(mood: isDone ? .happy : .think, size: 160, whole: true)
                 .scaleEffect(isDone ? 0.94 : 1, anchor: .bottom)
-                .animation(.easeInOut(duration: 0.6), value: isDone)
+                .animation(MicaboMotion.standard, value: isDone)
                 .padding(.bottom, 26)
 
             Text(title)
@@ -70,7 +70,7 @@ struct MikaLoadingView: View {
                 .foregroundStyle(OnboardingPalette.gray)
                 .multilineTextAlignment(.center)
                 .contentTransition(.opacity)
-                .animation(.easeOut(duration: 0.25), value: stepLabel)
+                .animation(MicaboMotion.quick, value: stepLabel)
                 .padding(.top, 16)
                 .frame(minHeight: 40, alignment: .top)
 
@@ -117,7 +117,7 @@ struct MikaLoadingView: View {
             } else {
                 Text(L10n.percent(percent, locale: .resolved()))
                     .contentTransition(.numericText(value: Double(percent)))
-                    .animation(.easeOut(duration: 0.2), value: percent)
+                    .animation(MicaboMotion.quick, value: percent)
             }
         }
         .font(MicaboFont.ui(40, weight: .bold))
@@ -149,7 +149,7 @@ struct MikaLoadingView: View {
                 }
             }
         }
-        .animation(.easeOut(duration: 0.18), value: filled)
+        .animation(MicaboMotion.quick, value: filled)
         // Comme le chiffre : une fois la grille pleine, rien ne l'anime plus.
         .transaction { transaction in
             if isDone { transaction.animation = nil }

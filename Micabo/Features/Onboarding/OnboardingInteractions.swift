@@ -98,8 +98,8 @@ struct OnboardingReadingText: View {
             Text(word.text)
                 .foregroundStyle(isLit ? OnboardingPalette.accent : OnboardingPalette.ink)
                 .opacity(isRead ? 1 : 0)
-                .animation(.easeOut(duration: 0.3), value: isRead)
-                .animation(.easeOut(duration: 0.3), value: isLit)
+                .animation(MicaboMotion.standard, value: isRead)
+                .animation(MicaboMotion.standard, value: isLit)
         }
         .font(OnboardingPalette.title(size))
         .tracking(-0.9)
@@ -111,7 +111,7 @@ struct OnboardingReadingText: View {
                     .padding(.vertical, -size * 0.02)
                     .scaleEffect(x: highlighted ? 1 : 0.001, y: 1, anchor: .leading)
                     .animation(
-                        .easeOut(duration: 0.45).delay(Double(word.markedRank) * 0.12),
+                        MicaboMotion.standard.delay(Double(word.markedRank) * 0.12),
                         value: highlighted
                     )
             }
@@ -245,7 +245,7 @@ struct OnboardingHoldButton: View {
         guard isPressing, !didComplete else { return }
         isPressing = false
         timer?.cancel()
-        withAnimation(.easeOut(duration: 0.3)) { progress = 0 }
+        withAnimation(MicaboMotion.standard) { progress = 0 }
     }
 
     private func complete() {

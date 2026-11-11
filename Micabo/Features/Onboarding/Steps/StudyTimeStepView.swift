@@ -204,7 +204,7 @@ struct OnboardingSkyCard: View {
                     .opacity(isNight ? 1 : 0)
                     .position(Self.point(progress: nightProgress, width: w, horizon: horizon, peak: h * 0.28))
             }
-            .animation(.easeInOut(duration: 0.55), value: hour)
+            .animation(MicaboMotion.standard, value: hour)
         }
         .frame(height: 200)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))

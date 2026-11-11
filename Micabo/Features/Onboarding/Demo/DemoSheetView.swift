@@ -228,7 +228,7 @@ struct DemoBarChart: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(MicaboColor.surfaceMuted.opacity(0.6), in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
         .onAppear {
-            withAnimation(.easeOut(duration: 0.7).delay(0.15)) { isDrawn = true }
+            withAnimation(MicaboMotion.gentle.delay(0.15)) { isDrawn = true }
         }
         .accessibilityElement(children: .combine)
     }
@@ -534,7 +534,7 @@ struct DemoPlotFigure: View {
         }
         .frame(height: 170)
         .onAppear {
-            withAnimation(.easeOut(duration: 0.9).delay(0.15)) { drawn = 1 }
+            withAnimation(MicaboMotion.gentle.delay(0.15)) { drawn = 1 }
         }
     }
 

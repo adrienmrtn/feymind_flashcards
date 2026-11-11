@@ -60,72 +60,109 @@ extension Binding {
     }
 }
 
-/// Bouton d'action principal : bloc bleu à coins 14 pt, qui s'enfonce à l'appui.
-/// Sur un écran sombre, on inverse : surface claire, texte encre.
+/// Les mesures communes aux boutons pleins et secondaires.
+enum MicaboButtonMetrics {
+    /// La hauteur d'un bouton : celle du pouce, partout la même. Un minimum, pas une
+    /// hauteur : avec les grandes tailles de texte, le libellé pousse le bouton.
+    static let height: CGFloat = 56
+    /// La hauteur du bouton seul d'un parcours ou d'un paywall.
+    static let prominentHeight: CGFloat = 62
+    /// Le rayon d'un bouton, principal comme secondaire.
+    static let radius: CGFloat = MicaboRadius.button
+}
+
+/// **Le seul rendu d'un bouton principal**, que tous les styles « pleins » de l'app dessinent.
 ///
-/// **Son ombre est de sa propre couleur.** Une ombre grise sous un aplat bleu le salit ;
-/// la même en bleu le fait rayonner un peu au lieu de le tacher, et c'est le seul objet de
-/// l'app qui a le droit de rayonner — il n'y en a qu'un par écran.
+/// Il y en avait quatre — `MicaboPrimaryButtonStyle` (bleu, 14 de rayon, 51 points fixes),
+/// `MicaboBrandButtonStyle` (dégradé et reflet, ressort à rebond), `LessonPrimaryButtonStyle`
+/// (encre noire) et `MicaboActionButtonStyle` (sans ombre) — et deux écrans voisins ne
+/// montraient pas le même bouton pour la même chose. Ils gardent leurs noms et leurs
+/// paramètres, et passent tous par ici : un aplat de l'accent, dix-huit de rayon, cinquante-six
+/// points au moins, deux lignes avant de réduire le texte, une ombre de sa propre couleur.
+///
+/// **La nuit**, l'accent s'éclaircit et le texte passe au graphite (`onInk`) : le même couple
+/// que les pastilles sélectionnées, lisible sur le noir sans éblouir.
+struct MicaboPrimaryFill<Label: View>: View {
+    let label: Label
+    var tint: Color = MicaboColor.accent
+    var foreground: Color = MicaboColor.onInk
+    var fullWidth: Bool = true
+    var minHeight: CGFloat = MicaboButtonMetrics.height
+    var fontSize: CGFloat = 17
+    var enabled: Bool = true
+    var isPressed: Bool
+    var feedback: Haptics.Press = .medium
+
+    @Environment(\.isEnabled) private var environmentEnabled
+
+    private var isLive: Bool { enabled && environmentEnabled }
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: MicaboButtonMetrics.radius, style: .continuous)
+        label
+            .font(MicaboFont.ui(fontSize, weight: .heavy))
+            .foregroundStyle(isLive ? foreground : MicaboColor.onInk)
+            .multilineTextAlignment(.center)
+            .lineLimit(2)
+            .minimumScaleFactor(0.85)
+            .padding(.horizontal, fullWidth ? 20 : 24)
+            .padding(.vertical, 10)
+            .frame(maxWidth: fullWidth ? .infinity : nil, minHeight: minHeight)
+            .background(isLive ? tint : MicaboColor.inkTertiary.opacity(0.55), in: shape)
+            .shadow(color: tint.opacity(isLive ? 0.22 : 0), radius: 10, x: 0, y: 6)
+            .contentShape(shape)
+            .micaboPressEffect(isPressed: isPressed, feedback: feedback)
+            .animation(MicaboMotion.quick, value: isLive)
+            .hoverEffect(.highlight)
+    }
+}
+
+/// Bouton d'action principal : l'aplat de l'accent (`MicaboPrimaryFill`), un par écran.
 struct MicaboPrimaryButtonStyle: ButtonStyle {
     var tint: Color = MicaboColor.accent
     var foreground: Color = MicaboColor.onInk
     var fullWidth: Bool = true
     var feedback: Haptics.Press = .medium
-    /// **Un quart plus grand**, pour le seul bouton d'un écran qui n'en a qu'un.
-    ///
-    /// Réservé au parcours d'accueil et aux paywalls : ce sont des écrans où l'on ne fait
-    /// qu'une chose, et où le bouton est la seule cible. Ailleurs dans l'app, un bouton de
-    /// cette taille écraserait les rangées et les actions secondaires autour de lui.
-    ///
-    /// La hauteur passe de 51 à 64 points, marges et corps compris — c'est un rapport, pas
-    /// deux réglages indépendants : grossir le seul rembourrage donnerait un bouton haut au
-    /// texte perdu au milieu.
+    /// **Un peu plus grand**, pour le seul bouton d'un écran qui n'en a qu'un : le parcours
+    /// d'accueil et les paywalls. Ailleurs, il écraserait les rangées autour de lui.
     var isProminent: Bool = false
 
-    private var font: Font {
-        isProminent ? MicaboFont.ui(19, weight: .semibold) : MicaboFont.cardTitle
-    }
-
-    private var verticalPadding: CGFloat {
-        isProminent ? 20 : 16
-    }
-
-    private var radius: CGFloat {
-        isProminent ? MicaboRadius.lg : MicaboRadius.button
-    }
-
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(font)
-            .foregroundStyle(foreground)
-            .frame(maxWidth: fullWidth ? .infinity : nil)
-            .padding(.vertical, verticalPadding)
-            .padding(.horizontal, fullWidth ? 0 : 24)
-            .background(tint, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .shadow(color: tint.opacity(0.22), radius: 3, x: 0, y: 2)
-            .shadow(color: tint.opacity(0.20), radius: 12, x: 0, y: 10)
-            .micaboPressEffect(isPressed: configuration.isPressed, feedback: feedback)
-            .hoverEffect(.highlight)
+        MicaboPrimaryFill(
+            label: configuration.label,
+            tint: tint,
+            foreground: foreground,
+            fullWidth: fullWidth,
+            minHeight: isProminent ? MicaboButtonMetrics.prominentHeight : MicaboButtonMetrics.height,
+            fontSize: isProminent ? 18 : 17,
+            isPressed: configuration.isPressed,
+            feedback: feedback
+        )
     }
 }
 
-/// Bouton secondaire : surface blanche, filet discret, le fond suffit à la détacher.
+/// Bouton secondaire : surface blanche et filet, **la même forme que le principal** (rayon,
+/// hauteur, retour à la ligne) pour que deux boutons empilés se lisent comme une paire.
 struct MicaboSecondaryButtonStyle: ButtonStyle {
     var fullWidth: Bool = true
     var feedback: Haptics.Press = .light
 
     func makeBody(configuration: Configuration) -> some View {
+        let shape = RoundedRectangle(cornerRadius: MicaboButtonMetrics.radius, style: .continuous)
         configuration.label
-            .font(MicaboFont.cardTitle)
+            .font(MicaboFont.ui(17, weight: .bold))
             .foregroundStyle(MicaboColor.ink)
-            .frame(maxWidth: fullWidth ? .infinity : nil)
-            .padding(.vertical, 16)
-            .padding(.horizontal, fullWidth ? 0 : 24)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
+            .multilineTextAlignment(.center)
+            .lineLimit(2)
+            .minimumScaleFactor(0.85)
+            .padding(.horizontal, fullWidth ? 20 : 24)
+            .padding(.vertical, 10)
+            .frame(maxWidth: fullWidth ? .infinity : nil, minHeight: MicaboButtonMetrics.height)
+            .background(MicaboColor.surface, in: shape)
             .overlay {
-                RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                    .strokeBorder(MicaboColor.strokeStrong, lineWidth: 1.5)
+                shape.strokeBorder(MicaboColor.strokeStrong, lineWidth: 1.5)
             }
+            .contentShape(shape)
             .micaboPressEffect(isPressed: configuration.isPressed, feedback: feedback)
             .hoverEffect(.highlight)
     }

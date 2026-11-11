@@ -190,13 +190,11 @@ struct SettingsView: View {
     // MARK: - Sections
 
     private var header: some View {
-        MicaboScreenHeader(title: i18n.t("settings.title"), back: MicaboHeaderBack.back(saveAndClose)) {
-            Button(i18n.t("ios.done"), action: saveAndClose)
-                .font(MicaboFont.ui(15, weight: .semibold))
-                .foregroundStyle(MicaboColor.accentInk)
-                .buttonStyle(MicaboPressableButtonStyle())
-        }
-        .padding(.top, MicaboSpacing.xs)
+        // **Une feuille se ferme par sa croix**, comme toutes les feuilles de l'app. Elle avait
+        // un chevron de retour (le geste d'un écran poussé) et un « OK » à droite : deux
+        // sorties pour le même geste.
+        MicaboScreenHeader(title: i18n.t("settings.title"), back: MicaboHeaderBack.close(saveAndClose))
+            .padding(.top, MicaboSpacing.xs)
     }
 
     /// **L'abonnement, en tête des Réglages.**

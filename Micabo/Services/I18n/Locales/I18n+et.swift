@@ -3,6 +3,8 @@
 
 extension IosI18nCatalogs {
     static let et: [String: String] = [
+        "ios.pol.sys.daysLeft": "{days, plural, one {1 päev jäänud} other {# päeva jäänud}}",
+        "ios.pol.sys.tab.focus": "Fookus",
         "ios.onb5.building.sub": "Valmistan sulle kõik ette",
         "ios.onb5.building.title": "Aitäh, {name}!",
         "ios.onb5.exam.dateLabel": "Eksami kuupäev",

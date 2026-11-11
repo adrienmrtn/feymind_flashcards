@@ -69,7 +69,7 @@ struct PaywallScreen: View {
             if reduceMotion || still {
                 shown = true
             } else {
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.85).delay(0.05)) { shown = true }
+                withAnimation(MicaboMotion.standard.delay(0.05)) { shown = true }
             }
         }
     }
@@ -99,7 +99,7 @@ struct PaywallScreen: View {
                                 : nil
                         ) {
                             guard plan.kind != selection else { return }
-                            withAnimation(.spring(response: 0.32, dampingFraction: 0.75)) {
+                            withAnimation(MicaboMotion.quick) {
                                 selection = plan.kind
                             }
                             onSelect(plan.kind)
@@ -136,7 +136,7 @@ private extension View {
     func entrance(_ index: Int, shown: Bool) -> some View {
         opacity(shown ? 1 : 0)
             .offset(y: shown ? 0 : 14)
-            .animation(.spring(response: 0.55, dampingFraction: 0.85).delay(0.07 * Double(index)), value: shown)
+            .animation(MicaboMotion.standard.delay(0.05 * Double(index)), value: shown)
     }
 }
 
@@ -407,7 +407,7 @@ struct PaywallPlanOption: View {
             }
         }
         .frame(width: 24, height: 24)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+        .animation(MicaboMotion.quick, value: isSelected)
     }
 
     /// « 3 jours gratuits », ou pourquoi il n'y en a pas : **déjà utilisé** par ce compte

@@ -37,7 +37,8 @@ struct ProfileCard: View {
                     Text(name)
                         .font(MicaboFont.ui(19, weight: .black))
                         .foregroundStyle(MicaboColor.ink)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
                     if let identity {
                         Text(identity)
                             .font(MicaboFont.ui(14, weight: .bold))
@@ -48,7 +49,8 @@ struct ProfileCard: View {
                         Text(studies)
                             .font(MicaboFont.ui(14, weight: .semibold))
                             .foregroundStyle(MicaboColor.inkSecondary)
-                            .lineLimit(1)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 Spacer(minLength: 0)
@@ -137,15 +139,22 @@ struct ProfileRow: View {
             HStack(spacing: 14) {
                 MicaboIconView(icon: icon, size: 28)
                     .frame(width: 36, height: 36)
+                // Le nom de la rangée passe avant sa valeur : « Thème » ne se coupe pas pour
+                // laisser la place à « Comme le téléphone ».
                 Text(title)
                     .font(MicaboFont.ui(17, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .layoutPriority(1)
                 Spacer(minLength: 8)
                 if let value {
                     Text(value)
                         .font(MicaboFont.ui(15, weight: .semibold))
                         .foregroundStyle(MicaboColor.inkSecondary)
-                        .lineLimit(1)
+                        .multilineTextAlignment(.trailing)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
                 }
                 Image(systemName: "chevron.forward")
                     .font(.system(size: 13, weight: .bold))

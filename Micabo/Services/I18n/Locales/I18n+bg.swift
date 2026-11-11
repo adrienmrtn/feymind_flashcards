@@ -3,6 +3,8 @@
 
 extension IosI18nCatalogs {
     static let bg: [String: String] = [
+        "ios.pol.sys.daysLeft": "оставащи дни: {days}",
+        "ios.pol.sys.tab.focus": "Фокус",
         "ios.onb5.building.sub": "Подготвям всичко за теб",
         "ios.onb5.building.title": "Благодаря, {name}!",
         "ios.onb5.exam.dateLabel": "Дата на изпита",
