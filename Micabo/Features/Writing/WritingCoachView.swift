@@ -30,6 +30,9 @@ struct WritingCoachContent: View {
     var isPro: Bool
     var focused: FocusState<Bool>.Binding
     var actions: WritingCoachActions
+    /// Les rendus de la CI ne dessinent pas un `TextEditor` (un contrôle UIKit) : ils posent le
+    /// texte à sa place, dans le même cadre.
+    var editorStandIn = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -87,15 +90,24 @@ struct WritingCoachContent: View {
                         .padding(.vertical, 16)
                         .allowsHitTesting(false)
                 }
-                TextEditor(text: $session.text)
-                    .font(MicaboFont.ui(17, weight: .medium))
-                    .foregroundStyle(MicaboColor.ink)
-                    .scrollContentBackground(.hidden)
-                    .focused(focused)
-                    .padding(.horizontal, 13)
-                    .padding(.vertical, 8)
-                    .frame(minHeight: 200)
-                    .disabled(session.phase == .checking || session.reading)
+                if editorStandIn {
+                    Text(session.text)
+                        .font(MicaboFont.ui(17, weight: .medium))
+                        .foregroundStyle(MicaboColor.ink)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 16)
+                        .frame(maxWidth: .infinity, minHeight: 200, alignment: .topLeading)
+                } else {
+                    TextEditor(text: $session.text)
+                        .font(MicaboFont.ui(17, weight: .medium))
+                        .foregroundStyle(MicaboColor.ink)
+                        .scrollContentBackground(.hidden)
+                        .focused(focused)
+                        .padding(.horizontal, 13)
+                        .padding(.vertical, 8)
+                        .frame(minHeight: 200)
+                        .disabled(session.phase == .checking || session.reading)
+                }
             }
             Divider().overlay(MicaboColor.stroke)
             HStack(spacing: 8) {
@@ -324,7 +336,10 @@ struct WritingCoachContent: View {
     /// Le texte de l'élève, corrections appliquées et surlignées en vert.
     private var correctedCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            MicaboEyebrow(text: writingText("ios.ku7.writing.corrected"))
+            // Pas de capitales espacées ici : l'interlettrage casse la liaison des lettres arabes.
+            Text(writingText("ios.ku7.writing.corrected"))
+                .font(MicaboFont.ui(13, weight: .heavy))
+                .foregroundStyle(MicaboColor.inkSecondary)
             Text(Self.highlighted(session.segments))
                 .font(MicaboFont.ui(16, weight: .regular))
                 .foregroundStyle(MicaboColor.ink)

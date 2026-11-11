@@ -109,7 +109,7 @@ struct SampleCardStepView: View {
                     color: MicaboColor.inkSecondary
                 )
                 .frame(maxWidth: .infinity, alignment: .leading)
-                Text(i18n.t("ios.onb7.card.source"))
+                Text(i18n.t("ios.journey.source"))
                     .font(MicaboFont.ui(12, weight: .semibold))
                     .foregroundStyle(MicaboColor.inkTertiary)
             }

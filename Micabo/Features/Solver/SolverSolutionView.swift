@@ -62,6 +62,7 @@ struct SolverSolutionContent: View {
                 MicaboEyebrow(text: solveText("statement.title"))
                 Spacer(minLength: 8)
                 SolverSubjectMenu(subject: session.exercise.subject, onPick: actions.pickSubject)
+                    .layoutPriority(1)
             }
             HStack(alignment: .top, spacing: 12) {
                 if let data = session.exercise.thumbnail, let image = UIImage(data: data) {

@@ -267,3 +267,30 @@ Home garde exactement sa hiérarchie et sa logique (§ 1, `HomeDay`, `StudyPlan`
 dans sa tuile bleu pâle, le bouton bleu, Mika noir sur le blanc. La carte de l'examen du
 Calendrier, la journée de Concentration, la carte profil et les cartes de Leçons prennent les
 mêmes mesures.
+
+## 10. Lot 7 : toutes les matières, « Corriger un texte », chercher dans le contenu
+
+Clés `ios.ku7.*` (26 langues), sans fonction serveur nouvelle : tout passe par `mika-chat` ou se
+fait sur l'appareil.
+
+- **Aide aux devoirs, toutes matières** : la tuile « Scanner un exo » devient « Aide aux devoirs ».
+  Deux familles s'ajoutent à `SolverSubject` (`languages` : langues et littérature ;
+  `humanities` : histoire, géographie, philosophie, économie), avec leur devinette sur l'appareil,
+  leur fil de « Demande à Mika » et leurs idées de questions. La consigne (`ios.ku7.prompt.solve`)
+  traite une question de cours, d'analyse ou de langue comme un raisonnement pas à pas, et
+  `HomeworkLevel` ajoute le palier de l'élève dans les mots de son pays (« Gymnasium », « High
+  school », « Collège »…). Le registre envoyé à la fonction ne change pas.
+- **Corriger un texte** (`Features/Writing`, raccourci de Home) : coller, taper ou photographier
+  (scanner VisionKit ou photothèque, OCR sur l'appareil) ; Mika relit à son niveau, garde la
+  langue du texte et explique dans celle de l'app : `[SUMMARY]`, `[FIX] passage => correction` et
+  la règle, `[TIP]` (`WritingParser`, balises en gras, numérotées ou traduites acceptées, repli
+  sur le texte brut). Les corrections s'appliquent **sur l'appareil** au texte de l'élève,
+  surlignées, et le texte corrigé se copie. Porte de Mika (`MikaQuota`, paywall `mika`), XP
+  `mikaAnswer`. Statistiques : `home_tool_opened`, `writing_opened`, `writing_unreadable`,
+  `writing_checked` (`source`, `fixes`, `applied`, `structured`, `words` en tranche),
+  `writing_copied` ; jamais un texte.
+- **Chercher dans le contenu** (`LessonSearch`) : la recherche de Leçons, qui promettait « un
+  cours ou une carte » mais ne lisait que le titre, lit les cartes, les thèmes et le début des
+  supports, sans accents ni casse, tous les mots dans n'importe quel ordre.
+- **Ce qui demande un serveur**, et n'est pas fait : les fiches d'autres élèves (communauté), les
+  plans d'examen « vérifiés » hébergés, un lien web de partage d'une leçon.
