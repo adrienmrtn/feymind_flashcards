@@ -202,7 +202,7 @@ règle, écrite aussi en tête de `MikaMascot.swift` :
    bras au crayon, la naissance des tentacules — **dépasse d'un bord**, coupé net par lui, comme
    quelqu'un qui passe la tête. Trois tailles, une par rôle : `MikaPeek.card` (92 points) dans
    une carte, `.line` (100) sur la ligne d'une question, `.hero` (124) pour l'accueil de Home.
-   Il monte de derrière son bord en arrivant, fait son geste une fois, puis reste immobile.
+   Il monte de derrière son bord en arrivant, fait son geste une fois, puis garde le sourire.
    - **Derrière le haut du bouton** d'une carte : le plan du jour de Home, la journée de
      Concentration (même taille, même retrait de 8 points depuis le bord droit) ;
    - **au bas d'une carte**, à droite, coupé par elle : la série du Profil, « Aucun examen » du
@@ -217,39 +217,83 @@ règle, écrite aussi en tête de `MikaMascot.swift` :
    révélé et sa préparation, la fête de l'objectif du jour et de la série, la fin d'une leçon,
    d'un quiz, d'un paquet de cartes, d'une récitation, le résultat d'un examen blanc, les écrans
    vides (Leçons, examens, quiz, conversation avec Mika), l'attente d'une génération (leçon,
-   examen blanc, entraînement, emploi du temps). Là il fait coucou, saute, écrit — puis s'arrête.
-3. **En avatar** (`MikaAvatar`, sa tête dans un rond clair, fixe) partout où il ferait moins de
+   examen blanc, entraînement, emploi du temps). Là il fait coucou, saute, écrit — puis s'arrête, souriant.
+3. **En avatar** (`MikaAvatar`, son visage souriant dans un rond clair, fixe) partout où il ferait moins de
    40 points : les messages du tuteur, les retours d'une question, la note d'une leçon, la
    série, l'emploi du temps lu.
 4. **Retiré** là où il n'apportait rien : la journée vide de l'agenda (une icône de
    calendrier), « Scanne ton emploi du temps » (l'appareil photo : Mika est déjà sur la carte
    d'examen juste au-dessus), la préparation d'un examen blanc. Jamais deux fois sur un écran,
    jamais sur un bouton, jamais dans une liste.
-5. **Le papier** : crème et blanc le jour, graphite la nuit, où une lueur discrète derrière lui
-   détache le corps noir. Des dégradés, pas de flou.
+5. **Le papier** : crème et blanc le jour, graphite la nuit. Mika y est lisible partout grâce
+   à ses images mêmes (ci-dessous) ; la nuit, une lumière douce derrière lui en plus. Des
+   dégradés, pas de flou.
 
-**Fluide** — le moteur (`MikaClipStore`, `MikaPlayerView`, `MikaStage`) :
+**Lisible et attachant (build 169 : « noir sur noir on voit pas bien la pieuvre », « il est pas
+assez mignon »)** — sans changer le personnage, tout est cuit dans ses images par
+`scripts/mika-assets.py`, donc gratuit pendant l'animation :
 
-- **Ce qui ramait** : chaque Mika animé décodait son WebP de 512 pixels image par image, 24 fois
-  par seconde, en boucle infinie (le repos, la réflexion, le sommeil…) ; chaque nouvelle image
-  posée dans une `UIImageView` changeait sa taille propre et relançait la mise en page SwiftUI
-  autour de lui ; les onglets gardés en vie continuaient d'animer leur Mika hors de l'écran ; le
-  halo de nuit était un flou recalculé ; Home ajoutait un flottement `repeatForever` et un
-  coucou toutes les 14 secondes ; le lancement lisait les seize fichiers sur le fil principal.
-- **Maintenant** : Mika est **fixe** la plupart du temps (une image du catalogue). Une
-  animation se prépare **une fois, hors du fil principal**, à la taille où elle s'affiche
-  (2 pixels par point au plus : en mouvement, l'œil ne voit pas la différence), sous un budget de 14 Mo (au-delà : 12 images par seconde, puis plus petit), et reste dans un
-  `NSCache` vidé si la mémoire manque. **Core Animation la joue** (`CAKeyframeAnimation` sur
-  `contents`) dans une vue sans taille propre : aucun calcul par image sur le fil principal.
-  Elle se joue **une fois** (l'arrivée, une réponse, une réussite), puis le lecteur se vide et la
-  pose de repos, nette, revient (`MikaMood.restStill`) ; seules la réflexion et
-  l'écriture bouclent, le temps d'une génération. **Un seul Mika joue à la fois** dans l'app
-  (`MikaStage`) ; quitter l'écran ou passer en arrière-plan arrête la lecture ; « Réduire les
-  animations », `\.mikaStill` et moins de 64 points : fixe.
-- **Le paquet** : onze animations au lieu de seize (le repos et le « non » sont fixes, les
-  voyages sont partis), rognées autour de Mika, à 24 images par seconde pour les gestes courts
-  et 12 pour les longs ; dix poses rognées ; la tête de l'avatar. `scripts/mika-assets.py` les
-  refait depuis le kit et écrit `MikaArt.swift` (où chaque image se place dans le canevas).
+- **Une lueur claire** autour de lui (blanche, 36 %, douce) : invisible sur la crème et le blanc
+  du jour, elle détache le corps noir du graphite la nuit et du bleu ; **une lumière de
+  contour** froide sur le haut et la gauche du corps : le noir brillant a du relief ;
+- **des joues roses** discrètes sous les yeux, repérées image par image (les yeux blancs dans
+  le noir de la tête) et lissées dans le temps : elles suivent la tête sans trembler, ne
+  touchent jamais les yeux ;
+- **il finit sur un sourire** : après un geste (coucou, saut, clin d'œil, fête, surprise), la
+  vidéo laisse place en fondu à sa pose souriante, les yeux plissés (`MikaMood.afterglow`) ;
+  au repos (`.idle`), il sourit aussi ; l'avatar est son visage souriant, cadré serré ;
+- **le demi montre le visage entier** : `MikaPeek` coupe sous les joues et le haut des
+  tentacules (260 unités du canevas au lieu de 236), jamais à ras des yeux ;
+- **les écrans vides et les questions** prennent un clin d'œil ou un regard curieux, plus une
+  réflexion qui tournait sans fin (écouter, réciter, l'examen d'une nouvelle leçon, un quiz
+  raté, l'emploi du temps vide).
+
+**Fluide (build 169 : « ça lag, très peu de fps »)** — le moteur (`MikaClipStore`,
+`MikaPlayerView`, `MikaStage`) :
+
+- **Ce qui saccadait** : le lecteur précédent décodait toutes les images d'une animation en
+  bitmaps avant de jouer (160 à 870 ms d'attente, jusqu'à 14 Mo par animation), et six
+  animations sur onze ne gardaient qu'une image sur deux (12 images par seconde) pour tenir
+  dans ce budget.
+- **Maintenant : de la vidéo HEVC avec alpha**, toutes les images, 24 par seconde.
+  `AVSampleBufferDisplayLayer` reçoit les images compressées ; le **décodeur matériel** les
+  décode juste à temps et le serveur d'affichage montre chaque image à son heure, sur sa propre
+  horloge : un fil principal occupé (un écran qui se construit, justement au moment où Mika
+  arrive) ne fait sauter aucune image. Mémoire : la vidéo compressée (115 à 500 Ko) et deux ou
+  trois images décodées, au lieu de 14 Mo.
+- **Démarrage instantané** : dès le premier Mika affiché, les onze vidéos (2,8 Mo en tout) sont
+  lues en mémoire en tâche de fond, sans les décoder (`MikaClipStore.warm`). La première image de
+  chaque vidéo existe aussi en image fixe (`Mika-clip-<nom>`), au pixel près : elle est à
+  l'écran pendant les 50 ms où le décodeur prépare la vidéo, posée sur elle, puis la vidéo prend
+  sa place — ni flash ni saut.
+- Le reste ne change pas : **fixe la plupart du temps**, une lecture **une fois** (l'arrivée,
+  une réponse, une réussite) ; seules la réflexion et l'écriture bouclent, le temps d'une
+  génération ; **un seul Mika joue à la fois** (`MikaStage`) ; hors de l'écran ou en
+  arrière-plan, la lecture s'arrête ; « Réduire les animations », `\.mikaStill`, moins de 64
+  points : fixe. **Aucune session audio** (pas d'`AVPlayer`) : la musique de l'élève continue.
+- **Mesures** (`MikaMascotTests`, journal `MIKA-PERF` et rendu `mika-perf`) : sur le Mac de l'encodage
+  (décodeur matériel), **0,2 à 0,6 ms par image** ; sur le simulateur de la CI (décodage
+  logiciel, le pire cas), 3 à 9 ms par image — pour un budget de 41,7 ms à 24 images par
+  seconde ; lecture d'une vidéo en mémoire 33 à 128 ms (une fois, en tâche de fond, au
+  lancement) ; **du geste demandé à la première image qui bouge : 54 ms**, dont 50 laissés au
+  décodeur sous l'image fixe identique (avant : 160 à 870 ms de préparation). Paquet : 2,8 Mo
+  de vidéos (avant : 5,8 Mo de WebP), écart à l'image source ≈ 1,3/255, transparence ≈ 0,2/255
+  (`mika-encode.swift` relit chaque vidéo).
+
+**Changer de kit, sans code** (un Mika plus mignon, de nouvelles poses) :
+
+1. Pousser le kit sur la branche `assets/mika-kit` — jamais dans l'app : `sequences-png/<nom>/
+   <nom>-000.png…` (canevas 512 px, 24 images par seconde) et `images-fixes/mika-<pose>.png`
+   (1024 px), la disposition du kit actuel.
+2. `gh workflow run mika-encode.yml --ref <branche> -f target=<branche>` : sur un Mac de GitHub
+   (l'encodeur HEVC avec alpha n'existe que sur macOS), le workflow lance
+   `scripts/mika-assets.py` (poses, premières images, avatar, `MikaArt.swift`, avec la lueur,
+   la lumière et les joues), encode chaque animation avec `scripts/mika-encode.swift`, **relit
+   chaque vidéo** et la compare à ses images (il refuse une vidéo qui perd des images ou s'en
+   écarte), commite le tout sur `<branche>` et publie ses planches de contrôle (début, milieu,
+   fin, sur la crème, le graphite et le bleu) sur `assets/mika-build`.
+3. Les noms des animations et des poses attendues sont en tête de `scripts/mika-assets.py`
+   (`CLIPS`, `STILLS`) ; les réglages du traitement aussi (lueur, lumière, joues).
 
 **Le même langage dans tous les onglets** :
 
