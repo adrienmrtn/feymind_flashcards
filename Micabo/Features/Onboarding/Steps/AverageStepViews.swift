@@ -311,6 +311,16 @@ struct GradeGapCard: View {
         }
     }
 
+    /// La note d'aujourd'hui, dans le barème de l'élève : « Moins de 10/20 » sous le barème.
+    private var fromLabel: String {
+        current < TargetScore.min
+            ? i18n.t("ios.averageBelow", ["grade": scale.choices.first?.label ?? ""])
+            : scale.label(for: current)
+    }
+
+    /// **L'écart se dit dans le barème de l'élève** (lot 7) : « 3.0 → 3.8 », « 08 → 12 »,
+    /// « 12/20 → 16/20 ». Il disait « 4 points à prendre », compté sur la droite 10–20
+    /// interne de l'app : un Américain qui visait 3.8 avec 3.0 lisait « 4 points ».
     var body: some View {
         HStack(spacing: 14) {
             Image(systemName: "arrow.up.right")
@@ -321,21 +331,32 @@ struct GradeGapCard: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 8) {
-                    Text(i18n.t("ios.target.gap", ["count": "\(points)"]))
-                        .font(MicaboFont.ui(15, weight: .bold))
-                        .foregroundStyle(OnboardingPalette.ink)
+                    HStack(spacing: 6) {
+                        Text(fromLabel)
+                        Image(systemName: "arrow.forward")
+                            .font(.system(size: 12, weight: .heavy))
+                            .foregroundStyle(OnboardingPalette.gray)
+                        Text(scale.label(for: target))
+                    }
+                    .font(MicaboFont.ui(15, weight: .bold))
+                    .foregroundStyle(OnboardingPalette.ink)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
 
                     Text(i18n.t(reachKey))
                         .font(MicaboFont.ui(11, weight: .bold))
                         .foregroundStyle(OnboardingPalette.accent)
+                        .lineLimit(1)
                         .padding(.horizontal, 9)
                         .padding(.vertical, 3)
                         .background(OnboardingPalette.accentWash, in: Capsule())
                 }
 
-                Text(i18n.t("ios.target.todayAt", ["grade": scale.label(for: current)]))
+                Text(i18n.t("ios.onb7.target.sub"))
                     .font(OnboardingPalette.subtitle)
                     .foregroundStyle(OnboardingPalette.gray)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }

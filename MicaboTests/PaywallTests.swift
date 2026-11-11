@@ -176,7 +176,8 @@ final class PaywallTests: XCTestCase {
         XCTAssertEqual(milestones.map(\.tone), [.current, .upcoming, .upcoming])
         XCTAssertEqual(Set(milestones.map(\.id)).count, milestones.count, "Deux étapes ne peuvent pas porter le même libellé")
         XCTAssertEqual(TrialTimeline.reminderDay, TrialTimeline.freeDays - 1)
-        XCTAssertTrue(milestones[1].title.contains("\(TrialTimeline.reminderDay)"))
+        // Des dates, pas des « jour 2 » : le rappel se lit au jour où il part.
+        XCTAssertTrue(milestones[1].title.contains(TrialTimeline.reminderDateText()))
 
         // Sans notifications, l'étape du rappel dit comment l'avoir, au lieu de le promettre.
         let off = TrialTimeline.milestones(remindersOn: false)
@@ -209,6 +210,7 @@ final class PaywallTests: XCTestCase {
         XCTAssertEqual(TrialTimeline.billingDateText(from: start, calendar: calendar), "28 août")
 
         let lastStep = try XCTUnwrap(TrialTimeline.milestones(from: start, calendar: calendar).last)
-        XCTAssertTrue(lastStep.detail.contains("28 août"), "La date manque à l'étape qui l'annonce : \(lastStep.detail)")
+        XCTAssertTrue(lastStep.title.contains("28 août"), "La date manque à l'étape qui l'annonce : \(lastStep.title)")
+        XCTAssertEqual(TrialTimeline.reminderDateText(from: start, calendar: calendar), "27 août", "La veille de la fin")
     }
 }
