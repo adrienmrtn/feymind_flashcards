@@ -3,6 +3,9 @@
 
 extension IosI18nCatalogs {
     static let hr: [String: String] = [
+        "ios.pol.home.countdown": "preostalo dana: {n}",
+        "ios.pol.home.proActiveA11y": "Micabo Pro je aktivan",
+        "ios.pol.home.late": "Kasni",
         "ios.pol.sys.daysLeft": "preostalo dana: {days}",
         "ios.pol.sys.tab.focus": "Fokus",
         "ios.onb5.building.sub": "Sve ti pripremam",
@@ -1410,6 +1413,16 @@ extension IosI18nCatalogs {
         "ios.sup.modes.mindMap": "Umna mapa",
         "ios.sup.modes.mindMapHint": "Teme i njihovi pojmovi kao stablo",
         "ios.sup.modes.title": "Uči drukčije",
+        "ios.pol.learn.next.start": "Započni lekciju",
+        "ios.pol.learn.next.resume": "Nastavi · Korak {n}",
+        "ios.pol.learn.next.writing": "Mika piše korak {n}…",
+        "ios.pol.learn.next.review": "Ponovi moje kartice ({count})",
+        "ios.pol.learn.next.practice": "Vježbaj na lekciji",
+        "ios.pol.learn.stepOf": "Korak {n} od {total}",
+        "ios.pol.learn.nextStep": "Sljedeći korak",
+        "ios.pol.learn.notes.answerToFinish": "Odgovori na pitanje da završiš korak",
+        "ios.pol.learn.cards.allKnown": "Nijedna kartica pogrešna, bravo!",
+        "ios.pol.learn.cards.againCount": "Uskoro za ponavljanje: {count}",
         "ios.sup.modes.voice": "Naglas",
         "ios.sup.modes.voiceHint": "Odgovaraj na kartice govorom",
         "ios.sup.paywall.export": "Sažeci u PDF-u za ispis i dijeljenje dolaze s Pro",

@@ -3,6 +3,9 @@
 
 extension IosI18nCatalogs {
     static let da: [String: String] = [
+        "ios.pol.home.countdown": "{n} dage tilbage",
+        "ios.pol.home.proActiveA11y": "Micabo Pro er aktiv",
+        "ios.pol.home.late": "Forsinket",
         "ios.pol.sys.daysLeft": "{days, plural, one {1 dag tilbage} other {# dage tilbage}}",
         "ios.pol.sys.tab.focus": "Fokus",
         "ios.onb5.building.sub": "Jeg gør alt klar til dig",
@@ -1410,6 +1413,16 @@ extension IosI18nCatalogs {
         "ios.sup.modes.mindMap": "Mindmap",
         "ios.sup.modes.mindMapHint": "Emnerne og deres begreber som et træ",
         "ios.sup.modes.title": "Øv på andre måder",
+        "ios.pol.learn.next.start": "Start lektionen",
+        "ios.pol.learn.next.resume": "Fortsæt · Trin {n}",
+        "ios.pol.learn.next.writing": "Mika skriver trin {n}…",
+        "ios.pol.learn.next.review": "Gennemgå mine kort ({count})",
+        "ios.pol.learn.next.practice": "Øv dig på lektionen",
+        "ios.pol.learn.stepOf": "Trin {n} af {total}",
+        "ios.pol.learn.nextStep": "Næste trin",
+        "ios.pol.learn.notes.answerToFinish": "Svar på spørgsmålet for at gennemføre trinnet",
+        "ios.pol.learn.cards.allKnown": "Ingen kort forkert, flot!",
+        "ios.pol.learn.cards.againCount": "Kommer snart igen: {count}",
         "ios.sup.modes.voice": "Højt",
         "ios.sup.modes.voiceHint": "Svar på kortene ved at tale",
         "ios.sup.paywall.export": "Resuméer som PDF til print og deling får du med Pro",

@@ -14,13 +14,13 @@ struct SheetExportView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            RevisionModeHeader(mode: .export, lessonTitle: digest.title) { dismiss() }
+            RevisionModeHeader(mode: .export, lessonTitle: digest.title, tone: tone) { dismiss() }
             SheetExportCard(title: digest.title, themes: digest.themes.count, pages: pages, ready: file != nil, failed: failed, tone: tone) {
                 if let file {
                     ShareLink(item: file) {
                         Label(L10n.t("ios.sup.export.share", locale: .resolved()), systemImage: "square.and.arrow.up")
                     }
-                    .buttonStyle(LessonPrimaryButtonStyle())
+                    .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
                 }
             }
             .padding(.horizontal, MicaboSpacing.screen)

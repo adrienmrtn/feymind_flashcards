@@ -7,6 +7,8 @@ import SwiftUI
 struct MindMapView: View {
     let root: MindMapNode
     var icon: MicaboIcon = .book
+    /// La couleur de la leçon, pour l'en-tête : la même que sur sa tuile.
+    var tone: LessonTone?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.homeStill) private var still
@@ -14,6 +16,7 @@ struct MindMapView: View {
 
     init(course: Course) {
         self.init(root: MindMap.build(LessonDigest(course: course)), icon: course.icon)
+        tone = course.tone
     }
 
     /// `expanded` : les thèmes ouverts à l'arrivée. Par défaut, le premier.
@@ -27,7 +30,7 @@ struct MindMapView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            RevisionModeHeader(mode: .mindMap, lessonTitle: root.title) { dismiss() }
+            RevisionModeHeader(mode: .mindMap, lessonTitle: root.title, tone: tone) { dismiss() }
             if still {
                 content
             } else {
@@ -49,7 +52,7 @@ struct MindMapView: View {
                 .foregroundStyle(MicaboColor.inkSecondary)
                 Spacer(minLength: 8)
                 Button {
-                    withAnimation(.spring(duration: 0.35)) {
+                    withAnimation(LearnMotion.standard) {
                         expanded = allOpen ? [] : Set(root.children.map(\.id))
                     }
                 } label: {
@@ -71,7 +74,7 @@ struct MindMapView: View {
                     isLast: index == root.children.count - 1,
                     isOpen: expanded.contains(theme.id)
                 ) {
-                    withAnimation(.spring(duration: 0.35)) {
+                    withAnimation(LearnMotion.standard) {
                         if expanded.contains(theme.id) {
                             expanded.remove(theme.id)
                         } else {

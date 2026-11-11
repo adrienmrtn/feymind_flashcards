@@ -226,6 +226,7 @@ final class RenderGalleryTests: XCTestCase {
         try RenderGallery.render(
             "lesson-cards", night: true,
             LessonCardsHub(session: session)
+                .environment(\.homeStill, true)
                 .frame(height: 980)
         )
         try RenderGallery.render(

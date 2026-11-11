@@ -55,7 +55,7 @@ struct MockExamFlow: View {
                     ExamHistory.record(result)
                     // Une copie rendue est une séance : elle allume la journée de la série.
                     StudyStreak.record()
-                    withAnimation(.spring(duration: 0.5)) { phase = .result(paper, answers, result) }
+                    withAnimation(LearnMotion.gentle) { phase = .result(paper, answers, result) }
                 }
                 .transition(.move(edge: .trailing))
             case .result(let paper, let answers, let result):
@@ -126,7 +126,7 @@ struct MockExamFlow: View {
                                 let isOn = minutes == value
                                 Button {
                                     Haptics.selection()
-                                    withAnimation(.spring(duration: 0.3)) { minutes = value }
+                                    withAnimation(LearnMotion.standard) { minutes = value }
                                 } label: {
                                     VStack(spacing: 2) {
                                         Text("\(value)")
@@ -212,7 +212,7 @@ struct MockExamFlow: View {
             return
         }
         let chosen = lessons.filter { selected.contains($0.id) }
-        withAnimation { phase = .writing }
+        withAnimation(LearnMotion.standard) { phase = .writing }
         Task {
             do {
                 let paper = try await builder.examPaper(title: title, exam: start.exam, courses: chosen, minutes: minutes, in: modelContext)
@@ -220,20 +220,20 @@ struct MockExamFlow: View {
                 // avant ce contrôle : une génération ratée (aucune question valide) coûtait
                 // le seul examen gratuit, et « Réessayer » ouvrait le paywall.
                 guard !paper.items.isEmpty else {
-                    withAnimation { phase = .failed(L10n.t("lesson.exam.failed", locale: .resolved())) }
+                    withAnimation(LearnMotion.standard) { phase = .failed(L10n.t("lesson.exam.failed", locale: .resolved())) }
                     return
                 }
                 if ExamAllowance.consumesFreeMock(isPro: isPro, questionCount: paper.items.count) {
                     ExamAllowance.freeMockUsed = true
                 }
                 Haptics.success()
-                withAnimation(.spring(duration: 0.5)) { phase = .run(paper) }
+                withAnimation(LearnMotion.gentle) { phase = .run(paper) }
             } catch let error as LessonServiceError where error.opensPaywall {
                 ExamAllowance.freeMockUsed = true
-                withAnimation { phase = .setup }
+                withAnimation(LearnMotion.standard) { phase = .setup }
                 paywall = .mockExam
             } catch {
-                withAnimation {
+                withAnimation(LearnMotion.standard) {
                     phase = .failed((error as? LocalizedError)?.errorDescription ?? L10n.t("lesson.exam.failed", locale: .resolved()))
                 }
             }
@@ -274,7 +274,7 @@ struct MockExamFlow: View {
             VStack(spacing: 12) {
                 Button(L10n.t("lesson.practice.retry", locale: .resolved()), action: begin)
                     .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
-                Button(L10n.t("lesson.practice.back", locale: .resolved())) { withAnimation { phase = .setup } }
+                Button(L10n.t("lesson.practice.back", locale: .resolved())) { withAnimation(LearnMotion.standard) { phase = .setup } }
                     .buttonStyle(MicaboSecondaryButtonStyle())
             }
             .padding(.horizontal, MicaboSpacing.screen)
@@ -425,7 +425,7 @@ struct MockExamRunView: View {
             }
             .scrollIndicators(.hidden)
             .onChange(of: index) { _, value in
-                withAnimation { proxy.scrollTo(value, anchor: .center) }
+                withAnimation(LearnMotion.standard) { proxy.scrollTo(value, anchor: .center) }
             }
         }
     }
@@ -511,7 +511,7 @@ struct MockExamRunView: View {
                 } label: {
                     Label(L10n.t("lesson.exam.submit", locale: .resolved()), systemImage: "paperplane.fill")
                 }
-                .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.correct))
+                .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
             } else {
                 Button {
                     go(to: index + 1)
@@ -530,7 +530,7 @@ struct MockExamRunView: View {
     private func go(to target: Int) {
         guard paper.items.indices.contains(target), target != index else { return }
         direction = target > index ? .trailing : .leading
-        withAnimation(.spring(duration: 0.4)) { index = target }
+        withAnimation(LearnMotion.standard) { index = target }
     }
 
     private func submit() {
@@ -544,12 +544,11 @@ struct MockExamRunView: View {
 }
 
 /// **Le chrono** : un anneau qui se vide et les minutes qui restent. Il passe à l'orange à
-/// cinq minutes, au rouge à la dernière, et bat doucement.
+/// cinq minutes, au rouge à la dernière. Il ne bat plus : une pastille qui pulse sous la
+/// question fait lever les yeux du sujet au pire moment, la couleur suffit à prévenir.
 struct TimerPill: View {
     let remaining: Int
     let total: Int
-
-    @State private var beat = false
 
     private var color: Color {
         if remaining <= 60 { return MicaboColor.wrong }
@@ -565,7 +564,7 @@ struct TimerPill: View {
                     .trim(from: 0, to: total == 0 ? 0 : CGFloat(remaining) / CGFloat(total))
                     .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                     .rotationEffect(.degrees(-90))
-                    .animation(.linear(duration: 1), value: remaining)
+                    .animation(LearnMotion.gentle, value: remaining)
             }
             .frame(width: 22, height: 22)
             Text(String(format: "%d:%02d", remaining / 60, remaining % 60))
@@ -578,10 +577,6 @@ struct TimerPill: View {
         .padding(.vertical, 9)
         .background(MicaboColor.surface, in: Capsule())
         .overlay(Capsule().strokeBorder(color.opacity(0.5), lineWidth: 1.5))
-        .scaleEffect(remaining <= 60 && beat ? 1.06 : 1)
-        .onAppear {
-            withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) { beat = true }
-        }
         .accessibilityElement(children: .combine)
     }
 }
@@ -613,8 +608,9 @@ struct MockExamResultView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
+                // La croix, en haut à gauche comme dans tous les parcours : on ferme la copie
+                // du même geste qu'on a fermé le sujet.
                 HStack {
-                    Spacer()
                     Button(action: onClose) {
                         Image(systemName: "xmark")
                             .font(.system(size: 19, weight: .bold))
@@ -623,6 +619,7 @@ struct MockExamResultView: View {
                     }
                     .buttonStyle(MicaboPressableButtonStyle())
                     .accessibilityLabel(Text(L10n.t("lesson.circle.close", locale: .resolved())))
+                    Spacer()
                 }
 
                 ZStack {
@@ -717,7 +714,7 @@ struct MockExamResultView: View {
 
                 VStack(alignment: .leading, spacing: 12) {
                     Button {
-                        withAnimation(.spring(duration: 0.4)) { showsCorrections.toggle() }
+                        withAnimation(LearnMotion.standard) { showsCorrections.toggle() }
                     } label: {
                         HStack {
                             Text(L10n.t("lesson.exam.corrections", locale: .resolved()))
@@ -749,8 +746,8 @@ struct MockExamResultView: View {
         .scrollIndicators(.hidden)
         .background(MicaboColor.canvas.ignoresSafeArea())
         .onAppear {
-            withAnimation(.easeOut(duration: 1.3).delay(0.2)) { fill = result.fraction }
-            withAnimation(.spring(duration: 0.6).delay(0.5)) { shown = true }
+            withAnimation(LearnMotion.gentle(delay: 0.2)) { fill = result.fraction }
+            withAnimation(LearnMotion.gentle(delay: 0.5)) { shown = true }
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                 if passes { Haptics.success() } else { Haptics.warning() }
             }
@@ -774,7 +771,7 @@ struct MockExamResultView: View {
         try? modelContext.save()
         CourseLedger.noteChange()
         Haptics.success()
-        withAnimation(.spring(duration: 0.4)) { cardsAdded = true }
+        withAnimation(LearnMotion.standard) { cardsAdded = true }
     }
 }
 

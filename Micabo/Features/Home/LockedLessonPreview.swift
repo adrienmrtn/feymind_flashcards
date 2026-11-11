@@ -161,7 +161,7 @@ struct LockedLessonPreview: View {
                 .foregroundStyle(done || active ? MicaboColor.ink : MicaboColor.inkTertiary)
             Spacer(minLength: 0)
         }
-        .animation(.spring(duration: 0.35), value: done)
+        .animation(MicaboMotion.standard, value: done)
     }
 
     /// La seule étape qui n'a pas eu lieu, et qui le dit : l'écriture, avec Pro.
@@ -242,12 +242,12 @@ struct LockedLessonPreview: View {
         for index in rows.indices {
             try? await Task.sleep(for: .milliseconds(650))
             if Task.isCancelled { return }
-            withAnimation(.spring(duration: 0.35)) { ticked = index + 1 }
+            withAnimation(MicaboMotion.standard) { ticked = index + 1 }
             Haptics.selection()
         }
         try? await Task.sleep(for: .milliseconds(450))
         if Task.isCancelled { return }
-        withAnimation(.spring(duration: 0.5)) { revealed = true }
+        withAnimation(MicaboMotion.gentle) { revealed = true }
         Haptics.success()
         try? await Task.sleep(for: .milliseconds(1_100))
         if Task.isCancelled { return }

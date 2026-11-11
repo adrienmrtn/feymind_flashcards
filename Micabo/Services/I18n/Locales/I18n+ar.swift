@@ -3,6 +3,9 @@
 
 extension IosI18nCatalogs {
     static let ar: [String: String] = [
+        "ios.pol.home.countdown": "الأيام المتبقية: {n}",
+        "ios.pol.home.proActiveA11y": "Micabo Pro مفعّل",
+        "ios.pol.home.late": "متأخر",
         "ios.pol.sys.daysLeft": "الأيام المتبقية: {days}",
         "ios.pol.sys.tab.focus": "التركيز",
         "ios.onb5.building.sub": "أجهّز كل شيء من أجلك",
@@ -1410,6 +1413,16 @@ extension IosI18nCatalogs {
         "ios.sup.modes.mindMap": "خريطة ذهنية",
         "ios.sup.modes.mindMapHint": "المحاور ومفاهيمها على شكل شجرة",
         "ios.sup.modes.title": "راجع بطريقة أخرى",
+        "ios.pol.learn.next.start": "ابدأ الدرس",
+        "ios.pol.learn.next.resume": "تابع · الخطوة {n}",
+        "ios.pol.learn.next.writing": "Mika يكتب الخطوة {n}…",
+        "ios.pol.learn.next.review": "راجع بطاقاتي ({count})",
+        "ios.pol.learn.next.practice": "تدرّب على الدرس",
+        "ios.pol.learn.stepOf": "الخطوة {n} من {total}",
+        "ios.pol.learn.nextStep": "الخطوة التالية",
+        "ios.pol.learn.notes.answerToFinish": "أجب عن السؤال لإتمام الخطوة",
+        "ios.pol.learn.cards.allKnown": "لا بطاقة خاطئة، أحسنت!",
+        "ios.pol.learn.cards.againCount": "للمراجعة قريبًا: {count}",
         "ios.sup.modes.voice": "بصوت عالٍ",
         "ios.sup.modes.voiceHint": "أجب عن البطاقات بالكلام",
         "ios.sup.paywall.export": "الملخصات بصيغة PDF للطباعة والمشاركة متاحة مع Pro",

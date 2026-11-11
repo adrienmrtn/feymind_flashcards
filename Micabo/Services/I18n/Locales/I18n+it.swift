@@ -3,6 +3,9 @@
 
 extension IosI18nCatalogs {
     static let it: [String: String] = [
+        "ios.pol.home.countdown": "tra {n} giorni",
+        "ios.pol.home.proActiveA11y": "Micabo Pro attivo",
+        "ios.pol.home.late": "In ritardo",
         "ios.pol.sys.daysLeft": "{days, plural, one {manca 1 giorno} other {mancano # giorni}}",
         "ios.pol.sys.tab.focus": "Focus",
         "ios.onb5.building.sub": "Sto preparando tutto per te",
@@ -1410,6 +1413,16 @@ extension IosI18nCatalogs {
         "ios.sup.modes.mindMap": "Mappa mentale",
         "ios.sup.modes.mindMapHint": "I temi e i loro concetti ad albero",
         "ios.sup.modes.title": "Ripassa in un altro modo",
+        "ios.pol.learn.next.start": "Inizia la lezione",
+        "ios.pol.learn.next.resume": "Continua · Tappa {n}",
+        "ios.pol.learn.next.writing": "Mika sta scrivendo la tappa {n}…",
+        "ios.pol.learn.next.review": "Ripassa le mie flashcard ({count})",
+        "ios.pol.learn.next.practice": "Esercitati sulla lezione",
+        "ios.pol.learn.stepOf": "Tappa {n} di {total}",
+        "ios.pol.learn.nextStep": "Tappa successiva",
+        "ios.pol.learn.notes.answerToFinish": "Rispondi alla domanda per completare la tappa",
+        "ios.pol.learn.cards.allKnown": "Nessuna carta sbagliata, ottimo!",
+        "ios.pol.learn.cards.againCount": "Da ripassare presto: {count}",
         "ios.sup.modes.voice": "Ad alta voce",
         "ios.sup.modes.voiceHint": "Rispondi alle carte parlando",
         "ios.sup.paywall.export": "Le schede in PDF da stampare e condividere sono con Pro",

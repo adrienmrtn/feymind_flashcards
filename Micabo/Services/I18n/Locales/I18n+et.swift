@@ -3,6 +3,9 @@
 
 extension IosI18nCatalogs {
     static let et: [String: String] = [
+        "ios.pol.home.countdown": "{n} päeva jäänud",
+        "ios.pol.home.proActiveA11y": "Micabo Pro on aktiivne",
+        "ios.pol.home.late": "Hilinenud",
         "ios.pol.sys.daysLeft": "{days, plural, one {1 päev jäänud} other {# päeva jäänud}}",
         "ios.pol.sys.tab.focus": "Fookus",
         "ios.onb5.building.sub": "Valmistan sulle kõik ette",
@@ -1410,6 +1413,16 @@ extension IosI18nCatalogs {
         "ios.sup.modes.mindMap": "Mõttekaart",
         "ios.sup.modes.mindMapHint": "Teemad ja mõisted puuna",
         "ios.sup.modes.title": "Õpi teisiti",
+        "ios.pol.learn.next.start": "Alusta tundi",
+        "ios.pol.learn.next.resume": "Jätka · Samm {n}",
+        "ios.pol.learn.next.writing": "Mika kirjutab sammu {n}…",
+        "ios.pol.learn.next.review": "Korda mu mälukaarte ({count})",
+        "ios.pol.learn.next.practice": "Harjuta selle tunniga",
+        "ios.pol.learn.stepOf": "Samm {n}/{total}",
+        "ios.pol.learn.nextStep": "Järgmine samm",
+        "ios.pol.learn.notes.answerToFinish": "Vasta küsimusele, et samm lõpetada",
+        "ios.pol.learn.cards.allKnown": "Ühtki valet kaarti, tubli!",
+        "ios.pol.learn.cards.againCount": "Varsti kordamisele: {count}",
         "ios.sup.modes.voice": "Valjusti",
         "ios.sup.modes.voiceHint": "Vasta kaartidele rääkides",
         "ios.sup.paywall.export": "Prinditavad ja jagatavad PDF-konspektid on Pro-s",

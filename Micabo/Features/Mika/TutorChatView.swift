@@ -384,10 +384,10 @@ struct TutorThreadView: View {
                 .scrollDismissesKeyboard(.interactively)
                 .onAppear { proxy.scrollTo("bottom", anchor: .bottom) }
                 .onChange(of: messages.count) { _, _ in
-                    withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
+                    withAnimation(LearnMotion.standard) { proxy.scrollTo("bottom", anchor: .bottom) }
                 }
                 .onChange(of: chat.thinking) { _, _ in
-                    withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
+                    withAnimation(LearnMotion.standard) { proxy.scrollTo("bottom", anchor: .bottom) }
                 }
             }
 

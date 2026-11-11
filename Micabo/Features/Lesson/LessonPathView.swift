@@ -4,11 +4,19 @@ import SwiftUI
 
 /// **L'écran d'une leçon : son chemin.** Voir `docs/refonte-parcours.md` § 5.3.
 ///
-/// En haut, le retour, le menu « ⋯ » (renommer, recommencer, supprimer) et Mika. La grande
-/// illustration de la leçon, son titre, « 27 % · 3 sur 11 étapes » et la barre qui se remplit.
-/// Le chemin, centré sur l'étape en cours à l'ouverture ; « Recommencer la leçon » tout en bas.
-/// En bas de l'écran, Notes, Quiz et Flashcards. Un ancien cours qui s'ouvre ici pour la
-/// première fois devient une leçon : on le convertit sur place, Mika au travail.
+/// En haut, le retour, le menu « ⋯ » (renommer, recommencer, supprimer) et Mika. Puis ce qui
+/// se lit en trois secondes : l'illustration, le titre, « 27 % · 3 sur 11 étapes » et la barre
+/// — **où j'en suis** — et un seul bouton plein — **que faire maintenant** : commencer,
+/// continuer l'étape en cours, ou, la leçon finie, réviser ses cartes (`LessonNextAction`).
+/// Les autres façons de réviser, en tuiles égales, puis le chemin ; « Recommencer la leçon »
+/// tout en bas. En bas de l'écran, Notes, Quiz et Flashcards.
+///
+/// Un parcours (une étape, le quiz, les flashcards, à voix haute) s'ouvre en plein écran et
+/// se ferme par sa croix, en haut à gauche, sur la leçon ; une option (lire les notes, Mika,
+/// écouter, la carte mentale, la fiche) monte en feuille. Jamais de feuille sur une feuille.
+///
+/// Un ancien cours qui s'ouvre ici pour la première fois devient une leçon : on le convertit
+/// sur place, Mika au travail.
 struct LessonPathView: View {
     let course: Course
 
@@ -22,6 +30,8 @@ struct LessonPathView: View {
     @State private var openCircle: PathCircle?
     @State private var finished = false
     @State private var sheet: LessonSheet?
+    /// Un parcours ouvert depuis la barre du bas ou le bouton principal : plein écran.
+    @State private var run: LessonRun?
     @State private var conversionError: String?
     @State private var scrolledPastHeader = false
     @State private var fullQuizAttempt = 0
@@ -73,7 +83,7 @@ struct LessonPathView: View {
         .overlay(alignment: .bottom) {
             if showsRating {
                 LessonRatingCard(course: course, moment: .firstCircle) {
-                    withAnimation(.spring(duration: 0.35)) { showsRating = false }
+                    withAnimation(LearnMotion.standard) { showsRating = false }
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.bottom, 12)
@@ -85,10 +95,8 @@ struct LessonPathView: View {
                 LessonNavbar(dueCount: session.dueCards().count) { entry in
                     switch entry {
                     case .notes: sheet = .notes
-                    case .quiz:
-                        fullQuizAttempt += 1
-                        sheet = .quiz
-                    case .flashcards: sheet = .cards
+                    case .quiz: startPractice()
+                    case .flashcards: run = .cards
                     }
                 }
             }
@@ -149,18 +157,32 @@ struct LessonPathView: View {
         .fullScreenCover(isPresented: $streakCelebration, onDismiss: leaveAfterStreak) {
             StreakCelebrationView { streakCelebration = false }
         }
-        .sheet(item: $revision) { mode in
+        .sheet(item: revisionSheet) { mode in
             switch mode {
             case .listen:
                 ListenView(course: course)
+                    .presentationDragIndicator(.visible)
             case .voice:
-                VoiceRecallView(session: session) { revision = nil }
-                    .interactiveDismissDisabled()
+                // Jamais ici : à voix haute s'ouvre en plein écran (`voiceOpen`).
+                EmptyView()
             case .mindMap:
                 MindMapView(course: course)
+                    .presentationDragIndicator(.visible)
             case .export:
                 SheetExportView(digest: LessonDigest(course: course), tone: course.tone)
                     .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+            }
+        }
+        .fullScreenCover(isPresented: voiceOpen) {
+            VoiceRecallView(session: session) { revision = nil }
+        }
+        .fullScreenCover(item: $run) { run in
+            switch run {
+            case .quiz:
+                LessonPracticeView(session: session, attempt: fullQuizAttempt)
+            case .cards:
+                LessonCardsHub(session: session)
             }
         }
         .micaboPaywall($paywall)
@@ -168,20 +190,10 @@ struct LessonPathView: View {
             switch sheet {
             case .notes:
                 LessonNotesReader(session: session)
-            case .quiz:
-                LessonPracticeView(session: session, attempt: fullQuizAttempt)
-            case .exam:
-                LessonQuizView(
-                    session: session,
-                    questions: session.fullQuiz(attempt: fullQuizAttempt),
-                    title: L10n.t("lesson.exam.mockTitle", locale: .resolved()),
-                    circleID: nil,
-                    onClose: { self.sheet = nil }
-                )
-            case .cards:
-                LessonCardsHub(session: session)
+                    .presentationDragIndicator(.visible)
             case .mika:
                 LessonMikaView(course: course)
+                    .presentationDragIndicator(.visible)
             }
         }
     }
@@ -193,11 +205,17 @@ struct LessonPathView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 0) {
-                        LessonPathHeader(course: course, session: session, exam: nextExam)
-                            .padding(.top, 60)
-                            .padding(.bottom, 26)
-                        RevisionModesRow(isPro: pro?.isPro ?? true, onSelect: openRevision)
-                            .padding(.bottom, 36)
+                        LessonPathHeader(
+                            course: course,
+                            session: session,
+                            exam: nextExam,
+                            next: nextAction,
+                            onNext: performNext
+                        )
+                        .padding(.top, 56)
+                        .padding(.bottom, MicaboSpacing.lg)
+                        RevisionModesRow(isPro: pro?.isPro ?? true, tone: tone, onSelect: openRevision)
+                            .padding(.bottom, MicaboSpacing.xl)
                         PathMapView(
                             session: session,
                             tone: tone,
@@ -220,18 +238,16 @@ struct LessonPathView: View {
                     // Passé l'en-tête, son titre monte dans la barre du haut.
                     let past = geometry.offset > 230
                     if past != scrolledPastHeader {
-                        withAnimation(.easeOut(duration: 0.2)) { scrolledPastHeader = past }
+                        withAnimation(LearnMotion.quick) { scrolledPastHeader = past }
                     }
                 }
                 .scrollIndicators(.hidden)
-                .onAppear {
-                    if let current = session.current {
-                        proxy.scrollTo(current.id, anchor: .center)
-                    }
-                }
+                // À l'ouverture, on reste en haut : l'en-tête dit où l'on en est et porte
+                // le bouton qui y emmène. Le chemin défile seulement quand une étape finie
+                // fait avancer l'étape en cours.
                 .onChange(of: session.current?.id) { _, id in
                     guard let id else { return }
-                    withAnimation(.easeInOut(duration: 0.6)) {
+                    withAnimation(LearnMotion.gentle) {
                         proxy.scrollTo(id, anchor: .center)
                     }
                 }
@@ -293,9 +309,8 @@ struct LessonPathView: View {
             Button {
                 sheet = .mika
             } label: {
-                MicaboIconView(icon: .mika, size: 34)
-                    .frame(width: 40, height: 40)
-                    .background(MicaboColor.surface, in: Circle())
+                // Mika en avatar, comme partout où il fait moins de 40 points.
+                MikaAvatar(size: 40)
                     .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 4)
             }
             .buttonStyle(MicaboPressableButtonStyle())
@@ -327,6 +342,49 @@ struct LessonPathView: View {
             return
         }
         revision = mode
+    }
+
+    /// Les modes qui se consultent montent en feuille.
+    private var revisionSheet: Binding<RevisionMode?> {
+        Binding(
+            get: { revision == .voice ? nil : revision },
+            set: { if $0 == nil, revision != .voice { revision = nil } }
+        )
+    }
+
+    /// À voix haute est un parcours : plein écran, pas une feuille.
+    private var voiceOpen: Binding<Bool> {
+        Binding(
+            get: { revision == .voice },
+            set: { if !$0, revision == .voice { revision = nil } }
+        )
+    }
+
+    /// **La prochaine chose à faire**, celle du bouton plein de l'en-tête.
+    private var nextAction: LessonNextAction {
+        LessonNextAction.resolve(session: session, dueCount: session.dueCards().count)
+    }
+
+    private func performNext() {
+        switch nextAction {
+        case .start(let circle), .resume(let circle):
+            Haptics.medium()
+            openCircle = circle
+        case .writing:
+            Haptics.light()
+        case .retry(let circle):
+            retry(circle)
+        case .review:
+            run = .cards
+        case .practice:
+            startPractice()
+        }
+    }
+
+    /// L'entraînement de la barre du bas : un nouveau tirage à chaque ouverture.
+    private func startPractice() {
+        fullQuizAttempt += 1
+        run = .quiz
     }
 
     private func open() async {
@@ -382,7 +440,7 @@ struct LessonPathView: View {
         // trait avance, le suivant reçoit « Continuer ».
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
             let firstContent = LessonRating.isFirstContentCircle(circle, doneBefore: session.progress.done, circles: session.circles)
-            withAnimation(.spring(duration: 0.6)) {
+            withAnimation(LearnMotion.gentle) {
                 session.complete(circle, in: modelContext)
             }
             offerRatingIfDue(afterFirstContent: firstContent, circle: circle)
@@ -413,7 +471,7 @@ struct LessonPathView: View {
         guard LessonRating.shouldOffer(course.id, at: .firstCircle) else { return }
         LessonRating.markOffered(course.id, at: .firstCircle)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
-            withAnimation(.spring(duration: 0.45)) { showsRating = true }
+            withAnimation(LearnMotion.gentle) { showsRating = true }
         }
     }
 
@@ -425,7 +483,7 @@ struct LessonPathView: View {
     /// prochaine étape au lieu de se perdre derrière.
     @discardableResult
     private func celebrateStreakIfNeeded() -> Bool {
-        guard openCircle == nil, sheet == nil, !finished, !streakCelebration else { return false }
+        guard openCircle == nil, sheet == nil, run == nil, revision == nil, !finished, !streakCelebration else { return false }
         guard StudyStreak.claimCelebration() else { return false }
         streakCelebration = true
         return true
@@ -442,7 +500,7 @@ struct LessonPathView: View {
         askForReviewAfterFirstLesson()
         switch destination {
         case .flashcards:
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { sheet = .cards }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { run = .cards }
         case .lessons:
             dismiss()
         }
@@ -469,7 +527,7 @@ struct LessonPathView: View {
     }
 
     private func resetLesson() {
-        withAnimation(.spring(duration: 0.6)) {
+        withAnimation(LearnMotion.gentle) {
             session.reset(in: modelContext)
         }
         Haptics.medium()
@@ -490,31 +548,44 @@ struct LessonPathHeader: View {
     let course: Course
     let session: LessonSession
     let exam: Exam?
+    /// Le bouton plein : ce qu'on fait maintenant. Sans lui (un aperçu), pas de bouton.
+    var next: LessonNextAction?
+    var onNext: () -> Void = {}
 
     private var tone: LessonTone { course.tone }
 
     var body: some View {
-        VStack(spacing: 18) {
-            // 88 points : les icônes 3D font 256 pixels, au-delà elles s'étirent et floutent.
+        VStack(spacing: MicaboSpacing.md) {
+            // 80 points : les icônes 3D font 256 pixels, au-delà elles s'étirent et floutent.
             // Le halo de la couleur de la leçon garde au grand en-tête sa présence.
-            MicaboIconView(icon: course.icon, size: 88)
+            MicaboIconView(icon: course.icon, size: 80)
                 .shadow(color: tone.vivid.opacity(0.25), radius: 24, x: 0, y: 14)
                 .background(
                     Circle()
-                        .fill(RadialGradient(colors: [tone.vivid.opacity(0.22), tone.vivid.opacity(0)], center: .center, startRadius: 4, endRadius: 90))
-                        .frame(width: 180, height: 180)
+                        .fill(RadialGradient(colors: [tone.vivid.opacity(0.22), tone.vivid.opacity(0)], center: .center, startRadius: 4, endRadius: 84))
+                        .frame(width: 168, height: 168)
                 )
-                .padding(.vertical, 14)
+                .padding(.vertical, 8)
+                .accessibilityHidden(true)
+            // Un titre long revient à la ligne, jusqu'à trois lignes, puis se resserre un peu :
+            // jamais de « … » sur le nom d'une leçon.
             Text(course.title)
-                .font(MicaboFont.display(30))
+                .font(MicaboFont.display(28))
                 .foregroundStyle(MicaboColor.ink)
                 .multilineTextAlignment(.center)
                 .lineLimit(3)
-                .minimumScaleFactor(0.8)
-                .padding(.horizontal, 28)
+                .minimumScaleFactor(0.85)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, MicaboSpacing.screen)
+                .accessibilityAddTraits(.isHeader)
             progressLine
-                .padding(.horizontal, 28)
+                .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.top, 4)
+            if let next {
+                nextButton(next)
+                    .padding(.horizontal, MicaboSpacing.screen)
+                    .padding(.top, 4)
+            }
             if session.plan?.shortened == true {
                 Label(L10n.t("lesson.path.shortened", locale: .resolved()), systemImage: "scissors")
                     .font(MicaboFont.ui(13, weight: .bold))
@@ -563,7 +634,26 @@ struct LessonPathHeader: View {
             }
             .frame(height: 14)
         }
-        .animation(.spring(duration: 0.8, bounce: 0.2), value: session.percent)
+        .animation(LearnMotion.gentle, value: session.percent)
+    }
+
+    /// **Le seul bouton plein de l'écran.** Il dit l'étape où il emmène ; pendant que Mika
+    /// écrit cette étape, il attend, grisé, au lieu de disparaître.
+    private func nextButton(_ next: LessonNextAction) -> some View {
+        Button(action: onNext) {
+            Label {
+                Text(next.title)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+                    .fixedSize(horizontal: false, vertical: true)
+            } icon: {
+                Image(systemName: next.symbol)
+            }
+            .padding(.horizontal, 12)
+        }
+        .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent, enabled: next.isEnabled))
+        .disabled(!next.isEnabled)
     }
 
     private func examPill(_ exam: Exam) -> some View {
@@ -593,15 +683,79 @@ struct LessonPathHeader: View {
 
 }
 
-/// Les feuilles qu'une leçon peut ouvrir.
+/// Les feuilles qu'une leçon peut ouvrir : ce qu'on consulte, pas un parcours.
 enum LessonSheet: String, Identifiable {
     case notes
-    case quiz
-    case exam
-    case cards
     case mika
 
     var id: String { rawValue }
+}
+
+/// Les parcours de la barre du bas, en plein écran : on les finit ou on les quitte par la
+/// croix, et l'on retombe sur la leçon.
+enum LessonRun: String, Identifiable {
+    case quiz
+    case cards
+
+    var id: String { rawValue }
+}
+
+/// **Ce que l'élève fait maintenant**, sur le bouton plein de l'en-tête d'une leçon.
+///
+/// Tant que le chemin n'est pas fini : commencer (rien de fait), continuer l'étape en cours,
+/// attendre qu'elle s'écrive ou la relancer si son écriture a échoué. Le chemin fini, la leçon
+/// se révise : les cartes dues d'abord, sinon l'entraînement.
+enum LessonNextAction: Equatable {
+    case start(PathCircle)
+    case resume(PathCircle)
+    case writing(PathCircle)
+    case retry(PathCircle)
+    case review(Int)
+    case practice
+
+    @MainActor
+    static func resolve(session: LessonSession, dueCount: Int) -> LessonNextAction {
+        if let current = session.current {
+            switch session.readiness(of: current) {
+            case .ready: return session.doneCount == 0 ? .start(current) : .resume(current)
+            case .writing: return .writing(current)
+            case .failed: return .retry(current)
+            }
+        }
+        return dueCount > 0 ? .review(dueCount) : .practice
+    }
+
+    var title: String {
+        switch self {
+        case .start:
+            L10n.t("ios.pol.learn.next.start", locale: .resolved())
+        case .resume(let circle):
+            L10n.t("ios.pol.learn.next.resume", locale: .resolved(), vars: ["n": String(circle.number)])
+        case .writing(let circle):
+            L10n.t("ios.pol.learn.next.writing", locale: .resolved(), vars: ["n": String(circle.number)])
+        case .retry:
+            L10n.t("lesson.path.retry", locale: .resolved())
+        case .review(let count):
+            L10n.t("ios.pol.learn.next.review", locale: .resolved(), vars: ["count": String(count)])
+        case .practice:
+            L10n.t("ios.pol.learn.next.practice", locale: .resolved())
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .start, .resume: "play.fill"
+        case .writing: "pencil.line"
+        case .retry: "arrow.clockwise"
+        case .review: "rectangle.on.rectangle.angled"
+        case .practice: "checklist"
+        }
+    }
+
+    var isEnabled: Bool {
+        if case .writing = self { return false }
+        return true
+    }
 }
 
 /// **Un ancien cours qui devient une leçon** : Mika prépare le chemin.
@@ -627,7 +781,7 @@ struct LessonPreparingView: View {
             if error != nil {
                 VStack(spacing: 12) {
                     Button(L10n.t("lesson.path.retry", locale: .resolved()), action: onRetry)
-                        .buttonStyle(LessonPrimaryButtonStyle())
+                        .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
                     Button(L10n.t("lesson.convert.openNow", locale: .resolved()), action: onOpenNow)
                         .buttonStyle(MicaboSecondaryButtonStyle())
                 }
@@ -667,7 +821,7 @@ struct LessonNavbar: View {
                             .foregroundStyle(MicaboColor.onInk)
                             .padding(.horizontal, 7)
                             .padding(.vertical, 3)
-                            .background(MicaboColor.wrong, in: Capsule())
+                            .background(MicaboColor.accent, in: Capsule())
                             .offset(x: 22, y: -2)
                             .transition(.scale.combined(with: .opacity))
                     }
@@ -689,7 +843,7 @@ struct LessonNavbar: View {
             .ignoresSafeArea(edges: .bottom)
             .allowsHitTesting(false)
         }
-        .animation(.spring(duration: 0.4), value: dueCount)
+        .animation(LearnMotion.standard, value: dueCount)
     }
 
     private func item(_ entry: Entry, icon: MicaboIcon, title: String) -> some View {

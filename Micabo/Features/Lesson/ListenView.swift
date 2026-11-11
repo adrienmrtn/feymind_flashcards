@@ -32,7 +32,7 @@ struct ListenView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            RevisionModeHeader(mode: .listen, lessonTitle: lessonTitle) {
+            RevisionModeHeader(mode: .listen, lessonTitle: lessonTitle, tone: tone) {
                 speaker.stop()
                 dismiss()
             }
@@ -160,7 +160,7 @@ struct ListenPlayerCard: View {
                 .lineLimit(5)
                 .frame(maxWidth: .infinity, minHeight: 84, alignment: .topLeading)
                 .fixedSize(horizontal: false, vertical: true)
-                .animation(.easeInOut(duration: 0.2), value: speaker.shownLine)
+                .animation(LearnMotion.quick, value: speaker.shownLine)
 
             VStack(spacing: 6) {
                 GeometryReader { proxy in

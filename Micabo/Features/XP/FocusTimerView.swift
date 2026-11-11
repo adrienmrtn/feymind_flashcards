@@ -103,7 +103,7 @@ struct FocusTimerView: View {
                 }
             }
         }
-        .animation(.spring(duration: 0.5), value: finished)
+        .animation(MicaboMotion.gentle, value: finished)
         .onAppear {
             UIApplication.shared.isIdleTimerDisabled = true
             guard startedAt == nil else { return }

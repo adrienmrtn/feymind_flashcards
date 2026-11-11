@@ -73,11 +73,11 @@ private struct HomeEntrance: ViewModifier {
         let visible = shown || !motion.entrance
         content
             .opacity(visible ? 1 : 0)
-            .offset(y: visible || motion.reduceMotion ? 0 : 18)
+            .offset(y: visible || motion.reduceMotion ? 0 : 12)
             .animation(
                 motion.reduceMotion
-                    ? .easeOut(duration: 0.2)
-                    : .spring(response: 0.55, dampingFraction: 0.82).delay(0.06 * Double(index)),
+                    ? MicaboMotion.reduced
+                    : MicaboMotion.gentle.delay(0.04 * Double(index)),
                 value: visible
             )
     }
@@ -94,7 +94,7 @@ struct HomePressStyle: ButtonStyle {
             .contentShape(Rectangle())
             .scaleEffect(configuration.isPressed ? scale : 1)
             .brightness(configuration.isPressed ? -0.03 : 0)
-            .animation(.spring(response: 0.28, dampingFraction: 0.65), value: configuration.isPressed)
+            .animation(MicaboMotion.quick, value: configuration.isPressed)
             .micaboPressFeedback(isPressed: configuration.isPressed, feedback: feedback)
     }
 }

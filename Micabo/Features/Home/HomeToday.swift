@@ -178,7 +178,7 @@ struct HomeGoalRing: View {
                 .foregroundStyle(target >= 1 ? MicaboColor.correct : HomePalette.bolt)
         }
         .frame(width: size, height: size)
-        .animation(.spring(response: 1.0, dampingFraction: 0.8), value: shown)
+        .animation(MicaboMotion.resolved(MicaboMotion.gentle, reduceMotion: motion.reduceMotion), value: shown)
         .onAppear {
             guard motion.entrance, !filled else { return }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { filled = true }
@@ -189,28 +189,21 @@ struct HomeGoalRing: View {
 
 // MARK: - Les outils
 
-/// Les outils de Home, hors de la leçon.
-enum HomeTool: CaseIterable {
+/// **Les outils de Home**, hors de la leçon : ceux qui créent ou font travailler tout de suite,
+/// posés sous la barre « Nouvelle leçon ». Le minuteur a son onglet (Concentration) et la ligue
+/// sa pastille (l'éclair de la rangée du haut) : ils ne sont pas répétés ici.
+enum HomeTool: CaseIterable, Identifiable {
+    /// « Scanner un exo » : le scanner de maths (`ScanExerciseView`, `SolverFlowView`).
     case scan
+    /// « Quiz éclair » : cinq questions sur la dernière leçon ouverte.
     case quiz
-    case timer
-    case league
+
+    var id: Self { self }
 
     var icon: MicaboIcon {
         switch self {
         case .scan: .photo
         case .quiz: .quiz
-        case .timer: .alarm
-        case .league: .trophy
-        }
-    }
-
-    var tone: LessonTone {
-        switch self {
-        case .scan: .blue
-        case .quiz: .pink
-        case .timer: .mint
-        case .league: .yellow
         }
     }
 
@@ -218,46 +211,52 @@ enum HomeTool: CaseIterable {
         switch self {
         case .scan: L10n.t("ios.kx.tools.scan.title", locale: .resolved())
         case .quiz: L10n.t("ios.kx.tools.quiz.title", locale: .resolved())
-        case .timer: L10n.t("ios.kx.tools.timer.title", locale: .resolved())
-        case .league: L10n.t("ios.kx.tools.league.title", locale: .resolved())
         }
+    }
+
+    /// Les outils qui ont un sens pour l'élève : le quiz éclair demande une leçon.
+    static func available(hasLesson: Bool) -> [HomeTool] {
+        hasLesson ? [.scan, .quiz] : [.scan]
     }
 }
 
-/// **Les outils, en raccourcis légers** : une seule carte, quatre icônes sur leur pastille et
-/// leur nom dessous, sur deux lignes au plus. Ils restent sous la main sans peser autant que
-/// le plan du jour.
-struct HomeToolsCard: View {
+/// **Les raccourcis sous la barre** : des pastilles neutres, l'icône et le nom, côte à côte, ou
+/// l'une sous l'autre quand la langue ou la taille du texte ne les laisse pas tenir sur une
+/// ligne. Secondaires : le seul bouton plein de Home reste celui du plan du jour.
+struct HomeQuickActions: View {
+    let tools: [HomeTool]
     let onTool: (HomeTool) -> Void
 
     var body: some View {
-        HStack(alignment: .top, spacing: 2) {
-            ForEach(HomeTool.allCases, id: \.self) { tool in
-                Button { onTool(tool) } label: { shortcut(tool) }
-                    .buttonStyle(HomePressStyle(scale: 0.92, feedback: .soft))
-                    .accessibilityLabel(Text(tool.title))
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) {
+                ForEach(tools) { chip($0) }
+                Spacer(minLength: 0)
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(tools) { chip($0) }
             }
         }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 14)
-        .homeCard(radius: MicaboStage.tileRadius)
     }
 
-    private func shortcut(_ tool: HomeTool) -> some View {
-        VStack(spacing: 7) {
-            MicaboIconView(icon: tool.icon, size: 26)
-                .frame(width: 44, height: 44)
-                .background(tool.tone.pale, in: Circle())
-            Text(tool.title)
-                .font(MicaboFont.ui(12.5, weight: .heavy))
-                .foregroundStyle(HomePalette.ink)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .minimumScaleFactor(0.8)
-                .fixedSize(horizontal: false, vertical: true)
+    private func chip(_ tool: HomeTool) -> some View {
+        Button { onTool(tool) } label: {
+            HStack(spacing: 7) {
+                MicaboIconView(icon: tool.icon, size: 22)
+                Text(tool.title)
+                    .font(MicaboFont.ui(14.5, weight: .heavy))
+                    .foregroundStyle(HomePalette.ink)
+                    .lineLimit(1)
+            }
+            .padding(.leading, 10)
+            .padding(.trailing, 14)
+            .frame(minHeight: 42)
+            .background(HomePalette.card, in: Capsule())
+            .overlay(Capsule().strokeBorder(HomePalette.cardStroke, lineWidth: 1))
+            .fixedSize()
         }
-        .padding(.horizontal, 2)
-        .frame(maxWidth: .infinity)
+        .buttonStyle(HomePressStyle(scale: 0.95, feedback: .soft))
+        .accessibilityLabel(Text(tool.title))
     }
 }
 
@@ -313,7 +312,7 @@ struct DueCardsReview: View {
     private var nextLesson: (() -> Void)? {
         guard position + 1 < sessions.count else { return nil }
         return {
-            withAnimation(.spring(duration: 0.4)) { position += 1 }
+            withAnimation(MicaboMotion.gentle) { position += 1 }
         }
     }
 }

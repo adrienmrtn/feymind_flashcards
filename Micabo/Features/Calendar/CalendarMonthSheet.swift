@@ -102,7 +102,7 @@ struct MonthGrid: View {
 
     private func arrow(_ symbol: String, by months: Int, label: String) -> some View {
         Button {
-            withAnimation(.spring(duration: 0.3)) {
+            withAnimation(MicaboMotion.standard) {
                 month = MicaboCalendar.shared.date(byAdding: .month, value: months, to: month) ?? month
             }
         } label: {

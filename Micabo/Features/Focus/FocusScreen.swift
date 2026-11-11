@@ -158,13 +158,13 @@ struct FocusNextRevisionCard: View {
                     .lineLimit(1)
             }
             Spacer(minLength: 4)
+            // Secondaire, bleu pâle : le bouton plein de l'onglet est « Démarrer une session ».
             Button(action: onStart) {
                 Image(systemName: "play.fill")
                     .font(.system(size: 15, weight: .black))
-                    .foregroundStyle(Color.white)
+                    .foregroundStyle(MicaboColor.accentInk)
                     .frame(width: 44, height: 44)
-                    .background(MicaboStage.buttonFill, in: Circle())
-                    .shadow(color: MicaboBrand.blue.opacity(0.3), radius: 8, y: 4)
+                    .background(MicaboColor.accentSoft, in: Circle())
             }
             .buttonStyle(HomePressStyle(scale: 0.9, feedback: .medium))
             .accessibilityLabel(Text(loc("ios.cal.startSession")))
@@ -356,10 +356,19 @@ struct FocusStatsCard: View {
             StudySectionTitle(title: loc("ios.focus.stats"), detail: loc("ios.focus.statsSub"))
             chart
                 .frame(height: 150)
-            HStack(spacing: 8) {
-                tile(value: CalendarTime.duration(minutes: weekMinutes), label: loc("ios.focus.statWeek"))
+            // Trois colonnes de la carte, séparées par des filets, de même hauteur : pas de
+            // sous-cartes (charte du lot 6 § 2).
+            HStack(alignment: .top, spacing: 0) {
+                tile(value: CalendarTime.duration(minutes: weekMinutes), label: loc("ios.focus.statWeek"), first: true)
+                divider
                 tile(value: "\(weekSessions)", label: loc("ios.focus.statSessions"))
+                divider
                 tile(value: loc("ios.focus.streakDays", ["count": "\(bestStreak)"]), label: loc("ios.focus.statStreak"))
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.top, 12)
+            .overlay(alignment: .top) {
+                Rectangle().fill(MicaboColor.stroke).frame(height: 1)
             }
         }
         .padding(16)
@@ -402,7 +411,7 @@ struct FocusStatsCard: View {
         .accessibilityLabel(Text(loc("ios.focus.chartA11y", ["minutes": "\(weekMinutes)"])))
     }
 
-    private func tile(value: String, label: String) -> some View {
+    private func tile(value: String, label: String, first: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(value)
                 .font(MicaboFont.number(18))
@@ -415,8 +424,16 @@ struct FocusStatsCard: View {
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(MicaboColor.canvas.opacity(0.7), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(.leading, first ? 0 : 12)
+        .padding(.trailing, 6)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var divider: some View {
+        Rectangle()
+            .fill(MicaboColor.stroke)
+            .frame(width: 1)
+            .padding(.vertical, 2)
     }
 }

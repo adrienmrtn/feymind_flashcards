@@ -42,7 +42,7 @@ struct VoiceRecallView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            RevisionModeHeader(mode: .voice, lessonTitle: session.course.title) {
+            RevisionModeHeader(mode: .voice, lessonTitle: session.course.title, tone: session.course.tone, closesLeading: true) {
                 listener.cancel()
                 voice.stop()
                 onClose()
@@ -141,7 +141,7 @@ struct VoiceRecallView: View {
     private func judge(_ heard: String) {
         let prompt = VoiceRecallPrompt(card: cards[index])
         let judgement = SpokenAnswer.judge(heard: heard, expected: prompt.answer)
-        withAnimation(.spring(duration: 0.35)) {
+        withAnimation(LearnMotion.standard) {
             phase = .judged(heard: heard, judgement: judgement)
         }
         switch judgement.verdict {
@@ -154,7 +154,7 @@ struct VoiceRecallView: View {
     private func reveal() {
         listener.cancel()
         voice.stop()
-        withAnimation(.spring(duration: 0.35)) {
+        withAnimation(LearnMotion.standard) {
             phase = .judged(heard: "", judgement: nil)
         }
     }
@@ -171,13 +171,13 @@ struct VoiceRecallView: View {
         try? modelContext.save()
         voice.stop()
         if index + 1 < cards.count {
-            withAnimation(.spring(duration: 0.35)) {
+            withAnimation(LearnMotion.standard) {
                 phase = .asking
                 index += 1
             }
         } else {
             Haptics.success()
-            withAnimation(.spring(duration: 0.4)) { finished = true }
+            withAnimation(LearnMotion.standard) { finished = true }
         }
     }
 }
@@ -350,7 +350,7 @@ struct VoiceRecallCard: View {
             Button(action: onStop) {
                 Label(L10n.t("ios.sup.voice.done", locale: .resolved()), systemImage: "stop.fill")
             }
-            .buttonStyle(LessonPrimaryButtonStyle())
+            .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
         }
     }
 
@@ -385,7 +385,7 @@ struct VoiceRecallCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             Button(L10n.t("ios.sup.voice.reveal", locale: .resolved()), action: onReveal)
-                .buttonStyle(LessonPrimaryButtonStyle())
+                .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
         }
     }
 
@@ -468,7 +468,7 @@ struct VoiceWave: View {
                     .frame(width: 8, height: max(10, 56 * shape * max(0.2, level)))
             }
         }
-        .animation(.easeOut(duration: 0.12), value: level)
+        .animation(LearnMotion.quick, value: level)
         .accessibilityHidden(true)
     }
 }
@@ -499,7 +499,7 @@ struct VoiceRecallSummary: View {
                 .fixedSize(horizontal: false, vertical: true)
             Spacer()
             Button(L10n.t("lesson.quiz.finish", locale: .resolved()), action: onDone)
-                .buttonStyle(LessonPrimaryButtonStyle())
+                .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.bottom, 20)

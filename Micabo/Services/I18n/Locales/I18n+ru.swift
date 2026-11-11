@@ -3,6 +3,9 @@
 
 extension IosI18nCatalogs {
     static let ru: [String: String] = [
+        "ios.pol.home.countdown": "осталось дней: {n}",
+        "ios.pol.home.proActiveA11y": "Micabo Pro активен",
+        "ios.pol.home.late": "Просрочено",
         "ios.pol.sys.daysLeft": "осталось дней: {days}",
         "ios.pol.sys.tab.focus": "Фокус",
         "ios.onb5.building.sub": "Готовлю всё для тебя",
@@ -1410,6 +1413,16 @@ extension IosI18nCatalogs {
         "ios.sup.modes.mindMap": "Ментальная карта",
         "ios.sup.modes.mindMapHint": "Темы и их понятия в виде дерева",
         "ios.sup.modes.title": "Учись по-другому",
+        "ios.pol.learn.next.start": "Начать урок",
+        "ios.pol.learn.next.resume": "Продолжить · Шаг {n}",
+        "ios.pol.learn.next.writing": "Mika пишет шаг {n}…",
+        "ios.pol.learn.next.review": "Повторить мои карточки ({count})",
+        "ios.pol.learn.next.practice": "Потренироваться по уроку",
+        "ios.pol.learn.stepOf": "Шаг {n} из {total}",
+        "ios.pol.learn.nextStep": "Следующий шаг",
+        "ios.pol.learn.notes.answerToFinish": "Ответь на вопрос, чтобы завершить шаг",
+        "ios.pol.learn.cards.allKnown": "Ни одной ошибки, молодец!",
+        "ios.pol.learn.cards.againCount": "Скоро повторить: {count}",
         "ios.sup.modes.voice": "Вслух",
         "ios.sup.modes.voiceHint": "Отвечай на карточки голосом",
         "ios.sup.paywall.export": "Конспекты в PDF для печати и отправки доступны с Pro",

@@ -5,14 +5,16 @@ import SwiftUI
 /// même tête selon qu'il a déjà ses leçons ou non.
 ///
 /// **L'élève qui a ses leçons** vient réviser : la rangée du haut ; le bonjour et l'objectif du
-/// jour ; **« Ton plan du jour »** sur une carte claire — le prochain examen, **la** chose à
-/// faire maintenant (la séance du calendrier, la leçon en cours ou les cartes dues) et un seul
-/// grand bouton bleu, Mika qui dépasse de son bord ; ce qui reste à l'agenda d'aujourd'hui ;
-/// ses leçons récentes ; la barre « Nouvelle leçon », en second ; les outils.
+/// jour ; **« Ton plan du jour »** sur une seule carte claire — la ligne méta du prochain
+/// examen, **la** chose à faire maintenant (la séance du calendrier, la leçon en cours ou les
+/// cartes dues) et un seul grand bouton bleu, Mika qui dépasse de son bord ; juste dessous, la
+/// barre « Nouvelle leçon » et ses raccourcis (scanner, quiz éclair) ; ce qui reste à l'agenda
+/// d'aujourd'hui ; ses leçons récentes. Le minuteur est l'onglet Concentration, la ligue
+/// l'éclair de la rangée du haut : Home ne les répète pas.
 ///
 /// **L'élève tout neuf** vient écrire sa première leçon, celle qui est offerte : Mika, sur le
 /// papier de la page, parle dans sa bulle au-dessus de la barre « comme une conversation »,
-/// puis « Comment ça marche » et les outils.
+/// le scanner dessous, puis « Comment ça marche ».
 ///
 /// La barre, dans les deux cas, passe par la même porte du gratuit (`send`, `tapImport`).
 ///
@@ -40,7 +42,6 @@ struct HomeView: View {
     @State private var showsStreak = false
     /// La ligue de la semaine (`docs/refonte-knowunity.md` § 3) : la pastille XP et l'outil.
     @State private var showsLeague = false
-    @State private var showsTimer = false
     @State private var showsScanner = false
     @State private var showsDueReview = false
     @State private var quickQuizCourse: Course?
@@ -163,21 +164,20 @@ struct HomeView: View {
             .sheet(isPresented: $showsLeague) {
                 LeagueSheet()
             }
-            .sheet(isPresented: $showsDueReview, onDismiss: refreshPlan) {
-                DueCardsReview(courses: DueReview.courses(courses))
-            }
-            .sheet(item: $quickQuizCourse) { course in
-                QuickQuizSheet(course: course)
-            }
             .sheet(item: $editingExam, onDismiss: refreshPlan) { target in
                 ExamEditSheet(target: target, lessons: lessons)
             }
     }
 
+    /// Les parcours — réviser ses cartes, le quiz éclair, une séance, le scanner — en plein
+    /// écran : un glissement ne les referme pas en plein milieu, leur croix le fait.
     private var presentations: some View {
         sheets
-            .fullScreenCover(isPresented: $showsTimer) {
-                FocusTimerView()
+            .fullScreenCover(isPresented: $showsDueReview, onDismiss: refreshPlan) {
+                DueCardsReview(courses: DueReview.courses(courses))
+            }
+            .fullScreenCover(item: $quickQuizCourse) { course in
+                QuickQuizSheet(course: course)
             }
             .fullScreenCover(item: $focusPlan, onDismiss: refreshPlan) { plan in
                 FocusTimerView(plan: plan)
@@ -347,7 +347,7 @@ struct HomeView: View {
     /// Une tâche à rendre, cochée d'ici comme dans Concentration.
     private func toggleTask(_ item: AgendaItem) {
         guard let task = tasks.first(where: { $0.id == item.taskID }) else { return }
-        withAnimation(.spring(duration: 0.3)) {
+        withAnimation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion)) {
             task.isDone.toggle()
             task.doneAt = task.isDone ? Date() : nil
         }
@@ -362,7 +362,7 @@ struct HomeView: View {
     private func refreshStreak() {
         let next = StudyStreak.status()
         guard next != streak else { return }
-        withAnimation(.spring(duration: 0.4)) { streak = next }
+        withAnimation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion)) { streak = next }
     }
 
     private func dismissKeyboard() {
@@ -414,16 +414,6 @@ struct HomeView: View {
             } else {
                 focused = true
             }
-        case .timer:
-            // L'onglet Concentration prépare la séance ; le minuteur seul reste pour un écran
-            // sans barre d'onglets.
-            if let router {
-                router.requestFocusSession()
-            } else {
-                showsTimer = true
-            }
-        case .league:
-            showsLeague = true
         }
     }
 
@@ -517,7 +507,7 @@ struct HomeScreen: View {
     @ViewBuilder
     private var returning: some View {
         HomeGreetingRow(title: hello, motion: motion)
-            .padding(.top, 18)
+            .padding(.top, 16)
             .homeEntrance(1, shown: appeared, motion: motion)
 
         HomePlanHero(
@@ -529,8 +519,20 @@ struct HomeScreen: View {
             onExam: actions.exam,
             onAddExam: actions.addExam
         )
-        .padding(.top, 14)
+        .padding(.top, 16)
         .homeEntrance(2, shown: appeared, motion: motion)
+
+        // Créer vient juste après la séance : c'est ce qui fait revenir (charte du lot 6).
+        HomeCreateSection(
+            composer: composer,
+            focused: focused,
+            tools: HomeTool.available(hasLesson: resume != nil),
+            onSend: actions.send,
+            onSources: actions.sources,
+            onTool: actions.tool
+        )
+        .padding(.top, 24)
+        .homeEntrance(3, shown: appeared, motion: motion)
 
         if !plan.agenda.isEmpty {
             HomeAgendaSection(
@@ -540,26 +542,19 @@ struct HomeScreen: View {
                 onToggle: actions.agendaToggle,
                 onCalendar: actions.calendar
             )
-            .padding(.top, 26)
-            .homeEntrance(3, shown: appeared, motion: motion)
+            .padding(.top, 32)
+            .homeEntrance(4, shown: appeared, motion: motion)
         }
 
         if !plan.lessons.isEmpty {
             HomeLessonsSection(lessons: plan.lessons, onOpen: actions.lesson, onAll: actions.allLessons)
-                .padding(.top, 26)
-                .homeEntrance(4, shown: appeared, motion: motion)
+                .padding(.top, 32)
+                .homeEntrance(5, shown: appeared, motion: motion)
         }
-
-        HomeCreateSection(composer: composer, focused: focused, onSend: actions.send, onSources: actions.sources)
-            .padding(.top, 26)
-            .homeEntrance(5, shown: appeared, motion: motion)
-
-        HomeToolsCard(onTool: actions.tool)
-            .padding(.top, 16)
-            .homeEntrance(6, shown: appeared, motion: motion)
     }
 
-    /// L'élève tout neuf : écrire sa première leçon, la leçon offerte.
+    /// L'élève tout neuf : écrire sa première leçon, la leçon offerte, et le scanner sous la
+    /// main.
     @ViewBuilder
     private var newcomer: some View {
         HomeHeroCard(
@@ -571,15 +566,15 @@ struct HomeScreen: View {
             onSources: actions.sources,
             onDismissKeyboard: actions.dismissKeyboard
         )
-        .padding(.top, 14)
+        .padding(.top, 16)
         .homeEntrance(1, shown: appeared, motion: motion)
 
-        HomeHowItWorks()
-            .padding(.top, 16)
+        HomeQuickActions(tools: HomeTool.available(hasLesson: false), onTool: actions.tool)
+            .padding(.top, 12)
             .homeEntrance(2, shown: appeared, motion: motion)
 
-        HomeToolsCard(onTool: actions.tool)
-            .padding(.top, 16)
+        HomeHowItWorks()
+            .padding(.top, 24)
             .homeEntrance(3, shown: appeared, motion: motion)
     }
 }

@@ -226,7 +226,7 @@ struct DeckSetupFlowView: View {
         .padding(.top, MicaboSpacing.sm)
         .opacity(isBuilding ? 0 : 1)
         .allowsHitTesting(!isBuilding)
-        .animation(.easeInOut(duration: 0.25), value: isBuilding)
+        .animation(LearnMotion.quick, value: isBuilding)
     }
 
     @ViewBuilder

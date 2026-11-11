@@ -435,7 +435,7 @@ struct CalendarEditForm: View {
                 StudyFieldLabel(text: loc("ios.cal.name"))
                 HStack(spacing: 10) {
                     Button {
-                        withAnimation(.spring(duration: 0.3)) { showsEmoji.toggle() }
+                        withAnimation(MicaboMotion.standard) { showsEmoji.toggle() }
                     } label: {
                         Text(emoji)
                             .font(.system(size: 28))
@@ -488,7 +488,7 @@ struct CalendarEditForm: View {
             ForEach(CalendarEmoji.all, id: \.self) { symbol in
                 Button {
                     emoji = symbol
-                    withAnimation(.spring(duration: 0.3)) { showsEmoji = false }
+                    withAnimation(MicaboMotion.standard) { showsEmoji = false }
                 } label: {
                     Text(symbol)
                         .font(.system(size: 25))

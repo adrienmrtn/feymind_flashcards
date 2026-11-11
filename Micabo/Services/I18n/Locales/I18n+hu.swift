@@ -3,6 +3,9 @@
 
 extension IosI18nCatalogs {
     static let hu: [String: String] = [
+        "ios.pol.home.countdown": "még {n} nap",
+        "ios.pol.home.proActiveA11y": "A Micabo Pro aktív",
+        "ios.pol.home.late": "Késésben",
         "ios.pol.sys.daysLeft": "még {days} nap",
         "ios.pol.sys.tab.focus": "Fókusz",
         "ios.onb5.building.sub": "Mindent előkészítek neked",
@@ -1410,6 +1413,16 @@ extension IosI18nCatalogs {
         "ios.sup.modes.mindMap": "Gondolattérkép",
         "ios.sup.modes.mindMapHint": "A témák és fogalmaik faként",
         "ios.sup.modes.title": "Tanulj másképp",
+        "ios.pol.learn.next.start": "Lecke indítása",
+        "ios.pol.learn.next.resume": "Tovább · {n}. lépés",
+        "ios.pol.learn.next.writing": "Mika épp írja: {n}. lépés…",
+        "ios.pol.learn.next.review": "Kártyáim ismétlése ({count})",
+        "ios.pol.learn.next.practice": "Gyakorlás a leckéből",
+        "ios.pol.learn.stepOf": "{n}. lépés / {total}",
+        "ios.pol.learn.nextStep": "Következő lépés",
+        "ios.pol.learn.notes.answerToFinish": "Válaszolj a kérdésre a lépés teljesítéséhez",
+        "ios.pol.learn.cards.allKnown": "Egy kártyát sem rontottál el, szuper!",
+        "ios.pol.learn.cards.againCount": "Hamarosan újra: {count}",
         "ios.sup.modes.voice": "Hangosan",
         "ios.sup.modes.voiceHint": "Válaszolj a kártyákra szóban",
         "ios.sup.paywall.export": "A nyomtatható és megosztható PDF-vázlatok a Próval járnak",

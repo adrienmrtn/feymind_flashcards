@@ -73,7 +73,7 @@ struct NotesCircleView: View {
         let waiting = current == .question && answer == nil
         VStack(spacing: 8) {
             if waiting {
-                Text(L10n.t("lesson.notes.answerToFinish", locale: .resolved()))
+                Text(L10n.t("ios.pol.learn.notes.answerToFinish", locale: .resolved()))
                     .font(MicaboFont.ui(14, weight: .bold))
                     .foregroundStyle(MicaboColor.inkSecondary)
             }
@@ -82,7 +82,7 @@ struct NotesCircleView: View {
                 : L10n.t("lesson.quiz.continue", locale: .resolved())) {
                 if isLast { onDone() } else { next() }
             }
-            .buttonStyle(LessonPrimaryButtonStyle(enabled: !waiting))
+            .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent, enabled: !waiting))
             .disabled(waiting)
         }
         .padding(.horizontal, MicaboSpacing.screen)
@@ -95,7 +95,7 @@ struct NotesCircleView: View {
         guard page + 1 < pages.count else { return }
         Haptics.light()
         forward = true
-        withAnimation(.spring(duration: 0.42, bounce: 0.15)) {
+        withAnimation(LearnMotion.gentle) {
             page += 1
             furthest = max(furthest, page)
         }
@@ -113,7 +113,7 @@ struct NotesCircleView: View {
         guard page > 0 else { return }
         Haptics.light()
         forward = false
-        withAnimation(.spring(duration: 0.42, bounce: 0.15)) { page -= 1 }
+        withAnimation(LearnMotion.gentle) { page -= 1 }
     }
 
     private func answered(_ result: QuizAnswer) {
@@ -310,7 +310,7 @@ struct NotesSegments: View {
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, 8)
         .padding(.bottom, 10)
-        .animation(.easeOut(duration: 0.2), value: onBack == nil)
+        .animation(LearnMotion.quick, value: onBack == nil)
     }
 }
 
@@ -329,7 +329,7 @@ private struct NotesSegment: View {
         }
         .onAppear { fill = filled ? 1 : 0 }
         .onChange(of: filled) { _, value in
-            withAnimation(.easeOut(duration: value ? 0.45 : 0.2)) { fill = value ? 1 : 0 }
+            withAnimation(value ? LearnMotion.gentle : LearnMotion.quick) { fill = value ? 1 : 0 }
         }
     }
 }
@@ -444,7 +444,7 @@ private struct Reveal: ViewModifier {
             .opacity(shown ? 1 : 0)
             .offset(y: shown || reduceMotion ? 0 : 16)
             .onAppear {
-                withAnimation(.spring(duration: 0.5, bounce: 0.2).delay(reduceMotion ? 0 : 0.08 + Double(order) * 0.09)) {
+                withAnimation(LearnMotion.gentle(delay: 0.08 + Double(order) * 0.09)) {
                     shown = true
                 }
             }
@@ -598,7 +598,7 @@ struct LessonNotesReader: View {
             ForEach(Array(course.orderedChapters.enumerated()), id: \.element.id) { index, chapter in
                 Button {
                     Haptics.light()
-                    withAnimation(.easeInOut(duration: 0.5)) { proxy.scrollTo(chapter.id, anchor: .top) }
+                    withAnimation(LearnMotion.gentle) { proxy.scrollTo(chapter.id, anchor: .top) }
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: PathSymbol.resolved(themes.indices.contains(index) ? themes[index].symbol : PathSymbol.fallback))

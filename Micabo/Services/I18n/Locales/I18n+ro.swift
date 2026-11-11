@@ -3,6 +3,9 @@
 
 extension IosI18nCatalogs {
     static let ro: [String: String] = [
+        "ios.pol.home.countdown": "zile rămase: {n}",
+        "ios.pol.home.proActiveA11y": "Micabo Pro este activ",
+        "ios.pol.home.late": "Cu întârziere",
         "ios.pol.sys.daysLeft": "zile rămase: {days}",
         "ios.pol.sys.tab.focus": "Focus",
         "ios.onb5.building.sub": "Pregătesc totul pentru tine",
@@ -1410,6 +1413,16 @@ extension IosI18nCatalogs {
         "ios.sup.modes.mindMap": "Hartă mentală",
         "ios.sup.modes.mindMapHint": "Temele și noțiunile lor ca un arbore",
         "ios.sup.modes.title": "Învață altfel",
+        "ios.pol.learn.next.start": "Începe lecția",
+        "ios.pol.learn.next.resume": "Continuă · Pasul {n}",
+        "ios.pol.learn.next.writing": "Mika scrie pasul {n}…",
+        "ios.pol.learn.next.review": "Repetă-mi cardurile ({count})",
+        "ios.pol.learn.next.practice": "Exersează pe lecție",
+        "ios.pol.learn.stepOf": "Pasul {n} din {total}",
+        "ios.pol.learn.nextStep": "Pasul următor",
+        "ios.pol.learn.notes.answerToFinish": "Răspunde la întrebare ca să termini pasul",
+        "ios.pol.learn.cards.allKnown": "Niciun card greșit, bravo!",
+        "ios.pol.learn.cards.againCount": "De repetat în curând: {count}",
         "ios.sup.modes.voice": "Cu voce tare",
         "ios.sup.modes.voiceHint": "Răspunde la carduri vorbind",
         "ios.sup.paywall.export": "Fișele PDF de printat și de trimis sunt cu Pro",
