@@ -135,6 +135,21 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     /// Un message envoyé dans un fil de « Demande à Mika », avec `subject`.
     case tutorAsked = "tutor_asked"
 
+    // MARK: Corriger un texte (lot 7)
+
+    /// Un raccourci des outils de Home : `tool` (`scan`, `writing`, `quiz`).
+    case homeToolOpened = "home_tool_opened"
+    /// L'écran « Corriger un texte » ouvert.
+    case writingOpened = "writing_opened"
+    /// Une photo de texte dont l'appareil n'a rien lu.
+    case writingUnreadable = "writing_unreadable"
+    /// Une relecture arrivée : `source` (`typed`, `pasted`, `photo`), `fixes` (le nombre de
+    /// corrections), `applied` (celles retrouvées dans le texte), `structured` et `words`, une
+    /// tranche de longueur. Jamais le texte ni une correction.
+    case writingChecked = "writing_checked"
+    /// Le texte corrigé copié.
+    case writingCopied = "writing_copied"
+
     // MARK: Leçons et synchro
 
     /// Un thème de leçon que le serveur n'a pas pu écrire : `reason` dit pourquoi

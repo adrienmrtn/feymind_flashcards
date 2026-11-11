@@ -192,9 +192,17 @@ struct HomeGoalRing: View {
 /// **Les outils de Home**, hors de la leçon : ceux qui créent ou font travailler tout de suite,
 /// posés sous la barre « Nouvelle leçon ». Le minuteur a son onglet (Concentration) et la ligue
 /// sa pastille (l'éclair de la rangée du haut) : ils ne sont pas répétés ici.
+///
+/// **Lot 7** : le scanner devient « Aide aux devoirs » (toutes les matières, pas seulement les
+/// maths), et « Corriger un texte » le rejoint : ce sont les deux gestes qui font ouvrir une
+/// app d'étude le soir des devoirs.
 enum HomeTool: CaseIterable, Identifiable {
-    /// « Scanner un exo » : le scanner de maths (`ScanExerciseView`, `SolverFlowView`).
+    /// « Aide aux devoirs » : une question de n'importe quelle matière, en photo ou tapée
+    /// (`ScanExerciseView`, `SolverFlowView`).
     case scan
+    /// « Corriger un texte » : Mika relit une rédaction, une lettre, un paragraphe
+    /// (`WritingCoachView`).
+    case writing
     /// « Quiz éclair » : cinq questions sur la dernière leçon ouverte.
     case quiz
 
@@ -203,20 +211,31 @@ enum HomeTool: CaseIterable, Identifiable {
     var icon: MicaboIcon {
         switch self {
         case .scan: .photo
+        case .writing: .quill
         case .quiz: .quiz
         }
     }
 
     var title: String {
         switch self {
-        case .scan: L10n.t("ios.kx.tools.scan.title", locale: .resolved())
+        case .scan: L10n.t("ios.ku7.tools.homework", locale: .resolved())
+        case .writing: L10n.t("ios.ku7.tools.writing", locale: .resolved())
         case .quiz: L10n.t("ios.kx.tools.quiz.title", locale: .resolved())
+        }
+    }
+
+    /// Le nom de l'outil dans les statistiques.
+    var analyticsName: String {
+        switch self {
+        case .scan: "scan"
+        case .writing: "writing"
+        case .quiz: "quiz"
         }
     }
 
     /// Les outils qui ont un sens pour l'élève : le quiz éclair demande une leçon.
     static func available(hasLesson: Bool) -> [HomeTool] {
-        hasLesson ? [.scan, .quiz] : [.scan]
+        hasLesson ? [.scan, .writing, .quiz] : [.scan, .writing]
     }
 }
 
@@ -227,15 +246,12 @@ struct HomeQuickActions: View {
     let tools: [HomeTool]
     let onTool: (HomeTool) -> Void
 
+    /// Les pastilles **reviennent à la ligne** au lieu de s'empiler toutes : trois outils
+    /// tiennent sur une ligne en anglais, sur deux en allemand ou en très grand texte, sans
+    /// jamais passer à une colonne de trois boutons.
     var body: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 8) {
-                ForEach(tools) { chip($0) }
-                Spacer(minLength: 0)
-            }
-            VStack(alignment: .leading, spacing: 8) {
-                ForEach(tools) { chip($0) }
-            }
+        MicaboFlowLayout(spacing: 8, lineSpacing: 8) {
+            ForEach(tools) { chip($0) }
         }
     }
 
