@@ -101,7 +101,7 @@ final class Look7RenderTests: XCTestCase {
                 swatch("accent", MicaboColor.accent)
                 swatch("soft", MicaboColor.accentSoft)
                 ForEach(LessonTone.allCases) { tone in
-                    swatch(tone.rawValue, tone.pale)
+                    self.swatch(tone.rawValue, tone.pale)
                 }
                 swatch("flame", MicaboColor.flame)
             }
