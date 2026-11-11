@@ -107,10 +107,11 @@ private struct SourcesHeader: View {
                         Image(systemName: "gift.fill")
                     }
                     .font(MicaboFont.ui(13, weight: .heavy))
-                    .foregroundStyle(MicaboColor.correctInk)
+                    // Un cadeau : le jaune du crayon (la récompense), pas le vert (réussi).
+                    .foregroundStyle(LessonTone.yellow.ink)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(MicaboColor.correctSoft, in: Capsule())
+                    .background(LessonTone.yellow.pale, in: Capsule())
                     .padding(.top, 2)
                 }
             }
@@ -120,8 +121,10 @@ private struct SourcesHeader: View {
         .padding(.leading, 10)
         .padding(.trailing, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.accentPale, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        // Mika vit sur le papier de l'app (la règle de `MikaMascot`) : la carte est celle des
+        // tuiles, pas une scène bleue pour lui seul.
+        .sourceCard()
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 }
 

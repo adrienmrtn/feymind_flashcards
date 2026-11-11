@@ -138,7 +138,7 @@ struct LessonCardsHub: View {
 
             // La légende revient à la ligne en allemand, en finnois ou en très grand texte,
             // au lieu de couper « Gemeistert ».
-            MicaboFlowLayout(spacing: 16, lineSpacing: 8) {
+            MicaboFlowLayout(spacing: 12, lineSpacing: 8) {
                 ForEach(CardMastery.allCases, id: \.self) { mastery in
                     HStack(spacing: 6) {
                         Circle().fill(mastery.color).frame(width: 10, height: 10)

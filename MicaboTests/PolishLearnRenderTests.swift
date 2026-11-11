@@ -79,7 +79,7 @@ final class PolishLearnRenderTests: XCTestCase {
         let session = LessonSession(course: course)
         course.updateProgress { progress in
             progress.done = finished ? Set(session.circles.map(\.id)) : Set(done)
-            progress.inCircle = finished ? 0 : 0.4
+            progress.inCircle = finished || done.isEmpty ? 0 : 0.4
             if finished { progress.finishedAt = Date() }
         }
         session.reload()
@@ -175,6 +175,7 @@ final class PolishLearnRenderTests: XCTestCase {
                 .padding(.horizontal, MicaboSpacing.screen)
             AnswerPanel(question: question, right: false, isLast: false) {}
             QuizScoreView(right: 6, total: 10, tone: fixture.course.tone, doneTitle: L10n.t("lesson.quiz.finish", locale: .resolved()), onDone: {}, onMore: {})
+                .environment(\.homeStill, true)
                 .frame(height: 560)
         }
         .environment(\.mikaStill, true)
