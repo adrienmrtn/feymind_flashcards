@@ -3,6 +3,9 @@
 
 extension IosI18nCatalogs {
     static let es419: [String: String] = [
+        "ios.pol.home.countdown": "faltan {n} días",
+        "ios.pol.home.proActiveA11y": "Micabo Pro activo",
+        "ios.pol.home.late": "Con retraso",
         "ios.pol.sys.daysLeft": "{days, plural, one {falta 1 día} other {faltan # días}}",
         "ios.pol.sys.tab.focus": "Enfoque",
         "ios.onb5.building.sub": "Estoy preparando todo para ti",

@@ -165,7 +165,7 @@ struct FocusView: View {
 
     private func toggleTask(_ id: UUID) {
         guard let task = tasks.first(where: { $0.id == id }) else { return }
-        withAnimation(.spring(duration: 0.3)) {
+        withAnimation(MicaboMotion.standard) {
             task.isDone.toggle()
             task.doneAt = task.isDone ? Date() : nil
         }

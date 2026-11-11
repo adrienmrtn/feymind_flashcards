@@ -93,15 +93,15 @@ struct CalendarHeader<Accessory: View>: View {
     }
 }
 
-/// Le « + » rond de l'en-tête, dessiné une fois pour le menu et pour les rendus.
+/// Le « + » rond de l'en-tête, dessiné une fois pour le menu et pour les rendus. Bleu pâle,
+/// secondaire : le bouton plein de la page est celui de la carte d'examen.
 struct CalendarAddLabel: View {
     var body: some View {
         Image(systemName: "plus")
             .font(.system(size: 18, weight: .black))
-            .foregroundStyle(Color.white)
+            .foregroundStyle(MicaboColor.accentInk)
             .frame(width: 42, height: 42)
-            .background(MicaboStage.buttonFill, in: Circle())
-            .shadow(color: MicaboBrand.blue.opacity(0.28), radius: 8, y: 4)
+            .background(MicaboColor.accentSoft, in: Circle())
             .accessibilityLabel(Text(loc("ios.cal.add")))
     }
 }
@@ -266,7 +266,15 @@ struct NextExamCard: View {
                 readinessBar(readiness)
             }
             actions
-            planRow
+            // Le plan des révisions est une ligne de la carte, sous un filet : pas une
+            // sous-carte (charte du lot 6 § 2).
+            VStack(spacing: 4) {
+                Rectangle()
+                    .fill(MicaboColor.stroke)
+                    .frame(height: 1)
+                planRow
+            }
+            .padding(.bottom, -6)
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -415,9 +423,9 @@ struct NextExamCard: View {
                 .font(.system(size: trailing == "ellipsis" ? 15 : 13, weight: .heavy))
                 .foregroundStyle(MicaboColor.inkTertiary)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 11)
-        .background(MicaboColor.canvas, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .padding(.vertical, 8)
+        .frame(minHeight: 44)
+        .contentShape(Rectangle())
     }
 }
 
@@ -439,11 +447,7 @@ struct DayAgendaSection: View {
             if items.isEmpty {
                 DayEmptyState(onAdd: onAdd)
             } else {
-                VStack(spacing: 8) {
-                    ForEach(items) { item in
-                        AgendaRow(item: item, onTap: { onTap(item) }, onStart: { onStart(item) }, onToggle: { onToggleTask(item) })
-                    }
-                }
+                AgendaList(items: items, onTap: onTap, onStart: onStart, onToggle: onToggleTask)
             }
         }
     }
@@ -493,24 +497,68 @@ struct DayEmptyState: View {
     }
 }
 
-/// **Une ligne de l'agenda** : l'heure à gauche, la barre de la couleur du calendrier, le
-/// titre et ce qui le précise, et le geste qui va avec à droite.
+/// **Les lignes d'un agenda**, sur Home comme dans le calendrier : ce qui dure toute la journée
+/// d'abord, sans heure — sous « Toute la journée » quand des heures suivent —, puis les heures,
+/// dans l'ordre. Une heure n'est jamais remplacée par un mot dans sa colonne.
+struct AgendaList: View {
+    let items: [AgendaItem]
+    let onTap: (AgendaItem) -> Void
+    let onStart: (AgendaItem) -> Void
+    let onToggle: (AgendaItem) -> Void
+    var now = Date()
+
+    var body: some View {
+        let allDay = items.filter(\.isAllDay)
+        let timed = items.filter { !$0.isAllDay }
+        VStack(alignment: .leading, spacing: 8) {
+            if !allDay.isEmpty, !timed.isEmpty {
+                Text(loc("ios.cal.allDay"))
+                    .font(MicaboFont.ui(12, weight: .black))
+                    .tracking(MicaboTracking.caps)
+                    .textCase(.uppercase)
+                    .foregroundStyle(MicaboColor.inkTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.isHeader)
+            }
+            ForEach(allDay) { row($0) }
+            if !allDay.isEmpty, !timed.isEmpty {
+                Color.clear.frame(height: 4)
+            }
+            ForEach(timed) { row($0) }
+        }
+    }
+
+    private func row(_ item: AgendaItem) -> some View {
+        AgendaRow(item: item, now: now, onTap: { onTap(item) }, onStart: { onStart(item) }, onToggle: { onToggle(item) })
+    }
+}
+
+/// **Une ligne de l'agenda** : l'heure à gauche (rien pour ce qui dure toute la journée), une
+/// carte neutre où seule la barre porte la couleur du type, le titre et ce qui le précise, et
+/// le geste qui va avec à droite, toujours secondaire : le seul bouton plein de l'écran reste
+/// celui du haut. Le rouge ne sert qu'à ce qui est en retard (`AgendaItem.isOverdue`).
 struct AgendaRow: View {
     let item: AgendaItem
+    var now = Date()
     let onTap: () -> Void
     let onStart: () -> Void
     let onToggle: () -> Void
 
-    @ScaledMetric(relativeTo: .body) private var timeWidth: CGFloat = 50
+    @ScaledMetric(relativeTo: .body) private var timeWidth: CGFloat = 46
 
     private var tint: CalendarTint { CalendarTint.at(item.tintIndex) }
+    private var overdue: Bool { item.isOverdue(now: now) }
+    /// La couleur de la barre et de l'icône : celle du type, le rouge si c'est en retard.
+    private var mark: Color { overdue ? MicaboColor.wrong : tint.color }
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
-            timeColumn
+            if !item.isAllDay {
+                timeColumn
+            }
             HStack(spacing: 10) {
                 Capsule()
-                    .fill(tint.color)
+                    .fill(mark)
                     .frame(width: 4)
                     .padding(.vertical, 2)
                 // Le geste principal et celui de droite sont deux boutons côte à côte : un
@@ -529,9 +577,9 @@ struct AgendaRow: View {
                             if let subtitle {
                                 Text(subtitle)
                                     .font(MicaboFont.ui(13, weight: .bold))
-                                    .foregroundStyle(MicaboColor.inkSecondary)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.85)
+                                    .foregroundStyle(overdue ? MicaboColor.wrongInk : MicaboColor.inkSecondary)
+                                    .lineLimit(2)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
                         }
                         // Le texte passe avant l'espace : mesuré sur une largeur et posé sur
@@ -550,13 +598,12 @@ struct AgendaRow: View {
             .padding(.leading, 10)
             .padding(.trailing, 12)
             .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
-            .background(tint.wash, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .homeCard(radius: 16)
             .opacity(item.isDone && item.kind != .focus ? 0.75 : 1)
         }
         .accessibilityElement(children: .contain)
     }
 
-    @ViewBuilder
     private var timeColumn: some View {
         VStack(alignment: .trailing, spacing: 2) {
             if let start = item.startMinute {
@@ -568,13 +615,9 @@ struct AgendaRow: View {
                         .font(MicaboFont.ui(12, weight: .bold))
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
-            } else {
-                Text(loc("ios.cal.allDay"))
-                    .font(MicaboFont.ui(11.5, weight: .black))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-                    .multilineTextAlignment(.trailing)
             }
         }
+        .monospacedDigit()
         .lineLimit(1)
         .minimumScaleFactor(0.7)
         .frame(width: timeWidth, alignment: .trailing)
@@ -586,19 +629,19 @@ struct AgendaRow: View {
         case .task:
             Image(systemName: item.isDone ? "checkmark.circle.fill" : "circle")
                 .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(item.isDone ? MicaboColor.correctInk : tint.color)
+                .foregroundStyle(item.isDone ? MicaboColor.correctInk : mark)
                 .contentTransition(.symbolEffect(.replace))
         case .exam:
             Text("🎓").font(.system(size: 20))
         case .milestone:
             Image(systemName: item.milestone == .mock ? "stopwatch.fill" : "flag.checkered")
                 .font(.system(size: 17, weight: .bold))
-                .foregroundStyle(tint.color)
+                .foregroundStyle(mark)
                 .frame(width: 24)
         case .revision:
             Image(systemName: item.isDone ? "checkmark.circle.fill" : "sparkles")
                 .font(.system(size: 17, weight: .bold))
-                .foregroundStyle(item.isDone ? MicaboColor.correctInk : tint.color)
+                .foregroundStyle(item.isDone ? MicaboColor.correctInk : mark)
                 .frame(width: 24)
         case .focus:
             Image(systemName: "timer")
@@ -616,25 +659,9 @@ struct AgendaRow: View {
     private var trailing: some View {
         switch item.kind {
         case .revision where !item.isDone:
-            Button(action: onStart) {
-                Image(systemName: "play.fill")
-                    .font(.system(size: 13, weight: .black))
-                    .foregroundStyle(Color.white)
-                    .frame(width: 34, height: 34)
-                    .background(MicaboStage.buttonFill, in: Circle())
-            }
-            .buttonStyle(HomePressStyle(scale: 0.9, feedback: .medium))
-            .accessibilityLabel(Text(loc("ios.cal.startSession")))
+            playButton(action: onStart, label: loc("ios.cal.startSession"))
         case .milestone where !item.isDone:
-            Button(action: onTap) {
-                Image(systemName: "play.fill")
-                    .font(.system(size: 13, weight: .black))
-                    .foregroundStyle(Color.white)
-                    .frame(width: 34, height: 34)
-                    .background(tint.color, in: Circle())
-            }
-            .buttonStyle(HomePressStyle(scale: 0.9, feedback: .medium))
-            .accessibilityLabel(Text(loc("ios.cal.go")))
+            playButton(action: onTap, label: loc("ios.cal.go"))
         case .focus:
             Image(systemName: "checkmark.seal.fill")
                 .font(.system(size: 17, weight: .bold))
@@ -642,6 +669,19 @@ struct AgendaRow: View {
         default:
             EmptyView()
         }
+    }
+
+    /// Le ▶ d'une ligne : secondaire, bleu pâle, le même pour une séance et un examen blanc.
+    private func playButton(action: @escaping () -> Void, label: String) -> some View {
+        Button(action: action) {
+            Image(systemName: "play.fill")
+                .font(.system(size: 13, weight: .black))
+                .foregroundStyle(MicaboColor.accentInk)
+                .frame(width: 36, height: 36)
+                .background(MicaboColor.accentSoft, in: Circle())
+        }
+        .buttonStyle(HomePressStyle(scale: 0.9, feedback: .medium))
+        .accessibilityLabel(Text(label))
     }
 
     private var title: String {
@@ -655,12 +695,20 @@ struct AgendaRow: View {
     }
 
     private var subtitle: String? {
+        let detail = baseSubtitle
+        guard overdue else { return detail }
+        let late = loc("ios.pol.home.late")
+        return detail.map { "\(late) · \($0)" } ?? late
+    }
+
+    private var baseSubtitle: String? {
         switch item.kind {
         case .exam: return loc("ios.cal.examDaySub")
         case .milestone:
             return "\(item.title) · \(CalendarTime.duration(minutes: item.minutes))"
         case .task:
-            return item.isDone ? loc("ios.cal.taskDone") : loc("ios.cal.taskDue")
+            if item.isDone { return loc("ios.cal.taskDone") }
+            return overdue ? nil : loc("ios.cal.taskDue")
         case .revision:
             guard let start = item.startMinute, let end = item.endMinute else { return nil }
             return CalendarTime.duration(minutes: end - start)

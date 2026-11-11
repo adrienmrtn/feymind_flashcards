@@ -83,7 +83,7 @@ struct PaywallScreen: View {
                 onClose: onClose
             )
 
-            VStack(spacing: 22) {
+            VStack(spacing: MicaboSpacing.xl - 4) {
                 PaywallBenefits(profile: profile)
                     .entrance(1, shown: shown || still)
                 PaywallProofLine()
@@ -109,7 +109,7 @@ struct PaywallScreen: View {
                 .entrance(3, shown: shown || still)
             }
             .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.top, 22)
+            .padding(.top, MicaboSpacing.xl - 4)
             .padding(.bottom, MicaboSpacing.lg)
         }
     }
@@ -340,6 +340,7 @@ struct PaywallPlanOption: View {
                     Text(plan.title)
                         .font(MicaboFont.ui(17, weight: .heavy))
                         .foregroundStyle(MicaboColor.ink)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text(plan.caption)
                         .font(MicaboFont.ui(13, weight: .semibold))
                         .foregroundStyle(MicaboColor.inkSecondary)
@@ -349,21 +350,23 @@ struct PaywallPlanOption: View {
                         .foregroundStyle(plan.hasTrial ? MicaboColor.correctInk : MicaboColor.inkTertiary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .layoutPriority(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                Spacer(minLength: 4)
+                // **Le prix ne se coupe jamais** : c'est lui qu'on compare. En allemand et en
+                // très grand texte, « 4,9… / Wo… » ne disait plus rien ; c'est le nom de
+                // l'offre, à gauche, qui passe à la ligne.
 
                 VStack(alignment: .trailing, spacing: 0) {
                     Text(plan.priceHeadline(for: .current))
                         .font(MicaboFont.number(20))
                         .foregroundStyle(MicaboColor.ink)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.75)
                     Text(plan.priceHeadlineUnit(for: .current))
                         .font(MicaboFont.ui(12.5, weight: .bold))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .lineLimit(1)
                 }
+                .fixedSize()
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 15)

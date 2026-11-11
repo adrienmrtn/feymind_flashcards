@@ -135,7 +135,7 @@ struct TaskEditSheet: View {
                         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
 
                     VStack(spacing: 0) {
-                        Toggle(isOn: $hasDue.animation(.spring(duration: 0.3))) {
+                        Toggle(isOn: $hasDue.animation(MicaboMotion.standard)) {
                             Label(loc("ios.focus.dueDate"), systemImage: "calendar")
                                 .font(MicaboFont.ui(16, weight: .bold))
                                 .foregroundStyle(MicaboColor.ink)
@@ -198,11 +198,12 @@ struct TaskEditSheet: View {
                     Button(L10n.t("app.common.cancel", locale: .resolved())) { dismiss() }
                 }
             }
-            .sheet(isPresented: $choosingLesson) {
+            .navigationDestination(isPresented: $choosingLesson) {
                 LessonPickerSheet(lessons: lessons, selected: courseID) { courseID = $0?.id }
             }
         }
         .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
         .onAppear {
             if let initialDue {
                 hasDue = true

@@ -180,13 +180,13 @@ struct OnboardingProgressCurveCard: View {
                 ProgressCurve(rank: CGFloat(selected), count: count)
                     .trim(from: 0, to: drawn)
                     .stroke(OnboardingPalette.accent, style: StrokeStyle(lineWidth: 3.5, lineCap: .round))
-                    .animation(reduceMotion ? nil : .timingCurve(0.3, 0, 0.2, 1, duration: 0.65), value: selected)
+                    .animation(reduceMotion ? nil : MicaboMotion.gentle, value: selected)
 
                 dot(at: start)
 
                 dot(at: end)
                     .opacity(Double(drawn))
-                    .animation(reduceMotion ? nil : .timingCurve(0.3, 0, 0.2, 1, duration: 0.65), value: selected)
+                    .animation(reduceMotion ? nil : MicaboMotion.gentle, value: selected)
             }
         }
     }

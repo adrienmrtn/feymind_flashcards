@@ -99,7 +99,7 @@ struct EventEditSheet: View {
                     Button(L10n.t("app.common.cancel", locale: .resolved())) { dismiss() }
                 }
             }
-            .sheet(isPresented: $choosingLesson) {
+            .navigationDestination(isPresented: $choosingLesson) {
                 LessonPickerSheet(lessons: lessons, selected: courseID) { course in
                     courseID = course?.id
                     if title.trimmingCharacters(in: .whitespaces).isEmpty, let course {
@@ -334,6 +334,10 @@ struct EventEditSheet: View {
 }
 
 /// **Choisir une leçon** : la liste des leçons, avec une recherche. « Aucune » retire le lien.
+///
+/// Une page **poussée dans la pile de la feuille** qui la demande (un événement, une tâche, la
+/// séance à préparer), avec son retour : jamais une feuille de plus sur une feuille (charte du
+/// lot 6 § 8). Le choix ramène à la feuille.
 struct LessonPickerSheet: View {
     let lessons: [Course]
     let selected: UUID?
@@ -349,55 +353,47 @@ struct LessonPickerSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
-            List {
-                if selected != nil {
-                    Button {
-                        onPick(nil)
-                        dismiss()
-                    } label: {
-                        Label(loc("ios.cal.noLesson"), systemImage: "xmark.circle")
-                            .font(MicaboFont.ui(16, weight: .bold))
-                            .foregroundStyle(MicaboColor.wrongInk)
-                    }
+        List {
+            if selected != nil {
+                Button {
+                    onPick(nil)
+                    dismiss()
+                } label: {
+                    Label(loc("ios.cal.noLesson"), systemImage: "xmark.circle")
+                        .font(MicaboFont.ui(16, weight: .bold))
+                        .foregroundStyle(MicaboColor.wrongInk)
                 }
-                ForEach(filtered) { course in
-                    Button {
-                        onPick(course)
-                        dismiss()
-                    } label: {
-                        HStack(spacing: 12) {
-                            MicaboIconView(icon: course.icon, size: 36)
-                            Text(course.title)
-                                .font(MicaboFont.ui(16, weight: .bold))
-                                .foregroundStyle(MicaboColor.ink)
-                                .lineLimit(2)
-                            Spacer()
-                            if course.id == selected {
-                                Image(systemName: "checkmark")
-                                    .font(.system(size: 15, weight: .heavy))
-                                    .foregroundStyle(MicaboColor.accent)
-                            }
+            }
+            ForEach(filtered) { course in
+                Button {
+                    onPick(course)
+                    dismiss()
+                } label: {
+                    HStack(spacing: 12) {
+                        MicaboIconView(icon: course.icon, size: 36)
+                        Text(course.title)
+                            .font(MicaboFont.ui(16, weight: .bold))
+                            .foregroundStyle(MicaboColor.ink)
+                            .lineLimit(2)
+                        Spacer()
+                        if course.id == selected {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 15, weight: .heavy))
+                                .foregroundStyle(MicaboColor.accent)
                         }
                     }
                 }
-                if filtered.isEmpty {
-                    Text(loc("ios.cal.noLessonFound"))
-                        .font(MicaboFont.ui(15, weight: .semibold))
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                }
             }
-            .scrollContentBackground(.hidden)
-            .background(MicaboColor.canvas.ignoresSafeArea())
-            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: Text(loc("ios.cal.searchLesson")))
-            .navigationTitle(loc("ios.cal.chooseLesson"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(L10n.t("app.common.cancel", locale: .resolved())) { dismiss() }
-                }
+            if filtered.isEmpty {
+                Text(loc("ios.cal.noLessonFound"))
+                    .font(MicaboFont.ui(15, weight: .semibold))
+                    .foregroundStyle(MicaboColor.inkSecondary)
             }
         }
-        .presentationDetents([.medium, .large])
+        .scrollContentBackground(.hidden)
+        .background(MicaboColor.canvas.ignoresSafeArea())
+        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: Text(loc("ios.cal.searchLesson")))
+        .navigationTitle(loc("ios.cal.chooseLesson"))
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

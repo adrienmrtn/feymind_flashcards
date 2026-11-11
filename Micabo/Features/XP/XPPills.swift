@@ -55,7 +55,7 @@ struct XPGoalRing: View {
                 .foregroundStyle(progress >= 1 ? MicaboColor.correct : LessonTone.yellow.ink)
         }
         .frame(width: size, height: size)
-        .animation(.spring(duration: 0.6), value: progress)
+        .animation(MicaboMotion.gentle, value: progress)
         .accessibilityHidden(true)
     }
 }

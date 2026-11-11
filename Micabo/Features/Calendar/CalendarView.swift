@@ -22,6 +22,7 @@ struct CalendarView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(TabRouter.self) private var router: TabRouter?
     @Environment(ProAccess.self) private var pro: ProAccess?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @Query(sort: \StudyCalendar.position) private var calendars: [StudyCalendar]
     @Query private var events: [CalendarEvent]
@@ -96,7 +97,7 @@ struct CalendarView: View {
                     addMenu
                 }
                 .padding(.top, MicaboSpacing.xs)
-                .animation(.spring(duration: 0.3), value: MicaboCalendar.shared.isDateInToday(selectedDay))
+                .animation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion), value: MicaboCalendar.shared.isDateInToday(selectedDay))
 
                 WeekPager(
                     weekOffset: $weekOffset,
@@ -284,7 +285,7 @@ struct CalendarView: View {
 
     private func select(_ day: Date, movesWeek: Bool = true) {
         let start = MicaboCalendar.shared.startOfDay(for: day)
-        withAnimation(.spring(duration: 0.3)) {
+        withAnimation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion)) {
             selectedDay = start
             if movesWeek { weekOffset = WeekPager.offset(of: start) }
         }
@@ -394,7 +395,7 @@ struct CalendarView: View {
             .sheet(item: $editingExam) { target in
                 ExamEditSheet(target: target, lessons: lessons, initialDate: selectedDay)
             }
-            .sheet(item: $dueCourses) { due in
+            .fullScreenCover(item: $dueCourses) { due in
                 DueCardsReview(courses: due.courses)
             }
             .fullScreenCover(item: $mock) { start in

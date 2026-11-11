@@ -1,6 +1,9 @@
 /// Phrases propres à l'iPhone. Les clés partagées vivent dans `SharedI18nCatalogs`.
 enum IosI18nCatalogs {
     static let fr: [String: String] = [
+        "ios.pol.home.countdown": "J-{n}",
+        "ios.pol.home.proActiveA11y": "Micabo Pro actif",
+        "ios.pol.home.late": "En retard",
         "ios.pol.sys.daysLeft": "J-{days}",
         "ios.pol.sys.tab.focus": "Focus",
         "ios.onb5.building.sub": "Je prépare tout pour toi",
@@ -1521,7 +1524,7 @@ enum IosI18nCatalogs {
         "ios.conv.rate.thanks": "Merci ! Ton avis aide Mika à écrire de meilleures leçons.",
         "ios.cal.add": "Ajouter",
         "ios.cal.addEvent": "Ajouter un événement",
-        "ios.cal.allDay": "Journée",
+        "ios.cal.allDay": "Toute la journée",
         "ios.cal.calendar": "Calendrier",
         "ios.cal.chooseLesson": "Choisir une leçon",
         "ios.cal.close": "Fermer",
@@ -1843,6 +1846,9 @@ enum IosI18nCatalogs {
     ]
 
     static let de: [String: String] = [
+        "ios.pol.home.countdown": "noch {n} Tage",
+        "ios.pol.home.proActiveA11y": "Micabo Pro aktiv",
+        "ios.pol.home.late": "Überfällig",
         "ios.pol.sys.daysLeft": "{days, plural, one {noch 1 Tag} other {noch # Tage}}",
         "ios.pol.sys.tab.focus": "Fokus",
         "ios.onb5.building.sub": "Ich bereite alles für dich vor",
@@ -3681,6 +3687,9 @@ enum IosI18nCatalogs {
     ]
 
     static let es: [String: String] = [
+        "ios.pol.home.countdown": "faltan {n} días",
+        "ios.pol.home.proActiveA11y": "Micabo Pro activo",
+        "ios.pol.home.late": "Con retraso",
         "ios.pol.sys.daysLeft": "{days, plural, one {falta 1 día} other {faltan # días}}",
         "ios.pol.sys.tab.focus": "Enfoque",
         "ios.onb5.building.sub": "Lo estoy preparando todo para ti",
@@ -5519,6 +5528,9 @@ enum IosI18nCatalogs {
     ]
 
     static let tr: [String: String] = [
+        "ios.pol.home.countdown": "{n} gün kaldı",
+        "ios.pol.home.proActiveA11y": "Micabo Pro etkin",
+        "ios.pol.home.late": "Gecikti",
         "ios.pol.sys.daysLeft": "{days} gün kaldı",
         "ios.pol.sys.tab.focus": "Odak",
         "ios.onb5.building.sub": "Her şeyi senin için hazırlıyorum",
@@ -7365,6 +7377,9 @@ enum IosI18nCatalogs {
     /// **toutes les clés du français**, dans le même ordre et sous les mêmes commentaires —
     /// et le test de parité (`testIosCatalogsHaveTheSameKeys`) le garde ainsi.
     static let en: [String: String] = [
+        "ios.pol.home.countdown": "{n} days left",
+        "ios.pol.home.proActiveA11y": "Micabo Pro active",
+        "ios.pol.home.late": "Overdue",
         "ios.pol.sys.daysLeft": "{days, plural, one {1 day left} other {# days left}}",
         "ios.pol.sys.tab.focus": "Focus",
         "ios.onb5.building.sub": "I'm getting everything ready for you",
