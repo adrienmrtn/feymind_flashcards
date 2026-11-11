@@ -12,7 +12,7 @@ import XCTest
 /// Rien ne se dessine hors de la CI : sans `MICABO_RENDER_DIR`, chaque test s'arrête aussitôt.
 @MainActor
 final class RenderGalleryTests: XCTestCase {
-    /// Mika dans ses treize humeurs (images fixes : les rendus ne dessinent pas Lottie), sur
+    /// Mika dans ses treize humeurs (images fixes : les rendus ne dessinent pas les animations), sur
     /// le papier de l'app (étincelle bleue) et sur le bleu Micabo (étincelle blanche) ; ses
     /// trois cadres ; et l'écran de lancement, de jour et de nuit.
     func testMika() throws {
