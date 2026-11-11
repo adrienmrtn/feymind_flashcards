@@ -110,22 +110,18 @@ struct WritingCoachContent: View {
                 }
             }
             Divider().overlay(MicaboColor.stroke)
-            HStack(spacing: 8) {
-                if session.reading {
-                    ProgressView().tint(MicaboColor.accent)
-                    Text(writingText("ios.ku7.writing.reading"))
-                        .font(MicaboFont.ui(14, weight: .semibold))
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                } else {
-                    Text(writingText("ios.ku7.writing.words", ["count": "\(session.wordCount)"]))
-                        .font(MicaboFont.ui(14, weight: .semibold))
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                        .monospacedDigit()
+            // Le compte et les deux pastilles sur une ligne ; sur deux quand la langue ou la taille
+            // du texte ne les laisse pas tenir, plutôt qu'un « Einfüg… ».
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 8) {
+                    status
+                    Spacer(minLength: 8)
+                    tools
                 }
-                Spacer(minLength: 8)
-                toolButton(solveText("type.paste"), systemImage: "doc.on.clipboard", action: actions.paste)
-                toolButton(writingText("ios.ku7.writing.photo"), systemImage: "camera", action: actions.photo)
+                VStack(alignment: .leading, spacing: 8) {
+                    status
+                    tools
+                }
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
@@ -142,12 +138,39 @@ struct WritingCoachContent: View {
         .solverCard(radius: 20)
     }
 
+    @ViewBuilder
+    private var status: some View {
+        if session.reading {
+            HStack(spacing: 8) {
+                ProgressView().tint(MicaboColor.accent)
+                Text(writingText("ios.ku7.writing.reading"))
+                    .font(MicaboFont.ui(14, weight: .semibold))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .fixedSize()
+            }
+        } else {
+            Text(writingText("ios.ku7.writing.words", ["count": "\(session.wordCount)"]))
+                .font(MicaboFont.ui(14, weight: .semibold))
+                .foregroundStyle(MicaboColor.inkSecondary)
+                .monospacedDigit()
+                .fixedSize()
+        }
+    }
+
+    private var tools: some View {
+        HStack(spacing: 8) {
+            toolButton(solveText("type.paste"), systemImage: "doc.on.clipboard", action: actions.paste)
+            toolButton(writingText("ios.ku7.writing.photo"), systemImage: "camera", action: actions.photo)
+        }
+    }
+
     private func toolButton(_ title: String, systemImage: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Label(title, systemImage: systemImage)
                 .font(MicaboFont.ui(14, weight: .bold))
                 .foregroundStyle(MicaboColor.accentInk)
                 .lineLimit(1)
+                .fixedSize()
                 .padding(.horizontal, 12)
                 .padding(.vertical, 7)
                 .background(MicaboColor.accentWash, in: Capsule())

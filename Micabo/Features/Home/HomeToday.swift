@@ -257,7 +257,7 @@ struct HomeQuickActions: View {
 
     private func chip(_ tool: HomeTool) -> some View {
         Button { onTool(tool) } label: {
-            HStack(spacing: 7) {
+            HStack(spacing: 6) {
                 MicaboIconView(icon: tool.icon, size: 22)
                 Text(tool.title)
                     .font(MicaboFont.ui(14.5, weight: .heavy))
@@ -265,7 +265,7 @@ struct HomeQuickActions: View {
                     .lineLimit(1)
             }
             .padding(.leading, 10)
-            .padding(.trailing, 14)
+            .padding(.trailing, 12)
             .frame(minHeight: 42)
             .background(HomePalette.card, in: Capsule())
             .overlay(Capsule().strokeBorder(HomePalette.cardStroke, lineWidth: 1))
