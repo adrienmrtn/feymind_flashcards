@@ -220,7 +220,7 @@ private struct WritingPreview: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             MicaboScreenHeader(title: writingText("ios.ku7.writing.title"), back: .close({}))
-            WritingCoachContent(session: session, isPro: isPro, focused: $focused, actions: WritingCoachActions())
+            WritingCoachContent(session: session, isPro: isPro, focused: $focused, actions: WritingCoachActions(), editorStandIn: true)
             Spacer(minLength: 0)
             if bar {
                 WritingCoachBar(session: session, actions: WritingCoachActions())

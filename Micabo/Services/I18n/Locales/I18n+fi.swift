@@ -38,7 +38,6 @@ extension IosI18nCatalogs {
         "ios.ku7.prompt.level": "Tasoni: {level}. Sovita selityksesi tälle tasolle.",
         "ios.ku7.prompt.practice": "Keksi liitteen kysymyksen kaltainen kysymys, jotta voin harjoitella: laskussa eri arvot, muuten läheinen käsite. Älä kerro vastausta. Kirjoita täsmälleen näin ja pidä tunnisteet englanniksi:\n[EXERCISE] koko tehtävä\n[ANSWER] odotettu vastaus lyhyesti",
         "ios.ku7.prompt.solve": "Auta minua liitteen kysymyksessä vaihe vaiheelta kuin yksityisopettaja: haluan ymmärtää menetelmän, en vain vastausta. Kysymys voi olla mistä aineesta tahansa: matematiikka, luonnontieteet, kielet, kirjallisuus, historia, maantieto, filosofia… Jos kysymyksiä on useita, käsittele vain ensimmäinen.\nLaskussa jokainen vaihe on laskun vaihe. Teoria-, analyysi- tai kielikysymyksessä jokainen vaihe on päättelyn vaihe: ydinajatus, perustelu, esimerkki, pätevä sääntö.\nKirjoita vastauksesi täsmälleen tässä muodossa ja pidä tunnisteet englanniksi:\n[SUBJECT] math, physics, biology, languages, humanities tai other\n[STEP] lyhyt otsikko\nYhdestä kolmeen virkettä, jotka selittävät vaiheen.\n(2-5 tunnistetta [STEP])\n[ANSWER] lopullinen vastaus lyhyesti\nKirjoita kaavat yksinkertaisena LaTeXina $-merkkien väliin ja laita tärkeä kaava omalle rivilleen $$-merkkien väliin.",
-        "ios.ku7.search.placeholder": "Hae oppitunneista ja korteista",
         "ios.ku7.subject.humanities": "Historia ja yhteiskunta",
         "ios.ku7.subject.languages": "Kielet ja kirjallisuus",
         "ios.ku7.tools.homework": "Läksyapu",

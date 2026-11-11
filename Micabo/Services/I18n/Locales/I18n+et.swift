@@ -38,7 +38,6 @@ extension IosI18nCatalogs {
         "ios.ku7.prompt.level": "Minu tase: {level}. Kohanda selgitus sellele tasemele.",
         "ios.ku7.prompt.practice": "Mõtle välja manusega sama tüüpi küsimus, et saaksin harjutada: arvutuses teised väärtused, muidu lähedane mõiste. Ära anna vastust. Kirjuta täpselt nii ja jäta sildid inglise keelde:\n[EXERCISE] kogu ülesanne\n[ANSWER] oodatud vastus lühidalt",
         "ios.ku7.prompt.solve": "Aita mind manuses oleva küsimusega samm-sammult nagu eraõpetaja: tahan aru saada meetodist, mitte ainult vastusest. See võib olla ükskõik mis ainest: matemaatika, loodusteadused, keeled, kirjandus, ajalugu, geograafia, filosoofia… Kui küsimusi on mitu, lahenda ainult esimene.\nArvutuses on iga samm arvutuse samm. Teooria-, analüüsi- või keeleküsimuses on iga samm arutluse samm: põhimõte, argument, näide, kehtiv reegel.\nKirjuta vastus täpselt sellisel kujul ja jäta sildid inglise keelde:\n[SUBJECT] math, physics, biology, languages, humanities või other\n[STEP] lühike pealkiri\nÜks kuni kolm lauset, mis sammu selgitavad.\n(2 kuni 5 silti [STEP])\n[ANSWER] lõplik vastus lühidalt\nKirjuta valemid lihtsas LaTeXis $-märkide vahele ja pane oluline valem eraldi reale $$-märkide vahele.",
-        "ios.ku7.search.placeholder": "Otsi minu tundidest ja kaartidest",
         "ios.ku7.subject.humanities": "Ajalugu ja ühiskond",
         "ios.ku7.subject.languages": "Keeled ja kirjandus",
         "ios.ku7.tools.homework": "Kodutööde abi",

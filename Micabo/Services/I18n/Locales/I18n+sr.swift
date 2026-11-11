@@ -38,7 +38,6 @@ extension IosI18nCatalogs {
         "ios.ku7.prompt.level": "Moj nivo: {level}. Prilagodi objašnjenje tom nivou.",
         "ios.ku7.prompt.practice": "Smisli pitanje iste vrste kao ono u priloženom dokumentu da bih mogao da vežbam: kod računa druge vrednosti, inače srodan pojam. Nemoj da daš odgovor. Napiši tačno ovako i ostavi oznake na engleskom:\n[EXERCISE] ceo zadatak\n[ANSWER] očekivani odgovor, kratko",
         "ios.ku7.prompt.solve": "Pomozi mi sa pitanjem iz priloženog dokumenta korak po korak, kao privatni nastavnik: želim da razumem postupak, a ne samo odgovor. Može biti iz bilo kog predmeta: matematika, prirodne nauke, jezici, književnost, istorija, geografija, filozofija… Ako ima više pitanja, reši samo prvo.\nKod računa je svaki korak korak računa. Kod pitanja iz teorije, analize ili jezika svaki korak je korak razmišljanja: glavna ideja, argument, primer, pravilo koje važi.\nNapiši odgovor tačno u ovom obliku i ostavi oznake na engleskom:\n[SUBJECT] math, physics, biology, languages, humanities ili other\n[STEP] kratak naslov\nJedna do tri rečenice koje objašnjavaju korak.\n(od 2 do 5 oznaka [STEP])\n[ANSWER] konačan odgovor, kratko\nFormule piši u jednostavnom LaTeX-u između $, a važnu formulu stavi samu u svoj red između $$.",
-        "ios.ku7.search.placeholder": "Pretraži moje lekcije i kartice",
         "ios.ku7.subject.humanities": "Istorija i društvo",
         "ios.ku7.subject.languages": "Jezici i književnost",
         "ios.ku7.tools.homework": "Pomoć sa domaćim",

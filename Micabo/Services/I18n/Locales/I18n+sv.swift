@@ -38,7 +38,6 @@ extension IosI18nCatalogs {
         "ios.ku7.prompt.level": "Min nivå: {level}. Anpassa förklaringen till den nivån.",
         "ios.ku7.prompt.practice": "Hitta på en fråga av samma slag som den i det bifogade dokumentet så att jag kan öva: andra värden i en uträkning, annars ett närliggande begrepp. Ge inte svaret. Skriv exakt så här och behåll taggarna på engelska:\n[EXERCISE] hela uppgiften\n[ANSWER] det förväntade svaret, kort",
         "ios.ku7.prompt.solve": "Hjälp mig med frågan i det bifogade dokumentet, steg för steg, som en privatlärare: jag vill förstå metoden, inte bara svaret. Frågan kan komma från vilket ämne som helst: matte, naturvetenskap, språk, litteratur, historia, geografi, filosofi… Om det finns flera frågor, ta bara den första.\nI en uträkning är varje steg ett steg i uträkningen. I en teori-, analys- eller språkfråga är varje steg ett steg i resonemanget: huvudtanken, argumentet, exemplet, regeln som gäller.\nSkriv ditt svar exakt i den här formen och behåll taggarna på engelska:\n[SUBJECT] math, physics, biology, languages, humanities eller other\n[STEP] en kort rubrik\nEn till tre meningar som förklarar steget.\n(2 till 5 taggar [STEP])\n[ANSWER] slutsvaret, kort\nSkriv formler i enkel LaTeX mellan $, och sätt en viktig formel ensam på en egen rad mellan $$.",
-        "ios.ku7.search.placeholder": "Sök i mina lektioner och kort",
         "ios.ku7.subject.humanities": "Historia & samhälle",
         "ios.ku7.subject.languages": "Språk & litteratur",
         "ios.ku7.tools.homework": "Läxhjälp",
