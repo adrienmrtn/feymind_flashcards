@@ -138,29 +138,55 @@ struct PaywallLegalFooter: View {
     @Environment(\.openURL) private var openURL
 
     var body: some View {
-        HStack(spacing: 7) {
-            entry(L10n.t("ios.paywallRestore", locale: .resolved()), action: onRestore)
-            separator
-            entry(L10n.t("ios.paywallTerms", locale: .resolved())) { open(PaywallLinks.terms) }
-            separator
-            entry(L10n.t("common.privacy", locale: .resolved())) { open(PaywallLinks.privacy) }
+        // **Sur une ligne quand elle tient, sinon l'une sous l'autre** : en allemand et en
+        // très grand texte, « Nutzungsbeding… » se coupait, et des conditions qu'on ne peut
+        // pas lire ne sont pas des conditions visibles.
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 7) {
+                restore
+                separator
+                terms
+                separator
+                privacy
+            }
+            .fixedSize()
+            VStack(spacing: 4) {
+                restore
+                terms
+                privacy
+            }
         }
         .frame(maxWidth: .infinity)
     }
 
-    private var separator: some View {
-        Text("·")
-            .font(MicaboFont.ui(11.5, weight: .regular))
-            .foregroundStyle(OnboardingPalette.grayLight)
+    private var restore: some View {
+        entry(L10n.t("ios.paywallRestore", locale: .resolved()), action: onRestore)
     }
 
+    private var terms: some View {
+        entry(L10n.t("ios.paywallTerms", locale: .resolved())) { open(PaywallLinks.terms) }
+    }
+
+    private var privacy: some View {
+        entry(L10n.t("common.privacy", locale: .resolved())) { open(PaywallLinks.privacy) }
+    }
+
+    private var separator: some View {
+        Text("·")
+            .font(MicaboFont.ui(12, weight: .regular))
+            .foregroundStyle(MicaboColor.inkTertiary)
+    }
+
+    /// Le gris secondaire de l'app, pas le tertiaire : la restauration et les conditions
+    /// doivent se lire sans plisser les yeux (le tertiaire tombait sous 3:1 sur le blanc).
     private func entry(_ title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
-                .font(MicaboFont.ui(11.5, weight: .regular))
-                .foregroundStyle(OnboardingPalette.grayLight)
+                .font(MicaboFont.ui(12, weight: .semibold))
+                .foregroundStyle(MicaboColor.inkSecondary)
                 .lineLimit(1)
-                .minimumScaleFactor(0.85)
+                .frame(minHeight: 28)
+                .contentShape(Rectangle())
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: true))
     }

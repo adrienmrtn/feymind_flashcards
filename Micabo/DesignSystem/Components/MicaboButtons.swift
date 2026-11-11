@@ -103,8 +103,10 @@ struct MicaboPrimaryFill<Label: View>: View {
             .font(MicaboFont.ui(fontSize, weight: .heavy))
             .foregroundStyle(isLive ? foreground : MicaboColor.onInk)
             .multilineTextAlignment(.center)
-            .lineLimit(2)
-            .minimumScaleFactor(0.85)
+            // **Le libellé passe à la ligne, il ne se coupe pas** : un bouton qui finit par
+            // « … » en allemand ou en très grand texte ne dit plus ce qu'il fait.
+            .lineLimit(3)
+            .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, fullWidth ? 20 : 24)
             .padding(.vertical, 10)
             .frame(maxWidth: fullWidth ? .infinity : nil, minHeight: minHeight)
@@ -153,8 +155,10 @@ struct MicaboSecondaryButtonStyle: ButtonStyle {
             .font(MicaboFont.ui(17, weight: .bold))
             .foregroundStyle(MicaboColor.ink)
             .multilineTextAlignment(.center)
-            .lineLimit(2)
-            .minimumScaleFactor(0.85)
+            // **Le libellé passe à la ligne, il ne se coupe pas** : un bouton qui finit par
+            // « … » en allemand ou en très grand texte ne dit plus ce qu'il fait.
+            .lineLimit(3)
+            .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, fullWidth ? 20 : 24)
             .padding(.vertical, 10)
             .frame(maxWidth: fullWidth ? .infinity : nil, minHeight: MicaboButtonMetrics.height)

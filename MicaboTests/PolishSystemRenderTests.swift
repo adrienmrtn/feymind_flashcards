@@ -269,7 +269,7 @@ final class PolishSystemRenderTests: XCTestCase {
         try RenderGallery.render("pol-onb-de-subjects-xl", width: small, height: 667, xl(page(.subjects, jonas) { SubjectsStepView() }))
         try RenderGallery.render("pol-onb-de-current", width: small, height: 667, page(.currentAverage, jonas) { CurrentAverageStepView() })
         try RenderGallery.render("pol-onb-de-trial-xl", width: small, height: 667, xl(page(.trialOffer, jonas) { TrialOfferStepView() }))
-        try RenderGallery.render("pol-onb-de-paywall-xl", width: small, height: 1_400, xl(paywall()))
+        try RenderGallery.render("pol-onb-de-paywall-xl", width: small, height: 1_900, xl(paywall()))
     }
 
     func testFinnishAndAmericanOnboarding() throws {

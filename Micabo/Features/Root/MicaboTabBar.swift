@@ -34,6 +34,9 @@ struct MicaboTabBar: View {
                     VStack(spacing: 3) {
                         Image(systemName: isSelected ? tab.selectedSystemImage : tab.systemImage)
                             .font(.system(size: 19, weight: isSelected ? .bold : .semibold))
+                            // Une hauteur commune aux icônes : sans elle, le calendrier et la
+                            // silhouette, plus bas que la maison, remontaient leur libellé.
+                            .frame(height: 24)
                         Text(label)
                             // **Taille fixe, comme la barre du système** : la barre a une
                             // hauteur fixe, et un libellé qui suit la taille du texte la

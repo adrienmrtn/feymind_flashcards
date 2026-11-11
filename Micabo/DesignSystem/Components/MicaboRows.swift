@@ -225,7 +225,8 @@ struct MicaboRow: View {
                         .font(MicaboFont.rowSubtitle)
                         .foregroundStyle(MicaboColor.inkTertiary)
                         .multilineTextAlignment(.leading)
-                        .lineLimit(2)
+                        .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 

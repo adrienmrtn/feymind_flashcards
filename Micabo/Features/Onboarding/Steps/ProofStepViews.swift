@@ -97,9 +97,10 @@ struct OnboardingBarsChart: View {
     /// La valeur écrite dans la barre. Sans elle, la hauteur dit tout.
     var showsValues: Bool = true
 
-    /// Le temps que les barres mettent à monter : deux secondes, lentement, et le chiffre
-    /// compte avec elles.
-    static let riseDuration = 2.0
+    /// Le temps que les barres mettent à monter : la courbe d'entrée de l'app
+    /// (`MicaboMotion.gentle`), et le chiffre compte avec elles. Elles montaient en deux
+    /// secondes : on attendait le graphe au lieu de le lire.
+    static let riseDuration = 0.45
     /// La hauteur d'une barre avant qu'elle ne monte.
     private static let restingHeight: CGFloat = 12
 
@@ -160,12 +161,12 @@ struct OnboardingBarsChart: View {
             // **Les barres ne partent qu'une fois le glissement fini**, et pas avant : une
             // animation dans une animation se lit comme un tremblement. Le départ est donc
             // posté après la durée du glissement, plutôt que différé dans l'animation elle-même,
-            // pour qu'aucune image de la montée ne tombe pendant que la page arrive. Puis
-            // **deux secondes**, lentement et de plus en plus posées, le chiffre comptant avec
-            // la barre. Elles se sentent partir, et se sentent se poser.
+            // pour qu'aucune image de la montée ne tombe pendant que la page arrive. Puis la
+            // courbe d'entrée de l'app, le chiffre comptant avec la barre. Elles se sentent
+            // partir, et se sentent se poser.
             DispatchQueue.main.asyncAfter(deadline: .now() + OnboardingMotion.slideDuration + 0.2) {
                 Haptics.soft()
-                withAnimation(.timingCurve(0.35, 0, 0.2, 1, duration: Self.riseDuration)) { drawn = 1 }
+                withAnimation(MicaboMotion.gentle) { drawn = 1 }
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + OnboardingMotion.slideDuration + 0.2 + Self.riseDuration - 0.1) {
                 Haptics.light()

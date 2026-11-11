@@ -386,7 +386,7 @@ struct SignInProviderButtons: View {
         }
         .animation(MicaboMotion.quick, value: auth.isWorking)
         .animation(MicaboMotion.quick, value: auth.message)
-        .animation(.timingCurve(0.25, 0.8, 0.25, 1, duration: 0.36), value: showsEmail)
+        .animation(MicaboMotion.standard, value: showsEmail)
     }
 
     /// Le troisième bouton, de la même forme que celui de Google : une enveloppe, et le
