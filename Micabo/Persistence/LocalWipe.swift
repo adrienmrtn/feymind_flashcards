@@ -63,6 +63,9 @@ enum LocalWipe {
         try deleteAll(StudyCalendar.self, in: context)
         try deleteAll(StudyTask.self, in: context)
         try deleteAll(FocusSession.self, in: context)
+        // Les exercices scannés et les fils de « Demande à Mika » : les questions du compte qui part.
+        try deleteAll(SolvedExercise.self, in: context)
+        try deleteAll(TutorMessage.self, in: context)
         CalendarDefaults.forget()
         RevisionPlanAllowance.forget()
         StudyNotifications.cancelAll()

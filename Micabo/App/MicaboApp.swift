@@ -38,6 +38,8 @@ struct MicaboApp: App {
     private static let schema = Schema([
         Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self,
         StudyCalendar.self, CalendarEvent.self, StudyTask.self, FocusSession.self,
+        // Le scanner d'exercices et « Demande à Mika » (`Features/Solver`), à la fin aussi.
+        SolvedExercise.self, TutorMessage.self,
     ])
 
     /// Vrai quand l'app ne sert que d'hôte aux tests unitaires : elle ne lance alors ni

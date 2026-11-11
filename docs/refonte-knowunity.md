@@ -90,17 +90,64 @@ Une feuille ou un écran :
 
 ## 4. Scanner un exo
 
-- L'appareil photo (scanner de document là où il existe) ou la photothèque, une seule page.
-- L'OCR **sur l'appareil**, celui des imports.
-- Un écran de conversation avec Mika, hors leçon (« Mika · Exercice »), qui reprend le chat de
-  la leçon : la pièce jointe `{ title: "Exercice scanné", text: <OCR> }` et un premier message
-  envoyé tout seul : « Explique-moi cet exercice pas à pas, sans me donner seulement la
-  réponse. » On peut poser des questions ensuite.
-- La porte est celle de Mika : une question offerte à vie, puis le paywall (`mika`).
-- Une réponse rapporte `exerciseSolved` (15) la première fois, puis `mikaAnswer`.
-- Une photo illisible : « Je n'arrive pas à lire la photo. Reprends-la bien à plat, avec de la
-  lumière. »
-- Aucun appel serveur nouveau : `mika-chat` accepte déjà un document joint en texte.
+Le scanner d'exercices (`Micabo/Features/Solver`, clés `ios.solve.*`, 26 langues), ouvert par
+la tuile « Scanner un exo » de Home (`ScanExerciseView` ne fait plus que l'ouvrir). Toujours
+ouvert : l'énoncé se lit sur l'appareil, et l'historique comme les fils de Mika restent à
+l'élève ; la porte vient à la demande de solution.
+
+1. **La capture**, plein écran sur fond noir : la visée (AVFoundation, pas le scanner de
+   documents de VisionKit, qui cherche une page entière), un **cadre réglable** (coins pour
+   l'agrandir, glisser pour le déplacer, extérieur assombri) et la consigne « Cadre une seule
+   question » ; la lampe ; « Photos » (la photothèque, le cadre posé sur toute l'image) ;
+   « Écrire » (taper ou coller l'énoncé) ; « Mes exercices » et « Demande à Mika ». Après la
+   photo, l'image se fige, on ajuste le cadre, « Lire l'énoncé ». Le cadre est ramené dans la
+   photo (`SolverCrop`) et seul ce morceau est lu, **sur l'appareil**
+   (`OnDeviceOCR.recognizeExercise` : la langue de l'app d'abord, puis la détection de Vision ;
+   `recognize(in:)` ne change pas pour les imports). Moins de douze caractères lus : « Je
+   n'arrive pas à lire », Mika triste en buste, « Reprendre » ou « Écrire ».
+2. **La matière** est devinée sur l'appareil (`SolverSubjectGuess` : mots et unités dans les
+   langues les plus parlées, signes de calcul) parmi Maths, Physique-chimie, SVT, Autres
+   matières ; l'élève la change d'un appui ; Mika la confirme dans sa réponse (`[SUBJECT]`)
+   tant que l'élève ne l'a pas choisie.
+3. **La solution pas à pas** (`SolverSolutionView`) : l'énoncé reconnu (corrigeable ; une
+   solution déjà là s'efface alors), puis, sur « Résoudre pas à pas », les **étapes en cartes
+   numérotées** qui se dévoilent une à une (« Étape suivante (2/3) » en bas, la carte suivante
+   en pointillés, « Tout afficher »), les formules composées (`SolverFormula` : le moteur de
+   `MathTypesetter` dessiné en image, repli sur la transposition), la **réponse encadrée**.
+   Sous chaque étape, « Je ne comprends pas cette étape » : Mika la réexplique dans une bulle
+   sous la carte. Puis « Un exercice similaire pour m'entraîner » : Mika invente l'énoncé,
+   l'élève répond, la correction dit juste ou faux et pourquoi, « Voir la réponse »,
+   « Un autre exercice ». Enfin « Une question sur cet exercice ? » ouvre le fil de la matière.
+4. **Le protocole**, sans fonction nouvelle : `mika-chat`, l'énoncé en document joint (texte
+   seulement), la consigne en message de l'élève **écrite dans la langue de l'app** (la
+   fonction répond dans la langue du dernier message). Mika écrit des balises en anglais
+   (`[SUBJECT]`, `[STEP]` titre puis explication, `[ANSWER]` ; `[EXERCISE]` ; `[RIGHT]` /
+   `[WRONG]`), lues par `SolverParser` : balises en gras, numérotées ou traduites acceptées,
+   repli sur les lignes numérotées puis les paragraphes, et sinon le texte tel quel ; les
+   échappées LaTeX perdues dans le JSON (`\frac` lu comme un saut de page) sont réparées. La
+   réponse brute est gardée et relue à chaque ouverture.
+5. **La porte** est celle de Mika (`MikaQuota`) pour **chaque** appel (solution, étape
+   réexpliquée, exercice similaire, correction, fil) : une question offerte à vie, puis le
+   paywall `mika` ; pour un abonné, le plafond du jour. Le premier scan d'un élève qui a sa
+   question offerte reçoit la solution entière (la valeur avant le paywall) ; la question
+   suivante ouvre le paywall. Sans question offerte, l'énoncé reconnu reste à l'écran et les
+   étapes, floutées, attendent Pro (« Débloquer la solution ») ; un abonnement pris là lance la
+   solution tout seul. Rien n'est consommé avant que la réponse n'arrive.
+6. **L'XP** : `exerciseSolved` (15) à la première solution d'un exercice, `mikaAnswer` pour
+   tout le reste (`XPRules` ne change pas).
+7. **Mes exercices** : les exercices demandés (vignette de la photo recadrée, matière, date,
+   « À résoudre » s'ils attendent Pro), filtre par matière, appui long pour supprimer,
+   réouverture de la solution.
+8. **Demande à Mika** (`TutorChatView`) : Mika en buste sur le papier de l'app, **un fil par
+   matière** ; un exercice résolu y arrive (l'énoncé, puis la réponse, avec « Voir la
+   solution ») ; le fil part avec ses huit derniers tours et, en document joint, le dernier
+   exercice du fil et sa solution. Deux idées de questions par matière dans un fil vide.
+9. **Ce qui se garde** : `SolvedExercise` et `TutorMessage` (SwiftData, en fin de schéma),
+   sur le téléphone seulement, effacés par `LocalWipe` à la sortie d'un compte.
+10. **Les statistiques** : `solver_captured` (`source`, `subject`), `solver_unreadable`,
+    `solver_solved` (`subject`, `steps`, `structured`, `source`), `solver_step_help`,
+    `solver_practice_checked` (`result`), `tutor_asked` (`subject`), plus `mika_asked` et
+    `mika_blocked` comme le chat de la leçon. Jamais un énoncé ni un message.
 
 ## 5. Le minuteur
 

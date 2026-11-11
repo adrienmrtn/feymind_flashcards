@@ -404,13 +404,10 @@ struct HomeView: View {
         dismissKeyboard()
         switch tool {
         case .scan:
-            // La porte de Mika avant l'appareil photo : scanner pour tomber sur le paywall
-            // serait un geste pour rien.
-            if MikaQuota().gate(isPro: isPro) == .paywall {
-                paywall = .mika
-            } else {
-                showsScanner = true
-            }
+            // Le scanner s'ouvre toujours : la lecture de l'énoncé se fait sur l'appareil, et
+            // l'historique comme les fils de Mika restent à l'élève. La porte de Mika vient à la
+            // demande de solution, une fois l'énoncé reconnu à l'écran (`SolverSession`).
+            showsScanner = true
         case .quiz:
             if let resume {
                 quickQuizCourse = resume
