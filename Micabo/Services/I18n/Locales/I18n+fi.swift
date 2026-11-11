@@ -3,6 +3,8 @@
 
 extension IosI18nCatalogs {
     static let fi: [String: String] = [
+        "ios.onb5.building.sub": "Valmistelen kaiken sinulle",
+        "ios.onb5.building.title": "Kiitos, {name}!",
         "ios.onb5.exam.dateLabel": "Kokeen päivä",
         "ios.onb5.exam.finals": "Tenttikausi",
         "ios.onb5.exam.finalsName": "Tenttikausi",

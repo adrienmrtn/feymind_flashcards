@@ -42,7 +42,13 @@ struct LessonAudience: Sendable, Equatable {
         let country = OnboardingPreferences.schoolingCountry
         let track = SchoolSystem.track(id: OnboardingPreferences.schoolTrackID, in: country)
         let year = SchoolSystem.year(id: OnboardingPreferences.schoolYearID, in: track)
-        let scale = DesiredGradeScale.for(country)
+        // Le barème que l'élève a lu dans le parcours (Notenpunkte, GPA, 9–1…) : le libellé
+        // envoyé est celui qu'il a choisi, sur la même droite 10–20.
+        let scale = StudentGradeScale.for(
+            region: SchoolRegion.code(country: country, custom: OnboardingPreferences.customCountry),
+            country: country,
+            track: track
+        ).scale
         let currentScore = OnboardingPreferences.currentScore
         let targetScore = OnboardingPreferences.targetScore
         return LessonAudience(

@@ -67,8 +67,11 @@ struct BuildingStepView: View {
         VStack(spacing: 0) {
             MikaLoadingView(
                 progress: progress,
-                title: i18n.t("ios.mika.hello"),
-                subtitle: i18n.t("ios.mika.role"),
+                // Mika s'est présenté à la question du prénom : ici, il remercie et se met
+                // au travail.
+                title: model.displayName.nilIfBlank.map { i18n.t("ios.onb5.building.title", ["name": $0]) }
+                    ?? i18n.t("ios.mika.hello"),
+                subtitle: i18n.t("ios.onb5.building.sub"),
                 stepLabel: stepLabel,
                 isDone: didFinish
             )
@@ -109,62 +112,5 @@ struct BuildingStepView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.holdAtEnd) {
             withAnimation(.easeOut(duration: 0.35)) { showsAction = true }
         }
-    }
-}
-
-// MARK: - Mika prend la parole
-
-/// **Une page pour une phrase de Mika.** Le blob, petit, en haut — celui du chargement,
-/// qui vient de rapetisser — et la phrase qui se lit mot à mot dessous, avec le rond qui
-/// n'arrive qu'une fois le dernier mot posé. Elle sert deux fois : avant les cinq écrans de
-/// démonstration, et avant la fiche.
-struct MikaSpeaksStepView: View {
-    let text: String
-
-    @Environment(OnboardingModel.self) private var model
-
-    @State private var isReady = false
-    @State private var mikaShown = false
-
-    var body: some View {
-        VStack(spacing: 0) {
-            VStack(spacing: 0) {
-                Spacer(minLength: 0)
-
-                MikaMascot(mood: .wave, size: 160, reactsToTap: true, frame: .rounded)
-                    .scaleEffect(mikaShown ? 1 : 0.4)
-                    .opacity(mikaShown ? 1 : 0)
-                    .padding(.bottom, 26)
-                    .onAppear {
-                        withAnimation(.spring(duration: 0.6, bounce: 0.45).delay(0.1)) { mikaShown = true }
-                    }
-
-                OnboardingReadingText(
-                    template: text,
-                    size: 32,
-                    wordDelay: 0.2,
-                    startDelay: 0.6,
-                    // Le nom marqué (« **Mika** ») s'allume quand la phrase est lue.
-                    highlightsOnFinish: true,
-                    onFinish: {
-                        withAnimation(.easeOut(duration: 0.4)) { isReady = true }
-                    }
-                )
-                .padding(.horizontal, MicaboSpacing.screen)
-
-                Spacer(minLength: 0)
-                Spacer(minLength: 0)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-            OnboardingArrowBar {
-                model.advance()
-            }
-            .opacity(isReady ? 1 : 0)
-            .allowsHitTesting(isReady)
-        }
-        .onboardingChromeInset()
-        .background(OnboardingPalette.white.ignoresSafeArea())
-        .environment(\.onboardingSurface, .canvas)
     }
 }

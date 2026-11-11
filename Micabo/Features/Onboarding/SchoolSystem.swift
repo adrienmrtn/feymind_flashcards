@@ -71,7 +71,7 @@ enum SchoolSystem {
     /// **Les filières d'un pays, par son code ISO** (« FR », « AT », « BR »).
     static func tracks(region: String?) -> [SchoolTrack] {
         guard let code = region?.uppercased() else { return [] }
-        switch code {
+        return switch code {
         case "FR": france
         case "TR": turkey
         case "DE": germany

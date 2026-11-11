@@ -3,6 +3,8 @@
 
 extension IosI18nCatalogs {
     static let sk: [String: String] = [
+        "ios.onb5.building.sub": "Všetko ti pripravujem",
+        "ios.onb5.building.title": "Vďaka, {name}!",
         "ios.onb5.exam.dateLabel": "Dátum skúšky",
         "ios.onb5.exam.finals": "Moje skúškové",
         "ios.onb5.exam.finalsName": "Skúškové",
