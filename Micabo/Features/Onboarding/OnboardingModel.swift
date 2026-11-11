@@ -63,7 +63,61 @@ final class OnboardingModel {
     private(set) var country: SchoolingCountry = .guessed()
     /// Le pays nommé à la main, quand la réponse est « Autre pays ». Il n'a de sens que dans
     /// ce cas-là, et il est effacé dès qu'on revient sur une pastille.
-    var customCountry: WorldCountry?
+    ///
+    /// Il choisit lui aussi un système scolaire (l'Autriche, le Brésil…) : en changer efface
+    /// la filière et l'année, qui appartenaient à l'autre pays.
+    var customCountry: WorldCountry? {
+        didSet {
+            guard customCountry != oldValue, !isRestoring else { return }
+            track = nil
+            year = nil
+            examChoice = nil
+            examDate = nil
+            if let code = customCountry?.code {
+                Analytics.track(.onboardingAnswer, ["field": "customCountry", "value": .text(code)])
+            }
+        }
+    }
+
+    /// Le code ISO du pays de l'élève, celui de la liste ou celui tapé à la main.
+    var regionCode: String? {
+        SchoolRegion.code(country: country, custom: customCountry)
+    }
+
+    /// **Le prochain examen**, choisi dans ceux de son pays et de son année.
+    var examChoice: ExamChoice? {
+        didSet {
+            guard let examChoice, examChoice != oldValue, !isRestoring else { return }
+            Analytics.track(.onboardingAnswer, ["field": "exam", "value": .text(examChoice.id)])
+        }
+    }
+
+    /// Le jour de cet examen : proposé d'après le calendrier du pays, corrigé par l'élève.
+    var examDate: Date?
+
+    /// Les examens proposés à cet élève-là (`SchoolExams.choices`).
+    var examChoices: [ExamChoice] {
+        SchoolExams.choices(track: track, year: year, tier: stage?.tier)
+    }
+
+    /// Choisit un examen, et sa date proposée quand l'élève n'en avait pas déjà choisi une
+    /// pour lui.
+    func choose(exam choice: ExamChoice, now: Date = Date()) {
+        guard choice != examChoice else { return }
+        examChoice = choice
+        examDate = SchoolExams.suggestedDate(for: choice, from: now)
+    }
+
+    /// Les jours avant l'examen, quand il y en a un.
+    func examDaysLeft(now: Date = Date()) -> Int? {
+        guard let examChoice, examChoice.hasDate, let examDate else { return nil }
+        return SchoolExams.daysLeft(until: examDate, from: now)
+    }
+
+    /// **Le barème que l'élève connaît**, pour les deux moyennes.
+    var gradeScale: StudentGradeScale {
+        StudentGradeScale.for(region: regionCode, country: country, track: track)
+    }
     var goals: Set<LearningGoal> = []
     var subjects: Set<String> = []
 
@@ -89,10 +143,17 @@ final class OnboardingModel {
             guard let track, track != oldValue, !isRestoring else { return }
             // Changer de filière efface l'année : « Terminale » accrochée à « Collège » est
             // une réponse que personne n'a donnée.
-            if oldValue != nil { year = nil }
+            if oldValue != nil {
+                year = nil
+                examChoice = nil
+                examDate = nil
+            }
             // Le palier large suit la filière : c'est lui que la fonction Edge reçoit et que
-            // le cloud synchronise, et il ne doit pas rester sur la réponse d'avant.
+            // le cloud synchronise, et il ne doit pas rester sur la réponse d'avant. Un pays
+            // tapé à la main n'a que l'échelle générique : la filière santé s'y décrit
+            // elle-même plutôt que de rester sans palier.
             stage = country.resolvedStage(id: nil, tier: track.tier, level: track.level)
+                ?? EducationStage(id: track.id, title: track.title, emoji: track.emoji, level: track.level, tier: track.tier)
             Analytics.track(.onboardingAnswer, ["field": "track", "value": .text(track.id)])
         }
     }
@@ -101,6 +162,11 @@ final class OnboardingModel {
     var year: SchoolYear? {
         didSet {
             guard let year, year != oldValue, !isRestoring else { return }
+            // L'examen appartenait à l'autre année : le brevet ne suit pas en seconde.
+            if oldValue != nil {
+                examChoice = nil
+                examDate = nil
+            }
             Analytics.track(.onboardingAnswer, ["field": "year", "value": .text(year.id)])
         }
     }
@@ -165,6 +231,8 @@ final class OnboardingModel {
         // pas en France, et la garder afficherait une réponse introuvable dans la liste. Le
         // palier, lui, se reporte — c'est tout l'objet de `resolvedStage`.
         track = nil
+        examChoice = nil
+        examDate = nil
         year = nil
         // Repartir sur une pastille efface le pays tapé à la main : le garder ferait dire à
         // l'écran « France » et « Brésil » en même temps.
@@ -181,7 +249,7 @@ final class OnboardingModel {
 
     /// Les filières proposées, vides quand le pays n'est pas décrit en détail.
     var tracks: [SchoolTrack] {
-        SchoolSystem.tracks(for: country)
+        SchoolSystem.tracks(for: country, custom: customCountry)
     }
 
     // MARK: Ce que le plan affiche
@@ -199,7 +267,7 @@ final class OnboardingModel {
     // MARK: Avancer, revenir
 
     private func isSkipped(_ step: OnboardingStep) -> Bool {
-        step.isSkipped(for: country)
+        step.isSkipped(for: country, custom: customCountry)
     }
 
     /// **La languette du compte**, montée sur le dernier écran de Mika, juste avant l'offre.
@@ -235,7 +303,7 @@ final class OnboardingModel {
         guard !transitionLock else { return false }
         // Le compte se demande en quittant le dernier écran de Mika, juste avant l'offre :
         // c'est là qu'il protège quelque chose — le profil qu'on vient de construire.
-        if step == .mikaRelief, !didAnswerAccount, !hasAccount {
+        if step == .mikaTutor, !didAnswerAccount, !hasAccount {
             isAccountSheetPresented = true
             return true
         }
@@ -312,6 +380,8 @@ final class OnboardingModel {
         OnboardingPreferences.schoolYearID = year?.id
         if let dailyMinutes { OnboardingPreferences.dailyMinutes = dailyMinutes }
         OnboardingPreferences.studyHour = studyHour
+        OnboardingPreferences.examID = examChoice?.id
+        OnboardingPreferences.examDate = examChoice?.hasDate == true ? examDate : nil
     }
 }
 
@@ -359,6 +429,8 @@ extension OnboardingModel {
         targetScore = OnboardingPreferences.targetScore
         dailyMinutes = OnboardingPreferences.answeredDailyMinutes
         studyHour = OnboardingPreferences.studyHour
+        examChoice = SchoolExams.choice(id: OnboardingPreferences.examID)
+        examDate = OnboardingPreferences.examDate
     }
 }
 

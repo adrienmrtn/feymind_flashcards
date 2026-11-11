@@ -35,8 +35,9 @@ struct CountryStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n.t("ios.countryTitle"),
-            scrolls: true
+            title: i18n.t("ios.onb5.q.country"),
+            scrolls: true,
+            reaction: reaction
         ) {
             // **La liste des pays, à même la page** : on voit le sien, on le touche. Le pays
             // du téléphone vient en tête, déjà choisi ; « Autre pays » ouvre la recherche.
@@ -64,6 +65,15 @@ struct CountryStepView: View {
                 model.advance()
             }
         }
+    }
+
+    /// **Mika connaît le système scolaire du pays choisi** : il le dit, et seulement quand
+    /// c'est vrai (un pays décrit dans `SchoolSystem`).
+    private var reaction: String? {
+        guard model.hasAnsweredCountry,
+              SchoolSystem.isDetailed(model.country, custom: model.customCountry)
+        else { return nil }
+        return i18n.t("ios.onb5.react.country")
     }
 
     /// Les pays, celui du téléphone d'abord, « Autre pays » en dernier.
@@ -263,11 +273,14 @@ struct CountryStepView: View {
         .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
+    @Environment(\.onboardingCheer) private var cheer
+
     private func choose(_ country: WorldCountry) {
         isSearching = false
         query = ""
         withAnimation(OnboardingMotion.tap) {
             model.customCountry = country
         }
+        cheer()
     }
 }

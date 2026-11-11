@@ -282,6 +282,10 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
     var skip: OnboardingSkip?
     /// Le titre se centre sur les écrans qui n'ont qu'une phrase et une image.
     var centered: Bool = false
+    /// **Ce que Mika répond** à une réponse donnée sur la page (`OnboardingMikaPrompt`).
+    var reaction: String?
+    /// L'humeur de Mika quand il pose la question ; celle de l'étape par défaut.
+    var mood: MikaMood?
     var content: () -> Content
     var footer: () -> Footer
 
@@ -301,6 +305,8 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         locksScrolling: Bool = false,
         skip: OnboardingSkip? = nil,
         centered: Bool = false,
+        reaction: String? = nil,
+        mood: MikaMood? = nil,
         @ViewBuilder content: @escaping () -> Content,
         @ViewBuilder footer: @escaping () -> Footer
     ) {
@@ -316,6 +322,8 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         self.locksScrolling = locksScrolling
         self.skip = skip
         self.centered = centered
+        self.reaction = reaction
+        self.mood = mood
         self.content = content
         self.footer = footer
     }
@@ -426,7 +434,24 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
     /// **Une seule mise en page, qui défile toujours si elle ne tient pas.** La composition
     /// prend au moins toute la hauteur visible : les écrans à roue ou à scène s'y centrent,
     /// les listes partent du haut ; et quand elle dépasse, elle défile au lieu de déborder.
+    @ViewBuilder
     private var page: some View {
+        if still {
+            // Les rendus de la CI ne dessinent pas l'intérieur d'un `ScrollView` : la page
+            // y est posée telle quelle, du haut.
+            VStack(spacing: 0) {
+                composition
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        } else {
+            scrollingPage
+        }
+    }
+
+    @Environment(\.onboardingStill) private var still
+
+    private var scrollingPage: some View {
         ScrollView {
             VStack(spacing: 0) {
                 if centersVertically {
@@ -467,7 +492,45 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         }
     }
 
+    @ViewBuilder
     private var stack: some View {
+        if let model {
+            askedByMika(model)
+        } else {
+            titledStack
+        }
+    }
+
+    /// **Dans le parcours, Mika pose la question** : son buste et sa bulle en tête, les
+    /// réponses dessous, partout au même endroit. Le titre devient ce qu'il dit.
+    private func askedByMika(_ model: OnboardingModel) -> some View {
+        VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
+            if let skip {
+                HStack {
+                    Spacer(minLength: 0)
+                    skipButton(skip)
+                }
+            }
+
+            OnboardingMikaPrompt(
+                question: title,
+                reaction: reaction,
+                mood: mood ?? (step ?? model.step).mikaMood,
+                cheers: cheers
+            )
+            .onboardingAppear(index: 0)
+
+            content()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .onboardingAppear(index: 2)
+        }
+        .padding(.horizontal, MicaboSpacing.screen)
+        .padding(.top, MicaboSpacing.sm)
+        .padding(.bottom, MicaboSpacing.lg)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+    }
+
+    private var titledStack: some View {
         VStack(alignment: isCentered ? .center : .leading, spacing: contentSpacing) {
             VStack(alignment: isCentered ? .center : .leading, spacing: 10) {
                 if eyebrow != nil || skip != nil {
@@ -565,6 +628,8 @@ extension OnboardingScaffold where Footer == EmptyView {
         locksScrolling: Bool = false,
         skip: OnboardingSkip? = nil,
         centered: Bool = false,
+        reaction: String? = nil,
+        mood: MikaMood? = nil,
         @ViewBuilder content: @escaping () -> Content
     ) {
         self.init(
@@ -580,6 +645,8 @@ extension OnboardingScaffold where Footer == EmptyView {
             locksScrolling: locksScrolling,
             skip: skip,
             centered: centered,
+            reaction: reaction,
+            mood: mood,
             content: content,
             footer: { EmptyView() }
         )
@@ -946,6 +1013,8 @@ struct OnboardingSingleChoiceStep<Item: Identifiable & Hashable>: View {
 struct OnboardingMultiChoiceStep<Item: Identifiable & Hashable>: View {
     let title: String
     var subtitle: String?
+    /// Ce que Mika répond à la réponse donnée (`OnboardingMikaPrompt`).
+    var reaction: String?
     let items: [Item]
     let selection: Set<Item>
     let label: (Item) -> String
@@ -957,7 +1026,8 @@ struct OnboardingMultiChoiceStep<Item: Identifiable & Hashable>: View {
         OnboardingScaffold(
             title: title,
             subtitle: subtitle,
-            scrolls: true
+            scrolls: true,
+            reaction: reaction
         ) {
             OnboardingAnswerList(items) { rank, item in
                 OnboardingChoiceRow(

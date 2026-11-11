@@ -20,6 +20,8 @@ struct SchoolTrack: Identifiable, Hashable {
     let tier: EducationTier
     /// Les années de cette filière, de la plus basse à la plus haute.
     let years: [SchoolYear]
+    /// Les examens de la filière, quand l'année n'en dit pas de plus précis (`SchoolExams`).
+    var exams: [String] = []
 }
 
 /// Une année dans une filière. Le nom est celui du pays : « Terminale », « 12. Klasse »,
@@ -29,22 +31,27 @@ struct SchoolYear: Identifiable, Hashable {
     let title: String
     /// Les matières de cette année-là. Vide, on retombe sur celles de la filière.
     let subjects: [String]
+    /// **Les examens de cette année-là** (identifiants de `SchoolExams`) : le brevet en
+    /// troisième, le bac de français en première. Vide, on prend ceux de la filière.
+    let exams: [String]
 
-    init(_ id: String, _ title: String, subjects: [String] = []) {
+    init(_ id: String, _ title: String, subjects: [String] = [], exams: [String] = []) {
         self.id = id
         self.title = title
         self.subjects = subjects
+        self.exams = exams
     }
 }
 
 /// **Le système scolaire d'un pays, filière par filière et année par année.**
 ///
-/// Quatre pays sont décrits en détail — France, Turquie, Allemagne, Espagne — et c'est un
-/// choix, pas un état intermédiaire. Décrire un système scolaire de l'extérieur produit des
-/// filières qui n'existent pas et des matières que personne n'étudie ; un élève à qui l'on
-/// propose une année qui n'existe pas dans son pays comprend immédiatement que l'app n'a pas
-/// été écrite pour lui. Partout ailleurs, on retombe sur les paliers larges
-/// d'`EducationStage`, qui ne prétendent rien savoir de plus que le niveau.
+/// Chaque pays de la liste courte est décrit en détail, et les pays qu'on choisit dans « Autre
+/// pays » le sont aussi quand ils correspondent à une langue de l'app (Autriche, Brésil,
+/// Mexique, Russie…) : `SchoolSystem.tracks(region:)` les lit par leur code ISO. Décrire un
+/// système scolaire de l'extérieur produit des filières qui n'existent pas et des matières que
+/// personne n'étudie ; chaque filière, chaque année et chaque examen est donc écrit avec le
+/// nom que l'élève lit sur son emploi du temps. Un pays qui n'est pas décrit retombe sur les
+/// paliers larges d'`EducationStage`, qui ne prétendent rien savoir de plus que le niveau.
 ///
 /// **Les matières sont écrites dans la langue du pays.** « Türk Dili ve Edebiyatı » ne se
 /// traduit pas par « Littérature turque » pour un élève turc : c'est le nom de sa matière sur
@@ -53,12 +60,23 @@ struct SchoolYear: Identifiable, Hashable {
 enum SchoolSystem {
     /// Les filières d'un pays, ou rien quand on ne connaît que ses paliers larges.
     static func tracks(for country: SchoolingCountry) -> [SchoolTrack] {
-        switch country {
-        case .fr: france
-        case .tr: turkey
-        case .de: germany
-        case .es: spain
-        default: []
+        tracks(region: country.regionCode)
+    }
+
+    /// Les filières d'un pays de la liste, ou du pays choisi dans « Autre pays ».
+    static func tracks(for country: SchoolingCountry, custom: WorldCountry?) -> [SchoolTrack] {
+        tracks(region: SchoolRegion.code(country: country, custom: custom))
+    }
+
+    /// **Les filières d'un pays, par son code ISO** (« FR », « AT », « BR »).
+    static func tracks(region: String?) -> [SchoolTrack] {
+        guard let code = region?.uppercased() else { return [] }
+        switch code {
+        case "FR": france
+        case "TR": turkey
+        case "DE": germany
+        case "ES": spain
+        default: world(code)
         }
     }
 
@@ -67,9 +85,18 @@ enum SchoolSystem {
         !tracks(for: country).isEmpty
     }
 
+    static func isDetailed(_ country: SchoolingCountry, custom: WorldCountry?) -> Bool {
+        !tracks(for: country, custom: custom).isEmpty
+    }
+
+    /// La filière d'identifiant donné. Les identifiants sont préfixés par le pays, donc
+    /// uniques : une filière d'un pays choisi dans « Autre pays » (`at.ahsOberstufe`) se
+    /// retrouve même quand on ne relit que `SchoolingCountry.other`.
     static func track(id: String?, in country: SchoolingCountry) -> SchoolTrack? {
         guard let id else { return nil }
-        return tracks(for: country).first { $0.id == id }
+        if let found = tracks(for: country).first(where: { $0.id == id }) { return found }
+        guard country == .other, let prefix = id.split(separator: ".").first else { return nil }
+        return tracks(region: String(prefix)).first { $0.id == id }
     }
 
     static func year(id: String?, in track: SchoolTrack?) -> SchoolYear? {
@@ -96,7 +123,7 @@ enum SchoolSystem {
                 ]),
                 SchoolYear("fr.5e", "Cinquième", subjects: frCollege),
                 SchoolYear("fr.4e", "Quatrième", subjects: frCollege),
-                SchoolYear("fr.3e", "Troisième", subjects: frCollege + ["Brevet"])
+                SchoolYear("fr.3e", "Troisième", subjects: frCollege + ["Brevet"], exams: ["fr.brevet"])
             ]
         ),
         SchoolTrack(
@@ -116,14 +143,14 @@ enum SchoolSystem {
                     "Mathématiques", "Physique-Chimie", "SVT", "SES", "HGGSP", "HLP",
                     "LLCER", "NSI", "Sciences de l'ingénieur", "Arts", "Anglais",
                     "Espagnol", "Allemand", "EMC", "EPS"
-                ]),
+                ], exams: ["fr.bacFrancais"]),
                 SchoolYear("fr.terminale", "Terminale", subjects: [
                     "Philosophie", "Histoire-Géographie", "Enseignement scientifique",
                     "Mathématiques", "Maths complémentaires", "Maths expertes",
                     "Physique-Chimie", "SVT", "SES", "HGGSP", "HLP", "LLCER", "NSI",
                     "Sciences de l'ingénieur", "Arts", "Anglais", "Espagnol", "Allemand",
                     "Grand oral", "EMC", "EPS"
-                ])
+                ], exams: ["fr.bac"])
             ]
         ),
         SchoolTrack(
@@ -134,8 +161,8 @@ enum SchoolSystem {
             tier: .upperSecondary,
             years: [
                 SchoolYear("fr.technoSeconde", "Seconde", subjects: frTechno),
-                SchoolYear("fr.technoPremiere", "Première", subjects: frTechno),
-                SchoolYear("fr.technoTerminale", "Terminale", subjects: frTechno + ["Grand oral"])
+                SchoolYear("fr.technoPremiere", "Première", subjects: frTechno, exams: ["fr.bacFrancais"]),
+                SchoolYear("fr.technoTerminale", "Terminale", subjects: frTechno + ["Grand oral"], exams: ["fr.bac"])
             ]
         ),
         SchoolTrack(
@@ -147,7 +174,7 @@ enum SchoolSystem {
             years: [
                 SchoolYear("fr.proSeconde", "Seconde pro", subjects: frPro),
                 SchoolYear("fr.proPremiere", "Première pro", subjects: frPro),
-                SchoolYear("fr.proTerminale", "Terminale pro", subjects: frPro)
+                SchoolYear("fr.proTerminale", "Terminale pro", subjects: frPro, exams: ["fr.bacPro"])
             ]
         ),
         SchoolTrack(
@@ -159,7 +186,8 @@ enum SchoolSystem {
             years: [
                 SchoolYear("fr.prepa1", "Première année", subjects: frPrepa),
                 SchoolYear("fr.prepa2", "Deuxième année", subjects: frPrepa)
-            ]
+            ],
+            exams: ["fr.concours"]
         ),
         SchoolTrack(
             id: "fr.sante",
@@ -230,7 +258,7 @@ enum SchoolSystem {
                 SchoolYear("tr.5", "5. sınıf", subjects: trOrtaokul),
                 SchoolYear("tr.6", "6. sınıf", subjects: trOrtaokul),
                 SchoolYear("tr.7", "7. sınıf", subjects: trOrtaokul),
-                SchoolYear("tr.8", "8. sınıf", subjects: trOrtaokul + ["LGS"])
+                SchoolYear("tr.8", "8. sınıf", subjects: trOrtaokul + ["LGS"], exams: ["tr.lgs"])
             ]
         ),
         SchoolTrack(
@@ -274,7 +302,8 @@ enum SchoolSystem {
             years: [
                 SchoolYear("tr.tyt", "TYT", subjects: trTYT),
                 SchoolYear("tr.ayt", "AYT", subjects: trAYT)
-            ]
+            ],
+            exams: ["tr.yks"]
         ),
         SchoolTrack(
             id: "tr.universite",
@@ -297,7 +326,7 @@ enum SchoolSystem {
             SchoolYear("\(prefix).9", "9. sınıf", subjects: subjects),
             SchoolYear("\(prefix).10", "10. sınıf", subjects: subjects),
             SchoolYear("\(prefix).11", "11. sınıf", subjects: subjects),
-            SchoolYear("\(prefix).12", "12. sınıf", subjects: subjects + ["YKS"])
+            SchoolYear("\(prefix).12", "12. sınıf", subjects: subjects + ["YKS"], exams: ["tr.yks"])
         ]
     }
 
@@ -356,8 +385,9 @@ enum SchoolSystem {
             tier: .upperSecondary,
             years: [
                 SchoolYear("de.klasse11", "11. Klasse", subjects: deOberstufe),
-                SchoolYear("de.klasse12", "12. Klasse", subjects: deOberstufe),
-                SchoolYear("de.klasse13", "13. Klasse, Abitur", subjects: deOberstufe + ["Abitur"])
+                // Abitur nach der 12. (G8) oder der 13. Klasse (G9), selon le Land.
+                SchoolYear("de.klasse12", "12. Klasse", subjects: deOberstufe, exams: ["de.abitur"]),
+                SchoolYear("de.klasse13", "13. Klasse, Abitur", subjects: deOberstufe + ["Abitur"], exams: ["de.abitur"])
             ]
         ),
         SchoolTrack(
@@ -366,7 +396,7 @@ enum SchoolSystem {
             emoji: "📗",
             level: .lycee,
             tier: .lowerSecondary,
-            years: (5...10).map { SchoolYear("de.real\($0)", "\($0). Klasse", subjects: deMittelstufe) }
+            years: (5...10).map { SchoolYear("de.real\($0)", "\($0). Klasse", subjects: deMittelstufe, exams: $0 == 10 ? ["de.msa"] : []) }
         ),
         SchoolTrack(
             id: "de.berufsschule",
@@ -387,8 +417,8 @@ enum SchoolSystem {
             level: .sante,
             tier: .health,
             years: [
-                SchoolYear("de.vorklinik", "Vorklinik", subjects: deMedizin),
-                SchoolYear("de.klinik", "Klinik", subjects: deMedizin),
+                SchoolYear("de.vorklinik", "Vorklinik", subjects: deMedizin, exams: ["de.physikum"]),
+                SchoolYear("de.klinik", "Klinik", subjects: deMedizin, exams: ["de.staatsexamen"]),
                 SchoolYear("de.pj", "Praktisches Jahr", subjects: deMedizin)
             ]
         ),
@@ -453,7 +483,7 @@ enum SchoolSystem {
             tier: .upperSecondary,
             years: [
                 SchoolYear("es.bachCiencias1", "1º de Bachillerato", subjects: esCiencias),
-                SchoolYear("es.bachCiencias2", "2º de Bachillerato", subjects: esCiencias + ["Selectividad"])
+                SchoolYear("es.bachCiencias2", "2º de Bachillerato", subjects: esCiencias + ["Selectividad"], exams: ["es.pau"])
             ]
         ),
         SchoolTrack(
@@ -464,7 +494,7 @@ enum SchoolSystem {
             tier: .upperSecondary,
             years: [
                 SchoolYear("es.bachHum1", "1º de Bachillerato", subjects: esHumanidades),
-                SchoolYear("es.bachHum2", "2º de Bachillerato", subjects: esHumanidades + ["Selectividad"])
+                SchoolYear("es.bachHum2", "2º de Bachillerato", subjects: esHumanidades + ["Selectividad"], exams: ["es.pau"])
             ]
         ),
         SchoolTrack(
@@ -475,7 +505,7 @@ enum SchoolSystem {
             tier: .upperSecondary,
             years: [
                 SchoolYear("es.bachArtes1", "1º de Bachillerato", subjects: esArtes),
-                SchoolYear("es.bachArtes2", "2º de Bachillerato", subjects: esArtes + ["Selectividad"])
+                SchoolYear("es.bachArtes2", "2º de Bachillerato", subjects: esArtes + ["Selectividad"], exams: ["es.pau"])
             ]
         ),
         SchoolTrack(
@@ -498,7 +528,7 @@ enum SchoolSystem {
             years: [
                 SchoolYear("es.medicina1", "Ciclo básico", subjects: esMedicina),
                 SchoolYear("es.medicina2", "Ciclo clínico", subjects: esMedicina),
-                SchoolYear("es.mir", "MIR", subjects: esMedicina)
+                SchoolYear("es.mir", "MIR", subjects: esMedicina, exams: ["es.mir"])
             ]
         ),
         SchoolTrack(

@@ -4,10 +4,14 @@ import SwiftUI
 
 /// **Le paywall, en un seul écran** — celui de l'app et celui de la fin du parcours d'accueil.
 ///
-/// De haut en bas : la scène bleue de la marque, Mika qui sort de son bord bas, le titre (au
-/// prénom quand on le connaît) et ce qui a ouvert l'écran ; quatre choses que Pro ouvre ; la
-/// note des élèves ; les deux offres, l'annuelle cochée d'avance ; puis, en pied fixe, la
-/// phrase du prix, le bouton, la promesse du rappel et les mentions.
+/// De haut en bas : la scène claire, Mika en buste coupé par son bord bas, le titre (au
+/// prénom quand on le connaît) et l'examen qui arrive (`PaywallProfile`) ; ce que Pro ouvre,
+/// dit avec les réponses de l'élève ; la recherche, sans chiffre inventé ; les deux offres,
+/// l'annuelle cochée d'avance ; puis, en pied fixe, la phrase du prix, **un seul bouton**, la
+/// promesse du rappel (réellement posé : `TrialEndReminder`) et les mentions.
+///
+/// **Mika vit sur le papier de l'app**, crème le jour et nuit la nuit, plus dans une scène
+/// bleue : c'est la même DA que les questions du parcours.
 ///
 /// **Rien ne se cache** : la croix est là dès l'ouverture, les deux offres sont côte à côte,
 /// et ce qui sera prélevé est écrit au-dessus du bouton. Le prix et l'essai viennent de
@@ -29,6 +33,8 @@ struct PaywallScreen: View {
     var onSelect: (PaywallPlan.Kind) -> Void = { _ in }
 
     @State private var selection: PaywallPlan.Kind = PaywallCatalog.recommended.kind
+    /// Les réponses du parcours, relues à l'ouverture.
+    @State private var profile = PaywallProfile.current()
     @State private var shown = false
     @Environment(\.onboardingStill) private var still
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -78,7 +84,7 @@ struct PaywallScreen: View {
             )
 
             VStack(spacing: 22) {
-                PaywallBenefits()
+                PaywallBenefits(profile: profile)
                     .entrance(1, shown: shown || still)
                 PaywallProofLine()
                     .entrance(2, shown: shown || still)
@@ -111,7 +117,9 @@ struct PaywallScreen: View {
     /// Ce qui a ouvert l'écran, en une ligne ; « Passer en Pro » n'a rien buté, il garde la
     /// ligne générale (son accroche redirait « Micabo Pro » sous la pastille du même nom).
     private var subtitle: String {
-        guard let trigger, trigger != .upgrade else { return L10n.t("ios.pay3.sub", locale: .resolved()) }
+        guard let trigger, trigger != .upgrade else {
+            return profile.subtitle(locale: .resolved()) ?? L10n.t("ios.pay3.sub", locale: .resolved())
+        }
         return trigger.headline
     }
 
@@ -134,9 +142,11 @@ private extension View {
 
 // MARK: - La scène
 
-/// **La scène du paywall** : le bleu de la marque jusque sous la barre d'état, la croix
-/// blanche, « ✦ Micabo Pro », le titre et sa ligne, et Mika en buste qui sort du bord bas —
-/// coupé par lui, comme sur l'icône.
+/// **La scène du paywall, claire** : une carte du blanc de l'app jusque sous la barre
+/// d'état, la croix, « ✦ Micabo Pro » sur sa pastille bleue, le titre et sa ligne, et Mika en
+/// buste qui sort du bord bas — coupé par lui, comme sur l'icône. Le jour, son étincelle est
+/// bleue ; la nuit, la carte est sombre, l'étincelle blanche et un halo bleu garde sa
+/// silhouette (`MikaBackdrop.surface`).
 struct PaywallBrandHero: View {
     let title: String
     let subtitle: String
@@ -145,13 +155,13 @@ struct PaywallBrandHero: View {
 
     @Environment(\.onboardingStill) private var still
 
-    static let mikaSize: CGFloat = 176
+    static let mikaSize: CGFloat = 168
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 if let onClose {
-                    PaywallCloseButton(tint: .white, action: onClose)
+                    PaywallCloseButton(tint: MicaboColor.inkSecondary, action: onClose)
                 }
                 Spacer(minLength: 0)
             }
@@ -169,21 +179,21 @@ struct PaywallBrandHero: View {
                 .foregroundStyle(Color.white)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
-                .background(Color.white.opacity(0.18), in: Capsule())
+                .background(MicaboBrand.blue, in: Capsule())
 
                 Text(title)
                     .font(MicaboFont.display(30))
                     .tracking(MicaboTracking.tight)
-                    .foregroundStyle(MicaboStage.ink)
+                    .foregroundStyle(MicaboColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityAddTraits(.isHeader)
 
                 Text(subtitle)
                     .font(MicaboFont.ui(15, weight: .bold))
-                    .foregroundStyle(MicaboStage.inkSecondary)
+                    .foregroundStyle(MicaboColor.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.trailing, Self.mikaSize - 40)
+            .padding(.trailing, Self.mikaSize - 44)
             .padding(.top, 4)
         }
         .padding(.horizontal, MicaboSpacing.screen)
@@ -191,13 +201,14 @@ struct PaywallBrandHero: View {
         .padding(.bottom, 26)
         .frame(maxWidth: .infinity, minHeight: 236, alignment: .topLeading)
         .background(alignment: .bottomTrailing) {
-            MikaMascot(mood: mood, size: Self.mikaSize, frozenAt: still ? 0.5 : nil, backdrop: .blue)
-                .offset(x: 10)
+            MikaMascot(mood: mood, size: Self.mikaSize, frozenAt: still ? 0.5 : nil, backdrop: .surface)
+                .offset(x: 8)
         }
         // Sous la barre d'état et quand on tire la page, c'est le fond de `PaywallFlowView`,
-        // du même bleu, qui prend le relais.
-        .background { MicaboBrandBackdrop() }
+        // du même blanc, qui prend le relais.
+        .background(MicaboColor.surface)
         .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: MicaboStage.heroRadius, bottomTrailingRadius: MicaboStage.heroRadius, style: .continuous))
+        .shadow(color: Color.black.opacity(0.06), radius: 14, y: 6)
     }
 }
 
@@ -206,6 +217,10 @@ struct PaywallBrandHero: View {
 /// **Ce que Pro ouvre, en quatre rangées** : une icône sur sa pastille de couleur, ce que
 /// c'est, et une ligne pour le dire concrètement.
 struct PaywallBenefits: View {
+    /// Les réponses du parcours : l'objectif, les matières et l'examen remplacent les lignes
+    /// générales quand on les connaît.
+    var profile = PaywallProfile()
+
     private static let rows: [(icon: MicaboIcon, tone: LessonTone)] = [
         (.pdf, .blue),
         (.mika, .lilac),
@@ -213,8 +228,28 @@ struct PaywallBenefits: View {
         (.photo, .mint),
     ]
 
+    private func sub(_ index: Int) -> String {
+        let locale = UiLocale.resolved()
+        switch index {
+        case 0:
+            if let subjects = profile.subjectsLine(locale: locale) {
+                return L10n.t("ios.pay5.benefit.subjects", locale: locale, vars: ["subjects": subjects])
+            }
+        case 2:
+            if let exam = profile.examTitle {
+                return L10n.t("ios.pay5.benefit.exam", locale: locale, vars: ["exam": exam])
+            }
+        default:
+            break
+        }
+        return L10n.t("ios.pay3.benefit\(index + 1).sub", locale: locale)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
+            if let target = profile.targetGrade {
+                goalRow(target: target)
+            }
             ForEach(Array(Self.rows.enumerated()), id: \.offset) { index, row in
                 HStack(spacing: 14) {
                     MicaboIconView(icon: row.icon, size: 28)
@@ -225,7 +260,7 @@ struct PaywallBenefits: View {
                             .font(MicaboFont.ui(16, weight: .heavy))
                             .foregroundStyle(MicaboColor.ink)
                             .fixedSize(horizontal: false, vertical: true)
-                        Text(L10n.t("ios.pay3.benefit\(index + 1).sub", locale: .resolved()))
+                        Text(sub(index))
                             .font(MicaboFont.ui(13.5, weight: .semibold))
                             .foregroundStyle(MicaboColor.inkSecondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -237,29 +272,44 @@ struct PaywallBenefits: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
+
+    /// **L'objectif de l'élève, en tête** : la note visée, dans son barème, et d'où il part.
+    private func goalRow(target: String) -> some View {
+        let locale = UiLocale.resolved()
+        return HStack(spacing: 14) {
+            MicaboIconView(icon: .trophy, size: 28)
+                .frame(width: 46, height: 46)
+                .background(LessonTone.yellow.pale, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            VStack(alignment: .leading, spacing: 1) {
+                Text(L10n.t("ios.pay5.goal.title", locale: locale, vars: ["grade": target]))
+                    .font(MicaboFont.ui(16, weight: .heavy))
+                    .foregroundStyle(MicaboColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(profile.currentGrade.map { L10n.t("ios.pay5.goal.sub", locale: locale, vars: ["grade": $0]) }
+                    ?? L10n.t("ios.pay5.goal.subAny", locale: locale))
+                    .font(MicaboFont.ui(13.5, weight: .semibold))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .combine)
+    }
 }
 
-/// **La note des élèves, en une ligne** : cinq étoiles du jaune du crayon, la note et le nombre
-/// d'élèves — les chiffres du parcours d'accueil (`OnboardingProofFigures`).
+/// **La preuve, en une ligne, et sourcée.** Elle disait « 4,8 sur l'App Store · 45 000+
+/// élèves » : rien dans le dépôt ne sourçait ces deux chiffres. Elle dit maintenant ce que la
+/// recherche a mesuré sur la méthode de Mika (Karpicke & Roediger, Science, 2008 : 80 % retenu
+/// en se testant contre 36 % en relisant), sans chiffre à nous.
 struct PaywallProofLine: View {
     var body: some View {
-        let locale = UiLocale.resolved()
         HStack(spacing: 8) {
-            HStack(spacing: 2) {
-                ForEach(0..<5, id: \.self) { _ in
-                    Image(systemName: "star.fill")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(MicaboBrand.pencil)
-                }
-            }
-            Text(L10n.t("ios.pay3.proof", locale: locale, vars: [
-                "rating": OnboardingProofFigures.text(OnboardingProofFigures.rating, locale: locale),
-                "n": OnboardingProofFigures.text(OnboardingProofFigures.students, locale: locale),
-            ]))
-            .font(MicaboFont.ui(13.5, weight: .bold))
-            .foregroundStyle(MicaboColor.inkSecondary)
-            .lineLimit(2)
-            .multilineTextAlignment(.center)
+            MicaboIconView(icon: .diploma, size: 20)
+            Text(L10n.t("ios.pay5.proof", locale: .resolved()))
+                .font(MicaboFont.ui(13.5, weight: .bold))
+                .foregroundStyle(MicaboColor.inkSecondary)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)

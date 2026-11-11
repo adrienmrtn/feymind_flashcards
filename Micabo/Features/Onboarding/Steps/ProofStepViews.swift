@@ -192,6 +192,9 @@ struct OnboardingBarsChart: View {
     /// De zéro à un : la part du chemin que les barres ont faite. Une seule valeur animée
     /// pour la hauteur **et** le chiffre, qui montent donc ensemble.
     @State private var drawn: CGFloat = 0
+    @Environment(\.onboardingStill) private var still
+    /// Les rendus figés montrent les barres montées.
+    private var shown: CGFloat { still ? 1 : drawn }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -207,7 +210,7 @@ struct OnboardingBarsChart: View {
                         ZStack(alignment: .bottom) {
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(bar.tint)
-                                .frame(height: Self.restingHeight + (height(for: bar) - Self.restingHeight) * drawn)
+                                .frame(height: Self.restingHeight + (height(for: bar) - Self.restingHeight) * shown)
 
                             if showsValues {
                                 if let text = bar.valueText {
@@ -216,11 +219,11 @@ struct OnboardingBarsChart: View {
                                         .foregroundStyle(bar.valueInk)
                                         .monospacedDigit()
                                         .padding(.bottom, 14)
-                                        .opacity(drawn > 0.15 ? 1 : 0)
+                                        .opacity(shown > 0.15 ? 1 : 0)
                                 } else {
-                                    OnboardingCountingPercent(value: Double(bar.value) * Double(drawn), ink: bar.valueInk)
+                                    OnboardingCountingPercent(value: Double(bar.value) * Double(shown), ink: bar.valueInk)
                                         .padding(.bottom, 14)
-                                        .opacity(drawn > 0.15 ? 1 : 0)
+                                        .opacity(shown > 0.15 ? 1 : 0)
                                 }
                             }
                         }

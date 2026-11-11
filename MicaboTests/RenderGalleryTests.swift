@@ -669,13 +669,6 @@ final class RenderGalleryTests: XCTestCase {
                 .environment(model)
                 .environment(\.onboardingStill, true)
         )
-        try RenderGallery.render(
-            "onboarding-social-support",
-            height: 780,
-            SupportUsStepView()
-                .environment(model)
-                .environment(\.onboardingStill, true)
-        )
 
         // « Voici ce qui va changer pour toi » : un profil rempli, puis une moyenne sous le
         // barème, dont l'étiquette est la plus longue.

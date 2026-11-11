@@ -1,62 +1,64 @@
 import Foundation
 
-/// Les écrans du parcours d'accueil, dans l'ordre.
+/// Les écrans du parcours d'accueil, dans l'ordre (version 2, novembre 2026).
 ///
-/// **Le parcours est un quiz, puis Mika, puis une offre.** Il pose ses questions d'abord — le
-/// prénom, le pays, les matières, ce qui inquiète, les deux moyennes, le temps par jour,
-/// l'heure du rappel — parce qu'un élève lit un parcours qui parle de lui. Mika prépare
-/// ensuite le profil, puis six écrans disent ce qu'il fait : sa mission, les documents qu'il
-/// prend, les parcours qu'il en tire, des leçons qui donnent envie, la solution, la fin de la
-/// pression. La preuve sociale et l'offre viennent après.
+/// **Mika pose les questions.** Chaque question est dite par Mika, en buste au bord de sa
+/// ligne, dans une bulle qui s'écrit ; il réagit à certaines réponses (« Bac : encore
+/// 7 mois. On a le temps de bien faire 💪 »). Le gabarit est le même pour toutes : Mika et sa
+/// bulle en haut, les réponses dessous, le rond en bas à droite (`OnboardingScaffold`).
 ///
-/// **Le parcours n'écrit plus de cours.** La première leçon se crée dans l'app, depuis Home :
-/// c'est là qu'elle a ses vraies portes (sujet tapé, PDF, photos, YouTube), et le parcours
-/// n'en joue plus une version réduite.
+/// **Tout s'adapte au pays et à l'année** : les filières, les années, les examens (Bac,
+/// Abitur, Matura, PAU, GCSE, SAT, ENEM, YKS…), les matières et leur nom local, le barème des
+/// moyennes (`SchoolSystem`, `SchoolExams`, `StudentGradeScale`).
 ///
-/// Quatre blocs :
+/// Cinq blocs :
 ///
 /// 1. **L'accroche** : le logo, le prénom, la bienvenue.
-/// 2. **Le quiz** : pays, niveau, matières, inquiétudes, objectifs, une preuve, les deux
-///    moyennes, le temps par jour, l'heure de révision, les rappels.
-/// 3. **Mika** : le profil se prépare, « voyons comment Mika peut t'aider », puis six écrans.
-///    Le compte se propose en quittant le dernier, dans une languette.
-/// 4. **L'offre** : la preuve sociale, l'essai, le rappel, le paywall.
+/// 2. **Le profil scolaire** : pays, niveau (ou filière et année), le prochain examen et sa
+///    date, les matières.
+/// 3. **Les objectifs** : ce qui l'inquiète, pourquoi il apprend, les deux moyennes, le temps
+///    par jour, l'heure de révision, les rappels.
+/// 4. **Mika** : le profil se prépare, puis trois écrans de démonstration — les documents, les
+///    parcours, le prof particulier. Le compte se propose en quittant le dernier.
+/// 5. **Le plan et l'offre** : la preuve, Mika calcule, **la révélation du plan** (« Ton plan
+///    pour le Bac est prêt »), la chronologie de l'essai, le paywall.
 ///
-/// **Le pays passe avant le niveau**, et le niveau avant les matières : chacun décide des
-/// réponses du suivant. La langue se déduit du pays, et ne se demande pas.
+/// **Avant / après** : 36 écrans (35 vus en France), maintenant 25 (24 vus en France).
+/// Retirés : `proofRetention` (devenu la réaction de Mika aux inquiétudes), `founders`,
+/// `aiCompanion` (l'étude de Harvard est passée sur l'écran de preuve), `startingPoint` (Mika
+/// pose déjà les questions), `featuresIntro`, `mikaMission`, `mikaDesign`, `mikaSolution`,
+/// `mikaRelief`, `supportUs` (la note se demande après la première leçon terminée),
+/// `freeTrialIntro` et `trialReminder` (regroupés dans la chronologie de l'essai). Ajouté :
+/// `exam`. Les noms des écrans gardés ne changent pas : leurs courbes d'analytics continuent.
 enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     // L'accroche.
     /// Le splash : le logo seul, puis la phrase et le bouton qui se posent dessous.
     case hookLogo
-    /// « Comment veux-tu qu'on t'appelle ? » Obligatoire : tout ce qui suit s'adresse à
+    /// « Comment veux-tu que je t'appelle ? » Obligatoire : tout ce qui suit s'adresse à
     /// quelqu'un.
     case name
-    /// « Bienvenue, {prénom}. » Une page pour une phrase, avant la première question.
+    /// « Enchanté, {prénom} ! » Mika se présente, avant la première question.
     case welcome
 
-    // Le quiz.
+    // Le profil scolaire.
     case country
     /// Le palier large, pour les pays dont on ne connaît pas les filières.
     case level
     /// La filière puis l'année, pour les pays décrits en détail.
     case schoolType
     case year
+    /// **Le prochain examen**, dans les termes du pays, et sa date. Il pré-remplit un examen
+    /// dans le calendrier à la fin du parcours.
+    case exam
     case subjects
-    /// Ce qui l'inquiète dans ses études. Plusieurs réponses.
+
+    // Les objectifs.
+    /// Ce qui l'inquiète dans ses études. Plusieurs réponses ; Mika y répond.
     case worries
     case goal
-    /// « On s'en occupe » : deux barres, relire contre se tester.
-    case proofRetention
-    /// « Micabo a été créé par deux étudiants… » : l'histoire, avant les chiffres.
-    case founders
-    /// « L'IA est le compagnon le plus incroyable pour apprendre » : l'étude de Harvard.
-    case aiCompanion
-    /// « Maintenant, partons de là où tu en es » : le pont vers les deux moyennes.
-    case startingPoint
     case currentAverage
     case targetAverage
-    /// « Combien de temps es-tu prêt à étudier sur Micabo par jour ? », sur un curseur qui
-    /// dessine la progression estimée.
+    /// « Combien de temps par jour ? », sur un curseur qui dessine la progression estimée.
     case dailyTime
     /// L'heure à laquelle il révise : c'est celle du rappel.
     case studyTime
@@ -65,37 +67,25 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     // Mika prépare, puis se présente.
     /// Le chargement : Mika se présente pendant que le profil se construit.
     case building
-    /// « Voyons maintenant comment Mika peut t'aider. »
-    case featuresIntro
-    /// Sa mission : les cours les plus interactifs possibles, pour apprendre simplement.
-    case mikaMission
     /// Il prend tous tes documents : cours, PDF, notes, YouTube.
     case mikaSources
     /// … et il en fait des parcours simples, faits pour toi.
     case mikaPaths
-    /// Des leçons qui donnent vraiment envie d'étudier.
-    case mikaDesign
     /// « Mika, c'est ton prof particulier, disponible à tout moment, dans ta poche. »
     case mikaTutor
-    /// La solution pour travailler efficacement et facilement.
-    case mikaSolution
-    /// La pression et la montagne de choses à revoir, c'est fini.
-    case mikaRelief
 
-    // La preuve, puis l'offre.
-    /// « On a aidé 45 000 élèves », l'étude de Harvard, les avis — et la demande de note du
-    /// système.
+    // Le plan, puis l'offre.
+    /// La preuve, sourcée : l'étude de Harvard et ce qu'il reste d'un cours relu ou testé.
     case socialProof
-    /// « Soutiens-nous » : le bouton suivant ouvre la demande de note du système, puis avance.
-    case supportUs
-    /// Mika calcule le parcours : le chargement d'après la preuve.
+    /// Mika calcule le plan : le chargement d'avant la révélation.
     case planBuilding
-    /// « Voici ton profil » : les réponses relues, et ce que Mika va en faire.
+    /// **La révélation du plan** (« Ton plan pour le Bac est prêt ») : pays, classe, examen,
+    /// matières, temps par jour, moyenne visée. Le nom de l'écran reste celui d'avant pour les
+    /// statistiques.
     case profileSummary
-    /// « Nous tenons à ce que tu essaies gratuitement » : Mika couronné, avant l'essai.
-    case freeTrialIntro
+    /// La chronologie de l'essai : aujourd'hui, le rappel, le premier prélèvement, et
+    /// « annule quand tu veux ».
     case trialOffer
-    case trialReminder
     case paywall
 
     var id: Int { rawValue }
@@ -141,11 +131,25 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// (`SchoolSystem`) ont une filière et une année, et le palier large s'en déduit. Les
     /// autres n'ont que le palier large : leur proposer une filière serait inventer des
     /// réponses fausses.
-    func isSkipped(for country: SchoolingCountry) -> Bool {
+    func isSkipped(for country: SchoolingCountry, custom: WorldCountry? = nil) -> Bool {
+        let detailed = SchoolSystem.isDetailed(country, custom: custom)
         switch self {
-        case .schoolType, .year: !SchoolSystem.isDetailed(country)
-        case .level: SchoolSystem.isDetailed(country)
-        default: false
+        case .schoolType, .year: return !detailed
+        case .level: return detailed
+        default: return false
+        }
+    }
+
+    /// **L'écran qui remplace un écran retiré**, pour reprendre un parcours commencé avant la
+    /// version 2 : on reprend au même moment du parcours, pas au logo.
+    static func replacement(forRetired name: String) -> OnboardingStep? {
+        switch name {
+        case "proofRetention", "founders", "aiCompanion", "startingPoint": .currentAverage
+        case "featuresIntro", "mikaMission": .mikaSources
+        case "mikaDesign", "mikaSolution", "mikaRelief": .mikaTutor
+        case "supportUs": .planBuilding
+        case "freeTrialIntro", "trialReminder": .trialOffer
+        default: nil
         }
     }
 
@@ -156,6 +160,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         case .country: .globe
         case .level, .schoolType: .diploma
         case .year: .book
+        case .exam: .exam
         case .subjects: .lightbulb
         case .worries: .brain
         case .goal: .rocket
@@ -171,11 +176,27 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// Vrai pour les écrans qui posent une question.
     var isQuestion: Bool {
         switch self {
-        case .name, .country, .level, .schoolType, .year, .subjects, .worries, .goal,
+        case .name, .country, .level, .schoolType, .year, .exam, .subjects, .worries, .goal,
              .currentAverage, .targetAverage, .dailyTime, .studyTime:
             true
         default:
             false
+        }
+    }
+
+    /// **L'humeur de Mika quand il pose la question** : il salue au prénom, regarde autour de
+    /// lui pour le pays, réfléchit sur l'année, s'étonne de l'examen, écrit les matières, fait
+    /// un clin d'œil aux objectifs. Une réponse le fait sourire (`OnboardingMikaPrompt`).
+    var mikaMood: MikaMood {
+        switch self {
+        case .name: .wave
+        case .country, .studyTime: .look
+        case .level, .schoolType, .year, .currentAverage: .think
+        case .exam: .surprise
+        case .subjects: .write
+        case .goal, .notifications: .wink
+        case .targetAverage: .happy
+        default: .idle
         }
     }
 

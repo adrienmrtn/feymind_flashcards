@@ -13,8 +13,7 @@ struct GoalStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n.t("ios.goalTitle"),
-            subtitle: i18n.t("ios.goalSub")
+            title: i18n.t("ios.onb5.q.goal")
         ) {
             VStack(spacing: 10) {
                 ForEach(Array(LearningGoal.allCases.enumerated()), id: \.element.id) { rank, goal in

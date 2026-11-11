@@ -21,8 +21,8 @@ struct SubjectsStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n.t("ios.subjectsTitle"),
-            subtitle: i18n.t("ios.subjectsSub")
+            title: i18n.t("ios.onb5.q.subjects"),
+            reaction: model.subjects.isEmpty ? nil : i18n.t("ios.onb5.react.subjects")
         ) {
             VStack(alignment: .leading, spacing: 20) {
                 if !mine.isEmpty {
@@ -66,7 +66,7 @@ struct SubjectsStepView: View {
     /// répéter les trente-huit pastilles une seconde fois sous un intitulé « tes matières »
     /// qui serait alors un mensonge.
     private var mine: [String] {
-        guard SchoolSystem.isDetailed(model.country) else { return [] }
+        guard SchoolSystem.isDetailed(model.country, custom: model.customCountry) else { return [] }
         return SchoolSubjects.forYear(
             trackID: model.track?.id,
             yearID: model.year?.id,
@@ -112,8 +112,13 @@ private struct SubjectChip: View {
     let isSelected: Bool
     var action: () -> Void
 
+    @Environment(\.onboardingCheer) private var cheer
+
     var body: some View {
-        Button(action: action) {
+        Button {
+            action()
+            if isSelected == false { cheer() }
+        } label: {
             HStack(spacing: 5) {
                 if isSelected {
                     Image(systemName: "checkmark")
