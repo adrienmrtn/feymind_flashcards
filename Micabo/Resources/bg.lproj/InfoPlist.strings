@@ -2,5 +2,5 @@
 
 "NSCameraUsageDescription" = "Micabo използва камерата, за да сканира страниците на курса ти.";
 "NSPhotoLibraryUsageDescription" = "Micabo достъпва снимките ти, за да импортира курс или диаграма.";
-"NSMicrophoneUsageDescription" = "Micabo използва микрофона, за да запише час или гласова бележка и да ги превърне в урок.";
-"NSSpeechRecognitionUsageDescription" = "Micabo транскрибира записите ти на телефона, за да ги превърне в урок.";
+"NSMicrophoneUsageDescription" = "Micabo използва микрофона, за да запише час или гласова бележка и да чуе отговорите ти на глас.";
+"NSSpeechRecognitionUsageDescription" = "Micabo превръща в текст на телефона ти записите и отговорите ти на глас.";

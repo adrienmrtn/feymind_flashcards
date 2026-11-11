@@ -29,6 +29,10 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
     /// supports déposés sur l'appareil, et l'écriture de la leçon est dans Pro
     /// (`LessonAllowance.sendRoute`, `LockedLessonPreview`).
     case lessonReady
+    /// **Réviser à voix haute**, après la séance offerte (`RevisionModeAllowance`, `docs/supports.md`).
+    case voiceRecall
+    /// **La fiche d'une leçon en PDF** (`RevisionModeAllowance`, `docs/supports.md`).
+    case exportSheet
 
     var id: String { rawValue }
 
@@ -44,6 +48,8 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
         case .generateCourse: L10n.t("ios.paywallGenerateHeadline", locale: .resolved())
         case .mockExam: L10n.t("ios.paywallMockHeadline", locale: .resolved())
         case .lessonReady: L10n.t("ios.conv.paywallLessonReady", locale: .resolved())
+        case .voiceRecall: L10n.t("ios.sup.paywall.voice", locale: .resolved())
+        case .exportSheet: L10n.t("ios.sup.paywall.export", locale: .resolved())
         }
     }
 }

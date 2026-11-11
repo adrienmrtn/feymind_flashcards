@@ -2,5 +2,5 @@
 
 "NSCameraUsageDescription" = "يستخدم Micabo الكاميرا لمسح صفحات دروسك ضوئيًا.";
 "NSPhotoLibraryUsageDescription" = "يصل Micabo إلى صورك لاستيراد درس أو رسم توضيحي.";
-"NSMicrophoneUsageDescription" = "يستخدم Micabo الميكروفون لتسجيل حصة أو ملاحظة صوتية وتحويلها إلى درس.";
-"NSSpeechRecognitionUsageDescription" = "يحوّل Micabo تسجيلاتك إلى نص على هاتفك لصنع درس منها.";
+"NSMicrophoneUsageDescription" = "يستخدم Micabo الميكروفون لتسجيل حصة أو مذكرة صوتية، ولسماع إجاباتك بصوت عالٍ.";
+"NSSpeechRecognitionUsageDescription" = "يحوّل Micabo تسجيلاتك وإجاباتك المنطوقة إلى نص على هاتفك.";

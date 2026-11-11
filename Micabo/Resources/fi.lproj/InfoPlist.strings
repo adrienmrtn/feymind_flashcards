@@ -2,5 +2,5 @@
 
 "NSCameraUsageDescription" = "Micabo käyttää kameraa kurssisi sivujen skannaamiseen.";
 "NSPhotoLibraryUsageDescription" = "Micabo tarvitsee pääsyn kuviisi kurssin tai kaavion tuomiseksi.";
-"NSMicrophoneUsageDescription" = "Micabo käyttää mikrofonia tunnin tai ääniviestin tallentamiseen ja muuttaa sen oppitunniksi.";
-"NSSpeechRecognitionUsageDescription" = "Micabo litteroi tallenteesi puhelimessasi ja tekee niistä oppitunnin.";
+"NSMicrophoneUsageDescription" = "Micabo käyttää mikrofonia tunnin tai äänimuistion nauhoittamiseen ja ääneen sanottujen vastaustesi kuulemiseen.";
+"NSSpeechRecognitionUsageDescription" = "Micabo litteroi nauhoituksesi ja ääneen sanotut vastauksesi puhelimellasi.";
