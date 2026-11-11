@@ -113,19 +113,19 @@ struct MicaboEmptyState: View {
             }
 
             Text(title)
-                .font(MicaboFont.ui(17, weight: .semibold))
+                .font(MicaboFont.ui(19, weight: .black))
                 .foregroundStyle(MicaboColor.ink)
                 .multilineTextAlignment(.center)
 
             Text(message)
-                .font(MicaboFont.ui(13.5, weight: .regular))
+                .font(MicaboFont.ui(14, weight: .semibold))
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 280)
 
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
-                    .buttonStyle(MicaboPrimaryButtonStyle())
+                    .buttonStyle(MicaboBrandButtonStyle(minHeight: 50))
                     .padding(.top, 6)
                     .frame(maxWidth: 240)
             }

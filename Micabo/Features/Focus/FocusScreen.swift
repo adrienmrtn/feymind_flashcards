@@ -42,6 +42,8 @@ struct FocusHeroCard: View {
             }
             HStack(alignment: .center, spacing: 14) {
                 ring
+                // Le titre prend toute la largeur : la tête de Mika ne monte qu'à hauteur de la
+                // seconde ligne, qui seule lui laisse sa place.
                 VStack(alignment: .leading, spacing: 4) {
                     Text(loc("ios.focus.minutesToday"))
                         .font(MicaboFont.ui(16, weight: .black))
@@ -51,9 +53,9 @@ struct FocusHeroCard: View {
                         .font(MicaboFont.ui(13.5, weight: .bold))
                         .foregroundStyle(reached ? MicaboColor.correctInk : MicaboColor.inkSecondary)
                         .fixedSize(horizontal: false, vertical: true)
+                        .padding(.trailing, Self.mikaReserve - 14)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                Color.clear.frame(width: Self.mikaReserve - 14, height: 1)
             }
             .padding(.top, 10)
             .padding(.bottom, 16)

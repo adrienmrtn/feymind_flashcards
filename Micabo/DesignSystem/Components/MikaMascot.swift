@@ -297,10 +297,12 @@ struct MikaMascot: View {
                     startRadius: 0,
                     endRadius: size * 0.5
                 ))
-            figure(side: size * 0.94)
+            // Un peu plus grand que dans la pastille bleue, et descendu : le haut de l'image
+            // est vide, et sur le clair un rond à moitié vide se voit. La tête tombe au milieu.
+            figure(side: size * 1.02)
                 // Mika est un peu à gauche dans son image (le crayon est à droite) : dans un
                 // rond, on le recentre d'un cheveu pour que le crayon ne touche pas le bord.
-                .offset(x: -size * 0.02)
+                .offset(x: -size * 0.03, y: size * 0.06)
         }
         .frame(width: size, height: size)
         .clipShape(Circle())
