@@ -3,6 +3,9 @@
 
 extension IosI18nCatalogs {
     static let el: [String: String] = [
+        "ios.pol.home.countdown": "σε {n} μέρες",
+        "ios.pol.home.proActiveA11y": "Το Micabo Pro είναι ενεργό",
+        "ios.pol.home.late": "Εκπρόθεσμο",
         "ios.onb5.building.sub": "Ετοιμάζω τα πάντα για σένα",
         "ios.onb5.building.title": "Ευχαριστώ, {name}!",
         "ios.onb5.exam.dateLabel": "Ημερομηνία εξέτασης",

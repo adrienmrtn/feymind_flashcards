@@ -49,6 +49,6 @@ struct StreakPill: View {
     private func refresh() {
         let next = StudyStreak.status()
         guard next != status else { return }
-        withAnimation(.spring(duration: 0.4)) { status = next }
+        withAnimation(MicaboMotion.standard) { status = next }
     }
 }

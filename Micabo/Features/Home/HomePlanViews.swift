@@ -48,16 +48,16 @@ struct HomeGreetingRow: View {
 
 // MARK: - Le plan du jour
 
-/// **« Ton plan du jour »**, sur une carte claire de la page, pour l'élève qui a déjà ses
-/// leçons (`docs/refonte-knowunity.md` § 1 et § 9) :
-/// 1. en haut, le prochain examen dans sa tuile bleu pâle — le compte à rebours dans sa
-///    pastille bleue, le nom, la préparation —, ou, sans examen, « Ton plan du jour » et une
-///    pilule discrète « Ajouter un examen » ;
-/// 2. **la** chose à faire maintenant (`HomeDay.primary`) : la séance du calendrier, la leçon
-///    en cours ou les cartes dues ;
-/// 3. **un** grand bouton bleu, le seul de l'écran, et Mika qui dépasse de son bord, noir sur
-///    le blanc de la carte ;
-/// 4. au plus une seconde ligne (`HomeDay.secondary`).
+/// **« Ton plan du jour »**, une seule carte claire, pour l'élève qui a déjà ses leçons
+/// (`docs/refonte-knowunity.md` § 1 et § 9, charte du lot 6 § 1 à 3) :
+/// 1. en haut, **une ligne méta discrète** : le prochain examen, son compte à rebours et sa
+///    préparation (« Bac d'histoire · J-12 · 64 % »), qui mène au calendrier ; sans examen,
+///    « Ton plan du jour » et une pilule discrète « Ajouter un examen » ;
+/// 2. **la** chose à faire maintenant (`HomeDay.primary`) : son titre, son heure et sa durée,
+///    ou son cercle ;
+/// 3. **un** grand bouton bleu, le seul plein de l'écran, et Mika qui passe la tête derrière
+///    son bord, dans une place réservée : il ne touche jamais le texte ;
+/// 4. au plus une seconde ligne (`HomeDay.secondary`), sobre, sous un filet : pas de sous-carte.
 struct HomePlanHero: View {
     let day: HomeDay
     let resume: (Course, ResumeTarget)?
@@ -80,78 +80,27 @@ struct HomePlanHero: View {
         let primary = day.primary
         VStack(alignment: .leading, spacing: 0) {
             if let exam {
-                examPanel(exam)
-                    .padding(.bottom, 16)
+                HomeExamMeta(exam: exam, action: onExam)
+                    .padding(.bottom, 8)
             } else {
                 planHeader
                     .padding(.bottom, 12)
             }
             stepBlock(primary)
-                .padding(.bottom, 14)
+                .padding(.bottom, 16)
             cta(primary)
             if let secondary = day.secondary {
+                Rectangle()
+                    .fill(HomePalette.cardStroke)
+                    .frame(height: 1)
+                    .padding(.top, 14)
                 secondaryRow(secondary)
-                    .padding(.top, 10)
+                    .padding(.top, 4)
+                    .padding(.bottom, -6)
             }
         }
         .padding(16)
         .homeCard(radius: MicaboStage.cardRadius)
-    }
-
-    // MARK: L'examen
-
-    private func examPanel(_ exam: HomeExam) -> some View {
-        Button(action: onExam) {
-            HStack(spacing: 12) {
-                HomeCountdownBadge(daysLeft: exam.daysLeft, side: 58)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(L10n.t("ios.cal.nextExam", locale: .resolved()))
-                        .font(MicaboFont.ui(11.5, weight: .black))
-                        .tracking(MicaboTracking.caps)
-                        .textCase(.uppercase)
-                        .foregroundStyle(MicaboColor.accentInk)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                    Text(exam.name)
-                        .font(MicaboFont.ui(17, weight: .black))
-                        .foregroundStyle(HomePalette.ink)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                    if let readiness = exam.readiness {
-                        readinessBar(readiness)
-                            .padding(.top, 3)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                Image(systemName: "chevron.forward")
-                    .font(.system(size: 13, weight: .heavy))
-                    .foregroundStyle(HomePalette.inkTertiary)
-            }
-            .padding(10)
-            .padding(.trailing, 4)
-            .background(MicaboColor.accentWash, in: RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous))
-            .contentShape(RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous))
-        }
-        .buttonStyle(HomePressStyle(scale: 0.98, feedback: .selection))
-        .accessibilityElement(children: .combine)
-        .accessibilityHint(Text(L10n.t("ios.home4.agenda.calendar", locale: .resolved())))
-    }
-
-    private func readinessBar(_ value: Int) -> some View {
-        HStack(spacing: 8) {
-            Text(L10n.t("ios.cal.readiness", locale: .resolved()))
-                .font(MicaboFont.ui(12, weight: .heavy))
-                .foregroundStyle(HomePalette.inkSecondary)
-                .lineLimit(1)
-                .fixedSize()
-            HomeBar(percent: value, track: MicaboColor.accent.opacity(0.16))
-            Text(L10n.percent(value, locale: .resolved()))
-                .font(MicaboFont.ui(12, weight: .black))
-                .foregroundStyle(MicaboColor.accentInk)
-                .monospacedDigit()
-                .fixedSize()
-        }
     }
 
     /// Sans examen : le nom du bloc, et la pilule qui en ajoute un — à côté quand les deux
@@ -197,25 +146,22 @@ struct HomePlanHero: View {
 
     // MARK: L'étape
 
+    /// Le titre et ce qui le précise, au-dessus du bouton. Le bloc est au moins aussi haut que
+    /// Mika : sa tête reste dans la place réservée à droite, sous la ligne méta.
     private func stepBlock(_ step: HomeDay.Step) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(eyebrow(step))
-                .font(MicaboFont.ui(12, weight: .black))
-                .tracking(MicaboTracking.caps)
-                .textCase(.uppercase)
-                .foregroundStyle(MicaboColor.accentInk)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
             Text(title(step))
                 .font(MicaboFont.ui(23, weight: .black))
                 .foregroundStyle(HomePalette.ink)
-                .lineLimit(2)
+                .lineLimit(3)
+                .minimumScaleFactor(0.85)
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
             if let subtitle = subtitle(step) {
                 Text(subtitle)
                     .font(MicaboFont.ui(14.5, weight: .bold))
                     .foregroundStyle(HomePalette.inkSecondary)
+                    .monospacedDigit()
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -224,7 +170,7 @@ struct HomePlanHero: View {
                     .padding(.top, 6)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: MikaPeek.height(for: Self.mikaSize) - 6, alignment: .bottomLeading)
+        .frame(maxWidth: .infinity, minHeight: MikaPeek.height(for: Self.mikaSize) + 4, alignment: .bottomLeading)
         .padding(.trailing, Self.mikaReserve)
         .accessibilityElement(children: .combine)
     }
@@ -240,16 +186,6 @@ struct HomePlanHero: View {
         }
     }
 
-    private func eyebrow(_ step: HomeDay.Step) -> String {
-        switch step {
-        case .session:
-            L10n.t("ios.focus.nextRevision", locale: .resolved(), vars: ["time": CalendarTime.label(minute: day.session?.startMinute ?? 0)])
-        case .lesson: L10n.t("lesson.home.resume", locale: .resolved())
-        case .cards: L10n.t("ios.home2.tool.due", locale: .resolved())
-        case .create: L10n.t("lesson.lessons.new", locale: .resolved())
-        }
-    }
-
     private func title(_ step: HomeDay.Step) -> String {
         switch step {
         case .session: day.session?.title ?? ""
@@ -259,13 +195,18 @@ struct HomePlanHero: View {
         }
     }
 
+    /// Ce qui précise l'étape. La séance dit son heure et sa durée ; l'examen qu'elle prépare
+    /// n'est redit que s'il n'est pas déjà dans la ligne méta.
     private func subtitle(_ step: HomeDay.Step) -> String? {
         switch step {
         case .session:
             guard let session = day.session else { return nil }
-            let length = CalendarTime.duration(minutes: session.minutes)
-            guard let exam = session.examName?.nilIfBlank else { return length }
-            return "\(length) · \(exam)"
+            var parts = [
+                CalendarTime.label(minute: session.startMinute),
+                CalendarTime.duration(minutes: session.minutes),
+            ]
+            if exam == nil, let name = session.examName?.nilIfBlank { parts.append(name) }
+            return parts.joined(separator: " · ")
         case .lesson:
             guard let target = resume?.1, let number = target.circleNumber, let title = target.circleTitle else {
                 return day.lessonCircle
@@ -311,6 +252,7 @@ struct HomePlanHero: View {
 
     // MARK: La seconde ligne
 
+    /// Une ligne de la carte, pas une carte : l'icône, le texte, le chevron, sur le blanc.
     private func secondaryRow(_ step: HomeDay.Step) -> some View {
         Button { onStep(step, .secondary) } label: {
             HStack(spacing: 10) {
@@ -320,18 +262,79 @@ struct HomePlanHero: View {
                     : L10n.t("ios.kx.today.continue", locale: .resolved(), vars: ["lesson": resume?.1.title ?? day.lessonTitle ?? ""]))
                     .font(MicaboFont.ui(15, weight: .heavy))
                     .foregroundStyle(HomePalette.ink)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 4)
                 Image(systemName: "chevron.forward")
                     .font(.system(size: 13, weight: .black))
                     .foregroundStyle(HomePalette.inkTertiary)
             }
-            .padding(.horizontal, 14)
-            .frame(minHeight: 46)
-            .background(HomePalette.canvas, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .padding(.vertical, 6)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
         }
         .buttonStyle(HomePressStyle(scale: 0.98, feedback: .soft))
+    }
+}
+
+/// **La ligne méta du prochain examen**, en haut du plan du jour : son nom, le compte à
+/// rebours (« J-12 », « noch 12 Tage », « Demain », « Aujourd'hui ») et la préparation, en
+/// petit et en gris. Le nom est celui que l'élève a donné à son examen : il suit son pays et
+/// son niveau (Bac, Abitur, GCSE…), jamais un nom écrit ici.
+struct HomeExamMeta: View {
+    let exam: HomeExam
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Image(systemName: "graduationcap.fill")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(MicaboColor.accentInk)
+                Text(Self.line(for: exam))
+                    .font(MicaboFont.ui(13.5, weight: .heavy))
+                    .foregroundStyle(HomePalette.inkSecondary)
+                    .monospacedDigit()
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 4)
+                Image(systemName: "chevron.forward")
+                    .font(.system(size: 11, weight: .heavy))
+                    .foregroundStyle(HomePalette.inkTertiary)
+            }
+            .frame(minHeight: 28)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(HomePressStyle(scale: 0.98, feedback: .selection))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(Self.accessibilityLine(for: exam)))
+        .accessibilityHint(Text(L10n.t("ios.home4.agenda.calendar", locale: .resolved())))
+        .accessibilityAddTraits(.isButton)
+    }
+
+    /// Le compte à rebours, dans la langue de l'app.
+    static func countdown(daysLeft: Int, locale: UiLocale = .resolved()) -> String {
+        switch daysLeft {
+        case ...0: L10n.t("ios.cal.today", locale: locale)
+        case 1: L10n.t("ios.cal.tomorrow", locale: locale)
+        default: L10n.t("ios.pol.home.countdown", locale: locale, vars: ["n": "\(daysLeft)"])
+        }
+    }
+
+    static func line(for exam: HomeExam, locale: UiLocale = .resolved()) -> String {
+        var parts = [exam.name, countdown(daysLeft: exam.daysLeft, locale: locale)]
+        if let readiness = exam.readiness { parts.append(L10n.percent(readiness, locale: locale)) }
+        return parts.joined(separator: " · ")
+    }
+
+    static func accessibilityLine(for exam: HomeExam, locale: UiLocale = .resolved()) -> String {
+        var parts = [exam.name, countdown(daysLeft: exam.daysLeft, locale: locale)]
+        if let readiness = exam.readiness {
+            parts.append("\(L10n.t("ios.cal.readiness", locale: locale)) \(L10n.percent(readiness, locale: locale))")
+        }
+        return parts.joined(separator: ", ")
     }
 }
 
@@ -406,11 +409,7 @@ struct HomeAgendaSection: View {
             StudySectionTitle(title: L10n.t("ios.kx.today.title", locale: .resolved())) {
                 HomeSectionLink(title: L10n.t("ios.home4.agenda.calendar", locale: .resolved()), action: onCalendar)
             }
-            VStack(spacing: 8) {
-                ForEach(items) { item in
-                    AgendaRow(item: item, onTap: { onTap(item) }, onStart: { onStart(item) }, onToggle: { onToggle(item) })
-                }
-            }
+            AgendaList(items: items, onTap: onTap, onStart: onStart, onToggle: onToggle)
         }
     }
 }
@@ -521,14 +520,17 @@ struct HomeLessonsSection: View {
 
 // MARK: - Une nouvelle leçon
 
-/// **« Nouvelle leçon »**, en second : la même barre que sur la scène (`HomeComposerBar`), sur
-/// une seule ligne. L'envoi passe par la même porte du gratuit (`HomeView.send`), le « + » par
-/// la même feuille des supports.
+/// **« Nouvelle leçon »**, juste sous le plan du jour : la même barre que sur la scène
+/// (`HomeComposerBar`), sur une seule ligne, et dessous les raccourcis qui créent ou font
+/// travailler tout de suite — le scanner de maths, le quiz éclair. L'envoi passe par la même
+/// porte du gratuit (`HomeView.send`), le « + » par la même feuille des supports.
 struct HomeCreateSection: View {
     let composer: LessonComposer
     var focused: FocusState<Bool>.Binding
+    let tools: [HomeTool]
     let onSend: () -> Void
     let onSources: () -> Void
+    let onTool: (HomeTool) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -540,6 +542,7 @@ struct HomeCreateSection: View {
                     .foregroundStyle(HomePalette.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            HomeQuickActions(tools: tools, onTool: onTool)
         }
     }
 }

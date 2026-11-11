@@ -16,6 +16,7 @@ struct StreakCelebrationView: View {
     let onContinue: () -> Void
 
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var status: StudyStreak.Status
     @State private var week: [StudyStreak.Day]
@@ -44,7 +45,7 @@ struct StreakCelebrationView: View {
             )
             .ignoresSafeArea()
             .allowsHitTesting(false)
-            if lit {
+            if lit, !reduceMotion {
                 ConfettiView(colors: [MicaboColor.flame, MicaboColor.flameInk, MicaboColor.flameTrack, LessonTone.yellow.vivid])
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
@@ -98,7 +99,7 @@ struct StreakCelebrationView: View {
         guard !played else { return }
         played = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-            withAnimation(.spring(duration: 0.55, bounce: 0.45)) {
+            withAnimation(MicaboMotion.resolved(MicaboMotion.celebrate, reduceMotion: reduceMotion)) {
                 lit = true
                 shownCount = status.current
             }

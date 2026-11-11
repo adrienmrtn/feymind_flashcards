@@ -51,7 +51,7 @@ struct LessonCreationFlow: View {
             case .generating: generating.transition(.opacity)
             }
         }
-        .animation(.spring(duration: 0.4), value: step)
+        .animation(MicaboMotion.gentle, value: step)
         .micaboPaywall($paywall, onSubscribed: subscribed)
     }
 
@@ -263,7 +263,7 @@ struct LessonCreationFlow: View {
         generation = Task {
             do {
                 let course = try await builder.create(request, in: modelContext) { stage in
-                    withAnimation(.spring(duration: 0.35)) { self.stage = stage }
+                    withAnimation(MicaboMotion.standard) { self.stage = stage }
                 }
                 // La leçon existe sous cet identifiant, écran fermé ou non : la prochaine
                 // demande en prend un neuf.
@@ -327,7 +327,7 @@ struct GenerationSteps: View {
                 .font(MicaboFont.ui(17, weight: active ? .heavy : .bold))
                 .foregroundStyle(done || active ? MicaboColor.ink : MicaboColor.inkTertiary)
         }
-        .animation(.spring(duration: 0.35), value: done)
+        .animation(MicaboMotion.standard, value: done)
     }
 
     static func key(for stage: LessonBuilder.Stage, hasSupports: Bool) -> String {

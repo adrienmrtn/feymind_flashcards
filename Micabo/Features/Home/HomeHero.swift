@@ -2,8 +2,12 @@ import SwiftUI
 
 // MARK: - La rangée du haut
 
-/// **La rangée du haut, sur la page** : l'initiale de l'élève (le Profil), « ✦ Pro » pour qui
-/// n'est pas abonné, puis une seule pastille pour la série et l'XP de la semaine.
+/// **La rangée du haut, sur la page** : l'initiale de l'élève (le Profil), le badge Pro, puis
+/// une seule pastille pour la série et l'XP de la semaine (la ligue).
+///
+/// Le badge ne dit pas la même chose aux deux : **un statut** pour l'abonné (« ✦ Pro », plein,
+/// rien à toucher) ; **un appel discret** pour qui ne l'est pas (« ✦ Passer en Pro », bleu
+/// pâle, qui ouvre l'offre). Un gratuit ne voit jamais un badge qui le ferait croire abonné.
 struct HomeTopBar: View {
     let name: String?
     let isPro: Bool
@@ -16,12 +20,35 @@ struct HomeTopBar: View {
     var body: some View {
         HStack(spacing: 8) {
             HomeAvatar(name: name, action: onProfile)
-            if !isPro {
+            if isPro {
+                ProStatusBadge()
+            } else {
                 ProPill(action: onPro)
             }
             Spacer(minLength: 0)
             HomeProgressPill(streakPreview: streakPreview, onStreak: onStreak, onLeague: onLeague)
         }
+    }
+}
+
+/// **« ✦ Pro », le statut de l'abonné** : petit, plein, du dégradé de la marque. Il ne se
+/// touche pas — l'abonnement se gère dans le Profil.
+struct ProStatusBadge: View {
+    var body: some View {
+        HStack(spacing: 3) {
+            Text("✦")
+                .font(.system(size: 11, weight: .black))
+            Text(L10n.t("ios.kx.pro.pill", locale: .resolved()))
+                .font(MicaboFont.ui(13.5, weight: .black))
+        }
+        .foregroundStyle(Color.white)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 4)
+        .frame(minHeight: 26)
+        .background(HomePalette.brand, in: Capsule())
+        .fixedSize()
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(L10n.t("ios.pol.home.proActiveA11y", locale: .resolved())))
     }
 }
 
@@ -58,29 +85,39 @@ struct HomeAvatar: View {
     }
 }
 
-/// **« ✦ Pro »**, pour qui n'est pas abonné : la pilule bleue de la marque, qui ouvre le
-/// paywall (déclencheur `upgrade`). Une hauteur **minimale** : avec les grandes tailles de
-/// texte, le libellé grandit au lieu d'être coupé.
+/// **« ✦ Passer en Pro »**, pour qui n'est pas abonné : un appel discret, bleu pâle, qui ouvre
+/// le paywall (déclencheur `upgrade`). Quand la place manque (texte agrandi, langue longue, petit
+/// écran), il se réduit à « ✦ Pro », toujours bleu pâle : jamais le plein du statut d'abonné.
+/// Une hauteur **minimale** : avec les grandes tailles de texte, le libellé grandit au lieu
+/// d'être coupé.
 struct ProPill: View {
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 4) {
-                Text("✦")
-                    .font(.system(size: 13, weight: .black))
-                Text(L10n.t("ios.kx.pro.pill", locale: .resolved()))
-                    .font(MicaboFont.ui(16, weight: .heavy))
+            ViewThatFits(in: .horizontal) {
+                label(L10n.t("ios.kx.pro.a11y", locale: .resolved()))
+                label(L10n.t("ios.kx.pro.pill", locale: .resolved()))
             }
-            .foregroundStyle(Color.white)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 6)
-            .frame(minHeight: 40)
-            .background(HomePalette.brand, in: Capsule())
-            .fixedSize()
         }
         .buttonStyle(HomePressStyle(scale: 0.92))
         .accessibilityLabel(Text(L10n.t("ios.kx.pro.a11y", locale: .resolved())))
+    }
+
+    private func label(_ title: String) -> some View {
+        HStack(spacing: 4) {
+            Text("✦")
+                .font(.system(size: 12, weight: .black))
+            Text(title)
+                .font(MicaboFont.ui(14.5, weight: .heavy))
+                .lineLimit(1)
+        }
+        .foregroundStyle(MicaboColor.accentInk)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .frame(minHeight: 36)
+        .background(MicaboColor.accentSoft, in: Capsule())
+        .fixedSize()
     }
 }
 
@@ -89,7 +126,8 @@ struct ProPill: View {
 /// forme : la rangée du haut reste calme.
 ///
 /// La flamme est allumée quand aujourd'hui est fait, grise sinon, et relue au retour dans
-/// l'app (minuit a pu passer). L'XP roule de zéro à la première apparition de la session.
+/// l'app (minuit a pu passer). Elle ne vacille pas : aucune animation ne tourne en boucle sur
+/// un écran du quotidien. L'XP roule de zéro à la première apparition de la session.
 struct HomeProgressPill: View {
     /// Une série donnée d'avance (rendus) ; sinon, celle du registre.
     var streakPreview: StudyStreak.Status?
@@ -102,7 +140,6 @@ struct HomeProgressPill: View {
     @Environment(\.homeStill) private var still
 
     @State private var status = StudyStreak.status()
-    @State private var flicker = false
     /// Le compteur n'a roulé qu'une fois par lancement : revenir sur Home ne le remet pas à zéro.
     private static var hasRolled = false
     @State private var rolling = false
@@ -120,7 +157,6 @@ struct HomeProgressPill: View {
                     MicaboIconView(icon: .flame, size: 22)
                         .saturation(lit ? 1 : 0)
                         .opacity(lit ? 1 : 0.5)
-                        .scaleEffect(x: flicker ? 0.95 : 1.03, y: flicker ? 1.06 : 0.98, anchor: .bottom)
                     Text("\(shown.current)")
                         .font(MicaboFont.number(17))
                         .foregroundStyle(lit ? MicaboColor.flameInk : HomePalette.inkTertiary)
@@ -159,18 +195,16 @@ struct HomeProgressPill: View {
         .background(HomePalette.card, in: Capsule())
         .overlay(Capsule().strokeBorder(HomePalette.cardStroke, lineWidth: 1))
         .fixedSize()
-        .animation(.spring(duration: 0.4), value: week)
+        .animation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion), value: week)
         .onAppear {
             refresh()
-            startFlicker(lit: lit)
             guard !Self.hasRolled, !still, !reduceMotion, week > 0 else { return }
             Self.hasRolled = true
             rolling = true
-            withAnimation(.spring(response: 0.9, dampingFraction: 0.85).delay(0.45)) {
+            withAnimation(MicaboMotion.gentle.delay(0.3)) {
                 rolling = false
             }
         }
-        .onChange(of: lit) { _, lit in startFlicker(lit: lit) }
         .onReceive(NotificationCenter.default.publisher(for: .micaboStreakDidChange)) { _ in refresh() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { refresh() }
@@ -180,17 +214,7 @@ struct HomeProgressPill: View {
     private func refresh() {
         let next = StudyStreak.status()
         guard next != status else { return }
-        withAnimation(.spring(duration: 0.4)) { status = next }
-    }
-
-    private func startFlicker(lit: Bool) {
-        guard lit, !reduceMotion, !still else {
-            flicker = false
-            return
-        }
-        withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
-            flicker = true
-        }
+        withAnimation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion)) { status = next }
     }
 }
 
@@ -471,8 +495,8 @@ struct HomeComposerBar: View {
             radius: compact ? 16 : 20,
             y: compact ? 8 : 10
         )
-        .animation(.easeOut(duration: 0.2), value: isFocused)
-        .animation(.spring(duration: 0.3), value: composer.supports.count)
+        .animation(MicaboMotion.quick, value: isFocused)
+        .animation(MicaboMotion.standard, value: composer.supports.count)
     }
 
     private var placeholder: String {
@@ -489,7 +513,7 @@ struct HomeComposerBar: View {
         let chips = HStack(spacing: 8) {
             ForEach(composer.supports) { support in
                 SupportChip(support: support) {
-                    withAnimation(.spring(duration: 0.3)) { composer.remove(support.id) }
+                    withAnimation(MicaboMotion.standard) { composer.remove(support.id) }
                 }
             }
         }
@@ -565,7 +589,7 @@ struct HomeComposerBar: View {
                     }
                 }
                 .scaleEffect(composer.canSend ? 1 : 0.94)
-                .animation(.spring(response: 0.35, dampingFraction: 0.6), value: composer.canSend)
+                .animation(MicaboMotion.quick, value: composer.canSend)
         }
         .buttonStyle(HomePressStyle(scale: 0.88, feedback: .medium))
         .disabled(!composer.canSend)

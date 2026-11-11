@@ -28,7 +28,7 @@ final class XPOverlayController {
         guard award.added > 0, let window = ensureWindow() else { return }
         window.overrideUserInterfaceStyle = Self.interfaceStyle
         window.isHidden = false
-        withAnimation(.spring(duration: 0.4, bounce: 0.35)) {
+        withAnimation(Self.motion(MicaboMotion.celebrate)) {
             model.toast = XPOverlayModel.Toast(points: award.added)
         }
         Haptics.light()
@@ -47,7 +47,7 @@ final class XPOverlayController {
     }
 
     private func endToast(thenCelebrate celebrates: Bool) {
-        withAnimation(.easeOut(duration: 0.35)) { model.toast = nil }
+        withAnimation(Self.motion(MicaboMotion.standard)) { model.toast = nil }
         if celebrates {
             celebrate()
         } else if !model.celebrating {
@@ -65,11 +65,11 @@ final class XPOverlayController {
         window.isHidden = false
         window.acceptsTouches = true
         window.rootViewController?.view.accessibilityViewIsModal = true
-        withAnimation(.easeInOut(duration: 0.3)) { model.celebrating = true }
+        withAnimation(Self.motion(MicaboMotion.standard)) { model.celebrating = true }
     }
 
     private func endCelebration() {
-        withAnimation(.easeInOut(duration: 0.3)) { model.celebrating = false }
+        withAnimation(Self.motion(MicaboMotion.standard)) { model.celebrating = false }
         window?.acceptsTouches = false
         window?.rootViewController?.view.accessibilityViewIsModal = false
         hideTask?.cancel()
@@ -95,6 +95,12 @@ final class XPOverlayController {
         window.isHidden = true
         self.window = window
         return window
+    }
+
+    /// La courbe de l'app, ou un fondu bref quand l'élève a réduit les animations : la fenêtre
+    /// est hors de SwiftUI, elle lit le réglage du système.
+    private static func motion(_ animation: Animation) -> Animation {
+        MicaboMotion.resolved(animation, reduceMotion: UIAccessibility.isReduceMotionEnabled)
     }
 
     /// Le thème choisi dans le Profil : la fenêtre n'hérite pas de celui de l'app.
@@ -184,13 +190,14 @@ struct XPToast: View {
 struct XPGoalCelebration: View {
     let onContinue: () -> Void
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var appeared = false
 
     var body: some View {
         ZStack {
             Color.black.opacity(0.45)
                 .ignoresSafeArea()
-            if appeared {
+            if appeared, !reduceMotion {
                 ConfettiView(colors: [MicaboColor.accent, MicaboColor.accentDeep, MicaboBrand.pencil, LessonTone.mint.vivid, MicaboBrand.eraser])
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
@@ -201,7 +208,7 @@ struct XPGoalCelebration: View {
                 .opacity(appeared ? 1 : 0)
         }
         .onAppear {
-            withAnimation(.spring(duration: 0.5, bounce: 0.4)) { appeared = true }
+            withAnimation(MicaboMotion.resolved(MicaboMotion.celebrate, reduceMotion: reduceMotion)) { appeared = true }
             Haptics.success()
             Haptics.burst(count: 3, over: 0.45)
         }

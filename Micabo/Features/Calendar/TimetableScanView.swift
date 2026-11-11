@@ -51,7 +51,7 @@ struct TimetableScanView: View {
                 problem(loc("ios.cal.scanLocked"), mood: .wink, retry: true)
             }
         }
-        .animation(.spring(duration: 0.4), value: phase)
+        .animation(MicaboMotion.standard, value: phase)
         .background(MicaboColor.canvas.ignoresSafeArea())
         .navigationTitle(loc("ios.cal.scanTitle"))
         .navigationBarTitleDisplayMode(.inline)

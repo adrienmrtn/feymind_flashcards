@@ -39,6 +39,22 @@ struct AgendaItem: Identifiable, Equatable {
     var isDone = false
 
     var isAllDay: Bool { startMinute == nil }
+
+    /// **En retard** : une chose à faire (tâche, séance de révision, jalon d'examen), pas faite,
+    /// dont le moment est passé — un jour d'avant, ou aujourd'hui une séance déjà finie. C'est
+    /// la seule ligne de l'agenda qui prend le rouge.
+    func isOverdue(now: Date = Date(), calendar: Calendar = MicaboCalendar.shared) -> Bool {
+        guard !isDone else { return false }
+        switch kind {
+        case .task, .revision, .milestone: break
+        case .exam, .lesson, .custom, .focus: return false
+        }
+        let today = calendar.startOfDay(for: now)
+        let start = calendar.startOfDay(for: day)
+        if start < today { return true }
+        guard start == today, let end = endMinute, startMinute != nil else { return false }
+        return end <= CalendarTime.minute(of: now, calendar: calendar)
+    }
 }
 
 /// Ce qu'un calendrier apporte à l'agenda, sans SwiftData.
@@ -73,8 +89,11 @@ struct AgendaSnapshot: Equatable {
 /// par ici.
 enum StudyAgenda {
     /// Les couleurs fixes de ce qui ne vient pas d'un calendrier.
-    static let examTint = 7
-    static let taskTint = 5
+    /// Les couleurs ont un sens (charte du lot 6 § 3) : le rouge est gardé pour ce qui est en
+    /// retard, le jaune pour la série et l'XP. L'examen et ses jalons prennent le sarcelle, les
+    /// tâches l'ardoise ; la séance de concentration menée, le vert du réussi.
+    static let examTint = 2
+    static let taskTint = 11
     static let focusTint = 3
 
     static func items(on day: Date, in snapshot: AgendaSnapshot, calendar: Calendar = MicaboCalendar.shared) -> [AgendaItem] {

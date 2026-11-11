@@ -59,7 +59,7 @@ struct FocusSetupSheet: View {
                     .accessibilityLabel(Text(loc("ios.cal.close")))
                 }
             }
-            .sheet(isPresented: $choosingLesson) {
+            .navigationDestination(isPresented: $choosingLesson) {
                 LessonPickerSheet(lessons: lessons, selected: plan.courseID) { course in
                     plan.courseID = course?.id
                     plan.courseTitle = course?.title
@@ -88,7 +88,7 @@ struct FocusSetupForm: View {
             }
             .padding(16)
             .homeCard()
-            .animation(.spring(duration: 0.35), value: plan.mode)
+            .animation(MicaboMotion.standard, value: plan.mode)
 
             goals
         }
@@ -132,7 +132,7 @@ struct FocusSetupForm: View {
         let next = plan.workMinutes + delta
         let enabled = range.contains(next)
         return Button {
-            withAnimation(.spring(duration: 0.25)) { plan.workMinutes = max(range.lowerBound, min(range.upperBound, next)) }
+            withAnimation(MicaboMotion.quick) { plan.workMinutes = max(range.lowerBound, min(range.upperBound, next)) }
         } label: {
             Image(systemName: symbol)
                 .font(.system(size: 18, weight: .black))
@@ -157,7 +157,7 @@ struct FocusSetupForm: View {
                 ForEach(Array(FocusPlan.cycleRange), id: \.self) { count in
                     let isOn = plan.cycles == count
                     Button {
-                        withAnimation(.spring(duration: 0.25)) { plan.cycles = count }
+                        withAnimation(MicaboMotion.quick) { plan.cycles = count }
                     } label: {
                         Text("\(count)")
                             .font(MicaboFont.number(20))
@@ -198,7 +198,7 @@ struct FocusSetupForm: View {
     private var goals: some View {
         VStack(alignment: .leading, spacing: 0) {
             Button {
-                withAnimation(.spring(duration: 0.35)) { goalsOpen.toggle() }
+                withAnimation(MicaboMotion.standard) { goalsOpen.toggle() }
             } label: {
                 HStack(spacing: 12) {
                     Image(systemName: "target")
@@ -302,7 +302,7 @@ struct FocusModePicker: View {
             ForEach(FocusMode.allCases) { option in
                 let isOn = option == mode
                 Button {
-                    withAnimation(.spring(duration: 0.3)) { mode = option }
+                    withAnimation(MicaboMotion.standard) { mode = option }
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: option == .simple ? "timer" : "arrow.triangle.2.circlepath")

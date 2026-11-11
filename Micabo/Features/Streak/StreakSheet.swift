@@ -149,7 +149,7 @@ struct StreakSheet: View {
     }
 
     private func refresh() {
-        withAnimation(.spring(duration: 0.4)) {
+        withAnimation(MicaboMotion.standard) {
             status = StudyStreak.status()
             week = StudyStreak.week()
         }
@@ -163,9 +163,10 @@ struct StreakSheet: View {
 /// L'icône ne dépasse jamais quatre-vingt-quatre points : ses images font 256 pixels, et plus
 /// grande elle se brouille. C'est le halo qui donne la présence, pas la taille de l'icône.
 ///
-/// La respiration se calcule sur l'horloge (`TimelineView`) plutôt qu'avec une animation qui
-/// se répète : posée au `onAppear` d'une feuille, une animation infinie emporte aussi le
-/// glissement de la feuille, et la flamme flotte pendant qu'elle monte.
+/// **Une seule inspiration**, à l'apparition : le halo s'ouvre et la flamme se pose, puis tout
+/// reste immobile (charte du lot 6 § 7 : aucune boucle). L'inspiration part un instant après
+/// l'apparition, pour ne pas s'ajouter au glissement de la feuille qui monte ; rien avec
+/// « Réduire les animations ».
 struct StreakFlame: View {
     var lit = true
     var size: CGFloat = 84
@@ -178,14 +179,15 @@ struct StreakFlame: View {
     }
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.homeStill) private var still
+    /// 0 avant l'inspiration, 1 une fois posée.
+    @State private var breathed = false
 
     var body: some View {
         let icon = min(size, Self.maximumIconSize)
-        let animated = lit && !reduceMotion
-        TimelineView(.animation(minimumInterval: 1 / 30, paused: !animated)) { timeline in
-            // Une respiration de 2,6 s : 0 au creux, 1 au plus fort.
-            let phase = timeline.date.timeIntervalSinceReferenceDate * 2 * Double.pi / 2.6
-            let breath: CGFloat = animated ? CGFloat((sin(phase) + 1) / 2) : 0.5
+        let animated = lit && !reduceMotion && !still
+        let breath: CGFloat = animated ? (breathed ? 1 : 0) : 1
+        Group {
             ZStack {
                 Circle()
                     .fill(RadialGradient(
@@ -209,6 +211,16 @@ struct StreakFlame: View {
         }
         .frame(width: icon * 1.6, height: icon * 1.6)
         .accessibilityHidden(true)
+        .onAppear {
+            guard animated, !breathed else { return }
+            withAnimation(MicaboMotion.gentle.delay(0.3)) { breathed = true }
+        }
+        .onChange(of: lit) { _, lit in
+            // La flamme qui s'allume (la fête de la série) prend son inspiration à ce moment.
+            guard lit, !reduceMotion, !still else { return }
+            breathed = false
+            withAnimation(MicaboMotion.celebrate.delay(0.1)) { breathed = true }
+        }
     }
 }
 
