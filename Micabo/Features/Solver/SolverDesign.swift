@@ -35,25 +35,22 @@ struct SolverSubjectTile: View {
 struct SolverSubjectMenu: View {
     let subject: SolverSubject
     var onPick: (SolverSubject) -> Void
+    @State private var picking = false
 
     var body: some View {
-        Menu {
-            ForEach(SolverSubject.allCases) { option in
-                Button {
-                    onPick(option)
-                } label: {
-                    if option == subject {
-                        Label(option.label, systemImage: "checkmark")
-                    } else {
-                        Text(option.label)
-                    }
-                }
-            }
+        Button {
+            picking = true
         } label: {
             SolverSubjectChip(subject: subject, showsChevron: true)
         }
+        .buttonStyle(MicaboPressableButtonStyle())
         .accessibilityLabel(Text(solveText("subject.change")))
         .accessibilityValue(Text(subject.label))
+        .confirmationDialog(solveText("subject.change"), isPresented: $picking, titleVisibility: .visible) {
+            ForEach(SolverSubject.allCases.filter { $0 != subject }) { option in
+                Button(option.label) { onPick(option) }
+            }
+        }
     }
 }
 
@@ -133,12 +130,9 @@ struct SolverMikaAvatar: View {
     var mood: MikaMood = .idle
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Circle().fill(MicaboColor.surfaceMuted)
-            MikaMascot(mood: mood, size: size * 1.08, backdrop: .surface, animates: false)
-                .offset(y: size * 0.12)
-        }
-        .frame(width: size, height: size)
+        MicaboIconView(icon: .mika, size: size * 0.86)
+            .frame(width: size, height: size)
+            .background(MicaboColor.surfaceMuted)
         .clipShape(Circle())
         .overlay(Circle().strokeBorder(MicaboColor.stroke, lineWidth: 1))
         .accessibilityHidden(true)
@@ -160,7 +154,7 @@ struct SolverRichText: View {
                 switch block {
                 case .text(let text):
                     SheetInlineText(
-                        markup: text,
+                        markup: Self.isolatingFormulas(text),
                         style: SheetTextStyle(size: size, weight: .regular, color: color, lineSpacing: 4)
                     )
                 case .formula(let latex):
@@ -171,6 +165,15 @@ struct SolverRichText: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private static let inlineFormula = try! NSRegularExpression(pattern: #"\$[^$\n]+\$"#)
+
+    /// Une formule dans une phrase garde son sens de lecture : en arabe, sans isolement, les
+    /// morceaux de `$ax^2 + bx + c = 0$` se rangeaient de droite à gauche avec la phrase.
+    static func isolatingFormulas(_ text: String) -> String {
+        let range = NSRange(text.startIndex..., in: text)
+        return inlineFormula.stringByReplacingMatches(in: text, range: range, withTemplate: "\u{2066}$0\u{2069}")
     }
 }
 

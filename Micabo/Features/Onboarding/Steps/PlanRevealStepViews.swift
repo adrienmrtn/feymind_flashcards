@@ -149,11 +149,14 @@ struct ProfileSummaryStepView: View {
                     MicaboIconView(icon: line.icon, size: 24)
                         .frame(width: 36, height: 36)
                         .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                    // Le libellé ne se coupe jamais au milieu d'un mot : c'est la valeur
+                    // qui passe à la ligne.
                     Text(line.label)
                         .font(MicaboFont.ui(14, weight: .semibold))
                         .foregroundStyle(MicaboColor.inkSecondary)
-                        .lineLimit(2)
-                        .layoutPriority(0)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                        .layoutPriority(2)
                     Spacer(minLength: 8)
                     Text(line.value)
                         .font(MicaboFont.ui(15, weight: .heavy))

@@ -268,8 +268,8 @@ struct HomeHeroCard: View {
     let onDismissKeyboard: () -> Void
 
     static let mikaSize: CGFloat = 150
-    /// Ce que la barre cache du buste : la coupe, et un peu de corps.
-    static let mikaSink: CGFloat = 14
+    /// Le bout des tentacules passe derrière la barre : Mika est posé sur son bord.
+    static let mikaSink: CGFloat = 5
 
     @State private var index = 0
     @State private var mood: MikaMood = .wave

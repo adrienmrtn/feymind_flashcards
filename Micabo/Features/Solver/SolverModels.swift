@@ -115,7 +115,7 @@ enum SolverSubjectGuess {
 
     /// La matière la plus probable ; « autre » quand rien ne parle.
     static func guess(_ text: String) -> SolverSubject {
-        var scores = scores(for: text)
+        var scores = Self.scores(for: text)
         // Des signes de calcul sans un mot de sciences : c'est des maths.
         let symbols = text.filter { "=+×÷^√∫∑<>≤≥²³πx".contains($0) }.count
         let digits = text.filter(\.isNumber).count

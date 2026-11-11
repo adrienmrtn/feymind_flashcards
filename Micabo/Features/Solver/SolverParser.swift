@@ -100,7 +100,7 @@ enum SolverParser {
     // MARK: La solution
 
     static func parse(_ raw: String) -> SolverSolution? {
-        let sections = sections(of: raw)
+        let sections = Self.sections(of: raw)
         var subject: SolverSubject?
         var steps: [SolverStep] = []
         var answer: String?
@@ -109,7 +109,7 @@ enum SolverParser {
             case .subject:
                 subject = SolverSubject(modelWord: section.text.components(separatedBy: .newlines).first ?? "")
             case .step:
-                if let step = step(from: section.text) { steps.append(step) }
+                if let step = Self.step(from: section.text) { steps.append(step) }
             case .answer:
                 let clean = section.text.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !clean.isEmpty { answer = clean }
@@ -236,7 +236,7 @@ enum SolverParser {
     /// L'exercice d'entraînement : `[EXERCISE]` et `[ANSWER]`. Sans balise, tout le texte est
     /// l'énoncé, et la réponse attendue manque (Mika corrigera quand même).
     static func practice(_ raw: String) -> SolverPractice? {
-        let sections = sections(of: raw)
+        let sections = Self.sections(of: raw)
         let exercise = sections.first { $0.tag == .exercise }?.text
         let expected = sections.first { $0.tag == .answer }?.text
         if let exercise, !exercise.isEmpty {
@@ -249,7 +249,7 @@ enum SolverParser {
 
     /// La correction : `[RIGHT]` ou `[WRONG]`, puis l'explication.
     static func verdict(_ raw: String) -> (verdict: SolverVerdict?, text: String) {
-        let sections = sections(of: raw)
+        let sections = Self.sections(of: raw)
         if let first = sections.first(where: { $0.tag == .right || $0.tag == .wrong }) {
             let verdict: SolverVerdict = first.tag == .right ? .right : .wrong
             let text = untagged(raw)
