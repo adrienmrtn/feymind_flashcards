@@ -567,13 +567,13 @@ struct LessonPathHeader: View {
                 )
                 .padding(.vertical, 8)
                 .accessibilityHidden(true)
-            // Un titre long revient à la ligne, jusqu'à trois lignes, puis se resserre un peu :
-            // jamais de « … » sur le nom d'une leçon.
+            // Un titre long revient à la ligne, jusqu'à quatre lignes en très grand texte, puis
+            // se resserre un peu : jamais de « … » sur le nom d'une leçon.
             Text(course.title)
                 .font(MicaboFont.display(28))
                 .foregroundStyle(MicaboColor.ink)
                 .multilineTextAlignment(.center)
-                .lineLimit(3)
+                .lineLimit(4)
                 .minimumScaleFactor(0.85)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, MicaboSpacing.screen)
@@ -581,11 +581,6 @@ struct LessonPathHeader: View {
             progressLine
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.top, 4)
-            if let next {
-                nextButton(next)
-                    .padding(.horizontal, MicaboSpacing.screen)
-                    .padding(.top, 4)
-            }
             if session.plan?.shortened == true {
                 Label(L10n.t("lesson.path.shortened", locale: .resolved()), systemImage: "scissors")
                     .font(MicaboFont.ui(13, weight: .bold))
@@ -596,6 +591,11 @@ struct LessonPathHeader: View {
             }
             if let exam {
                 examPill(exam)
+            }
+            if let next {
+                nextButton(next)
+                    .padding(.horizontal, MicaboSpacing.screen)
+                    .padding(.top, 4)
             }
         }
     }

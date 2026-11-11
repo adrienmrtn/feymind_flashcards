@@ -319,7 +319,7 @@ struct LessonFinishedView: View {
                                 .multilineTextAlignment(.center)
                             HStack(spacing: 14) {
                                 stat(
-                                    value: session.progress.averageQuizPercent.map { "\($0) %" } ?? "-",
+                                    value: session.progress.averageQuizPercent.map { L10n.percent($0, locale: .resolved()) } ?? "–",
                                     label: L10n.t("lesson.finished.score", locale: .resolved())
                                 )
                                 stat(
@@ -387,11 +387,29 @@ struct LessonFinishedView: View {
 }
 
 /// Des confettis légers, qui tombent une fois.
+///
+/// L'horloge s'arrête quand le dernier est tombé : elle redessinait l'écran soixante fois par
+/// seconde tant que la vue restait là, pour rien. Avec « Réduire les animations », pas de
+/// confettis : la fête se lit dans Mika et le titre.
 struct ConfettiView: View {
     let colors: [Color]
     @State private var start = Date()
+    @State private var fallen = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
+        if reduceMotion || fallen {
+            Color.clear
+        } else {
+            falling
+                .task {
+                    try? await Task.sleep(for: .seconds(4))
+                    fallen = true
+                }
+        }
+    }
+
+    private var falling: some View {
         TimelineView(.animation) { timeline in
             Canvas { context, size in
                 let elapsed = timeline.date.timeIntervalSince(start)

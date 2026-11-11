@@ -765,8 +765,8 @@ struct OnboardingContinueButton: View {
                 Text(isLoading ? (loadingTitle ?? i18n.t("ios.instant")) : (title ?? i18n.t("common.continue")))
                     .font(MicaboFont.ui(18, weight: .heavy))
                     .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.82)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .foregroundStyle(surface.buttonForeground)
             .padding(.horizontal, 20)

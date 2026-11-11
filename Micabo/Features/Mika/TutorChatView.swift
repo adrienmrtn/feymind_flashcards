@@ -389,6 +389,13 @@ struct TutorThreadView: View {
                 .onChange(of: chat.thinking) { _, _ in
                     withAnimation(LearnMotion.standard) { proxy.scrollTo("bottom", anchor: .bottom) }
                 }
+                // Le clavier monte : la dernière réponse remonte avec lui, au-dessus du champ.
+                .onChange(of: focused) { _, isFocused in
+                    guard isFocused else { return }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        withAnimation(LearnMotion.standard) { proxy.scrollTo("bottom", anchor: .bottom) }
+                    }
+                }
             }
 
             TutorInputBar(draft: $chat.draft, thinking: chat.thinking, focused: $focused) { send(nil) }
