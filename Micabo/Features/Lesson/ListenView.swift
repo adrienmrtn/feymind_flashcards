@@ -206,7 +206,7 @@ struct ListenPlayerCard: View {
                     } label: {
                         Text(Self.rateLabel(rate))
                             .font(MicaboFont.ui(15, weight: .heavy))
-                            .foregroundStyle(rate == speaker.rate ? .white : MicaboColor.ink)
+                            .foregroundStyle(rate == speaker.rate ? MicaboColor.onInk : MicaboColor.ink)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 8)
                             .background(rate == speaker.rate ? MicaboColor.ink : MicaboColor.surface.opacity(0.8), in: Capsule())
