@@ -327,9 +327,10 @@ struct HomeExamMeta: View {
         var parts = [exam.name, countdown(daysLeft: exam.daysLeft, locale: locale)]
         if let readiness = exam.readiness { parts.append(L10n.percent(readiness, locale: locale)) }
         // De droite à gauche, un nom en lettres latines et un pourcentage se mélangent avec
-        // l'arabe : chaque morceau est isolé (FSI … PDI) et garde son ordre.
+        // l'arabe : chaque morceau est isolé (FSI … PDI) et garde son ordre, et la marque de
+        // droite à gauche (RLM) en tête donne le sens de la ligne — les isolats n'en donnent pas.
         if locale.isRightToLeft {
-            parts = parts.map { "\u{2068}\($0)\u{2069}" }
+            return "\u{200F}" + parts.map { "\u{2068}\($0)\u{2069}" }.joined(separator: " · ")
         }
         return parts.joined(separator: " · ")
     }
