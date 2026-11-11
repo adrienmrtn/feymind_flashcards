@@ -56,11 +56,12 @@ struct MicaboSelectChip: View {
                 }
         }
         .buttonStyle(MicaboPressableButtonStyle(feedback: .selection))
-        .animation(.easeOut(duration: 0.18), value: isSelected)
+        .animation(MicaboMotion.quick, value: isSelected)
     }
 }
 
-/// Intitulé d'une section de contenu : capitales grises, et un lien à droite.
+/// Intitulé d'une section de contenu : **le titre de section de l'app** (`MicaboSectionHeading`),
+/// et un lien « Tout voir » à droite (`MicaboSeeAllLink`).
 struct MicaboSectionHeader: View {
     let title: String
     var subtitle: String?
@@ -68,24 +69,11 @@ struct MicaboSectionHeader: View {
     var action: (() -> Void)?
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 3) {
-                MicaboEyebrow(text: title)
-                if let subtitle {
-                    Text(subtitle)
-                        .font(MicaboFont.caption)
-                        .foregroundStyle(MicaboColor.inkTertiary)
-                }
-            }
-            Spacer(minLength: MicaboSpacing.xs)
+        MicaboSectionHeading(title: title, subtitle: subtitle) {
             if let actionTitle, let action {
-                Button(actionTitle, action: action)
-                    .font(MicaboFont.ui(13, weight: .semibold))
-                    .foregroundStyle(MicaboColor.accentInk)
-                    .buttonStyle(MicaboPressableButtonStyle())
+                MicaboSeeAllLink(title: actionTitle, action: action)
             }
         }
-        .padding(.leading, MicaboSpacing.xxs)
     }
 }
 
@@ -116,18 +104,21 @@ struct MicaboEmptyState: View {
                 .font(MicaboFont.ui(19, weight: .black))
                 .foregroundStyle(MicaboColor.ink)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
 
             Text(message)
                 .font(MicaboFont.ui(14, weight: .semibold))
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .multilineTextAlignment(.center)
-                .frame(maxWidth: 280)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 300)
 
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
-                    .buttonStyle(MicaboBrandButtonStyle(minHeight: 50))
+                    .buttonStyle(MicaboBrandButtonStyle())
                     .padding(.top, 6)
-                    .frame(maxWidth: 240)
+                    .frame(maxWidth: 280)
             }
         }
         .frame(maxWidth: .infinity)
@@ -151,7 +142,7 @@ struct MicaboProgressRing: View {
                 .trim(from: 0, to: max(0.001, min(1, progress)))
                 .stroke(tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-                .animation(.spring(response: 0.6, dampingFraction: 0.85), value: progress)
+                .animation(MicaboMotion.gentle, value: progress)
         }
     }
 }
@@ -171,7 +162,7 @@ struct MicaboProgressBar: View {
                 Capsule()
                     .fill(tint)
                     .frame(width: max(0, min(1, progress)) * proxy.size.width)
-                    .animation(.spring(response: 0.4, dampingFraction: 0.9), value: progress)
+                    .animation(MicaboMotion.standard, value: progress)
             }
         }
         .frame(height: 5)

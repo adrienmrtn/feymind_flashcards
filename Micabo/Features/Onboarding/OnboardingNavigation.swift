@@ -63,11 +63,11 @@ struct OnboardingPager {
 }
 
 extension OnboardingMotion {
-    /// Le glissement d'une page : quatre dixièmes, sur une courbe qui part vite et se pose
-    /// sans rebondir. C'est la courbe de la pile de navigation du système, à peu de chose
-    /// près, et c'est pour ça qu'elle passe inaperçue.
-    static let slideDuration = 0.42
-    static let slide = Animation.timingCurve(0.22, 0.9, 0.24, 1, duration: slideDuration)
+    /// Le glissement d'une page : la courbe standard de l'app (`MicaboMotion.standard`), qui
+    /// part vite et se pose sans rebondir, en trente-cinq centièmes. La page sortante est
+    /// retirée à la fin logique de l'animation, pas sur une minuterie (`OnboardingFlowView`).
+    static let slideDuration = 0.35
+    static let slide = MicaboMotion.standard
     /// Ce dont la page qui part recule, en fraction de la largeur.
     static let slideParallax: CGFloat = 0.32
 }
@@ -132,7 +132,7 @@ struct OnboardingTopBar: View {
         .frame(height: Self.height, alignment: .top)
         .opacity(isVisible ? 1 : 0)
         .allowsHitTesting(isVisible)
-        .animation(.easeInOut(duration: 0.25), value: isVisible)
+        .animation(MicaboMotion.standard, value: isVisible)
     }
 }
 
@@ -184,7 +184,7 @@ struct OnboardingArrowButton: View {
             .foregroundStyle(surface.buttonForeground)
             .frame(width: Self.size, height: Self.size)
             .background(isEnabled ? surface.buttonTint : surface.disabledButtonTint, in: Circle())
-            .shadow(color: OnboardingPalette.ink.opacity(isEnabled && !surface.isDark ? 0.18 : 0), radius: 14, y: 6)
+            .shadow(color: surface.buttonTint.opacity(isEnabled && !surface.isDark ? 0.24 : 0), radius: 12, y: 6)
             .contentShape(Circle())
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .medium))
@@ -307,8 +307,9 @@ struct OnboardingKeyboardLift: ViewModifier {
 
     private func move(to target: CGFloat, with note: Notification) {
         guard target != lift else { return }
-        let duration = (note.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double) ?? 0.25
-        withAnimation(.easeOut(duration: max(0.15, duration))) { lift = target }
+        // La courbe courte de l'app, à peu près la durée du clavier (un quart de seconde) :
+        // la page monte avec lui.
+        withAnimation(MicaboMotion.quick) { lift = target }
     }
 
     /// Ce que le clavier couvre de la page : sa hauteur sur l'écran, moins la zone sûre du

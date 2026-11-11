@@ -82,7 +82,7 @@ struct OnboardingAccountSheet: View {
         .padding(.bottom, MicaboSpacing.sm)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(OnboardingPalette.white.ignoresSafeArea())
-        .animation(.easeOut(duration: 0.22), value: auth.message)
+        .animation(MicaboMotion.quick, value: auth.message)
         // La connexion se termine dans le contrôleur, pas dans le bouton : c'est le passage à
         // l'état « connecté » qui referme, quel que soit le fournisseur emprunté.
         .onChange(of: auth.isSignedIn) { _, isSignedIn in

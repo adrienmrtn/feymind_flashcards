@@ -252,7 +252,7 @@ private struct DiscountGiftStage: View {
     private func tap() {
         guard taps < DiscountOffer.taps else { return }
 
-        withAnimation(.spring(response: 0.22, dampingFraction: 0.55)) {
+        withAnimation(MicaboMotion.quick) {
             taps += 1
             squash = true
         }
@@ -260,14 +260,15 @@ private struct DiscountGiftStage: View {
 
         // Le rebond : la boîte reprend sa taille juste après avoir encaissé.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.13) {
-            withAnimation(.spring(response: 0.34, dampingFraction: 0.5)) {
+            // Le cadeau est une récompense : la seule courbe à rebond de l'app.
+            withAnimation(MicaboMotion.celebrate) {
                 squash = false
             }
         }
 
         guard taps >= DiscountOffer.taps else { return }
 
-        withAnimation(.spring(response: 0.42, dampingFraction: 0.62)) {
+        withAnimation(MicaboMotion.celebrate) {
             bursting = true
         }
         Haptics.success()
@@ -324,7 +325,7 @@ private struct DiscountGiftBox: View {
                 .offset(y: -50 + lidOffset)
                 .opacity(isBursting ? 0 : 1)
         }
-        .animation(.spring(response: 0.34, dampingFraction: 0.6), value: lidLift)
+        .animation(MicaboMotion.celebrate, value: lidLift)
     }
 }
 
@@ -381,7 +382,7 @@ private struct DiscountRibbons: View {
             }
         }
         .onAppear {
-            withAnimation(.easeOut(duration: 0.55)) { out = true }
+            withAnimation(MicaboMotion.gentle) { out = true }
         }
     }
 }

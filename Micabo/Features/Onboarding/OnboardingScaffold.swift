@@ -29,8 +29,8 @@ enum OnboardingPalette {
     static let chartBad = MicaboColor.wrong
     /// **Le même vert, pour ce qui est gratuit** : « Essaie 3 jours gratuitement ».
     static let free = chartGood
-    /// L'or des étoiles.
-    static let star = Color(hex: 0xF5B942)
+    /// L'or des étoiles : le jaune du crayon, celui des récompenses.
+    static let star = MicaboBrand.pencil
 
     /// Le dégradé des mots mis en avant : le dégradé de marque, du bleu Micabo à son 700.
     static let mikaGradient: [Color] = MicaboColor.brandGradient
@@ -90,13 +90,15 @@ enum OnboardingSurface {
         isDark ? OnboardingPalette.white.opacity(0.22) : OnboardingPalette.cardStrong
     }
 
-    /// Le bouton est d'encre. Sur l'encre, il s'inverse.
+    /// **Le bouton est celui de l'app : l'accent** (`MicaboPrimaryFill`). Il était d'encre,
+    /// et le parcours passait d'un rond noir à un paywall bleu, puis à une app bleue : trois
+    /// boutons principaux pour une seule action, avancer. Sur l'encre, il s'inverse.
     var buttonTint: Color {
-        isDark ? OnboardingPalette.white : OnboardingPalette.ink
+        isDark ? OnboardingPalette.white : MicaboColor.accent
     }
 
     var buttonForeground: Color {
-        isDark ? OnboardingPalette.ink : OnboardingPalette.white
+        isDark ? OnboardingPalette.ink : MicaboColor.onInk
     }
 
     /// Éteint, il est gris clair et garde son texte blanc : c'est le bouton de Cal AI, et il
@@ -106,29 +108,27 @@ enum OnboardingSurface {
     }
 }
 
-/// **Le mouvement du parcours d'accueil, en un seul endroit.**
+/// **Le mouvement du parcours d'accueil : celui de l'app** (`MicaboMotion`).
 ///
-/// Une seule règle : **rien ne rebondit.** Un élément arrive par un fondu de deux dixièmes
-/// de seconde ; une page arrive par un glissement qui se pose sans dépasser. Les ressorts,
-/// les montées de quatorze points, le titre qui s'écrit mot à mot partout, la mascotte qui
-/// sursaute : tout ça donnait un parcours qui tremble et qui a l'air d'un jeu.
-///
-/// Les noms sont gardés pour les écrans qui les appellent ; toutes les courbes sont des
-/// fondus courts, et `rise` est nul.
+/// Une seule règle : **rien ne rebondit.** Le parcours avait ses ressorts (0,55 s et un
+/// rebond pour chaque entrée, un autre pour chaque réponse) : on passait d'un parcours qui
+/// sautille à une app qui se pose, et c'était le même produit. Les noms restent pour les
+/// écrans qui les appellent ; chacun renvoie à une courbe de `MicaboMotion`.
 enum OnboardingMotion {
-    /// Entrée d'un élément à l'ouverture d'un écran : le ressort doux de l'app.
-    static let enter = Animation.spring(duration: 0.55, bounce: 0.25)
+    /// Entrée d'un élément à l'ouverture d'un écran.
+    static let enter = MicaboMotion.standard
     /// La course d'un élément qui entre : il monte de quatorze points, comme dans l'app.
+    /// Nulle quand le mouvement est réduit (`OnboardingAppear`).
     static let rise: CGFloat = 14
     /// Réaction à un appui.
-    static let tap = Animation.easeOut(duration: 0.15)
-    /// La réaction d'une réponse qu'on choisit : un petit ressort.
-    static let select = Animation.spring(duration: 0.3, bounce: 0.35)
+    static let tap = MicaboMotion.quick
+    /// La réaction d'une réponse qu'on choisit.
+    static let select = MicaboMotion.quick
     /// Un élément qui change de forme sous les yeux.
-    static let shift = Animation.easeInOut(duration: 0.3)
+    static let shift = MicaboMotion.standard
     /// Passage d'un état à l'autre **dans** un écran. Les pages, elles, glissent :
     /// voir `slide`.
-    static let page = Animation.easeInOut(duration: 0.2)
+    static let page = MicaboMotion.quick
     /// Décalage entre deux éléments qui entrent à la suite.
     static let stagger = 0.05
     /// Le décalage dans une liste de réponses.
@@ -182,9 +182,9 @@ struct OnboardingFooterMika: View {
             .onChange(of: cheers) { _, _ in
                 mood = .happy
                 if !reduceMotion {
-                    withAnimation(.spring(duration: 0.22, bounce: 0.6)) { hop = true }
+                    withAnimation(MicaboMotion.quick) { hop = true }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
-                        withAnimation(.spring(duration: 0.35, bounce: 0.4)) { hop = false }
+                        withAnimation(MicaboMotion.standard) { hop = false }
                     }
                 }
                 calm(after: 1.6)
@@ -201,8 +201,8 @@ struct OnboardingFooterMika: View {
     }
 }
 
-/// **L'icône 3D d'une question**, posée sur son halo : elle arrive en ressort puis flotte
-/// doucement, comme les objets des écrans de Mika.
+/// **L'icône 3D d'une question**, posée sur son halo : elle arrive, puis reste immobile. Elle
+/// flottait sans fin ; une boucle sous une question qu'on lit tire l'œil de la question.
 struct OnboardingHeroIcon: View {
     let icon: MicaboIcon
 
@@ -215,7 +215,6 @@ struct OnboardingHeroIcon: View {
     private var size: CGFloat { Self.size }
 
     @State private var shown = false
-    @State private var up = false
     @Environment(\.onboardingStill) private var still
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -227,16 +226,13 @@ struct OnboardingHeroIcon: View {
                 .frame(width: size * 1.8, height: size * 1.8)
             MicaboIconView(icon: icon, size: size)
                 .shadow(color: MicaboColor.accent.opacity(0.22), radius: 18, y: 10)
-                .offset(y: up ? -5 : 4)
         }
         .frame(height: Self.height)
         .scaleEffect(isShown ? 1 : 0.4)
         .opacity(isShown ? 1 : 0)
         .accessibilityHidden(true)
         .onAppear {
-            withAnimation(.spring(duration: 0.55, bounce: 0.45).delay(0.05)) { shown = true }
-            guard !reduceMotion else { return }
-            withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true).delay(0.6)) { up = true }
+            withAnimation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion).delay(0.05)) { shown = true }
         }
     }
 }
@@ -427,7 +423,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
             .background(surface.background.ignoresSafeArea())
             .environment(\.onboardingSurface, surface)
             .onChange(of: showsHero) { _, shows in
-                withAnimation(.spring(duration: 0.4, bounce: 0.2)) { heroShown = shows }
+                withAnimation(MicaboMotion.standard) { heroShown = shows }
             }
     }
 
@@ -712,13 +708,16 @@ private struct OnboardingAppear: ViewModifier {
 
     @State private var isVisible = false
     @Environment(\.onboardingStill) private var still
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func body(content: Content) -> some View {
         content
             .opacity(isVisible || still ? 1 : 0)
-            .offset(y: isVisible || still ? 0 : OnboardingMotion.rise)
+            // Avec « Réduire les animations », l'élément apparaît sur place.
+            .offset(y: isVisible || still || reduceMotion ? 0 : OnboardingMotion.rise)
             .onAppear {
-                withAnimation(OnboardingMotion.enter.delay(Double(index) * stagger)) {
+                let curve = MicaboMotion.resolved(OnboardingMotion.enter, reduceMotion: reduceMotion)
+                withAnimation(curve.delay(reduceMotion ? 0 : Double(index) * stagger)) {
                     isVisible = true
                 }
             }
@@ -770,10 +769,14 @@ struct OnboardingContinueButton: View {
                     .minimumScaleFactor(0.82)
             }
             .foregroundStyle(surface.buttonForeground)
-            .frame(maxWidth: .infinity)
-            .frame(height: 58)
-            .background(isEnabled ? surface.buttonTint : surface.disabledButtonTint, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .padding(.horizontal, 20)
+            .padding(.vertical, 10)
+            // Une hauteur minimale, pas une hauteur : en allemand ou en très grand texte, le
+            // libellé passe sur deux lignes et pousse le bouton au lieu d'être coupé.
+            .frame(maxWidth: .infinity, minHeight: 58)
+            .background(isEnabled ? surface.buttonTint : surface.disabledButtonTint, in: RoundedRectangle(cornerRadius: MicaboButtonMetrics.radius, style: .continuous))
+            .shadow(color: surface.buttonTint.opacity(isEnabled && !surface.isDark ? 0.22 : 0), radius: 10, y: 6)
+            .contentShape(RoundedRectangle(cornerRadius: MicaboButtonMetrics.radius, style: .continuous))
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .medium))
         .disabled(!isEnabled || isLoading)
@@ -1088,7 +1091,7 @@ struct OnboardingCheck: View {
             }
         }
         .frame(width: 24, height: 24)
-        .animation(.spring(duration: 0.3, bounce: 0.4), value: isOn)
+        .animation(MicaboMotion.quick, value: isOn)
     }
 }
 

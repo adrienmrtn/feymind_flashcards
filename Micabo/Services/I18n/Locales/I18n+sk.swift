@@ -6,6 +6,8 @@ extension IosI18nCatalogs {
         "ios.pol.home.countdown": "zostáva dní: {n}",
         "ios.pol.home.proActiveA11y": "Micabo Pro je aktívne",
         "ios.pol.home.late": "Po termíne",
+        "ios.pol.sys.daysLeft": "zostáva dní: {days}",
+        "ios.pol.sys.tab.focus": "Fokus",
         "ios.onb5.building.sub": "Všetko ti pripravujem",
         "ios.onb5.building.title": "Vďaka, {name}!",
         "ios.onb5.exam.dateLabel": "Dátum skúšky",

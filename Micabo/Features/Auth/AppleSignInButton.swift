@@ -17,7 +17,11 @@ struct AppleSignInButton: UIViewRepresentable {
     var action: () -> Void
 
     func makeUIView(context: Context) -> ASAuthorizationAppleIDButton {
-        let button = ASAuthorizationAppleIDButton(authorizationButtonType: .continue, authorizationButtonStyle: .black)
+        // **Noir le jour, blanc la nuit**, comme le demandent les règles d'Apple : un bouton
+        // noir sur le graphite de la nuit ne se voyait plus. Le style ne change pas après la
+        // création ; l'appelant recrée le bouton quand l'apparence change (`.id`).
+        let style: ASAuthorizationAppleIDButton.Style = context.environment.colorScheme == .dark ? .white : .black
+        let button = ASAuthorizationAppleIDButton(authorizationButtonType: .continue, authorizationButtonStyle: style)
         button.cornerRadius = cornerRadius
         button.addTarget(context.coordinator, action: #selector(Coordinator.tapped), for: .touchUpInside)
         // Sans ça, la vue UIKit impose sa hauteur intrinsèque et la pile SwiftUI ne peut plus

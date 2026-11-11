@@ -100,6 +100,7 @@ struct WelcomeStepView: View {
     @State private var isReady = false
     @State private var mikaShown = false
     @Environment(\.onboardingStill) private var still
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var name: String {
         model.displayName.nilIfBlank ?? OnboardingPreferences.displayName ?? ""
@@ -118,7 +119,7 @@ struct WelcomeStepView: View {
                     .padding(.bottom, MicaboSpacing.lg)
                     .accessibilityHidden(true)
                     .onAppear {
-                        withAnimation(.spring(duration: 0.6, bounce: 0.45).delay(0.15)) { mikaShown = true }
+                        withAnimation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion).delay(0.15)) { mikaShown = true }
                     }
 
                 OnboardingReadingText(
@@ -139,7 +140,7 @@ struct WelcomeStepView: View {
                         startDelay: 0.25,
                         highlightsOnFinish: false,
                         onFinish: {
-                            withAnimation(.easeOut(duration: 0.4)) { isReady = true }
+                            withAnimation(MicaboMotion.standard) { isReady = true }
                         }
                     )
                     .padding(.horizontal, MicaboSpacing.xl)
@@ -151,7 +152,7 @@ struct WelcomeStepView: View {
                 Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .animation(.easeOut(duration: 0.3), value: titleRead)
+            .animation(MicaboMotion.standard, value: titleRead)
 
             OnboardingArrowBar {
                 model.advance()

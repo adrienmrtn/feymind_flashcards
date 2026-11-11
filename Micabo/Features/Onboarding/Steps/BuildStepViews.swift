@@ -110,7 +110,7 @@ struct BuildingStepView: View {
         didFinish = true
         Haptics.success()
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.holdAtEnd) {
-            withAnimation(.easeOut(duration: 0.35)) { showsAction = true }
+            withAnimation(MicaboMotion.standard) { showsAction = true }
         }
     }
 }

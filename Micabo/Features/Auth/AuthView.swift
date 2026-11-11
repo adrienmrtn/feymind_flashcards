@@ -27,6 +27,6 @@ struct AuthView: View {
         SignInScreen(placement: placement, onDismiss: onDismiss)
         // Une session ouverte depuis un lien reçu par courriel ferme l'écran d'elle-même :
         // c'est `RootView` qui décide de l'afficher, et il relit l'état du compte.
-        .animation(.easeOut(duration: 0.22), value: auth.message)
+        .animation(MicaboMotion.quick, value: auth.message)
     }
 }

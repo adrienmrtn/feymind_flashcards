@@ -241,8 +241,9 @@ enum MicaboRadius {
     /// Même valeur que la tuile, pour les vignettes du parcours d'accueil.
     static let cover: CGFloat = 14
     static let sm: CGFloat = 12
-    /// Boutons CTA principaux, et champs de saisie.
-    static let button: CGFloat = 14
+    /// Boutons (principaux, secondaires, connexion) et champs de saisie : la même forme pour
+    /// tout ce qu'on touche pour agir. Voir `MicaboButtonMetrics`.
+    static let button: CGFloat = 18
     static let md: CGFloat = 16
     /// Rangée-carte, encadré d'une fiche, rangée de choix du parcours d'accueil.
     static let lg: CGFloat = 18
@@ -684,8 +685,12 @@ private struct MicaboElevationStyle: ViewModifier {
     }
 }
 
-/// Surface blanche posée sur le fond. Le contraste des deux fonds suffit : pas de bordure,
-/// et l'ombre en deux couches pour décoller le bloc.
+/// **La carte de l'app** : une surface, un filet d'un point, une ombre légère.
+///
+/// C'est la même que la carte de Home (`homeCard`) : il y en avait deux, l'une cerclée,
+/// l'autre sans filet avec une ombre noire en deux couches, et une feuille de réglages ne
+/// ressemblait pas à la page qui l'avait ouverte. Le filet tient aussi la nuit, où l'ombre
+/// ne se voit plus.
 struct MicaboCardStyle: ViewModifier {
     var padding: CGFloat = MicaboSpacing.md
     var radius: CGFloat = MicaboRadius.card
@@ -695,6 +700,10 @@ struct MicaboCardStyle: ViewModifier {
         content
             .padding(padding)
             .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .strokeBorder(MicaboColor.stroke, lineWidth: 1)
+            }
             .micaboElevation(elevated ? .card : .row)
     }
 }
@@ -718,6 +727,11 @@ extension View {
     func micaboGroup(radius: CGFloat = MicaboRadius.group) -> some View {
         background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
             .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+            // Le filet de la carte de l'app (voir `MicaboCardStyle`) : le même bloc partout.
+            .overlay {
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .strokeBorder(MicaboColor.stroke, lineWidth: 1)
+            }
             .micaboElevation(.row)
     }
 

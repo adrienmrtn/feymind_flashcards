@@ -6,6 +6,8 @@ extension IosI18nCatalogs {
         "ios.pol.home.countdown": "{n} päeva jäänud",
         "ios.pol.home.proActiveA11y": "Micabo Pro on aktiivne",
         "ios.pol.home.late": "Hilinenud",
+        "ios.pol.sys.daysLeft": "{days, plural, one {1 päev jäänud} other {# päeva jäänud}}",
+        "ios.pol.sys.tab.focus": "Fookus",
         "ios.onb5.building.sub": "Valmistan sulle kõik ette",
         "ios.onb5.building.title": "Aitäh, {name}!",
         "ios.onb5.exam.dateLabel": "Eksami kuupäev",

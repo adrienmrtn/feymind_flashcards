@@ -89,7 +89,8 @@ struct RootView: View {
                     // ancienne installation, si la session a survécu - ne redescende.
                     Task { await sync.sync(context: modelContext) }
                 }
-                .transition(.opacity.combined(with: .scale(scale: 1.03)))
+                // Un fondu, sans échelle : une page qui « respire » en arrivant fait un saut.
+                .transition(.opacity)
             } else if showsAccountGate {
                 AuthView()
                     .transition(.opacity)
@@ -120,13 +121,15 @@ struct RootView: View {
             LaunchCurtain.hasLifted = true
             await Task.yield()
             try? await Task.sleep(for: .milliseconds(60))
-            withAnimation(reduceMotion ? .linear(duration: 0.2) : .easeOut(duration: 0.32)) {
+            withAnimation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion)) {
                 showsCurtain = false
             }
         }
-        .animation(.easeInOut(duration: 0.45), value: didCompleteOnboarding)
-        .animation(.easeInOut(duration: 0.35), value: showsAccountGate)
-        .animation(.easeInOut(duration: 0.45), value: pendingFirstImport)
+        // Le passage d'un écran racine à l'autre : la courbe commune, un fondu bref si le
+        // mouvement est réduit.
+        .animation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion), value: didCompleteOnboarding)
+        .animation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion), value: showsAccountGate)
+        .animation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion), value: pendingFirstImport)
         // Se connecter depuis les réglages referme la porte : sans ça, le drapeau « plus
         // tard » resterait vrai et l'écran de compte ne reviendrait jamais après une
         // déconnexion.

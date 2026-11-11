@@ -6,6 +6,8 @@ extension IosI18nCatalogs {
         "ios.pol.home.countdown": "még {n} nap",
         "ios.pol.home.proActiveA11y": "A Micabo Pro aktív",
         "ios.pol.home.late": "Késésben",
+        "ios.pol.sys.daysLeft": "még {days} nap",
+        "ios.pol.sys.tab.focus": "Fókusz",
         "ios.onb5.building.sub": "Mindent előkészítek neked",
         "ios.onb5.building.title": "Köszi, {name}!",
         "ios.onb5.exam.dateLabel": "A vizsga dátuma",
