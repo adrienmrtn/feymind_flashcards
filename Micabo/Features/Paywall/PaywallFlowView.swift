@@ -113,11 +113,11 @@ struct PaywallFlowView: View {
                 onSelect: { _ in plansCompared() }
             )
         }
-        // Le bleu de la scène sous la barre d'état et sous la poignée de la feuille, le papier
+        // Le blanc de la scène sous la barre d'état et sous la poignée de la feuille, le papier
         // de l'app dessous : c'est ce qu'on voit quand on tire la page.
         .background {
             VStack(spacing: 0) {
-                MicaboBrand.blue.frame(height: 320)
+                MicaboColor.surface.frame(height: 320)
                 MicaboColor.canvas
             }
             .ignoresSafeArea()
@@ -207,6 +207,9 @@ struct PaywallFlowView: View {
                 "price_display": PriceDisplay.current.analyticsValue,
             ])
             if promisedTrial {
+                // **Le rappel promis est posé** : la veille de la fin de l'essai, si les
+                // notifications sont permises (`TrialEndReminder`).
+                Task { await TrialEndReminder.schedule(trialDays: plan.trialDays) }
                 Analytics.track(.paywallTrialStarted, [
                     "trigger": .text(trigger?.rawValue ?? "inconnu"),
                     "plan": .text(plan.productID),

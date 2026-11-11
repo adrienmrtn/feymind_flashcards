@@ -400,6 +400,11 @@ enum OnboardingPreferences {
         static let studyHour = "micabo.onboarding.studyHour"
         /// Ce qui l'inquiète dans ses études, dans l'ordre de la liste.
         static let worries = "micabo.onboarding.worries"
+        /// Le prochain examen choisi (`SchoolExams`), et sa date.
+        static let exam = "micabo.onboarding.exam"
+        static let examDate = "micabo.onboarding.examDate"
+        /// L'examen du parcours a déjà été posé dans le calendrier : on ne le repose pas.
+        static let examPlaced = "micabo.onboarding.examPlaced"
         /// **Où le parcours en est**, pour le reprendre là après une app fermée. L'écran
         /// est écrit par son nom et non par son rang : le rang change dès qu'un écran
         /// s'ajoute, et une mise à jour reprendrait sur le mauvais.
@@ -418,7 +423,8 @@ enum OnboardingPreferences {
             institutionId, institutionName,
             dailyMinutes, weeklyMinutes, ratingAsked, pendingFirstImport, retiredNotificationsOptIn, completedAt,
             sheetLanguage, schoolTrack, schoolYear, displayName,
-            source, triedApps, blocker, examHorizon, method, studyHour, worries
+            source, triedApps, blocker, examHorizon, method, studyHour, worries,
+            exam, examDate, examPlaced
         ] + resume
     }
 
@@ -786,13 +792,45 @@ enum OnboardingPreferences {
         return stored == 0 ? nil : stored
     }
 
+    // MARK: Le prochain examen
+
+    /// L'identifiant de l'examen choisi (`SchoolExams.choice(id:)`).
+    static var examID: String? {
+        get { defaults.string(forKey: Key.exam) }
+        set { write(newValue, forKey: Key.exam) }
+    }
+
+    /// Le jour de l'examen choisi.
+    static var examDate: Date? {
+        get {
+            let stamp = defaults.double(forKey: Key.examDate)
+            return stamp > 0 ? Date(timeIntervalSince1970: stamp) : nil
+        }
+        set {
+            if let newValue {
+                defaults.set(newValue.timeIntervalSince1970, forKey: Key.examDate)
+            } else {
+                defaults.removeObject(forKey: Key.examDate)
+            }
+        }
+    }
+
+    static var examPlaced: Bool {
+        get { defaults.bool(forKey: Key.examPlaced) }
+        set { defaults.set(newValue, forKey: Key.examPlaced) }
+    }
+
     // MARK: La reprise
 
     /// L'écran où le parcours s'est arrêté. Voir `OnboardingStep.resumePoint`.
+    ///
+    /// Un écran retiré dans la version 2 du parcours (les fondateurs, les démonstrations de
+    /// Mika…) reprend sur l'écran qui l'a remplacé, plutôt que de renvoyer au logo.
     static var resumeStep: OnboardingStep? {
         get {
             guard let name = defaults.string(forKey: Key.resumeStep) else { return nil }
             return OnboardingStep.allCases.first { $0.analyticsName == name }
+                ?? OnboardingStep.replacement(forRetired: name)
         }
         set { write(newValue?.analyticsName, forKey: Key.resumeStep) }
     }

@@ -37,7 +37,7 @@ struct DailyTimeStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n.t("ios.quiz.time"),
+            title: i18n.t("ios.onb5.q.time"),
             // La question est longue — trois lignes en allemand — : un cran plus petit, et
             // tout tient au-dessus du rond, courbe et curseur compris.
             titleSize: 29,

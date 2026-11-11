@@ -25,7 +25,7 @@ struct StudyTimeStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n.t("ios.studyTime.title"),
+            title: i18n.t("ios.onb5.q.hour"),
             subtitle: i18n.t("ios.studyTime.sub"),
             scrolls: false,
             expandsContent: true

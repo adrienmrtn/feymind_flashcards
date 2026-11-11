@@ -52,6 +52,8 @@ final class OnboardingFlowTests: XCTestCase {
         detailed.advance()
         XCTAssertEqual(detailed.step, .year)
         detailed.advance()
+        XCTAssertEqual(detailed.step, .exam, "Le prochain examen, une fois l'année connue")
+        detailed.advance()
         XCTAssertEqual(detailed.step, .subjects)
 
         let generic = OnboardingModel()
@@ -59,6 +61,8 @@ final class OnboardingFlowTests: XCTestCase {
         while generic.step != .country { generic.advance() }
         generic.advance()
         XCTAssertEqual(generic.step, .level, "Un pays générique demande le palier large")
+        generic.advance()
+        XCTAssertEqual(generic.step, .exam)
         generic.advance()
         XCTAssertEqual(generic.step, .subjects)
 
@@ -69,8 +73,9 @@ final class OnboardingFlowTests: XCTestCase {
     // MARK: - Le quiz
 
     /// **Les questions se suivent dans l'ordre où chacune prépare la suivante** : les
-    /// matières, puis ce qui inquiète, puis les objectifs, puis la preuve qui répond à
-    /// l'inquiétude, les deux moyennes, le temps, l'heure, les rappels.
+    /// matières, puis ce qui inquiète (Mika y répond sur la page même), puis les objectifs, les
+    /// deux moyennes, le temps, l'heure, les rappels. Plus d'écran entre les objectifs et les
+    /// moyennes (version 2 : l'histoire, la recherche et le pont sont partis).
     func testTheQuizRunsFromSubjectsToReminders() {
         let model = self.model(advancingTo: .subjects)
 
@@ -79,15 +84,7 @@ final class OnboardingFlowTests: XCTestCase {
         model.advance()
         XCTAssertEqual(model.step, .goal)
         model.advance()
-        XCTAssertEqual(model.step, .proofRetention, "« On s'en occupe » répond à l'inquiétude")
-        model.advance()
-        XCTAssertEqual(model.step, .founders, "L'histoire de Micabo, après l'inquiétude")
-        model.advance()
-        XCTAssertEqual(model.step, .aiCompanion, "La recherche de Harvard")
-        model.advance()
-        XCTAssertEqual(model.step, .startingPoint, "Le pont vers les moyennes")
-        model.advance()
-        XCTAssertEqual(model.step, .currentAverage)
+        XCTAssertEqual(model.step, .currentAverage, "Les moyennes suivent les objectifs, sans écran entre")
         model.advance()
         XCTAssertEqual(model.step, .targetAverage)
         model.advance()
@@ -104,7 +101,7 @@ final class OnboardingFlowTests: XCTestCase {
     func testTheQuestionsAreExactlyTheScreensThatAsk() {
         let questions = OnboardingStep.allCases.filter(\.isQuestion)
         XCTAssertEqual(questions, [
-            .name, .country, .level, .schoolType, .year, .subjects, .worries, .goal,
+            .name, .country, .level, .schoolType, .year, .exam, .subjects, .worries, .goal,
             .currentAverage, .targetAverage, .dailyTime, .studyTime,
         ])
     }
@@ -157,27 +154,26 @@ final class OnboardingFlowTests: XCTestCase {
 
     // MARK: - Mika, puis l'offre
 
-    /// **Après le quiz, Mika** : il prépare le profil, annonce comment il peut aider, puis
-    /// six écrans — sa mission, les documents, les parcours, l'envie, la solution, la fin de
-    /// la pression. C'est en quittant le dernier qu'on demande un compte, dans une languette,
-    /// sur cette même page.
+    /// **Après le quiz, Mika** : il prépare le profil, puis trois écrans — les documents, les
+    /// parcours, le prof particulier. C'est en quittant le dernier qu'on demande un compte,
+    /// dans une languette, sur cette même page.
     func testMikaPresentsHimselfBeforeAskingForAnAccount() {
         let model = self.model(advancingTo: .building)
 
-        for expected in [OnboardingStep.featuresIntro, .mikaMission, .mikaSources, .mikaPaths, .mikaDesign, .mikaTutor, .mikaSolution, .mikaRelief] {
+        for expected in [OnboardingStep.mikaSources, .mikaPaths, .mikaTutor] {
             model.advance()
             XCTAssertEqual(model.step, expected)
         }
 
         model.advance()
-        XCTAssertEqual(model.step, .mikaRelief, "Le compte ne change pas de page")
+        XCTAssertEqual(model.step, .mikaTutor, "Le compte ne change pas de page")
         XCTAssertTrue(model.isAccountSheetPresented, "Le compte monte en languette")
     }
 
     /// Connexion ou « Passer », la languette se referme et le parcours reprend sur la preuve
     /// sociale. Le retour ne la rouvre pas.
     func testTheAccountSheetLeadsToTheOffer() {
-        let model = self.model(advancingTo: .mikaRelief)
+        let model = self.model(advancingTo: .mikaTutor)
         model.advance()
         XCTAssertTrue(model.isAccountSheetPresented)
 
@@ -186,13 +182,13 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(model.step, .socialProof)
     }
 
-    /// **Le parcours n'écrit plus de cours** : ni cases de dépôt, ni cours de démonstration,
-    /// ni cartes. Après Mika, la preuve et l'offre, dans cet ordre.
+    /// **Après Mika, le plan et l'offre** : la preuve, le calcul, la révélation du plan, la
+    /// chronologie de l'essai, le paywall. Le « payoff » vient juste avant l'offre.
     func testMikaLeadsStraightToTheProofAndTheOffer() {
-        let model = self.model(advancingTo: .mikaRelief)
+        let model = self.model(advancingTo: .mikaTutor)
         model.hasAccount = true
 
-        for expected in [OnboardingStep.socialProof, .supportUs, .planBuilding, .profileSummary, .freeTrialIntro, .trialOffer, .trialReminder, .paywall] {
+        for expected in [OnboardingStep.socialProof, .planBuilding, .profileSummary, .trialOffer, .paywall] {
             model.advance()
             XCTAssertEqual(model.step, expected)
         }
@@ -207,8 +203,7 @@ final class OnboardingFlowTests: XCTestCase {
                 XCTAssertTrue(text.contains("**"), "\(page) \(locale) met un mot en avant")
             }
         }
-        XCTAssertEqual(L10n.t("ios.quiz.time", locale: .fr), "Combien de temps es-tu prêt à étudier sur Micabo par jour ?")
-        XCTAssertEqual(L10n.t("ios.onb.features.intro", locale: .fr), "Voyons maintenant comment **Mika** peut t'aider.")
+        XCTAssertEqual(L10n.t("ios.onb5.q.time", locale: .fr), "Combien de temps par jour tu peux m'accorder ?")
     }
 
     /// L'écran de calcul du plan ne doit pas passer plus vite qu'on ne le lit : un
@@ -264,7 +259,7 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(model.step, .building)
         XCTAssertFalse(model.canGoBack, "Un chargement ne porte pas de flèche")
         model.advance()
-        XCTAssertEqual(model.step, .featuresIntro)
+        XCTAssertEqual(model.step, .mikaSources)
         XCTAssertTrue(model.canGoBack)
         model.goBack()
         XCTAssertEqual(model.step, .notifications, "Le retour enjambe le chargement")
@@ -287,6 +282,8 @@ final class OnboardingFlowTests: XCTestCase {
         let model = OnboardingModel()
         model.select(country: .other)
         while model.step != .subjects { model.advance() }
+        model.goBack()
+        XCTAssertEqual(model.step, .exam)
         model.goBack()
         XCTAssertEqual(model.step, .level, "Le palier large, pas l'année d'une filière inexistante")
         model.goBack()
@@ -327,12 +324,47 @@ final class OnboardingFlowTests: XCTestCase {
         }
     }
 
-    /// **Le parcours garde sa longueur** : le cours, les cartes et les cinq écrans de
-    /// fonctionnalités sont partis (treize écrans), Mika en a apporté six ; puis l'histoire,
-    /// la recherche, le point de départ et le prof particulier ; puis le calcul du parcours, le
-    /// profil, l'engagement et l'essai offert. Trente-six écrans.
+    /// **Le parcours v2 : vingt-cinq écrans** (trente-six avant). Partis : la réponse aux
+    /// inquiétudes (devenue la réaction de Mika), les fondateurs, la recherche (passée sur la
+    /// preuve), le pont vers les moyennes, cinq écrans de démonstration de Mika, « soutiens-
+    /// nous », l'essai offert et le rappel (regroupés dans la chronologie). Arrivé : l'examen.
+    /// Un élève de France en voit vingt-quatre (le palier large se saute).
     func testTheFlowKeepsItsLength() {
-        XCTAssertEqual(OnboardingStep.allCases.count, 36)
+        XCTAssertEqual(OnboardingStep.allCases.count, 25)
+        XCTAssertEqual(OnboardingStep.allCases.filter { !$0.isSkipped(for: .fr) }.count, 24)
+        XCTAssertEqual(OnboardingStep.allCases.filter { !$0.isSkipped(for: .other) }.count, 23)
+    }
+
+    /// **L'ordre v2, écran par écran** : l'accroche, le profil scolaire, les objectifs, Mika,
+    /// le plan et l'offre.
+    func testTheV2OrderIsLocked() {
+        XCTAssertEqual(OnboardingStep.allCases, [
+            .hookLogo, .name, .welcome,
+            .country, .level, .schoolType, .year, .exam, .subjects,
+            .worries, .goal, .currentAverage, .targetAverage, .dailyTime, .studyTime, .notifications,
+            .building, .mikaSources, .mikaPaths, .mikaTutor,
+            .socialProof, .planBuilding, .profileSummary, .trialOffer, .paywall,
+        ])
+    }
+
+    /// **Les noms des écrans gardés ne changent pas** : ce sont ceux des statistiques
+    /// (`onboarding_step`), et un nom changé coupe la courbe.
+    func testKeptScreensKeepTheirAnalyticsNames() {
+        let names = Set(OnboardingStep.allCases.map(\.analyticsName))
+        for kept in ["hookLogo", "name", "welcome", "country", "level", "schoolType", "year", "subjects",
+                     "worries", "goal", "currentAverage", "targetAverage", "dailyTime", "studyTime",
+                     "notifications", "building", "mikaSources", "mikaPaths", "mikaTutor", "socialProof",
+                     "planBuilding", "profileSummary", "trialOffer", "paywall"] {
+            XCTAssertTrue(names.contains(kept), kept)
+        }
+    }
+
+    /// **Un parcours commencé avant la v2 reprend au même moment**, pas au logo.
+    func testARetiredV1ScreenResumesOnItsReplacement() {
+        XCTAssertEqual(OnboardingStep.replacement(forRetired: "founders"), .currentAverage)
+        XCTAssertEqual(OnboardingStep.replacement(forRetired: "mikaRelief"), .mikaTutor)
+        XCTAssertEqual(OnboardingStep.replacement(forRetired: "trialReminder"), .trialOffer)
+        XCTAssertNil(OnboardingStep.replacement(forRetired: "trainCards"))
     }
 
     /// **Une page ne se quitte pas avant d'avoir été vue** : un second appui sur le rond,
@@ -344,7 +376,7 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(model.step, .goal, "Trop tôt : la page reste")
         model.minimumDwell = 0
         model.advance()
-        XCTAssertEqual(model.step, .proofRetention)
+        XCTAssertEqual(model.step, .currentAverage)
     }
 
     /// **Un appui trop tôt n'est plus perdu** : il attend la fin du temps minimal, puis la
@@ -358,7 +390,7 @@ final class OnboardingFlowTests: XCTestCase {
 
         let advanced = expectation(description: "la page avance à la fin du temps minimal")
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-            XCTAssertEqual(model.step, .proofRetention, "Une seule page, malgré deux appuis")
+            XCTAssertEqual(model.step, .currentAverage, "Une seule page, malgré deux appuis")
             advanced.fulfill()
         }
         wait(for: [advanced], timeout: 3)
@@ -985,7 +1017,7 @@ final class OnboardingFlowTests: XCTestCase {
         }
 
         OnboardingPreferences.displayName = "Lina"
-        OnboardingPreferences.resumeStep = .mikaRelief
+        OnboardingPreferences.resumeStep = .mikaTutor
 
         let resumed = OnboardingModel.resuming(in: nil)
         resumed.advance()

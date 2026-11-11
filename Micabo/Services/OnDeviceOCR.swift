@@ -122,6 +122,43 @@ enum OnDeviceOCR {
         }
     }
 
+    /// **Un énoncé d'exercice** (le scanner d'exercices) : une seule photo déjà recadrée, lue
+    /// dans la langue de l'app d'abord, puis celles que Vision reconnaît de lui-même. Les
+    /// autres appelants gardent `recognize(in:)`, en français et en anglais.
+    static func recognizeExercise(in image: UIImage, preferred: [String]) async -> String {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                let prepared = rasterized(image, maxDimension: 2400)
+                guard let cgImage = prepared.cgImage else {
+                    continuation.resume(returning: "")
+                    return
+                }
+                let request = VNRecognizeTextRequest { request, _ in
+                    let observations = (request.results as? [VNRecognizedTextObservation]) ?? []
+                    let lines = observations.compactMap { $0.topCandidates(1).first?.string }
+                    continuation.resume(returning: lines.joined(separator: "\n"))
+                }
+                request.recognitionLevel = .accurate
+                request.usesLanguageCorrection = true
+                let supported = (try? request.supportedRecognitionLanguages()) ?? ["fr-FR", "en-US"]
+                let wanted = (preferred + ["fr-FR", "en-US", "de-DE", "es-ES", "it-IT", "pt-BR"])
+                    .filter { supported.contains($0) }
+                var unique: [String] = []
+                for language in wanted where !unique.contains(language) { unique.append(language) }
+                request.recognitionLanguages = unique.isEmpty ? ["en-US"] : unique
+                if #available(iOS 16.0, *) {
+                    request.automaticallyDetectsLanguage = true
+                }
+                let handler = VNImageRequestHandler(cgImage: cgImage, orientation: .up)
+                do {
+                    try handler.perform([request])
+                } catch {
+                    continuation.resume(returning: "")
+                }
+            }
+        }
+    }
+
     static func recognize(images: [UIImage]) async -> String {
         var pages: [String] = []
         for image in images.prefix(pageLimit) {

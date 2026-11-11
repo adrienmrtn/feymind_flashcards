@@ -70,8 +70,7 @@ struct LessonCard: View {
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .micaboElevation(.row)
+            .homeCard(radius: MicaboStage.tileRadius)
         }
         .buttonStyle(MicaboPressableButtonStyle(feedback: .soft))
         .accessibilityElement(children: .combine)
@@ -176,12 +175,11 @@ struct LessonFolderCard: View {
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .homeCard(radius: MicaboStage.tileRadius)
             .overlay(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous)
                     .strokeBorder(isTargeted ? MicaboColor.accent : .clear, lineWidth: 2)
             )
-            .micaboElevation(.row)
         }
         .buttonStyle(MicaboPressableButtonStyle(feedback: .soft))
     }
@@ -207,7 +205,7 @@ struct NewLessonRow: View {
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
             .overlay(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous)
                     .strokeBorder(MicaboColor.stroke, style: StrokeStyle(lineWidth: 1.5, dash: [6, 5]))
             )
         }

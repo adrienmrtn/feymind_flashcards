@@ -2,72 +2,59 @@ import StoreKit
 import SwiftUI
 import UIKit
 
-// MARK: - « On a aidé 45 000 élèves »
+// MARK: - La preuve
 
-/// **La preuve sociale, au moment où elle a quelque chose à prouver.** Elle vient après
-/// que Mika s'est présenté, pas avant : posée en ouverture, elle demanderait de croire une
-/// app qu'on n'a pas vue ; posée ici, elle répond à la seule question qui reste — est-ce
-/// que ça marche pour d'autres que moi ? La recherche, elle, a son écran plus tôt
-/// (« L'IA est le compagnon le plus incroyable pour apprendre »).
+/// **La preuve, sans un chiffre inventé.** Mika vient de se présenter ; l'écran répond à la
+/// seule question qui reste — est-ce que ça marche ? — par ce qui est publié et sourcé :
 ///
-/// La forme est celle de la référence : « on a aidé », le chiffre peint du dégradé, les
-/// lauriers autour de l'App Store, puis les avis en carrousel, qui défilent seuls et se
-/// laissent glisser. Les photos viennent du catalogue (`ReviewAvatar1` à `5`) ; en
-/// attendant, une initiale sur le dégradé tient leur place.
+/// - l'essai de Harvard (Kestin et al., Scientific Reports, 2025), dans sa carte ;
+/// - ce qu'il reste d'un cours une semaine après, relu ou travaillé en se testant
+///   (Karpicke & Roediger, Science, 2008) — la méthode de Mika.
 ///
-/// La demande de note vient à l'écran suivant, « Soutiens-nous » (`SupportUsStepView`).
+/// **Ce qui en est parti** (version 2) : « On a aidé 45 000 élèves », « 4,8 », « #1 des
+/// assistants d'étude IA » et les avis signés d'un prénom et d'une ville. Rien dans le dépôt
+/// ne les sourçait (seulement les maquettes des captures de l'App Store) : un chiffre qu'on
+/// ne peut pas montrer ne se montre pas. Les avis restent dans le code
+/// (`OnboardingReviews`), prêts pour de vrais avis.
 struct SocialProofStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
         VStack(spacing: 0) {
-            GeometryReader { proxy in
-                // **Tout tient au-dessus du rond.** Les avis passaient sous le pied de page sur les
-                // écrans courts : Mika s'efface d'abord, puis les cartes raccourcissent, et la page
-                // ne défile qu'en dernier recours.
-                let room = proxy.size.height
-                let showsMika = room >= 650
-                let cardHeight = min(OnboardingReviewCarousel.fullHeight, max(214, room - (showsMika ? 356 : 238)))
-                ScrollView {
-                    VStack(spacing: 0) {
-                        VStack(spacing: 4) {
-                            if showsMika {
-                                MikaMascot(mood: .celebrate, size: 104, reactsToTap: true, frame: .circle)
-                                    .padding(.bottom, 6)
-                                    .accessibilityHidden(true)
-                            }
+            OnboardingCenteredScroll {
+                VStack(spacing: 22) {
+                    VStack(spacing: 14) {
+                        OnboardingMikaOnLine(mood: .celebrate, size: 128)
+                            .onboardingAppear(index: 0)
 
-                            Text(i18n.t("ios.onb.social.title"))
-                                .font(OnboardingPalette.title(32))
-                                .tracking(-0.6)
-                                .foregroundStyle(OnboardingPalette.ink)
-                                .multilineTextAlignment(.center)
-
-                            MikaGradientText(
-                                text: i18n.t("ios.onb.social.count", ["n": OnboardingProofFigures.text(OnboardingProofFigures.students, locale: i18n.locale)]),
-                                size: 34,
-                                weight: .heavy
-                            )
-                        }
-                        .padding(.top, MicaboSpacing.sm)
-                        .padding(.horizontal, MicaboSpacing.screen)
-                        .onboardingAppear(index: 1)
-
-                        laurels
-                            .padding(.top, 22)
-                            .onboardingAppear(index: 2)
-
-                        OnboardingReviewCarousel(reviews: OnboardingReviews.all(locale: i18n.locale), cardHeight: cardHeight)
-                            .padding(.top, 24)
-                            .onboardingAppear(index: 4)
+                        OnboardingAccentText(template: i18n.t("ios.onb5.proof.title"), size: 28, alignment: .center)
+                            .padding(.horizontal, MicaboSpacing.sm)
+                            .onboardingAppear(index: 1)
                     }
-                    .padding(.bottom, MicaboSpacing.md)
-                    .frame(width: proxy.size.width)
-                    .frame(minHeight: room, alignment: .top)
+
+                    ResearchQuoteCard(compact: true)
+                        .onboardingAppear(index: 2)
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        OnboardingBarsChart(
+                            title: i18n.t("ios.proof.retention.caption"),
+                            bars: [
+                                .init(label: i18n.t("ios.proof.retention.reread"), value: OnboardingProofFigures.retainedByRereading, tint: OnboardingPalette.chartBad),
+                                .init(label: i18n.t("ios.proof.retention.testing"), value: OnboardingProofFigures.retainedByTesting, tint: OnboardingPalette.chartGood),
+                            ]
+                        )
+                        Text(i18n.t("ios.journey.source"))
+                            .font(MicaboFont.ui(11.5, weight: .semibold))
+                            .foregroundStyle(MicaboColor.inkTertiary)
+                    }
+                    .padding(16)
+                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+                    .onboardingAppear(index: 3)
                 }
-                .scrollIndicators(.hidden)
-                .scrollBounceBehavior(.basedOnSize)
+                .padding(.horizontal, MicaboSpacing.screen)
+                .padding(.vertical, MicaboSpacing.md)
             }
 
             OnboardingArrowBar {
@@ -77,35 +64,6 @@ struct SocialProofStepView: View {
         .onboardingChromeInset()
         .background(OnboardingPalette.white.ignoresSafeArea())
         .environment(\.onboardingSurface, .canvas)
-    }
-
-    /// Les lauriers, et ce qu'ils encadrent.
-    private var laurels: some View {
-        HStack(spacing: 14) {
-            Image(systemName: "laurel.leading")
-                .font(.system(size: 44, weight: .regular))
-                .foregroundStyle(OnboardingPalette.grayLight)
-
-            VStack(spacing: 5) {
-                HStack(spacing: 6) {
-                    Image(systemName: "apple.logo")
-                        .font(.system(size: 22, weight: .medium))
-                    Text(i18n.t("ios.onb.social.store"))
-                        .font(MicaboFont.ui(24, weight: .semibold))
-                        .tracking(-0.4)
-                }
-                .foregroundStyle(OnboardingPalette.ink)
-
-                Text(i18n.t("ios.onb.social.rank"))
-                    .font(MicaboFont.ui(15, weight: .medium))
-                    .foregroundStyle(OnboardingPalette.gray)
-            }
-
-            Image(systemName: "laurel.trailing")
-                .font(.system(size: 44, weight: .regular))
-                .foregroundStyle(OnboardingPalette.grayLight)
-        }
-        .accessibilityElement(children: .combine)
     }
 }
 

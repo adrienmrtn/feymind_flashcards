@@ -3,10 +3,10 @@ import SwiftUI
 
 // MARK: - Le haut de la page
 
-/// **La journée de concentration**, sur la scène bleue de la marque : les minutes du jour dans
-/// un anneau qui se remplit vers l'objectif (le temps que l'élève s'est donné dans le parcours
-/// d'accueil), la série, et le grand bouton. Mika sort du bas de la scène, posé derrière le
-/// panneau blanc du bouton, comme sur Home.
+/// **La journée de concentration**, sur une carte claire comme le plan du jour de Home : les
+/// minutes du jour dans un anneau bleu qui se remplit vers l'objectif (le temps que l'élève
+/// s'est donné dans le parcours d'accueil), la série, et le grand bouton bleu. Mika dépasse du
+/// bord du bouton, noir sur le blanc de la carte.
 struct FocusHeroCard: View {
     let minutesToday: Int
     let goalMinutes: Int
@@ -17,9 +17,9 @@ struct FocusHeroCard: View {
     @Environment(\.homeStill) private var still
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    static let mikaSize: CGFloat = 116
+    static let mikaSize: CGFloat = 112
     /// Ce qui passe derrière le bouton : le bas du buste.
-    static let mikaSink: CGFloat = 24
+    static let mikaSink: CGFloat = 16
     /// La place que le buste prend à droite de la colonne de texte.
     static let mikaReserve: CGFloat = 88
 
@@ -36,72 +36,63 @@ struct FocusHeroCard: View {
                     .font(MicaboFont.ui(12.5, weight: .black))
                     .tracking(MicaboTracking.caps)
                     .textCase(.uppercase)
-                    .foregroundStyle(MicaboStage.inkSecondary)
+                    .foregroundStyle(MicaboColor.accentInk)
                 Spacer()
                 streakPill
             }
-            HStack(alignment: .center, spacing: 12) {
+            HStack(alignment: .center, spacing: 14) {
                 ring
+                // Le titre prend toute la largeur : la tête de Mika ne monte qu'à hauteur de la
+                // seconde ligne, qui seule lui laisse sa place.
                 VStack(alignment: .leading, spacing: 4) {
                     Text(loc("ios.focus.minutesToday"))
-                        .font(MicaboFont.ui(15, weight: .black))
-                        .foregroundStyle(MicaboStage.ink)
+                        .font(MicaboFont.ui(16, weight: .black))
+                        .foregroundStyle(MicaboColor.ink)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(reached ? loc("ios.focus.goalReached") : loc("ios.focus.goalLeft", ["minutes": CalendarTime.duration(minutes: goalMinutes - minutesToday)]))
-                        .font(MicaboFont.ui(13, weight: .bold))
-                        .foregroundStyle(reached ? MicaboBrand.pencil : MicaboStage.inkSecondary)
+                        .font(MicaboFont.ui(13.5, weight: .bold))
+                        .foregroundStyle(reached ? MicaboColor.correctInk : MicaboColor.inkSecondary)
                         .fixedSize(horizontal: false, vertical: true)
+                        .padding(.trailing, Self.mikaReserve - 14)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                Color.clear.frame(width: Self.mikaReserve - 12, height: 1)
             }
             .padding(.top, 10)
-            .padding(.bottom, 18)
+            .padding(.bottom, 16)
 
-            // Le bouton blanc passe devant le bas du buste : Mika regarde par-dessus.
+            // Le bouton bleu passe devant le bas du buste : Mika dépasse de son bord.
             Button(action: onStart) {
                 Label(loc("ios.focus.start"), systemImage: "play.fill")
-                    .font(MicaboFont.ui(17, weight: .heavy))
-                    .foregroundStyle(MicaboBrand.blue700)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
-                    .minimumScaleFactor(0.85)
-                    .padding(.horizontal, 16)
-                    .frame(maxWidth: .infinity, minHeight: 54)
-                    .background(Color.white, in: RoundedRectangle(cornerRadius: MicaboStage.buttonRadius, style: .continuous))
-                    .shadow(color: MicaboBrand.blue900.opacity(0.18), radius: 10, y: 5)
             }
-            .buttonStyle(HomePressStyle(scale: 0.97, feedback: .medium))
+            .buttonStyle(MicaboBrandButtonStyle(minHeight: 54))
             .background(alignment: .topTrailing) {
-                MikaMascot(mood: reached ? .happy : .idle, size: Self.mikaSize, frozenAt: still ? 0.5 : nil, backdrop: .blue)
-                    .offset(x: 2, y: -Self.mikaSize + Self.mikaSink)
+                MikaMascot(mood: reached ? .happy : .idle, size: Self.mikaSize, frozenAt: still ? 0.5 : nil)
+                    .offset(x: -2, y: -Self.mikaSize + Self.mikaSink)
                     .accessibilityHidden(true)
             }
         }
         .padding(18)
-        .background(MicaboBrandBackdrop(sparkles: true))
-        .clipShape(RoundedRectangle(cornerRadius: MicaboStage.heroRadius, style: .continuous))
-        .shadow(color: MicaboBrand.blue.opacity(0.3), radius: 20, y: 10)
+        .homeCard()
     }
 
     private var ring: some View {
         ZStack {
             Circle()
-                .stroke(Color.white.opacity(0.22), lineWidth: 10)
+                .stroke(MicaboColor.track, lineWidth: 10)
             Circle()
                 .trim(from: 0, to: max(0.001, progress))
-                .stroke(reached ? MicaboBrand.pencil : Color.white, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                .stroke(reached ? AnyShapeStyle(MicaboColor.correct) : AnyShapeStyle(MicaboStage.fill), style: StrokeStyle(lineWidth: 10, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             VStack(spacing: -2) {
                 Text("\(minutesToday)")
                     .font(MicaboFont.number(30))
-                    .foregroundStyle(MicaboStage.ink)
+                    .foregroundStyle(MicaboColor.ink)
                     .monospacedDigit()
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
                 Text(loc("ios.focus.minUnit"))
                     .font(MicaboFont.ui(12, weight: .black))
-                    .foregroundStyle(MicaboStage.inkSecondary)
+                    .foregroundStyle(MicaboColor.inkSecondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
             }
@@ -119,12 +110,12 @@ struct FocusHeroCard: View {
                 .opacity(streakLit ? 1 : 0.6)
             Text("\(streak)")
                 .font(MicaboFont.number(15))
-                .foregroundStyle(MicaboStage.ink)
+                .foregroundStyle(streakLit ? MicaboColor.flameInk : MicaboColor.inkTertiary)
                 .monospacedDigit()
         }
         .padding(.horizontal, 10)
         .frame(minHeight: 30)
-        .background(Color.white.opacity(0.18), in: Capsule())
+        .background(MicaboColor.canvas, in: Capsule())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(L10n.t("ios.streak.pillA11y", locale: .resolved(), vars: ["count": "\(streak)"])))
     }

@@ -67,6 +67,9 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     /// achetée promettait l'essai à ce compte. Les deux portent `price_display`, la variante
     /// du test de prix (`PriceDisplay`).
     case paywallTrialStarted = "paywall_trial_started"
+    /// **Le rappel de fin d'essai est posé** (`TrialEndReminder`) : la veille de la fin, si les
+    /// notifications sont permises. Sans propriété.
+    case paywallTrialReminder = "paywall_trial_reminder"
 
     // MARK: Import
 
@@ -114,6 +117,23 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     case mikaBlocked = "mika_blocked"
     /// Une carte proposée par Mika, rangée dans un cours.
     case mikaCardAdded = "mika_card_added"
+
+    // MARK: Scanner d'exercices
+
+    /// Un énoncé lu ou tapé : `source` (`camera`, `library`, `typed`) et `subject`, la matière
+    /// devinée. Jamais l'énoncé lui-même.
+    case solverCaptured = "solver_captured"
+    /// Une photo dont l'appareil n'a rien lu, avec sa `source`.
+    case solverUnreadable = "solver_unreadable"
+    /// Une solution arrivée : `subject`, `steps`, `structured` (les balises lues) et `source`.
+    case solverSolved = "solver_solved"
+    /// « Je ne comprends pas cette étape », répondu : `subject` et `step`.
+    case solverStepHelp = "solver_step_help"
+    /// Une réponse à l'exercice d'entraînement corrigée : `subject`, `result` (`right`,
+    /// `wrong`, `unknown`).
+    case solverPracticeChecked = "solver_practice_checked"
+    /// Un message envoyé dans un fil de « Demande à Mika », avec `subject`.
+    case tutorAsked = "tutor_asked"
 
     // MARK: Leçons et synchro
 

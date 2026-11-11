@@ -367,10 +367,13 @@ private struct MikaSourcesScene: View {
                         .position(home)
                 }
 
-                MikaMascot(mood: mood, size: min(150, proxy.size.height * 0.42), frame: .circle)
-                    .scaleEffect(munch ? 1.08 : 1)
+                // Mika en buste, posé sur le bas de la scène et coupé par sa ligne : sur le
+                // papier de l'app, plus dans une pastille bleue.
+                let side = min(150, proxy.size.height * 0.42)
+                OnboardingMikaOnLine(mood: mood, size: side)
+                    .scaleEffect(munch ? 1.06 : 1, anchor: .bottom)
                     .popIn(shown || still)
-                    .position(mika)
+                    .position(x: mika.x, y: proxy.size.height - OnboardingMikaOnLine.height(for: side) / 2)
 
                 if full {
                     Sparkles(points: [CGPoint(x: 0.3, y: 0.55), CGPoint(x: 0.7, y: 0.5), CGPoint(x: 0.36, y: 0.88), CGPoint(x: 0.66, y: 0.9)])
@@ -442,11 +445,10 @@ private struct MikaPathsScene: View {
                 OnboardingLessonPhone(fades: true, animated: true, widthRatio: 0.74)
                     .frame(width: proxy.size.width, height: proxy.size.height)
 
-                MikaMascot(mood: .wave, size: min(110, proxy.size.height * 0.3), frame: .circle)
-                    .bobbing(4, period: 2.4)
+                // Mika regarde depuis le bord bas de la scène, en buste sur sa ligne.
+                OnboardingMikaOnLine(mood: .wave, size: min(120, proxy.size.height * 0.32))
                     .popIn(shown || still, delay: 0.9)
-                    .padding(.leading, proxy.size.width * 0.04)
-                    .padding(.bottom, proxy.size.height * 0.08)
+                    .padding(.leading, proxy.size.width * 0.02)
             }
         }
         .onAppear { shown = true }
@@ -1482,5 +1484,33 @@ private struct OnboardingLessonScreen: View {
                 .offset(x: shown ? 0 : (titleOnRight ? -12 : 12))
                 .position(x: titleX, y: y)
         }
+    }
+}
+
+
+// MARK: - Mika sur sa ligne
+
+/// **Mika en buste, posé sur une ligne** : la coupe du buste repose sur un trait du filet de
+/// l'app (règle 1 du kit). C'est la forme de Mika sur le papier — crème le jour, nuit la nuit
+/// —, celle des questions du parcours (`OnboardingMikaPrompt`), sans pastille bleue.
+struct OnboardingMikaOnLine: View {
+    var mood: MikaMood = .idle
+    var size: CGFloat = 120
+    var animates = true
+
+    @Environment(\.onboardingStill) private var still
+
+    /// La part visible du buste : l'image garde de l'air au-dessus de lui pour ses effets.
+    static func height(for size: CGFloat) -> CGFloat { size * 0.74 + 2 }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            MikaMascot(mood: mood, size: size, reactsToTap: true, frozenAt: still ? 0 : nil, backdrop: .surface, animates: animates)
+                .frame(width: size, height: size * 0.74, alignment: .bottom)
+            Capsule()
+                .fill(MicaboColor.stroke)
+                .frame(width: size * 1.3, height: 2)
+        }
+        .accessibilityHidden(true)
     }
 }

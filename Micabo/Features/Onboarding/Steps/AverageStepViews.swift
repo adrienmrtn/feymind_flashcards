@@ -21,7 +21,7 @@ struct CurrentAverageStepView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     private var scale: DesiredGradeScale {
-        DesiredGradeScale.for(model.country)
+        model.gradeScale.scale
     }
 
     /// Le barème du pays, précédé du cran « moins que ça ».
@@ -35,8 +35,7 @@ struct CurrentAverageStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n.t("ios.averageTitle"),
-            subtitle: i18n.t("ios.averageSub"),
+            title: i18n.t("ios.onb5.q.current"),
             // La roue a ses hauteurs propres : la page la centre, et défile si elle ne tient
             // pas.
             expandsContent: true
@@ -55,7 +54,8 @@ struct CurrentAverageStepView: View {
                             }
                         }
                     ),
-                    label: i18n.t("ios.averageTitle")
+                    label: i18n.t("ios.onb5.q.current"),
+                    caption: model.gradeScale.caption(locale: i18n.locale)
                 )
                 Spacer(minLength: 0)
                 Spacer(minLength: 0)
@@ -78,7 +78,7 @@ struct TargetAverageStepView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     private var choices: [GradeTick] {
-        DesiredGradeScale.for(model.country).targets(above: model.currentScore)
+        model.gradeScale.scale.targets(above: model.currentScore)
     }
 
     /// Celui qui a déjà le haut du barème n'a rien à choisir : il le lit, et il continue.
@@ -86,13 +86,14 @@ struct TargetAverageStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n.t("ios.targetTitle"),
+            title: isAtTop ? i18n.t("ios.targetAtTop") : i18n.t("ios.onb5.q.target"),
             // Rien quand il reste quelque chose à choisir : `ios.targetLead` expliquait
             // comment répondre à une question qui n'en a pas besoin. La ligne du haut du
             // barème, elle, n'explique pas — elle remplace la roue.
-            subtitle: isAtTop ? i18n.t("ios.targetAtTop") : i18n.t("ios.targetSub"),
+            subtitle: isAtTop ? i18n.t("ios.targetAtTop") : nil,
             scrolls: false,
-            expandsContent: true
+            expandsContent: true,
+            reaction: nil
         ) {
             if !isAtTop {
                 VStack(spacing: 28) {
@@ -107,14 +108,15 @@ struct TargetAverageStepView: View {
                         // des deux côtés, et un objectif qui n'est ni le cran juste
                         // au-dessus du sien ni le haut du barème.
                         fallbackIndex: (choices.count - 1) / 2,
-                        label: i18n.t("ios.targetTitle")
+                        label: i18n.t("ios.onb5.q.target"),
+                        caption: model.gradeScale.caption(locale: i18n.locale)
                     )
 
                     if let current = model.currentScore, let target = model.targetScore {
                         GradeGapCard(
                             current: current,
                             target: target,
-                            scale: DesiredGradeScale.for(model.country)
+                            scale: model.gradeScale.scale
                         )
                         .transition(.opacity)
                     }
