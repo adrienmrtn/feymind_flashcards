@@ -26,10 +26,12 @@ struct LessonCard: View {
                     .background(course.tone.pale, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 6) {
+                    // Quatre lignes au plus : un titre long en très grand texte sur un iPhone SE
+                    // se lit en entier.
                     Text(course.title)
                         .font(MicaboFont.label)
                         .foregroundStyle(MicaboColor.ink)
-                        .lineLimit(3)
+                        .lineLimit(4)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(summary.caption)
