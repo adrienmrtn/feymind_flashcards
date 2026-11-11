@@ -21,6 +21,16 @@ struct SheetExportView: View {
                         Label(L10n.t("ios.sup.export.share", locale: .resolved()), systemImage: "square.and.arrow.up")
                     }
                     .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
+                } else if failed {
+                    // Une fiche qui n'a pas pu s'écrire se réessaie d'ici : avant, l'écran
+                    // disait « échec » et n'offrait que la croix (lot 7).
+                    Button {
+                        failed = false
+                        Task { await write() }
+                    } label: {
+                        Label(L10n.t("ios.retry", locale: .resolved()), systemImage: "arrow.clockwise")
+                    }
+                    .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
                 }
             }
             .padding(.horizontal, MicaboSpacing.screen)
@@ -92,9 +102,9 @@ struct SheetExportCard<Action: View>: View {
                 .multilineTextAlignment(.center)
                 .opacity(ready ? 1 : 0)
             }
-            if ready {
+            if ready || failed {
                 action
-            } else if !failed {
+            } else {
                 ProgressView().tint(MicaboColor.accent)
                     .frame(height: 54)
             }
