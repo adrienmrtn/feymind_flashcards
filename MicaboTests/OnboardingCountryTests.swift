@@ -24,8 +24,8 @@ final class OnboardingCountryTests: XCTestCase {
     }
 
     private func examTitles(_ yearID: String, region: String) -> [String] {
-        guard let (track, year) = year(yearID, region: region) else { return [] }
-        return SchoolExams.choices(track: track, year: year, tier: track.tier).compactMap {
+        guard let found = year(yearID, region: region) else { return [] }
+        return SchoolExams.choices(track: found.0, year: found.1, tier: found.0.tier).compactMap {
             if case .named(let exam) = $0 { return exam.title }
             return nil
         }

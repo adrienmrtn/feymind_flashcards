@@ -113,6 +113,6 @@ Rien n'a changé dans les produits, les prix, l'essai ni l'offering.
   dans le Calendrier), `PaywallTests` (chronologie, date du rappel).
 - Rendus : `OnboardingV2RenderTests` (`onb5-*`) — français jour/nuit, allemand, anglais
   (États-Unis), arabe (RTL), Italie, Espagne, Autriche, Brésil.
-- i18n : 68 clés `ios.onb5.*` / `ios.pay5.*` dans les 26 langues. Les durées (« 7 mois »,
+- i18n : 70 clés `ios.onb5.*` / `ios.pay5.*` dans les 26 langues. Les durées (« 7 mois »,
   « 3 недели ») sont écrites par le système (`DateComponentsFormatter`) pour les pluriels de
   chaque langue.

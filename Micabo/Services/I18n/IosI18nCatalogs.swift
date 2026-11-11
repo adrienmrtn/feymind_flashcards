@@ -1,6 +1,8 @@
 /// Phrases propres à l'iPhone. Les clés partagées vivent dans `SharedI18nCatalogs`.
 enum IosI18nCatalogs {
     static let fr: [String: String] = [
+        "ios.onb5.building.sub": "Je prépare tout pour toi",
+        "ios.onb5.building.title": "Merci, {name} !",
         "ios.onb5.exam.dateLabel": "Date de l'examen",
         "ios.onb5.exam.finals": "Mes partiels",
         "ios.onb5.exam.finalsName": "Partiels",
@@ -1704,6 +1706,8 @@ enum IosI18nCatalogs {
     ]
 
     static let de: [String: String] = [
+        "ios.onb5.building.sub": "Ich bereite alles für dich vor",
+        "ios.onb5.building.title": "Danke, {name}!",
         "ios.onb5.exam.dateLabel": "Prüfungsdatum",
         "ios.onb5.exam.finals": "Meine Klausurenphase",
         "ios.onb5.exam.finalsName": "Klausurenphase",
@@ -3403,6 +3407,8 @@ enum IosI18nCatalogs {
     ]
 
     static let es: [String: String] = [
+        "ios.onb5.building.sub": "Lo estoy preparando todo para ti",
+        "ios.onb5.building.title": "¡Gracias, {name}!",
         "ios.onb5.exam.dateLabel": "Fecha del examen",
         "ios.onb5.exam.finals": "Mis exámenes finales",
         "ios.onb5.exam.finalsName": "Exámenes finales",
@@ -5102,6 +5108,8 @@ enum IosI18nCatalogs {
     ]
 
     static let tr: [String: String] = [
+        "ios.onb5.building.sub": "Her şeyi senin için hazırlıyorum",
+        "ios.onb5.building.title": "Teşekkürler, {name}!",
         "ios.onb5.exam.dateLabel": "Sınav tarihi",
         "ios.onb5.exam.finals": "Dönem sonu sınavlarım",
         "ios.onb5.exam.finalsName": "Dönem sonu sınavları",
@@ -6809,6 +6817,8 @@ enum IosI18nCatalogs {
     /// **toutes les clés du français**, dans le même ordre et sous les mêmes commentaires —
     /// et le test de parité (`testIosCatalogsHaveTheSameKeys`) le garde ainsi.
     static let en: [String: String] = [
+        "ios.onb5.building.sub": "I'm getting everything ready for you",
+        "ios.onb5.building.title": "Thanks, {name}!",
         "ios.onb5.exam.dateLabel": "Exam date",
         "ios.onb5.exam.finals": "My end-of-term exams",
         "ios.onb5.exam.finalsName": "End-of-term exams",

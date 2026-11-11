@@ -67,8 +67,11 @@ struct BuildingStepView: View {
         VStack(spacing: 0) {
             MikaLoadingView(
                 progress: progress,
-                title: i18n.t("ios.mika.hello"),
-                subtitle: i18n.t("ios.mika.role"),
+                // Mika s'est présenté à la question du prénom : ici, il remercie et se met
+                // au travail.
+                title: model.displayName.nilIfBlank.map { i18n.t("ios.onb5.building.title", ["name": $0]) }
+                    ?? i18n.t("ios.mika.hello"),
+                subtitle: i18n.t("ios.onb5.building.sub"),
                 stepLabel: stepLabel,
                 isDone: didFinish
             )

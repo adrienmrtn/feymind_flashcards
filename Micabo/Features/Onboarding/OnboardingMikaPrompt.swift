@@ -62,7 +62,7 @@ struct OnboardingMikaPrompt: View {
                     backdrop: .surface
                 )
                 .frame(width: Self.mikaSize * 0.86, height: Self.mikaHeight, alignment: .bottom)
-                .offset(x: -Self.mikaSize * 0.07)
+                .offset(x: (layoutDirection == .rightToLeft ? 1 : -1) * Self.mikaSize * 0.07)
                 .accessibilityHidden(true)
 
                 bubble
@@ -107,7 +107,7 @@ struct OnboardingMikaPrompt: View {
         .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
         .overlay(alignment: .bottomLeading) {
             OnboardingBubbleTail()
-                .offset(x: -9, y: -14)
+                .offset(x: layoutDirection == .rightToLeft ? 9 : -9, y: -14)
                 .flipsForRightToLeftLayoutDirection(true)
         }
         .shadow(color: Color.black.opacity(0.04), radius: 10, y: 4)
