@@ -17,9 +17,9 @@ struct FocusHeroCard: View {
     @Environment(\.homeStill) private var still
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    static let mikaSize: CGFloat = 112
-    /// Ce qui passe derrière le bouton : le bas du buste.
-    static let mikaSink: CGFloat = 16
+    static let mikaSize: CGFloat = 100
+    /// Le bout des tentacules passe derrière le bouton : Mika est posé sur son bord.
+    static let mikaSink: CGFloat = 4
     /// La place que le buste prend à droite de la colonne de texte.
     static let mikaReserve: CGFloat = 88
 

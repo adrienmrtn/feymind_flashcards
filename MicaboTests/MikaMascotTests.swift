@@ -1,58 +1,53 @@
-import Lottie
+import ImageIO
 import UIKit
 import XCTest
 @testable import Micabo
 
-/// La mascotte : chaque humeur a son animation dans l'app, et son image fixe dans les deux
-/// versions de l'étincelle.
+/// La mascotte, en entier : chaque humeur a son animation WebP dans l'app, chaque pose son
+/// image fixe, et les voyages de Mika ont leurs fichiers.
 final class MikaMascotTests: XCTestCase {
-    /// Les treize animations du kit sont dans le paquet, et Lottie les décode.
+    /// Les treize animations sont dans le paquet, ImageIO les ouvre, et leur durée est celle
+    /// du kit (24 images par seconde).
     func testEveryMoodHasItsAnimation() throws {
         for mood in MikaMood.allCases {
-            let url = try XCTUnwrap(
-                Bundle.main.url(forResource: mood.animationName, withExtension: "json"),
-                "\(mood.animationName).json manque"
-            )
-            let animation = try LottieAnimation.from(data: Data(contentsOf: url))
-            XCTAssertEqual(animation.size.width, 1024, accuracy: 0.5, "\(mood) n'est pas en 1024")
-            XCTAssertEqual(animation.duration, mood.duration, accuracy: 0.05, "\(mood) : durée")
+            let url = try XCTUnwrap(MikaLibrary.url(for: mood.animationName), "mika-\(mood.animationName).webp manque")
+            let source = try XCTUnwrap(CGImageSourceCreateWithURL(url as CFURL, nil))
+            let count = CGImageSourceGetCount(source)
+            XCTAssertGreaterThan(count, 1, "\(mood) n'est pas animé")
+            XCTAssertEqual(Double(count) / 24, mood.duration, accuracy: 0.1, "\(mood) : durée")
+            let first = try XCTUnwrap(CGImageSourceCreateImageAtIndex(source, 0, nil))
+            XCTAssertEqual(first.width, 512, "\(mood) n'est pas en 512")
         }
     }
 
-    /// Chaque animation a l'étincelle que `MikaMascot` recolore sur un fond clair : un calque
-    /// de forme nommé « sparkle ». Sans lui, l'étincelle resterait blanche sur le blanc.
-    func testEveryAnimationHasASparkleLayer() throws {
-        for mood in MikaMood.allCases {
-            let url = try XCTUnwrap(Bundle.main.url(forResource: mood.animationName, withExtension: "json"))
-            let json = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
-            let layers = try XCTUnwrap(json["layers"] as? [[String: Any]])
-            let sparkles = layers.filter { $0["nm"] as? String == "sparkle" }
-            XCTAssertFalse(sparkles.isEmpty, "\(mood) sans étincelle")
-            XCTAssertTrue(sparkles.allSatisfy { $0["ty"] as? Int == 4 }, "\(mood) : l'étincelle n'est pas une forme")
+    /// Les voyages : entrer, sortir, traverser, sur le cadre large du kit.
+    func testJourneysHaveTheirAnimation() throws {
+        for kind in [MikaJourney.Kind.enter, .exit, .walkAcross] {
+            let url = try XCTUnwrap(MikaLibrary.url(for: kind.rawValue), "mika-\(kind.rawValue).webp manque")
+            let source = try XCTUnwrap(CGImageSourceCreateWithURL(url as CFURL, nil))
+            let first = try XCTUnwrap(CGImageSourceCreateImageAtIndex(source, 0, nil))
+            XCTAssertEqual(Double(first.width) / Double(first.height), Double(MikaJourney.aspect), accuracy: 0.01)
         }
     }
 
-    /// Les images fixes : dix expressions, deux étincelles, toutes dans le catalogue.
-    func testEveryStillExistsInBothSparkles() {
+    /// Les poses fixes : toutes dans le catalogue, et chaque humeur a la sienne.
+    func testEveryStillExists() {
         for still in MikaStill.allCases {
-            for sparkle in [MikaSparkle.white, .blue] {
-                let name = still.imageName(sparkle: sparkle)
-                XCTAssertNotNil(UIImage(named: name), "\(name) manque au catalogue")
-            }
+            XCTAssertNotNil(UIImage(named: still.imageName), "\(still.imageName) manque au catalogue")
         }
         for mood in MikaMood.allCases {
-            XCTAssertNotNil(UIImage(named: mood.still.imageName(sparkle: .blue)), "\(mood) sans image fixe")
+            XCTAssertNotNil(UIImage(named: mood.still.imageName), "\(mood) sans image fixe")
         }
     }
 
-    /// Les boucles du kit : repos, réflexion, écriture, tristesse, sommeil. Le reste se joue
-    /// une fois et revient au repos.
+    /// Les boucles : repos, réflexion, écriture, tristesse, sommeil. Le reste se joue une fois
+    /// et revient au repos.
     func testLoopingMoodsFollowTheKit() {
         let loops = Set(MikaMood.allCases.filter(\.loops))
         XCTAssertEqual(loops, [.idle, .think, .write, .sad, .sleep])
     }
 
-    /// Sous XCTest, Mika ne lance pas Lottie : les rendus restent des images.
+    /// Sous XCTest, Mika n'anime rien : les rendus restent des images.
     func testTestsUseStills() {
         XCTAssertTrue(MikaLibrary.isRunningTests)
     }

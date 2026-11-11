@@ -49,6 +49,16 @@ struct SolverCaptureChrome<Background: View>: View {
 
                 SolverCropOverlay(frame: $frame, bounds: size, editable: stage == .live || stage == .still, scanning: stage == .reading)
 
+                // Un voile en haut et en bas : les commandes restent lisibles sur une feuille blanche.
+                VStack(spacing: 0) {
+                    LinearGradient(colors: [Color.black.opacity(0.55), Color.black.opacity(0)], startPoint: .top, endPoint: .bottom)
+                        .frame(height: proxy.safeAreaInsets.top + 120)
+                    Spacer(minLength: 0)
+                    LinearGradient(colors: [Color.black.opacity(0), Color.black.opacity(0.75)], startPoint: .top, endPoint: .bottom)
+                        .frame(height: proxy.safeAreaInsets.bottom + 300)
+                }
+                .allowsHitTesting(false)
+
                 instruction
                     .position(x: size.width / 2, y: max(frame.minY - 30, proxy.safeAreaInsets.top + 70))
 
@@ -385,7 +395,7 @@ struct SolverUnreadableCard: View {
 
     var body: some View {
         VStack(spacing: 14) {
-            SolverMikaCard(mood: .sad, mikaSize: 96) {
+            SolverMikaCard(mood: .sad, mikaSize: 116) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(solveText("unreadable.title"))
                         .font(MicaboFont.ui(18, weight: .heavy))

@@ -193,24 +193,31 @@ au-dessus, et sur ses feuilles ; les autres la font sortir d'une carte claire ou
 dans un écran vide), et la couleur de marque reste aux boutons, aux barres, aux pastilles. La
 règle de Micabo, écrite aussi en tête de `MikaMascot.swift` :
 
+**Le nouveau Mika est en entier** : une petite pieuvre noire brillante, cinq tentacules et le bras
+qui tient le crayon jaune à l'étincelle (blanche à liseré bleu, lisible sur tous les fonds). Il
+n'est plus un buste coupé par un bord : il se tient debout, il arrive, il repart. Ses
+animations sont celles du kit, en WebP animé transparent (`Resources/Mika/`, seize fichiers :
+les treize humeurs et trois voyages), lues par ImageIO image par image ; ses douze poses fixes
+sont dans le catalogue (`Mika-<pose>`). Lottie a quitté l'app.
+
 1. **Mika vit sur le clair** : la crème et le blanc des cartes le jour, le graphite la nuit.
    Le jour, une ombre très douce suit sa silhouette ; **la nuit, un halo clair** (`MikaHalo`)
-   garde le corps noir lisible. L'étincelle du crayon est bleue sur le clair, blanche sur le
-   sombre et sur le bleu.
+   garde le corps noir lisible.
 2. **Le bleu redevient un accent** : le grand bouton (`MicaboBrandButtonStyle`), l'anneau, le
    compte à rebours (`HomeCountdownBadge`), les pastilles, et **une carte forte par écran au
    plus** (« Passer en Pro » sur le Profil). Plus de scène bleue sous Mika.
 3. **Trois moments, à varier** :
-   - **Mika qui dépasse** d'une carte blanche ou d'un bouton, la coupe du buste cachée par le
-     bord : le plan du jour de Home et la journée de Concentration (au-dessus du bouton bleu),
-     la barre du nouvel élève ;
+   - **Mika posé sur un bord**, ses tentacules sur le haut d'un bouton ou sur le bas de la
+     carte qui le porte : le plan du jour de Home et la journée de Concentration (sur le bouton
+     bleu), la barre du nouvel élève, la série du Profil (`MicaboStreakCard(mika:)`),
+     « Aucun examen » et « Scanne ton emploi du temps » dans le Calendrier ;
    - **Mika dans son nid**, le petit rond clair (`MikaFrame.circle` — blanc bleuté le jour,
      graphite éclairé la nuit, un filet fin), à côté d'une phrase : la journée vide du
      Calendrier, la feuille des supports, les écrans vides de Leçons, le minuteur. La pastille
      bleue reste possible, explicitement (`MikaFrame.blueCircle`, `.rounded` pour l'icône) ;
-   - **Mika assis sur le bord bas** d'une carte, à côté de ce qu'elle dit : la série du Profil
-     (`MicaboStreakCard(mika:)`), « Aucun examen » et « Scanne ton emploi du temps » dans le
-     Calendrier.
+   - **Mika qui arrive ou s'en va** (`MikaJourney` : il arrive en courant et freine, il prend
+     son élan et file, il traverse en marchant) : l'objectif du jour atteint, où il arrive en
+     courant puis saute de joie.
 4. **Tailles** : 100 à 170 points en héros, 52 à 88 dans un nid, jamais moins de 30 ; **deux
    Mika animés au plus par écran**.
 
