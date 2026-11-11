@@ -51,6 +51,10 @@ struct LessonPathView: View {
     /// Un mode de révision ouvert depuis la rangée sous l'en-tête (`RevisionModesRow`).
     @State private var revision: RevisionMode?
     @State private var paywall: PaywallTrigger?
+    /// Le mode demandé derrière le paywall : il s'ouvre tout seul une fois l'abonnement pris
+    /// (lot 7). Avant, l'élève revenait sur la leçon sans rien d'ouvert et devait retrouver
+    /// la tuile.
+    @State private var pendingRevision: RevisionMode?
     @Environment(ProAccess.self) private var pro: ProAccess?
 
     init(course: Course) {
@@ -185,7 +189,12 @@ struct LessonPathView: View {
                 LessonCardsHub(session: session)
             }
         }
-        .micaboPaywall($paywall)
+        .micaboPaywall($paywall, onSubscribed: {
+            guard let mode = pendingRevision else { return }
+            pendingRevision = nil
+            // Le temps que le paywall descende : deux présentations ne se croisent pas.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { revision = mode }
+        })
         .sheet(item: $sheet) { sheet in
             switch sheet {
             case .notes:
@@ -338,9 +347,11 @@ struct LessonPathView: View {
     /// passent par le paywall sans abonnement.
     private func openRevision(_ mode: RevisionMode) {
         if let trigger = RevisionModeAllowance.gate(mode, isPro: pro?.isPro ?? true) {
+            pendingRevision = mode
             paywall = trigger
             return
         }
+        pendingRevision = nil
         revision = mode
     }
 

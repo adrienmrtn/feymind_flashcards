@@ -31,6 +31,11 @@ struct NotificationsStepView: View {
     /// une démonstration et devient un décor.
     @State private var hasLanded = false
     @State private var hasPlayed = false
+    @Environment(\.onboardingStill) private var still
+
+    /// Les rendus posent l'écran à son état final : la semaine cochée, la notification là.
+    private var shownChecked: Int { still ? Self.days : checked }
+    private var landed: Bool { still || hasLanded }
 
     private static let days = 7
 
@@ -40,7 +45,13 @@ struct NotificationsStepView: View {
 
     /// Ce que l'étudiant verra vraiment, et non un nombre d'exemple.
     private var dueCount: Int {
-        DailyLoad.newCardsPerDay(dailyMinutes: OnboardingPreferences.dailyMinutes)
+        DailyLoad.newCardsPerDay(dailyMinutes: model.minutesPerDay)
+    }
+
+    /// La question de Mika : à l'heure choisie à l'écran d'avant, quand il y en a une.
+    private var askTitle: String {
+        guard let hour = model.studyHour else { return t("ios.onb7.notif.askAny") }
+        return i18n.t("ios.onb7.notif.ask", ["hour": ProfileSummaryStepView.hourText(hour, locale: i18n.locale)])
     }
 
     /// Les initiales des jours, dans la langue et l'ordre de la semaine de l'étudiant.
@@ -54,7 +65,10 @@ struct NotificationsStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: t("ios.notifTitle"),
+            // **Mika demande, à l'heure qu'on vient de choisir** (lot 7) : « Ne loupe jamais un
+            // jour. » n'était pas une question, et le rond qui suivait ouvrait la boîte d'iOS
+            // sans qu'on ait rien demandé. Maintenant c'est un petit oui, à une question claire.
+            title: askTitle,
             subtitle: t("ios.notifSub"),
             // Hors défilement : les ressorts qui centrent la scène n'ont pas de hauteur
             // dans un `ScrollView`.
@@ -112,11 +126,11 @@ struct NotificationsStepView: View {
         VStack(spacing: 16) {
             HStack(spacing: 12) {
                 MicaboIconView(icon: .flame, size: 52)
-                    .scaleEffect(checked == Self.days ? 1.08 : 1)
+                    .scaleEffect(shownChecked == Self.days ? 1.08 : 1)
                     .animation(MicaboMotion.quick, value: checked)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("\(checked)")
+                    Text("\(shownChecked)")
                         .font(MicaboFont.number(34))
                         .foregroundStyle(MicaboColor.flameInk)
                         .contentTransition(.numericText())
@@ -146,11 +160,11 @@ struct NotificationsStepView: View {
         .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(MicaboColor.warmWashStroke, lineWidth: 1.5))
         .micaboElevation(.card)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(i18n.t("ios.notif.streak", ["count": "\(checked)"]))
+        .accessibilityLabel(i18n.t("ios.notif.streak", ["count": "\(shownChecked)"]))
     }
 
     private func day(_ index: Int) -> some View {
-        let isChecked = index < checked
+        let isChecked = index < shownChecked
         let isToday = index == Self.days - 1
 
         return VStack(spacing: 7) {
@@ -214,7 +228,8 @@ struct NotificationsStepView: View {
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Text(t("ios.notifCardBody"))
+                // Le temps choisi deux écrans plus tôt, et pas « dix minutes » pour tout le monde.
+                Text(i18n.t("ios.onb7.notif.body", ["n": "\(model.minutesPerDay)"]))
                     .font(MicaboFont.ui(14, weight: .regular))
                     .foregroundStyle(OnboardingPalette.gray)
                     .multilineTextAlignment(.leading)
@@ -226,23 +241,24 @@ struct NotificationsStepView: View {
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
         .micaboElevation(.card)
-        .opacity(hasLanded ? 1 : 0)
-        .offset(y: hasLanded ? 0 : -18)
+        .opacity(landed ? 1 : 0)
+        .offset(y: landed ? 0 : -18)
         .animation(OnboardingMotion.enter, value: hasLanded)
         .accessibilityElement(children: .combine)
     }
 
-    /// **Pourquoi dire oui**, en une ligne sous la notification. Le chiffre vient de
-    /// `OnboardingProofFigures`, avec les autres.
+    /// **Ce qu'on promet, et rien de plus** : un seul rappel par jour, qu'on coupe quand on
+    /// veut. Il y avait là « les élèves révisent 2× plus souvent avec les rappels » : un
+    /// chiffre que rien ne sourçait (lot 7).
     private var proofLine: some View {
         OnboardingAccentText(
-            template: i18n.t("ios.notif.proof", ["n": "\(OnboardingProofFigures.reminderMultiplier)"]),
+            template: i18n.t("ios.onb7.notif.one"),
             size: 15,
             alignment: .leading,
             color: OnboardingPalette.gray
         )
         .frame(maxWidth: .infinity, alignment: .leading)
-        .opacity(hasLanded ? 1 : 0)
+        .opacity(landed ? 1 : 0)
         .animation(OnboardingMotion.enter.delay(0.15), value: hasLanded)
     }
 

@@ -19,6 +19,10 @@ struct CoursesListView: View {
     @Query private var exams: [Exam]
 
     @State private var searchText = ""
+    /// Le contenu de chaque leçon, replié, construit quand une recherche commence
+    /// (`LessonSearch`, lot 7) : une recherche lit les cartes et les thèmes, pas seulement les
+    /// titres.
+    @State private var searchIndex: [UUID: String] = [:]
     @State private var sortOrder: SortOrder = .recent
     @State private var subjectFilter: String?
     /// Une leçon ouvre son chemin (`LessonPathView`). Une leçon se crée depuis Home, pas ici.
@@ -97,10 +101,13 @@ struct CoursesListView: View {
 
         var base = searchText.isEmpty
             ? scope
-            : scope.filter {
-                $0.title.localizedCaseInsensitiveContains(searchText)
-                    || ($0.subject ?? "").localizedCaseInsensitiveContains(searchText)
-                    || $0.summary.localizedCaseInsensitiveContains(searchText)
+            : scope.filter { course in
+                if let entry = searchIndex[course.id] {
+                    return LessonSearch.matches(entry, query: searchText)
+                }
+                return course.title.localizedCaseInsensitiveContains(searchText)
+                    || (course.subject ?? "").localizedCaseInsensitiveContains(searchText)
+                    || course.summary.localizedCaseInsensitiveContains(searchText)
             }
 
         if let subjectFilter {
@@ -284,8 +291,15 @@ struct CoursesListView: View {
     @ViewBuilder
     private var myCourses: some View {
         if !sheets.isEmpty {
-            MicaboSearchField(text: $searchText, placeholder: i18n.t("app.courses.search"))
+            MicaboSearchField(text: $searchText, placeholder: i18n.t("ios.ku7.search.placeholder"))
                 .padding(.horizontal, MicaboSpacing.screen)
+                .onChange(of: searchText) { previous, query in
+                    if query.isEmpty {
+                        searchIndex = [:]
+                    } else if previous.isEmpty || searchIndex.isEmpty {
+                        searchIndex = LessonSearch.index(sheets)
+                    }
+                }
 
             folderTrail
         }

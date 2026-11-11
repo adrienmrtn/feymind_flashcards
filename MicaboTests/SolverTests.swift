@@ -143,7 +143,16 @@ final class SolverParserTests: XCTestCase {
         XCTAssertEqual(SolverSubjectGuess.guess("Quelle est la masse molaire du CO2 ? (g/mol)"), .physics)
         XCTAssertEqual(SolverSubjectGuess.guess("Décris le rôle de l'ADN dans la cellule."), .biology)
         XCTAssertEqual(SolverSubjectGuess.guess("Löse die Gleichung 3x + 2 = 11."), .math)
-        XCTAssertEqual(SolverSubjectGuess.guess("Analyse le poème de Victor Hugo."), .other)
+        // Lot 7 : une question de langue ou d'histoire a sa famille.
+        XCTAssertEqual(SolverSubjectGuess.guess("Analyse le poème de Victor Hugo."), .languages)
+        XCTAssertEqual(SolverSubjectGuess.guess("Conjugue le verbe aller au subjonctif présent."), .languages)
+        XCTAssertEqual(SolverSubjectGuess.guess("Quelles sont les causes de la Première Guerre mondiale ?"), .humanities)
+        XCTAssertEqual(SolverSubjectGuess.guess("Nenne die Ursachen des Ersten Weltkriegs."), .humanities)
+        XCTAssertEqual(SolverSubjectGuess.guess("Comment bien dormir ?"), .other)
+        XCTAssertEqual(SolverSubject(modelWord: "languages"), .languages)
+        XCTAssertEqual(SolverSubject(modelWord: "humanities"), .humanities)
+        XCTAssertEqual(SolverSubject(stored: "humanities"), .humanities)
+        XCTAssertEqual(SolverSubject(stored: "inconnue"), .other)
         XCTAssertEqual(SolverSubjectGuess.guess("12 + 7 = ?  et 3 × 4 = ?"), .math)
         XCTAssertEqual(SolverSubject(modelWord: "physics"), .physics)
         XCTAssertEqual(SolverSubject(modelWord: " biology"), .biology)
@@ -330,10 +339,24 @@ final class SolverSessionTests: XCTestCase {
         let french = IosI18nCatalogs.fr.keys.filter { $0.hasPrefix("ios.solve.") }
         XCTAssertGreaterThan(french.count, 80)
         var dynamic = ["capture.hint", "capture.adjust", "capture.reading", "capture.flashOn", "capture.flashOff", "practice.right", "practice.wrong"]
-        dynamic += SolverSubject.allCases.map { "subject.\($0.rawValue)" }
-        dynamic += SolverSubject.allCases.flatMap { ["tutor.suggest.\($0.rawValue)1", "tutor.suggest.\($0.rawValue)2"] }
         for key in dynamic {
             XCTAssertNotNil(IosI18nCatalogs.fr["ios.solve.\(key)"], key)
+        }
+        // Le nom de chaque matière et ses deux idées de question, dans toutes les langues : les
+        // familles du lot 7 portent leurs propres clés (`ios.ku7.*`).
+        let subjectKeys = SolverSubject.allCases.flatMap { [$0.labelKey, $0.suggestionKey(1), $0.suggestionKey(2)] }
+        for locale in UiLocale.allCases {
+            let table = IosI18nCatalogs.table(for: locale.rawValue)
+            for key in subjectKeys {
+                XCTAssertNotNil(table[key], "\(locale.rawValue) \(key)")
+            }
+            // La consigne de toutes les matières garde les balises que le parseur lit, et les
+            // deux nouvelles familles.
+            let solve = table["ios.ku7.prompt.solve"] ?? ""
+            for tag in ["[SUBJECT]", "[STEP]", "[ANSWER]", "languages", "humanities"] {
+                XCTAssertTrue(solve.contains(tag), "\(locale.rawValue) \(tag)")
+            }
+            XCTAssertTrue((table["ios.ku7.prompt.practice"] ?? "").contains("[EXERCISE]"), locale.rawValue)
         }
         for locale in UiLocale.allCases {
             let table = IosI18nCatalogs.table(for: locale.rawValue)

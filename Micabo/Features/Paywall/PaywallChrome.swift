@@ -96,6 +96,16 @@ struct PaywallFooter: View {
     var onSubscribe: () -> Void
     var onRestore: () -> Void
 
+    /// **Le rappel ne se promet que s'il sera tenu** (lot 7) : faux seulement quand l'élève a
+    /// refusé les notifications à iOS — le rappel ne partirait pas. Jamais demandées, elles le
+    /// seront à l'achat de l'essai (`TrialEndReminder`).
+    @State private var reminderKept = true
+
+    private var promise: String {
+        guard plan.hasTrial else { return L10n.t("ios.paywallCancelAnytime", locale: .resolved()) }
+        return L10n.t(reminderKept ? "ios.pay3.reassure" : "ios.paywallCancelAnytime", locale: .resolved())
+    }
+
     var body: some View {
         VStack(spacing: 10) {
             PaywallPitch.text(for: plan)
@@ -106,10 +116,10 @@ struct PaywallFooter: View {
             PaywallCallToAction(isPurchasing: isPurchasing, plan: plan, storeRevision: storeRevision, action: onSubscribe)
 
             HStack(spacing: 6) {
-                Image(systemName: plan.hasTrial ? "bell.badge.fill" : "checkmark.shield.fill")
+                Image(systemName: plan.hasTrial && reminderKept ? "bell.badge.fill" : "checkmark.shield.fill")
                     .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(MicaboColor.correct)
-                Text(L10n.t(plan.hasTrial ? "ios.pay3.reassure" : "ios.paywallCancelAnytime", locale: .resolved()))
+                Text(promise)
                     .font(MicaboFont.ui(13, weight: .bold))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .multilineTextAlignment(.center)
@@ -118,6 +128,7 @@ struct PaywallFooter: View {
 
             PaywallLegalFooter(onRestore: onRestore)
         }
+        .task { reminderKept = await TrialEndReminder.canBeKept() }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, 14)
         .padding(.bottom, MicaboSpacing.xs)

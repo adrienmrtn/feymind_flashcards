@@ -18,8 +18,6 @@ enum OnboardingProofFigures {
     /// Karpicke & Roediger, Science, 2008.
     static let retainedByRereading = 36
     static let retainedByTesting = 80
-    /// Le multiplicateur des rappels.
-    static let reminderMultiplier = 2
 
     /// Un entier écrit dans la langue de l'élève : « 12 000 », « 12,000 », « 12.000 ».
     static func text(_ value: Int, locale: UiLocale) -> String {

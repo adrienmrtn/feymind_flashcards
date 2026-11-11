@@ -3,8 +3,11 @@ import SwiftUI
 
 // MARK: - Mika calcule le parcours
 
-/// **Après la preuve sociale, Mika se met au travail** : il relit les réponses, règle le niveau
-/// sur l'année déclarée, cale le rythme du jour. Le même écran que le chargement du début — le
+/// **Avant la révélation, Mika construit le plan** — et c'est le seul écran qui le dit. Lot 7 :
+/// il annonçait « On construit ton parcours … Ton parcours est prêt ! » juste avant « Ton plan
+/// est prêt », après un premier chargement qui avait déjà « lu tes réponses » et « construit ton
+/// plan ». Mika y parle maintenant comme partout ailleurs, à la première personne, de ce
+/// qu'il fait de neuf : répartir les matières, régler le rythme, prévoir les révisions. Le même écran que le chargement du début — le
 /// blob, le pourcentage, la grille de points —, avec ses propres phrases, et le rond n'arrive
 /// qu'à cent pour cent : personne ne doit sauter le moment où son parcours se construit.
 struct PlanBuildingStepView: View {
@@ -29,15 +32,15 @@ struct PlanBuildingStepView: View {
 
     private var stepLabel: String {
         let index = min(3, Int(progress * 4))
-        return i18n.t("ios.plan.step\(index + 1)")
+        return i18n.t("ios.onb7.planBuild.step\(index + 1)")
     }
 
     var body: some View {
         VStack(spacing: 0) {
             MikaLoadingView(
                 progress: progress,
-                title: i18n.t("ios.plan.title"),
-                subtitle: i18n.t("ios.plan.role"),
+                title: i18n.t("ios.onb7.planBuild.title"),
+                subtitle: i18n.t("ios.onb7.planBuild.role"),
                 stepLabel: stepLabel,
                 isDone: didFinish
             )

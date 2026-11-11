@@ -4,6 +4,40 @@ Mika pose les questions, tout s'adapte au pays et à l'année, le parcours est p
 il se termine par la révélation d'un plan avant l'offre. Aucun prix, produit ni durée d'essai
 n'a changé.
 
+## 0. Lot 7 : cohérence et psychologie (novembre 2026)
+
+Retour après test sur iPhone : « encore 2-3 incohérences, et il faut renforcer la psychologie ».
+**24 écrans** (23 en France, 22 pour un pays non décrit).
+
+**Incohérences corrigées**
+
+| Où | Avant | Après |
+| --- | --- | --- |
+| Moyenne visée | « 4 points à prendre » compté sur la droite 10–20 interne (un Américain 3.0 → 3.8 lisait « 4 points ») | `GradeGapCard` : « 3.0 → 3.8 » dans le barème de l'élève, « Ton plan sera réglé sur cet objectif » |
+| Objectifs | « Et pourquoi tu apprends ? » trois écrans après l'examen, avec « monter en compétences pour le travail » proposé à un collégien | écran `goal` retiré ; `learning_goals` se déduit de l'examen (`OnboardingModel.learningGoals`) |
+| La recherche | même étude sur trois écrans : accroche « 2x plus vite » (Harvard), page « c'est prouvé » (Harvard + Karpicke), ligne du paywall (Karpicke) | accroche sans chiffre ; page `socialProof` retirée ; ligne du paywall retirée ; Karpicke & Roediger cité **une fois**, sourcé, sur la question d'essai |
+| Mika | « moi c'est Mika » puis « Il peut prendre tes documents », « Mika, c'est ton prof » | les trois pages de Mika à la première personne (`ios.onb7.mika.*`) |
+| Chargements | le 1er annonçait déjà « construction de ton plan », le 2e relisait « tes réponses » et concluait « Ton **parcours** est prêt ! » juste avant « ton **plan** est prêt » | 1er : profil, réponses, niveau ; 2e : Mika à la première personne, « Je construis ton plan », « Je répartis tes matières… » (`ios.onb7.planBuild.*`) |
+| Rappels | Mika disait « Ne loupe jamais un jour. » (pas une question), « les élèves révisent 2× plus souvent » (non sourcé), « Dix minutes » pour qui avait choisi 15 | « Je te fais signe chaque jour à 18 h pour réviser ? », « 15 min, et ta série tient », « Un seul rappel par jour » |
+| Essai | « Jour 2 : un rappel » (lu comme demain ; le rappel part le surlendemain) | « 13 novembre : un rappel », « 14 novembre : ton abonnement commence » |
+| Promesse du rappel | rien n'était posé pour qui avait passé les notifications ; le paywall promettait quand même | la boîte d'iOS s'ouvre à l'achat de l'essai si elle n'a jamais été montrée (`TrialEndReminder.schedule`) ; après un refus, le paywall ne promet plus de rappel |
+
+**Leviers ajoutés (honnêtes)**
+
+- **Preuve concrète** (`sampleCard`, après les parcours) : une vraie question sur une matière que
+  l'élève a cochée (aire du disque, formule de l'eau, chromosomes, mur de Berlin, cogito), trois
+  réponses, la bonne en vert, Mika réagit, puis l'étude. Sans serveur. Aucune matière qu'il n'a pas
+  choisie : sinon, « Culture générale ».
+- **Petit oui** : le rond de la question d'essai, et celui des rappels, répondent à une question
+  simple avant le plan et l'essai.
+- **Appropriation et projection** (`profileSummary`) : « Fait avec tes réponses, rien que pour
+  toi », puis la courbe d'aujourd'hui (sa moyenne) au jour de l'examen (sa note visée, sous le
+  trophée). C'est un objectif dessiné, pas une prédiction.
+- **Réassurance** : des dates réelles sur l'essai, le rappel réellement demandé et posé, « Rien
+  n'est prélevé d'ici là ».
+- Inchangés : prix, ancrage annuel/hebdo, offre de secours (décompte réel), aucune fausse preuve
+  sociale, aucune fausse urgence, aucune case pré-cochée.
+
 ## 1. Les écrans, avant / après
 
 **Avant : 36 écrans** (35 vus par un élève de France). **Après : 25** (24 en France, 23 pour
@@ -13,9 +47,9 @@ un pays non décrit). L'ordre est verrouillé par `OnboardingFlowTests.testTheV2
 | --- | --- | --- |
 | Accroche | `hookLogo`, `name`, `welcome` | — |
 | Profil scolaire | `country`, `level` *ou* `schoolType` + `year`, **`exam`** (nouveau), `subjects` | — |
-| Objectifs | `worries`, `goal`, `currentAverage`, `targetAverage`, `dailyTime`, `studyTime`, `notifications` | `proofRetention` (devenu la réaction de Mika aux inquiétudes), `founders`, `aiCompanion` (l'étude de Harvard est sur l'écran de preuve), `startingPoint` (Mika pose déjà les questions) |
-| Mika | `building`, `mikaSources`, `mikaPaths`, `mikaTutor` (le compte se propose en le quittant) | `featuresIntro`, `mikaMission`, `mikaDesign`, `mikaSolution`, `mikaRelief` |
-| Plan et offre | `socialProof`, `planBuilding`, `profileSummary` (**la révélation du plan**), `trialOffer`, `paywall` | `supportUs`, `freeTrialIntro` et `trialReminder` (regroupés dans `trialOffer`) |
+| Objectifs | `worries`, `currentAverage`, `targetAverage`, `dailyTime`, `studyTime`, `notifications` (lot 7 : `goal` retiré) | `proofRetention` (devenu la réaction de Mika aux inquiétudes), `founders`, `aiCompanion` (l'étude de Harvard est sur l'écran de preuve), `startingPoint` (Mika pose déjà les questions) |
+| Mika | `building`, `mikaSources`, `mikaPaths`, `sampleCard` (lot 7), `mikaTutor` (le compte se propose en le quittant) | `featuresIntro`, `mikaMission`, `mikaDesign`, `mikaSolution`, `mikaRelief` |
+| Plan et offre | `planBuilding`, `profileSummary` (**la révélation du plan**), `trialOffer`, `paywall` (lot 7 : `socialProof` retiré) | `supportUs`, `freeTrialIntro` et `trialReminder` (regroupés dans `trialOffer`) |
 
 - Les écrans gardés **gardent leur nom** : `onboarding_step` continue ses courbes.
 - Un parcours interrompu sur un écran retiré reprend sur celui qui le remplace
@@ -85,7 +119,7 @@ passée, et pas si un examen du même nom existe déjà ce jour-là. Les rappels
 
 Rien n'a changé dans les produits, les prix, l'essai ni l'offering.
 
-1. **La preuve, sourcée** (`socialProof`) : l'essai de Harvard (Kestin et al., 2025) et ce
+1. **La preuve, sourcée** (`socialProof`, retirée au lot 7 : voir § 0) : l'essai de Harvard (Kestin et al., 2025) et ce
    qu'il reste d'un cours relu ou testé (Karpicke & Roediger, 2008). « 45 000 élèves »,
    « 4,8 », « #1 des assistants d'étude IA » et les avis signés sont retirés : rien dans le
    dépôt ne les sourçait (seulement les maquettes des captures).

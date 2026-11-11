@@ -112,11 +112,12 @@ final class PolishHomeTests: XCTestCase {
     }
 
     /// Pas de doublon sur Home : le minuteur est l'onglet Concentration, la ligue l'éclair de
-    /// la rangée du haut. Le quiz éclair n'apparaît qu'avec une leçon.
+    /// la rangée du haut. Le quiz éclair n'apparaît qu'avec une leçon. « Corriger un texte »
+    /// (lot 7) rejoint l'aide aux devoirs.
     func testHomeToolsHaveNoDuplicate() {
-        XCTAssertEqual(HomeTool.allCases, [.scan, .quiz])
-        XCTAssertEqual(HomeTool.available(hasLesson: false), [.scan])
-        XCTAssertEqual(HomeTool.available(hasLesson: true), [.scan, .quiz])
+        XCTAssertEqual(HomeTool.allCases, [.scan, .writing, .quiz])
+        XCTAssertEqual(HomeTool.available(hasLesson: false), [.scan, .writing])
+        XCTAssertEqual(HomeTool.available(hasLesson: true), [.scan, .writing, .quiz])
     }
 
     // MARK: - Les données des rendus
