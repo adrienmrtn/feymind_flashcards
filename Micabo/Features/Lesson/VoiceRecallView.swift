@@ -107,7 +107,7 @@ struct VoiceRecallView: View {
     private var empty: some View {
         VStack(spacing: 14) {
             Spacer()
-            MikaMascot(mood: .think, size: 140, frame: .circle)
+            MikaMascot(mood: .think, size: 120)
             Text(L10n.t("ios.sup.voice.empty", locale: .resolved()))
                 .font(MicaboFont.ui(17, weight: .bold))
                 .foregroundStyle(MicaboColor.inkSecondary)
@@ -483,7 +483,7 @@ struct VoiceRecallSummary: View {
     var body: some View {
         VStack(spacing: 16) {
             Spacer()
-            MikaMascot(mood: known * 2 >= total ? .celebrate : .happy, size: 150, frame: .circle)
+            MikaMascot(mood: known * 2 >= total ? .celebrate : .happy, size: 120)
             Text(verbatim: "\(known) / \(total)")
                 .font(MicaboFont.number(52))
                 .foregroundStyle(tone.ink)

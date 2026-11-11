@@ -20,7 +20,7 @@ struct TutorHomeContent: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            SolverMikaCard(mood: .wave, mikaSize: 124) {
+            SolverMikaCard(mood: .wave) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(solveText("tutor.heroTitle"))
                         .font(MicaboFont.ui(20, weight: .heavy))
@@ -189,7 +189,7 @@ struct TutorThreadContent: View {
 
     private var empty: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SolverMikaCard(mood: .wave, mikaSize: 112) {
+            SolverMikaCard(mood: .wave) {
                 Text(solveText("tutor.threadLead", ["subject": subject.label]))
                     .font(MicaboFont.ui(16, weight: .semibold))
                     .foregroundStyle(MicaboColor.ink)

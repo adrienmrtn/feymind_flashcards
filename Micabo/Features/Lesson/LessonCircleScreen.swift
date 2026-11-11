@@ -151,11 +151,14 @@ struct IntroCircleView: View {
             CircleTopBar(progress: nil, tone: session.course.tone, label: nil) { dismiss() }
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
-                    HStack {
-                        Spacer()
-                        MikaMascot(mood: .wave, size: 130, frame: .circle)
-                        Spacer()
+                    // Mika en demi, qui dépasse de sa ligne : l'en-tête de la leçon.
+                    VStack(spacing: 0) {
+                        MikaPeek(mood: .wave, width: MikaPeek.line)
+                        Capsule()
+                            .fill(MicaboColor.stroke)
+                            .frame(width: MikaPeek.line * 1.4, height: 2)
                     }
+                    .frame(maxWidth: .infinity)
                     Text(L10n.t("lesson.intro.title", locale: .resolved()))
                         .font(MicaboFont.title)
                         .foregroundStyle(MicaboColor.ink)
@@ -309,7 +312,7 @@ struct LessonFinishedView: View {
                 GeometryReader { proxy in
                     ScrollView {
                         VStack(spacing: 22) {
-                            MikaMascot(mood: .celebrate, size: showsRating ? 140 : 190, reactsToTap: true, frame: .circle)
+                            MikaMascot(mood: .celebrate, size: showsRating ? 120 : 150, reactsToTap: true)
                             Text(L10n.t("lesson.finished.title", locale: .resolved()))
                                 .font(MicaboFont.display(32))
                                 .foregroundStyle(MicaboColor.ink)

@@ -145,7 +145,7 @@ struct LessonQuizView: View {
     private var empty: some View {
         VStack(spacing: 16) {
             Spacer()
-            MikaMascot(mood: .look, size: 150, frame: .circle)
+            MikaMascot(mood: .look, size: 120)
             Text(L10n.t("lesson.quiz.empty", locale: .resolved()))
                 .font(MicaboFont.subtitle)
                 .foregroundStyle(MicaboColor.ink)
@@ -188,7 +188,7 @@ struct AnswerPanel: View {
                 // L'XP de la réponse (`docs/refonte-knowunity.md` § 6), à côté du verdict.
                 XPBadge(points: right ? XPRules.correctAnswer : XPRules.wrongAnswer, tint: right ? MicaboColor.correctInk : MicaboColor.wrongInk)
                 Spacer(minLength: 0)
-                MikaMascot(mood: right ? .happy : .shake, size: 52, frame: .circle)
+                MikaAvatar(size: 36)
             }
             if !right, question.kind == .order || question.kind == .match || question.kind == .gap {
                 KeywordText(question.answerText, size: 16, weight: .bold, tintsKeywords: false)
@@ -276,7 +276,7 @@ struct QuizScoreView: View {
     var body: some View {
         VStack(spacing: 18) {
             Spacer()
-            MikaMascot(mood: ratio >= 0.8 ? .celebrate : ratio >= 0.5 ? .happy : .think, size: 130, frame: .circle)
+            MikaMascot(mood: ratio >= 0.8 ? .celebrate : ratio >= 0.5 ? .happy : .think, size: 128)
             ZStack {
                 Circle().stroke(MicaboColor.track, lineWidth: 14)
                 Circle()
@@ -447,7 +447,7 @@ struct LessonCardsRun: View {
     private var finishedState: some View {
         VStack(spacing: 18) {
             Spacer()
-            MikaMascot(mood: .happy, size: 160, frame: .circle)
+            MikaMascot(mood: .happy, size: 128)
             Text("\(cards.count) / \(cards.count)")
                 .font(MicaboFont.number(56))
                 .foregroundStyle(tone.ink)
@@ -470,7 +470,7 @@ struct LessonCardsRun: View {
     private var emptyState: some View {
         VStack(spacing: 16) {
             Spacer()
-            MikaMascot(mood: .sleep, size: 150, frame: .circle)
+            MikaMascot(mood: .sleep, size: 120)
             Text(L10n.t("lesson.cards.empty", locale: .resolved()))
                 .font(MicaboFont.subtitle)
                 .foregroundStyle(MicaboColor.ink)

@@ -2,21 +2,21 @@ import SwiftUI
 
 // MARK: - Mika pose la question
 
-/// **Mika pose la question** : en buste, posé sur sa ligne au bord gauche de la page, et sa
-/// bulle à côté de lui, dont le texte s'écrit lettre après lettre.
+/// **Mika pose la question** : en demi (`MikaPeek`), il dépasse de sa ligne au bord gauche de
+/// la page, et sa bulle à côté de lui, dont le texte s'écrit lettre après lettre.
 ///
 /// C'est l'en-tête de toutes les questions du parcours, au même endroit sur chaque écran : la
 /// même place pour Mika, la même bulle, puis les réponses dessous et le rond en bas. Il vit
-/// sur le papier de l'app — crème le jour, nuit la nuit —, pas dans une scène bleue : le jour,
-/// son étincelle est bleue ; la nuit, elle est blanche et un halo bleu garde sa silhouette
-/// (`MikaMascot`, `MikaBackdrop.surface`).
+/// sur le papier de l'app — crème le jour, graphite la nuit, où une lueur discrète le détache
+/// —, pas dans une scène bleue.
 ///
 /// **Il réagit.** Une réponse donnée sur cette page le fait sourire ; quand l'écran a une
 /// réaction à dire (« Bac : encore 7 mois. On a le temps de bien faire 💪 »), la bulle la
 /// tape à la place de la question. La bulle garde la hauteur de la plus longue des deux :
 /// rien ne saute sous le doigt quand elle change.
 ///
-/// Un seul Mika animé par écran, toujours celui-ci (règle 5 du kit : deux au plus).
+/// Le seul Mika de l'écran : il monte de derrière sa ligne en arrivant, puis saute de joie à
+/// chaque réponse.
 struct OnboardingMikaPrompt: View {
     /// La question ; un passage entre `**` prend le bleu de l'app.
     let question: String
@@ -35,11 +35,10 @@ struct OnboardingMikaPrompt: View {
     @State private var typing: Task<Void, Never>?
     @State private var settle: Task<Void, Never>?
 
-    /// La taille de Mika : un buste qui se lit d'un coup d'œil sans prendre la page.
-    static let mikaSize: CGFloat = 112
-    /// La part visible du buste au-dessus de sa ligne : l'image garde de l'air au-dessus de
-    /// lui pour ses étincelles, qui débordent sans pousser la bulle.
-    static var mikaHeight: CGFloat { mikaSize * 0.74 }
+    /// La largeur de Mika en demi : la taille de tous les Mika posés sur une ligne.
+    static let mikaSize: CGFloat = MikaPeek.line
+    /// Ce qui dépasse de la ligne.
+    static var mikaHeight: CGFloat { MikaPeek.height(for: mikaSize) }
 
     @ScaledMetric(relativeTo: .title3) private var textSize: CGFloat = 20
 
@@ -53,25 +52,22 @@ struct OnboardingMikaPrompt: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(alignment: .bottom, spacing: 2) {
-                MikaMascot(
+                MikaPeek(
                     mood: shownMood ?? mood,
-                    size: Self.mikaSize,
+                    width: Self.mikaSize,
                     reactsToTap: true,
-                    frozenAt: still ? 0 : nil,
-                    backdrop: .surface
+                    animates: !still
                 )
-                .frame(width: Self.mikaSize * 0.86, height: Self.mikaHeight, alignment: .bottom)
-                // Les décalages suivent le sens de lecture : en arabe, ils se retournent seuls.
-                .offset(x: -Self.mikaSize * 0.07)
                 .accessibilityHidden(true)
 
                 bubble
                     .padding(.bottom, 12)
+                    .padding(.leading, 4)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            // **La ligne où Mika est posé** : la coupe de son buste repose dessus (règle 1 du
-            // kit). Elle sépare aussi la question des réponses.
+            // **La ligne d'où Mika dépasse** : elle coupe son corps (la règle de mise en scène).
+            // Elle sépare aussi la question des réponses.
             Capsule()
                 .fill(MicaboColor.stroke)
                 .frame(height: 2)
@@ -187,7 +183,8 @@ struct OnboardingMikaPrompt: View {
             type(from: 0)
         }
         settle = Task { @MainActor in
-            try? await Task.sleep(for: .seconds(1.6))
+            // Le saut dure 1,6 s : il retombe avant de changer d'humeur.
+            try? await Task.sleep(for: .seconds(1.8))
             guard !Task.isCancelled else { return }
             shownMood = reaction != nil ? .happy : nil
         }
@@ -237,11 +234,11 @@ struct OnboardingBubbleTail: View {
 // MARK: - Une phrase de Mika, seule
 
 /// **Mika parle, sans poser de question** : la bienvenue, l'introduction d'un écran. Le même
-/// Mika que sur les questions, plus grand, posé sur sa ligne, et sa bulle au-dessus de lui.
+/// Mika en demi que sur les questions, qui dépasse de sa ligne, et sa bulle au-dessus de lui.
 struct OnboardingMikaSays: View {
     let text: String
     var mood: MikaMood = .wave
-    var size: CGFloat = 150
+    var size: CGFloat = MikaPeek.hero
 
     @Environment(\.onboardingStill) private var still
 
@@ -250,8 +247,7 @@ struct OnboardingMikaSays: View {
             MicaboSpeechBubble(text: OnboardingMikaPrompt.plain(text), tail: .bottom)
                 .padding(.horizontal, MicaboSpacing.screen)
             VStack(spacing: 0) {
-                MikaMascot(mood: mood, size: size, reactsToTap: true, frozenAt: still ? 0 : nil, backdrop: .surface)
-                    .frame(width: size, height: size * 0.74, alignment: .bottom)
+                MikaPeek(mood: mood, width: size, reactsToTap: true, animates: !still)
                 Capsule()
                     .fill(MicaboColor.stroke)
                     .frame(width: size * 1.5, height: 2)

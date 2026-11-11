@@ -90,7 +90,7 @@ struct SolverSolutionContent: View {
     // MARK: Avant la solution
 
     private var reviewCard: some View {
-        SolverMikaCard(mood: .wave, mikaSize: 108) {
+        SolverMikaCard(mood: .wave) {
             VStack(alignment: .leading, spacing: 10) {
                 Text(solveText("review.lead"))
                     .font(MicaboFont.ui(16, weight: .semibold))
@@ -110,7 +110,7 @@ struct SolverSolutionContent: View {
 
     private var solvingCard: some View {
         VStack(spacing: 12) {
-            SolverMikaCard(mood: .think, mikaSize: 100) {
+            SolverMikaCard(mood: .think) {
                 HStack(spacing: 10) {
                     ProgressView().tint(MicaboColor.accent)
                     Text(solveText("solving"))
@@ -241,7 +241,7 @@ struct SolverSolutionContent: View {
     @ViewBuilder
     private var practiceSection: some View {
         if session.practiceLoading {
-            SolverMikaCard(mood: .write, mikaSize: 96) {
+            SolverMikaCard(mood: .write) {
                 HStack(spacing: 10) {
                     ProgressView().tint(MicaboColor.accent)
                     Text(solveText("practice.loading"))
@@ -253,7 +253,7 @@ struct SolverSolutionContent: View {
         } else if let practice = session.practice {
             practiceCard(practice)
         } else {
-            SolverMikaCard(mood: .idle, mikaSize: 104) {
+            SolverMikaCard(mood: .idle) {
                 VStack(alignment: .leading, spacing: 12) {
                     Text(solveText("practice.title"))
                         .font(MicaboFont.ui(18, weight: .heavy))

@@ -34,7 +34,8 @@ struct ProfileSummaryStepView: View {
             OnboardingCenteredScroll {
                 VStack(spacing: 18) {
                     VStack(spacing: 12) {
-                        OnboardingMikaOnLine(mood: .celebrate, size: 112)
+                        // Le plan révélé : un moment qui compte, Mika en entier fait la fête.
+                        OnboardingMikaOnLine(mood: .celebrate, size: 128, whole: true)
                             .onboardingAppear(index: 0)
                         OnboardingAccentText(template: title, size: 27, alignment: .center)
                             .padding(.horizontal, MicaboSpacing.sm)

@@ -308,9 +308,8 @@ private struct MikaSourcesScene: View {
                         .position(home)
                 }
 
-                // Mika en buste, posé sur le bas de la scène et coupé par sa ligne : sur le
-                // papier de l'app, plus dans une pastille bleue.
-                let side = min(150, proxy.size.height * 0.42)
+                // Mika en demi, qui dépasse de sa ligne au bas de la scène.
+                let side = min(130, proxy.size.height * 0.42)
                 OnboardingMikaOnLine(mood: mood, size: side)
                     .scaleEffect(munch ? 1.06 : 1, anchor: .bottom)
                     .popIn(shown || still)
@@ -386,8 +385,8 @@ private struct MikaPathsScene: View {
                 OnboardingLessonPhone(fades: true, animated: true, widthRatio: 0.74)
                     .frame(width: proxy.size.width, height: proxy.size.height)
 
-                // Mika regarde depuis le bord bas de la scène, en buste sur sa ligne.
-                OnboardingMikaOnLine(mood: .wave, size: min(120, proxy.size.height * 0.32))
+                // Mika, en demi, fait coucou depuis le bord bas de la scène, sur sa ligne.
+                OnboardingMikaOnLine(mood: .wave, size: min(MikaPeek.hero, proxy.size.height * 0.32))
                     .popIn(shown || still, delay: 0.9)
                     .padding(.leading, proxy.size.width * 0.02)
             }
@@ -452,7 +451,7 @@ private struct MikaTutorScene: View {
     private func phone(width: CGFloat, height: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
-                MikaMascot(mood: stage >= 3 ? .happy : .idle, size: 30, frame: .circle)
+                MikaAvatar(size: 30)
                 Text("Mika")
                     .font(MicaboFont.ui(14, weight: .heavy))
                     .foregroundStyle(MicaboColor.ink)
@@ -783,26 +782,36 @@ private struct OnboardingLessonScreen: View {
 
 // MARK: - Mika sur sa ligne
 
-/// **Mika en buste, posé sur une ligne** : la coupe du buste repose sur un trait du filet de
-/// l'app (règle 1 du kit). C'est la forme de Mika sur le papier — crème le jour, nuit la nuit
-/// —, celle des questions du parcours (`OnboardingMikaPrompt`), sans pastille bleue.
+/// **Mika sur une ligne** : en demi, il dépasse d'un trait du filet de l'app qui coupe son
+/// corps, comme sur les questions du parcours (`OnboardingMikaPrompt`) ; ou, pour un moment
+/// qui compte (`whole` : le plan révélé, la préparation du plan), en entier, debout sur le
+/// papier. Jamais dans une pastille bleue.
 struct OnboardingMikaOnLine: View {
     var mood: MikaMood = .idle
+    /// La largeur de Mika en demi, le côté de son carré en entier.
     var size: CGFloat = 120
+    var whole = false
     var animates = true
 
     @Environment(\.onboardingStill) private var still
 
-    /// La part visible du buste : l'image garde de l'air au-dessus de lui pour ses effets.
-    static func height(for size: CGFloat) -> CGFloat { size * 0.74 + 2 }
+    /// La hauteur de la vue.
+    static func height(for size: CGFloat, whole: Bool = false) -> CGFloat {
+        whole ? size : MikaPeek.height(for: size) + 2
+    }
 
     var body: some View {
-        VStack(spacing: 0) {
-            MikaMascot(mood: mood, size: size, reactsToTap: true, frozenAt: still ? 0 : nil, backdrop: .surface, animates: animates)
-                .frame(width: size, height: size * 0.74, alignment: .bottom)
-            Capsule()
-                .fill(MicaboColor.stroke)
-                .frame(width: size * 1.3, height: 2)
+        Group {
+            if whole {
+                MikaMascot(mood: mood, size: size, reactsToTap: true, frozenAt: still ? 0 : nil, backdrop: .surface, animates: animates)
+            } else {
+                VStack(spacing: 0) {
+                    MikaPeek(mood: mood, width: size, reactsToTap: true, animates: animates && !still)
+                    Capsule()
+                        .fill(MicaboColor.stroke)
+                        .frame(width: size * 1.4, height: 2)
+                }
+            }
         }
         .accessibilityHidden(true)
     }

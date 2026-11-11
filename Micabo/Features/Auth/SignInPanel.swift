@@ -297,7 +297,8 @@ private struct SignInStage: View {
         let leftTurn: Double = drift ? -7 : 7
         let rightTurn: Double = drift ? 6 : -6
 
-        // Mika est un buste : il sort du bord bas de la carte, qui le coupe.
+        // Mika en demi : il dépasse du bord bas de la carte, qui le coupe. Les tuiles restent
+        // immobiles : rien ne tourne en boucle sur l'écran de connexion.
         return ZStack(alignment: .bottom) {
             RoundedRectangle(cornerRadius: 30, style: .continuous)
                 .fill(MicaboColor.pastel(at: 3))
@@ -310,17 +311,12 @@ private struct SignInStage: View {
                 .rotationEffect(.degrees(rightTurn))
                 .offset(x: 116, y: -96 - lift)
 
-            MikaMascot(mood: .celebrate, size: 170)
+            MikaPeek(mood: .wave, width: MikaPeek.hero)
         }
-        .frame(height: 188)
+        .frame(height: 150)
         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
         .frame(maxWidth: .infinity)
-        .animation(.easeInOut(duration: 2.8).repeatForever(autoreverses: true), value: drift)
         .accessibilityHidden(true)
-        .onAppear {
-            guard !reduceMotion else { return }
-            drift = true
-        }
     }
 
     private func tile(_ emoji: String, pastel: Int) -> some View {

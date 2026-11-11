@@ -274,7 +274,7 @@ struct FocusSessionScreen: View {
                     )
                     .rotationEffect(.degrees(-90))
                     .animation(.linear(duration: 1), value: position.remaining)
-                MikaMascot(mood: mood, size: 150, frame: .circle)
+                MikaMascot(mood: mood, size: 120)
             }
             .frame(width: 250, height: 250)
             .accessibilityElement(children: .ignore)
@@ -457,7 +457,7 @@ struct FocusFinishedScreen: View {
                         MicaboSpeechBubble(text: L10n.t("ios.kx.timer.mika", locale: .resolved()), tail: .bottom)
                             .padding(.top, 40)
                             .padding(.horizontal, 12)
-                        MikaMascot(mood: .celebrate, size: 150, reactsToTap: true, frame: .circle)
+                        MikaMascot(mood: .celebrate, size: 120, reactsToTap: true)
                     }
                     Text(L10n.t("ios.kx.timer.done", locale: .resolved()))
                         .font(MicaboFont.display(30))

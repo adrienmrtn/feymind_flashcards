@@ -193,33 +193,62 @@ au-dessus, et sur ses feuilles ; les autres la font sortir d'une carte claire ou
 dans un écran vide), et la couleur de marque reste aux boutons, aux barres, aux pastilles. La
 règle de Micabo, écrite aussi en tête de `MikaMascot.swift` :
 
-**Le nouveau Mika est en entier** : une petite pieuvre noire brillante, cinq tentacules et le bras
-qui tient le crayon jaune à l'étincelle (blanche à liseré bleu, lisible sur tous les fonds). Il
-n'est plus un buste coupé par un bord : il se tient debout, il arrive, il repart. Ses
-animations sont celles du kit, en WebP animé transparent (`Resources/Mika/`, seize fichiers :
-les treize humeurs et trois voyages), lues par ImageIO image par image ; ses douze poses fixes
-sont dans le catalogue (`Mika-<pose>`). Lottie a quitté l'app.
+**Le nouveau Mika** : une petite pieuvre noire brillante, cinq tentacules et le bras qui tient
+le crayon jaune à l'étincelle (blanche à liseré bleu, lisible sur tous les fonds). Au build 166,
+il était en entier partout, tout petit, posé sur des boutons et des listes, et il ramait. La
+règle, écrite aussi en tête de `MikaMascot.swift` :
 
-1. **Mika vit sur le clair** : la crème et le blanc des cartes le jour, le graphite la nuit.
-   Le jour, une ombre très douce suit sa silhouette ; **la nuit, un halo clair** (`MikaHalo`)
-   garde le corps noir lisible.
-2. **Le bleu redevient un accent** : le grand bouton (`MicaboBrandButtonStyle`), l'anneau, le
-   compte à rebours (`HomeCountdownBadge`), les pastilles, et **une carte forte par écran au
-   plus** (« Passer en Pro » sur le Profil). Plus de scène bleue sous Mika.
-3. **Trois moments, à varier** :
-   - **Mika posé sur un bord**, ses tentacules sur le haut d'un bouton ou sur le bas de la
-     carte qui le porte : le plan du jour de Home et la journée de Concentration (sur le bouton
-     bleu), la barre du nouvel élève, la série du Profil (`MicaboStreakCard(mika:)`),
-     « Aucun examen » et « Scanne ton emploi du temps » dans le Calendrier ;
-   - **Mika dans son nid**, le petit rond clair (`MikaFrame.circle` — blanc bleuté le jour,
-     graphite éclairé la nuit, un filet fin), à côté d'une phrase : la journée vide du
-     Calendrier, la feuille des supports, les écrans vides de Leçons, le minuteur. La pastille
-     bleue reste possible, explicitement (`MikaFrame.blueCircle`, `.rounded` pour l'icône) ;
-   - **Mika qui arrive ou s'en va** (`MikaJourney` : il arrive en courant et freine, il prend
-     son élan et file, il traverse en marchant) : l'objectif du jour atteint, où il arrive en
-     courant puis saute de joie.
-4. **Tailles** : 100 à 170 points en héros, 52 à 88 dans un nid, jamais moins de 30 ; **deux
-   Mika animés au plus par écran**.
+1. **En demi, par défaut dans l'app** (`MikaPeek`) : le haut du corps — la tête, les yeux, le
+   bras au crayon, la naissance des tentacules — **dépasse d'un bord**, coupé net par lui, comme
+   quelqu'un qui passe la tête. Trois tailles, une par rôle : `MikaPeek.card` (92 points) dans
+   une carte, `.line` (100) sur la ligne d'une question, `.hero` (124) pour l'accueil de Home.
+   Il monte de derrière son bord en arrivant, fait son geste une fois, puis reste immobile.
+   - **Derrière le haut du bouton** d'une carte : le plan du jour de Home, la journée de
+     Concentration (même taille, même retrait de 8 points depuis le bord droit) ;
+   - **au bas d'une carte**, à droite, coupé par elle : la série du Profil, « Aucun examen » du
+     Calendrier, l'en-tête du paywall, les cartes du tuteur et du scanner, la feuille des
+     supports, l'aperçu de la leçon offerte, la connexion ;
+   - **au-dessus de la barre de saisie** : le nouvel élève sur Home, sa bulle à côté ;
+   - **sur une ligne** : les questions de l'onboarding (sa bulle à côté), l'essai gratuit, la
+     preuve, l'en-tête d'une leçon ; sur le bleu du lancement, derrière le panneau (la seule
+     scène bleue de Mika).
+2. **En entier, rarement, aux moments qui comptent** (`MikaMascot`, 120 à 160 points, debout sur
+   le papier, une ombre douce dessous) : l'accueil de l'onboarding (« Enchanté »), le plan
+   révélé et sa préparation, la fête de l'objectif du jour et de la série, la fin d'une leçon,
+   d'un quiz, d'un paquet de cartes, d'une récitation, le résultat d'un examen blanc, les écrans
+   vides (Leçons, examens, quiz, conversation avec Mika), l'attente d'une génération (leçon,
+   examen blanc, entraînement, emploi du temps). Là il fait coucou, saute, écrit — puis s'arrête.
+3. **En avatar** (`MikaAvatar`, sa tête dans un rond clair, fixe) partout où il ferait moins de
+   40 points : les messages du tuteur, les retours d'une question, la note d'une leçon, la
+   série, l'emploi du temps lu.
+4. **Retiré** là où il n'apportait rien : la journée vide de l'agenda (une icône de
+   calendrier), « Scanne ton emploi du temps » (l'appareil photo : Mika est déjà sur la carte
+   d'examen juste au-dessus), la préparation d'un examen blanc. Jamais deux fois sur un écran,
+   jamais sur un bouton, jamais dans une liste.
+5. **Le papier** : crème et blanc le jour, graphite la nuit, où une lueur discrète derrière lui
+   détache le corps noir. Des dégradés, pas de flou.
+
+**Fluide** — le moteur (`MikaClipStore`, `MikaPlayerView`, `MikaStage`) :
+
+- **Ce qui ramait** : chaque Mika animé décodait son WebP de 512 pixels image par image, 24 fois
+  par seconde, en boucle infinie (le repos, la réflexion, le sommeil…) ; chaque nouvelle image
+  posée dans une `UIImageView` changeait sa taille propre et relançait la mise en page SwiftUI
+  autour de lui ; les onglets gardés en vie continuaient d'animer leur Mika hors de l'écran ; le
+  halo de nuit était un flou recalculé ; Home ajoutait un flottement `repeatForever` et un
+  coucou toutes les 14 secondes ; le lancement lisait les seize fichiers sur le fil principal.
+- **Maintenant** : Mika est **fixe** la plupart du temps (une image du catalogue). Une
+  animation se prépare **une fois, hors du fil principal**, à la taille où elle s'affiche,
+  sous un budget de 14 Mo (au-delà : 12 images par seconde, puis plus petit), et reste dans un
+  `NSCache` vidé si la mémoire manque. **Core Animation la joue** (`CAKeyframeAnimation` sur
+  `contents`) dans une vue sans taille propre : aucun calcul par image sur le fil principal.
+  Elle se joue **une fois** (l'arrivée, une réponse, une réussite) ; seules la réflexion et
+  l'écriture bouclent, le temps d'une génération. **Un seul Mika joue à la fois** dans l'app
+  (`MikaStage`) ; quitter l'écran ou passer en arrière-plan arrête la lecture ; « Réduire les
+  animations », `\.mikaStill` et moins de 64 points : fixe.
+- **Le paquet** : onze animations au lieu de seize (le repos et le « non » sont fixes, les
+  voyages sont partis), rognées autour de Mika, à 24 images par seconde pour les gestes courts
+  et 12 pour les longs ; dix poses rognées ; la tête de l'avatar. `scripts/mika-assets.py` les
+  refait depuis le kit et écrit `MikaArt.swift` (où chaque image se place dans le canevas).
 
 **Le même langage dans tous les onglets** :
 

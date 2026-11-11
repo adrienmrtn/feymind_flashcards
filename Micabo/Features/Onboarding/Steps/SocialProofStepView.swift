@@ -25,7 +25,7 @@ struct SocialProofStepView: View {
             OnboardingCenteredScroll {
                 VStack(spacing: 22) {
                     VStack(spacing: 14) {
-                        OnboardingMikaOnLine(mood: .celebrate, size: 128)
+                        OnboardingMikaOnLine(mood: .happy, size: MikaPeek.hero)
                             .onboardingAppear(index: 0)
 
                         OnboardingAccentText(template: i18n.t("ios.onb5.proof.title"), size: 28, alignment: .center)

@@ -114,7 +114,7 @@ struct ListenView: View {
     private var empty: some View {
         VStack(spacing: 14) {
             Spacer()
-            MikaMascot(mood: .think, size: 140, frame: .circle)
+            MikaMascot(mood: .think, size: 120)
             Text(L10n.t("ios.sup.listen.empty", locale: .resolved()))
                 .font(MicaboFont.ui(17, weight: .bold))
                 .foregroundStyle(MicaboColor.inkSecondary)

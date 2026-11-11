@@ -14,8 +14,8 @@ import SwiftUI
 /// Puis, d'un seul mouvement :
 ///
 /// 1. le panneau du bas monte du bord de l'écran, Mika assis derrière lui ;
-/// 2. Mika sort de derrière le panneau (`appear`), puis fait coucou (`wave`) — un buste,
-///    collé au bord du panneau comme le veut le kit (règle 1) ;
+/// 2. Mika, en demi (`MikaPeek`), monte de derrière le panneau et fait coucou (`wave`) — une
+///    fois —, coupé par son bord ;
 /// 3. le titre, le bouton et « J'ai déjà un compte » se posent sur le panneau, en fondu.
 ///
 /// Avec « Réduire les animations », tout est là d'emblée, Mika en image fixe.
@@ -43,12 +43,12 @@ struct HookLogoStepView: View {
     /// Mika est posé derrière le panneau. Il n'entre qu'après la première image : son
     /// animation n'a pas à peser sur elle.
     @State private var showsMika = HookIntro.played
-    @State private var mikaMood: MikaMood = HookIntro.played ? .idle : .appear
+    @State private var mikaMood: MikaMood = HookIntro.played ? .idle : .wave
     /// Le titre et les boutons se sont posés.
     @State private var contentVisible = HookIntro.played
 
-    /// Ce qui dépasse de Mika sous le bord du panneau : la coupe du buste se cache derrière.
-    private static let mikaTuck: CGFloat = 6
+    /// La coupe de Mika passe sous le bord du panneau.
+    private static let mikaTuck: CGFloat = 4
 
     var body: some View {
         GeometryReader { proxy in
@@ -85,25 +85,18 @@ struct HookLogoStepView: View {
 
     // MARK: - Mika
 
-    /// Mika, en buste, posé sur le bord haut du panneau. La place est tenue avant son
-    /// arrivée : rien ne bouge quand il entre.
+    /// **Mika en demi derrière le bord haut du panneau** : le bleu du lancement est la seule
+    /// scène bleue de Mika (la règle de mise en scène). 180 points au plus : au-delà, ses
+    /// images s'étireraient. La place est tenue avant son arrivée : rien ne bouge quand il
+    /// entre.
     private func mika(width: CGFloat) -> some View {
-        let size = min(width * 0.74, 320)
+        let size = min(width * 0.5, 180)
         return ZStack {
             if showsMika || still {
-                MikaMascot(
-                    mood: still ? .wave : mikaMood,
-                    size: size,
-                    reactsToTap: true,
-                    backdrop: .blue
-                ) {
-                    // `appear` le sort de derrière le panneau, `wave` fait coucou, puis il
-                    // revient au repos de lui-même.
-                    if mikaMood == .appear { mikaMood = .wave }
-                }
+                MikaPeek(mood: still ? .wave : mikaMood, width: size, reactsToTap: true, backdrop: .blue)
             }
         }
-        .frame(width: size, height: size)
+        .frame(width: size, height: MikaPeek.height(for: size))
         .frame(maxWidth: .infinity)
         .accessibilityHidden(true)
     }

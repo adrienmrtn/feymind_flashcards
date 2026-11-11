@@ -17,11 +17,11 @@ struct FocusHeroCard: View {
     @Environment(\.homeStill) private var still
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    static let mikaSize: CGFloat = 100
-    /// Le bout des tentacules passe derrière le bouton : Mika est posé sur son bord.
-    static let mikaSink: CGFloat = 4
-    /// La place que le buste prend à droite de la colonne de texte.
-    static let mikaReserve: CGFloat = 88
+    /// Mika en demi derrière le haut du bouton, comme sur le plan du jour de Home.
+    static let mikaSize: CGFloat = HomePlanHero.mikaSize
+    static let mikaSink: CGFloat = HomePlanHero.mikaSink
+    /// La place que Mika prend à droite de la colonne de texte.
+    static let mikaReserve: CGFloat = HomePlanHero.mikaReserve
 
     private var progress: Double {
         goalMinutes > 0 ? min(1, Double(minutesToday) / Double(goalMinutes)) : 0
@@ -53,21 +53,21 @@ struct FocusHeroCard: View {
                         .font(MicaboFont.ui(13.5, weight: .bold))
                         .foregroundStyle(reached ? MicaboColor.correctInk : MicaboColor.inkSecondary)
                         .fixedSize(horizontal: false, vertical: true)
-                        .padding(.trailing, Self.mikaReserve - 14)
+                        .padding(.trailing, Self.mikaReserve - 20)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.top, 10)
             .padding(.bottom, 16)
 
-            // Le bouton bleu passe devant le bas du buste : Mika dépasse de son bord.
+            // Le bouton bleu passe devant la coupe : Mika, en demi, dépasse de son bord.
             Button(action: onStart) {
                 Label(loc("ios.focus.start"), systemImage: "play.fill")
             }
             .buttonStyle(MicaboBrandButtonStyle(minHeight: 54))
             .background(alignment: .topTrailing) {
-                MikaMascot(mood: reached ? .happy : .idle, size: Self.mikaSize, frozenAt: still ? 0.5 : nil)
-                    .offset(x: -2, y: -Self.mikaSize + Self.mikaSink)
+                MikaPeek(mood: reached ? .happy : .wink, width: Self.mikaSize, animates: !still)
+                    .offset(x: -HomePlanHero.mikaInset, y: -MikaPeek.height(for: Self.mikaSize) + Self.mikaSink)
                     .accessibilityHidden(true)
             }
         }

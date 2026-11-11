@@ -165,7 +165,7 @@ struct SolverHistoryContent: View {
     }
 
     private var empty: some View {
-        SolverMikaCard(mood: .idle, mikaSize: 112) {
+        SolverMikaCard(mood: .idle) {
             VStack(alignment: .leading, spacing: 12) {
                 Text(solveText("history.empty"))
                     .font(MicaboFont.ui(17, weight: .bold))

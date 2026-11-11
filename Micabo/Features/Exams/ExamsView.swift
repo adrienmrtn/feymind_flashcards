@@ -132,7 +132,7 @@ struct ExamsView: View {
 
     private var emptyCard: some View {
         VStack(spacing: 14) {
-            MikaMascot(mood: .wave, size: 120, frame: .circle)
+            MikaMascot(mood: .wave, size: 120)
             Text(i18n.t("lesson.exam.emptyTitle"))
                 .font(MicaboFont.ui(22, weight: .heavy))
                 .foregroundStyle(MicaboColor.ink)

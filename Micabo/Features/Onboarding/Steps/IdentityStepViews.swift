@@ -110,16 +110,9 @@ struct WelcomeStepView: View {
             VStack(spacing: 0) {
                 Spacer(minLength: 0)
 
-                // Mika accueille : il arrive en ressort et fait coucou, au-dessus du prénom.
-                // Mika accueille sur le papier de l'app, posé sur sa ligne : le buste coupé
-                // par elle, comme sur les questions qui suivent (plus de pastille bleue).
-                VStack(spacing: 0) {
-                    MikaMascot(mood: .wave, size: 170, reactsToTap: true, frozenAt: still ? 0 : nil, backdrop: .surface)
-                        .frame(width: 170, height: 170 * 0.74, alignment: .bottom)
-                    Capsule()
-                        .fill(MicaboColor.stroke)
-                        .frame(width: 220, height: 2)
-                }
+                // L'accueil, un moment qui compte : Mika en entier, debout sur le papier de
+                // l'app, arrive en ressort et fait coucou au-dessus du prénom — une fois.
+                MikaMascot(mood: .wave, size: 160, reactsToTap: true, frozenAt: still ? 0 : nil, backdrop: .surface)
                     .scaleEffect(mikaShown || still ? 1 : 0.4, anchor: .bottom)
                     .opacity(mikaShown || still ? 1 : 0)
                     .padding(.bottom, MicaboSpacing.lg)

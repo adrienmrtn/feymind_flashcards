@@ -113,7 +113,7 @@ struct StreakSheet: View {
 
     private var mikaLine: some View {
         HStack(spacing: 12) {
-            MikaMascot(mood: status.studiedToday ? .happy : .wave, size: 64, frame: .circle)
+            MikaAvatar(size: 44)
             Text(line)
                 .font(MicaboFont.ui(16, weight: .bold))
                 .foregroundStyle(MicaboColor.ink)

@@ -39,8 +39,8 @@ struct MikaLoadingView: View {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
 
-            // Mika sur sa ligne, sur le papier de l'app : plus dans sa pastille bleue.
-            OnboardingMikaOnLine(mood: isDone ? .happy : .think, size: 176)
+            // Mika en entier, qui réfléchit le temps de préparer le plan, sur le papier de l'app.
+            OnboardingMikaOnLine(mood: isDone ? .happy : .think, size: 160, whole: true)
                 .scaleEffect(isDone ? 0.94 : 1, anchor: .bottom)
                 .animation(.easeInOut(duration: 0.6), value: isDone)
                 .padding(.bottom, 26)

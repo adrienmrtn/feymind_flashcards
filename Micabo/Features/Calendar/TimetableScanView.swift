@@ -71,7 +71,7 @@ struct TimetableScanView: View {
     private var waiting: some View {
         VStack(spacing: 18) {
             Spacer()
-            MikaMascot(mood: phase == .reading ? .look : .write, size: 150, frame: .circle)
+            MikaMascot(mood: phase == .reading ? .look : .write, size: 128)
             Text(loc(phase == .reading ? "ios.cal.scanReading" : "ios.cal.scanAsking"))
                 .font(MicaboFont.ui(19, weight: .black))
                 .foregroundStyle(MicaboColor.ink)
@@ -91,7 +91,7 @@ struct TimetableScanView: View {
             Spacer(minLength: 12)
             MicaboSpeechBubble(text: message, tail: .bottom)
                 .padding(.horizontal, 28)
-            MikaMascot(mood: mood, size: 140, frame: .circle)
+            MikaMascot(mood: mood, size: 120)
                 .padding(.top, 16)
             Spacer(minLength: 12)
             VStack(spacing: 10) {
@@ -246,7 +246,7 @@ struct TimetableReviewContent: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top, spacing: 12) {
-                MikaMascot(mood: .happy, size: 52, frame: .circle)
+                MikaAvatar(size: 40)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(loc("ios.cal.scanFound", ["count": "\(entries.count)"]))
                         .font(MicaboFont.ui(18, weight: .black))

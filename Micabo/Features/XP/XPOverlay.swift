@@ -214,26 +214,10 @@ struct XPGoalCard: View {
     var showsButton = true
     var onContinue: () -> Void = {}
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.mikaStill) private var forcedStill
-    /// Mika est arrivé : il a couru jusqu'au milieu, il peut fêter.
-    @State private var arrived = false
-
-    /// La scène de Mika : il arrive en courant et freine (`MikaJourney`), puis saute de joie,
-    /// debout au même endroit.
+    /// **La fête de l'objectif**, un moment qui compte : Mika en entier saute de joie, une
+    /// fois, puis reste debout sur la carte.
     private var mika: some View {
-        let height: CGFloat = 120
-        return ZStack(alignment: .bottom) {
-            if arrived || reduceMotion || forcedStill || MikaLibrary.isRunningTests {
-                // Le même Mika que dans le voyage : un corps de 0,6 de la hauteur, les
-                // tentacules à 0,89.
-                MikaMascot(mood: .celebrate, size: height * 0.6 / (0.59 * MikaMascot.bareScale), reactsToTap: true)
-                    .padding(.bottom, height * 0.11)
-            } else {
-                MikaJourney(kind: .enter, height: height) { arrived = true }
-            }
-        }
-        .frame(width: height * MikaJourney.aspect, height: height)
+        MikaMascot(mood: .celebrate, size: 120, reactsToTap: true)
     }
 
     var body: some View {

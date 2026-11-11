@@ -852,12 +852,12 @@ struct MicaboStreakCard: View {
     let best: Int
     let title: String
     let note: String
-    /// **Mika assis sur le bord bas de la carte**, à droite, coupé par elle (la règle de mise
-    /// en scène, `MikaMascot.swift`). Sans humeur, pas de Mika.
+    /// **Mika en demi au bas de la carte**, à droite, coupé par son bord (la règle de mise en
+    /// scène, `MikaMascot.swift`). Sans humeur, pas de Mika.
     var mika: MikaMood?
 
     private static let segments = 6
-    static let mikaSize: CGFloat = 86
+    static let mikaSize: CGFloat = MikaPeek.card
 
     /// **Les six segments disent le chemin vers le record.**
     ///
@@ -907,7 +907,7 @@ struct MicaboStreakCard: View {
             }
             .padding(.top, 1)
         }
-        .padding(.trailing, mika == nil ? 0 : Self.mikaSize - 12)
+        .padding(.trailing, mika == nil ? 0 : Self.mikaSize - 2)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(17)
         .background {
@@ -919,8 +919,8 @@ struct MicaboStreakCard: View {
         }
         .overlay(alignment: .bottomTrailing) {
             if let mika {
-                MikaMascot(mood: mika, size: Self.mikaSize)
-                    .padding(.trailing, 6)
+                MikaPeek(mood: mika, width: Self.mikaSize)
+                    .padding(.trailing, 12)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))

@@ -115,7 +115,6 @@ struct MockExamFlow: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         Spacer(minLength: 0)
-                        MikaMascot(mood: .think, size: 84, frame: .circle)
                     }
 
                     VStack(alignment: .leading, spacing: 12) {
@@ -244,7 +243,7 @@ struct MockExamFlow: View {
     private var writing: some View {
         VStack(spacing: 20) {
             Spacer()
-            MikaMascot(mood: .write, size: 160, frame: .circle)
+            MikaMascot(mood: .write, size: 128)
             Text(L10n.t("lesson.exam.writing", locale: .resolved()))
                 .font(MicaboFont.subtitle)
                 .foregroundStyle(MicaboColor.ink)
@@ -266,7 +265,7 @@ struct MockExamFlow: View {
     private func failed(_ message: String) -> some View {
         VStack(spacing: 18) {
             Spacer()
-            MikaMascot(mood: .sad, size: 150, frame: .circle)
+            MikaMascot(mood: .sad, size: 120)
             Text(message)
                 .font(MicaboFont.subtitle)
                 .foregroundStyle(MicaboColor.ink)
@@ -651,8 +650,9 @@ struct MockExamResultView: View {
                 }
                 .frame(width: 220, height: 220)
                 .overlay(alignment: .bottomTrailing) {
-                    MikaMascot(mood: passes ? .celebrate : .sad, size: 86, frame: .circle)
-                        .offset(x: 36, y: 12)
+                    // Le résultat, un moment qui compte : Mika en entier, à côté du score.
+                    MikaMascot(mood: passes ? .celebrate : .sad, size: 104)
+                        .offset(x: 56, y: 16)
                         .opacity(shown ? 1 : 0)
                 }
 

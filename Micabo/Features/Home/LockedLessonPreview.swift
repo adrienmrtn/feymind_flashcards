@@ -122,17 +122,17 @@ struct LockedLessonPreview: View {
         .padding(.bottom, 24)
     }
 
-    /// **La scène de marque**, comme sur Home et le paywall : la croix blanche, et Mika en
-    /// buste qui sort du bord bas — il lit, puis il sourit.
+    /// **Une carte claire, comme le paywall** : la croix, et Mika en demi qui dépasse du bord
+    /// bas — il lit, puis il saute de joie.
     private var stage: some View {
         ZStack(alignment: .bottom) {
-            MicaboBrandBackdrop()
-            MikaMascot(mood: revealed ? .happy : .think, size: 156, backdrop: .blue)
+            MicaboColor.accentPale
+            MikaPeek(mood: revealed ? .happy : .think, width: MikaPeek.hero)
         }
-        .frame(height: 176)
+        .frame(height: 140)
         .frame(maxWidth: .infinity)
         .overlay(alignment: .topLeading) {
-            PaywallCloseButton(tint: .white, action: onClose)
+            PaywallCloseButton(tint: MicaboColor.inkSecondary, action: onClose)
                 .padding(.leading, 12)
                 .padding(.top, 6)
                 .accessibilityLabel(Text(L10n.t("lesson.circle.close", locale: .resolved())))

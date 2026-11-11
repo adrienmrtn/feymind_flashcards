@@ -82,14 +82,13 @@ struct HomeSourcesSheet: View {
     }
 }
 
-/// L'en-tête : Mika posé au bas d'une carte claire, ce qu'il attend, et la leçon offerte.
+/// L'en-tête : Mika en demi au bas d'une carte claire, ce qu'il attend, et la leçon offerte.
 private struct SourcesHeader: View {
     let freeLessonLeft: Bool
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 12) {
-            MikaMascot(mood: .happy, size: 92, backdrop: .surface, animates: false)
-                .frame(width: 92, height: 92)
+            MikaPeek(mood: .happy, width: MikaPeek.card)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 6) {
                 Text(L10n.t("ios.sup.sheet.title", locale: .resolved()))

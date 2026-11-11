@@ -412,13 +412,13 @@ struct ProfileView: View {
     @ViewBuilder
     private func streakPanel(_ metrics: Metrics) -> some View {
         if !metrics.hasReviews {
-            // Avant le premier jour : Mika fait coucou depuis le bord bas de la carte.
+            // Avant le premier jour : Mika, en demi, fait coucou depuis le bas de la carte.
             HStack(alignment: .bottom, spacing: 0) {
                 firstReviewInvitation
                     .padding(16)
                 Spacer(minLength: 0)
-                MikaMascot(mood: .wave, size: MicaboStreakCard.mikaSize)
-                    .padding(.trailing, 6)
+                MikaPeek(mood: .wave, width: MicaboStreakCard.mikaSize)
+                    .padding(.trailing, 12)
             }
             .homeCardClipped(radius: MicaboStage.tileRadius)
         } else {

@@ -25,18 +25,15 @@ final class RenderGalleryTests: XCTestCase {
                             .font(MicaboFont.ui(12, weight: .bold))
                             .foregroundStyle(MicaboColor.inkSecondary)
                             .frame(width: 70, alignment: .leading)
-                        // Le buste collé au bas de sa carte, sur le papier.
-                        MikaMascot(mood: mood, size: 76, frozenAt: 0)
-                            .frame(width: 96, height: 76, alignment: .bottom)
+                        // En demi, au bas de sa carte, sur le papier.
+                        MikaPeek(mood: mood, width: 92)
+                            .padding(.horizontal, 10)
+                            .padding(.top, 8)
                             .background(MicaboColor.surface)
                             .clipShape(UnevenRoundedRectangle(topLeadingRadius: 14, topTrailingRadius: 14))
-                        // Sur le bleu : l'étincelle blanche.
-                        MikaMascot(mood: mood, size: 76, frozenAt: 0, backdrop: .blue)
-                            .frame(width: 96, height: 76, alignment: .bottom)
-                            .background(MicaboBrand.blue)
-                            .clipShape(UnevenRoundedRectangle(topLeadingRadius: 14, topTrailingRadius: 14))
-                        MikaMascot(mood: mood, size: 64, frozenAt: 0, frame: .circle)
-                        MikaMascot(mood: mood, size: 40, frame: .circle)
+                        // En entier.
+                        MikaMascot(mood: mood, size: 76, frozenAt: 0)
+                        MikaAvatar(size: 36)
                     }
                 }
             }
@@ -45,11 +42,19 @@ final class RenderGalleryTests: XCTestCase {
         try RenderGallery.render(
             "mika-frames", night: true,
             VStack(spacing: 24) {
+                // En entier, debout sur le papier ; l'icône ; l'avatar.
                 HStack(alignment: .bottom, spacing: 18) {
-                    MikaMascot(mood: .wave, size: 150, frozenAt: 0, frame: .rounded)
-                    MikaMascot(mood: .happy, size: 150, frozenAt: 0, frame: .circle)
+                    MikaMascot(mood: .wave, size: 140, frozenAt: 0)
+                    MikaMascot(mood: .happy, size: 110, frozenAt: 0, frame: .rounded)
+                    MikaAvatar(size: 40)
+                    MikaAvatar(size: 28)
                 }
-                // Le buste sans cadre, sorti du bas d'une carte.
+                // En demi, sur une ligne.
+                VStack(spacing: 0) {
+                    MikaPeek(mood: .wink, width: MikaPeek.line)
+                    Capsule().fill(MicaboColor.stroke).frame(width: 140, height: 2)
+                }
+                // En demi, qui dépasse du bas d'une carte.
                 ZStack(alignment: .bottomTrailing) {
                     RoundedRectangle(cornerRadius: 24, style: .continuous).fill(MicaboColor.surface)
                     Text("Objectif du jour")
@@ -57,7 +62,7 @@ final class RenderGalleryTests: XCTestCase {
                         .foregroundStyle(MicaboColor.ink)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                         .padding(18)
-                    MikaMascot(mood: .celebrate, size: 120, frozenAt: 0)
+                    MikaPeek(mood: .happy, width: MikaPeek.card)
                         .padding(.trailing, 12)
                 }
                 .frame(height: 130)
@@ -496,7 +501,7 @@ final class RenderGalleryTests: XCTestCase {
         try RenderGallery.render(
             "home-generating",
             VStack(spacing: 28) {
-                MikaMascot(mood: .write, size: 160, frozenAt: 0.6, frame: .circle)
+                MikaMascot(mood: .write, size: 128, frozenAt: 0.6)
                 GenerationSteps(current: .writing, hasSupports: true)
             }
             .padding(40)

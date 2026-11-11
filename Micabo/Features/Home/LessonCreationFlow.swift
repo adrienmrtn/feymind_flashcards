@@ -89,7 +89,7 @@ struct LessonCreationFlow: View {
         VStack(spacing: 0) {
             closeBar
             Spacer()
-            MikaMascot(mood: .think, size: 150, frame: .circle)
+            MikaMascot(mood: .think, size: 120)
             Text(L10n.t("lesson.create.examQuestion", locale: .resolved()))
                 .font(MicaboFont.title)
                 .foregroundStyle(MicaboColor.ink)
@@ -172,7 +172,7 @@ struct LessonCreationFlow: View {
             // il fallait tuer l'app. Fermer ici abandonne l'attente (voir `close`).
             closeBar
             Spacer()
-            MikaMascot(mood: failure == nil ? .write : .sad, size: 160, frame: .circle)
+            MikaMascot(mood: failure == nil ? .write : .sad, size: 128)
             Text(failure == nil
                 ? L10n.t("lesson.create.generatingTitle", locale: .resolved())
                 : L10n.t("lesson.create.failedTitle", locale: .resolved()))

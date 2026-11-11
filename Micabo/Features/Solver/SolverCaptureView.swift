@@ -395,7 +395,7 @@ struct SolverUnreadableCard: View {
 
     var body: some View {
         VStack(spacing: 14) {
-            SolverMikaCard(mood: .sad, mikaSize: 116) {
+            SolverMikaCard(mood: .sad) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(solveText("unreadable.title"))
                         .font(MicaboFont.ui(18, weight: .heavy))

@@ -19,25 +19,17 @@ final class LookRenderTests: XCTestCase {
 
     // MARK: - Mika sur le clair
 
-    /// Les trois moments de Mika : le nid à côté d'une phrase, le buste qui dépasse d'une carte,
-    /// le buste assis sur le bord bas d'une carte.
+    /// Les trois formes de Mika : en entier sur le papier, en demi au bas d'une carte, en
+    /// avatar.
     private func mikaPlaces() -> some View {
         VStack(alignment: .leading, spacing: 20) {
-            HStack(alignment: .bottom, spacing: 14) {
-                MikaMascot(mood: .happy, size: 96, frame: .circle)
-                MikaMascot(mood: .wave, size: 64, frame: .circle)
-                MikaMascot(mood: .think, size: 44, frame: .circle)
-                MikaMascot(mood: .sleep, size: 30, frame: .circle)
-                Spacer(minLength: 0)
-            }
-            // Sur le papier de la page, sans cadre.
             HStack(alignment: .bottom, spacing: 18) {
-                MikaMascot(mood: .idle, size: 110)
-                MikaMascot(mood: .wink, size: 80)
+                MikaMascot(mood: .wave, size: 120)
+                MikaMascot(mood: .wink, size: 90)
+                MikaAvatar(size: 40)
+                MikaAvatar(size: 30)
                 Spacer(minLength: 0)
             }
-            .frame(height: 110, alignment: .bottom)
-            .clipped()
             DayEmptyState {}
             MicaboStreakCard(days: 12, best: 18, title: t("ios.profile.streakDays", ["count": "12"]), note: t("ios.profile.streakToBeat", ["best": "18", "days": "6"]), mika: .happy)
         }
@@ -112,9 +104,6 @@ final class LookRenderTests: XCTestCase {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 84, height: 84)
-                        .background {
-                            MikaHalo(still: still, side: 84, night: false)
-                        }
                     Text(still.rawValue)
                         .font(MicaboFont.ui(12, weight: .bold))
                         .foregroundStyle(MicaboColor.inkSecondary)
@@ -124,13 +113,9 @@ final class LookRenderTests: XCTestCase {
         .padding(20)
     }
 
-    /// Mika qui arrive (fixe : arrivé), et la fête de l'objectif.
+    /// La fête de l'objectif du jour : Mika en entier.
     private func journeys() -> some View {
         VStack(spacing: 18) {
-            MikaJourney(kind: .enter, height: 120)
-                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            MikaJourney(kind: .walkAcross, height: 120)
-                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             XPGoalCard(showsButton: true)
         }
         .padding(20)

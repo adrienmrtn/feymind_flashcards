@@ -67,11 +67,14 @@ struct HomePlanHero: View {
     let onExam: () -> Void
     let onAddExam: () -> Void
 
-    static let mikaSize: CGFloat = 104
-    /// Le bout des tentacules passe derrière le bouton : Mika est posé sur son bord.
-    static let mikaSink: CGFloat = 4
-    /// La place que le buste prend à droite du texte.
-    static let mikaReserve: CGFloat = 86
+    /// Mika en demi, derrière le haut du bouton (`MikaPeek.card`).
+    static let mikaSize: CGFloat = MikaPeek.card
+    /// La coupe passe sous le bord du bouton.
+    static let mikaSink: CGFloat = 3
+    /// Le retrait de Mika depuis le bord droit du bouton : loin de son coin arrondi.
+    static let mikaInset: CGFloat = 8
+    /// La place que Mika prend à droite du texte.
+    static let mikaReserve: CGFloat = MikaPeek.card + 12
 
     var body: some View {
         let primary = day.primary
@@ -221,7 +224,7 @@ struct HomePlanHero: View {
                     .padding(.top, 6)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: Self.mikaSize - Self.mikaSink - 14, alignment: .bottomLeading)
+        .frame(maxWidth: .infinity, minHeight: MikaPeek.height(for: Self.mikaSize) - 6, alignment: .bottomLeading)
         .padding(.trailing, Self.mikaReserve)
         .accessibilityElement(children: .combine)
     }
@@ -275,21 +278,17 @@ struct HomePlanHero: View {
 
     // MARK: Le bouton
 
-    /// Le bouton bleu passe devant le bas du buste : Mika dépasse de son bord, sur le blanc de
-    /// la carte, comme sur Concentration.
+    /// **Mika en demi derrière le bouton** : le bouton bleu passe devant la coupe, Mika dépasse
+    /// de son bord, sur le blanc de la carte, comme sur Concentration.
     private func cta(_ step: HomeDay.Step) -> some View {
         Button { onStep(step, .hero) } label: {
             Label(ctaTitle(step), systemImage: ctaIcon(step))
         }
         .buttonStyle(MicaboBrandButtonStyle(minHeight: 54))
         .background(alignment: .topTrailing) {
-            MikaMascot(
-                mood: step == .session ? .wave : .idle,
-                size: Self.mikaSize,
-                frozenAt: motion.still ? 0.5 : nil
-            )
-            .offset(x: -2, y: -Self.mikaSize + Self.mikaSink)
-            .accessibilityHidden(true)
+            MikaPeek(mood: step == .session ? .wave : .wink, width: Self.mikaSize, animates: !motion.still)
+                .offset(x: -Self.mikaInset, y: -MikaPeek.height(for: Self.mikaSize) + Self.mikaSink)
+                .accessibilityHidden(true)
         }
     }
 

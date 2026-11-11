@@ -463,13 +463,17 @@ struct DayAgendaSection: View {
     }
 }
 
-/// Un jour vide : Mika dans sa pastille, une phrase, et de quoi le remplir.
+/// Un jour vide : le calendrier, une phrase, et de quoi le remplir. Pas de Mika dans l'agenda
+/// (la règle de mise en scène, `MikaMascot.swift`) : il est déjà sur la carte d'examen.
 struct DayEmptyState: View {
     let onAdd: () -> Void
 
     var body: some View {
         HStack(spacing: 14) {
-            MikaMascot(mood: .sleep, size: 56, frame: .circle)
+            MicaboIconView(icon: .exam, size: 30)
+                .frame(width: 52, height: 52)
+                .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 6) {
                 Text(loc("ios.cal.emptyDay"))
                     .font(MicaboFont.ui(16, weight: .black))
@@ -748,9 +752,9 @@ struct NoExamCard: View {
             .padding(.vertical, 18)
             .padding(.leading, 18)
             Spacer(minLength: 0)
-            // Mika sort du bas de la carte (règle 1 du kit).
-            MikaMascot(mood: .wave, size: 108)
-                .padding(.trailing, 6)
+            // Mika, en demi, dépasse du bas de la carte (la règle de mise en scène).
+            MikaPeek(mood: .wave, width: MikaPeek.card)
+                .padding(.trailing, 12)
         }
         .homeCardClipped()
     }
@@ -812,12 +816,10 @@ struct CalendarListRow: View {
     }
 }
 
-/// **« Scanne ton emploi du temps »** : une carte claire, Mika qui sort de son bord bas et
-/// regarde, et le geste qui remplit le calendrier « Cours » d'un coup.
+/// **« Scanne ton emploi du temps »** : une carte claire, l'appareil photo, et le geste qui
+/// remplit le calendrier « Cours » d'un coup.
 struct TimetableScanPromo: View {
     let onScan: () -> Void
-
-    @Environment(\.homeStill) private var still
 
     var body: some View {
         Button(action: onScan) {
@@ -848,9 +850,12 @@ struct TimetableScanPromo: View {
                 .padding(.vertical, 18)
                 .padding(.leading, 18)
                 Spacer(minLength: 0)
-                // Mika sort du bas de la carte (règle 1 du kit), noir sur le blanc.
-                MikaMascot(mood: .look, size: 108, frozenAt: still ? 0.4 : nil)
-                    .padding(.trailing, 6)
+                // L'appareil photo, pas Mika : il est déjà sur la carte d'examen, juste au-dessus
+                // (jamais deux fois sur un écran).
+                MicaboIconView(icon: .photo, size: 58)
+                    .padding(.trailing, 18)
+                    .padding(.bottom, 20)
+                    .accessibilityHidden(true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .homeCardClipped()

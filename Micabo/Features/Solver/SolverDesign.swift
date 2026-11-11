@@ -80,26 +80,26 @@ struct SolverSubjectChip: View {
 
 // MARK: - Mika
 
-/// **Mika sur fond clair** : une carte de la surface de l'app avec Mika debout sur son bord bas,
-/// et ce qu'il dit à côté. Pas de scène bleue : Mika vit sur le papier (`MikaBackdrop.surface`).
+/// **Mika sur fond clair** : une carte de la surface de l'app, Mika en demi qui dépasse de son
+/// bord bas (`MikaPeek.card`, la même taille partout), et ce qu'il dit à côté. Pas de scène
+/// bleue : Mika vit sur le papier.
 struct SolverMikaCard<Content: View>: View {
     var mood: MikaMood = .idle
-    var mikaSize: CGFloat = 104
     var animates = true
     @ViewBuilder var content: Content
 
+    private let mikaSize = MikaPeek.card
+
     var body: some View {
-        HStack(alignment: .bottom, spacing: 4) {
+        HStack(alignment: .bottom, spacing: 8) {
             content
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.vertical, 18)
                 .padding(.leading, 18)
-            MikaMascot(mood: mood, size: mikaSize, backdrop: .surface, animates: animates)
-                .frame(width: mikaSize * 0.86, height: mikaSize * 0.9, alignment: .bottom)
-                .clipped()
-                .padding(.trailing, 6)
+            MikaPeek(mood: mood, width: mikaSize, animates: animates)
+                .padding(.trailing, 12)
         }
-        .frame(maxWidth: .infinity, minHeight: mikaSize * 0.9, alignment: .bottom)
+        .frame(maxWidth: .infinity, minHeight: MikaPeek.height(for: mikaSize) + 12, alignment: .bottom)
         .solverCard()
         .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
     }
@@ -123,15 +123,13 @@ struct SolverMikaNote<Content: View>: View {
     }
 }
 
-/// Mika dans un petit rond clair, à côté de ce qu'il dit.
+/// La tête de Mika dans un petit rond clair, à côté de ce qu'il dit (`MikaAvatar`, fixe).
 struct SolverMikaAvatar: View {
     var size: CGFloat = 34
     var mood: MikaMood = .idle
 
     var body: some View {
-        // Mika dans son nid, la pastille claire du kit (pas la bleue) : en entier au milieu.
-        MikaMascot(mood: mood, size: size, backdrop: .surface, frame: .circle, animates: false)
-        .accessibilityHidden(true)
+        MikaAvatar(size: size)
     }
 }
 

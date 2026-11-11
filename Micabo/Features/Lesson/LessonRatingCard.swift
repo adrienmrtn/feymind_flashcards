@@ -89,7 +89,7 @@ struct LessonRatingCard: View {
 
     private var thanks: some View {
         HStack(spacing: 12) {
-            MikaMascot(mood: .happy, size: 44, frame: .circle)
+            MikaAvatar(size: 40)
                 .frame(width: 44, height: 44)
             Text(L10n.t("ios.conv.rate.thanks", locale: .resolved()))
                 .font(MicaboFont.ui(15, weight: .bold))

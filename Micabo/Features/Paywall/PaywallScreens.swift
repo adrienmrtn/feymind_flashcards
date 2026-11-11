@@ -155,7 +155,8 @@ struct PaywallBrandHero: View {
 
     @Environment(\.onboardingStill) private var still
 
-    static let mikaSize: CGFloat = 168
+    /// Mika en demi, qui dépasse du bas de l'en-tête (`MikaPeek.hero`).
+    static let mikaSize: CGFloat = MikaPeek.hero
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -193,7 +194,7 @@ struct PaywallBrandHero: View {
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.trailing, Self.mikaSize - 44)
+            .padding(.trailing, Self.mikaSize - 8)
             .padding(.top, 4)
         }
         .padding(.horizontal, MicaboSpacing.screen)
@@ -201,8 +202,8 @@ struct PaywallBrandHero: View {
         .padding(.bottom, 26)
         .frame(maxWidth: .infinity, minHeight: 236, alignment: .topLeading)
         .background(alignment: .bottomTrailing) {
-            MikaMascot(mood: mood, size: Self.mikaSize, frozenAt: still ? 0.5 : nil, backdrop: .surface)
-                .offset(x: 8)
+            MikaPeek(mood: mood, width: Self.mikaSize, animates: !still)
+                .padding(.trailing, 14)
         }
         // Sous la barre d'état et quand on tire la page, c'est le fond de `PaywallFlowView`,
         // du même blanc, qui prend le relais.

@@ -256,8 +256,8 @@ enum HomeGreeting {
 /// barre, comme une conversation. Le bleu y reste un accent : le filet et la lueur de la barre,
 /// le « + », l'envoi.
 ///
-/// Mika salue en arrivant, puis se repose ; il fait coucou de temps en temps, réfléchit
-/// pendant qu'un support se lit, et sourit quand on touche la bulle.
+/// Mika, en demi, passe la tête au-dessus de la barre et fait coucou en arrivant — une fois —,
+/// réfléchit pendant qu'un support se lit, et saute de joie quand on touche la bulle.
 struct HomeHeroCard: View {
     let composer: LessonComposer
     var focused: FocusState<Bool>.Binding
@@ -267,13 +267,13 @@ struct HomeHeroCard: View {
     let onSources: () -> Void
     let onDismissKeyboard: () -> Void
 
-    static let mikaSize: CGFloat = 150
-    /// Le bout des tentacules passe derrière la barre : Mika est posé sur son bord.
-    static let mikaSink: CGFloat = 5
+    /// Mika en demi au-dessus de la barre (`MikaPeek.hero`).
+    static let mikaSize: CGFloat = MikaPeek.hero
+    /// La coupe passe sous le bord haut de la barre.
+    static let mikaSink: CGFloat = 4
 
     @State private var index = 0
     @State private var mood: MikaMood = .wave
-    @State private var bob = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -289,27 +289,9 @@ struct HomeHeroCard: View {
                     .padding(.top, 10)
             }
         }
-        .task {
-            // Coucou en arrivant, puis le repos ; un nouveau coucou de temps en temps.
-            guard !motion.still else { return }
-            try? await Task.sleep(for: .seconds(2.6))
-            mood = .idle
-            guard motion.ambient else { return }
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(14))
-                guard !Task.isCancelled else { return }
-                mood = .wave
-                try? await Task.sleep(for: .seconds(2.6))
-                mood = .idle
-            }
-        }
-        .onAppear {
-            guard motion.ambient else { return }
-            withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) { bob = true }
-        }
     }
 
-    /// La bulle à gauche, Mika à droite, posé sur le haut de la barre.
+    /// La bulle à gauche, Mika à droite, qui dépasse du haut de la barre.
     private var stage: some View {
         HStack(alignment: .top, spacing: 0) {
             Button(action: nextLine) {
@@ -319,11 +301,11 @@ struct HomeHeroCard: View {
             .accessibilityLabel(Text(line))
             .accessibilityHint(Text(L10n.t("ios.home2.bubbleHint", locale: .resolved())))
             .frame(maxWidth: .infinity, alignment: .leading)
-            Color.clear.frame(width: Self.mikaSize - 40)
+            Color.clear.frame(width: Self.mikaSize - 6)
         }
         .padding(.top, 8)
-        .padding(.bottom, 26)
-        .frame(maxWidth: .infinity, minHeight: Self.mikaSize - Self.mikaSink + 2, alignment: .topLeading)
+        .padding(.bottom, 22)
+        .frame(maxWidth: .infinity, minHeight: MikaPeek.height(for: Self.mikaSize) + 8, alignment: .topLeading)
         .background {
             // Le vide de la scène ne se touche pas : un calque vide le fait, pour ranger le
             // clavier.
@@ -332,13 +314,13 @@ struct HomeHeroCard: View {
                 .onTapGesture(perform: onDismissKeyboard)
         }
         .overlay(alignment: .bottomTrailing) {
-            MikaMascot(
+            MikaPeek(
                 mood: composer.isReading ? .think : mood,
-                size: Self.mikaSize,
+                width: Self.mikaSize,
                 reactsToTap: true,
-                frozenAt: motion.still ? 0.55 : nil
+                animates: !motion.still
             )
-            .offset(x: -6, y: Self.mikaSink + (bob ? -3 : 2))
+            .offset(x: -14, y: Self.mikaSink)
             // Le toucher fait aussi ranger le clavier : Mika est au-dessus de la barre, là où
             // l'on appuie pour sortir du champ.
             .simultaneousGesture(TapGesture().onEnded { onDismissKeyboard() })
@@ -355,7 +337,8 @@ struct HomeHeroCard: View {
         index = (index + 1) % lines.count
         mood = .happy
         Task {
-            try? await Task.sleep(for: .seconds(1.2))
+            // Le saut dure 1,6 s : il retombe avant de revenir au repos.
+            try? await Task.sleep(for: .seconds(1.8))
             if mood == .happy { mood = .idle }
         }
     }
