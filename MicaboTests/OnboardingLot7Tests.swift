@@ -51,7 +51,7 @@ final class OnboardingLot7Tests: XCTestCase {
                 }
             }
             for key in ["ios.onb7.card.ask", "ios.onb7.card.right", "ios.onb7.card.wrong",
-                        "ios.onb7.card.proof", "ios.onb7.card.source"] {
+                        "ios.onb7.card.proof", "ios.journey.source"] {
                 XCTAssertFalse((table[key] ?? "").isEmpty, "\(locale.rawValue) \(key)")
             }
             XCTAssertTrue((table["ios.onb7.card.proof"] ?? "").contains("{testing}"), locale.rawValue)
@@ -123,7 +123,7 @@ final class OnboardingLot7Tests: XCTestCase {
 
     func testEveryLot7KeyExistsInEveryLanguage() {
         let french = IosI18nCatalogs.table(for: "fr").keys.filter { $0.hasPrefix("ios.onb7.") }
-        XCTAssertGreaterThanOrEqual(french.count, 27)
+        XCTAssertGreaterThanOrEqual(french.count, 32)
         for locale in UiLocale.allCases {
             let table = IosI18nCatalogs.table(for: locale.rawValue)
             for key in french {
