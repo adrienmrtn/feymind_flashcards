@@ -11,7 +11,7 @@ import UIKit
 //
 // 1. **Sur le clair**, Mika est noir sur crème ou blanc, l'étincelle de son crayon en bleu,
 //    une ombre très douce sous la silhouette. **La nuit**, un halo clair suit son contour
-//    (`MikaGlow`) : le corps noir ne se fond pas dans le graphite.
+//    (`MikaHalo`) : le corps noir ne se fond pas dans le graphite.
 // 2. **Les moments**, à varier d'un écran à l'autre :
 //    - **Mika qui dépasse** d'une carte blanche ou d'un bouton : le buste derrière, la coupe
 //      cachée par le bord (le plan du jour de Home, Concentration, la barre du nouvel élève) ;
@@ -272,7 +272,7 @@ struct MikaMascot: View {
                     // Sur le papier, une ombre douce le jour, un halo clair la nuit, qui suit
                     // la silhouette : derrière lui, jamais sur lui. Sur le bleu, rien.
                     if backdrop != .blue {
-                        MikaGlow(still: shown.still, side: size, night: colorScheme == .dark && backdrop == .surface)
+                        MikaHalo(still: shown.still, side: size, night: colorScheme == .dark && backdrop == .surface)
                     }
                 }
         case .circle:
@@ -409,7 +409,7 @@ enum MikaNest {
 /// **Le halo de Mika sans cadre** : la silhouette de son image fixe, floutée derrière lui. Le
 /// jour, une ombre très douce qui le pose sur la crème ; la nuit, un contour clair qui garde
 /// le corps noir lisible sur le graphite.
-struct MikaGlow: View {
+struct MikaHalo: View {
     let still: MikaStill
     let side: CGFloat
     let night: Bool

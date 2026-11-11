@@ -147,7 +147,7 @@ dans un écran vide), et la couleur de marque reste aux boutons, aux barres, aux
 règle de Micabo, écrite aussi en tête de `MikaMascot.swift` :
 
 1. **Mika vit sur le clair** : la crème et le blanc des cartes le jour, le graphite la nuit.
-   Le jour, une ombre très douce suit sa silhouette ; **la nuit, un halo clair** (`MikaGlow`)
+   Le jour, une ombre très douce suit sa silhouette ; **la nuit, un halo clair** (`MikaHalo`)
    garde le corps noir lisible. L'étincelle du crayon est bleue sur le clair, blanche sur le
    sombre et sur le bleu.
 2. **Le bleu redevient un accent** : le grand bouton (`MicaboBrandButtonStyle`), l'anneau, le
