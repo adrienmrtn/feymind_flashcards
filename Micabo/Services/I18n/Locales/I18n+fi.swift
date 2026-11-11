@@ -1425,7 +1425,7 @@ extension IosI18nCatalogs {
         "ios.sup.source.audioSub": "Äänimuistio tai tiedosto",
         "ios.sup.source.flashcards": "Tuo kortit",
         "ios.sup.source.flashcardsSub": "Anki tai Quizlet: pakka valmiina harjoiteltavaksi heti",
-        "ios.sup.source.handwriting": "Käsin kirjoitetut muistiinpanot",
+        "ios.sup.source.handwriting": "Käsiala",
         "ios.sup.source.handwritingSub": "Vihkosi, paperisi",
         "ios.sup.source.lecture": "Tunti livenä",
         "ios.sup.source.lectureSub": "Nauhoita opettajasi",

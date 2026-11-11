@@ -223,7 +223,9 @@ enum MindMap {
                 case .list(let items), .steps(let items):
                     attach(items)
                 case .callout(let kind, let title, let text):
-                    if kind == .remember || kind == .mistake { attach([title ?? text]) }
+                    if kind == .remember || kind == .mistake {
+                        if let title = title?.nilIfBlank { add(title, [text]) } else { add(text) }
+                    }
                 case .paragraph, .example, .table, .quote:
                     break
                 }

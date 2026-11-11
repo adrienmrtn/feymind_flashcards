@@ -78,10 +78,10 @@ enum RevisionModeAllowance {
         }
     }
 
-    /// Vrai quand la pastille « Pro » se montre sur la tuile : le mode est fermé, ou le sera
-    /// après la séance offerte.
-    static func showsProBadge(_ mode: RevisionMode, isPro: Bool) -> Bool {
-        !isPro && (mode == .voice || mode == .export)
+    /// Vrai quand la pastille « Pro » se montre sur la tuile : seulement quand le mode est
+    /// fermé. À voix haute ne la porte pas tant que sa séance offerte reste.
+    static func showsProBadge(_ mode: RevisionMode, isPro: Bool, defaults: UserDefaults = .standard) -> Bool {
+        gate(mode, isPro: isPro, defaults: defaults) != nil
     }
 
     static func voiceSessionsUsed(defaults: UserDefaults = .standard) -> Int {

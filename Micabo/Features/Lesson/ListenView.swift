@@ -153,14 +153,14 @@ struct ListenPlayerCard: View {
                 Spacer(minLength: 0)
             }
 
-            Text(speaker.currentLine ?? "")
+            Text(speaker.shownLine ?? "")
                 .font(MicaboFont.ui(20, weight: .bold))
                 .foregroundStyle(MicaboColor.ink)
                 .multilineTextAlignment(.leading)
                 .lineLimit(5)
                 .frame(maxWidth: .infinity, minHeight: 84, alignment: .topLeading)
                 .fixedSize(horizontal: false, vertical: true)
-                .animation(.easeInOut(duration: 0.2), value: speaker.currentLine)
+                .animation(.easeInOut(duration: 0.2), value: speaker.shownLine)
 
             VStack(spacing: 6) {
                 GeometryReader { proxy in

@@ -254,7 +254,7 @@ struct XPGoalCard: View {
                 .fixedSize(horizontal: false, vertical: true)
             if showsButton {
                 Button(L10n.t("ios.kx.continue", locale: .resolved()), action: onContinue)
-                    .buttonStyle(LessonPrimaryButtonStyle())
+                    .buttonStyle(MicaboBrandButtonStyle())
                     .padding(.top, 6)
             }
         }

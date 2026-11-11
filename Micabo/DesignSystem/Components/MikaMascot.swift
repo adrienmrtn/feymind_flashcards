@@ -104,9 +104,8 @@ enum MikaMood: String, CaseIterable, Identifiable {
         case .write: 2
         case .wave: 2.17
         case .happy: 1.58
-        case .surprise, .wink: 1.5
+        case .surprise, .wink, .shake: 1.5
         case .celebrate: 2.67
-        case .shake: 1.67
         case .appear: 1.33
         }
     }
@@ -116,11 +115,12 @@ enum MikaMood: String, CaseIterable, Identifiable {
         switch self {
         case .idle, .appear, .look: .neutral
         case .wave: .wave
-        case .happy: .smile
+        // La fête, fixe, est un grand sourire debout : la pose du saut est en l'air, et Mika
+        // posé sur un bord y flotterait.
+        case .happy, .celebrate: .smile
         case .sleep: .sleep
         case .think: .think
         case .surprise: .surprise
-        case .celebrate: .celebrate
         case .sad, .shake: .sad
         case .write: .write
         case .wink: .wink
