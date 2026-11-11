@@ -6,7 +6,6 @@ extension IosI18nCatalogs {
         "ios.ku7.prompt.level": "Moje úroveň: {level}. Přizpůsob vysvětlení této úrovni.",
         "ios.ku7.prompt.practice": "Vymysli otázku stejného typu jako v přiloženém dokumentu, abych si mohl procvičit: u výpočtu jiné hodnoty, jinak příbuzný pojem. Neprozrazuj odpověď. Napiš přesně takto a nech tyto značky v angličtině:\n[EXERCISE] celé zadání\n[ANSWER] očekávaná odpověď, stručně",
         "ios.ku7.prompt.solve": "Pomoz mi s otázkou z přiloženého dokumentu krok za krokem, jako doučovatel: chci pochopit postup, ne jen odpověď. Může být z jakéhokoli předmětu: matematika, přírodní vědy, jazyky, literatura, dějepis, zeměpis, filozofie… Pokud je otázek víc, vyřeš jen první.\nU výpočtu je každý krok krokem výpočtu. U otázky z teorie, rozboru nebo jazyka je každý krok krokem úvahy: hlavní myšlenka, argument, příklad, pravidlo, které platí.\nNapiš odpověď přesně v této podobě a nech tyto značky v angličtině:\n[SUBJECT] math, physics, biology, languages, humanities nebo other\n[STEP] krátký nadpis\nJedna až tři věty, které krok vysvětlí.\n(2 až 5 značek [STEP])\n[ANSWER] výsledná odpověď, stručně\nVzorce piš v jednoduchém LaTeXu mezi $ a důležitý vzorec dej samostatně na vlastní řádek mezi $$.",
-        "ios.ku7.search.placeholder": "Hledat v mých lekcích a kartičkách",
         "ios.ku7.subject.humanities": "Dějepis a společnost",
         "ios.ku7.subject.languages": "Jazyky a literatura",
         "ios.ku7.tools.homework": "Pomoc s úkoly",

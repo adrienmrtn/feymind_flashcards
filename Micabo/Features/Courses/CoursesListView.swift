@@ -291,7 +291,7 @@ struct CoursesListView: View {
     @ViewBuilder
     private var myCourses: some View {
         if !sheets.isEmpty {
-            MicaboSearchField(text: $searchText, placeholder: i18n.t("ios.ku7.search.placeholder"))
+            MicaboSearchField(text: $searchText, placeholder: i18n.t("app.courses.search"))
                 .padding(.horizontal, MicaboSpacing.screen)
                 .onChange(of: searchText) { previous, query in
                     if query.isEmpty {

@@ -6,7 +6,6 @@ extension IosI18nCatalogs {
         "ios.ku7.prompt.level": "Mit niveau: {level}. Tilpas din forklaring til dette niveau.",
         "ios.ku7.prompt.practice": "Find på et spørgsmål af samme slags som det i det vedhæftede dokument, så jeg kan øve mig: andre værdier i en udregning, ellers et beslægtet begreb. Giv ikke svaret. Skriv præcis sådan, og behold disse tags på engelsk:\n[EXERCISE] hele opgaven\n[ANSWER] det forventede svar, kort",
         "ios.ku7.prompt.solve": "Hjælp mig med spørgsmålet i det vedhæftede dokument, trin for trin, som en privatlærer: jeg vil forstå metoden, ikke kun svaret. Det kan komme fra et hvilket som helst fag: matematik, naturfag, sprog, litteratur, historie, geografi, filosofi… Hvis der er flere spørgsmål, så tag kun det første.\nI en udregning er hvert trin et trin i udregningen. I et teori-, analyse- eller sprogspørgsmål er hvert trin et trin i ræsonnementet: hovedidéen, argumentet, eksemplet, reglen der gælder.\nSkriv dit svar præcis i denne form, og behold disse tags på engelsk:\n[SUBJECT] math, physics, biology, languages, humanities eller other\n[STEP] en kort titel\nEn til tre sætninger, der forklarer trinnet.\n(2 til 5 tags [STEP])\n[ANSWER] det endelige svar, kort\nSkriv formler i simpel LaTeX mellem $, og sæt en vigtig formel alene på sin egen linje mellem $$.",
-        "ios.ku7.search.placeholder": "Søg i mine lektioner og kort",
         "ios.ku7.subject.humanities": "Historie & samfund",
         "ios.ku7.subject.languages": "Sprog & litteratur",
         "ios.ku7.tools.homework": "Lektiehjælp",

@@ -6,7 +6,6 @@ extension IosI18nCatalogs {
         "ios.ku7.prompt.level": "Moja raven: {level}. Prilagodi razlago tej ravni.",
         "ios.ku7.prompt.practice": "Izmisli si vprašanje iste vrste kot v priloženem dokumentu, da bom lahko vadil: pri računu druge vrednosti, sicer soroden pojem. Ne izdaj odgovora. Napiši natanko tako in pusti oznake v angleščini:\n[EXERCISE] celotna naloga\n[ANSWER] pričakovani odgovor, na kratko",
         "ios.ku7.prompt.solve": "Pomagaj mi pri vprašanju iz priloženega dokumenta korak za korakom, kot inštruktor: želim razumeti postopek, ne le odgovora. Lahko je iz katerega koli predmeta: matematika, naravoslovje, jeziki, književnost, zgodovina, geografija, filozofija… Če je vprašanj več, reši samo prvo.\nPri računu je vsak korak korak računa. Pri vprašanju iz teorije, analize ali jezika je vsak korak korak razmisleka: glavna ideja, argument, primer, pravilo, ki velja.\nOdgovor napiši natanko v tej obliki in pusti oznake v angleščini:\n[SUBJECT] math, physics, biology, languages, humanities ali other\n[STEP] kratek naslov\nEna do tri povedi, ki pojasnijo korak.\n(od 2 do 5 oznak [STEP])\n[ANSWER] končni odgovor, na kratko\nFormule piši v preprostem LaTeX-u med $, pomembno formulo pa postavi samo v svojo vrstico med $$.",
-        "ios.ku7.search.placeholder": "Išči v mojih lekcijah in karticah",
         "ios.ku7.subject.humanities": "Zgodovina in družba",
         "ios.ku7.subject.languages": "Jeziki in književnost",
         "ios.ku7.tools.homework": "Pomoč pri domači nalogi",

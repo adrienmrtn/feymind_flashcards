@@ -61,10 +61,13 @@ struct SolverSubjectChip: View {
     var body: some View {
         HStack(spacing: 6) {
             MicaboIconView(icon: subject.icon, size: 18)
+            // « Histoire et société », « Geschichte & Gesellschaft » : le nom réduit un peu plutôt
+            // que de finir en « … » (lot 7).
             Text(subject.label)
                 .font(MicaboFont.ui(14, weight: .bold))
                 .foregroundStyle(MicaboColor.ink)
                 .lineLimit(1)
+                .minimumScaleFactor(0.85)
             if showsChevron {
                 Image(systemName: "chevron.down")
                     .font(.system(size: 11, weight: .bold))
