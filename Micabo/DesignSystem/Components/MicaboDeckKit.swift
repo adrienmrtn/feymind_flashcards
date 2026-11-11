@@ -46,14 +46,17 @@ struct MicaboPageHeading<Trailing: View>: View {
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
             VStack(alignment: .leading, spacing: 3) {
+                // Le titre de tous les onglets : celui du mois du Calendrier et du bonjour de
+                // Home, vingt-six points, le plus gras de la police.
                 Text(title)
-                    .font(MicaboFont.ui(21, weight: .bold))
-                    .tracking(-0.3)
+                    .font(MicaboFont.ui(26, weight: .black))
                     .foregroundStyle(MicaboColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.isHeader)
 
                 if let subtitle {
                     Text(subtitle)
-                        .font(MicaboFont.ui(13.5, weight: .regular))
+                        .font(MicaboFont.ui(14, weight: .bold))
                         .foregroundStyle(MicaboColor.inkSecondary)
                 }
             }
@@ -849,8 +852,12 @@ struct MicaboStreakCard: View {
     let best: Int
     let title: String
     let note: String
+    /// **Mika assis sur le bord bas de la carte**, à droite, coupé par elle (la règle de mise
+    /// en scène, `MikaMascot.swift`). Sans humeur, pas de Mika.
+    var mika: MikaMood?
 
     private static let segments = 6
+    static let mikaSize: CGFloat = 86
 
     /// **Les six segments disent le chemin vers le record.**
     ///
@@ -900,6 +907,7 @@ struct MicaboStreakCard: View {
             }
             .padding(.top, 1)
         }
+        .padding(.trailing, mika == nil ? 0 : Self.mikaSize - 12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(17)
         .background {
@@ -908,6 +916,12 @@ struct MicaboStreakCard: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
+        }
+        .overlay(alignment: .bottomTrailing) {
+            if let mika {
+                MikaMascot(mood: mika, size: Self.mikaSize)
+                    .padding(.trailing, 6)
+            }
         }
         .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
         .overlay {

@@ -360,7 +360,8 @@ struct CoursesListView: View {
         MicaboEmptyState(
             systemImage: "folder",
             title: i18n.t("app.folders.emptyTitle"),
-            message: i18n.t("app.folders.emptyBody")
+            message: i18n.t("app.folders.emptyBody"),
+            mika: .sleep
         )
         .padding(.horizontal, MicaboSpacing.screen)
     }
@@ -370,7 +371,8 @@ struct CoursesListView: View {
             systemImage: "books.vertical",
             title: i18n.t("lesson.lessons.emptyTitle"),
             message: i18n.t("lesson.lessons.emptyBody"),
-            actionTitle: i18n.t("lesson.lessons.new")
+            actionTitle: i18n.t("lesson.lessons.new"),
+            mika: .wave
         ) {
             requestImport()
         }
@@ -381,7 +383,8 @@ struct CoursesListView: View {
         MicaboEmptyState(
             systemImage: "magnifyingglass",
             title: i18n.t("app.courses.noResults"),
-            message: i18n.t("app.courses.noResultsBody")
+            message: i18n.t("app.courses.noResultsBody"),
+            mika: .look
         )
         .padding(.horizontal, MicaboSpacing.screen)
     }

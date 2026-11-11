@@ -94,15 +94,23 @@ struct MicaboEmptyState: View {
     let title: String
     let message: String
     var actionTitle: String?
+    /// **Mika à la place du pictogramme**, dans son nid clair : une liste vide est l'un de
+    /// ses moments (la règle de mise en scène, `MikaMascot.swift`).
+    var mika: MikaMood?
     var action: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 8) {
-            Image(systemName: systemImage)
-                .font(.system(size: 20, weight: .regular))
-                .foregroundStyle(MicaboColor.inkTertiary)
-                .frame(width: 48, height: 48)
-                .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            if let mika {
+                MikaMascot(mood: mika, size: 88, frame: .circle)
+                    .padding(.bottom, 4)
+            } else {
+                Image(systemName: systemImage)
+                    .font(.system(size: 20, weight: .regular))
+                    .foregroundStyle(MicaboColor.inkTertiary)
+                    .frame(width: 48, height: 48)
+                    .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
 
             Text(title)
                 .font(MicaboFont.ui(17, weight: .semibold))

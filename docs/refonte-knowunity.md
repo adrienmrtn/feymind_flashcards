@@ -26,17 +26,17 @@ conversion, la barre reste la scène.
    la semaine (⚡, ouvre la ligue).
 2. **Le bonjour** (« Bonsoir Léa », la nuit dit encore bonsoir) et l'objectif du jour :
    `xpToday / DAILY_XP_GOAL` (50) en texte et **un seul anneau**.
-3. **« Ton plan du jour »**, sur la scène bleue de la marque (`HomePlanHero`) :
-   - en haut, le **prochain examen** (`NextExam.current`) : le compte à rebours dans sa tuile
-     blanche, le nom, la préparation (`ExamReadiness`) ; un appui ouvre le Calendrier. Sans
+3. **« Ton plan du jour »**, sur une carte claire de la page (`HomePlanHero`) :
+   - en haut, le **prochain examen** (`NextExam.current`) : le compte à rebours dans sa pastille
+     bleue, le nom, la préparation (`ExamReadiness`) ; un appui ouvre le Calendrier. Sans
      examen : « Ton plan du jour » et une pilule discrète « Ajouter un examen » qui ouvre
      `ExamEditSheet` ;
    - **la** chose à faire maintenant (`HomeDay.primary`) : la séance de révision posée au
      calendrier aujourd'hui, ni faite ni finie (`StudyPlan.today` → `HomeSession.next`), puis
      la leçon en cours tant qu'elle n'a pas avancé aujourd'hui, puis les cartes dues, puis la
      leçon ; sinon, écrire la suivante ;
-   - **un** grand bouton blanc — « Démarrer la séance », « Continuer », « Réviser
-     maintenant » —, Mika en buste qui regarde par-dessus (comme sur Concentration). La séance
+   - **un** grand bouton bleu — « Démarrer la séance », « Continuer », « Réviser
+     maintenant » —, Mika en buste qui dépasse de son bord (comme sur Concentration). La séance
      part comme du calendrier (`FocusPlan.revision`) ;
    - au plus une seconde ligne (`HomeDay.secondary`) : les cartes dues, ou la leçon en cours.
 4. **« Aujourd'hui »** : ce qui reste à l'agenda du jour, trois lignes au plus, dessinées
@@ -50,7 +50,7 @@ conversion, la barre reste la scène.
 7. **Les outils**, en raccourcis légers dans une seule carte : Scanner un exo, Quiz éclair,
    Minuteur (ouvre Concentration et « Préparer ma session »), Ligue.
 
-**L'élève tout neuf** : la rangée du haut ; la scène bleue avec la bulle de Mika (le salut à
+**L'élève tout neuf** : la rangée du haut ; sur le papier de la page, la bulle de Mika (le salut à
 l'heure et au prénom, qui s'écrit lettre après lettre), Mika en buste qui sort de derrière la
 barre, et la barre « comme une conversation » ; « Comment ça marche » en trois pas ; les
 outils.
@@ -137,3 +137,49 @@ paywall tout de suite, comme avant (`LessonAllowance.immediatePaywall`).
 L'onboarding (ses écrans et leur ordre), le paywall et les achats, les prix, les thèmes
 jour et nuit, Mika et ses humeurs. Chaque nouvelle phrase existe dans **toutes** les langues
 de la plateforme.
+
+## 9. Mika hors du fond bleu, et un seul langage pour les onglets
+
+« La mascotte est toujours sur fond bleu. » Les grandes apps d'étude à mascotte font l'inverse :
+la mascotte vit **sur le fond de l'app** (Knowunity la pose au centre de sa page, sa bulle
+au-dessus, et sur ses feuilles ; les autres la font sortir d'une carte claire ou la montrent
+dans un écran vide), et la couleur de marque reste aux boutons, aux barres, aux pastilles. La
+règle de Micabo, écrite aussi en tête de `MikaMascot.swift` :
+
+1. **Mika vit sur le clair** : la crème et le blanc des cartes le jour, le graphite la nuit.
+   Le jour, une ombre très douce suit sa silhouette ; **la nuit, un halo clair** (`MikaGlow`)
+   garde le corps noir lisible. L'étincelle du crayon est bleue sur le clair, blanche sur le
+   sombre et sur le bleu.
+2. **Le bleu redevient un accent** : le grand bouton (`MicaboBrandButtonStyle`), l'anneau, le
+   compte à rebours (`HomeCountdownBadge`), les pastilles, et **une carte forte par écran au
+   plus** (« Passer en Pro » sur le Profil). Plus de scène bleue sous Mika.
+3. **Trois moments, à varier** :
+   - **Mika qui dépasse** d'une carte blanche ou d'un bouton, la coupe du buste cachée par le
+     bord : le plan du jour de Home et la journée de Concentration (au-dessus du bouton bleu),
+     la barre du nouvel élève ;
+   - **Mika dans son nid**, le petit rond clair (`MikaFrame.circle` — blanc bleuté le jour,
+     graphite éclairé la nuit, un filet fin), à côté d'une phrase : la journée vide du
+     Calendrier, la feuille des supports, les écrans vides de Leçons, le minuteur. La pastille
+     bleue reste possible, explicitement (`MikaFrame.blueCircle`, `.rounded` pour l'icône) ;
+   - **Mika assis sur le bord bas** d'une carte, à côté de ce qu'elle dit : la série du Profil
+     (`MicaboStreakCard(mika:)`), « Aucun examen » et « Scanne ton emploi du temps » dans le
+     Calendrier.
+4. **Tailles** : 100 à 170 points en héros, 52 à 88 dans un nid, jamais moins de 30 ; **deux
+   Mika animés au plus par écran**.
+
+**Le même langage dans tous les onglets** :
+
+- **Le titre de page** : 26 points, le plus gras (`MicaboPageHeading`, le mois du Calendrier,
+  le bonjour de Home) ;
+- **Les titres de section** : `StudySectionTitle` partout (19 points), y compris les groupes
+  de réglages du Profil, qui ne sont plus en petites capitales ;
+- **Les cartes** : `homeCard` — blanche le jour, anthracite la nuit, un filet, la même ombre
+  douce ; 26 points de rayon pour une grande carte (`MicaboStage.cardRadius`), 20 pour une
+  tuile ou une rangée-carte (`tileRadius`) ; `homeCardClipped` quand Mika sort du bord bas ;
+- **Le grand bouton** : bleu, texte blanc, un seul par écran.
+
+Home garde exactement sa hiérarchie et sa logique (§ 1, `HomeDay`, `StudyPlan`,
+`home_plan_tapped`) : seul le dessin change — le plan du jour sur une carte claire, l'examen
+dans sa tuile bleu pâle, le bouton bleu, Mika noir sur le blanc. La carte de l'examen du
+Calendrier, la journée de Concentration, la carte profil et les cartes de Leçons prennent les
+mêmes mesures.

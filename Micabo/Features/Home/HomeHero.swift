@@ -250,9 +250,11 @@ enum HomeGreeting {
 
 // MARK: - La scène
 
-/// **La scène de Home** : la carte bleue de la marque. En haut, la bulle de Mika ; à droite,
-/// Mika en buste, qui sort de derrière la barre — elle cache la coupe de son corps, comme le
-/// bord bas de l'icône ; en bas, la barre, comme une conversation.
+/// **La scène du nouvel élève**, sur le papier de la page et non plus sur un aplat bleu
+/// (`docs/refonte-knowunity.md` § 9) : en haut, la bulle de Mika ; à droite, Mika en buste,
+/// noir sur la crème, qui dépasse de la barre — elle cache la coupe de son corps ; en bas, la
+/// barre, comme une conversation. Le bleu y reste un accent : le filet et la lueur de la barre,
+/// le « + », l'envoi.
 ///
 /// Mika salue en arrivant, puis se repose ; il fait coucou de temps en temps, réfléchit
 /// pendant qu'un support se lit, et sourit quand on touche la bulle.
@@ -265,9 +267,9 @@ struct HomeHeroCard: View {
     let onSources: () -> Void
     let onDismissKeyboard: () -> Void
 
-    static let mikaSize: CGFloat = 164
+    static let mikaSize: CGFloat = 150
     /// Ce que la barre cache du buste : la coupe, et un peu de corps.
-    static let mikaSink: CGFloat = 8
+    static let mikaSink: CGFloat = 14
 
     @State private var index = 0
     @State private var mood: MikaMood = .wave
@@ -277,30 +279,16 @@ struct HomeHeroCard: View {
         VStack(spacing: 0) {
             stage
             HomeComposerBar(composer: composer, focused: focused, onSend: onSend, onSources: onSources)
-                .padding(.horizontal, 10)
-                .padding(.bottom, 10)
             if !composer.hasRoom {
                 Text(L10n.t("lesson.home.supportsFull", locale: .resolved(), vars: ["n": String(LessonComposer.maximumSupports)]))
                     .font(MicaboFont.ui(13, weight: .bold))
-                    .foregroundStyle(MicaboStage.inkSecondary)
+                    .foregroundStyle(HomePalette.inkSecondary)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, 16)
-                    .padding(.bottom, 12)
+                    .padding(.top, 10)
             }
         }
-        .background {
-            ZStack {
-                MicaboBrandBackdrop()
-                // L'aplat lui-même ne se touche pas : un calque vide le fait, pour ranger le
-                // clavier.
-                Color.clear
-                    .contentShape(Rectangle())
-                    .onTapGesture(perform: onDismissKeyboard)
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: MicaboStage.heroRadius, style: .continuous))
-        .shadow(color: MicaboBrand.blue.opacity(0.22), radius: 22, y: 12)
         .task {
             // Coucou en arrivant, puis le repos ; un nouveau coucou de temps en temps.
             guard !motion.still else { return }
@@ -331,22 +319,26 @@ struct HomeHeroCard: View {
             .accessibilityLabel(Text(line))
             .accessibilityHint(Text(L10n.t("ios.home2.bubbleHint", locale: .resolved())))
             .frame(maxWidth: .infinity, alignment: .leading)
-            Color.clear.frame(width: Self.mikaSize - 42)
+            Color.clear.frame(width: Self.mikaSize - 40)
         }
-        .padding(.leading, 16)
-        .padding(.trailing, 6)
-        .padding(.top, 18)
+        .padding(.top, 8)
         .padding(.bottom, 26)
         .frame(maxWidth: .infinity, minHeight: Self.mikaSize - Self.mikaSink + 2, alignment: .topLeading)
+        .background {
+            // Le vide de la scène ne se touche pas : un calque vide le fait, pour ranger le
+            // clavier.
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture(perform: onDismissKeyboard)
+        }
         .overlay(alignment: .bottomTrailing) {
             MikaMascot(
                 mood: composer.isReading ? .think : mood,
                 size: Self.mikaSize,
                 reactsToTap: true,
-                frozenAt: motion.still ? 0.55 : nil,
-                backdrop: .blue
+                frozenAt: motion.still ? 0.55 : nil
             )
-            .offset(x: 4, y: Self.mikaSink + (bob ? -3 : 2))
+            .offset(x: -6, y: Self.mikaSink + (bob ? -3 : 2))
             // Le toucher fait aussi ranger le clavier : Mika est au-dessus de la barre, là où
             // l'on appuie pour sortir du champ.
             .simultaneousGesture(TapGesture().onEnded { onDismissKeyboard() })
@@ -369,9 +361,10 @@ struct HomeHeroCard: View {
     }
 }
 
-/// **La bulle de Mika** : blanche sur le bleu, sa pointe tournée vers lui, en bas du côté de
-/// Mika. Le texte complet est posé, invisible, sous celui qui s'écrit : la bulle a sa taille
-/// finale dès la première lettre et ne pousse rien pendant la frappe.
+/// **La bulle de Mika** : une carte de la page — blanche le jour, anthracite la nuit —, sa
+/// pointe tournée vers lui, en bas du côté de Mika. Le texte complet est posé, invisible, sous
+/// celui qui s'écrit : la bulle a sa taille finale dès la première lettre et ne pousse rien
+/// pendant la frappe.
 struct HomeSpeechBubble: View {
     let text: String
     let motion: HomeMotion
@@ -385,7 +378,7 @@ struct HomeSpeechBubble: View {
             Text(shown)
         }
         .font(MicaboFont.ui(17, weight: .heavy))
-        .foregroundStyle(HomePalette.bubbleInk)
+        .foregroundStyle(HomePalette.ink)
         .multilineTextAlignment(.leading)
         .lineSpacing(1)
         .fixedSize(horizontal: false, vertical: true)
@@ -394,15 +387,15 @@ struct HomeSpeechBubble: View {
         .background {
             ZStack(alignment: .bottomTrailing) {
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(Color.white)
+                    .fill(HomePalette.card)
                 HomeBubbleTail()
-                    .fill(Color.white)
+                    .fill(HomePalette.card)
                     .frame(width: 18, height: 16)
                     .offset(x: 10, y: -10)
             }
             .flipsForRightToLeftLayoutDirection(true)
             .compositingGroup()
-            .shadow(color: MicaboBrand.blue900.opacity(0.22), radius: 12, y: 6)
+            .shadow(color: MicaboBrand.blue900.opacity(0.10), radius: 14, y: 6)
         }
         .task(id: text) {
             guard motion.ambient else { return }
@@ -485,11 +478,16 @@ struct HomeComposerBar: View {
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .strokeBorder(
-                    compact && !isFocused ? HomePalette.cardStroke : MicaboBrand.blue200.opacity(isFocused ? 1 : 0),
+                    isFocused ? MicaboColor.accent : (compact ? HomePalette.cardStroke : MicaboColor.accentPale),
                     lineWidth: compact && !isFocused ? 1 : 2
                 )
         )
-        .shadow(color: MicaboBrand.blue900.opacity(compact ? 0.06 : 0.18), radius: compact ? 16 : 14, y: compact ? 8 : 6)
+        // Seule, la barre du nouvel élève porte la lueur bleue : c'est l'accent de sa scène.
+        .shadow(
+            color: compact ? MicaboBrand.blue900.opacity(0.06) : MicaboBrand.blue.opacity(0.22),
+            radius: compact ? 16 : 20,
+            y: compact ? 8 : 10
+        )
         .animation(.easeOut(duration: 0.2), value: isFocused)
         .animation(.spring(duration: 0.3), value: composer.supports.count)
     }

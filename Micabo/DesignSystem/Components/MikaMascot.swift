@@ -2,6 +2,32 @@ import Lottie
 import SwiftUI
 import UIKit
 
+// MARK: - La mise en scène de Mika (la règle)
+//
+// **Mika vit sur le papier de l'app, pas sur un aplat bleu.** Le jour, sur la crème et le
+// blanc des cartes ; la nuit, sur le graphite. Le bleu Micabo redevient un accent : les
+// boutons, les anneaux, les pastilles, et **une carte forte par écran au plus** — jamais le
+// décor systématique de la mascotte.
+//
+// 1. **Sur le clair**, Mika est noir sur crème ou blanc, l'étincelle de son crayon en bleu,
+//    une ombre très douce sous la silhouette. **La nuit**, un halo clair suit son contour
+//    (`MikaGlow`) : le corps noir ne se fond pas dans le graphite.
+// 2. **Les moments**, à varier d'un écran à l'autre :
+//    - **Mika qui dépasse** d'une carte blanche ou d'un bouton : le buste derrière, la coupe
+//      cachée par le bord (le plan du jour de Home, Concentration, la barre du nouvel élève) ;
+//    - **Mika dans son nid**, un petit cadre rond clair (`MikaFrame.circle`), à côté d'une
+//      bulle ou d'une phrase (les journées vides, les feuilles, les retours de quiz) ;
+//    - **Mika assis sur le bord** d'une carte, en bas, à côté de ce qu'elle dit (la série du
+//      Profil, la carte « Aucun examen »).
+// 3. **Les tailles** : un buste de 100 à 170 points pour le héros d'un écran, 52 à 64 dans un
+//    nid à côté d'un texte, jamais moins de 30.
+// 4. **Deux Mika animés au plus par écran** ; les autres sont fixes (`animates: false`).
+// 5. **Le bleu reste permis** comme une scène de marque rare — le lancement, l'icône
+//    (`MikaFrame.rounded`), une carte forte (`MikaFrame.blueCircle`, `backdrop: .blue`) — mais
+//    ce n'est plus là que Mika habite.
+//
+// Le détail, écran par écran : `docs/refonte-knowunity.md` § 9.
+
 /// **Les treize humeurs de Mika**, celles du kit de marque (`design/micabo-kit-mika/`).
 ///
 /// Chacune a son animation Lottie (`Resources/Mika/mika-<humeur>.json`) et une image fixe
@@ -118,13 +144,16 @@ enum MikaBackdrop: Equatable {
 }
 
 /// Le cadre de Mika. **Mika est un buste** (règle 1 du kit) : sans cadre, il doit être collé
-/// au bord bas de ce qui le porte — une carte, l'écran — et coupé par lui. Pour le poser
-/// n'importe où, on le met dans sa pastille bleue (règle 2), d'où il sort par le bas.
+/// au bord bas de ce qui le porte — une carte, un bouton, l'écran — et coupé par lui. Pour le
+/// poser n'importe où, on le met dans un cadre, d'où il sort par le bas.
 enum MikaFrame: Equatable {
     /// Aucun cadre : le bas de l'image est la coupe du buste, à poser sur un bord bas.
     case none
-    /// Une pastille ronde bleu Micabo.
+    /// **Le nid** : une pastille ronde claire — blanc bleuté le jour, graphite éclairé la nuit,
+    /// un filet fin. C'est le cadre de tous les jours.
     case circle
+    /// La pastille ronde bleu Micabo, pour une carte forte de la marque.
+    case blueCircle
     /// Un carré arrondi bleu Micabo, comme l'icône de l'app.
     case rounded
 }
@@ -202,7 +231,12 @@ struct MikaMascot: View {
     }
 
     private var sparkle: MikaSparkle {
-        if frame != .none { return .white }
+        switch frame {
+        case .blueCircle, .rounded: return .white
+        // Le nid est clair le jour, graphite la nuit : l'étincelle suit le papier.
+        case .circle: return colorScheme == .dark ? .white : .blue
+        case .none: break
+        }
         switch backdrop {
         case .blue: return .white
         case .light: return .blue
@@ -235,22 +269,42 @@ struct MikaMascot: View {
         case .none:
             figure(side: size)
                 .background {
-                    // La nuit, le corps noir se fondrait dans le fond : un halo bleu, derrière
-                    // lui et non sur lui, garde sa silhouette lisible.
-                    if sparkle == .white, backdrop == .surface {
-                        RadialGradient(
-                            colors: [MicaboBrand.blue.opacity(0.32), MicaboBrand.blue.opacity(0)],
-                            center: UnitPoint(x: 0.45, y: 0.78),
-                            startRadius: 0,
-                            endRadius: size * 0.5
-                        )
+                    // Sur le papier, une ombre douce le jour, un halo clair la nuit, qui suit
+                    // la silhouette : derrière lui, jamais sur lui. Sur le bleu, rien.
+                    if backdrop != .blue {
+                        MikaGlow(still: shown.still, side: size, night: colorScheme == .dark && backdrop == .surface)
                     }
                 }
         case .circle:
+            nest
+        case .blueCircle:
             pastille(Circle(), scale: 0.94)
         case .rounded:
             pastille(RoundedRectangle(cornerRadius: size * 0.2237, style: .continuous), scale: 1)
         }
+    }
+
+    /// **Le nid** : Mika dans son rond clair, sorti du bas et coupé par lui.
+    private var nest: some View {
+        let night = colorScheme == .dark
+        return ZStack(alignment: .bottom) {
+            Circle().fill(MikaNest.fill(night: night))
+            // Une lumière derrière la tête : le noir s'y détache, de jour comme de nuit.
+            Circle()
+                .fill(RadialGradient(
+                    colors: [MikaNest.light(night: night), MikaNest.light(night: night).opacity(0)],
+                    center: UnitPoint(x: 0.45, y: 0.58),
+                    startRadius: 0,
+                    endRadius: size * 0.5
+                ))
+            figure(side: size * 0.94)
+                // Mika est un peu à gauche dans son image (le crayon est à droite) : dans un
+                // rond, on le recentre d'un cheveu pour que le crayon ne touche pas le bord.
+                .offset(x: -size * 0.02)
+        }
+        .frame(width: size, height: size)
+        .clipShape(Circle())
+        .overlay(Circle().strokeBorder(MikaNest.rim(night: night), lineWidth: max(1, size * 0.014)))
     }
 
     /// Mika dans sa pastille bleue, sorti de son bord bas et coupé par elle.
@@ -258,9 +312,7 @@ struct MikaMascot: View {
         ZStack(alignment: .bottom) {
             shape.fill(MicaboBrand.blue)
             figure(side: size * scale)
-                // Mika est un peu à gauche dans son image (le crayon est à droite) : dans un
-                // rond, on le recentre d'un cheveu pour que le crayon ne touche pas le bord.
-                .offset(x: frame == .circle ? -size * 0.02 : 0)
+                .offset(x: frame == .blueCircle ? -size * 0.02 : 0)
         }
         .frame(width: size, height: size)
         .clipShape(shape)
@@ -328,6 +380,52 @@ struct MikaMascot: View {
             guard !Task.isCancelled else { return }
             onDone()
         }
+    }
+}
+
+// MARK: - Le nid et le halo
+
+/// **Les couleurs du nid** de Mika (`MikaFrame.circle`) : clair le jour — du blanc au bleu le
+/// plus pâle de la gamme —, graphite éclairé la nuit. Des constantes, pas les jetons du
+/// thème : le nid doit se lire pareil sur la crème, le blanc d'une carte et le bleu.
+enum MikaNest {
+    static func fill(night: Bool) -> LinearGradient {
+        night
+            ? LinearGradient(colors: [Color(hex: 0x363946), Color(hex: 0x272933)], startPoint: .top, endPoint: .bottom)
+            : LinearGradient(colors: [Color.white, MicaboBrand.blue50], startPoint: .top, endPoint: .bottom)
+    }
+
+    /// La lumière derrière la tête.
+    static func light(night: Bool) -> Color {
+        night ? Color.white.opacity(0.14) : MicaboBrand.blue100
+    }
+
+    /// Le filet du bord : il tient le rond sur un fond du même ton.
+    static func rim(night: Bool) -> Color {
+        night ? Color.white.opacity(0.10) : MicaboBrand.blue100
+    }
+}
+
+/// **Le halo de Mika sans cadre** : la silhouette de son image fixe, floutée derrière lui. Le
+/// jour, une ombre très douce qui le pose sur la crème ; la nuit, un contour clair qui garde
+/// le corps noir lisible sur le graphite.
+struct MikaGlow: View {
+    let still: MikaStill
+    let side: CGFloat
+    let night: Bool
+
+    var body: some View {
+        Image(still.imageName(sparkle: .blue))
+            .resizable()
+            .renderingMode(.template)
+            .interpolation(.medium)
+            .scaledToFit()
+            .frame(width: side, height: side)
+            .foregroundStyle(night ? Color.white.opacity(0.24) : MicaboBrand.blue900.opacity(0.14))
+            .blur(radius: max(2, side * (night ? 0.035 : 0.05)))
+            .offset(y: night ? 0 : side * 0.025)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
     }
 }
 
