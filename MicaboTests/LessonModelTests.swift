@@ -354,8 +354,10 @@ final class CourseLessonTests: XCTestCase {
     func testAnOldCourseHasAStableToneAndAGuessedIcon() {
         let course = Course(title: "La guerre froide", subject: "Histoire")
         XCTAssertFalse(course.isLesson)
-        XCTAssertEqual(course.tone, LessonTone.stable(for: course.id))
+        XCTAssertEqual(course.tone, .yellow, "la couleur de l'histoire")
         XCTAssertEqual(course.icon, .scroll)
+        let unknown = Course(title: "Notes diverses", subject: nil)
+        XCTAssertEqual(unknown.tone, LessonTone.stable(for: unknown.id), "sans matière : un ton stable")
         course.iconID = "globe"
         course.toneRaw = LessonTone.mint.rawValue
         XCTAssertEqual(course.icon, .scroll, "la matière l'emporte sur le globe du modèle")
