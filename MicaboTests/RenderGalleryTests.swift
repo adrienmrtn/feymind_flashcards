@@ -404,6 +404,8 @@ final class RenderGalleryTests: XCTestCase {
 
         try RenderGallery.render("home", night: true, busyHome())
         try RenderGallery.render("home-top", night: true, fold(busyHome()))
+        // Le texte agrandi : rien ne se coupe, le plan du jour reste lisible.
+        try RenderGallery.render("home-top-xl", fold(busyHome()).environment(\.dynamicTypeSize, .xxxLarge))
         // Sans examen ni séance : la leçon en cours, les cartes en seconde ligne, « Ajouter
         // un examen » dans le haut de la scène.
         try RenderGallery.render(

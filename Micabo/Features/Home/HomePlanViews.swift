@@ -65,9 +65,10 @@ struct HomePlanHero: View {
     let onExam: () -> Void
     let onAddExam: () -> Void
 
-    static let mikaSize: CGFloat = 108
-    /// Ce qui passe derrière le bouton : le bas du buste.
-    static let mikaSink: CGFloat = 24
+    static let mikaSize: CGFloat = 104
+    /// Ce qui passe derrière le bouton : le bas du buste. Assez peu pour que ses yeux
+    /// dépassent.
+    static let mikaSink: CGFloat = 10
     /// La place que le buste prend à droite du texte.
     static let mikaReserve: CGFloat = 86
 
@@ -90,7 +91,8 @@ struct HomePlanHero: View {
             }
         }
         .padding(16)
-        .background(MicaboBrandBackdrop(sparkles: true))
+        // Sans étincelles : la scène est pleine de texte, elles tombaient dessus.
+        .background(MicaboBrandBackdrop(sparkles: false))
         .clipShape(RoundedRectangle(cornerRadius: MicaboStage.heroRadius, style: .continuous))
         .shadow(color: MicaboBrand.blue.opacity(0.26), radius: 20, y: 10)
     }
@@ -187,33 +189,46 @@ struct HomePlanHero: View {
         }
     }
 
-    /// Sans examen : le nom du bloc, et la pilule qui en ajoute un.
+    /// Sans examen : le nom du bloc, et la pilule qui en ajoute un — à côté quand les deux
+    /// tiennent sur une ligne, dessous sinon (l'allemand, le finnois).
     private var planHeader: some View {
-        HStack(spacing: 10) {
-            Text(L10n.t("ios.home4.plan.title", locale: .resolved()))
-                .font(MicaboFont.ui(15, weight: .black))
-                .foregroundStyle(MicaboStage.inkSecondary)
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityAddTraits(.isHeader)
-            Spacer(minLength: 4)
-            Button(action: onAddExam) {
-                HStack(spacing: 5) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 11, weight: .black))
-                    Text(L10n.t("ios.home4.exam.add", locale: .resolved()))
-                        .font(MicaboFont.ui(13.5, weight: .heavy))
-                        .lineLimit(1)
-                }
-                .foregroundStyle(MicaboStage.ink)
-                .padding(.horizontal, 12)
-                .frame(minHeight: 32)
-                .background(Color.white.opacity(0.18), in: Capsule())
-                .overlay(Capsule().strokeBorder(Color.white.opacity(0.3), lineWidth: 1))
-                .fixedSize()
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 10) {
+                planTitle.fixedSize()
+                Spacer(minLength: 4)
+                addExamPill
             }
-            .buttonStyle(HomePressStyle(scale: 0.94, feedback: .selection))
+            VStack(alignment: .leading, spacing: 8) {
+                planTitle.fixedSize(horizontal: false, vertical: true)
+                addExamPill
+            }
         }
+    }
+
+    private var planTitle: some View {
+        Text(L10n.t("ios.home4.plan.title", locale: .resolved()))
+            .font(MicaboFont.ui(15, weight: .black))
+            .foregroundStyle(MicaboStage.inkSecondary)
+            .accessibilityAddTraits(.isHeader)
+    }
+
+    private var addExamPill: some View {
+        Button(action: onAddExam) {
+            HStack(spacing: 5) {
+                Image(systemName: "plus")
+                    .font(.system(size: 11, weight: .black))
+                Text(L10n.t("ios.home4.exam.add", locale: .resolved()))
+                    .font(MicaboFont.ui(13.5, weight: .heavy))
+                    .lineLimit(1)
+            }
+            .foregroundStyle(MicaboStage.ink)
+            .padding(.horizontal, 12)
+            .frame(minHeight: 32)
+            .background(Color.white.opacity(0.18), in: Capsule())
+            .overlay(Capsule().strokeBorder(Color.white.opacity(0.3), lineWidth: 1))
+            .fixedSize()
+        }
+        .buttonStyle(HomePressStyle(scale: 0.94, feedback: .selection))
     }
 
     // MARK: L'étape
@@ -245,7 +260,7 @@ struct HomePlanHero: View {
                     .padding(.top, 6)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: Self.mikaSize - Self.mikaSink - 14, alignment: .bottomLeading)
+        .frame(maxWidth: .infinity, minHeight: Self.mikaSize - Self.mikaSink - 16, alignment: .bottomLeading)
         .padding(.trailing, Self.mikaReserve)
         .accessibilityElement(children: .combine)
     }
