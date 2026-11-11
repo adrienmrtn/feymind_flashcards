@@ -1425,7 +1425,7 @@ extension IosI18nCatalogs {
         "ios.sup.source.audioSub": "Röstmemo eller fil",
         "ios.sup.source.flashcards": "Importera kort",
         "ios.sup.source.flashcardsSub": "Anki eller Quizlet: en kortlek redo att plugga, direkt",
-        "ios.sup.source.handwriting": "Handskrivna anteckningar",
+        "ios.sup.source.handwriting": "Handskrift",
         "ios.sup.source.handwritingSub": "Ditt block, dina papper",
         "ios.sup.source.lecture": "Lektion live",
         "ios.sup.source.lectureSub": "Spela in din lärare",

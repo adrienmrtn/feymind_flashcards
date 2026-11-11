@@ -350,7 +350,7 @@ struct VoiceRecallCard: View {
             Button(action: onStop) {
                 Label(L10n.t("ios.sup.voice.done", locale: .resolved()), systemImage: "stop.fill")
             }
-            .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
+            .buttonStyle(LessonPrimaryButtonStyle())
         }
     }
 
@@ -385,7 +385,7 @@ struct VoiceRecallCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             Button(L10n.t("ios.sup.voice.reveal", locale: .resolved()), action: onReveal)
-                .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
+                .buttonStyle(LessonPrimaryButtonStyle())
         }
     }
 

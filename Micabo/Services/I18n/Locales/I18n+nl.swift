@@ -1425,7 +1425,7 @@ extension IosI18nCatalogs {
         "ios.sup.source.audioSub": "Spraakmemo of bestand",
         "ios.sup.source.flashcards": "Flashcards importeren",
         "ios.sup.source.flashcardsSub": "Anki of Quizlet: een set die meteen klaar is om te leren",
-        "ios.sup.source.handwriting": "Handgeschreven aantekeningen",
+        "ios.sup.source.handwriting": "Handschrift",
         "ios.sup.source.handwritingSub": "Je schrift, je blaadjes",
         "ios.sup.source.lecture": "Live les",
         "ios.sup.source.lectureSub": "Neem je docent op",

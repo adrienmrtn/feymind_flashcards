@@ -20,7 +20,7 @@ struct SheetExportView: View {
                     ShareLink(item: file) {
                         Label(L10n.t("ios.sup.export.share", locale: .resolved()), systemImage: "square.and.arrow.up")
                     }
-                    .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
+                    .buttonStyle(LessonPrimaryButtonStyle())
                 }
             }
             .padding(.horizontal, MicaboSpacing.screen)
