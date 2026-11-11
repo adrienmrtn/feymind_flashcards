@@ -439,11 +439,13 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         if still {
             // Les rendus de la CI ne dessinent pas l'intérieur d'un `ScrollView` : la page
             // y est posée telle quelle, du haut.
-            VStack(spacing: 0) {
+            // Une page plus haute que l'écran part du haut et se coupe en bas, comme le premier
+            // écran qu'on verrait avant de défiler.
+            GeometryReader { proxy in
                 composition
-                Spacer(minLength: 0)
+                    .frame(width: proxy.size.width, alignment: .top)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .clipped()
         } else {
             scrollingPage
         }

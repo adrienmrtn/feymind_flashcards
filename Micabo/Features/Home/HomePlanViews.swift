@@ -68,9 +68,8 @@ struct HomePlanHero: View {
     let onAddExam: () -> Void
 
     static let mikaSize: CGFloat = 104
-    /// Ce qui passe derrière le bouton : le bas du buste. Assez peu pour que ses yeux
-    /// dépassent.
-    static let mikaSink: CGFloat = 12
+    /// Le bout des tentacules passe derrière le bouton : Mika est posé sur son bord.
+    static let mikaSink: CGFloat = 4
     /// La place que le buste prend à droite du texte.
     static let mikaReserve: CGFloat = 86
 

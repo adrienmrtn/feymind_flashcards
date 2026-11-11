@@ -65,6 +65,13 @@ final class LessonSpeaker: NSObject, AVSpeechSynthesizerDelegate {
         return script.chapters[chapter].lines[line]
     }
 
+    /// La phrase affichée : le titre d'un chapitre est déjà dans l'en-tête du lecteur, on montre
+    /// donc la phrase qui suit tant que la lecture n'a pas dépassé le titre.
+    var shownLine: String? {
+        guard line == 0, script.chapters.indices.contains(chapter), script.chapters[chapter].lines.count > 1 else { return currentLine }
+        return script.chapters[chapter].lines[1]
+    }
+
     /// La part de la leçon déjà lue, de 0 à 1.
     var progress: Double {
         let total = script.lineCount

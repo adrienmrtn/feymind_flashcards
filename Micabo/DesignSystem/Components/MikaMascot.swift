@@ -1,26 +1,33 @@
-import Lottie
+import ImageIO
 import SwiftUI
 import UIKit
 
 // MARK: - La mise en scène de Mika (la règle)
 //
-// **Mika vit sur le papier de l'app, pas sur un aplat bleu.** Le jour, sur la crème et le
-// blanc des cartes ; la nuit, sur le graphite. Le bleu Micabo redevient un accent : les
-// boutons, les anneaux, les pastilles, et **une carte forte par écran au plus** — jamais le
-// décor systématique de la mascotte.
+// **Mika est une petite pieuvre noire, en entier** : la tête, cinq tentacules, et le bras qui
+// tient le crayon jaune à l'étincelle. Il n'est plus un buste coupé par un bord : il se tient
+// debout quelque part, il entre, il sort, il traverse.
 //
-// 1. **Sur le clair**, Mika est noir sur crème ou blanc, l'étincelle de son crayon en bleu,
-//    une ombre très douce sous la silhouette. **La nuit**, un halo clair suit son contour
-//    (`MikaHalo`) : le corps noir ne se fond pas dans le graphite.
+// **Il vit sur le papier de l'app, pas sur un aplat bleu.** Le jour, sur la crème et le blanc
+// des cartes ; la nuit, sur le graphite. Le bleu Micabo redevient un accent : les boutons, les
+// anneaux, les pastilles, et **une carte forte par écran au plus** — jamais le décor
+// systématique de la mascotte.
+//
+// 1. **Sur le clair**, Mika est noir sur crème ou blanc, une ombre très douce sous la
+//    silhouette. **La nuit**, un halo clair suit son contour (`MikaHalo`) : le corps noir ne se
+//    fond pas dans le graphite. L'étincelle du crayon est blanche à liseré bleu : elle se lit
+//    partout.
 // 2. **Les moments**, à varier d'un écran à l'autre :
-//    - **Mika qui dépasse** d'une carte blanche ou d'un bouton : le buste derrière, la coupe
-//      cachée par le bord (le plan du jour de Home, Concentration, la barre du nouvel élève) ;
-//    - **Mika dans son nid**, un petit cadre rond clair (`MikaFrame.circle`), à côté d'une
-//      bulle ou d'une phrase (les journées vides, les feuilles, les retours de quiz) ;
-//    - **Mika assis sur le bord** d'une carte, en bas, à côté de ce qu'elle dit (la série du
-//      Profil, la carte « Aucun examen »).
-// 3. **Les tailles** : un buste de 100 à 170 points pour le héros d'un écran, 52 à 64 dans un
-//    nid à côté d'un texte, jamais moins de 30.
+//    - **Mika posé sur un bord** : ses tentacules sur le haut d'un bouton ou d'une carte, ou
+//      sur le bas d'une carte qui le porte (le plan du jour de Home, Concentration, la barre du
+//      nouvel élève, la série du Profil, « Aucun examen ») ;
+//    - **Mika dans son nid**, un petit rond clair (`MikaFrame.circle`), à côté d'une phrase
+//      (les journées vides, les feuilles, les retours de quiz, les écrans vides) ;
+//    - **Mika qui arrive ou s'en va** (`MikaJourney` : il entre en courant et freine, il prend
+//      son élan et file, il traverse en marchant ou à la nage), pour un moment qui le mérite :
+//      un objectif atteint, une attente.
+// 3. **Les tailles** : 100 à 170 points pour le héros d'un écran, 52 à 88 dans un nid, jamais
+//    moins de 30. Sous 64 points, Mika est une image fixe.
 // 4. **Deux Mika animés au plus par écran** ; les autres sont fixes (`animates: false`).
 // 5. **Le bleu reste permis** comme une scène de marque rare — le lancement, l'icône
 //    (`MikaFrame.rounded`), une carte forte (`MikaFrame.blueCircle`, `backdrop: .blue`) — mais
@@ -28,27 +35,26 @@ import UIKit
 //
 // Le détail, écran par écran : `docs/refonte-knowunity.md` § 9.
 
-/// **Les treize humeurs de Mika**, celles du kit de marque (`design/micabo-kit-mika/`).
+/// **Les treize humeurs de Mika.**
 ///
-/// Chacune a son animation Lottie (`Resources/Mika/mika-<humeur>.json`) et une image fixe
-/// (`Mika-<expression>-bleu|clair` dans le catalogue) : les dix expressions fixes du kit
-/// couvrent les treize humeurs, les trois sans image prennent la plus proche.
+/// Chacune a son animation (`Resources/Mika/mika-<nom>.webp`, du WebP animé transparent à 24
+/// images par seconde, 512 points de côté) et une pose fixe (`Mika-<pose>` dans le catalogue).
 enum MikaMood: String, CaseIterable, Identifiable {
-    /// Au repos : il respire, cligne des yeux, l'étincelle scintille. Les écrans calmes.
+    /// Au repos : il flotte, respire, cligne des yeux. Les écrans calmes, l'attente.
     case idle
-    /// Coucou : il agite le crayon. Accueil, premier lancement.
+    /// Coucou : il salue d'un tentacule. Accueil, premier lancement.
     case wave
-    /// Sourire : les yeux rieurs, un petit rebond. Bonne réponse, action réussie.
+    /// Joie : un saut. Bonne réponse, action réussie.
     case happy
-    /// Sommeil : yeux fermés, « z z z ». Inactivité, liste vide, rappel.
+    /// Sommeil : yeux fermés, « z z z ». Inactivité, liste vide, rappel, la nuit.
     case sleep
-    /// Réflexion : il regarde l'étincelle qui tourne. Chargement, l'IA lit le cours.
+    /// Réflexion : il tapote et regarde l'étincelle. Chargement, l'IA lit le cours.
     case think
-    /// Surprise : grands yeux, un sursaut. Nouveauté, récompense.
+    /// Surprise : un sursaut, les tentacules écartés. Nouveauté, récompense.
     case surprise
-    /// Célébration : il saute avec des étincelles. Leçon finie, objectif atteint.
+    /// Célébration : deux sauts, des étincelles. Leçon finie, objectif atteint.
     case celebrate
-    /// Tristesse : regard baissé, étincelle éteinte. Erreur, hors-ligne.
+    /// Tristesse. Erreur, hors-ligne.
     case sad
     /// Écriture : il gribouille, des étincelles s'envolent. Génération en cours.
     case write
@@ -58,13 +64,31 @@ enum MikaMood: String, CaseIterable, Identifiable {
     case look
     /// Non : il secoue la tête, un « non » doux. Mauvaise réponse.
     case shake
-    /// Entrée : il surgit du bas. Arrivée sur un écran.
+    /// Apparition : il tombe du haut et atterrit. Arrivée sur un écran.
     case appear
 
     var id: String { rawValue }
 
-    /// Les humeurs qui bouclent ; les autres se jouent une fois puis rendent la main au
-    /// repos (`idle`), dont elles partent et où elles finissent toutes.
+    /// Le nom de l'animation, celui du fichier `mika-<nom>.webp`.
+    var animationName: String {
+        switch self {
+        case .idle: "repos"
+        case .wave: "coucou"
+        case .happy: "saut"
+        case .sleep: "sommeil"
+        case .think: "reflexion"
+        case .surprise: "surprise"
+        case .celebrate: "celebration"
+        case .sad: "triste"
+        case .write: "ecriture"
+        case .wink: "clin-doeil"
+        case .look: "regard"
+        case .shake: "non"
+        case .appear: "apparition"
+        }
+    }
+
+    /// Les humeurs qui bouclent ; les autres se jouent une fois puis Mika revient au repos.
     var loops: Bool {
         switch self {
         case .idle, .think, .write, .sad, .sleep: true
@@ -72,24 +96,22 @@ enum MikaMood: String, CaseIterable, Identifiable {
         }
     }
 
-    /// Le nom du fichier Lottie, sans extension.
-    var animationName: String { "mika-\(rawValue)" }
-
-    /// Durée de l'animation, en secondes (`tokens.json`).
+    /// Durée de l'animation, en secondes (`animations.json` du kit).
     var duration: Double {
         switch self {
-        case .idle, .sleep: 5
-        case .happy, .write: 2
-        case .wave: 2.5
-        case .think, .celebrate: 3
-        case .surprise, .shake: 1.67
-        case .sad: 4
-        case .look: 3.33
-        case .appear, .wink: 1.5
+        case .idle, .think, .sad, .look: 3
+        case .sleep: 4
+        case .write: 2
+        case .wave: 2.17
+        case .happy: 1.58
+        case .surprise, .wink: 1.5
+        case .celebrate: 2.67
+        case .shake: 1.67
+        case .appear: 1.33
         }
     }
 
-    /// L'expression fixe la plus proche.
+    /// La pose fixe la plus proche.
     var still: MikaStill {
         switch self {
         case .idle, .appear, .look: .neutral
@@ -106,7 +128,7 @@ enum MikaMood: String, CaseIterable, Identifiable {
     }
 }
 
-/// Les dix expressions fixes du kit, dans les deux versions de l'étincelle.
+/// Les douze poses fixes du kit, en PNG transparent.
 enum MikaStill: String, CaseIterable {
     case neutral = "neutre"
     case wave = "coucou"
@@ -114,43 +136,47 @@ enum MikaStill: String, CaseIterable {
     case sleep = "sommeil"
     case think = "reflexion"
     case surprise
-    case celebrate = "celebration"
+    /// Le saut de joie, en l'air.
+    case celebrate = "saut"
     case sad = "triste"
     case write = "ecriture"
     case wink = "clin-doeil"
+    case run = "course"
+    case swim = "nage"
 
-    /// Le nom de l'image dans le catalogue : étincelle blanche (`bleu`, pour un fond bleu ou
-    /// sombre) ou bleue (`clair`, pour un fond clair).
-    func imageName(sparkle: MikaSparkle) -> String {
-        "Mika-\(rawValue)-\(sparkle == .white ? "bleu" : "clair")"
-    }
+    /// Le nom de l'image dans le catalogue.
+    var imageName: String { "Mika-\(rawValue)" }
+
+    /// Gardé pour les appelants d'avant : l'étincelle du nouveau Mika se lit sur tous les fonds,
+    /// il n'y a plus qu'une image par pose.
+    func imageName(sparkle: MikaSparkle) -> String { imageName }
 }
 
-/// La couleur de l'étincelle au bout du crayon. Blanche sur le bleu, elle disparaîtrait sur
-/// un fond clair : elle y devient bleue (règle 3 du kit).
+/// La couleur de l'étincelle au bout du crayon. Le nouveau Mika a une étincelle blanche à
+/// liseré bleu, lisible partout : la valeur ne choisit plus d'image, elle reste pour les
+/// appelants.
 enum MikaSparkle: Equatable {
     case white
     case blue
 }
 
-/// Ce qu'il y a derrière Mika, d'où se déduit son étincelle.
+/// Ce qu'il y a derrière Mika, d'où se déduit son halo.
 enum MikaBackdrop: Equatable {
-    /// Le papier de l'app, qui suit le thème : étincelle bleue le jour, blanche la nuit.
+    /// Le papier de l'app, qui suit le thème : une ombre douce le jour, un halo clair la nuit.
     case surface
-    /// Un fond clair quel que soit le thème : étincelle bleue.
+    /// Un fond clair quel que soit le thème : l'ombre douce.
     case light
-    /// Le bleu Micabo, ou un fond sombre et saturé : étincelle blanche.
+    /// Le bleu Micabo, ou un fond sombre et saturé : ni ombre ni halo.
     case blue
 }
 
-/// Le cadre de Mika. **Mika est un buste** (règle 1 du kit) : sans cadre, il doit être collé
-/// au bord bas de ce qui le porte — une carte, un bouton, l'écran — et coupé par lui. Pour le
-/// poser n'importe où, on le met dans un cadre, d'où il sort par le bas.
+/// Le cadre de Mika.
 enum MikaFrame: Equatable {
-    /// Aucun cadre : le bas de l'image est la coupe du buste, à poser sur un bord bas.
+    /// Aucun cadre : Mika debout, ses tentacules sur le bord bas du carré — à poser sur un
+    /// bord (le haut d'un bouton, le bas d'une carte), ou sur une ligne.
     case none
     /// **Le nid** : une pastille ronde claire — blanc bleuté le jour, graphite éclairé la nuit,
-    /// un filet fin. C'est le cadre de tous les jours.
+    /// un filet fin —, Mika en entier au milieu. Le cadre de tous les jours.
     case circle
     /// La pastille ronde bleu Micabo, pour une carte forte de la marque.
     case blueCircle
@@ -158,24 +184,27 @@ enum MikaFrame: Equatable {
     case rounded
 }
 
-/// **Mika, la mascotte** : le personnage noir aux yeux blancs, crayon à la main.
+/// **Mika, la mascotte** : la petite pieuvre noire aux yeux blancs, crayon à la main.
 ///
-/// Animé par Lottie (`mika-<humeur>.json`, les treize animations du kit), ou fixe — une
-/// image du catalogue — quand l'animation n'a pas sa place :
-/// - `frozenAt` est donné (les rendus de la CI : `ImageRenderer` ne dessine pas Lottie),
-///   ou `animates` est faux (règle 5 : deux Mika animés au plus par écran) ;
+/// Animé (`MikaLibrary`, le WebP animé du kit lu par ImageIO), ou fixe — une pose du
+/// catalogue — quand l'animation n'a pas sa place :
+/// - `frozenAt` est donné (les rendus de la CI : `ImageRenderer` ne dessine pas UIKit),
+///   ou `animates` est faux (règle 4 : deux Mika animés au plus par écran) ;
 /// - « Réduire les animations » est actif, ou `\.mikaStill` est posé ;
-/// - Mika fait moins de 64 points (règle 4) ;
+/// - Mika fait moins de 64 points ;
 /// - on tourne sous XCTest.
 ///
 /// Les humeurs qui bouclent (`idle`, `think`, `write`, `sad`, `sleep`) bouclent ; les autres
 /// se jouent une fois puis Mika revient au repos, et `onDone` est appelé. Un appui, si
-/// `reactsToTap`, lui fait un sourire puis il revient à son humeur.
+/// `reactsToTap`, lui fait un saut de joie puis il revient à son humeur.
+///
+/// `size` est le côté du carré qu'il occupe ; sans cadre, ses tentacules touchent le bas du
+/// carré et sa tête monte aux quatre cinquièmes.
 struct MikaMascot: View {
     var mood: MikaMood
     var size: CGFloat
     var reactsToTap: Bool
-    /// Fige Mika sur l'image de son humeur (rendus, aperçus). La valeur n'est plus lue :
+    /// Fige Mika sur la pose de son humeur (rendus, aperçus). La valeur n'est plus lue :
     /// une image fixe n'a pas d'instant.
     var frozenAt: Double?
     var backdrop: MikaBackdrop
@@ -204,14 +233,20 @@ struct MikaMascot: View {
         self.onDone = onDone
     }
 
-    /// Sous cette taille, une image fixe (règle 4 du kit).
+    /// Sous cette taille, une image fixe.
     static let minimumAnimatedSize: CGFloat = 64
+    /// **L'échelle du dessin sans cadre** : l'image du kit garde un grand vide au-dessus de
+    /// Mika (pour ses sauts). Dessinée à 1,3 fois le carré, posée par le bas, elle met ses
+    /// tentacules au bord bas et l'étincelle juste sous le bord haut ; un saut déborde au-dessus.
+    static let bareScale: CGFloat = 1.3
+    /// Dans un rond : Mika en entier, centré, un peu remonté.
+    static let framedScale: CGFloat = 1.04
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.mikaStill) private var forcedStill
     @Environment(\.colorScheme) private var colorScheme
 
-    /// Le sourire d'un appui, joué par-dessus l'humeur.
+    /// Le saut d'un appui, joué par-dessus l'humeur.
     @State private var reaction: MikaMood?
     /// L'humeur ponctuelle a fini de se jouer : Mika est revenu au repos.
     @State private var settled = false
@@ -228,20 +263,6 @@ struct MikaMascot: View {
     private var shown: MikaMood {
         if let reaction { return reaction }
         return settled && !mood.loops ? .idle : mood
-    }
-
-    private var sparkle: MikaSparkle {
-        switch frame {
-        case .blueCircle, .rounded: return .white
-        // Le nid est clair le jour, graphite la nuit : l'étincelle suit le papier.
-        case .circle: return colorScheme == .dark ? .white : .blue
-        case .none: break
-        }
-        switch backdrop {
-        case .blue: return .white
-        case .light: return .blue
-        case .surface: return colorScheme == .dark ? .white : .blue
-        }
     }
 
     var body: some View {
@@ -267,54 +288,57 @@ struct MikaMascot: View {
     private var framed: some View {
         switch frame {
         case .none:
-            figure(side: size)
+            figure(side: size * Self.bareScale)
                 .background {
                     // Sur le papier, une ombre douce le jour, un halo clair la nuit, qui suit
                     // la silhouette : derrière lui, jamais sur lui. Sur le bleu, rien.
                     if backdrop != .blue {
-                        MikaHalo(still: shown.still, side: size, night: colorScheme == .dark && backdrop == .surface)
+                        MikaHalo(still: shown.still, side: size * Self.bareScale, night: colorScheme == .dark && backdrop == .surface)
                     }
                 }
+                .frame(width: size, height: size, alignment: .bottom)
         case .circle:
             nest
         case .blueCircle:
-            pastille(Circle(), scale: 0.94)
+            pastille(Circle())
         case .rounded:
-            pastille(RoundedRectangle(cornerRadius: size * 0.2237, style: .continuous), scale: 1)
+            pastille(RoundedRectangle(cornerRadius: size * 0.2237, style: .continuous))
         }
     }
 
-    /// **Le nid** : Mika dans son rond clair, sorti du bas et coupé par lui.
+    /// Mika au milieu d'un rond : tout le corps, un peu remonté pour que les tentacules ne
+    /// touchent pas le bord.
+    private var centered: some View {
+        figure(side: size * Self.framedScale)
+            .offset(y: -size * 0.14)
+            .frame(width: size, height: size)
+    }
+
+    /// **Le nid** : Mika dans son rond clair.
     private var nest: some View {
         let night = colorScheme == .dark
-        return ZStack(alignment: .bottom) {
+        return ZStack {
             Circle().fill(MikaNest.fill(night: night))
-            // Une lumière derrière la tête : le noir s'y détache, de jour comme de nuit.
+            // Une lumière derrière lui : le noir s'y détache, de jour comme de nuit.
             Circle()
                 .fill(RadialGradient(
                     colors: [MikaNest.light(night: night), MikaNest.light(night: night).opacity(0)],
-                    center: UnitPoint(x: 0.45, y: 0.58),
+                    center: UnitPoint(x: 0.5, y: 0.5),
                     startRadius: 0,
                     endRadius: size * 0.5
                 ))
-            // Un peu plus grand que dans la pastille bleue, et descendu : le haut de l'image
-            // est vide, et sur le clair un rond à moitié vide se voit. La tête tombe au milieu.
-            figure(side: size * 1.02)
-                // Mika est un peu à gauche dans son image (le crayon est à droite) : dans un
-                // rond, on le recentre d'un cheveu pour que le crayon ne touche pas le bord.
-                .offset(x: -size * 0.03, y: size * 0.06)
+            centered
         }
         .frame(width: size, height: size)
         .clipShape(Circle())
         .overlay(Circle().strokeBorder(MikaNest.rim(night: night), lineWidth: max(1, size * 0.014)))
     }
 
-    /// Mika dans sa pastille bleue, sorti de son bord bas et coupé par elle.
-    private func pastille<S: Shape>(_ shape: S, scale: CGFloat) -> some View {
-        ZStack(alignment: .bottom) {
+    /// Mika dans une pastille bleue.
+    private func pastille<S: Shape>(_ shape: S) -> some View {
+        ZStack {
             shape.fill(MicaboBrand.blue)
-            figure(side: size * scale)
-                .offset(x: frame == .blueCircle ? -size * 0.02 : 0)
+            centered
         }
         .frame(width: size, height: size)
         .clipShape(shape)
@@ -325,16 +349,12 @@ struct MikaMascot: View {
     @ViewBuilder
     private func figure(side: CGFloat) -> some View {
         if isAnimated {
-            MikaLottieView(
-                mood: shown,
-                take: take,
-                sparkle: sparkle == .white ? .white : UIColor(MicaboBrand.blue)
-            ) { finished in
-                finish(finished)
+            MikaAnimationView(name: shown.animationName, take: take, loops: shown.loops) {
+                finish(shown)
             }
             .frame(width: side, height: side)
         } else {
-            Image(shown.still.imageName(sparkle: sparkle))
+            Image(shown.still.imageName)
                 .resizable()
                 .interpolation(.high)
                 .scaledToFit()
@@ -350,7 +370,7 @@ struct MikaMascot: View {
         reaction = .happy
         take += 1
         guard !isAnimated else { return }
-        // Fixe : le sourire reste le temps de l'animation, puis Mika revient.
+        // Fixe : la joie reste le temps de l'animation, puis Mika revient.
         stillTask?.cancel()
         let current = take
         stillTask = Task { @MainActor in
@@ -361,13 +381,15 @@ struct MikaMascot: View {
     }
 
     /// La fin d'une lecture ponctuelle.
-    private func finish(_ mood: MikaMood) {
-        if reaction != nil, mood == reaction {
+    private func finish(_ played: MikaMood) {
+        if reaction != nil, played == reaction {
             reaction = nil
+            take += 1
             return
         }
-        guard mood == self.mood, !mood.loops else { return }
+        guard played == mood, !mood.loops else { return }
         settled = true
+        take += 1
         onDone?()
     }
 
@@ -385,6 +407,78 @@ struct MikaMascot: View {
     }
 }
 
+// MARK: - Mika qui arrive, qui part, qui traverse
+
+/// **Les voyages de Mika**, sur un cadre large (680 × 440 dans le kit) : il arrive en
+/// courant et freine au milieu, il prend son élan et file à droite, il traverse en marchant ou
+/// à la nage. Pour un moment qui le mérite — un objectif atteint, une attente —, jamais en
+/// décor permanent.
+///
+/// Fixe (rendus, « Réduire les animations ») : `enter` le montre arrivé, debout au milieu ;
+/// les traversées le montrent en route ; `exit` ne montre rien.
+struct MikaJourney: View {
+    enum Kind: String {
+        case enter = "entree"
+        case exit = "sortie"
+        case walkAcross = "traversee-marche"
+
+        var loops: Bool { self == .walkAcross }
+
+        /// La pose fixe, et où la poser (la part de la largeur, depuis le bord de tête).
+        var still: (MikaStill, CGFloat)? {
+            switch self {
+            case .enter: (.neutral, 0.5)
+            case .exit: nil
+            case .walkAcross: (.run, 0.5)
+            }
+        }
+    }
+
+    let kind: Kind
+    /// La hauteur du cadre : Mika y a la taille d'un `MikaMascot` de ce côté.
+    var height: CGFloat = 140
+    var onDone: (() -> Void)?
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.mikaStill) private var forcedStill
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var done = false
+
+    static let aspect: CGFloat = 680 / 440
+
+    private var isAnimated: Bool { !reduceMotion && !forcedStill && !MikaLibrary.isRunningTests }
+
+    var body: some View {
+        let width = height * Self.aspect
+        Group {
+            if isAnimated, !done {
+                MikaAnimationView(name: kind.rawValue, take: 0, loops: kind.loops) {
+                    done = true
+                    onDone?()
+                }
+            } else if let still = kind.still {
+                // Dans le cadre large, Mika a 0,6 de la hauteur et ses tentacules à 0,89 ;
+                // dans la pose carrée, son corps fait 0,59 du côté, tentacules à 0,95 : la
+                // pose, du côté de la hauteur, se pose 0,06 plus haut que le bas du cadre.
+                Image(still.0.imageName)
+                    .resizable()
+                    .interpolation(.high)
+                    .scaledToFit()
+                    .frame(width: height, height: height)
+                    .background {
+                        MikaHalo(still: still.0, side: height, night: colorScheme == .dark)
+                    }
+                    .position(x: width * still.1, y: height * (0.5 - 0.06))
+            } else {
+                Color.clear
+            }
+        }
+        .frame(width: width, height: height)
+        .accessibilityHidden(true)
+        .allowsHitTesting(false)
+    }
+}
+
 // MARK: - Le nid et le halo
 
 /// **Les couleurs du nid** de Mika (`MikaFrame.circle`) : clair le jour — du blanc au bleu le
@@ -397,7 +491,7 @@ enum MikaNest {
             : LinearGradient(colors: [Color.white, MicaboBrand.blue50], startPoint: .top, endPoint: .bottom)
     }
 
-    /// La lumière derrière la tête.
+    /// La lumière derrière lui.
     static func light(night: Bool) -> Color {
         night ? Color.white.opacity(0.14) : MicaboBrand.blue100
     }
@@ -408,7 +502,7 @@ enum MikaNest {
     }
 }
 
-/// **Le halo de Mika sans cadre** : la silhouette de son image fixe, floutée derrière lui. Le
+/// **Le halo de Mika sans cadre** : la silhouette de sa pose fixe, floutée derrière lui. Le
 /// jour, une ombre très douce qui le pose sur la crème ; la nuit, un contour clair qui garde
 /// le corps noir lisible sur le graphite.
 struct MikaHalo: View {
@@ -417,15 +511,15 @@ struct MikaHalo: View {
     let night: Bool
 
     var body: some View {
-        Image(still.imageName(sparkle: .blue))
+        Image(still.imageName)
             .resizable()
             .renderingMode(.template)
             .interpolation(.medium)
             .scaledToFit()
             .frame(width: side, height: side)
             .foregroundStyle(night ? Color.white.opacity(0.24) : MicaboBrand.blue900.opacity(0.14))
-            .blur(radius: max(2, side * (night ? 0.035 : 0.05)))
-            .offset(y: night ? 0 : side * 0.025)
+            .blur(radius: max(2, side * (night ? 0.03 : 0.04)))
+            .offset(y: night ? 0 : side * 0.02)
             .allowsHitTesting(false)
             .accessibilityHidden(true)
     }
@@ -448,102 +542,105 @@ extension EnvironmentValues {
 
 // MARK: - Les animations
 
-/// Les treize animations, décodées une fois et gardées par le cache de Lottie : changer
-/// d'humeur ne repasse pas par le disque, et rien ne clignote.
+/// **Les animations de Mika** : du WebP animé transparent (`Resources/Mika/mika-<nom>.webp`),
+/// lu par ImageIO (`CGAnimateImageAtURLWithBlock`). Le système décode chaque image au moment
+/// de la montrer, à son rythme : un Mika animé ne garde pas soixante-douze images en mémoire,
+/// et deux Mika sur un écran restent légers.
 enum MikaLibrary {
-    /// Vrai dans le processus des tests : ni Lottie, ni minuterie, des images fixes.
+    /// Vrai dans le processus des tests : ni animation, ni minuterie, des images fixes.
     static let isRunningTests: Bool =
         NSClassFromString("XCTestCase") != nil
             || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
 
-    static func animation(for mood: MikaMood) -> LottieAnimation? {
-        LottieAnimation.named(mood.animationName)
+    /// L'adresse d'une animation dans l'app, `nil` si elle n'y est pas.
+    static func url(for name: String) -> URL? {
+        Bundle.main.url(forResource: "mika-\(name)", withExtension: "webp")
     }
 
-    /// Décode les animations en tâche de fond, au lancement : la première apparition de Mika
-    /// n'attend pas le décodage de son fichier.
+    /// Le nombre d'images d'une animation, lu une fois.
+    @MainActor private static var frameCounts: [String: Int] = [:]
+
+    @MainActor static func frameCount(of name: String) -> Int {
+        if let count = frameCounts[name] { return count }
+        guard let url = url(for: name), let source = CGImageSourceCreateWithURL(url as CFURL, nil) else { return 0 }
+        let count = CGImageSourceGetCount(source)
+        frameCounts[name] = count
+        return count
+    }
+
+    /// Lit le nombre d'images de chaque animation au lancement, en tâche de fond : la première
+    /// apparition de Mika n'attend pas l'ouverture de son fichier.
     static func preload() {
         guard !isRunningTests else { return }
-        Task.detached(priority: .utility) {
+        Task { @MainActor in
             for mood in MikaMood.allCases {
-                _ = LottieAnimation.named(mood.animationName)
+                _ = frameCount(of: mood.animationName)
             }
         }
     }
 }
 
-/// Le lecteur Lottie. Une humeur (ou une nouvelle `take`) recharge l'animation et la joue :
-/// en boucle si elle boucle, une fois sinon, et la fin est signalée à `onFinish`.
-private struct MikaLottieView: UIViewRepresentable {
-    let mood: MikaMood
+/// Le lecteur : une `UIImageView` que ImageIO nourrit image par image. Une nouvelle `take`
+/// (ou un autre nom) arrête la lecture en cours et en lance une autre ; une lecture « une
+/// fois » s'arrête sur sa dernière image et le signale à `onFinish`.
+private struct MikaAnimationView: UIViewRepresentable {
+    let name: String
     let take: Int
-    let sparkle: UIColor
-    let onFinish: (MikaMood) -> Void
-
-    /// Les étincelles du kit sont des calques de forme nommés « sparkle », à remplissage plein.
-    private static let sparkleKeypath = AnimationKeypath(keypath: "sparkle.**.Color")
+    let loops: Bool
+    let onFinish: () -> Void
 
     final class Coordinator {
-        var mood: MikaMood?
+        var name: String?
         var take = -1
-        var sparkle: UIColor?
-        var onFinish: (MikaMood) -> Void = { _ in }
+        /// Le jeton de la lecture en cours : une lecture remplacée s'arrête d'elle-même.
+        var token = 0
+        var onFinish: () -> Void = {}
+
+        deinit { token += 1 }
     }
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
-    func makeUIView(context: Context) -> UIView {
-        let container = UIView()
-        container.backgroundColor = .clear
-        container.isUserInteractionEnabled = false
-        let animationView = LottieAnimationView(configuration: .shared)
-        animationView.contentMode = .scaleAspectFit
-        animationView.backgroundBehavior = .pauseAndRestore
-        animationView.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(animationView)
-        NSLayoutConstraint.activate([
-            animationView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            animationView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            animationView.topAnchor.constraint(equalTo: container.topAnchor),
-            animationView.bottomAnchor.constraint(equalTo: container.bottomAnchor)
-        ])
-        return container
+    func makeUIView(context: Context) -> UIImageView {
+        let view = UIImageView()
+        view.contentMode = .scaleAspectFit
+        view.backgroundColor = .clear
+        view.isUserInteractionEnabled = false
+        view.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        view.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+        view.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        view.setContentHuggingPriority(.defaultLow, for: .vertical)
+        return view
     }
 
-    func updateUIView(_ container: UIView, context: Context) {
-        guard let animationView = container.subviews.first as? LottieAnimationView else { return }
+    func updateUIView(_ view: UIImageView, context: Context) {
         let coordinator = context.coordinator
         coordinator.onFinish = onFinish
-
-        if coordinator.sparkle != sparkle {
-            coordinator.sparkle = sparkle
-            animationView.setValueProvider(
-                ColorValueProvider(sparkle.lottieColorValue),
-                keypath: Self.sparkleKeypath
-            )
-        }
-
-        guard coordinator.mood != mood || coordinator.take != take else { return }
-        coordinator.mood = mood
+        guard coordinator.name != name || coordinator.take != take else { return }
+        coordinator.name = name
         coordinator.take = take
-        // L'animation vient du cache : elle remplace la précédente dans la même passe,
-        // sans image vide entre les deux.
-        animationView.animation = MikaLibrary.animation(for: mood)
-        let played = mood
-        let playedTake = take
-        animationView.play(
-            fromProgress: 0,
-            toProgress: 1,
-            loopMode: mood.loops ? .loop : .playOnce
-        ) { [weak coordinator] completed in
-            guard completed, let coordinator,
-                  coordinator.mood == played, coordinator.take == playedTake
-            else { return }
-            coordinator.onFinish(played)
+        coordinator.token += 1
+        let token = coordinator.token
+        guard let url = MikaLibrary.url(for: name) else { return }
+        let last = MikaLibrary.frameCount(of: name) - 1
+        let loops = loops
+        // Les fichiers du kit bouclent tous : une lecture « une fois » s'arrête elle-même sur
+        // sa dernière image.
+        let options = [kCGImageAnimationLoopCount: loops ? 100_000 : 1] as CFDictionary
+        CGAnimateImageAtURLWithBlock(url as CFURL, options) { [weak view, weak coordinator] index, image, stop in
+            guard let view, let coordinator, coordinator.token == token else {
+                stop.pointee = true
+                return
+            }
+            view.image = UIImage(cgImage: image)
+            if !loops, index >= last {
+                stop.pointee = true
+                coordinator.onFinish()
+            }
         }
     }
 
-    static func dismantleUIView(_ container: UIView, coordinator: Coordinator) {
-        (container.subviews.first as? LottieAnimationView)?.stop()
+    static func dismantleUIView(_ view: UIImageView, coordinator: Coordinator) {
+        coordinator.token += 1
     }
 }

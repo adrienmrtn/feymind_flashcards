@@ -320,7 +320,7 @@ struct FlashcardImportSheet: View {
             } label: {
                 Text(L10n.t("ios.sup.cards.create", locale: .resolved()))
             }
-            .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
+            .buttonStyle(LessonPrimaryButtonStyle())
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, 6)

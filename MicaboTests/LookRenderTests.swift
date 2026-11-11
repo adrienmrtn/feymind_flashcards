@@ -103,8 +103,44 @@ final class LookRenderTests: XCTestCase {
 
     // MARK: - Les rendus
 
+    /// **La planche du nouveau Mika** : ses douze poses fixes, en entier, sur le papier.
+    private func poses() -> some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 14) {
+            ForEach(MikaStill.allCases, id: \.self) { still in
+                VStack(spacing: 4) {
+                    Image(still.imageName)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 84, height: 84)
+                        .background {
+                            MikaHalo(still: still, side: 84, night: false)
+                        }
+                    Text(still.rawValue)
+                        .font(MicaboFont.ui(12, weight: .bold))
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                }
+            }
+        }
+        .padding(20)
+    }
+
+    /// Mika qui arrive (fixe : arrivé), et la fête de l'objectif.
+    private func journeys() -> some View {
+        VStack(spacing: 18) {
+            MikaJourney(kind: .enter, height: 120)
+                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            MikaJourney(kind: .walkAcross, height: 120)
+                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            XPGoalCard(showsButton: true)
+        }
+        .padding(20)
+        .environment(\.homeStill, true)
+    }
+
     func testMikaOnLight() throws {
         try RenderGallery.render("look-mika", night: true, mikaPlaces())
+        try RenderGallery.render("look-mika-poses", night: true, poses())
+        try RenderGallery.render("look-mika-journeys", night: true, journeys())
     }
 
     func testProfileAndLessons() throws {

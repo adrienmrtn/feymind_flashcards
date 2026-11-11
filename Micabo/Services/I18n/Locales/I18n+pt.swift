@@ -1433,7 +1433,7 @@ extension IosI18nCatalogs {
         "ios.sup.source.pdfSub": "Um capítulo, uma sebenta",
         "ios.sup.source.photo": "Fotos",
         "ios.sup.source.photoSub": "Digitalização ou galeria",
-        "ios.sup.source.slides": "Diapositivos",
+        "ios.sup.source.slides": "Slides",
         "ios.sup.source.slidesSub": "Um PowerPoint (.pptx)",
         "ios.sup.source.text": "Texto",
         "ios.sup.source.textSub": "Copiar e colar",

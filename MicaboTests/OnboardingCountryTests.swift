@@ -133,9 +133,13 @@ final class OnboardingCountryTests: XCTestCase {
 
     /// Le temps qui reste s'écrit par le système, avec les pluriels de chaque langue.
     func testTheRemainingTimeIsWrittenByTheSystem() {
-        XCTAssertEqual(SchoolExams.remainingText(days: 214, locale: .fr), "7 mois")
-        XCTAssertEqual(SchoolExams.remainingText(days: 21, locale: .en), "3 weeks")
-        XCTAssertEqual(SchoolExams.remainingText(days: 5, locale: .de), "5 Tage")
+        // Le système met une espace insécable entre le nombre et l'unité : on compare les mots.
+        func plain(_ text: String) -> String {
+            text.replacingOccurrences(of: "\u{00A0}", with: " ").replacingOccurrences(of: "\u{202F}", with: " ")
+        }
+        XCTAssertEqual(plain(SchoolExams.remainingText(days: 214, locale: .fr)), "7 mois")
+        XCTAssertEqual(plain(SchoolExams.remainingText(days: 21, locale: .en)), "3 weeks")
+        XCTAssertEqual(plain(SchoolExams.remainingText(days: 5, locale: .de)), "5 Tage")
         XCTAssertTrue(SchoolExams.remainingText(days: 214, locale: .ru).contains("месяц"))
     }
 

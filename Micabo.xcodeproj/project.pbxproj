@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		FE00000000000000000200 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = FE00000000000000000210 /* RevenueCat */; };
 		FE00000000000000000201 /* SwiftMath in Frameworks */ = {isa = PBXBuildFile; productRef = FE00000000000000000211 /* SwiftMath */; };
-		FE00000000000000000202 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = FE00000000000000000212 /* Lottie */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -53,7 +52,6 @@
 			files = (
 				FE00000000000000000200 /* RevenueCat in Frameworks */,
 				FE00000000000000000201 /* SwiftMath in Frameworks */,
-				FE00000000000000000202 /* Lottie in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -107,7 +105,6 @@
 			packageProductDependencies = (
 				FE00000000000000000210 /* RevenueCat */,
 				FE00000000000000000211 /* SwiftMath */,
-				FE00000000000000000212 /* Lottie */,
 			);
 			productName = Micabo;
 			productReference = FE00000000000000000001 /* Micabo.app */;
@@ -197,7 +194,6 @@
 			packageReferences = (
 				FE00000000000000000220 /* XCRemoteSwiftPackageReference "purchases-ios" */,
 				FE00000000000000000221 /* XCRemoteSwiftPackageReference "SwiftMath" */,
-				FE00000000000000000222 /* XCRemoteSwiftPackageReference "lottie-spm" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = FE00000000000000000031 /* Products */;
@@ -547,14 +543,6 @@
 				minimumVersion = 1.7.3;
 			};
 		};
-		FE00000000000000000222 /* XCRemoteSwiftPackageReference "lottie-spm" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/airbnb/lottie-spm";
-			requirement = {
-				kind = exactVersion;
-				version = 4.5.2;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -567,11 +555,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FE00000000000000000221 /* XCRemoteSwiftPackageReference "SwiftMath" */;
 			productName = SwiftMath;
-		};
-		FE00000000000000000212 /* Lottie */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = FE00000000000000000222 /* XCRemoteSwiftPackageReference "lottie-spm" */;
-			productName = Lottie;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
