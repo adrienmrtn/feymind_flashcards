@@ -137,6 +137,8 @@ final class OnboardingLot7RenderTests: XCTestCase {
                                  page(.targetAverage, model, rtl: rtl) { TargetAverageStepView() })
         try RenderGallery.render("\(prefix)-notif", height: 852, night: night,
                                  page(.notifications, model, rtl: rtl) { NotificationsStepView() })
+        try RenderGallery.render("\(prefix)-planbuild", height: 852, night: night,
+                                 page(.planBuilding, model, rtl: rtl) { PlanBuildingStepView() })
         try RenderGallery.render("\(prefix)-plan", height: 1_100, night: night,
                                  page(.profileSummary, model, rtl: rtl) { ProfileSummaryStepView() })
         try RenderGallery.render("\(prefix)-trial", height: 852, night: night,
