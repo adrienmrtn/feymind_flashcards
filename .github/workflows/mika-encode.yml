@@ -1,0 +1,116 @@
+# **Mika, du kit à l'app, en une commande** : lit le kit de Mika (la branche
+# `assets/mika-kit` : `sequences-png/<nom>/…png` et `images-fixes/mika-<pose>.png`), refait
+# toutes ses images avec `scripts/mika-assets.py` (poses, premières images, avatar,
+# `MikaArt.swift`), encode chaque animation en vidéo HEVC avec alpha avec
+# `scripts/mika-encode.swift` (macOS seulement), relit chaque vidéo et la compare à ses images,
+# puis :
+#   - publie le résultat et ses planches de contrôle sur la branche `assets/mika-build`
+#     (écrasée à chaque fois : `git checkout origin/assets/mika-build -- Micabo` le reprend) ;
+#   - le commite sur la branche `target` si on le demande (par défaut au lancement manuel).
+#
+#   gh workflow run mika-encode.yml --ref <branche> -f target=<branche>
+#
+# Un push qui change ces scripts sur une branche claude/** le relance aussi, sans commiter
+# (le résultat attend sur `assets/mika-build`).
+
+name: Mika (vidéos)
+
+on:
+  workflow_dispatch:
+    inputs:
+      kit:
+        description: "Branche du kit de Mika"
+        default: assets/mika-kit
+      target:
+        description: "Branche où commiter le résultat (vide : ne rien commiter)"
+        default: ""
+      quality:
+        description: "Qualité de l'encodeur, de 0 à 1"
+        default: "0.6"
+  push:
+    branches: ["claude/**"]
+    paths:
+      - ".github/workflows/mika-encode.yml"
+      - "scripts/mika-encode.swift"
+      - "scripts/mika-assets.py"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mika-encode-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  encode:
+    name: Encoder Mika
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.target || github.ref }}
+
+      - name: Le kit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.kit || 'assets/mika-kit' }}
+          path: build/kit
+
+      - name: Python (Pillow, NumPy)
+        run: |
+          python3 -m venv build/venv
+          build/venv/bin/pip install --quiet pillow numpy
+
+      - name: Les images
+        run: build/venv/bin/python scripts/mika-assets.py build/kit --frames build/mika-frames
+
+      - name: Les vidéos
+        env:
+          MIKA_QUALITY: ${{ inputs.quality || '0.6' }}
+        run: |
+          sw_vers
+          xcrun swiftc -O -o build/mika-encode scripts/mika-encode.swift
+          build/mika-encode build/mika-frames Micabo/Resources/Mika build/mika-check
+          {
+            echo '## Mika : les vidéos'
+            echo '```'
+            cat build/mika-check/rapport.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publier sur assets/mika-build
+        env:
+          TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SOURCE: ${{ github.sha }}
+        run: |
+          rm -rf build/publish && mkdir -p build/publish/Micabo/Resources build/publish/Micabo/DesignSystem/Components
+          cp -R Micabo/Resources/Mika build/publish/Micabo/Resources/
+          mkdir -p build/publish/Micabo/Resources/Assets.xcassets
+          cp -R Micabo/Resources/Assets.xcassets/Mika build/publish/Micabo/Resources/Assets.xcassets/
+          cp Micabo/DesignSystem/Components/MikaArt.swift build/publish/Micabo/DesignSystem/Components/
+          cp -R build/mika-check build/publish/controle
+          cd build/publish
+          git init -q -b assets/mika-build
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Mika : vidéos et images fabriquées depuis $SOURCE"
+          git push -q -f "https://x-access-token:$TOKEN@github.com/$REPO.git" assets/mika-build
+
+      - name: Commiter sur la branche
+        if: ${{ inputs.target != '' && github.event_name == 'workflow_dispatch' }}
+        env:
+          TARGET: ${{ inputs.target }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A Micabo/Resources/Mika Micabo/Resources/Assets.xcassets/Mika Micabo/DesignSystem/Components/MikaArt.swift
+          if git diff --cached --quiet; then echo "rien n'a changé"; exit 0; fi
+          git commit -q -m "Mika : vidéos HEVC avec alpha et images refaites depuis le kit"
+          for attempt in 1 2 3 4 5; do
+            git pull -q --no-rebase --no-edit origin "$TARGET" && git push -q origin "HEAD:$TARGET" && exit 0
+            sleep 5
+          done
+          exit 1

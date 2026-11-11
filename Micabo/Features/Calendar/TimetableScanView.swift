@@ -44,7 +44,7 @@ struct TimetableScanView: View {
             case .unreadable:
                 problem(loc("ios.cal.scanUnreadable"), mood: .sad, retry: false)
             case .empty:
-                problem(loc("ios.cal.scanEmpty"), mood: .think, retry: true)
+                problem(loc("ios.cal.scanEmpty"), mood: .look, retry: true)
             case .failed(let message):
                 problem(message, mood: .sad, retry: true)
             case .locked:

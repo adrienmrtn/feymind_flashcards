@@ -21,6 +21,7 @@ import SwiftUI
 struct ProfileSummaryStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private var name: String {
         model.displayName.nilIfBlank ?? OnboardingPreferences.displayName ?? ""
@@ -152,21 +153,36 @@ struct ProfileSummaryStepView: View {
                     MicaboIconView(icon: line.icon, size: 24)
                         .frame(width: 36, height: 36)
                         .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-                    // Le libellé ne se coupe jamais au milieu d'un mot : c'est la valeur
-                    // qui passe à la ligne.
-                    Text(line.label)
-                        .font(MicaboFont.ui(14, weight: .semibold))
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                        .lineLimit(1)
-                        .fixedSize(horizontal: true, vertical: false)
-                        .layoutPriority(2)
-                    Spacer(minLength: 8)
-                    Text(line.value)
-                        .font(MicaboFont.ui(15, weight: .heavy))
-                        .foregroundStyle(MicaboColor.ink)
-                        .multilineTextAlignment(.trailing)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .layoutPriority(1)
+                    if dynamicTypeSize >= .xxLarge {
+                        // **En très grand texte, la valeur passe sous son libellé** (lot 7) :
+                        // serrée à droite, elle se coupait « Mathématiques / , Philosophie ».
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(line.label)
+                                .font(MicaboFont.ui(14, weight: .semibold))
+                                .foregroundStyle(MicaboColor.inkSecondary)
+                            Text(line.value)
+                                .font(MicaboFont.ui(15, weight: .heavy))
+                                .foregroundStyle(MicaboColor.ink)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        // Le libellé ne se coupe jamais au milieu d'un mot : c'est la valeur
+                        // qui passe à la ligne.
+                        Text(line.label)
+                            .font(MicaboFont.ui(14, weight: .semibold))
+                            .foregroundStyle(MicaboColor.inkSecondary)
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
+                            .layoutPriority(2)
+                        Spacer(minLength: 8)
+                        Text(line.value)
+                            .font(MicaboFont.ui(15, weight: .heavy))
+                            .foregroundStyle(MicaboColor.ink)
+                            .multilineTextAlignment(.trailing)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .layoutPriority(1)
+                    }
                 }
                 .padding(.vertical, 8)
                 .accessibilityElement(children: .combine)
