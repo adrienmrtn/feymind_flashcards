@@ -129,7 +129,7 @@ struct WelcomeStepView: View {
                 )
                 .padding(.horizontal, MicaboSpacing.screen)
 
-                if titleRead {
+                if titleRead || still {
                     OnboardingReadingText(
                         template: i18n.t("ios.onb5.welcome.sub"),
                         size: 22,
@@ -154,7 +154,7 @@ struct WelcomeStepView: View {
             OnboardingArrowBar {
                 model.advance()
             }
-            .opacity(isReady ? 1 : 0)
+            .opacity(isReady || still ? 1 : 0)
             .allowsHitTesting(isReady)
         }
         .onboardingChromeInset()

@@ -28,7 +28,6 @@ struct OnboardingMikaPrompt: View {
 
     @Environment(\.onboardingStill) private var still
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.layoutDirection) private var layoutDirection
 
     @State private var typed = 0
     @State private var showsReaction = false
@@ -37,7 +36,7 @@ struct OnboardingMikaPrompt: View {
     @State private var settle: Task<Void, Never>?
 
     /// La taille de Mika : un buste qui se lit d'un coup d'œil sans prendre la page.
-    static let mikaSize: CGFloat = 96
+    static let mikaSize: CGFloat = 112
     /// La part visible du buste au-dessus de sa ligne : l'image garde de l'air au-dessus de
     /// lui pour ses étincelles, qui débordent sans pousser la bulle.
     static var mikaHeight: CGFloat { mikaSize * 0.74 }
@@ -62,7 +61,8 @@ struct OnboardingMikaPrompt: View {
                     backdrop: .surface
                 )
                 .frame(width: Self.mikaSize * 0.86, height: Self.mikaHeight, alignment: .bottom)
-                .offset(x: (layoutDirection == .rightToLeft ? 1 : -1) * Self.mikaSize * 0.07)
+                // Les décalages suivent le sens de lecture : en arabe, ils se retournent seuls.
+                .offset(x: -Self.mikaSize * 0.07)
                 .accessibilityHidden(true)
 
                 bubble
@@ -107,7 +107,7 @@ struct OnboardingMikaPrompt: View {
         .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
         .overlay(alignment: .bottomLeading) {
             OnboardingBubbleTail()
-                .offset(x: layoutDirection == .rightToLeft ? 9 : -9, y: -14)
+                .offset(x: -9, y: -14)
                 .flipsForRightToLeftLayoutDirection(true)
         }
         .shadow(color: Color.black.opacity(0.04), radius: 10, y: 4)

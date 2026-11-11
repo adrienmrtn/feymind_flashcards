@@ -27,6 +27,8 @@ struct OnboardingReadingText: View {
     var onHighlighted: () -> Void = {}
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Les rendus figés montrent la phrase lue.
+    @Environment(\.onboardingStill) private var still
 
     @State private var read = 0
     @State private var highlighted = false
@@ -86,7 +88,7 @@ struct OnboardingReadingText: View {
     /// l'encre qui s'anime, et elle s'anime toujours — la couleur d'un texte, pas
     /// forcément.
     private func word(_ word: Word) -> some View {
-        let isRead = word.id < read
+        let isRead = still || word.id < read
         let isLit = highlighted && word.isMarked
 
         return ZStack {
