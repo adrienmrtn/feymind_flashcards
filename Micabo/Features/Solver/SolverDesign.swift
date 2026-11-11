@@ -130,10 +130,16 @@ struct SolverMikaAvatar: View {
     var mood: MikaMood = .idle
 
     var body: some View {
-        MicaboIconView(icon: .mika, size: size * 0.86)
+        // Le buste agrandi et posé sur le bord bas du rond : la tête le remplit, les épaules
+        // sont coupées par lui, comme sur une carte.
+        Circle()
+            .fill(MicaboColor.accentWash)
             .frame(width: size, height: size)
-            .background(MicaboColor.surfaceMuted)
-        .clipShape(Circle())
+            .overlay(alignment: .bottom) {
+                MikaMascot(mood: mood, size: size * 1.5, backdrop: .light, animates: false)
+                    .offset(x: size * 0.12)
+            }
+            .clipShape(Circle())
         .overlay(Circle().strokeBorder(MicaboColor.stroke, lineWidth: 1))
         .accessibilityHidden(true)
     }
