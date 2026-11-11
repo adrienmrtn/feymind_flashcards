@@ -42,5 +42,5 @@ enum MikaArt {
     ]
 
     /// La tête de l'avatar (`Mika-tete`).
-    static let head = CGRect(x: 120, y: 182, width: 270, height: 270)
+    static let head = CGRect(x: 104, y: 176, width: 308, height: 308)
 }

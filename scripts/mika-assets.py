@@ -50,7 +50,7 @@ STILL_SCALE = 1.5  # pixels par unité du canevas de 512
 PAD = 3
 QUALITY = 88
 # La tête, pour l'avatar : un carré du canevas de 512 (yeux au milieu, le haut du crayon).
-HEAD = (120, 182, 390, 452)
+HEAD = (104, 176, 412, 484)
 
 
 def alpha_box(im):

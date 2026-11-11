@@ -58,7 +58,9 @@ final class MikaMascotTests: XCTestCase {
     /// **Le temps de préparer une animation**, hors du fil principal (le chemin de décodage
     /// le vérifie lui-même en DEBUG) : toutes les animations, à la taille d'un Mika de 120
     /// points sur un écran 3x. Les chiffres s'écrivent dans le journal (`MIKA-PERF`).
+    @MainActor
     func testPreparingAnAnimationIsFastAndOffTheMainThread() throws {
+        var lines: [String] = []
         let resolution = MikaClipStore.resolution(MikaPlacement.standing(side: 120).scale * 3)
         var total = 0.0
         var frames = 0
@@ -71,11 +73,22 @@ final class MikaMascotTests: XCTestCase {
             XCTAssertLessThanOrEqual(clip.bytes, MikaClipStore.budget, "\(name) dépasse le budget")
             XCTAssertTrue(Set(clip.images.map(\.width)).count == 1, "\(name) : images de tailles différentes")
             XCTAssertTrue(isOpaqueNearCenter(clip.images[clip.images.count / 2]), "\(name) : image vide")
-            print(String(format: "MIKA-PERF %@ %d images %dx%d %.1f Mo %.0f ms (%.1f ms/image)",
-                         name, clip.images.count, clip.images[0].width, clip.images[0].height,
-                         Double(clip.bytes) / 1_048_576, elapsed, elapsed / Double(clip.images.count)))
+            lines.append(String(format: "%@ : %d images %dx%d, %.1f Mo, %.0f ms (%.1f ms/image)",
+                                name, clip.images.count, clip.images[0].width, clip.images[0].height,
+                                Double(clip.bytes) / 1_048_576, elapsed, elapsed / Double(clip.images.count)))
         }
-        print(String(format: "MIKA-PERF total %d images %.0f ms (%.1f ms/image)", frames, total, total / Double(frames)))
+        lines.append(String(format: "Total : %d images, %.0f ms (%.1f ms/image)", frames, total, total / Double(frames)))
+        lines.forEach { print("MIKA-PERF \($0)") }
+        // Les chiffres, en image : la CI ne publie que les rendus.
+        if RenderGallery.directory != nil {
+            try RenderGallery.render("mika-perf", VStack(alignment: .leading, spacing: 6) {
+                Text("Préparer une animation (Mika de 120 pt, écran 3x, hors fil principal)")
+                    .font(.system(size: 13, weight: .bold))
+                ForEach(lines, id: \.self) { Text($0).font(.system(size: 12, design: .monospaced)) }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading))
+        }
 
         // La mesure XCTest : préparer le coucou (52 images, la plus longue des 24 i/s).
         measure(metrics: [XCTClockMetric()]) {
@@ -107,8 +120,16 @@ final class MikaMascotTests: XCTestCase {
     /// **Un seul Mika joue à la fois** : le second qui commence arrête le premier.
     @MainActor
     func testOnlyOneMikaPlaysAtOnce() throws {
-        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 393, height: 400))
+        // Une vraie fenêtre de la scène de l'app : sans elle, rien ne s'affiche.
+        let scene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
+        let window = scene.map { UIWindow(windowScene: $0) } ?? UIWindow(frame: CGRect(x: 0, y: 0, width: 393, height: 400))
+        window.frame = CGRect(x: 0, y: 0, width: 393, height: 400)
         window.isHidden = false
+        defer { window.isHidden = true }
+        let state = UIApplication.shared.applicationState
+        guard state != .background else {
+            throw XCTSkip("l'app des tests est en arrière-plan : Mika n'y joue pas, c'est voulu")
+        }
         let one = MikaPlayerView(frame: CGRect(x: 0, y: 0, width: 120, height: 120))
         let two = MikaPlayerView(frame: CGRect(x: 0, y: 200, width: 120, height: 120))
         window.addSubview(one)
@@ -117,14 +138,14 @@ final class MikaMascotTests: XCTestCase {
         two.placement = .standing(side: 120)
 
         one.apply(MikaPlayRequest(clip: "reflexion", loops: true, take: 1, mood: .think))
-        try waitUntil { one.isPlaying }
+        try waitUntil("le premier ne joue pas (état \(state.rawValue), scène \(scene != nil))") { one.isPlaying }
         two.apply(MikaPlayRequest(clip: "ecriture", loops: true, take: 1, mood: .write))
-        try waitUntil { two.isPlaying && !one.isPlaying }
+        try waitUntil("le second n'a pas arrêté le premier") { two.isPlaying && !one.isPlaying }
         XCTAssertTrue(MikaStage.shared.isPlaying)
 
         // Quitter l'écran arrête la lecture.
         two.removeFromSuperview()
-        try waitUntil { !two.isPlaying }
+        try waitUntil("hors de l'écran, il joue encore") { !two.isPlaying }
         one.removeFromSuperview()
     }
 
@@ -155,10 +176,10 @@ final class MikaMascotTests: XCTestCase {
     }
 
     @MainActor
-    private func waitUntil(timeout: TimeInterval = 5, _ condition: () -> Bool) throws {
+    private func waitUntil(_ what: String, timeout: TimeInterval = 5, _ condition: () -> Bool) throws {
         let deadline = Date().addingTimeInterval(timeout)
         while !condition() {
-            guard Date() < deadline else { return XCTFail("délai dépassé") }
+            guard Date() < deadline else { return XCTFail(what) }
             RunLoop.main.run(until: Date().addingTimeInterval(0.02))
         }
     }
