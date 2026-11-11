@@ -120,7 +120,7 @@ struct SignInScreen: View {
         }
         .background(MicaboColor.canvas.ignoresSafeArea())
         .environment(\.onboardingSurface, .canvas)
-        .animation(.easeOut(duration: 0.22), value: auth.message)
+        .animation(MicaboMotion.quick, value: auth.message)
         .overlay {
             if isResolving {
                 ProgressView()
@@ -343,6 +343,7 @@ struct SignInProviderButtons: View {
 
     @Environment(AuthController.self) private var auth
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.colorScheme) private var colorScheme
 
     @State private var email = ""
     /// Vrai une fois qu'on a choisi le courriel : le bouton devient le champ.
@@ -383,8 +384,8 @@ struct SignInProviderButtons: View {
                     .transition(.opacity)
             }
         }
-        .animation(.easeOut(duration: 0.2), value: auth.isWorking)
-        .animation(.easeOut(duration: 0.2), value: auth.message)
+        .animation(MicaboMotion.quick, value: auth.isWorking)
+        .animation(MicaboMotion.quick, value: auth.message)
         .animation(.timingCurve(0.25, 0.8, 0.25, 1, duration: 0.36), value: showsEmail)
     }
 
@@ -473,6 +474,7 @@ struct SignInProviderButtons: View {
         }
         .frame(height: 56)
         .frame(maxWidth: .infinity)
+        .id(colorScheme)
         .accessibilityLabel(t("onboarding.continueApple"))
     }
 

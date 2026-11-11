@@ -164,8 +164,8 @@ struct HookLogoStepView: View {
 
     /// L'entrée d'un élément du panneau : un fondu qui monte, décalé du précédent.
     private func reveal(index: Int) -> Animation {
-        if reduceMotion { return .easeOut(duration: 0.2) }
-        return .easeOut(duration: 0.45).delay(0.12 + Double(index) * 0.08)
+        if reduceMotion { return MicaboMotion.reduced }
+        return MicaboMotion.standard.delay(0.12 + Double(index) * 0.08)
     }
 
     // MARK: - Le mouvement
@@ -181,7 +181,7 @@ struct HookLogoStepView: View {
         if reduceMotion {
             mikaMood = .wave
             showsMika = true
-            withAnimation(.easeOut(duration: 0.25)) {
+            withAnimation(MicaboMotion.reduced) {
                 panelUp = true
                 contentVisible = true
             }
@@ -198,7 +198,7 @@ struct HookLogoStepView: View {
             return
         }
 
-        withAnimation(.spring(duration: 0.65, bounce: 0.16)) { panelUp = true }
+        withAnimation(MicaboMotion.gentle) { panelUp = true }
         try? await Task.sleep(for: .milliseconds(300))
 
         Haptics.soft()

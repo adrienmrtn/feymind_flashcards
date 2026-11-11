@@ -89,11 +89,11 @@ struct MikaStepView: View {
         .background(OnboardingPalette.white.ignoresSafeArea())
         .environment(\.onboardingSurface, .canvas)
         .onAppear {
-            withAnimation(reduceMotion ? .easeOut(duration: 0.2) : .spring(duration: 0.6, bounce: 0.25).delay(0.2)) {
+            withAnimation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion).delay(reduceMotion ? 0 : 0.2)) {
                 shown = true
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + (reduceMotion ? 0.4 : Self.actionDelay)) {
-                withAnimation(.easeOut(duration: 0.3)) { showsAction = true }
+                withAnimation(MicaboMotion.standard) { showsAction = true }
             }
         }
     }
@@ -159,21 +159,22 @@ private struct MikaTile: View {
     }
 }
 
-/// Un léger flottement, chacun à son rythme : ce qui flotte ensemble ne bat pas ensemble.
+/// **Un objet qui se pose**, chacun à son rythme : il arrive d'un peu plus bas, une fois, puis
+/// reste immobile. Il flottait sans fin ; une scène qui bouge en boucle sous une phrase qu'on
+/// lit tire l'œil de la phrase, et ne dit rien de plus la dixième seconde que la première.
 private struct Bobbing: ViewModifier {
     var amplitude: CGFloat = 6
     var period: Double = 2.2
     var delay: Double = 0
 
-    @State private var up = false
+    @State private var settled = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func body(content: Content) -> some View {
         content
-            .offset(y: up ? -amplitude : amplitude)
+            .offset(y: settled || reduceMotion ? 0 : amplitude)
             .onAppear {
-                guard !reduceMotion else { return }
-                withAnimation(.easeInOut(duration: period).repeatForever(autoreverses: true).delay(delay)) { up = true }
+                withAnimation(MicaboMotion.resolved(MicaboMotion.gentle, reduceMotion: reduceMotion).delay(delay)) { settled = true }
             }
     }
 }
@@ -187,7 +188,7 @@ private struct PopIn: ViewModifier {
         content
             .scaleEffect(shown ? 1 : 0.3)
             .opacity(shown ? 1 : 0)
-            .animation(.spring(duration: 0.55, bounce: 0.45).delay(delay), value: shown)
+            .animation(MicaboMotion.standard.delay(delay), value: shown)
     }
 }
 
@@ -201,13 +202,10 @@ private extension View {
     }
 }
 
-/// Le halo doux derrière Mika, qui respire.
+/// Le halo doux derrière Mika, immobile : il respirait en boucle.
 private struct MikaGlow: View {
     var size: CGFloat = 240
     var color: Color = MicaboColor.accent
-
-    @State private var breathe = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// **La plus grande taille qui tienne sous le haut de la page**, centrée en `center` : au
     /// delà, le halo (et sa respiration, 6 %) dépasse les dix points d'air au-dessus de la
@@ -221,15 +219,11 @@ private struct MikaGlow: View {
         Circle()
             .fill(RadialGradient(colors: [color.opacity(0.22), color.opacity(0)], center: .center, startRadius: 4, endRadius: size / 2))
             .frame(width: size, height: size)
-            .scaleEffect(breathe ? 1.06 : 0.94)
-            .onAppear {
-                guard !reduceMotion else { return }
-                withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) { breathe = true }
-            }
     }
 }
 
-/// Quelques éclats qui scintillent autour d'une scène.
+/// Quelques éclats autour d'une scène : ils s'allument une fois, l'un après l'autre, puis
+/// restent. Ils clignotaient sans fin.
 private struct Sparkles: View {
     let points: [CGPoint]
     var color: Color = MicaboColor.cautionVivid
@@ -246,7 +240,7 @@ private struct Sparkles: View {
                     .scaleEffect(on ? 1 : 0.4)
                     .opacity(on ? 1 : 0.2)
                     .animation(
-                        reduceMotion ? nil : .easeInOut(duration: 1.1).repeatForever(autoreverses: true).delay(Double(index) * 0.27),
+                        reduceMotion ? nil : MicaboMotion.standard.delay(0.3 + Double(index) * 0.12),
                         value: on
                     )
                     .position(x: proxy.size.width * point.x, y: proxy.size.height * point.y)
@@ -348,21 +342,22 @@ private struct MikaSourcesScene: View {
         try? await Task.sleep(for: .seconds(1.3))
         for index in Self.sources.indices {
             guard !Task.isCancelled else { return }
-            withAnimation(.easeIn(duration: 0.42)) { flying = index }
+            withAnimation(MicaboMotion.standard) { flying = index }
             try? await Task.sleep(for: .seconds(0.42))
             eaten.insert(index)
             flying = nil
-            withAnimation(.spring(duration: 0.25, bounce: 0.6)) {
+            withAnimation(MicaboMotion.quick) {
                 munch = true
                 mood = .happy
             }
             Haptics.tick()
             try? await Task.sleep(for: .seconds(0.22))
-            withAnimation(.spring(duration: 0.3)) { munch = false }
+            withAnimation(MicaboMotion.quick) { munch = false }
             try? await Task.sleep(for: .seconds(0.28))
         }
         guard !Task.isCancelled else { return }
-        withAnimation(.spring(duration: 0.5, bounce: 0.5)) {
+        // La seule courbe à rebond de l'app, pour la réussite de la scène.
+        withAnimation(MicaboMotion.celebrate) {
             mood = .celebrate
             full = true
         }
@@ -514,7 +509,7 @@ private struct MikaTutorScene: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
         .shadow(color: .black.opacity(0.14), radius: 22, y: 14)
-        .animation(.spring(duration: 0.45, bounce: 0.35), value: stage)
+        .animation(MicaboMotion.standard, value: stage)
     }
 
     /// La part de la largeur qu'une pastille peut prendre, et sa marge au bord de l'écran.
@@ -677,7 +672,7 @@ private struct OnboardingLessonScreen: View {
             }
             for index in circles.indices {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5 + Double(index) * 0.32) {
-                    withAnimation(.spring(duration: 0.5, bounce: 0.45)) { revealedState = index + 1 }
+                    withAnimation(MicaboMotion.standard) { revealedState = index + 1 }
                 }
             }
         }
@@ -751,7 +746,7 @@ private struct OnboardingLessonScreen: View {
                 shape
                     .trim(from: 0, to: revealed > 0 ? fraction : 0)
                     .stroke(tone.vivid, style: StrokeStyle(lineWidth: PathMapView.trailWidth, lineCap: .round, lineJoin: .round))
-                    .animation(.easeInOut(duration: 0.6), value: revealed)
+                    .animation(MicaboMotion.standard, value: revealed)
             }
             .frame(width: layout.width, height: layout.height)
         }

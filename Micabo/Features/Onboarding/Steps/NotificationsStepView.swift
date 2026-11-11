@@ -113,7 +113,7 @@ struct NotificationsStepView: View {
             HStack(spacing: 12) {
                 MicaboIconView(icon: .flame, size: 52)
                     .scaleEffect(checked == Self.days ? 1.08 : 1)
-                    .animation(.spring(duration: 0.4, bounce: 0.5), value: checked)
+                    .animation(MicaboMotion.quick, value: checked)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("\(checked)")
@@ -182,7 +182,7 @@ struct NotificationsStepView: View {
                 .foregroundStyle(isChecked ? MicaboColor.flameInk : MicaboColor.warmProse)
         }
         .frame(maxWidth: .infinity)
-        .animation(.spring(duration: 0.35, bounce: 0.5), value: isChecked)
+        .animation(MicaboMotion.quick, value: isChecked)
     }
 
     // MARK: - La notification

@@ -143,7 +143,7 @@ struct OnboardingProgressCurveCard: View {
         .padding(18)
         .onboardingCard(selected: false, radius: 24)
         .onAppear {
-            withAnimation(.easeOut(duration: 0.9).delay(OnboardingMotion.slideDuration)) { drawn = 1 }
+            withAnimation(MicaboMotion.gentle.delay(OnboardingMotion.slideDuration)) { drawn = 1 }
         }
         .accessibilityElement()
         .accessibilityLabel(i18n.t("ios.quiz.time.chart"))

@@ -42,6 +42,17 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
         label(t: { L10n.t($0, locale: .resolved()) })
     }
 
+    /// **Le nom écrit dans la barre**, plus court quand le titre de la page ne tient pas dans
+    /// un cinquième d'écran : « Concentration », « Keskittyminen », « Concentración » y
+    /// tombaient à 62 % de leur taille. La page garde son titre entier ; la barre dit
+    /// « Focus », « Keskity », « Enfoque ».
+    func barLabel(t: (String) -> String) -> String {
+        switch self {
+        case .focus: t("ios.pol.sys.tab.focus")
+        default: label(t: t)
+        }
+    }
+
     var systemImage: String {
         switch self {
         case .decks: "books.vertical"

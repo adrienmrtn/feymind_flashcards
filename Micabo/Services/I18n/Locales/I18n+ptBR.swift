@@ -3,6 +3,8 @@
 
 extension IosI18nCatalogs {
     static let ptBR: [String: String] = [
+        "ios.pol.sys.daysLeft": "{days, plural, one {falta 1 dia} other {faltam # dias}}",
+        "ios.pol.sys.tab.focus": "Foco",
         "ios.onb5.building.sub": "Estou preparando tudo para você",
         "ios.onb5.building.title": "Valeu, {name}!",
         "ios.onb5.exam.dateLabel": "Data da prova",

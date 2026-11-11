@@ -37,23 +37,22 @@ extension View {
     }
 }
 
-/// Le bouton d'action principal de la refonte : un aplat d'encre, texte blanc, coins arrondis.
-/// « C'est parti », « Cercle suivant », « Terminer ».
+/// Le bouton d'action principal d'une leçon, d'un quiz, d'un import : « C'est parti »,
+/// « Cercle suivant », « Terminer ». **Le bouton principal de l'app** (`MicaboPrimaryFill`) :
+/// il était d'encre noire, et un bouton noir sur un écran puis un bleu sur le suivant disaient
+/// deux choses différentes pour la même. `enabled` à faux l'éteint en gris.
 struct LessonPrimaryButtonStyle: ButtonStyle {
-    var tint: Color = MicaboColor.ink
+    var tint: Color = MicaboColor.accent
     var enabled = true
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(MicaboFont.ui(18, weight: .heavy))
-            .foregroundStyle(MicaboColor.onInk)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 17)
-            .background(
-                enabled ? tint : MicaboColor.inkTertiary,
-                in: RoundedRectangle(cornerRadius: 18, style: .continuous)
-            )
-            .shadow(color: tint.opacity(enabled ? 0.18 : 0), radius: 10, x: 0, y: 6)
-            .micaboPressEffect(isPressed: configuration.isPressed, feedback: .medium)
+        MicaboPrimaryFill(
+            label: configuration.label,
+            tint: tint,
+            fontSize: 17,
+            enabled: enabled,
+            isPressed: configuration.isPressed,
+            feedback: .medium
+        )
     }
 }

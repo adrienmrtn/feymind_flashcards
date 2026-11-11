@@ -24,7 +24,7 @@ struct MicaboTabBar: View {
     private func bar(_ router: TabRouter) -> some View {
         HStack(spacing: 2) {
             ForEach(RootTab.tabs) { tab in
-                let label = tab.label(t: { i18n.t($0) })
+                let label = tab.barLabel(t: { i18n.t($0) })
                 let isSelected = tab == router.selection
                 Button {
                     // Sans `withAnimation` : animer `selection` faisait fondre les pages, et
@@ -35,11 +35,13 @@ struct MicaboTabBar: View {
                         Image(systemName: isSelected ? tab.selectedSystemImage : tab.systemImage)
                             .font(.system(size: 19, weight: isSelected ? .bold : .semibold))
                         Text(label)
-                            .font(MicaboFont.ui(11, weight: .heavy))
+                            // **Taille fixe, comme la barre du système** : la barre a une
+                            // hauteur fixe, et un libellé qui suit la taille du texte la
+                            // déborderait. Les grandes tailles passent par la visionneuse
+                            // (appui long), ci-dessous.
+                            .font(.custom(MicaboFont.nunitoName(for: .heavy), fixedSize: 11))
                             .lineLimit(1)
-                            // Cinq onglets : « Konzentration », « Keskittyminen » se
-                            // resserrent au lieu de se couper.
-                            .minimumScaleFactor(0.62)
+                            .minimumScaleFactor(0.85)
                             .padding(.horizontal, 2)
                     }
                     .foregroundStyle(isSelected ? MicaboColor.accent : MicaboColor.inkSecondary)
@@ -53,8 +55,14 @@ struct MicaboTabBar: View {
                     .contentShape(Capsule())
                 }
                 .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-                .accessibilityLabel(label)
+                .accessibilityLabel(tab.label(t: { i18n.t($0) }))
                 .accessibilityAddTraits(isSelected ? .isSelected : [])
+                // En très grande taille de texte, un appui long montre l'onglet en grand,
+                // comme dans la barre du système.
+                .accessibilityShowsLargeContentViewer {
+                    Image(systemName: tab.selectedSystemImage)
+                    Text(tab.label(t: { i18n.t($0) }))
+                }
             }
         }
         .padding(5)

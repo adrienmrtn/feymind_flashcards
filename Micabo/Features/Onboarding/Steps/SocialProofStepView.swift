@@ -139,7 +139,7 @@ struct OnboardingReviewCarousel: View {
                 guard !Task.isCancelled, isDriving else { return }
                 let current = position ?? 1
                 let next = current >= reviews.count ? 1 : current + 1
-                withAnimation(.easeInOut(duration: 0.5)) { position = next }
+                withAnimation(MicaboMotion.standard) { position = next }
             }
         }
     }

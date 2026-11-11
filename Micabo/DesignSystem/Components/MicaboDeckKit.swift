@@ -90,7 +90,7 @@ struct MicaboCountdownPill: View {
     private var isUrgent: Bool { days <= urgentWithin }
 
     var body: some View {
-        Text(days <= 0 ? i18n.t("app.exams.countdown.today") : "J-\(days)")
+        Text(days <= 0 ? i18n.t("app.exams.countdown.today") : i18n.t("ios.pol.sys.daysLeft", ["days": "\(days)"]))
             .font(MicaboFont.ui(11.5, weight: .heavy))
             .foregroundStyle(isUrgent ? MicaboColor.onInk : MicaboColor.inkSecondary)
             .padding(.vertical, 5)
@@ -145,7 +145,7 @@ struct MicaboFilterChip: View {
                 }
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-        .animation(.easeOut(duration: 0.18), value: isSelected)
+        .animation(MicaboMotion.quick, value: isSelected)
     }
 }
 
@@ -288,7 +288,7 @@ struct MicaboFolderTile: View {
                         .font(.system(size: 44))
                 }
                 .frame(height: MicaboDeckTile.tileHeight)
-                .animation(.easeOut(duration: 0.15), value: isTargeted)
+                .animation(MicaboMotion.quick, value: isTargeted)
 
                 VStack(alignment: .leading, spacing: 5) {
                     // Deux lignes réservées, comme sur un deck : même hauteur sur la rangée.
@@ -728,58 +728,59 @@ struct MicaboOutlineCard<Content: View>: View {
 
 // MARK: - Le bouton de la maquette
 
-/// **Le bouton d'action, sans ombre.**
-///
-/// `MicaboPrimaryButtonStyle` en porte deux, et c'était juste tant que le fond de l'app
-/// était crème : une ombre y faisait décoller le bouton. Sur du blanc elle salit, et la
-/// maquette n'en a aucune — cinquante-six points de haut, quatorze de rayon, seize et demi
-/// de texte, et l'aplat violet suffit.
+/// **Le bouton d'action** : le bouton principal de l'app (`MicaboPrimaryFill`), à la hauteur
+/// donnée. Il avait son propre rendu, sans ombre et en seize et demi ; il dessine maintenant
+/// le même aplat que tous les autres.
 struct MicaboActionButtonStyle: ButtonStyle {
     var tint: Color = MicaboColor.accent
     var foreground: Color = MicaboColor.onInk
-    var height: CGFloat = 56
+    var height: CGFloat = MicaboButtonMetrics.height
     var feedback: Haptics.Press = .medium
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(MicaboFont.ui(16.5, weight: .bold))
-            .foregroundStyle(foreground)
-            .frame(maxWidth: .infinity)
-            .frame(height: height)
-            .background(tint, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
-            .micaboPressEffect(isPressed: configuration.isPressed, feedback: feedback)
+        MicaboPrimaryFill(
+            label: configuration.label,
+            tint: tint,
+            foreground: foreground,
+            minHeight: height,
+            isPressed: configuration.isPressed,
+            feedback: feedback
+        )
     }
 }
 
 // MARK: - L'intitulé d'un rayon
 
-/// **Le titre d'une section, et son lien.**
+/// **Le titre d'une section, et son lien** — le même sur tous les onglets.
 ///
-/// Dix-huit points en gras, une ligne grise en dessous quand elle apporte quelque chose, et
-/// « Tout voir › » en violet à droite. C'est le seul violet de la page qui ne soit pas une
-/// progression : un lien qui mène ailleurs, et il n'y en a qu'un par rayon.
+/// Dix-neuf points au plus gras de la police, une ligne grise dessous quand elle apporte
+/// quelque chose, et « Tout voir » à droite (`MicaboSeeAllLink`). C'est la mesure du titre de
+/// section de Home, du Calendrier et de Concentration : le Profil en avait un à dix-huit
+/// points demi-gras, et le même mot « section » ne se lisait pas pareil d'un onglet à l'autre.
 struct MicaboSectionHeading<Trailing: View>: View {
     let title: String
     var subtitle: String?
     @ViewBuilder var trailing: Trailing
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .firstTextBaseline, spacing: MicaboSpacing.xs) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(MicaboFont.ui(18, weight: .bold))
-                    .tracking(-0.2)
+                    .font(MicaboFont.ui(19, weight: .black))
                     .foregroundStyle(MicaboColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.isHeader)
 
                 if let subtitle {
                     Text(subtitle)
-                        .font(MicaboFont.ui(13, weight: .regular))
+                        .font(MicaboFont.ui(13.5, weight: .bold))
                         .foregroundStyle(MicaboColor.inkSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            trailing.padding(.top, 3)
+            trailing
         }
     }
 }
@@ -790,18 +791,28 @@ extension MicaboSectionHeading where Trailing == EmptyView {
     }
 }
 
-/// « Tout voir › » : le lien de fin de rayon, toujours écrit pareil.
+/// « Tout voir » : le lien de fin de section, toujours écrit pareil — quatorze points, la
+/// teinte de l'accent, et un chevron qui se retourne en arabe (le « › » écrit en dur, lui,
+/// pointait du mauvais côté).
 struct MicaboSeeAllLink: View {
     let title: String
     var action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Text("\(title) ›")
-                .font(MicaboFont.ui(13.5, weight: .bold))
-                .foregroundStyle(MicaboColor.accentInk)
+            HStack(spacing: 3) {
+                Text(title)
+                    .lineLimit(1)
+                Image(systemName: "chevron.forward")
+                    .font(.system(size: 11, weight: .black))
+            }
+            .font(MicaboFont.ui(14, weight: .heavy))
+            .foregroundStyle(MicaboColor.accentInk)
+            .frame(minHeight: 32)
+            .fixedSize()
+            .contentShape(Rectangle())
         }
-        .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
+        .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .selection))
     }
 }
 
@@ -1085,7 +1096,7 @@ struct MicaboSessionHeader: View {
                     Capsule()
                         .fill(MicaboColor.accent)
                         .frame(width: max(0, min(1, progress)) * proxy.size.width)
-                        .animation(.easeOut(duration: 0.25), value: progress)
+                        .animation(MicaboMotion.standard, value: progress)
                 }
             }
             .frame(height: 4)

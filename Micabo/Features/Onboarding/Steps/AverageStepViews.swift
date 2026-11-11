@@ -122,7 +122,7 @@ struct TargetAverageStepView: View {
                     }
                     Spacer(minLength: 0)
                 }
-                .animation(.easeOut(duration: 0.18), value: model.targetScore)
+                .animation(MicaboMotion.quick, value: model.targetScore)
             }
         } footer: {
             OnboardingArrowButton(isEnabled: isAtTop || model.targetScore != nil) {

@@ -95,43 +95,24 @@ struct MicaboSparkleShape: Shape {
     }
 }
 
-/// **Le grand bouton de marque** : un aplat bleu Micabo, du texte blanc, une ombre bleue. Le
-/// même sur Home (la prochaine chose à faire), le paywall et l'aperçu verrouillé — un seul
-/// par écran.
+/// **Le grand bouton de marque** : le bouton principal de l'app (`MicaboPrimaryFill`), avec
+/// une hauteur et une taille de texte réglables. Le même sur Home, le paywall et l'aperçu
+/// verrouillé — un seul par écran.
 ///
 /// `minHeight` et non une hauteur : avec les grandes tailles de texte, le libellé pousse le
 /// bouton au lieu d'être coupé.
 struct MicaboBrandButtonStyle: ButtonStyle {
-    var minHeight: CGFloat = 56
+    var minHeight: CGFloat = MicaboButtonMetrics.height
     var fontSize: CGFloat = 17
     var feedback: Haptics.Press = .medium
 
-    @Environment(\.isEnabled) private var isEnabled
-
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(MicaboFont.ui(fontSize, weight: .heavy))
-            .foregroundStyle(Color.white)
-            .multilineTextAlignment(.center)
-            .lineLimit(2)
-            .minimumScaleFactor(0.85)
-            .padding(.horizontal, 20)
-            .padding(.vertical, 10)
-            .frame(maxWidth: .infinity, minHeight: minHeight)
-            .background(MicaboStage.buttonFill, in: RoundedRectangle(cornerRadius: MicaboStage.buttonRadius, style: .continuous))
-            .overlay(alignment: .top) {
-                // Un reflet très doux sur le haut : le bouton se lit comme un objet, pas un
-                // rectangle.
-                RoundedRectangle(cornerRadius: MicaboStage.buttonRadius, style: .continuous)
-                    .fill(LinearGradient(colors: [Color.white.opacity(0.16), Color.white.opacity(0)], startPoint: .top, endPoint: .center))
-                    .allowsHitTesting(false)
-            }
-            .shadow(color: MicaboBrand.blue.opacity(isEnabled ? 0.3 : 0), radius: 14, y: 7)
-            .opacity(isEnabled ? 1 : 0.6)
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .brightness(configuration.isPressed ? -0.04 : 0)
-            .animation(.spring(response: 0.28, dampingFraction: 0.65), value: configuration.isPressed)
-            .micaboPressFeedback(isPressed: configuration.isPressed, feedback: feedback)
-            .contentShape(RoundedRectangle(cornerRadius: MicaboStage.buttonRadius, style: .continuous))
+        MicaboPrimaryFill(
+            label: configuration.label,
+            minHeight: minHeight,
+            fontSize: fontSize,
+            isPressed: configuration.isPressed,
+            feedback: feedback
+        )
     }
 }

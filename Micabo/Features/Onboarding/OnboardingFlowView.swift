@@ -141,7 +141,7 @@ struct OnboardingFlowView: View {
         ])
 
         let forward = next.rawValue > previous.rawValue
-        let duration = reduceMotion ? 0.25 : OnboardingMotion.slideDuration
+        let duration = reduceMotion ? 0.15 : OnboardingMotion.slideDuration
         model.transitionLock = true
 
         var staged = OnboardingPager(current: next)
@@ -155,16 +155,32 @@ struct OnboardingFlowView: View {
         }
         pager = staged
 
+        // **La page sortante part à la fin de l'animation**, pas sur une minuterie : avec un
+        // ressort, une minuterie la retirait quelques points avant que la nouvelle soit posée,
+        // et l'ancienne disparaissait d'un coup sous le bord qui finissait d'arriver.
+        let settle: () -> Void = {
+            if pager.current == next {
+                pager.outgoing = nil
+                pager.veil = 0
+                pager.currentOpacity = 1
+            }
+            model.transitionLock = false
+        }
+
         DispatchQueue.main.async {
             if reduceMotion {
-                withAnimation(.easeInOut(duration: duration)) {
+                withAnimation(MicaboMotion.reduced, completionCriteria: .logicallyComplete) {
                     pager.currentOpacity = 1
+                } completion: {
+                    settle()
                 }
             } else {
-                withAnimation(OnboardingMotion.slide) {
+                withAnimation(OnboardingMotion.slide, completionCriteria: .logicallyComplete) {
                     pager.currentOffset = 0
                     pager.outgoingOffset = forward ? -width * OnboardingMotion.slideParallax : width
                     pager.veil = forward ? OnboardingMotion.slideVeil : 0
+                } completion: {
+                    settle()
                 }
             }
         }
@@ -175,13 +191,10 @@ struct OnboardingFlowView: View {
             Haptics.tick()
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + duration + 0.03) {
-            if pager.current == next {
-                pager.outgoing = nil
-                pager.veil = 0
-                pager.currentOpacity = 1
-            }
-            model.transitionLock = false
+        // Filet : une animation qui ne finit jamais (app passée en arrière-plan au mauvais
+        // moment) ne doit pas laisser le parcours verrouillé.
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration + 0.5) {
+            if pager.current == next, pager.outgoing != nil { settle() }
         }
     }
 

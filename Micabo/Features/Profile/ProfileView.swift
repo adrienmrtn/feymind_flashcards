@@ -244,7 +244,7 @@ struct ProfileView: View {
     private func profile(_ metrics: Metrics) -> some View {
         NavigationStack(path: $path) {
             ScrollView(.vertical) {
-                VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: MicaboSpacing.xl - 4) {
                     header
                     ProfileCard(name: profileName, identity: profileIdentity, studies: profileStudies) {
                         showSettings = true
@@ -315,6 +315,7 @@ struct ProfileView: View {
             .sheet(isPresented: $showSettings) {
                 SettingsView()
                     .presentationCornerRadius(MicaboRadius.sheet)
+                    .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showsStreak) {
                 StreakSheet()
