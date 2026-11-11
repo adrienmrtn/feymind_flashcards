@@ -93,7 +93,7 @@ struct SolverHistoryContent: View {
     private func chip(_ subject: SolverSubject?) -> some View {
         let selected = filter == subject
         return Button {
-            withAnimation(.snappy) { filter = subject }
+            withAnimation(LearnMotion.quick) { filter = subject }
         } label: {
             HStack(spacing: 6) {
                 if let subject { MicaboIconView(icon: subject.icon, size: 16) }

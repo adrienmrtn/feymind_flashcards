@@ -285,8 +285,10 @@ struct SolverCropOverlay: View {
                 LinearGradient(colors: [MicaboBrand.blue.opacity(0), MicaboBrand.blue.opacity(0.55), MicaboBrand.blue.opacity(0)], startPoint: .top, endPoint: .bottom)
                     .frame(width: frame.width - 16, height: 40)
                     .offset(x: frame.minX + 8, y: frame.minY + (sweep ? frame.height - 48 : 8))
-                    .animation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true), value: sweep)
-                    .onAppear { sweep = true }
+                    // La lecture de la photo est une attente : seule boucle permise, et aucune
+                    // avec « Réduire les animations ».
+                    .animation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true), value: sweep) // attente
+                    .onAppear { sweep = !LearnMotion.reduceMotion }
                     .onDisappear { sweep = false }
                     .allowsHitTesting(false)
             }

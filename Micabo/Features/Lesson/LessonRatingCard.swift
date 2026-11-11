@@ -35,7 +35,7 @@ struct LessonRatingCard: View {
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
         .micaboElevation(.card)
-        .animation(.spring(duration: 0.35), value: phase)
+        .animation(LearnMotion.standard, value: phase)
     }
 
     // MARK: Les trois temps
@@ -83,7 +83,7 @@ struct LessonRatingCard: View {
                 commentFocused = false
                 rate(.down)
             }
-            .buttonStyle(LessonPrimaryButtonStyle())
+            .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
         }
     }
 

@@ -186,7 +186,7 @@ struct NoteBlockView: View {
     /// Une définition : le terme en violet, replié ; un appui l'ouvre.
     private func definition(term: String, text: String) -> some View {
         Button {
-            withAnimation(.spring(duration: 0.3)) { definitionOpen.toggle() }
+            withAnimation(LearnMotion.standard) { definitionOpen.toggle() }
         } label: {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {

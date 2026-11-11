@@ -66,7 +66,7 @@ struct LessonPracticeView: View {
                 failed(message)
             }
         }
-        .animation(.spring(duration: 0.45), value: phase)
+        .animation(LearnMotion.gentle, value: phase)
         .background(MicaboColor.canvas.ignoresSafeArea())
         .micaboPaywall($paywall)
     }
@@ -97,7 +97,7 @@ struct LessonPracticeView: View {
                 round += 1
                 phase = .quiz
                 Haptics.success()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { withAnimation { freshCount = 0 } }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { withAnimation(LearnMotion.standard) { freshCount = 0 } }
             } catch let error as LessonServiceError where error.opensPaywall {
                 PracticeAllowance.freeBatchUsed = true
                 phase = .quiz
@@ -141,7 +141,7 @@ struct LessonPracticeView: View {
             Spacer()
             VStack(spacing: 12) {
                 Button(L10n.t("lesson.practice.retry", locale: .resolved()), action: generate)
-                    .buttonStyle(LessonPrimaryButtonStyle())
+                    .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
                 Button(L10n.t("lesson.practice.back", locale: .resolved())) { dismiss() }
                     .buttonStyle(MicaboSecondaryButtonStyle())
             }

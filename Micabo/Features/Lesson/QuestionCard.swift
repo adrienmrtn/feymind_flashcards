@@ -51,7 +51,7 @@ struct QuestionCard: View {
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
         }
-        .animation(.spring(duration: 0.35), value: answered)
+        .animation(LearnMotion.standard, value: answered)
     }
 
     /// Ce qu'on attend de l'élève, en petit, au-dessus : « Vrai ou faux ? », « Remets dans
@@ -186,7 +186,7 @@ struct ChoiceList: View {
                 .buttonStyle(MicaboPressableButtonStyle(feedback: .none))
                 .disabled(answered != nil)
                 .modifier(Shake(amount: reveals && isPicked(shown) && answered?.right == false ? 1 : 0))
-                .animation(.linear(duration: 0.4), value: answered)
+                .animation(LearnMotion.standard, value: answered)
             }
         }
     }
@@ -247,7 +247,7 @@ struct GapSentence: View {
             .font(MicaboFont.ui(22, weight: .heavy))
             .foregroundStyle(MicaboColor.ink)
             .fixedSize(horizontal: false, vertical: true)
-            .animation(.spring(duration: 0.4), value: filled)
+            .animation(LearnMotion.standard, value: filled)
     }
 }
 
@@ -288,7 +288,7 @@ struct TrueFalseButtons: View {
                 .buttonStyle(MicaboPressableButtonStyle(feedback: .none))
                 .disabled(answered != nil)
                 .modifier(Shake(amount: reveals && answered?.picked == index && answered?.right == false ? 1 : 0))
-                .animation(.linear(duration: 0.4), value: answered)
+                .animation(LearnMotion.standard, value: answered)
             }
         }
     }
@@ -340,7 +340,7 @@ struct OrderBuilder: View {
                     Button {
                         guard answered == nil else { return }
                         Haptics.selection()
-                        withAnimation(.spring(duration: 0.35)) { placed.removeAll { $0 == item } }
+                        withAnimation(LearnMotion.standard) { placed.removeAll { $0 == item } }
                     } label: {
                         HStack(spacing: 12) {
                             Text("\(position + 1)")
@@ -380,7 +380,7 @@ struct OrderBuilder: View {
                     ForEach(pool.filter { !placed.contains($0) }, id: \.self) { item in
                         Button {
                             Haptics.selection()
-                            withAnimation(.spring(duration: 0.35)) { placed.append(item) }
+                            withAnimation(LearnMotion.standard) { placed.append(item) }
                         } label: {
                             KeywordText(question.choices[item], size: 16, weight: .bold, tintsKeywords: false)
                                 .font(MicaboFont.ui(16, weight: .bold))
@@ -399,7 +399,7 @@ struct OrderBuilder: View {
                 Button(L10n.t("lesson.question.check", locale: .resolved())) {
                     onAnswer(QuizAnswer(right: placed == Array(question.choices.indices), picked: nil))
                 }
-                .buttonStyle(LessonPrimaryButtonStyle(enabled: placed.count == question.choices.count))
+                .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent, enabled: placed.count == question.choices.count))
                 .disabled(placed.count != question.choices.count)
             }
         }
@@ -467,7 +467,7 @@ struct MatchBoard: View {
                     tile(question.matches[right], color: owner.map(color(left:)) ?? nil, selected: false, verdict: owner.flatMap(verdict(left:))) {
                         guard answered == nil, let left = selectedLeft else { return }
                         Haptics.selection()
-                        withAnimation(.spring(duration: 0.3)) {
+                        withAnimation(LearnMotion.standard) {
                             if let owner { pairs[owner] = nil }
                             pairs[left] = right
                             selectedLeft = nil
@@ -519,7 +519,7 @@ struct MatchBoard: View {
         }
         .buttonStyle(MicaboPressableButtonStyle(feedback: .none))
         .disabled(answered != nil)
-        .animation(.spring(duration: 0.25), value: selected)
+        .animation(LearnMotion.quick, value: selected)
     }
 
     private func fill(color: Color?, verdict: Bool?) -> Color {

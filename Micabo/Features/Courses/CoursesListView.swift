@@ -300,7 +300,7 @@ struct CoursesListView: View {
             HStack(spacing: MicaboSpacing.xs) {
                 ForEach(SortOrder.allCases) { order in
                     MicaboFilterChip(title: order.label(i18n), isSelected: order == sortOrder && subjectFilter == nil) {
-                        withAnimation(.easeOut(duration: 0.2)) {
+                        withAnimation(LearnMotion.quick) {
                             sortOrder = order
                             subjectFilter = nil
                         }
@@ -309,7 +309,7 @@ struct CoursesListView: View {
 
                 ForEach(subjects, id: \.self) { subject in
                     MicaboFilterChip(title: subject, isSelected: subjectFilter == subject) {
-                        withAnimation(.easeOut(duration: 0.2)) {
+                        withAnimation(LearnMotion.quick) {
                             subjectFilter = subjectFilter == subject ? nil : subject
                         }
                     }
@@ -472,7 +472,7 @@ struct CoursesListView: View {
         ) {
             // Un lâcher n'est pas un appui : voir `lastDrop`, armé dès le survol.
             guard Date().timeIntervalSince(lastDrop) > 0.6 else { return }
-            withAnimation(.easeOut(duration: 0.2)) { openFolder = branch.folder.id }
+            withAnimation(LearnMotion.quick) { openFolder = branch.folder.id }
         }
         .contextMenu { folderMenu(branch.folder) }
         // Le glisser-déposer existe aussi sur le téléphone, pour qui le connaît :
@@ -557,7 +557,7 @@ struct CoursesListView: View {
         HStack(spacing: MicaboSpacing.xs) {
             if openFolder != nil {
                 Button {
-                    withAnimation(.easeOut(duration: 0.2)) {
+                    withAnimation(LearnMotion.quick) {
                         openFolder = trail.count > 1 ? trail[trail.count - 2].id : nil
                     }
                 } label: {
@@ -711,7 +711,7 @@ struct CoursesListView: View {
     private func folderDeleteActions() -> some View {
         Button(i18n.t("app.folders.delete"), role: .destructive) {
             if let folder = folderPendingDelete {
-                withAnimation { deleteFolder(folder) }
+                withAnimation(LearnMotion.standard) { deleteFolder(folder) }
             }
             folderPendingDelete = nil
         }
@@ -726,7 +726,7 @@ struct CoursesListView: View {
     private func courseDeleteActions() -> some View {
         Button(i18n.t("app.courses.deleteCourse"), role: .destructive) {
             if let course = coursePendingDelete {
-                withAnimation {
+                withAnimation(LearnMotion.standard) {
                     try? CourseRepository.delete(course, in: modelContext)
                 }
             }
@@ -807,7 +807,7 @@ struct CoursesListView: View {
 
     private func move(_ course: Course, to folder: UUID?) {
         guard course.folderID != folder else { return }
-        withAnimation(.easeOut(duration: 0.2)) {
+        withAnimation(LearnMotion.quick) {
             course.folderID = folder
             course.updatedAt = Date()
         }
@@ -818,7 +818,7 @@ struct CoursesListView: View {
         guard folder.parentID != parent,
               CourseLibrary.canMove(folders, folder: folder.id, into: parent)
         else { return }
-        withAnimation(.easeOut(duration: 0.2)) {
+        withAnimation(LearnMotion.quick) {
             folder.parentID = parent
             folder.updatedAt = Date()
         }

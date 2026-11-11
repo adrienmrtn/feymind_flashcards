@@ -94,10 +94,17 @@ enum RevisionModeAllowance {
     }
 }
 
-/// **La rangée des modes de révision**, sous l'en-tête d'une leçon : quatre tuiles égales,
-/// chacune son icône sur sa pastille et son nom. Une pastille « Pro » sur ce qui est dans Pro.
+/// **La rangée des modes de révision**, sous l'action principale d'une leçon : quatre tuiles
+/// égales, toutes du même papier, l'icône dans la couleur de la leçon et le nom dessous. Une
+/// pastille « Pro » sur ce qui est dans Pro.
+///
+/// Elles étaient quatre aplats de quatre couleurs (bleu, rose, vert, jaune) : un mur de
+/// boutons colorés juste sous « Continuer », qui tiraient l'œil autant que lui et ne disaient
+/// rien de plus — la couleur d'une leçon est la sienne, pas celle de ses outils.
 struct RevisionModesRow: View {
     var isPro = true
+    /// La couleur de la leçon : celle de ses icônes.
+    var tone: LessonTone = .blue
     let onSelect: (RevisionMode) -> Void
 
     var body: some View {
@@ -110,7 +117,7 @@ struct RevisionModesRow: View {
                 .fixedSize(horizontal: false, vertical: true)
             HStack(alignment: .top, spacing: 10) {
                 ForEach(RevisionMode.allCases) { mode in
-                    RevisionModeTile(mode: mode, showsPro: RevisionModeAllowance.showsProBadge(mode, isPro: isPro)) {
+                    RevisionModeTile(mode: mode, tone: tone, showsPro: RevisionModeAllowance.showsProBadge(mode, isPro: isPro)) {
                         onSelect(mode)
                     }
                 }
@@ -120,9 +127,10 @@ struct RevisionModesRow: View {
     }
 }
 
-/// Une tuile de mode : la pastille carrée et son icône, le nom dessous.
+/// Une tuile de mode : l'icône sur une pastille de papier, le nom dessous.
 struct RevisionModeTile: View {
     let mode: RevisionMode
+    var tone: LessonTone = .blue
     var showsPro = false
     let action: () -> Void
 
@@ -130,12 +138,12 @@ struct RevisionModeTile: View {
         Button(action: action) {
             VStack(spacing: 8) {
                 Image(systemName: mode.symbol)
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(mode.tone.ink)
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(tone.ink)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 62)
-                    .background(mode.tone.pale, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(mode.tone.vivid.opacity(0.25), lineWidth: 1))
+                    .frame(height: 58)
+                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
                     .overlay(alignment: .topTrailing) {
                         if showsPro {
                             ProBadge()
@@ -143,11 +151,11 @@ struct RevisionModeTile: View {
                         }
                     }
                 Text(L10n.t(mode.titleKey, locale: .resolved()))
-                    .font(MicaboFont.ui(13, weight: .heavy))
+                    .font(MicaboFont.ui(13, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
-                    .minimumScaleFactor(0.8)
+                    .minimumScaleFactor(0.85)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity)
@@ -175,42 +183,61 @@ struct ProBadge: View {
 }
 
 /// L'en-tête commun des écrans de mode : la croix, le titre, et ce que le mode fait.
+///
+/// La croix est à droite sur une feuille (écouter, la carte mentale, la fiche), comme toutes
+/// les feuilles de l'app ; à gauche sur un parcours plein écran (à voix haute), comme le quiz,
+/// les flashcards et l'examen blanc.
 struct RevisionModeHeader: View {
     let mode: RevisionMode
     let lessonTitle: String
+    /// La couleur de la leçon ouverte : la même que sur sa tuile. Sans elle, celle du mode.
+    var tone: LessonTone?
+    /// Vrai pour un parcours plein écran : la croix passe en tête.
+    var closesLeading = false
     let onClose: () -> Void
 
     var body: some View {
+        let tone = self.tone ?? mode.tone
         HStack(alignment: .center, spacing: 12) {
+            if closesLeading {
+                closeButton
+            }
             Image(systemName: mode.symbol)
                 .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(mode.tone.ink)
+                .foregroundStyle(tone.ink)
                 .frame(width: 42, height: 42)
-                .background(mode.tone.pale, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .background(tone.pale, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             VStack(alignment: .leading, spacing: 1) {
                 Text(L10n.t(mode.titleKey, locale: .resolved()))
                     .font(MicaboFont.ui(20, weight: .black))
                     .foregroundStyle(MicaboColor.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(lessonTitle)
                     .font(MicaboFont.ui(14, weight: .semibold))
                     .foregroundStyle(MicaboColor.inkSecondary)
-                    .lineLimit(1)
+                    .lineLimit(2)
             }
             Spacer(minLength: 8)
-            Button(action: onClose) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(MicaboColor.ink)
-                    .frame(width: 40, height: 40)
-                    .background(MicaboColor.surface, in: Circle())
+            if !closesLeading {
+                closeButton
             }
-            .buttonStyle(MicaboPressableButtonStyle())
-            .accessibilityLabel(Text(L10n.t("lesson.circle.close", locale: .resolved())))
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, 14)
         .padding(.bottom, 8)
+    }
+
+    private var closeButton: some View {
+        Button(action: onClose) {
+            Image(systemName: "xmark")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(MicaboColor.ink)
+                .frame(width: 40, height: 40)
+                .background(MicaboColor.surface, in: Circle())
+        }
+        .buttonStyle(MicaboPressableButtonStyle())
+        .accessibilityLabel(Text(L10n.t("lesson.circle.close", locale: .resolved())))
     }
 }

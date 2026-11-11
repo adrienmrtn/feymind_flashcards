@@ -75,7 +75,7 @@ struct WebLinkSheet: View {
                 }
                 .buttonStyle(MicaboSecondaryButtonStyle())
                 Button(L10n.t("lesson.import.add", locale: .resolved())) { onDone(link) }
-                    .buttonStyle(LessonPrimaryButtonStyle(enabled: isValid))
+                    .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent, enabled: isValid))
                     .disabled(!isValid)
             }
         }

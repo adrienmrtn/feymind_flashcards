@@ -41,7 +41,7 @@ struct LessonCircleScreen: View {
                         title: circle.title,
                         circleID: circle.id,
                         onClose: { dismiss() },
-                        onDone: { withAnimation(.spring(duration: 0.45)) { showsTakeaways = true } }
+                        onDone: { withAnimation(LearnMotion.gentle) { showsTakeaways = true } }
                     )
                 }
             }
@@ -118,7 +118,7 @@ struct CircleTopBar: View {
                     }
                 }
                 .frame(height: 10)
-                .animation(.easeOut(duration: 0.25), value: progress)
+                .animation(LearnMotion.quick, value: progress)
             } else {
                 Spacer()
             }
@@ -200,7 +200,7 @@ struct IntroCircleView: View {
                 .padding(.bottom, 24)
             }
             Button(L10n.t("lesson.intro.go", locale: .resolved()), action: onDone)
-                .buttonStyle(LessonPrimaryButtonStyle())
+                .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.bottom, 12)
         }
@@ -270,7 +270,7 @@ struct ConclusionCircleView: View {
                 .padding(.bottom, 24)
             }
             Button(L10n.t("lesson.conclusion.finish", locale: .resolved()), action: onDone)
-                .buttonStyle(LessonPrimaryButtonStyle())
+                .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.bottom, 12)
         }
@@ -329,7 +329,7 @@ struct LessonFinishedView: View {
                             }
                             if showsRating {
                                 LessonRatingCard(course: session.course, moment: .finished) {
-                                    withAnimation(.spring(duration: 0.35)) { showsRating = false }
+                                    withAnimation(LearnMotion.standard) { showsRating = false }
                                 }
                                 .padding(.horizontal, MicaboSpacing.screen)
                                 .transition(.opacity.combined(with: .move(edge: .bottom)))
@@ -342,7 +342,7 @@ struct LessonFinishedView: View {
                 }
                 VStack(spacing: 12) {
                     Button(L10n.t("lesson.finished.cards", locale: .resolved())) { onLeave(.flashcards) }
-                        .buttonStyle(LessonPrimaryButtonStyle())
+                        .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
                     Button(L10n.t("lesson.finished.back", locale: .resolved())) { onLeave(.lessons) }
                         .buttonStyle(MicaboSecondaryButtonStyle())
                 }
@@ -357,7 +357,7 @@ struct LessonFinishedView: View {
             LessonRating.markOffered(id, at: .finished)
             // Après la fête : la question vient une fois les confettis tombés.
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                withAnimation(.spring(duration: 0.45)) { showsRating = true }
+                withAnimation(LearnMotion.gentle) { showsRating = true }
             }
         }
     }
