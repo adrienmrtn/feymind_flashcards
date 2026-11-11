@@ -443,11 +443,14 @@ struct HomeLessonsSection: View {
             StudySectionTitle(title: L10n.t("ios.home4.lessons", locale: .resolved())) {
                 HomeSectionLink(title: L10n.t("ios.focus.seeAll", locale: .resolved()), action: onAll)
             }
-            if still {
-                // Les rendus ne dessinent pas ce qui défile : la même rangée, qui déborde.
-                row
-                    .fixedSize()
+            if still, let first = lessons.first {
+                // Les rendus ne dessinent pas ce qui défile : la même rangée, qui déborde. Une
+                // carte cachée donne la hauteur ; la rangée est posée par-dessus, sans élargir
+                // la page.
+                card(first)
+                    .hidden()
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .overlay(alignment: .leading) { row.fixedSize() }
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
                     row
