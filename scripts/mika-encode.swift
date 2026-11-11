@@ -58,6 +58,11 @@ let checkDir = URL(fileURLWithPath: args[3])
 try FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
 try FileManager.default.createDirectory(at: checkDir, withIntermediateDirectories: true)
 
+/// La qualité de l'encodeur (0 à 1) : 0,6 garde un écart d'environ 1/255 avec les images, pour
+/// un paquet trois fois plus léger qu'à 0,9. `MIKA_QUALITY` la change.
+let quality = Double(ProcessInfo.processInfo.environment["MIKA_QUALITY"] ?? "") ?? 0.6
+let alphaQuality = min(1, quality + 0.2)
+
 let srgb = CGColorSpace(name: CGColorSpace.sRGB)!
 let bitmapInfo = CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
 
@@ -82,11 +87,11 @@ func pixels(_ image: CGImage, width: Int, height: Int) -> [UInt8] {
 
 func outputSettings(_ clip: ClipInfo, writer: AVAssetWriter) -> [String: Any] {
     var compression: [String: Any] = [
-        AVVideoQualityKey: 0.92,
+        AVVideoQualityKey: quality,
         AVVideoExpectedSourceFrameRateKey: clip.fps,
         AVVideoMaxKeyFrameIntervalKey: clip.frames,
         AVVideoAllowFrameReorderingKey: false,
-        kVTCompressionPropertyKey_TargetQualityForAlpha as String: 0.95,
+        kVTCompressionPropertyKey_TargetQualityForAlpha as String: alphaQuality,
         kVTCompressionPropertyKey_AlphaChannelMode as String: kVTAlphaChannelMode_PremultipliedAlpha,
     ]
     let base: [String: Any] = [

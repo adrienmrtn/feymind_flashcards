@@ -24,6 +24,9 @@ on:
       target:
         description: "Branche où commiter le résultat (vide : ne rien commiter)"
         default: ""
+      quality:
+        description: "Qualité de l'encodeur, de 0 à 1"
+        default: "0.6"
   push:
     branches: ["claude/**"]
     paths:
@@ -63,6 +66,8 @@ jobs:
         run: build/venv/bin/python scripts/mika-assets.py build/kit --frames build/mika-frames
 
       - name: Les vidéos
+        env:
+          MIKA_QUALITY: ${{ inputs.quality || '0.6' }}
         run: |
           sw_vers
           xcrun swiftc -O -o build/mika-encode scripts/mika-encode.swift
