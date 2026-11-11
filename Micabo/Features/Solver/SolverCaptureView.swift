@@ -706,7 +706,8 @@ struct SolverTypeSheet: View {
             }
             ZStack(alignment: .topLeading) {
                 if text.isEmpty {
-                    Text(solveText("type.placeholder"))
+                    // Toutes les matières : l'exemple n'est plus seulement une équation.
+                    Text(L10n.t("ios.ku7.type.placeholder", locale: .resolved()))
                         .font(MicaboFont.ui(17, weight: .medium))
                         .foregroundStyle(MicaboColor.inkTertiary)
                         .padding(.horizontal, 18)

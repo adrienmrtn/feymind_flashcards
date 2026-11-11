@@ -12,7 +12,7 @@ enum MikaPage: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 
     /// La phrase de l'écran ; les mots entre `**` se peignent du dégradé de l'app.
-    var titleKey: String { "ios.onb.mika.\(rawValue)" }
+    var titleKey: String { "ios.onb7.mika.\(rawValue)" }
 
     /// **La part de la page que prend la scène.**
     var sceneShare: CGFloat { 0.6 }
@@ -49,34 +49,17 @@ struct MikaStepView: View {
                 // un titre de quatre lignes, elle rapetisse ; plus bas que 240 points, c'est
                 // la page qui défile.
                 let sceneHeight = max(240, min(room * page.sceneShare, room - textHeight - 18))
-                ScrollView {
-                    VStack(spacing: 0) {
-                        // Dix points d'air au-dessus : ce qui flotte en haut de la scène — Mika
-                        // assis sur sa carte — n'est pas rogné par le bord de la page.
-                        scene
-                            .frame(width: proxy.size.width, height: sceneHeight)
-                            .padding(.top, 10)
-                            .accessibilityHidden(true)
-
-                        VStack(spacing: 18) {
-                            OnboardingAccentText(template: i18n.t(page.titleKey), size: 27, alignment: .center)
-                                .padding(.horizontal, 26)
-
-                        }
-                        .padding(.top, 6)
-                        .padding(.bottom, MicaboSpacing.md)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { textHeight = $0 }
-                        .opacity(isShown ? 1 : 0)
-                        .offset(y: isShown ? 0 : 14)
-
-                        Spacer(minLength: 0)
+                // Les rendus de la CI ne dessinent pas l'intérieur d'un `ScrollView` : la page
+                // y est posée telle quelle, pour qu'on y lise la phrase de Mika.
+                if still {
+                    column(width: proxy.size.width, room: room, sceneHeight: sceneHeight, isShown: isShown)
+                } else {
+                    ScrollView {
+                        column(width: proxy.size.width, room: room, sceneHeight: sceneHeight, isShown: isShown)
                     }
-                    .frame(width: proxy.size.width)
-                    .frame(minHeight: room, alignment: .top)
+                    .scrollIndicators(.hidden)
+                    .scrollBounceBehavior(.basedOnSize)
                 }
-                .scrollIndicators(.hidden)
-                .scrollBounceBehavior(.basedOnSize)
             }
 
             OnboardingArrowBar {
@@ -96,6 +79,31 @@ struct MikaStepView: View {
                 withAnimation(MicaboMotion.standard) { showsAction = true }
             }
         }
+    }
+
+    /// La scène, puis la phrase : la colonne de la page, qu'elle défile ou non.
+    private func column(width: CGFloat, room: CGFloat, sceneHeight: CGFloat, isShown: Bool) -> some View {
+        VStack(spacing: 0) {
+            // Dix points d'air au-dessus : ce qui flotte en haut de la scène — Mika
+            // assis sur sa carte — n'est pas rogné par le bord de la page.
+            scene
+                .frame(width: width, height: sceneHeight)
+                .padding(.top, 10)
+                .accessibilityHidden(true)
+
+            OnboardingAccentText(template: i18n.t(page.titleKey), size: 27, alignment: .center)
+                .padding(.horizontal, 26)
+                .padding(.top, 6)
+                .padding(.bottom, MicaboSpacing.md)
+                .fixedSize(horizontal: false, vertical: true)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { textHeight = $0 }
+                .opacity(isShown ? 1 : 0)
+                .offset(y: isShown ? 0 : 14)
+
+            Spacer(minLength: 0)
+        }
+        .frame(width: width)
+        .frame(minHeight: room, alignment: .top)
     }
 
     @ViewBuilder

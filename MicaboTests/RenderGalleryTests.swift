@@ -658,7 +658,7 @@ final class RenderGalleryTests: XCTestCase {
             height: 780,
             VStack(spacing: 0) {
                 OnboardingTopBar(progress: 0.42, showsBack: true, isVisible: true, onBack: {})
-                GoalStepView()
+                WorriesStepView()
             }
             .environment(model)
         )
@@ -669,9 +669,9 @@ final class RenderGalleryTests: XCTestCase {
                 .environment(model)
         )
         try RenderGallery.render(
-            "onboarding-social",
-            height: 1_400,
-            SocialProofStepView()
+            "onboarding-sample-card",
+            height: 900,
+            SampleCardStepView(previewAnswer: 1)
                 .environment(model)
                 .environment(\.onboardingStill, true)
         )

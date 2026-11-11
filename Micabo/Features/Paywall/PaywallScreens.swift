@@ -6,7 +6,7 @@ import SwiftUI
 ///
 /// De haut en bas : la scène claire, Mika en buste coupé par son bord bas, le titre (au
 /// prénom quand on le connaît) et l'examen qui arrive (`PaywallProfile`) ; ce que Pro ouvre,
-/// dit avec les réponses de l'élève ; la recherche, sans chiffre inventé ; les deux offres,
+/// dit avec les réponses de l'élève ; les deux offres,
 /// l'annuelle cochée d'avance ; puis, en pied fixe, la phrase du prix, **un seul bouton**, la
 /// promesse du rappel (réellement posé : `TrialEndReminder`) et les mentions.
 ///
@@ -86,8 +86,6 @@ struct PaywallScreen: View {
             VStack(spacing: MicaboSpacing.xl - 4) {
                 PaywallBenefits(profile: profile)
                     .entrance(1, shown: shown || still)
-                PaywallProofLine()
-                    .entrance(2, shown: shown || still)
                 VStack(spacing: 12) {
                     ForEach(PaywallCatalog.all) { plan in
                         PaywallPlanOption(
@@ -106,7 +104,7 @@ struct PaywallScreen: View {
                         }
                     }
                 }
-                .entrance(3, shown: shown || still)
+                .entrance(2, shown: shown || still)
             }
             .padding(.horizontal, MicaboSpacing.screen)
             .padding(.top, MicaboSpacing.xl - 4)
@@ -298,24 +296,10 @@ struct PaywallBenefits: View {
     }
 }
 
-/// **La preuve, en une ligne, et sourcée.** Elle disait « 4,8 sur l'App Store · 45 000+
-/// élèves » : rien dans le dépôt ne sourçait ces deux chiffres. Elle dit maintenant ce que la
-/// recherche a mesuré sur la méthode de Mika (Karpicke & Roediger, Science, 2008 : 80 % retenu
-/// en se testant contre 36 % en relisant), sans chiffre à nous.
-struct PaywallProofLine: View {
-    var body: some View {
-        HStack(spacing: 8) {
-            MicaboIconView(icon: .diploma, size: 20)
-            Text(L10n.t("ios.pay5.proof", locale: .resolved()))
-                .font(MicaboFont.ui(13.5, weight: .bold))
-                .foregroundStyle(MicaboColor.inkSecondary)
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity)
-        .accessibilityElement(children: .combine)
-    }
-}
+// **La ligne de la recherche est partie du paywall** (lot 7) : « en se testant, on retient
+// plus de deux fois plus qu'en relisant » était la troisième fois que le parcours citait la
+// même étude. Elle est dite une fois, sourcée, juste après la question d'essai
+// (`SampleCardStepView`), là où l'élève vient de le vivre.
 
 // MARK: - Les offres
 

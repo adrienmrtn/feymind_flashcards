@@ -8,9 +8,12 @@ import UserNotifications
 /// 2026) ; la promesse est maintenant tenue : à l'achat d'un essai, une notification locale
 /// est posée vingt-quatre heures avant la fin, à l'heure de l'achat.
 ///
-/// Rien n'est demandé au système ici : l'autorisation se demande une fois, dans le parcours
-/// (`NotificationPermission`). Sans elle, on ne pose rien — et la chronologie de l'essai dit
-/// alors comment l'activer, au lieu de promettre un rappel qui ne viendrait pas.
+/// **L'autorisation** se demande d'abord dans le parcours (`NotificationPermission`). Qui a
+/// choisi « Continuer sans notifications » n'a jamais vu la boîte d'iOS : la chronologie de
+/// l'essai lui promet quand même le rappel, donc elle s'ouvre ici, à l'achat de l'essai, pour
+/// ce rappel-là (lot 7). Qui a dit non à iOS n'est pas redemandé — iOS ne le permet pas — et
+/// la chronologie lui dit comment l'activer, au lieu de promettre un rappel qui ne viendrait
+/// pas.
 enum TrialEndReminder {
     static let identifier = "micabo.trial.end"
 
@@ -31,6 +34,13 @@ enum TrialEndReminder {
         )
     }
 
+    /// **Le rappel sera-t-il tenu ?** Vrai quand les notifications sont permises, ou quand la
+    /// question n'a jamais été posée (elle le sera à l'achat) ; faux seulement après un non.
+    static func canBeKept() async -> Bool {
+        let status = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+        return status != .denied
+    }
+
     /// Pose le rappel, s'il peut l'être. Rend vrai quand il est posé.
     @discardableResult
     static func schedule(
@@ -39,9 +49,15 @@ enum TrialEndReminder {
         locale: UiLocale = .resolved(),
         calendar: Calendar = .current
     ) async -> Bool {
-        guard let fire = fireDate(purchasedAt: purchasedAt, trialDays: trialDays),
-              await NotificationPermission.isAuthorized()
-        else { return false }
+        guard let fire = fireDate(purchasedAt: purchasedAt, trialDays: trialDays) else { return false }
+        switch await NotificationPermission.request() {
+        case .granted:
+            break
+        case .denied:
+            return false
+        case .alreadyAnswered(let isAuthorized):
+            guard isAuthorized else { return false }
+        }
         let text = content(locale: locale)
         let notification = UNMutableNotificationContent()
         notification.title = text.title

@@ -196,7 +196,7 @@ struct TutorThreadContent: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             ForEach(["1", "2"], id: \.self) { index in
-                let suggestion = solveText("tutor.suggest.\(subject.rawValue)\(index)")
+                let suggestion = subject.suggestion(Int(index) ?? 1)
                 Button { onSuggestion(suggestion) } label: {
                     HStack(spacing: 10) {
                         Image(systemName: "sparkles")

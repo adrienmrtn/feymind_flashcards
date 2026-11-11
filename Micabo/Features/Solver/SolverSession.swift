@@ -17,13 +17,20 @@ enum SolverPrompts {
         L10n.t(key, locale: .resolved(), vars: vars)
     }
 
-    static func solve() -> String { t("ios.solve.prompt.solve") }
+    /// **Toutes les matières** (lot 7) : la consigne dit à Mika qu'une question d'histoire ou de
+    /// langue se résout aussi pas à pas (les étapes d'un raisonnement, pas d'un calcul), et
+    /// le niveau de l'élève suit, dans les mots de son pays (`HomeworkLevel`).
+    static func solve(level: String? = HomeworkLevel.current) -> String {
+        HomeworkLevel.appending(level, to: t("ios.ku7.prompt.solve"))
+    }
 
     static func explain(step: Int, text: String) -> String {
         t("ios.solve.prompt.explain", ["n": "\(step)", "step": String(text.prefix(600))])
     }
 
-    static func practice() -> String { t("ios.solve.prompt.practice") }
+    static func practice(level: String? = HomeworkLevel.current) -> String {
+        HomeworkLevel.appending(level, to: t("ios.ku7.prompt.practice"))
+    }
 
     static func check(answer: String) -> String {
         t("ios.solve.prompt.check", ["answer": String(answer.prefix(500))])

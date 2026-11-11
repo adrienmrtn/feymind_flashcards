@@ -43,6 +43,8 @@ struct HomeView: View {
     /// La ligue de la semaine (`docs/refonte-knowunity.md` § 3) : la pastille XP et l'outil.
     @State private var showsLeague = false
     @State private var showsScanner = false
+    /// « Corriger un texte » (lot 7), en plein écran comme le scanner.
+    @State private var showsWriting = false
     @State private var showsDueReview = false
     @State private var quickQuizCourse: Course?
     /// La feuille du « + » : les supports en grandes tuiles.
@@ -184,6 +186,9 @@ struct HomeView: View {
             }
             .fullScreenCover(isPresented: $showsScanner) {
                 ScanExerciseView()
+            }
+            .fullScreenCover(isPresented: $showsWriting) {
+                WritingCoachView()
             }
     }
 
@@ -402,7 +407,12 @@ struct HomeView: View {
     /// Un outil, depuis son raccourci.
     private func open(_ tool: HomeTool, resume: Course?) {
         dismissKeyboard()
+        Analytics.track(.homeToolOpened, ["tool": .text(tool.analyticsName)])
         switch tool {
+        case .writing:
+            // Toujours ouvert, comme le scanner : la porte de Mika vient à la demande de
+            // relecture, une fois le texte à l'écran (`WritingSession`).
+            showsWriting = true
         case .scan:
             // Le scanner s'ouvre toujours : la lecture de l'énoncé se fait sur l'appareil, et
             // l'historique comme les fils de Mika restent à l'élève. La porte de Mika vient à la
