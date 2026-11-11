@@ -34,7 +34,8 @@ struct LessonCard: View {
                     Text(summary.caption)
                         .font(MicaboFont.ui(13, weight: .bold))
                         .foregroundStyle(MicaboColor.inkSecondary)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                     GeometryReader { proxy in
                         ZStack(alignment: .leading) {
                             Capsule().fill(MicaboColor.track)
@@ -136,7 +137,8 @@ struct LessonCardSummary: Equatable {
         if course.isLearned {
             caption = L10n.t("lesson.lessons.finished", locale: locale)
         } else if let current = PathLayout.current(in: circles, done: done) {
-            caption = L10n.t("lesson.lessons.circle", locale: locale, vars: [
+            // « Étape », comme sur le chemin : l'élève ne voit nulle part ailleurs le mot « cercle ».
+            caption = L10n.t("ios.pol.learn.stepOf", locale: locale, vars: [
                 "n": String(current.number),
                 "total": String(circles.count),
             ])
@@ -163,7 +165,8 @@ struct LessonFolderCard: View {
                     Text(name)
                         .font(MicaboFont.label)
                         .foregroundStyle(MicaboColor.ink)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
                     Text(L10n.t("lesson.lessons.folderCount", locale: .resolved(), vars: ["count": String(count)]))
                         .font(MicaboFont.ui(13, weight: .bold))
                         .foregroundStyle(MicaboColor.inkSecondary)

@@ -62,7 +62,7 @@ struct FlashcardImportSheet: View {
             guard case .success(let urls) = result, let url = urls.first else { return }
             readFile(url)
         }
-        .animation(.spring(duration: 0.35), value: step)
+        .animation(LearnMotion.standard, value: step)
     }
 
     private var topBar: some View {
@@ -240,7 +240,7 @@ struct FlashcardImportSheet: View {
                 }
                 .buttonStyle(MicaboSecondaryButtonStyle())
                 Button(L10n.t("ios.sup.cards.read", locale: .resolved())) { readPasted() }
-                    .buttonStyle(LessonPrimaryButtonStyle(enabled: pasted.nilIfBlank != nil))
+                    .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent, enabled: pasted.nilIfBlank != nil))
                     .disabled(pasted.nilIfBlank == nil)
             }
         }
@@ -320,7 +320,7 @@ struct FlashcardImportSheet: View {
             } label: {
                 Text(L10n.t("ios.sup.cards.create", locale: .resolved()))
             }
-            .buttonStyle(LessonPrimaryButtonStyle())
+            .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, 6)

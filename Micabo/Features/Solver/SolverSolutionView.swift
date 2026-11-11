@@ -582,12 +582,12 @@ struct SolverSolutionView: View {
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.top, 8)
                 .padding(.bottom, 24)
-                .animation(.spring(duration: 0.4), value: session.revealed)
-                .animation(.spring(duration: 0.4), value: session.phase)
+                .animation(LearnMotion.standard, value: session.revealed)
+                .animation(LearnMotion.standard, value: session.phase)
             }
             .scrollDismissesKeyboard(.interactively)
             .onChange(of: session.revealed) { _, _ in
-                withAnimation { proxy.scrollTo("end", anchor: .bottom) }
+                withAnimation(LearnMotion.standard) { proxy.scrollTo("end", anchor: .bottom) }
             }
         }
         .safeAreaInset(edge: .bottom) {
@@ -624,8 +624,8 @@ struct SolverSolutionView: View {
     private var actions: SolverSolutionActions {
         SolverSolutionActions(
             solve: { Task { await session.solve(isPro: isPro, service: aiService, context: context) } },
-            next: { withAnimation(.spring(duration: 0.4)) { session.revealNext() } },
-            revealAll: { withAnimation(.spring(duration: 0.4)) { session.revealAll() } },
+            next: { withAnimation(LearnMotion.standard) { session.revealNext() } },
+            revealAll: { withAnimation(LearnMotion.standard) { session.revealAll() } },
             help: { index in Task { await session.explain(step: index, isPro: isPro, service: aiService) } },
             editStatement: { editing = true },
             pickSubject: { session.setSubject($0) },

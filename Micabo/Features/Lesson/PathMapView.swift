@@ -54,7 +54,7 @@ struct PathMapView: View {
             if reduceMotion {
                 revealed = true
             } else {
-                withAnimation(.spring(duration: 0.55, bounce: 0.35).delay(0.08)) { revealed = true }
+                withAnimation(LearnMotion.gentle(delay: 0.08)) { revealed = true }
             }
         }
     }
@@ -75,7 +75,7 @@ struct PathMapView: View {
             shape
                 .trim(from: 0, to: revealed ? fraction : 0)
                 .stroke(tone.vivid, style: StrokeStyle(lineWidth: Self.trailWidth, lineCap: .round, lineJoin: .round))
-                .animation(.easeInOut(duration: reduceMotion ? 0 : 0.9), value: fraction)
+                .animation(LearnMotion.gentle, value: fraction)
         }
         .frame(width: layout.width, height: layout.height)
         .allowsHitTesting(false)
@@ -106,7 +106,7 @@ struct PathMapView: View {
             .modifier(Shake(amount: shaking == circle.id ? 1 : 0))
             .scaleEffect(revealed ? 1 : 0.4)
             .opacity(revealed ? 1 : 0)
-            .animation(.spring(duration: 0.5, bounce: 0.4).delay(Double(index) * 0.05), value: revealed)
+            .animation(LearnMotion.gentle(delay: Double(index) * 0.05), value: revealed)
             .position(x: center.x, y: y)
 
             PathStepTitle(circle: circle, state: state, readiness: readiness, tone: tone, alignLeading: titleOnRight) {
@@ -115,7 +115,7 @@ struct PathMapView: View {
             .frame(width: titleWidth, alignment: titleOnRight ? .leading : .trailing)
             .opacity(revealed ? 1 : 0)
             .offset(x: revealed ? 0 : (titleOnRight ? -12 : 12))
-            .animation(.easeOut(duration: 0.4).delay(Double(index) * 0.05 + 0.1), value: revealed)
+            .animation(LearnMotion.standard(delay: Double(index) * 0.05 + 0.1), value: revealed)
             .position(x: titleX, y: y)
         }
     }
@@ -125,7 +125,7 @@ struct PathMapView: View {
     private func tap(_ circle: PathCircle, state: PathCircle.State, readiness: LessonSession.Readiness) {
         if state == .upcoming {
             Haptics.warning()
-            withAnimation(.linear(duration: 0.4)) { shaking = circle.id }
+            withAnimation(LearnMotion.standard) { shaking = circle.id }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { shaking = nil }
             showBlocked()
             return
@@ -143,11 +143,11 @@ struct PathMapView: View {
 
     private func showBlocked() {
         let title = session.current?.title ?? ""
-        withAnimation(.spring(duration: 0.3)) {
+        withAnimation(LearnMotion.standard) {
             blocked = L10n.t("lesson.path.finishFirst", locale: .resolved(), vars: ["circle": title])
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            withAnimation(.easeOut(duration: 0.25)) { blocked = nil }
+            withAnimation(LearnMotion.quick) { blocked = nil }
         }
     }
 
@@ -315,12 +315,12 @@ struct PathNode: View {
         .onChange(of: state) { old, new in
             if new == .current { startBreathing() }
             guard old != new, new == .done || new == .current, !reduceMotion else { return }
-            withAnimation(.spring(duration: 0.28, bounce: 0.6)) { pop = true }
+            withAnimation(LearnMotion.celebrate) { pop = true }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.28) {
-                withAnimation(.spring(duration: 0.4, bounce: 0.3)) { pop = false }
+                withAnimation(LearnMotion.standard) { pop = false }
             }
         }
-        .animation(.spring(duration: 0.55, bounce: 0.3), value: state)
+        .animation(LearnMotion.celebrate, value: state)
     }
 
     // MARK: Le contenu
@@ -376,7 +376,7 @@ struct PathNode: View {
             .frame(width: ringDiameter, height: ringDiameter)
             .offset(y: Self.depth / 2)
             .opacity(ring > 0.001 ? 1 : 0)
-            .animation(.easeOut(duration: 0.6), value: ring)
+            .animation(LearnMotion.gentle, value: ring)
     }
 
     private var halo: some View {
@@ -384,14 +384,20 @@ struct PathNode: View {
             .fill(tone.vivid.opacity(0.18))
             .frame(width: ringDiameter + 18, height: ringDiameter + 18)
             .offset(y: Self.depth / 2)
-            .scaleEffect(breathe && !reduceMotion ? 1.08 : 0.94)
-            .opacity(breathe && !reduceMotion ? 0.0 : 0.9)
+            .scaleEffect(breathe && !reduceMotion ? 1.08 : 1)
+            .opacity(breathe && !reduceMotion ? 0.35 : 0.9)
     }
 
+    /// **Une respiration, une seule** : le halo de l'étape en cours s'ouvre et revient quand
+    /// elle arrive, puis reste immobile. Il battait en boucle, sans fin, sur un écran qu'on
+    /// lit : l'œil y retournait sans cesse.
     private func startBreathing() {
         guard state == .current, !reduceMotion else { return }
         breathe = false
-        withAnimation(.easeOut(duration: 1.8).repeatForever(autoreverses: false)) { breathe = true }
+        withAnimation(LearnMotion.gentle(delay: 0.3)) { breathe = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            withAnimation(LearnMotion.gentle) { breathe = false }
+        }
     }
 
     // MARK: Les couleurs
@@ -424,7 +430,7 @@ private struct PathNodeButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .offset(y: configuration.isPressed ? 4 : 0)
-            .animation(.spring(duration: 0.18, bounce: 0.2), value: configuration.isPressed)
+            .animation(LearnMotion.quick, value: configuration.isPressed)
     }
 }
 
@@ -456,8 +462,13 @@ struct StartBubble: View {
         .micaboElevation(.row)
         .offset(y: float && !reduceMotion ? -4 : 0)
         .onAppear {
+            // Un saut à l'arrivée pour attirer l'œil, puis la bulle se pose : elle ne flotte
+            // plus en boucle au-dessus de l'étape.
             guard !reduceMotion else { return }
-            withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) { float = true }
+            withAnimation(LearnMotion.standard(delay: 0.4)) { float = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                withAnimation(LearnMotion.gentle) { float = false }
+            }
         }
     }
 }
@@ -516,7 +527,7 @@ struct PathStepTitle: View {
                     .foregroundStyle(MicaboColor.inkTertiary)
             }
         }
-        .animation(.easeOut(duration: 0.3), value: state)
+        .animation(LearnMotion.standard, value: state)
     }
 }
 

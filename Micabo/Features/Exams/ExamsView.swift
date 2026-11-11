@@ -96,7 +96,7 @@ struct ExamsView: View {
         }
         .onAppear {
             reloadHistory()
-            withAnimation(.spring(duration: 0.6)) { shown = true }
+            shown = true
         }
     }
 
@@ -209,8 +209,6 @@ struct ExamHero: View {
     let onMock: () -> Void
     let onEdit: () -> Void
 
-    @State private var pulse = false
-
     /// Au-delà, les leçons de l'examen se résument en « +N » : la carte reste une carte.
     static let shownLessons = 4
 
@@ -251,7 +249,6 @@ struct ExamHero: View {
                     .font(MicaboFont.number(days == 0 ? 44 : 64))
                     .foregroundStyle(MicaboColor.onInk)
                     .contentTransition(.numericText())
-                    .scaleEffect(pulse ? 1.04 : 1, anchor: .leading)
                 if days > 0 {
                     Text(L10n.t(days == 1 ? "lesson.exam.dayLeft" : "lesson.exam.daysLeft", locale: .resolved()))
                         .font(MicaboFont.ui(17, weight: .bold))
@@ -328,9 +325,6 @@ struct ExamHero: View {
                 .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
         }
         .shadow(color: MicaboColor.accent.opacity(0.3), radius: 20, x: 0, y: 12)
-        .onAppear {
-            withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) { pulse = true }
-        }
     }
 }
 
@@ -354,7 +348,8 @@ struct ExamRow: View {
                     Text(exam.name)
                         .font(MicaboFont.ui(17, weight: .heavy))
                         .foregroundStyle(MicaboColor.ink)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
                     Text("\(MicaboCalendar.shortDayLabel(exam.date)) · \(L10n.t("lesson.exam.lessonCount", locale: .resolved(), vars: ["count": "\(lessonCount)"]))")
                         .font(MicaboFont.ui(14, weight: .medium))
                         .foregroundStyle(MicaboColor.inkSecondary)
@@ -376,11 +371,13 @@ struct ExamRow: View {
 /// Un examen blanc rendu : la note dans le barème du pays, le titre, le jour.
 struct MockResultRow: View {
     let result: ExamPaperResult
+    /// Le pays dont le barème note la copie : celui de l'élève.
+    var country: SchoolingCountry = OnboardingPreferences.schoolingCountry
 
     var body: some View {
         let passes = ExamGrade.passes(result.fraction)
         HStack(spacing: 14) {
-            Text(ExamGrade.label(result.fraction, country: OnboardingPreferences.schoolingCountry))
+            Text(ExamGrade.label(result.fraction, country: country))
                 .font(MicaboFont.number(16))
                 .foregroundStyle(passes ? MicaboColor.correctInk : MicaboColor.wrongInk)
                 .lineLimit(1)
@@ -391,10 +388,13 @@ struct MockResultRow: View {
                 Text(result.title)
                     .font(MicaboFont.ui(16, weight: .heavy))
                     .foregroundStyle(MicaboColor.ink)
-                    .lineLimit(1)
-                Text("\(MicaboCalendar.shortDayLabel(result.date)) · \(result.correct)/\(result.total) · \(L10n.t("lesson.finished.minutes", locale: .resolved(), vars: ["n": "\(result.minutes)"]))")
+                    .lineLimit(2)
+                // Les bonnes réponses portent une coche : « 14/20 » seul se lisait comme une
+                // note sur 20, à côté d'une note qui, à Berlin ou à Boston, n'est pas sur 20.
+                Text("\(MicaboCalendar.shortDayLabel(result.date)) · \(Image(systemName: "checkmark")) \(result.correct)/\(result.total) · \(L10n.t("lesson.finished.minutes", locale: .resolved(), vars: ["n": "\(result.minutes)"]))")
                     .font(MicaboFont.ui(13.5, weight: .medium))
                     .foregroundStyle(MicaboColor.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
         }
@@ -445,7 +445,8 @@ struct ExamEditSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     field(L10n.t("lesson.exam.name", locale: .resolved())) {
-                        TextField(L10n.t("lesson.exam.namePlaceholder", locale: .resolved()), text: $name)
+                        // L'exemple suit le système scolaire de l'élève : « Abitur » à Berlin, pas « Bac ».
+                        TextField(ExamNaming.placeholder(), text: $name)
                             .font(MicaboFont.ui(18, weight: .semibold))
                             .padding(16)
                             .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -612,6 +613,6 @@ extension View {
     func slideIn(_ shown: Bool, delay: Double) -> some View {
         opacity(shown ? 1 : 0)
             .offset(y: shown ? 0 : 18)
-            .animation(.spring(duration: 0.55).delay(delay), value: shown)
+            .animation(LearnMotion.gentle(delay: delay), value: shown)
     }
 }
