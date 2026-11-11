@@ -353,6 +353,7 @@ final class LessonBuilderTests: XCTestCase {
         }
         try context.save()
         XCTAssertFalse(course.isLesson)
+        let toneBefore = course.tone
 
         try await builder(FakeLessonService()).convert(course, in: context)
 
@@ -364,7 +365,7 @@ final class LessonBuilderTests: XCTestCase {
         XCTAssertEqual(course.orderedChapters.first?.quiz?.questions.count, 1)
         XCTAssertEqual(course.cards.count, 5, "une flashcard ajoutée à chacun des deux chapitres sans cartes")
         XCTAssertEqual(course.lessonPath?.status, .ready)
-        XCTAssertEqual(course.tone, LessonTone.stable(for: course.id))
+        XCTAssertEqual(course.tone, toneBefore, "la conversion ne change pas la couleur de la leçon")
     }
 
     /// Un paquet de cartes sans fiche devient une leçon d'un seul thème, qui garde ses cartes.
