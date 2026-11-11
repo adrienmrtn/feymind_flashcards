@@ -57,9 +57,12 @@ struct BuildingStepView: View {
         return 1
     }
 
-    /// Quatre étapes, aux quarts de l'avancement.
+    /// **Trois étapes, aux tiers de l'avancement** : le profil, les réponses, le niveau. La
+    /// quatrième, « construction de ton plan », est partie au lot 7 : c'est le chargement
+    /// d'avant la révélation qui construit le plan (`PlanBuildingStepView`) ; ici, il était
+    /// annoncé une première fois, dix écrans trop tôt.
     private var stepLabel: String {
-        let index = min(3, Int(progress * 4))
+        let index = min(2, Int(progress * 3))
         return i18n.t("ios.mika.step\(index + 1)")
     }
 

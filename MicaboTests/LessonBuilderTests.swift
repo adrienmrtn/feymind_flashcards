@@ -332,7 +332,9 @@ final class LessonBuilderTests: XCTestCase {
         let first = try await builder.create(LessonCreation(topic: "a", source: .topic), in: context)
         try await Task.sleep(nanoseconds: 5_000_000)
         let second = try await builder.create(LessonCreation(topic: "b", source: .topic), in: context)
-        XCTAssertNotEqual(first.tone, second.tone)
+        // Le ton enregistré tourne toujours ; celui qu'on voit suit la matière quand elle est
+        // reconnue (lot 7), et deux leçons de la même matière se ressemblent alors exprès.
+        XCTAssertNotEqual(first.toneRaw, second.toneRaw)
     }
 
     /// Un ancien cours devient une leçon sans perdre ses notes ni ses cartes.

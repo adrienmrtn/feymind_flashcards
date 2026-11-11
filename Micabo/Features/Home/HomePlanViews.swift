@@ -490,7 +490,9 @@ struct HomeLessonsSection: View {
         VStack(alignment: .leading, spacing: 10) {
             ZStack {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(LinearGradient(colors: [lesson.tone.vivid.opacity(0.95), lesson.tone.vivid.opacity(0.65)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    // Le lavis pâle du ton, comme la tuile de la liste des leçons : un aplat vif
+                    // en dégradé criait à côté des autres cartes (lot 7).
+                    .fill(lesson.tone.pale)
                 MicaboIconView(icon: lesson.icon, size: 28)
             }
             .frame(width: 46, height: 46)
