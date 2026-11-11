@@ -45,9 +45,9 @@ struct SolverFlowView: View {
     private func destination(_ route: SolverRoute) -> some View {
         switch route {
         case .solution(let id):
-            if let session = session(for: id) {
+            if let solverSession = session(for: id) {
                 SolverSolutionView(
-                    session: session,
+                    session: solverSession,
                     onBack: { pop() },
                     onAskMika: { subject in path.append(.thread(subject)) }
                 )
