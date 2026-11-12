@@ -439,6 +439,21 @@ final class PaywallTests: XCTestCase {
         }
     }
 
+    /// **Quatre serrages, du plus aéré au plus serré.** Le dernier retire un élément — un
+    /// bénéfice, et la ligne des deux autres — plutôt que de faire défiler ; les trois
+    /// premiers gardent tout.
+    func testTheLastDensityDropsABenefitAndNothingElse() {
+        XCTAssertEqual(PaywallDensity.allCases, [.regular, .compact, .tight, .minimal])
+        for density in PaywallDensity.allCases where density != .minimal {
+            XCTAssertEqual(density.benefitCount, 3)
+            XCTAssertTrue(density.showsBenefitDetail)
+        }
+        XCTAssertEqual(PaywallDensity.minimal.benefitCount, 2)
+        XCTAssertFalse(PaywallDensity.minimal.showsBenefitDetail)
+        XCTAssertGreaterThan(PaywallDensity.regular.planHeight, PaywallDensity.minimal.planHeight)
+        XCTAssertGreaterThan(PaywallDensity.regular.titleSize, PaywallDensity.compact.titleSize)
+    }
+
     /// Chaque phrase du lot existe dans les six langues écrites, sans variable perdue.
     func testTheCopyExistsInTheWrittenLanguages() {
         let keys = IosI18nCatalogs.fr.keys.filter { $0.hasPrefix("ios.pay10.") }

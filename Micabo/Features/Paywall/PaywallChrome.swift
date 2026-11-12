@@ -73,6 +73,9 @@ enum PaywallStyle {
     /// L'icône d'une rangée, et la colonne qui la porte.
     static let glyph: CGFloat = V3Metric.optionIcon
     static let glyphColumn: CGFloat = 34
+    /// Les mêmes, à côté d'un titre seul (`PaywallDensity.minimal`).
+    static let glyphSmall: CGFloat = 22
+    static let glyphColumnSmall: CGFloat = 28
     /// Une offre : sa hauteur (une ligne de réponse, plus la place de sa deuxième ligne), son
     /// rayon, l'espace entre deux.
     static let planHeight: CGFloat = V3Metric.optionHeight + 8
@@ -281,6 +284,8 @@ struct PaywallGlyph: View {
     var symbol: String
     var tone: Color
     var size: CGFloat = PaywallStyle.glyph
+    /// Le côté de la colonne qui porte l'icône.
+    var column: CGFloat = PaywallStyle.glyphColumn
 
     var body: some View {
         ZStack {
@@ -290,7 +295,7 @@ struct PaywallGlyph: View {
                 .foregroundStyle(tone)
         }
         .font(.system(size: size, weight: .semibold))
-        .frame(width: PaywallStyle.glyphColumn, height: PaywallStyle.glyphColumn)
+        .frame(width: column, height: column)
         .accessibilityHidden(true)
     }
 }
@@ -307,10 +312,13 @@ struct PaywallInfoRow: View {
     var detail: String?
     /// La police de la ligne : une légende quand l'écran est serré.
     var detailFont: Font = PaywallStyle.rowDetail
+    /// L'icône et sa colonne : plus petites à côté d'un titre seul.
+    var glyph: CGFloat = PaywallStyle.glyph
+    var glyphColumn: CGFloat = PaywallStyle.glyphColumn
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
-            PaywallGlyph(symbol: symbol, tone: tone)
+            PaywallGlyph(symbol: symbol, tone: tone, size: glyph, column: glyphColumn)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
                     .font(PaywallStyle.rowTitle)
