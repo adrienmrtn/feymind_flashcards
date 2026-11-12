@@ -123,10 +123,10 @@ final class ChatRenderTests: XCTestCase {
 
     private func history(_ copy: Copy, empty: Bool = false) -> some View {
         let now = Date()
-        let origins: [ChatOrigin] = [.camera, .camera, .lesson, .home]
+        let origins: [ChatOrigin] = [.camera, .camera, .home, .scan]
         let offsets: [TimeInterval] = [-600, -3_600, -86_400, -4 * 86_400]
         let rows = empty ? [] : (0..<4).map { index in
-            ChatHistoryRow(title: copy.titles[index], preview: copy.previews[index], date: now.addingTimeInterval(offsets[index]), origin: origins[index], courseTitle: index == 2 ? copy.lesson : nil)
+            ChatHistoryRow(title: copy.titles[index], preview: copy.previews[index], date: now.addingTimeInterval(offsets[index]), origin: origins[index], courseTitle: index == 0 ? copy.lesson : nil)
         }
         return ChatHistoryContent(rows: rows, totalCount: rows.count, query: .constant(""), onOpen: { _ in }, still: true)
             .environment(\.mikaStill, true)

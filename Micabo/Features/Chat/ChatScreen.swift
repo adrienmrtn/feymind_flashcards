@@ -212,12 +212,14 @@ struct ChatConversationView: View {
         VStack(spacing: 0) {
             ChatTopBar(title: session.title, subtitle: session.courseTitle, isEmpty: session.isEmpty, actions: actions)
             if still {
-                VStack(spacing: 0) {
-                    Spacer(minLength: 0)
-                    thread
-                }
-                .frame(maxHeight: .infinity)
-                .clipped()
+                // Le fil posé en bas, coupé en haut comme un fil qui a défilé : il ne pousse
+                // ni la barre du haut ni la barre de saisie hors de l'écran.
+                Color.clear
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .overlay(alignment: .bottom) {
+                        thread.fixedSize(horizontal: false, vertical: true)
+                    }
+                    .clipped()
             } else {
                 ScrollViewReader { proxy in
                     ScrollView {
@@ -434,7 +436,7 @@ struct ChatBubbleView: View {
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
                         .background(
-                            V3Color.soft,
+                            V3Color.accentWash,
                             in: UnevenRoundedRectangle(
                                 topLeadingRadius: V3Metric.radiusBubble,
                                 bottomLeadingRadius: V3Metric.radiusBubble,

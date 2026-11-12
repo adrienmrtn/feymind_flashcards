@@ -103,7 +103,11 @@ struct ChatCameraChrome<Preview: View>: View {
 
     var body: some View {
         ZStack {
-            preview()
+            // La visée remplit l'écran sans en dicter la taille : les commandes restent dans
+            // les marges, quelle que soit la photo.
+            Color.black
+                .overlay { preview() }
+                .clipped()
                 .ignoresSafeArea()
             if !available {
                 VStack(spacing: 12) {
