@@ -14,6 +14,7 @@ enum L10n {
     /// langue tombe sur la langue que le plus de monde lit. Le français, langue d'écriture du
     /// projet, ne reste que le dernier recours.
     static func t(_ key: String, locale: UiLocale, vars: [String: String] = [:]) -> String {
+        PerfProbe.hit("l10n")
         // Les phrases de la refonte d'abord : leurs clés commencent toutes par `lesson.`.
         if key.hasPrefix("lesson.") {
             let lesson = LessonI18nCatalogs.table(for: locale.rawValue)[key]
