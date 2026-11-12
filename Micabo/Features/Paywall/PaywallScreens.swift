@@ -498,8 +498,7 @@ enum PaywallDensity: CaseIterable {
     var titleSize: CGFloat {
         switch self {
         case .regular: PaywallStyle.titleSize
-        case .compact: PaywallStyle.titleMediumSize
-        case .tight, .minimal, .bare: PaywallStyle.titleCompactSize
+        case .compact, .tight, .minimal, .bare: PaywallStyle.titleCompactSize
         }
     }
 
@@ -525,7 +524,7 @@ enum PaywallDensity: CaseIterable {
     var sectionSpacing: CGFloat {
         switch self {
         case .regular: 20
-        case .compact: 16
+        case .compact: 12
         case .tight: 12
         case .minimal, .bare: 10
         }
@@ -551,7 +550,7 @@ enum PaywallDensity: CaseIterable {
 
     /// Une ligne du tableau.
     var tableRowHeight: CGFloat {
-        isTight ? PaywallStyle.tableRowTight : PaywallStyle.tableRow
+        self == .regular ? PaywallStyle.tableRow : PaywallStyle.tableRowTight
     }
 
     /// La formule recommandée, et l'autre, plus basse.
