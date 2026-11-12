@@ -361,6 +361,24 @@ final class PerfBenchTests: XCTestCase {
         try part("concentration-journee") {
             FocusHeroCard(minutesToday: 25, goalMinutes: 30, streak: 12, streakLit: true, onStart: {})
         }
+
+        // Ce que tous les écrans partagent : Mika, et vingt lignes de texte dans la police de
+        // l'app, à côté des mêmes vingt lignes dans la police du système (le témoin).
+        try part("mika-120") { MikaMascot(mood: .idle, size: 120) }
+        try part("vingt-lignes-police-app") {
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(0..<20, id: \.self) { row in
+                    Text("Ligne \(row) du banc d'essai").font(MicaboFont.ui(17, weight: .bold))
+                }
+            }
+        }
+        try part("vingt-lignes-police-systeme") {
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(0..<20, id: \.self) { row in
+                    Text("Ligne \(row) du banc d'essai").font(.system(size: 17, weight: .bold))
+                }
+            }
+        }
         let chapter = try firstLesson().orderedChapters[0]
         PerfReport.record("micro", "NotesPage.pages", [("us", PerfReport.micro(50) { _ = NotesPage.pages(for: chapter, hasQuestion: true) })])
         let context = fixture.context
