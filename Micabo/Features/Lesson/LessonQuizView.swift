@@ -30,6 +30,8 @@ struct LessonQuizView: View {
     @State private var finished = false
     /// La graine du mélange des propositions : neuve à chaque ouverture.
     @State private var seed = UInt64.random(in: 1...UInt64.max)
+    /// « Demander à Mika » sur la question en cours (lot 11).
+    @State private var askLaunch: ChatLaunch?
 
     init(
         session: LessonSession,
@@ -102,13 +104,20 @@ struct LessonQuizView: View {
         }
         .overlay(alignment: .bottom) {
             if let answer, !finished, questions.indices.contains(index) {
-                AnswerPanel(question: questions[index], right: answer.right, isLast: index + 1 == questions.count, action: next)
+                AnswerPanel(question: questions[index], right: answer.right, isLast: index + 1 == questions.count, action: next, onAsk: { ask(questions[index]) })
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
         .animation(LearnMotion.standard, value: answer)
         .background(MicaboColor.canvas.ignoresSafeArea())
         .lessonClock(session, activity: circleID == nil ? .quiz : nil)
+        .sheet(item: $askLaunch) { launch in
+            ChatScreen(launch: launch)
+        }
+    }
+
+    private func ask(_ question: QuizQuestion) {
+        askLaunch = .lesson(session.course.id, origin: .quiz, prefill: L10n.t("ios.chat11.ask.quiz", locale: .resolved(), vars: ["question": question.prompt]))
     }
 
     private func record(_ result: QuizAnswer) {
@@ -175,6 +184,8 @@ struct AnswerPanel: View {
     let right: Bool
     let isLast: Bool
     let action: () -> Void
+    /// « Demander à Mika » (lot 11) : la question part dans une conversation liée à la leçon.
+    var onAsk: (() -> Void)? = nil
 
     @State private var mikaShown = false
     @Environment(\.mikaStill) private var mikaStill
@@ -208,6 +219,9 @@ struct AnswerPanel: View {
                     .font(MicaboFont.ui(16, weight: .medium))
                     .foregroundStyle(MicaboColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
+            }
+            if let onAsk {
+                ChatAskButton(action: onAsk)
             }
             Button(isLast
                 ? L10n.t("lesson.quiz.seeScore", locale: .resolved())
@@ -378,6 +392,8 @@ struct LessonCardsRun: View {
     @State private var finished = false
     /// Les cartes notées « Encore » : elles reviennent dans la séance de demain.
     @State private var again = 0
+    /// « Demander à Mika » sur la carte retournée (lot 11).
+    @State private var askLaunch: ChatLaunch?
 
     init(session: LessonSession, cards: [Flashcard], onClose: @escaping () -> Void, onDone: (() -> Void)? = nil) {
         self.session = session
@@ -422,11 +438,19 @@ struct LessonCardsRun: View {
         }
         .background(MicaboColor.canvas.ignoresSafeArea())
         .lessonClock(session, activity: onDone == nil ? .flashcards : nil)
+        .sheet(item: $askLaunch) { launch in
+            ChatScreen(launch: launch)
+        }
     }
 
     @ViewBuilder
     private var controls: some View {
         if flipped {
+            ChatAskButton {
+                let card = cards[index]
+                askLaunch = .lesson(session.course.id, origin: .card, prefill: L10n.t("ios.chat11.ask.card", locale: .resolved(), vars: ["question": card.front, "answer": card.back]))
+            }
+            .frame(maxWidth: .infinity)
             HStack(spacing: 10) {
                 rating(.again, title: L10n.t("lesson.cards.again", locale: .resolved()), ink: MicaboColor.wrongInk, fill: MicaboColor.wrongSoft)
                 rating(.good, title: L10n.t("lesson.cards.good", locale: .resolved()), ink: MicaboColor.accentInk, fill: MicaboColor.accentSoft)

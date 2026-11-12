@@ -67,6 +67,11 @@ struct LessonPathView: View {
     /// Le mode demandé derrière le paywall : il s'ouvre tout seul une fois l'abonnement pris.
     @State private var pendingRevision: RevisionMode?
     @Environment(ProAccess.self) private var pro: ProAccess?
+    /// Une séance de Concentration sur cette leçon (lot 11) : préparée, puis lancée une fois
+    /// la feuille refermée.
+    @State private var focusSetup: FocusPlan?
+    @State private var pendingFocus: FocusPlan?
+    @State private var focusRun: FocusPlan?
 
     init(course: Course) {
         self.course = course
@@ -76,6 +81,7 @@ struct LessonPathView: View {
     var body: some View {
         VStack(spacing: 0) {
             topBar
+                .modifier(FocusLauncher(setup: $focusSetup, pending: $pendingFocus, running: $focusRun, lessons: [course]))
             if course.isLesson {
                 path
             } else {
@@ -196,7 +202,7 @@ struct LessonPathView: View {
                     .toolIntro(.notes)
                     .presentationDragIndicator(.visible)
             case .mika:
-                LessonMikaView(course: course)
+                ChatScreen(launch: .lesson(course.id))
                     .toolIntro(.mika)
                     .presentationDragIndicator(.visible)
             }
@@ -284,6 +290,15 @@ struct LessonPathView: View {
         V3TopBar(progress: nil, onBack: { dismiss() }) {
             if course.isLesson {
                 Menu {
+                    Button {
+                        focusSetup = FocusPlan(
+                            workMinutes: FocusPlan.defaultMinutes(dailyMinutes: OnboardingPreferences.dailyMinutes),
+                            courseID: course.id,
+                            courseTitle: course.title
+                        )
+                    } label: {
+                        Label(L10n.t("ios.chat11.focus.fromLesson", locale: .resolved()), systemImage: "timer")
+                    }
                     Button {
                         newTitle = course.title
                         renaming = true
