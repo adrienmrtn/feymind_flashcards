@@ -52,6 +52,13 @@ struct HomeView: View {
     @State private var showsScanner = false
     /// « Corriger un texte », en plein écran comme le scanner.
     @State private var showsWriting = false
+    /// Le chat Mika (lot 11) : la barre y envoie une question, son appareil photo y ouvre la
+    /// prise en rafale ; la puce « Mes questions » ouvre l'historique.
+    @State private var chatLaunch: ChatLaunch?
+    @State private var showsChats = false
+    @State private var hasChats = false
+    /// « En faire une leçon », demandé depuis le chat : lancé une fois le chat refermé.
+    @State private var lessonTopicFromChat: String?
     @State private var showsDueReview = false
     @State private var quickQuizCourse: Course?
     @State private var mock: MockExamStart?
@@ -157,7 +164,8 @@ struct HomeView: View {
                 shortcuts: HomeShortcut.available(
                     isNewcomer: !day.hasCourses,
                     hasLesson: snapshot.resumeID != nil,
-                    dueCount: day.dueCount
+                    dueCount: day.dueCount,
+                    hasChats: hasChats
                 ),
                 dueCount: day.dueCount,
                 isBusy: generation.isBusy || locked != nil,
@@ -249,6 +257,18 @@ struct HomeView: View {
                 ScanExerciseView()
                     .toolIntro(.scan)
             }
+            .fullScreenCover(item: $chatLaunch, onDismiss: afterChat) { launch in
+                ChatScreen(launch: launch, onMakeLesson: { topic in
+                    lessonTopicFromChat = topic
+                    chatLaunch = nil
+                })
+            }
+            .fullScreenCover(isPresented: $showsChats, onDismiss: afterChat) {
+                ChatHub(onMakeLesson: { topic in
+                    lessonTopicFromChat = topic
+                    showsChats = false
+                })
+            }
             .fullScreenCover(isPresented: $showsWriting) {
                 WritingCoachView()
             }
@@ -327,6 +347,40 @@ struct HomeView: View {
         refreshPlan()
         Haptics.prepare()
         consumeFirstLessonIntent()
+        // Les conversations d'avant le lot 11 rejoignent l'historique, une fois.
+        ChatMigration.runIfNeeded(in: modelContext)
+        refreshChats()
+    }
+
+    private func refreshChats() {
+        let any = ChatStore.hasAny(in: modelContext)
+        if any != hasChats { hasChats = any }
+    }
+
+    // MARK: Le chat
+
+    /// Une question tapée dans la barre : elle part dans une conversation avec Mika.
+    private func ask(_ question: String) {
+        dismissKeyboard()
+        chatLaunch = ChatLaunch(origin: .home, autoSend: question)
+        composer.draft = ""
+    }
+
+    /// L'appareil photo de la barre : une conversation, la prise en rafale ouverte.
+    private func openChatCamera() {
+        dismissKeyboard()
+        chatLaunch = ChatLaunch(origin: .camera, opensCamera: true)
+    }
+
+    /// Le chat est refermé : la puce des conversations apparaît, et « En faire une leçon »
+    /// lance la création de leçon que la barre connaît, sur le sujet de la conversation.
+    private func afterChat() {
+        refreshChats()
+        guard let topic = lessonTopicFromChat else { return }
+        lessonTopicFromChat = nil
+        guard !generation.isBusy else { return }
+        composer.draft = topic
+        createLesson()
     }
 
     /// **La première leçon choisie pendant le parcours d'accueil** (`FirstLessonIntent`), lue
@@ -372,7 +426,7 @@ struct HomeView: View {
             leave: leave,
             shortcut: open,
             sources: openSources,
-            scan: { open(.scan) },
+            scan: openChatCamera,
             send: send,
             dismissKeyboard: dismissKeyboard
         )
@@ -443,6 +497,8 @@ struct HomeView: View {
             mock = MockExamStart(exam: exams.first { $0.id == snapshot.examID })
         case .photo, .pdf, .youtube:
             if let kind = shortcut.source { tapImport(kind) }
+        case .chats:
+            showsChats = true
         }
     }
 
@@ -499,9 +555,21 @@ struct HomeView: View {
 
     // MARK: Écrire une leçon
 
-    /// Envoyer ce que la barre a préparé : le paywall d'un sujet seul s'ouvre tout de suite
-    /// (`LessonAllowance.immediatePaywall`) ; sinon les deux questions, puis l'écriture.
+    /// **Envoyer ce que la barre a préparé** (lot 11) : une question tapée seule part dans une
+    /// conversation avec Mika ; des supports déposés (un PDF, des photos, une vidéo) font une
+    /// leçon, comme avant.
     private func send() {
+        let question = composer.draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        if composer.supports.isEmpty, !question.isEmpty {
+            ask(question)
+            return
+        }
+        createLesson()
+    }
+
+    /// Une leçon depuis la barre : le paywall d'un sujet seul s'ouvre tout de suite
+    /// (`LessonAllowance.immediatePaywall`) ; sinon les deux questions, puis l'écriture.
+    private func createLesson() {
         guard composer.canSend, !generation.isBusy else { return }
         dismissKeyboard()
         if let trigger = LessonAllowance.immediatePaywall(isPro: isPro, source: composer.source, courses: courses) {

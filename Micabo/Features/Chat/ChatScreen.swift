@@ -23,6 +23,13 @@ struct ChatScreen: View {
     /// Le symbole du bouton de sortie : la croix d'une feuille, la flèche d'une pile.
     var closeSymbol = "xmark"
 
+    init(launch: ChatLaunch, onMakeLesson: ((String) -> Void)? = nil, onClose: (() -> Void)? = nil, closeSymbol: String = "xmark") {
+        self.launch = launch
+        self.onMakeLesson = onMakeLesson
+        self.onClose = onClose
+        self.closeSymbol = closeSymbol
+    }
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.aiService) private var aiService
@@ -841,5 +848,25 @@ struct ChatLessonPicker: View {
             .navigationTitle(L10n.t("ios.chat11.card.pick", locale: .resolved()))
             .navigationBarTitleDisplayMode(.inline)
         }
+    }
+}
+
+// MARK: - « Demander à Mika »
+
+/// Le petit bouton « Demander à Mika » d'une carte ou d'une question de quiz : il ouvre une
+/// conversation liée à la leçon, la question déjà posée dans le champ.
+struct ChatAskButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label(L10n.t("ios.chat11.ask.action", locale: .resolved()), systemImage: "bubble.left.and.text.bubble.right.fill")
+                .font(V3Font.label)
+                .foregroundStyle(V3Color.accentBright)
+                .padding(.horizontal, 14)
+                .frame(minHeight: 40)
+                .background(V3Color.accentWash, in: Capsule())
+        }
+        .buttonStyle(MicaboPressableButtonStyle(feedback: .light))
     }
 }

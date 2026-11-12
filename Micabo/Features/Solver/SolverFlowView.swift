@@ -12,6 +12,8 @@ enum SolverRoute: Hashable {
     case history
     case tutor
     case thread(SolverSubject)
+    /// Le chat Mika (lot 11) : une conversation de l'historique, ou celle d'un exercice.
+    case chat(ChatLaunch)
 }
 
 /// **Le scanner d'exercices** (`docs/refonte-knowunity.md` § 4), ouvert depuis la tuile
@@ -49,16 +51,24 @@ struct SolverFlowView: View {
                 SolverSolutionView(
                     session: solverSession,
                     onBack: { pop() },
-                    onAskMika: { subject in path.append(.thread(subject)) }
+                    onAskMika: { _ in path.append(.chat(ChatLaunch(origin: .scan, exerciseID: id))) }
                 )
                 .enablesSwipeBack()
             }
         case .history:
             SolverHistoryView(onBack: { pop() }, onOpen: open)
         case .tutor:
-            TutorHomeView(onBack: { pop() }, onOpen: { subject in path.append(.thread(subject)) })
+            // « Demande à Mika » : l'historique des conversations, où les exercices arrivent.
+            ChatHistoryView(
+                onOpen: { threadID in path.append(.chat(ChatLaunch(origin: .scan, threadID: threadID))) },
+                onNew: { path.append(.chat(ChatLaunch(origin: .home))) },
+                onClose: { pop() }
+            )
         case .thread(let subject):
             TutorThreadView(subject: subject, onBack: { pop() }, onOpenExercise: open)
+        case .chat(let launch):
+            ChatScreen(launch: launch, onClose: { pop() }, closeSymbol: "chevron.backward")
+                .enablesSwipeBack()
         }
     }
 

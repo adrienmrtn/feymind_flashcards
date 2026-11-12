@@ -387,6 +387,8 @@ enum HomeShortcut: String, Equatable, CaseIterable, Identifiable {
     case photo
     case pdf
     case youtube
+    /// Les conversations avec Mika (lot 11) : l'historique, en un geste.
+    case chats
 
     var id: String { rawValue }
 
@@ -395,11 +397,12 @@ enum HomeShortcut: String, Equatable, CaseIterable, Identifiable {
 
     /// Ce que la Home propose, dans l'ordre. Le quiz demande une leçon ouverte, les cartes des
     /// cartes dues.
-    static func available(isNewcomer: Bool, hasLesson: Bool, dueCount: Int) -> [HomeShortcut] {
+    static func available(isNewcomer: Bool, hasLesson: Bool, dueCount: Int, hasChats: Bool = false) -> [HomeShortcut] {
         if isNewcomer {
-            return [.photo, .pdf, .youtube, .focus, .scan]
+            return hasChats ? [.photo, .pdf, .youtube, .chats, .focus, .scan] : [.photo, .pdf, .youtube, .focus, .scan]
         }
-        var shortcuts: [HomeShortcut] = [.focus, .scan]
+        // Les conversations avec Mika juste après Focus, dès qu'il y en a une.
+        var shortcuts: [HomeShortcut] = hasChats ? [.focus, .chats, .scan] : [.focus, .scan]
         if hasLesson { shortcuts.append(.quiz) }
         if dueCount > 0 { shortcuts.append(.cards) }
         shortcuts.append(contentsOf: [.importSource, .writing, .mock])
@@ -419,6 +422,7 @@ enum HomeShortcut: String, Equatable, CaseIterable, Identifiable {
         case .photo: L10n.t("ios.home10.tool.photo", locale: locale)
         case .pdf: L10n.t("ios.home10.tool.pdf", locale: locale)
         case .youtube: "YouTube"
+        case .chats: L10n.t("ios.chat11.home.chip", locale: locale)
         }
     }
 

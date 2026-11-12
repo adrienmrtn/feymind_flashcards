@@ -32,6 +32,13 @@ struct ChatHistoryView: View {
     var onNew: () -> Void = {}
     var onClose: (() -> Void)?
 
+    init(currentID: UUID? = nil, onOpen: @escaping (UUID) -> Void, onNew: @escaping () -> Void = {}, onClose: (() -> Void)? = nil) {
+        self.currentID = currentID
+        self.onOpen = onOpen
+        self.onNew = onNew
+        self.onClose = onClose
+    }
+
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \ChatThread.updatedAt, order: .reverse) private var threads: [ChatThread]
@@ -316,6 +323,10 @@ struct ChatHub: View {
     var onMakeLesson: ((String) -> Void)?
     @Environment(\.dismiss) private var dismiss
     @State private var path: [ChatLaunch] = []
+
+    init(onMakeLesson: ((String) -> Void)? = nil) {
+        self.onMakeLesson = onMakeLesson
+    }
 
     var body: some View {
         NavigationStack(path: $path) {

@@ -12,6 +12,11 @@ struct ChatCameraView: View {
     let room: Int
     let onDone: ([UIImage]) -> Void
 
+    init(room: Int, onDone: @escaping ([UIImage]) -> Void) {
+        self.room = room
+        self.onDone = onDone
+    }
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
     @State private var camera = SolverCamera()

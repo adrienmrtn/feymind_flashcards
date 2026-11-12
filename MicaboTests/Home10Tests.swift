@@ -263,7 +263,7 @@ final class Home10Tests: XCTestCase {
     func testShortcutAnalyticsNamesAreFixed() {
         XCTAssertEqual(
             HomeShortcut.allCases.map(\.analyticsName),
-            ["focus", "scan", "quiz", "cards", "import", "writing", "mock", "photo", "pdf", "youtube"]
+            ["focus", "scan", "quiz", "cards", "import", "writing", "mock", "photo", "pdf", "youtube", "chats"]
         )
         XCTAssertEqual(Set(HomeAction.Kind.allCases.map { HomeAction(kind: $0, title: "", symbol: "").analyticsStep }).count, HomeAction.Kind.allCases.count - 1,
                        "« créer » et « première leçon » partagent le nom historique `create`")

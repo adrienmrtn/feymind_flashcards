@@ -22,7 +22,7 @@ extension HomeShortcut {
         case .writing: .quill
         case .mock: .diploma
         case .pdf: .pdf
-        case .focus, .importSource, .youtube: nil
+        case .focus, .importSource, .youtube, .chats: nil
         }
     }
 
@@ -32,6 +32,7 @@ extension HomeShortcut {
         case .focus: "timer"
         case .importSource: "square.and.arrow.down.fill"
         case .youtube: "play.rectangle.fill"
+        case .chats: "bubble.left.and.text.bubble.right.fill"
         default: icon?.symbol ?? "square.grid.2x2.fill"
         }
     }
@@ -43,6 +44,7 @@ extension HomeShortcut {
         case .focus: V3Color.iconOrange
         case .importSource: V3Color.iconLilac
         case .youtube: V3Color.iconRed
+        case .chats: V3Color.iconBlue
         default: nil
         }
     }
@@ -280,7 +282,7 @@ struct HomeInputBar: View {
             }
             .buttonStyle(MicaboPressableButtonStyle(feedback: .light))
             .disabled(isBusy)
-            .accessibilityLabel(Text(MicaboName.scan.text()))
+            .accessibilityLabel(Text(L10n.t("ios.chat11.camera.open", locale: .resolved())))
         }
     }
 }
