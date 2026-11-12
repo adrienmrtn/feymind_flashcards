@@ -110,14 +110,54 @@ struct StoriesStepView: View {
 
     // MARK: Le haut
 
-    /// Le choix de la langue, en haut à droite.
+    /// Le choix de la langue, en haut à droite : la langue de l'app (`UiLocaleStore`), dans
+    /// une puce du système visuel. Un rendu ne dessine pas un menu du système : il montre la
+    /// puce seule.
     private var header: some View {
         HStack {
             Spacer(minLength: 0)
-            LanguageSwitcher(variant: .menu)
+            if still || previewPage != nil {
+                languageChip
+            } else {
+                Menu {
+                    ForEach(UiLocale.allCases) { code in
+                        Button {
+                            i18n?.pick(code)
+                        } label: {
+                            if code == i18n.locale {
+                                Label(code.nativeName, systemImage: "checkmark")
+                            } else {
+                                Text(verbatim: "\(code.flag)  \(code.nativeName)")
+                            }
+                        }
+                    }
+                } label: {
+                    languageChip
+                }
+                .accessibilityLabel(Text(i18n.t("ios.appLanguage")))
+                .accessibilityValue(Text(verbatim: i18n.locale.nativeName))
+            }
         }
         .padding(.horizontal, OnbLayout.margin)
         .frame(minHeight: 44)
+    }
+
+    /// La langue choisie : son drapeau, son nom, un chevron.
+    private var languageChip: some View {
+        HStack(spacing: 7) {
+            Text(verbatim: i18n.locale.flag)
+                .font(V3Font.label)
+                .accessibilityHidden(true)
+            Text(verbatim: i18n.locale.nativeName)
+                .font(V3Font.label)
+                .lineLimit(1)
+            Image(systemName: "chevron.down")
+                .font(V3Font.caption)
+        }
+        .foregroundStyle(V3Color.ink2)
+        .padding(.horizontal, 14)
+        .frame(minHeight: V3Metric.chipHeight - 8)
+        .modifier(V3SurfaceStyle(radius: (V3Metric.chipHeight - 8) / 2))
     }
 
     // MARK: Les pages
@@ -163,7 +203,7 @@ struct StoriesStepView: View {
 
     private var footer: some View {
         VStack(spacing: 10) {
-            V3Button(i18n.t(story.next == nil ? "common.start" : "common.continue")) {
+            V3Button(i18n.t(story.next == nil ? "ios.onb10.story.start" : "common.continue")) {
                 advance()
             }
             V3Button(i18n.t("common.alreadyAccount"), kind: .secondary, isEnabled: !auth.isWorking && !isCheckingAccount) {
@@ -284,6 +324,9 @@ struct StoryPage: View {
                 }
             }
             .padding(.top, 26)
+            // Un aperçu du produit est une illustration (VoiceOver ne le lit pas) : il garde
+            // ses proportions en très grand texte, où le titre seul grossit.
+            .dynamicTypeSize(.large)
             .accessibilityHidden(true)
         }
         .padding(.horizontal, OnbLayout.margin)
@@ -313,6 +356,9 @@ private struct StoryPhoneFrame<Content: View>: View {
         }
         .padding(.horizontal, 18)
         .padding(.top, 26)
+        // L'aperçu garde sa hauteur naturelle : sur un petit écran, le cadre le coupe par le
+        // bas au lieu de le tasser.
+        .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(
             LinearGradient(colors: [V3Color.surface, V3Color.bg], startPoint: .top, endPoint: .bottom),

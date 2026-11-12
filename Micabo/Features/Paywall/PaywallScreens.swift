@@ -301,6 +301,7 @@ struct PaywallScreen: View {
                 content(.regular)
                 content(.compact)
                 content(.tight)
+                content(.minimal)
                 ScrollView {
                     content(.compact)
                 }
@@ -344,7 +345,7 @@ struct PaywallScreen: View {
         if let trigger, !showsTrialHeader {
             VStack(alignment: .leading, spacing: density.headerSpacing) {
                 PaywallMikaLine(line: PaywallCopy.hook(for: trigger), mood: .wink)
-                PaywallRows(rows: benefitRows(for: trigger), density: density)
+                benefits(for: trigger, density)
             }
         } else {
             VStack(alignment: .leading, spacing: density.headerSpacing) {
@@ -357,9 +358,24 @@ struct PaywallScreen: View {
                     size: density.titleSize
                 )
 
-                PaywallRows(rows: selectedPlan.hasTrial ? timelineRows : benefitRows(for: nil), density: density)
+                // La chronologie garde toujours ses lignes : ce sont elles qui promettent.
+                if selectedPlan.hasTrial {
+                    PaywallRows(rows: timelineRows, density: density)
+                } else {
+                    benefits(for: nil, density)
+                }
             }
         }
+    }
+
+    /// Les bénéfices de Pro, celui de la porte d'abord. Au dernier serrage : les deux premiers,
+    /// leur titre seul.
+    private func benefits(for trigger: PaywallTrigger?, _ density: PaywallDensity) -> some View {
+        PaywallRows(
+            rows: Array(benefitRows(for: trigger).prefix(density.benefitCount)),
+            density: density,
+            showsDetail: density.showsBenefitDetail
+        )
     }
 
     /// La chronologie de l'essai : aujourd'hui, le rappel, le premier prélèvement.
@@ -428,19 +444,25 @@ struct PaywallScreen: View {
 
 // MARK: - Les serrages
 
-/// **Trois serrages pour un même écran** : le paywall prend le premier qui tient sans défiler
+/// **Quatre serrages pour un même écran** : le paywall prend le premier qui tient sans défiler
 /// (`ViewThatFits`). Aéré sur un grand téléphone ; resserré quand la langue est longue ; serré
-/// sur un iPhone SE, où le titre, les marges et les offres rapetissent d'un cran — sans rien
-/// retirer de ce qui est promis ni de ce qui sera prélevé.
+/// sur un iPhone SE, où le titre, les marges et les offres rapetissent d'un cran ; et, pour
+/// la plus longue accroche sur le plus petit écran, deux bénéfices sans leur ligne. Rien de
+/// ce qui est promis ni de ce qui sera prélevé n'est jamais retiré : la chronologie de
+/// l'essai, les offres et la mention restent entières.
 enum PaywallDensity: CaseIterable {
     case regular
     case compact
     case tight
+    case minimal
 
     /// La taille du titre de l'en-tête « essai ».
     var titleSize: CGFloat {
         self == .regular ? PaywallStyle.titleSize : PaywallStyle.titleCompactSize
     }
+
+    /// Serré : les deux derniers crans, ceux d'un petit écran.
+    private var isTight: Bool { self == .tight || self == .minimal }
 
     /// Entre l'en-tête et les offres.
     var sectionSpacing: CGFloat {
@@ -448,6 +470,7 @@ enum PaywallDensity: CaseIterable {
         case .regular: 24
         case .compact: 16
         case .tight: 12
+        case .minimal: 10
         }
     }
 
@@ -457,6 +480,7 @@ enum PaywallDensity: CaseIterable {
         case .regular: 22
         case .compact: 14
         case .tight: 10
+        case .minimal: 8
         }
     }
 
@@ -466,6 +490,7 @@ enum PaywallDensity: CaseIterable {
         case .regular: 16
         case .compact: 10
         case .tight: 8
+        case .minimal: 6
         }
     }
 
@@ -475,17 +500,34 @@ enum PaywallDensity: CaseIterable {
         case .regular: 22
         case .compact: 12
         case .tight: 6
+        case .minimal: 4
         }
     }
 
     /// La hauteur d'une offre : serrée, celle d'une ligne de réponse.
     var planHeight: CGFloat {
-        self == .tight ? V3Metric.optionHeight : PaywallStyle.planHeight
+        isTight ? V3Metric.optionHeight : PaywallStyle.planHeight
     }
 
     /// La police de la ligne d'une rangée : serrée, une légende.
     var rowDetail: Font {
-        self == .tight ? PaywallStyle.rowDetailTight : PaywallStyle.rowDetail
+        isTight ? PaywallStyle.rowDetailTight : PaywallStyle.rowDetail
+    }
+
+    /// Un bénéfice garde sa ligne, sauf au dernier cran : on retire un élément plutôt que de
+    /// rapetisser encore.
+    var showsBenefitDetail: Bool { self != .minimal }
+
+    /// Combien de bénéfices se montrent : trois, et les deux premiers au dernier cran.
+    var benefitCount: Int { self == .minimal ? 2 : 3 }
+
+    /// L'icône d'une rangée et sa colonne : au dernier cran, à la mesure d'un titre seul.
+    var glyph: CGFloat {
+        self == .minimal ? PaywallStyle.glyphSmall : PaywallStyle.glyph
+    }
+
+    var glyphColumn: CGFloat {
+        self == .minimal ? PaywallStyle.glyphColumnSmall : PaywallStyle.glyphColumn
     }
 }
 
@@ -518,6 +560,8 @@ struct PaywallHeaderRow: Identifiable, Equatable {
 private struct PaywallRows: View {
     let rows: [PaywallHeaderRow]
     let density: PaywallDensity
+    /// Faux au dernier serrage, pour les bénéfices : le titre seul.
+    var showsDetail = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: density.rowSpacing) {
@@ -526,8 +570,10 @@ private struct PaywallRows: View {
                     symbol: row.symbol,
                     tone: row.tone,
                     title: row.title,
-                    detail: row.detail,
-                    detailFont: density.rowDetail
+                    detail: showsDetail ? row.detail : nil,
+                    detailFont: density.rowDetail,
+                    glyph: showsDetail ? PaywallStyle.glyph : density.glyph,
+                    glyphColumn: showsDetail ? PaywallStyle.glyphColumn : density.glyphColumn
                 )
             }
         }

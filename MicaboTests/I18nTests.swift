@@ -171,6 +171,8 @@ final class I18nTests: XCTestCase {
             "ios.journey.source", "ios.today.approxMinutes",
             // Deux formats chiffrés du lot « Knowunity » : « 30 / 50 XP », « Or · 120 XP ».
             "ios.kx.today.goalProgress", "ios.kx.league.rowSub",
+            // « Focus · 25 min » : le nom de l'onglet, le même en anglais (lot 10, un nom par chose).
+            "ios.cal.focusDone",
         ]
         assertNotCopiedFromFrench(
             french: IosI18nCatalogs.fr,

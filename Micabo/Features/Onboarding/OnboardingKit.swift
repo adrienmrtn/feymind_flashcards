@@ -59,15 +59,30 @@ struct OnbScreen<Content: View, Footer: View>: View {
 
     private var hasFooter: Bool { Footer.self != EmptyView.self }
 
+    /// Le contenu immobile, dans les marges de l'écran.
+    private var column: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            content
+        }
+        .padding(.horizontal, V3Metric.screenMargin)
+        .padding(.bottom, 16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
     var body: some View {
         if still {
             VStack(spacing: 0) {
-                VStack(alignment: .leading, spacing: 0) {
-                    content
+                // Un contenu plus haut que l'écran se montre comme un défilement à son début :
+                // à sa hauteur naturelle, depuis le haut, coupé en bas ; le pied reste à sa
+                // place. Un contenu qui tient prend toute la hauteur (les réponses ancrées en
+                // bas y restent).
+                ViewThatFits(in: .vertical) {
+                    column
+                    column
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(.horizontal, V3Metric.screenMargin)
-                .padding(.bottom, 16)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .frame(maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
+                .clipped()
 
                 if hasFooter {
                     VStack(spacing: 10) {
@@ -76,6 +91,7 @@ struct OnbScreen<Content: View, Footer: View>: View {
                     .padding(.horizontal, V3Metric.screenMargin)
                     .padding(.vertical, 8)
                     .frame(maxWidth: .infinity)
+                    .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .background(V3Color.bg)
@@ -354,7 +370,8 @@ enum OnbWords {
     /// « 18 h », « 6 PM », « 18 Uhr » : l'heure du rappel.
     static func hour(_ hour: Int, locale: UiLocale) -> String {
         let moment = Calendar.current.date(bySettingHour: hour, minute: 0, second: 0, of: Date()) ?? Date()
-        return formatted(moment, template: "j", locale: locale)
+        // « 18 h » ne se coupe pas en fin de ligne d'un titre : l'espace est insécable.
+        return formatted(moment, template: "j", locale: locale).replacingOccurrences(of: " ", with: "\u{00A0}")
     }
 
     private static func formatted(_ date: Date, template: String, locale: UiLocale) -> String {
@@ -370,9 +387,15 @@ enum OnbWords {
         SchoolExams.remainingText(days: days, locale: locale)
     }
 
-    /// « 12/20 → 16/20 » : d'où l'on part, où l'on va. La flèche suit le sens de lecture.
+    /// « 12/20 → 16/20 » : d'où l'on part, où l'on va.
+    ///
+    /// **Une plage de notes s'écrit de gauche à droite, dans toutes les langues**, comme une
+    /// équation : iOS pose de toute façon des chiffres et une flèche de gauche à droite (les
+    /// rendus en arabe montraient « 60% ← 80% », qui se lit de 80 vers 60). La plage est donc
+    /// un bloc enchâssé de gauche à droite (U+202A … U+202C), flèche vers la droite : en
+    /// arabe aussi, « 60% → 80% ».
     static func range(from: String, to: String, locale: UiLocale) -> String {
-        locale.isRightToLeft ? "\(from) ← \(to)" : "\(from) → \(to)"
+        locale.isRightToLeft ? "\u{202A}\(from) → \(to)\u{202C}" : "\(from) → \(to)"
     }
 
     /// « Maths, Philo et Physique-Chimie » : une liste, avec la virgule et le « et » de la
