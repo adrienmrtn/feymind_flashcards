@@ -1,71 +1,78 @@
 import SwiftUI
 
-/// **Les matières qu'on suit.** Sélection multiple.
+/// **« Quelles matières on travaille ensemble ? »** Choix multiple.
 ///
-/// L'écran propose d'abord **les matières de l'année qu'on vient de déclarer**, et le
-/// catalogue général en dessous. C'est ce que change la question de la filière et de
-/// l'année : un terminale générale voit ses huit matières et coche en trois secondes, là où
-/// le catalogue entier — trente-huit pastilles en sept familles — l'oblige à chercher les
-/// siennes parmi celles de la médecine et du droit.
+/// L'écran propose **les matières de la classe qu'on vient de déclarer** : un élève de
+/// terminale voit les siennes et coche en trois secondes. Le catalogue général reste à un
+/// appui (« Autres matières ») : quelqu'un suit une option que sa classe ne liste pas, et lui
+/// cacher le reste serait lui dire que sa matière n'existe pas. Sans classe connue, c'est le
+/// catalogue qui s'affiche.
 ///
-/// Le catalogue reste dessous et n'est pas replié : quelqu'un suit une option que son année
-/// ne liste pas, ou révise pour un concours qui n'a rien à voir, et lui cacher le reste
-/// serait lui dire que sa matière n'existe pas.
-///
-/// Les emojis viennent de `CourseEmoji`, la même table que les cours importés : une seconde
-/// liste tenue en parallèle finirait par donner à une matière un emoji que ses cours n'ont
-/// pas.
+/// **Mika réagit dès la première matière cochée** : sa bulle change, et il se met à écrire.
 struct SubjectsStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
+    @State private var showsCatalog = false
+
+    /// Les matières de la classe déclarée, vides quand on n'en sait pas assez.
+    private var mine: [String] {
+        Self.classSubjects(for: model)
+    }
+
+    /// Le catalogue général, sans ce que la classe propose déjà.
+    private var others: [String] {
+        let known = Set(mine)
+        return SubjectCatalog.allSubjects.filter { !known.contains($0) }
+    }
+
+    /// Le catalogue se montre quand la classe n'a pas de liste, quand l'élève le demande, ou
+    /// quand une matière déjà cochée s'y trouve (un retour sur l'écran).
+    private var showsOthers: Bool {
+        mine.isEmpty || showsCatalog || !model.subjects.isSubset(of: Set(mine))
+    }
+
+    private var hasAnswer: Bool {
+        !model.subjects.isEmpty
+    }
+
     var body: some View {
-        OnboardingScaffold(
-            title: i18n.t("ios.onb5.q.subjects"),
-            reaction: model.subjects.isEmpty ? nil : i18n.t("ios.onb5.react.subjects")
+        OnbQuestion(
+            i18n.t(hasAnswer ? "ios.onb10.react.subjects" : "ios.onb10.q.subjects"),
+            mood: hasAnswer ? .write : .idle,
+            anchored: false
         ) {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 14) {
                 if !mine.isEmpty {
-                    section(title: i18n.t("ios.onb.subjects.mine"), subjects: mine)
+                    if let label = model.classLabel {
+                        caption(i18n.t("ios.onb10.subjects.of", ["class": label]))
+                    }
+                    chips(mine)
                 }
 
-                ForEach(SubjectCatalog.families) { family in
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text(SubjectDisplay.family(family.name, locale: i18n.locale).uppercased())
-                            .font(MicaboFont.ui(11, weight: .semibold))
-                            .tracking(1.4)
-                            .foregroundStyle(OnboardingPalette.gray)
-
-                        MicaboFlowLayout(spacing: 8, lineSpacing: 8) {
-                            ForEach(family.subjects, id: \.self) { subject in
-                                SubjectChip(
-                                    title: SubjectDisplay.subject(subject, locale: i18n.locale),
-                                    // L'emoji d'une matière vient d'où viennent ceux des
-                                    // cours : une table unique, et pas une deuxième liste à
-                                    // maintenir en parallèle de celle-ci.
-                                    emoji: SubjectCatalog.emoji(for: subject),
-                                    isSelected: model.subjects.contains(subject)
-                                ) {
-                                    toggle(subject)
-                                }
-                            }
-                        }
+                if showsOthers {
+                    if !mine.isEmpty {
+                        caption(i18n.t("ios.onb10.subjects.more"))
+                            .padding(.top, 8)
+                    }
+                    chips(others)
+                } else {
+                    V3Chip(i18n.t("ios.onb10.subjects.more"), systemImage: "plus") {
+                        withAnimation(MicaboMotion.standard) { showsCatalog = true }
                     }
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         } footer: {
-            OnboardingArrowButton(isEnabled: !model.subjects.isEmpty) {
+            V3Button(i18n.t("common.continue"), isEnabled: hasAnswer) {
                 model.advance()
             }
         }
     }
 
-    /// Les matières de l'année déclarée, vides quand on n'en sait pas assez.
-    ///
-    /// Le repli sur le catalogue entier est **silencieux** : on ne rend rien plutôt que de
-    /// répéter les trente-huit pastilles une seconde fois sous un intitulé « tes matières »
-    /// qui serait alors un mensonge.
-    private var mine: [String] {
+    /// **Les matières de la classe de l'élève** (`SchoolSubjects.forYear`), ou rien quand le
+    /// pays n'est pas décrit : on ne rend pas une liste inventée.
+    static func classSubjects(for model: OnboardingModel) -> [String] {
         guard SchoolSystem.isDetailed(model.country, custom: model.customCountry) else { return [] }
         return SchoolSubjects.forYear(
             trackID: model.track?.id,
@@ -74,68 +81,32 @@ struct SubjectsStepView: View {
         ) ?? []
     }
 
-    private func section(title: String, subjects: [String]) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(title.uppercased())
-                .font(MicaboFont.ui(11, weight: .semibold))
-                .tracking(1.4)
-                .foregroundStyle(OnboardingPalette.accent)
+    private func caption(_ text: String) -> some View {
+        Text(text)
+            .font(V3Font.caption)
+            .foregroundStyle(V3Color.ink3)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
 
-            MicaboFlowLayout(spacing: 8, lineSpacing: 8) {
-                ForEach(subjects, id: \.self) { subject in
-                    SubjectChip(
-                        title: SubjectDisplay.subject(subject, locale: i18n.locale),
-                        emoji: SubjectCatalog.emoji(for: subject),
-                        isSelected: model.subjects.contains(subject)
-                    ) {
-                        toggle(subject)
-                    }
+    private func chips(_ subjects: [String]) -> some View {
+        MicaboFlowLayout(spacing: 8, lineSpacing: 10) {
+            ForEach(subjects, id: \.self) { subject in
+                V3Chip(
+                    SubjectDisplay.subject(subject, locale: i18n.locale),
+                    isSelected: model.subjects.contains(subject)
+                ) {
+                    toggle(subject)
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func toggle(_ subject: String) {
-        withAnimation(OnboardingMotion.tap) {
-            if model.subjects.contains(subject) {
-                model.subjects.remove(subject)
-            } else {
-                model.subjects.insert(subject)
-            }
+        if model.subjects.contains(subject) {
+            model.subjects.remove(subject)
+        } else {
+            model.subjects.insert(subject)
         }
-    }
-}
-
-private struct SubjectChip: View {
-    let title: String
-    var emoji: String?
-    let isSelected: Bool
-    var action: () -> Void
-
-    @Environment(\.onboardingCheer) private var cheer
-
-    var body: some View {
-        Button {
-            action()
-            if isSelected == false { cheer() }
-        } label: {
-            HStack(spacing: 5) {
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 9, weight: .bold))
-                } else if let emoji {
-                    Text(emoji)
-                        .font(.system(size: 13))
-                }
-                Text(title)
-                    .font(MicaboFont.ui(14, weight: .medium))
-            }
-            .foregroundStyle(isSelected ? OnboardingPalette.white : OnboardingPalette.ink)
-            .padding(.vertical, 11)
-            .padding(.horizontal, 15)
-            .background(isSelected ? OnboardingPalette.ink : OnboardingPalette.card, in: Capsule())
-        }
-        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-        .animation(OnboardingMotion.select, value: isSelected)
     }
 }

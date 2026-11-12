@@ -6,50 +6,47 @@ import SwiftUI
 /// dans `OnboardingPreferences` : quitter l'app en cours de route ne les perd pas, et
 /// l'écran atteint non plus (`resuming(in:)`).
 ///
-/// **Il n'y a plus de cours dans le parcours** : ni supports à déposer, ni cours de
-/// démonstration, ni cartes. La première leçon se crée depuis Home.
+/// **Une seule pile d'étapes, et aucune attente.** Avancer change l'étape, et c'est tout :
+/// la vue du parcours pousse la page (`OnboardingFlowView`). Il n'y a ni temps minimal sur
+/// une page, ni appui mis en file : un bouton est actif dès que la réponse est valide.
 @Observable
 final class OnboardingModel {
     private(set) var step: OnboardingStep = .hookLogo {
         didSet {
-            arrivedAt = Date()
-            hasQueuedAdvance = false
             guard !isRestoring else { return }
             OnboardingPreferences.resumeStep = step
         }
     }
 
-    /// **Le temps minimal sur une page avant de la quitter.** Un second appui sur le rond, un
-    /// doigt resté posé à la fin du chargement : la page suivante se passait avant d'avoir été
-    /// vue. Posé par la vue du parcours ; les tests, sans vue, avancent librement.
-    ///
-    /// Un appui arrivé avant la fin de ce temps n'est plus perdu : il attend, et la page
-    /// avance dès qu'il est écoulé (`queueAdvance`).
-    @ObservationIgnored var minimumDwell: TimeInterval = 0
-    @ObservationIgnored private var arrivedAt = Date.distantPast
-    /// Vrai quand un appui trop précoce attend la fin de `minimumDwell` sur la page actuelle.
-    @ObservationIgnored private var hasQueuedAdvance = false
+    /// **Le sens du dernier changement d'écran.** En avançant, la page arrive par le bord de
+    /// fin et l'ancienne part par le bord de début ; au retour, l'inverse. Il est posé avant
+    /// l'étape, et lu par la transition au moment où elle se joue (`OnboardingPush`).
+    private(set) var isMovingForward = true
+
+    /// **Posé par la vue du parcours** : avec lui, chaque changement d'étape est animé, et un
+    /// second appui pendant qu'une page glisse n'en empile pas une troisième. Les tests n'ont
+    /// pas de vue : ils avancent librement, sans animation.
+    @ObservationIgnored var animatesTransitions = false
+    /// L'instant où la page a commencé à glisser ; `nil` une fois posée.
+    @ObservationIgnored private var transitionStartedAt: Date?
 
     /// Vrai quand le parcours reprend là où une app fermée l'avait laissé.
     private(set) var isResumed = false
 
     /// **Vrai le temps de relire un parcours interrompu.** Les réponses relues ne sont pas
     /// des réponses données : elles ne repartent pas dans les statistiques, et elles ne
-    /// réécrivent rien. La vue du parcours peut construire plusieurs fois son modèle de
-    /// reprise et n'en garder qu'un ; ceux qu'elle jette ne doivent rien avoir changé.
+    /// réécrivent rien.
     @ObservationIgnored private var isRestoring = false
 
-    /// **Vrai le temps qu'une page glisse.** Posé par la vue du parcours, relu par
-    /// `advance()` : un second appui pendant le glissement n'empile pas deux pages. Les
-    /// tests n'ont pas de vue, donc pas de verrou, et avancent librement.
-    var transitionLock = false
+    init() {
+        applyDetectedCountry()
+    }
 
-    /// **Le prénom, et rien d'autre.** Il ne sert qu'à s'adresser à quelqu'un : la
-    /// bienvenue, le bravo, l'accueil. Il ne part pas au modèle, il ne part pas au serveur.
+    /// **Le prénom, et rien d'autre.** Il ne sert qu'à s'adresser à quelqu'un. Il ne part
+    /// pas au modèle, il ne part pas au serveur.
     var displayName: String = ""
 
-    /// Le palier d'études, dans les termes du pays choisi. Il n'est proposé qu'après le
-    /// pays, faute de quoi il n'y aurait rien de juste à proposer.
+    /// Le palier d'études, dans les termes du pays choisi.
     ///
     /// Le `didSet` marque la réponse plutôt que l'écran : « a vu l'écran du palier » et
     /// « a choisi un palier » sont deux chiffres différents, et c'est leur écart qui dit
@@ -61,11 +58,9 @@ final class OnboardingModel {
         }
     }
     private(set) var country: SchoolingCountry = .guessed()
-    /// Le pays nommé à la main, quand la réponse est « Autre pays ». Il n'a de sens que dans
-    /// ce cas-là, et il est effacé dès qu'on revient sur une pastille.
-    ///
-    /// Il choisit lui aussi un système scolaire (l'Autriche, le Brésil…) : en changer efface
-    /// la filière et l'année, qui appartenaient à l'autre pays.
+    /// Le pays choisi dans la recherche, quand il n'est pas dans la liste. Il choisit lui
+    /// aussi un système scolaire (l'Autriche, le Brésil…) : en changer efface la filière et
+    /// l'année, qui appartenaient à l'autre pays.
     var customCountry: WorldCountry? {
         didSet {
             guard customCountry != oldValue, !isRestoring else { return }
@@ -79,12 +74,12 @@ final class OnboardingModel {
         }
     }
 
-    /// Le code ISO du pays de l'élève, celui de la liste ou celui tapé à la main.
+    /// Le code ISO du pays de l'élève, celui de la liste ou celui de la recherche.
     var regionCode: String? {
         SchoolRegion.code(country: country, custom: customCountry)
     }
 
-    /// **Le prochain examen**, choisi dans ceux de son pays et de son année.
+    /// **Ce qui arrive en premier**, choisi dans les examens de son pays et de son année.
     var examChoice: ExamChoice? {
         didSet {
             guard let examChoice, examChoice != oldValue, !isRestoring else { return }
@@ -118,7 +113,8 @@ final class OnboardingModel {
     var gradeScale: StudentGradeScale {
         StudentGradeScale.for(region: regionCode, country: country, track: track)
     }
-    /// **L'objectif n°1**, choisi à l'écran `goal` (lot 9) parmi ceux de son niveau
+
+    /// **L'objectif n°1**, choisi à l'écran `goal` parmi ceux de son niveau
     /// (`LearningGoal.offered(for:)`) ; ou, à la reprise, ce qu'un parcours d'avant avait gardé.
     var goals: Set<LearningGoal> = [] {
         didSet {
@@ -134,11 +130,9 @@ final class OnboardingModel {
         LearningGoal.offered(for: stage?.tier).first { goals.contains($0) }
     }
 
-    /// **Pourquoi il apprend** : l'objectif n°1, plus ce que l'examen dit déjà. La question ne
-    /// redemande pas l'examen (« Et pourquoi tu apprends ? » proposait « réviser pour un
-    /// examen » trois écrans après l'examen, au lot 5) : un examen daté ajoute « réviser pour
-    /// un examen », « pas d'examen en vue » ajoute « retenir mes cours ». C'est ce que le cloud
-    /// garde (`learning_goals`).
+    /// **Pourquoi il apprend** : l'objectif n°1, plus ce que l'examen dit déjà. Un examen daté
+    /// ajoute « réviser pour un examen », « rien pour l'instant » ajoute « retenir mes cours ».
+    /// C'est ce que le cloud garde (`learning_goals`).
     var learningGoals: Set<LearningGoal> {
         var result = goals
         if let examChoice {
@@ -146,21 +140,42 @@ final class OnboardingModel {
         }
         return result
     }
+
     var subjects: Set<String> = []
 
-    /// **Ce qui l'inquiète dans ses études.** Plusieurs réponses ; la première, dans l'ordre
-    /// de la liste, donne son titre à l'écran « on s'en occupe ».
+    /// **Ce qui le bloque.** Plusieurs réponses ; `solutionMap` répond aux trois premières
+    /// cochées.
     var worries: Set<StudyWorry> = [] {
         didSet {
-            guard worries != oldValue, !worries.isEmpty, !isRestoring else { return }
+            guard worries != oldValue else { return }
+            // L'ordre coché suit l'ensemble : ce qui est décoché s'en va, ce qui arrive se
+            // range à la fin (dans l'ordre de la liste quand plusieurs arrivent d'un coup).
+            worriesInOrder.removeAll { !worries.contains($0) }
+            for worry in StudyWorry.allCases where worries.contains(worry) && !worriesInOrder.contains(worry) {
+                worriesInOrder.append(worry)
+            }
+            guard !worries.isEmpty, !isRestoring else { return }
             let ids = StudyWorry.allCases.filter { worries.contains($0) }.map(\.rawValue)
             Analytics.track(.onboardingAnswer, ["field": "worries", "value": .text(ids.joined(separator: ","))])
         }
     }
 
-    /// L'inquiétude mise en avant : la première cochée, dans l'ordre de la liste.
-    var leadWorry: StudyWorry? {
-        StudyWorry.allCases.first { worries.contains($0) }
+    /// **Les blocages dans l'ordre où ils ont été cochés** : c'est l'ordre des cartes de
+    /// `solutionMap`.
+    private(set) var worriesInOrder: [StudyWorry] = []
+
+    /// Coche ou décoche un blocage.
+    func toggle(worry: StudyWorry) {
+        if worries.contains(worry) {
+            worries.remove(worry)
+        } else {
+            worries.insert(worry)
+        }
+    }
+
+    /// Les blocages auxquels `solutionMap` répond : les trois premiers cochés.
+    var answeredWorries: [StudyWorry] {
+        Array(worriesInOrder.prefix(StudyWorry.answeredAtMost))
     }
 
     /// **La filière suivie**, dans les termes du pays. Elle ne se demande qu'aux pays
@@ -176,16 +191,15 @@ final class OnboardingModel {
                 examDate = nil
             }
             // Le palier large suit la filière : c'est lui que la fonction Edge reçoit et que
-            // le cloud synchronise, et il ne doit pas rester sur la réponse d'avant. Un pays
-            // tapé à la main n'a que l'échelle générique : la filière santé s'y décrit
-            // elle-même plutôt que de rester sans palier.
+            // le cloud synchronise. Un pays hors liste n'a que l'échelle générique : la
+            // filière s'y décrit elle-même plutôt que de rester sans palier.
             stage = country.resolvedStage(id: nil, tier: track.tier, level: track.level)
                 ?? EducationStage(id: track.id, title: track.title, emoji: track.emoji, level: track.level, tier: track.tier)
             Analytics.track(.onboardingAnswer, ["field": "track", "value": .text(track.id)])
         }
     }
 
-    /// L'année dans la filière. Elle décide des matières proposées deux écrans plus loin.
+    /// L'année dans la filière. Elle décide des matières et des examens proposés ensuite.
     var year: SchoolYear? {
         didSet {
             guard let year, year != oldValue, !isRestoring else { return }
@@ -197,23 +211,28 @@ final class OnboardingModel {
             Analytics.track(.onboardingAnswer, ["field": "year", "value": .text(year.id)])
         }
     }
-    /// La moyenne d'aujourd'hui, sur l'échelle 10-20. `TargetScore.min - 1` veut dire « en
-    /// dessous du barème » : c'est le seul cran hors échelle, et il existe parce qu'un
-    /// parcours qui ne propose que la moyenne et au-dessus dit à celui qui rame qu'il n'est
-    /// pas prévu.
+
+    /// La moyenne d'aujourd'hui, sur l'échelle 10-20 du produit. `TargetScore.min - 1` veut
+    /// dire « en dessous du barème » : c'est le seul cran hors échelle, et il existe parce
+    /// qu'un parcours qui ne propose que la moyenne et au-dessus dit à celui qui rame qu'il
+    /// n'est pas prévu.
     var currentScore: Int? {
         didSet {
             guard let currentScore, currentScore != oldValue, !isRestoring else { return }
             Analytics.track(.onboardingAnswer, ["field": "currentScore", "value": .number(Double(currentScore))])
         }
     }
-    /// La moyenne visée. Toujours au-dessus de l'actuelle.
+    /// La moyenne visée. Jamais en dessous de l'actuelle ; la même, c'est « tenir ».
     var targetScore: Int? {
         didSet {
             guard let targetScore, targetScore != oldValue, !isRestoring else { return }
             Analytics.track(.onboardingAnswer, ["field": "targetScore", "value": .number(Double(targetScore))])
         }
     }
+
+    /// **La moyenne a été passée** (« Passer », en haut de `currentAverage`) : la moyenne
+    /// visée ne se demande pas non plus, et la projection se dessine sans chiffres.
+    private(set) var didSkipAverages = false
 
     /// Le temps qu'il se donne par jour, en minutes. C'est de lui que `DailyLoad` tire le
     /// nombre de cartes du plan.
@@ -224,13 +243,65 @@ final class OnboardingModel {
         }
     }
 
-    /// **L'heure à laquelle il révise**, de 5 à 23. C'est l'heure du rappel quotidien, et
-    /// elle se règle au curseur, le soleil qui monte et descend avec elle.
+    /// **L'heure du rappel quotidien**, de 5 à 23. Elle se règle sur l'écran des rappels.
     var studyHour: Int? {
         didSet {
             guard let studyHour, studyHour != oldValue, !isRestoring else { return }
             Analytics.track(.onboardingAnswer, ["field": "studyHour", "value": .number(Double(studyHour))])
         }
+    }
+
+    // MARK: La première leçon
+
+    /// Les deux façons de commencer : un sujet qu'on écrit, ou un cours qu'on a sous la main.
+    enum FirstLessonChoice: Equatable {
+        case topic
+        case importSource
+    }
+
+    /// **Par quel cours on commence** (`firstLesson`). `nil` tant que rien n'est choisi, ou
+    /// après « Plus tard ».
+    var firstLessonChoice: FirstLessonChoice?
+    /// Le sujet tel qu'il est tapé. Il reste sur l'appareil : il ne part pas dans les
+    /// statistiques.
+    var firstLessonTopic: String = ""
+
+    /// Le sujet de la première leçon, quand il y en a un d'écrit.
+    var firstLessonSubject: String? {
+        firstLessonChoice == .topic ? firstLessonTopic.nilIfBlank : nil
+    }
+
+    /// Vrai quand la question a une réponse : un sujet écrit, ou l'import choisi.
+    var hasAnsweredFirstLesson: Bool {
+        switch firstLessonChoice {
+        case .topic: firstLessonTopic.nilIfBlank != nil
+        case .importSource: true
+        case nil: false
+        }
+    }
+
+    /// **« Continuer »** sur la première leçon : le choix part à la Home, qui le lancera à la
+    /// sortie du parcours (`FirstLessonIntent`). Les statistiques ne gardent que la forme de
+    /// la réponse, jamais le sujet.
+    func confirmFirstLesson() {
+        guard step == .firstLesson, hasAnsweredFirstLesson else { return }
+        if let subject = firstLessonSubject {
+            FirstLessonIntent.pending = .topic(subject)
+            Analytics.track(.onboardingFirstLesson, ["choice": "topic"])
+        } else {
+            FirstLessonIntent.pending = .importSource
+            Analytics.track(.onboardingFirstLesson, ["choice": "import"])
+        }
+        advance()
+    }
+
+    /// **« Plus tard »** : rien n'attend la Home, et le plan n'annonce pas de première leçon.
+    func skipFirstLesson() {
+        guard step == .firstLesson else { return }
+        firstLessonChoice = nil
+        FirstLessonIntent.pending = nil
+        Analytics.track(.onboardingFirstLesson, ["choice": "later"])
+        advance()
     }
 
     /// Le registre de rédaction, seule forme sous laquelle le niveau sort du parcours.
@@ -245,31 +316,79 @@ final class OnboardingModel {
 
     /// Changer de pays change les réponses de la question suivante.
     ///
-    /// Le palier déjà choisi est reporté sur son équivalent dans le nouveau pays — sa marche
-    /// exacte, sinon la plus proche en montant — et abandonné quand il n'a pas d'équivalent :
-    /// garder « PASS » après un passage aux États-Unis laisserait affichée une réponse qui
-    /// n'existe pas dans la liste.
+    /// Le palier déjà choisi est reporté sur son équivalent dans le nouveau pays (sa marche
+    /// exacte, sinon la plus proche en montant) et abandonné quand il n'a pas d'équivalent.
     func select(country newCountry: SchoolingCountry) {
         guard newCountry != country else { return }
         let previous = stage
         country = newCountry
         stage = newCountry.resolvedStage(id: nil, tier: previous?.tier, level: previous?.level)
         // La filière et l'année appartiennent à un système scolaire : « Fen Lisesi » n'existe
-        // pas en France, et la garder afficherait une réponse introuvable dans la liste. Le
-        // palier, lui, se reporte — c'est tout l'objet de `resolvedStage`.
+        // pas en France. Le palier, lui, se reporte.
         track = nil
         examChoice = nil
         examDate = nil
         year = nil
-        // Repartir sur une pastille efface le pays tapé à la main : le garder ferait dire à
-        // l'écran « France » et « Brésil » en même temps.
+        // Repartir sur un pays de la liste efface celui de la recherche.
         if newCountry != .other { customCountry = nil }
         Analytics.track(.onboardingAnswer, ["field": "country", "value": .text(newCountry.rawValue)])
     }
 
+    /// **Choisit un pays trouvé par la recherche** : un pays de la liste se range sous son
+    /// nom de la liste (les États-Unis restent `.us`) ; les autres sous « autre pays », avec
+    /// leur code.
+    func select(worldCountry: WorldCountry) {
+        if let listed = SchoolingCountry.allCases.first(where: { $0.regionCode == worldCountry.code.uppercased() }) {
+            select(country: listed)
+        } else {
+            select(country: .other)
+            customCountry = worldCountry
+        }
+    }
+
+    // MARK: Le pays détecté
+
+    /// **Le pays du téléphone, quand ni ses langues ni la liste courte n'en désignent un**
+    /// (un iPhone en arabe réglé sur l'Arabie saoudite, en japonais sur le Japon…). Les
+    /// langues décident d'abord (`SchoolingCountry.detected`) ; sans réponse de leur part,
+    /// c'est la région du téléphone, et plus la France par défaut.
+    static func deviceCountry(
+        languages: [String] = Locale.preferredLanguages,
+        chosen: String? = UserDefaults.standard.string(forKey: UiLocale.storageKey),
+        region: String? = Locale.current.region?.identifier,
+        locale: UiLocale = .resolved()
+    ) -> WorldCountry? {
+        guard SchoolingCountry.detected(languages: languages, chosen: chosen) == nil,
+              let code = region?.uppercased(),
+              !SchoolingCountry.allCases.contains(where: { $0.regionCode == code })
+        else { return nil }
+        return WorldCountries.country(code: code, locale: locale)
+    }
+
+    /// Pose le pays présélectionné : celui que l'appareil désigne. Ce n'est pas une réponse,
+    /// et rien ne part dans les statistiques.
+    private func applyDetectedCountry() {
+        let wasRestoring = isRestoring
+        isRestoring = true
+        defer { isRestoring = wasRestoring }
+        if let device = Self.deviceCountry() {
+            country = .other
+            customCountry = device
+        } else {
+            country = .guessed()
+            customCountry = nil
+        }
+    }
+
+    /// **En quittant les stories** : la langue a pu changer sur le premier écran, et le pays
+    /// présélectionné la suit, tant que l'élève n'a pas répondu lui-même.
+    func adoptDetectedCountry() {
+        guard step == .hookLogo, !OnboardingPreferences.hasChosenCountry else { return }
+        applyDetectedCountry()
+    }
+
     /// Vrai quand la question du pays a une réponse complète. « Autre pays » n'en est une
-    /// qu'une fois le pays choisi dans la liste : sans ça, on avance sur un « ailleurs » qui
-    /// ne dit rien de plus que le silence.
+    /// qu'une fois le pays choisi dans la recherche.
     var hasAnsweredCountry: Bool {
         country != .other || customCountry != nil
     }
@@ -293,19 +412,27 @@ final class OnboardingModel {
 
     // MARK: Avancer, revenir
 
-    private func isSkipped(_ step: OnboardingStep) -> Bool {
-        step.isSkipped(for: country, custom: customCountry)
+    /// **Les écrans sautés, selon ce qui a été répondu** : la question de niveau que le pays
+    /// n'a pas ; la moyenne visée quand la moyenne a été passée ; les deux écrans de l'essai
+    /// quand la boutique dit que cet élève n'y a plus droit (on ne promet pas trois jours
+    /// qu'Apple ne donnera pas).
+    func isSkipped(_ step: OnboardingStep) -> Bool {
+        if step.isSkipped(for: country, custom: customCountry) { return true }
+        switch step {
+        case .targetAverage: return didSkipAverages
+        case .freeTrialIntro, .trialOffer: return !OnboardingTrial.isOffered
+        default: return false
+        }
     }
 
-    /// **La languette du compte**, montée sur le dernier écran de Mika, juste avant l'offre.
-    /// Apple, Google, ou « Passer » : aucune des trois ne coûte une page au parcours. Qui
-    /// passe garde ses leçons sur le téléphone, et se connecte plus tard depuis les réglages.
+    /// **La languette du compte**, montée en quittant le plan révélé. Apple, Google, le
+    /// courriel, ou « Plus tard » : aucune ne coûte une page au parcours.
     var isAccountSheetPresented = false
-    /// Vrai une fois la languette refermée, par une connexion ou par « Passer ». Le retour
-    /// n'y ramène pas : on ne redemande pas un compte à qui vient de répondre.
+    /// Vrai une fois la languette refermée, par une connexion ou par « Plus tard ». Le
+    /// retour n'y ramène pas : on ne redemande pas un compte à qui vient de répondre.
     private(set) var didAnswerAccount = false
-    /// Vrai quand un compte est déjà ouvert — un lien de connexion ouvert plus tôt, par
-    /// exemple : la languette ne monte pas pour rien. Tenu à jour par la vue du parcours.
+    /// Vrai quand un compte est déjà ouvert (une session restaurée, un lien de connexion) :
+    /// la languette ne monte pas pour rien. Tenu à jour par la vue du parcours.
     var hasAccount = false
 
     /// La connexion a abouti, ou l'élève a passé : la languette se referme, et le parcours
@@ -316,65 +443,53 @@ final class OnboardingModel {
         advance()
     }
 
-    /// Passe à l'écran suivant. Rend vrai quand l'appui est pris - la page avance, la
-    /// languette du compte monte, ou l'appui attend la fin du temps minimal - et faux quand il
-    /// est refusé (une page qui glisse encore, ou plus rien après) : l'écran qui a désactivé
-    /// son bouton doit alors le rendre.
+    /// Passe à l'écran suivant. Rend vrai quand l'appui est pris (la page avance, ou la
+    /// languette du compte monte) et faux quand il est refusé : une page qui glisse encore,
+    /// ou plus rien après.
     @discardableResult
     func advance() -> Bool {
-        let waited = Date().timeIntervalSince(arrivedAt)
-        guard waited >= minimumDwell else {
-            queueAdvance(after: minimumDwell - waited)
-            return true
-        }
-        guard !transitionLock else { return false }
-        // Le compte se demande en quittant le dernier écran de Mika, juste avant l'offre :
-        // c'est là qu'il protège quelque chose — le profil qu'on vient de construire.
+        guard !isTransitioning else { return false }
+        // Le compte se demande en quittant le plan révélé, juste avant l'offre.
         if step == OnboardingStep.accountStep, !didAnswerAccount, !hasAccount {
             isAccountSheetPresented = true
             return true
         }
         persist()
         var next = step.next
-        // Les écrans sans réponse possible se sautent plutôt que de s'afficher vides : un
-        // pays dont on ne connaît que les paliers larges n'a ni filière ni année à proposer.
+        // Les écrans sans réponse possible se sautent plutôt que de s'afficher vides.
         while let candidate = next, isSkipped(candidate) {
             next = candidate.next
         }
         guard let next else { return false }
-        step = next
+        move(to: next, forward: true)
         return true
     }
 
-    /// **Un appui trop tôt attend au lieu de se perdre.** Jusqu'au 2 novembre 2026, un appui
-    /// dans la seconde qui suivait l'arrivée d'une page ne faisait rien, sans rien montrer :
-    /// l'élève tapait une seconde fois, ou croyait l'app figée. Il avance maintenant la page
-    /// dès que le temps minimal est écoulé - une seule fois, quel que soit le nombre d'appuis,
-    /// et seulement si l'on est encore sur la page où il a été fait.
-    private func queueAdvance(after delay: TimeInterval) {
-        guard !hasQueuedAdvance else { return }
-        hasQueuedAdvance = true
-        let arrival = arrivedAt
-        DispatchQueue.main.asyncAfter(deadline: .now() + max(0, delay) + 0.02) { [weak self] in
-            guard let self, self.hasQueuedAdvance, self.arrivedAt == arrival else { return }
-            self.hasQueuedAdvance = false
-            self.advance()
-        }
+    /// **« Passer » la moyenne** : ni la moyenne d'aujourd'hui ni celle visée ne sont
+    /// gardées, et le parcours continue sur la projection, sans chiffres.
+    func skipAverages() {
+        guard step == .currentAverage, !isTransitioning else { return }
+        currentScore = nil
+        targetScore = nil
+        didSkipAverages = true
+        Analytics.track(.onboardingAnswer, ["field": "averages", "value": "passer"])
+        advance()
+    }
+
+    /// La moyenne d'aujourd'hui est donnée : celle visée se redemande.
+    func answerCurrentAverage() {
+        didSkipAverages = false
     }
 
     /// **Revenir d'un écran.**
     ///
-    /// Une réponse donnée doit pouvoir se corriger, et la langue se rechoisir : quelqu'un
-    /// dont le téléphone a mal deviné la langue, ou qui n'a pas vu le sélecteur de
-    /// l'accroche, doit pouvoir y retourner. On revient donc depuis tous les écrans, sauf
-    /// les chargements et le paywall, et jusqu'à l'accroche.
-    ///
-    /// Le retour enjambe les chargements (ils avancent seuls : y revenir renverrait aussitôt
-    /// en avant) et les écrans sautés à l'aller : on ne fait pas apparaître au retour une
-    /// question qu'on n'a pas posée.
+    /// Une réponse donnée doit pouvoir se corriger, et la langue se rechoisir. Le retour
+    /// enjambe le chargement (il avance seul : y revenir renverrait aussitôt en avant) et les
+    /// écrans sautés à l'aller : on ne fait pas apparaître au retour une question qu'on n'a
+    /// pas posée.
     func goBack() {
-        guard !transitionLock, let previous = returnTarget else { return }
-        step = previous
+        guard !isTransitioning, canGoBack, let previous = returnTarget else { return }
+        move(to: previous, forward: false)
     }
 
     /// Vrai quand il y a un écran en arrière qui accepte qu'on y revienne.
@@ -389,6 +504,33 @@ final class OnboardingModel {
             previous = candidate.previous
         }
         return previous
+    }
+
+    // MARK: Le changement d'étape
+
+    /// Vrai le temps qu'une page glisse. Le filet (huit dixièmes de seconde) ne laisse pas
+    /// le parcours verrouillé si la fin de l'animation ne revient jamais.
+    private var isTransitioning: Bool {
+        guard let started = transitionStartedAt else { return false }
+        return Date().timeIntervalSince(started) < 0.8
+    }
+
+    /// **Change d'étape.** Avec une vue, sous la courbe standard de l'app (un fondu bref si
+    /// le mouvement est réduit) : c'est ce qui fait glisser la page. Le verrou tombe à la fin
+    /// de l'animation, pas sur une minuterie.
+    private func move(to next: OnboardingStep, forward: Bool) {
+        isMovingForward = forward
+        guard animatesTransitions else {
+            step = next
+            return
+        }
+        transitionStartedAt = Date()
+        let curve = MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: UIAccessibility.isReduceMotionEnabled)
+        withAnimation(curve, completionCriteria: .logicallyComplete) {
+            step = next
+        } completion: { [weak self] in
+            self?.transitionStartedAt = nil
+        }
     }
 
     /// Recopie les réponses dans les réglages à chaque changement d'écran :
@@ -433,8 +575,16 @@ extension OnboardingModel {
         // Qui a passé la connexion ne la revoit pas : `RootView` lit le même drapeau.
         model.didAnswerAccount = UserDefaults.standard.bool(forKey: AccountGate.skippedKey)
 
-        let target = saved.resumePoint(hasName: model.displayName.nilIfBlank != nil)
+        var target = saved.resumePoint(hasName: model.displayName.nilIfBlank != nil)
         guard target != .hookLogo else { return OnboardingModel() }
+        // Les moyennes passées se relisent à leur absence, une fois leur écran dépassé.
+        model.didSkipAverages = model.currentScore == nil && model.targetScore == nil
+            && target.rawValue > OnboardingStep.currentAverage.rawValue
+        // Un écran que ce parcours-ci saute (l'autre question de niveau, par exemple) se
+        // reprend sur le suivant.
+        while model.isSkipped(target), let next = target.next {
+            target = next
+        }
         model.step = target
         model.isResumed = true
         return model
@@ -458,15 +608,38 @@ extension OnboardingModel {
         studyHour = OnboardingPreferences.studyHour
         examChoice = SchoolExams.choice(id: OnboardingPreferences.examID)
         examDate = OnboardingPreferences.examDate
+        switch FirstLessonIntent.pending {
+        case .topic(let topic):
+            firstLessonChoice = .topic
+            firstLessonTopic = topic
+        case .importSource:
+            firstLessonChoice = .importSource
+        case nil:
+            break
+        }
+    }
+}
+
+// MARK: - L'essai
+
+/// **L'essai gratuit tel que la boutique le propose à cet élève** : sa durée vient du
+/// produit, et il ne s'annonce que s'il peut être tenu (`PaywallPlan.hasTrial`).
+enum OnboardingTrial {
+    /// Les jours offerts par l'offre recommandée.
+    static var days: Int { PaywallCatalog.yearly.trialDays }
+
+    /// Vrai tant qu'une offre propose encore l'essai à cet élève. Tant que la boutique n'a
+    /// rien dit, on suit le catalogue : c'est le cas d'un premier lancement.
+    static var isOffered: Bool {
+        PaywallCatalog.yearly.hasTrial || PaywallCatalog.weekly.hasTrial
     }
 }
 
 // MARK: - Les réponses du quiz
 
-/// Ce qui l'inquiète dans ses études. Plusieurs réponses possibles.
+/// Ce qui le bloque dans ses études. Plusieurs réponses possibles.
 ///
-/// L'ordre de déclaration est l'ordre des rangées, et c'est lui qui choisit l'inquiétude
-/// mise en avant sur l'écran suivant quand plusieurs sont cochées.
+/// L'ordre de déclaration est l'ordre des rangées.
 enum StudyWorry: String, CaseIterable, Identifiable {
     case examStress
     case hardLessons
@@ -477,30 +650,26 @@ enum StudyWorry: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var emoji: String {
-        switch self {
-        case .examStress: "😰"
-        case .hardLessons: "🤯"
-        case .homework: "⏳"
-        case .forgetting: "🫥"
-        case .noStart: "🧭"
-        case .motivation: "🔋"
-        }
-    }
+    /// `solutionMap` répond à trois blocages au plus : un écran, pas une liste.
+    static let answeredAtMost = 3
 
     /// Le libellé de la rangée.
     func title(locale: UiLocale) -> String {
         L10n.t("ios.onb.worry.\(rawValue)", locale: locale)
     }
 
-    /// **La forme courte**, pour le titre de « on s'en occupe » : « Le stress des examens ?
-    /// On s'en occupe. » La rangée entière y serait trop longue.
-    func echo(locale: UiLocale) -> String {
-        L10n.t("ios.onb.worry.\(rawValue).echo", locale: locale)
+    /// **La fonctionnalité qui répond à ce blocage**, sur `solutionMap` : son nom.
+    func solutionTitle(locale: UiLocale) -> String {
+        L10n.t("ios.onb10.solution.\(rawValue).title", locale: locale)
+    }
+
+    /// Ce qu'elle fait, en une ligne, dite par Mika.
+    func solutionBody(locale: UiLocale) -> String {
+        L10n.t("ios.onb10.solution.\(rawValue).body", locale: locale)
     }
 }
 
-/// Le temps par jour, en minutes. Quatre crans, et le nombre de cartes qui va avec.
+/// Le temps par jour, en minutes. Quatre crans.
 enum OnboardingDailyTime: Int, CaseIterable, Identifiable {
     case five = 5
     case ten = 10
@@ -509,17 +678,9 @@ enum OnboardingDailyTime: Int, CaseIterable, Identifiable {
 
     var id: Int { rawValue }
 
-    var emoji: String {
-        switch self {
-        case .five: "☕️"
-        case .ten: "🚌"
-        case .fifteen: "📖"
-        case .thirty: "🎯"
-        }
-    }
-
-    /// Le mot qui qualifie le cran, sous la courbe : « un bon début » jusqu'à « énorme ».
-    func caption(locale: UiLocale) -> String {
-        L10n.t("ios.quiz.time.caption.\(rawValue)", locale: locale)
+    /// « 5 min · Tranquille » : la durée, puis le mot qui qualifie le cran.
+    func title(locale: UiLocale) -> String {
+        let minutes = L10n.t("ios.quiz.time.short", locale: locale, vars: ["n": "\(rawValue)"])
+        return "\(minutes) · \(L10n.t("ios.onb10.time.\(rawValue)", locale: locale))"
     }
 }

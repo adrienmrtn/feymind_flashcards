@@ -31,6 +31,11 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     /// « a vu l'écran » de « a répondu », et l'écart entre les deux est un abandon.
     case onboardingAnswer = "onboarding_answer"
     case onboardingFinished = "onboarding_finished"
+    /// Une page des stories du premier écran, vue : `index` de 1 à 4. Une fois par page.
+    case onboardingStoryViewed = "onboarding_story_viewed"
+    /// La première leçon choisie pendant le parcours : `choice` vaut `topic`, `import` ou
+    /// `later`. Jamais le sujet tapé.
+    case onboardingFirstLesson = "onboarding_first_lesson"
 
     // MARK: Compte
 
