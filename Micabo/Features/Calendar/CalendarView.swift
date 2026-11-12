@@ -331,7 +331,9 @@ struct CalendarView: View {
     private func start(_ item: AgendaItem) {
         guard let start = item.startMinute, let end = item.endMinute else { return }
         let course = lessons.first { $0.id == item.courseID }
-        focusPlan = .revision(eventID: item.eventID, startMinute: start, endMinute: end, courseID: course?.id, courseTitle: course?.title)
+        // Seule une séance de révision se coche en fin de séance : un cours qui revient chaque
+        // semaine ne se marque pas « fait ».
+        focusPlan = .revision(eventID: item.kind == .revision ? item.eventID : nil, startMinute: start, endMinute: end, courseID: course?.id, courseTitle: course?.title)
     }
 
     private func toggleTask(_ item: AgendaItem) {

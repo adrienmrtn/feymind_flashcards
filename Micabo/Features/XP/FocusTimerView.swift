@@ -64,6 +64,11 @@ struct FocusTimerView: View {
     @State private var confirmsStop = false
     @State private var openLesson: Course?
     @State private var lastPhase = 0
+    /// La leçon de l'objectif au départ : le bilan de fin compare (lot 11).
+    @State private var baseline: FocusOutcome.Baseline?
+    @State private var outcome: FocusOutcome?
+    /// Les cartes ou le quiz de la leçon, ouverts par la séance.
+    @State private var lessonRun: FocusLessonRun?
 
     private var phases: [FocusPhase] { plan.phases }
     private var isPaused: Bool { segmentStart == nil && !finished }
@@ -77,6 +82,7 @@ struct FocusTimerView: View {
                 FocusFinishedScreen(
                     minutes: Int(workDone / 60),
                     award: award,
+                    outcome: outcome,
                     tasks: goalTasks.map(\.spec),
                     onToggleTask: toggleTask,
                     onContinue: { dismiss() }
@@ -114,6 +120,7 @@ struct FocusTimerView: View {
             guard startedAt == nil else { return }
             startedAt = Date()
             segmentStart = Date()
+            openGoal()
             Analytics.track(.focusStarted, [
                 "mode": .text(plan.mode.rawValue),
                 "minutes": .number(Double(plan.totalWorkMinutes)),
@@ -138,6 +145,14 @@ struct FocusTimerView: View {
                 break
             }
         }
+        .fullScreenCover(item: $lessonRun) { run in
+            switch run.activity {
+            case .cards:
+                LessonCardsHub(session: LessonSession(course: run.course))
+            case .quiz, .lesson:
+                LessonPracticeView(session: LessonSession(course: run.course), attempt: 1)
+            }
+        }
         .sheet(item: $openLesson) { course in
             NavigationStack {
                 LessonPathView(course: course)
@@ -153,6 +168,27 @@ struct FocusTimerView: View {
         } message: {
             Text(loc("ios.focus.stopMsg"))
         }
+    }
+
+    /// **La séance ouvre sa leçon** (lot 11), sur l'activité choisie : le chemin de la leçon, ses
+    /// cartes ou son quiz, par-dessus la séance qui court. La leçon se note au départ, pour le
+    /// bilan de fin.
+    private func openGoal() {
+        guard let course = goalCourse else { return }
+        baseline = FocusOutcome.baseline(of: course)
+        Analytics.track(.focusLessonOpened, ["activity": .text(plan.activity.rawValue)])
+        switch plan.activity {
+        case .lesson:
+            openLesson = course
+        case .cards, .quiz:
+            lessonRun = FocusLessonRun(course: course, activity: plan.activity)
+        }
+    }
+
+    /// Le bilan : ce qui a bougé dans la leçon depuis le départ.
+    private func measureOutcome(workSeconds: TimeInterval) {
+        guard let baseline, let course = goalCourse else { return }
+        outcome = FocusOutcome.measure(from: baseline, course: course, workSeconds: workSeconds, in: modelContext)
     }
 
     /// Ouvrir la leçon de l'objectif, par-dessus la séance qui continue de courir.
@@ -198,6 +234,7 @@ struct FocusTimerView: View {
         elapsedBefore = total
         segmentStart = nil
         workDone = FocusPhases.position(in: phases, elapsed: total).workDone
+        measureOutcome(workSeconds: workDone)
         // La fête du jour se montre ici, dans l'écran de fin : pas de seconde fête par-dessus.
         award = FocusRecorder.record(
             plan: plan,
@@ -444,6 +481,8 @@ struct FocusSessionScreen: View {
 struct FocusFinishedScreen: View {
     let minutes: Int
     let award: XPAward?
+    /// Le bilan d'une séance liée à une leçon (lot 11).
+    var outcome: FocusOutcome? = nil
     let tasks: [StudyTaskSpec]
     let onToggleTask: (UUID) -> Void
     let onContinue: () -> Void
@@ -481,6 +520,10 @@ struct FocusFinishedScreen: View {
                         XPBadge(points: added)
                             .scaleEffect(1.25)
                             .padding(.top, 4)
+                    }
+                    if let outcome {
+                        FocusOutcomeCard(outcome: outcome)
+                            .padding(.top, 8)
                     }
                     if !tasks.isEmpty {
                         taskList

@@ -230,6 +230,9 @@ struct FocusSetupForm: View {
                 VStack(alignment: .leading, spacing: 12) {
                     MicaboHairline()
                     lessonRow
+                    if plan.courseID != nil {
+                        FocusActivityPicker(activity: $plan.activity)
+                    }
                     if !tasks.isEmpty {
                         StudyFieldLabel(text: loc("ios.focus.goalTasks"))
                         ForEach(tasks.prefix(8)) { task in

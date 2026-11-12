@@ -19,6 +19,8 @@ struct FocusPlan: Equatable, Identifiable {
     var breakMinutes: Int = FocusPhases.breakMinutes
     var courseID: UUID?
     var courseTitle: String?
+    /// Ce que la séance fait de sa leçon (lot 11) : elle l'ouvre dessus dès le départ.
+    var activity: FocusActivity = .lesson
     var taskIDs: [UUID] = []
     /// La séance de révision du calendrier que cette séance accomplit.
     var eventID: UUID?

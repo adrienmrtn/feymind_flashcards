@@ -660,6 +660,9 @@ struct AgendaRow: View {
         switch item.kind {
         case .revision where !item.isDone:
             playButton(action: onStart, label: loc("ios.cal.startSession"))
+        // Un cours ou un événement lié à une leçon lance aussi sa séance (lot 11).
+        case .lesson where item.courseID != nil, .custom where item.courseID != nil:
+            playButton(action: onStart, label: loc("ios.cal.startSession"))
         case .milestone where !item.isDone:
             playButton(action: onTap, label: loc("ios.cal.go"))
         case .focus:
