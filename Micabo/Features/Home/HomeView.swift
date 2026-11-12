@@ -70,6 +70,8 @@ struct HomeView: View {
     /// Une séance de révision ou de Concentration, lancée d'ici.
     @State private var focusPlan: FocusPlan?
     @State private var editingExam: ExamEditTarget?
+    /// Les demandes de nouvelle leçon venues de l'onglet Leçons, déjà servies.
+    @State private var handledCreationRequests = 0
     @FocusState private var focused: Bool
 
     private var isPro: Bool { pro?.isPro ?? true }
@@ -116,9 +118,11 @@ struct HomeView: View {
                 // De retour d'une leçon : elle a pu avancer.
                 if depth == 0 { refreshPlan() }
             }
-            .onChange(of: router?.lessonCreationRequests ?? 0) { old, new in
-                // « Nouvelle leçon », demandée depuis l'onglet Leçons.
-                guard new > old else { return }
+            .onChange(of: router?.lessonCreationRequests ?? 0, initial: true) { _, requests in
+                // « Nouvelle leçon », demandée depuis l'onglet Leçons — même quand c'est elle
+                // qui fait apparaître la Home pour la première fois.
+                guard requests > handledCreationRequests else { return }
+                handledCreationRequests = requests
                 openSources()
             }
             .onChange(of: generation.deliveries) { _, _ in openDelivered() }
