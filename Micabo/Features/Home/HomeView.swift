@@ -1,33 +1,34 @@
 import SwiftData
 import SwiftUI
 
-/// **Home**, dans l'ordre où un élève la lit (`docs/refonte-knowunity.md` § 1). Elle n'a pas la
-/// même tête selon qu'il a déjà ses leçons ou non.
+/// **Home** (lot 10, HOME.md § 1) : elle ne défile pas et ne dit qu'une chose.
 ///
-/// **L'élève qui a ses leçons** vient réviser : la rangée du haut ; le bonjour et l'objectif du
-/// jour ; **« Ton plan du jour »** sur une seule carte claire — la ligne méta du prochain
-/// examen, **la** chose à faire maintenant (la séance du calendrier, la leçon en cours ou les
-/// cartes dues) et un seul grand bouton bleu, Mika qui dépasse de son bord ; juste dessous, la
-/// barre « Nouvelle leçon » et ses raccourcis (scanner, quiz éclair) ; ce qui reste à l'agenda
-/// d'aujourd'hui ; ses leçons récentes. Le minuteur est l'onglet Concentration, la ligue
-/// l'éclair de la rangée du haut : Home ne les répète pas.
+/// De haut en bas : l'en-tête (« Passer en PRO », l'XP, la série) ; la pastille jaune de
+/// l'examen, qui mène au Calendrier ; Mika ; **une** phrase tirée du plan du jour et **une**
+/// action (`HomeBoard`) ; en bas, fixées au-dessus des onglets, les puces d'outils — « Focus »
+/// d'abord — et la barre de saisie (`HomeDock`).
 ///
-/// **L'élève tout neuf** vient écrire sa première leçon, celle qui est offerte : Mika, sur le
-/// papier de la page, parle dans sa bulle au-dessus de la barre « comme une conversation »,
-/// le scanner dessous, puis « Comment ça marche ».
+/// Ce qui a quitté la Home reste à un geste : la carte de séance est devenue la phrase et son
+/// action ; les leçons ont leur onglet ; l'agenda du jour, le Calendrier (la pastille d'examen
+/// y mène) ; la Concentration, la puce « Focus » et son onglet ; le Profil, son onglet.
 ///
-/// La barre, dans les deux cas, passe par la même porte du gratuit (`send`, `tapImport`).
+/// **La leçon s'écrit ici** (`LessonGeneration`) : une fois les deux questions posées
+/// (`LessonCreationFlow`), la Home dit « J'écris ta leçon… », la jauge à la place de l'action,
+/// et l'élève garde la main sur le reste de l'app. La leçon arrivée s'ouvre sur son chemin.
 ///
-/// **Un appui à côté du champ range le clavier.** La rangée du haut, Mika et tout le vide
-/// entre les blocs le rendent ; les boutons gardent leur appui, parce qu'un geste posé sur un
-/// parent passe après ceux de ses enfants. Le geste n'est jamais posé sur la barre elle-même :
-/// un appui dans le champ doit l'ouvrir, pas le refermer aussitôt.
+/// **Rien de lourd ne se calcule au dessin** : la journée (cartes dues, leçon en cours, séance
+/// du calendrier, prochain examen) est lue quand quelque chose change (`refreshPlan`) et gardée
+/// (`HomeSnapshot`) ; `body` ne fait que la mettre en phrase.
+///
+/// La barre passe par la même porte du gratuit qu'avant (`send`, `tapImport`).
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(ProAccess.self) private var pro: ProAccess?
     @Environment(TabRouter.self) private var router: TabRouter?
+    /// Optionnel : le banc d'essai pose la Home sans lui, et rien ne s'y écrit.
+    @Environment(LessonBuilder.self) private var builder: LessonBuilder?
+    @Environment(XPStore.self) private var injectedXP: XPStore?
     @Query(sort: \Course.createdAt, order: .reverse) private var courses: [Course]
     /// Ce que le plan du jour lit du calendrier : relu quand l'un d'eux change.
     @Query private var events: [CalendarEvent]
@@ -36,104 +37,144 @@ struct HomeView: View {
 
     @State private var path = NavigationPath()
     @State private var composer = LessonComposer()
+    /// La leçon qui s'écrit : elle vit autant que la Home.
+    @State private var generation = LessonGeneration()
+    @State private var connectivity = HomeConnectivity()
     @State private var importRequest: LessonComposer.Kind?
+    /// Les deux questions d'avant l'écriture (« As-tu un examen ? »).
     @State private var creating = false
     @State private var paywall: PaywallTrigger?
     @State private var showsStreak = false
-    /// La ligue de la semaine (`docs/refonte-knowunity.md` § 3) : la pastille XP et l'outil.
+    /// « Faire une leçon », choisi dans la feuille de la série : fait une fois la feuille refermée.
+    @State private var studiesAfterStreak = false
+    /// La ligue de la semaine : l'XP de l'en-tête y mène.
     @State private var showsLeague = false
     @State private var showsScanner = false
-    /// « Corriger un texte » (lot 7), en plein écran comme le scanner.
+    /// « Corriger un texte », en plein écran comme le scanner.
     @State private var showsWriting = false
     @State private var showsDueReview = false
     @State private var quickQuizCourse: Course?
-    /// La feuille du « + » : les supports en grandes tuiles.
+    @State private var mock: MockExamStart?
+    /// La feuille du « + » : les sources en grandes tuiles.
     @State private var showsSources = false
-    /// Le support choisi dans la feuille, ouvert une fois la feuille refermée : deux feuilles
+    /// La source choisie dans la feuille, ouverte une fois la feuille refermée : deux feuilles
     /// ne se présentent pas en même temps.
     @State private var pendingImport: LessonComposer.Kind?
-    /// Les blocs sont entrés : l'entrée ne se rejoue pas à chaque retour sur l'onglet.
-    @State private var appeared = false
     @State private var streak = StudyStreak.status()
-    /// L'agenda d'aujourd'hui (`StudyPlan.today`) et le prochain examen, relus à l'arrivée.
-    @State private var agenda: [AgendaItem] = []
-    @State private var nextExam: HomeExam?
-    @State private var now = Date()
-    /// Une séance de révision du calendrier, lancée d'ici comme du calendrier.
+    /// La journée, telle qu'elle a été lue la dernière fois.
+    @State private var snapshot = HomeSnapshot()
+    /// Une leçon lue qui attend Pro : l'aperçu verrouillé a été refermé sans abonnement.
+    @State private var locked: HomeLockedLesson?
+    /// Mika a fait coucou : il ne le refait pas à chaque retour sur l'onglet.
+    @State private var greeted = false
+    /// Une séance de révision ou de Concentration, lancée d'ici.
     @State private var focusPlan: FocusPlan?
     @State private var editingExam: ExamEditTarget?
     @FocusState private var focused: Bool
 
     private var isPro: Bool { pro?.isPro ?? true }
+    private var xp: XPStore { injectedXP ?? .shared }
 
-    /// La leçon offerte n'a pas encore servi : un import peut l'écrire (§ 7).
+    /// La leçon offerte n'a pas encore servi : un import peut l'écrire.
     private var freeLessonLeft: Bool {
         !isPro && !LessonAllowance.hasUsedFreeLesson(courses: courses)
     }
 
     private var lessons: [Course] { courses.filter { $0.isLesson && $0.source != .deck } }
 
+    /// La leçon ouverte le plus récemment : celle de « Continuer » et du quiz éclair.
+    private var resumeCourse: Course? {
+        guard let id = snapshot.resumeID else { return nil }
+        return courses.first { $0.id == id }
+    }
+
     var body: some View {
-        presentations
+        observing
             .task(id: planKey) { refreshPlan() }
             // Le journal des cartes rejoint la série une fois : un ancien compte retrouve la
-            // sienne dans la pastille dès l'ouverture.
+            // sienne dans l'en-tête dès l'ouverture.
             .task { StudyStreak.adoptReviewHistoryIfNeeded(in: modelContext) }
-            .onAppear {
+            .onAppear(perform: appeared)
+            .reportsNavigationDepth(for: .today, depth: path.count)
+            .returnsHome(path: $path)
+    }
+
+    /// Ce que la Home écoute : la série, le retour au premier plan, le retour d'une leçon,
+    /// l'onglet Leçons qui demande une nouvelle leçon, la leçon qui arrive, le réseau.
+    private var observing: some View {
+        presentations
+            .onReceive(NotificationCenter.default.publisher(for: .micaboStreakDidChange)) { _ in
                 refreshStreak()
                 refreshPlan()
-                guard !appeared else { return }
-                Haptics.prepare()
-                DispatchQueue.main.async { appeared = true }
             }
-            .onReceive(NotificationCenter.default.publisher(for: .micaboStreakDidChange)) { _ in refreshStreak() }
             .onChange(of: scenePhase) { _, phase in
                 guard phase == .active else { return }
                 refreshStreak()
                 refreshPlan()
             }
-            .reportsNavigationDepth(for: .today, depth: path.count)
-            .returnsHome(path: $path)
-            // « Nouvelle leçon », demandée depuis l'onglet Leçons : la feuille des supports.
+            .onChange(of: path.count) { _, depth in
+                // De retour d'une leçon : elle a pu avancer.
+                if depth == 0 { refreshPlan() }
+            }
             .onChange(of: router?.lessonCreationRequests ?? 0) { old, new in
+                // « Nouvelle leçon », demandée depuis l'onglet Leçons.
                 guard new > old else { return }
-                dismissKeyboard()
-                showsSources = true
+                openSources()
+            }
+            .onChange(of: generation.deliveries) { _, _ in openDelivered() }
+            .onChange(of: generation.refusals) { _, _ in
+                if let trigger = generation.takeRefusal() { paywall = trigger }
+            }
+            .onChange(of: connectivity.isOnline) { _, online in
+                if online { generation.networkReturned() }
             }
     }
 
     // MARK: La page
 
     private var page: some View {
-        let resume = ResumeTarget.pick(from: courses)
-        let day = today(resume: resume)
-        let name = HomeGreeting.firstName(OnboardingPreferences.displayName)
-        let moment = HomeGreeting.moment(hour: Calendar.current.component(.hour, from: now))
-        return ScrollView {
-            HomeScreen(
+        let day = snapshot.day
+        return HomeScreen(
+            board: HomeBoard.resolve(boardInput),
+            exam: HomeExamPill.resolve(snapshot.exam),
+            entry: HomeProEntry.resolve(isPro: isPro, offerIsLive: DiscountChip.isLive),
+            xp: xp.week,
+            league: xp.league.name,
+            streak: streak,
+            greeted: greeted,
+            onGreeted: { greeted = true },
+            actions: actions
+        )
+        .background(V3Color.bg.ignoresSafeArea())
+        .tabBarClearance {
+            HomeDock(
                 composer: composer,
                 focused: $focused,
-                isPro: isPro,
-                name: name,
-                hello: HomeGreeting.hello(name: name, moment: moment),
-                greeting: HomeGreeting.lines(name: name, moment: moment, dueCount: day.dueCount),
-                day: day,
-                resume: resume,
-                plan: HomePlan(
-                    exam: nextExam,
-                    agenda: HomePlan.upcoming(agenda, now: now, excluding: day.session),
-                    lessons: HomeLessonCard.recent(courses)
+                shortcuts: HomeShortcut.available(
+                    isNewcomer: !day.hasCourses,
+                    hasLesson: snapshot.resumeID != nil,
+                    dueCount: day.dueCount
                 ),
-                motion: HomeMotion(still: false, reduceMotion: reduceMotion),
-                appeared: appeared,
-                actions: actions(day: day, resume: resume?.0)
+                dueCount: day.dueCount,
+                isBusy: generation.isBusy || locked != nil,
+                actions: actions
             )
         }
-        .scrollDismissesKeyboard(.interactively)
-        .scrollIndicators(.hidden)
-        .background(HomePalette.canvas.ignoresSafeArea())
-        .tabBarClearance()
         .toolbar(.hidden, for: .navigationBar)
+    }
+
+    private var boardInput: HomeBoardInput {
+        HomeBoardInput(
+            day: snapshot.day,
+            name: snapshot.name,
+            greeting: snapshot.greeting,
+            phase: generation.phase,
+            stage: generation.stage,
+            subject: generation.subject,
+            hasSupports: generation.hasSupports,
+            locked: locked,
+            hasLesson: snapshot.resumeID != nil
+        )
     }
 
     private var navigation: some View {
@@ -144,15 +185,18 @@ struct HomeView: View {
                 }
                 .lessonImportPickers(composer, request: $importRequest)
                 .fullScreenCover(isPresented: $creating) {
-                    LessonCreationFlow(composer: composer, sendsAsFreeLesson: LessonAllowance.sendsAsFreeLesson(isPro: isPro, source: composer.source, courses: courses)) { course in
+                    LessonCreationFlow(composer: composer) { examDate in
+                        // La Home écrit : l'écran des questions se referme sur elle.
+                        generate(examDate: examDate)
                         creating = false
-                        composer.reset()
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { path.append(course) }
+                    } onLocked: { lesson in
+                        locked = lesson
+                        creating = false
                     } onCancel: {
                         creating = false
                     }
                 }
-                .micaboPaywall($paywall)
+                .micaboPaywall($paywall, onSubscribed: subscribed)
         }
     }
 
@@ -166,8 +210,8 @@ struct HomeView: View {
                     showsSources = false
                 }
             }
-            .sheet(isPresented: $showsStreak) {
-                StreakSheet(onStudy: study)
+            .sheet(isPresented: $showsStreak, onDismiss: studyIfAsked) {
+                StreakSheet(onStudy: { studiesAfterStreak = true })
             }
             .sheet(isPresented: $showsLeague) {
                 LeagueSheet()
@@ -177,21 +221,29 @@ struct HomeView: View {
             }
     }
 
-    /// Les parcours — réviser ses cartes, le quiz éclair, une séance, le scanner — en plein
-    /// écran : un glissement ne les referme pas en plein milieu, leur croix le fait.
+    /// Les parcours — réviser ses cartes, le quiz éclair, une séance, l'examen blanc, le
+    /// scanner — en plein écran : un glissement ne les referme pas en plein milieu, leur croix
+    /// le fait. Chaque outil dit ce qu'il fait la première fois qu'on l'ouvre (`toolIntro`).
     private var presentations: some View {
         sheets
             .fullScreenCover(isPresented: $showsDueReview, onDismiss: refreshPlan) {
                 DueCardsReview(courses: DueReview.courses(courses))
+                    .toolIntro(.cards)
             }
-            .fullScreenCover(item: $quickQuizCourse) { course in
+            .fullScreenCover(item: $quickQuizCourse, onDismiss: refreshPlan) { course in
                 QuickQuizSheet(course: course)
+                    .toolIntro(.quickQuiz)
             }
             .fullScreenCover(item: $focusPlan, onDismiss: refreshPlan) { plan in
                 FocusTimerView(plan: plan)
             }
+            .fullScreenCover(item: $mock, onDismiss: refreshPlan) { start in
+                MockExamFlow(start: start, lessons: lessons)
+                    .toolIntro(.mock)
+            }
             .fullScreenCover(isPresented: $showsScanner) {
                 ScanExerciseView()
+                    .toolIntro(.scan)
             }
             .fullScreenCover(isPresented: $showsWriting) {
                 WritingCoachView()
@@ -199,37 +251,6 @@ struct HomeView: View {
     }
 
     // MARK: Ce que Home lit
-
-    /// Ce que l'app sait de la journée, pour le plan du jour.
-    private func today(resume: (Course, ResumeTarget)?) -> HomeDay {
-        let calendar = Calendar.current
-        var day = HomeDay()
-        day.hasCourses = !courses.isEmpty
-        day.studiedToday = streak.studiedToday
-        for course in courses {
-            let due = DueReview.dueCount(of: course, now: now)
-            day.dueCount += due
-            if due > 0 { day.dueLessons += 1 }
-            day.reviewedToday += course.cards.filter { card in
-                card.lastReviewedAt.map { calendar.isDate($0, inSameDayAs: now) } ?? false
-            }.count
-        }
-        if let resume, let number = resume.1.circleNumber {
-            let (course, target) = resume
-            day.lessonTitle = target.title
-            // « Étape », comme sur le chemin : plus de « cercle » nulle part.
-            day.lessonCircle = L10n.t("lesson.path.step", locale: .resolved(), vars: ["n": String(number)])
-            day.lessonStep = number
-            day.lessonStepTitle = target.circleTitle
-            day.lessonStarted = target.percent > 0
-            let finishedToday = course.progress.finishedAt.map { calendar.isDate($0, inSameDayAs: now) } ?? false
-            let openedToday = course.lastOpenedAt.map { calendar.isDate($0, inSameDayAs: now) } ?? false
-            day.lessonAdvancedToday = finishedToday || (openedToday && streak.studiedToday)
-        }
-        let examNames = Dictionary(exams.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
-        day.session = HomeSession.next(in: agenda, now: now, examNames: examNames)
-        return day
-    }
 
     /// Ce qui fait relire le plan : une séance cochée ou déplacée, un examen ajouté, une tâche
     /// faite, une leçon de plus.
@@ -240,41 +261,96 @@ struct HomeView: View {
         return "\(courses.count)-\(events.count)-\(eventStamp)-\(exams.count)-\(examStamp)-\(tasks.count)-\(done)"
     }
 
-    /// **Le plan du jour, relu** : l'agenda d'aujourd'hui (`StudyPlan.today`), le prochain
-    /// examen (`NextExam.current`) et sa préparation. Rien pour l'élève tout neuf : sa Home
-    /// n'en montre rien.
+    /// **La journée, relue** : les cartes dues, la leçon en cours, la séance du calendrier
+    /// (`StudyPlan.today`) et le prochain examen (`NextExam.current`) — pour le nouvel élève
+    /// aussi, qui a pu donner le sien au parcours d'accueil. Rien n'est écrit quand rien n'a
+    /// changé : la Home ne se redessine pas pour rien.
     private func refreshPlan() {
-        let current = Date()
-        now = current
-        guard !courses.isEmpty else {
-            agenda = []
-            nextExam = nil
-            return
+        let now = Date()
+        let calendar = Calendar.current
+        var day = HomeDay()
+        day.hasCourses = !courses.isEmpty
+        day.studiedToday = streak.studiedToday
+        for course in courses {
+            let due = DueReview.dueCount(of: course, now: now)
+            day.dueCount += due
+            if due > 0 { day.dueLessons += 1 }
         }
-        agenda = StudyPlan.today(in: modelContext, now: current)
-        guard let exam = NextExam.current(in: modelContext, now: current) else {
-            nextExam = nil
-            return
+
+        var next = HomeSnapshot()
+        if let (course, target) = ResumeTarget.pick(from: courses) {
+            next.resumeID = course.id
+            if let number = target.circleNumber {
+                day.lessonTitle = target.title
+                day.lessonStep = number
+                day.lessonStepTitle = target.circleTitle
+                day.lessonStarted = target.percent > 0
+                let finishedToday = course.progress.finishedAt.map { calendar.isDate($0, inSameDayAs: now) } ?? false
+                let openedToday = course.lastOpenedAt.map { calendar.isDate($0, inSameDayAs: now) } ?? false
+                day.lessonAdvancedToday = finishedToday || (openedToday && streak.studiedToday)
+            }
         }
-        let cards = ExamRepository.cards(of: exam, in: modelContext)
-        let readiness = cards.isEmpty
-            ? nil
-            : ExamReadiness.masteryPercent(of: cards, logs: ExamReadiness.recentLogsByCard(in: modelContext, now: current), now: current)
-        nextExam = HomeExam(name: exam.name, daysLeft: max(0, exam.daysRemaining(from: current)), readiness: readiness)
+
+        if !courses.isEmpty {
+            let agenda = StudyPlan.today(in: modelContext, now: now)
+            let examNames = Dictionary(exams.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
+            day.session = HomeSession.next(in: agenda, now: now, examNames: examNames)
+        }
+
+        if let exam = NextExam.current(in: modelContext, now: now) {
+            next.exam = HomeExam(name: exam.name, daysLeft: max(0, exam.daysRemaining(from: now)), readiness: nil)
+            next.examID = exam.id
+            next.examDate = exam.date
+        }
+
+        next.day = day
+        next.name = HomeGreeting.firstName(OnboardingPreferences.displayName)
+        next.greeting = HomeGreeting.moment(hour: calendar.component(.hour, from: now))
+        if next != snapshot { snapshot = next }
+    }
+
+    private func refreshStreak() {
+        let next = StudyStreak.status()
+        guard next != streak else { return }
+        streak = next
+    }
+
+    /// La Home arrive à l'écran : elle relit la journée, écoute le réseau, et lance ce que
+    /// l'élève a choisi pendant le parcours d'accueil.
+    private func appeared() {
+        connectivity.start()
+        refreshStreak()
+        refreshPlan()
+        Haptics.prepare()
+        consumeFirstLessonIntent()
+    }
+
+    /// **La première leçon choisie pendant le parcours d'accueil** (`FirstLessonIntent`), lue
+    /// et effacée : une seule fois. Un sujet part tout de suite à l'écriture — l'élève vient de
+    /// répondre à assez de questions, la Home passe à « J'écris ta leçon… » ; « J'ai un cours »
+    /// ouvre la feuille des sources.
+    private func consumeFirstLessonIntent() {
+        guard let intent = FirstLessonIntent.pending else { return }
+        FirstLessonIntent.pending = nil
+        switch intent {
+        case .topic(let topic):
+            guard !generation.isBusy else { return }
+            composer.draft = topic
+            guard composer.canSend else { return }
+            if let trigger = LessonAllowance.immediatePaywall(isPro: isPro, source: composer.source, courses: courses) {
+                paywall = trigger
+                return
+            }
+            generate(examDate: nil)
+        case .importSource:
+            openSources()
+        }
     }
 
     // MARK: Les gestes
 
-    private func actions(day: HomeDay, resume: Course?) -> HomeActions {
-        var profile: (() -> Void)?
-        if let router {
-            profile = {
-                dismissKeyboard()
-                router.selection = .profile
-            }
-        }
-        return HomeActions(
-            profile: profile,
+    private var actions: HomeActions {
+        HomeActions(
             pro: {
                 dismissKeyboard()
                 paywall = .upgrade
@@ -287,61 +363,98 @@ struct HomeView: View {
                 dismissKeyboard()
                 showsStreak = true
             },
-            sources: {
-                dismissKeyboard()
-                showsSources = true
-            },
+            exam: openExam,
+            perform: perform,
+            leave: leave,
+            shortcut: open,
+            sources: openSources,
+            scan: { open(.scan) },
             send: send,
-            step: { step, slot in
-                dismissKeyboard()
-                Analytics.track(.homePlanTapped, [
-                    "step": .text(step.rawValue),
-                    "slot": .text(slot.rawValue),
-                    "exam": .flag(nextExam != nil),
-                ])
-                switch step {
-                case .session: if let session = day.session { start(session) }
-                case .cards: showsDueReview = true
-                case .lesson: if let resume { path.append(resume) } else { focused = true }
-                case .create: focused = true
-                }
-            },
-            tool: { tool in open(tool, resume: resume) },
-            exam: {
-                dismissKeyboard()
-                router?.showCalendar()
-            },
-            addExam: {
-                dismissKeyboard()
-                editingExam = .new
-            },
-            calendar: {
-                dismissKeyboard()
-                router?.showCalendar(day: now)
-            },
-            agendaTap: { item in
-                dismissKeyboard()
-                if item.kind == .task {
-                    toggleTask(item)
-                } else {
-                    router?.showCalendar(day: now)
-                }
-            },
-            agendaStart: { item in
-                dismissKeyboard()
-                start(item)
-            },
-            agendaToggle: toggleTask,
-            lesson: { id in
-                dismissKeyboard()
-                if let course = courses.first(where: { $0.id == id }) { path.append(course) }
-            },
-            allLessons: {
-                dismissKeyboard()
-                router?.selection = .decks
-            },
             dismissKeyboard: dismissKeyboard
         )
+    }
+
+    private func dismissKeyboard() {
+        focused = false
+    }
+
+    /// **L'**action de la Home. Le nom du geste part dans `home_plan_tapped` : une valeur fixe.
+    private func perform(_ action: HomeAction) {
+        dismissKeyboard()
+        Analytics.track(.homePlanTapped, [
+            "step": .text(action.analyticsStep),
+            "slot": .text("hero"),
+            "exam": .flag(snapshot.exam != nil),
+        ])
+        switch action.kind {
+        case .session:
+            if let session = snapshot.day.session { start(session) }
+        case .cards:
+            showsDueReview = true
+        case .lesson, .more:
+            if let course = resumeCourse { path.append(course) }
+        case .create, .first:
+            showsSources = true
+        case .unlock:
+            paywall = .lessonReady
+        case .retry:
+            generation.retry()
+        }
+    }
+
+    /// L'issue discrète sous l'action.
+    private func leave(_ exit: HomeExit) {
+        switch exit.kind {
+        case .cancel:
+            generation.cancel()
+        case .later:
+            // Les supports restent dans la barre : la leçon peut repartir plus tard.
+            locked = nil
+        }
+    }
+
+    /// Une puce d'outil. Le nom de l'outil part dans `home_tool_opened` : une valeur fixe.
+    private func open(_ shortcut: HomeShortcut) {
+        dismissKeyboard()
+        Analytics.track(.homeToolOpened, ["tool": .text(shortcut.analyticsName)])
+        switch shortcut {
+        case .focus:
+            // Une séance de Concentration, à la durée par défaut de l'élève, sans réglage.
+            focusPlan = FocusPlan(workMinutes: FocusPlan.defaultMinutes(dailyMinutes: OnboardingPreferences.dailyMinutes))
+        case .scan:
+            // Le scanner s'ouvre toujours : la lecture de l'énoncé se fait sur l'appareil. La
+            // porte de Mika vient à la demande de solution (`SolverSession`).
+            showsScanner = true
+        case .quiz:
+            quickQuizCourse = resumeCourse
+        case .cards:
+            showsDueReview = true
+        case .importSource:
+            showsSources = true
+        case .writing:
+            // Toujours ouvert, comme le scanner : la porte de Mika vient à la demande de
+            // relecture (`WritingSession`).
+            showsWriting = true
+        case .mock:
+            mock = MockExamStart(exam: exams.first { $0.id == snapshot.examID })
+        case .photo, .pdf, .youtube:
+            if let kind = shortcut.source { tapImport(kind) }
+        }
+    }
+
+    /// La pastille de l'examen : son jour dans le Calendrier, ou l'ajout d'un examen.
+    private func openExam() {
+        dismissKeyboard()
+        if snapshot.exam != nil {
+            router?.showCalendar(day: snapshot.examDate)
+        } else {
+            editingExam = .new
+        }
+    }
+
+    private func openSources() {
+        dismissKeyboard()
+        showsSources = true
     }
 
     /// La séance du plan, lancée comme le calendrier la lance (`FocusPlan.revision`).
@@ -350,51 +463,15 @@ struct HomeView: View {
         focusPlan = .revision(eventID: session.eventID, startMinute: session.startMinute, endMinute: session.endMinute, courseID: course?.id, courseTitle: course?.title)
     }
 
-    /// Le ▶ d'une ligne de l'agenda : une séance de révision part d'ici ; le reste s'ouvre dans
-    /// le calendrier, où vivent l'examen blanc et ses réglages.
-    private func start(_ item: AgendaItem) {
-        guard item.kind == .revision, let startMinute = item.startMinute, let endMinute = item.endMinute else {
-            router?.showCalendar(day: now)
-            return
-        }
-        let course = courses.first { $0.id == item.courseID }
-        focusPlan = .revision(eventID: item.eventID, startMinute: startMinute, endMinute: endMinute, courseID: course?.id, courseTitle: course?.title)
-    }
-
-    /// Une tâche à rendre, cochée d'ici comme dans Concentration.
-    private func toggleTask(_ item: AgendaItem) {
-        guard let task = tasks.first(where: { $0.id == item.taskID }) else { return }
-        withAnimation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion)) {
-            task.isDone.toggle()
-            task.doneAt = task.isDone ? Date() : nil
-        }
-        try? modelContext.save()
-        if task.isDone {
-            Haptics.success()
-            Analytics.track(.taskDone)
-        }
-        refreshPlan()
-    }
-
-    private func refreshStreak() {
-        let next = StudyStreak.status()
-        guard next != streak else { return }
-        withAnimation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion)) { streak = next }
-    }
-
-    private func dismissKeyboard() {
-        focused = false
-    }
-
-    /// « Faire une leçon », depuis la feuille de la série : la leçon en cours s'il y en a une,
-    /// sinon la barre, prête à écrire.
-    private func study() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            if let resume = ResumeTarget.pick(from: courses) {
-                path.append(resume.0)
-            } else {
-                focused = true
-            }
+    /// « Faire une leçon », depuis la feuille de la série, une fois la feuille refermée : la
+    /// leçon en cours s'il y en a une, sinon la barre, prête à écrire.
+    private func studyIfAsked() {
+        guard studiesAfterStreak else { return }
+        studiesAfterStreak = false
+        if let course = resumeCourse {
+            path.append(course)
+        } else {
+            focused = true
         }
     }
 
@@ -402,206 +479,64 @@ struct HomeView: View {
     /// leçon qui passe par la porte du gratuit (`LessonAllowance.locksImport`, `sendRoute`).
     private func tapImport(_ kind: LessonComposer.Kind) {
         if LessonAllowance.locksImport(kind, isPro: isPro, freeLessonLeft: freeLessonLeft) {
-            focused = false
+            dismissKeyboard()
             paywall = .generateCourse
             return
         }
         importRequest = kind
     }
 
-    /// La feuille du « + » est refermée : le support choisi s'ouvre maintenant.
+    /// La feuille du « + » est refermée : la source choisie s'ouvre maintenant.
     private func openPendingImport() {
         guard let kind = pendingImport else { return }
         pendingImport = nil
         tapImport(kind)
     }
 
-    /// Un outil, depuis son raccourci.
-    private func open(_ tool: HomeTool, resume: Course?) {
-        dismissKeyboard()
-        Analytics.track(.homeToolOpened, ["tool": .text(tool.analyticsName)])
-        switch tool {
-        case .writing:
-            // Toujours ouvert, comme le scanner : la porte de Mika vient à la demande de
-            // relecture, une fois le texte à l'écran (`WritingSession`).
-            showsWriting = true
-        case .scan:
-            // Le scanner s'ouvre toujours : la lecture de l'énoncé se fait sur l'appareil, et
-            // l'historique comme les fils de Mika restent à l'élève. La porte de Mika vient à la
-            // demande de solution, une fois l'énoncé reconnu à l'écran (`SolverSession`).
-            showsScanner = true
-        case .quiz:
-            if let resume {
-                quickQuizCourse = resume
-            } else {
-                focused = true
-            }
-        }
-    }
+    // MARK: Écrire une leçon
 
+    /// Envoyer ce que la barre a préparé : le paywall d'un sujet seul s'ouvre tout de suite
+    /// (`LessonAllowance.immediatePaywall`) ; sinon les deux questions, puis l'écriture.
     private func send() {
-        guard composer.canSend else { return }
+        guard composer.canSend, !generation.isBusy else { return }
+        dismissKeyboard()
         if let trigger = LessonAllowance.immediatePaywall(isPro: isPro, source: composer.source, courses: courses) {
-            focused = false
             paywall = trigger
             return
         }
-        focused = false
+        locked = nil
         creating = true
     }
-}
 
-// MARK: - L'écran
-
-/// Les gestes de Home, pour que l'écran se dessine sans rien savoir de la navigation : les
-/// rendus de la CI le posent avec des gestes vides.
-struct HomeActions {
-    var profile: (() -> Void)?
-    var pro: () -> Void = {}
-    var league: () -> Void = {}
-    var streak: () -> Void = {}
-    var sources: () -> Void = {}
-    var send: () -> Void = {}
-    var step: (HomeDay.Step, HomeSlot) -> Void = { _, _ in }
-    var tool: (HomeTool) -> Void = { _ in }
-    var exam: () -> Void = {}
-    var addExam: () -> Void = {}
-    var calendar: () -> Void = {}
-    var agendaTap: (AgendaItem) -> Void = { _ in }
-    var agendaStart: (AgendaItem) -> Void = { _ in }
-    var agendaToggle: (AgendaItem) -> Void = { _ in }
-    var lesson: (UUID) -> Void = { _ in }
-    var allLessons: () -> Void = {}
-    var dismissKeyboard: () -> Void = {}
-}
-
-/// **Tout Home, de haut en bas**, sans défilement ni navigation : `HomeView` le pose dans son
-/// `ScrollView`, les rendus le dessinent tel quel.
-struct HomeScreen: View {
-    let composer: LessonComposer
-    var focused: FocusState<Bool>.Binding
-    let isPro: Bool
-    let name: String?
-    /// Le bonjour court du plan du jour (`HomeGreeting.hello`).
-    let hello: String
-    /// Les phrases de la bulle de Mika, pour l'élève tout neuf (`HomeGreeting.lines`).
-    let greeting: [String]
-    let day: HomeDay
-    let resume: (Course, ResumeTarget)?
-    let plan: HomePlan
-    let motion: HomeMotion
-    let appeared: Bool
-    var streakPreview: StudyStreak.Status?
-    let actions: HomeActions
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HomeTopBar(
-                name: name,
-                isPro: isPro,
-                onProfile: actions.profile,
-                onPro: actions.pro,
-                onLeague: actions.league,
-                onStreak: actions.streak,
-                streakPreview: streakPreview
-            )
-            .homeEntrance(0, shown: appeared, motion: motion)
-
-            if day.hasCourses {
-                returning
-            } else {
-                newcomer
-            }
-        }
-        .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.top, 8)
-        .padding(.bottom, 24)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        // Le vide entre les blocs : rien n'y est touchable, l'appui tombe sur ce fond.
-        .background(
-            Color.clear
-                .contentShape(Rectangle())
-                .onTapGesture(perform: actions.dismissKeyboard)
-        )
-    }
-
-    /// L'élève qui a ses leçons : son plan d'abord, écrire ensuite.
-    @ViewBuilder
-    private var returning: some View {
-        HomeGreetingRow(title: hello, motion: motion)
-            .padding(.top, 16)
-            .homeEntrance(1, shown: appeared, motion: motion)
-
-        HomePlanHero(
-            day: day,
-            resume: resume,
-            exam: plan.exam,
-            motion: motion,
-            onStep: actions.step,
-            onExam: actions.exam,
-            onAddExam: actions.addExam
-        )
-        .padding(.top, 16)
-        .homeEntrance(2, shown: appeared, motion: motion)
-
-        // Créer vient juste après la séance : c'est ce qui fait revenir (charte du lot 6).
-        HomeCreateSection(
+    /// La Home écrit la leçon (`LessonGeneration`). Hors ligne, la demande attend le réseau.
+    private func generate(examDate: Date?) {
+        guard let builder else { return }
+        locked = nil
+        generation.start(
             composer: composer,
-            focused: focused,
-            tools: HomeTool.available(hasLesson: resume != nil),
-            onSend: actions.send,
-            onSources: actions.sources,
-            onTool: actions.tool
+            builder: builder,
+            context: modelContext,
+            examDate: examDate,
+            sendsAsFreeLesson: LessonAllowance.sendsAsFreeLesson(isPro: isPro, source: composer.source, courses: courses),
+            online: connectivity.isOnline
         )
-        .padding(.top, 24)
-        .homeEntrance(3, shown: appeared, motion: motion)
-
-        if !plan.agenda.isEmpty {
-            HomeAgendaSection(
-                items: plan.agenda,
-                onTap: actions.agendaTap,
-                onStart: actions.agendaStart,
-                onToggle: actions.agendaToggle,
-                onCalendar: actions.calendar
-            )
-            .padding(.top, 32)
-            .homeEntrance(4, shown: appeared, motion: motion)
-        }
-
-        if !plan.lessons.isEmpty {
-            HomeLessonsSection(lessons: plan.lessons, onOpen: actions.lesson, onAll: actions.allLessons)
-                .padding(.top, 32)
-                .homeEntrance(5, shown: appeared, motion: motion)
-        }
     }
 
-    /// L'élève tout neuf : écrire sa première leçon, la leçon offerte, et le scanner sous la
-    /// main.
-    @ViewBuilder
-    private var newcomer: some View {
-        HomeHeroCard(
-            composer: composer,
-            focused: focused,
-            lines: greeting,
-            motion: motion,
-            onSend: actions.send,
-            onSources: actions.sources,
-            onDismissKeyboard: actions.dismissKeyboard
-        )
-        .padding(.top, 16)
-        .homeEntrance(1, shown: appeared, motion: motion)
+    /// La leçon est arrivée : la barre se vide, et la leçon s'ouvre sur son chemin.
+    private func openDelivered() {
+        guard let course = generation.takeDelivered() else { return }
+        composer.reset()
+        refreshPlan()
+        path.append(course)
+    }
 
-        HomeQuickActions(tools: HomeTool.available(hasLesson: false), onTool: actions.tool)
-            .padding(.top, 12)
-            .homeEntrance(2, shown: appeared, motion: motion)
-
-        HomeHowItWorks()
-            .padding(.top, 24)
-            .homeEntrance(3, shown: appeared, motion: motion)
+    /// Abonné depuis la Home : la leçon qui attendait Pro s'écrit, avec les mêmes supports et
+    /// la même date d'examen ; celle que le serveur avait refusée repart.
+    private func subscribed() {
+        if let lesson = locked {
+            generate(examDate: lesson.examDate)
+        } else if generation.wasRefused {
+            generation.retry()
+        }
     }
 }
-
-// MARK: - Les supports
-
-// La feuille du « + » (`HomeSourcesSheet`) vit avec les supports, dans
-// `Features/Import/SourcesSheet.swift` (`docs/supports.md`).

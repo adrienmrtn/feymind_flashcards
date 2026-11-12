@@ -65,13 +65,10 @@ struct LockedLessonPreview: View {
 
             if revealed {
                 VStack(spacing: 10) {
-                    Button(action: onUnlock) {
-                        Label(L10n.t("ios.conv.locked.unlock", locale: .resolved()), systemImage: "lock.open.fill")
-                    }
-                    .buttonStyle(MicaboBrandButtonStyle(minHeight: 58, fontSize: 18))
+                    V3Button(L10n.t("ios.conv.locked.unlock", locale: .resolved()), systemImage: "lock.open.fill", action: onUnlock)
                     Text(L10n.t("ios.conv.locked.note", locale: .resolved()))
-                        .font(MicaboFont.ui(13, weight: .semibold))
-                        .foregroundStyle(MicaboColor.inkSecondary)
+                        .font(V3Font.caption)
+                        .foregroundStyle(V3Color.ink2)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -93,9 +90,8 @@ struct LockedLessonPreview: View {
             Text(revealed
                 ? L10n.t("ios.conv.locked.title", locale: .resolved())
                 : L10n.t("ios.conv.locked.reading", locale: .resolved()))
-                .font(MicaboFont.ui(24, weight: .black))
-                .tracking(MicaboTracking.tight)
-                .foregroundStyle(MicaboColor.ink)
+                .font(V3Font.h2)
+                .foregroundStyle(V3Color.ink)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 12)
@@ -109,8 +105,7 @@ struct LockedLessonPreview: View {
             }
             .padding(18)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboStage.cardRadius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: MicaboStage.cardRadius, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+            .v3Card()
 
             if revealed {
                 previewCard
@@ -228,8 +223,7 @@ struct LockedLessonPreview: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboStage.cardRadius, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: MicaboStage.cardRadius, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+        .v3Card()
     }
 
     // MARK: Le déroulé

@@ -3,18 +3,15 @@ import SwiftUI
 
 // MARK: - Aujourd'hui
 
-/// Ce que l'app sait de la journée, et la seule chose qu'on en tire : **la prochaine étape**.
+/// Ce que l'app sait de la journée, et la seule chose qu'on en tire : **ce qu'elle propose**.
 /// Tout se lit dans ce que l'app sait déjà — la séance de révision du calendrier, les cartes
 /// dues, la leçon en cours, la série —, rien ne vient d'un serveur.
 struct HomeDay: Equatable {
     /// Les cartes dues, toutes leçons confondues.
     var dueCount = 0
-    /// Les cartes notées aujourd'hui.
-    var reviewedToday = 0
     var hasCourses = false
-    /// La leçon en cours : son titre et le cercle où elle attend (`nil` une fois terminée).
+    /// La leçon en cours : son titre (`nil` sans leçon ouverte).
     var lessonTitle: String?
-    var lessonCircle: String?
     /// La leçon a avancé aujourd'hui : terminée aujourd'hui, ou ouverte et travaillée.
     var lessonAdvancedToday = false
     /// Un vrai geste d'étude a allumé la journée (`StudyStreak`).
@@ -52,49 +49,6 @@ struct HomeDay: Equatable {
         if lessonWaits { return .lesson }
         return .open
     }
-
-    /// Une étape de la journée. Les noms partent tels quels dans `home_plan_tapped`.
-    enum Step: String, Equatable {
-        /// Écrire une leçon : la première, ou la suivante.
-        case create
-        /// Reprendre la leçon en cours, au cercle où elle attend.
-        case lesson
-        /// Réviser les cartes dues.
-        case cards
-        /// Mener la séance de révision que le calendrier a posée aujourd'hui.
-        case session
-    }
-
-    private var hasOpenLesson: Bool { lessonTitle != nil && lessonCircle != nil }
-
-    /// **La prochaine chose à faire**, et la seule que le plan du jour met en avant : la séance
-    /// prévue au calendrier d'abord — c'est le plan de l'élève —, puis la leçon en cours tant
-    /// qu'elle n'a pas avancé aujourd'hui, puis les cartes dues, puis la leçon ; sans leçon,
-    /// en écrire une.
-    var primary: Step {
-        guard hasCourses else { return .create }
-        if session != nil { return .session }
-        if hasOpenLesson && !lessonAdvancedToday { return .lesson }
-        if dueCount > 0 { return .cards }
-        if hasOpenLesson { return .lesson }
-        return .create
-    }
-
-    /// **Une seconde ligne, au plus** : ce qui reste d'utile à côté de l'étape mise en avant.
-    var secondary: Step? {
-        switch primary {
-        case .session: dueCount > 0 ? .cards : (hasOpenLesson ? .lesson : nil)
-        case .lesson: dueCount > 0 ? .cards : nil
-        case .cards: hasOpenLesson ? .lesson : nil
-        case .create: dueCount > 0 ? .cards : nil
-        }
-    }
-}
-
-/// Où un geste du plan a été fait : le grand bouton, ou la ligne dessous.
-enum HomeSlot: String {
-    case hero
-    case secondary
 }
 
 /// **La séance de révision d'aujourd'hui** que Home propose : une ligne `revision` de l'agenda
@@ -127,186 +81,26 @@ struct HomeSession: Equatable {
     }
 }
 
-/// **Le prochain examen**, tel que le plan du jour l'annonce.
+/// **Le prochain examen**, tel que la pastille de la Home l'annonce.
 struct HomeExam: Equatable {
     var name: String
     var daysLeft: Int
-    /// La maîtrise des cartes de l'examen, sur cent ; `nil` sans carte.
+    /// La maîtrise des cartes de l'examen, sur cent ; `nil` sans carte. La Home ne l'écrit
+    /// plus : elle vit dans le Calendrier.
     var readiness: Int?
 }
 
-/// Une leçon récente, pour la rangée « Mes leçons ».
-struct HomeLessonCard: Equatable, Identifiable {
-    var id: UUID
-    var title: String
-    var icon: MicaboIcon
-    var tone: LessonTone
-    var percent: Int
-
-    /// Les leçons ouvertes le plus récemment, puis les plus récentes.
-    static func recent(_ courses: [Course], limit: Int = 5) -> [HomeLessonCard] {
-        courses
-            .filter(\.isLesson)
-            .sorted { ($0.lastOpenedAt ?? $0.createdAt) > ($1.lastOpenedAt ?? $1.createdAt) }
-            .prefix(limit)
-            .map { course in
-                HomeLessonCard(
-                    id: course.id,
-                    title: course.title,
-                    icon: course.icon,
-                    tone: course.tone,
-                    percent: ResumeTarget.target(for: course).percent
-                )
-            }
-    }
-}
-
-/// **Ce que le plan du jour lit du calendrier** : le prochain examen, ce qui reste à l'agenda
-/// d'aujourd'hui, et les leçons récentes.
-struct HomePlan: Equatable {
+/// **Ce que la Home a lu de la journée**, une fois par changement, et non à chaque dessin : la
+/// journée, la leçon à rouvrir, le prénom, le prochain examen.
+struct HomeSnapshot: Equatable {
+    var day = HomeDay()
+    /// La leçon ouverte le plus récemment (`ResumeTarget.pick`).
+    var resumeID: UUID?
+    var name: String?
+    var greeting: HomeGreeting.Moment = .day
     var exam: HomeExam?
-    /// Ce qui reste à faire aujourd'hui, la séance du plan mise à part (`upcoming`).
-    var agenda: [AgendaItem] = []
-    var lessons: [HomeLessonCard] = []
-
-    /// Trois lignes au plus : ce qui dure toute la journée et n'est pas fait, puis ce qui n'est
-    /// pas encore fini, sans les séances de concentration menées ni la séance déjà proposée.
-    static func upcoming(_ items: [AgendaItem], now: Date, excluding session: HomeSession?, limit: Int = 3, calendar: Calendar = MicaboCalendar.shared) -> [AgendaItem] {
-        let minute = CalendarTime.minute(of: now, calendar: calendar)
-        return Array(items.filter { item in
-            guard item.kind != .focus, !item.isDone else { return false }
-            if let session, item.kind == .revision, item.eventID == session.eventID { return false }
-            return item.isAllDay || (item.endMinute ?? 0) > minute
-        }.prefix(limit))
-    }
-}
-
-/// **L'anneau de l'objectif du jour** : le bleu de la marque sur un creux, l'éclair jaune du
-/// crayon au milieu, une coche une fois atteint. Il se remplit à l'arrivée, puis suit chaque
-/// gain.
-struct HomeGoalRing: View {
-    let progress: Double
-    let motion: HomeMotion
-    var size: CGFloat = 58
-    var lineWidth: CGFloat = 7
-
-    @State private var filled = false
-
-    var body: some View {
-        let target = max(0, min(1, progress))
-        let shown = filled || !motion.entrance ? target : 0
-        ZStack {
-            Circle().stroke(HomePalette.track, lineWidth: lineWidth)
-            Circle()
-                .trim(from: 0, to: shown)
-                .stroke(
-                    target >= 1 ? AnyShapeStyle(MicaboColor.correct) : AnyShapeStyle(MicaboStage.buttonFill),
-                    style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
-            Image(systemName: target >= 1 ? "checkmark" : "bolt.fill")
-                .font(.system(size: size * 0.32, weight: .black))
-                .foregroundStyle(target >= 1 ? MicaboColor.correct : HomePalette.bolt)
-        }
-        .frame(width: size, height: size)
-        .animation(MicaboMotion.resolved(MicaboMotion.gentle, reduceMotion: motion.reduceMotion), value: shown)
-        .onAppear {
-            guard motion.entrance, !filled else { return }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { filled = true }
-        }
-        .accessibilityHidden(true)
-    }
-}
-
-// MARK: - Les outils
-
-/// **Les outils de Home**, hors de la leçon : ceux qui créent ou font travailler tout de suite,
-/// posés sous la barre « Nouvelle leçon ». Le minuteur a son onglet (Concentration) et la ligue
-/// sa pastille (l'éclair de la rangée du haut) : ils ne sont pas répétés ici.
-///
-/// **Lot 7** : le scanner devient « Aide aux devoirs » (toutes les matières, pas seulement les
-/// maths), et « Corriger un texte » le rejoint : ce sont les deux gestes qui font ouvrir une
-/// app d'étude le soir des devoirs.
-enum HomeTool: CaseIterable, Identifiable {
-    /// « Aide aux devoirs » : une question de n'importe quelle matière, en photo ou tapée
-    /// (`ScanExerciseView`, `SolverFlowView`).
-    case scan
-    /// « Corriger un texte » : Mika relit une rédaction, une lettre, un paragraphe
-    /// (`WritingCoachView`).
-    case writing
-    /// « Quiz éclair » : cinq questions sur la dernière leçon ouverte.
-    case quiz
-
-    var id: Self { self }
-
-    var icon: MicaboIcon {
-        switch self {
-        case .scan: .photo
-        case .writing: .quill
-        case .quiz: .quiz
-        }
-    }
-
-    var title: String {
-        switch self {
-        // Un nom par chose (`MicaboName`) : « Scanner un exo », plus « Aide aux devoirs ».
-        case .scan: MicaboName.scan.text()
-        case .writing: MicaboName.writing.text()
-        case .quiz: MicaboName.quickQuiz.text()
-        }
-    }
-
-    /// Le nom de l'outil dans les statistiques.
-    var analyticsName: String {
-        switch self {
-        case .scan: "scan"
-        case .writing: "writing"
-        case .quiz: "quiz"
-        }
-    }
-
-    /// Les outils qui ont un sens pour l'élève : le quiz éclair demande une leçon.
-    static func available(hasLesson: Bool) -> [HomeTool] {
-        hasLesson ? [.scan, .writing, .quiz] : [.scan, .writing]
-    }
-}
-
-/// **Les raccourcis sous la barre** : des pastilles neutres, l'icône et le nom, côte à côte, ou
-/// l'une sous l'autre quand la langue ou la taille du texte ne les laisse pas tenir sur une
-/// ligne. Secondaires : le seul bouton plein de Home reste celui du plan du jour.
-struct HomeQuickActions: View {
-    let tools: [HomeTool]
-    let onTool: (HomeTool) -> Void
-
-    /// Les pastilles **reviennent à la ligne** au lieu de s'empiler toutes : trois outils
-    /// tiennent sur une ligne en anglais, sur deux en allemand ou en très grand texte, sans
-    /// jamais passer à une colonne de trois boutons.
-    var body: some View {
-        MicaboFlowLayout(spacing: 8, lineSpacing: 8) {
-            ForEach(tools) { chip($0) }
-        }
-    }
-
-    private func chip(_ tool: HomeTool) -> some View {
-        Button { onTool(tool) } label: {
-            HStack(spacing: 6) {
-                MicaboIconView(icon: tool.icon, size: 22)
-                Text(tool.title)
-                    .font(MicaboFont.ui(14.5, weight: .heavy))
-                    .foregroundStyle(HomePalette.ink)
-                    .lineLimit(1)
-            }
-            .padding(.leading, 10)
-            .padding(.trailing, 12)
-            .frame(minHeight: 42)
-            // La surface de l'app, sur sa lèvre (lot 9) : une puce d'outil se touche.
-            .micaboSurface(radius: 21, fill: HomePalette.card, stroke: HomePalette.cardStroke, lip: 2)
-            .padding(.bottom, 2)
-            .fixedSize()
-        }
-        .buttonStyle(HomePressStyle(scale: 0.95, feedback: .soft))
-        .accessibilityLabel(Text(tool.title))
-    }
+    var examID: UUID?
+    var examDate: Date?
 }
 
 // MARK: - Les cartes dues
@@ -327,8 +121,8 @@ enum DueReview {
     }
 }
 
-/// **« {n} cartes à réviser »** : les cartes dues, leçon après leçon, dans la série de
-/// flashcards de la leçon (`LessonCardsRun`). « Suivant » passe à la leçon d'après.
+/// **« {n} cartes à réviser »** : les cartes dues, leçon après leçon, dans la série de cartes de
+/// la leçon (`LessonCardsRun`). « Suivant » passe à la leçon d'après.
 struct DueCardsReview: View {
     @Environment(\.dismiss) private var dismiss
     @State private var sessions: [LessonSession]
@@ -368,8 +162,8 @@ struct DueCardsReview: View {
 
 // MARK: - Quiz éclair
 
-/// **« Quiz éclair »** (§ 1.4) : cinq questions sur la dernière leçon ouverte, dans le quiz de
-/// la leçon. Chaque réponse rapporte son XP, comme ailleurs.
+/// **« Quiz éclair »** : cinq questions sur la dernière leçon ouverte, dans le quiz de la
+/// leçon. Chaque réponse rapporte son XP, comme ailleurs.
 struct QuickQuizSheet: View {
     static let count = 5
 

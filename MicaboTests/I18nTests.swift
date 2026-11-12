@@ -404,7 +404,16 @@ final class I18nTests: XCTestCase {
                 missing.append("\(locale.rawValue) \(key)")
             }
         }
-        XCTAssertEqual(missing, [], "clés absentes d'une langue : elles s'afficheraient en anglais, ou telles quelles")
+        // Le message reste court : une liste de dizaines de milliers d'entrées sur une seule
+        // ligne fait perdre au journal de la CI tout ce qui suit (le reste des tests, « Ce qui a
+        // cassé »). Le nombre par langue, puis les premières clés.
+        let perLocale = Dictionary(grouping: missing) { entry in String(entry.prefix { character in character != " " }) }
+            .map { locale, keys in "\(locale) \(keys.count)" }
+            .sorted()
+        XCTAssertTrue(
+            missing.isEmpty,
+            "\(missing.count) clés absentes d'une langue (elles s'afficheraient en anglais, ou telles quelles) : \(perLocale.joined(separator: ", ")) ; d'abord \(missing.prefix(40).joined(separator: ", "))"
+        )
     }
 
     /// Vrai quand la langue a sa propre phrase pour la clé, sans retomber sur une autre.

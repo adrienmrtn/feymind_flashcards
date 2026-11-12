@@ -262,6 +262,35 @@ final class PerfStage {
     }
 }
 
+// MARK: - Le verdict
+
+/// **Les échecs du banc et des garde-fous, écrits à côté des mesures** : `PERF|echec|…` par
+/// assertion tombée, `PERF|bilan|…` quand une classe a fini. Le journal de l'étape des tests
+/// peut se taire avant la fin (une ligne d'un autre test l'a déjà coupé) ; `perf.txt`, lui,
+/// repasse par sa propre étape et par la branche des rendus.
+enum PerfVerdict {
+    static func write(_ line: String) {
+        print(line)
+        guard let path = ProcessInfo.processInfo.environment["MICABO_RENDER_DIR"], !path.isEmpty else { return }
+        let directory = URL(fileURLWithPath: path, isDirectory: true)
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let url = directory.appendingPathComponent("perf.txt")
+        let data = Data((line + "\n").utf8)
+        if let handle = try? FileHandle(forWritingTo: url) {
+            defer { try? handle.close() }
+            _ = try? handle.seekToEnd()
+            try? handle.write(contentsOf: data)
+        } else {
+            try? data.write(to: url)
+        }
+    }
+
+    static func failure(in test: String, _ issue: XCTIssue) {
+        let text = issue.compactDescription.replacingOccurrences(of: "\n", with: " ")
+        write("PERF|echec|\(test)|\(String(text.prefix(600)))")
+    }
+}
+
 // MARK: - Le rapport
 
 /// **Les chiffres, une ligne par mesure** : `PERF|section|nom|clé=valeur|…`. Imprimés (le

@@ -345,7 +345,7 @@ final class Home10Tests: XCTestCase {
         let retired = [
             "lesson.practice.title", "lesson.finished.cards", "ios.ku7.tools.homework", "lesson.path.circleNumber",
             "lesson.cards.empty", "lesson.quiz.missedBecomeCards", "lesson.menu.resetMessage", "ios.sup.voice.empty",
-            "lesson.exam.addCards", "lesson.lessons.circle",
+            "lesson.exam.addCards", "lesson.lessons.circle", "lesson.home.resumeCircle",
         ]
         let sources = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -389,6 +389,68 @@ final class Home10Tests: XCTestCase {
                 XCTAssertLessThanOrEqual(phrase.count, 90, "\(locale.rawValue) : \(phrase)")
             }
         }
+    }
+
+    // MARK: - L'en-tête et la leçon qui s'écrit
+
+    /// À gauche de l'en-tête : « PRO » seul pour un abonné, la pastille de l'offre tant qu'elle
+    /// court, sinon « Passer en PRO ». Un abonné ne voit jamais l'offre.
+    func testTheHeaderShowsProTheOfferOrTheUpgrade() {
+        XCTAssertEqual(HomeProEntry.resolve(isPro: true, offerIsLive: false), .member)
+        XCTAssertEqual(HomeProEntry.resolve(isPro: true, offerIsLive: true), .member)
+        XCTAssertEqual(HomeProEntry.resolve(isPro: false, offerIsLive: true), .offer)
+        XCTAssertEqual(HomeProEntry.resolve(isPro: false, offerIsLive: false), .upgrade)
+    }
+
+    /// Chaque puce a son pictogramme : une icône de la famille, ou un symbole dans sa couleur.
+    func testEveryShortcutHasItsIcon() {
+        for shortcut in HomeShortcut.allCases {
+            XCTAssertFalse(shortcut.symbol.isEmpty, shortcut.rawValue)
+            XCTAssertTrue(shortcut.icon != nil || shortcut.tone != nil, "\(shortcut.rawValue) : ni icône ni couleur")
+            for locale in Self.written {
+                XCTAssertFalse(shortcut.title(dueCount: 3, locale: locale).isEmpty, "\(locale.rawValue) \(shortcut.rawValue)")
+                XCTAssertFalse(shortcut.spokenTitle(dueCount: 3, locale: locale).contains("{"), "\(locale.rawValue) \(shortcut.rawValue)")
+            }
+        }
+    }
+
+    /// Hors ligne, la demande attend au lieu de partir ; l'abandonner rend la main, et ce que
+    /// l'élève avait tapé reste dans la barre.
+    func testOfflineALessonWaitsAndCanBeCancelled() throws {
+        let container = try ModelContainer(
+            for: Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let composer = LessonComposer()
+        composer.draft = "  La guerre froide "
+        let generation = LessonGeneration()
+        XCTAssertFalse(generation.isBusy)
+
+        generation.start(
+            composer: composer,
+            builder: LessonBuilder(),
+            context: ModelContext(container),
+            examDate: nil,
+            sendsAsFreeLesson: false,
+            online: false
+        )
+        XCTAssertEqual(generation.phase, .waiting)
+        XCTAssertTrue(generation.isBusy)
+        XCTAssertEqual(generation.subject, "La guerre froide")
+        XCTAssertFalse(generation.hasSupports)
+        XCTAssertNil(generation.takeDelivered())
+        XCTAssertNil(generation.takeRefusal())
+
+        generation.cancel()
+        XCTAssertEqual(generation.phase, .idle)
+        XCTAssertFalse(generation.isBusy)
+        XCTAssertNil(generation.subject)
+        XCTAssertEqual(composer.draft, "  La guerre froide ", "ce que l'élève a tapé reste dans la barre")
+
+        // Sans demande en attente, « Réessayer » et le retour du réseau ne lancent rien.
+        generation.retry()
+        generation.networkReturned()
+        XCTAssertEqual(generation.phase, .idle)
     }
 
     // MARK: - L'onglet Leçons
