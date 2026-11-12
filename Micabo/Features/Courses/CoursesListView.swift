@@ -266,7 +266,9 @@ struct CoursesListView: View {
                 newLessonButton
             }
         }
-        .padding(.top, MicaboSpacing.xs)
+        // Le titre à la même hauteur que sur les autres onglets (le défilement pose déjà
+        // les 8 pt du haut : ils étaient comptés deux fois).
+        .frame(minHeight: MicaboLayout.tabHeaderHeight)
     }
 
     private var pageTitle: some View {

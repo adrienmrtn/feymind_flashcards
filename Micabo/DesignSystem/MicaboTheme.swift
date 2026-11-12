@@ -288,6 +288,12 @@ enum MicaboLayout {
     /// réserve qui change avec la longueur des libellés.
     static let tabBarHeight: CGFloat = V3Metric.tabBarHeight
 
+    /// **La rangée du titre d'un onglet** (lot 11) : Leçons, Calendrier, Focus, Profil posent
+    /// leur titre au centre d'une rangée de cette hauteur, 8 pt sous la zone sûre. Le titre est
+    /// ainsi à la même hauteur d'un onglet à l'autre, qu'il ait un bouton à côté (« + Nouvelle
+    /// leçon », 56 pt ; le « + » du Calendrier, 44 pt) ou non — il sautait de 17 pt.
+    static let tabHeaderHeight: CGFloat = V3Metric.buttonHeight
+
     /// Air laissé entre la barre d'onglets et ce qu'une page ancre juste au-dessus d'elle :
     /// le « + » de Cours, le bouton de session de Réviser.
     ///

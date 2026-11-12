@@ -19,6 +19,8 @@ import UIKit
 /// statistique vivre derrière l'écran actif ; une écriture SwiftData réveillait tout.
 struct RootTabView: View {
     @State private var router: TabRouter
+    /// Le clavier est ouvert : la barre d'onglets s'efface.
+    @State private var keyboardShown = false
 
     /// Le routeur se donne de l'extérieur dans le banc d'essai, qui change d'onglet et mesure
     /// (`PerfBenchTests`) ; l'app laisse la valeur par défaut.
@@ -78,9 +80,18 @@ struct RootTabView: View {
         // attend dans « Reprendre », un appui l'ouvre sur son chemin. La remise ne sert plus
         // à choisir l'onglet ; Leçons la consomme. Voir `FirstDeckHandoff`.
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            if router.isAtRoot {
+            // Clavier ouvert, la barre s'efface : elle montait au-dessus du clavier, entre lui
+            // et le champ qu'on remplit (lot 11). Les pages rendent sa place (`tabBarShown`).
+            if router.isAtRoot, !keyboardShown {
                 MicaboTabBar()
             }
+        }
+        .environment(\.tabBarShown, !keyboardShown)
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+            keyboardShown = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            keyboardShown = false
         }
         .tint(MicaboColor.accent)
         .environment(router)

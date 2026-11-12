@@ -525,7 +525,9 @@ struct MockExamRunView: View {
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, 10)
-        .padding(.bottom, 10)
+        // 12 pt sous les boutons, comme les autres parcours (quiz, notes, leçon terminée) :
+        // à 10, « Passer » collait au bord d'un iPhone SE (lot 11).
+        .padding(.bottom, 12)
         .background(MicaboColor.canvas)
     }
 

@@ -85,7 +85,8 @@ struct FirstLessonStepView: View {
             } action: { height in
                 // Le pied, ses marges, et la zone sûre du bas : ce qui sépare le contenu du
                 // bord de l'écran.
-                footerHeight = height + 16 + (MicaboScreen.keyWindow?.safeAreaInsets.bottom ?? 0)
+                let safeBottom = MicaboScreen.keyWindow?.safeAreaInsets.bottom ?? 0
+                footerHeight = height + 8 + OnbLayout.footerGap(safeBottom: safeBottom) + safeBottom
             }
         }
     }
