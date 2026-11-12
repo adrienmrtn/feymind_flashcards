@@ -119,12 +119,14 @@ extension MicaboIcon {
     /// pour les maths, atome pour la physique, livre sinon. Les mots-clés couvrent les cinq
     /// langues de l'app, sans accents.
     static func guess(subject: String?, title: String) -> MicaboIcon {
-        let text = ((subject ?? "") + " " + title).lowercased()
-            .folding(options: .diacriticInsensitive, locale: nil)
-        for (icon, keys) in subjectKeywords where keys.contains(where: text.contains) {
-            return icon
+        let source = (subject ?? "") + " " + title
+        return guessed.value(for: source) {
+            let text = source.lowercased().folding(options: .diacriticInsensitive, locale: nil)
+            for (icon, keys) in subjectKeywords where keys.contains(where: text.contains) {
+                return icon
+            }
+            return .book
         }
-        return .book
     }
 
     /// **L'icône d'une matière**, lue dans le nom de la matière seul (pas dans le titre), ou
@@ -132,19 +134,35 @@ extension MicaboIcon {
     /// sa couleur (`Course.icon`, `Course.tone`) : deux leçons de maths se ressemblent.
     static func subjectIcon(_ subject: String?) -> MicaboIcon? {
         guard let subject, !subject.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
-        let text = folded(subject)
-        // Les mots-clés passent par le même pliage que le texte : un hamza arabe ou un « й »
-        // russe plié d'un côté et pas de l'autre ne se retrouveraient plus.
-        let matches: (String) -> Bool = { text.contains(folded($0)) }
-        for (icon, keys) in subjectKeywords where keys.contains(where: matches) {
-            return icon
+        return subjectIcons.value(for: subject) {
+            let text = folded(subject)
+            // Les mots-clés passent par le même pliage que le texte : un hamza arabe ou un « й »
+            // russe plié d'un côté et pas de l'autre ne se retrouveraient plus.
+            let matches: (String) -> Bool = { text.contains($0) }
+            for (icon, keys) in foldedSubjectKeywords where keys.contains(where: matches) {
+                return icon
+            }
+            return foldedLanguageKeywords.contains(where: matches) ? .book : nil
         }
-        return languageKeywords.contains(where: matches) ? .book : nil
     }
 
     private static func folded(_ text: String) -> String {
         text.lowercased().folding(options: .diacriticInsensitive, locale: nil)
     }
+
+    /// **L'icône d'une matière ne se recherche qu'une fois par nom.** `Course.icon` et
+    /// `Course.tone` passent ici à chaque passe de chaque rangée : plier le nom puis cent
+    /// vingt mots-clés, à chaque fois, coûtait plus que dessiner la rangée. Les mots-clés sont
+    /// pliés une fois (`foldedSubjectKeywords`), et la réponse est gardée par nom de matière
+    /// (`MemoCache`) : un élève en a une dizaine.
+    private static let subjectIcons = MemoCache<String, MicaboIcon?>(limit: 512)
+    private static let guessed = MemoCache<String, MicaboIcon>(limit: 512)
+
+    private static let foldedSubjectKeywords: [(MicaboIcon, [String])] = subjectKeywords.map { icon, keys in
+        (icon, keys.map { folded($0) })
+    }
+
+    private static let foldedLanguageKeywords: [String] = languageKeywords.map { folded($0) }
 
     /// Dans l'ordre : la première matière reconnue gagne. Les maths passent avant la physique
     /// (« physique mathématique » reste des maths), la chimie avant la biologie, l'histoire

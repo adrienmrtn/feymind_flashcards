@@ -531,6 +531,33 @@ struct KeywordText: View {
         tintsKeywords: Bool = true,
         italic: Bool = false
     ) -> AttributedString {
+        let key = AttributedKey(source: source, size: size, weight: weight, tintsKeywords: tintsKeywords, italic: italic)
+        return composed.value(for: key) {
+            compose(source, size: size, weight: weight, tintsKeywords: tintsKeywords, italic: italic)
+        }
+    }
+
+    /// **Un texte ne se compose qu'une fois.** Chaque passe d'un écran de notes, de quiz ou de
+    /// cartes redécoupait chaque phrase (mots-clés, formules) et rebâtissait sa chaîne mise en
+    /// forme ; la même phrase, à la même taille, rend maintenant la chaîne déjà faite
+    /// (`MemoCache`). La couleur des mots-clés suit toujours le thème : elle se résout au dessin.
+    private struct AttributedKey: Hashable {
+        let source: String
+        let size: CGFloat
+        let weight: Font.Weight
+        let tintsKeywords: Bool
+        let italic: Bool
+    }
+
+    private static let composed = MemoCache<AttributedKey, AttributedString>(limit: 400)
+
+    private static func compose(
+        _ source: String,
+        size: CGFloat,
+        weight: Font.Weight,
+        tintsKeywords: Bool,
+        italic: Bool
+    ) -> AttributedString {
         var result = AttributedString()
         for (index, part) in source.components(separatedBy: "**").enumerated() where !part.isEmpty {
             let isKeyword = index % 2 == 1

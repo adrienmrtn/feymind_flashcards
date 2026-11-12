@@ -355,10 +355,9 @@ struct LessonFinishedView: View {
             let id = session.course.id
             guard LessonRating.shouldOffer(id, at: .finished) else { return }
             LessonRating.markOffered(id, at: .finished)
-            // Après la fête : la question vient une fois les confettis tombés.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                withAnimation(LearnMotion.gentle) { showsRating = true }
-            }
+            // La question est là d'emblée, sous le score : elle arrivait 1,2 s après l'écran, et
+            // poussait ce que l'élève était en train de lire.
+            showsRating = true
         }
     }
 
