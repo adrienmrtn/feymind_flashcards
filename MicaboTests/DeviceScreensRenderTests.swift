@@ -120,5 +120,19 @@ final class DeviceScreensRenderTests: XCTestCase {
         try render("ligue", LeagueSheet())
         try render("serie-fete", StreakCelebrationView {})
         try render("connexion", AuthView())
+        try render("amis", NavigationStack { FriendsView(onOpen: { _ in }) })
+        try render("ecole", SettingsSchoolSheet())
+        try render("matieres", SettingsSubjectsSheet())
+        try render("avis", FeedbackView())
+    }
+
+    // MARK: - La création d'une leçon, le lien, le carnet du scanner
+
+    func testCreation() throws {
+        let composer = LessonComposer()
+        composer.draft = "La photosynthèse"
+        try render("creation", LessonCreationFlow(composer: composer, onGenerate: { _ in }, onLocked: { _ in }, onCancel: {}))
+        try render("lien-web", WebLinkSheet(onDone: { _ in }))
+        try render("scanner-carnet", SolverHistoryView(onBack: {}, onOpen: { _ in }))
     }
 }
