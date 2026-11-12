@@ -53,7 +53,7 @@ final class Mika9RenderTests: XCTestCase {
     private func scores() -> some View {
         HStack(alignment: .top, spacing: 0) {
             ForEach([9, 6, 3], id: \.self) { right in
-                QuizScoreView(right: right, total: 10, tone: .lilac, doneTitle: t("lesson.quiz.finish"), onDone: {})
+                QuizScoreView(right: right, total: 10, tone: .lilac, doneTitle: self.t("lesson.quiz.finish"), onDone: {})
                     .frame(width: 393, height: 640)
                     .scaleEffect(0.5, anchor: .topLeading)
                     .frame(width: 196, height: 320, alignment: .topLeading)
