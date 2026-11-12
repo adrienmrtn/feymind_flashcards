@@ -679,7 +679,8 @@ private struct MikaDesignScene: View {
                             .offset(x: -18, y: -MikaPeek.height(for: MikaPeek.card) + 2)
                             .accessibilityHidden(true)
                     }
-                    .popIn(shown || still, delay: 0.1)
+                    // Un fondu sur place : Mika est sur la carte, il ne surgit pas de petit.
+                    .popIn(shown || still, delay: 0.1, scales: false)
                     .position(center)
             }
         }
