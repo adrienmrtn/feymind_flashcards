@@ -66,6 +66,10 @@ enum LocalWipe {
         // Les exercices scannés et les fils de « Demande à Mika » : les questions du compte qui part.
         try deleteAll(SolvedExercise.self, in: context)
         try deleteAll(TutorMessage.self, in: context)
+        // L'historique du chat Mika (lot 11) et ses photos, gardées sur le téléphone.
+        try deleteAll(ChatMessage.self, in: context)
+        try deleteAll(ChatThread.self, in: context)
+        ChatPhotoStore.shared.eraseAll()
         CalendarDefaults.forget()
         RevisionPlanAllowance.forget()
         StudyNotifications.cancelAll()

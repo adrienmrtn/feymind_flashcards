@@ -150,6 +150,20 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     /// Un message envoyé dans un fil de « Demande à Mika », avec `subject`.
     case tutorAsked = "tutor_asked"
 
+    // MARK: Le chat Mika (lot 11)
+
+    /// Une conversation ouverte : `origin` (`home`, `camera`, `lesson`, `card`, `quiz`, `scan`,
+    /// `legacy`) et `resumed` (reprise de l'historique). Jamais le texte.
+    case chatOpened = "chat_opened"
+    /// Un message envoyé : `origin`, `photos` (leur nombre) et `linked` (une leçon ou un exercice).
+    case chatSent = "chat_sent"
+    /// L'historique ouvert, avec `count` (le nombre de conversations).
+    case chatHistoryOpened = "chat_history_opened"
+    /// Une passerelle depuis une réponse : `kind` (`lesson`, `card`).
+    case chatGateway = "chat_gateway"
+    /// Une séance de Concentration qui ouvre sa leçon : `activity` (`lesson`, `cards`, `quiz`).
+    case focusLessonOpened = "focus_lesson_opened"
+
     // MARK: Corriger un texte (lot 7)
 
     /// Un raccourci des outils de Home : `tool` (`scan`, `writing`, `quiz`).

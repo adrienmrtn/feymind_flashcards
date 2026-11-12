@@ -40,6 +40,8 @@ struct MicaboApp: App {
         StudyCalendar.self, CalendarEvent.self, StudyTask.self, FocusSession.self,
         // Le scanner d'exercices et « Demande à Mika » (`Features/Solver`), à la fin aussi.
         SolvedExercise.self, TutorMessage.self,
+        // Le chat Mika et son historique (lot 11, `Features/Chat`), à la fin encore.
+        ChatThread.self, ChatMessage.self,
     ])
 
     /// Vrai quand l'app ne sert que d'hôte aux tests unitaires : elle ne lance alors ni

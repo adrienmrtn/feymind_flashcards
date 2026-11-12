@@ -354,20 +354,13 @@ final class SolverSession {
         try? exercise.modelContext?.save()
     }
 
-    /// **L'exercice arrive dans le fil de sa matière** : l'énoncé, puis la réponse de Mika.
-    /// Résolu à nouveau (un énoncé corrigé), il remplace sa première arrivée.
+    /// **L'exercice arrive dans l'historique du chat** (lot 11) : une conversation liée à
+    /// l'exercice, l'énoncé puis la réponse de Mika ; « Demander à Mika » la reprend. Résolu à
+    /// nouveau (un énoncé corrigé), il remplace sa première arrivée.
     private func postToThread(context: ModelContext?) {
         guard let context else { return }
-        let id = exercise.id
-        let target: UUID? = id
-        let previous = (try? context.fetch(FetchDescriptor<TutorMessage>(predicate: #Predicate { $0.exerciseID == target }))) ?? []
-        for message in previous {
-            context.delete(message)
-        }
-        let now = Date()
-        context.insert(TutorMessage(subject: exercise.subject, role: .user, text: exercise.statement, exerciseID: id, createdAt: now))
         let summary = solution?.answer ?? solution?.steps.first?.body ?? SolverParser.untagged(exercise.solutionRaw ?? "")
-        context.insert(TutorMessage(subject: exercise.subject, role: .mika, text: summary, exerciseID: id, createdAt: now.addingTimeInterval(1)))
+        ChatStore.recordExercise(id: exercise.id, statement: exercise.statement, answer: summary, in: context)
     }
 
     // MARK: La langue, le niveau
