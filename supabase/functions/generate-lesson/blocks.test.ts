@@ -391,7 +391,7 @@ describe("le fil d'enseignement du thème", () => {
       assert(THEME_SYSTEM_PROMPT.includes(part), part);
     }
     assert(!THEME_SYSTEM_PROMPT.includes("2 à 5 blocs"), "le nombre de blocs vient de la marche");
-    assert.equal(PROMPT_VERSION, "lesson-v4.2.0");
+    assert.equal(PROMPT_VERSION, "lesson-v4.3.0");
   });
 
   it("le volume des notes et la question d'examen suivent la marche", () => {
