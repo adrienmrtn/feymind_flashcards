@@ -107,9 +107,12 @@ struct HomeScreen: View {
                 stage(Self.mikaSizes[0])
                 stage(Self.mikaSizes[1])
                 stage(Self.mikaSizes[2])
+                // Très grand texte sur un petit écran : Mika cède sa place, la pastille de
+                // l'examen reste — c'est le Calendrier, visible d'emblée.
+                stage(nil, showsExam: true)
                 stage(nil)
                 ScrollView {
-                    stage(nil)
+                    stage(nil, showsExam: true)
                 }
                 .scrollBounceBehavior(.basedOnSize)
                 .scrollIndicators(.hidden)
@@ -127,11 +130,12 @@ struct HomeScreen: View {
         }
     }
 
-    private func stage(_ mikaSize: CGFloat?) -> some View {
+    private func stage(_ mikaSize: CGFloat?, showsExam: Bool? = nil) -> some View {
         HomeStage(
             board: board,
             exam: exam,
             mikaSize: mikaSize,
+            showsExam: showsExam ?? (mikaSize != nil),
             mood: mood,
             onGreeted: onGreeted,
             actions: actions
@@ -237,18 +241,22 @@ struct HomeStage: View {
     let board: HomeBoard
     let exam: HomeExamPill
     let mikaSize: CGFloat?
+    /// La pastille de l'examen, au-dessus de Mika — ou seule quand Mika a cédé sa place.
+    var showsExam = true
     let mood: MikaMood
     var onGreeted: () -> Void = {}
     let actions: HomeActions
 
     var body: some View {
         VStack(spacing: 0) {
-            if let mikaSize {
+            if showsExam {
                 Button(action: actions.exam) {
                     ExamPillLabel(text: exam.text, isInvitation: !exam.hasExam)
                 }
                 .buttonStyle(MicaboPressableButtonStyle(feedback: .light))
-
+                .padding(.bottom, mikaSize == nil ? 18 : 0)
+            }
+            if let mikaSize {
                 MikaMascot(mood: mood, size: mikaSize, onDone: onGreeted)
                     .accessibilityHidden(true)
                     .padding(.top, 22)

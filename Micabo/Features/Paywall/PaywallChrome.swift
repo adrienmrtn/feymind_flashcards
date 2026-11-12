@@ -303,7 +303,8 @@ struct PaywallInfoRow: View {
     /// La teinte de l'icône : une couleur par idée.
     var tone: Color
     var title: String
-    var detail: String
+    /// La ligne sous le titre ; `nil` quand l'écran n'a de place que pour le titre.
+    var detail: String?
     /// La police de la ligne : une légende quand l'écran est serré.
     var detailFont: Font = PaywallStyle.rowDetail
 
@@ -314,9 +315,11 @@ struct PaywallInfoRow: View {
                 Text(title)
                     .font(PaywallStyle.rowTitle)
                     .foregroundStyle(V3Color.ink)
-                Text(detail)
-                    .font(detailFont)
-                    .foregroundStyle(V3Color.ink2)
+                if let detail {
+                    Text(detail)
+                        .font(detailFont)
+                        .foregroundStyle(V3Color.ink2)
+                }
             }
             .multilineTextAlignment(.leading)
             .fixedSize(horizontal: false, vertical: true)
