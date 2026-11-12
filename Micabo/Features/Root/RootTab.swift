@@ -47,8 +47,8 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     /// tombaient à 62 % de leur taille. La page garde son titre entier ; la barre dit
     /// « Focus », « Keskity », « Enfoque ».
     ///
-    /// Home s'y appelle « Accueil ». Depuis la V3.3 la barre ne montre que des icônes : ces noms
-    /// sont ceux que VoiceOver lit, et que la visionneuse en très grand texte affiche.
+    /// Home s'y appelle « Accueil ». Depuis le lot 11, l'onglet actif de la pilule écrit ce nom ;
+    /// VoiceOver et la visionneuse en très grand texte le lisent pour tous.
     func barLabel(t: (String) -> String) -> String {
         switch self {
         case .focus: t("ios.pol.sys.tab.focus")

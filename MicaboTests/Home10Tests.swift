@@ -284,12 +284,12 @@ final class Home10Tests: XCTestCase {
         XCTAssertEqual(RootTab.tabs, [.today, .decks, .calendar, .focus, .profile])
     }
 
-    /// La leçon range tout dans une grille : huit tuiles, quatre par ligne, et chaque mode de
-    /// révision y a la sienne.
+    /// La leçon range tout dans une grille : six tuiles, deux rangées égales de trois, et chaque
+    /// mode de révision y a la sienne. « Écouter » et « À voix haute » sont retirés (lot 11).
     func testTheLessonGridHoldsEveryWayToStudy() {
-        XCTAssertEqual(LessonTool.allCases, [.notes, .quiz, .cards, .mika, .listen, .voice, .mindMap, .sheet])
-        XCTAssertEqual(LessonTool.rows(columns: 4).map(\.count), [4, 4])
-        XCTAssertEqual(LessonTool.rows(columns: 2).map(\.count), [2, 2, 2, 2])
+        XCTAssertEqual(LessonTool.allCases, [.notes, .quiz, .cards, .mika, .mindMap, .sheet])
+        XCTAssertEqual(LessonTool.rows(columns: 3).map(\.count), [3, 3])
+        XCTAssertEqual(LessonTool.rows(columns: 2).map(\.count), [2, 2, 2])
         XCTAssertEqual(Set(LessonTool.allCases.compactMap(\.revision)), Set(RevisionMode.allCases))
         // Notes, Quiz, Cartes et Mika s'ouvrent toujours : leur tuile n'a pas de porte.
         for tool in [LessonTool.notes, .quiz, .cards, .mika] {
@@ -305,8 +305,6 @@ final class Home10Tests: XCTestCase {
         XCTAssertEqual(names[.quiz], "Quiz")
         XCTAssertEqual(names[.cards], "Cartes")
         XCTAssertEqual(names[.mika], "Mika")
-        XCTAssertEqual(names[.listen], "Écouter")
-        XCTAssertEqual(names[.voice], "À voix haute")
         XCTAssertEqual(names[.mindMap], "Carte mentale")
         XCTAssertEqual(names[.sheet], "Fiche PDF")
         XCTAssertEqual(names[.mock], "Examen blanc")
@@ -345,6 +343,7 @@ final class Home10Tests: XCTestCase {
         let retired = [
             "lesson.practice.title", "lesson.finished.cards", "ios.ku7.tools.homework", "lesson.path.circleNumber",
             "lesson.cards.empty", "lesson.quiz.missedBecomeCards", "lesson.menu.resetMessage", "ios.sup.voice.empty",
+            "ios.sup.modes.listen", "ios.sup.modes.voice", "ios.home10.intro.listen", "ios.sup.voice.speak",
             "lesson.exam.addCards", "lesson.lessons.circle", "lesson.home.resumeCircle",
         ]
         let sources = URL(fileURLWithPath: #filePath)

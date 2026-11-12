@@ -6,8 +6,7 @@ import SwiftUI
 /// qu'on l'ouvre, en une phrase, par la voix de Mika, en tête de son écran — pas un tutoriel,
 /// pas une visite guidée. Un appui la range ; la fois suivante, elle n'est plus là.
 ///
-/// « Corriger un texte » et « À voix haute » portent déjà leur phrase dans leur écran : ils
-/// n'en reçoivent pas une seconde.
+/// « Corriger un texte » porte déjà sa phrase dans son écran : il n'en reçoit pas une seconde.
 enum ToolIntro: String, CaseIterable {
     case scan
     case quickQuiz
@@ -16,7 +15,6 @@ enum ToolIntro: String, CaseIterable {
     case quiz
     case cards
     case mika
-    case listen
     case mindMap
     case sheet
 
@@ -30,7 +28,6 @@ enum ToolIntro: String, CaseIterable {
         case .quiz: "ios.home10.intro.quiz"
         case .cards: "ios.home10.intro.cards"
         case .mika: "ios.home10.intro.mika"
-        case .listen: "ios.home10.intro.listen"
         case .mindMap: "ios.home10.intro.mindMap"
         case .sheet: "ios.home10.intro.sheet"
         }

@@ -1,19 +1,18 @@
 import SwiftUI
 
-/// **Les huit façons de réviser une leçon**, dans l'ordre de la grille (lot 10, HOME.md § 2) :
-/// Notes, Quiz, Cartes, Mika, puis Écouter, À voix haute, Carte mentale, Fiche PDF.
+/// **Les six façons de réviser une leçon**, dans l'ordre de la grille : Notes, Quiz, Cartes,
+/// puis Mika, Carte mentale, Fiche PDF — deux rangées de trois. « Écouter » et « À voix haute »
+/// ont été retirés au lot 11, à la demande de l'utilisateur.
 ///
 /// Elles vivaient à trois endroits — une barre en bas (Notes, Quiz, Flashcards), une rangée
 /// « Réviser autrement » sous le bouton, l'avatar de Mika en haut — et l'élève ne savait plus où
-/// chercher. Elles sont maintenant huit tuiles égales, au même endroit, sous **le** bouton qui
+/// chercher. Elles sont maintenant des tuiles égales, au même endroit, sous **le** bouton qui
 /// dit quoi faire maintenant.
 enum LessonTool: String, CaseIterable, Identifiable {
     case notes
     case quiz
     case cards
     case mika
-    case listen
-    case voice
     case mindMap
     case sheet
 
@@ -26,8 +25,6 @@ enum LessonTool: String, CaseIterable, Identifiable {
         case .quiz: .quiz
         case .cards: .cards
         case .mika: .mika
-        case .listen: .listen
-        case .voice: .voice
         case .mindMap: .mindMap
         case .sheet: .sheet
         }
@@ -38,8 +35,6 @@ enum LessonTool: String, CaseIterable, Identifiable {
     /// propre porte, quand ils en ont une, est dans leur écran.
     var revision: RevisionMode? {
         switch self {
-        case .listen: .listen
-        case .voice: .voice
         case .mindMap: .mindMap
         case .sheet: .export
         case .notes, .quiz, .cards, .mika: nil
@@ -53,16 +48,14 @@ enum LessonTool: String, CaseIterable, Identifiable {
         case .quiz: .quiz
         case .cards: .cards
         case .mika: .mika
-        case .voice: .audio
         case .sheet: .pdf
-        case .listen, .mindMap: nil
+        case .mindMap: nil
         }
     }
 
-    /// Le pictogramme des deux outils qui n'ont pas d'icône dans la famille.
+    /// Le pictogramme de l'outil qui n'a pas d'icône dans la famille.
     var symbol: String {
         switch self {
-        case .listen: "headphones"
         case .mindMap: "point.3.filled.connected.trianglepath.dotted"
         default: icon?.symbol ?? "square.grid.2x2.fill"
         }
@@ -71,7 +64,6 @@ enum LessonTool: String, CaseIterable, Identifiable {
     /// La couleur de l'idée, pour un pictogramme hors famille.
     var tint: Color {
         switch self {
-        case .listen: V3Color.yellow
         case .mindMap: V3Color.green
         default: V3Color.accent
         }
@@ -82,7 +74,7 @@ enum LessonTool: String, CaseIterable, Identifiable {
         revision?.hintKey
     }
 
-    /// Les rangées de la grille, quatre tuiles par ligne, deux en très grand texte.
+    /// Les rangées de la grille : trois tuiles par ligne, deux en très grand texte.
     static func rows(columns: Int) -> [[LessonTool]] {
         let size = max(1, columns)
         return stride(from: 0, to: allCases.count, by: size).map { start in
@@ -91,7 +83,7 @@ enum LessonTool: String, CaseIterable, Identifiable {
     }
 }
 
-/// **La grille « Réviser »** : huit tuiles égales, une icône et un nom. La tuile Cartes porte le
+/// **La grille « Réviser »** : six tuiles égales, une icône et un nom. La tuile Cartes porte le
 /// nombre de cartes à revoir ; une tuile dans Pro, et fermée, porte la pastille « PRO ».
 struct LessonToolGrid: View {
     /// Les cartes à revoir aujourd'hui, sur la tuile Cartes.
@@ -101,8 +93,9 @@ struct LessonToolGrid: View {
 
     @Environment(\.dynamicTypeSize) private var typeSize
 
-    /// Quatre par ligne ; deux quand le texte est grand, pour qu'aucun nom ne se coupe.
-    private var columns: Int { typeSize >= .xLarge ? 2 : 4 }
+    /// Trois par ligne (deux rangées égales) ; deux quand le texte est grand, pour qu'aucun nom
+    /// ne se coupe.
+    private var columns: Int { typeSize >= .xLarge ? 2 : 3 }
 
     var body: some View {
         VStack(spacing: 10) {

@@ -14,7 +14,14 @@
  *   « Terminale », « Lycée général », « YKS hazırlık · TYT », « Bac de français ».
  *
  * Tout est pur et testé (`learner.test.ts`).
+ *
+ * Lot 11 : l'année exacte (identifiants du catalogue de l'app, rang dans la filière) règle le
+ * **calibrage** (`calibration.ts`) : une Sixième n'a plus le cours d'une Troisième, ni une
+ * Seconde celui d'une Terminale. Le pays « Autre pays » arrive par son code ISO (`region`),
+ * les examens de l'année et les matières par le catalogue de l'app. Tous ces champs sont
+ * facultatifs : une app d'avant ne les envoie pas, et la leçon s'écrit comme avant.
  */
+import { calibrationBrief, calibrationOf, gradeOf, type YearPlace } from "./calibration.ts";
 
 export type Tier =
   | "lowerSecondary"
@@ -49,6 +56,24 @@ export interface Learner {
   targetLabel?: string;
   /** Ce qui le freine, parmi `WORRIES`. */
   worries?: Worry[];
+  /**
+   * Le pays par son code ISO (`at`, `br`), quand il n'a pas sa ligne dans `COUNTRIES`
+   * (« Autre pays ») : sans lui, un élève autrichien passait pour « pays non précisé ».
+   */
+  region?: string;
+  /** L'identifiant de la filière dans le catalogue de l'app (`fr.college`). */
+  trackId?: string;
+  /** L'identifiant de l'année (`fr.6e`). */
+  yearId?: string;
+  /** Le rang de l'année dans sa filière, à partir de 1, et le nombre d'années de la filière. */
+  yearRank?: number;
+  yearCount?: number;
+  /** Les examens que le catalogue de l'app donne pour cette année (« Brevet », « Matura »). */
+  yearExams?: string[];
+  /** Les matières choisies à l'accueil (« Mathématiques », « SVT »). */
+  subjects?: string[];
+  /** L'examen de l'année choisi à l'accueil, avec sa date, quand la leçon n'en nomme pas. */
+  targetExam?: string;
 }
 
 /** Ce qui freine l'élève, tel que l'app le demande à l'accueil. */
@@ -85,6 +110,26 @@ const TIER_OF_LEVEL: Record<string, Tier> = {
   concours: "competitive",
   other: "other",
 };
+
+function cleanList(raw: unknown, max: number, each: number): string[] {
+  const out: string[] = [];
+  for (const item of Array.isArray(raw) ? raw : []) {
+    const value = clean(item, each);
+    if (value && !out.includes(value)) out.push(value);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+function cleanInt(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? Math.round(value) : undefined;
+}
+
+/** Les codes ISO dont la ligne de `COUNTRIES` porte un autre nom (`gb` → `uk`). */
+const COUNTRY_OF_REGION: Record<string, string> = { gb: "uk" };
+
+/** Un identifiant du catalogue de l'app : le pays, un point, puis lettres et chiffres. */
+const CATALOG_ID = /^[a-z]{2}\.[A-Za-z0-9.]{1,40}$/;
 
 function clean(value: unknown, max: number): string {
   return typeof value === "string" ? value.replace(/[\r\n<>{}]/g, " ").replace(/\s+/g, " ").trim().slice(0, max) : "";
@@ -137,11 +182,25 @@ export function readLearner(body: {
   scoreLabel?: unknown;
   targetLabel?: unknown;
   worries?: unknown;
+  region?: unknown;
+  trackId?: unknown;
+  yearId?: unknown;
+  yearRank?: unknown;
+  yearCount?: unknown;
+  yearExams?: unknown;
+  subjects?: unknown;
+  targetExam?: unknown;
 }): Learner {
   const rawTier = clean(body.tier, 40) as Tier;
   const level = clean(body.level, 40).toLowerCase();
   const tier = TIERS.includes(rawTier) ? rawTier : (TIER_OF_LEVEL[level] ?? "other");
-  const country = clean(body.country, 8).toLowerCase() || "other";
+  const region = clean(body.region, 4).toLowerCase();
+  const regionCountry = /^[a-z]{2}$/.test(region) ? (COUNTRY_OF_REGION[region] ?? region) : "";
+  let country = clean(body.country, 8).toLowerCase() || "other";
+  // « Autre pays » : le code ISO dit lequel, et quand il a sa ligne, c'est elle qui sert.
+  if (!COUNTRIES[country] || country === "other") {
+    if (regionCountry && COUNTRIES[regionCountry] && regionCountry !== "other") country = regionCountry;
+  }
   const learner: Learner = {
     tier,
     country: COUNTRIES[country] ? country : "other",
@@ -160,6 +219,26 @@ export function readLearner(body: {
   if (scoreLabel) learner.scoreLabel = scoreLabel;
   if (targetLabel) learner.targetLabel = targetLabel;
   if (worries.length) learner.worries = worries;
+  if (learner.country === "other" && /^[a-z]{2}$/.test(region)) learner.region = region;
+  const trackId = clean(body.trackId, 60);
+  const yearId = clean(body.yearId, 60);
+  if (CATALOG_ID.test(trackId)) learner.trackId = trackId;
+  if (CATALOG_ID.test(yearId)) learner.yearId = yearId;
+  const yearRank = cleanInt(body.yearRank);
+  const yearCount = cleanInt(body.yearCount);
+  if (
+    yearRank !== undefined && yearCount !== undefined &&
+    yearCount >= 1 && yearCount <= 15 && yearRank >= 1 && yearRank <= yearCount
+  ) {
+    learner.yearRank = yearRank;
+    learner.yearCount = yearCount;
+  }
+  const yearExams = cleanList(body.yearExams, 4, 60);
+  if (yearExams.length) learner.yearExams = yearExams;
+  const subjects = cleanList(body.subjects, 12, 40);
+  if (subjects.length) learner.subjects = subjects;
+  const targetExam = clean(body.targetExam, 120);
+  if (targetExam) learner.targetExam = targetExam;
   return learner;
 }
 
@@ -387,18 +466,111 @@ export function gradingOf(country: string): string {
 export function learnerBrief(learner: Learner): string {
   const country = COUNTRIES[learner.country] ?? COUNTRIES.other!;
   const where = [learner.track, learner.year].filter(Boolean).join(", ") || learner.stage;
+  const regionName = learner.country === "other" ? regionNameOf(learner.region) : "";
   const lines = [
     "POUR QUI TU ÉCRIS",
     TIER_BRIEFS[learner.tier],
-    `Il étudie ${country.name}${where ? `, en ${where}` : ""}. Examens de ce système : ${country.exams} Barème : ${country.grading}.`,
   ];
-  if (country.never) lines.push(country.never);
+  if (regionName) {
+    // Un pays que la table ne décrit pas : on le nomme, et ses examens viennent du catalogue
+    // de l'app, jamais d'une supposition.
+    const exams = learner.yearExams?.length
+      ? `Examens de cette année, tels que l'élève les nomme : ${learner.yearExams.join(", ")}.`
+      : "Ne nomme un examen de ce pays que si tu es certain de son nom ; sinon, parle de « l'examen ».";
+    lines.push(`Il étudie ${regionName}${where ? `, en ${where}` : ""}. ${exams} Ne parle d'aucun examen ni d'aucun diplôme d'un autre pays.`);
+  } else {
+    lines.push(`Il étudie ${country.name}${where ? `, en ${where}` : ""}. Examens de ce système : ${country.exams} Barème : ${country.grading}.`);
+    if (country.never) lines.push(country.never);
+    if (learner.yearExams?.length && learner.country !== "other") {
+      lines.push(`Examens de son année : ${learner.yearExams.join(", ")}.`);
+    }
+  }
   if (learner.exam) {
     lines.push(`Il prépare précisément : ${learner.exam}. Les exemples, les mots attendus et le format des questions sont ceux de cet examen.`);
+  } else if (learner.targetExam) {
+    lines.push(`Son examen de l'année : ${learner.targetExam}. Quand la leçon y prépare, les mots attendus et le format des questions sont ceux de cet examen.`);
+  }
+  if (learner.subjects?.length) {
+    lines.push(`Ses matières, avec leur nom dans son établissement : ${learner.subjects.join(", ")}.`);
   }
   lines.push("Le niveau, les mots et les exemples sont ceux de CETTE classe dans CE pays : ni plus simples, ni plus savants.");
+  const place = placeOf(learner);
+  lines.push(calibrationBrief(calibrationOf(place), gradeOf(place)));
   const difficulty = difficultyBrief(learner);
   if (difficulty) lines.push(difficulty);
+  return lines.join("\n");
+}
+
+/**
+ * **La consigne « pour qui », seulement quand l'app a dit pour qui.** Pour les fonctions que
+ * les apps d'avant appellent sans profil (`generate-flashcards`, `generate-mock`) : sans marche
+ * ni registre, rien n'est ajouté et la copie s'écrit comme avant.
+ */
+export function optionalLearnerBrief(body: Record<string, unknown>): string {
+  const said = ["tier", "level", "yearId"].some((key) => typeof body[key] === "string" && (body[key] as string).trim());
+  return said ? learnerBrief(readLearner(body)) : "";
+}
+
+/** Ce que le calibrage lit de l'élève. */
+export function placeOf(learner: Learner): YearPlace {
+  return {
+    tier: learner.tier,
+    trackId: learner.trackId,
+    yearId: learner.yearId,
+    yearRank: learner.yearRank,
+    yearCount: learner.yearCount,
+  };
+}
+
+/** Le nom d'un pays en français, précédé de sa préposition neutre (« dans le pays : Autriche »). */
+export function regionNameOf(region: string | undefined): string {
+  if (!region || !/^[a-z]{2}$/.test(region)) return "";
+  try {
+    const name = new Intl.DisplayNames(["fr"], { type: "region" }).of(region.toUpperCase());
+    return name && name.toUpperCase() !== region.toUpperCase() ? `dans ce pays : ${name}` : "";
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * **Le programme officiel.** Il n'y a pas de programme détaillé dans le dépôt, et il ne faut
+ * pas en écrire de faux : la consigne demande au modèle de s'aligner sur le programme en
+ * vigueur pour CE pays, CETTE filière et CETTE année, de n'en citer un intitulé que s'il en est
+ * sûr, et de dire quand le sujet dépasse le niveau plutôt que de le traiter au mauvais niveau.
+ *
+ * Sans document, le programme décide de ce qu'on couvre. Avec un document, le document
+ * décide : on n'en retire rien, on l'explique au niveau de l'élève.
+ */
+export function programmeBrief(learner: Learner, options: { fromScratch: boolean; subject?: string }): string {
+  const country = COUNTRIES[learner.country] ?? COUNTRIES.other!;
+  const regionName = learner.country === "other" ? regionNameOf(learner.region) : "";
+  const where = regionName || (learner.country === "other" ? "" : country.name);
+  const level = [learner.track, learner.year].filter(Boolean).join(", ") || learner.stage;
+  const subject = (options.subject ?? "").replace(/[\r\n<>{}]/g, " ").trim().slice(0, 60);
+  const scope = [
+    level ? `en ${level}` : "",
+    where,
+    subject ? `en ${subject}` : "",
+  ].filter(Boolean).join(", ");
+  const lines = ["PROGRAMME OFFICIEL"];
+  if (!scope || learner.tier === "other") {
+    lines.push("Le programme de l'élève n'est pas connu : écris au niveau demandé par le sujet, sans nommer de programme ni d'épreuve.");
+    return lines.join("\n");
+  }
+  lines.push(
+    `Aligne-toi sur le programme officiel en vigueur pour cet élève (${scope}) : l'ordre et les intitulés de ses chapitres, les notions et les capacités exigibles à CE niveau, le vocabulaire et les méthodes que ses professeurs emploient, le format de son épreuve.`,
+    "N'invente pas : ne cite un intitulé de programme, un numéro de chapitre ou une épreuve que si tu en es certain ; sinon, décris la notion sans la rattacher à un intitulé.",
+  );
+  if (options.fromScratch) {
+    lines.push(
+      "Reste dans ce qui est au programme de SON année. Si le sujet demandé (ou une partie) ne s'étudie qu'à un niveau supérieur, ne le traite pas au mauvais niveau : traite la partie accessible avec les outils de sa classe, et la première ligne de l'intro le dit simplement (par exemple « Les intégrales se voient en Terminale : voici ce qu'on en comprend en Troisième »). Si le sujet relève d'une classe antérieure, fais-en une révision ciblée de ses bases, au vocabulaire de sa classe.",
+    );
+  } else {
+    lines.push(
+      "Le document de l'élève passe avant le programme : n'en retire rien. Explique chaque notion au niveau de sa classe ; si une notion du document dépasse son programme, explique-la quand même, simplement, en t'appuyant sur ce qu'il sait.",
+    );
+  }
   return lines.join("\n");
 }
 

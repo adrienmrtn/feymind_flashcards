@@ -3,10 +3,6 @@ import SwiftUI
 /// **Les modes de révision d'une leçon**, construits sur l'appareil à partir de ce qu'elle
 /// contient déjà (`docs/supports.md`) : rien ne part au modèle.
 enum RevisionMode: String, CaseIterable, Identifiable {
-    /// La leçon lue à voix haute, chapitre par chapitre.
-    case listen
-    /// La carte pose la question, l'élève répond à voix haute.
-    case voice
     /// Les thèmes et leurs notions, en arbre.
     case mindMap
     /// La fiche de la leçon, en PDF à partager.
@@ -16,8 +12,6 @@ enum RevisionMode: String, CaseIterable, Identifiable {
 
     var titleKey: String {
         switch self {
-        case .listen: "ios.sup.modes.listen"
-        case .voice: "ios.sup.modes.voice"
         case .mindMap: "ios.sup.modes.mindMap"
         case .export: "ios.sup.modes.export"
         }
@@ -25,8 +19,6 @@ enum RevisionMode: String, CaseIterable, Identifiable {
 
     var hintKey: String {
         switch self {
-        case .listen: "ios.sup.modes.listenHint"
-        case .voice: "ios.sup.modes.voiceHint"
         case .mindMap: "ios.sup.modes.mindMapHint"
         case .export: "ios.sup.modes.exportHint"
         }
@@ -34,8 +26,6 @@ enum RevisionMode: String, CaseIterable, Identifiable {
 
     var symbol: String {
         switch self {
-        case .listen: "headphones"
-        case .voice: "waveform.and.mic"
         case .mindMap: "point.3.connected.trianglepath.dotted"
         case .export: "doc.richtext.fill"
         }
@@ -43,8 +33,6 @@ enum RevisionMode: String, CaseIterable, Identifiable {
 
     var tone: LessonTone {
         switch self {
-        case .listen: .blue
-        case .voice: .pink
         case .mindMap: .mint
         case .export: .yellow
         }
@@ -53,44 +41,24 @@ enum RevisionMode: String, CaseIterable, Identifiable {
 
 /// **Ce qui est gratuit, et ce qui est dans Pro** (`docs/supports.md` § « La porte »).
 ///
-/// La règle suit celle de l'app : ce qui relit la leçon est à tous, ce qui la fait travailler
-/// davantage a son essai offert puis passe dans Pro, comme Mika (une question) et l'examen
-/// blanc (un). Aucun prix ne change.
-///
-/// - Écouter et la carte mentale : gratuits, toujours. Ils ne coûtent rien et donnent envie
-///   de revenir.
-/// - À voix haute : une séance offerte, puis Pro (`PaywallTrigger.voiceRecall`).
-/// - La fiche en PDF : Pro (`PaywallTrigger.exportSheet`).
+/// La carte mentale est gratuite, toujours : elle relit la leçon et donne envie de revenir. La
+/// fiche en PDF est dans Pro (`PaywallTrigger.exportSheet`). Aucun prix ne change.
+/// (« Écouter » et « À voix haute » ont été retirés au lot 11.)
 enum RevisionModeAllowance {
-    static let freeVoiceSessions = 1
-    static let voiceSessionsKey = "micabo.sup.voiceSessions"
-
     /// Le paywall à ouvrir avant le mode, ou `nil` s'il s'ouvre.
-    static func gate(_ mode: RevisionMode, isPro: Bool, defaults: UserDefaults = .standard) -> PaywallTrigger? {
+    static func gate(_ mode: RevisionMode, isPro: Bool) -> PaywallTrigger? {
         guard !isPro else { return nil }
         switch mode {
-        case .listen, .mindMap:
+        case .mindMap:
             return nil
-        case .voice:
-            return voiceSessionsUsed(defaults: defaults) >= freeVoiceSessions ? .voiceRecall : nil
         case .export:
             return .exportSheet
         }
     }
 
-    /// Vrai quand la pastille « Pro » se montre sur la tuile : seulement quand le mode est
-    /// fermé. À voix haute ne la porte pas tant que sa séance offerte reste.
-    static func showsProBadge(_ mode: RevisionMode, isPro: Bool, defaults: UserDefaults = .standard) -> Bool {
-        gate(mode, isPro: isPro, defaults: defaults) != nil
-    }
-
-    static func voiceSessionsUsed(defaults: UserDefaults = .standard) -> Int {
-        defaults.integer(forKey: voiceSessionsKey)
-    }
-
-    /// Une séance à voix haute a vraiment commencé : sa première carte est notée.
-    static func noteVoiceSession(defaults: UserDefaults = .standard) {
-        defaults.set(voiceSessionsUsed(defaults: defaults) + 1, forKey: voiceSessionsKey)
+    /// Vrai quand la pastille « Pro » se montre sur la tuile : seulement quand le mode est fermé.
+    static func showsProBadge(_ mode: RevisionMode, isPro: Bool) -> Bool {
+        gate(mode, isPro: isPro) != nil
     }
 }
 
@@ -106,9 +74,9 @@ struct ProBadge: View {
 
 /// L'en-tête commun des écrans de mode : la croix, le titre, et ce que le mode fait.
 ///
-/// La croix est à droite sur une feuille (écouter, la carte mentale, la fiche), comme toutes
-/// les feuilles de l'app ; à gauche sur un parcours plein écran (à voix haute), comme le quiz,
-/// les flashcards et l'examen blanc.
+/// La croix est à droite sur une feuille (la carte mentale, la fiche), comme toutes les feuilles
+/// de l'app ; à gauche sur un parcours plein écran, comme le quiz, les flashcards et l'examen
+/// blanc.
 struct RevisionModeHeader: View {
     let mode: RevisionMode
     let lessonTitle: String

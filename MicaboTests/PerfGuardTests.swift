@@ -73,7 +73,6 @@ final class PerfGuardTests: XCTestCase {
         Allowance(path: "Services/Analytics/Analytics.swift", max: 1, why: "le lot de statistiques attend sa fenêtre d'envoi"),
         Allowance(path: "Services/Auth/AuthController.swift", max: 5, why: "réseau : nouvel essai, fenêtres de garde de la connexion"),
         Allowance(path: "Services/Lesson/LessonBuilder.swift", max: 1, why: "réseau : nouvel essai d'un thème"),
-        Allowance(path: "Services/Lesson/VoiceRecallListener.swift", max: 1, why: "le silence qui clôt une réponse à voix haute"),
     ]
 
     /// Les horloges d'animation (`TimelineView(.animation)`) et les minuteries qu'on connaît.

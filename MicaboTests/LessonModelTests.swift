@@ -723,6 +723,64 @@ final class LessonAudienceTests: XCTestCase {
         XCTAssertEqual(LessonAudience.gradeLabel(DesiredGradeScale.belowScore, scale: scale), "< 10/20")
     }
 
+    /// Lot 11 : l'année exacte part, pour que le serveur calibre la leçon (`calibration.ts`).
+    func testTheExactYearTravelsForTheCalibration() {
+        let college = SchoolSystem.track(id: "fr.college", in: .fr)
+        var sixieme = LessonAudience(level: "lycee", country: "fr", schoolStage: "Collège", language: "fr")
+        sixieme.place(region: "FR", track: college, year: SchoolSystem.year(id: "fr.6e", in: college))
+        var payload = sixieme.payload
+        XCTAssertEqual(payload["region"] as? String, "fr")
+        XCTAssertEqual(payload["trackId"] as? String, "fr.college")
+        XCTAssertEqual(payload["yearId"] as? String, "fr.6e")
+        XCTAssertEqual(payload["yearRank"] as? Int, 1)
+        XCTAssertEqual(payload["yearCount"] as? Int, 4)
+        XCTAssertNil(payload["yearExams"], "pas d'examen en Sixième")
+
+        var troisieme = sixieme
+        troisieme.place(region: "FR", track: college, year: SchoolSystem.year(id: "fr.3e", in: college))
+        XCTAssertEqual(troisieme.payload["yearRank"] as? Int, 4)
+        XCTAssertEqual(troisieme.payload["yearExams"] as? [String], ["Brevet"])
+
+        let lycee = SchoolSystem.track(id: "fr.lyceeGeneral", in: .fr)
+        var terminale = sixieme
+        terminale.place(region: "FR", track: lycee, year: SchoolSystem.year(id: "fr.terminale", in: lycee))
+        payload = terminale.payload
+        XCTAssertEqual(payload["yearRank"] as? Int, 3)
+        XCTAssertEqual(payload["yearCount"] as? Int, 3)
+        XCTAssertEqual(payload["yearExams"] as? [String], ["Bac"])
+
+        // Un pays de « Autre pays » part par son code ISO.
+        let gcse = SchoolSystem.track(id: "uk.gcse", in: .uk)
+        var year10 = LessonAudience(level: "lycee", country: "uk", schoolStage: "", language: "en")
+        year10.place(region: "GB", track: gcse, year: SchoolSystem.year(id: "uk.y10", in: gcse))
+        XCTAssertEqual(year10.payload["region"] as? String, "gb")
+        XCTAssertEqual(year10.payload["yearId"] as? String, "uk.y10")
+
+        // Sans filière ni année, rien de vide ne part : le serveur garde le calibrage de la marche.
+        var bare = sixieme
+        bare.place(region: nil, track: nil, year: nil)
+        for key in ["region", "trackId", "yearId", "yearRank", "yearCount", "yearExams"] {
+            XCTAssertNil(bare.payload[key], key)
+        }
+    }
+
+    func testTheProfilePayloadHasNoLanguageNoKindsAndNothingPersonal() {
+        var audience = LessonAudience(level: "lycee", country: "fr", schoolStage: "Lycée", language: "fr", tier: "upperSecondary")
+        audience.subjects = ["Mathématiques", "SVT"]
+        audience.targetExam = LessonAudience.targetExamLine(SchoolExams.choice(id: "fr.bac"), date: nil)
+        let profile = audience.profilePayload
+        XCTAssertNil(profile["language"], "la langue du deck reste celle de l'appel")
+        XCTAssertNil(profile["kinds"], "les formes de carte restent celles de l'appel")
+        XCTAssertEqual(profile["subjects"] as? [String], ["Mathématiques", "SVT"])
+        XCTAssertEqual(profile["targetExam"] as? String, "l'examen « Bac »")
+        for key in ["name", "firstName", "displayName", "email"] {
+            XCTAssertNil(profile[key], key)
+        }
+        XCTAssertEqual(audience.payload["language"] as? String, "fr")
+        XCTAssertEqual(LessonAudience.targetExamLine(.test, date: Date()), "", "un contrôle ne dit rien du programme")
+        XCTAssertEqual(LessonAudience.targetExamLine(nil, date: nil), "")
+    }
+
     func testPathSymbolsAreUniqueAndFromTheCatalog() {
         let symbols = PathSymbol.unique(["flag", "flag", "nope", ""])
         XCTAssertEqual(symbols.first, "flag")
