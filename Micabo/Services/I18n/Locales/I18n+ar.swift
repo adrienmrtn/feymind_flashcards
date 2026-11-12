@@ -231,7 +231,7 @@ extension IosI18nCatalogs {
         "ios.pay11.me.examIn": "{exam} بعد {time}",
         "ios.pay11.offer.includes": "كل Pro: الدروس، أسئلة إلى Mika، الامتحانات التجريبية، التمارين.",
         "ios.pay11.offer.legal": "تدفع اليوم: {price} لسنة كاملة، دون تجربة. ألغِ متى شئت.",
-        "ios.pay11.plan.trialThenWeek": "{n} أيام مجانًا، ثم {price} أسبوعيًا",
+        "ios.pay11.plan.trialThenWeek": "{n} أيام مجانًا، ثم أسبوعيًا",
         "ios.pay11.plan.trialThenYear": "{n} أيام مجانًا، ثم {price} سنويًا",
         "ios.pay11.row.exams": "امتحانات تجريبية مصحَّحة",
         "ios.pay11.row.lessons": "دروس يكتبها Mika",
