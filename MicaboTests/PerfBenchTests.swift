@@ -365,6 +365,12 @@ final class PerfBenchTests: XCTestCase {
         PerfReport.record("micro", "NotesPage.pages", [("us", PerfReport.micro(50) { _ = NotesPage.pages(for: chapter, hasQuestion: true) })])
         let context = fixture.context
         PerfReport.record("micro", "StudyPlan.snapshot", [("us", PerfReport.micro(20) { _ = StudyPlan.snapshot(in: context) })])
+        // D'où vient le temps de l'agenda : ses lectures, ou les rendez-vous des examens.
+        PerfReport.record("micro", "StudyPlan.snapshot-sans-rendez-vous", [("us", PerfReport.micro(20) { _ = StudyPlan.snapshot(in: context, withMilestones: false) })])
+        let exams = ExamRepository.all(in: context)
+        PerfReport.record("micro", "StudyPlan.milestones", [("us", PerfReport.micro(20) { _ = StudyPlan.milestones(for: exams, in: context) })])
+        PerfReport.record("micro", "CourseRepository.allCourses", [("us", PerfReport.micro(20) { _ = CourseRepository.allCourses(in: context) })])
+        PerfReport.record("micro", "fetch-evenements", [("us", PerfReport.micro(20) { _ = try? context.fetch(FetchDescriptor<CalendarEvent>()) })])
     }
 
     // MARK: - Examens, scanner, tuteur, texte
