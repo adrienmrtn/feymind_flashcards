@@ -216,11 +216,11 @@ bras droit qui tient le crayon jaune, une étincelle à côté de la mine.
   généré, `scripts/mika-assets.py` et le workflow `mika-encode.yml` sont retirés (l'ancien kit
   reste sur la branche `assets/mika-kit`). Une seule image vient encore du dessin, exportée du
   SVG par `node design/mika-v3/export.js` : le Mika de l'écran de lancement (`LaunchMika`).
-- **L'icône de l'app n'a pas changé** : elle porte encore l'ancien Mika, comme la marque posée
-  dans l'app (`BrandMark`). Trois propositions avec le nouveau sont dessinées dans
-  `design/mika-v3/icone.html` ; aucune n'a été retenue. Le jour où l'une l'est,
-  `node design/mika-v3/export.js --icone A` remplace `AppIcon` (1024 px, sans transparence) et
-  `BrandMark`.
+- **L'icône de l'app** porte le nouveau Mika : en buste, la bouche ouverte, sur un bleu nuit
+  uni `#101737` (la variante Y de `design/mika-v3/icone.html`, qui garde aussi les pistes non
+  retenues). `node design/mika-v3/export.js --icone Y` refait `AppIcon.png` au pixel près
+  (1024 px, sans transparence). La marque posée dans l'app (`BrandMark`) porte encore l'ancien
+  Mika ; `--icone Y --marque` la refera quand on le décidera.
 
 **La règle des deux places** (écrite aussi en tête de `MikaMascot.swift`). Mika parle à la
 première personne, et il n'a que deux places :

@@ -501,6 +501,8 @@ struct MikaFigure: View, Animatable {
             MikaArt.paint(pieces, pose: drawn, in: &context, toView: toView)
         }
         .frame(width: size.width, height: size.height)
+        // Rien ne se dessine hors du canevas : c'est son bord bas qui coupe le demi-Mika.
+        .clipped()
     }
 }
 
@@ -521,6 +523,7 @@ private struct MikaBurst: View {
             MikaArt.paint(pieces, pose: .idle, in: &context, toView: toView)
         }
         .frame(width: size.width, height: size.height)
+        .clipped()
         .allowsHitTesting(false)
     }
 }
