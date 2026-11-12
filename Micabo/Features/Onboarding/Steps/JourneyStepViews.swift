@@ -212,16 +212,17 @@ struct OnboardingMikaSpeechPage: View {
 
                 Spacer(minLength: MicaboSpacing.lg)
 
-                ZStack(alignment: .topTrailing) {
-                    OnboardingMikaOnLine(mood: mood, size: MikaPeek.hero)
-                    if let icon {
-                        MicaboIconView(icon: icon, size: 54)
-                            .rotationEffect(.degrees(14))
-                            .offset(x: 46, y: -18)
-                            .accessibilityHidden(true)
+                OnboardingMikaOnLine(mood: mood, size: MikaPeek.hero)
+                    // La couronne de l'essai se pose sur sa tête, un peu de travers.
+                    .overlay(alignment: .top) {
+                        if let icon {
+                            MicaboIconView(icon: icon, size: 50)
+                                .rotationEffect(.degrees(-12))
+                                .offset(x: -8, y: -30)
+                                .accessibilityHidden(true)
+                        }
                     }
-                }
-                .frame(maxWidth: .infinity)
+                    .frame(maxWidth: .infinity)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -276,6 +277,7 @@ struct FreeTrialIntroStepView: View {
 struct SocialProofStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.onboardingStill) private var still
 
     private struct Moment: Identifiable {
         let id: String
@@ -306,13 +308,20 @@ struct SocialProofStepView: View {
     var body: some View {
         VStack(spacing: 0) {
             OnboardingCenteredScroll {
-                VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
-                    HStack(alignment: .bottom, spacing: 10) {
-                        OnboardingAccentText(template: i18n.t("ios.onb9.proof.title"), size: 28, alignment: .leading)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        OnboardingMikaOnLine(mood: .wink, size: MikaPeek.card)
-                    }
-                    .onboardingAppear(index: 0)
+                VStack(alignment: .leading, spacing: MicaboSpacing.md) {
+                    // Le titre sur toute la largeur : à côté de Mika, « Concrètement » se
+                    // coupait en deux en très grand texte.
+                    OnboardingAccentText(template: i18n.t("ios.onb9.proof.title"), size: 28, alignment: .leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .onboardingAppear(index: 0)
+
+                    // Mika passe la tête par-dessus la carte, au bord droit : le haut de la carte
+                    // coupe son buste (la règle de mise en scène).
+                    MikaPeek(mood: .wink, width: MikaPeek.card, reactsToTap: true, animates: !still)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .padding(.trailing, MicaboSpacing.lg)
+                        .padding(.bottom, -2)
+                        .accessibilityHidden(true)
 
                     VStack(spacing: 0) {
                         ForEach(Array(moments.enumerated()), id: \.element.id) { index, moment in
@@ -326,6 +335,7 @@ struct SocialProofStepView: View {
                     .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
                     .micaboElevation(.card)
+                    .padding(.top, -MicaboSpacing.md)
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.vertical, MicaboSpacing.md)

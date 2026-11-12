@@ -65,8 +65,14 @@ final class OnboardingLot7Tests: XCTestCase {
     /// étude du parcours est celle de la question d'essai.
     func testTheResearchIsCitedOnce() {
         let names = OnboardingStep.allCases.map(\.analyticsName)
-        XCTAssertFalse(names.contains("socialProof"))
         XCTAssertTrue(names.contains("sampleCard"))
+        // Lot 9 : `socialProof` revient, sans étude (`OnboardingLot9Tests`).
+        for locale in UiLocale.allCases {
+            let table = IosI18nCatalogs.table(for: locale.rawValue)
+            for (key, text) in table where key.hasPrefix("ios.onb9.proof.") {
+                XCTAssertFalse(text.contains("Karpicke") || text.contains("Harvard"), "\(locale.rawValue) \(key)")
+            }
+        }
         for locale in UiLocale.allCases {
             let hook = L10n.t("ios.onb7.hook.title", locale: locale)
             XCTAssertFalse(hook.contains("2"), "\(locale.rawValue) : un chiffre sans source sur le premier écran")

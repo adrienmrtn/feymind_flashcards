@@ -95,7 +95,8 @@ final class I18nTests: XCTestCase {
         XCTAssertTrue(french.contains("ios.onb.review1.title"))
         XCTAssertTrue(french.contains("ios.trialReminder"))
         for goal in LearningGoal.allCases {
-            XCTAssertTrue(french.contains("ios.goal.\(goal.rawValue)"), goal.rawValue)
+            // Les objectifs du lot 9 ont leurs clés `ios.onb9.goal.*`.
+            XCTAssertTrue(french.contains("ios.goal.\(goal.rawValue)") || french.contains("ios.onb9.goal.\(goal.rawValue)"), goal.rawValue)
         }
         for habit in ForgettingHabit.allCases {
             XCTAssertTrue(french.contains("ios.forget.\(habit.rawValue)"), habit.rawValue)
