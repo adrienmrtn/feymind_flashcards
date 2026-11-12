@@ -178,7 +178,7 @@ struct ChoiceList: View {
                     )
                     .background(
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(answered == nil ? MicaboColor.stroke : .clear)
+                            .fill(answered == nil ? MicaboColor.edge : .clear)
                             .offset(y: 3)
                     )
                     .scaleEffect(isPicked(shown) ? 1.02 : 1)
@@ -281,7 +281,7 @@ struct TrueFalseButtons: View {
                     .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(answered == nil ? MicaboColor.stroke : .clear, lineWidth: 2))
                     .background(
                         RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .fill(answered == nil ? MicaboColor.stroke : .clear)
+                            .fill(answered == nil ? MicaboColor.edge : .clear)
                             .offset(y: 4)
                     )
                 }

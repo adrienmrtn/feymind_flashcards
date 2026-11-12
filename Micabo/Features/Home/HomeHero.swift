@@ -481,7 +481,16 @@ struct HomeComposerBar: View {
             }
         }
         .padding(8)
-        .background(HomePalette.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        // La surface de l'app, sur sa lèvre (lot 9), sous le filet qui s'allume au focus.
+        .background {
+            ZStack {
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(MicaboColor.edge)
+                    .offset(y: MicaboSurface.lip)
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(HomePalette.card)
+            }
+        }
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .strokeBorder(
@@ -491,9 +500,9 @@ struct HomeComposerBar: View {
         )
         // Seule, la barre du nouvel élève porte la lueur bleue : c'est l'accent de sa scène.
         .shadow(
-            color: compact ? MicaboBrand.blue900.opacity(0.06) : MicaboBrand.blue.opacity(0.22),
-            radius: compact ? 16 : 20,
-            y: compact ? 8 : 10
+            color: compact ? .clear : MicaboBrand.blue.opacity(0.22),
+            radius: 20,
+            y: 10
         )
         .animation(MicaboMotion.quick, value: isFocused)
         .animation(MicaboMotion.standard, value: composer.supports.count)

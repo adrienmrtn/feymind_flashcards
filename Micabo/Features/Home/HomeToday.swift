@@ -267,8 +267,9 @@ struct HomeQuickActions: View {
             .padding(.leading, 10)
             .padding(.trailing, 12)
             .frame(minHeight: 42)
-            .background(HomePalette.card, in: Capsule())
-            .overlay(Capsule().strokeBorder(HomePalette.cardStroke, lineWidth: 1))
+            // La surface de l'app, sur sa lèvre (lot 9) : une puce d'outil se touche.
+            .micaboSurface(radius: 21, fill: HomePalette.card, stroke: HomePalette.cardStroke, lip: 2)
+            .padding(.bottom, 2)
             .fixedSize()
         }
         .buttonStyle(HomePressStyle(scale: 0.95, feedback: .soft))
