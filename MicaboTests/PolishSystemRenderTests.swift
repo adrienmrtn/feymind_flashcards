@@ -220,17 +220,11 @@ final class PolishSystemRenderTests: XCTestCase {
         return model
     }
 
+    /// Une page du parcours, sous sa barre du haut (`OnboardingRenderPage`). `reaction` date du
+    /// parcours d'avant : Mika réagit maintenant dès que la réponse est là.
     private func page<V: View>(_ step: OnboardingStep, _ model: OnboardingModel, rtl: Bool = false, reaction: Bool = false, @ViewBuilder _ content: () -> V) -> some View {
-        ZStack(alignment: .top) {
-            content()
-                .environment(\.onboardingStep, step)
-            OnboardingTopBar(progress: step.progress, showsBack: step.allowsReturn, isVisible: step.showsChrome, onBack: {})
-        }
-        .environment(model)
-        .environment(\.onboardingStill, true)
-        .environment(\.mikaStill, true)
-        .environment(\.onboardingShowsReaction, reaction)
-        .environment(\.layoutDirection, rtl ? .rightToLeft : .leftToRight)
+        model.place(on: step)
+        return OnboardingRenderPage(step: step, model: model, rtl: rtl, safeTop: 0, safeBottom: 0, content: content)
     }
 
     private func paywall(rtl: Bool = false) -> some View {

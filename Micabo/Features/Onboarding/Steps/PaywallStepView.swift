@@ -39,7 +39,7 @@ struct PaywallStepView: View {
             if showsPaywall {
                 PaywallFlowView(onDismiss: finishOnce, onSubscribed: finishOnce)
             } else {
-                OnboardingPalette.white.ignoresSafeArea()
+                V3Color.bg.ignoresSafeArea()
             }
         }
         .onChange(of: showsPaywall, initial: true) { _, shows in

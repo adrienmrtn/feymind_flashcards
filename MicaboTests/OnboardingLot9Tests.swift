@@ -1,8 +1,10 @@
 import XCTest
 @testable import Micabo
 
-/// **Lot 9** : les écrans du parcours remis (« tu as enlevé trop de trucs »), l'objectif n°1
-/// selon le niveau, et le paywall qu'on ne voyait plus (« j'vois pas le paywall »).
+/// **Lot 9**, ce qui en reste dans le parcours du lot 10 : l'objectif n°1 selon le niveau, et le
+/// paywall qu'on ne voyait plus (« j'vois pas le paywall »), que « Refaire l'onboarding » montre
+/// toujours. Les écrans que le lot 9 avait remis sont partis : voir `OnboardingFlowTests` et
+/// `OnboardingContentTests`.
 final class OnboardingLot9Tests: XCTestCase {
     // MARK: - Le paywall, visible en test
 
@@ -171,30 +173,6 @@ final class OnboardingLot9Tests: XCTestCase {
                 XCTAssertFalse(text.localizedCaseInsensitiveContains("Karpicke"), "\(locale.rawValue) \(key)")
                 XCTAssertFalse(text.contains("000"), "\(locale.rawValue) \(key) : pas de compteur d'élèves")
             }
-        }
-    }
-
-    /// Le point de départ nomme l'examen du pays : l'Abitur en Allemagne, pas le Bac.
-    func testTheStartingPointNamesTheExamOfTheCountry() throws {
-        let model = OnboardingModel()
-        model.select(country: .de)
-        let gymnasium = try XCTUnwrap(model.tracks.first { $0.id == "de.gymnasium" })
-        model.track = gymnasium
-        model.year = gymnasium.years.last
-        let exam = try XCTUnwrap(model.examChoices.first { $0.hasDate })
-        model.choose(exam: exam)
-        let title = L10n.t("ios.onb9.start.exam", locale: .de, vars: ["exam": exam.title(locale: .de)])
-        XCTAssertTrue(title.contains("Abitur"), title)
-        XCTAssertFalse(title.contains("Bac"), title)
-    }
-
-    /// Les pages de Mika revenues parlent à la première personne, comme les autres.
-    func testEveryMikaPageHasItsStep() {
-        XCTAssertEqual(MikaPage.allCases.map(\.step), [.mikaMission, .mikaSources, .mikaPaths, .mikaDesign, .mikaTutor, .mikaSolution, .mikaRelief])
-        for page in MikaPage.allCases {
-            let french = L10n.t(page.titleKey, locale: .fr)
-            XCTAssertFalse(french.hasPrefix("Il "), french)
-            XCTAssertFalse(french.hasPrefix("Mika "), french)
         }
     }
 }
