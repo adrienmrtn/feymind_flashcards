@@ -296,11 +296,11 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(FirstLessonStepView.exampleTopic(for: lina, locale: .fr), "Les fonctions affines")
     }
 
-    /// **De droite à gauche, la plage de notes est un bloc enchâssé** : sans lui, iOS pose
-    /// « 60% ← 80% » de gauche à droite, et la flèche va de la note visée vers celle d'aujourd'hui.
-    func testTheGradeRangeReadsInTheDirectionOfTheLanguage() {
+    /// **Une plage de notes se lit de gauche à droite, comme une équation**, en arabe aussi :
+    /// un bloc enchâssé de gauche à droite, flèche vers la note visée.
+    func testTheGradeRangeReadsLikeAnEquation() {
         XCTAssertEqual(OnbWords.range(from: "12/20", to: "16/20", locale: .fr), "12/20 → 16/20")
-        XCTAssertEqual(OnbWords.range(from: "60%", to: "80%", locale: .ar), "\u{202B}60% ← 80%\u{202C}")
+        XCTAssertEqual(OnbWords.range(from: "60%", to: "80%", locale: .ar), "\u{202A}60% → 80%\u{202C}")
     }
 
     /// **Un collégien français est au collège**, même si le palier large envoyé au serveur

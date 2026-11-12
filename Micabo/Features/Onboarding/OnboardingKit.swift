@@ -387,14 +387,15 @@ enum OnbWords {
         SchoolExams.remainingText(days: days, locale: locale)
     }
 
-    /// « 12/20 → 16/20 » : d'où l'on part, où l'on va. La flèche suit le sens de lecture.
+    /// « 12/20 → 16/20 » : d'où l'on part, où l'on va.
     ///
-    /// **De droite à gauche, la plage est un bloc enchâssé** (U+202B … U+202C) : des chiffres
-    /// et une flèche n'ont aucune lettre qui donne un sens, et sans lui iOS les pose de
-    /// gauche à droite, « 60% ← 80% », ce qui se lit de 80 vers 60. Enchâssée, la note de
-    /// départ est à droite et la flèche va vers la note visée.
+    /// **Une plage de notes s'écrit de gauche à droite, dans toutes les langues**, comme une
+    /// équation : iOS pose de toute façon des chiffres et une flèche de gauche à droite (les
+    /// rendus en arabe montraient « 60% ← 80% », qui se lit de 80 vers 60). La plage est donc
+    /// un bloc enchâssé de gauche à droite (U+202A … U+202C), flèche vers la droite : en
+    /// arabe aussi, « 60% → 80% ».
     static func range(from: String, to: String, locale: UiLocale) -> String {
-        locale.isRightToLeft ? "\u{202B}\(from) ← \(to)\u{202C}" : "\(from) → \(to)"
+        locale.isRightToLeft ? "\u{202A}\(from) → \(to)\u{202C}" : "\(from) → \(to)"
     }
 
     /// « Maths, Philo et Physique-Chimie » : une liste, avec la virgule et le « et » de la
