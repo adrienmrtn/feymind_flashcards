@@ -73,7 +73,7 @@ enum PaywallStyle {
     /// L'icône d'une rangée, et la colonne qui la porte.
     static let glyph: CGFloat = V3Metric.optionIcon
     static let glyphColumn: CGFloat = 34
-    /// Les mêmes, à côté d'un titre seul (`PaywallDensity.minimal`).
+    /// Les mêmes, à côté d'un titre seul (`PaywallDensity.minimal`, `bare`).
     static let glyphSmall: CGFloat = 22
     static let glyphColumnSmall: CGFloat = 28
     /// Une offre : sa hauteur (une ligne de réponse, plus la place de sa deuxième ligne), son

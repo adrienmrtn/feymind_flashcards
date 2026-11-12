@@ -439,18 +439,20 @@ final class PaywallTests: XCTestCase {
         }
     }
 
-    /// **Quatre serrages, du plus aéré au plus serré.** Le dernier retire un élément — un
-    /// bénéfice, et la ligne des deux autres — plutôt que de faire défiler ; les trois
-    /// premiers gardent tout.
-    func testTheLastDensityDropsABenefitAndNothingElse() {
-        XCTAssertEqual(PaywallDensity.allCases, [.regular, .compact, .tight, .minimal])
-        for density in PaywallDensity.allCases where density != .minimal {
+    /// **Cinq serrages, du plus aéré au plus serré.** Les deux derniers retirent un élément
+    /// plutôt que de faire défiler — la ligne des bénéfices, puis le troisième bénéfice ; les
+    /// trois premiers gardent tout.
+    func testTheLastDensitiesDropBenefitLinesAndNothingElse() {
+        XCTAssertEqual(PaywallDensity.allCases, [.regular, .compact, .tight, .minimal, .bare])
+        for density in [PaywallDensity.regular, .compact, .tight] {
             XCTAssertEqual(density.benefitCount, 3)
             XCTAssertTrue(density.showsBenefitDetail)
         }
-        XCTAssertEqual(PaywallDensity.minimal.benefitCount, 2)
+        XCTAssertEqual(PaywallDensity.minimal.benefitCount, 3)
         XCTAssertFalse(PaywallDensity.minimal.showsBenefitDetail)
-        XCTAssertGreaterThan(PaywallDensity.regular.planHeight, PaywallDensity.minimal.planHeight)
+        XCTAssertEqual(PaywallDensity.bare.benefitCount, 2)
+        XCTAssertFalse(PaywallDensity.bare.showsBenefitDetail)
+        XCTAssertGreaterThan(PaywallDensity.regular.planHeight, PaywallDensity.bare.planHeight)
         XCTAssertGreaterThan(PaywallDensity.regular.titleSize, PaywallDensity.compact.titleSize)
     }
 

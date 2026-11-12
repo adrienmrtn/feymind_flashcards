@@ -302,6 +302,7 @@ struct PaywallScreen: View {
                 content(.compact)
                 content(.tight)
                 content(.minimal)
+                content(.bare)
                 ScrollView {
                     content(.compact)
                 }
@@ -368,8 +369,8 @@ struct PaywallScreen: View {
         }
     }
 
-    /// Les bénéfices de Pro, celui de la porte d'abord. Au dernier serrage : les deux premiers,
-    /// leur titre seul.
+    /// Les bénéfices de Pro, celui de la porte d'abord. Aux derniers serrages : leur titre
+    /// seul, puis les deux premiers seulement.
     private func benefits(for trigger: PaywallTrigger?, _ density: PaywallDensity) -> some View {
         PaywallRows(
             rows: Array(benefitRows(for: trigger).prefix(density.benefitCount)),
@@ -444,17 +445,20 @@ struct PaywallScreen: View {
 
 // MARK: - Les serrages
 
-/// **Quatre serrages pour un même écran** : le paywall prend le premier qui tient sans défiler
+/// **Cinq serrages pour un même écran** : le paywall prend le premier qui tient sans défiler
 /// (`ViewThatFits`). Aéré sur un grand téléphone ; resserré quand la langue est longue ; serré
-/// sur un iPhone SE, où le titre, les marges et les offres rapetissent d'un cran ; et, pour
-/// la plus longue accroche sur le plus petit écran, deux bénéfices sans leur ligne. Rien de
-/// ce qui est promis ni de ce qui sera prélevé n'est jamais retiré : la chronologie de
-/// l'essai, les offres et la mention restent entières.
+/// sur un iPhone SE, où le titre, les marges et les offres rapetissent d'un cran ; puis, pour
+/// une longue accroche sur le plus petit écran, les bénéfices sans leur ligne, et au dernier
+/// cran deux bénéfices au lieu de trois. Rien de ce qui est promis ni de ce qui sera prélevé
+/// n'est jamais retiré : la chronologie de l'essai, les offres et la mention restent entières.
 enum PaywallDensity: CaseIterable {
     case regular
     case compact
     case tight
+    /// Les bénéfices sans leur ligne.
     case minimal
+    /// Deux bénéfices, sans leur ligne.
+    case bare
 
     /// La taille du titre de l'en-tête « essai ».
     var titleSize: CGFloat {
@@ -462,7 +466,10 @@ enum PaywallDensity: CaseIterable {
     }
 
     /// Serré : les deux derniers crans, ceux d'un petit écran.
-    private var isTight: Bool { self == .tight || self == .minimal }
+    private var isTight: Bool { self == .tight || isMinimal }
+
+    /// Les deux derniers crans : les bénéfices n'ont plus que leur titre.
+    private var isMinimal: Bool { self == .minimal || self == .bare }
 
     /// Entre l'en-tête et les offres.
     var sectionSpacing: CGFloat {
@@ -470,7 +477,7 @@ enum PaywallDensity: CaseIterable {
         case .regular: 24
         case .compact: 16
         case .tight: 12
-        case .minimal: 10
+        case .minimal, .bare: 10
         }
     }
 
@@ -480,7 +487,7 @@ enum PaywallDensity: CaseIterable {
         case .regular: 22
         case .compact: 14
         case .tight: 10
-        case .minimal: 8
+        case .minimal, .bare: 8
         }
     }
 
@@ -490,7 +497,7 @@ enum PaywallDensity: CaseIterable {
         case .regular: 16
         case .compact: 10
         case .tight: 8
-        case .minimal: 6
+        case .minimal, .bare: 6
         }
     }
 
@@ -500,7 +507,7 @@ enum PaywallDensity: CaseIterable {
         case .regular: 22
         case .compact: 12
         case .tight: 6
-        case .minimal: 4
+        case .minimal, .bare: 4
         }
     }
 
@@ -514,20 +521,20 @@ enum PaywallDensity: CaseIterable {
         isTight ? PaywallStyle.rowDetailTight : PaywallStyle.rowDetail
     }
 
-    /// Un bénéfice garde sa ligne, sauf au dernier cran : on retire un élément plutôt que de
-    /// rapetisser encore.
-    var showsBenefitDetail: Bool { self != .minimal }
+    /// Un bénéfice garde sa ligne, sauf aux deux derniers crans : on retire un élément plutôt
+    /// que de rapetisser encore.
+    var showsBenefitDetail: Bool { !isMinimal }
 
     /// Combien de bénéfices se montrent : trois, et les deux premiers au dernier cran.
-    var benefitCount: Int { self == .minimal ? 2 : 3 }
+    var benefitCount: Int { self == .bare ? 2 : 3 }
 
-    /// L'icône d'une rangée et sa colonne : au dernier cran, à la mesure d'un titre seul.
+    /// L'icône d'une rangée et sa colonne : à côté d'un titre seul, à sa mesure.
     var glyph: CGFloat {
-        self == .minimal ? PaywallStyle.glyphSmall : PaywallStyle.glyph
+        isMinimal ? PaywallStyle.glyphSmall : PaywallStyle.glyph
     }
 
     var glyphColumn: CGFloat {
-        self == .minimal ? PaywallStyle.glyphColumnSmall : PaywallStyle.glyphColumn
+        isMinimal ? PaywallStyle.glyphColumnSmall : PaywallStyle.glyphColumn
     }
 }
 
@@ -560,7 +567,7 @@ struct PaywallHeaderRow: Identifiable, Equatable {
 private struct PaywallRows: View {
     let rows: [PaywallHeaderRow]
     let density: PaywallDensity
-    /// Faux au dernier serrage, pour les bénéfices : le titre seul.
+    /// Faux aux derniers serrages, pour les bénéfices : le titre seul.
     var showsDetail = true
 
     var body: some View {
