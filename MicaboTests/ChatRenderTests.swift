@@ -167,12 +167,13 @@ final class ChatRenderTests: XCTestCase {
     }
 
     func testCamera() throws {
+        let backdrop = page("Ex. 3", tint: .systemGreen)
         let shots = [ChatShot(image: page("Ex. 1", tint: .systemBlue)), ChatShot(image: page("Ex. 2", tint: .systemPink))]
         let chrome = ChatCameraChrome(
             shots: shots, room: 6, available: true, torchAvailable: true, torchOn: false,
             onClose: {}, onTorch: {}, onShoot: {}, onRemove: { _ in }, onDone: {}
         ) {
-            Image(uiImage: page("Ex. 3", tint: .systemGreen)).resizable().scaledToFill()
+            Image(uiImage: backdrop).resizable().scaledToFill()
         }
         try RenderGallery.renderDevice("chat11-camera", devices: [.iPhone15Pro], chrome)
     }
