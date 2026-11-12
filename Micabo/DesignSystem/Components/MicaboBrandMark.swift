@@ -1,23 +1,26 @@
 import SwiftUI
 
-/// Le stylo sur fond bleu, le même fichier que le favicon du site.
+/// **La marque de Micabo : le Mika vectoriel**, dans un squircle (lot 11).
 ///
-/// L'image est déjà un squircle : on la recoupe encore d'un filet continu pour que le
-/// halo gris de l'export ne se lise pas à côté du mot « Micabo ».
+/// C'était une image : l'ancien Mika noir et brillant, sur fond bleu, que l'utilisateur ne
+/// reconnaissait plus à côté du Mika plat de l'app (l'écran de connexion la montrait encore).
+/// C'est maintenant le même dessin que partout (`MikaFigure`, la tête), sur son disque, en
+/// marine comme en clair — rien à exporter, net à toutes les tailles.
 struct MicaboBrandMark: View {
     var size: CGFloat = 32
 
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
-        Image("BrandMark")
-            .resizable()
-            .interpolation(.high)
-            .scaledToFit()
+        let night = colorScheme == .dark
+        let shape = RoundedRectangle(cornerRadius: size * 0.22, style: .continuous)
+        MikaFigure(pose: .face, framing: .avatar, scale: size / MikaFraming.avatar.window.width, night: night)
             .frame(width: size, height: size)
-            .clipShape(RoundedRectangle(cornerRadius: size * 0.22, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: size * 0.22, style: .continuous)
-                    .strokeBorder(Color.black.opacity(0.08), lineWidth: MicaboSurface.border)
-            }
+            .background(MikaPalette.disc(night: night))
+            .clipShape(shape)
+            .overlay { shape.strokeBorder(V3Color.line, lineWidth: MicaboSurface.border) }
+            // Le dessin de Mika ne se retourne pas en arabe.
+            .environment(\.layoutDirection, .leftToRight)
             .accessibilityHidden(true)
     }
 }
