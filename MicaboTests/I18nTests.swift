@@ -342,18 +342,16 @@ final class I18nTests: XCTestCase {
 
     /// Le compte à rebours de l'offre se compose au lieu de s'écrire : chaque langue pose
     /// « il reste » où elle veut, et le turc met le signe du pourcentage devant le nombre.
-    func testOfferCountdownAndDiscountSplitFollowTheLocale() {
+    func testOfferCountdownAndSavingsFollowTheLocale() {
         XCTAssertEqual(DiscountOffer.countdownLabel(0, locale: .en), "offer ended")
         XCTAssertEqual(DiscountOffer.countdownLabel(30, locale: .en), "less than a minute left")
         XCTAssertEqual(DiscountOffer.countdownLabel(3 * 3600, locale: .en), "3 hours left")
         XCTAssertEqual(DiscountOffer.countdownLabel(3600 + 60, locale: .en), "1 hour and 1 minute left")
         XCTAssertEqual(DiscountOffer.countdownLabel(3600 + 60, locale: .fr), "il reste 1 heure et 1 minute")
 
-        XCTAssertEqual(DiscountHeadline.split(percent: 30, locale: .en).rate, "30%")
-        XCTAssertEqual(DiscountHeadline.split(percent: 30, locale: .fr).rate, L10n.percent(30, locale: .fr))
-        XCTAssertEqual(DiscountHeadline.split(percent: 30, locale: .en).rest, " off")
-        XCTAssertEqual(DiscountHeadline.split(percent: 30, locale: .tr).rate, "%30")
-        XCTAssertEqual(DiscountHeadline.split(percent: 30, locale: .tr).rest, " indirim")
+        XCTAssertEqual(DiscountOffer.savingsLabel(30, locale: .en), "−30%")
+        XCTAssertEqual(DiscountOffer.savingsLabel(30, locale: .tr), "−%30")
+        XCTAssertTrue(DiscountOffer.savingsLabel(30, locale: .fr).hasSuffix(L10n.percent(30, locale: .fr)))
     }
 
     /// **Chaque clé écrite dans le code a sa phrase dans chacune des vingt-six langues.**

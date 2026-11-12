@@ -120,23 +120,26 @@ final class PriceDisplayTests: XCTestCase {
         XCTAssertEqual(PaywallCatalog.weekly.priceHeadlineUnit(for: .monthly), PaywallCatalog.weekly.headlineUnit)
     }
 
-    /// **La phrase du paywall, dans les deux variantes**, avec la somme prélevée d'un bloc.
-    func testThePitchSaysTheWeekAndStillTheYearlyCharge() throws {
-        let weekly = try XCTUnwrap(PaywallCatalog.yearly.weeklyEquivalent)
-        let monthly = try XCTUnwrap(PaywallCatalog.yearly.monthlyEquivalent)
+    /// **L'offre annuelle, dans les deux variantes** : le chiffre qu'on compare suit la
+    /// variante — la semaine ou le mois —, et la somme prélevée d'un bloc reste écrite deux
+    /// fois, sous le nom de l'offre et sous le bouton.
+    func testTheRowFollowsTheVariantAndTheYearlyChargeStaysWritten() throws {
+        let yearly = PaywallCatalog.yearly
+        let weekly = try XCTUnwrap(yearly.weeklyEquivalent)
+        let monthly = try XCTUnwrap(yearly.monthlyEquivalent)
 
-        let b = PaywallPitch.sentence(for: PaywallCatalog.yearly, locale: .fr, display: .weekly)
-        XCTAssertTrue(b.contains(weekly), b)
-        XCTAssertTrue(b.contains("semaine"), b)
-        XCTAssertTrue(b.contains(PaywallCatalog.yearly.displayPrice), "La somme prélevée reste écrite : \(b)")
-        XCTAssertFalse(b.contains(monthly), b)
+        XCTAssertEqual(yearly.priceHeadline(for: .weekly), weekly)
+        XCTAssertTrue(yearly.priceHeadlineUnit(for: .weekly).contains("semaine"))
+        XCTAssertEqual(yearly.priceHeadline(for: .monthly), monthly)
+        XCTAssertTrue(yearly.priceHeadlineUnit(for: .monthly).contains("mois"))
 
-        let a = PaywallPitch.sentence(for: PaywallCatalog.yearly, locale: .fr, display: .monthly)
-        XCTAssertTrue(a.contains(monthly), a)
-        XCTAssertTrue(a.contains("mois"), a)
+        let detail = PaywallCopy.planDetail(for: yearly, mentionsTrial: false, locale: .fr)
+        XCTAssertTrue(detail.contains(yearly.displayPrice), "La somme prélevée reste écrite : \(detail)")
 
-        XCTAssertTrue(PaywallPitch.headlineSentence(for: PaywallCatalog.yearly, locale: .en, display: .weekly).contains("week"))
-        XCTAssertTrue(PaywallPitch.headlineSentence(for: PaywallCatalog.yearly, locale: .en, display: .monthly).contains("month"))
+        let legal = PaywallCopy.legal(for: yearly, locale: .fr)
+        XCTAssertTrue(legal.contains(yearly.displayPrice), legal)
+        XCTAssertFalse(legal.contains(weekly), "La mention dit ce qui est prélevé, pas un équivalent : \(legal)")
+        XCTAssertFalse(legal.contains(monthly), legal)
     }
 
     /// Chaque phrase de la variante B existe dans chaque langue de l'app.

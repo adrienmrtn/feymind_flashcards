@@ -1,159 +1,386 @@
 import SwiftUI
 
-/// **Ce que tous les écrans d'abonnement ont en commun** : la croix en haut à gauche, le
-/// bouton qui engage, et les mentions du bas.
+/// **Ce que le paywall et l'offre ont en commun** : leurs choix visuels (`PaywallStyle`), la
+/// croix, la marque, la rangée « icône, titre, une ligne », le message posé sous le bouton et
+/// les liens du bas.
 ///
-/// Les avoir ici plutôt que recopiés dans chaque écran n'est pas une commodité. Micabo
-/// ouvre le paywall à cinq endroits — la fin du parcours, la fiche coupée, le deuxième
-/// import, l'entraînement libre, la cinquième carte — et cinq boutons d'abonnement qui ne
-/// portent pas le même nom donnent l'impression de cinq offres différentes.
+/// Les avoir ici plutôt que recopiés dans chaque écran n'est pas une commodité : Micabo
+/// ouvre le paywall à une douzaine d'endroits, l'offre le remplace quand on le referme, et
+/// deux croix qui ne se ressemblent pas donnent l'impression de deux apps.
 
-/// La croix, en haut à gauche.
+// MARK: - Les choix visuels
+
+/// **Tout ce qui se règle à l'œil, en un seul endroit** : chaque valeur vient d'un jeton V3
+/// (`V3Font`, `V3Color`, `V3Metric`) ou des tons d'icône de l'app (`LessonTone`). Les écrans
+/// ne nomment ni police ni couleur ; changer la direction artistique du paywall et de l'offre
+/// se fait ici.
+enum PaywallStyle {
+    // MARK: Les polices du paywall
+
+    /// « Micabo », en haut à gauche, et « PRO » dans sa pastille.
+    static let brand = V3Font.title
+    static let brandPro = V3Font.label
+    /// « Pour Lina », sous la marque.
+    static let brandFor = V3Font.caption
+    /// Le titre de l'en-tête « essai », sur deux phrases — et le même, quand l'écran est court.
+    static let title = V3Font.h1
+    static let titleCompact = V3Font.h2
+    /// Une rangée de la chronologie ou d'un bénéfice : son titre, sa ligne.
+    static let rowTitle = V3Font.bodyStrong
+    static let rowDetail = V3Font.caption
+    /// Une offre : son nom, sa ligne, son prix et l'unité du prix.
+    static let planTitle = V3Font.bodyStrong
+    static let planDetail = V3Font.caption
+    static let price = V3Font.title
+    static let priceUnit = V3Font.caption
+    /// La pastille de la remise, à côté du nom de l'offre.
+    static let badge = V3Font.caption
+    /// « Rien à payer aujourd'hui », au-dessus du bouton.
+    static let assurance = V3Font.label
+    /// La mention sous le bouton, le message d'un achat qui n'a pas abouti, les liens.
+    static let legal = V3Font.caption
+    static let link = V3Font.caption
+
+    // MARK: Les polices de l'offre et de la bienvenue
+
+    /// Le titre d'un moment : « Bienvenue dans Micabo Pro ».
+    static let moment = V3Font.display()
+    static let momentSub = V3Font.body
+    /// « −40 % », en géant.
+    static let percent = V3Font.display(132)
+    /// « sur ton année Micabo Pro ».
+    static let offerSub = V3Font.h2
+    /// Le tarif réduit, dans sa carte, et ce qui l'entoure.
+    static let offerPrice = V3Font.display(34)
+    static let offerPriceUnit = V3Font.caption
+    static let offerEquivalent = V3Font.title
+    /// Le décompte dans sa pastille, la pastille de la Home, « Offre de bienvenue ».
+    static let pill = V3Font.label
+    static let pillQuiet = V3Font.caption
+
+    // MARK: Les mesures
+
+    /// La croix : son dessin, et la zone qu'on touche.
+    static let closeSize: CGFloat = 36
+    static let touch: CGFloat = 44
+    /// L'icône d'une rangée, et la colonne qui la porte.
+    static let glyph: CGFloat = 26
+    static let glyphColumn: CGFloat = 32
+    /// Une offre : sa hauteur, son rayon, l'espace entre deux.
+    static let planHeight: CGFloat = V3Metric.optionHeight
+    static let planRadius: CGFloat = V3Metric.radiusButton
+    static let planSpacing: CGFloat = 10
+    /// Les pastilles : le décompte de l'offre, la pastille de la Home.
+    static let pillHeight: CGFloat = 34
+    /// Le rayon de la pastille « PRO ».
+    static let proRadius: CGFloat = V3Metric.radiusButton / 2
+    /// Mika en fête : sur l'offre, et à la bienvenue.
+    static let offerMika: CGFloat = 150
+    static let welcomeMika: CGFloat = 200
+
+    // MARK: Les couleurs
+
+    /// Le mot-clé d'un titre ou d'une bulle : le bleu clair de l'accent.
+    static let keyword = V3Color.accentInk
+    /// Le jaune de l'offre et de « PRO » : le grand pourcentage, les pastilles.
+    static let yellow = V3Color.yellow
+    /// Ce qui s'écrit sur ce jaune : son lavis de la nuit, un brun très sombre.
+    static let onYellow = V3Color.yellowWash
+    /// « Rien à payer aujourd'hui » : le vert de ce qui est gratuit.
+    static let free = V3Color.green
+    /// Un message d'erreur, sous le bouton.
+    static let error = V3Color.pink
+
+    // MARK: Les boutons
+
+    /// Le bouton de l'offre : « Profiter de −40 % ».
+    static let offerButton: V3ButtonKind = .accent
+}
+
+// MARK: - La croix
+
+/// **La croix** : 36 points, dessinée à même la page.
 ///
 /// Elle est **toujours là, et elle ne se fait pas attendre**. Un paywall dont la sortie
 /// apparaît au bout de cinq secondes fait fermer l'app au lieu de la faire refuser : on perd
-/// l'utilisateur au lieu de perdre l'abonnement. Ce qu'elle fait derrière peut varier — sur
-/// le premier paywall elle ouvre le second, sur celui d'une session elle demande confirmation
-/// — mais elle réagit toujours au premier appui.
+/// l'utilisateur au lieu de perdre l'abonnement. Elle réagit au premier appui ; pendant un
+/// achat seulement, elle s'éteint — on ne quitte pas un paiement en cours.
 struct PaywallCloseButton: View {
-    /// La couleur de la croix : le gris de l'encre sur la page, le blanc sur la scène bleue.
-    var tint: Color = OnboardingPalette.gray
+    /// La couleur de la croix.
+    var tint: Color = V3Color.ink
     var action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Image(systemName: "xmark")
-                .font(.system(size: 15, weight: .bold))
+                .font(.system(size: PaywallStyle.closeSize / 2, weight: .bold))
                 .foregroundStyle(tint)
-                .frame(width: 34, height: 34)
-                .background(tint.opacity(0.16), in: Circle())
-                // La zone touchable fait 44 points, le rond reste calé sur la marge.
-                .frame(width: 44, height: 44, alignment: .leading)
+                .frame(width: PaywallStyle.closeSize, height: PaywallStyle.closeSize)
+                // La zone touchable fait 44 points.
+                .frame(width: PaywallStyle.touch, height: PaywallStyle.touch)
+                .contentShape(Rectangle())
         }
-        .buttonStyle(MicaboPressableButtonStyle(dimming: false))
+        .buttonStyle(MicaboPressableButtonStyle(dimming: true))
         .accessibilityLabel(L10n.t("app.a11y.close", locale: .resolved()))
     }
 }
 
-/// Bandeau du haut : la croix, et rien d'autre.
-struct PaywallHeader: View {
+/// Ce dont la croix dépasse de son dessin : de quoi l'aligner sur la marge de l'écran.
+private let closeOverhang = (PaywallStyle.closeSize - PaywallStyle.touch) / 2
+
+// MARK: - La marque
+
+/// **Une pastille du jaune de l'offre**, avec son encre brune : « PRO », la remise d'une
+/// offre, la pastille de la Home.
+///
+/// **Elle garde son jaune dans les deux thèmes** : c'est une étiquette, pas une surface de
+/// l'app. Elle se dessine donc dans les couleurs de la nuit — le jaune plein, et son lavis
+/// brun pour l'encre — quel que soit le thème de l'élève.
+struct PaywallYellowPill<Label: View>: View {
+    var horizontal: CGFloat = 9
+    var vertical: CGFloat = 2
+    var radius: CGFloat?
+    @ViewBuilder var label: () -> Label
+
+    var body: some View {
+        label()
+            .foregroundStyle(PaywallStyle.onYellow)
+            .lineLimit(1)
+            .padding(.horizontal, horizontal)
+            .padding(.vertical, vertical)
+            .background(PaywallStyle.yellow, in: shape)
+            .environment(\.colorScheme, .dark)
+    }
+
+    private var shape: AnyShape {
+        if let radius {
+            return AnyShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+        }
+        return AnyShape(Capsule())
+    }
+}
+
+/// **« Micabo PRO · Pour Lina »**, en haut à gauche du paywall : ce qu'on vend, et à qui.
+/// « PRO » est en capitales droites, dans une pastille jaune.
+struct PaywallBrand: View {
+    /// Le prénom de l'élève ; sans lui, la marque seule.
+    var name: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            HStack(spacing: 6) {
+                Text(verbatim: "Micabo")
+                    .font(PaywallStyle.brand)
+                    .foregroundStyle(V3Color.ink)
+                PaywallYellowPill(horizontal: 7, vertical: 1, radius: PaywallStyle.proRadius) {
+                    Text(verbatim: "PRO")
+                        .font(PaywallStyle.brandPro)
+                }
+            }
+            .lineLimit(1)
+            .fixedSize()
+            if let name {
+                Text(L10n.t("ios.pay10.brand.for", locale: .resolved(), vars: ["name": name]))
+                    .font(PaywallStyle.brandFor)
+                    .foregroundStyle(V3Color.ink2)
+                    .lineLimit(1)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
+    }
+}
+
+/// **La barre du haut du paywall** : la marque à gauche, la croix à droite. La croix s'éteint
+/// pendant un achat.
+struct PaywallTopBar: View {
+    var name: String?
+    var isBusy: Bool
     var onClose: () -> Void
 
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(alignment: .center, spacing: 12) {
+            PaywallBrand(name: name)
+            Spacer(minLength: 0)
             PaywallCloseButton(action: onClose)
+                .disabled(isBusy)
+                .padding(.trailing, closeOverhang)
+        }
+        .padding(.horizontal, V3Metric.screenMargin)
+        .frame(minHeight: V3Metric.topBarHeight)
+    }
+}
+
+/// **La barre du haut de l'offre** : la croix à gauche, le décompte à droite.
+struct DiscountTopBar: View {
+    /// Les secondes qui restent sur la fenêtre.
+    var remaining: Int
+    var isBusy: Bool
+    var onClose: () -> Void
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            PaywallCloseButton(action: onClose)
+                .disabled(isBusy)
+                .padding(.leading, closeOverhang)
+            Spacer(minLength: 0)
+            DiscountCountdownPill(remaining: remaining)
+        }
+        .padding(.horizontal, V3Metric.screenMargin)
+        .frame(minHeight: V3Metric.topBarHeight)
+    }
+}
+
+// MARK: - Un texte et son mot-clé
+
+/// **Un texte et son mot-clé** : les phrases du catalogue marquent d'un `**…**` le groupe de
+/// mots à écrire en bleu clair. Ici on les sépare : le texte tel qu'il se lit, et le groupe à
+/// mettre en avant — un seul par phrase.
+struct PaywallEmphasis: Equatable {
+    /// Le texte, sans ses marques.
+    let text: String
+    /// Le groupe de mots à mettre en avant, `nil` s'il n'y en a pas.
+    let highlight: String?
+
+    init(text: String, highlight: String?) {
+        self.text = text
+        self.highlight = highlight
+    }
+
+    /// Lit une phrase marquée : « Je réponds à **toutes tes questions** avec Pro. »
+    init(marked: String) {
+        let parts = marked.components(separatedBy: "**")
+        text = parts.joined()
+        highlight = parts.count >= 3 && !parts[1].isEmpty ? parts[1] : nil
+    }
+
+    /// Le texte, son mot-clé en bleu clair : pour un titre posé à même la page.
+    func styled(ink: Color = V3Color.ink, keyword: Color = PaywallStyle.keyword) -> Text {
+        guard let highlight, let range = text.range(of: highlight) else {
+            return Text(text).foregroundStyle(ink)
+        }
+        return Text(String(text[..<range.lowerBound])).foregroundStyle(ink)
+            + Text(highlight).foregroundStyle(keyword)
+            + Text(String(text[range.upperBound...])).foregroundStyle(ink)
+    }
+}
+
+/// **Mika dit l'accroche, dans sa bulle** : c'est lui qui parle derrière chaque porte de
+/// l'app. Le mot-clé de la phrase est en bleu clair.
+struct PaywallMikaLine: View {
+    let line: PaywallEmphasis
+    var mood: MikaMood = .idle
+
+    var body: some View {
+        MikaAsk(line.text, mood: mood)
+    }
+}
+
+// MARK: - Une rangée
+
+/// **Une icône du paywall, en deux tons** : le plein du symbole au quart de sa couleur, son
+/// contour par-dessus. C'est le dessin des icônes de l'app (`MicaboIconView`), pour les
+/// quelques symboles qu'elle n'a pas (le cadenas ouvert, la cloche).
+struct PaywallGlyph: View {
+    /// Le nom du symbole du système, sans « .fill » : le contour. Son plein se déduit.
+    var symbol: String
+    var tone: LessonTone
+    var size: CGFloat = PaywallStyle.glyph
+
+    var body: some View {
+        ZStack {
+            Image(systemName: symbol + ".fill")
+                .foregroundStyle(tone.glyph.opacity(0.24))
+            Image(systemName: symbol)
+                .foregroundStyle(tone.glyph)
+        }
+        .font(.system(size: size, weight: .semibold))
+        .frame(width: PaywallStyle.glyphColumn, height: PaywallStyle.glyphColumn)
+        .accessibilityHidden(true)
+    }
+}
+
+/// **Une rangée du paywall** : une icône deux tons, un titre, une ligne. C'est une étape de
+/// la chronologie de l'essai, ou un bénéfice de Pro.
+struct PaywallInfoRow: View {
+    /// Le symbole du système, sans « .fill ».
+    var symbol: String
+    /// Le ton de l'icône : une couleur par idée.
+    var tone: LessonTone
+    var title: String
+    var detail: String
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            PaywallGlyph(symbol: symbol, tone: tone)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(PaywallStyle.rowTitle)
+                    .foregroundStyle(V3Color.ink)
+                Text(detail)
+                    .font(PaywallStyle.rowDetail)
+                    .foregroundStyle(V3Color.ink2)
+            }
+            .multilineTextAlignment(.leading)
+            .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.top, MicaboSpacing.xs)
+        .accessibilityElement(children: .combine)
     }
 }
 
-/// Le bouton d'abonnement, identique partout où il apparaît.
-struct PaywallCallToAction: View {
-    var isPurchasing: Bool
-    /// Absent : l'écran ne vend que l'annuel. Présent : le libellé suit l'offre.
-    var plan: PaywallPlan? = nil
-    /// Voir `PaywallScreen.storeRevision` : l'essai peut se révéler consommé après
-    /// l'ouverture, et le bouton ne doit plus le promettre.
-    var storeRevision: Int = 0
-    var action: () -> Void
+// MARK: - Le message sous le bouton
 
-    /// Le bouton ne promet l'essai que si ce compte y a droit : un « Commencer l'essai »
-    /// suivi d'un prélèvement immédiat est la pire façon de découvrir la règle d'Apple.
-    private var hasTrial: Bool { (plan ?? PaywallCatalog.recommended).hasTrial }
+/// **Ce que la boutique a répondu, quand ce n'est pas un achat** : une panne ou un refus
+/// (`error`), ou un achat qui attend une validation (`info`). Le message se pose sous le
+/// bouton, sans alerte : un bouton qui ne répond rien passe pour cassé, une alerte par-dessus
+/// un prix fait sursauter.
+enum PaywallNotice: Equatable {
+    case error(String)
+    case info(String)
+
+    var text: String {
+        switch self {
+        case .error(let text), .info(let text): text
+        }
+    }
+
+    var isError: Bool {
+        if case .error = self { return true }
+        return false
+    }
+}
+
+/// Le message, sous le bouton.
+struct PaywallNoticeLine: View {
+    let notice: PaywallNotice
 
     var body: some View {
-        // **Le bouton de l'offre** : le grand bouton de la marque (`MicaboBrandButtonStyle`),
-        // le même sur tous les paywalls, sur Home et sur l'aperçu verrouillé.
-        Button {
-            guard !isPurchasing else { return }
-            action()
-        } label: {
-            HStack(spacing: 9) {
-                if isPurchasing {
-                    ProgressView().controlSize(.small).tint(.white)
-                }
-                Text(isPurchasing
-                    ? L10n.t("ios.instant", locale: .resolved())
-                    : (hasTrial
-                        ? L10n.t("ios.paywallStartTrial", locale: .resolved(), vars: ["n": "\(PaywallCatalog.freeTrialDays)"])
-                        : L10n.t("app.paywall.subscribe", locale: .resolved())))
-            }
-        }
-        .buttonStyle(MicaboBrandButtonStyle(minHeight: 58, fontSize: 18))
-        .disabled(isPurchasing)
+        Text(notice.text)
+            .font(PaywallStyle.legal)
+            .foregroundStyle(notice.isError ? PaywallStyle.error : V3Color.ink2)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity)
     }
 }
 
-/// **Le pied du paywall**, fixe sous la page : la phrase du prix (`PaywallPitch`, dans
-/// l'écriture du test `PriceDisplay`), le bouton, la promesse — le rappel avant la fin de
-/// l'essai, l'annulation à tout moment — puis les mentions.
-struct PaywallFooter: View {
-    let plan: PaywallPlan
-    var isPurchasing: Bool
-    var storeRevision: Int = 0
-    var onSubscribe: () -> Void
-    var onRestore: () -> Void
+// MARK: - Les liens
 
-    /// **Le rappel ne se promet que s'il sera tenu** (lot 7) : faux seulement quand l'élève a
-    /// refusé les notifications à iOS — le rappel ne partirait pas. Jamais demandées, elles le
-    /// seront à l'achat de l'essai (`TrialEndReminder`).
-    @State private var reminderKept = true
-
-    private var promise: String {
-        guard plan.hasTrial else { return L10n.t("ios.paywallCancelAnytime", locale: .resolved()) }
-        return L10n.t(reminderKept ? "ios.pay3.reassure" : "ios.paywallCancelAnytime", locale: .resolved())
-    }
-
-    var body: some View {
-        VStack(spacing: 10) {
-            PaywallPitch.text(for: plan)
-                .font(MicaboFont.ui(13.5, weight: .semibold))
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-
-            PaywallCallToAction(isPurchasing: isPurchasing, plan: plan, storeRevision: storeRevision, action: onSubscribe)
-
-            HStack(spacing: 6) {
-                Image(systemName: plan.hasTrial && reminderKept ? "bell.badge.fill" : "checkmark.shield.fill")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(MicaboColor.correct)
-                Text(promise)
-                    .font(MicaboFont.ui(13, weight: .bold))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            PaywallLegalFooter(onRestore: onRestore)
-        }
-        .task { reminderKept = await TrialEndReminder.canBeKept() }
-        .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.top, 14)
-        .padding(.bottom, MicaboSpacing.xs)
-        .frame(maxWidth: .infinity)
-        .background {
-            UnevenRoundedRectangle(topLeadingRadius: MicaboRadius.sheet, topTrailingRadius: MicaboRadius.sheet, style: .continuous)
-                .fill(MicaboColor.surface)
-                .shadow(color: .black.opacity(0.07), radius: 16, y: -6)
-                .ignoresSafeArea(edges: .bottom)
-        }
-    }
-}
-
-/// Restauration et mentions légales, en pied de page.
-struct PaywallLegalFooter: View {
+/// **Les liens du bas** : la restauration, puis les conditions et la confidentialité
+/// qu'Apple exige sur un écran d'abonnement.
+struct PaywallLegalLinks: View {
+    var isBusy = false
     var onRestore: () -> Void
 
     @Environment(\.openURL) private var openURL
 
     var body: some View {
         // **Sur une ligne quand elle tient, sinon l'une sous l'autre** : en allemand et en
-        // très grand texte, « Nutzungsbeding… » se coupait, et des conditions qu'on ne peut
-        // pas lire ne sont pas des conditions visibles.
+        // très grand texte, un lien coupé ne se lit plus, et des conditions qu'on ne peut pas
+        // lire ne sont pas des conditions visibles.
         ViewThatFits(in: .horizontal) {
-            HStack(spacing: 7) {
+            HStack(spacing: 8) {
                 restore
                 separator
                 terms
@@ -161,7 +388,7 @@ struct PaywallLegalFooter: View {
                 privacy
             }
             .fixedSize()
-            VStack(spacing: 4) {
+            VStack(spacing: 0) {
                 restore
                 terms
                 privacy
@@ -172,31 +399,31 @@ struct PaywallLegalFooter: View {
 
     private var restore: some View {
         entry(L10n.t("ios.paywallRestore", locale: .resolved()), action: onRestore)
+            .disabled(isBusy)
     }
 
     private var terms: some View {
-        entry(L10n.t("ios.paywallTerms", locale: .resolved())) { open(PaywallLinks.terms) }
+        entry(L10n.t("ios.pay10.terms", locale: .resolved())) { open(PaywallLinks.terms) }
     }
 
     private var privacy: some View {
-        entry(L10n.t("common.privacy", locale: .resolved())) { open(PaywallLinks.privacy) }
+        entry(L10n.t("ios.pay10.privacy", locale: .resolved())) { open(PaywallLinks.privacy) }
     }
 
     private var separator: some View {
-        Text("·")
-            .font(MicaboFont.ui(12, weight: .regular))
-            .foregroundStyle(MicaboColor.inkTertiary)
+        Text(verbatim: "·")
+            .font(PaywallStyle.link)
+            .foregroundStyle(V3Color.ink3)
+            .accessibilityHidden(true)
     }
 
-    /// Le gris secondaire de l'app, pas le tertiaire : la restauration et les conditions
-    /// doivent se lire sans plisser les yeux (le tertiaire tombait sous 3:1 sur le blanc).
     private func entry(_ title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
-                .font(MicaboFont.ui(12, weight: .semibold))
-                .foregroundStyle(MicaboColor.inkSecondary)
+                .font(PaywallStyle.link)
+                .foregroundStyle(V3Color.ink2)
                 .lineLimit(1)
-                .frame(minHeight: 28)
+                .frame(minHeight: 26)
                 .contentShape(Rectangle())
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: true))
@@ -208,120 +435,15 @@ struct PaywallLegalFooter: View {
     }
 }
 
-/// La phrase qui dit le prix, et la seule de l'app qui le dise.
-///
-/// **Le test de prix** (`PriceDisplay`) : chaque phrase prend la variante de l'installation,
-/// le mois (« 4,17 € / mois ») ou la semaine (« 0,96 € / semaine »), toujours avec la somme
-/// prélevée d'un bloc. Le prix, lui, est le même.
-enum PaywallPitch {
-    /// « Essaie 3 jours gratuitement, puis 4,17 € / mois (facturé 49,99 € par an). »
-    ///
-    /// Le violet ne porte que la partie gratuite. Colorer la phrase entière n'aurait mis en
-    /// avant que le prix, colorer le prix aurait mis en avant ce qu'on demande.
-    ///
-    /// Sans essai — déjà consommé, ou absent dans ce pays —, il reste le prix, et rien
-    /// d'autre : la moitié verte ne s'écrit que si Apple l'honorera.
-    static func text(for plan: PaywallPlan, display: PriceDisplay = .current) -> Text {
-        let locale = UiLocale.resolved()
-        let price = Text(sentence(for: plan, locale: locale, display: display))
-            .foregroundStyle(OnboardingPalette.ink)
-        guard plan.hasTrial else { return price }
-        let free = Text(L10n.t("ios.paywallTryDays", locale: locale, vars: ["n": "\(PaywallCatalog.freeTrialDays)"]))
-            .foregroundStyle(OnboardingPalette.accent)
-        return free + price
-    }
-
-    /// La moitié « prix » de la phrase. Derrière l'essai elle commence par « puis » ; seule,
-    /// elle commence par le prix.
-    static func sentence(for plan: PaywallPlan, locale: UiLocale = .resolved(), display: PriceDisplay = .current) -> String {
-        let afterTrial = plan.hasTrial
-        if display == .weekly, let weekly = plan.weeklyEquivalent {
-            return L10n.t(
-                afterTrial ? "ios.conv.paywallThenYearWeekly" : "ios.conv.paywallPriceYearWeekly",
-                locale: locale,
-                vars: ["weekly": weekly, "yearly": plan.displayPrice]
-            )
-        }
-        if let monthly = plan.monthlyEquivalent {
-            return L10n.t(
-                afterTrial ? "ios.paywallThenYear" : "ios.paywallPriceYear",
-                locale: locale,
-                vars: ["monthly": monthly, "yearly": plan.displayPrice]
-            )
-        }
-        return L10n.t(
-            afterTrial ? "ios.paywallThenPeriod" : "ios.paywallPricePeriod",
-            locale: locale,
-            vars: ["price": plan.displayPrice, "unit": plan.period.unit]
-        )
-    }
-
-    /// **La phrase du premier paywall** : « Essaie 3 jours gratuitement, puis seulement
-    /// 4,17 € / mois ». Le vert porte la partie gratuite, l'encre le prix ; ce qui est
-    /// prélevé d'un bloc descend dans la ligne grise du bas (`PaywallPlan.billedLine`).
-    ///
-    /// Sans essai — déjà utilisé par ce compte, ou absent dans ce pays —, il reste
-    /// « Seulement 4,17 € / mois » : la moitié verte ne s'écrit que si Apple l'honorera.
-    static func headline(for plan: PaywallPlan, locale: UiLocale = .resolved(), display: PriceDisplay = .current) -> Text {
-        guard plan.hasTrial else {
-            return Text(headlineSentence(for: plan, locale: locale, display: display)).foregroundStyle(OnboardingPalette.ink)
-        }
-        // « Essaie **3 jours gratuitement**, puis seulement 4,17 €/mois » : les jours offerts
-        // sont surlignés, comme au marqueur.
-        let days = "\(PaywallCatalog.freeTrialDays)"
-        var lead = AttributedString(L10n.t("ios.paywallTry.lead", locale: locale))
-        lead.foregroundColor = OnboardingPalette.ink
-        var free = AttributedString(L10n.t("ios.paywallTry.free", locale: locale, vars: ["n": days]))
-        free.foregroundColor = MicaboColor.correctInk
-        free.backgroundColor = MicaboColor.correctSoft
-        var then: AttributedString
-        if display == .weekly, let weekly = plan.weeklyEquivalent {
-            then = AttributedString(L10n.t("ios.conv.paywallTryThenWeekly", locale: locale, vars: ["weekly": weekly]))
-        } else {
-            let monthly = plan.monthlyEquivalent ?? plan.displayPrice
-            then = AttributedString(L10n.t("ios.paywallTry.then", locale: locale, vars: ["monthly": monthly]))
-        }
-        then.foregroundColor = OnboardingPalette.ink
-        return Text(lead + free + then)
-    }
-
-    /// La moitié « prix » de la phrase du premier paywall, sans la somme annuelle.
-    static func headlineSentence(for plan: PaywallPlan, locale: UiLocale = .resolved(), display: PriceDisplay = .current) -> String {
-        let afterTrial = plan.hasTrial
-        if display == .weekly, let weekly = plan.weeklyEquivalent {
-            return L10n.t(afterTrial ? "ios.conv.paywallThenOnlyWeekly" : "ios.conv.paywallOnlyWeekly", locale: locale, vars: ["weekly": weekly])
-        }
-        if let monthly = plan.monthlyEquivalent {
-            return L10n.t(afterTrial ? "ios.paywallThenOnly" : "ios.paywallOnly", locale: locale, vars: ["monthly": monthly])
-        }
-        return L10n.t(
-            afterTrial ? "ios.paywallThenPeriod" : "ios.paywallPricePeriod",
-            locale: locale,
-            vars: ["price": plan.displayPrice, "unit": plan.period.unit]
-        )
-    }
-
-    /// La ligne grise posée juste au-dessus du bouton.
-    static var reassurance: String {
-        L10n.t("ios.paywallReassurance", locale: .resolved())
-    }
-}
-
 // MARK: - Les prix du pays, ou l'attente
 
-/// Ce que `PaywallPriceGate` règle sans dépendre de son contenu : un type générique ne peut
-/// pas porter de constantes.
-enum PaywallPriceLoading {
-    /// Les pauses avant chaque demande des prix : la première part tout de suite, les
-    /// suivantes s'espacent. Sept secondes en tout, puis « Réessayer ».
-    static let retryDelays: [Duration] = [.zero, .seconds(1), .seconds(2), .seconds(4)]
-
-    /// Vrai quand le paywall peut montrer ses prix : la boutique a répondu pour chacun de ses
-    /// produits, ou il n'y a pas de boutique branchée (aperçus, constructions sans clé), et
-    /// rien ne viendra.
-    static func hasPrices(for productIDs: [String]) -> Bool {
-        !PaywallPurchases.isReady || productIDs.allSatisfy { PaywallStorePrices.price(for: $0) != nil }
-    }
+/// Où en sont les prix d'un écran qui vend.
+enum PaywallPriceState: Equatable {
+    /// La boutique n'a pas encore répondu : les offres sont des silhouettes.
+    case loading
+    /// Elle n'a pas répondu, ou sans ces produits : la phrase dit pourquoi.
+    case failed(String)
+    case ready
 }
 
 /// **Les prix du pays, ou rien.**
@@ -329,107 +451,43 @@ enum PaywallPriceLoading {
 /// Quand la boutique n'avait pas encore répondu - un premier lancement sur un réseau lent,
 /// un App Store qui tarde -, le paywall montrait les prix écrits en dur : ceux de la France,
 /// en euros, à tout le monde. Un prix faux à côté d'un bouton d'achat. Le paywall attend
-/// maintenant la réponse, la redemande en espaçant (`PaywallPriceLoading.retryDelays`), puis
-/// propose « Réessayer » avec la cause.
-///
-/// **La croix est là tout de suite** pendant l'attente : on ne retient personne derrière un
-/// chargement.
-struct PaywallPriceGate<Content: View>: View {
-    /// Les produits dont le paywall affiche le prix.
-    let productIDs: [String]
-    var onClose: () -> Void
-    /// Rappelé à chaque réponse de la boutique, avec `PaywallStorePrices.revision` : les
-    /// écrans redessinent l'essai et les prix qui arrivent après leur ouverture.
-    var onRevision: (Int) -> Void
-    let content: () -> Content
+/// maintenant la réponse (`PaywallFlowView.loadPrices`), la redemande en espaçant
+/// (`retryDelays`), puis propose « Réessayer » avec la cause. Pendant l'attente, l'écran est
+/// là, la croix aussi : seules les offres sont des silhouettes.
+enum PaywallPriceLoading {
+    /// Les pauses avant chaque demande des prix : la première part tout de suite, les
+    /// suivantes s'espacent. Sept secondes en tout, puis « Réessayer ».
+    static let retryDelays: [Duration] = [.zero, .seconds(1), .seconds(2), .seconds(4)]
 
-    private enum Phase: Equatable {
-        case loading
-        case failed(String)
-        case ready
+    /// Vrai quand un écran peut montrer ses prix : la boutique a répondu pour chacun de ses
+    /// produits, ou il n'y a pas de boutique branchée (aperçus, constructions sans clé), et
+    /// rien ne viendra.
+    static func hasPrices(for productIDs: [String]) -> Bool {
+        !PaywallPurchases.isReady || productIDs.allSatisfy { PaywallStorePrices.price(for: $0) != nil }
     }
 
-    @State private var phase: Phase
-
-    init(
-        productIDs: [String],
-        onClose: @escaping () -> Void,
-        onRevision: @escaping (Int) -> Void = { _ in },
-        @ViewBuilder content: @escaping () -> Content
-    ) {
-        self.productIDs = productIDs
-        self.onClose = onClose
-        self.onRevision = onRevision
-        self.content = content
-        _phase = State(initialValue: PaywallPriceLoading.hasPrices(for: productIDs) ? .ready : .loading)
+    /// Où en sont les prix de ces produits, sachant ce que la dernière demande a rendu.
+    static func state(for productIDs: [String], failure: String?) -> PaywallPriceState {
+        if hasPrices(for: productIDs) { return .ready }
+        if let failure { return .failed(failure) }
+        return .loading
     }
+}
 
-    var body: some View {
-        Group {
-            if phase == .ready {
-                content()
-            } else {
-                waiting
-            }
-        }
-        .task { await load() }
-    }
+// MARK: - Le gabarit d'un prix
 
-    private var waiting: some View {
-        VStack(spacing: 0) {
-            PaywallHeader(onClose: onClose)
-            Spacer(minLength: 0)
-            VStack(spacing: 18) {
-                if case .failed(let message) = phase {
-                    Text(message)
-                        .font(MicaboFont.ui(16, weight: .medium))
-                        .foregroundStyle(OnboardingPalette.gray)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Button(L10n.t("ios.retry", locale: .resolved())) {
-                        Task { await load() }
-                    }
-                    .buttonStyle(MicaboSecondaryButtonStyle())
-                } else {
-                    ProgressView()
-                        .controlSize(.large)
-                        .tint(OnboardingPalette.accent)
-                }
-            }
-            .padding(.horizontal, MicaboSpacing.screen)
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        // Opaque : le fond du paywall, bleu en haut, est celui de la page prête.
-        .background(MicaboColor.canvas.ignoresSafeArea())
-    }
+/// **Un prix dans sa phrase, coupé autour de lui** : « 29,99 € par an » s'écrit avec la somme
+/// en grand et le reste en petit, et la somme ne se range pas au même endroit dans toutes les
+/// langues. Le gabarit traduit dit où elle va ; ce qui la précède et ce qui la suit gardent
+/// leur place.
+enum PaywallPriceTemplate {
+    private static let marker = "\u{fffc}"
 
-    /// Demande les prix jusqu'à ce qu'ils soient là, ou que les essais soient épuisés.
-    ///
-    /// Déjà là, ils sont relus quand même, sans rien cacher : l'essai d'un compte et un prix
-    /// changé dans App Store Connect arrivent par la même réponse.
-    @MainActor
-    private func load() async {
-        if phase == .ready {
-            await PaywallPurchases.refreshPrices()
-            onRevision(PaywallStorePrices.revision)
-            return
-        }
-        phase = .loading
-        var failure: PaywallFailure?
-        for delay in PaywallPriceLoading.retryDelays {
-            if delay > .zero {
-                try? await Task.sleep(for: delay)
-            }
-            if Task.isCancelled { return }
-            failure = await PaywallPurchases.fetchPrices()
-            onRevision(PaywallStorePrices.revision)
-            if PaywallPriceLoading.hasPrices(for: productIDs) {
-                phase = .ready
-                return
-            }
-        }
-        // La boutique a répondu sans ces produits : l'offre n'est pas ouverte dans ce pays.
-        phase = .failed((failure ?? .productUnavailable).message)
+    /// Ce que le gabarit `key` écrit avant et après `{price}`.
+    static func split(_ key: String, locale: UiLocale = .resolved()) -> (before: String, after: String) {
+        let probed = L10n.t(key, locale: locale, vars: ["price": marker])
+        let parts = probed.components(separatedBy: marker)
+        guard parts.count == 2 else { return ("", "") }
+        return (parts[0], parts[1])
     }
 }

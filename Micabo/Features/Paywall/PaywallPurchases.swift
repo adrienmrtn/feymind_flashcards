@@ -35,7 +35,7 @@ enum PaywallPurchases {
     ///
     /// Appelée au lancement et à l'ouverture de chaque paywall. Elle ne rend rien et
     /// n'échoue jamais bruyamment ; c'est le paywall qui attend les prix du pays et retente
-    /// (`PaywallPriceGate`, avec `fetchPrices`).
+    /// (`PaywallFlowView.loadPrices`, avec `fetchPrices`).
     @MainActor
     static func refreshPrices() async {
         _ = await fetchPrices()

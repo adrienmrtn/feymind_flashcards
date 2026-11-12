@@ -81,7 +81,7 @@ struct PaywallPlan: Identifiable, Equatable {
     /// turc à qui l'on annonce des euros pendant qu'Apple lui prélève des livres lit un
     /// chiffre faux — pas approximatif, faux. `PaywallStorePrices` garde ce que
     /// l'offering a répondu, dans la devise et le format du pays. Quand la boutique est
-    /// branchée, le paywall attend sa réponse (`PaywallPriceGate`) au lieu de montrer ce
+    /// branchée, le paywall attend sa réponse (`PaywallPriceLoading`) au lieu de montrer ce
     /// nombre ; il ne sert plus qu'aux aperçus et aux constructions sans boutique.
     var displayPrice: String {
         PaywallStorePrices.price(for: productID)?.localized ?? PaywallPrice.text(price)
@@ -316,7 +316,7 @@ enum PaywallPrice {
 ///
 /// **Il n'est pas isolé sur l'acteur principal**, et c'est délibéré : `displayPrice` est lu
 /// par les tests hors de tout acteur, et l'isoler obligerait à faire remonter `@MainActor`
-/// jusqu'à `PaywallPitch`. Les écritures viennent toutes de `PaywallPurchases.refreshPrices()`,
+/// jusqu'à `PaywallCopy`. Les écritures viennent toutes de `PaywallPurchases.refreshPrices()`,
 /// qui est `@MainActor`.
 enum PaywallStorePrices {
     /// Un prix tel que la boutique le donne : la somme, sa mise en forme locale, et de quoi

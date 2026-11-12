@@ -12,7 +12,7 @@ import UIKit
 /// l'offre ou « Passer en Pro », et se redessine quand la fenêtre s'ouvre ou se referme —
 /// pas à chaque seconde du décompte.
 ///
-/// Il relit quand un réglage de l'appareil change (l'ouverture du cadeau, un achat, « Forcer
+/// Il relit quand un réglage de l'appareil change (l'offre qui s'affiche, un achat, « Forcer
 /// Pro »), quand l'app revient au premier plan, et à chaque seconde tant qu'une pastille est
 /// à l'écran : c'est elle qui voit la fenêtre finir.
 @MainActor
@@ -20,7 +20,7 @@ import UIKit
 final class DiscountWindow {
     static let shared = DiscountWindow()
 
-    /// L'instant d'ouverture du cadeau, `nil` si personne ne l'a ouvert ici.
+    /// L'instant où l'offre s'est affichée, `nil` si elle ne l'a jamais été ici.
     private(set) var startedAt: Date?
 
     /// Vrai tant qu'une fenêtre court pour un élève sans abonnement.
@@ -59,29 +59,9 @@ final class DiscountWindow {
     }
 }
 
-extension DiscountOffer {
-    /// **La pastille de la Home se montre-t-elle ?** Tant que la fenêtre court, et jamais à
-    /// un abonné. Une fonction pure, pour qu'elle se teste sans vue ni horloge.
-    static func isChipLive(isPro: Bool, startedAt: Date?, now: Date = Date()) -> Bool {
-        guard !isPro, let startedAt else { return false }
-        return isLive(startedAt: startedAt, now: now)
-    }
-
-    /// « −40 % », écrit comme la langue l'écrit : « −40% » en anglais, « −%40 » en turc.
-    ///
-    /// C'est le formateur du pays qui pose le signe, le symbole et les marques de sens de
-    /// lecture (l'arabe) ; seul le trait d'union devient un vrai signe moins.
-    static func savingsLabel(_ percent: Int, locale: UiLocale = .resolved()) -> String {
-        guard percent > 0 else { return L10n.percent(0, locale: locale) }
-        return (-Double(percent) / 100)
-            .formatted(.percent.precision(.fractionLength(0)).locale(locale.foundation))
-            .replacingOccurrences(of: "-", with: "−")
-    }
-}
-
 // MARK: - La pastille
 
-/// **La pastille de l'offre, en tête de la Home** : « 🎁 −40 % · 23:41:10 ».
+/// **La pastille de l'offre, en tête de la Home** : « −40 % », et le temps qu'il reste.
 ///
 /// Elle prend la place de « Passer en Pro » tant que la fenêtre de l'offre court
 /// (`DiscountChip.isLive`), compte à la seconde tant qu'elle est à l'écran, et rouvre l'offre
@@ -96,7 +76,7 @@ struct DiscountChip: View {
     /// lit dans son `body` se redessine quand la fenêtre s'ouvre ou se referme.
     @MainActor static var isLive: Bool { DiscountWindow.shared.isLive }
 
-    @State private var presentation: DiscountPresentation?
+    @State private var presentation: DiscountPresentation? = nil
 
     var body: some View {
         let window = DiscountWindow.shared
@@ -111,7 +91,7 @@ struct DiscountChip: View {
                     } label: {
                         DiscountChipLabel(percent: DiscountOffer.savingsPercent, remaining: left)
                     }
-                    .buttonStyle(DiscountChipPressStyle())
+                    .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
                     .accessibilityLabel(L10n.t(
                         "ios.reopenOffer",
                         locale: .resolved(),
@@ -128,7 +108,8 @@ struct DiscountChip: View {
     }
 }
 
-/// Ce que la pastille montre, sans horloge : c'est ce que les rendus dessinent.
+/// Ce que la pastille montre, sans horloge : c'est ce que les rendus dessinent. Une pastille
+/// du jaune de l'offre, comme « PRO » dont elle prend la place.
 struct DiscountChipLabel: View {
     let percent: Int
     /// Les secondes qui restent sur la fenêtre.
@@ -136,53 +117,18 @@ struct DiscountChipLabel: View {
     var locale: UiLocale = .resolved()
 
     var body: some View {
-        HStack(spacing: 5) {
-            Text(verbatim: "🎁")
-            Text(verbatim: DiscountOffer.savingsLabel(percent, locale: locale))
-            Text(verbatim: "·")
-            // Chiffres à chasse fixe : la pastille ne change pas de largeur à chaque seconde.
-            Text(verbatim: DiscountOffer.countdown(remaining))
-                .monospacedDigit()
-        }
-        .font(MicaboFont.ui(15, weight: .heavy))
-        .foregroundStyle(DiscountChipTone.ink)
-        .lineLimit(1)
-        .minimumScaleFactor(0.8)
-        .padding(.horizontal, 16)
-        .frame(minHeight: 38)
-        .background(DiscountChipTone.fill, in: Capsule())
-        .overlay(Capsule().strokeBorder(DiscountChipTone.edge, lineWidth: 2))
-    }
-}
-
-/// La lèvre de la pastille : trois points pleins dessous, qui disparaissent sous le doigt.
-private struct DiscountChipPressStyle: ButtonStyle {
-    private let lip: CGFloat = 3
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .offset(y: configuration.isPressed ? lip : 0)
-            .background {
-                Capsule()
-                    .fill(DiscountChipTone.edge)
-                    .offset(y: lip)
+        PaywallYellowPill(horizontal: 12, vertical: 0) {
+            HStack(spacing: 6) {
+                Text(verbatim: DiscountOffer.savingsLabel(percent, locale: locale))
+                Text(verbatim: "·")
+                    .accessibilityHidden(true)
+                // Chiffres à chasse fixe : la pastille ne change pas de largeur à chaque seconde.
+                Text(verbatim: DiscountOffer.countdown(remaining))
+                    .monospacedDigit()
             }
-            .padding(.bottom, lip)
-            .contentShape(Capsule())
-            .animation(MicaboPress.animation(isPressed: configuration.isPressed), value: configuration.isPressed)
-            .micaboPressFeedback(isPressed: configuration.isPressed, feedback: .light)
-    }
-}
-
-/// Le jaune de l'offre : lavis, bord et encre, le jour et la nuit.
-private enum DiscountChipTone {
-    static let fill = adaptive(light: 0xFFF4D6, dark: 0x3A2E10)
-    static let edge = adaptive(light: 0xF4D98A, dark: 0x6B5417)
-    static let ink = adaptive(light: 0x7A4E00, dark: 0xFFD25E)
-
-    private static func adaptive(light: UInt32, dark: UInt32) -> Color {
-        let light = UIColor(Color(hex: light))
-        let dark = UIColor(Color(hex: dark))
-        return Color(UIColor { traits in traits.userInterfaceStyle == .dark ? dark : light })
+            .font(PaywallStyle.pill)
+            .minimumScaleFactor(0.8)
+            .frame(minHeight: PaywallStyle.pillHeight)
+        }
     }
 }
