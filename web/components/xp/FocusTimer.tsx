@@ -211,19 +211,13 @@ export function FocusTimer() {
         <div className="flex flex-1 flex-col items-center justify-center gap-5 px-6 text-center">
           <div className="relative" style={{ width: size, height: size, maxWidth: "78vw", maxHeight: "78vw" }}>
             <svg aria-hidden="true" className="absolute inset-0 size-full" viewBox={`0 0 ${size} ${size}`}>
-              <defs>
-                <linearGradient id="kx-focus" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="var(--color-tone-mint-vivid)" />
-                  <stop offset="100%" stopColor="var(--color-accent)" />
-                </linearGradient>
-              </defs>
               <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--color-track)" strokeWidth={stroke} />
               <circle
                 cx={size / 2}
                 cy={size / 2}
                 r={radius}
                 fill="none"
-                stroke="url(#kx-focus)"
+                stroke="var(--color-accent)"
                 strokeWidth={stroke}
                 strokeLinecap="round"
                 strokeDasharray={circumference}
@@ -236,7 +230,7 @@ export function FocusTimer() {
               <Mika mood={paused ? "sleep" : "idle"} size={150} label="" className="max-w-[56%]" />
             </div>
           </div>
-          <p className="numeral text-[56px] font-extrabold leading-none tracking-tight-title text-ink" role="timer" aria-live="off">
+          <p className="numeral font-display text-[68px] leading-none text-ink" role="timer" aria-live="off">
             {clock}
           </p>
           <p className="max-w-[340px] text-[16px] font-semibold text-ink-secondary">{paused ? t("app.kx.timer.paused") : t("app.kx.timer.focus")}</p>

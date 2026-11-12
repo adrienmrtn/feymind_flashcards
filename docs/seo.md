@@ -115,24 +115,28 @@ même requête.
 Si la redirection est un jour inversée (`www` → nu), c'est cette constante qu'il faut
 changer, et elle seule.
 
-## Le favicon : le stylo, coins arrondis
+## Le favicon : Mika en buste, coins arrondis
 
-Le rendu 3D (stylo blanc sur bleu) est la marque. Le fichier source est un **carré aux
-coins droits** : on lui pose un masque arrondi (~22 %) partout où l'icône s'affiche
-dans un onglet, une barre ou à côté du mot « Micabo ». iOS applique son propre masque :
+La marque est l'icône de l'app iPhone (direction artistique V3.3) : Mika en buste, la bouche
+ouverte, sur le bleu nuit `#101737` (`design/mika-v3/icone.html`, variante Y). Le dessin vient
+de `design/mika-v3/mika.js`, et Chromium le photographie à chaque taille : rien n'est agrandi
+depuis un petit PNG. On pose un masque arrondi (~22 %) partout où l'icône s'affiche dans un
+onglet, une barre ou à côté du mot « Micabo ». iOS applique son propre masque :
 `apple-touch-icon.png` reste donc un carré plein.
 
-Tous les fichiers vivent dans `web/public/`. On les régénère depuis le PNG source :
+Tous les fichiers vivent dans `web/public/`, et les images de partage (`opengraph-image.png`,
+`twitter-image.png`, 1200 × 630, avec leur `.alt.txt`) dans `web/app/`. On les régénère
+depuis la racine du dépôt (Playwright et son Chromium sont nécessaires) :
 
 ```bash
-node web/scripts/build-icons.mjs chemin/vers/stylo.png
+node --experimental-strip-types --import ./scripts/ts-extensions.mjs web/scripts/build-icons.mjs
 ```
 
 | Fichier | Format | Taille | À quoi il sert |
 | --- | --- | --- | --- |
-| `icon.svg` | SVG + PNG embarqué, coins arrondis | — | Onglets de bureau |
+| `icon.svg` | SVG vectoriel, coins arrondis | — | Onglets de bureau |
 | `icon.png` | PNG, coins arrondis | 256 × 256 | Logo dans les pages |
-| `icon-32.png` / `icon-64.png` | PNG, coins arrondis | 32 / 64 | Relais PNG |
+| `icon-16.png` / `icon-32.png` / `icon-64.png` | PNG, coins arrondis | 16 / 32 / 64 | Relais PNG |
 | `icon-192.png` | PNG, coins arrondis | 192 × 192 | Android, onglets anciens |
 | `icon-512.png` | PNG, coins arrondis | 512 × 512 | Splash, `Organization.logo` |
 | `apple-touch-icon.png` | PNG 24 bits, **sans transparence** | 180 × 180 | Écran d'accueil iOS |
@@ -146,7 +150,7 @@ node web/scripts/build-icons.mjs chemin/vers/stylo.png
 couche alpha est vide. Fond plein, coins carrés : iOS arrondit lui-même.
 
 **De la marge sur la version maskable, et seulement sur elle.** Android rogne jusqu'à 20 % de
-chaque bord. Le stylo doit tenir dans le cercle central, sinon la pointe est coupée.
+chaque bord. Mika doit tenir dans le cercle central (80 %), sinon ses yeux sont coupés.
 
 **`icon.svg` reste sans commentaire.** Un SVG est du XML : un `--` dans un commentaire, ou un
 accent mal encodé, fait échouer le parseur en silence et l'onglet retombe sur l'icône par

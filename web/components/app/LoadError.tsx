@@ -3,7 +3,7 @@
 import { startTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
+import { Mika } from "@/components/mika/Mika";
 import { useI18n } from "@/lib/i18n/client";
 
 /**
@@ -32,15 +32,16 @@ export function LoadError({ error, reset }: { error: Error & { digest?: string }
 
   return (
     <div role="alert" className="mx-auto flex w-full max-w-[460px] flex-col items-center px-6 py-16 text-center">
+      <Mika mood="sad" size={120} label="" className="mb-6" />
       <h1 className="text-balance text-[24px] font-bold leading-[1.15] tracking-tight-title text-ink">
         {t("app.errors.loadFailedTitle")}
       </h1>
       <p className="mt-3 max-w-[38ch] text-[15.5px] leading-relaxed text-ink-secondary">
         {t("app.errors.loadFailedBody")}
       </p>
-      <Button size="xl" className="mt-7 h-12 rounded-pill px-6 text-[15px] sm:h-12 sm:text-[15px]" onClick={retry}>
+      <button type="button" className="btn-primary mt-7 w-auto px-10" onClick={retry}>
         {t("app.errors.retry")}
-      </Button>
+      </button>
     </div>
   );
 }

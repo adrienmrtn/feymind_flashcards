@@ -162,6 +162,7 @@
 
 .lp-gradient-fill {
   background: var(--color-accent);
+  color: var(--color-on-ink);
 }
 
 /* Une surface de la vitrine : un filet, sans ombre floue. */

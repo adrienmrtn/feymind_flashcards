@@ -148,7 +148,7 @@ function EndState({ mood, big, tone, title, button, onLeave }: { mood: "sleep" |
     <div className="score-in flex flex-1 flex-col items-center justify-center gap-[18px] px-1 pb-4 text-center">
       <Mika mood={mood} size={mood === "happy" ? 170 : 150} label="" />
       {big ? (
-        <p className="numeral text-[56px] font-extrabold leading-none" style={{ color: tone ? `var(--color-tone-${tone}-ink)` : undefined }}>
+        <p className="numeral font-display text-[64px] leading-none" style={{ color: tone ? `var(--color-tone-${tone}-ink)` : undefined }}>
           {big}
         </p>
       ) : null}

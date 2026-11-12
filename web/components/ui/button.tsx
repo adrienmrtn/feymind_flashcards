@@ -30,8 +30,10 @@ export const buttonVariants = cva(
         xs: "h-7 gap-1 rounded-md px-[calc(--spacing(2)-1px)] text-sm before:rounded-[calc(var(--radius-md)-1px)] sm:h-6 sm:text-xs [&_svg:not([class*='size-'])]:size-4 sm:[&_svg:not([class*='size-'])]:size-3.5",
       },
       variant: {
+        // Le bouton principal de la direction artistique V3.3 : une pilule pleine (blanche sur
+        // le marine, encre sur le clair), en Sofia Sans Condensed, posée sur sa lèvre.
         default:
-          "not-disabled:inset-shadow-[0_1px_--theme(--color-white/16%)] border-primary bg-primary text-primary-foreground shadow-primary/24 shadow-xs hover:bg-primary/90 data-pressed:bg-primary/90 *:data-[slot=button-loading-indicator]:text-primary-foreground [:active,[data-pressed]]:inset-shadow-[0_1px_--theme(--color-black/8%)] [:disabled,:active,[data-pressed]]:shadow-none",
+          "border-primary bg-primary font-display text-[17px] font-black tracking-[0.1px] text-primary-foreground shadow-[0_3px_0_var(--color-cta-lip)] hover:bg-primary/92 data-pressed:bg-primary/90 *:data-[slot=button-loading-indicator]:text-primary-foreground [:active,[data-pressed]]:translate-y-[2px] [:active,[data-pressed]]:shadow-[0_1px_0_var(--color-cta-lip)] [:disabled]:shadow-none sm:text-[17px]",
         destructive:
           "not-disabled:inset-shadow-[0_1px_--theme(--color-white/16%)] border-destructive bg-destructive text-white shadow-destructive/24 shadow-xs hover:bg-destructive/90 data-pressed:bg-destructive/90 *:data-[slot=button-loading-indicator]:text-white [:active,[data-pressed]]:inset-shadow-[0_1px_--theme(--color-black/8%)] [:disabled,:active,[data-pressed]]:shadow-none",
         "destructive-outline":

@@ -168,7 +168,7 @@ function ConnexionBody() {
           href={homeHref}
           size={28}
           className="text-ink"
-          wordClassName="text-[15px] font-bold text-ink"
+          wordClassName="font-display text-[21px] leading-none text-ink"
         />
         <div className="flex items-center gap-1.5">
           <AppearanceSwitcher variant="compact" />

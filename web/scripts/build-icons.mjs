@@ -6,8 +6,8 @@
  * Chromium le photographie à chaque taille : rien n'est agrandi depuis un petit PNG.
  *
  * Ce script écrit dans `public/` :
- * - `icon.svg` (l'icône vectorielle, coins arrondis), `favicon.ico` (16, 32, 48) ;
- * - `icon-32.png`, `icon-48.png`, `icon-64.png`, `icon-192.png`, `icon-512.png` (coins arrondis,
+ * - `icon.svg` (l'icône vectorielle, coins arrondis), `favicon.ico` (16 et 32) ;
+ * - `icon-16.png`, `icon-32.png`, `icon-48.png`, `icon-64.png`, `icon-192.png`, `icon-512.png` (coins arrondis,
  *   fond transparent autour) et `icon.png` (256, la marque posée à côté du mot « Micabo ») ;
  * - `apple-touch-icon.png` (180, carré plein : iOS pose son propre masque) ;
  * - `icon-maskable-512.png` (Mika réduit dans la zone sûre, le fond jusqu'aux bords) ;
@@ -77,7 +77,7 @@ const rounded = {};
 for (const side of [16, 32, 48, 64, 192, 256, 512]) {
   rounded[side] = await png(iconSvg(side), side, side);
 }
-for (const side of [32, 48, 64, 192, 512]) writeFileSync(resolve(PUBLIC, `icon-${side}.png`), rounded[side]);
+for (const side of [16, 32, 48, 64, 192, 512]) writeFileSync(resolve(PUBLIC, `icon-${side}.png`), rounded[side]);
 writeFileSync(resolve(PUBLIC, "icon.png"), rounded[256]);
 
 // iOS : un carré plein, sans transparence.
@@ -92,9 +92,10 @@ await png(
   { transparent: false },
 );
 
-// favicon.ico : trois PNG dans un conteneur ICO.
+// favicon.ico : deux PNG (16 et 32) dans un conteneur ICO. Le 48 px est `icon-48.png`, déclaré
+// en premier : un ICO qui prétend faire 48 × 48 trompe Google (`docs/seo.md`).
 {
-  const images = [16, 32, 48].map((side) => ({ side, data: rounded[side] }));
+  const images = [16, 32].map((side) => ({ side, data: rounded[side] }));
   const header = Buffer.alloc(6 + 16 * images.length);
   header.writeUInt16LE(0, 0);
   header.writeUInt16LE(1, 2);

@@ -75,7 +75,7 @@ export function SiteHeader({
           href={homeHref}
           size={28}
           className="shrink-0 text-ink"
-          wordClassName="text-[15px] font-bold tracking-tight text-ink"
+          wordClassName="font-display text-[21px] leading-none text-ink"
         />
 
         <nav aria-label={ariaLabel ?? t("landing.navAria")} className="hidden items-center gap-6 md:flex">

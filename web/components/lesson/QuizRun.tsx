@@ -251,7 +251,7 @@ export function QuizScore({
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <p className="numeral text-[40px] font-extrabold leading-none" style={{ color: `var(--color-tone-${tone}-ink)` }}>
+          <p className="numeral font-display text-[48px] leading-none" style={{ color: `var(--color-tone-${tone}-ink)` }}>
             {right} / {total}
           </p>
           <p className="numeral mt-1 text-[16px] font-bold text-ink-secondary">{Math.round(ratio * 100)} %</p>

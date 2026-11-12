@@ -53,7 +53,7 @@ export function Pricing({
         <div className="flex min-h-7 flex-wrap items-center gap-2">
           <p className="text-[17px] font-extrabold text-ink">{planTitle(t, plan)}</p>
           {recommended ? (
-            <span className="lp-gradient-fill rounded-pill px-2.5 py-1 text-[11.5px] font-extrabold text-white">
+            <span className="lp-gradient-fill rounded-pill px-2.5 py-1 text-[11.5px] font-extrabold text-on-ink">
               {t("landing.pricingRecommended")}
             </span>
           ) : null}
@@ -62,7 +62,7 @@ export function Pricing({
           ) : null}
         </div>
         <p className="mt-5 flex items-baseline gap-1.5">
-          <span className="numeral text-[44px] font-extrabold leading-none tracking-display text-ink">{amount}</span>
+          <span className="numeral font-display text-[52px] leading-none text-ink">{amount}</span>
           <span className="text-[15px] font-bold text-ink-tertiary">/ {unit}</span>
         </p>
         <p className="mt-2 min-h-[22px] text-[14.5px] font-semibold text-ink-secondary">

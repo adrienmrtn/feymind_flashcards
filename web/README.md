@@ -20,7 +20,8 @@ web/
   lib/                 données (`data/`), actions serveur, i18n, la porte du gratuit (`paywall.ts`)
   packages/core/       @micabo/core : ce que l'iPhone et le web doivent partager — SM-2, lesson/
                        (chemin, tirages, stats), allowance, entitlement
-  public/icons3d/      les 34 icônes 3D de l'app, et design/mika pour l'oiseau
+  public/              l'icône (Mika en buste) et ses tailles, app-screens/ (captures réelles de l'app) ;
+                       icons3d/ reste pour les anciennes versions. Mika vient de design/mika-v3
   scripts/demo/        un faux Supabase pour regarder l'app sans compte, et les captures
 ```
 

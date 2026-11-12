@@ -433,7 +433,7 @@ function MockExamResult({
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <p className="numeral text-[44px] font-extrabold leading-none text-ink">{examGradeLabel(fraction, country, locale)}</p>
+          <p className="numeral font-display text-[52px] leading-none text-ink">{examGradeLabel(fraction, country, locale)}</p>
           {examGradeLabel(fraction, country, locale) !== `${result.correct}/${result.total}` ? (
             <p className="numeral mt-1.5 text-[16px] font-bold text-ink-secondary">
               {result.correct}/{result.total}

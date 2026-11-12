@@ -48,7 +48,7 @@ export function IphoneLanding({ signedIn = false }: { signedIn?: boolean }) {
             href={home}
             size={28}
             className="shrink-0 text-ink"
-            wordClassName="text-[15px] font-bold tracking-tight text-ink"
+            wordClassName="font-display text-[21px] leading-none text-ink"
           />
           <div className="flex min-w-0 items-center justify-end gap-1.5">
             <AppearanceSwitcher variant="compact" />

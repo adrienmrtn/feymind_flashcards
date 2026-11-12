@@ -13,7 +13,7 @@ import { ProfileDetail, type ProfileDetailProps } from "@/components/profile/Pro
 import { APP_STORE_LISTING, PLAY_STORE_LISTING, ratingListings, type StorePlatform } from "@/components/profile/stores";
 import { manageSubscription } from "@/lib/actions/checkout";
 import { setUiLocale } from "@/lib/actions/locale";
-import { APPEARANCES, type Appearance } from "@/lib/appearance";
+import { type Appearance } from "@/lib/appearance";
 import { readDiscountStart, requestDiscount } from "@/lib/discount";
 import { useI18n } from "@/lib/i18n/client";
 import { useLocalizedHref } from "@/lib/i18n/href";
@@ -417,14 +417,17 @@ function LanguageRow() {
 
 const THEME_KEY: Record<Appearance, string> = { day: "settings.appearanceDay", night: "settings.appearanceNight", twilight: "settings.appearanceTwilight" };
 
-/** Changer le thème : clair, sombre, crépuscule. Reste sur cet appareil. */
+/** Les deux thèmes de l'app (V3.3) : le marine, puis le clair. Le crépuscule s'affiche en marine. */
+const THEME_CHOICES: readonly Appearance[] = ["night", "day"];
+
+/** Changer le thème : marine ou clair. Reste sur cet appareil. */
 function ThemeRow() {
   const { t } = useI18n();
   const { appearance, setAppearance } = useAppearance();
   return (
     <RowShell icon={<Palette aria-hidden="true" className="size-5" strokeWidth={2.4} />} title={t("lesson.profile.theme")}>
-      <select value={appearance} onChange={(event) => setAppearance(event.target.value as Appearance)} aria-label={t("lesson.profile.theme")} className="rounded-pill bg-surface-muted px-3 py-1.5 text-[14px] font-bold text-ink outline-none focus-visible:shadow-[0_0_0_2px_var(--color-accent)]">
-        {APPEARANCES.map((value) => (
+      <select value={appearance === "twilight" ? "night" : appearance} onChange={(event) => setAppearance(event.target.value as Appearance)} aria-label={t("lesson.profile.theme")} className="rounded-pill bg-surface-muted px-3 py-1.5 text-[14px] font-bold text-ink outline-none focus-visible:shadow-[0_0_0_2px_var(--color-accent)]">
+        {THEME_CHOICES.map((value) => (
           <option key={value} value={value}>
             {t(THEME_KEY[value])}
           </option>

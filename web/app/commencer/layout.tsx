@@ -113,7 +113,7 @@ function Frame({ children }: { children: React.ReactNode }) {
       <Atmosphere boxed />
 
       <header className="mx-auto flex h-14 w-full max-w-page shrink-0 items-center justify-between gap-3 px-screen">
-        <BrandLockup href={"/" as Route} size={28} className="text-ink" wordClassName="text-[15px] font-bold text-ink" />
+        <BrandLockup href={"/" as Route} size={28} className="text-ink" wordClassName="font-display text-[21px] leading-none text-ink" />
         {showsLanguage ? <LanguageSwitcher /> : null}
       </header>
 
