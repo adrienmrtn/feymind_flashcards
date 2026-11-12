@@ -8,11 +8,11 @@
 //
 //     node design/mika-v3/export.js                    # l'image de lancement et la planche
 //     node design/mika-v3/export.js --propositions D   # écrit aussi les icônes A, B et C (1024 px) dans D
-//     node design/mika-v3/export.js --icone A          # installe une proposition comme icône de l'app
+//     node design/mika-v3/export.js --icone Y          # refait l'icône de l'app depuis `icone.html`
 //
-// **L'icône de l'app n'est pas refaite par défaut** : aucune des propositions de `icone.html`
-// n'a encore été retenue. `--icone` remplace `AppIcon` (1024 px, sans transparence ni coins
-// arrondis) et `BrandMark` (la même image en 384 px, la marque posée dans l'app).
+// **L'icône de l'app n'est pas refaite par défaut** : `AppIcon.png` est déjà l'export de la
+// variante Y de `icone.html` (Mika en buste sur bleu nuit). `--icone` le réécrit (1024 px, sans
+// transparence ni coins arrondis) ; avec `--marque`, il réécrit aussi `BrandMark` (384 px).
 //
 // Il faut Playwright et son Chromium (`npm i -g playwright && npx playwright install chromium`,
 // puis `NODE_PATH=$(npm root -g)` si Node ne le trouve pas).
@@ -71,16 +71,18 @@ async function main() {
   if (proposals) {
     const folder = path.resolve(proposals);
     fs.mkdirSync(folder, { recursive: true });
-    const names = { A: 'icone-A-marine-1024.png', B: 'icone-B-jaune-1024.png', C: 'icone-C-bleu-profond-1024.png' };
+    const names = { Y: 'icone-Y-bleu-nuit-1024.png', A: 'icone-A-marine-1024.png', B: 'icone-B-jaune-1024.png', C: 'icone-C-bleu-profond-1024.png' };
     for (const variant of Object.keys(names)) {
       await icon(variant, 1024, path.join(folder, names[variant]));
     }
   }
 
-  // L'icône retenue : celle de l'app, et la marque posée dans l'app (la même, en petit).
+  // L'icône de l'app et, sur demande, la marque posée dans l'app (la même, en petit).
   if (chosen) {
     await icon(chosen, 1024, path.join(assets, 'AppIcon.appiconset/AppIcon.png'));
-    await icon(chosen, 384, path.join(assets, 'BrandMark.imageset/BrandMark.png'));
+    if (process.argv.includes('--marque')) {
+      await icon(chosen, 384, path.join(assets, 'BrandMark.imageset/BrandMark.png'));
+    }
   }
 
   await browser.close();

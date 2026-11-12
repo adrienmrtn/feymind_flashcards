@@ -262,6 +262,11 @@ pour tout mouvement. Maintenant :
   depuis son trait, le crayon rentre dans le poing quand le bras se range.
 - **Coût nul au repos** : rien ne se redessine tant que la pose ne change pas. Pas d'horloge
   d'images, pas de minuterie hors du clignement.
+- **À la cadence de l'écran** : pendant un geste, le canevas se redessine à chaque image. Sur
+  un iPhone ProMotion, les animations qu'une app calcule elle-même plafonnent à 60 images par
+  seconde sans la clé `CADisableMinimumFrameDurationOnPhone` d'`Info.plist` : elle est posée
+  (test `testTheAppAsksForTheScreenCadence`), et vaut pour toutes les animations SwiftUI de
+  l'app.
 - **Un geste, une fois, sur place** (`MikaMood.beats` : une suite de poses et de courbes) :
 
   | Humeur | Geste | Pose qui reste |

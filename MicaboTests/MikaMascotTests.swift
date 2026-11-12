@@ -482,14 +482,25 @@ final class MikaMascotTests: XCTestCase {
             XCTAssertEqual(cues.count, count, "\(mood) : quelque chose a rejoué hors écran")
             XCTAssertEqual(director.activity, .offstage, "\(mood)")
 
-            // De retour à l'écran : une attente reprend, un geste déjà joué ne se rejoue pas.
+            // De retour à l'écran : une attente reprend ; un geste coupé avant sa fin (personne
+            // ne l'a vu) se rejoue ; un geste joué jusqu'au bout ne se rejoue pas.
             director.appear(mood)
             if mood.loops {
                 XCTAssertEqual(director.activity, .looping, "\(mood)")
                 XCTAssertEqual(cues.last?.repeats, true, "\(mood)")
             } else {
+                XCTAssertEqual(director.activity, .gesturing, "\(mood) : le geste coupé ne se rejoue pas")
+                var guardrail = 0
+                while director.activity == .gesturing, guardrail < 20 {
+                    director.finished(try XCTUnwrap(cues.last))
+                    guardrail += 1
+                }
                 XCTAssertEqual(director.activity, .resting, "\(mood)")
-                XCTAssertEqual(cues.count, count, "\(mood) : le geste se rejoue au retour")
+                director.leave()
+                let played = cues.count
+                director.appear(mood)
+                XCTAssertEqual(director.activity, .resting, "\(mood)")
+                XCTAssertEqual(cues.count, played, "\(mood) : un geste déjà joué se rejoue au retour")
             }
         }
     }
@@ -581,9 +592,10 @@ final class MikaMascotTests: XCTestCase {
         XCTAssertEqual(MikaPeek.height(for: MikaPeek.card), 92 * 260 / 312, accuracy: 0.001)
         XCTAssertEqual(MikaArt.peekCut, 248)
         XCTAssertLessThan(CGFloat(MikaArt.peekCut), MikaArt.head.cgPath.boundingBoxOfPath.maxY, "coupé par le bord, pas posé dessus")
+        let face: [MikaPiece.Part] = [.eye, .pupil, .lid, .cheek, .mouth]
         for mood in MikaMood.allCases {
             for pose in everyPose(of: mood) {
-                for piece in MikaArt.scene(pose) where [.eye, .pupil, .lid, .cheek, .mouth].contains(piece.part) {
+                for piece in MikaArt.scene(pose) where face.contains(piece.part) {
                     let box = MikaArt.bounds(of: piece, pose: pose)
                     XCTAssertLessThan(Double(box.maxY), MikaArt.peekCut - 2, "\(mood) : le bord coupe le visage (\(piece.part))")
                 }
@@ -632,6 +644,12 @@ final class MikaMascotTests: XCTestCase {
         let videos = (Bundle.main.urls(forResourcesWithExtension: "mov", subdirectory: nil) ?? [])
             + (Bundle.main.urls(forResourcesWithExtension: "mp4", subdirectory: nil) ?? [])
         XCTAssertTrue(videos.filter { $0.lastPathComponent.hasPrefix("mika") }.isEmpty, "\(videos)")
+    }
+
+    /// Mika se redessine à chaque image de ses gestes : sur un iPhone ProMotion, l'app demande
+    /// la cadence de l'écran (sans cette clé, ses animations plafonnent à 60 images par seconde).
+    func testTheAppAsksForTheScreenCadence() {
+        XCTAssertEqual(Bundle.main.object(forInfoDictionaryKey: "CADisableMinimumFrameDurationOnPhone") as? Bool, true)
     }
 
     /// **L'écran de lancement et la première image de l'app sont les mêmes** : le marine dans

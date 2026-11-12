@@ -1,32 +1,34 @@
 <!doctype html><meta charset="utf-8">
 <!--
-  Des propositions d'icône avec le nouveau Mika : au repos, la bouche ouverte, la tête et le
-  crayon entiers, les tentacules coupés par le bas. A = fond marine en dégradé radial,
-  B = jaune, C = bleu profond. **Aucune n'est installée** : l'icône de l'app n'a pas encore
-  changé (`node design/mika-v3/export.js --icone A` installera celle qui sera retenue).
+  L'icône de Micabo et les pistes qui l'ont précédée, dessinées avec le nouveau Mika.
 
-  Le cadrage : le dessin (viewBox « 10 -8 400 400 ») est rendu à 106 % de la largeur de
-  l'icône, décalé de −6 % en x et de +4,67 % en y.
+  Y = **l'icône de l'app** : Mika en buste, la bouche ouverte, sur un bleu nuit uni #101737
+  (le dessin, viewBox « -10 -30 420 420 », rendu à 140 % de la largeur de l'icône, décalé de
+  −20 % en x et de +6 % en y). `AppIcon.png` est l'export de ces paramètres.
+  A (marine en dégradé radial), B (jaune), C (bleu profond) : des pistes non retenues, cadrées
+  plus large (viewBox « 10 -8 400 400 » à 106 %, décalé de −6 % et de +4,67 %).
 
-  Sans paramètre : les trois propositions côte à côte, aux coins arrondis (pour regarder).
-  `?v=A&s=1024` : une seule, carrée, sans coins arrondis ni transparence, à la taille demandée
+  Sans paramètre : toutes côte à côte, aux coins arrondis (pour regarder).
+  `?v=Y&s=1024` : une seule, carrée, sans coins arrondis ni transparence, à la taille demandée
   (ce que `export.js` photographie).
 -->
 <body style="margin:0;background:#3A3D48">
 <div id="wall" style="display:flex;gap:28px;padding:28px"></div>
 <script src="mika.js"></script>
 <script>
+const wide = { viewBox: '10 -8 400 400', zoom: 318 / 300, left: -18 / 300, top: 14 / 300 };
 const variants = {
-  A: ['A · marine', 'background:radial-gradient(circle at 50% 36%, #22357A 0%, #0B0F1C 72%)', { body: '#5C88FF', shade: '#3F6BE8' }],
-  B: ['B · jaune', 'background:#FFC531', { body: '#3870FE', shade: '#2A5BE0' }],
-  C: ['C · bleu profond', 'background:linear-gradient(#2F58E0,#152E8C)', { body: '#8FB0FF', shade: '#6A91FF' }],
+  Y: ["Y · bleu nuit (l'icône)", 'background:#101737', { body: '#5C88FF', shade: '#3F6BE8' }, { viewBox: '-10 -30 420 420', zoom: 1.4, left: -0.2, top: 0.06 }],
+  A: ['A · marine', 'background:radial-gradient(circle at 50% 36%, #22357A 0%, #0B0F1C 72%)', { body: '#5C88FF', shade: '#3F6BE8' }, wide],
+  B: ['B · jaune', 'background:#FFC531', { body: '#3870FE', shade: '#2A5BE0' }, wide],
+  C: ['C · bleu profond', 'background:linear-gradient(#2F58E0,#152E8C)', { body: '#8FB0FF', shade: '#6A91FF' }, wide],
 };
-// Une icône de `side` pixels : le fond, puis Mika à 106 %, décalé de (−6 %, +4,67 %).
+// Une icône de `side` pixels : le fond, puis Mika agrandi et décalé selon son cadrage.
 function icon(key, side, radius) {
-  const [, background, colors] = variants[key];
-  const art = mika(Object.assign({ size: side * 318 / 300, noShadow: true, viewBox: '10 -8 400 400', mouth: 'open' }, colors));
+  const [, background, colors, frame] = variants[key];
+  const art = mika(Object.assign({ size: side * frame.zoom, noShadow: true, viewBox: frame.viewBox, mouth: 'open' }, colors));
   return `<div id="icone" style="width:${side}px;height:${side}px;border-radius:${radius}px;overflow:hidden;${background};position:relative">`
-    + `<div style="position:absolute;left:${-side * 18 / 300}px;top:${side * 14 / 300}px">${art}</div></div>`;
+    + `<div style="position:absolute;left:${side * frame.left}px;top:${side * frame.top}px">${art}</div></div>`;
 }
 const query = new URLSearchParams(location.search);
 const wall = document.getElementById('wall');

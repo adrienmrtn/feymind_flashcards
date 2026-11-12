@@ -28,6 +28,14 @@
 		<key>UIImageRespectsSafeAreaInsets</key>
 		<false/>
 	</dict>
+	<!--
+	La cadence de l'écran. Sans cette clé, un iPhone ProMotion plafonne à 60 images par seconde
+	les animations que l'app calcule elle-même, image par image : celles de SwiftUI, donc Mika,
+	dessiné dans un canevas à chaque image de ses gestes. Avec elle, elles suivent l'écran
+	jusqu'à 120 Hz.
+	-->
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Micabo uses the camera to scan your course pages.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

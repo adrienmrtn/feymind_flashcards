@@ -701,8 +701,10 @@ private struct MikaCore: View {
         }
     }
 
-    /// **La vie au repos** : un clignement toutes les 3 à 6 secondes. La tâche s'arrête dès
-    /// que la vue quitte l'écran ou que le mouvement n'est plus permis.
+    /// **La vie au repos** : un clignement toutes les 3 à 6 secondes. C'est la seule horloge de
+    /// Mika (un clignement n'a pas d'autre déclencheur que le temps qui passe) ; elle ne
+    /// tourne que pour un Mika visible, au repos, et la tâche s'arrête dès que la vue quitte
+    /// l'écran ou que le mouvement n'est plus permis.
     private func blinkWhileResting() async {
         guard blinkClock else { return }
         while !Task.isCancelled {
@@ -713,11 +715,10 @@ private struct MikaCore: View {
         }
     }
 
-    /// Figé (les rendus, « Réduire les animations ») : `onDone` arrive quand le geste aurait fini.
+    /// Figé (les rendus, « Réduire les animations ») : il n'y a pas de geste à attendre,
+    /// `onDone` arrive tout de suite.
     private func reportDoneWhenStill() async {
         guard !moves, let onDone, mood.loop == nil else { return }
-        try? await Task.sleep(for: .seconds(mood.duration))
-        guard !Task.isCancelled else { return }
         onDone()
     }
 }
@@ -873,9 +874,11 @@ final class MikaDirector {
         apply?(MikaCue(run: run, pose: mood.rest, curve: .standard, awaits: false))
     }
 
-    /// Hors écran : tout s'arrête, Mika est posé sur la fin de son geste.
+    /// Hors écran : tout s'arrête, Mika est posé sur la fin de son geste. Un geste coupé avant
+    /// sa fin (personne ne l'a vu) se rejouera au retour.
     func leave() {
         guard activity != .offstage else { return }
+        if activity == .gesturing { played = false }
         stop(as: .offstage)
     }
 
