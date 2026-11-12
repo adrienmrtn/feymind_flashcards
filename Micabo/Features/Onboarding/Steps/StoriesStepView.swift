@@ -356,6 +356,9 @@ private struct StoryPhoneFrame<Content: View>: View {
         }
         .padding(.horizontal, 18)
         .padding(.top, 26)
+        // L'aperçu garde sa hauteur naturelle : sur un petit écran, le cadre le coupe par le
+        // bas au lieu de le tasser.
+        .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(
             LinearGradient(colors: [V3Color.surface, V3Color.bg], startPoint: .top, endPoint: .bottom),
