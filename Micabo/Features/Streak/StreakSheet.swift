@@ -212,13 +212,13 @@ struct StreakFlame: View {
         .accessibilityHidden(true)
         .onAppear {
             guard animated, !breathed else { return }
-            withAnimation(MicaboMotion.gentle.delay(0.3)) { breathed = true }
+            withAnimation(MicaboMotion.gentle) { breathed = true }
         }
         .onChange(of: lit) { _, lit in
             // La flamme qui s'allume (la fête de la série) prend son inspiration à ce moment.
             guard lit, !reduceMotion, !still else { return }
             breathed = false
-            withAnimation(MicaboMotion.celebrate.delay(0.1)) { breathed = true }
+            withAnimation(MicaboMotion.celebrate) { breathed = true }
         }
     }
 }

@@ -41,7 +41,7 @@ struct LessonPracticeView: View {
                 LessonQuizView(
                     session: session,
                     questions: questions,
-                    title: L10n.t("lesson.practice.title", locale: .resolved()),
+                    title: MicaboName.quiz.text(),
                     circleID: nil,
                     onClose: { dismiss() },
                     onMore: generate

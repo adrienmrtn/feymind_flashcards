@@ -299,17 +299,21 @@ struct MockExamRunView: View {
     /// Le nombre de remises à zéro de chaque question, pour recréer sa carte.
     @State private var resets: [String: Int] = [:]
     @State private var startedAt = Date()
-    @State private var now = Date()
     @State private var confirmQuit = false
     @State private var confirmSubmit = false
     @State private var submitted = false
     @State private var direction: Edge = .trailing
 
+    /// **La minuterie ne redessine plus la copie.** Elle écrivait l'heure dans un état de cet
+    /// écran : chaque seconde, la question, ses réponses, les vingt pastilles et la barre du
+    /// bas se relisaient pour faire avancer un chiffre. Le chrono se dessine maintenant seul
+    /// (`ExamClock`) ; la minuterie ne sert plus qu'à rendre la copie à zéro, et ne touche à
+    /// aucun état tant qu'il reste du temps.
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var total: Int { paper.minutes * 60 }
-    private var elapsed: Int { min(total, Int(now.timeIntervalSince(startedAt))) }
-    private var remaining: Int { max(0, total - elapsed) }
+    /// Les secondes écoulées à un instant, bornées à la durée de l'épreuve.
+    private func elapsed(at date: Date = Date()) -> Int { min(total, max(0, Int(date.timeIntervalSince(startedAt)))) }
     private var item: ExamPaper.Item { paper.items[index] }
     private var answeredCount: Int { paper.items.filter { answers[$0.id] != nil }.count }
 
@@ -349,8 +353,6 @@ struct MockExamRunView: View {
         }
         .background(MicaboColor.canvas.ignoresSafeArea())
         .onReceive(timer) { value in
-            now = value
-            // Lu depuis l'instant reçu, pas depuis l'état qu'on vient d'écrire.
             let left = total - Int(value.timeIntervalSince(startedAt))
             if left <= 0, !submitted {
                 submit()
@@ -385,7 +387,7 @@ struct MockExamRunView: View {
 
             Spacer()
 
-            TimerPill(remaining: remaining, total: total)
+            ExamClock(startedAt: startedAt, total: total)
 
             Spacer()
 
@@ -539,7 +541,21 @@ struct MockExamRunView: View {
         Haptics.success()
         // Un examen blanc rendu : la plus grosse part d'XP.
         XPStore.shared.award(.mockExamFinished)
-        onSubmit(answers, elapsed)
+        onSubmit(answers, elapsed())
+    }
+}
+
+/// **Le chrono de l'épreuve, qui tourne seul** : une horloge d'une seconde autour de la seule
+/// pastille, pour que rien d'autre de la copie ne se redessine quand le temps avance.
+struct ExamClock: View {
+    let startedAt: Date
+    let total: Int
+
+    var body: some View {
+        TimelineView(.periodic(from: startedAt, by: 1)) { context in
+            let elapsed = min(total, max(0, Int(context.date.timeIntervalSince(startedAt))))
+            TimerPill(remaining: max(0, total - elapsed), total: total)
+        }
     }
 }
 
@@ -705,7 +721,7 @@ struct MockExamResultView: View {
                 if !missed.isEmpty {
                     Button(action: addCards) {
                         Label(
-                            L10n.t(cardsAdded ? "lesson.exam.cardsAdded" : "lesson.exam.addCards", locale: .resolved(), vars: ["count": "\(missed.count)"]),
+                            L10n.t(cardsAdded ? "lesson.exam.cardsAdded" : "ios.home10.mock.addCards", locale: .resolved(), vars: ["count": "\(missed.count)"]),
                             systemImage: cardsAdded ? "checkmark" : "rectangle.stack.badge.plus"
                         )
                     }
@@ -747,11 +763,13 @@ struct MockExamResultView: View {
         .scrollIndicators(.hidden)
         .background(MicaboColor.canvas.ignoresSafeArea())
         .onAppear {
-            withAnimation(LearnMotion.gentle(delay: 0.2)) { fill = result.fraction }
-            withAnimation(LearnMotion.gentle(delay: 0.5)) { shown = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                if passes { Haptics.success() } else { Haptics.warning() }
+            // La note est là à l'arrivée de l'écran : elle restait invisible une demi-seconde,
+            // le temps que l'anneau commence à se remplir.
+            withAnimation(LearnMotion.gentle) {
+                fill = result.fraction
+                shown = true
             }
+            if passes { Haptics.success() } else { Haptics.warning() }
         }
     }
 

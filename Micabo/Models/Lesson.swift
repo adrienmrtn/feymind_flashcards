@@ -50,9 +50,13 @@ struct LessonPath: Codable, Equatable {
     /// l'écriture du thème, et « Réessayer » les renvoie telles quelles.
     var points: [[String]]?
 
+    /// Les plans déjà décodés, gardés par leurs octets (`MemoCache`) : `Course.lessonPath` se
+    /// relit à chaque passe d'un écran, et le JSON ne se décode qu'une fois.
+    private static let decoded = MemoCache<Data, LessonPath?>(limit: 128)
+
     static func decode(from data: Data?) -> LessonPath? {
         guard let data, !data.isEmpty else { return nil }
-        return try? JSONDecoder().decode(LessonPath.self, from: data)
+        return decoded.value(for: data) { try? JSONDecoder().decode(LessonPath.self, from: data) }
     }
 
     func encoded() -> Data? {
@@ -75,9 +79,13 @@ struct ThemeNotes: Codable, Equatable {
         case oneLiner, blocks, takeaways
     }
 
+    /// Les notes déjà décodées, gardées par leurs octets (`MemoCache`) : une page de notes
+    /// relisait trois fois le même JSON à chaque « Continuer ».
+    private static let decoded = MemoCache<Data, ThemeNotes?>(limit: 128)
+
     static func decode(from data: Data?) -> ThemeNotes? {
         guard let data, !data.isEmpty else { return nil }
-        return try? JSONDecoder().decode(ThemeNotes.self, from: data)
+        return decoded.value(for: data) { try? JSONDecoder().decode(ThemeNotes.self, from: data) }
     }
 
     func encoded() -> Data? {
@@ -344,8 +352,12 @@ enum NoteBlock: Codable, Equatable {
     ///
     /// Jumeau de `inlineSteps` dans `supabase/functions/generate-lesson/schema.ts`, sans ses
     /// plafonds de longueur : le serveur coupe ce qui dépasse, l'app ne coupe rien.
+    /// Le motif d'une énumération écrite dans un paragraphe, compilé une fois : il l'était à
+    /// chaque paragraphe de chaque thème décodé.
+    private static let stepMarker = try? NSRegularExpression(pattern: "(?:^|(?<=[\\s:;]))(\\d{1,2})[.)]\\s+")
+
     static func inlineSteps(in text: String) -> (lead: String, items: [String])? {
-        guard let marker = try? NSRegularExpression(pattern: "(?:^|(?<=[\\s:;]))(\\d{1,2})[.)]\\s+") else {
+        guard let marker = stepMarker else {
             return nil
         }
         let source = text as NSString
@@ -505,9 +517,12 @@ struct ThemeQuiz: Codable, Equatable {
     var final: QuizQuestion? { questions.first }
     var reserve: [QuizQuestion] { Array(questions.dropFirst()) }
 
+    /// Les questions déjà décodées, gardées par leurs octets (`MemoCache`).
+    private static let decoded = MemoCache<Data, ThemeQuiz?>(limit: 128)
+
     static func decode(from data: Data?) -> ThemeQuiz? {
         guard let data, !data.isEmpty else { return nil }
-        return try? JSONDecoder().decode(ThemeQuiz.self, from: data)
+        return decoded.value(for: data) { try? JSONDecoder().decode(ThemeQuiz.self, from: data) }
     }
 
     func encoded() -> Data? {
@@ -531,11 +546,15 @@ struct LessonProgress: Codable, Equatable {
     /// Le jour où la leçon est devenue « apprise ».
     var finishedAt: Date?
 
+    /// Les progressions déjà décodées, gardées par leurs octets (`MemoCache`) : la liste des
+    /// leçons lit celle de chaque leçon à chaque passe.
+    private static let decoded = MemoCache<Data, LessonProgress>(limit: 256)
+
     static func decode(from data: Data?) -> LessonProgress {
-        guard let data, !data.isEmpty,
-              let progress = try? JSONDecoder.lessonDates.decode(LessonProgress.self, from: data)
-        else { return LessonProgress() }
-        return progress
+        guard let data, !data.isEmpty else { return LessonProgress() }
+        return decoded.value(for: data) {
+            (try? JSONDecoder.lessonDates.decode(LessonProgress.self, from: data)) ?? LessonProgress()
+        }
     }
 
     func encoded() -> Data? {

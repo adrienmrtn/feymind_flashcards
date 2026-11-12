@@ -177,10 +177,15 @@ describe("le branchement RevenueCat de l'app", () => {
 });
 
 describe("l'offre cadeau, des deux côtés", () => {
-  it("compte les mêmes appuis et la même durée d'offre", () => {
+  it("compte la même durée d'offre, chacun avec son geste", () => {
     // Une pastille qui dirait 12 h sur le site et 24 h sur le téléphone ferait douter du
     // prix lui-même : ce sont les nombres d'une promesse, pas d'un réglage.
-    expect(swiftConstant(discountOffer, "taps")).toBe(String(discount.taps));
+    //
+    // Le geste, lui, n'est plus le même : sur l'iPhone, l'offre remplace le paywall qu'on
+    // referme et arrive ouverte, sans cadeau à déballer (lot 10) ; le site garde ses trois
+    // appuis.
+    expect(swiftNumber(discountOffer, "taps")).toBe(0);
+    expect(discount.taps).toBe(3);
     expect(swiftConstant(discountOffer, "windowSeconds")).toBe(String(discount.windowSeconds));
     expect(swiftConstant(discountOffer, "restSeconds")).toBe(String(discount.restSeconds));
   });
@@ -261,8 +266,9 @@ describe("l'offre cadeau, des deux côtés", () => {
   });
 
   it("n'ouvre Pro que sur un achat confirmé, comme les autres paywalls", () => {
+    // Le tarif réduit se vend par le même écran que les deux offres (`PaywallFlowView.buy`).
     const flow = readFileSync(
-      resolve(repoRoot, "Micabo/Features/Paywall/DiscountFlowView.swift"),
+      resolve(repoRoot, "Micabo/Features/Paywall/PaywallFlowView.swift"),
       "utf8",
     );
     expect(flow).not.toContain("case .purchased, .unavailable:");

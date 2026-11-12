@@ -119,8 +119,9 @@ struct RootView: View {
             // Une seule fois par lancement : changer de langue recrée `RootView`
             // (`.id(uiLocale.locale)`), et le bleu n'a pas à repasser sur l'app.
             LaunchCurtain.hasLifted = true
+            // Le tour de boucle suffit : la tâche part une fois la première image posée, et
+            // attendre soixante millisecondes de plus ne faisait que retarder l'app.
             await Task.yield()
-            try? await Task.sleep(for: .milliseconds(60))
             withAnimation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion)) {
                 showsCurtain = false
             }

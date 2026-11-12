@@ -95,7 +95,7 @@ struct NotesCircleView: View {
         guard page + 1 < pages.count else { return }
         Haptics.light()
         forward = true
-        withAnimation(LearnMotion.gentle) {
+        withAnimation(LearnMotion.standard) {
             page += 1
             furthest = max(furthest, page)
         }
@@ -113,7 +113,7 @@ struct NotesCircleView: View {
         guard page > 0 else { return }
         Haptics.light()
         forward = false
-        withAnimation(LearnMotion.gentle) { page -= 1 }
+        withAnimation(LearnMotion.standard) { page -= 1 }
     }
 
     private func answered(_ result: QuizAnswer) {
@@ -334,8 +334,7 @@ private struct NotesSegment: View {
     }
 }
 
-/// **Le contenu d'un écran**, qui se remplit en arrivant : chaque élément glisse en place, un
-/// peu après le précédent.
+/// **Le contenu d'un écran**, posé d'un bloc : il arrive avec la page qui glisse.
 struct NotesPageView: View {
     let page: NotesPage
     let chapter: Chapter
@@ -433,27 +432,14 @@ struct NotesPageView: View {
     }
 }
 
-/// Un élément qui glisse en place à l'arrivée de l'écran, après ceux qui le précèdent.
-private struct Reveal: ViewModifier {
-    let order: Int
-    @State private var shown = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    func body(content: Content) -> some View {
-        content
-            .opacity(shown ? 1 : 0)
-            .offset(y: shown || reduceMotion ? 0 : 16)
-            .onAppear {
-                withAnimation(LearnMotion.gentle(delay: 0.08 + Double(order) * 0.09)) {
-                    shown = true
-                }
-            }
-    }
-}
-
 extension View {
+    /// **Le contenu d'une page de notes arrive avec la page** (lot 10, « mouvement natif et
+    /// immédiat »). Chaque élément glissait en place après le précédent, 0,09 s plus tard : le
+    /// dernier bloc d'une page de six n'était lisible qu'une seconde après « Continuer », à
+    /// chaque page. La page glisse d'un bloc ; rien n'attend dessus. L'ordre reste dans les
+    /// appels pour dire dans quel sens l'écran se lit.
     func reveal(_ order: Int) -> some View {
-        modifier(Reveal(order: order))
+        self
     }
 }
 
@@ -521,7 +507,12 @@ struct LessonNotesReader: View {
         NavigationStack {
             ScrollViewReader { proxy in
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 32) {
+                    // **Un thème ne se compose que lorsqu'on y arrive.** La pile composait d'un coup
+                    // les notes entières des cinq thèmes (une cinquantaine de blocs, leurs mots-clés
+                    // et leurs formules) avant de montrer la première ligne : la feuille s'ouvrait
+                    // avec ce retard. La couverture, le sommaire et le premier thème suffisent à
+                    // l'ouverture ; le sommaire saute toujours au thème voulu.
+                    LazyVStack(alignment: .leading, spacing: 32) {
                         cover
                         summary(proxy)
                         ForEach(Array(course.orderedChapters.enumerated()), id: \.element.id) { index, chapter in

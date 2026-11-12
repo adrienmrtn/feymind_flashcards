@@ -1250,7 +1250,7 @@ extension IosI18nCatalogs {
         "ios.cal.examToday": "È oggi",
         "ios.cal.examsCount": "{count, plural, one {# esame in arrivo} other {# esami in arrivo}}",
         "ios.cal.examsNone": "Simulazioni ed esami passati",
-        "ios.cal.focusDone": "Concentrazione · {minutes}",
+        "ios.cal.focusDone": "Focus · {minutes}",
         "ios.cal.go": "Inizia",
         "ios.cal.hide": "Nascondi il calendario",
         "ios.cal.linkedLesson": "Lezione collegata",
