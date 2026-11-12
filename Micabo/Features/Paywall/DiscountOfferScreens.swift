@@ -53,24 +53,27 @@ struct DiscountOfferScreen: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        VStack(spacing: 0) {
-            DiscountTopBar(clock: clock, isBusy: isPurchasing, onClose: onClose) {
-                expired = true
-            }
-
-            ViewThatFits(in: .vertical) {
-                content(mika: PaywallStyle.offerMika)
-                content(mika: PaywallStyle.offerMika * 0.7)
-                content(mika: nil)
-                ScrollView {
-                    content(mika: nil)
+        PaywallSafeFrame { bottomGap in
+            VStack(spacing: 0) {
+                DiscountTopBar(clock: clock, isBusy: isPurchasing, onClose: onClose) {
+                    expired = true
                 }
-                .scrollIndicators(.hidden)
-                .scrollBounceBehavior(.basedOnSize)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
 
-            footer
+                ViewThatFits(in: .vertical) {
+                    content(mika: PaywallStyle.offerMika, includes: true)
+                    content(mika: PaywallStyle.offerMika * 0.7, includes: true)
+                    content(mika: PaywallStyle.offerMika * 0.7, includes: false)
+                    content(mika: nil, includes: false)
+                    ScrollView {
+                        content(mika: nil, includes: true)
+                    }
+                    .scrollIndicators(.hidden)
+                    .scrollBounceBehavior(.basedOnSize)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+
+                footer(bottomGap: bottomGap)
+            }
         }
         .background(V3Color.bg.ignoresSafeArea())
         .onAppear {
@@ -83,8 +86,10 @@ struct DiscountOfferScreen: View {
 
     // MARK: Le contenu
 
-    /// `mika` : la taille de Mika, ou `nil` quand l'écran est trop court pour lui.
-    private func content(mika: CGFloat?) -> some View {
+    /// `mika` : la taille de Mika, ou `nil` quand l'écran est trop court pour lui ;
+    /// `includes` : la ligne qui rappelle ce que l'année Pro contient, la même que le
+    /// tableau du paywall qu'on vient de quitter.
+    private func content(mika: CGFloat?, includes: Bool) -> some View {
         VStack(spacing: 0) {
             Text(L10n.t("ios.pay10.offer.badge", locale: .resolved()))
                 .font(PaywallStyle.pillQuiet)
@@ -111,6 +116,15 @@ struct DiscountOfferScreen: View {
 
             priceCard
                 .padding(.top, mika == nil ? 18 : 0)
+
+            if includes, prices == .ready {
+                Text(L10n.t("ios.pay11.offer.includes", locale: .resolved()))
+                    .font(PaywallStyle.offerIncludes)
+                    .foregroundStyle(V3Color.ink2)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 10)
+            }
         }
         .padding(.horizontal, V3Metric.screenMargin)
         .padding(.top, 14)
@@ -213,7 +227,7 @@ struct DiscountOfferScreen: View {
 
     // MARK: Le pied
 
-    private var footer: some View {
+    private func footer(bottomGap: CGFloat) -> some View {
         VStack(spacing: 8) {
             button
             if let notice {
@@ -222,9 +236,9 @@ struct DiscountOfferScreen: View {
                 PaywallNoticeLine(notice: .info(L10n.t("ios.pay10.offer.ended", locale: .resolved())))
             }
             if prices == .ready {
-                Text(L10n.t("ios.pay10.offer.legal", locale: .resolved(), vars: ["price": plan.displayPrice]))
+                Text(L10n.t("ios.pay11.offer.legal", locale: .resolved(), vars: ["price": plan.displayPrice]))
                     .font(PaywallStyle.legal)
-                    .foregroundStyle(V3Color.ink3)
+                    .foregroundStyle(V3Color.ink2)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -232,7 +246,7 @@ struct DiscountOfferScreen: View {
         }
         .padding(.horizontal, V3Metric.screenMargin)
         .padding(.top, 8)
-        .padding(.bottom, 4)
+        .padding(.bottom, bottomGap)
         .frame(maxWidth: .infinity)
         .background(V3Color.bg)
     }

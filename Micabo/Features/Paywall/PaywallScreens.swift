@@ -25,10 +25,9 @@ struct PaywallContext: Equatable {
 
 // MARK: - Les mots du paywall
 
-/// **Ce que le paywall écrit**, à part de ce qu'il dessine : le titre, la chronologie de
-/// l'essai, la ligne d'une offre, le bouton et la mention. Des fonctions pures : chaque
-/// promesse — « gratuitement », « je te préviens », « tu ne paies rien » — se vérifie sans
-/// écran.
+/// **Ce que le paywall écrit**, à part de ce qu'il dessine : le titre, la ligne d'une offre,
+/// le bouton et la mention. Des fonctions pures : chaque promesse — « gratuit », « je te
+/// préviens », la somme et sa date — se vérifie sans écran.
 enum PaywallCopy {
     /// **Le titre de l'en-tête « essai »**, en deux phrases : le plan de l'élève, puis ce
     /// qu'on lui propose, en bleu clair. « Gratuitement » ne s'écrit que si l'essai lui est
@@ -58,44 +57,62 @@ enum PaywallCopy {
         PaywallEmphasis(marked: L10n.t(trigger.hookKey, locale: locale))
     }
 
-    /// La ligne sous le nom d'une offre : ce qui est prélevé, et à quel rythme. Dans
-    /// l'en-tête « contexte », où la chronologie n'est pas là pour le dire, elle porte aussi
-    /// les jours gratuits — quand ce compte y a droit.
-    static func planDetail(
-        for plan: PaywallPlan,
-        mentionsTrial: Bool,
-        locale: UiLocale = .resolved()
-    ) -> String {
-        let trial = mentionsTrial && plan.hasTrial
-            ? L10n.t("ios.pay10.plan.trialDays", locale: locale, vars: ["n": "\(plan.trialDays)"])
-            : nil
-        guard plan.period == .year else { return trial ?? plan.caption }
-        let perYear = L10n.t("ios.pay10.plan.perYear", locale: locale, vars: ["price": plan.displayPrice])
-        guard let trial else { return perYear }
-        return "\(perYear) · \(trial)"
-    }
-
-    /// **Le bouton ne promet l'essai que si ce compte y a droit** : un « Essayer
-    /// gratuitement » suivi d'un prélèvement immédiat est la pire façon de découvrir la règle
-    /// d'Apple.
-    static func callToAction(for plan: PaywallPlan, locale: UiLocale = .resolved()) -> String {
-        L10n.t(plan.hasTrial ? "ios.pay10.cta.trial" : "ios.pay10.cta.continue", locale: locale)
-    }
-
-    /// **La mention sous le bouton** : ce qui sera prélevé, quand, et la sortie. Avec essai :
-    /// « 3 jours gratuits, puis 49,99 € par an. Annule quand tu veux. » Sans : la somme
-    /// seule, précédée de « Essai gratuit déjà utilisé. » quand c'est la raison.
-    static func legal(for plan: PaywallPlan, locale: UiLocale = .resolved()) -> String {
+    /// **La ligne sous le nom d'une offre : ce qui est prélevé, et à quel rythme**, précédé
+    /// des jours gratuits quand ce compte y a droit — « 3 jours gratuits, puis 49,99 € par
+    /// an ». Sans essai : « 49,99 € par an », « facturé chaque semaine ».
+    static func planDetail(for plan: PaywallPlan, locale: UiLocale = .resolved()) -> String {
         let yearly = plan.period == .year
         if plan.hasTrial {
             return L10n.t(
-                yearly ? "ios.pay10.legal.trialYear" : "ios.pay10.legal.trialWeek",
+                yearly ? "ios.pay11.plan.trialThenYear" : "ios.pay11.plan.trialThenWeek",
                 locale: locale,
                 vars: ["n": "\(plan.trialDays)", "price": plan.displayPrice]
             )
         }
+        return yearly
+            ? L10n.t("ios.pay10.plan.perYear", locale: locale, vars: ["price": plan.displayPrice])
+            : plan.caption
+    }
+
+    /// **Le bouton dit ce qu'il fait.** Avec essai : « Commencer mes 3 jours gratuits » ;
+    /// sans : « S'abonner · 49,99 € par an ». Un « Essayer gratuitement » suivi d'un
+    /// prélèvement immédiat est la pire façon de découvrir la règle d'Apple, et un
+    /// « Continuer » ne dit pas qu'on paie.
+    static func callToAction(for plan: PaywallPlan, locale: UiLocale = .resolved()) -> String {
+        if plan.hasTrial {
+            return L10n.t("ios.pay11.cta.trial", locale: locale, vars: ["n": "\(plan.trialDays)"])
+        }
+        return L10n.t(
+            plan.period == .year ? "ios.pay11.cta.year" : "ios.pay11.cta.week",
+            locale: locale,
+            vars: ["price": plan.displayPrice]
+        )
+    }
+
+    /// **La mention sous le bouton : ce qui sera prélevé, et quand.** Avec essai :
+    /// « Gratuit jusqu'au 15 novembre, puis 49,99 € par an. Annule quand tu veux. » — la date
+    /// est celle de la chronologie. Sans essai : « Payé aujourd'hui : 49,99 €, puis chaque
+    /// année. », précédé de « Essai gratuit déjà utilisé. » quand c'est la raison.
+    static func legal(
+        for plan: PaywallPlan,
+        now: Date = Date(),
+        locale: UiLocale = .resolved(),
+        calendar: Calendar = .current
+    ) -> String {
+        let yearly = plan.period == .year
+        if plan.hasTrial {
+            let end = PaywallTimeline.endDate(from: now, trialDays: plan.trialDays)
+            return L10n.t(
+                yearly ? "ios.pay11.legal.trialYear" : "ios.pay11.legal.trialWeek",
+                locale: locale,
+                vars: [
+                    "date": PaywallTimeline.dayText(end, locale: locale, calendar: calendar),
+                    "price": plan.displayPrice,
+                ]
+            )
+        }
         let price = L10n.t(
-            yearly ? "ios.pay10.legal.year" : "ios.pay10.legal.week",
+            yearly ? "ios.pay11.legal.year" : "ios.pay11.legal.week",
             locale: locale,
             vars: ["price": plan.displayPrice]
         )
@@ -113,7 +130,7 @@ enum PaywallCopy {
 }
 
 /// **La chronologie de l'essai**, en trois étapes datées : aujourd'hui, le rappel, le premier
-/// prélèvement.
+/// paiement — et son montant.
 ///
 /// **De vraies dates, les mêmes que celles du rappel réellement posé** : l'étape du rappel
 /// sort de `TrialEndReminder.fireDate`, celle de la fin du même instant plus la durée de
@@ -137,8 +154,8 @@ enum PaywallTimeline {
         var symbol: String {
             switch kind {
             case .today: "lock.open"
-            case .reminder: "bell.badge"
-            case .end: "crown"
+            case .reminder: "bell"
+            case .end: "creditcard"
             }
         }
 
@@ -152,14 +169,15 @@ enum PaywallTimeline {
         }
     }
 
-    /// La longueur au-delà de laquelle le sujet d'une leçon est abrégé dans la première étape.
+    /// La longueur au-delà de laquelle le sujet d'une leçon est abrégé.
     static let longestTopic = 40
 
+    /// `price` : ce que coûtera la formule cochée, écrit par la boutique du pays.
     static func steps(
         trialDays: Int,
+        price: String,
         now: Date = Date(),
         reminderKept: Bool,
-        topic: String? = nil,
         locale: UiLocale = .resolved(),
         calendar: Calendar = .current
     ) -> [Step] {
@@ -167,20 +185,20 @@ enum PaywallTimeline {
             Step(
                 kind: .today,
                 title: L10n.t("ios.pay10.timeline.today", locale: locale),
-                detail: todayDetail(topic: topic, locale: locale)
+                detail: L10n.t("ios.pay11.tl.todaySub", locale: locale)
             ),
         ]
         if reminderKept, let fire = TrialEndReminder.fireDate(purchasedAt: now, trialDays: trialDays) {
             steps.append(Step(
                 kind: .reminder,
                 title: dayText(fire, locale: locale, calendar: calendar),
-                detail: L10n.t("ios.pay10.timeline.reminderSub", locale: locale)
+                detail: L10n.t("ios.pay11.tl.reminderSub", locale: locale)
             ))
         }
         steps.append(Step(
             kind: .end,
             title: dayText(endDate(from: now, trialDays: trialDays), locale: locale, calendar: calendar),
-            detail: L10n.t("ios.pay10.timeline.endSub", locale: locale)
+            detail: L10n.t("ios.pay11.tl.endSub", locale: locale, vars: ["price": price])
         ))
         return steps
     }
@@ -201,39 +219,32 @@ enum PaywallTimeline {
         formatter.setLocalizedDateFormatFromTemplate("dMMMM")
         return formatter.string(from: date)
     }
-
-    /// « Tout est débloqué », et la leçon que l'élève a demandée dans le parcours quand il
-    /// en a demandé une : elle s'écrit dès qu'il entre.
-    private static func todayDetail(topic: String?, locale: UiLocale) -> String {
-        guard let topic = topic?.trimmingCharacters(in: .whitespacesAndNewlines), !topic.isEmpty else {
-            return L10n.t("ios.pay10.timeline.todaySub", locale: locale)
-        }
-        let shown = topic.count > longestTopic ? String(topic.prefix(longestTopic - 1)) + "…" : topic
-        return L10n.t("ios.pay10.timeline.todayTopic", locale: locale, vars: ["topic": shown])
-    }
 }
 
 // MARK: - Le paywall, en un écran
 
 /// **Le paywall, en un seul écran** — celui de l'app et celui de la fin du parcours d'accueil.
 ///
-/// De haut en bas : la marque (« Micabo PRO · Pour Lina ») et la croix ; l'en-tête ; les deux
-/// offres, l'annuelle cochée d'avance ; puis, en pied fixe, « Rien à payer aujourd'hui », **un
-/// seul bouton**, la mention de ce qui sera prélevé, la restauration et les liens.
+/// **Lot 11 : il répond, de haut en bas, aux trois questions qu'on se pose en trois
+/// secondes.**
+/// 1. *C'est pour moi ?* — la marque « Micabo PRO · Pour Lina », puis, selon la porte :
+///    le titre du plan (« Ton plan pour le Bac est prêt. ») et ce que l'élève a déclaré en
+///    pastilles (l'examen et le temps qui reste, ses matières, sa première leçon) ; ou Mika
+///    qui dit ce qui vient de se passer et ce que Pro ouvre là.
+/// 2. *J'ai quoi de plus ?* — le tableau Gratuit / PRO, avec les vraies limites de l'app
+///    (`PaywallFeature`), la ligne de la porte en tête.
+/// 3. *Je paie quoi, et quand ?* — la chronologie datée, qui finit sur le montant du premier
+///    paiement ; les deux formules, l'annuelle cochée ; un bouton qui dit les jours
+///    gratuits ; la phrase de ce qui sera prélevé, et à quelle date.
 ///
-/// **Deux en-têtes pour un même écran** (`PaywallTrigger.showsTrialHeader`) :
-/// - « essai », quand on n'a buté sur rien : le plan de l'élève en titre, et la chronologie
-///   datée de ses jours gratuits ;
-/// - « contexte », derrière une porte de l'app : Mika dit dans sa bulle ce qu'il fera avec
-///   Pro, puis trois bénéfices, celui de la porte d'abord.
+/// **Rien ne se cache, rien ne ment** : la croix est là dès l'ouverture, et l'essai ne
+/// s'annonce — titre, chronologie, coche verte, bouton, mention — que si Apple l'accordera à
+/// ce compte (`PaywallPlan.hasTrial`). Le prix et l'essai viennent de la boutique du pays,
+/// l'écriture du prix du test `PriceDisplay`.
 ///
-/// **Rien ne se cache, rien ne ment** : la croix est là dès l'ouverture, ce qui sera prélevé
-/// est écrit sous le bouton, et l'essai ne s'annonce — titre, coche verte, bouton, mention —
-/// que si Apple l'accordera à ce compte (`PaywallPlan.hasTrial`). Le prix et l'essai viennent
-/// de la boutique du pays, l'écriture du prix du test `PriceDisplay`.
-///
-/// **Tout tient sans défiler quand l'écran le permet** ; sinon le contenu défile et le pied
-/// reste fixe.
+/// **Tout tient sans défiler quand l'écran le permet** (`PaywallDensity`) ; sinon le contenu
+/// défile et le pied reste fixe. Le pied reste dans la zone sûre et garde une marge sous les
+/// liens quand l'écran n'a pas de barre d'accueil (iPhone SE).
 struct PaywallScreen: View {
     /// Ce qui a ouvert l'écran. Absent à la sortie du parcours d'accueil : on n'y vient de
     /// nulle part, on y arrive.
@@ -292,34 +303,40 @@ struct PaywallScreen: View {
     private var selectedPlan: PaywallPlan { PaywallCatalog.plan(selection) }
     private var showsTrialHeader: Bool { PaywallTrigger.showsTrialHeader(trigger) }
     private var reminderKept: Bool { context.reminderKept ?? reminderAllowed }
+    /// La chronologie ne se montre que pour un essai réellement offert, prix connus.
+    private var showsTimeline: Bool { selectedPlan.hasTrial && prices == .ready }
 
     var body: some View {
-        VStack(spacing: 0) {
-            PaywallTopBar(name: name, isBusy: isPurchasing, onClose: onClose)
+        PaywallSafeFrame { bottomGap in
+            VStack(spacing: 0) {
+                PaywallTopBar(name: name, isBusy: isPurchasing, onClose: onClose)
 
-            ViewThatFits(in: .vertical) {
-                content(.regular)
-                content(.compact)
-                content(.tight)
-                content(.minimal)
-                content(.bare)
-                ScrollView {
+                ViewThatFits(in: .vertical) {
+                    content(.regular)
                     content(.compact)
+                    content(.tight)
+                    content(.minimal)
+                    content(.bare)
+                    ScrollView {
+                        content(.compact)
+                    }
+                    .scrollIndicators(.hidden)
+                    .scrollBounceBehavior(.basedOnSize)
                 }
-                .scrollIndicators(.hidden)
-                .scrollBounceBehavior(.basedOnSize)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
 
-            PaywallFooter(
-                plan: selectedPlan,
-                prices: prices,
-                isPurchasing: isPurchasing,
-                notice: notice,
-                onSubscribe: { onSubscribe(selectedPlan) },
-                onRetry: onRetry,
-                onRestore: onRestore
-            )
+                PaywallFooter(
+                    plan: selectedPlan,
+                    now: context.now,
+                    prices: prices,
+                    isPurchasing: isPurchasing,
+                    notice: notice,
+                    bottomGap: bottomGap,
+                    onSubscribe: { onSubscribe(selectedPlan) },
+                    onRetry: onRetry,
+                    onRestore: onRestore
+                )
+            }
         }
         .background(V3Color.bg.ignoresSafeArea())
         .task {
@@ -333,6 +350,14 @@ struct PaywallScreen: View {
     private func content(_ density: PaywallDensity) -> some View {
         VStack(alignment: .leading, spacing: density.sectionSpacing) {
             header(density)
+            PaywallFeatureTable(
+                features: PaywallFeature.shown(for: showsTrialHeader ? nil : trigger, count: density.rowCount),
+                highlighted: showsTrialHeader ? nil : trigger?.feature,
+                rowHeight: density.tableRowHeight
+            )
+            if showsTimeline, showsTrialHeader || density.keepsDoorTimeline {
+                PaywallTimelineStrip(steps: timelineSteps, compact: density.isTight)
+            }
             plans(density)
         }
         .padding(.horizontal, V3Metric.screenMargin)
@@ -344,10 +369,7 @@ struct PaywallScreen: View {
     @ViewBuilder
     private func header(_ density: PaywallDensity) -> some View {
         if let trigger, !showsTrialHeader {
-            VStack(alignment: .leading, spacing: density.headerSpacing) {
-                PaywallMikaLine(line: PaywallCopy.hook(for: trigger), mood: .wink)
-                benefits(for: trigger, density)
-            }
+            PaywallMikaLine(line: PaywallCopy.hook(for: trigger), mood: .wink)
         } else {
             VStack(alignment: .leading, spacing: density.headerSpacing) {
                 PaywallTitle(
@@ -358,49 +380,22 @@ struct PaywallScreen: View {
                     ),
                     size: density.titleSize
                 )
-
-                // La chronologie garde toujours ses lignes : ce sont elles qui promettent.
-                if selectedPlan.hasTrial {
-                    PaywallRows(rows: timelineRows, density: density)
-                } else {
-                    benefits(for: nil, density)
+                if density.showsFacts {
+                    PaywallFactsRow(facts: context.profile.facts(topic: context.topic, now: context.now))
                 }
             }
         }
     }
 
-    /// Les bénéfices de Pro, celui de la porte d'abord. Aux derniers serrages : leur titre
-    /// seul, puis les deux premiers seulement.
-    private func benefits(for trigger: PaywallTrigger?, _ density: PaywallDensity) -> some View {
-        PaywallRows(
-            rows: Array(benefitRows(for: trigger).prefix(density.benefitCount)),
-            density: density,
-            showsDetail: density.showsBenefitDetail
-        )
-    }
-
-    /// La chronologie de l'essai : aujourd'hui, le rappel, le premier prélèvement.
-    private var timelineRows: [PaywallHeaderRow] {
+    /// La chronologie de l'essai : aujourd'hui, le rappel, le premier paiement et son
+    /// montant — celui de la formule cochée.
+    private var timelineSteps: [PaywallTimeline.Step] {
         PaywallTimeline.steps(
             trialDays: selectedPlan.trialDays,
+            price: selectedPlan.displayPrice,
             now: context.now,
-            reminderKept: reminderKept,
-            topic: context.topic
+            reminderKept: reminderKept
         )
-        .map { PaywallHeaderRow(id: $0.id, symbol: $0.symbol, tone: $0.tone, title: $0.title, detail: $0.detail) }
-    }
-
-    /// Ce que Pro ouvre, le bénéfice de la porte d'abord.
-    private func benefitRows(for trigger: PaywallTrigger?) -> [PaywallHeaderRow] {
-        PaywallBenefit.shown(for: trigger).map { benefit in
-            PaywallHeaderRow(
-                id: benefit.rawValue,
-                symbol: benefit.symbol,
-                tone: benefit.tone,
-                title: L10n.t(benefit.titleKey, locale: .resolved()),
-                detail: L10n.t(benefit.detailKey, locale: .resolved())
-            )
-        }
     }
 
     @ViewBuilder
@@ -409,13 +404,15 @@ struct PaywallScreen: View {
         case .ready:
             VStack(spacing: PaywallStyle.planSpacing) {
                 ForEach(PaywallCatalog.all) { plan in
+                    let recommended = plan.kind == PaywallCatalog.recommended.kind
                     PaywallPlanRow(
                         plan: plan,
                         isSelected: plan.kind == selection,
                         storeRevision: storeRevision,
-                        savings: plan.kind == PaywallCatalog.recommended.kind ? savingsLabel : nil,
-                        detail: PaywallCopy.planDetail(for: plan, mentionsTrial: !showsTrialHeader),
-                        height: density.planHeight
+                        savings: recommended ? savingsLabel : nil,
+                        detail: PaywallCopy.planDetail(for: plan),
+                        height: recommended ? density.planHeight : density.secondaryPlanHeight,
+                        prominent: recommended
                     ) {
                         select(plan.kind)
                     }
@@ -443,98 +440,113 @@ struct PaywallScreen: View {
     }
 }
 
+// MARK: - La zone sûre
+
+/// **Le paywall et l'offre restent dans la zone sûre de l'appareil** — sous l'encoche ou la
+/// Dynamic Island, au-dessus de la barre d'accueil — et le fond seul déborde.
+///
+/// Sur un appareil sans barre d'accueil (iPhone SE), la zone sûre s'arrête au bord de
+/// l'écran : le pied y garde une marge (`PaywallStyle.bottomGapWithoutHomeBar`) pour que
+/// « Restaurer · Conditions » ne colle pas au bord. Avec une barre d'accueil, la zone sûre
+/// fait déjà cet espace.
+struct PaywallSafeFrame<Content: View>: View {
+    @ViewBuilder var content: (_ bottomGap: CGFloat) -> Content
+
+    var body: some View {
+        GeometryReader { proxy in
+            content(
+                proxy.safeAreaInsets.bottom > 0
+                    ? PaywallStyle.bottomGapAboveHomeBar
+                    : PaywallStyle.bottomGapWithoutHomeBar
+            )
+            .frame(width: proxy.size.width, height: proxy.size.height)
+        }
+    }
+}
+
 // MARK: - Les serrages
 
 /// **Cinq serrages pour un même écran** : le paywall prend le premier qui tient sans défiler
-/// (`ViewThatFits`). Aéré sur un grand téléphone ; resserré quand la langue est longue ; serré
-/// sur un iPhone SE, où le titre, les marges et les offres rapetissent d'un cran ; puis, pour
-/// une longue accroche sur le plus petit écran, les bénéfices sans leur ligne, et au dernier
-/// cran deux bénéfices au lieu de trois. Rien de ce qui est promis ni de ce qui sera prélevé
-/// n'est jamais retiré : la chronologie de l'essai, les offres et la mention restent entières.
+/// (`ViewThatFits`). Aéré sur un grand téléphone ; resserré quand la langue est longue ; puis,
+/// sur un iPhone SE, sans les pastilles de l'élève, le tableau sur quatre puis trois puis
+/// deux lignes. **Rien de ce qui est promis ni de ce qui sera prélevé n'est jamais retiré** :
+/// la chronologie de l'essai d'accueil, les formules et la mention restent entières. Derrière
+/// une porte, la chronologie compacte part au dernier cran : la ligne de l'offre et la
+/// mention disent déjà les jours gratuits et la date.
 enum PaywallDensity: CaseIterable {
     case regular
     case compact
     case tight
-    /// Les bénéfices sans leur ligne.
     case minimal
-    /// Deux bénéfices, sans leur ligne.
     case bare
 
     /// La taille du titre de l'en-tête « essai ».
     var titleSize: CGFloat {
-        self == .regular ? PaywallStyle.titleSize : PaywallStyle.titleCompactSize
+        switch self {
+        case .regular: PaywallStyle.titleSize
+        case .compact: PaywallStyle.titleMediumSize
+        case .tight, .minimal, .bare: PaywallStyle.titleCompactSize
+        }
     }
 
-    /// Serré : les deux derniers crans, ceux d'un petit écran.
-    private var isTight: Bool { self == .tight || isMinimal }
+    /// Serré : les trois derniers crans, ceux d'un petit écran.
+    var isTight: Bool { self == .tight || self == .minimal || self == .bare }
 
-    /// Les deux derniers crans : les bénéfices n'ont plus que leur titre.
-    private var isMinimal: Bool { self == .minimal || self == .bare }
+    /// Les pastilles de ce que l'élève a déclaré : aux deux premiers crans.
+    var showsFacts: Bool { !isTight }
 
-    /// Entre l'en-tête et les offres.
+    /// Les lignes du tableau : quatre, puis trois, puis deux.
+    var rowCount: Int {
+        switch self {
+        case .regular, .compact, .tight: 4
+        case .minimal: 3
+        case .bare: 2
+        }
+    }
+
+    /// La chronologie compacte reste derrière une porte, sauf au dernier cran.
+    var keepsDoorTimeline: Bool { self != .bare }
+
+    /// Entre deux blocs.
     var sectionSpacing: CGFloat {
         switch self {
-        case .regular: 24
+        case .regular: 20
         case .compact: 16
         case .tight: 12
         case .minimal, .bare: 10
         }
     }
 
-    /// Entre le titre (ou la bulle de Mika) et ses rangées.
+    /// Entre le titre et les pastilles.
     var headerSpacing: CGFloat {
         switch self {
-        case .regular: 22
-        case .compact: 14
-        case .tight: 10
-        case .minimal, .bare: 8
-        }
-    }
-
-    /// Entre deux rangées.
-    var rowSpacing: CGFloat {
-        switch self {
-        case .regular: 16
+        case .regular: 14
         case .compact: 10
-        case .tight: 8
-        case .minimal, .bare: 6
+        case .tight, .minimal, .bare: 8
         }
     }
 
     /// Au-dessus du contenu, sous la barre du haut.
     var topPadding: CGFloat {
         switch self {
-        case .regular: 22
-        case .compact: 12
-        case .tight: 6
-        case .minimal, .bare: 4
+        case .regular: 14
+        case .compact: 8
+        case .tight, .minimal, .bare: 4
         }
     }
 
-    /// La hauteur d'une offre : serrée, celle d'une ligne de réponse.
+    /// Une ligne du tableau.
+    var tableRowHeight: CGFloat {
+        isTight ? PaywallStyle.tableRowTight : PaywallStyle.tableRow
+    }
+
+    /// La formule recommandée, et l'autre, plus basse.
     var planHeight: CGFloat {
         isTight ? V3Metric.optionHeight : PaywallStyle.planHeight
     }
 
-    /// La police de la ligne d'une rangée : serrée, une légende.
-    var rowDetail: Font {
-        isTight ? PaywallStyle.rowDetailTight : PaywallStyle.rowDetail
-    }
-
-    /// Un bénéfice garde sa ligne, sauf aux deux derniers crans : on retire un élément plutôt
-    /// que de rapetisser encore.
-    var showsBenefitDetail: Bool { !isMinimal }
-
-    /// Combien de bénéfices se montrent : trois, et les deux premiers au dernier cran.
-    var benefitCount: Int { self == .bare ? 2 : 3 }
-
-    /// L'icône d'une rangée et sa colonne : à côté d'un titre seul, à sa mesure.
-    var glyph: CGFloat {
-        isMinimal ? PaywallStyle.glyphSmall : PaywallStyle.glyph
-    }
-
-    var glyphColumn: CGFloat {
-        isMinimal ? PaywallStyle.glyphColumnSmall : PaywallStyle.glyphColumn
+    var secondaryPlanHeight: CGFloat {
+        isTight ? PaywallStyle.secondaryPlanTight : PaywallStyle.secondaryPlanHeight
     }
 }
 
@@ -551,47 +563,12 @@ struct PaywallTitle: View {
     }
 }
 
-// MARK: - Les rangées de l'en-tête
-
-/// Une rangée de l'en-tête : une étape de la chronologie, ou un bénéfice.
-struct PaywallHeaderRow: Identifiable, Equatable {
-    let id: String
-    /// Le symbole du système, sans « .fill ».
-    let symbol: String
-    let tone: Color
-    let title: String
-    let detail: String
-}
-
-/// Les rangées de l'en-tête, l'une sous l'autre : trois au plus.
-private struct PaywallRows: View {
-    let rows: [PaywallHeaderRow]
-    let density: PaywallDensity
-    /// Faux aux derniers serrages, pour les bénéfices : le titre seul.
-    var showsDetail = true
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: density.rowSpacing) {
-            ForEach(rows) { row in
-                PaywallInfoRow(
-                    symbol: row.symbol,
-                    tone: row.tone,
-                    title: row.title,
-                    detail: showsDetail ? row.detail : nil,
-                    detailFont: density.rowDetail,
-                    glyph: showsDetail ? PaywallStyle.glyph : density.glyph,
-                    glyphColumn: showsDetail ? PaywallStyle.glyphColumn : density.glyphColumn
-                )
-            }
-        }
-    }
-}
-
 // MARK: - Les offres
 
 /// **Une offre**, comme une ligne qu'on choisit : son nom et la remise qu'elle fait, ce qui
 /// est prélevé ; à droite, le chiffre qu'on compare, dans l'écriture du test de prix
-/// (`PriceDisplay`). Choisie, la ligne prend le filet et le lavis de l'accent.
+/// (`PriceDisplay`). Choisie, la ligne prend le filet et le lavis de l'accent. L'offre
+/// recommandée (`prominent`) est plus haute et son prix plus grand : l'œil la lit d'abord.
 struct PaywallPlanRow: View {
     let plan: PaywallPlan
     let isSelected: Bool
@@ -600,15 +577,17 @@ struct PaywallPlanRow: View {
     let storeRevision: Int
     /// « −81 % », à côté du nom ; `nil` pour une offre sans remise à annoncer.
     let savings: String?
-    /// La ligne sous le nom : ce qui est prélevé, et à quel rythme.
+    /// La ligne sous le nom : les jours gratuits, ce qui est prélevé, et à quel rythme.
     let detail: String
     /// La hauteur de la ligne, au moins : elle grandit avec son texte.
     var height: CGFloat = PaywallStyle.planHeight
+    var prominent = true
     var action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(alignment: .center, spacing: 12) {
+                PaywallRadio(isOn: isSelected)
                 VStack(alignment: .leading, spacing: 2) {
                     name
                     Text(detail)
@@ -623,7 +602,7 @@ struct PaywallPlanRow: View {
                 // très grand texte, c'est le nom de l'offre, à gauche, qui passe à la ligne.
                 VStack(alignment: .trailing, spacing: 0) {
                     Text(plan.priceHeadline(for: .current))
-                        .font(PaywallStyle.price)
+                        .font(prominent ? PaywallStyle.price : PaywallStyle.priceSecondary)
                         .foregroundStyle(V3Color.ink)
                     Text(plan.priceHeadlineUnit(for: .current))
                         .font(PaywallStyle.priceUnit)
@@ -632,7 +611,7 @@ struct PaywallPlanRow: View {
                 .lineLimit(1)
                 .fixedSize()
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 14)
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity, minHeight: height)
             .v3Card(selected: isSelected, radius: PaywallStyle.planRadius)
@@ -679,6 +658,27 @@ struct PaywallPlanRow: View {
     private var accessibilityText: String {
         let price = "\(plan.priceHeadline(for: .current)) \(plan.priceHeadlineUnit(for: .current))"
         return [plan.title, savings, price, detail].compactMap { $0 }.joined(separator: ", ")
+    }
+}
+
+/// **La coche d'une offre** : un rond vide, ou plein de l'accent avec sa coche. Elle dit
+/// sans lire laquelle des deux sera achetée.
+private struct PaywallRadio: View {
+    let isOn: Bool
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .strokeBorder(isOn ? V3Color.accent : V3Color.line, lineWidth: 2)
+            if isOn {
+                Circle().fill(V3Color.accent)
+                Image(systemName: "checkmark")
+                    .font(.system(size: 11, weight: .black))
+                    .foregroundStyle(V3Color.onAccent)
+            }
+        }
+        .frame(width: 22, height: 22)
+        .accessibilityHidden(true)
     }
 }
 
@@ -740,13 +740,15 @@ private struct PaywallPriceFailure: View {
 // MARK: - Le pied
 
 /// **Le pied du paywall**, fixe sous la page : « Rien à payer aujourd'hui » quand c'est vrai,
-/// le bouton, le message d'un achat qui n'a pas abouti, la mention de ce qui sera prélevé,
-/// puis la restauration et les liens.
+/// le bouton, le message d'un achat qui n'a pas abouti, la mention de ce qui sera prélevé et
+/// quand, puis la restauration et les liens.
 private struct PaywallFooter: View {
     let plan: PaywallPlan
+    let now: Date
     let prices: PaywallPriceState
     let isPurchasing: Bool
     let notice: PaywallNotice?
+    var bottomGap: CGFloat
     var onSubscribe: () -> Void
     var onRetry: () -> Void
     var onRestore: () -> Void
@@ -763,9 +765,9 @@ private struct PaywallFooter: View {
                 PaywallNoticeLine(notice: notice)
             }
             if isReady {
-                Text(PaywallCopy.legal(for: plan))
+                Text(PaywallCopy.legal(for: plan, now: now))
                     .font(PaywallStyle.legal)
-                    .foregroundStyle(V3Color.ink3)
+                    .foregroundStyle(V3Color.ink2)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -773,7 +775,7 @@ private struct PaywallFooter: View {
         }
         .padding(.horizontal, V3Metric.screenMargin)
         .padding(.top, 8)
-        .padding(.bottom, 4)
+        .padding(.bottom, bottomGap)
         .frame(maxWidth: .infinity)
         .background(V3Color.bg)
     }
@@ -815,29 +817,30 @@ struct PaywallWelcomeScreen: View {
     var onContinue: () -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer(minLength: 24)
-            MikaMascot(mood: .celebrate, size: PaywallStyle.welcomeMika)
-                .accessibilityHidden(true)
-            VStack(spacing: 10) {
-                PaywallTitle(
-                    title: PaywallCopy.welcome(name: name),
-                    size: PaywallStyle.momentSize,
-                    alignment: .center
-                )
-                Text(L10n.t("ios.pay10.welcome.sub", locale: .resolved()))
-                    .font(PaywallStyle.momentSub)
-                    .foregroundStyle(V3Color.ink2)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
+        PaywallSafeFrame { bottomGap in
+            VStack(spacing: 0) {
+                Spacer(minLength: 24)
+                MikaMascot(mood: .celebrate, size: PaywallStyle.welcomeMika)
+                    .accessibilityHidden(true)
+                VStack(spacing: 10) {
+                    PaywallTitle(
+                        title: PaywallCopy.welcome(name: name),
+                        size: PaywallStyle.momentSize,
+                        alignment: .center
+                    )
+                    Text(L10n.t("ios.pay10.welcome.sub", locale: .resolved()))
+                        .font(PaywallStyle.momentSub)
+                        .foregroundStyle(V3Color.ink2)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.top, 18)
+                Spacer(minLength: 24)
+                V3Button(L10n.t("ios.pay10.welcome.cta", locale: .resolved()), action: onContinue)
+                    .padding(.bottom, bottomGap + 8)
             }
-            .padding(.top, 18)
-            Spacer(minLength: 24)
-            V3Button(L10n.t("ios.pay10.welcome.cta", locale: .resolved()), action: onContinue)
-                .padding(.bottom, 12)
+            .padding(.horizontal, V3Metric.screenMargin)
         }
-        .padding(.horizontal, V3Metric.screenMargin)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(V3Color.bg.ignoresSafeArea())
     }
 }

@@ -24,7 +24,26 @@ enum PaywallStyle {
     /// Le titre de l'en-tête « essai » (`V3Title`), sur deux phrases : sa taille, et celle
     /// qu'il prend quand l'écran est court.
     static let titleSize: CGFloat = 32
+    static let titleMediumSize: CGFloat = 28
     static let titleCompactSize: CGFloat = 25
+    /// Les pastilles de ce que l'élève a déclaré (`PaywallFactsRow`).
+    static let fact = V3Font.text(.footnote, weight: .semibold)
+    static let factIcon = V3Font.text(.caption, weight: .bold)
+    static let factHeight: CGFloat = 30
+    /// Le tableau Gratuit / PRO (`PaywallFeatureTable`) : son en-tête, ses lignes, la ligne
+    /// de la porte, ses valeurs et sa coche.
+    static let tableHeader = V3Font.text(.caption, weight: .bold)
+    static let tableRowTitle = V3Font.text(.subheadline, weight: .semibold)
+    static let tableRowLead = V3Font.text(.subheadline, weight: .bold)
+    static let tableValue = V3Font.text(.subheadline, weight: .bold)
+    static let tableCheck: CGFloat = 20
+    static let tableGlyph: CGFloat = 18
+    static let tableGlyphColumn: CGFloat = 24
+    /// La chronologie sur une rangée (`PaywallTimelineStrip`) : la date, sa ligne.
+    static let stepTitle = V3Font.text(.footnote, weight: .bold)
+    static let stepDetail = V3Font.text(.caption, weight: .medium)
+    static let stepDetailTight = V3Font.text(.caption2, weight: .medium)
+    static let stepDot: CGFloat = 26
     /// Une rangée de la chronologie ou d'un bénéfice : son titre, sa ligne.
     static let rowTitle = V3Font.option
     static let rowDetail = V3Font.support
@@ -34,6 +53,8 @@ enum PaywallStyle {
     static let planTitle = V3Font.option
     static let planDetail = V3Font.caption
     static let price = V3Font.title
+    /// Le prix de l'offre qui n'est pas recommandée : un cran plus petit.
+    static let priceSecondary = V3Font.heading(19, relativeTo: .headline)
     static let priceUnit = V3Font.caption
     /// La pastille de la remise, à côté du nom de l'offre.
     static let badge = V3Font.text(.caption, weight: .heavy)
@@ -54,6 +75,8 @@ enum PaywallStyle {
     static let percentTracking: CGFloat = -2
     /// « sur ton année Micabo Pro ».
     static let offerSub = V3Font.h2
+    /// « Tout Pro : leçons, Mika, examens blancs, entraînements », sous la carte du prix.
+    static let offerIncludes = V3Font.support
     /// Le tarif réduit, dans sa carte, et ce qui l'entoure.
     static let offerPrice = V3Font.display(34)
     static let offerPriceUnit = V3Font.support
@@ -79,8 +102,23 @@ enum PaywallStyle {
     /// Une offre : sa hauteur (une ligne de réponse, plus la place de sa deuxième ligne), son
     /// rayon, l'espace entre deux.
     static let planHeight: CGFloat = V3Metric.optionHeight + 8
+    /// L'offre qui n'est pas recommandée : plus basse, elle se lit en second.
+    static let secondaryPlanHeight: CGFloat = V3Metric.optionHeight
+    static let secondaryPlanTight: CGFloat = 50
     static let planRadius: CGFloat = V3Metric.radiusInner
     static let planSpacing: CGFloat = 10
+    /// Le tableau : ses lignes, son en-tête, ses colonnes, ses rayons.
+    static let tableRow: CGFloat = 36
+    static let tableRowTight: CGFloat = 30
+    static let tableHeaderHeight: CGFloat = 28
+    static let freeColumn: CGFloat = 62
+    static let proColumn: CGFloat = 52
+    static let proColumnRadius: CGFloat = 14
+    static let tableRadius: CGFloat = V3Metric.radiusCard
+    /// **Sous les liens du bas** : au-dessus d'une barre d'accueil, la zone sûre fait déjà
+    /// l'espace ; sans elle (iPhone SE), le pied garde sa marge à lui.
+    static let bottomGapAboveHomeBar: CGFloat = 4
+    static let bottomGapWithoutHomeBar: CGFloat = 14
     /// Les pastilles : le décompte de l'offre, la pastille de la Home.
     static let pillHeight: CGFloat = 34
     /// Ce qui est éteint le temps d'un achat : la croix.

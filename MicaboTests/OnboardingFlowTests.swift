@@ -68,12 +68,13 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(OnboardingStep.allCases.map(\.analyticsName), [
             "hookLogo",
             "welcome", "name", "country", "level", "schoolType", "year", "exam", "subjects",
-            "goal", "worries", "solutionMap", "currentAverage", "targetAverage", "startingPoint",
-            "dailyTime", "sampleCard", "notifications", "firstLesson",
+            "lessonDemo",
+            "goal", "worries", "solutionMap", "scanDemo", "currentAverage", "targetAverage", "startingPoint",
+            "dailyTime", "planDemo", "sampleCard", "chatDemo", "notifications", "firstLesson",
             "planBuilding", "profileSummary",
-            "freeTrialIntro", "trialOffer", "paywall",
+            "freeTrialIntro", "trialOffer", "whyNow", "paywall",
         ])
-        XCTAssertEqual(OnboardingStep.allCases.count, 24, "Un écran de stories et vingt-trois étapes")
+        XCTAssertEqual(OnboardingStep.allCases.count, 29, "Un écran de stories et vingt-huit étapes (lot 11)")
         XCTAssertEqual(OnboardingStep.allCases.filter { $0.kind == .stories }, [.hookLogo])
         XCTAssertEqual(OnboardingStep.allCases.last, .paywall)
     }
@@ -128,12 +129,12 @@ final class OnboardingFlowTests: XCTestCase {
         let model = OnboardingModel()
         model.select(country: .fr)
         var expected: [OnboardingStep] = [
-            .hookLogo, .welcome, .name, .country, .schoolType, .year, .exam, .subjects,
-            .goal, .worries, .solutionMap, .currentAverage, .targetAverage, .startingPoint,
-            .dailyTime, .sampleCard, .notifications, .firstLesson, .planBuilding, .profileSummary,
+            .hookLogo, .welcome, .name, .country, .schoolType, .year, .exam, .subjects, .lessonDemo,
+            .goal, .worries, .solutionMap, .scanDemo, .currentAverage, .targetAverage, .startingPoint,
+            .dailyTime, .planDemo, .sampleCard, .chatDemo, .notifications, .firstLesson, .planBuilding, .profileSummary,
         ]
         if OnboardingTrial.isOffered { expected += [.freeTrialIntro, .trialOffer] }
-        expected.append(.paywall)
+        expected += [.whyNow, .paywall]
         XCTAssertEqual(walk(model), expected)
     }
 
@@ -144,7 +145,7 @@ final class OnboardingFlowTests: XCTestCase {
             let model = OnboardingModel()
             model.select(country: country)
             let seen = walk(model)
-            XCTAssertEqual(seen.count, 21 + trialScreens, "\(country)")
+            XCTAssertEqual(seen.count, 26 + trialScreens, "\(country)")
             XCTAssertFalse(seen.contains(.level), "\(country) : la filière et l'année, pas le palier")
             XCTAssertEqual(seen.last, .paywall)
         }
@@ -152,7 +153,7 @@ final class OnboardingFlowTests: XCTestCase {
         let elsewhere = OnboardingModel()
         elsewhere.select(country: .other)
         let seen = walk(elsewhere)
-        XCTAssertEqual(seen.count, 20 + trialScreens)
+        XCTAssertEqual(seen.count, 25 + trialScreens)
         XCTAssertFalse(seen.contains(.schoolType) || seen.contains(.year))
         XCTAssertTrue(seen.contains(.level))
 
@@ -162,7 +163,7 @@ final class OnboardingFlowTests: XCTestCase {
         saudi.select(worldCountry: try XCTUnwrap(WorldCountries.country(code: "SA")))
         XCTAssertEqual(saudi.country, .other)
         XCTAssertEqual(saudi.regionCode, "SA")
-        XCTAssertEqual(walk(saudi).count, 21 + trialScreens)
+        XCTAssertEqual(walk(saudi).count, 26 + trialScreens)
 
         // Un pays de la liste retrouvé par la recherche se range sous son nom de la liste.
         let morocco = OnboardingModel()
@@ -423,7 +424,10 @@ final class OnboardingFlowTests: XCTestCase {
         for name in kept {
             XCTAssertTrue(names.contains(name), "\(name) a disparu des statistiques")
         }
-        XCTAssertEqual(names.subtracting(kept), ["solutionMap", "firstLesson"])
+        XCTAssertEqual(
+            names.subtracting(kept),
+            ["solutionMap", "firstLesson", "lessonDemo", "scanDemo", "planDemo", "chatDemo", "whyNow"]
+        )
         XCTAssertEqual(AnalyticsEvent.onboardingStoryViewed.rawValue, "onboarding_story_viewed")
         XCTAssertEqual(AnalyticsEvent.onboardingFirstLesson.rawValue, "onboarding_first_lesson")
     }

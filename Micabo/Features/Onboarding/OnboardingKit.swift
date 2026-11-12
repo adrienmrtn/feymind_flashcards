@@ -35,17 +35,27 @@ enum OnbLayout {
     static let heroMin: CGFloat = 120
     /// Mika quand il se présente : le plus grand du parcours.
     static let heroWelcome: CGFloat = 240
+
+    /// **Sous le bouton du pied**, au-dessus de la zone sûre du bas : 16 pt au-dessus de la
+    /// barre d'accueil ; 24 pt du bord sur un iPhone à bouton d'accueil, qui n'a pas de marge.
+    static func footerGap(safeBottom: CGFloat) -> CGFloat {
+        safeBottom > 0 ? 16 : 24
+    }
 }
 
 // MARK: - Le gabarit d'un écran
 
-/// **L'écran d'une étape** : le gabarit du système visuel (`V3Screen`), un contenu qui défile
-/// s'il dépasse et un pied fixe. La barre du haut n'est pas ici : elle est fixe, au-dessus des
-/// pages (`OnboardingFlowView`).
+/// **L'écran d'une étape** : un contenu qui remplit la hauteur (et défile s'il dépasse), et un
+/// pied fixe. La barre du haut n'est pas ici : elle est fixe, au-dessus des pages
+/// (`OnboardingFlowView`).
 ///
-/// **Les rendus de la CI ne dessinent pas l'intérieur d'un `ScrollView`.** Posé immobile
-/// (`onboardingStill`), l'écran garde donc la même mise en page (les marges, l'écart du pied),
-/// sans défilement : ce que le rendu montre est ce que l'élève voit sur un écran qui tient.
+/// Le contenu reçoit au moins la hauteur de l'écran (`.frame(minHeight:)` dans le
+/// défilement) : les `Spacer` y poussent, les réponses descendent. Les rendus « sur
+/// l'appareil » (`OnboardingDeviceRenderTests`) le vérifient avec les vraies marges.
+///
+/// **Le pied** est sous la colonne, dans la zone sûre : son bouton se pose au-dessus de la
+/// barre d'accueil avec une marge normale (`OnbLayout.footerGap`), et à 24 pt du bord sur un
+/// iPhone à bouton d'accueil, qui n'a pas de marge en bas.
 struct OnbScreen<Content: View, Footer: View>: View {
     private let content: Content
     private let footer: Footer
@@ -59,7 +69,7 @@ struct OnbScreen<Content: View, Footer: View>: View {
 
     private var hasFooter: Bool { Footer.self != EmptyView.self }
 
-    /// Le contenu immobile, dans les marges de l'écran.
+    /// Le contenu, dans les marges de l'écran.
     private var column: some View {
         VStack(alignment: .leading, spacing: 0) {
             content
@@ -70,38 +80,43 @@ struct OnbScreen<Content: View, Footer: View>: View {
     }
 
     var body: some View {
-        if still {
+        GeometryReader { outer in
             VStack(spacing: 0) {
-                // Un contenu plus haut que l'écran se montre comme un défilement à son début :
-                // à sa hauteur naturelle, depuis le haut, coupé en bas ; le pied reste à sa
-                // place. Un contenu qui tient prend toute la hauteur (les réponses ancrées en
-                // bas y restent).
-                ViewThatFits(in: .vertical) {
-                    column
-                    column
-                        .fixedSize(horizontal: false, vertical: true)
+                GeometryReader { proxy in
+                    if still {
+                        // Un rendu ne dessine pas l'intérieur d'un `ScrollView` : la même
+                        // colonne, coupée en bas si elle dépasse (le début d'un défilement).
+                        ViewThatFits(in: .vertical) {
+                            column
+                            column
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
+                        .clipped()
+                    } else {
+                        ScrollView {
+                            column
+                                .frame(minHeight: proxy.size.height, alignment: .top)
+                        }
+                        .scrollBounceBehavior(.basedOnSize)
+                        .scrollDismissesKeyboard(.interactively)
+                        .scrollIndicators(.hidden)
+                    }
                 }
-                .frame(maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .topLeading)
-                .clipped()
 
                 if hasFooter {
                     VStack(spacing: 10) {
                         footer
                     }
                     .padding(.horizontal, V3Metric.screenMargin)
-                    .padding(.vertical, 8)
+                    .padding(.top, 8)
+                    .padding(.bottom, OnbLayout.footerGap(safeBottom: outer.safeAreaInsets.bottom))
                     .frame(maxWidth: .infinity)
                     .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .background(V3Color.bg)
-        } else {
-            V3Screen {
-                content
-            } footer: {
-                footer
-            }
         }
+        .background(V3Color.bg.ignoresSafeArea())
     }
 }
 
