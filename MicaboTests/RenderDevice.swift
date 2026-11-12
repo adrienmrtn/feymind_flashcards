@@ -60,12 +60,21 @@ private final class DeviceFrameController: UIViewController {
     /// du simulateur apporte les siennes, qu'on retranche).
     func settleInsets() {
         view.layoutIfNeeded()
-        let inherited = view.safeAreaInsets
+        // Ce que la fenêtre donne, hors ce qu'on a déjà ajouté. Une marge ajoutée négative fait
+        // ignorer toutes les autres : chaque bord est borné à zéro.
+        let current = view.safeAreaInsets
+        let added = additionalSafeAreaInsets
+        let inherited = UIEdgeInsets(
+            top: current.top - added.top,
+            left: current.left - added.left,
+            bottom: current.bottom - added.bottom,
+            right: current.right - added.right
+        )
         additionalSafeAreaInsets = UIEdgeInsets(
-            top: target.top - inherited.top,
-            left: target.left - inherited.left,
-            bottom: target.bottom - inherited.bottom,
-            right: target.right - inherited.right
+            top: max(0, target.top - inherited.top),
+            left: max(0, target.left - inherited.left),
+            bottom: max(0, target.bottom - inherited.bottom),
+            right: max(0, target.right - inherited.right)
         )
         view.setNeedsLayout()
         view.layoutIfNeeded()
