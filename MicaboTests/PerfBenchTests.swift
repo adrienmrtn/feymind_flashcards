@@ -528,6 +528,17 @@ final class PerfBenchTests: XCTestCase {
 
         PerfReport.record("micro", "MicaboIcon.subjectIcon", [("us", PerfReport.micro { _ = MicaboIcon.subjectIcon("Physique-chimie") })])
         PerfReport.record("micro", "MicaboIcon.guess", [("us", PerfReport.micro { _ = MicaboIcon.guess(subject: nil, title: "La guerre froide et ses crises") })])
+        // Un libellé de date : le formateur refait à chaque appel (le chemin d'avant), puis gardé.
+        let someDay = Date(timeIntervalSince1970: 1_800_000_000)
+        PerfReport.record("micro", "DateFormatter-refait", [("us", PerfReport.micro {
+            let formatter = DateFormatter()
+            formatter.locale = UiLocale.fr.foundation
+            formatter.calendar = MicaboCalendar.shared
+            formatter.setLocalizedDateFormatFromTemplate("EEE")
+            _ = formatter.string(from: someDay)
+        })])
+        PerfReport.record("micro", "MicaboCalendar.shortWeekday", [("us", PerfReport.micro { _ = MicaboCalendar.shortWeekday(someDay, locale: .fr) })])
+        PerfReport.record("micro", "CalendarTime.label", [("us", PerfReport.micro { _ = CalendarTime.label(minute: 870, locale: .fr) })])
         PerfReport.record("micro", "StudyStreak.status", [("us", PerfReport.micro { _ = StudyStreak.status() })])
         PerfReport.record("micro", "StudyStreak.week", [("us", PerfReport.micro { _ = StudyStreak.week() })])
 
