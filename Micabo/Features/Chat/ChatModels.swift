@@ -342,7 +342,7 @@ enum ChatStore {
 
     /// Supprime la conversation, ses messages et ses photos.
     static func delete(_ thread: ChatThread, in context: ModelContext, photos: ChatPhotoStore = .shared) {
-        let messages = messages(of: thread.id, in: context)
+        let messages = Self.messages(of: thread.id, in: context)
         photos.delete(messages.flatMap(\.photoNames))
         for message in messages { context.delete(message) }
         context.delete(thread)
@@ -363,7 +363,7 @@ enum ChatStore {
     /// **Un exercice résolu par le scanner entre dans l'historique** : l'énoncé, puis la réponse
     /// de Mika. Résolu à nouveau (un énoncé corrigé), il remplace ses messages d'avant.
     static func recordExercise(id: UUID, statement: String, answer: String, in context: ModelContext, now: Date = Date()) {
-        let thread = thread(forExercise: id, in: context) ?? createThread(origin: .scan, exerciseID: id, in: context, now: now)
+        let thread = Self.thread(forExercise: id, in: context) ?? Self.createThread(origin: .scan, exerciseID: id, in: context, now: now)
         for message in messages(of: thread.id, in: context) where message.exerciseID == id {
             context.delete(message)
             thread.messageCount = max(0, thread.messageCount - 1)
