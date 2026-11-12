@@ -23,8 +23,12 @@ final class DiscountWindow {
     /// L'instant où l'offre s'est affichée, `nil` si elle ne l'a jamais été ici.
     private(set) var startedAt: Date?
 
-    /// Vrai tant qu'une fenêtre court pour un élève sans abonnement.
+    /// Vrai tant qu'une fenêtre court pour un élève sans abonnement — et tant que l'offre
+    /// ouverte depuis la pastille est à l'écran (`hold`).
     private(set) var isLive = false
+
+    /// L'offre ouverte depuis la pastille est à l'écran.
+    @ObservationIgnored private var isHeld = false
 
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
@@ -55,7 +59,16 @@ final class DiscountWindow {
             now: now
         )
         if start != startedAt { startedAt = start }
-        if live != isLive { isLive = live }
+        if (live || isHeld) != isLive { isLive = live || isHeld }
+    }
+
+    /// **L'offre ouverte depuis la pastille tient la pastille en place.** C'est la pastille
+    /// qui porte l'écran de l'offre : une fenêtre qui finit pendant qu'on le lit, ou l'achat
+    /// qu'on y fait, la retirerait de la Home — et l'écran avec elle, sous les yeux de
+    /// l'élève. Elle reste donc jusqu'à ce qu'il le referme.
+    func hold(_ held: Bool) {
+        isHeld = held
+        refresh()
     }
 }
 
@@ -81,28 +94,38 @@ struct DiscountChip: View {
     var body: some View {
         let window = DiscountWindow.shared
         Group {
-            // L'offre ouverte garde la pastille montée : une fenêtre qui finit pendant qu'on
-            // la lit ne doit pas refermer l'écran d'un coup.
             if let startedAt = window.startedAt, window.isLive || presentation != nil {
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     let left = DiscountOffer.windowRemaining(startedAt: startedAt, now: context.date)
-                    Button {
-                        presentation = .paywall
-                    } label: {
-                        DiscountChipLabel(percent: DiscountOffer.savingsPercent, remaining: left)
+                    // Une pile, et pas un groupe : même vide, elle existe, et c'est elle qui
+                    // voit la fenêtre finir.
+                    ZStack {
+                        // À zéro, plus rien à montrer : la pastille ne reste montée que pour
+                        // l'offre qu'elle a ouverte.
+                        if left > 0 {
+                            Button {
+                                presentation = .paywall
+                            } label: {
+                                DiscountChipLabel(percent: DiscountOffer.savingsPercent, remaining: left)
+                            }
+                            .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
+                            .accessibilityLabel(L10n.t(
+                                "ios.reopenOffer",
+                                locale: .resolved(),
+                                vars: ["left": DiscountOffer.countdownLabel(left)]
+                            ))
+                        }
                     }
-                    .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
-                    .accessibilityLabel(L10n.t(
-                        "ios.reopenOffer",
-                        locale: .resolved(),
-                        vars: ["left": DiscountOffer.countdownLabel(left)]
-                    ))
-                    // La fenêtre vient de finir sous nos yeux : la Home reprend la main.
-                    .onChange(of: left > 0) { _, _ in
-                        DiscountWindow.shared.refresh()
+                    // La fenêtre vient de finir sous nos yeux — ou l'était déjà quand la
+                    // pastille est revenue à l'écran : la Home reprend la main.
+                    .onChange(of: left > 0, initial: true) { _, isRunning in
+                        if !isRunning { DiscountWindow.shared.refresh() }
                     }
                 }
                 .micaboDiscountOffer($presentation)
+                .onChange(of: presentation != nil) { _, isOpen in
+                    DiscountWindow.shared.hold(isOpen)
+                }
             }
         }
     }

@@ -56,6 +56,16 @@ final class DiscountOfferTests: XCTestCase {
         XCTAssertEqual(DiscountOffer.windowRemaining(startedAt: start, now: before), 86_400)
     }
 
+    /// L'horloge de l'écran compte depuis l'instant d'origine de la fenêtre ; une durée posée
+    /// (les rendus) reste ce qu'elle est, jamais négative.
+    func testTheScreenClockCountsFromTheOrigin() {
+        let start = Date(timeIntervalSince1970: 0)
+        XCTAssertEqual(DiscountClock.since(start).remaining(now: start.addingTimeInterval(60)), 86_340)
+        XCTAssertEqual(DiscountClock.since(start).remaining(now: start.addingTimeInterval(90_000)), 0)
+        XCTAssertEqual(DiscountClock.fixed(90).remaining(), 90)
+        XCTAssertEqual(DiscountClock.fixed(-5).remaining(), 0)
+    }
+
     /// Deux chiffres partout : une pastille qui change de largeur à chaque seconde attire
     /// l'œil pour rien.
     func testTheCountdownKeepsItsWidth() {
@@ -206,8 +216,9 @@ final class DiscountOfferTests: XCTestCase {
         XCTAssertTrue(window.isLive)
         XCTAssertEqual(window.startedAt?.timeIntervalSince1970 ?? 0, opened.timeIntervalSince1970, accuracy: 0.001)
 
-        // La fenêtre finie, vue par l'horloge de la pastille.
-        window.refresh(now: opened.addingTimeInterval(86_400))
+        // La fenêtre finie, vue par l'horloge de la pastille. Une seconde de marge : l'instant
+        // relu des réglages n'est celui qu'on y a écrit qu'à une fraction de milliseconde près.
+        window.refresh(now: opened.addingTimeInterval(86_401))
         XCTAssertFalse(window.isLive)
         window.refresh()
         XCTAssertTrue(window.isLive)
@@ -215,6 +226,15 @@ final class DiscountOfferTests: XCTestCase {
         defaults.set(true, forKey: ProAccess.Key.isPro)
         window.refresh()
         XCTAssertFalse(window.isLive, "Un abonné ne voit pas la pastille")
+
+        // L'offre ouverte depuis la pastille la tient en place : l'achat qu'on y fait, ou
+        // la fenêtre qui finit, ne la retire qu'une fois l'écran refermé.
+        window.hold(true)
+        XCTAssertTrue(window.isLive)
+        window.refresh(now: opened.addingTimeInterval(90_000))
+        XCTAssertTrue(window.isLive)
+        window.hold(false)
+        XCTAssertFalse(window.isLive, "Refermée, la pastille d'un abonné s'en va")
 
         defaults.set(false, forKey: ProAccess.Key.isPro)
         DiscountOffer.forget(in: defaults)
