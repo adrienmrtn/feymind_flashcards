@@ -662,8 +662,9 @@ struct SettingsView: View {
         }
 
         #if DEBUG
-        // L'offre cadeau ne se présente qu'une fois par appareil : sans ce bouton, la
-        // revoir demanderait de désinstaller l'app.
+        // L'offre de réduction se repose deux jours après sa fenêtre, et ne revient pas deux
+        // fois dans une session une fois refusée : ce bouton l'oublie, elle se représente au
+        // prochain paywall refermé.
         rows.append(
             MicaboRow(
                 tile: MicaboTile(glyph: .symbol("gift.fill"), background: MicaboColor.infoSoft),

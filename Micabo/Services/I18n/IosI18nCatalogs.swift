@@ -929,8 +929,8 @@ enum IosI18nCatalogs {
         "ios.debug.supabaseURL": "URL Supabase",
         "ios.debug.publicKey": "Clé publique",
         "ios.debug.test": "Test",
-        "ios.debug.replayGift": "Rejouer le cadeau",
-        "ios.debug.replayGiftHelp": "Ouvre la boîte sur la prochaine fiche",
+        "ios.debug.replayGift": "Oublier l'offre de réduction",
+        "ios.debug.replayGiftHelp": "Elle revient au prochain paywall refermé",
         // Le cours d'essai des constructions de développement : un vrai PDF, sans sa fiche.
         "ios.debug.sampleCourse": "Cours d'essai",
         "ios.debug.sampleCourseHelp": "Réimporte le PDF de photosynthèse, sans sa fiche",
@@ -2185,7 +2185,7 @@ enum IosI18nCatalogs {
         "ios.onb9.trial.intro": "{name}, je tiens à ce que tu **essaies ton plan gratuitement**.",
         "ios.onb9.trial.introNoName": "Je tiens à ce que tu **essaies ton plan gratuitement**.",
         "ios.onb9.test.discount": "Voir l'offre de secours",
-        "ios.onb9.test.discountHelp": "Le cadeau, puis le tarif réduit",
+        "ios.onb9.test.discountHelp": "Le tarif réduit et son décompte",
         "ios.onb9.test.replayHelp": "Depuis le début, paywall compris",
         "ios.onb9.test.footnote": "Visible sur TestFlight seulement. Les achats y passent par le bac à sable d'Apple : rien n'est prélevé. Refaire l'onboarding efface les réponses de l'inscription, pas tes cours.",
     ]
@@ -2979,8 +2979,8 @@ enum IosI18nCatalogs {
         "ios.debug.supabaseURL": "Supabase-URL",
         "ios.debug.publicKey": "Öffentlicher Schlüssel",
         "ios.debug.test": "Test",
-        "ios.debug.replayGift": "Geschenk nochmal spielen",
-        "ios.debug.replayGiftHelp": "Öffnet die Box auf dem nächsten Blatt",
+        "ios.debug.replayGift": "Rabattangebot vergessen",
+        "ios.debug.replayGiftHelp": "Es kommt beim nächsten geschlossenen Paywall zurück",
         // Der Testkurs der Entwicklungsversionen: ein echtes PDF, ohne sein Blatt.
         "ios.debug.sampleCourse": "Testkurs",
         "ios.debug.sampleCourseHelp": "Importiert das Photosynthese-PDF erneut, ohne Blatt",
@@ -4371,7 +4371,7 @@ enum IosI18nCatalogs {
         "ios.onb9.trial.intro": "{name}, ich möchte, dass du **deinen Plan kostenlos testest**.",
         "ios.onb9.trial.introNoName": "Ich möchte, dass du **deinen Plan kostenlos testest**.",
         "ios.onb9.test.discount": "Rettungsangebot ansehen",
-        "ios.onb9.test.discountHelp": "Das Geschenk, dann der reduzierte Preis",
+        "ios.onb9.test.discountHelp": "Der reduzierte Preis mit Countdown",
         "ios.onb9.test.replayHelp": "Von vorn, mit Paywall",
         "ios.onb9.test.footnote": "Nur in TestFlight sichtbar. Käufe laufen hier über Apples Sandbox: Es wird nichts abgebucht. Das Onboarding nochmal machen löscht die Antworten der Anmeldung, nicht deine Kurse.",
     ]
@@ -5165,8 +5165,8 @@ enum IosI18nCatalogs {
         "ios.debug.supabaseURL": "URL de Supabase",
         "ios.debug.publicKey": "Clave pública",
         "ios.debug.test": "Prueba",
-        "ios.debug.replayGift": "Repetir el regalo",
-        "ios.debug.replayGiftHelp": "Abre la caja en la próxima ficha",
+        "ios.debug.replayGift": "Olvidar la oferta de descuento",
+        "ios.debug.replayGiftHelp": "Vuelve al cerrar el próximo paywall",
         // El curso de prueba de las versiones de desarrollo: un PDF real, sin su ficha.
         "ios.debug.sampleCourse": "Curso de prueba",
         "ios.debug.sampleCourseHelp": "Vuelve a importar el PDF de fotosíntesis, sin ficha",
@@ -6557,7 +6557,7 @@ enum IosI18nCatalogs {
         "ios.onb9.trial.intro": "{name}, quiero que **pruebes tu plan gratis**.",
         "ios.onb9.trial.introNoName": "Quiero que **pruebes tu plan gratis**.",
         "ios.onb9.test.discount": "Ver la oferta de rescate",
-        "ios.onb9.test.discountHelp": "El regalo y luego el precio rebajado",
+        "ios.onb9.test.discountHelp": "El precio rebajado y su cuenta atrás",
         "ios.onb9.test.replayHelp": "Desde el principio, con el paywall",
         "ios.onb9.test.footnote": "Solo visible en TestFlight. Las compras pasan por el entorno de pruebas de Apple: no se cobra nada. Repetir el onboarding borra las respuestas del registro, no tus cursos.",
     ]
@@ -7351,8 +7351,8 @@ enum IosI18nCatalogs {
         "ios.debug.supabaseURL": "Supabase URL'si",
         "ios.debug.publicKey": "Genel anahtar",
         "ios.debug.test": "Test",
-        "ios.debug.replayGift": "Hediyeyi yeniden oyna",
-        "ios.debug.replayGiftHelp": "Kutuyu sonraki özette açar",
+        "ios.debug.replayGift": "İndirim teklifini unut",
+        "ios.debug.replayGiftHelp": "Bir sonraki paywall kapanınca geri gelir",
         // Geliştirme sürümlerinin deneme dersi: gerçek bir PDF, özeti olmadan.
         "ios.debug.sampleCourse": "Deneme dersi",
         "ios.debug.sampleCourseHelp": "Fotosentez PDF'ini özetsiz yeniden içe aktarır",
@@ -8743,7 +8743,7 @@ enum IosI18nCatalogs {
         "ios.onb9.trial.intro": "{name}, planını **ücretsiz denemeni** istiyorum.",
         "ios.onb9.trial.introNoName": "Planını **ücretsiz denemeni** istiyorum.",
         "ios.onb9.test.discount": "Kurtarma teklifini gör",
-        "ios.onb9.test.discountHelp": "Önce hediye, sonra indirimli fiyat",
+        "ios.onb9.test.discountHelp": "İndirimli fiyat ve geri sayımı",
         "ios.onb9.test.replayHelp": "Baştan, ödeme ekranı dahil",
         "ios.onb9.test.footnote": "Yalnızca TestFlight'ta görünür. Satın almalar Apple'ın test ortamından geçer: hiçbir ücret alınmaz. Tanıtımı yeniden yapmak kayıt cevaplarını siler, derslerini değil.",
     ]
@@ -9683,8 +9683,8 @@ enum IosI18nCatalogs {
         "ios.debug.supabaseURL": "Supabase URL",
         "ios.debug.publicKey": "Publishable key",
         "ios.debug.test": "Test",
-        "ios.debug.replayGift": "Replay the gift",
-        "ios.debug.replayGiftHelp": "Opens the box on the next sheet",
+        "ios.debug.replayGift": "Forget the discount offer",
+        "ios.debug.replayGiftHelp": "It comes back the next time a paywall is closed",
         // The test course of development builds: a real PDF, without its sheet.
         "ios.debug.sampleCourse": "Test course",
         "ios.debug.sampleCourseHelp": "Imports the photosynthesis PDF again, with no sheet",
@@ -10936,7 +10936,7 @@ enum IosI18nCatalogs {
         "ios.onb9.trial.intro": "{name}, I want you to **try your plan for free**.",
         "ios.onb9.trial.introNoName": "I want you to **try your plan for free**.",
         "ios.onb9.test.discount": "Show the fallback offer",
-        "ios.onb9.test.discountHelp": "The gift, then the reduced price",
+        "ios.onb9.test.discountHelp": "The reduced price and its countdown",
         "ios.onb9.test.replayHelp": "From the start, paywall included",
         "ios.onb9.test.footnote": "Only visible on TestFlight. Purchases go through Apple's sandbox here: nothing is charged. Redoing the onboarding erases your sign-up answers, not your courses.",
     ]
