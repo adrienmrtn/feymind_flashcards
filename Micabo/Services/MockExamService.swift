@@ -342,6 +342,9 @@ final class MockExamService {
         if let subject = matter.first?.subject?.nilIfBlank {
             payload["subject"] = subject
         }
+        // Le profil scolaire : la copie prend le niveau et le format d'épreuve de la classe.
+        // Champs facultatifs, que le serveur d'avant ignore.
+        payload.merge(LessonAudience.current.profilePayload) { mine, _ in mine }
 
         let envelope = try await functions.post("generate-mock", payload: payload)
         let questions = Self.numbered(envelope["questions"])

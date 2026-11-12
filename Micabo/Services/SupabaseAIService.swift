@@ -59,7 +59,7 @@ struct SupabaseAIService: AIService {
 
         // `count` et `kinds` restent envoyés en plus du quota : une fonction déployée avant
         // les quotas les comprend encore, et produira le bon volume à défaut du bon détail.
-        let payload: [String: Any] = [
+        var payload: [String: Any] = [
             "title": request.courseTitle,
             "context": String(context.prefix(40_000)),
             "count": request.quota.total,
@@ -70,6 +70,9 @@ struct SupabaseAIService: AIService {
             "language": request.language.rawValue,
             "chapters": request.chapterTitles
         ]
+        // Le profil scolaire (pays, filière, année) : des cartes au niveau de la classe. Les
+        // champs de l'appel gardent la main ; une fonction d'avant ignore les autres.
+        payload.merge(LessonAudience.current.profilePayload) { mine, _ in mine }
 
         let envelope = try await post("generate-flashcards", payload: payload)
         return try decode([GeneratedFlashcard].self, from: envelope, key: "cards")
