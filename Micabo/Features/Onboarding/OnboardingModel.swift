@@ -127,7 +127,15 @@ final class OnboardingModel {
     /// niveau. Un objectif d'un autre niveau (l'élève est revenu changer de classe) ne
     /// s'affiche pas coché.
     var mainGoal: LearningGoal? {
-        LearningGoal.offered(for: stage?.tier).first { goals.contains($0) }
+        LearningGoal.offered(for: tier).first { goals.contains($0) }
+    }
+
+    /// **La marche de l'élève**, telle que les écrans du parcours la lisent : celle de sa
+    /// filière quand il en a une (un collégien français est au collège, même si le palier
+    /// large que reçoit le serveur est « Lycée » : la France n'a pas de palier collège), sinon
+    /// celle du palier large.
+    var tier: EducationTier? {
+        track?.tier ?? stage?.tier
     }
 
     /// **Pourquoi il apprend** : l'objectif n°1, plus ce que l'examen dit déjà. Un examen daté

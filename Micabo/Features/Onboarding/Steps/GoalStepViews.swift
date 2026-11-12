@@ -13,7 +13,7 @@ struct GoalStepView: View {
     var body: some View {
         OnbQuestion(i18n.t("ios.onb10.q.goal")) {
             VStack(spacing: OnbLayout.rowGap) {
-                ForEach(LearningGoal.offered(for: model.stage?.tier)) { goal in
+                ForEach(LearningGoal.offered(for: model.tier)) { goal in
                     V3OptionRow(
                         goal.title(locale: i18n.locale),
                         icon: goal.icon,

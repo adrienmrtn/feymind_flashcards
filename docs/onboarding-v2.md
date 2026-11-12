@@ -4,6 +4,51 @@ Mika pose les questions, tout s'adapte au pays et à l'année, le parcours est p
 il se termine par la révélation d'un plan avant l'offre. Aucun prix, produit ni durée d'essai
 n'a changé.
 
+## 000. Lot 10 : le parcours V3.3, réécrit (novembre 2026)
+
+Le verdict du build 173 : « des répétitions, pas beau, le flow psychologique pas parfait ». Le
+parcours est **refait**, pas retouché : **1 écran de stories + 23 étapes** (22 vues en France,
+21 pour un pays non décrit), dans le style V3.3 (marine, Sofia Sans Condensed pour les titres
+et les bulles, pilule blanche, mot-clé en bleu clair, icônes deux tons). Spécification :
+`ONBOARDING.md` du lot 10 ; ordre verrouillé par `OnboardingFlowTests.testTheFlowIsTheSpecInOrder`.
+
+| Acte | Étapes (nom des statistiques) |
+| --- | --- |
+| 0. Stories | `hookLogo` : 4 pages (leçon, quiz et cartes, exo en photo, plan jusqu'à l'examen), « Continuer » puis « Commencer », « J'ai déjà un compte », la langue en haut |
+| 1. Faire connaissance | `welcome` (grand Mika, « Salut, moi c'est **Mika** ! »), `name`, `country`, `schoolType` + `year` *ou* `level`, `exam`, `subjects` |
+| 2. L'objectif | `goal`, `worries`, **`solutionMap`** (nouveau), `currentAverage`, `targetAverage`, `startingPoint`, `dailyTime`, `sampleCard`, `notifications` (l'heure y est), **`firstLesson`** (nouveau) |
+| 3. Le plan | `planBuilding` (4,4 s, seul écran à horloge), `profileSummary` ; le compte se propose en le quittant |
+| 4. L'offre | `freeTrialIntro`, `trialOffer` (rappel promis seulement s'il peut partir), `paywall` |
+
+**Retirés** : `building`, `featuresIntro`, `mikaMission`, `mikaSources`, `mikaPaths`,
+`mikaDesign`, `mikaTutor`, `mikaSolution`, `mikaRelief`, `socialProof`, `studyTime`. Ce qu'ils
+disaient l'est une fois, par les stories et par `solutionMap`. Un parcours repris sur l'un d'eux
+continue sur le suivant qui existe (`OnboardingStep.replacement(forRetired:)`).
+
+**Règles tenues par le code et ses tests**
+
+- Une pile d'étapes, une poussée latérale native (inversée en arabe), la barre du haut fixe au
+  dessus des pages. Aucun délai, aucune cascade, aucune boucle (`OnboardingContentTests`
+  refuse `asyncAfter`, `Task.sleep`, `.delay(`, `repeatForever`, et toute horloge hors du
+  chargement du plan).
+- Un choix unique avance seul ; Mika réagit à chaque réponse (sa bulle change de texte et lui
+  d'humeur).
+- Tout le style passe par `Micabo/DesignSystem/V3/` (`V3Screen`, `MikaAsk`, `V3Title`,
+  `V3OptionRow`, `V3Chip`, `V3Button`, `.v3Card`, `V3Color`, `V3Font`) : aucune couleur,
+  police ni rayon en dur dans `Features/Onboarding`.
+- `firstLesson` écrit `FirstLessonIntent.pending` (`.topic(sujet)`, `.importSource`, ou `nil`
+  pour « Plus tard ») ; la Home le consomme. Le sujet tapé reste sur l'appareil.
+- Statistiques : `onboarding_step` garde ses noms ; deux événements à valeurs fixes,
+  `onboarding_story_viewed` (`index` 1-4) et `onboarding_first_lesson` (`choice` : topic,
+  import, later).
+- Une seule étude citée (Karpicke & Roediger, 2008), sur `sampleCard`.
+- Phrases `ios.onb10.*` : français, anglais, allemand, espagnol, turc, arabe ; les vingt autres
+  langues sont à traduire.
+
+**Rendus** : `OnboardingRenderTests` (`onb10-*`) dessine chaque écran dans l'ordre (français,
+allemand, arabe ; jour et marine), leurs états (avant réponse, mauvaise réponse, import, rappel
+refusé, moyenne passée) et les écrans denses sur iPhone SE en très grand texte.
+
 ## 00. Lot 9 : « l'onboarding, tu as enlevé trop de trucs » (novembre 2026)
 
 La demande du lot 5 était de « retirer 2/3 écrans un peu lourds » ; on était passé de 36 à 25

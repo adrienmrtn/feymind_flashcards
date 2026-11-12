@@ -110,7 +110,7 @@ struct ExamStepView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                Text(i18n.t("ios.edit"))
+                Text(i18n.t("ios.onb10.exam.edit"))
                     .font(V3Font.label)
                     .foregroundStyle(V3Color.accentBright)
             }
