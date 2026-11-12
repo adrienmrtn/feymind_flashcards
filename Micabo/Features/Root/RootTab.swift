@@ -109,17 +109,6 @@ final class TabRouter {
     /// pour le même geste.
     private(set) var courseImportRequests = 0
 
-    /// Compteur de demandes du cadeau. La liste des decks le demande au retour du premier
-    /// cours ; c'est la racine (`DiscountBadgeHost`) qui le présente, par-dessus la barre
-    /// du bas et les onglets. Présenté depuis la page, le pop-up assombrissait tout sauf
-    /// la barre.
-    private(set) var giftRequests = 0
-
-    /// Demande à la racine de poser le cadeau par-dessus l'app.
-    func requestGift() {
-        giftRequests += 1
-    }
-
     /// **Ramène l'app à son écran d'accueil**, quelle que soit la profondeur d'où l'on part.
     ///
     /// Une session lancée depuis la fiche d'un deck est deux écrans plus loin que
@@ -156,5 +145,17 @@ final class TabRouter {
     func requestFocusSession() {
         focusRequests += 1
         selection = .focus
+    }
+
+    /// Compteur de demandes de nouvelle leçon depuis un autre onglet : Home l'observe et ouvre
+    /// sa feuille des supports.
+    private(set) var lessonCreationRequests = 0
+
+    /// **Ouvre Home et sa feuille des supports** : « Nouvelle leçon », depuis l'onglet Leçons.
+    /// Une leçon se crée sur Home (le compositeur, les imports, la porte du gratuit) ; la
+    /// demander d'ailleurs ne doit pas faire chercher la barre de création.
+    func requestLessonCreation() {
+        lessonCreationRequests += 1
+        selection = .today
     }
 }

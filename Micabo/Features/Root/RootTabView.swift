@@ -82,16 +82,6 @@ struct RootTabView: View {
                 MicaboTabBar()
             }
         }
-        // La languette du cadeau est posée ici, hors des pages, pour la même raison que
-        // la barre : son décompte ne doit pas repartir de zéro à chaque changement
-        // d'onglet. Elle se colle au bord droit, au-dessus de la barre et des boutons.
-        .overlay {
-            DiscountBadgeHost(
-                bottomInset: router.isAtRoot
-                    ? MicaboLayout.tabBarSpace + MicaboSpacing.sm
-                    : MicaboLayout.bottomBarClearance
-            )
-        }
         .tint(MicaboColor.accent)
         .environment(router)
     }

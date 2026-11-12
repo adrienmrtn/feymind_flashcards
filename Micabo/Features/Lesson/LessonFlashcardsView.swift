@@ -83,7 +83,7 @@ struct LessonCardsHub: View {
                 .buttonStyle(MicaboPressableButtonStyle())
                 .accessibilityLabel(Text(L10n.t("lesson.circle.close", locale: .resolved())))
 
-                Text(L10n.t("lesson.nav.flashcards", locale: .resolved()))
+                Text(MicaboName.cards.text())
                     .font(MicaboFont.display(40))
                     .foregroundStyle(MicaboColor.ink)
 
@@ -163,7 +163,7 @@ struct LessonCardsHub: View {
             .disabled(total == 0)
 
             if total == 0 {
-                Text(L10n.t("lesson.cards.empty", locale: .resolved()))
+                Text(L10n.t("ios.home10.cards.empty", locale: .resolved()))
                     .font(MicaboFont.ui(15, weight: .medium))
                     .foregroundStyle(MicaboColor.inkSecondary)
             }

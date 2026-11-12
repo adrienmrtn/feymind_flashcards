@@ -412,7 +412,7 @@ struct SignInProviderButtons: View {
             )
             .overlay {
                 RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                    .strokeBorder(MicaboColor.strokeStrong, lineWidth: 1)
+                    .strokeBorder(MicaboColor.strokeStrong, lineWidth: MicaboSurface.border)
             }
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .medium))
@@ -501,7 +501,7 @@ struct SignInProviderButtons: View {
             )
             .overlay {
                 RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                    .strokeBorder(MicaboColor.strokeStrong, lineWidth: 1)
+                    .strokeBorder(MicaboColor.strokeStrong, lineWidth: MicaboSurface.border)
             }
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .medium))

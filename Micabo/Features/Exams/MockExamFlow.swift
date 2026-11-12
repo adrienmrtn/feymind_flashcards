@@ -722,7 +722,7 @@ struct MockExamResultView: View {
                 if !missed.isEmpty {
                     Button(action: addCards) {
                         Label(
-                            L10n.t(cardsAdded ? "lesson.exam.cardsAdded" : "lesson.exam.addCards", locale: .resolved(), vars: ["count": "\(missed.count)"]),
+                            L10n.t(cardsAdded ? "lesson.exam.cardsAdded" : "ios.home10.mock.addCards", locale: .resolved(), vars: ["count": "\(missed.count)"]),
                             systemImage: cardsAdded ? "checkmark" : "rectangle.stack.badge.plus"
                         )
                     }

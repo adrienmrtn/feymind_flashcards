@@ -213,6 +213,6 @@ struct MindMapNotion: View {
         .padding(.vertical, 8)
         .padding(.horizontal, 12)
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
     }
 }

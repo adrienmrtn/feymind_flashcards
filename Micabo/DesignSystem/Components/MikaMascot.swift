@@ -3,270 +3,331 @@ import UIKit
 
 // MARK: - La mise en scène de Mika (la règle)
 //
-// Mika est une petite pieuvre noire brillante : la tête, cinq tentacules, et le bras qui tient
-// le crayon jaune à l'étincelle. **Trois formes, chacune à sa place, et nulle part ailleurs :**
+// Mika est un petit personnage **plat, dessiné dans le code** (lot 10) : un corps bleu — l'accent
+// de l'app, `#5C88FF` sur le marine, `#3870FE` en thème clair —, de grands yeux, des joues
+// roses, cinq tentacules et le bras qui tient le crayon jaune à l'étincelle. Son dessin est
+// dans `MikaArt.swift`, sa géométrie dans `design/mika-v3/mika.js`.
 //
-// 1. **En demi, par défaut dans l'app** (`MikaPeek`) : le haut du corps — la tête, les yeux et
-//    les joues, le bras au crayon, le haut des tentacules — qui **dépasse d'un bord**, coupé net
-//    par lui, comme quelqu'un qui passe la tête : le haut du bouton d'une carte, le bas d'une
-//    carte, une ligne sous une question, le haut de la barre de saisie. Toujours la même
-//    taille pour le même rôle : `MikaPeek.card` (92 pt) dans une carte, `.line` (100 pt) sur la
-//    ligne d'une question ou d'une bulle, `.hero` (124 pt) pour l'accueil de Home. Il est déjà
-//    là quand l'écran arrive : il ne monte pas, il ne saute pas.
-// 2. **En entier, aux moments qui comptent** (`MikaMascot`, 140 à 200 points, debout sur le
-//    papier, une ombre douce dessous, au centre) : l'accueil de l'onboarding, le plan révélé,
-//    la fête de l'objectif du jour et de la série, une leçon, un quiz ou un examen blanc
-//    terminés, les écrans vides, l'attente d'une génération. L'expression dit exactement ce
-//    qui se passe (`MikaMood`), sa bulle parle pour lui.
-// 3. **En avatar** (`MikaAvatar`), son visage souriant dans un rond clair : partout où il ferait
-//    moins de 40 points (l'en-tête d'une conversation, un message, une rangée).
+// **Deux places, et nulle part ailleurs :**
 //
-// **Nulle part ailleurs** : pas sur un bouton, pas dans une liste, pas dans une pastille, jamais
-// deux fois sur un écran.
+// 1. **La bulle** : un petit Mika en entier (76 points) à gauche, sa bulle à droite, en
+//    haut de l'écran (`MikaAsk`). C'est lui qui pose les questions, propose la séance, présente
+//    l'offre ; il parle à la première personne.
+// 2. **Le moment** : un grand Mika en entier (170 à 240 points) au centre — il se présente,
+//    prépare le plan, fête une réussite, attend une génération, tient un écran vide. Dessiné
+//    en vecteur, il est net à toutes les tailles.
 //
-// **Il est attachant** : ses images portent une lueur claire autour de lui (invisible sur la
-// crème et le blanc, elle le détache du graphite la nuit et du bleu), une lumière de contour
-// sur le noir brillant, des joues roses discrètes ; un geste se termine sur un sourire, jamais
-// sur un regard vide. Tout est cuit dans les images par `scripts/mika-assets.py`.
+// **Trois cadrages** : en entier (`MikaMascot`) ; en demi (`MikaPeek`), du haut de la tête
+// jusque sous les joues et la bouche, coupé net par le bord où il se pose ; en avatar
+// (`MikaAvatar`), le visage en gros plan dans un disque de la couleur d'une surface, partout
+// où il ferait moins de 40 points.
 //
-// **Il est fluide, à coup sûr** (lot 9, après le build 170 : « il faut pas que tu fasses Mika sauter », « pas
-// fluide ») — le moteur, plus bas (`MikaCore`) :
-// - **Une image fixe nette à chaque instant** : l'expression du moment (`MikaStill`, PNG à la
-//   définition du kit). Aucune vidéo : une animation précalculée à 24 images par seconde
-//   saccadait à côté d'une interface à 120 Hz (mesures : `docs/refonte-knowunity.md` § 9).
-// - **Tout mouvement est natif**, calculé par Core Animation à la cadence de l'écran, avec les
-//   courbes de `MicaboMotion` : le **fondu enchaîné** d'une expression à l'autre (la nouvelle
-//   se pose sur l'ancienne, puis l'ancienne s'efface : le corps ne devient jamais transparent),
-//   une **respiration** d'échelle de 1,5 % une fois à l'arrivée, un **petit écrasement** de
-//   3 % qui revient à l'appui, les **étincelles** de la fête. Jamais de saut, de rebond ni de
-//   translation de Mika.
-// - **Un geste, une fois** (`MikaMood.beats`) : coucou puis sourire, clin d'œil puis sourire…
-//   puis il garde sa pose. Seules la réflexion et l'écriture alternent leurs deux images, le
-//   temps d'une attente réseau.
-// - **Un seul Mika en mouvement à la fois** dans toute l'app (`MikaStage`) : le dernier arrivé
-//   joue, le précédent se pose sur son expression finale.
-// - « Réduire les animations » : les fondus restent (ce sont des fondus), ni respiration, ni
-//   écrasement, ni étincelles qui grandissent. `\.mikaStill`, `frozenAt`, `animates: false`,
-//   les tests : l'expression fixe de l'humeur, rien d'autre.
+// **Jamais directement sur un fond bleu** : il y disparaîtrait. Pour les rares cas,
+// `MikaMascot(…).mikaBackdrop(.disc)` pose un disque derrière lui ; `backdrop: .blue` lui
+// donne un liseré blanc d'autocollant.
 //
-// Le détail, écran par écran, et le cahier des charges d'un futur Mika :
+// **Il vit par le visage et les bras, sur place** — ni saut, ni translation, ni apparition
+// qui grandit. Le moteur, plus bas (`MikaCore`, `MikaDirector`) :
+// - **Une pose est un vecteur** (`MikaPose`) : `MikaFigure` est `Animatable`, SwiftUI
+//   interpole la pose à la cadence de l'écran avec les courbes de `MicaboMotion`. D'une humeur
+//   à l'autre, c'est une métamorphose : l'œil s'aplatit pendant que l'arc rieur apparaît, le
+//   bras tourne autour de l'épaule, la bouche s'ouvre.
+// - **Un geste, une fois** (`MikaMood.beats`) : le coucou (le bras gauche se lève, balance
+//   deux fois, revient), la fête (les deux bras en l'air, une gerbe de confettis de 1,2 s), le
+//   clin d'œil, la surprise, la tristesse, le sommeil… puis il garde sa pose.
+// - **Deux attentes seulement tournent en boucle** : l'écriture (le crayon oscille) et la
+//   réflexion (ses trois points pulsent), le temps qu'une réponse arrive.
+// - **À l'appui** (`reactsToTap`) : un écrasement de 3 % et un clin d'œil.
+// - **La vie au repos** : un clignement toutes les 3 à 6 secondes, pour un Mika de 64 points
+//   et plus, visible à l'écran.
+// - **Coût nul au repos** : rien ne se redessine tant que la pose ne change pas. **Un seul
+//   Mika en mouvement** à la fois (`MikaStage`). Hors écran, tout s'arrête.
+// - « Réduire les animations » : ni geste, ni boucle, ni clignement ; un changement d'humeur
+//   est un fondu bref. `\.mikaStill`, `frozenAt`, `animates: false`, les tests : l'expression
+//   fixe de l'humeur (`MikaMood.pose`).
+//
+// Le détail, la règle des deux places et la façon d'ajouter une humeur :
 // `docs/refonte-knowunity.md` § 9.
 
-/// **Les treize humeurs de Mika** : ce qui se passe, et l'expression qui le dit.
+/// **Les quatorze humeurs de Mika** : ce qui se passe, et l'expression qui le dit.
 enum MikaMood: String, CaseIterable, Identifiable {
-    /// Au repos : son sourire, les yeux plissés.
+    /// Au repos : son sourire, le crayon à l'étincelle.
     case idle
-    /// Coucou : il salue du bras, puis sourit. Accueil, premier lancement.
+    /// Coucou : le bras gauche se lève, balance deux fois, puis revient. Accueil.
     case wave
-    /// Joie : un sourire et un petit écrasement. Bonne réponse, action réussie.
+    /// Joie : les yeux rieurs, la bouche ouverte. Bonne réponse, action réussie.
     case happy
-    /// Sommeil : yeux fermés, « z z z ». Liste vide, la nuit.
+    /// Sommeil : les yeux fermés, « z z ». Liste vide, la nuit.
     case sleep
-    /// Réflexion : l'étincelle au bout du crayon. Chargement, l'IA lit le cours.
+    /// Réflexion : le regard en l'air, trois points qui pulsent. Chargement, l'IA lit le cours.
     case think
-    /// Surprise : les tentacules écartés, les yeux grands. Nouveauté, récompense. Il la garde :
-    /// son corps est trop différent de celui du sourire pour un fondu sans fantôme.
+    /// Surprise : les yeux écarquillés, la bouche ronde. Nouveauté, récompense.
     case surprise
-    /// Célébration : un grand sourire et des étincelles autour de lui. Leçon finie, objectif
-    /// atteint.
+    /// Célébration : les deux bras en l'air, les yeux rieurs, des confettis. Leçon finie,
+    /// objectif atteint.
     case celebrate
-    /// Tristesse. Erreur, hors-ligne.
+    /// Tristesse : le regard bas, le crayon rangé. Erreur, hors-ligne.
     case sad
-    /// Écriture : il écrit, des étincelles s'envolent du crayon. Génération en cours.
+    /// Écriture : le crayon oscille près de sa tête. Génération en cours.
     case write
     /// Clin d'œil : encouragement, astuce, « à toi ».
     case wink
-    /// Attentif : les yeux ouverts, il écoute. Écran vide, une lecture en cours.
+    /// Attentif : il regarde de côté. Écran vide, une lecture en cours.
     case look
-    /// Non : la pose triste. Mauvaise réponse.
+    /// Non : la tristesse, et la tête qui se penche d'un côté puis de l'autre. Mauvaise réponse.
     case shake
     /// Arrivée : il regarde, puis sourit.
     case appear
+    /// Fierté : le crayon levé, les yeux rieurs. Un palier, un record, un plan prêt.
+    case proud
 
     var id: String { rawValue }
 
     /// **L'expression qui dit l'humeur**, fixe : ce qu'on voit dans les rendus, avec
-    /// `\.mikaStill`, et ce que l'animation montre au moment qui compte.
-    var still: MikaStill {
+    /// `\.mikaStill`, et le temps fort du geste.
+    var pose: MikaPose {
         switch self {
-        case .idle, .happy, .celebrate, .appear: .smile
+        case .idle, .appear: .idle
         case .wave: .wave
+        case .happy: .happy
         case .sleep: .sleep
         case .think: .think
         case .surprise: .surprise
+        case .celebrate: .celebrate
         case .sad, .shake: .sad
         case .write: .write
         case .wink: .wink
-        case .look: .neutral
+        case .look: .look
+        case .proud: .proud
         }
     }
 
-    /// L'expression d'où part le geste, quand Mika s'anime.
-    var opening: MikaStill {
+    /// La pose de la première image, quand Mika s'anime : il est déjà là, au repos, et son
+    /// geste part de là.
+    var opening: MikaPose {
         switch self {
-        case .wink, .appear: .neutral
-        default: still
+        case .appear: .look
+        default: .idle
         }
     }
 
-    /// **Le geste**, joué une fois à l'arrivée et à chaque changement d'humeur : chaque temps
-    /// attend `after` secondes, puis fond vers `pose`. Le dernier est la pose qui reste.
+    /// **Le geste**, joué une fois à l'arrivée et à chaque changement d'humeur : une suite de
+    /// poses, chacune rejointe par une courbe de `MicaboMotion`. La dernière est la pose qui
+    /// reste. Tout se passe sur place : aucune pose ne déplace Mika.
     var beats: [MikaBeat] {
         switch self {
-        case .wave: [MikaBeat(after: 1.4, pose: .smile)]
-        case .wink: [MikaBeat(after: 0.45, pose: .wink), MikaBeat(after: 1.3, pose: .smile)]
-        case .appear: [MikaBeat(after: 0.6, pose: .smile)]
-        default: []
+        case .idle:
+            return [MikaBeat(.idle, .standard)]
+        case .wave:
+            // Le bras gauche se lève, balance deux fois, puis revient le long du corps.
+            let up = MikaPose.wave
+            let out = up.with { $0.leftArm = $0.leftArm.swung(by: -14) }
+            let back = up.with { $0.leftArm = $0.leftArm.swung(by: 10) }
+            return [
+                MikaBeat(up, .standard),
+                MikaBeat(out, .quick), MikaBeat(back, .quick),
+                MikaBeat(out, .quick), MikaBeat(back, .quick),
+                MikaBeat(.idle, .standard, delay: 0.08),
+            ]
+        case .happy:
+            // Un petit écrasement de joie, qui revient.
+            return [MikaBeat(MikaPose.happy.with { $0.squash = 0.03 }, .quick), MikaBeat(.happy, .standard)]
+        case .celebrate:
+            // Les deux bras en l'air, qui s'écartent une fois ; les confettis sont une gerbe à
+            // part (`MikaArt.burst`), pas les six pièces fixes de l'image.
+            let up = MikaPose.celebrate.with { $0.confetti = 0 }
+            let wide = up.with {
+                $0.leftArm = $0.leftArm.swung(by: -12)
+                $0.rightArm = $0.rightArm.swung(by: 12)
+            }
+            return [MikaBeat(up, .celebrate), MikaBeat(wide, .quick, delay: 0.06), MikaBeat(up, .celebrate)]
+        case .wink:
+            return [MikaBeat(MikaPose.wink.with { $0.tilt = 3 }, .quick), MikaBeat(.idle, .standard, delay: 0.45)]
+        case .surprise:
+            return [MikaBeat(.surprise, .celebrate)]
+        case .sad:
+            return [MikaBeat(.sad, .gentle)]
+        case .shake:
+            // « Non » : la tête se penche d'un côté, de l'autre, et se pose.
+            let sad = MikaPose.sad
+            return [
+                MikaBeat(sad, .standard),
+                MikaBeat(sad.with { $0.tilt = -3 }, .quick), MikaBeat(sad.with { $0.tilt = 3 }, .quick),
+                MikaBeat(sad.with { $0.tilt = -2 }, .quick), MikaBeat(sad, .quick),
+            ]
+        case .sleep:
+            return [MikaBeat(.sleep, .gentle)]
+        case .think:
+            return [MikaBeat(.think, .standard)]
+        case .write:
+            return [MikaBeat(.write, .standard)]
+        case .look:
+            return [MikaBeat(.look, .standard)]
+        case .appear:
+            return [MikaBeat(.look, .standard), MikaBeat(.idle, .standard, delay: 0.5)]
+        case .proud:
+            return [MikaBeat(.proud, .celebrate)]
         }
     }
 
     /// **La pose qui reste après le geste.**
-    var rest: MikaStill { beats.last?.pose ?? opening }
+    var rest: MikaPose { beats.last?.pose ?? pose }
 
-    /// Les humeurs qui alternent deux images, le temps d'une attente réseau. Les autres se
-    /// jouent une fois, puis Mika garde sa pose.
-    var loops: Bool {
+    /// **L'attente** : les deux seules humeurs qui tournent en boucle, tant qu'elles durent.
+    /// L'écriture fait osciller le crayon ; la réflexion fait pulser ses trois points.
+    var loop: MikaLoop? {
         switch self {
-        case .think, .write: true
-        default: false
+        case .think:
+            MikaLoop(from: .think, to: MikaPose.think.with { $0.dotsPulse = 1 }, curve: .gentle)
+        case .write:
+            MikaLoop(
+                from: .write,
+                to: MikaPose.write.with {
+                    $0.pencilAngle = -15
+                    $0.lines = 0.5
+                    $0.pupilX = 7
+                    $0.pupilY = -5
+                },
+                curve: .quick
+            )
+        default:
+            nil
         }
     }
 
-    /// Les deux images d'une attente : l'étincelle seule, puis les étincelles qui s'envolent.
-    var loopPoses: [MikaStill] {
-        switch self {
-        case .think: [.think, .write]
-        case .write: [.write, .think]
-        default: []
-        }
-    }
-
-    /// La joie se dit aussi du corps : un petit écrasement qui revient, à l'arrivée.
-    var squashes: Bool { self == .happy || self == .celebrate }
-
-    /// À l'appui, il répond d'un clin d'œil, puis revient — seulement depuis une expression
-    /// qui partage son corps avec le clin d'œil (pas la tristesse, le sommeil, la surprise :
-    /// là, seul le petit écrasement répond).
-    var winksOnTap: Bool {
-        switch rest {
-        case .smile, .neutral, .wink, .think, .write: true
-        default: false
-        }
-    }
+    /// Les humeurs qui tournent en boucle, le temps d'une attente.
+    var loops: Bool { loop != nil }
 
     /// Durée du geste, en secondes : `onDone` arrive après.
     var duration: Double {
-        let gesture = beats.reduce(0) { $0 + $1.after }
-        return gesture > 0 ? gesture + 0.3 : 1.2
+        beats.reduce(0) { $0 + $1.delay + $1.curve.duration }
+    }
+
+    /// **À l'appui** : un écrasement de 3 % et un clin d'œil, puis il revient. Les yeux déjà
+    /// fermés ou la bouche triste ne font pas de clin d'œil : seul l'écrasement répond.
+    static func tapBeats(from rest: MikaPose) -> [MikaBeat] {
+        guard rest.eyesOpen, rest.mouthCurve >= 0 else {
+            return [MikaBeat(rest.with { $0.squash = tapSquash }, .quick), MikaBeat(rest, .standard)]
+        }
+        let pressed = rest.with {
+            $0.squash = tapSquash
+            $0.eyeWink = 1
+        }
+        let winking = rest.with { $0.eyeWink = 1 }
+        return [MikaBeat(pressed, .quick), MikaBeat(winking, .quick), MikaBeat(rest, .standard, delay: 0.3)]
+    }
+
+    /// **Le clignement** : les yeux se ferment vite, se rouvrent.
+    static func blinkBeats(from rest: MikaPose) -> [MikaBeat] {
+        [MikaBeat(rest.with { $0.blink = 1 }, .snap), MikaBeat(rest, .quick)]
+    }
+
+    /// L'écrasement d'un appui : 3 %.
+    static let tapSquash: Double = 0.03
+    /// La durée de la gerbe de confettis d'une fête.
+    static let confettiSeconds: Double = 1.2
+    /// En dessous, un Mika ne cligne pas des yeux.
+    static let blinkingSize: CGFloat = 64
+    /// Un clignement toutes les 3 à 6 secondes, au hasard.
+    static let blinkEvery: ClosedRange<Double> = 3...6
+}
+
+/// Les courbes de Mika : celles de `MicaboMotion`, et le battement rapide d'une paupière.
+enum MikaCurve: Equatable {
+    /// Une paupière qui se ferme : `quick`, deux fois plus vite.
+    case snap
+    case quick
+    case standard
+    case gentle
+    /// Le seul rebond : les bras d'une fête, des yeux qui s'écarquillent.
+    case celebrate
+
+    var animation: Animation {
+        switch self {
+        case .snap: MicaboMotion.quick.speed(2)
+        case .quick: MicaboMotion.quick
+        case .standard: MicaboMotion.standard
+        case .gentle: MicaboMotion.gentle
+        case .celebrate: MicaboMotion.celebrate
+        }
+    }
+
+    /// La durée de la courbe, en secondes.
+    var duration: Double {
+        switch self {
+        case .snap: 0.11
+        case .quick: 0.22
+        case .standard: 0.35
+        case .gentle: 0.45
+        case .celebrate: 0.5
+        }
     }
 }
 
-/// Un temps d'un geste de Mika.
+/// Un temps d'un geste de Mika : la pose à rejoindre, la courbe du trajet, et le temps que la
+/// pose d'avant tient avant de partir.
 struct MikaBeat: Equatable {
-    var after: Double
-    var pose: MikaStill
+    var pose: MikaPose
+    var curve: MikaCurve
+    var delay: Double
+
+    init(_ pose: MikaPose, _ curve: MikaCurve, delay: Double = 0) {
+        self.pose = pose
+        self.curve = curve
+        self.delay = delay
+    }
 }
 
-/// Les expressions, en PNG transparent rogné autour de Mika (`MikaArt.stills` dit où chacune
-/// se place). Toutes debout, les tentacules au même endroit : deux expressions se superposent.
-enum MikaStill: String, CaseIterable {
-    case neutral = "neutre"
-    case smile = "sourire"
-    case wink = "clin-doeil"
-    case wave = "coucou"
-    case surprise
-    case think = "reflexion"
-    case write = "ecriture"
-    case sad = "triste"
-    case sleep = "sommeil"
-
-    /// Le nom de l'image dans le catalogue.
-    var imageName: String { "Mika-\(rawValue)" }
-
-    /// Gardé pour les appelants d'avant : il n'y a qu'une image par expression.
-    func imageName(sparkle: MikaSparkle) -> String { imageName }
-
-    /// Où l'expression se place dans le canevas de 512 du kit.
-    var rect: CGRect { MikaArt.stills[rawValue] ?? CGRect(x: 74, y: 157, width: 370, height: 358) }
-}
-
-/// La couleur de l'étincelle au bout du crayon : blanche à liseré bleu, lisible partout. La
-/// valeur reste pour les appelants.
-enum MikaSparkle: Equatable {
-    case white
-    case blue
+/// Une attente : l'aller-retour sans fin entre deux poses, tant que l'humeur dure.
+struct MikaLoop: Equatable {
+    var from: MikaPose
+    var to: MikaPose
+    var curve: MikaCurve
 }
 
 /// Ce qu'il y a derrière Mika.
 enum MikaBackdrop: Equatable {
-    /// Le papier de l'app, qui suit le thème : une ombre douce le jour, une lueur la nuit.
+    /// Le fond de l'app, qui suit le thème.
     case surface
     /// Un fond clair quel que soit le thème.
     case light
-    /// Le bleu Micabo, ou un fond sombre et saturé : ni ombre ni lueur ajoutées (la lueur de
-    /// ses images suffit).
+    /// Un fond bleu (l'accent de l'app) : Mika prend un liseré blanc d'autocollant, il ne
+    /// se pose jamais directement sur du bleu.
     case blue
+    /// Un disque de la couleur d'une surface derrière lui, pour un fond bleu ou chargé.
+    case disc
+    /// Le liseré blanc d'autocollant, quel que soit le fond.
+    case sticker
+
+    /// Mika prend son liseré blanc.
+    var outlines: Bool { self == .blue || self == .sticker }
 }
 
 /// Le cadre de Mika en entier.
 enum MikaFrame: Equatable {
-    /// Aucun cadre : Mika debout, ses tentacules sur le bas du carré, une ombre douce dessous.
+    /// Aucun cadre : Mika debout, ses tentacules vers le bas du carré.
     case none
-    /// **Le nid** : un rond clair — blanc bleuté le jour, graphite éclairé la nuit —, Mika au
-    /// milieu.
+    /// **Le nid** : un disque de la couleur d'une surface, Mika en entier au milieu.
     case circle
-    /// La pastille ronde bleu Micabo, pour une carte forte de la marque.
+    /// Gardé pour les appelants d'avant (une pastille bleue) : le nid.
     case blueCircle
-    /// Un carré arrondi bleu Micabo, comme l'icône de l'app.
+    /// Le nid, en carré arrondi.
     case rounded
-}
-
-// MARK: - Le cadrage
-
-/// **Où le canevas de 512 du kit tombe dans la vue** : `scale` points par unité du canevas,
-/// et le point du canevas qui tombe au coin haut-gauche de la vue.
-struct MikaPlacement: Equatable {
-    var scale: CGFloat
-    var origin: CGPoint
-
-    func frame(of rect: CGRect) -> CGRect {
-        CGRect(
-            x: (rect.minX - origin.x) * scale,
-            y: (rect.minY - origin.y) * scale,
-            width: rect.width * scale,
-            height: rect.height * scale
-        )
-    }
-
-    func point(_ point: CGPoint) -> CGPoint {
-        CGPoint(x: (point.x - origin.x) * scale, y: (point.y - origin.y) * scale)
-    }
-
-    /// Mika debout dans un carré de `side` : ses tentacules au bas du carré, l'étincelle au
-    /// haut.
-    static func standing(side: CGFloat) -> MikaPlacement {
-        let units: CGFloat = 330
-        return MikaPlacement(scale: side / units, origin: CGPoint(x: 255 - units / 2, y: 493 - units))
-    }
-
-    /// Mika en entier au milieu d'un rond de `side`.
-    static func nested(side: CGFloat) -> MikaPlacement {
-        let units: CGFloat = 440
-        return MikaPlacement(scale: side / units, origin: CGPoint(x: 255 - units / 2, y: 332 - units / 2))
-    }
 }
 
 // MARK: - Mika en entier
 
-/// **Mika en entier**, pour les moments qui comptent (règle 2).
+/// **Mika en entier** : la bulle (76 points, à côté de ce qu'il dit) et le moment (170 à
+/// 240 points, au centre).
 ///
 /// Fixe — l'expression de son humeur — quand le mouvement n'a pas sa place : `frozenAt` donné
-/// (les rendus), `animates` faux, `\.mikaStill`, sous XCTest. Sinon il respire une fois en
-/// arrivant et joue le geste de son humeur (`MikaMood.beats`), puis garde sa pose. Un appui, si
-/// `reactsToTap`, le fait sourire d'un clin d'œil avec un petit écrasement. `onDone` arrive à
-/// la fin du geste.
+/// (les rendus), `animates` faux, `\.mikaStill`, sous XCTest. Sinon il joue le geste de son
+/// humeur (`MikaMood.beats`) sur place, puis garde sa pose et cligne des yeux de temps en
+/// temps. Un appui, si `reactsToTap`, lui tire un clin d'œil avec un petit écrasement.
+/// `onDone` arrive à la fin du geste.
 ///
-/// `size` est le côté du carré qu'il occupe.
+/// `size` est le côté du carré qu'il occupe : la fenêtre de la maquette
+/// (`viewBox="-10 -30 420 420"`), où son corps tient les trois quarts de la hauteur.
 struct MikaMascot: View {
     var mood: MikaMood
     var size: CGFloat
@@ -276,6 +337,8 @@ struct MikaMascot: View {
     var backdrop: MikaBackdrop
     var frame: MikaFrame
     var animates: Bool
+    /// L'ombre plate au sol, sous ses tentacules.
+    var shadow: Bool
     var onDone: (() -> Void)?
 
     init(
@@ -286,6 +349,7 @@ struct MikaMascot: View {
         backdrop: MikaBackdrop = .surface,
         frame: MikaFrame = .none,
         animates: Bool = true,
+        shadow: Bool = false,
         onDone: (() -> Void)? = nil
     ) {
         self.mood = mood
@@ -295,95 +359,57 @@ struct MikaMascot: View {
         self.backdrop = backdrop
         self.frame = frame
         self.animates = animates
+        self.shadow = shadow
         self.onDone = onDone
     }
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.mikaBackdrop) private var placed
 
     var body: some View {
-        switch frame {
-        case .none:
-            core(.standing(side: size))
-                .background(alignment: .bottom) { ground }
-        case .circle:
+        let behind = placed ?? backdrop
+        if frame == .none, behind != .disc {
+            core(.full, shadow: shadow && !behind.outlines, sticker: behind.outlines)
+        } else {
+            // Le nid : un disque (ou un carré arrondi), Mika en entier au milieu.
             let night = colorScheme == .dark
-            ZStack {
-                Circle().fill(MikaNest.fill(night: night))
-                Circle().fill(RadialGradient(
-                    colors: [MikaNest.light(night: night), MikaNest.light(night: night).opacity(0)],
-                    center: .center, startRadius: 0, endRadius: size * 0.5
-                ))
-                core(.nested(side: size))
-            }
-            .frame(width: size, height: size)
-            .clipShape(Circle())
-            .overlay(Circle().strokeBorder(MikaNest.rim(night: night), lineWidth: max(1, size * 0.014)))
-        case .blueCircle:
-            pastille(Circle())
-        case .rounded:
-            pastille(RoundedRectangle(cornerRadius: size * 0.2237, style: .continuous))
+            let shape = frame == .rounded
+                ? AnyShape(RoundedRectangle(cornerRadius: size * 0.2237, style: .continuous))
+                : AnyShape(Circle())
+            core(.nest, shadow: false, sticker: false)
+                .background(behind == .disc ? MikaPalette.plate(night: night) : MikaPalette.disc(night: night))
+                .clipShape(shape)
         }
     }
 
-    private func core(_ placement: MikaPlacement) -> some View {
+    private func core(_ framing: MikaFraming, shadow: Bool, sticker: Bool) -> MikaCore {
         MikaCore(
             mood: mood,
-            placement: placement,
-            canvas: CGSize(width: size, height: size),
+            framing: framing,
+            width: size,
             lives: animates && frozenAt == nil,
             reactsToTap: reactsToTap,
+            shadow: shadow,
+            sticker: sticker,
             onDone: onDone
         )
-    }
-
-    private func pastille<S: Shape>(_ shape: S) -> some View {
-        ZStack {
-            shape.fill(MicaboBrand.blue)
-            core(.nested(side: size))
-        }
-        .frame(width: size, height: size)
-        .clipShape(shape)
-    }
-
-    /// Sous ses tentacules : une ombre douce, posée sur le papier ; la nuit, une lumière douce
-    /// derrière lui en plus de la lueur de ses images. Des dégradés, pas de flou.
-    @ViewBuilder
-    private var ground: some View {
-        if backdrop != .blue {
-            let night = colorScheme == .dark && backdrop == .surface
-            ZStack(alignment: .bottom) {
-                if night {
-                    Circle()
-                        .fill(RadialGradient(colors: [Color.white.opacity(0.09), Color.white.opacity(0)], center: .center, startRadius: 0, endRadius: size * 0.5))
-                        .frame(width: size, height: size)
-                        .offset(y: -size * 0.1)
-                }
-                Ellipse()
-                    .fill(RadialGradient(
-                        colors: [Color.black.opacity(night ? 0.4 : 0.14), Color.black.opacity(0)],
-                        center: .center, startRadius: 0, endRadius: size * 0.36
-                    ))
-                    .frame(width: size * 0.74, height: size * 0.1)
-                    .offset(y: size * 0.03)
-            }
-            .allowsHitTesting(false)
-        }
     }
 }
 
 // MARK: - Mika en demi
 
-/// **Mika en demi**, la forme de tous les jours (règle 1) : le haut de son corps dépasse du
-/// bord sur lequel on pose le bas de la vue, coupé net par lui. La vue fait `width` sur
-/// `MikaPeek.height(for:)` ; les étincelles d'une fête débordent au-dessus, jamais en dessous.
+/// **Mika en demi** : du haut de la tête jusque sous les joues et la bouche, coupé net par le
+/// bord sur lequel on pose le bas de la vue (une carte, une ligne, le bas de l'écran). La vue
+/// fait `width` sur `MikaPeek.height(for:)` ; le crayon d'une fête et ses confettis débordent
+/// au-dessus, jamais en dessous.
 ///
-/// Il est déjà là quand l'écran arrive — il ne monte pas de derrière son bord —, respire une
-/// fois et joue le geste de son humeur.
+/// Il est déjà là quand l'écran arrive — il ne monte pas de derrière son bord — et joue le
+/// geste de son humeur.
 struct MikaPeek: View {
     var mood: MikaMood = .idle
     var width: CGFloat = MikaPeek.card
     var reactsToTap = false
-    /// Gardé pour les appelants : Mika ne monte plus de derrière son bord.
+    /// Gardé pour les appelants : Mika ne monte pas de derrière son bord.
     var rises = true
     var backdrop: MikaBackdrop = .surface
     var animates = true
@@ -393,60 +419,37 @@ struct MikaPeek: View {
     static let card: CGFloat = 92
     /// Sur la ligne d'une question, à côté d'une bulle.
     static let line: CGFloat = 100
-    /// L'accueil de Home, au-dessus de la barre de saisie.
+    /// L'accueil d'un écran, au-dessus d'une barre.
     static let hero: CGFloat = 124
 
-    /// **Ce qui dépasse**, dans le canevas de 512 : de l'étincelle au haut des tentacules,
-    /// coupé à `window.maxY` — sous les joues et la naissance des bras, jamais à ras des yeux.
-    static let window = CGRect(x: 99, y: 174, width: 312, height: 260)
-    /// L'air au-dessus de lui (les étincelles d'une fête), en unités du canevas.
-    static let headroom: CGFloat = 60
-    /// Ce que sa lueur et les étincelles d'une fête débordent sur les côtés, en unités du
-    /// canevas.
-    static let bleed: CGFloat = 64
+    /// **Ce qui dépasse**, dans le dessin : de l'air au-dessus de la tête (l'étincelle) jusqu'à
+    /// la coupe, sous les joues et la bouche.
+    static let window = MikaFraming.peek.window
 
     static func height(for width: CGFloat) -> CGFloat { width * window.height / window.width }
 
-    @Environment(\.colorScheme) private var colorScheme
-
-    private var scale: CGFloat { width / Self.window.width }
-    private var height: CGFloat { Self.height(for: width) }
+    @Environment(\.mikaBackdrop) private var placed
 
     var body: some View {
-        let air = Self.headroom * scale
-        let placement = MikaPlacement(scale: scale, origin: CGPoint(x: Self.window.minX, y: Self.window.minY - Self.headroom))
-        ZStack(alignment: .bottom) {
-            if backdrop == .surface, colorScheme == .dark {
-                // La nuit, une lumière douce derrière sa tête, en plus de la lueur de ses
-                // images : le noir se détache du graphite.
-                Circle()
-                    .fill(RadialGradient(colors: [Color.white.opacity(0.08), Color.white.opacity(0)], center: .center, startRadius: 0, endRadius: width * 0.5))
-                    .frame(width: width * 1.05, height: width * 1.05)
-                    .offset(y: width * 0.3)
-            }
-            MikaCore(
-                mood: mood,
-                placement: placement,
-                canvas: CGSize(width: width, height: height + air),
-                lives: animates,
-                reactsToTap: reactsToTap,
-                onDone: onDone
-            )
-        }
-        .frame(width: width, height: height + air, alignment: .bottom)
-        // Coupé net en bas, par son bord ; sur les côtés, sa lueur déborde librement.
-        .mask(alignment: .bottom) {
-            Rectangle().frame(width: width + Self.bleed * scale * 2, height: height + air)
-        }
-        .frame(width: width, height: height, alignment: .bottom)
-        .accessibilityHidden(true)
+        let behind = placed ?? backdrop
+        MikaCore(
+            mood: mood,
+            framing: .peek,
+            width: width,
+            lives: animates,
+            reactsToTap: reactsToTap,
+            shadow: false,
+            // Coupé par un bord, un disque n'a pas de sens : le liseré fait le même travail.
+            sticker: behind.outlines || behind == .disc,
+            onDone: onDone
+        )
     }
 }
 
 // MARK: - Mika en avatar
 
-/// **Le visage souriant de Mika dans un rond clair**, image fixe : là où il ferait moins de
-/// 40 points.
+/// **Le visage de Mika en gros plan dans un disque** de la couleur d'une surface, fixe : là
+/// où il ferait moins de 40 points (un message, une rangée, une notification).
 struct MikaAvatar: View {
     var size: CGFloat = 32
 
@@ -454,325 +457,488 @@ struct MikaAvatar: View {
 
     var body: some View {
         let night = colorScheme == .dark
-        Image("Mika-tete")
-            .resizable()
-            .interpolation(.high)
-            .scaledToFit()
+        MikaFigure(pose: .face, framing: .avatar, scale: size / MikaFraming.avatar.window.width, night: night)
             .frame(width: size, height: size)
-            .background(Circle().fill(MikaNest.fill(night: night)))
+            .background(MikaPalette.disc(night: night))
             .clipShape(Circle())
-            .overlay(Circle().strokeBorder(MikaNest.rim(night: night), lineWidth: 1))
+            // Le dessin de Mika ne se retourne pas en arabe.
+            .environment(\.layoutDirection, .leftToRight)
             .accessibilityHidden(true)
     }
 }
 
-// MARK: - Le cœur : l'expression, le fondu, le geste
+// MARK: - La figure : une pose, dessinée
 
-/// **Ce qu'on voit de Mika** : l'image de son expression, et, le temps d'un fondu, l'image
-/// d'avant dessous. Tout ce qui bouge est une propriété animée par SwiftUI (opacité, échelle) :
-/// Core Animation l'interpole à la cadence de l'écran, hors du fil principal.
+/// **Mika dans une pose**, dessiné dans un `Canvas`. La vue est `Animatable` : quand la pose
+/// change dans une animation, SwiftUI recalcule la pose intermédiaire à chaque image et le
+/// canevas se redessine — une métamorphose, à la cadence de l'écran. Tant que la pose ne
+/// change pas, rien ne se redessine.
+struct MikaFigure: View, Animatable {
+    var pose: MikaPose
+    var framing: MikaFraming
+    /// Points par unité du dessin.
+    var scale: CGFloat
+    /// Le marine (thème sombre) ou le thème clair.
+    var night = false
+    var shadow = false
+    /// Le liseré blanc d'autocollant.
+    var sticker = false
+
+    var animatableData: MikaPose {
+        get { pose }
+        set { pose = newValue }
+    }
+
+    var body: some View {
+        let drawn = self.pose
+        let palette = MikaPalette.resolved(night: night)
+        let ground = shadow
+        let outline: Double = sticker ? MikaArt.stickerWidth : 0
+        let toView = framing.toView(scale: scale)
+        let size = framing.canvasSize(scale: scale)
+        Canvas { context, _ in
+            let pieces = MikaArt.scene(drawn, palette: palette, shadow: ground, sticker: outline)
+            MikaArt.paint(pieces, pose: drawn, in: &context, toView: toView)
+        }
+        .frame(width: size.width, height: size.height)
+        // Rien ne se dessine hors du canevas : c'est son bord bas qui coupe le demi-Mika.
+        .clipped()
+    }
+}
+
+/// La gerbe de confettis d'une fête, à un instant donné (`progress` de 0 à 1).
+private struct MikaBurst: View {
+    var progress: Double
+    var framing: MikaFraming
+    var scale: CGFloat
+    var night: Bool
+
+    var body: some View {
+        let moment = progress
+        let palette = MikaPalette.resolved(night: night)
+        let toView = framing.toView(scale: scale)
+        let size = framing.canvasSize(scale: scale)
+        Canvas { context, _ in
+            let pieces = MikaArt.burst(moment, palette: palette)
+            MikaArt.paint(pieces, pose: .idle, in: &context, toView: toView)
+        }
+        .frame(width: size.width, height: size.height)
+        .clipped()
+        .allowsHitTesting(false)
+    }
+}
+
+// MARK: - Le cœur : la pose à l'écran, le geste, la vie
+
+/// **Ce qu'on voit de Mika, et ce qui le fait bouger.** La pose à l'écran est un état ; le
+/// metteur en scène (`MikaDirector`) dit vers quelle pose aller, par quelle courbe, et la vue
+/// l'anime. Rien d'autre ne tourne : pas d'horloge d'images, pas de minuterie hors du
+/// clignement.
 private struct MikaCore: View {
     let mood: MikaMood
-    let placement: MikaPlacement
-    let canvas: CGSize
+    let framing: MikaFraming
+    /// La largeur de mise en page, en points.
+    let width: CGFloat
     /// Le parent permet le mouvement (`animates`, pas de `frozenAt`).
     let lives: Bool
     let reactsToTap: Bool
+    let shadow: Bool
+    let sticker: Bool
     let onDone: (() -> Void)?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.mikaStill) private var forcedStill
+    @Environment(\.colorScheme) private var colorScheme
 
-    /// L'expression à l'écran (`nil` : celle d'où part le geste de l'humeur).
-    @State private var pose: MikaStill?
-    /// L'expression d'avant, gardée opaque dessous pendant que la nouvelle se pose dessus.
-    @State private var under: MikaStill?
-    @State private var poseOpacity: Double = 1
-    @State private var underOpacity: Double = 1
-    @State private var breathed = false
-    @State private var squashed = false
-    @State private var sparkled = false
-    @State private var arrived = false
-    @State private var script: Task<Void, Never>?
-    @State private var doneTask: Task<Void, Never>?
-    @State private var fades = 0
-    @State private var token = UUID()
+    /// La pose à l'écran (`nil` : celle d'où part le geste de l'humeur).
+    @State private var pose: MikaPose?
+    @State private var director = MikaDirector()
+    /// La vue est dans la partie visible de sa page.
+    @State private var onScreen = true
+    /// Une fête de plus : la gerbe de confettis part.
+    @State private var bursts = 0
 
-    /// Les expressions changent (des fondus : « Réduire les animations » les garde).
+    /// Les poses changent en fondu (« Réduire les animations » le garde).
     private var alive: Bool { lives && !forcedStill && !MikaLibrary.isRunningTests }
-    /// Le corps bouge (respiration, écrasement, étincelles qui grandissent).
+    /// Les gestes, les boucles et le clignement jouent.
     private var moves: Bool { alive && !reduceMotion }
 
-    private var shown: MikaStill { alive ? (pose ?? mood.opening) : mood.still }
+    private var scale: CGFloat { width / framing.window.width }
+    private var height: CGFloat { framing.window.height * scale }
+    private var night: Bool { colorScheme == .dark }
 
-    /// L'échelle du corps, ancrée sous ses tentacules : une respiration de 1,5 % à l'arrivée,
-    /// un écrasement de 3 % à l'appui. Jamais de translation.
-    private var scaleX: CGFloat { (moves && !breathed ? 0.985 : 1) * (squashed ? 1.03 : 1) }
-    private var scaleY: CGFloat { (moves && !breathed ? 0.985 : 1) * (squashed ? 0.97 : 1) }
-
-    var body: some View {
-        ZStack(alignment: .topLeading) {
-            if alive, let under {
-                image(under).opacity(underOpacity)
-            }
-            image(shown).opacity(alive ? poseOpacity : 1)
-            if mood == .celebrate {
-                MikaSparkles(placement: placement, shown: alive ? sparkled : true, reduceMotion: reduceMotion)
-            }
-        }
-        .frame(width: canvas.width, height: canvas.height, alignment: .topLeading)
-        .scaleEffect(x: scaleX, y: scaleY, anchor: .bottom)
-        // Le dessin de Mika ne se retourne pas en arabe : son crayon reste dans sa main droite.
-        .environment(\.layoutDirection, .leftToRight)
-        .contentShape(Rectangle())
-        .onTapGesture { react() }
-        .allowsHitTesting(reactsToTap)
-        .onAppear(perform: arrive)
-        .onChange(of: mood) { _, next in
-            scheduleDone()
-            guard alive else { return }
-            if next == .celebrate { sparkled = false }
-            play(next)
-        }
-        .onDisappear {
-            script?.cancel()
-            doneTask?.cancel()
-            MikaStage.shared.end(token)
-        }
-        .accessibilityHidden(true)
+    private var shown: MikaPose {
+        guard alive else { return mood.pose }
+        return pose ?? (moves ? mood.opening : mood.pose)
     }
 
-    private func image(_ still: MikaStill) -> some View {
-        let frame = placement.frame(of: still.rect)
-        return Image(still.imageName)
-            .resizable()
-            .interpolation(.high)
-            .frame(width: frame.width, height: frame.height)
-            .offset(x: frame.minX, y: frame.minY)
+    /// L'horloge du clignement tourne : un Mika assez grand, visible, les yeux ouverts.
+    private var blinkClock: Bool {
+        moves && onScreen && width >= MikaMood.blinkingSize && mood.rest.eyesOpen
+    }
+
+    var body: some View {
+        MikaFigure(pose: shown, framing: framing, scale: scale, night: night, shadow: shadow, sticker: sticker)
+            .overlay(alignment: .bottom) { confetti }
+            // Le canevas déborde de la mise en page, en haut et sur les côtés : un bras qui se
+            // lève, le crayon d'une fête. En bas, il s'arrête au bord (la coupe du demi).
+            .frame(width: width, height: height, alignment: .bottom)
+            // Le dessin de Mika ne se retourne pas en arabe : son crayon reste dans sa main droite.
+            .environment(\.layoutDirection, .leftToRight)
+            .contentShape(Rectangle())
+            .onTapGesture { react() }
+            .allowsHitTesting(reactsToTap)
+            .onGeometryChange(for: Bool.self) { proxy in
+                // Dans une page qui défile : visible tant qu'il croise ce qu'elle montre.
+                guard let port = proxy.bounds(of: .scrollView) else { return true }
+                return port.intersects(CGRect(origin: .zero, size: proxy.size))
+            } action: { visible in
+                onScreen = visible
+            }
+            .onAppear { arrive() }
+            .onDisappear { director.leave() }
+            .onChange(of: mood) { _, next in change(to: next) }
+            .onChange(of: onScreen) { _, visible in
+                if visible {
+                    arrive()
+                } else {
+                    director.leave()
+                }
+            }
+            .onChange(of: moves) { _, allowed in
+                if allowed {
+                    arrive()
+                } else {
+                    settle()
+                }
+            }
+            .task(id: blinkClock) { await blinkWhileResting() }
+            .task(id: mood) { await reportDoneWhenStill() }
+            .accessibilityHidden(true)
+    }
+
+    /// La gerbe de confettis d'une fête : jouée une fois par fête, sur 1,2 seconde, puis plus
+    /// rien ne se dessine.
+    @ViewBuilder
+    private var confetti: some View {
+        if moves, mood == .celebrate {
+            KeyframeAnimator(initialValue: 1.0, trigger: bursts) { progress in
+                MikaBurst(progress: progress, framing: framing.burst, scale: scale, night: night)
+            } keyframes: { _ in
+                KeyframeTrack {
+                    MoveKeyframe(0.0)
+                    LinearKeyframe(1.0, duration: MikaMood.confettiSeconds)
+                }
+            }
+        }
     }
 
     // MARK: Le temps
 
     private func arrive() {
-        scheduleDone()
-        guard alive else { return }
-        if arrived {
-            // De retour à l'écran : une attente reprend ; un geste joué ne se rejoue pas.
-            if mood.loops { play(mood) }
+        guard alive, onScreen else { return }
+        guard moves else {
+            // « Réduire les animations » : l'expression de l'humeur, posée.
+            if pose == nil { pose = mood.pose }
             return
         }
-        arrived = true
-        // L'expression devient explicite : un changement d'humeur fondra depuis elle.
-        var instant = Transaction()
-        instant.disablesAnimations = true
-        withTransaction(instant) { pose = mood.opening }
-        if moves {
-            withAnimation(MicaboMotion.standard.delay(0.05)) { breathed = true }
-        }
-        play(mood)
+        wire()
+        director.appear(mood)
     }
 
-    /// **Le geste de l'humeur** : fondu vers l'expression d'où il part, puis ses temps ; une
-    /// attente alterne ses deux images. Il prend la scène : un autre Mika en mouvement se pose.
-    private func play(_ next: MikaMood) {
-        script?.cancel()
-        // Un changement d'humeur peut passer d'un corps à un autre (la surprise, le sommeil) :
-        // un fondu bref.
-        show(next.opening, quick: true)
-        if next.squashes { squash(after: 0.12) }
-        if next == .celebrate {
-            withAnimation(MicaboMotion.resolved(MicaboMotion.celebrate, reduceMotion: reduceMotion).delay(0.1)) { sparkled = true }
+    private func change(to next: MikaMood) {
+        guard alive else { return }
+        guard moves else {
+            withAnimation(MicaboMotion.reduced) { pose = next.pose }
+            return
         }
-        guard !next.beats.isEmpty || next.loops else { return }
-        let token = token
-        MikaStage.shared.begin(token) { settle() }
-        script = Task { @MainActor in
-            if next.loops {
-                var index = 0
-                while !Task.isCancelled {
-                    try? await Task.sleep(for: .seconds(1.6))
-                    guard !Task.isCancelled else { return }
-                    index += 1
-                    show(next.loopPoses[index % next.loopPoses.count], slow: true)
-                }
-            } else {
-                for beat in next.beats {
-                    try? await Task.sleep(for: .seconds(beat.after))
-                    guard !Task.isCancelled else { return }
-                    show(beat.pose)
-                }
-                MikaStage.shared.end(token)
-            }
-        }
+        wire()
+        director.change(to: next)
     }
 
-    /// Un autre Mika prend la scène : celui-ci se pose sur la fin de son geste, sans bouger.
+    /// Le mouvement n'est plus permis : tout s'arrête sur l'expression de l'humeur.
     private func settle() {
-        script?.cancel()
-        script = nil
-        if !mood.loops { show(mood.rest) }
-    }
-
-    /// **Le fondu enchaîné** : la nouvelle expression se pose sur l'ancienne, qui reste opaque
-    /// dessous ; puis l'ancienne s'efface. Le corps, commun aux deux, ne pâlit jamais.
-    private func show(_ next: MikaStill, slow: Bool = false, quick: Bool = false) {
-        guard next != shown else { return }
-        fades += 1
-        let fade = fades
+        director.moves = false
+        director.halt()
         var instant = Transaction()
         instant.disablesAnimations = true
-        withTransaction(instant) {
-            under = shown
-            underOpacity = 1
-            pose = next
-            poseOpacity = 0
-        }
-        let curve = slow ? MicaboMotion.gentle : quick ? MicaboMotion.quick : MicaboMotion.standard
-        withAnimation(curve, completionCriteria: .logicallyComplete) {
-            poseOpacity = 1
-        } completion: {
-            guard fade == fades else { return }
-            withAnimation(MicaboMotion.quick, completionCriteria: .logicallyComplete) {
-                underOpacity = 0
-            } completion: {
-                guard fade == fades else { return }
-                under = nil
-            }
-        }
-    }
-
-    /// Le petit écrasement : 3 % plus large, 3 % plus bas, ancré au sol, puis il revient.
-    private func squash(after delay: Double = 0) {
-        guard moves else { return }
-        withAnimation(MicaboMotion.quick.delay(delay)) { squashed = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay + 0.13) {
-            withAnimation(MicaboMotion.standard) { squashed = false }
-        }
+        withTransaction(instant) { pose = alive ? mood.pose : nil }
     }
 
     private func react() {
         guard reactsToTap else { return }
         Haptics.selection()
-        guard alive else { return }
-        squash()
-        script?.cancel()
-        let token = token
-        MikaStage.shared.begin(token) { settle() }
-        guard mood.winksOnTap else { return }
-        let back = mood.loops ? mood.opening : mood.rest
-        show(shown == .wink ? .smile : .wink, quick: true)
-        script = Task { @MainActor in
-            try? await Task.sleep(for: .seconds(1.1))
+        guard moves else { return }
+        wire()
+        director.tap()
+    }
+
+    /// Branche le metteur en scène sur cette vue : ce qu'il décide, elle l'anime.
+    private func wire() {
+        director.moves = moves
+        director.blinks = width >= MikaMood.blinkingSize
+        director.apply = { cue in perform(cue) }
+        director.done = onDone
+    }
+
+    /// **Joue un temps** : la pose change dans une animation, SwiftUI interpole.
+    private func perform(_ cue: MikaCue) {
+        if cue.confetti { bursts += 1 }
+        guard let curve = cue.curve else {
+            var instant = Transaction()
+            instant.disablesAnimations = true
+            withTransaction(instant) { pose = cue.pose }
+            return
+        }
+        var animation = curve.animation
+        if cue.delay > 0 { animation = animation.delay(cue.delay) }
+        if cue.repeats { animation = animation.repeatForever(autoreverses: true) } // attente
+        guard cue.awaits else {
+            withAnimation(animation) { pose = cue.pose }
+            return
+        }
+        withAnimation(animation, completionCriteria: .logicallyComplete) {
+            pose = cue.pose
+        } completion: {
+            director.finished(cue)
+        }
+    }
+
+    /// **La vie au repos** : un clignement toutes les 3 à 6 secondes. C'est la seule horloge de
+    /// Mika (un clignement n'a pas d'autre déclencheur que le temps qui passe) ; elle ne
+    /// tourne que pour un Mika visible, au repos, et la tâche s'arrête dès que la vue quitte
+    /// l'écran ou que le mouvement n'est plus permis.
+    private func blinkWhileResting() async {
+        guard blinkClock else { return }
+        while !Task.isCancelled {
+            try? await Task.sleep(for: .seconds(Double.random(in: MikaMood.blinkEvery)))
             guard !Task.isCancelled else { return }
-            show(back, quick: true)
-            MikaStage.shared.end(token)
-            if mood.loops { play(mood) }
+            wire()
+            director.blink()
         }
     }
 
-    /// `onDone` arrive à la fin du geste d'une humeur ponctuelle.
-    private func scheduleDone() {
-        guard onDone != nil, !mood.loops else { return }
-        doneTask?.cancel()
-        let duration = mood.duration
-        doneTask = Task { @MainActor in
-            try? await Task.sleep(for: .seconds(duration))
-            guard !Task.isCancelled else { return }
-            onDone?()
+    /// Figé (les rendus, « Réduire les animations ») : il n'y a pas de geste à attendre,
+    /// `onDone` arrive tout de suite.
+    private func reportDoneWhenStill() async {
+        guard !moves, let onDone, mood.loop == nil else { return }
+        onDone()
+    }
+}
+
+// MARK: - Le metteur en scène
+
+/// Un temps à jouer : la pose à rejoindre et la façon d'y aller.
+struct MikaCue: Equatable {
+    /// Le numéro du geste en cours : la fin d'un geste abandonné ne compte plus.
+    var run: Int
+    var pose: MikaPose
+    /// La courbe du trajet ; `nil` : posé d'un coup, sans animation.
+    var curve: MikaCurve?
+    var delay: Double = 0
+    /// L'aller-retour sans fin d'une attente.
+    var repeats = false
+    /// La fin de ce temps est attendue (`MikaDirector.finished`).
+    var awaits = true
+    /// La gerbe de confettis part avec ce temps.
+    var confetti = false
+}
+
+/// **Le metteur en scène d'un Mika** : quel geste joue, où il en est, et ce qui doit
+/// s'arrêter. Il ne dessine rien et n'attend rien : il reçoit des événements (l'arrivée, un
+/// changement d'humeur, un appui, la fin d'un temps, la sortie de l'écran) et rend les temps à
+/// jouer par `apply`. C'est lui que les tests interrogent : un seul Mika en mouvement, rien
+/// qui tourne hors écran. Lu et écrit sur le fil principal seulement (les vues).
+final class MikaDirector {
+    enum Activity: Equatable {
+        /// Hors écran : rien ne tourne.
+        case offstage
+        /// À l'écran, immobile (« Réduire les animations »).
+        case still
+        /// Au repos sur la pose de son humeur : il peut cligner.
+        case resting
+        /// Le geste de son humeur.
+        case gesturing
+        /// L'attente : écriture ou réflexion.
+        case looping
+        /// La réponse à un appui.
+        case reacting
+        /// Un clignement.
+        case blinking
+    }
+
+    private(set) var activity: Activity = .offstage
+    private(set) var mood: MikaMood = .idle
+    /// Le mouvement est permis : ni figé, ni sous test, ni « Réduire les animations ».
+    var moves = false
+    /// Assez grand pour cligner des yeux.
+    var blinks = false
+    /// Où partent les temps à jouer : la vue les anime.
+    var apply: ((MikaCue) -> Void)?
+    /// La fin du geste d'une humeur ponctuelle.
+    var done: (() -> Void)?
+
+    /// Son nom sur la scène.
+    let token = UUID()
+    private let stage: MikaStage
+    private var script: [MikaBeat] = []
+    private var step = 0
+    private var run = 0
+    /// Le geste d'arrivée de l'humeur a été joué : revenir à l'écran ne le rejoue pas.
+    private var played = false
+
+    init(stage: MikaStage = .shared) {
+        self.stage = stage
+    }
+
+    /// Quelque chose tourne : un geste, une attente, une réponse, un clignement.
+    var isBusy: Bool {
+        switch activity {
+        case .gesturing, .looping, .reacting, .blinking: true
+        case .offstage, .still, .resting: false
         }
     }
-}
 
-// MARK: - Les étincelles de la fête
+    // MARK: Les événements
 
-/// **Les étincelles autour de Mika qui fête** : des étoiles à quatre branches, comme celle de
-/// son crayon — blanches à liseré bleu, et deux jaunes comme le crayon. Dessinées en vecteur,
-/// nettes à toutes les tailles ; elles grandissent une fois à l'arrivée, puis restent.
-private struct MikaSparkles: View {
-    let placement: MikaPlacement
-    let shown: Bool
-    let reduceMotion: Bool
-
-    /// Centre et rayon dans le canevas de 512, jaune ou blanche : dans l'air autour de sa tête
-    /// et de son crayon, jamais sur son visage.
-    static let spots: [(x: CGFloat, y: CGFloat, radius: CGFloat, yellow: Bool)] = [
-        (104, 196, 19, false),
-        (72, 292, 10, true),
-        (292, 168, 9, true),
-        (452, 268, 14, false),
-        (446, 372, 8, true),
-    ]
-
-    var body: some View {
-        ZStack(alignment: .topLeading) {
-            ForEach(Self.spots.indices, id: \.self) { index in
-                let spot = Self.spots[index]
-                let center = placement.point(CGPoint(x: spot.x, y: spot.y))
-                let radius = spot.radius * placement.scale
-                MikaSparkleShape()
-                    .fill(spot.yellow ? MicaboBrand.pencil : Color.white)
-                    .overlay(
-                        MikaSparkleShape()
-                            .stroke(spot.yellow ? Color(hex: 0xC98A00) : MicaboBrand.blue, lineWidth: max(1, radius * 0.16))
-                    )
-                    .frame(width: radius * 2, height: radius * 2)
-                    .scaleEffect(shown || reduceMotion ? 1 : 0.3)
-                    .opacity(shown ? 1 : 0)
-                    .animation(
-                        MicaboMotion.resolved(MicaboMotion.celebrate, reduceMotion: reduceMotion).delay(Double(index) * 0.05),
-                        value: shown
-                    )
-                    .offset(x: center.x - radius, y: center.y - radius)
-            }
+    /// Mika arrive à l'écran (ou y revient).
+    func appear(_ mood: MikaMood) {
+        guard activity == .offstage || activity == .still else { return }
+        self.mood = mood
+        guard moves else {
+            activity = .still
+            return
         }
-        .allowsHitTesting(false)
+        activity = .resting
+        if played {
+            // De retour à l'écran : une attente reprend ; un geste déjà joué ne se rejoue pas.
+            startLoop()
+            return
+        }
+        played = true
+        play(mood.beats, as: .gesturing)
+    }
+
+    /// L'humeur change : le geste de la nouvelle part de la pose du moment.
+    func change(to mood: MikaMood) {
+        self.mood = mood
+        guard activity != .offstage else {
+            // Hors écran, rien ne joue : le geste attendra le retour.
+            played = false
+            return
+        }
+        guard moves else {
+            halt()
+            return
+        }
+        played = true
+        play(mood.beats, as: .gesturing)
+    }
+
+    /// Un appui : l'écrasement et le clin d'œil.
+    func tap() {
+        guard moves, activity != .offstage, activity != .still else { return }
+        play(MikaMood.tapBeats(from: mood.rest), as: .reacting)
+    }
+
+    /// L'horloge du clignement a sonné. Il ne cligne qu'au repos, les yeux ouverts, et si
+    /// aucun autre Mika n'est en mouvement.
+    func blink() {
+        guard moves, blinks, activity == .resting, mood.rest.eyesOpen, stage.performer == nil else { return }
+        play(MikaMood.blinkBeats(from: mood.rest), as: .blinking)
+    }
+
+    /// Un temps est fini : le suivant, ou la fin du geste.
+    func finished(_ cue: MikaCue) {
+        guard cue.run == run, cue.awaits else { return }
+        guard activity == .gesturing || activity == .reacting || activity == .blinking else { return }
+        step += 1
+        if step < script.count {
+            emit()
+            return
+        }
+        let ended = activity
+        script = []
+        activity = .resting
+        if mood.loop != nil {
+            startLoop()
+        } else {
+            stage.end(token)
+            if ended == .gesturing { done?() }
+        }
+    }
+
+    /// Un autre Mika prend la scène : celui-ci se pose sur la fin de son geste.
+    func settle() {
+        guard isBusy else { return }
+        run += 1
+        script = []
+        activity = .resting
+        apply?(MikaCue(run: run, pose: mood.rest, curve: .standard, awaits: false))
+    }
+
+    /// Hors écran : tout s'arrête, Mika est posé sur la fin de son geste. Un geste coupé avant
+    /// sa fin (personne ne l'a vu) se rejouera au retour.
+    func leave() {
+        guard activity != .offstage else { return }
+        if activity == .gesturing { played = false }
+        stop(as: .offstage)
+    }
+
+    /// Le mouvement n'est plus permis : même arrêt, il reste à l'écran.
+    func halt() {
+        stop(as: .still)
+    }
+
+    // MARK: Le geste
+
+    private func stop(as next: Activity) {
+        let wasBusy = isBusy
+        run += 1
+        script = []
+        activity = next
+        stage.end(token)
+        if wasBusy {
+            apply?(MikaCue(run: run, pose: mood.rest, curve: nil, awaits: false))
+        }
+    }
+
+    /// Joue une suite de temps. Il prend la scène : un autre Mika en mouvement se pose.
+    private func play(_ beats: [MikaBeat], as next: Activity) {
+        guard !beats.isEmpty else { return }
+        run += 1
+        script = beats
+        step = 0
+        activity = next
+        stage.begin(token) { [weak self] in self?.settle() }
+        emit()
+    }
+
+    private func emit() {
+        let beat = script[step]
+        var cue = MikaCue(run: run, pose: beat.pose, curve: beat.curve, delay: beat.delay)
+        cue.confetti = activity == .gesturing && step == 0 && mood == .celebrate
+        apply?(cue)
+    }
+
+    /// L'attente de l'humeur : un aller-retour sans fin, jusqu'au prochain événement.
+    private func startLoop() {
+        guard let loop = mood.loop else { return }
+        run += 1
+        activity = .looping
+        stage.begin(token) { [weak self] in self?.settle() }
+        apply?(MikaCue(run: run, pose: loop.to, curve: loop.curve, repeats: true, awaits: false))
     }
 }
 
-/// Une étoile à quatre branches aux côtés creusés.
-struct MikaSparkleShape: Shape {
-    func path(in rect: CGRect) -> Path {
-        let c = CGPoint(x: rect.midX, y: rect.midY)
-        let r = min(rect.width, rect.height) / 2
-        let k = r * 0.2
-        var path = Path()
-        path.move(to: CGPoint(x: c.x, y: c.y - r))
-        path.addQuadCurve(to: CGPoint(x: c.x + r, y: c.y), control: CGPoint(x: c.x + k, y: c.y - k))
-        path.addQuadCurve(to: CGPoint(x: c.x, y: c.y + r), control: CGPoint(x: c.x + k, y: c.y + k))
-        path.addQuadCurve(to: CGPoint(x: c.x - r, y: c.y), control: CGPoint(x: c.x - k, y: c.y + k))
-        path.addQuadCurve(to: CGPoint(x: c.x, y: c.y - r), control: CGPoint(x: c.x - k, y: c.y - k))
-        path.closeSubpath()
-        return path
-    }
-}
-
-// MARK: - Le nid
-
-/// **Les couleurs du nid** (`MikaFrame.circle`) et de l'avatar : clair le jour, graphite
-/// éclairé la nuit. Des constantes, pas les jetons du thème : le rond se lit pareil sur la
-/// crème, le blanc d'une carte et le bleu.
-enum MikaNest {
-    static func fill(night: Bool) -> LinearGradient {
-        night
-            ? LinearGradient(colors: [Color(hex: 0x41455A), Color(hex: 0x2C2F3B)], startPoint: .top, endPoint: .bottom)
-            : LinearGradient(colors: [Color.white, MicaboBrand.blue50], startPoint: .top, endPoint: .bottom)
-    }
-
-    /// La lumière derrière lui.
-    static func light(night: Bool) -> Color {
-        night ? Color.white.opacity(0.14) : MicaboBrand.blue100
-    }
-
-    /// Le filet du bord.
-    static func rim(night: Bool) -> Color {
-        night ? Color.white.opacity(0.16) : MicaboBrand.blue100
-    }
-}
-
-// MARK: - Le figé
+// MARK: - Le figé, le fond
 
 private struct MikaStillKey: EnvironmentKey {
     static let defaultValue = false
+}
+
+private struct MikaBackdropKey: EnvironmentKey {
+    static let defaultValue: MikaBackdrop? = nil
 }
 
 extension EnvironmentValues {
@@ -782,12 +948,26 @@ extension EnvironmentValues {
         get { self[MikaStillKey.self] }
         set { self[MikaStillKey.self] = newValue }
     }
+
+    /// Ce qu'il y a derrière les Mika du dessous (`View.mikaBackdrop`).
+    var mikaBackdrop: MikaBackdrop? {
+        get { self[MikaBackdropKey.self] }
+        set { self[MikaBackdropKey.self] = newValue }
+    }
+}
+
+extension View {
+    /// **Dit sur quoi Mika est posé.** `MikaMascot(…).mikaBackdrop(.disc)` glisse un disque de
+    /// la couleur d'une surface derrière lui : la seule façon de le poser sur un fond bleu.
+    func mikaBackdrop(_ backdrop: MikaBackdrop) -> some View {
+        environment(\.mikaBackdrop, backdrop)
+    }
 }
 
 // MARK: - La scène
 
 enum MikaLibrary {
-    /// Vrai dans le processus des tests : ni geste, ni minuterie, des images fixes.
+    /// Vrai dans le processus des tests : ni geste, ni minuterie, l'expression fixe.
     static let isRunningTests: Bool =
         NSClassFromString("XCTestCase") != nil
             || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil

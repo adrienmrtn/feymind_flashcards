@@ -132,6 +132,13 @@ enum V3Font {
         )
     }
 
+    /// **Le contenu d'un cours** (une question, une définition, une réponse), demandé à
+    /// l'ancienne échelle : en police système quelle que soit sa taille. La condensée dit
+    /// « interface » ; une question de trois lignes se lit dans la police du texte.
+    static func content(_ size: CGFloat, weight: Font.Weight) -> Font {
+        text(V3LegacyScale.textStyle(for: size), weight: V3LegacyScale.textWeight(weight))
+    }
+
     /// Le style du système le plus proche d'une taille : c'est lui qui règle de combien elle
     /// grossit avec « Taille du texte ».
     static func textStyle(for size: CGFloat) -> Font.TextStyle {

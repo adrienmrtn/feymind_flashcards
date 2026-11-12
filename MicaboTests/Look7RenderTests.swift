@@ -67,7 +67,6 @@ final class Look7RenderTests: XCTestCase {
             ForEach(Array(courses.enumerated()), id: \.offset) { index, course in
                 LessonCard(course: course, dueCount: index == 0 ? 8 : 0, examDays: index == 0 ? 12 : nil) {}
             }
-            NewLessonRow {}
         }
         .padding(20)
         .environment(\.homeStill, true)

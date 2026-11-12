@@ -341,7 +341,7 @@ struct LessonFinishedView: View {
                     .scrollDismissesKeyboard(.interactively)
                 }
                 VStack(spacing: 12) {
-                    Button(L10n.t("lesson.finished.cards", locale: .resolved())) { onLeave(.flashcards) }
+                    Button(L10n.t("ios.home10.lesson.reviewCards", locale: .resolved())) { onLeave(.flashcards) }
                         .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
                     Button(L10n.t("lesson.finished.back", locale: .resolved())) { onLeave(.lessons) }
                         .buttonStyle(MicaboSecondaryButtonStyle())
