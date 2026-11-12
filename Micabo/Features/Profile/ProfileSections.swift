@@ -94,7 +94,6 @@ struct ProUpgradeCard: View {
             }
             .padding(16)
             .background(MicaboStage.fill, in: RoundedRectangle(cornerRadius: MicaboStage.cardRadius, style: .continuous))
-            .shadow(color: MicaboBrand.blue.opacity(0.24), radius: 14, y: 7)
         }
         .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
     }
@@ -114,8 +113,7 @@ struct ProfileGroup<Content: View>: View {
             }
             .background(HomePalette.card)
             .clipShape(RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous).strokeBorder(HomePalette.cardStroke, lineWidth: 1))
-            .shadow(color: MicaboBrand.blue900.opacity(0.06), radius: 16, y: 8)
+            .overlay(RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous).strokeBorder(HomePalette.cardStroke, lineWidth: MicaboSurface.border))
         }
     }
 }

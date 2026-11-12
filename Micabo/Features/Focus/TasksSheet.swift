@@ -132,7 +132,7 @@ struct TaskEditSheet: View {
                         .onSubmit(save)
                         .padding(16)
                         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
 
                     VStack(spacing: 0) {
                         Toggle(isOn: $hasDue.animation(MicaboMotion.standard)) {

@@ -16,7 +16,7 @@ struct MicaboBrandMark: View {
             .clipShape(RoundedRectangle(cornerRadius: size * 0.22, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: size * 0.22, style: .continuous)
-                    .strokeBorder(Color.black.opacity(0.08), lineWidth: 1)
+                    .strokeBorder(Color.black.opacity(0.08), lineWidth: MicaboSurface.border)
             }
             .accessibilityHidden(true)
     }

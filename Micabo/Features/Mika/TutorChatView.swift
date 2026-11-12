@@ -248,7 +248,7 @@ struct TutorThreadContent: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 11)
                 .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
                 .padding(.trailing, 24)
             }
         }
@@ -303,7 +303,7 @@ struct TutorInputBar: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
                 .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
             Button(action: onSend) {
                 Image(systemName: "arrow.up")
                     .font(.system(size: 17, weight: .heavy))

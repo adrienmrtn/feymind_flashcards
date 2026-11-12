@@ -790,7 +790,7 @@ struct ProfileView: View {
         MicaboRowGroup(
             rows: [
                 MicaboRow(
-                    tile: MicaboTile(glyph: .emoji(XPStore.shared.league.emoji), background: LessonTone.yellow.pale),
+                    tile: MicaboTile(glyph: .symbol("trophy.fill"), background: LessonTone.yellow.pale, tint: V3Color.iconYellow),
                     title: i18n.t("ios.kx.league.title"),
                     subtitle: i18n.t("ios.kx.league.rowSub", [
                         "league": XPStore.shared.league.name,

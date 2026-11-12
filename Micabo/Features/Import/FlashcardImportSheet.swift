@@ -175,7 +175,7 @@ struct FlashcardImportSheet: View {
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
         }
         .buttonStyle(MicaboPressableButtonStyle(feedback: .soft))
         .disabled(reading)
@@ -298,7 +298,7 @@ struct FlashcardImportSheet: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
             .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
 
             if skipped > 0 {
                 Text(L10n.t("ios.sup.cards.skipped", locale: .resolved(), vars: ["count": String(skipped)]))

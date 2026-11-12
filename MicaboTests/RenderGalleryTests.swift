@@ -799,7 +799,10 @@ enum RenderGallery {
         guard let directory else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
         FontLoader.registerFonts()
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let schemes: [(ColorScheme, String)] = night ? [(.light, name), (.dark, "\(name)-nuit")] : [(.light, name)]
+        // Le marine est le thème de référence depuis le lot 10 : chaque écran y est dessiné,
+        // demandé ou non. Le clair garde le nom nu, pour que les anciens rendus se comparent.
+        _ = night
+        let schemes: [(ColorScheme, String)] = [(.light, name), (.dark, "\(name)-nuit")]
         for (scheme, file) in schemes {
             let framed = view
                 .frame(width: width, height: height)

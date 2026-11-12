@@ -324,7 +324,6 @@ struct ExamHero: View {
                 }
                 .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous))
         }
-        .shadow(color: MicaboColor.accent.opacity(0.3), radius: 20, x: 0, y: 12)
     }
 }
 

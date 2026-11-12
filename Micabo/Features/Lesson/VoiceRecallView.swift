@@ -303,7 +303,6 @@ struct VoiceRecallCard: View {
                         .foregroundStyle(.white)
                         .frame(width: 96, height: 96)
                         .background(MicaboColor.accent, in: Circle())
-                        .shadow(color: MicaboColor.accent.opacity(0.3), radius: 16, y: 8)
                     Text(L10n.t("ios.sup.voice.speak", locale: .resolved()))
                         .font(MicaboFont.ui(17, weight: .heavy))
                         .foregroundStyle(MicaboColor.ink)
@@ -426,7 +425,7 @@ struct VoiceRecallCard: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
     }
 
     private func rateButton(knew: Bool, recommended: Bool) -> some View {

@@ -39,7 +39,7 @@ struct StudyTextField: View {
         .padding(.horizontal, 14)
         .frame(minHeight: 50)
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
     }
 }
 
@@ -144,7 +144,7 @@ struct TimetableScanButtons: View {
             .padding(.horizontal, 8)
             .frame(maxWidth: .infinity, minHeight: 76)
             .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
         }
         .buttonStyle(HomePressStyle(scale: 0.96, feedback: .medium))
     }
