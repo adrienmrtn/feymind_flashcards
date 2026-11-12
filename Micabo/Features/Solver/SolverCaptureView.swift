@@ -40,6 +40,14 @@ struct SolverCaptureChrome<Background: View>: View {
     @ViewBuilder var background: Background
 
     var body: some View {
+        // **Les marges se lisent hors de `ignoresSafeArea`** : à l'intérieur, la zone sûre est
+        // nulle, et la croix montait sous l'encoche, les commandes du bas sur la barre d'accueil.
+        GeometryReader { outer in
+            chrome(insets: outer.safeAreaInsets)
+        }
+    }
+
+    private func chrome(insets: EdgeInsets) -> some View {
         GeometryReader { proxy in
             let size = proxy.size
             ZStack {
@@ -52,23 +60,23 @@ struct SolverCaptureChrome<Background: View>: View {
                 // Un voile en haut et en bas : les commandes restent lisibles sur une feuille blanche.
                 VStack(spacing: 0) {
                     LinearGradient(colors: [Color.black.opacity(0.55), Color.black.opacity(0)], startPoint: .top, endPoint: .bottom)
-                        .frame(height: proxy.safeAreaInsets.top + 120)
+                        .frame(height: insets.top + 120)
                     Spacer(minLength: 0)
                     LinearGradient(colors: [Color.black.opacity(0), Color.black.opacity(0.75)], startPoint: .top, endPoint: .bottom)
-                        .frame(height: proxy.safeAreaInsets.bottom + 300)
+                        .frame(height: insets.bottom + 300)
                 }
                 .allowsHitTesting(false)
 
                 instruction
-                    .position(x: size.width / 2, y: max(frame.minY - 30, proxy.safeAreaInsets.top + 70))
+                    .position(x: size.width / 2, y: max(frame.minY - 30, insets.top + 70))
 
                 VStack(spacing: 0) {
                     topBar
                         .environment(\.colorScheme, .dark)
-                        .padding(.top, proxy.safeAreaInsets.top + 8)
+                        .padding(.top, max(insets.top, 20) + 4)
                     Spacer(minLength: 0)
                     bottom
-                        .padding(.bottom, max(proxy.safeAreaInsets.bottom, 16) + 8)
+                        .padding(.bottom, max(insets.bottom, 16) + 8)
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
             }

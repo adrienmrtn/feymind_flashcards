@@ -31,16 +31,26 @@ struct RenderDevice {
     )
 }
 
-/// Le contrôleur qui tient l'écran : il force les marges de sécurité du profil, quelles que
-/// soient celles du simulateur.
+/// **Le contrôleur qui tient l'écran** : il pose la vue de l'écran dans un cadre de la taille du
+/// profil, placé dans la fenêtre du simulateur là où celle-ci ne donne aucune marge (entre
+/// l'encoche et la barre d'accueil), puis lui ajoute les marges du profil.
+///
+/// La marge d'une **fenêtre** vient de la scène, où qu'on la pose ; celle d'une **vue** est
+/// géométrique : la part d'elle qui chevauche l'encoche ou la barre d'accueil. Un cadre posé
+/// hors de ces zones n'a donc aucune marge, et `additionalSafeAreaInsets` (qui ne sait
+/// qu'ajouter) donne exactement celles du profil. Un profil plus haut que cette zone (l'iPhone
+/// 15 Pro sur un simulateur de 874 pt) garde au moins les marges du simulateur.
 @MainActor
 private final class DeviceFrameController: UIViewController {
     let hosting: UIViewController
     let target: UIEdgeInsets
+    let size: CGSize
+    let frameView = UIView()
 
-    init(hosting: UIViewController, target: UIEdgeInsets) {
+    init(hosting: UIViewController, target: UIEdgeInsets, size: CGSize) {
         self.hosting = hosting
         self.target = target
+        self.size = size
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -49,25 +59,35 @@ private final class DeviceFrameController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .black
+        frameView.clipsToBounds = true
+        view.addSubview(frameView)
         addChild(hosting)
-        hosting.view.frame = view.bounds
         hosting.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        view.addSubview(hosting.view)
+        frameView.addSubview(hosting.view)
         hosting.didMove(toParent: self)
     }
 
-    /// Ajuste les marges ajoutées pour que l'écran voie exactement celles du profil (la fenêtre
-    /// du simulateur apporte les siennes, qu'on retranche).
+    /// Pose le cadre, puis ajoute à l'écran ce qui lui manque pour avoir les marges du profil.
     func settleInsets() {
         view.layoutIfNeeded()
-        let inherited = view.safeAreaInsets
-        additionalSafeAreaInsets = UIEdgeInsets(
-            top: target.top - inherited.top,
-            left: target.left - inherited.left,
-            bottom: target.bottom - inherited.bottom,
-            right: target.right - inherited.right
+        let unsafe = view.safeAreaInsets
+        var origin = CGPoint.zero
+        if unsafe.top + size.height <= view.bounds.height - unsafe.bottom {
+            origin.y = unsafe.top
+        }
+        frameView.frame = CGRect(origin: origin, size: size)
+        hosting.view.frame = frameView.bounds
+        hosting.additionalSafeAreaInsets = .zero
+        view.layoutIfNeeded()
+        let inherited = hosting.view.safeAreaInsets
+        hosting.additionalSafeAreaInsets = UIEdgeInsets(
+            top: max(0, target.top - inherited.top),
+            left: max(0, target.left - inherited.left),
+            bottom: max(0, target.bottom - inherited.bottom),
+            right: max(0, target.right - inherited.right)
         )
-        view.setNeedsLayout()
+        hosting.view.setNeedsLayout()
         view.layoutIfNeeded()
     }
 }
@@ -111,28 +131,13 @@ extension RenderGallery {
         } else {
             window = UIWindow(frame: frame)
         }
-        // **Où poser la fenêtre** : là où l'écran du simulateur ne lui donne aucune marge, pour que
-        // le profil impose les siennes (une marge ajoutée ne peut pas être négative : une fenêtre
-        // posée sous l'encoche du simulateur garderait ses 59 ou 62 pt). Un iPhone SE tient
-        // entre l'encoche et la barre d'accueil ; un profil aussi haut que l'écran reste en
-        // haut et garde au moins les marges du simulateur.
         window.frame = window.windowScene?.screen.bounds ?? frame
-        window.isHidden = false
-        window.layoutIfNeeded()
-        let screen = window.bounds
-        let unsafe = window.safeAreaInsets
-        var origin = CGPoint.zero
-        if unsafe.top + device.size.height <= screen.height - unsafe.bottom {
-            origin.y = unsafe.top
-        }
-        window.frame = CGRect(origin: origin, size: device.size)
         window.windowLevel = UIWindow.Level(rawValue: UIWindow.Level.normal.rawValue + 2)
         window.overrideUserInterfaceStyle = scheme == .dark ? .dark : .light
 
         let hosting = UIHostingController(rootView: AnyView(view.environment(\.colorScheme, scheme)))
         hosting.view.backgroundColor = UIColor(V3Color.bg).resolvedColor(with: UITraitCollection(userInterfaceStyle: scheme == .dark ? .dark : .light))
-        let root = DeviceFrameController(hosting: hosting, target: device.insets)
-        root.view.backgroundColor = hosting.view.backgroundColor
+        let root = DeviceFrameController(hosting: hosting, target: device.insets, size: device.size)
         window.rootViewController = root
         window.isHidden = false
         root.settleInsets()
@@ -142,6 +147,7 @@ extension RenderGallery {
         RunLoop.main.run(until: Date().addingTimeInterval(0.05))
         let measured = hosting.view.safeAreaInsets
         appendLog("\(log) : marges vues par l'écran haut \(Int(measured.top)) bas \(Int(measured.bottom)) (attendu \(Int(device.insets.top))/\(Int(device.insets.bottom)))")
+        let captured = root.frameView
 
         let format = UIGraphicsImageRendererFormat()
         format.scale = 3
@@ -153,8 +159,8 @@ extension RenderGallery {
             if device.cornerRadius > 0 {
                 UIBezierPath(roundedRect: frame, cornerRadius: device.cornerRadius).addClip()
             }
-            if !window.drawHierarchy(in: frame, afterScreenUpdates: true) {
-                window.layer.render(in: cg)
+            if !captured.drawHierarchy(in: frame, afterScreenUpdates: true) {
+                captured.layer.render(in: cg)
             }
             drawChrome(device: device, dark: scheme == .dark, guides: guides, in: cg)
             // Une marge qui n'est pas celle du profil se voit sur l'image, en rouge.

@@ -53,7 +53,7 @@ struct DiscountOfferScreen: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        PaywallSafeFrame { bottomGap in
+        PaywallSafeFrame { area in
             VStack(spacing: 0) {
                 DiscountTopBar(clock: clock, isBusy: isPurchasing, onClose: onClose) {
                     expired = true
@@ -72,7 +72,7 @@ struct DiscountOfferScreen: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
 
-                footer(bottomGap: bottomGap)
+                footer(bottomGap: area.bottomGap)
             }
         }
         .background(V3Color.bg.ignoresSafeArea())

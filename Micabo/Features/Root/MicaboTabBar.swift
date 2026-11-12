@@ -161,13 +161,7 @@ extension View {
         safeAreaInset(edge: .bottom, spacing: 0) {
             VStack(spacing: 0) {
                 accessory()
-
-                // La barre, et l'air au-dessus d'elle. Ce creux ne prend pas les appuis :
-                // il recouvre la barre, et une surface transparente qui les avale rendrait
-                // les onglets inertes.
-                Color.clear
-                    .frame(height: MicaboLayout.tabBarSpace)
-                    .allowsHitTesting(false)
+                TabBarReserve()
             }
         }
     }
@@ -176,6 +170,34 @@ extension View {
     /// rangée passe sous la barre.
     func tabBarClearance() -> some View {
         tabBarClearance { EmptyView() }
+    }
+}
+
+/// La place de la barre, et l'air au-dessus d'elle. Ce creux ne prend pas les appuis : il
+/// recouvre la barre, et une surface transparente qui les avale rendrait les onglets inertes.
+///
+/// **Clavier ouvert, la barre s'efface et le creux aussi** (lot 11) : la barre montait
+/// au-dessus du clavier, et le champ de la Home flottait 76 pt plus haut, séparé du clavier
+/// par des onglets qu'on ne peut pas toucher en tapant.
+private struct TabBarReserve: View {
+    @Environment(\.tabBarShown) private var shown
+
+    var body: some View {
+        Color.clear
+            .frame(height: shown ? MicaboLayout.tabBarSpace : 0)
+            .allowsHitTesting(false)
+    }
+}
+
+private struct TabBarShownKey: EnvironmentKey {
+    static let defaultValue = true
+}
+
+extension EnvironmentValues {
+    /// Vrai quand la barre d'onglets est posée sous la page (ni écran poussé, ni clavier).
+    var tabBarShown: Bool {
+        get { self[TabBarShownKey.self] }
+        set { self[TabBarShownKey.self] = newValue }
     }
 }
 

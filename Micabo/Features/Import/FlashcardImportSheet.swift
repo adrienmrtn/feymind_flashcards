@@ -145,6 +145,8 @@ struct FlashcardImportSheet: View {
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, 6)
+        // Les boutons du bas collaient à la barre d'accueil (au bord, sur un iPhone SE).
+        .padding(.bottom, 12)
     }
 
     private func option(symbol: String, tone: LessonTone, title: String, detail: String, action: @escaping () -> Void) -> some View {
@@ -246,6 +248,8 @@ struct FlashcardImportSheet: View {
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, 6)
+        // Les boutons du bas collaient à la barre d'accueil (au bord, sur un iPhone SE).
+        .padding(.bottom, 12)
     }
 
     // MARK: Ce qui a été lu
@@ -324,6 +328,8 @@ struct FlashcardImportSheet: View {
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, 6)
+        // Les boutons du bas collaient à la barre d'accueil (au bord, sur un iPhone SE).
+        .padding(.bottom, 12)
     }
 
     // MARK: Lire et créer

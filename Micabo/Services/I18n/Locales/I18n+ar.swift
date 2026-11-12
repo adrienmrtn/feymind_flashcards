@@ -209,7 +209,7 @@ extension IosI18nCatalogs {
         "ios.pay11.a11y.free": "مجاني: {value}",
         "ios.pay11.a11y.freeNone": "غير متاح مجانًا",
         "ios.pay11.a11y.pro": "مضمَّن في Pro",
-        "ios.pay11.cta.trial": "ابدأ أيامي المجانية الـ{n}",
+        "ios.pay11.cta.trial": "ابدأ تجربتي المجانية ({n} أيام)",
         "ios.pay11.cta.week": "اشترك · {price} أسبوعيًا",
         "ios.pay11.cta.year": "اشترك · {price} سنويًا",
         "ios.pay11.hook.exportSheet": "**ملخصك بصيغة PDF**، جاهز للطباعة: أجهّزه لك مع Pro.",
