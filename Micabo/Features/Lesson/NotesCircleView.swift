@@ -571,7 +571,7 @@ struct LessonNotesReader: View {
 
     private var cover: some View {
         HStack(spacing: 16) {
-            MicaboIconView(icon: course.icon, size: 72)
+            MicaboIconView(icon: course.icon, size: 72, tone: course.tone)
             VStack(alignment: .leading, spacing: 4) {
                 Text(course.title)
                     .font(MicaboFont.display(26))

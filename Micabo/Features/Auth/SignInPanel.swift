@@ -544,7 +544,7 @@ struct SignInProviderButtons: View {
                 Button(action: sendLink) {
                     Image(systemName: "arrow.forward")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(MicaboColor.onInk)
+                        .foregroundStyle(MicaboColor.onAccent)
                         .frame(width: 42, height: 42)
                         .background(
                             MicaboColor.accent,

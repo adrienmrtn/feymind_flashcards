@@ -1,16 +1,19 @@
 import SwiftUI
 import UIKit
 
-/// **Les icônes 3D de Micabo**, et leur repli.
+/// **Les icônes de Micabo : plates, en deux tons** (lot 9).
 ///
-/// La refonte retire les emojis des textes : chaque leçon, chaque thème, chaque cercle, chaque
-/// source d'import porte une icône 3D de la base (`Assets.xcassets/Icon3D-<id>`, en @2x et @3x).
-/// Une icône a un identifiant stable — le nom de son fichier dans la base (`rawValue`) : c'est
-/// lui que le modèle choisit pour une leçon ou un thème, lui qui est enregistré
-/// (`Course.iconID`, `Chapter.iconID`), et lui qui nomme l'image.
+/// Chaque leçon, chaque thème, chaque cercle, chaque source d'import porte une icône. Elle a un
+/// identifiant stable (`rawValue`) : c'est lui que le modèle choisit pour une leçon ou un thème,
+/// lui qui est enregistré (`Course.iconID`, `Chapter.iconID`).
 ///
-/// Quelques usages n'ont pas d'icône dans la base — l'audio, les onglets, les réglages. Ils
-/// se dessinent en SF Symbol (`symbol`), comme toute icône dont l'image manquerait.
+/// **Elles se dessinent en SF Symbols, en deux tons** : le contour plein de la couleur, et
+/// l'intérieur de la même couleur à un quart. Les icônes 3D de la base
+/// (`Assets.xcassets/Icon3D-<id>`) faisaient « autocollant » à côté des pictogrammes du
+/// système, se brouillaient sous vingt-huit points et ne changeaient pas de couleur avec la
+/// matière ; une famille plate se lit net à toutes les tailles, de la puce de seize points au
+/// trophée de cent, et prend le ton de la leçon. Les images restent dans le catalogue — le site
+/// et les anciennes versions les nomment —, l'app ne les dessine plus.
 ///
 /// La liste des icônes qu'un modèle peut choisir est `lessonCatalog` ; la même liste, avec le
 /// même sens, vit côté serveur dans `supabase/functions/_shared/icons.ts`.
@@ -115,23 +118,23 @@ enum MicaboIcon: String, CaseIterable, Codable, Identifiable {
     /// L'image 3D, si elle est dans le catalogue.
     var image: UIImage? { UIImage(named: assetName) }
 
-    /// Le dessin de repli, et celui des icônes hors base.
+    /// Le dessin plein : l'intérieur de l'icône, et son repli quand il n'y a pas de contour.
     var symbol: String {
         switch self {
         case .star: "star.fill"
-        case .quill: "pencil.and.scribble"
+        case .quill: "pencil.and.outline"
         case .lightbulb: "lightbulb.fill"
-        case .book: "book.fill"
+        case .book: "book.closed.fill"
         case .flask: "flask.fill"
         case .globe: "globe.europe.africa.fill"
-        case .calculator: "function"
+        case .calculator: "plusminus.circle.fill"
         case .hourglass: "hourglass"
         case .puzzle: "puzzlepiece.fill"
         case .trophy: "trophy.fill"
-        case .flag: "flag.checkered"
+        case .flag: "flag.fill"
         case .brain: "brain.head.profile"
         case .rocket: "paperplane.fill"
-        case .magnifier: "magnifyingglass"
+        case .magnifier: "magnifyingglass.circle.fill"
         case .lock: "lock.fill"
         case .check: "checkmark.circle.fill"
         case .palette: "paintpalette.fill"
@@ -146,10 +149,10 @@ enum MicaboIcon: String, CaseIterable, Codable, Identifiable {
         case .mika: "bubble.left.fill"
         case .photo: "camera.fill"
         case .pdf: "doc.richtext.fill"
-        case .link: "link"
+        case .link: "link.circle.fill"
         case .text: "text.alignleft"
         case .folder: "folder.fill"
-        case .exam: "calendar"
+        case .exam: "calendar.circle.fill"
         case .flame: "flame.fill"
         case .crown: "crown.fill"
         case .audio: "mic.fill"
@@ -167,21 +170,77 @@ enum MicaboIcon: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    /// La teinte d'un dessin de repli, prise dans la base : violet, jaune, rose, menthe, bleu.
-    var tint: Color {
+    /// Le contour posé sur le plein, quand le symbole a les deux dessins. Sans contour,
+    /// l'icône est un trait d'une seule teinte (`symbol`).
+    var outline: String? {
         switch self {
-        case .star, .quill, .rocket, .diploma, .scroll, .mika, .theme, .apps:
-            Color(hex: 0x7C5CF0)
-        case .lightbulb, .trophy, .crown, .flame, .folder, .alarm, .rate, .hourglass:
-            Color(hex: 0xF2A900)
-        case .calculator, .brain, .flag, .pin, .photo, .exam, .audio, .privacy:
-            Color(hex: 0xEC6A96)
-        case .flask, .puzzle, .check, .text, .cards, .friends:
-            Color(hex: 0x2FB37A)
-        default:
-            Color(hex: 0x4F8EF7)
+        case .star: "star"
+        case .lightbulb: "lightbulb"
+        case .book: "book.closed"
+        case .flask: "flask"
+        case .globe: "globe.europe.africa"
+        case .calculator: "plusminus.circle"
+        case .puzzle: "puzzlepiece"
+        case .trophy: "trophy"
+        case .flag: "flag"
+        case .rocket: "paperplane"
+        case .magnifier: "magnifyingglass.circle"
+        case .lock: "lock"
+        case .check: "checkmark.circle"
+        case .palette: "paintpalette"
+        case .diploma: "graduationcap"
+        case .scroll: "scroll"
+        case .pin: "mappin.circle"
+        case .alarm: "alarm"
+        case .notes: "doc.text"
+        case .quiz: "list.clipboard"
+        case .cards: "rectangle.on.rectangle.angled"
+        case .mika: "bubble.left"
+        case .photo: "camera"
+        case .pdf: "doc.richtext"
+        case .link: "link.circle"
+        case .folder: "folder"
+        case .exam: "calendar.circle"
+        case .flame: "flame"
+        case .crown: "crown"
+        case .audio: "mic"
+        case .home: "house"
+        case .lessons: "books.vertical"
+        case .profile: "person.crop.circle"
+        case .mail: "envelope"
+        case .apps: "square.grid.2x2"
+        case .document: "doc.plaintext"
+        case .language: "character.bubble"
+        case .rate: "star.bubble"
+        case .friends: "person.2"
+        case .privacy: "hand.raised"
+        case .quill, .hourglass, .brain, .atom, .text, .theme: nil
         }
     }
+
+    /// **Le ton d'une icône** : celui de la matière qu'elle représente (`LessonTone.forSubject`),
+    /// pour qu'une icône de maths soit bleue partout où elle paraît ; pour les autres, le ton
+    /// de ce qu'elles disent — le jaune du crayon pour ce qui récompense (série, trophée,
+    /// couronne), le rose pour ce qui capte (photo, micro), la menthe pour ce qui est juste.
+    var tone: LessonTone {
+        switch self {
+        case .calculator, .rocket, .atom, .brain, .flask, .globe, .scroll, .diploma, .quill, .book, .palette:
+            LessonTone.forSubject(self)
+        case .lightbulb, .trophy, .crown, .flame, .folder, .alarm, .rate, .hourglass, .star:
+            .yellow
+        case .flag, .pin, .photo, .audio, .privacy:
+            .pink
+        case .puzzle, .check, .text, .cards, .friends:
+            .mint
+        case .mika, .theme, .apps, .exam:
+            .lilac
+        default:
+            .blue
+        }
+    }
+
+    /// La teinte du dessin : le trait du ton de l'icône.
+    var tint: Color { tone.glyph }
 
     /// Vrai si l'icône a une image dans la base (et pas seulement un symbole).
     var isInBase: Bool {
@@ -195,25 +254,35 @@ enum MicaboIcon: String, CaseIterable, Codable, Identifiable {
     }
 }
 
-/// **Une icône 3D à la taille demandée**, ou son repli dessiné.
+/// **Une icône à la taille demandée** : plate, en deux tons, dans le ton de l'icône ou dans
+/// celui qu'on lui donne (`tone`) — celui de la leçon, pour que le dessin et la tuile pâle
+/// qui le porte soient de la même couleur.
 struct MicaboIconView: View {
     let icon: MicaboIcon
     var size: CGFloat = 44
     /// À venir, sur le chemin : l'icône s'efface à 40 %.
     var dimmed = false
+    /// Le ton du dessin ; par défaut, celui de l'icône (`MicaboIcon.tone`).
+    var tone: LessonTone?
 
     var body: some View {
-        Group {
-            if let image = icon.image {
-                Image(uiImage: image)
-                    .resizable()
-                    .interpolation(.high)
-                    .scaledToFit()
+        let color = (tone ?? icon.tone).glyph
+        // Le trait s'épaissit sur les petites tailles : un contour régulier à seize points
+        // disparaît, un contour gras à cent en devient un pictogramme d'avertissement.
+        let weight: Font.Weight = size < 30 ? .bold : (size < 64 ? .semibold : .medium)
+        let font = Font.system(size: size * 0.62, weight: weight)
+        ZStack {
+            if let outline = icon.outline {
+                Image(systemName: icon.symbol)
+                    .font(font)
+                    .foregroundStyle(color.opacity(0.24))
+                Image(systemName: outline)
+                    .font(font)
+                    .foregroundStyle(color)
             } else {
                 Image(systemName: icon.symbol)
-                    .font(.system(size: size * 0.6, weight: .semibold))
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(icon.tint.gradient)
+                    .font(font)
+                    .foregroundStyle(color)
             }
         }
         .frame(width: size, height: size)

@@ -78,14 +78,16 @@ enum MicaboButtonMetrics {
 /// (encre noire) et `MicaboActionButtonStyle` (sans ombre) — et deux écrans voisins ne
 /// montraient pas le même bouton pour la même chose. Ils gardent leurs noms et leurs
 /// paramètres, et passent tous par ici : un aplat de l'accent, dix-huit de rayon, cinquante-six
-/// points au moins, deux lignes avant de réduire le texte, une ombre de sa propre couleur.
+/// points au moins, deux lignes avant de réduire le texte.
 ///
-/// **La nuit**, l'accent s'éclaircit et le texte passe au graphite (`onInk`) : le même couple
-/// que les pastilles sélectionnées, lisible sur le noir sans éblouir.
+/// **Une touche, pas une étiquette** (lot 9) : sous l'aplat, une lèvre de quatre points dans la
+/// même teinte assombrie. À l'appui, le bouton descend sur sa lèvre — on sent l'enfoncement
+/// avant le retour haptique. Elle remplace l'ombre colorée floue, qui bavait sur le fond et ne
+/// se voyait plus la nuit. Le texte est blanc le jour comme la nuit (`onAccent`).
 struct MicaboPrimaryFill<Label: View>: View {
     let label: Label
     var tint: Color = MicaboColor.accent
-    var foreground: Color = MicaboColor.onInk
+    var foreground: Color = MicaboColor.onAccent
     var fullWidth: Bool = true
     var minHeight: CGFloat = MicaboButtonMetrics.height
     var fontSize: CGFloat = 17
@@ -97,11 +99,19 @@ struct MicaboPrimaryFill<Label: View>: View {
 
     private var isLive: Bool { enabled && environmentEnabled }
 
+    /// La lèvre : l'accent prend son bout sombre de marque, une autre teinte s'assombrit.
+    private var lipColor: Color {
+        guard isLive else { return MicaboColor.inkTertiary.opacity(0.35) }
+        return tint == MicaboColor.accent ? MicaboColor.accentDeep : tint.darkened(by: 0.22)
+    }
+
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: MicaboButtonMetrics.radius, style: .continuous)
+        let lip = MicaboSurface.buttonLip
+        let sunk = isPressed && isLive ? lip : 0
         label
             .font(MicaboFont.ui(fontSize, weight: .heavy))
-            .foregroundStyle(isLive ? foreground : MicaboColor.onInk)
+            .foregroundStyle(isLive ? foreground : MicaboColor.onAccent)
             .multilineTextAlignment(.center)
             // **Le libellé passe à la ligne, il ne se coupe pas** : un bouton qui finit par
             // « … » en allemand ou en très grand texte ne dit plus ce qu'il fait.
@@ -110,10 +120,18 @@ struct MicaboPrimaryFill<Label: View>: View {
             .padding(.horizontal, fullWidth ? 20 : 24)
             .padding(.vertical, 10)
             .frame(maxWidth: fullWidth ? .infinity : nil, minHeight: minHeight)
-            .background(isLive ? tint : MicaboColor.inkTertiary.opacity(0.55), in: shape)
-            .shadow(color: tint.opacity(isLive ? 0.22 : 0), radius: 10, x: 0, y: 6)
+            .background {
+                ZStack {
+                    shape.fill(lipColor).offset(y: lip - sunk)
+                    shape.fill(isLive ? tint : MicaboColor.inkTertiary.opacity(0.55))
+                }
+            }
+            .offset(y: sunk)
+            .padding(.bottom, lip)
             .contentShape(shape)
-            .micaboPressEffect(isPressed: isPressed, feedback: feedback)
+            .opacity(isPressed && isLive ? 0.96 : 1)
+            .animation(MicaboPress.animation(isPressed: isPressed), value: isPressed)
+            .micaboPressFeedback(isPressed: isPressed, feedback: feedback)
             .animation(MicaboMotion.quick, value: isLive)
             .hoverEffect(.highlight)
     }
@@ -122,7 +140,7 @@ struct MicaboPrimaryFill<Label: View>: View {
 /// Bouton d'action principal : l'aplat de l'accent (`MicaboPrimaryFill`), un par écran.
 struct MicaboPrimaryButtonStyle: ButtonStyle {
     var tint: Color = MicaboColor.accent
-    var foreground: Color = MicaboColor.onInk
+    var foreground: Color = MicaboColor.onAccent
     var fullWidth: Bool = true
     var feedback: Haptics.Press = .medium
     /// **Un peu plus grand**, pour le seul bouton d'un écran qui n'en a qu'un : le parcours
@@ -143,16 +161,18 @@ struct MicaboPrimaryButtonStyle: ButtonStyle {
     }
 }
 
-/// Bouton secondaire : surface blanche et filet, **la même forme que le principal** (rayon,
-/// hauteur, retour à la ligne) pour que deux boutons empilés se lisent comme une paire.
+/// Bouton secondaire : surface, filet et lèvre grise, **la même forme que le principal**
+/// (rayon, hauteur, retour à la ligne) pour que deux boutons empilés se lisent comme une paire.
 struct MicaboSecondaryButtonStyle: ButtonStyle {
     var fullWidth: Bool = true
     var feedback: Haptics.Press = .light
 
     func makeBody(configuration: Configuration) -> some View {
         let shape = RoundedRectangle(cornerRadius: MicaboButtonMetrics.radius, style: .continuous)
+        let lip = MicaboSurface.lip
+        let sunk = configuration.isPressed ? lip : 0
         configuration.label
-            .font(MicaboFont.ui(17, weight: .bold))
+            .font(MicaboFont.ui(17, weight: .heavy))
             .foregroundStyle(MicaboColor.ink)
             .multilineTextAlignment(.center)
             // **Le libellé passe à la ligne, il ne se coupe pas** : un bouton qui finit par
@@ -162,12 +182,20 @@ struct MicaboSecondaryButtonStyle: ButtonStyle {
             .padding(.horizontal, fullWidth ? 20 : 24)
             .padding(.vertical, 10)
             .frame(maxWidth: fullWidth ? .infinity : nil, minHeight: MicaboButtonMetrics.height)
-            .background(MicaboColor.surface, in: shape)
+            .background {
+                ZStack {
+                    shape.fill(MicaboColor.edge).offset(y: lip - sunk)
+                    shape.fill(MicaboColor.surface)
+                }
+            }
             .overlay {
                 shape.strokeBorder(MicaboColor.strokeStrong, lineWidth: 1.5)
             }
+            .offset(y: sunk)
+            .padding(.bottom, lip)
             .contentShape(shape)
-            .micaboPressEffect(isPressed: configuration.isPressed, feedback: feedback)
+            .animation(MicaboPress.animation(isPressed: configuration.isPressed), value: configuration.isPressed)
+            .micaboPressFeedback(isPressed: configuration.isPressed, feedback: feedback)
             .hoverEffect(.highlight)
     }
 }

@@ -569,7 +569,7 @@ struct LessonPathHeader: View {
         VStack(spacing: MicaboSpacing.md) {
             // 80 points : les icônes 3D font 256 pixels, au-delà elles s'étirent et floutent.
             // Le halo de la couleur de la leçon garde au grand en-tête sa présence.
-            MicaboIconView(icon: course.icon, size: 80)
+            MicaboIconView(icon: course.icon, size: 80, tone: course.tone)
                 .shadow(color: tone.vivid.opacity(0.25), radius: 24, x: 0, y: 14)
                 .background(
                     Circle()
@@ -829,7 +829,7 @@ struct LessonNavbar: View {
                     if dueCount > 0 {
                         Text("\(dueCount)")
                             .font(MicaboFont.ui(12, weight: .heavy))
-                            .foregroundStyle(MicaboColor.onInk)
+                            .foregroundStyle(MicaboColor.onAccent)
                             .padding(.horizontal, 7)
                             .padding(.vertical, 3)
                             .background(MicaboColor.accent, in: Capsule())

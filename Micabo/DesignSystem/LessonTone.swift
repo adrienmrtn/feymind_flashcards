@@ -26,6 +26,8 @@ enum LessonTone: String, CaseIterable, Codable, Identifiable {
     var pale: Color { palette.tonePale[index] }
     var vivid: Color { palette.toneVivid[index] }
     var ink: Color { palette.toneInk[index] }
+    /// Le trait d'une icône plate posée sur le pâle du même ton (`MicaboIconView`).
+    var glyph: Color { palette.toneGlyph[index] }
 
     /// Un ton lu depuis le stockage ; un nom inconnu (ou absent) retombe sur le bleu.
     init(raw: String?) {
