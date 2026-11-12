@@ -361,10 +361,46 @@ final class PerfBenchTests: XCTestCase {
         try part("concentration-journee") {
             FocusHeroCard(minutesToday: 25, goalMinutes: 30, streak: 12, streakLit: true, onStart: {})
         }
+
+        // Ce que tous les écrans partagent : Mika, et vingt lignes de texte dans la police de
+        // l'app, à côté des mêmes vingt lignes dans la police du système (le témoin).
+        try part("mika-120") { MikaMascot(mood: .idle, size: 120) }
+        try part("vingt-lignes-police-app") {
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(0..<20, id: \.self) { row in
+                    Text("Ligne \(row) du banc d'essai").font(MicaboFont.ui(17, weight: .bold))
+                }
+            }
+        }
+        try part("vingt-lignes-police-systeme") {
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(0..<20, id: \.self) { row in
+                    Text("Ligne \(row) du banc d'essai").font(.system(size: 17, weight: .bold))
+                }
+            }
+        }
         let chapter = try firstLesson().orderedChapters[0]
         PerfReport.record("micro", "NotesPage.pages", [("us", PerfReport.micro(50) { _ = NotesPage.pages(for: chapter, hasQuestion: true) })])
         let context = fixture.context
         PerfReport.record("micro", "StudyPlan.snapshot", [("us", PerfReport.micro(20) { _ = StudyPlan.snapshot(in: context) })])
+        // D'où vient le temps de l'agenda : ses lectures, ou les rendez-vous des examens.
+        PerfReport.record("micro", "StudyPlan.snapshot-sans-rendez-vous", [("us", PerfReport.micro(20) { _ = StudyPlan.snapshot(in: context, withMilestones: false) })])
+        let exams = ExamRepository.all(in: context)
+        PerfReport.record("micro", "StudyPlan.milestones", [("us", PerfReport.micro(20) { _ = StudyPlan.milestones(for: exams, in: context) })])
+        PerfReport.record("micro", "CourseRepository.allCourses", [("us", PerfReport.micro(20) { _ = CourseRepository.allCourses(in: context) })])
+        // Le compte des cartes d'un examen : par la base, et le même nombre que la lecture.
+        for exam in exams {
+            XCTAssertEqual(
+                ExamRepository.cardCount(of: exam, in: context),
+                ExamRepository.cards(of: exam, in: context).count,
+                "le compte des cartes de « \(exam.name) » par la base ne dit pas ce que dit la lecture"
+            )
+        }
+        if let exam = exams.first {
+            PerfReport.record("micro", "ExamRepository.cardCount", [("us", PerfReport.micro(20) { _ = ExamRepository.cardCount(of: exam, in: context) })])
+            PerfReport.record("micro", "ExamRepository.cards.count", [("us", PerfReport.micro(20) { _ = ExamRepository.cards(of: exam, in: context).count })])
+        }
+        PerfReport.record("micro", "fetch-evenements", [("us", PerfReport.micro(20) { _ = try? context.fetch(FetchDescriptor<CalendarEvent>()) })])
     }
 
     // MARK: - Examens, scanner, tuteur, texte
@@ -528,6 +564,17 @@ final class PerfBenchTests: XCTestCase {
 
         PerfReport.record("micro", "MicaboIcon.subjectIcon", [("us", PerfReport.micro { _ = MicaboIcon.subjectIcon("Physique-chimie") })])
         PerfReport.record("micro", "MicaboIcon.guess", [("us", PerfReport.micro { _ = MicaboIcon.guess(subject: nil, title: "La guerre froide et ses crises") })])
+        // Un libellé de date : le formateur refait à chaque appel (le chemin d'avant), puis gardé.
+        let someDay = Date(timeIntervalSince1970: 1_800_000_000)
+        PerfReport.record("micro", "DateFormatter-refait", [("us", PerfReport.micro {
+            let formatter = DateFormatter()
+            formatter.locale = UiLocale.fr.foundation
+            formatter.calendar = MicaboCalendar.shared
+            formatter.setLocalizedDateFormatFromTemplate("EEE")
+            _ = formatter.string(from: someDay)
+        })])
+        PerfReport.record("micro", "MicaboCalendar.shortWeekday", [("us", PerfReport.micro { _ = MicaboCalendar.shortWeekday(someDay, locale: .fr) })])
+        PerfReport.record("micro", "CalendarTime.label", [("us", PerfReport.micro { _ = CalendarTime.label(minute: 870, locale: .fr) })])
         PerfReport.record("micro", "StudyStreak.status", [("us", PerfReport.micro { _ = StudyStreak.status() })])
         PerfReport.record("micro", "StudyStreak.week", [("us", PerfReport.micro { _ = StudyStreak.week() })])
 

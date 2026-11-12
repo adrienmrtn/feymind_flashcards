@@ -112,12 +112,7 @@ enum CalendarTime {
     }
 
     static func label(_ date: Date, locale: UiLocale = .resolved()) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = locale.foundation
-        formatter.calendar = MicaboCalendar.shared
-        formatter.timeZone = MicaboCalendar.shared.timeZone
-        formatter.setLocalizedDateFormatFromTemplate("jmm")
-        return formatter.string(from: date)
+        MicaboDateFormat.template("jmm", locale: locale, pinsTimeZone: true).string(from: date)
     }
 
     /// « 14:30 – 15:30 ».
@@ -200,47 +195,31 @@ extension MicaboCalendar {
 
     /// « lun. », « Mo. », « пн » : le nom court d'un jour, dans la langue de l'app.
     static func shortWeekday(_ date: Date, locale: UiLocale = .resolved()) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = locale.foundation
-        formatter.calendar = shared
-        formatter.setLocalizedDateFormatFromTemplate("EEE")
-        return formatter.string(from: date)
+        MicaboDateFormat.template("EEE", locale: locale).string(from: date)
     }
 
     /// Les noms très courts des jours (« L », « M »…) pour l'en-tête de la grille, du lundi au
     /// dimanche, dans la langue de l'app.
     static func veryShortWeekdays(locale: UiLocale = .resolved()) -> [String] {
-        let formatter = DateFormatter()
-        formatter.locale = locale.foundation
-        let symbols = formatter.veryShortStandaloneWeekdaySymbols ?? []
+        let symbols = MicaboDateFormat.symbols(locale: locale).veryShortStandaloneWeekdaySymbols ?? []
         guard symbols.count == 7 else { return ["1", "2", "3", "4", "5", "6", "7"] }
         return Array(symbols[1...]) + [symbols[0]]
     }
 
     /// Le nom complet d'un jour de la semaine (1 = lundi), pour un sélecteur.
     static func weekdayName(_ isoWeekday: Int, locale: UiLocale = .resolved()) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = locale.foundation
-        let symbols = formatter.standaloneWeekdaySymbols ?? []
+        let symbols = MicaboDateFormat.symbols(locale: locale).standaloneWeekdaySymbols ?? []
         guard symbols.count == 7, (1...7).contains(isoWeekday) else { return "\(isoWeekday)" }
         return symbols[isoWeekday % 7].capitalizedFirstLetter
     }
 
     /// « novembre » : le mois seul.
     static func monthName(_ date: Date, locale: UiLocale = .resolved()) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = locale.foundation
-        formatter.calendar = shared
-        formatter.setLocalizedDateFormatFromTemplate("LLLL")
-        return formatter.string(from: date).capitalizedFirstLetter
+        MicaboDateFormat.template("LLLL", locale: locale).string(from: date).capitalizedFirstLetter
     }
 
     /// Le numéro du jour, dans les chiffres de la langue.
     static func dayNumber(_ date: Date, locale: UiLocale = .resolved()) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = locale.foundation
-        formatter.calendar = shared
-        formatter.setLocalizedDateFormatFromTemplate("d")
-        return formatter.string(from: date)
+        MicaboDateFormat.template("d", locale: locale).string(from: date)
     }
 }

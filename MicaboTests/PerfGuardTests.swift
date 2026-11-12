@@ -33,18 +33,10 @@ final class PerfGuardTests: XCTestCase {
 
     // MARK: - Les sources
 
-    /// Ce que d'autres lots réécrivent pendant le lot 10 : leurs fichiers sont relus à la fin
-    /// du lot, une fois les réécritures posées (`perf.md`, « à transmettre »).
-    private static let pending = [
-        "Features/Onboarding/",
-        "Features/Paywall/",
-        "Features/Home/",
-        "Features/Courses/CoursesListView.swift",
-        "Features/Lesson/LessonPathView.swift",
-        "Features/Lesson/PathMapView.swift",
-        "DesignSystem/Components/MikaMascot.swift",
-        "DesignSystem/V3/",
-    ]
+    /// Ce qu'un autre lot est en train de réécrire, et qu'on ne relit pas encore. Vide depuis
+    /// la fin du lot 10 : le parcours d'accueil, le paywall, la Home, la leçon ouverte et Mika
+    /// sont relus comme le reste.
+    private static let pending: [String] = []
 
     private struct Allowance {
         let path: String
@@ -56,17 +48,24 @@ final class PerfGuardTests: XCTestCase {
     /// Un fichier peut en perdre ; il ne peut pas en gagner sans passer par ici.
     private static let delays: [Allowance] = [
         Allowance(path: "App/MicaboApp.swift", max: 1, why: "la synchro du lancement attend que la première image soit posée"),
+        Allowance(path: "DesignSystem/Components/MikaMascot.swift", max: 1, why: "le clignement de Mika au repos, sa seule horloge"),
         Allowance(path: "DesignSystem/Haptics.swift", max: 1, why: "le rythme d'une salve de vibrations"),
         Allowance(path: "Features/Calendar/CalendarEditSheet.swift", max: 2, why: "deux présentations ne s'enchaînent pas dans la même passe"),
+        Allowance(path: "Features/Courses/CoursesListView.swift", max: 1, why: "le recensement attend que la page soit repliée"),
         Allowance(path: "Features/Deck/Steps/DeckBuildingStepView.swift", max: 3, why: "la jauge d'un écran de chargement (parcours hérité, plus ouvert par l'app)"),
         Allowance(path: "Features/Deck/Steps/DeckMaterialsStepView.swift", max: 1, why: "le retour d'un appui (parcours hérité, plus ouvert par l'app)"),
         Allowance(path: "Features/Friends/FriendsView.swift", max: 1, why: "la recherche attend la fin de la frappe"),
+        Allowance(path: "Features/Home/LessonImportPickers.swift", max: 1, why: "deux présentations ne se croisent pas"),
+        Allowance(path: "Features/Home/LockedLessonPreview.swift", max: 3, why: "l'aperçu d'une leçon verrouillée se coche au rythme d'une lecture, avant le paywall"),
         Allowance(path: "Features/Lesson/LessonCircleScreen.swift", max: 1, why: "les confettis s'arrêtent d'eux-mêmes"),
         Allowance(path: "Features/Lesson/LessonMikaView.swift", max: 1, why: "le fil suit le clavier qui monte"),
+        Allowance(path: "Features/Lesson/LessonPathView.swift", max: 2, why: "le mode attend que le paywall soit descendu ; la note de l'App Store attend la sortie de la leçon"),
         Allowance(path: "Features/Lesson/LessonPracticeView.swift", max: 1, why: "un message passager qui se retire"),
         Allowance(path: "Features/Lesson/LessonRatingCard.swift", max: 1, why: "le merci se retire de lui-même"),
         Allowance(path: "Features/Lesson/SheetExportView.swift", max: 1, why: "la mise en page du PDF attend que la feuille soit montée"),
         Allowance(path: "Features/Mika/TutorChatView.swift", max: 1, why: "le fil suit le clavier qui monte"),
+        Allowance(path: "Features/Paywall/PaywallFlowView.swift", max: 1, why: "réseau : nouvel essai des prix"),
+        Allowance(path: "Features/Paywall/PaywallPurchases.swift", max: 1, why: "réseau : nouvel essai de l'identification chez RevenueCat"),
         Allowance(path: "Features/Profile/SettingsSchoolSheet.swift", max: 1, why: "la recherche attend la fin de la frappe"),
         Allowance(path: "Features/Profile/SettingsView.swift", max: 1, why: "rejouer le parcours une fois la feuille refermée (TestFlight)"),
         Allowance(path: "Features/Writing/WritingCoachView.swift", max: 1, why: "« Copié » se retire de lui-même"),
@@ -88,6 +87,9 @@ final class PerfGuardTests: XCTestCase {
         let lines: [String]
     }
 
+    /// Vrai une fois le nombre de fichiers relus écrit dans `perf.txt`.
+    private static var reported = false
+
     private func sources() throws -> [Source] {
         let root = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -103,7 +105,14 @@ final class PerfGuardTests: XCTestCase {
                   let text = try? String(contentsOf: url, encoding: .utf8) else { continue }
             found.append(Source(path: relative, lines: text.components(separatedBy: "\n")))
         }
-        guard found.count > 100 else { throw XCTSkip("les sources ne sont pas lisibles depuis ce simulateur") }
+        guard found.count > 100 else {
+            PerfVerdict.write("PERF|garde|sources|fichiers=\(found.count)|illisibles depuis ce simulateur : les garde-fous de sources sont sautés")
+            throw XCTSkip("les sources ne sont pas lisibles depuis ce simulateur")
+        }
+        if !Self.reported {
+            Self.reported = true
+            PerfVerdict.write("PERF|garde|sources|fichiers=\(found.count)")
+        }
         return found
     }
 
@@ -317,6 +326,31 @@ final class PerfGuardTests: XCTestCase {
         XCTAssertEqual(FormulaRenderer.symbolsOnly("Une phrase sans commande."), "Une phrase sans commande.")
         XCTAssertEqual(FormulaRenderer.symbolsOnly("A \\to B"), "A → B")
         XCTAssertEqual(FormulaRenderer.stripped("1914 \\rightarrow 1918"), "1914 → 1918")
+    }
+
+    /// **Un libellé de date gardé dit ce que disait le formateur refait à chaque appel**, dans
+    /// quatre langues et pour chaque gabarit du calendrier.
+    func testACachedDateLabelSaysWhatAFreshFormatterSaid() {
+        let days = [0, 86_400 * 200, 1_800_000_000, 1_812_345_678].map { Date(timeIntervalSince1970: TimeInterval($0)) }
+        for locale in [UiLocale.fr, .en, .de, .ar] {
+            for template in ["EEE", "d", "LLLL", "d MMM", "MMMM yyyy", "EEEE d MMMM", "EEEE d MMMM yyyy", "jmm"] {
+                let fresh = DateFormatter()
+                fresh.locale = locale.foundation
+                fresh.calendar = MicaboCalendar.shared
+                fresh.setLocalizedDateFormatFromTemplate(template)
+                for day in days {
+                    XCTAssertEqual(
+                        MicaboDateFormat.template(template, locale: locale).string(from: day),
+                        fresh.string(from: day),
+                        "\(locale.rawValue) \(template)"
+                    )
+                }
+            }
+            let fresh = DateFormatter()
+            fresh.locale = locale.foundation
+            XCTAssertEqual(MicaboDateFormat.symbols(locale: locale).standaloneWeekdaySymbols, fresh.standaloneWeekdaySymbols)
+            XCTAssertEqual(MicaboDateFormat.symbols(locale: locale).veryShortStandaloneWeekdaySymbols, fresh.veryShortStandaloneWeekdaySymbols)
+        }
     }
 
     // MARK: - Le lancement

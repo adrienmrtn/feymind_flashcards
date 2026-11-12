@@ -278,12 +278,16 @@ enum StudyPlan {
     /// Les examens blancs et les points d'étape conseillés des examens à venir
     /// (`ExamAgenda`). Un blanc rendu pour l'examen coche son rendez-vous.
     static func milestones(for exams: [Exam], in context: ModelContext, now: Date = Date()) -> [AgendaEvent] {
+        let upcoming = exams.filter { !$0.isPast(from: now) }
+        guard !upcoming.isEmpty else { return [] }
         let history = ExamHistory.all()
-        return exams.filter { !$0.isPast(from: now) }.flatMap { exam -> [AgendaEvent] in
+        return upcoming.flatMap { exam -> [AgendaEvent] in
             let done = history
                 .filter { $0.examID == exam.id }
                 .map { AgendaDone(examId: exam.id, kind: .mock, finishedAt: $0.date) }
-            let cardCount = ExamRepository.cards(of: exam, in: context).count
+            // Compté par la base (`ExamRepository.cardCount`) : relire les cours puis leurs
+            // cartes pour n'en garder que le nombre coûtait soixante millisecondes par agenda.
+            let cardCount = ExamRepository.cardCount(of: exam, in: context)
             return ExamAgenda.events(for: exam, cardCount: cardCount, done: done, now: now)
                 .filter { $0.status != .missed }
         }
