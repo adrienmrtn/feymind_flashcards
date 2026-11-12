@@ -692,7 +692,7 @@ private struct MikaCore: View {
         }
         var animation = curve.animation
         if cue.delay > 0 { animation = animation.delay(cue.delay) }
-        if cue.repeats { animation = animation.repeatForever(autoreverses: true) }
+        if cue.repeats { animation = animation.repeatForever(autoreverses: true) } // attente
         guard cue.awaits else {
             withAnimation(animation) { pose = cue.pose }
             return
