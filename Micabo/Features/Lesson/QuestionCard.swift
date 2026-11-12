@@ -474,9 +474,7 @@ struct MatchBoard: View {
                         }
                         if pairs.count == question.choices.count {
                             let right = pairs.allSatisfy { $0.key == $0.value }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                                onAnswer(QuizAnswer(right: right, picked: nil))
-                            }
+                            onAnswer(QuizAnswer(right: right, picked: nil))
                         }
                     }
                 }

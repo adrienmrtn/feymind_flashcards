@@ -235,7 +235,7 @@ struct AnswerPanel: View {
                 .opacity(mikaShown || mikaStill ? 1 : 0)
         }
         .onAppear {
-            withAnimation(MicaboMotion.standard.delay(0.3)) { mikaShown = true }
+            withAnimation(MicaboMotion.standard) { mikaShown = true }
         }
     }
 }
@@ -352,7 +352,7 @@ struct QuizScoreView: View {
             if still || LearnMotion.reduceMotion {
                 shown = ratio
             } else {
-                withAnimation(LearnMotion.gentle(delay: 0.2)) { shown = ratio }
+                withAnimation(LearnMotion.gentle) { shown = ratio }
             }
             if ratio >= 0.8 { Haptics.burst(count: 3, over: 0.4) }
         }

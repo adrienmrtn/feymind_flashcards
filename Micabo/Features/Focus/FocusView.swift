@@ -45,7 +45,13 @@ struct FocusView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        // Lus une fois par passe : les séances se convertissaient quatre fois (la journée, les
+        // sept jours, les minutes et les séances de la semaine) et les leçons se filtraient à
+        // chaque usage.
+        let specs = self.specs
+        let lessons = self.lessons
+        let cardTasks = self.cardTasks
+        return NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     MicaboPageHeading(title: loc("ios.focus.title"), subtitle: nil) { EmptyView() }
