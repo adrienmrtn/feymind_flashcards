@@ -21,7 +21,8 @@ import { UNTRUSTED_SYSTEM_RULE } from "../_shared/prompt-boundary.ts";
 import { type Depth, depthOf } from "../_shared/learner.ts";
 import { MATERIAL_PLAN_RULES, type Material, materialThemeBrief, type ThemeRole } from "./material.ts";
 
-export const PROMPT_VERSION = "lesson-v4.2.0";
+/** v4.3 : calibrage par palier et par année, programme officiel, volume proportionné au support. */
+export const PROMPT_VERSION = "lesson-v4.3.0";
 
 const VOICE =
   `Tu es Mika, le professeur de Micabo, une app de révision pour élèves et étudiants. Tu tutoies. Tu écris des NOTES qui expliquent, pas un cours magistral : phrases courtes (25 mots au plus), un vocabulaire précis, aucune formule creuse (« il est important de noter que », « en conclusion »), aucun tiret cadratin, aucun emoji (sauf, dans des notes, un seul à la fin d'un sous-titre).`;
@@ -60,6 +61,10 @@ export function planShapeBrief(options: {
   fromScratch: boolean;
   topicThemes?: [number, number];
   maxThemes?: number;
+  /** Le nombre de thèmes calculé sur la taille du support (`sourceThemeRange`). */
+  sourceThemes?: [number, number];
+  /** La taille du support, en pages à peu près. */
+  pages?: number;
 }): string {
   if (options.shortSource) {
     return `VOLUME\nLe contenu est très court : fais exactement 4 thèmes, et complète avec des exemples et les notions voisines indispensables, sans rien inventer de douteux. Un seul palier, qui regroupe les 4 thèmes.`;
@@ -69,6 +74,11 @@ export function planShapeBrief(options: {
     return `VOLUME\nIl n'y a pas de document : tu construis la leçon depuis ce que tu sais du sujet, au niveau de l'élève. Entre ${low} et ${high} thèmes : ce qu'un bon professeur de CETTE classe couvrirait sur ce sujet, et rien de plus.`;
   }
   const max = options.maxThemes ?? 12;
+  if (options.sourceThemes) {
+    const [low, high] = options.sourceThemes;
+    const pages = options.pages ? `Le support fait environ ${options.pages} page${options.pages > 1 ? "s" : ""}. ` : "";
+    return `VOLUME\n${pages}Entre ${low} et ${high} thèmes, selon sa structure : chaque partie du support a sa place, aucune n'est résumée en une ligne ni laissée de côté. Jamais plus de ${max} : au-delà, regroupe des sous-parties voisines plutôt que d'en laisser tomber.`;
+  }
   return `VOLUME\nLe nombre de thèmes suit la structure du support et sa quantité de contenu : 4 pour une page de notes, 6 à 8 pour un chapitre, jusqu'à ${max} pour un long document. Jamais plus de ${max} : au-delà, regroupe des sous-parties voisines plutôt que d'en laisser tomber.`;
 }
 

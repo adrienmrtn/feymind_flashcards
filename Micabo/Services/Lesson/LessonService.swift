@@ -37,6 +37,22 @@ struct LessonAudience: Sendable, Equatable {
     var targetLabel: String = ""
     /// Ce qui l'inquiète (`StudyWorry.rawValue`), tel qu'il l'a coché.
     var worries: [String] = []
+    /// **L'année exacte, pour le calibrage** (`supabase/functions/_shared/calibration.ts`) :
+    /// une Sixième n'a pas le cours d'une Troisième. Le code ISO du pays (« at » pour un pays
+    /// choisi dans « Autre pays »), les identifiants de catalogue de la filière et de
+    /// l'année, le rang de l'année dans sa filière et le nombre d'années de la filière.
+    var region: String = ""
+    var trackID: String = ""
+    var yearID: String = ""
+    var yearRank: Int?
+    var yearCount: Int?
+    /// Les examens de cette année d'après le catalogue de l'app (« Brevet », « Matura »).
+    var yearExams: [String] = []
+    /// Les matières choisies à l'accueil.
+    var subjects: [String] = []
+    /// L'examen de l'année choisi à l'accueil, avec sa date : il part même quand la leçon
+    /// n'est rattachée à aucun examen.
+    var targetExam: String = ""
 
     static var current: LessonAudience {
         let country = OnboardingPreferences.schoolingCountry
@@ -51,7 +67,7 @@ struct LessonAudience: Sendable, Equatable {
         ).scale
         let currentScore = OnboardingPreferences.currentScore
         let targetScore = OnboardingPreferences.targetScore
-        return LessonAudience(
+        var audience = LessonAudience(
             level: OnboardingPreferences.studyLevel?.rawValue ?? "",
             country: country.rawValue,
             schoolStage: OnboardingPreferences.educationStage?.title ?? "",
@@ -65,6 +81,44 @@ struct LessonAudience: Sendable, Equatable {
             targetLabel: targetScore.map { gradeLabel($0, scale: scale) } ?? "",
             worries: OnboardingPreferences.worries.compactMap(StudyWorry.init(rawValue:)).map(\.rawValue)
         )
+        audience.place(
+            region: SchoolRegion.code(country: country, custom: OnboardingPreferences.customCountry),
+            track: track,
+            year: year
+        )
+        audience.subjects = Array(OnboardingPreferences.subjects.prefix(12))
+        audience.targetExam = targetExamLine(
+            SchoolExams.choice(id: OnboardingPreferences.examID),
+            date: OnboardingPreferences.examDate
+        )
+        return audience
+    }
+
+    /// **La place de l'élève dans son système** : le pays, la filière et l'année du catalogue,
+    /// le rang de l'année et les examens que le catalogue lui donne. Rien de personnel.
+    mutating func place(region: String?, track: SchoolTrack?, year: SchoolYear?) {
+        self.region = region?.lowercased() ?? ""
+        trackID = track?.id ?? ""
+        yearID = year?.id ?? ""
+        if let track, let year, let index = track.years.firstIndex(where: { $0.id == year.id }) {
+            yearRank = index + 1
+            yearCount = track.years.count
+        } else {
+            yearRank = nil
+            yearCount = nil
+        }
+        let examIDs = (year?.exams.isEmpty == false ? year?.exams : track?.exams) ?? []
+        yearExams = examIDs.compactMap { SchoolExams.catalog[$0]?.title }
+    }
+
+    /// L'examen choisi à l'accueil, s'il a un nom de pays : « l'examen « Bac », le 2027-06-15 ».
+    /// Un contrôle, des partiels ou « pas d'examen » ne disent rien du programme : rien ne part.
+    static func targetExamLine(_ choice: ExamChoice?, date: Date?) -> String {
+        guard case .named(let exam)? = choice else { return "" }
+        guard let date else { return "l'examen « \(exam.title) »" }
+        // La même phrase que `LessonBuilder.examLine`, écrite ici : celle-là vit sur l'acteur
+        // principal, et l'audience se lit de partout.
+        return "l'examen « \(exam.title) », le \(ExamDayStamp.string(from: date))"
     }
 
     /// Le libellé d'une note dans le barème du pays, comme le résumé du parcours d'accueil
@@ -98,10 +152,29 @@ struct LessonAudience: Sendable, Equatable {
     }
 
     var payload: [String: Any] {
+        var out = profilePayload
+        out["language"] = language
+        out["kinds"] = QuizKind.allCases.map(\.rawValue)
+        return out
+    }
+
+    /// **Le profil scolaire seul**, sans la langue ni les formes de question : ce qui s'ajoute
+    /// aux appels qui ont déjà les leurs (`generate-flashcards`, `generate-mock`). Tous ces
+    /// champs sont facultatifs côté serveur ; aucun prénom, aucune adresse.
+    var profilePayload: [String: Any] {
         var out: [String: Any] = [
-            "level": level, "country": country, "schoolStage": schoolStage, "language": language,
-            "kinds": QuizKind.allCases.map(\.rawValue)
+            "level": level, "country": country, "schoolStage": schoolStage
         ]
+        if !region.isEmpty { out["region"] = region }
+        if !trackID.isEmpty { out["trackId"] = trackID }
+        if !yearID.isEmpty { out["yearId"] = yearID }
+        if let yearRank, let yearCount {
+            out["yearRank"] = yearRank
+            out["yearCount"] = yearCount
+        }
+        if !yearExams.isEmpty { out["yearExams"] = yearExams }
+        if !subjects.isEmpty { out["subjects"] = subjects }
+        if !targetExam.isEmpty { out["targetExam"] = targetExam }
         if !tier.isEmpty { out["tier"] = tier }
         if !track.isEmpty { out["track"] = track }
         if !year.isEmpty { out["year"] = year }

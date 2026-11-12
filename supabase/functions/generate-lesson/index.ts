@@ -45,7 +45,8 @@ import { languageBrief } from "../_shared/language.ts";
 import { sanitizeMeta, wrapUntrusted } from "../_shared/prompt-boundary.ts";
 import { normalizeIcon } from "../_shared/icons.ts";
 import { readingBrief, VISION_SYSTEM_PROMPT } from "../generate-course/prompt.ts";
-import { depthOf, learnerBrief, readLearner, volumeOf } from "../_shared/learner.ts";
+import { learnerBrief, placeOf, programmeBrief, readLearner } from "../_shared/learner.ts";
+import { blocksForShare, calibrationOf, pagesOf, sourceThemeRange } from "../_shared/calibration.ts";
 import { assessmentBrief, disciplineName, hasVariedKinds } from "../_shared/assessment.ts";
 import {
   CONVERT_SYSTEM_PROMPT,
@@ -388,15 +389,27 @@ async function writePlan(
   const shortSource = !fromScratch && reference.length < SHORT_SOURCE;
 
   const learner = readLearner(body);
-  const volume = volumeOf(learner.tier);
+  // Le palier (la marche affinée par l'année) règle le volume et le registre : une Sixième
+  // n'a pas le plan d'une Troisième (`calibration.ts`).
+  const calibration = calibrationOf(placeOf(learner));
+  const volume = calibration.volume;
   const examOriented = isExamOriented(learner);
   // Une première lecture du support : le modèle la corrige, sauf quand elle ne fait pas de
   // doute (pas de document, ou une vidéo et sa transcription).
   const guess: Material = fromScratch ? "topic" : guessMaterial(reference, source);
   const forcedMaterial: Material | undefined = guess === "topic" || guess === "lecture" ? guess : undefined;
   const sections = audienceSections(body, fromScratch ? topic : reference);
-  sections.push(planShapeBrief({ shortSource, fromScratch, topicThemes: volume.topicThemes, maxThemes: volume.maxThemes }));
-  sections.push(planMaterialBrief({ guess, fromScratch, register: depthOf(learner.tier).register, examOriented }));
+  sections.push(programmeBrief(learner, { fromScratch, subject: body.subject }));
+  sections.push(planShapeBrief({
+    shortSource,
+    fromScratch,
+    topicThemes: volume.topicThemes,
+    maxThemes: volume.maxThemes,
+    // Le nombre de thèmes suit la taille du support : un cours de dix pages n'en fait pas quatre.
+    sourceThemes: fromScratch ? undefined : sourceThemeRange(reference.length, volume.maxThemes),
+    pages: fromScratch ? undefined : pagesOf(reference.length),
+  }));
+  sections.push(planMaterialBrief({ guess, fromScratch, register: calibration.depth.register, examOriented }));
   sections.push(iconsSection());
   sections.push(symbolsSection());
   if (fromScratch) {
@@ -497,10 +510,13 @@ async function theme(request: Request, body: RequestBody, deadline: number): Pro
   const lessonTitle = sanitizeMeta(body.lessonTitle, 200) || themes[index]!;
   const meter: ModelUsage[] = [];
   const learner = readLearner(body);
-  const volume = volumeOf(learner.tier);
-  // Jusqu'où expliquer : le nombre de blocs et leur longueur suivent la marche, et un examen
-  // nommé appelle toujours une question à son format.
-  const tierDepth = depthOf(learner.tier);
+  const calibration = calibrationOf(placeOf(learner));
+  const volume = calibration.volume;
+  // Jusqu'où expliquer : le nombre de blocs et leur longueur suivent le palier, un thème qui
+  // couvre une grande part du support a plus de blocs (`blocksForShare`), et un examen nommé
+  // appelle toujours une question à son format.
+  const share = context ? context.length / themes.length : 0;
+  const tierDepth = { ...calibration.depth, blocks: blocksForShare(calibration.depth.blocks, share) };
   const depth = learner.exam ? { ...tierDepth, examFormat: true } : tierDepth;
   const limits = noteLimits(depth);
   const examOriented = isExamOriented(learner);
@@ -520,6 +536,7 @@ async function theme(request: Request, body: RequestBody, deadline: number): Pro
 
   const sample = context || lessonTitle;
   const sections = audienceSections(body, sample);
+  sections.push(programmeBrief(learner, { fromScratch: !context, subject: body.subject }));
   sections.push(themeBrief({
     lessonTitle,
     themeTitle: themes[index]!,
