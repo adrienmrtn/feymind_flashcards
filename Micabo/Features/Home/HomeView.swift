@@ -94,6 +94,12 @@ struct HomeView: View {
             }
             .reportsNavigationDepth(for: .today, depth: path.count)
             .returnsHome(path: $path)
+            // « Nouvelle leçon », demandée depuis l'onglet Leçons : la feuille des supports.
+            .onChange(of: router?.lessonCreationRequests ?? 0) { old, new in
+                guard new > old else { return }
+                dismissKeyboard()
+                showsSources = true
+            }
     }
 
     // MARK: La page
@@ -201,7 +207,9 @@ struct HomeView: View {
         day.hasCourses = !courses.isEmpty
         day.studiedToday = streak.studiedToday
         for course in courses {
-            day.dueCount += DueReview.dueCount(of: course, now: now)
+            let due = DueReview.dueCount(of: course, now: now)
+            day.dueCount += due
+            if due > 0 { day.dueLessons += 1 }
             day.reviewedToday += course.cards.filter { card in
                 card.lastReviewedAt.map { calendar.isDate($0, inSameDayAs: now) } ?? false
             }.count
@@ -209,7 +217,11 @@ struct HomeView: View {
         if let resume, let number = resume.1.circleNumber {
             let (course, target) = resume
             day.lessonTitle = target.title
-            day.lessonCircle = L10n.t("lesson.path.circleNumber", locale: .resolved(), vars: ["n": String(number)])
+            // « Étape », comme sur le chemin : plus de « cercle » nulle part.
+            day.lessonCircle = L10n.t("lesson.path.step", locale: .resolved(), vars: ["n": String(number)])
+            day.lessonStep = number
+            day.lessonStepTitle = target.circleTitle
+            day.lessonStarted = target.percent > 0
             let finishedToday = course.progress.finishedAt.map { calendar.isDate($0, inSameDayAs: now) } ?? false
             let openedToday = course.lastOpenedAt.map { calendar.isDate($0, inSameDayAs: now) } ?? false
             day.lessonAdvancedToday = finishedToday || (openedToday && streak.studiedToday)

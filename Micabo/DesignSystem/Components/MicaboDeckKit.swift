@@ -429,7 +429,7 @@ struct MicaboTodayCard<Footer: View>: View {
         .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.deck, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: MicaboRadius.deck, style: .continuous)
-                .strokeBorder(MicaboColor.dayWashStroke, lineWidth: 1)
+                .strokeBorder(MicaboColor.dayWashStroke, lineWidth: MicaboSurface.border)
         }
     }
 
@@ -921,7 +921,7 @@ struct MicaboStreakCard: View {
         .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous)
-                .strokeBorder(MicaboColor.warmWashStroke, lineWidth: 1)
+                .strokeBorder(MicaboColor.warmWashStroke, lineWidth: MicaboSurface.border)
         }
     }
 }

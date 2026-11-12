@@ -72,7 +72,6 @@ final class LookRenderTests: XCTestCase {
             LessonFolderCard(name: "Bac de maths", count: 4) {}
             LessonCard(course: course, dueCount: 8, examDays: 12) {}
             LessonCard(course: old) {}
-            NewLessonRow {}
         }
         .padding(20)
         .environment(\.homeStill, true)
@@ -95,16 +94,14 @@ final class LookRenderTests: XCTestCase {
 
     // MARK: - Les rendus
 
-    /// **La planche du nouveau Mika** : ses douze poses fixes, en entier, sur le papier.
+    /// **La planche de Mika** : l'expression de chaque humeur, en entier, sur le fond de l'app
+    /// (le détail est dans `MikaRenderTests`).
     private func poses() -> some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 14) {
-            ForEach(MikaStill.allCases, id: \.self) { still in
+            ForEach(MikaMood.allCases) { mood in
                 VStack(spacing: 4) {
-                    Image(still.imageName)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 84, height: 84)
-                    Text(still.rawValue)
+                    MikaMascot(mood: mood, size: 84, frozenAt: 0)
+                    Text(mood.rawValue)
                         .font(MicaboFont.ui(12, weight: .bold))
                         .foregroundStyle(MicaboColor.inkSecondary)
                 }

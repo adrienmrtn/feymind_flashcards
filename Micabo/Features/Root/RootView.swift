@@ -111,9 +111,8 @@ struct RootView: View {
             }
         }
         // **Le rideau se lève au tour suivant de la boucle**, une fois la première image de
-        // l'écran posée dessous : l'écran de lancement (le même bleu) cède la place sans
-        // blanc intermédiaire, par un fondu court. Sur le parcours, le premier écran est
-        // lui-même ce bleu, et le fondu ne se voit pas.
+        // l'écran posée dessous : l'écran de lancement (le même marine, le même Mika) cède la
+        // place sans blanc intermédiaire, par un fondu court.
         .task {
             guard showsCurtain else { return }
             // Une seule fois par lancement : changer de langue recrée `RootView`
@@ -140,21 +139,27 @@ struct RootView: View {
     }
 }
 
-/// **Le bleu de l'écran de lancement, recopié en SwiftUI.**
+/// **L'écran de lancement, recopié en SwiftUI.**
 ///
-/// L'écran de lancement (`UILaunchScreen` dans `Info.plist`) est un aplat
-/// `LaunchBackground` - le bleu Micabo, jour comme nuit - sans image. La première image de
-/// SwiftUI doit lui être identique au pixel près : ce rideau la recouvre, puis s'efface en
-/// fondu sur l'écran qui suit. Il n'y a qu'un seul logo, et c'est Mika qui le porte, sur le
-/// premier écran du parcours : la marque ne s'affiche plus deux fois de suite.
+/// L'écran de lancement (`UILaunchScreen` dans `Info.plist`) est le marine de l'app
+/// (`LaunchBackground`, le même dans les deux thèmes) et Mika au centre de l'écran
+/// (`LaunchMika`, 200 points). La première image de SwiftUI doit lui être identique : ce
+/// rideau repose le même fond et la même image, à sa taille, au centre de l'écran entier
+/// (pas de la zone sûre), puis s'efface en fondu sur l'écran qui suit.
 struct LaunchCurtain: View {
     /// Vrai une fois le rideau levé pendant ce lancement.
     nonisolated(unsafe) static var hasLifted = false
 
+    /// L'image de l'écran de lancement, dans le catalogue.
+    static let mika = "LaunchMika"
+
     var body: some View {
-        MicaboBrand.launch
-            .ignoresSafeArea()
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
+        ZStack {
+            MicaboBrand.launch
+            Image(Self.mika)
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }

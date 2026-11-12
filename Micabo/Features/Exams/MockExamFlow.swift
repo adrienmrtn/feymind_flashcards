@@ -580,7 +580,8 @@ struct TimerPill: View {
                     .trim(from: 0, to: total == 0 ? 0 : CGFloat(remaining) / CGFloat(total))
                     .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                     .rotationEffect(.degrees(-90))
-                    .animation(LearnMotion.gentle, value: remaining)
+                    // Pas d'animation : une seconde y déplace l'arc de quelques centièmes de
+                    // point, et l'animer faisait redessiner la pastille à chaque image.
             }
             .frame(width: 22, height: 22)
             Text(String(format: "%d:%02d", remaining / 60, remaining % 60))
@@ -721,7 +722,7 @@ struct MockExamResultView: View {
                 if !missed.isEmpty {
                     Button(action: addCards) {
                         Label(
-                            L10n.t(cardsAdded ? "lesson.exam.cardsAdded" : "lesson.exam.addCards", locale: .resolved(), vars: ["count": "\(missed.count)"]),
+                            L10n.t(cardsAdded ? "lesson.exam.cardsAdded" : "ios.home10.mock.addCards", locale: .resolved(), vars: ["count": "\(missed.count)"]),
                             systemImage: cardsAdded ? "checkmark" : "rectangle.stack.badge.plus"
                         )
                     }

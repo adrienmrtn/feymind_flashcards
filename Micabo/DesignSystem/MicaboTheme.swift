@@ -330,6 +330,12 @@ enum MicaboFont {
         V3Font.legacy(size, weight: weight)
     }
 
+    /// Le contenu d'un cours (question, définition, réponse) : police système à toute taille.
+    /// Voir `V3Font.content`.
+    static func content(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        V3Font.content(size, weight: weight)
+    }
+
     /// Le texte qu'on lit, demandé à l'ancienne échelle : toujours en police système, et à sa
     /// graisse — un texte long garde son Regular.
     static func reading(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {

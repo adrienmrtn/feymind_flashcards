@@ -1,0 +1,48 @@
+<!doctype html><meta charset="utf-8">
+<!--
+  L'icône de Micabo et les pistes qui l'ont précédée, dessinées avec le nouveau Mika.
+
+  Y = **l'icône de l'app** : Mika en buste, la bouche ouverte, sur un bleu nuit uni #101737
+  (le dessin, viewBox « -10 -30 420 420 », rendu à 140 % de la largeur de l'icône, décalé de
+  −20 % en x et de +6 % en y). `AppIcon.png` est l'export de ces paramètres.
+  A (marine en dégradé radial), B (jaune), C (bleu profond) : des pistes non retenues, cadrées
+  plus large (viewBox « 10 -8 400 400 » à 106 %, décalé de −6 % et de +4,67 %).
+
+  Sans paramètre : toutes côte à côte, aux coins arrondis (pour regarder).
+  `?v=Y&s=1024` : une seule, carrée, sans coins arrondis ni transparence, à la taille demandée
+  (ce que `export.js` photographie).
+-->
+<body style="margin:0;background:#3A3D48">
+<div id="wall" style="display:flex;gap:28px;padding:28px"></div>
+<script src="mika.js"></script>
+<script>
+const wide = { viewBox: '10 -8 400 400', zoom: 318 / 300, left: -18 / 300, top: 14 / 300 };
+const variants = {
+  Y: ["Y · bleu nuit (l'icône)", 'background:#101737', { body: '#5C88FF', shade: '#3F6BE8' }, { viewBox: '-10 -30 420 420', zoom: 1.4, left: -0.2, top: 0.06 }],
+  A: ['A · marine', 'background:radial-gradient(circle at 50% 36%, #22357A 0%, #0B0F1C 72%)', { body: '#5C88FF', shade: '#3F6BE8' }, wide],
+  B: ['B · jaune', 'background:#FFC531', { body: '#3870FE', shade: '#2A5BE0' }, wide],
+  C: ['C · bleu profond', 'background:linear-gradient(#2F58E0,#152E8C)', { body: '#8FB0FF', shade: '#6A91FF' }, wide],
+};
+// Une icône de `side` pixels : le fond, puis Mika agrandi et décalé selon son cadrage.
+function icon(key, side, radius) {
+  const [, background, colors, frame] = variants[key];
+  const art = mika(Object.assign({ size: side * frame.zoom, noShadow: true, viewBox: frame.viewBox, mouth: 'open' }, colors));
+  return `<div id="icone" style="width:${side}px;height:${side}px;border-radius:${radius}px;overflow:hidden;${background};position:relative">`
+    + `<div style="position:absolute;left:${side * frame.left}px;top:${side * frame.top}px">${art}</div></div>`;
+}
+const query = new URLSearchParams(location.search);
+const wall = document.getElementById('wall');
+if (query.get('v')) {
+  // L'export : une seule icône, posée dans le coin de la page.
+  document.body.style.background = '#000';
+  wall.style.cssText = 'padding:0';
+  wall.innerHTML = icon(query.get('v'), +(query.get('s') || 1024), 0);
+} else {
+  for (const key of Object.keys(variants)) {
+    const cell = document.createElement('div');
+    cell.innerHTML = icon(key, 300, 66) + `<div style="color:#fff;font:700 14px sans-serif;text-align:center;margin-top:8px">${variants[key][0]}</div>`;
+    cell.firstChild.removeAttribute('id');
+    wall.appendChild(cell);
+  }
+}
+</script>

@@ -71,7 +71,7 @@ struct SolverSolutionContent: View {
                         .scaledToFill()
                         .frame(width: 60, height: 60)
                         .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
                         .accessibilityHidden(true)
                 }
                 SolverRichText(source: session.exercise.statement, size: 16)
@@ -521,7 +521,7 @@ struct SolverAnswerBox: View {
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(MicaboColor.accentWash, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboBrand.blue, lineWidth: 2))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboBrand.blue, lineWidth: MicaboSurface.border))
         .accessibilityElement(children: .combine)
     }
 }

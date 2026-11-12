@@ -146,4 +146,16 @@ final class TabRouter {
         focusRequests += 1
         selection = .focus
     }
+
+    /// Compteur de demandes de nouvelle leçon depuis un autre onglet : Home l'observe et ouvre
+    /// sa feuille des supports.
+    private(set) var lessonCreationRequests = 0
+
+    /// **Ouvre Home et sa feuille des supports** : « Nouvelle leçon », depuis l'onglet Leçons.
+    /// Une leçon se crée sur Home (le compositeur, les imports, la porte du gratuit) ; la
+    /// demander d'ailleurs ne doit pas faire chercher la barre de création.
+    func requestLessonCreation() {
+        lessonCreationRequests += 1
+        selection = .today
+    }
 }

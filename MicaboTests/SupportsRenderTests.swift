@@ -100,7 +100,8 @@ final class SupportsRenderTests: XCTestCase {
             LessonPathHeader(course: course, session: session, exam: nil)
                 .padding(.top, 30)
                 .padding(.bottom, 26)
-            RevisionModesRow(isPro: false) { _ in }
+            LessonToolGrid(isPro: false) { _ in }
+                .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.bottom, 30)
         }
     }

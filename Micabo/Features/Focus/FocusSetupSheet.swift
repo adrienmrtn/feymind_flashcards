@@ -116,7 +116,7 @@ struct FocusSetupForm: View {
                     .contentTransition(.numericText(value: Double(plan.workMinutes)))
                     .frame(maxWidth: .infinity, minHeight: 74)
                     .background(MicaboColor.accentSoft.opacity(0.5), in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous).strokeBorder(MicaboColor.accent.opacity(0.5), lineWidth: 2))
+                    .overlay(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous).strokeBorder(MicaboColor.accent.opacity(0.5), lineWidth: MicaboSurface.border))
                     .accessibilityLabel(Text(CalendarTime.duration(minutes: plan.workMinutes)))
                 stepButton("plus", delta: FocusPlan.stepMinutes, label: "ios.focus.more")
             }

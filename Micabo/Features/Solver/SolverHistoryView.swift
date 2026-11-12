@@ -105,7 +105,7 @@ struct SolverHistoryContent: View {
             .padding(.horizontal, 13)
             .padding(.vertical, 8)
             .background(selected ? MicaboColor.ink : MicaboColor.surface, in: Capsule())
-            .overlay(Capsule().strokeBorder(selected ? Color.clear : MicaboColor.stroke, lineWidth: 1))
+            .overlay(Capsule().strokeBorder(selected ? Color.clear : MicaboColor.stroke, lineWidth: MicaboSurface.border))
         }
         .buttonStyle(MicaboPressableButtonStyle())
         .accessibilityAddTraits(selected ? .isSelected : [])

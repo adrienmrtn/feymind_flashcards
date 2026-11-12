@@ -111,7 +111,7 @@ struct MonthGrid: View {
                 .foregroundStyle(MicaboColor.ink)
                 .frame(width: 40, height: 40)
                 .background(MicaboColor.surface, in: Circle())
-                .overlay(Circle().strokeBorder(MicaboColor.stroke, lineWidth: 1))
+                .overlay(Circle().strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
                 .flipsForRightToLeftLayoutDirection(true)
         }
         .buttonStyle(HomePressStyle(scale: 0.9, feedback: .selection))

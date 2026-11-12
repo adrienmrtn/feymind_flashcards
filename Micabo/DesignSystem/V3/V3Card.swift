@@ -83,7 +83,7 @@ struct V3Check: View {
     var body: some View {
         ZStack {
             Circle().fill(isOn ? V3Color.accent : Color.clear)
-            Circle().strokeBorder(isOn ? V3Color.accent : V3Color.ink3, lineWidth: 2)
+            Circle().strokeBorder(isOn ? V3Color.accent : V3Color.ink3, lineWidth: MicaboSurface.border)
             if isOn {
                 Image(systemName: "checkmark")
                     .font(.system(size: size * 0.48, weight: .black))
