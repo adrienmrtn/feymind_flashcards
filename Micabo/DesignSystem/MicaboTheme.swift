@@ -3,10 +3,12 @@ import UIKit
 
 /// Jetons de style de Micabo.
 ///
-/// Direction : blanc sur gris, avec du bleu pour ce qui est actif. Le fond est le
-/// gris groupé d'iOS ; les surfaces sont blanches. Les listes sont soit posées à
-/// même le fond et séparées par un filet, soit regroupées dans un bloc blanc.
-/// L'accent bleu est réservé à ce qui est actif ou sélectionné.
+/// **Direction V3.3 (lot 10) : « marine, net, adulte ».** L'app s'ouvre en marine ; le clair
+/// est une option, sur un fond teinté. Une carte est une surface à filet de 1,5 point — ni
+/// lèvre, ni ombre : seul le bouton principal a une lèvre. Les titres sont dans la police
+/// d'affichage, tout le reste en police système. Ces jetons portent les valeurs de `V3Color`,
+/// `V3Font` et `V3Metric` : un écran d'avant le lot 10 prend la direction sans changer une
+/// ligne, et elle se règle en un seul endroit.
 ///
 /// Deux bleus, et la distinction compte : `accent` est assez sombre pour porter du
 /// texte de onze points sur un fond pastel, `accentVivid` ne sert qu'aux surfaces
@@ -225,8 +227,8 @@ enum MicaboSpacing {
     static let xl: CGFloat = 28
     static let xxl: CGFloat = 40
 
-    /// Marge horizontale standard des écrans.
-    static let screen: CGFloat = 20
+    /// Marge horizontale standard des écrans : celle de la V3.
+    static let screen: CGFloat = V3Metric.screenMargin
 }
 
 /// **Le bouton est moins rond que la carte, et c'est voulu.**
@@ -236,37 +238,38 @@ enum MicaboSpacing {
 /// **surface** sur laquelle quelque chose est posé, un bouton est une **commande** qu'on
 /// presse. Plus la surface est grande, plus elle peut s'arrondir sans mollir ; un bouton
 /// trop rond, lui, perd ses angles d'appui et se met à ressembler à une pastille.
+///
+/// **Lot 10 : les valeurs sont celles de `V3Metric`** (12 / 14 / 18 / 22 / 24 / 28), le seul
+/// endroit où un rayon de la direction artistique s'écrit.
 enum MicaboRadius {
     /// Tuile pastel d'une rangée : carré arrondi, emoji ou symbole au centre.
-    static let tile: CGFloat = 14
+    static let tile: CGFloat = V3Metric.radiusTile
     /// **La grande tuile d'un deck**, dans la grille à deux colonnes. Elle fait 112 points
     /// de haut et porte son emoji à quarante-quatre : à ce format, le rayon d'une tuile de
     /// rangée la ferait paraître carrée.
     static let deck: CGFloat = 26
     /// Même valeur que la tuile, pour les vignettes du parcours d'accueil.
-    static let cover: CGFloat = 14
-    static let sm: CGFloat = 12
+    static let cover: CGFloat = V3Metric.radiusTile
+    static let sm: CGFloat = V3Metric.radiusBadge
     /// Boutons (principaux, secondaires, connexion) et champs de saisie : la même forme pour
     /// tout ce qu'on touche pour agir. Voir `MicaboButtonMetrics`.
-    static let button: CGFloat = 18
-    static let md: CGFloat = 16
-    /// Rangée-carte, encadré d'une fiche, rangée de choix du parcours d'accueil.
-    static let lg: CGFloat = 18
+    static let button: CGFloat = V3Metric.radiusButton
+    /// Un bloc à l'intérieur d'une carte, un champ.
+    static let md: CGFloat = V3Metric.radiusInner
+    /// Rangée-carte, encadré d'une fiche, rangée de choix du parcours d'accueil : le rayon de
+    /// la ligne de réponse.
+    static let lg: CGFloat = V3Metric.radiusInner
     /// **La carte à lavis** : série du profil, graphe de progression, et tout encadré qui
-    /// porte une couleur de fond plutôt qu'un filet. Vingt points — entre l'encadré à filet
-    /// et la grande tuile.
-    ///
-    /// Elle ne se confond pas avec `card`, qui vaut vingt-deux et qui sert aux cartes
-    /// blanches à ombre : deux points d'écart sur deux objets qui ne portent ni le même
-    /// fond ni la même fonction.
-    static let wash: CGFloat = 20
-    /// Bloc blanc regroupant plusieurs rangées, et cartes d'appel.
-    static let group: CGFloat = 22
-    static let card: CGFloat = 22
-    static let xl: CGFloat = 24
+    /// porte une couleur de fond plutôt qu'un filet. Le rayon de la bulle V3 — un cran sous
+    /// `card`, qui sert aux cartes à bord et à lèvre.
+    static let wash: CGFloat = V3Metric.radiusBubble
+    /// Bloc blanc regroupant plusieurs rangées, et cartes d'appel : le rayon de la carte V3.
+    static let group: CGFloat = V3Metric.radiusCard
+    static let card: CGFloat = V3Metric.radiusCard
+    static let xl: CGFloat = V3Metric.radiusCard
     static let xxl: CGFloat = 26
     /// Coins des feuilles modales.
-    static let sheet: CGFloat = 28
+    static let sheet: CGFloat = V3Metric.radiusSheet
     static let pill: CGFloat = 999
 }
 
@@ -283,13 +286,13 @@ enum MicaboLayout {
     /// Elle est déclarée ici et pas déduite du contenu : c'est cette hauteur que
     /// `safeAreaInset` réserve aux pages, et une barre qui se mesure elle-même donne une
     /// réserve qui change avec la longueur des libellés.
-    static let tabBarHeight: CGFloat = 60
+    static let tabBarHeight: CGFloat = V3Metric.tabBarHeight
 
     /// Air laissé entre la barre d'onglets et ce qu'une page ancre juste au-dessus d'elle :
     /// le « + » de Cours, le bouton de session de Réviser.
     ///
-    /// La barre est une pilule de verre qui flotte : huit points d'air au-dessus d'elle
-    /// suffisent pour qu'un bouton de page ne se lise pas comme à moitié caché.
+    /// La barre est pleine largeur, sur le fond du thème (lot 10) : huit points d'air au-dessus
+    /// d'elle suffisent pour qu'un bouton de page ne se colle pas à ses icônes.
     static let tabBarGap: CGFloat = 8
 
     /// **Tout ce que la barre d'onglets occupe**, hors zone sûre : c'est la hauteur
@@ -301,63 +304,58 @@ enum MicaboLayout {
     static var tabBarSpace: CGFloat { tabBarGap + tabBarHeight }
 }
 
-/// **Une seule famille : Nunito, partout.**
+/// **Deux familles : Sofia Sans Condensed pour les titres, la police système pour le texte**
+/// (V3.3, lot 10).
 ///
-/// L'app a eu deux familles — Outfit pour nommer, Hanken Grotesk pour raconter. La refonte
-/// « parcours » n'en garde qu'une, arrondie : un parcours façon Duolingo se lit comme un jeu,
-/// et une grotesque serrée le ferait ressembler à un tableau de bord. Nunito tient les deux
-/// rôles — ses graisses vont du normal au noir, et elle a un vrai italique, là où Hanken
-/// demandait une inclinaison synthétique.
+/// L'app a eu deux familles — Outfit pour nommer, Hanken Grotesk pour raconter —, puis une
+/// seule, la Nunito ronde de la refonte « parcours ». Ses terminaisons rondes faisaient
+/// enfantin : la V3.3 prend une condensée franche, **Sofia Sans Condensed**, pour ce qui se
+/// lit de loin (titres, bulles de Mika, boutons, grands chiffres), et passe tout le reste en
+/// **police système**. Nunito a quitté l'app.
 ///
-/// Le barème des Notes (26 / 20 / 17 / 12) est celui de la refonte, voir
-/// `docs/refonte-parcours.md` § 6. Les anciens rôles restent tant que les anciens écrans
-/// vivent.
+/// **Tout ce type passe par `V3Font`**, la fabrique unique des polices de l'app.
+/// - Les jetons nommés (`screenTitle`, `body`, `caption`…) **sont** des jetons `V3Font`.
+/// - `ui(_:weight:)`, que cinq cents appels d'écran utilisent avec les tailles et les graisses
+///   de l'ancienne app, est **réparti entre les deux familles** par `V3LegacyScale` : un titre
+///   (19 points et plus, en gras) en Sofia Sans Condensed, le reste en police système au style
+///   le plus proche. Un écran d'avant le lot 10 prend donc la typographie d'aujourd'hui sans qu'on y
+///   touche, et elle se règle en un seul endroit. Un écran neuf n'appelle pas `ui` : il lit un
+///   jeton `V3Font`.
 enum MicaboFont {
     // MARK: La famille
 
-    /// Nunito, à une graisse donnée.
+    /// **La police d'un écran d'avant le lot 10**, demandée à l'ancienne échelle :
+    /// `V3Font.legacy` en fait un titre Sofia ou du texte système. Voir le commentaire du type.
     static func ui(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        .custom(nunitoName(for: weight), size: size)
+        V3Font.legacy(size, weight: weight)
     }
 
-    /// Le texte qu'on lit. Même famille que l'interface depuis la refonte ; le nom reste pour
-    /// dire l'intention à l'appel.
+    /// Le texte qu'on lit, demandé à l'ancienne échelle : toujours en police système, et à sa
+    /// graisse — un texte long garde son Regular.
     static func reading(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        ui(size, weight: weight)
+        V3Font.legacy(size, weight: weight, reading: true)
     }
 
-    /// Nunito côté UIKit : la fiche compose ses paragraphes dans un `UITextView` pour que la
-    /// sélection d'un passage soit celle du système, et il lui faut donc des `UIFont`.
+    /// La police de la fiche côté UIKit : elle compose ses paragraphes dans un `UITextView` pour
+    /// que la sélection d'un passage soit celle du système, et il lui faut donc des `UIFont`.
+    /// Les mêmes deux familles que `V3Font` : la police d'affichage pour un titre (19 points et
+    /// plus, en gras), la police système pour le reste — avec son vrai italique.
     static func uiFont(_ size: CGFloat, weight: Font.Weight = .regular, italic: Bool = false) -> UIFont {
-        UIFont(name: nunitoName(for: weight, italic: italic), size: size)
-            ?? UIFont.systemFont(ofSize: size, weight: uiWeight(for: weight))
+        if !italic, V3LegacyScale.isTitle(size: size, weight: weight),
+           let display = UIFont(name: V3Typeface.displayName(for: V3LegacyScale.titleWeight(weight)), size: size) {
+            return display
+        }
+        let system = UIFont.systemFont(ofSize: size, weight: uiWeight(for: weight))
+        // L'italique s'ajoute aux traits de la police, il ne les remplace pas : un gras italique
+        // reste gras.
+        let traits = system.fontDescriptor.symbolicTraits.union(.traitItalic)
+        guard italic, let slanted = system.fontDescriptor.withSymbolicTraits(traits) else { return system }
+        return UIFont(descriptor: slanted, size: size)
     }
 
     /// La police d'interface côté UIKit, pour les rares vues qui en sont faites.
     static func uiDisplayFont(_ size: CGFloat, weight: Font.Weight = .regular) -> UIFont {
         uiFont(size, weight: weight)
-    }
-
-    // MARK: Noms PostScript
-
-    /// Les six graisses embarquées, et les deux italiques. Une graisse plus fine que le normal
-    /// retombe sur le normal plutôt que sur une police absente ; l'italique n'existe qu'en
-    /// normal et en gras, et chaque graisse prend le plus proche des deux.
-    static func nunitoName(for weight: Font.Weight, italic: Bool = false) -> String {
-        if italic {
-            switch weight {
-            case .semibold, .bold, .heavy, .black: return "Nunito-BoldItalic"
-            default: return "Nunito-Italic"
-            }
-        }
-        switch weight {
-        case .black: return "Nunito-Black"
-        case .heavy: return "Nunito-ExtraBold"
-        case .bold: return "Nunito-Bold"
-        case .semibold: return "Nunito-SemiBold"
-        case .medium: return "Nunito-Medium"
-        default: return "Nunito-Regular"
-        }
     }
 
     private static func uiWeight(for weight: Font.Weight) -> UIFont.Weight {
@@ -369,49 +367,57 @@ enum MicaboFont {
         return .regular
     }
 
-    // MARK: Le barème de la refonte
+    // MARK: Le barème de la refonte — des jetons `V3Font` (lot 10)
+    //
+    // Chaque rôle d'avant est le jeton `V3Font` qui lui correspond : 32 pour un titre de page,
+    // 25 pour un titre d'écran ou de thème, 22 pour un titre de section, 21 pour un titre de
+    // carte (Sofia Sans Condensed Black) ; 16-17 pour le corps, 15 pour un libellé, 13 pour une
+    // légende (police système).
 
     /// Titre d'un thème, titre d'une leçon en tête de parcours.
-    static let title = ui(26, weight: .bold)
+    static let title = V3Font.h2
     /// Sous-titre dans les notes, titre d'une page de quiz.
-    static let subtitle = ui(20, weight: .bold)
-    /// Corps des notes et des puces. Interligne 1,35 : c'est la hauteur naturelle de Nunito.
-    static let notes = ui(17, weight: .regular)
+    static let subtitle = V3Font.title
+    /// Corps des notes et des puces : le seul texte long de l'app, un cran plus léger que
+    /// l'interface.
+    static let notes = V3Font.reading
     /// Un mot-clé dans les notes : gras, et violet (`MicaboColor.keyword`).
-    static let keyword = ui(17, weight: .bold)
+    static let keyword = V3Font.bodyStrong
     /// Titre d'un cercle sur le chemin, intitulé d'une rangée.
-    static let label = ui(17, weight: .bold)
-    /// **Le seul petit texte autorisé** : durée, numéro de cercle, palier. Toujours en
+    static let label = V3Font.bodyStrong
+    /// **Le plus petit texte de l'app** : durée, numéro de cercle, palier. Toujours en
     /// capitales, en gris, avec `MicaboTracking.caps`.
-    static let small = ui(12, weight: .bold)
+    static let small = V3Font.eyebrow
 
     // MARK: Rôles
 
     static func display(_ size: CGFloat) -> Font {
-        ui(size, weight: .heavy)
+        ui(size, weight: .black)
     }
 
     /// **Les chiffres qu'on lit comme un résultat** : les stats de Home, un score, une
     /// progression. Poser `.monospacedDigit()` là où le nombre bouge reste nécessaire — c'est
     /// ce qui empêche un compteur de tressauter.
-    static func number(_ size: CGFloat, weight: Font.Weight = .heavy) -> Font {
+    static func number(_ size: CGFloat, weight: Font.Weight = .black) -> Font {
         ui(size, weight: weight)
     }
 
-    /// Grand titre d'écran, posé à même le fond.
-    static let screenTitle = ui(30, weight: .black)
-    static let pageTitle = ui(22, weight: .bold)
-    static let sectionTitle = ui(19, weight: .bold)
-    static let cardTitle = ui(17, weight: .bold)
-    static let rowTitle = ui(17, weight: .bold)
-    static let rowSubtitle = ui(14, weight: .medium)
-    static let body = ui(17, weight: .regular)
-    static let bodyEmphasis = ui(17, weight: .semibold)
-    static let caption = ui(14, weight: .medium)
-    static let captionEmphasis = ui(14, weight: .bold)
-    static let micro = ui(12, weight: .bold)
+    /// Grand titre d'écran, posé à même le fond : le h1 de la direction artistique.
+    static let screenTitle = V3Font.h1
+    /// Titre d'un écran poussé ou d'une feuille : son h2.
+    static let pageTitle = V3Font.h2
+    /// Titre de section.
+    static let sectionTitle = V3Font.section
+    static let cardTitle = V3Font.cardTitle
+    static let rowTitle = V3Font.bodyStrong
+    static let rowSubtitle = V3Font.support
+    static let body = V3Font.body
+    static let bodyEmphasis = V3Font.bodyStrong
+    static let caption = V3Font.support
+    static let captionEmphasis = V3Font.custom(14, weight: .heavy)
+    static let micro = V3Font.caption
     /// Sur-titres et intitulés de section, toujours en capitales.
-    static let eyebrow = ui(12, weight: .bold)
+    static let eyebrow = V3Font.eyebrow
 }
 
 /// Le réglage typographique de la fiche d'un cours.
@@ -521,9 +527,9 @@ enum SheetTypography {
 
 enum MicaboTracking {
     /// Resserrement appliqué aux grands titres.
-    static let tight: CGFloat = -0.5
+    static let tight: CGFloat = V3Tracking.h2
     /// Resserrement des très grands chiffres et titres d'écran.
-    static let display: CGFloat = -0.9
+    static let display: CGFloat = V3Tracking.display
     /// Écartement des textes en capitales.
     static let caps: CGFloat = 1.1
 }
@@ -680,15 +686,26 @@ enum MicaboElevation {
 private struct MicaboElevationStyle: ViewModifier {
     var level: MicaboElevation
 
+    /// **Plus d'ombre floue** (V3.3, lot 10) : sur le marine, une surface se détache par sa
+    /// clarté et son filet. Seul ce qui flotte réellement au-dessus de la page — un bouton
+    /// d'import posé sur le contenu — garde une ombre ; une rangée et une carte n'en ont plus.
     func body(content: Content) -> some View {
         let contact = level.contact
         let ambient = level.ambient
+        let floats = level == .floating
         return content
-            // Un bleu nuit, pas l'encre : la nuit, l'encre est claire, et une ombre claire serait
-            // un halo. Le jour, une ombre teintée du bleu de l'accent reste fraîche là où le noir
-            // grisait le blanc des cartes (lot 7).
-            .shadow(color: MicaboShadow.tint.opacity(contact.opacity), radius: contact.radius, x: 0, y: contact.y)
-            .shadow(color: MicaboShadow.tint.opacity(level.ambientOpacity), radius: ambient.radius, x: 0, y: ambient.y)
+            .shadow(
+                color: MicaboShadow.tint.opacity(floats ? contact.opacity : 0),
+                radius: floats ? contact.radius : 0,
+                x: 0,
+                y: floats ? contact.y : 0
+            )
+            .shadow(
+                color: MicaboShadow.tint.opacity(floats ? level.ambientOpacity : 0),
+                radius: floats ? ambient.radius : 0,
+                x: 0,
+                y: floats ? ambient.y : 0
+            )
     }
 }
 
@@ -698,33 +715,39 @@ enum MicaboShadow {
     static let tint = Color(hex: 0x1A2340)
 }
 
-/// **La surface de l'app** (lot 9) : un fond, un rayon, un filet d'un point, et une **lèvre**.
+/// **La surface de l'app** : un fond, un rayon, un **filet de 1,5 point** (V3.3, lot 10).
 ///
-/// La lèvre est le bord plein de trois points qui dépasse sous la surface, dans `edge` : elle
-/// pose un objet touchable comme une touche. Elle remplace l'ombre floue en deux couches, qui
-/// grisait le blanc le jour et ne se voyait pas la nuit ; une lèvre se lit dans les deux. Le
-/// jour garde une diffusion très légère sous la lèvre, pour décoller la carte du fond.
-///
-/// **Tout est dans le fond**, rien sur le contenu : une ombre posée sur une pile ombre aussi
-/// chacun de ses textes, et une lèvre nette se lirait en double sous chaque mot.
+/// Sur le marine, une carte se détache par sa clarté et son filet. Elle a eu une ombre floue
+/// (qui grisait le blanc et ne se voyait pas la nuit), puis une lèvre de trois points (lot 9) :
+/// la V3.3 ne garde de lèvre que sous le bouton principal. Les mesures viennent de `V3Metric`.
 enum MicaboSurface {
-    /// La hauteur de la lèvre d'une carte et d'une rangée.
-    static let lip: CGFloat = 3
-    /// La lèvre d'un bouton plein : un cran plus haute, c'est elle qui s'enfonce à l'appui.
-    static let buttonLip: CGFloat = 4
+    /// La hauteur de la lèvre d'une carte et d'une rangée : aucune, depuis la V3.3.
+    static let lip: CGFloat = V3Metric.lip
+    /// La lèvre d'un bouton plein : c'est elle qui s'enfonce à l'appui.
+    static let buttonLip: CGFloat = V3Metric.buttonLip
+    /// L'épaisseur du filet.
+    static let border: CGFloat = V3Metric.border
 }
 
 struct MicaboSurfaceStyle: ViewModifier {
     var radius: CGFloat
     var fill: Color = MicaboColor.surface
     var stroke: Color = MicaboColor.stroke
+    /// La lèvre demandée par l'écran. Elle ne dépasse jamais celle de la direction artistique
+    /// (`MicaboSurface.lip`) : à zéro, aucune surface de l'app n'en a.
     var lip: CGFloat = MicaboSurface.lip
     /// Coupe le contenu à la forme : pour un Mika ou une image qui sort du bord.
     var clipped: Bool = false
 
+    private var lipHeight: CGFloat { min(lip, MicaboSurface.lip) }
+
+    /// La lèvre a la couleur du bord : le filet par défaut, la teinte d'une surface colorée.
+    private var lipColor: Color {
+        stroke == MicaboColor.stroke ? MicaboColor.edge : stroke
+    }
+
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
-        let ambient = AppearanceStore.shared.palette.cardShadow
         return Group {
             if clipped {
                 content.clipShape(shape)
@@ -734,15 +757,16 @@ struct MicaboSurfaceStyle: ViewModifier {
         }
         .background {
             ZStack {
-                shape
-                    .fill(MicaboColor.edge)
-                    .offset(y: lip)
-                    .shadow(color: MicaboShadow.tint.opacity(ambient), radius: 12, x: 0, y: 6 + lip)
+                if lipHeight > 0 {
+                    shape
+                        .fill(lipColor)
+                        .offset(y: lipHeight)
+                }
                 shape.fill(fill)
             }
         }
         .overlay {
-            shape.strokeBorder(stroke, lineWidth: 1)
+            shape.strokeBorder(stroke, lineWidth: MicaboSurface.border)
         }
     }
 }
@@ -759,7 +783,7 @@ struct MicaboCardStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding(padding)
-            .micaboSurface(radius: radius, lip: elevated ? MicaboSurface.lip : 2)
+            .micaboSurface(radius: radius)
     }
 }
 

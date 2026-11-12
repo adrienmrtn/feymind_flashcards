@@ -120,8 +120,8 @@ struct SolverMikaNote<Content: View>: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(MicaboColor.accentWash, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(MicaboColor.accentSoft, lineWidth: 1))
+                .background(MicaboColor.accentWash, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous).strokeBorder(MicaboColor.accentSoft, lineWidth: 1))
         }
     }
 }

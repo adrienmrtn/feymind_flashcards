@@ -111,6 +111,6 @@ struct SheetExportCard<Action: View>: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity)
-        .background(tone.pale, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .background(tone.pale, in: RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous))
     }
 }

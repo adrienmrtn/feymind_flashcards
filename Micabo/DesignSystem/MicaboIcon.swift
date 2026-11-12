@@ -1,18 +1,26 @@
 import SwiftUI
 import UIKit
 
-/// **Les icônes de Micabo : plates, en deux tons** (lot 9).
+/// **Les icônes de Micabo : plates, en deux tons, une couleur par idée** (lot 9, V3.3 au lot 10).
 ///
-/// Chaque leçon, chaque thème, chaque cercle, chaque source d'import porte une icône. Elle a un
-/// identifiant stable (`rawValue`) : c'est lui que le modèle choisit pour une leçon ou un thème,
-/// lui qui est enregistré (`Course.iconID`, `Chapter.iconID`).
+/// Chaque leçon, chaque thème, chaque cercle, chaque source d'import, chaque réponse d'un
+/// parcours porte une icône. Elle a un identifiant stable (`rawValue`) : c'est lui que le modèle
+/// choisit pour une leçon ou un thème, lui qui est enregistré (`Course.iconID`,
+/// `Chapter.iconID`).
 ///
 /// **Elles se dessinent en SF Symbols, en deux tons** : le contour plein de la couleur, et
-/// l'intérieur de la même couleur à un quart. Les icônes 3D de la base
-/// (`Assets.xcassets/Icon3D-<id>`) faisaient « autocollant » à côté des pictogrammes du
-/// système, se brouillaient sous vingt-huit points et ne changeaient pas de couleur avec la
-/// matière ; une famille plate se lit net à toutes les tailles, de la puce de seize points au
-/// trophée de cent, et prend le ton de la leçon. Les images restent dans le catalogue — le site
+/// l'intérieur de la même couleur à un quart — le rendu « duotone » des maquettes. Un symbole
+/// sans contour prend le rendu hiérarchique du système. **Une icône n'est jamais un emoji** :
+/// un emoji ne se teinte pas, ne se lit pas la nuit comme le jour, et change de dessin d'un
+/// téléphone à l'autre.
+///
+/// **Sept teintes, une par idée** (`V3Color.icon…`) : bleu pour capter et lire (photo, notes,
+/// lien), rose pour s'évaluer (quiz, examen), vert pour mémoriser et réussir (cartes, coche),
+/// jaune pour l'idée et la récompense (ampoule, trophée, étoile), lilas pour Mika et ce qui
+/// distingue (couronne, diplôme), orange pour l'élan et le temps (flamme, réveil), rouge pour
+/// ce qui se repère de loin (PDF, drapeau, épingle).
+///
+/// Les icônes 3D de la base (`Assets.xcassets/Icon3D-<id>`) restent dans le catalogue — le site
 /// et les anciennes versions les nomment —, l'app ne les dessine plus.
 ///
 /// La liste des icônes qu'un modèle peut choisir est `lessonCatalog` ; la même liste, avec le
@@ -219,28 +227,34 @@ enum MicaboIcon: String, CaseIterable, Codable, Identifiable {
     }
 
     /// **Le ton d'une icône** : celui de la matière qu'elle représente (`LessonTone.forSubject`),
-    /// pour qu'une icône de maths soit bleue partout où elle paraît ; pour les autres, le ton
-    /// de ce qu'elles disent — le jaune du crayon pour ce qui récompense (série, trophée,
-    /// couronne), le rose pour ce qui capte (photo, micro), la menthe pour ce qui est juste.
+    /// pour qu'une icône de maths soit bleue partout où elle paraît ; pour les autres, le ton de
+    /// l'idée qu'elles portent. C'est lui qui donne le pâle d'une tuile (`tone.pale`).
     var tone: LessonTone {
         switch self {
         case .calculator, .rocket, .atom, .brain, .flask, .globe, .scroll, .diploma, .quill, .book, .palette:
             LessonTone.forSubject(self)
-        case .lightbulb, .trophy, .crown, .flame, .folder, .alarm, .rate, .hourglass, .star:
+        case .lightbulb, .trophy, .flame, .folder, .alarm, .rate, .hourglass, .star:
             .yellow
-        case .flag, .pin, .photo, .audio, .privacy:
+        case .flag, .pin, .quiz, .exam, .pdf, .privacy:
             .pink
-        case .puzzle, .check, .text, .cards, .friends:
+        case .puzzle, .check, .text, .cards, .friends, .audio:
             .mint
-        case .mika, .theme, .apps, .exam:
+        case .mika, .theme, .apps, .crown, .language:
             .lilac
         default:
             .blue
         }
     }
 
-    /// La teinte du dessin : le trait du ton de l'icône.
-    var tint: Color { tone.glyph }
+    /// **La teinte du dessin** : celle du ton, sauf pour les deux idées qui n'ont pas de ton de
+    /// leçon — l'orange de l'élan et du temps, le rouge de ce qui se repère de loin.
+    var tint: Color {
+        switch self {
+        case .flame, .alarm, .hourglass: V3Color.iconOrange
+        case .pdf, .flag, .pin: V3Color.iconRed
+        default: tone.glyph
+        }
+    }
 
     /// Vrai si l'icône a une image dans la base (et pas seulement un symbole).
     var isInBase: Bool {
@@ -254,19 +268,22 @@ enum MicaboIcon: String, CaseIterable, Codable, Identifiable {
     }
 }
 
-/// **Une icône à la taille demandée** : plate, en deux tons, dans le ton de l'icône ou dans
-/// celui qu'on lui donne (`tone`) — celui de la leçon, pour que le dessin et la tuile pâle
-/// qui le porte soient de la même couleur.
+/// **Une icône à la taille demandée** : plate, en deux tons, dans la teinte de l'icône, dans
+/// le ton d'une leçon (`tone`) — pour que le dessin et la tuile pâle qui le porte soient de la
+/// même couleur — ou dans une teinte donnée (`tint` : `V3Color.iconGreen`, le blanc sur un
+/// aplat).
 struct MicaboIconView: View {
     let icon: MicaboIcon
     var size: CGFloat = 44
     /// À venir, sur le chemin : l'icône s'efface à 40 %.
     var dimmed = false
-    /// Le ton du dessin ; par défaut, celui de l'icône (`MicaboIcon.tone`).
+    /// Le ton du dessin ; par défaut, celui de l'icône (`MicaboIcon.tint`).
     var tone: LessonTone?
+    /// Une teinte imposée, qui passe avant le ton.
+    var tint: Color?
 
     var body: some View {
-        let color = (tone ?? icon.tone).glyph
+        let color = tint ?? tone?.glyph ?? icon.tint
         // Le trait s'épaissit sur les petites tailles : un contour régulier à seize points
         // disparaît, un contour gras à cent en devient un pictogramme d'avertissement.
         let weight: Font.Weight = size < 30 ? .bold : (size < 64 ? .semibold : .medium)
@@ -280,7 +297,10 @@ struct MicaboIconView: View {
                     .font(font)
                     .foregroundStyle(color)
             } else {
+                // Pas de contour à poser sur un plein : le rendu hiérarchique du système donne
+                // les deux tons, quand le symbole a deux couches.
                 Image(systemName: icon.symbol)
+                    .symbolRenderingMode(.hierarchical)
                     .font(font)
                     .foregroundStyle(color)
             }

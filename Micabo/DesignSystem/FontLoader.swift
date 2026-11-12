@@ -4,20 +4,12 @@ import UIKit
 /// Enregistre les fichiers de police du bundle (complément de `UIAppFonts` dans
 /// Info.plist) pour qu'ils soient disponibles dès le premier rendu.
 ///
-/// Une seule famille, Nunito, en six graisses et deux italiques. Un fichier manquant, et la
-/// graisse qu'il porte retombe sur San Francisco sans rien dire : `FontTests` vérifie qu'ils
-/// sont tous là.
+/// Une seule famille embarquée : **Sofia Sans Condensed**, la police d'affichage de Micabo, en
+/// ExtraBold et en Black (`V3Typeface.displayFiles`). Tout le reste du texte est en police système. Un
+/// fichier manquant, et la graisse qu'il porte retombe sur San Francisco sans rien dire :
+/// `FoundationsTests` vérifie qu'ils sont tous là.
 enum FontLoader {
-    static let fileNames = [
-        "Nunito-Regular",
-        "Nunito-Medium",
-        "Nunito-SemiBold",
-        "Nunito-Bold",
-        "Nunito-ExtraBold",
-        "Nunito-Black",
-        "Nunito-Italic",
-        "Nunito-BoldItalic"
-    ]
+    static let fileNames = V3Typeface.displayFiles
 
     private static var didRegister = false
 

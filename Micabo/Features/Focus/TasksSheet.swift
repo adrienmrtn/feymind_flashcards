@@ -131,8 +131,8 @@ struct TaskEditSheet: View {
                         .submitLabel(.done)
                         .onSubmit(save)
                         .padding(16)
-                        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+                        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
 
                     VStack(spacing: 0) {
                         Toggle(isOn: $hasDue.animation(MicaboMotion.standard)) {
@@ -151,7 +151,7 @@ struct TaskEditSheet: View {
                                 .padding(.horizontal, 8)
                         }
                     }
-                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
 
                     Button {
                         choosingLesson = true
@@ -172,7 +172,7 @@ struct TaskEditSheet: View {
                         }
                         .padding(.horizontal, 14)
                         .frame(minHeight: 52)
-                        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
                     }
                     .buttonStyle(HomePressStyle(scale: 0.98))
                     .disabled(lessons.isEmpty)

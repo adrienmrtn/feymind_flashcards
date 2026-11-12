@@ -1,16 +1,17 @@
 import SwiftUI
 
-/// **La ligne de réponse V3** : 64 pt au moins, une pastille d'icône de 40 pt, un texte de
-/// 18 pt ExtraBold, une coche ronde à droite. Choisie : bord et lèvre d'accent, fond de lavis.
-/// Elle s'enfonce sur sa lèvre à l'appui.
+/// **La ligne de réponse de l'app** : une surface plate de 58 pt au moins, rayon 16, filet de
+/// 1,5 pt ; une icône deux tons de 26 pt à gauche, le texte en 16 pt Bold, et une coche ronde à
+/// droite **seulement quand elle est choisie**. Choisie : filet d'accent, lavis de sélection.
 ///
-/// - `emoji` ou `icon` : ce que porte la pastille (l'emoji gagne s'il y a les deux) ; sans
-///   l'un ni l'autre, pas de pastille.
-/// - `tone` : le fond de la pastille — un lavis (`V3Color.greenWash`) ou un plein, délayé.
-/// - `multiple` : la coche devient une case, pour un choix multiple.
+/// - `icon` : l'icône deux tons de la ligne (`MicaboIcon`), dans sa teinte ou dans `tone`.
+/// - `emoji` : gardé pour ce qui n'a pas d'icône (un drapeau) ; jamais à la place d'une icône.
+/// - `tone` : la teinte de l'icône (`V3Color.iconGreen`…).
+/// - `multiple` : la case reste visible, vide, tant que la ligne n'est pas choisie — on peut en
+///   cocher plusieurs.
 ///
-/// Une ligne réserve ses 4 pt de lèvre : dans une pile, `VStack(spacing: 10)` donne les 14 pt
-/// des maquettes. Le texte passe à la ligne, la ligne grandit.
+/// Dans une pile, `VStack(spacing: 10)` donne l'écart des maquettes. Le texte passe à la ligne,
+/// la ligne grandit.
 struct V3OptionRow: View {
     private let title: String
     private let subtitle: String?
@@ -44,11 +45,11 @@ struct V3OptionRow: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 14) {
-                badge
+                leading
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(V3Font.option)
-                        .foregroundStyle(isSelected ? V3Color.accentInk : V3Color.ink)
+                        .foregroundStyle(V3Color.ink)
                     if let subtitle, !subtitle.isEmpty {
                         Text(subtitle)
                             .font(V3Font.support)
@@ -58,10 +59,12 @@ struct V3OptionRow: View {
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                V3Check(isOn: isSelected, square: multiple)
+                if isSelected || multiple {
+                    V3Check(isOn: isSelected)
+                }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 10)
+            .padding(.vertical, 8)
             .frame(maxWidth: .infinity, minHeight: V3Metric.optionHeight)
         }
         .buttonStyle(V3TileButtonStyle(selected: isSelected))
@@ -70,26 +73,17 @@ struct V3OptionRow: View {
     }
 
     @ViewBuilder
-    private var badge: some View {
-        if emoji != nil || icon != nil {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(badgeFill)
-                if let emoji {
-                    Text(emoji)
-                        .font(.system(size: 22))
-                } else if let icon {
-                    MicaboIconView(icon: icon, size: 28)
-                }
-            }
-            .frame(width: V3Metric.badge, height: V3Metric.badge)
-            .accessibilityHidden(true)
+    private var leading: some View {
+        if let icon {
+            // `MicaboIconView` dessine son symbole aux deux tiers de sa case : on lui donne une
+            // case plus grande, pour un dessin de 26 pt à l'œil.
+            MicaboIconView(icon: icon, size: V3Metric.optionIcon * 1.35, tint: tone)
+                .frame(width: V3Metric.optionIcon + 2, height: V3Metric.optionIcon + 2)
+        } else if let emoji {
+            Text(emoji)
+                .font(.system(size: 22))
+                .frame(width: V3Metric.optionIcon, height: V3Metric.optionIcon)
+                .accessibilityHidden(true)
         }
-    }
-
-    private var badgeFill: Color {
-        if let tone { return V3Color.wash(of: tone) }
-        if emoji == nil, let icon { return icon.tone.pale }
-        return isSelected ? V3Color.accentWash2 : V3Color.soft
     }
 }

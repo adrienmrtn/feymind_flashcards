@@ -250,9 +250,9 @@ struct AnswerButtonStyle: ButtonStyle {
             .foregroundStyle(MicaboColor.onInk)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(color, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(color, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
             .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
                     .fill(color.opacity(0.6))
                     .offset(y: configuration.isPressed ? 0 : 4)
             )
@@ -452,8 +452,8 @@ struct LessonCardsRun: View {
                 .minimumScaleFactor(0.85)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(fill, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(ink.opacity(0.25), lineWidth: 1.5))
+                .background(fill, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous).strokeBorder(ink.opacity(0.25), lineWidth: 1.5))
         }
         .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
     }
@@ -594,9 +594,9 @@ struct FlashcardFace: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity, minHeight: 320, alignment: .topLeading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
+            RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous)
                 .strokeBorder(flipped ? tone.vivid : MicaboColor.stroke, lineWidth: 2)
         )
         .micaboElevation(.card)

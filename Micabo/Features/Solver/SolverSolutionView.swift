@@ -70,8 +70,8 @@ struct SolverSolutionContent: View {
                         .resizable()
                         .scaledToFill()
                         .frame(width: 60, height: 60)
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+                        .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
                         .accessibilityHidden(true)
                 }
                 SolverRichText(source: session.exercise.statement, size: 16)
@@ -272,7 +272,7 @@ struct SolverSolutionContent: View {
                             .fixedSize(horizontal: false, vertical: true)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 11)
-                            .background(MicaboBrand.blue, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .background(MicaboBrand.blue, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
                     }
                     .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
                 }
@@ -328,7 +328,7 @@ struct SolverSolutionContent: View {
                         .lineLimit(1...4)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 12)
-                        .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
                         .submitLabel(.done)
                     Button {
                         actions.check(attempt)
@@ -345,7 +345,7 @@ struct SolverSolutionContent: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 16)
                         .frame(minHeight: 46)
-                        .background(attempt.nilIfBlank == nil ? MicaboColor.inkTertiary : MicaboBrand.blue, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .background(attempt.nilIfBlank == nil ? MicaboColor.inkTertiary : MicaboBrand.blue, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
                     }
                     .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
                     .disabled(attempt.nilIfBlank == nil || session.checking)
@@ -364,7 +364,7 @@ struct SolverSolutionContent: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(right ? MicaboColor.correctSoft : MicaboColor.wrongSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .background(right ? MicaboColor.correctSoft : MicaboColor.wrongSoft, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
     }
 
     // MARK: Demander à Mika
