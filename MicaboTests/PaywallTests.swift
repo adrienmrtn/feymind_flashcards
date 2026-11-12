@@ -306,7 +306,7 @@ final class PaywallTests: XCTestCase {
         let yearly = PaywallCatalog.yearly
         let weekly = PaywallCatalog.weekly
         XCTAssertEqual(PaywallCopy.planDetail(for: yearly, locale: .fr), "3 jours gratuits, puis \(yearly.displayPrice) par an")
-        XCTAssertEqual(PaywallCopy.planDetail(for: weekly, locale: .fr), "3 jours gratuits, puis \(weekly.displayPrice) par semaine")
+        XCTAssertEqual(PaywallCopy.planDetail(for: weekly, locale: .fr), "3 jours gratuits, puis chaque semaine")
 
         PaywallStorePrices.storeTrialEligibility([yearly.productID: false, weekly.productID: false])
         XCTAssertEqual(PaywallCopy.planDetail(for: PaywallCatalog.yearly, locale: .fr), "\(yearly.displayPrice) par an")
