@@ -46,6 +46,12 @@ struct DiscountOfferScreen: View {
     @State private var expired = false
     private var isOver: Bool { expired || clock.remaining() <= 0 }
 
+    /// Le grand pourcentage est arrivé. Tenu par l'écran, pas par le chiffre : l'écran change
+    /// de mise en page quand un message se pose sous le bouton, et l'arrivée ne doit pas se
+    /// rejouer pour autant.
+    @State private var arrived = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         VStack(spacing: 0) {
             DiscountTopBar(clock: clock, isBusy: isPurchasing, onClose: onClose) {
@@ -67,6 +73,12 @@ struct DiscountOfferScreen: View {
             footer
         }
         .background(V3Color.bg.ignoresSafeArea())
+        .onAppear {
+            guard animatesArrival, !arrived else { return }
+            withAnimation(MicaboMotion.resolved(MicaboMotion.celebrate, reduceMotion: reduceMotion)) {
+                arrived = true
+            }
+        }
     }
 
     // MARK: Le contenu
@@ -82,7 +94,7 @@ struct DiscountOfferScreen: View {
                 .padding(.vertical, 7)
                 .background(V3Color.surface, in: Capsule())
 
-            DiscountPercent(savings: savings, animatesArrival: animatesArrival)
+            DiscountPercent(savings: savings, isSettled: arrived || !animatesArrival)
                 .padding(.top, 10)
 
             Text(L10n.t("ios.pay10.offer.sub", locale: .resolved()))
@@ -248,20 +260,13 @@ struct DiscountOfferScreen: View {
 // MARK: - Le grand pourcentage
 
 /// **« −40 % », en géant** : le jaune de l'offre, le même dans les deux thèmes. Il arrive une
-/// fois, avec la courbe des réussites — un rien plus petit, puis à sa taille.
+/// fois, avec la courbe des réussites — un rien plus petit (`isSettled` faux), puis à sa
+/// taille. C'est l'écran qui joue l'arrivée (`DiscountOfferScreen`).
 struct DiscountPercent: View {
     /// « −40 % », écrit comme la langue l'écrit.
     let savings: String
-    var animatesArrival = true
-
-    @State private var arrived: Bool
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    init(savings: String, animatesArrival: Bool = true) {
-        self.savings = savings
-        self.animatesArrival = animatesArrival
-        _arrived = State(initialValue: !animatesArrival)
-    }
+    /// Vrai une fois le chiffre à sa taille.
+    var isSettled = true
 
     var body: some View {
         Text(savings)
@@ -270,14 +275,8 @@ struct DiscountPercent: View {
             .lineLimit(1)
             .tracking(PaywallStyle.percentTracking)
             .minimumScaleFactor(0.4)
-            .scaleEffect(arrived ? 1 : 0.9)
+            .scaleEffect(isSettled ? 1 : 0.9)
             .accessibilityAddTraits(.isHeader)
-            .onAppear {
-                guard !arrived else { return }
-                withAnimation(MicaboMotion.resolved(MicaboMotion.celebrate, reduceMotion: reduceMotion)) {
-                    arrived = true
-                }
-            }
     }
 }
 
