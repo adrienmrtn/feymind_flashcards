@@ -108,7 +108,7 @@ enum PaywallStyle {
     static let planRadius: CGFloat = V3Metric.radiusInner
     static let planSpacing: CGFloat = 10
     /// Le tableau : ses lignes, son en-tête, ses colonnes, ses rayons.
-    static let tableRow: CGFloat = 36
+    static let tableRow: CGFloat = 32
     static let tableRowTight: CGFloat = 30
     static let tableHeaderHeight: CGFloat = 28
     static let freeColumn: CGFloat = 62
@@ -119,6 +119,9 @@ enum PaywallStyle {
     /// l'espace ; sans elle (iPhone SE), le pied garde sa marge à lui.
     static let bottomGapAboveHomeBar: CGFloat = 4
     static let bottomGapWithoutHomeBar: CGFloat = 14
+    /// En dessous de cette hauteur utile, l'écran est court (iPhone SE : 647 points) et les
+    /// formules prennent la hauteur d'une ligne de réponse.
+    static let shortScreen: CGFloat = 700
     /// Les pastilles : le décompte de l'offre, la pastille de la Home.
     static let pillHeight: CGFloat = 34
     /// Ce qui est éteint le temps d'un achat : la croix.
