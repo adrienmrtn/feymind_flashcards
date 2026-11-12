@@ -477,16 +477,24 @@ final class PerfFixture {
                 }
                 context.insert(card)
                 if position % 3 != 0 {
-                    card.logs = (0..<3).map { step in
-                        ReviewLog(
-                            reviewedAt: today.addingTimeInterval(-Double(step * 3 + index % 5) * 86_400),
-                            rating: step == 0 ? .hard : .good,
-                            stateBefore: step == 0 ? .new : .review,
-                            previousIntervalDays: Double(step),
-                            newIntervalDays: Double(step * 3 + 1),
+                    var logs: [ReviewLog] = []
+                    for step in 0..<3 {
+                        let daysAgo = Double(step * 3 + index % 5)
+                        let reviewedAt: Date = today.addingTimeInterval(-daysAgo * 86_400)
+                        let rating: ReviewRating = step == 0 ? .hard : .good
+                        let before: CardState = step == 0 ? .new : .review
+                        let previous = Double(step)
+                        let next = Double(step * 3 + 1)
+                        logs.append(ReviewLog(
+                            reviewedAt: reviewedAt,
+                            rating: rating,
+                            stateBefore: before,
+                            previousIntervalDays: previous,
+                            newIntervalDays: next,
                             easeAfter: 2.5
-                        )
+                        ))
                     }
+                    card.logs = logs
                 }
             }
             lessons.append(course)
