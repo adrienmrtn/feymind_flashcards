@@ -4,9 +4,12 @@ import SwiftUI
 /// elle reste immobile pendant qu'elles se remplacent. C'est le routeur qui la retire sur
 /// les écrans poussés.
 ///
-/// **Une pilule de verre qui flotte** (`docs/refonte-parcours.md` § 2) : Liquid Glass sur
-/// iOS 26, un matériau fin avant (`micaboGlass`). L'onglet actif se pose sur une pastille
-/// bleu pâle.
+/// **Cinq icônes, sans libellé** (V3.3, lot 10) — Accueil, Leçons, Calendrier, Focus, Profil :
+/// maison, livres, calendrier, minuteur, personne. L'onglet actif est plein et clair (l'encre),
+/// les autres en tertiaire. Les noms restent pour VoiceOver, et pour la visionneuse en très
+/// grand texte (appui long). La barre a le fond du thème et descend jusqu'au bord de l'écran,
+/// sous l'indicateur d'accueil. Elle a été une pilule de verre qui flottait sur son ombre : un
+/// objet de plus à regarder, derrière lequel le contenu passait en transparence.
 ///
 /// Sa hauteur est fixée par `MicaboLayout.tabBarHeight` et non mesurée sur ses libellés :
 /// c'est cette hauteur que les pages réservent, et une réserve qui varie est une réserve
@@ -24,56 +27,41 @@ struct MicaboTabBar: View {
     private func bar(_ router: TabRouter) -> some View {
         HStack(spacing: 2) {
             ForEach(RootTab.tabs) { tab in
-                let label = tab.barLabel(t: { i18n.t($0) })
+                // VoiceOver lit le nom entier de la page (« Concentration »), sauf pour l'accueil,
+                // qui s'appelle « Accueil » dans la barre.
+                let spoken = tab == .today ? tab.barLabel(t: { i18n.t($0) }) : tab.label(t: { i18n.t($0) })
                 let isSelected = tab == router.selection
                 Button {
                     // Sans `withAnimation` : animer `selection` faisait fondre les pages, et
                     // l'onglet touché n'était lisible qu'après 280 ms.
                     router.selection = tab
                 } label: {
-                    VStack(spacing: 3) {
-                        Image(systemName: isSelected ? tab.selectedSystemImage : tab.systemImage)
-                            .font(.system(size: 19, weight: isSelected ? .bold : .semibold))
-                            // Une hauteur commune aux icônes : sans elle, le calendrier et la
-                            // silhouette, plus bas que la maison, remontaient leur libellé.
-                            .frame(height: 24)
-                        Text(label)
-                            // **Taille fixe, comme la barre du système** : la barre a une
-                            // hauteur fixe, et un libellé qui suit la taille du texte la
-                            // déborderait. Les grandes tailles passent par la visionneuse
-                            // (appui long), ci-dessous.
-                            .font(.custom(MicaboFont.nunitoName(for: .heavy), fixedSize: 11))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.85)
-                            .padding(.horizontal, 2)
-                    }
-                    .foregroundStyle(isSelected ? MicaboColor.accent : MicaboColor.inkSecondary)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: MicaboLayout.tabBarHeight - 10)
-                    .background {
-                        if isSelected {
-                            Capsule().fill(MicaboColor.accentSoft.opacity(0.9))
-                        }
-                    }
-                    .contentShape(Capsule())
+                    Image(systemName: isSelected ? tab.selectedSystemImage : tab.systemImage)
+                        .font(.system(size: 23, weight: .semibold))
+                        .foregroundStyle(isSelected ? V3Color.ink : V3Color.ink3)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: MicaboLayout.tabBarHeight)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-                .accessibilityLabel(tab.label(t: { i18n.t($0) }))
+                .accessibilityLabel(spoken)
                 .accessibilityAddTraits(isSelected ? .isSelected : [])
                 // En très grande taille de texte, un appui long montre l'onglet en grand,
                 // comme dans la barre du système.
                 .accessibilityShowsLargeContentViewer {
                     Image(systemName: tab.selectedSystemImage)
-                    Text(tab.label(t: { i18n.t($0) }))
+                    Text(spoken)
                 }
             }
         }
-        .padding(5)
+        .padding(.horizontal, 6)
         .frame(height: MicaboLayout.tabBarHeight)
-        .micaboGlass(in: Capsule(), interactive: true)
-        // Cinq onglets : la pilule prend presque toute la largeur pour que chaque libellé
-        // tienne.
-        .padding(.horizontal, 12)
+        .frame(maxWidth: .infinity)
+        .background {
+            // Le fond de la page, jusqu'au bord bas de l'écran.
+            MicaboColor.canvas
+                .ignoresSafeArea(edges: .bottom)
+        }
     }
 }
 

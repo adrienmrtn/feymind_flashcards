@@ -133,7 +133,7 @@ struct FocusNextRevisionCard: View {
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous).fill(CalendarTint.at(CalendarTint.revisionIndex).wash)
+                RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous).fill(CalendarTint.at(CalendarTint.revisionIndex).wash)
                 Image(systemName: "sparkles")
                     .font(.system(size: 19, weight: .bold))
                     .foregroundStyle(CalendarTint.at(CalendarTint.revisionIndex).color)
@@ -218,7 +218,7 @@ struct FocusTasksCard: View {
                         Spacer(minLength: 0)
                     }
                     .padding(14)
-                    .background(MicaboColor.canvas.opacity(0.7), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .background(MicaboColor.canvas.opacity(0.7), in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
                 }
                 .buttonStyle(HomePressStyle(scale: 0.98))
             } else {

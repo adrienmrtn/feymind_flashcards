@@ -38,8 +38,8 @@ struct StudyTextField: View {
         .font(MicaboFont.ui(size, weight: .semibold))
         .padding(.horizontal, 14)
         .frame(minHeight: 50)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
     }
 }
 
@@ -70,7 +70,7 @@ struct CalendarColorGrid: View {
                 Button {
                     selection = tint.id
                 } label: {
-                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous)
                         .fill(tint.color)
                         .aspectRatio(1, contentMode: .fit)
                         .overlay {
@@ -83,7 +83,7 @@ struct CalendarColorGrid: View {
                         .padding(isOn ? 3 : 0)
                         .overlay {
                             if isOn {
-                                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                                RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous)
                                     .strokeBorder(tint.color, lineWidth: 2.5)
                             }
                         }
@@ -143,8 +143,8 @@ struct TimetableScanButtons: View {
             }
             .padding(.horizontal, 8)
             .frame(maxWidth: .infinity, minHeight: 76)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
         }
         .buttonStyle(HomePressStyle(scale: 0.96, feedback: .medium))
     }
@@ -440,8 +440,8 @@ struct CalendarEditForm: View {
                         Text(emoji)
                             .font(.system(size: 28))
                             .frame(width: 54, height: 54)
-                            .background(CalendarTint.at(color).wash, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).strokeBorder(CalendarTint.at(color).color.opacity(0.5), lineWidth: 1.5))
+                            .background(CalendarTint.at(color).wash, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous).strokeBorder(CalendarTint.at(color).color.opacity(0.5), lineWidth: 1.5))
                             .overlay(alignment: .bottomTrailing) {
                                 Image(systemName: "pencil.circle.fill")
                                     .font(.system(size: 17))
@@ -473,7 +473,7 @@ struct CalendarEditForm: View {
                 .tint(MicaboColor.accent)
                 .padding(.horizontal, 14)
                 .frame(minHeight: 52)
-                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
             }
 
             VStack(alignment: .leading, spacing: 10) {
@@ -493,12 +493,12 @@ struct CalendarEditForm: View {
                     Text(symbol)
                         .font(.system(size: 25))
                         .frame(maxWidth: .infinity, minHeight: 46)
-                        .background(symbol == emoji ? CalendarTint.at(color).wash : MicaboColor.surface, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .background(symbol == emoji ? CalendarTint.at(color).wash : MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous))
                 }
                 .buttonStyle(HomePressStyle(scale: 0.9, feedback: .selection))
             }
         }
         .padding(10)
-        .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
     }
 }

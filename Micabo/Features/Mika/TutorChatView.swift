@@ -161,7 +161,7 @@ struct TutorThreadContent: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 14)
-                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
                     Spacer(minLength: 0)
                 }
                 .id("thinking")
@@ -228,7 +228,7 @@ struct TutorThreadContent: View {
                     .foregroundStyle(MicaboColor.onInk)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 11)
-                    .background(MicaboColor.ink, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .background(MicaboColor.ink, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.leading, 48)
@@ -247,8 +247,8 @@ struct TutorThreadContent: View {
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 11)
-                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
                 .padding(.trailing, 24)
             }
         }
@@ -279,7 +279,7 @@ struct TutorThreadContent: View {
             }
             .padding(14)
             .frame(maxWidth: 290, alignment: .leading)
-            .background(MicaboColor.ink, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(MicaboColor.ink, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
         }
         .buttonStyle(MicaboPressableButtonStyle())
         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -302,8 +302,8 @@ struct TutorInputBar: View {
                 .focused(focused)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
-                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
             Button(action: onSend) {
                 Image(systemName: "arrow.up")
                     .font(.system(size: 17, weight: .heavy))

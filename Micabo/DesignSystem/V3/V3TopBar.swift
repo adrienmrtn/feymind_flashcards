@@ -1,13 +1,13 @@
 import SwiftUI
 
-/// **La barre du haut d'un parcours V3** : un chevron de retour de 40 pt, la jauge de 10 pt,
-/// et ce que l'écran pose à droite (`trailing`). 44 pt de haut, marges de 20 pt.
+/// **La barre du haut d'un parcours** : une flèche de retour de 36 pt, la jauge de 8 pt, et
+/// ce que l'écran pose à droite (`trailing`). 44 pt de haut, marges de 20 pt.
 ///
-/// - `onBack` absent : pas de chevron, la jauge part du bord.
+/// - `onBack` absent : pas de flèche, la jauge part du bord.
 /// - `progress` absent : pas de jauge, `trailing` reste calé à droite.
 ///
-/// Le chevron se retourne en arabe. Sur un fond plein, `.v3Tint(.white)` blanchit le chevron
-/// et la jauge.
+/// La flèche se retourne en arabe. Sur un fond plein, `.v3Tint(.white)` blanchit la flèche et
+/// la jauge.
 struct V3TopBar<Trailing: View>: View {
     private let progress: Double?
     private let onBack: (() -> Void)?
@@ -25,11 +25,15 @@ struct V3TopBar<Trailing: View>: View {
         HStack(spacing: 14) {
             if let onBack {
                 Button(action: onBack) {
-                    Image(systemName: "chevron.backward")
-                        .font(.system(size: 19, weight: .black))
+                    Image(systemName: "arrow.backward")
+                        .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(tint ?? V3Color.ink)
                         .frame(width: V3Metric.backSize, height: V3Metric.backSize)
+                        // La cible reste celle du doigt — 44 pt — sans déplacer la jauge : la
+                        // case garde ses 36 pt dans la mise en page.
+                        .padding(4)
                         .contentShape(Rectangle())
+                        .padding(-4)
                 }
                 .buttonStyle(MicaboPressableButtonStyle())
                 .accessibilityLabel(Text(L10n.t("app.common.back", locale: .resolved())))

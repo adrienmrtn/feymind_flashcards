@@ -119,7 +119,7 @@ struct QuestionFeedback: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(right ? MicaboColor.correctSoft : MicaboColor.wrongSoft, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .background(right ? MicaboColor.correctSoft : MicaboColor.wrongSoft, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
     }
 }
 
@@ -171,13 +171,13 @@ struct ChoiceList: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, compact ? 12 : 15)
                     .frame(maxWidth: compact ? nil : .infinity, alignment: .leading)
-                    .background(background(shown: shown, original: original), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .background(background(shown: shown, original: original), in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
                             .strokeBorder(border(shown: shown, original: original), lineWidth: 2)
                     )
                     .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
                             .fill(answered == nil ? MicaboColor.edge : .clear)
                             .offset(y: 3)
                     )
@@ -277,10 +277,10 @@ struct TrueFalseButtons: View {
                     .foregroundStyle(foreground(index))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 26)
-                    .background(background(index), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(answered == nil ? MicaboColor.stroke : .clear, lineWidth: 2))
+                    .background(background(index), in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(answered == nil ? MicaboColor.stroke : .clear, lineWidth: 2))
                     .background(
-                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous)
                             .fill(answered == nil ? MicaboColor.edge : .clear)
                             .offset(y: 4)
                     )
@@ -355,15 +355,15 @@ struct OrderBuilder: View {
                             Spacer(minLength: 0)
                         }
                         .padding(12)
-                        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(rowBorder(position: position, item: item), lineWidth: 2))
+                        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous).strokeBorder(rowBorder(position: position, item: item), lineWidth: 2))
                         .matchedGeometryEffect(id: item, in: namespace)
                     }
                     .buttonStyle(MicaboPressableButtonStyle(feedback: .none))
                     .disabled(answered != nil)
                 }
                 ForEach(placed.count..<question.choices.count, id: \.self) { slot in
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
                         .strokeBorder(MicaboColor.stroke, style: StrokeStyle(lineWidth: 2, dash: [6, 5]))
                         .frame(height: 54)
                         .overlay(alignment: .leading) {
@@ -388,8 +388,8 @@ struct OrderBuilder: View {
                                 .foregroundStyle(MicaboColor.ink)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 11)
-                                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 2))
+                                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
+                                .overlay(RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 2))
                                 .matchedGeometryEffect(id: item, in: namespace)
                         }
                         .buttonStyle(MicaboPressableButtonStyle(feedback: .none))
@@ -510,9 +510,9 @@ struct MatchBoard: View {
                 .frame(maxWidth: .infinity, minHeight: 48)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 8)
-                .background(fill(color: color, verdict: verdict), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .background(fill(color: color, verdict: verdict), in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous)
                         .strokeBorder(stroke(color: color, selected: selected, verdict: verdict), lineWidth: selected ? 3 : 2)
                 )
                 .scaleEffect(selected ? 1.03 : 1)
