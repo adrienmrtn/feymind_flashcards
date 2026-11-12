@@ -7,6 +7,7 @@ import {
   MIKA_MAX_TURNS,
   parseMikaReply,
   readAttachment,
+  readAttachments,
   readTurns,
 } from "./mika.ts";
 import { UNTRUSTED_BEGIN, UNTRUSTED_END } from "./prompt-boundary.ts";
@@ -39,6 +40,23 @@ Deno.test("readAttachment borne le texte et rend rien sans texte", () => {
   const long = readAttachment({ title: "  Chapitre 3  ", text: "a".repeat(MIKA_MAX_ATTACHMENT + 10) });
   assertEquals(long?.title, "Chapitre 3");
   assertEquals(long?.text.length, MIKA_MAX_ATTACHMENT);
+});
+
+Deno.test("readAttachments réunit les photos d'un message sous leurs titres, dans la même borne", () => {
+  assertEquals(readAttachments({ title: "Seul", text: "x" }, undefined), { title: "Seul", text: "x" });
+  const merged = readAttachments(undefined, [
+    { title: "Photo 1", text: "3x + 1 = 7" },
+    { title: "Photo 2", text: "  " },
+    { title: "Photo 3", text: "y = 2" },
+  ]);
+  assertEquals(merged?.title, "Photo 1");
+  assertEquals(merged?.text, "Photo 1\n3x + 1 = 7\n\nPhoto 3\ny = 2");
+  const many = readAttachments(
+    { title: "Leçon", text: "a".repeat(10_000) },
+    Array.from({ length: 10 }, (_, index) => ({ title: `Photo ${index + 1}`, text: "b".repeat(5_000) })),
+  );
+  assertEquals(many?.title, "Leçon");
+  assertEquals(many?.text.length, MIKA_MAX_ATTACHMENT);
 });
 
 Deno.test("buildMikaPrompt met la langue en tête, le document entre marqueurs, la conversation à la fin", () => {
