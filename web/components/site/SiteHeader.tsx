@@ -78,7 +78,7 @@ export function SiteHeader({
           wordClassName="font-display text-[21px] leading-none text-ink"
         />
 
-        <nav aria-label={ariaLabel ?? t("landing.navAria")} className="hidden items-center gap-6 md:flex">
+        <nav aria-label={ariaLabel ?? t("landing.navAria")} className="hidden items-center gap-6 lg:flex">
           {nav.map((item) =>
             item.href.startsWith("#") ? (
               <a
