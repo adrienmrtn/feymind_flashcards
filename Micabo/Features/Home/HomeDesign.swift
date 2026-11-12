@@ -38,7 +38,7 @@ private struct HomeStillKey: EnvironmentKey {
 extension EnvironmentValues {
     /// **Home immobile** : tout est posé dans son état final, sans entrée, sans frappe, sans
     /// flottement. Les rendus de la CI le demandent (`ImageRenderer` ne dessine qu'une image) ;
-    /// « Réduire les animations » donne le même résultat par `HomeMotion`.
+    /// « Réduire les animations » donne le même résultat.
     var homeStill: Bool {
         get { self[HomeStillKey.self] }
         set { self[HomeStillKey.self] = newValue }
