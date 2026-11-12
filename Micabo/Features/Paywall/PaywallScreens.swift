@@ -307,7 +307,7 @@ struct PaywallScreen: View {
     private var showsTimeline: Bool { selectedPlan.hasTrial && prices == .ready }
 
     var body: some View {
-        PaywallSafeFrame { bottomGap in
+        PaywallSafeFrame { area in
             VStack(spacing: 0) {
                 PaywallTopBar(name: name, isBusy: isPurchasing, onClose: onClose)
 
@@ -325,13 +325,17 @@ struct PaywallScreen: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
 
+                // **Les formules et le bouton sont dans le pied fixe** : quoi qu'il arrive au
+                // contenu au-dessus (une langue longue, un petit écran), ce qu'on achète, son
+                // prix et le bouton restent visibles sans défiler.
                 PaywallFooter(
+                    plans: plans(short: area.isShort),
                     plan: selectedPlan,
                     now: context.now,
                     prices: prices,
                     isPurchasing: isPurchasing,
                     notice: notice,
-                    bottomGap: bottomGap,
+                    bottomGap: area.bottomGap,
                     onSubscribe: { onSubscribe(selectedPlan) },
                     onRetry: onRetry,
                     onRestore: onRestore
@@ -358,7 +362,6 @@ struct PaywallScreen: View {
             if showsTimeline, showsTrialHeader || density.keepsDoorTimeline {
                 PaywallTimelineStrip(steps: timelineSteps, compact: density.isTight)
             }
-            plans(density)
         }
         .padding(.horizontal, V3Metric.screenMargin)
         .padding(.top, density.topPadding)
@@ -398,8 +401,11 @@ struct PaywallScreen: View {
         )
     }
 
+    /// Les deux formules. `short` : un écran court (iPhone SE), où elles prennent la hauteur
+    /// d'une ligne de réponse.
     @ViewBuilder
-    private func plans(_ density: PaywallDensity) -> some View {
+    private func plans(short: Bool) -> some View {
+        let density: PaywallDensity = short ? .tight : .regular
         switch prices {
         case .ready:
             VStack(spacing: PaywallStyle.planSpacing) {
@@ -450,18 +456,26 @@ struct PaywallScreen: View {
 /// « Restaurer · Conditions » ne colle pas au bord. Avec une barre d'accueil, la zone sûre
 /// fait déjà cet espace.
 struct PaywallSafeFrame<Content: View>: View {
-    @ViewBuilder var content: (_ bottomGap: CGFloat) -> Content
+    @ViewBuilder var content: (PaywallSafeArea) -> Content
 
     var body: some View {
         GeometryReader { proxy in
-            content(
-                proxy.safeAreaInsets.bottom > 0
+            content(PaywallSafeArea(
+                bottomGap: proxy.safeAreaInsets.bottom > 0
                     ? PaywallStyle.bottomGapAboveHomeBar
-                    : PaywallStyle.bottomGapWithoutHomeBar
-            )
+                    : PaywallStyle.bottomGapWithoutHomeBar,
+                isShort: proxy.size.height < PaywallStyle.shortScreen
+            ))
             .frame(width: proxy.size.width, height: proxy.size.height)
         }
     }
+}
+
+/// Ce que la zone sûre dit à l'écran : la marge à garder sous les liens, et si l'écran est
+/// court (la hauteur utile d'un iPhone SE).
+struct PaywallSafeArea {
+    let bottomGap: CGFloat
+    let isShort: Bool
 }
 
 // MARK: - Les serrages
@@ -587,7 +601,6 @@ struct PaywallPlanRow: View {
     var body: some View {
         Button(action: action) {
             HStack(alignment: .center, spacing: 12) {
-                PaywallRadio(isOn: isSelected)
                 VStack(alignment: .leading, spacing: 2) {
                     name
                     Text(detail)
@@ -661,27 +674,6 @@ struct PaywallPlanRow: View {
     }
 }
 
-/// **La coche d'une offre** : un rond vide, ou plein de l'accent avec sa coche. Elle dit
-/// sans lire laquelle des deux sera achetée.
-private struct PaywallRadio: View {
-    let isOn: Bool
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .strokeBorder(isOn ? V3Color.accent : V3Color.line, lineWidth: 2)
-            if isOn {
-                Circle().fill(V3Color.accent)
-                Image(systemName: "checkmark")
-                    .font(.system(size: 11, weight: .black))
-                    .foregroundStyle(V3Color.onAccent)
-            }
-        }
-        .frame(width: 22, height: 22)
-        .accessibilityHidden(true)
-    }
-}
-
 /// **Les deux offres, pendant que la boutique répond** : leurs silhouettes, à leur place et à
 /// leur taille. L'écran n'est jamais vide, et rien ne saute quand les prix arrivent.
 private struct PaywallPlanSkeleton: View {
@@ -742,7 +734,8 @@ private struct PaywallPriceFailure: View {
 /// **Le pied du paywall**, fixe sous la page : « Rien à payer aujourd'hui » quand c'est vrai,
 /// le bouton, le message d'un achat qui n'a pas abouti, la mention de ce qui sera prélevé et
 /// quand, puis la restauration et les liens.
-private struct PaywallFooter: View {
+private struct PaywallFooter<Plans: View>: View {
+    let plans: Plans
     let plan: PaywallPlan
     let now: Date
     let prices: PaywallPriceState
@@ -757,6 +750,8 @@ private struct PaywallFooter: View {
 
     var body: some View {
         VStack(spacing: 8) {
+            plans
+                .padding(.bottom, 4)
             if isReady, plan.hasTrial {
                 assurance
             }
@@ -817,7 +812,7 @@ struct PaywallWelcomeScreen: View {
     var onContinue: () -> Void
 
     var body: some View {
-        PaywallSafeFrame { bottomGap in
+        PaywallSafeFrame { area in
             VStack(spacing: 0) {
                 Spacer(minLength: 24)
                 MikaMascot(mood: .celebrate, size: PaywallStyle.welcomeMika)
@@ -837,7 +832,7 @@ struct PaywallWelcomeScreen: View {
                 .padding(.top, 18)
                 Spacer(minLength: 24)
                 V3Button(L10n.t("ios.pay10.welcome.cta", locale: .resolved()), action: onContinue)
-                    .padding(.bottom, bottomGap + 8)
+                    .padding(.bottom, area.bottomGap + 8)
             }
             .padding(.horizontal, V3Metric.screenMargin)
         }

@@ -98,6 +98,7 @@ struct CalendarView: View {
                 ) {
                     addMenu
                 }
+                .frame(minHeight: MicaboLayout.tabHeaderHeight)
                 .padding(.top, MicaboSpacing.xs)
                 .animation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion), value: MicaboCalendar.shared.isDateInToday(selectedDay))
 

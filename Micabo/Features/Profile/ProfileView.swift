@@ -337,8 +337,10 @@ struct ProfileView: View {
     }
 
     private var header: some View {
+        // Le défilement pose déjà les 8 pt du haut ; la rangée a la hauteur de celle des autres
+        // onglets, pour que les titres soient alignés de l'un à l'autre (lot 11).
         MicaboPageHeading(title: i18n.t("lesson.tab.profile"), subtitle: nil)
-            .padding(.top, MicaboSpacing.xs)
+            .frame(minHeight: MicaboLayout.tabHeaderHeight)
     }
 
     /// **Qui l'on est**, sur une ligne, en tête du panneau : le prénom donné au parcours

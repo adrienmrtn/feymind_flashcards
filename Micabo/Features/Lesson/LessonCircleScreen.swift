@@ -327,6 +327,9 @@ struct LessonFinishedView: View {
                                     label: L10n.t("lesson.finished.time", locale: .resolved())
                                 )
                             }
+                            // Les deux cartes touchaient les bords de l'écran : la marge de
+                            // l'app, comme les boutons dessous (lot 11).
+                            .padding(.horizontal, MicaboSpacing.screen)
                             if showsRating {
                                 LessonRatingCard(course: session.course, moment: .finished) {
                                     withAnimation(LearnMotion.standard) { showsRating = false }

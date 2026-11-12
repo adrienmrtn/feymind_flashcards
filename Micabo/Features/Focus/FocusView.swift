@@ -55,6 +55,7 @@ struct FocusView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     MicaboPageHeading(title: loc("ios.focus.title"), subtitle: nil) { EmptyView() }
+                        .frame(minHeight: MicaboLayout.tabHeaderHeight)
                         .padding(.top, MicaboSpacing.xs)
 
                     FocusHeroCard(
