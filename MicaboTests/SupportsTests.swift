@@ -121,35 +121,6 @@ final class SupportsTests: XCTestCase {
         XCTAssertEqual(FlashcardPaste.separator(for: ["a\tb, c", "d\te"]), "\t", "la tabulation gagne")
     }
 
-    // MARK: - La réponse dite
-
-    func testSpokenAnswersAreComparedTolerantly() {
-        XCTAssertEqual(SpokenAnswer.judge(heard: "c'est la photo synthèse", expected: "La photosynthèse").verdict, .right)
-        XCTAssertEqual(SpokenAnswer.judge(heard: "la chlorophylle capte la lumiere", expected: "La chlorophylle capte la lumière du soleil").verdict, .right)
-        XCTAssertEqual(SpokenAnswer.judge(heard: "en 1989", expected: "1989").verdict, .right)
-        XCTAssertEqual(SpokenAnswer.judge(heard: "en 1991", expected: "1989").verdict, .missed)
-        XCTAssertEqual(SpokenAnswer.judge(heard: "des mitochondries", expected: "La mitochondrie").verdict, .right, "un pluriel")
-        XCTAssertEqual(SpokenAnswer.judge(heard: "Truman", expected: "Truman").verdict, .right)
-        XCTAssertEqual(SpokenAnswer.judge(heard: "trumen", expected: "Truman").verdict, .right, "une faute de reconnaissance")
-
-        let partial = SpokenAnswer.judge(heard: "les États-Unis et l'URSS s'opposent", expected: "Les États-Unis et l'URSS s'opposent sans guerre directe")
-        XCTAssertEqual(partial.verdict, .close)
-        XCTAssertTrue(partial.matched.contains("urss"))
-        XCTAssertTrue(partial.missing.contains("guerre"))
-        XCTAssertEqual(SpokenAnswer.judge(heard: "les États-Unis", expected: "Les États-Unis et l'URSS s'opposent sans guerre directe").verdict, .missed, "deux mots sur sept")
-
-        XCTAssertEqual(SpokenAnswer.judge(heard: "aucune idée", expected: "La guerre froide").verdict, .missed)
-        XCTAssertEqual(SpokenAnswer.judge(heard: "", expected: "La guerre froide").verdict, .missed)
-    }
-
-    func testKeywordsLeaveOutLittleWords() {
-        XCTAssertEqual(SpokenAnswer.keywords("La prise de la Bastille"), ["prise", "bastille"])
-        XCTAssertEqual(SpokenAnswer.keywords("Die Teilung der Zelle"), ["teilung", "zelle"])
-        XCTAssertEqual(SpokenAnswer.keywords("le"), ["le"], "une réponse faite de petits mots les garde")
-        XCTAssertEqual(SpokenAnswer.distance("chat", "chats", limit: 2), 1)
-        XCTAssertGreaterThan(SpokenAnswer.distance("photosynthese", "respiration", limit: 2), 2)
-    }
-
     // MARK: - La carte mentale
 
     static let notes = ThemeNotes(
@@ -208,28 +179,6 @@ final class SupportsTests: XCTestCase {
         let onlyTakeaways = ThemeNotes(oneLiner: "Une phrase.", blocks: [.paragraph("Rien d'autre.")], takeaways: ["À retenir"])
         let fallback = MindMap.build(LessonDigest(title: "T", themes: [LessonDigest.Theme(title: "A", notes: onlyTakeaways, cards: [])]))
         XCTAssertEqual(fallback.children[0].children.map(\.title), ["À retenir"])
-    }
-
-    // MARK: - L'écoute
-
-    func testListeningScriptReadsTheNotesChapterByChapter() {
-        let script = ListeningScript(digest: Self.digest, locale: .fr)
-        XCTAssertEqual(script.chapters.count, 3, "deux thèmes, puis l'essentiel de la leçon")
-        XCTAssertEqual(script.chapters[0].lines.first, "Deux blocs face à face")
-        XCTAssertTrue(script.chapters[0].lines.contains("Le capitalisme américain"), "sans les étoiles du gras")
-        XCTAssertTrue(script.chapters[0].lines.contains("Rideau de fer. La frontière qui coupe l'Europe."))
-        XCTAssertFalse(script.chapters[0].lines.contains { $0.contains("mc^2") }, "une formule sans légende ne se lit pas")
-        XCTAssertTrue(script.chapters[0].lines.contains("À retenir"))
-        XCTAssertEqual(script.chapters[1].lines, ["Le vocabulaire", "OTAN. Alliance de l'Ouest", "Pacte de Varsovie. Alliance de l'Est"])
-        XCTAssertEqual(script.chapters[2].title, L10n.t("ios.sup.listen.takeaways", locale: .fr))
-        XCTAssertGreaterThanOrEqual(script.minutes(), 1)
-        XCTAssertEqual(ListeningScript.sentences("Une phrase. Une autre ! Et la fin ?").count, 3)
-        XCTAssertEqual(ListenPlayerCard.rateLabel(1), "1×")
-    }
-
-    func testSpeakerRatesStayInTheSynthesizerRange() {
-        XCTAssertLessThan(LessonSpeaker.utteranceRate(for: 1), LessonSpeaker.utteranceRate(for: 1.5))
-        XCTAssertLessThanOrEqual(LessonSpeaker.utteranceRate(for: 1.5), 0.75)
     }
 
     // MARK: - Le deck sans génération
@@ -331,22 +280,14 @@ final class SupportsTests: XCTestCase {
         XCTAssertFalse(HomeSourcesSheet.grid.flatMap { $0 }.contains(.flashcards), "les flashcards sont à part")
     }
 
-    func testListenAndMindMapAreFreeVoiceHasOneFreeSessionExportIsPro() throws {
-        let defaults = try XCTUnwrap(UserDefaults(suiteName: "supports-tests"))
-        defaults.removePersistentDomain(forName: "supports-tests")
-        defer { defaults.removePersistentDomain(forName: "supports-tests") }
-
-        XCTAssertNil(RevisionModeAllowance.gate(.listen, isPro: false, defaults: defaults))
-        XCTAssertNil(RevisionModeAllowance.gate(.mindMap, isPro: false, defaults: defaults))
-        XCTAssertNil(RevisionModeAllowance.gate(.voice, isPro: false, defaults: defaults), "la première séance est offerte")
-        XCTAssertEqual(RevisionModeAllowance.gate(.export, isPro: false, defaults: defaults), .exportSheet)
-        RevisionModeAllowance.noteVoiceSession(defaults: defaults)
-        XCTAssertEqual(RevisionModeAllowance.gate(.voice, isPro: false, defaults: defaults), .voiceRecall)
+    func testMindMapIsFreeExportIsPro() {
+        XCTAssertEqual(RevisionMode.allCases, [.mindMap, .export], "Écouter et À voix haute sont retirés")
+        XCTAssertNil(RevisionModeAllowance.gate(.mindMap, isPro: false))
+        XCTAssertEqual(RevisionModeAllowance.gate(.export, isPro: false), .exportSheet)
         for mode in RevisionMode.allCases {
-            XCTAssertNil(RevisionModeAllowance.gate(mode, isPro: true, defaults: defaults))
+            XCTAssertNil(RevisionModeAllowance.gate(mode, isPro: true))
             XCTAssertFalse(RevisionModeAllowance.showsProBadge(mode, isPro: true))
         }
-        XCTAssertFalse(PaywallTrigger.voiceRecall.headline.isEmpty)
         XCTAssertNotEqual(PaywallTrigger.exportSheet.headline, "ios.sup.paywall.export")
     }
 

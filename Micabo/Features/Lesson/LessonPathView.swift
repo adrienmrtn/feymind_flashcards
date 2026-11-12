@@ -159,15 +159,8 @@ struct LessonPathView: View {
         .fullScreenCover(isPresented: $streakCelebration, onDismiss: leaveAfterStreak) {
             StreakCelebrationView { streakCelebration = false }
         }
-        .sheet(item: revisionSheet) { mode in
+        .sheet(item: $revision) { mode in
             switch mode {
-            case .listen:
-                ListenView(course: course)
-                    .toolIntro(.listen)
-                    .presentationDragIndicator(.visible)
-            case .voice:
-                // Jamais ici : à voix haute s'ouvre en plein écran (`voiceOpen`).
-                EmptyView()
             case .mindMap:
                 MindMapView(course: course)
                     .toolIntro(.mindMap)
@@ -178,9 +171,6 @@ struct LessonPathView: View {
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
-        }
-        .fullScreenCover(isPresented: voiceOpen) {
-            VoiceRecallView(session: session) { revision = nil }
         }
         .fullScreenCover(item: $run) { run in
             switch run {
@@ -336,7 +326,7 @@ struct LessonPathView: View {
     // MARK: Agir
 
     /// Une tuile de la grille. Notes et Mika montent en feuille ; le quiz et les cartes
-    /// s'ouvrent en plein écran ; les quatre modes passent par leur porte.
+    /// s'ouvrent en plein écran ; la carte mentale et la fiche passent par leur porte.
     private func openTool(_ tool: LessonTool) {
         if let mode = tool.revision {
             openRevision(mode)
@@ -347,13 +337,12 @@ struct LessonPathView: View {
         case .quiz: startPractice()
         case .cards: run = .cards
         case .mika: sheet = .mika
-        case .listen, .voice, .mindMap, .sheet: break
+        case .mindMap, .sheet: break
         }
     }
 
-    /// Un mode de révision, par sa porte (`RevisionModeAllowance`) : écouter et la carte
-    /// mentale s'ouvrent toujours ; à voix haute après sa séance offerte, et la fiche en PDF,
-    /// passent par le paywall sans abonnement.
+    /// Un mode de révision, par sa porte (`RevisionModeAllowance`) : la carte mentale s'ouvre
+    /// toujours ; la fiche en PDF passe par le paywall sans abonnement.
     private func openRevision(_ mode: RevisionMode) {
         if let trigger = RevisionModeAllowance.gate(mode, isPro: pro?.isPro ?? true) {
             pendingRevision = mode
@@ -362,22 +351,6 @@ struct LessonPathView: View {
         }
         pendingRevision = nil
         revision = mode
-    }
-
-    /// Les modes qui se consultent montent en feuille.
-    private var revisionSheet: Binding<RevisionMode?> {
-        Binding(
-            get: { revision == .voice ? nil : revision },
-            set: { if $0 == nil, revision != .voice { revision = nil } }
-        )
-    }
-
-    /// À voix haute est un parcours : plein écran, pas une feuille.
-    private var voiceOpen: Binding<Bool> {
-        Binding(
-            get: { revision == .voice },
-            set: { if !$0, revision == .voice { revision = nil } }
-        )
     }
 
     /// **La prochaine chose à faire**, celle du bouton plein de l'en-tête.
