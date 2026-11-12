@@ -109,7 +109,7 @@ final class PolishSystemTests: XCTestCase {
 
     /// Le libellé court ne vaut que pour la barre : la page garde son titre entier.
     func testTheShortTabLabelOnlyLivesInTheBar() {
-        XCTAssertEqual(RootTab.focus.label(t: { L10n.t($0, locale: .fr) }), "Concentration")
+        XCTAssertEqual(RootTab.focus.label(t: { L10n.t($0, locale: .fr) }), "Focus")
         XCTAssertEqual(RootTab.focus.barLabel(t: { L10n.t($0, locale: .fr) }), "Focus")
         XCTAssertEqual(RootTab.profile.barLabel(t: { L10n.t($0, locale: .de) }), RootTab.profile.label(t: { L10n.t($0, locale: .de) }))
     }

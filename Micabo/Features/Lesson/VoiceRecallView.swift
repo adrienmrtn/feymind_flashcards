@@ -108,7 +108,7 @@ struct VoiceRecallView: View {
         VStack(spacing: 14) {
             Spacer()
             MikaMascot(mood: .wink, size: 120)
-            Text(L10n.t("ios.sup.voice.empty", locale: .resolved()))
+            Text(L10n.t("ios.home10.cards.empty", locale: .resolved()))
                 .font(MicaboFont.ui(17, weight: .bold))
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .multilineTextAlignment(.center)

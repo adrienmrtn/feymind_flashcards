@@ -239,9 +239,13 @@ final class RenderGalleryTests: XCTestCase {
             VStack(spacing: 0) {
                 LessonPathHeader(course: course, session: session, exam: nil)
                     .padding(.top, 40)
-                    .padding(.bottom, 44)
+                    .padding(.bottom, 24)
+                LessonToolGrid(dueCount: 8) { _ in }
+                    .padding(.horizontal, MicaboSpacing.screen)
+                    .padding(.bottom, 24)
                 PathMapView(session: session, tone: course.tone, width: 393, onOpen: { _ in }, onRetry: { _ in })
-                LessonNavbar(dueCount: 8) { _ in }
+                    .frame(height: 420, alignment: .top)
+                    .clipped()
             }
         )
         let chapter = course.orderedChapters[0]
@@ -543,7 +547,6 @@ final class RenderGalleryTests: XCTestCase {
                 LessonFolderCard(name: "Bac de maths", count: 4) {}
                 LessonCard(course: course, dueCount: 8, examDays: 12) {}
                 LessonCard(course: old) {}
-                NewLessonRow {}
             }
             .padding(20)
         )
