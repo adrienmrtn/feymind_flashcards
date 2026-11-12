@@ -25,7 +25,7 @@ export function Hero({ signedIn = false }: { signedIn?: boolean }) {
       <div className="mx-auto grid max-w-page items-center gap-4 px-screen sm:gap-12 pb-6 pt-10 sm:pt-14 lg:grid-cols-[1.05fr_1fr] lg:gap-8 lg:pb-10 lg:pt-16">
         <div className="text-center lg:text-start">
           <p
-            className="lp-enter inline-flex items-center gap-2 rounded-pill bg-surface/75 px-3.5 py-1.5 text-[13px] font-bold text-ink-secondary shadow-paper backdrop-blur-sm"
+            className="lp-enter inline-flex items-center gap-2 rounded-pill bg-surface px-3.5 py-1.5 text-[13px] font-bold text-ink-secondary shadow-paper"
             style={{ ["--i" as string]: 0 }}
           >
             <PlatformIcons />
@@ -33,10 +33,10 @@ export function Hero({ signedIn = false }: { signedIn?: boolean }) {
           </p>
 
           <h1
-            className="lp-enter mx-auto mt-6 max-w-[15ch] text-balance text-[42px] font-extrabold leading-[1.02] tracking-display text-ink sm:text-[58px] lg:mx-0 lg:text-[66px]"
+            className="lp-enter mx-auto mt-6 max-w-[15ch] text-balance text-[46px] leading-[1.02] text-ink sm:text-[64px] lg:mx-0 lg:text-[76px]"
             style={{ ["--i" as string]: 1 }}
           >
-            {t("landing.titleBefore")} <span className="home-gradient-text">{t("landing.titleAccent")}</span>.
+            {t("landing.titleBefore")} <span className="kw">{t("landing.titleAccent")}</span>.
           </h1>
 
           <p
@@ -54,7 +54,7 @@ export function Hero({ signedIn = false }: { signedIn?: boolean }) {
             {signedIn ? null : (
               <Link
                 href={"/connexion" as Route}
-                className="lp-card inline-flex h-14 w-full items-center justify-center rounded-[18px] bg-surface/80 px-6 text-[16px] font-bold text-ink shadow-paper backdrop-blur-sm sm:w-auto dark:ring-1 dark:ring-stroke-strong"
+                className="btn-secondary w-full px-8 sm:w-auto"
               >
                 {t("common.alreadyAccount")}
               </Link>
@@ -90,7 +90,7 @@ export function PrimaryCta({ signedIn = false, className = "" }: { signedIn?: bo
   return (
     <Link
       href={signedIn ? "/app" : "/commencer"}
-      className={`lp-cta inline-flex h-14 w-full items-center justify-center gap-2.5 rounded-[18px] bg-accent px-7 text-[16.5px] font-extrabold text-on-ink sm:w-auto ${className}`}
+      className={`btn-primary lp-cta w-full px-8 sm:w-auto ${className}`}
     >
       {signedIn ? t("common.openApp") : t("landing.heroCta")}
       <svg aria-hidden viewBox="0 0 20 20" className="lp-arrow size-[18px]" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">

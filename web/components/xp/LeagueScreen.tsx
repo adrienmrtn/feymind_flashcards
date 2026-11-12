@@ -15,6 +15,7 @@ import { useXp } from "@/lib/xp/client";
 import { LEAGUE_EMOJI, LEAGUE_TONE, leagueNameKey } from "@/lib/xp/league";
 import { daysUntilWeekEnd } from "@/lib/xp/state";
 import { syncXp } from "@/lib/xp/sync";
+import { EmojiGlyph } from "@/components/ui/EmojiGlyph";
 
 /** Ce que `friends_league()` rend : l'élève et ses amis acceptés, triés par XP de la semaine. */
 interface LeagueRow {
@@ -86,11 +87,11 @@ export function LeagueScreen({ userId, myName }: { userId: string; myName: strin
         <h1 className="text-[32px] font-extrabold leading-tight tracking-tight-title text-ink">{t("app.kx.league.title")}</h1>
       </header>
 
-      <section className="flex flex-col items-center gap-2 rounded-[26px] p-5 text-center shadow-floating" style={{ background: `var(--color-tone-${tone}-pale)` }}>
+      <section className="flex flex-col items-center gap-2 rounded-[26px] p-5 text-center border-[1.5px] border-stroke" style={{ background: `var(--color-tone-${tone}-pale)` }}>
         <span className="relative flex size-[92px] items-center justify-center rounded-full bg-surface/70">
           <MicaboIcon id="trophee" size={64} />
-          <span aria-hidden="true" className="absolute -bottom-1 -end-1 text-[28px] leading-none">
-            {LEAGUE_EMOJI[league]}
+          <span aria-hidden="true" className="absolute -bottom-1 -end-1 flex size-9 items-center justify-center rounded-full bg-surface">
+            <EmojiGlyph emoji={LEAGUE_EMOJI[league]} size={24} />
           </span>
         </span>
         <p className="text-[24px] font-extrabold leading-tight" style={{ color: `var(--color-tone-${tone}-ink)` }}>

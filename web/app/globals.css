@@ -5,171 +5,173 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ==========================================================================
-   Les jetons de Micabo, sur le web.
+   Les jetons de Micabo, sur le web — direction artistique V3.3.
 
-   Portés valeur par valeur depuis `Micabo/DesignSystem/MicaboTheme.swift`. C'est le seul
-   endroit où une couleur, un rayon, une durée ou une courbe est écrite : une couleur déclarée
-   deux fois finit par différer, et c'est comme ça qu'une interface se met à « sonner faux ».
+   Portés valeur par valeur depuis `Micabo/DesignSystem/V3/V3Color.swift` (`V3Palette.night`
+   et `V3Palette.day`) et `MicaboAppearance.swift`. C'est le seul endroit où une couleur, un
+   rayon, une durée ou une courbe est écrite.
 
-   Direction : du papier, pas des cartes empilées. Le fond est un gris froid, assez marqué
-   pour que le blanc se détache seul - les surfaces n'ont donc ni bordure ni ombre appuyée.
+   **Le marine est le thème par défaut**, comme dans l'app : fond #0B0F1C, surfaces #171C2C,
+   filet #262D42, texte #F5F6FB, accent #5C88FF, mot-clé #7FA2FF, jaune #F7B41F, vert #34D399.
+   Le clair (`data-appearance="day"`) est une option : une page teintée (#EEF1F8), jamais du
+   blanc pur, des cartes blanches à filet.
 
-   Deux règles restent : **aucun display serif**, et **aucun accent terracotta**. La
-   distinction vient d'ailleurs : une page, deux états, la même empreinte.
+   La couleur a un sens, le même partout : bleu = sélection, progression, mot-clé ; jaune =
+   PRO, offre, série, examen ; vert = juste, gratuit ; rouge = faux, en retard. Aucune ombre
+   floue : une carte se tient par un filet, et la seule lèvre est celle des boutons pleins.
+
+   Deux ajustements au web, pour le contraste AA d'un texte de treize pixels : le tertiaire
+   remonte d'un cran (#8A93AC sur le marine, #69728A sur le clair) et l'accent du clair porte
+   le texte en #2452D0 (le vif #3870FE reste celui des aplats), et le lavis qui porte un
+   libellé bleu reste le plus sombre des deux sur le marine (#18224A).
    ========================================================================== */
 
 @theme {
   /* ---- Fonds ---- */
-  --color-canvas: #f6f4ed;
-  --color-surface: #ffffff;
-  --color-surface-muted: #f0ede4;
-  --color-surface-sunken: #e9e5da;
-  --color-stroke: #e7e2d7;
-  --color-stroke-strong: #dad4c7;
-
-  /* Filet de séparation d'une rangée à l'autre. Il reste une bordure : une ombre porte la
-     profondeur, une bordure porte la structure, et un séparateur est de la structure. */
-  --color-hairline: #ece8de;
-  --color-hairline-on-canvas: #e3ded2;
+  --color-canvas: #0b0f1c;
+  --color-surface: #171c2c;
+  --color-surface-muted: #20263a;
+  --color-surface-sunken: #0f1424;
+  --color-stroke: #262d42;
+  --color-stroke-strong: #3a4260;
+  --color-hairline: #20263a;
+  --color-hairline-on-canvas: #262d42;
 
   /* ---- Encre ---- */
-  --color-ink: #1b1e24;
-  --color-ink-secondary: #63676f;
-  --color-ink-tertiary: #85878c;
-  /* Encre des longs paragraphes d'une fiche. Un noir de titre tenu sur trente lignes fatigue :
-     celui-ci est à peine remonté. */
-  --color-ink-reading: #2a2d33;
+  --color-ink: #f5f6fb;
+  --color-ink-secondary: #a9b1c6;
+  --color-ink-tertiary: #8a93ac;
+  --color-ink-reading: #e9ecf5;
 
-  --color-on-ink: #ffffff;
-  --color-on-ink-muted: #a8abb3;
+  --color-on-ink: #0b0f1c;
+  --color-on-ink-muted: #4a5066;
 
-  /* Le gris teinté de vert, pour les écrans qui ne sont ni une liste ni une lecture. */
-  --color-canvas-sage: #f6f4ed;
+  --color-canvas-sage: #0b0f1c;
 
   /* ---- Accent ----
-     Deux bleus, et la distinction est fonctionnelle. `accent` est assez sombre pour porter du
-     texte de onze points sur un fond pastel ; `accent-vivid` ne remplit que de grandes
-     surfaces posées sur du blanc. */
-  --color-accent: #2563eb;
-  --color-accent-soft: #dbeafe;
-  --color-accent-vivid: #3b82f6;
+     `accent` porte du texte et des traits ; `accent-hi` est le bleu clair du mot-clé d'un
+     titre ; `accent-wash` est le lavis d'une sélection. */
+  --color-accent: #5c88ff;
+  --color-accent-hi: #7fa2ff;
+  --color-accent-soft: #18224a;
+  --color-accent-wash: #18224a;
+  --color-accent-vivid: #5c88ff;
+  --color-accent-deep: #3f6be8;
 
-  /* Toute progression porte cette couleur, sans exception. Une seule couleur pour « ça
-     avance », sinon on cherche un sens derrière chaque nuance. */
-  --color-progress: #2563eb;
-  --color-progress-track: #e7e2d7;
+  --color-progress: #5c88ff;
+  --color-progress-track: #262d42;
 
-  /* Le jaune du surligneur de la fiche. Le passage marqué a été de l'encre bleue pendant une
-     version, parce qu'un fond posé derrière le texte se battait avec l'interligne. Mais du
-     texte bleu au milieu d'un paragraphe se lit comme un lien, pas comme un surlignage,
-     d'autant que le bleu est déjà l'accent de l'app. La bande est revenue, et son épaisseur
-     est tenue en `em` par `.sheet-marker` : elle ne dépend plus de la hauteur de ligne. */
-  --color-sheet-marker: #fff0a6;
+  /* ---- Les boutons pleins ----
+     Le principal est une pilule blanche posée sur une lèvre de 4 px ; l'offre, une pilule
+     jaune. En clair, le principal passe à l'encre. */
+  --color-cta: #ffffff;
+  --color-cta-lip: #bfc6d9;
+  --color-cta-ink: #0b0f1c;
+  --color-yellow: #f7b41f;
+  --color-yellow-deep: #b07c08;
+  --color-yellow-wash: #2b2412;
+  --color-on-yellow: #2a1d00;
+  --color-green: #34d399;
+  --color-green-wash: #0f2e26;
+  --color-pink: #ff8fa8;
+  --color-lilac: #a78bfa;
+  --color-orange: #fb923c;
 
-  /* Les cinq surligneurs, et le choix qui va avec : ils sont **pastel**, donc l'encre reste
-     lisible dessus. Un feutre saturé oblige à alléger le texte pour qu'il ressorte, et une
-     fiche qu'on a surlignée en entier devient alors moins lisible qu'avant de l'avoir
-     travaillée. Cinq teintes parce qu'au-delà on ne les distingue plus en diagonale, et que
-     le code couleur d'une fiche ne tient que s'il se retient. */
-  --color-hl-jaune: #fff0a6;
-  --color-hl-menthe: #c9ebd3;
-  --color-hl-bleu: #d6e7fb;
-  --color-hl-rose: #fbd9e4;
-  --color-hl-lilas: #dcc9fb;
+  --color-sheet-marker: #5a4a12;
+  --color-hl-jaune: #5a4a12;
+  --color-hl-menthe: #1f4a33;
+  --color-hl-bleu: #1e3a5f;
+  --color-hl-rose: #5a2235;
+  --color-hl-lilas: #3e2c66;
 
   /* ---- Retours d'information ---- */
-  --color-positive: #2f7d57;
-  --color-caution: #8a6410;
-  /* Le jaune des **grandes** surfaces, et d'elles seules. Même partage que l'accent :
-     `caution` est assombri pour porter du texte de onze points sur un fond pastel, ce qui en
-     fait un ocre terne dès qu'on le tient sur cent points de haut. */
-  --color-caution-vivid: #ffc53d;
-  --color-negative: #c93b2b;
-  --color-info: #3a6fc4;
-  --color-positive-soft: #def5e7;
-  --color-caution-soft: #fdf1d6;
-  --color-negative-soft: #fde8e2;
-  --color-info-soft: #e3edfc;
+  --color-positive: #34d399;
+  --color-caution: #f7b41f;
+  --color-caution-ink: #f7b41f;
+  --color-caution-vivid: #f7b41f;
+  --color-negative: #f87171;
+  --color-info: #7fa2ff;
+  --color-positive-soft: #0f2e26;
+  --color-caution-soft: #2b2412;
+  --color-negative-soft: #3a1820;
+  --color-info-soft: #18224a;
 
-  /* ---- L'offre cadeau ----
-     Les seules couleurs du produit qui ne sont ni le vert de Micabo ni son papier, et c'est
-     assumé : l'offre est un **événement**, pas un écran de plus. Un tarif réduit peint dans
-     la palette de l'app se lit comme une fonctionnalité, donc comme quelque chose qui sera
-     encore là demain - ce qui est exactement ce qu'il ne faut pas dire d'une remise qui
-     expire.
-
-     Le violet de la minuterie ne sert qu'à elle. C'est la seule chose de la carte qui
-     compte à rebours, et elle ne doit pas se confondre avec le bleu qui vend. */
-  --color-offer-sky: #12a3f2;
-  --color-offer-sky-deep: #0b8fdc;
-  --color-offer-wash: #c4e7fa;
-  --color-offer-wash-soft: #eaf7fe;
-  --color-offer-urgency: #5b46e5;
+  /* ---- L'offre ----
+     L'offre est jaune dans la direction artistique : la pilule, le pourcentage, « PRO ».
+     Les noms d'avant (`offer-sky`) restent, ils portent maintenant le jaune. */
+  --color-offer-sky: #f7b41f;
+  --color-offer-sky-deep: #b07c08;
+  --color-offer-wash: #2b2412;
+  --color-offer-wash-soft: #1d1a12;
+  --color-offer-urgency: #f7b41f;
   --app-float-dock: 0px;
 
-  /* Chrome de micabo OS, pour l'app connectée. */
-  --color-sidebar: #f0ede4;
-  --color-sidebar-foreground: #63676f;
-  --color-sidebar-accent: rgba(27, 30, 36, 0.05);
-  --color-sidebar-accent-foreground: #1b1e24;
-  --color-sidebar-border: rgba(27, 30, 36, 0.08);
-
-  /* ---- La leçon ----
-     Ce que la refonte « parcours » ajoute, porté de `MicaboPalette.day` : le violet des
-     mots-clés (son seul usage), le vert et le rouge d'une réponse, le rail d'une barre, et
-     les cinq tons d'une leçon en trois nuances — pâle pour un fond d'encadré, vive pour un
-     aplat sans texte (étape cochée, trait, barre), encre pour ce qui s'écrit sur le pâle.
-
-     Dans un bloc `static` : ces jetons se lisent surtout depuis des styles en ligne
-     (`var(--color-tone-blue-vivid)`), que Tailwind ne voit pas, et un jeton qu'aucune classe
-     n'emploie est retiré de la feuille. Ici, ils sont toujours écrits. */
+  /* Chrome de l'app connectée. */
+  --color-sidebar: #0b0f1c;
+  --color-sidebar-foreground: #a9b1c6;
+  --color-sidebar-accent: #171c2c;
+  --color-sidebar-accent-foreground: #f5f6fb;
+  --color-sidebar-border: #262d42;
 }
 
 @theme static {
-  --color-keyword: #7c3aed;
-  --color-correct: #16a34a;
-  --color-correct-ink: #15803d;
-  --color-correct-soft: #dcfce7;
-  --color-wrong: #dc2626;
-  --color-wrong-ink: #b91c1c;
-  --color-wrong-soft: #fee2e2;
-  --color-track: #e3ded2;
-  --color-tone-yellow-pale: #fff1b8;
-  --color-tone-yellow-vivid: #f2b200;
-  --color-tone-yellow-ink: #7a5600;
-  --color-tone-mint-pale: #cdefdc;
-  --color-tone-mint-vivid: #22b573;
-  --color-tone-mint-ink: #146c45;
-  --color-tone-blue-pale: #d6e7fb;
-  --color-tone-blue-vivid: #3b82f6;
-  --color-tone-blue-ink: #1d4ed8;
-  --color-tone-pink-pale: #fbd9e4;
-  --color-tone-pink-vivid: #ec5b8f;
-  --color-tone-pink-ink: #a8204f;
-  --color-tone-lilac-pale: #e4d9fb;
-  --color-tone-lilac-vivid: #8b5cf6;
-  --color-tone-lilac-ink: #5b21b6;
+  --color-keyword: #a78bfa;
+  --color-correct: #34d399;
+  --color-correct-ink: #34d399;
+  --color-correct-soft: #0f2e26;
+  --color-wrong: #f87171;
+  --color-wrong-ink: #fca5a5;
+  --color-wrong-soft: #3a1820;
+  --color-track: #262d42;
+  --color-tone-yellow-pale: #2b2412;
+  --color-tone-yellow-vivid: #fbbf24;
+  --color-tone-yellow-ink: #f7b41f;
+  --color-tone-mint-pale: #0f2e26;
+  --color-tone-mint-vivid: #34d399;
+  --color-tone-mint-ink: #34d399;
+  --color-tone-blue-pale: #18224a;
+  --color-tone-blue-vivid: #60a5fa;
+  --color-tone-blue-ink: #7fa2ff;
+  --color-tone-pink-pale: #3a1a28;
+  --color-tone-pink-vivid: #f472b6;
+  --color-tone-pink-ink: #ff8fa8;
+  --color-tone-lilac-pale: #241d45;
+  --color-tone-lilac-vivid: #a78bfa;
+  --color-tone-lilac-ink: #c4b5fd;
+  /* Les sept teintes d'icône : une couleur par idée (`V3Color.icon…`). */
+  --color-icon-blue: #60a5fa;
+  --color-icon-pink: #f472b6;
+  --color-icon-green: #34d399;
+  --color-icon-yellow: #fbbf24;
+  --color-icon-lilac: #a78bfa;
+  --color-icon-orange: #fb923c;
+  --color-icon-red: #f87171;
+  /* Le corps de Mika : #5C88FF sur le marine, #3870FE sur le clair. */
+  --mika-body: #5c88ff;
+  --mika-shade: #3f6be8;
 }
 
 @theme {
   /* ---- Typographie ----
-     Nunito partout, les mots comme les nombres : c'est la police de l'app depuis la refonte
-     « parcours » (`MicaboFont`), et une interface qui lit et compte dans la même main se lit
-     d'un trait. `--font-number` reste un nom : les nombres gardent leurs chiffres tabulaires. */
-  --font-sans: var(--font-nunito), ui-rounded, system-ui, sans-serif;
-  --font-number: var(--font-nunito), ui-rounded, system-ui, sans-serif;
+     Deux familles, comme l'app (`V3Font`) : **Sofia Sans Condensed** Black pour les titres,
+     les bulles, les boutons et les grands chiffres ; **la police du système** pour tout le
+     reste. Nunito est sortie. `--font-number` reste un nom : les chiffres gardent leurs
+     colonnes tabulaires. */
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, "Noto Sans", sans-serif;
+  --font-display: var(--font-sofia), "Arial Narrow", system-ui, sans-serif;
+  --font-number: var(--font-sans);
 
-  --tracking-tight-title: -0.5px;
-  --tracking-display: -0.9px;
+  --tracking-tight-title: -0.1px;
+  --tracking-display: -0.2px;
   --tracking-caps: 1.1px;
 
   /* ---- Rayons ----
-     Les quatre valeurs de l'app sont les **repères**, pas des valeurs à imbriquer telles
-     quelles : un rayon extérieur vaut le rayon intérieur plus la marge, et 13 dans 20 avec 16
-     de marge voudrait 29. Sur le web, l'imbriqué se calcule. */
-  --radius-tile: 13px;
-  --radius-button: 16px;
-  --radius-group: 20px;
+     Les repères de la direction artistique : 16 pour une rangée de réponse, 22 pour une
+     carte, la pilule pour un bouton et une puce. */
+  --radius-tile: 14px;
+  --radius-button: 999px;
+  --radius-group: 22px;
   --radius-sheet: 28px;
   --radius-pill: 999px;
 
@@ -179,32 +181,26 @@
   --container-page: 1100px;
 
   /* ---- Mouvement ----
-     Rien ne rebondit. Un ressort dépasse sa cible puis revient, et vingt écrans qui dépassent
-     leur cible donnent un produit qui tremble. Les courbes sont monotones : elles partent vite,
-     ralentissent, s'arrêtent net. */
+     Natif et immédiat : des fondus et de courts glissements, rien ne rebondit. */
   --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 
-  /* Budgets. `ease-in` n'apparaît nulle part : il démarre lentement, donc il retarde
-     exactement l'instant qu'on regarde. Un geste fréquent reste sous 200 ms. */
-  --duration-press: 150ms;
+  --duration-press: 120ms;
   --duration-hover: 150ms;
   --duration-fill: 200ms;
   --duration-tooltip: 180ms;
   --duration-menu: 220ms;
-  --duration-sheet: 320ms;
+  --duration-sheet: 300ms;
 
-  /* Coss / Cal.com primitives map onto Micabo's paper tokens. `--color-accent`
-     is the blue of the product — Coss's wash hover uses `surface-muted`. */
   --color-background: var(--color-canvas);
   --color-foreground: var(--color-ink);
   --color-card: var(--color-surface);
   --color-card-foreground: var(--color-ink);
   --color-popover: var(--color-surface);
   --color-popover-foreground: var(--color-ink);
-  --color-primary: var(--color-accent);
-  --color-primary-foreground: var(--color-on-ink);
+  --color-primary: var(--color-cta);
+  --color-primary-foreground: var(--color-cta-ink);
   --color-secondary: var(--color-surface-muted);
   --color-secondary-foreground: var(--color-ink);
   --color-muted: var(--color-surface-muted);
@@ -213,150 +209,41 @@
   --color-destructive: var(--color-negative);
   --color-border: var(--color-stroke);
   --color-input: var(--color-stroke-strong);
-  --color-ring: #2563eb;
-  --font-heading: var(--font-sans);
+  --color-ring: var(--color-accent);
+  --font-heading: var(--font-display);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --radius-md: 12px;
   --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-2xl: 20px;
+  --radius-xl: 22px;
+  --radius-2xl: 22px;
 }
 
 /* --------------------------------------------------------------------------
    Ombres
 
-   « Les ombres portent la profondeur, les bordures portent la structure. » Une bordure posée
-   pour décoller une carte devient donc une ombre en trois couches - la première tient lieu de
-   filet de 1 px, les deux autres donnent la levée puis l'ambiance. Elles sont transparentes,
-   donc elles s'adaptent au fond, ce qu'une bordure de couleur fixe ne fait pas.
-
-   Les blocs se tiennent par un filet, pas par une ombre. Ce qui flotte vraiment
-   (un menu, une feuille) garde une levée un peu plus nette.
+   Aucune ombre floue sous une carte : un filet. Ce qui flotte vraiment (un menu, une
+   feuille) garde une levée nette, sombre sur le marine.
    -------------------------------------------------------------------------- */
 @theme {
-  --shadow-paper:
-    0 0 0 1px oklch(0 0 0 / 0.05), 0 1px 2px 0 oklch(0 0 0 / 0.025);
-  --shadow-paper-hover:
-    0 0 0 1px oklch(0 0 0 / 0.06), 0 2px 6px 0 oklch(0 0 0 / 0.04);
-  /* Ce qui flotte vraiment : un menu, une feuille. */
-  --shadow-floating: 0 0 0 1px oklch(0 0 0 / 0.05), 0 10px 28px -8px oklch(0 0 0 / 0.10);
+  --shadow-paper: 0 0 0 1.5px var(--color-stroke);
+  --shadow-paper-hover: 0 0 0 1.5px var(--color-stroke-strong);
+  --shadow-floating: 0 0 0 1px var(--color-stroke), 0 18px 40px -14px oklch(0 0 0 / 0.6);
 }
 
 /* --------------------------------------------------------------------------
-   Base
+   Base : le marine
    -------------------------------------------------------------------------- */
 
-:root,
-[data-appearance="day"] {
-  color-scheme: light;
-  --background: var(--color-canvas);
-  --foreground: var(--color-ink);
-  --card: var(--color-surface);
-  --card-foreground: var(--color-ink);
-  --popover: var(--color-surface);
-  --popover-foreground: var(--color-ink);
-  --primary: var(--color-accent);
-  --primary-foreground: var(--color-on-ink);
-  --secondary: var(--color-surface-muted);
-  --secondary-foreground: var(--color-ink);
-  --muted: var(--color-surface-muted);
-  --muted-foreground: var(--color-ink-secondary);
-  --destructive: var(--color-negative);
-  --destructive-foreground: var(--color-negative);
-  --info: var(--color-info);
-  --info-foreground: var(--color-info);
-  --success: var(--color-positive);
-  --success-foreground: var(--color-positive);
-  --warning: var(--color-caution);
-  --warning-foreground: var(--color-caution);
-  --border: var(--color-stroke);
-  --input: var(--color-stroke-strong);
-  --ring: #2563eb;
-}
-
-/* --------------------------------------------------------------------------
-   Nuit et crépuscule
-
-   Tout passe par les jetons. Une couleur en dur dans un composant resterait
-   blanche (ou noire) quand le reste de la page bascule. Les deux modes
-   sombres portent aussi `.dark` sur `html`, pour que les variantes Tailwind
-   déjà posées suivent.
-
-   Nuit : papier froid, bleu inchangé. Crépuscule : la même page sous une
-   lampe, surfaces chaudes, accent encore bleu - pas un thème sépia générique.
-   -------------------------------------------------------------------------- */
-
-[data-appearance="night"] {
+:root {
   color-scheme: dark;
-  --color-canvas: #121317;
-  --color-surface: #1c1e24;
-  --color-surface-muted: #23262d;
-  --color-surface-sunken: #2a2d35;
-  --color-stroke: #30333b;
-  --color-stroke-strong: #3b3f48;
-  --color-hairline: #2a2d34;
-  --color-hairline-on-canvas: #24272e;
-  --color-ink: #f3f1ea;
-  --color-ink-secondary: #a4a7ae;
-  --color-ink-tertiary: #8b8f97;
-  --color-ink-reading: #e7e5df;
-  --color-on-ink: #121317;
-  --color-on-ink-muted: #4d5058;
-  --color-canvas-sage: #121317;
-  --color-accent: #6b9bf2;
-  --color-accent-soft: #1d2a45;
-  --color-accent-vivid: #60a5fa;
-  --color-progress: #6b9bf2;
-  --color-progress-track: #30333b;
-  --color-sheet-marker: #5a4a12;
-  /* De nuit, la bande est sombre et l'encre reste claire : un pastel de jour porterait du
-     texte blanc sur du crème. */
-  --color-hl-jaune: #5a4a12;
-  --color-hl-menthe: #1f4a33;
-  --color-hl-bleu: #1e3a5f;
-  --color-hl-rose: #5a2235;
-  --color-hl-lilas: #3e2c66;
-  --color-positive: #4cc38a;
-  --color-caution: #e3b24c;
-  --color-caution-vivid: #ffc53d;
-  --color-negative: #f06a5a;
-  --color-info: #6e9bea;
-  --color-positive-soft: #18301f;
-  --color-caution-soft: #33280f;
-  --color-negative-soft: #3a1a16;
-  --color-info-soft: #1a2740;
-  --color-offer-wash: #3e2c66;
-  --color-offer-wash-soft: #261c3d;
-  --color-sidebar: #16181d;
-  --color-sidebar-foreground: #a4a7ae;
-  --color-sidebar-accent: rgba(255, 255, 255, 0.06);
-  --color-sidebar-accent-foreground: #f3f1ea;
-  --color-sidebar-border: rgba(255, 255, 255, 0.08);
-  --color-background: var(--color-canvas);
-  --color-foreground: var(--color-ink);
-  --color-card: var(--color-surface);
-  --color-card-foreground: var(--color-ink);
-  --color-popover: var(--color-surface);
-  --color-popover-foreground: var(--color-ink);
-  --color-primary: var(--color-accent);
-  --color-primary-foreground: var(--color-on-ink);
-  --color-secondary: var(--color-surface-muted);
-  --color-secondary-foreground: var(--color-ink);
-  --color-muted: var(--color-surface-muted);
-  --color-muted-foreground: var(--color-ink-secondary);
-  --color-accent-foreground: var(--color-on-ink);
-  --color-destructive: var(--color-negative);
-  --color-border: var(--color-stroke);
-  --color-input: var(--color-stroke-strong);
-  --color-ring: #6b9bf2;
   --background: var(--color-canvas);
   --foreground: var(--color-ink);
   --card: var(--color-surface);
   --card-foreground: var(--color-ink);
   --popover: var(--color-surface);
   --popover-foreground: var(--color-ink);
-  --primary: var(--color-accent);
-  --primary-foreground: var(--color-on-ink);
+  --primary: var(--color-cta);
+  --primary-foreground: var(--color-cta-ink);
   --secondary: var(--color-surface-muted);
   --secondary-foreground: var(--color-ink);
   --muted: var(--color-surface-muted);
@@ -371,157 +258,116 @@
   --warning-foreground: var(--color-caution);
   --border: var(--color-stroke);
   --input: var(--color-stroke-strong);
-  --ring: #6b9bf2;
-  --shadow-paper: 0 0 0 1px oklch(1 0 0 / 0.08), 0 1px 2px 0 oklch(0 0 0 / 0.35);
-  --shadow-paper-hover: 0 0 0 1px oklch(1 0 0 / 0.12), 0 2px 6px 0 oklch(0 0 0 / 0.4);
-  --shadow-floating: 0 0 0 1px oklch(1 0 0 / 0.08), 0 10px 28px -8px oklch(0 0 0 / 0.55);
+  --ring: var(--color-accent);
 }
 
-[data-appearance="twilight"] {
-  color-scheme: dark;
-  --color-canvas: #1c1612;
-  --color-surface: #2a211b;
-  --color-surface-muted: #362b23;
-  --color-surface-sunken: #15110e;
-  --color-stroke: rgba(243, 230, 212, 0.1);
-  --color-stroke-strong: rgba(243, 230, 212, 0.16);
-  --color-hairline: rgba(243, 230, 212, 0.1);
-  --color-hairline-on-canvas: rgba(243, 230, 212, 0.08);
-  --color-ink: #f3e6d4;
-  --color-ink-secondary: #c4b09a;
-  --color-ink-tertiary: #a89480;
-  --color-ink-reading: #ead9c4;
-  --color-on-ink: #1c1612;
-  --color-on-ink-muted: #8a7a68;
-  --color-canvas-sage: #1f1a14;
-  --color-accent: #8bb0ff;
-  --color-accent-soft: #2a3348;
-  --color-accent-vivid: #7aa2ff;
-  --color-progress: #8bb0ff;
-  --color-progress-track: #3a3028;
-  --color-sheet-marker: #c9a227;
-  /* De nuit, la bande est sombre et l'encre reste claire : un pastel de jour porterait du
-     texte blanc sur du crème. */
-  --color-hl-jaune: #55491c;
-  --color-hl-menthe: #1f4034;
-  --color-hl-bleu: #1e3a56;
-  --color-hl-rose: #4d2733;
-  --color-hl-lilas: #382f57;
-  --color-positive: #8fbf8a;
-  --color-caution: #e0b84a;
-  --color-caution-vivid: #e8b23c;
-  --color-negative: #e07a68;
-  --color-info: #8bb0ff;
-  --color-positive-soft: #24301f;
-  --color-caution-soft: #3a2e16;
-  --color-negative-soft: #3a1e18;
-  --color-info-soft: #222838;
-  --color-offer-wash: #243040;
-  --color-offer-wash-soft: #1c222c;
-  --color-sidebar: #211a15;
-  --color-sidebar-foreground: #c4b09a;
-  --color-sidebar-accent: rgba(243, 230, 212, 0.08);
-  --color-sidebar-accent-foreground: #f3e6d4;
-  --color-sidebar-border: rgba(243, 230, 212, 0.1);
-  --color-background: var(--color-canvas);
-  --color-foreground: var(--color-ink);
-  --color-card: var(--color-surface);
-  --color-card-foreground: var(--color-ink);
-  --color-popover: var(--color-surface);
-  --color-popover-foreground: var(--color-ink);
-  --color-primary: var(--color-accent);
-  --color-primary-foreground: var(--color-on-ink);
-  --color-secondary: var(--color-surface-muted);
-  --color-secondary-foreground: var(--color-ink);
-  --color-muted: var(--color-surface-muted);
-  --color-muted-foreground: var(--color-ink-secondary);
-  --color-accent-foreground: var(--color-on-ink);
-  --color-destructive: var(--color-negative);
-  --color-border: var(--color-stroke);
-  --color-input: var(--color-stroke-strong);
-  --color-ring: #8bb0ff;
-  --background: var(--color-canvas);
-  --foreground: var(--color-ink);
-  --card: var(--color-surface);
-  --card-foreground: var(--color-ink);
-  --popover: var(--color-surface);
-  --popover-foreground: var(--color-ink);
-  --primary: var(--color-accent);
-  --primary-foreground: var(--color-on-ink);
-  --secondary: var(--color-surface-muted);
-  --secondary-foreground: var(--color-ink);
-  --muted: var(--color-surface-muted);
-  --muted-foreground: var(--color-ink-secondary);
-  --destructive: var(--color-negative);
-  --destructive-foreground: var(--color-negative);
-  --info: var(--color-info);
-  --info-foreground: var(--color-info);
-  --success: var(--color-positive);
-  --success-foreground: var(--color-positive);
-  --warning: var(--color-caution);
-  --warning-foreground: var(--color-caution);
-  --border: var(--color-stroke);
-  --input: var(--color-stroke-strong);
-  --ring: #8bb0ff;
-  --shadow-paper: 0 0 0 1px oklch(0.95 0.04 70 / 0.08), 0 1px 2px 0 oklch(0 0 0 / 0.35);
-  --shadow-paper-hover: 0 0 0 1px oklch(0.95 0.04 70 / 0.12), 0 2px 6px 0 oklch(0 0 0 / 0.4);
-  --shadow-floating: 0 0 0 1px oklch(0.95 0.04 70 / 0.08), 0 10px 28px -8px oklch(0 0 0 / 0.55);
-}
-
-/* Les jetons de la leçon, dans les deux modes sombres : `MicaboPalette.night`. */
+/* Nuit et crépuscule : le marine. Le crépuscule, ancien thème chaud, n'existe plus dans
+   l'app ; qui l'avait choisi retrouve le marine. */
 [data-appearance="night"],
 [data-appearance="twilight"] {
-  --color-keyword: #a78bfa;
-  --color-correct: #22c55e;
-  --color-correct-ink: #4ade80;
-  --color-correct-soft: #13301e;
-  --color-wrong: #ef4444;
-  --color-wrong-ink: #f87171;
-  --color-wrong-soft: #3a1717;
-  --color-track: #2c2f36;
-  --color-tone-yellow-pale: #3b3112;
-  --color-tone-yellow-ink: #f6cf5a;
-  --color-tone-mint-pale: #143326;
-  --color-tone-mint-ink: #5dd69b;
-  --color-tone-blue-pale: #182b45;
-  --color-tone-blue-ink: #8db8fa;
-  --color-tone-pink-pale: #3d1a29;
-  --color-tone-pink-ink: #f49ab9;
-  --color-tone-lilac-pale: #2a2148;
-  --color-tone-lilac-ink: #b9a0fa;
+  color-scheme: dark;
 }
 
 /* --------------------------------------------------------------------------
-   Pastel — app connectée seulement
-
-   `data-pastel="on"` est posé sur `.app-shell` depuis `AppChrome`, jamais sur
-   `html`. Landing et onboarding restent sur le papier gris. Mettre
-   `WEBSITE_PASTEL` à `false` retire l'attribut : ces jetons ne s'appliquent
-   plus. Les teintes sont celles des tuiles (`TILE_PASTELS`).
+   Le clair (option) : `V3Palette.day`. Une page teintée, des cartes blanches à filet,
+   le bouton principal à l'encre.
    -------------------------------------------------------------------------- */
 
+[data-appearance="day"] {
+  color-scheme: light;
+  --color-canvas: #eef1f8;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f4f6fb;
+  --color-surface-sunken: #e2e7f1;
+  --color-stroke: #dce1ec;
+  --color-stroke-strong: #c2c9d8;
+  --color-hairline: #e8ecf3;
+  --color-hairline-on-canvas: #dce1ec;
+  --color-ink: #0f1324;
+  --color-ink-secondary: #566078;
+  --color-ink-tertiary: #69728a;
+  --color-ink-reading: #1e2338;
+  --color-on-ink: #ffffff;
+  --color-on-ink-muted: #a8abb3;
+  --color-canvas-sage: #eef1f8;
+  --color-accent: #2452d0;
+  --color-accent-hi: #2452d0;
+  --color-accent-soft: #e4ecff;
+  --color-accent-wash: #e4ecff;
+  --color-accent-vivid: #3870fe;
+  --color-accent-deep: #1f47b8;
+  --color-progress: #3870fe;
+  --color-progress-track: #dce1ec;
+  --color-cta: #0f1324;
+  --color-cta-lip: #000000;
+  --color-cta-ink: #ffffff;
+  --color-yellow-wash: #fff4d6;
+  --color-green: #059669;
+  --color-green-wash: #ddf7ea;
+  --color-pink: #db2777;
+  --color-lilac: #7c3aed;
+  --color-orange: #f97316;
+  --color-sheet-marker: #fff0a6;
+  --color-hl-jaune: #fff0a6;
+  --color-hl-menthe: #c9ebd3;
+  --color-hl-bleu: #d6e7fb;
+  --color-hl-rose: #fbd9e4;
+  --color-hl-lilas: #dcc9fb;
+  --color-positive: #047857;
+  --color-caution: #8a5a00;
+  --color-caution-ink: #8a5a00;
+  --color-caution-vivid: #f7b41f;
+  --color-negative: #dc2626;
+  --color-info: #2452d0;
+  --color-positive-soft: #ddf7ea;
+  --color-caution-soft: #fff4d6;
+  --color-negative-soft: #ffe7ec;
+  --color-info-soft: #e4ecff;
+  --color-offer-wash: #fff4d6;
+  --color-offer-wash-soft: #fffaeb;
+  --color-sidebar: #eef1f8;
+  --color-sidebar-foreground: #566078;
+  --color-sidebar-accent: #ffffff;
+  --color-sidebar-accent-foreground: #0f1324;
+  --color-sidebar-border: #dce1ec;
+  --color-keyword: #7c3aed;
+  --color-correct: #059669;
+  --color-correct-ink: #047857;
+  --color-correct-soft: #ddf7ea;
+  --color-wrong: #dc2626;
+  --color-wrong-ink: #b91c1c;
+  --color-wrong-soft: #ffe7ec;
+  --color-track: #dce1ec;
+  --color-tone-yellow-pale: #fff4d6;
+  --color-tone-yellow-vivid: #d97706;
+  --color-tone-yellow-ink: #8a5a00;
+  --color-tone-mint-pale: #ddf7ea;
+  --color-tone-mint-vivid: #059669;
+  --color-tone-mint-ink: #047857;
+  --color-tone-blue-pale: #e4ecff;
+  --color-tone-blue-vivid: #3870fe;
+  --color-tone-blue-ink: #2452d0;
+  --color-tone-pink-pale: #ffe4ef;
+  --color-tone-pink-vivid: #db2777;
+  --color-tone-pink-ink: #be185d;
+  --color-tone-lilac-pale: #eee9ff;
+  --color-tone-lilac-vivid: #7c3aed;
+  --color-tone-lilac-ink: #6d28d9;
+  --color-icon-blue: #3870fe;
+  --color-icon-pink: #db2777;
+  --color-icon-green: #059669;
+  --color-icon-yellow: #d97706;
+  --color-icon-lilac: #7c3aed;
+  --color-icon-orange: #f97316;
+  --color-icon-red: #dc2626;
+  --mika-body: #3870fe;
+  --mika-shade: #2a5be0;
+  --shadow-floating: 0 0 0 1px var(--color-stroke), 0 18px 40px -16px oklch(0.2 0.03 265 / 0.22);
+}
+
+/* Le voile pastel de l'ancienne app n'a plus cours : le marine se suffit. */
 .pastel-wash {
   display: none;
-}
-
-.app-shell[data-pastel="on"] .pastel-wash {
-  display: block;
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background:
-    radial-gradient(ellipse 55% 42% at 8% 6%, #f8e4ec 0%, transparent 62%),
-    radial-gradient(ellipse 50% 40% at 92% 10%, #dfeaf8 0%, transparent 64%),
-    radial-gradient(ellipse 42% 36% at 78% 88%, #dff2e8 0%, transparent 60%),
-    radial-gradient(ellipse 38% 32% at 14% 82%, #fbebda 0%, transparent 58%),
-    radial-gradient(ellipse 28% 26% at 52% 46%, #f6f0d6 0%, transparent 72%);
-  opacity: 0.88;
-}
-
-[data-appearance="night"] .app-shell[data-pastel="on"] .pastel-wash,
-[data-appearance="twilight"] .app-shell[data-pastel="on"] .pastel-wash {
-  opacity: 0.26;
 }
 
 html {
@@ -572,6 +418,20 @@ h2,
 h3 {
   letter-spacing: var(--tracking-tight-title);
   text-wrap: balance;
+}
+
+/* Les titres sont en Sofia Sans Condensed Black, comme dans l'app (`V3Font.display`, `h1`,
+   `h2`) : une page, deux familles. L'interligne est serré (1,05 à 1,1) et la graisse est
+   900 quelle que soit la classe posée, sauf `.font-sans` qui garde un titre en police
+   système. */
+:where(h1, h2, h3):not(.font-sans),
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-synthesis: none;
+}
+:where(h1, h2):not(.font-sans) {
+  line-height: 1.06;
 }
 
 p {
@@ -648,8 +508,9 @@ img[data-icon] {
    théâtral ; au-dessus, on ne le sent plus. */
 /* Coupe le filet du squircle : le PNG a déjà son masque, ce clip ne
    reprend que le halo d'un pixel qui restait visible sur fond clair. */
+/* L'icône de l'app (Mika en buste sur le bleu nuit) : le PNG porte déjà ses coins arrondis. */
 .brand-mark {
-  clip-path: inset(4% round 26%);
+  border-radius: 22.4%;
 }
 
 @utility pressable {
@@ -1726,73 +1587,71 @@ img[data-icon] {
    `page-title`, `page-lead`, `section-title`, `section-lead`, et pour les nombres
    `stat-value` (un chiffre parmi d'autres) et `hero-value` (le seul grand chiffre d'un écran). */
 .app-shell {
-  --font-heading: var(--font-sans);
-  --radius: 0.625rem;
-  --radius-tile: 10px;
-  --radius-button: 10px;
-  --radius-group: 16px;
-  --radius-sheet: 16px;
+  --font-heading: var(--font-display);
+  --radius: 0.875rem;
+  --radius-tile: 14px;
+  --radius-button: 999px;
+  --radius-group: 22px;
+  --radius-sheet: 22px;
   background: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
-[data-appearance="day"] .app-shell,
-html:not([data-appearance]) .app-shell {
-  --primary: var(--color-ink);
-  --primary-foreground: var(--color-on-ink);
+.app-shell {
+  --primary: var(--color-cta);
+  --primary-foreground: var(--color-cta-ink);
   --accent: var(--color-surface-muted);
   --accent-foreground: var(--color-ink);
-  --ring: var(--color-ink-tertiary);
+  --ring: var(--color-accent);
   --sidebar: var(--color-sidebar);
   --sidebar-foreground: var(--color-sidebar-foreground);
   --sidebar-accent: var(--color-sidebar-accent);
   --sidebar-accent-foreground: var(--color-sidebar-accent-foreground);
   --sidebar-border: var(--color-sidebar-border);
-  --shadow-paper: none;
-  --shadow-paper-hover: none;
-  --shadow-floating: 0 1px 2px rgba(27, 30, 36, 0.04), 0 10px 28px rgba(27, 30, 36, 0.08);
+  --shadow-paper: 0 0 0 1.5px var(--color-stroke);
+  --shadow-paper-hover: 0 0 0 1.5px var(--color-stroke-strong);
 }
 
 /* Les couleurs des graphes. Une seule par sens, et le sens ne change pas d'un écran à
    l'autre : bleu = ce qui se travaille, vert = acquis, ocre = fragile ou à surveiller, rouge =
    dépassement, gris = pas encore vu. Validées ensemble pour le daltonisme (voir docs/web.md). */
 .app-shell {
-  --chart-work: #2563eb;
-  --chart-work-soft: #dbe6fd;
-  --chart-solid: #1f9d55;
-  --chart-solid-soft: #d9f1e3;
-  --chart-fragile: #d9a021;
-  --chart-fragile-soft: #fbefd2;
-  --chart-over: #d64545;
-  --chart-over-soft: #fbe1e1;
-  --chart-untouched: #d9d9de;
-  --chart-grid: #ececef;
-  --chart-axis: #8a8a93;
+  --chart-work: #5c88ff;
+  --chart-work-soft: #18224a;
+  --chart-solid: #34d399;
+  --chart-solid-soft: #0f2e26;
+  --chart-fragile: #f7b41f;
+  --chart-fragile-soft: #2b2412;
+  --chart-over: #f87171;
+  --chart-over-soft: #3a1820;
+  --chart-untouched: #3a4260;
+  --chart-grid: #20263a;
+  --chart-axis: #8a93ac;
 }
 
-[data-appearance="night"] .app-shell,
-[data-appearance="twilight"] .app-shell {
-  --chart-work: #5b8def;
-  --chart-work-soft: #1f2d4d;
-  --chart-solid: #3fb56f;
-  --chart-solid-soft: #16362a;
-  --chart-fragile: #e0b043;
-  --chart-fragile-soft: #3d3218;
-  --chart-over: #e06060;
-  --chart-over-soft: #3f1f1f;
-  --chart-untouched: #3a3a42;
-  --chart-grid: #2a2a31;
-  --chart-axis: #8a8a93;
+[data-appearance="day"] .app-shell {
+  --chart-work: #3870fe;
+  --chart-work-soft: #e4ecff;
+  --chart-solid: #059669;
+  --chart-solid-soft: #ddf7ea;
+  --chart-fragile: #d99a0b;
+  --chart-fragile-soft: #fff4d6;
+  --chart-over: #dc2626;
+  --chart-over-soft: #ffe7ec;
+  --chart-untouched: #c2c9d8;
+  --chart-grid: #e8ecf3;
+  --chart-axis: #69728a;
 }
 
 /* L'échelle typographique de l'app. */
 .app-shell .page-title {
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.3px;
-  line-height: 1.2;
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -0.1px;
+  line-height: 1.06;
   color: var(--color-ink);
 }
 .app-shell .page-lead {
@@ -1802,9 +1661,10 @@ html:not([data-appearance]) .app-shell {
   color: var(--color-ink-secondary);
 }
 .app-shell .section-title {
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.3;
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 900;
+  line-height: 1.1;
   color: var(--color-ink);
 }
 .app-shell .section-lead {
@@ -1814,19 +1674,19 @@ html:not([data-appearance]) .app-shell {
   color: var(--color-ink-secondary);
 }
 .app-shell .stat-value {
-  font-family: var(--font-number);
-  font-size: 22px;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 900;
   line-height: 1;
-  letter-spacing: -0.4px;
+  letter-spacing: 0;
   color: var(--color-ink);
 }
 .app-shell .hero-value {
-  font-family: var(--font-number);
-  font-size: 36px;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 900;
   line-height: 1;
-  letter-spacing: -0.8px;
+  letter-spacing: -0.2px;
   color: var(--color-ink);
 }
 .app-shell .stat-label {
@@ -1837,7 +1697,7 @@ html:not([data-appearance]) .app-shell {
 
 /* Le panneau : la seule surface de l'app. */
 .app-shell .panel {
-  border: 1px solid var(--color-stroke);
+  border: 1.5px solid var(--color-stroke);
   border-radius: var(--radius-group);
   background: var(--color-surface);
 }
@@ -1903,18 +1763,6 @@ html:not([data-appearance]) .app-shell {
   translate: none;
 }
 
-[data-appearance="night"] .app-shell,
-[data-appearance="twilight"] .app-shell {
-  --primary: var(--color-ink);
-  --primary-foreground: var(--color-canvas);
-  --accent: var(--color-surface-muted);
-  --accent-foreground: var(--color-ink);
-  --sidebar: var(--color-sidebar);
-  --sidebar-foreground: var(--color-sidebar-foreground);
-  --sidebar-accent: var(--color-sidebar-accent);
-  --sidebar-accent-foreground: var(--color-sidebar-accent-foreground);
-  --sidebar-border: var(--color-sidebar-border);
-}
 
 [data-appearance="night"] .app-shell .saas-card,
 [data-appearance="twilight"] .app-shell .saas-card,
@@ -1925,10 +1773,8 @@ html:not([data-appearance]) .app-shell {
   box-shadow: none;
 }
 
-[data-appearance="night"] img,
-[data-appearance="night"] video,
-[data-appearance="twilight"] img,
-[data-appearance="twilight"] video {
+html:not([data-appearance="day"]) img,
+html:not([data-appearance="day"]) video {
   outline-color: oklch(1 0 0 / 0.1);
 }
 
@@ -2256,59 +2102,120 @@ html:not([data-appearance]) .app-shell {
    le panneau de réponse monte du bas, la carte se retourne en 3D. « Réduire les animations »
    coupe tout ce qui se déplace et garde ce qui change de couleur.
    -------------------------------------------------------------------------- */
-.lesson-btn-primary {
+@layer components {
+.lesson-btn-primary,
+.btn-primary,
+.btn-offer {
   display: inline-flex;
   width: 100%;
+  min-height: 56px;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 17px 20px;
-  border-radius: 18px;
-  background: var(--color-ink);
-  color: var(--color-on-ink);
-  font-size: 18px;
-  font-weight: 800;
-  line-height: 1.2;
-  box-shadow: 0 6px 10px -2px color-mix(in srgb, var(--color-ink) 18%, transparent);
+  padding: 12px 24px;
+  border-radius: 999px;
+  background: var(--color-cta);
+  color: var(--color-cta-ink);
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 900;
+  letter-spacing: 0.1px;
+  line-height: 1.1;
+  /* La lèvre de 4 px : le seul relief de la direction artistique. Elle s'enfonce à l'appui. */
+  box-shadow: 0 4px 0 var(--color-cta-lip);
+  margin-bottom: 4px;
   transition:
-    scale var(--duration-press) var(--ease-out-strong),
-    background-color 0.2s,
-    box-shadow 0.2s;
+    translate var(--duration-press) var(--ease-out-strong),
+    box-shadow var(--duration-press) var(--ease-out-strong),
+    background-color 0.2s;
 }
-.lesson-btn-primary:active:not(:disabled) {
-  scale: 0.97;
+.btn-offer {
+  background: var(--color-yellow);
+  color: var(--color-on-yellow);
+  box-shadow: 0 4px 0 var(--color-yellow-deep);
 }
-.lesson-btn-primary:disabled {
-  background: var(--color-ink-tertiary);
+.lesson-btn-primary:active:not(:disabled),
+.btn-primary:active:not(:disabled),
+.btn-offer:active:not(:disabled) {
+  translate: 0 3px;
+  box-shadow: 0 1px 0 var(--color-cta-lip);
+}
+.btn-offer:active:not(:disabled) {
+  box-shadow: 0 1px 0 var(--color-yellow-deep);
+}
+@media (any-hover: hover) {
+  .lesson-btn-primary:hover:not(:disabled),
+  .btn-primary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-cta) 92%, var(--color-accent));
+  }
+  .btn-offer:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-yellow) 90%, #fff);
+  }
+}
+.lesson-btn-primary:disabled,
+.btn-primary:disabled {
+  background: var(--color-surface-muted);
+  color: var(--color-ink-tertiary);
   box-shadow: none;
   cursor: default;
 }
 
-.lesson-btn-secondary {
+.lesson-btn-secondary,
+.btn-secondary {
   display: inline-flex;
   width: 100%;
+  min-height: 56px;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 16px 20px;
-  border-radius: var(--radius-button);
+  padding: 12px 24px;
+  border-radius: 999px;
   background: var(--color-surface);
   color: var(--color-ink);
-  box-shadow: inset 0 0 0 1.5px var(--color-stroke-strong);
-  font-size: 17px;
-  font-weight: 700;
-  line-height: 1.2;
-  transition: scale var(--duration-press) var(--ease-out-strong);
+  box-shadow: inset 0 0 0 1.5px var(--color-stroke);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.1;
+  transition:
+    scale var(--duration-press) var(--ease-out-strong),
+    background-color 0.2s;
 }
-.lesson-btn-secondary:active:not(:disabled) {
-  scale: 0.97;
+.lesson-btn-secondary:active:not(:disabled),
+.btn-secondary:active:not(:disabled) {
+  scale: 0.98;
+}
+@media (any-hover: hover) {
+  .lesson-btn-secondary:hover:not(:disabled),
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--color-surface-muted);
+  }
+}
+
+/* « PRO » : en capitales droites, dans une pastille jaune. Jamais d'italique. */
+.pro-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px 0;
+  border-radius: 7px;
+  background: var(--color-yellow);
+  color: var(--color-on-yellow);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-style: normal;
+  letter-spacing: 0.2px;
+  line-height: 1.25;
+}
+}
+
+/* Le mot-clé d'un titre : bleu clair. */
+.kw {
+  color: var(--color-accent-hi);
 }
 
 /* Une proposition de quiz, et son relief de trois pixels tant qu'on n'a pas répondu. */
 .quiz-choice {
-  box-shadow:
-    inset 0 0 0 2px var(--color-stroke),
-    0 3px 0 var(--color-stroke);
+  box-shadow: inset 0 0 0 1.5px var(--color-stroke);
 }
 
 @keyframes notes-reveal {
@@ -2447,36 +2354,30 @@ html:not([data-appearance]) .app-shell {
   z-index: 10;
 }
 
-/* La barre de Home : haute, bordée du dégradé de l'app, un halo bleu qui s'allume quand on
-   écrit. Le dégradé est peint dans la bordure, le blanc dans la boîte. */
+/* La barre de Home : une pilule de surface à filet, comme dans l'app. L'écriture allume
+   le filet en bleu, sans halo. */
 .home-bar {
-  border: 2px solid transparent;
+  border: 1.5px solid var(--color-stroke);
   border-radius: 30px;
-  background:
-    linear-gradient(var(--color-surface), var(--color-surface)) padding-box,
-    linear-gradient(135deg, var(--color-accent), var(--color-keyword)) border-box;
-  box-shadow: 0 8px 16px -4px color-mix(in srgb, var(--color-accent) 18%, transparent);
-  transition: box-shadow 0.25s ease-out, border-width 0.25s ease-out;
+  background: var(--color-surface);
+  transition: border-color 0.2s ease-out;
 }
 .home-bar-focused {
-  border-width: 3px;
-  box-shadow: 0 8px 22px -4px color-mix(in srgb, var(--color-accent) 30%, transparent);
+  border-color: var(--color-accent);
 }
 .home-send {
-  background: linear-gradient(135deg, var(--color-accent), var(--color-keyword));
-  box-shadow: 0 5px 10px -2px color-mix(in srgb, var(--color-accent) 35%, transparent);
+  background: var(--color-cta);
+  color: var(--color-cta-ink);
 }
 .home-gradient-text {
-  background: linear-gradient(90deg, var(--color-accent), var(--color-keyword));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--color-accent-hi);
 }
 
 /* Le lot « Knowunity » (`docs/refonte-knowunity.md`) : la pilule Pro, le « +10 XP » qui monte
    et s'efface, l'anneau du minuteur. Le dégradé est celui de la barre de Home. */
 .kx-gradient {
-  background: linear-gradient(135deg, var(--color-accent), var(--color-keyword));
+  background: var(--color-accent);
+  color: var(--color-on-ink);
 }
 @keyframes xp-toast {
   0% {
@@ -2497,7 +2398,8 @@ html:not([data-appearance]) .app-shell {
   }
 }
 .xp-toast {
-  background: linear-gradient(135deg, var(--color-accent), var(--color-keyword));
+  background: var(--color-accent);
+  color: var(--color-on-ink);
   animation: xp-toast 1.5s var(--ease-out-strong) both;
 }
 .focus-ring {

@@ -70,7 +70,7 @@ function WelcomeButton({ label, onPress }: { label: string; onPress: () => void 
     <button
       type="button"
       onClick={onPress}
-      className="lp-cta inline-flex h-14 w-full items-center justify-center gap-2.5 rounded-[18px] bg-accent px-7 text-[16.5px] font-extrabold text-on-ink"
+      className="btn-primary lp-cta"
     >
       {label}
       <svg aria-hidden viewBox="0 0 20 20" className="lp-arrow size-[18px] rtl:-scale-x-100" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">

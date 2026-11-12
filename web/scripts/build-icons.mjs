@@ -1,196 +1,151 @@
 /**
- * Construit les icônes du site à partir du rendu 3D du stylo.
+ * **L'identité du site, refaite depuis l'icône de l'app** (direction artistique V3.3).
  *
- * Le fichier source est un carré aux coins droits. On pose un masque arrondi
- * (~22 %, comme une icône d'écran d'accueil) sur tout ce qui s'affiche dans
- * un onglet ou à côté du mot « Micabo ». iOS applique son propre masque :
- * `apple-touch-icon.png` reste donc un carré plein.
+ * L'icône est celle de l'iPhone : Mika en buste, la bouche ouverte, sur le bleu nuit #101737
+ * (`design/mika-v3/icone.html`, variante Y). Le dessin vient de `design/mika-v3/mika.js` et
+ * Chromium le photographie à chaque taille : rien n'est agrandi depuis un petit PNG.
  *
- * Usage :
- *   node web/scripts/build-icons.mjs <source.png>
+ * Ce script écrit dans `public/` :
+ * - `icon.svg` (l'icône vectorielle, coins arrondis), `favicon.ico` (16, 32, 48) ;
+ * - `icon-32.png`, `icon-48.png`, `icon-64.png`, `icon-192.png`, `icon-512.png` (coins arrondis,
+ *   fond transparent autour) et `icon.png` (256, la marque posée à côté du mot « Micabo ») ;
+ * - `apple-touch-icon.png` (180, carré plein : iOS pose son propre masque) ;
+ * - `icon-maskable-512.png` (Mika réduit dans la zone sûre, le fond jusqu'aux bords) ;
+ * et dans `app/` les images de partage `opengraph-image.png` et `twitter-image.png`
+ * (1200 × 630), avec leur texte de remplacement.
+ *
+ * Il faut Playwright et son Chromium (préinstallés dans l'environnement des agents, sinon
+ * `npm i -g playwright && npx playwright install chromium`, puis `NODE_PATH=$(npm root -g)`).
+ *
+ *     # depuis la racine du dépôt (le chargeur lit les catalogues TypeScript du site)
+ *     node --experimental-strip-types --import ./scripts/ts-extensions.mjs web/scripts/build-icons.mjs
  */
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createRequire } from "node:module";
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const REPO = resolve(ROOT, "..");
-const OUT = resolve(ROOT, "public");
+import { loadMika } from "./sync-mika.mjs";
+
 const require = createRequire(import.meta.url);
-const sharpCandidates = [
-  "sharp",
-  resolve(ROOT, "node_modules/.pnpm/sharp@0.35.3_@types+node@26.3.0/node_modules/sharp"),
-  resolve(REPO, "node_modules/.pnpm/sharp@0.35.3_@types+node@26.3.0/node_modules/sharp"),
-];
-const sharpPath = sharpCandidates.find((candidate) => {
-  try {
-    require.resolve(candidate);
-    return true;
-  } catch {
-    return existsSync(candidate);
-  }
-});
-if (!sharpPath) {
-  console.error("sharp introuvable. Lancer depuis web/ après pnpm install.");
-  process.exit(1);
-}
-const sharp = require(sharpPath);
-const RADIUS = 0.22;
-const BLUE = { r: 34, g: 136, b: 250 };
-/** Recule le masque d'un filet pour ne pas garder le halo sombre du squircle. */
-const MASK_INSET_RATIO = 0.018;
+const { chromium } = require("playwright");
 
-const source = process.argv[2];
-if (!source) {
-  console.error("Usage: node web/scripts/build-icons.mjs <source.png>");
-  process.exit(1);
+const here = dirname(fileURLToPath(import.meta.url));
+const WEB = resolve(here, "..");
+const PUBLIC = resolve(WEB, "public");
+const APP = resolve(WEB, "app");
+const FONT = resolve(WEB, "app/fonts/SofiaSansCondensed-Black.woff2");
+const { en } = await import(resolve(WEB, "lib/i18n/catalogs/en.ts")).catch(() => ({ en: null }));
+
+const NIGHT = "#101737";
+const MARINE = "#0B0F1C";
+const mika = loadMika();
+
+/** Mika en buste, comme l'icône de l'app : 140 % de la largeur, décalé de −20 % et +6 %. */
+function bust(side, { zoom = 1.4, left = -0.2, top = 0.06 } = {}) {
+  const art = mika.draw({ size: side * zoom, noShadow: true, viewBox: "-10 -30 420 420", mouth: "open", body: "#5C88FF", shade: "#3F6BE8" });
+  const inner = art.slice(art.indexOf(">") + 1, art.lastIndexOf("</svg>"));
+  return `<svg x="${side * left}" y="${side * top}" width="${side * zoom}" height="${side * zoom}" viewBox="-10 -30 420 420">${inner}</svg>`;
 }
 
-mkdirSync(OUT, { recursive: true });
-
-function roundedMask(size) {
-  const inset = Math.max(1, Math.round(size * MASK_INSET_RATIO));
-  const inner = size - inset * 2;
-  const r = Math.max(1, Math.round(inner * RADIUS));
-  return Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}"><rect x="${inset}" y="${inset}" width="${inner}" height="${inner}" rx="${r}" ry="${r}" fill="#fff"/></svg>`,
-  );
+/** L'icône en SVG : le fond, puis Mika. `radius` en fraction du côté (0 = carré plein). */
+function iconSvg(side, { radius = 0.2237, frame } = {}) {
+  const r = side * radius;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${side} ${side}" width="${side}" height="${side}">`
+    + `<title>Micabo</title>`
+    + `<defs><clipPath id="c"><rect width="${side}" height="${side}" rx="${r}" ry="${r}"/></clipPath></defs>`
+    + `<g clip-path="url(#c)"><rect width="${side}" height="${side}" fill="${NIGHT}"/>${bust(side, frame)}</g></svg>`;
 }
 
-async function hardenAlpha(buffer) {
-  const { data, info } = await sharp(buffer).ensureAlpha().raw().toBuffer({
-    resolveWithObject: true,
+const browser = await chromium.launch();
+
+async function png(html, width, height, target, { transparent = true } = {}) {
+  const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 1 });
+  await page.setContent(`<!doctype html><html><body style="margin:0;background:transparent">${html}</body></html>`);
+  await page.evaluate(() => document.fonts.ready);
+  const buffer = await page.screenshot({ omitBackground: transparent, clip: { x: 0, y: 0, width, height } });
+  await page.close();
+  if (target) writeFileSync(target, buffer);
+  return buffer;
+}
+
+// Le SVG : 64 unités suffisent, le dessin est vectoriel.
+writeFileSync(resolve(PUBLIC, "icon.svg"), iconSvg(64) + "\n");
+
+// Les PNG à coins arrondis.
+const rounded = {};
+for (const side of [16, 32, 48, 64, 192, 256, 512]) {
+  rounded[side] = await png(iconSvg(side), side, side);
+}
+for (const side of [32, 48, 64, 192, 512]) writeFileSync(resolve(PUBLIC, `icon-${side}.png`), rounded[side]);
+writeFileSync(resolve(PUBLIC, "icon.png"), rounded[256]);
+
+// iOS : un carré plein, sans transparence.
+await png(iconSvg(180, { radius: 0 }), 180, 180, resolve(PUBLIC, "apple-touch-icon.png"), { transparent: false });
+
+// Android : le fond jusqu'aux bords, Mika tenu dans les 80 % du centre.
+await png(
+  iconSvg(512, { radius: 0, frame: { zoom: 1.4 * 0.8, left: 0.1 - 0.2 * 0.8, top: 0.1 + 0.06 * 0.8 } }),
+  512,
+  512,
+  resolve(PUBLIC, "icon-maskable-512.png"),
+  { transparent: false },
+);
+
+// favicon.ico : trois PNG dans un conteneur ICO.
+{
+  const images = [16, 32, 48].map((side) => ({ side, data: rounded[side] }));
+  const header = Buffer.alloc(6 + 16 * images.length);
+  header.writeUInt16LE(0, 0);
+  header.writeUInt16LE(1, 2);
+  header.writeUInt16LE(images.length, 4);
+  let offset = header.length;
+  images.forEach(({ side, data }, index) => {
+    const at = 6 + index * 16;
+    header.writeUInt8(side, at);
+    header.writeUInt8(side, at + 1);
+    header.writeUInt8(0, at + 2);
+    header.writeUInt8(0, at + 3);
+    header.writeUInt16LE(1, at + 4);
+    header.writeUInt16LE(32, at + 6);
+    header.writeUInt32LE(data.length, at + 8);
+    header.writeUInt32LE(offset, at + 12);
+    offset += data.length;
   });
-  for (let i = 0; i < data.length; i += 4) {
-    if (data[i + 3] < 160) {
-      data[i] = 0;
-      data[i + 1] = 0;
-      data[i + 2] = 0;
-      data[i + 3] = 0;
-    } else {
-      data[i + 3] = 255;
-    }
-  }
-  return sharp(data, {
-    raw: { width: info.width, height: info.height, channels: 4 },
-  })
-    .png({ compressionLevel: 9 })
-    .toBuffer();
+  writeFileSync(resolve(PUBLIC, "favicon.ico"), Buffer.concat([header, ...images.map((image) => image.data)]));
 }
 
-async function roundedPng(size) {
-  const masked = await sharp(source)
-    .resize(size, size, { fit: "cover" })
-    .composite([{ input: roundedMask(size), blend: "dest-in" }])
-    .png()
-    .toBuffer();
-  const hardened = await hardenAlpha(masked);
-  // Sous 48 px le dégradé 3D se perd de toute façon : une palette tient
-  // dans un favicon. Au-dessus, on garde les ombres du stylo.
-  return size < 48
-    ? sharp(hardened).png({ compressionLevel: 9, palette: true, colours: 48 }).toBuffer()
-    : hardened;
+// L'image de partage : le marine, la marque, la phrase du site, et Mika qui salue.
+{
+  const font = readFileSync(FONT).toString("base64");
+  const before = en?.landing.titleBefore ?? "Learn anything,";
+  const accent = en?.landing.titleAccent ?? "step by step";
+  const line = en?.landing.ogDescriptionShort ?? "";
+  const wave = mika.draw({ size: 420, noShadow: true, viewBox: "-10 -30 420 420", leftArm: "wave", mouth: "open", body: "#5C88FF", shade: "#3F6BE8" });
+  const html = `<style>
+      @font-face { font-family: Sofia; src: url(data:font/woff2;base64,${font}) format("woff2"); font-weight: 900; }
+      .og { width: 1200px; height: 630px; box-sizing: border-box; padding: 64px 72px; position: relative; overflow: hidden;
+            background: radial-gradient(ellipse 60% 70% at 78% 40%, #18224A 0%, ${MARINE} 70%); color: #F5F6FB;
+            font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; justify-content: space-between; }
+      .brand { display: flex; align-items: center; gap: 16px; font: 900 40px/1 Sofia; }
+      .brand > svg { width: 64px; height: 64px; }
+      h1 { margin: 0; font: 900 84px/0.98 Sofia; letter-spacing: -0.4px; max-width: 640px; }
+      h1 span { color: #7FA2FF; }
+      p { margin: 20px 0 0; font-size: 27px; line-height: 1.35; color: #A9B1C6; max-width: 600px; font-weight: 500; }
+      .mika { position: absolute; right: 56px; top: 50%; transform: translateY(-46%); }
+    </style>
+    <div class="og">
+      <div class="brand">${iconSvg(64)}Micabo</div>
+      <div><h1>${before} <span>${accent}</span>.</h1><p>${line}</p></div>
+      <div class="mika">${wave}</div>
+    </div>`;
+  const buffer = await png(html, 1200, 630, null, { transparent: false });
+  writeFileSync(resolve(APP, "opengraph-image.png"), buffer);
+  writeFileSync(resolve(APP, "twitter-image.png"), buffer);
+  const alt = `Micabo - ${before} ${accent}.`;
+  writeFileSync(resolve(APP, "opengraph-image.alt.txt"), alt);
+  writeFileSync(resolve(APP, "twitter-image.alt.txt"), alt);
 }
 
-async function squarePng(size) {
-  return sharp(source)
-    .resize(size, size, { fit: "cover" })
-    .flatten({ background: BLUE })
-    .png({ compressionLevel: 9 })
-    .toBuffer();
-}
-
-function pngsToIco(entries) {
-  const header = 6 + 16 * entries.length;
-  let offset = header;
-  const parts = entries.map((entry) => {
-    const part = { ...entry, offset, bytes: entry.png.length };
-    offset += entry.png.length;
-    return part;
-  });
-  const out = Buffer.alloc(offset);
-  out.writeUInt16LE(0, 0);
-  out.writeUInt16LE(1, 2);
-  out.writeUInt16LE(entries.length, 4);
-  let cursor = 6;
-  for (const part of parts) {
-    out[cursor] = part.size >= 256 ? 0 : part.size;
-    out[cursor + 1] = part.size >= 256 ? 0 : part.size;
-    out[cursor + 2] = 0;
-    out[cursor + 3] = 0;
-    out.writeUInt16LE(1, cursor + 4);
-    out.writeUInt16LE(32, cursor + 6);
-    out.writeUInt32LE(part.bytes, cursor + 8);
-    out.writeUInt32LE(part.offset, cursor + 12);
-    cursor += 16;
-  }
-  for (const part of parts) {
-    part.png.copy(out, part.offset);
-  }
-  return out;
-}
-
-const icon32 = await roundedPng(32);
-const icon48 = await roundedPng(48);
-const icon64 = await roundedPng(64);
-const icon256 = await roundedPng(256);
-const icon192 = await roundedPng(192);
-const icon512 = await roundedPng(512);
-const apple = await squarePng(180);
-
-const maskInner = 390;
-const padded = await sharp(source)
-  .resize(maskInner, maskInner, { fit: "cover" })
-  .png()
-  .toBuffer();
-const maskable = await sharp({
-  create: { width: 512, height: 512, channels: 3, background: BLUE },
-})
-  .composite([{ input: padded, left: Math.round((512 - maskInner) / 2), top: Math.round((512 - maskInner) / 2) }])
-  .png({ compressionLevel: 9 })
-  .toBuffer();
-
-const icon16 = await roundedPng(16);
-const ico = pngsToIco([
-  { size: 16, png: icon16 },
-  { size: 32, png: icon32 },
-  { size: 48, png: icon48 },
-]);
-
-writeFileSync(resolve(OUT, "icon.png"), icon256);
-writeFileSync(resolve(OUT, "icon-32.png"), icon32);
-writeFileSync(resolve(OUT, "icon-48.png"), icon48);
-writeFileSync(resolve(OUT, "icon-64.png"), icon64);
-writeFileSync(resolve(OUT, "icon-192.png"), icon192);
-writeFileSync(resolve(OUT, "icon-512.png"), icon512);
-writeFileSync(resolve(OUT, "apple-touch-icon.png"), apple);
-writeFileSync(resolve(OUT, "icon-maskable-512.png"), maskable);
-writeFileSync(resolve(OUT, "favicon.ico"), ico);
-
-const embed = icon64.toString("base64");
-const svg = [
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">',
-  "<title>Micabo</title>",
-  `<image href="data:image/png;base64,${embed}" width="64" height="64" />`,
-  "</svg>",
-  "",
-].join("");
-writeFileSync(resolve(OUT, "icon.svg"), svg);
-
-for (const name of [
-  "icon.png",
-  "icon-32.png",
-  "icon-48.png",
-  "icon-64.png",
-  "icon-192.png",
-  "icon-512.png",
-  "apple-touch-icon.png",
-  "icon-maskable-512.png",
-  "favicon.ico",
-  "icon.svg",
-]) {
-  const { statSync } = await import("node:fs");
-  const bytes = statSync(resolve(OUT, name)).size;
-  console.log(`${name.padEnd(24)} ${(bytes / 1024).toFixed(1)} KB`);
-}
+await browser.close();
+console.log("Icônes et images de partage écrites.");

@@ -9,6 +9,7 @@ import { useI18n } from "@/lib/i18n/client";
 import { prefetchStep } from "@/lib/onboarding/prefetch";
 import { useOnboarding } from "@/lib/onboarding/store";
 import { nextPath, previousPath, type OnboardingPath, type StepContext } from "@/lib/onboarding/steps";
+import { EmojiGlyph } from "@/components/ui/EmojiGlyph";
 
 /**
  * Ce que l'ordre des écrans a besoin de savoir des réponses : le pays, et la filière.
@@ -196,8 +197,8 @@ export function ContinueButton({
       type="button"
       disabled={!enabled}
       onClick={press}
-      className={`inline-flex h-[52px] max-w-full items-center justify-center gap-2 rounded-[16px] px-5 text-[15.5px] font-extrabold leading-tight transition-[background-color,color,box-shadow] duration-hover sm:h-14 sm:px-7 sm:text-[16px] ${
-        enabled ? "lp-cta bg-accent text-on-ink" : "cursor-not-allowed bg-surface-muted text-ink-tertiary"
+      className={`max-w-full px-7 sm:w-auto ${
+        enabled ? "btn-primary lp-cta" : "btn-primary cursor-not-allowed"
       }`}
     >
       <span className="truncate">{text}</span>
@@ -218,7 +219,7 @@ function Tick({ selected, multi }: { selected: boolean; multi: boolean }) {
       } ${selected ? "border-accent bg-accent" : "border-stroke-strong bg-surface"}`}
     >
       {selected ? (
-        <svg viewBox="0 0 20 20" className="emoji-pop h-full w-full text-on-ink">
+        <svg viewBox="0 0 20 20" className="emoji-pop h-full w-full text-white">
           <path d="M5 10.5l3.2 3.2L15 7" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       ) : null}
@@ -259,18 +260,16 @@ export function ChoiceRow({
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
-      className={`pressable flex min-h-[54px] w-full items-center gap-3.5 rounded-[16px] border-[1.5px] px-4 py-2.5 text-start transition-colors duration-hover ${
-        selected ? "border-accent bg-accent-soft" : "border-stroke bg-surface hover:border-stroke-strong hover:bg-surface-muted/60"
+      className={`pressable flex min-h-[58px] w-full items-center gap-3.5 rounded-[16px] border-[1.5px] px-4 py-2.5 text-start transition-colors duration-hover ${
+        selected ? "border-accent bg-accent-wash" : "border-stroke bg-surface hover:border-stroke-strong"
       }`}
     >
       {icon ??
         (emoji ? (
-          <span aria-hidden className="emoji w-7 shrink-0 text-center text-[22px] leading-none">
-            {emoji}
-          </span>
+          <EmojiGlyph emoji={emoji} size={26} className="w-7" />
         ) : null)}
       <span className="min-w-0 flex-1">
-        <span className={`block text-[15.5px] font-semibold leading-snug ${selected ? "text-accent" : "text-ink"}`}>{title}</span>
+        <span className="block text-[16.5px] font-bold leading-snug text-ink">{title}</span>
         {detail ? <span className="mt-0.5 block truncate text-[12.5px] font-medium text-ink-tertiary">{detail}</span> : null}
       </span>
       <Tick selected={selected} multi={multi} />

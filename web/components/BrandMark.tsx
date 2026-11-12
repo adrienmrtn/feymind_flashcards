@@ -2,10 +2,8 @@ import type { Route } from "next";
 import Link from "next/link";
 
 /**
- * Le stylo, coins arrondis. C'est le même fichier que le favicon.
- *
- * Le PNG est déjà masqué. On recoupe encore d'un filet en CSS : le halo
- * gris du squircle ne doit plus se lire à côté du mot « Micabo ».
+ * L'icône de l'app : Mika en buste sur le bleu nuit, coins arrondis. C'est le même dessin
+ * que le favicon (`scripts/build-icons.mjs`).
  */
 export function BrandMark({
   size = 32,
@@ -35,7 +33,7 @@ export function BrandLockup({
   size = 28,
   word = "Micabo",
   className = "",
-  wordClassName = "text-[15px] font-bold tracking-tight",
+  wordClassName = "font-display text-[22px] leading-none",
 }: {
   href: Route;
   size?: number;
@@ -67,7 +65,7 @@ export function BrandWordmark({
   return (
     <div className={`flex flex-col items-center ${className}`.trim()}>
       <BrandMark size={mark} />
-      <p className="mt-3 text-[22px] font-bold leading-none tracking-tight text-ink">micabo</p>
+      <p className="mt-3 font-display text-[28px] leading-none text-ink">Micabo</p>
       <p className="mt-1.5 text-[11px] font-medium uppercase tracking-[0.22em] text-ink-tertiary">
         {tagline}
       </p>

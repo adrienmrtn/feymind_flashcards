@@ -2,14 +2,12 @@
 
 import type { Route } from "next";
 import Link from "next/link";
-import { BookOpen, CalendarSync, GraduationCap, Home, User, Zap } from "lucide-react";
+import { BookOpen, CalendarSync, Zap } from "lucide-react";
 
 
 import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { BrandLockup, BrandMark } from "@/components/BrandMark";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
-import { MicaboIcon } from "@/components/lesson/MicaboIcon";
-import { PathStory } from "@/components/onboarding/stories/PathStory";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n/client";
 import type { Translator } from "@/lib/i18n/copy";
@@ -213,94 +211,33 @@ function points(t: Translator) {
 }
 
 /**
- * **Le cadre, et l'écran de révision dedans.**
- *
- * La carte est montrée **retournée**, verso compris. Un recto seul demande au visiteur de
- * croire qu'une réponse existe derrière ; la réponse écrite lui montre ce que Micabo tire
- * d'un cours, et c'est le seul argument de la page après le bouton.
- *
- * Le graphite du châssis ne vient pas de la palette et ne change pas avec l'apparence : un
- * téléphone est un objet, pas une surface de l'interface, et une bordure qui s'éclaircit la
- * nuit se lirait comme un cadre blanc autour de l'écran. Ce qui le détache du fond n'est donc
- * pas sa couleur mais **le filet clair sur sa tranche** — l'ombre portée, elle, ne se voit que
- * de jour, et la nuit un téléphone posé sur du noir ne se lirait plus que par ce reflet.
+ * **Le cadre, et l'écran de l'app dedans** : une vraie capture de l'app iPhone (le chemin d'une leçon, thème
+ * marine, `public/app-screens/lecon.webp`), dans un châssis graphite. Un dessin de l'écran
+ * vieillirait à la première retouche de l'app ; la capture dit ce qu'on ouvrira.
  */
 function PhoneFrame() {
   const { t } = useI18n();
-
   return (
     <div
-      role="img"
-      aria-label={t("landing.iosPhoneAria")}
-      className="mx-auto w-full max-w-[320px] rounded-[46px] bg-[#25272e] p-[11px]"
-      style={{
-        boxShadow:
-          "inset 0 0 0 1px oklch(1 0 0 / 0.14), 0 30px 60px -24px oklch(0 0 0 / 0.45), 0 0 0 1px oklch(0 0 0 / 0.08)",
-      }}
+      className="mx-auto w-full max-w-[300px] rounded-[46px] bg-[#1d2030] p-[9px]"
+      style={{ boxShadow: "inset 0 0 0 1px oklch(1 0 0 / 0.14)" }}
     >
-      <div className="relative overflow-hidden rounded-[36px] bg-canvas">
-        {/* L'île, à la bonne place : c'est elle qui fait lire « iPhone » plutôt que
-            « rectangle arrondi ». */}
-        <div className="flex h-11 items-center justify-center">
-          <span className="h-[26px] w-[86px] rounded-pill bg-[#22242a]" />
-        </div>
-
-        <div className="px-3.5 pb-2">
-          <div className="flex items-center justify-between gap-2">
-            <p className="truncate text-[14px] font-extrabold text-ink">{t("landing.iosLessonTitle")}</p>
-            <span className="numeral shrink-0 rounded-pill bg-accent-soft px-2 py-0.5 text-[11px] font-extrabold text-accent">3 / 7</span>
-          </div>
-          <div className="mt-1.5 h-1.5 overflow-hidden rounded-pill bg-track">
-            <div className="h-full w-[43%] rounded-pill bg-accent" />
-          </div>
-        </div>
-
-        <div className="h-[250px] overflow-hidden">
-          <PathStory scale={0.56} height={250} />
-        </div>
-
-        <div className="mx-3 grid grid-cols-3 gap-1.5 rounded-[16px] bg-surface p-1.5 shadow-paper">
-          {(["notes", "quiz", "flashcards"] as const).map((item, index) => (
-            <span key={item} className="flex flex-col items-center gap-0.5 py-1">
-              <MicaboIcon id={["fiche", "quiz", "cartes"][index]!} size={24} />
-              <span className="text-[9.5px] font-extrabold text-ink">{t(`lesson.nav.${item}`)}</span>
-            </span>
-          ))}
-        </div>
-
-        {/* Les quatre onglets de l'app : Home, Leçons, Examen, Profil. */}
-        <div className="mt-2 border-t border-hairline bg-surface px-2 pb-2 pt-2">
-          <div className="flex items-center justify-around">
-            <Tab icon={Home} label={t("lesson.tab.home")} />
-            <Tab icon={BookOpen} label={t("lesson.tab.lessons")} active />
-            <Tab icon={GraduationCap} label={t("lesson.tab.exams")} />
-            <Tab icon={User} label={t("lesson.tab.profile")} />
-          </div>
-          <span className="mx-auto mb-1.5 mt-2.5 block h-[4px] w-[108px] rounded-full bg-ink/25" />
-        </div>
+      <div className="overflow-hidden rounded-[37px] bg-canvas">
+        {/* eslint-disable-next-line @next/next/no-img-element -- une capture fixe, déjà au bon format. */}
+        <img
+          src="/app-screens/lecon.webp"
+          alt={t("landing.iosPhoneAria")}
+          width={507}
+          height={1046}
+          decoding="async"
+          className="block h-auto w-full"
+          style={{ outline: "none" }}
+        />
       </div>
     </div>
   );
 }
 
-function Tab({
-  icon: Icon,
-  label,
-  active = false,
-}: {
-  icon: typeof BookOpen;
-  label: string;
-  active?: boolean;
-}) {
-  return (
-    <span
-      className={`flex min-w-0 flex-col items-center gap-0.5 ${active ? "text-accent" : "text-ink-tertiary"}`}
-    >
-      <Icon className="size-[18px]" strokeWidth={active ? 2.2 : 1.7} aria-hidden />
-      <span className="truncate text-[9.5px] font-medium">{label}</span>
-    </span>
-  );
-}
 
 /**
  * Le pied de page de cette page-là, et pas celui de la vitrine.

@@ -182,7 +182,7 @@ export function ProfileDetail({ email, onClose, ...initial }: ProfileDetailProps
             <option value="">{t("app.profileTab.levelNone")}</option>
             {stages.map((stage) => (
               <option key={stage.id} value={stage.id}>
-                {stage.emoji} {stage.title}
+                {stage.title}
               </option>
             ))}
           </select>

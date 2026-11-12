@@ -33,9 +33,9 @@ describe("le pastel de l'app", () => {
   });
 
   it("ne teinte pas la landing ni l'onboarding", () => {
-    // L'ivoire de `MicaboPalette.day`, le même que `--color-canvas`.
-    expect(APPEARANCE_THEME_COLOR.day).toBe("#f6f4ed");
-    expect(APPEARANCE_SHADER.day.back).toBe("#f6f4ed");
+    // Le fond teinté du clair (`V3Palette.day.bg`), le même que `--color-canvas`.
+    expect(APPEARANCE_THEME_COLOR.day).toBe("#eef1f8");
+    expect(APPEARANCE_SHADER.day.back).toBe("#eef1f8");
     expect(rootLayout).not.toContain("data-pastel");
     expect(rootLayout).not.toContain("PastelWash");
   });

@@ -25,6 +25,7 @@ import { usePresentment } from "@/lib/presentment";
 import { manageLabel, subscriptionDetail, subscriptionHeadline, type SubscriptionView } from "@/lib/subscription-copy";
 import { useXp } from "@/lib/xp/client";
 import { LEAGUE_EMOJI, leagueNameKey } from "@/lib/xp/league";
+import { EmojiGlyph } from "@/components/ui/EmojiGlyph";
 
 /** Où l'on écrit, et nos autres apps : les mêmes adresses que `ProfileLinks` côté Swift. */
 export const SUPPORT_EMAIL = "team@micabo.app";
@@ -162,7 +163,7 @@ function LeagueLink() {
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="text-[17px] font-extrabold text-ink">{t("app.kx.league.title")}</span>
         <span className="truncate text-[14px] font-semibold text-ink-secondary">
-          {LEAGUE_EMOJI[xp.league]} {t("app.kx.league.profileLine", { xp: xp.week, league: t(leagueNameKey(xp.league)) })}
+          <EmojiGlyph emoji={LEAGUE_EMOJI[xp.league]} size={16} className="me-1 align-[-3px]" /> {t("app.kx.league.profileLine", { xp: xp.week, league: t(leagueNameKey(xp.league)) })}
         </span>
       </span>
       <ChevronRight aria-hidden="true" className="size-5 shrink-0 text-ink-tertiary" strokeWidth={2.6} />

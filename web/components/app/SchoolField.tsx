@@ -8,6 +8,7 @@ import { institutionSearchCountry } from "@micabo/core";
 import { useI18n } from "@/lib/i18n/client";
 import { institutionKindLabel } from "@/lib/i18n/institution";
 import { createClient } from "@/lib/supabase/client";
+import { EmojiGlyph } from "@/components/ui/EmojiGlyph";
 
 interface Suggestion {
   id: string;
@@ -78,9 +79,7 @@ export function SchoolField({
   return (
     <div>
       <div className="flex items-center gap-2 rounded-button bg-surface-muted px-4">
-        <span aria-hidden className="emoji text-[16px]">
-          🏫
-        </span>
+        <EmojiGlyph emoji="🏫" size={18} />
         <label htmlFor="profile-school" className="sr-only">
           {t("app.settings.schoolSr")}
         </label>

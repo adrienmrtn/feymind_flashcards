@@ -8,6 +8,7 @@ import { localeBcp47 } from "@/lib/i18n/copy";
 import { useI18n } from "@/lib/i18n/client";
 import { isExamDate } from "@/lib/onboarding/questions";
 import { useOnboarding } from "@/lib/onboarding/store";
+import { EmojiGlyph } from "@/components/ui/EmojiGlyph";
 
 function isoDay(date: Date): string {
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
@@ -92,9 +93,7 @@ export default function ExamDateStep() {
         }}
         className="pressable mx-auto mt-5 flex min-h-12 items-center justify-center gap-2 rounded-[16px] border-[1.5px] border-stroke bg-surface px-5 text-[15px] font-semibold text-ink-secondary transition-colors duration-hover hover:border-stroke-strong hover:text-ink"
       >
-        <span aria-hidden className="emoji text-[18px]">
-          🤷
-        </span>
+        <EmojiGlyph emoji="🤷" size={20} />
         {t("onboarding.examNoDate")}
       </button>
     </Scaffold>

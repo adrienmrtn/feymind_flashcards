@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import type { Route } from "next";
-import { ChevronRight, Flame, Play, Sparkles, Zap } from "lucide-react";
+import { ChevronRight, Flame, Play, Zap } from "lucide-react";
 
 import { DAILY_XP_GOAL, FOCUS_MINUTES, type LessonTone, type ResumeTarget } from "@micabo/core";
 
@@ -16,6 +16,7 @@ import { FOCUS_PATH, flashcardsPath, LEAGUE_PATH, lessonPath, QUICK_QUIZ_QUESTIO
 import { requestPaywall } from "@/lib/paywall";
 import { useXp } from "@/lib/xp/client";
 import { LEAGUE_EMOJI, leagueNameKey } from "@/lib/xp/league";
+import { EmojiGlyph } from "@/components/ui/EmojiGlyph";
 
 /**
  * **Ce que le lot « Knowunity » ajoute à Home** (`docs/refonte-knowunity.md` § 1) : la rangée du
@@ -39,10 +40,9 @@ export function HomeTopRow({ isPro, streak }: { isPro: boolean; streak: number }
           type="button"
           onClick={() => requestPaywall("upgrade")}
           aria-label={t("lesson.profile.goPro")}
-          className="kx-gradient pressable inline-flex items-center gap-1 rounded-pill px-3.5 py-1.5 text-[14px] font-extrabold text-white shadow-[0_5px_10px_-3px_color-mix(in_srgb,var(--color-accent)_45%,transparent)]"
+          className="pressable pro-badge px-2.5 py-1 text-[19px]"
         >
-          <Sparkles aria-hidden="true" className="size-3.5 fill-current" strokeWidth={2.4} />
-          Pro
+          PRO
         </button>
       )}
       <div className="flex items-center gap-2">
@@ -53,9 +53,7 @@ export function HomeTopRow({ isPro, streak }: { isPro: boolean; streak: number }
         >
           <Zap aria-hidden="true" className="size-4 fill-current" strokeWidth={2.4} />
           <span className="numeral">{xp.week}</span>
-          <span aria-hidden="true" className="text-[14px] leading-none">
-            {LEAGUE_EMOJI[xp.league]}
-          </span>
+          <EmojiGlyph emoji={LEAGUE_EMOJI[xp.league]} size={15} />
         </Link>
         {streak > 1 ? (
           <span className="inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-[13px] font-extrabold" style={{ background: "var(--color-tone-yellow-pale)", color: "var(--color-tone-yellow-ink)" }}>

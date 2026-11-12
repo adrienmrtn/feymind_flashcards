@@ -75,9 +75,7 @@ export function Pricing({
         )}
         <Link
           href={href}
-          className={`mt-7 inline-flex h-12 items-center justify-center rounded-[16px] text-[15.5px] font-extrabold ${
-            recommended ? "lp-cta bg-accent text-on-ink" : "lp-card bg-surface-muted text-ink"
-          }`}
+          className={`mt-7 ${recommended ? "btn-primary" : "btn-secondary"}`}
         >
           {recommended && badge ? t("landing.pricingTrialCta", { days: pricing.trialDays(plan, presentment) }) : t("landing.heroCta")}
         </Link>

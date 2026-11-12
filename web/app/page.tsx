@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { AppScreens } from "@/components/landing/AppScreens";
 import { AppsSection } from "@/components/landing/AppsSection";
 import { Atmosphere } from "@/components/landing/Atmosphere";
 import { Closing } from "@/components/landing/Closing";
@@ -124,6 +125,8 @@ export default async function LandingPage({
             links={[{ href: localizedHref(locale, EXAM_PAGE.path), label: t("landing.examMore") }]}
           />
         </section>
+
+        <AppScreens />
 
         <AppsSection id={LANDING_SECTIONS.apps} />
 

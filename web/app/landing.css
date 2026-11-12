@@ -22,8 +22,8 @@
 /* Les sections de la vitrine montent sur la courbe douce, un peu plus loin et plus lentement
    que les écrans du produit. Le `Reveal` reste le même composant. */
 .lp .reveal {
-  translate: 0 18px;
-  transition-duration: 680ms;
+  translate: 0 10px;
+  transition-duration: 480ms;
   transition-timing-function: var(--ease-soft);
 }
 
@@ -35,7 +35,7 @@
 @keyframes lp-enter {
   from {
     opacity: 0;
-    transform: translate3d(0, 16px, 0);
+    transform: translate3d(0, 8px, 0);
   }
   to {
     opacity: 1;
@@ -53,8 +53,8 @@
 }
 
 .lp-enter {
-  animation: lp-enter 720ms var(--ease-soft) both;
-  animation-delay: calc(var(--i, 0) * 70ms + 60ms);
+  animation: lp-enter 420ms var(--ease-soft) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
 }
 
 /* Les trois points de « Mika écrit ta leçon » : ils respirent l'un après l'autre. */
@@ -75,111 +75,41 @@
 }
 
 /* ---- L'ambiance ----
-   Trois taches de couleur en dégradé radial (aucun flou, donc aucun coût de rendu), qui
-   dérivent sur une trentaine de secondes, et un grain fixe par-dessus. Le bas se fond dans
-   le papier par un masque : pas de bord visible entre le héros et la suite. */
+   Direction artistique V3.3 : sobre. Une seule lueur bleue, immobile, très basse, derrière
+   le haut de page ; le reste est le marine. Pas de taches qui dérivent. */
 .lp-atmos {
   pointer-events: none;
   position: absolute;
   inset: 0 0 auto 0;
-  height: 1180px;
+  height: 900px;
   overflow: hidden;
   z-index: -1;
-  background: linear-gradient(
-    180deg,
-    color-mix(in oklch, var(--color-accent-soft) 70%, var(--color-canvas)) 0%,
-    var(--color-canvas) 82%
+  background: radial-gradient(
+    ellipse 70% 60% at 50% -10%,
+    color-mix(in oklch, var(--color-accent) 16%, transparent),
+    transparent 70%
   );
-  -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent 100%);
-  mask-image: linear-gradient(180deg, #000 60%, transparent 100%);
 }
 
 /* La même ambiance, tenue dans une boîte (l'appel final, la connexion). */
 .lp-atmos-box {
   height: auto;
   inset: 0;
-  -webkit-mask-image: none;
-  mask-image: none;
-  background: color-mix(in oklch, var(--color-accent-soft) 55%, var(--color-canvas));
+  background: radial-gradient(
+    ellipse 80% 70% at 50% 0%,
+    color-mix(in oklch, var(--color-accent) 14%, transparent),
+    transparent 75%
+  );
 }
 
 .lp-blob {
-  position: absolute;
-  border-radius: 999px;
-  will-change: transform;
-  animation: lp-drift-a 26s var(--ease-in-out-strong) infinite alternate;
-}
-
-.lp-blob-a {
-  width: 860px;
-  height: 860px;
-  left: -280px;
-  top: -340px;
-  background: radial-gradient(
-    closest-side,
-    color-mix(in oklch, var(--color-accent-vivid) 30%, transparent),
-    transparent
-  );
-}
-
-.lp-blob-b {
-  width: 780px;
-  height: 780px;
-  right: -260px;
-  top: -160px;
-  background: radial-gradient(
-    closest-side,
-    color-mix(in oklch, var(--color-tone-lilac-vivid) 22%, transparent),
-    transparent
-  );
-  animation-name: lp-drift-b;
-  animation-duration: 30s;
-}
-
-.lp-blob-c {
-  width: 700px;
-  height: 700px;
-  left: 28%;
-  top: 360px;
-  background: radial-gradient(
-    closest-side,
-    color-mix(in oklch, var(--color-tone-mint-vivid) 14%, transparent),
-    transparent
-  );
-  animation-name: lp-drift-c;
-  animation-duration: 34s;
-}
-
-@keyframes lp-drift-a {
-  from {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  to {
-    transform: translate3d(140px, 70px, 0) scale(1.08);
-  }
-}
-
-@keyframes lp-drift-b {
-  from {
-    transform: translate3d(0, 0, 0) scale(1.05);
-  }
-  to {
-    transform: translate3d(-120px, 90px, 0) scale(0.94);
-  }
-}
-
-@keyframes lp-drift-c {
-  from {
-    transform: translate3d(0, 0, 0) scale(0.95);
-  }
-  to {
-    transform: translate3d(-100px, -70px, 0) scale(1.06);
-  }
+  display: none;
 }
 
 /* Le grain : un bruit SVG posé une fois, immobile. Il casse le dégradé, qui sans lui se
    lit comme une capture d'écran. */
 .lp-grain {
+  display: none;
   position: absolute;
   inset: 0;
   opacity: 0.05;
@@ -200,38 +130,16 @@
   transition: transform 220ms var(--ease-soft);
 }
 
-.lp-cta::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  box-shadow: 0 16px 32px -12px color-mix(in oklch, var(--color-accent) 75%, transparent);
-  opacity: 0.5;
-  transition: opacity 220ms var(--ease-soft);
-}
-
 .lp-cta .lp-arrow {
   transition: transform 220ms var(--ease-soft);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .lp-cta:hover {
-    transform: translateY(-1px);
-  }
-
-  .lp-cta:hover::after {
-    opacity: 1;
-  }
-
   .lp-cta:hover .lp-arrow {
     transform: translateX(3px);
   }
 }
 
-.lp-cta:active {
-  transform: scale(0.97);
-}
 
 /* Une carte de la vitrine : elle monte de trois points au survol, son ombre s'approfondit. */
 .lp-card {
@@ -240,63 +148,30 @@
   transition: transform 280ms var(--ease-soft);
 }
 
-.lp-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  box-shadow: 0 24px 48px -24px oklch(0 0 0 / 0.22);
-  opacity: 0;
-  transition: opacity 280ms var(--ease-soft);
-}
-
 @media (hover: hover) and (pointer: fine) {
   .lp-card:hover {
-    transform: translateY(-3px);
-  }
-
-  .lp-card:hover::after {
-    opacity: 1;
+    transform: translateY(-2px);
   }
 }
 
-/* Le bord en dégradé de l'app (bleu vers violet), pour ce qui est recommandé. */
+/* Ce qui est recommandé : un filet d'accent, sans dégradé. */
 .lp-gradient-ring {
-  border: 2px solid transparent;
-  background:
-    linear-gradient(var(--color-surface), var(--color-surface)) padding-box,
-    linear-gradient(135deg, var(--color-accent), var(--color-keyword)) border-box;
+  border: 1.5px solid var(--color-accent);
+  background: var(--color-accent-wash);
 }
 
 .lp-gradient-fill {
-  background: linear-gradient(135deg, var(--color-accent), var(--color-keyword));
+  background: var(--color-accent);
 }
 
+/* Une surface de la vitrine : un filet, sans ombre floue. */
 .lp-surface-shadow {
-  box-shadow:
-    0 0 0 1px oklch(0 0 0 / 0.04),
-    0 18px 40px -26px oklch(0 0 0 / 0.25);
-}
-
-.dark .lp-surface-shadow {
-  box-shadow:
-    0 0 0 1px oklch(1 0 0 / 0.07),
-    0 18px 40px -26px oklch(0 0 0 / 0.7);
+  box-shadow: 0 0 0 1.5px var(--color-stroke);
 }
 
 /* ---- La carte produit du héros ---- */
 .lp-demo-card {
-  box-shadow:
-    0 0 0 1px oklch(0 0 0 / 0.04),
-    0 34px 70px -28px color-mix(in oklch, var(--color-accent) 34%, oklch(0 0 0 / 0.4)),
-    0 12px 24px -14px oklch(0 0 0 / 0.12);
-}
-
-.dark .lp-demo-card {
-  box-shadow:
-    0 0 0 1px oklch(1 0 0 / 0.07),
-    0 34px 70px -28px oklch(0 0 0 / 0.75);
+  box-shadow: 0 0 0 1.5px var(--color-stroke);
 }
 
 @keyframes lp-hover-float {
@@ -309,8 +184,9 @@
   }
 }
 
+/* Plus de flottement en boucle : ce qui est posé ne bouge pas. */
 .lp-float {
-  animation: lp-hover-float 7s var(--ease-in-out-strong) infinite;
+  animation: none;
 }
 
 /* Deux vues dans le même rectangle : les supports, puis la leçon. Elles se fondent l'une

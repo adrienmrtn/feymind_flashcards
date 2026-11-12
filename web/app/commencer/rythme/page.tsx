@@ -8,6 +8,7 @@ import { useI18n } from "@/lib/i18n/client";
 import { DAILY_MINUTES } from "@/lib/onboarding/questions";
 import { useOnboarding } from "@/lib/onboarding/store";
 import { weekDays } from "@/lib/onboarding/week";
+import { EmojiGlyph } from "@/components/ui/EmojiGlyph";
 
 /**
  * **Le rythme** : le temps par jour, et les jours sans révision. Un seul écran pour une seule
@@ -50,12 +51,10 @@ export default function RhythmStep() {
                 trackOnboardingAnswer("dailyMinutes", choice.minutes);
               }}
               className={`pressable flex min-h-[104px] flex-col items-center justify-center gap-1 rounded-[18px] border-[1.5px] px-1 py-3 transition-colors duration-hover ${
-                selected ? "border-accent bg-accent-soft" : "border-stroke bg-surface hover:border-stroke-strong"
+                selected ? "border-accent bg-accent-wash" : "border-stroke bg-surface hover:border-stroke-strong"
               }`}
             >
-              <span aria-hidden className="emoji text-[24px] leading-none">
-                {choice.emoji}
-              </span>
+              <EmojiGlyph emoji={choice.emoji} size={26} />
               <span className={`numeral mt-1 text-[17px] font-extrabold leading-none ${selected ? "text-accent" : "text-ink"}`}>
                 {t("onboarding.timeMinutes", { n: choice.minutes })}
               </span>
@@ -95,9 +94,7 @@ export default function RhythmStep() {
                     sept cases sautent d'un cran dès qu'on en touche une. */}
                 <span className="flex h-[18px] items-center">
                   {off ? (
-                    <span aria-hidden className="emoji emoji-pop text-[14px] leading-none">
-                      💤
-                    </span>
+                    <EmojiGlyph emoji="💤" size={15} className="emoji-pop" />
                   ) : null}
                 </span>
               </button>
