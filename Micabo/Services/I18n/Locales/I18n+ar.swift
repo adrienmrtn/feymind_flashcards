@@ -1522,6 +1522,7 @@ extension IosI18nCatalogs {
         "ios.home10.cta.more": "راجع على أي حال",
         "ios.home10.cta.first": "أنشئ درسي الأول",
         "ios.home10.cta.later": "لاحقاً",
+        "ios.home10.pro.prefix": "اشترك في",
         "ios.home10.exam.add": "أضف امتحاني",
         "ios.home10.tool.scan": "صوّر",
         "ios.home10.tool.cards": "البطاقات · {count}",

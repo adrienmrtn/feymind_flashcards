@@ -68,19 +68,18 @@ final class PolishHomeTests: XCTestCase {
         XCTAssertEqual(offenders.sorted(), [])
     }
 
-    /// La ligne méta du prochain examen : son nom, le compte à rebours de la langue, la
-    /// préparation.
-    func testExamMetaLine() {
+    /// La pastille du prochain examen : son nom, puis le compte à rebours de la langue.
+    func testExamPillLine() {
         let exam = HomeExam(name: "Bac d'histoire", daysLeft: 12, readiness: 64)
-        XCTAssertEqual(HomeExamMeta.line(for: exam, locale: .fr), "Bac d'histoire · J-12 · \(L10n.percent(64, locale: .fr))")
-        XCTAssertEqual(HomeExamMeta.countdown(daysLeft: 12, locale: .de), "noch 12 Tage")
-        XCTAssertEqual(HomeExamMeta.countdown(daysLeft: 12, locale: .en), "12 days left")
-        XCTAssertEqual(HomeExamMeta.countdown(daysLeft: 1, locale: .fr), L10n.t("ios.cal.tomorrow", locale: .fr))
-        XCTAssertEqual(HomeExamMeta.countdown(daysLeft: 0, locale: .fr), L10n.t("ios.cal.today", locale: .fr))
+        XCTAssertEqual(HomeExamPill.resolve(exam, locale: .fr).text, "Bac d'histoire · J-12")
+        XCTAssertEqual(ExamCountdown.label(daysLeft: 12, locale: .de), "noch 12 Tage")
+        XCTAssertEqual(ExamCountdown.label(daysLeft: 12, locale: .en), "12 days left")
+        XCTAssertEqual(ExamCountdown.label(daysLeft: 1, locale: .fr), L10n.t("ios.cal.tomorrow", locale: .fr))
+        XCTAssertEqual(ExamCountdown.label(daysLeft: 0, locale: .fr), L10n.t("ios.cal.today", locale: .fr))
         let abitur = HomeExam(name: "Abitur Mathe", daysLeft: 30, readiness: nil)
-        XCTAssertEqual(HomeExamMeta.line(for: abitur, locale: .de), "Abitur Mathe · noch 30 Tage")
+        XCTAssertEqual(HomeExamPill.resolve(abitur, locale: .de).text, "Abitur Mathe · noch 30 Tage")
         for locale in UiLocale.allCases {
-            let text = HomeExamMeta.countdown(daysLeft: 5, locale: locale)
+            let text = ExamCountdown.label(daysLeft: 5, locale: locale)
             XCTAssertTrue(text.contains("5"), "\(locale.rawValue) : \(text)")
             XCTAssertFalse(text.contains("{"), "\(locale.rawValue) : \(text)")
         }
@@ -111,135 +110,7 @@ final class PolishHomeTests: XCTestCase {
         XCTAssertNotEqual(StudyAgenda.taskTint, 5)
     }
 
-    /// Pas de doublon sur Home : le minuteur est l'onglet Concentration, la ligue l'éclair de
-    /// la rangée du haut. Le quiz éclair n'apparaît qu'avec une leçon. « Corriger un texte »
-    /// (lot 7) rejoint l'aide aux devoirs.
-    func testHomeToolsHaveNoDuplicate() {
-        XCTAssertEqual(HomeTool.allCases, [.scan, .writing, .quiz])
-        XCTAssertEqual(HomeTool.available(hasLesson: false), [.scan, .writing])
-        XCTAssertEqual(HomeTool.available(hasLesson: true), [.scan, .writing, .quiz])
-    }
-
-    // MARK: - Les données des rendus
-
-    private struct Fixture {
-        let container: ModelContainer
-        let course: Course
-        let resume: (Course, ResumeTarget)
-        let busyXP: XPStore
-        let freshXP: XPStore
-    }
-
-    private func fixture() throws -> Fixture {
-        let container = try ModelContainer(
-            for: Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self,
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-        )
-        let context = ModelContext(container)
-        let course = Course(title: "La photosynthèse", subject: "Biologie")
-        course.toneRaw = LessonTone.yellow.rawValue
-        context.insert(course)
-        for index in 0..<4 {
-            context.insert(Chapter(position: index, title: ["La lumière", "La chlorophylle", "Le cycle de Calvin", "Le bilan"][index], course: course))
-        }
-        course.setLessonPath(LessonPath(
-            icon: MicaboIcon.flask.rawValue,
-            intro: LessonPath.Intro(lines: [], minutes: 20),
-            takeaways: [],
-            groups: [LessonPath.Group(name: "", themes: [0, 1]), LessonPath.Group(name: "", themes: [2, 3])],
-            status: .ready
-        ))
-        course.iconID = MicaboIcon.flask.rawValue
-        course.updateProgress { progress in
-            progress.done = ["intro", "notes:0", "notes:1"]
-            progress.addTime(2_700, to: .notes)
-        }
-        course.lastOpenedAt = Date()
-        try context.save()
-        let resume = try XCTUnwrap(ResumeTarget.pick(from: [course]))
-        let suite = "micabo.render.polish.home"
-        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
-        defaults.removePersistentDomain(forName: suite)
-        let busyXP = XPStore(defaults: defaults)
-        busyXP.award(points: 30)
-        let empty = try XCTUnwrap(UserDefaults(suiteName: suite + ".empty"))
-        empty.removePersistentDomain(forName: suite + ".empty")
-        return Fixture(container: container, course: course, resume: resume, busyXP: busyXP, freshXP: XPStore(defaults: empty))
-    }
-
     private var today: Date { MicaboCalendar.shared.startOfDay(for: Date()) }
-
-    /// La journée d'un élève de terminale, à 17 h 55 : la séance de 18 h sur la guerre froide,
-    /// l'examen blanc conseillé, le DM de maths, une seconde séance ce soir.
-    private func agenda(examID: UUID) -> [AgendaItem] {
-        [
-            AgendaItem(id: "m", kind: .milestone, title: "Bac blanc d'histoire", day: today, tintIndex: StudyAgenda.examTint, examID: examID, milestone: .mock, minutes: 15),
-            AgendaItem(id: "t", kind: .task, title: "Rendre le DM de maths", day: today, tintIndex: StudyAgenda.taskTint, taskID: UUID()),
-            AgendaItem(id: "r", kind: .revision, title: "La guerre froide", day: today, startMinute: 18 * 60, endMinute: 18 * 60 + 30, tintIndex: CalendarTint.revisionIndex, emoji: "📚", calendarName: "Révisions", examID: examID, eventID: UUID()),
-            AgendaItem(id: "r2", kind: .revision, title: "La décolonisation", day: today, startMinute: 20 * 60 + 30, endMinute: 21 * 60, tintIndex: CalendarTint.revisionIndex, emoji: "📚", calendarName: "Révisions", examID: examID, eventID: UUID()),
-        ]
-    }
-
-    private func lessons(_ fixture: Fixture) -> [HomeLessonCard] {
-        [
-            HomeLessonCard(id: fixture.course.id, title: "La photosynthèse", icon: .flask, tone: .yellow, percent: fixture.resume.1.percent),
-            HomeLessonCard(id: UUID(), title: "La guerre froide", icon: .globe, tone: .pink, percent: 70),
-            HomeLessonCard(id: UUID(), title: "Les fonctions affines", icon: .calculator, tone: .blue, percent: 15),
-        ]
-    }
-
-    /// La Home de l'élève actif : la séance de 18 h avec l'examen, ou, sans séance ni examen,
-    /// la leçon en cours.
-    private func busyHome(_ fixture: Fixture, isPro: Bool = false, withSession: Bool = true) -> AnyView {
-        let examID = UUID()
-        let items = agenda(examID: examID)
-        let evening = CalendarTime.date(minute: 17 * 60 + 55, on: today)
-        let session = withSession ? HomeSession.next(in: items, now: evening, examNames: [examID: "Bac d'histoire"]) : nil
-        let plan = withSession
-            ? HomePlan(exam: HomeExam(name: "Bac d'histoire", daysLeft: 12, readiness: 64), agenda: HomePlan.upcoming(items, now: evening, excluding: session), lessons: lessons(fixture))
-            : HomePlan(exam: nil, agenda: [], lessons: lessons(fixture))
-        let day = HomeDay(
-            dueCount: 8,
-            reviewedToday: 0,
-            hasCourses: true,
-            lessonTitle: fixture.resume.1.title,
-            lessonCircle: fixture.resume.1.circleNumber.map { L10n.t("lesson.path.circleNumber", locale: .resolved(), vars: ["n": String($0)]) },
-            lessonAdvancedToday: false,
-            studiedToday: true,
-            session: session
-        )
-        return AnyView(PolishHomePreview(
-            isPro: isPro,
-            name: "Léa",
-            moment: withSession ? .evening : .morning,
-            day: day,
-            resume: fixture.resume,
-            plan: plan,
-            streak: StudyStreak.Status(current: 12, best: 18, studiedToday: true)
-        )
-        .environment(fixture.busyXP))
-    }
-
-    private func newHome(_ fixture: Fixture, isPro: Bool = false) -> AnyView {
-        AnyView(PolishHomePreview(
-            isPro: isPro,
-            name: nil,
-            moment: .day,
-            day: HomeDay(hasCourses: false, studiedToday: false),
-            resume: nil,
-            plan: HomePlan(),
-            streak: StudyStreak.Status(current: 0, best: 0, studiedToday: false)
-        )
-        .environment(fixture.freshXP))
-    }
-
-    /// Le premier écran, coupé à la hauteur d'un iPhone.
-    private func fold(_ view: AnyView, height: CGFloat = 852) -> some View {
-        view
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(height: height, alignment: .top)
-            .clipped()
-    }
 
     /// L'agenda d'hier, avec du retard : la seule ligne rouge, et ce qui est fait.
     private func lateDay() -> some View {
@@ -267,39 +138,6 @@ final class PolishHomeTests: XCTestCase {
 
     // MARK: - Les rendus
 
-    func testPolishedHomeRenders() throws {
-        guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
-        let fixture = try fixture()
-        try withLocale(.fr) {
-            try RenderGallery.render("pol-home", night: true, busyHome(fixture))
-            try RenderGallery.render("pol-home-top", night: true, fold(busyHome(fixture)))
-            try RenderGallery.render("pol-home-pro", fold(busyHome(fixture, isPro: true)))
-            try RenderGallery.render("pol-home-lesson", night: true, busyHome(fixture, withSession: false))
-            try RenderGallery.render("pol-home-new", night: true, newHome(fixture))
-            try RenderGallery.render("pol-home-new-pro", newHome(fixture, isPro: true))
-            // Le texte agrandi, sur un grand et un petit écran.
-            try RenderGallery.render("pol-home-xl", fold(busyHome(fixture)).environment(\.dynamicTypeSize, .xxxLarge))
-            try RenderGallery.render("pol-home-se", width: 375, fold(busyHome(fixture), height: 667))
-            try RenderGallery.render("pol-home-se-xl", width: 375, fold(busyHome(fixture), height: 1_000).environment(\.dynamicTypeSize, .xxxLarge))
-            try RenderGallery.render("pol-home-new-se-xl", width: 375, newHome(fixture).environment(\.dynamicTypeSize, .xxxLarge))
-        }
-        try withLocale(.de) {
-            try RenderGallery.render("pol-home-de", busyHome(fixture))
-            try RenderGallery.render("pol-home-new-de", newHome(fixture))
-            try RenderGallery.render("pol-home-se-de", width: 375, fold(busyHome(fixture), height: 900))
-        }
-        try withLocale(.fi) {
-            try RenderGallery.render("pol-home-fi", fold(busyHome(fixture)))
-        }
-        try withLocale(.en) {
-            try RenderGallery.render("pol-home-en", fold(busyHome(fixture)))
-        }
-        try withLocale(.ar) {
-            try RenderGallery.render("pol-home-ar", busyHome(fixture).environment(\.layoutDirection, .rightToLeft))
-            try RenderGallery.render("pol-home-new-ar", newHome(fixture).environment(\.layoutDirection, .rightToLeft))
-        }
-    }
-
     func testPolishedDailyTabsRenders() throws {
         guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
         try withLocale(.fr) {
@@ -322,38 +160,5 @@ final class PolishHomeTests: XCTestCase {
         try withLocale(.ar) {
             try RenderGallery.render("pol-cal-late-ar", lateDay().environment(\.layoutDirection, .rightToLeft))
         }
-    }
-}
-
-/// Home a besoin d'un focus pour sa barre : une vue le porte, le temps du rendu. L'écran est
-/// posé immobile (`homeStill`).
-private struct PolishHomePreview: View {
-    let isPro: Bool
-    let name: String?
-    var moment: HomeGreeting.Moment = .day
-    let day: HomeDay
-    let resume: (Course, ResumeTarget)?
-    var plan = HomePlan()
-    let streak: StudyStreak.Status
-    @State private var composer = LessonComposer()
-    @FocusState private var focused: Bool
-
-    var body: some View {
-        HomeScreen(
-            composer: composer,
-            focused: $focused,
-            isPro: isPro,
-            name: name,
-            hello: HomeGreeting.hello(name: name, moment: moment),
-            greeting: HomeGreeting.lines(name: name, moment: moment, dueCount: day.dueCount),
-            day: day,
-            resume: resume,
-            plan: plan,
-            motion: HomeMotion(still: true, reduceMotion: false),
-            appeared: true,
-            streakPreview: streak,
-            actions: HomeActions()
-        )
-        .environment(\.homeStill, true)
     }
 }

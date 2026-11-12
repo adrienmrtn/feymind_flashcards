@@ -45,44 +45,6 @@ extension EnvironmentValues {
     }
 }
 
-/// Ce qui bouge sur Home, et ce qui reste en place quand on le demande.
-struct HomeMotion {
-    let still: Bool
-    let reduceMotion: Bool
-
-    /// Le flottement de Mika, la frappe de la bulle, la flamme qui vacille.
-    var ambient: Bool { !still && !reduceMotion }
-    /// L'entrée des blocs : un fondu reste permis avec « Réduire les animations ».
-    var entrance: Bool { !still }
-}
-
-extension View {
-    /// **L'entrée d'un bloc**, l'un après l'autre : il monte de quelques points et apparaît,
-    /// sur un ressort. Une seule fois : `shown` est tenu par Home, pas par le bloc.
-    func homeEntrance(_ index: Int, shown: Bool, motion: HomeMotion) -> some View {
-        modifier(HomeEntrance(index: index, shown: shown, motion: motion))
-    }
-}
-
-private struct HomeEntrance: ViewModifier {
-    let index: Int
-    let shown: Bool
-    let motion: HomeMotion
-
-    func body(content: Content) -> some View {
-        let visible = shown || !motion.entrance
-        content
-            .opacity(visible ? 1 : 0)
-            .offset(y: visible || motion.reduceMotion ? 0 : 12)
-            .animation(
-                motion.reduceMotion
-                    ? MicaboMotion.reduced
-                    : MicaboMotion.gentle.delay(0.04 * Double(index)),
-                value: visible
-            )
-    }
-}
-
 /// **L'appui de Home** : un enfoncement net, et la vibration à l'enfoncement, comme partout
 /// (`micaboPressFeedback`).
 struct HomePressStyle: ButtonStyle {
