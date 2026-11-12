@@ -388,6 +388,18 @@ final class PerfBenchTests: XCTestCase {
         let exams = ExamRepository.all(in: context)
         PerfReport.record("micro", "StudyPlan.milestones", [("us", PerfReport.micro(20) { _ = StudyPlan.milestones(for: exams, in: context) })])
         PerfReport.record("micro", "CourseRepository.allCourses", [("us", PerfReport.micro(20) { _ = CourseRepository.allCourses(in: context) })])
+        // Le compte des cartes d'un examen : par la base, et le même nombre que la lecture.
+        for exam in exams {
+            XCTAssertEqual(
+                ExamRepository.cardCount(of: exam, in: context),
+                ExamRepository.cards(of: exam, in: context).count,
+                "le compte des cartes de « \(exam.name) » par la base ne dit pas ce que dit la lecture"
+            )
+        }
+        if let exam = exams.first {
+            PerfReport.record("micro", "ExamRepository.cardCount", [("us", PerfReport.micro(20) { _ = ExamRepository.cardCount(of: exam, in: context) })])
+            PerfReport.record("micro", "ExamRepository.cards.count", [("us", PerfReport.micro(20) { _ = ExamRepository.cards(of: exam, in: context).count })])
+        }
         PerfReport.record("micro", "fetch-evenements", [("us", PerfReport.micro(20) { _ = try? context.fetch(FetchDescriptor<CalendarEvent>()) })])
     }
 

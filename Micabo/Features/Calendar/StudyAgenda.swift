@@ -281,20 +281,13 @@ enum StudyPlan {
         let upcoming = exams.filter { !$0.isPast(from: now) }
         guard !upcoming.isEmpty else { return [] }
         let history = ExamHistory.all()
-        // Les cartes de chaque cours d'examen, comptées en une lecture : une lecture des cours
-        // par examen à venir coûtait dix millisecondes pièce, à chaque agenda relu.
-        let wanted = Set(upcoming.flatMap(\.courseIDs))
-        var cardsByCourse: [UUID: Int] = [:]
-        if !wanted.isEmpty {
-            for course in CourseRepository.allCourses(in: context) where wanted.contains(course.id) {
-                cardsByCourse[course.id] = course.cards.filter { !$0.isSuspended }.count
-            }
-        }
         return upcoming.flatMap { exam -> [AgendaEvent] in
             let done = history
                 .filter { $0.examID == exam.id }
                 .map { AgendaDone(examId: exam.id, kind: .mock, finishedAt: $0.date) }
-            let cardCount = Set(exam.courseIDs).reduce(0) { $0 + (cardsByCourse[$1] ?? 0) }
+            // Compté par la base (`ExamRepository.cardCount`) : relire les cours puis leurs
+            // cartes pour n'en garder que le nombre coûtait soixante millisecondes par agenda.
+            let cardCount = ExamRepository.cardCount(of: exam, in: context)
             return ExamAgenda.events(for: exam, cardCount: cardCount, done: done, now: now)
                 .filter { $0.status != .missed }
         }

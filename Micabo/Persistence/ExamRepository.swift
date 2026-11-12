@@ -37,6 +37,27 @@ enum ExamRepository {
             .filter { !$0.isSuspended }
     }
 
+    /// **Combien de cartes au programme d'un examen**, sans en matérialiser une seule : le même
+    /// nombre que `cards(of:in:).count`, compté par SQLite cours par cours.
+    ///
+    /// Relire les cours fait retomber leurs cartes en faute : les reparcourir pour les compter
+    /// coûtait soixante millisecondes à chaque agenda relu, et la Home relit le sien à chaque
+    /// retour. Si la base refuse le compte, on retombe sur la lecture complète.
+    static func cardCount(of exam: Exam, in context: ModelContext) -> Int {
+        var total = 0
+        for courseID in Set(exam.courseIDs) {
+            let wanted: UUID? = courseID
+            let descriptor = FetchDescriptor<Flashcard>(
+                predicate: #Predicate { $0.isSuspended == false && $0.course?.id == wanted }
+            )
+            guard let count = try? context.fetchCount(descriptor) else {
+                return cards(of: exam, in: context).count
+            }
+            total += count
+        }
+        return total
+    }
+
     /// Le prochain examen à venir, celui qu'annonce l'onglet Réviser.
     static func next(in context: ModelContext, now: Date = Date()) -> Exam? {
         all(in: context).first { !$0.isPast(from: now) }
