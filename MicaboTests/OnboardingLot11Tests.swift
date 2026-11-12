@@ -22,7 +22,7 @@ final class OnboardingLot11Tests: XCTestCase {
     /// Chaque phrase du lot existe dans les six langues, avec ses mots-clés et ses variables.
     func testEveryPhraseExistsInTheSixLanguages() {
         let french = IosI18nCatalogs.table(for: "fr").filter { $0.key.hasPrefix("ios.onb11.") }
-        XCTAssertGreaterThanOrEqual(french.count, 38)
+        XCTAssertGreaterThanOrEqual(french.count, 39)
         for locale in Self.languages {
             let table = IosI18nCatalogs.table(for: locale.rawValue)
             for (key, source) in french {
@@ -87,6 +87,11 @@ final class OnboardingLot11Tests: XCTestCase {
         XCTAssertNil(WhyNowStepView.sessionsLeft(daysLeft: nil))
         XCTAssertNil(WhyNowStepView.sessionsLeft(daysLeft: 1))
         XCTAssertEqual(WhyNowStepView.sessionsLeft(daysLeft: 12), 12)
+        XCTAssertEqual(WhyNowStepView.sessionsLeft(daysLeft: 56), 56)
+        XCTAssertNil(WhyNowStepView.sessionsLeft(daysLeft: 215), "Loin de l'examen, on ne compte plus les séances")
+        XCTAssertTrue(WhyNowStepView.isFar(daysLeft: 215))
+        XCTAssertFalse(WhyNowStepView.isFar(daysLeft: 30))
+        XCTAssertFalse(WhyNowStepView.isFar(daysLeft: nil))
     }
 
     /// Ce que l'essai ouvre : la première leçon (offerte de toute façon) en tête, l'examen nommé.

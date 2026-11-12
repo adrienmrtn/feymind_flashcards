@@ -278,10 +278,20 @@ struct WhyNowStepView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     /// Les séances d'ici l'examen, une par jour à partir d'aujourd'hui : rien sans examen daté
-    /// ou le jour même.
+    /// ou le jour même, ni quand l'examen est loin (`countsSessionsUpTo`).
     static func sessionsLeft(daysLeft: Int?) -> Int? {
-        guard let daysLeft, daysLeft > 1 else { return nil }
+        guard let daysLeft, daysLeft > 1, daysLeft <= countsSessionsUpTo else { return nil }
         return daysLeft
+    }
+
+    /// **Au-delà de huit semaines, on ne compte plus les séances** : « 215 séances » décourage.
+    /// On dit le temps qu'il reste, et ce qu'il permet.
+    static let countsSessionsUpTo = 56
+
+    /// Vrai quand l'examen est assez loin pour parler en semaines ou en mois.
+    static func isFar(daysLeft: Int?) -> Bool {
+        guard let daysLeft else { return false }
+        return daysLeft > countsSessionsUpTo
     }
 
     private var daysLeft: Int? { model.examDaysLeft(now: now) }
@@ -302,6 +312,11 @@ struct WhyNowStepView: View {
         var rows: [(icon: MicaboIcon, text: String)] = []
         if let sessions = Self.sessionsLeft(daysLeft: daysLeft) {
             rows.append((icon: .flame, text: i18n.t("ios.onb11.now.sessions", ["n": "\(sessions)", "min": minutes])))
+        } else if Self.isFar(daysLeft: daysLeft), let days = daysLeft {
+            rows.append((icon: .flame, text: i18n.t("ios.onb11.now.long", [
+                "time": OnbWords.duration(days: days, locale: i18n.locale),
+                "min": minutes,
+            ])))
         }
         switch model.firstLessonChoice {
         case .topic:

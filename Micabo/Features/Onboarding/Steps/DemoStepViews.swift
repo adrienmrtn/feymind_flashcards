@@ -39,10 +39,10 @@ enum OnbDemo {
     }
 
     /// Les matières des séances de la semaine : les siennes, dans l'ordre où le plan les lit,
-    /// trois au plus.
+    /// deux au plus (trois ne tenaient pas sur un iPhone SE).
     static func sessionSubjects(for model: OnboardingModel, locale: UiLocale) -> [String] {
         let names = model.subjectNames(locale: locale)
-        return Array(names.prefix(3))
+        return Array(names.prefix(2))
     }
 }
 
@@ -273,7 +273,7 @@ struct PlanDemoStepView: View {
                 .lineLimit(1)
         }
         .padding(.horizontal, 12)
-        .frame(minHeight: 40)
+        .frame(minHeight: 38)
         .background(V3Color.soft, in: RoundedRectangle(cornerRadius: V3Metric.radiusTile, style: .continuous))
     }
 

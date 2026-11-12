@@ -1746,6 +1746,7 @@ extension IosI18nCatalogs {
         "ios.onb11.unlock.mika": "Mika، مدرّسك الخاص، في أي وقت",
         "ios.onb11.now.title": "**{exam}** بعد {time}",
         "ios.onb11.now.titleAny": "هل نبدأ **الليلة**؟",
+        "ios.onb11.now.long": "أمامك {time}: وقت كافٍ لمراجعة كل مادة كاملة، بإيقاعك {min} دقيقة يوميًا.",
         "ios.onb11.now.sessions": "إن بدأت اليوم: {n} جلسة من {min} دقيقة قبل اليوم الكبير.",
         "ios.onb11.now.lesson": "درسك «{topic}» جاهز.",
         "ios.onb11.now.import": "ملاحظاتك بانتظارك: سنستوردها مباشرة بعد ذلك.",
