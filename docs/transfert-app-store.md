@@ -164,7 +164,7 @@ Micabo → onglet **TestFlight**.
 | Environnement | Xcode *Latest Release*, macOS *Latest Release*, construction propre (*Clean*) |
 | Démarrage | à chaque modification de la branche `main`, avec annulation automatique des builds en cours |
 | Action | *Archive – iOS*, schéma `Micabo`, distribution *App Store Eligible*, obligatoire |
-| Dernier build envoyé | 160 (relevé le 2 novembre, version 1.11 en vente) : le *Next Build Number* chez Vik Studios part de 161 |
+| Dernier build envoyé | 170 (relevé le 12 novembre, version 1.11 en vente) : le *Next Build Number* chez Vik Studios part de 171 |
 
 ### 1.9 La clé Sign in with Apple d'Adrien Martinot
 
