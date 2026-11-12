@@ -298,9 +298,21 @@ final class Look10RenderTests: XCTestCase {
         ]
     }
 
-    /// Les briques de la direction, de haut en bas, comme elles s'empilent sur un écran.
-    private func board(_ words: Words) -> some View {
+    /// Une planche : ses briques empilées, sur le fond de la page.
+    private func sheet<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 20) {
+            content()
+        }
+        .padding(.horizontal, V3Metric.screenMargin)
+        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(V3Color.bg)
+        .environment(\.mikaStill, true)
+    }
+
+    /// Première planche : la barre du haut, Mika qui demande, les lignes de réponse, les puces.
+    private func answers(_ words: Words) -> some View {
+        sheet {
             V3TopBar(progress: 0.32, onBack: {})
                 .padding(.horizontal, -V3Metric.screenMargin)
             MikaAsk(words.question, highlight: words.keyword)
@@ -317,16 +329,20 @@ final class Look10RenderTests: XCTestCase {
                 V3Chip(words.chips[2], systemImage: "bolt.fill", tone: V3Color.iconYellow) {}
                 V3Chip(words.chips[1], isSelected: true) {}
             }
+        }
+    }
+
+    /// Deuxième planche : les cartes, la semaine à flammes, « PRO », la jauge, les boutons.
+    private func cards(_ words: Words) -> some View {
+        sheet {
             VStack(alignment: .leading, spacing: 14) {
                 Text(words.cardTitle)
-                    .font(V3Font.title)
-                    .tracking(V3Tracking.title)
+                    .font(V3Font.cardTitle)
                     .foregroundStyle(V3Color.ink)
                 V3WeekStrip(days: week(words))
                 Text(words.cardBody)
                     .font(V3Font.support)
                     .foregroundStyle(V3Color.ink2)
-                V3Button(words.primary, systemImage: "play.fill") {}
             }
             .fixedSize(horizontal: false, vertical: true)
             .padding(16)
@@ -370,19 +386,21 @@ final class Look10RenderTests: XCTestCase {
             V3ProgressBar(value: 0.64)
             VStack(spacing: 10) {
                 V3Button(words.primary) {}
-                V3Button(words.primary, isEnabled: false) {}
+                V3Button(words.primary, systemImage: "play.fill", isEnabled: false) {}
                 V3Button(words.primary, isLoading: true) {}
                 V3Button(words.offer, kind: .offer) {}
                 V3Button(words.secondary, kind: .secondary) {}
                 V3Button(words.later, kind: .ghost) {}
             }
+        }
+    }
+
+    /// Troisième planche : l'échelle typographique, et toutes les icônes.
+    private func typeScale(_ words: Words) -> some View {
+        sheet {
             scale(words)
             icons
         }
-        .padding(.horizontal, V3Metric.screenMargin)
-        .padding(.vertical, 16)
-        .background(V3Color.bg)
-        .environment(\.mikaStill, true)
     }
 
     /// L'échelle typographique : les titres en Sofia Sans Condensed, le texte en police système.
@@ -473,17 +491,44 @@ final class Look10RenderTests: XCTestCase {
     }
 
     /// `RenderGallery` dessine le clair, puis le marine sous `-nuit` : ici le marine est le
-    /// thème de référence, le clair l'option.
-    func testTheComponentsBoard() throws {
-        try RenderGallery.render("look10-v3-components", night: true, board(.fr))
+    /// thème de référence, le clair l'option. Trois planches plutôt qu'une : au-delà d'une
+    /// certaine hauteur, l'outil ne rend plus rien.
+    func testTheComponentsBoards() throws {
+        try RenderGallery.render("look10-v3-answers", night: true, answers(.fr))
+        try RenderGallery.render("look10-v3-cards", night: true, cards(.fr))
+        try RenderGallery.render("look10-v3-type", night: true, typeScale(.fr))
+    }
+
+    func testTheComponentsBoardsInArabic() throws {
         try RenderGallery.render(
-            "look10-v3-components-ar",
-            board(.ar).environment(\.layoutDirection, .rightToLeft).environment(\.colorScheme, .dark)
+            "look10-v3-answers-ar",
+            answers(.ar).environment(\.layoutDirection, .rightToLeft).environment(\.colorScheme, .dark)
         )
         try RenderGallery.render(
-            "look10-v3-components-de-xxxl",
+            "look10-v3-cards-ar",
+            cards(.ar).environment(\.layoutDirection, .rightToLeft).environment(\.colorScheme, .dark)
+        )
+        try RenderGallery.render(
+            "look10-v3-type-ar",
+            typeScale(.ar).environment(\.layoutDirection, .rightToLeft).environment(\.colorScheme, .dark)
+        )
+    }
+
+    func testTheComponentsBoardsInGermanAtTheLargestTextSize() throws {
+        try RenderGallery.render(
+            "look10-v3-answers-de-xxxl",
             width: 375,
-            board(.de).environment(\.dynamicTypeSize, .xxxLarge).environment(\.colorScheme, .dark)
+            answers(.de).environment(\.dynamicTypeSize, .xxxLarge).environment(\.colorScheme, .dark)
+        )
+        try RenderGallery.render(
+            "look10-v3-cards-de-xxxl",
+            width: 375,
+            cards(.de).environment(\.dynamicTypeSize, .xxxLarge).environment(\.colorScheme, .dark)
+        )
+        try RenderGallery.render(
+            "look10-v3-type-de-xxxl",
+            width: 375,
+            typeScale(.de).environment(\.dynamicTypeSize, .xxxLarge).environment(\.colorScheme, .dark)
         )
     }
 
