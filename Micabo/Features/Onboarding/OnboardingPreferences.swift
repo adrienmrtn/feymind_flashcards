@@ -281,12 +281,23 @@ enum SchoolingCountry: String, CaseIterable, Identifiable {
         languages: [String] = Locale.preferredLanguages,
         chosen: String? = UserDefaults.standard.string(forKey: UiLocale.storageKey)
     ) -> SchoolingCountry {
+        detected(languages: languages, chosen: chosen) ?? fallback
+    }
+
+    /// **Le pays que les langues de l'appareil désignent vraiment**, ou rien. C'est `guessed`
+    /// sans son repli : un iPhone en arabe d'Arabie saoudite, ou en japonais, ne désigne aucun
+    /// pays de la liste, et lui supposer la France serait lui répondre à côté. Le parcours
+    /// prend alors la région du téléphone (`OnboardingModel.deviceCountry`).
+    static func detected(
+        languages: [String] = Locale.preferredLanguages,
+        chosen: String? = UserDefaults.standard.string(forKey: UiLocale.storageKey)
+    ) -> SchoolingCountry? {
         let tags = languages.map { $0.lowercased() }
         if let chosen = chosen?.lowercased(), let language = primaryLanguage(of: chosen) {
             let ordered = tags.filter { primaryLanguage(of: $0) == language } + [language]
             if let match = firstMatch(in: ordered) { return match }
         }
-        return firstMatch(in: tags) ?? fallback
+        return firstMatch(in: tags)
     }
 
     /// Le pays de la première étiquette qui en désigne un : sa région quand ce pays parle sa

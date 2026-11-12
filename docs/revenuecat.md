@@ -229,7 +229,7 @@ Elle est appelée trois fois, et c'est voulu :
 | Où | Pourquoi |
 | --- | --- |
 | `MicaboApp`, au lancement | pour qu'un paywall ne s'ouvre jamais sur les prix français puis change de chiffre sous les yeux |
-| `PaywallFlowView` et `DiscountFlowView`, à l'ouverture | un premier appel tombé sans réseau laisserait ces écrans-là en euros |
+| `PaywallFlowView` (le paywall, et l'offre de réduction qui le remplace), à l'ouverture | un premier appel tombé sans réseau laisserait ces écrans-là en euros |
 | `SessionPaywallView`, à l'ouverture | il écrit son prix lui-même, hors de `PaywallFlowView` |
 
 **Les remises aussi se calculent sur les prix du pays.** Le sceau « −81 % » de l'annuel et

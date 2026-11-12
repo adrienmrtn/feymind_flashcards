@@ -84,6 +84,9 @@ struct RootTabView: View {
         }
         .tint(MicaboColor.accent)
         .environment(router)
+        // L'offre de réduction rouverte depuis la pastille de la Home : c'est ici qu'elle se
+        // présente, pour ne pas partir avec la pastille quand celle-ci quitte l'en-tête.
+        .micaboDiscountChipOffer()
     }
 
     /// Une fois par lancement : la racine est reconstruite à chaque passe de `RootView`.

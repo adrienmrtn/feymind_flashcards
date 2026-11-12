@@ -2,23 +2,18 @@ import SwiftUI
 
 // MARK: - La question d'essai
 
-/// **Une vraie question de parcours, sur sa matière, avant le plan et l'offre** (lot 7).
+/// **Une vraie question, sur sa matière** : « À toi ! Une question comme dans tes leçons. »
 ///
-/// Jusqu'ici, le parcours *disait* ce que fait Mika ; ici l'élève le *fait* : Mika lui pose
-/// une question comme celles de ses parcours, dans une matière qu'il a cochée, trois réponses
-/// à toucher. Il répond, la bonne s'allume en vert (et la sienne en rouge s'il s'est trompé),
-/// Mika réagit dans sa bulle, et **la recherche dit pourquoi ça marche** — une semaine après,
-/// on retient 80 % d'un cours en se testant, contre 36 % en le relisant (Karpicke & Roediger,
-/// Science, 2008). C'est la seule étude citée du parcours, et elle tombe au moment où elle se
-/// comprend : l'élève vient de se tester.
+/// Jusqu'ici, le parcours *disait* ce que fait l'app ; ici l'élève le *fait* : une question
+/// comme celles de ses leçons, dans une matière qu'il a cochée, trois réponses à toucher. Il
+/// répond, la bonne s'allume en vert (et la sienne en rouge s'il s'est trompé), Mika réagit
+/// dans sa bulle, et **la recherche dit pourquoi ça marche** : une semaine après, on retient
+/// 80 % d'un cours en se testant, contre 36 % en le relisant (Karpicke & Roediger, Science,
+/// 2008). C'est la seule étude citée du parcours, et elle tombe au moment où elle se comprend.
 ///
-/// **Rien ne part au serveur.** Les questions sont écrites d'avance dans les 26 langues
-/// (`SampleCard`), avec des réponses qui se lisent partout (« π × r² », « H₂O », « 1989 »). Elles
-/// valent du collège à l'université : c'est une démonstration de la mécanique, pas un test de
-/// niveau.
-///
-/// Le rond ne s'allume qu'une fois la réponse donnée : c'est un petit oui, facile, avant les
-/// écrans qui engagent (le plan, l'essai).
+/// **Rien ne part au serveur.** Les questions sont écrites d'avance dans toutes les langues
+/// (`SampleCard`), avec des réponses qui se lisent partout (« π × r² », « H₂O », « 1989 »).
+/// Le bouton s'allume une fois la réponse donnée.
 struct SampleCardStepView: View {
     /// Une réponse déjà donnée, pour les rendus.
     var previewAnswer: Int?
@@ -28,100 +23,124 @@ struct SampleCardStepView: View {
 
     @State private var answer: Int?
 
-    private var chosen: Int? { answer ?? previewAnswer }
+    private var chosen: Int? {
+        answer ?? previewAnswer
+    }
 
     private var pick: SampleCard.Pick {
         SampleCard.pick(for: model.subjects)
     }
 
-    private var reaction: String? {
-        guard let chosen else { return nil }
-        return i18n.t(pick.card.isRight(chosen) ? "ios.onb7.card.right" : "ios.onb7.card.wrong")
+    /// Ce que Mika dit : la consigne, puis sa réaction à la réponse.
+    private var bubble: String {
+        guard let chosen else { return i18n.t("ios.onb10.card.ask") }
+        return pick.card.isRight(chosen) ? i18n.t("ios.onb10.card.right") : i18n.t("ios.onb10.card.wrong")
+    }
+
+    private var mood: MikaMood {
+        guard let chosen else { return .idle }
+        return pick.card.isRight(chosen) ? .happy : .wink
     }
 
     var body: some View {
-        OnboardingScaffold(
-            title: i18n.t("ios.onb7.card.ask"),
-            reaction: reaction
-        ) {
+        OnbQuestion(bubble, mood: mood, anchored: false) {
             VStack(alignment: .leading, spacing: 14) {
-                subjectChip
+                subjectPill
 
                 Text(i18n.t(pick.card.questionKey))
-                    .font(MicaboFont.ui(21, weight: .heavy))
-                    .tracking(-0.3)
-                    .foregroundStyle(MicaboColor.ink)
+                    .font(V3Font.h2)
+                    .foregroundStyle(V3Color.ink)
+                    .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.bottom, 2)
 
-                VStack(spacing: 10) {
-                    ForEach(Array(pick.card.displayOrder.enumerated()), id: \.element) { rank, option in
-                        SampleCardOption(
-                            title: pick.card.option(option, locale: i18n.locale),
-                            state: state(of: option),
-                            rank: rank
-                        ) {
-                            choose(option)
-                        }
+                VStack(spacing: OnbLayout.rowGap) {
+                    ForEach(pick.card.displayOrder, id: \.self) { option in
+                        answerRow(option)
                     }
                 }
 
                 if chosen != nil {
                     proof
-                        .transition(.opacity.combined(with: .offset(y: 6)))
+                        .transition(.opacity)
                 }
             }
             .animation(MicaboMotion.standard, value: chosen)
         } footer: {
-            OnboardingArrowButton(isEnabled: chosen != nil) { model.advance() }
-        }
-    }
-
-    private var subjectChip: some View {
-        HStack(spacing: 6) {
-            Text(pick.emoji)
-                .font(.system(size: 14))
-            Text(SubjectDisplay.subject(pick.subject, locale: i18n.locale))
-                .font(MicaboFont.ui(13.5, weight: .heavy))
-                .lineLimit(1)
-                .minimumScaleFactor(0.85)
-        }
-        .foregroundStyle(MicaboColor.accentInk)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(MicaboColor.accentSoft, in: Capsule())
-    }
-
-    /// **Pourquoi se tester**, une fois, sourcé.
-    private var proof: some View {
-        HStack(alignment: .top, spacing: 10) {
-            MicaboIconView(icon: .diploma, size: 22)
-                .frame(width: 26)
-            VStack(alignment: .leading, spacing: 4) {
-                OnboardingAccentText(
-                    template: i18n.t("ios.onb7.card.proof", [
-                        "testing": L10n.percent(OnboardingProofFigures.retainedByTesting, locale: i18n.locale),
-                        "reread": L10n.percent(OnboardingProofFigures.retainedByRereading, locale: i18n.locale),
-                    ]),
-                    size: 15,
-                    alignment: .leading,
-                    color: MicaboColor.inkSecondary
-                )
-                .frame(maxWidth: .infinity, alignment: .leading)
-                Text(i18n.t("ios.journey.source"))
-                    .font(MicaboFont.ui(12, weight: .semibold))
-                    .foregroundStyle(MicaboColor.inkTertiary)
+            V3Button(i18n.t("common.continue"), isEnabled: chosen != nil) {
+                model.advance()
             }
         }
-        .padding(.top, 4)
-        .accessibilityElement(children: .combine)
     }
 
-    private func state(of option: Int) -> SampleCardOption.Look {
+    /// La matière de la question : une de celles que l'élève a cochées.
+    private var subjectPill: some View {
+        Text(SubjectDisplay.subject(pick.subject, locale: i18n.locale))
+            .font(V3Font.caption)
+            .foregroundStyle(V3Color.accent)
+            .lineLimit(1)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(V3Color.accentWash, in: Capsule())
+    }
+
+    // MARK: Les réponses
+
+    private enum Look: Equatable {
+        case open
+        case right
+        case wrong
+        case dimmed
+    }
+
+    private func look(of option: Int) -> Look {
         guard let chosen else { return .open }
         if pick.card.isRight(option) { return .right }
         return option == chosen ? .wrong : .dimmed
+    }
+
+    /// Une réponse : elle s'allume en vert quand c'est la bonne, en rouge quand c'est celle,
+    /// fausse, qu'on a touchée. Les autres s'effacent à moitié.
+    private func answerRow(_ option: Int) -> some View {
+        let state = look(of: option)
+        return Button {
+            choose(option)
+        } label: {
+            HStack(spacing: 12) {
+                Text(pick.card.option(option, locale: i18n.locale))
+                    .font(V3Font.bodyStrong)
+                    .foregroundStyle(V3Color.ink)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                if state == .right {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(V3Font.title)
+                        .foregroundStyle(V3Color.green)
+                } else if state == .wrong {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(V3Font.title)
+                        .foregroundStyle(V3Color.red)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 16)
+            .frame(maxWidth: .infinity)
+            .v3Card(tone: Self.tone(of: state))
+            .opacity(state == .dimmed ? 0.5 : 1)
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
+        .disabled(chosen != nil)
+        .accessibilityAddTraits(state == .right || state == .wrong ? [.isSelected] : [])
+    }
+
+    private static func tone(of look: Look) -> Color? {
+        switch look {
+        case .right: V3Color.green
+        case .wrong: V3Color.red
+        default: nil
+        }
     }
 
     private func choose(_ option: Int) {
@@ -134,99 +153,33 @@ struct SampleCardStepView: View {
             "value": .text(right ? "right" : "wrong"),
         ])
     }
-}
 
-// MARK: - Une réponse
+    // MARK: La preuve
 
-/// Une réponse de la question d'essai : la rangée du parcours, qui s'allume en vert quand
-/// c'est la bonne et en rouge quand c'est celle, fausse, qu'on a touchée. Les autres
-/// s'effacent à moitié.
-private struct SampleCardOption: View {
-    enum Look: Equatable {
-        case open
-        case right
-        case wrong
-        case dimmed
-    }
+    /// **Pourquoi se tester**, une fois, sourcé.
+    private var proof: some View {
+        HStack(alignment: .top, spacing: 10) {
+            OnbIcon(icon: .diploma, size: 24)
 
-    let title: String
-    let state: Look
-    var rank: Int
-    var action: () -> Void
-
-    @Environment(\.onboardingCheer) private var cheer
-
-    var body: some View {
-        Button {
-            guard state == .open else { return }
-            action()
-            cheer()
-        } label: {
-            HStack(spacing: 12) {
-                Text(title)
-                    .font(MicaboFont.ui(18, weight: .bold))
-                    .foregroundStyle(ink)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: MicaboSpacing.xs)
-                mark
+            VStack(alignment: .leading, spacing: 4) {
+                OnbPhrase.marked(
+                    i18n.t("ios.onb7.card.proof", [
+                        "testing": L10n.percent(SampleCard.retainedByTesting, locale: i18n.locale),
+                        "reread": L10n.percent(SampleCard.retainedByRereading, locale: i18n.locale),
+                    ]),
+                    keyword: V3Color.ink
+                )
+                .font(V3Font.support)
+                .foregroundStyle(V3Color.ink2)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                Text(i18n.t("ios.journey.source"))
+                    .font(V3Font.caption)
+                    .foregroundStyle(V3Color.ink3)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity, minHeight: 58, alignment: .leading)
-            .background(fill, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(stroke, lineWidth: state == .open || state == .dimmed ? 1.5 : 2)
-            )
-            .opacity(state == .dimmed ? 0.5 : 1)
         }
-        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-        .disabled(state != .open)
-        .animation(OnboardingMotion.select, value: state)
-        .accessibilityAddTraits(state == .right || state == .wrong ? [.isSelected] : [])
-    }
-
-    private var ink: Color {
-        switch state {
-        case .right: MicaboColor.correctInk
-        case .wrong: MicaboColor.wrongInk
-        default: MicaboColor.ink
-        }
-    }
-
-    private var fill: Color {
-        switch state {
-        case .right: MicaboColor.correctSoft
-        case .wrong: MicaboColor.wrongSoft
-        default: MicaboColor.surface
-        }
-    }
-
-    private var stroke: Color {
-        switch state {
-        case .right: MicaboColor.correct
-        case .wrong: MicaboColor.wrong
-        default: MicaboColor.stroke
-        }
-    }
-
-    @ViewBuilder
-    private var mark: some View {
-        switch state {
-        case .right:
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 22, weight: .bold))
-                .foregroundStyle(MicaboColor.correct)
-        case .wrong:
-            Image(systemName: "xmark.circle.fill")
-                .font(.system(size: 22, weight: .bold))
-                .foregroundStyle(MicaboColor.wrong)
-        default:
-            Circle()
-                .strokeBorder(MicaboColor.strokeStrong, lineWidth: 2)
-                .frame(width: 22, height: 22)
-        }
+        .padding(.top, 2)
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -245,6 +198,11 @@ enum SampleCard: String, CaseIterable {
     case history
     case philosophy
 
+    /// **La seule étude du parcours** : ce qu'il reste d'un cours une semaine après, en se
+    /// testant et en le relisant, en pourcentage. Karpicke & Roediger, Science, 2008.
+    static let retainedByTesting = 80
+    static let retainedByRereading = 36
+
     /// La matière du catalogue qui porte la question quand l'élève n'en a coché aucune qui
     /// lui corresponde.
     var catalogSubject: String {
@@ -257,8 +215,8 @@ enum SampleCard: String, CaseIterable {
         }
     }
 
-    /// La question. Celle d'histoire est la question du mur de Berlin que l'app pose déjà dans
-    /// ses 26 langues.
+    /// La question. Celle d'histoire est la question du mur de Berlin, déjà écrite dans
+    /// toutes les langues.
     var questionKey: String {
         self == .history ? "ios.onb.mika.design.question" : "ios.onb7.card.\(rawValue).q"
     }
@@ -314,7 +272,7 @@ enum SampleCard: String, CaseIterable {
     /// **La question d'une matière que l'élève a cochée**, dans l'ordre alphabétique pour que
     /// le choix ne change pas d'un affichage à l'autre. Aucune ne correspond (des langues
     /// vivantes, une matière que la table ne connaît pas) : la question d'histoire, présentée
-    /// comme de la culture générale — jamais une matière qu'il n'a pas choisie.
+    /// comme de la culture générale, jamais comme une matière qu'il n'a pas choisie.
     static func pick(for subjects: Set<String>) -> Pick {
         for subject in subjects.sorted() {
             let emoji = SubjectCatalog.emoji(for: subject)

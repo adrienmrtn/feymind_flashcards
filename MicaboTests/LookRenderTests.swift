@@ -175,26 +175,18 @@ final class LookRenderTests: XCTestCase {
     }
 }
 
-/// Home d'un élève tout neuf, immobile : la barre a besoin d'un focus, cette vue le porte.
+/// Home d'un élève tout neuf, immobile (lot 10) : la phrase de Mika, « Créer ma première
+/// leçon », les trois sources en puces et la barre de saisie.
 private struct LookNewcomerHome: View {
-    @FocusState private var focused: Bool
-
     var body: some View {
-        HomeScreen(
-            composer: LessonComposer(),
-            focused: $focused,
-            isPro: false,
-            name: nil,
-            hello: HomeGreeting.hello(name: nil, moment: .day),
-            greeting: HomeGreeting.lines(name: nil, moment: .day, dueCount: 0),
-            day: HomeDay(hasCourses: false, studiedToday: false),
-            resume: nil,
-            plan: HomePlan(),
-            motion: HomeMotion(still: true, reduceMotion: false),
-            appeared: true,
-            streakPreview: StudyStreak.Status(current: 0, best: 0, studiedToday: false),
-            actions: HomeActions()
+        Home10Board(
+            board: HomeBoard.resolve(HomeBoardInput()),
+            exam: nil,
+            xp: 0,
+            streak: .empty,
+            shortcuts: HomeShortcut.available(isNewcomer: true, hasLesson: false, dueCount: 0),
+            dueCount: 0,
+            composer: LessonComposer()
         )
-        .environment(\.homeStill, true)
     }
 }

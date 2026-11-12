@@ -1,239 +1,121 @@
 import SwiftUI
 
+// MARK: - Mika se présente
+
+/// **« Salut, moi c'est Mika ! »** Un moment, avant la première question : un grand Mika au
+/// centre, qui fait coucou, son nom, ce qu'il va faire, et un bouton. Rien ne défile tout
+/// seul.
+struct WelcomeStepView: View {
+    @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    var body: some View {
+        OnbScreen {
+            // Mika prend d'abord sa place ; l'air qui reste se partage au-dessus et en dessous.
+            Spacer(minLength: 12)
+                .layoutPriority(-1)
+
+            OnbHeroMika(mood: .wave, max: OnbLayout.heroWelcome)
+
+            VStack(spacing: 12) {
+                OnbTitle(i18n.t("ios.onb10.welcome.title"), size: OnbLayout.display, alignment: .center)
+                Text(i18n.t("ios.onb10.welcome.sub"))
+                    .font(V3Font.body)
+                    .foregroundStyle(V3Color.ink2)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
+            }
+            .padding(.top, 20)
+
+            Spacer(minLength: 12)
+                .layoutPriority(-1)
+        } footer: {
+            V3Button(i18n.t("ios.onb10.go")) {
+                model.advance()
+            }
+        }
+    }
+}
+
 // MARK: - Le prénom
 
-/// **« Comment veux-tu qu'on t'appelle ? »**
+/// **« Comment je t'appelle ? »**
 ///
-/// C'est la première question, avant tout ce qui trie, et elle n'est pas facultative : tout
-/// ce qui suit s'adresse à quelqu'un — la bienvenue, le bravo, l'accueil — et une app qui
-/// dit « bienvenue, toi » n'a rien demandé.
+/// La première question, avant tout ce qui trie, et elle n'est pas facultative : tout ce qui
+/// suit s'adresse à quelqu'un. Le prénom se tape en très grand, au centre ; le clavier est
+/// ouvert d'emblée, et le bouton est actif dès la première lettre.
+///
+/// **Le clavier ne fait rien bouger.** La page est composée depuis le haut : la bulle, le
+/// prénom, le bouton juste dessous. Le clavier monte et redescend sous eux, que la page
+/// glisse ou non.
 ///
 /// **Le prénom ne sert à rien d'autre.** Il ne part pas au modèle, il ne part pas au
 /// serveur, il n'entre dans aucune consigne de génération.
 struct NameStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.onboardingStill) private var still
 
     @FocusState private var isFocused: Bool
-    @Environment(\.onboardingStill) private var still
+
+    private var canContinue: Bool {
+        model.displayName.nilIfBlank != nil
+    }
 
     var body: some View {
         @Bindable var model = model
 
-        return OnboardingScaffold(
-            title: i18n.t("ios.onb5.q.name")
-        ) {
-            HStack(spacing: 10) {
-                if still {
-                    // Les rendus ne dessinent pas un champ UIKit : le prénom, écrit.
-                    Text(model.displayName.nilIfBlank ?? i18n.t("ios.onb.name.placeholder"))
-                        .font(MicaboFont.ui(20, weight: .semibold))
-                        .foregroundStyle(OnboardingPalette.ink)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                } else {
-                    TextField(i18n.t("ios.onb.name.placeholder"), text: $model.displayName)
-                        .font(MicaboFont.ui(20, weight: .semibold))
-                        .foregroundStyle(OnboardingPalette.ink)
-                        .textInputAutocapitalization(.words)
-                        .textContentType(.givenName)
-                        .autocorrectionDisabled()
-                        .focused($isFocused)
-                        .submitLabel(.done)
-                        .onSubmit { advance(fromKeyboard: true) }
-                }
+        OnbQuestion(i18n.t("ios.onb10.q.name"), mood: .wave, anchored: false) {
+            VStack(spacing: 12) {
+                field($model.displayName)
+                Text(i18n.t("ios.onb10.name.hint"))
+                    .font(V3Font.caption)
+                    .foregroundStyle(V3Color.ink2)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top, 24)
 
-                if !model.displayName.isEmpty {
-                    Button {
-                        model.displayName = ""
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 17))
-                            .foregroundStyle(OnboardingPalette.gray)
-                    }
-                    .buttonStyle(MicaboPressableButtonStyle())
-                    .accessibilityLabel(Text(i18n.t("ios.clearText")))
-                }
-            }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 18)
-            .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            // Le clavier arrive une fois la page posée : ouvert pendant le glissement, il
-            // ferait remonter le bas de la page avant qu'elle ne soit arrivée.
-            .onAppear {
-                DispatchQueue.main.asyncAfter(deadline: .now() + OnboardingMotion.slideDuration) {
-                    isFocused = true
-                }
-            }
-        } footer: {
-            OnboardingArrowButton(isEnabled: model.displayName.nilIfBlank != nil) {
+            V3Button(i18n.t("common.continue"), isEnabled: canContinue) {
                 advance()
             }
+            .padding(.top, 36)
+
+            OnbKeyboardRoom(isActive: self.model.step == .name)
+        }
+        .onAppear { isFocused = true }
+    }
+
+    /// Le prénom, en très grand. Les rendus ne dessinent pas un champ du système : le prénom
+    /// y est écrit.
+    @ViewBuilder
+    private func field(_ text: Binding<String>) -> some View {
+        let placeholder = i18n.t("ios.onb.name.placeholder")
+        if still {
+            Text(text.wrappedValue.nilIfBlank ?? placeholder)
+                .font(V3Font.display())
+                .foregroundStyle(text.wrappedValue.nilIfBlank == nil ? V3Color.ink3 : V3Color.ink)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+        } else {
+            TextField("", text: text, prompt: Text(placeholder).foregroundStyle(V3Color.ink3))
+                .font(V3Font.display())
+                .foregroundStyle(V3Color.ink)
+                .multilineTextAlignment(.center)
+                .tint(V3Color.accent)
+                .textInputAutocapitalization(.words)
+                .textContentType(.givenName)
+                .autocorrectionDisabled()
+                .focused($isFocused)
+                .submitLabel(.continue)
+                .onSubmit { advance() }
+                .accessibilityLabel(Text(placeholder))
         }
     }
 
-    /// **L'étape d'abord, le clavier ensuite.** Le modèle change d'étape avant que le clavier
-    /// ne commence à se ranger : la page, qui n'est plus l'étape courante, se fige avec son
-    /// pied levé (`OnboardingKeyboardLift`) et part telle quelle sous la bienvenue, pendant
-    /// que le clavier descend dessous. Dans l'autre ordre, le pied redescendait à l'appui.
-    private func advance(fromKeyboard: Bool = false) {
-        guard model.displayName.nilIfBlank != nil, !model.transitionLock else { return }
-        // Le rond vibre de lui-même à l'enfoncement ; la touche « OK » du clavier, non.
-        if fromKeyboard { Haptics.medium() }
+    private func advance() {
+        guard canContinue else { return }
         model.advance()
-        isFocused = false
-    }
-}
-
-// MARK: - La bienvenue
-
-/// **« Bienvenue, {prénom}. On est ravis de t'avoir ici. Apprenons à te connaître. »**
-///
-/// Une page pour une phrase, entre le prénom et la première question. Elle gagne sa place
-/// parce qu'elle change de registre : jusqu'ici on demandait, à partir d'ici l'app parle à
-/// quelqu'un. Le prénom s'écrit en grand, la phrase se lit mot à mot en dessous, et le rond
-/// n'arrive qu'une fois le dernier mot posé.
-struct WelcomeStepView: View {
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    @State private var titleRead = false
-    @State private var isReady = false
-    @State private var mikaShown = false
-    @Environment(\.onboardingStill) private var still
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    private var name: String {
-        model.displayName.nilIfBlank ?? OnboardingPreferences.displayName ?? ""
-    }
-
-    var body: some View {
-        VStack(spacing: 0) {
-            VStack(spacing: 0) {
-                Spacer(minLength: 0)
-
-                // L'accueil, un moment qui compte : Mika en entier, grand, debout sur le papier
-                // de l'app, apparaît en fondu et fait coucou au-dessus du prénom — une fois. Il
-                // ne surgit pas, il ne saute pas.
-                MikaMascot(mood: .wave, size: 190, reactsToTap: true, frozenAt: still ? 0 : nil, backdrop: .surface)
-                    .opacity(mikaShown || still ? 1 : 0)
-                    .padding(.bottom, MicaboSpacing.lg)
-                    .accessibilityHidden(true)
-                    .onAppear {
-                        withAnimation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion).delay(0.15)) { mikaShown = true }
-                    }
-
-                OnboardingReadingText(
-                    template: i18n.t("ios.onb5.welcome.title", ["name": name]),
-                    size: 38,
-                    wordDelay: 0.22,
-                    startDelay: 0.55,
-                    highlightsOnFinish: false,
-                    onFinish: { titleRead = true }
-                )
-                .padding(.horizontal, MicaboSpacing.screen)
-
-                if titleRead || still {
-                    OnboardingReadingText(
-                        template: i18n.t("ios.onb5.welcome.sub"),
-                        size: 22,
-                        wordDelay: 0.14,
-                        startDelay: 0.25,
-                        highlightsOnFinish: false,
-                        onFinish: {
-                            withAnimation(MicaboMotion.standard) { isReady = true }
-                        }
-                    )
-                    .padding(.horizontal, MicaboSpacing.xl)
-                    .padding(.top, MicaboSpacing.lg)
-                    .transition(.opacity)
-                }
-
-                Spacer(minLength: 0)
-                Spacer(minLength: 0)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .animation(MicaboMotion.standard, value: titleRead)
-
-            OnboardingArrowBar {
-                model.advance()
-            }
-            .opacity(isReady || still ? 1 : 0)
-            .allowsHitTesting(isReady)
-        }
-        .onboardingChromeInset()
-        .background(OnboardingPalette.white.ignoresSafeArea())
-        .environment(\.onboardingSurface, .canvas)
-    }
-}
-
-// MARK: - La filière
-
-/// **« Tu es dans quel type d'établissement ? »**
-///
-/// « Lycée » ne dit pas ce qu'on étudie. Un élève de terminale STMG et un élève de terminale
-/// générale n'ont ni les mêmes matières, ni la même épreuve, ni le même niveau d'écriture
-/// attendu — et c'est la différence entre une fiche qui sert et une fiche à côté.
-///
-/// L'écran ne s'affiche que dans les pays décrits assez finement pour qu'il ait de vraies
-/// réponses (`SchoolSystem`). Ailleurs, il se saute et le palier large suffit : inventer
-/// « lycée technologique » pour un pays qui n'en a pas produirait une réponse fausse, et une
-/// réponse fausse coûte plus cher qu'une réponse large.
-struct SchoolTypeStepView: View {
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    var body: some View {
-        OnboardingScaffold(
-            title: i18n.t("ios.onb5.q.schoolType")
-        ) {
-            VStack(spacing: 10) {
-                ForEach(Array(model.tracks.enumerated()), id: \.element.id) { rank, track in
-                    OnboardingChoiceRow(
-                        title: track.title,
-                        emoji: track.emoji,
-                        isSelected: model.track?.id == track.id,
-                        rank: rank
-                    ) {
-                        model.track = track
-                    }
-                }
-            }
-        } footer: {
-            OnboardingArrowButton(isEnabled: model.track != nil) { model.advance() }
-        }
-    }
-}
-
-// MARK: - L'année
-
-/// **« Tu es en quelle année ? »**
-///
-/// Elle décide des matières proposées deux écrans plus loin, et du niveau d'écriture des
-/// cours générés. C'est la question la plus précise du parcours, et la dernière sur le
-/// « où j'en suis ».
-struct SchoolYearStepView: View {
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    private var years: [SchoolYear] { model.track?.years ?? [] }
-
-    var body: some View {
-        OnboardingScaffold(
-            title: i18n.t("ios.onb5.q.year")
-        ) {
-            VStack(spacing: 10) {
-                ForEach(Array(years.enumerated()), id: \.element.id) { rank, year in
-                    OnboardingChoiceRow(
-                        title: year.title,
-                        isSelected: model.year?.id == year.id,
-                        rank: rank
-                    ) {
-                        model.year = year
-                    }
-                }
-            }
-        } footer: {
-            OnboardingArrowButton(isEnabled: model.year != nil) { model.advance() }
-        }
     }
 }

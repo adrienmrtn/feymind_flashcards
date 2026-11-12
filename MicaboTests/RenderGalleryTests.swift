@@ -79,7 +79,7 @@ final class RenderGalleryTests: XCTestCase {
                 QuestionFeedback(question: Self.sampleQuestion(id: "mika-right"), right: true)
                 QuestionFeedback(question: Self.sampleQuestion(id: "mika-wrong"), right: false)
                 HStack {
-                    OnboardingFooterMika(cheers: 0)
+                    MikaMascot(mood: .happy, size: 72)
                     Spacer()
                 }
             }
@@ -301,140 +301,37 @@ final class RenderGalleryTests: XCTestCase {
     }
 
     /// Home : la rangée du haut, la scène bleue (Mika, sa bulle, la barre), les outils et
-    /// « Aujourd'hui » — pour un élève qui avance (une leçon, des cartes dues, de l'XP, une
-    /// série) et pour un élève tout neuf, gratuit, sans leçon ; la barre avec deux supports,
-    /// la feuille du « + », l'allemand, le turc, l'arabe, l'écran de génération, la barre
-    /// d'onglets et l'aperçu de la leçon verrouillée.
+    /// La Home V3.3 (lot 10) — pour un élève qui avance (une séance prévue, des cartes dues,
+    /// de l'XP, une série) et pour un élève tout neuf ; la barre avec un sujet et deux
+    /// supports, la feuille du « + », l'allemand, le finnois, l'arabe, une leçon qui s'écrit,
+    /// la barre d'onglets et l'aperçu de la leçon verrouillée. Tous ses états sont dans
+    /// `Home10RenderTests`.
     func testHomeScreens() throws {
         guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
-        let container = try ModelContainer(
-            for: Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self,
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-        )
-        let context = ModelContext(container)
-        let course = Course(title: "La photosynthèse", subject: "Biologie")
-        course.toneRaw = LessonTone.yellow.rawValue
-        context.insert(course)
-        for index in 0..<4 {
-            context.insert(Chapter(position: index, title: ["La lumière", "La chlorophylle", "Le cycle de Calvin", "Le bilan"][index], course: course))
-        }
-        course.setLessonPath(LessonPath(
-            icon: MicaboIcon.flask.rawValue,
-            intro: LessonPath.Intro(lines: [], minutes: 20),
-            takeaways: [],
-            groups: [LessonPath.Group(name: "", themes: [0, 1]), LessonPath.Group(name: "", themes: [2, 3])],
-            status: .ready
-        ))
-        course.iconID = MicaboIcon.flask.rawValue
-        course.updateProgress { progress in
-            progress.done = ["intro", "notes:0", "notes:1"]
-            progress.addTime(2_700, to: .notes)
-        }
-        course.lastOpenedAt = Date()
-        for index in 0..<8 {
-            let card = Flashcard(front: "Question \(index)", back: "Réponse", position: index, course: course)
-            card.state = .review
-            card.dueDate = Date().addingTimeInterval(-3_600)
-            context.insert(card)
-        }
-        try context.save()
-        let resume = try XCTUnwrap(ResumeTarget.pick(from: [course]))
+        let exam = HomeExam(name: "Bac d'histoire", daysLeft: 12, readiness: nil)
+        let session = HomeSession(eventID: UUID(), courseID: UUID(), title: "la guerre froide", startMinute: 18 * 60, endMinute: 18 * 60 + 30)
+        let day = HomeDay(dueCount: 8, hasCourses: true, session: session, dueLessons: 2)
 
-        // L'XP vit dans une suite à part : les rendus ne touchent pas aux réglages de l'app.
-        let suite = "micabo.render.home"
-        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
-        defaults.removePersistentDomain(forName: suite)
-        let busyXP = XPStore(defaults: defaults)
-        busyXP.award(points: 30)
-        let emptyDefaults = try XCTUnwrap(UserDefaults(suiteName: suite + ".empty"))
-        emptyDefaults.removePersistentDomain(forName: suite + ".empty")
-        let freshXP = XPStore(defaults: emptyDefaults)
-
-        // **Le plan du jour d'un élève de terminale** : le bac d'histoire dans douze jours,
-        // préparé à 64 %, et à 17 h 55 la séance de 18 h sur la guerre froide. L'agenda garde
-        // l'examen blanc conseillé, le DM de maths et une seconde séance ce soir ; les cours du
-        // matin et la séance de concentration menée sont passés.
-        let today = MicaboCalendar.shared.startOfDay(for: Date())
-        let examID = UUID()
-        let agenda = [
-            AgendaItem(id: "m", kind: .milestone, title: "Bac blanc d'histoire", day: today, tintIndex: StudyAgenda.examTint, examID: examID, milestone: .mock, minutes: 15),
-            AgendaItem(id: "t", kind: .task, title: "Rendre le DM de maths", day: today, tintIndex: StudyAgenda.taskTint, taskID: UUID()),
-            AgendaItem(id: "a", kind: .lesson, title: "Mathématiques", day: today, startMinute: 8 * 60, endMinute: 9 * 60 + 30, tintIndex: CalendarTint.classesIndex, emoji: "🏫", calendarName: "Cours", room: "B12"),
-            AgendaItem(id: "f", kind: .focus, title: "", day: today, startMinute: 14 * 60, endMinute: 14 * 60 + 25, tintIndex: StudyAgenda.focusTint, minutes: 25, isDone: true),
-            AgendaItem(id: "r", kind: .revision, title: "La guerre froide", day: today, startMinute: 18 * 60, endMinute: 18 * 60 + 30, tintIndex: CalendarTint.revisionIndex, emoji: "📚", calendarName: "Révisions", examID: examID, eventID: UUID()),
-            AgendaItem(id: "r2", kind: .revision, title: "La décolonisation", day: today, startMinute: 20 * 60 + 30, endMinute: 21 * 60, tintIndex: CalendarTint.revisionIndex, emoji: "📚", calendarName: "Révisions", examID: examID, eventID: UUID()),
-        ]
-        let evening = CalendarTime.date(minute: 17 * 60 + 55, on: today)
-        let session = HomeSession.next(in: agenda, now: evening, examNames: [examID: "Bac d'histoire"])
-        XCTAssertEqual(session?.title, "La guerre froide")
-        let lessons = [
-            HomeLessonCard(id: course.id, title: "La photosynthèse", icon: .flask, tone: .yellow, percent: resume.1.percent),
-            HomeLessonCard(id: UUID(), title: "La guerre froide", icon: .globe, tone: .pink, percent: 70),
-            HomeLessonCard(id: UUID(), title: "Les fonctions affines", icon: .calculator, tone: .blue, percent: 15),
-            HomeLessonCard(id: UUID(), title: "Le passé composé", icon: .quill, tone: .mint, percent: 100),
-        ]
-        let examPlan = HomePlan(
-            exam: HomeExam(name: "Bac d'histoire", daysLeft: 12, readiness: 64),
-            agenda: HomePlan.upcoming(agenda, now: evening, excluding: session),
-            lessons: lessons
-        )
-        XCTAssertEqual(examPlan.agenda.map(\.id), ["m", "t", "r2"])
-
-        func busyHome(composer: LessonComposer? = nil, session: HomeSession? = session, plan: HomePlan = examPlan, moment: HomeGreeting.Moment = .evening) -> AnyView {
-            let day = HomeDay(
-                dueCount: 8,
-                reviewedToday: 0,
-                hasCourses: true,
-                lessonTitle: resume.1.title,
-                lessonCircle: resume.1.circleNumber.map { L10n.t("lesson.path.circleNumber", locale: .resolved(), vars: ["n": String($0)]) },
-                lessonAdvancedToday: false,
-                studiedToday: true,
-                session: session
+        func busyHome(composer: LessonComposer? = nil, name: String = "Léa") -> Home10Board {
+            Home10Board(
+                board: HomeBoard.resolve(HomeBoardInput(day: day, name: name, greeting: .evening, hasLesson: true)),
+                exam: exam,
+                composer: composer ?? LessonComposer()
             )
-            return AnyView(HomeScreenPreview(
-                composer: composer ?? LessonComposer(),
-                isPro: false,
-                name: "Léa",
-                moment: moment,
-                day: day,
-                resume: resume,
-                plan: plan,
-                streak: StudyStreak.Status(current: 12, best: 18, studiedToday: true)
-            )
-            .environment(busyXP))
         }
 
-        /// Ce qu'on voit en ouvrant l'app : le premier écran, coupé à la hauteur d'un iPhone.
-        func fold(_ view: AnyView) -> some View {
-            view
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(height: 852, alignment: .top)
-                .clipped()
-        }
-
-        try RenderGallery.render("home", night: true, busyHome())
-        try RenderGallery.render("home-top", night: true, fold(busyHome()))
-        // Le texte agrandi : rien ne se coupe, le plan du jour reste lisible.
-        try RenderGallery.render("home-top-xl", fold(busyHome()).environment(\.dynamicTypeSize, .xxxLarge))
-        // Sans examen ni séance : la leçon en cours, les cartes en seconde ligne, « Ajouter
-        // un examen » dans le haut de la scène.
+        try RenderGallery.render("home", height: 852, night: true, busyHome())
         try RenderGallery.render(
-            "home-noexam",
-            busyHome(session: nil, plan: HomePlan(exam: nil, agenda: [], lessons: lessons), moment: .morning)
-        )
-        try RenderGallery.render(
-            "home-new", night: true,
-            HomeScreenPreview(
-                composer: LessonComposer(),
-                isPro: false,
-                name: nil,
-                moment: .day,
-                day: HomeDay(hasCourses: false, studiedToday: false),
-                resume: nil,
-                plan: HomePlan(),
-                streak: StudyStreak.Status(current: 0, best: 0, studiedToday: false)
+            "home-new", height: 852, night: true,
+            Home10Board(
+                board: HomeBoard.resolve(HomeBoardInput()),
+                exam: nil,
+                xp: 0,
+                streak: .empty,
+                shortcuts: HomeShortcut.available(isNewcomer: true, hasLesson: false, dueCount: 0),
+                dueCount: 0,
+                composer: LessonComposer()
             )
-            .environment(freshXP)
         )
 
         let composer = LessonComposer()
@@ -451,7 +348,7 @@ final class RenderGalleryTests: XCTestCase {
             ))
         }
         composer.begin(.youtube, title: "YouTube")
-        try RenderGallery.render("home-composer", night: true, busyHome(composer: composer))
+        try RenderGallery.render("home-composer", height: 852, night: true, busyHome(composer: composer))
 
         try RenderGallery.render(
             "home-sources", night: true,
@@ -469,12 +366,11 @@ final class RenderGalleryTests: XCTestCase {
                 if let previousLocale { localeDefaults.set(previousLocale, forKey: UiLocale.storageKey) }
                 else { localeDefaults.removeObject(forKey: UiLocale.storageKey) }
             }
-            try RenderGallery.render("home-de", busyHome())
-            try RenderGallery.render("home-noexam-de", fold(busyHome(session: nil, plan: HomePlan(exam: nil, agenda: [], lessons: lessons), moment: .morning)))
+            try RenderGallery.render("home-de", height: 852, busyHome(name: "Lea"))
             localeDefaults.set(UiLocale.fi.rawValue, forKey: UiLocale.storageKey)
-            try RenderGallery.render("home-fi", fold(busyHome()))
+            try RenderGallery.render("home-fi", height: 852, busyHome(name: "Aino"))
             localeDefaults.set(UiLocale.ar.rawValue, forKey: UiLocale.storageKey)
-            try RenderGallery.render("home-ar", busyHome().environment(\.layoutDirection, .rightToLeft))
+            try RenderGallery.render("home-ar", height: 852, busyHome(name: "ليلى").environment(\.layoutDirection, .rightToLeft))
         }
 
         // La leçon lue, sous cadenas : l'aperçu dans son état final, puis pendant la lecture.
@@ -503,13 +399,11 @@ final class RenderGalleryTests: XCTestCase {
             MicaboTabBar().environment(TabRouter())
                 .padding(20)
         )
+        // Une leçon s'écrit : la Home le dit, la jauge à la place de l'action.
+        let writing = HomeBoardInput(day: HomeDay(hasCourses: true), name: "Léa", phase: .running, stage: .writing, subject: "La photosynthèse", hasSupports: true)
         try RenderGallery.render(
-            "home-generating",
-            VStack(spacing: 28) {
-                MikaMascot(mood: .write, size: 128, frozenAt: 0.6)
-                GenerationSteps(current: .writing, hasSupports: true)
-            }
-            .padding(40)
+            "home-generating", height: 852,
+            Home10Board(board: HomeBoard.resolve(writing), exam: exam, composer: LessonComposer(), isBusy: true)
         )
     }
 
@@ -624,52 +518,27 @@ final class RenderGalleryTests: XCTestCase {
         )
     }
 
-    /// Le parcours d'accueil : la leçon dans le téléphone, les six écrans de Mika, une
-    /// question avec Mika au pied de la page, la barre du haut.
+    /// Le parcours d'accueil : une question, le temps par jour, la question d'essai, le plan
+    /// révélé, puis le paywall. Chaque écran du parcours a ses rendus dans
+    /// `OnboardingRenderTests` (`onb10-*`).
     func testOnboardingScreens() throws {
         guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
         let model = OnboardingModel()
         model.displayName = "Lina"
 
         try RenderGallery.render(
-            "onboarding-hook",
-            height: 560,
-            OnboardingHookMockup()
-                .environment(\.onboardingStill, true)
-        )
-        // Les scènes seules : la page entière défile, et un `ScrollView` ne se dessine pas.
-        for page in MikaPage.allCases {
-            try RenderGallery.render(
-                "onboarding-mika-scene-\(page.rawValue)",
-                height: 360,
-                MikaPageScene(page: page)
-                    .environment(model)
-                    .environment(\.onboardingStill, true)
-            )
-        }
-        for page in MikaPage.allCases {
-            try RenderGallery.render(
-                "onboarding-mika-\(page.rawValue)",
-                height: 780,
-                MikaStepView(page: page)
-                    .environment(model)
-                    .environment(\.onboardingStill, true)
-            )
-        }
-        try RenderGallery.render(
             "onboarding-question",
             height: 780,
-            VStack(spacing: 0) {
-                OnboardingTopBar(progress: 0.42, showsBack: true, isVisible: true, onBack: {})
-                WorriesStepView()
-            }
-            .environment(model)
+            WorriesStepView()
+                .environment(model)
+                .environment(\.onboardingStill, true)
         )
         try RenderGallery.render(
             "onboarding-time",
             height: 780,
             DailyTimeStepView()
                 .environment(model)
+                .environment(\.onboardingStill, true)
         )
         try RenderGallery.render(
             "onboarding-sample-card",
@@ -819,38 +688,5 @@ enum RenderGallery {
             }
             try data.write(to: directory.appendingPathComponent("\(file).png"))
         }
-    }
-}
-
-/// Home a besoin d'un focus pour sa barre : une vue le porte, le temps du rendu. L'écran est
-/// posé immobile (`homeStill`) : ni entrée, ni frappe, ni dérive, tout dans son état final.
-private struct HomeScreenPreview: View {
-    let composer: LessonComposer
-    let isPro: Bool
-    let name: String?
-    var moment: HomeGreeting.Moment = .day
-    let day: HomeDay
-    let resume: (Course, ResumeTarget)?
-    var plan = HomePlan()
-    let streak: StudyStreak.Status
-    @FocusState private var focused: Bool
-
-    var body: some View {
-        HomeScreen(
-            composer: composer,
-            focused: $focused,
-            isPro: isPro,
-            name: name,
-            hello: HomeGreeting.hello(name: name, moment: moment),
-            greeting: HomeGreeting.lines(name: name, moment: moment, dueCount: day.dueCount),
-            day: day,
-            resume: resume,
-            plan: plan,
-            motion: HomeMotion(still: true, reduceMotion: false),
-            appeared: true,
-            streakPreview: streak,
-            actions: HomeActions()
-        )
-        .environment(\.homeStill, true)
     }
 }

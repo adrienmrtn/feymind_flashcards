@@ -17,9 +17,12 @@ import SwiftUI
 /// (`DiscountOffer.savingsPercent`), le décompte descend de l'instant où l'offre s'est
 /// affichée pour la première fois. À zéro, le bouton s'éteint : un tarif expiré ne se vend
 /// plus.
+///
+/// **Seule la pastille du décompte se redessine à chaque seconde** (`DiscountTicking`) : le
+/// reste de l'écran ne bouge qu'une fois, à l'instant où la fenêtre se ferme.
 struct DiscountOfferScreen: View {
-    /// Les secondes qui restent sur la fenêtre.
-    var remaining: Int
+    /// Le temps qu'il reste sur la fenêtre : compté depuis son instant d'origine, ou posé.
+    var clock: DiscountClock
     var isPurchasing: Bool
     /// Où en sont les prix du tarif réduit et de l'annuel qu'il barre.
     var prices: PaywallPriceState = .ready
@@ -37,11 +40,17 @@ struct DiscountOfferScreen: View {
     private var plan: PaywallPlan { DiscountOffer.plan }
     private var reference: PaywallPlan { DiscountOffer.reference }
     private var savings: String { DiscountOffer.savingsLabel(DiscountOffer.savingsPercent) }
-    private var isOver: Bool { remaining <= 0 }
+
+    /// La fenêtre s'est fermée sous les yeux de l'élève : c'est la pastille du décompte qui
+    /// le dit, à la seconde où elle arrive à zéro.
+    @State private var expired = false
+    private var isOver: Bool { expired || clock.remaining() <= 0 }
 
     var body: some View {
         VStack(spacing: 0) {
-            DiscountTopBar(remaining: remaining, isBusy: isPurchasing, onClose: onClose)
+            DiscountTopBar(clock: clock, isBusy: isPurchasing, onClose: onClose) {
+                expired = true
+            }
 
             ViewThatFits(in: .vertical) {
                 content(mika: PaywallStyle.offerMika)
@@ -101,15 +110,23 @@ struct DiscountOfferScreen: View {
     private var priceCard: some View {
         switch prices {
         case .ready:
+            // Le prix et ce qu'il fait par mois, côte à côte ; sur un écran étroit, le
+            // second s'écrit plus petit pour rester à côté ; en très grand texte, il passe
+            // dessous. Aucun des deux ne se coupe.
             ViewThatFits(in: .horizontal) {
                 HStack(alignment: .bottom, spacing: 12) {
                     priceColumn
                     Spacer(minLength: 0)
-                    equivalentColumn(.trailing)
+                    equivalentColumn(.trailing, font: PaywallStyle.offerEquivalent)
+                }
+                HStack(alignment: .bottom, spacing: 10) {
+                    priceColumn
+                    Spacer(minLength: 0)
+                    equivalentColumn(.trailing, font: PaywallStyle.offerEquivalentNarrow)
                 }
                 VStack(alignment: .leading, spacing: 10) {
                     priceColumn
-                    equivalentColumn(.leading)
+                    equivalentColumn(.leading, font: PaywallStyle.offerEquivalent)
                 }
             }
             .padding(.horizontal, 18)
@@ -163,13 +180,13 @@ struct DiscountOfferScreen: View {
     }
 
     /// Ce que le tarif fait par mois ou par semaine, selon le test de prix.
-    private func equivalentColumn(_ alignment: HorizontalAlignment) -> some View {
+    private func equivalentColumn(_ alignment: HorizontalAlignment, font: Font) -> some View {
         VStack(alignment: alignment, spacing: 0) {
             Text(L10n.t("ios.pay10.offer.thatIs", locale: .resolved()))
                 .font(PaywallStyle.offerEquivalentLead)
                 .foregroundStyle(V3Color.ink2)
             Text("\(plan.priceHeadline(for: .current)) \(plan.priceHeadlineUnit(for: .current))")
-                .font(PaywallStyle.offerEquivalent)
+                .font(font)
                 .foregroundStyle(PaywallStyle.keyword)
         }
         .lineLimit(1)
@@ -265,6 +282,42 @@ struct DiscountPercent: View {
 }
 
 // MARK: - Le décompte
+
+/// **Le temps qu'il reste sur la fenêtre de l'offre** : compté depuis l'instant où elle s'est
+/// affichée pour la première fois, ou posé tel quel (les rendus, une offre sans fenêtre).
+enum DiscountClock: Equatable {
+    /// La fenêtre court depuis cet instant.
+    case since(Date)
+    /// Tant de secondes, sans horloge.
+    case fixed(Int)
+
+    /// Les secondes qui restent, à cet instant.
+    func remaining(now: Date = Date()) -> Int {
+        switch self {
+        case .since(let startedAt): DiscountOffer.windowRemaining(startedAt: startedAt, now: now)
+        case .fixed(let seconds): max(0, seconds)
+        }
+    }
+}
+
+/// **Ce qui se redessine à chaque seconde, et rien d'autre** : la vue qu'on lui donne reçoit
+/// le temps qu'il reste. L'horloge est celle du système (`TimelineView`) : elle ne tourne que
+/// pour une vue affichée, et aucune tâche ne dort derrière. Une durée posée ne tourne pas.
+struct DiscountTicking<Content: View>: View {
+    let clock: DiscountClock
+    @ViewBuilder var content: (Int) -> Content
+
+    var body: some View {
+        switch clock {
+        case .fixed:
+            content(clock.remaining())
+        case .since:
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                content(clock.remaining(now: context.date))
+            }
+        }
+    }
+}
 
 /// **Le décompte de l'offre**, dans sa pastille : le temps qu'il reste sur les vingt-quatre
 /// heures, à la seconde. Les chiffres sont à chasse fixe : la pastille ne change pas de

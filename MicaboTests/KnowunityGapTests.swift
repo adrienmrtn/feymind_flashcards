@@ -202,7 +202,7 @@ final class KnowunityGapTests: XCTestCase {
     // MARK: - Les outils de Home et les statistiques
 
     func testHomeToolsAndEventsCarryNoStudentText() {
-        XCTAssertEqual(HomeTool.allCases.map(\.analyticsName), ["scan", "writing", "quiz"])
+        XCTAssertEqual(HomeShortcut.allCases.map(\.analyticsName), ["focus", "scan", "quiz", "cards", "import", "writing", "mock", "photo", "pdf", "youtube"])
         for event in [AnalyticsEvent.homeToolOpened, .writingOpened, .writingUnreadable, .writingChecked, .writingCopied] {
             XCTAssertTrue(event.rawValue.allSatisfy { $0.isLowercase || $0 == "_" }, event.rawValue)
         }
