@@ -170,7 +170,7 @@ struct FirstLessonStepView: View {
     /// question d'essai) et à son niveau : collège, lycée, ou après le bac.
     static func exampleTopic(for model: OnboardingModel, locale: UiLocale) -> String {
         let family = SampleCard.pick(for: model.subjects).card
-        return L10n.t("ios.onb10.lesson.ex.\(family.rawValue).\(band(for: model.stage?.tier))", locale: locale)
+        return L10n.t("ios.onb10.lesson.ex.\(family.rawValue).\(band(for: model.tier))", locale: locale)
     }
 
     /// Les trois hauteurs d'exemple.

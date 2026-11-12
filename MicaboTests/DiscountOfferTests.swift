@@ -227,14 +227,14 @@ final class DiscountOfferTests: XCTestCase {
         window.refresh()
         XCTAssertFalse(window.isLive, "Un abonné ne voit pas la pastille")
 
-        // L'offre ouverte depuis la pastille la tient en place : l'achat qu'on y fait, ou
-        // la fenêtre qui finit, ne la retire qu'une fois l'écran refermé.
-        window.hold(true)
-        XCTAssertTrue(window.isLive)
-        window.refresh(now: opened.addingTimeInterval(90_000))
-        XCTAssertTrue(window.isLive)
-        window.hold(false)
-        XCTAssertFalse(window.isLive, "Refermée, la pastille d'un abonné s'en va")
+        // L'offre rouverte depuis la pastille est portée par la fenêtre, pas par la pastille :
+        // un abonnement retire la pastille sans refermer l'écran.
+        XCTAssertNil(window.presentation)
+        window.presentation = .paywall
+        window.refresh()
+        XCTAssertFalse(window.isLive)
+        XCTAssertEqual(window.presentation, .paywall)
+        window.presentation = nil
 
         defaults.set(false, forKey: ProAccess.Key.isPro)
         DiscountOffer.forget(in: defaults)

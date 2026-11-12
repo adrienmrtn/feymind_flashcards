@@ -15,6 +15,11 @@ import UIKit
 /// Il relit quand un réglage de l'appareil change (l'offre qui s'affiche, un achat, « Forcer
 /// Pro »), quand l'app revient au premier plan, et à chaque seconde tant qu'une pastille est
 /// à l'écran : c'est elle qui voit la fenêtre finir.
+///
+/// Il porte aussi **l'offre que la pastille a ouverte** (`presentation`) : c'est la racine de
+/// l'app qui la présente (`micaboDiscountChipOffer`, posé sur `RootTabView`), pas la pastille.
+/// La pastille s'en va de la Home quand la fenêtre finit ou que l'élève s'abonne ; un écran
+/// qu'elle porterait partirait avec elle, sous ses yeux.
 @MainActor
 @Observable
 final class DiscountWindow {
@@ -23,12 +28,12 @@ final class DiscountWindow {
     /// L'instant où l'offre s'est affichée, `nil` si elle ne l'a jamais été ici.
     private(set) var startedAt: Date?
 
-    /// Vrai tant qu'une fenêtre court pour un élève sans abonnement — et tant que l'offre
-    /// ouverte depuis la pastille est à l'écran (`hold`).
+    /// Vrai tant qu'une fenêtre court pour un élève sans abonnement.
     private(set) var isLive = false
 
-    /// L'offre ouverte depuis la pastille est à l'écran.
-    @ObservationIgnored private var isHeld = false
+    /// L'offre ouverte à la demande, depuis la pastille de la Home ; `nil` quand elle est
+    /// refermée.
+    var presentation: DiscountPresentation?
 
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
@@ -59,16 +64,7 @@ final class DiscountWindow {
             now: now
         )
         if start != startedAt { startedAt = start }
-        if (live || isHeld) != isLive { isLive = live || isHeld }
-    }
-
-    /// **L'offre ouverte depuis la pastille tient la pastille en place.** C'est la pastille
-    /// qui porte l'écran de l'offre : une fenêtre qui finit pendant qu'on le lit, ou l'achat
-    /// qu'on y fait, la retirerait de la Home — et l'écran avec elle, sous les yeux de
-    /// l'élève. Elle reste donc jusqu'à ce qu'il le referme.
-    func hold(_ held: Bool) {
-        isHeld = held
-        refresh()
+        if live != isLive { isLive = live }
     }
 }
 
@@ -82,6 +78,9 @@ final class DiscountWindow {
 ///
 /// Le décompte est une `TimelineView` : l'horloge du système, qui ne tourne que pour une vue
 /// affichée. Aucune tâche ne dort derrière.
+///
+/// L'offre s'ouvre depuis la racine de l'app (`DiscountWindow.presentation`) : la pastille
+/// peut quitter la Home — la fenêtre finit, l'élève s'abonne — sans emporter l'écran.
 struct DiscountChip: View {
     init() {}
 
@@ -89,22 +88,18 @@ struct DiscountChip: View {
     /// lit dans son `body` se redessine quand la fenêtre s'ouvre ou se referme.
     @MainActor static var isLive: Bool { DiscountWindow.shared.isLive }
 
-    @State private var presentation: DiscountPresentation? = nil
-
     var body: some View {
         let window = DiscountWindow.shared
-        Group {
-            if let startedAt = window.startedAt, window.isLive || presentation != nil {
+        // Une pile, et pas un groupe : même vide, elle existe.
+        ZStack {
+            if let startedAt = window.startedAt, window.isLive {
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     let left = DiscountOffer.windowRemaining(startedAt: startedAt, now: context.date)
-                    // Une pile, et pas un groupe : même vide, elle existe, et c'est elle qui
-                    // voit la fenêtre finir.
                     ZStack {
-                        // À zéro, plus rien à montrer : la pastille ne reste montée que pour
-                        // l'offre qu'elle a ouverte.
+                        // À zéro, plus rien à montrer.
                         if left > 0 {
                             Button {
-                                presentation = .paywall
+                                DiscountWindow.shared.presentation = .paywall
                             } label: {
                                 DiscountChipLabel(percent: DiscountOffer.savingsPercent, remaining: left)
                             }
@@ -121,10 +116,6 @@ struct DiscountChip: View {
                     .onChange(of: left > 0, initial: true) { _, isRunning in
                         if !isRunning { DiscountWindow.shared.refresh() }
                     }
-                }
-                .micaboDiscountOffer($presentation)
-                .onChange(of: presentation != nil) { _, isOpen in
-                    DiscountWindow.shared.hold(isOpen)
                 }
             }
         }
@@ -153,5 +144,27 @@ struct DiscountChipLabel: View {
             .minimumScaleFactor(0.8)
             .frame(minHeight: PaywallStyle.pillHeight)
         }
+    }
+}
+
+// MARK: - L'offre, présentée par la racine
+
+/// **Présente l'offre que la pastille de la Home a ouverte.** Posé une fois, sur la racine des
+/// onglets : elle ne quitte jamais l'écran, l'offre non plus tant qu'on ne la referme pas.
+///
+/// Un modificateur à part, pour que seul lui se relise quand l'offre s'ouvre ou se referme :
+/// la racine, elle, ne lit rien de la fenêtre.
+private struct DiscountChipOfferPresenter: ViewModifier {
+    func body(content: Content) -> some View {
+        @Bindable var window = DiscountWindow.shared
+        return content.micaboDiscountOffer($window.presentation)
+    }
+}
+
+extension View {
+    /// Présente l'offre de réduction ouverte depuis la pastille de la Home (`DiscountChip`).
+    /// À poser une seule fois, sur une vue qui reste : la racine des onglets.
+    func micaboDiscountChipOffer() -> some View {
+        modifier(DiscountChipOfferPresenter())
     }
 }
