@@ -43,7 +43,9 @@ final class DeviceScreensRenderTests: XCTestCase {
     }
 
     private func render<V: View>(_ name: String, _ view: V) throws {
-        try RenderGallery.renderDevice("dev-\(name)", env.wrap(view.environment(\.homeStill, true), container: fixture.container))
+        // Sans `homeStill` : un écran « immobile » pose sa page sans défilement, et ce qui
+        // dépasse se centre et passe sous l'encoche — ce n'est pas l'écran de l'app.
+        try RenderGallery.renderDevice("dev-\(name)", env.wrap(view, container: fixture.container))
     }
 
     private func firstLesson() throws -> Course {
