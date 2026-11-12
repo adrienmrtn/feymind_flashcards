@@ -264,7 +264,7 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(ExamStepView.rowTitle(.noExam, locale: .fr), "Rien pour l'instant")
         XCTAssertEqual(lina.classLabel, "Terminale")
         XCTAssertTrue(SubjectsStepView.classSubjects(for: lina).contains("Philosophie"))
-        XCTAssertTrue(LearningGoal.offered(for: lina.stage?.tier).contains(.dreamSchool))
+        XCTAssertTrue(LearningGoal.offered(for: lina.tier).contains(.dreamSchool))
 
         XCTAssertEqual(
             plain(ExamStepView.reaction(choice: lina.examChoice, date: lina.examDate, now: Self.now, locale: .fr)),
@@ -296,6 +296,22 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(FirstLessonStepView.exampleTopic(for: lina, locale: .fr), "Les fonctions affines")
     }
 
+    /// **De droite à gauche, la plage de notes est un bloc enchâssé** : sans lui, iOS pose
+    /// « 60% ← 80% » de gauche à droite, et la flèche va de la note visée vers celle d'aujourd'hui.
+    func testTheGradeRangeReadsInTheDirectionOfTheLanguage() {
+        XCTAssertEqual(OnbWords.range(from: "12/20", to: "16/20", locale: .fr), "12/20 → 16/20")
+        XCTAssertEqual(OnbWords.range(from: "60%", to: "80%", locale: .ar), "\u{202B}60% ← 80%\u{202C}")
+    }
+
+    /// **Un collégien français est au collège**, même si le palier large envoyé au serveur
+    /// est « Lycée » (la France n'a pas de palier collège) : ses objectifs et ses exemples sont
+    /// ceux de son âge.
+    func testTheTierOfTheScreensIsTheTrackOne() throws {
+        let tom = try student(name: "Tom", region: "FR", track: "fr.college", year: "fr.3e", subjects: ["Histoire-Géographie"])
+        XCTAssertEqual(tom.tier, .lowerSecondary)
+        XCTAssertEqual(tom.stage?.tier, .upperSecondary, "Le palier large ne change pas")
+    }
+
     /// **Un collégien de troisième** : le Brevet, pas de « formation de mes rêves », des
     /// exemples à sa hauteur.
     func testAFrenchMiddleSchoolStudent() throws {
@@ -303,10 +319,10 @@ final class OnboardingContentTests: XCTestCase {
                               subjects: ["Histoire-Géographie"])
         XCTAssertEqual(named(tom), ["Brevet"])
         XCTAssertEqual(tom.classLabel, "Troisième")
-        let goals = LearningGoal.offered(for: tom.stage?.tier)
+        let goals = LearningGoal.offered(for: tom.tier)
         XCTAssertFalse(goals.contains(.dreamSchool))
         XCTAssertFalse(goals.contains(.passYear))
-        XCTAssertEqual(FirstLessonStepView.band(for: tom.stage?.tier), "lower")
+        XCTAssertEqual(FirstLessonStepView.band(for: tom.tier), "lower")
         XCTAssertEqual(FirstLessonStepView.exampleTopic(for: tom, locale: .fr), "La Révolution française")
         XCTAssertEqual(SampleCard.pick(for: tom.subjects).card, .history)
         XCTAssertTrue(NotificationsStepView.message(for: tom, locale: .fr).hasPrefix("Tom, "))
@@ -321,8 +337,8 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(ines.examChoices.first, .finals)
         XCTAssertEqual(ines.examChoice, .finals)
         XCTAssertEqual(ines.classLabel, "Licence 1")
-        XCTAssertTrue(LearningGoal.offered(for: ines.stage?.tier).contains(.passYear))
-        XCTAssertEqual(FirstLessonStepView.band(for: ines.stage?.tier), "higher")
+        XCTAssertTrue(LearningGoal.offered(for: ines.tier).contains(.passYear))
+        XCTAssertEqual(FirstLessonStepView.band(for: ines.tier), "higher")
         XCTAssertEqual(FirstLessonStepView.exampleTopic(for: ines, locale: .fr), "Les matrices")
         let reaction = try XCTUnwrap(ExamStepView.reaction(choice: ines.examChoice, date: ines.examDate, now: Self.now, locale: .fr))
         XCTAssertTrue(reaction.hasPrefix("Partiels dans "), reaction)

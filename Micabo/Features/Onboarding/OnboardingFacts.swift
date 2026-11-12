@@ -294,8 +294,8 @@ struct OnboardingGradeGap: Equatable {
             return OnbWords.range(from: from, to: to, locale: locale)
         }
         return L10n.t("ios.onb10.target.line", locale: locale, vars: [
-            "from": from,
-            "to": to,
+            // La plage entière : de droite à gauche, elle s'écrit en un bloc (`OnbWords.range`).
+            "range": OnbWords.range(from: from, to: to, locale: locale),
             "date": OnbWords.day(date, locale: locale),
         ])
     }

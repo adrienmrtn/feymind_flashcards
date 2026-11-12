@@ -66,6 +66,16 @@ final class PerfBenchTests: XCTestCase {
         PerfProbe.isRecording = true
     }
 
+    override func record(_ issue: XCTIssue) {
+        PerfVerdict.failure(in: name, issue)
+        super.record(issue)
+    }
+
+    override class func tearDown() {
+        PerfVerdict.write("PERF|bilan|PerfBenchTests|fini")
+        super.tearDown()
+    }
+
     override func tearDownWithError() throws {
         PerfProbe.isRecording = false
         // Les gestes mesurés gagnent de l'XP dans le magasin de l'app : il repart de zéro.
