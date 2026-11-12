@@ -106,8 +106,8 @@ struct ListenView: View {
                     .buttonStyle(MicaboPressableButtonStyle())
                 }
             }
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
         }
     }
 
@@ -136,7 +136,7 @@ struct ListenPlayerCard: View {
             HStack(spacing: 12) {
                 MicaboIconView(icon: icon, size: 44)
                     .frame(width: 58, height: 58)
-                    .background(MicaboColor.surface.opacity(0.75), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .background(MicaboColor.surface.opacity(0.75), in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(L10n.t("ios.sup.listen.chapterOf", locale: .resolved(), vars: [
                         "n": String(speaker.chapter + 1),
@@ -217,7 +217,7 @@ struct ListenPlayerCard: View {
             }
         }
         .padding(20)
-        .background(tone.pale, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .background(tone.pale, in: RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous))
     }
 
     private var currentChapterTitle: String {

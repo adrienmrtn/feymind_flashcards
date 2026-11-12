@@ -38,6 +38,11 @@ struct FocusTimerView: View {
 
     init(plan: FocusPlan = .default) {
         self.plan = plan
+        // **La leçon de l'objectif, et elle seule.** La séance lisait la table entière des
+        // cours (trente kilo-octets de texte par ligne) pour y retrouver un titre, et la
+        // relisait à chaque écriture de la base.
+        let wanted = plan.courseID ?? UUID()
+        _courses = Query(filter: #Predicate<Course> { $0.id == wanted })
     }
 
     @Environment(\.dismiss) private var dismiss
@@ -273,7 +278,11 @@ struct FocusSessionScreen: View {
                         style: StrokeStyle(lineWidth: 16, lineCap: .round)
                     )
                     .rotationEffect(.degrees(-90))
-                    .animation(.linear(duration: 1), value: position.remaining)
+                    // **L'anneau avance d'un cran par seconde, d'un geste bref.** Il glissait en
+                    // continu (une animation linéaire d'une seconde, relancée chaque seconde) :
+                    // l'app redessinait l'anneau à chaque image pendant toute la séance, vingt-cinq
+                    // minutes durant, pour un déplacement d'un demi-point par seconde.
+                    .animation(MicaboMotion.quick, value: position.remaining)
                 MikaMascot(mood: mood, size: 120)
             }
             .frame(width: 250, height: 250)

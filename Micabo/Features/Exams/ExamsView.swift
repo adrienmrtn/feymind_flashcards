@@ -151,8 +151,8 @@ struct ExamsView: View {
         }
         .padding(22)
         .frame(maxWidth: .infinity)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
         .micaboElevation(.card)
     }
 
@@ -188,8 +188,8 @@ struct ExamsView: View {
                     .foregroundStyle(MicaboColor.inkTertiary)
             }
             .padding(18)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
             .micaboElevation(.card)
         }
         .buttonStyle(MicaboPressableButtonStyle())
@@ -286,7 +286,7 @@ struct ExamHero: View {
                         }
                         .padding(.horizontal, 10)
                         .padding(.vertical, 7)
-                        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
                     }
                     if lessons.count > Self.shownLessons {
                         Text("+\(lessons.count - Self.shownLessons)")
@@ -294,7 +294,7 @@ struct ExamHero: View {
                             .foregroundStyle(MicaboColor.ink)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 9)
-                            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
                     }
                 }
             }
@@ -305,7 +305,7 @@ struct ExamHero: View {
                     .foregroundStyle(MicaboColor.accentInk)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
             }
             .buttonStyle(MicaboPressableButtonStyle())
             .disabled(lessons.isEmpty)
@@ -314,7 +314,7 @@ struct ExamHero: View {
         .padding(22)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background {
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
+            RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous)
                 .fill(LinearGradient(colors: [MicaboColor.accent, MicaboColor.accentVivid], startPoint: .topLeading, endPoint: .bottomTrailing))
                 .overlay(alignment: .topTrailing) {
                     Circle()
@@ -322,7 +322,7 @@ struct ExamHero: View {
                         .frame(width: 220, height: 220)
                         .offset(x: 70, y: -90)
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous))
         }
         .shadow(color: MicaboColor.accent.opacity(0.3), radius: 20, x: 0, y: 12)
     }
@@ -343,7 +343,7 @@ struct ExamRow: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                     .frame(width: 70, height: 50)
-                    .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
                 VStack(alignment: .leading, spacing: 3) {
                     Text(exam.name)
                         .font(MicaboFont.ui(17, weight: .heavy))
@@ -362,8 +362,8 @@ struct ExamRow: View {
                     .foregroundStyle(MicaboColor.inkTertiary)
             }
             .padding(14)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
         }
         .buttonStyle(MicaboPressableButtonStyle())
     }
@@ -384,7 +384,7 @@ struct MockResultRow: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
                 .frame(width: 70, height: 46)
-                .background(passes ? MicaboColor.correctSoft : MicaboColor.wrongSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .background(passes ? MicaboColor.correctSoft : MicaboColor.wrongSoft, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
             VStack(alignment: .leading, spacing: 3) {
                 Text(result.title)
                     .font(MicaboFont.ui(16, weight: .heavy))
@@ -400,8 +400,8 @@ struct MockResultRow: View {
             Spacer(minLength: 0)
         }
         .padding(12)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
     }
 }
 
@@ -450,8 +450,8 @@ struct ExamEditSheet: View {
                         TextField(ExamNaming.placeholder(), text: $name)
                             .font(MicaboFont.ui(18, weight: .semibold))
                             .padding(16)
-                            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+                            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
                     }
 
                     field(L10n.t("lesson.exam.date", locale: .resolved())) {
@@ -459,8 +459,8 @@ struct ExamEditSheet: View {
                             .datePickerStyle(.graphical)
                             .tint(MicaboColor.accent)
                             .padding(8)
-                            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+                            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
                     }
 
                     field(L10n.t("lesson.exam.lessons", locale: .resolved())) {
@@ -599,8 +599,8 @@ struct LessonChecklist: View {
                                 .contentTransition(.symbolEffect(.replace))
                         }
                         .padding(12)
-                        .background(isOn ? MicaboColor.accentSoft : MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(isOn ? MicaboColor.accent : MicaboColor.stroke, lineWidth: isOn ? 2 : 1.5))
+                        .background(isOn ? MicaboColor.accentSoft : MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(isOn ? MicaboColor.accent : MicaboColor.stroke, lineWidth: isOn ? 2 : 1.5))
                     }
                     .buttonStyle(MicaboPressableButtonStyle(feedback: .none))
                 }
@@ -610,10 +610,10 @@ struct LessonChecklist: View {
 }
 
 extension View {
-    /// Apparaît en glissant d'un peu plus bas, avec un léger retard.
+    /// **Le bloc est là d'emblée** (lot 10, « mouvement natif et immédiat ») : la page des
+    /// examens arrivait vide, puis ses cartes glissaient en place l'une après l'autre pendant
+    /// que la page finissait d'être poussée. La poussée du système suffit.
     func slideIn(_ shown: Bool, delay: Double) -> some View {
-        opacity(shown ? 1 : 0)
-            .offset(y: shown ? 0 : 18)
-            .animation(LearnMotion.gentle(delay: delay), value: shown)
+        self
     }
 }

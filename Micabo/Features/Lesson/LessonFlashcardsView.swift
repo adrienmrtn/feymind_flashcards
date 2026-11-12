@@ -49,7 +49,10 @@ struct LessonCardsHub: View {
     /// Un rendu immobile (`RenderGallery`) : la page à plat, sans défilement ni entrée.
     @Environment(\.homeStill) private var still
     @State private var running: [Flashcard]?
-    @State private var shown = false
+    /// La jauge est pleine à l'arrivée. Elle se remplissait en animation à chaque ouverture :
+    /// l'état changeait juste après la première image, et toute la page (la jauge, la liste
+    /// des cartes) se relisait une seconde fois pendant que l'écran montait.
+    @State private var shown = true
 
     var body: some View {
         Group {
@@ -110,9 +113,6 @@ struct LessonCardsHub: View {
             }
         }
         .background(MicaboColor.canvas.ignoresSafeArea())
-        .onAppear {
-            if still { shown = true } else { withAnimation(LearnMotion.gentle(delay: 0.15)) { shown = true } }
-        }
     }
 
     private func progressCard(counts: [CardMastery: Int], total: Int, queue: [Flashcard]) -> some View {
@@ -169,8 +169,8 @@ struct LessonCardsHub: View {
             }
         }
         .padding(20)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.xxl, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.xxl, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
         .micaboElevation(.card)
     }
 }
@@ -200,7 +200,7 @@ private struct CardRow: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
     }
 }

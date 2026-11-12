@@ -85,15 +85,16 @@ final class PolishSystemTests: XCTestCase {
 
     // MARK: - La barre d'onglets
 
-    /// **Chaque libellé tient dans son cinquième de barre**, sur un iPhone SE, dans les
-    /// vingt-six langues, sans descendre sous 85 % de sa taille. « Concentration »,
-    /// « Keskittyminen » et « Συγκέντρωση » tombaient à 62 %.
+    /// **Chaque nom d'onglet tient dans un cinquième de barre**, sur un iPhone SE, dans les
+    /// vingt-six langues, sans descendre sous 85 % de sa taille. La barre ne montre plus que des
+    /// icônes (V3.3) ; les noms restent courts pour VoiceOver et pour la visionneuse en très
+    /// grand texte. « Concentration », « Keskittyminen » et « Συγκέντρωση » tombaient à 62 %.
     func testTabLabelsFitOnASmallPhoneInEveryLanguage() {
-        FontLoader.registerFonts()
-        let font = UIFont(name: MicaboFont.nunitoName(for: .heavy), size: 11) ?? .systemFont(ofSize: 11, weight: .heavy)
-        // 375 points, moins les marges de la pilule (12 + 12), son rembourrage (5 + 5), les
-        // quatre espaces entre onglets (2 chacun), puis 2 + 2 autour du libellé.
-        let slot = (375.0 - 24 - 10 - 8) / 5 - 4
+        // Le nom d'un onglet : 11 points en gras, police système (`V3Font.tab`).
+        let font = UIFont.systemFont(ofSize: 11, weight: .bold)
+        // 375 points, moins les marges de la barre (6 + 6) et les quatre espaces entre onglets
+        // (2 chacun), puis 2 + 2 autour du libellé.
+        let slot = (375.0 - 12 - 8) / 5 - 4
         var tooLong: [String] = []
         for locale in UiLocale.allCases {
             for tab in RootTab.tabs {
@@ -112,6 +113,20 @@ final class PolishSystemTests: XCTestCase {
         XCTAssertEqual(RootTab.focus.label(t: { L10n.t($0, locale: .fr) }), "Focus")
         XCTAssertEqual(RootTab.focus.barLabel(t: { L10n.t($0, locale: .fr) }), "Focus")
         XCTAssertEqual(RootTab.profile.barLabel(t: { L10n.t($0, locale: .de) }), RootTab.profile.label(t: { L10n.t($0, locale: .de) }))
+    }
+
+    /// **Les cinq onglets gardent leur nom** — Accueil, Leçons, Calendrier, Focus, Profil — même
+    /// si la barre ne montre que leurs icônes : c'est ce que VoiceOver lit.
+    func testTheFiveTabsAreNamed() {
+        let french = RootTab.tabs.map { $0.barLabel(t: { L10n.t($0, locale: .fr) }) }
+        XCTAssertEqual(french, ["Accueil", "Leçons", "Calendrier", "Focus", "Profil"])
+        for locale in UiLocale.allCases {
+            for tab in RootTab.tabs {
+                let label = tab.barLabel(t: { L10n.t($0, locale: locale) })
+                XCTAssertFalse(label.isEmpty, locale.rawValue)
+                XCTAssertFalse(label.contains("."), "\(locale.rawValue) : la clé s'afficherait telle quelle (« \(label) »)")
+            }
+        }
     }
 
     // MARK: - Les mots du pays

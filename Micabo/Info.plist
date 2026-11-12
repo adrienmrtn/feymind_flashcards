@@ -45,14 +45,8 @@
 	-->
 	<key>UIAppFonts</key>
 	<array>
-		<string>Nunito-Regular.ttf</string>
-		<string>Nunito-Medium.ttf</string>
-		<string>Nunito-SemiBold.ttf</string>
-		<string>Nunito-Bold.ttf</string>
-		<string>Nunito-ExtraBold.ttf</string>
-		<string>Nunito-Black.ttf</string>
-		<string>Nunito-Italic.ttf</string>
-		<string>Nunito-BoldItalic.ttf</string>
+		<string>SofiaSansCondensed-ExtraBold.ttf</string>
+		<string>SofiaSansCondensed-Black.ttf</string>
 	</array>
 	<!--
 	Le schéma de retour des connexions.

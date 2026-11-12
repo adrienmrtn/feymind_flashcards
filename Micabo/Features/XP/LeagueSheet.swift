@@ -211,9 +211,9 @@ struct LeagueSheet: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(row.isMe ? MicaboColor.accentSoft : MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .background(row.isMe ? MicaboColor.accentSoft : MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
                 .strokeBorder(row.isMe ? MicaboColor.accent.opacity(0.5) : MicaboColor.stroke, lineWidth: row.isMe ? 1.5 : 1)
         )
         .accessibilityElement(children: .ignore)

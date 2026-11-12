@@ -174,7 +174,7 @@ struct IntroCircleView: View {
                         }
                         .padding(18)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(session.course.tone.pale, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .background(session.course.tone.pale, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
                     }
 
                     VStack(alignment: .leading, spacing: 12) {
@@ -248,7 +248,7 @@ struct ConclusionCircleView: View {
                         }
                         .padding(18)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(session.course.tone.pale, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .background(session.course.tone.pale, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
                     }
 
                     if let score = session.progress.averageQuizPercent {
@@ -262,7 +262,7 @@ struct ConclusionCircleView: View {
                                 .foregroundStyle(session.course.tone.ink)
                         }
                         .padding(18)
-                        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
                         .micaboElevation(.row)
                     }
                 }
@@ -355,10 +355,9 @@ struct LessonFinishedView: View {
             let id = session.course.id
             guard LessonRating.shouldOffer(id, at: .finished) else { return }
             LessonRating.markOffered(id, at: .finished)
-            // Après la fête : la question vient une fois les confettis tombés.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                withAnimation(LearnMotion.gentle) { showsRating = true }
-            }
+            // La question est là d'emblée, sous le score : elle arrivait 1,2 s après l'écran, et
+            // poussait ce que l'élève était en train de lire.
+            showsRating = true
         }
     }
 
@@ -381,7 +380,7 @@ struct LessonFinishedView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
         .micaboElevation(.row)
     }
 }

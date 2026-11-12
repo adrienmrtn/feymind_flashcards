@@ -98,13 +98,12 @@ struct StreakCelebrationView: View {
     private func play() {
         guard !played else { return }
         played = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-            withAnimation(MicaboMotion.resolved(MicaboMotion.celebrate, reduceMotion: reduceMotion)) {
-                lit = true
-                shownCount = status.current
-            }
-            Haptics.success()
-            Haptics.burst(count: 3, over: 0.45)
+        // La flamme s'allume à l'arrivée de l'écran : elle attendait 0,6 s, devant un écran figé.
+        withAnimation(MicaboMotion.resolved(MicaboMotion.celebrate, reduceMotion: reduceMotion)) {
+            lit = true
+            shownCount = status.current
         }
+        Haptics.success()
+        Haptics.burst(count: 3, over: 0.45)
     }
 }
