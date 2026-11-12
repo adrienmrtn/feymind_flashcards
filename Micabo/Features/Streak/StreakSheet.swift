@@ -106,8 +106,8 @@ struct StreakSheet: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
         .accessibilityElement(children: .combine)
     }
 
@@ -124,7 +124,7 @@ struct StreakSheet: View {
         .padding(.vertical, 12)
         .background(
             status.studiedToday ? MicaboColor.flameSoft : MicaboColor.surfaceMuted,
-            in: RoundedRectangle(cornerRadius: 20, style: .continuous)
+            in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous)
         )
     }
 
@@ -206,20 +206,19 @@ struct StreakFlame: View {
                     .saturation(lit ? 1 : 0)
                     .opacity(lit ? 1 : 0.45)
                     .scaleEffect(1 + 0.04 * breath, anchor: .bottom)
-                    .shadow(color: MicaboColor.flame.opacity(lit ? Double(0.18 + 0.2 * breath) : 0), radius: 14, x: 0, y: 8)
             }
         }
         .frame(width: icon * 1.6, height: icon * 1.6)
         .accessibilityHidden(true)
         .onAppear {
             guard animated, !breathed else { return }
-            withAnimation(MicaboMotion.gentle.delay(0.3)) { breathed = true }
+            withAnimation(MicaboMotion.gentle) { breathed = true }
         }
         .onChange(of: lit) { _, lit in
             // La flamme qui s'allume (la fête de la série) prend son inspiration à ce moment.
             guard lit, !reduceMotion, !still else { return }
             breathed = false
-            withAnimation(MicaboMotion.celebrate.delay(0.1)) { breathed = true }
+            withAnimation(MicaboMotion.celebrate) { breathed = true }
         }
     }
 }
@@ -254,8 +253,8 @@ struct StreakWeekCard: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
         .micaboElevation(.card)
     }
 }
@@ -317,7 +316,7 @@ private struct StreakDayDot: View {
         .padding(3)
         .overlay {
             if day.isToday {
-                Circle().strokeBorder(lit ? MicaboColor.flame : MicaboColor.inkTertiary, lineWidth: 2)
+                Circle().strokeBorder(lit ? MicaboColor.flame : MicaboColor.inkTertiary, lineWidth: MicaboSurface.border)
             }
         }
     }

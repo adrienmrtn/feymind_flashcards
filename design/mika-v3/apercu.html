@@ -1,0 +1,35 @@
+<!doctype html><meta charset="utf-8">
+<!--
+  Mika (V3.1) : ses douze expressions, sur le marine de l'app (le thème par défaut) puis sur le
+  fond teinté du thème clair. La géométrie vient de `mika.js` (fonction `mika(o)`, viewBox
+  400 × 400, pieds posés vers y = 344) : c'est la source de vérité du dessin, que l'iPhone
+  retrace en SwiftUI (`Micabo/DesignSystem/Components/MikaArt.swift`).
+
+  `node design/mika-v3/export.js` refait `mika-expressions.png` depuis cette page.
+-->
+<body style="margin:0;background:#0B0F1C;font-family:Helvetica,Arial,sans-serif">
+<div id="grid" style="display:grid;grid-template-columns:repeat(6,200px);gap:0;width:1200px"></div>
+<script src="mika.js"></script>
+<script>
+// Ce qui flotte autour de lui (`mika.js` les pose dans `window.MIKA`).
+const air = window.MIKA;
+// Les douze expressions : ce que chaque humeur change au repos.
+const set = [
+  ['idle', {}], ['happy', { eyes: 'happy', mouth: 'open' }], ['wave', { leftArm: 'wave', mouth: 'open' }], ['wink', { eyes: 'wink', mouth: 'smile' }],
+  ['celebrate', { eyes: 'happy', mouth: 'open', leftArm: 'up', rightArm: 'up', extra: air.confetti }], ['think', { px: 8, py: -13, mouth: 'small', extra: air.dots }],
+  ['write', { px: 9, py: -3, mouth: 'small', rightArm: 'tilt', extra: air.lines }], ['surprise', { eyes: 'wide', mouth: 'o' }], ['sad', { py: 6, mouth: 'sad', rightArm: 'rest' }],
+  ['sleep', { eyes: 'closed', mouth: 'flat', rightArm: 'rest', extra: air.zzz }], ['look', { px: 10, py: -2, mouth: 'small' }], ['proud', { eyes: 'happy', mouth: 'smile', rightArm: 'up' }],
+];
+// Les deux thèmes : le fond de page, la couleur du texte, le corps et les tentacules arrière.
+const themes = [
+  { bg: '#0B0F1C', ink: '#F5F6FB', body: '#5C88FF', shade: '#3F6BE8' },
+  { bg: '#EEF1F8', ink: '#0F1324', body: '#3870FE', shade: '#2A5BE0' },
+];
+const grid = document.getElementById('grid');
+for (const theme of themes) for (const [name, o] of set) {
+  const cell = document.createElement('div');
+  cell.style.cssText = `background:${theme.bg};text-align:center;color:${theme.ink};font-size:13px;font-weight:700;padding-bottom:8px`;
+  cell.innerHTML = mika(Object.assign({ noShadow: true, body: theme.body, shade: theme.shade }, o)) + '<br>' + name;
+  grid.appendChild(cell);
+}
+</script>

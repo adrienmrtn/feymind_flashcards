@@ -82,7 +82,6 @@ struct SheetExportCard<Action: View>: View {
             .padding(18)
             .frame(width: 200, height: 250, alignment: .topLeading)
             .background(Color.white, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-            .shadow(color: Color.black.opacity(0.12), radius: 18, y: 10)
             .rotationEffect(.degrees(-3))
             .padding(.vertical, 10)
             .accessibilityHidden(true)
@@ -111,6 +110,6 @@ struct SheetExportCard<Action: View>: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity)
-        .background(tone.pale, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .background(tone.pale, in: RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous))
     }
 }

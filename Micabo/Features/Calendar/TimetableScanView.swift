@@ -286,7 +286,7 @@ struct TimetableReviewContent: View {
                     .font(MicaboFont.ui(15, weight: .black))
                     .foregroundStyle(MicaboColor.accentInk)
                     .frame(maxWidth: .infinity, minHeight: 48)
-                    .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                    .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
             }
             .buttonStyle(HomePressStyle(scale: 0.97))
         }
@@ -336,7 +336,7 @@ struct TimetableEntryRow: View {
             }
         }
         .padding(12)
-        .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
     }
 
     @ViewBuilder

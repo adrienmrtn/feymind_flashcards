@@ -235,7 +235,7 @@ struct AnswerPanel: View {
                 .opacity(mikaShown || mikaStill ? 1 : 0)
         }
         .onAppear {
-            withAnimation(MicaboMotion.standard.delay(0.3)) { mikaShown = true }
+            withAnimation(MicaboMotion.standard) { mikaShown = true }
         }
     }
 }
@@ -250,9 +250,9 @@ struct AnswerButtonStyle: ButtonStyle {
             .foregroundStyle(MicaboColor.onInk)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(color, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(color, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
             .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
                     .fill(color.opacity(0.6))
                     .offset(y: configuration.isPressed ? 0 : 4)
             )
@@ -327,7 +327,7 @@ struct QuizScoreView: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             if right < total {
-                Text(L10n.t("lesson.quiz.missedBecomeCards", locale: .resolved()))
+                Text(L10n.t("ios.home10.quiz.missed", locale: .resolved()))
                     .font(MicaboFont.ui(15, weight: .medium))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .multilineTextAlignment(.center)
@@ -352,7 +352,7 @@ struct QuizScoreView: View {
             if still || LearnMotion.reduceMotion {
                 shown = ratio
             } else {
-                withAnimation(LearnMotion.gentle(delay: 0.2)) { shown = ratio }
+                withAnimation(LearnMotion.gentle) { shown = ratio }
             }
             if ratio >= 0.8 { Haptics.burst(count: 3, over: 0.4) }
         }
@@ -452,8 +452,8 @@ struct LessonCardsRun: View {
                 .minimumScaleFactor(0.85)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(fill, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(ink.opacity(0.25), lineWidth: 1.5))
+                .background(fill, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous).strokeBorder(ink.opacity(0.25), lineWidth: 1.5))
         }
         .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
     }
@@ -516,7 +516,7 @@ struct LessonCardsRun: View {
         VStack(spacing: 16) {
             Spacer()
             MikaMascot(mood: .sleep, size: 120)
-            Text(L10n.t("lesson.cards.empty", locale: .resolved()))
+            Text(L10n.t("ios.home10.cards.empty", locale: .resolved()))
                 .font(MicaboFont.subtitle)
                 .foregroundStyle(MicaboColor.ink)
                 .multilineTextAlignment(.center)
@@ -594,10 +594,10 @@ struct FlashcardFace: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity, minHeight: 320, alignment: .topLeading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .strokeBorder(flipped ? tone.vivid : MicaboColor.stroke, lineWidth: 2)
+            RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous)
+                .strokeBorder(flipped ? tone.vivid : MicaboColor.stroke, lineWidth: MicaboSurface.border)
         )
         .micaboElevation(.card)
         .accessibilityElement(children: .combine)

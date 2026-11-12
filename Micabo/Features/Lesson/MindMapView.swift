@@ -101,7 +101,7 @@ struct MindMapView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(MicaboStage.buttonFill, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .background(MicaboStage.buttonFill, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
         .accessibilityAddTraits(.isHeader)
     }
 
@@ -145,7 +145,7 @@ struct MindMapBranch: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
-                .background(tone.pale, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .background(tone.pale, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
                 .contentShape(Rectangle())
             }
             .buttonStyle(MicaboPressableButtonStyle())
@@ -212,7 +212,7 @@ struct MindMapNotion: View {
         .fixedSize(horizontal: false, vertical: true)
         .padding(.vertical, 8)
         .padding(.horizontal, 12)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
     }
 }

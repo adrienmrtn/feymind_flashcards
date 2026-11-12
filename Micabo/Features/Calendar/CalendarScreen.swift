@@ -163,16 +163,16 @@ private struct WeekDayCell: View {
             .padding(.vertical, 9)
             .frame(maxWidth: .infinity)
             .background {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
                     .fill(isSelected ? AnyShapeStyle(MicaboStage.fill) : AnyShapeStyle(Color.clear))
             }
             .overlay {
                 if isToday && !isSelected {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
                         .strokeBorder(MicaboColor.accent.opacity(0.55), lineWidth: 1.5)
                 }
             }
-            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
         }
         .buttonStyle(HomePressStyle(scale: 0.93, feedback: .selection))
         .accessibilityLabel(Text(MicaboCalendar.dayLabel(day)))
@@ -476,7 +476,7 @@ struct DayEmptyState: View {
         HStack(spacing: 14) {
             MicaboIconView(icon: .exam, size: 30)
                 .frame(width: 52, height: 52)
-                .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 6) {
                 Text(loc("ios.cal.emptyDay"))
@@ -632,7 +632,7 @@ struct AgendaRow: View {
                 .foregroundStyle(item.isDone ? MicaboColor.correctInk : mark)
                 .contentTransition(.symbolEffect(.replace))
         case .exam:
-            Text("🎓").font(.system(size: 20))
+            MicaboIconView(icon: .diploma, size: 28, tint: V3Color.iconYellow)
         case .milestone:
             Image(systemName: item.milestone == .mock ? "stopwatch.fill" : "flag.checkered")
                 .font(.system(size: 17, weight: .bold))
@@ -734,8 +734,8 @@ struct ExamsSummaryRow: View {
             Button(action: onOpen) {
                 HStack(spacing: 12) {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous).fill(CalendarTint.at(StudyAgenda.examTint).wash)
-                        Text("🎓").font(.system(size: 22))
+                        RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous).fill(CalendarTint.at(StudyAgenda.examTint).wash)
+                        MicaboIconView(icon: .diploma, size: 32, tint: V3Color.iconYellow)
                     }
                     .frame(width: 46, height: 46)
                     VStack(alignment: .leading, spacing: 2) {
@@ -823,7 +823,7 @@ struct CalendarListRow: View {
             Button(action: onEdit) {
                 HStack(spacing: 12) {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 13, style: .continuous).fill(CalendarTint.at(calendar.tintIndex).wash)
+                        RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous).fill(CalendarTint.at(calendar.tintIndex).wash)
                         Text(calendar.emoji).font(.system(size: 21))
                     }
                     .frame(width: 44, height: 44)
@@ -831,7 +831,7 @@ struct CalendarListRow: View {
                         Circle()
                             .fill(CalendarTint.at(calendar.tintIndex).color)
                             .frame(width: 12, height: 12)
-                            .overlay(Circle().strokeBorder(MicaboColor.surface, lineWidth: 2))
+                            .overlay(Circle().strokeBorder(MicaboColor.surface, lineWidth: MicaboSurface.border))
                             .offset(x: 3, y: 3)
                     }
                     VStack(alignment: .leading, spacing: 2) {

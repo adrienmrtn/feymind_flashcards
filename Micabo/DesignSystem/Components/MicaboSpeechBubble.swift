@@ -25,9 +25,9 @@ struct MicaboSpeechBubble: View {
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
-            .background(MicaboColor.canvas, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .background(MicaboColor.canvas, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous)
                     .strokeBorder(MicaboColor.stroke, lineWidth: 1.5)
             }
             .overlay(alignment: tailAlignment) {
@@ -35,7 +35,6 @@ struct MicaboSpeechBubble: View {
                     .rotationEffect(.degrees(tailTurn))
                     .offset(y: tailOffset)
             }
-            .shadow(color: Color.black.opacity(0.05), radius: 12, y: 5)
     }
 
     private var tailShape: some View {

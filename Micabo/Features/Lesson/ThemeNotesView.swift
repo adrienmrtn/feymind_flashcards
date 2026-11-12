@@ -86,7 +86,7 @@ struct ToneBox<Content: View>: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(tone.pale, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .background(tone.pale, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
     }
 }
 
@@ -150,8 +150,8 @@ struct NoteBlockView: View {
             }
             .padding(18)
             .frame(maxWidth: .infinity)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
 
         case .example(let text):
             VStack(alignment: .leading, spacing: 6) {
@@ -167,7 +167,7 @@ struct NoteBlockView: View {
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
 
         case .steps(let items):
             NoteSteps(items: items, tone: tone)
@@ -216,9 +216,9 @@ struct NoteBlockView: View {
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
                     .strokeBorder(MicaboColor.keyword.opacity(0.35), lineWidth: 1.5)
             )
         }
@@ -299,8 +299,8 @@ struct NoteSteps: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
     }
 }
 
@@ -355,8 +355,8 @@ struct NoteTable: View {
                 )
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
     }
 
     private func row(_ cells: [String], isHeader: Bool, tint: Color, columnWidth: CGFloat?) -> some View {
@@ -407,7 +407,7 @@ struct NoteQuote: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
     }
 }
 
@@ -449,9 +449,9 @@ struct NoteCallout: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(wash, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .background(wash, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
                 .strokeBorder(ink.opacity(0.25), lineWidth: 1.5)
         )
         .accessibilityElement(children: .combine)
@@ -531,14 +531,47 @@ struct KeywordText: View {
         tintsKeywords: Bool = true,
         italic: Bool = false
     ) -> AttributedString {
+        let key = AttributedKey(source: source, size: size, weight: weight, tintsKeywords: tintsKeywords, italic: italic)
+        return composed.value(for: key) {
+            compose(source, size: size, weight: weight, tintsKeywords: tintsKeywords, italic: italic)
+        }
+    }
+
+    /// **Un texte ne se compose qu'une fois.** Chaque passe d'un écran de notes, de quiz ou de
+    /// cartes redécoupait chaque phrase (mots-clés, formules) et rebâtissait sa chaîne mise en
+    /// forme ; la même phrase, à la même taille, rend maintenant la chaîne déjà faite
+    /// (`MemoCache`). La couleur des mots-clés suit toujours le thème : elle se résout au dessin.
+    private struct AttributedKey: Hashable {
+        let source: String
+        let size: CGFloat
+        let weight: Font.Weight
+        let tintsKeywords: Bool
+        let italic: Bool
+    }
+
+    private static let composed = MemoCache<AttributedKey, AttributedString>(limit: 400)
+
+    private static func compose(
+        _ source: String,
+        size: CGFloat,
+        weight: Font.Weight,
+        tintsKeywords: Bool,
+        italic: Bool
+    ) -> AttributedString {
         var result = AttributedString()
+        // Grand et gras, l'ancienne échelle en ferait un titre condensé : un contenu de cours
+        // garde la police du texte, on la pose donc sur chaque morceau.
+        let isLarge = V3LegacyScale.isTitle(size: size, weight: weight)
+        let base = MicaboFont.content(size, weight: weight)
         for (index, part) in source.components(separatedBy: "**").enumerated() where !part.isEmpty {
             let isKeyword = index % 2 == 1
             for segment in FormulaRenderer.segments(of: part) where !segment.text.isEmpty {
                 var chunk = AttributedString(segment.text)
                 if isKeyword || segment.isMath {
-                    let font = MicaboFont.ui(size, weight: isKeyword ? keywordWeight(weight) : formulaWeight(weight))
+                    let font = MicaboFont.content(size, weight: isKeyword ? keywordWeight(weight) : formulaWeight(weight))
                     chunk.font = segment.isMath || italic ? font.italic() : font
+                } else if isLarge {
+                    chunk.font = italic ? base.italic() : base
                 }
                 if isKeyword, tintsKeywords {
                     chunk.foregroundColor = MicaboColor.keyword

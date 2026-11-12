@@ -174,8 +174,8 @@ struct FlashcardImportSheet: View {
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
         }
         .buttonStyle(MicaboPressableButtonStyle(feedback: .soft))
         .disabled(reading)
@@ -221,8 +221,8 @@ struct FlashcardImportSheet: View {
                 .focused($editing)
                 .frame(minHeight: 180)
                 .padding(12)
-                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
                 .overlay(alignment: .topLeading) {
                     if pasted.isEmpty {
                         Text(L10n.t("ios.sup.cards.pastePlaceholder", locale: .resolved()))
@@ -268,8 +268,8 @@ struct FlashcardImportSheet: View {
                 TextField(L10n.t("ios.sup.cards.namePlaceholder", locale: .resolved()), text: $title)
                     .font(MicaboFont.ui(17, weight: .bold))
                     .padding(14)
-                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
             }
             VStack(spacing: 0) {
                 ForEach(Array(cards.prefix(4).enumerated()), id: \.offset) { index, card in
@@ -297,8 +297,8 @@ struct FlashcardImportSheet: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
 
             if skipped > 0 {
                 Text(L10n.t("ios.sup.cards.skipped", locale: .resolved(), vars: ["count": String(skipped)]))

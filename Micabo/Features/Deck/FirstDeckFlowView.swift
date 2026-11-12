@@ -63,7 +63,7 @@ struct FirstDeckFlowView: View {
 
             VStack(spacing: 24) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous)
                         .fill(OnboardingPalette.card)
                         .frame(width: 112, height: 112)
 

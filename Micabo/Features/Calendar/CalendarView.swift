@@ -36,6 +36,8 @@ struct CalendarView: View {
     @State private var weekOffset = 0
     @State private var milestones: [AgendaEvent] = []
     @State private var readiness: [UUID: Int] = [:]
+    /// Les points des jours déjà calculés, gardés d'une passe à l'autre (`AgendaDotsMemo`).
+    @State private var dotsMemo = AgendaDotsMemo()
 
     @State private var showsMonth = false
     @State private var editingCalendar: CalendarEditTarget?
@@ -102,7 +104,7 @@ struct CalendarView: View {
                 WeekPager(
                     weekOffset: $weekOffset,
                     selected: selectedDay,
-                    dots: { StudyAgenda.dots(on: $0, in: snapshot) },
+                    dots: { dotsMemo.dots(on: $0, in: snapshot) },
                     onSelect: { select($0, movesWeek: false) }
                 )
 
@@ -207,7 +209,7 @@ struct CalendarView: View {
                             .font(MicaboFont.ui(15, weight: .black))
                             .foregroundStyle(MicaboColor.accentInk)
                             .frame(maxWidth: .infinity, minHeight: 46)
-                            .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
                     }
                     .buttonStyle(HomePressStyle(scale: 0.97))
                 }
@@ -382,7 +384,7 @@ struct CalendarView: View {
         stack
             .sheet(isPresented: $showsMonth) {
                 let snapshot = self.snapshot
-                CalendarMonthSheet(selected: selectedDay, dots: { StudyAgenda.dots(on: $0, in: snapshot) }) { day in
+                CalendarMonthSheet(selected: selectedDay, dots: { dotsMemo.dots(on: $0, in: snapshot) }) { day in
                     select(day)
                 }
             }
@@ -453,6 +455,30 @@ struct CalendarView: View {
             StudyPlanStore.clear(examID: exam.id, in: modelContext)
             Analytics.track(.planCleared)
         }
+    }
+}
+
+/// **Les points d'un jour, calculés une fois tant que l'agenda ne change pas.**
+///
+/// Chaque case de la semaine et du mois demande ses points, et chaque demande refaisait tout
+/// l'agenda du jour (les événements répétés, les tâches, les examens, les jalons) pour n'en
+/// garder que trois couleurs. Toucher un jour relisait la page, donc les points de toutes les
+/// cases visibles, alors que rien n'avait changé. Ils sont gardés ici par jour, et jetés dès
+/// que l'agenda lu diffère du précédent.
+final class AgendaDotsMemo {
+    private var snapshot: AgendaSnapshot?
+    private var dots: [Date: [Int]] = [:]
+
+    func dots(on day: Date, in snapshot: AgendaSnapshot, calendar: Calendar = MicaboCalendar.shared) -> [Int] {
+        if self.snapshot != snapshot {
+            self.snapshot = snapshot
+            dots.removeAll(keepingCapacity: true)
+        }
+        let key = calendar.startOfDay(for: day)
+        if let known = dots[key] { return known }
+        let made = StudyAgenda.dots(on: key, in: snapshot, calendar: calendar)
+        dots[key] = made
+        return made
     }
 }
 

@@ -115,8 +115,8 @@ struct FocusSetupForm: View {
                     .minimumScaleFactor(0.6)
                     .contentTransition(.numericText(value: Double(plan.workMinutes)))
                     .frame(maxWidth: .infinity, minHeight: 74)
-                    .background(MicaboColor.accentSoft.opacity(0.5), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(MicaboColor.accent.opacity(0.5), lineWidth: 2))
+                    .background(MicaboColor.accentSoft.opacity(0.5), in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous).strokeBorder(MicaboColor.accent.opacity(0.5), lineWidth: MicaboSurface.border))
                     .accessibilityLabel(Text(CalendarTime.duration(minutes: plan.workMinutes)))
                 stepButton("plus", delta: FocusPlan.stepMinutes, label: "ios.focus.more")
             }
@@ -164,12 +164,12 @@ struct FocusSetupForm: View {
                             .foregroundStyle(isOn ? Color.white : MicaboColor.ink)
                             .frame(width: 54, height: 50)
                             .background {
-                                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                                RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous)
                                     .fill(isOn ? AnyShapeStyle(MicaboStage.buttonFill) : AnyShapeStyle(MicaboColor.surface))
                             }
                             .overlay {
                                 if !isOn {
-                                    RoundedRectangle(cornerRadius: 15, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5)
+                                    RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5)
                                 }
                             }
                     }
@@ -205,7 +205,7 @@ struct FocusSetupForm: View {
                         .font(.system(size: 17, weight: .bold))
                         .foregroundStyle(MicaboColor.accentInk)
                         .frame(width: 38, height: 38)
-                        .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous))
                     VStack(alignment: .leading, spacing: 1) {
                         Text(loc("ios.focus.goal"))
                             .font(MicaboFont.ui(16, weight: .black))
@@ -287,7 +287,7 @@ struct FocusSetupForm: View {
             }
             .padding(.horizontal, 12)
             .frame(minHeight: 46)
-            .background(MicaboColor.canvas.opacity(0.7), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+            .background(MicaboColor.canvas.opacity(0.7), in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
         }
         .buttonStyle(HomePressStyle(scale: 0.98))
     }
@@ -316,7 +316,7 @@ struct FocusModePicker: View {
                     .frame(maxWidth: .infinity, minHeight: 44)
                     .background {
                         if isOn {
-                            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                            RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous)
                                 .fill(MicaboColor.surface)
                                 .shadow(color: MicaboBrand.blue900.opacity(0.1), radius: 6, y: 2)
                         }
@@ -327,7 +327,7 @@ struct FocusModePicker: View {
             }
         }
         .padding(4)
-        .background(MicaboColor.surfaceSunken, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(MicaboColor.surfaceSunken, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
     }
 }
 
@@ -415,8 +415,8 @@ struct FocusStartBar: View {
             }
             .padding(.horizontal, 8)
             .frame(width: 92, height: 56)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(MicaboColor.accent.opacity(0.4), lineWidth: 1.5))
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous).strokeBorder(MicaboColor.accent.opacity(0.4), lineWidth: 1.5))
             .accessibilityElement(children: .combine)
         }
     }

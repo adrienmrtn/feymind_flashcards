@@ -122,7 +122,7 @@ struct SolverCaptureChrome<Background: View>: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 9)
         .background(Color.black.opacity(0.55), in: Capsule())
-        .overlay(Capsule().strokeBorder(Color.white.opacity(0.18), lineWidth: 1))
+        .overlay(Capsule().strokeBorder(Color.white.opacity(0.18), lineWidth: MicaboSurface.border))
         .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: 320)
         .opacity(stage == .unreadable ? 0 : 1)
@@ -180,7 +180,7 @@ struct SolverCaptureChrome<Background: View>: View {
                     .minimumScaleFactor(0.8)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(Color.white.opacity(0.14), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .background(Color.white.opacity(0.14), in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
             }
             .buttonStyle(MicaboPressableButtonStyle())
             Button(action: actions.confirm) {
@@ -191,7 +191,7 @@ struct SolverCaptureChrome<Background: View>: View {
                     .minimumScaleFactor(0.8)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(MicaboBrand.blue, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .background(MicaboBrand.blue, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
             }
             .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
         }
@@ -230,7 +230,7 @@ struct SolverCaptureChrome<Background: View>: View {
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: .semibold))
                     .frame(width: 52, height: 52)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
                 Text(text)
                     .font(MicaboFont.ui(13, weight: .bold))
                     .lineLimit(1)
@@ -269,8 +269,8 @@ struct SolverCropOverlay: View {
             .fill(Color.black.opacity(0.52), style: FillStyle(eoFill: true))
             .allowsHitTesting(false)
 
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.35), lineWidth: 1)
+            RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.35), lineWidth: MicaboSurface.border)
                 .frame(width: frame.width, height: frame.height)
                 .offset(x: frame.minX, y: frame.minY)
                 .allowsHitTesting(false)

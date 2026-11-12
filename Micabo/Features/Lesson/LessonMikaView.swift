@@ -77,7 +77,7 @@ struct LessonMikaView: View {
                                 }
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 14)
-                                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
                                 Spacer(minLength: 0)
                             }
                             .id("thinking")
@@ -202,11 +202,11 @@ struct LessonMikaView: View {
                     .padding(.vertical, 11)
                     .background(
                         mine ? MicaboColor.ink : MicaboColor.surface,
-                        in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
                     )
                     .overlay {
                         if !mine {
-                            RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1)
+                            RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border)
                         }
                     }
                     .fixedSize(horizontal: false, vertical: true)
@@ -241,7 +241,7 @@ struct LessonMikaView: View {
             .disabled(added)
         }
         .padding(14)
-        .background(course.tone.pale, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(course.tone.pale, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
     }
 
     private func failureRow(_ failure: String) -> some View {
@@ -269,8 +269,8 @@ struct LessonMikaView: View {
                 .focused($focused)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
-                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
             Button(action: send) {
                 Image(systemName: "arrow.up")
                     .font(.system(size: 17, weight: .heavy))

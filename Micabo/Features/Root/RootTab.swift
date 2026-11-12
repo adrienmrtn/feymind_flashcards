@@ -46,9 +46,13 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     /// un cinquième d'écran : « Concentration », « Keskittyminen », « Concentración » y
     /// tombaient à 62 % de leur taille. La page garde son titre entier ; la barre dit
     /// « Focus », « Keskity », « Enfoque ».
+    ///
+    /// Home s'y appelle « Accueil ». Depuis la V3.3 la barre ne montre que des icônes : ces noms
+    /// sont ceux que VoiceOver lit, et que la visionneuse en très grand texte affiche.
     func barLabel(t: (String) -> String) -> String {
         switch self {
         case .focus: t("ios.pol.sys.tab.focus")
+        case .today: t("ios.look10.tab.home")
         default: label(t: t)
         }
     }
@@ -63,7 +67,8 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
         }
     }
 
-    /// Variante pleine, affichée quand l'onglet est actif.
+    /// Variante pleine, affichée quand l'onglet est actif : sans libellé, c'est le plein et la
+    /// clarté de l'icône qui disent où l'on est.
     var selectedSystemImage: String {
         switch self {
         case .decks: "books.vertical.fill"
@@ -104,17 +109,6 @@ final class TabRouter {
     /// pour le même geste.
     private(set) var courseImportRequests = 0
 
-    /// Compteur de demandes du cadeau. La liste des decks le demande au retour du premier
-    /// cours ; c'est la racine (`DiscountBadgeHost`) qui le présente, par-dessus la barre
-    /// du bas et les onglets. Présenté depuis la page, le pop-up assombrissait tout sauf
-    /// la barre.
-    private(set) var giftRequests = 0
-
-    /// Demande à la racine de poser le cadeau par-dessus l'app.
-    func requestGift() {
-        giftRequests += 1
-    }
-
     /// **Ramène l'app à son écran d'accueil**, quelle que soit la profondeur d'où l'on part.
     ///
     /// Une session lancée depuis la fiche d'un deck est deux écrans plus loin que
@@ -151,5 +145,17 @@ final class TabRouter {
     func requestFocusSession() {
         focusRequests += 1
         selection = .focus
+    }
+
+    /// Compteur de demandes de nouvelle leçon depuis un autre onglet : Home l'observe et ouvre
+    /// sa feuille des supports.
+    private(set) var lessonCreationRequests = 0
+
+    /// **Ouvre Home et sa feuille des supports** : « Nouvelle leçon », depuis l'onglet Leçons.
+    /// Une leçon se crée sur Home (le compositeur, les imports, la porte du gratuit) ; la
+    /// demander d'ailleurs ne doit pas faire chercher la barre de création.
+    func requestLessonCreation() {
+        lessonCreationRequests += 1
+        selection = .today
     }
 }

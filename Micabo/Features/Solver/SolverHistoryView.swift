@@ -105,7 +105,7 @@ struct SolverHistoryContent: View {
             .padding(.horizontal, 13)
             .padding(.vertical, 8)
             .background(selected ? MicaboColor.ink : MicaboColor.surface, in: Capsule())
-            .overlay(Capsule().strokeBorder(selected ? Color.clear : MicaboColor.stroke, lineWidth: 1))
+            .overlay(Capsule().strokeBorder(selected ? Color.clear : MicaboColor.stroke, lineWidth: MicaboSurface.border))
         }
         .buttonStyle(MicaboPressableButtonStyle())
         .accessibilityAddTraits(selected ? .isSelected : [])
@@ -119,7 +119,7 @@ struct SolverHistoryContent: View {
                         .resizable()
                         .scaledToFill()
                         .frame(width: 58, height: 58)
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
                         .overlay(alignment: .bottomTrailing) {
                             MicaboIconView(icon: item.subject.icon, size: 20)
                                 .padding(3)
@@ -177,7 +177,7 @@ struct SolverHistoryContent: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
-                        .background(MicaboBrand.blue, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .background(MicaboBrand.blue, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
                 }
                 .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
             }

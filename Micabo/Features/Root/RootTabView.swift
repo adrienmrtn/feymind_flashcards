@@ -34,20 +34,30 @@ struct RootTabView: View {
             MicaboColor.canvas
                 .ignoresSafeArea()
 
+            // **Chaque page est posée une fois** (`RootPage`) : cette racine se relit à chaque
+            // changement d'onglet et à chaque écran poussé (elle lit `selection` et la
+            // profondeur), et elle reconstruisait alors les cinq pages, que SwiftUI devait
+            // comparer une à une. Une page ne dépend de rien que la racine lui donne : elle ne
+            // se redessine plus que pour ce qu'elle lit elle-même.
             TabView(selection: $router.selection) {
-                HomeView()
+                RootPage { HomeView() }
+                    .equatable()
                     .toolbar(.hidden, for: .tabBar)
                     .tag(RootTab.today)
-                CoursesListView()
+                RootPage { CoursesListView() }
+                    .equatable()
                     .toolbar(.hidden, for: .tabBar)
                     .tag(RootTab.decks)
-                CalendarView()
+                RootPage { CalendarView() }
+                    .equatable()
                     .toolbar(.hidden, for: .tabBar)
                     .tag(RootTab.calendar)
-                FocusView()
+                RootPage { FocusView() }
+                    .equatable()
                     .toolbar(.hidden, for: .tabBar)
                     .tag(RootTab.focus)
-                ProfileView()
+                RootPage { ProfileView() }
+                    .equatable()
                     .toolbar(.hidden, for: .tabBar)
                     .tag(RootTab.profile)
             }
@@ -72,21 +82,20 @@ struct RootTabView: View {
                 MicaboTabBar()
             }
         }
-        // La languette du cadeau est posée ici, hors des pages, pour la même raison que
-        // la barre : son décompte ne doit pas repartir de zéro à chaque changement
-        // d'onglet. Elle se colle au bord droit, au-dessus de la barre et des boutons.
-        .overlay {
-            DiscountBadgeHost(
-                bottomInset: router.isAtRoot
-                    ? MicaboLayout.tabBarSpace + MicaboSpacing.sm
-                    : MicaboLayout.bottomBarClearance
-            )
-        }
         .tint(MicaboColor.accent)
         .environment(router)
     }
 
+    /// Une fois par lancement : la racine est reconstruite à chaque passe de `RootView`.
+    private static let chrome: Void = {
+        applyChrome()
+    }()
+
     private static func configureChrome() {
+        _ = chrome
+    }
+
+    private static func applyChrome() {
         let navigationBar = UINavigationBarAppearance()
         navigationBar.configureWithOpaqueBackground()
         navigationBar.backgroundColor = UIColor(MicaboColor.canvas)
@@ -98,5 +107,23 @@ struct RootTabView: View {
         UINavigationBar.appearance().standardAppearance = navigationBar
         UINavigationBar.appearance().scrollEdgeAppearance = navigationBar
         UINavigationBar.appearance().compactAppearance = navigationBar
+    }
+}
+
+/// **Une page d'onglet, que la racine ne fait jamais redessiner.**
+///
+/// Les cinq pages ne reçoivent rien de la racine : ni valeur, ni liaison. Deux `RootPage` sont
+/// donc toujours égales, et `.equatable()` dit à SwiftUI de ne pas relire leur contenu quand la
+/// racine se relit. Ce que la page lit elle-même (sa base, l'environnement, ses états) la fait
+/// toujours redessiner : seule la relecture venue d'en haut s'arrête ici.
+private struct RootPage<Content: View>: View, Equatable {
+    @ViewBuilder var content: () -> Content
+
+    static func == (lhs: RootPage<Content>, rhs: RootPage<Content>) -> Bool {
+        true
+    }
+
+    var body: some View {
+        content()
     }
 }

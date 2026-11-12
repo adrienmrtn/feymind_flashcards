@@ -108,7 +108,7 @@ struct VoiceRecallView: View {
         VStack(spacing: 14) {
             Spacer()
             MikaMascot(mood: .wink, size: 120)
-            Text(L10n.t("ios.sup.voice.empty", locale: .resolved()))
+            Text(L10n.t("ios.home10.cards.empty", locale: .resolved()))
                 .font(MicaboFont.ui(17, weight: .bold))
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .multilineTextAlignment(.center)
@@ -291,7 +291,7 @@ struct VoiceRecallCard: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(tone.pale, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .background(tone.pale, in: RoundedRectangle(cornerRadius: MicaboRadius.xxl, style: .continuous))
     }
 
     private var asking: some View {
@@ -303,7 +303,6 @@ struct VoiceRecallCard: View {
                         .foregroundStyle(.white)
                         .frame(width: 96, height: 96)
                         .background(MicaboColor.accent, in: Circle())
-                        .shadow(color: MicaboColor.accent.opacity(0.3), radius: 16, y: 8)
                     Text(L10n.t("ios.sup.voice.speak", locale: .resolved()))
                         .font(MicaboFont.ui(17, weight: .heavy))
                         .foregroundStyle(MicaboColor.ink)
@@ -327,7 +326,7 @@ struct VoiceRecallCard: View {
             .tint(MicaboColor.accent)
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
 
             Button(L10n.t("ios.sup.voice.reveal", locale: .resolved()), action: onReveal)
                 .font(MicaboFont.ui(16, weight: .bold))
@@ -383,7 +382,7 @@ struct VoiceRecallCard: View {
             .foregroundStyle(MicaboColor.inkSecondary)
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
             Button(L10n.t("ios.sup.voice.reveal", locale: .resolved()), action: onReveal)
                 .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
         }
@@ -408,7 +407,7 @@ struct VoiceRecallCard: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(fill, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(fill, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
     }
 
     private func line(label: String, text: String, color: Color) -> some View {
@@ -425,8 +424,8 @@ struct VoiceRecallCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
     }
 
     private func rateButton(knew: Bool, recommended: Bool) -> some View {
@@ -443,10 +442,10 @@ struct VoiceRecallCard: View {
                 .padding(.vertical, 16)
                 .background(
                     recommended ? (knew ? MicaboColor.correct : MicaboColor.wrong) : MicaboColor.surface,
-                    in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
                         .strokeBorder(recommended ? Color.clear : MicaboColor.strokeStrong, lineWidth: 1.5)
                 )
         }

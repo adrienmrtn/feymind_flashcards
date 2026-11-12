@@ -32,8 +32,8 @@ struct LessonRatingCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
         .micaboElevation(.card)
         .animation(LearnMotion.standard, value: phase)
     }
@@ -47,8 +47,8 @@ struct LessonRatingCard: View {
                 .foregroundStyle(MicaboColor.ink)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 4)
-            thumb("👍", label: "ios.conv.rate.up") { rate(.up) }
-            thumb("👎", label: "ios.conv.rate.down") {
+            thumb("hand.thumbsup.fill", tint: V3Color.iconGreen, label: "ios.conv.rate.up") { rate(.up) }
+            thumb("hand.thumbsdown.fill", tint: V3Color.iconRed, label: "ios.conv.rate.down") {
                 Haptics.selection()
                 phase = .reasons
             }
@@ -106,12 +106,14 @@ struct LessonRatingCard: View {
 
     // MARK: Les boutons
 
-    private func thumb(_ emoji: String, label key: String, action: @escaping () -> Void) -> some View {
+    private func thumb(_ symbol: String, tint: Color, label key: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(emoji)
-                .font(.system(size: 24))
+            Image(systemName: symbol)
+                .font(.system(size: 20, weight: .bold))
+                .foregroundStyle(tint)
                 .frame(width: 48, height: 48)
                 .background(MicaboColor.surfaceSunken, in: Circle())
+                .overlay(Circle().strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
         }
         .buttonStyle(MicaboPressableButtonStyle(feedback: .soft))
         .accessibilityLabel(Text(L10n.t(key, locale: .resolved())))

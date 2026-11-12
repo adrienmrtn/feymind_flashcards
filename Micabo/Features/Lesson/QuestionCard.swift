@@ -119,7 +119,7 @@ struct QuestionFeedback: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(right ? MicaboColor.correctSoft : MicaboColor.wrongSoft, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .background(right ? MicaboColor.correctSoft : MicaboColor.wrongSoft, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
     }
 }
 
@@ -171,15 +171,10 @@ struct ChoiceList: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, compact ? 12 : 15)
                     .frame(maxWidth: compact ? nil : .infinity, alignment: .leading)
-                    .background(background(shown: shown, original: original), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .background(background(shown: shown, original: original), in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(border(shown: shown, original: original), lineWidth: 2)
-                    )
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(answered == nil ? MicaboColor.edge : .clear)
-                            .offset(y: 3)
+                        RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
+                            .strokeBorder(border(shown: shown, original: original), lineWidth: MicaboSurface.border)
                     )
                     .scaleEffect(isPicked(shown) ? 1.02 : 1)
                 }
@@ -196,22 +191,25 @@ struct ChoiceList: View {
     private func background(shown: Int, original: Int) -> Color {
         guard answered != nil else { return MicaboColor.surface }
         guard reveals else { return isPicked(shown) ? MicaboColor.accentSoft : MicaboColor.surface }
-        if original == question.answer { return MicaboColor.correct }
-        if isPicked(shown) { return MicaboColor.wrong }
+        if original == question.answer { return MicaboColor.correctSoft }
+        if isPicked(shown) { return MicaboColor.wrongSoft }
         return MicaboColor.surface
     }
 
     private func foreground(shown: Int, original: Int) -> Color {
         guard answered != nil else { return MicaboColor.ink }
         guard reveals else { return isPicked(shown) ? MicaboColor.accent : MicaboColor.inkSecondary }
-        if original == question.answer || isPicked(shown) { return MicaboColor.onInk }
+        if original == question.answer { return MicaboColor.correctInk }
+        if isPicked(shown) { return MicaboColor.wrongInk }
         return MicaboColor.inkTertiary
     }
 
     private func border(shown: Int, original: Int) -> Color {
         guard answered != nil else { return MicaboColor.stroke }
         guard reveals else { return isPicked(shown) ? MicaboColor.accent : MicaboColor.stroke }
-        return .clear
+        if original == question.answer { return MicaboColor.correct }
+        if isPicked(shown) { return MicaboColor.wrong }
+        return MicaboColor.stroke
     }
 
     private func symbol(shown: Int, original: Int) -> String? {
@@ -244,7 +242,7 @@ struct GapSentence: View {
             text.append(KeywordText.attributed(parts.dropFirst().joined(separator: ClozeGap.marker), size: 22, weight: .heavy))
         }
         return Text(text)
-            .font(MicaboFont.ui(22, weight: .heavy))
+            .font(MicaboFont.content(22, weight: .heavy))
             .foregroundStyle(MicaboColor.ink)
             .fixedSize(horizontal: false, vertical: true)
             .animation(LearnMotion.standard, value: filled)
@@ -277,13 +275,8 @@ struct TrueFalseButtons: View {
                     .foregroundStyle(foreground(index))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 26)
-                    .background(background(index), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(answered == nil ? MicaboColor.stroke : .clear, lineWidth: 2))
-                    .background(
-                        RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .fill(answered == nil ? MicaboColor.edge : .clear)
-                            .offset(y: 4)
-                    )
+                    .background(background(index), in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(border(index), lineWidth: MicaboSurface.border))
                 }
                 .buttonStyle(MicaboPressableButtonStyle(feedback: .none))
                 .disabled(answered != nil)
@@ -296,16 +289,25 @@ struct TrueFalseButtons: View {
     private func background(_ index: Int) -> Color {
         guard let answered else { return MicaboColor.surface }
         guard reveals else { return answered.picked == index ? MicaboColor.accentSoft : MicaboColor.surface }
-        if index == question.answer { return MicaboColor.correct }
-        if answered.picked == index { return MicaboColor.wrong }
+        if index == question.answer { return MicaboColor.correctSoft }
+        if answered.picked == index { return MicaboColor.wrongSoft }
         return MicaboColor.surface
     }
 
     private func foreground(_ index: Int) -> Color {
         guard let answered else { return index == 0 ? MicaboColor.correctInk : MicaboColor.wrongInk }
         guard reveals else { return answered.picked == index ? MicaboColor.accent : MicaboColor.inkTertiary }
-        if index == question.answer || answered.picked == index { return MicaboColor.onInk }
+        if index == question.answer { return MicaboColor.correctInk }
+        if answered.picked == index { return MicaboColor.wrongInk }
         return MicaboColor.inkTertiary
+    }
+
+    private func border(_ index: Int) -> Color {
+        guard let answered else { return MicaboColor.stroke }
+        guard reveals else { return answered.picked == index ? MicaboColor.accent : MicaboColor.stroke }
+        if index == question.answer { return MicaboColor.correct }
+        if answered.picked == index { return MicaboColor.wrong }
+        return MicaboColor.stroke
     }
 }
 
@@ -355,15 +357,15 @@ struct OrderBuilder: View {
                             Spacer(minLength: 0)
                         }
                         .padding(12)
-                        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(rowBorder(position: position, item: item), lineWidth: 2))
+                        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous).strokeBorder(rowBorder(position: position, item: item), lineWidth: MicaboSurface.border))
                         .matchedGeometryEffect(id: item, in: namespace)
                     }
                     .buttonStyle(MicaboPressableButtonStyle(feedback: .none))
                     .disabled(answered != nil)
                 }
                 ForEach(placed.count..<question.choices.count, id: \.self) { slot in
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
                         .strokeBorder(MicaboColor.stroke, style: StrokeStyle(lineWidth: 2, dash: [6, 5]))
                         .frame(height: 54)
                         .overlay(alignment: .leading) {
@@ -388,8 +390,8 @@ struct OrderBuilder: View {
                                 .foregroundStyle(MicaboColor.ink)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 11)
-                                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 2))
+                                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
+                                .overlay(RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
                                 .matchedGeometryEffect(id: item, in: namespace)
                         }
                         .buttonStyle(MicaboPressableButtonStyle(feedback: .none))
@@ -474,9 +476,7 @@ struct MatchBoard: View {
                         }
                         if pairs.count == question.choices.count {
                             let right = pairs.allSatisfy { $0.key == $0.value }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                                onAnswer(QuizAnswer(right: right, picked: nil))
-                            }
+                            onAnswer(QuizAnswer(right: right, picked: nil))
                         }
                     }
                 }
@@ -510,9 +510,9 @@ struct MatchBoard: View {
                 .frame(maxWidth: .infinity, minHeight: 48)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 8)
-                .background(fill(color: color, verdict: verdict), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .background(fill(color: color, verdict: verdict), in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous)
                         .strokeBorder(stroke(color: color, selected: selected, verdict: verdict), lineWidth: selected ? 3 : 2)
                 )
                 .scaleEffect(selected ? 1.03 : 1)

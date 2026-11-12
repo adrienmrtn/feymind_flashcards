@@ -66,35 +66,34 @@ struct ProfileCard: View {
     }
 }
 
-/// **« Passer en Pro »**, pour qui n'est pas abonné : la carte forte du Profil, la seule
-/// en bleu de la marque — comme la pilule « ✦ Pro » de Home.
+/// **« Passer en Pro »**, pour qui n'est pas abonné : une carte de la direction, la
+/// couronne en jaune : le jaune, c'est PRO.
 struct ProUpgradeCard: View {
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 14) {
-                MicaboIconView(icon: .crown, size: 34)
+                MicaboIconView(icon: .crown, size: 34, tint: V3Color.yellow)
                     .frame(width: 52, height: 52)
-                    .background(Color.white.opacity(0.18), in: Circle())
+                    .background(V3Color.yellowWash, in: Circle())
                 VStack(alignment: .leading, spacing: 3) {
                     Text(L10n.t("lesson.profile.goPro", locale: .resolved()))
                         .font(MicaboFont.ui(17, weight: .black))
-                        .foregroundStyle(MicaboStage.ink)
+                        .foregroundStyle(V3Color.ink)
                     Text(L10n.t("lesson.profile.goProBody", locale: .resolved()))
                         .font(MicaboFont.ui(14, weight: .semibold))
-                        .foregroundStyle(MicaboStage.inkSecondary)
+                        .foregroundStyle(V3Color.ink2)
                         .fixedSize(horizontal: false, vertical: true)
                         .multilineTextAlignment(.leading)
                 }
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.forward")
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(MicaboStage.inkSecondary)
+                    .foregroundStyle(V3Color.ink2)
             }
             .padding(16)
-            .background(MicaboStage.fill, in: RoundedRectangle(cornerRadius: MicaboStage.cardRadius, style: .continuous))
-            .shadow(color: MicaboBrand.blue.opacity(0.24), radius: 14, y: 7)
+            .v3Card()
         }
         .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
     }
@@ -114,8 +113,7 @@ struct ProfileGroup<Content: View>: View {
             }
             .background(HomePalette.card)
             .clipShape(RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous).strokeBorder(HomePalette.cardStroke, lineWidth: 1))
-            .shadow(color: MicaboBrand.blue900.opacity(0.06), radius: 16, y: 8)
+            .overlay(RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous).strokeBorder(HomePalette.cardStroke, lineWidth: MicaboSurface.border))
         }
     }
 }

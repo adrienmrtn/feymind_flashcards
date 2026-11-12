@@ -86,63 +86,91 @@ final class PolishLearnRenderTests: XCTestCase {
         return Fixture(container: container, course: course, session: session)
     }
 
-    /// L'écran d'une leçon, tel qu'il s'ouvre : la barre du haut, l'en-tête et son bouton, les
-    /// modes, le début du chemin, et la barre du bas.
+    /// L'écran d'une leçon, tel qu'il s'ouvre (lot 10, HOME.md § 2) : le retour et le menu,
+    /// l'en-tête et son seul bouton plein, la grille « Réviser », puis « Le parcours » et le
+    /// début du chemin. Plus de barre du bas, plus d'avatar de Mika.
     private func lessonScreen(_ fixture: Fixture, dueCount: Int, exam: Exam? = nil, isPro: Bool = false, width: CGFloat = 393) -> some View {
         let next = LessonNextAction.resolve(session: fixture.session, dueCount: dueCount)
-        return VStack(spacing: 0) {
-            HStack(spacing: 12) {
-                MicaboCircleButton(systemImage: "chevron.backward", style: .light, size: 40) {}
-                Spacer(minLength: 0)
+        return VStack(alignment: .leading, spacing: 0) {
+            V3TopBar(progress: nil, onBack: {}) {
                 Image(systemName: "ellipsis")
-                    .font(.system(size: 17, weight: .bold))
-                    .foregroundStyle(MicaboColor.ink)
+                    .font(.system(size: 19, weight: .black))
+                    .foregroundStyle(V3Color.ink)
                     .frame(width: 40, height: 40)
-                    .background(MicaboColor.surface, in: Circle())
-                MikaAvatar(size: 40)
             }
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.vertical, 8)
             LessonPathHeader(course: fixture.course, session: fixture.session, exam: exam, next: next)
-                .padding(.top, 4)
-                .padding(.bottom, MicaboSpacing.lg)
-            RevisionModesRow(isPro: isPro, tone: fixture.course.tone) { _ in }
-                .padding(.bottom, MicaboSpacing.xl)
+                .padding(.top, 6)
+            LessonToolGrid(dueCount: dueCount, isPro: isPro) { _ in }
+                .padding(.horizontal, MicaboSpacing.screen)
+                .padding(.top, 24)
+            Text(L10n.t("ios.home10.lesson.path", locale: .resolved()))
+                .font(V3Font.title)
+                .foregroundStyle(V3Color.ink)
+                .padding(.horizontal, MicaboSpacing.screen)
+                .padding(.top, 28)
+                .padding(.bottom, 4)
             PathMapView(session: fixture.session, tone: fixture.course.tone, width: width, onOpen: { _ in }, onRetry: { _ in })
-                .frame(height: 300, alignment: .top)
+                .frame(height: 400, alignment: .top)
                 .clipped()
-            LessonNavbar(dueCount: dueCount) { _ in }
         }
+        .background(V3Color.bg)
         .environment(\.homeStill, true)
         .environment(\.mikaStill, true)
     }
 
+    /// L'onglet Leçons (lot 10, HOME.md § 4) : le titre et « + Nouvelle leçon », un dossier, et
+    /// les leçons en cartes. (La recherche est un champ du système : l'outil ne le dessine pas.)
     private func lessonsTab(_ items: [Fixture]) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            MicaboPageHeading(title: L10n.t("lesson.tab.lessons", locale: .resolved()), subtitle: L10n.t("lesson.lessons.count", locale: .resolved(), vars: ["count": "\(items.count + 4)"]))
-                .padding(.bottom, 4)
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 12) {
+                    lessonsTitle
+                    Spacer(minLength: 8)
+                    newLessonButton
+                }
+                VStack(alignment: .leading, spacing: 12) {
+                    lessonsTitle
+                    newLessonButton
+                }
+            }
+            .padding(.bottom, 4)
             LessonFolderCard(name: "Révisions du bac blanc de printemps", count: 4) {}
             ForEach(Array(items.enumerated()), id: \.offset) { index, item in
                 LessonCard(course: item.course, dueCount: index == 0 ? 8 : 0, examDays: index == 0 ? 12 : nil, onRename: {}, onMove: {}, onDelete: {}) {}
             }
-            NewLessonRow {}
         }
         .padding(20)
+        .background(V3Color.bg)
         .environment(\.mikaStill, true)
     }
 
+    private var lessonsTitle: some View {
+        Text(L10n.t("lesson.tab.lessons", locale: .resolved()))
+            .font(V3Font.h1)
+            .foregroundStyle(V3Color.ink)
+            .lineLimit(1)
+            .fixedSize()
+    }
+
+    private var newLessonButton: some View {
+        V3Button(L10n.t("lesson.lessons.new", locale: .resolved()), systemImage: "plus") {}
+            .fixedSize(horizontal: true, vertical: false)
+    }
+
+    /// L'onglet Leçons vide : Mika en grand, une promesse, un bouton.
     private func emptyLessons() -> some View {
         VStack(alignment: .leading, spacing: 18) {
-            MicaboPageHeading(title: L10n.t("lesson.tab.lessons", locale: .resolved()), subtitle: L10n.t("lesson.lessons.none", locale: .resolved()))
-            MicaboEmptyState(
-                systemImage: "books.vertical",
-                title: L10n.t("lesson.lessons.emptyTitle", locale: .resolved()),
-                message: L10n.t("lesson.lessons.emptyBody", locale: .resolved()),
-                actionTitle: L10n.t("lesson.lessons.new", locale: .resolved()),
-                mika: .wave
-            ) {}
+            lessonsTitle
+            LessonsEmptyState(
+                mood: .wave,
+                mikaSize: 190,
+                title: L10n.t("ios.home10.lessons.emptyTitle", locale: .resolved()),
+                actionTitle: L10n.t("ios.home3.cta.create", locale: .resolved()),
+                action: {}
+            )
         }
         .padding(20)
+        .background(V3Color.bg)
         .environment(\.mikaStill, true)
     }
 
@@ -185,7 +213,8 @@ final class PolishLearnRenderTests: XCTestCase {
         VStack(spacing: 18) {
             RevisionModeHeader(mode: .listen, lessonTitle: fixture.course.title, tone: fixture.course.tone) {}
             RevisionModeHeader(mode: .voice, lessonTitle: fixture.course.title, tone: fixture.course.tone, closesLeading: true) {}
-            RevisionModesRow(isPro: true, tone: fixture.course.tone) { _ in }
+            LessonToolGrid(dueCount: 5, isPro: false) { _ in }
+                .padding(.horizontal, MicaboSpacing.screen)
         }
         .padding(.vertical, 12)
     }

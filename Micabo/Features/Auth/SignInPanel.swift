@@ -300,7 +300,7 @@ private struct SignInStage: View {
         // Mika en demi : il dépasse du bord bas de la carte, qui le coupe. Les tuiles restent
         // immobiles : rien ne tourne en boucle sur l'écran de connexion.
         return ZStack(alignment: .bottom) {
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
+            RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous)
                 .fill(MicaboColor.pastel(at: 3))
 
             tile("🏛️", pastel: 0)
@@ -314,7 +314,7 @@ private struct SignInStage: View {
             MikaPeek(mood: .wave, width: MikaPeek.hero)
         }
         .frame(height: 150)
-        .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous))
         .frame(maxWidth: .infinity)
         .accessibilityHidden(true)
     }
@@ -323,7 +323,7 @@ private struct SignInStage: View {
         Text(emoji)
             .font(.system(size: 22))
             .frame(width: 46, height: 46)
-            .background(MicaboColor.pastel(at: pastel), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+            .background(MicaboColor.pastel(at: pastel), in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
     }
 }
 
@@ -412,7 +412,7 @@ struct SignInProviderButtons: View {
             )
             .overlay {
                 RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                    .strokeBorder(MicaboColor.strokeStrong, lineWidth: 1)
+                    .strokeBorder(MicaboColor.strokeStrong, lineWidth: MicaboSurface.border)
             }
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .medium))
@@ -501,7 +501,7 @@ struct SignInProviderButtons: View {
             )
             .overlay {
                 RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                    .strokeBorder(MicaboColor.strokeStrong, lineWidth: 1)
+                    .strokeBorder(MicaboColor.strokeStrong, lineWidth: MicaboSurface.border)
             }
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .medium))

@@ -22,7 +22,15 @@ import XCTest
 ///
 /// Les lignes `PERF|…` partent dans le journal et dans `perf.txt` (dossier des rendus). Le
 /// banc ne tourne que là où les rendus tournent : sans `MICABO_RENDER_DIR`, chaque test passe.
-/// Rien n'y échoue : les plafonds sont dans `PerfGuardTests`.
+/// **Les plafonds y sont aussi**, là où l'écran est déjà posé : la première mise en page à chaud
+/// d'un écran (large : six fois la mesure du jour), une minuterie qui ne relit pas son écran,
+/// une frappe qui ne redessine pas tout, les étapes du lancement. Les garde-fous qui relisent
+/// les sources sont dans `PerfGuardTests`.
+/// Un compteur que les fermetures d'une pièce d'écran incrémentent.
+final class PerfCounter {
+    var value = 0
+}
+
 @MainActor
 final class PerfBenchTests: XCTestCase {
     private static var shared: PerfFixture?
@@ -60,6 +68,8 @@ final class PerfBenchTests: XCTestCase {
 
     override func tearDownWithError() throws {
         PerfProbe.isRecording = false
+        // Les gestes mesurés gagnent de l'XP dans le magasin de l'app : il repart de zéro.
+        if RenderGallery.directory != nil { XPStore.shared.reset() }
         stage?.close()
         stage = nil
         if let domain = Bundle.main.bundleIdentifier, RenderGallery.directory != nil {
@@ -90,14 +100,26 @@ final class PerfBenchTests: XCTestCase {
     private struct Options {
         var warm = 3
         var settle: TimeInterval = 0.5
+        /// La demi-seconde qui suit l'arrivée : la fin des entrées animées s'y voit.
+        var tail: TimeInterval = 0.5
         var idle: TimeInterval = 0.6
         var scrolls = true
         var types = false
+        /// **Le plafond de la première mise en page à chaud**, en millisecondes : large, au
+        /// moins six fois la mesure du jour où il a été posé. Il n'attrape qu'une régression
+        /// grossière ; le simulateur de la CI est trop bruité pour mieux.
+        var ceiling: Double?
+        /// Vrai quand l'écran ne doit relire aucune phrase au repos : sa minuterie se dessine
+        /// seule.
+        var quietAtRest = false
+        /// Le nombre de phrases qu'une frappe peut faire relire : au-delà, c'est tout l'écran
+        /// qui se redessine à chaque lettre.
+        var phrasesPerKeystroke: Double?
     }
 
     /// Mesure un écran : à froid sur une base rouverte, puis à chaud, au repos, en défilant,
     /// et en tapant s'il a un champ.
-    private func bench<V: View>(_ name: String, _ options: Options = Options(), _ make: () -> V) throws {
+    private func bench<V: View>(_ name: String, _ options: Options = Options(), section: String = "ecran", _ make: () -> V) throws {
         try fixture.reopen()
         let container = fixture.container
         let lookupsBefore = PerfProbe.count("l10n")
@@ -109,10 +131,17 @@ final class PerfBenchTests: XCTestCase {
             ("blocage", cold.stall),
             ("phrases", Double(lookups)),
         ]
+        if options.tail > 0 {
+            values.append(("suite", stage.meter.measure(pump: options.tail).busy))
+        }
         if options.idle > 0 {
             let lookupsAtRest = PerfProbe.count("l10n")
             values.append(("repos", stage.idle(seconds: options.idle)))
-            values.append(("phrasesAuRepos", Double(PerfProbe.count("l10n") - lookupsAtRest) / options.idle))
+            let read = PerfProbe.count("l10n") - lookupsAtRest
+            values.append(("phrasesAuRepos", Double(read) / options.idle))
+            if options.quietAtRest {
+                XCTAssertEqual(read, 0, "« \(name) » relit \(read) phrases en \(options.idle) s sans qu'on y touche : une minuterie redessine l'écran")
+            }
         }
         if options.scrolls, let scroll = stage.scroll() {
             values.append(("cran", scroll.median))
@@ -124,6 +153,9 @@ final class PerfBenchTests: XCTestCase {
             values.append(("frappePire", typing.worst))
             values.append(("frappes", Double(typing.typed)))
             values.append(("phrasesParFrappe", typing.lookups))
+            if let limit = options.phrasesPerKeystroke, typing.typed > 0 {
+                XCTAssertLessThanOrEqual(typing.lookups, limit, "« \(name) » relit \(typing.lookups) phrases à chaque frappe : le champ fait redessiner tout l'écran")
+            }
         }
         stage.clear()
         var warm: [Double] = []
@@ -131,8 +163,19 @@ final class PerfBenchTests: XCTestCase {
             warm.append(stage.mount(settle: 0.12) { env.wrap(make(), container: container) }.first)
             stage.clear()
         }
-        if !warm.isEmpty { values.insert(("chaud", PerfStage.median(warm)), at: 1) }
-        PerfReport.record("ecran", name, values)
+        if !warm.isEmpty {
+            let median = PerfStage.median(warm)
+            values.insert(("chaud", median), at: 1)
+            if let ceiling = options.ceiling {
+                XCTAssertLessThanOrEqual(median, ceiling, "« \(name) » : première mise en page à chaud en \(Int(median)) ms, plafond \(Int(ceiling)) ms")
+            }
+        }
+        PerfReport.record(section, name, values)
+    }
+
+    /// Une pièce d'écran, posée seule : la première mise en page à froid et à chaud.
+    private func part<V: View>(_ name: String, _ make: () -> V) throws {
+        try bench(name, Options(warm: 3, settle: 0.2, tail: 0, idle: 0, scrolls: false), section: "piece", make)
     }
 
     private func firstLesson() throws -> Course {
@@ -146,9 +189,9 @@ final class PerfBenchTests: XCTestCase {
     func testTabs() throws {
         try bench("home", Options(types: true)) { HomeView() }
         try bench("lecons") { CoursesListView() }
-        try bench("calendrier") { CalendarView() }
-        try bench("concentration") { FocusView() }
-        try bench("profil") { ProfileView() }
+        try bench("calendrier", Options(ceiling: 2_400)) { CalendarView() }
+        try bench("concentration", Options(ceiling: 600)) { FocusView() }
+        try bench("profil", Options(ceiling: 500)) { ProfileView() }
     }
 
     /// **Changer d'onglet**, dans la vraie racine : la première visite de chaque onglet, puis
@@ -169,9 +212,15 @@ final class PerfBenchTests: XCTestCase {
                 stage.window.layoutIfNeeded()
                 CATransaction.flush()
             }
+            let read = PerfProbe.count("l10n") - lookups
             PerfReport.record("onglet", "premiere-visite-\(name)", [
-                ("travail", sample.busy), ("blocage", sample.longest), ("phrases", Double(PerfProbe.count("l10n") - lookups)),
+                ("travail", sample.busy), ("blocage", sample.longest), ("phrases", Double(read)),
             ])
+            // Une page neuve lit ses phrases en se dessinant : aucune phrase lue, c'est que
+            // l'onglet n'a pas changé.
+            if tab != .today {
+                XCTAssertGreaterThan(read, 0, "l'onglet « \(name) » ne s'est pas ouvert : la racine ne suit plus le routeur")
+            }
         }
         for (tab, name) in order {
             let lookups = PerfProbe.count("l10n")
@@ -186,141 +235,154 @@ final class PerfBenchTests: XCTestCase {
         }
 
         // Une écriture banale, tous onglets ouverts : ce que paie chaque réponse à un quiz.
+        // Mesurée depuis chaque onglet : ce que les onglets cachés relisent s'y voit.
         let course = try firstLesson()
-        var costs: [Double] = []
-        var stalls: [Double] = []
-        let lookups = PerfProbe.count("l10n")
-        for _ in 0..<5 {
-            let sample = stage.meter.measure(pump: 0.25) {
-                course.lastOpenedAt = Date()
-                try? container.mainContext.save()
+        for (tab, name) in order {
+            router.selection = tab
+            stage.meter.measure(pump: 0.5)
+            var costs: [Double] = []
+            var stalls: [Double] = []
+            let lookups = PerfProbe.count("l10n")
+            for round in 0..<4 {
+                let sample = stage.meter.measure(pump: 0.25) {
+                    if round % 2 == 0 {
+                        course.lastOpenedAt = Date()
+                    } else {
+                        course.updateProgress { $0.inCircle = Double(round) / 10 }
+                    }
+                    try? container.mainContext.save()
+                }
+                costs.append(sample.busy)
+                stalls.append(sample.longest)
             }
-            costs.append(sample.busy)
-            stalls.append(sample.longest)
+            PerfReport.record("ecriture", "depuis-\(name)", [
+                ("travail", PerfStage.median(costs)), ("blocage", PerfStage.median(stalls)),
+                ("phrases", Double(PerfProbe.count("l10n") - lookups) / 4),
+            ])
         }
-        PerfReport.record("ecriture", "lastOpenedAt-tous-onglets-ouverts", [
-            ("travail", PerfStage.median(costs)), ("blocage", PerfStage.median(stalls)),
-            ("phrases", Double(PerfProbe.count("l10n") - lookups) / 5),
-        ])
-        var progressCosts: [Double] = []
-        for round in 0..<5 {
-            let sample = stage.meter.measure(pump: 0.25) {
-                course.updateProgress { $0.inCircle = Double(round) / 10 }
-                try? container.mainContext.save()
-            }
-            progressCosts.append(sample.busy)
-        }
-        PerfReport.record("ecriture", "progression-tous-onglets-ouverts", [("travail", PerfStage.median(progressCosts))])
     }
 
     // MARK: - Dans une leçon
 
     func testLessonScreens() throws {
         try bench("lecon-ouverte") { NavigationStack { LessonPathView(course: try! firstLesson()) } }
-        try bench("notes") {
+        try bench("notes", Options(ceiling: 300)) {
             let course = try! firstLesson()
             let session = LessonSession(course: course)
             return NotesCircleView(session: session, chapter: course.orderedChapters[0], onDone: {})
         }
-        try bench("notes-entieres") {
+        try bench("notes-entieres", Options(ceiling: 1_200)) {
             LessonNotesReader(session: LessonSession(course: try! firstLesson()))
         }
-        try bench("quiz") {
+        try bench("quiz", Options(ceiling: 300)) {
             let session = LessonSession(course: try! firstLesson())
             return LessonQuizView(session: session, questions: session.fullQuiz(attempt: 1), title: "Quiz", circleID: nil, onClose: {})
         }
-        try bench("entrainement") {
+        try bench("entrainement", Options(ceiling: 300)) {
             LessonPracticeView(session: LessonSession(course: try! firstLesson()), attempt: 1)
         }
     }
 
     func testLessonTools() throws {
-        try bench("flashcards") {
+        try bench("flashcards", Options(ceiling: 400)) {
             LessonCardsHub(session: LessonSession(course: try! firstLesson()))
         }
-        try bench("flashcards-serie") {
+        try bench("flashcards-serie", Options(ceiling: 400)) {
             let session = LessonSession(course: try! firstLesson())
             return LessonCardsRun(session: session, cards: session.studyQueue(), onClose: {})
         }
-        try bench("ecouter") { ListenView(course: try! firstLesson()) }
-        try bench("carte-mentale") { MindMapView(course: try! firstLesson()) }
-        try bench("mika-lecon", Options(types: true)) { LessonMikaView(course: try! firstLesson()) }
+        try bench("ecouter", Options(ceiling: 500)) { ListenView(course: try! firstLesson()) }
+        try bench("carte-mentale", Options(ceiling: 400)) { MindMapView(course: try! firstLesson()) }
+        try bench("mika-lecon", Options(types: true, ceiling: 400, phrasesPerKeystroke: 14)) { LessonMikaView(course: try! firstLesson()) }
     }
 
-    /// **Tourner les pages des notes** : ce que coûte un « Continuer », page après page.
-    func testNotesPageTurns() throws {
-        try fixture.reopen()
-        let container = fixture.container
-        let course = try firstLesson()
-        let chapter = course.orderedChapters[0]
-        let session = LessonSession(course: course)
-        _ = stage.mount(settle: 0.4) {
-            env.wrap(NotesCircleView(session: session, chapter: chapter, onDone: {}), container: container)
+    // MARK: - Pièce par pièce
+
+    /// **Le calendrier et la concentration, pièce par pièce** : où part le temps de la page.
+    func testParts() throws {
+        let calendar = MicaboCalendar.shared
+        let today = calendar.startOfDay(for: Date())
+        let snapshot = StudyPlan.snapshot(in: fixture.context)
+        let items = StudyAgenda.items(on: today, in: snapshot)
+
+        // Les semaines : combien de jours demandent leurs points à la pose de la page.
+        let asked = PerfCounter()
+        try part("calendrier-semaines") {
+            WeekPager(weekOffset: .constant(0), selected: today, dots: { day in
+                asked.value += 1
+                return StudyAgenda.dots(on: day, in: snapshot)
+            }, onSelect: { _ in })
         }
-        var turns: [Double] = []
-        var stalls: [Double] = []
-        for _ in 0..<6 {
-            guard let button = Self.lastButton(in: stage.window) else { break }
-            let sample = stage.meter.measure(pump: 0.45) {
-                button.accessibilityActivate()
-                stage.window.layoutIfNeeded()
-                CATransaction.flush()
-            }
-            turns.append(sample.busy)
-            stalls.append(sample.longest)
+        PerfReport.record("piece", "calendrier-semaines-points-demandes", [("parPose", Double(asked.value) / 4)])
+        try part("calendrier-semaines-sans-points") {
+            WeekPager(weekOffset: .constant(0), selected: today, dots: { _ in [0] }, onSelect: { _ in })
         }
-        PerfReport.record("geste", "notes-page-suivante", [
-            ("travail", PerfStage.median(turns)), ("blocage", PerfStage.median(stalls)), ("pages", Double(turns.count)),
-        ])
-        // Le même décodage, mesuré seul : ce que `body` refait à chaque page.
+        try part("calendrier-agenda-du-jour") {
+            DayAgendaSection(day: today, items: items, onTap: { _ in }, onStart: { _ in }, onToggleTask: { _ in }, onAdd: {})
+        }
+        try part("calendrier-mois") {
+            MonthGrid(month: .constant(today), selected: today, dots: { StudyAgenda.dots(on: $0, in: snapshot) }, onSelect: { _ in })
+        }
+        let summary = NextExamSummary(
+            examID: UUID(),
+            name: "Bac blanc d'histoire",
+            date: today.addingTimeInterval(12 * 86_400),
+            daysLeft: 12,
+            lessonTitles: ["La guerre froide", "La décolonisation", "La Ve République", "L'Europe"],
+            readiness: 64,
+            plannedCount: 8,
+            nextSession: "Aujourd'hui, 18:00",
+            hasLessons: true
+        )
+        try part("calendrier-prochain-examen") {
+            NextExamCard(summary: summary, onRevise: {}, onMock: {}, onPlan: {}, onPlanMenu: {}, onEdit: {})
+        }
+
+        // La concentration : le graphique de la semaine est le seul de l'app.
+        let minutes = [20, 45, 0, 30, 60, 15, 25]
+        var days: [FocusDayBar] = []
+        for offset in 0..<7 {
+            let day = calendar.date(byAdding: .day, value: offset - 6, to: today) ?? today
+            days.append(FocusDayBar(day: day, minutes: minutes[offset]))
+        }
+        try part("concentration-graphique") {
+            FocusStatsCard(days: days, goalMinutes: 30, weekMinutes: 195, weekSessions: 8, bestStreak: 18)
+        }
+        try part("concentration-journee") {
+            FocusHeroCard(minutesToday: 25, goalMinutes: 30, streak: 12, streakLit: true, onStart: {})
+        }
+        let chapter = try firstLesson().orderedChapters[0]
         PerfReport.record("micro", "NotesPage.pages", [("us", PerfReport.micro(50) { _ = NotesPage.pages(for: chapter, hasQuestion: true) })])
-    }
-
-    /// Le dernier élément d'accessibilité activable de l'écran : le bouton du bas.
-    private static func lastButton(in root: UIView) -> NSObject? {
-        var found: NSObject?
-        func visit(_ element: Any) {
-            guard let object = element as? NSObject else { return }
-            if object.isAccessibilityElement, object.accessibilityTraits.contains(.button),
-               !object.accessibilityTraits.contains(.notEnabled) {
-                found = object
-            }
-            if let children = object.accessibilityElements {
-                for child in children { visit(child) }
-            } else if let view = object as? UIView {
-                for subview in view.subviews { visit(subview) }
-            }
-        }
-        visit(root)
-        return found
+        let context = fixture.context
+        PerfReport.record("micro", "StudyPlan.snapshot", [("us", PerfReport.micro(20) { _ = StudyPlan.snapshot(in: context) })])
     }
 
     // MARK: - Examens, scanner, tuteur, texte
 
     func testExamScreens() throws {
-        try bench("examens") { NavigationStack { ExamsView() } }
-        try bench("examen-blanc-reglage") {
+        try bench("examens", Options(ceiling: 700)) { NavigationStack { ExamsView() } }
+        try bench("examen-blanc-reglage", Options(ceiling: 500)) {
             let lessons = Array(fixture.lessons().prefix(12))
             return MockExamFlow(start: MockExamStart(exam: fixture.exams().first), lessons: lessons)
         }
         // La copie a une minuterie d'une seconde : le repos dit ce qu'elle fait redessiner.
         let paper = fixture.paper()
-        try bench("examen-blanc-copie", Options(idle: 3)) {
+        try bench("examen-blanc-copie", Options(idle: 3, ceiling: 400, quietAtRest: true)) {
             MockExamRunView(paper: paper, tone: .blue, onQuit: {}, onSubmit: { _, _ in })
         }
     }
 
     func testToolScreens() throws {
-        try bench("scanner") { SolverFlowView() }
-        try bench("solution") {
+        try bench("scanner", Options(ceiling: 400)) { SolverFlowView() }
+        try bench("solution", Options(ceiling: 400)) {
             let exercise = try! XCTUnwrap(try! fixture.context.fetch(FetchDescriptor<SolvedExercise>()).first)
             return SolverSolutionView(session: SolverSession(exercise: exercise, xp: nil), onBack: {}, onAskMika: { _ in })
         }
-        try bench("tuteur", Options(types: true)) {
+        try bench("tuteur", Options(types: true, ceiling: 400, phrasesPerKeystroke: 12)) {
             TutorThreadView(subject: .math, onBack: {}, onOpenExercise: { _ in })
         }
-        try bench("corriger-un-texte", Options(types: true)) { WritingCoachView() }
-        try bench("import-cartes", Options(types: true)) {
+        try bench("corriger-un-texte", Options(types: true, ceiling: 400, phrasesPerKeystroke: 16)) { WritingCoachView() }
+        try bench("import-cartes", Options(types: true, ceiling: 300)) {
             FlashcardImportSheet(step: .paste, onCreated: { _ in })
         }
     }
@@ -329,13 +391,13 @@ final class PerfBenchTests: XCTestCase {
 
     func testCalendarAndFocusScreens() throws {
         let today = MicaboCalendar.shared.startOfDay(for: Date())
-        try bench("calendrier-mois") {
+        try bench("calendrier-mois", Options(ceiling: 500)) {
             CalendarMonthSheet(selected: today, dots: { _ in [0, 9] }, onSelect: { _ in })
         }
-        try bench("evenement", Options(types: true)) {
+        try bench("evenement", Options(types: true, ceiling: 1_500)) {
             EventEditSheet(target: .new(day: today), calendars: fixture.calendars(), lessons: Array(fixture.lessons().prefix(12)))
         }
-        try bench("concentration-reglage") {
+        try bench("concentration-reglage", Options(ceiling: 500)) {
             FocusSetupSheet(
                 initial: FocusPlan(),
                 lessons: Array(fixture.lessons().prefix(12)),
@@ -344,16 +406,16 @@ final class PerfBenchTests: XCTestCase {
             )
         }
         // La séance a une horloge : le repos dit ce qu'une seconde fait redessiner.
-        try bench("concentration-seance", Options(idle: 3)) { FocusTimerView(plan: FocusPlan()) }
-        try bench("taches", Options(types: false)) { TasksSheet(lessons: Array(fixture.lessons().prefix(12))) }
+        try bench("concentration-seance", Options(idle: 3, ceiling: 400)) { FocusTimerView(plan: FocusPlan()) }
+        try bench("taches", Options(ceiling: 900)) { TasksSheet(lessons: Array(fixture.lessons().prefix(12))) }
     }
 
     // MARK: - Profil, réglages, série, ligue
 
     func testProfileScreens() throws {
-        try bench("reglages", Options(types: true)) { SettingsView() }
-        try bench("serie") { StreakSheet() }
-        try bench("ligue") { LeagueSheet() }
+        try bench("reglages", Options(types: true, ceiling: 1_300)) { SettingsView() }
+        try bench("serie", Options(ceiling: 400)) { StreakSheet() }
+        try bench("ligue", Options(ceiling: 500)) { LeagueSheet() }
     }
 
     // MARK: - Parcours d'accueil, paywall
@@ -390,6 +452,7 @@ final class PerfBenchTests: XCTestCase {
             opens.append(try PerfReport.once { _ = try fixture.reopen() })
         }
         PerfReport.record("lancement", "base-ouverture", [("ms", PerfStage.median(opens)), ("premiere", opens[0])])
+        XCTAssertLessThan(PerfStage.median(opens), 500, "ouvrir la base de l'élève du banc prend plus d'une demi-seconde")
 
         // Ce que le premier écran lit : toutes les leçons, puis leurs cartes.
         try fixture.reopen()
@@ -412,6 +475,7 @@ final class PerfBenchTests: XCTestCase {
         // Les services posés dans l'environnement.
         let services = PerfReport.once { _ = PerfEnvironment() }
         PerfReport.record("lancement", "services", [("ms", services)])
+        XCTAssertLessThan(services, 300, "les services posés dans l'environnement font un travail lourd à leur création")
 
         // Les passes d'une fois, déjà faites : ce qu'elles coûtent à chaque lancement suivant.
         let passes = PerfReport.once {
@@ -419,10 +483,12 @@ final class PerfBenchTests: XCTestCase {
             SubjectCasePass.runIfNeeded(in: fixture.context)
         }
         PerfReport.record("lancement", "passes-deja-faites", [("ms", passes)])
+        XCTAssertLessThan(passes, 50, "une passe d'une fois relit la base à chaque lancement")
 
         // Les rappels, reposés après la synchro et en partant.
         let reminders = PerfReport.once { StudyNotifications.refresh(in: fixture.context) }
         PerfReport.record("lancement", "rappels-calendrier", [("ms", reminders)])
+        XCTAssertLessThan(reminders, 300, "reposer les rappels du calendrier bloque le fil principal")
 
         // La première image : la racine, sur une base rouverte.
         try fixture.reopen()
@@ -473,6 +539,28 @@ final class PerfBenchTests: XCTestCase {
 
         let exercise = try XCTUnwrap(try fixture.context.fetch(FetchDescriptor<SolvedExercise>()).first)
         PerfReport.record("micro", "SolvedExercise.solution", [("us", PerfReport.micro(50) { _ = exercise.solution })])
+
+        // Les gestes : ce qu'un appui écrit, sur le fil principal, avant que l'écran ne réponde.
+        let context = fixture.context
+        let question = try XCTUnwrap(chapter.quiz?.questions.first)
+        let rightAnswer = PerfReport.micro(10, rounds: 3) { session.answered(question, right: true, in: context) }
+        PerfReport.record("geste", "reponse-juste", [("ms", rightAnswer / 1000)])
+        let wrongAnswer = PerfReport.micro(10, rounds: 3) { session.answered(question, right: false, in: context) }
+        PerfReport.record("geste", "reponse-fausse", [("ms", wrongAnswer / 1000)])
+        let card = try XCTUnwrap(course.cards.first)
+        let rating = PerfReport.micro(10, rounds: 3) {
+            LessonReview.rate(card, .good)
+            course.updatedAt = Date()
+            try? context.save()
+        }
+        PerfReport.record("geste", "note-de-carte", [("ms", rating / 1000)])
+        let plainSave = PerfReport.micro(10, rounds: 3) {
+            course.lastOpenedAt = Date()
+            try? context.save()
+        }
+        PerfReport.record("geste", "ecriture-seule", [("ms", plainSave / 1000)])
+        PerfReport.record("micro", "StudyStreak.record-meme-jour", [("us", PerfReport.micro { StudyStreak.record() })])
+        PerfReport.record("micro", "XPStore.award", [("us", PerfReport.micro(50) { env.xp.award(.cardReviewed) })])
 
         let text = PerfFixture.notes(0).plainText
         PerfReport.record("micro", "KeywordText.attributed", [("us", PerfReport.micro(50) { _ = KeywordText.attributed(text) })])

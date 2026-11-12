@@ -59,7 +59,7 @@ struct MicaboScreenHeader<Trailing: View>: View {
                 HStack(spacing: MicaboSpacing.sm) {
                     MicaboCircleButton(
                         systemImage: back.systemImage,
-                        size: 38,
+                        size: 40,
                         accessibilityTitle: back.accessibilityTitle,
                         action: back.action
                     )
@@ -116,7 +116,7 @@ extension MicaboScreenHeader where Trailing == EmptyView {
     }
 }
 
-/// Champ de recherche large, blanc, aux coins généreux.
+/// Champ de recherche large : une surface à filet, comme une ligne de réponse.
 struct MicaboSearchField: View {
     @Binding var text: String
     var placeholder: String = L10n.t("ios.search", locale: .resolved())
@@ -124,7 +124,7 @@ struct MicaboSearchField: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 15, weight: .medium))
+                .font(.system(size: 16, weight: .bold))
                 .foregroundStyle(MicaboColor.inkTertiary)
 
             TextField(placeholder, text: $text)
@@ -145,12 +145,9 @@ struct MicaboSearchField: View {
                 .accessibilityLabel(L10n.t("ios.clearSearch", locale: .resolved()))
             }
         }
-        .padding(.vertical, 13)
-        .padding(.horizontal, 15)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-        }
+        .padding(.vertical, 14)
+        .padding(.horizontal, 16)
+        .frame(minHeight: 52)
+        .micaboSurface(radius: MicaboRadius.lg)
     }
 }
