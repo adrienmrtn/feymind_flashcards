@@ -71,7 +71,7 @@ struct TimetableScanView: View {
     private var waiting: some View {
         VStack(spacing: 18) {
             Spacer()
-            MikaMascot(mood: phase == .reading ? .look : .write, size: 128)
+            MikaMascot(mood: phase == .reading ? .look : .write, size: 150)
             Text(loc(phase == .reading ? "ios.cal.scanReading" : "ios.cal.scanAsking"))
                 .font(MicaboFont.ui(19, weight: .black))
                 .foregroundStyle(MicaboColor.ink)

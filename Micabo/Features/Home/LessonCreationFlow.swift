@@ -172,7 +172,7 @@ struct LessonCreationFlow: View {
             // il fallait tuer l'app. Fermer ici abandonne l'attente (voir `close`).
             closeBar
             Spacer()
-            MikaMascot(mood: failure == nil ? .write : .sad, size: 128)
+            MikaMascot(mood: failure == nil ? .write : .sad, size: 150)
             Text(failure == nil
                 ? L10n.t("lesson.create.generatingTitle", locale: .resolved())
                 : L10n.t("lesson.create.failedTitle", locale: .resolved()))

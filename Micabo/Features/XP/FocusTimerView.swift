@@ -457,7 +457,7 @@ struct FocusFinishedScreen: View {
                         MicaboSpeechBubble(text: L10n.t("ios.kx.timer.mika", locale: .resolved()), tail: .bottom)
                             .padding(.top, 40)
                             .padding(.horizontal, 12)
-                        MikaMascot(mood: .celebrate, size: 120, reactsToTap: true)
+                        MikaMascot(mood: .celebrate, size: 160, reactsToTap: true)
                     }
                     Text(L10n.t("ios.kx.timer.done", locale: .resolved()))
                         .font(MicaboFont.display(30))

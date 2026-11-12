@@ -118,19 +118,33 @@ final class OnboardingModel {
     var gradeScale: StudentGradeScale {
         StudentGradeScale.for(region: regionCode, country: country, track: track)
     }
-    /// Les objectifs d'un parcours d'avant le lot 7, relus à la reprise. La question n'est
-    /// plus posée : voir `learningGoals`.
-    var goals: Set<LearningGoal> = []
+    /// **L'objectif n°1**, choisi à l'écran `goal` (lot 9) parmi ceux de son niveau
+    /// (`LearningGoal.offered(for:)`) ; ou, à la reprise, ce qu'un parcours d'avant avait gardé.
+    var goals: Set<LearningGoal> = [] {
+        didSet {
+            guard goals != oldValue, !isRestoring, let first = LearningGoal.allCases.first(where: { goals.contains($0) }) else { return }
+            Analytics.track(.onboardingAnswer, ["field": "goal", "value": .text(first.rawValue)])
+        }
+    }
 
-    /// **Pourquoi il apprend, déduit de l'examen** plutôt que redemandé. « Et pourquoi tu
-    /// apprends ? » arrivait trois écrans après « Quel est ton prochain gros examen ? », avec
-    /// des réponses (« monter en compétences pour le travail ») qui ne parlaient pas à un
-    /// collégien. Un examen daté dit « réviser pour un examen » ; « pas d'examen en vue »,
-    /// « retenir mes cours ». C'est ce que le cloud garde (`learning_goals`).
+    /// L'objectif n°1 tel que l'écran le montre : le premier choisi parmi ceux proposés à ce
+    /// niveau. Un objectif d'un autre niveau (l'élève est revenu changer de classe) ne
+    /// s'affiche pas coché.
+    var mainGoal: LearningGoal? {
+        LearningGoal.offered(for: stage?.tier).first { goals.contains($0) }
+    }
+
+    /// **Pourquoi il apprend** : l'objectif n°1, plus ce que l'examen dit déjà. La question ne
+    /// redemande pas l'examen (« Et pourquoi tu apprends ? » proposait « réviser pour un
+    /// examen » trois écrans après l'examen, au lot 5) : un examen daté ajoute « réviser pour
+    /// un examen », « pas d'examen en vue » ajoute « retenir mes cours ». C'est ce que le cloud
+    /// garde (`learning_goals`).
     var learningGoals: Set<LearningGoal> {
-        if !goals.isEmpty { return goals }
-        guard let examChoice else { return [] }
-        return examChoice.hasDate ? [.exam] : [.lectures]
+        var result = goals
+        if let examChoice {
+            result.insert(examChoice.hasDate ? .exam : .lectures)
+        }
+        return result
     }
     var subjects: Set<String> = []
 
@@ -316,7 +330,7 @@ final class OnboardingModel {
         guard !transitionLock else { return false }
         // Le compte se demande en quittant le dernier écran de Mika, juste avant l'offre :
         // c'est là qu'il protège quelque chose — le profil qu'on vient de construire.
-        if step == .mikaTutor, !didAnswerAccount, !hasAccount {
+        if step == OnboardingStep.accountStep, !didAnswerAccount, !hasAccount {
             isAccountSheetPresented = true
             return true
         }

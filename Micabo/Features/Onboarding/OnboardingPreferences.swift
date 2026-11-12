@@ -5,6 +5,10 @@ import Foundation
 /// Un libellé, et rien d'autre. Le sous-titre et l'icône qui accompagnaient chaque objectif
 /// ont disparu avec les rangées qui les affichaient : sept lignes à picto et sous-titre font
 /// lire des pictogrammes au lieu des réponses.
+///
+/// **Lot 9 : l'objectif n°1, selon le niveau** (`offered(for:)`). Les valeurs sont celles de
+/// `profiles.learning_goals` (un tableau de texte, sans liste fermée) : les nouvelles
+/// s'ajoutent sans rien casser chez les clients qui ne les connaissent pas.
 enum LearningGoal: String, CaseIterable, Identifiable {
     case language
     case exam
@@ -13,6 +17,18 @@ enum LearningGoal: String, CaseIterable, Identifiable {
     case profession
     case curiosity
     case other
+    /// De meilleures notes.
+    case grades
+    /// Entrer dans la formation de ses rêves (après le lycée).
+    case dreamSchool
+    /// Vraiment comprendre ses cours.
+    case understand
+    /// Réviser plus vite.
+    case faster
+    /// Prendre de l'avance.
+    case ahead
+    /// Valider son année (à l'université).
+    case passYear
 
     var id: String { rawValue }
 
@@ -21,7 +37,12 @@ enum LearningGoal: String, CaseIterable, Identifiable {
     }
 
     func title(locale: UiLocale) -> String {
-        L10n.t("ios.goal.\(rawValue)", locale: locale)
+        switch self {
+        case .grades, .dreamSchool, .understand, .faster, .ahead, .passYear:
+            L10n.t("ios.onb9.goal.\(rawValue)", locale: locale)
+        default:
+            L10n.t("ios.goal.\(rawValue)", locale: locale)
+        }
     }
 
     /// Un emoji par réponse. Il ne remplace pas le libellé, il l'accroche : on retrouve sa
@@ -35,6 +56,33 @@ enum LearningGoal: String, CaseIterable, Identifiable {
         case .profession: "💼"
         case .curiosity: "🧠"
         case .other: "✨"
+        case .grades: "📈"
+        case .dreamSchool: "🎓"
+        case .understand: "💡"
+        case .faster: "⚡️"
+        case .ahead: "🚀"
+        case .passYear: "✅"
+        }
+    }
+
+    /// **Les objectifs proposés à ce niveau**, dans l'ordre des rangées.
+    ///
+    /// L'examen n'y est jamais : il vient d'être dit (`exam`), et `learningGoals` l'ajoute de
+    /// lui-même. Un collégien ne voit ni « valider mon année » ni « monter en compétences pour
+    /// le travail » ; un étudiant ne voit pas « entrer dans la formation de mes rêves » ; un
+    /// concours ou une filière de santé voit son concours.
+    static func offered(for tier: EducationTier?) -> [LearningGoal] {
+        switch tier {
+        case .lowerSecondary:
+            [.grades, .understand, .faster, .ahead, .curiosity]
+        case .upperSecondary, .preUniversity:
+            [.grades, .dreamSchool, .understand, .faster, .ahead]
+        case .undergraduate, .graduate:
+            [.passYear, .grades, .understand, .faster, .profession]
+        case .health, .competitive:
+            [.competition, .grades, .understand, .faster]
+        case .other, nil:
+            [.grades, .understand, .faster, .language, .curiosity, .profession]
         }
     }
 }

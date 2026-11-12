@@ -93,7 +93,8 @@ struct LessonQuizView: View {
                     .id(index)
                     .padding(.horizontal, MicaboSpacing.screen)
                     .padding(.top, 16)
-                    .padding(.bottom, 200)
+                    // Le panneau de réponse et Mika qui passe la tête au-dessus.
+                    .padding(.bottom, 280)
                     .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)).combined(with: .opacity))
                 }
                 .scrollIndicators(.hidden)
@@ -165,11 +166,18 @@ struct LessonQuizView: View {
 
 /// **La réponse, dans un panneau qui monte du bas** : vert et « Bien joué ! », ou rouge et
 /// « Pas tout à fait », la phrase qui explique, et « Continuer » dans la même couleur.
+///
+/// **Mika passe la tête au-dessus du panneau**, à droite, coupé net par son bord : il sourit
+/// à une bonne réponse, il est déçu avec l'élève à une mauvaise. Il apparaît en fondu une fois
+/// le panneau posé — il ne monte pas avec lui — et s'efface dès « Continuer ».
 struct AnswerPanel: View {
     let question: QuizQuestion
     let right: Bool
     let isLast: Bool
     let action: () -> Void
+
+    @State private var mikaShown = false
+    @Environment(\.mikaStill) private var mikaStill
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -188,7 +196,6 @@ struct AnswerPanel: View {
                 // L'XP de la réponse (`docs/refonte-knowunity.md` § 6), à côté du verdict.
                 XPBadge(points: right ? XPRules.correctAnswer : XPRules.wrongAnswer, tint: right ? MicaboColor.correctInk : MicaboColor.wrongInk)
                 Spacer(minLength: 0)
-                MikaAvatar(size: 36)
             }
             if !right, question.kind == .order || question.kind == .match || question.kind == .gap {
                 KeywordText(question.answerText, size: 16, weight: .bold, tintsKeywords: false)
@@ -204,7 +211,10 @@ struct AnswerPanel: View {
             }
             Button(isLast
                 ? L10n.t("lesson.quiz.seeScore", locale: .resolved())
-                : L10n.t("lesson.quiz.continue", locale: .resolved()), action: action)
+                : L10n.t("lesson.quiz.continue", locale: .resolved())) {
+                    mikaShown = false
+                    action()
+                }
                 .buttonStyle(AnswerButtonStyle(color: right ? MicaboColor.correct : MicaboColor.wrong))
         }
         .padding(.horizontal, MicaboSpacing.screen)
@@ -217,6 +227,15 @@ struct AnswerPanel: View {
                 .overlay(alignment: .top) {
                     Rectangle().fill((right ? MicaboColor.correct : MicaboColor.wrong).opacity(0.35)).frame(height: 2)
                 }
+        }
+        .overlay(alignment: .topTrailing) {
+            MikaPeek(mood: right ? .happy : .shake, width: MikaPeek.card)
+                .padding(.trailing, MicaboSpacing.screen + 4)
+                .alignmentGuide(.top) { $0[.bottom] }
+                .opacity(mikaShown || mikaStill ? 1 : 0)
+        }
+        .onAppear {
+            withAnimation(MicaboMotion.standard.delay(0.3)) { mikaShown = true }
         }
     }
 }
@@ -277,7 +296,7 @@ struct QuizScoreView: View {
     var body: some View {
         VStack(spacing: 18) {
             Spacer()
-            MikaMascot(mood: ratio >= 0.8 ? .celebrate : ratio >= 0.5 ? .happy : .wink, size: 128)
+            MikaMascot(mood: ratio >= 0.8 ? .celebrate : ratio >= 0.5 ? .happy : .wink, size: 150)
             ZStack {
                 Circle().stroke(MicaboColor.track, lineWidth: 14)
                 Circle()
@@ -464,7 +483,7 @@ struct LessonCardsRun: View {
     private var finishedState: some View {
         VStack(spacing: 18) {
             Spacer()
-            MikaMascot(mood: again == 0 ? .celebrate : .happy, size: 128)
+            MikaMascot(mood: again == 0 ? .celebrate : .happy, size: 150)
             Text("\(cards.count)")
                 .font(MicaboFont.number(56))
                 .foregroundStyle(tone.ink)

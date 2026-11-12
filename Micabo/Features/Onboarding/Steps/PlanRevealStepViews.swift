@@ -42,9 +42,10 @@ struct ProfileSummaryStepView: View {
             OnboardingCenteredScroll {
                 VStack(spacing: 18) {
                     VStack(spacing: 12) {
-                        // Le plan révélé : un moment qui compte, Mika en entier fait la fête.
-                        OnboardingMikaOnLine(mood: .celebrate, size: 128, whole: true)
-                            .onboardingAppear(index: 0)
+                        // Le plan révélé : un moment qui compte, Mika en entier fait la fête — il
+                        // apparaît en fondu, sur place.
+                        OnboardingMikaOnLine(mood: .celebrate, size: 150, whole: true)
+                            .onboardingAppear(index: 0, rises: false)
                         OnboardingAccentText(template: title, size: 27, alignment: .center)
                             .padding(.horizontal, MicaboSpacing.sm)
                             .onboardingAppear(index: 1)
@@ -419,9 +420,10 @@ struct TrialOfferStepView: View {
                             alignment: .leading
                         )
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        .onboardingAppear(index: 0)
                         OnboardingMikaOnLine(mood: .wink, size: 92)
+                            .onboardingAppear(index: 0, rises: false)
                     }
-                    .onboardingAppear(index: 0)
 
                     VStack(spacing: 0) {
                         ForEach(Array(milestones.enumerated()), id: \.element.id) { index, milestone in

@@ -14,6 +14,10 @@ import SwiftUI
 /// lisait comme une erreur, ou comme une seconde facture. Pro ouvert, le parcours se termine
 /// sans paywall ; et si Pro s'ouvre pendant qu'il est affiché (un droit relu en retard, un
 /// achat confirmé après coup), il se termine aussi.
+///
+/// **Sauf en test** (lot 9) : « Refaire l'onboarding », dans la section Test des réglages de
+/// TestFlight, demande le paywall même à un abonné (`PaywallTestMode`). C'est ce qui le
+/// rendait invisible au compte du développeur, Pro à vie.
 struct PaywallStepView: View {
     var onFinish: () -> Void
 
@@ -21,19 +25,25 @@ struct PaywallStepView: View {
 
     /// Une seule fin : l'achat et le passage à Pro qu'il provoque arrivent tous deux ici.
     @State private var didFinish = false
+    /// Lu une fois, à l'arrivée : le paywall demandé par le test reste jusqu'à sa croix.
+    @State private var forcedByTest = PaywallTestMode.forcesOnboardingPaywall()
 
     private var isPro: Bool { pro?.isPro ?? false }
 
+    private var showsPaywall: Bool {
+        PaywallTestMode.showsOnboardingPaywall(isPro: isPro, forcedByTest: forcedByTest)
+    }
+
     var body: some View {
         Group {
-            if isPro {
-                OnboardingPalette.white.ignoresSafeArea()
-            } else {
+            if showsPaywall {
                 PaywallFlowView(onDismiss: finishOnce, onSubscribed: finishOnce)
+            } else {
+                OnboardingPalette.white.ignoresSafeArea()
             }
         }
-        .onChange(of: isPro, initial: true) { _, isPro in
-            guard isPro else { return }
+        .onChange(of: showsPaywall, initial: true) { _, shows in
+            guard !shows else { return }
             finishOnce()
         }
     }
@@ -41,6 +51,8 @@ struct PaywallStepView: View {
     private func finishOnce() {
         guard !didFinish else { return }
         didFinish = true
+        // Le test ne vaut que pour ce parcours-ci : le suivant redevient normal.
+        PaywallTestMode.setForcesOnboardingPaywall(false)
         onFinish()
     }
 }

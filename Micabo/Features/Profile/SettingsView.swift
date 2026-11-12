@@ -726,19 +726,35 @@ struct SettingsView: View {
         )
     }
 
-    /// Outils de relecture. L'interrupteur « Forcer Pro » y paraît dans toute construction
-    /// Xcode, sur TestFlight (sauf pour le compte de relecture d'Apple) et pour le compte
-    /// développeur (`ProAccess.canForcePro`).
+    /// **La section Test** (lot 9) : de quoi voir le paywall, l'offre de secours et le parcours
+    /// entier **même avec un compte Pro**, sur TestFlight et dans les constructions Xcode
+    /// seulement (`PaywallTestMode`) — jamais sur l'App Store, jamais pour le compte de
+    /// relecture d'Apple. S'y ajoutent l'interrupteur « Forcer Pro » (`ProAccess.canForcePro`,
+    /// qui suit aussi le compte développeur sur l'App Store) et, en développement, le cadeau et
+    /// le cours d'essai. Sans aucune rangée, la section n'existe pas.
+    @ViewBuilder
     private var testSection: some View {
-        MicaboSettingsSection(
-            caption: i18n.t("ios.debug.test"),
-            rows: testRows,
-            footnote: testFootnote
-        )
+        let rows = testRows
+        if !rows.isEmpty {
+            MicaboSettingsSection(
+                caption: i18n.t("ios.debug.test"),
+                rows: rows,
+                footnote: testFootnote
+            )
+        }
+    }
+
+    /// Vrai là où les outils de test des paywalls existent : TestFlight, Xcode.
+    private var showsPaywallTests: Bool {
+        PaywallTestMode.isAvailable(email: auth.user?.email)
     }
 
     private var testRows: [MicaboRow] {
         var rows: [MicaboRow] = []
+
+        if showsPaywallTests {
+            rows.append(contentsOf: paywallTestRows)
+        }
 
         #if DEBUG
         // L'offre cadeau ne se présente qu'une fois par appareil : sans ce bouton, la
@@ -802,28 +818,51 @@ struct SettingsView: View {
             )
         }
 
-        // **Les paywalls, à vue**, même abonné ou déjà en essai : sans cette rangée, un compte
-        // qui a commencé son essai ne les revoyait plus jamais.
-        rows.append(
+        return rows
+    }
+
+    /// **Le paywall, l'offre de secours, le parcours entier**, même abonné ou déjà en essai.
+    /// Sur TestFlight, les achats passent par le bac à sable d'Apple : rien n'est prélevé.
+    private var paywallTestRows: [MicaboRow] {
+        Self.paywallTestRows(
+            locale: i18n.locale,
+            showPaywall: { paywall = .upgrade },
+            showDiscount: { discountOffer = .gift },
+            replayOnboarding: replayOnboarding
+        )
+    }
+
+    /// Les trois rangées, à part de la vue : les rendus les dessinent sans monter les réglages.
+    static func paywallTestRows(
+        locale: UiLocale,
+        showPaywall: @escaping () -> Void,
+        showDiscount: @escaping () -> Void,
+        replayOnboarding: @escaping () -> Void
+    ) -> [MicaboRow] {
+        let t = { (key: String) in L10n.t(key, locale: locale) }
+        return [
             MicaboRow(
                 tile: MicaboTile(glyph: .symbol("crown.fill"), background: MicaboColor.cautionSoft),
-                title: i18n.t("ios.debug.showPaywall"),
-                subtitle: i18n.t("ios.debug.showPaywallHelp"),
+                title: t("ios.debug.showPaywall"),
+                subtitle: t("ios.debug.showPaywallHelp"),
                 accessory: .chevron,
-                action: { paywall = .upgrade }
-            )
-        )
-
-        rows.append(
+                action: showPaywall
+            ),
+            MicaboRow(
+                tile: MicaboTile(glyph: .symbol("gift.fill"), background: MicaboColor.tilePastels[1]),
+                title: t("ios.onb9.test.discount"),
+                subtitle: t("ios.onb9.test.discountHelp"),
+                accessory: .chevron,
+                action: showDiscount
+            ),
             MicaboRow(
                 tile: MicaboTile(glyph: .symbol("repeat"), background: MicaboColor.tilePastels[2]),
-                title: i18n.t("ios.debug.replayOnboarding"),
+                title: t("ios.debug.replayOnboarding"),
+                subtitle: t("ios.onb9.test.replayHelp"),
                 accessory: .chevron,
                 action: replayOnboarding
-            )
-        )
-
-        return rows
+            ),
+        ]
     }
 
     private var notificationTestRows: [MicaboRow] {
@@ -945,11 +984,11 @@ struct SettingsView: View {
         return rows
     }
 
-    private var testFootnote: String {
+    private var testFootnote: String? {
         #if DEBUG
         return i18n.t("ios.debug.footnoteDebug")
         #else
-        return i18n.t("ios.debug.footnote")
+        return showsPaywallTests ? i18n.t("ios.onb9.test.footnote") : nil
         #endif
     }
 
@@ -1066,10 +1105,14 @@ struct SettingsView: View {
 
     /// La feuille se referme d'abord : la bascule vers l'onboarding remplace toute
     /// la hiérarchie de vues, autant ne pas le faire pendant l'animation de fermeture.
+    ///
+    /// **Depuis le début, paywall compris**, même pour un compte Pro : c'est le seul moyen de
+    /// revoir le parcours tel qu'un nouvel élève le voit (`PaywallTestMode`).
     private func replayOnboarding() {
         dismiss()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
             OnboardingPreferences.reset()
+            PaywallTestMode.setForcesOnboardingPaywall(true)
         }
     }
 

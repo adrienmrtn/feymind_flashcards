@@ -483,7 +483,7 @@ struct VoiceRecallSummary: View {
     var body: some View {
         VStack(spacing: 16) {
             Spacer()
-            MikaMascot(mood: known * 2 >= total ? .celebrate : .happy, size: 120)
+            MikaMascot(mood: known * 2 >= total ? .celebrate : .happy, size: 150)
             Text(verbatim: "\(known) / \(total)")
                 .font(MicaboFont.number(52))
                 .foregroundStyle(tone.ink)

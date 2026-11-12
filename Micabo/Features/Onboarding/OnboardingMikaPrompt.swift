@@ -15,8 +15,8 @@ import SwiftUI
 /// tape à la place de la question. La bulle garde la hauteur de la plus longue des deux :
 /// rien ne saute sous le doigt quand elle change.
 ///
-/// Le seul Mika de l'écran : il monte de derrière sa ligne en arrivant, puis saute de joie à
-/// chaque réponse.
+/// Le seul Mika de l'écran : il est sur sa ligne quand la page arrive (un fondu, sur place),
+/// puis sourit à chaque réponse — un petit écrasement, jamais un saut.
 struct OnboardingMikaPrompt: View {
     /// La question ; un passage entre `**` prend le bleu de l'app.
     let question: String
