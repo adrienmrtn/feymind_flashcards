@@ -1,0 +1,10 @@
+ignorées (pas dans STILLS ni dans MikaStill) : course, nage, saut
+neutre       (69, 157, 443, 515) 748x716
+sourire      (74, 157, 444, 515) 740x716
+clin-doeil   (75, 160, 447, 514) 744x708
+coucou       (62, 147, 440, 515) 756x736
+surprise     (61, 125, 463, 515) 804x780
+reflexion    (76, 165, 450, 515) 748x700
+ecriture     (77, 165, 449, 515) 744x700
+triste       (74, 192, 452, 514) 756x644
+sommeil      (66, 135, 472, 515) 812x760
