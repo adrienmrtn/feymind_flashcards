@@ -29,6 +29,15 @@ enum OnbDemo {
         FirstLessonStepView.exampleTopic(for: model, locale: locale)
     }
 
+    /// Le même sujet au milieu d'une phrase : « m'expliquer les fonctions affines ». Les
+    /// langues qui ne mettent pas de majuscule aux noms communs la retirent ; l'allemand, le
+    /// turc et l'arabe le gardent tel quel.
+    static func topicInSentence(for model: OnboardingModel, locale: UiLocale) -> String {
+        let text = Self.topic(for: model, locale: locale)
+        guard [UiLocale.fr, .es, .en].contains(locale), let first = text.first else { return text }
+        return first.lowercased() + text.dropFirst()
+    }
+
     /// Les matières des séances de la semaine : les siennes, dans l'ordre où le plan les lit,
     /// trois au plus.
     static func sessionSubjects(for model: OnboardingModel, locale: UiLocale) -> [String] {
@@ -326,7 +335,7 @@ struct ChatDemoStepView: View {
         OnbQuestion(i18n.t("ios.onb11.chat.ask"), mood: .wink) {
             OnbDemoCard {
                 // La question de l'élève, à droite.
-                Text(i18n.t("ios.onb11.chat.question", ["topic": OnbDemo.topic(for: model, locale: i18n.locale)]))
+                Text(i18n.t("ios.onb11.chat.question", ["topic": OnbDemo.topicInSentence(for: model, locale: i18n.locale)]))
                     .font(V3Font.bodyStrong)
                     .foregroundStyle(V3Color.onAccent)
                     .multilineTextAlignment(.leading)
