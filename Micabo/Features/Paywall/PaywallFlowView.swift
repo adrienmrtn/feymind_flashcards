@@ -127,14 +127,14 @@ enum PaywallBenefit: String, CaseIterable, Identifiable {
         }
     }
 
-    /// Le ton de son icône : une couleur par idée.
-    var tone: LessonTone {
+    /// La teinte de son icône : une couleur par idée.
+    var tone: Color {
         switch self {
-        case .lessons: .blue
-        case .mika: .lilac
-        case .exams: .pink
-        case .scan: .mint
-        case .modes: .yellow
+        case .lessons: V3Color.iconBlue
+        case .mika: V3Color.iconLilac
+        case .exams: V3Color.iconPink
+        case .scan: V3Color.iconGreen
+        case .modes: V3Color.iconOrange
         }
     }
 

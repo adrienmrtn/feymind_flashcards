@@ -142,11 +142,12 @@ enum PaywallTimeline {
             }
         }
 
-        var tone: LessonTone {
+        /// La teinte de son icône : une couleur par idée.
+        var tone: Color {
             switch kind {
-            case .today: .blue
-            case .reminder: .yellow
-            case .end: .lilac
+            case .today: V3Color.iconBlue
+            case .reminder: V3Color.iconYellow
+            case .end: V3Color.iconLilac
             }
         }
     }
@@ -346,16 +347,14 @@ struct PaywallScreen: View {
             }
         } else {
             VStack(alignment: .leading, spacing: compact ? 14 : 22) {
-                PaywallCopy.title(
-                    profile: context.profile,
-                    offersTrial: selectedPlan.hasTrial,
-                    trialDays: selectedPlan.trialDays
+                PaywallTitle(
+                    title: PaywallCopy.title(
+                        profile: context.profile,
+                        offersTrial: selectedPlan.hasTrial,
+                        trialDays: selectedPlan.trialDays
+                    ),
+                    size: compact ? PaywallStyle.titleCompactSize : PaywallStyle.titleSize
                 )
-                .styled()
-                .font(compact ? PaywallStyle.titleCompact : PaywallStyle.title)
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityAddTraits(.isHeader)
 
                 PaywallRows(rows: selectedPlan.hasTrial ? timelineRows : benefitRows(for: nil), compact: compact)
             }
@@ -425,6 +424,19 @@ struct PaywallScreen: View {
     }
 }
 
+// MARK: - Le titre
+
+/// **Un titre du paywall** : le titre de l'app (`V3Title`), son mot-clé en bleu clair.
+struct PaywallTitle: View {
+    let title: PaywallEmphasis
+    var size: CGFloat
+    var alignment: TextAlignment = .leading
+
+    var body: some View {
+        V3Title(title.text, highlight: title.highlight, size: size, alignment: alignment)
+    }
+}
+
 // MARK: - Les rangées de l'en-tête
 
 /// Une rangée de l'en-tête : une étape de la chronologie, ou un bénéfice.
@@ -432,7 +444,7 @@ struct PaywallHeaderRow: Identifiable, Equatable {
     let id: String
     /// Le symbole du système, sans « .fill ».
     let symbol: String
-    let tone: LessonTone
+    let tone: Color
     let title: String
     let detail: String
 }
@@ -640,7 +652,8 @@ private struct PaywallFooter: View {
     private var assurance: some View {
         HStack(spacing: 6) {
             Image(systemName: "checkmark")
-                .font(.system(size: 12, weight: .black))
+                .font(PaywallStyle.assurance.weight(.black))
+                .imageScale(.small)
                 .accessibilityHidden(true)
             Text(L10n.t("ios.pay10.nothingToday", locale: .resolved()))
                 .font(PaywallStyle.assurance)
@@ -678,15 +691,17 @@ struct PaywallWelcomeScreen: View {
             MikaMascot(mood: .celebrate, size: PaywallStyle.welcomeMika)
                 .accessibilityHidden(true)
             VStack(spacing: 10) {
-                PaywallCopy.welcome(name: name).styled()
-                    .font(PaywallStyle.moment)
-                    .accessibilityAddTraits(.isHeader)
+                PaywallTitle(
+                    title: PaywallCopy.welcome(name: name),
+                    size: PaywallStyle.momentSize,
+                    alignment: .center
+                )
                 Text(L10n.t("ios.pay10.welcome.sub", locale: .resolved()))
                     .font(PaywallStyle.momentSub)
                     .foregroundStyle(V3Color.ink2)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .multilineTextAlignment(.center)
-            .fixedSize(horizontal: false, vertical: true)
             .padding(.top, 18)
             Spacer(minLength: 24)
             V3Button(L10n.t("ios.pay10.welcome.cta", locale: .resolved()), action: onContinue)

@@ -166,7 +166,7 @@ struct DiscountOfferScreen: View {
     private func equivalentColumn(_ alignment: HorizontalAlignment) -> some View {
         VStack(alignment: alignment, spacing: 0) {
             Text(L10n.t("ios.pay10.offer.thatIs", locale: .resolved()))
-                .font(PaywallStyle.offerPriceUnit)
+                .font(PaywallStyle.offerEquivalentLead)
                 .foregroundStyle(V3Color.ink2)
             Text("\(plan.priceHeadline(for: .current)) \(plan.priceHeadlineUnit(for: .current))")
                 .font(PaywallStyle.offerEquivalent)
@@ -251,9 +251,8 @@ struct DiscountPercent: View {
             .font(PaywallStyle.percent)
             .foregroundStyle(PaywallStyle.yellow)
             .lineLimit(1)
+            .tracking(PaywallStyle.percentTracking)
             .minimumScaleFactor(0.4)
-            // Le jaune de la nuit, dans les deux thèmes : l'offre garde sa couleur.
-            .environment(\.colorScheme, .dark)
             .scaleEffect(arrived ? 1 : 0.9)
             .accessibilityAddTraits(.isHeader)
             .onAppear {

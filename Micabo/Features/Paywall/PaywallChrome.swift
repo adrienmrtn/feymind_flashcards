@@ -10,91 +10,95 @@ import SwiftUI
 
 // MARK: - Les choix visuels
 
-/// **Tout ce qui se règle à l'œil, en un seul endroit** : chaque valeur vient d'un jeton V3
-/// (`V3Font`, `V3Color`, `V3Metric`) ou des tons d'icône de l'app (`LessonTone`). Les écrans
-/// ne nomment ni police ni couleur ; changer la direction artistique du paywall et de l'offre
-/// se fait ici.
+/// **Tout ce qui se règle à l'œil, en un seul endroit** : chaque valeur est un jeton V3
+/// (`V3Font`, `V3Color`, `V3Metric`). Les écrans ne nomment ni police ni couleur ; changer la
+/// direction artistique du paywall et de l'offre se fait ici — et, pour tout ce que le paywall
+/// partage avec le reste de l'app (le bouton, la bulle de Mika, « PRO »), dans le composant V3.
 enum PaywallStyle {
     // MARK: Les polices du paywall
 
-    /// « Micabo », en haut à gauche, et « PRO » dans sa pastille.
-    static let brand = V3Font.title
-    static let brandPro = V3Font.label
+    /// « Micabo [PRO] », en haut à gauche : la taille de la marque (`V3ProBadge`).
+    static let brandSize: CGFloat = 24
     /// « Pour Lina », sous la marque.
-    static let brandFor = V3Font.caption
-    /// Le titre de l'en-tête « essai », sur deux phrases — et le même, quand l'écran est court.
-    static let title = V3Font.h1
-    static let titleCompact = V3Font.h2
+    static let brandFor = V3Font.eyebrow
+    /// Le titre de l'en-tête « essai » (`V3Title`), sur deux phrases : sa taille, et celle
+    /// qu'il prend quand l'écran est court.
+    static let titleSize: CGFloat = 32
+    static let titleCompactSize: CGFloat = 25
     /// Une rangée de la chronologie ou d'un bénéfice : son titre, sa ligne.
-    static let rowTitle = V3Font.bodyStrong
-    static let rowDetail = V3Font.caption
+    static let rowTitle = V3Font.option
+    static let rowDetail = V3Font.support
     /// Une offre : son nom, sa ligne, son prix et l'unité du prix.
-    static let planTitle = V3Font.bodyStrong
+    static let planTitle = V3Font.option
     static let planDetail = V3Font.caption
     static let price = V3Font.title
     static let priceUnit = V3Font.caption
     /// La pastille de la remise, à côté du nom de l'offre.
-    static let badge = V3Font.caption
+    static let badge = V3Font.text(.caption, weight: .heavy)
     /// « Rien à payer aujourd'hui », au-dessus du bouton.
     static let assurance = V3Font.label
     /// La mention sous le bouton, le message d'un achat qui n'a pas abouti, les liens.
-    static let legal = V3Font.caption
-    static let link = V3Font.caption
+    static let legal = V3Font.text(.caption, weight: .medium)
+    static let notice = V3Font.caption
+    static let link = V3Font.text(.caption, weight: .semibold)
 
     // MARK: Les polices de l'offre et de la bienvenue
 
-    /// Le titre d'un moment : « Bienvenue dans Micabo Pro ».
-    static let moment = V3Font.display()
+    /// Le titre d'un moment (`V3Title`) : « Bienvenue dans Micabo Pro ».
+    static let momentSize: CGFloat = 40
     static let momentSub = V3Font.body
-    /// « −40 % », en géant.
+    /// « −40 % », en géant, et son interlettrage.
     static let percent = V3Font.display(132)
+    static let percentTracking: CGFloat = -2
     /// « sur ton année Micabo Pro ».
     static let offerSub = V3Font.h2
     /// Le tarif réduit, dans sa carte, et ce qui l'entoure.
     static let offerPrice = V3Font.display(34)
-    static let offerPriceUnit = V3Font.caption
-    static let offerEquivalent = V3Font.title
+    static let offerPriceUnit = V3Font.support
+    static let offerEquivalent = V3Font.figure
+    static let offerEquivalentLead = V3Font.caption
     /// Le décompte dans sa pastille, la pastille de la Home, « Offre de bienvenue ».
     static let pill = V3Font.label
-    static let pillQuiet = V3Font.caption
+    static let pillQuiet = V3Font.eyebrow
 
     // MARK: Les mesures
 
     /// La croix : son dessin, et la zone qu'on touche.
-    static let closeSize: CGFloat = 36
+    static let closeSize: CGFloat = V3Metric.backSize
     static let touch: CGFloat = 44
     /// L'icône d'une rangée, et la colonne qui la porte.
-    static let glyph: CGFloat = 26
-    static let glyphColumn: CGFloat = 32
-    /// Une offre : sa hauteur, son rayon, l'espace entre deux.
-    static let planHeight: CGFloat = V3Metric.optionHeight
-    static let planRadius: CGFloat = V3Metric.radiusButton
+    static let glyph: CGFloat = V3Metric.optionIcon
+    static let glyphColumn: CGFloat = 34
+    /// Une offre : sa hauteur (une ligne de réponse, plus la place de sa deuxième ligne), son
+    /// rayon, l'espace entre deux.
+    static let planHeight: CGFloat = V3Metric.optionHeight + 8
+    static let planRadius: CGFloat = V3Metric.radiusInner
     static let planSpacing: CGFloat = 10
     /// Les pastilles : le décompte de l'offre, la pastille de la Home.
     static let pillHeight: CGFloat = 34
-    /// Le rayon de la pastille « PRO ».
-    static let proRadius: CGFloat = V3Metric.radiusButton / 2
     /// Mika en fête : sur l'offre, et à la bienvenue.
     static let offerMika: CGFloat = 150
     static let welcomeMika: CGFloat = 200
 
     // MARK: Les couleurs
 
-    /// Le mot-clé d'un titre ou d'une bulle : le bleu clair de l'accent.
-    static let keyword = V3Color.accentInk
-    /// Le jaune de l'offre et de « PRO » : le grand pourcentage, les pastilles.
+    /// Le mot-clé d'un titre ou d'une bulle, et ce que le tarif réduit fait par mois : le
+    /// bleu clair.
+    static let keyword = V3Color.accentBright
+    /// Le jaune de l'offre et de « PRO » : le grand pourcentage, les pastilles. Le même dans
+    /// les deux thèmes.
     static let yellow = V3Color.yellow
-    /// Ce qui s'écrit sur ce jaune : son lavis de la nuit, un brun très sombre.
-    static let onYellow = V3Color.yellowWash
+    /// Ce qui s'écrit sur ce jaune : un brun très sombre, le même dans les deux thèmes.
+    static let onYellow = V3Color.onYellow
     /// « Rien à payer aujourd'hui » : le vert de ce qui est gratuit.
     static let free = V3Color.green
     /// Un message d'erreur, sous le bouton.
-    static let error = V3Color.pink
+    static let error = V3Color.red
 
     // MARK: Les boutons
 
-    /// Le bouton de l'offre : « Profiter de −40 % ».
-    static let offerButton: V3ButtonKind = .accent
+    /// Le bouton de l'offre : la pilule jaune, « Profiter de −40 % ».
+    static let offerButton: V3ButtonKind = .offer
 }
 
 // MARK: - La croix
@@ -130,16 +134,12 @@ private let closeOverhang = (PaywallStyle.closeSize - PaywallStyle.touch) / 2
 
 // MARK: - La marque
 
-/// **Une pastille du jaune de l'offre**, avec son encre brune : « PRO », la remise d'une
-/// offre, la pastille de la Home.
-///
-/// **Elle garde son jaune dans les deux thèmes** : c'est une étiquette, pas une surface de
-/// l'app. Elle se dessine donc dans les couleurs de la nuit — le jaune plein, et son lavis
-/// brun pour l'encre — quel que soit le thème de l'élève.
+/// **Une pastille du jaune de l'offre**, avec son encre brune : la remise d'une offre, la
+/// pastille de la Home. C'est le jaune et l'encre de « PRO » (`V3ProBadge`), les mêmes dans
+/// les deux thèmes : une étiquette, pas une surface de l'app.
 struct PaywallYellowPill<Label: View>: View {
     var horizontal: CGFloat = 9
     var vertical: CGFloat = 2
-    var radius: CGFloat?
     @ViewBuilder var label: () -> Label
 
     var body: some View {
@@ -148,37 +148,22 @@ struct PaywallYellowPill<Label: View>: View {
             .lineLimit(1)
             .padding(.horizontal, horizontal)
             .padding(.vertical, vertical)
-            .background(PaywallStyle.yellow, in: shape)
-            .environment(\.colorScheme, .dark)
-    }
-
-    private var shape: AnyShape {
-        if let radius {
-            return AnyShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
-        }
-        return AnyShape(Capsule())
+            .background(PaywallStyle.yellow, in: Capsule())
     }
 }
 
-/// **« Micabo PRO · Pour Lina »**, en haut à gauche du paywall : ce qu'on vend, et à qui.
-/// « PRO » est en capitales droites, dans une pastille jaune.
+/// **« Micabo [PRO] · Pour Lina »**, en haut à gauche du paywall : ce qu'on vend, et à qui.
+/// La marque est celle de l'app (`V3ProBadge`) : « PRO » en capitales droites, dans sa
+/// pastille jaune.
 struct PaywallBrand: View {
     /// Le prénom de l'élève ; sans lui, la marque seule.
     var name: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
-            HStack(spacing: 6) {
-                Text(verbatim: "Micabo")
-                    .font(PaywallStyle.brand)
-                    .foregroundStyle(V3Color.ink)
-                PaywallYellowPill(horizontal: 7, vertical: 1, radius: PaywallStyle.proRadius) {
-                    Text(verbatim: "PRO")
-                        .font(PaywallStyle.brandPro)
-                }
-            }
-            .lineLimit(1)
-            .fixedSize()
+            V3ProBadge("Micabo", size: PaywallStyle.brandSize)
+                .lineLimit(1)
+                .fixedSize()
             if let name {
                 Text(L10n.t("ios.pay10.brand.for", locale: .resolved(), vars: ["name": name]))
                     .font(PaywallStyle.brandFor)
@@ -235,7 +220,8 @@ struct DiscountTopBar: View {
 
 /// **Un texte et son mot-clé** : les phrases du catalogue marquent d'un `**…**` le groupe de
 /// mots à écrire en bleu clair. Ici on les sépare : le texte tel qu'il se lit, et le groupe à
-/// mettre en avant — un seul par phrase.
+/// mettre en avant — un seul par phrase. Ce sont les deux entrées des composants qui les
+/// dessinent (`V3Title`, `MikaAsk`).
 struct PaywallEmphasis: Equatable {
     /// Le texte, sans ses marques.
     let text: String
@@ -253,26 +239,16 @@ struct PaywallEmphasis: Equatable {
         text = parts.joined()
         highlight = parts.count >= 3 && !parts[1].isEmpty ? parts[1] : nil
     }
-
-    /// Le texte, son mot-clé en bleu clair : pour un titre posé à même la page.
-    func styled(ink: Color = V3Color.ink, keyword: Color = PaywallStyle.keyword) -> Text {
-        guard let highlight, let range = text.range(of: highlight) else {
-            return Text(text).foregroundStyle(ink)
-        }
-        return Text(String(text[..<range.lowerBound])).foregroundStyle(ink)
-            + Text(highlight).foregroundStyle(keyword)
-            + Text(String(text[range.upperBound...])).foregroundStyle(ink)
-    }
 }
 
-/// **Mika dit l'accroche, dans sa bulle** : c'est lui qui parle derrière chaque porte de
-/// l'app. Le mot-clé de la phrase est en bleu clair.
+/// **Mika dit l'accroche, dans sa bulle** (`MikaAsk`) : c'est lui qui parle derrière chaque
+/// porte de l'app. Le mot-clé de la phrase est en bleu clair.
 struct PaywallMikaLine: View {
     let line: PaywallEmphasis
     var mood: MikaMood = .idle
 
     var body: some View {
-        MikaAsk(line.text, mood: mood)
+        MikaAsk(line.text, highlight: line.highlight, mood: mood)
     }
 }
 
@@ -280,19 +256,20 @@ struct PaywallMikaLine: View {
 
 /// **Une icône du paywall, en deux tons** : le plein du symbole au quart de sa couleur, son
 /// contour par-dessus. C'est le dessin des icônes de l'app (`MicaboIconView`), pour les
-/// quelques symboles qu'elle n'a pas (le cadenas ouvert, la cloche).
+/// quelques symboles qu'elle n'a pas (le cadenas ouvert, la cloche), dans ses teintes
+/// (`V3Color.iconBlue` et les autres : une couleur par idée).
 struct PaywallGlyph: View {
     /// Le nom du symbole du système, sans « .fill » : le contour. Son plein se déduit.
     var symbol: String
-    var tone: LessonTone
+    var tone: Color
     var size: CGFloat = PaywallStyle.glyph
 
     var body: some View {
         ZStack {
             Image(systemName: symbol + ".fill")
-                .foregroundStyle(tone.glyph.opacity(0.24))
+                .foregroundStyle(tone.opacity(0.24))
             Image(systemName: symbol)
-                .foregroundStyle(tone.glyph)
+                .foregroundStyle(tone)
         }
         .font(.system(size: size, weight: .semibold))
         .frame(width: PaywallStyle.glyphColumn, height: PaywallStyle.glyphColumn)
@@ -305,13 +282,13 @@ struct PaywallGlyph: View {
 struct PaywallInfoRow: View {
     /// Le symbole du système, sans « .fill ».
     var symbol: String
-    /// Le ton de l'icône : une couleur par idée.
-    var tone: LessonTone
+    /// La teinte de l'icône : une couleur par idée.
+    var tone: Color
     var title: String
     var detail: String
 
     var body: some View {
-        HStack(alignment: .center, spacing: 14) {
+        HStack(alignment: .center, spacing: 12) {
             PaywallGlyph(symbol: symbol, tone: tone)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
@@ -357,7 +334,7 @@ struct PaywallNoticeLine: View {
 
     var body: some View {
         Text(notice.text)
-            .font(PaywallStyle.legal)
+            .font(PaywallStyle.notice)
             .foregroundStyle(notice.isError ? PaywallStyle.error : V3Color.ink2)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
