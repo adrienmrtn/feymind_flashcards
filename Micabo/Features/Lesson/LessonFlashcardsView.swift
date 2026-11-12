@@ -169,8 +169,8 @@ struct LessonCardsHub: View {
             }
         }
         .padding(20)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.xxl, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.xxl, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
         .micaboElevation(.card)
     }
 }
@@ -200,7 +200,7 @@ private struct CardRow: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
     }
 }

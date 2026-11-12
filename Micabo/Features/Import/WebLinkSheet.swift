@@ -57,8 +57,8 @@ struct WebLinkSheet: View {
                 }
             }
             .padding(16)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(isValid ? MicaboColor.accent : MicaboColor.stroke, lineWidth: 1.5))
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous).strokeBorder(isValid ? MicaboColor.accent : MicaboColor.stroke, lineWidth: 1.5))
 
             Label {
                 Text(L10n.t("ios.sup.web.privacy", locale: .resolved()))

@@ -403,7 +403,7 @@ struct NotesPageView: View {
                                 }
                                 .padding(16)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
                                 .micaboElevation(.row)
                                 .reveal(index + 2)
                             }
@@ -613,7 +613,7 @@ struct LessonNotesReader: View {
             }
         }
         .padding(16)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
         .micaboElevation(.row)
     }
 

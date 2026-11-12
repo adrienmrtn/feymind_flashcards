@@ -137,8 +137,8 @@ struct MockExamFlow: View {
                                     .foregroundStyle(isOn ? MicaboColor.accent : MicaboColor.ink)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 14)
-                                    .background(isOn ? MicaboColor.accentSoft : MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                                    .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(isOn ? MicaboColor.accent : MicaboColor.stroke, lineWidth: isOn ? 2 : 1.5))
+                                    .background(isOn ? MicaboColor.accentSoft : MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+                                    .overlay(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(isOn ? MicaboColor.accent : MicaboColor.stroke, lineWidth: isOn ? 2 : 1.5))
                                     .scaleEffect(isOn ? 1.04 : 1)
                                 }
                                 .buttonStyle(MicaboPressableButtonStyle(feedback: .none))
@@ -163,7 +163,7 @@ struct MockExamFlow: View {
                         rule("checkmark.seal", "lesson.exam.rule.grade")
                     }
                     .padding(16)
-                    .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.bottom, 20)
@@ -485,7 +485,7 @@ struct MockExamRunView: View {
             .buttonStyle(MicaboPressableButtonStyle())
         }
         .padding(14)
-        .background(MicaboColor.accentSoft.opacity(0.6), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(MicaboColor.accentSoft.opacity(0.6), in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
     }
 
     // MARK: La barre du bas
@@ -499,8 +499,8 @@ struct MockExamRunView: View {
                     .font(.system(size: 18, weight: .heavy))
                     .foregroundStyle(MicaboColor.ink)
                     .frame(width: 58, height: 58)
-                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
             }
             .buttonStyle(MicaboPressableButtonStyle())
             .disabled(index == 0)
@@ -714,8 +714,8 @@ struct MockExamResultView: View {
                         }
                     }
                     .padding(18)
-                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
                 }
 
                 if !missed.isEmpty {
@@ -837,8 +837,8 @@ struct CorrectionRow: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(right ? MicaboColor.correct.opacity(0.4) : MicaboColor.stroke, lineWidth: 1.5))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(right ? MicaboColor.correct.opacity(0.4) : MicaboColor.stroke, lineWidth: 1.5))
     }
 
     /// Le texte choisi, pour un QCM, un vrai/faux ou une phrase à trou : `picked` est le rang

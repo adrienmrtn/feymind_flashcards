@@ -25,14 +25,14 @@ struct MicaboTile: View {
                     .font(.system(size: size * 0.45))
             case .symbol(let name):
                 Image(systemName: name)
-                    .font(.system(size: size * 0.40, weight: .medium))
+                    .font(.system(size: size * 0.42, weight: .bold))
                     .foregroundStyle(tint)
             case .date(let value):
                 VStack(spacing: 1) {
                     Text(Self.day(of: value))
-                        .font(MicaboFont.ui(size * 0.34, weight: .bold))
+                        .font(V3Font.custom(size * 0.34, weight: .bold))
                     Text(Self.month(of: value))
-                        .font(MicaboFont.ui(size * 0.215, weight: .semibold))
+                        .font(V3Font.custom(size * 0.215, weight: .semibold))
                         .tracking(0.5)
                 }
                 .foregroundStyle(tint)
@@ -157,10 +157,10 @@ struct MicaboBadge: View {
 
     var body: some View {
         Text(text)
-            .font(MicaboFont.ui(11, weight: .semibold))
+            .font(V3Font.custom(13, weight: .heavy))
             .foregroundStyle(tone.foreground)
             .padding(.vertical, 5)
-            .padding(.horizontal, 9)
+            .padding(.horizontal, 10)
             .background(tone.background, in: Capsule())
             .lineLimit(1)
             .fixedSize()
@@ -223,7 +223,7 @@ struct MicaboRow: View {
                 if let subtitle {
                     Text(subtitle)
                         .font(MicaboFont.rowSubtitle)
-                        .foregroundStyle(MicaboColor.inkTertiary)
+                        .foregroundStyle(MicaboColor.inkSecondary)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -233,8 +233,9 @@ struct MicaboRow: View {
 
             accessoryView
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 15)
+        .padding(.vertical, 13)
+        .padding(.horizontal, 16)
+        .frame(minHeight: 60)
         .contentShape(Rectangle())
     }
 
@@ -245,12 +246,12 @@ struct MicaboRow: View {
             EmptyView()
         case .chevron:
             Image(systemName: "chevron.forward")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(MicaboColor.inkTertiary.opacity(0.8))
+                .font(.system(size: 13, weight: .heavy))
+                .foregroundStyle(MicaboColor.inkTertiary)
         case .value(let text):
             Text(text)
-                .font(MicaboFont.ui(14, weight: .regular))
-                .foregroundStyle(MicaboColor.inkTertiary)
+                .font(V3Font.custom(15, weight: .bold))
+                .foregroundStyle(MicaboColor.inkSecondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
         case .badge(let text, let tone):
@@ -263,7 +264,7 @@ struct MicaboRow: View {
                 .tint(MicaboColor.accent)
         case .symbol(let name):
             Image(systemName: name)
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: 15, weight: .bold))
                 .foregroundStyle(MicaboColor.inkTertiary)
         }
     }
@@ -311,9 +312,8 @@ struct MicaboRowGroup: View {
     var radius: CGFloat = MicaboRadius.group
     var layout: Layout = .cards
 
-    /// L'air entre deux cartes. Assez pour qu'on voie deux objets, assez peu pour qu'on
-    /// voie une liste : au-delà, les cours cessent d'avoir l'air de tenir ensemble.
-    private static let cardSpacing: CGFloat = 9
+    /// L'air entre deux cartes : les dix points qui séparent deux lignes de réponse.
+    private static let cardSpacing: CGFloat = 10
 
     var body: some View {
         switch layout {
@@ -356,8 +356,8 @@ struct MicaboSectionFootnote: View {
 
     var body: some View {
         Text(text)
-            .font(MicaboFont.ui(12, weight: .regular))
-            .foregroundStyle(MicaboColor.inkTertiary)
+            .font(V3Font.custom(13, weight: .bold))
+            .foregroundStyle(MicaboColor.inkSecondary)
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, MicaboSpacing.xxs)
     }

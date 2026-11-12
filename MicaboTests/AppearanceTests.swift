@@ -7,8 +7,8 @@ final class AppearanceTests: XCTestCase {
     /// Clair, sombre, ou le téléphone ; un choix enregistré se relit tel quel.
     func testTheThreeThemesAndTheOldSettings() {
         XCTAssertEqual(MicaboAppearance.allCases, [.system, .day, .night])
-        XCTAssertEqual(MicaboAppearance.fromUnknown(nil), .day, "sans choix, l'app est en clair")
-        XCTAssertEqual(MicaboAppearance.fromUnknown("sepia"), .day)
+        XCTAssertEqual(MicaboAppearance.fromUnknown(nil), .night, "sans choix, l'app est en marine")
+        XCTAssertEqual(MicaboAppearance.fromUnknown("sepia"), .night)
         XCTAssertEqual(MicaboAppearance.fromUnknown("system"), .system)
         XCTAssertEqual(MicaboAppearance.fromUnknown("day"), .day)
         XCTAssertEqual(MicaboAppearance.fromUnknown("night"), .night)
@@ -21,23 +21,33 @@ final class AppearanceTests: XCTestCase {
         XCTAssertEqual(MicaboAppearance.night.colorScheme, .dark)
     }
 
-    /// **Lot 7 : clair par défaut.** Un appareil neuf, ou un ancien resté en « Système »,
-    /// s'ouvre en clair ; un élève qui avait choisi la nuit la garde.
-    func testANewOrUndecidedStudentStartsInDay() throws {
+    /// **Lot 10 : marine par défaut, pour tout le monde.** Un appareil neuf s'ouvre en marine,
+    /// et un ancien aussi, quoi que dise l'ancienne clé : elle a pu être écrite sans geste.
+    func testANewOrUndecidedStudentStartsInNavy() throws {
         let fresh = try XCTUnwrap(UserDefaults(suiteName: "appearance-\(UUID().uuidString)"))
-        XCTAssertEqual(AppearanceStore(defaults: fresh).appearance, .day)
+        XCTAssertEqual(AppearanceStore(defaults: fresh).appearance, .night)
+        XCTAssertEqual(MicaboAppearance.defaultAppearance, .night)
 
-        let undecided = try XCTUnwrap(UserDefaults(suiteName: "appearance-\(UUID().uuidString)"))
-        undecided.set("system", forKey: MicaboAppearance.storageKey)
-        XCTAssertEqual(AppearanceStore(defaults: undecided).appearance, .day, "« system » a pu être écrit sans geste")
+        for legacy in ["system", "day", "night", "twilight", "sepia"] {
+            let old = try XCTUnwrap(UserDefaults(suiteName: "appearance-\(UUID().uuidString)"))
+            old.set(legacy, forKey: MicaboAppearance.storageKey)
+            XCTAssertEqual(AppearanceStore(defaults: old).appearance, .night, "ancienne clé « \(legacy) »")
+        }
+    }
 
-        let nightOwl = try XCTUnwrap(UserDefaults(suiteName: "appearance-\(UUID().uuidString)"))
-        nightOwl.set("night", forKey: MicaboAppearance.storageKey)
-        XCTAssertEqual(AppearanceStore(defaults: nightOwl).appearance, .night, "la nuit était un choix")
+    /// **Un choix explicite est gardé** : « Jour », « Comme le téléphone » ou « Nuit », choisi
+    /// dans le Profil, survit au passage en marine — et au redémarrage.
+    func testAnExplicitChoiceSurvivesTheMoveToNavy() throws {
+        for (choice, expected) in [("day", MicaboAppearance.day), ("system", .system), ("night", .night)] {
+            let defaults = try XCTUnwrap(UserDefaults(suiteName: "appearance-\(UUID().uuidString)"))
+            defaults.set(choice, forKey: MicaboAppearance.choiceKey)
+            XCTAssertEqual(AppearanceStore(defaults: defaults).appearance, expected, "choix « \(choice) »")
+        }
 
-        let twilight = try XCTUnwrap(UserDefaults(suiteName: "appearance-\(UUID().uuidString)"))
-        twilight.set("twilight", forKey: MicaboAppearance.storageKey)
-        XCTAssertEqual(AppearanceStore(defaults: twilight).appearance, .night)
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "appearance-\(UUID().uuidString)"))
+        AppearanceStore(defaults: defaults).choose(.day)
+        XCTAssertEqual(defaults.string(forKey: MicaboAppearance.choiceKey), "day")
+        XCTAssertEqual(AppearanceStore(defaults: defaults).appearance, .day, "« Jour » choisi se retrouve au lancement suivant")
     }
 
     /// Lancer l'app n'écrit rien : seul le geste de l'élève devient un choix.
@@ -58,7 +68,7 @@ final class AppearanceTests: XCTestCase {
         XCTAssertEqual(AppearanceStore(defaults: defaults).appearance, .night)
     }
 
-    /// Chaque jeton se résout selon l'écran : l'ivoire le jour, la nuit la nuit.
+    /// Chaque jeton se résout selon l'écran : le clair teinté le jour, le marine la nuit.
     func testTheAdaptivePaletteFollowsTheScreen() {
         let light = UITraitCollection(userInterfaceStyle: .light)
         let dark = UITraitCollection(userInterfaceStyle: .dark)

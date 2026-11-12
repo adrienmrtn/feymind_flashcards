@@ -294,8 +294,8 @@ struct DeckLanguageStepView: View {
                 .padding(.horizontal, 18)
                 .padding(.vertical, 16)
                 .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
-                .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .background(OnboardingPalette.card, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
+                .contentShape(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
             }
             .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
             .accessibilityLabel(i18n.t("ios.deckSetup.language"))

@@ -1,13 +1,14 @@
 import SwiftUI
 
-/// **Le gabarit d'un écran V3** : la barre du haut (chevron + jauge), un contenu qui défile,
+/// **Le gabarit d'un écran** : la barre du haut (flèche + jauge), un contenu qui défile,
 /// et un pied fixe — le bouton principal, toujours au même endroit.
 ///
 /// - Le contenu a ses marges de 20 pt et s'aligne à gauche ; il occupe au moins toute la
-///   hauteur libre, donc un `Spacer` y pousse bien vers le bas. S'il dépasse (très grand
-///   texte, petit écran), il défile sous le pied, qui ne bouge pas.
+///   hauteur libre, donc un `Spacer` y pousse bien vers le bas : **la question en haut, les
+///   réponses ancrées en bas, du vide entre les deux**. S'il dépasse (très grand texte, petit
+///   écran), il défile sous le pied, qui ne bouge pas.
 /// - Le pied reste **au-dessus du clavier** : il est posé dans la zone sûre du bas, que le
-///   clavier repousse. Ses éléments s'empilent à 8 pt (bouton principal, puis `ghost`).
+///   clavier repousse. Ses éléments s'empilent à 10 pt (bouton principal, puis `ghost`).
 /// - Sans `progress` ni `onBack`, pas de barre du haut. Sans pied (`footer` vide ou omis), le
 ///   contenu va jusqu'en bas : un choix unique avance tout seul.
 ///
@@ -53,7 +54,7 @@ struct V3Screen<Content: View, Footer: View>: View {
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if hasFooter {
-                VStack(spacing: 8) {
+                VStack(spacing: 10) {
                     footer
                 }
                 .padding(.horizontal, V3Metric.screenMargin)
