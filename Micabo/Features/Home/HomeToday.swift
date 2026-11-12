@@ -21,6 +21,37 @@ struct HomeDay: Equatable {
     var studiedToday = false
     /// La séance de révision du calendrier qui reste à faire aujourd'hui (`HomeSession.next`).
     var session: HomeSession?
+    /// L'étape où la leçon en cours attend, et son titre (`nil` une fois la leçon terminée).
+    var lessonStep: Int?
+    var lessonStepTitle: String?
+    /// Au moins une étape de la leçon est faite : Mika dit « On reprend », pas « On commence ».
+    var lessonStarted = false
+    /// Les leçons qui ont des cartes dues.
+    var dueLessons = 0
+
+    /// **Ce que la journée propose** (lot 10, HOME.md § 1), dans l'ordre : la séance posée au
+    /// calendrier — c'est le plan de l'élève —, puis les cartes dues, puis la leçon en cours ;
+    /// une journée déjà travaillée où il ne reste rien est faite ; sinon rien n'est prévu.
+    /// L'élève sans leçon, lui, commence par en créer une.
+    enum Proposal: String, Equatable, CaseIterable {
+        case session
+        case cards
+        case lesson
+        case done
+        case open
+        case newcomer
+    }
+
+    var proposal: Proposal {
+        guard hasCourses else { return .newcomer }
+        if session != nil { return .session }
+        if dueCount > 0 { return .cards }
+        let lessonWaits = lessonTitle != nil && lessonStep != nil
+        if lessonWaits && !lessonAdvancedToday { return .lesson }
+        if studiedToday { return .done }
+        if lessonWaits { return .lesson }
+        return .open
+    }
 
     /// Une étape de la journée. Les noms partent tels quels dans `home_plan_tapped`.
     enum Step: String, Equatable {
@@ -218,9 +249,10 @@ enum HomeTool: CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .scan: L10n.t("ios.ku7.tools.homework", locale: .resolved())
-        case .writing: L10n.t("ios.ku7.tools.writing", locale: .resolved())
-        case .quiz: L10n.t("ios.kx.tools.quiz.title", locale: .resolved())
+        // Un nom par chose (`MicaboName`) : « Scanner un exo », plus « Aide aux devoirs ».
+        case .scan: MicaboName.scan.text()
+        case .writing: MicaboName.writing.text()
+        case .quiz: MicaboName.quickQuiz.text()
         }
     }
 
@@ -355,7 +387,7 @@ struct QuickQuizSheet: View {
         LessonQuizView(
             session: session,
             questions: questions,
-            title: L10n.t("ios.kx.tools.quiz.title", locale: .resolved()),
+            title: MicaboName.quickQuiz.text(),
             circleID: nil,
             onClose: { dismiss() }
         )

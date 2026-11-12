@@ -235,10 +235,17 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
         return fallback
     }
 
+    /// **La langue du téléphone, lue une fois par lancement.** `resolved()` est appelée à chaque
+    /// phrase affichée (`loc`, `L10n.t(…, locale: .resolved())`) : relire et redécouper les
+    /// langues préférées du système à chaque fois coûtait plus que la phrase elle-même. Elles
+    /// ne changent pas pendant que l'app tourne : iOS la relance quand on change de langue,
+    /// celle du téléphone comme celle de l'app dans Réglages.
+    private static let system = fromPreferredLanguages()
+
     static func resolved(defaults: UserDefaults = .standard) -> UiLocale {
         if let stored = defaults.string(forKey: storageKey), let locale = UiLocale(rawValue: stored) {
             return locale
         }
-        return fromPreferredLanguages()
+        return system
     }
 }

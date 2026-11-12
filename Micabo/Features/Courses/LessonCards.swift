@@ -1,11 +1,11 @@
 import SwiftUI
 
-/// **Une leçon dans l'onglet Leçons** (`docs/refonte-parcours.md` § 15, lot 6) : une carte
-/// horizontale. L'icône sur le ton de la leçon, le titre, où on en est sur le chemin, et deux
-/// pastilles quand elles disent quelque chose : les cartes à réviser, l'examen qui approche.
+/// **Une leçon dans l'onglet Leçons** (lot 10, HOME.md § 4) : une carte. L'icône de sa matière,
+/// le titre, où on en est sur le chemin (« Étape 3 sur 7 », ou « Terminée »), la jauge, et deux
+/// pastilles quand elles disent quelque chose : les cartes à revoir, l'examen qui approche.
 struct LessonCard: View {
     let course: Course
-    /// Les flashcards dues aujourd'hui.
+    /// Les cartes dues aujourd'hui.
     var dueCount = 0
     /// Les jours avant l'examen le plus proche.
     var examDays: Int?
@@ -20,65 +20,54 @@ struct LessonCard: View {
     var body: some View {
         let summary = LessonCardSummary(course: course)
         Button(action: action) {
-            HStack(spacing: 14) {
-                MicaboIconView(icon: course.icon, size: 40, tone: course.tone)
-                    .frame(width: 60, height: 60)
-                    .background(course.tone.pale, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            HStack(alignment: .top, spacing: 14) {
+                LessonIconTile(icon: course.icon, tone: course.tone)
 
                 VStack(alignment: .leading, spacing: 6) {
                     // Quatre lignes au plus : un titre long en très grand texte sur un iPhone SE
                     // se lit en entier.
                     Text(course.title)
-                        .font(MicaboFont.label)
-                        .foregroundStyle(MicaboColor.ink)
+                        .font(V3Font.bodyStrong)
+                        .foregroundStyle(V3Color.ink)
                         .lineLimit(4)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(summary.caption)
-                        .font(MicaboFont.ui(13, weight: .bold))
-                        .foregroundStyle(MicaboColor.inkSecondary)
+                        .font(V3Font.caption)
+                        .foregroundStyle(V3Color.ink2)
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
-                    GeometryReader { proxy in
-                        ZStack(alignment: .leading) {
-                            Capsule().fill(MicaboColor.track)
-                            Capsule()
-                                .fill(course.tone.vivid)
-                                .frame(width: proxy.size.width * CGFloat(summary.percent) / 100)
-                        }
-                    }
-                    .frame(height: 8)
+                    V3ProgressBar(value: Double(summary.percent) / 100)
+                        .padding(.top, 2)
                     if dueCount > 0 || (examDays ?? -1) >= 0 {
                         HStack(spacing: 6) {
                             if dueCount > 0 {
-                                pill(
-                                    L10n.t("lesson.lessons.due", locale: .resolved(), vars: ["count": String(dueCount)]),
-                                    foreground: MicaboColor.onAccent,
-                                    background: MicaboColor.accent
+                                LessonPill(
+                                    text: L10n.t("ios.home10.lessons.due", locale: .resolved(), vars: ["count": String(dueCount)]),
+                                    foreground: V3Color.onAccent,
+                                    background: V3Color.accent
                                 )
                             }
                             if let examDays, examDays >= 0 {
-                                pill(
-                                    examDays == 0
-                                        ? L10n.t("app.exams.countdown.today", locale: .resolved())
-                                        : L10n.t("lesson.lessons.examDays", locale: .resolved(), vars: ["days": String(examDays)]),
-                                    foreground: course.tone.ink,
-                                    background: course.tone.pale
+                                LessonPill(
+                                    text: ExamCountdown.label(daysLeft: examDays),
+                                    foreground: V3Color.yellowInk,
+                                    background: V3Color.yellowWash
                                 )
                             }
                         }
                         .padding(.top, 2)
                     }
                 }
-                Spacer(minLength: hasMenu ? 34 : 0)
+                Spacer(minLength: hasMenu ? 30 : 0)
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .homeCard(radius: MicaboStage.tileRadius)
+            .v3Card()
         }
         .buttonStyle(MicaboPressableButtonStyle(feedback: .soft))
         .accessibilityElement(children: .combine)
-        .overlay(alignment: .trailing) {
+        .overlay(alignment: .topTrailing) {
             if hasMenu {
                 Menu {
                     if let onRename {
@@ -99,24 +88,47 @@ struct LessonCard: View {
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(MicaboColor.inkSecondary)
+                        .foregroundStyle(V3Color.ink3)
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
                 }
-                .padding(.trailing, 6)
+                .padding(.trailing, 4)
+                .padding(.top, 4)
                 .accessibilityLabel(Text(L10n.t("lesson.menu.more", locale: .resolved())))
             }
         }
     }
+}
 
-    private func pill(_ text: String, foreground: Color, background: Color) -> some View {
+/// L'icône d'une leçon ou d'un dossier, dans sa couleur, sur un carré de la surface haute.
+struct LessonIconTile: View {
+    let icon: MicaboIcon
+    var tone: LessonTone?
+    var side: CGFloat = 52
+
+    var body: some View {
+        MicaboIconView(icon: icon, size: side * 0.62, tone: tone)
+            .frame(width: side, height: side)
+            .background(V3Color.soft, in: RoundedRectangle(cornerRadius: V3Metric.radiusTile, style: .continuous))
+            .accessibilityHidden(true)
+    }
+}
+
+/// Une pastille d'une carte de leçon : « 8 à revoir », « J-12 ».
+struct LessonPill: View {
+    let text: String
+    let foreground: Color
+    let background: Color
+
+    var body: some View {
         Text(text)
-            .font(MicaboFont.ui(12, weight: .heavy))
+            .font(V3Font.caption)
+            .monospacedDigit()
             .foregroundStyle(foreground)
             .lineLimit(1)
             .fixedSize()
             .padding(.horizontal, 9)
-            .padding(.vertical, 5)
+            .padding(.vertical, 4)
             .background(background, in: Capsule())
     }
 }
@@ -138,7 +150,7 @@ struct LessonCardSummary: Equatable {
         let doneCount = circles.filter { done.contains($0.id) }.count
         percent = circles.isEmpty ? 0 : Int((Double(doneCount) / Double(circles.count) * 100).rounded())
         if course.isLearned {
-            caption = L10n.t("lesson.lessons.finished", locale: locale)
+            caption = L10n.t("ios.home10.lessons.finished", locale: locale)
         } else if let current = PathLayout.current(in: circles, done: done) {
             // « Étape », comme sur le chemin : l'élève ne voit nulle part ailleurs le mot « cercle ».
             caption = L10n.t("ios.pol.learn.stepOf", locale: locale, vars: [
@@ -146,12 +158,13 @@ struct LessonCardSummary: Equatable {
                 "total": String(circles.count),
             ])
         } else {
-            caption = L10n.t("lesson.lessons.finished", locale: locale)
+            caption = L10n.t("ios.home10.lessons.finished", locale: locale)
         }
     }
 }
 
-/// Un dossier : son icône, son nom, le nombre de leçons qu'il range.
+/// Un dossier : son icône, son nom, le nombre de leçons qu'il range. Un cours qu'on glisse
+/// au-dessus de lui le marque du filet d'accent.
 struct LessonFolderCard: View {
     let name: String
     let count: Int
@@ -161,61 +174,67 @@ struct LessonFolderCard: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 14) {
-                MicaboIconView(icon: .folder, size: 40)
-                    .frame(width: 60, height: 60)
-                    .background(MicaboColor.surfaceSunken, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                LessonIconTile(icon: .folder)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(name)
-                        .font(MicaboFont.label)
-                        .foregroundStyle(MicaboColor.ink)
+                        .font(V3Font.bodyStrong)
+                        .foregroundStyle(V3Color.ink)
                         .lineLimit(3)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(L10n.t("lesson.lessons.folderCount", locale: .resolved(), vars: ["count": String(count)]))
-                        .font(MicaboFont.ui(13, weight: .bold))
-                        .foregroundStyle(MicaboColor.inkSecondary)
+                        .font(V3Font.caption)
+                        .foregroundStyle(V3Color.ink2)
                 }
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.forward")
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(MicaboColor.inkTertiary)
+                    .foregroundStyle(V3Color.ink3)
+                    .accessibilityHidden(true)
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .homeCard(radius: MicaboStage.tileRadius)
-            .overlay(
-                RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous)
-                    .strokeBorder(isTargeted ? MicaboColor.accent : .clear, lineWidth: 2)
-            )
+            .v3Card(selected: isTargeted)
         }
         .buttonStyle(MicaboPressableButtonStyle(feedback: .soft))
     }
 }
 
-/// « Nouvelle leçon » : la dernière rangée, qui ramène à la barre de Home.
-struct NewLessonRow: View {
-    let action: () -> Void
+/// **Un écran vide de l'onglet Leçons** : Mika, une phrase, et au plus une ligne et un bouton.
+/// La bibliothèque vide est un de ses moments : il y est en grand, avec « Créer une leçon ».
+struct LessonsEmptyState: View {
+    let mood: MikaMood
+    var mikaSize: CGFloat = 130
+    let title: String
+    var message: String?
+    var actionTitle: String?
+    var action: (() -> Void)?
 
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 14) {
-                Image(systemName: "plus")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(MicaboColor.accentInk)
-                    .frame(width: 60, height: 60)
-                    .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                Text(L10n.t("lesson.lessons.new", locale: .resolved()))
-                    .font(MicaboFont.label)
-                    .foregroundStyle(MicaboColor.accentInk)
-                Spacer(minLength: 0)
+        VStack(spacing: 0) {
+            MikaMascot(mood: mood, size: mikaSize)
+                .accessibilityHidden(true)
+            Text(title)
+                .font(V3Font.h2)
+                .foregroundStyle(V3Color.ink)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
+                .padding(.top, 16)
+            if let message {
+                Text(message)
+                    .font(V3Font.body)
+                    .foregroundStyle(V3Color.ink2)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 6)
             }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .overlay(
-                RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous)
-                    .strokeBorder(MicaboColor.stroke, style: StrokeStyle(lineWidth: 1.5, dash: [6, 5]))
-            )
+            if let actionTitle, let action {
+                V3Button(actionTitle, systemImage: "plus", action: action)
+                    .padding(.top, 20)
+            }
         }
-        .buttonStyle(MicaboPressableButtonStyle())
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 24)
     }
 }

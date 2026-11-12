@@ -206,20 +206,19 @@ struct StreakFlame: View {
                     .saturation(lit ? 1 : 0)
                     .opacity(lit ? 1 : 0.45)
                     .scaleEffect(1 + 0.04 * breath, anchor: .bottom)
-                    .shadow(color: MicaboColor.flame.opacity(lit ? Double(0.18 + 0.2 * breath) : 0), radius: 14, x: 0, y: 8)
             }
         }
         .frame(width: icon * 1.6, height: icon * 1.6)
         .accessibilityHidden(true)
         .onAppear {
             guard animated, !breathed else { return }
-            withAnimation(MicaboMotion.gentle.delay(0.3)) { breathed = true }
+            withAnimation(MicaboMotion.gentle) { breathed = true }
         }
         .onChange(of: lit) { _, lit in
             // La flamme qui s'allume (la fête de la série) prend son inspiration à ce moment.
             guard lit, !reduceMotion, !still else { return }
             breathed = false
-            withAnimation(MicaboMotion.celebrate.delay(0.1)) { breathed = true }
+            withAnimation(MicaboMotion.celebrate) { breathed = true }
         }
     }
 }
@@ -317,7 +316,7 @@ private struct StreakDayDot: View {
         .padding(3)
         .overlay {
             if day.isToday {
-                Circle().strokeBorder(lit ? MicaboColor.flame : MicaboColor.inkTertiary, lineWidth: 2)
+                Circle().strokeBorder(lit ? MicaboColor.flame : MicaboColor.inkTertiary, lineWidth: MicaboSurface.border)
             }
         }
     }

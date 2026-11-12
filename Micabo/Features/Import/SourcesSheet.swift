@@ -243,7 +243,6 @@ private extension View {
     /// La carte d'une tuile : la surface de l'app, un filet, une ombre douce.
     func sourceCard() -> some View {
         background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
-            .shadow(color: MicaboBrand.blue900.opacity(0.05), radius: 12, y: 6)
+            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
     }
 }

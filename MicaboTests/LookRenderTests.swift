@@ -72,7 +72,6 @@ final class LookRenderTests: XCTestCase {
             LessonFolderCard(name: "Bac de maths", count: 4) {}
             LessonCard(course: course, dueCount: 8, examDays: 12) {}
             LessonCard(course: old) {}
-            NewLessonRow {}
         }
         .padding(20)
         .environment(\.homeStill, true)

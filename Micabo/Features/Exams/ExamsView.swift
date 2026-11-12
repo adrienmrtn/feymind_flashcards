@@ -324,7 +324,6 @@ struct ExamHero: View {
                 }
                 .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous))
         }
-        .shadow(color: MicaboColor.accent.opacity(0.3), radius: 20, x: 0, y: 12)
     }
 }
 
@@ -610,10 +609,10 @@ struct LessonChecklist: View {
 }
 
 extension View {
-    /// Apparaît en glissant d'un peu plus bas, avec un léger retard.
+    /// **Le bloc est là d'emblée** (lot 10, « mouvement natif et immédiat ») : la page des
+    /// examens arrivait vide, puis ses cartes glissaient en place l'une après l'autre pendant
+    /// que la page finissait d'être poussée. La poussée du système suffit.
     func slideIn(_ shown: Bool, delay: Double) -> some View {
-        opacity(shown ? 1 : 0)
-            .offset(y: shown ? 0 : 18)
-            .animation(LearnMotion.gentle(delay: delay), value: shown)
+        self
     }
 }

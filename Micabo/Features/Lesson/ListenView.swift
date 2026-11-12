@@ -107,7 +107,7 @@ struct ListenView: View {
                 }
             }
             .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
         }
     }
 
@@ -191,7 +191,6 @@ struct ListenPlayerCard: View {
                         .foregroundStyle(.white)
                         .frame(width: 76, height: 76)
                         .background(MicaboColor.accent, in: Circle())
-                        .shadow(color: MicaboColor.accent.opacity(0.3), radius: 14, y: 8)
                 }
                 .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
                 .accessibilityLabel(Text(L10n.t(speaker.isPlaying ? "ios.sup.listen.pause" : "ios.sup.listen.play", locale: .resolved())))

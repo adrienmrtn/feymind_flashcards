@@ -141,7 +141,7 @@ struct DeckDeadlineStepView: View {
                 )
                 .overlay {
                     RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
-                        .strokeBorder(MicaboColor.stroke, lineWidth: 1)
+                        .strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border)
                 }
 
                 paceNote

@@ -235,7 +235,7 @@ struct AnswerPanel: View {
                 .opacity(mikaShown || mikaStill ? 1 : 0)
         }
         .onAppear {
-            withAnimation(MicaboMotion.standard.delay(0.3)) { mikaShown = true }
+            withAnimation(MicaboMotion.standard) { mikaShown = true }
         }
     }
 }
@@ -327,7 +327,7 @@ struct QuizScoreView: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             if right < total {
-                Text(L10n.t("lesson.quiz.missedBecomeCards", locale: .resolved()))
+                Text(L10n.t("ios.home10.quiz.missed", locale: .resolved()))
                     .font(MicaboFont.ui(15, weight: .medium))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .multilineTextAlignment(.center)
@@ -352,7 +352,7 @@ struct QuizScoreView: View {
             if still || LearnMotion.reduceMotion {
                 shown = ratio
             } else {
-                withAnimation(LearnMotion.gentle(delay: 0.2)) { shown = ratio }
+                withAnimation(LearnMotion.gentle) { shown = ratio }
             }
             if ratio >= 0.8 { Haptics.burst(count: 3, over: 0.4) }
         }
@@ -516,7 +516,7 @@ struct LessonCardsRun: View {
         VStack(spacing: 16) {
             Spacer()
             MikaMascot(mood: .sleep, size: 120)
-            Text(L10n.t("lesson.cards.empty", locale: .resolved()))
+            Text(L10n.t("ios.home10.cards.empty", locale: .resolved()))
                 .font(MicaboFont.subtitle)
                 .foregroundStyle(MicaboColor.ink)
                 .multilineTextAlignment(.center)
@@ -597,7 +597,7 @@ struct FlashcardFace: View {
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous)
-                .strokeBorder(flipped ? tone.vivid : MicaboColor.stroke, lineWidth: 2)
+                .strokeBorder(flipped ? tone.vivid : MicaboColor.stroke, lineWidth: MicaboSurface.border)
         )
         .micaboElevation(.card)
         .accessibilityElement(children: .combine)

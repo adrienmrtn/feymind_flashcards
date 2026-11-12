@@ -206,7 +206,7 @@ struct LessonMikaView: View {
                     )
                     .overlay {
                         if !mine {
-                            RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1)
+                            RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border)
                         }
                     }
                     .fixedSize(horizontal: false, vertical: true)
@@ -270,7 +270,7 @@ struct LessonMikaView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
                 .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
             Button(action: send) {
                 Image(systemName: "arrow.up")
                     .font(.system(size: 17, weight: .heavy))

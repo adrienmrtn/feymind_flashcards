@@ -122,7 +122,7 @@ struct SolverCaptureChrome<Background: View>: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 9)
         .background(Color.black.opacity(0.55), in: Capsule())
-        .overlay(Capsule().strokeBorder(Color.white.opacity(0.18), lineWidth: 1))
+        .overlay(Capsule().strokeBorder(Color.white.opacity(0.18), lineWidth: MicaboSurface.border))
         .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: 320)
         .opacity(stage == .unreadable ? 0 : 1)
@@ -270,7 +270,7 @@ struct SolverCropOverlay: View {
             .allowsHitTesting(false)
 
             RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.35), lineWidth: 1)
+                .strokeBorder(Color.white.opacity(0.35), lineWidth: MicaboSurface.border)
                 .frame(width: frame.width, height: frame.height)
                 .offset(x: frame.minX, y: frame.minY)
                 .allowsHitTesting(false)

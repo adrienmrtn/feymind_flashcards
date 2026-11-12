@@ -1,10 +1,12 @@
 import SwiftData
 import SwiftUI
 
-/// Onglet **Cours** : tout ce qui a été importé, avec recherche et filtres.
+/// **L'onglet Leçons** (lot 10, HOME.md § 4) : le titre et **le** bouton de la page,
+/// « + Nouvelle leçon » ; la recherche ; puis les dossiers et les leçons en cartes — l'icône de
+/// la matière, le titre, « Étape 3 sur 7 » ou « Terminée », la jauge, et les pastilles
+/// « 8 à revoir » et « J-12 ». Vide, Mika y propose la première leçon.
 ///
-/// Les cours des amis se voient encore sur leur profil, si leur visibilité le
-/// permet. Il n'y a plus de rayon « Découvrir ».
+/// C'est ici que vivent les leçons : la Home n'en garde plus la rangée « Reprendre ».
 struct CoursesListView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(ProAccess.self) private var pro: ProAccess?
@@ -240,58 +242,56 @@ struct CoursesListView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .scrollIndicators(.hidden)
-        .micaboScreenBackground()
-        // Le « + » se pose juste au-dessus de la barre d'onglets —
-        // voir `tabBarClearance`.
-        .tabBarClearance { importButton }
+        .scrollDismissesKeyboard(.immediately)
+        .background(V3Color.bg.ignoresSafeArea())
+        .tabBarClearance()
     }
 
-    /// **Le titre de la page, et rien au-dessus.**
+    /// **Le titre, et LE bouton de la page** : « + Nouvelle leçon », compact, à côté du titre.
     ///
-    /// `MicaboScreenHeader` portait un sur-titre en capitales grises et réservait la place
-    /// d'un bouton de retour qui n'existe pas ici : on arrive sur cette page par la barre du
-    /// bas, il n'y a nulle part d'où revenir. La maquette pose un titre de vingt-et-un points
-    /// et son compte en dessous, et laisse la place au reste.
+    /// Il remplace le rond « + » qui flottait en bas à droite et la rangée en pointillés au
+    /// bout de la liste : une seule entrée pour créer, toujours au même endroit. Il n'est pas
+    /// là quand la bibliothèque est vide : l'écran vide porte déjà « Créer une leçon », et deux
+    /// boutons pour la même action feraient hésiter. Dans une langue longue ou en très grand
+    /// texte, il passe sous le titre.
     private var header: some View {
-        MicaboPageHeading(title: i18n.t("lesson.tab.lessons"), subtitle: countLabel)
-            .padding(.top, MicaboSpacing.xs)
-    }
-
-    /// Le seul bouton flottant de l'app : en bas à droite, là où le pouce tombe, et posé
-    /// au-dessus de la barre du bas. Quand la liste est vide, l'écran d'accueil porte déjà
-    /// son propre appel à importer : deux boutons pour la même action feraient hésiter.
-    /// **Le « + » ne porte pas de cadenas**, même quand le cours suivant se paie.
-    ///
-    /// Un bouton verrouillé annonce un refus avant qu'on ait demandé quoi que ce soit : il
-    /// transforme le seul geste de l'écran en porte fermée, et on cesse de le regarder. Il
-    /// garde donc son signe, et c'est l'appui qui ouvre le paywall — on demande, on obtient
-    /// une réponse, et la réponse dit ce qu'elle coûte.
-    @ViewBuilder
-    private var importButton: some View {
-        if !sheets.isEmpty {
-            MicaboCircleButton(
-                systemImage: "plus",
-                style: .dark,
-                size: 56,
-                accessibilityTitle: i18n.t("app.import.importCourse")
-            ) {
-                requestImport()
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .center, spacing: 12) {
+                pageTitle
+                Spacer(minLength: 8)
+                newLessonButton
             }
-            .padding(.trailing, MicaboSpacing.screen)
-            .padding(.bottom, MicaboSpacing.sm)
-            .frame(maxWidth: .infinity, alignment: .trailing)
+            VStack(alignment: .leading, spacing: 12) {
+                pageTitle
+                newLessonButton
+            }
         }
+        .padding(.top, MicaboSpacing.xs)
     }
 
-    private var countLabel: String {
-        guard !sheets.isEmpty else { return i18n.t("lesson.lessons.none") }
-        return i18n.t("lesson.lessons.count", ["count": "\(sheets.count)"])
+    private var pageTitle: some View {
+        Text(i18n.t("lesson.tab.lessons"))
+            .font(V3Font.h1)
+            .foregroundStyle(V3Color.ink)
+            .lineLimit(1)
+            .fixedSize()
+            .accessibilityAddTraits(.isHeader)
+    }
+
+    /// **Le « + » ne porte pas de cadenas**, même quand la leçon suivante se paie : on demande,
+    /// et c'est la réponse qui dit ce qu'elle coûte.
+    @ViewBuilder
+    private var newLessonButton: some View {
+        if !sheets.isEmpty {
+            V3Button(i18n.t("lesson.lessons.new"), systemImage: "plus", action: requestImport)
+                .fixedSize(horizontal: true, vertical: false)
+        }
     }
 
     @ViewBuilder
     private var myCourses: some View {
         if !sheets.isEmpty {
-            MicaboSearchField(text: $searchText, placeholder: i18n.t("app.courses.search"))
+            MicaboSearchField(text: $searchText, placeholder: i18n.t("ios.home10.lessons.search"))
                 .padding(.horizontal, MicaboSpacing.screen)
                 .onChange(of: searchText) { previous, query in
                     if query.isEmpty {
@@ -371,34 +371,31 @@ struct CoursesListView: View {
     }
 
     private var emptyFolder: some View {
-        MicaboEmptyState(
-            systemImage: "folder",
+        LessonsEmptyState(
+            mood: .sleep,
             title: i18n.t("app.folders.emptyTitle"),
-            message: i18n.t("app.folders.emptyBody"),
-            mika: .sleep
+            message: i18n.t("ios.home10.lessons.folderEmptyBody")
         )
         .padding(.horizontal, MicaboSpacing.screen)
     }
 
+    /// La bibliothèque vide : Mika en grand, une promesse, un bouton.
     private var emptyLibrary: some View {
-        MicaboEmptyState(
-            systemImage: "books.vertical",
-            title: i18n.t("lesson.lessons.emptyTitle"),
-            message: i18n.t("lesson.lessons.emptyBody"),
-            actionTitle: i18n.t("lesson.lessons.new"),
-            mika: .wave
-        ) {
-            requestImport()
-        }
+        LessonsEmptyState(
+            mood: .wave,
+            mikaSize: 190,
+            title: i18n.t("ios.home10.lessons.emptyTitle"),
+            actionTitle: i18n.t("ios.home3.cta.create"),
+            action: requestImport
+        )
         .padding(.horizontal, MicaboSpacing.screen)
     }
 
     private var noResults: some View {
-        MicaboEmptyState(
-            systemImage: "magnifyingglass",
+        LessonsEmptyState(
+            mood: .look,
             title: i18n.t("app.courses.noResults"),
-            message: i18n.t("app.courses.noResultsBody"),
-            mika: .look
+            message: i18n.t("app.courses.noResultsBody")
         )
         .padding(.horizontal, MicaboSpacing.screen)
     }
@@ -431,10 +428,6 @@ struct CoursesListView: View {
             ForEach(items, id: \.id) { course in
                 deckTile(course)
             }
-
-            // « Nouvelle leçon » ferme la liste : elle ramène à la barre de Home, le seul
-            // endroit où une leçon se crée.
-            NewLessonRow(action: requestImport)
         }
         .padding(.horizontal, MicaboSpacing.screen)
     }
@@ -581,11 +574,11 @@ struct CoursesListView: View {
                         Text(
                             trail.count > 1
                                 ? trail[trail.count - 2].name
-                                : i18n.t("app.folders.root")
+                                : i18n.t("lesson.tab.lessons")
                         )
-                        .font(MicaboFont.ui(14, weight: .medium))
+                        .font(V3Font.caption)
                     }
-                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .foregroundStyle(V3Color.ink2)
                 }
                 // Lâcher un cours ici le sort du dossier : c'est le `..` d'un gestionnaire
                 // de fichiers, et le même geste que sur le site.
@@ -596,8 +589,8 @@ struct CoursesListView: View {
 
                 if let current = trail.last {
                     Text(current.name)
-                        .font(MicaboFont.ui(14, weight: .semibold))
-                        .foregroundStyle(MicaboColor.ink)
+                        .font(V3Font.caption)
+                        .foregroundStyle(V3Color.ink)
                         .lineLimit(1)
                 }
             }
@@ -612,9 +605,9 @@ struct CoursesListView: View {
                     i18n.t("app.folders.new"),
                     systemImage: "folder.badge.plus"
                 )
-                .font(MicaboFont.ui(13.5, weight: .medium))
+                .font(V3Font.caption)
                 .labelStyle(.titleAndIcon)
-                .foregroundStyle(MicaboColor.accentInk)
+                .foregroundStyle(V3Color.accent)
             }
         }
         .padding(.horizontal, MicaboSpacing.screen)
@@ -669,7 +662,7 @@ struct CoursesListView: View {
     }
 
     private var deleteCourseTitle: String {
-        i18n.t("app.courses.deleteQ")
+        i18n.t("lesson.menu.deleteTitle")
     }
 
     private var folderNamePlaceholder: String {
@@ -738,7 +731,7 @@ struct CoursesListView: View {
 
     @ViewBuilder
     private func courseDeleteActions() -> some View {
-        Button(i18n.t("app.courses.deleteCourse"), role: .destructive) {
+        Button(i18n.t("lesson.menu.delete"), role: .destructive) {
             if let course = coursePendingDelete {
                 withAnimation(LearnMotion.standard) {
                     try? CourseRepository.delete(course, in: modelContext)
@@ -883,10 +876,11 @@ struct CoursesListView: View {
         path.append(course)
     }
 
-    /// **Le « + » ouvre les questions à tout le monde.** Le paywall tombe à la fin, sur
-    /// « générer mon cours » (`DeckSetupFlowView`) : c'est là qu'on sait ce qu'on achète.
+    /// **« Nouvelle leçon » ouvre la Home et sa feuille des supports** : c'est là qu'une leçon
+    /// se crée — le compositeur, les imports, la porte du gratuit. La demander d'ici ne fait pas
+    /// chercher la barre de création.
     private func requestImport() {
-        router?.selection = .today
+        router?.requestLessonCreation()
     }
 
     private var renamingCoursePresented: Binding<Bool> {

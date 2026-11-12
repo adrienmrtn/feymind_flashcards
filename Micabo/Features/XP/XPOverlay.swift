@@ -181,8 +181,7 @@ struct XPToast: View {
             LinearGradient(colors: MicaboColor.brandGradient, startPoint: .leading, endPoint: .trailing),
             in: Capsule()
         )
-        .overlay(Capsule().strokeBorder(Color.white.opacity(0.35), lineWidth: 1))
-        .shadow(color: MicaboColor.accent.opacity(0.35), radius: 12, y: 6)
+        .overlay(Capsule().strokeBorder(Color.white.opacity(0.35), lineWidth: MicaboSurface.border))
     }
 }
 
@@ -255,7 +254,7 @@ struct XPGoalCard: View {
         .background(MicaboColor.canvas, in: RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
+                .strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border)
         )
     }
 }
