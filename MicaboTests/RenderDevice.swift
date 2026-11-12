@@ -111,7 +111,21 @@ extension RenderGallery {
         } else {
             window = UIWindow(frame: frame)
         }
-        window.frame = frame
+        // **Où poser la fenêtre** : là où l'écran du simulateur ne lui donne aucune marge, pour que
+        // le profil impose les siennes (une marge ajoutée ne peut pas être négative : une fenêtre
+        // posée sous l'encoche du simulateur garderait ses 59 ou 62 pt). Un iPhone SE tient
+        // entre l'encoche et la barre d'accueil ; un profil aussi haut que l'écran reste en
+        // haut et garde au moins les marges du simulateur.
+        window.frame = window.windowScene?.screen.bounds ?? frame
+        window.isHidden = false
+        window.layoutIfNeeded()
+        let screen = window.bounds
+        let unsafe = window.safeAreaInsets
+        var origin = CGPoint.zero
+        if unsafe.top + device.size.height <= screen.height - unsafe.bottom {
+            origin.y = unsafe.top
+        }
+        window.frame = CGRect(origin: origin, size: device.size)
         window.windowLevel = UIWindow.Level(rawValue: UIWindow.Level.normal.rawValue + 2)
         window.overrideUserInterfaceStyle = scheme == .dark ? .dark : .light
 
@@ -143,6 +157,14 @@ extension RenderGallery {
                 window.layer.render(in: cg)
             }
             drawChrome(device: device, dark: scheme == .dark, guides: guides, in: cg)
+            // Une marge qui n'est pas celle du profil se voit sur l'image, en rouge.
+            if abs(measured.top - device.insets.top) > 4 || abs(measured.bottom - device.insets.bottom) > 4 {
+                let warning = NSAttributedString(
+                    string: " marges vues \(Int(measured.top))/\(Int(measured.bottom)) ≠ \(Int(device.insets.top))/\(Int(device.insets.bottom)) ",
+                    attributes: [.font: UIFont.boldSystemFont(ofSize: 12), .foregroundColor: UIColor.white, .backgroundColor: UIColor.red]
+                )
+                warning.draw(at: CGPoint(x: 8, y: device.size.height / 2))
+            }
         }
         window.rootViewController = nil
         window.isHidden = true
