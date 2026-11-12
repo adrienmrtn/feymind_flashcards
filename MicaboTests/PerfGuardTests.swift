@@ -21,6 +21,16 @@ import XCTest
 /// présentations qui s'enchaînent) s'ajoute à la liste avec sa raison ; une apparition
 /// retardée ou une cascade se retire.
 final class PerfGuardTests: XCTestCase {
+    override func record(_ issue: XCTIssue) {
+        PerfVerdict.failure(in: name, issue)
+        super.record(issue)
+    }
+
+    override class func tearDown() {
+        PerfVerdict.write("PERF|bilan|PerfGuardTests|fini")
+        super.tearDown()
+    }
+
     // MARK: - Les sources
 
     /// Ce que d'autres lots réécrivent pendant le lot 10 : leurs fichiers sont relus à la fin
