@@ -151,7 +151,7 @@ struct LessonToolTile: View {
             .padding(.horizontal, 4)
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .v3Card(radius: MicaboRadius.md)
+            .v3Card(radius: V3Metric.radiusInner)
         }
         .buttonStyle(MicaboPressableButtonStyle(feedback: .soft))
         .overlay(alignment: .topTrailing) { badge }

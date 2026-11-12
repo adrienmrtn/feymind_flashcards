@@ -109,7 +109,7 @@ struct LessonIconTile: View {
     var body: some View {
         MicaboIconView(icon: icon, size: side * 0.62, tone: tone)
             .frame(width: side, height: side)
-            .background(V3Color.soft, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
+            .background(V3Color.soft, in: RoundedRectangle(cornerRadius: V3Metric.radiusTile, style: .continuous))
             .accessibilityHidden(true)
     }
 }

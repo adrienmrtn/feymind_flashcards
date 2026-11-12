@@ -94,17 +94,12 @@ enum RevisionModeAllowance {
     }
 }
 
-/// La petite pastille « PRO », dans le jaune du crayon sur son lavis, comme « Passer en Pro » :
-/// sur la tuile d'un outil qui est dans Pro et fermé (`LessonToolGrid`).
+/// La petite pastille « PRO » : la même que « Passer en PRO » sur la Home (`V3ProBadge`), en
+/// capitales droites sur le jaune, à la taille d'un coin de tuile — sur un outil qui est dans
+/// Pro et fermé (`LessonToolGrid`).
 struct ProBadge: View {
     var body: some View {
-        Text(verbatim: "PRO")
-            .font(V3Font.caption)
-            .foregroundStyle(V3Color.yellow)
-            .padding(.horizontal, 7)
-            .padding(.vertical, 2)
-            .background(V3Color.yellowWash, in: Capsule())
-            .overlay(Capsule().strokeBorder(V3Color.yellow.opacity(0.35)))
+        V3ProBadge(nil, size: 12)
             .accessibilityLabel(Text(verbatim: "Pro"))
     }
 }

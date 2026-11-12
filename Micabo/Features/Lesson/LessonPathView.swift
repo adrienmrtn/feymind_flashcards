@@ -49,6 +49,8 @@ struct LessonPathView: View {
     @State private var renaming = false
     @State private var newTitle = ""
     @State private var confirmsDelete = false
+    /// La suppression est demandée : elle se fait quand l'écran a quitté l'image.
+    @State private var deletesOnLeave = false
     @State private var confirmsReset = false
     /// Un palier franchi : des confettis, une fois.
     @State private var celebration = 0
@@ -130,6 +132,7 @@ struct LessonPathView: View {
         .navigationBarBackButtonHidden(true)
         .enablesSwipeBack()
         .task { await open() }
+        .onDisappear(perform: deleteIfAsked)
         .onChange(of: builder.writing) { _, _ in session.reload() }
         // Une conversion finie ailleurs, une synchro qui apporte le chemin ou la progression.
         .onChange(of: course.pathData) { _, _ in session.reload() }
@@ -558,14 +561,19 @@ struct LessonPathView: View {
         Haptics.medium()
     }
 
+    /// « Supprimer » : l'écran se replie d'abord. La leçon s'efface quand il a disparu
+    /// (`deleteIfAsked`), pas au bout d'un délai : un écran encore à l'image lirait un modèle
+    /// supprimé.
     private func deleteLesson() {
+        deletesOnLeave = true
         dismiss()
-        // La leçon s'efface une fois son écran replié : un écran encore à l'image lirait un
-        // modèle supprimé.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-            try? CourseRepository.delete(course, in: modelContext)
-            CourseLedger.noteChange()
-        }
+    }
+
+    private func deleteIfAsked() {
+        guard deletesOnLeave else { return }
+        deletesOnLeave = false
+        try? CourseRepository.delete(course, in: modelContext)
+        CourseLedger.noteChange()
     }
 }
 

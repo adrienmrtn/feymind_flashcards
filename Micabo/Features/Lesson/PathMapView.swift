@@ -295,7 +295,7 @@ struct PathNode: View {
         } else if readiness == .failed && state != .done {
             Image(systemName: "arrow.clockwise")
                 .font(.system(size: 22, weight: .bold))
-                .foregroundStyle(state == .current ? V3Color.onAccent : V3Color.pink)
+                .foregroundStyle(state == .current ? V3Color.onAccent : V3Color.red)
         } else {
             switch state {
             case .done:
@@ -371,7 +371,7 @@ struct PathStepTitle: View {
                 Button(action: onRetry) {
                     Label(L10n.t("lesson.path.retry", locale: .resolved()), systemImage: "arrow.clockwise")
                         .font(V3Font.caption)
-                        .foregroundStyle(V3Color.pink)
+                        .foregroundStyle(V3Color.red)
                 }
                 .buttonStyle(MicaboPressableButtonStyle())
             } else if readiness == .writing && state != .done {
