@@ -1,0 +1,46 @@
+<!doctype html><meta charset="utf-8">
+<!--
+  Des propositions d'icône avec le nouveau Mika : au repos, la bouche ouverte, la tête et le
+  crayon entiers, les tentacules coupés par le bas. A = fond marine en dégradé radial,
+  B = jaune, C = bleu profond. **Aucune n'est installée** : l'icône de l'app n'a pas encore
+  changé (`node design/mika-v3/export.js --icone A` installera celle qui sera retenue).
+
+  Le cadrage : le dessin (viewBox « 10 -8 400 400 ») est rendu à 106 % de la largeur de
+  l'icône, décalé de −6 % en x et de +4,67 % en y.
+
+  Sans paramètre : les trois propositions côte à côte, aux coins arrondis (pour regarder).
+  `?v=A&s=1024` : une seule, carrée, sans coins arrondis ni transparence, à la taille demandée
+  (ce que `export.js` photographie).
+-->
+<body style="margin:0;background:#3A3D48">
+<div id="wall" style="display:flex;gap:28px;padding:28px"></div>
+<script src="mika.js"></script>
+<script>
+const variants = {
+  A: ['A · marine', 'background:radial-gradient(circle at 50% 36%, #22357A 0%, #0B0F1C 72%)', { body: '#5C88FF', shade: '#3F6BE8' }],
+  B: ['B · jaune', 'background:#FFC531', { body: '#3870FE', shade: '#2A5BE0' }],
+  C: ['C · bleu profond', 'background:linear-gradient(#2F58E0,#152E8C)', { body: '#8FB0FF', shade: '#6A91FF' }],
+};
+// Une icône de `side` pixels : le fond, puis Mika à 106 %, décalé de (−6 %, +4,67 %).
+function icon(key, side, radius) {
+  const [, background, colors] = variants[key];
+  const art = mika(Object.assign({ size: side * 318 / 300, noShadow: true, viewBox: '10 -8 400 400', mouth: 'open' }, colors));
+  return `<div id="icone" style="width:${side}px;height:${side}px;border-radius:${radius}px;overflow:hidden;${background};position:relative">`
+    + `<div style="position:absolute;left:${-side * 18 / 300}px;top:${side * 14 / 300}px">${art}</div></div>`;
+}
+const query = new URLSearchParams(location.search);
+const wall = document.getElementById('wall');
+if (query.get('v')) {
+  // L'export : une seule icône, posée dans le coin de la page.
+  document.body.style.background = '#000';
+  wall.style.cssText = 'padding:0';
+  wall.innerHTML = icon(query.get('v'), +(query.get('s') || 1024), 0);
+} else {
+  for (const key of Object.keys(variants)) {
+    const cell = document.createElement('div');
+    cell.innerHTML = icon(key, 300, 66) + `<div style="color:#fff;font:700 14px sans-serif;text-align:center;margin-top:8px">${variants[key][0]}</div>`;
+    cell.firstChild.removeAttribute('id');
+    wall.appendChild(cell);
+  }
+}
+</script>

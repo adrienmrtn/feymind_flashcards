@@ -185,161 +185,145 @@ L'onboarding (ses écrans et leur ordre), le paywall et les achats, les prix, le
 jour et nuit, Mika et ses humeurs. Chaque nouvelle phrase existe dans **toutes** les langues
 de la plateforme.
 
-## 9. Mika hors du fond bleu, et un seul langage pour les onglets
+## 9. Mika, dessiné dans le code — et un seul langage pour les onglets
 
-« La mascotte est toujours sur fond bleu. » Les grandes apps d'étude à mascotte font l'inverse :
-la mascotte vit **sur le fond de l'app** (Knowunity la pose au centre de sa page, sa bulle
-au-dessus, et sur ses feuilles ; les autres la font sortir d'une carte claire ou la montrent
-dans un écran vide), et la couleur de marque reste aux boutons, aux barres, aux pastilles. La
-règle de Micabo, écrite aussi en tête de `MikaMascot.swift` :
+**Le personnage (lot 10).** Verdict de l'élève sur le build 173 : « la mascotte est pas belle »,
+« mal incarné », « pas fluide ». La pieuvre noire en 3D, livrée en images fixes, est partie.
+Mika est un petit personnage **plat et vectoriel, dessiné par SwiftUI**, que l'utilisateur a
+validé (« j'aime bien le nouveau Mika ») : un corps bleu, de grands yeux blancs aux pupilles
+d'encre, des joues roses, cinq tentacules (les deux de l'arrière un cran plus sombres), et le
+bras droit qui tient le crayon jaune, une étincelle à côté de la mine.
 
-**Le nouveau Mika** : une petite pieuvre noire brillante, cinq tentacules et le bras qui tient
-le crayon jaune à l'étincelle (blanche à liseré bleu, lisible sur tous les fonds). Au build 166,
-il était en entier partout, tout petit, posé sur des boutons et des listes, et il ramait. La
-règle, écrite aussi en tête de `MikaMascot.swift` :
+- **La géométrie fait foi dans `design/mika-v3/mika.js`** (la fonction `mika(o)` : un viewBox
+  de 400 × 400, les pieds posés vers y = 344 ; la tête est un chemin de quatre cubiques, les
+  tentacules des traits ronds de 46). `apercu.html` montre les douze expressions sur le marine
+  puis sur le thème clair ; `mika-expressions.png` en est la planche. L'iPhone retrace ce
+  dessin trait pour trait (`MikaArt.swift`), et un test compare les deux, pixel pour pixel
+  (`testTheDrawingMatchesTheMockup`).
+- **Les couleurs suivent le thème** (`MikaPalette`) :
 
-1. **En demi, par défaut dans l'app** (`MikaPeek`) : le haut du corps — la tête, les yeux, le
-   bras au crayon, la naissance des tentacules — **dépasse d'un bord**, coupé net par lui, comme
-   quelqu'un qui passe la tête. Trois tailles, une par rôle : `MikaPeek.card` (92 points) dans
-   une carte, `.line` (100) sur la ligne d'une question, `.hero` (124) pour l'accueil de Home.
-   Il est déjà là quand l'écran arrive (il ne monte plus de derrière son bord), fait son
-   geste une fois, puis garde le sourire.
-   - **Derrière le haut du bouton** d'une carte : le plan du jour de Home, la journée de
-     Concentration (même taille, même retrait de 8 points depuis le bord droit) ;
-   - **au bas d'une carte**, à droite, coupé par elle : la série du Profil, « Aucun examen » du
-     Calendrier, l'en-tête du paywall, les cartes du tuteur et du scanner, la feuille des
-     supports, l'aperçu de la leçon offerte, la connexion ;
-   - **au-dessus de la barre de saisie** : le nouvel élève sur Home, sa bulle à côté ;
-   - **sur une ligne** : les questions de l'onboarding (sa bulle à côté), l'essai gratuit, la
-     preuve, l'en-tête d'une leçon ; sur le bleu du lancement, derrière le panneau (la seule
-     scène bleue de Mika).
-2. **En entier, rarement, aux moments qui comptent** (`MikaMascot`, 120 à 160 points, debout sur
-   le papier, une ombre douce dessous) : l'accueil de l'onboarding (« Enchanté »), le plan
-   révélé et sa préparation, la fête de l'objectif du jour et de la série, la fin d'une leçon,
-   d'un quiz, d'un paquet de cartes, d'une récitation, le résultat d'un examen blanc, les écrans
-   vides (Leçons, examens, quiz, conversation avec Mika), l'attente d'une génération (leçon,
-   examen blanc, entraînement, emploi du temps). Là il fait coucou, fait la fête, écrit — puis s'arrête, souriant.
-3. **En avatar** (`MikaAvatar`, son visage souriant dans un rond clair, fixe) partout où il ferait moins de
-   40 points : les messages du tuteur, les retours d'une question, la note d'une leçon, la
-   série, l'emploi du temps lu.
-4. **Retiré** là où il n'apportait rien : la journée vide de l'agenda (une icône de
-   calendrier), « Scanne ton emploi du temps » (l'appareil photo : Mika est déjà sur la carte
-   d'examen juste au-dessus), la préparation d'un examen blanc. Jamais deux fois sur un écran,
-   jamais sur un bouton, jamais dans une liste.
-5. **Le papier** : crème et blanc le jour, graphite la nuit. Mika y est lisible partout grâce
-   à ses images mêmes (ci-dessous) ; la nuit, une lumière douce derrière lui en plus. Des
-   dégradés, pas de flou.
+  | | Marine (défaut) | Clair |
+  | --- | --- | --- |
+  | Corps | `#5C88FF` | `#3870FE` |
+  | Tentacules arrière | `#3F6BE8` | `#2A5BE0` |
+  | Disque de l'avatar et du nid | `#171C2C` | `#E4ECFF` |
 
-**Lisible et attachant (build 169 : « noir sur noir on voit pas bien la pieuvre », « il est pas
-assez mignon »)** — sans changer le personnage, tout est cuit dans ses images par
-`scripts/mika-assets.py`, donc gratuit pendant l'animation :
+  Dans les deux : l'encre `#14182B` (pupilles, bouche, mine), les joues `#FF8FA8` à 80 %, le
+  crayon `#F7B41F`, la gomme `#E3596C`, le bois `#F6DDB6`, l'étincelle `#F7B41F`, le reflet
+  blanc à 26 %. L'ombre au sol (une ellipse plate) est une option (`shadow: true`). Plus de
+  lueur de nuit ni de joues « cuites » dans des images.
+- **Plus aucune image d'expression** : le catalogue `Assets.xcassets/Mika`, `MikaArt.swift`
+  généré, `scripts/mika-assets.py` et le workflow `mika-encode.yml` sont retirés (l'ancien kit
+  reste sur la branche `assets/mika-kit`). Une seule image vient encore du dessin, exportée du
+  SVG par `node design/mika-v3/export.js` : le Mika de l'écran de lancement (`LaunchMika`).
+- **L'icône de l'app n'a pas changé** : elle porte encore l'ancien Mika, comme la marque posée
+  dans l'app (`BrandMark`). Trois propositions avec le nouveau sont dessinées dans
+  `design/mika-v3/icone.html` ; aucune n'a été retenue. Le jour où l'une l'est,
+  `node design/mika-v3/export.js --icone A` remplace `AppIcon` (1024 px, sans transparence) et
+  `BrandMark`.
 
-- **Une lueur claire** autour de lui (blanche, 36 %, douce) : invisible sur la crème et le blanc
-  du jour, elle détache le corps noir du graphite la nuit et du bleu ; **une lumière de
-  contour** froide sur le haut et la gauche du corps : le noir brillant a du relief ;
-- **des joues roses** discrètes sous les yeux, repérées image par image (les yeux blancs dans
-  le noir de la tête) et lissées dans le temps : elles suivent la tête sans trembler, ne
-  touchent jamais les yeux ;
-- **il finit sur un sourire** : après un geste (coucou, clin d'œil, fête), il passe en fondu
-  à sa pose souriante, les yeux plissés (`MikaMood.rest`) ;
-  au repos (`.idle`), il sourit aussi ; l'avatar est son visage souriant, cadré serré ;
-- **le demi montre le visage entier** : `MikaPeek` coupe sous les joues et le haut des
-  tentacules (260 unités du canevas au lieu de 236), jamais à ras des yeux ;
-- **les écrans vides et les questions** prennent un clin d'œil ou un regard curieux, plus une
-  réflexion qui tournait sans fin (écouter, réciter, l'examen d'une nouvelle leçon, un quiz
-  raté, l'emploi du temps vide).
+**La règle des deux places** (écrite aussi en tête de `MikaMascot.swift`). Mika parle à la
+première personne, et il n'a que deux places :
 
-**Fluide à coup sûr, sans saut (lot 9, après le build 170 : « il faut pas que tu fasses Mika sauter », « mal
-incarné », « pas fluide, c'est chiant »)** — le moteur (`MikaCore`, `MikaStage`) :
+1. **La bulle** : un petit Mika en entier (76 points) à gauche, sa bulle à droite, en haut
+   de l'écran (`MikaAsk`). C'est lui qui pose les questions du parcours, propose la séance sur
+   Home, présente l'offre.
+2. **Le moment** : un grand Mika en entier (170 à 240 points), au centre : il se présente,
+   prépare le plan, fête une réussite, attend une génération, tient un écran vide. Vectoriel,
+   il est net à toutes les tailles.
 
-- **Ce qui n'allait pas** (mesuré sur le kit, `scripts/mika-assets.py` lit les mêmes images) :
-  les vidéos du lot 7 tournaient à 24 images par seconde dans une interface à 60/120 Hz :
-  chaque image restait à l'écran pendant 5 rafraîchissements, puis Mika sautait d'un coup à la
-  suivante. Sur un Mika de 150 points, le centre de sa silhouette avançait **jusqu'à 21 points
-  d'une image à l'autre** dans le saut (`saut`), 19 dans la fête (`celebration`), 62 dans
-  l'apparition (qui tombait du haut) et 6 dans la surprise — des à-coups visibles quel que soit
-  le décodeur, et justement les sauts que l'élève ne voulait plus. Les gestes calmes (coucou,
-  clin d'œil, regard, repos) ne bougeaient presque pas le corps (0,2 à 0,7 unité du canevas par
-  image) : seul le visage changeait. Et le passage pose fixe → vidéo → pose fixe pouvait
-  clignoter (deux images différentes, un lecteur qui démarre).
-- **Décision** : **plus aucune vidéo** (2,8 Mo de `.mov` et 2,3 Mo de premières images retirés).
-  Aucun clip ne passait le contrôle image par image : la fête et le saut sont des sauts, et les
-  gestes calmes se refont mieux en fondus. **Mika est une image fixe nette à chaque instant**
-  — l'expression du moment, à la définition du kit (2 pixels par unité, net jusqu'à 220 points
-  sur un iPhone 3x) — et **tout mouvement est natif**, interpolé par Core Animation à la cadence
-  de l'écran (120 Hz sur ProMotion), avec les courbes de `MicaboMotion` :
-  - **le fondu enchaîné** entre deux expressions (coucou → sourire, neutre → clin d'œil →
-    sourire, réflexion ↔ écriture pendant une attente) : la nouvelle se pose sur l'ancienne
-    restée opaque, puis l'ancienne s'efface — le corps, commun aux deux, ne pâlit jamais. Les
-    expressions qui se suivent partagent leur silhouette à plus de 80 % (test
-    `testSuccessiveExpressionsShareTheirBody`) ; la surprise, au corps trop différent, se garde ;
-  - **une respiration** d'échelle de 1,5 %, ancrée sous ses tentacules, une fois à l'arrivée ;
-  - **un petit écrasement** de 3 % qui revient (à l'appui, à une bonne réponse, à la fête) ;
-    à l'appui, un clin d'œil, puis il revient ;
-  - **les étincelles de la fête** : des étoiles vectorielles à quatre branches, comme celle de
-    son crayon, qui grandissent une fois autour de lui, puis restent.
-  Jamais de saut, de rebond ni de translation de Mika : il ne monte plus de derrière son bord,
-  ne surgit plus de petit (l'accueil, les scènes du parcours), ne monte plus avec une question
-  (`onboardingAppear(rises: false)`), ne rebondit plus avec la carte de la fête ; au pied d'une
-  page, sa joie est un sourire, plus un bond (test `testNoMikaJumpsAnywhere`).
-- **Un geste, une fois** (`MikaMood.beats`), puis il garde sa pose ; seules la réflexion et
-  l'écriture alternent leurs deux images, le temps d'une attente réseau. **Un seul Mika en
-  mouvement** (`MikaStage`) : le dernier arrivé joue, le précédent se pose sur sa fin. « Réduire
-  les animations » garde les fondus (ce sont des fondus) et retire respiration, écrasement et
-  croissance des étincelles ; `\.mikaStill`, `frozenAt`, les tests : l'expression fixe.
+Jamais deux fois sur un écran, jamais sur un bouton, jamais dans une liste. **Trois
+cadrages** : en entier (`MikaMascot(mood:size:)`, `size` est le côté de la fenêtre
+`-10 -30 420 420` de la maquette, où son corps tient les trois quarts de la hauteur) ; en demi
+(`MikaPeek`), du haut de la tête jusque sous les joues et la bouche, coupé net à y = 248 par le
+bord où il se pose, sans montée — pour une carte ou une ligne dont il dépasse ; en avatar
+(`MikaAvatar`), le visage en gros plan dans un disque de la couleur d'une surface, partout où
+il ferait moins de 40 points. **Jamais directement sur un fond bleu**, où il disparaîtrait :
+`MikaMascot(…).mikaBackdrop(.disc)` glisse un disque derrière lui, `backdrop: .blue` lui donne
+un liseré blanc d'autocollant.
 
-**Mieux incarné** — ce que fait la mascotte de Knowunity, appliqué à Mika sans rien lui
-emprunter : elle est **grande et au centre des moments clés** (l'accueil la montre immense,
-coupée par le bas de l'écran ; « on prépare tout » et « c'est prêt » la posent au centre, au
--dessus du titre), **son expression change avec ce qui se passe** (les yeux qui sourient, qui
-regardent, la fête), **elle parle par sa bulle ou le titre juste à côté**, et elle est **toujours
-à la même place et à la même taille pour le même rôle** (dans un quiz, elle passe la tête
-au-dessus du panneau de réponse). Pour Mika :
+**Le moteur : une pose est un vecteur.** Ce qui n'allait pas avant : des images (puis des
+vidéos à 24 images par seconde) dans une interface à 120 Hz, et un fondu entre deux images
+pour tout mouvement. Maintenant :
 
-| Rôle | Forme, taille | Expression |
-| --- | --- | --- |
-| Premier écran (bleu) | demi, `min(56 % de la largeur, 220)`, au centre, derrière le panneau | coucou → sourire |
-| Accueil « Bienvenue » | entier, 190 | coucou → sourire |
-| Questions du parcours | demi `.line` (100), sa bulle à côté | l'humeur de la question ; un sourire à chaque réponse |
-| Plan révélé, fête de l'objectif, fin du minuteur, série | entier, 150 à 160 | fête (sourire + étincelles) |
-| Fin d'un quiz, d'un paquet de cartes, d'une récitation | entier, 150 | fête (≥ 80 %), joie (≥ 50 %), clin d'œil (en dessous) |
-| Résultat d'un examen blanc | entier, 124, à côté du score | fête, ou clin d'œil « pas encore » |
-| Retour d'une réponse de quiz | demi `.card` (92), au-dessus du bord du panneau, à droite, en fondu une fois le panneau posé | joie (bonne), déçu (mauvaise) |
-| Attente d'une génération, et son échec | entier, 150, au même endroit | écriture ↔ réflexion ; triste |
-| Écrans vides | entier, 120 | coucou, clin d'œil, attentif, sommeil selon l'écran |
-| Cartes (Home, Concentration, Profil, Calendrier, paywall…) | demi `.card` / `.hero` | inchangé |
-| Messages, rangées | avatar (< 40) | son visage souriant |
+- **Une pose** (`MikaPose`) est une quarantaine de nombres : l'ouverture des yeux, les yeux
+  rieurs, les yeux écarquillés, le clin d'œil, le regard (x, y), la courbure, la largeur et
+  l'ouverture de la bouche, la bouche ronde, le penché, l'écrasement, le crayon (tenu, angle,
+  pivot, prise), l'étincelle, ce qui flotte autour de lui (les trois points, les traits
+  d'écriture, les « z », les confettis), le clignement, et ses deux bras, chacun en cinq points
+  de contrôle rangés en polaire autour de l'épaule (le bras tourne autour d'elle au lieu de se
+  raccourcir en ligne droite).
+- **`MikaFigure` est `Animatable`** : sa pose est son `animatableData`. Quand elle change dans
+  une animation, SwiftUI calcule la pose intermédiaire à chaque image et le `Canvas` se
+  redessine, à la cadence de l'écran, avec les courbes de `MicaboMotion`. Passer d'une humeur à
+  l'autre est une **métamorphose** : l'ellipse blanche de l'œil s'aplatit pendant qu'un trait
+  d'encre apparaît puis se courbe (vers le haut pour un œil rieur, vers le bas pour le sommeil ;
+  le sourire, le clin d'œil et le clignement passent par le même mécanisme), la bouche s'ouvre
+  depuis son trait, le crayon rentre dans le poing quand le bras se range.
+- **Coût nul au repos** : rien ne se redessine tant que la pose ne change pas. Pas d'horloge
+  d'images, pas de minuterie hors du clignement.
+- **Un geste, une fois, sur place** (`MikaMood.beats` : une suite de poses et de courbes) :
 
-**Changer de Mika, en une commande** : `python3 scripts/mika-assets.py <dossier du kit>
-[--sheet controle.jpg]` refait toutes ses images (expressions, avatar, `MikaArt.swift`, avec la
-lueur, la lumière de contour et les joues) ; sur GitHub, pousser le kit sur `assets/mika-kit`
-puis `gh workflow run mika-encode.yml --ref <branche> -f target=<branche>` (un Linux suffit,
-la planche de contrôle part sur `assets/mika-build`). Une expression manquante arrête le script
-avec la liste attendue ; une expression nouvelle demande sa ligne dans `MikaStill`.
+  | Humeur | Geste | Pose qui reste |
+  | --- | --- | --- |
+  | `wave` | le bras gauche se lève, balance deux fois, revient | le repos |
+  | `celebrate` | les deux bras en l'air (le seul rebond), une gerbe de confettis de 1,2 s | les bras levés, les yeux rieurs |
+  | `happy` | un petit écrasement de joie | les yeux rieurs, la bouche ouverte |
+  | `wink` | l'œil droit se ferme en arc, la tête penche un peu | le repos |
+  | `surprise` | les yeux s'écarquillent, la bouche s'arrondit | la surprise |
+  | `sad`, `shake` | le regard tombe, le crayon se range ; « non » : la tête penche d'un côté puis de l'autre | la tristesse |
+  | `sleep` | les yeux se ferment, « z z » | le sommeil |
+  | `look`, `appear` | le regard de côté ; l'arrivée regarde puis sourit | attentif ; le repos |
+  | `proud` | le crayon se lève, les yeux rient | la fierté |
+  | `think`, `write` | les deux **attentes**, les seules boucles : ses trois points pulsent ; le crayon oscille près de sa tête | tant que l'humeur dure |
 
-**Cahier des charges d'un futur Mika** (à donner à l'illustrateur ou à l'outil) :
+  Aucun geste ne le déplace : le penché fait glisser la tête sans qu'aucun point ne monte ni ne
+  descende, l'écrasement part du sol (`MikaArt.bodyTransform`, test
+  `testNoGestureMovesMikaUpOrDown`). Pas de saut, pas de translation, pas d'apparition qui
+  grandit (test `testNoMikaJumpsAnywhere`, qui relit les sources de l'app).
+- **À l'appui** (`reactsToTap`) : un écrasement de 3 % et un clin d'œil, puis il revient.
+- **La vie au repos** : un clignement toutes les 3 à 6 secondes (au hasard), seulement pour un
+  Mika de 64 points et plus, les yeux ouverts, visible à l'écran.
+- **Un seul Mika en mouvement** (`MikaStage`) : le dernier qui commence un geste pose le
+  précédent sur la fin du sien, et personne ne cligne pendant qu'un autre joue. **Hors écran,
+  tout s'arrête** (la vue disparaît, ou sort de ce que sa page montre) : le metteur en scène
+  (`MikaDirector`) pose Mika d'un coup sur la fin de son geste, et plus rien ne repart ; de
+  retour, une attente reprend, un geste déjà joué ne se rejoue pas.
+- **« Réduire les animations »** : ni geste, ni boucle, ni clignement ; un changement d'humeur
+  est un fondu bref vers l'expression. `\.mikaStill`, `frozenAt`, `animates: false`, les tests :
+  l'expression fixe de l'humeur (`MikaMood.pose`), celle des douze dessins de la maquette.
 
-1. **Le mieux : une animation vectorielle pilotée par l'app.** Un fichier **Rive (`.riv`)**
-   avec une *state machine* : des entrées `mood` (nombre : repos, coucou, joie, fête,
-   réflexion, écriture, clin d'œil, surprise, triste, sommeil, attentif) et `tap` (déclencheur),
-   un état de repos qui respire à peine, des transitions mélangées entre états (pas de coupe),
-   **aucun déplacement du personnage** (pas de saut ni d'entrée par un bord : les pieds restent
-   au sol), le personnage centré, tentacules au bas du cadre, 60 i/s ou plus (Rive interpole à
-   la cadence de l'écran). À défaut, un **Lottie (JSON)** par geste, 60 i/s, même règles. Couleurs
-   à plat ou dégradés simples, contour lisible sur crème `#FAF6EE`, graphite `#1C1E26` et bleu
-   `#3870FE`.
-2. **Sinon : des images fixes.** Un PNG transparent de **1024 × 1024 px** par expression,
-   nommé `mika-<expression>.png` : `neutre`, `sourire`, `clin-doeil`, `coucou`, `surprise`,
-   `reflexion`, `ecriture`, `triste`, `sommeil` (et, si possible, `regard-gauche`,
-   `regard-droite`, `fete` — les bras levés, les pieds au sol). **Le même corps au même endroit
-   dans toutes** (seuls le visage, le bras du crayon et les accessoires changent), le bas des
-   tentacules vers y = 970 px, la tête centrée vers x = 510 px, 40 px d'air au moins sur les
-   bords : c'est ce qui rend les fondus invisibles. Fond transparent, pas d'ombre au sol (l'app
-   la dessine).
-3. **Une animation en images** (si ni Rive ni Lottie) : une séquence PNG par geste à **60 i/s**,
-   même canevas et même corps que les images fixes, le personnage au sol du début à la fin, la
-   première et la dernière image identiques à une expression fixe. Le moteur actuel ne les lit
-   pas : ce serait un nouveau lecteur, à faire seulement si elles sont parfaites image par image.
+**Ajouter une humeur.**
+
+1. **La dessiner dans la maquette** : une ligne dans la table `set` de
+   `design/mika-v3/apercu.html` (et, s'il faut une forme nouvelle, dans `mika.js`), puis
+   `node design/mika-v3/export.js` pour refaire la planche.
+2. **Sa pose** (`MikaArt.swift`) : un `static let` de `MikaPose`, écrit depuis le repos
+   (`idle.with { $0.eyeHappy = 1 … }`) avec les nombres de la maquette. Si elle demande un trait
+   que les poses n'ont pas (un accessoire, une autre bouche), ajouter **un nombre** à
+   `MikaPose.Lane` (et à `count`), son accesseur, et le dessiner dans `MikaArt.scene` de façon
+   qu'il s'interpole : de 0 (absent) à 1 (entier), jamais « oui ou non ».
+3. **Son humeur** (`MikaMascot.swift`) : un cas de `MikaMood`, sa `pose`, et son geste dans
+   `beats` — une suite de `MikaBeat(pose, courbe)` qui finit sur la pose qui reste. Tout se
+   passe sur place : ni `tilt` de plus de 3 degrés, ni `squash` de plus de 3 %.
+4. **Les tests** : l'ajouter à `MikaMockup.expressions` si la planche la porte, et ses nombres
+   à `testThePosesAreTheMockupOnes`. Les tests généraux la couvrent d'office : elle a une pose,
+   elle s'interpole avec toutes les autres, aucun temps de son geste ne déplace Mika, rien ne
+   tourne hors écran.
+5. **La regarder** sur les planches `mika10-*` (`MikaRenderTests`) : en entier, en demi, sur le
+   marine et le clair, à côté de la maquette.
+
+**L'écran de lancement et la première image.** L'écran de lancement (`UILaunchScreen` dans
+`Info.plist`) est le marine `#0B0F1C` (`LaunchBackground`, le même dans les deux thèmes) et
+Mika au centre de l'écran (`LaunchMika`, 200 points). La première image de l'app
+(`LaunchCurtain` dans `RootView`) repose le même fond et la même image au même endroit, puis
+fond sur l'écran qui suit (test `testTheLaunchScreenAndTheFirstFrameMatch`).
+
+**Les planches** (`MikaRenderTests`, rendus `mika10-*`) : la maquette au-dessus du même tableau
+dessiné par l'app, avec l'écart en pixels sous chaque dessin ; chaque humeur en entier et en
+demi ; les tailles 36, 84, 150, 240 et 300, les demis et les avatars ; les métamorphoses et les
+gestes image par image ; la gerbe de confettis ; les fonds (liseré, disque, arabe) ; l'écran de
+lancement ; Mika à sa place dans un quiz, un écran vide, une attente.
 
 **Le même langage dans tous les onglets** :
 
@@ -353,10 +337,8 @@ avec la liste attendue ; une expression nouvelle demande sa ligne dans `MikaStil
 - **Le grand bouton** : bleu, texte blanc, un seul par écran.
 
 Home garde exactement sa hiérarchie et sa logique (§ 1, `HomeDay`, `StudyPlan`,
-`home_plan_tapped`) : seul le dessin change — le plan du jour sur une carte claire, l'examen
-dans sa tuile bleu pâle, le bouton bleu, Mika noir sur le blanc. La carte de l'examen du
-Calendrier, la journée de Concentration, la carte profil et les cartes de Leçons prennent les
-mêmes mesures.
+`home_plan_tapped`) : seul le dessin change. La carte de l'examen du Calendrier, la journée de
+Concentration, la carte profil et les cartes de Leçons prennent les mêmes mesures.
 
 ## 10. Lot 7 : toutes les matières, « Corriger un texte », chercher dans le contenu
 

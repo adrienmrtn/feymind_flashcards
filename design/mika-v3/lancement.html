@@ -1,0 +1,15 @@
+<!doctype html><meta charset="utf-8">
+<!--
+  Le Mika de l'écran de lancement : au repos, dans ses couleurs du marine, sans ombre, sur un
+  fond transparent (le fond de l'écran est la couleur `LaunchBackground` du catalogue, le
+  marine #0B0F1C dans les deux thèmes). 200 points de côté : `export.js` le photographie à
+  2 et 3 pixels par point pour `LaunchMika.imageset`.
+
+  La première image de l'app (`LaunchCurtain`) repose cette même image au même endroit.
+-->
+<body style="margin:0;background:transparent">
+<div id="mika" style="width:200px;height:200px"></div>
+<script src="mika.js"></script>
+<script>
+document.getElementById('mika').innerHTML = mika({ size: 200, noShadow: true, body: '#5C88FF', shade: '#3F6BE8' });
+</script>
