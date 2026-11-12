@@ -211,8 +211,7 @@ final class PolishLearnRenderTests: XCTestCase {
 
     private func modes(_ fixture: Fixture) -> some View {
         VStack(spacing: 18) {
-            RevisionModeHeader(mode: .listen, lessonTitle: fixture.course.title, tone: fixture.course.tone) {}
-            RevisionModeHeader(mode: .voice, lessonTitle: fixture.course.title, tone: fixture.course.tone, closesLeading: true) {}
+            RevisionModeHeader(mode: .export, lessonTitle: fixture.course.title, tone: fixture.course.tone, closesLeading: true) {}
             LessonToolGrid(dueCount: 5, isPro: false) { _ in }
                 .padding(.horizontal, MicaboSpacing.screen)
         }

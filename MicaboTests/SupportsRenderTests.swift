@@ -106,40 +106,6 @@ final class SupportsRenderTests: XCTestCase {
         }
     }
 
-    private func listen() -> some View {
-        ListenView(digest: Self.digest, icon: .globe, tone: .mint, language: "fr-FR")
-            .environment(\.homeStill, true)
-            .frame(height: 860)
-    }
-
-    private func voice() -> some View {
-        let prompt = VoiceRecallPrompt(question: "Quelle frontière coupe l'Europe en deux blocs ?", answer: "Le rideau de fer")
-        let judgement = SpokenAnswer.judge(heard: "c'est le rideau de fer", expected: prompt.answer)
-        return HStack(alignment: .top, spacing: 0) {
-            VStack(spacing: 0) {
-                RevisionModeHeader(mode: .voice, lessonTitle: "La guerre froide") {}
-                VoiceRecallCard(prompt: prompt, phase: .asking, tone: .mint, readsAloud: .constant(true))
-                    .padding(20)
-                Spacer(minLength: 0)
-            }
-            .frame(width: 393, height: 760)
-            VStack(spacing: 0) {
-                RevisionModeHeader(mode: .voice, lessonTitle: "La guerre froide") {}
-                VoiceRecallCard(prompt: prompt, phase: .listening, tone: .mint, level: 0.6, transcript: "c'est le rideau", readsAloud: .constant(true))
-                    .padding(20)
-                Spacer(minLength: 0)
-            }
-            .frame(width: 393, height: 760)
-            VStack(spacing: 0) {
-                RevisionModeHeader(mode: .voice, lessonTitle: "La guerre froide") {}
-                VoiceRecallCard(prompt: prompt, phase: .judged(heard: "c'est le rideau de fer", judgement: judgement), tone: .mint, readsAloud: .constant(true))
-                    .padding(20)
-                Spacer(minLength: 0)
-            }
-            .frame(width: 393, height: 760)
-        }
-    }
-
     private func mindMap() -> some View {
         let root = MindMap.build(Self.digest)
         return MindMapView(root: root, icon: .globe, expanded: [root.children[0].id])
@@ -172,8 +138,6 @@ final class SupportsRenderTests: XCTestCase {
         try render("sup-web", webLink())
         try render("sup-flashcards", width: 786, flashcards())
         try render("sup-modes", modesRow(course: course, session: session))
-        try render("sup-listen", listen())
-        try render("sup-voice", width: 1179, voice())
         try render("sup-mindmap", mindMap())
         try render("sup-export", export())
     }

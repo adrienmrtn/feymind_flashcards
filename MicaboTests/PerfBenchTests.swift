@@ -301,7 +301,6 @@ final class PerfBenchTests: XCTestCase {
             let session = LessonSession(course: try! firstLesson())
             return LessonCardsRun(session: session, cards: session.studyQueue(), onClose: {})
         }
-        try bench("ecouter", Options(ceiling: 500)) { ListenView(course: try! firstLesson()) }
         try bench("carte-mentale", Options(ceiling: 400)) { MindMapView(course: try! firstLesson()) }
         try bench("mika-lecon", Options(types: true, ceiling: 400, phrasesPerKeystroke: 14)) { LessonMikaView(course: try! firstLesson()) }
     }

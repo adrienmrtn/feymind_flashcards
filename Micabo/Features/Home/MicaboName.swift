@@ -2,7 +2,7 @@ import Foundation
 
 /// **Un nom par chose** (lot 10, HOME.md § 3).
 ///
-/// Une leçon s'ouvre sur ses Notes, son Quiz, ses Cartes, Mika, Écouter, À voix haute, sa Carte
+/// Une leçon s'ouvre sur ses Notes, son Quiz, ses Cartes, Mika, sa Carte
 /// mentale et sa Fiche PDF ; la Home propose Scanner un exo, Quiz éclair, Corriger un texte et
 /// Examen blanc ; la barre du bas dit Focus. Chaque chose a **un** nom, et chaque écran qui la
 /// nomme — une tuile, une puce, un titre, un libellé d'accessibilité — le lit ici. Un synonyme
@@ -16,8 +16,6 @@ enum MicaboName: String, CaseIterable {
     case quiz
     case cards
     case mika
-    case listen
-    case voice
     case mindMap
     case sheet
     case mock
@@ -33,8 +31,6 @@ enum MicaboName: String, CaseIterable {
         case .quiz: "lesson.nav.quiz"
         case .cards: "ios.home10.name.cards"
         case .mika: nil
-        case .listen: "ios.sup.modes.listen"
-        case .voice: "ios.sup.modes.voice"
         case .mindMap: "ios.sup.modes.mindMap"
         case .sheet: "ios.sup.modes.export"
         case .mock: "ios.cal.mock"
