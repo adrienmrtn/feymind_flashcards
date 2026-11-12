@@ -88,12 +88,14 @@ struct StoriesStepView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            pages
-            dots
-                .padding(.top, 6)
-            footer
+        GeometryReader { proxy in
+            VStack(spacing: 0) {
+                header
+                pages
+                dots
+                    .padding(.top, 6)
+                footer(bottom: OnbLayout.footerGap(safeBottom: proxy.safeAreaInsets.bottom))
+            }
         }
         .background(V3Color.bg.ignoresSafeArea())
         .sheet(isPresented: $showsLogin) {
@@ -164,24 +166,37 @@ struct StoriesStepView: View {
 
     /// Les quatre pages, côte à côte : on glisse de l'une à l'autre, page par page. Les rendus
     /// n'en posent qu'une.
+    ///
+    /// **La cause du « trop haut » du build 174.** Chaque page prenait la taille de son
+    /// conteneur par `.containerRelativeFrame([.horizontal, .vertical])`. Pour la hauteur, le
+    /// conteneur d'un `ScrollView` est sa zone visible *étendue sous les marges de sécurité* :
+    /// sur un iPhone à Dynamic Island, chaque page mesurait ~93 pt de trop. La colonne
+    /// (langue, page, points, boutons) débordait alors des deux côtés : le titre passait sous
+    /// l'encoche, « Continuer » collait au bord bas et « J'ai déjà un compte » sortait de
+    /// l'écran. Les rendus posaient une seule page, sans `ScrollView` : ils étaient justes.
+    /// Maintenant chaque page prend exactement la place que la colonne laisse au défilement,
+    /// lue par un `GeometryReader`.
     @ViewBuilder
     private var pages: some View {
         if still || previewPage != nil {
             StoryPage(story: story, exam: examName)
         } else {
-            ScrollView(.horizontal) {
-                HStack(spacing: 0) {
-                    ForEach(OnboardingStory.allCases) { story in
-                        StoryPage(story: story, exam: examName)
-                            .containerRelativeFrame([.horizontal, .vertical])
-                            .id(story)
+            GeometryReader { proxy in
+                ScrollView(.horizontal) {
+                    HStack(spacing: 0) {
+                        ForEach(OnboardingStory.allCases) { story in
+                            StoryPage(story: story, exam: examName)
+                                .frame(width: proxy.size.width, height: proxy.size.height)
+                                .id(story)
+                        }
                     }
+                    .scrollTargetLayout()
                 }
-                .scrollTargetLayout()
+                .scrollTargetBehavior(.paging)
+                .scrollPosition(id: $current)
+                .scrollIndicators(.hidden)
+                .scrollBounceBehavior(.basedOnSize, axes: .vertical)
             }
-            .scrollTargetBehavior(.paging)
-            .scrollPosition(id: $current)
-            .scrollIndicators(.hidden)
         }
     }
 
@@ -201,7 +216,8 @@ struct StoriesStepView: View {
 
     // MARK: Le pied
 
-    private var footer: some View {
+    /// Les deux boutons, au-dessus de la barre d'accueil avec la marge de tout le parcours.
+    private func footer(bottom: CGFloat) -> some View {
         VStack(spacing: 10) {
             V3Button(i18n.t(story.next == nil ? "ios.onb10.story.start" : "common.continue")) {
                 advance()
@@ -213,7 +229,7 @@ struct StoriesStepView: View {
         }
         .padding(.horizontal, OnbLayout.margin)
         .padding(.top, 16)
-        .padding(.bottom, 8)
+        .padding(.bottom, bottom)
     }
 
     /// « Continuer » : la page suivante ; à la dernière, le parcours.
@@ -336,7 +352,7 @@ struct StoryPage: View {
 
 /// **Le cadre « haut de téléphone »** : une surface qui se fond dans la page, des coins
 /// arrondis en haut, un filet ; le bas se dissout, et coupe ce qui dépasse.
-private struct StoryPhoneFrame<Content: View>: View {
+struct StoryPhoneFrame<Content: View>: View {
     private let content: Content
 
     init(@ViewBuilder content: () -> Content) {
@@ -381,7 +397,7 @@ private struct StoryPhoneFrame<Content: View>: View {
 // MARK: - Les aperçus
 
 /// Une tuile d'aperçu : la surface haute de l'app, posée dans le cadre.
-private struct StoryTile: ViewModifier {
+struct StoryTile: ViewModifier {
     var radius: CGFloat = V3Metric.radiusInner
 
     func body(content: Content) -> some View {
@@ -392,7 +408,7 @@ private struct StoryTile: ViewModifier {
 }
 
 /// Une pastille dans un ton : son lavis, son texte.
-private struct StoryTag: View {
+struct StoryTag: View {
     let text: String
     let tone: Color
 
@@ -487,7 +503,7 @@ private struct StoryQuizPreview: View {
 }
 
 /// **Page 3** : un énoncé dans un cadre de visée, puis ses étapes, jusqu'au résultat.
-private struct StoryScanPreview: View {
+struct StoryScanPreview: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
@@ -544,7 +560,7 @@ private struct StoryScanPreview: View {
 }
 
 /// Les quatre coins d'un cadre de visée.
-private struct StoryViewfinder: Shape {
+struct StoryViewfinder: Shape {
     var arm: CGFloat = 18
     var radius: CGFloat = 10
 

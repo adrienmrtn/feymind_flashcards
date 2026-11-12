@@ -283,34 +283,21 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
     }
 }
 
-// MARK: - Entrée en fondu
+// MARK: - Entrée
 
-/// Fait apparaître l'élément, décalé selon sa position dans l'écran.
+/// **Un élément de la page, posé tout de suite** (lot 11). C'était une cascade : chaque élément
+/// attendait `index × stagger` avant d'apparaître, ce que la direction artistique V3.3
+/// interdit (rien n'attend). La page arrive maintenant d'un bloc, avec la transition de
+/// l'écran ; les paramètres restent pour les appelants, et ne changent plus rien.
 private struct OnboardingAppear: ViewModifier {
-    let index: Int
-    var stagger: Double = OnboardingMotion.stagger
-    var rises = true
-
-    @State private var isVisible = false
-    @Environment(\.onboardingStill) private var still
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
     func body(content: Content) -> some View {
         content
-            .opacity(isVisible || still ? 1 : 0)
-            .offset(y: isVisible || still || reduceMotion || !rises ? 0 : OnboardingMotion.rise)
-            .onAppear {
-                let curve = MicaboMotion.resolved(OnboardingMotion.enter, reduceMotion: reduceMotion)
-                withAnimation(curve.delay(reduceMotion ? 0 : Double(index) * stagger)) {
-                    isVisible = true
-                }
-            }
     }
 }
 
 extension View {
     func onboardingAppear(index: Int, stagger: Double = OnboardingMotion.stagger, rises: Bool = true) -> some View {
-        modifier(OnboardingAppear(index: index, stagger: stagger, rises: rises))
+        modifier(OnboardingAppear())
     }
 }
 
