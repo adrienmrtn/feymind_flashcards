@@ -105,7 +105,7 @@ final class Mika9RenderTests: XCTestCase {
         use(.fr)
         try RenderGallery.render("mika9-quiz-right", night: true, quiz(right: true))
         try RenderGallery.render("mika9-quiz-wrong", night: true, quiz(right: false))
-        try RenderGallery.render("mika9-scores", height: 340, night: true, scores())
+        try RenderGallery.render("mika9-scores", width: 590, height: 340, night: true, scores())
         try RenderGallery.render("mika9-moments", night: true, moments())
         try RenderGallery.render("mika9-waits", night: true, waits())
         try RenderGallery.render("mika9-loading", height: 760, night: true,

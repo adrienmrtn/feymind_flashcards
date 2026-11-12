@@ -401,8 +401,9 @@ struct MikaPeek: View {
     static let window = CGRect(x: 99, y: 174, width: 312, height: 260)
     /// L'air au-dessus de lui (les étincelles d'une fête), en unités du canevas.
     static let headroom: CGFloat = 60
-    /// Ce que sa lueur déborde sur les côtés, en unités du canevas.
-    static let bleed: CGFloat = 48
+    /// Ce que sa lueur et les étincelles d'une fête débordent sur les côtés, en unités du
+    /// canevas.
+    static let bleed: CGFloat = 64
 
     static func height(for width: CGFloat) -> CGFloat { width * window.height / window.width }
 
