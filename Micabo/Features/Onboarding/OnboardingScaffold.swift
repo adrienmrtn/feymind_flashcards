@@ -161,7 +161,8 @@ extension EnvironmentValues {
 }
 
 /// **Mika au pied de la page**, debout à gauche du rond, à la hauteur du pouce : il fait
-/// coucou en arrivant, attend, puis saute de joie à chaque réponse. Il est un peu plus grand
+/// coucou en arrivant, attend, puis sourit à chaque réponse (un petit écrasement sur place,
+/// jamais un saut). Il est un peu plus grand
 /// que le rond, posé sur la même ligne : il accompagne, il ne cache rien.
 struct OnboardingFooterMika: View {
     var cheers: Int
@@ -169,24 +170,15 @@ struct OnboardingFooterMika: View {
     static let size: CGFloat = 64
 
     @State private var mood: MikaMood = .wave
-    @State private var hop = false
     @State private var settle: Task<Void, Never>?
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         MikaMascot(mood: mood, size: Self.size, reactsToTap: true, frame: .circle)
             .frame(width: Self.size, height: Self.size)
-            .offset(y: hop ? -10 : 0)
             .accessibilityHidden(true)
             .onAppear { calm(after: 2.2) }
             .onChange(of: cheers) { _, _ in
                 mood = .happy
-                if !reduceMotion {
-                    withAnimation(MicaboMotion.quick) { hop = true }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
-                        withAnimation(MicaboMotion.standard) { hop = false }
-                    }
-                }
                 calm(after: 1.6)
             }
     }
@@ -516,7 +508,8 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                 mood: mood ?? (step ?? model.step).mikaMood,
                 cheers: cheers
             )
-            .onboardingAppear(index: 0)
+            // Mika et sa bulle apparaissent en fondu, sur place : Mika ne monte pas.
+            .onboardingAppear(index: 0, rises: false)
 
             content()
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -705,6 +698,8 @@ struct OnboardingCenteredScroll<Content: View>: View {
 private struct OnboardingAppear: ViewModifier {
     let index: Int
     var stagger: Double = OnboardingMotion.stagger
+    /// Faux pour Mika : un fondu sur place, il ne monte pas.
+    var rises = true
 
     @State private var isVisible = false
     @Environment(\.onboardingStill) private var still
@@ -714,7 +709,7 @@ private struct OnboardingAppear: ViewModifier {
         content
             .opacity(isVisible || still ? 1 : 0)
             // Avec « Réduire les animations », l'élément apparaît sur place.
-            .offset(y: isVisible || still || reduceMotion ? 0 : OnboardingMotion.rise)
+            .offset(y: isVisible || still || reduceMotion || !rises ? 0 : OnboardingMotion.rise)
             .onAppear {
                 let curve = MicaboMotion.resolved(OnboardingMotion.enter, reduceMotion: reduceMotion)
                 withAnimation(curve.delay(reduceMotion ? 0 : Double(index) * stagger)) {
@@ -725,8 +720,8 @@ private struct OnboardingAppear: ViewModifier {
 }
 
 extension View {
-    func onboardingAppear(index: Int, stagger: Double = OnboardingMotion.stagger) -> some View {
-        modifier(OnboardingAppear(index: index, stagger: stagger))
+    func onboardingAppear(index: Int, stagger: Double = OnboardingMotion.stagger, rises: Bool = true) -> some View {
+        modifier(OnboardingAppear(index: index, stagger: stagger, rises: rises))
     }
 }
 

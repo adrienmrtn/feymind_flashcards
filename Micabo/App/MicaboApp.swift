@@ -61,9 +61,6 @@ struct MicaboApp: App {
             PurchasesBridge.configureIfPossible()
             // Le repère de cette installation, avant toute synchro : voir `LaunchGate`.
             LaunchGate.markInstallIfNeeded()
-            // Les vidéos de Mika, lues en tâche de fond (2,8 Mo, sans décodage) : son premier
-            // geste part sans attendre.
-            MikaClipStore.warm()
             // Avant la fin du lancement, comme iOS le demande : une notification qui ouvre
             // l'app doit trouver son délégué en place.
             UNUserNotificationCenter.current().delegate = ReminderPresenter.shared

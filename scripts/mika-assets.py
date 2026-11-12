@@ -2,46 +2,43 @@
 """
 **Mika, du kit à l'app iPhone — en une commande.**
 
-Changer de Mika (un kit plus mignon, de nouvelles poses) ne demande aucun code :
+Depuis le lot 9, Mika est une **image fixe nette** à chaque instant : ses expressions sont
+des PNG, et tout ce qui bouge (le fondu d'une expression à l'autre, la respiration de son
+arrivée, le petit écrasement d'un appui, les étincelles de la fête) est dessiné par SwiftUI à
+la cadence de l'écran (`MikaMascot.swift`). Plus aucune vidéo : une animation précalculée à
+24 images par seconde saccadait à côté d'une interface à 120 Hz.
 
-    1. Pousser le kit sur la branche d'assets (jamais dans l'app) :
-         sequences-png/<nom>/<nom>-000.png…   une animation, image par image, canevas 512 px,
-                                              24 images par seconde
-         images-fixes/mika-<pose>.png         les poses fixes, canevas 1024 px
-       (la disposition du kit d'origine, `seq/sequences-png/` et
-       `anim/mika-animations/images-fixes/`, est lue aussi).
-           git switch --orphan assets/mika-kit && cp -r <kit>/… . && git add -A
-           git commit -m "Kit de Mika" && git push origin assets/mika-kit
-    2. Lancer la fabrication sur un Mac de GitHub (l'encodage HEVC avec alpha n'existe que sur
-       macOS) :
-           gh workflow run mika-encode.yml --ref <branche> -f target=<branche>
-       Le workflow (`.github/workflows/mika-encode.yml`) lit le kit, lance ce script, encode
-       chaque animation avec `scripts/mika-encode.swift`, vérifie chaque vidéo en la relisant,
-       et commite tout sur `<branche>` ; ses planches de contrôle partent sur
-       `assets/mika-build`.
+Changer de Mika (un kit plus mignon, de nouvelles expressions) :
+
+    python3 scripts/mika-assets.py <dossier du kit> [--sheet controle.jpg]
+
+Le kit : `images-fixes/mika-<expression>.png` (PNG transparent, canevas carré de 1024 px,
+Mika debout au même endroit et à la même taille dans chaque image, le bas des tentacules vers
+y = 970), une image par nom de `STILLS` ci-dessous. La disposition du kit d'origine
+(`anim/mika-animations/images-fixes/`) est lue aussi ; les séquences d'animation, s'il y en a,
+sont ignorées. Sur GitHub : pousser le kit sur la branche `assets/mika-kit`, puis
+`gh workflow run mika-encode.yml --ref <branche> -f target=<branche>` (un Linux suffit).
 
 Ce que le script écrit (tout ce que l'app embarque de Mika) :
 
-- `Micabo/Resources/Assets.xcassets/Mika/Mika-<pose>.imageset` : les poses fixes, rognées
-  autour de lui, à 1,5 pixel par unité du canevas de 512 (un iPhone 3x pour un Mika de 170
-  points) ; `Mika-tete` : son visage souriant, pour l'avatar rond ;
-  `Mika-clip-<nom>.imageset` : la première image de chaque animation, au pixel près de la
-  vidéo — l'app la montre tant que la vidéo n'est pas prête (aucun flash, aucun saut) ;
-- `--frames <dossier>` : les images de chaque animation, traitées, rognées et agrandies comme
-  la vidéo les attend, et `clips.json` (ce que lit `mika-encode.swift`) ;
+- `Micabo/Resources/Assets.xcassets/Mika/Mika-<expression>.imageset` : chaque expression,
+  rognée autour de lui, à 2 pixels par unité du canevas de 512 (la définition du kit : un
+  iPhone 3x net jusqu'à un Mika de 220 points) ; `Mika-tete` : son visage souriant, pour
+  l'avatar rond ;
 - `Micabo/DesignSystem/Components/MikaArt.swift` : où chaque image se place dans le canevas de
-  512 du kit, pour que l'app superpose pose, première image et vidéo au pixel près.
+  512, pour que deux expressions se superposent au pixel près pendant leur fondu ;
+- `--sheet` : une planche de contrôle (chaque expression sur la crème, le graphite et le bleu).
 
-**Le traitement** (le même pour les poses, les images des animations et l'avatar, réglé dans
-les constantes plus bas) :
+**Le traitement** (le même pour toutes, réglé dans les constantes plus bas) :
 - une **lueur claire** autour de lui (blanche, douce) : invisible sur la crème et le blanc du
   jour, elle détache le corps noir du graphite la nuit et du bleu ;
 - une **lumière de contour** froide sur le haut et la gauche du corps : le noir brillant a du
   relief sur tous les fonds ;
-- des **joues roses**, discrètes, sous les yeux (repérés image par image, lissés dans le
-  temps) : seulement sur le noir du corps, jamais sur les yeux.
+- des **joues roses**, discrètes, sous les yeux (repérés dans l'image) : seulement sur le noir
+  du corps, jamais sur les yeux.
 
-    python3 scripts/mika-assets.py <dossier du kit> [--frames <dossier>]
+Une nouvelle expression (un nom absent de `STILLS`) demande aussi sa place dans `MikaStill`
+(`MikaMascot.swift`) ; une expression manquante arrête le script avec la liste attendue.
 
 Dépendances : Pillow et NumPy.
 """
@@ -53,16 +50,15 @@ import shutil
 import sys
 
 import numpy as np
-from PIL import Image, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Les animations que l'app joue, toutes à la cadence du kit (24 images par seconde).
-CLIPS = ["coucou", "saut", "surprise", "clin-doeil", "apparition", "celebration",
-         "reflexion", "ecriture", "triste", "regard", "sommeil"]
-STILLS = ["neutre", "coucou", "sourire", "sommeil", "reflexion", "surprise", "saut", "triste", "ecriture", "clin-doeil"]
-CANVAS = 512            # le canevas du kit, en unités
-SCALE = 1.5             # pixels par unité : poses, premières images et vidéos
+# Les expressions que l'app montre (`MikaStill`), toutes debout, les tentacules au sol.
+STILLS = ["neutre", "sourire", "clin-doeil", "coucou", "surprise", "reflexion", "ecriture",
+          "triste", "sommeil"]
+CANVAS = 512            # le canevas de référence, en unités (le kit est en 1024 px : 2 px par unité)
+SCALE = 2.0             # pixels par unité : la définition du kit, sans agrandissement
 PAD = 2                 # unités d'air autour de Mika (en plus de la lueur)
 # L'avatar : un carré du canevas autour de son visage (la tête, les yeux, le haut du crayon).
 HEAD = (118, 182, 394, 458)
@@ -151,33 +147,6 @@ def eyes(a):
     return (x1, y1, x2, y2)
 
 
-def smooth_eyes(found):
-    """Comble les images sans yeux lisibles (un clignement, un saut) et lisse le mouvement :
-    les joues suivent la tête sans trembler."""
-    n = len(found)
-    known = [i for i, e in enumerate(found) if e is not None]
-    if not known:
-        return found
-    filled = []
-    for i in range(n):
-        if found[i] is not None:
-            filled.append(np.array(found[i]))
-            continue
-        before = [k for k in known if k < i]
-        after = [k for k in known if k > i]
-        if before and after:
-            k0, k1 = before[-1], after[0]
-            t = (i - k0) / (k1 - k0)
-            filled.append(np.array(found[k0]) * (1 - t) + np.array(found[k1]) * t)
-        else:
-            filled.append(np.array(found[(before or after)[-1 if before else 0]]))
-    out = []
-    for i in range(n):
-        window = [filled[j] for j in range(max(0, i - 2), min(n, i + 3))]
-        out.append(tuple(np.mean(window, axis=0)))
-    return out
-
-
 def blush(a, eye):
     if eye is None or BLUSH_OPACITY <= 0:
         return a
@@ -201,7 +170,7 @@ def blush(a, eye):
 # MARK: - Le traitement
 
 def treat(a, eye):
-    """Joues, lumière de contour, lueur : une image du canevas (512 ou 1024 px de côté)."""
+    """Joues, lumière de contour, lueur : une image du canevas (1024 px de côté)."""
     w = a.shape[1]
     al = a[..., 3]
     out = blush(a, eye)
@@ -224,8 +193,7 @@ def alpha_box(a, threshold=2 / 255):
 
 
 def box_units(box, side, multiple=4):
-    """Le rectangle en unités entières du canevas, élargi de PAD et arrondi à `multiple` (les
-    côtés de la vidéo, ×1,5, restent pairs)."""
+    """Le rectangle en unités entières du canevas, élargi de PAD et arrondi à `multiple`."""
     k = side / CANVAS
     x0, y0 = int(np.floor(box[0] / k)) - PAD, int(np.floor(box[1] / k)) - PAD
     x1, y1 = int(np.ceil(box[2] / k)) + PAD, int(np.ceil(box[3] / k)) + PAD
@@ -257,12 +225,11 @@ def crop_units(a, box):
     return img(np.clip(out, 0, 1))
 
 
-def find_kit(kit):
-    seq = next((p for p in [os.path.join(kit, "sequences-png"), os.path.join(kit, "seq/sequences-png")] if os.path.isdir(p)), None)
-    stills = next((p for p in [os.path.join(kit, "images-fixes"), os.path.join(kit, "anim/mika-animations/images-fixes")] if os.path.isdir(p)), None)
-    if not seq or not stills:
-        sys.exit(f"kit incomplet dans {kit} : il faut sequences-png/ et images-fixes/")
-    return seq, stills
+def find_stills(kit):
+    for path in [os.path.join(kit, "images-fixes"), os.path.join(kit, "anim/mika-animations/images-fixes"), kit]:
+        if glob.glob(os.path.join(path, "mika-*.png")):
+            return path
+    sys.exit(f"aucune image mika-<expression>.png dans {kit} (ni dans images-fixes/)")
 
 
 def imageset(folder, name, image):
@@ -281,87 +248,79 @@ def rect(b):
     return f"CGRect(x: {b[0]}, y: {b[1]}, width: {b[2] - b[0]}, height: {b[3] - b[1]})"
 
 
+def sheet(path, images):
+    """La planche de contrôle : chaque expression sur la crème, le graphite et le bleu."""
+    cell = 220
+    backgrounds = [(250, 246, 238), (28, 30, 38), (64, 112, 240)]
+    out = Image.new("RGB", (cell * len(images), cell * len(backgrounds)), (255, 255, 255))
+    draw = ImageDraw.Draw(out)
+    for column, (name, image) in enumerate(images):
+        thumb = image.copy()
+        thumb.thumbnail((cell - 24, cell - 40), Image.LANCZOS)
+        for row, color in enumerate(backgrounds):
+            tile = Image.new("RGBA", (cell, cell), color + (255,))
+            tile.alpha_composite(thumb, ((cell - thumb.width) // 2, (cell - 18 - thumb.height) // 2))
+            out.paste(tile.convert("RGB"), (column * cell, row * cell))
+            draw.text((column * cell + 6, row * cell + cell - 16), name, fill=(220, 40, 40))
+    out.save(path, quality=88)
+
+
 # MARK: - La fabrication
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("kit")
-    parser.add_argument("--frames", help="où écrire les images des animations, pour mika-encode.swift")
+    parser.add_argument("--sheet", help="où écrire la planche de contrôle (JPEG)")
     args = parser.parse_args()
-    seq_dir, still_dir = find_kit(args.kit)
+    still_dir = find_stills(args.kit)
+    missing = [p for p in STILLS if not os.path.exists(os.path.join(still_dir, f"mika-{p}.png"))]
+    if missing:
+        sys.exit(f"il manque {', '.join(f'mika-{m}.png' for m in missing)} dans {still_dir} "
+                 f"(attendu : {', '.join(STILLS)})")
+    extra = sorted(os.path.basename(p)[5:-4] for p in glob.glob(os.path.join(still_dir, "mika-*.png")))
+    extra = [p for p in extra if p not in STILLS]
+    if extra:
+        print(f"ignorées (pas dans STILLS ni dans MikaStill) : {', '.join(extra)}")
+
     out_assets = os.path.join(ROOT, "Micabo/Resources/Assets.xcassets/Mika")
     os.makedirs(out_assets, exist_ok=True)
     for old in glob.glob(os.path.join(out_assets, "Mika-*.imageset")):
         shutil.rmtree(old)
-    for old in glob.glob(os.path.join(ROOT, "Micabo/Resources/Mika/*.webp")):
-        os.remove(old)
-
-    clips = []
-    manifest = []
-    for name in CLIPS:
-        files = sorted(glob.glob(os.path.join(seq_dir, name, "*.png")))
-        if not files:
-            sys.exit(f"{name} : aucune image dans {seq_dir}/{name}")
-        raw = [arr(Image.open(f)) for f in files]
-        found = smooth_eyes([eyes(a) for a in raw])
-        frames = [treat(a, e) for a, e in zip(raw, found)]
-        side = frames[0].shape[1]
-        boxes = [alpha_box(f) for f in frames if (f[..., 3] > 2 / 255).any()]
-        union = (min(b[0] for b in boxes), min(b[1] for b in boxes), max(b[2] for b in boxes), max(b[3] for b in boxes))
-        box = box_units(union, side)
-        out = [crop_units(f, box) for f in frames]
-        imageset(out_assets, f"Mika-clip-{name}", out[0])
-        if args.frames:
-            folder = os.path.join(args.frames, name)
-            shutil.rmtree(folder, ignore_errors=True)
-            os.makedirs(folder)
-            for i, im in enumerate(out):
-                im.save(os.path.join(folder, f"{i:04d}.png"))
-        manifest.append({"name": name, "fps": 24, "frames": len(out), "width": out[0].width, "height": out[0].height})
-        clips.append((name, box, len(out)))
-        seen = sum(e is not None for e in [eyes(a) for a in raw[:: max(1, len(raw) // 8)]])
-        print(f"{name:12s} {box} {len(out)} images {out[0].width}x{out[0].height}  yeux vus {seen}/{len(raw[:: max(1, len(raw) // 8)])}")
-    if args.frames:
-        with open(os.path.join(args.frames, "clips.json"), "w") as f:
-            json.dump(manifest, f, indent=2)
+    # Les vidéos d'avant le lot 9 : plus rien ne les lit.
+    shutil.rmtree(os.path.join(ROOT, "Micabo/Resources/Mika"), ignore_errors=True)
 
     stills = []
+    shown = []
     for pose in STILLS:
         a = arr(Image.open(os.path.join(still_dir, f"mika-{pose}.png")))
         t = treat(a, eyes(a))
         box = box_units(alpha_box(t), t.shape[1], multiple=2)
-        imageset(out_assets, f"Mika-{pose}", crop_units(t, box))
+        image = crop_units(t, box)
+        imageset(out_assets, f"Mika-{pose}", image)
         stills.append((pose, box))
+        shown.append((pose, image))
+        print(f"{pose:12s} {box} {image.width}x{image.height}")
         if pose == HEAD_POSE:
             head = crop_units(t, HEAD).resize((HEAD_PIXELS, HEAD_PIXELS), Image.LANCZOS)
             imageset(out_assets, "Mika-tete", head)
+    if args.sheet:
+        sheet(args.sheet, shown)
 
     lines = [
         "import CoreGraphics",
         "",
         "// Généré par scripts/mika-assets.py depuis le kit de Mika. Ne pas éditer à la main.",
         "",
-        "/// **Où chaque image de Mika se place**, dans le canevas de 512 du kit : les vidéos, leurs",
-        "/// premières images et les poses sont rognées autour de lui, ce cadre les remet au pixel près.",
+        "/// **Où chaque expression de Mika se place**, dans le canevas de 512 du kit : les images",
+        "/// sont rognées autour de lui, ce cadre les remet au pixel près — deux expressions se",
+        "/// superposent exactement pendant leur fondu.",
         "enum MikaArt {",
-        "    struct Clip {",
-        "        /// Le rectangle de la vidéo (et de sa première image) dans le canevas.",
-        "        let rect: CGRect",
-        "        let frames: Int",
-        "        let fps: Double",
-        "",
-        "        var duration: Double { Double(frames) / fps }",
-        "    }",
-        "",
-        f"    /// Pixels par unité du canevas, partout.",
+        "    /// Pixels par unité du canevas, partout.",
         f"    static let pixelsPerUnit: CGFloat = {SCALE}",
         "",
-        "    /// Les animations embarquées, par nom (`mika-<nom>.mov`, première image `Mika-clip-<nom>`).",
-        "    static let clips: [String: Clip] = [",
+        "    /// Les expressions, par nom (`Mika-<nom>`).",
+        "    static let stills: [String: CGRect] = [",
     ]
-    for name, box, n in clips:
-        lines.append(f'        "{name}": Clip(rect: {rect(box)}, frames: {n}, fps: 24),')
-    lines += ["    ]", "", "    /// Les poses fixes, par nom (`Mika-<nom>`).", "    static let stills: [String: CGRect] = ["]
     for pose, box in stills:
         lines.append(f'        "{pose}": {rect(box)},')
     lines += ["    ]", "", "    /// Le visage de l'avatar (`Mika-tete`).", f"    static let head = {rect(HEAD)}", "}", ""]

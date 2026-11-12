@@ -123,7 +123,7 @@ struct LockedLessonPreview: View {
     }
 
     /// **Une carte claire, comme le paywall** : la croix, et Mika en demi qui dépasse du bord
-    /// bas — il lit, puis il saute de joie.
+    /// bas — il lit, puis il sourit.
     private var stage: some View {
         ZStack(alignment: .bottom) {
             MicaboColor.accentPale

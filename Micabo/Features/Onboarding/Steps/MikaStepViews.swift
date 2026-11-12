@@ -187,14 +187,16 @@ private struct Bobbing: ViewModifier {
     }
 }
 
-/// Une apparition en ressort, décalée par son rang.
+/// Une apparition en ressort, décalée par son rang. Pour Mika (`scales` faux), un fondu sur
+/// place : il ne surgit pas de petit.
 private struct PopIn: ViewModifier {
     let shown: Bool
     var delay: Double = 0
+    var scales = true
 
     func body(content: Content) -> some View {
         content
-            .scaleEffect(shown ? 1 : 0.3)
+            .scaleEffect(shown || !scales ? 1 : 0.3)
             .opacity(shown ? 1 : 0)
             .animation(MicaboMotion.standard.delay(delay), value: shown)
     }
@@ -205,8 +207,8 @@ private extension View {
         modifier(Bobbing(amplitude: amplitude, period: period, delay: delay))
     }
 
-    func popIn(_ shown: Bool, delay: Double = 0) -> some View {
-        modifier(PopIn(shown: shown, delay: delay))
+    func popIn(_ shown: Bool, delay: Double = 0, scales: Bool = true) -> some View {
+        modifier(PopIn(shown: shown, delay: delay, scales: scales))
     }
 }
 
@@ -312,9 +314,10 @@ private struct MikaSourcesScene: View {
 
                 // Mika en demi, qui dépasse de sa ligne au bas de la scène.
                 let side = min(130, proxy.size.height * 0.42)
+                // Il croque : un petit écrasement de 3 % sur place, jamais un saut.
                 OnboardingMikaOnLine(mood: mood, size: side)
-                    .scaleEffect(munch ? 1.06 : 1, anchor: .bottom)
-                    .popIn(shown || still)
+                    .scaleEffect(x: munch ? 1.03 : 1, y: munch ? 0.97 : 1, anchor: .bottom)
+                    .popIn(shown || still, scales: false)
                     .position(x: mika.x, y: proxy.size.height - OnboardingMikaOnLine.height(for: side) / 2)
 
                 if full {
@@ -390,7 +393,7 @@ private struct MikaPathsScene: View {
 
                 // Mika, en demi, fait coucou depuis le bord bas de la scène, sur sa ligne.
                 OnboardingMikaOnLine(mood: .wave, size: min(MikaPeek.hero, proxy.size.height * 0.32))
-                    .popIn(shown || still, delay: 0.9)
+                    .popIn(shown || still, delay: 0.9, scales: false)
                     .padding(.leading, proxy.size.width * 0.02)
             }
         }
