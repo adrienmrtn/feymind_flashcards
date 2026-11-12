@@ -87,6 +87,23 @@ final class OnboardingDeviceRenderTests: XCTestCase {
         try RenderGallery.renderDevice("onb11-device-\(name)", OnboardingLivePage(step: step, model: model))
     }
 
+    /// Les stories en arabe (de droite à gauche) et en allemand (les mots les plus longs), et
+    /// les écrans qui amènent à l'offre.
+    func testLongLanguagesOnDevice() throws {
+        for (locale, tag) in [(UiLocale.de, "de"), (UiLocale.ar, "ar")] {
+            UserDefaults.standard.set(locale.rawValue, forKey: UiLocale.storageKey)
+            for step in [OnboardingStep.hookLogo, .lessonDemo, .planDemo, .freeTrialIntro, .trialOffer, .whyNow] {
+                let model = lina()
+                model.place(on: step)
+                try RenderGallery.renderDevice(
+                    "onb11-device-\(tag)-\(step.analyticsName)",
+                    OnboardingLivePage(step: step, model: model)
+                        .environment(\.layoutDirection, locale.isRightToLeft ? .rightToLeft : .leftToRight)
+                )
+            }
+        }
+    }
+
     /// Chaque écran du parcours (le paywall est rendu par son propre lot).
     func testEveryStepOnDevice() throws {
         let steps = OnboardingStep.allCases.filter { $0 != .paywall && $0 != .level }

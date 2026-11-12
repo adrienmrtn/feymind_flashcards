@@ -49,6 +49,8 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// Il pré-remplit un examen dans le calendrier à la fin du parcours.
     case exam
     case subjects
+    /// **Démo (lot 11) : ton cours devient une leçon**, dans la matière qu'il vient de cocher.
+    case lessonDemo
 
     // Acte 2 : l'objectif.
     /// **L'objectif n°1**, parmi ceux de son niveau (`LearningGoal.offered(for:)`).
@@ -58,14 +60,21 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// **« Voilà comment je t'aide »** : pour chaque blocage coché (trois au plus), la
     /// fonctionnalité qui y répond.
     case solutionMap
+    /// **Démo (lot 11) : le scanner d'exercices**, en réponse aux devoirs et aux cours durs.
+    case scanDemo
     case currentAverage
     case targetAverage
     /// La projection (d'aujourd'hui à la date de l'examen) et l'engagement.
     case startingPoint
     case dailyTime
+    /// **Démo (lot 11) : le plan dans le calendrier**, avec le temps qu'il vient de choisir,
+    /// ses matières, son examen, et une séance de concentration.
+    case planDemo
     /// **Une vraie question, sur sa matière**, et la seule étude citée du parcours
     /// (Karpicke & Roediger, 2008).
     case sampleCard
+    /// **Démo (lot 11) : le chat avec Mika**, sur un sujet de sa matière et de son niveau.
+    case chatDemo
     /// Le rappel quotidien : son heure (l'ancien écran `studyTime` est ici), puis la demande
     /// d'iOS.
     case notifications
@@ -85,6 +94,9 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// « Je te préviens avant la fin de ton essai » : promis seulement si le rappel peut
     /// être envoyé.
     case trialOffer
+    /// **Pourquoi maintenant (lot 11)** : le compte à rebours de son examen, les séances qu'il
+    /// reste si l'on commence ce soir, la première leçon prête. Le dernier écran avant l'offre.
+    case whyNow
     case paywall
 
     var id: Int { rawValue }
@@ -181,7 +193,8 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         case .name, .country, .level, .schoolType, .year, .exam, .subjects, .goal, .worries,
              .currentAverage, .targetAverage, .dailyTime, .sampleCard, .firstLesson:
             .question
-        case .solutionMap, .startingPoint, .notifications, .trialOffer:
+        case .solutionMap, .startingPoint, .notifications, .trialOffer,
+             .lessonDemo, .scanDemo, .planDemo, .chatDemo, .whyNow:
             .page
         case .paywall:
             .paywall

@@ -202,20 +202,25 @@ final class OnboardingRenderTests: XCTestCase {
         try render("\(prefix)-05-year", .year, model, rtl: rtl) { SchoolYearStepView() }
         try render("\(prefix)-06-exam", .exam, model, rtl: rtl) { ExamStepView() }
         try render("\(prefix)-07-subjects", .subjects, model, rtl: rtl) { SubjectsStepView() }
+        try render("\(prefix)-07b-lessondemo", .lessonDemo, model, rtl: rtl) { LessonDemoStepView() }
         try render("\(prefix)-08-goal", .goal, model, rtl: rtl) { GoalStepView() }
         try render("\(prefix)-09-worries", .worries, model, rtl: rtl) { WorriesStepView() }
         try render("\(prefix)-10-solutions", .solutionMap, model, rtl: rtl) { SolutionMapStepView() }
+        try render("\(prefix)-10b-scandemo", .scanDemo, model, rtl: rtl) { ScanDemoStepView() }
         try render("\(prefix)-11-current", .currentAverage, model, rtl: rtl) { CurrentAverageStepView() }
         try render("\(prefix)-12-target", .targetAverage, model, rtl: rtl) { TargetAverageStepView() }
         try render("\(prefix)-13-projection", .startingPoint, model, rtl: rtl) { StartingPointStepView() }
         try render("\(prefix)-14-time", .dailyTime, model, rtl: rtl) { DailyTimeStepView() }
+        try render("\(prefix)-14b-plandemo", .planDemo, model, rtl: rtl) { PlanDemoStepView() }
         try render("\(prefix)-15-card", .sampleCard, model, rtl: rtl) { SampleCardStepView(previewAnswer: 0) }
+        try render("\(prefix)-15b-chatdemo", .chatDemo, model, rtl: rtl) { ChatDemoStepView() }
         try render("\(prefix)-16-reminder", .notifications, model, rtl: rtl) { NotificationsStepView() }
         try render("\(prefix)-17-lesson", .firstLesson, model, rtl: rtl) { FirstLessonStepView() }
         try render("\(prefix)-18-building", .planBuilding, model, rtl: rtl) { PlanBuildingStepView(previewProgress: 0.62) }
         try render("\(prefix)-19-plan", .profileSummary, model, rtl: rtl) { ProfileSummaryStepView() }
         try render("\(prefix)-20-trial", .freeTrialIntro, model, rtl: rtl) { FreeTrialIntroStepView() }
         try render("\(prefix)-21-promise", .trialOffer, model, rtl: rtl) { TrialOfferStepView(previewDenied: false) }
+        try render("\(prefix)-22-whynow", .whyNow, model, rtl: rtl) { WhyNowStepView() }
     }
 
     // MARK: - Français
