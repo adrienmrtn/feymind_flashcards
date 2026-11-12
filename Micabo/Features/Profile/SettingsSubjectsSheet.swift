@@ -71,7 +71,7 @@ struct SettingsSubjectsSheet: View {
                 Text(SubjectDisplay.subject(subject, locale: i18n.locale))
                     .font(MicaboFont.ui(13, weight: .medium))
             }
-            .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.inkBody)
+            .foregroundStyle(isSelected ? MicaboColor.onAccent : MicaboColor.inkBody)
             .padding(.vertical, 9)
             .padding(.horizontal, 13)
             .background(isSelected ? MicaboColor.accent : MicaboColor.surface, in: Capsule())

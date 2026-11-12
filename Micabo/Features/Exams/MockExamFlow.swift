@@ -412,7 +412,7 @@ struct MockExamRunView: View {
                         } label: {
                             Text("\(number + 1)")
                                 .font(MicaboFont.ui(12, weight: .heavy))
-                                .foregroundStyle(done ? MicaboColor.onInk : MicaboColor.inkSecondary)
+                                .foregroundStyle(done ? MicaboColor.onAccent : MicaboColor.inkSecondary)
                                 .frame(width: 28, height: 28)
                                 .background(done ? MicaboColor.accent : MicaboColor.surface, in: Circle())
                                 .overlay(Circle().strokeBorder(number == index ? MicaboColor.ink : MicaboColor.stroke, lineWidth: number == index ? 2 : 1))

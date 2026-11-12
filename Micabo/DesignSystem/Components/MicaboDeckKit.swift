@@ -47,9 +47,11 @@ struct MicaboPageHeading<Trailing: View>: View {
         HStack(alignment: .center, spacing: 10) {
             VStack(alignment: .leading, spacing: 3) {
                 // Le titre de tous les onglets : celui du mois du Calendrier et du bonjour de
-                // Home, vingt-six points, le plus gras de la police.
+                // Home, vingt-huit points (lot 9 : un cran de plus, resserré), le plus gras de la
+                // police.
                 Text(title)
-                    .font(MicaboFont.ui(26, weight: .black))
+                    .font(MicaboFont.ui(28, weight: .black))
+                    .tracking(MicaboTracking.tight)
                     .foregroundStyle(MicaboColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityAddTraits(.isHeader)
@@ -733,7 +735,7 @@ struct MicaboOutlineCard<Content: View>: View {
 /// le même aplat que tous les autres.
 struct MicaboActionButtonStyle: ButtonStyle {
     var tint: Color = MicaboColor.accent
-    var foreground: Color = MicaboColor.onInk
+    var foreground: Color = MicaboColor.onAccent
     var height: CGFloat = MicaboButtonMetrics.height
     var feedback: Haptics.Press = .medium
 

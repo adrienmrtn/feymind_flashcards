@@ -64,6 +64,11 @@ enum MicaboColor {
     }
 
     // Sur fond d'accent / de bouton plein
+    /// Le texte d'un aplat de l'accent : blanc, le jour comme la nuit.
+    static var onAccent: Color { palette.onAccent }
+    /// La lèvre d'une surface touchable : le bord plein sous une carte, une rangée, un bouton
+    /// secondaire (`micaboSurface`).
+    static var edge: Color { palette.edge }
     static var onInk: Color { palette.onInk }
     static var onInkMuted: Color { palette.onInkMuted }
 
@@ -394,7 +399,7 @@ enum MicaboFont {
     }
 
     /// Grand titre d'écran, posé à même le fond.
-    static let screenTitle = ui(30, weight: .heavy)
+    static let screenTitle = ui(30, weight: .black)
     static let pageTitle = ui(22, weight: .bold)
     static let sectionTitle = ui(19, weight: .bold)
     static let cardTitle = ui(17, weight: .bold)
@@ -693,12 +698,59 @@ enum MicaboShadow {
     static let tint = Color(hex: 0x1A2340)
 }
 
-/// **La carte de l'app** : une surface, un filet d'un point, une ombre légère.
+/// **La surface de l'app** (lot 9) : un fond, un rayon, un filet d'un point, et une **lèvre**.
 ///
-/// C'est la même que la carte de Home (`homeCard`) : il y en avait deux, l'une cerclée,
-/// l'autre sans filet avec une ombre noire en deux couches, et une feuille de réglages ne
-/// ressemblait pas à la page qui l'avait ouverte. Le filet tient aussi la nuit, où l'ombre
-/// ne se voit plus.
+/// La lèvre est le bord plein de trois points qui dépasse sous la surface, dans `edge` : elle
+/// pose un objet touchable comme une touche. Elle remplace l'ombre floue en deux couches, qui
+/// grisait le blanc le jour et ne se voyait pas la nuit ; une lèvre se lit dans les deux. Le
+/// jour garde une diffusion très légère sous la lèvre, pour décoller la carte du fond.
+///
+/// **Tout est dans le fond**, rien sur le contenu : une ombre posée sur une pile ombre aussi
+/// chacun de ses textes, et une lèvre nette se lirait en double sous chaque mot.
+enum MicaboSurface {
+    /// La hauteur de la lèvre d'une carte et d'une rangée.
+    static let lip: CGFloat = 3
+    /// La lèvre d'un bouton plein : un cran plus haute, c'est elle qui s'enfonce à l'appui.
+    static let buttonLip: CGFloat = 4
+}
+
+struct MicaboSurfaceStyle: ViewModifier {
+    var radius: CGFloat
+    var fill: Color = MicaboColor.surface
+    var stroke: Color = MicaboColor.stroke
+    var lip: CGFloat = MicaboSurface.lip
+    /// Coupe le contenu à la forme : pour un Mika ou une image qui sort du bord.
+    var clipped: Bool = false
+
+    func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
+        let ambient = AppearanceStore.shared.palette.cardShadow
+        return Group {
+            if clipped {
+                content.clipShape(shape)
+            } else {
+                content
+            }
+        }
+        .background {
+            ZStack {
+                shape
+                    .fill(MicaboColor.edge)
+                    .offset(y: lip)
+                    .shadow(color: MicaboShadow.tint.opacity(ambient), radius: 12, x: 0, y: 6 + lip)
+                shape.fill(fill)
+            }
+        }
+        .overlay {
+            shape.strokeBorder(stroke, lineWidth: 1)
+        }
+    }
+}
+
+/// **La carte de l'app** : la surface (`MicaboSurfaceStyle`) avec ses marges.
+///
+/// C'est la même que la carte de Home (`homeCard`) et que le bloc de rangées (`micaboGroup`) :
+/// une feuille de réglages ressemble à la page qui l'a ouverte.
 struct MicaboCardStyle: ViewModifier {
     var padding: CGFloat = MicaboSpacing.md
     var radius: CGFloat = MicaboRadius.card
@@ -707,12 +759,7 @@ struct MicaboCardStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding(padding)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-            }
-            .micaboElevation(elevated ? .card : .row)
+            .micaboSurface(radius: radius, lip: elevated ? MicaboSurface.lip : 2)
     }
 }
 
@@ -720,6 +767,17 @@ extension View {
     /// Pose l'ombre d'un niveau donné, sans toucher au fond ni au rayon.
     func micaboElevation(_ level: MicaboElevation) -> some View {
         modifier(MicaboElevationStyle(level: level))
+    }
+
+    /// **La surface de l'app** : fond, filet, lèvre (`MicaboSurfaceStyle`).
+    func micaboSurface(
+        radius: CGFloat = MicaboRadius.card,
+        fill: Color = MicaboColor.surface,
+        stroke: Color = MicaboColor.stroke,
+        lip: CGFloat = MicaboSurface.lip,
+        clipped: Bool = false
+    ) -> some View {
+        modifier(MicaboSurfaceStyle(radius: radius, fill: fill, stroke: stroke, lip: lip, clipped: clipped))
     }
 
     func micaboCard(padding: CGFloat = MicaboSpacing.md, radius: CGFloat = MicaboRadius.card, elevated: Bool = true) -> some View {
@@ -733,14 +791,7 @@ extension View {
     /// qui appartiennent au même sujet. Les listes d'objets — cours, paquets, ce qu'il y a
     /// au programme — sont passées à la rangée-carte, voir `MicaboRowGroup`.
     func micaboGroup(radius: CGFloat = MicaboRadius.group) -> some View {
-        background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
-            // Le filet de la carte de l'app (voir `MicaboCardStyle`) : le même bloc partout.
-            .overlay {
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-            }
-            .micaboElevation(.row)
+        micaboSurface(radius: radius, clipped: true)
     }
 
     /// Ombre douce des éléments posés sur le fond, sans passer par une carte complète.
