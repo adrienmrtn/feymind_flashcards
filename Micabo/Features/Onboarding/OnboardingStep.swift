@@ -1,6 +1,6 @@
 import Foundation
 
-/// Les écrans du parcours d'accueil, dans l'ordre (version 2, novembre 2026).
+/// Les écrans du parcours d'accueil, dans l'ordre (version 2, novembre 2026 ; lot 9).
 ///
 /// **Mika pose les questions.** Chaque question est dite par Mika, en buste au bord de sa
 /// ligne, dans une bulle qui s'écrit ; il réagit à certaines réponses (« Bac : encore
@@ -9,33 +9,36 @@ import Foundation
 ///
 /// **Tout s'adapte au pays et à l'année** : les filières, les années, les examens (Bac,
 /// Abitur, Matura, PAU, GCSE, SAT, ENEM, YKS…), les matières et leur nom local, le barème des
-/// moyennes (`SchoolSystem`, `SchoolExams`, `StudentGradeScale`).
+/// moyennes (`SchoolSystem`, `SchoolExams`, `StudentGradeScale`), et les objectifs proposés
+/// (`LearningGoal.offered(for:)`).
 ///
 /// Cinq blocs :
 ///
 /// 1. **L'accroche** : le logo, le prénom, la bienvenue.
 /// 2. **Le profil scolaire** : pays, niveau (ou filière et année), le prochain examen et sa
 ///    date, les matières.
-/// 3. **Les objectifs** : ce qui l'inquiète, les deux moyennes, le temps par jour, l'heure de
-///    révision, les rappels.
-/// 4. **Mika** : le profil se prépare, puis les documents, les parcours, **une vraie question
-///    sur sa matière** (la preuve par l'essai, et la seule étude citée du parcours), le prof
-///    particulier. Le compte se propose en quittant le dernier.
+/// 3. **Les objectifs** : ce qui l'inquiète, l'objectif n°1 (adapté au niveau), le point de
+///    départ, les deux moyennes, le temps par jour, l'heure de révision, les rappels.
+/// 4. **Mika** : le profil se prépare, Mika annonce ce qu'il va montrer, sa mission, les
+///    documents, les parcours, **une vraie question sur sa matière** (la preuve par l'essai,
+///    et la seule étude citée du parcours), l'XP et la série, le prof particulier, tout au
+///    même endroit, la montagne rangée, puis ce que ça change concrètement. Le compte se
+///    propose en quittant la montagne rangée, le dernier écran où Mika se présente.
 /// 5. **Le plan et l'offre** : Mika calcule, **la révélation du plan** (« Ton plan est prêt »,
-///    et sa courbe jusqu'au jour de l'examen), la chronologie de l'essai, le paywall.
+///    et sa courbe jusqu'au jour de l'examen), l'essai offert, la chronologie de l'essai, le
+///    paywall.
 ///
-/// **Avant / après** : 36 écrans (35 vus en France), 25 en v2, maintenant 24 (23 vus en
-/// France). Lot 7 : `goal` est parti (« pourquoi tu apprends ? » redemandait ce que l'examen
-/// venait de dire, avec des réponses comme « monter en compétences pour le travail » posées à
-/// un collégien) ; `socialProof` est remplacé par `sampleCard` (l'étude de Harvard et celle de
-/// Karpicke revenaient sur trois écrans : il n'en reste qu'une, une fois, là où l'élève vient
-/// de se tester).
-/// Retirés : `proofRetention` (devenu la réaction de Mika aux inquiétudes), `founders`,
-/// `aiCompanion` (l'étude de Harvard est passée sur l'écran de preuve), `startingPoint` (Mika
-/// pose déjà les questions), `featuresIntro`, `mikaMission`, `mikaDesign`, `mikaSolution`,
-/// `mikaRelief`, `supportUs` (la note se demande après la première leçon terminée),
-/// `freeTrialIntro` et `trialReminder` (regroupés dans la chronologie de l'essai). Ajouté :
-/// `exam`. Les noms des écrans gardés ne changent pas : leurs courbes d'analytics continuent.
+/// **Avant / après** : 36 écrans (35 vus en France) ; 25 en v2 (« retire 2/3 écrans un peu
+/// lourds » avait été lu trop large) ; 24 au lot 7 ; **33 au lot 9** (32 vus en France),
+/// soit l'esprit de la demande : les 36 moins les plus lourds. Lot 9 : retour de `goal`
+/// (réponses selon le niveau, plus de « réviser pour un examen » puisque l'examen vient
+/// d'être dit), `startingPoint`, `featuresIntro`, `mikaMission`, `mikaDesign` (l'XP et la
+/// série, plus une deuxième question), `mikaSolution`, `mikaRelief`, `socialProof` (des
+/// moments concrets, sans étude ni chiffre) et `freeTrialIntro`. Restent partis :
+/// `proofRetention` et `aiCompanion` (une deuxième et une troisième citation d'étude),
+/// `founders` (une histoire que rien ne source), `supportUs` (une note demandée avant toute
+/// leçon) et `trialReminder` (déjà dans la chronologie de l'essai). Les noms historiques sont
+/// repris tels quels : leurs courbes d'analytics reprennent.
 enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     // L'accroche.
     /// Le splash : le logo seul, puis la phrase et le bouton qui se posent dessous.
@@ -61,6 +64,13 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     // Les objectifs.
     /// Ce qui l'inquiète dans ses études. Plusieurs réponses ; Mika y répond.
     case worries
+    /// **L'objectif n°1** (lot 9) : une réponse, parmi celles de son niveau — un collégien ne
+    /// voit pas « valider mon année », un étudiant ne voit pas « entrer dans la formation de
+    /// mes rêves ». L'examen n'y est plus : il vient d'être dit.
+    case goal
+    /// « On part de là où tu en es, et je t'emmène jusqu'à ton Bac » : le pont vers les deux
+    /// moyennes, avec le nom de son examen.
+    case startingPoint
     case currentAverage
     case targetAverage
     /// « Combien de temps par jour ? », sur un curseur qui dessine la progression estimée.
@@ -72,6 +82,10 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     // Mika prépare, puis se présente.
     /// Le chargement : Mika se présente pendant que le profil se construit.
     case building
+    /// « Maintenant, je te montre comment je vais t'aider. »
+    case featuresIntro
+    /// Sa mission : des cours interactifs, pour apprendre simplement.
+    case mikaMission
     /// Il prend tous tes documents : cours, PDF, notes, YouTube.
     case mikaSources
     /// … et il en fait des parcours simples, faits pour toi.
@@ -80,8 +94,18 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// recherche dit pourquoi se tester fait retenir (Karpicke & Roediger, 2008) — la seule
     /// étude du parcours, citée une fois.
     case sampleCard
+    /// L'XP de chaque bonne réponse et la série qui grandit chaque jour.
+    case mikaDesign
     /// « Mika, c'est ton prof particulier, disponible à tout moment, dans ta poche. »
     case mikaTutor
+    /// Fiches, quiz, flashcards, examens : tout au même endroit.
+    case mikaSolution
+    /// La montagne de choses à revoir, rangée chapitre par chapitre. Le compte se propose en
+    /// la quittant.
+    case mikaRelief
+    /// **Ce que ça change, concrètement** : trois moments de la semaine d'un élève, avec ses
+    /// matières. Ni étude, ni chiffre, ni avis inventé.
+    case socialProof
 
     // Le plan, puis l'offre.
     /// Mika calcule le plan : le chargement d'avant la révélation.
@@ -90,12 +114,18 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// matières, temps par jour, moyenne visée. Le nom de l'écran reste celui d'avant pour les
     /// statistiques.
     case profileSummary
+    /// « Je tiens à ce que tu essaies ton plan gratuitement » : Mika, avant la chronologie.
+    case freeTrialIntro
     /// La chronologie de l'essai : aujourd'hui, le rappel, le premier prélèvement, et
     /// « annule quand tu veux ».
     case trialOffer
     case paywall
 
     var id: Int { rawValue }
+
+    /// **Le dernier écran où Mika se présente** : le compte se propose en le quittant, dans
+    /// une languette, juste avant ce que ça change et le plan.
+    static let accountStep: OnboardingStep = .mikaRelief
 
     /// **Le nom de l'étape dans les statistiques.**
     ///
@@ -148,18 +178,15 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     }
 
     /// **L'écran qui remplace un écran retiré**, pour reprendre un parcours commencé avant la
-    /// version 2 : on reprend au même moment du parcours, pas au logo.
+    /// version 2 : on reprend au même moment du parcours, pas au logo. Les écrans revenus au
+    /// lot 9 (`goal`, `startingPoint`, `featuresIntro`, `mikaMission`, `mikaDesign`,
+    /// `mikaSolution`, `mikaRelief`, `socialProof`, `freeTrialIntro`) se reprennent sous leur
+    /// propre nom, et ne passent plus par ici.
     static func replacement(forRetired name: String) -> OnboardingStep? {
         switch name {
-        case "proofRetention", "founders", "aiCompanion", "startingPoint": .currentAverage
-        case "featuresIntro", "mikaMission": .mikaSources
-        case "mikaDesign", "mikaSolution", "mikaRelief": .mikaTutor
+        case "proofRetention", "founders", "aiCompanion": .startingPoint
         case "supportUs": .planBuilding
-        // Lot 7 : la question des objectifs redemandait l'examen ; la preuve est devenue
-        // la question d'essai.
-        case "goal": .currentAverage
-        case "socialProof": .planBuilding
-        case "freeTrialIntro", "trialReminder": .trialOffer
+        case "trialReminder": .trialOffer
         default: nil
         }
     }
@@ -174,6 +201,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         case .exam: .exam
         case .subjects: .lightbulb
         case .worries: .brain
+        case .goal: .rocket
         case .currentAverage: .exam
         case .targetAverage: .trophy
         case .dailyTime: .hourglass
@@ -186,7 +214,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// Vrai pour les écrans qui posent une question.
     var isQuestion: Bool {
         switch self {
-        case .name, .country, .level, .schoolType, .year, .exam, .subjects, .worries,
+        case .name, .country, .level, .schoolType, .year, .exam, .subjects, .worries, .goal,
              .currentAverage, .targetAverage, .dailyTime, .studyTime:
             true
         default:
@@ -204,7 +232,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         case .level, .schoolType, .year, .currentAverage: .think
         case .exam: .surprise
         case .subjects: .write
-        case .notifications: .wink
+        case .goal, .notifications: .wink
         case .sampleCard: .write
         case .targetAverage: .happy
         default: .idle

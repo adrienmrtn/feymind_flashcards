@@ -65,8 +65,14 @@ final class OnboardingLot7Tests: XCTestCase {
     /// étude du parcours est celle de la question d'essai.
     func testTheResearchIsCitedOnce() {
         let names = OnboardingStep.allCases.map(\.analyticsName)
-        XCTAssertFalse(names.contains("socialProof"))
         XCTAssertTrue(names.contains("sampleCard"))
+        // Lot 9 : `socialProof` revient, sans étude (`OnboardingLot9Tests`).
+        for locale in UiLocale.allCases {
+            let table = IosI18nCatalogs.table(for: locale.rawValue)
+            for (key, text) in table where key.hasPrefix("ios.onb9.proof.") {
+                XCTAssertFalse(text.contains("Karpicke") || text.contains("Harvard"), "\(locale.rawValue) \(key)")
+            }
+        }
         for locale in UiLocale.allCases {
             let hook = L10n.t("ios.onb7.hook.title", locale: locale)
             XCTAssertFalse(hook.contains("2"), "\(locale.rawValue) : un chiffre sans source sur le premier écran")
@@ -78,7 +84,11 @@ final class OnboardingLot7Tests: XCTestCase {
 
     /// « Et pourquoi tu apprends ? » est parti : l'examen dit déjà pourquoi.
     func testTheGoalIsReadFromTheExamInsteadOfAskedTwice() {
-        XCTAssertFalse(OnboardingStep.allCases.map(\.analyticsName).contains("goal"))
+        // Lot 9 : la question revient, mais jamais avec l'examen dans ses réponses.
+        for tier in EducationTier.allCases.map(Optional.some) + [nil] {
+            XCTAssertFalse(LearningGoal.offered(for: tier).contains(.exam), "\(String(describing: tier))")
+            XCTAssertFalse(LearningGoal.offered(for: tier).contains(.lectures), "\(String(describing: tier))")
+        }
 
         let model = OnboardingModel()
         XCTAssertEqual(model.learningGoals, [])
@@ -89,16 +99,16 @@ final class OnboardingLot7Tests: XCTestCase {
             model.examChoice = dated
             XCTAssertEqual(model.learningGoals, [.exam])
         }
-        // Un parcours d'avant, repris, garde ce qu'il avait répondu.
-        model.goals = [.competition]
-        XCTAssertEqual(model.learningGoals, [.competition])
+        // L'objectif n°1 s'ajoute à ce que l'examen dit déjà.
+        model.goals = [.grades]
+        XCTAssertEqual(model.learningGoals, dated == nil ? [.grades, .lectures] : [.grades, .exam])
     }
 
     /// Mika dit « je » partout : plus de « il prend tes documents » trois écrans après « moi
     /// c'est Mika ».
     func testMikaSpeaksInTheFirstPerson() {
         for page in MikaPage.allCases {
-            XCTAssertTrue(page.titleKey.hasPrefix("ios.onb7."), "\(page)")
+            XCTAssertTrue(page.titleKey.hasPrefix("ios.onb7.") || page.titleKey.hasPrefix("ios.onb9."), "\(page)")
             let french = L10n.t(page.titleKey, locale: .fr)
             XCTAssertFalse(french.hasPrefix("Il "), french)
             XCTAssertFalse(french.contains("Mika,"), french)

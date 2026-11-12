@@ -4,6 +4,61 @@ Mika pose les questions, tout s'adapte au pays et à l'année, le parcours est p
 il se termine par la révélation d'un plan avant l'offre. Aucun prix, produit ni durée d'essai
 n'a changé.
 
+## 00. Lot 9 : « l'onboarding, tu as enlevé trop de trucs » (novembre 2026)
+
+La demande du lot 5 était de « retirer 2/3 écrans un peu lourds » ; on était passé de 36 à 25
+écrans, puis 24 au lot 7. **33 écrans maintenant** (32 vus en France, 31 pour un pays non
+décrit) : les 36 d'avant, moins les cinq plus lourds, plus l'examen et la question d'essai.
+L'ordre est verrouillé par `OnboardingFlowTests.testTheV2OrderIsLocked`. Les noms historiques
+sont repris tels quels (`onboarding_step` reprend leurs courbes).
+
+| Bloc | Écrans (lot 9) |
+| --- | --- |
+| Accroche | `hookLogo`, `name`, `welcome` |
+| Profil scolaire | `country`, `level` *ou* `schoolType` + `year`, `exam`, `subjects` |
+| Objectifs | `worries`, **`goal`**, **`startingPoint`**, `currentAverage`, `targetAverage`, `dailyTime`, `studyTime`, `notifications` |
+| Mika | `building`, **`featuresIntro`**, **`mikaMission`**, `mikaSources`, `mikaPaths`, `sampleCard`, **`mikaDesign`**, `mikaTutor`, **`mikaSolution`**, **`mikaRelief`** (le compte se propose en la quittant : `OnboardingStep.accountStep`), **`socialProof`** |
+| Plan et offre | `planBuilding`, `profileSummary`, **`freeTrialIntro`**, `trialOffer`, `paywall` |
+
+**Remis, et rendus cohérents avec le parcours d'aujourd'hui**
+
+| Écran | Ce qu'il dit maintenant | Pourquoi il revient, et ce qui a changé |
+| --- | --- | --- |
+| `goal` | « Et ton objectif n°1 cette année ? », une réponse | Le rythme question/réaction, comme Knowunity (« What's your main study goal »). Réponses **selon le niveau** (`LearningGoal.offered(for:)`) : collège (meilleures notes, comprendre, plus vite, prendre de l'avance, culture générale), lycée (+ « la formation de mes rêves »), université (« valider mon année », le travail), santé et concours (le concours). **Jamais l'examen** : il vient d'être dit, et `learningGoals` l'ajoute seul. Mika réagit (« je règle ton plan là-dessus »). |
+| `startingPoint` | « On part de là où tu en es. Direction : **Abitur** 🎯 » | Le pont vers les moyennes, avec **le nom de l'examen du pays** (sans examen daté : « jusqu'où je peux t'emmener »). Chemin pointillé « Tu es ici » → trophée. |
+| `featuresIntro` | « Maintenant, je te montre comment je vais t'aider. » | Annonce les pages de Mika ; Mika en demi sur sa ligne, la phrase se lit mot à mot. |
+| `mikaMission` | « Ma mission : te faire les cours les plus interactifs possible… » | Première personne (règle du lot 7) ; Mika en demi qui écrit, plus dans une pastille. |
+| `mikaDesign` | « Chaque bonne réponse te rapporte de l'XP, et ta série grandit chaque jour. » | Avant : une **deuxième** question (mur de Berlin) juste après la vraie (`sampleCard`). Maintenant : la série et l'XP de l'app (le jaune de la série), sans question. |
+| `mikaSolution` | « Tout ce qu'il faut pour réviser, au même endroit. » | Les quatre portes d'une leçon (notes, quiz, flashcards, examens), cochées. |
+| `mikaRelief` | « La montagne de choses à revoir ? Je la range pour toi, un chapitre à la fois. » | Plus de point rouge d'alerte (le rouge est réservé à l'erreur réelle). |
+| `socialProof` | « Concrètement, ce qui change pour toi » : ton cours en photo ; « {matière} : la veille de l'examen » ; une question à 23 h | **Sans étude** (la seule reste sur `sampleCard`), **sans chiffre** (« 45 000 élèves », « 4,8 », « n°1 » ne sont sourcés par rien) et **sans avis signé inventé** : trois moments de la semaine de l'élève, avec une de ses matières. |
+| `freeTrialIntro` | « Lina, je tiens à ce que tu essaies ton plan gratuitement. » | Le pont émotionnel avant la chronologie datée de l'essai (`trialOffer`, inchangée). |
+
+**Restent partis (les plus lourds)** : `proofRetention` et `aiCompanion` (une deuxième et une
+troisième citation d'étude), `founders` (une histoire que rien dans le dépôt ne source),
+`supportUs` (une note demandée avant toute leçon : elle attend la première leçon finie) et
+`trialReminder` (déjà dans la chronologie de l'essai). Un parcours interrompu sur l'un d'eux
+reprend sur `startingPoint`, `planBuilding` ou `trialOffer`.
+
+Gardés du lot 7 : la question d'essai et sa seule citation d'étude, la révélation du plan avec
+sa courbe, les dates réelles de l'essai, le rappel réellement posé. Prix, produits et essai
+inchangés. Rendus : `OnboardingLot9RenderTests` (`onb9-*`, français jour/nuit, allemand, arabe,
+collège, université, États-Unis, iPhone SE en très grand texte). Phrases : 29 clés
+`ios.onb9.*` dans les 26 langues.
+
+**« J'vois pas le paywall »** — la cause : le compte de test du développeur est Pro à vie
+(`LifetimePro`, et `ProAccess.refresh()` l'ouvre dès le lancement, la session survivant à la
+réinstallation). Pro ouvert, `PaywallStepView` termine le parcours sans paywall, la leçon lue ne
+se verrouille pas, aucune porte ne se ferme. Un compte qui a pris l'essai en bac à sable est dans
+le même cas. Les rangées « Voir les paywalls » et « Refaire l'onboarding » étaient dans les
+réglages de toutes les versions, App Store compris, et « Refaire l'onboarding » finissait
+lui aussi sans paywall pour un abonné. Maintenant, une **section Test**, seulement sur un reçu de
+bac à sable (TestFlight) ou une construction Xcode, jamais pour le compte de relecture d'Apple
+(`PaywallTestMode`) : « Voir les paywalls », « Voir l'offre de secours » (le cadeau, puis le
+tarif réduit), « Refaire l'onboarding » (depuis le début, **paywall compris même pour un compte
+Pro** : `PaywallTestMode.onboardingPaywallKey`, effacé à la fin du parcours). Les achats y
+passent par le bac à sable d'Apple.
+
 ## 0. Lot 7 : cohérence et psychologie (novembre 2026)
 
 Retour après test sur iPhone : « encore 2-3 incohérences, et il faut renforcer la psychologie ».

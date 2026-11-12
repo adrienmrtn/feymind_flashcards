@@ -120,12 +120,8 @@ final class OnboardingLot7RenderTests: XCTestCase {
     /// Les écrans touchés par le lot, pour un élève, dans une langue.
     private func renderAll(_ prefix: String, _ model: OnboardingModel, rtl: Bool = false, night: Bool = false) throws {
         try RenderGallery.render("\(prefix)-hook", height: 852, night: night, hook(model, rtl: rtl))
-        for mika in MikaPage.allCases {
-            let step: OnboardingStep = switch mika {
-            case .sources: .mikaSources
-            case .paths: .mikaPaths
-            case .tutor: .mikaTutor
-            }
+        for mika in [MikaPage.sources, .paths, .tutor] {
+            let step = mika.step
             try RenderGallery.render("\(prefix)-mika-\(mika.rawValue)", height: 852, night: night,
                                      page(step, model, rtl: rtl) { MikaStepView(page: mika) })
         }

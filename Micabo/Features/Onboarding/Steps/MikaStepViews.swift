@@ -1,18 +1,43 @@
 import SwiftUI
 
-// MARK: - Mika se présente, en trois écrans
+// MARK: - Mika se présente, en sept écrans
 
-/// Les trois écrans où Mika dit ce qu'il fait (parcours v2) : les documents qu'il prend, les
-/// parcours qu'il en tire, le prof particulier dans la poche.
+/// Les écrans où Mika dit ce qu'il fait, dans l'ordre du parcours : sa mission, les documents
+/// qu'il prend, les parcours qu'il en tire, l'XP et la série, le prof particulier dans la
+/// poche, tout au même endroit, la montagne rangée. Trois au lot 7 ; les quatre autres sont
+/// revenus au lot 9, à la première personne comme les trois premiers.
 enum MikaPage: String, CaseIterable, Identifiable {
+    case mission
     case sources
     case paths
+    case design
     case tutor
+    case solution
+    case relief
 
     var id: String { rawValue }
 
-    /// La phrase de l'écran ; les mots entre `**` se peignent du dégradé de l'app.
-    var titleKey: String { "ios.onb7.mika.\(rawValue)" }
+    /// L'étape du parcours qui montre la page.
+    var step: OnboardingStep {
+        switch self {
+        case .mission: .mikaMission
+        case .sources: .mikaSources
+        case .paths: .mikaPaths
+        case .design: .mikaDesign
+        case .tutor: .mikaTutor
+        case .solution: .mikaSolution
+        case .relief: .mikaRelief
+        }
+    }
+
+    /// La phrase de l'écran ; les mots entre `**` se peignent du dégradé de l'app. Les pages du
+    /// lot 7 gardent leurs phrases ; celles revenues au lot 9 ont les leurs.
+    var titleKey: String {
+        switch self {
+        case .sources, .paths, .tutor: "ios.onb7.mika.\(rawValue)"
+        case .mission, .design, .solution, .relief: "ios.onb9.mika.\(rawValue)"
+        }
+    }
 
     /// **La part de la page que prend la scène.**
     var sceneShare: CGFloat { 0.6 }
@@ -121,9 +146,13 @@ struct MikaPageScene: View {
     @ViewBuilder
     var body: some View {
         switch page {
+        case .mission: MikaMissionScene()
         case .sources: MikaSourcesScene()
         case .paths: MikaPathsScene()
+        case .design: MikaDesignScene()
         case .tutor: MikaTutorScene()
+        case .solution: MikaSolutionScene()
+        case .relief: MikaReliefScene()
         }
     }
 }
@@ -564,6 +593,379 @@ private struct MikaTutorScene: View {
         guard !Task.isCancelled else { return }
         phase = 3
         Haptics.light()
+    }
+}
+
+// MARK: - La mission (lot 9)
+
+/// **Ce que Mika fabrique pour toi** : des fiches, un quiz, des cartes, un trophée, une série,
+/// une idée — chacune se pose autour de lui, une fois, puis ne bouge plus. Mika, en demi sur
+/// sa ligne, écrit.
+private struct MikaMissionScene: View {
+    @State private var shown = false
+    @Environment(\.onboardingStill) private var still
+
+    /// L'icône, sa place (en fraction de la largeur, puis de la hauteur au-dessus de Mika), et
+    /// son inclinaison.
+    private static let orbit: [(MicaboIcon, CGFloat, CGFloat, Double)] = [
+        (.cards, 0.30, 0.02, 5), (.trophy, 0.70, 0.0, -6),
+        (.notes, 0.15, 0.48, -7), (.quiz, 0.85, 0.44, 6),
+        (.flame, 0.13, 0.98, 7), (.lightbulb, 0.87, 0.94, -5),
+    ]
+
+    var body: some View {
+        GeometryReader { proxy in
+            let side = min(MikaPeek.hero, proxy.size.height * 0.4)
+            let peek = OnboardingMikaOnLine.height(for: side)
+            let mika = CGPoint(x: proxy.size.width / 2, y: proxy.size.height - peek / 2)
+            // La place des tuiles : du haut de la scène au sommet de Mika.
+            let top: CGFloat = 40
+            let usable = max(60, proxy.size.height - peek - top - 10)
+            ZStack {
+                MikaGlow(size: min(proxy.size.width * 0.8, MikaGlow.room(mika, in: proxy.size)))
+                    .position(mika)
+
+                ForEach(Array(Self.orbit.enumerated()), id: \.offset) { index, item in
+                    MikaTile(icon: item.0, size: 62)
+                        .rotationEffect(.degrees(item.3))
+                        .bobbing(6, delay: Double(index) * 0.06)
+                        .popIn(shown || still, delay: 0.2 + Double(index) * 0.07)
+                        .position(x: proxy.size.width * item.1, y: top + usable * item.2)
+                }
+
+                OnboardingMikaOnLine(mood: .write, size: side)
+                    .popIn(shown || still)
+                    .position(mika)
+
+                Sparkles(points: [CGPoint(x: 0.5, y: 0.08), CGPoint(x: 0.24, y: 0.3), CGPoint(x: 0.78, y: 0.26), CGPoint(x: 0.5, y: 0.42)])
+            }
+        }
+        .onAppear { shown = true }
+    }
+}
+
+// MARK: - L'XP et la série (lot 9)
+
+/// **Chaque bonne réponse rapporte, et la série grandit** : une carte de l'app — la flamme et
+/// son nombre de jours, la semaine qui se coche jour après jour, la barre d'XP qui se remplit
+/// avec « +10 XP ». Le jaune est celui de l'app pour la série et l'XP, et rien d'autre ne
+/// l'est. Mika dépasse du haut de la carte. Pas de deuxième question : la vraie, sur sa
+/// matière, vient juste avant (`SampleCardStepView`).
+private struct MikaDesignScene: View {
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.onboardingStill) private var still
+
+    @State private var shown = false
+    /// Les jours cochés de la semaine, de 0 à 7.
+    @State private var days = 0
+
+    private static let week = 7
+    private var lit: Int { still ? Self.week : days }
+
+    var body: some View {
+        GeometryReader { proxy in
+            let width = min(330, proxy.size.width - 56)
+            let center = CGPoint(x: proxy.size.width / 2, y: proxy.size.height * 0.62)
+            ZStack {
+                MikaGlow(size: min(proxy.size.width * 0.9, MikaGlow.room(center, in: proxy.size)), color: MicaboColor.cautionVivid)
+                    .position(center)
+
+                card(width: width)
+                    // Mika passe la tête par-dessus la carte : le bord haut de la carte coupe son
+                    // buste (la règle de mise en scène).
+                    .background(alignment: .topTrailing) {
+                        MikaPeek(mood: .wink, width: MikaPeek.card, reactsToTap: true, animates: !still)
+                            .offset(x: -18, y: -MikaPeek.height(for: MikaPeek.card) + 2)
+                            .accessibilityHidden(true)
+                    }
+                    .popIn(shown || still, delay: 0.1)
+                    .position(center)
+            }
+        }
+        .onAppear { shown = true }
+        .task { await fill() }
+    }
+
+    private func card(width: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .center, spacing: 12) {
+                MicaboIconView(icon: .flame, size: 44)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(max(1, lit).formatted(.number.locale(i18n.locale.foundation)))
+                        .font(MicaboFont.number(34))
+                        .foregroundStyle(MicaboColor.flameInk)
+                        .contentTransition(.numericText(value: Double(lit)))
+                    Text(i18n.t("ios.streak.title"))
+                        .font(MicaboFont.ui(13, weight: .heavy))
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                }
+                Spacer(minLength: 8)
+                Text("+10 XP")
+                    .font(MicaboFont.ui(15, weight: .black))
+                    .foregroundStyle(MicaboColor.flameInk)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(MicaboColor.flameSoft, in: Capsule())
+                    .environment(\.layoutDirection, .leftToRight)
+            }
+
+            HStack(spacing: 0) {
+                ForEach(Array(weekdays.enumerated()), id: \.offset) { index, symbol in
+                    VStack(spacing: 6) {
+                        ZStack {
+                            Circle()
+                                .fill(index < lit ? MicaboColor.cautionVivid : MicaboColor.track)
+                            if index < lit {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 12, weight: .black))
+                                    .foregroundStyle(MicaboColor.flameInk)
+                                    .transition(.scale.combined(with: .opacity))
+                            }
+                        }
+                        .frame(width: 30, height: 30)
+                        Text(symbol)
+                            .font(MicaboFont.ui(12, weight: .bold))
+                            .foregroundStyle(MicaboColor.inkTertiary)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+
+            Capsule()
+                .fill(MicaboColor.track)
+                .frame(height: 12)
+                .overlay(alignment: .leading) {
+                    GeometryReader { bar in
+                        Capsule()
+                            .fill(MicaboColor.cautionVivid)
+                            .frame(width: bar.size.width * (0.18 + 0.8 * CGFloat(lit) / CGFloat(Self.week)))
+                    }
+                }
+        }
+        .padding(18)
+        .frame(width: width, alignment: .leading)
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .micaboElevation(.card)
+        .animation(MicaboMotion.standard, value: lit)
+    }
+
+    /// Les jours de la semaine, dans la langue de l'élève et à partir du premier jour de son
+    /// pays : « L M M J V S D », « M D M D F S S », « ن ث ر خ ج س ح ».
+    private var weekdays: [String] {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = i18n.locale.foundation
+        let symbols = calendar.veryShortStandaloneWeekdaySymbols
+        let first = max(0, min(symbols.count - 1, calendar.firstWeekday - 1))
+        return Array(symbols[first...] + symbols[..<first])
+    }
+
+    /// La semaine se coche jour après jour, une fois, puis reste pleine.
+    @MainActor
+    private func fill() async {
+        guard !still else { return }
+        guard !reduceMotion else {
+            days = Self.week
+            return
+        }
+        try? await Task.sleep(for: .seconds(0.7))
+        for day in 1...Self.week {
+            guard !Task.isCancelled else { return }
+            days = day
+            Haptics.tick()
+            try? await Task.sleep(for: .seconds(0.16))
+        }
+        Haptics.success()
+    }
+}
+
+// MARK: - Tout au même endroit (lot 9)
+
+/// **Les quatre portes d'une leçon, cochées l'une après l'autre** : fiches, quiz, flashcards,
+/// examens blancs. Mika, en demi sur sa ligne, regarde le tout.
+private struct MikaSolutionScene: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.onboardingStill) private var still
+
+    @State private var shown = false
+    @State private var checked = 0
+
+    private static let items: [(MicaboIcon, String)] = [
+        (.notes, "lesson.nav.notes"),
+        (.quiz, "lesson.nav.quiz"),
+        (.cards, "lesson.nav.flashcards"),
+        (.exam, "lesson.tab.exams"),
+    ]
+
+    private var done: Int { still ? Self.items.count : checked }
+
+    var body: some View {
+        GeometryReader { proxy in
+            let side = min(MikaPeek.hero, proxy.size.height * 0.36)
+            let peek = OnboardingMikaOnLine.height(for: side)
+            let mika = CGPoint(x: proxy.size.width / 2, y: proxy.size.height - peek / 2)
+            let gridHeight = max(120, proxy.size.height - peek - 24)
+            ZStack {
+                MikaGlow(size: min(proxy.size.width * 0.85, MikaGlow.room(CGPoint(x: 0, y: gridHeight / 2), in: proxy.size)))
+                    .position(x: proxy.size.width / 2, y: gridHeight / 2)
+
+                VStack(spacing: 22) {
+                    HStack(spacing: 44) {
+                        tile(0)
+                        tile(1)
+                    }
+                    HStack(spacing: 44) {
+                        tile(2)
+                        tile(3)
+                    }
+                }
+                .position(x: proxy.size.width / 2, y: gridHeight / 2 + 6)
+
+                OnboardingMikaOnLine(mood: .look, size: side)
+                    .popIn(shown || still, delay: 0.1)
+                    .position(mika)
+            }
+        }
+        .onAppear { shown = true }
+        .task { await run() }
+    }
+
+    private func tile(_ index: Int) -> some View {
+        let item = Self.items[index]
+        let isChecked = index < done
+        return MikaTile(icon: item.0, size: 64, label: L10n.t(item.1, locale: .resolved()))
+            .overlay(alignment: .topTrailing) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(MicaboColor.onInk, MicaboColor.correct)
+                    .background(Circle().fill(MicaboColor.surface).padding(2))
+                    .offset(x: 10, y: -10)
+                    .scaleEffect(isChecked ? 1 : 0.3)
+                    .opacity(isChecked ? 1 : 0)
+                    .animation(MicaboMotion.standard, value: isChecked)
+            }
+            .bobbing(4, delay: Double(index) * 0.08)
+            .popIn(shown || still, delay: 0.15 + Double(index) * 0.08)
+    }
+
+    @MainActor
+    private func run() async {
+        guard !still else { return }
+        guard !reduceMotion else {
+            checked = Self.items.count
+            return
+        }
+        try? await Task.sleep(for: .seconds(0.8))
+        for index in Self.items.indices {
+            guard !Task.isCancelled else { return }
+            checked = index + 1
+            Haptics.tick()
+            try? await Task.sleep(for: .seconds(0.3))
+        }
+        Haptics.success()
+    }
+}
+
+// MARK: - La montagne rangée (lot 9)
+
+/// **La pile de choses à revoir, puis une leçon rangée** : des feuilles de travers
+/// s'empilent, puis se replient en une seule carte de leçon, cochée et à jour. Mika, en demi sur
+/// sa ligne au bord, regarde la pile se ranger. Pas de rouge : rien n'est en retard ici, c'est
+/// juste en désordre.
+private struct MikaReliefScene: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.onboardingStill) private var still
+
+    @State private var shown = false
+    @State private var tidyState = false
+
+    private var tidy: Bool { still || tidyState }
+
+    /// La pile : décalage, rotation, de bas en haut.
+    private static let sheets: [(CGFloat, CGFloat, Double)] = [
+        (-64, 54, -9), (40, 60, 7), (-20, 30, 4), (56, 18, -12), (-50, 0, 10), (12, -20, -5), (-6, -46, 8),
+    ]
+
+    var body: some View {
+        GeometryReader { proxy in
+            let side = min(MikaPeek.hero, proxy.size.height * 0.34)
+            let peek = OnboardingMikaOnLine.height(for: side)
+            let base = CGPoint(x: proxy.size.width / 2, y: max(110, (proxy.size.height - peek) * 0.5))
+            ZStack {
+                MikaGlow(size: min(proxy.size.width * 0.85, MikaGlow.room(base, in: proxy.size)), color: tidy ? MicaboColor.correct : MicaboColor.accent)
+                    .position(base)
+
+                ForEach(Array(Self.sheets.enumerated()), id: \.offset) { index, sheet in
+                    paper(index: index)
+                        .rotationEffect(.degrees(tidy ? 0 : sheet.2))
+                        .offset(x: tidy ? 0 : sheet.0, y: tidy ? 0 : sheet.1)
+                        .scaleEffect(tidy ? 0.6 : 1)
+                        .opacity(tidy ? 0 : 1)
+                        .popIn(shown || still, delay: 0.04 * Double(index))
+                        .position(base)
+                }
+
+                lesson
+                    .scaleEffect(tidy ? 1 : 0.5)
+                    .opacity(tidy ? 1 : 0)
+                    .position(base)
+
+                OnboardingMikaOnLine(mood: tidy ? .wink : .look, size: side)
+                    .popIn(shown || still, delay: 0.2)
+                    .position(x: proxy.size.width / 2, y: proxy.size.height - peek / 2)
+            }
+            .animation(MicaboMotion.gentle, value: tidy)
+        }
+        .onAppear { shown = true }
+        .task { await settle() }
+    }
+
+    /// Une feuille de cours : des lignes grises, parfois un surlignage.
+    private func paper(index: Int) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Capsule().fill(MicaboColor.ink.opacity(0.7)).frame(width: 70, height: 7)
+            ForEach(0..<4, id: \.self) { line in
+                Capsule()
+                    .fill(line == 1 && index.isMultiple(of: 2) ? MicaboColor.accentSoft : MicaboColor.track)
+                    .frame(width: line == 3 ? 62 : 104, height: 5)
+            }
+        }
+        .padding(14)
+        .frame(width: 134, height: 96, alignment: .topLeading)
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.2))
+        .shadow(color: .black.opacity(0.06), radius: 6, y: 3)
+    }
+
+    /// La leçon rangée : une icône, une barre pleine, une coche.
+    private var lesson: some View {
+        HStack(spacing: 14) {
+            MicaboIconView(icon: .check, size: 54)
+            VStack(alignment: .leading, spacing: 8) {
+                Capsule().fill(MicaboColor.ink.opacity(0.8)).frame(width: 110, height: 9)
+                Capsule().fill(MicaboColor.correct).frame(width: 140, height: 10)
+            }
+        }
+        .padding(18)
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .micaboElevation(.card)
+    }
+
+    @MainActor
+    private func settle() async {
+        guard !still else { return }
+        guard !reduceMotion else {
+            tidyState = true
+            return
+        }
+        try? await Task.sleep(for: .seconds(1.4))
+        guard !Task.isCancelled else { return }
+        tidyState = true
+        Haptics.success()
     }
 }
 
