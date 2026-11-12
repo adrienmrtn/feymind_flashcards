@@ -10,6 +10,7 @@ import {
 } from "../_shared/fal.ts";
 import { detectDiscipline, disciplineBrief } from "../_shared/discipline.ts";
 import { languageBrief } from "../_shared/language.ts";
+import { optionalLearnerBrief } from "../_shared/learner.ts";
 import { sanitizeMeta, wrapUntrusted } from "../_shared/prompt-boundary.ts";
 
 /**
@@ -238,6 +239,9 @@ Deno.serve((request: Request) =>
 
       const sections = [
         languageBrief(body.language),
+        // Le profil scolaire, quand l'app l'envoie (champs facultatifs, `learner.ts`) : la
+        // copie prend le niveau et le format d'épreuve de la classe de l'élève.
+        optionalLearnerBrief(body as Record<string, unknown>),
         `Programme : ${title || "Sans titre"}`,
         subjectBrief,
         `Écris exactement ${count} questions, réparties ainsi : ${breakdown}. Ces nombres ne se négocient pas.`,

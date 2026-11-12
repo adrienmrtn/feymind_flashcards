@@ -16,6 +16,10 @@ struct PaywallProfile: Equatable {
     /// L'identifiant de cet examen dans le catalogue (`SchoolExams`) : son préfixe dit de
     /// quel pays il est.
     var examID: String?
+    /// Le jour de cet examen, quand l'élève l'a posé : la pastille « Bac · dans 7 mois ».
+    var examDate: Date?
+    /// Les matières cochées dans le parcours, sous leur nom canonique (`SubjectCatalog`).
+    var subjects: [String] = []
 
     /// La longueur au-delà de laquelle un nom d'examen ne tient plus dans le titre : il
     /// ferait une phrase de cinq lignes, et le titre reste alors celui de tout le monde.
@@ -27,9 +31,48 @@ struct PaywallProfile: Equatable {
         return PaywallProfile(
             firstName: firstName(OnboardingPreferences.displayName),
             examName: name,
-            examID: name == nil ? nil : choice?.id
+            examID: name == nil ? nil : choice?.id,
+            examDate: name == nil ? nil : OnboardingPreferences.examDate,
+            subjects: OnboardingPreferences.subjects
         )
     }
+
+    /// **Ce que l'élève a déclaré, en pastilles** : l'examen et le temps qui reste, ses
+    /// matières (trois au plus, puis « +n »), la leçon qu'il a demandée. Une réponse absente
+    /// retire sa pastille ; rien n'est inventé.
+    func facts(topic: String?, now: Date = Date(), locale: UiLocale = .resolved()) -> [PaywallFact] {
+        var facts: [PaywallFact] = []
+        if let examName {
+            var text = examName
+            if let examDate {
+                let days = SchoolExams.daysLeft(until: examDate, from: now)
+                if days > 0 {
+                    text = L10n.t("ios.pay11.me.examIn", locale: locale, vars: [
+                        "exam": examName,
+                        "time": SchoolExams.remainingText(days: days, locale: locale),
+                    ])
+                }
+            }
+            facts.append(PaywallFact(id: "exam", symbol: "flag.checkered", text: text))
+        }
+        let names = subjects.sorted().map { SubjectDisplay.subject($0, locale: locale) }
+        for name in names.prefix(Self.shownSubjects) {
+            facts.append(PaywallFact(id: "subject.\(name)", symbol: nil, text: name))
+        }
+        if names.count > Self.shownSubjects {
+            facts.append(PaywallFact(id: "more", symbol: nil, text: "+\(names.count - Self.shownSubjects)"))
+        }
+        if let topic = topic?.trimmingCharacters(in: .whitespacesAndNewlines), !topic.isEmpty {
+            let shown = topic.count > PaywallTimeline.longestTopic
+                ? String(topic.prefix(PaywallTimeline.longestTopic - 1)) + "…"
+                : topic
+            facts.append(PaywallFact(id: "topic", symbol: "book", text: shown))
+        }
+        return facts
+    }
+
+    /// Les matières nommées une à une, avant « +n ».
+    static let shownSubjects = 3
 
     /// Le prénom : le premier mot de ce que l'élève a donné, rien s'il n'a rien donné.
     static func firstName(_ raw: String?) -> String? {

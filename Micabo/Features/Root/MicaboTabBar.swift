@@ -4,19 +4,29 @@ import SwiftUI
 /// elle reste immobile pendant qu'elles se remplacent. C'est le routeur qui la retire sur
 /// les écrans poussés.
 ///
-/// **Cinq icônes, sans libellé** (V3.3, lot 10) — Accueil, Leçons, Calendrier, Focus, Profil :
-/// maison, livres, calendrier, minuteur, personne. L'onglet actif est plein et clair (l'encre),
-/// les autres en tertiaire. Les noms restent pour VoiceOver, et pour la visionneuse en très
-/// grand texte (appui long). La barre a le fond du thème et descend jusqu'au bord de l'écran,
-/// sous l'indicateur d'accueil. Elle a été une pilule de verre qui flottait sur son ombre : un
-/// objet de plus à regarder, derrière lequel le contenu passait en transparence.
+/// **La pilule flottante de Micabo** (lot 11 ; maquettes `scratchpad/lot11/navbar/`, variante A
+/// retenue). « On doit quand même être un peu différent de Knowunity » : cinq icônes nues sur
+/// une barre pleine largeur, c'était leur barre. La nôtre est une pilule surface à filet, posée
+/// au-dessus de la barre d'accueil, détachée des bords ; **l'onglet actif s'élargit et dit son
+/// nom** en Sofia Sans Condensed, sur le lavis bleu — Accueil, Leçons, Calendrier, Focus,
+/// Profil. Les autres restent des icônes (zone tactile de 48 pt). Un fondu du fond, sous la
+/// pilule, garde lisible ce qui défile derrière.
 ///
 /// Sa hauteur est fixée par `MicaboLayout.tabBarHeight` et non mesurée sur ses libellés :
-/// c'est cette hauteur que les pages réservent, et une réserve qui varie est une réserve
-/// qu'on finit par manquer.
+/// c'est cette hauteur que les pages réservent (`tabBarClearance`), et une réserve qui varie
+/// est une réserve qu'on finit par manquer. Le contenu d'une page ne passe donc jamais dessous :
+/// il s'arrête au-dessus, seul le défilement le fait glisser derrière le fondu.
 struct MicaboTabBar: View {
     @Environment(TabRouter.self) private var router: TabRouter?
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// La pilule elle-même ; l'air sous elle complète `MicaboLayout.tabBarHeight`.
+    static let pillHeight: CGFloat = 60
+    /// L'air entre la pilule et le bas de la zone sûre (le bord de l'écran sur un iPhone SE).
+    static let bottomAir: CGFloat = MicaboLayout.tabBarHeight - pillHeight
+    /// La hauteur d'un onglet : une zone tactile au-dessus des 44 pt demandés.
+    static let tabHeight: CGFloat = 48
 
     var body: some View {
         if let router {
@@ -27,40 +37,88 @@ struct MicaboTabBar: View {
     private func bar(_ router: TabRouter) -> some View {
         HStack(spacing: 2) {
             ForEach(RootTab.tabs) { tab in
-                // VoiceOver lit le nom entier de la page (« Concentration »), sauf pour l'accueil,
-                // qui s'appelle « Accueil » dans la barre.
-                let spoken = tab == .today ? tab.barLabel(t: { i18n.t($0) }) : tab.label(t: { i18n.t($0) })
-                let isSelected = tab == router.selection
-                Button {
+                MicaboTabButton(
+                    tab: tab,
+                    title: tab.barLabel(t: { i18n.t($0) }),
+                    spoken: tab == .today ? tab.barLabel(t: { i18n.t($0) }) : tab.label(t: { i18n.t($0) }),
+                    isSelected: tab == router.selection
+                ) {
                     // Sans `withAnimation` : animer `selection` faisait fondre les pages, et
-                    // l'onglet touché n'était lisible qu'après 280 ms.
+                    // l'onglet touché n'était lisible qu'après 280 ms. Seule la pilule s'anime.
                     router.selection = tab
-                } label: {
-                    Image(systemName: isSelected ? tab.selectedSystemImage : tab.systemImage)
-                        .font(.system(size: 23, weight: .semibold))
-                        .foregroundStyle(isSelected ? V3Color.ink : V3Color.ink3)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: MicaboLayout.tabBarHeight)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-                .accessibilityLabel(spoken)
-                .accessibilityAddTraits(isSelected ? .isSelected : [])
-                // En très grande taille de texte, un appui long montre l'onglet en grand,
-                // comme dans la barre du système.
-                .accessibilityShowsLargeContentViewer {
-                    Image(systemName: tab.selectedSystemImage)
-                    Text(spoken)
                 }
             }
         }
         .padding(.horizontal, 6)
+        .frame(height: Self.pillHeight)
+        .background(V3Color.surface, in: Capsule())
+        .overlay(Capsule().strokeBorder(V3Color.line, lineWidth: V3Metric.border))
+        .animation(MicaboMotion.resolved(MicaboMotion.quick, reduceMotion: reduceMotion), value: router.selection)
+        .padding(.horizontal, 16)
+        .padding(.bottom, Self.bottomAir)
         .frame(height: MicaboLayout.tabBarHeight)
         .frame(maxWidth: .infinity)
         .background {
-            // Le fond de la page, jusqu'au bord bas de l'écran.
-            MicaboColor.canvas
-                .ignoresSafeArea(edges: .bottom)
+            // Le fondu du fond, jusqu'au bord bas de l'écran : ce qui défile derrière s'efface
+            // avant d'atteindre la pilule.
+            LinearGradient(
+                stops: [
+                    .init(color: V3Color.bg.opacity(0), location: 0),
+                    .init(color: V3Color.bg, location: 0.45),
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea(edges: .bottom)
+            .allowsHitTesting(false)
+        }
+        .accessibilityElement(children: .contain)
+    }
+}
+
+/// Un onglet de la pilule : l'icône seule, ou — quand il est actif — l'icône pleine et son nom
+/// sur le lavis bleu.
+struct MicaboTabButton: View {
+    let tab: RootTab
+    let title: String
+    let spoken: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 7) {
+                Image(systemName: isSelected ? tab.selectedSystemImage : tab.systemImage)
+                    .font(.system(size: isSelected ? 21 : 23, weight: .semibold))
+                if isSelected {
+                    Text(title)
+                        .font(Font.custom(V3Typeface.displayName(for: .heavy), fixedSize: 19))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .fixedSize(horizontal: true, vertical: false)
+                        .transition(.opacity)
+                }
+            }
+            .foregroundStyle(isSelected ? V3Color.accentBright : V3Color.ink3)
+            .padding(.horizontal, isSelected ? 16 : 0)
+            .frame(minWidth: 44, maxWidth: isSelected ? nil : .infinity)
+            .frame(height: MicaboTabBar.tabHeight)
+            .background {
+                if isSelected {
+                    Capsule().fill(V3Color.accentWash)
+                }
+            }
+            .contentShape(Capsule())
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
+        .layoutPriority(isSelected ? 1 : 0)
+        .accessibilityLabel(spoken)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        // En très grande taille de texte, un appui long montre l'onglet en grand, comme dans
+        // la barre du système.
+        .accessibilityShowsLargeContentViewer {
+            Image(systemName: tab.selectedSystemImage)
+            Text(spoken)
         }
     }
 }

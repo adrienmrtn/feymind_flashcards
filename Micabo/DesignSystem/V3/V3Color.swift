@@ -474,6 +474,6 @@ enum V3Metric {
     static let topBarHeight: CGFloat = 44
     static let backSize: CGFloat = 36
     static let progressHeight: CGFloat = 8
-    /// La barre d'onglets : cinq icônes, sans libellé.
-    static let tabBarHeight: CGFloat = 52
+    /// La barre d'onglets (lot 11) : la pilule flottante de 60 pt et 8 pt d'air sous elle.
+    static let tabBarHeight: CGFloat = 68
 }

@@ -291,8 +291,8 @@ enum MicaboLayout {
     /// Air laissé entre la barre d'onglets et ce qu'une page ancre juste au-dessus d'elle :
     /// le « + » de Cours, le bouton de session de Réviser.
     ///
-    /// La barre est pleine largeur, sur le fond du thème (lot 10) : huit points d'air au-dessus
-    /// d'elle suffisent pour qu'un bouton de page ne se colle pas à ses icônes.
+    /// La barre est une pilule flottante (lot 11) : huit points d'air au-dessus d'elle suffisent
+    /// pour qu'un bouton de page ne se colle pas à son filet.
     static let tabBarGap: CGFloat = 8
 
     /// **Tout ce que la barre d'onglets occupe**, hors zone sûre : c'est la hauteur
