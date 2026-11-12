@@ -271,11 +271,20 @@ struct OnboardingGradeGap: Equatable {
             default: return L10n.t("ios.onb10.target.large.plain", locale: locale)
             }
         }
-        let gap = isWhole ? L10n.t("ios.onb10.target.points", locale: locale, vars: ["count": amount]) : amount
+        // Des points entiers : la phrase accorde son unité (« +1 point », « +4 points »).
+        if isWhole {
+            let vars = ["count": amount]
+            switch size {
+            case .small: return L10n.t("ios.onb10.target.small.points", locale: locale, vars: vars)
+            case .medium: return L10n.t("ios.onb10.target.medium.points", locale: locale, vars: vars)
+            default: return L10n.t("ios.onb10.target.large.points", locale: locale, vars: vars)
+            }
+        }
+        let vars = ["gap": amount]
         switch size {
-        case .small: return L10n.t("ios.onb10.target.small", locale: locale, vars: ["gap": gap])
-        case .medium: return L10n.t("ios.onb10.target.medium", locale: locale, vars: ["gap": gap])
-        default: return L10n.t("ios.onb10.target.large", locale: locale, vars: ["gap": gap])
+        case .small: return L10n.t("ios.onb10.target.small", locale: locale, vars: vars)
+        case .medium: return L10n.t("ios.onb10.target.medium", locale: locale, vars: vars)
+        default: return L10n.t("ios.onb10.target.large", locale: locale, vars: vars)
         }
     }
 

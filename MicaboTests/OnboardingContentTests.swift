@@ -207,7 +207,7 @@ final class OnboardingContentTests: XCTestCase {
                 for waiting in ["asyncAfter", "Task.sleep", ".delay(", "repeatForever"] {
                     XCTAssertFalse(line.contains(waiting), "\(path):\(number + 1) attend : \(waiting)")
                 }
-                if line.contains("Timer.") {
+                for clock in ["Timer.", "TimelineView(", "CADisplayLink("] where line.contains(clock) {
                     XCTAssertTrue(path.hasSuffix("Steps/PlanStepViews.swift"), "\(path):\(number + 1) a une horloge")
                 }
             }
@@ -219,6 +219,11 @@ final class OnboardingContentTests: XCTestCase {
 
     /// Le chargement coche ses lignes une à une, la dernière à cent pour cent.
     func testTheLoadingTicksItsLinesOneByOne() {
+        XCTAssertEqual(PlanBuildingStepView.progress(elapsed: 0), 0)
+        XCTAssertEqual(PlanBuildingStepView.progress(elapsed: PlanBuildingStepView.duration), 1)
+        XCTAssertEqual(PlanBuildingStepView.progress(elapsed: 60), 1, "L'app revenue de l'arrière-plan ne dépasse pas cent")
+        XCTAssertGreaterThan(PlanBuildingStepView.progress(elapsed: PlanBuildingStepView.duration / 2), 0.5,
+                             "La course part vite et se pose")
         XCTAssertEqual(PlanBuildingStepView.checkedCount(progress: 0, lines: 5), 0)
         XCTAssertEqual(PlanBuildingStepView.checkedCount(progress: 0.2, lines: 5), 1)
         XCTAssertEqual(PlanBuildingStepView.checkedCount(progress: 0.62, lines: 5), 3)

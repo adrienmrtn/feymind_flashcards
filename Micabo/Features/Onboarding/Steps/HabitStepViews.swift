@@ -57,7 +57,7 @@ struct NotificationsStepView: View {
     }
 
     var body: some View {
-        V3Screen {
+        OnbScreen {
             OnbTitle(i18n.t("ios.onb10.notif.title", ["hour": hourText]), size: OnbLayout.display)
                 .padding(.top, OnbLayout.titleTop)
 

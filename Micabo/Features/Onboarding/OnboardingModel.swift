@@ -506,6 +506,15 @@ final class OnboardingModel {
         return previous
     }
 
+    /// **Pose le parcours sur un écran**, sans transition et sans rien écrire : pour les
+    /// rendus et les aperçus. Le parcours lui-même n'avance que par `advance` et `goBack`.
+    func place(on target: OnboardingStep) {
+        let wasRestoring = isRestoring
+        isRestoring = true
+        step = target
+        isRestoring = wasRestoring
+    }
+
     // MARK: Le changement d'étape
 
     /// Vrai le temps qu'une page glisse. Le filet (huit dixièmes de seconde) ne laisse pas

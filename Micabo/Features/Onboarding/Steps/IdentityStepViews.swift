@@ -10,7 +10,7 @@ struct WelcomeStepView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
-        V3Screen {
+        OnbScreen {
             // Mika prend d'abord sa place ; l'air qui reste se partage au-dessus et en dessous.
             Spacer(minLength: 12)
                 .layoutPriority(-1)

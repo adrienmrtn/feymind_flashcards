@@ -330,7 +330,7 @@ struct StartingPointStepView: View {
     }
 
     var body: some View {
-        V3Screen {
+        OnbScreen {
             // La note visée est en vert : c'est l'objectif.
             OnbTitle(title, size: OnbLayout.display, alignment: .center, keyword: V3Color.green)
                 .padding(.top, OnbLayout.titleTop)

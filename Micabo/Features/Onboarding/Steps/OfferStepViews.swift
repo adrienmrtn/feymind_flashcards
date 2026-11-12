@@ -18,7 +18,7 @@ struct FreeTrialIntroStepView: View {
     }
 
     var body: some View {
-        V3Screen {
+        OnbScreen {
             OnbTitle(title, size: OnbLayout.display, alignment: .center)
                 .padding(.top, OnbLayout.titleTop)
 
@@ -83,7 +83,7 @@ struct TrialOfferStepView: View {
     }
 
     var body: some View {
-        V3Screen {
+        OnbScreen {
             OnbTitle(i18n.t(Self.titleKey(canRemind: promises)), size: OnbLayout.display, alignment: .center)
                 .padding(.top, OnbLayout.titleTop)
 

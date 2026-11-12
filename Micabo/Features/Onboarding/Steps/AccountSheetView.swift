@@ -16,6 +16,7 @@ struct OnboardingAccountSheet: View {
 
     @Environment(AuthController.self) private var auth
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.onboardingStill) private var still
 
     /// Le même drapeau que celui lu par `RootView` : passer ici vaut passer pour de bon, et
     /// l'app ne repose pas la question à la sortie du parcours.
@@ -24,48 +25,18 @@ struct OnboardingAccountSheet: View {
     @State private var didFinish = false
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                VStack(spacing: 8) {
-                    OnbTitle(i18n.t("ios.onb10.account.title"), alignment: .center)
-
-                    Text(i18n.t("ios.account.sub"))
-                        .font(V3Font.body)
-                        .foregroundStyle(V3Color.ink2)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: .infinity)
+        Group {
+            if still {
+                // Les rendus ne dessinent pas l'intérieur d'un `ScrollView`.
+                content
+                    .frame(maxHeight: .infinity, alignment: .top)
+            } else {
+                ScrollView {
+                    content
                 }
-
-                VStack(spacing: 0) {
-                    // Apple, Google et le courriel, tels que `SignInProviderButtons` les
-                    // dessine partout, logos compris.
-                    SignInProviderButtons(offersEmail: true)
-
-                    SignInFailureNote(includeSent: false, includeError: true)
-                        .padding(.top, 8)
-                }
-                .padding(.top, 22)
-                // Les portes seules attendent la fin d'une connexion en cours : pas deux à la
-                // fois. « Plus tard », juste en dessous, reste vivant.
-                .allowsHitTesting(!auth.isWorking)
-
-                VStack(spacing: 6) {
-                    V3Button(i18n.t("ios.onb10.later"), kind: .ghost) {
-                        skip()
-                    }
-                    .accessibilityLabel(Text(i18n.t("ios.skipNoAccount")))
-
-                    legalLine
-                }
-                .padding(.top, 10)
+                .scrollBounceBehavior(.basedOnSize)
             }
-            .padding(.horizontal, OnbLayout.margin)
-            .padding(.top, 30)
-            .padding(.bottom, 12)
-            .frame(maxWidth: .infinity)
         }
-        .scrollBounceBehavior(.basedOnSize)
         .background(V3Color.bg.ignoresSafeArea())
         .animation(MicaboMotion.quick, value: auth.message)
         // La connexion se termine dans le contrôleur, pas dans le bouton : c'est le passage à
@@ -77,6 +48,49 @@ struct OnboardingAccountSheet: View {
         .onAppear {
             if auth.isSignedIn { finishOnce() }
         }
+    }
+
+    /// La question, les portes, la sortie et les mentions.
+    private var content: some View {
+        VStack(spacing: 0) {
+            VStack(spacing: 8) {
+                OnbTitle(i18n.t("ios.onb10.account.title"), alignment: .center)
+
+                Text(i18n.t("ios.account.sub"))
+                    .font(V3Font.body)
+                    .foregroundStyle(V3Color.ink2)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
+            }
+
+            VStack(spacing: 0) {
+                // Apple, Google et le courriel, tels que `SignInProviderButtons` les dessine
+                // partout, logos compris.
+                SignInProviderButtons(offersEmail: true)
+
+                SignInFailureNote(includeSent: false, includeError: true)
+                    .padding(.top, 8)
+            }
+            .padding(.top, 22)
+            // Les portes seules attendent la fin d'une connexion en cours : pas deux à la
+            // fois. « Plus tard », juste en dessous, reste vivant.
+            .allowsHitTesting(!auth.isWorking)
+
+            VStack(spacing: 6) {
+                V3Button(i18n.t("ios.onb10.later"), kind: .ghost) {
+                    skip()
+                }
+                .accessibilityLabel(Text(i18n.t("ios.skipNoAccount")))
+
+                legalLine
+            }
+            .padding(.top, 10)
+        }
+        .padding(.horizontal, OnbLayout.margin)
+        .padding(.top, 30)
+        .padding(.bottom, 12)
+        .frame(maxWidth: .infinity)
     }
 
     private var legalLine: some View {

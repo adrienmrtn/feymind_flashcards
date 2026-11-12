@@ -79,7 +79,7 @@ struct SolutionMapStepView: View {
     }
 
     var body: some View {
-        V3Screen {
+        OnbScreen {
             OnbTitle(title)
                 .padding(.top, OnbLayout.titleTop)
 

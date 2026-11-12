@@ -3,8 +3,9 @@ import SwiftUI
 // Les briques communes aux écrans du parcours. Elles ne dessinent rien par elles-mêmes : les
 // couleurs, les polices et les formes viennent du système visuel V3 (`V3Color`, `V3Font`,
 // `V3Metric`, `V3Screen`, `MikaAsk`, `V3Title`, `V3OptionRow`, `V3Chip`, `V3Button`,
-// `.v3Card`). Ici : la mise en page d'une question, le grand Mika d'un moment, la place du
-// clavier, et les mots (dates, heures).
+// `.v3Card`). Ici : le gabarit d'un écran (qui se dessine aussi dans un rendu), la mise en
+// page d'une question, le grand Mika d'un moment, la place du clavier, et les mots (dates,
+// heures).
 
 // MARK: - Les mesures du parcours
 
@@ -34,6 +35,65 @@ enum OnbLayout {
     static let heroMin: CGFloat = 120
     /// Mika quand il se présente : le plus grand du parcours.
     static let heroWelcome: CGFloat = 240
+}
+
+// MARK: - Le gabarit d'un écran
+
+/// **L'écran d'une étape** : le gabarit du système visuel (`V3Screen`), un contenu qui défile
+/// s'il dépasse et un pied fixe. La barre du haut n'est pas ici : elle est fixe, au-dessus des
+/// pages (`OnboardingFlowView`).
+///
+/// **Les rendus de la CI ne dessinent pas l'intérieur d'un `ScrollView`.** Posé immobile
+/// (`onboardingStill`), l'écran garde donc la même mise en page (les marges, l'écart du pied),
+/// sans défilement : ce que le rendu montre est ce que l'élève voit sur un écran qui tient.
+struct OnbScreen<Content: View, Footer: View>: View {
+    private let content: Content
+    private let footer: Footer
+
+    @Environment(\.onboardingStill) private var still
+
+    init(@ViewBuilder content: () -> Content, @ViewBuilder footer: () -> Footer) {
+        self.content = content()
+        self.footer = footer()
+    }
+
+    private var hasFooter: Bool { Footer.self != EmptyView.self }
+
+    var body: some View {
+        if still {
+            VStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 0) {
+                    content
+                }
+                .padding(.horizontal, V3Metric.screenMargin)
+                .padding(.bottom, 16)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+
+                if hasFooter {
+                    VStack(spacing: 10) {
+                        footer
+                    }
+                    .padding(.horizontal, V3Metric.screenMargin)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            .background(V3Color.bg)
+        } else {
+            V3Screen {
+                content
+            } footer: {
+                footer
+            }
+        }
+    }
+}
+
+extension OnbScreen where Footer == EmptyView {
+    /// Un écran sans pied : un choix unique, qui avance à l'appui.
+    init(@ViewBuilder content: () -> Content) {
+        self.init(content: content, footer: { EmptyView() })
+    }
 }
 
 // MARK: - Une question
@@ -69,7 +129,7 @@ struct OnbQuestion<Answers: View, Footer: View>: View {
     }
 
     var body: some View {
-        V3Screen {
+        OnbScreen {
             OnbBubble(ask, mood: mood)
             if anchored {
                 Spacer(minLength: OnbLayout.askGap)

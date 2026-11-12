@@ -79,7 +79,7 @@ final class RenderGalleryTests: XCTestCase {
                 QuestionFeedback(question: Self.sampleQuestion(id: "mika-right"), right: true)
                 QuestionFeedback(question: Self.sampleQuestion(id: "mika-wrong"), right: false)
                 HStack {
-                    OnboardingFooterMika(cheers: 0)
+                    MikaMascot(mood: .happy, size: 72)
                     Spacer()
                 }
             }
@@ -624,52 +624,27 @@ final class RenderGalleryTests: XCTestCase {
         )
     }
 
-    /// Le parcours d'accueil : la leçon dans le téléphone, les six écrans de Mika, une
-    /// question avec Mika au pied de la page, la barre du haut.
+    /// Le parcours d'accueil : une question, le temps par jour, la question d'essai, le plan
+    /// révélé, puis le paywall. Chaque écran du parcours a ses rendus dans
+    /// `OnboardingRenderTests` (`onb10-*`).
     func testOnboardingScreens() throws {
         guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
         let model = OnboardingModel()
         model.displayName = "Lina"
 
         try RenderGallery.render(
-            "onboarding-hook",
-            height: 560,
-            OnboardingHookMockup()
-                .environment(\.onboardingStill, true)
-        )
-        // Les scènes seules : la page entière défile, et un `ScrollView` ne se dessine pas.
-        for page in MikaPage.allCases {
-            try RenderGallery.render(
-                "onboarding-mika-scene-\(page.rawValue)",
-                height: 360,
-                MikaPageScene(page: page)
-                    .environment(model)
-                    .environment(\.onboardingStill, true)
-            )
-        }
-        for page in MikaPage.allCases {
-            try RenderGallery.render(
-                "onboarding-mika-\(page.rawValue)",
-                height: 780,
-                MikaStepView(page: page)
-                    .environment(model)
-                    .environment(\.onboardingStill, true)
-            )
-        }
-        try RenderGallery.render(
             "onboarding-question",
             height: 780,
-            VStack(spacing: 0) {
-                OnboardingTopBar(progress: 0.42, showsBack: true, isVisible: true, onBack: {})
-                WorriesStepView()
-            }
-            .environment(model)
+            WorriesStepView()
+                .environment(model)
+                .environment(\.onboardingStill, true)
         )
         try RenderGallery.render(
             "onboarding-time",
             height: 780,
             DailyTimeStepView()
                 .environment(model)
+                .environment(\.onboardingStill, true)
         )
         try RenderGallery.render(
             "onboarding-sample-card",
