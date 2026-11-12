@@ -1,15 +1,20 @@
 import SwiftUI
 
-/// **La puce V3** : une pilule de 44 pt, bord de 2 pt, lèvre de 3 pt, libellé de 15 pt
-/// ExtraBold, précédé d'un emoji ou d'un pictogramme. Choisie : bord et lèvre d'accent, fond
-/// de lavis. Elle s'enfonce sur sa lèvre à l'appui.
+/// **La puce de l'app** : une pilule surface de 44 pt à filet, libellé de 15 pt Bold, précédé
+/// d'une icône deux tons. Choisie (une matière cochée) : un aplat d'accent, texte blanc.
 ///
-/// Pour un raccourci (« Scanner un exo »), un filtre, un choix court dans une rangée qui
-/// passe à la ligne (`MicaboFlowLayout`) ou qui défile.
+/// Pour un raccourci (« Scanner »), un filtre, un choix court dans une rangée qui passe à la
+/// ligne (`MicaboFlowLayout`) ou qui défile.
+///
+/// - `icon` : une icône de la famille (`MicaboIcon`), dans sa teinte ou dans `tone`.
+/// - `systemImage` : un SF Symbol hors famille, teinté de `tone` (l'accent par défaut).
+/// - `emoji` : gardé pour ce qui n'a pas d'icône (un drapeau) ; jamais à la place d'une icône.
 struct V3Chip: View {
     private let title: String
     private let systemImage: String?
     private let emoji: String?
+    private let icon: MicaboIcon?
+    private let tone: Color?
     private let isSelected: Bool
     private let action: () -> Void
 
@@ -17,12 +22,16 @@ struct V3Chip: View {
         _ title: String,
         systemImage: String? = nil,
         emoji: String? = nil,
+        icon: MicaboIcon? = nil,
+        tone: Color? = nil,
         isSelected: Bool = false,
         action: @escaping () -> Void
     ) {
         self.title = title
         self.systemImage = systemImage
         self.emoji = emoji
+        self.icon = icon
+        self.tone = tone
         self.isSelected = isSelected
         self.action = action
     }
@@ -30,19 +39,10 @@ struct V3Chip: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
-                if let emoji {
-                    Text(emoji)
-                        .font(.system(size: 16))
-                        .accessibilityHidden(true)
-                } else if let systemImage {
-                    Image(systemName: systemImage)
-                        .font(.system(size: 15, weight: .heavy))
-                        .foregroundStyle(isSelected ? V3Color.accentInk : V3Color.accent)
-                        .accessibilityHidden(true)
-                }
+                leading
                 Text(title)
                     .font(V3Font.label)
-                    .foregroundStyle(isSelected ? V3Color.accentInk : V3Color.ink)
+                    .foregroundStyle(isSelected ? V3Color.onAccent : V3Color.ink)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -54,10 +54,27 @@ struct V3Chip: View {
             V3TileButtonStyle(
                 selected: isSelected,
                 radius: V3Metric.chipHeight / 2,
-                lip: V3Metric.chipLip,
+                selectedFill: V3Color.accent,
                 feedback: .light
             )
         )
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    @ViewBuilder
+    private var leading: some View {
+        if let icon {
+            MicaboIconView(icon: icon, size: 30, tint: isSelected ? V3Color.onAccent : tone)
+                .frame(width: 24, height: 24)
+        } else if let systemImage {
+            Image(systemName: systemImage)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(isSelected ? V3Color.onAccent : (tone ?? V3Color.accent))
+                .accessibilityHidden(true)
+        } else if let emoji {
+            Text(emoji)
+                .font(.system(size: 16))
+                .accessibilityHidden(true)
+        }
     }
 }

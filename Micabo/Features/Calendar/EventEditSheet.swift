@@ -185,7 +185,7 @@ struct EventEditSheet: View {
                 .padding(.vertical, 10)
             }
             .tint(MicaboColor.accent)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
             if end <= start {
                 Text(loc("ios.cal.timeInvalid"))
                     .font(MicaboFont.ui(13, weight: .bold))
@@ -236,7 +236,7 @@ struct EventEditSheet: View {
                 }
                 .padding(.horizontal, 14)
                 .frame(minHeight: 56)
-                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
             }
             .buttonStyle(HomePressStyle(scale: 0.98))
             .disabled(lessons.isEmpty)

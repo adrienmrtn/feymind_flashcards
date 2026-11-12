@@ -174,7 +174,7 @@ struct IntroCircleView: View {
                         }
                         .padding(18)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(session.course.tone.pale, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .background(session.course.tone.pale, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
                     }
 
                     VStack(alignment: .leading, spacing: 12) {
@@ -248,7 +248,7 @@ struct ConclusionCircleView: View {
                         }
                         .padding(18)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(session.course.tone.pale, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .background(session.course.tone.pale, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
                     }
 
                     if let score = session.progress.averageQuizPercent {
@@ -262,7 +262,7 @@ struct ConclusionCircleView: View {
                                 .foregroundStyle(session.course.tone.ink)
                         }
                         .padding(18)
-                        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
                         .micaboElevation(.row)
                     }
                 }
@@ -381,7 +381,7 @@ struct LessonFinishedView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
         .micaboElevation(.row)
     }
 }

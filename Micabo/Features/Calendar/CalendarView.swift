@@ -207,7 +207,7 @@ struct CalendarView: View {
                             .font(MicaboFont.ui(15, weight: .black))
                             .foregroundStyle(MicaboColor.accentInk)
                             .frame(maxWidth: .infinity, minHeight: 46)
-                            .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
                     }
                     .buttonStyle(HomePressStyle(scale: 0.97))
                 }

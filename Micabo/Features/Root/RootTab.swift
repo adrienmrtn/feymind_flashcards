@@ -46,9 +46,13 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     /// un cinquième d'écran : « Concentration », « Keskittyminen », « Concentración » y
     /// tombaient à 62 % de leur taille. La page garde son titre entier ; la barre dit
     /// « Focus », « Keskity », « Enfoque ».
+    ///
+    /// Home s'y appelle « Accueil ». Depuis la V3.3 la barre ne montre que des icônes : ces noms
+    /// sont ceux que VoiceOver lit, et que la visionneuse en très grand texte affiche.
     func barLabel(t: (String) -> String) -> String {
         switch self {
         case .focus: t("ios.pol.sys.tab.focus")
+        case .today: t("ios.look10.tab.home")
         default: label(t: t)
         }
     }
@@ -63,7 +67,8 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
         }
     }
 
-    /// Variante pleine, affichée quand l'onglet est actif.
+    /// Variante pleine, affichée quand l'onglet est actif : sans libellé, c'est le plein et la
+    /// clarté de l'icône qui disent où l'on est.
     var selectedSystemImage: String {
         switch self {
         case .decks: "books.vertical.fill"

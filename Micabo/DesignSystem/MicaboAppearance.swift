@@ -8,9 +8,14 @@ import UIKit
 /// et chaque jeton se résout au moment de peindre. Le réglage ne fait que fixer l'apparence de
 /// la fenêtre (`colorScheme`) ; en « Système », c'est le téléphone qui décide.
 ///
-/// **Micabo s'ouvre en clair** (lot 7) : un iPhone réglé en sombre voyait toute l'app en
-/// graphite, et l'élève la trouvait « trop sombre ». La nuit et « Comme le téléphone » restent
-/// au choix dans le Profil ; elles ne s'imposent plus d'elles-mêmes.
+/// **Micabo s'ouvre en marine** (lot 10, V3.3) : c'est le thème de la direction artistique, et
+/// celui de tout le monde — un appareil neuf comme un élève qui n'avait rien choisi. Le clair
+/// (« Jour », sur un fond teinté) et « Comme le téléphone » restent au choix dans le Profil, et
+/// un élève qui a choisi l'un des deux le garde.
+///
+/// Le lot 7 avait fait l'inverse — clair par défaut — parce que la nuit d'alors était un
+/// graphite terne, que l'élève trouvait « trop sombre ». Le marine d'aujourd'hui est une
+/// couleur, pas une absence de lumière : c'est lui que l'utilisateur a validé.
 enum MicaboAppearance: String, CaseIterable, Identifiable {
     case system
     case day
@@ -33,34 +38,34 @@ enum MicaboAppearance: String, CaseIterable, Identifiable {
     static let storageKey = "micabo.appearance"
 
     /// **Le choix de l'élève**, écrit seulement quand il touche au sélecteur du Profil. C'est
-    /// la seule source de vérité à partir du lot 7 : sans elle, l'app est en clair.
+    /// la seule source de vérité depuis le lot 7 : sans elle, l'app est dans son thème par
+    /// défaut.
     static let choiceKey = "micabo.appearance.choice"
 
-    /// Le thème d'un élève qui n'a rien choisi.
-    static let defaultAppearance: MicaboAppearance = .day
+    /// Le thème d'un élève qui n'a rien choisi : le marine.
+    static let defaultAppearance: MicaboAppearance = .night
 
-    /// Un choix enregistré, lu tel quel. Un nom inconnu retombe sur le clair.
+    /// Un choix enregistré, lu tel quel : « Jour », « Nuit » et « Comme le téléphone » sont
+    /// trois choix, et chacun se garde. Un nom inconnu retombe sur le thème par défaut.
     static func fromUnknown(_ value: String?) -> MicaboAppearance {
         switch value {
         case "system": .system
+        case "day": .day
         case "night", "twilight": .night
         default: defaultAppearance
         }
     }
 
-    /// **Le thème d'un appareil qui n'a pas encore de choix enregistré** (`choiceKey`), lu
-    /// dans l'ancienne clé.
+    /// **Le thème d'un appareil qui n'a pas de choix enregistré** (`choiceKey`) : le marine,
+    /// quoi que dise l'ancienne clé.
     ///
-    /// Seule la nuit y est sûrement un choix : aucune version n'a écrit « night » ou
-    /// « twilight » d'elle-même, c'est l'élève qui l'a demandée (le crépuscule était une nuit
-    /// douce, il redevient la nuit). « system » a pu être écrit sans que l'élève y touche, et
-    /// rien ne permet de le distinguer d'un vrai choix : il passe en clair, comme un appareil
-    /// neuf. Il retrouve « Comme le téléphone » en un geste dans le Profil.
+    /// L'ancienne clé (`storageKey`, écrite jusqu'au lot 7) ne dit pas ce que l'élève a
+    /// voulu : « system » et « day » ont pu y être écrits sans qu'il touche à rien, et rien ne
+    /// les distingue d'un vrai choix. Seul `choiceKey` est un geste. Un élève qui tenait au
+    /// clair le retrouve en un geste dans le Profil, et ce geste-là est gardé pour de bon ;
+    /// celui qui avait demandé la nuit y est déjà.
     static func migrated(legacy value: String?) -> MicaboAppearance {
-        switch value {
-        case "night", "twilight": .night
-        default: defaultAppearance
-        }
+        defaultAppearance
     }
 
     /// Le thème au lancement : le choix enregistré, sinon la migration de l'ancienne clé.
@@ -202,25 +207,37 @@ struct MicaboPalette: Equatable {
     /// qui est actif ou sélectionné. Vert et rouge ne disent que juste et faux. Chaque leçon porte un
     /// des cinq tons de Micabo (`LessonTone`).
     ///
-    /// **Les couleurs des notes de révision ne bougent pas** (`ratingAgain`, `caution`,
-    /// `positive`, `info` et leurs fonds) : le bilan de fin de session les rejoue.
+    /// **Lot 10 — V3.3, « marine, net, adulte »** : le clair n'est plus le thème par défaut,
+    /// c'est une option. Sa page est **teintée** (`#EEF1F8`, jamais de blanc pur) et ses cartes
+    /// sont blanches, à filet (`#DCE1EC`) ; ni lèvre, ni ombre floue. L'encre est `#0F1324`, le
+    /// secondaire `#566078`, le tertiaire `#97A0B4`. Les couleurs ont un sens, le même
+    /// partout : l'accent pour la sélection et la progression, le jaune pour l'offre et la
+    /// récompense, l'orange pour la série, le vert pour ce qui est juste, le rouge pour ce qui
+    /// est faux ou en retard. Les valeurs sont celles de `V3Color` (un test les tient égales).
+    ///
+    /// Les quatre notes de révision (`ratingAgain`, `caution`, `positive`, `info` et leurs
+    /// fonds) sont dans cette même famille : rouge, jaune, vert, bleu.
+    ///
+    /// **Les valeurs ne s'écrivent plus ici** : tout ce qui a un équivalent dans la direction
+    /// artistique se lit dans `V3Palette.day` (`V3Palette.night` pour la nuit), la seule table
+    /// de couleurs de l'app. Ne restent en dur que les teintes propres aux anciens écrans —
+    /// surligneurs d'une fiche, lavis chauds, offre —, qui n'ont pas de jeton V3.
     static let day = MicaboPalette(
-        canvas: Color(hex: 0xF4F6FB),
-        surface: .white,
-        surfaceMuted: Color(hex: 0xEEF1F7),
-        surfaceSunken: Color(hex: 0xE6EAF2),
-        stroke: Color(hex: 0xE3E7F0),
-        strokeStrong: Color(hex: 0xD3D9E5),
-        hairline: Color(hex: 0xECEFF5),
-        hairlineOnCanvas: Color(hex: 0xE2E6EE),
-        // Un noir à peine bleuté : 16:1 sur l'ivoire. C'est aussi le fond des boutons
-        // d'action principaux.
-        ink: Color(hex: 0x0F1324),
-        // 5,2:1 sur l'ivoire — au-dessus du seuil, y compris à douze points.
-        inkSecondary: Color(hex: 0x586074),
-        inkTertiary: Color(hex: 0x99A0B1),
-        inkReading: Color(hex: 0x1F2433),
-        inkBody: Color(hex: 0x404759),
+        canvas: V3Palette.day.color(\.bg),
+        surface: V3Palette.day.color(\.surface),
+        surfaceMuted: V3Palette.day.color(\.soft),
+        surfaceSunken: Color(hex: 0xE2E7F1),
+        stroke: V3Palette.day.color(\.line),
+        strokeStrong: V3Palette.day.color(\.lip),
+        hairline: Color(hex: 0xE8ECF3),
+        hairlineOnCanvas: V3Palette.day.color(\.line),
+        // Un bleu-noir : 17:1 sur le blanc.
+        ink: V3Palette.day.color(\.ink),
+        // 6:1 sur le blanc — au-dessus du seuil, y compris à treize points.
+        inkSecondary: V3Palette.day.color(\.ink2),
+        inkTertiary: V3Palette.day.color(\.ink3),
+        inkReading: Color(hex: 0x1E2338),
+        inkBody: Color(hex: 0x3D4459),
         sheetMarker: Color(hex: 0xFFF0A6),
         sheetHighlights: [
             Color(hex: 0xFFF0A6),
@@ -231,45 +248,45 @@ struct MicaboPalette: Equatable {
         ],
         onInk: .white,
         onInkMuted: Color(hex: 0xA8ABB3),
-        canvasSage: Color(hex: 0xF4F6FB),
+        canvasSage: V3Palette.day.color(\.bg),
         // Le bleu Micabo (`MicaboBrand.blue`) : 4,3:1 sur le blanc, assez pour un libellé
-        // gras ; le petit texte sur un lavis prend `accentInk` (le 600, 4,7:1 sur
+        // gras ; le petit texte sur un lavis prend `accentInk` (`#1F47B8`, 7:1 sur
         // `accentSoft`).
-        accent: Color(hex: 0x3870FE),
-        accentSoft: Color(hex: 0xE1E9FF),
-        accentVivid: Color(hex: 0x3870FE),
-        accentInk: Color(hex: 0x2A59D9),
-        accentDeep: Color(hex: 0x2350CC),
-        progressTrack: Color(hex: 0xE4E8F0),
-        // À partir d'ici, et jusqu'à `infoSoft` : les couleurs des notes de révision,
-        // reprises telles quelles de l'ancienne palette. Voir le commentaire du type.
-        positive: Color(hex: 0x2F7D57),
-        caution: Color(hex: 0x8A6410),
-        cautionVivid: Color(hex: 0xFFC53D),
-        negative: Color(hex: 0xC93B2B),
-        ratingAgain: Color(hex: 0xB5573C),
-        info: Color(hex: 0x3A6FC4),
-        positiveWash: Color(hex: 0xE4F6EE),
-        positiveInk: Color(hex: 0x16795A),
-        positiveSoft: Color(hex: 0xDEF5E7),
-        cautionSoft: Color(hex: 0xFDF1D6),
-        negativeSoft: Color(hex: 0xFDE8E2),
-        infoSoft: Color(hex: 0xE3EDFC),
+        accent: V3Palette.day.color(\.accent),
+        accentSoft: V3Palette.day.color(\.accentWash2),
+        accentVivid: V3Palette.day.color(\.accent),
+        accentInk: V3Palette.day.color(\.accentInk),
+        accentDeep: V3Palette.day.color(\.accentDeep),
+        progressTrack: V3Palette.day.color(\.line),
+        // À partir d'ici, et jusqu'à `infoSoft` : les couleurs des notes de révision, dans
+        // la famille V3 (vert, jaune, rose-rouge, bleu). Voir le commentaire du type.
+        positive: V3Palette.day.color(\.green),
+        caution: V3Palette.day.color(\.yellowInk),
+        cautionVivid: V3Palette.day.color(\.yellow),
+        negative: V3Palette.day.color(\.red),
+        ratingAgain: V3Palette.day.color(\.red),
+        info: V3Palette.day.color(\.accentInk),
+        positiveWash: V3Palette.day.color(\.greenWash),
+        positiveInk: V3Palette.day.color(\.greenInk),
+        positiveSoft: V3Palette.day.color(\.greenWash),
+        cautionSoft: V3Palette.day.color(\.yellowWash),
+        negativeSoft: V3Palette.day.color(\.redWash),
+        infoSoft: V3Palette.day.color(\.accentWash),
         offerWash: Color(hex: 0xDCC9FB),
         offerWashSoft: Color(hex: 0xF4EEFE),
         gradeNear: Color(hex: 0xB7BCC7),
         gradeMid: Color(hex: 0xD2D6DE),
         gradeFar: Color(hex: 0xE5E8EE),
-        accentWash: Color(hex: 0xEFF4FF),
+        accentWash: V3Palette.day.color(\.accentWash),
         accentPale: Color(hex: 0xBBCEFF),
-        track: Color(hex: 0xE1E5EE),
+        track: V3Palette.day.color(\.line),
         // **La série est dans le jaune du crayon**, pas dans le rouge : le rouge de l'app dit
         // « erreur » ou « en retard », et une série tenue n'est ni l'un ni l'autre. L'encre
         // reste assez sombre pour un texte de treize points sur le lavis (5:1).
-        flame: Color(hex: 0xF59E0B),
-        flameInk: Color(hex: 0x9A5B00),
-        flameSoft: Color(hex: 0xFFF4DD),
-        flameTrack: Color(hex: 0xF4E0B8),
+        flame: V3Palette.day.color(\.orange),
+        flameInk: V3Palette.day.color(\.orangeInk),
+        flameSoft: V3Palette.day.color(\.orangeWash),
+        flameTrack: Color(hex: 0xFBD9B5),
         warmProse: Color(hex: 0x6B5A52),
         warmWashStart: Color(hex: 0xFFF8EA),
         warmWashEnd: Color(hex: 0xFFF0D4),
@@ -280,57 +297,59 @@ struct MicaboPalette: Equatable {
         dayWashStroke: Color(hex: 0xE4DDFA),
         // Les tuiles : les cinq tons pâles, et un gris de papier.
         tilePastels: [
-            Color(hex: 0xFFF1CC),
-            Color(hex: 0xD6F5E6),
-            Color(hex: 0xE1EAFF),
-            Color(hex: 0xFDE2EC),
-            Color(hex: 0xEDE5FF),
-            Color(hex: 0xEEF1F6)
+            V3Palette.day.color(\.yellowWash),
+            V3Palette.day.color(\.greenWash),
+            V3Palette.day.color(\.accentWash),
+            V3Palette.day.color(\.pinkWash),
+            V3Palette.day.color(\.lilacWash),
+            V3Palette.day.color(\.soft)
         ],
         keyword: Color(hex: 0x7C3AED),
-        correct: Color(hex: 0x16A34A),
-        correctInk: Color(hex: 0x15803D),
-        correctSoft: Color(hex: 0xDCFCE7),
-        wrong: Color(hex: 0xDC2626),
-        wrongInk: Color(hex: 0xB91C1C),
-        wrongSoft: Color(hex: 0xFEE2E2),
+        correct: V3Palette.day.color(\.green),
+        correctInk: V3Palette.day.color(\.greenInk),
+        correctSoft: V3Palette.day.color(\.greenWash),
+        wrong: V3Palette.day.color(\.red),
+        wrongInk: V3Palette.day.color(\.redInk),
+        wrongSoft: V3Palette.day.color(\.redWash),
         // jaune, menthe, bleu, rose, lilas
         tonePale: [
-            Color(hex: 0xFFF1CC),
-            Color(hex: 0xD6F5E6),
-            Color(hex: 0xE1EAFF),
-            Color(hex: 0xFDE2EC),
-            Color(hex: 0xEDE5FF)
+            V3Palette.day.color(\.yellowWash),
+            V3Palette.day.color(\.greenWash),
+            V3Palette.day.color(\.accentWash),
+            V3Palette.day.color(\.pinkWash),
+            V3Palette.day.color(\.lilacWash)
         ],
         toneVivid: [
-            Color(hex: 0xF7B41F),
-            Color(hex: 0x1FB57A),
-            Color(hex: 0x3870FE),
-            Color(hex: 0xEC5B8F),
-            Color(hex: 0x8B5CF6)
+            V3Palette.day.color(\.iconYellow),
+            V3Palette.day.color(\.iconGreen),
+            V3Palette.day.color(\.iconBlue),
+            V3Palette.day.color(\.iconPink),
+            V3Palette.day.color(\.iconLilac)
         ],
         toneInk: [
-            Color(hex: 0x7A5200),
-            Color(hex: 0x0E6B45),
-            Color(hex: 0x2350CC),
-            Color(hex: 0xA8204F),
-            Color(hex: 0x5B21B6)
+            V3Palette.day.color(\.yellowInk),
+            V3Palette.day.color(\.greenInk),
+            V3Palette.day.color(\.accentInk),
+            V3Palette.day.color(\.pinkInk),
+            V3Palette.day.color(\.lilacInk)
         ],
         toneGlyph: [
-            Color(hex: 0xE29E00),
-            Color(hex: 0x13A06A),
-            Color(hex: 0x3870FE),
-            Color(hex: 0xE14E86),
-            Color(hex: 0x7C4DF0)
+            V3Palette.day.color(\.iconYellow),
+            V3Palette.day.color(\.iconGreen),
+            V3Palette.day.color(\.iconBlue),
+            V3Palette.day.color(\.iconPink),
+            V3Palette.day.color(\.iconLilac)
         ],
-        edge: Color(hex: 0xDCE1EB),
+        edge: V3Palette.day.color(\.line),
         onAccent: .white,
         cardShadow: 0.05,
         groupShadow: 0.035
     )
 
 
-    /// **La nuit : le marine de Micabo** (lot 9).
+    /// **La nuit : le marine de Micabo** (lot 9), **thème par défaut depuis le lot 10**. Les
+    /// valeurs de la direction artistique V3.3 se lisent dans `V3Palette.night` : fond
+    /// `#0B0F1C`, surfaces `#171C2C`, filet `#262D42`, texte `#F5F6FB`, accent `#5C88FF`.
     ///
     /// Un bleu-noir (`#0B0F1C`), plus un graphite : le gris faisait une nuit terne, sans
     /// famille avec le bleu de l'accent. Les surfaces montent d'un seul cran net (`#161B2B`),
@@ -339,19 +358,19 @@ struct MicaboPalette: Equatable {
     /// (`#5C88FF`) et porte du texte **blanc** (`onAccent`), comme le jour. Les tons d'une leçon
     /// gardent leur vif ; leur pâle passe en lavis sombre, leur encre s'éclaircit.
     static let night = MicaboPalette(
-        canvas: Color(hex: 0x0B0F1C),
-        surface: Color(hex: 0x161B2B),
-        surfaceMuted: Color(hex: 0x1E2436),
-        surfaceSunken: Color(hex: 0x262D41),
-        stroke: Color(hex: 0x252B3E),
-        strokeStrong: Color(hex: 0x343B54),
-        hairline: Color(hex: 0x222839),
-        hairlineOnCanvas: Color(hex: 0x1A1F2E),
-        ink: Color(hex: 0xF4F6FC),
-        inkSecondary: Color(hex: 0xA3AABD),
-        inkTertiary: Color(hex: 0x6C7389),
-        inkReading: Color(hex: 0xE7EAF3),
-        inkBody: Color(hex: 0xC5CAD8),
+        canvas: V3Palette.night.color(\.bg),
+        surface: V3Palette.night.color(\.surface),
+        surfaceMuted: V3Palette.night.color(\.soft),
+        surfaceSunken: Color(hex: 0x0F1424),
+        stroke: V3Palette.night.color(\.line),
+        strokeStrong: V3Palette.night.color(\.lip),
+        hairline: Color(hex: 0x20263A),
+        hairlineOnCanvas: V3Palette.night.color(\.line),
+        ink: V3Palette.night.color(\.ink),
+        inkSecondary: V3Palette.night.color(\.ink2),
+        inkTertiary: V3Palette.night.color(\.ink3),
+        inkReading: Color(hex: 0xE9ECF5),
+        inkBody: Color(hex: 0xC9CEDD),
         sheetMarker: Color(hex: 0x5A4A12),
         sheetHighlights: [
             Color(hex: 0x5A4A12),
@@ -360,40 +379,40 @@ struct MicaboPalette: Equatable {
             Color(hex: 0x5A2235),
             Color(hex: 0x3E2C66)
         ],
-        onInk: Color(hex: 0x0B0F1C),
+        onInk: V3Palette.night.color(\.bg),
         onInkMuted: Color(hex: 0x4A5066),
-        canvasSage: Color(hex: 0x0B0F1C),
+        canvasSage: V3Palette.night.color(\.bg),
         // Le 400 de la gamme : 5,4:1 sur la carte de nuit, 4,6:1 sur `accentSoft`.
-        accent: Color(hex: 0x5C88FF),
-        accentSoft: Color(hex: 0x1B2A55),
-        accentVivid: Color(hex: 0x4D7DFF),
-        accentInk: Color(hex: 0x9DB7FF),
-        accentDeep: Color(hex: 0x2F5BE0),
-        progressTrack: Color(hex: 0x252B3E),
-        positive: Color(hex: 0x4CC38A),
-        caution: Color(hex: 0xE3B24C),
-        cautionVivid: Color(hex: 0xFFC53D),
-        negative: Color(hex: 0xF06A5A),
-        ratingAgain: Color(hex: 0xE07A5F),
-        info: Color(hex: 0x6E9BEA),
-        positiveWash: Color(hex: 0x0F2A20),
-        positiveInk: Color(hex: 0x6FD3A0),
-        positiveSoft: Color(hex: 0x11301F),
-        cautionSoft: Color(hex: 0x31270C),
-        negativeSoft: Color(hex: 0x3A1619),
-        infoSoft: Color(hex: 0x172645),
+        accent: V3Palette.night.color(\.accent),
+        accentSoft: V3Palette.night.color(\.accentWash2),
+        accentVivid: V3Palette.night.color(\.accent),
+        accentInk: V3Palette.night.color(\.accentInk),
+        accentDeep: V3Palette.night.color(\.accentDeep),
+        progressTrack: V3Palette.night.color(\.line),
+        positive: V3Palette.night.color(\.green),
+        caution: V3Palette.night.color(\.yellowInk),
+        cautionVivid: V3Palette.night.color(\.yellow),
+        negative: V3Palette.night.color(\.red),
+        ratingAgain: V3Palette.night.color(\.red),
+        info: V3Palette.night.color(\.accentInk),
+        positiveWash: V3Palette.night.color(\.greenWash),
+        positiveInk: V3Palette.night.color(\.greenInk),
+        positiveSoft: V3Palette.night.color(\.greenWash),
+        cautionSoft: V3Palette.night.color(\.yellowWash),
+        negativeSoft: V3Palette.night.color(\.redWash),
+        infoSoft: V3Palette.night.color(\.accentWash),
         offerWash: Color(hex: 0x3E2C66),
         offerWashSoft: Color(hex: 0x261C3D),
         gradeNear: Color(hex: 0x545B70),
         gradeMid: Color(hex: 0x3E4458),
         gradeFar: Color(hex: 0x2E3446),
-        accentWash: Color(hex: 0x131D38),
+        accentWash: V3Palette.night.color(\.accentWash),
         accentPale: Color(hex: 0x1E3A85),
-        track: Color(hex: 0x262C40),
-        flame: Color(hex: 0xFFB547),
-        flameInk: Color(hex: 0xFFC76E),
-        flameSoft: Color(hex: 0x33260C),
-        flameTrack: Color(hex: 0x4D3A15),
+        track: V3Palette.night.color(\.line),
+        flame: V3Palette.night.color(\.orange),
+        flameInk: V3Palette.night.color(\.orangeInk),
+        flameSoft: V3Palette.night.color(\.orangeWash),
+        flameTrack: Color(hex: 0x4A2C12),
         warmProse: Color(hex: 0xCBB8AE),
         warmWashStart: Color(hex: 0x241F14),
         warmWashEnd: Color(hex: 0x2A2212),
@@ -403,49 +422,49 @@ struct MicaboPalette: Equatable {
         dayWashEnd: Color(hex: 0x12282A),
         dayWashStroke: Color(hex: 0x2A2848),
         tilePastels: [
-            Color(hex: 0x3A2E0E),
-            Color(hex: 0x0F3326),
-            Color(hex: 0x17284D),
-            Color(hex: 0x3D1828),
-            Color(hex: 0x2B2050),
-            Color(hex: 0x1E2436)
+            V3Palette.night.color(\.yellowWash),
+            V3Palette.night.color(\.greenWash),
+            V3Palette.night.color(\.accentWash),
+            V3Palette.night.color(\.pinkWash),
+            V3Palette.night.color(\.lilacWash),
+            V3Palette.night.color(\.soft)
         ],
         keyword: Color(hex: 0xA78BFA),
-        correct: Color(hex: 0x22C55E),
-        correctInk: Color(hex: 0x4ADE80),
-        correctSoft: Color(hex: 0x0C2E1E),
-        wrong: Color(hex: 0xEF4444),
-        wrongInk: Color(hex: 0xF87171),
-        wrongSoft: Color(hex: 0x3A1619),
+        correct: V3Palette.night.color(\.green),
+        correctInk: V3Palette.night.color(\.greenInk),
+        correctSoft: V3Palette.night.color(\.greenWash),
+        wrong: V3Palette.night.color(\.red),
+        wrongInk: V3Palette.night.color(\.redInk),
+        wrongSoft: V3Palette.night.color(\.redWash),
         tonePale: [
-            Color(hex: 0x3A2E0E),
-            Color(hex: 0x0F3326),
-            Color(hex: 0x17284D),
-            Color(hex: 0x3D1828),
-            Color(hex: 0x2B2050)
+            V3Palette.night.color(\.yellowWash),
+            V3Palette.night.color(\.greenWash),
+            V3Palette.night.color(\.accentWash),
+            V3Palette.night.color(\.pinkWash),
+            V3Palette.night.color(\.lilacWash)
         ],
         toneVivid: [
-            Color(hex: 0xF7B41F),
-            Color(hex: 0x22C083),
-            Color(hex: 0x4D7DFF),
-            Color(hex: 0xEC5B8F),
-            Color(hex: 0x9B6DFF)
+            V3Palette.night.color(\.iconYellow),
+            V3Palette.night.color(\.iconGreen),
+            V3Palette.night.color(\.iconBlue),
+            V3Palette.night.color(\.iconPink),
+            V3Palette.night.color(\.iconLilac)
         ],
         toneInk: [
-            Color(hex: 0xF8CC5C),
-            Color(hex: 0x5DDBA4),
-            Color(hex: 0x9DB7FF),
-            Color(hex: 0xF59BB8),
-            Color(hex: 0xBCA4FF)
+            V3Palette.night.color(\.yellowInk),
+            V3Palette.night.color(\.greenInk),
+            V3Palette.night.color(\.accentInk),
+            V3Palette.night.color(\.pinkInk),
+            V3Palette.night.color(\.lilacInk)
         ],
         toneGlyph: [
-            Color(hex: 0xF7C14A),
-            Color(hex: 0x3DD195),
-            Color(hex: 0x7DA2FF),
-            Color(hex: 0xF27DA5),
-            Color(hex: 0xA88BFA)
+            V3Palette.night.color(\.iconYellow),
+            V3Palette.night.color(\.iconGreen),
+            V3Palette.night.color(\.iconBlue),
+            V3Palette.night.color(\.iconPink),
+            V3Palette.night.color(\.iconLilac)
         ],
-        edge: Color(hex: 0x2A3147),
+        edge: V3Palette.night.color(\.line),
         onAccent: .white,
         cardShadow: 0.0,
         groupShadow: 0.0

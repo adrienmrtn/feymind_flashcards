@@ -124,7 +124,7 @@ private struct SourcesHeader: View {
         // Mika vit sur le papier de l'app (la règle de `MikaMascot`) : la carte est celle des
         // tuiles, pas une scène bleue pour lui seul.
         .sourceCard()
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
     }
 }
 
@@ -242,8 +242,8 @@ struct SourceIcon: View {
 private extension View {
     /// La carte d'une tuile : la surface de l'app, un filet, une ombre douce.
     func sourceCard() -> some View {
-        background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
+        background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
             .shadow(color: MicaboBrand.blue900.opacity(0.05), radius: 12, y: 6)
     }
 }

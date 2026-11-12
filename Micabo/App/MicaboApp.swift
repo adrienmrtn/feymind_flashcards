@@ -35,7 +35,7 @@ struct MicaboApp: App {
     /// Les modèles du Calendrier et de la Concentration (`StudyCalendar`, `CalendarEvent`,
     /// `StudyTask`, `FocusSession`) s'ajoutent à la fin, sans toucher aux autres : SwiftData
     /// migre en ajoutant leurs tables.
-    private static let schema = Schema([
+    static let schema = Schema([
         Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self,
         StudyCalendar.self, CalendarEvent.self, StudyTask.self, FocusSession.self,
         // Le scanner d'exercices et « Demande à Mika » (`Features/Solver`), à la fin aussi.

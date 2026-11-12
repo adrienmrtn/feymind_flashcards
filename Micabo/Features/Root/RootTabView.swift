@@ -18,9 +18,12 @@ import UIKit
 /// L'ancien `ZStack` à opacité zéro laissait chaque `@Query`, chaque calendrier et chaque
 /// statistique vivre derrière l'écran actif ; une écriture SwiftData réveillait tout.
 struct RootTabView: View {
-    @State private var router = TabRouter()
+    @State private var router: TabRouter
 
-    init() {
+    /// Le routeur se donne de l'extérieur dans le banc d'essai, qui change d'onglet et mesure
+    /// (`PerfBenchTests`) ; l'app laisse la valeur par défaut.
+    init(router: TabRouter = TabRouter()) {
+        _router = State(initialValue: router)
         Self.configureChrome()
     }
 
