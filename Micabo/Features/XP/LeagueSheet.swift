@@ -104,7 +104,6 @@ struct LeagueSheet: View {
                 .foregroundStyle(MicaboColor.ink)
                 .multilineTextAlignment(.center)
             HStack(spacing: 6) {
-                Text(league.emoji)
                 Image(systemName: "bolt.fill")
                     .foregroundStyle(LessonTone.yellow.ink)
                 Text(L10n.t("ios.kx.league.weekXP", locale: .resolved(), vars: ["xp": "\(week)"]))
@@ -133,7 +132,7 @@ struct LeagueSheet: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background(MicaboColor.surface, in: Capsule())
-                .overlay(Capsule().strokeBorder(MicaboColor.stroke, lineWidth: 1))
+                .overlay(Capsule().strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
         }
         .frame(maxWidth: .infinity)
     }

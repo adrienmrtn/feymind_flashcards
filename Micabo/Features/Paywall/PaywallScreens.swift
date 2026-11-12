@@ -298,10 +298,11 @@ struct PaywallScreen: View {
             PaywallTopBar(name: name, isBusy: isPurchasing, onClose: onClose)
 
             ViewThatFits(in: .vertical) {
-                content(compact: false)
-                content(compact: true)
+                content(.regular)
+                content(.compact)
+                content(.tight)
                 ScrollView {
-                    content(compact: true)
+                    content(.compact)
                 }
                 .scrollIndicators(.hidden)
                 .scrollBounceBehavior(.basedOnSize)
@@ -327,36 +328,36 @@ struct PaywallScreen: View {
 
     // MARK: Le contenu
 
-    private func content(compact: Bool) -> some View {
-        VStack(alignment: .leading, spacing: compact ? 16 : 24) {
-            header(compact: compact)
-            plans
+    private func content(_ density: PaywallDensity) -> some View {
+        VStack(alignment: .leading, spacing: density.sectionSpacing) {
+            header(density)
+            plans(density)
         }
         .padding(.horizontal, V3Metric.screenMargin)
-        .padding(.top, compact ? 12 : 22)
+        .padding(.top, density.topPadding)
         .padding(.bottom, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
-    private func header(compact: Bool) -> some View {
+    private func header(_ density: PaywallDensity) -> some View {
         if let trigger, !showsTrialHeader {
-            VStack(alignment: .leading, spacing: compact ? 14 : 20) {
+            VStack(alignment: .leading, spacing: density.headerSpacing) {
                 PaywallMikaLine(line: PaywallCopy.hook(for: trigger), mood: .wink)
-                PaywallRows(rows: benefitRows(for: trigger), compact: compact)
+                PaywallRows(rows: benefitRows(for: trigger), density: density)
             }
         } else {
-            VStack(alignment: .leading, spacing: compact ? 14 : 22) {
+            VStack(alignment: .leading, spacing: density.headerSpacing) {
                 PaywallTitle(
                     title: PaywallCopy.title(
                         profile: context.profile,
                         offersTrial: selectedPlan.hasTrial,
                         trialDays: selectedPlan.trialDays
                     ),
-                    size: compact ? PaywallStyle.titleCompactSize : PaywallStyle.titleSize
+                    size: density.titleSize
                 )
 
-                PaywallRows(rows: selectedPlan.hasTrial ? timelineRows : benefitRows(for: nil), compact: compact)
+                PaywallRows(rows: selectedPlan.hasTrial ? timelineRows : benefitRows(for: nil), density: density)
             }
         }
     }
@@ -386,7 +387,7 @@ struct PaywallScreen: View {
     }
 
     @ViewBuilder
-    private var plans: some View {
+    private func plans(_ density: PaywallDensity) -> some View {
         switch prices {
         case .ready:
             VStack(spacing: PaywallStyle.planSpacing) {
@@ -396,7 +397,8 @@ struct PaywallScreen: View {
                         isSelected: plan.kind == selection,
                         storeRevision: storeRevision,
                         savings: plan.kind == PaywallCatalog.recommended.kind ? savingsLabel : nil,
-                        detail: PaywallCopy.planDetail(for: plan, mentionsTrial: !showsTrialHeader)
+                        detail: PaywallCopy.planDetail(for: plan, mentionsTrial: !showsTrialHeader),
+                        height: density.planHeight
                     ) {
                         select(plan.kind)
                     }
@@ -404,9 +406,9 @@ struct PaywallScreen: View {
                 }
             }
         case .loading:
-            PaywallPlanSkeleton()
+            PaywallPlanSkeleton(height: density.planHeight)
         case .failed(let message):
-            PaywallPriceFailure(message: message)
+            PaywallPriceFailure(message: message, height: density.planHeight)
         }
     }
 
@@ -421,6 +423,69 @@ struct PaywallScreen: View {
         guard kind != selection else { return }
         withAnimation(MicaboMotion.quick) { selection = kind }
         onSelect(kind)
+    }
+}
+
+// MARK: - Les serrages
+
+/// **Trois serrages pour un même écran** : le paywall prend le premier qui tient sans défiler
+/// (`ViewThatFits`). Aéré sur un grand téléphone ; resserré quand la langue est longue ; serré
+/// sur un iPhone SE, où le titre, les marges et les offres rapetissent d'un cran — sans rien
+/// retirer de ce qui est promis ni de ce qui sera prélevé.
+enum PaywallDensity: CaseIterable {
+    case regular
+    case compact
+    case tight
+
+    /// La taille du titre de l'en-tête « essai ».
+    var titleSize: CGFloat {
+        self == .regular ? PaywallStyle.titleSize : PaywallStyle.titleCompactSize
+    }
+
+    /// Entre l'en-tête et les offres.
+    var sectionSpacing: CGFloat {
+        switch self {
+        case .regular: 24
+        case .compact: 16
+        case .tight: 12
+        }
+    }
+
+    /// Entre le titre (ou la bulle de Mika) et ses rangées.
+    var headerSpacing: CGFloat {
+        switch self {
+        case .regular: 22
+        case .compact: 14
+        case .tight: 10
+        }
+    }
+
+    /// Entre deux rangées.
+    var rowSpacing: CGFloat {
+        switch self {
+        case .regular: 16
+        case .compact: 10
+        case .tight: 8
+        }
+    }
+
+    /// Au-dessus du contenu, sous la barre du haut.
+    var topPadding: CGFloat {
+        switch self {
+        case .regular: 22
+        case .compact: 12
+        case .tight: 6
+        }
+    }
+
+    /// La hauteur d'une offre : serrée, celle d'une ligne de réponse.
+    var planHeight: CGFloat {
+        self == .tight ? V3Metric.optionHeight : PaywallStyle.planHeight
+    }
+
+    /// La police de la ligne d'une rangée : serrée, une légende.
+    var rowDetail: Font {
+        self == .tight ? PaywallStyle.rowDetailTight : PaywallStyle.rowDetail
     }
 }
 
@@ -452,12 +517,18 @@ struct PaywallHeaderRow: Identifiable, Equatable {
 /// Les rangées de l'en-tête, l'une sous l'autre : trois au plus.
 private struct PaywallRows: View {
     let rows: [PaywallHeaderRow]
-    let compact: Bool
+    let density: PaywallDensity
 
     var body: some View {
-        VStack(alignment: .leading, spacing: compact ? 10 : 16) {
+        VStack(alignment: .leading, spacing: density.rowSpacing) {
             ForEach(rows) { row in
-                PaywallInfoRow(symbol: row.symbol, tone: row.tone, title: row.title, detail: row.detail)
+                PaywallInfoRow(
+                    symbol: row.symbol,
+                    tone: row.tone,
+                    title: row.title,
+                    detail: row.detail,
+                    detailFont: density.rowDetail
+                )
             }
         }
     }
@@ -478,6 +549,8 @@ struct PaywallPlanRow: View {
     let savings: String?
     /// La ligne sous le nom : ce qui est prélevé, et à quel rythme.
     let detail: String
+    /// La hauteur de la ligne, au moins : elle grandit avec son texte.
+    var height: CGFloat = PaywallStyle.planHeight
     var action: () -> Void
 
     var body: some View {
@@ -507,8 +580,8 @@ struct PaywallPlanRow: View {
                 .fixedSize()
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .frame(maxWidth: .infinity, minHeight: PaywallStyle.planHeight)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, minHeight: height)
             .v3Card(selected: isSelected, radius: PaywallStyle.planRadius)
             .contentShape(RoundedRectangle(cornerRadius: PaywallStyle.planRadius, style: .continuous))
         }
@@ -559,6 +632,8 @@ struct PaywallPlanRow: View {
 /// **Les deux offres, pendant que la boutique répond** : leurs silhouettes, à leur place et à
 /// leur taille. L'écran n'est jamais vide, et rien ne saute quand les prix arrivent.
 private struct PaywallPlanSkeleton: View {
+    var height: CGFloat = PaywallStyle.planHeight
+
     var body: some View {
         VStack(spacing: PaywallStyle.planSpacing) {
             ForEach(0 ..< PaywallCatalog.all.count, id: \.self) { _ in
@@ -574,8 +649,8 @@ private struct PaywallPlanSkeleton: View {
                     }
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .frame(maxWidth: .infinity, minHeight: PaywallStyle.planHeight)
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity, minHeight: height)
                 .v3Card(radius: PaywallStyle.planRadius)
             }
         }
@@ -594,6 +669,7 @@ private struct PaywallPlanSkeleton: View {
 /// du pied devient « Réessayer », et la croix est toujours là.
 private struct PaywallPriceFailure: View {
     let message: String
+    var height: CGFloat = PaywallStyle.planHeight
 
     var body: some View {
         Text(message)
@@ -603,7 +679,7 @@ private struct PaywallPriceFailure: View {
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, 16)
             .padding(.vertical, 18)
-            .frame(maxWidth: .infinity, minHeight: PaywallStyle.planHeight)
+            .frame(maxWidth: .infinity, minHeight: height * 2 + PaywallStyle.planSpacing)
             .v3Card(radius: PaywallStyle.planRadius)
     }
 }

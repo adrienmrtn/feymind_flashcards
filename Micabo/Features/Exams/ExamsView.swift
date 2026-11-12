@@ -222,23 +222,23 @@ struct ExamHero: View {
                         .font(MicaboFont.ui(13, weight: .heavy))
                         .tracking(1.2)
                         .textCase(.uppercase)
-                        .foregroundStyle(MicaboColor.onInk.opacity(0.8))
+                        .foregroundStyle(V3Color.yellowInk)
                     Text(exam.name)
                         .font(MicaboFont.display(28))
-                        .foregroundStyle(MicaboColor.onInk)
+                        .foregroundStyle(V3Color.ink)
                         .lineLimit(2)
                         .minimumScaleFactor(0.8)
                     Text(MicaboCalendar.dayLabel(exam.date).capitalizedFirstLetter)
                         .font(MicaboFont.ui(15, weight: .semibold))
-                        .foregroundStyle(MicaboColor.onInk.opacity(0.85))
+                        .foregroundStyle(V3Color.ink2)
                 }
                 Spacer(minLength: 8)
                 Button(action: onEdit) {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 17, weight: .heavy))
-                        .foregroundStyle(MicaboColor.onInk)
+                        .foregroundStyle(V3Color.ink)
                         .frame(width: 38, height: 38)
-                        .background(MicaboColor.onInk.opacity(0.18), in: Circle())
+                        .background(V3Color.soft, in: Circle())
                 }
                 .buttonStyle(MicaboPressableButtonStyle())
                 .accessibilityLabel(Text(L10n.t("lesson.exam.edit", locale: .resolved())))
@@ -247,22 +247,22 @@ struct ExamHero: View {
             HStack(alignment: .lastTextBaseline, spacing: 10) {
                 Text(days == 0 ? L10n.t("app.exams.countdown.today", locale: .resolved()).capitalizedFirstLetter : "\(days)")
                     .font(MicaboFont.number(days == 0 ? 44 : 64))
-                    .foregroundStyle(MicaboColor.onInk)
+                    .foregroundStyle(V3Color.yellowInk)
                     .contentTransition(.numericText())
                 if days > 0 {
                     Text(L10n.t(days == 1 ? "lesson.exam.dayLeft" : "lesson.exam.daysLeft", locale: .resolved()))
                         .font(MicaboFont.ui(17, weight: .bold))
-                        .foregroundStyle(MicaboColor.onInk.opacity(0.85))
+                        .foregroundStyle(V3Color.ink2)
                 }
                 Spacer(minLength: 0)
                 if let best {
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(ExamGrade.label(best.fraction, country: OnboardingPreferences.schoolingCountry))
                             .font(MicaboFont.number(22))
-                            .foregroundStyle(MicaboColor.onInk)
+                            .foregroundStyle(V3Color.ink)
                         Text(L10n.t("lesson.exam.best", locale: .resolved()))
                             .font(MicaboFont.ui(12, weight: .bold))
-                            .foregroundStyle(MicaboColor.onInk.opacity(0.8))
+                            .foregroundStyle(V3Color.ink2)
                     }
                 }
             }
@@ -286,7 +286,7 @@ struct ExamHero: View {
                         }
                         .padding(.horizontal, 10)
                         .padding(.vertical, 7)
-                        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
+                        .background(V3Color.soft, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
                     }
                     if lessons.count > Self.shownLessons {
                         Text("+\(lessons.count - Self.shownLessons)")
@@ -294,37 +294,21 @@ struct ExamHero: View {
                             .foregroundStyle(MicaboColor.ink)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 9)
-                            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
+                            .background(V3Color.soft, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
                     }
                 }
             }
 
-            Button(action: onMock) {
-                Label(L10n.t("lesson.exam.startMock", locale: .resolved()), systemImage: "stopwatch")
-                    .font(MicaboFont.ui(18, weight: .heavy))
-                    .foregroundStyle(MicaboColor.accentInk)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
-            }
-            .buttonStyle(MicaboPressableButtonStyle())
-            .disabled(lessons.isEmpty)
-            .opacity(lessons.isEmpty ? 0.6 : 1)
+            V3Button(
+                L10n.t("lesson.exam.startMock", locale: .resolved()),
+                systemImage: "stopwatch",
+                isEnabled: !lessons.isEmpty,
+                action: onMock
+            )
         }
-        .padding(22)
+        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous)
-                .fill(LinearGradient(colors: [MicaboColor.accent, MicaboColor.accentVivid], startPoint: .topLeading, endPoint: .bottomTrailing))
-                .overlay(alignment: .topTrailing) {
-                    Circle()
-                        .fill(MicaboColor.onInk.opacity(0.08))
-                        .frame(width: 220, height: 220)
-                        .offset(x: 70, y: -90)
-                }
-                .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous))
-        }
-        .shadow(color: MicaboColor.accent.opacity(0.3), radius: 20, x: 0, y: 12)
+        .v3Card()
     }
 }
 

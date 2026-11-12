@@ -18,7 +18,7 @@ struct XPBadge: View {
         .padding(.horizontal, 9)
         .padding(.vertical, 5)
         .background(MicaboColor.surface.opacity(0.85), in: Capsule())
-        .overlay(Capsule().strokeBorder(tint.opacity(0.35), lineWidth: 1))
+        .overlay(Capsule().strokeBorder(tint.opacity(0.35), lineWidth: MicaboSurface.border))
         .fixedSize()
     }
 }

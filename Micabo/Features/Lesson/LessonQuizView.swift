@@ -597,7 +597,7 @@ struct FlashcardFace: View {
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous)
-                .strokeBorder(flipped ? tone.vivid : MicaboColor.stroke, lineWidth: 2)
+                .strokeBorder(flipped ? tone.vivid : MicaboColor.stroke, lineWidth: MicaboSurface.border)
         )
         .micaboElevation(.card)
         .accessibilityElement(children: .combine)

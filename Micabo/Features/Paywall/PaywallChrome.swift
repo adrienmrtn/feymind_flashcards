@@ -28,6 +28,8 @@ enum PaywallStyle {
     /// Une rangée de la chronologie ou d'un bénéfice : son titre, sa ligne.
     static let rowTitle = V3Font.option
     static let rowDetail = V3Font.support
+    /// La même ligne, sur un écran serré (`PaywallDensity.tight`).
+    static let rowDetailTight = V3Font.caption
     /// Une offre : son nom, sa ligne, son prix et l'unité du prix.
     static let planTitle = V3Font.option
     static let planDetail = V3Font.caption
@@ -56,6 +58,8 @@ enum PaywallStyle {
     static let offerPrice = V3Font.display(34)
     static let offerPriceUnit = V3Font.support
     static let offerEquivalent = V3Font.figure
+    /// Le même, sur un écran étroit : il reste à côté du prix au lieu de passer dessous.
+    static let offerEquivalentNarrow = V3Font.label
     static let offerEquivalentLead = V3Font.caption
     /// Le décompte dans sa pastille, la pastille de la Home, « Offre de bienvenue ».
     static let pill = V3Font.label
@@ -76,6 +80,8 @@ enum PaywallStyle {
     static let planSpacing: CGFloat = 10
     /// Les pastilles : le décompte de l'offre, la pastille de la Home.
     static let pillHeight: CGFloat = 34
+    /// Ce qui est éteint le temps d'un achat : la croix.
+    static let disabledOpacity: Double = 0.35
     /// Mika en fête : sur l'offre, et à la bienvenue.
     static let offerMika: CGFloat = 150
     static let welcomeMika: CGFloat = 200
@@ -114,11 +120,15 @@ struct PaywallCloseButton: View {
     var tint: Color = V3Color.ink
     var action: () -> Void
 
+    @Environment(\.isEnabled) private var isEnabled
+
     var body: some View {
         Button(action: action) {
             Image(systemName: "xmark")
                 .font(.system(size: PaywallStyle.closeSize / 2, weight: .bold))
                 .foregroundStyle(tint)
+                // Éteinte pendant un achat : elle se voit éteinte.
+                .opacity(isEnabled ? 1 : PaywallStyle.disabledOpacity)
                 .frame(width: PaywallStyle.closeSize, height: PaywallStyle.closeSize)
                 // La zone touchable fait 44 points.
                 .frame(width: PaywallStyle.touch, height: PaywallStyle.touch)
@@ -196,12 +206,15 @@ struct PaywallTopBar: View {
     }
 }
 
-/// **La barre du haut de l'offre** : la croix à gauche, le décompte à droite.
+/// **La barre du haut de l'offre** : la croix à gauche, le décompte à droite. Le décompte
+/// est la seule chose de l'écran qui se redessine à chaque seconde ; arrivé à zéro, il le dit
+/// (`onExpired`).
 struct DiscountTopBar: View {
-    /// Les secondes qui restent sur la fenêtre.
-    var remaining: Int
+    /// Le temps qu'il reste sur la fenêtre.
+    var clock: DiscountClock
     var isBusy: Bool
     var onClose: () -> Void
+    var onExpired: () -> Void = {}
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -209,7 +222,12 @@ struct DiscountTopBar: View {
                 .disabled(isBusy)
                 .padding(.leading, closeOverhang)
             Spacer(minLength: 0)
-            DiscountCountdownPill(remaining: remaining)
+            DiscountTicking(clock: clock) { left in
+                DiscountCountdownPill(remaining: left)
+                    .onChange(of: left <= 0) { _, isOver in
+                        if isOver { onExpired() }
+                    }
+            }
         }
         .padding(.horizontal, V3Metric.screenMargin)
         .frame(minHeight: V3Metric.topBarHeight)
@@ -286,6 +304,8 @@ struct PaywallInfoRow: View {
     var tone: Color
     var title: String
     var detail: String
+    /// La police de la ligne : une légende quand l'écran est serré.
+    var detailFont: Font = PaywallStyle.rowDetail
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -295,7 +315,7 @@ struct PaywallInfoRow: View {
                     .font(PaywallStyle.rowTitle)
                     .foregroundStyle(V3Color.ink)
                 Text(detail)
-                    .font(PaywallStyle.rowDetail)
+                    .font(detailFont)
                     .foregroundStyle(V3Color.ink2)
             }
             .multilineTextAlignment(.leading)

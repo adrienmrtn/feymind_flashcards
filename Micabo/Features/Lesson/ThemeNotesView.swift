@@ -559,13 +559,19 @@ struct KeywordText: View {
         italic: Bool
     ) -> AttributedString {
         var result = AttributedString()
+        // Grand et gras, l'ancienne échelle en ferait un titre condensé : un contenu de cours
+        // garde la police du texte, on la pose donc sur chaque morceau.
+        let isLarge = V3LegacyScale.isTitle(size: size, weight: weight)
+        let base = MicaboFont.content(size, weight: weight)
         for (index, part) in source.components(separatedBy: "**").enumerated() where !part.isEmpty {
             let isKeyword = index % 2 == 1
             for segment in FormulaRenderer.segments(of: part) where !segment.text.isEmpty {
                 var chunk = AttributedString(segment.text)
                 if isKeyword || segment.isMath {
-                    let font = MicaboFont.ui(size, weight: isKeyword ? keywordWeight(weight) : formulaWeight(weight))
+                    let font = MicaboFont.content(size, weight: isKeyword ? keywordWeight(weight) : formulaWeight(weight))
                     chunk.font = segment.isMath || italic ? font.italic() : font
+                } else if isLarge {
+                    chunk.font = italic ? base.italic() : base
                 }
                 if isKeyword, tintsKeywords {
                     chunk.foregroundColor = MicaboColor.keyword

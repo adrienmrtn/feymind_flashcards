@@ -96,7 +96,7 @@ final class Paywall10RenderTests: XCTestCase {
         rtl: Bool = false
     ) -> some View {
         DiscountOfferScreen(
-            remaining: remaining,
+            clock: .fixed(remaining),
             isPurchasing: purchasing,
             prices: prices,
             notice: notice,
@@ -262,6 +262,7 @@ final class Paywall10RenderTests: XCTestCase {
 
         // Sur un iPhone SE, au texte normal puis en très grand texte.
         try RenderGallery.render("pay10-de-se-trial", width: smallWidth, height: smallHeight, paywall(context: german))
+        try RenderGallery.render("pay10-de-se-door", width: smallWidth, height: smallHeight, paywall(.mockExam, context: german))
         try RenderGallery.render("pay10-de-se-offer", width: smallWidth, height: smallHeight, offer())
         try RenderGallery.render(
             "pay10-de-se-xl-trial",

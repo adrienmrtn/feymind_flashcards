@@ -632,7 +632,7 @@ struct AgendaRow: View {
                 .foregroundStyle(item.isDone ? MicaboColor.correctInk : mark)
                 .contentTransition(.symbolEffect(.replace))
         case .exam:
-            Text("🎓").font(.system(size: 20))
+            MicaboIconView(icon: .diploma, size: 28, tint: V3Color.iconYellow)
         case .milestone:
             Image(systemName: item.milestone == .mock ? "stopwatch.fill" : "flag.checkered")
                 .font(.system(size: 17, weight: .bold))
@@ -735,7 +735,7 @@ struct ExamsSummaryRow: View {
                 HStack(spacing: 12) {
                     ZStack {
                         RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous).fill(CalendarTint.at(StudyAgenda.examTint).wash)
-                        Text("🎓").font(.system(size: 22))
+                        MicaboIconView(icon: .diploma, size: 32, tint: V3Color.iconYellow)
                     }
                     .frame(width: 46, height: 46)
                     VStack(alignment: .leading, spacing: 2) {
@@ -831,7 +831,7 @@ struct CalendarListRow: View {
                         Circle()
                             .fill(CalendarTint.at(calendar.tintIndex).color)
                             .frame(width: 12, height: 12)
-                            .overlay(Circle().strokeBorder(MicaboColor.surface, lineWidth: 2))
+                            .overlay(Circle().strokeBorder(MicaboColor.surface, lineWidth: MicaboSurface.border))
                             .offset(x: 3, y: 3)
                     }
                     VStack(alignment: .leading, spacing: 2) {

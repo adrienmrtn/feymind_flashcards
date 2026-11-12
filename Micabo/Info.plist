@@ -13,16 +13,29 @@
 	<key>MicaboCommit</key>
 	<string>dev</string>
 	<!--
-	L'écran de lancement : un aplat bleu Micabo `#3870FE`, le jour comme la nuit, sans image
-	(`LaunchBackground` dans le catalogue). La première image SwiftUI est ce même bleu
-	(`LaunchCurtain` dans `RootView`, puis le premier écran du parcours, d'où Mika monte) :
-	le passage ne se voit pas, et la marque ne s'affiche plus deux fois de suite.
+	L'écran de lancement : le marine de l'app `#0B0F1C` (`LaunchBackground` dans le
+	catalogue, le même dans les deux thèmes) et Mika au centre de l'écran (`LaunchMika`,
+	200 points, exporté du dessin par `design/mika-v3/export.js`). La première image SwiftUI
+	(`LaunchCurtain` dans `RootView`) repose le même fond et la même image au même endroit,
+	puis fond sur l'écran qui suit : le passage ne se voit pas.
 	-->
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>
 		<string>LaunchBackground</string>
+		<key>UIImageName</key>
+		<string>LaunchMika</string>
+		<key>UIImageRespectsSafeAreaInsets</key>
+		<false/>
 	</dict>
+	<!--
+	La cadence de l'écran. Sans cette clé, un iPhone ProMotion plafonne à 60 images par seconde
+	les animations que l'app calcule elle-même, image par image : celles de SwiftUI, donc Mika,
+	dessiné dans un canevas à chaque image de ses gestes. Avec elle, elles suivent l'écran
+	jusqu'à 120 Hz.
+	-->
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Micabo uses the camera to scan your course pages.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

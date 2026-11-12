@@ -7,8 +7,7 @@ extension View {
     /// et une ombre douce. La sienne et pas celle de Home, que Home peut changer.
     func solverCard(radius: CGFloat = MicaboRadius.card, fill: Color = MicaboColor.surface) -> some View {
         background(fill, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
-            .shadow(color: MicaboBrand.blue900.opacity(0.05), radius: 14, y: 6)
+            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
     }
 }
 
@@ -77,7 +76,7 @@ struct SolverSubjectChip: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 7)
         .background(subject.tint.opacity(0.12), in: Capsule())
-        .overlay(Capsule().strokeBorder(subject.tint.opacity(0.28), lineWidth: 1))
+        .overlay(Capsule().strokeBorder(subject.tint.opacity(0.28), lineWidth: MicaboSurface.border))
     }
 }
 
@@ -121,7 +120,7 @@ struct SolverMikaNote<Content: View>: View {
                 .padding(.vertical, 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(MicaboColor.accentWash, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous).strokeBorder(MicaboColor.accentSoft, lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous).strokeBorder(MicaboColor.accentSoft, lineWidth: MicaboSurface.border))
         }
     }
 }
