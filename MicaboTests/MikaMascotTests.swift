@@ -127,7 +127,8 @@ final class MikaMascotTests: XCTestCase {
 
     /// **Aucun Mika ne saute ni ne se déplace dans l'app** : à côté d'un `MikaMascot` ou d'un
     /// `MikaPeek`, pas de décalage qui dépend d'un état (`offset(y: hop ? -10 : 0)`), pas
-    /// d'échelle qui le fait surgir de petit (`scaleEffect(shown ? 1 : 0.4)`). Un décalage
+    /// d'échelle qui le fait surgir de petit (`scaleEffect(shown ? 1 : 0.4)`, `popIn` qui
+    /// grandit). Un décalage
     /// fixe, pour le placer, reste permis.
     func testNoMikaJumpsAnywhere() throws {
         let sources = URL(fileURLWithPath: #filePath)
@@ -137,7 +138,7 @@ final class MikaMascotTests: XCTestCase {
         guard let files = FileManager.default.enumerator(at: sources, includingPropertiesForKeys: nil) else {
             throw XCTSkip("les sources ne sont pas lisibles depuis ce simulateur")
         }
-        let moving = try NSRegularExpression(pattern: #"\.offset\([^)]*\?|\.scaleEffect\([^)]*\?\s*[0-9.]+\s*:\s*0?\.[0-8]"#)
+        let moving = try NSRegularExpression(pattern: #"\.offset\([^)]*\?|\.scaleEffect\([^)]*\?\s*[0-9.]+\s*:\s*0?\.[0-8]|\.popIn\((?![^)]*scales: false)"#)
         var offenders: [String] = []
         var read = 0
         for case let url as URL in files where url.pathExtension == "swift" {
@@ -145,7 +146,7 @@ final class MikaMascotTests: XCTestCase {
                   let text = try? String(contentsOf: url, encoding: .utf8) else { continue }
             read += 1
             let lines = text.components(separatedBy: "\n")
-            for (number, line) in lines.enumerated() where line.contains("MikaMascot(") || line.contains("MikaPeek(") {
+            for (number, line) in lines.enumerated() where ["MikaMascot(", "MikaPeek(", "OnboardingMikaOnLine("].contains(where: line.contains) {
                 for follow in lines[number..<min(lines.count, number + 6)] {
                     let range = NSRange(follow.startIndex..., in: follow)
                     if moving.firstMatch(in: follow, range: range) != nil {

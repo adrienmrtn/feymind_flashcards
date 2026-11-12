@@ -634,7 +634,7 @@ private struct MikaMissionScene: View {
                 }
 
                 OnboardingMikaOnLine(mood: .write, size: side)
-                    .popIn(shown || still)
+                    .popIn(shown || still, scales: false)
                     .position(mika)
 
                 Sparkles(points: [CGPoint(x: 0.5, y: 0.08), CGPoint(x: 0.24, y: 0.3), CGPoint(x: 0.78, y: 0.26), CGPoint(x: 0.5, y: 0.42)])
@@ -826,7 +826,7 @@ private struct MikaSolutionScene: View {
                 .position(x: proxy.size.width / 2, y: gridHeight / 2 + 6)
 
                 OnboardingMikaOnLine(mood: .look, size: side)
-                    .popIn(shown || still, delay: 0.1)
+                    .popIn(shown || still, delay: 0.1, scales: false)
                     .position(mika)
             }
         }
@@ -915,7 +915,7 @@ private struct MikaReliefScene: View {
                     .position(base)
 
                 OnboardingMikaOnLine(mood: tidy ? .wink : .look, size: side)
-                    .popIn(shown || still, delay: 0.2)
+                    .popIn(shown || still, delay: 0.2, scales: false)
                     .position(x: proxy.size.width / 2, y: proxy.size.height - peek / 2)
             }
             .animation(MicaboMotion.gentle, value: tidy)
