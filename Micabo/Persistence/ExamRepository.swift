@@ -18,8 +18,16 @@ enum ExamRepository {
     /// Les cours d'un examen, dans l'ordre des cours. Un cours supprimé disparaît de la
     /// liste sans bruit : un examen désigne des cours, il ne les possède pas.
     static func courses(of exam: Exam, in context: ModelContext) -> [Course] {
-        let wanted = Set(exam.courseIDs)
-        guard !wanted.isEmpty else { return [] }
+        let ids = exam.courseIDs
+        guard !ids.isEmpty else { return [] }
+        // Les cours de l'examen seulement : relire la table entière, trente kilo-octets de
+        // texte par ligne, pour en garder deux coûtait cent millisecondes à chaque agenda.
+        let descriptor = FetchDescriptor<Course>(
+            predicate: #Predicate { ids.contains($0.id) },
+            sortBy: [SortDescriptor(\.updatedAt, order: .reverse)]
+        )
+        if let found = try? context.fetch(descriptor) { return found }
+        let wanted = Set(ids)
         return CourseRepository.allCourses(in: context).filter { wanted.contains($0.id) }
     }
 

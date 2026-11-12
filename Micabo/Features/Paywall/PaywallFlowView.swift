@@ -317,23 +317,20 @@ struct PaywallFlowView: View {
         )
     }
 
-    /// L'offre. Son décompte est l'horloge du système (`TimelineView`) : elle ne tourne que
-    /// tant que l'écran est affiché.
+    /// L'offre. Son décompte descend de l'instant où elle s'est affichée pour la première
+    /// fois ; c'est l'horloge du système qui le fait tourner, dans sa seule pastille.
     private var offerStage: some View {
-        TimelineView(.periodic(from: .now, by: 1)) { context in
-            DiscountOfferScreen(
-                remaining: startedAt.map { DiscountOffer.windowRemaining(startedAt: $0, now: context.date) }
-                    ?? DiscountOffer.windowSeconds,
-                isPurchasing: isPurchasing,
-                prices: PaywallPriceLoading.state(for: Self.offerProducts, failure: priceFailure),
-                notice: notice,
-                storeRevision: storeRevision,
-                onClose: declineOffer,
-                onBuy: { Task { await buy(DiscountOffer.plan, door: "discount") } },
-                onRestore: { Task { await restore() } },
-                onRetry: { Task { await loadPrices() } }
-            )
-        }
+        DiscountOfferScreen(
+            clock: startedAt.map(DiscountClock.since) ?? .fixed(DiscountOffer.windowSeconds),
+            isPurchasing: isPurchasing,
+            prices: PaywallPriceLoading.state(for: Self.offerProducts, failure: priceFailure),
+            notice: notice,
+            storeRevision: storeRevision,
+            onClose: declineOffer,
+            onBuy: { Task { await buy(DiscountOffer.plan, door: "discount") } },
+            onRestore: { Task { await restore() } },
+            onRetry: { Task { await loadPrices() } }
+        )
     }
 
     private var welcomeStage: some View {

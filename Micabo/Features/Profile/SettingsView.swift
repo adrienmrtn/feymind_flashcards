@@ -17,7 +17,6 @@ struct SettingsView: View {
     @Environment(CloudSync.self) private var sync
     @Environment(SocialService.self) private var social
 
-    @State private var username = ""
 
     @State private var stage = OnboardingPreferences.educationStage
     @State private var country = OnboardingPreferences.schoolingCountry
@@ -65,7 +64,7 @@ struct SettingsView: View {
                 header
                 proSection
                 accountSection
-                identitySection
+                SettingsIdentitySection()
                 studiesSection
                 languageSection
                 #if DEBUG
@@ -382,100 +381,6 @@ struct SettingsView: View {
         formatter.locale = locale.foundation
         formatter.setLocalizedDateFormatFromTemplate("j:mm")
         return formatter.string(from: date)
-    }
-
-    /// Le nom d'utilisateur, et rien d'autre dans cette section.
-    ///
-    /// Il est donné à l'inscription, dérivé de ce que le fournisseur OAuth a fourni — « Adrien
-    /// Martinot » devient `adrien-7910` — pour qu'on n'ait rien à choisir avant d'avoir compris
-    /// à quoi ça sert. Il se change ici, parce qu'un identifiant qu'on va dicter à ses
-    /// camarades doit pouvoir être le sien.
-    ///
-    /// Le champ ne refuse rien : ce qu'on tape est mis en forme au fur et à mesure, majuscules
-    /// et accents compris. C'est la base qui a le dernier mot sur l'unicité, et le message
-    /// vient d'elle.
-    @ViewBuilder
-    private var identitySection: some View {
-        if auth.isSignedIn {
-            VStack(alignment: .leading, spacing: 8) {
-                MicaboSectionCaption(text: i18n.t("ios.usernameLabel"))
-
-                HStack(spacing: 11) {
-                    Text("@")
-                        .font(MicaboFont.ui(16, weight: .semibold))
-                        .foregroundStyle(MicaboColor.inkTertiary)
-
-                    TextField(i18n.t("ios.usernamePlaceholder"), text: $username)
-                        .font(MicaboFont.rowTitle)
-                        .foregroundStyle(MicaboColor.ink)
-                        .tint(MicaboColor.accent)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .submitLabel(.done)
-                        .onSubmit { commitUsername() }
-
-                    if social.isLoading {
-                        ProgressView()
-                            .controlSize(.small)
-                            .tint(MicaboColor.progress)
-                    } else if hasUsernameChange {
-                        Button(i18n.t("app.common.save"), action: commitUsername)
-                            .font(MicaboFont.ui(13, weight: .semibold))
-                            .foregroundStyle(MicaboColor.accentInk)
-                            .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
-                    }
-                }
-                .padding(.vertical, 13)
-                .padding(.horizontal, MicaboSpacing.md)
-                .micaboGroup()
-
-                usernameFootnote
-            }
-            .onAppear { username = social.username ?? "" }
-            .onChange(of: social.username) { _, new in
-                guard let new else { return }
-                username = new
-            }
-        }
-    }
-
-    /// Ce que le nom va devenir, ou ce qui l'empêche.
-    ///
-    /// La mise en forme **ne se fait plus sous les doigts**, et c'était un vrai défaut : elle
-    /// retirait le séparateur en attente à chaque frappe, si bien que taper « Adrien Martinot »
-    /// lettre par lettre donnait `adrienmartinot`. Seul un collage marchait. Le champ laisse
-    /// donc taper ce qu'on veut, et la ligne du dessous annonce ce qui sera enregistré.
-    @ViewBuilder
-    private var usernameFootnote: some View {
-        if let notice = social.failure, hasUsernameChange {
-            Text(notice)
-                .font(MicaboFont.caption)
-                .foregroundStyle(MicaboColor.negative)
-                .fixedSize(horizontal: false, vertical: true)
-        } else if hasUsernameChange {
-            let preview = Username.normalize(username)
-            MicaboSectionFootnote(
-                text: preview.isEmpty
-                    ? i18n.t("ios.usernameRules")
-                    : i18n.t("ios.usernameSavedAs", ["name": Username.display(preview)])
-            )
-        }
-    }
-
-    private var hasUsernameChange: Bool {
-        let typed = username.trimmingCharacters(in: .whitespaces)
-        return !typed.isEmpty && Username.normalize(typed) != (social.username ?? "")
-    }
-
-    private func commitUsername() {
-        let candidate = username
-        Task {
-            let saved = await social.setUsername(candidate)
-            if saved {
-                Haptics.success()
-                username = social.username ?? candidate
-            }
-        }
     }
 
     /// Pour qui les fiches sont écrites, et à quelle longueur.
@@ -1132,4 +1037,108 @@ struct SettingsView: View {
 
 #Preview {
     SettingsView()
+}
+
+/// **Le nom d'utilisateur des Réglages, dans sa propre vue** : ce qu'on y tape est son état à
+/// elle. Tenu par l'écran, chaque lettre faisait relire les Réglages entiers (84 phrases par
+/// frappe au banc d'essai).
+private struct SettingsIdentitySection: View {
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(AuthController.self) private var auth
+    @Environment(SocialService.self) private var social
+
+    @State private var username = ""
+
+    /// Le nom d'utilisateur, et rien d'autre dans cette section.
+    ///
+    /// Il est donné à l'inscription, dérivé de ce que le fournisseur OAuth a fourni — « Adrien
+    /// Martinot » devient `adrien-7910` — pour qu'on n'ait rien à choisir avant d'avoir compris
+    /// à quoi ça sert. Il se change ici, parce qu'un identifiant qu'on va dicter à ses
+    /// camarades doit pouvoir être le sien.
+    ///
+    /// Le champ ne refuse rien : ce qu'on tape est mis en forme au fur et à mesure, majuscules
+    /// et accents compris. C'est la base qui a le dernier mot sur l'unicité, et le message
+    /// vient d'elle.
+    var body: some View {
+        if auth.isSignedIn {
+            VStack(alignment: .leading, spacing: 8) {
+                MicaboSectionCaption(text: i18n.t("ios.usernameLabel"))
+
+                HStack(spacing: 11) {
+                    Text("@")
+                        .font(MicaboFont.ui(16, weight: .semibold))
+                        .foregroundStyle(MicaboColor.inkTertiary)
+
+                    TextField(i18n.t("ios.usernamePlaceholder"), text: $username)
+                        .font(MicaboFont.rowTitle)
+                        .foregroundStyle(MicaboColor.ink)
+                        .tint(MicaboColor.accent)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .submitLabel(.done)
+                        .onSubmit { commitUsername() }
+
+                    if social.isLoading {
+                        ProgressView()
+                            .controlSize(.small)
+                            .tint(MicaboColor.progress)
+                    } else if hasUsernameChange {
+                        Button(i18n.t("app.common.save"), action: commitUsername)
+                            .font(MicaboFont.ui(13, weight: .semibold))
+                            .foregroundStyle(MicaboColor.accentInk)
+                            .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
+                    }
+                }
+                .padding(.vertical, 13)
+                .padding(.horizontal, MicaboSpacing.md)
+                .micaboGroup()
+
+                usernameFootnote
+            }
+            .onAppear { username = social.username ?? "" }
+            .onChange(of: social.username) { _, new in
+                guard let new else { return }
+                username = new
+            }
+        }
+    }
+
+    /// Ce que le nom va devenir, ou ce qui l'empêche.
+    ///
+    /// La mise en forme **ne se fait plus sous les doigts**, et c'était un vrai défaut : elle
+    /// retirait le séparateur en attente à chaque frappe, si bien que taper « Adrien Martinot »
+    /// lettre par lettre donnait `adrienmartinot`. Seul un collage marchait. Le champ laisse
+    /// donc taper ce qu'on veut, et la ligne du dessous annonce ce qui sera enregistré.
+    @ViewBuilder
+    private var usernameFootnote: some View {
+        if let notice = social.failure, hasUsernameChange {
+            Text(notice)
+                .font(MicaboFont.caption)
+                .foregroundStyle(MicaboColor.negative)
+                .fixedSize(horizontal: false, vertical: true)
+        } else if hasUsernameChange {
+            let preview = Username.normalize(username)
+            MicaboSectionFootnote(
+                text: preview.isEmpty
+                    ? i18n.t("ios.usernameRules")
+                    : i18n.t("ios.usernameSavedAs", ["name": Username.display(preview)])
+            )
+        }
+    }
+
+    private var hasUsernameChange: Bool {
+        let typed = username.trimmingCharacters(in: .whitespaces)
+        return !typed.isEmpty && Username.normalize(typed) != (social.username ?? "")
+    }
+
+    private func commitUsername() {
+        let candidate = username
+        Task {
+            let saved = await social.setUsername(candidate)
+            if saved {
+                Haptics.success()
+                username = social.username ?? candidate
+            }
+        }
+    }
 }

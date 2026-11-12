@@ -580,7 +580,8 @@ struct TimerPill: View {
                     .trim(from: 0, to: total == 0 ? 0 : CGFloat(remaining) / CGFloat(total))
                     .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                     .rotationEffect(.degrees(-90))
-                    .animation(LearnMotion.gentle, value: remaining)
+                    // Pas d'animation : une seconde y déplace l'arc de quelques centièmes de
+                    // point, et l'animer faisait redessiner la pastille à chaque image.
             }
             .frame(width: 22, height: 22)
             Text(String(format: "%d:%02d", remaining / 60, remaining % 60))

@@ -252,8 +252,8 @@ final class PaywallTests: XCTestCase {
         XCTAssertTrue(german.text.hasPrefix("Dein Abitur-Plan steht."), german.text)
 
         let anonymous = PaywallCopy.title(profile: PaywallProfile(), offersTrial: false, trialDays: 3, locale: .fr)
-        XCTAssertEqual(anonymous.text, "Ton plan est prêt.\nDébloque-le avec Micabo Pro.")
-        XCTAssertEqual(anonymous.highlight, "Débloque-le avec Micabo Pro.")
+        XCTAssertEqual(anonymous.text, "Ton plan est prêt.\nDébloque-le avec Micabo\u{00a0}Pro.")
+        XCTAssertEqual(anonymous.highlight, "Débloque-le avec Micabo\u{00a0}Pro.")
 
         let oneDay = PaywallCopy.title(profile: PaywallProfile(), offersTrial: true, trialDays: 1, locale: .fr)
         XCTAssertEqual(oneDay.highlight, "Essaie-le 1 jour, gratuitement.")
@@ -502,9 +502,9 @@ final class PaywallTests: XCTestCase {
         XCTAssertNil(PaywallProfile.firstName(nil))
 
         let welcome = PaywallCopy.welcome(name: "Lina", locale: .fr)
-        XCTAssertEqual(welcome.text, "Bienvenue dans Micabo Pro, Lina\u{00a0}!")
-        XCTAssertEqual(welcome.highlight, "Micabo Pro")
-        XCTAssertEqual(PaywallCopy.welcome(name: nil, locale: .en).text, "Welcome to Micabo Pro!")
+        XCTAssertEqual(welcome.text, "Bienvenue dans Micabo\u{00a0}Pro, Lina\u{00a0}!")
+        XCTAssertEqual(welcome.highlight, "Micabo\u{00a0}Pro")
+        XCTAssertEqual(PaywallCopy.welcome(name: nil, locale: .en).text, "Welcome to Micabo\u{00a0}Pro!")
         XCTAssertEqual(L10n.t("ios.pay10.brand.for", locale: .fr, vars: ["name": "Lina"]), "Pour Lina")
     }
 
