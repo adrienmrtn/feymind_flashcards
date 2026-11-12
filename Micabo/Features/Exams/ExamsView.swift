@@ -276,7 +276,7 @@ struct ExamHero: View {
                 MicaboFlowLayout(spacing: 8, lineSpacing: 8) {
                     ForEach(lessons.prefix(Self.shownLessons)) { course in
                         HStack(spacing: 6) {
-                            MicaboIconView(icon: course.icon, size: 22)
+                            MicaboIconView(icon: course.icon, size: 22, tone: course.tone)
                             Text(course.title)
                                 .font(MicaboFont.ui(13.5, weight: .bold))
                                 .foregroundStyle(MicaboColor.ink)
@@ -586,7 +586,7 @@ struct LessonChecklist: View {
                         if isOn { selected.remove(course.id) } else { selected.insert(course.id) }
                     } label: {
                         HStack(spacing: 12) {
-                            MicaboIconView(icon: course.icon, size: 38)
+                            MicaboIconView(icon: course.icon, size: 38, tone: course.tone)
                             Text(course.title)
                                 .font(MicaboFont.ui(16, weight: .bold))
                                 .foregroundStyle(MicaboColor.ink)

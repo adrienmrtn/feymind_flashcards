@@ -493,7 +493,7 @@ struct HomeLessonsSection: View {
                     // Le lavis pâle du ton, comme la tuile de la liste des leçons : un aplat vif
                     // en dégradé criait à côté des autres cartes (lot 7).
                     .fill(lesson.tone.pale)
-                MicaboIconView(icon: lesson.icon, size: 28)
+                MicaboIconView(icon: lesson.icon, size: 28, tone: lesson.tone)
             }
             .frame(width: 46, height: 46)
             Text(lesson.title)

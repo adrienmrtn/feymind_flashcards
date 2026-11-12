@@ -111,10 +111,10 @@ struct WelcomeStepView: View {
             VStack(spacing: 0) {
                 Spacer(minLength: 0)
 
-                // L'accueil, un moment qui compte : Mika en entier, debout sur le papier de
-                // l'app, arrive en ressort et fait coucou au-dessus du prénom — une fois.
-                MikaMascot(mood: .wave, size: 160, reactsToTap: true, frozenAt: still ? 0 : nil, backdrop: .surface)
-                    .scaleEffect(mikaShown || still ? 1 : 0.4, anchor: .bottom)
+                // L'accueil, un moment qui compte : Mika en entier, grand, debout sur le papier
+                // de l'app, apparaît en fondu et fait coucou au-dessus du prénom — une fois. Il
+                // ne surgit pas, il ne saute pas.
+                MikaMascot(mood: .wave, size: 190, reactsToTap: true, frozenAt: still ? 0 : nil, backdrop: .surface)
                     .opacity(mikaShown || still ? 1 : 0)
                     .padding(.bottom, MicaboSpacing.lg)
                     .accessibilityHidden(true)

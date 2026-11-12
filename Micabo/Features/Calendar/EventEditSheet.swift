@@ -214,7 +214,7 @@ struct EventEditSheet: View {
             } label: {
                 HStack(spacing: 12) {
                     if let course = lessons.first(where: { $0.id == courseID }) {
-                        MicaboIconView(icon: course.icon, size: 34)
+                        MicaboIconView(icon: course.icon, size: 34, tone: course.tone)
                         Text(course.title)
                             .font(MicaboFont.ui(16, weight: .bold))
                             .foregroundStyle(MicaboColor.ink)
@@ -370,7 +370,7 @@ struct LessonPickerSheet: View {
                     dismiss()
                 } label: {
                     HStack(spacing: 12) {
-                        MicaboIconView(icon: course.icon, size: 36)
+                        MicaboIconView(icon: course.icon, size: 36, tone: course.tone)
                         Text(course.title)
                             .font(MicaboFont.ui(16, weight: .bold))
                             .foregroundStyle(MicaboColor.ink)

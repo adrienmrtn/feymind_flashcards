@@ -202,7 +202,8 @@ règle, écrite aussi en tête de `MikaMascot.swift` :
    bras au crayon, la naissance des tentacules — **dépasse d'un bord**, coupé net par lui, comme
    quelqu'un qui passe la tête. Trois tailles, une par rôle : `MikaPeek.card` (92 points) dans
    une carte, `.line` (100) sur la ligne d'une question, `.hero` (124) pour l'accueil de Home.
-   Il monte de derrière son bord en arrivant, fait son geste une fois, puis garde le sourire.
+   Il est déjà là quand l'écran arrive (il ne monte plus de derrière son bord), fait son
+   geste une fois, puis garde le sourire.
    - **Derrière le haut du bouton** d'une carte : le plan du jour de Home, la journée de
      Concentration (même taille, même retrait de 8 points depuis le bord droit) ;
    - **au bas d'une carte**, à droite, coupé par elle : la série du Profil, « Aucun examen » du
@@ -217,7 +218,7 @@ règle, écrite aussi en tête de `MikaMascot.swift` :
    révélé et sa préparation, la fête de l'objectif du jour et de la série, la fin d'une leçon,
    d'un quiz, d'un paquet de cartes, d'une récitation, le résultat d'un examen blanc, les écrans
    vides (Leçons, examens, quiz, conversation avec Mika), l'attente d'une génération (leçon,
-   examen blanc, entraînement, emploi du temps). Là il fait coucou, saute, écrit — puis s'arrête, souriant.
+   examen blanc, entraînement, emploi du temps). Là il fait coucou, fait la fête, écrit — puis s'arrête, souriant.
 3. **En avatar** (`MikaAvatar`, son visage souriant dans un rond clair, fixe) partout où il ferait moins de
    40 points : les messages du tuteur, les retours d'une question, la note d'une leçon, la
    série, l'emploi du temps lu.
@@ -239,8 +240,8 @@ assez mignon »)** — sans changer le personnage, tout est cuit dans ses images
 - **des joues roses** discrètes sous les yeux, repérées image par image (les yeux blancs dans
   le noir de la tête) et lissées dans le temps : elles suivent la tête sans trembler, ne
   touchent jamais les yeux ;
-- **il finit sur un sourire** : après un geste (coucou, saut, clin d'œil, fête, surprise), la
-  vidéo laisse place en fondu à sa pose souriante, les yeux plissés (`MikaMood.afterglow`) ;
+- **il finit sur un sourire** : après un geste (coucou, clin d'œil, fête), il passe en fondu
+  à sa pose souriante, les yeux plissés (`MikaMood.rest`) ;
   au repos (`.idle`), il sourit aussi ; l'avatar est son visage souriant, cadré serré ;
 - **le demi montre le visage entier** : `MikaPeek` coupe sous les joues et le haut des
   tentacules (260 unités du canevas au lieu de 236), jamais à ras des yeux ;
@@ -248,52 +249,97 @@ assez mignon »)** — sans changer le personnage, tout est cuit dans ses images
   réflexion qui tournait sans fin (écouter, réciter, l'examen d'une nouvelle leçon, un quiz
   raté, l'emploi du temps vide).
 
-**Fluide (build 169 : « ça lag, très peu de fps »)** — le moteur (`MikaClipStore`,
-`MikaPlayerView`, `MikaStage`) :
+**Fluide à coup sûr, sans saut (lot 9, après le build 170 : « il faut pas que tu fasses Mika sauter », « mal
+incarné », « pas fluide, c'est chiant »)** — le moteur (`MikaCore`, `MikaStage`) :
 
-- **Ce qui saccadait** : le lecteur précédent décodait toutes les images d'une animation en
-  bitmaps avant de jouer (160 à 870 ms d'attente, jusqu'à 14 Mo par animation), et six
-  animations sur onze ne gardaient qu'une image sur deux (12 images par seconde) pour tenir
-  dans ce budget.
-- **Maintenant : de la vidéo HEVC avec alpha**, toutes les images, 24 par seconde.
-  `AVSampleBufferDisplayLayer` reçoit les images compressées ; le **décodeur matériel** les
-  décode juste à temps et le serveur d'affichage montre chaque image à son heure, sur sa propre
-  horloge : un fil principal occupé (un écran qui se construit, justement au moment où Mika
-  arrive) ne fait sauter aucune image. Mémoire : la vidéo compressée (115 à 500 Ko) et deux ou
-  trois images décodées, au lieu de 14 Mo.
-- **Démarrage instantané** : dès le premier Mika affiché, les onze vidéos (2,8 Mo en tout) sont
-  lues en mémoire en tâche de fond, sans les décoder (`MikaClipStore.warm`). La première image de
-  chaque vidéo existe aussi en image fixe (`Mika-clip-<nom>`), au pixel près : elle est à
-  l'écran pendant les 50 ms où le décodeur prépare la vidéo, posée sur elle, puis la vidéo prend
-  sa place — ni flash ni saut.
-- Le reste ne change pas : **fixe la plupart du temps**, une lecture **une fois** (l'arrivée,
-  une réponse, une réussite) ; seules la réflexion et l'écriture bouclent, le temps d'une
-  génération ; **un seul Mika joue à la fois** (`MikaStage`) ; hors de l'écran ou en
-  arrière-plan, la lecture s'arrête ; « Réduire les animations », `\.mikaStill`, moins de 64
-  points : fixe. **Aucune session audio** (pas d'`AVPlayer`) : la musique de l'élève continue.
-- **Mesures** (`MikaMascotTests`, journal `MIKA-PERF` et rendu `mika-perf`) : sur le Mac de l'encodage
-  (décodeur matériel), **0,2 à 0,6 ms par image** ; sur le simulateur de la CI (décodage
-  logiciel, le pire cas), 3 à 9 ms par image — pour un budget de 41,7 ms à 24 images par
-  seconde ; lecture d'une vidéo en mémoire 33 à 128 ms (une fois, en tâche de fond, au
-  lancement) ; **du geste demandé à la première image qui bouge : 54 ms**, dont 50 laissés au
-  décodeur sous l'image fixe identique (avant : 160 à 870 ms de préparation). Paquet : 2,8 Mo
-  de vidéos (avant : 5,8 Mo de WebP), écart à l'image source ≈ 1,3/255, transparence ≈ 0,2/255
-  (`mika-encode.swift` relit chaque vidéo).
+- **Ce qui n'allait pas** (mesuré sur le kit, `scripts/mika-assets.py` lit les mêmes images) :
+  les vidéos du lot 7 tournaient à 24 images par seconde dans une interface à 60/120 Hz :
+  chaque image restait à l'écran pendant 5 rafraîchissements, puis Mika sautait d'un coup à la
+  suivante. Sur un Mika de 150 points, le centre de sa silhouette avançait **jusqu'à 21 points
+  d'une image à l'autre** dans le saut (`saut`), 19 dans la fête (`celebration`), 62 dans
+  l'apparition (qui tombait du haut) et 6 dans la surprise — des à-coups visibles quel que soit
+  le décodeur, et justement les sauts que l'élève ne voulait plus. Les gestes calmes (coucou,
+  clin d'œil, regard, repos) ne bougeaient presque pas le corps (0,2 à 0,7 unité du canevas par
+  image) : seul le visage changeait. Et le passage pose fixe → vidéo → pose fixe pouvait
+  clignoter (deux images différentes, un lecteur qui démarre).
+- **Décision** : **plus aucune vidéo** (2,8 Mo de `.mov` et 2,3 Mo de premières images retirés).
+  Aucun clip ne passait le contrôle image par image : la fête et le saut sont des sauts, et les
+  gestes calmes se refont mieux en fondus. **Mika est une image fixe nette à chaque instant**
+  — l'expression du moment, à la définition du kit (2 pixels par unité, net jusqu'à 220 points
+  sur un iPhone 3x) — et **tout mouvement est natif**, interpolé par Core Animation à la cadence
+  de l'écran (120 Hz sur ProMotion), avec les courbes de `MicaboMotion` :
+  - **le fondu enchaîné** entre deux expressions (coucou → sourire, neutre → clin d'œil →
+    sourire, réflexion ↔ écriture pendant une attente) : la nouvelle se pose sur l'ancienne
+    restée opaque, puis l'ancienne s'efface — le corps, commun aux deux, ne pâlit jamais. Les
+    expressions qui se suivent partagent leur silhouette à plus de 80 % (test
+    `testSuccessiveExpressionsShareTheirBody`) ; la surprise, au corps trop différent, se garde ;
+  - **une respiration** d'échelle de 1,5 %, ancrée sous ses tentacules, une fois à l'arrivée ;
+  - **un petit écrasement** de 3 % qui revient (à l'appui, à une bonne réponse, à la fête) ;
+    à l'appui, un clin d'œil, puis il revient ;
+  - **les étincelles de la fête** : des étoiles vectorielles à quatre branches, comme celle de
+    son crayon, qui grandissent une fois autour de lui, puis restent.
+  Jamais de saut, de rebond ni de translation de Mika : il ne monte plus de derrière son bord,
+  ne surgit plus de petit (l'accueil, les scènes du parcours), ne monte plus avec une question
+  (`onboardingAppear(rises: false)`), ne rebondit plus avec la carte de la fête ; au pied d'une
+  page, sa joie est un sourire, plus un bond (test `testNoMikaJumpsAnywhere`).
+- **Un geste, une fois** (`MikaMood.beats`), puis il garde sa pose ; seules la réflexion et
+  l'écriture alternent leurs deux images, le temps d'une attente réseau. **Un seul Mika en
+  mouvement** (`MikaStage`) : le dernier arrivé joue, le précédent se pose sur sa fin. « Réduire
+  les animations » garde les fondus (ce sont des fondus) et retire respiration, écrasement et
+  croissance des étincelles ; `\.mikaStill`, `frozenAt`, les tests : l'expression fixe.
 
-**Changer de kit, sans code** (un Mika plus mignon, de nouvelles poses) :
+**Mieux incarné** — ce que fait la mascotte de Knowunity, appliqué à Mika sans rien lui
+emprunter : elle est **grande et au centre des moments clés** (l'accueil la montre immense,
+coupée par le bas de l'écran ; « on prépare tout » et « c'est prêt » la posent au centre, au
+-dessus du titre), **son expression change avec ce qui se passe** (les yeux qui sourient, qui
+regardent, la fête), **elle parle par sa bulle ou le titre juste à côté**, et elle est **toujours
+à la même place et à la même taille pour le même rôle** (dans un quiz, elle passe la tête
+au-dessus du panneau de réponse). Pour Mika :
 
-1. Pousser le kit sur la branche `assets/mika-kit` — jamais dans l'app : `sequences-png/<nom>/
-   <nom>-000.png…` (canevas 512 px, 24 images par seconde) et `images-fixes/mika-<pose>.png`
-   (1024 px), la disposition du kit actuel.
-2. `gh workflow run mika-encode.yml --ref <branche> -f target=<branche>` : sur un Mac de GitHub
-   (l'encodeur HEVC avec alpha n'existe que sur macOS), le workflow lance
-   `scripts/mika-assets.py` (poses, premières images, avatar, `MikaArt.swift`, avec la lueur,
-   la lumière et les joues), encode chaque animation avec `scripts/mika-encode.swift`, **relit
-   chaque vidéo** et la compare à ses images (il refuse une vidéo qui perd des images ou s'en
-   écarte), commite le tout sur `<branche>` et publie ses planches de contrôle (début, milieu,
-   fin, sur la crème, le graphite et le bleu) sur `assets/mika-build`.
-3. Les noms des animations et des poses attendues sont en tête de `scripts/mika-assets.py`
-   (`CLIPS`, `STILLS`) ; les réglages du traitement aussi (lueur, lumière, joues).
+| Rôle | Forme, taille | Expression |
+| --- | --- | --- |
+| Premier écran (bleu) | demi, `min(56 % de la largeur, 220)`, au centre, derrière le panneau | coucou → sourire |
+| Accueil « Bienvenue » | entier, 190 | coucou → sourire |
+| Questions du parcours | demi `.line` (100), sa bulle à côté | l'humeur de la question ; un sourire à chaque réponse |
+| Plan révélé, fête de l'objectif, fin du minuteur, série | entier, 150 à 160 | fête (sourire + étincelles) |
+| Fin d'un quiz, d'un paquet de cartes, d'une récitation | entier, 150 | fête (≥ 80 %), joie (≥ 50 %), clin d'œil (en dessous) |
+| Résultat d'un examen blanc | entier, 124, à côté du score | fête, ou clin d'œil « pas encore » |
+| Retour d'une réponse de quiz | demi `.card` (92), au-dessus du bord du panneau, à droite, en fondu une fois le panneau posé | joie (bonne), déçu (mauvaise) |
+| Attente d'une génération, et son échec | entier, 150, au même endroit | écriture ↔ réflexion ; triste |
+| Écrans vides | entier, 120 | coucou, clin d'œil, attentif, sommeil selon l'écran |
+| Cartes (Home, Concentration, Profil, Calendrier, paywall…) | demi `.card` / `.hero` | inchangé |
+| Messages, rangées | avatar (< 40) | son visage souriant |
+
+**Changer de Mika, en une commande** : `python3 scripts/mika-assets.py <dossier du kit>
+[--sheet controle.jpg]` refait toutes ses images (expressions, avatar, `MikaArt.swift`, avec la
+lueur, la lumière de contour et les joues) ; sur GitHub, pousser le kit sur `assets/mika-kit`
+puis `gh workflow run mika-encode.yml --ref <branche> -f target=<branche>` (un Linux suffit,
+la planche de contrôle part sur `assets/mika-build`). Une expression manquante arrête le script
+avec la liste attendue ; une expression nouvelle demande sa ligne dans `MikaStill`.
+
+**Cahier des charges d'un futur Mika** (à donner à l'illustrateur ou à l'outil) :
+
+1. **Le mieux : une animation vectorielle pilotée par l'app.** Un fichier **Rive (`.riv`)**
+   avec une *state machine* : des entrées `mood` (nombre : repos, coucou, joie, fête,
+   réflexion, écriture, clin d'œil, surprise, triste, sommeil, attentif) et `tap` (déclencheur),
+   un état de repos qui respire à peine, des transitions mélangées entre états (pas de coupe),
+   **aucun déplacement du personnage** (pas de saut ni d'entrée par un bord : les pieds restent
+   au sol), le personnage centré, tentacules au bas du cadre, 60 i/s ou plus (Rive interpole à
+   la cadence de l'écran). À défaut, un **Lottie (JSON)** par geste, 60 i/s, même règles. Couleurs
+   à plat ou dégradés simples, contour lisible sur crème `#FAF6EE`, graphite `#1C1E26` et bleu
+   `#3870FE`.
+2. **Sinon : des images fixes.** Un PNG transparent de **1024 × 1024 px** par expression,
+   nommé `mika-<expression>.png` : `neutre`, `sourire`, `clin-doeil`, `coucou`, `surprise`,
+   `reflexion`, `ecriture`, `triste`, `sommeil` (et, si possible, `regard-gauche`,
+   `regard-droite`, `fete` — les bras levés, les pieds au sol). **Le même corps au même endroit
+   dans toutes** (seuls le visage, le bras du crayon et les accessoires changent), le bas des
+   tentacules vers y = 970 px, la tête centrée vers x = 510 px, 40 px d'air au moins sur les
+   bords : c'est ce qui rend les fondus invisibles. Fond transparent, pas d'ombre au sol (l'app
+   la dessine).
+3. **Une animation en images** (si ni Rive ni Lottie) : une séquence PNG par geste à **60 i/s**,
+   même canevas et même corps que les images fixes, le personnage au sol du début à la fin, la
+   première et la dernière image identiques à une expression fixe. Le moteur actuel ne les lit
+   pas : ce serait un nouveau lecteur, à faire seulement si elles sont parfaites image par image.
 
 **Le même langage dans tous les onglets** :
 

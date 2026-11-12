@@ -171,6 +171,16 @@ struct MicaboPalette: Equatable {
     var tonePale: [Color]
     var toneVivid: [Color]
     var toneInk: [Color]
+    /// **Le dessin d'une icône** dans le ton d'une leçon (lot 9) : assez soutenu pour un trait
+    /// de deux points sur le pâle du même ton, assez clair la nuit pour se lire sur le marine.
+    var toneGlyph: [Color]
+    /// **La lèvre** d'une surface touchable (lot 9) : le bord plein de trois points sous une
+    /// carte, une rangée, un bouton secondaire. Elle remplace l'ombre floue : c'est elle qui
+    /// pose l'objet, le jour comme la nuit, où une ombre ne se voit plus.
+    var edge: Color
+    /// Le texte posé sur l'accent : blanc, le jour comme la nuit (lot 9). `onInk` reste le
+    /// texte posé sur l'encre, qui s'inverse avec elle.
+    var onAccent: Color
     var cardShadow: Double
     var groupShadow: Double
 
@@ -185,29 +195,32 @@ struct MicaboPalette: Equatable {
     /// réserve aux mots-clés des notes, et un violet qui voudrait dire « bouton » et « à
     /// retenir » ne dirait plus rien.
     ///
-    /// Les boutons d'action principaux sont **noirs** (l'encre) ; le bleu dit ce qui est
-    /// actif ou sélectionné. Vert et rouge ne disent que juste et faux. Chaque leçon porte un
+    /// **Lot 9** : l'encre descend vers le bleu-noir (`#0F1324`) pour des titres qui tiennent,
+    /// les tons remontent vers les couleurs de la marque (le jaune du crayon `#F7B41F`), et les
+    /// cartes se posent sur une lèvre (`edge`) au lieu d'une ombre floue. Le bouton d'action
+    /// principal est l'aplat de l'accent, une lèvre plus sombre dessous ; le bleu dit aussi ce
+    /// qui est actif ou sélectionné. Vert et rouge ne disent que juste et faux. Chaque leçon porte un
     /// des cinq tons de Micabo (`LessonTone`).
     ///
     /// **Les couleurs des notes de révision ne bougent pas** (`ratingAgain`, `caution`,
     /// `positive`, `info` et leurs fonds) : le bilan de fin de session les rejoue.
     static let day = MicaboPalette(
-        canvas: Color(hex: 0xF5F7FB),
+        canvas: Color(hex: 0xF4F6FB),
         surface: .white,
-        surfaceMuted: Color(hex: 0xEFF2F7),
-        surfaceSunken: Color(hex: 0xE7EBF2),
-        stroke: Color(hex: 0xE8EBF1),
-        strokeStrong: Color(hex: 0xD6DBE4),
-        hairline: Color(hex: 0xEEF0F5),
-        hairlineOnCanvas: Color(hex: 0xE4E8EF),
+        surfaceMuted: Color(hex: 0xEEF1F7),
+        surfaceSunken: Color(hex: 0xE6EAF2),
+        stroke: Color(hex: 0xE3E7F0),
+        strokeStrong: Color(hex: 0xD3D9E5),
+        hairline: Color(hex: 0xECEFF5),
+        hairlineOnCanvas: Color(hex: 0xE2E6EE),
         // Un noir à peine bleuté : 16:1 sur l'ivoire. C'est aussi le fond des boutons
         // d'action principaux.
-        ink: Color(hex: 0x161A22),
+        ink: Color(hex: 0x0F1324),
         // 5,2:1 sur l'ivoire — au-dessus du seuil, y compris à douze points.
-        inkSecondary: Color(hex: 0x5E6573),
-        inkTertiary: Color(hex: 0x9AA1AE),
-        inkReading: Color(hex: 0x262A33),
-        inkBody: Color(hex: 0x434957),
+        inkSecondary: Color(hex: 0x586074),
+        inkTertiary: Color(hex: 0x99A0B1),
+        inkReading: Color(hex: 0x1F2433),
+        inkBody: Color(hex: 0x404759),
         sheetMarker: Color(hex: 0xFFF0A6),
         sheetHighlights: [
             Color(hex: 0xFFF0A6),
@@ -218,16 +231,16 @@ struct MicaboPalette: Equatable {
         ],
         onInk: .white,
         onInkMuted: Color(hex: 0xA8ABB3),
-        canvasSage: Color(hex: 0xF5F7FB),
+        canvasSage: Color(hex: 0xF4F6FB),
         // Le bleu Micabo (`MicaboBrand.blue`) : 4,3:1 sur le blanc, assez pour un libellé
         // gras ; le petit texte sur un lavis prend `accentInk` (le 600, 4,7:1 sur
         // `accentSoft`).
         accent: Color(hex: 0x3870FE),
-        accentSoft: Color(hex: 0xDFE8FF),
+        accentSoft: Color(hex: 0xE1E9FF),
         accentVivid: Color(hex: 0x3870FE),
-        accentInk: Color(hex: 0x2F5ED5),
-        accentDeep: Color(hex: 0x264CAD),
-        progressTrack: Color(hex: 0xE6E9F0),
+        accentInk: Color(hex: 0x2A59D9),
+        accentDeep: Color(hex: 0x2350CC),
+        progressTrack: Color(hex: 0xE4E8F0),
         // À partir d'ici, et jusqu'à `infoSoft` : les couleurs des notes de révision,
         // reprises telles quelles de l'ancienne palette. Voir le commentaire du type.
         positive: Color(hex: 0x2F7D57),
@@ -249,7 +262,7 @@ struct MicaboPalette: Equatable {
         gradeFar: Color(hex: 0xE5E8EE),
         accentWash: Color(hex: 0xEFF4FF),
         accentPale: Color(hex: 0xBBCEFF),
-        track: Color(hex: 0xE3E7EE),
+        track: Color(hex: 0xE1E5EE),
         // **La série est dans le jaune du crayon**, pas dans le rouge : le rouge de l'app dit
         // « erreur » ou « en retard », et une série tenue n'est ni l'un ni l'autre. L'encre
         // reste assez sombre pour un texte de treize points sur le lavis (5:1).
@@ -267,11 +280,11 @@ struct MicaboPalette: Equatable {
         dayWashStroke: Color(hex: 0xE4DDFA),
         // Les tuiles : les cinq tons pâles, et un gris de papier.
         tilePastels: [
-            Color(hex: 0xFFF3C4),
-            Color(hex: 0xD3F2E2),
-            Color(hex: 0xE0E9FF),
-            Color(hex: 0xFCE1EB),
-            Color(hex: 0xECE3FD),
+            Color(hex: 0xFFF1CC),
+            Color(hex: 0xD6F5E6),
+            Color(hex: 0xE1EAFF),
+            Color(hex: 0xFDE2EC),
+            Color(hex: 0xEDE5FF),
             Color(hex: 0xEEF1F6)
         ],
         keyword: Color(hex: 0x7C3AED),
@@ -283,50 +296,62 @@ struct MicaboPalette: Equatable {
         wrongSoft: Color(hex: 0xFEE2E2),
         // jaune, menthe, bleu, rose, lilas
         tonePale: [
-            Color(hex: 0xFFF3C4),
-            Color(hex: 0xD3F2E2),
-            Color(hex: 0xE0E9FF),
-            Color(hex: 0xFCE1EB),
-            Color(hex: 0xECE3FD)
+            Color(hex: 0xFFF1CC),
+            Color(hex: 0xD6F5E6),
+            Color(hex: 0xE1EAFF),
+            Color(hex: 0xFDE2EC),
+            Color(hex: 0xEDE5FF)
         ],
         toneVivid: [
-            Color(hex: 0xF2B200),
-            Color(hex: 0x22B573),
+            Color(hex: 0xF7B41F),
+            Color(hex: 0x1FB57A),
             Color(hex: 0x3870FE),
             Color(hex: 0xEC5B8F),
             Color(hex: 0x8B5CF6)
         ],
         toneInk: [
-            Color(hex: 0x7A5600),
-            Color(hex: 0x146C45),
-            Color(hex: 0x264CAD),
+            Color(hex: 0x7A5200),
+            Color(hex: 0x0E6B45),
+            Color(hex: 0x2350CC),
             Color(hex: 0xA8204F),
             Color(hex: 0x5B21B6)
         ],
+        toneGlyph: [
+            Color(hex: 0xE29E00),
+            Color(hex: 0x13A06A),
+            Color(hex: 0x3870FE),
+            Color(hex: 0xE14E86),
+            Color(hex: 0x7C4DF0)
+        ],
+        edge: Color(hex: 0xDCE1EB),
+        onAccent: .white,
         cardShadow: 0.05,
         groupShadow: 0.035
     )
 
 
-    /// **La nuit** : le même papier retourné. Un graphite doux (`#17181D`, plus un noir qui
-    /// écrase), des cartes nettement plus claires (`#22242B`) et cerclées d'un filet, l'encre
-    /// devient un blanc à peine chaud. Les boutons d'action restent « d'encre » :
-    /// clairs sur la nuit, texte sombre dessus. Les tons d'une leçon gardent leur vif ; leur pâle
-    /// passe en lavis sombre, et leur encre s'éclaircit pour se lire dessus.
+    /// **La nuit : le marine de Micabo** (lot 9).
+    ///
+    /// Un bleu-noir (`#0B0F1C`), plus un graphite : le gris faisait une nuit terne, sans
+    /// famille avec le bleu de l'accent. Les surfaces montent d'un seul cran net (`#161B2B`),
+    /// sans ombre — la nuit, la profondeur vient de la clarté et de la lèvre (`edge`), pas d'un
+    /// flou qui ne se voit pas. L'encre est un blanc à peine bleuté. L'accent se relève
+    /// (`#5C88FF`) et porte du texte **blanc** (`onAccent`), comme le jour. Les tons d'une leçon
+    /// gardent leur vif ; leur pâle passe en lavis sombre, leur encre s'éclaircit.
     static let night = MicaboPalette(
-        canvas: Color(hex: 0x17181D),
-        surface: Color(hex: 0x22242B),
-        surfaceMuted: Color(hex: 0x2A2D35),
-        surfaceSunken: Color(hex: 0x31343C),
-        stroke: Color(hex: 0x33363F),
-        strokeStrong: Color(hex: 0x3F434D),
-        hairline: Color(hex: 0x2E3139),
-        hairlineOnCanvas: Color(hex: 0x282A31),
-        ink: Color(hex: 0xF1F2F4),
-        inkSecondary: Color(hex: 0xA9ADB6),
-        inkTertiary: Color(hex: 0x787D87),
-        inkReading: Color(hex: 0xE6E7EA),
-        inkBody: Color(hex: 0xC8CAD0),
+        canvas: Color(hex: 0x0B0F1C),
+        surface: Color(hex: 0x161B2B),
+        surfaceMuted: Color(hex: 0x1E2436),
+        surfaceSunken: Color(hex: 0x262D41),
+        stroke: Color(hex: 0x252B3E),
+        strokeStrong: Color(hex: 0x343B54),
+        hairline: Color(hex: 0x222839),
+        hairlineOnCanvas: Color(hex: 0x1A1F2E),
+        ink: Color(hex: 0xF4F6FC),
+        inkSecondary: Color(hex: 0xA3AABD),
+        inkTertiary: Color(hex: 0x6C7389),
+        inkReading: Color(hex: 0xE7EAF3),
+        inkBody: Color(hex: 0xC5CAD8),
         sheetMarker: Color(hex: 0x5A4A12),
         sheetHighlights: [
             Color(hex: 0x5A4A12),
@@ -335,84 +360,93 @@ struct MicaboPalette: Equatable {
             Color(hex: 0x5A2235),
             Color(hex: 0x3E2C66)
         ],
-        onInk: Color(hex: 0x17181D),
-        onInkMuted: Color(hex: 0x50535C),
-        canvasSage: Color(hex: 0x17181D),
+        onInk: Color(hex: 0x0B0F1C),
+        onInkMuted: Color(hex: 0x4A5066),
+        canvasSage: Color(hex: 0x0B0F1C),
         // Le 400 de la gamme : 5,4:1 sur la carte de nuit, 4,6:1 sur `accentSoft`.
-        accent: Color(hex: 0x608DFE),
-        accentSoft: Color(hex: 0x1D2A45),
-        accentVivid: Color(hex: 0x3870FE),
-        accentInk: Color(hex: 0x90AFFE),
-        accentDeep: Color(hex: 0x3870FE),
-        progressTrack: Color(hex: 0x343741),
+        accent: Color(hex: 0x5C88FF),
+        accentSoft: Color(hex: 0x1B2A55),
+        accentVivid: Color(hex: 0x4D7DFF),
+        accentInk: Color(hex: 0x9DB7FF),
+        accentDeep: Color(hex: 0x2F5BE0),
+        progressTrack: Color(hex: 0x252B3E),
         positive: Color(hex: 0x4CC38A),
         caution: Color(hex: 0xE3B24C),
         cautionVivid: Color(hex: 0xFFC53D),
         negative: Color(hex: 0xF06A5A),
         ratingAgain: Color(hex: 0xE07A5F),
         info: Color(hex: 0x6E9BEA),
-        positiveWash: Color(hex: 0x15291F),
+        positiveWash: Color(hex: 0x0F2A20),
         positiveInk: Color(hex: 0x6FD3A0),
-        positiveSoft: Color(hex: 0x18301F),
-        cautionSoft: Color(hex: 0x33280F),
-        negativeSoft: Color(hex: 0x3A1A16),
-        infoSoft: Color(hex: 0x1A2740),
+        positiveSoft: Color(hex: 0x11301F),
+        cautionSoft: Color(hex: 0x31270C),
+        negativeSoft: Color(hex: 0x3A1619),
+        infoSoft: Color(hex: 0x172645),
         offerWash: Color(hex: 0x3E2C66),
         offerWashSoft: Color(hex: 0x261C3D),
-        gradeNear: Color(hex: 0x5A5C65),
-        gradeMid: Color(hex: 0x44464F),
-        gradeFar: Color(hex: 0x35373F),
-        accentWash: Color(hex: 0x17213A),
-        accentPale: Color(hex: 0x1C387F),
-        track: Color(hex: 0x30333B),
+        gradeNear: Color(hex: 0x545B70),
+        gradeMid: Color(hex: 0x3E4458),
+        gradeFar: Color(hex: 0x2E3446),
+        accentWash: Color(hex: 0x131D38),
+        accentPale: Color(hex: 0x1E3A85),
+        track: Color(hex: 0x262C40),
         flame: Color(hex: 0xFFB547),
         flameInk: Color(hex: 0xFFC76E),
-        flameSoft: Color(hex: 0x33270F),
-        flameTrack: Color(hex: 0x4D3B19),
+        flameSoft: Color(hex: 0x33260C),
+        flameTrack: Color(hex: 0x4D3A15),
         warmProse: Color(hex: 0xCBB8AE),
-        warmWashStart: Color(hex: 0x2A2417),
-        warmWashEnd: Color(hex: 0x2D2413),
-        warmWashStroke: Color(hex: 0x3D3220),
-        dayWashStart: Color(hex: 0x221C33),
-        dayWashMid: Color(hex: 0x1B2233),
-        dayWashEnd: Color(hex: 0x182A26),
-        dayWashStroke: Color(hex: 0x2E2645),
+        warmWashStart: Color(hex: 0x241F14),
+        warmWashEnd: Color(hex: 0x2A2212),
+        warmWashStroke: Color(hex: 0x3A3020),
+        dayWashStart: Color(hex: 0x1C1A33),
+        dayWashMid: Color(hex: 0x15203A),
+        dayWashEnd: Color(hex: 0x12282A),
+        dayWashStroke: Color(hex: 0x2A2848),
         tilePastels: [
-            Color(hex: 0x463A10),
-            Color(hex: 0x173D2B),
-            Color(hex: 0x1C3352),
-            Color(hex: 0x4A1F30),
-            Color(hex: 0x33275A),
-            Color(hex: 0x2A2D35)
+            Color(hex: 0x3A2E0E),
+            Color(hex: 0x0F3326),
+            Color(hex: 0x17284D),
+            Color(hex: 0x3D1828),
+            Color(hex: 0x2B2050),
+            Color(hex: 0x1E2436)
         ],
         keyword: Color(hex: 0xA78BFA),
         correct: Color(hex: 0x22C55E),
         correctInk: Color(hex: 0x4ADE80),
-        correctSoft: Color(hex: 0x13301E),
+        correctSoft: Color(hex: 0x0C2E1E),
         wrong: Color(hex: 0xEF4444),
         wrongInk: Color(hex: 0xF87171),
-        wrongSoft: Color(hex: 0x3A1717),
+        wrongSoft: Color(hex: 0x3A1619),
         tonePale: [
-            Color(hex: 0x3B3112),
-            Color(hex: 0x143326),
-            Color(hex: 0x182B45),
-            Color(hex: 0x3D1A29),
-            Color(hex: 0x2A2148)
+            Color(hex: 0x3A2E0E),
+            Color(hex: 0x0F3326),
+            Color(hex: 0x17284D),
+            Color(hex: 0x3D1828),
+            Color(hex: 0x2B2050)
         ],
         toneVivid: [
-            Color(hex: 0xF2B200),
-            Color(hex: 0x22B573),
-            Color(hex: 0x3870FE),
+            Color(hex: 0xF7B41F),
+            Color(hex: 0x22C083),
+            Color(hex: 0x4D7DFF),
             Color(hex: 0xEC5B8F),
-            Color(hex: 0x8B5CF6)
+            Color(hex: 0x9B6DFF)
         ],
         toneInk: [
-            Color(hex: 0xF6CF5A),
-            Color(hex: 0x5DD69B),
-            Color(hex: 0x90AFFE),
-            Color(hex: 0xF49AB9),
-            Color(hex: 0xB9A0FA)
+            Color(hex: 0xF8CC5C),
+            Color(hex: 0x5DDBA4),
+            Color(hex: 0x9DB7FF),
+            Color(hex: 0xF59BB8),
+            Color(hex: 0xBCA4FF)
         ],
+        toneGlyph: [
+            Color(hex: 0xF7C14A),
+            Color(hex: 0x3DD195),
+            Color(hex: 0x7DA2FF),
+            Color(hex: 0xF27DA5),
+            Color(hex: 0xA88BFA)
+        ],
+        edge: Color(hex: 0x2A3147),
+        onAccent: .white,
         cardShadow: 0.0,
         groupShadow: 0.0
     )
@@ -490,6 +524,9 @@ struct MicaboPalette: Equatable {
         tonePale: zip(day.tonePale, night.tonePale).map { blend($0, $1) },
         toneVivid: zip(day.toneVivid, night.toneVivid).map { blend($0, $1) },
         toneInk: zip(day.toneInk, night.toneInk).map { blend($0, $1) },
+        toneGlyph: zip(day.toneGlyph, night.toneGlyph).map { blend($0, $1) },
+        edge: blend(day.edge, night.edge),
+        onAccent: blend(day.onAccent, night.onAccent),
         cardShadow: day.cardShadow,
         groupShadow: day.groupShadow
     )

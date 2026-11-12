@@ -100,19 +100,15 @@ struct HomePressStyle: ButtonStyle {
 }
 
 extension View {
-    /// La carte de la page : blanche le jour, anthracite la nuit, un filet et une ombre douce.
+    /// La carte de la page : **la surface de l'app** (`micaboSurface`), blanche le jour,
+    /// marine la nuit, un filet et sa lèvre.
     func homeCard(radius: CGFloat = MicaboStage.cardRadius) -> some View {
-        background(HomePalette.card, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(HomePalette.cardStroke, lineWidth: 1))
-            .shadow(color: MicaboBrand.blue900.opacity(0.06), radius: 16, y: 8)
+        micaboSurface(radius: radius, fill: HomePalette.card, stroke: HomePalette.cardStroke)
     }
 
     /// **La même carte, qui coupe ce qu'elle porte** : pour un Mika qui sort de son bord bas.
-    /// La coupe passe avant l'ombre, qui reste visible.
+    /// La coupe ne prend que le contenu : la lèvre reste visible.
     func homeCardClipped(radius: CGFloat = MicaboStage.cardRadius) -> some View {
-        background(HomePalette.card)
-            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(HomePalette.cardStroke, lineWidth: 1))
-            .shadow(color: MicaboBrand.blue900.opacity(0.06), radius: 16, y: 8)
+        micaboSurface(radius: radius, fill: HomePalette.card, stroke: HomePalette.cardStroke, clipped: true)
     }
 }

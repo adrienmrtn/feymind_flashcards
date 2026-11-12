@@ -37,7 +37,8 @@ struct MicaboGlassChip: View {
     }
 }
 
-/// Pilule de sélection : encre pleine quand elle est active, blanche cerclée sinon.
+/// Pilule de sélection : l'accent plein quand elle est active, une surface cerclée sur sa
+/// lèvre sinon — la même touche que les cartes et les boutons (lot 9).
 struct MicaboSelectChip: View {
     let title: String
     let isSelected: Bool
@@ -46,14 +47,20 @@ struct MicaboSelectChip: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(MicaboFont.ui(14, weight: .medium))
-                .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.inkSecondary)
+                .font(MicaboFont.ui(15, weight: isSelected ? .heavy : .bold))
+                .foregroundStyle(isSelected ? MicaboColor.onAccent : MicaboColor.ink)
                 .padding(.vertical, 9)
                 .padding(.horizontal, 16)
-                .background(isSelected ? MicaboColor.accent : MicaboColor.surface, in: Capsule())
+                .background {
+                    ZStack {
+                        Capsule().fill(isSelected ? MicaboColor.accentDeep : MicaboColor.edge).offset(y: 2)
+                        Capsule().fill(isSelected ? MicaboColor.accent : MicaboColor.surface)
+                    }
+                }
                 .overlay {
                     Capsule().strokeBorder(isSelected ? Color.clear : MicaboColor.stroke, lineWidth: 1)
                 }
+                .padding(.bottom, 2)
         }
         .buttonStyle(MicaboPressableButtonStyle(feedback: .selection))
         .animation(MicaboMotion.quick, value: isSelected)
@@ -168,6 +175,8 @@ struct MicaboProgressBar: View {
                     .animation(MicaboMotion.standard, value: progress)
             }
         }
-        .frame(height: 5)
+        // Huit points (lot 9) : une jauge de cinq se lisait comme un filet, pas comme une
+        // avancée.
+        .frame(height: 8)
     }
 }

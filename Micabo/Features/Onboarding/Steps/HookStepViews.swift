@@ -13,9 +13,9 @@ import SwiftUI
 ///
 /// Puis, d'un seul mouvement :
 ///
-/// 1. le panneau du bas monte du bord de l'écran, Mika assis derrière lui ;
-/// 2. Mika, en demi (`MikaPeek`), monte de derrière le panneau et fait coucou (`wave`) — une
-///    fois —, coupé par son bord ;
+/// 1. le panneau du bas monte du bord de l'écran ;
+/// 2. une fois le panneau posé, Mika, en demi (`MikaPeek`), apparaît en fondu derrière son
+///    bord, coupé par lui, et fait coucou (`wave`) — une fois. Il ne monte jamais ;
 /// 3. le titre, le bouton et « J'ai déjà un compte » se posent sur le panneau, en fondu.
 ///
 /// Avec « Réduire les animations », tout est là d'emblée, Mika en image fixe.
@@ -86,14 +86,16 @@ struct HookLogoStepView: View {
     // MARK: - Mika
 
     /// **Mika en demi derrière le bord haut du panneau** : le bleu du lancement est la seule
-    /// scène bleue de Mika (la règle de mise en scène). 180 points au plus : au-delà, ses
-    /// images s'étireraient. La place est tenue avant son arrivée : rien ne bouge quand il
-    /// entre.
+    /// scène bleue de Mika (la règle de mise en scène). Grand, au centre, comme un hôte qui
+    /// accueille : 220 points au plus (la définition de ses images). La place est tenue avant
+    /// son arrivée : rien ne bouge quand il entre, il apparaît en fondu une fois le panneau
+    /// posé — il ne monte jamais avec lui.
     private func mika(width: CGFloat) -> some View {
-        let size = min(width * 0.5, 180)
+        let size = min(width * 0.56, 220)
         return ZStack {
             if showsMika || still {
                 MikaPeek(mood: still ? .wave : mikaMood, width: size, reactsToTap: true, backdrop: .blue)
+                    .transition(.opacity)
             }
         }
         .frame(width: size, height: MikaPeek.height(for: size))
@@ -202,8 +204,10 @@ struct HookLogoStepView: View {
         try? await Task.sleep(for: .milliseconds(300))
 
         Haptics.soft()
-        showsMika = true
         contentVisible = true
+        // Le panneau a fini de monter : Mika apparaît, sur place.
+        try? await Task.sleep(for: .milliseconds(150))
+        withAnimation(MicaboMotion.standard) { showsMika = true }
     }
 
     private var loginSheet: some View {

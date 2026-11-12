@@ -204,11 +204,12 @@ struct XPGoalCelebration: View {
             }
             XPGoalCard(onContinue: onContinue)
                 .padding(.horizontal, MicaboSpacing.screen)
-                .scaleEffect(appeared ? 1 : 0.86)
+                .scaleEffect(appeared ? 1 : 0.96)
                 .opacity(appeared ? 1 : 0)
         }
         .onAppear {
-            withAnimation(MicaboMotion.resolved(MicaboMotion.celebrate, reduceMotion: reduceMotion)) { appeared = true }
+            // La carte se pose en fondu, sans rebond : Mika est dessus, il ne rebondit pas.
+            withAnimation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion)) { appeared = true }
             Haptics.success()
             Haptics.burst(count: 3, over: 0.45)
         }
@@ -221,10 +222,10 @@ struct XPGoalCard: View {
     var showsButton = true
     var onContinue: () -> Void = {}
 
-    /// **La fête de l'objectif**, un moment qui compte : Mika en entier saute de joie, une
-    /// fois, puis reste debout sur la carte.
+    /// **La fête de l'objectif**, un moment qui compte : Mika en entier, grand sourire et
+    /// étincelles autour de lui, debout sur la carte.
     private var mika: some View {
-        MikaMascot(mood: .celebrate, size: 120, reactsToTap: true)
+        MikaMascot(mood: .celebrate, size: 150, reactsToTap: true)
     }
 
     var body: some View {

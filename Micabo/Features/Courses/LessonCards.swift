@@ -21,7 +21,7 @@ struct LessonCard: View {
         let summary = LessonCardSummary(course: course)
         Button(action: action) {
             HStack(spacing: 14) {
-                MicaboIconView(icon: course.icon, size: 40)
+                MicaboIconView(icon: course.icon, size: 40, tone: course.tone)
                     .frame(width: 60, height: 60)
                     .background(course.tone.pale, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
 
@@ -47,13 +47,13 @@ struct LessonCard: View {
                                 .frame(width: proxy.size.width * CGFloat(summary.percent) / 100)
                         }
                     }
-                    .frame(height: 5)
+                    .frame(height: 8)
                     if dueCount > 0 || (examDays ?? -1) >= 0 {
                         HStack(spacing: 6) {
                             if dueCount > 0 {
                                 pill(
                                     L10n.t("lesson.lessons.due", locale: .resolved(), vars: ["count": String(dueCount)]),
-                                    foreground: MicaboColor.onInk,
+                                    foreground: MicaboColor.onAccent,
                                     background: MicaboColor.accent
                                 )
                             }
