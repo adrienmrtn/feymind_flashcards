@@ -175,19 +175,19 @@ final class PaywallTests: XCTestCase {
         XCTAssertFalse(title.text.lowercased().contains("gratuit"), title.text)
         XCTAssertFalse(title.text.contains("3"), title.text)
 
-        XCTAssertEqual(PaywallCopy.callToAction(for: yearly, locale: .fr), "Continuer")
-        XCTAssertFalse(PaywallCopy.planDetail(for: yearly, mentionsTrial: true, locale: .fr).contains("gratuit"))
+        XCTAssertEqual(PaywallCopy.callToAction(for: yearly, locale: .fr), "S'abonner · \(yearly.displayPrice) par an")
+        XCTAssertFalse(PaywallCopy.planDetail(for: yearly, locale: .fr).contains("gratuit"))
 
         let legal = PaywallCopy.legal(for: yearly, locale: .fr)
         XCTAssertTrue(legal.hasPrefix("Essai gratuit déjà utilisé."), legal)
-        XCTAssertTrue(legal.contains(yearly.displayPrice), legal)
-        XCTAssertFalse(legal.contains("puis"), "Sans essai, rien ne vient « puis » : \(legal)")
+        XCTAssertTrue(legal.contains("Payé aujourd'hui : \(yearly.displayPrice)"), legal)
         XCTAssertFalse(legal.contains("jours gratuits"), legal)
+        XCTAssertFalse(legal.contains("jusqu'au"), "Sans essai, aucune date de gratuité : \(legal)")
 
         // Une réponse « éligible » rend l'essai, sans attendre un redémarrage.
         PaywallStorePrices.storeTrialEligibility([yearly.productID: true])
         XCTAssertTrue(PaywallCatalog.yearly.hasTrial)
-        XCTAssertEqual(PaywallCopy.callToAction(for: PaywallCatalog.yearly, locale: .fr), "Essayer gratuitement")
+        XCTAssertEqual(PaywallCopy.callToAction(for: PaywallCatalog.yearly, locale: .fr), "Commencer mes 3 jours gratuits")
     }
 
     /// Un pays où aucun essai n'est posé : la mention dit le prix, sans parler d'un essai
@@ -197,19 +197,19 @@ final class PaywallTests: XCTestCase {
         PaywallStorePrices.storeTrialEligibility([yearly.productID: false], notOffered: [yearly.productID])
 
         let legal = PaywallCopy.legal(for: PaywallCatalog.yearly, locale: .fr)
-        XCTAssertEqual(legal, "\(yearly.displayPrice) par an. Annule quand tu veux.")
-        XCTAssertEqual(PaywallCopy.callToAction(for: PaywallCatalog.yearly, locale: .fr), "Continuer")
+        XCTAssertEqual(legal, "Payé aujourd'hui : \(yearly.displayPrice), puis chaque année. Annule quand tu veux.")
+        XCTAssertEqual(PaywallCopy.callToAction(for: PaywallCatalog.yearly, locale: .fr), "S'abonner · \(yearly.displayPrice) par an")
     }
 
     /// **Le tarif réduit n'a pas d'essai**, et rien sur son écran n'en promet : ni son
     /// bouton, ni sa mention, qui le dit en toutes lettres.
     func testTheDiscountNeverPromisesATrial() {
         let discount = PaywallCatalog.discount
-        XCTAssertEqual(PaywallCopy.callToAction(for: discount, locale: .fr), "Continuer")
+        XCTAssertEqual(PaywallCopy.callToAction(for: discount, locale: .fr), "S'abonner · \(discount.displayPrice) par an")
         XCTAssertFalse(PaywallCopy.legal(for: discount, locale: .fr).contains("gratuit"))
 
-        let mention = L10n.t("ios.pay10.offer.legal", locale: .fr, vars: ["price": discount.displayPrice])
-        XCTAssertEqual(mention, "\(discount.displayPrice) par an, sans essai. Annule quand tu veux.")
+        let mention = L10n.t("ios.pay11.offer.legal", locale: .fr, vars: ["price": discount.displayPrice])
+        XCTAssertEqual(mention, "Payé aujourd'hui : \(discount.displayPrice) pour un an, sans essai. Annule quand tu veux.")
         XCTAssertEqual(L10n.t("ios.pay10.offer.cta", locale: .fr, vars: ["percent": "−40 %"]), "Profiter de −40 %")
     }
 
@@ -276,34 +276,41 @@ final class PaywallTests: XCTestCase {
         XCTAssertNil(broken.highlight)
     }
 
-    /// **La mention sous le bouton dit ce qui sera prélevé**, quand, et la sortie.
-    func testTheLegalLineSaysWhatIsCharged() {
+    /// **La mention sous le bouton dit ce qui sera prélevé, et quand** : la date de fin de
+    /// l'essai, la même que celle de la chronologie, puis la somme et son rythme.
+    func testTheLegalLineSaysWhatIsChargedAndWhen() throws {
+        let calendar = try paris()
+        let now = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 11, day: 12, hour: 10)))
         let yearly = PaywallCatalog.yearly
         let weekly = PaywallCatalog.weekly
         XCTAssertEqual(
-            PaywallCopy.legal(for: yearly, locale: .fr),
-            "3 jours gratuits, puis \(yearly.displayPrice) par an. Annule quand tu veux."
+            PaywallCopy.legal(for: yearly, now: now, locale: .fr, calendar: calendar),
+            "Gratuit jusqu'au 15 novembre, puis \(yearly.displayPrice) par an. Annule quand tu veux."
         )
         XCTAssertEqual(
-            PaywallCopy.legal(for: weekly, locale: .fr),
-            "3 jours gratuits, puis \(weekly.displayPrice) par semaine. Annule quand tu veux."
+            PaywallCopy.legal(for: weekly, now: now, locale: .fr, calendar: calendar),
+            "Gratuit jusqu'au 15 novembre, puis \(weekly.displayPrice) par semaine. Annule quand tu veux."
         )
-        XCTAssertTrue(PaywallCopy.legal(for: yearly, locale: .en).contains("3 days free, then"))
-        XCTAssertEqual(PaywallCopy.callToAction(for: yearly, locale: .fr), "Essayer gratuitement")
+        XCTAssertEqual(
+            PaywallCopy.legal(for: yearly, now: now, locale: .en, calendar: calendar),
+            "Free until November 15, then \(yearly.displayPrice) per year. Cancel anytime."
+        )
+        // Le bouton dit les jours gratuits, et rien d'autre.
+        XCTAssertEqual(PaywallCopy.callToAction(for: yearly, locale: .fr), "Commencer mes 3 jours gratuits")
+        XCTAssertEqual(PaywallCopy.callToAction(for: yearly, locale: .en), "Start my 3 free days")
     }
 
-    /// La ligne sous le nom d'une offre : la somme prélevée et son rythme ; derrière une
-    /// porte de l'app, où la chronologie n'est pas là, les jours gratuits aussi.
-    func testThePlanDetailSaysTheChargeAndTheTrialBehindADoor() {
+    /// La ligne sous le nom d'une offre : les jours gratuits quand ce compte y a droit, puis
+    /// la somme prélevée et son rythme.
+    func testThePlanDetailSaysTheTrialThenTheCharge() {
         let yearly = PaywallCatalog.yearly
         let weekly = PaywallCatalog.weekly
-        XCTAssertEqual(PaywallCopy.planDetail(for: yearly, mentionsTrial: false, locale: .fr), "\(yearly.displayPrice) par an")
-        XCTAssertEqual(
-            PaywallCopy.planDetail(for: yearly, mentionsTrial: true, locale: .fr),
-            "\(yearly.displayPrice) par an · 3 jours gratuits"
-        )
-        XCTAssertEqual(PaywallCopy.planDetail(for: weekly, mentionsTrial: false, locale: .fr), weekly.caption)
-        XCTAssertEqual(PaywallCopy.planDetail(for: weekly, mentionsTrial: true, locale: .fr), "3 jours gratuits")
+        XCTAssertEqual(PaywallCopy.planDetail(for: yearly, locale: .fr), "3 jours gratuits, puis \(yearly.displayPrice) par an")
+        XCTAssertEqual(PaywallCopy.planDetail(for: weekly, locale: .fr), "3 jours gratuits, puis \(weekly.displayPrice) par semaine")
+
+        PaywallStorePrices.storeTrialEligibility([yearly.productID: false, weekly.productID: false])
+        XCTAssertEqual(PaywallCopy.planDetail(for: PaywallCatalog.yearly, locale: .fr), "\(yearly.displayPrice) par an")
+        XCTAssertEqual(PaywallCopy.planDetail(for: PaywallCatalog.weekly, locale: .fr), weekly.caption)
     }
 
     private func paris() throws -> Calendar {
@@ -313,16 +320,18 @@ final class PaywallTests: XCTestCase {
     }
 
     /// **La chronologie écrit de vraies dates, et celle du rappel est celle du rappel
-    /// réellement posé** (`TrialEndReminder`) : la veille de la fin, à l'heure de l'achat.
+    /// réellement posé** (`TrialEndReminder`) : la veille de la fin, à l'heure de l'achat. La
+    /// dernière étape dit la somme du premier paiement.
     func testTheTimelineUsesTheRealReminderDate() throws {
         let calendar = try paris()
         let start = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 11, day: 12, hour: 18, minute: 30)))
 
-        let steps = PaywallTimeline.steps(trialDays: 3, now: start, reminderKept: true, locale: .fr, calendar: calendar)
+        let steps = PaywallTimeline.steps(trialDays: 3, price: "49,99 €", now: start, reminderKept: true, locale: .fr, calendar: calendar)
         XCTAssertEqual(steps.map(\.kind), [.today, .reminder, .end])
         XCTAssertEqual(steps[0].title, "Aujourd'hui")
         XCTAssertEqual(steps[1].title, "14 novembre")
         XCTAssertEqual(steps[2].title, "15 novembre")
+        XCTAssertEqual(steps[2].detail, "1er paiement : 49,99 €")
         XCTAssertEqual(Set(steps.map(\.id)).count, steps.count)
 
         let fire = try XCTUnwrap(TrialEndReminder.fireDate(purchasedAt: start, trialDays: 3))
@@ -334,7 +343,7 @@ final class PaywallTests: XCTestCase {
             "Le rappel part la veille de la fin"
         )
 
-        let english = PaywallTimeline.steps(trialDays: 3, now: start, reminderKept: true, locale: .en, calendar: calendar)
+        let english = PaywallTimeline.steps(trialDays: 3, price: "$49.99", now: start, reminderKept: true, locale: .en, calendar: calendar)
         XCTAssertEqual(english[1].title, "November 14")
         XCTAssertEqual(english[2].title, "November 15")
     }
@@ -345,33 +354,42 @@ final class PaywallTests: XCTestCase {
         let calendar = try paris()
         let start = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 11, day: 12, hour: 9)))
 
-        let refused = PaywallTimeline.steps(trialDays: 3, now: start, reminderKept: false, locale: .fr, calendar: calendar)
+        let refused = PaywallTimeline.steps(trialDays: 3, price: "49,99 €", now: start, reminderKept: false, locale: .fr, calendar: calendar)
         XCTAssertEqual(refused.map(\.kind), [.today, .end])
         XCTAssertEqual(refused[1].title, "15 novembre")
 
-        let oneDay = PaywallTimeline.steps(trialDays: 1, now: start, reminderKept: true, locale: .fr, calendar: calendar)
+        let oneDay = PaywallTimeline.steps(trialDays: 1, price: "49,99 €", now: start, reminderKept: true, locale: .fr, calendar: calendar)
         XCTAssertEqual(oneDay.map(\.kind), [.today, .end])
         XCTAssertEqual(oneDay[1].title, "13 novembre")
     }
 
-    /// La leçon demandée pendant le parcours d'accueil s'écrit dès l'entrée : la première
-    /// étape le dit, avec son sujet — abrégé s'il est long, absent s'il est vide.
-    func testTheTimelineNamesTheLessonAskedDuringOnboarding() {
-        let now = Date(timeIntervalSince1970: 1_800_000_000)
-        let plain = PaywallTimeline.steps(trialDays: 3, now: now, reminderKept: true, locale: .fr)[0]
-        XCTAssertEqual(plain.detail, L10n.t("ios.pay10.timeline.todaySub", locale: .fr))
-
-        let topic = PaywallTimeline.steps(trialDays: 3, now: now, reminderKept: true, topic: " La guerre froide ", locale: .fr)[0]
-        XCTAssertTrue(topic.detail.contains("La guerre froide"), topic.detail)
-        XCTAssertTrue(topic.detail.contains("j'écris ta leçon"), topic.detail)
+    /// **Ce que l'élève a déclaré revient en pastilles** : l'examen et le temps qui reste, trois
+    /// matières puis « +n », la leçon demandée (abrégée si elle est longue). Rien d'absent ne
+    /// s'invente.
+    func testTheFactsAreWhatTheStudentDeclared() throws {
+        let calendar = MicaboCalendar.shared
+        let now = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 11, day: 12, hour: 10)))
+        let exam = try XCTUnwrap(calendar.date(from: DateComponents(year: 2027, month: 6, day: 15)))
+        let lina = PaywallProfile(
+            firstName: "Lina",
+            examName: "Bac",
+            examID: "fr.bac",
+            examDate: exam,
+            subjects: ["SVT", "Mathématiques", "Histoire", "Philosophie", "Physique"]
+        )
+        let facts = lina.facts(topic: " La guerre froide ", now: now, locale: .fr)
+        XCTAssertEqual(facts.first?.id, "exam")
+        XCTAssertTrue(facts[0].text.hasPrefix("Bac dans "), facts[0].text)
+        XCTAssertEqual(facts.filter { $0.id.hasPrefix("subject.") }.count, PaywallProfile.shownSubjects)
+        XCTAssertEqual(facts.first { $0.id == "more" }?.text, "+2")
+        XCTAssertEqual(facts.last?.text, "La guerre froide")
 
         let long = String(repeating: "photosynthèse ", count: 8)
-        let shortened = PaywallTimeline.steps(trialDays: 3, now: now, reminderKept: true, topic: long, locale: .fr)[0]
-        XCTAssertTrue(shortened.detail.contains("…"), shortened.detail)
-        XCTAssertFalse(shortened.detail.contains(long.trimmingCharacters(in: .whitespaces)))
+        XCTAssertTrue(lina.facts(topic: long, now: now, locale: .fr).last?.text.hasSuffix("…") == true)
 
-        let blank = PaywallTimeline.steps(trialDays: 3, now: now, reminderKept: true, topic: "   ", locale: .fr)[0]
-        XCTAssertEqual(blank.detail, plain.detail)
+        XCTAssertTrue(PaywallProfile().facts(topic: nil, now: now, locale: .fr).isEmpty)
+        XCTAssertTrue(PaywallProfile().facts(topic: "   ", now: now, locale: .fr).isEmpty)
+        XCTAssertEqual(PaywallProfile(examName: "Bac", examID: "fr.bac").facts(topic: nil, locale: .fr).map(\.text), ["Bac"])
     }
 
     // MARK: - Les portes
@@ -400,13 +418,14 @@ final class PaywallTests: XCTestCase {
                 XCTAssertEqual(hook.components(separatedBy: keyword).count, 2, "\(name) : le mot-clé doit s'y trouver une seule fois")
             }
         }
-        XCTAssertEqual(PaywallTrigger.lessonReady.hook(locale: .fr), "Ta leçon est prête à être écrite. Débloque-la avec Pro.")
-        XCTAssertEqual(PaywallTrigger.mika.hook(locale: .fr), "Je réponds à toutes tes questions avec Pro.")
+        // L'accroche dit ce qui vient de se passer, puis ce que Pro ouvre à cet endroit.
+        XCTAssertEqual(PaywallTrigger.mika.hook(locale: .fr), "Ta question offerte est posée. Les suivantes, j'y réponds avec Pro.")
+        XCTAssertEqual(PaywallTrigger.lessonReady.hook(locale: .fr), "J'ai lu tes documents. Ta leçon, je l'écris dès que tu passes Pro.")
         XCTAssertEqual(PaywallTrigger.mika.headline, PaywallTrigger.mika.hook())
     }
 
     /// L'en-tête « essai » est celui de qui n'a buté sur rien : la fin du parcours d'accueil
-    /// et « Passer en Pro ». Toutes les autres portes ont l'accroche et les bénéfices.
+    /// et « Passer en Pro ». Toutes les autres portes ont l'accroche de Mika.
     func testOnlyTheDoorlessPaywallsShowTheTrialHeader() {
         XCTAssertTrue(PaywallTrigger.showsTrialHeader(nil))
         XCTAssertTrue(PaywallTrigger.showsTrialHeader(.upgrade))
@@ -415,54 +434,56 @@ final class PaywallTests: XCTestCase {
         }
     }
 
-    /// **Trois bénéfices, et celui de la porte d'abord** : qui bute sur une question à Mika
-    /// lit d'abord « Mika, ton prof perso ».
-    func testTheDoorsBenefitComesFirst() {
-        XCTAssertEqual(PaywallBenefit.shown(for: nil), [.lessons, .mika, .exams])
-        XCTAssertEqual(PaywallBenefit.shown(for: .lessonReady), [.lessons, .mika, .exams])
-        XCTAssertEqual(PaywallBenefit.shown(for: .mika), [.mika, .lessons, .exams])
-        XCTAssertEqual(PaywallBenefit.shown(for: .mockExam), [.exams, .lessons, .mika])
-        XCTAssertEqual(PaywallBenefit.shown(for: .voiceRecall), [.modes, .lessons, .mika])
-        XCTAssertEqual(PaywallBenefit.shown(for: .exportSheet).first, .modes)
+    /// **Le tableau dit les vraies limites du gratuit** — celles que l'app applique — et la
+    /// ligne de la porte passe en tête.
+    func testTheTableStatesTheRealFreeLimitsAndLeadsWithTheDoor() {
+        XCTAssertEqual(PaywallFeature.mika.freeAllowance, MikaAllowance.freeQuestions)
+        XCTAssertEqual(PaywallFeature.lessons.freeAllowance, 1)
+        XCTAssertEqual(PaywallFeature.exams.freeAllowance, 1)
+        XCTAssertEqual(PaywallFeature.practice.freeAllowance, 1)
+        XCTAssertNil(PaywallFeature.pdf.freeAllowance, "La fiche PDF est réservée à Pro (RevisionModeAllowance)")
+        XCTAssertNotNil(RevisionModeAllowance.gate(.export, isPro: false))
+
+        XCTAssertEqual(PaywallFeature.shown(for: nil), [.lessons, .mika, .exams, .practice])
+        XCTAssertEqual(PaywallFeature.shown(for: .mika), [.mika, .lessons, .exams, .practice])
+        XCTAssertEqual(PaywallFeature.shown(for: .exportSheet), [.pdf, .lessons, .mika, .exams])
+        XCTAssertEqual(PaywallFeature.shown(for: .mockExam, count: 2), [.exams, .lessons])
 
         for trigger in PaywallTrigger.allCases {
-            let shown = PaywallBenefit.shown(for: trigger)
-            XCTAssertEqual(shown.count, 3, trigger.rawValue)
-            XCTAssertEqual(Set(shown).count, 3, trigger.rawValue)
-            XCTAssertEqual(shown.first, trigger.leadBenefit, trigger.rawValue)
+            let shown = PaywallFeature.shown(for: trigger)
+            XCTAssertEqual(shown.count, 4, trigger.rawValue)
+            XCTAssertEqual(Set(shown).count, 4, trigger.rawValue)
+            XCTAssertEqual(shown.first, trigger.feature, trigger.rawValue)
         }
-        for benefit in PaywallBenefit.allCases {
+        for feature in PaywallFeature.allCases {
             for locale in Self.written {
-                XCTAssertFalse(L10n.t(benefit.titleKey, locale: locale).hasPrefix("ios."), benefit.rawValue)
-                XCTAssertFalse(L10n.t(benefit.detailKey, locale: locale).hasPrefix("ios."), benefit.rawValue)
+                XCTAssertFalse(L10n.t(feature.titleKey, locale: locale).hasPrefix("ios."), feature.rawValue)
             }
         }
     }
 
-    /// **Cinq serrages, du plus aéré au plus serré.** Les deux derniers retirent un élément
-    /// plutôt que de faire défiler — la ligne des bénéfices, puis le troisième bénéfice ; les
-    /// trois premiers gardent tout.
-    func testTheLastDensitiesDropBenefitLinesAndNothingElse() {
+    /// **Cinq serrages, du plus aéré au plus serré** : les pastilles partent d'abord, puis
+    /// des lignes du tableau. La chronologie de l'essai d'accueil et les formules restent.
+    func testTheDensitiesDropFactsThenRows() {
         XCTAssertEqual(PaywallDensity.allCases, [.regular, .compact, .tight, .minimal, .bare])
-        for density in [PaywallDensity.regular, .compact, .tight] {
-            XCTAssertEqual(density.benefitCount, 3)
-            XCTAssertTrue(density.showsBenefitDetail)
-        }
-        XCTAssertEqual(PaywallDensity.minimal.benefitCount, 3)
-        XCTAssertFalse(PaywallDensity.minimal.showsBenefitDetail)
-        XCTAssertEqual(PaywallDensity.bare.benefitCount, 2)
-        XCTAssertFalse(PaywallDensity.bare.showsBenefitDetail)
+        XCTAssertTrue(PaywallDensity.regular.showsFacts)
+        XCTAssertTrue(PaywallDensity.compact.showsFacts)
+        XCTAssertFalse(PaywallDensity.tight.showsFacts)
+        XCTAssertEqual(PaywallDensity.allCases.map(\.rowCount), [4, 4, 4, 3, 2])
         XCTAssertGreaterThan(PaywallDensity.regular.planHeight, PaywallDensity.bare.planHeight)
         XCTAssertGreaterThan(PaywallDensity.regular.titleSize, PaywallDensity.compact.titleSize)
+        XCTAssertGreaterThan(PaywallDensity.regular.planHeight, PaywallDensity.regular.secondaryPlanHeight)
     }
 
-    /// Chaque phrase du lot existe dans les six langues écrites, sans variable perdue.
+    /// Chaque phrase des lots 10 et 11 existe dans les six langues écrites.
     func testTheCopyExistsInTheWrittenLanguages() {
-        let keys = IosI18nCatalogs.fr.keys.filter { $0.hasPrefix("ios.pay10.") }
-        XCTAssertEqual(keys.count, 55)
+        let keys10 = IosI18nCatalogs.fr.keys.filter { $0.hasPrefix("ios.pay10.") }
+        XCTAssertEqual(keys10.count, 55)
+        let keys11 = IosI18nCatalogs.fr.keys.filter { $0.hasPrefix("ios.pay11.") }
+        XCTAssertEqual(keys11.count, 36)
         for locale in Self.written {
             let table = IosI18nCatalogs.table(for: locale.rawValue)
-            for key in keys {
+            for key in keys10 + keys11 {
                 XCTAssertFalse((table[key] ?? "").isEmpty, "\(locale.rawValue) \(key)")
             }
         }

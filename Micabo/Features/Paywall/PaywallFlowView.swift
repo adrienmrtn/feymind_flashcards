@@ -40,20 +40,24 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
 
     /// La clé de l'accroche. Écrite en toutes lettres : le test des langues relit les
     /// sources, et une clé composée lui échapperait.
+    ///
+    /// **Lot 11 : chaque accroche dit ce qui vient de se passer et ce que Pro ouvre à cet
+    /// endroit précis** (« Ta question offerte est posée. Les suivantes, j'y réponds avec
+    /// Pro. »), au lieu d'une promesse générale.
     var hookKey: String {
         switch self {
-        case .lockedSheet: "ios.pay10.hook.lockedSheet"
-        case .secondCourse: "ios.pay10.hook.secondCourse"
-        case .practice: "ios.pay10.hook.practice"
-        case .sessionLimit: "ios.pay10.hook.sessionLimit"
-        case .upgrade: "ios.pay10.hook.upgrade"
-        case .openChapter: "ios.pay10.hook.openChapter"
-        case .mika: "ios.pay10.hook.mika"
-        case .generateCourse: "ios.pay10.hook.generateCourse"
-        case .mockExam: "ios.pay10.hook.mockExam"
-        case .lessonReady: "ios.pay10.hook.lessonReady"
-        case .voiceRecall: "ios.pay10.hook.voiceRecall"
-        case .exportSheet: "ios.pay10.hook.exportSheet"
+        case .lockedSheet: "ios.pay11.hook.lockedSheet"
+        case .secondCourse: "ios.pay11.hook.secondCourse"
+        case .practice: "ios.pay11.hook.practice"
+        case .sessionLimit: "ios.pay11.hook.sessionLimit"
+        case .upgrade: "ios.pay11.hook.upgrade"
+        case .openChapter: "ios.pay11.hook.openChapter"
+        case .mika: "ios.pay11.hook.mika"
+        case .generateCourse: "ios.pay11.hook.generateCourse"
+        case .mockExam: "ios.pay11.hook.mockExam"
+        case .lessonReady: "ios.pay11.hook.lessonReady"
+        case .voiceRecall: "ios.pay11.hook.voiceRecall"
+        case .exportSheet: "ios.pay11.hook.exportSheet"
         }
     }
 
@@ -74,56 +78,66 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
         trigger == nil || trigger == .upgrade
     }
 
-    /// Le bénéfice que cette porte met en premier : celui sur lequel l'élève vient de buter.
-    var leadBenefit: PaywallBenefit {
+    /// **La ligne du tableau que cette porte ouvre** : celle sur laquelle l'élève vient de
+    /// buter. Elle passe en tête du tableau, surlignée.
+    var feature: PaywallFeature {
         switch self {
         case .lockedSheet, .secondCourse, .upgrade, .openChapter, .generateCourse, .lessonReady: .lessons
         case .mika: .mika
         case .mockExam: .exams
-        case .practice, .sessionLimit, .voiceRecall, .exportSheet: .modes
+        case .practice, .sessionLimit, .voiceRecall: .practice
+        case .exportSheet: .pdf
         }
     }
 }
 
-/// **Ce que Pro ouvre**, en cinq bénéfices dont le paywall montre trois.
-enum PaywallBenefit: String, CaseIterable, Identifiable {
+/// **Ce que Pro ouvre, ligne à ligne, face au gratuit** — le tableau du paywall.
+///
+/// La colonne « Gratuit » dit **la vraie limite de l'app**, lue dans son code : une leçon
+/// offerte (`LessonAllowance`), une question à Mika (`MikaAllowance.freeQuestions`), une série
+/// d'entraînement (`PracticeAllowance`), un examen blanc (`ExamAllowance`), et la fiche PDF
+/// réservée à Pro (`RevisionModeAllowance`). La colonne « PRO » coche, sans écrire
+/// « illimité » : le serveur garde des plafonds par jour (`MikaAllowance.proMessagesPerDay`,
+/// `begin_extra`), et un « illimité » serait faux le jour où on les touche.
+enum PaywallFeature: String, CaseIterable, Identifiable {
     case lessons
     case mika
     case exams
-    case scan
-    case modes
+    case practice
+    case pdf
 
     var id: String { rawValue }
 
     var titleKey: String {
         switch self {
-        case .lessons: "ios.pay10.benefit.lessons"
-        case .mika: "ios.pay10.benefit.mika"
-        case .exams: "ios.pay10.benefit.exams"
-        case .scan: "ios.pay10.benefit.scan"
-        case .modes: "ios.pay10.benefit.modes"
+        case .lessons: "ios.pay11.row.lessons"
+        case .mika: "ios.pay11.row.mika"
+        case .exams: "ios.pay11.row.exams"
+        case .practice: "ios.pay11.row.practice"
+        case .pdf: "ios.pay11.row.pdf"
         }
     }
 
-    var detailKey: String {
+    /// Ce que le gratuit en donne : un nombre, ou rien (`nil` : réservé à Pro).
+    var freeAllowance: Int? {
         switch self {
-        case .lessons: "ios.pay10.benefit.lessons.sub"
-        case .mika: "ios.pay10.benefit.mika.sub"
-        case .exams: "ios.pay10.benefit.exams.sub"
-        case .scan: "ios.pay10.benefit.scan.sub"
-        case .modes: "ios.pay10.benefit.modes.sub"
+        case .lessons: 1
+        case .mika: MikaAllowance.freeQuestions
+        case .exams: 1
+        case .practice: 1
+        case .pdf: nil
         }
     }
 
-    /// Le symbole du système qui le représente, sans « .fill » : l'icône se dessine en deux
+    /// Le symbole du système qui la représente, sans « .fill » : l'icône se dessine en deux
     /// tons (`PaywallGlyph`).
     var symbol: String {
         switch self {
-        case .lessons: "books.vertical"
+        case .lessons: "book.pages"
         case .mika: "bubble.left.and.text.bubble.right"
         case .exams: "list.clipboard"
-        case .scan: "camera"
-        case .modes: "square.grid.2x2"
+        case .practice: "dumbbell"
+        case .pdf: "doc.richtext"
         }
     }
 
@@ -133,16 +147,17 @@ enum PaywallBenefit: String, CaseIterable, Identifiable {
         case .lessons: V3Color.iconBlue
         case .mika: V3Color.iconLilac
         case .exams: V3Color.iconPink
-        case .scan: V3Color.iconGreen
-        case .modes: V3Color.iconOrange
+        case .practice: V3Color.iconGreen
+        case .pdf: V3Color.iconOrange
         }
     }
 
-    /// **Les trois bénéfices d'un paywall** : celui de la porte d'abord, puis les deux
-    /// premiers des autres, dans l'ordre de la liste.
-    static func shown(for trigger: PaywallTrigger?) -> [PaywallBenefit] {
-        let lead = trigger?.leadBenefit ?? .lessons
-        return [lead] + allCases.filter { $0 != lead }.prefix(2)
+    /// **Les lignes d'un paywall**, `count` au plus : celle de la porte d'abord, puis les
+    /// autres dans l'ordre du tableau. Sans porte, l'ordre du tableau.
+    static func shown(for trigger: PaywallTrigger?, count: Int = 4) -> [PaywallFeature] {
+        let lead = trigger.map(\.feature)
+        let rest = allCases.filter { $0 != lead }
+        return Array(((lead.map { [$0] } ?? []) + rest).prefix(count))
     }
 }
 

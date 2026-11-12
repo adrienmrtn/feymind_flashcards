@@ -27,6 +27,11 @@ struct PaywallStepView: View {
     @State private var didFinish = false
     /// Lu une fois, à l'arrivée : le paywall demandé par le test reste jusqu'à sa croix.
     @State private var forcedByTest = PaywallTestMode.forcesOnboardingPaywall()
+    /// **Vrai dès que le paywall a été montré.** L'achat fait passer Pro avant que l'élève
+    /// ait vu la bienvenue (`PaywallWelcomeScreen`) : si l'écran se démontait à ce moment-là,
+    /// la bienvenue sautait et le parcours se terminait d'un coup. Une fois montré, le paywall
+    /// reste en place jusqu'à ce qu'il rende la main (`onDismiss`, `onSubscribed`).
+    @State private var didShowPaywall = false
 
     private var isPro: Bool { pro?.isPro ?? false }
 
@@ -34,16 +39,29 @@ struct PaywallStepView: View {
         PaywallTestMode.showsOnboardingPaywall(isPro: isPro, forcedByTest: forcedByTest)
     }
 
+    /// Le paywall reste monté une fois montré, même si Pro s'ouvre entre-temps.
+    private var keepsPaywall: Bool {
+        Self.keepsPaywall(shows: showsPaywall, didShow: didShowPaywall)
+    }
+
+    /// **Garder le paywall à l'écran** : tant qu'il doit se montrer, et après, une fois montré.
+    static func keepsPaywall(shows: Bool, didShow: Bool) -> Bool {
+        shows || didShow
+    }
+
     var body: some View {
         Group {
-            if showsPaywall {
+            if keepsPaywall {
                 PaywallFlowView(onDismiss: finishOnce, onSubscribed: finishOnce)
+                    .onAppear { didShowPaywall = true }
             } else {
                 V3Color.bg.ignoresSafeArea()
             }
         }
         .onChange(of: showsPaywall, initial: true) { _, shows in
-            guard !shows else { return }
+            // Un abonné qui arrive ici n'a rien à acheter : le parcours se termine. Un élève
+            // qui vient d'acheter, lui, voit la bienvenue : c'est elle qui termine.
+            guard !shows, !didShowPaywall else { return }
             finishOnce()
         }
     }

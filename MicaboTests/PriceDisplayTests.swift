@@ -133,7 +133,7 @@ final class PriceDisplayTests: XCTestCase {
         XCTAssertEqual(yearly.priceHeadline(for: .monthly), monthly)
         XCTAssertTrue(yearly.priceHeadlineUnit(for: .monthly).contains("mois"))
 
-        let detail = PaywallCopy.planDetail(for: yearly, mentionsTrial: false, locale: .fr)
+        let detail = PaywallCopy.planDetail(for: yearly, locale: .fr)
         XCTAssertTrue(detail.contains(yearly.displayPrice), "La somme prélevée reste écrite : \(detail)")
 
         let legal = PaywallCopy.legal(for: yearly, locale: .fr)
