@@ -27,10 +27,10 @@ final class AppStoreReviewTests: XCTestCase {
         XCTAssertFalse(AppStoreReview.matches(""))
     }
 
-    /// Sans droit Pro, le cadeau et le paywall se posent comme pour les autres.
-    func testAFreeReviewSessionCanSeeTheGift() {
-        XCTAssertTrue(
-            DiscountOffer.shouldPresentGift(isPro: false, courseCount: 1, seen: false, startedAt: nil)
-        )
+    /// Sans droit Pro, l'offre de réduction se présente comme pour les autres : à la
+    /// fermeture d'un paywall, et par la rangée des Réglages qui garde le tarif atteignable.
+    func testAFreeReviewSessionCanSeeTheOffer() {
+        XCTAssertTrue(DiscountOffer.paywallClosed(isPro: false, startedAt: nil, declined: false))
+        XCTAssertTrue(DiscountOffer.isReachable(isPro: false, courseCount: 0))
     }
 }

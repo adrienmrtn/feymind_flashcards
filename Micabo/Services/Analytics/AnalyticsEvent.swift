@@ -71,6 +71,16 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     /// notifications sont permises. Sans propriété.
     case paywallTrialReminder = "paywall_trial_reminder"
 
+    // MARK: Offre de réduction
+
+    /// **L'offre de réduction s'affiche** (lot 10) : `source` dit ce qui y a mené (`paywall` :
+    /// un paywall refermé sans achat ; `direct` : la pastille de la Home ou les Réglages ;
+    /// `test`), `fresh` si cet affichage a ouvert une fenêtre de vingt-quatre heures. L'achat
+    /// du tarif réduit reste `paywall_purchased`, avec `trigger` à `discount`.
+    case discountShown = "discount_shown"
+    /// L'offre est refusée (« Non merci », la croix), avec `source` et la durée passée dessus.
+    case discountDismissed = "discount_dismissed"
+
     // MARK: Import
 
     case importOpened = "import_opened"
