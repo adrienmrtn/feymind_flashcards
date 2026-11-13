@@ -570,31 +570,25 @@ struct PaywallBenefits: View {
 
 /// **L'essai, en une ligne verte** : rien à payer aujourd'hui, et le jour du rappel.
 ///
-/// **Sur une ligne quand elle tient ; sinon ses deux moitiés l'une sous l'autre** (« Rien à
-/// payer aujourd'hui » / « je te préviens le 14 novembre ») ; sinon le texte passe à la ligne.
-/// Chaque forme se mesure d'un bloc : rien ne se coupe.
+/// **Ses deux moitiés l'une sous l'autre** (« Rien à
+/// payer aujourd'hui » / « je te préviens le 14 novembre »), chacune sur sa ligne : sa hauteur
+/// est connue d'avance, rien ne se coupe.
 struct PaywallTrialLine: View {
     let text: String
 
     private var parts: [String] { text.components(separatedBy: " · ") }
 
     var body: some View {
-        ViewThatFits(in: .horizontal) {
-            row(text)
-                .lineLimit(1)
-                .fixedSize()
-            if parts.count == 2 {
-                VStack(spacing: 2) {
-                    row(parts[0])
-                    Text(parts[1])
-                }
-                .lineLimit(1)
-                .fixedSize()
+        // Pas de mesure imbriquée : l'écran choisit son serrage en mesurant ce bloc, qui doit
+        // dire sa vraie hauteur. Une ligne par moitié, qui rapetisse plutôt que de se couper.
+        VStack(spacing: 2) {
+            row(parts[0])
+            ForEach(parts.dropFirst(), id: \.self) { part in
+                Text(part)
             }
-            row(text)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
         }
+        .lineLimit(1)
+        .minimumScaleFactor(0.75)
         .font(PaywallStyle.trialLine)
         .foregroundStyle(PaywallStyle.free)
         .frame(maxWidth: .infinity)
