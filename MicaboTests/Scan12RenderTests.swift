@@ -239,7 +239,7 @@ private struct ScanCameraRender: View {
     @State private var frame: CGRect = .zero
 
     var body: some View {
-        ScanCaptureChrome(state: state, frame: $frame) {
+        ScanCaptureChrome(state: state, frame: $frame, actions: ScanActions()) {
             if let still {
                 Color.black.overlay { Image(uiImage: still).resizable().aspectRatio(contentMode: .fit) }
             } else if state.cameraRefused {
