@@ -15,7 +15,9 @@ enum OnbLayout {
     /// gabarit.
     static let margin: CGFloat = 20
     /// Le titre d'une question ou d'une démonstration : l'élément dominant de l'écran.
-    static let questionTitle: CGFloat = 34
+    static let questionTitle: CGFloat = 36
+    /// Le même titre sur un écran court.
+    static let questionTitleCompact: CGFloat = 30
     /// Entre le titre et Mika.
     static let mikaGap: CGFloat = 12
     /// Entre Mika et les réponses (ou le morceau d'app).
@@ -160,7 +162,7 @@ struct OnbMikaRow: View {
     @Environment(\.onbCompact) private var compact
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private var size: CGFloat { compact ? 62 : 84 }
+    private var size: CGFloat { compact ? 58 : 78 }
 
     var body: some View {
         let phrase = OnbPhrase(say.text)
@@ -354,7 +356,16 @@ struct OnbDemoStage<Panel: View>: View {
 struct OnbEyebrow: View {
     let text: String
 
+    @Environment(\.onbCompact) private var compact
+
     var body: some View {
+        // Sur un écran court, l'étiquette laisse sa place au morceau d'app.
+        if !compact {
+            label
+        }
+    }
+
+    private var label: some View {
         Text(text)
             .font(V3Font.eyebrow)
             .foregroundStyle(V3Color.accentBright)
@@ -424,7 +435,18 @@ private struct OnbCompactKey: EnvironmentKey {
     static let defaultValue = false
 }
 
+private struct OnbSettledKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
 extension EnvironmentValues {
+    /// **Les arrivées déjà jouées** : la courbe tracée, le point posé. Pour les rendus sur
+    /// appareil, qui gardent le défilement de l'iPhone mais photographient l'état final.
+    var onbSettled: Bool {
+        get { self[OnbSettledKey.self] }
+        set { self[OnbSettledKey.self] = newValue }
+    }
+
     /// **Un écran court** (iPhone SE, très grand texte) : Mika et les morceaux d'app se
     /// resserrent, le titre et le bouton gardent leur taille.
     var onbCompact: Bool {
@@ -490,8 +512,13 @@ struct OnbTitle: View {
         self.keyword = keyword
     }
 
+    @Environment(\.onbCompact) private var compact
+
     var body: some View {
-        V3Title(template, size: size, alignment: alignment, highlightColor: keyword)
+        // Un titre de question passe à 30 pt sur un écran court : il reste l'élément dominant,
+        // et les réponses remontent.
+        let shown = compact && size >= OnbLayout.questionTitle ? OnbLayout.questionTitleCompact : size
+        V3Title(template, size: shown, alignment: alignment, highlightColor: keyword)
     }
 }
 

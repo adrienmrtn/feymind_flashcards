@@ -376,7 +376,7 @@ final class OnboardingFlowTests: XCTestCase {
 
         model.finishAccountSheet()
         XCTAssertFalse(model.isAccountSheetPresented)
-        XCTAssertEqual(model.step, OnboardingTrial.isOffered ? .freeTrialIntro : .paywall)
+        XCTAssertEqual(model.step, .firstLesson, "Le plan reçu, on choisit sa première leçon")
     }
 
     /// Qui a déjà un compte ne voit pas la languette.
@@ -601,7 +601,7 @@ final class OnboardingFlowTests: XCTestCase {
         model.confirmFirstLesson()
 
         XCTAssertEqual(FirstLessonIntent.pending, .topic("La guerre froide"))
-        XCTAssertEqual(model.step, .planBuilding)
+        XCTAssertEqual(model.step, OnboardingTrial.isOffered ? .freeTrialIntro : .whyNow)
         XCTAssertEqual(model.firstLessonLine(locale: .fr), "La guerre froide")
     }
 
@@ -611,7 +611,7 @@ final class OnboardingFlowTests: XCTestCase {
         model.confirmFirstLesson()
 
         XCTAssertEqual(FirstLessonIntent.pending, .importSource)
-        XCTAssertEqual(model.step, .planBuilding)
+        XCTAssertEqual(model.step, OnboardingTrial.isOffered ? .freeTrialIntro : .whyNow)
         XCTAssertEqual(model.firstLessonLine(locale: .fr), "Ton cours à importer")
     }
 
@@ -625,7 +625,7 @@ final class OnboardingFlowTests: XCTestCase {
 
         XCTAssertNil(FirstLessonIntent.pending)
         XCTAssertNil(model.firstLessonChoice)
-        XCTAssertEqual(model.step, .planBuilding)
+        XCTAssertEqual(model.step, OnboardingTrial.isOffered ? .freeTrialIntro : .whyNow)
         XCTAssertNil(model.firstLessonLine(locale: .fr))
         XCTAssertFalse(model.planSummary(locale: .fr).contains { $0.id == "lesson" })
     }
@@ -1192,7 +1192,7 @@ final class OnboardingFlowTests: XCTestCase {
         first.confirmFirstLesson()
 
         let resumed = OnboardingModel.resuming(in: nil)
-        XCTAssertEqual(resumed.step, .planBuilding)
+        XCTAssertEqual(resumed.step, OnboardingTrial.isOffered ? .freeTrialIntro : .whyNow)
         XCTAssertEqual(resumed.firstLessonChoice, .topic)
         XCTAssertEqual(resumed.firstLessonSubject, "La photosynthèse")
     }
@@ -1226,7 +1226,7 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(resumed.step, .profileSummary)
         resumed.advance()
         XCTAssertFalse(resumed.isAccountSheetPresented)
-        XCTAssertEqual(resumed.step, OnboardingTrial.isOffered ? .freeTrialIntro : .paywall)
+        XCTAssertEqual(resumed.step, .firstLesson)
     }
 
     /// Seule la vue du parcours reprend, et un parcours fini ne laisse rien à reprendre.

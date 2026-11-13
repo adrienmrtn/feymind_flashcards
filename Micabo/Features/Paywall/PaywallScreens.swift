@@ -374,7 +374,7 @@ struct PaywallScreen: View {
         VStack(alignment: .leading, spacing: density.sectionSpacing) {
             header(density)
             PaywallFeatureTable(
-                features: PaywallFeature.shown(for: showsTrialHeader ? nil : trigger, count: density.rowCount),
+                features: PaywallFeature.shown(for: showsTrialHeader ? nil : trigger, count: density.rows(trialHeader: showsTrialHeader)),
                 highlighted: showsTrialHeader ? nil : trigger?.feature,
                 rowHeight: density.tableRowHeight
             )
@@ -546,10 +546,16 @@ enum PaywallDensity: CaseIterable {
     var mikaSize: CGFloat? {
         switch self {
         case .regular: PaywallStyle.trialMika
-        case .compact: PaywallStyle.trialMika * 0.8
-        case .tight: PaywallStyle.trialMika * 0.66
+        case .compact: PaywallStyle.trialMika * 0.86
+        case .tight: PaywallStyle.trialMika * 0.78
         case .minimal, .bare: nil
         }
+    }
+
+    /// **Les lignes du tableau sous l'en-tête d'essai** : Mika y prend la place d'une ligne
+    /// (la quatrième, les séries d'entraînement, reste dans Pro et sur les portes).
+    func rows(trialHeader: Bool) -> Int {
+        trialHeader && mikaSize != nil ? min(rowCount, 3) : rowCount
     }
 
     /// Les lignes du tableau : quatre, puis trois, puis deux.

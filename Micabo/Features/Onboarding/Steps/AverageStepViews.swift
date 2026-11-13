@@ -357,7 +357,8 @@ struct OnbProjectionChart: View {
     /// La note visée, écrite au bout de la courbe ; sans elle, la courbe est sans chiffres.
     let target: String?
 
-    @Environment(\.onboardingStill) private var still
+    @Environment(\.onboardingStill) private var frozen
+    @Environment(\.onbSettled) private var settled
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// **La courbe se trace à l'arrivée** (lot 12) : de 0 à 1, une fois, d'aujourd'hui vers
     /// l'objectif. Dans un rendu ou avec « Réduire les animations », elle est là d'emblée.
@@ -365,6 +366,7 @@ struct OnbProjectionChart: View {
     /// La courbe est arrivée : le point et la note visée se posent, d'un ressort.
     @State private var arrived = false
 
+    private var still: Bool { frozen || settled }
     private var progress: CGFloat { still || reduceMotion ? 1 : drawn }
     private var landed: Bool { still || reduceMotion || arrived }
 

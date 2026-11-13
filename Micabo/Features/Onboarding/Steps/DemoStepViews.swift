@@ -223,6 +223,7 @@ struct CardsDemoStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.onbCompact) private var compact
 
     @State private var flipped = false
     @State private var knew: Bool?
@@ -295,7 +296,7 @@ struct CardsDemoStepView: View {
             }
         }
         .padding(20)
-        .frame(maxWidth: .infinity, minHeight: 230)
+        .frame(maxWidth: .infinity, minHeight: compact ? 180 : 290)
         .v3Card(tone: back ? V3Color.green : nil)
     }
 
@@ -407,7 +408,7 @@ struct ScanDemoStepView: View {
     private var viewfinder: some View {
         VStack(spacing: 10) {
             Text(verbatim: "2x² − 8x + 6 = 0")
-                .font(V3Font.display(30))
+                .font(V3Font.display(36))
                 .foregroundStyle(V3Color.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
@@ -420,7 +421,7 @@ struct ScanDemoStepView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, captured ? 22 : 40)
+        .padding(.vertical, captured ? 26 : 64)
         .padding(.horizontal, 20)
         .overlay {
             StoryViewfinder(arm: 26, radius: 12)
@@ -433,7 +434,7 @@ struct ScanDemoStepView: View {
     }
 
     private var steps: some View {
-        OnbPanel {
+        OnbPanel(padding: 18) {
             step(1, i18n.t("ios.onb10.story.step1"))
             if current >= 2 {
                 step(2, i18n.t("ios.onb10.story.step2")).transition(.onbPop)
@@ -445,7 +446,7 @@ struct ScanDemoStepView: View {
                         .foregroundStyle(V3Color.green)
                         .frame(width: 28)
                     Text(i18n.t("ios.onb10.story.result"))
-                        .font(V3Font.heading(22))
+                        .font(V3Font.heading(26))
                         .foregroundStyle(V3Color.green)
                         .environment(\.layoutDirection, .leftToRight)
                 }
@@ -522,7 +523,7 @@ struct ChatDemoStepView: View {
             isPlayed: chosen != nil,
             onPlay: { ask(0) }
         ) {
-            OnbPanel(padding: 14) {
+            OnbPanel(padding: 16) {
                 mika(greeting)
                 if let chosen {
                     student(question(chosen))
@@ -540,8 +541,8 @@ struct ChatDemoStepView: View {
                                     .foregroundStyle(V3Color.accentBright)
                                     .multilineTextAlignment(.leading)
                                     .fixedSize(horizontal: false, vertical: true)
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 12)
                                     .background(V3Color.accentWash, in: Capsule())
                                     .overlay(Capsule().strokeBorder(V3Color.accent.opacity(0.6), lineWidth: V3Metric.border))
                             }
@@ -646,7 +647,7 @@ struct ExamDemoStepView: View {
                 if isPlayed {
                     HStack(spacing: 10) {
                         Text(i18n.t("ios.onb12.exam.score", ["n": "2", "total": "3"]))
-                            .font(V3Font.heading(30))
+                            .font(V3Font.heading(40))
                             .foregroundStyle(V3Color.ink)
                         Text(i18n.t("ios.onb12.exam.corrected"))
                             .font(V3Font.support)
@@ -689,7 +690,7 @@ struct ExamDemoStepView: View {
             }
         }
         .padding(.horizontal, 14)
-        .frame(minHeight: 52)
+        .frame(minHeight: 62)
         .background(V3Color.soft, in: RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous))
     }
 }

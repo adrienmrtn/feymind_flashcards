@@ -86,7 +86,9 @@ final class OnboardingLot11Tests: XCTestCase {
         model.subjects = ["Histoire"]
         XCTAssertEqual(OnbDemo.subject(for: model, locale: .fr), SubjectDisplay.subject("Histoire", locale: .fr))
         model.subjects = ["Anglais"]
-        XCTAssertNil(OnbDemo.subject(for: model, locale: .fr), "Aucune famille connue : la phrase se dit sans matière")
+        XCTAssertEqual(OnbDemo.subject(for: model, locale: .fr), SubjectDisplay.subject("Anglais", locale: .fr), "Sa seule matière, même sans question d'exemple")
+        model.subjects = ["Anglais", "Espagnol"]
+        XCTAssertNil(OnbDemo.subject(for: model, locale: .fr), "Aucune famille connue ni matière la plus dure : la phrase se dit sans matière")
         XCTAssertFalse(OnbDemo.topic(for: model, locale: .fr).hasPrefix("ios."))
     }
 

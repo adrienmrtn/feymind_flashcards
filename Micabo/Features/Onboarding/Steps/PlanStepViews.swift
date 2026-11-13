@@ -229,10 +229,8 @@ struct ProfileSummaryStepView: View {
                     .minimumScaleFactor(0.8)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 if let exam = model.examName(locale: i18n.locale), let days = model.examDaysLeft(now: now), days > 0 {
-                    Text(i18n.t("ios.onb12.plan.examPill", [
-                        "exam": exam,
-                        "time": OnbWords.duration(days: days, locale: i18n.locale),
-                    ]))
+                    // « Bac · 7 mois » : deux mots de l'élève, séparés d'un point médian.
+                    Text(verbatim: "\(exam) · \(OnbWords.duration(days: days, locale: i18n.locale))")
                     .font(V3Font.label)
                     .foregroundStyle(V3Color.yellowInk)
                     .lineLimit(1)

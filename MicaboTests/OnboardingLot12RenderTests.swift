@@ -34,6 +34,7 @@ struct OnboardingLivePage<Content: View>: View {
         .environment(auth)
         .environment(CloudSync(auth: auth))
         .environment(\.mikaStill, true)
+        .environment(\.onbSettled, true)
         .transaction { $0.disablesAnimations = true }
     }
 }

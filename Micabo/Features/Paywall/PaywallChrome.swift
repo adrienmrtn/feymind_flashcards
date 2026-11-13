@@ -130,7 +130,7 @@ enum PaywallStyle {
     static let offerMika: CGFloat = 150
     /// Mika et sa réplique, en tête de l'offre et du paywall d'essai (lot 12).
     static let offerMikaLine: CGFloat = 76
-    static let trialMika: CGFloat = 84
+    static let trialMika: CGFloat = 64
     static let welcomeMika: CGFloat = 200
 
     // MARK: Les couleurs
@@ -331,12 +331,12 @@ struct DiscountMikaLine: View {
                 .frame(width: size, height: size)
                 .accessibilityHidden(true)
             Text(v3: line.text, highlight: line.highlight)
-                .font(V3Font.bodyStrong)
+                .font(size < 70 ? V3Font.support : V3Font.bodyStrong)
                 .foregroundStyle(V3Color.ink)
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 14)
-                .padding(.vertical, 11)
+                .padding(.vertical, size < 70 ? 8 : 11)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(
                     V3Color.surface,

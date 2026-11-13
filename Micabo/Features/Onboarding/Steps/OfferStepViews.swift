@@ -166,7 +166,8 @@ struct TrialOfferStepView: View {
 
     var body: some View {
         OnbScreen {
-            OnbTitle(i18n.t(Self.titleKey(canRemind: promises)), size: OnbLayout.questionTitle)
+            // Le titre tient sur deux lignes (lot 12) : la bascule du rappel reste sous la chronologie.
+            OnbTitle(i18n.t(promises ? "ios.onb12.trialOffer.title" : "ios.onb12.trialOffer.anytime"), size: OnbLayout.questionTitle)
                 .padding(.top, OnbLayout.titleTop)
 
             OnbMikaRow(say: OnbSay(i18n.t("ios.onb12.trialOffer.say"), mood: .wink))
@@ -250,7 +251,7 @@ struct OnbTrialTimeline: View {
                         Image(systemName: milestone.systemImage)
                             .font(V3Font.label)
                             .foregroundStyle(tint(milestone.tone))
-                            .frame(width: 40, height: 40)
+                            .frame(width: 34, height: 34)
                             .background(V3Color.wash(of: tint(milestone.tone)), in: Circle())
                         if index < milestones.count - 1 {
                             Rectangle()
@@ -271,14 +272,14 @@ struct OnbTrialTimeline: View {
                     }
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 8)
-                    .padding(.bottom, index < milestones.count - 1 ? 18 : 0)
+                    .padding(.top, 5)
+                    .padding(.bottom, index < milestones.count - 1 ? 12 : 0)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityElement(children: .combine)
                 }
             }
         }
-        .padding(18)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .v3Card()
     }
@@ -361,11 +362,21 @@ struct WhyNowStepView: View {
 
     var body: some View {
         OnbScreen {
-            OnbTitle(title, size: OnbLayout.display, keyword: V3Color.yellow)
-                .padding(.top, OnbLayout.titleTop)
+            Spacer(minLength: 4)
+                .layoutPriority(-1)
 
-            OnbMikaRow(say: OnbSay(i18n.t("ios.onb12.now.say"), mood: .happy))
-                .padding(.top, OnbLayout.mikaGap)
+            OnbHeroMika(mood: .proud, max: 170, min: 90)
+
+            OnbTitle(title, size: OnbLayout.display, alignment: .center, keyword: V3Color.yellow)
+                .padding(.top, 8)
+
+            Text(i18n.t("ios.onb12.now.say"))
+                .font(V3Font.body)
+                .foregroundStyle(V3Color.ink2)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 8)
 
             VStack(alignment: .leading, spacing: 14) {
                 ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
@@ -385,6 +396,9 @@ struct WhyNowStepView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .v3Card()
             .padding(.top, OnbLayout.answersGap)
+
+            Spacer(minLength: 4)
+                .layoutPriority(-1)
         } footer: {
             V3Button(i18n.t(OnboardingTrial.isOffered ? "ios.onb11.now.cta" : "common.continue")) {
                 model.advance()
