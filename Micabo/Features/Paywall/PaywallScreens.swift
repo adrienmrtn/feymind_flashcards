@@ -350,6 +350,7 @@ struct PaywallScreen: View {
 
                 ViewThatFits(in: .vertical) {
                     content(.regular)
+                    content(.comfortable)
                     content(.compact)
                     content(.tight)
                     ScrollView {
@@ -358,7 +359,9 @@ struct PaywallScreen: View {
                     .scrollIndicators(.hidden)
                     .scrollBounceBehavior(.basedOnSize)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                // Ce qui reste d'air se partage au-dessus et au-dessous : le héros ne colle
+                // ni à la barre, ni au pied.
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
 
                 // **Les formules et le bouton sont dans le pied fixe** : quoi qu'il arrive au
                 // contenu au-dessus (une langue longue, un petit écran), ce qu'on achète, son
@@ -566,19 +569,64 @@ struct PaywallBenefits: View {
 }
 
 /// **L'essai, en une ligne verte** : rien à payer aujourd'hui, et le jour du rappel.
+///
+/// **Sur une ligne quand elle tient ; sinon ses deux moitiés l'une sous l'autre** (« Rien à
+/// payer aujourd'hui » / « je te préviens le 14 novembre ») ; sinon le texte passe à la ligne.
+/// Chaque forme se mesure d'un bloc : rien ne se coupe.
 struct PaywallTrialLine: View {
     let text: String
 
+    private var parts: [String] { text.components(separatedBy: " · ") }
+
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
-            Image(systemName: "checkmark.circle.fill")
-                .accessibilityHidden(true)
-            Text(text)
+        ViewThatFits(in: .horizontal) {
+            row(text)
+                .lineLimit(1)
+                .fixedSize()
+            if parts.count == 2 {
+                VStack(spacing: 2) {
+                    row(parts[0])
+                    Text(parts[1])
+                }
+                .lineLimit(1)
+                .fixedSize()
+            }
+            row(text)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .font(PaywallStyle.trialLine)
         .foregroundStyle(PaywallStyle.free)
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(text)
+    }
+
+    private func row(_ line: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Image(systemName: "checkmark.circle.fill")
+                .accessibilityHidden(true)
+            Text(line)
+        }
+    }
+}
+
+/// **Une ligne posée au calme** sous la bienvenue : la coche verte, le texte en couleur
+/// secondaire — une information, pas une promesse.
+struct PaywallQuietLine: View {
+    let text: String
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(PaywallStyle.free)
+                .accessibilityHidden(true)
+            Text(text)
+                .foregroundStyle(V3Color.ink2)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .font(V3Font.support)
         .frame(maxWidth: .infinity)
     }
 }
@@ -791,12 +839,13 @@ struct PaywallSafeArea {
 
 // MARK: - Les serrages
 
-/// **Trois serrages pour un même écran** : le paywall prend le premier qui tient sans défiler
+/// **Quatre serrages pour un même écran** : le paywall prend le premier qui tient sans défiler
 /// (`ViewThatFits`). Mika et le titre rapetissent, l'air entre les zones se resserre ; **rien
 /// de ce qui est promis ni de ce qui sera prélevé n'est retiré** — les trois bénéfices, la
 /// ligne de l'essai, les formules et la mention restent entiers.
 enum PaywallDensity: CaseIterable {
     case regular
+    case comfortable
     case compact
     case tight
 
@@ -807,7 +856,8 @@ enum PaywallDensity: CaseIterable {
     var mikaSize: CGFloat {
         switch self {
         case .regular: PaywallStyle.heroMika
-        case .compact: PaywallStyle.heroMika * 0.74
+        case .comfortable: PaywallStyle.heroMika * 0.86
+        case .compact: PaywallStyle.heroMika * 0.72
         case .tight: PaywallStyle.heroMika * 0.52
         }
     }
@@ -815,7 +865,7 @@ enum PaywallDensity: CaseIterable {
     /// Le grand titre.
     var titleSize: CGFloat {
         switch self {
-        case .regular: PaywallStyle.titleSize
+        case .regular, .comfortable: PaywallStyle.titleSize
         case .compact: PaywallStyle.titleMediumSize
         case .tight: PaywallStyle.titleCompactSize
         }
@@ -825,7 +875,7 @@ enum PaywallDensity: CaseIterable {
     var titleGap: CGFloat {
         switch self {
         case .regular: 14
-        case .compact: 10
+        case .comfortable, .compact: 10
         case .tight: 6
         }
     }
@@ -833,8 +883,9 @@ enum PaywallDensity: CaseIterable {
     /// Entre deux zones.
     var sectionGap: CGFloat {
         switch self {
-        case .regular: 26
-        case .compact: 18
+        case .regular: 24
+        case .comfortable: 20
+        case .compact: 16
         case .tight: 12
         }
     }
@@ -843,6 +894,7 @@ enum PaywallDensity: CaseIterable {
     var benefitSpacing: CGFloat {
         switch self {
         case .regular: 14
+        case .comfortable: 12
         case .compact: 10
         case .tight: 7
         }
@@ -894,7 +946,7 @@ struct PaywallWelcomeScreen: View {
                     .padding(.top, 8)
 
                 if let trialEnd {
-                    PaywallTrialLine(text: L10n.t("ios.pay12.welcome.trial", locale: .resolved(), vars: [
+                    PaywallQuietLine(text: L10n.t("ios.pay12.welcome.trial", locale: .resolved(), vars: [
                         "date": PaywallTimeline.dayText(trialEnd, locale: .resolved()),
                     ]))
                     .padding(.top, 22)

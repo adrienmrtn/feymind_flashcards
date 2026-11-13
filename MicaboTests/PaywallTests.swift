@@ -462,10 +462,10 @@ final class PaywallTests: XCTestCase {
         }
     }
 
-    /// **Trois serrages, du plus aéré au plus serré** : Mika et le titre rapetissent, l'air se
+    /// **Quatre serrages, du plus aéré au plus serré** : Mika et le titre rapetissent, l'air se
     /// resserre ; les trois bénéfices restent, et rien de ce qui est promis ne part.
     func testTheDensitiesShrinkTheHeroAndKeepThePromises() {
-        XCTAssertEqual(PaywallDensity.allCases, [.regular, .compact, .tight])
+        XCTAssertEqual(PaywallDensity.allCases, [.regular, .comfortable, .compact, .tight])
         XCTAssertEqual(PaywallDensity.benefitCount, 3)
         let sizes = PaywallDensity.allCases.map(\.mikaSize)
         XCTAssertEqual(sizes, sizes.sorted(by: >))
