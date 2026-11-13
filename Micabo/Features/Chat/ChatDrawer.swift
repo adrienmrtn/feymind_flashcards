@@ -139,6 +139,8 @@ struct ChatDrawerContent: View {
                     Text(L10n.t("ios.chat11.history.noResult", locale: .resolved()))
                         .font(V3Font.bodyStrong)
                         .foregroundStyle(V3Color.ink)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text(L10n.t("ios.chat12.search.hint", locale: .resolved()))
                         .font(V3Font.caption)
                         .foregroundStyle(V3Color.ink2)

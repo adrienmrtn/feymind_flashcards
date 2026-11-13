@@ -188,7 +188,7 @@ struct ScanCaptureChrome<Background: View>: View {
             SolverCropOverlay(
                 // Avant que l'écran ait posé son cadre (sa première passe), celui du mode.
                 frame: Binding(
-                    get: { frame == .zero ? Self.defaultFrame(for: state.mode, in: size) : frame },
+                    get: { frame.width < 40 || frame.height < 40 ? Self.defaultFrame(for: state.mode, in: size) : frame },
                     set: { frame = $0 }
                 ),
                 bounds: size,
