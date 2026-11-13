@@ -424,37 +424,34 @@ struct StoryTag: View {
     }
 }
 
-/// **Page 1** : « Photo de mon cours », puis la leçon qui en sort, avec sa jauge et ses trois
-/// modes.
+/// **Page 1** : une vraie page de cahier prise en photo (`NotebookPhoto`), puis la leçon qui
+/// en sort, avec ses trois modes (retour testeur du build 179 : « un peu vide »).
 private struct StoryLessonPreview: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "camera.fill")
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(V3Color.accentBright)
-            Text(i18n.t("ios.onb10.story.photo"))
-                .foregroundStyle(V3Color.ink)
-        }
-        .font(V3Font.label)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 9)
-        .background(V3Color.soft, in: RoundedRectangle(cornerRadius: V3Metric.radiusTile, style: .continuous))
-        .frame(maxWidth: .infinity, alignment: .trailing)
+        NotebookPhoto(height: 196)
+            .frame(maxWidth: .infinity)
+            .padding(.bottom, 4)
+
+        Image(systemName: "arrow.down")
+            .font(.system(size: 18, weight: .black))
+            .foregroundStyle(V3Color.accentBright)
+            .frame(maxWidth: .infinity)
+            .accessibilityHidden(true)
 
         VStack(alignment: .leading, spacing: 0) {
-            Text(i18n.t("ios.onb.sample.title"))
+            Text(i18n.t("ios.onb12.notebook.title"))
                 .font(V3Font.display(22))
                 .foregroundStyle(V3Color.ink)
-            V3ProgressBar(value: 0.4)
-                .padding(.top, 10)
-                .padding(.bottom, 14)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
             HStack(spacing: 8) {
                 StoryTag(text: i18n.t("lesson.nav.notes"), tone: V3Color.accentBright)
                 StoryTag(text: i18n.t("lesson.nav.quiz"), tone: V3Color.green)
                 StoryTag(text: i18n.t("lesson.nav.flashcards"), tone: V3Color.lilac)
             }
+            .padding(.top, 12)
         }
         .padding(16)
         .modifier(StoryTile())

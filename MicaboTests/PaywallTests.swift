@@ -175,7 +175,7 @@ final class PaywallTests: XCTestCase {
         XCTAssertFalse(title.text.lowercased().contains("gratuit"), title.text)
         XCTAssertFalse(title.text.contains("3"), title.text)
 
-        XCTAssertEqual(PaywallCopy.callToAction(for: yearly, locale: .fr), "S'abonner · \(yearly.displayPrice) par an")
+        XCTAssertEqual(PaywallCopy.callToAction(for: yearly, locale: .fr), "S'abonner")
         XCTAssertFalse(PaywallCopy.planDetail(for: yearly, locale: .fr).contains("gratuit"))
 
         let legal = PaywallCopy.legal(for: yearly, locale: .fr)
@@ -198,14 +198,14 @@ final class PaywallTests: XCTestCase {
 
         let legal = PaywallCopy.legal(for: PaywallCatalog.yearly, locale: .fr)
         XCTAssertEqual(legal, "Payé aujourd'hui : \(yearly.displayPrice), puis chaque année. Annule quand tu veux.")
-        XCTAssertEqual(PaywallCopy.callToAction(for: PaywallCatalog.yearly, locale: .fr), "S'abonner · \(yearly.displayPrice) par an")
+        XCTAssertEqual(PaywallCopy.callToAction(for: PaywallCatalog.yearly, locale: .fr), "S'abonner")
     }
 
     /// **Le tarif réduit n'a pas d'essai**, et rien sur son écran n'en promet : ni son
     /// bouton, ni sa mention, qui le dit en toutes lettres.
     func testTheDiscountNeverPromisesATrial() {
         let discount = PaywallCatalog.discount
-        XCTAssertEqual(PaywallCopy.callToAction(for: discount, locale: .fr), "S'abonner · \(discount.displayPrice) par an")
+        XCTAssertEqual(PaywallCopy.callToAction(for: discount, locale: .fr), "S'abonner", "Le bouton ne porte jamais de prix")
         XCTAssertFalse(PaywallCopy.legal(for: discount, locale: .fr).contains("gratuit"))
 
         let mention = L10n.t("ios.pay11.offer.legal", locale: .fr, vars: ["price": discount.displayPrice])

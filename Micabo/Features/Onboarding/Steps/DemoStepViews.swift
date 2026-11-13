@@ -87,11 +87,10 @@ struct LessonDemoStepView: View {
 
     private var isPlayed: Bool { played || previewPlayed }
 
+    /// Le titre : « Ton cours devient une leçon. » La page photographiée est de maths, pour
+    /// se lire dans toutes les langues ; le titre ne promet donc pas sa matière à lui.
     private var title: String {
-        guard let subject = OnbDemo.subject(for: model, locale: i18n.locale) else {
-            return i18n.t("ios.onb12.lesson.titleAny")
-        }
-        return i18n.t("ios.onb12.lesson.title", ["subject": subject])
+        i18n.t("ios.onb12.lesson.titleAny")
     }
 
     var body: some View {
@@ -122,61 +121,22 @@ struct LessonDemoStepView: View {
         onbPlay { played = true }
     }
 
-    /// La page de cours prise en photo : le sujet écrit en haut, des lignes de texte, le cadre
-    /// de visée.
+    /// **La page de cours prise en photo** (retour testeur du build 179) : une vraie page de
+    /// cahier, écrite à la main, dans le cadre de visée de l'appareil photo.
     private var photo: some View {
-        OnbPanel(padding: 18) {
-            HStack(spacing: 8) {
-                Image(systemName: "camera.fill")
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(V3Color.accentBright)
-                Text(i18n.t("ios.onb10.story.photo"))
-                    .foregroundStyle(V3Color.ink)
-            }
-            .font(V3Font.label)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(V3Color.soft, in: Capsule())
-
-            VStack(alignment: .leading, spacing: 10) {
-                Text(OnbDemo.topic(for: model, locale: i18n.locale))
-                    .font(V3Font.heading(22))
-                    .foregroundStyle(V3Color.ink2)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                ForEach(0 ..< (compact ? 5 : 8), id: \.self) { index in
-                    Capsule()
-                        .fill(V3Color.line)
-                        .frame(height: 8)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.trailing, CGFloat([0, 40, 12, 70, 24, 0, 56, 90][index % 8]))
-                }
-            }
-            .padding(18)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(V3Color.soft, in: RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous))
+        NotebookPhoto(height: compact ? 236 : 300)
+            .padding(.vertical, compact ? 10 : 16)
+            .frame(maxWidth: .infinity)
             .overlay {
                 StoryViewfinder()
                     .stroke(V3Color.pink, style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
-                    .padding(6)
             }
-        }
     }
 
-    /// La leçon qui en sort : la matière, le sujet, la jauge à zéro, ses trois façons de
-    /// travailler.
+    /// **La leçon qui en sort**, faite de ce qui est écrit sur la page : la règle, un
+    /// exercice, une carte.
     private var lesson: some View {
-        OnbPanel(padding: 18) {
-            Text(OnbDemo.topic(for: model, locale: i18n.locale))
-                .font(V3Font.heading(28))
-                .foregroundStyle(V3Color.ink)
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.bottom, 4)
-            mode(.notes, i18n.t("ios.onb11.lesson.notes"), tone: V3Color.iconBlue)
-            mode(.quiz, i18n.t("ios.onb11.lesson.quiz"), tone: V3Color.iconPink)
-            mode(.cards, i18n.t("ios.onb11.lesson.cards"), tone: V3Color.iconGreen)
-        }
+        NotebookLesson(compact: compact)
     }
 
     private func mode(_ icon: MicaboIcon, _ text: String, tone: Color) -> some View {

@@ -439,6 +439,11 @@ struct HomeView: View {
             generate(examDate: nil)
         case .importSource:
             openSources()
+        case .lesson(let id, _):
+            // Écrite pendant le parcours : elle s'ouvre sur son chemin, sans se réécrire.
+            if let course = courses.first(where: { $0.id == id }) {
+                path.append(course)
+            }
         }
     }
 

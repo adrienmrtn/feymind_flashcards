@@ -63,12 +63,12 @@ final class OnboardingLot11Tests: XCTestCase {
         after(.examDemo, .chatDemo)
         after(.planDemo, .dailyTime)
         after(.focusDemo, .planDemo)
-        // Les écrans qui amènent à l'offre : le plan, la leçon choisie, ce que l'essai ouvre, la
-        // fin de l'essai, pourquoi maintenant.
-        XCTAssertEqual(Array(order.suffix(6)), [.profileSummary, .firstLesson, .freeTrialIntro, .trialOffer, .whyNow, .paywall])
+        // Les écrans qui amènent au paywall : le plan, la leçon choisie, écrite, prête — et
+        // rien qui annonce l'essai avant lui (retour testeur du build 179).
+        XCTAssertEqual(Array(order.suffix(5)), [.profileSummary, .firstLesson, .lessonBuilding, .lessonReady, .paywall])
         let demos = OnboardingStep.allCases.filter { $0.kind == .demo }
-        XCTAssertTrue((demos + [.whyNow, .commitment]).allSatisfy(\.showsChrome))
-        XCTAssertTrue((demos + [.whyNow, .commitment]).allSatisfy(\.allowsReturn))
+        XCTAssertTrue((demos + [.commitment]).allSatisfy(\.showsChrome))
+        XCTAssertTrue((demos + [.commitment]).allSatisfy(\.allowsReturn))
     }
 
     /// La démo de leçon parle de la matière cochée, jamais d'une matière qu'il n'a pas.
@@ -81,30 +81,6 @@ final class OnboardingLot11Tests: XCTestCase {
         model.subjects = ["Anglais", "Espagnol"]
         XCTAssertNil(OnbDemo.subject(for: model, locale: .fr), "Aucune famille connue ni matière la plus dure : la phrase se dit sans matière")
         XCTAssertFalse(OnbDemo.topic(for: model, locale: .fr).hasPrefix("ios."))
-    }
-
-    /// Les séances d'ici l'examen : une par jour, à partir de deux jours (« 1 séances » ne se dit pas).
-    func testSessionsLeftAreTheDaysLeft() {
-        XCTAssertNil(WhyNowStepView.sessionsLeft(daysLeft: nil))
-        XCTAssertNil(WhyNowStepView.sessionsLeft(daysLeft: 1))
-        XCTAssertEqual(WhyNowStepView.sessionsLeft(daysLeft: 12), 12)
-        XCTAssertEqual(WhyNowStepView.sessionsLeft(daysLeft: 56), 56)
-        XCTAssertNil(WhyNowStepView.sessionsLeft(daysLeft: 215), "Loin de l'examen, on ne compte plus les séances")
-        XCTAssertTrue(WhyNowStepView.isFar(daysLeft: 215))
-        XCTAssertFalse(WhyNowStepView.isFar(daysLeft: 30))
-        XCTAssertFalse(WhyNowStepView.isFar(daysLeft: nil))
-    }
-
-    /// Ce que l'essai ouvre : la première leçon (offerte de toute façon) en tête, l'examen nommé.
-    func testTheTrialUnlocksAreMadeOfTheAnswers() {
-        let model = OnboardingModel()
-        model.firstLessonChoice = .topic
-        model.firstLessonTopic = "La guerre froide"
-        let unlocks = FreeTrialIntroStepView.unlocks(for: model, locale: .fr)
-        XCTAssertEqual(unlocks.count, 6)
-        XCTAssertTrue(unlocks[0].isFree)
-        XCTAssertTrue(unlocks[0].text.contains("La guerre froide"))
-        XCTAssertEqual(unlocks.filter(\.isFree).count, 1)
     }
 
     /// **La bienvenue après l'achat** : une fois montré, le paywall reste monté même quand Pro

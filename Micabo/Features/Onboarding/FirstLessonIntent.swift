@@ -12,9 +12,13 @@ enum FirstLessonIntent: Equatable {
     case topic(String)
     /// Il a un cours à importer : la feuille des sources s'ouvrira à l'arrivée.
     case importSource
+    /// **La leçon a été écrite pendant le parcours** (`lessonBuilding`) : la Home l'ouvre au
+    /// lieu de la réécrire. Le sujet tapé l'accompagne, pour reprendre un parcours laissé.
+    case lesson(UUID, topic: String)
 
     private static let kindKey = "micabo.onboarding.firstLesson.kind"
     private static let topicKey = "micabo.onboarding.firstLesson.topic"
+    private static let lessonKey = "micabo.onboarding.firstLesson.lesson"
 
     /// Ce qui attend d'être lancé. `nil` : rien de choisi, ou déjà consommé.
     static var pending: FirstLessonIntent? {
@@ -27,6 +31,9 @@ enum FirstLessonIntent: Equatable {
                 return topic.isEmpty ? nil : .topic(topic)
             case "import":
                 return .importSource
+            case "lesson":
+                guard let id = defaults.string(forKey: lessonKey).flatMap(UUID.init(uuidString:)) else { return nil }
+                return .lesson(id, topic: defaults.string(forKey: topicKey) ?? "")
             default:
                 return nil
             }
@@ -40,9 +47,14 @@ enum FirstLessonIntent: Equatable {
             case .importSource:
                 defaults.set("import", forKey: kindKey)
                 defaults.removeObject(forKey: topicKey)
+            case .lesson(let id, let topic):
+                defaults.set("lesson", forKey: kindKey)
+                defaults.set(id.uuidString, forKey: lessonKey)
+                defaults.set(topic, forKey: topicKey)
             case nil:
                 defaults.removeObject(forKey: kindKey)
                 defaults.removeObject(forKey: topicKey)
+                defaults.removeObject(forKey: lessonKey)
             }
         }
     }

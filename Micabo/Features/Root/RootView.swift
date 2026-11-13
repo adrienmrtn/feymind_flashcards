@@ -106,25 +106,20 @@ struct RootView: View {
         }
         .overlay {
             if showsCurtain {
-                LaunchCurtain()
-                    .transition(.opacity)
+                // **L'écran de lancement animé** (retour testeur du build 179) : il part de
+                // l'image exacte de l'écran de lancement du système, Mika rebondit une fois et
+                // le nom apparaît, puis le rideau se lève — pendant que l'app se pose dessous.
+                LaunchCurtain(isPlaying: true) {
+                    withAnimation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion)) {
+                        showsCurtain = false
+                    }
+                }
+                .transition(.opacity)
             }
         }
-        // **Le rideau se lève au tour suivant de la boucle**, une fois la première image de
-        // l'écran posée dessous : l'écran de lancement (le même marine, le même Mika) cède la
-        // place sans blanc intermédiaire, par un fondu court.
-        .task {
-            guard showsCurtain else { return }
-            // Une seule fois par lancement : changer de langue recrée `RootView`
-            // (`.id(uiLocale.locale)`), et le bleu n'a pas à repasser sur l'app.
-            LaunchCurtain.hasLifted = true
-            // Le tour de boucle suffit : la tâche part une fois la première image posée, et
-            // attendre soixante millisecondes de plus ne faisait que retarder l'app.
-            await Task.yield()
-            withAnimation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion)) {
-                showsCurtain = false
-            }
-        }
+        // Une seule fois par lancement : changer de langue recrée `RootView`
+        // (`.id(uiLocale.locale)`), et le rideau n'a pas à repasser sur l'app.
+        .onAppear { LaunchCurtain.hasLifted = true }
         // Le passage d'un écran racine à l'autre : la courbe commune, un fondu bref si le
         // mouvement est réduit.
         .animation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion), value: didCompleteOnboarding)
@@ -146,6 +141,12 @@ struct RootView: View {
 /// (`LaunchMika`, 200 points). La première image de SwiftUI doit lui être identique : ce
 /// rideau repose le même fond et la même image, à sa taille, au centre de l'écran entier
 /// (pas de la zone sûre), puis s'efface en fondu sur l'écran qui suit.
+///
+/// **Animé depuis le build 180** (`isPlaying`) : la première image reste celle de l'écran de
+/// lancement, au point près ; puis Mika rebondit une fois et « Micabo » monte sous lui, et le
+/// rideau rend la main (`onFinished`) **à la fin de ce geste, sans minuterie** : un peu plus
+/// d'une demi-seconde, pendant laquelle l'app se pose dessous. « Réduire les animations » : ni
+/// rebond ni montée, le nom apparaît en fondu bref, et le rideau se lève aussitôt.
 struct LaunchCurtain: View {
     /// Vrai une fois le rideau levé pendant ce lancement.
     nonisolated(unsafe) static var hasLifted = false
@@ -153,13 +154,50 @@ struct LaunchCurtain: View {
     /// L'image de l'écran de lancement, dans le catalogue.
     static let mika = "LaunchMika"
 
+    /// Faux : l'image fixe de l'écran de lancement (les rendus, les tests).
+    var isPlaying = false
+    var onFinished: () -> Void = {}
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Le geste a commencé : Mika rebondit, le nom monte.
+    @State private var played = false
+
     var body: some View {
         ZStack {
             MicaboBrand.launch
             Image(Self.mika)
+                .keyframeAnimator(initialValue: CGFloat(1), trigger: played && !reduceMotion) { content, scale in
+                    content.scaleEffect(scale)
+                } keyframes: { _ in
+                    KeyframeTrack {
+                        SpringKeyframe(0.9, duration: 0.14)
+                        SpringKeyframe(1.08, duration: 0.2)
+                        SpringKeyframe(1, duration: 0.24)
+                    }
+                }
+            Text(verbatim: "Micabo")
+                .font(V3Font.display(40))
+                .foregroundStyle(.white)
+                .opacity(played ? 1 : 0)
+                .offset(y: played || reduceMotion ? 132 : 148)
         }
         .ignoresSafeArea()
         .allowsHitTesting(false)
         .accessibilityHidden(true)
+        .onAppear(perform: play)
+    }
+
+    private func play() {
+        guard isPlaying, !played else { return }
+        // Le nom monte pendant que Mika rebondit (six dixièmes de seconde) ; mouvement réduit,
+        // un fondu bref.
+        let curve = reduceMotion
+            ? MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: true)
+            : MicaboMotion.fill(seconds: 0.6)
+        withAnimation(curve, completionCriteria: .logicallyComplete) {
+            played = true
+        } completion: {
+            onFinished()
+        }
     }
 }

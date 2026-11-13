@@ -183,6 +183,79 @@ final class OnboardingLot12Tests: XCTestCase {
         XCTAssertTrue(PaywallStepView.keepsPaywall(shows: true, didShow: false))
     }
 
+    /// **La leçon écrite mène au paywall** (retour testeur du build 179) : le sujet écrit, la
+    /// leçon s'écrit, « Ta leçon est prête », puis le paywall — et la Home l'ouvrira au lieu de
+    /// la réécrire. Une écriture en échec n'arrête personne : le paywall suit, et le sujet
+    /// attend la Home.
+    func testTheWrittenLessonLeadsToThePaywall() throws {
+        let model = try lina()
+        model.place(on: .firstLesson)
+        model.firstLessonChoice = .topic
+        model.firstLessonTopic = "La guerre froide"
+        model.confirmFirstLesson()
+        XCTAssertEqual(model.step, .lessonBuilding)
+
+        let id = UUID()
+        model.lessonWritten(OnboardingWrittenLesson(id: id, title: "La guerre froide", themes: ["Deux blocs"]))
+        XCTAssertEqual(FirstLessonIntent.pending, .lesson(id, topic: "La guerre froide"), "La Home ouvre la leçon, sans la réécrire")
+        model.advance()
+        XCTAssertEqual(model.step, .lessonReady)
+        model.advance()
+        XCTAssertEqual(model.step, .paywall, "« Voir ma leçon » ouvre le paywall")
+
+        let failed = try lina()
+        failed.place(on: .firstLesson)
+        failed.firstLessonChoice = .topic
+        failed.firstLessonTopic = "La photosynthèse"
+        failed.confirmFirstLesson()
+        XCTAssertEqual(failed.step, .lessonBuilding)
+        failed.advance()
+        XCTAssertEqual(failed.step, .paywall, "Sans leçon écrite, pas de « leçon prête » : le paywall")
+        XCTAssertEqual(FirstLessonIntent.pending, .topic("La photosynthèse"), "La Home l'écrira")
+
+        let headline = PaywallCopy.lessonHeadline(title: "La guerre froide", locale: .fr)
+        XCTAssertEqual(headline.text, "Débloque ta leçon « La guerre froide »")
+        XCTAssertEqual(headline.highlight, "La guerre froide")
+    }
+
+    /// **Rien n'annonce le gratuit avant le paywall** : ni « leçon offerte », ni essai, ni
+    /// limite, sur le choix de la leçon, son écriture et « Ta leçon est prête ».
+    func testNothingAnnouncesFreeBeforeThePaywall() {
+        let keys = [
+            "ios.onb10.q.lesson", "ios.onb12.say.lesson", "ios.onb10.lesson.topic", "ios.onb10.lesson.import",
+            "ios.onb10.lesson.importHint", "ios.onb12.lesson.buildingTitle", "ios.onb12.lesson.failedTitle",
+            "ios.onb12.lesson.failed", "ios.onb12.lesson.readyTitle", "ios.onb12.lesson.parts", "ios.onb12.lesson.see",
+        ]
+        for key in keys {
+            let text = L10n.t(key, locale: .fr).lowercased()
+            for word in ["offert", "gratuit", "essai", "limite", "abonn"] {
+                XCTAssertFalse(text.contains(word), "\(key) : « \(word) »")
+            }
+        }
+    }
+
+    /// **Un choix unique n'a pas de bouton** : il avance au toucher. Aucun « Continuer » ne
+    /// reste au pied de ces écrans (retour testeur du build 179).
+    func testSingleChoiceScreensHaveNoButton() throws {
+        let steps = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Micabo/Features/Onboarding/Steps", isDirectory: true)
+        var read = 0
+        for file in ["SchoolStepViews.swift", "GoalStepViews.swift", "HabitStepViews.swift", "SubjectsStepView.swift"] {
+            guard let text = try? String(contentsOf: steps.appendingPathComponent(file), encoding: .utf8) else { continue }
+            read += 1
+            for answer in [
+                "model.hasAnsweredCountry", "model.track != nil", "model.year != nil", "model.stage != nil",
+                "model.mainGoal != nil", "model.weeklyStudy != nil", "model.studyMethod != nil",
+                "model.dailyMinutes != nil", "model.hardestSubject != nil",
+            ] {
+                XCTAssertFalse(text.contains("isEnabled: \(answer)"), "\(file) : un bouton sur un choix unique (\(answer))")
+            }
+        }
+        guard read > 0 else { throw XCTSkip("les sources ne sont pas lisibles depuis ce simulateur") }
+    }
+
     /// **Un compte déjà Pro voit le paywall en aperçu dans les constructions internes**, et un
     /// vrai abonné de l'App Store finit sans paywall.
     func testAProAccountSeesThePaywallInInternalBuilds() {

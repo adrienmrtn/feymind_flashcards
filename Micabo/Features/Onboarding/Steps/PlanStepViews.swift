@@ -290,3 +290,337 @@ struct ProfileSummaryStepView: View {
         .accessibilityElement(children: .combine)
     }
 }
+
+// MARK: - Mika écrit la leçon
+
+/// **« J'écris ta leçon… »** (retour testeur du build 179) : la première leçon choisie s'écrit
+/// **pour de vrai**, ici, avec le moteur de la Home (`LessonGeneration`, `LessonBuilder`).
+///
+/// La jauge suit les étapes du vrai travail (`LessonBuilder.Stage` : lire le sujet, découper
+/// les thèmes, écrire les notes, préparer les questions) ; entre deux étapes, elle avance
+/// doucement vers la suivante sans jamais l'atteindre, pour ne pas mentir sur ce qui reste.
+/// La leçon livrée, l'écran passe à « Ta leçon est prête ».
+///
+/// **Rien ne bloque l'élève** : hors ligne, ou si l'écriture échoue, Mika le dit simplement et
+/// « Continuer » mène au paywall puis à l'app, où la leçon s'écrira (`FirstLessonIntent`
+/// garde le sujet). Un refus du serveur (la leçon offerte déjà servie sur ce compte) mène
+/// aussi au paywall, sans message.
+struct LessonBuildingStepView: View {
+    /// Pour les rendus : l'étape et l'avancement à montrer, figés.
+    var previewStage: LessonBuilder.Stage?
+    var previewProgress: Double?
+    var previewFailed = false
+
+    @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(LessonBuilder.self) private var builder: LessonBuilder?
+    @Environment(\.modelContext) private var context
+    @Environment(\.onboardingStill) private var still
+
+    @State private var generation = LessonGeneration()
+    @State private var composer = LessonComposer()
+    /// L'instant où l'étape en cours a commencé : la jauge en part.
+    @State private var stageStart = Date()
+    /// L'instant où la leçon est arrivée : la jauge finit sa course, puis l'écran avance.
+    @State private var deliveredAt: Date?
+    @State private var didStart = false
+    @State private var didAdvance = false
+
+    private static let tick = 1.0 / 30.0
+    /// Ce qu'on laisse lire « 100 % » avant d'avancer.
+    static let hold = 0.5
+
+    /// **Où commence chaque étape** sur la jauge, et où elle s'arrête au plus tant que la
+    /// suivante n'est pas atteinte.
+    static func floor(of stage: LessonBuilder.Stage?) -> Double {
+        switch stage {
+        case nil, .reading?: 0.04
+        case .cutting?: 0.38
+        case .writing?: 0.56
+        case .questions?: 0.86
+        }
+    }
+
+    static func ceiling(of stage: LessonBuilder.Stage?) -> Double {
+        switch stage {
+        case nil, .reading?: 0.36
+        case .cutting?: 0.54
+        case .writing?: 0.84
+        case .questions?: 0.97
+        }
+    }
+
+    /// **L'avancement affiché** : le plancher de l'étape, plus une approche lente du plafond
+    /// (la moitié du chemin en six secondes), puis cent quand la leçon est là.
+    static func progress(stage: LessonBuilder.Stage?, sinceStage: TimeInterval, delivered: Bool) -> Double {
+        if delivered { return 1 }
+        let low = floor(of: stage), high = ceiling(of: stage)
+        let approach = 1 - pow(0.5, max(0, sinceStage) / 6)
+        return low + (high - low) * approach
+    }
+
+    private var topic: String {
+        model.firstLessonSubject ?? model.writtenLesson?.title ?? ""
+    }
+
+    private var isFailed: Bool {
+        if previewFailed { return true }
+        if case .failed = generation.phase, !generation.wasRefused { return true }
+        return false
+    }
+
+    var body: some View {
+        OnbScreen {
+            Spacer(minLength: 8)
+                .layoutPriority(-1)
+
+            OnbHeroMika(mood: isFailed ? .think : .write, max: 130, min: 80)
+
+            Text(i18n.t(isFailed ? "ios.onb12.lesson.failedTitle" : "ios.onb12.lesson.buildingTitle"))
+                .font(V3Font.h1)
+                .foregroundStyle(V3Color.ink)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 8)
+                .accessibilityAddTraits(.isHeader)
+
+            Text(verbatim: "« \(topic) »")
+                .font(V3Font.bodyStrong)
+                .foregroundStyle(V3Color.accentBright)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 4)
+
+            if isFailed {
+                Text(i18n.t("ios.onb12.lesson.failed"))
+                    .font(V3Font.support)
+                    .foregroundStyle(V3Color.ink2)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 18)
+            } else if let frozen = previewProgress ?? (still ? 0.62 : nil) {
+                LessonBuildingProgress(progress: frozen, stage: previewStage ?? .writing)
+            } else {
+                TimelineView(.periodic(from: stageStart, by: Self.tick)) { timeline in
+                    let delivered = deliveredAt != nil
+                    LessonBuildingProgress(
+                        progress: Self.progress(
+                            stage: generation.stage,
+                            sinceStage: timeline.date.timeIntervalSince(stageStart),
+                            delivered: delivered
+                        ),
+                        stage: delivered ? nil : generation.stage
+                    )
+                    .onChange(of: deliveredAt.map { timeline.date.timeIntervalSince($0) >= Self.hold } ?? false) { _, isOver in
+                        guard isOver else { return }
+                        finish()
+                    }
+                }
+            }
+
+            Spacer(minLength: 8)
+                .layoutPriority(-1)
+        } footer: {
+            if isFailed {
+                V3Button(i18n.t("common.continue")) {
+                    finish()
+                }
+            }
+        }
+        .task { begin() }
+        .onChange(of: generation.stage) { _, _ in
+            stageStart = Date()
+        }
+        .onChange(of: generation.deliveries) { _, _ in
+            guard let course = generation.takeDelivered() else { return }
+            model.lessonWritten(OnboardingWrittenLesson(course: course))
+            Haptics.success()
+            deliveredAt = Date()
+        }
+        .onChange(of: generation.refusals) { _, _ in
+            // La leçon offerte a déjà servi sur ce compte : le paywall, sans message.
+            _ = generation.takeRefusal()
+            finish()
+        }
+    }
+
+    /// Lance l'écriture, une fois. Sans moteur (un rendu), rien ne part.
+    private func begin() {
+        guard !didStart, previewProgress == nil, !previewFailed, !still else { return }
+        didStart = true
+        guard let builder, let subject = model.firstLessonSubject else {
+            finish()
+            return
+        }
+        composer.draft = subject
+        guard composer.canSend else {
+            finish()
+            return
+        }
+        stageStart = Date()
+        generation.start(
+            composer: composer,
+            builder: builder,
+            context: context,
+            examDate: nil,
+            sendsAsFreeLesson: false,
+            online: true
+        )
+    }
+
+    /// La leçon est là (ou ne viendra pas ici) : le parcours avance, une fois.
+    private func finish() {
+        guard !didAdvance, model.step == .lessonBuilding else { return }
+        didAdvance = true
+        model.advance()
+    }
+}
+
+/// **Ce qui bouge pendant l'écriture** : le pourcentage, la jauge, et les quatre étapes du
+/// vrai travail, cochées à mesure qu'elles sont atteintes.
+private struct LessonBuildingProgress: View {
+    let progress: Double
+    /// L'étape en cours ; `nil` une fois la leçon livrée (tout est coché).
+    let stage: LessonBuilder.Stage?
+
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    /// La phrase d'une étape.
+    static func key(for stage: LessonBuilder.Stage) -> String {
+        switch stage {
+        case .reading: "ios.onb12.lesson.stage.reading"
+        case .cutting: "ios.onb12.lesson.stage.cutting"
+        case .writing: "ios.onb12.lesson.stage.writing"
+        case .questions: "ios.onb12.lesson.stage.questions"
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Text(L10n.percent(Int((progress * 100).rounded()), locale: i18n.locale))
+                .font(V3Font.display(48))
+                .foregroundStyle(V3Color.accentBright)
+                .monospacedDigit()
+                .padding(.top, 14)
+            V3ProgressBar(value: progress)
+                .padding(.top, 6)
+
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(LessonBuilder.Stage.allCases, id: \.self) { step in
+                    HStack(spacing: 12) {
+                        mark(step)
+                        Text(i18n.t(Self.key(for: step)))
+                            .font(V3Font.bodyStrong)
+                            .foregroundStyle(isDone(step) ? V3Color.ink : (step == current ? V3Color.ink2 : V3Color.ink3))
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .v3Card()
+            .padding(.top, 18)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    /// L'étape en cours ; avant la première réponse, la lecture.
+    private var current: LessonBuilder.Stage { stage ?? .reading }
+
+    private func isDone(_ step: LessonBuilder.Stage) -> Bool {
+        stage == nil && progress >= 1 ? true : step < current
+    }
+
+    @ViewBuilder
+    private func mark(_ step: LessonBuilder.Stage) -> some View {
+        if isDone(step) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(V3Font.title)
+                .foregroundStyle(V3Color.green)
+        } else if step == current {
+            Image(systemName: "circle")
+                .font(V3Font.title)
+                .foregroundStyle(V3Color.accent)
+        } else {
+            Image(systemName: "circle.fill")
+                .font(V3Font.title)
+                .foregroundStyle(V3Color.line)
+        }
+    }
+}
+
+// MARK: - La leçon prête
+
+/// **« Ta leçon est prête »** : son titre, ses thèmes (ceux que le serveur a écrits), et un
+/// seul bouton, « Voir ma leçon ». Au toucher, le paywall s'ouvre, tourné vers elle — c'est le
+/// moment où l'élève la veut (retour testeur du build 179). Rien ici ne parle de prix,
+/// d'offert ou d'essai.
+struct LessonReadyStepView: View {
+    @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.onbCompact) private var compact
+
+    /// Les thèmes montrés : quatre au plus.
+    static let shownThemes = 4
+
+    private var lesson: OnboardingWrittenLesson? { model.writtenLesson }
+
+    var body: some View {
+        OnbScreen {
+            OnbHeroMika(mood: .celebrate, max: compact ? 96 : 140, min: 72)
+                .padding(.top, 2)
+
+            OnbTitle(i18n.t("ios.onb12.lesson.readyTitle"), size: OnbLayout.display, alignment: .center)
+                .padding(.top, 4)
+
+            if let lesson {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(lesson.title)
+                        .font(V3Font.cardTitle)
+                        .foregroundStyle(V3Color.ink)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if !lesson.themes.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            ForEach(Array(lesson.themes.prefix(Self.shownThemes).enumerated()), id: \.offset) { index, theme in
+                                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                                    Text(verbatim: "\(index + 1)")
+                                        .font(V3Font.label)
+                                        .foregroundStyle(V3Color.accentBright)
+                                        .frame(width: 18, alignment: .leading)
+                                    Text(theme)
+                                        .font(V3Font.support)
+                                        .foregroundStyle(V3Color.ink)
+                                        .multilineTextAlignment(.leading)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                            }
+                        }
+                    }
+
+                    Text(i18n.t("ios.onb12.lesson.parts"))
+                        .font(V3Font.caption)
+                        .foregroundStyle(V3Color.ink2)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(18)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .v3Card(selected: true)
+                .padding(.top, 18)
+            }
+        } footer: {
+            V3Button(i18n.t("ios.onb12.lesson.see")) {
+                model.advance()
+            }
+        }
+        .overlay {
+            OnbConfetti(isOn: true)
+        }
+    }
+}

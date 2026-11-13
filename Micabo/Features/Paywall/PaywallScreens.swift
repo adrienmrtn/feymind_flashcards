@@ -13,13 +13,23 @@ struct PaywallContext: Equatable {
     var reminderKept: Bool?
     /// Le sujet de la première leçon, choisi dans le parcours (`FirstLessonIntent`).
     var topic: String?
+    /// **La leçon écrite pendant le parcours** (retour testeur du build 179) : le paywall
+    /// s'ouvre au toucher de « Voir ma leçon », et son titre parle d'elle.
+    var lessonTitle: String? = nil
 
     static func current(now: Date = Date()) -> PaywallContext {
         var topic: String?
-        if case .topic(let chosen)? = FirstLessonIntent.pending {
+        var lessonTitle: String?
+        switch FirstLessonIntent.pending {
+        case .topic(let chosen)?:
             topic = chosen
+        case .lesson(_, let chosen)?:
+            topic = chosen
+            lessonTitle = chosen
+        default:
+            break
         }
-        return PaywallContext(profile: .current(now: now), now: now, reminderKept: nil, topic: topic)
+        return PaywallContext(profile: .current(now: now), now: now, reminderKept: nil, topic: topic, lessonTitle: lessonTitle)
     }
 }
 
@@ -74,19 +84,16 @@ enum PaywallCopy {
             : plan.caption
     }
 
-    /// **Le bouton dit ce qu'il fait.** Avec essai : « Commencer mes 3 jours gratuits » ;
-    /// sans : « S'abonner · 49,99 € par an ». Un « Essayer gratuitement » suivi d'un
-    /// prélèvement immédiat est la pire façon de découvrir la règle d'Apple, et un
-    /// « Continuer » ne dit pas qu'on paie.
+    /// **Le bouton dit ce qu'il fait, sans prix** (lot 12, retour testeur) : avec essai,
+    /// « Commencer mes 3 jours gratuits » ; sans, « S'abonner ». Le prix est déjà écrit dans
+    /// la formule cochée et dans la mention sous le bouton : le répéter sur le bouton chargeait
+    /// l'écran sans rien dire de plus. Un « Essayer gratuitement » suivi d'un prélèvement
+    /// immédiat reste exclu.
     static func callToAction(for plan: PaywallPlan, locale: UiLocale = .resolved()) -> String {
         if plan.hasTrial {
             return L10n.t("ios.pay11.cta.trial", locale: locale, vars: ["n": "\(plan.trialDays)"])
         }
-        return L10n.t(
-            plan.period == .year ? "ios.pay11.cta.year" : "ios.pay11.cta.week",
-            locale: locale,
-            vars: ["price": plan.displayPrice]
-        )
+        return L10n.t("ios.pay12.cta.subscribe", locale: locale)
     }
 
     /// **La mention sous le bouton : ce qui sera prélevé, et quand.** Avec essai :
@@ -129,6 +136,18 @@ enum PaywallCopy {
         return PaywallEmphasis(
             text: L10n.t("ios.pay10.title.planExam", locale: locale, vars: ["exam": exam]),
             highlight: exam
+        )
+    }
+
+    /// **Le grand titre quand la leçon vient d'être écrite** : « Débloque ta leçon « La guerre
+    /// froide » ». Le titre de la leçon est mis en avant.
+    static func lessonHeadline(title: String, locale: UiLocale = .resolved()) -> PaywallEmphasis {
+        let shown = title.count > PaywallTimeline.longestTopic
+            ? String(title.prefix(PaywallTimeline.longestTopic - 1)) + "…"
+            : title
+        return PaywallEmphasis(
+            text: L10n.t("ios.pay12.lesson.title", locale: locale, vars: ["title": shown]),
+            highlight: shown
         )
     }
 
@@ -424,6 +443,9 @@ struct PaywallScreen: View {
     private var heroTitle: PaywallEmphasis {
         if let trigger, !showsTrialHeader {
             return PaywallCopy.hook(for: trigger)
+        }
+        if let lesson = context.lessonTitle?.nilIfBlank {
+            return PaywallCopy.lessonHeadline(title: lesson)
         }
         return PaywallCopy.headline(profile: context.profile)
     }

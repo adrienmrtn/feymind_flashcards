@@ -332,6 +332,18 @@ final class OnboardingModel {
     /// statistiques.
     var firstLessonTopic: String = ""
 
+    /// **La leçon réellement écrite pendant le parcours** (`lessonBuilding`) : son identifiant,
+    /// son titre, ses thèmes. `nil` tant qu'elle ne l'est pas, ou si elle n'a pas pu l'être
+    /// (elle s'écrira alors à l'arrivée dans l'app).
+    var writtenLesson: OnboardingWrittenLesson?
+
+    /// **La leçon est écrite** : elle est gardée pour « Ta leçon est prête » et pour le
+    /// paywall, et la Home l'ouvrira à l'arrivée au lieu de la réécrire (`FirstLessonIntent`).
+    func lessonWritten(_ lesson: OnboardingWrittenLesson) {
+        writtenLesson = lesson
+        FirstLessonIntent.pending = .lesson(lesson.id, topic: firstLessonSubject ?? lesson.title)
+    }
+
     /// Le sujet de la première leçon, quand il y en a un d'écrit.
     var firstLessonSubject: String? {
         firstLessonChoice == .topic ? firstLessonTopic.nilIfBlank : nil
@@ -479,15 +491,16 @@ final class OnboardingModel {
     // MARK: Avancer, revenir
 
     /// **Les écrans sautés, selon ce qui a été répondu** : la question de niveau que le pays
-    /// n'a pas ; la moyenne visée quand la moyenne a été passée ; les deux écrans de l'essai
-    /// quand la boutique dit que cet élève n'y a plus droit (on ne promet pas trois jours
-    /// qu'Apple ne donnera pas).
+    /// n'a pas ; la moyenne visée quand la moyenne a été passée ; l'écriture de la leçon sans
+    /// sujet écrit (ou une fois écrite) ; « Ta leçon est prête » tant qu'elle ne l'est pas.
     func isSkipped(_ step: OnboardingStep) -> Bool {
         if step.isSkipped(for: country, custom: customCountry) { return true }
         switch step {
         case .targetAverage: return didSkipAverages
         case .hardestSubject: return subjects.count < 2
-        case .freeTrialIntro, .trialOffer: return !OnboardingTrial.isOffered
+        // La leçon ne s'écrit que d'un sujet ; « Ta leçon est prête » seulement si elle l'est.
+        case .lessonBuilding: return firstLessonSubject == nil || writtenLesson != nil
+        case .lessonReady: return writtenLesson == nil
         default: return false
         }
     }
@@ -696,6 +709,10 @@ extension OnboardingModel {
         case .topic(let topic):
             firstLessonChoice = .topic
             firstLessonTopic = topic
+        case .lesson(let id, let topic):
+            firstLessonChoice = .topic
+            firstLessonTopic = topic
+            writtenLesson = OnboardingWrittenLesson(id: id, title: topic, themes: [])
         case .importSource:
             firstLessonChoice = .importSource
         case nil:
@@ -843,5 +860,29 @@ enum OnboardingDailyTime: Int, CaseIterable, Identifiable {
     func title(locale: UiLocale) -> String {
         let minutes = L10n.t("ios.quiz.time.short", locale: locale, vars: ["n": "\(rawValue)"])
         return "\(minutes) · \(L10n.t("ios.onb10.time.\(rawValue)", locale: locale))"
+    }
+}
+
+// MARK: - La leçon écrite
+
+/// **Ce que le parcours garde de la leçon écrite** : de quoi la montrer (« Ta leçon est
+/// prête »), l'annoncer au paywall et l'ouvrir dans l'app. Rien n'est inventé : le titre et
+/// les thèmes sont ceux que le serveur a écrits.
+struct OnboardingWrittenLesson: Equatable {
+    let id: UUID
+    let title: String
+    /// Les titres de ses thèmes, dans l'ordre.
+    let themes: [String]
+
+    init(id: UUID, title: String, themes: [String]) {
+        self.id = id
+        self.title = title
+        self.themes = themes
+    }
+
+    /// Tirée du cours que l'écriture vient de livrer.
+    init(course: Course) {
+        let chapters = (course.chapters ?? []).sorted { $0.position < $1.position }
+        self.init(id: course.id, title: course.title, themes: chapters.map(\.title).filter { !$0.isEmpty })
     }
 }

@@ -145,6 +145,10 @@ final class Paywall12RenderTests: XCTestCase {
             paywall(context: context(), notice: .info(L10n.t("ios.pay12.preview", locale: .fr)))
         )
         try RenderGallery.renderDevice("pay12-fr-loading", devices: [.iPhoneSE], paywall(context: context(), prices: .loading))
+        // **Au toucher de « Voir ma leçon »** : le paywall parle de la leçon qui vient de s'écrire.
+        var lesson = context()
+        lesson.lessonTitle = "La guerre froide"
+        try RenderGallery.renderDevice("pay12-fr-lesson", paywall(context: lesson))
         try RenderGallery.renderDevice("pay12-fr-buying", devices: [.iPhone15Pro], paywall(context: context(), purchasing: true))
     }
 

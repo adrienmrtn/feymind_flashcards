@@ -233,27 +233,6 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(PlanBuildingStepView.checkedCount(progress: 1, lines: 0), 0)
     }
 
-    /// **Un rappel n'est promis que s'il peut être envoyé** : notifications refusées, ou essai
-    /// trop court pour avoir une veille, l'écran dit ce qui reste vrai.
-    func testNoReminderIsPromisedWithoutScheduling() {
-        XCTAssertTrue(TrialOfferStepView.canPromise(notificationsAllowed: true, trialDays: 3, now: Self.now))
-        XCTAssertFalse(TrialOfferStepView.canPromise(notificationsAllowed: false, trialDays: 3, now: Self.now))
-        XCTAssertFalse(TrialOfferStepView.canPromise(notificationsAllowed: true, trialDays: 1, now: Self.now),
-                       "Un essai d'un jour n'a pas de veille : rien ne serait posé")
-
-        XCTAssertEqual(TrialOfferStepView.titleKey(canRemind: true), "ios.onb10.trial.remind")
-        XCTAssertEqual(TrialOfferStepView.titleKey(canRemind: false), "ios.onb10.trial.anytime")
-        XCTAssertEqual(TrialOfferStepView.reassuranceKey(canRemind: false), "ios.onb5.trial.noCharge")
-
-        let refused = L10n.t(TrialOfferStepView.titleKey(canRemind: false), locale: .fr)
-        XCTAssertFalse(refused.localizedCaseInsensitiveContains("préviens"), refused)
-        XCTAssertFalse(refused.localizedCaseInsensitiveContains("rappel"), refused)
-        XCTAssertTrue(L10n.t(TrialOfferStepView.titleKey(canRemind: true), locale: .fr).contains("préviens"))
-
-        // La durée annoncée est celle du produit, et le rappel de cet essai-là se pose bien.
-        XCTAssertEqual(OnboardingTrial.days, PaywallCatalog.yearly.trialDays)
-        XCTAssertNotNil(TrialEndReminder.fireDate(purchasedAt: Self.now, trialDays: OnboardingTrial.days))
-    }
 
     // MARK: - Adapté au pays et au niveau
 
