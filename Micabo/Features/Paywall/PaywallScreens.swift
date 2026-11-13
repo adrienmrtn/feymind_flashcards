@@ -424,7 +424,7 @@ struct PaywallScreen: View {
                 .padding(.top, 6)
 
             PaywallBenefits(
-                features: PaywallFeature.shown(for: showsTrialHeader ? nil : trigger, count: PaywallDensity.benefitCount),
+                features: PaywallFeature.shown(for: showsTrialHeader ? nil : trigger, count: density.benefits),
                 spacing: density.benefitSpacing
             )
             .padding(.top, density.sectionGap)
@@ -870,6 +870,13 @@ enum PaywallDensity: CaseIterable {
 
     /// Les bénéfices : trois, jamais plus.
     static let benefitCount = 3
+
+    /// **Les bénéfices montrés** : trois ; deux au dernier serrage (un iPhone SE dans une
+    /// langue longue, ou un titre de leçon sur deux lignes), pour que la ligne de l'essai et
+    /// son rappel restent à l'écran sans défiler.
+    var benefits: Int {
+        self == .tightest ? 2 : Self.benefitCount
+    }
 
     /// Mika, en grand : le visuel fort du héros.
     var mikaSize: CGFloat {

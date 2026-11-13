@@ -430,7 +430,7 @@ private struct StoryLessonPreview: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
-        NotebookPhoto(height: 196)
+        NotebookPhoto(height: 164)
             .frame(maxWidth: .infinity)
             .padding(.bottom, 4)
 

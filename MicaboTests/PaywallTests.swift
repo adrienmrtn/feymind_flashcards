@@ -467,6 +467,7 @@ final class PaywallTests: XCTestCase {
     func testTheDensitiesShrinkTheHeroAndKeepThePromises() {
         XCTAssertEqual(PaywallDensity.allCases, [.regular, .comfortable, .compact, .tight, .tightest])
         XCTAssertEqual(PaywallDensity.benefitCount, 3)
+        XCTAssertEqual(PaywallDensity.allCases.map(\.benefits), [3, 3, 3, 3, 2])
         let sizes = PaywallDensity.allCases.map(\.mikaSize)
         XCTAssertEqual(sizes, sizes.sorted(by: >))
         XCTAssertGreaterThan(PaywallDensity.tightest.mikaSize, 0, "Mika reste, même sur un iPhone SE")
