@@ -55,10 +55,6 @@ final class OnboardingFlowTests: XCTestCase {
         return seen
     }
 
-    /// Les deux écrans de l'essai ne se montrent que si la boutique le propose encore.
-    private var trialScreens: Int {
-        OnboardingTrial.isOffered ? 2 : 0
-    }
 
     // MARK: - L'ordre
 
@@ -193,7 +189,8 @@ final class OnboardingFlowTests: XCTestCase {
     /// l'acte monte, et les actes se suivent dans l'ordre du parcours.
     func testTheGaugeIsSplitIntoActs() {
         var lastAct = 0
-        for step in OnboardingStep.allCases where step != .hookLogo {
+        // Les stories et le paywall sont hors jauge.
+        for step in OnboardingStep.allCases where step != .hookLogo && step != .paywall {
             XCTAssertGreaterThanOrEqual(step.act, lastAct, "\(step)")
             XCTAssertLessThan(step.act, OnboardingStep.actCount)
             XCTAssertGreaterThan(step.actFraction, 0)
@@ -211,7 +208,7 @@ final class OnboardingFlowTests: XCTestCase {
             let model = OnboardingModel()
             model.select(country: country)
             let seen = walk(model)
-            XCTAssertEqual(seen.count, 32 + trialScreens, "\(country) : sans matière cochée, la plus dure ne se demande pas")
+            XCTAssertEqual(seen.count, 31, "\(country) : sans matière cochée, la plus dure ne se demande pas ; sans sujet, la leçon s'écrira dans l'app")
             XCTAssertFalse(seen.contains(.level), "\(country) : la filière et l'année, pas le palier")
             XCTAssertEqual(seen.last, .paywall)
         }
@@ -219,7 +216,7 @@ final class OnboardingFlowTests: XCTestCase {
         let elsewhere = OnboardingModel()
         elsewhere.select(country: .other)
         let seen = walk(elsewhere)
-        XCTAssertEqual(seen.count, 31 + trialScreens)
+        XCTAssertEqual(seen.count, 30)
         XCTAssertFalse(seen.contains(.schoolType) || seen.contains(.year))
         XCTAssertTrue(seen.contains(.level))
 
@@ -229,7 +226,7 @@ final class OnboardingFlowTests: XCTestCase {
         saudi.select(worldCountry: try XCTUnwrap(WorldCountries.country(code: "SA")))
         XCTAssertEqual(saudi.country, .other)
         XCTAssertEqual(saudi.regionCode, "SA")
-        XCTAssertEqual(walk(saudi).count, 32 + trialScreens)
+        XCTAssertEqual(walk(saudi).count, 31)
 
         // Un pays de la liste retrouvé par la recherche se range sous son nom de la liste.
         let morocco = OnboardingModel()
@@ -281,10 +278,10 @@ final class OnboardingFlowTests: XCTestCase {
     func testTheChromeHidesOnlyOnTheScreensThatStandAlone() {
         XCTAssertEqual(
             OnboardingStep.allCases.filter { !$0.showsChrome },
-            [.hookLogo, .planBuilding, .profileSummary, .paywall]
+            [.hookLogo, .planBuilding, .profileSummary, .lessonBuilding, .lessonReady, .paywall]
         )
         XCTAssertEqual(OnboardingStep.allCases.filter(\.isSkippable), [.currentAverage])
-        XCTAssertEqual(OnboardingStep.allCases.filter(\.isLoading), [.planBuilding])
+        XCTAssertEqual(OnboardingStep.allCases.filter(\.isLoading), [.planBuilding, .lessonBuilding])
     }
 
     // MARK: - Les réponses
@@ -442,7 +439,7 @@ final class OnboardingFlowTests: XCTestCase {
     func testGoingBackWorksEverywhereExceptLoadingAndPaywall() {
         XCTAssertEqual(
             OnboardingStep.allCases.filter { !$0.allowsReturn },
-            [.hookLogo, .planBuilding, .profileSummary, .paywall]
+            [.hookLogo, .planBuilding, .profileSummary, .lessonBuilding, .lessonReady, .paywall]
         )
 
         let model = self.model(advancingTo: .name)
