@@ -315,10 +315,6 @@ struct StartingPointStepView: View {
     /// La carte : son intitulé, la courbe, puis d'où l'on part et quand on arrive.
     private var projection: some View {
         VStack(spacing: 8) {
-            Text(i18n.t("ios.onb10.start.card"))
-                .font(V3Font.caption)
-                .foregroundStyle(V3Color.ink2)
-
             OnbProjectionChart(target: target)
                 .frame(height: 170)
 

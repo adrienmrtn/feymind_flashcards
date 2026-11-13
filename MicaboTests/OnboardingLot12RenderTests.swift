@@ -296,6 +296,7 @@ final class OnboardingLot12RenderTests: XCTestCase {
         try render("onb12-\(id(.notifications))", .notifications, model)
         try render("onb12-\(id(.commitment))-before", .commitment, model)
         try render("onb12-\(id(.commitment))", .commitment, model) { CommitmentStepView(previewCommitted: true) }
+        try render("onb12-\(id(.commitment))-holding", .commitment, model, devices: [.iPhone15Pro]) { CommitmentStepView(previewHold: 0.6) }
     }
 
     /// Acte 6 et 7 : la première leçon, le plan, puis la montée vers l'offre.

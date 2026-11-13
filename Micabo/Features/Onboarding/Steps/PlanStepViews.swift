@@ -31,11 +31,11 @@ struct PlanBuildingStepView: View {
     @State private var start = Date()
     @State private var didAdvance = false
 
-    /// De 0 à 1, d'après le temps écoulé. La course part vite et se pose : c'est un travail
-    /// qui s'achève.
+    /// De 0 à 1, d'après le temps écoulé, **à vitesse constante** (lot 12) : le pourcentage
+    /// coule sans à-coup, et les lignes se cochent à intervalles réguliers.
     static func progress(elapsed: TimeInterval) -> Double {
         let time = min(1, max(0, elapsed / duration))
-        return 1 - (1 - time) * (1 - time)
+        return time
     }
 
     /// Le nombre de lignes cochées : elles se partagent la course, la dernière à cent.
@@ -164,15 +164,17 @@ private struct PlanBuildingProgress: View {
 
 // MARK: - Le plan prêt
 
-/// **« Lina, ton plan est prêt »** : le moment où le parcours rend ce qu'il a demandé, **comme
-/// un objet à lui** (lot 12).
+/// **« Lina, ton plan est prêt »** : le moment où le parcours rend ce qu'il a demandé, et qui
+/// **se comprend en trois secondes** (lot 12). Trois blocs, un gros chiffre chacun :
 ///
-/// Mika fête, des confettis une fois, et le plan en une carte : « Plan de Lina », son examen et
-/// le temps qu'il reste ; sa semaine, un point par jour ; **la première séance, ce soir à son
-/// heure**, sur sa première leçon (ou sa matière la plus dure) ; son objectif dans son barème.
-/// Une réponse absente retire sa ligne. Le compte se propose en quittant cet écran.
+/// 1. **Ce soir** : l'heure du rappel, en grand, et ce qu'on travaille (sa première leçon, sinon
+///    sa matière la plus dure) pendant son temps choisi. Mis en avant.
+/// 2. **Cette semaine** : sept séances, une par jour, à sa durée.
+/// 3. **Ton objectif** : sa note visée, en vert, et le jour de son examen (sans examen :
+///    l'horizon de trois mois ; sans note : l'examen et sa date ; sans rien : le bloc part).
 ///
-/// Le nom de l'étape reste `profileSummary` : sa courbe dans les statistiques continue.
+/// Mika fête, des confettis une fois. Le compte se propose en quittant cet écran. Le nom de
+/// l'étape reste `profileSummary` : sa courbe dans les statistiques continue.
 struct ProfileSummaryStepView: View {
     var now = Date()
 
@@ -180,14 +182,12 @@ struct ProfileSummaryStepView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @Environment(\.onbCompact) private var compact
 
+    /// Une séance par jour : sept dans la semaine.
+    static let sessionsPerWeek = 7
+
     private var title: String {
         guard let name = model.displayName.nilIfBlank else { return i18n.t("ios.onb10.plan.titleNoName") }
         return i18n.t("ios.onb10.plan.title", ["name": name])
-    }
-
-    private var planName: String {
-        guard let name = model.displayName.nilIfBlank else { return i18n.t("ios.onb12.plan.nameAny") }
-        return i18n.t("ios.onb12.plan.name", ["name": name])
     }
 
     /// Ce que la séance de ce soir travaille : la première leçon, sinon la matière la plus dure.
@@ -197,16 +197,61 @@ struct ProfileSummaryStepView: View {
         return model.firstSubjectName(locale: i18n.locale) ?? i18n.t("ios.onb11.plan.lesson")
     }
 
+    /// L'objectif : la valeur en grand et sa ligne, ou rien quand l'élève n'a dit ni note ni
+    /// examen.
+    private var goal: (value: String, detail: String)? {
+        let exam = model.datedExam
+        if let target = model.targetLabel(locale: i18n.locale) {
+            if let exam {
+                return (target, i18n.t("ios.onb12.plan.goalDetail", [
+                    "exam": exam.choice.title(locale: i18n.locale),
+                    "date": OnbWords.day(exam.date, locale: i18n.locale),
+                ]))
+            }
+            return (target, i18n.t("ios.onb12.plan.goalOpen", [
+                "time": OnbWords.duration(days: StartingPointStepView.openHorizonDays, locale: i18n.locale),
+            ]))
+        }
+        if let exam {
+            return (exam.choice.title(locale: i18n.locale), OnbWords.date(exam.date, locale: i18n.locale))
+        }
+        return nil
+    }
+
     var body: some View {
         OnbScreen {
-            OnbHeroMika(mood: .celebrate, max: compact ? 96 : 130, min: 72)
-                .padding(.top, 4)
+            OnbHeroMika(mood: .celebrate, max: compact ? 84 : 120, min: 64)
+                .padding(.top, 2)
 
             OnbTitle(title, size: OnbLayout.display, alignment: .center)
-                .padding(.top, 6)
+                .padding(.top, 4)
 
-            plan
-                .padding(.top, 16)
+            VStack(spacing: 10) {
+                block(
+                    label: i18n.t("ios.onb12.plan.tonightLabel"),
+                    value: OnbWords.hour(model.reminderHour, locale: i18n.locale),
+                    detail: i18n.t("ios.onb12.plan.tonightDetail", ["topic": tonight, "min": "\(model.minutesPerDay)"]),
+                    tone: V3Color.accentBright,
+                    highlighted: true
+                )
+                block(
+                    label: i18n.t("ios.onb12.plan.weekLabel"),
+                    value: "\(Self.sessionsPerWeek)",
+                    detail: i18n.t("ios.onb12.plan.weekDetail", ["min": "\(model.minutesPerDay)"]),
+                    tone: V3Color.ink,
+                    highlighted: false
+                )
+                if let goal {
+                    block(
+                        label: i18n.t("ios.onb12.plan.goalLabel"),
+                        value: goal.value,
+                        detail: goal.detail,
+                        tone: V3Color.green,
+                        highlighted: false
+                    )
+                }
+            }
+            .padding(.top, 16)
         } footer: {
             V3Button(i18n.t("ios.deckBuild.seePlan")) {
                 model.advance()
@@ -217,91 +262,31 @@ struct ProfileSummaryStepView: View {
         }
     }
 
-    /// **Le plan, comme un objet** : son nom, son examen, sa semaine, la séance de ce soir, son
-    /// objectif.
-    private var plan: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .center, spacing: 10) {
-                Text(planName)
-                    .font(V3Font.heading(24))
+    /// Un bloc : son nom en petit, le gros chiffre, la ligne qui le dit en mots.
+    private func block(label: String, value: String, detail: String, tone: Color, highlighted: Bool) -> some View {
+        HStack(alignment: .center, spacing: 14) {
+            Text(value)
+                .font(V3Font.display(compact ? 34 : 40))
+                .foregroundStyle(tone)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .frame(minWidth: 76, alignment: .leading)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .font(V3Font.label)
+                    .foregroundStyle(V3Color.ink2)
+                Text(detail)
+                    .font(V3Font.bodyStrong)
                     .foregroundStyle(V3Color.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                if let exam = model.examName(locale: i18n.locale), let days = model.examDaysLeft(now: now), days > 0 {
-                    // « Bac · 7 mois » : deux mots de l'élève, séparés d'un point médian.
-                    Text(verbatim: "\(exam) · \(OnbWords.duration(days: days, locale: i18n.locale))")
-                    .font(V3Font.label)
-                    .foregroundStyle(V3Color.yellowInk)
-                    .lineLimit(1)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(V3Color.yellowWash, in: Capsule())
-                }
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-
-            V3WeekStrip(days: PlanDemoStepView.week(from: now, examDate: model.datedExam?.date, locale: i18n.locale))
-
-            // La séance de ce soir : le temps fort de la carte.
-            HStack(spacing: 12) {
-                OnbIcon(icon: .alarm, size: 28)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(i18n.t("ios.onb12.plan.tonight", ["hour": OnbWords.hour(model.reminderHour, locale: i18n.locale)]))
-                        .font(V3Font.caption)
-                        .foregroundStyle(V3Color.accentBright)
-                    Text(tonight)
-                        .font(V3Font.bodyStrong)
-                        .foregroundStyle(V3Color.ink)
-                        .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                Text(i18n.t("ios.quiz.time.short", ["n": "\(model.minutesPerDay)"]))
-                    .font(V3Font.label)
-                    .foregroundStyle(V3Color.accentBright)
-                    .lineLimit(1)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(V3Color.accentWash, in: Capsule())
-            }
-            .padding(12)
-            .background(V3Color.accentWash.opacity(0.5), in: RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous)
-                    .strokeBorder(V3Color.accent, lineWidth: V3Metric.border)
-            )
-
-            if let target = model.targetLabel(locale: i18n.locale) {
-                HStack(spacing: 12) {
-                    OnbIcon(icon: .trophy, size: 24)
-                    Text(i18n.t("ios.onb5.plan.goal"))
-                        .font(V3Font.body)
-                        .foregroundStyle(V3Color.ink2)
-                    Spacer(minLength: 8)
-                    Text(model.currentLabel(locale: i18n.locale).map { OnbWords.range(from: $0, to: target, locale: i18n.locale) } ?? target)
-                        .font(V3Font.bodyStrong)
-                        .foregroundStyle(V3Color.green)
-                        .lineLimit(1)
-                }
-                .accessibilityElement(children: .combine)
-            }
-
-            let names = OnbDemo.sessionSubjects(for: model, locale: i18n.locale)
-            if !names.isEmpty {
-                HStack(alignment: .firstTextBaseline, spacing: 12) {
-                    OnbIcon(icon: .book, size: 24)
-                    Text(OnbWords.list(names, locale: i18n.locale))
-                        .font(V3Font.body)
-                        .foregroundStyle(V3Color.ink2)
-                        .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .accessibilityElement(children: .combine)
-            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(18)
+        .padding(.horizontal, 18)
+        .padding(.vertical, compact ? 10 : 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .v3Card(selected: true)
+        .v3Card(selected: highlighted)
+        .accessibilityElement(children: .combine)
     }
 }

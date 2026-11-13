@@ -252,17 +252,23 @@ struct PaywallFlowView: View {
     /// **Vrai à la fin du parcours d'accueil** : l'offre refusée mène à la sortie propre
     /// (`Stage.farewell`) au lieu de refermer l'écran d'un coup.
     var showsFarewell = false
+    /// **L'aperçu d'un compte déjà Pro** (lot 12, constructions internes) : mêmes écrans, vrais
+    /// prix, mais aucun achat ni restauration ne part ; une mention le dit sous le bouton, et
+    /// la croix mène à l'offre puis à l'app, comme pour un élève sans abonnement.
+    var previewsPro = false
 
     /// **Le paywall**, ouvert par une porte de l'app (`trigger`) ou par la fin du parcours
     /// d'accueil (sans `trigger`, `showsFarewell` vrai).
     init(
         trigger: PaywallTrigger? = nil,
         showsFarewell: Bool = false,
+        previewsPro: Bool = false,
         onDismiss: @escaping () -> Void,
         onSubscribed: @escaping () -> Void
     ) {
         self.trigger = trigger
         self.showsFarewell = showsFarewell
+        self.previewsPro = previewsPro
         self.onDismiss = onDismiss
         self.onSubscribed = onSubscribed
         _stage = State(initialValue: .paywall)
@@ -325,7 +331,7 @@ struct PaywallFlowView: View {
         // par le flux du SDK (`ProAccess.observePurchases`) : l'écran encore ouvert passe
         // alors à la bienvenue, au lieu de rester devant quelqu'un d'abonné.
         .onChange(of: pro?.isPro == true) { _, isPro in
-            guard isPro, !didSubscribe else { return }
+            guard isPro, !didSubscribe, !previewsPro else { return }
             subscribed()
         }
     }
@@ -372,9 +378,14 @@ struct PaywallFlowView: View {
         )
     }
 
+    /// La mention de l'aperçu, sous le bouton.
+    private var previewNotice: PaywallNotice? {
+        previewsPro ? .info(L10n.t("ios.pay12.preview", locale: .resolved())) : nil
+    }
+
     /// Passe à un autre temps, en fondu. Le message d'une boutique qui a buté ne suit pas.
     private func show(_ next: Stage) {
-        notice = nil
+        notice = previewNotice
         withAnimation(motion(MicaboMotion.standard)) { stage = next }
     }
 
@@ -382,6 +393,7 @@ struct PaywallFlowView: View {
 
     private func opened() {
         openedAt = Date()
+        notice = previewNotice
         switch stage {
         case .paywall:
             Analytics.track(.paywallOpened, [
@@ -440,7 +452,7 @@ struct PaywallFlowView: View {
         // sont arrivés de la boutique. Une offre qui s'ouvrirait sur une attente serait pire
         // que pas d'offre.
         guard PaywallPriceLoading.hasPrices(for: Self.offerProducts),
-              DiscountOffer.paywallClosed(isPro: isPro)
+              DiscountOffer.paywallClosed(isPro: isPro && !previewsPro)
         else {
             onDismiss()
             return
@@ -513,6 +525,12 @@ struct PaywallFlowView: View {
     @MainActor
     private func buy(_ plan: PaywallPlan, door: String) async {
         guard !isPurchasing else { return }
+        // L'aperçu ne vend rien : la mention le redit, et rien ne part chez la boutique.
+        guard !previewsPro else {
+            Haptics.warning()
+            notice = previewNotice
+            return
+        }
         isPurchasing = true
         notice = nil
         // L'essai tel qu'il était promis au moment d'acheter : la boutique peut répondre
@@ -584,6 +602,10 @@ struct PaywallFlowView: View {
     @MainActor
     private func restore() async {
         guard !isPurchasing else { return }
+        guard !previewsPro else {
+            notice = previewNotice
+            return
+        }
         isPurchasing = true
         notice = nil
 

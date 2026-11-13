@@ -330,7 +330,6 @@ enum OnbPick {
 /// la carte », « Prendre la photo »…), puis devient « Continuer ». Toucher le morceau d'app
 /// joue aussi.
 struct OnbDemoStage<Panel: View>: View {
-    var eyebrow: String?
     let title: String
     let say: OnbSay
     /// Le libellé du bouton tant que la démonstration n'est pas jouée ; `nil` : « Continuer ».
@@ -350,13 +349,6 @@ struct OnbDemoStage<Panel: View>: View {
                 .padding(.top, OnbLayout.mikaGap)
             panel()
                 .frame(maxWidth: .infinity)
-                .overlay(alignment: .topLeading) {
-                    // Ce que la démonstration soigne, en étiquette sur le coin du morceau d'app.
-                    if let eyebrow {
-                        OnbEyebrow(text: eyebrow)
-                            .offset(x: 14, y: -11)
-                    }
-                }
                 .padding(.top, OnbLayout.answersGap)
                 .dynamicTypeSize(...DynamicTypeSize.xxLarge)
         } footer: {
@@ -370,34 +362,6 @@ struct OnbDemoStage<Panel: View>: View {
                 }
             }
         }
-    }
-}
-
-/// **L'étiquette d'une démonstration** : ce qu'elle soigne, entre guillemets, en petit et en
-/// couleur, au-dessus du titre.
-struct OnbEyebrow: View {
-    let text: String
-
-    @Environment(\.onbCompact) private var compact
-
-    var body: some View {
-        // Sur un écran court, l'étiquette laisse sa place au morceau d'app.
-        if !compact {
-            label
-        }
-    }
-
-    private var label: some View {
-        Text(text)
-            .font(V3Font.eyebrow)
-            .foregroundStyle(V3Color.accentBright)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
-            .background(V3Color.bg, in: Capsule())
-            .overlay(Capsule().strokeBorder(V3Color.accent.opacity(0.6), lineWidth: 1))
-            .padding(.trailing, 28)
     }
 }
 

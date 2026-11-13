@@ -71,15 +71,6 @@ final class OnboardingLot11Tests: XCTestCase {
         XCTAssertTrue((demos + [.whyNow, .commitment]).allSatisfy(\.allowsReturn))
     }
 
-    /// L'étiquette d'une démonstration reprend le blocage coché, sinon nomme l'outil.
-    func testTheDemoEyebrowSpeaksToTheWorry() {
-        let model = OnboardingModel()
-        model.toggle(worry: .homework)
-        let quoted = OnbDemo.eyebrow(worry: .homework, tool: "Le scanner", model: model, locale: .fr)
-        XCTAssertTrue(quoted.contains(StudyWorry.homework.title(locale: .fr)), quoted)
-        XCTAssertEqual(OnbDemo.eyebrow(worry: .forgetting, tool: "Les cartes", model: model, locale: .fr), "Les cartes")
-    }
-
     /// La démo de leçon parle de la matière cochée, jamais d'une matière qu'il n'a pas.
     func testTheLessonDemoUsesATickedSubject() {
         let model = OnboardingModel()

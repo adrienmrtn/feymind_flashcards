@@ -231,14 +231,6 @@ struct SolutionMapStepView: View {
             .v3Card()
             .padding(.top, 18)
 
-            Text(i18n.t("ios.onb12.recap.next"))
-                .font(V3Font.body)
-                .foregroundStyle(V3Color.ink2)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity)
-                .padding(.top, 14)
-
             Spacer(minLength: 4)
                 .layoutPriority(-1)
         } footer: {
