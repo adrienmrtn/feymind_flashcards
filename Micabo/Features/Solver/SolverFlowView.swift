@@ -20,6 +20,11 @@ enum SolverRoute: Hashable {
 /// « Scanner un exo » de Home : la capture, puis la solution pas à pas ; l'historique des
 /// exercices ; et « Demande à Mika », un fil par matière où les exercices scannés arrivent.
 struct SolverFlowView: View {
+    /// Lot 12 — le mode avec lequel la caméra s'ouvre (la feuille Outils) ; sinon le dernier.
+    var initialMode: ScanMode?
+    /// « En faire une leçon », depuis une conversation née ici.
+    var onMakeLesson: ((ChatLessonSeed) -> Void)?
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Query(sort: \SolvedExercise.createdAt, order: .reverse) private var exercises: [SolvedExercise]
@@ -29,12 +34,16 @@ struct SolverFlowView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            SolverCaptureView(
-                historyCount: exercises.count,
-                onClose: { dismiss() },
-                onHistory: { path.append(.history) },
-                onTutor: { path.append(.tutor) },
-                onRead: read
+            // **La caméra à modes** (lot 12) : « Résoudre » garde le scanner pas à pas ; les
+            // autres modes répondent dans une conversation avec Mika, gardée dans l'historique.
+            ScanCaptureView(
+                context: .standalone,
+                initialMode: initialMode,
+                onSolve: read,
+                onCapture: { capture in
+                    path.append(.chat(ChatLaunch(origin: .scan, scan: ScanPayload(capture))))
+                },
+                onClose: { dismiss() }
             )
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: SolverRoute.self) { route in
@@ -67,7 +76,7 @@ struct SolverFlowView: View {
         case .thread(let subject):
             TutorThreadView(subject: subject, onBack: { pop() }, onOpenExercise: open)
         case .chat(let launch):
-            ChatScreen(launch: launch, onClose: { pop() }, closeSymbol: "chevron.backward")
+            ChatScreen(launch: launch, onMakeLesson: onMakeLesson, onClose: { pop() }, closeSymbol: "chevron.backward")
                 .enablesSwipeBack()
         }
     }

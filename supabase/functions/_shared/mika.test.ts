@@ -4,10 +4,14 @@ import {
   buildMikaPrompt,
   MIKA_MAX_ATTACHMENT,
   MIKA_MAX_MESSAGE,
+  MIKA_MAX_TOKENS,
   MIKA_MAX_TURNS,
+  mikaMaxTokens,
+  mikaModeBrief,
   parseMikaReply,
   readAttachment,
   readAttachments,
+  readMode,
   readTurns,
 } from "./mika.ts";
 import { UNTRUSTED_BEGIN, UNTRUSTED_END } from "./prompt-boundary.ts";
@@ -107,4 +111,18 @@ Deno.test("buildMikaPrompt suit la langue de l'élève, celle de l'interface par
   assert(source.startsWith("LANGUE DE SORTIE : celle du dernier message de l'élève."));
   assert(!source.includes("FRANÇAIS"));
   assert(source.includes("reprends la langue de ses messages précédents"));
+});
+
+Deno.test("le geste de la caméra (lot 12) : lu s'il est connu, une traduction a la place d'une page", () => {
+  assertEquals(readMode("translate"), "translate");
+  assertEquals(readMode("hack"), undefined);
+  assertEquals(readMode(42), undefined);
+  assertEquals(mikaMaxTokens(undefined), MIKA_MAX_TOKENS);
+  assertEquals(mikaMaxTokens("summary"), MIKA_MAX_TOKENS);
+  assert(mikaMaxTokens("translate") > MIKA_MAX_TOKENS);
+  assertEquals(mikaModeBrief(undefined), "");
+  const prompt = buildMikaPrompt({ turns: [{ role: "user", text: "Traduis" }], mode: "translate" });
+  assert(prompt.includes("GESTE : TRADUCTION"));
+  const plain = buildMikaPrompt({ turns: [{ role: "user", text: "Salut" }] });
+  assert(!plain.includes("GESTE"));
 });
