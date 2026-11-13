@@ -397,12 +397,14 @@ enum HomeShortcut: String, Equatable, CaseIterable, Identifiable {
 
     /// Ce que la Home propose, dans l'ordre. Le quiz demande une leçon ouverte, les cartes des
     /// cartes dues.
-    static func available(isNewcomer: Bool, hasLesson: Bool, dueCount: Int, hasChats: Bool = false) -> [HomeShortcut] {
+    ///
+    /// Les conversations avec Mika ne sont plus une puce (lot 12) : elles ont leur tiroir, au
+    /// bouton menu de l'en-tête.
+    static func available(isNewcomer: Bool, hasLesson: Bool, dueCount: Int) -> [HomeShortcut] {
         if isNewcomer {
-            return hasChats ? [.photo, .pdf, .youtube, .chats, .focus, .scan] : [.photo, .pdf, .youtube, .focus, .scan]
+            return [.photo, .pdf, .youtube, .focus, .scan]
         }
-        // Les conversations avec Mika juste après Focus, dès qu'il y en a une.
-        var shortcuts: [HomeShortcut] = hasChats ? [.focus, .chats, .scan] : [.focus, .scan]
+        var shortcuts: [HomeShortcut] = [.focus, .scan]
         if hasLesson { shortcuts.append(.quiz) }
         if dueCount > 0 { shortcuts.append(.cards) }
         shortcuts.append(contentsOf: [.importSource, .writing, .mock])

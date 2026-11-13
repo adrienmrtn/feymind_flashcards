@@ -49,16 +49,21 @@ struct HomeView: View {
     @State private var studiesAfterStreak = false
     /// La ligue de la semaine : l'XP de l'en-tête y mène.
     @State private var showsLeague = false
-    @State private var showsScanner = false
+    /// La caméra à modes (lot 12), avec le mode d'ouverture choisi dans la feuille Outils.
+    @State private var scanner: HomeScannerLaunch?
     /// « Corriger un texte », en plein écran comme le scanner.
     @State private var showsWriting = false
-    /// Le chat Mika (lot 11) : la barre y envoie une question, son appareil photo y ouvre la
-    /// prise en rafale ; la puce « Mes questions » ouvre l'historique.
+    /// Le chat Mika (lot 11) : la barre y envoie une question ; le tiroir y rouvre une
+    /// conversation, ou en commence une.
     @State private var chatLaunch: ChatLaunch?
-    @State private var showsChats = false
-    @State private var hasChats = false
     /// « En faire une leçon », demandé depuis le chat : lancé une fois le chat refermé.
-    @State private var lessonTopicFromChat: String?
+    @State private var lessonSeedFromChat: ChatLessonSeed?
+    /// Lot 12 — le tiroir des conversations, à gauche (à droite en arabe).
+    @State private var drawerOpen = false
+    @State private var showsSettings = false
+    /// Lot 12 — la feuille Outils du « + », et l'entrée choisie (ouverte une fois refermée).
+    @State private var showsTools = false
+    @State private var pickedTool: ToolItem?
     @State private var showsDueReview = false
     @State private var quickQuizCourse: Course?
     @State private var mock: MockExamStart?
@@ -98,14 +103,44 @@ struct HomeView: View {
     }
 
     var body: some View {
-        observing
-            .task(id: planKey) { refreshPlan() }
-            // Le journal des cartes rejoint la série une fois : un ancien compte retrouve la
-            // sienne dans l'en-tête dès l'ouverture.
-            .task { StudyStreak.adoptReviewHistoryIfNeeded(in: modelContext) }
-            .onAppear(perform: appeared)
-            .reportsNavigationDepth(for: .today, depth: path.count)
-            .returnsHome(path: $path)
+        // **Le tiroir des conversations** (lot 12) : le bouton menu de l'en-tête, ou un
+        // glissement depuis le bord. Ouvert, la barre d'onglets s'efface comme pour un écran
+        // poussé ; une leçon poussée garde son retour par glissement (le bord est à elle).
+        SideDrawer(isOpen: $drawerOpen, enabled: path.isEmpty, onSwipeOpen: { drawerOpened(via: "swipe") }) {
+            observing
+                .task(id: planKey) { refreshPlan() }
+                // Le journal des cartes rejoint la série une fois : un ancien compte retrouve la
+                // sienne dans l'en-tête dès l'ouverture.
+                .task { StudyStreak.adoptReviewHistoryIfNeeded(in: modelContext) }
+                .onAppear(perform: appeared)
+        } drawer: {
+            ChatHistoryView(
+                onOpen: { id in
+                    drawerOpen = false
+                    chatLaunch = ChatLaunch(origin: .home, threadID: id)
+                },
+                onNew: {
+                    drawerOpen = false
+                    chatLaunch = ChatLaunch(origin: .home)
+                },
+                onSettings: {
+                    drawerOpen = false
+                    showsSettings = true
+                }
+            )
+        }
+        .reportsNavigationDepth(for: .today, depth: path.count + (drawerOpen ? 1 : 0))
+        .returnsHome(path: $path)
+        .onChange(of: router?.homeRequests ?? 0) { _, _ in drawerOpen = false }
+        .sheet(isPresented: $showsSettings) {
+            SettingsView()
+                .presentationDragIndicator(.visible)
+        }
+    }
+
+    private func drawerOpened(via: String) {
+        dismissKeyboard()
+        Analytics.track(.drawerOpened, ["via": .text(via), "count": .number(Double(ChatStore.threads(in: modelContext).count))])
     }
 
     /// Ce que la Home écoute : la série, le retour au premier plan, le retour d'une leçon,
@@ -164,8 +199,7 @@ struct HomeView: View {
                 shortcuts: HomeShortcut.available(
                     isNewcomer: !day.hasCourses,
                     hasLesson: snapshot.resumeID != nil,
-                    dueCount: day.dueCount,
-                    hasChats: hasChats
+                    dueCount: day.dueCount
                 ),
                 dueCount: day.dueCount,
                 isBusy: generation.isBusy || locked != nil,
@@ -216,6 +250,15 @@ struct HomeView: View {
     /// chaque morceau se type de son côté, comme dans `CalendarView`.
     private var sheets: some View {
         navigation
+            .sheet(isPresented: $showsTools, onDismiss: openPickedTool) {
+                ToolsSheet(
+                    context: .home,
+                    availability: ToolsAvailability(hasLesson: resumeCourse != nil, hasLessons: !lessons.isEmpty, canImport: composer.hasRoom && !generation.isBusy)
+                ) { item in
+                    pickedTool = item
+                    showsTools = false
+                }
+            }
             .sheet(isPresented: $showsSources, onDismiss: openPendingImport) {
                 HomeSourcesSheet(isPro: isPro, freeLessonLeft: freeLessonLeft, enabled: composer.hasRoom) { kind in
                     pendingImport = kind
@@ -253,20 +296,17 @@ struct HomeView: View {
                 MockExamFlow(start: start, lessons: lessons)
                     .toolIntro(.mock)
             }
-            .fullScreenCover(isPresented: $showsScanner) {
-                ScanExerciseView()
-                    .toolIntro(.scan)
+            .fullScreenCover(item: $scanner, onDismiss: afterChat) { launch in
+                ScanExerciseView(initialMode: launch.mode, onMakeLesson: { seed in
+                    lessonSeedFromChat = seed
+                    scanner = nil
+                })
+                .toolIntro(.scan)
             }
             .fullScreenCover(item: $chatLaunch, onDismiss: afterChat) { launch in
-                ChatScreen(launch: launch, onMakeLesson: { topic in
-                    lessonTopicFromChat = topic
+                ChatScreen(launch: launch, onMakeLesson: { seed in
+                    lessonSeedFromChat = seed
                     chatLaunch = nil
-                })
-            }
-            .fullScreenCover(isPresented: $showsChats, onDismiss: afterChat) {
-                ChatHub(onMakeLesson: { topic in
-                    lessonTopicFromChat = topic
-                    showsChats = false
                 })
             }
             .fullScreenCover(isPresented: $showsWriting) {
@@ -349,12 +389,6 @@ struct HomeView: View {
         consumeFirstLessonIntent()
         // Les conversations d'avant le lot 11 rejoignent l'historique, une fois.
         ChatMigration.runIfNeeded(in: modelContext)
-        refreshChats()
-    }
-
-    private func refreshChats() {
-        let any = ChatStore.hasAny(in: modelContext)
-        if any != hasChats { hasChats = any }
     }
 
     // MARK: Le chat
@@ -366,20 +400,23 @@ struct HomeView: View {
         composer.draft = ""
     }
 
-    /// L'appareil photo de la barre : une conversation, la prise en rafale ouverte.
-    private func openChatCamera() {
+    /// **L'appareil photo de la barre** (lot 12) : la caméra à modes, sur le dernier mode choisi.
+    private func openCamera() {
         dismissKeyboard()
-        chatLaunch = ChatLaunch(origin: .camera, opensCamera: true)
+        scanner = HomeScannerLaunch(mode: nil)
     }
 
-    /// Le chat est refermé : la puce des conversations apparaît, et « En faire une leçon »
-    /// lance la création de leçon que la barre connaît, sur le sujet de la conversation.
+    /// Le chat (ou la caméra) est refermé : « En faire une leçon » lance la création de leçon
+    /// que la barre connaît — les pages lues deviennent un support, sinon le sujet part seul.
     private func afterChat() {
-        refreshChats()
-        guard let topic = lessonTopicFromChat else { return }
-        lessonTopicFromChat = nil
+        guard let seed = lessonSeedFromChat else { return }
+        lessonSeedFromChat = nil
         guard !generation.isBusy else { return }
-        composer.draft = topic
+        if let text = seed.text, text.count >= 200, let id = composer.begin(.photo, title: seed.title) {
+            composer.finish(id, with: ImportedDocument(text: text, pageImages: [], coverImage: nil, pageCount: 1, fileName: seed.title, source: .photo, extractionNote: nil))
+        } else {
+            composer.draft = seed.topic
+        }
         createLesson()
     }
 
@@ -425,10 +462,14 @@ struct HomeView: View {
             perform: perform,
             leave: leave,
             shortcut: open,
-            sources: openSources,
-            scan: openChatCamera,
+            sources: openTools,
+            scan: openCamera,
             send: send,
-            dismissKeyboard: dismissKeyboard
+            dismissKeyboard: dismissKeyboard,
+            menu: {
+                drawerOpened(via: "button")
+                drawerOpen = true
+            }
         )
     }
 
@@ -482,7 +523,7 @@ struct HomeView: View {
         case .scan:
             // Le scanner s'ouvre toujours : la lecture de l'énoncé se fait sur l'appareil. La
             // porte de Mika vient à la demande de solution (`SolverSession`).
-            showsScanner = true
+            scanner = HomeScannerLaunch(mode: .solve)
         case .quiz:
             quickQuizCourse = resumeCourse
         case .cards:
@@ -498,7 +539,44 @@ struct HomeView: View {
         case .photo, .pdf, .youtube:
             if let kind = shortcut.source { tapImport(kind) }
         case .chats:
-            showsChats = true
+            drawerOpen = true
+        }
+    }
+
+    /// Le « + » : la feuille Outils.
+    private func openTools() {
+        dismissKeyboard()
+        showsTools = true
+    }
+
+    /// **Une entrée de la feuille Outils**, ouverte une fois la feuille refermée : chacune mène
+    /// à ce qui existe déjà — la caméra à modes, un import, la séance, le quiz, l'examen blanc,
+    /// le plan de révision.
+    private func openPickedTool() {
+        guard let item = pickedTool else { return }
+        pickedTool = nil
+        if let mode = item.scanMode {
+            scanner = HomeScannerLaunch(mode: mode)
+            return
+        }
+        switch item {
+        case .camera: scanner = HomeScannerLaunch(mode: nil)
+        case .photos: tapImport(.photo)
+        case .files: tapImport(.pdf)
+        case .youtube: tapImport(.youtube)
+        case .audio: tapImport(.audio)
+        case .allSources: showsSources = true
+        case .focus: open(.focus)
+        case .quiz: quickQuizCourse = resumeCourse
+        case .mock: mock = MockExamStart(exam: exams.first { $0.id == snapshot.examID })
+        case .plan:
+            // Le plan de révision vit dans le Calendrier ; sans examen, on commence par lui.
+            if snapshot.exam != nil {
+                router?.showCalendar(day: snapshot.examDate)
+            } else {
+                editingExam = .new
+            }
+        default: break
         }
     }
 
@@ -611,4 +689,10 @@ struct HomeView: View {
             generation.retry()
         }
     }
+}
+
+/// La caméra à modes ouverte depuis la Home, et son mode d'ouverture (`nil` : le dernier).
+struct HomeScannerLaunch: Identifiable {
+    let id = UUID()
+    var mode: ScanMode?
 }

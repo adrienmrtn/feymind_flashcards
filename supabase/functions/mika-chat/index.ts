@@ -11,11 +11,12 @@ import {
 import {
   buildMikaPrompt,
   MIKA_FREE_CEILING,
-  MIKA_MAX_TOKENS,
   MIKA_PRO_CEILING,
   MIKA_SYSTEM_PROMPT,
+  mikaMaxTokens,
   parseMikaReply,
   readAttachments,
+  readMode,
   readTurns,
 } from "../_shared/mika.ts";
 
@@ -37,6 +38,8 @@ interface RequestBody {
   attachments?: unknown;
   language?: string;
   level?: string;
+  /** Lot 12 : le geste de la caméra (`translate`, `vocabulary`…), ignoré s'il est inconnu. */
+  mode?: unknown;
 }
 
 Deno.serve((request: Request) =>
@@ -55,16 +58,18 @@ Deno.serve((request: Request) =>
         throw new FalError("Il n'y a pas de question à laquelle répondre.", 400);
       }
 
+      const mode = readMode(body.mode);
       const output = await callModel({
         prompt: buildMikaPrompt({
           turns,
           attachment: readAttachments(body.attachment, body.attachments),
           language: body.language,
           level: body.level,
+          mode,
         }),
         systemPrompt: MIKA_SYSTEM_PROMPT,
         temperature: 0.5,
-        maxTokens: MIKA_MAX_TOKENS,
+        maxTokens: mikaMaxTokens(mode),
       });
 
       const reply = parseMikaReply(deepStripEmDashes(extractJSON<Record<string, unknown>>(output)));

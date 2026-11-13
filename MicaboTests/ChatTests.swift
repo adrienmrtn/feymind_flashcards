@@ -160,7 +160,7 @@ final class ChatTests: XCTestCase {
         XCTAssertEqual(groups[0].0, .today)
         XCTAssertEqual(groups[1].0, .yesterday)
         XCTAssertEqual(groups[2].0, .week)
-        if case .month = groups[3].0 {} else { XCTFail("plus d'une semaine : rangé par mois") }
+        XCTAssertEqual(groups[3].0, .older, "plus d'une semaine : « plus ancien »")
     }
 
     // MARK: - Le document joint
@@ -317,10 +317,11 @@ final class ChatTests: XCTestCase {
 
     // MARK: - Les entrées
 
-    func testTheHomeOffersTheConversationsOnceThereAreSome() {
+    /// Lot 12 : les conversations ont leur tiroir (le bouton menu de la Home) ; la puce
+    /// « Mes questions » ne double plus ce chemin.
+    func testTheConversationsLiveInTheDrawerNotInAChip() {
         XCTAssertFalse(HomeShortcut.available(isNewcomer: false, hasLesson: true, dueCount: 0).contains(.chats))
-        XCTAssertEqual(Array(HomeShortcut.available(isNewcomer: false, hasLesson: true, dueCount: 0, hasChats: true).prefix(2)), [.focus, .chats])
-        XCTAssertTrue(HomeShortcut.available(isNewcomer: true, hasLesson: false, dueCount: 0, hasChats: true).contains(.chats))
+        XCTAssertFalse(HomeShortcut.available(isNewcomer: true, hasLesson: false, dueCount: 0).contains(.chats))
         XCTAssertEqual(HomeShortcut.chats.title(locale: .fr), "Mes questions")
     }
 

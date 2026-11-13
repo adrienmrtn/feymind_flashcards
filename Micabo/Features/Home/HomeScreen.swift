@@ -35,6 +35,8 @@ struct HomeActions {
     /// Envoyer le sujet tapé : la leçon se crée.
     var send: () -> Void = {}
     var dismissKeyboard: () -> Void = {}
+    /// Lot 12 — le bouton menu, en haut à gauche : le tiroir des conversations.
+    var menu: () -> Void = {}
 }
 
 /// Ce que l'en-tête montre à gauche.
@@ -96,7 +98,8 @@ struct HomeScreen: View {
                 offerRemaining: offerRemaining,
                 onPro: actions.pro,
                 onLeague: actions.league,
-                onStreak: actions.streak
+                onStreak: actions.streak,
+                onMenu: actions.menu
             )
             .padding(.top, 8)
 
@@ -161,9 +164,26 @@ struct HomeHeader: View {
     let onPro: () -> Void
     let onLeague: () -> Void
     let onStreak: () -> Void
+    /// Lot 12 — le tiroir des conversations.
+    var onMenu: () -> Void = {}
 
     var body: some View {
         HStack(spacing: 16) {
+            Button(action: onMenu) {
+                // Trois traits inégaux, le plus court en bas : le menu, à la façon de Micabo.
+                VStack(alignment: .leading, spacing: 4.5) {
+                    Capsule().frame(width: 22, height: 2.6)
+                    Capsule().frame(width: 22, height: 2.6)
+                    Capsule().frame(width: 13, height: 2.6)
+                }
+                .foregroundStyle(V3Color.ink)
+                .frame(width: 44, height: 44)
+                .background(V3Color.surface, in: Circle())
+                .overlay(Circle().strokeBorder(V3Color.line, lineWidth: V3Metric.border))
+            }
+            .buttonStyle(MicaboPressableButtonStyle(feedback: .light))
+            .padding(.trailing, -4)
+            .accessibilityLabel(Text(L10n.t("ios.chat12.menu", locale: .resolved())))
             proEntry
             Spacer(minLength: 8)
             figure(
