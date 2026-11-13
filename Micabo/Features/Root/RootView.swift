@@ -143,10 +143,11 @@ struct RootView: View {
 /// (pas de la zone sûre), puis s'efface en fondu sur l'écran qui suit.
 ///
 /// **Animé depuis le build 180** (`isPlaying`) : la première image reste celle de l'écran de
-/// lancement, au point près ; puis Mika rebondit une fois et « Micabo » monte sous lui, et le
-/// rideau rend la main (`onFinished`) **à la fin de ce geste, sans minuterie** : un peu plus
-/// d'une demi-seconde, pendant laquelle l'app se pose dessous. « Réduire les animations » : ni
-/// rebond ni montée, le nom apparaît en fondu bref, et le rideau se lève aussitôt.
+/// lancement, au point près ; puis Mika, **sans sauter ni rebondir** (il ne décolle jamais),
+/// passe en fondu à son clin d'œil en grandissant à peine, et « Micabo » monte sous lui. Le
+/// rideau rend la main (`onFinished`) **à la fin de ce geste, sans minuterie** : six dixièmes
+/// de seconde, pendant lesquels l'app se pose dessous. « Réduire les animations » : ni mise à
+/// l'échelle ni montée, un fondu bref, et le rideau se lève aussitôt.
 struct LaunchCurtain: View {
     /// Vrai une fois le rideau levé pendant ce lancement.
     nonisolated(unsafe) static var hasLifted = false
@@ -159,22 +160,18 @@ struct LaunchCurtain: View {
     var onFinished: () -> Void = {}
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    /// Le geste a commencé : Mika rebondit, le nom monte.
+    /// Le geste a commencé : Mika fait son clin d'œil, le nom monte.
     @State private var played = false
+
+    /// La taille de Mika sur l'écran de lancement (`LaunchMika`, 200 points).
+    static let size: CGFloat = 200
 
     var body: some View {
         ZStack {
             MicaboBrand.launch
-            Image(Self.mika)
-                .keyframeAnimator(initialValue: CGFloat(1), trigger: played && !reduceMotion) { content, scale in
-                    content.scaleEffect(scale)
-                } keyframes: { _ in
-                    KeyframeTrack {
-                        SpringKeyframe(0.9, duration: 0.14)
-                        SpringKeyframe(1.08, duration: 0.2)
-                        SpringKeyframe(1, duration: 0.24)
-                    }
-                }
+            LaunchMikaWink(isWinking: played)
+                // Une légère mise à l'échelle, sur place : Mika ne quitte pas son centre.
+                .scaleEffect(played && !reduceMotion ? 1.04 : 1)
             Text(verbatim: "Micabo")
                 .font(V3Font.display(40))
                 .foregroundStyle(.white)
@@ -189,8 +186,8 @@ struct LaunchCurtain: View {
 
     private func play() {
         guard isPlaying, !played else { return }
-        // Le nom monte pendant que Mika rebondit (six dixièmes de seconde) ; mouvement réduit,
-        // un fondu bref.
+        // Le nom monte pendant que Mika fait son clin d'œil (six dixièmes de seconde) ;
+        // mouvement réduit, un fondu bref.
         let curve = reduceMotion
             ? MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: true)
             : MicaboMotion.fill(seconds: 0.6)
@@ -199,5 +196,21 @@ struct LaunchCurtain: View {
         } completion: {
             onFinished()
         }
+    }
+}
+
+/// **Mika au lancement** : l'image de l'écran de lancement, puis, en fondu à la même place et
+/// à la même taille, son clin d'œil. Aucun déplacement.
+private struct LaunchMikaWink: View {
+    let isWinking: Bool
+
+    var body: some View {
+        ZStack {
+            Image(LaunchCurtain.mika)
+                .opacity(isWinking ? 0 : 1)
+            MikaMascot(mood: .wink, size: LaunchCurtain.size)
+                .opacity(isWinking ? 1 : 0)
+        }
+        .frame(width: LaunchCurtain.size, height: LaunchCurtain.size)
     }
 }
