@@ -31,6 +31,12 @@ struct GoalStepView: View {
                     }
                 }
             }
+        } footer: {
+            // Un appui suffit (la page part à la fin du ressort) ; le bouton reste à sa place,
+            // le même que partout, pour qui revient sur l'écran.
+            V3Button(i18n.t("common.continue"), isEnabled: model.mainGoal != nil) {
+                model.advance()
+            }
         }
     }
 }
@@ -104,6 +110,12 @@ struct StudyHoursStepView: View {
                     }
                 }
             }
+        } footer: {
+            // Un appui suffit (la page part à la fin du ressort) ; le bouton reste à sa place,
+            // le même que partout, pour qui revient sur l'écran.
+            V3Button(i18n.t("common.continue"), isEnabled: model.weeklyStudy != nil) {
+                model.advance()
+            }
         }
     }
 }
@@ -129,6 +141,12 @@ struct StudyMethodStepView: View {
                         OnbPick.choose(on: .studyMethod, model: model) { model.studyMethod = method }
                     }
                 }
+            }
+        } footer: {
+            // Un appui suffit (la page part à la fin du ressort) ; le bouton reste à sa place,
+            // le même que partout, pour qui revient sur l'écran.
+            V3Button(i18n.t("common.continue"), isEnabled: model.studyMethod != nil) {
+                model.advance()
             }
         }
     }

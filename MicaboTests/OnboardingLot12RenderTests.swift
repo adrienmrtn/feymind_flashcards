@@ -11,11 +11,24 @@ struct OnboardingLivePage<Content: View>: View {
     let step: OnboardingStep
     let model: OnboardingModel
     let content: Content
+    /// Vrai pour une vue d'étape posée à la main : elle reçoit ici ce que
+    /// `OnboardingStepScreen` donne à la sienne (la place de la barre du haut). Faux pour
+    /// `OnboardingStepScreen`, qui la prend déjà : la compter deux fois descendait le titre de
+    /// 44 pt dans les rendus.
+    private let pads: Bool
 
     init(step: OnboardingStep, model: OnboardingModel, @ViewBuilder content: () -> Content) {
         self.step = step
         self.model = model
         self.content = content()
+        self.pads = true
+    }
+
+    fileprivate init(step: OnboardingStep, model: OnboardingModel, screen: Content) {
+        self.step = step
+        self.model = model
+        self.content = screen
+        self.pads = false
     }
 
     var body: some View {
@@ -24,7 +37,7 @@ struct OnboardingLivePage<Content: View>: View {
             V3Color.bg
                 .ignoresSafeArea()
             content
-                .padding(.top, step.showsChrome ? OnboardingTopBar.height : 0)
+                .padding(.top, pads && step.showsChrome ? OnboardingTopBar.height : 0)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .modifier(OnbCompactReader(chrome: step.showsChrome))
                 .background(V3Color.bg.ignoresSafeArea())
@@ -89,7 +102,7 @@ struct OnboardingRenderPage<Content: View>: View {
 
 extension OnboardingLivePage where Content == OnboardingStepScreen {
     init(step: OnboardingStep, model: OnboardingModel) {
-        self.init(step: step, model: model) { OnboardingStepScreen(step: step) }
+        self.init(step: step, model: model, screen: OnboardingStepScreen(step: step))
     }
 }
 

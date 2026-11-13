@@ -252,8 +252,8 @@ struct ProfileSummaryStepView: View {
                     Text(tonight)
                         .font(V3Font.bodyStrong)
                         .foregroundStyle(V3Color.ink)
-                        .lineLimit(2)
                         .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 Text(i18n.t("ios.quiz.time.short", ["n": "\(model.minutesPerDay)"]))
@@ -293,8 +293,8 @@ struct ProfileSummaryStepView: View {
                     Text(OnbWords.list(names, locale: i18n.locale))
                         .font(V3Font.body)
                         .foregroundStyle(V3Color.ink2)
-                        .lineLimit(2)
                         .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .accessibilityElement(children: .combine)

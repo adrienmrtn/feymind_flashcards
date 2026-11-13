@@ -156,6 +156,12 @@ struct HardestSubjectStepView: View {
                     }
                 }
             }
+        } footer: {
+            // Un appui suffit (la page part à la fin du ressort) ; le bouton reste à sa place,
+            // le même que partout, pour qui revient sur l'écran.
+            V3Button(i18n.t("common.continue"), isEnabled: model.hardestSubject != nil) {
+                model.advance()
+            }
         }
     }
 }

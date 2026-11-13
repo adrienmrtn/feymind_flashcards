@@ -262,7 +262,8 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     var isQuestion: Bool { kind == .question }
 
     /// **Un choix unique avance tout seul** : la ligne se coche, son ressort se joue, et la
-    /// page part à la fin du ressort. Ces écrans n'ont pas de bouton.
+    /// page part à la fin du ressort. Leur bouton « Continuer » reste au pied, comme partout,
+    /// pour qui revient sur l'écran.
     var advancesOnChoice: Bool {
         switch self {
         case .country, .level, .schoolType, .year, .hardestSubject, .goal, .studyHours,

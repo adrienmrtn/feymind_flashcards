@@ -50,14 +50,15 @@ struct SampleCardStepView: View {
     var body: some View {
         OnbQuestion(i18n.t("ios.onb12.q.card"), say: say) {
             VStack(alignment: .leading, spacing: 14) {
-                HStack {
-                    subjectPill
-                    Spacer(minLength: 8)
-                    if let points = shownPoints {
-                        OnbXPPill(points: points)
-                            .transition(.scale(scale: 0.6).combined(with: .opacity))
+                // Le gain d'XP se pose par-dessus la ligne de la matière : rien ne bouge dessous.
+                subjectPill
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .overlay(alignment: .trailing) {
+                        if let points = shownPoints {
+                            OnbXPPill(points: points)
+                                .transition(.scale(scale: 0.6).combined(with: .opacity))
+                        }
                     }
-                }
 
                 Text(i18n.t(pick.card.questionKey))
                     .font(V3Font.h2)

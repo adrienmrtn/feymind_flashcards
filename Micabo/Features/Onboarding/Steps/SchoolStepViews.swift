@@ -77,6 +77,11 @@ struct CountryStepView: View {
             }
 
             OnbKeyboardRoom(isActive: model.step == .country)
+        } footer: {
+            V3Button(i18n.t("common.continue"), isEnabled: model.hasAnsweredCountry) {
+                isSearching = false
+                model.advance()
+            }
         }
     }
 
@@ -176,6 +181,12 @@ struct SchoolTypeStepView: View {
                     }
                 }
             }
+        } footer: {
+            // Un appui suffit (la page part à la fin du ressort) ; le bouton reste à sa place,
+            // le même que partout, pour qui revient sur l'écran.
+            V3Button(i18n.t("common.continue"), isEnabled: model.track != nil) {
+                model.advance()
+            }
         }
     }
 }
@@ -214,6 +225,12 @@ struct SchoolYearStepView: View {
                     }
                 }
             }
+        } footer: {
+            // Un appui suffit (la page part à la fin du ressort) ; le bouton reste à sa place,
+            // le même que partout, pour qui revient sur l'écran.
+            V3Button(i18n.t("common.continue"), isEnabled: model.year != nil) {
+                model.advance()
+            }
         }
     }
 }
@@ -237,6 +254,12 @@ struct LevelStepView: View {
                         OnbPick.choose(on: .level, model: model) { model.stage = stage }
                     }
                 }
+            }
+        } footer: {
+            // Un appui suffit (la page part à la fin du ressort) ; le bouton reste à sa place,
+            // le même que partout, pour qui revient sur l'écran.
+            V3Button(i18n.t("common.continue"), isEnabled: model.stage != nil) {
+                model.advance()
             }
         }
     }

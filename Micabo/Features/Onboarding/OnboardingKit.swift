@@ -151,8 +151,13 @@ struct OnbSay: Equatable {
     }
 }
 
-/// **Mika qui réagit, sous le titre** (lot 12) : un Mika de 84 pt (64 sur un petit écran) et
-/// sa réplique dans une bulle secondaire. Le titre domine ; Mika vit à côté.
+/// **Mika qui réagit, sous le titre** (lot 12) : un grand Mika (112 pt, 80 sur un petit
+/// écran), perché du côté de fin, **qui dépasse derrière le bloc de réponses** — ses
+/// tentacules passent sous la première carte —, et sa réplique dans une bulle secondaire qui
+/// pointe vers lui. Le titre domine ; Mika a du poids sans manger la place des réponses.
+///
+/// La rangée a toujours la hauteur de Mika : une réplique qui change de longueur ne déplace
+/// rien en dessous.
 ///
 /// Quand la réplique change (l'élève vient de répondre), le texte fait un fondu, la bulle fait
 /// un petit ressort, et Mika change d'humeur (son geste, une fois). Rien ne retarde la page.
@@ -164,7 +169,9 @@ struct OnbMikaRow: View {
     @Environment(\.onbCompact) private var compact
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private var size: CGFloat { compact ? 58 : 78 }
+    private var size: CGFloat { compact ? 80 : 112 }
+    /// Ce que le bloc suivant recouvre de Mika : le bas de ses tentacules.
+    private var overlap: CGFloat { (size * 0.17).rounded() }
 
     var body: some View {
         if !(compact && collapsible) {
@@ -175,10 +182,7 @@ struct OnbMikaRow: View {
     private var row: some View {
         let phrase = OnbPhrase(say.text)
         let calm = reduceMotion
-        return HStack(alignment: .center, spacing: 8) {
-            MikaMascot(mood: say.mood, size: size)
-                .frame(width: size, height: size)
-                .accessibilityHidden(true)
+        return HStack(alignment: .bottom, spacing: 2) {
             Text(v3: phrase.text, highlight: phrase.highlight)
                 .font(V3Font.bodyStrong)
                 .foregroundStyle(V3Color.ink2)
@@ -191,22 +195,29 @@ struct OnbMikaRow: View {
                 .background(
                     V3Color.surface,
                     in: UnevenRoundedRectangle(
-                        topLeadingRadius: V3Metric.radiusBubbleTail,
+                        topLeadingRadius: V3Metric.radiusBubble,
                         bottomLeadingRadius: V3Metric.radiusBubble,
-                        bottomTrailingRadius: V3Metric.radiusBubble,
+                        bottomTrailingRadius: V3Metric.radiusBubbleTail,
                         topTrailingRadius: V3Metric.radiusBubble,
                         style: .continuous
                     )
                 )
                 .keyframeAnimator(initialValue: CGFloat(1), trigger: say.text) { content, scale in
-                    content.scaleEffect(calm ? 1 : scale, anchor: .leading)
+                    content.scaleEffect(calm ? 1 : scale, anchor: .bottomTrailing)
                 } keyframes: { _ in
                     KeyframeTrack {
                         SpringKeyframe(1.035, duration: 0.12)
                         SpringKeyframe(1.0, duration: 0.25)
                     }
                 }
+                // La bulle se pose au niveau de la bouche de Mika, au-dessus du bloc suivant.
+                .padding(.bottom, overlap + size * 0.18)
+            MikaMascot(mood: say.mood, size: size)
+                .frame(width: size, height: size)
+                .accessibilityHidden(true)
         }
+        .frame(minHeight: size)
+        .padding(.bottom, -overlap)
         .animation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion), value: say.text)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(phrase.text))
@@ -333,16 +344,19 @@ struct OnbDemoStage<Panel: View>: View {
 
     var body: some View {
         OnbScreen {
-            if let eyebrow {
-                OnbEyebrow(text: eyebrow)
-                    .padding(.top, OnbLayout.titleTop)
-            }
             OnbTitle(title, size: OnbLayout.questionTitle)
-                .padding(.top, eyebrow == nil ? OnbLayout.titleTop : 6)
+                .padding(.top, OnbLayout.titleTop)
             OnbMikaRow(say: say)
                 .padding(.top, OnbLayout.mikaGap)
             panel()
                 .frame(maxWidth: .infinity)
+                .overlay(alignment: .topLeading) {
+                    // Ce que la démonstration soigne, en étiquette sur le coin du morceau d'app.
+                    if let eyebrow {
+                        OnbEyebrow(text: eyebrow)
+                            .offset(x: 14, y: -11)
+                    }
+                }
                 .padding(.top, OnbLayout.answersGap)
                 .dynamicTypeSize(...DynamicTypeSize.xxLarge)
         } footer: {
@@ -377,9 +391,13 @@ struct OnbEyebrow: View {
         Text(text)
             .font(V3Font.eyebrow)
             .foregroundStyle(V3Color.accentBright)
-            .lineLimit(2)
-            .multilineTextAlignment(.leading)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(V3Color.bg, in: Capsule())
+            .overlay(Capsule().strokeBorder(V3Color.accent.opacity(0.6), lineWidth: 1))
+            .padding(.trailing, 28)
     }
 }
 
