@@ -172,10 +172,10 @@ final class OnboardingLot12Tests: XCTestCase {
             XCTAssertFalse(model.advance(), "Rien après le paywall")
         }
         XCTAssertEqual(OnboardingStep.allCases.last, .paywall)
-        for internal in [false, true] {
+        for isInternal in [false, true] {
             for forced in [false, true] {
                 XCTAssertTrue(
-                    PaywallTestMode.showsOnboardingPaywall(isPro: false, forcedByTest: forced, isInternal: internal),
+                    PaywallTestMode.showsOnboardingPaywall(isPro: false, forcedByTest: forced, isInternal: isInternal),
                     "Un compte gratuit voit toujours le paywall"
                 )
             }
