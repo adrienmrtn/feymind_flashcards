@@ -192,18 +192,26 @@ final class OnboardingLot12Tests: XCTestCase {
         XCTAssertFalse(L10n.t("ios.pay12.preview", locale: .fr).hasPrefix("ios."))
     }
 
-    /// **Mika ne promet le rappel que s'il partira** ; sans essai, il parle d'annulation.
-    func testThePaywallMikaPromisesOnlyWhatIsKept() {
-        let reminded = PaywallCopy.trialMika(name: "Lina", remindsBeforeEnd: true, offersTrial: true, locale: .fr)
-        XCTAssertTrue(reminded.text.contains("préviens"), reminded.text)
-        XCTAssertTrue(reminded.text.contains("Lina"))
-        let refused = PaywallCopy.trialMika(name: "Lina", remindsBeforeEnd: false, offersTrial: true, locale: .fr)
-        XCTAssertFalse(refused.text.contains("préviens"), refused.text)
-        let noTrial = PaywallCopy.trialMika(name: nil, remindsBeforeEnd: true, offersTrial: false, locale: .fr)
-        XCTAssertFalse(noTrial.text.contains("préviens"), noTrial.text)
-        XCTAssertFalse(noTrial.text.contains("{"))
-        XCTAssertNotNil(PaywallDensity.regular.mikaSize)
-        XCTAssertNil(PaywallDensity.bare.mikaSize, "Sur un petit écran, Mika laisse la place à ce qui est promis")
+    /// **Le paywall ne promet le rappel que s'il partira**, et ne dit « gratuitement » que si
+    /// l'essai est offert. Le grand titre parle de son examen.
+    func testThePaywallPromisesOnlyWhatIsKept() throws {
+        let reminder = try XCTUnwrap(Calendar.current.date(from: DateComponents(year: 2026, month: 11, day: 14, hour: 10)))
+        let reminded = PaywallCopy.trialLine(reminder: reminder, locale: .fr)
+        XCTAssertEqual(reminded, "Rien à payer aujourd'hui · je te préviens le 14 novembre")
+        let refused = PaywallCopy.trialLine(reminder: nil, locale: .fr)
+        XCTAssertEqual(refused, "Rien à payer aujourd'hui")
+
+        XCTAssertEqual(PaywallCopy.promise(offersTrial: true, trialDays: 3, locale: .fr), "Essaie-le 3 jours, gratuitement.")
+        XCTAssertFalse(PaywallCopy.promise(offersTrial: false, trialDays: 3, locale: .fr).contains("gratuit"))
+
+        let lina = PaywallProfile(firstName: "Lina", examName: "Bac", examID: "fr.bac")
+        let headline = PaywallCopy.headline(profile: lina, locale: .fr)
+        XCTAssertEqual(headline.text, "Ton plan pour le Bac est prêt.")
+        XCTAssertEqual(headline.highlight, "le Bac")
+        XCTAssertNil(PaywallCopy.headline(profile: PaywallProfile(), locale: .fr).highlight)
+        for locale in Self.languages {
+            XCTAssertFalse(PaywallCopy.trialLine(reminder: reminder, locale: locale).contains("{"), locale.rawValue)
+        }
     }
 
     /// **L'offre parle en premier**, avec le prénom quand il est connu, et sans reproche.
