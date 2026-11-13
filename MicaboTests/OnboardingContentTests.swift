@@ -287,6 +287,7 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(lina.planLines(locale: .fr).map { plain($0) ?? "" }, [
             "Le programme de Terminale",
             "Tes 3 matières",
+            "Ton objectif : 12/20 → 16/20",
             "Bac, le 15 juin",
             "15 min par jour, à \(hour)",
             "Ta première leçon : La guerre froide",

@@ -55,11 +55,11 @@ struct FreeTrialIntroStepView: View {
 
     var body: some View {
         OnbScreen {
-            OnbTitle(title, size: OnbLayout.pageTitle + 2, alignment: .center, keyword: V3Color.yellow)
+            OnbTitle(title, size: OnbLayout.questionTitle, keyword: V3Color.yellow)
                 .padding(.top, OnbLayout.titleTop)
 
-            Spacer(minLength: OnbLayout.titleGap)
-                .layoutPriority(-1)
+            OnbMikaRow(say: OnbSay(i18n.t("ios.onb12.trial.say"), mood: .happy))
+                .padding(.top, OnbLayout.mikaGap)
 
             VStack(spacing: 0) {
                 ForEach(Array(Self.unlocks(for: model, locale: i18n.locale).enumerated()), id: \.element.id) { index, unlock in
@@ -75,17 +75,7 @@ struct FreeTrialIntroStepView: View {
             .padding(.vertical, 4)
             .frame(maxWidth: .infinity)
             .v3Card()
-
-            Text(i18n.t("ios.onb11.unlock.freeNote"))
-                .font(V3Font.caption)
-                .foregroundStyle(V3Color.ink2)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity)
-                .padding(.top, 10)
-
-            Spacer(minLength: 12)
-                .layoutPriority(-1)
+            .padding(.top, OnbLayout.answersGap)
         } footer: {
             OnbReassurance(text: i18n.t("ios.onb5.trial.noCharge"))
             V3Button(i18n.t("common.continue")) {
@@ -142,8 +132,17 @@ struct TrialOfferStepView: View {
     /// Vrai le temps que la boîte du système soit à l'écran.
     @State private var isAsking = false
 
-    private var promises: Bool {
+    /// **La bascule « Préviens-moi la veille »** (lot 12) : c'est l'élève qui l'active. Coupée,
+    /// rien n'est demandé à iOS et rien n'est promis.
+    @State private var wantsReminder = true
+
+    /// Le rappel peut partir (notifications non refusées).
+    private var canBeKept: Bool {
         previewDenied.map { !$0 } ?? canRemind
+    }
+
+    private var promises: Bool {
+        canBeKept && wantsReminder
     }
 
     /// **Le rappel peut-il être promis ?** Il faut que les notifications ne soient pas
@@ -167,16 +166,19 @@ struct TrialOfferStepView: View {
 
     var body: some View {
         OnbScreen {
-            OnbTitle(i18n.t(Self.titleKey(canRemind: promises)), size: OnbLayout.pageTitle + 2, alignment: .center)
+            OnbTitle(i18n.t(Self.titleKey(canRemind: promises)), size: OnbLayout.questionTitle)
                 .padding(.top, OnbLayout.titleTop)
 
-            Spacer(minLength: OnbLayout.titleGap)
-                .layoutPriority(-1)
+            OnbMikaRow(say: OnbSay(i18n.t("ios.onb12.trialOffer.say"), mood: .wink))
+                .padding(.top, OnbLayout.mikaGap)
 
             OnbTrialTimeline(milestones: TrialTimeline.milestones(locale: i18n.locale, remindersOn: promises))
+                .padding(.top, OnbLayout.answersGap)
 
-            Spacer(minLength: 12)
-                .layoutPriority(-1)
+            if canBeKept {
+                reminderToggle
+                    .padding(.top, 10)
+            }
         } footer: {
             OnbReassurance(text: i18n.t(Self.reassuranceKey(canRemind: promises)))
             V3Button(i18n.t("common.continue"), isLoading: isAsking) {
@@ -188,6 +190,31 @@ struct TrialOfferStepView: View {
             let allowed = await TrialEndReminder.canBeKept()
             canRemind = Self.canPromise(notificationsAllowed: allowed, trialDays: OnboardingTrial.days)
         }
+    }
+
+    /// **La bascule du rappel** : « Préviens-moi la veille de la fin ».
+    private var reminderToggle: some View {
+        Toggle(isOn: Binding(
+            get: { wantsReminder },
+            set: { value in
+                Haptics.selection()
+                withAnimation(MicaboMotion.standard) { wantsReminder = value }
+            }
+        )) {
+            HStack(spacing: 12) {
+                OnbIcon(icon: .alarm, size: 26)
+                Text(i18n.t("ios.onb12.trialOffer.toggle"))
+                    .font(V3Font.option)
+                    .foregroundStyle(V3Color.ink)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .tint(V3Color.green)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .frame(minHeight: V3Metric.optionHeight)
+        .v3Card(selected: wantsReminder, radius: V3Metric.radiusInner)
     }
 
     /// **« Continuer »** : si la demande d'iOS n'a jamais été montrée, elle s'ouvre ici (le
@@ -334,16 +361,11 @@ struct WhyNowStepView: View {
 
     var body: some View {
         OnbScreen {
-            OnbTitle(title, size: OnbLayout.display, alignment: .center, keyword: V3Color.yellow)
+            OnbTitle(title, size: OnbLayout.display, keyword: V3Color.yellow)
                 .padding(.top, OnbLayout.titleTop)
 
-            Spacer(minLength: 12)
-                .layoutPriority(-1)
-
-            OnbHeroMika(mood: .happy, max: 150, min: 90)
-
-            Spacer(minLength: 12)
-                .layoutPriority(-1)
+            OnbMikaRow(say: OnbSay(i18n.t("ios.onb12.now.say"), mood: .happy))
+                .padding(.top, OnbLayout.mikaGap)
 
             VStack(alignment: .leading, spacing: 14) {
                 ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
@@ -362,6 +384,7 @@ struct WhyNowStepView: View {
             .padding(18)
             .frame(maxWidth: .infinity, alignment: .leading)
             .v3Card()
+            .padding(.top, OnbLayout.answersGap)
         } footer: {
             V3Button(i18n.t(OnboardingTrial.isOffered ? "ios.onb11.now.cta" : "common.continue")) {
                 model.advance()

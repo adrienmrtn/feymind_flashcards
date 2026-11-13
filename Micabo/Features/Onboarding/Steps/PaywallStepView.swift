@@ -52,7 +52,7 @@ struct PaywallStepView: View {
     var body: some View {
         Group {
             if keepsPaywall {
-                PaywallFlowView(onDismiss: finishOnce, onSubscribed: finishOnce)
+                PaywallFlowView(showsFarewell: true, onDismiss: finishOnce, onSubscribed: finishOnce)
                     .onAppear { didShowPaywall = true }
             } else {
                 V3Color.bg.ignoresSafeArea()

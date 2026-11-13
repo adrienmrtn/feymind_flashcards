@@ -197,6 +197,10 @@ struct PaywallFlowView: View {
         case paywall
         case offer
         case welcome
+        /// **La sortie propre** (lot 12) : à la fin du parcours d'accueil, l'offre refusée, Mika
+        /// dit au revoir sans reproche — la première leçon reste offerte, l'offre attend sur
+        /// l'accueil — et ouvre l'app.
+        case farewell
     }
 
     /// Ce qui a mené à l'offre : c'est ce que les statistiques en retiennent.
@@ -241,15 +245,24 @@ struct PaywallFlowView: View {
     /// L'instant d'origine de la fenêtre de l'offre : celui de son premier affichage.
     @State private var startedAt: Date? = nil
     @State private var showsConfetti = false
+    /// Les jours d'essai de la formule achetée : la bienvenue dit quand l'essai finit.
+    @State private var boughtTrialDays: Int?
+    /// L'instant de l'achat, d'où partent les dates de l'essai.
+    @State private var boughtAt = Date()
+    /// **Vrai à la fin du parcours d'accueil** : l'offre refusée mène à la sortie propre
+    /// (`Stage.farewell`) au lieu de refermer l'écran d'un coup.
+    var showsFarewell = false
 
     /// **Le paywall**, ouvert par une porte de l'app (`trigger`) ou par la fin du parcours
-    /// d'accueil (sans `trigger`).
+    /// d'accueil (sans `trigger`, `showsFarewell` vrai).
     init(
         trigger: PaywallTrigger? = nil,
+        showsFarewell: Bool = false,
         onDismiss: @escaping () -> Void,
         onSubscribed: @escaping () -> Void
     ) {
         self.trigger = trigger
+        self.showsFarewell = showsFarewell
         self.onDismiss = onDismiss
         self.onSubscribed = onSubscribed
         _stage = State(initialValue: .paywall)
@@ -293,6 +306,9 @@ struct PaywallFlowView: View {
                 offerStage.transition(.opacity)
             case .welcome:
                 welcomeStage.transition(.opacity)
+            case .farewell:
+                PaywallFarewellScreen(name: firstName, topic: PaywallContext.current().topic, onContinue: onDismiss)
+                    .transition(.opacity)
             }
 
             if showsConfetti {
@@ -349,7 +365,11 @@ struct PaywallFlowView: View {
     }
 
     private var welcomeStage: some View {
-        PaywallWelcomeScreen(name: firstName, onContinue: onSubscribed)
+        PaywallWelcomeScreen(
+            name: firstName,
+            trialEnd: boughtTrialDays.map { PaywallTimeline.endDate(from: boughtAt, trialDays: $0) },
+            onContinue: onSubscribed
+        )
     }
 
     /// Passe à un autre temps, en fondu. Le message d'une boutique qui a buté ne suit pas.
@@ -370,7 +390,7 @@ struct PaywallFlowView: View {
             ])
         case .offer:
             offerShown()
-        case .welcome:
+        case .welcome, .farewell:
             break
         }
     }
@@ -442,6 +462,12 @@ struct PaywallFlowView: View {
             "source": .text(offerSource.rawValue),
             "seconds": .number((Date().timeIntervalSince(openedAt) * 10).rounded() / 10),
         ])
+        // À la fin du parcours d'accueil, l'offre refusée mène à la sortie propre : Mika dit ce
+        // qui reste (la leçon offerte, l'offre sur l'accueil), puis l'app s'ouvre.
+        if showsFarewell, offerSource == .paywall {
+            show(.farewell)
+            return
+        }
         onDismiss()
     }
 
@@ -502,6 +528,10 @@ struct PaywallFlowView: View {
         let outcome = await PaywallPurchases.buy(plan)
         isPurchasing = false
         lastOutcome = outcome
+        if outcome == .purchased, promisedTrial {
+            boughtTrialDays = plan.trialDays
+            boughtAt = Date()
+        }
 
         switch outcome {
         case .purchased:

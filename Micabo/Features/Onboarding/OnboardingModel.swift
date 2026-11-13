@@ -149,7 +149,65 @@ final class OnboardingModel {
         return result
     }
 
-    var subjects: Set<String> = []
+    var subjects: Set<String> = [] {
+        didSet {
+            // La matière la plus dure appartient aux matières cochées : décochée, elle s'en va.
+            if let hardestSubject, !subjects.contains(hardestSubject) {
+                self.hardestSubject = nil
+            }
+        }
+    }
+
+    /// **La matière qui lui donne le plus de fil à retordre** (lot 12), parmi celles cochées.
+    /// C'est elle que prennent les démonstrations et la question d'essai. Un nom du catalogue
+    /// (`SubjectCatalog`), jamais un texte tapé.
+    var hardestSubject: String? {
+        didSet {
+            guard let hardestSubject, hardestSubject != oldValue, !isRestoring else { return }
+            Analytics.track(.onboardingAnswer, ["field": "hardestSubject", "value": .text(hardestSubject)])
+        }
+    }
+
+    /// **La matière des démonstrations** : la plus dure, sinon la seule cochée, sinon celle
+    /// que la question d'essai prendrait.
+    var focusSubject: String? {
+        if let hardestSubject { return hardestSubject }
+        if subjects.count == 1 { return subjects.first }
+        return nil
+    }
+
+    /// Les matières que la question d'essai et les démonstrations considèrent : la plus dure
+    /// d'abord, quand elle a une question ; sinon toutes celles cochées.
+    var demoSubjects: Set<String> {
+        if let focusSubject, SampleCard.card(forEmoji: SubjectCatalog.emoji(for: focusSubject)) != nil {
+            return [focusSubject]
+        }
+        return subjects
+    }
+
+    /// **Le temps de révision d'aujourd'hui, par semaine** (lot 12).
+    var weeklyStudy: WeeklyStudy? {
+        didSet {
+            guard let weeklyStudy, weeklyStudy != oldValue, !isRestoring else { return }
+            Analytics.track(.onboardingAnswer, ["field": "weeklyStudy", "value": .text(weeklyStudy.rawValue)])
+        }
+    }
+
+    /// **Comment il révise aujourd'hui** (lot 12).
+    var studyMethod: StudyMethod? {
+        didSet {
+            guard let studyMethod, studyMethod != oldValue, !isRestoring else { return }
+            Analytics.track(.onboardingAnswer, ["field": "studyMethod", "value": .text(studyMethod.rawValue)])
+        }
+    }
+
+    /// **L'engagement est pris** (`commitment`) : l'appui long a été tenu jusqu'au bout.
+    var hasCommitted = false {
+        didSet {
+            guard hasCommitted, !oldValue, !isRestoring else { return }
+            Analytics.track(.onboardingAnswer, ["field": "commitment", "value": "pris"])
+        }
+    }
 
     /// **Ce qui le bloque.** Plusieurs réponses ; `solutionMap` répond aux trois premières
     /// cochées.
@@ -428,6 +486,7 @@ final class OnboardingModel {
         if step.isSkipped(for: country, custom: customCountry) { return true }
         switch step {
         case .targetAverage: return didSkipAverages
+        case .hardestSubject: return subjects.count < 2
         case .freeTrialIntro, .trialOffer: return !OnboardingTrial.isOffered
         default: return false
         }
@@ -568,6 +627,10 @@ final class OnboardingModel {
         OnboardingPreferences.studyHour = studyHour
         OnboardingPreferences.examID = examChoice?.id
         OnboardingPreferences.examDate = examChoice?.hasDate == true ? examDate : nil
+        OnboardingPreferences.hardestSubject = hardestSubject
+        OnboardingPreferences.weeklyStudy = weeklyStudy?.rawValue
+        OnboardingPreferences.method = studyMethod?.rawValue
+        OnboardingPreferences.hasCommitted = hasCommitted
     }
 }
 
@@ -625,6 +688,10 @@ extension OnboardingModel {
         studyHour = OnboardingPreferences.studyHour
         examChoice = SchoolExams.choice(id: OnboardingPreferences.examID)
         examDate = OnboardingPreferences.examDate
+        hardestSubject = OnboardingPreferences.hardestSubject.flatMap { subjects.contains($0) ? $0 : nil }
+        weeklyStudy = OnboardingPreferences.weeklyStudy.flatMap(WeeklyStudy.init(rawValue:))
+        studyMethod = OnboardingPreferences.method.flatMap(StudyMethod.init(rawValue:))
+        hasCommitted = OnboardingPreferences.hasCommitted
         switch FirstLessonIntent.pending {
         case .topic(let topic):
             firstLessonChoice = .topic
@@ -683,6 +750,83 @@ enum StudyWorry: String, CaseIterable, Identifiable {
     /// Ce qu'elle fait, en une ligne, dite par Mika.
     func solutionBody(locale: UiLocale) -> String {
         L10n.t("ios.onb10.solution.\(rawValue).body", locale: locale)
+    }
+}
+
+/// **Le temps de révision d'aujourd'hui, par semaine** (lot 12). Quatre crans, sans jugement.
+enum WeeklyStudy: String, CaseIterable, Identifiable {
+    case underOne
+    case oneToThree
+    case threeToSix
+    case overSix
+
+    var id: String { rawValue }
+
+    /// Le libellé de la rangée.
+    func title(locale: UiLocale) -> String {
+        switch self {
+        case .underOne: L10n.t("ios.onb12.hours.underOne", locale: locale)
+        case .oneToThree: L10n.t("ios.onb12.hours.oneToThree", locale: locale)
+        case .threeToSix: L10n.t("ios.onb12.hours.threeToSix", locale: locale)
+        case .overSix: L10n.t("ios.onb12.hours.overSix", locale: locale)
+        }
+    }
+
+    /// Ce que Mika en dit, à l'écran suivant.
+    func reaction(locale: UiLocale) -> String {
+        switch self {
+        case .underOne: L10n.t("ios.onb12.react.hours.underOne", locale: locale)
+        case .oneToThree: L10n.t("ios.onb12.react.hours.oneToThree", locale: locale)
+        case .threeToSix: L10n.t("ios.onb12.react.hours.threeToSix", locale: locale)
+        case .overSix: L10n.t("ios.onb12.react.hours.overSix", locale: locale)
+        }
+    }
+
+    var icon: MicaboIcon {
+        switch self {
+        case .underOne: .hourglass
+        case .oneToThree: .book
+        case .threeToSix: .flame
+        case .overSix: .rocket
+        }
+    }
+}
+
+/// **Comment il révise aujourd'hui** (lot 12). Une réponse.
+enum StudyMethod: String, CaseIterable, Identifiable {
+    case rereading
+    case notes
+    case exercises
+    case nothingFixed
+
+    var id: String { rawValue }
+
+    func title(locale: UiLocale) -> String {
+        switch self {
+        case .rereading: L10n.t("ios.onb12.method.rereading", locale: locale)
+        case .notes: L10n.t("ios.onb12.method.notes", locale: locale)
+        case .exercises: L10n.t("ios.onb12.method.exercises", locale: locale)
+        case .nothingFixed: L10n.t("ios.onb12.method.nothingFixed", locale: locale)
+        }
+    }
+
+    /// La ligne du récapitulatif (`solutionMap`).
+    func recap(locale: UiLocale) -> String {
+        switch self {
+        case .rereading: L10n.t("ios.onb12.recap.method.rereading", locale: locale)
+        case .notes: L10n.t("ios.onb12.recap.method.notes", locale: locale)
+        case .exercises: L10n.t("ios.onb12.recap.method.exercises", locale: locale)
+        case .nothingFixed: L10n.t("ios.onb12.recap.method.nothingFixed", locale: locale)
+        }
+    }
+
+    var icon: MicaboIcon {
+        switch self {
+        case .rereading: .book
+        case .notes: .notes
+        case .exercises: .quill
+        case .nothingFixed: .puzzle
+        }
     }
 }
 

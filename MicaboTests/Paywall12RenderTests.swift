@@ -2,24 +2,27 @@ import SwiftUI
 import XCTest
 @testable import Micabo
 
-/// **Le paywall et l'offre du lot 11, sur un vrai iPhone** : posés dans une fenêtre avec les
-/// marges de l'iPhone 15 Pro (59/34) et de l'iPhone SE (20/0), l'encoche et la barre
-/// d'accueil dessinées par-dessus (`RenderGallery.renderDevice`). C'est là que se voient une
-/// croix sous l'encoche, un bouton ou des liens collés au bord bas.
+/// **Le paywall, l'offre, la sortie et la bienvenue du lot 12, sur un vrai iPhone** : posés
+/// dans une fenêtre avec les marges de l'iPhone 15 Pro (59/34) et de l'iPhone SE (20/0),
+/// l'encoche et la barre d'accueil dessinées par-dessus (`RenderGallery.renderDevice`).
 ///
-/// L'en-tête « essai » (fin du parcours, « Passer en Pro ») avec ce que l'élève a déclaré ;
-/// les portes de l'app, leur ligne du tableau en tête ; les états ; l'offre ; la bienvenue ;
-/// l'allemand et l'arabe.
+/// L'en-tête « essai » (la promesse, puis Mika, ce que l'élève a déclaré, le tableau, la
+/// chronologie) ; une porte de l'app ; les états ; l'offre qui suit le paywall refusé (Mika
+/// parle d'abord) ; la sortie propre ; la bienvenue d'un essai qui commence ; l'allemand et
+/// l'arabe.
 @MainActor
-final class Paywall11RenderTests: XCTestCase {
+final class Paywall12RenderTests: XCTestCase {
     private var savedLocale: String?
     private var savedDisplay: PriceDisplay?
+    private var savedName: String?
 
     override func setUpWithError() throws {
         guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
         savedLocale = UserDefaults.standard.string(forKey: UiLocale.storageKey)
         savedDisplay = PriceDisplay.forced(in: .standard)
+        savedName = OnboardingPreferences.displayName
         PriceDisplay.setOverride(.weekly)
+        OnboardingPreferences.displayName = "Lina"
     }
 
     override func tearDown() {
@@ -29,6 +32,7 @@ final class Paywall11RenderTests: XCTestCase {
             UserDefaults.standard.removeObject(forKey: UiLocale.storageKey)
         }
         PriceDisplay.setOverride(savedDisplay)
+        OnboardingPreferences.displayName = savedName
         PaywallStorePrices.clear()
         super.tearDown()
     }
@@ -107,14 +111,17 @@ final class Paywall11RenderTests: XCTestCase {
 
     func testTrialOnDevice() throws {
         use(.fr)
-        try RenderGallery.renderDevice("pay11-fr-trial", paywall(context: context()))
+        try RenderGallery.renderDevice("pay12-fr-trial", paywall(context: context()))
         try RenderGallery.renderDevice(
-            "pay11-fr-trial-plain",
+            "pay12-fr-trial-noreminder",
+            devices: [.iPhone15Pro],
+            paywall(context: context(reminder: false))
+        )
+        try RenderGallery.renderDevice(
+            "pay12-fr-trial-plain",
+            devices: [.iPhone15Pro],
             paywall(.upgrade, context: context(name: nil, exam: nil, subjects: [], reminder: false, topic: nil))
         )
-        PriceDisplay.setOverride(.monthly)
-        try RenderGallery.renderDevice("pay11-fr-trial-monthly", devices: [.iPhone15Pro], paywall(context: context()))
-        PriceDisplay.setOverride(.weekly)
     }
 
     /// L'essai déjà pris : ni chronologie, ni « gratuit », un bouton qui dit la somme.
@@ -124,48 +131,30 @@ final class Paywall11RenderTests: XCTestCase {
             PaywallCatalog.yearly.productID: false,
             PaywallCatalog.weekly.productID: false,
         ])
-        try RenderGallery.renderDevice("pay11-fr-notrial", paywall(context: context()))
-        try RenderGallery.renderDevice("pay11-fr-notrial-door", devices: [.iPhone15Pro], paywall(.mika, context: context()))
+        try RenderGallery.renderDevice("pay12-fr-notrial", devices: [.iPhone15Pro], paywall(context: context()))
         PaywallStorePrices.clear()
     }
 
-    // MARK: - Les portes
-
-    func testDoorsOnDevice() throws {
+    func testDoorAndStatesOnDevice() throws {
         use(.fr)
-        try RenderGallery.renderDevice("pay11-fr-door-lesson", paywall(.lessonReady, context: context()))
-        try RenderGallery.renderDevice("pay11-fr-door-mika", paywall(.mika, context: context()))
-        for trigger in [PaywallTrigger.mockExam, .generateCourse, .practice, .exportSheet, .secondCourse] {
-            try RenderGallery.renderDevice("pay11-fr-door-\(trigger.rawValue)", devices: [.iPhone15Pro], paywall(trigger, context: context()))
-        }
+        try RenderGallery.renderDevice("pay12-fr-door-mika", devices: [.iPhone15Pro], paywall(.mika, context: context()))
+        try RenderGallery.renderDevice("pay12-fr-loading", devices: [.iPhoneSE], paywall(context: context(), prices: .loading))
+        try RenderGallery.renderDevice("pay12-fr-buying", devices: [.iPhone15Pro], paywall(context: context(), purchasing: true))
     }
 
-    // MARK: - Les états
+    // MARK: - L'offre, la sortie, la bienvenue
 
-    func testStatesOnDevice() throws {
+    func testOfferFarewellWelcomeOnDevice() throws {
         use(.fr)
-        try RenderGallery.renderDevice("pay11-fr-loading", devices: [.iPhoneSE], paywall(context: context(), prices: .loading))
+        try RenderGallery.renderDevice("pay12-fr-offer", offer())
         try RenderGallery.renderDevice(
-            "pay11-fr-failed",
-            devices: [.iPhoneSE],
-            paywall(context: context(), prices: .failed(PaywallFailure.network.message))
+            "pay12-fr-farewell",
+            PaywallFarewellScreen(name: "Lina", topic: "La guerre froide", onContinue: {}).environment(\.mikaStill, true)
         )
-        try RenderGallery.renderDevice("pay11-fr-buying", devices: [.iPhone15Pro], paywall(context: context(), purchasing: true))
+        let end = PaywallTimeline.endDate(from: Self.now, trialDays: 3)
         try RenderGallery.renderDevice(
-            "pay11-fr-error",
-            devices: [.iPhone15Pro],
-            paywall(.lessonReady, context: context(), notice: .error(PaywallFailure.store.message))
-        )
-    }
-
-    // MARK: - L'offre, la bienvenue
-
-    func testOfferOnDevice() throws {
-        use(.fr)
-        try RenderGallery.renderDevice("pay11-fr-offer", offer())
-        try RenderGallery.renderDevice(
-            "pay11-fr-welcome",
-            PaywallWelcomeScreen(name: "Lina", onContinue: {}).environment(\.mikaStill, true)
+            "pay12-fr-welcome",
+            PaywallWelcomeScreen(name: "Lina", trialEnd: end, onContinue: {}).environment(\.mikaStill, true)
         )
     }
 
@@ -173,14 +162,20 @@ final class Paywall11RenderTests: XCTestCase {
 
     func testLanguagesOnDevice() throws {
         use(.de)
-        let german = context(exam: ("Abitur", "de.abitur"), subjects: ["Mathématiques", "Physique", "Anglais"], topic: "Der Kalte Krieg")
-        try RenderGallery.renderDevice("pay11-de-trial", paywall(context: german))
-        try RenderGallery.renderDevice("pay11-de-door-exam", paywall(.mockExam, context: german))
-        try RenderGallery.renderDevice("pay11-de-offer", devices: [.iPhoneSE], offer())
+        OnboardingPreferences.displayName = "Mia"
+        let german = context(name: "Mia", exam: ("Abitur", "de.abitur"), subjects: ["Mathématiques", "Physique", "Anglais"], topic: "Der Kalte Krieg")
+        try RenderGallery.renderDevice("pay12-de-trial", paywall(context: german))
+        try RenderGallery.renderDevice("pay12-de-offer", devices: [.iPhoneSE], offer())
+        try RenderGallery.renderDevice(
+            "pay12-de-farewell",
+            devices: [.iPhoneSE],
+            PaywallFarewellScreen(name: "Mia", topic: "Der Kalte Krieg", onContinue: {}).environment(\.mikaStill, true)
+        )
 
         use(.ar)
+        OnboardingPreferences.displayName = "لينا"
         let arabic = context(name: "لينا", exam: ("الثانوية العامة", "eg.thanawiya"), subjects: ["Mathématiques", "Physique"], topic: nil)
-        try RenderGallery.renderDevice("pay11-ar-trial", paywall(context: arabic, rtl: true))
-        try RenderGallery.renderDevice("pay11-ar-door-mika", devices: [.iPhone15Pro], paywall(.mika, context: arabic, rtl: true))
+        try RenderGallery.renderDevice("pay12-ar-trial", devices: [.iPhone15Pro], paywall(context: arabic, rtl: true))
+        try RenderGallery.renderDevice("pay12-ar-offer", devices: [.iPhone15Pro], offer(rtl: true))
     }
 }

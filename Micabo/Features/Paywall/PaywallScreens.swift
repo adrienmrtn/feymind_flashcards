@@ -120,6 +120,25 @@ enum PaywallCopy {
         return L10n.t("ios.pay10.legal.trialUsed", locale: locale) + " " + price
     }
 
+    /// **Ce que Mika dit sous le titre d'essai** (lot 12) : pourquoi essayer est sans risque.
+    /// Le rappel n'est promis que s'il partira (`remindsBeforeEnd`) ; sans essai, il dit que
+    /// tout est prêt et qu'on annule quand on veut.
+    static func trialMika(
+        name: String?,
+        remindsBeforeEnd: Bool,
+        offersTrial: Bool,
+        locale: UiLocale = .resolved()
+    ) -> PaywallEmphasis {
+        let key: String
+        switch (offersTrial, remindsBeforeEnd, name != nil) {
+        case (true, true, true): key = "ios.pay12.trial.mika"
+        case (true, true, false): key = "ios.pay12.trial.mikaAnon"
+        case (_, _, true): key = "ios.pay12.trial.mikaCancel"
+        case (_, _, false): key = "ios.pay12.trial.mikaCancelAnon"
+        }
+        return PaywallEmphasis(marked: L10n.t(key, locale: locale, vars: ["name": name ?? ""]))
+    }
+
     /// « Bienvenue dans Micabo Pro, Lina ! », après l'achat.
     static func welcome(name: String?, locale: UiLocale = .resolved()) -> PaywallEmphasis {
         if let name {
@@ -375,6 +394,7 @@ struct PaywallScreen: View {
             PaywallMikaLine(line: PaywallCopy.hook(for: trigger), mood: .wink)
         } else {
             VStack(alignment: .leading, spacing: density.headerSpacing) {
+                // **La promesse d'abord** : le plan de l'élève, et ce qu'on lui propose.
                 PaywallTitle(
                     title: PaywallCopy.title(
                         profile: context.profile,
@@ -383,6 +403,19 @@ struct PaywallScreen: View {
                     ),
                     size: density.titleSize
                 )
+                // **Puis Mika** (lot 12), qui a construit le plan avec l'élève : il dit pourquoi
+                // c'est sans risque — le rappel s'il partira, l'annulation sinon.
+                if let size = density.mikaSize {
+                    DiscountMikaLine(
+                        line: PaywallCopy.trialMika(
+                            name: name,
+                            remindsBeforeEnd: selectedPlan.hasTrial && reminderKept,
+                            offersTrial: selectedPlan.hasTrial
+                        ),
+                        mood: .proud,
+                        size: size
+                    )
+                }
                 if density.showsFacts {
                     PaywallFactsRow(facts: context.profile.facts(topic: context.topic, now: context.now))
                 }
@@ -507,6 +540,17 @@ enum PaywallDensity: CaseIterable {
 
     /// Les pastilles de ce que l'élève a déclaré : aux deux premiers crans.
     var showsFacts: Bool { !isTight }
+
+    /// **Mika et sa réplique** sous le titre d'essai (lot 12) : à sa taille au premier cran,
+    /// plus petit au deuxième et au troisième, retiré ensuite.
+    var mikaSize: CGFloat? {
+        switch self {
+        case .regular: PaywallStyle.trialMika
+        case .compact: PaywallStyle.trialMika * 0.8
+        case .tight: PaywallStyle.trialMika * 0.66
+        case .minimal, .bare: nil
+        }
+    }
 
     /// Les lignes du tableau : quatre, puis trois, puis deux.
     var rowCount: Int {
@@ -808,6 +852,9 @@ private struct PaywallFooter<Plans: View>: View {
 struct PaywallWelcomeScreen: View {
     /// Le prénom de l'élève, pour le titre.
     var name: String?
+    /// **La fin de l'essai qui vient de commencer** (lot 12), `nil` sans essai : la bienvenue
+    /// dit la date, et comment annuler.
+    var trialEnd: Date?
     var onContinue: () -> Void
 
     var body: some View {
@@ -829,6 +876,27 @@ struct PaywallWelcomeScreen: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(.top, 18)
+
+                if let trialEnd {
+                    HStack(spacing: 12) {
+                        Image(systemName: "calendar.badge.clock")
+                            .font(V3Font.title)
+                            .symbolRenderingMode(.hierarchical)
+                            .foregroundStyle(V3Color.yellow)
+                            .accessibilityHidden(true)
+                        Text(L10n.t("ios.pay12.welcome.trial", locale: .resolved(), vars: [
+                            "date": PaywallTimeline.dayText(trialEnd, locale: .resolved()),
+                        ]))
+                        .font(V3Font.support)
+                        .foregroundStyle(V3Color.ink)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(16)
+                    .v3Card()
+                    .padding(.top, 22)
+                }
                 Spacer(minLength: 24)
                 V3Button(L10n.t("ios.pay10.welcome.cta", locale: .resolved()), action: onContinue)
                     .padding(.bottom, area.bottomGap + 8)
@@ -836,5 +904,73 @@ struct PaywallWelcomeScreen: View {
             .padding(.horizontal, V3Metric.screenMargin)
         }
         .background(V3Color.bg.ignoresSafeArea())
+    }
+}
+
+// MARK: - La sortie propre
+
+/// **L'offre refusée, à la fin du parcours d'accueil** (lot 12) : Mika ne retient personne. Il
+/// dit ce qui reste vrai — la première leçon est offerte, le prix réduit attend sur l'accueil
+/// jusqu'à la fin de son décompte — et ouvre l'app sur cette leçon. Aucun reproche, aucune
+/// urgence de plus.
+struct PaywallFarewellScreen: View {
+    var name: String?
+    /// Le sujet de la première leçon, quand il a été écrit.
+    var topic: String?
+    var onContinue: () -> Void
+
+    private var title: PaywallEmphasis {
+        if let name {
+            return PaywallEmphasis(marked: L10n.t("ios.pay12.bye.title", locale: .resolved(), vars: ["name": name]))
+        }
+        return PaywallEmphasis(marked: L10n.t("ios.pay12.bye.titleAnon", locale: .resolved()))
+    }
+
+    private var lesson: String {
+        if let topic {
+            return L10n.t("ios.pay12.bye.lesson", locale: .resolved(), vars: ["topic": topic])
+        }
+        return L10n.t("ios.pay12.bye.lessonAny", locale: .resolved())
+    }
+
+    var body: some View {
+        PaywallSafeFrame { area in
+            VStack(spacing: 0) {
+                Spacer(minLength: 24)
+                MikaMascot(mood: .wave, size: PaywallStyle.welcomeMika * 0.85)
+                    .accessibilityHidden(true)
+                PaywallTitle(title: title, size: PaywallStyle.momentSize, alignment: .center)
+                    .padding(.top, 14)
+
+                VStack(alignment: .leading, spacing: 14) {
+                    row(icon: .book, tone: V3Color.iconGreen, text: lesson)
+                    row(icon: .crown, tone: V3Color.iconYellow, text: L10n.t("ios.pay12.bye.offer", locale: .resolved()))
+                }
+                .padding(18)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .v3Card()
+                .padding(.top, 22)
+
+                Spacer(minLength: 24)
+                V3Button(L10n.t(topic == nil ? "ios.pay12.bye.ctaAny" : "ios.pay12.bye.cta", locale: .resolved()), action: onContinue)
+                    .padding(.bottom, area.bottomGap + 8)
+            }
+            .padding(.horizontal, V3Metric.screenMargin)
+        }
+        .background(V3Color.bg.ignoresSafeArea())
+    }
+
+    private func row(icon: MicaboIcon, tone: Color, text: String) -> some View {
+        HStack(spacing: 12) {
+            MicaboIconView(icon: icon, size: 26 * 1.35, tint: tone)
+                .frame(width: 30, height: 30)
+            Text(text)
+                .font(V3Font.bodyStrong)
+                .foregroundStyle(V3Color.ink)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .accessibilityElement(children: .combine)
     }
 }

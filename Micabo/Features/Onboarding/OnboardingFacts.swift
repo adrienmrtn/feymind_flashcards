@@ -105,6 +105,16 @@ extension OnboardingModel {
         if !subjects.isEmpty {
             lines.append(L10n.t("ios.onb10.build.subjects", locale: locale, vars: ["count": "\(subjects.count)"]))
         }
+        // Lot 12 : la matière la plus dure passe en tête, et l'objectif se règle.
+        if let hardestSubject {
+            lines.append(L10n.t("ios.onb12.build.hardest", locale: locale, vars: [
+                "subject": SubjectDisplay.subject(hardestSubject, locale: locale),
+            ]))
+        }
+        if let target = targetLabel(locale: locale) {
+            let value = currentLabel(locale: locale).map { OnbWords.range(from: $0, to: target, locale: locale) } ?? target
+            lines.append(L10n.t("ios.onb12.build.goal", locale: locale, vars: ["range": value]))
+        }
         if let exam = datedExam {
             lines.append(L10n.t("ios.onb10.build.exam", locale: locale, vars: [
                 "exam": exam.choice.title(locale: locale),

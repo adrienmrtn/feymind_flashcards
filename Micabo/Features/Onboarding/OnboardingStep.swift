@@ -1,41 +1,35 @@
 import Foundation
 
-/// Les écrans du parcours d'accueil, dans l'ordre (V3.3, lot 10).
+/// Les écrans du parcours d'accueil, dans l'ordre (lot 12 : l'entonnoir reconstruit).
 ///
-/// **Chaque écran fait une chose.** Mika parle à la première personne, chaque réponse reçoit
-/// une réaction visible, un choix unique avance tout seul. Aucun écran n'en répète un autre.
+/// **Un fil psychologique en huit actes**, une action par écran, un temps fort toutes les
+/// quatre à six étapes :
 ///
-/// Cinq actes :
+/// 0. **L'accroche** (`hookLogo`) : les stories du produit.
+/// 1. **Toi** : Mika se présente et pose le cadre, puis le prénom, le pays, la classe,
+///    l'examen et sa date, les matières. Chaque réponse revient à l'écran suivant.
+/// 2. **Ce qui bloque** : la matière la plus dure, l'objectif n°1, les blocages, le temps de
+///    révision, la méthode d'aujourd'hui, puis **Mika reformule** (`solutionMap`).
+/// 3. **Les réponses, à jouer** : une démonstration jouable par blocage (la leçon, les
+///    cartes, le scanner, le chat, l'examen blanc), sur sa matière.
+/// 4. **La preuve par l'essai** : une vraie question (`sampleCard`), de l'XP réellement gagnée.
+/// 5. **La projection et l'engagement** : les deux moyennes, la courbe, le temps par jour, la
+///    semaine au calendrier, une séance de concentration, le rappel, **l'engagement**.
+/// 6. **Le plan** : la première leçon, le plan qui se construit en citant les réponses, puis
+///    le plan prêt, comme un objet à lui.
+/// 7. **Vers l'offre** : ce que l'essai débloque, comment il se passe (dates réelles, rappel),
+///    pourquoi maintenant, puis le paywall (et, refermé, l'offre de réduction).
 ///
-/// 0. **Les stories** (`hookLogo`) : quatre pages qui montrent ce que fait l'app, dans un
-///    aperçu du produit.
-/// 1. **Faire connaissance** : Mika se présente, le prénom, le pays, la classe (filière et
-///    année, ou palier large), ce qui arrive en premier (l'examen et sa date), les matières.
-/// 2. **L'objectif** : l'objectif n°1, ce qui bloque, **ce que Mika y répond** (`solutionMap`),
-///    les deux moyennes, la projection et l'engagement, le temps par jour, une vraie question
-///    (et la seule étude citée du parcours), le rappel quotidien et son heure, **la première
-///    leçon** (`firstLesson`).
-/// 3. **Le plan** : Mika le prépare, puis le révèle. Le compte se propose en le quittant.
-/// 4. **L'offre** : l'essai offert, le rappel promis (seulement s'il peut être tenu), le
-///    paywall.
-///
-/// **Tout s'adapte au pays et à l'année** : filières, années, examens, matières, barème
-/// (`SchoolSystem`, `SchoolExams`, `StudentGradeScale`), objectifs (`LearningGoal.offered`).
-///
-/// **Les noms sont ceux des statistiques** (`onboarding_step`) : les écrans gardés portent
-/// le nom qu'ils avaient, deux sont nouveaux (`solutionMap`, `firstLesson`). Retirés par
-/// rapport au lot 9,
-/// et jamais remplacés à l'identique : `building`, `featuresIntro`, `mikaMission`,
-/// `mikaSources`, `mikaPaths`, `mikaDesign`, `mikaTutor`, `mikaSolution`, `mikaRelief`,
-/// `socialProof`, `studyTime` (fusionné dans `notifications`). Ce qu'ils disaient est dit une
-/// fois : par les stories, et par `solutionMap`.
+/// **Les noms sont ceux des statistiques** (`onboarding_step`) : les écrans gardés portent le
+/// nom qu'ils avaient ; le lot 12 en ajoute sept (`hardestSubject`, `studyHours`,
+/// `studyMethod`, `cardsDemo`, `examDemo`, `focusDemo`, `commitment`), sans en renommer.
 enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     // Acte 0 : les stories.
     /// Les quatre stories, sur un seul écran. Le nom reste celui du premier écran d'avant.
     case hookLogo
 
-    // Acte 1 : faire connaissance.
-    /// « Salut, moi c'est Mika ! » : un moment, avant la première question.
+    // Acte 1 : toi.
+    /// « Salut, moi c'est Mika ! » et le cadre : quelques questions, et ton plan.
     case welcome
     /// « Comment je t'appelle ? » Obligatoire : tout ce qui suit s'adresse à quelqu'un.
     case name
@@ -49,53 +43,72 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// Il pré-remplit un examen dans le calendrier à la fin du parcours.
     case exam
     case subjects
-    /// **Démo (lot 11) : ton cours devient une leçon**, dans la matière qu'il vient de cocher.
-    case lessonDemo
 
-    // Acte 2 : l'objectif.
+    // Acte 2 : ce qui bloque.
+    /// **La matière la plus dure**, parmi celles cochées : c'est elle que les démonstrations
+    /// et la question d'essai prennent. Sautée quand il n'y en a qu'une.
+    case hardestSubject
     /// **L'objectif n°1**, parmi ceux de son niveau (`LearningGoal.offered(for:)`).
     case goal
-    /// Ce qui le bloque. Plusieurs réponses ; l'écran suivant y répond.
+    /// Ce qui le bloque. Plusieurs réponses.
     case worries
-    /// **« Voilà comment je t'aide »** : pour chaque blocage coché (trois au plus), la
-    /// fonctionnalité qui y répond.
+    /// **Le temps de révision par semaine, aujourd'hui** : ce que ça lui coûte.
+    case studyHours
+    /// **Comment il révise aujourd'hui.**
+    case studyMethod
+    /// **« Je t'ai compris »** : Mika reformule les réponses (sa matière, ses blocages, son
+    /// temps, sa méthode), puis annonce les démonstrations. Le nom reste celui d'avant.
     case solutionMap
-    /// **Démo (lot 11) : le scanner d'exercices**, en réponse aux devoirs et aux cours durs.
+
+    // Acte 3 : les réponses, à jouer.
+    /// **Démo : ton cours devient une leçon**, dans sa matière la plus dure.
+    case lessonDemo
+    /// **Démo : une carte à retourner**, et la répétition au bon moment.
+    case cardsDemo
+    /// **Démo : le scanner d'exercices**, étape par étape.
     case scanDemo
+    /// **Démo : le chat avec Mika**, une question à choisir.
+    case chatDemo
+    /// **Démo : un examen blanc corrigé.**
+    case examDemo
+
+    // Acte 4 : la preuve par l'essai.
+    /// **Une vraie question, sur sa matière**, l'XP gagnée, et la seule étude citée du
+    /// parcours (Karpicke & Roediger, 2008).
+    case sampleCard
+
+    // Acte 5 : la projection et l'engagement.
     case currentAverage
     case targetAverage
-    /// La projection (d'aujourd'hui à la date de l'examen) et l'engagement.
+    /// La projection, d'aujourd'hui à la date de l'examen : la courbe se trace.
     case startingPoint
     case dailyTime
-    /// **Démo (lot 11) : le plan dans le calendrier**, avec le temps qu'il vient de choisir,
-    /// ses matières, son examen, et une séance de concentration.
+    /// **Démo : sa semaine dans le calendrier**, un jour à toucher.
     case planDemo
-    /// **Une vraie question, sur sa matière**, et la seule étude citée du parcours
-    /// (Karpicke & Roediger, 2008).
-    case sampleCard
-    /// **Démo (lot 11) : le chat avec Mika**, sur un sujet de sa matière et de son niveau.
-    case chatDemo
+    /// **Démo : une séance de concentration**, à lancer.
+    case focusDemo
     /// Le rappel quotidien : son heure (l'ancien écran `studyTime` est ici), puis la demande
     /// d'iOS.
     case notifications
-    /// **« Par quel cours on commence ? »** : un sujet écrit, ou un cours à importer. La Home
-    /// le lance à la sortie du parcours (`FirstLessonIntent`).
-    case firstLesson
+    /// **L'engagement** : un appui long sur « Je m'engage », qui scelle ce qu'il a dit.
+    case commitment
 
-    // Acte 3 : le plan.
+    // Acte 6 : le plan.
     /// Mika prépare le plan : le seul chargement du parcours.
     case planBuilding
-    /// **Le plan révélé.** Le nom reste celui d'avant pour les statistiques.
+    /// **Le plan prêt**, comme un objet. Le nom reste celui d'avant pour les statistiques.
     case profileSummary
+    /// **« Par quel cours on commence ce soir ? »** : un sujet écrit, ou un cours à importer —
+    /// l'élève investit dans le plan qu'il vient de recevoir. La Home le lance à la sortie du
+    /// parcours (`FirstLessonIntent`).
+    case firstLesson
 
-    // Acte 4 : l'offre.
-    /// « Je t'offre 3 jours pour essayer ton plan » : la durée vient du produit.
+    // Acte 7 : vers l'offre.
+    /// Ce que l'essai débloque. La durée vient du produit.
     case freeTrialIntro
-    /// « Je te préviens avant la fin de ton essai » : promis seulement si le rappel peut
-    /// être envoyé.
+    /// Comment l'essai se passe : la chronologie datée, et le rappel qu'on active soi-même.
     case trialOffer
-    /// **Pourquoi maintenant (lot 11)** : le compte à rebours de son examen, les séances qu'il
-    /// reste si l'on commence ce soir, la première leçon prête. Le dernier écran avant l'offre.
+    /// **Pourquoi maintenant** : son examen, sa leçon prête, sa séance de ce soir.
     case whyNow
     case paywall
 
@@ -168,16 +181,58 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         }
     }
 
+    // MARK: - Les actes
+
+    /// **Les sept actes de la jauge**, des questions au paywall (les stories n'en font pas
+    /// partie : la jauge commence avec Mika).
+    static let actCount = 7
+
+    /// L'acte de l'écran, de 0 à `actCount - 1` (les stories et le paywall sont hors jauge).
+    var act: Int {
+        switch self {
+        case .hookLogo, .welcome, .name, .country, .level, .schoolType, .year, .exam, .subjects:
+            0
+        case .hardestSubject, .goal, .worries, .studyHours, .studyMethod, .solutionMap:
+            1
+        case .lessonDemo, .cardsDemo, .scanDemo, .chatDemo, .examDemo:
+            2
+        case .sampleCard:
+            3
+        case .currentAverage, .targetAverage, .startingPoint, .dailyTime, .planDemo, .focusDemo,
+             .notifications, .commitment:
+            4
+        case .planBuilding, .profileSummary, .firstLesson:
+            5
+        case .freeTrialIntro, .trialOffer, .whyNow, .paywall:
+            6
+        }
+    }
+
+    /// Les écrans d'un acte, dans l'ordre.
+    static func steps(inAct act: Int) -> [OnboardingStep] {
+        allCases.filter { $0.act == act && $0 != .hookLogo }
+    }
+
+    /// **L'avancée dans l'acte**, de 0 (premier écran de l'acte) à 1 (le dernier fini). Le
+    /// premier écran d'un acte montre déjà un filet : on y est entré.
+    var actFraction: Double {
+        let steps = Self.steps(inAct: act)
+        guard let index = steps.firstIndex(of: self) else { return 0 }
+        return Double(index + 1) / Double(steps.count + 1)
+    }
+
     // MARK: - La forme de l'écran
 
-    /// Les quatre formes d'un écran du parcours.
+    /// Les formes d'un écran du parcours.
     enum Kind: Equatable {
         /// Les stories : plein écran, sans barre.
         case stories
-        /// Un moment : un grand Mika centré, un titre, un bouton.
+        /// Un moment : un grand Mika, un titre, un bouton.
         case moment
-        /// Une question : Mika et sa bulle en haut (`MikaAsk`), les réponses dessous.
+        /// Une question : le titre en grand, Mika qui réagit dessous, les réponses groupées.
         case question
+        /// Une démonstration jouable : un morceau d'app, et le bouton qui le joue.
+        case demo
         /// Une page à titre : une idée, une illustration, un bouton.
         case page
         /// Le paywall, qui porte sa propre croix.
@@ -188,27 +243,33 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         switch self {
         case .hookLogo:
             .stories
-        case .welcome, .planBuilding, .profileSummary, .freeTrialIntro:
+        case .welcome, .solutionMap, .planBuilding, .profileSummary:
             .moment
-        case .name, .country, .level, .schoolType, .year, .exam, .subjects, .goal, .worries,
-             .currentAverage, .targetAverage, .dailyTime, .sampleCard, .firstLesson:
+        case .name, .country, .level, .schoolType, .year, .exam, .subjects, .hardestSubject,
+             .goal, .worries, .studyHours, .studyMethod, .currentAverage, .targetAverage,
+             .dailyTime, .sampleCard, .firstLesson:
             .question
-        case .solutionMap, .startingPoint, .notifications, .trialOffer,
-             .lessonDemo, .scanDemo, .planDemo, .chatDemo, .whyNow:
+        case .lessonDemo, .cardsDemo, .scanDemo, .chatDemo, .examDemo, .planDemo, .focusDemo:
+            .demo
+        case .startingPoint, .notifications, .commitment, .freeTrialIntro, .trialOffer, .whyNow:
             .page
         case .paywall:
             .paywall
         }
     }
 
-    /// Vrai pour les écrans où Mika pose une question dans sa bulle.
+    /// Vrai pour les écrans qui posent une question.
     var isQuestion: Bool { kind == .question }
 
-    /// **Un choix unique avance tout seul à l'appui** : ces écrans n'ont pas de bouton.
+    /// **Un choix unique avance tout seul** : la ligne se coche, son ressort se joue, et la
+    /// page part à la fin du ressort. Ces écrans n'ont pas de bouton.
     var advancesOnChoice: Bool {
         switch self {
-        case .country, .level, .schoolType, .year, .goal, .dailyTime: true
-        default: false
+        case .country, .level, .schoolType, .year, .hardestSubject, .goal, .studyHours,
+             .studyMethod, .dailyTime:
+            true
+        default:
+            false
         }
     }
 
@@ -224,8 +285,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         }
     }
 
-    /// **La jauge** accompagne les questions ; l'écran où Mika se présente n'a que le retour :
-    /// rien n'a encore commencé.
+    /// **La jauge** accompagne tout le parcours, dès que Mika a parlé.
     var showsProgress: Bool {
         self != .welcome
     }
@@ -237,7 +297,6 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
 
     /// **Un écran d'où l'on peut revenir.** Tous, sauf le premier (rien derrière), le
     /// chargement, le plan révélé (un aboutissement) et le paywall, qui porte sa propre croix.
-    /// Revenir jusqu'aux stories rend le choix de la langue.
     var allowsReturn: Bool {
         switch self {
         case .hookLogo, .profileSummary, .paywall: false
@@ -251,10 +310,8 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         self == .currentAverage
     }
 
-    /// Position de l'étape dans la jauge, entre 0 et 1.
-    ///
-    /// La jauge couvre le parcours entier, des stories au paywall : elle avance toujours
-    /// dans le même sens. Le plancher garde un filet visible dès le premier écran.
+    /// Position de l'étape dans le parcours entier, entre 0 et 1 : elle avance toujours dans
+    /// le même sens.
     var progress: Double {
         let last = Double(OnboardingStep.allCases.count - 1)
         guard last > 0 else { return 1 }

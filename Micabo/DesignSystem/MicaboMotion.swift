@@ -16,6 +16,18 @@ enum MicaboMotion {
     static let gentle: Animation = .spring(duration: 0.45, bounce: 0.0)
     static let celebrate: Animation = .spring(duration: 0.5, bounce: 0.3)
 
+    /// **Une jauge qui se remplit sous les yeux** (lot 12) : la courbe qui se trace, l'anneau
+    /// d'une séance de démonstration. Régulière, sans rebond, et une seule fois.
+    static func fill(seconds: Double) -> Animation {
+        .easeInOut(duration: seconds)
+    }
+
+    /// **Un geste qu'on tient** (lot 12) : l'anneau de « Je m'engage » suit le doigt, à vitesse
+    /// constante, le temps de l'appui long.
+    static func hold(seconds: Double) -> Animation {
+        .linear(duration: seconds)
+    }
+
     /// Fondu bref qui remplace tout mouvement quand l'élève a réduit les animations.
     static let reduced: Animation = .easeOut(duration: 0.15)
 

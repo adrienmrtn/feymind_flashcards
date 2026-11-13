@@ -22,30 +22,42 @@ struct SampleCardStepView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @State private var answer: Int?
+    /// L'XP réellement gagnée par la bonne réponse : rien tant qu'elle n'est pas donnée.
+    @State private var earned: Int?
 
     private var chosen: Int? {
         answer ?? previewAnswer
     }
 
     private var pick: SampleCard.Pick {
-        SampleCard.pick(for: model.subjects)
+        SampleCard.pick(for: model.demoSubjects)
     }
 
     /// Ce que Mika dit : la consigne, puis sa réaction à la réponse.
-    private var bubble: String {
-        guard let chosen else { return i18n.t("ios.onb10.card.ask") }
-        return pick.card.isRight(chosen) ? i18n.t("ios.onb10.card.right") : i18n.t("ios.onb10.card.wrong")
+    private var say: OnbSay {
+        guard let chosen else { return OnbSay(i18n.t("ios.onb12.card.say"), mood: .wink) }
+        return pick.card.isRight(chosen)
+            ? OnbSay(i18n.t("ios.onb10.card.right"), mood: .celebrate)
+            : OnbSay(i18n.t("ios.onb10.card.wrong"), mood: .happy)
     }
 
-    private var mood: MikaMood {
-        guard let chosen else { return .idle }
-        return pick.card.isRight(chosen) ? .happy : .wink
+    /// Le gain montré : celui crédité, ou, dans un rendu, celui d'une bonne réponse.
+    private var shownPoints: Int? {
+        if let earned { return earned }
+        return previewAnswer.map(pick.card.isRight) == true ? XPReason.correctAnswer.points : nil
     }
 
     var body: some View {
-        OnbQuestion(bubble, mood: mood, anchored: false) {
+        OnbQuestion(i18n.t("ios.onb12.q.card"), say: say) {
             VStack(alignment: .leading, spacing: 14) {
-                subjectPill
+                HStack {
+                    subjectPill
+                    Spacer(minLength: 8)
+                    if let points = shownPoints {
+                        OnbXPPill(points: points)
+                            .transition(.scale(scale: 0.6).combined(with: .opacity))
+                    }
+                }
 
                 Text(i18n.t(pick.card.questionKey))
                     .font(V3Font.h2)
@@ -65,11 +77,14 @@ struct SampleCardStepView: View {
                         .transition(.opacity)
                 }
             }
-            .animation(MicaboMotion.standard, value: chosen)
+            .animation(MicaboMotion.resolved(MicaboMotion.celebrate, reduceMotion: UIAccessibility.isReduceMotionEnabled), value: chosen)
         } footer: {
             V3Button(i18n.t("common.continue"), isEnabled: chosen != nil) {
                 model.advance()
             }
+        }
+        .overlay {
+            OnbConfetti(isOn: answer.map(pick.card.isRight) == true)
         }
     }
 
@@ -147,7 +162,15 @@ struct SampleCardStepView: View {
         guard chosen == nil else { return }
         answer = option
         let right = pick.card.isRight(option)
-        if right { Haptics.success() } else { Haptics.warning() }
+        if right {
+            Haptics.success()
+            // **L'XP est réelle** : la bonne réponse est créditée comme dans une leçon, et la
+            // pastille montre ce qui a été ajouté au total du jour.
+            let award = XPStore.shared.award(.correctAnswer, celebrates: false)
+            earned = award.added > 0 ? award.added : nil
+        } else {
+            Haptics.warning()
+        }
         Analytics.track(.onboardingAnswer, [
             "field": "sampleCard",
             "value": .text(right ? "right" : "wrong"),

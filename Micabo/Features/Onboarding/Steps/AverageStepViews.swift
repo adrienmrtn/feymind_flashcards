@@ -27,7 +27,10 @@ struct CurrentAverageStepView: View {
     }
 
     var body: some View {
-        OnbQuestion(i18n.t("ios.onb10.q.current")) {
+        OnbQuestion(
+            i18n.t("ios.onb12.q.current"),
+            say: OnbSay(i18n.t("ios.onb12.say.current"), mood: .wink)
+        ) {
             VStack(spacing: 18) {
                 OnbGradeWheel(
                     choices: choices,
@@ -41,21 +44,11 @@ struct CurrentAverageStepView: View {
                             }
                         }
                     ),
-                    label: OnbPhrase.plain(i18n.t("ios.onb10.q.current")),
+                    label: OnbPhrase.plain(i18n.t("ios.onb12.q.current")),
                     caption: model.gradeScale.caption(locale: i18n.locale)
                 )
-
-                HStack(spacing: 6) {
-                    Image(systemName: "lock.fill")
-                        .accessibilityHidden(true)
-                    Text(i18n.t("ios.onb10.current.private"))
-                }
-                .font(V3Font.caption)
-                .foregroundStyle(V3Color.ink3)
             }
             .frame(maxWidth: .infinity)
-
-            Spacer(minLength: 0)
         } footer: {
             V3Button(i18n.t("common.continue"), isEnabled: model.currentScore != nil) {
                 model.answerCurrentAverage()
@@ -81,8 +74,8 @@ struct TargetAverageStepView: View {
     }
 
     var body: some View {
-        OnbQuestion(i18n.t("ios.onb10.q.target"), mood: .happy) {
-            VStack(spacing: 22) {
+        OnbQuestion(i18n.t("ios.onb10.q.target"), say: say) {
+            VStack(spacing: 18) {
                 OnbGradeWheel(
                     choices: choices,
                     score: Binding(
@@ -95,13 +88,8 @@ struct TargetAverageStepView: View {
                     caption: model.gradeScale.caption(locale: i18n.locale)
                 )
 
-                if let gap = model.gradeGap(locale: i18n.locale) {
-                    gapCard(gap)
-                }
             }
             .frame(maxWidth: .infinity)
-
-            Spacer(minLength: 0)
         } footer: {
             V3Button(i18n.t("common.continue"), isEnabled: model.targetScore != nil) {
                 model.advance()
@@ -109,36 +97,13 @@ struct TargetAverageStepView: View {
         }
     }
 
-    /// La réaction : une cible, l'écart et ce qu'il vaut, puis d'où l'on part et où l'on va.
-    private func gapCard(_ gap: OnboardingGradeGap) -> some View {
-        HStack(alignment: .center, spacing: 12) {
-            // Une cible, en vert : c'est un objectif.
-            Image(systemName: "target")
-                .resizable()
-                .scaledToFit()
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(V3Color.green)
-                .frame(width: 30, height: 30)
-                .accessibilityHidden(true)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(gap.title(locale: i18n.locale))
-                    .font(V3Font.bodyStrong)
-                    .foregroundStyle(V3Color.ink)
-                Text(gap.line(until: model.datedExam?.date, locale: i18n.locale))
-                    .font(V3Font.caption)
-                    .foregroundStyle(V3Color.ink2)
-            }
-            .multilineTextAlignment(.leading)
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(maxWidth: .infinity, alignment: .leading)
+    /// **Mika réagit à l'écart, en direct** : l'écart dans le barème de l'élève, et ce qu'il
+    /// vaut (« +4 points : ambitieux, et faisable »). Il change à chaque cran de la molette.
+    private var say: OnbSay {
+        guard let gap = model.gradeGap(locale: i18n.locale) else {
+            return OnbSay(i18n.t("ios.onb12.say.target"), mood: .happy)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .v3Card(tone: V3Color.green)
-        .contentTransition(.opacity)
-        .animation(MicaboMotion.quick, value: gap)
-        .accessibilityElement(children: .combine)
+        return OnbSay(gap.title(locale: i18n.locale), mood: .happy)
     }
 }
 
@@ -332,19 +297,16 @@ struct StartingPointStepView: View {
     var body: some View {
         OnbScreen {
             // La note visée est en vert : c'est l'objectif.
-            OnbTitle(title, size: OnbLayout.display, alignment: .center, keyword: V3Color.green)
+            OnbTitle(title, size: OnbLayout.display, keyword: V3Color.green)
                 .padding(.top, OnbLayout.titleTop)
 
+            OnbMikaRow(say: OnbSay(i18n.t("ios.onb10.start.line"), mood: .proud))
+                .padding(.top, OnbLayout.mikaGap)
+
             projection
-                .padding(.top, OnbLayout.titleGap)
+                .padding(.top, OnbLayout.answersGap)
         } footer: {
-            Text(i18n.t("ios.onb10.start.line"))
-                .font(V3Font.body)
-                .foregroundStyle(V3Color.ink2)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.bottom, 4)
-            V3Button(i18n.t("ios.onb10.start.commit")) {
+            V3Button(i18n.t("ios.onb12.start.cta")) {
                 model.advance()
             }
         }
@@ -395,7 +357,31 @@ struct OnbProjectionChart: View {
     /// La note visée, écrite au bout de la courbe ; sans elle, la courbe est sans chiffres.
     let target: String?
 
+    @Environment(\.onboardingStill) private var still
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// **La courbe se trace à l'arrivée** (lot 12) : de 0 à 1, une fois, d'aujourd'hui vers
+    /// l'objectif. Dans un rendu ou avec « Réduire les animations », elle est là d'emblée.
+    @State private var drawn: CGFloat = 0
+    /// La courbe est arrivée : le point et la note visée se posent, d'un ressort.
+    @State private var arrived = false
+
+    private var progress: CGFloat { still || reduceMotion ? 1 : drawn }
+    private var landed: Bool { still || reduceMotion || arrived }
+
     var body: some View {
+        chart
+            .onAppear {
+                guard !still, !reduceMotion, drawn == 0 else { return }
+                withAnimation(MicaboMotion.fill(seconds: 1.1), completionCriteria: .logicallyComplete) {
+                    drawn = 1
+                } completion: {
+                    Haptics.soft()
+                    withAnimation(MicaboMotion.celebrate) { arrived = true }
+                }
+            }
+    }
+
+    private var chart: some View {
         GeometryReader { proxy in
             let size = proxy.size
             let start = CGPoint(x: 12, y: size.height - 28)
@@ -416,8 +402,10 @@ struct OnbProjectionChart: View {
                         startPoint: .top,
                         endPoint: .bottom
                     ))
+                    .opacity(Double(progress))
 
                 OnbProjectionCurve(start: start, end: end, floor: nil)
+                    .trim(from: 0, to: progress)
                     .stroke(V3Color.green, style: StrokeStyle(lineWidth: 5, lineCap: .round))
 
                 Circle()
@@ -430,13 +418,16 @@ struct OnbProjectionChart: View {
                     .fill(V3Color.green)
                     .overlay(Circle().strokeBorder(V3Color.surface, lineWidth: 3))
                     .frame(width: 18, height: 18)
+                    .scaleEffect(landed ? 1 : 0.2)
+                    .opacity(landed ? 1 : 0)
                     .position(end)
             }
             .flipsForRightToLeftLayoutDirection(true)
         }
         .overlay(alignment: .topTrailing) {
-            // La note visée, dans une pastille verte, au bout de la courbe.
-            if let target {
+            // La note visée, dans une pastille verte, au bout de la courbe : elle se pose quand
+            // la courbe arrive.
+            if let target, landed {
                 Text(target)
                     .font(V3Font.label)
                     .foregroundStyle(V3Color.bg)

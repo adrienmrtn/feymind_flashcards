@@ -60,12 +60,11 @@ struct DiscountOfferScreen: View {
                 }
 
                 ViewThatFits(in: .vertical) {
-                    content(mika: PaywallStyle.offerMika, includes: true)
-                    content(mika: PaywallStyle.offerMika * 0.7, includes: true)
-                    content(mika: PaywallStyle.offerMika * 0.7, includes: false)
+                    content(mika: PaywallStyle.offerMikaLine, includes: true)
+                    content(mika: PaywallStyle.offerMikaLine * 0.8, includes: false)
                     content(mika: nil, includes: false)
                     ScrollView {
-                        content(mika: nil, includes: true)
+                        content(mika: PaywallStyle.offerMikaLine * 0.8, includes: true)
                     }
                     .scrollIndicators(.hidden)
                     .scrollBounceBehavior(.basedOnSize)
@@ -86,21 +85,37 @@ struct DiscountOfferScreen: View {
 
     // MARK: Le contenu
 
-    /// `mika` : la taille de Mika, ou `nil` quand l'écran est trop court pour lui ;
+    /// **Ce que Mika dit en arrivant** (lot 12) : la suite du paywall qu'on vient de refermer,
+    /// sans reproche — il a entendu « pas à ce prix-là », il en propose un autre.
+    static func mikaLine(name: String?, locale: UiLocale = .resolved()) -> PaywallEmphasis {
+        if let name {
+            return PaywallEmphasis(marked: L10n.t("ios.pay12.offer.mika", locale: locale, vars: ["name": name]))
+        }
+        return PaywallEmphasis(marked: L10n.t("ios.pay12.offer.mikaAnon", locale: locale))
+    }
+
+    /// `mika` : la taille de Mika et de sa réplique, ou `nil` quand l'écran est trop court ;
     /// `includes` : la ligne qui rappelle ce que l'année Pro contient, la même que le
     /// tableau du paywall qu'on vient de quitter.
     private func content(mika: CGFloat?, includes: Bool) -> some View {
         VStack(spacing: 0) {
-            Text(L10n.t("ios.pay10.offer.badge", locale: .resolved()))
-                .font(PaywallStyle.pillQuiet)
-                .foregroundStyle(V3Color.ink2)
-                .lineLimit(1)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-                .background(V3Color.surface, in: Capsule())
+            if let mika {
+                DiscountMikaLine(
+                    line: Self.mikaLine(name: PaywallProfile.firstName(OnboardingPreferences.displayName)),
+                    size: mika
+                )
+            } else {
+                Text(L10n.t("ios.pay10.offer.badge", locale: .resolved()))
+                    .font(PaywallStyle.pillQuiet)
+                    .foregroundStyle(V3Color.ink2)
+                    .lineLimit(1)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 7)
+                    .background(V3Color.surface, in: Capsule())
+            }
 
             DiscountPercent(savings: savings, isSettled: arrived || !animatesArrival)
-                .padding(.top, 10)
+                .padding(.top, 6)
 
             Text(L10n.t("ios.pay10.offer.sub", locale: .resolved()))
                 .font(PaywallStyle.offerSub)
@@ -108,14 +123,8 @@ struct DiscountOfferScreen: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
-            if let mika {
-                MikaMascot(mood: .celebrate, size: mika)
-                    .padding(.top, 8)
-                    .accessibilityHidden(true)
-            }
-
             priceCard
-                .padding(.top, mika == nil ? 18 : 0)
+                .padding(.top, 18)
 
             if includes, prices == .ready {
                 Text(L10n.t("ios.pay11.offer.includes", locale: .resolved()))

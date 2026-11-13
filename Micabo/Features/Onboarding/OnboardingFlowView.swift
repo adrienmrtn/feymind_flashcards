@@ -144,10 +144,26 @@ struct OnboardingTopBar: View {
 
     var body: some View {
         let step = model.step
-        V3TopBar(
-            progress: step.showsProgress ? step.progress : nil,
-            onBack: model.canGoBack ? { model.goBack() } : nil
-        ) {
+        HStack(spacing: 14) {
+            if model.canGoBack {
+                Button {
+                    model.goBack()
+                } label: {
+                    Image(systemName: "arrow.backward")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(V3Color.ink)
+                        .frame(width: V3Metric.backSize, height: V3Metric.backSize)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(MicaboPressableButtonStyle())
+                .accessibilityLabel(Text(i18n.t("app.common.back")))
+            }
+            // **La jauge, en actes** (lot 12) : un segment par acte, celui en cours se remplit.
+            if step.showsProgress {
+                V3ActProgress(acts: OnboardingStep.actCount, act: step.act, fraction: step.actFraction)
+            } else {
+                Spacer(minLength: 0)
+            }
             if step.isSkippable {
                 Button {
                     model.skipAverages()
@@ -161,6 +177,7 @@ struct OnboardingTopBar: View {
                 .buttonStyle(MicaboPressableButtonStyle())
             }
         }
+        .padding(.horizontal, V3Metric.screenMargin)
         .frame(height: Self.height)
         .opacity(step.showsChrome ? 1 : 0)
         .allowsHitTesting(step.showsChrome)
@@ -194,19 +211,26 @@ struct OnboardingStepScreen: View {
         case .year: SchoolYearStepView()
         case .exam: ExamStepView()
         case .subjects: SubjectsStepView()
-        case .lessonDemo: LessonDemoStepView()
+        case .hardestSubject: HardestSubjectStepView()
         case .goal: GoalStepView()
         case .worries: WorriesStepView()
+        case .studyHours: StudyHoursStepView()
+        case .studyMethod: StudyMethodStepView()
         case .solutionMap: SolutionMapStepView()
+        case .lessonDemo: LessonDemoStepView()
+        case .cardsDemo: CardsDemoStepView()
         case .scanDemo: ScanDemoStepView()
+        case .chatDemo: ChatDemoStepView()
+        case .examDemo: ExamDemoStepView()
+        case .sampleCard: SampleCardStepView()
         case .currentAverage: CurrentAverageStepView()
         case .targetAverage: TargetAverageStepView()
         case .startingPoint: StartingPointStepView()
         case .dailyTime: DailyTimeStepView()
         case .planDemo: PlanDemoStepView()
-        case .sampleCard: SampleCardStepView()
-        case .chatDemo: ChatDemoStepView()
+        case .focusDemo: FocusDemoStepView()
         case .notifications: NotificationsStepView()
+        case .commitment: CommitmentStepView()
         case .firstLesson: FirstLessonStepView()
         case .planBuilding: PlanBuildingStepView()
         case .profileSummary: ProfileSummaryStepView()

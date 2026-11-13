@@ -1,34 +1,36 @@
 import SwiftUI
 
-// MARK: - Mika se présente
+// MARK: - Mika se présente, et pose le cadre
 
-/// **« Salut, moi c'est Mika ! »** Un moment, avant la première question : un grand Mika au
-/// centre, qui fait coucou, son nom, ce qu'il va faire, et un bouton. Rien ne défile tout
-/// seul.
+/// **« Salut, moi c'est Mika ! »** Le premier moment : un grand Mika qui fait coucou, son nom,
+/// et le cadre de ce qui suit — quelques questions faciles, puis le plan, puis la première
+/// leçon. Trois jalons, pour que l'élève sache où il va avant de répondre à quoi que ce soit.
 struct WelcomeStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
         OnbScreen {
-            // Mika prend d'abord sa place ; l'air qui reste se partage au-dessus et en dessous.
-            Spacer(minLength: 12)
+            Spacer(minLength: 8)
                 .layoutPriority(-1)
 
             OnbHeroMika(mood: .wave, max: OnbLayout.heroWelcome)
 
-            VStack(spacing: 12) {
-                OnbTitle(i18n.t("ios.onb10.welcome.title"), size: OnbLayout.display, alignment: .center)
-                Text(i18n.t("ios.onb10.welcome.sub"))
+            VStack(spacing: 10) {
+                OnbTitle(i18n.t("ios.onb12.welcome.title"), size: OnbLayout.display, alignment: .center)
+                Text(i18n.t("ios.onb12.welcome.sub"))
                     .font(V3Font.body)
                     .foregroundStyle(V3Color.ink2)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity)
             }
-            .padding(.top, 20)
+            .padding(.top, 16)
 
-            Spacer(minLength: 12)
+            milestones
+                .padding(.top, 22)
+
+            Spacer(minLength: 8)
                 .layoutPriority(-1)
         } footer: {
             V3Button(i18n.t("ios.onb10.go")) {
@@ -36,19 +38,54 @@ struct WelcomeStepView: View {
             }
         }
     }
+
+    /// Les trois jalons : toi, ton plan, ta première leçon.
+    private var milestones: some View {
+        HStack(alignment: .top, spacing: 0) {
+            milestone(.profile, i18n.t("ios.onb12.welcome.you"), tone: V3Color.iconBlue)
+            arrow
+            milestone(.exam, i18n.t("ios.onb12.welcome.plan"), tone: V3Color.iconYellow)
+            arrow
+            milestone(.book, i18n.t("ios.onb12.welcome.lesson"), tone: V3Color.iconGreen)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func milestone(_ icon: MicaboIcon, _ label: String, tone: Color) -> some View {
+        VStack(spacing: 8) {
+            MicaboIconView(icon: icon, size: 30 * 1.35, tint: tone)
+                .frame(width: 54, height: 54)
+                .background(V3Color.surface, in: RoundedRectangle(cornerRadius: V3Metric.radiusTile, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: V3Metric.radiusTile, style: .continuous)
+                        .strokeBorder(V3Color.line, lineWidth: V3Metric.border)
+                )
+            Text(label)
+                .font(V3Font.label)
+                .foregroundStyle(V3Color.ink)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var arrow: some View {
+        Image(systemName: "chevron.forward")
+            .font(.system(size: 14, weight: .black))
+            .foregroundStyle(V3Color.ink3)
+            .padding(.top, 20)
+            .accessibilityHidden(true)
+    }
 }
 
 // MARK: - Le prénom
 
 /// **« Comment je t'appelle ? »**
 ///
-/// La première question, avant tout ce qui trie, et elle n'est pas facultative : tout ce qui
-/// suit s'adresse à quelqu'un. Le prénom se tape en très grand, au centre ; le clavier est
-/// ouvert d'emblée, et le bouton est actif dès la première lettre.
-///
-/// **Le clavier ne fait rien bouger.** La page est composée depuis le haut : la bulle, le
-/// prénom, le bouton juste dessous. Le clavier monte et redescend sous eux, que la page
-/// glisse ou non.
+/// La première question, et elle n'est pas facultative : tout ce qui suit s'adresse à
+/// quelqu'un. Le prénom se tape en très grand ; **Mika réagit dès la première lettre**
+/// (« Enchanté, Lina ! », il sourit) : la première réponse reçoit sa récompense tout de suite.
 ///
 /// **Le prénom ne sert à rien d'autre.** Il ne part pas au modèle, il ne part pas au
 /// serveur, il n'entre dans aucune consigne de génération.
@@ -63,26 +100,30 @@ struct NameStepView: View {
         model.displayName.nilIfBlank != nil
     }
 
+    private var say: OnbSay {
+        guard let name = model.displayName.nilIfBlank else {
+            return OnbSay(i18n.t("ios.onb12.say.name"), mood: .wave)
+        }
+        return OnbSay(i18n.t("ios.onb12.react.name", ["name": name]), mood: .happy)
+    }
+
     var body: some View {
         @Bindable var model = model
 
-        OnbQuestion(i18n.t("ios.onb10.q.name"), mood: .wave, anchored: false) {
-            VStack(spacing: 12) {
+        OnbQuestion(i18n.t("ios.onb12.q.name"), say: say) {
+            VStack(spacing: 0) {
                 field($model.displayName)
-                Text(i18n.t("ios.onb10.name.hint"))
-                    .font(V3Font.caption)
-                    .foregroundStyle(V3Color.ink2)
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.top, 24)
+                    .padding(.vertical, 18)
+                    .frame(maxWidth: .infinity)
+                    .v3Card(selected: canContinue)
 
-            V3Button(i18n.t("common.continue"), isEnabled: canContinue) {
-                advance()
-            }
-            .padding(.top, 36)
+                V3Button(i18n.t("common.continue"), isEnabled: canContinue) {
+                    advance()
+                }
+                .padding(.top, 20)
 
-            OnbKeyboardRoom(isActive: self.model.step == .name)
+                OnbKeyboardRoom(isActive: self.model.step == .name)
+            }
         }
         .onAppear { isFocused = true }
     }

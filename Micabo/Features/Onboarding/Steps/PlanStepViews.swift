@@ -4,14 +4,14 @@ import SwiftUI
 
 /// **« Je prépare ton plan… »** Le seul chargement du parcours, et sa seule horloge.
 ///
-/// Mika écrit ; le pourcentage monte ; la liste se coche ligne à ligne, et chaque ligne est
-/// une réponse de l'élève (sa classe, ses matières, son examen et sa date, son temps par jour
-/// et l'heure, sa première leçon : `OnboardingModel.planLines`). Une information absente
-/// retire sa ligne. À cent pour cent, l'écran avance seul, vers le plan révélé.
+/// Mika écrit ; le pourcentage monte ; la liste se coche ligne à ligne, et **chaque ligne est
+/// une réponse de l'élève** (sa classe, ses matières, sa matière la plus dure, son objectif,
+/// son examen et sa date, son temps par jour et l'heure, sa première leçon :
+/// `OnboardingModel.planLines`). Une information absente retire sa ligne. À cent pour cent,
+/// l'écran avance seul, vers le plan prêt.
 ///
 /// **L'horloge ne redessine que ce qui bouge** : le pourcentage, la jauge et la liste vivent
-/// dans une vue à part, sous une `TimelineView` périodique. Mika et le titre ne sont pas relus
-/// trente fois par seconde.
+/// dans une vue à part, sous une `TimelineView` périodique.
 struct PlanBuildingStepView: View {
     /// Pour les rendus : l'avancement à montrer, figé.
     var previewProgress: Double?
@@ -50,10 +50,10 @@ struct PlanBuildingStepView: View {
 
     var body: some View {
         OnbScreen {
-            Spacer(minLength: 16)
+            Spacer(minLength: 8)
                 .layoutPriority(-1)
 
-            OnbHeroMika(mood: .write, max: 170)
+            OnbHeroMika(mood: .write, max: 130, min: 80)
 
             Text(i18n.t("ios.onb10.build.title"))
                 .font(V3Font.h1)
@@ -61,7 +61,7 @@ struct PlanBuildingStepView: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity)
-                .padding(.top, 10)
+                .padding(.top, 8)
                 .accessibilityAddTraits(.isHeader)
 
             if let frozen = previewProgress ?? (still ? 1 : nil) {
@@ -77,12 +77,12 @@ struct PlanBuildingStepView: View {
                 }
             }
 
-            Spacer(minLength: 16)
+            Spacer(minLength: 8)
                 .layoutPriority(-1)
         }
     }
 
-    /// Le chargement est fini : le parcours passe au plan révélé, une fois.
+    /// Le chargement est fini : le parcours passe au plan prêt, une fois.
     private func finish() {
         guard !didAdvance, model.step == .planBuilding else { return }
         didAdvance = true
@@ -107,15 +107,15 @@ private struct PlanBuildingProgress: View {
     var body: some View {
         VStack(spacing: 0) {
             Text(L10n.percent(Int((progress * 100).rounded()), locale: i18n.locale))
-                .font(V3Font.display(52))
-                .foregroundStyle(V3Color.ink2)
+                .font(V3Font.display(48))
+                .foregroundStyle(V3Color.accentBright)
                 .monospacedDigit()
-                .padding(.top, 6)
+                .padding(.top, 4)
             V3ProgressBar(value: progress)
-                .padding(.top, 8)
+                .padding(.top, 6)
 
             checklist
-                .padding(.top, OnbLayout.titleGap)
+                .padding(.top, 18)
         }
         .frame(maxWidth: .infinity)
         .onChange(of: checked) { previous, next in
@@ -126,19 +126,19 @@ private struct PlanBuildingProgress: View {
 
     /// La liste, dans une carte : cochée, en cours (un anneau), à venir.
     private var checklist: some View {
-        VStack(alignment: .leading, spacing: 15) {
+        VStack(alignment: .leading, spacing: 12) {
             ForEach(Array(lines.enumerated()), id: \.offset) { index, line in
                 HStack(alignment: .center, spacing: 12) {
                     mark(index)
                     Text(line)
                         .font(V3Font.bodyStrong)
-                        .foregroundStyle(index <= checked ? V3Color.ink : V3Color.ink3)
+                        .foregroundStyle(index < checked ? V3Color.ink : (index == checked ? V3Color.ink2 : V3Color.ink3))
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }
-        .padding(18)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .v3Card()
     }
@@ -149,6 +149,7 @@ private struct PlanBuildingProgress: View {
             Image(systemName: "checkmark.circle.fill")
                 .font(V3Font.title)
                 .foregroundStyle(V3Color.green)
+                .transition(.scale.combined(with: .opacity))
         } else if index == checked {
             Image(systemName: "circle")
                 .font(V3Font.title)
@@ -161,88 +162,148 @@ private struct PlanBuildingProgress: View {
     }
 }
 
-// MARK: - Le plan révélé
+// MARK: - Le plan prêt
 
-/// **« {prénom}, ton plan est prêt »** : le moment où le parcours rend ce qu'il a demandé.
+/// **« Lina, ton plan est prêt »** : le moment où le parcours rend ce qu'il a demandé, **comme
+/// un objet à lui** (lot 12).
 ///
-/// Mika en fête, des confettis une fois, et la carte du plan : chaque ligne vient d'une
-/// réponse (l'examen et son jour, les matières, le temps par jour et l'heure, l'objectif dans
-/// le barème de l'élève, la première leçon). Une réponse absente retire sa ligne au lieu d'en
-/// inventer une. Le compte se propose en quittant cet écran.
+/// Mika fête, des confettis une fois, et le plan en une carte : « Plan de Lina », son examen et
+/// le temps qu'il reste ; sa semaine, un point par jour ; **la première séance, ce soir à son
+/// heure**, sur sa première leçon (ou sa matière la plus dure) ; son objectif dans son barème.
+/// Une réponse absente retire sa ligne. Le compte se propose en quittant cet écran.
 ///
 /// Le nom de l'étape reste `profileSummary` : sa courbe dans les statistiques continue.
 struct ProfileSummaryStepView: View {
+    var now = Date()
+
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-    @Environment(\.onboardingStill) private var still
+    @Environment(\.onbCompact) private var compact
 
     private var title: String {
         guard let name = model.displayName.nilIfBlank else { return i18n.t("ios.onb10.plan.titleNoName") }
         return i18n.t("ios.onb10.plan.title", ["name": name])
     }
 
-    private var rows: [OnboardingPlanRow] {
-        model.planSummary(locale: i18n.locale)
+    private var planName: String {
+        guard let name = model.displayName.nilIfBlank else { return i18n.t("ios.onb12.plan.nameAny") }
+        return i18n.t("ios.onb12.plan.name", ["name": name])
+    }
+
+    /// Ce que la séance de ce soir travaille : la première leçon, sinon la matière la plus dure.
+    private var tonight: String {
+        if let lesson = model.firstLessonLine(locale: i18n.locale) { return lesson }
+        if let subject = model.focusSubject { return SubjectDisplay.subject(subject, locale: i18n.locale) }
+        return model.firstSubjectName(locale: i18n.locale) ?? i18n.t("ios.onb11.plan.lesson")
     }
 
     var body: some View {
         OnbScreen {
-            Spacer(minLength: 12)
-                .layoutPriority(-1)
-
-            OnbHeroMika(mood: .celebrate)
+            OnbHeroMika(mood: .celebrate, max: compact ? 96 : 130, min: 72)
+                .padding(.top, 4)
 
             OnbTitle(title, size: OnbLayout.display, alignment: .center)
-                .padding(.top, 10)
+                .padding(.top, 6)
 
-            summary
-                .padding(.top, OnbLayout.titleGap)
-
-            Spacer(minLength: 12)
-                .layoutPriority(-1)
+            plan
+                .padding(.top, 16)
         } footer: {
             V3Button(i18n.t("ios.deckBuild.seePlan")) {
                 model.advance()
             }
         }
         .overlay {
-            // Les confettis tombent une fois ; « Réduire les animations » les retire.
-            if !still {
-                ConfettiView(colors: [V3Color.accent, V3Color.yellow, V3Color.green, V3Color.pink])
-                    .allowsHitTesting(false)
-                    .accessibilityHidden(true)
-            }
+            OnbConfetti(isOn: true)
         }
     }
 
-    /// La carte du plan : un libellé à gauche, sa valeur à droite, un filet entre deux lignes.
-    private var summary: some View {
-        VStack(spacing: 0) {
-            ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
-                if index > 0 {
-                    Rectangle()
-                        .fill(V3Color.line)
-                        .frame(height: 1.5)
+    /// **Le plan, comme un objet** : son nom, son examen, sa semaine, la séance de ce soir, son
+    /// objectif.
+    private var plan: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center, spacing: 10) {
+                Text(planName)
+                    .font(V3Font.heading(24))
+                    .foregroundStyle(V3Color.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                if let exam = model.examName(locale: i18n.locale), let days = model.examDaysLeft(now: now), days > 0 {
+                    Text(i18n.t("ios.onb12.plan.examPill", [
+                        "exam": exam,
+                        "time": OnbWords.duration(days: days, locale: i18n.locale),
+                    ]))
+                    .font(V3Font.label)
+                    .foregroundStyle(V3Color.yellowInk)
+                    .lineLimit(1)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(V3Color.yellowWash, in: Capsule())
                 }
-                HStack(alignment: .firstTextBaseline, spacing: 12) {
-                    Text(row.label)
+            }
+
+            V3WeekStrip(days: PlanDemoStepView.week(from: now, examDate: model.datedExam?.date, locale: i18n.locale))
+
+            // La séance de ce soir : le temps fort de la carte.
+            HStack(spacing: 12) {
+                OnbIcon(icon: .alarm, size: 28)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(i18n.t("ios.onb12.plan.tonight", ["hour": OnbWords.hour(model.reminderHour, locale: i18n.locale)]))
+                        .font(V3Font.caption)
+                        .foregroundStyle(V3Color.accentBright)
+                    Text(tonight)
+                        .font(V3Font.bodyStrong)
+                        .foregroundStyle(V3Color.ink)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Text(i18n.t("ios.quiz.time.short", ["n": "\(model.minutesPerDay)"]))
+                    .font(V3Font.label)
+                    .foregroundStyle(V3Color.accentBright)
+                    .lineLimit(1)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(V3Color.accentWash, in: Capsule())
+            }
+            .padding(12)
+            .background(V3Color.accentWash.opacity(0.5), in: RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous)
+                    .strokeBorder(V3Color.accent, lineWidth: V3Metric.border)
+            )
+
+            if let target = model.targetLabel(locale: i18n.locale) {
+                HStack(spacing: 12) {
+                    OnbIcon(icon: .trophy, size: 24)
+                    Text(i18n.t("ios.onb5.plan.goal"))
                         .font(V3Font.body)
                         .foregroundStyle(V3Color.ink2)
-                        .fixedSize()
-                    Text(row.value)
+                    Spacer(minLength: 8)
+                    Text(model.currentLabel(locale: i18n.locale).map { OnbWords.range(from: $0, to: target, locale: i18n.locale) } ?? target)
                         .font(V3Font.bodyStrong)
-                        .foregroundStyle(row.isAccent ? V3Color.green : V3Color.ink)
-                        .multilineTextAlignment(.trailing)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .foregroundStyle(V3Color.green)
+                        .lineLimit(1)
                 }
-                .padding(.vertical, 13)
+                .accessibilityElement(children: .combine)
+            }
+
+            let names = OnbDemo.sessionSubjects(for: model, locale: i18n.locale)
+            if !names.isEmpty {
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    OnbIcon(icon: .book, size: 24)
+                    Text(OnbWords.list(names, locale: i18n.locale))
+                        .font(V3Font.body)
+                        .foregroundStyle(V3Color.ink2)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
                 .accessibilityElement(children: .combine)
             }
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 4)
-        .frame(maxWidth: .infinity)
-        .v3Card()
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .v3Card(selected: true)
     }
 }

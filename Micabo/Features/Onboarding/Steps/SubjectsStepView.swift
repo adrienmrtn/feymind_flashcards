@@ -1,14 +1,10 @@
 import SwiftUI
 
-/// **« Quelles matières on travaille ensemble ? »** Choix multiple.
+/// **« Tes matières cette année ? »** Choix multiple.
 ///
 /// L'écran propose **les matières de la classe qu'on vient de déclarer** : un élève de
 /// terminale voit les siennes et coche en trois secondes. Le catalogue général reste à un
-/// appui (« Autres matières ») : quelqu'un suit une option que sa classe ne liste pas, et lui
-/// cacher le reste serait lui dire que sa matière n'existe pas. Sans classe connue, c'est le
-/// catalogue qui s'affiche.
-///
-/// **Mika réagit dès la première matière cochée** : sa bulle change, et il se met à écrire.
+/// appui (« Autres matières »). Mika reprend la classe, puis réagit dès la première coche.
 struct SubjectsStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -36,23 +32,29 @@ struct SubjectsStepView: View {
         !model.subjects.isEmpty
     }
 
+    private var say: OnbSay {
+        if hasAnswer {
+            return OnbSay(i18n.t("ios.onb10.react.subjects"), mood: .write)
+        }
+        if !mine.isEmpty, let label = model.classLabel {
+            return OnbSay(i18n.t("ios.onb12.say.subjectsOf", ["class": label]), mood: .idle)
+        }
+        return OnbSay(i18n.t("ios.onb12.say.subjects"), mood: .idle)
+    }
+
     var body: some View {
-        OnbQuestion(
-            i18n.t(hasAnswer ? "ios.onb10.react.subjects" : "ios.onb10.q.subjects"),
-            mood: hasAnswer ? .write : .idle,
-            anchored: false
-        ) {
+        OnbQuestion(i18n.t("ios.onb12.q.subjects"), say: say) {
             VStack(alignment: .leading, spacing: 14) {
                 if !mine.isEmpty {
-                    if let label = model.classLabel {
-                        caption(i18n.t("ios.onb10.subjects.of", ["class": label]))
-                    }
                     chips(mine)
                 }
 
                 if showsOthers {
                     if !mine.isEmpty {
-                        caption(i18n.t("ios.onb10.subjects.more"))
+                        Text(i18n.t("ios.onb10.subjects.more"))
+                            .font(V3Font.caption)
+                            .foregroundStyle(V3Color.ink3)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.top, 8)
                     }
                     chips(others)
@@ -81,18 +83,11 @@ struct SubjectsStepView: View {
         ) ?? []
     }
 
-    private func caption(_ text: String) -> some View {
-        Text(text)
-            .font(V3Font.caption)
-            .foregroundStyle(V3Color.ink3)
-            .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
     private func chips(_ subjects: [String]) -> some View {
         MicaboFlowLayout(spacing: 8, lineSpacing: 10) {
             ForEach(subjects, id: \.self) { subject in
-                V3Chip(
-                    SubjectDisplay.subject(subject, locale: i18n.locale),
+                OnbSubjectChip(
+                    title: SubjectDisplay.subject(subject, locale: i18n.locale),
                     isSelected: model.subjects.contains(subject)
                 ) {
                     toggle(subject)
@@ -103,10 +98,62 @@ struct SubjectsStepView: View {
     }
 
     private func toggle(_ subject: String) {
-        if model.subjects.contains(subject) {
-            model.subjects.remove(subject)
-        } else {
-            model.subjects.insert(subject)
+        withAnimation(MicaboMotion.quick) {
+            if model.subjects.contains(subject) {
+                model.subjects.remove(subject)
+            } else {
+                model.subjects.insert(subject)
+            }
+        }
+    }
+}
+
+/// **Une matière en puce, qui saute quand on la coche.**
+struct OnbSubjectChip: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        V3Chip(title, isSelected: isSelected, action: action)
+            .keyframeAnimator(initialValue: CGFloat(1), trigger: isSelected) { content, scale in
+                content.scaleEffect(reduceMotion || !isSelected ? 1 : scale)
+            } keyframes: { _ in
+                KeyframeTrack {
+                    SpringKeyframe(1.08, duration: 0.1)
+                    SpringKeyframe(1.0, duration: 0.25)
+                }
+            }
+    }
+}
+
+// MARK: - La matière la plus dure
+
+/// **« Laquelle te donne le plus de fil à retordre ? »** (lot 12) Une réponse, parmi ses
+/// matières. C'est elle que prennent ensuite les démonstrations et la question d'essai : la
+/// douleur est nommée, et la réponse de l'app y revient tout de suite.
+struct HardestSubjectStepView: View {
+    @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    var body: some View {
+        OnbQuestion(
+            i18n.t("ios.onb12.q.hardest"),
+            say: OnbSay(i18n.t("ios.onb12.say.hardest"), mood: .wink)
+        ) {
+            VStack(spacing: OnbLayout.rowGap) {
+                ForEach(model.subjects.sorted(), id: \.self) { subject in
+                    OnbOption(
+                        title: SubjectDisplay.subject(subject, locale: i18n.locale),
+                        icon: MicaboIcon.subjectIcon(subject) ?? .book,
+                        isSelected: model.hardestSubject == subject
+                    ) {
+                        OnbPick.choose(on: .hardestSubject, model: model) { model.hardestSubject = subject }
+                    }
+                }
+            }
         }
     }
 }

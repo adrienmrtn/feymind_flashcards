@@ -21,7 +21,7 @@ struct FirstLessonStepView: View {
     /// La hauteur du pied (les deux boutons), que le clavier recouvre.
     @State private var footerHeight: CGFloat = 0
 
-    /// Ce que Mika dit : la question, puis sa réaction au choix.
+    /// Ce que Mika dit : la leçon offerte, puis sa réaction au choix.
     private var bubble: String {
         switch model.firstLessonChoice {
         case .importSource:
@@ -30,9 +30,9 @@ struct FirstLessonStepView: View {
             if !isTyping, let subject = model.firstLessonSubject {
                 return i18n.t("ios.onb10.react.lesson.topic", ["topic": subject])
             }
-            return i18n.t("ios.onb10.q.lesson")
+            return i18n.t("ios.onb12.say.lesson")
         case nil:
-            return i18n.t("ios.onb10.q.lesson")
+            return i18n.t("ios.onb12.say.lesson")
         }
     }
 
@@ -48,18 +48,18 @@ struct FirstLessonStepView: View {
     var body: some View {
         @Bindable var model = model
 
-        OnbQuestion(bubble, mood: hasReacted ? .happy : .wink) {
+        OnbQuestion(i18n.t("ios.onb10.q.lesson"), say: OnbSay(bubble, mood: hasReacted ? .happy : .wink)) {
             VStack(spacing: OnbLayout.rowGap) {
                 if model.firstLessonChoice == .topic {
                     topicCard($model.firstLessonTopic)
                 } else {
-                    V3OptionRow(i18n.t("ios.onb10.lesson.topic"), icon: .quill, isSelected: false) {
+                    OnbOption(title: i18n.t("ios.onb10.lesson.topic"), icon: .quill, isSelected: false) {
                         chooseTopic()
                     }
                 }
 
-                V3OptionRow(
-                    i18n.t("ios.onb10.lesson.import"),
+                OnbOption(
+                    title: i18n.t("ios.onb10.lesson.import"),
                     subtitle: i18n.t("ios.onb10.lesson.importHint"),
                     icon: .photo,
                     isSelected: model.firstLessonChoice == .importSource
@@ -170,7 +170,7 @@ struct FirstLessonStepView: View {
     /// **Un sujet d'exemple**, dans la famille de sa première matière (la même que celle de la
     /// question d'essai) et à son niveau : collège, lycée, ou après le bac.
     static func exampleTopic(for model: OnboardingModel, locale: UiLocale) -> String {
-        let family = SampleCard.pick(for: model.subjects).card
+        let family = SampleCard.pick(for: model.demoSubjects).card
         return L10n.t("ios.onb10.lesson.ex.\(family.rawValue).\(band(for: model.tier))", locale: locale)
     }
 

@@ -48,28 +48,36 @@ final class OnboardingLot11Tests: XCTestCase {
         }
     }
 
-    /// Chaque démo suit la réponse qui la précède.
+    /// **Les démonstrations suivent la reformulation** (lot 12) : Mika dit « je t'ai compris »,
+    /// puis montre une réponse jouable par blocage ; le calendrier et la concentration suivent
+    /// le temps par jour.
     func testEachDemoFollowsTheAnswerItIllustrates() {
         let order = OnboardingStep.allCases
         func after(_ demo: OnboardingStep, _ answer: OnboardingStep) {
             XCTAssertEqual(order.firstIndex(of: demo), order.firstIndex(of: answer).map { $0 + 1 }, "\(demo)")
         }
-        after(.lessonDemo, .subjects)
-        after(.scanDemo, .solutionMap)
+        after(.lessonDemo, .solutionMap)
+        after(.cardsDemo, .lessonDemo)
+        after(.scanDemo, .cardsDemo)
+        after(.chatDemo, .scanDemo)
+        after(.examDemo, .chatDemo)
         after(.planDemo, .dailyTime)
-        after(.chatDemo, .sampleCard)
-        // Les quatre écrans qui amènent à l'offre : le plan, ce que l'essai ouvre, la fin de
-        // l'essai, pourquoi maintenant.
-        XCTAssertEqual(Array(order.suffix(5)), [.profileSummary, .freeTrialIntro, .trialOffer, .whyNow, .paywall])
-        XCTAssertTrue([OnboardingStep.lessonDemo, .scanDemo, .planDemo, .chatDemo, .whyNow].allSatisfy(\.showsChrome))
-        XCTAssertTrue([OnboardingStep.lessonDemo, .scanDemo, .planDemo, .chatDemo, .whyNow].allSatisfy(\.allowsReturn))
+        after(.focusDemo, .planDemo)
+        // Les écrans qui amènent à l'offre : le plan, la leçon choisie, ce que l'essai ouvre, la
+        // fin de l'essai, pourquoi maintenant.
+        XCTAssertEqual(Array(order.suffix(6)), [.profileSummary, .firstLesson, .freeTrialIntro, .trialOffer, .whyNow, .paywall])
+        let demos = OnboardingStep.allCases.filter { $0.kind == .demo }
+        XCTAssertTrue((demos + [.whyNow, .commitment]).allSatisfy(\.showsChrome))
+        XCTAssertTrue((demos + [.whyNow, .commitment]).allSatisfy(\.allowsReturn))
     }
 
-    /// La phrase du scanner reprend le blocage coché.
-    func testTheScannerSpeaksToTheWorry() {
-        XCTAssertEqual(ScanDemoStepView.askKey(worries: [.homework, .hardLessons]), "ios.onb11.scan.askHomework")
-        XCTAssertEqual(ScanDemoStepView.askKey(worries: [.hardLessons]), "ios.onb11.scan.askHard")
-        XCTAssertEqual(ScanDemoStepView.askKey(worries: [.forgetting]), "ios.onb11.scan.ask")
+    /// L'étiquette d'une démonstration reprend le blocage coché, sinon nomme l'outil.
+    func testTheDemoEyebrowSpeaksToTheWorry() {
+        let model = OnboardingModel()
+        model.toggle(worry: .homework)
+        let quoted = OnbDemo.eyebrow(worry: .homework, tool: "Le scanner", model: model, locale: .fr)
+        XCTAssertTrue(quoted.contains(StudyWorry.homework.title(locale: .fr)), quoted)
+        XCTAssertEqual(OnbDemo.eyebrow(worry: .forgetting, tool: "Les cartes", model: model, locale: .fr), "Les cartes")
     }
 
     /// La démo de leçon parle de la matière cochée, jamais d'une matière qu'il n'a pas.

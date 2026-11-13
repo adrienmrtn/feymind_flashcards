@@ -14,8 +14,12 @@ enum OnbLayout {
     /// La marge horizontale d'une page composée hors du gabarit (les stories) : celle du
     /// gabarit.
     static let margin: CGFloat = 20
-    /// Entre la bulle de Mika et les réponses, au moins.
-    static let askGap: CGFloat = 28
+    /// Le titre d'une question ou d'une démonstration : l'élément dominant de l'écran.
+    static let questionTitle: CGFloat = 34
+    /// Entre le titre et Mika.
+    static let mikaGap: CGFloat = 12
+    /// Entre Mika et les réponses (ou le morceau d'app).
+    static let answersGap: CGFloat = 16
     /// Entre deux lignes de réponse.
     static let rowGap: CGFloat = 10
     /// Entre deux cartes.
@@ -34,7 +38,11 @@ enum OnbLayout {
     static let heroMax: CGFloat = 190
     static let heroMin: CGFloat = 120
     /// Mika quand il se présente : le plus grand du parcours.
-    static let heroWelcome: CGFloat = 240
+    static let heroWelcome: CGFloat = 220
+
+    /// En dessous de cette hauteur de page (un iPhone SE, sous la barre du haut), l'écran est
+    /// court : Mika et les morceaux d'app se resserrent.
+    static let compactHeight: CGFloat = 640
 
     /// **Sous le bouton du pied**, au-dessus de la zone sûre du bas : 16 pt au-dessus de la
     /// barre d'accueil ; 24 pt du bord sur un iPhone à bouton d'accueil, qui n'a pas de marge.
@@ -51,7 +59,7 @@ enum OnbLayout {
 ///
 /// Le contenu reçoit au moins la hauteur de l'écran (`.frame(minHeight:)` dans le
 /// défilement) : les `Spacer` y poussent, les réponses descendent. Les rendus « sur
-/// l'appareil » (`OnboardingDeviceRenderTests`) le vérifient avec les vraies marges.
+/// l'appareil » (`OnboardingLot12RenderTests`) le vérifient avec les vraies marges.
 ///
 /// **Le pied** est sous la colonne, dans la zone sûre : son bouton se pose au-dessus de la
 /// barre d'accueil avec une marge normale (`OnbLayout.footerGap`), et à 24 pt du bord sur un
@@ -115,6 +123,7 @@ struct OnbScreen<Content: View, Footer: View>: View {
                     .fixedSize(horizontal: false, vertical: true)
                 }
             }
+            .environment(\.onbCompact, outer.size.height < OnbLayout.compactHeight)
         }
         .background(V3Color.bg.ignoresSafeArea())
     }
@@ -127,48 +136,108 @@ extension OnbScreen where Footer == EmptyView {
     }
 }
 
+// MARK: - Ce que dit Mika
+
+/// **Une réplique de Mika** : sa phrase (son mot-clé entre `**`) et l'humeur qui va avec.
+struct OnbSay: Equatable {
+    var text: String
+    var mood: MikaMood
+
+    init(_ text: String, mood: MikaMood = .idle) {
+        self.text = text
+        self.mood = mood
+    }
+}
+
+/// **Mika qui réagit, sous le titre** (lot 12) : un Mika de 84 pt (64 sur un petit écran) et
+/// sa réplique dans une bulle secondaire. Le titre domine ; Mika vit à côté.
+///
+/// Quand la réplique change (l'élève vient de répondre), le texte fait un fondu, la bulle fait
+/// un petit ressort, et Mika change d'humeur (son geste, une fois). Rien ne retarde la page.
+struct OnbMikaRow: View {
+    let say: OnbSay
+
+    @Environment(\.onbCompact) private var compact
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var size: CGFloat { compact ? 62 : 84 }
+
+    var body: some View {
+        let phrase = OnbPhrase(say.text)
+        HStack(alignment: .center, spacing: 8) {
+            MikaMascot(mood: say.mood, size: size)
+                .frame(width: size, height: size)
+                .accessibilityHidden(true)
+            Text(v3: phrase.text, highlight: phrase.highlight)
+                .font(V3Font.bodyStrong)
+                .foregroundStyle(V3Color.ink2)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .contentTransition(.opacity)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 11)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    V3Color.surface,
+                    in: UnevenRoundedRectangle(
+                        topLeadingRadius: V3Metric.radiusBubbleTail,
+                        bottomLeadingRadius: V3Metric.radiusBubble,
+                        bottomTrailingRadius: V3Metric.radiusBubble,
+                        topTrailingRadius: V3Metric.radiusBubble,
+                        style: .continuous
+                    )
+                )
+                .keyframeAnimator(initialValue: CGFloat(1), trigger: say.text) { content, scale in
+                    content.scaleEffect(reduceMotion ? 1 : scale, anchor: .leading)
+                } keyframes: { _ in
+                    KeyframeTrack {
+                        SpringKeyframe(1.035, duration: 0.12)
+                        SpringKeyframe(1.0, duration: 0.25)
+                    }
+                }
+        }
+        .animation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion), value: say.text)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(phrase.text))
+    }
+}
+
 // MARK: - Une question
 
-/// **Une question du parcours** : Mika et sa bulle en haut (`MikaAsk`), les réponses ancrées
-/// en bas, du vide entre les deux ; et, quand il y en a un, le bouton au pied. La barre du
-/// haut n'est pas ici : elle est fixe, au-dessus des pages (`OnboardingFlowView`).
+/// **Une question du parcours** (lot 12) : **le titre en grand, en haut**, la question
+/// elle-même, son mot-clé en couleur ; dessous, Mika qui réagit dans sa bulle ; dessous, les
+/// réponses, groupées. Le bouton, quand il y en a un, est au pied, toujours au même endroit.
 ///
-/// Quand l'élève répond, l'écran change le texte de la bulle (un fondu, dans `MikaAsk`) et
-/// l'humeur de Mika : c'est la réaction, et elle ne retarde rien.
-///
-/// `anchored` faux : les réponses suivent la bulle (une longue liste, des puces, une page qui
-/// prend le clavier).
+/// Plus de question dans une petite bulle, plus de grand vide entre la question et les
+/// réponses : l'œil va du titre à Mika, puis aux réponses.
 struct OnbQuestion<Answers: View, Footer: View>: View {
-    private let ask: String
-    private let mood: MikaMood
-    private let anchored: Bool
+    private let title: String
+    private let say: OnbSay?
     private let answers: Answers
     private let footer: Footer
 
     init(
-        _ ask: String,
-        mood: MikaMood = .idle,
-        anchored: Bool = true,
+        _ title: String,
+        say: OnbSay?,
         @ViewBuilder answers: () -> Answers,
         @ViewBuilder footer: () -> Footer
     ) {
-        self.ask = ask
-        self.mood = mood
-        self.anchored = anchored
+        self.title = title
+        self.say = say
         self.answers = answers()
         self.footer = footer()
     }
 
     var body: some View {
         OnbScreen {
-            OnbBubble(ask, mood: mood)
-            if anchored {
-                Spacer(minLength: OnbLayout.askGap)
-            } else {
-                Color.clear
-                    .frame(height: OnbLayout.askGap)
+            OnbTitle(title, size: OnbLayout.questionTitle)
+                .padding(.top, OnbLayout.titleTop)
+            if let say {
+                OnbMikaRow(say: say)
+                    .padding(.top, OnbLayout.mikaGap)
             }
             answers
+                .padding(.top, OnbLayout.answersGap)
         } footer: {
             footer
         }
@@ -177,13 +246,186 @@ struct OnbQuestion<Answers: View, Footer: View>: View {
 
 extension OnbQuestion where Footer == EmptyView {
     /// Une question à choix unique : pas de bouton, la réponse avance.
-    init(
-        _ ask: String,
-        mood: MikaMood = .idle,
-        anchored: Bool = true,
-        @ViewBuilder answers: () -> Answers
-    ) {
-        self.init(ask, mood: mood, anchored: anchored, answers: answers, footer: { EmptyView() })
+    init(_ title: String, say: OnbSay?, @ViewBuilder answers: () -> Answers) {
+        self.init(title, say: say, answers: answers, footer: { EmptyView() })
+    }
+}
+
+// MARK: - Une réponse qui se coche
+
+/// **Une ligne de réponse qui réagit** : la ligne de l'app (`V3OptionRow`), plus un petit
+/// ressort quand elle devient choisie. Le retour haptique est celui de la ligne.
+struct OnbOption: View {
+    let title: String
+    var subtitle: String?
+    var icon: MicaboIcon?
+    var emoji: String?
+    let isSelected: Bool
+    var multiple = false
+    let action: () -> Void
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        V3OptionRow(title, subtitle: subtitle, icon: icon, emoji: emoji, isSelected: isSelected, multiple: multiple, action: action)
+            .keyframeAnimator(initialValue: CGFloat(1), trigger: isSelected) { content, scale in
+                content.scaleEffect(reduceMotion || !isSelected ? 1 : scale)
+            } keyframes: { _ in
+                KeyframeTrack {
+                    SpringKeyframe(1.03, duration: 0.1)
+                    SpringKeyframe(1.0, duration: 0.22)
+                }
+            }
+    }
+}
+
+/// **Un choix unique qui avance** : la réponse s'écrit sous le ressort court de l'app (la
+/// coche apparaît, la ligne se gonfle), et la page part **à la fin de ce ressort** — pas après
+/// une minuterie. « Réduire les animations » : un fondu bref, puis la page.
+enum OnbPick {
+    static func choose(on step: OnboardingStep, model: OnboardingModel, _ apply: () -> Void) {
+        guard model.step == step else { return }
+        let curve = MicaboMotion.resolved(MicaboMotion.quick, reduceMotion: UIAccessibility.isReduceMotionEnabled)
+        withAnimation(curve, completionCriteria: .logicallyComplete) {
+            apply()
+        } completion: {
+            guard model.step == step else { return }
+            model.advance()
+        }
+    }
+}
+
+// MARK: - Une démonstration jouable
+
+/// **Une démonstration du parcours** (lot 12) : un morceau d'app à jouer, grand, dans la DA.
+///
+/// En haut, le blocage qu'elle soigne (une étiquette) et la promesse (le titre) ; Mika
+/// dessous, qui dit quoi faire puis réagit ; puis le morceau d'app, qui prend la place qui
+/// reste. Le bouton du pied **joue la démonstration** tant qu'elle ne l'a pas été (« Retourner
+/// la carte », « Prendre la photo »…), puis devient « Continuer ». Toucher le morceau d'app
+/// joue aussi.
+struct OnbDemoStage<Panel: View>: View {
+    var eyebrow: String?
+    let title: String
+    let say: OnbSay
+    /// Le libellé du bouton tant que la démonstration n'est pas jouée ; `nil` : « Continuer ».
+    var playLabel: String?
+    let isPlayed: Bool
+    var onPlay: () -> Void = {}
+    @ViewBuilder let panel: () -> Panel
+
+    @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    var body: some View {
+        OnbScreen {
+            if let eyebrow {
+                OnbEyebrow(text: eyebrow)
+                    .padding(.top, OnbLayout.titleTop)
+            }
+            OnbTitle(title, size: OnbLayout.questionTitle)
+                .padding(.top, eyebrow == nil ? OnbLayout.titleTop : 6)
+            OnbMikaRow(say: say)
+                .padding(.top, OnbLayout.mikaGap)
+            panel()
+                .frame(maxWidth: .infinity)
+                .padding(.top, OnbLayout.answersGap)
+                .dynamicTypeSize(...DynamicTypeSize.xxLarge)
+        } footer: {
+            if isPlayed || playLabel == nil {
+                V3Button(i18n.t("common.continue")) {
+                    model.advance()
+                }
+            } else if let playLabel {
+                V3Button(playLabel, kind: .primary) {
+                    onPlay()
+                }
+            }
+        }
+    }
+}
+
+/// **L'étiquette d'une démonstration** : ce qu'elle soigne, entre guillemets, en petit et en
+/// couleur, au-dessus du titre.
+struct OnbEyebrow: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .font(V3Font.eyebrow)
+            .foregroundStyle(V3Color.accentBright)
+            .lineLimit(2)
+            .multilineTextAlignment(.leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// **Le cadre d'un morceau d'app** : une grande surface, rayon des cartes, sans ombre.
+struct OnbPanel<Content: View>: View {
+    var padding: CGFloat = 16
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            content()
+        }
+        .padding(padding)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .v3Card()
+    }
+}
+
+// MARK: - Les temps forts
+
+/// **Une fête** : des confettis qui tombent une fois, par-dessus la page, quand `isOn` passe
+/// à vrai. « Réduire les animations » les retire (`ConfettiView`), et les rendus aussi.
+struct OnbConfetti: View {
+    let isOn: Bool
+
+    @Environment(\.onboardingStill) private var still
+
+    var body: some View {
+        if isOn, !still {
+            ConfettiView(colors: [V3Color.accent, V3Color.yellow, V3Color.green, V3Color.pink, V3Color.lilac])
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+        }
+    }
+}
+
+/// **Un gain d'XP**, en pastille jaune : « +10 XP ». Il apparaît d'un ressort.
+struct OnbXPPill: View {
+    let points: Int
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "bolt.fill")
+                .font(.system(size: 14, weight: .black))
+            Text(verbatim: "+\(points) XP")
+                .font(V3Font.heading(18))
+                .monospacedDigit()
+        }
+        .foregroundStyle(V3Color.onYellow)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(V3Color.yellow, in: Capsule())
+        .accessibilityElement(children: .combine)
+    }
+}
+
+// MARK: - La petite taille
+
+private struct OnbCompactKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+extension EnvironmentValues {
+    /// **Un écran court** (iPhone SE, très grand texte) : Mika et les morceaux d'app se
+    /// resserrent, le titre et le bouton gardent leur taille.
+    var onbCompact: Bool {
+        get { self[OnbCompactKey.self] }
+        set { self[OnbCompactKey.self] = newValue }
     }
 }
 
@@ -220,22 +462,6 @@ struct OnbPhrase: Equatable {
             result = result + (isKeyword ? Text(verbatim: part).foregroundStyle(keyword) : Text(verbatim: part))
         }
         return result
-    }
-}
-
-/// **Mika et sa bulle** (`MikaAsk`), pour une phrase du catalogue : son mot-clé prend la
-/// couleur que le système visuel donne aux mots-clés.
-struct OnbBubble: View {
-    private let phrase: OnbPhrase
-    private let mood: MikaMood
-
-    init(_ template: String, mood: MikaMood = .idle) {
-        self.phrase = OnbPhrase(template)
-        self.mood = mood
-    }
-
-    var body: some View {
-        MikaAsk(phrase.text, highlight: phrase.highlight, mood: mood)
     }
 }
 

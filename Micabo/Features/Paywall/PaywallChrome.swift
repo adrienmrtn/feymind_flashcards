@@ -128,6 +128,9 @@ enum PaywallStyle {
     static let disabledOpacity: Double = 0.35
     /// Mika en fête : sur l'offre, et à la bienvenue.
     static let offerMika: CGFloat = 150
+    /// Mika et sa réplique, en tête de l'offre et du paywall d'essai (lot 12).
+    static let offerMikaLine: CGFloat = 76
+    static let trialMika: CGFloat = 84
     static let welcomeMika: CGFloat = 200
 
     // MARK: Les couleurs
@@ -311,6 +314,43 @@ struct PaywallMikaLine: View {
 
     var body: some View {
         MikaAsk(line.text, highlight: line.highlight, mood: mood)
+    }
+}
+
+/// **Mika et sa réplique, en tête de l'offre** (lot 12) : il parle d'abord, le grand
+/// pourcentage vient ensuite. La bulle est celle du parcours d'accueil : une surface, le
+/// petit coin du côté de Mika, le texte en corps gras secondaire.
+struct DiscountMikaLine: View {
+    let line: PaywallEmphasis
+    var mood: MikaMood = .wink
+    var size: CGFloat = PaywallStyle.offerMikaLine
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 8) {
+            MikaMascot(mood: mood, size: size)
+                .frame(width: size, height: size)
+                .accessibilityHidden(true)
+            Text(v3: line.text, highlight: line.highlight)
+                .font(V3Font.bodyStrong)
+                .foregroundStyle(V3Color.ink)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 11)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    V3Color.surface,
+                    in: UnevenRoundedRectangle(
+                        topLeadingRadius: V3Metric.radiusBubbleTail,
+                        bottomLeadingRadius: V3Metric.radiusBubble,
+                        bottomTrailingRadius: V3Metric.radiusBubble,
+                        topTrailingRadius: V3Metric.radiusBubble,
+                        style: .continuous
+                    )
+                )
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(line.text))
     }
 }
 
