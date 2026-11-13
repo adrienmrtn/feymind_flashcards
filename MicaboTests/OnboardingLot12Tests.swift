@@ -198,6 +198,7 @@ final class OnboardingLot12Tests: XCTestCase {
         let id = UUID()
         model.lessonWritten(OnboardingWrittenLesson(id: id, title: "La guerre froide", themes: ["Deux blocs"]))
         XCTAssertEqual(FirstLessonIntent.pending, .lesson(id, topic: "La guerre froide"), "La Home ouvre la leçon, sans la réécrire")
+        XCTAssertEqual(PaywallContext.current().lessonTitle, "La guerre froide", "Le paywall du parcours titre sur la leçon, pas sur le plan")
         model.advance()
         XCTAssertEqual(model.step, .lessonReady)
         model.advance()
