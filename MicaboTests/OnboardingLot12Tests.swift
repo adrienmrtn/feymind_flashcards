@@ -128,7 +128,7 @@ final class OnboardingLot12Tests: XCTestCase {
     func testThePromiseIsWrittenWithTheAnswers() throws {
         let model = try lina()
         let promise = CommitmentStepView.studentPromise(for: model, locale: .fr)
-        XCTAssertTrue(promise.contains("Lina") && promise.contains("15 min"), promise)
+        XCTAssertTrue(promise.contains("Lina") && promise.contains("15\u{00A0}min"), promise)
         XCTAssertTrue(promise.contains("juin"), promise)
 
         model.examChoice = .noExam
