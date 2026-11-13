@@ -13,6 +13,7 @@ import { addMikaCard, askMika } from "@/lib/actions/lesson";
 import { useI18n } from "@/lib/i18n/client";
 import { lessonPath } from "@/lib/lesson/routes";
 import { requestPaywall } from "@/lib/paywall";
+import { awardXp } from "@/lib/xp/client";
 
 /**
  * **Mika, dans la leçon** : une conversation où la leçon est jointe d'office. Une conversation
@@ -117,6 +118,7 @@ export function LessonMika({ lessonId, title, tone, isPro }: { lessonId: string;
       return;
     }
     noteAnswered();
+    awardXp("mikaAnswer");
     setMessages((current) => [...current, { id: crypto.randomUUID(), role: "mika", text: result.reply!, ...(result.card ? { card: result.card } : {}) }]);
   }
 

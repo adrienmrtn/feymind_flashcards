@@ -206,10 +206,10 @@ struct SupabaseAuthClient {
         case "otp_expired", "flow_state_expired", "flow_state_not_found", "bad_code_verifier":
             return .linkExpired
         case "validation_failed" where message.localizedCaseInsensitiveContains("provider"):
-            return .providerNotEnabled("ce fournisseur")
+            return .providerNotEnabled("OAuth")
         default:
             if status == 400, message.localizedCaseInsensitiveContains("provider is not enabled") {
-                return .providerNotEnabled("ce fournisseur")
+                return .providerNotEnabled("OAuth")
             }
             if status == 429 || message.localizedCaseInsensitiveContains("for security purposes") {
                 return .rateLimited

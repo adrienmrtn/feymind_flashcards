@@ -5,6 +5,7 @@ import { AppChrome } from "@/components/app/AppChrome";
 import { DiscountHost } from "@/components/app/DiscountOffer";
 import { PaywallHost } from "@/components/app/PaywallFlow";
 import { TourHost } from "@/components/app/Tour";
+import { XpHost } from "@/components/xp/XpHost";
 import { entitlement } from "@micabo/core";
 
 import { ownedCourseCount, readEntitlement } from "@/lib/data/entitlement";
@@ -35,6 +36,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <AppChrome userName={userName} userInitial={userInitial}>
       <PresentmentProvider country={pricingCountry}>
         {children}
+        <XpHost userId={user.id} />
         <Suspense fallback={null}>
           <PaywallGate
             tourSeen={profile?.tour_seen ?? []}

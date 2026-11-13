@@ -1,3 +1,5 @@
+import { kxCs } from "./kx-cs";
+
 /** Connected-app copy (cs). */
 export const appCs = {
   a11y: {
@@ -572,6 +574,7 @@ export const appCs = {
     delayMonths: "{n} měs.",
     delayYears: "{n, plural, one {# rok} few {# roky} many {# roku} other {# let}}",
   },
+  kx: kxCs,
 } as const;
 
 export const copyCs = {

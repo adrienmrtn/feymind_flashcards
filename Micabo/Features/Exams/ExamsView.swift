@@ -1,13 +1,16 @@
 import SwiftData
 import SwiftUI
 
-/// **L'onglet Examen** : le prochain examen en grand, avec son compte à rebours, les autres en
-/// dessous, et l'examen blanc chronométré, sur une ou plusieurs leçons, noté dans le barème du
-/// pays.
+/// **« Mes examens »** : tous les examens, le prochain en grand avec son compte à rebours, les
+/// autres en dessous, l'examen blanc chronométré, les copies rendues et les examens passés.
 ///
-/// Un examen se déclare ici ou à la création d'une leçon (sa date). Un examen blanc se lance
-/// depuis un examen (ses leçons sont déjà choisies) ou seul. Le premier est offert, les
-/// suivants sont dans Pro (`ExamAllowance`, `begin_extra` côté serveur).
+/// C'était l'onglet Examen ; les examens ont déménagé dans le Calendrier, qui annonce le
+/// prochain et pousse cette page pour le reste. Rien n'a disparu : elle garde tout ce que
+/// l'onglet montrait.
+///
+/// Un examen se déclare ici, depuis le Calendrier ou à la création d'une leçon (sa date). Un
+/// examen blanc se lance depuis un examen (ses leçons sont déjà choisies) ou seul. Le premier
+/// est offert, les suivants sont dans Pro (`ExamAllowance`, `begin_extra` côté serveur).
 struct ExamsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -15,7 +18,6 @@ struct ExamsView: View {
     @Query(sort: \Exam.date) private var exams: [Exam]
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
 
-    @State private var path = NavigationPath()
     @State private var editing: ExamEditTarget?
     @State private var mock: MockExamStart?
     @State private var history: [ExamPaperResult] = []
@@ -26,71 +28,66 @@ struct ExamsView: View {
     private var past: [Exam] { exams.filter { $0.isPast() }.reversed() }
 
     var body: some View {
-        NavigationStack(path: $path) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    MicaboPageHeading(title: i18n.t("lesson.tab.exams"), subtitle: subtitle) {
-                        MicaboCircleButton(systemImage: "plus", style: .dark, size: 44, accessibilityTitle: i18n.t("lesson.exam.new")) {
-                            editing = .new
-                        }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                MicaboPageHeading(title: i18n.t("ios.cal.myExams"), subtitle: subtitle) {
+                    MicaboCircleButton(systemImage: "plus", style: .dark, size: 44, accessibilityTitle: i18n.t("lesson.exam.new")) {
+                        editing = .new
                     }
-                    .padding(.top, MicaboSpacing.xs)
+                }
+                .padding(.top, MicaboSpacing.xs)
 
-                    if let next = upcoming.first {
-                        ExamHero(exam: next, lessons: lessonsOf(next), best: bestResult(for: next)) {
-                            mock = MockExamStart(exam: next)
-                        } onEdit: {
-                            editing = .edit(next)
-                        }
+                if let next = upcoming.first {
+                    ExamHero(exam: next, lessons: lessonsOf(next), best: bestResult(for: next)) {
+                        mock = MockExamStart(exam: next)
+                    } onEdit: {
+                        editing = .edit(next)
+                    }
+                    .slideIn(shown, delay: 0.05)
+                } else {
+                    emptyCard
                         .slideIn(shown, delay: 0.05)
-                    } else {
-                        emptyCard
-                            .slideIn(shown, delay: 0.05)
-                    }
+                }
 
-                    mockCard
-                        .slideIn(shown, delay: 0.12)
+                mockCard
+                    .slideIn(shown, delay: 0.12)
 
-                    if upcoming.count > 1 {
-                        section(i18n.t("lesson.exam.upcoming"))
-                        VStack(spacing: 12) {
-                            ForEach(Array(upcoming.dropFirst())) { exam in
-                                ExamRow(exam: exam, lessonCount: lessonsOf(exam).count) { editing = .edit(exam) }
-                            }
+                if upcoming.count > 1 {
+                    section(i18n.t("lesson.exam.upcoming"))
+                    VStack(spacing: 12) {
+                        ForEach(Array(upcoming.dropFirst())) { exam in
+                            ExamRow(exam: exam, lessonCount: lessonsOf(exam).count) { editing = .edit(exam) }
                         }
-                        .slideIn(shown, delay: 0.18)
                     }
+                    .slideIn(shown, delay: 0.18)
+                }
 
-                    if !history.isEmpty {
-                        section(i18n.t("lesson.exam.history"))
-                        VStack(spacing: 10) {
-                            ForEach(history.prefix(8)) { result in
-                                MockResultRow(result: result)
-                            }
+                if !history.isEmpty {
+                    section(i18n.t("lesson.exam.history"))
+                    VStack(spacing: 10) {
+                        ForEach(history.prefix(8)) { result in
+                            MockResultRow(result: result)
                         }
-                        .slideIn(shown, delay: 0.22)
                     }
+                    .slideIn(shown, delay: 0.22)
+                }
 
-                    if !past.isEmpty {
-                        section(i18n.t("lesson.exam.past"))
-                        VStack(spacing: 10) {
-                            ForEach(past.prefix(6)) { exam in
-                                ExamRow(exam: exam, lessonCount: lessonsOf(exam).count) { editing = .edit(exam) }
-                                    .opacity(0.6)
-                            }
+                if !past.isEmpty {
+                    section(i18n.t("lesson.exam.past"))
+                    VStack(spacing: 10) {
+                        ForEach(past.prefix(6)) { exam in
+                            ExamRow(exam: exam, lessonCount: lessonsOf(exam).count) { editing = .edit(exam) }
+                                .opacity(0.6)
                         }
                     }
                 }
-                .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.bottom, MicaboSpacing.lg)
             }
-            .scrollIndicators(.hidden)
-            .micaboScreenBackground()
-            .tabBarClearance()
-            .toolbar(.hidden, for: .navigationBar)
-            .reportsNavigationDepth(for: .exams, depth: path.count)
-            .returnsHome(path: $path)
+            .padding(.horizontal, MicaboSpacing.screen)
+            .padding(.bottom, MicaboSpacing.lg)
         }
+        .scrollIndicators(.hidden)
+        .micaboScreenBackground()
+        .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $editing) { target in
             ExamEditSheet(target: target, lessons: lessons)
         }
@@ -99,7 +96,7 @@ struct ExamsView: View {
         }
         .onAppear {
             reloadHistory()
-            withAnimation(.spring(duration: 0.6)) { shown = true }
+            shown = true
         }
     }
 
@@ -154,8 +151,8 @@ struct ExamsView: View {
         }
         .padding(22)
         .frame(maxWidth: .infinity)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
         .micaboElevation(.card)
     }
 
@@ -171,7 +168,7 @@ struct ExamsView: View {
                     Circle().fill(MicaboColor.accentSoft)
                     Image(systemName: "stopwatch.fill")
                         .font(.system(size: 30, weight: .bold))
-                        .foregroundStyle(MicaboColor.accent)
+                        .foregroundStyle(MicaboColor.accentInk)
                         .symbolEffect(.bounce, value: shown)
                 }
                 .frame(width: 64, height: 64)
@@ -186,13 +183,13 @@ struct ExamsView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
+                Image(systemName: "chevron.forward")
                     .font(.system(size: 16, weight: .heavy))
                     .foregroundStyle(MicaboColor.inkTertiary)
             }
             .padding(18)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
             .micaboElevation(.card)
         }
         .buttonStyle(MicaboPressableButtonStyle())
@@ -212,8 +209,6 @@ struct ExamHero: View {
     let onMock: () -> Void
     let onEdit: () -> Void
 
-    @State private var pulse = false
-
     /// Au-delà, les leçons de l'examen se résument en « +N » : la carte reste une carte.
     static let shownLessons = 4
 
@@ -227,23 +222,23 @@ struct ExamHero: View {
                         .font(MicaboFont.ui(13, weight: .heavy))
                         .tracking(1.2)
                         .textCase(.uppercase)
-                        .foregroundStyle(MicaboColor.onInk.opacity(0.8))
+                        .foregroundStyle(V3Color.yellowInk)
                     Text(exam.name)
                         .font(MicaboFont.display(28))
-                        .foregroundStyle(MicaboColor.onInk)
+                        .foregroundStyle(V3Color.ink)
                         .lineLimit(2)
                         .minimumScaleFactor(0.8)
                     Text(MicaboCalendar.dayLabel(exam.date).capitalizedFirstLetter)
                         .font(MicaboFont.ui(15, weight: .semibold))
-                        .foregroundStyle(MicaboColor.onInk.opacity(0.85))
+                        .foregroundStyle(V3Color.ink2)
                 }
                 Spacer(minLength: 8)
                 Button(action: onEdit) {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 17, weight: .heavy))
-                        .foregroundStyle(MicaboColor.onInk)
+                        .foregroundStyle(V3Color.ink)
                         .frame(width: 38, height: 38)
-                        .background(MicaboColor.onInk.opacity(0.18), in: Circle())
+                        .background(V3Color.soft, in: Circle())
                 }
                 .buttonStyle(MicaboPressableButtonStyle())
                 .accessibilityLabel(Text(L10n.t("lesson.exam.edit", locale: .resolved())))
@@ -252,23 +247,22 @@ struct ExamHero: View {
             HStack(alignment: .lastTextBaseline, spacing: 10) {
                 Text(days == 0 ? L10n.t("app.exams.countdown.today", locale: .resolved()).capitalizedFirstLetter : "\(days)")
                     .font(MicaboFont.number(days == 0 ? 44 : 64))
-                    .foregroundStyle(MicaboColor.onInk)
+                    .foregroundStyle(V3Color.yellowInk)
                     .contentTransition(.numericText())
-                    .scaleEffect(pulse ? 1.04 : 1, anchor: .leading)
                 if days > 0 {
                     Text(L10n.t(days == 1 ? "lesson.exam.dayLeft" : "lesson.exam.daysLeft", locale: .resolved()))
                         .font(MicaboFont.ui(17, weight: .bold))
-                        .foregroundStyle(MicaboColor.onInk.opacity(0.85))
+                        .foregroundStyle(V3Color.ink2)
                 }
                 Spacer(minLength: 0)
                 if let best {
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(ExamGrade.label(best.fraction, country: OnboardingPreferences.schoolingCountry))
                             .font(MicaboFont.number(22))
-                            .foregroundStyle(MicaboColor.onInk)
+                            .foregroundStyle(V3Color.ink)
                         Text(L10n.t("lesson.exam.best", locale: .resolved()))
                             .font(MicaboFont.ui(12, weight: .bold))
-                            .foregroundStyle(MicaboColor.onInk.opacity(0.8))
+                            .foregroundStyle(V3Color.ink2)
                     }
                 }
             }
@@ -282,7 +276,7 @@ struct ExamHero: View {
                 MicaboFlowLayout(spacing: 8, lineSpacing: 8) {
                     ForEach(lessons.prefix(Self.shownLessons)) { course in
                         HStack(spacing: 6) {
-                            MicaboIconView(icon: course.icon, size: 22)
+                            MicaboIconView(icon: course.icon, size: 22, tone: course.tone)
                             Text(course.title)
                                 .font(MicaboFont.ui(13.5, weight: .bold))
                                 .foregroundStyle(MicaboColor.ink)
@@ -292,7 +286,7 @@ struct ExamHero: View {
                         }
                         .padding(.horizontal, 10)
                         .padding(.vertical, 7)
-                        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .background(V3Color.soft, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
                     }
                     if lessons.count > Self.shownLessons {
                         Text("+\(lessons.count - Self.shownLessons)")
@@ -300,40 +294,21 @@ struct ExamHero: View {
                             .foregroundStyle(MicaboColor.ink)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 9)
-                            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .background(V3Color.soft, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
                     }
                 }
             }
 
-            Button(action: onMock) {
-                Label(L10n.t("lesson.exam.startMock", locale: .resolved()), systemImage: "stopwatch")
-                    .font(MicaboFont.ui(18, weight: .heavy))
-                    .foregroundStyle(MicaboColor.accent)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            }
-            .buttonStyle(MicaboPressableButtonStyle())
-            .disabled(lessons.isEmpty)
-            .opacity(lessons.isEmpty ? 0.6 : 1)
+            V3Button(
+                L10n.t("lesson.exam.startMock", locale: .resolved()),
+                systemImage: "stopwatch",
+                isEnabled: !lessons.isEmpty,
+                action: onMock
+            )
         }
-        .padding(22)
+        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .fill(LinearGradient(colors: [MicaboColor.accent, MicaboColor.accentVivid], startPoint: .topLeading, endPoint: .bottomTrailing))
-                .overlay(alignment: .topTrailing) {
-                    Circle()
-                        .fill(MicaboColor.onInk.opacity(0.08))
-                        .frame(width: 220, height: 220)
-                        .offset(x: 70, y: -90)
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-        }
-        .shadow(color: MicaboColor.accent.opacity(0.3), radius: 20, x: 0, y: 12)
-        .onAppear {
-            withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) { pulse = true }
-        }
+        .v3Card()
     }
 }
 
@@ -348,29 +323,31 @@ struct ExamRow: View {
             HStack(spacing: 14) {
                 Text(exam.countdownLabel())
                     .font(MicaboFont.number(15))
-                    .foregroundStyle(MicaboColor.accent)
+                    .foregroundStyle(MicaboColor.accentInk)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                     .frame(width: 70, height: 50)
-                    .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
                 VStack(alignment: .leading, spacing: 3) {
                     Text(exam.name)
                         .font(MicaboFont.ui(17, weight: .heavy))
                         .foregroundStyle(MicaboColor.ink)
-                        .lineLimit(1)
+                        .lineLimit(3)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text("\(MicaboCalendar.shortDayLabel(exam.date)) · \(L10n.t("lesson.exam.lessonCount", locale: .resolved(), vars: ["count": "\(lessonCount)"]))")
                         .font(MicaboFont.ui(14, weight: .medium))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .lineLimit(1)
                 }
                 Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
+                Image(systemName: "chevron.forward")
                     .font(.system(size: 14, weight: .heavy))
                     .foregroundStyle(MicaboColor.inkTertiary)
             }
             .padding(14)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
         }
         .buttonStyle(MicaboPressableButtonStyle())
     }
@@ -379,31 +356,36 @@ struct ExamRow: View {
 /// Un examen blanc rendu : la note dans le barème du pays, le titre, le jour.
 struct MockResultRow: View {
     let result: ExamPaperResult
+    /// Le pays dont le barème note la copie : celui de l'élève.
+    var country: SchoolingCountry = OnboardingPreferences.schoolingCountry
 
     var body: some View {
         let passes = ExamGrade.passes(result.fraction)
         HStack(spacing: 14) {
-            Text(ExamGrade.label(result.fraction, country: OnboardingPreferences.schoolingCountry))
+            Text(ExamGrade.label(result.fraction, country: country))
                 .font(MicaboFont.number(16))
                 .foregroundStyle(passes ? MicaboColor.correctInk : MicaboColor.wrongInk)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
                 .frame(width: 70, height: 46)
-                .background(passes ? MicaboColor.correctSoft : MicaboColor.wrongSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .background(passes ? MicaboColor.correctSoft : MicaboColor.wrongSoft, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
             VStack(alignment: .leading, spacing: 3) {
                 Text(result.title)
                     .font(MicaboFont.ui(16, weight: .heavy))
                     .foregroundStyle(MicaboColor.ink)
-                    .lineLimit(1)
-                Text("\(MicaboCalendar.shortDayLabel(result.date)) · \(result.correct)/\(result.total) · \(L10n.t("lesson.finished.minutes", locale: .resolved(), vars: ["n": "\(result.minutes)"]))")
+                    .lineLimit(2)
+                // Les bonnes réponses portent une coche : « 14/20 » seul se lisait comme une
+                // note sur 20, à côté d'une note qui, à Berlin ou à Boston, n'est pas sur 20.
+                Text("\(MicaboCalendar.shortDayLabel(result.date)) · \(Image(systemName: "checkmark")) \(result.correct)/\(result.total) · \(L10n.t("lesson.finished.minutes", locale: .resolved(), vars: ["n": "\(result.minutes)"]))")
                     .font(MicaboFont.ui(13.5, weight: .medium))
                     .foregroundStyle(MicaboColor.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
         }
         .padding(12)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
     }
 }
 
@@ -425,6 +407,8 @@ enum ExamEditTarget: Identifiable {
 struct ExamEditSheet: View {
     let target: ExamEditTarget
     let lessons: [Course]
+    /// Le jour proposé pour un nouvel examen : celui qu'on regardait dans le calendrier.
+    var initialDate: Date? = nil
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -434,6 +418,7 @@ struct ExamEditSheet: View {
     @State private var selected: Set<UUID> = []
     @State private var confirmDelete = false
     @State private var loaded = false
+    @State private var saved = false
 
     private var existing: Exam? {
         if case .edit(let exam) = target { return exam }
@@ -445,11 +430,12 @@ struct ExamEditSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     field(L10n.t("lesson.exam.name", locale: .resolved())) {
-                        TextField(L10n.t("lesson.exam.namePlaceholder", locale: .resolved()), text: $name)
+                        // L'exemple suit le système scolaire de l'élève : « Abitur » à Berlin, pas « Bac ».
+                        TextField(ExamNaming.placeholder(), text: $name)
                             .font(MicaboFont.ui(18, weight: .semibold))
                             .padding(16)
-                            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+                            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
                     }
 
                     field(L10n.t("lesson.exam.date", locale: .resolved())) {
@@ -457,8 +443,8 @@ struct ExamEditSheet: View {
                             .datePickerStyle(.graphical)
                             .tint(MicaboColor.accent)
                             .padding(8)
-                            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+                            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
                     }
 
                     field(L10n.t("lesson.exam.lessons", locale: .resolved())) {
@@ -504,7 +490,12 @@ struct ExamEditSheet: View {
                 titleVisibility: .visible
             ) {
                 Button(L10n.t("lesson.exam.delete", locale: .resolved()), role: .destructive) {
-                    if let existing { try? ExamRepository.delete(existing, in: modelContext) }
+                    if let existing {
+                        // Son planning de révisions part avec lui.
+                        StudyPlanStore.forget(examID: existing.id, in: modelContext)
+                        try? ExamRepository.delete(existing, in: modelContext)
+                    }
+                    StudyNotifications.refresh(in: modelContext)
                     dismiss()
                 }
             }
@@ -532,18 +523,29 @@ struct ExamEditSheet: View {
             name = existing.name
             date = existing.date
             selected = Set(existing.courseIDs)
-        } else if let first = lessons.first {
-            selected = [first.id]
+        } else {
+            if let initialDate, initialDate > Date() {
+                date = initialDate
+            }
+            if let first = lessons.first {
+                selected = [first.id]
+            }
         }
     }
 
     private func save() {
+        // La feuille met un instant à descendre : un second appui créait un second examen.
+        guard !saved, canSave else { return }
+        saved = true
         let ids = lessons.map(\.id).filter(selected.contains)
         if let existing {
             try? ExamRepository.update(existing, name: name, date: date, courseIDs: ids, intensity: existing.intensity, in: modelContext)
+            // Une autre date, d'autres leçons : le planning de Mika se refait sur elles.
+            StudyPlanStore.refreshIfPlanned(existing, in: modelContext)
         } else {
             _ = try? ExamRepository.create(name: name, date: date, courseIDs: ids, intensity: .standard, in: modelContext)
         }
+        StudyNotifications.refresh(in: modelContext)
         Haptics.success()
         dismiss()
     }
@@ -568,7 +570,7 @@ struct LessonChecklist: View {
                         if isOn { selected.remove(course.id) } else { selected.insert(course.id) }
                     } label: {
                         HStack(spacing: 12) {
-                            MicaboIconView(icon: course.icon, size: 38)
+                            MicaboIconView(icon: course.icon, size: 38, tone: course.tone)
                             Text(course.title)
                                 .font(MicaboFont.ui(16, weight: .bold))
                                 .foregroundStyle(MicaboColor.ink)
@@ -581,8 +583,8 @@ struct LessonChecklist: View {
                                 .contentTransition(.symbolEffect(.replace))
                         }
                         .padding(12)
-                        .background(isOn ? MicaboColor.accentSoft : MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(isOn ? MicaboColor.accent : MicaboColor.stroke, lineWidth: isOn ? 2 : 1.5))
+                        .background(isOn ? MicaboColor.accentSoft : MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(isOn ? MicaboColor.accent : MicaboColor.stroke, lineWidth: isOn ? 2 : 1.5))
                     }
                     .buttonStyle(MicaboPressableButtonStyle(feedback: .none))
                 }
@@ -592,10 +594,10 @@ struct LessonChecklist: View {
 }
 
 extension View {
-    /// Apparaît en glissant d'un peu plus bas, avec un léger retard.
+    /// **Le bloc est là d'emblée** (lot 10, « mouvement natif et immédiat ») : la page des
+    /// examens arrivait vide, puis ses cartes glissaient en place l'une après l'autre pendant
+    /// que la page finissait d'être poussée. La poussée du système suffit.
     func slideIn(_ shown: Bool, delay: Double) -> some View {
-        opacity(shown ? 1 : 0)
-            .offset(y: shown ? 0 : 18)
-            .animation(.spring(duration: 0.55).delay(delay), value: shown)
+        self
     }
 }

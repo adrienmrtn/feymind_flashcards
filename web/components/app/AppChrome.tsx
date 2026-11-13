@@ -81,7 +81,7 @@ function MobileHeader({ userInitial }: { userInitial: string }) {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-sm lg:hidden" data-print="hide">
       <div className="flex h-13 items-center justify-between gap-3 px-4">
-        <span className="truncate text-[15px] font-extrabold tracking-tight text-ink">{t(current.labelKey)}</span>
+        <span className="truncate font-display text-[20px] leading-none text-ink">{t(current.labelKey)}</span>
         <Link href={PROFILE_PATH} aria-label={t("lesson.tab.profile")} className="pressable flex h-8 w-8 items-center justify-center rounded-full bg-accent text-[12px] font-extrabold text-on-ink">
           {userInitial}
         </Link>
@@ -99,7 +99,7 @@ function Sidebar({ userName, userInitial }: { userName: string; userInitial: str
     <aside aria-label={t("app.a11y.navigation")} className="sticky top-0 hidden h-svh w-60 shrink-0 flex-col self-start border-e border-sidebar-border bg-sidebar lg:flex" data-print="hide">
       <Link href={HOME_PATH} className="flex items-center gap-2.5 px-5 pb-4 pt-5" aria-label="Micabo">
         <BrandMark size={28} />
-        <span className="text-[15px] font-extrabold tracking-tight text-sidebar-accent-foreground">micabo</span>
+        <span className="font-display text-[22px] leading-none text-sidebar-accent-foreground">Micabo</span>
       </Link>
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 pt-2" data-tour="nav">
         {DESTINATIONS.map((item) => {

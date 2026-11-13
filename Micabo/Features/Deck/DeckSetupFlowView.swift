@@ -164,11 +164,8 @@ struct DeckSetupFlowView: View {
         }
         .onChange(of: step) { _, value in
             Analytics.track(.deckSetupStep, ["step": .text(value.analyticsName), "index": .number(Double(value.analyticsIndex)), "first": .flag(!isDismissable)])
-            // La page qui se pose se sent — à l'atterrissage, comme sur le parcours
-            // d'accueil. Voir `OnboardingFlowView`.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.26) {
-                Haptics.tick()
-            }
+            // La page qui se pose se sent, à l'appui.
+            Haptics.tick()
         }
     }
 
@@ -196,7 +193,7 @@ struct DeckSetupFlowView: View {
 
             HStack(alignment: .center, spacing: 10) {
                 Button(action: goBack) {
-                    Image(systemName: "arrow.left")
+                    Image(systemName: "arrow.backward")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(OnboardingPalette.ink)
                         .frame(width: 40, height: 40)
@@ -226,7 +223,7 @@ struct DeckSetupFlowView: View {
         .padding(.top, MicaboSpacing.sm)
         .opacity(isBuilding ? 0 : 1)
         .allowsHitTesting(!isBuilding)
-        .animation(.easeInOut(duration: 0.25), value: isBuilding)
+        .animation(LearnMotion.quick, value: isBuilding)
     }
 
     @ViewBuilder

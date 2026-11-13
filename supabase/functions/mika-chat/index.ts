@@ -15,7 +15,7 @@ import {
   MIKA_PRO_CEILING,
   MIKA_SYSTEM_PROMPT,
   parseMikaReply,
-  readAttachment,
+  readAttachments,
   readTurns,
 } from "../_shared/mika.ts";
 
@@ -33,6 +33,8 @@ import {
 interface RequestBody {
   messages?: unknown;
   attachment?: unknown;
+  /** Lot 11 : plusieurs documents (les photos lues sur l'appareil), réunis en un seul. */
+  attachments?: unknown;
   language?: string;
   level?: string;
 }
@@ -56,7 +58,7 @@ Deno.serve((request: Request) =>
       const output = await callModel({
         prompt: buildMikaPrompt({
           turns,
-          attachment: readAttachment(body.attachment),
+          attachment: readAttachments(body.attachment, body.attachments),
           language: body.language,
           level: body.level,
         }),

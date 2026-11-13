@@ -2,32 +2,38 @@ import SwiftUI
 
 /// Les destinations de la barre d'onglets.
 ///
-/// **Quatre : Home, Leçons, Examen, Profil** (`docs/refonte-parcours.md` § 2). Home crée une
-/// leçon et montre les stats, Leçons les range, Examen compte les jours et fait passer des
-/// examens blancs, Profil garde le compte et les réglages. On ne balaye pas d'un onglet à
-/// l'autre : la barre est le seul moyen de changer de page.
+/// **Cinq : Home, Leçons, Calendrier, Concentration, Profil.** Home crée une leçon et montre
+/// la journée, Leçons les range, Calendrier tient la vie d'étude en un seul endroit (les
+/// cours, les examens et leur compte à rebours, les révisions que Mika planifie), Concentration
+/// lance une séance chronométrée et garde les tâches, Profil garde le compte et les réglages.
+/// On ne balaye pas d'un onglet à l'autre : la barre est le seul moyen de changer de page.
 ///
-/// Les noms de cas datent de l'ancienne barre (`today` porte Home, `decks` les Leçons) : ils
-/// sont la clé de la profondeur de navigation de chaque page.
+/// **Les rangs ne bougent jamais** : ils sont la clé de la profondeur de navigation de chaque
+/// page. Les noms de cas datent de l'ancienne barre (`today` porte Home, `decks` les Leçons) ;
+/// `calendar` a repris le rang 3 de l'ancien onglet Examen, qu'il remplace : tout ce qui
+/// ouvrait Examen ouvre le Calendrier, où les examens ont déménagé.
 enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     case decks
     case today
     case profile
+    /// Le Calendrier, au rang de l'ancien onglet Examen.
+    case calendar
     /// Ajouté après les autres : les rangs déjà donnés ne bougent pas.
-    case exams
+    case focus
 
     var id: Int { rawValue }
 
-    /// **Les quatre onglets**, dans l'ordre de la barre : Home, Leçons, Examen, Profil
-    /// (`docs/refonte-parcours.md` § 2). `today` porte Home, `decks` les Leçons ; Mika vit
-    /// désormais dans chaque leçon.
-    static let tabs: [RootTab] = [.today, .decks, .exams, .profile]
+    /// **Les cinq onglets**, dans l'ordre de la barre : Home, Leçons, Calendrier,
+    /// Concentration, Profil. `today` porte Home, `decks` les Leçons ; Mika vit dans chaque
+    /// leçon.
+    static let tabs: [RootTab] = [.today, .decks, .calendar, .focus, .profile]
 
     func label(t: (String) -> String) -> String {
         switch self {
         case .decks: t("lesson.tab.lessons")
         case .today: t("lesson.tab.home")
-        case .exams: t("lesson.tab.exams")
+        case .calendar: t("ios.cal.tab")
+        case .focus: t("ios.focus.tab")
         case .profile: t("lesson.tab.profile")
         }
     }
@@ -36,21 +42,39 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
         label(t: { L10n.t($0, locale: .resolved()) })
     }
 
+    /// **Le nom écrit dans la barre**, plus court quand le titre de la page ne tient pas dans
+    /// un cinquième d'écran : « Concentration », « Keskittyminen », « Concentración » y
+    /// tombaient à 62 % de leur taille. La page garde son titre entier ; la barre dit
+    /// « Focus », « Keskity », « Enfoque ».
+    ///
+    /// Home s'y appelle « Accueil ». Depuis le lot 11, l'onglet actif de la pilule écrit ce nom ;
+    /// VoiceOver et la visionneuse en très grand texte le lisent pour tous.
+    func barLabel(t: (String) -> String) -> String {
+        switch self {
+        case .focus: t("ios.pol.sys.tab.focus")
+        case .today: t("ios.look10.tab.home")
+        default: label(t: t)
+        }
+    }
+
     var systemImage: String {
         switch self {
         case .decks: "books.vertical"
         case .today: "house"
-        case .exams: "graduationcap"
+        case .calendar: "calendar"
+        case .focus: "timer"
         case .profile: "person"
         }
     }
 
-    /// Variante pleine, affichée quand l'onglet est actif.
+    /// Variante pleine, affichée quand l'onglet est actif : sans libellé, c'est le plein et la
+    /// clarté de l'icône qui disent où l'on est.
     var selectedSystemImage: String {
         switch self {
         case .decks: "books.vertical.fill"
         case .today: "house.fill"
-        case .exams: "graduationcap.fill"
+        case .calendar: "calendar"
+        case .focus: "timer"
         case .profile: "person.fill"
         }
     }
@@ -85,17 +109,6 @@ final class TabRouter {
     /// pour le même geste.
     private(set) var courseImportRequests = 0
 
-    /// Compteur de demandes du cadeau. La liste des decks le demande au retour du premier
-    /// cours ; c'est la racine (`DiscountBadgeHost`) qui le présente, par-dessus la barre
-    /// du bas et les onglets. Présenté depuis la page, le pop-up assombrissait tout sauf
-    /// la barre.
-    private(set) var giftRequests = 0
-
-    /// Demande à la racine de poser le cadeau par-dessus l'app.
-    func requestGift() {
-        giftRequests += 1
-    }
-
     /// **Ramène l'app à son écran d'accueil**, quelle que soit la profondeur d'où l'on part.
     ///
     /// Une session lancée depuis la fiche d'un deck est deux écrans plus loin que
@@ -110,5 +123,39 @@ final class TabRouter {
     func requestCourseImport() {
         courseImportRequests += 1
         selection = .decks
+    }
+
+    /// Compteur de demandes de séance depuis un autre onglet : Concentration l'observe et
+    /// ouvre « Préparer ma session ».
+    private(set) var focusRequests = 0
+
+    /// Le jour que le Calendrier doit montrer en arrivant, s'il y en a un.
+    private(set) var calendarDay: Date?
+    private(set) var calendarRequests = 0
+
+    /// **Ouvre le Calendrier**, sur un jour si on en donne un. C'est la porte de tout ce qui
+    /// ouvrait l'ancien onglet Examen.
+    func showCalendar(day: Date? = nil) {
+        calendarDay = day
+        calendarRequests += 1
+        selection = .calendar
+    }
+
+    /// Ouvre Concentration et sa feuille « Préparer ma session ».
+    func requestFocusSession() {
+        focusRequests += 1
+        selection = .focus
+    }
+
+    /// Compteur de demandes de nouvelle leçon depuis un autre onglet : Home l'observe et ouvre
+    /// sa feuille des supports.
+    private(set) var lessonCreationRequests = 0
+
+    /// **Ouvre Home et sa feuille des supports** : « Nouvelle leçon », depuis l'onglet Leçons.
+    /// Une leçon se crée sur Home (le compositeur, les imports, la porte du gratuit) ; la
+    /// demander d'ailleurs ne doit pas faire chercher la barre de création.
+    func requestLessonCreation() {
+        lessonCreationRequests += 1
+        selection = .today
     }
 }

@@ -171,7 +171,7 @@ struct DeckBuildingStepView: View {
     private func creep() async {
         while !Task.isCancelled, built == nil, failure == nil {
             let step = (Self.ceiling - shown) * 0.02
-            withAnimation(.linear(duration: 0.3)) { shown += max(0.0006, step) }
+            withAnimation(LearnMotion.standard) { shown += max(0.0006, step) }
             try? await Task.sleep(for: .milliseconds(300))
         }
     }
@@ -182,12 +182,12 @@ struct DeckBuildingStepView: View {
     @MainActor
     private func finishGauge() async {
         for target in Self.thresholds where target > shown {
-            withAnimation(.easeOut(duration: 0.3)) { shown = target }
+            withAnimation(LearnMotion.standard) { shown = target }
             try? await Task.sleep(for: .milliseconds(300))
         }
         try? await Task.sleep(for: .milliseconds(120))
         Haptics.success()
-        withAnimation(.easeOut(duration: 0.3)) { isReady = true }
+        withAnimation(LearnMotion.standard) { isReady = true }
     }
 
     @MainActor

@@ -36,6 +36,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import com.micabo.app.data.MikaGate
+import com.micabo.app.data.XpRules
+import com.micabo.app.data.dueCards
+import com.micabo.app.ui.lesson.QUICK_QUIZ
+import com.micabo.app.ui.xp.ProPill
+import com.micabo.app.ui.xp.XpPill
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -117,25 +128,55 @@ fun HomeScreen() {
     var full by remember { mutableStateOf(false) }
     var streakSheet by remember { mutableStateOf(false) }
     val focus = LocalFocusManager.current
-    val stats = remember(lessons) { HomeStats.of(lessons.values) }
+    val focusSeconds by app.focus.seconds.collectAsState()
+    val xpStatus by app.xp.status.collectAsState()
+    // Le temps du minuteur compte dans le temps de révision, comme celui passé dans les leçons.
+    val stats = remember(lessons, focusSeconds) { HomeStats.of(lessons.values).let { it.copy(seconds = it.seconds + focusSeconds) } }
     val resume = remember(lessons) { lessons.values.filter { it.openedAt > 0 }.maxByOrNull { it.openedAt } }
+    // Les cartes dues de toutes les leçons ; « Réviser » ouvre la leçon qui en a le plus.
+    val due = remember(lessons) { lessons.values.map { it to it.dueCards() }.filter { it.second > 0 } }
+    val dueTotal = due.sumOf { it.second }
+    val list = rememberLazyListState()
+    val composerFocus = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    val scope = rememberCoroutineScope()
 
     // La leçon du parcours d'accueil (`LessonCreation.onboarding`) : la première après l'accueil,
     // tant qu'aucune leçon ne compte. Comme sur l'iPhone et le site, elle peut partir d'un PDF ou
     // de photos sans abonnement : le serveur l'accorde une fois (`begin_lesson`, `p_onboarding`).
     val onboardingLesson = app.prefs.onboardingLessonPending && lessons.values.none { it.usesFreeLesson }
+    // **La leçon offerte peut venir d'un import** (`docs/refonte-knowunity.md` § 7) : tant qu'elle
+    // n'a pas servi, un élève sans Pro la crée depuis un PDF, des photos ou YouTube, et la
+    // génération part avec `onboarding: true`. Ensuite, les imports rouvrent le paywall.
+    val freeLessonLeft = !isPro && lessons.values.none { it.usesFreeLesson }
 
-    // La porte du gratuit, côté app (`LessonAllowance.gate`) : les imports sont Pro, et la leçon
-    // offerte ne se crée qu'une fois. Le serveur tient la même porte ; celle-ci évite un appel refusé.
-    // Un paquet ou un cours d'exemple venu de l'iPhone ne la ferme pas (`Lesson.usesFreeLesson`).
+    // La porte du gratuit, côté app (`LessonAllowance.gate`) : la leçon offerte ne se crée qu'une
+    // fois. Le serveur tient la même porte ; celle-ci évite un appel refusé. Un paquet ou un cours
+    // d'exemple venu de l'iPhone ne la ferme pas (`Lesson.usesFreeLesson`).
     fun send() {
         // Un double toucher n'empile pas deux écrans (création ou paywall) l'un sur l'autre.
         if (!composer.canSend || navigator.current != Screen.Home) return
         focus.clearFocus()
         when {
-            !isPro && composer.needsPro && !onboardingLesson -> navigator.push(Screen.Paywall("import_pro"))
-            !isPro && lessons.values.any { it.usesFreeLesson } -> navigator.push(Screen.Paywall("free_limit"))
-            else -> navigator.push(Screen.Creating(composer.request(examDate = null).copy(onboarding = onboardingLesson)))
+            !isPro && composer.needsPro && !freeLessonLeft -> navigator.push(Screen.Paywall("import_pro"))
+            !isPro && !freeLessonLeft -> navigator.push(Screen.Paywall("free_limit"))
+            else -> navigator.push(
+                Screen.Creating(composer.request(examDate = null).copy(onboarding = onboardingLesson || (freeLessonLeft && composer.needsPro))),
+            )
+        }
+    }
+
+    /** Un écran de l'accueil ; un double toucher n'en empile pas deux. */
+    fun open(screen: Screen) {
+        if (navigator.current == Screen.Home) navigator.push(screen)
+    }
+
+    /** Le curseur dans la barre, la barre en vue : pour écrire sa première leçon. */
+    fun focusComposer() {
+        scope.launch {
+            list.animateScrollToItem(0)
+            runCatching { composerFocus.requestFocus() }
+            keyboard?.show()
         }
     }
 
@@ -177,18 +218,26 @@ fun HomeScreen() {
 
     LazyColumn(
         Modifier.fillMaxSize(),
+        state = list,
         contentPadding = PaddingValues(top = top + 8.dp, bottom = bottom + TAB_BAR_SPACE + 16.dp),
     ) {
         item {
+            // La rangée du haut : « ✦ Pro » pour qui ne l'est pas, puis l'XP de la semaine et la série.
             Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
                 Image(
                     painterResource(R.mipmap.ic_launcher_foreground_art),
                     contentDescription = null,
-                    modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)),
+                    modifier = Modifier.size(34.dp).clip(RoundedCornerShape(10.dp)),
                 )
-                Spacer(Modifier.width(10.dp))
-                Text(stringResource(R.string.app_name), style = nunito(24.sp, FontWeight.Black), color = colors.ink)
+                Spacer(Modifier.width(8.dp))
+                if (isPro) {
+                    Text(stringResource(R.string.app_name), style = nunito(22.sp, FontWeight.Black), color = colors.ink, maxLines = 1)
+                } else {
+                    ProPill(onClick = { open(Screen.Paywall("")) })
+                }
                 Spacer(Modifier.weight(1f))
+                XpPill(onClick = { open(Screen.League) })
+                Spacer(Modifier.width(8.dp))
                 StreakPill(onClick = { streakSheet = true })
             }
         }
@@ -204,12 +253,13 @@ fun HomeScreen() {
             }
         }
         item {
-            ComposerCard(composer, onSend = ::send)
+            ComposerCard(composer, onSend = ::send, focusRequester = composerFocus)
         }
         item {
+            // Plus de cadenas sur les imports tant que la leçon offerte reste.
             SourceRow(
                 composer,
-                isPro = isPro || onboardingLesson,
+                isPro = isPro || onboardingLesson || freeLessonLeft,
                 onFull = { full = true },
                 onLocked = {
                     focus.clearFocus()
@@ -217,11 +267,43 @@ fun HomeScreen() {
                 },
             )
         }
+        item {
+            TodayCard(
+                status = xpStatus,
+                hasLessons = lessons.isNotEmpty(),
+                dueCards = dueTotal,
+                resume = resume,
+                onReview = { due.maxByOrNull { it.second }?.first?.let { open(Screen.Flashcards(it.id)) } },
+                onContinue = { open(Screen.LessonPath(it.id)) },
+                onCreate = ::focusComposer,
+            )
+        }
+        item {
+            // Le quiz éclair part de la dernière leçon ouverte (sinon de la plus récente).
+            val quizLesson = resume ?: lessons.values.maxByOrNull { it.createdAt }
+            ToolsGrid(
+                listOf(
+                    Tool("loupe", 2, stringResource(R.string.kx_tool_scan), stringResource(R.string.kx_tool_scanSub)) {
+                        // La porte de Mika d'abord : pas de photo prise pour rien avant le paywall.
+                        if (app.mika.gate(isPro) == MikaGate.PAYWALL) open(Screen.Paywall("pro_required", trigger = "mika")) else open(Screen.Exercise)
+                    },
+                    Tool(
+                        "quiz", 4, stringResource(R.string.kx_tool_quiz),
+                        if (quizLesson == null) stringResource(R.string.kx_tool_quizEmpty) else stringResource(R.string.kx_tool_quizSub),
+                    ) {
+                        if (quizLesson == null) focusComposer() else open(Screen.Quiz(quizLesson.id, QUICK_QUIZ))
+                    },
+                    Tool("reveil", 1, stringResource(R.string.kx_tool_focus), stringResource(R.string.kx_tool_focusSub, XpRules.FOCUS_MINUTES.toString())) {
+                        open(Screen.Focus)
+                    },
+                    Tool("trophee", 0, stringResource(R.string.kx_tool_league), stringResource(R.string.kx_tool_leagueSub)) {
+                        open(Screen.League)
+                    },
+                ),
+            )
+        }
         if (lessons.isNotEmpty()) {
             item { StatsCard(stats) }
-        }
-        resume?.let { lesson ->
-            item { ResumeCard(lesson, onOpen = { navigator.push(Screen.LessonPath(lesson.id)) }) }
         }
     }
 
@@ -304,56 +386,3 @@ private fun Stat(icon: String, value: String, label: String, modifier: Modifier)
     }
 }
 
-/** **« Reprendre »** : la dernière leçon ouverte, et le cercle où elle attend. */
-@Composable
-private fun ResumeCard(lesson: Lesson, onOpen: () -> Unit) {
-    val colors = Micabo.colors
-    val tone = colors.tone(lesson.tone)
-    val circles = remember(lesson) { lesson.pathCircles() }
-    val done = circles.count { it.id in lesson.progress.done }
-    val current = remember(lesson) { lesson.currentCircle() }
-    val percent = if (circles.isEmpty()) 0f else done / circles.size.toFloat()
-    Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 26.dp)) {
-        Text(stringResource(R.string.lesson_home_resume), style = nunito(22.sp, FontWeight.Black), color = colors.ink)
-        Spacer(Modifier.height(12.dp))
-        Pressable(onClick = onOpen) {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(tone.pale)
-                    .border(1.5.dp, tone.vivid.copy(alpha = 0.35f), RoundedCornerShape(24.dp))
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(Modifier.size(64.dp).clip(RoundedCornerShape(18.dp)).background(colors.surface), contentAlignment = Alignment.Center) {
-                    Icon3D(lesson.icon, 48.dp)
-                }
-                Spacer(Modifier.width(14.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        plainText(lesson.title),
-                        style = nunito(18.sp, FontWeight.ExtraBold, lineHeight = 22.sp),
-                        color = tone.ink,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        if (current == null) {
-                            stringResource(R.string.lesson_home_resumeDone)
-                        } else {
-                            stringResource(R.string.lesson_home_resumeCircle, (circles.indexOf(current) + 1).toString(), circleTitle(lesson, current))
-                        },
-                        style = nunito(14.sp, FontWeight.SemiBold),
-                        color = colors.inkSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    ProgressBar(percent, height = 8.dp, color = tone.vivid)
-                }
-            }
-        }
-    }
-}

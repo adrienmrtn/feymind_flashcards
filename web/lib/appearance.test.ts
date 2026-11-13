@@ -20,9 +20,10 @@ describe("l'apparence", () => {
     expect(isAppearance("")).toBe(false);
   });
 
-  it("retombe sur le jour", () => {
+  it("retombe sur le marine", () => {
+    expect(DEFAULT_APPEARANCE).toBe("night");
     expect(appearanceFromUnknown(undefined)).toBe(DEFAULT_APPEARANCE);
-    expect(appearanceFromUnknown("sepia")).toBe("day");
+    expect(appearanceFromUnknown("sepia")).toBe("night");
     expect(appearanceFromUnknown("twilight")).toBe("twilight");
   });
 

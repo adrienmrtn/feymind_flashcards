@@ -220,29 +220,17 @@ enum MicaboCalendar {
 
     /// « mardi 8 septembre », sans l'année quand c'est cette année-ci.
     static func dayLabel(_ date: Date, from reference: Date = Date()) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = UiLocale.resolved().foundation
-        formatter.calendar = shared
         let sameYear = shared.component(.year, from: date) == shared.component(.year, from: reference)
-        formatter.setLocalizedDateFormatFromTemplate(sameYear ? "EEEE d MMMM" : "EEEE d MMMM yyyy")
-        return formatter.string(from: date)
+        return MicaboDateFormat.template(sameYear ? "EEEE d MMMM" : "EEEE d MMMM yyyy", locale: .resolved()).string(from: date)
     }
 
     /// « 8 sept. », pour les endroits étroits.
     static func shortDayLabel(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = UiLocale.resolved().foundation
-        formatter.calendar = shared
-        formatter.setLocalizedDateFormatFromTemplate("d MMM")
-        return formatter.string(from: date)
+        MicaboDateFormat.template("d MMM", locale: .resolved()).string(from: date)
     }
 
     /// « Septembre 2026 », en tête du calendrier.
     static func monthLabel(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = UiLocale.resolved().foundation
-        formatter.calendar = shared
-        formatter.setLocalizedDateFormatFromTemplate("MMMM yyyy")
-        return formatter.string(from: date).capitalizedFirstLetter
+        MicaboDateFormat.template("MMMM yyyy", locale: .resolved()).string(from: date).capitalizedFirstLetter
     }
 }

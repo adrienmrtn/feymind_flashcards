@@ -11,14 +11,14 @@ struct MicaboChip: View {
         HStack(spacing: 5) {
             if let systemImage {
                 Image(systemName: systemImage)
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.system(size: 11, weight: .bold))
             }
             Text(text)
                 .font(MicaboFont.micro)
         }
         .foregroundStyle(filled ? MicaboColor.onInk : tint)
         .padding(.vertical, 6)
-        .padding(.horizontal, 11)
+        .padding(.horizontal, 12)
         .background(filled ? tint : MicaboColor.surfaceMuted, in: Capsule())
     }
 }
@@ -37,30 +37,21 @@ struct MicaboGlassChip: View {
     }
 }
 
-/// Pilule de sélection : encre pleine quand elle est active, blanche cerclée sinon.
+/// Pilule de sélection : **la puce de l'app** (`V3Chip`) — une pilule surface de 44 points, à
+/// filet ; choisie, un aplat d'accent.
 struct MicaboSelectChip: View {
     let title: String
     let isSelected: Bool
     var action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(MicaboFont.ui(14, weight: .medium))
-                .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.inkSecondary)
-                .padding(.vertical, 9)
-                .padding(.horizontal, 16)
-                .background(isSelected ? MicaboColor.accent : MicaboColor.surface, in: Capsule())
-                .overlay {
-                    Capsule().strokeBorder(isSelected ? Color.clear : MicaboColor.stroke, lineWidth: 1)
-                }
-        }
-        .buttonStyle(MicaboPressableButtonStyle(feedback: .selection))
-        .animation(.easeOut(duration: 0.18), value: isSelected)
+        V3Chip(title, isSelected: isSelected, action: action)
+            .animation(MicaboMotion.quick, value: isSelected)
     }
 }
 
-/// Intitulé d'une section de contenu : capitales grises, et un lien à droite.
+/// Intitulé d'une section de contenu : **le titre de section de l'app** (`MicaboSectionHeading`),
+/// et un lien « Tout voir » à droite (`MicaboSeeAllLink`).
 struct MicaboSectionHeader: View {
     let title: String
     var subtitle: String?
@@ -68,24 +59,11 @@ struct MicaboSectionHeader: View {
     var action: (() -> Void)?
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 3) {
-                MicaboEyebrow(text: title)
-                if let subtitle {
-                    Text(subtitle)
-                        .font(MicaboFont.caption)
-                        .foregroundStyle(MicaboColor.inkTertiary)
-                }
-            }
-            Spacer(minLength: MicaboSpacing.xs)
+        MicaboSectionHeading(title: title, subtitle: subtitle) {
             if let actionTitle, let action {
-                Button(actionTitle, action: action)
-                    .font(MicaboFont.ui(13, weight: .semibold))
-                    .foregroundStyle(MicaboColor.accent)
-                    .buttonStyle(MicaboPressableButtonStyle())
+                MicaboSeeAllLink(title: actionTitle, action: action)
             }
         }
-        .padding(.leading, MicaboSpacing.xxs)
     }
 }
 
@@ -94,36 +72,52 @@ struct MicaboEmptyState: View {
     let title: String
     let message: String
     var actionTitle: String?
+    /// **Mika en entier à la place du pictogramme** : un écran vide est l'un de ses moments
+    /// (la règle de mise en scène, `MikaMascot.swift`). Il fait son geste une fois.
+    var mika: MikaMood?
     var action: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 8) {
-            Image(systemName: systemImage)
-                .font(.system(size: 20, weight: .regular))
-                .foregroundStyle(MicaboColor.inkTertiary)
-                .frame(width: 48, height: 48)
-                .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            if let mika {
+                MikaMascot(mood: mika, size: 120)
+                    .padding(.bottom, 8)
+            } else {
+                // Le pictogramme dans le bleu de l'app, sur son lavis : un gris sur gris disait
+                // « rien », alors qu'un écran vide invite à commencer (lot 7).
+                Image(systemName: systemImage)
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundStyle(MicaboColor.accent)
+                    .frame(width: 64, height: 64)
+                    .background(MicaboColor.accentWash, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
+                    .padding(.bottom, 6)
+            }
 
+            // Une idée par écran : un titre, une ligne de soutien, une action.
             Text(title)
-                .font(MicaboFont.ui(17, weight: .semibold))
+                .font(V3Font.title)
+                .tracking(V3Tracking.title)
                 .foregroundStyle(MicaboColor.ink)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
 
             Text(message)
-                .font(MicaboFont.ui(13.5, weight: .regular))
+                .font(V3Font.body)
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .multilineTextAlignment(.center)
-                .frame(maxWidth: 280)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 320)
 
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
-                    .buttonStyle(MicaboPrimaryButtonStyle())
-                    .padding(.top, 6)
-                    .frame(maxWidth: 240)
+                    .buttonStyle(MicaboBrandButtonStyle())
+                    .padding(.top, 10)
+                    .frame(maxWidth: 300)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, MicaboSpacing.md)
+        .padding(.vertical, MicaboSpacing.lg)
         .padding(.horizontal, MicaboSpacing.md)
     }
 }
@@ -143,7 +137,7 @@ struct MicaboProgressRing: View {
                 .trim(from: 0, to: max(0.001, min(1, progress)))
                 .stroke(tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-                .animation(.spring(response: 0.6, dampingFraction: 0.85), value: progress)
+                .animation(MicaboMotion.gentle, value: progress)
         }
     }
 }
@@ -163,9 +157,10 @@ struct MicaboProgressBar: View {
                 Capsule()
                     .fill(tint)
                     .frame(width: max(0, min(1, progress)) * proxy.size.width)
-                    .animation(.spring(response: 0.4, dampingFraction: 0.9), value: progress)
+                    .animation(MicaboMotion.standard, value: progress)
             }
         }
-        .frame(height: 5)
+        // La hauteur de la jauge de l'app (`V3ProgressBar`).
+        .frame(height: V3Metric.progressHeight)
     }
 }

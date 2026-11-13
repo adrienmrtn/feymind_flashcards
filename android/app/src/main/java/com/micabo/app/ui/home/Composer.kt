@@ -63,6 +63,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -110,7 +112,7 @@ private fun SupportKind.icon(): String = when (this) {
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ComposerCard(composer: LessonComposer, onSend: () -> Unit) {
+fun ComposerCard(composer: LessonComposer, onSend: () -> Unit, focusRequester: FocusRequester? = null) {
     val colors = Micabo.colors
     val canSend = composer.canSend
     Column(
@@ -148,7 +150,11 @@ fun ComposerCard(composer: LessonComposer, onSend: () -> Unit) {
                 cursorBrush = SolidColor(colors.accent),
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Send),
                 keyboardActions = KeyboardActions(onSend = { if (canSend) onSend() }),
-                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+                // « Crée ta première leçon » et le quiz éclair sans leçon y mettent le curseur.
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp)
+                    .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier),
             )
         }
         AnimatedVisibility(visible = canSend || composer.isReading, enter = fadeIn() + scaleIn(initialScale = 0.9f), exit = fadeOut() + scaleOut(targetScale = 0.9f)) {

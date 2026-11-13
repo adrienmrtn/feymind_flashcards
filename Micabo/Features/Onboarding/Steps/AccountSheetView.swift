@@ -1,21 +1,22 @@
 import SwiftUI
 
-/// **La languette du compte** : Apple, Google, ou « Passer ».
+/// **La languette du compte : « Garde ton plan en lieu sûr ».** Apple, Google, le courriel, ou
+/// « Plus tard ».
 ///
-/// Elle monte sur la page qui annonce la fiche, au moment où l'élève quitte cette page pour
-/// déposer ses supports. C'était une page entière du parcours, avec sa jauge, son titre en
-/// trente-quatre et ses mentions : une page de connexion au milieu d'un quiz se lit comme un
-/// mur. Une languette se lit comme une question, et elle se referme.
+/// Elle monte en quittant le plan révélé : c'est là qu'un compte protège quelque chose, le
+/// plan qu'on vient de construire. Une languette se lit comme une question, et elle se
+/// referme ; elle ne coûte pas une page au parcours.
 ///
-/// **« Passer » ne coûte rien à l'élève.** Ses cours sont enregistrés sur le téléphone, et la
-/// synchronisation n'est qu'une copie : ils montent sur son compte à la première connexion,
-/// depuis les réglages. Passer ouvre en silence un compte invité (`AuthController`), qui
-/// porte le quota de génération et l'abonnement pris sans compte.
+/// **« Plus tard » ne coûte rien à l'élève.** Ses cours sont enregistrés sur le téléphone, et
+/// la synchronisation n'est qu'une copie : ils montent sur son compte à la première
+/// connexion, depuis les réglages. Passer ouvre en silence un compte invité
+/// (`AuthController`), qui porte le quota de génération et l'abonnement pris sans compte.
 struct OnboardingAccountSheet: View {
     var onFinish: () -> Void
 
     @Environment(AuthController.self) private var auth
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.onboardingStill) private var still
 
     /// Le même drapeau que celui lu par `RootView` : passer ici vaut passer pour de bon, et
     /// l'app ne repose pas la question à la sortie du parcours.
@@ -24,65 +25,20 @@ struct OnboardingAccountSheet: View {
     @State private var didFinish = false
 
     var body: some View {
-        // Trois étages à espaces fixes : la question, les deux portes, la sortie et les
-        // mentions. La languette est taillée à leur hauteur (`OnboardingFlowView`) : des
-        // espaces élastiques étiraient le blanc entre eux au lieu de le retirer.
-        VStack(spacing: 0) {
-            VStack(spacing: 8) {
-                Text(i18n.t("onboarding.compteTitle"))
-                    .font(OnboardingPalette.title(28))
-                    .tracking(-0.8)
-                    .foregroundStyle(OnboardingPalette.ink)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Text(i18n.t("ios.account.sub"))
-                    .font(MicaboFont.ui(15, weight: .regular))
-                    .foregroundStyle(OnboardingPalette.gray)
-                    .lineSpacing(3)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity)
-
-            VStack(spacing: 0) {
-                // Apple et Google, tels que `SignInProviderButtons` les dessine partout, logos
-                // compris. Le courriel reste à la reconnexion.
-                SignInProviderButtons(offersEmail: false)
-
-                SignInFailureNote(includeSent: false, includeError: true)
-                    .padding(.top, 8)
-            }
-            .padding(.top, 22)
-            // Les portes seules attendent la fin d'une connexion en cours : pas deux à la fois.
-            // « Passer », juste en dessous, reste vivant - posé sur toute la languette, ce
-            // verrou laissait l'élève sans sortie tant qu'Apple ou Google n'avait pas répondu.
-            .allowsHitTesting(!auth.isWorking)
-
-            VStack(spacing: 6) {
-                Button(action: skip) {
-                    Text(i18n.t("common.skip"))
-                        .font(MicaboFont.ui(16, weight: .semibold))
-                        .foregroundStyle(OnboardingPalette.gray)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: 44)
-                        .contentShape(Rectangle())
+        Group {
+            if still {
+                // Les rendus ne dessinent pas l'intérieur d'un `ScrollView`.
+                content
+                    .frame(maxHeight: .infinity, alignment: .top)
+            } else {
+                ScrollView {
+                    content
                 }
-                .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
-                .accessibilityLabel(i18n.t("ios.skipNoAccount"))
-
-                legalLine
+                .scrollBounceBehavior(.basedOnSize)
             }
-            .padding(.top, 10)
-
-            Spacer(minLength: 0)
         }
-        .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.top, 30)
-        .padding(.bottom, MicaboSpacing.sm)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(OnboardingPalette.white.ignoresSafeArea())
-        .animation(.easeOut(duration: 0.22), value: auth.message)
+        .background(V3Color.bg.ignoresSafeArea())
+        .animation(MicaboMotion.quick, value: auth.message)
         // La connexion se termine dans le contrôleur, pas dans le bouton : c'est le passage à
         // l'état « connecté » qui referme, quel que soit le fournisseur emprunté.
         .onChange(of: auth.isSignedIn) { _, isSignedIn in
@@ -94,11 +50,54 @@ struct OnboardingAccountSheet: View {
         }
     }
 
+    /// La question, les portes, la sortie et les mentions.
+    private var content: some View {
+        VStack(spacing: 0) {
+            VStack(spacing: 8) {
+                OnbTitle(i18n.t("ios.onb10.account.title"), alignment: .center)
+
+                Text(i18n.t("ios.account.sub"))
+                    .font(V3Font.body)
+                    .foregroundStyle(V3Color.ink2)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
+            }
+
+            VStack(spacing: 0) {
+                // Apple, Google et le courriel, tels que `SignInProviderButtons` les dessine
+                // partout, logos compris.
+                SignInProviderButtons(offersEmail: true)
+
+                SignInFailureNote(includeSent: false, includeError: true)
+                    .padding(.top, 8)
+            }
+            .padding(.top, 22)
+            // Les portes seules attendent la fin d'une connexion en cours : pas deux à la
+            // fois. « Plus tard », juste en dessous, reste vivant.
+            .allowsHitTesting(!auth.isWorking)
+
+            VStack(spacing: 6) {
+                V3Button(i18n.t("ios.onb10.later"), kind: .ghost) {
+                    skip()
+                }
+                .accessibilityLabel(Text(i18n.t("ios.skipNoAccount")))
+
+                legalLine
+            }
+            .padding(.top, 10)
+        }
+        .padding(.horizontal, OnbLayout.margin)
+        .padding(.top, 30)
+        .padding(.bottom, 12)
+        .frame(maxWidth: .infinity)
+    }
+
     private var legalLine: some View {
         Text(legalAttributed)
-            .font(MicaboFont.ui(11.5))
-            .foregroundStyle(OnboardingPalette.grayLight)
-            .tint(OnboardingPalette.gray)
+            .font(V3Font.caption)
+            .foregroundStyle(V3Color.ink3)
+            .tint(V3Color.ink2)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity)

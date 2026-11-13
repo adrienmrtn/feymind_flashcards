@@ -192,7 +192,7 @@ export function DiscountGift({ onOpened, onDismiss }: { onOpened: () => void; on
         role="dialog"
         aria-modal="true"
         aria-labelledby="cadeau-boite-title"
-        className="paywall-card relative w-full max-w-[400px] rounded-[28px] bg-gradient-to-b from-offer-wash via-offer-wash-soft to-surface px-5 pb-6 pt-3 shadow-[0_34px_110px_-24px_rgba(11,143,220,0.55)]"
+        className="paywall-card relative w-full max-w-[400px] rounded-[28px] border-[1.5px] border-stroke bg-surface px-5 pb-6 pt-3 shadow-floating"
       >
         <div className="flex justify-end">
           <button
@@ -341,7 +341,7 @@ export function DiscountCard({ onClose }: { onClose: () => void }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="cadeau-title"
-        className="paywall-card relative max-h-[94svh] w-full max-w-[500px] overflow-y-auto rounded-[28px] bg-gradient-to-b from-offer-wash via-offer-wash-soft to-surface px-5 pb-6 pt-11 shadow-[0_34px_110px_-24px_rgba(11,143,220,0.55)] sm:px-7"
+        className="paywall-card relative max-h-[94svh] w-full max-w-[500px] overflow-y-auto rounded-[28px] border-[1.5px] border-stroke bg-surface px-5 pb-6 pt-11 shadow-floating sm:px-7"
       >
         <button
           type="button"
@@ -370,7 +370,7 @@ export function DiscountCard({ onClose }: { onClose: () => void }) {
             {t("app.paywall.discountSubtitle")}
           </h2>
 
-          <div className="mt-6 flex w-full items-center gap-4 rounded-[22px] bg-surface px-4 py-4 text-start shadow-[0_14px_34px_-18px_rgba(11,143,220,0.55)] sm:px-5">
+          <div className="mt-6 flex w-full items-center gap-4 rounded-[22px] bg-surface px-4 py-4 text-start border-[1.5px] border-stroke sm:px-5">
             <SaleSeal percent={saved} />
 
             <div className="min-w-0">
@@ -405,7 +405,7 @@ export function DiscountCard({ onClose }: { onClose: () => void }) {
                 type="button"
                 onClick={() => void subscribe()}
                 disabled={pending}
-                className="pressable shiny mt-5 flex h-[58px] w-full items-center justify-center gap-2 rounded-[16px] bg-offer-sky text-[17px] font-semibold text-white disabled:opacity-70"
+                className="btn-offer mt-5 disabled:opacity-70"
               >
                 {pending ? <ThinkingOrb state="connecting" size={20} theme="dark" /> : null}
                 {t("app.paywall.discountCta", { pct: saved })}
@@ -459,7 +459,7 @@ function SaleSeal({ percent }: { percent: number }) {
         <path d={SEAL_PATH} fill="url(#offer-seal)" />
       </svg>
 
-      <span className="relative flex flex-col items-center leading-none text-white">
+      <span className="relative flex flex-col items-center leading-none text-on-yellow">
         <span className="text-[9.5px] font-semibold">{t("app.paywall.saleSeal")}</span>
         <span className="mt-0.5 text-[20px] font-bold">
           {percent}
@@ -534,13 +534,13 @@ export function DiscountBadge({
         aria-label={t("app.paywall.reopenOffer", {
           time: countdownLabel(t, UI_LOCALE_META[locale].bcp47, left),
         })}
-        className="app-offer-badge pressable fixed right-4 z-40 flex items-center gap-2.5 rounded-pill bg-offer-sky px-4 py-3 text-white shadow-[0_16px_40px_-12px_rgba(11,143,220,0.6)] lg:right-8"
+        className="app-offer-badge pressable fixed right-4 z-40 flex items-center gap-2.5 rounded-pill bg-yellow px-4 py-3 text-on-yellow shadow-[0_4px_0_var(--color-yellow-deep)] lg:right-8"
       >
-        <span aria-hidden className="text-white">
+        <span aria-hidden>
           <GiftGlyph />
         </span>
         <span className="text-start">
-          <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-white/80">
+          <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-on-yellow/80">
             {t("app.paywall.yourOffer")}
           </span>
           <span className="block font-number text-[15px] font-bold tabular-nums" aria-hidden>

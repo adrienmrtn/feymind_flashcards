@@ -1,3 +1,5 @@
+import { kxAr } from "./kx-ar";
+
 /** Connected-app copy (Arabic). Keys shared with the iOS app reuse I18n+ar.swift. */
 export const appAr = {
   a11y: {
@@ -572,6 +574,7 @@ export const appAr = {
     delayMonths: "{n} شهر",
     delayYears: "{n, plural, zero {# سنة} one {سنة واحدة} two {سنتان} few {# سنوات} many {# سنة} other {# سنة}}",
   },
+  kx: kxAr,
 } as const;
 
 /** Shared short copy. */

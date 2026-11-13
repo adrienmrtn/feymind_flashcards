@@ -41,7 +41,7 @@ struct LessonPracticeView: View {
                 LessonQuizView(
                     session: session,
                     questions: questions,
-                    title: L10n.t("lesson.practice.title", locale: .resolved()),
+                    title: MicaboName.quiz.text(),
                     circleID: nil,
                     onClose: { dismiss() },
                     onMore: generate
@@ -66,7 +66,7 @@ struct LessonPracticeView: View {
                 failed(message)
             }
         }
-        .animation(.spring(duration: 0.45), value: phase)
+        .animation(LearnMotion.gentle, value: phase)
         .background(MicaboColor.canvas.ignoresSafeArea())
         .micaboPaywall($paywall)
     }
@@ -74,6 +74,9 @@ struct LessonPracticeView: View {
     // MARK: Écrire un lot
 
     private func generate() {
+        // Un second appui pendant l'écriture lançait un second lot : deux appels payés, et le
+        // lot offert consommé deux fois.
+        guard phase != .writing else { return }
         let isPro = pro?.isPro == true
         if !isPro && PracticeAllowance.freeBatchUsed {
             paywall = .practice
@@ -94,7 +97,7 @@ struct LessonPracticeView: View {
                 round += 1
                 phase = .quiz
                 Haptics.success()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { withAnimation { freshCount = 0 } }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { withAnimation(LearnMotion.standard) { freshCount = 0 } }
             } catch let error as LessonServiceError where error.opensPaywall {
                 PracticeAllowance.freeBatchUsed = true
                 phase = .quiz
@@ -108,7 +111,7 @@ struct LessonPracticeView: View {
     private var writing: some View {
         VStack(spacing: 20) {
             Spacer()
-            MikaMascot(mood: .think, size: 170)
+            MikaMascot(mood: .write, size: 150)
             Text(L10n.t("lesson.practice.writing", locale: .resolved()))
                 .font(MicaboFont.subtitle)
                 .foregroundStyle(MicaboColor.ink)
@@ -138,7 +141,7 @@ struct LessonPracticeView: View {
             Spacer()
             VStack(spacing: 12) {
                 Button(L10n.t("lesson.practice.retry", locale: .resolved()), action: generate)
-                    .buttonStyle(LessonPrimaryButtonStyle())
+                    .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
                 Button(L10n.t("lesson.practice.back", locale: .resolved())) { dismiss() }
                     .buttonStyle(MicaboSecondaryButtonStyle())
             }

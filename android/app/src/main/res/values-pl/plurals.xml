@@ -25,6 +25,18 @@
         <item quantity="one">dzień z rzędu</item>
         <item quantity="other">dni z rzędu</item>
     </plurals>
+    <plurals name="kx_league_endsIn">
+        <item quantity="one">Koniec za %1$d dzień</item>
+        <item quantity="few">Koniec za %1$d dni</item>
+        <item quantity="many">Koniec za %1$d dni</item>
+        <item quantity="other">Koniec za %1$d dnia</item>
+    </plurals>
+    <plurals name="kx_today_due">
+        <item quantity="one">%1$d fiszka do powtórki</item>
+        <item quantity="few">%1$d fiszki do powtórki</item>
+        <item quantity="many">%1$d fiszek do powtórki</item>
+        <item quantity="other">%1$d fiszki do powtórki</item>
+    </plurals>
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Dodaj mój błąd do fiszek</item>
         <item quantity="other">Dodaj moje błędy (%1$d) do fiszek</item>

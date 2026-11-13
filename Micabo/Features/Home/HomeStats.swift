@@ -16,7 +16,10 @@ struct HomeStats: Equatable {
         self.learnedCards = learnedCards
     }
 
-    init(courses: [Course], now: Date = Date()) {
+    /// `extraSeconds` : le temps passé ailleurs que dans une leçon, les séances du minuteur
+    /// menées au bout (`FocusLog`).
+    init(courses: [Course], extraSeconds: Double = 0, now: Date = Date()) {
+        seconds = max(0, extraSeconds)
         for course in courses {
             let progress = course.progress
             seconds += progress.totalSeconds
@@ -35,7 +38,7 @@ struct HomeStats: Equatable {
         let value: String
         if hours < 10 {
             let formatter = NumberFormatter()
-            formatter.locale = Locale(identifier: locale.rawValue)
+            formatter.locale = locale.foundation
             formatter.minimumFractionDigits = 0
             formatter.maximumFractionDigits = 1
             value = formatter.string(from: NSNumber(value: (hours * 10).rounded() / 10)) ?? String(format: "%.1f", hours)
@@ -61,17 +64,22 @@ struct ResumeTarget: Equatable {
             .filter({ $0.lastOpenedAt != nil })
             .max(by: { ($0.lastOpenedAt ?? .distantPast) < ($1.lastOpenedAt ?? .distantPast) })
         else { return nil }
+        return (course, target(for: course))
+    }
+
+    /// Où en est une leçon : le cercle qui l'attend et la part des cercles faits.
+    static func target(for course: Course) -> ResumeTarget {
         let circles = course.pathSteps().compactMap(\.circle)
         let done = course.progress.done
         let current = PathLayout.current(in: circles, done: done)
         let doneCount = circles.filter { done.contains($0.id) }.count
         let percent = circles.isEmpty ? 0 : Int((Double(doneCount) / Double(circles.count) * 100).rounded())
-        return (course, ResumeTarget(
+        return ResumeTarget(
             courseID: course.id,
             title: course.title,
             circleNumber: current?.number,
             circleTitle: current?.title,
             percent: percent
-        ))
+        )
     }
 }

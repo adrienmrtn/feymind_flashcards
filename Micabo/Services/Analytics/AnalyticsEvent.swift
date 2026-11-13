@@ -31,6 +31,11 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     /// « a vu l'écran » de « a répondu », et l'écart entre les deux est un abandon.
     case onboardingAnswer = "onboarding_answer"
     case onboardingFinished = "onboarding_finished"
+    /// Une page des stories du premier écran, vue : `index` de 1 à 4. Une fois par page.
+    case onboardingStoryViewed = "onboarding_story_viewed"
+    /// La première leçon choisie pendant le parcours : `choice` vaut `topic`, `import` ou
+    /// `later`. Jamais le sujet tapé.
+    case onboardingFirstLesson = "onboarding_first_lesson"
 
     // MARK: Compte
 
@@ -63,6 +68,23 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     /// Refermé sans rien acheter. Avec la durée passée dessus : un paywall refermé en
     /// deux secondes et un paywall lu pendant une minute ne se corrigent pas pareil.
     case paywallDismissed = "paywall_dismissed"
+    /// **Un achat qui ouvre un essai gratuit** : posé avec `paywall_purchased` quand l'offre
+    /// achetée promettait l'essai à ce compte. Les deux portent `price_display`, la variante
+    /// du test de prix (`PriceDisplay`).
+    case paywallTrialStarted = "paywall_trial_started"
+    /// **Le rappel de fin d'essai est posé** (`TrialEndReminder`) : la veille de la fin, si les
+    /// notifications sont permises. Sans propriété.
+    case paywallTrialReminder = "paywall_trial_reminder"
+
+    // MARK: Offre de réduction
+
+    /// **L'offre de réduction s'affiche** (lot 10) : `source` dit ce qui y a mené (`paywall` :
+    /// un paywall refermé sans achat ; `direct` : la pastille de la Home ou les Réglages ;
+    /// `test`), `fresh` si cet affichage a ouvert une fenêtre de vingt-quatre heures. L'achat
+    /// du tarif réduit reste `paywall_purchased`, avec `trigger` à `discount`.
+    case discountShown = "discount_shown"
+    /// L'offre est refusée (« Non merci », la croix), avec `source` et la durée passée dessus.
+    case discountDismissed = "discount_dismissed"
 
     // MARK: Import
 
@@ -76,6 +98,10 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     /// n'est qu'une tentative.
     case courseImported = "course_imported"
     case courseGenerationFailed = "course_generation_failed"
+    /// **La leçon verrouillée** : la leçon offerte a servi, Mika a lu les supports sur
+    /// l'appareil, et l'aperçu s'affiche avant le paywall `lessonReady`. Avec `source`,
+    /// `supports`, `pages`, `words`. Le dénominateur de la conversion de ce moment-là.
+    case lessonLockedPreview = "lesson_locked_preview"
     /// Un écran du parcours de création d'un deck. C'est l'entonnoir de l'import : le
     /// parcours pose sept questions avant la première dépense, et c'est là que se perdent
     /// les decks qui ne seront jamais créés.
@@ -107,6 +133,52 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     /// Une carte proposée par Mika, rangée dans un cours.
     case mikaCardAdded = "mika_card_added"
 
+    // MARK: Scanner d'exercices
+
+    /// Un énoncé lu ou tapé : `source` (`camera`, `library`, `typed`) et `subject`, la matière
+    /// devinée. Jamais l'énoncé lui-même.
+    case solverCaptured = "solver_captured"
+    /// Une photo dont l'appareil n'a rien lu, avec sa `source`.
+    case solverUnreadable = "solver_unreadable"
+    /// Une solution arrivée : `subject`, `steps`, `structured` (les balises lues) et `source`.
+    case solverSolved = "solver_solved"
+    /// « Je ne comprends pas cette étape », répondu : `subject` et `step`.
+    case solverStepHelp = "solver_step_help"
+    /// Une réponse à l'exercice d'entraînement corrigée : `subject`, `result` (`right`,
+    /// `wrong`, `unknown`).
+    case solverPracticeChecked = "solver_practice_checked"
+    /// Un message envoyé dans un fil de « Demande à Mika », avec `subject`.
+    case tutorAsked = "tutor_asked"
+
+    // MARK: Le chat Mika (lot 11)
+
+    /// Une conversation ouverte : `origin` (`home`, `camera`, `lesson`, `card`, `quiz`, `scan`,
+    /// `legacy`) et `resumed` (reprise de l'historique). Jamais le texte.
+    case chatOpened = "chat_opened"
+    /// Un message envoyé : `origin`, `photos` (leur nombre) et `linked` (une leçon ou un exercice).
+    case chatSent = "chat_sent"
+    /// L'historique ouvert, avec `count` (le nombre de conversations).
+    case chatHistoryOpened = "chat_history_opened"
+    /// Une passerelle depuis une réponse : `kind` (`lesson`, `card`).
+    case chatGateway = "chat_gateway"
+    /// Une séance de Concentration qui ouvre sa leçon : `activity` (`lesson`, `cards`, `quiz`).
+    case focusLessonOpened = "focus_lesson_opened"
+
+    // MARK: Corriger un texte (lot 7)
+
+    /// Un raccourci des outils de Home : `tool` (`scan`, `writing`, `quiz`).
+    case homeToolOpened = "home_tool_opened"
+    /// L'écran « Corriger un texte » ouvert.
+    case writingOpened = "writing_opened"
+    /// Une photo de texte dont l'appareil n'a rien lu.
+    case writingUnreadable = "writing_unreadable"
+    /// Une relecture arrivée : `source` (`typed`, `pasted`, `photo`), `fixes` (le nombre de
+    /// corrections), `applied` (celles retrouvées dans le texte), `structured` et `words`, une
+    /// tranche de longueur. Jamais le texte ni une correction.
+    case writingChecked = "writing_checked"
+    /// Le texte corrigé copié.
+    case writingCopied = "writing_copied"
+
     // MARK: Leçons et synchro
 
     /// Un thème de leçon que le serveur n'a pas pu écrire : `reason` dit pourquoi
@@ -114,6 +186,12 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     /// l'app va le redemander seule. Le 21 octobre 2026, quarante-cinq thèmes ont échoué sans
     /// qu'aucune courbe de l'app ne le montre.
     case lessonThemeFailed = "lesson_theme_failed"
+    /// **« Cette leçon t'a aidé ? »** : 👍 ou 👎, une fois par leçon. Avec `lesson_id`,
+    /// `rating` (`up`, `down`), `reasons` (séparées par des virgules), `comment` (facultatif,
+    /// coupé à 120 caractères), `prompt_version` (celle du serveur qui a écrit le plan, ou
+    /// `inconnue`), `path_version`, `source`, `app_language`, `level`, `moment`
+    /// (`first_circle`, `finished`) et `created` (le jour de la leçon).
+    case lessonRated = "lesson_rated"
     /// Un aller-retour de synchro réussi, avec ce qu'il a poussé (`courses`, `cards`) et
     /// sous quel compte (`user` : `account` ou `guest`). Sans lui, deux leçons sur trois
     /// manquaient en base et rien ne le disait.
@@ -124,6 +202,43 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     case guestClaimed = "guest_claimed"
     /// Une réclamation refusée ou tombée, et pourquoi. Le passage suivant la retente.
     case guestClaimFailed = "guest_claim_failed"
+
+    // MARK: Calendrier
+
+    /// Un calendrier créé à la main ou par le scanner, avec sa couleur.
+    case calendarCreated = "calendar_created"
+    /// Un événement ajouté à la main, avec `weekly`.
+    case calendarEventAdded = "calendar_event_added"
+    /// Une photo d'emploi du temps lue : `result` (`ok`, `empty`, `unreadable`, `failed`) et
+    /// `count`, le nombre de cours trouvés.
+    case timetableScanned = "timetable_scanned"
+    /// Les cours relus et enregistrés, avec `count`.
+    case timetableSaved = "timetable_saved"
+    /// Mika a planifié les révisions d'un examen : `count` séances, `days` jours restants.
+    case planGenerated = "plan_generated"
+    case planCleared = "plan_cleared"
+    /// Un planning demandé pour un second examen, sans Pro : le paywall s'ouvre.
+    case planBlocked = "plan_blocked"
+
+    // MARK: Concentration
+
+    /// « Commencer la session », avec `mode` et `minutes`.
+    case focusPrepared = "focus_prepared"
+    /// Une séance lancée : `mode`, `minutes`, `goal` (une leçon visée), `planned` (une
+    /// séance du calendrier).
+    case focusStarted = "focus_started"
+    case focusCompleted = "focus_completed"
+    /// Une séance arrêtée en route, avec les minutes faites.
+    case focusStopped = "focus_stopped"
+    case taskAdded = "task_added"
+    case taskDone = "task_done"
+
+    // MARK: Home
+
+    /// Un geste du plan du jour : `step` (`session`, `lesson`, `cards`, `create`), `slot`
+    /// (`hero` pour le grand bouton, `secondary` pour la ligne dessous) et `exam` (un examen
+    /// est à venir). Rien d'écrit par l'élève.
+    case homePlanTapped = "home_plan_tapped"
 }
 
 /// **Ce qu'une étiquette a le droit d'être.**

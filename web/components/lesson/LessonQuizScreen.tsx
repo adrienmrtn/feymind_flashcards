@@ -27,6 +27,7 @@ export function LessonQuizScreen({
   quizzes,
   progress,
   seed: initialSeed,
+  limit,
 }: {
   lessonId: string;
   tone: LessonTone;
@@ -34,13 +35,18 @@ export function LessonQuizScreen({
   progress: LessonProgress;
   /** La graine du mélange des propositions, tirée par la page (voir `QuizRun`). */
   seed: string;
+  /** Le « Quiz éclair » de Home : les premières questions du tirage seulement. */
+  limit?: number;
 }) {
   const { t } = useI18n();
   const router = useRouter();
   const [attempt, setAttempt] = useState(0);
   const [seed, setSeed] = useState<bigint>(() => BigInt(initialSeed));
   const [known, setKnown] = useState(progress);
-  const [questions, setQuestions] = useState<QuizQuestion[]>(() => fullQuiz(lessonId, quizzes, progress, 0));
+  const [questions, setQuestions] = useState<QuizQuestion[]>(() => {
+    const drawn = fullQuiz(lessonId, quizzes, progress, 0);
+    return limit ? drawn.slice(0, limit) : drawn;
+  });
   void known;
   useLessonClock(lessonId, "quiz");
 

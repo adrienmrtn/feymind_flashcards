@@ -8,6 +8,7 @@ import { CLOZE_GAP, LESSON_TONES, answerText, choiceOrder, matchRightOrder, norm
 import { KeywordText, plainKeywordText } from "@/components/lesson/KeywordText";
 import { LessonPrimaryButton } from "@/components/lesson/LessonButtons";
 import { Mika } from "@/components/mika/Mika";
+import { AnswerReward } from "@/components/xp/XpBadge";
 import { useI18n } from "@/lib/i18n/client";
 
 /** Ce que l'élève a répondu à une question. */
@@ -31,6 +32,7 @@ export function QuestionCard({
   shuffleSeed = 0n,
   showsFeedback = true,
   reveals = true,
+  rewards = false,
   onAnswer,
 }: {
   question: QuizQuestion;
@@ -41,6 +43,8 @@ export function QuestionCard({
   showsFeedback?: boolean;
   /** Faux dans un examen blanc : la réponse choisie se surligne, sans dire si elle est juste. */
   reveals?: boolean;
+  /** Vrai dans une leçon : le retour montre l'XP gagnée (`docs/refonte-knowunity.md` § 6). */
+  rewards?: boolean;
   onAnswer: (answer: QuizAnswer) => void;
 }) {
   const { t } = useI18n();
@@ -69,19 +73,20 @@ export function QuestionCard({
         <MatchBoard question={question} answered={answered} seed={shuffleSeed} reveals={reveals} onAnswer={onAnswer} />
       )}
 
-      {showsFeedback && reveals && answered ? <QuestionFeedback question={question} right={answered.right} /> : null}
+      {showsFeedback && reveals && answered ? <QuestionFeedback question={question} right={answered.right} rewards={rewards} /> : null}
     </div>
   );
 }
 
 /** Juste ou faux, Mika réagit, et la phrase qui explique. */
-export function QuestionFeedback({ question, right }: { question: QuizQuestion; right: boolean }) {
+export function QuestionFeedback({ question, right, rewards = false }: { question: QuizQuestion; right: boolean; rewards?: boolean }) {
   const { t } = useI18n();
   return (
     <div className={`panel-rise flex items-center gap-3 rounded-[18px] p-3.5 ${right ? "bg-correct-soft" : "bg-wrong-soft"}`} role="status">
       <Mika mood={right ? "happy" : "sad"} size={64} label="" />
       <div className="flex min-w-0 flex-col gap-1">
         <p className={`text-[18px] font-extrabold ${right ? "text-correct-ink" : "text-wrong-ink"}`}>{right ? t("lesson.question.right") : t("lesson.question.wrong")}</p>
+        {rewards ? <AnswerReward right={right} /> : null}
         {!right && (question.kind === "order" || question.kind === "match") ? (
           <p className="text-[15px] font-bold text-ink">
             <KeywordText text={answerText(question)} tints={false} />

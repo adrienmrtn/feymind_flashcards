@@ -10,6 +10,7 @@ import {
 } from "../_shared/fal.ts";
 import { detectDiscipline, disciplineBrief } from "../_shared/discipline.ts";
 import { languageBrief } from "../_shared/language.ts";
+import { optionalLearnerBrief } from "../_shared/learner.ts";
 import { sanitizeMeta, wrapUntrusted } from "../_shared/prompt-boundary.ts";
 
 interface RequestBody {
@@ -347,6 +348,9 @@ Deno.serve((request: Request) =>
 
       const sections = [
         languageBrief(body.language),
+        // Le profil scolaire, quand l'app l'envoie (champs facultatifs, `learner.ts`) : des
+        // cartes au vocabulaire et au niveau de la classe de l'élève.
+        optionalLearnerBrief(body as Record<string, unknown>),
         `Cours : ${title || "Sans titre"}`,
         subjectBrief,
         `Génère exactement ${count} flashcards, réparties ainsi : ${breakdown}. Ces nombres ne se négocient pas.`,

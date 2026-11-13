@@ -2,5 +2,5 @@
 
 "NSCameraUsageDescription" = "Micabo bruger kameraet til at scanne siderne i dit kursus.";
 "NSPhotoLibraryUsageDescription" = "Micabo skal have adgang til dine fotos for at importere et kursus eller et diagram.";
-"NSMicrophoneUsageDescription" = "Micabo bruger mikrofonen til at optage en time eller et stemmememo og lave det om til en lektion.";
-"NSSpeechRecognitionUsageDescription" = "Micabo transskriberer dine optagelser på telefonen for at lave dem om til en lektion.";
+"NSMicrophoneUsageDescription" = "Micabo bruger mikrofonen til at optage undervisning eller et lydnotat og til at høre dine svar, når du svarer højt.";
+"NSSpeechRecognitionUsageDescription" = "Micabo skriver dine optagelser og dine højt sagte svar ud på din telefon.";

@@ -28,6 +28,7 @@ import { Mika } from "@/components/mika/Mika";
 import { addExamMissedCards, finishExamPaper } from "@/lib/actions/exam-paper";
 import { useI18n } from "@/lib/i18n/client";
 import { requestPaywall } from "@/lib/paywall";
+import { awardXp } from "@/lib/xp/client";
 
 /**
  * **Un examen blanc, du début à la fin** : on choisit les leçons et la durée, Mika écrit la
@@ -93,6 +94,7 @@ export function MockExamFlow({
 
   async function submit(paper: ExamPaper, answers: Record<string, QuizAnswer>, seconds: number) {
     const local = examResult(paper, answers, seconds);
+    awardXp("mockExamFinished");
     setPhase({ kind: "result", paper, answers, result: local });
     const outcome = await finishExamPaper(
       paper.id,
@@ -431,7 +433,7 @@ function MockExamResult({
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <p className="numeral text-[44px] font-extrabold leading-none text-ink">{examGradeLabel(fraction, country, locale)}</p>
+          <p className="numeral font-display text-[52px] leading-none text-ink">{examGradeLabel(fraction, country, locale)}</p>
           {examGradeLabel(fraction, country, locale) !== `${result.correct}/${result.total}` ? (
             <p className="numeral mt-1.5 text-[16px] font-bold text-ink-secondary">
               {result.correct}/{result.total}

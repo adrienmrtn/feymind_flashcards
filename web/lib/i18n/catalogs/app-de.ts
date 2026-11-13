@@ -1,3 +1,5 @@
+import { kxDe } from "./kx-de";
+
 /** Texte der verbundenen App (außer Landing und Onboarding). */
 export const appDe = {
   a11y: {
@@ -568,6 +570,7 @@ export const appDe = {
     delayMonths: "{n} Mon.",
     delayYears: "{n, plural, one {# Jahr} other {# Jahre}}",
   },
+  kx: kxDe,
 } as const;
 
 export const copyDe = {

@@ -13,6 +13,7 @@ on:
     paths:
       - "web/**"
       - "design/mika/**"
+      - "design/mika-v3/**"
       - "supabase/functions/_shared/icons.ts"
       - "supabase/functions/_shared/symbols.ts"
       - "supabase/functions/_shared/sheet.ts"

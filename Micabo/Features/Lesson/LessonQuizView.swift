@@ -30,6 +30,8 @@ struct LessonQuizView: View {
     @State private var finished = false
     /// La graine du mélange des propositions : neuve à chaque ouverture.
     @State private var seed = UInt64.random(in: 1...UInt64.max)
+    /// « Demander à Mika » sur la question en cours (lot 11).
+    @State private var askLaunch: ChatLaunch?
 
     init(
         session: LessonSession,
@@ -68,7 +70,7 @@ struct LessonQuizView: View {
                     tone: tone,
                     doneTitle: onDone == nil
                         ? L10n.t("lesson.quiz.finish", locale: .resolved())
-                        : L10n.t("lesson.circle.next", locale: .resolved()),
+                        : L10n.t("ios.pol.learn.nextStep", locale: .resolved()),
                     onDone: { if let onDone { onDone() } else { onClose() } },
                     onMore: onMore
                 )
@@ -93,7 +95,8 @@ struct LessonQuizView: View {
                     .id(index)
                     .padding(.horizontal, MicaboSpacing.screen)
                     .padding(.top, 16)
-                    .padding(.bottom, 200)
+                    // Le panneau de réponse et Mika qui passe la tête au-dessus.
+                    .padding(.bottom, 280)
                     .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)).combined(with: .opacity))
                 }
                 .scrollIndicators(.hidden)
@@ -101,16 +104,26 @@ struct LessonQuizView: View {
         }
         .overlay(alignment: .bottom) {
             if let answer, !finished, questions.indices.contains(index) {
-                AnswerPanel(question: questions[index], right: answer.right, isLast: index + 1 == questions.count, action: next)
+                AnswerPanel(question: questions[index], right: answer.right, isLast: index + 1 == questions.count, action: next, onAsk: { ask(questions[index]) })
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .animation(.spring(duration: 0.4, bounce: 0.2), value: answer)
+        .animation(LearnMotion.standard, value: answer)
         .background(MicaboColor.canvas.ignoresSafeArea())
         .lessonClock(session, activity: circleID == nil ? .quiz : nil)
+        .sheet(item: $askLaunch) { launch in
+            ChatScreen(launch: launch)
+        }
+    }
+
+    private func ask(_ question: QuizQuestion) {
+        askLaunch = .lesson(session.course.id, origin: .quiz, prefill: L10n.t("ios.chat11.ask.quiz", locale: .resolved(), vars: ["question": question.prompt]))
     }
 
     private func record(_ result: QuizAnswer) {
+        // Deux appuis dans la même image passent tous deux la garde de la carte, qui relit
+        // une valeur figée au rendu : la seconde réponse compterait deux fois l'XP et le score.
+        guard answer == nil, !finished, questions.indices.contains(index) else { return }
         answer = result
         let question = questions[index]
         if result.right {
@@ -125,9 +138,9 @@ struct LessonQuizView: View {
     }
 
     private func next() {
-        guard answer != nil else { return }
+        guard answer != nil, !finished else { return }
         if index + 1 < questions.count {
-            withAnimation(.spring(duration: 0.35)) {
+            withAnimation(LearnMotion.standard) {
                 index += 1
                 answer = nil
             }
@@ -135,14 +148,14 @@ struct LessonQuizView: View {
             if let circleID {
                 session.recordQuiz(circleID, right: right, total: questions.count, in: modelContext)
             }
-            withAnimation(.spring(duration: 0.5)) { finished = true }
+            withAnimation(LearnMotion.gentle) { finished = true }
         }
     }
 
     private var empty: some View {
         VStack(spacing: 16) {
             Spacer()
-            MikaMascot(mood: .think, size: 150)
+            MikaMascot(mood: .look, size: 120)
             Text(L10n.t("lesson.quiz.empty", locale: .resolved()))
                 .font(MicaboFont.subtitle)
                 .foregroundStyle(MicaboColor.ink)
@@ -150,10 +163,10 @@ struct LessonQuizView: View {
             Spacer()
             Button(onDone == nil
                 ? L10n.t("lesson.quiz.finish", locale: .resolved())
-                : L10n.t("lesson.circle.next", locale: .resolved())) {
+                : L10n.t("ios.pol.learn.nextStep", locale: .resolved())) {
                 if let onDone { onDone() } else { onClose() }
             }
-            .buttonStyle(LessonPrimaryButtonStyle())
+            .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.bottom, 12)
@@ -162,11 +175,20 @@ struct LessonQuizView: View {
 
 /// **La réponse, dans un panneau qui monte du bas** : vert et « Bien joué ! », ou rouge et
 /// « Pas tout à fait », la phrase qui explique, et « Continuer » dans la même couleur.
+///
+/// **Mika passe la tête au-dessus du panneau**, à droite, coupé net par son bord : il sourit
+/// à une bonne réponse, il est déçu avec l'élève à une mauvaise. Il apparaît en fondu une fois
+/// le panneau posé — il ne monte pas avec lui — et s'efface dès « Continuer ».
 struct AnswerPanel: View {
     let question: QuizQuestion
     let right: Bool
     let isLast: Bool
     let action: () -> Void
+    /// « Demander à Mika » (lot 11) : la question part dans une conversation liée à la leçon.
+    var onAsk: (() -> Void)? = nil
+
+    @State private var mikaShown = false
+    @Environment(\.mikaStill) private var mikaStill
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -176,12 +198,15 @@ struct AnswerPanel: View {
                     .foregroundStyle(right ? MicaboColor.correct : MicaboColor.wrong)
                     .symbolEffect(.bounce, value: right)
                 Text(right
-                    ? L10n.t("lesson.question.right", locale: .resolved())
+                    ? XPCheer.word(for: question.id)
                     : L10n.t("lesson.question.wrong", locale: .resolved()))
                     .font(MicaboFont.ui(21, weight: .heavy))
                     .foregroundStyle(right ? MicaboColor.correctInk : MicaboColor.wrongInk)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                // L'XP de la réponse (`docs/refonte-knowunity.md` § 6), à côté du verdict.
+                XPBadge(points: right ? XPRules.correctAnswer : XPRules.wrongAnswer, tint: right ? MicaboColor.correctInk : MicaboColor.wrongInk)
                 Spacer(minLength: 0)
-                MikaMascot(mood: right ? .happy : .sad, size: 52)
             }
             if !right, question.kind == .order || question.kind == .match || question.kind == .gap {
                 KeywordText(question.answerText, size: 16, weight: .bold, tintsKeywords: false)
@@ -195,9 +220,15 @@ struct AnswerPanel: View {
                     .foregroundStyle(MicaboColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            if let onAsk {
+                ChatAskButton(action: onAsk)
+            }
             Button(isLast
                 ? L10n.t("lesson.quiz.seeScore", locale: .resolved())
-                : L10n.t("lesson.quiz.continue", locale: .resolved()), action: action)
+                : L10n.t("lesson.quiz.continue", locale: .resolved())) {
+                    mikaShown = false
+                    action()
+                }
                 .buttonStyle(AnswerButtonStyle(color: right ? MicaboColor.correct : MicaboColor.wrong))
         }
         .padding(.horizontal, MicaboSpacing.screen)
@@ -210,6 +241,15 @@ struct AnswerPanel: View {
                 .overlay(alignment: .top) {
                     Rectangle().fill((right ? MicaboColor.correct : MicaboColor.wrong).opacity(0.35)).frame(height: 2)
                 }
+        }
+        .overlay(alignment: .topTrailing) {
+            MikaPeek(mood: right ? .happy : .shake, width: MikaPeek.card)
+                .padding(.trailing, MicaboSpacing.screen + 4)
+                .alignmentGuide(.top) { $0[.bottom] }
+                .opacity(mikaShown || mikaStill ? 1 : 0)
+        }
+        .onAppear {
+            withAnimation(MicaboMotion.standard) { mikaShown = true }
         }
     }
 }
@@ -224,14 +264,14 @@ struct AnswerButtonStyle: ButtonStyle {
             .foregroundStyle(MicaboColor.onInk)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(color, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(color, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
             .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
                     .fill(color.opacity(0.6))
                     .offset(y: configuration.isPressed ? 0 : 4)
             )
             .offset(y: configuration.isPressed ? 3 : 0)
-            .animation(.spring(duration: 0.18), value: configuration.isPressed)
+            .animation(LearnMotion.quick, value: configuration.isPressed)
     }
 }
 
@@ -248,7 +288,7 @@ struct StreakBadge: View {
             .padding(.vertical, 7)
             .background(LessonTone.yellow.pale, in: Capsule())
             .contentTransition(.numericText(value: Double(count)))
-            .animation(.spring(duration: 0.3), value: count)
+            .animation(LearnMotion.standard, value: count)
     }
 }
 
@@ -263,18 +303,19 @@ struct QuizScoreView: View {
     var onMore: (() -> Void)?
 
     @State private var shown: Double = 0
+    @Environment(\.homeStill) private var still
 
     private var ratio: Double { Double(right) / Double(max(1, total)) }
 
     var body: some View {
         VStack(spacing: 18) {
             Spacer()
-            MikaMascot(mood: ratio >= 0.8 ? .celebrate : ratio >= 0.5 ? .happy : .think, size: 130)
+            MikaMascot(mood: ratio >= 0.8 ? .celebrate : ratio >= 0.5 ? .happy : .wink, size: 150)
             ZStack {
                 Circle().stroke(MicaboColor.track, lineWidth: 14)
                 Circle()
                     .trim(from: 0, to: shown)
-                    .stroke(ratio >= 0.5 ? tone.vivid : MicaboColor.wrong, style: StrokeStyle(lineWidth: 14, lineCap: .round))
+                    .stroke(tone.vivid, style: StrokeStyle(lineWidth: 14, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                 VStack(spacing: 2) {
                     Text("\(Int((shown * Double(total)).rounded())) / \(total)")
@@ -282,7 +323,7 @@ struct QuizScoreView: View {
                         .foregroundStyle(tone.ink)
                         .monospacedDigit()
                         .contentTransition(.numericText(value: shown))
-                    Text("\(Int((shown * 100).rounded())) %")
+                    Text(L10n.percent(Int((shown * 100).rounded()), locale: .resolved()))
                         .font(MicaboFont.ui(16, weight: .bold))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .monospacedDigit()
@@ -298,16 +339,18 @@ struct QuizScoreView: View {
                 .font(MicaboFont.subtitle)
                 .foregroundStyle(MicaboColor.ink)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
             if right < total {
-                Text(L10n.t("lesson.quiz.missedBecomeCards", locale: .resolved()))
+                Text(L10n.t("ios.home10.quiz.missed", locale: .resolved()))
                     .font(MicaboFont.ui(15, weight: .medium))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
             VStack(spacing: 12) {
                 Button(doneTitle, action: onDone)
-                    .buttonStyle(LessonPrimaryButtonStyle())
+                    .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
                 if let onMore {
                     Button(action: onMore) {
                         Label(L10n.t("lesson.practice.more", locale: .resolved()), systemImage: "sparkles")
@@ -319,7 +362,12 @@ struct QuizScoreView: View {
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.bottom, 12)
         .onAppear {
-            withAnimation(.easeOut(duration: 1.1).delay(0.2)) { shown = ratio }
+            // Avec « Réduire les animations » (ou dans un rendu), le score est là d'emblée.
+            if still || LearnMotion.reduceMotion {
+                shown = ratio
+            } else {
+                withAnimation(LearnMotion.gentle) { shown = ratio }
+            }
             if ratio >= 0.8 { Haptics.burst(count: 3, over: 0.4) }
         }
     }
@@ -342,6 +390,10 @@ struct LessonCardsRun: View {
     @State private var index = 0
     @State private var flipped = false
     @State private var finished = false
+    /// Les cartes notées « Encore » : elles reviennent dans la séance de demain.
+    @State private var again = 0
+    /// « Demander à Mika » sur la carte retournée (lot 11).
+    @State private var askLaunch: ChatLaunch?
 
     init(session: LessonSession, cards: [Flashcard], onClose: @escaping () -> Void, onDone: (() -> Void)? = nil) {
         self.session = session
@@ -386,73 +438,99 @@ struct LessonCardsRun: View {
         }
         .background(MicaboColor.canvas.ignoresSafeArea())
         .lessonClock(session, activity: onDone == nil ? .flashcards : nil)
+        .sheet(item: $askLaunch) { launch in
+            ChatScreen(launch: launch)
+        }
     }
 
     @ViewBuilder
     private var controls: some View {
         if flipped {
+            ChatAskButton {
+                let card = cards[index]
+                askLaunch = .lesson(session.course.id, origin: .card, prefill: L10n.t("ios.chat11.ask.card", locale: .resolved(), vars: ["question": card.front, "answer": card.back]))
+            }
+            .frame(maxWidth: .infinity)
             HStack(spacing: 10) {
-                rating(.again, title: L10n.t("lesson.cards.again", locale: .resolved()), color: MicaboColor.wrong)
-                rating(.good, title: L10n.t("lesson.cards.good", locale: .resolved()), color: tone.vivid)
-                rating(.easy, title: L10n.t("lesson.cards.easy", locale: .resolved()), color: MicaboColor.correct)
+                rating(.again, title: L10n.t("lesson.cards.again", locale: .resolved()), ink: MicaboColor.wrongInk, fill: MicaboColor.wrongSoft)
+                rating(.good, title: L10n.t("lesson.cards.good", locale: .resolved()), ink: MicaboColor.accentInk, fill: MicaboColor.accentSoft)
+                rating(.easy, title: L10n.t("lesson.cards.easy", locale: .resolved()), ink: MicaboColor.correctInk, fill: MicaboColor.correctSoft)
             }
         } else {
             Button(L10n.t("lesson.cards.flip", locale: .resolved()), action: flip)
-                .buttonStyle(LessonPrimaryButtonStyle())
+                .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
         }
     }
 
-    private func rating(_ rating: ReviewRating, title: String, color: Color) -> some View {
+    /// **Une note**, teintée de son sens : rouge pâle pour « Encore » (raté), bleu pour
+    /// « Bien », vert pour « Facile ». Trois aplats pleins de trois couleurs côte à côte
+    /// criaient plus fort que la carte elle-même.
+    private func rating(_ rating: ReviewRating, title: String, ink: Color, fill: Color) -> some View {
         Button {
             rate(rating)
         } label: {
             Text(title)
                 .font(MicaboFont.ui(17, weight: .heavy))
-                .foregroundStyle(MicaboColor.onInk)
+                .foregroundStyle(ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(color, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .background(fill, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous).strokeBorder(ink.opacity(0.25), lineWidth: 1.5))
         }
         .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
     }
 
     private func flip() {
         Haptics.light()
-        withAnimation(.spring(duration: 0.5, bounce: 0.2)) { flipped.toggle() }
+        withAnimation(LearnMotion.gentle) { flipped.toggle() }
     }
 
     private func rate(_ rating: ReviewRating) {
+        // Un double appui sur une note notait aussi la carte suivante, sans qu'on l'ait vue.
+        guard flipped, !finished, cards.indices.contains(index) else { return }
         LessonReview.rate(cards[index], rating)
+        if rating == .again { again += 1 }
         session.course.updatedAt = Date()
         try? modelContext.save()
         if index + 1 < cards.count {
-            withAnimation(.spring(duration: 0.35)) {
+            withAnimation(LearnMotion.standard) {
                 index += 1
                 flipped = false
             }
         } else {
-            withAnimation(.spring(duration: 0.4)) { finished = true }
+            withAnimation(LearnMotion.standard) { finished = true }
         }
     }
 
     private var finishedState: some View {
         VStack(spacing: 18) {
             Spacer()
-            MikaMascot(mood: .happy, size: 170)
-            Text("\(cards.count) / \(cards.count)")
+            MikaMascot(mood: again == 0 ? .celebrate : .happy, size: 150)
+            Text("\(cards.count)")
                 .font(MicaboFont.number(56))
                 .foregroundStyle(tone.ink)
             Text(L10n.t("lesson.cards.done", locale: .resolved()))
                 .font(MicaboFont.subtitle)
                 .foregroundStyle(MicaboColor.ink)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            // Ce qu'on retient de la séance : les cartes qui reviennent, ou aucune.
+            Text(again == 0
+                ? L10n.t("ios.pol.learn.cards.allKnown", locale: .resolved())
+                : L10n.t("ios.pol.learn.cards.againCount", locale: .resolved(), vars: ["count": String(again)]))
+                .font(MicaboFont.ui(15, weight: .semibold))
+                .foregroundStyle(MicaboColor.inkSecondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
             Spacer()
             Button(onDone == nil
                 ? L10n.t("lesson.quiz.finish", locale: .resolved())
-                : L10n.t("lesson.circle.next", locale: .resolved())) {
+                : L10n.t("ios.pol.learn.nextStep", locale: .resolved())) {
                 if let onDone { onDone() } else { onClose() }
             }
-            .buttonStyle(LessonPrimaryButtonStyle())
+            .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.bottom, 12)
@@ -461,18 +539,18 @@ struct LessonCardsRun: View {
     private var emptyState: some View {
         VStack(spacing: 16) {
             Spacer()
-            MikaMascot(mood: .sleep, size: 150)
-            Text(L10n.t("lesson.cards.empty", locale: .resolved()))
+            MikaMascot(mood: .sleep, size: 120)
+            Text(L10n.t("ios.home10.cards.empty", locale: .resolved()))
                 .font(MicaboFont.subtitle)
                 .foregroundStyle(MicaboColor.ink)
                 .multilineTextAlignment(.center)
             Spacer()
             Button(onDone == nil
                 ? L10n.t("lesson.quiz.finish", locale: .resolved())
-                : L10n.t("lesson.circle.next", locale: .resolved())) {
+                : L10n.t("ios.pol.learn.nextStep", locale: .resolved())) {
                 if let onDone { onDone() } else { onClose() }
             }
-            .buttonStyle(LessonPrimaryButtonStyle())
+            .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.bottom, 12)
@@ -540,10 +618,10 @@ struct FlashcardFace: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity, minHeight: 320, alignment: .topLeading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .strokeBorder(flipped ? tone.vivid : MicaboColor.stroke, lineWidth: 2)
+            RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous)
+                .strokeBorder(flipped ? tone.vivid : MicaboColor.stroke, lineWidth: MicaboSurface.border)
         )
         .micaboElevation(.card)
         .accessibilityElement(children: .combine)

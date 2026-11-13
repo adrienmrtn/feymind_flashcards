@@ -22,10 +22,32 @@ function base64url(value) {
  * des `\n` littéraux, ou encodée en base64. Les trois arrivent en pratique.
  */
 export function readPrivateKey(raw) {
-  let text = raw.trim();
-  if (!text.includes("BEGIN")) text = Buffer.from(text, "base64").toString("utf8").trim();
-  text = text.replace(/\\n/g, "\n");
-  return createPrivateKey(text);
+  // Collée depuis TextEdit, un terminal ou un gestionnaire de mots de passe, la même clé
+  // arrive sous bien des formes : guillemets, « \n » littéraux, retours Windows, espaces à la
+  // place des retours, en-têtes absents, ou le fichier entier encodé en base64. On ne garde
+  // que le corps base64 et on reconstruit un PEM propre.
+  let text = raw.trim().replace(/^["']|["']$/g, "").replace(/\\n/g, "\n").replace(/\r/g, "");
+  if (!text.includes("BEGIN")) {
+    const decoded = Buffer.from(text.replace(/\s+/g, ""), "base64").toString("utf8");
+    if (decoded.includes("BEGIN")) text = decoded;
+  }
+  const body = text
+    .replace(/-----BEGIN [A-Z ]+-----/g, "")
+    .replace(/-----END [A-Z ]+-----/g, "")
+    .replace(/[^A-Za-z0-9+/=]/g, "");
+  const pem = `-----BEGIN PRIVATE KEY-----\n${body.match(/.{1,64}/g)?.join("\n") ?? ""}\n-----END PRIVATE KEY-----\n`;
+  try {
+    return createPrivateKey(pem);
+  } catch (error) {
+    // Jamais le contenu : seulement sa forme, pour savoir quoi recoller.
+    const hint = [
+      `ASC_PRIVATE_KEY illisible : ${raw.length} caractères reçus, ${body.length} caractères base64 après nettoyage`,
+      `(une clé .p8 d'Apple en compte environ 200),`,
+      raw.includes("BEGIN") ? "en-tête BEGIN présent." : "aucun en-tête « -----BEGIN PRIVATE KEY----- ».",
+      body.length < 150 ? "La clé semble tronquée ou ce n'est pas le contenu du fichier .p8 (le nom du fichier ? le Key ID ?)." : "",
+    ].join(" ");
+    throw new Error(`${hint}\n${error.message}`);
+  }
 }
 
 /**

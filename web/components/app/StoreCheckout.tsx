@@ -37,7 +37,7 @@ export function StoreCheckout({
           type="button"
           onClick={onContinue}
           className={`pressable shiny mt-4 flex h-14 w-full items-center justify-center rounded-button text-[16px] font-semibold ${
-            tone === "offer" ? "bg-offer-sky text-white" : "bg-accent text-on-ink"
+            tone === "offer" ? "bg-yellow text-on-yellow" : "bg-accent text-on-ink"
           }`}
         >
           {t("app.paywall.continueFree")}

@@ -1,582 +1,614 @@
 import SwiftData
 import SwiftUI
 
-/// **Home** (`docs/refonte-parcours.md` § 3) : la série en haut à droite, la grande question
-/// au centre, la barre « comme une IA » avec Mika perché dessus — c'est elle qu'on voit
-/// d'abord —, les cinq supports en petit dessous, trois petits chiffres mesurés, et
-/// « Reprendre ».
+/// **Home** (lot 10, HOME.md § 1) : elle ne défile pas et ne dit qu'une chose.
 ///
-/// **Un appui à côté du champ range le clavier.** Le titre, la rangée du haut, les chiffres et
-/// tout le vide entre les blocs le rendent ; les boutons gardent leur appui, parce qu'un geste
-/// posé sur un parent passe après ceux de ses enfants. Le geste n'est jamais posé sur la barre
-/// elle-même : un appui dans le champ doit l'ouvrir, pas le refermer aussitôt.
+/// De haut en bas : l'en-tête (« Passer en PRO », l'XP, la série) ; la pastille jaune de
+/// l'examen, qui mène au Calendrier ; Mika ; **une** phrase tirée du plan du jour et **une**
+/// action (`HomeBoard`) ; en bas, fixées au-dessus des onglets, les puces d'outils — « Focus »
+/// d'abord — et la barre de saisie (`HomeDock`).
+///
+/// Ce qui a quitté la Home reste à un geste : la carte de séance est devenue la phrase et son
+/// action ; les leçons ont leur onglet ; l'agenda du jour, le Calendrier (la pastille d'examen
+/// y mène) ; la Concentration, la puce « Focus » et son onglet ; le Profil, son onglet.
+///
+/// **La leçon s'écrit ici** (`LessonGeneration`) : une fois les deux questions posées
+/// (`LessonCreationFlow`), la Home dit « J'écris ta leçon… », la jauge à la place de l'action,
+/// et l'élève garde la main sur le reste de l'app. La leçon arrivée s'ouvre sur son chemin.
+///
+/// **Rien de lourd ne se calcule au dessin** : la journée (cartes dues, leçon en cours, séance
+/// du calendrier, prochain examen) est lue quand quelque chose change (`refreshPlan`) et gardée
+/// (`HomeSnapshot`) ; `body` ne fait que la mettre en phrase.
+///
+/// La barre passe par la même porte du gratuit qu'avant (`send`, `tapImport`).
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(ProAccess.self) private var pro: ProAccess?
+    @Environment(TabRouter.self) private var router: TabRouter?
+    /// Optionnel : le banc d'essai pose la Home sans lui, et rien ne s'y écrit.
+    @Environment(LessonBuilder.self) private var builder: LessonBuilder?
+    @Environment(XPStore.self) private var injectedXP: XPStore?
     @Query(sort: \Course.createdAt, order: .reverse) private var courses: [Course]
+    /// Ce que le plan du jour lit du calendrier : relu quand l'un d'eux change.
+    @Query private var events: [CalendarEvent]
+    @Query(sort: \Exam.date) private var exams: [Exam]
+    @Query private var tasks: [StudyTask]
 
     @State private var path = NavigationPath()
     @State private var composer = LessonComposer()
+    /// La leçon qui s'écrit : elle vit autant que la Home.
+    @State private var generation = LessonGeneration()
+    @State private var connectivity = HomeConnectivity()
     @State private var importRequest: LessonComposer.Kind?
+    /// Les deux questions d'avant l'écriture (« As-tu un examen ? »).
     @State private var creating = false
     @State private var paywall: PaywallTrigger?
     @State private var showsStreak = false
+    /// « Faire une leçon », choisi dans la feuille de la série : fait une fois la feuille refermée.
+    @State private var studiesAfterStreak = false
+    /// La ligue de la semaine : l'XP de l'en-tête y mène.
+    @State private var showsLeague = false
+    @State private var showsScanner = false
+    /// « Corriger un texte », en plein écran comme le scanner.
+    @State private var showsWriting = false
+    /// Le chat Mika (lot 11) : la barre y envoie une question, son appareil photo y ouvre la
+    /// prise en rafale ; la puce « Mes questions » ouvre l'historique.
+    @State private var chatLaunch: ChatLaunch?
+    @State private var showsChats = false
+    @State private var hasChats = false
+    /// « En faire une leçon », demandé depuis le chat : lancé une fois le chat refermé.
+    @State private var lessonTopicFromChat: String?
+    @State private var showsDueReview = false
+    @State private var quickQuizCourse: Course?
+    @State private var mock: MockExamStart?
+    /// La feuille du « + » : les sources en grandes tuiles.
+    @State private var showsSources = false
+    /// La source choisie dans la feuille, ouverte une fois la feuille refermée : deux feuilles
+    /// ne se présentent pas en même temps.
+    @State private var pendingImport: LessonComposer.Kind?
+    @State private var streak = StudyStreak.status()
+    /// La journée, telle qu'elle a été lue la dernière fois.
+    @State private var snapshot = HomeSnapshot()
+    /// Une leçon lue qui attend Pro : l'aperçu verrouillé a été refermé sans abonnement.
+    @State private var locked: HomeLockedLesson?
+    /// Mika a fait coucou : il ne le refait pas à chaque retour sur l'onglet.
+    @State private var greeted = false
+    /// Une séance de révision ou de Concentration, lancée d'ici.
+    @State private var focusPlan: FocusPlan?
+    @State private var editingExam: ExamEditTarget?
+    /// Les demandes de nouvelle leçon venues de l'onglet Leçons, déjà servies.
+    @State private var handledCreationRequests = 0
     @FocusState private var focused: Bool
 
     private var isPro: Bool { pro?.isPro ?? true }
+    private var xp: XPStore { injectedXP ?? .shared }
 
-    var body: some View {
-        NavigationStack(path: $path) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 26) {
-                    header
-                    HomeComposerBar(
-                        composer: composer,
-                        focused: $focused,
-                        isPro: isPro,
-                        isThinking: composer.isReading,
-                        onImport: tapImport,
-                        onSend: send
-                    )
-                    .padding(.top, HomePerch.height)
-                    HomeStatsRow(stats: HomeStats(courses: courses))
-                        .contentShape(Rectangle())
-                        .onTapGesture(perform: dismissKeyboard)
-                    if let resume = ResumeTarget.pick(from: courses) {
-                        ResumeCard(course: resume.0, target: resume.1) {
-                            path.append(resume.0)
-                        }
-                    }
-                }
-                .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.top, 8)
-                .padding(.bottom, 24)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                // Le vide entre les blocs et autour d'eux : rien n'y est touchable, l'appui
-                // tombe sur ce fond.
-                .background {
-                    Color.clear
-                        .contentShape(Rectangle())
-                        .onTapGesture(perform: dismissKeyboard)
-                }
-            }
-            .scrollDismissesKeyboard(.interactively)
-            .scrollIndicators(.hidden)
-            .background(MicaboColor.canvas.ignoresSafeArea())
-            .tabBarClearance()
-            .toolbar(.hidden, for: .navigationBar)
-            .navigationDestination(for: Course.self) { course in
-                LessonPathView(course: course)
-            }
-            .lessonImportPickers(composer, request: $importRequest)
-            .fullScreenCover(isPresented: $creating) {
-                LessonCreationFlow(composer: composer) { course in
-                    creating = false
-                    composer.reset()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { path.append(course) }
-                } onCancel: {
-                    creating = false
-                }
-            }
-            .micaboPaywall($paywall)
-            .sheet(isPresented: $showsStreak) {
-                StreakSheet(onStudy: study)
-            }
-            // Le journal des cartes rejoint la série une fois : un ancien compte retrouve la
-            // sienne dans la pastille dès l'ouverture.
-            .task { StudyStreak.adoptReviewHistoryIfNeeded(in: modelContext) }
-        }
-        .reportsNavigationDepth(for: .today, depth: path.count)
-        .returnsHome(path: $path)
+    /// La leçon offerte n'a pas encore servi : un import peut l'écrire.
+    private var freeLessonLeft: Bool {
+        !isPro && !LessonAllowance.hasUsedFreeLesson(courses: courses)
     }
 
-    /// **La rangée du haut et la question**, centrées l'une sur l'autre. La série se pose à
-    /// droite, sur sa propre ligne : elle ne pousse ni le titre ni Mika.
-    private var header: some View {
-        VStack(spacing: 8) {
-            HStack {
-                Spacer(minLength: 0)
-                StreakPill {
-                    dismissKeyboard()
-                    showsStreak = true
+    private var lessons: [Course] { courses.filter { $0.isLesson && $0.source != .deck } }
+
+    /// La leçon ouverte le plus récemment : celle de « Continuer » et du quiz éclair.
+    private var resumeCourse: Course? {
+        guard let id = snapshot.resumeID else { return nil }
+        return courses.first { $0.id == id }
+    }
+
+    var body: some View {
+        observing
+            .task(id: planKey) { refreshPlan() }
+            // Le journal des cartes rejoint la série une fois : un ancien compte retrouve la
+            // sienne dans l'en-tête dès l'ouverture.
+            .task { StudyStreak.adoptReviewHistoryIfNeeded(in: modelContext) }
+            .onAppear(perform: appeared)
+            .reportsNavigationDepth(for: .today, depth: path.count)
+            .returnsHome(path: $path)
+    }
+
+    /// Ce que la Home écoute : la série, le retour au premier plan, le retour d'une leçon,
+    /// l'onglet Leçons qui demande une nouvelle leçon, la leçon qui arrive, le réseau.
+    private var observing: some View {
+        presentations
+            .onReceive(NotificationCenter.default.publisher(for: .micaboStreakDidChange)) { _ in
+                refreshStreak()
+                refreshPlan()
+            }
+            .onChange(of: scenePhase) { _, phase in
+                guard phase == .active else { return }
+                refreshStreak()
+                refreshPlan()
+            }
+            .onChange(of: path.count) { _, depth in
+                // De retour d'une leçon : elle a pu avancer.
+                if depth == 0 { refreshPlan() }
+            }
+            .onChange(of: router?.lessonCreationRequests ?? 0, initial: true) { _, requests in
+                // « Nouvelle leçon », demandée depuis l'onglet Leçons — même quand c'est elle
+                // qui fait apparaître la Home pour la première fois.
+                guard requests > handledCreationRequests else { return }
+                handledCreationRequests = requests
+                openSources()
+            }
+            .onChange(of: generation.deliveries) { _, _ in openDelivered() }
+            .onChange(of: generation.refusals) { _, _ in
+                if let trigger = generation.takeRefusal() { paywall = trigger }
+            }
+            .onChange(of: connectivity.isOnline) { _, online in
+                if online { generation.networkReturned() }
+            }
+    }
+
+    // MARK: La page
+
+    private var page: some View {
+        let day = snapshot.day
+        return HomeScreen(
+            board: HomeBoard.resolve(boardInput),
+            exam: HomeExamPill.resolve(snapshot.exam),
+            entry: HomeProEntry.resolve(isPro: isPro, offerIsLive: DiscountChip.isLive),
+            xp: xp.week,
+            league: xp.league.name,
+            streak: streak,
+            greeted: greeted,
+            onGreeted: { greeted = true },
+            actions: actions
+        )
+        .background(V3Color.bg.ignoresSafeArea())
+        .tabBarClearance {
+            HomeDock(
+                composer: composer,
+                focused: $focused,
+                shortcuts: HomeShortcut.available(
+                    isNewcomer: !day.hasCourses,
+                    hasLesson: snapshot.resumeID != nil,
+                    dueCount: day.dueCount,
+                    hasChats: hasChats
+                ),
+                dueCount: day.dueCount,
+                isBusy: generation.isBusy || locked != nil,
+                actions: actions
+            )
+        }
+        .toolbar(.hidden, for: .navigationBar)
+    }
+
+    private var boardInput: HomeBoardInput {
+        HomeBoardInput(
+            day: snapshot.day,
+            name: snapshot.name,
+            greeting: snapshot.greeting,
+            phase: generation.phase,
+            stage: generation.stage,
+            subject: generation.subject,
+            hasSupports: generation.hasSupports,
+            locked: locked,
+            hasLesson: snapshot.resumeID != nil
+        )
+    }
+
+    private var navigation: some View {
+        NavigationStack(path: $path) {
+            page
+                .navigationDestination(for: Course.self) { course in
+                    LessonPathView(course: course)
+                }
+                .lessonImportPickers(composer, request: $importRequest)
+                .fullScreenCover(isPresented: $creating) {
+                    LessonCreationFlow(composer: composer) { examDate in
+                        // La Home écrit : l'écran des questions se referme sur elle.
+                        generate(examDate: examDate)
+                        creating = false
+                    } onLocked: { lesson in
+                        locked = lesson
+                        creating = false
+                    } onCancel: {
+                        creating = false
+                    }
+                }
+                .micaboPaywall($paywall, onSubscribed: subscribed)
+        }
+    }
+
+    /// Le compilateur type mal d'un seul tenant la pile, les feuilles et les couvertures :
+    /// chaque morceau se type de son côté, comme dans `CalendarView`.
+    private var sheets: some View {
+        navigation
+            .sheet(isPresented: $showsSources, onDismiss: openPendingImport) {
+                HomeSourcesSheet(isPro: isPro, freeLessonLeft: freeLessonLeft, enabled: composer.hasRoom) { kind in
+                    pendingImport = kind
+                    showsSources = false
                 }
             }
-            HomeTitle()
-                .padding(.horizontal, 4)
+            .sheet(isPresented: $showsStreak, onDismiss: studyIfAsked) {
+                StreakSheet(onStudy: { studiesAfterStreak = true })
+            }
+            .sheet(isPresented: $showsLeague) {
+                LeagueSheet()
+            }
+            .sheet(item: $editingExam, onDismiss: refreshPlan) { target in
+                ExamEditSheet(target: target, lessons: lessons)
+            }
+    }
+
+    /// Les parcours — réviser ses cartes, le quiz éclair, une séance, l'examen blanc, le
+    /// scanner — en plein écran : un glissement ne les referme pas en plein milieu, leur croix
+    /// le fait. Chaque outil dit ce qu'il fait la première fois qu'on l'ouvre (`toolIntro`).
+    private var presentations: some View {
+        sheets
+            .fullScreenCover(isPresented: $showsDueReview, onDismiss: refreshPlan) {
+                DueCardsReview(courses: DueReview.courses(courses))
+                    .toolIntro(.cards)
+            }
+            .fullScreenCover(item: $quickQuizCourse, onDismiss: refreshPlan) { course in
+                QuickQuizSheet(course: course)
+                    .toolIntro(.quickQuiz)
+            }
+            .fullScreenCover(item: $focusPlan, onDismiss: refreshPlan) { plan in
+                FocusTimerView(plan: plan)
+            }
+            .fullScreenCover(item: $mock, onDismiss: refreshPlan) { start in
+                MockExamFlow(start: start, lessons: lessons)
+                    .toolIntro(.mock)
+            }
+            .fullScreenCover(isPresented: $showsScanner) {
+                ScanExerciseView()
+                    .toolIntro(.scan)
+            }
+            .fullScreenCover(item: $chatLaunch, onDismiss: afterChat) { launch in
+                ChatScreen(launch: launch, onMakeLesson: { topic in
+                    lessonTopicFromChat = topic
+                    chatLaunch = nil
+                })
+            }
+            .fullScreenCover(isPresented: $showsChats, onDismiss: afterChat) {
+                ChatHub(onMakeLesson: { topic in
+                    lessonTopicFromChat = topic
+                    showsChats = false
+                })
+            }
+            .fullScreenCover(isPresented: $showsWriting) {
+                WritingCoachView()
+            }
+    }
+
+    // MARK: Ce que Home lit
+
+    /// Ce qui fait relire le plan : une séance cochée ou déplacée, un examen ajouté, une tâche
+    /// faite, une leçon de plus.
+    private var planKey: String {
+        let eventStamp = events.map(\.updatedAt).max()?.timeIntervalSince1970 ?? 0
+        let examStamp = exams.map(\.updatedAt).max()?.timeIntervalSince1970 ?? 0
+        let done = tasks.filter(\.isDone).count
+        return "\(courses.count)-\(events.count)-\(eventStamp)-\(exams.count)-\(examStamp)-\(tasks.count)-\(done)"
+    }
+
+    /// **La journée, relue** : les cartes dues, la leçon en cours, la séance du calendrier
+    /// (`StudyPlan.today`) et le prochain examen (`NextExam.current`) — pour le nouvel élève
+    /// aussi, qui a pu donner le sien au parcours d'accueil. Rien n'est écrit quand rien n'a
+    /// changé : la Home ne se redessine pas pour rien.
+    private func refreshPlan() {
+        let now = Date()
+        let calendar = Calendar.current
+        var day = HomeDay()
+        day.hasCourses = !courses.isEmpty
+        day.studiedToday = streak.studiedToday
+        for course in courses {
+            let due = DueReview.dueCount(of: course, now: now)
+            day.dueCount += due
+            if due > 0 { day.dueLessons += 1 }
         }
-        .contentShape(Rectangle())
-        .onTapGesture(perform: dismissKeyboard)
+
+        var next = HomeSnapshot()
+        if let (course, target) = ResumeTarget.pick(from: courses) {
+            next.resumeID = course.id
+            if let number = target.circleNumber {
+                day.lessonTitle = target.title
+                day.lessonStep = number
+                day.lessonStepTitle = target.circleTitle
+                day.lessonStarted = target.percent > 0
+                let finishedToday = course.progress.finishedAt.map { calendar.isDate($0, inSameDayAs: now) } ?? false
+                let openedToday = course.lastOpenedAt.map { calendar.isDate($0, inSameDayAs: now) } ?? false
+                day.lessonAdvancedToday = finishedToday || (openedToday && streak.studiedToday)
+            }
+        }
+
+        if !courses.isEmpty {
+            let agenda = StudyPlan.today(in: modelContext, now: now)
+            let examNames = Dictionary(exams.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
+            day.session = HomeSession.next(in: agenda, now: now, examNames: examNames)
+        }
+
+        if let exam = NextExam.current(in: modelContext, now: now) {
+            next.exam = HomeExam(name: exam.name, daysLeft: max(0, exam.daysRemaining(from: now)), readiness: nil)
+            next.examID = exam.id
+            next.examDate = exam.date
+        }
+
+        next.day = day
+        next.name = HomeGreeting.firstName(OnboardingPreferences.displayName)
+        next.greeting = HomeGreeting.moment(hour: calendar.component(.hour, from: now))
+        if next != snapshot { snapshot = next }
+    }
+
+    private func refreshStreak() {
+        let next = StudyStreak.status()
+        guard next != streak else { return }
+        streak = next
+    }
+
+    /// La Home arrive à l'écran : elle relit la journée, écoute le réseau, et lance ce que
+    /// l'élève a choisi pendant le parcours d'accueil.
+    private func appeared() {
+        connectivity.start()
+        refreshStreak()
+        refreshPlan()
+        Haptics.prepare()
+        consumeFirstLessonIntent()
+        // Les conversations d'avant le lot 11 rejoignent l'historique, une fois.
+        ChatMigration.runIfNeeded(in: modelContext)
+        refreshChats()
+    }
+
+    private func refreshChats() {
+        let any = ChatStore.hasAny(in: modelContext)
+        if any != hasChats { hasChats = any }
+    }
+
+    // MARK: Le chat
+
+    /// Une question tapée dans la barre : elle part dans une conversation avec Mika.
+    private func ask(_ question: String) {
+        dismissKeyboard()
+        chatLaunch = ChatLaunch(origin: .home, autoSend: question)
+        composer.draft = ""
+    }
+
+    /// L'appareil photo de la barre : une conversation, la prise en rafale ouverte.
+    private func openChatCamera() {
+        dismissKeyboard()
+        chatLaunch = ChatLaunch(origin: .camera, opensCamera: true)
+    }
+
+    /// Le chat est refermé : la puce des conversations apparaît, et « En faire une leçon »
+    /// lance la création de leçon que la barre connaît, sur le sujet de la conversation.
+    private func afterChat() {
+        refreshChats()
+        guard let topic = lessonTopicFromChat else { return }
+        lessonTopicFromChat = nil
+        guard !generation.isBusy else { return }
+        composer.draft = topic
+        createLesson()
+    }
+
+    /// **La première leçon choisie pendant le parcours d'accueil** (`FirstLessonIntent`), lue
+    /// et effacée : une seule fois. Un sujet part tout de suite à l'écriture — l'élève vient de
+    /// répondre à assez de questions, la Home passe à « J'écris ta leçon… » ; « J'ai un cours »
+    /// ouvre la feuille des sources.
+    private func consumeFirstLessonIntent() {
+        guard let intent = FirstLessonIntent.pending else { return }
+        FirstLessonIntent.pending = nil
+        switch intent {
+        case .topic(let topic):
+            guard !generation.isBusy else { return }
+            composer.draft = topic
+            guard composer.canSend else { return }
+            if let trigger = LessonAllowance.immediatePaywall(isPro: isPro, source: composer.source, courses: courses) {
+                paywall = trigger
+                return
+            }
+            generate(examDate: nil)
+        case .importSource:
+            openSources()
+        }
+    }
+
+    // MARK: Les gestes
+
+    private var actions: HomeActions {
+        HomeActions(
+            pro: {
+                dismissKeyboard()
+                paywall = .upgrade
+            },
+            league: {
+                dismissKeyboard()
+                showsLeague = true
+            },
+            streak: {
+                dismissKeyboard()
+                showsStreak = true
+            },
+            exam: openExam,
+            perform: perform,
+            leave: leave,
+            shortcut: open,
+            sources: openSources,
+            scan: openChatCamera,
+            send: send,
+            dismissKeyboard: dismissKeyboard
+        )
     }
 
     private func dismissKeyboard() {
         focused = false
     }
 
-    /// « Faire une leçon », depuis la feuille de la série : la leçon en cours s'il y en a une,
-    /// sinon la barre, prête à écrire.
-    private func study() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            if let resume = ResumeTarget.pick(from: courses) {
-                path.append(resume.0)
-            } else {
-                focused = true
-            }
+    /// **L'**action de la Home. Le nom du geste part dans `home_plan_tapped` : une valeur fixe.
+    private func perform(_ action: HomeAction) {
+        dismissKeyboard()
+        Analytics.track(.homePlanTapped, [
+            "step": .text(action.analyticsStep),
+            "slot": .text("hero"),
+            "exam": .flag(snapshot.exam != nil),
+        ])
+        switch action.kind {
+        case .session:
+            if let session = snapshot.day.session { start(session) }
+        case .cards:
+            showsDueReview = true
+        case .lesson, .more:
+            if let course = resumeCourse { path.append(course) }
+        case .create, .first:
+            showsSources = true
+        case .unlock:
+            paywall = .lessonReady
+        case .retry:
+            generation.retry()
         }
     }
 
-    /// PDF, Photo, Audio et YouTube sont Pro ; un texte collé est la leçon offerte.
+    /// L'issue discrète sous l'action.
+    private func leave(_ exit: HomeExit) {
+        switch exit.kind {
+        case .cancel:
+            generation.cancel()
+        case .later:
+            // Les supports restent dans la barre : la leçon peut repartir plus tard.
+            locked = nil
+        }
+    }
+
+    /// Une puce d'outil. Le nom de l'outil part dans `home_tool_opened` : une valeur fixe.
+    private func open(_ shortcut: HomeShortcut) {
+        dismissKeyboard()
+        Analytics.track(.homeToolOpened, ["tool": .text(shortcut.analyticsName)])
+        switch shortcut {
+        case .focus:
+            // Une séance de Concentration, à la durée par défaut de l'élève, sans réglage.
+            focusPlan = FocusPlan(workMinutes: FocusPlan.defaultMinutes(dailyMinutes: OnboardingPreferences.dailyMinutes))
+        case .scan:
+            // Le scanner s'ouvre toujours : la lecture de l'énoncé se fait sur l'appareil. La
+            // porte de Mika vient à la demande de solution (`SolverSession`).
+            showsScanner = true
+        case .quiz:
+            quickQuizCourse = resumeCourse
+        case .cards:
+            showsDueReview = true
+        case .importSource:
+            showsSources = true
+        case .writing:
+            // Toujours ouvert, comme le scanner : la porte de Mika vient à la demande de
+            // relecture (`WritingSession`).
+            showsWriting = true
+        case .mock:
+            mock = MockExamStart(exam: exams.first { $0.id == snapshot.examID })
+        case .photo, .pdf, .youtube:
+            if let kind = shortcut.source { tapImport(kind) }
+        case .chats:
+            showsChats = true
+        }
+    }
+
+    /// La pastille de l'examen : son jour dans le Calendrier, ou l'ajout d'un examen.
+    private func openExam() {
+        dismissKeyboard()
+        if snapshot.exam != nil {
+            router?.showCalendar(day: snapshot.examDate)
+        } else {
+            editingExam = .new
+        }
+    }
+
+    private func openSources() {
+        dismissKeyboard()
+        showsSources = true
+    }
+
+    /// La séance du plan, lancée comme le calendrier la lance (`FocusPlan.revision`).
+    private func start(_ session: HomeSession) {
+        let course = courses.first { $0.id == session.courseID }
+        focusPlan = .revision(eventID: session.eventID, startMinute: session.startMinute, endMinute: session.endMinute, courseID: course?.id, courseTitle: course?.title)
+    }
+
+    /// « Faire une leçon », depuis la feuille de la série, une fois la feuille refermée : la
+    /// leçon en cours s'il y en a une, sinon la barre, prête à écrire.
+    private func studyIfAsked() {
+        guard studiesAfterStreak else { return }
+        studiesAfterStreak = false
+        if let course = resumeCourse {
+            path.append(course)
+        } else {
+            focused = true
+        }
+    }
+
+    /// Un import s'ouvre toujours : la lecture se fait sur l'appareil, et c'est l'écriture de la
+    /// leçon qui passe par la porte du gratuit (`LessonAllowance.locksImport`, `sendRoute`).
     private func tapImport(_ kind: LessonComposer.Kind) {
-        if kind != .text && !isPro {
-            focused = false
+        if LessonAllowance.locksImport(kind, isPro: isPro, freeLessonLeft: freeLessonLeft) {
+            dismissKeyboard()
             paywall = .generateCourse
             return
         }
         importRequest = kind
     }
 
+    /// La feuille du « + » est refermée : la source choisie s'ouvre maintenant.
+    private func openPendingImport() {
+        guard let kind = pendingImport else { return }
+        pendingImport = nil
+        tapImport(kind)
+    }
+
+    // MARK: Écrire une leçon
+
+    /// **Envoyer ce que la barre a préparé** (lot 11) : une question tapée seule part dans une
+    /// conversation avec Mika ; des supports déposés (un PDF, des photos, une vidéo) font une
+    /// leçon, comme avant.
     private func send() {
-        guard composer.canSend else { return }
-        if let trigger = LessonAllowance.gate(isPro: isPro, source: composer.source, courses: courses) {
-            focused = false
+        let question = composer.draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        if composer.supports.isEmpty, !question.isEmpty {
+            ask(question)
+            return
+        }
+        createLesson()
+    }
+
+    /// Une leçon depuis la barre : le paywall d'un sujet seul s'ouvre tout de suite
+    /// (`LessonAllowance.immediatePaywall`) ; sinon les deux questions, puis l'écriture.
+    private func createLesson() {
+        guard composer.canSend, !generation.isBusy else { return }
+        dismissKeyboard()
+        if let trigger = LessonAllowance.immediatePaywall(isPro: isPro, source: composer.source, courses: courses) {
             paywall = trigger
             return
         }
-        focused = false
+        locked = nil
         creating = true
     }
-}
 
-// MARK: - La question
-
-/// **« Qu'est-ce que tu veux apprendre aujourd'hui ? »**, en grand, le mot « apprendre » dans
-/// une couleur qui ressort. Le mot est marqué `**…**` dans le catalogue, dans chaque langue.
-///
-/// **Centrée, sur toute la largeur de la barre.** Calée à gauche, avec Mika perché à droite
-/// en dessous, la question avait l'air poussée de côté : deux lignes de longueurs inégales
-/// contre un bord, un personnage contre l'autre, et un grand vide entre les deux. Centrée,
-/// elle tombe dans l'axe de Mika et de la barre, et l'écran se lit de haut en bas sur une
-/// seule ligne.
-struct HomeTitle: View {
-    var body: some View {
-        Self.text(L10n.t("lesson.home.title", locale: .resolved()))
-            .font(MicaboFont.display(34))
-            .tracking(MicaboTracking.tight)
-            .foregroundStyle(MicaboColor.ink)
-            .multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity)
-            .fixedSize(horizontal: false, vertical: true)
-            .accessibilityAddTraits(.isHeader)
+    /// La Home écrit la leçon (`LessonGeneration`). Hors ligne, la demande attend le réseau.
+    private func generate(examDate: Date?) {
+        guard let builder else { return }
+        locked = nil
+        generation.start(
+            composer: composer,
+            builder: builder,
+            context: modelContext,
+            examDate: examDate,
+            sendsAsFreeLesson: LessonAllowance.sendsAsFreeLesson(isPro: isPro, source: composer.source, courses: courses),
+            online: connectivity.isOnline
+        )
     }
 
-    /// Le texte, le mot marqué en dégradé bleu-violet.
-    static func text(_ source: String) -> Text {
-        let parts = source.components(separatedBy: "**")
-        var out = Text("")
-        for (index, part) in parts.enumerated() where !part.isEmpty {
-            if index % 2 == 1 {
-                out = out + Text(part).foregroundStyle(
-                    LinearGradient(colors: [MicaboColor.accent, MicaboColor.keyword], startPoint: .leading, endPoint: .trailing)
-                )
-            } else {
-                out = out + Text(part)
-            }
+    /// La leçon est arrivée : la barre se vide, et la leçon s'ouvre sur son chemin.
+    private func openDelivered() {
+        guard let course = generation.takeDelivered() else { return }
+        composer.reset()
+        refreshPlan()
+        path.append(course)
+    }
+
+    /// Abonné depuis la Home : la leçon qui attendait Pro s'écrit, avec les mêmes supports et
+    /// la même date d'examen ; celle que le serveur avait refusée repart.
+    private func subscribed() {
+        if let lesson = locked {
+            generate(examDate: lesson.examDate)
+        } else if generation.wasRefused {
+            generation.retry()
         }
-        return out
-    }
-}
-
-/// **Mika, perché sur la barre** : ses pattes et son ombre posées sur le bord haut, au milieu,
-/// sous la question. Il fait coucou, puis attend ; il réfléchit pendant qu'un support se lit.
-struct HomePerch: View {
-    var isThinking = false
-
-    static let size: CGFloat = 96
-    /// La place qu'il prend au-dessus de la barre : sa taille, moins ce qui se pose dessus.
-    static let height: CGFloat = size - sink
-    /// Ce qui descend sous le bord : les pattes et l'ombre, pour qu'il soit assis, pas posé à
-    /// côté.
-    static let sink: CGFloat = 10
-
-    @State private var mood: MikaMood = .wave
-
-    var body: some View {
-        MikaMascot(mood: isThinking ? .think : mood, size: Self.size, reactsToTap: true)
-            .frame(width: Self.size, height: Self.size)
-            .task {
-                try? await Task.sleep(for: .seconds(2.4))
-                mood = .idle
-            }
-    }
-}
-
-// MARK: - La barre
-
-/// La barre « comme une IA » : les supports déposés en pastilles au-dessus, le champ, la
-/// flèche d'envoi, et les cinq imports dessous.
-struct HomeComposerBar: View {
-    let composer: LessonComposer
-    var focused: FocusState<Bool>.Binding
-    let isPro: Bool
-    var isThinking = false
-    let onImport: (LessonComposer.Kind) -> Void
-    let onSend: () -> Void
-
-    var body: some View {
-        @Bindable var composer = composer
-        VStack(alignment: .leading, spacing: 18) {
-            VStack(alignment: .leading, spacing: 10) {
-                if !composer.supports.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(composer.supports) { support in
-                                SupportChip(support: support) {
-                                    withAnimation(.spring(duration: 0.3)) { composer.remove(support.id) }
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 2)
-                    }
-                    .scrollClipDisabled()
-                    if let failure = composer.supports.compactMap(\.failure).last {
-                        Text(failure)
-                            .font(MicaboFont.ui(13, weight: .bold))
-                            .foregroundStyle(MicaboColor.wrongInk)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-
-                HStack(alignment: .bottom, spacing: 10) {
-                    TextField(
-                        composer.supports.isEmpty
-                            ? L10n.t("lesson.home.placeholder", locale: .resolved())
-                            : L10n.t("lesson.home.placeholderWithSupports", locale: .resolved()),
-                        text: $composer.draft,
-                        axis: .vertical
-                    )
-                    .font(MicaboFont.ui(20, weight: .semibold))
-                    .foregroundStyle(MicaboColor.ink)
-                    .lineLimit(3...6)
-                    .focused(focused)
-                    .submitLabel(.send)
-                    .onSubmit(onSend)
-                    .padding(.vertical, 10)
-
-                    Button(action: onSend) {
-                        Image(systemName: "arrow.up")
-                            .font(.system(size: 20, weight: .heavy))
-                            .foregroundStyle(Color.white)
-                            .frame(width: 52, height: 52)
-                            .background {
-                                if composer.canSend {
-                                    Circle().fill(LinearGradient(colors: [MicaboColor.accent, MicaboColor.keyword], startPoint: .topLeading, endPoint: .bottomTrailing))
-                                } else {
-                                    Circle().fill(MicaboColor.inkTertiary)
-                                }
-                            }
-                            .shadow(color: MicaboColor.accent.opacity(composer.canSend ? 0.35 : 0), radius: 10, y: 5)
-                    }
-                    .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
-                    .disabled(!composer.canSend)
-                    .accessibilityLabel(Text(L10n.t("lesson.home.send", locale: .resolved())))
-                }
-            }
-            // **La barre est ce qui ressort le plus** : haute, bordée du dégradé de l'app, avec
-            // un halo bleu qui s'allume quand on écrit.
-            .padding(.leading, 20)
-            .padding(.trailing, 10)
-            .padding(.vertical, 12)
-            .frame(minHeight: 132, alignment: .bottom)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 30, style: .continuous)
-                    .strokeBorder(
-                        LinearGradient(colors: [MicaboColor.accent, MicaboColor.keyword], startPoint: .topLeading, endPoint: .bottomTrailing),
-                        lineWidth: focused.wrappedValue ? 3 : 2
-                    )
-            )
-            .shadow(color: MicaboColor.accent.opacity(focused.wrappedValue ? 0.3 : 0.18), radius: focused.wrappedValue ? 22 : 16, y: 8)
-            .animation(.easeOut(duration: 0.25), value: focused.wrappedValue)
-            .overlay(alignment: .top) {
-                HomePerch(isThinking: isThinking)
-                    .offset(y: -HomePerch.height)
-                    // Le toucher le fait sauter de joie, et range aussi le clavier : il est
-                    // au-dessus de la barre, là où l'on appuie pour sortir du champ.
-                    .simultaneousGesture(TapGesture().onEnded { focused.wrappedValue = false })
-            }
-            .animation(.spring(duration: 0.3), value: composer.supports.count)
-
-            ImportGrid(isPro: isPro, enabled: composer.hasRoom, onImport: onImport)
-
-            if !composer.hasRoom {
-                Text(L10n.t("lesson.home.supportsFull", locale: .resolved(), vars: ["n": String(LessonComposer.maximumSupports)]))
-                    .font(MicaboFont.ui(13, weight: .bold))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .frame(maxWidth: .infinity)
-            }
-        }
-    }
-}
-
-private extension LessonComposer.Support {
-    var failure: String? {
-        if case .failed(let message) = state { return message }
-        return nil
-    }
-}
-
-/// **Les cinq supports, en petit, sous la barre** : une ligne de pastilles, l'icône 3D et
-/// son nom. La barre reste ce qu'on voit d'abord ; un support Pro porte sa petite couronne
-/// pour qui n'est pas abonné.
-struct ImportGrid: View {
-    let isPro: Bool
-    var enabled = true
-    let onImport: (LessonComposer.Kind) -> Void
-
-    private static let kinds: [LessonComposer.Kind] = [.pdf, .photo, .audio, .youtube, .text]
-
-    var body: some View {
-        HStack(spacing: 8) {
-            ForEach(Self.kinds, id: \.self) { kind in
-                ImportChip(kind: kind, locked: kind != .text && !isPro, enabled: enabled) { onImport(kind) }
-            }
-        }
-    }
-}
-
-/// Une pastille d'import : l'icône 3D, le nom dessous, en petit.
-struct ImportChip: View {
-    let kind: LessonComposer.Kind
-    var locked = false
-    var enabled = true
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                MicaboIconView(icon: kind.icon, size: 30, dimmed: !enabled)
-                Text(L10n.t(kind.titleKey, locale: .resolved()))
-                    .font(MicaboFont.ui(12, weight: .heavy))
-                    .foregroundStyle(enabled ? MicaboColor.inkSecondary : MicaboColor.inkTertiary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .background(MicaboColor.surface.opacity(0.7), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
-            .overlay(alignment: .topTrailing) {
-                if locked {
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 8, weight: .bold))
-                        .foregroundStyle(LessonTone.yellow.ink)
-                        .padding(4)
-                        .background(LessonTone.yellow.pale, in: Circle())
-                        .offset(x: 3, y: -3)
-                        .accessibilityLabel(Text("Pro"))
-                }
-            }
-        }
-        .buttonStyle(MicaboPressableButtonStyle(feedback: .soft))
-        .disabled(!enabled)
-    }
-}
-
-/// Une tuile d'import : son icône 3D, son nom, et pour les grandes, ce qu'on y met.
-struct ImportButton: View {
-    enum Size {
-        case large
-        case medium
-    }
-
-    let kind: LessonComposer.Kind
-    var size: Size = .medium
-    var locked = false
-    var enabled = true
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(alignment: size == .large ? .leading : .center, spacing: size == .large ? 10 : 8) {
-                MicaboIconView(icon: kind.icon, size: size == .large ? 58 : 46, dimmed: !enabled)
-                VStack(alignment: size == .large ? .leading : .center, spacing: 2) {
-                    Text(L10n.t(kind.titleKey, locale: .resolved()))
-                        .font(MicaboFont.ui(size == .large ? 19 : 16, weight: .heavy))
-                        .foregroundStyle(enabled ? MicaboColor.ink : MicaboColor.inkTertiary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                    if size == .large {
-                        Text(L10n.t(kind.titleKey + "Sub", locale: .resolved()))
-                            .font(MicaboFont.ui(13, weight: .semibold))
-                            .foregroundStyle(MicaboColor.inkSecondary)
-                            .lineLimit(2)
-                            .multilineTextAlignment(.leading)
-                    }
-                }
-            }
-            .padding(size == .large ? 16 : 12)
-            .frame(maxWidth: .infinity, minHeight: size == .large ? 150 : 112, alignment: size == .large ? .topLeading : .center)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
-            .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(MicaboColor.stroke)
-                    .offset(y: 4)
-            )
-            .overlay(alignment: .topTrailing) {
-                if locked {
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(LessonTone.yellow.ink)
-                        .padding(6)
-                        .background(LessonTone.yellow.pale, in: Circle())
-                        .padding(10)
-                        .accessibilityLabel(Text("Pro"))
-                }
-            }
-        }
-        .buttonStyle(MicaboPressableButtonStyle(feedback: .soft))
-        .disabled(!enabled)
-    }
-}
-
-/// Un support déposé : son icône, son nom, et où en est sa lecture.
-struct SupportChip: View {
-    let support: LessonComposer.Support
-    let onRemove: () -> Void
-
-    var body: some View {
-        HStack(spacing: 8) {
-            ZStack {
-                if support.state == .reading {
-                    ProgressView().controlSize(.small)
-                } else {
-                    MicaboIconView(icon: support.kind.icon, size: 22)
-                }
-            }
-            .frame(width: 24, height: 24)
-            Text(support.title)
-                .font(MicaboFont.ui(14, weight: .bold))
-                .foregroundStyle(isFailed ? MicaboColor.wrongInk : MicaboColor.ink)
-                .lineLimit(1)
-                .frame(maxWidth: 150, alignment: .leading)
-            Button(action: onRemove) {
-                Image(systemName: isFailed ? "exclamationmark.circle.fill" : "xmark.circle.fill")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(isFailed ? MicaboColor.wrong : MicaboColor.inkTertiary)
-            }
-            .buttonStyle(MicaboPressableButtonStyle())
-            .accessibilityLabel(Text(L10n.t("lesson.home.removeSupport", locale: .resolved())))
-        }
-        .padding(.leading, 10)
-        .padding(.trailing, 8)
-        .padding(.vertical, 7)
-        .background(isFailed ? MicaboColor.wrongSoft : MicaboColor.canvas, in: Capsule())
-        .overlay(Capsule().strokeBorder(isFailed ? MicaboColor.wrong.opacity(0.4) : MicaboColor.stroke, lineWidth: 1))
-        .transition(.scale.combined(with: .opacity))
-    }
-
-    private var isFailed: Bool {
-        if case .failed = support.state { return true }
-        return false
-    }
-}
-
-// MARK: - Les chiffres
-
-/// X h de révision · X leçons apprises · X flashcards apprises : trois petites pastilles de
-/// la même taille, sous les imports. Elles disent où on en est sans prendre la place.
-struct HomeStatsRow: View {
-    let stats: HomeStats
-
-    var body: some View {
-        HStack(spacing: 8) {
-            pill(stats.formattedTime(), L10n.t("lesson.home.statTime", locale: .resolved()), icon: .hourglass)
-            pill(String(stats.learnedLessons), L10n.t("lesson.home.statLessons", locale: .resolved()), icon: .diploma)
-            pill(String(stats.learnedCards), L10n.t("lesson.home.statCards", locale: .resolved()), icon: .cards)
-        }
-    }
-
-    private func pill(_ value: String, _ label: String, icon: MicaboIcon) -> some View {
-        HStack(spacing: 8) {
-            MicaboIconView(icon: icon, size: 22)
-            VStack(alignment: .leading, spacing: 0) {
-                Text(value)
-                    .font(MicaboFont.number(16))
-                    .foregroundStyle(MicaboColor.ink)
-                    .monospacedDigit()
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                Text(label)
-                    .font(MicaboFont.ui(11, weight: .bold))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.85)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 10)
-        .frame(maxWidth: .infinity, minHeight: 62, maxHeight: 62, alignment: .leading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1))
-    }
-}
-
-// MARK: - Reprendre
-
-/// La dernière leçon ouverte : son anneau, son titre, le cercle où elle attend.
-struct ResumeCard: View {
-    let course: Course
-    let target: ResumeTarget
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 14) {
-                ZStack {
-                    Circle().stroke(MicaboColor.track, lineWidth: 5)
-                    Circle()
-                        .trim(from: 0, to: max(0.02, CGFloat(target.percent) / 100))
-                        .stroke(course.tone.vivid, style: StrokeStyle(lineWidth: 5, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-                    MicaboIconView(icon: course.icon, size: 36)
-                }
-                .frame(width: 60, height: 60)
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(L10n.t("lesson.home.resume", locale: .resolved()))
-                        .font(MicaboFont.small)
-                        .tracking(MicaboTracking.caps)
-                        .textCase(.uppercase)
-                        .foregroundStyle(course.tone.ink)
-                    Text(target.title)
-                        .font(MicaboFont.label)
-                        .foregroundStyle(MicaboColor.ink)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                    Text(subtitle)
-                        .font(MicaboFont.ui(14, weight: .semibold))
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                        .lineLimit(1)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "play.fill")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(MicaboColor.onInk)
-                    .frame(width: 40, height: 40)
-                    .background(MicaboColor.ink, in: Circle())
-            }
-            .padding(16)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .micaboElevation(.card)
-        }
-        .buttonStyle(MicaboPressableButtonStyle(feedback: .soft))
-    }
-
-    private var subtitle: String {
-        guard let number = target.circleNumber, let title = target.circleTitle else {
-            return L10n.t("lesson.home.resumeDone", locale: .resolved())
-        }
-        return L10n.t("lesson.home.resumeCircle", locale: .resolved(), vars: ["n": String(number), "title": title])
     }
 }

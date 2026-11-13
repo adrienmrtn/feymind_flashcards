@@ -35,6 +35,8 @@ struct ProfileView: View {
     @State private var path = NavigationPath()
     @State private var metrics = Metrics.empty
     @State private var showsStreak = false
+    /// La ligue de la semaine (`docs/refonte-knowunity.md` § 3), au-dessus des amis.
+    @State private var showsLeague = false
 
     /// Les statistiques sont calculées une seule fois par rendu. Avant, `streak`,
     /// `bestStreak`, la répartition et les cartes les plus passées reparcouraient le même
@@ -171,66 +173,32 @@ struct ProfileView: View {
         let weak: [ExamReadiness.WeakCard]
         let accuracyPercent: Int
 
+        /// **Seulement ce que la page montre** (lot 10).
+        ///
+        /// Le Profil n'affiche plus que la série : les panneaux de maîtrise, d'activité et de
+        /// cartes fragiles (`masteryPanel`, `activityPanel`, `weakPanel`, `totalsStrip`) ne sont
+        /// plus posés dans la page depuis la refonte. Cette lecture continuait pourtant, à
+        /// **chaque** arrivée sur l'onglet, de lire toutes les cartes et tout l'historique, puis
+        /// de recalculer la maîtrise de chaque cours et les cartes les plus ratées, sur le fil
+        /// principal, pour des chiffres que personne ne voyait.
+        ///
+        /// Il reste ce que la série demande : les dates des passages, versées dans
+        /// `StudyStreak`, et deux comptes qui ne matérialisent aucune ligne. Qui
+        /// reposerait un de ces panneaux doit d'abord relire ce qu'il affiche : la version
+        /// d'avant est dans l'historique du dépôt.
         static func load(in context: ModelContext) -> ProfileSnapshot {
-            let cards = (try? context.fetch(FetchDescriptor<Flashcard>())) ?? []
             let logs = (try? context.fetch(FetchDescriptor<ReviewLog>())) ?? []
-            // Le nombre de cours est un `COUNT` : il ne matérialise aucune ligne. C'est le
-            // seul endroit du Profil qui parle des cours **sans** carte, d'où la lecture
-            // séparée — la boucle ci-dessous, elle, ne voit que les cours qui en ont.
             let courseCount = (try? context.fetchCount(FetchDescriptor<Course>())) ?? 0
-            let now = Date()
-            let usable = cards.filter { !$0.isSuspended }
-
-            // Deux lectures de table, puis tout se range en mémoire : ni `course.cards` sur
-            // chaque cours ni `card.logs` sur chaque carte, qui rouvrent une requête à chaque
-            // fois et faisaient attendre le Profil dès qu'on avait plusieurs cours.
-            //
-            // Le titre et l'emoji se prennent au passage, sur la première carte qui désigne
-            // le cours.
-            //
-            // **Ce que ça économise, et ce que ça n'économise pas.** Toucher `card.course`
-            // faulte la ligne entière — Core Data ne faulte pas par attribut — donc chaque
-            // cours ayant au moins une carte active est bel et bien matérialisé, texte
-            // compris. Le gain n'est pas là. Il est dans la **fréquence** : le `@Query` qui
-            // vivait en tête de ce fichier rematérialisait **toute** la table à **chaque**
-            // écriture SwiftData, y compris pendant une session, y compris quand le Profil
-            // n'était pas regardé. Cette lecture-ci ne se fait que lorsque le Profil est
-            // actif et qu'une de ses clés a bougé, et elle ne touche que les cours qui ont
-            // des cartes.
-            var cardsByCourse: [UUID: [Flashcard]] = [:]
-            var courseOrder: [(id: UUID, title: String, emoji: String)] = []
-            for card in usable {
-                guard let course = card.course else { continue }
-                // Le test précède l'ajout : avec `default:`, la clé existerait déjà et le
-                // titre ne serait jamais capté.
-                if cardsByCourse[course.id] == nil {
-                    courseOrder.append((id: course.id, title: course.title, emoji: course.emoji))
-                }
-                cardsByCourse[course.id, default: []].append(card)
-            }
-            let logsByCard = ExamReadiness.group(logs)
-
-            let byCourse: [CourseMastery] = courseOrder.compactMap { entry -> CourseMastery? in
-                guard let own = cardsByCourse[entry.id], !own.isEmpty else { return nil }
-                return CourseMastery(
-                    id: entry.id,
-                    title: entry.title,
-                    emoji: entry.emoji,
-                    percent: ExamReadiness.masteryPercent(of: own, logs: logsByCard, now: now),
-                    cards: own.count
-                )
-            }
-            .sorted { $0.percent == $1.percent ? $0.title < $1.title : $0.percent > $1.percent }
-            let again = logs.filter { $0.rating == .again }.count
+            let cardCount = (try? context.fetchCount(FetchDescriptor<Flashcard>())) ?? 0
             return ProfileSnapshot(
                 courseCount: courseCount,
-                cardCount: cards.count,
+                cardCount: cardCount,
                 reviewDates: logs.map(\.reviewedAt),
-                knowledge: cards.map { ($0.state, $0.intervalDays) },
-                masteryPercent: ExamReadiness.masteryPercent(of: usable, logs: logsByCard, now: now),
-                byCourse: byCourse,
-                weak: ExamReadiness.weakCards(in: usable, logs: logsByCard, now: now, limit: 5),
-                accuracyPercent: logs.isEmpty ? 0 : Int((Double(logs.count - again) / Double(logs.count) * 100).rounded())
+                knowledge: [],
+                masteryPercent: 0,
+                byCourse: [],
+                weak: [],
+                accuracyPercent: 0
             )
         }
     }
@@ -242,7 +210,7 @@ struct ProfileView: View {
     private func profile(_ metrics: Metrics) -> some View {
         NavigationStack(path: $path) {
             ScrollView(.vertical) {
-                VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: MicaboSpacing.xl - 4) {
                     header
                     ProfileCard(name: profileName, identity: profileIdentity, studies: profileStudies) {
                         showSettings = true
@@ -313,9 +281,13 @@ struct ProfileView: View {
             .sheet(isPresented: $showSettings) {
                 SettingsView()
                     .presentationCornerRadius(MicaboRadius.sheet)
+                    .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showsStreak) {
                 StreakSheet()
+            }
+            .sheet(isPresented: $showsLeague) {
+                LeagueSheet()
             }
             .micaboPaywall($paywall)
         }
@@ -365,8 +337,10 @@ struct ProfileView: View {
     }
 
     private var header: some View {
+        // Le défilement pose déjà les 8 pt du haut ; la rangée a la hauteur de celle des autres
+        // onglets, pour que les titres soient alignés de l'un à l'autre (lot 11).
         MicaboPageHeading(title: i18n.t("lesson.tab.profile"), subtitle: nil)
-            .padding(.top, MicaboSpacing.xs)
+            .frame(minHeight: MicaboLayout.tabHeaderHeight)
     }
 
     /// **Qui l'on est**, sur une ligne, en tête du panneau : le prénom donné au parcours
@@ -407,13 +381,22 @@ struct ProfileView: View {
     @ViewBuilder
     private func streakPanel(_ metrics: Metrics) -> some View {
         if !metrics.hasReviews {
-            MicaboOutlineCard { firstReviewInvitation }
+            // Avant le premier jour : Mika, en demi, fait coucou depuis le bas de la carte.
+            HStack(alignment: .bottom, spacing: 0) {
+                firstReviewInvitation
+                    .padding(16)
+                Spacer(minLength: 0)
+                MikaPeek(mood: .wave, width: MicaboStreakCard.mikaSize)
+                    .padding(.trailing, 12)
+            }
+            .homeCardClipped(radius: MicaboStage.tileRadius)
         } else {
             MicaboStreakCard(
                 days: metrics.streak,
                 best: max(metrics.bestStreak, metrics.streak),
                 title: i18n.t("ios.profile.streakDays", ["count": "\(metrics.streak)"]),
-                note: streakNote(metrics)
+                note: streakNote(metrics),
+                mika: .happy
             )
         }
     }
@@ -618,7 +601,7 @@ struct ProfileView: View {
             }
             .padding(18)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .micaboGroup()
+            .homeCard(radius: MicaboStage.tileRadius)
         }
     }
 
@@ -687,7 +670,7 @@ struct ProfileView: View {
             }
             .padding(18)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .micaboGroup()
+            .homeCard(radius: MicaboStage.tileRadius)
         }
     }
 
@@ -774,6 +757,17 @@ struct ProfileView: View {
     private var friendsRow: some View {
         MicaboRowGroup(
             rows: [
+                MicaboRow(
+                    tile: MicaboTile(glyph: .symbol("trophy.fill"), background: LessonTone.yellow.pale, tint: V3Color.iconYellow),
+                    title: i18n.t("ios.kx.league.title"),
+                    subtitle: i18n.t("ios.kx.league.rowSub", [
+                        "league": XPStore.shared.league.name,
+                        "xp": "\(XPStore.shared.week)",
+                    ]),
+                    accessory: .chevron
+                ) {
+                    showsLeague = true
+                },
                 MicaboRow(
                     tile: MicaboTile(glyph: .symbol("person.2.fill"), background: MicaboColor.tilePastels[2]),
                     title: i18n.t("nav.friends"),

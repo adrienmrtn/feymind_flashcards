@@ -80,7 +80,11 @@ enum FormulaRenderer {
 
     /// Les commandes seules, sans toucher aux `_` et `^` d'une phrase.
     static func symbolsOnly(_ source: String) -> String {
-        replacingCommands(in: replacingLabelledArrows(in: source))
+        let arrows = replacingLabelledArrows(in: source)
+        // Sans antislash, aucune commande à transposer : presque toutes les phrases d'une
+        // leçon sont là, et les recopier caractère par caractère ne changeait rien.
+        guard arrows.utf8.contains(UInt8(ascii: "\\")) else { return arrows }
+        return replacingCommands(in: arrows)
     }
 
     /// Transpose un fragment LaTeX en Unicode lisible.

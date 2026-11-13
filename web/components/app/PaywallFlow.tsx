@@ -308,7 +308,7 @@ export function PaywallCard({
                 <button
                   type="button"
                   onClick={next}
-                  className="pressable shiny flex h-14 w-full items-center justify-center rounded-button bg-accent text-[16px] font-semibold text-on-ink"
+                  className="btn-primary"
                 >
                   {stage === "social"
                     ? t("app.common.continue")

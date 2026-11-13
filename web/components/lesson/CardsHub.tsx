@@ -13,6 +13,7 @@ import { gradeLessonCard, type GradeResult } from "@/lib/actions/review";
 import { useI18n } from "@/lib/i18n/client";
 import { useLessonClock } from "@/lib/lesson/use-lesson-clock";
 import { lessonPath } from "@/lib/lesson/routes";
+import { awardXp } from "@/lib/xp/client";
 
 export type HubCard = RunCard & LessonCard;
 
@@ -73,6 +74,7 @@ export function CardsHub({ lessonId, tone, cards: initialCards, autoStart = fals
   }, [autoStart]);
 
   const grade = useCallback((card: RunCard, rating: (typeof LESSON_RATINGS)[number]) => {
+    awardXp("cardReviewed");
     // Le serveur part de la ligne en base, pas de `card.snapshot` : seule la note voyage.
     void gradeLessonCard({ cardId: card.id, rating }).then(
       (result) => setCards((current) => withGrade(current, card.id, result)),

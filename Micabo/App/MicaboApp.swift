@@ -24,12 +24,25 @@ struct MicaboApp: App {
     @State private var lessons: LessonBuilder
     /// Le thème choisi dans le Profil : clair, sombre ou celui du téléphone.
     @State private var appearance = AppearanceStore.shared
+    /// L'XP de l'élève (`docs/refonte-knowunity.md` § 2) : un seul magasin, que les gestes
+    /// appellent directement et que les écrans lisent dans l'environnement.
+    @State private var xp = XPStore.shared
     /// Le parcours d'accueil et le premier cours sont dessinés pour le clair : ils le gardent.
     @AppStorage(OnboardingPreferences.Key.completed) private var didCompleteOnboarding = false
     @AppStorage(OnboardingPreferences.Key.pendingFirstImport) private var pendingFirstImport = false
     @Environment(\.scenePhase) private var scenePhase
 
-    private static let schema = Schema([Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self])
+    /// Les modèles du Calendrier et de la Concentration (`StudyCalendar`, `CalendarEvent`,
+    /// `StudyTask`, `FocusSession`) s'ajoutent à la fin, sans toucher aux autres : SwiftData
+    /// migre en ajoutant leurs tables.
+    static let schema = Schema([
+        Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self,
+        StudyCalendar.self, CalendarEvent.self, StudyTask.self, FocusSession.self,
+        // Le scanner d'exercices et « Demande à Mika » (`Features/Solver`), à la fin aussi.
+        SolvedExercise.self, TutorMessage.self,
+        // Le chat Mika et son historique (lot 11, `Features/Chat`), à la fin encore.
+        ChatThread.self, ChatMessage.self,
+    ])
 
     /// Vrai quand l'app ne sert que d'hôte aux tests unitaires : elle ne lance alors ni
     /// réseau, ni achats, ni synchro, ni cours de démonstration. Les tests construisent ce
@@ -48,6 +61,8 @@ struct MicaboApp: App {
             // Avant tout le reste : le SDK doit être configuré avant qu'un écran ne puisse
             // demander une offre, et avant le premier `logIn`.
             PurchasesBridge.configureIfPossible()
+            // Le repère de cette installation, avant toute synchro : voir `LaunchGate`.
+            LaunchGate.markInstallIfNeeded()
             // Avant la fin du lancement, comme iOS le demande : une notification qui ouvre
             // l'app doit trouver son délégué en place.
             UNUserNotificationCenter.current().delegate = ReminderPresenter.shared
@@ -120,12 +135,18 @@ struct MicaboApp: App {
             .environment(pro)
             .environment(uiLocale)
             .environment(lessons)
+            .environment(xp)
             .environment(\.locale, uiLocale.locale.foundation)
             .environment(\.layoutDirection, uiLocale.locale.isRightToLeft ? .rightToLeft : .leftToRight)
             .preferredColorScheme(colorScheme)
             // Avant le reste de la tâche : ouvrir la session de statistiques est
             // quelques microsecondes, et tout ce qui suit peut vouloir tracer.
-            .onAppear { Analytics.start() }
+            .onAppear {
+                Analytics.start()
+                // Le « +10 XP » et la fête du jour s'affichent au-dessus de tout, feuilles
+                // comprises (`XPOverlayController`).
+                XPOverlayController.shared.install()
+            }
             // Vider la file en partant à l'arrière-plan, et l'écrire sur disque : c'est
             // le seul moment où l'on sait que l'app risque de ne pas revenir.
             .onChange(of: scenePhase) { _, phase in
@@ -231,6 +252,8 @@ struct MicaboApp: App {
         let token = UIApplication.shared.beginBackgroundTask(withName: "DailyReminder")
         Task {
             await DailyReminder.reschedule(context: container.mainContext, eligible: pro.receivesDailyReminder)
+            // Les rappels du calendrier aussi : une séance passée ne doit plus sonner.
+            StudyNotifications.refresh(in: container.mainContext)
             UIApplication.shared.endBackgroundTask(token)
         }
     }

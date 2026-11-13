@@ -26,6 +26,16 @@
         <item quantity="one">dan zaredom</item>
         <item quantity="other">dana zaredom</item>
     </plurals>
+    <plurals name="kx_league_endsIn">
+        <item quantity="one">Završava za %1$d dan</item>
+        <item quantity="few">Završava za %1$d dana</item>
+        <item quantity="other">Završava za %1$d dana</item>
+    </plurals>
+    <plurals name="kx_today_due">
+        <item quantity="one">%1$d kartica za ponavljanje</item>
+        <item quantity="few">%1$d kartice za ponavljanje</item>
+        <item quantity="other">%1$d kartica za ponavljanje</item>
+    </plurals>
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Dodaj moju grešku u kartice</item>
         <item quantity="other">Dodaj moje greške u kartice (%1$d)</item>

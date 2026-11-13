@@ -72,21 +72,21 @@ export function ExamsScreen({ exams, lessons, results, country }: { exams: ExamI
       </header>
 
       {next ? (
-        <section className="relative overflow-hidden rounded-[28px] p-5 text-on-ink shadow-floating" style={{ background: "linear-gradient(135deg, var(--color-accent) 0%, var(--color-keyword) 100%)" }} aria-label={t("lesson.exam.upNext")} data-tour="examen-prochain">
+        <section className="relative overflow-hidden rounded-[22px] border-[1.5px] border-stroke bg-surface p-5 text-ink" aria-label={t("lesson.exam.upNext")} data-tour="examen-prochain">
           <div className="flex items-start justify-between gap-3">
-            <p className="text-[12px] font-extrabold uppercase tracking-caps opacity-85">{t("lesson.exam.upNext")}</p>
-            <button type="button" onClick={() => edit(next)} aria-label={t("lesson.exam.edit")} className="pressable flex size-9 items-center justify-center rounded-full bg-white/20">
+            <p className="rounded-pill bg-yellow-wash px-2.5 py-1 text-[12px] font-extrabold uppercase tracking-caps text-caution-ink">{t("lesson.exam.upNext")}</p>
+            <button type="button" onClick={() => edit(next)} aria-label={t("lesson.exam.edit")} className="pressable flex size-9 items-center justify-center rounded-full bg-surface-muted text-ink-secondary">
               <Pencil aria-hidden="true" className="size-4" strokeWidth={2.6} />
             </button>
           </div>
           <div className="mt-2 flex items-end gap-4">
             <div className="flex flex-col items-start leading-none">
-              <span className="numeral text-[72px] font-extrabold leading-none tracking-tight-title">{daysUntil(next.examDate)}</span>
-              <span className="text-[14px] font-extrabold opacity-85">{daysUntil(next.examDate) === 1 ? t("lesson.exam.dayLeft") : t("lesson.exam.daysLeft")}</span>
+              <span className="numeral font-display text-[76px] leading-none text-caution-ink">{daysUntil(next.examDate)}</span>
+              <span className="text-[14px] font-extrabold text-ink-secondary">{daysUntil(next.examDate) === 1 ? t("lesson.exam.dayLeft") : t("lesson.exam.daysLeft")}</span>
             </div>
             <div className="mb-1 flex min-w-0 flex-1 flex-col gap-0.5">
               <h2 className="line-clamp-2 text-[24px] font-extrabold leading-tight tracking-tight-title">{next.name}</h2>
-              <p className="flex items-center gap-1.5 text-[14px] font-bold opacity-90">
+              <p className="flex items-center gap-1.5 text-[14px] font-bold text-ink-secondary">
                 <CalendarDays aria-hidden="true" className="size-4" strokeWidth={2.6} />
                 {dateLabel(next.examDate)}
               </p>
@@ -100,7 +100,7 @@ export function ExamsScreen({ exams, lessons, results, country }: { exams: ExamI
               {next.courseIds.map((id) => {
                 const lesson = byId.get(id);
                 return lesson ? (
-                  <li key={id} className="flex items-center gap-1.5 rounded-pill bg-white/20 py-1 ps-1.5 pe-3 text-[13px] font-bold">
+                  <li key={id} className="flex items-center gap-1.5 rounded-pill bg-surface-muted py-1 ps-1.5 pe-3 text-[13px] font-bold">
                     <MicaboIcon id={lesson.icon} size={20} />
                     <span className="max-w-[180px] truncate">{lesson.title}</span>
                   </li>
@@ -112,11 +112,11 @@ export function ExamsScreen({ exams, lessons, results, country }: { exams: ExamI
             <p className="mt-4 flex items-center gap-2 text-[14px] font-bold">
               <Trophy aria-hidden="true" className="size-[18px]" strokeWidth={2.4} />
               <span className="numeral">{examGradeLabel(best(next.id)!, country, locale)}</span>
-              <span className="opacity-85">{t("lesson.exam.best")}</span>
+              <span className="text-ink-secondary">{t("lesson.exam.best")}</span>
             </p>
           ) : null}
           <div className="mt-5">
-            <LessonPrimaryButton onClick={() => setMock({ title: next.name, examId: next.id, preselected: next.courseIds })} disabled={lessons.length === 0} style={{ background: "var(--color-ink)" }}>
+            <LessonPrimaryButton onClick={() => setMock({ title: next.name, examId: next.id, preselected: next.courseIds })} disabled={lessons.length === 0}>
               <Play aria-hidden="true" className="size-5 fill-current" />
               {t("lesson.exam.startMock")}
             </LessonPrimaryButton>

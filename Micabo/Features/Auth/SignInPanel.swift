@@ -45,7 +45,7 @@ struct SignInFailureNote: View {
             case .sent(let email) where includeSent:
                 Text(i18n.t("onboarding.linkSent", ["email": email]))
                     .font(MicaboFont.ui(14.5, weight: .medium))
-                    .foregroundStyle(MicaboColor.accent)
+                    .foregroundStyle(MicaboColor.accentInk)
                     .fixedSize(horizontal: false, vertical: true)
                     .transition(.opacity)
             default:
@@ -120,7 +120,7 @@ struct SignInScreen: View {
         }
         .background(MicaboColor.canvas.ignoresSafeArea())
         .environment(\.onboardingSurface, .canvas)
-        .animation(.easeOut(duration: 0.22), value: auth.message)
+        .animation(MicaboMotion.quick, value: auth.message)
         .overlay {
             if isResolving {
                 ProgressView()
@@ -297,35 +297,33 @@ private struct SignInStage: View {
         let leftTurn: Double = drift ? -7 : 7
         let rightTurn: Double = drift ? 6 : -6
 
-        return ZStack {
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
+        // Mika en demi : il dépasse du bord bas de la carte, qui le coupe. Les tuiles restent
+        // immobiles : rien ne tourne en boucle sur l'écran de connexion.
+        return ZStack(alignment: .bottom) {
+            RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous)
                 .fill(MicaboColor.pastel(at: 3))
 
             tile("🏛️", pastel: 0)
                 .rotationEffect(.degrees(leftTurn))
-                .offset(x: -112, y: -34 + lift)
+                .offset(x: -112, y: -60 + lift)
 
             tile("🧬", pastel: 1)
                 .rotationEffect(.degrees(rightTurn))
-                .offset(x: 116, y: 30 - lift)
+                .offset(x: 116, y: -96 - lift)
 
-            MicaboMascot(mood: .celebrating, size: 112)
+            MikaPeek(mood: .wave, width: MikaPeek.hero)
         }
-        .frame(height: 188)
+        .frame(height: 150)
+        .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous))
         .frame(maxWidth: .infinity)
-        .animation(.easeInOut(duration: 2.8).repeatForever(autoreverses: true), value: drift)
         .accessibilityHidden(true)
-        .onAppear {
-            guard !reduceMotion else { return }
-            drift = true
-        }
     }
 
     private func tile(_ emoji: String, pastel: Int) -> some View {
         Text(emoji)
             .font(.system(size: 22))
             .frame(width: 46, height: 46)
-            .background(MicaboColor.pastel(at: pastel), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+            .background(MicaboColor.pastel(at: pastel), in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
     }
 }
 
@@ -345,6 +343,7 @@ struct SignInProviderButtons: View {
 
     @Environment(AuthController.self) private var auth
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.colorScheme) private var colorScheme
 
     @State private var email = ""
     /// Vrai une fois qu'on a choisi le courriel : le bouton devient le champ.
@@ -385,9 +384,9 @@ struct SignInProviderButtons: View {
                     .transition(.opacity)
             }
         }
-        .animation(.easeOut(duration: 0.2), value: auth.isWorking)
-        .animation(.easeOut(duration: 0.2), value: auth.message)
-        .animation(.timingCurve(0.25, 0.8, 0.25, 1, duration: 0.36), value: showsEmail)
+        .animation(MicaboMotion.quick, value: auth.isWorking)
+        .animation(MicaboMotion.quick, value: auth.message)
+        .animation(MicaboMotion.standard, value: showsEmail)
     }
 
     /// Le troisième bouton, de la même forme que celui de Google : une enveloppe, et le
@@ -413,7 +412,7 @@ struct SignInProviderButtons: View {
             )
             .overlay {
                 RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                    .strokeBorder(MicaboColor.strokeStrong, lineWidth: 1)
+                    .strokeBorder(MicaboColor.strokeStrong, lineWidth: MicaboSurface.border)
             }
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .medium))
@@ -475,6 +474,7 @@ struct SignInProviderButtons: View {
         }
         .frame(height: 56)
         .frame(maxWidth: .infinity)
+        .id(colorScheme)
         .accessibilityLabel(t("onboarding.continueApple"))
     }
 
@@ -501,7 +501,7 @@ struct SignInProviderButtons: View {
             )
             .overlay {
                 RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                    .strokeBorder(MicaboColor.strokeStrong, lineWidth: 1)
+                    .strokeBorder(MicaboColor.strokeStrong, lineWidth: MicaboSurface.border)
             }
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .medium))
@@ -542,9 +542,9 @@ struct SignInProviderButtons: View {
                     .accessibilityLabel(t("onboarding.emailLabel"))
 
                 Button(action: sendLink) {
-                    Image(systemName: "arrow.right")
+                    Image(systemName: "arrow.forward")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(MicaboColor.onInk)
+                        .foregroundStyle(MicaboColor.onAccent)
                         .frame(width: 42, height: 42)
                         .background(
                             MicaboColor.accent,

@@ -141,7 +141,7 @@ struct DeckDeadlineStepView: View {
                 )
                 .overlay {
                     RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
-                        .strokeBorder(MicaboColor.stroke, lineWidth: 1)
+                        .strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border)
                 }
 
                 paceNote
@@ -161,7 +161,7 @@ struct DeckDeadlineStepView: View {
         HStack(spacing: 8) {
             Image(systemName: "bolt.fill")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(MicaboColor.accent)
+                .foregroundStyle(MicaboColor.accentInk)
             Text(i18n.t("ios.deckSetup.pace", ["count": "\(readout.perDay)"]))
                 .font(MicaboFont.ui(15, weight: .semibold))
                 .foregroundStyle(MicaboColor.ink)

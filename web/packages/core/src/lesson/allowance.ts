@@ -58,6 +58,39 @@ export function lessonGate(options: {
   return hasUsedFreeLesson(options.courses) ? "free_limit" : null;
 }
 
+/**
+ * **La porte de la barre de Home, avec la leçon offerte depuis un import**
+ * (`docs/refonte-knowunity.md` § 7). Le serveur accepte déjà qu'une leçon offerte vienne d'un
+ * PDF, de photos ou de YouTube quand la demande porte `onboarding: true`
+ * (`begin_lesson(p_onboarding)`). Tant que la leçon offerte n'a pas servi, un élève qui n'est
+ * pas Pro peut donc la créer depuis un import, et cette demande-là porte `onboarding: true` ;
+ * une fois la leçon offerte utilisée, un import ouvre le paywall comme avant.
+ *
+ * `lessonGate` reste la porte d'avant ce lot, celle que relit le test de parité avec le Swift.
+ */
+export interface ComposerGate {
+  /** Le paywall à ouvrir avant d'envoyer, ou `null` si la demande peut partir. */
+  verdict: LessonGateVerdict | null;
+  /** Vrai quand la demande doit porter `onboarding: true` : la leçon offerte, depuis un import. */
+  onboarding: boolean;
+}
+
+export function composerGate(options: { isPro: boolean; source: LessonSource; hasUsedFreeLesson: boolean }): ComposerGate {
+  if (options.isPro) return { verdict: null, onboarding: false };
+  if (isImportSource(options.source)) {
+    return options.hasUsedFreeLesson ? { verdict: "import_pro", onboarding: false } : { verdict: null, onboarding: true };
+  }
+  return { verdict: options.hasUsedFreeLesson ? "free_limit" : null, onboarding: false };
+}
+
+/**
+ * Vrai quand une pastille d'import (PDF, Photo, Audio, YouTube) ouvre le paywall au lieu de sa
+ * feuille, et porte la couronne : pour qui n'est pas Pro **et** a déjà utilisé sa leçon offerte.
+ */
+export function importLocked(options: { isPro: boolean; hasUsedFreeLesson: boolean }): boolean {
+  return !options.isPro && options.hasUsedFreeLesson;
+}
+
 /** Ce que Mika laisse demander : une question offerte, puis un plafond par jour pour Pro. */
 export const MIKA_ALLOWANCE = { freeQuestions: 1, proMessagesPerDay: 30 } as const;
 

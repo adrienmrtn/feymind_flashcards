@@ -13,16 +13,19 @@ import { ProfileDetail, type ProfileDetailProps } from "@/components/profile/Pro
 import { APP_STORE_LISTING, PLAY_STORE_LISTING, ratingListings, type StorePlatform } from "@/components/profile/stores";
 import { manageSubscription } from "@/lib/actions/checkout";
 import { setUiLocale } from "@/lib/actions/locale";
-import { APPEARANCES, type Appearance } from "@/lib/appearance";
+import { type Appearance } from "@/lib/appearance";
 import { readDiscountStart, requestDiscount } from "@/lib/discount";
 import { useI18n } from "@/lib/i18n/client";
 import { useLocalizedHref } from "@/lib/i18n/href";
 import { UI_LOCALES, UI_LOCALE_META, type UiLocale } from "@/lib/i18n/locales";
 import { localeSwitchHref } from "@/lib/i18n/paths";
-import { FRIENDS_PATH } from "@/lib/lesson/routes";
+import { FRIENDS_PATH, LEAGUE_PATH } from "@/lib/lesson/routes";
 import { requestPaywall } from "@/lib/paywall";
 import { usePresentment } from "@/lib/presentment";
 import { manageLabel, subscriptionDetail, subscriptionHeadline, type SubscriptionView } from "@/lib/subscription-copy";
+import { useXp } from "@/lib/xp/client";
+import { LEAGUE_EMOJI, leagueNameKey } from "@/lib/xp/league";
+import { EmojiGlyph } from "@/components/ui/EmojiGlyph";
 
 /** Où l'on écrit, et nos autres apps : les mêmes adresses que `ProfileLinks` côté Swift. */
 export const SUPPORT_EMAIL = "team@micabo.app";
@@ -100,6 +103,7 @@ export function ProfileScreen({
       )}
 
       <section className="flex flex-col gap-3">
+        <LeagueLink />
         {ranking.length >= 2 ? <WeekRankingCard rows={ranking} /> : null}
         <Link href={FRIENDS_PATH} className="pressable flex items-center gap-3.5 rounded-[22px] bg-surface p-3.5 shadow-[inset_0_0_0_1.5px_var(--color-stroke)]">
           <span className="flex size-11 items-center justify-center rounded-[14px] bg-accent-soft text-accent">
@@ -144,6 +148,26 @@ export function ProfileScreen({
 
       {open ? <ProfileDetail {...detail} email={email} onClose={() => setOpen(false)} /> : null}
     </div>
+  );
+}
+
+/** La ligue de la semaine (`docs/refonte-knowunity.md` § 3), au-dessus des amis. */
+function LeagueLink() {
+  const { t } = useI18n();
+  const xp = useXp();
+  return (
+    <Link href={LEAGUE_PATH} className="pressable flex items-center gap-3.5 rounded-[22px] bg-surface p-3.5 shadow-[inset_0_0_0_1.5px_var(--color-stroke)]">
+      <span className="flex size-11 items-center justify-center rounded-[14px]" style={{ background: "var(--color-tone-yellow-pale)" }}>
+        <MicaboIcon id="trophee" size={30} />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="text-[17px] font-extrabold text-ink">{t("app.kx.league.title")}</span>
+        <span className="truncate text-[14px] font-semibold text-ink-secondary">
+          <EmojiGlyph emoji={LEAGUE_EMOJI[xp.league]} size={16} className="me-1 align-[-3px]" /> {t("app.kx.league.profileLine", { xp: xp.week, league: t(leagueNameKey(xp.league)) })}
+        </span>
+      </span>
+      <ChevronRight aria-hidden="true" className="size-5 shrink-0 text-ink-tertiary" strokeWidth={2.6} />
+    </Link>
   );
 }
 
@@ -393,14 +417,17 @@ function LanguageRow() {
 
 const THEME_KEY: Record<Appearance, string> = { day: "settings.appearanceDay", night: "settings.appearanceNight", twilight: "settings.appearanceTwilight" };
 
-/** Changer le thème : clair, sombre, crépuscule. Reste sur cet appareil. */
+/** Les deux thèmes de l'app (V3.3) : le marine, puis le clair. Le crépuscule s'affiche en marine. */
+const THEME_CHOICES: readonly Appearance[] = ["night", "day"];
+
+/** Changer le thème : marine ou clair. Reste sur cet appareil. */
 function ThemeRow() {
   const { t } = useI18n();
   const { appearance, setAppearance } = useAppearance();
   return (
     <RowShell icon={<Palette aria-hidden="true" className="size-5" strokeWidth={2.4} />} title={t("lesson.profile.theme")}>
-      <select value={appearance} onChange={(event) => setAppearance(event.target.value as Appearance)} aria-label={t("lesson.profile.theme")} className="rounded-pill bg-surface-muted px-3 py-1.5 text-[14px] font-bold text-ink outline-none focus-visible:shadow-[0_0_0_2px_var(--color-accent)]">
-        {APPEARANCES.map((value) => (
+      <select value={appearance === "twilight" ? "night" : appearance} onChange={(event) => setAppearance(event.target.value as Appearance)} aria-label={t("lesson.profile.theme")} className="rounded-pill bg-surface-muted px-3 py-1.5 text-[14px] font-bold text-ink outline-none focus-visible:shadow-[0_0_0_2px_var(--color-accent)]">
+        {THEME_CHOICES.map((value) => (
           <option key={value} value={value}>
             {t(THEME_KEY[value])}
           </option>

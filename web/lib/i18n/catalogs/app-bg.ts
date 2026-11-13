@@ -1,3 +1,5 @@
+import { kxBg } from "./kx-bg";
+
 /** Textes de l'app connectée (hors vitrine et parcours), version bg. */
 export const appBg = {
   a11y: {
@@ -572,6 +574,7 @@ export const appBg = {
     delayMonths: "{n} мес.",
     delayYears: "{n, plural, one {# година} other {# години}}",
   },
+  kx: kxBg,
 };
 
 export const copyBg = {

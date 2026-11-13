@@ -1,3 +1,5 @@
+import { kxSr } from "./kx-sr";
+
 /** Textes de l'app connectée (hors vitrine et parcours), version sr. */
 export const appSr = {
   a11y: {
@@ -572,6 +574,7 @@ export const appSr = {
     delayMonths: "{n} mes.",
     delayYears: "{n, plural, one {# godina} other {# god.}}",
   },
+  kx: kxSr,
 };
 
 export const copySr = {

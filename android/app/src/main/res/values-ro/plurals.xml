@@ -30,6 +30,16 @@
         <item quantity="few">zile la rând</item>
         <item quantity="other">de zile la rând</item>
     </plurals>
+    <plurals name="kx_league_endsIn">
+        <item quantity="one">Se termină în %1$d zi</item>
+        <item quantity="few">Se termină în %1$d zile</item>
+        <item quantity="other">Se termină în %1$d de zile</item>
+    </plurals>
+    <plurals name="kx_today_due">
+        <item quantity="one">%1$d card de recapitulat</item>
+        <item quantity="few">%1$d carduri de recapitulat</item>
+        <item quantity="other">%1$d de carduri de recapitulat</item>
+    </plurals>
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Adaugă greșeala mea la carduri</item>
         <item quantity="few">Adaugă cele %1$d greșeli la carduri</item>

@@ -57,12 +57,39 @@ enum LocalWipe {
         try deleteAll(CourseFolder.self, in: context)
         try deleteAll(Exam.self, in: context)
         try deleteAll(OffDay.self, in: context)
+        // Le calendrier, les tâches et les séances de concentration : tout ce qui vit dans
+        // les onglets Calendrier et Concentration est local, et appartient au compte qui part.
+        try deleteAll(CalendarEvent.self, in: context)
+        try deleteAll(StudyCalendar.self, in: context)
+        try deleteAll(StudyTask.self, in: context)
+        try deleteAll(FocusSession.self, in: context)
+        // Les exercices scannés et les fils de « Demande à Mika » : les questions du compte qui part.
+        try deleteAll(SolvedExercise.self, in: context)
+        try deleteAll(TutorMessage.self, in: context)
+        // L'historique du chat Mika (lot 11) et ses photos, gardées sur le téléphone.
+        try deleteAll(ChatMessage.self, in: context)
+        try deleteAll(ChatThread.self, in: context)
+        ChatPhotoStore.shared.eraseAll()
+        CalendarDefaults.forget()
+        RevisionPlanAllowance.forget()
+        StudyNotifications.cancelAll()
+        FocusPhaseAlerts.cancel()
         // Ce qui vit hors de la base mais appartient au compte qui part : les journées
         // décochées (sinon effacées au serveur du compte suivant), les examens blancs rendus,
         // et l'examen offert, que le serveur compte par compte.
         OffDayTombstones.clear(OffDayTombstones.all())
         ExamHistory.clear()
         ExamAllowance.freeMockUsed = false
+        // L'XP monte avec le profil : le compte suivant ne doit pas hériter de celle-ci.
+        XPStore.shared.reset()
+        // Ce que Mika et l'entraînement gardaient sur l'appareil : les conversations, dont les
+        // questions appartiennent au compte qui part ; la question et le lot de questions
+        // offerts, que le serveur compte par compte comme l'examen offert ; et le temps de
+        // concentration, qui s'ajoute aux heures de révision de Home.
+        MikaConversationStore.eraseAll()
+        MikaQuota().forget()
+        PracticeAllowance.freeBatchUsed = false
+        FocusLog.reset()
         LibraryCensus.forget()
         CourseLedger.noteChange()
     }

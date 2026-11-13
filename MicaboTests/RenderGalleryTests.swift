@@ -12,30 +12,97 @@ import XCTest
 /// Rien ne se dessine hors de la CI : sans `MICABO_RENDER_DIR`, chaque test s'arrête aussitôt.
 @MainActor
 final class RenderGalleryTests: XCTestCase {
-    /// Mika dans ses huit humeurs, à trois instants de chaque animation.
+    /// Mika dans ses treize humeurs (images fixes : les rendus ne dessinent pas les animations), sur
+    /// le papier de l'app (étincelle bleue) et sur le bleu Micabo (étincelle blanche) ; ses
+    /// trois cadres ; et l'écran de lancement, de jour et de nuit.
     func testMika() throws {
-        let instants: [Double] = [0.25, 0.7, 1.4]
         try RenderGallery.render(
-            "mika-moods",
-            VStack(spacing: 4) {
+            "mika-moods", night: true,
+            VStack(spacing: 10) {
                 ForEach(MikaMood.allCases) { mood in
-                    HStack(spacing: 12) {
+                    HStack(spacing: 10) {
                         Text(mood.rawValue)
-                            .font(MicaboFont.ui(11, weight: .bold))
+                            .font(MicaboFont.ui(12, weight: .bold))
                             .foregroundStyle(MicaboColor.inkSecondary)
-                            .frame(width: 64, alignment: .leading)
-                        ForEach(instants, id: \.self) { instant in
-                            MikaMascot(mood: mood, size: 84, frozenAt: instant)
-                        }
+                            .frame(width: 70, alignment: .leading)
+                        // En demi, au bas de sa carte, sur le papier.
+                        MikaPeek(mood: mood, width: 92)
+                            .padding(.horizontal, 10)
+                            .padding(.top, 8)
+                            .background(MicaboColor.surface)
+                            .clipShape(UnevenRoundedRectangle(topLeadingRadius: 14, topTrailingRadius: 14))
+                        // En entier.
+                        MikaMascot(mood: mood, size: 76, frozenAt: 0)
+                        MikaAvatar(size: 36)
                     }
                 }
             }
             .padding(16)
         )
         try RenderGallery.render(
-            "mika-large",
-            MikaMascot(mood: .wave, size: 300, frozenAt: 0.5)
-                .padding(40)
+            "mika-frames", night: true,
+            VStack(spacing: 24) {
+                // En entier, debout sur le papier ; l'icône ; l'avatar.
+                HStack(alignment: .bottom, spacing: 18) {
+                    MikaMascot(mood: .wave, size: 140, frozenAt: 0)
+                    MikaMascot(mood: .happy, size: 110, frozenAt: 0, frame: .rounded)
+                    MikaAvatar(size: 40)
+                    MikaAvatar(size: 28)
+                }
+                // En demi, sur une ligne.
+                VStack(spacing: 0) {
+                    MikaPeek(mood: .wink, width: MikaPeek.line)
+                    Capsule().fill(MicaboColor.stroke).frame(width: 140, height: 2)
+                }
+                // En demi, qui dépasse du bas d'une carte.
+                ZStack(alignment: .bottomTrailing) {
+                    RoundedRectangle(cornerRadius: 24, style: .continuous).fill(MicaboColor.surface)
+                    Text("Objectif du jour")
+                        .font(MicaboFont.ui(20, weight: .heavy))
+                        .foregroundStyle(MicaboColor.ink)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .padding(18)
+                    MikaPeek(mood: .happy, width: MikaPeek.card)
+                        .padding(.trailing, 12)
+                }
+                .frame(height: 130)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            }
+            .padding(24)
+        )
+        // Quelques places de Mika dans l'app : la fête de l'objectif, les deux retours d'une
+        // question, l'attente du parcours d'accueil, Mika au pied d'une page.
+        try RenderGallery.render(
+            "mika-places", night: true,
+            VStack(spacing: 18) {
+                XPGoalCard(showsButton: false)
+                QuestionFeedback(question: Self.sampleQuestion(id: "mika-right"), right: true)
+                QuestionFeedback(question: Self.sampleQuestion(id: "mika-wrong"), right: false)
+                HStack {
+                    MikaMascot(mood: .happy, size: 72)
+                    Spacer()
+                }
+            }
+            .padding(20)
+        )
+        try RenderGallery.render(
+            "mika-loading", height: 700,
+            MikaLoadingView(progress: 0.6, title: "Mika prépare ton plan", subtitle: "Calibrage de ton niveau", stepLabel: "Étape 3")
+        )
+        try RenderGallery.render(
+            "mika-launch", width: 300, height: 650, night: true,
+            // L'écran de lancement n'a plus d'image : l'aplat bleu, que le premier écran
+            // reprend tel quel (`LaunchCurtain`).
+            Color("LaunchBackground")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        )
+        try RenderGallery.render(
+            "mika-brand",
+            HStack(spacing: 16) {
+                MicaboBrandMark(size: 96)
+                MicaboBrandLockup(size: 40)
+            }
+            .padding(24)
         )
     }
 
@@ -159,6 +226,7 @@ final class RenderGalleryTests: XCTestCase {
         try RenderGallery.render(
             "lesson-cards", night: true,
             LessonCardsHub(session: session)
+                .environment(\.homeStill, true)
                 .frame(height: 980)
         )
         try RenderGallery.render(
@@ -171,9 +239,13 @@ final class RenderGalleryTests: XCTestCase {
             VStack(spacing: 0) {
                 LessonPathHeader(course: course, session: session, exam: nil)
                     .padding(.top, 40)
-                    .padding(.bottom, 44)
+                    .padding(.bottom, 24)
+                LessonToolGrid(dueCount: 8) { _ in }
+                    .padding(.horizontal, MicaboSpacing.screen)
+                    .padding(.bottom, 24)
                 PathMapView(session: session, tone: course.tone, width: 393, onOpen: { _ in }, onRetry: { _ in })
-                LessonNavbar(dueCount: 8) { _ in }
+                    .frame(height: 420, alignment: .top)
+                    .clipped()
             }
         )
         let chapter = course.orderedChapters[0]
@@ -228,35 +300,39 @@ final class RenderGalleryTests: XCTestCase {
         }
     }
 
-    /// Home : Mika et sa question, la barre avec deux supports, les chiffres, « Reprendre »,
-    /// l'écran de génération et la barre d'onglets.
+    /// Home : la rangée du haut, la scène bleue (Mika, sa bulle, la barre), les outils et
+    /// La Home V3.3 (lot 10) — pour un élève qui avance (une séance prévue, des cartes dues,
+    /// de l'XP, une série) et pour un élève tout neuf ; la barre avec un sujet et deux
+    /// supports, la feuille du « + », l'allemand, le finnois, l'arabe, une leçon qui s'écrit,
+    /// la barre d'onglets et l'aperçu de la leçon verrouillée. Tous ses états sont dans
+    /// `Home10RenderTests`.
     func testHomeScreens() throws {
         guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
-        let container = try ModelContainer(
-            for: Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self,
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        let exam = HomeExam(name: "Bac d'histoire", daysLeft: 12, readiness: nil)
+        let session = HomeSession(eventID: UUID(), courseID: UUID(), title: "la guerre froide", startMinute: 18 * 60, endMinute: 18 * 60 + 30)
+        let day = HomeDay(dueCount: 8, hasCourses: true, session: session, dueLessons: 2)
+
+        func busyHome(composer: LessonComposer? = nil, name: String = "Léa") -> Home10Board {
+            Home10Board(
+                board: HomeBoard.resolve(HomeBoardInput(day: day, name: name, greeting: .evening, hasLesson: true)),
+                exam: exam,
+                composer: composer ?? LessonComposer()
+            )
+        }
+
+        try RenderGallery.render("home", height: 852, night: true, busyHome())
+        try RenderGallery.render(
+            "home-new", height: 852, night: true,
+            Home10Board(
+                board: HomeBoard.resolve(HomeBoardInput()),
+                exam: nil,
+                xp: 0,
+                streak: .empty,
+                shortcuts: HomeShortcut.available(isNewcomer: true, hasLesson: false, dueCount: 0),
+                dueCount: 0,
+                composer: LessonComposer()
+            )
         )
-        let context = ModelContext(container)
-        let course = Course(title: "La photosynthèse", subject: "Biologie")
-        course.toneRaw = LessonTone.yellow.rawValue
-        context.insert(course)
-        for index in 0..<4 {
-            context.insert(Chapter(position: index, title: ["La lumière", "La chlorophylle", "Le cycle de Calvin", "Le bilan"][index], course: course))
-        }
-        course.setLessonPath(LessonPath(
-            icon: MicaboIcon.flask.rawValue,
-            intro: LessonPath.Intro(lines: [], minutes: 20),
-            takeaways: [],
-            groups: [LessonPath.Group(name: "", themes: [0, 1]), LessonPath.Group(name: "", themes: [2, 3])],
-            status: .ready
-        ))
-        course.iconID = MicaboIcon.flask.rawValue
-        course.updateProgress { progress in
-            progress.done = ["intro", "notes:0", "notes:1"]
-            progress.addTime(2_700, to: .notes)
-        }
-        course.lastOpenedAt = Date()
-        try context.save()
 
         let composer = LessonComposer()
         composer.draft = "Les étapes clés"
@@ -272,27 +348,62 @@ final class RenderGalleryTests: XCTestCase {
             ))
         }
         composer.begin(.youtube, title: "YouTube")
+        try RenderGallery.render("home-composer", height: 852, night: true, busyHome(composer: composer))
 
-        let resume = try XCTUnwrap(ResumeTarget.pick(from: [course]))
         try RenderGallery.render(
-            "home", night: true,
-            VStack(alignment: .leading, spacing: 28) {
-                HomeTitle()
-                    .padding(.bottom, HomePerch.height)
-                ComposerBarPreview(composer: composer)
-                HomeStatsRow(stats: HomeStats(seconds: 5_400, learnedLessons: 3, learnedCards: 42))
-                ResumeCard(course: resume.0, target: resume.1) {}
-                MicaboTabBar().environment(TabRouter())
+            "home-sources", night: true,
+            HomeSourcesSheet(isPro: false, freeLessonLeft: true) { _ in }
+                .environment(\.homeStill, true)
+        )
+
+        // Les phrases longues : l'allemand et le finnois, sur le même élève ; l'arabe, de
+        // droite à gauche.
+        do {
+            let localeDefaults = UserDefaults.standard
+            let previousLocale = localeDefaults.string(forKey: UiLocale.storageKey)
+            localeDefaults.set(UiLocale.de.rawValue, forKey: UiLocale.storageKey)
+            defer {
+                if let previousLocale { localeDefaults.set(previousLocale, forKey: UiLocale.storageKey) }
+                else { localeDefaults.removeObject(forKey: UiLocale.storageKey) }
             }
-            .padding(20)
+            try RenderGallery.render("home-de", height: 852, busyHome(name: "Lea"))
+            localeDefaults.set(UiLocale.fi.rawValue, forKey: UiLocale.storageKey)
+            try RenderGallery.render("home-fi", height: 852, busyHome(name: "Aino"))
+            localeDefaults.set(UiLocale.ar.rawValue, forKey: UiLocale.storageKey)
+            try RenderGallery.render("home-ar", height: 852, busyHome(name: "ليلى").environment(\.layoutDirection, .rightToLeft))
+        }
+
+        // La leçon lue, sous cadenas : l'aperçu dans son état final, puis pendant la lecture.
+        let summary = LessonReadSummary(documents: [ImportedDocument(
+            text: "La photosynthèse\nLa lumière est captée par la chlorophylle des feuilles.\nElle sert à fabriquer du glucose à partir d'eau et de CO2.\nLe dioxygène est rejeté dans l'air.",
+            pageImages: [],
+            coverImage: nil,
+            pageCount: 4,
+            fileName: "Chapitre 3",
+            source: .pdf,
+            extractionNote: nil
+        )])
+        try RenderGallery.render(
+            "home-locked", night: true,
+            LockedLessonPreview(summary: summary, revealed: true, onUnlock: {}, onClose: {}, onRevealed: {})
+                .environment(\.homeStill, true)
         )
         try RenderGallery.render(
-            "home-generating",
-            VStack(spacing: 28) {
-                MikaMascot(mood: .think, size: 170, frozenAt: 0.6)
-                GenerationSteps(current: .writing, hasSupports: true)
-            }
-            .padding(40)
+            "home-locked-reading",
+            LockedLessonPreview(summary: summary, onUnlock: {}, onClose: {}, onRevealed: {})
+                .environment(\.homeStill, true)
+        )
+
+        try RenderGallery.render(
+            "home-tabbar", night: true,
+            MicaboTabBar().environment(TabRouter())
+                .padding(20)
+        )
+        // Une leçon s'écrit : la Home le dit, la jauge à la place de l'action.
+        let writing = HomeBoardInput(day: HomeDay(hasCourses: true), name: "Léa", phase: .running, stage: .writing, subject: "La photosynthèse", hasSupports: true)
+        try RenderGallery.render(
+            "home-generating", height: 852,
+            Home10Board(board: HomeBoard.resolve(writing), exam: exam, composer: LessonComposer(), isBusy: true)
         )
     }
 
@@ -330,7 +441,6 @@ final class RenderGalleryTests: XCTestCase {
                 LessonFolderCard(name: "Bac de maths", count: 4) {}
                 LessonCard(course: course, dueCount: 8, examDays: 12) {}
                 LessonCard(course: old) {}
-                NewLessonRow {}
             }
             .padding(20)
         )
@@ -408,54 +518,32 @@ final class RenderGalleryTests: XCTestCase {
         )
     }
 
-    /// Le parcours d'accueil : la leçon dans le téléphone, les six écrans de Mika, une
-    /// question avec Mika au pied de la page, la barre du haut.
+    /// Le parcours d'accueil : une question, le temps par jour, la question d'essai, le plan
+    /// révélé, puis le paywall. Chaque écran du parcours a ses rendus dans
+    /// `OnboardingRenderTests` (`onb10-*`).
     func testOnboardingScreens() throws {
         guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
         let model = OnboardingModel()
         model.displayName = "Lina"
 
         try RenderGallery.render(
-            "onboarding-hook",
-            height: 560,
-            OnboardingHookMockup()
-                .environment(\.onboardingStill, true)
-        )
-        for page in MikaPage.allCases {
-            try RenderGallery.render(
-                "onboarding-mika-\(page.rawValue)",
-                height: 780,
-                MikaStepView(page: page)
-                    .environment(model)
-                    .environment(\.onboardingStill, true)
-            )
-        }
-        try RenderGallery.render(
             "onboarding-question",
             height: 780,
-            VStack(spacing: 0) {
-                OnboardingTopBar(progress: 0.42, showsBack: true, isVisible: true, onBack: {})
-                GoalStepView()
-            }
-            .environment(model)
+            WorriesStepView()
+                .environment(model)
+                .environment(\.onboardingStill, true)
         )
         try RenderGallery.render(
             "onboarding-time",
             height: 780,
             DailyTimeStepView()
                 .environment(model)
-        )
-        try RenderGallery.render(
-            "onboarding-social",
-            height: 1_400,
-            SocialProofStepView()
-                .environment(model)
                 .environment(\.onboardingStill, true)
         )
         try RenderGallery.render(
-            "onboarding-social-support",
-            height: 780,
-            SupportUsStepView()
+            "onboarding-sample-card",
+            height: 900,
+            SampleCardStepView(previewAnswer: 1)
                 .environment(model)
                 .environment(\.onboardingStill, true)
         )
@@ -486,25 +574,40 @@ final class RenderGalleryTests: XCTestCase {
                 .environment(profiled)
                 .environment(\.onboardingStill, true)
         )
+        // La fin du parcours : le même paywall que dans l'app, au prénom de l'élève.
         try RenderGallery.render(
             "onboarding-paywall",
-            height: 1_250,
-            PaywallOfferView(
-                plan: PaywallCatalog.recommended,
-                isPurchasing: false,
-                onClose: {},
-                onSeeAllPlans: {},
-                onSubscribe: {},
-                onRestore: {}
-            )
-            .environment(\.onboardingStill, true)
-        )
-        try RenderGallery.render(
-            "onboarding-plans",
-            height: 1_300,
-            PaywallPlansView(isPurchasing: false, onClose: {}, onSubscribe: { _ in }, onRestore: {})
+            PaywallScreen(name: "Lina", isPurchasing: false, onClose: {}, onSubscribe: { _ in }, onRestore: {})
                 .environment(\.onboardingStill, true)
         )
+    }
+
+    /// Le paywall, en un écran : de jour et de nuit, ouvert par « Passer en Pro » ; ouvert par
+    /// la leçon lue ; en allemand ; et dans la variante « à la semaine » du test de prix.
+    func testPaywallScreens() throws {
+        guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
+        func paywall(_ trigger: PaywallTrigger?, name: String?) -> some View {
+            PaywallScreen(trigger: trigger, name: name, isPurchasing: false, onClose: {}, onSubscribe: { _ in }, onRestore: {})
+                .environment(\.onboardingStill, true)
+        }
+        try RenderGallery.render("paywall", night: true, paywall(.upgrade, name: "Léa"))
+        try RenderGallery.render("paywall-lesson", paywall(.lessonReady, name: nil))
+
+        let previousDisplay = PriceDisplay.forced(in: .standard)
+        PriceDisplay.setOverride(.weekly)
+        try RenderGallery.render("paywall-weekly", paywall(nil, name: "Léa"))
+        PriceDisplay.setOverride(previousDisplay)
+
+        let localeDefaults = UserDefaults.standard
+        let previousLocale = localeDefaults.string(forKey: UiLocale.storageKey)
+        defer {
+            if let previousLocale { localeDefaults.set(previousLocale, forKey: UiLocale.storageKey) }
+            else { localeDefaults.removeObject(forKey: UiLocale.storageKey) }
+        }
+        localeDefaults.set(UiLocale.de.rawValue, forKey: UiLocale.storageKey)
+        try RenderGallery.render("paywall-de", paywall(.mika, name: "Léa"))
+        localeDefaults.set(UiLocale.ar.rawValue, forKey: UiLocale.storageKey)
+        try RenderGallery.render("paywall-ar", paywall(nil, name: nil).environment(\.layoutDirection, .rightToLeft))
     }
 
     private static let sampleNotes = ThemeNotes(
@@ -568,7 +671,10 @@ enum RenderGallery {
         guard let directory else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
         FontLoader.registerFonts()
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let schemes: [(ColorScheme, String)] = night ? [(.light, name), (.dark, "\(name)-nuit")] : [(.light, name)]
+        // Le marine est le thème de référence depuis le lot 10 : chaque écran y est dessiné,
+        // demandé ou non. Le clair garde le nom nu, pour que les anciens rendus se comparent.
+        _ = night
+        let schemes: [(ColorScheme, String)] = [(.light, name), (.dark, "\(name)-nuit")]
         for (scheme, file) in schemes {
             let framed = view
                 .frame(width: width, height: height)
@@ -582,15 +688,5 @@ enum RenderGallery {
             }
             try data.write(to: directory.appendingPathComponent("\(file).png"))
         }
-    }
-}
-
-/// La barre de Home a besoin d'un focus : une vue le porte, le temps du rendu.
-private struct ComposerBarPreview: View {
-    let composer: LessonComposer
-    @FocusState private var focused: Bool
-
-    var body: some View {
-        HomeComposerBar(composer: composer, focused: $focused, isPro: true, onImport: { _ in }, onSend: {})
     }
 }

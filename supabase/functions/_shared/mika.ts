@@ -131,6 +131,31 @@ export function readAttachment(raw: unknown): MikaAttachment | undefined {
   return { title, text };
 }
 
+/** Le nombre de documents qu'un message peut joindre : les photos d'une même question. */
+export const MIKA_MAX_ATTACHMENTS = 6;
+
+/**
+ * **Plusieurs documents joints** (lot 11, le chat aux photos) : `attachments`, une liste de
+ * `{ title, text }` (une photo lue sur l'appareil, une leçon), en plus de l'ancien `attachment`.
+ * Ils sont réunis en un seul document, chacun sous son titre, dans la même borne de 16 000
+ * caractères : le coût d'un appel ne change pas. Un client d'avant, qui n'envoie que
+ * `attachment`, reçoit exactement ce qu'il recevait.
+ */
+export function readAttachments(single: unknown, list: unknown): MikaAttachment | undefined {
+  const first = readAttachment(single);
+  const items = Array.isArray(list)
+    ? list.slice(0, MIKA_MAX_ATTACHMENTS).map(readAttachment).filter((item): item is MikaAttachment => !!item)
+    : [];
+  if (items.length === 0) return first;
+  const all = first ? [first, ...items] : items;
+  if (all.length === 1) return all[0];
+  const text = all
+    .map((item) => (item.title ? `${item.title}\n${item.text}` : item.text))
+    .join("\n\n")
+    .slice(0, MIKA_MAX_ATTACHMENT);
+  return { title: first?.title || all[0].title, text };
+}
+
 /**
  * **La consigne de langue de Mika.** Elle diffère de celle des fiches : une fiche s'écrit
  * dans une seule langue, décidée d'avance ; une conversation suit l'élève. La langue de

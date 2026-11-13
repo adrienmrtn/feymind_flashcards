@@ -46,15 +46,20 @@ struct MicaboPageHeading<Trailing: View>: View {
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
             VStack(alignment: .leading, spacing: 3) {
+                // Le titre de tous les onglets : le h1 de V3, trente-deux points en Black,
+                // resserré (lot 10).
                 Text(title)
-                    .font(MicaboFont.ui(21, weight: .bold))
-                    .tracking(-0.3)
+                    .font(V3Font.h1)
+                    .tracking(V3Tracking.h1)
                     .foregroundStyle(MicaboColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.isHeader)
 
                 if let subtitle {
                     Text(subtitle)
-                        .font(MicaboFont.ui(13.5, weight: .regular))
+                        .font(V3Font.custom(15, weight: .bold))
                         .foregroundStyle(MicaboColor.inkSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -87,8 +92,8 @@ struct MicaboCountdownPill: View {
     private var isUrgent: Bool { days <= urgentWithin }
 
     var body: some View {
-        Text(days <= 0 ? i18n.t("app.exams.countdown.today") : "J-\(days)")
-            .font(MicaboFont.ui(11.5, weight: .heavy))
+        Text(days <= 0 ? i18n.t("app.exams.countdown.today") : i18n.t("ios.pol.sys.daysLeft", ["days": "\(days)"]))
+            .font(V3Font.custom(13, weight: .heavy))
             .foregroundStyle(isUrgent ? MicaboColor.onInk : MicaboColor.inkSecondary)
             .padding(.vertical, 5)
             .padding(.horizontal, 10)
@@ -109,7 +114,7 @@ struct MicaboStreakPill: View {
                 .foregroundStyle(MicaboColor.flame)
 
             Text("\(days)")
-                .font(MicaboFont.ui(14, weight: .heavy))
+                .font(V3Font.custom(15, weight: .heavy))
                 .foregroundStyle(MicaboColor.flameInk)
                 .monospacedDigit()
         }
@@ -120,29 +125,15 @@ struct MicaboStreakPill: View {
     }
 }
 
-/// Une pastille de filtre. Encre pleine quand elle est active, filet quand elle ne l'est pas.
+/// Une pastille de filtre : la puce V3 (`V3Chip`), choisie dans l'accent.
 struct MicaboFilterChip: View {
     let title: String
     let isSelected: Bool
     var action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(MicaboFont.ui(12.5, weight: isSelected ? .bold : .semibold))
-                .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.inkSecondary)
-                .padding(.vertical, 8)
-                .padding(.horizontal, 15)
-                .background {
-                    if isSelected {
-                        Capsule().fill(MicaboColor.ink)
-                    } else {
-                        Capsule().strokeBorder(MicaboColor.stroke, lineWidth: 1)
-                    }
-                }
-        }
-        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-        .animation(.easeOut(duration: 0.18), value: isSelected)
+        V3Chip(title, isSelected: isSelected, action: action)
+            .animation(MicaboMotion.quick, value: isSelected)
     }
 }
 
@@ -150,13 +141,13 @@ struct MicaboFilterChip: View {
 
 /// **Une barre de progression fine, et son pourcentage à côté.**
 ///
-/// Cinq points de haut : c'est une indication, pas une jauge de téléchargement. Le
-/// pourcentage est en violet et en gras parce que c'est lui qu'on lit — la barre ne fait que
-/// le rendre comparable d'une tuile à l'autre sans avoir à lire deux nombres.
+/// Huit points de haut (V3 : une barre de cinq se lisait comme un filet). Le pourcentage est
+/// dans l'accent et en gras parce que c'est lui qu'on lit — la barre ne fait que le rendre
+/// comparable d'une tuile à l'autre sans avoir à lire deux nombres.
 struct MicaboSlimProgress: View {
     let percent: Int
     var showsLabel: Bool = true
-    var height: CGFloat = 5
+    var height: CGFloat = 8
 
     var body: some View {
         HStack(spacing: 7) {
@@ -171,9 +162,9 @@ struct MicaboSlimProgress: View {
             .frame(height: height)
 
             if showsLabel {
-                Text("\(percent) %")
-                    .font(MicaboFont.ui(11.5, weight: .bold))
-                    .foregroundStyle(MicaboColor.accent)
+                Text(L10n.percent(percent, locale: .resolved()))
+                    .font(V3Font.custom(13, weight: .heavy))
+                    .foregroundStyle(MicaboColor.accentInk)
                     .monospacedDigit()
                     .fixedSize()
             }
@@ -230,14 +221,14 @@ struct MicaboDeckTile: View {
                     // titre de deux faisait deux tuiles de hauteurs différentes sur la même
                     // rangée, et leurs légendes ne s'alignaient plus.
                     Text(title)
-                        .font(MicaboFont.ui(14.5, weight: .bold))
+                        .font(V3Font.custom(15, weight: .heavy))
                         .foregroundStyle(MicaboColor.ink)
                         .lineLimit(2, reservesSpace: true)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text(meta)
-                        .font(MicaboFont.ui(11.5, weight: .medium))
+                        .font(V3Font.custom(13, weight: .bold))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .lineLimit(1)
 
@@ -285,19 +276,19 @@ struct MicaboFolderTile: View {
                         .font(.system(size: 44))
                 }
                 .frame(height: MicaboDeckTile.tileHeight)
-                .animation(.easeOut(duration: 0.15), value: isTargeted)
+                .animation(MicaboMotion.quick, value: isTargeted)
 
                 VStack(alignment: .leading, spacing: 5) {
                     // Deux lignes réservées, comme sur un deck : même hauteur sur la rangée.
                     Text(title)
-                        .font(MicaboFont.ui(14.5, weight: .bold))
+                        .font(V3Font.custom(15, weight: .heavy))
                         .foregroundStyle(MicaboColor.ink)
                         .lineLimit(2, reservesSpace: true)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text(meta)
-                        .font(MicaboFont.ui(11.5, weight: .medium))
+                        .font(V3Font.custom(13, weight: .bold))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .lineLimit(1)
                 }
@@ -335,14 +326,14 @@ struct MicaboAddDeckTile: View {
                     // Deux lignes réservées, comme sur un deck : le cadre pointillé reste
                     // à la hauteur du pastel d'à côté, quelle que soit la longueur du titre.
                     Text(title)
-                        .font(MicaboFont.ui(14.5, weight: .bold))
+                        .font(V3Font.custom(15, weight: .heavy))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .lineLimit(2, reservesSpace: true)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text(meta)
-                        .font(MicaboFont.ui(11.5, weight: .medium))
+                        .font(V3Font.custom(13, weight: .bold))
                         .foregroundStyle(MicaboColor.inkTertiary)
                         .lineLimit(1)
                 }
@@ -398,21 +389,21 @@ struct MicaboTodayCard<Footer: View>: View {
         VStack(alignment: .leading, spacing: 15) {
             HStack(alignment: .bottom, spacing: 10) {
                 Text("\(total)")
-                    .font(MicaboFont.number(46, weight: .heavy))
+                    .font(V3Font.custom(46, weight: .black))
                     .tracking(-1.8)
                     .foregroundStyle(MicaboColor.ink)
                     .monospacedDigit()
                     .contentTransition(.numericText())
 
                 Text(unitLabel)
-                    .font(MicaboFont.ui(16, weight: .semibold))
+                    .font(V3Font.custom(17, weight: .heavy))
                     .foregroundStyle(MicaboColor.ink)
                     .padding(.bottom, 5)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 if let durationLabel {
                     Text(durationLabel)
-                        .font(MicaboFont.ui(13, weight: .semibold))
+                        .font(V3Font.custom(14, weight: .bold))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .padding(.bottom, 7)
                 }
@@ -438,7 +429,7 @@ struct MicaboTodayCard<Footer: View>: View {
         .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.deck, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: MicaboRadius.deck, style: .continuous)
-                .strokeBorder(MicaboColor.dayWashStroke, lineWidth: 1)
+                .strokeBorder(MicaboColor.dayWashStroke, lineWidth: MicaboSurface.border)
         }
     }
 
@@ -480,7 +471,7 @@ struct MicaboTodayCard<Footer: View>: View {
         HStack(spacing: 7) {
             Circle().fill(color).frame(width: 8, height: 8)
             Text(label)
-                .font(MicaboFont.ui(13, weight: .semibold))
+                .font(V3Font.custom(14, weight: .bold))
                 .foregroundStyle(ink)
         }
     }
@@ -577,13 +568,13 @@ struct MicaboFlatRow<Trailing: View>: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(MicaboFont.ui(15, weight: .semibold))
+                    .font(V3Font.custom(16, weight: .heavy))
                     .foregroundStyle(MicaboColor.ink)
                     .lineLimit(1)
 
                 if let subtitle {
                     Text(subtitle)
-                        .font(MicaboFont.ui(12.5, weight: .regular))
+                        .font(V3Font.custom(13, weight: .semibold))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .lineLimit(1)
                 }
@@ -622,7 +613,7 @@ extension MicaboFlatRow where Trailing == EmptyView {
 /// chaque écran pour qu'il ne se mette pas à varier d'un point d'un écran à l'autre.
 struct MicaboRowChevron: View {
     var body: some View {
-        Image(systemName: "chevron.right")
+        Image(systemName: "chevron.forward")
             .font(.system(size: 14, weight: .semibold))
             .foregroundStyle(MicaboColor.inkTertiary)
     }
@@ -669,7 +660,7 @@ struct MicaboChapterRow: View {
                             .foregroundStyle(circleInk)
                     } else {
                         Text("\(number)")
-                            .font(MicaboFont.ui(13, weight: .heavy))
+                            .font(V3Font.custom(14, weight: .heavy))
                             .foregroundStyle(circleInk)
                             .monospacedDigit()
                     }
@@ -678,7 +669,7 @@ struct MicaboChapterRow: View {
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(title)
-                        .font(MicaboFont.ui(14.5, weight: .semibold))
+                        .font(V3Font.custom(15, weight: .heavy))
                         // Un chapitre jamais ouvert s'écrit un ton plus bas : il est à lire,
                         // pas à relire, et la liste doit dire lequel vient ensuite.
                         .foregroundStyle(state == .untouched ? MicaboColor.inkSecondary : MicaboColor.ink)
@@ -687,7 +678,7 @@ struct MicaboChapterRow: View {
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text(meta)
-                        .font(MicaboFont.ui(12, weight: .regular))
+                        .font(V3Font.custom(13, weight: .semibold))
                         .foregroundStyle(MicaboColor.inkSecondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -718,65 +709,67 @@ struct MicaboOutlineCard<Content: View>: View {
             .background(MicaboColor.canvas, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
-                    .strokeBorder(MicaboColor.stroke, lineWidth: 1)
+                    .strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border)
             }
     }
 }
 
 // MARK: - Le bouton de la maquette
 
-/// **Le bouton d'action, sans ombre.**
-///
-/// `MicaboPrimaryButtonStyle` en porte deux, et c'était juste tant que le fond de l'app
-/// était crème : une ombre y faisait décoller le bouton. Sur du blanc elle salit, et la
-/// maquette n'en a aucune — cinquante-six points de haut, quatorze de rayon, seize et demi
-/// de texte, et l'aplat violet suffit.
+/// **Le bouton d'action** : le bouton principal de l'app (`MicaboPrimaryFill`), à la hauteur
+/// donnée. Il avait son propre rendu, sans ombre et en seize et demi ; il dessine maintenant
+/// le même aplat que tous les autres.
 struct MicaboActionButtonStyle: ButtonStyle {
     var tint: Color = MicaboColor.accent
-    var foreground: Color = MicaboColor.onInk
-    var height: CGFloat = 56
+    var foreground: Color = MicaboColor.onAccent
+    var height: CGFloat = MicaboButtonMetrics.height
     var feedback: Haptics.Press = .medium
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(MicaboFont.ui(16.5, weight: .bold))
-            .foregroundStyle(foreground)
-            .frame(maxWidth: .infinity)
-            .frame(height: height)
-            .background(tint, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
-            .micaboPressEffect(isPressed: configuration.isPressed, feedback: feedback)
+        MicaboPrimaryFill(
+            label: configuration.label,
+            tint: tint,
+            foreground: foreground,
+            minHeight: height,
+            isPressed: configuration.isPressed,
+            feedback: feedback
+        )
     }
 }
 
 // MARK: - L'intitulé d'un rayon
 
-/// **Le titre d'une section, et son lien.**
+/// **Le titre d'une section, et son lien** — le même sur tous les onglets.
 ///
-/// Dix-huit points en gras, une ligne grise en dessous quand elle apporte quelque chose, et
-/// « Tout voir › » en violet à droite. C'est le seul violet de la page qui ne soit pas une
-/// progression : un lien qui mène ailleurs, et il n'y en a qu'un par rayon.
+/// Dix-neuf points au plus gras de la police, une ligne grise dessous quand elle apporte
+/// quelque chose, et « Tout voir » à droite (`MicaboSeeAllLink`). C'est la mesure du titre de
+/// section de Home, du Calendrier et de Concentration : le Profil en avait un à dix-huit
+/// points demi-gras, et le même mot « section » ne se lisait pas pareil d'un onglet à l'autre.
 struct MicaboSectionHeading<Trailing: View>: View {
     let title: String
     var subtitle: String?
     @ViewBuilder var trailing: Trailing
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .firstTextBaseline, spacing: MicaboSpacing.xs) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(MicaboFont.ui(18, weight: .bold))
-                    .tracking(-0.2)
+                    .font(V3Font.title)
+                    .tracking(V3Tracking.title)
                     .foregroundStyle(MicaboColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.isHeader)
 
                 if let subtitle {
                     Text(subtitle)
-                        .font(MicaboFont.ui(13, weight: .regular))
+                        .font(V3Font.custom(14, weight: .bold))
                         .foregroundStyle(MicaboColor.inkSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            trailing.padding(.top, 3)
+            trailing
         }
     }
 }
@@ -787,18 +780,28 @@ extension MicaboSectionHeading where Trailing == EmptyView {
     }
 }
 
-/// « Tout voir › » : le lien de fin de rayon, toujours écrit pareil.
+/// « Tout voir » : le lien de fin de section, toujours écrit pareil — quatorze points, la
+/// teinte de l'accent, et un chevron qui se retourne en arabe (le « › » écrit en dur, lui,
+/// pointait du mauvais côté).
 struct MicaboSeeAllLink: View {
     let title: String
     var action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Text("\(title) ›")
-                .font(MicaboFont.ui(13.5, weight: .bold))
-                .foregroundStyle(MicaboColor.accent)
+            HStack(spacing: 3) {
+                Text(title)
+                    .lineLimit(1)
+                Image(systemName: "chevron.forward")
+                    .font(.system(size: 11, weight: .black))
+            }
+            .font(V3Font.custom(15, weight: .heavy))
+            .foregroundStyle(MicaboColor.accentInk)
+            .frame(minHeight: 32)
+            .fixedSize()
+            .contentShape(Rectangle())
         }
-        .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
+        .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .selection))
     }
 }
 
@@ -812,7 +815,7 @@ struct MicaboStatBox: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(value)
-                .font(MicaboFont.ui(20, weight: .heavy))
+                .font(V3Font.custom(22, weight: .black))
                 .tracking(-0.5)
                 .foregroundStyle(MicaboColor.ink)
                 .monospacedDigit()
@@ -820,19 +823,14 @@ struct MicaboStatBox: View {
                 .minimumScaleFactor(0.7)
 
             Text(label)
-                .font(MicaboFont.ui(11, weight: .regular))
+                .font(V3Font.custom(13, weight: .bold))
                 .foregroundStyle(MicaboColor.inkSecondary)
-                .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 13)
-        .padding(.horizontal, 11)
-        .background(MicaboColor.canvas, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-        }
+        .padding(.horizontal, 12)
+        .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
     }
 }
 
@@ -849,8 +847,12 @@ struct MicaboStreakCard: View {
     let best: Int
     let title: String
     let note: String
+    /// **Mika en demi au bas de la carte**, à droite, coupé par son bord (la règle de mise en
+    /// scène, `MikaMascot.swift`). Sans humeur, pas de Mika.
+    var mika: MikaMood?
 
     private static let segments = 6
+    static let mikaSize: CGFloat = MikaPeek.card
 
     /// **Les six segments disent le chemin vers le record.**
     ///
@@ -881,12 +883,12 @@ struct MicaboStreakCard: View {
                     .foregroundStyle(MicaboColor.flame)
 
                 Text(title)
-                    .font(MicaboFont.ui(16, weight: .bold))
+                    .font(V3Font.custom(17, weight: .heavy))
                     .foregroundStyle(MicaboColor.ink)
             }
 
             Text(note)
-                .font(MicaboFont.ui(13.5, weight: .regular))
+                .font(V3Font.custom(14, weight: .semibold))
                 .foregroundStyle(MicaboColor.warmProse)
                 .lineSpacing(2)
                 .fixedSize(horizontal: false, vertical: true)
@@ -900,6 +902,7 @@ struct MicaboStreakCard: View {
             }
             .padding(.top, 1)
         }
+        .padding(.trailing, mika == nil ? 0 : Self.mikaSize - 2)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(17)
         .background {
@@ -909,10 +912,16 @@ struct MicaboStreakCard: View {
                 endPoint: .bottomTrailing
             )
         }
+        .overlay(alignment: .bottomTrailing) {
+            if let mika {
+                MikaPeek(mood: mika, width: Self.mikaSize)
+                    .padding(.trailing, 12)
+            }
+        }
         .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous)
-                .strokeBorder(MicaboColor.warmWashStroke, lineWidth: 1)
+                .strokeBorder(MicaboColor.warmWashStroke, lineWidth: MicaboSurface.border)
         }
     }
 }
@@ -933,14 +942,14 @@ struct MicaboMasteryRow: View {
         Button(action: action) {
             HStack(spacing: 12) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 13, style: .continuous).fill(pastel)
+                    RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous).fill(pastel)
                     Text(emoji).font(.system(size: 19))
                 }
                 .frame(width: 40, height: 40)
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text(title)
-                        .font(MicaboFont.ui(14.5, weight: .semibold))
+                        .font(V3Font.custom(15, weight: .heavy))
                         .foregroundStyle(MicaboColor.ink)
                         .lineLimit(1)
 
@@ -948,9 +957,9 @@ struct MicaboMasteryRow: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                Text("\(percent) %")
-                    .font(MicaboFont.ui(13, weight: .bold))
-                    .foregroundStyle(MicaboColor.accent)
+                Text(L10n.percent(percent, locale: .resolved()))
+                    .font(V3Font.custom(14, weight: .heavy))
+                    .foregroundStyle(MicaboColor.accentInk)
                     .monospacedDigit()
                     .fixedSize()
             }
@@ -1010,12 +1019,12 @@ struct MicaboFactLine: View {
             ForEach(Array(facts.enumerated()), id: \.element.id) { index, fact in
                 if fact.isLead {
                     Text(fact.text.uppercased())
-                        .font(MicaboFont.ui(11, weight: .bold))
+                        .font(V3Font.custom(13, weight: .heavy))
                         .tracking(1.2)
-                        .foregroundStyle(MicaboColor.accent)
+                        .foregroundStyle(MicaboColor.accentInk)
                 } else {
                     Text(fact.text)
-                        .font(MicaboFont.ui(12.5, weight: .medium))
+                        .font(V3Font.custom(13, weight: .bold))
                         .foregroundStyle(MicaboColor.inkSecondary)
                 }
 
@@ -1054,7 +1063,7 @@ struct MicaboSessionHeader: View {
                     .accessibilityLabel(i18n.t("app.a11y.close"))
 
                 Text(counter)
-                    .font(MicaboFont.ui(14, weight: .semibold))
+                    .font(V3Font.custom(15, weight: .heavy))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .monospacedDigit()
                     .frame(maxWidth: .infinity)
@@ -1071,7 +1080,7 @@ struct MicaboSessionHeader: View {
                     Capsule()
                         .fill(MicaboColor.accent)
                         .frame(width: max(0, min(1, progress)) * proxy.size.width)
-                        .animation(.easeOut(duration: 0.25), value: progress)
+                        .animation(MicaboMotion.standard, value: progress)
                 }
             }
             .frame(height: 4)

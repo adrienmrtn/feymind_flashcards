@@ -73,7 +73,7 @@ struct NotesCircleView: View {
         let waiting = current == .question && answer == nil
         VStack(spacing: 8) {
             if waiting {
-                Text(L10n.t("lesson.notes.answerToFinish", locale: .resolved()))
+                Text(L10n.t("ios.pol.learn.notes.answerToFinish", locale: .resolved()))
                     .font(MicaboFont.ui(14, weight: .bold))
                     .foregroundStyle(MicaboColor.inkSecondary)
             }
@@ -82,7 +82,7 @@ struct NotesCircleView: View {
                 : L10n.t("lesson.quiz.continue", locale: .resolved())) {
                 if isLast { onDone() } else { next() }
             }
-            .buttonStyle(LessonPrimaryButtonStyle(enabled: !waiting))
+            .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent, enabled: !waiting))
             .disabled(waiting)
         }
         .padding(.horizontal, MicaboSpacing.screen)
@@ -95,7 +95,7 @@ struct NotesCircleView: View {
         guard page + 1 < pages.count else { return }
         Haptics.light()
         forward = true
-        withAnimation(.spring(duration: 0.42, bounce: 0.15)) {
+        withAnimation(LearnMotion.standard) {
             page += 1
             furthest = max(furthest, page)
         }
@@ -113,7 +113,7 @@ struct NotesCircleView: View {
         guard page > 0 else { return }
         Haptics.light()
         forward = false
-        withAnimation(.spring(duration: 0.42, bounce: 0.15)) { page -= 1 }
+        withAnimation(LearnMotion.standard) { page -= 1 }
     }
 
     private func answered(_ result: QuizAnswer) {
@@ -297,7 +297,7 @@ struct NotesSegments: View {
 
             if let onBack {
                 Button(action: onBack) {
-                    Image(systemName: "chevron.left")
+                    Image(systemName: "chevron.backward")
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .frame(width: 32, height: 36)
@@ -310,7 +310,7 @@ struct NotesSegments: View {
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, 8)
         .padding(.bottom, 10)
-        .animation(.easeOut(duration: 0.2), value: onBack == nil)
+        .animation(LearnMotion.quick, value: onBack == nil)
     }
 }
 
@@ -329,13 +329,12 @@ private struct NotesSegment: View {
         }
         .onAppear { fill = filled ? 1 : 0 }
         .onChange(of: filled) { _, value in
-            withAnimation(.easeOut(duration: value ? 0.45 : 0.2)) { fill = value ? 1 : 0 }
+            withAnimation(value ? LearnMotion.gentle : LearnMotion.quick) { fill = value ? 1 : 0 }
         }
     }
 }
 
-/// **Le contenu d'un écran**, qui se remplit en arrivant : chaque élément glisse en place, un
-/// peu après le précédent.
+/// **Le contenu d'un écran**, posé d'un bloc : il arrive avec la page qui glisse.
 struct NotesPageView: View {
     let page: NotesPage
     let chapter: Chapter
@@ -404,7 +403,7 @@ struct NotesPageView: View {
                                 }
                                 .padding(16)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
                                 .micaboElevation(.row)
                                 .reveal(index + 2)
                             }
@@ -433,27 +432,14 @@ struct NotesPageView: View {
     }
 }
 
-/// Un élément qui glisse en place à l'arrivée de l'écran, après ceux qui le précèdent.
-private struct Reveal: ViewModifier {
-    let order: Int
-    @State private var shown = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    func body(content: Content) -> some View {
-        content
-            .opacity(shown ? 1 : 0)
-            .offset(y: shown || reduceMotion ? 0 : 16)
-            .onAppear {
-                withAnimation(.spring(duration: 0.5, bounce: 0.2).delay(reduceMotion ? 0 : 0.08 + Double(order) * 0.09)) {
-                    shown = true
-                }
-            }
-    }
-}
-
 extension View {
+    /// **Le contenu d'une page de notes arrive avec la page** (lot 10, « mouvement natif et
+    /// immédiat »). Chaque élément glissait en place après le précédent, 0,09 s plus tard : le
+    /// dernier bloc d'une page de six n'était lisible qu'une seconde après « Continuer », à
+    /// chaque page. La page glisse d'un bloc ; rien n'attend dessus. L'ordre reste dans les
+    /// appels pour dire dans quel sens l'écran se lit.
     func reveal(_ order: Int) -> some View {
-        modifier(Reveal(order: order))
+        self
     }
 }
 
@@ -521,7 +507,12 @@ struct LessonNotesReader: View {
         NavigationStack {
             ScrollViewReader { proxy in
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 32) {
+                    // **Un thème ne se compose que lorsqu'on y arrive.** La pile composait d'un coup
+                    // les notes entières des cinq thèmes (une cinquantaine de blocs, leurs mots-clés
+                    // et leurs formules) avant de montrer la première ligne : la feuille s'ouvrait
+                    // avec ce retard. La couverture, le sommaire et le premier thème suffisent à
+                    // l'ouverture ; le sommaire saute toujours au thème voulu.
+                    LazyVStack(alignment: .leading, spacing: 32) {
                         cover
                         summary(proxy)
                         ForEach(Array(course.orderedChapters.enumerated()), id: \.element.id) { index, chapter in
@@ -571,7 +562,7 @@ struct LessonNotesReader: View {
 
     private var cover: some View {
         HStack(spacing: 16) {
-            MicaboIconView(icon: course.icon, size: 72)
+            MicaboIconView(icon: course.icon, size: 72, tone: course.tone)
             VStack(alignment: .leading, spacing: 4) {
                 Text(course.title)
                     .font(MicaboFont.display(26))
@@ -598,7 +589,7 @@ struct LessonNotesReader: View {
             ForEach(Array(course.orderedChapters.enumerated()), id: \.element.id) { index, chapter in
                 Button {
                     Haptics.light()
-                    withAnimation(.easeInOut(duration: 0.5)) { proxy.scrollTo(chapter.id, anchor: .top) }
+                    withAnimation(LearnMotion.gentle) { proxy.scrollTo(chapter.id, anchor: .top) }
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: PathSymbol.resolved(themes.indices.contains(index) ? themes[index].symbol : PathSymbol.fallback))
@@ -622,7 +613,7 @@ struct LessonNotesReader: View {
             }
         }
         .padding(16)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
         .micaboElevation(.row)
     }
 

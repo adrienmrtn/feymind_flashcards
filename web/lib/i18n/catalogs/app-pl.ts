@@ -1,3 +1,5 @@
+import { kxPl } from "./kx-pl";
+
 /** Connected-app copy (pl). */
 export const appPl = {
   a11y: {
@@ -572,6 +574,7 @@ export const appPl = {
     delayMonths: "{n} mies.",
     delayYears: "{n, plural, one {# rok} few {# lata} many {# lat} other {# roku}}",
   },
+  kx: kxPl,
 } as const;
 
 export const copyPl = {

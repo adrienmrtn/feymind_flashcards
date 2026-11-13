@@ -132,7 +132,6 @@ enum OfflineCourseBuilder {
 /// Service utilisé pour les aperçus et le repli hors ligne.
 struct OfflineAIService: AIService {
     func generateCourse(_ request: CourseGenerationRequest) async throws -> GeneratedCourse {
-        try await Task.sleep(nanoseconds: 400_000_000)
         return OfflineCourseBuilder.build(
             from: request.rawText,
             hintTitle: request.hintTitle,
@@ -141,7 +140,6 @@ struct OfflineAIService: AIService {
     }
 
     func generateFlashcards(_ request: FlashcardGenerationRequest) async throws -> [GeneratedFlashcard] {
-        try await Task.sleep(nanoseconds: 300_000_000)
         let course = OfflineCourseBuilder.build(
             from: request.courseContext,
             hintTitle: request.courseTitle,
@@ -151,14 +149,12 @@ struct OfflineAIService: AIService {
     }
 
     func explain(_ request: SelectionExplanationRequest) async throws -> SelectionExplanation {
-        try await Task.sleep(nanoseconds: 300_000_000)
         return OfflineCourseBuilder.explain(request)
     }
 
     /// Hors ligne, Mika ne fabrique pas de réponse : il dit qu'il ne peut pas, et c'est
     /// mieux qu'une phrase inventée qui aurait l'air d'en être une.
     func chat(_ request: MikaChatRequest) async throws -> MikaChatReply {
-        try await Task.sleep(nanoseconds: 300_000_000)
         return MikaChatReply(reply: L10n.t("ios.mika.chat.offline", locale: .resolved()), card: nil)
     }
 }

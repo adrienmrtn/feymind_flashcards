@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Nunito } from "next/font/google";
+import localFont from "next/font/local";
 
 import { Analytics } from "@vercel/analytics/next";
 
@@ -24,22 +24,26 @@ import { SiteStructuredData } from "@/components/landing/StructuredData";
 import "./globals.css";
 
 /**
- * **Nunito partout**, les mots comme les nombres.
+ * **Deux familles, comme l'app** (direction artistique V3.3, `V3Font`).
  *
- * C'est la police de l'app depuis la refonte « parcours » (`MicaboFont`, `docs/refonte-parcours.md`
- * § 10) : Hanken Grotesk et Inter en sont sortis, et le site les suit. `next/font` l'héberge
- * lui-même au moment de la compilation, donc aucun appel à un tiers à l'exécution. Les cinq
- * graisses sont celles que l'app embarque.
+ * Les titres, les bulles de Mika, les boutons et les grands chiffres sont en **Sofia Sans
+ * Condensed** Black (900), ExtraBold (800) pour un bouton secondaire ; tout le reste est en
+ * police système (`--font-sans`). Nunito est sortie, du site comme de l'app.
  *
- * Seuls le latin et le latin étendu sont préchargés ; le cyrillique (russe, bulgare) est
- * déclaré aussi et ne se télécharge que sur une page qui en affiche. Le grec et l'arabe, que
- * Nunito n'a pas, retombent sur la police du système.
+ * Les fichiers sont ceux de l'app, sous licence OFL (`app/fonts/OFL.txt`), réduits au latin
+ * étendu, au grec et au cyrillique et convertis en WOFF2 (40 Ko chacun). L'arabe retombe sur
+ * la police du système. `adjustFontFallback` dessine une police de repli aux mêmes mesures :
+ * le titre ne saute pas quand la vraie arrive.
  */
-const nunito = Nunito({
-  subsets: ["latin", "latin-ext"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-nunito",
+const sofia = localFont({
+  src: [
+    { path: "./fonts/SofiaSansCondensed-ExtraBold.woff2", weight: "800", style: "normal" },
+    { path: "./fonts/SofiaSansCondensed-Black.woff2", weight: "900", style: "normal" },
+  ],
+  variable: "--font-sofia",
   display: "swap",
+  adjustFontFallback: "Arial",
+  fallback: ["Arial Narrow", "system-ui", "sans-serif"],
 });
 
 /**
@@ -74,6 +78,7 @@ export async function generateMetadata(): Promise<Metadata> {
         { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
         { url: "/icon.svg", type: "image/svg+xml" },
         { url: "/icon-32.png", type: "image/png", sizes: "32x32" },
+        { url: "/icon-16.png", type: "image/png", sizes: "16x16" },
         { url: "/favicon.ico", sizes: "32x32" },
       ],
       apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
@@ -99,13 +104,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  // La couleur de la barre du navigateur suit le papier : une bande blanche au-dessus d'un fond
-  // teinté fait lire une bordure là où il n'y en a pas. Nuit et crépuscule la remplacent
-  // au moment du choix (`applyAppearance`).
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: APPEARANCE_THEME_COLOR.day },
-    { color: APPEARANCE_THEME_COLOR.day },
-  ],
+  // La couleur de la barre du navigateur suit le fond : le marine par défaut. Le clair la
+  // remplace au moment du choix (`applyAppearance`, et le script d'amorçage).
+  themeColor: [{ color: APPEARANCE_THEME_COLOR.night }],
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -117,7 +118,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       // `globals.css`, et les propriétés logiques `ps-` / `pe-` / `text-start`).
       dir={UI_LOCALE_META[locale].dir}
       data-appearance={appearance}
-      className={`${nunito.variable}${appearanceIsDark(appearance) ? " dark" : ""}`}
+      className={`${sofia.variable}${appearanceIsDark(appearance) ? " dark" : ""}`}
       // Le script d'amorçage pose le même `color-scheme` avant l'hydratation : le serveur doit
       // l'écrire aussi, sinon React signale un attribut qu'il n'attendait pas.
       style={{ colorScheme: appearanceIsDark(appearance) ? "dark" : "light" }}

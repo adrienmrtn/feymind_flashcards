@@ -53,7 +53,7 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
               href={home}
               size={32}
               className="text-ink"
-              wordClassName="text-[15px] font-bold text-ink"
+              wordClassName="font-display text-[21px] leading-none text-ink"
             />
             <p className="mt-2.5 text-[13.5px] leading-relaxed text-ink-secondary">
               {t("landing.footerTagline")}

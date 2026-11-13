@@ -16,6 +16,7 @@ import { cleanWorries, type Worry } from "@/lib/onboarding/questions";
 import { trackById, yearById } from "@/lib/onboarding/school-system";
 import { useOnboarding } from "@/lib/onboarding/store";
 import { createClient } from "@/lib/supabase/client";
+import { EmojiGlyph } from "@/components/ui/EmojiGlyph";
 
 /**
  * **« Voici ce qui va changer pour toi »** : les réponses relues, juste avant le compte.
@@ -138,8 +139,8 @@ export default function SummaryStep() {
             className="rise flex items-center gap-3 rounded-[16px] border-[1.5px] border-stroke bg-surface px-3 py-2.5"
             style={{ animationDelay: `${60 + index * 50}ms` }}
           >
-            <span aria-hidden className="emoji flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-accent-soft text-[20px]">
-              {benefit.emoji}
+            <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-surface-muted">
+              <EmojiGlyph emoji={benefit.emoji} size={24} />
             </span>
             <span className="min-w-0">
               <span className="block text-[14.5px] font-extrabold leading-snug text-ink">{benefit.title}</span>

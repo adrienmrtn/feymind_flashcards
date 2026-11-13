@@ -1,3 +1,5 @@
+import { kxSl } from "./kx-sl";
+
 /** Textes de l'app connectée (hors vitrine et parcours), version sl. */
 export const appSl = {
   a11y: {
@@ -572,6 +574,7 @@ export const appSl = {
     delayMonths: "{n} mes.",
     delayYears: "{n, plural, one {# leto} other {Let: #}}",
   },
+  kx: kxSl,
 };
 
 export const copySl = {

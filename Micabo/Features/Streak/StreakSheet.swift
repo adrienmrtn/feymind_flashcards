@@ -106,14 +106,14 @@ struct StreakSheet: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
         .accessibilityElement(children: .combine)
     }
 
     private var mikaLine: some View {
         HStack(spacing: 12) {
-            MikaMascot(mood: status.studiedToday ? .happy : .wave, size: 64)
+            MikaAvatar(size: 44)
             Text(line)
                 .font(MicaboFont.ui(16, weight: .bold))
                 .foregroundStyle(MicaboColor.ink)
@@ -124,7 +124,7 @@ struct StreakSheet: View {
         .padding(.vertical, 12)
         .background(
             status.studiedToday ? MicaboColor.flameSoft : MicaboColor.surfaceMuted,
-            in: RoundedRectangle(cornerRadius: 20, style: .continuous)
+            in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous)
         )
     }
 
@@ -149,7 +149,7 @@ struct StreakSheet: View {
     }
 
     private func refresh() {
-        withAnimation(.spring(duration: 0.4)) {
+        withAnimation(MicaboMotion.standard) {
             status = StudyStreak.status()
             week = StudyStreak.week()
         }
@@ -163,9 +163,10 @@ struct StreakSheet: View {
 /// L'icône ne dépasse jamais quatre-vingt-quatre points : ses images font 256 pixels, et plus
 /// grande elle se brouille. C'est le halo qui donne la présence, pas la taille de l'icône.
 ///
-/// La respiration se calcule sur l'horloge (`TimelineView`) plutôt qu'avec une animation qui
-/// se répète : posée au `onAppear` d'une feuille, une animation infinie emporte aussi le
-/// glissement de la feuille, et la flamme flotte pendant qu'elle monte.
+/// **Une seule inspiration**, à l'apparition : le halo s'ouvre et la flamme se pose, puis tout
+/// reste immobile (charte du lot 6 § 7 : aucune boucle). L'inspiration part un instant après
+/// l'apparition, pour ne pas s'ajouter au glissement de la feuille qui monte ; rien avec
+/// « Réduire les animations ».
 struct StreakFlame: View {
     var lit = true
     var size: CGFloat = 84
@@ -178,14 +179,15 @@ struct StreakFlame: View {
     }
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.homeStill) private var still
+    /// 0 avant l'inspiration, 1 une fois posée.
+    @State private var breathed = false
 
     var body: some View {
         let icon = min(size, Self.maximumIconSize)
-        let animated = lit && !reduceMotion
-        TimelineView(.animation(minimumInterval: 1 / 30, paused: !animated)) { timeline in
-            // Une respiration de 2,6 s : 0 au creux, 1 au plus fort.
-            let phase = timeline.date.timeIntervalSinceReferenceDate * 2 * Double.pi / 2.6
-            let breath: CGFloat = animated ? CGFloat((sin(phase) + 1) / 2) : 0.5
+        let animated = lit && !reduceMotion && !still
+        let breath: CGFloat = animated ? (breathed ? 1 : 0) : 1
+        Group {
             ZStack {
                 Circle()
                     .fill(RadialGradient(
@@ -204,11 +206,20 @@ struct StreakFlame: View {
                     .saturation(lit ? 1 : 0)
                     .opacity(lit ? 1 : 0.45)
                     .scaleEffect(1 + 0.04 * breath, anchor: .bottom)
-                    .shadow(color: MicaboColor.flame.opacity(lit ? Double(0.18 + 0.2 * breath) : 0), radius: 14, x: 0, y: 8)
             }
         }
         .frame(width: icon * 1.6, height: icon * 1.6)
         .accessibilityHidden(true)
+        .onAppear {
+            guard animated, !breathed else { return }
+            withAnimation(MicaboMotion.gentle) { breathed = true }
+        }
+        .onChange(of: lit) { _, lit in
+            // La flamme qui s'allume (la fête de la série) prend son inspiration à ce moment.
+            guard lit, !reduceMotion, !still else { return }
+            breathed = false
+            withAnimation(MicaboMotion.celebrate) { breathed = true }
+        }
     }
 }
 
@@ -242,8 +253,8 @@ struct StreakWeekCard: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
         .micaboElevation(.card)
     }
 }
@@ -305,7 +316,7 @@ private struct StreakDayDot: View {
         .padding(3)
         .overlay {
             if day.isToday {
-                Circle().strokeBorder(lit ? MicaboColor.flame : MicaboColor.inkTertiary, lineWidth: 2)
+                Circle().strokeBorder(lit ? MicaboColor.flame : MicaboColor.inkTertiary, lineWidth: MicaboSurface.border)
             }
         }
     }

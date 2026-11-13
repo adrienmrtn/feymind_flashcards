@@ -35,7 +35,7 @@ export default function YearStep() {
   return (
     <Scaffold
       title={t("onboarding.yearTitle")}
-      lead={track ? `${track.emoji} ${track.title}` : undefined}
+      lead={track ? track.title : undefined}
       footer={<ContinueButton enabled={Boolean(selected) && ready} />}
       center
     >

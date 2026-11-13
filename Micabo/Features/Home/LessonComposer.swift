@@ -16,13 +16,27 @@ final class LessonComposer {
     /// Les pages envoyées à la passe visuelle.
     static let maximumImages = 6
 
-    /// Une icône d'import sous la barre.
+    /// **Un support**, dans la feuille du « + » et sur sa pastille sous la barre
+    /// (`docs/supports.md`). Les cinq premiers sont ceux d'avant ; les suivants lisent sur
+    /// l'appareil de nouvelles sources et envoient leur texte par le même chemin. `flashcards`
+    /// est à part : un paquet repris tel quel devient un deck, sans passer par la génération
+    /// (`DeckLessonBuilder`).
     enum Kind: String, CaseIterable, Identifiable {
         case pdf
         case photo
         case audio
         case youtube
         case text
+        /// Une page web, récupérée et nettoyée sur l'appareil (`WebPageImportService`).
+        case web
+        /// Des diapositives PowerPoint : le texte de chaque diapo et ses notes (`SlidesImportService`).
+        case slides
+        /// Des notes écrites à la main : le scanner, puis l'OCR de Vision en mode précis.
+        case handwriting
+        /// Un cours enregistré en direct, transcrit sur l'appareil (`AudioTranscriber`).
+        case lecture
+        /// Un paquet de flashcards (Anki, Quizlet) : un deck tout de suite, sans génération.
+        case flashcards
 
         var id: String { rawValue }
 
@@ -33,10 +47,43 @@ final class LessonComposer {
             case .audio: .audio
             case .youtube: .link
             case .text: .text
+            case .web: .globe
+            case .slides: .palette
+            case .handwriting: .quill
+            case .lecture: .audio
+            case .flashcards: .cards
             }
         }
 
-        var titleKey: String { "lesson.import.\(rawValue)" }
+        var titleKey: String {
+            switch self {
+            case .pdf: "ios.sup.source.pdf"
+            case .photo: "ios.sup.source.photo"
+            case .audio: "ios.sup.source.audio"
+            case .youtube: "ios.sup.source.youtube"
+            case .text: "ios.sup.source.text"
+            case .web: "ios.sup.source.web"
+            case .slides: "ios.sup.source.slides"
+            case .handwriting: "ios.sup.source.handwriting"
+            case .lecture: "ios.sup.source.lecture"
+            case .flashcards: "ios.sup.source.flashcards"
+            }
+        }
+
+        var subtitleKey: String {
+            switch self {
+            case .pdf: "ios.sup.source.pdfSub"
+            case .photo: "ios.sup.source.photoSub"
+            case .audio: "ios.sup.source.audioSub"
+            case .youtube: "ios.sup.source.youtubeSub"
+            case .text: "ios.sup.source.textSub"
+            case .web: "ios.sup.source.webSub"
+            case .slides: "ios.sup.source.slidesSub"
+            case .handwriting: "ios.sup.source.handwritingSub"
+            case .lecture: "ios.sup.source.lectureSub"
+            case .flashcards: "ios.sup.source.flashcardsSub"
+            }
+        }
     }
 
     struct Support: Identifiable, Equatable {
@@ -179,17 +226,25 @@ final class LessonComposer {
     static func sourceKind(of support: Support) -> LessonSourceKind {
         switch support.kind {
         case .pdf: support.document?.source == .docx ? .docx : .pdf
-        case .photo: .photo
-        case .audio: .audio
+        case .photo, .handwriting: .photo
+        case .audio, .lecture: .audio
         case .youtube: .youtube
-        case .text: .text
+        // Une page web se lit comme un texte collé : le serveur ne connaît que ces sources
+        // (`normalizeSource`, `supabase/functions/generate-lesson/gate.ts`).
+        case .text, .web: .text
+        // Des diapositives sont un document, comme un PDF.
+        case .slides: .pdf
+        // Un paquet de cartes ne passe jamais par la barre (`LessonImportPickers`).
+        case .flashcards: .text
         }
     }
 }
 
 /// **La porte du gratuit, côté app** (`docs/refonte-parcours.md` § 7) : une leçon offerte, à vie,
-/// depuis un sujet ou un texte collé ; les imports sont Pro. Le serveur tient la même porte
-/// (`begin_lesson`) : celle-ci évite seulement un appel qui serait refusé.
+/// depuis un sujet, un texte collé **ou un import** (`docs/refonte-knowunity.md` § 7 : la leçon
+/// offerte importée part avec `onboarding: true`, que `begin_lesson(p_onboarding)` accepte) ;
+/// une fois servie, les imports sont Pro. Le serveur tient la même porte (`begin_lesson`) :
+/// celle-ci évite seulement un appel qui serait refusé.
 enum LessonAllowance {
     /// Vrai quand l'élève a déjà un cours à lui : une leçon créée, un ancien cours importé ou
     /// généré. Les cours de démonstration, de la bibliothèque et les paquets faits à la main
@@ -203,7 +258,113 @@ enum LessonAllowance {
     /// Le paywall à ouvrir avant d'envoyer, ou `nil` si la demande peut partir.
     static func gate(isPro: Bool, source: LessonSourceKind, courses: [Course]) -> PaywallTrigger? {
         if isPro { return nil }
+        // La leçon offerte n'a pas servi : elle part, d'un sujet comme d'un import.
+        guard hasUsedFreeLesson(courses: courses) else { return nil }
         if source.isImport { return .generateCourse }
-        return hasUsedFreeLesson(courses: courses) ? .secondCourse : nil
+        return .secondCourse
+    }
+
+    /// Vrai quand cette demande est la leçon offerte **depuis un import** : elle part avec
+    /// `onboarding: true`. Un sujet ou un texte n'en a pas besoin, le serveur les offre déjà.
+    static func sendsAsFreeLesson(isPro: Bool, source: LessonSourceKind, courses: [Course]) -> Bool {
+        !isPro && source.isImport && !hasUsedFreeLesson(courses: courses)
+    }
+
+    // MARK: Quand le paywall s'ouvre
+
+    /// **Où mène l'envoi.** La règle reste celle de `gate` ; seul le moment du paywall change :
+    /// un élève qui a déposé des supports les voit lus, puis le paywall s'ouvre au moment de
+    /// débloquer la leçon. Un sujet seul n'a rien à lire : son paywall s'ouvre tout de suite,
+    /// comme avant.
+    enum SendRoute: Equatable {
+        /// La demande part au serveur.
+        case create
+        /// Le paywall tout de suite, sans rien d'autre.
+        case paywall(PaywallTrigger)
+        /// La lecture (déjà faite sur l'appareil), l'aperçu de ce qui a été lu, puis le paywall
+        /// `lessonReady`. Rien ne part au serveur avant l'achat : il refuserait la leçon.
+        case lockedPreview
+    }
+
+    static func sendRoute(isPro: Bool, source: LessonSourceKind, courses: [Course]) -> SendRoute {
+        guard let trigger = gate(isPro: isPro, source: source, courses: courses) else { return .create }
+        return source == .topic ? .paywall(trigger) : .lockedPreview
+    }
+
+    /// Le paywall que Home ouvre **avant** l'écran de création : seulement celui d'un sujet
+    /// seul. Les supports déposés passent par l'aperçu verrouillé (`LessonCreationFlow`).
+    static func immediatePaywall(isPro: Bool, source: LessonSourceKind, courses: [Course]) -> PaywallTrigger? {
+        if case .paywall(let trigger) = sendRoute(isPro: isPro, source: source, courses: courses) {
+            return trigger
+        }
+        return nil
+    }
+
+    /// **Un import n'est jamais fermé, et ne porte plus de couronne.** Lire un PDF, des
+    /// photos, un audio ou une vidéo se fait sur l'appareil ; c'est l'écriture de la leçon qui
+    /// est dans Pro, et son paywall vient à la fin de la lecture (`sendRoute`). Home lit cette
+    /// fonction pour la couronne des tuiles de supports comme pour le paywall de `tapImport`.
+    static func locksImport(_ kind: LessonComposer.Kind, isPro: Bool, freeLessonLeft: Bool) -> Bool {
+        false
+    }
+}
+
+/// **Ce que Mika a vraiment lu**, pour l'aperçu verrouillé : rien d'inventé, tout vient des
+/// supports lus sur l'appareil.
+struct LessonReadSummary: Equatable {
+    /// Les supports lus.
+    var supports: Int
+    /// Les pages d'un PDF, d'un Word ou de photos ; zéro pour une vidéo, un audio ou un texte
+    /// collé, qui n'en ont pas (la ligne ne s'affiche alors pas).
+    var pages: Int
+    var words: Int
+    /// Le titre deviné : le titre d'une vidéo, sinon la première vraie ligne du texte, sinon
+    /// le nom du fichier.
+    var title: String
+    /// Les premières lignes du texte, floutées derrière le cadenas.
+    var previewLines: [String]
+
+    static let previewLineCount = 4
+    static let maximumLineLength = 90
+
+    init(documents: [ImportedDocument]) {
+        supports = documents.count
+        pages = documents
+            .filter { [.pdf, .photo, .docx].contains($0.source) }
+            .reduce(0) { $0 + max(1, $1.pageCount) }
+        words = documents.reduce(0) { $0 + Self.wordCount($1.text) }
+
+        let first = documents.first
+        let lines = first.map { Self.meaningfulLines($0.text) } ?? []
+        if let first, first.source == .youtube, let name = first.fileName.nilIfBlank {
+            title = name
+            previewLines = Array(lines.prefix(Self.previewLineCount))
+        } else if let line = lines.first {
+            title = Self.clip(line, to: 80)
+            previewLines = Array(lines.dropFirst().prefix(Self.previewLineCount))
+        } else {
+            title = first?.fileName ?? ""
+            previewLines = []
+        }
+        previewLines = previewLines.map { Self.clip($0, to: Self.maximumLineLength) }
+    }
+
+    /// Les mots : ce qui, entre deux blancs, contient une lettre ou un chiffre.
+    static func wordCount(_ text: String) -> Int {
+        text.split(whereSeparator: { $0.isWhitespace || $0.isNewline })
+            .filter { $0.contains(where: { $0.isLetter || $0.isNumber }) }
+            .count
+    }
+
+    /// Les lignes qui disent quelque chose : au moins trois lettres, pas un numéro de page,
+    /// pas une rangée de tirets.
+    static func meaningfulLines(_ text: String) -> [String] {
+        text.components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { line in line.filter(\.isLetter).count >= 3 }
+    }
+
+    private static func clip(_ line: String, to length: Int) -> String {
+        line.count > length ? String(line.prefix(length - 1)) + "…" : line
     }
 }

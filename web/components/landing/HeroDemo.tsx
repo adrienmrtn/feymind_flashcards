@@ -153,7 +153,7 @@ export function HeroDemo() {
               </ul>
 
               <div className="lp-generate-press mt-auto">
-                <div className="lp-generate relative flex h-[52px] items-center justify-center overflow-hidden rounded-[18px] lp-gradient-fill text-[15.5px] font-extrabold text-white">
+                <div className="lp-generate relative flex h-[52px] items-center justify-center overflow-hidden rounded-full lp-gradient-fill font-display text-[19px]">
                   <span className="lp-generate-ring" />
                   <span className="lp-label lp-label-idle flex items-center gap-2">
                     {t("landing.demoGenerate")}

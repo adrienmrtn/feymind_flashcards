@@ -359,6 +359,15 @@ class Prefs(context: Context) {
         get() = prefs.getString("sync.profile", "").orEmpty()
         set(value) = prefs.edit { putString("sync.profile", value) }
 
+    /**
+     * L'XP telle qu'elle est montée la dernière fois (`total|semaine|lundi`) : à part de
+     * l'empreinte du profil, pour qu'un gain d'XP ne passe pas pour un profil changé ici (le
+     * profil du compte ne redescendrait plus).
+     */
+    var xpSignature: String
+        get() = prefs.getString("sync.xp", "").orEmpty()
+        set(value) = prefs.edit { putString("sync.xp", value) }
+
     fun clearAccount() {
         prefs.edit {
             listOf("account.access", "account.refresh", "account.expiresAt", "account.user", "account.email", "account.name").forEach(::remove)

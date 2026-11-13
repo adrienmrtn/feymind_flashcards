@@ -45,6 +45,9 @@ data class SharedCourse(
 /** Une ligne du classement de la semaine : cartes passées depuis lundi. */
 data class RankingRow(val userId: String, val username: String, val passes: Int, val isMe: Boolean)
 
+/** Une ligne de la ligue de la semaine (`friends_league`) : soi ou un ami accepté, et son XP depuis lundi. */
+data class LeagueRow(val userId: String, val username: String, val displayName: String, val xpWeek: Int, val isMe: Boolean)
+
 /** Une carte d'un cours partagé : le contenu, pas ce que l'auteur savait. */
 data class SharedCard(val front: String, val back: String)
 
@@ -183,6 +186,31 @@ class Social(private val auth: SupabaseAuth) {
             RankingRow(id, row.str("username"), row.str("passes").toIntOrNull() ?: 0, id == me)
         }
     }.getOrDefault(emptyList())
+
+    /**
+     * **La ligue de la semaine** (`rpc/friends_league`) : l'élève et ses amis acceptés, triés
+     * par XP de la semaine. Rien (`null`) sans compte, ou si l'appel échoue - la fonction peut
+     * ne pas être encore déployée : l'écran retombe alors sur la seule ligne de l'élève.
+     */
+    suspend fun league(): List<LeagueRow>? {
+        val me = me ?: return null
+        return runCatching {
+            val result = call("POST", "rpc/friends_league", "{}")
+            check(result)
+            MicaboJson.parseToJsonElement(result.body).jsonArray.mapNotNull { item ->
+                val row = item as? JsonObject ?: return@mapNotNull null
+                val id = row.str("user_id").lowercase()
+                if (id.isEmpty()) return@mapNotNull null
+                LeagueRow(
+                    userId = id,
+                    username = row.str("username"),
+                    displayName = row.str("display_name"),
+                    xpWeek = row.str("xp_week").toIntOrNull()?.coerceAtLeast(0) ?: 0,
+                    isMe = row.str("is_me").toBooleanStrictOrNull() ?: (id == me),
+                )
+            }
+        }.getOrNull()
+    }
 
     fun relation(id: String): Relation {
         val key = id.lowercase()

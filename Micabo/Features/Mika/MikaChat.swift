@@ -68,6 +68,22 @@ enum MikaConversationStore {
         try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         try? data.write(to: url, options: .atomic)
     }
+
+    /// Le dossier des conversations de leçon, une par fichier (`LessonMikaView.storeURL`).
+    static var lessonsDirectory: URL {
+        defaultURL
+            .deletingLastPathComponent()
+            .appendingPathComponent("mika-lessons", isDirectory: true)
+    }
+
+    /// **Toutes les conversations de l'appareil**, à la sortie d'un compte : celle de l'ancien
+    /// onglet et celles des leçons. Elles restaient sur le téléphone, et le compte suivant
+    /// retrouvait les questions du précédent dès qu'une leçon portait le même identifiant.
+    static func eraseAll() {
+        let files = FileManager.default
+        try? files.removeItem(at: defaultURL)
+        try? files.removeItem(at: lessonsDirectory)
+    }
 }
 
 // MARK: - Ce que Mika laisse demander
@@ -121,6 +137,15 @@ struct MikaQuota {
         defaults.set(count + 1, forKey: Key.dayCount)
     }
 
+    /// Oublie la question offerte et le compte du jour : un compte qui s'en va (`LocalWipe`).
+    /// Le serveur compte aussi par compte ; garder le drapeau ici fermait la question offerte
+    /// du compte suivant avant même de la lui demander.
+    func forget() {
+        for key in [Key.freeUsed, Key.day, Key.dayCount] {
+            defaults.removeObject(forKey: key)
+        }
+    }
+
     /// Le jour, dans le calendrier de l'élève : le plafond se remet à minuit chez lui.
     private func stamp() -> String {
         let parts = calendar.dateComponents([.year, .month, .day], from: now())
@@ -148,15 +173,25 @@ final class MikaChat {
 
     let quota: MikaQuota
     private let store: (MikaConversation) -> Void
+    /// L'XP de la première réponse de cette conversation : `mikaAnswer` dans une leçon,
+    /// `exerciseSolved` pour un exercice scanné. Les suivantes rapportent `mikaAnswer`.
+    private let firstReward: XPReason
+    private var rewarded = false
+    /// Où l'XP se compte : `XPStore.shared` dans l'app, un magasin à part dans les tests.
+    private let xp: XPStore?
 
     init(
         conversation: MikaConversation = MikaConversationStore.load(),
         quota: MikaQuota = MikaQuota(),
-        store: @escaping (MikaConversation) -> Void = { MikaConversationStore.save($0) }
+        store: @escaping (MikaConversation) -> Void = { MikaConversationStore.save($0) },
+        firstReward: XPReason = .mikaAnswer,
+        xp: XPStore? = .shared
     ) {
         self.conversation = conversation
         self.quota = quota
         self.store = store
+        self.firstReward = firstReward
+        self.xp = xp
     }
 
     var messages: [MikaMessage] { conversation.messages }
@@ -229,6 +264,8 @@ final class MikaChat {
             quota.noteAnswered()
             persist()
             Haptics.tick()
+            xp?.award(rewarded ? .mikaAnswer : firstReward)
+            rewarded = true
         } catch {
             failure = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
@@ -264,5 +301,25 @@ final class MikaChat {
 
     private func persist() {
         store(conversation)
+    }
+
+    // MARK: Les statistiques
+
+    /// **Ce que Mika répond, et ce qu'il refuse**, compté au même endroit pour la leçon et le
+    /// scanner. `mika_asked` et `mika_blocked` sont partis avec l'ancien onglet Mika, qui était
+    /// seul à les envoyer : depuis, aucune courbe ne disait qui parle à Mika.
+    static func track(_ gate: MikaQuota.Gate?, isPro: Bool, chat: MikaChat) {
+        switch gate {
+        case .allowed:
+            // Posée **et répondue** : une panne n'est pas une question.
+            guard chat.failure == nil else { return }
+            Analytics.track(.mikaAsked, ["pro": .flag(isPro), "attached": .flag(chat.attachment != nil)])
+        case .paywall:
+            Analytics.track(.mikaBlocked, ["reason": .text("paywall")])
+        case .dailyCapReached:
+            Analytics.track(.mikaBlocked, ["reason": .text("cap")])
+        case nil:
+            break
+        }
     }
 }

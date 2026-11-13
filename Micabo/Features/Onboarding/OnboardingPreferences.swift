@@ -5,6 +5,10 @@ import Foundation
 /// Un libellé, et rien d'autre. Le sous-titre et l'icône qui accompagnaient chaque objectif
 /// ont disparu avec les rangées qui les affichaient : sept lignes à picto et sous-titre font
 /// lire des pictogrammes au lieu des réponses.
+///
+/// **Lot 9 : l'objectif n°1, selon le niveau** (`offered(for:)`). Les valeurs sont celles de
+/// `profiles.learning_goals` (un tableau de texte, sans liste fermée) : les nouvelles
+/// s'ajoutent sans rien casser chez les clients qui ne les connaissent pas.
 enum LearningGoal: String, CaseIterable, Identifiable {
     case language
     case exam
@@ -13,6 +17,18 @@ enum LearningGoal: String, CaseIterable, Identifiable {
     case profession
     case curiosity
     case other
+    /// De meilleures notes.
+    case grades
+    /// Entrer dans la formation de ses rêves (après le lycée).
+    case dreamSchool
+    /// Vraiment comprendre ses cours.
+    case understand
+    /// Réviser plus vite.
+    case faster
+    /// Prendre de l'avance.
+    case ahead
+    /// Valider son année (à l'université).
+    case passYear
 
     var id: String { rawValue }
 
@@ -21,7 +37,12 @@ enum LearningGoal: String, CaseIterable, Identifiable {
     }
 
     func title(locale: UiLocale) -> String {
-        L10n.t("ios.goal.\(rawValue)", locale: locale)
+        switch self {
+        case .grades, .dreamSchool, .understand, .faster, .ahead, .passYear:
+            L10n.t("ios.onb9.goal.\(rawValue)", locale: locale)
+        default:
+            L10n.t("ios.goal.\(rawValue)", locale: locale)
+        }
     }
 
     /// Un emoji par réponse. Il ne remplace pas le libellé, il l'accroche : on retrouve sa
@@ -35,6 +56,33 @@ enum LearningGoal: String, CaseIterable, Identifiable {
         case .profession: "💼"
         case .curiosity: "🧠"
         case .other: "✨"
+        case .grades: "📈"
+        case .dreamSchool: "🎓"
+        case .understand: "💡"
+        case .faster: "⚡️"
+        case .ahead: "🚀"
+        case .passYear: "✅"
+        }
+    }
+
+    /// **Les objectifs proposés à ce niveau**, dans l'ordre des rangées.
+    ///
+    /// L'examen n'y est jamais : il vient d'être dit (`exam`), et `learningGoals` l'ajoute de
+    /// lui-même. Un collégien ne voit ni « valider mon année » ni « monter en compétences pour
+    /// le travail » ; un étudiant ne voit pas « entrer dans la formation de mes rêves » ; un
+    /// concours ou une filière de santé voit son concours.
+    static func offered(for tier: EducationTier?) -> [LearningGoal] {
+        switch tier {
+        case .lowerSecondary:
+            [.grades, .understand, .faster, .ahead, .curiosity]
+        case .upperSecondary, .preUniversity:
+            [.grades, .dreamSchool, .understand, .faster, .ahead]
+        case .undergraduate, .graduate:
+            [.passYear, .grades, .understand, .faster, .profession]
+        case .health, .competitive:
+            [.competition, .grades, .understand, .faster]
+        case .other, nil:
+            [.grades, .understand, .faster, .language, .curiosity, .profession]
         }
     }
 }
@@ -233,12 +281,23 @@ enum SchoolingCountry: String, CaseIterable, Identifiable {
         languages: [String] = Locale.preferredLanguages,
         chosen: String? = UserDefaults.standard.string(forKey: UiLocale.storageKey)
     ) -> SchoolingCountry {
+        detected(languages: languages, chosen: chosen) ?? fallback
+    }
+
+    /// **Le pays que les langues de l'appareil désignent vraiment**, ou rien. C'est `guessed`
+    /// sans son repli : un iPhone en arabe d'Arabie saoudite, ou en japonais, ne désigne aucun
+    /// pays de la liste, et lui supposer la France serait lui répondre à côté. Le parcours
+    /// prend alors la région du téléphone (`OnboardingModel.deviceCountry`).
+    static func detected(
+        languages: [String] = Locale.preferredLanguages,
+        chosen: String? = UserDefaults.standard.string(forKey: UiLocale.storageKey)
+    ) -> SchoolingCountry? {
         let tags = languages.map { $0.lowercased() }
         if let chosen = chosen?.lowercased(), let language = primaryLanguage(of: chosen) {
             let ordered = tags.filter { primaryLanguage(of: $0) == language } + [language]
             if let match = firstMatch(in: ordered) { return match }
         }
-        return firstMatch(in: tags) ?? fallback
+        return firstMatch(in: tags)
     }
 
     /// Le pays de la première étiquette qui en désigne un : sa région quand ce pays parle sa
@@ -400,6 +459,11 @@ enum OnboardingPreferences {
         static let studyHour = "micabo.onboarding.studyHour"
         /// Ce qui l'inquiète dans ses études, dans l'ordre de la liste.
         static let worries = "micabo.onboarding.worries"
+        /// Le prochain examen choisi (`SchoolExams`), et sa date.
+        static let exam = "micabo.onboarding.exam"
+        static let examDate = "micabo.onboarding.examDate"
+        /// L'examen du parcours a déjà été posé dans le calendrier : on ne le repose pas.
+        static let examPlaced = "micabo.onboarding.examPlaced"
         /// **Où le parcours en est**, pour le reprendre là après une app fermée. L'écran
         /// est écrit par son nom et non par son rang : le rang change dès qu'un écran
         /// s'ajoute, et une mise à jour reprendrait sur le mauvais.
@@ -418,7 +482,8 @@ enum OnboardingPreferences {
             institutionId, institutionName,
             dailyMinutes, weeklyMinutes, ratingAsked, pendingFirstImport, retiredNotificationsOptIn, completedAt,
             sheetLanguage, schoolTrack, schoolYear, displayName,
-            source, triedApps, blocker, examHorizon, method, studyHour, worries
+            source, triedApps, blocker, examHorizon, method, studyHour, worries,
+            exam, examDate, examPlaced
         ] + resume
     }
 
@@ -786,13 +851,45 @@ enum OnboardingPreferences {
         return stored == 0 ? nil : stored
     }
 
+    // MARK: Le prochain examen
+
+    /// L'identifiant de l'examen choisi (`SchoolExams.choice(id:)`).
+    static var examID: String? {
+        get { defaults.string(forKey: Key.exam) }
+        set { write(newValue, forKey: Key.exam) }
+    }
+
+    /// Le jour de l'examen choisi.
+    static var examDate: Date? {
+        get {
+            let stamp = defaults.double(forKey: Key.examDate)
+            return stamp > 0 ? Date(timeIntervalSince1970: stamp) : nil
+        }
+        set {
+            if let newValue {
+                defaults.set(newValue.timeIntervalSince1970, forKey: Key.examDate)
+            } else {
+                defaults.removeObject(forKey: Key.examDate)
+            }
+        }
+    }
+
+    static var examPlaced: Bool {
+        get { defaults.bool(forKey: Key.examPlaced) }
+        set { defaults.set(newValue, forKey: Key.examPlaced) }
+    }
+
     // MARK: La reprise
 
     /// L'écran où le parcours s'est arrêté. Voir `OnboardingStep.resumePoint`.
+    ///
+    /// Un écran retiré dans la version 2 du parcours (les fondateurs, les démonstrations de
+    /// Mika…) reprend sur l'écran qui l'a remplacé, plutôt que de renvoyer au logo.
     static var resumeStep: OnboardingStep? {
         get {
             guard let name = defaults.string(forKey: Key.resumeStep) else { return nil }
             return OnboardingStep.allCases.first { $0.analyticsName == name }
+                ?? OnboardingStep.replacement(forRetired: name)
         }
         set { write(newValue?.analyticsName, forKey: Key.resumeStep) }
     }

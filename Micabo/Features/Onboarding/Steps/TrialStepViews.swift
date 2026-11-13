@@ -1,15 +1,19 @@
 import Foundation
 import SwiftUI
 
-/// Les quatre moments de l'essai, du compte créé au premier prélèvement.
+/// **Les trois moments de l'essai**, d'aujourd'hui au premier prélèvement : l'accès complet,
+/// le rappel la veille de la fin (`TrialEndReminder`), puis l'abonnement.
 ///
-/// La chronologie est calculée à partir d'une date reçue en paramètre plutôt que lue
-/// depuis `Date.now` au fond d'une vue : c'est ce qui permet de vérifier la date de
-/// premier prélèvement sans attendre trois jours.
+/// La chronologie est calculée à partir d'une date reçue en paramètre plutôt que lue depuis
+/// `Date.now` au fond d'une vue : c'est ce qui permet de vérifier la date du premier
+/// prélèvement sans attendre trois jours.
 enum TrialTimeline {
     /// Durée de l'essai, et seule source de vérité à ce sujet dans le parcours : la date
     /// annoncée sur la chronologie et celle facturée par la boutique doivent être la même.
     static let freeDays = 3
+
+    /// Le jour du rappel : la veille de la fin.
+    static var reminderDay: Int { max(1, freeDays - 1) }
 
     enum Tone {
         /// Ce qui est déjà fait.
@@ -30,39 +34,38 @@ enum TrialTimeline {
         let tone: Tone
     }
 
+    /// Aujourd'hui, le rappel, le premier prélèvement. `remindersOn` dit si le rappel partira
+    /// vraiment (notifications permises) : sinon l'étape dit comment l'activer, plutôt que de
+    /// promettre un rappel qui ne viendra pas.
     static func milestones(
         from date: Date = .now,
         calendar: Calendar = .current,
-        locale: UiLocale = .fr
+        locale: UiLocale = .fr,
+        remindersOn: Bool = true
     ) -> [Milestone] {
         let dateText = billingDateText(from: date, calendar: calendar, locale: locale)
+        let reminderText = dayText(reminderDay, from: date, calendar: calendar, locale: locale)
         return [
             Milestone(
-                title: L10n.t("ios.accountCreated", locale: locale),
-                detail: L10n.t("ios.trialCreatedDetail", locale: locale),
-                systemImage: "checkmark",
-                tone: .done
-            ),
-            Milestone(
-                title: L10n.t("ios.trialToday", locale: locale),
-                detail: L10n.t("ios.trialTodayDetail", locale: locale),
+                title: L10n.t("ios.onb5.trial.today", locale: locale),
+                detail: L10n.t("ios.onb5.trial.todayDetail", locale: locale),
                 systemImage: "lock.open.fill",
                 tone: .current
             ),
-            // Pas de cloche : Micabo n'envoie aucun rappel de fin d'essai (choix du 23 octobre
-            // 2026). L'étape dit ce qui est vrai - on peut annuler à tout moment.
             Milestone(
-                title: L10n.t("ios.trialDay2", locale: locale),
-                detail: L10n.t("ios.trialDay2Detail", locale: locale),
-                systemImage: "hand.tap.fill",
+                // **Des dates, plus des « jour 2 / jour 3 »** (lot 7) : « Jour 2 » se lisait le
+                // lendemain, alors que le rappel part le surlendemain, la veille de la fin.
+                title: L10n.t("ios.onb7.trial.reminder", locale: locale, vars: ["date": reminderText]),
+                detail: L10n.t(remindersOn ? "ios.onb5.trial.reminderDetail" : "ios.onb5.trial.reminderOff", locale: locale),
+                systemImage: "bell.fill",
                 tone: .upcoming
             ),
             Milestone(
-                title: L10n.t("ios.trialLast", locale: locale, vars: ["n": "\(freeDays)"]),
-                detail: L10n.t("ios.trialLastDetail", locale: locale, vars: ["date": dateText]),
+                title: L10n.t("ios.onb7.trial.billing", locale: locale, vars: ["date": dateText]),
+                detail: L10n.t("ios.onb7.trial.billingDetail", locale: locale),
                 systemImage: "star.fill",
                 tone: .upcoming
-            )
+            ),
         ]
     }
 
@@ -72,7 +75,26 @@ enum TrialTimeline {
         calendar: Calendar = .current,
         locale: UiLocale = .fr
     ) -> String {
-        let billingDate = calendar.date(byAdding: .day, value: freeDays, to: date) ?? date
+        dayText(freeDays, from: date, calendar: calendar, locale: locale)
+    }
+
+    /// Le jour du rappel, la veille de la fin : « 27 août ».
+    static func reminderDateText(
+        from date: Date = .now,
+        calendar: Calendar = .current,
+        locale: UiLocale = .fr
+    ) -> String {
+        dayText(reminderDay, from: date, calendar: calendar, locale: locale)
+    }
+
+    /// Un jour, `days` jours après `date`, écrit comme on le dirait.
+    private static func dayText(
+        _ days: Int,
+        from date: Date,
+        calendar: Calendar,
+        locale: UiLocale
+    ) -> String {
+        let billingDate = calendar.date(byAdding: .day, value: days, to: date) ?? date
         let formatter = DateFormatter()
         formatter.locale = locale.foundation
         formatter.calendar = calendar
@@ -81,303 +103,5 @@ enum TrialTimeline {
         formatter.timeZone = calendar.timeZone
         formatter.setLocalizedDateFormatFromTemplate("d MMMM")
         return formatter.string(from: billingDate)
-    }
-}
-
-/// La chronologie de l'essai gratuit.
-///
-/// Le seul écran du parcours qui **répond à une question qu'on ne pose jamais à voix
-/// haute** : quand est-ce qu'on me prélève ? Y répondre avant le paywall coûte un écran et
-/// évite les trois jours d'inquiétude qui font annuler un essai dès la première minute.
-///
-/// Les quatre étapes arrivent l'une après l'autre, et le filet qui les relie pousse en même
-/// temps que celle qu'il annonce : c'est le geste de la ligne qui se trace, pas quatre
-/// blocs qui s'allument. Le bouton n'apparaît qu'après la dernière — on ne fait pas défiler
-/// une chronologie qu'on n'a pas fini de dessiner.
-struct TrialOfferStepView: View {
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    private var milestones: [TrialTimeline.Milestone] {
-        TrialTimeline.milestones(locale: i18n.locale)
-    }
-
-    @State private var revealedCount = 0
-    @State private var showsAction = false
-    @State private var didStart = false
-
-    private var stepDelay: Double { 0.34 }
-
-    var body: some View {
-        VStack(spacing: 0) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 34) {
-                    Text(i18n.t("ios.trialHow"))
-                        .font(OnboardingPalette.title(32))
-                        .foregroundStyle(MicaboColor.ink)
-                        .tracking(-0.6)
-                        .lineSpacing(-1)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .onboardingAppear(index: 0)
-
-                    VStack(spacing: 0) {
-                        ForEach(Array(milestones.enumerated()), id: \.element.id) { index, milestone in
-                            TrialMilestoneRow(
-                                milestone: milestone,
-                                isLast: index == milestones.count - 1,
-                                isRevealed: index < revealedCount,
-                                // Le filet sous une étape se trace au moment où la
-                                // suivante se pose : la ligne conduit le regard au lieu de
-                                // l'attendre.
-                                isConnectorRevealed: index + 1 < revealedCount
-                            )
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.top, MicaboSpacing.xl)
-                .padding(.bottom, MicaboSpacing.lg)
-            }
-            .scrollIndicators(.hidden)
-
-            OnboardingArrowBar {
-                model.advance()
-            }
-            .opacity(showsAction ? 1 : 0)
-            .allowsHitTesting(showsAction)
-        }
-        .onboardingChromeInset()
-        .background(OnboardingPalette.white.ignoresSafeArea())
-        .onAppear(perform: reveal)
-    }
-
-    private func reveal() {
-        guard !didStart else { return }
-        didStart = true
-
-        for index in milestones.indices {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3 + Double(index) * stepDelay) {
-                withAnimation(OnboardingMotion.enter) {
-                    revealedCount = index + 1
-                }
-                Haptics.tick()
-            }
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3 + Double(milestones.count) * stepDelay) {
-            withAnimation(OnboardingMotion.enter) {
-                showsAction = true
-            }
-        }
-    }
-}
-
-private struct TrialMilestoneRow: View {
-    let milestone: TrialTimeline.Milestone
-    let isLast: Bool
-    let isRevealed: Bool
-    let isConnectorRevealed: Bool
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            VStack(spacing: 0) {
-                Image(systemName: milestone.systemImage)
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(iconColor)
-                    .frame(width: 46, height: 46)
-                    .background(discColor, in: Circle())
-                    .background(Circle().fill(discColor.opacity(0.55)).offset(y: 3))
-                    .scaleEffect(isRevealed ? 1 : 0.55)
-                    .opacity(isRevealed ? 1 : 0)
-
-                if !isLast {
-                    Capsule()
-                        .fill(connectorColor)
-                        .frame(width: 2)
-                        .frame(maxHeight: .infinity)
-                        .padding(.vertical, 4)
-                        .scaleEffect(y: isConnectorRevealed ? 1 : 0, anchor: .top)
-                }
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(milestone.title)
-                    .font(MicaboFont.ui(18, weight: .heavy))
-                    .foregroundStyle(MicaboColor.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Text(milestone.detail)
-                    .font(MicaboFont.ui(14.5, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .lineSpacing(2)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(.top, 4)
-            .padding(.bottom, isLast ? 0 : 26)
-            .opacity(isRevealed ? 1 : 0)
-            .offset(y: isRevealed ? 0 : 10)
-
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
-    }
-
-    /// Le vert pour ce qui est acquis, l'encre pour ce qui commence, le sable pour ce qui
-    /// n'est pas encore arrivé : la chronologie se lit sans lire les libellés.
-    private var discColor: Color {
-        switch milestone.tone {
-        case .done: MicaboColor.accent
-        case .current: MicaboColor.ink
-        case .upcoming: MicaboColor.surfaceSunken
-        }
-    }
-
-    private var iconColor: Color {
-        switch milestone.tone {
-        case .done, .current: MicaboColor.onInk
-        case .upcoming: MicaboColor.surface
-        }
-    }
-
-    private var connectorColor: Color {
-        milestone.tone == .done ? MicaboColor.accent.opacity(0.35) : MicaboColor.strokeStrong
-    }
-}
-
-/// **Ce que coûte l'essai, et comment en sortir.**
-///
-/// Cet écran promettait un rappel la veille de la fin de l'essai, et montrait la notification
-/// telle qu'elle arriverait. Aucune ne partait : rien dans l'app ne la programmait. Le choix
-/// du 23 octobre 2026 est de ne pas en envoyer du tout ; l'écran ne promet donc plus rien
-/// qu'il ne tienne. Il dit le prix après l'essai et qu'on annule en deux appuis depuis l'App
-/// Store, à tout moment - ce que la relecture d'Apple demande, et ce qui rassure vraiment.
-///
-/// Le réveil reste, pour le geste de la page ; la phrase se lit mot à mot, puis les deux
-/// garanties se posent. Le bouton n'arrive qu'une fois la phrase lue.
-struct TrialReminderStepView: View {
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-    @Environment(\.onboardingStill) private var still
-
-    @State private var chipsIn = false
-    @State private var showsAction = false
-
-    /// Le prix de l'annuel tel que la boutique du pays l'annonce, sinon celui du catalogue.
-    private var yearlyPrice: String {
-        PaywallCatalog.plan(.yearly).displayPrice
-    }
-
-    var body: some View {
-        VStack(spacing: 0) {
-            OnboardingCenteredScroll {
-                VStack(spacing: 24) {
-                    ReminderAlarm()
-
-                    OnboardingReadingText(
-                        template: i18n.t("ios.trialReminder", [
-                            "n": "\(TrialTimeline.freeDays)",
-                            "price": yearlyPrice,
-                        ]),
-                        size: 24,
-                        wordDelay: 0.11,
-                        startDelay: 0.6,
-                        onFinish: {
-                            withAnimation(OnboardingMotion.enter) { chipsIn = true }
-                            withAnimation(OnboardingMotion.enter.delay(0.25)) { showsAction = true }
-                        }
-                    )
-
-                    // Côte à côte quand elles tiennent, l'une sous l'autre sinon : en allemand
-                    // ou en turc, deux pastilles sur une ligne débordaient.
-                    ViewThatFits(in: .horizontal) {
-                        HStack(spacing: 8) { chips }
-                        VStack(spacing: 8) { chips }
-                    }
-                    .opacity(chipsIn || still ? 1 : 0)
-                    .offset(y: chipsIn || still ? 0 : 10)
-                }
-                .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.vertical, MicaboSpacing.md)
-            }
-
-            OnboardingArrowBar {
-                model.advance()
-            }
-            .opacity(showsAction || still ? 1 : 0)
-            .allowsHitTesting(showsAction)
-        }
-        .onboardingChromeInset()
-        .background(OnboardingPalette.white.ignoresSafeArea())
-    }
-
-    @ViewBuilder
-    private var chips: some View {
-        chip("creditcard.fill", i18n.t("ios.trialReminder.free"))
-        chip("hand.tap.fill", i18n.t("ios.trialReminder.cancel"))
-    }
-
-    private func chip(_ symbol: String, _ title: String) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: symbol)
-                .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(MicaboColor.correct)
-            Text(title)
-                .font(MicaboFont.ui(13, weight: .bold))
-                .foregroundStyle(MicaboColor.ink)
-                .lineLimit(1)
-                .fixedSize()
-        }
-        .padding(.vertical, 9)
-        .padding(.horizontal, 12)
-        .background(MicaboColor.surface, in: Capsule())
-        .overlay(Capsule().strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
-    }
-}
-
-/// Le réveil 3D, sur son halo, avec deux ondes de chaque côté qui battent doucement : il
-/// vacille sur sa base, il ne sonne pas - le temps de l'essai, pas une alarme.
-private struct ReminderAlarm: View {
-    @State private var shown = false
-    @State private var sway = false
-    @State private var wave = false
-    @Environment(\.onboardingStill) private var still
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    var body: some View {
-        let isShown = shown || still
-        return ZStack {
-            Circle()
-                .fill(RadialGradient(colors: [MicaboColor.accent.opacity(0.22), MicaboColor.accent.opacity(0)], center: .center, startRadius: 4, endRadius: 86))
-                .frame(width: 172, height: 172)
-
-            ForEach([-1.0, 1.0], id: \.self) { side in
-                ForEach(0..<2, id: \.self) { ring in
-                    // Un arc centré à neuf heures ; retourné, le même à trois heures.
-                    Circle()
-                        .trim(from: 0.42, to: 0.58)
-                        .stroke(MicaboColor.accent.opacity(0.55), style: StrokeStyle(lineWidth: 3.5, lineCap: .round))
-                        .frame(width: CGFloat(110 + ring * 30), height: CGFloat(110 + ring * 30))
-                        .rotationEffect(.degrees(side < 0 ? 0 : 180))
-                        .opacity(wave || still ? (ring == 0 ? 0.9 : 0.45) : 0.15)
-                        .scaleEffect(wave ? 1.04 : 0.96)
-                }
-            }
-
-            MicaboIconView(icon: .alarm, size: 84)
-                .shadow(color: MicaboColor.accent.opacity(0.25), radius: 16, y: 10)
-                .rotationEffect(.degrees(sway ? 7 : -7), anchor: .bottom)
-        }
-        .frame(height: 150)
-        .scaleEffect(isShown ? 1 : 0.5)
-        .opacity(isShown ? 1 : 0)
-        .accessibilityHidden(true)
-        .onAppear {
-            withAnimation(.spring(duration: 0.55, bounce: 0.45)) { shown = true }
-            guard !reduceMotion else { return }
-            withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true).delay(0.3)) { sway = true }
-            withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true).delay(0.3)) { wave = true }
-        }
     }
 }

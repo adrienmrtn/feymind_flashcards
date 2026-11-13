@@ -52,7 +52,7 @@ struct SettingsSubjectsSheet: View {
     private func chip(_ subject: String) -> some View {
         let isSelected = selected.contains(subject)
         return Button {
-            withAnimation(.easeOut(duration: 0.15)) {
+            withAnimation(MicaboMotion.quick) {
                 if isSelected {
                     selected.remove(subject)
                 } else {
@@ -71,7 +71,7 @@ struct SettingsSubjectsSheet: View {
                 Text(SubjectDisplay.subject(subject, locale: i18n.locale))
                     .font(MicaboFont.ui(13, weight: .medium))
             }
-            .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.inkBody)
+            .foregroundStyle(isSelected ? MicaboColor.onAccent : MicaboColor.inkBody)
             .padding(.vertical, 9)
             .padding(.horizontal, 13)
             .background(isSelected ? MicaboColor.accent : MicaboColor.surface, in: Capsule())

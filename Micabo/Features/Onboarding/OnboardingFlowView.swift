@@ -1,19 +1,21 @@
 import SwiftData
 import SwiftUI
 
-/// Parcours d'accueil complet. Strictement linéaire : chaque écran pousse le suivant au
-/// bouton, on revient par la pilule du haut là où c'est permis, et rien ne se feuillette au
-/// doigt.
+/// Le parcours d'accueil. **Une seule pile d'étapes, et une poussée native entre deux pages.**
 ///
-/// **La barre du haut ne bouge pas, les pages glissent dessous.** La jauge et la pilule de
-/// retour sont posées par-dessus la pile des pages, hors du glissement : quand une page
-/// arrive, la jauge avance d'un cran sur place, et c'est ce qui fait lire un seul parcours
-/// plutôt qu'une suite d'écrans.
-///
-/// **Il reprend où il s'est arrêté.** Une app fermée en arrière-plan pendant le parcours le
-/// faisait repartir du logo ; il repart maintenant de l'écran quitté, réponses comprises
-/// (`OnboardingModel.resuming(in:)`) : la pile des pages commence sur l'écran de reprise,
-/// sans glisser depuis un autre.
+/// - **La page glisse, la barre du haut ne bouge pas.** Le retour et la jauge sont posés
+///   par-dessus la pile, hors de la transition : quand une page arrive par le bord de fin et
+///   que l'ancienne part par le bord de début (l'inverse au retour, et en arabe), la jauge
+///   avance d'un cran sur place.
+/// - **Rien n'attend.** Pas de page posée hors champ puis animée au tour suivant, pas de
+///   délai avant un contenu ni avant un bouton : l'étape change sous la courbe standard de
+///   l'app (`OnboardingModel.move`), et la transition fait le reste. « Réduire les
+///   animations » donne un fondu.
+/// - **Le clavier ne déplace rien.** Le parcours l'ignore : les pages qui tapent du texte
+///   sont composées pour lui (`OnbKeyboardRoom`), et aucun pied de page ne monte ni ne
+///   redescend pendant qu'une page glisse.
+/// - **Il reprend où il s'est arrêté** : une app fermée pendant le parcours repart de l'écran
+///   quitté, réponses comprises (`OnboardingModel.resuming(in:)`).
 struct OnboardingFlowView: View {
     var onFinish: () -> Void
 
@@ -21,65 +23,40 @@ struct OnboardingFlowView: View {
     @Environment(AuthController.self) private var auth
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var model: OnboardingModel
-    @State private var pager: OnboardingPager
+
+    private let library: ModelContext
 
     init(library: ModelContext, onFinish: @escaping () -> Void) {
+        self.library = library
         self.onFinish = onFinish
         let model = OnboardingModel.resuming(in: library)
-        // Une page se pose avant de se quitter : le temps du glissement, et un souffle. Un
-        // appui plus précoce n'est plus perdu, il attend la fin de ce temps (voir
-        // `OnboardingModel.minimumDwell`). C'était 0,9 s d'appuis ignorés sans rien dire ;
-        // le glissement verrouille déjà le double appui (`transitionLock`, et les pages ne
-        // répondent pas au doigt pendant qu'elles glissent).
-        model.minimumDwell = OnboardingMotion.slideDuration + 0.15
+        model.animatesTransitions = true
         _model = State(initialValue: model)
-        _pager = State(initialValue: OnboardingPager(current: model.step))
     }
 
-    private var surface: OnboardingSurface { model.step.surface }
-
     var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .top) {
-                surface.background
-                    .ignoresSafeArea()
+        ZStack(alignment: .top) {
+            V3Color.bg
+                .ignoresSafeArea()
 
-                // **Pas de rognage.** Une page qui glisse sort par le bord de l'écran, qui la
-                // coupe déjà ; rogner la pile à la zone sûre coupait en plus ce que les pages
-                // étendent sous la barre d'état — le bandeau d'un cours s'arrêtait sous elle,
-                // avec une bande blanche au-dessus.
-                ZStack(alignment: .top) {
-                    ForEach(pager.pages, id: \.self) { step in
-                        page(for: step, size: proxy.size)
-                    }
+            // La pile : la page de l'étape, et rien d'autre. Changer d'étape retire l'une et
+            // pose l'autre ; la transition les fait glisser.
+            ZStack {
+                ForEach([model.step], id: \.self) { step in
+                    OnboardingStepScreen(step: step, onFinish: finish)
+                        .transition(push)
                 }
-                .frame(width: proxy.size.width, height: proxy.size.height)
+            }
 
-                OnboardingTopBar(
-                    progress: model.step.progress,
-                    showsBack: model.canGoBack,
-                    isVisible: model.step.showsChrome,
-                    onBack: { model.goBack() }
-                )
-            }
-            .onChange(of: model.step) { previous, next in
-                slide(from: previous, to: next, width: proxy.size.width)
-            }
+            OnboardingTopBar(model: model)
         }
-        // **Le clavier ne redimensionne pas les pages.** Laissé au système, il rétrécissait
-        // la pile à son arrivée et la rallongeait à son départ : la page du prénom changeait
-        // de forme à l'appui, avant même que la suivante ne glisse. Chaque page qui prend
-        // le clavier lève son pied elle-même (`OnboardingKeyboardLift`).
         .ignoresSafeArea(.keyboard)
         .environment(model)
-        .environment(\.onboardingSurface, surface)
         .environment(\.locale, i18n.locale.foundation)
         .environment(\.layoutDirection, i18n.locale.isRightToLeft ? .rightToLeft : .leftToRight)
-        // **Les couleurs de l'app, jour ou nuit** : le parcours suit l'apparence de l'app
-        // (celle du téléphone par défaut), comme tous les écrans qui suivent.
-        // **Le compte, en languette**, posée sur le dernier écran de Mika : le parcours ne
+        // **Le compte, en languette**, posée en quittant le plan révélé : le parcours ne
         // change pas de page pour le demander. Balayée vers le bas, elle se referme sans
-        // répondre, et la flèche la rouvre.
+        // répondre, et le bouton la rouvre.
         .sheet(isPresented: Binding(
             get: { model.isAccountSheetPresented },
             set: { model.isAccountSheetPresented = $0 }
@@ -87,168 +64,156 @@ struct OnboardingFlowView: View {
             OnboardingAccountSheet { model.finishAccountSheet() }
                 .environment(\.locale, i18n.locale.foundation)
                 .environment(\.layoutDirection, i18n.locale.isRightToLeft ? .rightToLeft : .leftToRight)
-                .presentationDetents([.height(410), .large])
+                .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
-                .presentationCornerRadius(MicaboRadius.sheet)
-                .presentationBackground(OnboardingPalette.white)
+                .presentationBackground(V3Color.bg)
         }
         .onChange(of: auth.isSignedIn, initial: true) { _, isSignedIn in
             model.hasAccount = isSignedIn
         }
+        .onChange(of: model.step) { _, next in
+            track(next)
+        }
         .onAppear {
             Haptics.prepare()
             Analytics.track(.onboardingStarted, model.isResumed ? ["resumed": .flag(true)] : [:])
-            Analytics.track(.onboardingStep, [
-                "step": .text(model.step.analyticsName),
-                "index": .number(Double(model.step.rawValue)),
-            ])
+            track(model.step)
         }
     }
 
-    /// Une page de la pile : l'écran de l'étape, à la taille de l'écran, décalé par le
-    /// glissement en cours. Pendant qu'une page glisse, aucune des deux ne répond au doigt.
-    private func page(for step: OnboardingStep, size: CGSize) -> some View {
-        stepView(step)
-            .environment(\.onboardingStep, step)
-            .frame(width: size.width, height: size.height)
-            .overlay {
-                OnboardingPalette.ink
-                    .opacity(pager.veilOpacity(for: step))
-                    .ignoresSafeArea()
-                    .allowsHitTesting(false)
-            }
-            .opacity(pager.opacity(for: step))
-            .offset(x: pager.offset(for: step))
-            .allowsHitTesting(step == pager.current && pager.outgoing == nil)
+    /// La poussée latérale, ou un fondu quand le mouvement est réduit.
+    private var push: AnyTransition {
+        reduceMotion ? .opacity : AnyTransition(OnboardingPush(model: model))
     }
 
-    // MARK: - Le glissement
-
-    /// **Chaque changement d'étape est un glissement**, et il se joue en deux temps : la
-    /// nouvelle page est d'abord posée hors champ, puis, au tour de boucle suivant, les deux
-    /// pages sont animées vers leur place. Poser et animer dans le même tour ne glisserait
-    /// rien : la nouvelle page n'aurait jamais été vue ailleurs qu'à l'arrivée.
-    ///
-    /// Le verrou du modèle tient le temps du glissement : un second appui pendant qu'une
-    /// page arrive n'en empile pas une troisième.
-    private func slide(from previous: OnboardingStep, to next: OnboardingStep, width: CGFloat) {
+    private func track(_ step: OnboardingStep) {
         Analytics.track(.onboardingStep, [
-            "step": .text(next.analyticsName),
-            "index": .number(Double(next.rawValue)),
+            "step": .text(step.analyticsName),
+            "index": .number(Double(step.rawValue)),
         ])
-
-        let forward = next.rawValue > previous.rawValue
-        let duration = reduceMotion ? 0.25 : OnboardingMotion.slideDuration
-        model.transitionLock = true
-
-        var staged = OnboardingPager(current: next)
-        staged.outgoing = previous
-        staged.direction = forward ? .forward : .backward
-        if reduceMotion {
-            staged.currentOpacity = 0
-        } else {
-            staged.currentOffset = forward ? width : -width * OnboardingMotion.slideParallax
-            staged.veil = forward ? 0 : OnboardingMotion.slideVeil
-        }
-        pager = staged
-
-        DispatchQueue.main.async {
-            if reduceMotion {
-                withAnimation(.easeInOut(duration: duration)) {
-                    pager.currentOpacity = 1
-                }
-            } else {
-                withAnimation(OnboardingMotion.slide) {
-                    pager.currentOffset = 0
-                    pager.outgoingOffset = forward ? -width * OnboardingMotion.slideParallax : width
-                    pager.veil = forward ? OnboardingMotion.slideVeil : 0
-                }
-            }
-        }
-
-        // **La page qui se pose se sent**, aux trois quarts du glissement, quand elle
-        // freine : c'est l'atterrissage, pas le départ.
-        DispatchQueue.main.asyncAfter(deadline: .now() + duration * 0.75) {
-            Haptics.tick()
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + duration + 0.03) {
-            if pager.current == next {
-                pager.outgoing = nil
-                pager.veil = 0
-                pager.currentOpacity = 1
-            }
-            model.transitionLock = false
-        }
-    }
-
-    // MARK: - Les écrans
-
-    @ViewBuilder
-    private func stepView(_ step: OnboardingStep) -> some View {
-        switch step {
-        case .hookLogo: HookLogoStepView()
-        case .name: NameStepView()
-        case .welcome: WelcomeStepView()
-        case .country: CountryStepView()
-        case .level: LevelStepView()
-        case .schoolType: SchoolTypeStepView()
-        case .year: SchoolYearStepView()
-        case .subjects: SubjectsStepView()
-        case .worries: WorriesStepView()
-        case .goal: GoalStepView()
-        case .proofRetention: ProofRetentionStepView()
-        case .founders: MikaStepView(page: .founders)
-        case .aiCompanion: MikaStepView(page: .companion)
-        case .startingPoint: MikaStepView(page: .start)
-        case .currentAverage: CurrentAverageStepView()
-        case .targetAverage: TargetAverageStepView()
-        case .dailyTime: DailyTimeStepView()
-        case .studyTime: StudyTimeStepView()
-        case .notifications: NotificationsStepView()
-        case .building: BuildingStepView()
-        case .featuresIntro: MikaSpeaksStepView(text: i18n.t("ios.onb.features.intro"))
-        case .mikaMission: MikaStepView(page: .mission)
-        case .mikaSources: MikaStepView(page: .sources)
-        case .mikaPaths: MikaStepView(page: .paths)
-        case .mikaDesign: MikaStepView(page: .design)
-        case .mikaSolution: MikaStepView(page: .solution)
-        case .mikaTutor: MikaStepView(page: .tutor)
-        case .mikaRelief: MikaStepView(page: .relief)
-        case .socialProof: SocialProofStepView()
-        case .supportUs: SupportUsStepView()
-        case .planBuilding: PlanBuildingStepView()
-        case .profileSummary: ProfileSummaryStepView()
-        case .freeTrialIntro: FreeTrialIntroStepView()
-        case .trialOffer: TrialOfferStepView()
-        case .trialReminder: TrialReminderStepView()
-        case .paywall: PaywallStepView(onFinish: finish)
-        }
     }
 
     private func finish() {
         Analytics.track(.onboardingFinished)
+        // Avant le drapeau : dès qu'il est posé, une synchro peut relire le profil du
+        // serveur, et ce sont les réponses qu'on vient de donner qui doivent gagner.
+        CloudSync.noteOnboardingAnswers()
         OnboardingPreferences.markCompleted()
-        // L'app s'ouvre sur Home, dont la barre crée la première leçon : le parcours n'en
-        // écrit plus. Ce dernier écran n'a pas de croix : on n'y enferme personne.
+        // L'app s'ouvre sur Home, qui lance la première leçon choisie (`FirstLessonIntent`).
         OnboardingPreferences.pendingFirstImport = false
-        // La note ne se demande plus à l'arrivée dans l'app : elle attend la première leçon
-        // terminée (`InAppReviewPrompt`).
+        // L'examen choisi devient un examen du Calendrier, et ses rappels suivent.
+        if OnboardingExamPlacement.placeIfNeeded(in: library) != nil {
+            StudyNotifications.refresh(in: library)
+        }
         onFinish()
     }
 }
 
-extension OnboardingMotion {
-    /// Le voile posé sur la page qui recule sous la nouvelle : six centièmes, juste ce
-    /// qu'il faut pour qu'elle se lise dessous.
-    static let slideVeil: Double = 0.06
+// MARK: - La poussée
+
+/// **La poussée latérale d'une page** : en avançant, la page arrive par le bord de fin et
+/// l'ancienne part par le bord de début ; au retour, l'inverse. Les bords sont ceux de la
+/// langue : en arabe, tout se joue dans l'autre sens.
+///
+/// Le sens est lu sur le modèle **au moment où la transition se joue**, pas quand la page a
+/// été posée : une page arrivée en avançant doit pouvoir repartir par le même bord si l'élève
+/// revient en arrière. Le mouvement lui-même est celui du système (`MoveTransition`).
+struct OnboardingPush: Transition {
+    let model: OnboardingModel
+
+    func body(content: Content, phase: TransitionPhase) -> some View {
+        let entering = phase == .willAppear
+        let edge: Edge = entering == model.isMovingForward ? .trailing : .leading
+        MoveTransition(edge: edge).apply(content: content, phase: phase)
+    }
 }
 
-extension AnyTransition {
-    /// **Un fondu, pour ce qui change à l'intérieur d'un écran** — les étapes d'un deck qui
-    /// se crée, les deux paywalls. Le glissement est réservé aux pages du parcours, et il
-    /// n'est pas une transition : voir `OnboardingPager`.
-    static var onboardingFade: AnyTransition {
-        .opacity
+// MARK: - La barre du haut
+
+/// **Le retour et la jauge, fixes au-dessus des pages.** La barre est celle du système
+/// visuel (`V3TopBar`) ; ici, seulement ce que l'étape en fait : la jauge avance, le chevron
+/// part des écrans d'où l'on ne revient pas, « Passer » se pose à droite de la seule question
+/// facultative, et la barre s'efface des écrans qui sont un moment à eux seuls.
+struct OnboardingTopBar: View {
+    let model: OnboardingModel
+
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    /// La hauteur que les pages lui laissent.
+    static let height: CGFloat = 44
+
+    var body: some View {
+        let step = model.step
+        V3TopBar(
+            progress: step.showsProgress ? step.progress : nil,
+            onBack: model.canGoBack ? { model.goBack() } : nil
+        ) {
+            if step.isSkippable {
+                Button {
+                    model.skipAverages()
+                } label: {
+                    Text(i18n.t("common.skip"))
+                        .font(V3Font.label)
+                        .foregroundStyle(V3Color.ink2)
+                        .frame(minHeight: Self.height)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(MicaboPressableButtonStyle())
+            }
+        }
+        .frame(height: Self.height)
+        .opacity(step.showsChrome ? 1 : 0)
+        .allowsHitTesting(step.showsChrome)
+        .accessibilityHidden(!step.showsChrome)
+    }
+}
+
+// MARK: - Une page
+
+/// **La page d'une étape**, sous la barre du haut quand l'étape la montre.
+struct OnboardingStepScreen: View {
+    let step: OnboardingStep
+    var onFinish: () -> Void = {}
+
+    var body: some View {
+        content
+            .padding(.top, step.showsChrome ? OnboardingTopBar.height : 0)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(V3Color.bg.ignoresSafeArea())
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch step {
+        case .hookLogo: StoriesStepView()
+        case .welcome: WelcomeStepView()
+        case .name: NameStepView()
+        case .country: CountryStepView()
+        case .level: LevelStepView()
+        case .schoolType: SchoolTypeStepView()
+        case .year: SchoolYearStepView()
+        case .exam: ExamStepView()
+        case .subjects: SubjectsStepView()
+        case .lessonDemo: LessonDemoStepView()
+        case .goal: GoalStepView()
+        case .worries: WorriesStepView()
+        case .solutionMap: SolutionMapStepView()
+        case .scanDemo: ScanDemoStepView()
+        case .currentAverage: CurrentAverageStepView()
+        case .targetAverage: TargetAverageStepView()
+        case .startingPoint: StartingPointStepView()
+        case .dailyTime: DailyTimeStepView()
+        case .planDemo: PlanDemoStepView()
+        case .sampleCard: SampleCardStepView()
+        case .chatDemo: ChatDemoStepView()
+        case .notifications: NotificationsStepView()
+        case .firstLesson: FirstLessonStepView()
+        case .planBuilding: PlanBuildingStepView()
+        case .profileSummary: ProfileSummaryStepView()
+        case .freeTrialIntro: FreeTrialIntroStepView()
+        case .trialOffer: TrialOfferStepView()
+        case .whyNow: WhyNowStepView()
+        case .paywall: PaywallStepView(onFinish: onFinish)
+        }
     }
 }

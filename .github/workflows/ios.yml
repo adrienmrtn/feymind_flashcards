@@ -35,8 +35,10 @@ on:
 permissions:
   contents: read
 
+# Sur main, un push annule le run précédent. Sur une branche claude/**, plusieurs agents poussent
+# en parallèle et chacun attend les rendus de son commit : chaque commit garde son run.
 concurrency:
-  group: ios-${{ github.ref }}
+  group: ios-${{ github.ref }}-${{ startsWith(github.ref, 'refs/heads/claude/') && github.sha || 'latest' }}
   cancel-in-progress: true
 
 jobs:
@@ -132,6 +134,15 @@ jobs:
             2>&1 | tee build/test.log | grep -E "error: |Executed [0-9]+ test|\*\* TEST" || true
           grep -q "\*\* TEST EXECUTE SUCCEEDED \*\*" build/test.log
 
+      - name: Fluidité
+        # Les mesures du banc d'essai (`PerfBenchTests`) : une ligne `PERF|…` par mesure, écrites
+        # dans `perf.txt` à côté des rendus. Elles passent par ce journal et par la branche des
+        # rendus, lisibles sans artefact.
+        if: always()
+        run: |
+          [ -f build/renders/perf.txt ] || exit 0
+          cat build/renders/perf.txt
+
       - name: Rendus
         if: always()
         uses: actions/upload-artifact@v4
@@ -166,6 +177,8 @@ jobs:
             [ -f "$png" ] || continue
             sips -s format jpeg -s formatOptions 55 -Z 1100 "$png" --out "build/small/$(basename "$png" .png).jpg" >/dev/null
           done
+          # Les mesures de fluidité suivent les rendus sur leur branche.
+          cp build/renders/perf.txt build/small/ 2>/dev/null || true
 
       - name: Rendus JPEG (artefact)
         if: always()

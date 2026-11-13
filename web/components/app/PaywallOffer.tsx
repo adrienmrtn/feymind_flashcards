@@ -103,7 +103,7 @@ export function PaywallOffer({
               className="flex items-center gap-2 text-[22px] font-bold tracking-tight text-ink"
             >
               Micabo
-              <span className="rounded-pill bg-accent px-2 py-0.5 text-[11px] font-bold tracking-wide text-on-ink">
+              <span className="pro-badge text-[13px]">
                 Pro
               </span>
             </h2>
@@ -171,7 +171,7 @@ export function PaywallOffer({
             type="button"
             onClick={() => void subscribe()}
             disabled={pending}
-            className="pressable shiny flex h-14 w-full items-center justify-center gap-2 rounded-button bg-accent text-[16px] font-semibold text-on-ink disabled:opacity-70"
+            className="btn-primary disabled:opacity-70"
           >
             {pending ? <ThinkingOrb state="connecting" size={20} theme="dark" /> : null}
             {pricing.hasTrial(selected, presentment)

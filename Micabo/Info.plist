@@ -12,28 +12,54 @@
 	-->
 	<key>MicaboCommit</key>
 	<string>dev</string>
+	<!--
+	L'écran de lancement : le marine de l'app `#0B0F1C` (`LaunchBackground` dans le
+	catalogue, le même dans les deux thèmes) et Mika au centre de l'écran (`LaunchMika`,
+	200 points, exporté du dessin par `design/mika-v3/export.js`). La première image SwiftUI
+	(`LaunchCurtain` dans `RootView`) repose le même fond et la même image au même endroit,
+	puis fond sur l'écran qui suit : le passage ne se voit pas.
+	-->
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+		<key>UIImageName</key>
+		<string>LaunchMika</string>
+		<key>UIImageRespectsSafeAreaInsets</key>
+		<false/>
+	</dict>
+	<!--
+	La cadence de l'écran. Sans cette clé, un iPhone ProMotion plafonne à 60 images par seconde
+	les animations que l'app calcule elle-même, image par image : celles de SwiftUI, donc Mika,
+	dessiné dans un canevas à chaque image de ses gestes. Avec elle, elles suivent l'écran
+	jusqu'à 120 Hz.
+	-->
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Micabo uses the camera to scan your course pages.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Micabo accesses your photos to import a course or a diagram.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Micabo uses the microphone to record a class or a voice note and turn it into a lesson.</string>
+	<string>Micabo uses the microphone to record a class or a voice note, and to hear your spoken answers.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Micabo transcribes your recordings on your phone to turn them into a lesson.</string>
+	<string>Micabo transcribes your recordings and your spoken answers on your phone.</string>
+	<!--
+	L'audio en arrière-plan : « Écouter » lit la leçon écran verrouillé, et un cours enregistré
+	en direct continue quand le téléphone se met en veille (`docs/supports.md`).
+	-->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
 	<!--
 	Une seule famille, Nunito, pour l'interface comme pour le texte qu'on lit. Voir
 	`MicaboFont`.
 	-->
 	<key>UIAppFonts</key>
 	<array>
-		<string>Nunito-Regular.ttf</string>
-		<string>Nunito-Medium.ttf</string>
-		<string>Nunito-SemiBold.ttf</string>
-		<string>Nunito-Bold.ttf</string>
-		<string>Nunito-ExtraBold.ttf</string>
-		<string>Nunito-Black.ttf</string>
-		<string>Nunito-Italic.ttf</string>
-		<string>Nunito-BoldItalic.ttf</string>
+		<string>SofiaSansCondensed-ExtraBold.ttf</string>
+		<string>SofiaSansCondensed-Black.ttf</string>
 	</array>
 	<!--
 	Le schéma de retour des connexions.

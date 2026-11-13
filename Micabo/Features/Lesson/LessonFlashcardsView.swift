@@ -46,19 +46,23 @@ struct LessonCardsHub: View {
     let session: LessonSession
 
     @Environment(\.dismiss) private var dismiss
+    /// Un rendu immobile (`RenderGallery`) : la page à plat, sans défilement ni entrée.
+    @Environment(\.homeStill) private var still
     @State private var running: [Flashcard]?
-    @State private var shown = false
+    /// La jauge est pleine à l'arrivée. Elle se remplissait en animation à chaque ouverture :
+    /// l'état changeait juste après la première image, et toute la page (la jauge, la liste
+    /// des cartes) se relisait une seconde fois pendant que l'écran montait.
+    @State private var shown = true
 
     var body: some View {
         Group {
             if let running {
-                LessonCardsRun(session: session, cards: running, onClose: { withAnimation { self.running = nil } })
+                LessonCardsRun(session: session, cards: running, onClose: { withAnimation(LearnMotion.standard) { self.running = nil } })
                     .transition(.move(edge: .trailing))
             } else {
                 overview
             }
         }
-        .animation(.spring(duration: 0.4), value: running == nil)
     }
 
     private var cards: [Flashcard] {
@@ -69,8 +73,7 @@ struct LessonCardsHub: View {
         let cards = self.cards
         let counts = Dictionary(grouping: cards, by: CardMastery.init).mapValues(\.count)
         let queue = session.studyQueue()
-        return ScrollView {
-            VStack(alignment: .leading, spacing: 22) {
+        let page = VStack(alignment: .leading, spacing: 22) {
                 Button { dismiss() } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 19, weight: .bold))
@@ -80,7 +83,7 @@ struct LessonCardsHub: View {
                 .buttonStyle(MicaboPressableButtonStyle())
                 .accessibilityLabel(Text(L10n.t("lesson.circle.close", locale: .resolved())))
 
-                Text(L10n.t("lesson.nav.flashcards", locale: .resolved()))
+                Text(MicaboName.cards.text())
                     .font(MicaboFont.display(40))
                     .foregroundStyle(MicaboColor.ink)
 
@@ -101,10 +104,15 @@ struct LessonCardsHub: View {
             .padding(.horizontal, MicaboSpacing.screen)
             .padding(.top, 8)
             .padding(.bottom, 32)
+        return Group {
+            if still {
+                page
+            } else {
+                ScrollView { page }
+                    .scrollIndicators(.hidden)
+            }
         }
-        .scrollIndicators(.hidden)
         .background(MicaboColor.canvas.ignoresSafeArea())
-        .onAppear { withAnimation(.easeOut(duration: 0.9).delay(0.15)) { shown = true } }
     }
 
     private func progressCard(counts: [CardMastery: Int], total: Int, queue: [Flashcard]) -> some View {
@@ -128,41 +136,41 @@ struct LessonCardsHub: View {
             }
             .frame(height: 14)
 
-            HStack(spacing: 16) {
+            // La légende revient à la ligne en allemand, en finnois ou en très grand texte,
+            // au lieu de couper « Gemeistert ».
+            MicaboFlowLayout(spacing: 12, lineSpacing: 8) {
                 ForEach(CardMastery.allCases, id: \.self) { mastery in
                     HStack(spacing: 6) {
                         Circle().fill(mastery.color).frame(width: 10, height: 10)
                         Text("\(counts[mastery] ?? 0) \(L10n.t(mastery.titleKey, locale: .resolved()))")
                             .font(MicaboFont.ui(15, weight: .semibold))
                             .foregroundStyle(MicaboColor.ink)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
+                            .fixedSize()
                     }
                 }
             }
-            .frame(maxWidth: .infinity)
 
             Button {
                 Haptics.medium()
-                withAnimation { running = queue.isEmpty ? Array(cards.shuffled().prefix(20)) : queue }
+                withAnimation(LearnMotion.standard) { running = queue.isEmpty ? Array(cards.shuffled().prefix(20)) : queue }
             } label: {
                 Label(queue.isEmpty
                     ? L10n.t("lesson.cards.reviewAnyway", locale: .resolved())
                     : L10n.t("lesson.cards.start", locale: .resolved(), vars: ["count": String(queue.count)]),
                     systemImage: "lightbulb.max")
             }
-            .buttonStyle(LessonPrimaryButtonStyle(enabled: total > 0))
+            .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent, enabled: total > 0))
             .disabled(total == 0)
 
             if total == 0 {
-                Text(L10n.t("lesson.cards.empty", locale: .resolved()))
+                Text(L10n.t("ios.home10.cards.empty", locale: .resolved()))
                     .font(MicaboFont.ui(15, weight: .medium))
                     .foregroundStyle(MicaboColor.inkSecondary)
             }
         }
         .padding(20)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.xxl, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.xxl, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
         .micaboElevation(.card)
     }
 }
@@ -192,7 +200,7 @@ private struct CardRow: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
     }
 }

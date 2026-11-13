@@ -14,6 +14,10 @@ import SwiftUI
 /// lisait comme une erreur, ou comme une seconde facture. Pro ouvert, le parcours se termine
 /// sans paywall ; et si Pro s'ouvre pendant qu'il est affiché (un droit relu en retard, un
 /// achat confirmé après coup), il se termine aussi.
+///
+/// **Sauf en test** (lot 9) : « Refaire l'onboarding », dans la section Test des réglages de
+/// TestFlight, demande le paywall même à un abonné (`PaywallTestMode`). C'est ce qui le
+/// rendait invisible au compte du développeur, Pro à vie.
 struct PaywallStepView: View {
     var onFinish: () -> Void
 
@@ -21,19 +25,43 @@ struct PaywallStepView: View {
 
     /// Une seule fin : l'achat et le passage à Pro qu'il provoque arrivent tous deux ici.
     @State private var didFinish = false
+    /// Lu une fois, à l'arrivée : le paywall demandé par le test reste jusqu'à sa croix.
+    @State private var forcedByTest = PaywallTestMode.forcesOnboardingPaywall()
+    /// **Vrai dès que le paywall a été montré.** L'achat fait passer Pro avant que l'élève
+    /// ait vu la bienvenue (`PaywallWelcomeScreen`) : si l'écran se démontait à ce moment-là,
+    /// la bienvenue sautait et le parcours se terminait d'un coup. Une fois montré, le paywall
+    /// reste en place jusqu'à ce qu'il rende la main (`onDismiss`, `onSubscribed`).
+    @State private var didShowPaywall = false
 
     private var isPro: Bool { pro?.isPro ?? false }
 
+    private var showsPaywall: Bool {
+        PaywallTestMode.showsOnboardingPaywall(isPro: isPro, forcedByTest: forcedByTest)
+    }
+
+    /// Le paywall reste monté une fois montré, même si Pro s'ouvre entre-temps.
+    private var keepsPaywall: Bool {
+        Self.keepsPaywall(shows: showsPaywall, didShow: didShowPaywall)
+    }
+
+    /// **Garder le paywall à l'écran** : tant qu'il doit se montrer, et après, une fois montré.
+    static func keepsPaywall(shows: Bool, didShow: Bool) -> Bool {
+        shows || didShow
+    }
+
     var body: some View {
         Group {
-            if isPro {
-                OnboardingPalette.white.ignoresSafeArea()
-            } else {
+            if keepsPaywall {
                 PaywallFlowView(onDismiss: finishOnce, onSubscribed: finishOnce)
+                    .onAppear { didShowPaywall = true }
+            } else {
+                V3Color.bg.ignoresSafeArea()
             }
         }
-        .onChange(of: isPro, initial: true) { _, isPro in
-            guard isPro else { return }
+        .onChange(of: showsPaywall, initial: true) { _, shows in
+            // Un abonné qui arrive ici n'a rien à acheter : le parcours se termine. Un élève
+            // qui vient d'acheter, lui, voit la bienvenue : c'est elle qui termine.
+            guard !shows, !didShowPaywall else { return }
             finishOnce()
         }
     }
@@ -41,6 +69,8 @@ struct PaywallStepView: View {
     private func finishOnce() {
         guard !didFinish else { return }
         didFinish = true
+        // Le test ne vaut que pour ce parcours-ci : le suivant redevient normal.
+        PaywallTestMode.setForcesOnboardingPaywall(false)
         onFinish()
     }
 }

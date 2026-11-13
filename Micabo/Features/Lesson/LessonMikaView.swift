@@ -6,6 +6,10 @@ import SwiftUI
 ///
 /// La porte est celle de Mika (`MikaQuota`) : une question offerte, puis Pro ; un plafond par
 /// jour pour un abonné. Quand Mika propose une carte, « Ajouter » la range dans la leçon.
+///
+/// Elle se lit comme le fil du tuteur (`TutorThreadContent`) : Mika en demi sur sa carte à
+/// l'accueil, sa tête dans un rond à côté de chaque réponse, les trois points pendant qu'il
+/// écrit, et la flèche bleue d'envoi, que le clavier ne cache jamais.
 struct LessonMikaView: View {
     let course: Course
 
@@ -31,9 +35,7 @@ struct LessonMikaView: View {
 
     /// Un fichier par leçon, à côté de la conversation de l'ancien onglet.
     static func storeURL(for id: UUID) -> URL {
-        MikaConversationStore.defaultURL
-            .deletingLastPathComponent()
-            .appendingPathComponent("mika-lessons", isDirectory: true)
+        MikaConversationStore.lessonsDirectory
             .appendingPathComponent("\(id.uuidString).json")
     }
 
@@ -66,9 +68,17 @@ struct LessonMikaView: View {
                             bubble(message).id(message.id)
                         }
                         if chat.isThinking {
-                            HStack {
-                                MikaMascot(mood: .think, size: 72)
-                                Spacer()
+                            HStack(alignment: .bottom, spacing: 10) {
+                                MikaAvatar(size: 34)
+                                HStack(spacing: 5) {
+                                    ForEach(0..<3, id: \.self) { _ in
+                                        Circle().fill(MicaboColor.inkTertiary).frame(width: 7, height: 7)
+                                    }
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 14)
+                                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+                                Spacer(minLength: 0)
                             }
                             .id("thinking")
                         }
@@ -84,7 +94,14 @@ struct LessonMikaView: View {
                 .scrollDismissesKeyboard(.interactively)
                 .onChange(of: chat.messages.count) { _, _ in
                     guard let last = chat.messages.last else { return }
-                    withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
+                    withAnimation(LearnMotion.standard) { proxy.scrollTo(last.id, anchor: .bottom) }
+                }
+                // Le clavier monte : la dernière réponse remonte avec lui, au-dessus du champ.
+                .onChange(of: focused) { _, isFocused in
+                    guard isFocused, let last = chat.messages.last else { return }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        withAnimation(LearnMotion.standard) { proxy.scrollTo(last.id, anchor: .bottom) }
+                    }
                 }
             }
             input(draft: $chat.draft)
@@ -95,7 +112,7 @@ struct LessonMikaView: View {
 
     private var header: some View {
         HStack(spacing: 12) {
-            MicaboIconView(icon: .mika, size: 36)
+            MikaAvatar(size: 36)
             VStack(alignment: .leading, spacing: 1) {
                 Text("Mika")
                     .font(MicaboFont.ui(18, weight: .heavy))
@@ -132,21 +149,21 @@ struct LessonMikaView: View {
         .padding(.vertical, 10)
     }
 
+    /// L'accueil : Mika en demi au bas de sa carte (la règle de `MikaMascot`), ce qu'il propose,
+    /// et trois questions toutes prêtes, rangées comme celles du tuteur.
     private var welcome: some View {
-        VStack(spacing: 14) {
-            MikaMascot(mood: .wave, size: 130)
-            Text(L10n.t("lesson.mika.welcome", locale: .resolved(), vars: ["lesson": course.title]))
-                .font(MicaboFont.subtitle)
-                .foregroundStyle(MicaboColor.ink)
-                .multilineTextAlignment(.center)
-            VStack(spacing: 8) {
-                suggestion(L10n.t("lesson.mika.suggestExplain", locale: .resolved()))
-                suggestion(L10n.t("lesson.mika.suggestExample", locale: .resolved()))
-                suggestion(L10n.t("lesson.mika.suggestQuiz", locale: .resolved()))
+        VStack(alignment: .leading, spacing: 12) {
+            SolverMikaCard(mood: .wave) {
+                Text(L10n.t("lesson.mika.welcome", locale: .resolved(), vars: ["lesson": course.title]))
+                    .font(MicaboFont.ui(16, weight: .semibold))
+                    .foregroundStyle(MicaboColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            suggestion(L10n.t("lesson.mika.suggestExplain", locale: .resolved()))
+            suggestion(L10n.t("lesson.mika.suggestExample", locale: .resolved()))
+            suggestion(L10n.t("lesson.mika.suggestQuiz", locale: .resolved()))
         }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 12)
+        .padding(.top, 4)
     }
 
     private func suggestion(_ text: String) -> some View {
@@ -154,37 +171,52 @@ struct LessonMikaView: View {
             chat.draft = text
             send()
         } label: {
-            Text(text)
-                .font(MicaboFont.ui(15, weight: .bold))
-                .foregroundStyle(MicaboColor.ink)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 11)
-                .frame(maxWidth: .infinity)
-                .background(MicaboColor.surface, in: Capsule())
-                .overlay(Capsule().strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+            HStack(spacing: 10) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(MicaboColor.accentInk)
+                Text(text)
+                    .font(MicaboFont.ui(15, weight: .semibold))
+                    .foregroundStyle(MicaboColor.ink)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+            }
+            .padding(14)
+            .solverCard(radius: 16)
         }
         .buttonStyle(MicaboPressableButtonStyle())
     }
 
     private func bubble(_ message: MikaMessage) -> some View {
         let mine = message.role == .user
-        return VStack(alignment: mine ? .trailing : .leading, spacing: 8) {
-            KeywordText(message.text, size: 16, weight: .medium, tintsKeywords: message.role != .user)
-                .font(MicaboFont.ui(16, weight: .medium))
-                .foregroundStyle(mine ? MicaboColor.onInk : MicaboColor.ink)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 11)
-                .background(
-                    mine ? MicaboColor.ink : MicaboColor.surface,
-                    in: RoundedRectangle(cornerRadius: 18, style: .continuous)
-                )
-                .fixedSize(horizontal: false, vertical: true)
-            if let card = message.card {
-                proposedCard(card, added: message.cardAdded, messageID: message.id)
+        return HStack(alignment: .bottom, spacing: 10) {
+            if !mine {
+                MikaAvatar(size: 34)
+            }
+            VStack(alignment: mine ? .trailing : .leading, spacing: 8) {
+                KeywordText(message.text, size: 16, weight: .medium, tintsKeywords: message.role != .user)
+                    .font(MicaboFont.ui(16, weight: .medium))
+                    .foregroundStyle(mine ? MicaboColor.onInk : MicaboColor.ink)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 11)
+                    .background(
+                        mine ? MicaboColor.ink : MicaboColor.surface,
+                        in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
+                    )
+                    .overlay {
+                        if !mine {
+                            RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border)
+                        }
+                    }
+                    .fixedSize(horizontal: false, vertical: true)
+                if let card = message.card {
+                    proposedCard(card, added: message.cardAdded, messageID: message.id)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: mine ? .trailing : .leading)
-        .padding(mine ? .leading : .trailing, 40)
+        .padding(mine ? .leading : .trailing, mine ? 48 : 24)
     }
 
     private func proposedCard(_ card: GeneratedFlashcard, added: Bool, messageID: UUID) -> some View {
@@ -209,7 +241,7 @@ struct LessonMikaView: View {
             .disabled(added)
         }
         .padding(14)
-        .background(course.tone.pale, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(course.tone.pale, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
     }
 
     private func failureRow(_ failure: String) -> some View {
@@ -217,12 +249,14 @@ struct LessonMikaView: View {
             Text(failure)
                 .font(MicaboFont.ui(14, weight: .medium))
                 .foregroundStyle(MicaboColor.wrongInk)
-            Spacer()
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
             if chat.canRetry {
                 Button(L10n.t("lesson.path.retry", locale: .resolved())) {
                     Task { await chat.retry(level: level, language: language, using: aiService) }
                 }
                 .font(MicaboFont.ui(14, weight: .heavy))
+                .foregroundStyle(MicaboColor.accentInk)
             }
         }
     }
@@ -235,14 +269,15 @@ struct LessonMikaView: View {
                 .focused($focused)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
-                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border))
             Button(action: send) {
                 Image(systemName: "arrow.up")
                     .font(.system(size: 17, weight: .heavy))
-                    .foregroundStyle(MicaboColor.onInk)
+                    .foregroundStyle(.white)
                     .frame(width: 44, height: 44)
                     .background(
-                        draft.wrappedValue.nilIfBlank == nil ? MicaboColor.inkTertiary : MicaboColor.ink,
+                        draft.wrappedValue.nilIfBlank == nil || chat.isThinking ? MicaboColor.inkTertiary : MicaboBrand.blue,
                         in: Circle()
                     )
             }
@@ -257,7 +292,9 @@ struct LessonMikaView: View {
 
     private func send() {
         Task {
-            let gate = await chat.send(isPro: pro?.isPro ?? false, level: level, language: language, using: aiService)
+            let isPro = pro?.isPro ?? false
+            let gate = await chat.send(isPro: isPro, level: level, language: language, using: aiService)
+            MikaChat.track(gate, isPro: isPro, chat: chat)
             switch gate {
             case .paywall:
                 focused = false
@@ -279,12 +316,16 @@ struct LessonMikaView: View {
         course.language ?? ContentLanguage(rawValue: UiLocale.resolved().rawValue) ?? DeckSetup.defaultLanguage()
     }
 
+    /// La carte proposée rejoint la leçon, par le même chemin que les cartes générées : texte
+    /// nettoyé, format vérifié, rang après la dernière carte. Une seule fois : `.disabled` ne
+    /// suit qu'au rendu suivant, et un double appui la rangeait deux fois.
     private func addCard(_ card: GeneratedFlashcard, messageID: UUID) {
-        let flashcard = Flashcard(front: card.front, back: card.back, position: course.cards.count, course: course)
-        modelContext.insert(flashcard)
-        course.updatedAt = Date()
-        try? modelContext.save()
+        guard chat.messages.first(where: { $0.id == messageID })?.cardAdded != true else { return }
+        guard let inserted = try? CourseRepository.addFlashcards([card], to: course, in: modelContext),
+              !inserted.isEmpty
+        else { return }
         chat.markCardAdded(messageID)
         Haptics.success()
+        Analytics.track(.mikaCardAdded)
     }
 }

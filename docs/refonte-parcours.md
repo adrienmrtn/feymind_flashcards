@@ -558,9 +558,10 @@ projet de production n'est pas joignable depuis la session de développement.
 
 ## 16. Reçu, et ce qui reste à faire hors du code
 
-- **La mascotte** (`micabo-mascotte-mico (2).zip`) est intégrée : `design/mika/` garde le SVG et
-  le CSS d'origine, `scripts/generate-mika.py` les traduit en `Micabo/Resources/mika.json`, que
-  `MikaMascot` rejoue nativement (huit humeurs). Les GIF du zip ne sont pas embarqués.
+- **La mascotte** est celle du kit de marque (`design/micabo-kit-mika/`) : Mika, le buste noir
+  au crayon. L'iPhone embarque ses 13 animations Lottie (`Micabo/Resources/Mika/`, lues par
+  `lottie-ios`) et ses 10 expressions fixes (`Assets.xcassets/Mika/`), que `MikaMascot` choisit
+  selon le contexte. L'ancien oiseau (`design/mika/`) ne sert plus qu'au site.
 - **Les icônes 3D** (`micabo-icones-3d.zip`) sont dans `Assets.xcassets` (`Icon3D-*`) ; la même
   liste est donnée au modèle (`supabase/functions/_shared/icons.ts`, testée contre le Swift).
 - **À déployer à la main** sur le projet de production : les migrations

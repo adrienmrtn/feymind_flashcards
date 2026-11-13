@@ -60,74 +60,123 @@ extension Binding {
     }
 }
 
-/// Bouton d'action principal : bloc bleu à coins 14 pt, qui s'enfonce à l'appui.
-/// Sur un écran sombre, on inverse : surface claire, texte encre.
+/// Les mesures communes aux boutons pleins et secondaires : celles de `V3Metric`.
+enum MicaboButtonMetrics {
+    /// La hauteur d'un bouton, partout la même. Un minimum, pas une hauteur : avec les grandes
+    /// tailles de texte, le libellé pousse le bouton.
+    static let height: CGFloat = V3Metric.buttonHeight
+    /// La hauteur du bouton seul d'un parcours ou d'un paywall : la même.
+    static let prominentHeight: CGFloat = V3Metric.buttonHeight
+    /// Le rayon d'un bouton, principal comme secondaire.
+    static let radius: CGFloat = V3Metric.radiusButton
+}
+
+/// **Le seul rendu d'un bouton principal**, que tous les styles « pleins » de l'app dessinent.
 ///
-/// **Son ombre est de sa propre couleur.** Une ombre grise sous un aplat bleu le salit ;
-/// la même en bleu le fait rayonner un peu au lieu de le tacher, et c'est le seul objet de
-/// l'app qui a le droit de rayonner — il n'y en a qu'un par écran.
-struct MicaboPrimaryButtonStyle: ButtonStyle {
+/// Il y en avait quatre — `MicaboPrimaryButtonStyle`, `MicaboBrandButtonStyle`,
+/// `LessonPrimaryButtonStyle` et `MicaboActionButtonStyle` — et deux écrans voisins ne
+/// montraient pas le même bouton pour la même chose. Ils gardent leurs noms et leurs
+/// paramètres, et passent tous par ici.
+///
+/// **Depuis le lot 10, c'est le dessin de `V3Button`** (`V3ButtonPlate`) : la forme, la hauteur,
+/// la lèvre et la police viennent de `V3Metric` et de `V3Font.button`, et la couleur du bouton
+/// principal de `V3Color.cta`. Un écran d'avant le lot 10 montre donc le même bouton qu'un
+/// écran neuf. Une autre teinte (`tint` : le vert d'une bonne réponse, le rouge d'une mauvaise)
+/// garde sa couleur, sur une lèvre assombrie. `fontSize` n'est plus lu : la taille est celle de
+/// la direction artistique.
+struct MicaboPrimaryFill<Label: View>: View {
+    let label: Label
     var tint: Color = MicaboColor.accent
-    var foreground: Color = MicaboColor.onInk
+    var foreground: Color = MicaboColor.onAccent
     var fullWidth: Bool = true
+    var minHeight: CGFloat = MicaboButtonMetrics.height
+    var fontSize: CGFloat = 18
+    var enabled: Bool = true
+    var isPressed: Bool
     var feedback: Haptics.Press = .medium
-    /// **Un quart plus grand**, pour le seul bouton d'un écran qui n'en a qu'un.
-    ///
-    /// Réservé au parcours d'accueil et aux paywalls : ce sont des écrans où l'on ne fait
-    /// qu'une chose, et où le bouton est la seule cible. Ailleurs dans l'app, un bouton de
-    /// cette taille écraserait les rangées et les actions secondaires autour de lui.
-    ///
-    /// La hauteur passe de 51 à 64 points, marges et corps compris — c'est un rapport, pas
-    /// deux réglages indépendants : grossir le seul rembourrage donnerait un bouton haut au
-    /// texte perdu au milieu.
-    var isProminent: Bool = false
 
-    private var font: Font {
-        isProminent ? MicaboFont.ui(19, weight: .semibold) : MicaboFont.cardTitle
+    @Environment(\.isEnabled) private var environmentEnabled
+
+    private var isLive: Bool { enabled && environmentEnabled }
+
+    /// Vrai pour le bouton principal de l'app : celui qu'aucun écran n'a teinté.
+    private var isCta: Bool { tint == MicaboColor.accent }
+
+    private var fill: Color {
+        guard isLive else { return V3Color.surface }
+        return isCta ? V3Color.cta : tint
     }
 
-    private var verticalPadding: CGFloat {
-        isProminent ? 20 : 16
+    private var lipColor: Color {
+        guard isLive else { return V3Color.line }
+        return isCta ? V3Color.ctaLip : tint.darkened(by: 0.22)
     }
 
-    private var radius: CGFloat {
-        isProminent ? MicaboRadius.lg : MicaboRadius.button
+    /// Le texte : celui du bouton principal, ou — sur une autre teinte — une encre qui s'inverse
+    /// avec le thème. Les teintes du marine sont claires (un vert, un rouge lumineux) et portent
+    /// du texte sombre ; celles du clair sont soutenues et portent du blanc.
+    private var ink: Color {
+        guard isLive else { return V3Color.ink3 }
+        guard foreground == MicaboColor.onAccent else { return foreground }
+        return isCta ? V3Color.ctaInk : MicaboColor.onInk
     }
 
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(font)
-            .foregroundStyle(foreground)
-            .frame(maxWidth: fullWidth ? .infinity : nil)
-            .padding(.vertical, verticalPadding)
-            .padding(.horizontal, fullWidth ? 0 : 24)
-            .background(tint, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .shadow(color: tint.opacity(0.22), radius: 3, x: 0, y: 2)
-            .shadow(color: tint.opacity(0.20), radius: 12, x: 0, y: 10)
-            .micaboPressEffect(isPressed: configuration.isPressed, feedback: feedback)
-            .hoverEffect(.highlight)
+    var body: some View {
+        V3ButtonPlate(
+            label: label,
+            fill: fill,
+            lipColor: lipColor,
+            foreground: ink,
+            fullWidth: fullWidth,
+            minHeight: minHeight,
+            isPressed: isPressed && isLive,
+            feedback: feedback
+        )
+        .animation(MicaboMotion.quick, value: isLive)
     }
 }
 
-/// Bouton secondaire : surface blanche, filet discret, le fond suffit à la détacher.
+/// Bouton d'action principal : `MicaboPrimaryFill`, un par écran.
+struct MicaboPrimaryButtonStyle: ButtonStyle {
+    var tint: Color = MicaboColor.accent
+    var foreground: Color = MicaboColor.onAccent
+    var fullWidth: Bool = true
+    var feedback: Haptics.Press = .medium
+    /// Gardé pour les écrans qui le passent : le bouton a la même hauteur partout.
+    var isProminent: Bool = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        MicaboPrimaryFill(
+            label: configuration.label,
+            tint: tint,
+            foreground: foreground,
+            fullWidth: fullWidth,
+            minHeight: isProminent ? MicaboButtonMetrics.prominentHeight : MicaboButtonMetrics.height,
+            isPressed: configuration.isPressed,
+            feedback: feedback
+        )
+    }
+}
+
+/// Bouton secondaire : **le bouton secondaire de `V3Button`** — une surface à filet, à plat, de
+/// la même forme que le principal pour que deux boutons empilés se lisent comme une paire.
 struct MicaboSecondaryButtonStyle: ButtonStyle {
     var fullWidth: Bool = true
     var feedback: Haptics.Press = .light
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(MicaboFont.cardTitle)
-            .foregroundStyle(MicaboColor.ink)
-            .frame(maxWidth: fullWidth ? .infinity : nil)
-            .padding(.vertical, 16)
-            .padding(.horizontal, fullWidth ? 0 : 24)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                    .strokeBorder(MicaboColor.strokeStrong, lineWidth: 1.5)
-            }
-            .micaboPressEffect(isPressed: configuration.isPressed, feedback: feedback)
-            .hoverEffect(.highlight)
+        V3ButtonPlate(
+            label: configuration.label,
+            fill: V3Color.surface,
+            lipColor: Color.clear,
+            foreground: V3Color.ink,
+            font: V3Font.buttonSecondary,
+            fullWidth: fullWidth,
+            lip: 0,
+            border: V3Color.line,
+            isPressed: configuration.isPressed,
+            feedback: feedback
+        )
     }
 }
 
@@ -152,7 +201,7 @@ struct MicaboQuietButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(MicaboFont.captionEmphasis)
+            .font(V3Font.label)
             .foregroundStyle(MicaboColor.inkSecondary)
             .padding(.vertical, 10)
             .padding(.horizontal, 16)
@@ -178,6 +227,8 @@ enum MicaboCircleStyle: Equatable {
         }
     }
 
+    /// La pastille claire est une surface : c'est sa clarté sur le fond de la page qui la
+    /// dessine, il n'y a plus d'ombre pour le faire.
     var background: Color {
         switch self {
         case .light: MicaboColor.surface
@@ -186,30 +237,26 @@ enum MicaboCircleStyle: Equatable {
         case .tinted: Color.white.opacity(0.75)
         }
     }
-
-    var shadowOpacity: Double {
-        switch self {
-        case .light: 0.05
-        case .dark: 0.12
-        case .glass, .tinted: 0
-        }
-    }
 }
 
-/// Pastille circulaire blanche, sans bordure. Utilisée seule dans un `Menu`,
-/// ou enveloppée par `MicaboCircleButton`.
+/// Pastille circulaire : une surface à filet, sans ombre. Utilisée seule dans un `Menu`, ou
+/// enveloppée par `MicaboCircleButton`.
 struct MicaboCircleIcon: View {
     let systemImage: String
     var style: MicaboCircleStyle = .light
-    var size: CGFloat = 38
+    var size: CGFloat = 40
 
     var body: some View {
         Image(systemName: systemImage)
-            .font(.system(size: size * 0.38, weight: .medium))
+            .font(.system(size: size * 0.4, weight: .bold))
             .foregroundStyle(style.foreground)
             .frame(width: size, height: size)
             .background(style.background, in: Circle())
-            .shadow(color: Color.black.opacity(style.shadowOpacity), radius: 10, x: 0, y: 4)
+            .overlay {
+                if style == .light {
+                    Circle().strokeBorder(MicaboColor.stroke, lineWidth: MicaboSurface.border)
+                }
+            }
     }
 }
 
@@ -217,7 +264,7 @@ struct MicaboCircleIcon: View {
 struct MicaboCircleButton: View {
     let systemImage: String
     var style: MicaboCircleStyle = .light
-    var size: CGFloat = 38
+    var size: CGFloat = 40
     var accessibilityTitle: String?
     var feedback: Haptics.Press = .light
     var action: () -> Void

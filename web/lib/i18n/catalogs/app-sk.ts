@@ -1,3 +1,5 @@
+import { kxSk } from "./kx-sk";
+
 /** Connected-app copy (sk). */
 export const appSk = {
   a11y: {
@@ -572,6 +574,7 @@ export const appSk = {
     delayMonths: "{n} mes.",
     delayYears: "{n, plural, one {# rok} few {# roky} many {# roka} other {# rokov}}",
   },
+  kx: kxSk,
 } as const;
 
 export const copySk = {

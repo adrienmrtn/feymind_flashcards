@@ -18,7 +18,7 @@ enum ProfileLinks {
 }
 
 /// La carte profil : l'initiale, le prénom, le nom d'utilisateur, les études. Un appui ouvre
-/// toutes les infos et le compte.
+/// toutes les infos et le compte. La carte claire de l'app, comme celles de Home.
 struct ProfileCard: View {
     let name: String
     let identity: String?
@@ -30,88 +30,90 @@ struct ProfileCard: View {
             HStack(spacing: 14) {
                 Text(String(name.prefix(1)).uppercased())
                     .font(MicaboFont.number(26))
-                    .foregroundStyle(MicaboColor.onInk)
+                    .foregroundStyle(Color.white)
                     .frame(width: 60, height: 60)
-                    .background(MicaboColor.accent, in: Circle())
+                    .background(MicaboStage.fill, in: Circle())
                 VStack(alignment: .leading, spacing: 3) {
                     Text(name)
-                        .font(MicaboFont.subtitle)
+                        .font(MicaboFont.ui(19, weight: .black))
                         .foregroundStyle(MicaboColor.ink)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
                     if let identity {
                         Text(identity)
                             .font(MicaboFont.ui(14, weight: .bold))
-                            .foregroundStyle(MicaboColor.accent)
-                            .lineLimit(1)
+                            .foregroundStyle(MicaboColor.accentInk)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     if let studies {
                         Text(studies)
-                            .font(MicaboFont.ui(14, weight: .medium))
+                            .font(MicaboFont.ui(14, weight: .semibold))
                             .foregroundStyle(MicaboColor.inkSecondary)
-                            .lineLimit(1)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
+                Image(systemName: "chevron.forward")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(MicaboColor.inkTertiary)
             }
             .padding(16)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .micaboElevation(.card)
+            .homeCard()
         }
         .buttonStyle(MicaboPressableButtonStyle(feedback: .soft))
     }
 }
 
-/// « Passer en Pro » : la carte d'encre, pour qui n'est pas abonné.
+/// **« Passer en Pro »**, pour qui n'est pas abonné : une carte de la direction, la
+/// couronne en jaune : le jaune, c'est PRO.
 struct ProUpgradeCard: View {
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 14) {
-                MicaboIconView(icon: .crown, size: 44)
+                MicaboIconView(icon: .crown, size: 34, tint: V3Color.yellow)
+                    .frame(width: 52, height: 52)
+                    .background(V3Color.yellowWash, in: Circle())
                 VStack(alignment: .leading, spacing: 3) {
                     Text(L10n.t("lesson.profile.goPro", locale: .resolved()))
-                        .font(MicaboFont.label)
-                        .foregroundStyle(MicaboColor.onInk)
+                        .font(MicaboFont.ui(17, weight: .black))
+                        .foregroundStyle(V3Color.ink)
                     Text(L10n.t("lesson.profile.goProBody", locale: .resolved()))
-                        .font(MicaboFont.ui(14, weight: .medium))
-                        .foregroundStyle(MicaboColor.onInkMuted)
+                        .font(MicaboFont.ui(14, weight: .semibold))
+                        .foregroundStyle(V3Color.ink2)
                         .fixedSize(horizontal: false, vertical: true)
                         .multilineTextAlignment(.leading)
                 }
                 Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
+                Image(systemName: "chevron.forward")
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(MicaboColor.onInkMuted)
+                    .foregroundStyle(V3Color.ink2)
             }
             .padding(16)
-            .background(MicaboColor.ink, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .v3Card()
         }
         .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
     }
 }
 
-/// Un groupe de rangées, sous son petit titre.
+/// Un groupe de rangées, sous son titre — le même titre de section que Home, le Calendrier
+/// et Concentration (`StudySectionTitle`).
 struct ProfileGroup<Content: View>: View {
     let title: String
     @ViewBuilder let content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(MicaboFont.small)
-                .tracking(MicaboTracking.caps)
-                .textCase(.uppercase)
-                .foregroundStyle(MicaboColor.inkSecondary)
-                .padding(.leading, 4)
+        VStack(alignment: .leading, spacing: 12) {
+            StudySectionTitle(title: title)
             VStack(spacing: 0) {
                 content
             }
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .micaboElevation(.row)
+            .background(HomePalette.card)
+            .clipShape(RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: MicaboStage.tileRadius, style: .continuous).strokeBorder(HomePalette.cardStroke, lineWidth: MicaboSurface.border))
         }
     }
 }
@@ -136,17 +138,24 @@ struct ProfileRow: View {
             HStack(spacing: 14) {
                 MicaboIconView(icon: icon, size: 28)
                     .frame(width: 36, height: 36)
+                // Le nom de la rangée passe avant sa valeur : « Thème » ne se coupe pas pour
+                // laisser la place à « Comme le téléphone ».
                 Text(title)
                     .font(MicaboFont.ui(17, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .layoutPriority(1)
                 Spacer(minLength: 8)
                 if let value {
                     Text(value)
                         .font(MicaboFont.ui(15, weight: .semibold))
                         .foregroundStyle(MicaboColor.inkSecondary)
-                        .lineLimit(1)
+                        .multilineTextAlignment(.trailing)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
                 }
-                Image(systemName: "chevron.right")
+                Image(systemName: "chevron.forward")
                     .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(MicaboColor.inkTertiary)
             }
@@ -194,7 +203,7 @@ struct ProfileSettingsGroup: View {
             Menu {
                 ForEach(MicaboAppearance.allCases) { mode in
                     Button {
-                        appearance.appearance = mode
+                        appearance.choose(mode)
                         Haptics.selection()
                     } label: {
                         if mode == appearance.appearance {

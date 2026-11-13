@@ -416,7 +416,7 @@ private struct DeckMaterialSlot: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 118)
+            .frame(minHeight: 118)
             .padding(.horizontal, 10)
             .background(background)
             .overlay(border)
@@ -440,7 +440,7 @@ private struct DeckMaterialSlot: View {
         case .ready:
             Image(systemName: material.document?.source.systemImage ?? "doc.fill")
                 .font(.system(size: 22, weight: .medium))
-                .foregroundStyle(MicaboColor.accent)
+                .foregroundStyle(MicaboColor.accentInk)
         case .failed:
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 20, weight: .medium))

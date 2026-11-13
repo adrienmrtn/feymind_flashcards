@@ -16,6 +16,7 @@ struct StreakCelebrationView: View {
     let onContinue: () -> Void
 
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var status: StudyStreak.Status
     @State private var week: [StudyStreak.Day]
@@ -44,7 +45,7 @@ struct StreakCelebrationView: View {
             )
             .ignoresSafeArea()
             .allowsHitTesting(false)
-            if lit {
+            if lit, !reduceMotion {
                 ConfettiView(colors: [MicaboColor.flame, MicaboColor.flameInk, MicaboColor.flameTrack, LessonTone.yellow.vivid])
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
@@ -53,7 +54,7 @@ struct StreakCelebrationView: View {
             VStack(spacing: 0) {
                 Spacer(minLength: 12)
                 HStack(alignment: .bottom, spacing: -8) {
-                    MikaMascot(mood: .celebrate, size: 124, reactsToTap: true)
+                    MikaMascot(mood: .celebrate, size: 150, reactsToTap: true)
                     StreakFlame(lit: lit, size: 84)
                 }
                 Text("\(shownCount)")
@@ -97,13 +98,12 @@ struct StreakCelebrationView: View {
     private func play() {
         guard !played else { return }
         played = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-            withAnimation(.spring(duration: 0.55, bounce: 0.45)) {
-                lit = true
-                shownCount = status.current
-            }
-            Haptics.success()
-            Haptics.burst(count: 3, over: 0.45)
+        // La flamme s'allume à l'arrivée de l'écran : elle attendait 0,6 s, devant un écran figé.
+        withAnimation(MicaboMotion.resolved(MicaboMotion.celebrate, reduceMotion: reduceMotion)) {
+            lit = true
+            shownCount = status.current
         }
+        Haptics.success()
+        Haptics.burst(count: 3, over: 0.45)
     }
 }

@@ -119,10 +119,18 @@ struct ProfileRecord: Codable {
     /// Langue des prochaines fiches, quand elle n'est plus celle du pays.
     var sheet_language: String?
     var onboarding_completed_at: Date?
+    /// **L'XP** (`docs/refonte-knowunity.md` § 2, migration `xp_league`) : le total, celle de
+    /// la semaine et son lundi (`AAAA-MM-JJ`). Optionnels : absents, ils ne partent pas
+    /// (`encodeIfPresent`), et c'est ce que fait `withoutXP` quand la colonne n'existe pas
+    /// encore au serveur. Ils n'entrent pas dans `signature` : ce ne sont pas des réglages.
+    var xp_total: Int?
+    var xp_week: Int?
+    var xp_week_start: String?
 
     /// Le profil tel que les réglages locaux le décrivent.
     static func fromLocalPreferences(userID: UUID, displayName: String?) -> ProfileRecord {
-        ProfileRecord(
+        let xp = XPStore.shared.syncValues
+        return ProfileRecord(
             id: userID,
             display_name: displayName,
             study_level: OnboardingPreferences.level,
@@ -141,8 +149,21 @@ struct ProfileRecord: Codable {
             // La langue dans laquelle on écrit, c'est-à-dire celle de l'app : un ancien appareil
             // du même compte, qui relit encore ce champ, écrit alors dans la même langue.
             sheet_language: OnboardingPreferences.contentLanguage.rawValue,
-            onboarding_completed_at: OnboardingPreferences.isCompleted ? Date() : nil
+            onboarding_completed_at: OnboardingPreferences.isCompleted ? Date() : nil,
+            xp_total: xp.total,
+            xp_week: xp.week,
+            xp_week_start: xp.weekStart
         )
+    }
+
+    /// Le même profil sans les trois champs d'XP : ce qui repart quand le serveur refuse une
+    /// colonne `xp_*` (migration pas encore déployée). La synchro ne casse jamais à cause de l'XP.
+    var withoutXP: ProfileRecord {
+        var copy = self
+        copy.xp_total = nil
+        copy.xp_week = nil
+        copy.xp_week_start = nil
+        return copy
     }
 
     /// **L'empreinte de ce que le profil transporte**, telle que cet appareil la voit.
@@ -163,7 +184,8 @@ struct ProfileRecord: Codable {
     /// Recopie le profil distant dans les réglages locaux.
     ///
     /// C'est ce qui fait qu'une réinstallation retrouve un étudiant en PASS au Maroc et non un
-    /// lycéen français par défaut, sans lui refaire passer l'inscription.
+    /// lycéen français par défaut, quand il choisit « J'ai déjà un compte »
+    /// (`CloudSync.recognizeExistingAccount`).
     func applyToLocalPreferences() {
         if let country = SchoolingCountry(rawValue: country_code) {
             OnboardingPreferences.schoolingCountry = country
@@ -190,9 +212,11 @@ struct ProfileRecord: Codable {
         // Absente à distance, elle s'efface aussi ici : la langue des fiches redevient celle
         // du pays, ce qui est la réponse quand personne ne l'a choisie.
         OnboardingPreferences.sheetLanguage = sheet_language.flatMap(ContentLanguage.init(rawValue:))
-        if onboarding_completed_at != nil {
-            OnboardingPreferences.markCompleted()
-        }
+        // `onboarding_completed_at` ne redescend plus dans le drapeau local. Il le faisait, et
+        // c'est ce qui empêchait de faire le parcours après une réinstallation : la session
+        // survit dans le trousseau, la première synchro relisait « parcours fini » sur le
+        // serveur, et l'app quittait le parcours sous les doigts de l'élève. Le parcours se
+        // fait sur chaque installation, sauf « J'ai déjà un compte » (`LaunchGate`).
     }
 }
 
@@ -614,7 +638,10 @@ struct ExamRecord: Codable {
         try container.encode(id, forKey: .id)
         try container.encode(user_id, forKey: .user_id)
         try container.encode(name, forKey: .name)
-        try container.encode(exam_date, forKey: .exam_date)
+        // **Le jour, pas un instant.** La colonne est un `date` nu : un horodatage
+        // (« 2027-06-14T22:00:00Z » pour le 15 juin à minuit à Paris) y perdait son heure et
+        // son fuseau, et l'examen arrivait la veille sur le site et sur l'appareil suivant.
+        try container.encode(ExamDayStamp.string(from: exam_date), forKey: .exam_date)
         try container.encode(intensity, forKey: .intensity)
         try container.encodeIfPresent(target_score, forKey: .target_score)
         try container.encodeIfPresent(kind, forKey: .kind)
@@ -626,6 +653,16 @@ struct ExamRecord: Codable {
         try container.encode(updated_at, forKey: .updated_at)
         try container.encodeIfPresent(deleted_at, forKey: .deleted_at)
         try container.encodeIfPresent(schedule_backup, forKey: .schedule_backup)
+    }
+
+    /// **Le jour d'une colonne `date`, ramené à minuit chez l'élève.** La descente lit
+    /// « 2027-06-15 » comme minuit UTC : à l'ouest de Greenwich, c'était encore le 14, et
+    /// l'examen reculait d'un jour à chaque appareil qui le recevait.
+    static func localDay(fromColumn date: Date, calendar: Calendar = MicaboCalendar.shared) -> Date {
+        var utc = Calendar(identifier: .gregorian)
+        utc.timeZone = TimeZone(secondsFromGMT: 0) ?? utc.timeZone
+        let parts = utc.dateComponents([.year, .month, .day], from: date)
+        return calendar.date(from: parts).map { calendar.startOfDay(for: $0) } ?? date
     }
 }
 

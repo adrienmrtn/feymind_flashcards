@@ -55,7 +55,25 @@ struct RootView: View {
     @AppStorage(OnboardingPreferences.Key.pendingFirstImport) private var pendingFirstImport = false
 
     @Environment(AuthController.self) private var auth
+    @Environment(CloudSync.self) private var sync
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// **Le rideau bleu du lancement**, levé une fois la première image posée. Voir
+    /// `LaunchCurtain`.
+    @State private var showsCurtain = !LaunchCurtain.hasLifted
+
+    /// Parcours ou app : la règle est dans `LaunchGate`. Une session restaurée du trousseau
+    /// n'en décide pas — seul le parcours fini sur cette installation, ou « J'ai déjà un
+    /// compte » (qui le marque fini), ouvre l'app.
+    private var route: LaunchRoute {
+        LaunchGate.route(
+            installMarked: LaunchGate.isInstallMarked(),
+            onboardingDoneLocally: didCompleteOnboarding,
+            hasSession: auth.isSignedIn,
+            tappedHaveAccount: false
+        )
+    }
 
     private var showsAccountGate: Bool {
         didCompleteOnboarding && !auth.isSignedIn && !didSkipAccount && auth.state != .restoring
@@ -63,11 +81,16 @@ struct RootView: View {
 
     var body: some View {
         ZStack {
-            if !didCompleteOnboarding {
+            if route == .onboarding {
                 OnboardingFlowView(library: modelContext) {
                     didCompleteOnboarding = true
+                    // Les réponses du parcours montent tout de suite (`noteOnboardingAnswers`,
+                    // posé par le parcours), avant que le profil du serveur - celui d'une
+                    // ancienne installation, si la session a survécu - ne redescende.
+                    Task { await sync.sync(context: modelContext) }
                 }
-                .transition(.opacity.combined(with: .scale(scale: 1.03)))
+                // Un fondu, sans échelle : une page qui « respire » en arrivant fait un saut.
+                .transition(.opacity)
             } else if showsAccountGate {
                 AuthView()
                     .transition(.opacity)
@@ -81,14 +104,62 @@ struct RootView: View {
                     .transition(.opacity)
             }
         }
-        .animation(.easeInOut(duration: 0.45), value: didCompleteOnboarding)
-        .animation(.easeInOut(duration: 0.35), value: showsAccountGate)
-        .animation(.easeInOut(duration: 0.45), value: pendingFirstImport)
+        .overlay {
+            if showsCurtain {
+                LaunchCurtain()
+                    .transition(.opacity)
+            }
+        }
+        // **Le rideau se lève au tour suivant de la boucle**, une fois la première image de
+        // l'écran posée dessous : l'écran de lancement (le même marine, le même Mika) cède la
+        // place sans blanc intermédiaire, par un fondu court.
+        .task {
+            guard showsCurtain else { return }
+            // Une seule fois par lancement : changer de langue recrée `RootView`
+            // (`.id(uiLocale.locale)`), et le bleu n'a pas à repasser sur l'app.
+            LaunchCurtain.hasLifted = true
+            // Le tour de boucle suffit : la tâche part une fois la première image posée, et
+            // attendre soixante millisecondes de plus ne faisait que retarder l'app.
+            await Task.yield()
+            withAnimation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion)) {
+                showsCurtain = false
+            }
+        }
+        // Le passage d'un écran racine à l'autre : la courbe commune, un fondu bref si le
+        // mouvement est réduit.
+        .animation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion), value: didCompleteOnboarding)
+        .animation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion), value: showsAccountGate)
+        .animation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion), value: pendingFirstImport)
         // Se connecter depuis les réglages referme la porte : sans ça, le drapeau « plus
         // tard » resterait vrai et l'écran de compte ne reviendrait jamais après une
         // déconnexion.
         .onChange(of: auth.isSignedIn) { _, isSignedIn in
             if isSignedIn { didSkipAccount = false }
         }
+    }
+}
+
+/// **L'écran de lancement, recopié en SwiftUI.**
+///
+/// L'écran de lancement (`UILaunchScreen` dans `Info.plist`) est le marine de l'app
+/// (`LaunchBackground`, le même dans les deux thèmes) et Mika au centre de l'écran
+/// (`LaunchMika`, 200 points). La première image de SwiftUI doit lui être identique : ce
+/// rideau repose le même fond et la même image, à sa taille, au centre de l'écran entier
+/// (pas de la zone sûre), puis s'efface en fondu sur l'écran qui suit.
+struct LaunchCurtain: View {
+    /// Vrai une fois le rideau levé pendant ce lancement.
+    nonisolated(unsafe) static var hasLifted = false
+
+    /// L'image de l'écran de lancement, dans le catalogue.
+    static let mika = "LaunchMika"
+
+    var body: some View {
+        ZStack {
+            MicaboBrand.launch
+            Image(Self.mika)
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }

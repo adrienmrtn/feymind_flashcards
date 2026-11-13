@@ -41,7 +41,7 @@ struct LessonCircleScreen: View {
                         title: circle.title,
                         circleID: circle.id,
                         onClose: { dismiss() },
-                        onDone: { withAnimation(.spring(duration: 0.45)) { showsTakeaways = true } }
+                        onDone: { withAnimation(LearnMotion.gentle) { showsTakeaways = true } }
                     )
                 }
             }
@@ -118,7 +118,7 @@ struct CircleTopBar: View {
                     }
                 }
                 .frame(height: 10)
-                .animation(.easeOut(duration: 0.25), value: progress)
+                .animation(LearnMotion.quick, value: progress)
             } else {
                 Spacer()
             }
@@ -151,11 +151,14 @@ struct IntroCircleView: View {
             CircleTopBar(progress: nil, tone: session.course.tone, label: nil) { dismiss() }
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
-                    HStack {
-                        Spacer()
-                        MikaMascot(mood: .wave, size: 130)
-                        Spacer()
+                    // Mika en demi, qui dépasse de sa ligne : l'en-tête de la leçon.
+                    VStack(spacing: 0) {
+                        MikaPeek(mood: .wave, width: MikaPeek.line)
+                        Capsule()
+                            .fill(MicaboColor.stroke)
+                            .frame(width: MikaPeek.line * 1.4, height: 2)
                     }
+                    .frame(maxWidth: .infinity)
                     Text(L10n.t("lesson.intro.title", locale: .resolved()))
                         .font(MicaboFont.title)
                         .foregroundStyle(MicaboColor.ink)
@@ -171,7 +174,7 @@ struct IntroCircleView: View {
                         }
                         .padding(18)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(session.course.tone.pale, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .background(session.course.tone.pale, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
                     }
 
                     VStack(alignment: .leading, spacing: 12) {
@@ -197,7 +200,7 @@ struct IntroCircleView: View {
                 .padding(.bottom, 24)
             }
             Button(L10n.t("lesson.intro.go", locale: .resolved()), action: onDone)
-                .buttonStyle(LessonPrimaryButtonStyle())
+                .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.bottom, 12)
         }
@@ -245,7 +248,7 @@ struct ConclusionCircleView: View {
                         }
                         .padding(18)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(session.course.tone.pale, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .background(session.course.tone.pale, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
                     }
 
                     if let score = session.progress.averageQuizPercent {
@@ -254,12 +257,12 @@ struct ConclusionCircleView: View {
                                 .font(MicaboFont.label)
                                 .foregroundStyle(MicaboColor.ink)
                             Spacer()
-                            Text("\(score) %")
+                            Text(L10n.percent(score, locale: .resolved()))
                                 .font(MicaboFont.number(28))
                                 .foregroundStyle(session.course.tone.ink)
                         }
                         .padding(18)
-                        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
                         .micaboElevation(.row)
                     }
                 }
@@ -267,7 +270,7 @@ struct ConclusionCircleView: View {
                 .padding(.bottom, 24)
             }
             Button(L10n.t("lesson.conclusion.finish", locale: .resolved()), action: onDone)
-                .buttonStyle(LessonPrimaryButtonStyle())
+                .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.bottom, 12)
         }
@@ -293,33 +296,56 @@ struct LessonFinishedView: View {
     let session: LessonSession
     let onLeave: (Destination) -> Void
 
+    /// « Cette leçon t'a aidé ? », si l'élève n'a pas encore donné son avis sur cette leçon
+    /// (`LessonRating`). Décidé une fois, à l'apparition.
+    @State private var showsRating = false
+
     var body: some View {
         ZStack {
             MicaboColor.canvas.ignoresSafeArea()
             ConfettiView(colors: LessonTone.allCases.map(\.vivid))
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
-            VStack(spacing: 22) {
-                Spacer()
-                MikaMascot(mood: .celebrate, size: 200, reactsToTap: true)
-                Text(L10n.t("lesson.finished.title", locale: .resolved()))
-                    .font(MicaboFont.display(32))
-                    .foregroundStyle(MicaboColor.ink)
-                    .multilineTextAlignment(.center)
-                HStack(spacing: 14) {
-                    stat(
-                        value: session.progress.averageQuizPercent.map { "\($0) %" } ?? "-",
-                        label: L10n.t("lesson.finished.score", locale: .resolved())
-                    )
-                    stat(
-                        value: minutes,
-                        label: L10n.t("lesson.finished.time", locale: .resolved())
-                    )
+            VStack(spacing: 0) {
+                // Le contenu défile s'il le faut : les raisons d'un 👎 ne doivent pas pousser
+                // les deux boutons hors de l'écran d'un petit iPhone.
+                GeometryReader { proxy in
+                    ScrollView {
+                        VStack(spacing: 22) {
+                            MikaMascot(mood: .celebrate, size: showsRating ? 120 : 150, reactsToTap: true)
+                            Text(L10n.t("lesson.finished.title", locale: .resolved()))
+                                .font(MicaboFont.display(32))
+                                .foregroundStyle(MicaboColor.ink)
+                                .multilineTextAlignment(.center)
+                            HStack(spacing: 14) {
+                                stat(
+                                    value: session.progress.averageQuizPercent.map { L10n.percent($0, locale: .resolved()) } ?? "–",
+                                    label: L10n.t("lesson.finished.score", locale: .resolved())
+                                )
+                                stat(
+                                    value: minutes,
+                                    label: L10n.t("lesson.finished.time", locale: .resolved())
+                                )
+                            }
+                            // Les deux cartes touchaient les bords de l'écran : la marge de
+                            // l'app, comme les boutons dessous (lot 11).
+                            .padding(.horizontal, MicaboSpacing.screen)
+                            if showsRating {
+                                LessonRatingCard(course: session.course, moment: .finished) {
+                                    withAnimation(LearnMotion.standard) { showsRating = false }
+                                }
+                                .padding(.horizontal, MicaboSpacing.screen)
+                                .transition(.opacity.combined(with: .move(edge: .bottom)))
+                            }
+                        }
+                        .frame(maxWidth: .infinity, minHeight: proxy.size.height)
+                    }
+                    .scrollBounceBehavior(.basedOnSize)
+                    .scrollDismissesKeyboard(.interactively)
                 }
-                Spacer()
                 VStack(spacing: 12) {
-                    Button(L10n.t("lesson.finished.cards", locale: .resolved())) { onLeave(.flashcards) }
-                        .buttonStyle(LessonPrimaryButtonStyle())
+                    Button(L10n.t("ios.home10.lesson.reviewCards", locale: .resolved())) { onLeave(.flashcards) }
+                        .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
                     Button(L10n.t("lesson.finished.back", locale: .resolved())) { onLeave(.lessons) }
                         .buttonStyle(MicaboSecondaryButtonStyle())
                 }
@@ -327,7 +353,15 @@ struct LessonFinishedView: View {
                 .padding(.bottom, 12)
             }
         }
-        .onAppear { Haptics.burst(count: 4, over: 0.6) }
+        .onAppear {
+            Haptics.burst(count: 4, over: 0.6)
+            let id = session.course.id
+            guard LessonRating.shouldOffer(id, at: .finished) else { return }
+            LessonRating.markOffered(id, at: .finished)
+            // La question est là d'emblée, sous le score : elle arrivait 1,2 s après l'écran, et
+            // poussait ce que l'élève était en train de lire.
+            showsRating = true
+        }
     }
 
     private var minutes: String {
@@ -349,17 +383,35 @@ struct LessonFinishedView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
         .micaboElevation(.row)
     }
 }
 
 /// Des confettis légers, qui tombent une fois.
+///
+/// L'horloge s'arrête quand le dernier est tombé : elle redessinait l'écran soixante fois par
+/// seconde tant que la vue restait là, pour rien. Avec « Réduire les animations », pas de
+/// confettis : la fête se lit dans Mika et le titre.
 struct ConfettiView: View {
     let colors: [Color]
     @State private var start = Date()
+    @State private var fallen = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
+        if reduceMotion || fallen {
+            Color.clear
+        } else {
+            falling
+                .task {
+                    try? await Task.sleep(for: .seconds(4))
+                    fallen = true
+                }
+        }
+    }
+
+    private var falling: some View {
         TimelineView(.animation) { timeline in
             Canvas { context, size in
                 let elapsed = timeline.date.timeIntervalSince(start)

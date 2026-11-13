@@ -1,3 +1,5 @@
+import { kxFi } from "./kx-fi";
+
 /** Suomenkielinen (fi) : textes de l'app connectée (hors vitrine et onboarding). */
 export const appFi = {
   a11y: {
@@ -572,6 +574,7 @@ export const appFi = {
     delayMonths: "{n} kk",
     delayYears: "{n, plural, one {# vuosi} other {# vuotta}}",
   },
+  kx: kxFi,
 } as const;
 
 export const copyFi = {

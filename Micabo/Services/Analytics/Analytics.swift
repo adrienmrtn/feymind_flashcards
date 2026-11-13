@@ -92,6 +92,9 @@ enum Analytics {
 actor AnalyticsQueue {
     static let shared = AnalyticsQueue()
 
+    /// Vrai quand l'app ne sert que d'hôte aux tests (le même signe que `MicaboApp`).
+    private static let isHostingTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+
     // MARK: Réglages
 
     /// Le lot qui déclenche un envoi immédiat.
@@ -203,7 +206,9 @@ actor AnalyticsQueue {
     }
 
     private func enqueue(name: String, props: [String: AnalyticsValue], at date: Date) {
-        guard AppConfig.isConfigured, let context else { return }
+        // Sous les tests, rien ne part : le banc d'essai pose de vrais écrans, qui tracent comme
+        // dans l'app, et la table des événements ne doit pas recevoir ceux d'une machine de CI.
+        guard !Self.isHostingTests, AppConfig.isConfigured, let context else { return }
 
         pending.append(AnalyticsRow(
             deviceID: context.deviceID,

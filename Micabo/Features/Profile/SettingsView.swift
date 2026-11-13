@@ -17,13 +17,17 @@ struct SettingsView: View {
     @Environment(CloudSync.self) private var sync
     @Environment(SocialService.self) private var social
 
-    @State private var username = ""
 
     @State private var stage = OnboardingPreferences.educationStage
     @State private var country = OnboardingPreferences.schoolingCountry
     @State private var showResetConfirmation = false
     @State private var showDeleteAccountConfirmation = false
     @State private var showSignOutConfirmation = false
+    /// Vrai pendant une déconnexion ou une suppression : un second appui n'en lance pas une
+    /// seconde par-dessus.
+    @State private var isLeavingAccount = false
+    /// Ce qui a empêché la suppression du compte, à dire dans une alerte.
+    @State private var leaveFailure: String?
     @State private var showAuth = false
     @State private var showSubjects = false
     @State private var showSchool = false
@@ -33,6 +37,9 @@ struct SettingsView: View {
 
     @Environment(ProAccess.self) private var pro: ProAccess?
     @State private var paywall: PaywallTrigger?
+    /// La variante du test de prix montrée par les paywalls (`PriceDisplay`), relue pour que
+    /// la rangée de test suive l'appui.
+    @State private var priceDisplay = PriceDisplay.current
     @State private var discountOffer: DiscountPresentation?
     /// Ce que répondent les boutons de test des notifications.
     @State private var notificationReport: String?
@@ -57,7 +64,7 @@ struct SettingsView: View {
                 header
                 proSection
                 accountSection
-                identitySection
+                SettingsIdentitySection()
                 studiesSection
                 languageSection
                 #if DEBUG
@@ -91,7 +98,18 @@ struct SettingsView: View {
             Button(i18n.t("ios.deleteAccount"), role: .destructive) {
                 // Le compte part, et ce qu'il avait sur ce téléphone avec lui : le message
                 // promet « tes cours seront effacés ». Voir `CloudSync.leaveAccount`.
-                Task { await sync.leaveAccount(context: modelContext, deleting: true) }
+                //
+                // **Un refus se dit.** L'erreur restait dans `auth.message`, que cet écran ne
+                // montre pas : sans réseau, « Supprimer mon compte » ne faisait rien, sans un mot.
+                guard !isLeavingAccount else { return }
+                isLeavingAccount = true
+                Task {
+                    let left = await sync.leaveAccount(context: modelContext, deleting: true)
+                    isLeavingAccount = false
+                    guard !left else { return }
+                    auth.clearMessage()
+                    leaveFailure = i18n.t("app.settings.delete.error")
+                }
             }
             Button(i18n.t("ios.cancel"), role: .cancel) {}
         } message: {
@@ -113,7 +131,10 @@ struct SettingsView: View {
             titleVisibility: .visible
         ) {
             Button(i18n.t("common.signOut"), role: .destructive) {
+                guard !isLeavingAccount else { return }
+                isLeavingAccount = true
                 Task {
+                    defer { isLeavingAccount = false }
                     // Une dernière montée, puis le téléphone se vide et un invité neuf prend
                     // la place : les cours restent sur le compte, ils ne restent plus ici à
                     // remonter sous le compte suivant. Voir `CloudSync.leaveAccount`.
@@ -138,6 +159,14 @@ struct SettingsView: View {
         } message: {
             Text(notificationReport ?? "")
         }
+        .alert(
+            i18n.t("app.common.oops"),
+            isPresented: Binding(get: { leaveFailure != nil }, set: { if !$0 { leaveFailure = nil } })
+        ) {
+            Button(i18n.t("ios.ok"), role: .cancel) {}
+        } message: {
+            Text(leaveFailure ?? "")
+        }
         .micaboPaywall($paywall)
         .micaboDiscountOffer($discountOffer)
         .sheet(isPresented: $showFeedback) {
@@ -160,13 +189,11 @@ struct SettingsView: View {
     // MARK: - Sections
 
     private var header: some View {
-        MicaboScreenHeader(title: i18n.t("settings.title"), back: MicaboHeaderBack.back(saveAndClose)) {
-            Button(i18n.t("ios.done"), action: saveAndClose)
-                .font(MicaboFont.ui(15, weight: .semibold))
-                .foregroundStyle(MicaboColor.accent)
-                .buttonStyle(MicaboPressableButtonStyle())
-        }
-        .padding(.top, MicaboSpacing.xs)
+        // **Une feuille se ferme par sa croix**, comme toutes les feuilles de l'app. Elle avait
+        // un chevron de retour (le geste d'un écran poussé) et un « OK » à droite : deux
+        // sorties pour le même geste.
+        MicaboScreenHeader(title: i18n.t("settings.title"), back: MicaboHeaderBack.close(saveAndClose))
+            .padding(.top, MicaboSpacing.xs)
     }
 
     /// **L'abonnement, en tête des Réglages.**
@@ -354,100 +381,6 @@ struct SettingsView: View {
         formatter.locale = locale.foundation
         formatter.setLocalizedDateFormatFromTemplate("j:mm")
         return formatter.string(from: date)
-    }
-
-    /// Le nom d'utilisateur, et rien d'autre dans cette section.
-    ///
-    /// Il est donné à l'inscription, dérivé de ce que le fournisseur OAuth a fourni — « Adrien
-    /// Martinot » devient `adrien-7910` — pour qu'on n'ait rien à choisir avant d'avoir compris
-    /// à quoi ça sert. Il se change ici, parce qu'un identifiant qu'on va dicter à ses
-    /// camarades doit pouvoir être le sien.
-    ///
-    /// Le champ ne refuse rien : ce qu'on tape est mis en forme au fur et à mesure, majuscules
-    /// et accents compris. C'est la base qui a le dernier mot sur l'unicité, et le message
-    /// vient d'elle.
-    @ViewBuilder
-    private var identitySection: some View {
-        if auth.isSignedIn {
-            VStack(alignment: .leading, spacing: 8) {
-                MicaboSectionCaption(text: i18n.t("ios.usernameLabel"))
-
-                HStack(spacing: 11) {
-                    Text("@")
-                        .font(MicaboFont.ui(16, weight: .semibold))
-                        .foregroundStyle(MicaboColor.inkTertiary)
-
-                    TextField(i18n.t("ios.usernamePlaceholder"), text: $username)
-                        .font(MicaboFont.rowTitle)
-                        .foregroundStyle(MicaboColor.ink)
-                        .tint(MicaboColor.accent)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .submitLabel(.done)
-                        .onSubmit { commitUsername() }
-
-                    if social.isLoading {
-                        ProgressView()
-                            .controlSize(.small)
-                            .tint(MicaboColor.progress)
-                    } else if hasUsernameChange {
-                        Button(i18n.t("app.common.save"), action: commitUsername)
-                            .font(MicaboFont.ui(13, weight: .semibold))
-                            .foregroundStyle(MicaboColor.accent)
-                            .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
-                    }
-                }
-                .padding(.vertical, 13)
-                .padding(.horizontal, MicaboSpacing.md)
-                .micaboGroup()
-
-                usernameFootnote
-            }
-            .onAppear { username = social.username ?? "" }
-            .onChange(of: social.username) { _, new in
-                guard let new else { return }
-                username = new
-            }
-        }
-    }
-
-    /// Ce que le nom va devenir, ou ce qui l'empêche.
-    ///
-    /// La mise en forme **ne se fait plus sous les doigts**, et c'était un vrai défaut : elle
-    /// retirait le séparateur en attente à chaque frappe, si bien que taper « Adrien Martinot »
-    /// lettre par lettre donnait `adrienmartinot`. Seul un collage marchait. Le champ laisse
-    /// donc taper ce qu'on veut, et la ligne du dessous annonce ce qui sera enregistré.
-    @ViewBuilder
-    private var usernameFootnote: some View {
-        if let notice = social.failure, hasUsernameChange {
-            Text(notice)
-                .font(MicaboFont.caption)
-                .foregroundStyle(MicaboColor.negative)
-                .fixedSize(horizontal: false, vertical: true)
-        } else if hasUsernameChange {
-            let preview = Username.normalize(username)
-            MicaboSectionFootnote(
-                text: preview.isEmpty
-                    ? i18n.t("ios.usernameRules")
-                    : i18n.t("ios.usernameSavedAs", ["name": Username.display(preview)])
-            )
-        }
-    }
-
-    private var hasUsernameChange: Bool {
-        let typed = username.trimmingCharacters(in: .whitespaces)
-        return !typed.isEmpty && Username.normalize(typed) != (social.username ?? "")
-    }
-
-    private func commitUsername() {
-        let candidate = username
-        Task {
-            let saved = await social.setUsername(candidate)
-            if saved {
-                Haptics.success()
-                username = social.username ?? candidate
-            }
-        }
     }
 
     /// Pour qui les fiches sont écrites, et à quelle longueur.
@@ -698,23 +631,40 @@ struct SettingsView: View {
         )
     }
 
-    /// Outils de relecture. L'interrupteur « Forcer Pro » y paraît dans toute construction
-    /// Xcode, sur TestFlight (sauf pour le compte de relecture d'Apple) et pour le compte
-    /// développeur (`ProAccess.canForcePro`).
+    /// **La section Test** (lot 9) : de quoi voir le paywall, l'offre de secours et le parcours
+    /// entier **même avec un compte Pro**, sur TestFlight et dans les constructions Xcode
+    /// seulement (`PaywallTestMode`) — jamais sur l'App Store, jamais pour le compte de
+    /// relecture d'Apple. S'y ajoutent l'interrupteur « Forcer Pro » (`ProAccess.canForcePro`,
+    /// qui suit aussi le compte développeur sur l'App Store) et, en développement, le cadeau et
+    /// le cours d'essai. Sans aucune rangée, la section n'existe pas.
+    @ViewBuilder
     private var testSection: some View {
-        MicaboSettingsSection(
-            caption: i18n.t("ios.debug.test"),
-            rows: testRows,
-            footnote: testFootnote
-        )
+        let rows = testRows
+        if !rows.isEmpty {
+            MicaboSettingsSection(
+                caption: i18n.t("ios.debug.test"),
+                rows: rows,
+                footnote: testFootnote
+            )
+        }
+    }
+
+    /// Vrai là où les outils de test des paywalls existent : TestFlight, Xcode.
+    private var showsPaywallTests: Bool {
+        PaywallTestMode.isAvailable(email: auth.user?.email)
     }
 
     private var testRows: [MicaboRow] {
         var rows: [MicaboRow] = []
 
+        if showsPaywallTests {
+            rows.append(contentsOf: paywallTestRows)
+        }
+
         #if DEBUG
-        // L'offre cadeau ne se présente qu'une fois par appareil : sans ce bouton, la
-        // revoir demanderait de désinstaller l'app.
+        // L'offre de réduction se repose deux jours après sa fenêtre, et ne revient pas deux
+        // fois dans une session une fois refusée : ce bouton l'oublie, elle se représente au
+        // prochain paywall refermé.
         rows.append(
             MicaboRow(
                 tile: MicaboTile(glyph: .symbol("gift.fill"), background: MicaboColor.infoSoft),
@@ -756,30 +706,69 @@ struct SettingsView: View {
         // **Les notifications, sans attendre le soir** : en développement et sur TestFlight.
         if BuildChannel.isInternal {
             rows.append(contentsOf: notificationTestRows)
+            // **Le test de prix**, forcé d'un appui : le mois ou la semaine, pour relire les
+            // deux paywalls sans réinstaller l'app.
+            rows.append(
+                MicaboRow(
+                    tile: MicaboTile(glyph: .symbol("eurosign.circle.fill"), background: MicaboColor.tilePastels[1]),
+                    title: i18n.t("ios.conv.debugPrice"),
+                    subtitle: i18n.t(priceDisplay == .weekly ? "ios.conv.debugPriceWeekly" : "ios.conv.debugPriceMonthly"),
+                    accessory: .chevron,
+                    action: {
+                        let next: PriceDisplay = priceDisplay == .weekly ? .monthly : .weekly
+                        PriceDisplay.setOverride(next)
+                        priceDisplay = next
+                        Haptics.selection()
+                    }
+                )
+            )
         }
 
-        // **Les paywalls, à vue**, même abonné ou déjà en essai : sans cette rangée, un compte
-        // qui a commencé son essai ne les revoyait plus jamais.
-        rows.append(
+        return rows
+    }
+
+    /// **Le paywall, l'offre de secours, le parcours entier**, même abonné ou déjà en essai.
+    /// Sur TestFlight, les achats passent par le bac à sable d'Apple : rien n'est prélevé.
+    private var paywallTestRows: [MicaboRow] {
+        Self.paywallTestRows(
+            locale: i18n.locale,
+            showPaywall: { paywall = .upgrade },
+            showDiscount: { discountOffer = .gift },
+            replayOnboarding: replayOnboarding
+        )
+    }
+
+    /// Les trois rangées, à part de la vue : les rendus les dessinent sans monter les réglages.
+    static func paywallTestRows(
+        locale: UiLocale,
+        showPaywall: @escaping () -> Void,
+        showDiscount: @escaping () -> Void,
+        replayOnboarding: @escaping () -> Void
+    ) -> [MicaboRow] {
+        let t = { (key: String) in L10n.t(key, locale: locale) }
+        return [
             MicaboRow(
                 tile: MicaboTile(glyph: .symbol("crown.fill"), background: MicaboColor.cautionSoft),
-                title: i18n.t("ios.debug.showPaywall"),
-                subtitle: i18n.t("ios.debug.showPaywallHelp"),
+                title: t("ios.debug.showPaywall"),
+                subtitle: t("ios.debug.showPaywallHelp"),
                 accessory: .chevron,
-                action: { paywall = .upgrade }
-            )
-        )
-
-        rows.append(
+                action: showPaywall
+            ),
+            MicaboRow(
+                tile: MicaboTile(glyph: .symbol("gift.fill"), background: MicaboColor.tilePastels[1]),
+                title: t("ios.onb9.test.discount"),
+                subtitle: t("ios.onb9.test.discountHelp"),
+                accessory: .chevron,
+                action: showDiscount
+            ),
             MicaboRow(
                 tile: MicaboTile(glyph: .symbol("repeat"), background: MicaboColor.tilePastels[2]),
-                title: i18n.t("ios.debug.replayOnboarding"),
+                title: t("ios.debug.replayOnboarding"),
+                subtitle: t("ios.onb9.test.replayHelp"),
                 accessory: .chevron,
                 action: replayOnboarding
-            )
-        )
-
-        return rows
+            ),
+        ]
     }
 
     private var notificationTestRows: [MicaboRow] {
@@ -901,11 +890,11 @@ struct SettingsView: View {
         return rows
     }
 
-    private var testFootnote: String {
+    private var testFootnote: String? {
         #if DEBUG
         return i18n.t("ios.debug.footnoteDebug")
         #else
-        return i18n.t("ios.debug.footnote")
+        return showsPaywallTests ? i18n.t("ios.onb9.test.footnote") : nil
         #endif
     }
 
@@ -1022,10 +1011,14 @@ struct SettingsView: View {
 
     /// La feuille se referme d'abord : la bascule vers l'onboarding remplace toute
     /// la hiérarchie de vues, autant ne pas le faire pendant l'animation de fermeture.
+    ///
+    /// **Depuis le début, paywall compris**, même pour un compte Pro : c'est le seul moyen de
+    /// revoir le parcours tel qu'un nouvel élève le voit (`PaywallTestMode`).
     private func replayOnboarding() {
         dismiss()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
             OnboardingPreferences.reset()
+            PaywallTestMode.setForcesOnboardingPaywall(true)
         }
     }
 
@@ -1045,4 +1038,108 @@ struct SettingsView: View {
 
 #Preview {
     SettingsView()
+}
+
+/// **Le nom d'utilisateur des Réglages, dans sa propre vue** : ce qu'on y tape est son état à
+/// elle. Tenu par l'écran, chaque lettre faisait relire les Réglages entiers (84 phrases par
+/// frappe au banc d'essai).
+private struct SettingsIdentitySection: View {
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(AuthController.self) private var auth
+    @Environment(SocialService.self) private var social
+
+    @State private var username = ""
+
+    /// Le nom d'utilisateur, et rien d'autre dans cette section.
+    ///
+    /// Il est donné à l'inscription, dérivé de ce que le fournisseur OAuth a fourni — « Adrien
+    /// Martinot » devient `adrien-7910` — pour qu'on n'ait rien à choisir avant d'avoir compris
+    /// à quoi ça sert. Il se change ici, parce qu'un identifiant qu'on va dicter à ses
+    /// camarades doit pouvoir être le sien.
+    ///
+    /// Le champ ne refuse rien : ce qu'on tape est mis en forme au fur et à mesure, majuscules
+    /// et accents compris. C'est la base qui a le dernier mot sur l'unicité, et le message
+    /// vient d'elle.
+    var body: some View {
+        if auth.isSignedIn {
+            VStack(alignment: .leading, spacing: 8) {
+                MicaboSectionCaption(text: i18n.t("ios.usernameLabel"))
+
+                HStack(spacing: 11) {
+                    Text("@")
+                        .font(MicaboFont.ui(16, weight: .semibold))
+                        .foregroundStyle(MicaboColor.inkTertiary)
+
+                    TextField(i18n.t("ios.usernamePlaceholder"), text: $username)
+                        .font(MicaboFont.rowTitle)
+                        .foregroundStyle(MicaboColor.ink)
+                        .tint(MicaboColor.accent)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .submitLabel(.done)
+                        .onSubmit { commitUsername() }
+
+                    if social.isLoading {
+                        ProgressView()
+                            .controlSize(.small)
+                            .tint(MicaboColor.progress)
+                    } else if hasUsernameChange {
+                        Button(i18n.t("app.common.save"), action: commitUsername)
+                            .font(MicaboFont.ui(13, weight: .semibold))
+                            .foregroundStyle(MicaboColor.accentInk)
+                            .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
+                    }
+                }
+                .padding(.vertical, 13)
+                .padding(.horizontal, MicaboSpacing.md)
+                .micaboGroup()
+
+                usernameFootnote
+            }
+            .onAppear { username = social.username ?? "" }
+            .onChange(of: social.username) { _, new in
+                guard let new else { return }
+                username = new
+            }
+        }
+    }
+
+    /// Ce que le nom va devenir, ou ce qui l'empêche.
+    ///
+    /// La mise en forme **ne se fait plus sous les doigts**, et c'était un vrai défaut : elle
+    /// retirait le séparateur en attente à chaque frappe, si bien que taper « Adrien Martinot »
+    /// lettre par lettre donnait `adrienmartinot`. Seul un collage marchait. Le champ laisse
+    /// donc taper ce qu'on veut, et la ligne du dessous annonce ce qui sera enregistré.
+    @ViewBuilder
+    private var usernameFootnote: some View {
+        if let notice = social.failure, hasUsernameChange {
+            Text(notice)
+                .font(MicaboFont.caption)
+                .foregroundStyle(MicaboColor.negative)
+                .fixedSize(horizontal: false, vertical: true)
+        } else if hasUsernameChange {
+            let preview = Username.normalize(username)
+            MicaboSectionFootnote(
+                text: preview.isEmpty
+                    ? i18n.t("ios.usernameRules")
+                    : i18n.t("ios.usernameSavedAs", ["name": Username.display(preview)])
+            )
+        }
+    }
+
+    private var hasUsernameChange: Bool {
+        let typed = username.trimmingCharacters(in: .whitespaces)
+        return !typed.isEmpty && Username.normalize(typed) != (social.username ?? "")
+    }
+
+    private func commitUsername() {
+        let candidate = username
+        Task {
+            let saved = await social.setUsername(candidate)
+            if saved {
+                Haptics.success()
+                username = social.username ?? candidate
+            }
+        }
+    }
 }

@@ -1,3 +1,5 @@
+import { kxTr } from "./kx-tr";
+
 /** Bağlı uygulamanın metinleri (açılış ve karşılama dışı). */
 export const appTr = {
   a11y: {
@@ -570,6 +572,7 @@ export const appTr = {
     delayMonths: "{n} ay",
     delayYears: "{n, plural, one {# yıl} other {# yıl}}",
   },
+  kx: kxTr,
 } as const;
 
 export const copyTr = {

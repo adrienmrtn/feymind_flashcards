@@ -73,14 +73,19 @@ function Devices() {
 
       {/* Le téléphone. */}
       <div className="absolute bottom-0 right-1 w-[40%] max-w-[178px] rounded-[34px] bg-[#111215] p-[6px] shadow-[0_30px_60px_-28px_oklch(0_0_0/0.55),inset_0_0_0_1px_rgb(255_255_255/0.08)]">
-        <div className="relative flex aspect-[9/18] flex-col overflow-hidden rounded-[28px] bg-canvas px-3 pb-3 pt-6">
-          <span className="absolute left-1/2 top-2 h-[5px] w-12 -translate-x-1/2 rounded-pill bg-[#111215]" />
-          <p className="text-[12px] font-extrabold leading-tight text-ink">{t("landing.demoLessonTitle")}</p>
-          <div className="mt-3 flex flex-1 flex-col items-center justify-around">
-            <MiniNode icon="fiche" tone="blue" done offset={-18} />
-            <MiniNode icon="quiz" tone="mint" syncDelay={0} offset={16} />
-            <MiniNode icon="cartes" tone="yellow" offset={-12} />
-          </div>
+        {/* Une vraie capture de l'app iPhone (le chemin d'une leçon), pas un dessin. */}
+        <div className="relative aspect-[9/18] overflow-hidden rounded-[28px] bg-canvas">
+          {/* eslint-disable-next-line @next/next/no-img-element -- une capture fixe, déjà au bon format. */}
+          <img
+            src="/app-screens/lecon.webp"
+            alt=""
+            width={507}
+            height={1046}
+            loading="lazy"
+            decoding="async"
+            className="block h-full w-full object-cover object-top"
+            style={{ outline: "none" }}
+          />
         </div>
       </div>
 
@@ -122,37 +127,6 @@ function MiniRow({
         </span>
       ) : null}
     </div>
-  );
-}
-
-function MiniNode({
-  icon,
-  tone,
-  done = false,
-  syncDelay,
-  offset,
-}: {
-  icon: string;
-  tone: string;
-  done?: boolean;
-  syncDelay?: number;
-  offset: number;
-}) {
-  return (
-    <span
-      className="relative flex size-11 items-center justify-center rounded-full"
-      style={{ background: `var(--color-tone-${tone}-pale)`, transform: `translateX(${offset}px)` }}
-    >
-      <MicaboIcon id={icon} size={26} />
-      {done || syncDelay !== undefined ? (
-        <span
-          className={`absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-correct text-white ring-2 ring-canvas ${syncDelay !== undefined ? "lp-sync-check" : ""}`}
-          style={syncDelay !== undefined ? { ["--d" as string]: `${syncDelay}ms` } : undefined}
-        >
-          <TinyCheck />
-        </span>
-      ) : null}
-    </span>
   );
 }
 

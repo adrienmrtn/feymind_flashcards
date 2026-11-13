@@ -18,8 +18,16 @@ enum ExamRepository {
     /// Les cours d'un examen, dans l'ordre des cours. Un cours supprimé disparaît de la
     /// liste sans bruit : un examen désigne des cours, il ne les possède pas.
     static func courses(of exam: Exam, in context: ModelContext) -> [Course] {
-        let wanted = Set(exam.courseIDs)
-        guard !wanted.isEmpty else { return [] }
+        let ids = exam.courseIDs
+        guard !ids.isEmpty else { return [] }
+        // Les cours de l'examen seulement : relire la table entière, trente kilo-octets de
+        // texte par ligne, pour en garder deux coûtait cent millisecondes à chaque agenda.
+        let descriptor = FetchDescriptor<Course>(
+            predicate: #Predicate { ids.contains($0.id) },
+            sortBy: [SortDescriptor(\.updatedAt, order: .reverse)]
+        )
+        if let found = try? context.fetch(descriptor) { return found }
+        let wanted = Set(ids)
         return CourseRepository.allCourses(in: context).filter { wanted.contains($0.id) }
     }
 
@@ -27,6 +35,27 @@ enum ExamRepository {
         courses(of: exam, in: context)
             .flatMap(\.cards)
             .filter { !$0.isSuspended }
+    }
+
+    /// **Combien de cartes au programme d'un examen**, sans en matérialiser une seule : le même
+    /// nombre que `cards(of:in:).count`, compté par SQLite cours par cours.
+    ///
+    /// Relire les cours fait retomber leurs cartes en faute : les reparcourir pour les compter
+    /// coûtait soixante millisecondes à chaque agenda relu, et la Home relit le sien à chaque
+    /// retour. Si la base refuse le compte, on retombe sur la lecture complète.
+    static func cardCount(of exam: Exam, in context: ModelContext) -> Int {
+        var total = 0
+        for courseID in Set(exam.courseIDs) {
+            let wanted: UUID? = courseID
+            let descriptor = FetchDescriptor<Flashcard>(
+                predicate: #Predicate { $0.isSuspended == false && $0.course?.id == wanted }
+            )
+            guard let count = try? context.fetchCount(descriptor) else {
+                return cards(of: exam, in: context).count
+            }
+            total += count
+        }
+        return total
     }
 
     /// Le prochain examen à venir, celui qu'annonce l'onglet Réviser.

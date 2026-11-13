@@ -28,6 +28,22 @@
         <item quantity="many">يومًا متتاليًا</item>
         <item quantity="other">يوم متتالٍ</item>
     </plurals>
+    <plurals name="kx_league_endsIn">
+        <item quantity="zero">ينتهي اليوم</item>
+        <item quantity="one">ينتهي خلال يوم واحد</item>
+        <item quantity="two">ينتهي خلال يومين</item>
+        <item quantity="few">ينتهي خلال %1$d أيام</item>
+        <item quantity="many">ينتهي خلال %1$d يومًا</item>
+        <item quantity="other">ينتهي خلال %1$d يوم</item>
+    </plurals>
+    <plurals name="kx_today_due">
+        <item quantity="zero">لا بطاقات للمراجعة</item>
+        <item quantity="one">بطاقة واحدة للمراجعة</item>
+        <item quantity="two">بطاقتان للمراجعة</item>
+        <item quantity="few">%1$d بطاقات للمراجعة</item>
+        <item quantity="many">%1$d بطاقة للمراجعة</item>
+        <item quantity="other">%1$d بطاقة للمراجعة</item>
+    </plurals>
     <plurals name="lesson_exam_addCards">
         <item quantity="one">أضف خطئي إلى البطاقات</item>
         <item quantity="other">أضف أخطائي إلى البطاقات (%1$d)</item>

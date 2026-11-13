@@ -55,7 +55,7 @@ struct MockExamFlow: View {
                     ExamHistory.record(result)
                     // Une copie rendue est une séance : elle allume la journée de la série.
                     StudyStreak.record()
-                    withAnimation(.spring(duration: 0.5)) { phase = .result(paper, answers, result) }
+                    withAnimation(LearnMotion.gentle) { phase = .result(paper, answers, result) }
                 }
                 .transition(.move(edge: .trailing))
             case .result(let paper, let answers, let result):
@@ -115,7 +115,6 @@ struct MockExamFlow: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         Spacer(minLength: 0)
-                        MikaMascot(mood: .think, size: 84)
                     }
 
                     VStack(alignment: .leading, spacing: 12) {
@@ -127,7 +126,7 @@ struct MockExamFlow: View {
                                 let isOn = minutes == value
                                 Button {
                                     Haptics.selection()
-                                    withAnimation(.spring(duration: 0.3)) { minutes = value }
+                                    withAnimation(LearnMotion.standard) { minutes = value }
                                 } label: {
                                     VStack(spacing: 2) {
                                         Text("\(value)")
@@ -138,8 +137,8 @@ struct MockExamFlow: View {
                                     .foregroundStyle(isOn ? MicaboColor.accent : MicaboColor.ink)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 14)
-                                    .background(isOn ? MicaboColor.accentSoft : MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                                    .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(isOn ? MicaboColor.accent : MicaboColor.stroke, lineWidth: isOn ? 2 : 1.5))
+                                    .background(isOn ? MicaboColor.accentSoft : MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+                                    .overlay(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(isOn ? MicaboColor.accent : MicaboColor.stroke, lineWidth: isOn ? 2 : 1.5))
                                     .scaleEffect(isOn ? 1.04 : 1)
                                 }
                                 .buttonStyle(MicaboPressableButtonStyle(feedback: .none))
@@ -164,7 +163,7 @@ struct MockExamFlow: View {
                         rule("checkmark.seal", "lesson.exam.rule.grade")
                     }
                     .padding(16)
-                    .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.bottom, 20)
@@ -192,7 +191,7 @@ struct MockExamFlow: View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: symbol)
                 .font(.system(size: 17, weight: .bold))
-                .foregroundStyle(MicaboColor.accent)
+                .foregroundStyle(MicaboColor.accentInk)
                 .frame(width: 24)
             Text(L10n.t(key, locale: .resolved()))
                 .font(MicaboFont.ui(15, weight: .medium))
@@ -204,13 +203,16 @@ struct MockExamFlow: View {
     // MARK: Écrire la copie
 
     private func begin() {
+        // Un double appui sur « Commencer » écrivait deux copies : deux appels payés, et
+        // l'examen offert compté deux fois.
+        if case .writing = phase { return }
         let isPro = pro?.isPro == true
         if !isPro && ExamAllowance.freeMockUsed {
             paywall = .mockExam
             return
         }
         let chosen = lessons.filter { selected.contains($0.id) }
-        withAnimation { phase = .writing }
+        withAnimation(LearnMotion.standard) { phase = .writing }
         Task {
             do {
                 let paper = try await builder.examPaper(title: title, exam: start.exam, courses: chosen, minutes: minutes, in: modelContext)
@@ -218,20 +220,20 @@ struct MockExamFlow: View {
                 // avant ce contrôle : une génération ratée (aucune question valide) coûtait
                 // le seul examen gratuit, et « Réessayer » ouvrait le paywall.
                 guard !paper.items.isEmpty else {
-                    withAnimation { phase = .failed(L10n.t("lesson.exam.failed", locale: .resolved())) }
+                    withAnimation(LearnMotion.standard) { phase = .failed(L10n.t("lesson.exam.failed", locale: .resolved())) }
                     return
                 }
                 if ExamAllowance.consumesFreeMock(isPro: isPro, questionCount: paper.items.count) {
                     ExamAllowance.freeMockUsed = true
                 }
                 Haptics.success()
-                withAnimation(.spring(duration: 0.5)) { phase = .run(paper) }
+                withAnimation(LearnMotion.gentle) { phase = .run(paper) }
             } catch let error as LessonServiceError where error.opensPaywall {
                 ExamAllowance.freeMockUsed = true
-                withAnimation { phase = .setup }
+                withAnimation(LearnMotion.standard) { phase = .setup }
                 paywall = .mockExam
             } catch {
-                withAnimation {
+                withAnimation(LearnMotion.standard) {
                     phase = .failed((error as? LocalizedError)?.errorDescription ?? L10n.t("lesson.exam.failed", locale: .resolved()))
                 }
             }
@@ -241,7 +243,7 @@ struct MockExamFlow: View {
     private var writing: some View {
         VStack(spacing: 20) {
             Spacer()
-            MikaMascot(mood: .think, size: 170)
+            MikaMascot(mood: .write, size: 150)
             Text(L10n.t("lesson.exam.writing", locale: .resolved()))
                 .font(MicaboFont.subtitle)
                 .foregroundStyle(MicaboColor.ink)
@@ -272,7 +274,7 @@ struct MockExamFlow: View {
             VStack(spacing: 12) {
                 Button(L10n.t("lesson.practice.retry", locale: .resolved()), action: begin)
                     .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
-                Button(L10n.t("lesson.practice.back", locale: .resolved())) { withAnimation { phase = .setup } }
+                Button(L10n.t("lesson.practice.back", locale: .resolved())) { withAnimation(LearnMotion.standard) { phase = .setup } }
                     .buttonStyle(MicaboSecondaryButtonStyle())
             }
             .padding(.horizontal, MicaboSpacing.screen)
@@ -297,17 +299,21 @@ struct MockExamRunView: View {
     /// Le nombre de remises à zéro de chaque question, pour recréer sa carte.
     @State private var resets: [String: Int] = [:]
     @State private var startedAt = Date()
-    @State private var now = Date()
     @State private var confirmQuit = false
     @State private var confirmSubmit = false
     @State private var submitted = false
     @State private var direction: Edge = .trailing
 
+    /// **La minuterie ne redessine plus la copie.** Elle écrivait l'heure dans un état de cet
+    /// écran : chaque seconde, la question, ses réponses, les vingt pastilles et la barre du
+    /// bas se relisaient pour faire avancer un chiffre. Le chrono se dessine maintenant seul
+    /// (`ExamClock`) ; la minuterie ne sert plus qu'à rendre la copie à zéro, et ne touche à
+    /// aucun état tant qu'il reste du temps.
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var total: Int { paper.minutes * 60 }
-    private var elapsed: Int { min(total, Int(now.timeIntervalSince(startedAt))) }
-    private var remaining: Int { max(0, total - elapsed) }
+    /// Les secondes écoulées à un instant, bornées à la durée de l'épreuve.
+    private func elapsed(at date: Date = Date()) -> Int { min(total, max(0, Int(date.timeIntervalSince(startedAt)))) }
     private var item: ExamPaper.Item { paper.items[index] }
     private var answeredCount: Int { paper.items.filter { answers[$0.id] != nil }.count }
 
@@ -347,8 +353,6 @@ struct MockExamRunView: View {
         }
         .background(MicaboColor.canvas.ignoresSafeArea())
         .onReceive(timer) { value in
-            now = value
-            // Lu depuis l'instant reçu, pas depuis l'état qu'on vient d'écrire.
             let left = total - Int(value.timeIntervalSince(startedAt))
             if left <= 0, !submitted {
                 submit()
@@ -383,7 +387,7 @@ struct MockExamRunView: View {
 
             Spacer()
 
-            TimerPill(remaining: remaining, total: total)
+            ExamClock(startedAt: startedAt, total: total)
 
             Spacer()
 
@@ -410,7 +414,7 @@ struct MockExamRunView: View {
                         } label: {
                             Text("\(number + 1)")
                                 .font(MicaboFont.ui(12, weight: .heavy))
-                                .foregroundStyle(done ? MicaboColor.onInk : MicaboColor.inkSecondary)
+                                .foregroundStyle(done ? MicaboColor.onAccent : MicaboColor.inkSecondary)
                                 .frame(width: 28, height: 28)
                                 .background(done ? MicaboColor.accent : MicaboColor.surface, in: Circle())
                                 .overlay(Circle().strokeBorder(number == index ? MicaboColor.ink : MicaboColor.stroke, lineWidth: number == index ? 2 : 1))
@@ -423,7 +427,7 @@ struct MockExamRunView: View {
             }
             .scrollIndicators(.hidden)
             .onChange(of: index) { _, value in
-                withAnimation { proxy.scrollTo(value, anchor: .center) }
+                withAnimation(LearnMotion.standard) { proxy.scrollTo(value, anchor: .center) }
             }
         }
     }
@@ -467,7 +471,7 @@ struct MockExamRunView: View {
         HStack(spacing: 10) {
             Label(L10n.t("lesson.exam.saved", locale: .resolved()), systemImage: "checkmark.circle.fill")
                 .font(MicaboFont.ui(15, weight: .bold))
-                .foregroundStyle(MicaboColor.accent)
+                .foregroundStyle(MicaboColor.accentInk)
             Spacer()
             Button {
                 Haptics.selection()
@@ -481,7 +485,7 @@ struct MockExamRunView: View {
             .buttonStyle(MicaboPressableButtonStyle())
         }
         .padding(14)
-        .background(MicaboColor.accentSoft.opacity(0.6), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(MicaboColor.accentSoft.opacity(0.6), in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
     }
 
     // MARK: La barre du bas
@@ -491,12 +495,12 @@ struct MockExamRunView: View {
             Button {
                 go(to: index - 1)
             } label: {
-                Image(systemName: "chevron.left")
+                Image(systemName: "chevron.backward")
                     .font(.system(size: 18, weight: .heavy))
                     .foregroundStyle(MicaboColor.ink)
                     .frame(width: 58, height: 58)
-                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
             }
             .buttonStyle(MicaboPressableButtonStyle())
             .disabled(index == 0)
@@ -509,7 +513,7 @@ struct MockExamRunView: View {
                 } label: {
                     Label(L10n.t("lesson.exam.submit", locale: .resolved()), systemImage: "paperplane.fill")
                 }
-                .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.correct))
+                .buttonStyle(LessonPrimaryButtonStyle(tint: MicaboColor.accent))
             } else {
                 Button {
                     go(to: index + 1)
@@ -521,31 +525,48 @@ struct MockExamRunView: View {
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, 10)
-        .padding(.bottom, 10)
+        // 12 pt sous les boutons, comme les autres parcours (quiz, notes, leçon terminée) :
+        // à 10, « Passer » collait au bord d'un iPhone SE (lot 11).
+        .padding(.bottom, 12)
         .background(MicaboColor.canvas)
     }
 
     private func go(to target: Int) {
         guard paper.items.indices.contains(target), target != index else { return }
         direction = target > index ? .trailing : .leading
-        withAnimation(.spring(duration: 0.4)) { index = target }
+        withAnimation(LearnMotion.standard) { index = target }
     }
 
     private func submit() {
         guard !submitted else { return }
         submitted = true
         Haptics.success()
-        onSubmit(answers, elapsed)
+        // Un examen blanc rendu : la plus grosse part d'XP.
+        XPStore.shared.award(.mockExamFinished)
+        onSubmit(answers, elapsed())
+    }
+}
+
+/// **Le chrono de l'épreuve, qui tourne seul** : une horloge d'une seconde autour de la seule
+/// pastille, pour que rien d'autre de la copie ne se redessine quand le temps avance.
+struct ExamClock: View {
+    let startedAt: Date
+    let total: Int
+
+    var body: some View {
+        TimelineView(.periodic(from: startedAt, by: 1)) { context in
+            let elapsed = min(total, max(0, Int(context.date.timeIntervalSince(startedAt))))
+            TimerPill(remaining: max(0, total - elapsed), total: total)
+        }
     }
 }
 
 /// **Le chrono** : un anneau qui se vide et les minutes qui restent. Il passe à l'orange à
-/// cinq minutes, au rouge à la dernière, et bat doucement.
+/// cinq minutes, au rouge à la dernière. Il ne bat plus : une pastille qui pulse sous la
+/// question fait lever les yeux du sujet au pire moment, la couleur suffit à prévenir.
 struct TimerPill: View {
     let remaining: Int
     let total: Int
-
-    @State private var beat = false
 
     private var color: Color {
         if remaining <= 60 { return MicaboColor.wrong }
@@ -561,7 +582,8 @@ struct TimerPill: View {
                     .trim(from: 0, to: total == 0 ? 0 : CGFloat(remaining) / CGFloat(total))
                     .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                     .rotationEffect(.degrees(-90))
-                    .animation(.linear(duration: 1), value: remaining)
+                    // Pas d'animation : une seconde y déplace l'arc de quelques centièmes de
+                    // point, et l'animer faisait redessiner la pastille à chaque image.
             }
             .frame(width: 22, height: 22)
             Text(String(format: "%d:%02d", remaining / 60, remaining % 60))
@@ -574,10 +596,6 @@ struct TimerPill: View {
         .padding(.vertical, 9)
         .background(MicaboColor.surface, in: Capsule())
         .overlay(Capsule().strokeBorder(color.opacity(0.5), lineWidth: 1.5))
-        .scaleEffect(remaining <= 60 && beat ? 1.06 : 1)
-        .onAppear {
-            withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) { beat = true }
-        }
         .accessibilityElement(children: .combine)
     }
 }
@@ -609,8 +627,9 @@ struct MockExamResultView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
+                // La croix, en haut à gauche comme dans tous les parcours : on ferme la copie
+                // du même geste qu'on a fermé le sujet.
                 HStack {
-                    Spacer()
                     Button(action: onClose) {
                         Image(systemName: "xmark")
                             .font(.system(size: 19, weight: .bold))
@@ -619,6 +638,7 @@ struct MockExamResultView: View {
                     }
                     .buttonStyle(MicaboPressableButtonStyle())
                     .accessibilityLabel(Text(L10n.t("lesson.circle.close", locale: .resolved())))
+                    Spacer()
                 }
 
                 ZStack {
@@ -646,8 +666,10 @@ struct MockExamResultView: View {
                 }
                 .frame(width: 220, height: 220)
                 .overlay(alignment: .bottomTrailing) {
-                    MikaMascot(mood: passes ? .celebrate : .sad, size: 86)
-                        .offset(x: 36, y: 12)
+                    // Le résultat, un moment qui compte : Mika en entier, à côté du score — la
+                    // fête s'il est réussi, un clin d'œil qui encourage s'il ne l'est pas encore.
+                    MikaMascot(mood: passes ? .celebrate : .wink, size: 124)
+                        .offset(x: 64, y: 20)
                         .opacity(shown ? 1 : 0)
                 }
 
@@ -695,14 +717,14 @@ struct MockExamResultView: View {
                         }
                     }
                     .padding(18)
-                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
+                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
                 }
 
                 if !missed.isEmpty {
                     Button(action: addCards) {
                         Label(
-                            L10n.t(cardsAdded ? "lesson.exam.cardsAdded" : "lesson.exam.addCards", locale: .resolved(), vars: ["count": "\(missed.count)"]),
+                            L10n.t(cardsAdded ? "lesson.exam.cardsAdded" : "ios.home10.mock.addCards", locale: .resolved(), vars: ["count": "\(missed.count)"]),
                             systemImage: cardsAdded ? "checkmark" : "rectangle.stack.badge.plus"
                         )
                     }
@@ -712,7 +734,7 @@ struct MockExamResultView: View {
 
                 VStack(alignment: .leading, spacing: 12) {
                     Button {
-                        withAnimation(.spring(duration: 0.4)) { showsCorrections.toggle() }
+                        withAnimation(LearnMotion.standard) { showsCorrections.toggle() }
                     } label: {
                         HStack {
                             Text(L10n.t("lesson.exam.corrections", locale: .resolved()))
@@ -744,17 +766,22 @@ struct MockExamResultView: View {
         .scrollIndicators(.hidden)
         .background(MicaboColor.canvas.ignoresSafeArea())
         .onAppear {
-            withAnimation(.easeOut(duration: 1.3).delay(0.2)) { fill = result.fraction }
-            withAnimation(.spring(duration: 0.6).delay(0.5)) { shown = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                if passes { Haptics.success() } else { Haptics.warning() }
+            // La note est là à l'arrivée de l'écran : elle restait invisible une demi-seconde,
+            // le temps que l'anneau commence à se remplir.
+            withAnimation(LearnMotion.gentle) {
+                fill = result.fraction
+                shown = true
             }
+            if passes { Haptics.success() } else { Haptics.warning() }
         }
     }
 
     /// Chaque question ratée devient une flashcard de sa leçon, dans le bon thème, à revoir
     /// dès demain.
     private func addCards() {
+        // `.disabled` ne suit qu'au rendu suivant : deux appuis dans la même image doublaient
+        // chaque carte.
+        guard !cardsAdded else { return }
         let byID = Dictionary(lessons.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         for item in missed {
             guard paper.lessons.indices.contains(item.lesson), let course = byID[paper.lessons[item.lesson].courseID] else { continue }
@@ -766,7 +793,7 @@ struct MockExamResultView: View {
         try? modelContext.save()
         CourseLedger.noteChange()
         Haptics.success()
-        withAnimation(.spring(duration: 0.4)) { cardsAdded = true }
+        withAnimation(LearnMotion.standard) { cardsAdded = true }
     }
 }
 
@@ -813,8 +840,8 @@ struct CorrectionRow: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(right ? MicaboColor.correct.opacity(0.4) : MicaboColor.stroke, lineWidth: 1.5))
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous).strokeBorder(right ? MicaboColor.correct.opacity(0.4) : MicaboColor.stroke, lineWidth: 1.5))
     }
 
     /// Le texte choisi, pour un QCM, un vrai/faux ou une phrase à trou : `picked` est le rang

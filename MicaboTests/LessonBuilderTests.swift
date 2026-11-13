@@ -279,11 +279,21 @@ final class LessonBuilderTests: XCTestCase {
         XCTAssertEqual(ExamGrade.label(1, country: .de, locale: locale), "1,0")
         XCTAssertEqual(ExamGrade.label(0.7, country: .ch, locale: locale), "4,5")
         XCTAssertEqual(ExamGrade.label(0.85, country: .us, locale: locale), "B")
-        XCTAssertEqual(ExamGrade.label(0.78, country: .tr, locale: locale), "78 %")
+        // Le pourcentage s'écrit comme la langue l'écrit : « 78 % » en français, « %78 » en turc.
+        XCTAssertEqual(ExamGrade.label(0.78, country: .tr, locale: locale), L10n.percent(78, locale: .fr))
+        XCTAssertEqual(ExamGrade.label(0.78, country: .tr, locale: .tr), "%78")
         XCTAssertEqual(ExamGrade.label(0.75, country: .it, locale: locale), "7,5/10")
         XCTAssertEqual(ExamGrade.label(0.2, country: .uk, locale: locale), "U")
         XCTAssertTrue(ExamGrade.passes(0.5))
         XCTAssertFalse(ExamGrade.passes(0.45))
+    }
+
+    /// La consigne reçoit le jour de l'examen tel que l'élève l'a choisi : `.iso8601` formate
+    /// en UTC, et un examen enregistré à minuit à Paris y devenait celui de la veille.
+    func testTheExamLineCarriesTheStudentsDay() throws {
+        let day = try XCTUnwrap(MicaboCalendar.shared.date(from: DateComponents(year: 2027, month: 6, day: 15)))
+        XCTAssertTrue(LessonBuilder.examLine(name: nil, date: day).hasSuffix("2027-06-15"))
+        XCTAssertTrue(LessonBuilder.examLine(name: "Bac", date: day).contains("2027-06-15"))
     }
 
     func testAnUsedFreePracticeOpensThePaywall() async throws {
@@ -322,7 +332,9 @@ final class LessonBuilderTests: XCTestCase {
         let first = try await builder.create(LessonCreation(topic: "a", source: .topic), in: context)
         try await Task.sleep(nanoseconds: 5_000_000)
         let second = try await builder.create(LessonCreation(topic: "b", source: .topic), in: context)
-        XCTAssertNotEqual(first.tone, second.tone)
+        // Le ton enregistré tourne toujours ; celui qu'on voit suit la matière quand elle est
+        // reconnue (lot 7), et deux leçons de la même matière se ressemblent alors exprès.
+        XCTAssertNotEqual(first.toneRaw, second.toneRaw)
     }
 
     /// Un ancien cours devient une leçon sans perdre ses notes ni ses cartes.
@@ -341,6 +353,7 @@ final class LessonBuilderTests: XCTestCase {
         }
         try context.save()
         XCTAssertFalse(course.isLesson)
+        let toneBefore = course.tone
 
         try await builder(FakeLessonService()).convert(course, in: context)
 
@@ -352,7 +365,7 @@ final class LessonBuilderTests: XCTestCase {
         XCTAssertEqual(course.orderedChapters.first?.quiz?.questions.count, 1)
         XCTAssertEqual(course.cards.count, 5, "une flashcard ajoutée à chacun des deux chapitres sans cartes")
         XCTAssertEqual(course.lessonPath?.status, .ready)
-        XCTAssertEqual(course.tone, LessonTone.stable(for: course.id))
+        XCTAssertEqual(course.tone, toneBefore, "la conversion ne change pas la couleur de la leçon")
     }
 
     /// Un paquet de cartes sans fiche devient une leçon d'un seul thème, qui garde ses cartes.

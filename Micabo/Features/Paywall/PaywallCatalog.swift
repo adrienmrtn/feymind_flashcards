@@ -81,7 +81,7 @@ struct PaywallPlan: Identifiable, Equatable {
     /// turc à qui l'on annonce des euros pendant qu'Apple lui prélève des livres lit un
     /// chiffre faux — pas approximatif, faux. `PaywallStorePrices` garde ce que
     /// l'offering a répondu, dans la devise et le format du pays. Quand la boutique est
-    /// branchée, le paywall attend sa réponse (`PaywallPriceGate`) au lieu de montrer ce
+    /// branchée, le paywall attend sa réponse (`PaywallPriceLoading`) au lieu de montrer ce
     /// nombre ; il ne sert plus qu'aux aperçus et aux constructions sans boutique.
     var displayPrice: String {
         PaywallStorePrices.price(for: productID)?.localized ?? PaywallPrice.text(price)
@@ -120,6 +120,43 @@ struct PaywallPlan: Identifiable, Equatable {
             return text
         }
         return PaywallPrice.text(price / 12)
+    }
+
+    /// **Le prix ramené à la semaine**, pour la variante B du test de prix (`PriceDisplay`).
+    ///
+    /// Calculé exactement comme `monthlyEquivalent` : la somme **de la boutique du pays**,
+    /// divisée dans sa devise, arrondie par le formateur d'Apple pour ce pays (« 0,96 € »
+    /// pour 49,99 €). Le prix, le produit et l'essai ne changent pas : seule l'écriture change.
+    var weeklyEquivalent: String? {
+        guard period == .year else { return nil }
+        if let store = PaywallStorePrices.price(for: productID),
+           let text = store.formatted(store.amount / 52) {
+            return text
+        }
+        return PaywallPrice.text(price / 52)
+    }
+
+    /// L'équivalent que la variante annonce : le mois (A) ou la semaine (B). `nil` pour une
+    /// offre qui se paie déjà à la semaine.
+    func equivalent(for display: PriceDisplay) -> String? {
+        switch display {
+        case .monthly: monthlyEquivalent
+        case .weekly: weeklyEquivalent
+        }
+    }
+
+    /// Le grand chiffre d'une carte d'offre, dans la variante du test : `headlinePrice` pour
+    /// le mois, l'équivalent hebdomadaire pour la semaine.
+    func priceHeadline(for display: PriceDisplay) -> String {
+        equivalent(for: display) ?? displayPrice
+    }
+
+    /// L'unité qui accompagne `priceHeadline(for:)`.
+    func priceHeadlineUnit(for display: PriceDisplay) -> String {
+        switch (period, display) {
+        case (.year, .monthly): L10n.t("app.paywall.perMonthSlash", locale: .resolved())
+        case (.year, .weekly), (.week, _): L10n.t("app.paywall.perWeekSlash", locale: .resolved())
+        }
     }
 
     /// **Le grand chiffre du paywall, et c'est le mois.**
@@ -279,7 +316,7 @@ enum PaywallPrice {
 ///
 /// **Il n'est pas isolé sur l'acteur principal**, et c'est délibéré : `displayPrice` est lu
 /// par les tests hors de tout acteur, et l'isoler obligerait à faire remonter `@MainActor`
-/// jusqu'à `PaywallPitch`. Les écritures viennent toutes de `PaywallPurchases.refreshPrices()`,
+/// jusqu'à `PaywallCopy`. Les écritures viennent toutes de `PaywallPurchases.refreshPrices()`,
 /// qui est `@MainActor`.
 enum PaywallStorePrices {
     /// Un prix tel que la boutique le donne : la somme, sa mise en forme locale, et de quoi

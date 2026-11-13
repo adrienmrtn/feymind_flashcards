@@ -73,17 +73,14 @@ export function OnboardingOffer({ country }: { country: string | null }) {
     <PresentmentProvider country={country ?? answers.country ?? null}>
       {/* Mika fait la fête sur le bord de la carte (l'habillage) : il n'est pas deux fois là. */}
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-6 pb-10 pt-6 text-center">
-        <span aria-hidden className="emoji text-[56px] leading-none">
-          🎉
-        </span>
-        <h1 className="mt-5 text-balance text-[27px] font-extrabold leading-[1.1] tracking-tight-title text-ink sm:text-[31px]">
+        <h1 className="text-balance text-[27px] font-extrabold leading-[1.1] tracking-tight-title text-ink sm:text-[31px]">
           {t("onboarding.accountReady")}
         </h1>
         <button
           type="button"
           onClick={() => void enter()}
           disabled={leaving}
-          className="lp-cta mt-8 inline-flex h-14 items-center justify-center gap-2.5 rounded-[18px] bg-accent px-8 text-[16px] font-extrabold text-on-ink disabled:opacity-70"
+          className="btn-primary lp-cta mt-8 w-auto px-10 disabled:opacity-70"
         >
           {t("onboarding.openMicabo")}
         </button>

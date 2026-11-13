@@ -28,6 +28,7 @@ import { answerQuestion, completeCircle, recordQuizScore, setInCircle } from "@/
 import { useI18n } from "@/lib/i18n/client";
 import { flashcardsPath, lessonPath, LESSONS_PATH } from "@/lib/lesson/routes";
 import { useLessonClock } from "@/lib/lesson/use-lesson-clock";
+import { awardXp } from "@/lib/xp/client";
 
 /**
  * **Une étape ouverte**, en plein écran : l'Intro, des Notes, un Checkpoint ou le Quiz final
@@ -90,6 +91,8 @@ export function StepScreen(props: StepScreenProps) {
   /** Coche l'étape, puis le chemin (ou, pour le Quiz final, l'écran de fin). */
   function finish() {
     const isFinal = circle.kind.type === "final";
+    // Une étape déjà cochée, refaite, ne rapporte pas une seconde fois.
+    if (!progress.done.includes(circle.id)) awardXp("circleCompleted");
     startTransition(async () => {
       const result = await completeCircle(lessonId, circle.id, isFinal);
       if (result.status === "ok" && result.progress) setProgress(result.progress);

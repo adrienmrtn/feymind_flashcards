@@ -498,6 +498,41 @@ final class CloudRecordTests: XCTestCase {
         XCTAssertTrue(json.contains("schedule_backup"))
     }
 
+    /// **Le jour de l'examen traverse la synchro sans glisser.** La colonne `exam_date` est
+    /// un `date` nu : l'app y envoyait un horodatage, minuit local exprimé en UTC
+    /// (« 2027-06-14T22:00:00Z » pour le 15 juin à Paris), dont Postgres ne garde que le
+    /// 14. Elle envoie maintenant le jour lui-même, et relit « 2027-06-15 » comme le 15
+    /// chez l'élève, quel que soit son fuseau.
+    func testAnExamDayCrossesTheSyncWithoutShifting() throws {
+        let calendar = MicaboCalendar.shared
+        let day = try XCTUnwrap(calendar.date(from: DateComponents(year: 2027, month: 6, day: 15)))
+        let record = ExamRecord(
+            id: UUID(),
+            user_id: UUID(),
+            name: "Bac",
+            exam_date: day,
+            intensity: "standard",
+            target_score: nil,
+            course_ids: [],
+            is_planned: false,
+            planned_at: nil,
+            created_at: day,
+            updated_at: day,
+            deleted_at: nil,
+            schedule_backup: nil
+        )
+        let json = String(data: try JSONEncoder().encode(record), encoding: .utf8) ?? ""
+        XCTAssertTrue(json.contains(#""exam_date":"2027-06-15""#), json)
+
+        // Ce que la descente rend pour « 2027-06-15 » : minuit UTC.
+        var utc = Calendar(identifier: .gregorian)
+        utc.timeZone = try XCTUnwrap(TimeZone(secondsFromGMT: 0))
+        let column = try XCTUnwrap(utc.date(from: DateComponents(year: 2027, month: 6, day: 15)))
+        let local = ExamRecord.localDay(fromColumn: column)
+        XCTAssertEqual(calendar.dateComponents([.year, .month, .day], from: local), DateComponents(year: 2027, month: 6, day: 15))
+        XCTAssertEqual(local, calendar.startOfDay(for: local))
+    }
+
     private func decodeCard(_ payload: String) throws -> FlashcardRecord {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601

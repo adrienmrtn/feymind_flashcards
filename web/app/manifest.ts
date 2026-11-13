@@ -22,8 +22,9 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     description: t("landing.manifestDescription"),
     start_url: "/",
     display: "standalone",
-    background_color: "#f6f7f9",
-    theme_color: "#f6f7f9",
+    // Le marine de l'app (V3.3) : l'écran de lancement et la barre d'un site épinglé.
+    background_color: "#0b0f1c",
+    theme_color: "#0b0f1c",
     lang: locale,
     // Les deux apps natives. `prefer_related_applications` reste faux : le site est un vrai
     // client de la même leçon, pas une page qui renvoie vers la boutique.

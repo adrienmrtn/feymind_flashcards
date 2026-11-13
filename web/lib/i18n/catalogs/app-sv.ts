@@ -1,3 +1,5 @@
+import { kxSv } from "./kx-sv";
+
 /** Svensk (sv) : textes de l'app connectée (hors vitrine et onboarding). */
 export const appSv = {
   a11y: {
@@ -572,6 +574,7 @@ export const appSv = {
     delayMonths: "{n} mån",
     delayYears: "{n, plural, one {# år} other {# år}}",
   },
+  kx: kxSv,
 } as const;
 
 export const copySv = {

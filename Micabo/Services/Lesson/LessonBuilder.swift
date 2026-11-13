@@ -552,8 +552,11 @@ final class LessonBuilder {
 
     /// L'examen, tel que la consigne le reprend : « Examen « La guerre froide », le 2027-06-15 ».
     /// La date est écrite à l'ISO : le serveur la lit dans toutes les langues.
+    ///
+    /// **Le jour de l'élève, pas celui de Greenwich.** `.iso8601` formate en UTC : un examen
+    /// le 15 juin, enregistré à minuit à Paris, partait dans la consigne comme le 14.
     static func examLine(name: String?, date: Date) -> String {
-        let day = date.formatted(.iso8601.year().month().day())
+        let day = ExamDayStamp.string(from: date)
         let title = name?.nilIfBlank.map { "« \($0) »" } ?? ""
         return title.isEmpty ? "un examen, le \(day)" : "l'examen \(title), le \(day)"
     }

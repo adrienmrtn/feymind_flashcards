@@ -25,6 +25,14 @@
         <item quantity="one">ден поред</item>
         <item quantity="other">поредни дни</item>
     </plurals>
+    <plurals name="kx_league_endsIn">
+        <item quantity="one">Край след %1$d ден</item>
+        <item quantity="other">Край след %1$d дни</item>
+    </plurals>
+    <plurals name="kx_today_due">
+        <item quantity="one">%1$d карта за преговор</item>
+        <item quantity="other">%1$d карти за преговор</item>
+    </plurals>
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Добави грешката си във флашкартите</item>
         <item quantity="other">Добави %1$d грешки във флашкартите</item>

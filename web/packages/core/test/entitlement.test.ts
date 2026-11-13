@@ -11,6 +11,8 @@
 
 import { describe, expect, it } from "vitest";
 
+import { composerGate, importLocked } from "../src/lesson/allowance";
+
 import {
   ASSUME_PRO_WITHOUT_ROW,
   ENTITLEMENT_ID,
@@ -125,6 +127,26 @@ describe("le gratuit de la refonte", () => {
     expect(FREE_LESSON_TIER.mikaQuestions).toBe(1);
     expect(FREE_LESSON_TIER.practiceSets).toBe(1);
     expect(FREE_LESSON_TIER.mockExams).toBe(1);
+    expect(FREE_LESSON_TIER.freeLessonFromImport).toBe(true);
+  });
+
+  it("laisse créer la leçon offerte depuis un import, avec `onboarding: true`", () => {
+    // `docs/refonte-knowunity.md` § 7 : tant que la leçon offerte reste, un import passe et
+    // la demande porte `onboarding: true` ; ensuite, un import ouvre le paywall comme avant.
+    for (const source of ["pdf", "photo", "audio", "youtube", "docx", "mixed"] as const) {
+      expect(composerGate({ isPro: false, source, hasUsedFreeLesson: false }), source).toEqual({ verdict: null, onboarding: true });
+      expect(composerGate({ isPro: false, source, hasUsedFreeLesson: true }), source).toEqual({ verdict: "import_pro", onboarding: false });
+      expect(composerGate({ isPro: true, source, hasUsedFreeLesson: true }), source).toEqual({ verdict: null, onboarding: false });
+    }
+    for (const source of ["topic", "text"] as const) {
+      expect(composerGate({ isPro: false, source, hasUsedFreeLesson: false }), source).toEqual({ verdict: null, onboarding: false });
+      expect(composerGate({ isPro: false, source, hasUsedFreeLesson: true }), source).toEqual({ verdict: "free_limit", onboarding: false });
+      expect(composerGate({ isPro: true, source, hasUsedFreeLesson: true }), source).toEqual({ verdict: null, onboarding: false });
+    }
+    // La couronne des pastilles d'import : seulement quand la leçon offerte a servi.
+    expect(importLocked({ isPro: false, hasUsedFreeLesson: false })).toBe(false);
+    expect(importLocked({ isPro: false, hasUsedFreeLesson: true })).toBe(true);
+    expect(importLocked({ isPro: true, hasUsedFreeLesson: true })).toBe(false);
   });
 
   it("connaît ses trois portes, et « Passer en Pro »", () => {
