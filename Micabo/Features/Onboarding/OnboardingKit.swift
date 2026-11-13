@@ -164,6 +164,7 @@ struct OnbMikaRow: View {
 
     var body: some View {
         let phrase = OnbPhrase(say.text)
+        let calm = reduceMotion
         HStack(alignment: .center, spacing: 8) {
             MikaMascot(mood: say.mood, size: size)
                 .frame(width: size, height: size)
@@ -188,7 +189,7 @@ struct OnbMikaRow: View {
                     )
                 )
                 .keyframeAnimator(initialValue: CGFloat(1), trigger: say.text) { content, scale in
-                    content.scaleEffect(reduceMotion ? 1 : scale, anchor: .leading)
+                    content.scaleEffect(calm ? 1 : scale, anchor: .leading)
                 } keyframes: { _ in
                     KeyframeTrack {
                         SpringKeyframe(1.035, duration: 0.12)
@@ -267,9 +268,12 @@ struct OnbOption: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
+        // Lus avant la fermeture de l'animation, qui n'est pas isolée au fil principal.
+        let calm = reduceMotion
+        let selected = isSelected
         V3OptionRow(title, subtitle: subtitle, icon: icon, emoji: emoji, isSelected: isSelected, multiple: multiple, action: action)
             .keyframeAnimator(initialValue: CGFloat(1), trigger: isSelected) { content, scale in
-                content.scaleEffect(reduceMotion || !isSelected ? 1 : scale)
+                content.scaleEffect(calm || !selected ? 1 : scale)
             } keyframes: { _ in
                 KeyframeTrack {
                     SpringKeyframe(1.03, duration: 0.1)

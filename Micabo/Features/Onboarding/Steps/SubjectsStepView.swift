@@ -117,9 +117,11 @@ struct OnbSubjectChip: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
+        let calm = reduceMotion
+        let selected = isSelected
         V3Chip(title, isSelected: isSelected, action: action)
             .keyframeAnimator(initialValue: CGFloat(1), trigger: isSelected) { content, scale in
-                content.scaleEffect(reduceMotion || !isSelected ? 1 : scale)
+                content.scaleEffect(calm || !selected ? 1 : scale)
             } keyframes: { _ in
                 KeyframeTrack {
                     SpringKeyframe(1.08, duration: 0.1)

@@ -38,6 +38,53 @@ struct OnboardingLivePage<Content: View>: View {
     }
 }
 
+/// **Une page du parcours posée immobile**, sans fenêtre (`RenderGallery.render`) : gardée
+/// pour les rendus d'autres lots (`PolishSystemRenderTests`).
+struct OnboardingRenderPage<Content: View>: View {
+    let step: OnboardingStep
+    let model: OnboardingModel
+    var rtl = false
+    var xxl = false
+    var safeTop: CGFloat = 59
+    var safeBottom: CGFloat = 34
+    private let content: Content
+
+    init(
+        step: OnboardingStep,
+        model: OnboardingModel,
+        rtl: Bool = false,
+        xxl: Bool = false,
+        safeTop: CGFloat = 59,
+        safeBottom: CGFloat = 34,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.step = step
+        self.model = model
+        self.rtl = rtl
+        self.xxl = xxl
+        self.safeTop = safeTop
+        self.safeBottom = safeBottom
+        self.content = content()
+    }
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            content
+                .padding(.top, step.showsChrome ? OnboardingTopBar.height : 0)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            OnboardingTopBar(model: model)
+        }
+        .padding(.top, safeTop)
+        .padding(.bottom, safeBottom)
+        .background(V3Color.bg)
+        .environment(model)
+        .environment(\.onboardingStill, true)
+        .environment(\.mikaStill, true)
+        .environment(\.layoutDirection, rtl ? .rightToLeft : .leftToRight)
+        .environment(\.dynamicTypeSize, xxl ? .xxxLarge : .large)
+    }
+}
+
 extension OnboardingLivePage where Content == OnboardingStepScreen {
     init(step: OnboardingStep, model: OnboardingModel) {
         self.init(step: step, model: model) { OnboardingStepScreen(step: step) }
