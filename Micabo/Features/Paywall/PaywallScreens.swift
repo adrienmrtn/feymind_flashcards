@@ -353,8 +353,9 @@ struct PaywallScreen: View {
                     content(.comfortable)
                     content(.compact)
                     content(.tight)
+                    content(.tightest)
                     ScrollView {
-                        content(.tight)
+                        content(.tightest)
                     }
                     .scrollIndicators(.hidden)
                     .scrollBounceBehavior(.basedOnSize)
@@ -833,7 +834,7 @@ struct PaywallSafeArea {
 
 // MARK: - Les serrages
 
-/// **Quatre serrages pour un même écran** : le paywall prend le premier qui tient sans défiler
+/// **Cinq serrages pour un même écran** : le paywall prend le premier qui tient sans défiler
 /// (`ViewThatFits`). Mika et le titre rapetissent, l'air entre les zones se resserre ; **rien
 /// de ce qui est promis ni de ce qui sera prélevé n'est retiré** — les trois bénéfices, la
 /// ligne de l'essai, les formules et la mention restent entiers.
@@ -842,6 +843,8 @@ enum PaywallDensity: CaseIterable {
     case comfortable
     case compact
     case tight
+    /// L'iPhone SE dans une langue longue : Mika petit, l'air au plus juste.
+    case tightest
 
     /// Les bénéfices : trois, jamais plus.
     static let benefitCount = 3
@@ -853,6 +856,7 @@ enum PaywallDensity: CaseIterable {
         case .comfortable: PaywallStyle.heroMika * 0.86
         case .compact: PaywallStyle.heroMika * 0.72
         case .tight: PaywallStyle.heroMika * 0.52
+        case .tightest: PaywallStyle.heroMika * 0.38
         }
     }
 
@@ -862,6 +866,7 @@ enum PaywallDensity: CaseIterable {
         case .regular, .comfortable: PaywallStyle.titleSize
         case .compact: PaywallStyle.titleMediumSize
         case .tight: PaywallStyle.titleCompactSize
+        case .tightest: PaywallStyle.titleCompactSize - 2
         }
     }
 
@@ -871,6 +876,7 @@ enum PaywallDensity: CaseIterable {
         case .regular: 14
         case .comfortable, .compact: 10
         case .tight: 6
+        case .tightest: 4
         }
     }
 
@@ -881,6 +887,7 @@ enum PaywallDensity: CaseIterable {
         case .comfortable: 20
         case .compact: 16
         case .tight: 12
+        case .tightest: 8
         }
     }
 
@@ -891,6 +898,7 @@ enum PaywallDensity: CaseIterable {
         case .comfortable: 12
         case .compact: 10
         case .tight: 7
+        case .tightest: 5
         }
     }
 }

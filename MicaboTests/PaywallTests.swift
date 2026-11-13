@@ -462,14 +462,14 @@ final class PaywallTests: XCTestCase {
         }
     }
 
-    /// **Quatre serrages, du plus aéré au plus serré** : Mika et le titre rapetissent, l'air se
+    /// **Cinq serrages, du plus aéré au plus serré** : Mika et le titre rapetissent, l'air se
     /// resserre ; les trois bénéfices restent, et rien de ce qui est promis ne part.
     func testTheDensitiesShrinkTheHeroAndKeepThePromises() {
-        XCTAssertEqual(PaywallDensity.allCases, [.regular, .comfortable, .compact, .tight])
+        XCTAssertEqual(PaywallDensity.allCases, [.regular, .comfortable, .compact, .tight, .tightest])
         XCTAssertEqual(PaywallDensity.benefitCount, 3)
         let sizes = PaywallDensity.allCases.map(\.mikaSize)
         XCTAssertEqual(sizes, sizes.sorted(by: >))
-        XCTAssertGreaterThan(PaywallDensity.tight.mikaSize, 0, "Mika reste, même sur un iPhone SE")
+        XCTAssertGreaterThan(PaywallDensity.tightest.mikaSize, 0, "Mika reste, même sur un iPhone SE")
         XCTAssertGreaterThan(PaywallDensity.regular.titleSize, PaywallDensity.compact.titleSize)
         XCTAssertGreaterThan(PaywallDensity.compact.titleSize, PaywallDensity.tight.titleSize)
         XCTAssertGreaterThan(PaywallDensity.regular.sectionGap, PaywallDensity.tight.sectionGap)
