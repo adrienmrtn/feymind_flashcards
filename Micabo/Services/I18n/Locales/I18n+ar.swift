@@ -1985,7 +1985,6 @@ extension IosI18nCatalogs {
         "ios.onb12.plan.nameAny": "خطتك",
         "ios.onb12.plan.tonight": "الليلة، {hour}",
         "ios.onb12.trial.say": "أريدك أن تجرب خطتك قبل أن تقرر.",
-        "ios.onb12.trialOffer.say": "بلا مفاجآت: كل التواريخ هنا.",
         "ios.onb12.trialOffer.toggle": "ذكّرني قبل النهاية بيوم",
         "ios.onb12.now.say": "كل شيء جاهز. هل نبدأ الليلة؟",
         "ios.pay12.offer.mika": "انتظر، {name}! أقدم لك **سعرًا خاصًا** لسنتك الأولى.",

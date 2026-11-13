@@ -170,7 +170,9 @@ struct TrialOfferStepView: View {
             OnbTitle(i18n.t(promises ? "ios.onb12.trialOffer.title" : "ios.onb12.trialOffer.anytime"), size: OnbLayout.questionTitle)
                 .padding(.top, OnbLayout.titleTop)
 
-            OnbMikaRow(say: OnbSay(i18n.t("ios.onb12.trialOffer.say"), mood: .wink))
+            // Mika dit ce qui rassure (on annule quand on veut) : la ligne verte du pied
+            // n'a plus à le répéter, et la bascule du rappel tient sous la chronologie.
+            OnbMikaRow(say: OnbSay(i18n.t(Self.reassuranceKey(canRemind: promises)), mood: .wink), collapsible: true)
                 .padding(.top, OnbLayout.mikaGap)
 
             OnbTrialTimeline(milestones: TrialTimeline.milestones(locale: i18n.locale, remindersOn: promises))
@@ -181,7 +183,6 @@ struct TrialOfferStepView: View {
                     .padding(.top, 10)
             }
         } footer: {
-            OnbReassurance(text: i18n.t(Self.reassuranceKey(canRemind: promises)))
             V3Button(i18n.t("common.continue"), isLoading: isAsking) {
                 Task { await proceed() }
             }

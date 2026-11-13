@@ -158,6 +158,8 @@ struct OnbSay: Equatable {
 /// un petit ressort, et Mika change d'humeur (son geste, une fois). Rien ne retarde la page.
 struct OnbMikaRow: View {
     let say: OnbSay
+    /// Vrai : sur un écran court, la réplique s'efface et laisse la place à ce qui est promis.
+    var collapsible = false
 
     @Environment(\.onbCompact) private var compact
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -165,9 +167,15 @@ struct OnbMikaRow: View {
     private var size: CGFloat { compact ? 58 : 78 }
 
     var body: some View {
+        if !(compact && collapsible) {
+            row
+        }
+    }
+
+    private var row: some View {
         let phrase = OnbPhrase(say.text)
         let calm = reduceMotion
-        HStack(alignment: .center, spacing: 8) {
+        return HStack(alignment: .center, spacing: 8) {
             MikaMascot(mood: say.mood, size: size)
                 .frame(width: size, height: size)
                 .accessibilityHidden(true)
@@ -433,6 +441,21 @@ struct OnbXPPill: View {
 
 private struct OnbCompactKey: EnvironmentKey {
     static let defaultValue = false
+}
+
+/// **Mesure la hauteur de la page** et dit aux écrans du parcours s'ils sont courts
+/// (`onbCompact`) : posé sur la page entière, il vaut aussi pour les vues de l'étape, pas
+/// seulement pour ce que `OnbScreen` contient.
+struct OnbCompactReader: ViewModifier {
+    /// La page a la barre du haut : elle lui laisse sa hauteur.
+    let chrome: Bool
+
+    func body(content: Content) -> some View {
+        GeometryReader { proxy in
+            content
+                .environment(\.onbCompact, proxy.size.height - (chrome ? OnboardingTopBar.height : 0) < OnbLayout.compactHeight)
+        }
+    }
 }
 
 private struct OnbSettledKey: EnvironmentKey {

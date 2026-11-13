@@ -26,6 +26,7 @@ struct OnboardingLivePage<Content: View>: View {
             content
                 .padding(.top, step.showsChrome ? OnboardingTopBar.height : 0)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .modifier(OnbCompactReader(chrome: step.showsChrome))
                 .background(V3Color.bg.ignoresSafeArea())
             OnboardingTopBar(model: model)
         }
