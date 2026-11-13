@@ -44,12 +44,6 @@ enum OnbDemo {
         return first.lowercased() + text.dropFirst()
     }
 
-    /// L'étiquette d'une démo : le blocage qu'elle soigne, s'il a été coché, sinon son outil.
-    static func eyebrow(worry: StudyWorry, tool: String, model: OnboardingModel, locale: UiLocale) -> String {
-        guard model.worries.contains(worry) else { return tool }
-        return L10n.t("ios.onb10.solutions.quote", locale: locale, vars: ["worry": worry.title(locale: locale)])
-    }
-
     /// Les matières des séances de la semaine : la plus dure d'abord, puis les autres.
     static func sessionSubjects(for model: OnboardingModel, locale: UiLocale) -> [String] {
         var ordered = model.subjects.sorted()
@@ -102,7 +96,6 @@ struct LessonDemoStepView: View {
 
     var body: some View {
         OnbDemoStage(
-            eyebrow: OnbDemo.eyebrow(worry: .hardLessons, tool: i18n.t("ios.onb12.lesson.tool"), model: model, locale: i18n.locale),
             title: title,
             say: isPlayed
                 ? OnbSay(i18n.t("ios.onb12.lesson.done"), mood: .proud)
@@ -174,15 +167,11 @@ struct LessonDemoStepView: View {
     /// travailler.
     private var lesson: some View {
         OnbPanel(padding: 18) {
-            if let subject = OnbDemo.subject(for: model, locale: i18n.locale) {
-                StoryTag(text: subject, tone: V3Color.accentBright)
-            }
             Text(OnbDemo.topic(for: model, locale: i18n.locale))
                 .font(V3Font.heading(28))
                 .foregroundStyle(V3Color.ink)
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
-            V3ProgressBar(value: 0.08)
                 .padding(.bottom, 4)
             mode(.notes, i18n.t("ios.onb11.lesson.notes"), tone: V3Color.iconBlue)
             mode(.quiz, i18n.t("ios.onb11.lesson.quiz"), tone: V3Color.iconPink)
@@ -243,7 +232,6 @@ struct CardsDemoStepView: View {
 
     var body: some View {
         OnbDemoStage(
-            eyebrow: OnbDemo.eyebrow(worry: .forgetting, tool: i18n.t("ios.onb12.cards.tool"), model: model, locale: i18n.locale),
             title: i18n.t("ios.onb12.cards.title"),
             say: say,
             playLabel: i18n.t("ios.onb12.cards.play"),
@@ -276,9 +264,6 @@ struct CardsDemoStepView: View {
     /// Une face de la carte : la matière et la question, ou la réponse.
     private func face(back: Bool) -> some View {
         VStack(spacing: 14) {
-            if let subject = OnbDemo.subject(for: model, locale: i18n.locale) {
-                StoryTag(text: subject, tone: back ? V3Color.green : V3Color.accentBright)
-            }
             Spacer(minLength: 0)
             Text(back ? family.demoCardAnswer(locale: i18n.locale) : family.demoCardQuestion(locale: i18n.locale))
                 .font(V3Font.heading(back ? 34 : 28))
@@ -286,14 +271,6 @@ struct CardsDemoStepView: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
-            if !back {
-                HStack(spacing: 6) {
-                    Image(systemName: "hand.tap.fill")
-                    Text(i18n.t("ios.onb12.cards.tap"))
-                }
-                .font(V3Font.caption)
-                .foregroundStyle(V3Color.ink3)
-            }
         }
         .padding(20)
         .frame(maxWidth: .infinity, minHeight: compact ? 180 : 290)
@@ -381,7 +358,6 @@ struct ScanDemoStepView: View {
 
     var body: some View {
         OnbDemoStage(
-            eyebrow: OnbDemo.eyebrow(worry: .homework, tool: i18n.t("ios.onb12.scan.tool"), model: model, locale: i18n.locale),
             title: i18n.t("ios.onb12.scan.title"),
             say: say,
             playLabel: playLabel,
@@ -514,7 +490,6 @@ struct ChatDemoStepView: View {
 
     var body: some View {
         OnbDemoStage(
-            eyebrow: OnbDemo.eyebrow(worry: .hardLessons, tool: i18n.t("ios.onb12.chat.tool"), model: model, locale: i18n.locale),
             title: i18n.t("ios.onb12.chat.title"),
             say: chosen == nil
                 ? OnbSay(i18n.t("ios.onb12.chat.say"), mood: .wink)
@@ -620,7 +595,6 @@ struct ExamDemoStepView: View {
 
     var body: some View {
         OnbDemoStage(
-            eyebrow: OnbDemo.eyebrow(worry: .examStress, tool: i18n.t("ios.onb12.exam.tool"), model: model, locale: i18n.locale),
             title: i18n.t("ios.onb12.exam.title"),
             say: isPlayed
                 ? OnbSay(i18n.t("ios.onb12.exam.done"), mood: .happy)
@@ -649,11 +623,6 @@ struct ExamDemoStepView: View {
                         Text(i18n.t("ios.onb12.exam.score", ["n": "2", "total": "3"]))
                             .font(V3Font.heading(40))
                             .foregroundStyle(V3Color.ink)
-                        Text(i18n.t("ios.onb12.exam.corrected"))
-                            .font(V3Font.support)
-                            .foregroundStyle(V3Color.ink2)
-                            .multilineTextAlignment(.leading)
-                            .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(.top, 4)
                     .transition(.onbPop)
@@ -723,7 +692,6 @@ struct PlanDemoStepView: View {
 
     var body: some View {
         OnbDemoStage(
-            eyebrow: OnbDemo.eyebrow(worry: .noStart, tool: i18n.t("ios.onb12.plan.tool"), model: model, locale: i18n.locale),
             title: i18n.t("ios.onb11.plan.ask", ["min": "\(model.minutesPerDay)"]),
             say: say,
             playLabel: i18n.t("ios.onb12.plan.play"),
@@ -731,7 +699,6 @@ struct PlanDemoStepView: View {
             onPlay: { pick(1) }
         ) {
             OnbPanel(padding: 16) {
-                header
                 week
                 session
                     .id(selected)
@@ -744,37 +711,6 @@ struct PlanDemoStepView: View {
         guard index != day else { return }
         Haptics.selection()
         onbPlay { day = index }
-    }
-
-    /// Le prochain examen et le temps qu'il reste ; sans examen daté, « Ta semaine ».
-    @ViewBuilder
-    private var header: some View {
-        if let exam = model.datedExam, let days = model.examDaysLeft(now: now) {
-            HStack(alignment: .center, spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(i18n.t("ios.cal.nextExam"))
-                        .font(V3Font.caption)
-                        .foregroundStyle(V3Color.ink2)
-                    Text(exam.choice.title(locale: i18n.locale))
-                        .font(V3Font.heading(24))
-                        .foregroundStyle(V3Color.ink)
-                        .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                Text(OnbWords.duration(days: days, locale: i18n.locale))
-                    .font(V3Font.label)
-                    .foregroundStyle(V3Color.yellowInk)
-                    .lineLimit(1)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(V3Color.yellowWash, in: Capsule())
-            }
-        } else {
-            Text(i18n.t("ios.onb11.plan.week"))
-                .font(V3Font.heading(24))
-                .foregroundStyle(V3Color.ink)
-        }
     }
 
     /// Les sept jours qui commencent aujourd'hui, à toucher.
@@ -819,13 +755,9 @@ struct PlanDemoStepView: View {
             (.cards, i18n.t("ios.onb12.plan.kind.cards")),
         ]
         let kind = kinds[selected % kinds.count]
-        let date = Calendar.current.date(byAdding: .day, value: selected, to: now) ?? now
         return HStack(spacing: 12) {
             OnbIcon(icon: kind.0, size: 30)
             VStack(alignment: .leading, spacing: 2) {
-                Text(selected == 0 ? i18n.t("ios.onb12.plan.today") : Self.weekday(date, locale: i18n.locale))
-                    .font(V3Font.caption)
-                    .foregroundStyle(V3Color.ink2)
                 Text(subject)
                     .font(V3Font.heading(22))
                     .foregroundStyle(V3Color.ink)
@@ -899,7 +831,6 @@ struct FocusDemoStepView: View {
 
     var body: some View {
         OnbDemoStage(
-            eyebrow: OnbDemo.eyebrow(worry: .motivation, tool: i18n.t("ios.onb12.focus.tool"), model: model, locale: i18n.locale),
             title: i18n.t("ios.onb12.focus.title"),
             say: isDone
                 ? OnbSay(i18n.t("ios.onb12.focus.done"), mood: .celebrate)

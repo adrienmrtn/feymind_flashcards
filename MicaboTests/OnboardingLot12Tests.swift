@@ -155,6 +155,43 @@ final class OnboardingLot12Tests: XCTestCase {
 
     // MARK: - Le paywall et l'offre
 
+    /// **Le parcours d'un compte gratuit finit toujours sur le paywall** : quel que soit le
+    /// pays, que la boutique propose l'essai ou non (les deux écrans de l'essai se sautent, le
+    /// paywall jamais), et sans aucune réponse donnée.
+    func testAFreeAccountAlwaysEndsOnThePaywall() throws {
+        for country in [SchoolingCountry.fr, .de, .us, .other] {
+            let model = OnboardingModel()
+            model.select(country: country)
+            XCTAssertFalse(model.isSkipped(.paywall), "\(country)")
+            var guardCounter = 0
+            while model.step != .paywall, guardCounter < OnboardingStep.allCases.count * 2 {
+                if model.isAccountSheetPresented { model.finishAccountSheet() } else { model.advance() }
+                guardCounter += 1
+            }
+            XCTAssertEqual(model.step, .paywall, "\(country) : le parcours doit finir sur le paywall")
+            XCTAssertFalse(model.advance(), "Rien après le paywall")
+        }
+        XCTAssertEqual(OnboardingStep.allCases.last, .paywall)
+        for isInternal in [false, true] {
+            for forced in [false, true] {
+                XCTAssertTrue(
+                    PaywallTestMode.showsOnboardingPaywall(isPro: false, forcedByTest: forced, isInternal: isInternal),
+                    "Un compte gratuit voit toujours le paywall"
+                )
+            }
+        }
+        XCTAssertTrue(PaywallStepView.keepsPaywall(shows: true, didShow: false))
+    }
+
+    /// **Un compte déjà Pro voit le paywall en aperçu dans les constructions internes**, et un
+    /// vrai abonné de l'App Store finit sans paywall.
+    func testAProAccountSeesThePaywallInInternalBuilds() {
+        XCTAssertTrue(PaywallTestMode.showsOnboardingPaywall(isPro: true, forcedByTest: false, isInternal: true))
+        XCTAssertFalse(PaywallTestMode.showsOnboardingPaywall(isPro: true, forcedByTest: false, isInternal: false))
+        XCTAssertTrue(PaywallTestMode.showsOnboardingPaywall(isPro: true, forcedByTest: true, isInternal: false))
+        XCTAssertFalse(L10n.t("ios.pay12.preview", locale: .fr).hasPrefix("ios."))
+    }
+
     /// **Mika ne promet le rappel que s'il partira** ; sans essai, il parle d'annulation.
     func testThePaywallMikaPromisesOnlyWhatIsKept() {
         let reminded = PaywallCopy.trialMika(name: "Lina", remindsBeforeEnd: true, offersTrial: true, locale: .fr)

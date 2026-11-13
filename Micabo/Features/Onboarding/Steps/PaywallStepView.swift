@@ -36,8 +36,12 @@ struct PaywallStepView: View {
     private var isPro: Bool { pro?.isPro ?? false }
 
     private var showsPaywall: Bool {
-        PaywallTestMode.showsOnboardingPaywall(isPro: isPro, forcedByTest: forcedByTest)
+        PaywallTestMode.showsOnboardingPaywall(isPro: isPro, forcedByTest: forcedByTest, isInternal: BuildChannel.isInternal)
     }
+
+    /// **L'aperçu** (lot 12) : un compte déjà Pro voit le même paywall, aux vrais prix, mais
+    /// l'achat est neutralisé et une mention le dit. Lu une fois, à l'arrivée.
+    @State private var previewsPro: Bool?
 
     /// Le paywall reste monté une fois montré, même si Pro s'ouvre entre-temps.
     private var keepsPaywall: Bool {
@@ -52,12 +56,13 @@ struct PaywallStepView: View {
     var body: some View {
         Group {
             if keepsPaywall {
-                PaywallFlowView(showsFarewell: true, onDismiss: finishOnce, onSubscribed: finishOnce)
+                PaywallFlowView(showsFarewell: true, previewsPro: previewsPro ?? isPro, onDismiss: finishOnce, onSubscribed: finishOnce)
                     .onAppear { didShowPaywall = true }
             } else {
                 V3Color.bg.ignoresSafeArea()
             }
         }
+        .onAppear { if previewsPro == nil { previewsPro = isPro } }
         .onChange(of: showsPaywall, initial: true) { _, shows in
             // Un abonné qui arrive ici n'a rien à acheter : le parcours se termine. Un élève
             // qui vient d'acheter, lui, voit la bienvenue : c'est elle qui termine.

@@ -138,6 +138,12 @@ final class Paywall12RenderTests: XCTestCase {
     func testDoorAndStatesOnDevice() throws {
         use(.fr)
         try RenderGallery.renderDevice("pay12-fr-door-mika", devices: [.iPhone15Pro], paywall(.mika, context: context()))
+        // L'aperçu d'un compte déjà Pro (constructions internes) : la mention sous le bouton.
+        try RenderGallery.renderDevice(
+            "pay12-fr-preview-pro",
+            devices: [.iPhone15Pro],
+            paywall(context: context(), notice: .info(L10n.t("ios.pay12.preview", locale: .fr)))
+        )
         try RenderGallery.renderDevice("pay12-fr-loading", devices: [.iPhoneSE], paywall(context: context(), prices: .loading))
         try RenderGallery.renderDevice("pay12-fr-buying", devices: [.iPhone15Pro], paywall(context: context(), purchasing: true))
     }

@@ -208,7 +208,8 @@ final class OnboardingContentTests: XCTestCase {
                     XCTAssertFalse(line.contains(waiting), "\(path):\(number + 1) attend : \(waiting)")
                 }
                 for clock in ["Timer.", "TimelineView(", "CADisplayLink("] where line.contains(clock) {
-                    XCTAssertTrue(path.hasSuffix("Steps/PlanStepViews.swift"), "\(path):\(number + 1) a une horloge")
+                    // Le chargement du plan, et l'anneau de l'engagement le temps que le doigt est posé.
+                    XCTAssertTrue(path.hasSuffix("Steps/PlanStepViews.swift") || path.hasSuffix("Steps/CommitmentStepView.swift"), "\(path):\(number + 1) a une horloge")
                 }
             }
         }
@@ -222,8 +223,8 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(PlanBuildingStepView.progress(elapsed: 0), 0)
         XCTAssertEqual(PlanBuildingStepView.progress(elapsed: PlanBuildingStepView.duration), 1)
         XCTAssertEqual(PlanBuildingStepView.progress(elapsed: 60), 1, "L'app revenue de l'arrière-plan ne dépasse pas cent")
-        XCTAssertGreaterThan(PlanBuildingStepView.progress(elapsed: PlanBuildingStepView.duration / 2), 0.5,
-                             "La course part vite et se pose")
+        XCTAssertEqual(PlanBuildingStepView.progress(elapsed: PlanBuildingStepView.duration / 2), 0.5, accuracy: 0.0001,
+                             "Une course régulière, sans à-coup (lot 12)")
         XCTAssertEqual(PlanBuildingStepView.checkedCount(progress: 0, lines: 5), 0)
         XCTAssertEqual(PlanBuildingStepView.checkedCount(progress: 0.2, lines: 5), 1)
         XCTAssertEqual(PlanBuildingStepView.checkedCount(progress: 0.62, lines: 5), 3)
