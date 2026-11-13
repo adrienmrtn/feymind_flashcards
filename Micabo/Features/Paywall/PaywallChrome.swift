@@ -18,14 +18,21 @@ enum PaywallStyle {
     // MARK: Les polices du paywall
 
     /// « Micabo [PRO] », en haut à gauche : la taille de la marque (`V3ProBadge`).
-    static let brandSize: CGFloat = 24
+    static let brandSize: CGFloat = 20
     /// « Pour Lina », sous la marque.
     static let brandFor = V3Font.eyebrow
-    /// Le titre de l'en-tête « essai » (`V3Title`), sur deux phrases : sa taille, et celle
-    /// qu'il prend quand l'écran est court.
-    static let titleSize: CGFloat = 32
-    static let titleMediumSize: CGFloat = 28
-    static let titleCompactSize: CGFloat = 25
+    /// Le grand titre du héros (`V3Title`) : sa taille, et celles qu'il prend quand l'écran
+    /// est plus court.
+    static let titleSize: CGFloat = 36
+    static let titleMediumSize: CGFloat = 31
+    static let titleCompactSize: CGFloat = 27
+    /// **La deuxième taille de l'écran** (lot 12, refonte) : la promesse sous le titre, les
+    /// bénéfices, la ligne de l'essai. La troisième est celle des légendes.
+    static let heroText = V3Font.text(.body, weight: .semibold)
+    static let trialLine = V3Font.text(.subheadline, weight: .bold)
+    /// Une carte de formule : son nom, son grand chiffre.
+    static let planName = V3Font.text(.footnote, weight: .bold)
+    static let cardPrice = V3Font.heading(24, relativeTo: .title2)
     /// Les pastilles de ce que l'élève a déclaré (`PaywallFactsRow`).
     static let fact = V3Font.text(.footnote, weight: .semibold)
     static let factIcon = V3Font.text(.caption, weight: .bold)
@@ -63,7 +70,7 @@ enum PaywallStyle {
     /// La mention sous le bouton, le message d'un achat qui n'a pas abouti, les liens.
     static let legal = V3Font.text(.caption, weight: .medium)
     static let notice = V3Font.caption
-    static let link = V3Font.text(.caption, weight: .semibold)
+    static let link = V3Font.text(.caption2, weight: .semibold)
 
     // MARK: Les polices de l'offre et de la bienvenue
 
@@ -71,7 +78,8 @@ enum PaywallStyle {
     static let momentSize: CGFloat = 40
     static let momentSub = V3Font.body
     /// « −40 % », en géant, et son interlettrage.
-    static let percent = V3Font.display(132)
+    static let percent = V3Font.display(percentSize)
+    static let percentSize: CGFloat = 120
     static let percentTracking: CGFloat = -2
     /// « sur ton année Micabo Pro ».
     static let offerSub = V3Font.h2
@@ -106,6 +114,11 @@ enum PaywallStyle {
     static let secondaryPlanHeight: CGFloat = V3Metric.optionHeight
     static let secondaryPlanTight: CGFloat = 50
     static let planRadius: CGFloat = V3Metric.radiusInner
+    /// La hauteur d'une carte de formule, au moins (le chargement et l'échec la gardent).
+    static let planCardHeight: CGFloat = 92
+    /// Le pictogramme d'un bénéfice, et sa colonne.
+    static let benefitGlyph: CGFloat = 19
+    static let benefitGlyphColumn: CGFloat = 30
     static let planSpacing: CGFloat = 10
     /// Le tableau : ses lignes, son en-tête, ses colonnes, ses rayons.
     static let tableRow: CGFloat = 32
@@ -132,6 +145,8 @@ enum PaywallStyle {
     static let offerMikaLine: CGFloat = 76
     static let trialMika: CGFloat = 64
     static let welcomeMika: CGFloat = 200
+    /// Mika en grand, en tête du paywall (lot 12, refonte).
+    static let heroMika: CGFloat = 148
 
     // MARK: Les couleurs
 
@@ -236,7 +251,7 @@ struct PaywallBrand: View {
 /// **La barre du haut du paywall** : la marque à gauche, la croix à droite. La croix s'éteint
 /// pendant un achat.
 struct PaywallTopBar: View {
-    var name: String?
+    var name: String? = nil
     var isBusy: Bool
     var onClose: () -> Void
 
@@ -244,7 +259,8 @@ struct PaywallTopBar: View {
         HStack(alignment: .center, spacing: 12) {
             PaywallBrand(name: name)
             Spacer(minLength: 0)
-            PaywallCloseButton(action: onClose)
+            // La croix est là, discrète : la couleur secondaire du texte.
+            PaywallCloseButton(tint: V3Color.ink2, action: onClose)
                 .disabled(isBusy)
                 .padding(.trailing, closeOverhang)
         }

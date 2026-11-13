@@ -173,6 +173,12 @@ final class Paywall12RenderTests: XCTestCase {
         try RenderGallery.renderDevice("pay12-de-trial", paywall(context: german))
         try RenderGallery.renderDevice("pay12-de-offer", devices: [.iPhoneSE], offer())
         try RenderGallery.renderDevice(
+            "pay12-de-welcome",
+            devices: [.iPhoneSE],
+            PaywallWelcomeScreen(name: "Mia", trialEnd: PaywallTimeline.endDate(from: Self.now, trialDays: 3), onContinue: {})
+                .environment(\.mikaStill, true)
+        )
+        try RenderGallery.renderDevice(
             "pay12-de-farewell",
             devices: [.iPhoneSE],
             PaywallFarewellScreen(name: "Mia", topic: "Der Kalte Krieg", onContinue: {}).environment(\.mikaStill, true)
@@ -183,5 +189,12 @@ final class Paywall12RenderTests: XCTestCase {
         let arabic = context(name: "لينا", exam: ("الثانوية العامة", "eg.thanawiya"), subjects: ["Mathématiques", "Physique"], topic: nil)
         try RenderGallery.renderDevice("pay12-ar-trial", devices: [.iPhone15Pro], paywall(context: arabic, rtl: true))
         try RenderGallery.renderDevice("pay12-ar-offer", devices: [.iPhone15Pro], offer(rtl: true))
+        try RenderGallery.renderDevice(
+            "pay12-ar-welcome",
+            devices: [.iPhone15Pro],
+            PaywallWelcomeScreen(name: "لينا", trialEnd: PaywallTimeline.endDate(from: Self.now, trialDays: 3), onContinue: {})
+                .environment(\.mikaStill, true)
+                .environment(\.layoutDirection, .rightToLeft)
+        )
     }
 }
