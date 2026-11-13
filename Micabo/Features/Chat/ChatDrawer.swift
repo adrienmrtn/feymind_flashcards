@@ -68,7 +68,8 @@ struct ChatDrawerContent: View {
                 Text(L10n.t("ios.chat12.drawer.subtitle", locale: .resolved()))
                     .font(V3Font.caption)
                     .foregroundStyle(V3Color.ink2)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityElement(children: .combine)
@@ -289,16 +290,19 @@ struct SideDrawer<Main: View, Drawer: View>: View {
         GeometryReader { proxy in
             let width = Self.width(for: proxy.size.width)
             let progress = Self.progress(isOpen: isOpen, drag: drag, width: width)
-            // `offset` ne se retourne pas en arabe : le sens se pose à la main.
+            // En arabe, la mise en page est retournée, `offset` compris (vu au rendu
+            // `scan12-tiroir-ar`) : les décalages s'écrivent vers le bord de fuite, sans signe.
+            // Le doigt, lui, se lit dans le repère de l'écran (`.global`, jamais retourné) :
+            // l'ouverture est un glissement vers la gauche en arabe.
             let sign: CGFloat = direction == .rightToLeft ? -1 : 1
             ZStack(alignment: .leading) {
                 main()
                     .accessibilityHidden(isOpen)
-                    .offset(x: sign * progress * width)
+                    .offset(x: progress * width)
                 if progress > 0 {
                     Color.black.opacity(0.5 * progress)
                         .ignoresSafeArea()
-                        .offset(x: sign * progress * width)
+                        .offset(x: progress * width)
                         .contentShape(Rectangle())
                         .onTapGesture { set(false) }
                         .accessibilityHidden(true)
@@ -311,7 +315,7 @@ struct SideDrawer<Main: View, Drawer: View>: View {
                         .overlay(alignment: .trailing) {
                             Rectangle().fill(V3Color.line).frame(width: 1).ignoresSafeArea()
                         }
-                        .offset(x: sign * (progress - 1) * width)
+                        .offset(x: (progress - 1) * width)
                         .accessibilityAddTraits(.isModal)
                         .accessibilityAction(.escape) { set(false) }
                 }

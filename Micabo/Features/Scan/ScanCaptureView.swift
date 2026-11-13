@@ -147,7 +147,7 @@ struct ScanCaptureChrome<Background: View>: View {
                     .clipped()
 
                 if !state.cameraRefused || state.stage != .live {
-                    framingOverlay(size: size, top: top)
+                    framingOverlay(size: size, top: top, bottom: bottom)
                 }
 
                 VStack(spacing: 0) {
@@ -182,29 +182,38 @@ struct ScanCaptureChrome<Background: View>: View {
     // MARK: Le cadre
 
     @ViewBuilder
-    private func framingOverlay(size: CGSize, top: CGFloat) -> some View {
+    private func framingOverlay(size: CGSize, top: CGFloat, bottom: CGFloat) -> some View {
         switch state.mode.framing {
         case .question, .line:
             SolverCropOverlay(
-                frame: $frame,
+                // Avant que l'écran ait posé son cadre (sa première passe), celui du mode.
+                frame: Binding(
+                    get: { frame == .zero ? Self.defaultFrame(for: state.mode, in: size) : frame },
+                    set: { frame = $0 }
+                ),
                 bounds: size,
                 editable: state.stage == .live || state.stage == .still,
                 scanning: state.stage == .reading
             )
         case .page:
             if state.stage == .live {
-                ScanPageGuide(rect: Self.pageRect(in: size, top: top))
+                ScanPageGuide(rect: Self.pageRect(in: size, top: top, bottom: bottom))
             }
         }
     }
 
-    /// Le contour d'une page, sous la phrase d'aide et au-dessus des commandes.
-    static func pageRect(in size: CGSize, top: CGFloat) -> CGRect {
-        let width = size.width - 56
-        let available = size.height - top - 330 - 110
-        let height = max(160, min(width * 1.3, available))
-        let fitted = min(width, height / 1.3)
-        return CGRect(x: (size.width - fitted) / 2, y: top + 104, width: fitted, height: height)
+    /// Le contour d'une page, sous la phrase d'aide et au-dessus des pastilles et du
+    /// déclencheur (les vignettes des pages prises peuvent mordre sur son bas).
+    static func pageRect(in size: CGSize, top: CGFloat, bottom: CGFloat) -> CGRect {
+        let available = max(160, size.height - (top + 104) - (bottom + 236))
+        let width = min(size.width - 40, available / 1.3)
+        let height = min(available, width * 1.42)
+        return CGRect(x: (size.width - width) / 2, y: top + 104, width: width, height: height)
+    }
+
+    /// Le cadre de départ du mode : la question du scanner, ou la bande d'une équation.
+    static func defaultFrame(for mode: ScanMode, in size: CGSize) -> CGRect {
+        mode.framing == .line ? lineFrame(in: size) : SolverCrop.initialFrame(in: size)
     }
 
     /// Le cadre de départ d'une équation : une bande large et basse.
@@ -275,7 +284,7 @@ struct ScanCaptureChrome<Background: View>: View {
                 .accessibilityElement(children: .combine)
             }
             if state.offline {
-                banner(symbol: "wifi.slash", text: L10n.t("ios.scan12.offline", locale: .resolved()), tone: Color.white.opacity(0.14), ink: .white)
+                banner(symbol: "wifi.slash", text: L10n.t("ios.scan12.offline", locale: .resolved()), tone: Color.black.opacity(0.72), ink: .white)
             }
             if state.limitReached {
                 Button(action: actions.unlock) {
@@ -338,13 +347,15 @@ struct ScanCaptureChrome<Background: View>: View {
                     ScanTargetPicker(target: state.target, onPick: actions.target)
                 }
                 ScanModePicker(selected: state.mode, onPick: actions.mode)
-                controls
+                if !state.cameraRefused {
+                    controls
+                }
             }
         case .still, .reading:
-            HStack(spacing: 12) {
-                V3Button(L10n.t("ios.scan12.retake", locale: .resolved()), systemImage: "arrow.counterclockwise", kind: .secondary, action: actions.retake)
-                V3Button(L10n.t("ios.scan12.read", locale: .resolved()), systemImage: "text.viewfinder", isLoading: state.stage == .reading, action: actions.confirm)
-            }
+            ScanButtonPair(
+                primary: V3Button(L10n.t("ios.scan12.read", locale: .resolved()), systemImage: "text.viewfinder", isLoading: state.stage == .reading, action: actions.confirm),
+                secondary: V3Button(L10n.t("ios.scan12.retake", locale: .resolved()), systemImage: "arrow.counterclockwise", kind: .secondary, action: actions.retake)
+            )
             .disabled(state.stage == .reading)
             .padding(.horizontal, V3Metric.screenMargin)
         case .unreadable:
@@ -574,6 +585,7 @@ struct ScanPagesRow: View {
                 .font(V3Font.label)
                 .foregroundStyle(Color.white.opacity(0.8))
                 .monospacedDigit()
+                .fixedSize()
         }
         .padding(.top, 6)
         .padding(.trailing, 6)
@@ -644,13 +656,27 @@ struct ScanUnreadableCard: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            HStack(spacing: 10) {
-                V3Button(L10n.t("ios.scan12.type", locale: .resolved()), systemImage: "keyboard", kind: .secondary, action: onType)
-                V3Button(L10n.t("ios.scan12.retake", locale: .resolved()), systemImage: "camera.fill", action: onRetake)
-            }
+            ScanButtonPair(
+                primary: V3Button(L10n.t("ios.scan12.retake", locale: .resolved()), systemImage: "camera.fill", action: onRetake),
+                secondary: V3Button(L10n.t("ios.scan12.type", locale: .resolved()), systemImage: "keyboard", kind: .secondary, action: onType)
+            )
         }
         .padding(18)
         .v3Card(radius: V3Metric.radiusCard)
+    }
+}
+
+/// Deux boutons empilés, le principal en haut : côte à côte, « Reprendre » se coupait en deux
+/// lignes sur un iPhone SE (rendu `scan12-camera-illisible-se`).
+struct ScanButtonPair: View {
+    let primary: V3Button
+    let secondary: V3Button
+
+    var body: some View {
+        VStack(spacing: 10) {
+            primary
+            secondary
+        }
     }
 }
 
@@ -677,10 +703,10 @@ struct ScanRefusedCard: View {
                 .font(V3Font.body)
                 .foregroundStyle(V3Color.ink2)
                 .fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: 10) {
-                V3Button(L10n.t("ios.scan12.files", locale: .resolved()), systemImage: "doc.fill", kind: .secondary, action: onFiles)
-                V3Button(L10n.t("ios.scan12.photos", locale: .resolved()), systemImage: "photo.on.rectangle.angled", action: onLibrary)
-            }
+            ScanButtonPair(
+                primary: V3Button(L10n.t("ios.scan12.photos", locale: .resolved()), systemImage: "photo.on.rectangle.angled", action: onLibrary),
+                secondary: V3Button(L10n.t("ios.scan12.files", locale: .resolved()), systemImage: "doc.fill", kind: .secondary, action: onFiles)
+            )
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
