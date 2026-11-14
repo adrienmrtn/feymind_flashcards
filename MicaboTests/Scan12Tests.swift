@@ -119,8 +119,15 @@ final class Scan12Tests: XCTestCase {
     func testTheTargetLanguageDefaultsToTheAppAndIsRemembered() {
         let memory = ScanModeMemory(defaults: freshDefaults())
         XCTAssertEqual(memory.target(appLocale: .de), .de)
-        XCTAssertEqual(memory.target(appLocale: .es419), .es, "l'espagnol d'Amérique vise l'espagnol")
-        XCTAssertEqual(memory.target(appLocale: .fi), .en, "une langue où Mika ne sait pas viser : l'anglais")
+        // Lot 13 : les cibles suivent les catalogues (`ScanTranslation.targets`). L'espagnol
+        // d'Amérique et le finnois écrivent désormais leur propre consigne : ils se visent eux-mêmes.
+        XCTAssertEqual(memory.target(appLocale: .es419), .es419, "l'espagnol d'Amérique a sa consigne")
+        XCTAssertEqual(memory.target(appLocale: .fi), .fi, "le finnois a sa consigne")
+        // Une langue sans consigne à elle retomberait sur sa langue de base, sinon l'anglais.
+        for locale in UiLocale.allCases where !ScanTranslation.targets.contains(locale) {
+            let fallback = ScanTranslation.defaultTarget(for: locale)
+            XCTAssertTrue(ScanTranslation.targets.contains(fallback) || fallback == .en, locale.rawValue)
+        }
         memory.remember(target: .ar)
         XCTAssertEqual(memory.target(appLocale: .fr), .ar)
     }
