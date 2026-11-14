@@ -13,7 +13,19 @@
  */
 export type ContentLanguage = keyof typeof NAMES;
 
+/**
+ * **Rien de demandé : le français.** Une version de l'application antérieure au choix de la
+ * langue n'envoie rien, et ses fiches ont toujours été écrites en français : elles ne doivent pas
+ * changer de langue. C'est aussi la langue de « celle du document » quand un nom est attendu.
+ */
 const DEFAULT_LANGUAGE = "fr";
+
+/**
+ * **Une langue demandée mais pas servie : l'anglais**, comme l'application, qui ouvre en anglais
+ * un téléphone dont elle ne parle pas la langue. Un élève qui envoie « zh » lit l'app en anglais :
+ * lui écrire en français serait lui écrire dans une langue qu'il n'a jamais vue dans l'app.
+ */
+const UNKNOWN_LANGUAGE = "en";
 
 /**
  * Le nom de la langue, écrit en français, pour les consignes du modèle — et la liste des
@@ -141,10 +153,14 @@ export function isSourceLanguage(code: string | undefined): boolean {
   return cleaned === "source" || cleaned === "auto" || cleaned === "document";
 }
 
-/** La langue demandée, ou le français quand la demande est absente ou inconnue. */
+/**
+ * La langue demandée ; le français quand rien n'est demandé (ou « celle du document »), l'anglais
+ * quand la langue demandée n'est pas servie.
+ */
 export function resolveLanguage(code: string | undefined): ContentLanguage {
   if (isSourceLanguage(code)) return DEFAULT_LANGUAGE;
   const raw = (code ?? "").trim().replace("_", "-");
+  if (raw === "") return DEFAULT_LANGUAGE;
   // La région d'abord : « pt-BR » et « es-419 » sont des langues à part entière. Une autre
   // région (« es-MX », « pt-AO ») retombe sur sa variante la plus proche.
   const lower = raw.toLowerCase();
@@ -152,7 +168,7 @@ export function resolveLanguage(code: string | undefined): ContentLanguage {
   if (lower === "es-419" || (lower.startsWith("es-") && lower !== "es-es")) return "es-419";
   const cleaned = lower.slice(0, 2);
   if (cleaned in ALIASES) return ALIASES[cleaned]!;
-  return cleaned in NAMES ? cleaned as ContentLanguage : DEFAULT_LANGUAGE;
+  return cleaned in NAMES ? cleaned as ContentLanguage : UNKNOWN_LANGUAGE;
 }
 
 export function languageName(code: string | undefined): string {

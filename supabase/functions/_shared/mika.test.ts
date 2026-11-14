@@ -104,7 +104,8 @@ Deno.test("buildMikaPrompt suit la langue de l'élève, celle de l'interface par
   assert(!prompt.includes("LANGUE DE SORTIE : FRANÇAIS"));
 
   const unknown = buildMikaPrompt({ turns: [{ role: "user", text: "?" }], language: "xx" });
-  assert(unknown.includes("L'élève utilise l'app en FRANÇAIS"));
+  // Une langue que Micabo ne sert pas : l'app s'ouvre en anglais, le serveur aussi (lot 13).
+  assert(unknown.includes("L'élève utilise l'app en ANGLAIS"));
 
   // Une ancienne app envoie « source » : ce n'est pas le français, c'est « je ne sais pas ».
   const source = buildMikaPrompt({ turns: [{ role: "user", text: "?" }], language: "source" });
