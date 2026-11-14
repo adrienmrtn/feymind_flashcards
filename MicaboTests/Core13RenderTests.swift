@@ -30,8 +30,9 @@ final class Core13RenderTests: XCTestCase {
     private var newcomerShortcuts: [HomeShortcut] { HomeShortcut.available(isNewcomer: true, hasLesson: false, dueCount: 0) }
     private var activeShortcuts: [HomeShortcut] { HomeShortcut.available(isNewcomer: false, hasLesson: true, dueCount: 0) }
 
-    private func page(_ input: HomeBoardInput, shortcuts: [HomeShortcut], composer: LessonComposer = LessonComposer()) -> some View {
-        RenderTabRoot {
+    private func page(_ input: HomeBoardInput, shortcuts: [HomeShortcut], composer: LessonComposer? = nil) -> some View {
+        let composer = composer ?? LessonComposer()
+        return RenderTabRoot {
             HomePage(board: HomeBoard.resolve(input), exam: exam, shortcuts: shortcuts, dueCount: 0, composer: composer)
         }
         .environment(\.mikaStill, true)
