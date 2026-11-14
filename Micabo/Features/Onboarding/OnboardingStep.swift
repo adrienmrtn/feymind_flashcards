@@ -15,11 +15,12 @@ import Foundation
 /// 4. **La preuve par l'essai** : une vraie question (`sampleCard`), de l'XP réellement gagnée.
 /// 5. **La projection et l'engagement** : les deux moyennes, la courbe, le temps par jour, la
 ///    semaine au calendrier, une séance de concentration, le rappel, **l'engagement**.
-/// 6. **Le plan, puis sa leçon** : le plan qui se construit en citant les réponses, le plan
-///    prêt ; la première leçon choisie, **réellement écrite** sous ses yeux, et prête.
-/// 7. **Le paywall**, au toucher de « Voir ma leçon », tourné vers cette leçon (et, refermé,
-///    l'offre de réduction). Rien ne l'annonce avant : ni « leçon offerte », ni écran d'essai
-///    (retour testeur du build 179 : « le paywall spawn un peu de nulle part »).
+/// 6. **Le plan** : le plan qui se construit en citant les réponses, le plan prêt, puis le
+///    sujet de la première leçon (rien ne s'écrit avant le paywall : la Home le proposera).
+/// 7. **L'essai, puis le paywall** (lot 13) : « On veut que tu essaies Micabo Pro
+///    gratuitement », « On t'enverra un rappel avant la fin de ton essai », puis le paywall
+///    titré sur le plan et l'essai (et, refermé, l'offre de réduction). Rien n'annonce le
+///    gratuit avant : après les refus, la Home propose la première leçon.
 ///
 /// **Les noms sont ceux des statistiques** (`onboarding_step`) : les écrans gardés portent le
 /// nom qu'ils avaient ; le lot 12 en ajoute sept (`hardestSubject`, `studyHours`,
@@ -100,17 +101,17 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// **Le plan prêt**, comme un objet. Le nom reste celui d'avant pour les statistiques.
     case profileSummary
     /// **« Par quel cours on commence ? »** : un sujet écrit, ou un cours à importer — l'élève
-    /// investit dans le plan qu'il vient de recevoir. Aucune mention de gratuit, d'offert ou
-    /// d'essai.
+    /// investit dans le plan qu'il vient de recevoir. Rien ne s'écrit ici : la Home le
+    /// proposera en grand à l'arrivée (`FirstLessonIntent`). Aucune mention de gratuit.
     case firstLesson
-    /// **Mika écrit la leçon, pour de vrai** (`LessonGeneration`), la jauge suivant les étapes
-    /// du vrai travail. Sauté sans sujet écrit (un import se fait dans l'app).
-    case lessonBuilding
-    /// **« Ta leçon est prête »** : son titre, ses thèmes, et un seul bouton, « Voir ma
-    /// leçon ». Sauté quand la leçon n'a pas pu s'écrire (elle s'écrira dans l'app).
-    case lessonReady
 
-    // Acte 7 : le paywall.
+    // Acte 7 : l'essai, puis le paywall.
+    /// **« On veut que tu essaies Micabo Pro gratuitement »** : ce que l'essai ouvre, tiré des
+    /// réponses, et « Rien à payer aujourd'hui ». Sauté sans essai offert par la boutique.
+    case freeTrialIntro
+    /// **« On t'enverra un rappel avant la fin de ton essai »** : la chronologie aux vraies
+    /// dates, et l'autorisation des notifications si elle n'a pas été donnée. Sauté sans essai.
+    case trialOffer
     case paywall
 
     var id: Int { rawValue }
@@ -146,10 +147,6 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
             .hookLogo
         case _ where !hasName:
             .hookLogo
-        // L'écriture de la leçon ne se reprend pas en plein vol : on revient au choix du
-        // cours (une leçon déjà écrite est retrouvée, et l'écriture est alors enjambée).
-        case .lessonBuilding, .lessonReady:
-            .firstLesson
         default:
             self
         }
@@ -181,17 +178,20 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         // Retirés avant.
         case "proofRetention", "founders", "aiCompanion": .startingPoint
         case "supportUs": .planBuilding
-        // Retirés après le build 179 : l'essai ne s'annonce plus avant le paywall.
-        case "trialReminder", "freeTrialIntro", "trialOffer", "whyNow": .paywall
+        case "trialReminder": .trialOffer
+        // Retirés au lot 13 : la leçon ne s'écrit plus avant le paywall ; « pourquoi
+        // maintenant » s'est fondu dans l'essai.
+        case "lessonBuilding", "lessonReady": .freeTrialIntro
+        case "whyNow": .paywall
         default: nil
         }
     }
 
     // MARK: - Les actes
 
-    /// **Les six actes de la jauge**, des questions à la leçon (les stories et le paywall n'en
-    /// font pas partie : la jauge commence avec Mika et finit sur la leçon prête).
-    static let actCount = 6
+    /// **Les sept actes de la jauge**, des questions à l'essai (les stories et le paywall n'en
+    /// font pas partie : la jauge commence avec Mika et finit sur le rappel de l'essai).
+    static let actCount = 7
 
     /// L'acte de l'écran, de 0 à `actCount - 1` (les stories et le paywall sont hors jauge).
     var act: Int {
@@ -207,8 +207,10 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         case .currentAverage, .targetAverage, .startingPoint, .dailyTime, .planDemo, .focusDemo,
              .notifications, .commitment:
             4
-        case .planBuilding, .profileSummary, .firstLesson, .lessonBuilding, .lessonReady, .paywall:
+        case .planBuilding, .profileSummary, .firstLesson:
             5
+        case .freeTrialIntro, .trialOffer, .paywall:
+            6
         }
     }
 
@@ -247,7 +249,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         switch self {
         case .hookLogo:
             .stories
-        case .welcome, .solutionMap, .planBuilding, .profileSummary, .lessonBuilding, .lessonReady:
+        case .welcome, .solutionMap, .planBuilding, .profileSummary:
             .moment
         case .name, .country, .level, .schoolType, .year, .exam, .subjects, .hardestSubject,
              .goal, .worries, .studyHours, .studyMethod, .currentAverage, .targetAverage,
@@ -255,7 +257,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
             .question
         case .lessonDemo, .cardsDemo, .scanDemo, .chatDemo, .examDemo, .planDemo, .focusDemo:
             .demo
-        case .startingPoint, .notifications, .commitment:
+        case .startingPoint, .notifications, .commitment, .freeTrialIntro, .trialOffer:
             .page
         case .paywall:
             .paywall
@@ -285,7 +287,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// puis se révèle, et le paywall.
     var showsChrome: Bool {
         switch self {
-        case .hookLogo, .planBuilding, .profileSummary, .lessonBuilding, .lessonReady, .paywall:
+        case .hookLogo, .planBuilding, .profileSummary, .paywall:
             false
         default:
             true
@@ -299,14 +301,14 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
 
     /// **Le chargement** : il ne se revisite pas, et avance seul. Le retour l'enjambe.
     var isLoading: Bool {
-        self == .planBuilding || self == .lessonBuilding
+        self == .planBuilding
     }
 
     /// **Un écran d'où l'on peut revenir.** Tous, sauf le premier (rien derrière), le
     /// chargement, le plan révélé (un aboutissement) et le paywall, qui porte sa propre croix.
     var allowsReturn: Bool {
         switch self {
-        case .hookLogo, .profileSummary, .lessonReady, .paywall: false
+        case .hookLogo, .profileSummary, .paywall: false
         default: !isLoading
         }
     }

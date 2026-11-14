@@ -63,9 +63,9 @@ final class OnboardingLot11Tests: XCTestCase {
         after(.examDemo, .chatDemo)
         after(.planDemo, .dailyTime)
         after(.focusDemo, .planDemo)
-        // Les écrans qui amènent au paywall : le plan, la leçon choisie, écrite, prête — et
-        // rien qui annonce l'essai avant lui (retour testeur du build 179).
-        XCTAssertEqual(Array(order.suffix(5)), [.profileSummary, .firstLesson, .lessonBuilding, .lessonReady, .paywall])
+        // Les écrans qui amènent au paywall (lot 13) : le plan, le sujet de la première leçon,
+        // l'essai voulu pour lui, le rappel promis.
+        XCTAssertEqual(Array(order.suffix(5)), [.profileSummary, .firstLesson, .freeTrialIntro, .trialOffer, .paywall])
         let demos = OnboardingStep.allCases.filter { $0.kind == .demo }
         XCTAssertTrue((demos + [.commitment]).allSatisfy(\.showsChrome))
         XCTAssertTrue((demos + [.commitment]).allSatisfy(\.allowsReturn))

@@ -39,6 +39,9 @@ struct HomeView: View {
     @State private var composer = LessonComposer()
     /// La leçon qui s'écrit : elle vit autant que la Home.
     @State private var generation = LessonGeneration()
+    /// **Le sujet choisi dans le parcours d'accueil**, proposé en grand tant qu'il n'est pas
+    /// écrit (`consumeFirstLessonIntent`).
+    @State private var firstTopic: String?
     @State private var connectivity = HomeConnectivity()
     @State private var importRequest: LessonComposer.Kind?
     /// Les deux questions d'avant l'écriture (« As-tu un examen ? »).
@@ -219,8 +222,15 @@ struct HomeView: View {
             subject: generation.subject,
             hasSupports: generation.hasSupports,
             locked: locked,
-            hasLesson: snapshot.resumeID != nil
+            hasLesson: snapshot.resumeID != nil,
+            firstTopic: proposedFirstTopic,
+            firstIsFree: !isPro && !LessonAllowance.hasUsedFreeLesson(courses: courses)
         )
+    }
+
+    /// Le sujet du parcours, tant que l'élève n'a encore aucun cours à lui.
+    private var proposedFirstTopic: String? {
+        snapshot.day.hasCourses ? nil : firstTopic
     }
 
     private var navigation: some View {
@@ -420,31 +430,33 @@ struct HomeView: View {
         createLesson()
     }
 
-    /// **La première leçon choisie pendant le parcours d'accueil** (`FirstLessonIntent`), lue
-    /// et effacée : une seule fois. Un sujet part tout de suite à l'écriture — l'élève vient de
-    /// répondre à assez de questions, la Home passe à « J'écris ta leçon… » ; « J'ai un cours »
-    /// ouvre la feuille des sources.
+    /// **La première leçon choisie pendant le parcours d'accueil** (`FirstLessonIntent`).
+    ///
+    /// **Lot 13 : rien ne s'écrit avant le paywall, ni tout seul après.** Un sujet est
+    /// **proposé en grand** sur la Home (« Écris ta première leçon : La guerre froide »,
+    /// `HomeBoard`), et s'écrit d'un geste — c'est la leçon gratuite (`LessonAllowance`). Il
+    /// reste proposé d'un lancement à l'autre tant qu'il n'est pas écrit. « J'ai un cours »
+    /// ouvre la feuille des sources, une fois.
     private func consumeFirstLessonIntent() {
         guard let intent = FirstLessonIntent.pending else { return }
-        FirstLessonIntent.pending = nil
         switch intent {
         case .topic(let topic):
-            guard !generation.isBusy else { return }
-            composer.draft = topic
-            guard composer.canSend else { return }
-            if let trigger = LessonAllowance.immediatePaywall(isPro: isPro, source: composer.source, courses: courses) {
-                paywall = trigger
-                return
-            }
-            generate(examDate: nil)
+            firstTopic = topic
         case .importSource:
+            FirstLessonIntent.pending = nil
             openSources()
-        case .lesson(let id, _):
-            // Écrite pendant le parcours : elle s'ouvre sur son chemin, sans se réécrire.
-            if let course = courses.first(where: { $0.id == id }) {
-                path.append(course)
-            }
         }
+    }
+
+    /// **« Écrire ma leçon »** : le sujet choisi dans le parcours part à l'écriture, par le
+    /// chemin de toutes les leçons (les deux questions, puis l'écriture) ; la porte du gratuit
+    /// reste celle de `LessonAllowance`.
+    private func writeFirstTopic(_ topic: String) {
+        firstTopic = nil
+        FirstLessonIntent.pending = nil
+        guard !generation.isBusy else { return }
+        composer.draft = topic
+        createLesson()
     }
 
     // MARK: Les gestes
@@ -498,7 +510,11 @@ struct HomeView: View {
         case .lesson, .more:
             if let course = resumeCourse { path.append(course) }
         case .create, .first:
-            showsSources = true
+            if let topic = proposedFirstTopic {
+                writeFirstTopic(topic)
+            } else {
+                showsSources = true
+            }
         case .unlock:
             paywall = .lessonReady
         case .retry:
