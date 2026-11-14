@@ -23,6 +23,12 @@ extension IosI18nCatalogs {
         "el": el,
         "ru": ru,
         "ar": ar,
+        "nb": nb,
+        "he": he,
+        "ja": ja,
+        "lt": lt,
+        "lv": lv,
+        "ko": ko,
     ]
 }
 
@@ -49,6 +55,12 @@ extension LessonI18nCatalogs {
         "el": el,
         "ru": ru,
         "ar": ar,
+        "nb": nb,
+        "he": he,
+        "ja": ja,
+        "lt": lt,
+        "lv": lv,
+        "ko": ko,
     ]
 }
 
