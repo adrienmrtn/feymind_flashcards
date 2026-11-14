@@ -225,6 +225,7 @@ final class OnboardingLot12Tests: XCTestCase {
         XCTAssertEqual(unlocks.count, 3)
         XCTAssertTrue(unlocks[0].text.contains("La guerre froide"), unlocks[0].text)
         XCTAssertTrue(unlocks[1].text.contains("Mathématiques"), unlocks[1].text)
+        XCTAssertFalse(unlocks[2].text.hasSuffix("pour Bac"), "L'examen prend son article : \(unlocks[2].text)")
         for unlock in FreeTrialIntroStepView.unlocks(for: OnboardingModel(), locale: .fr) {
             XCTAssertFalse(unlock.text.contains("{") || unlock.text.hasPrefix("ios."), unlock.text)
         }

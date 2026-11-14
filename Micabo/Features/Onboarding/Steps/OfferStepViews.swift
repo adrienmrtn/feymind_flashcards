@@ -41,8 +41,9 @@ struct FreeTrialIntroStepView: View {
         let mika = model.focusSubject.map {
             L10n.t("ios.onb12.trial.unlock.mika", locale: locale, vars: ["subject": SubjectDisplay.subject($0, locale: locale)])
         } ?? L10n.t("ios.pay12.benefit.mika", locale: locale)
+        // « pour le Bac », pas « pour Bac » : en français, l'examen prend son article.
         let exam = model.examName(locale: locale).map {
-            L10n.t("ios.onb12.trial.unlock.exam", locale: locale, vars: ["exam": $0])
+            L10n.t("ios.onb12.trial.unlock.exam", locale: locale, vars: ["exam": locale == .fr ? PaywallProfile.frenchArticled($0) : $0])
         } ?? L10n.t("ios.pay12.benefit.exams", locale: locale)
         return [
             Unlock(icon: .book, text: lesson),
