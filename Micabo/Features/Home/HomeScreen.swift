@@ -304,6 +304,8 @@ struct HomeActionArea: View {
 
     /// La jauge de l'écriture ne s'étire pas d'un bord à l'autre.
     static let gaugeWidth: CGFloat = 220
+    /// Le bouton qui écrit une leçon ne s'étire pas non plus sur un grand écran.
+    static let primaryWidth: CGFloat = 340
 
     var body: some View {
         VStack(spacing: 10) {
@@ -320,8 +322,17 @@ struct HomeActionArea: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             if let action = board.action {
-                V3Chip(action.title, systemImage: action.symbol, tone: Self.tone(of: action.kind)) {
-                    actions.perform(action)
+                if action.isPrimary {
+                    // Lot 13 — écrire une leçon : la pilule blanche, le bouton de l'écran.
+                    V3Button(action.title, systemImage: action.symbol) {
+                        actions.perform(action)
+                    }
+                    .frame(maxWidth: Self.primaryWidth)
+                    .padding(.top, 4)
+                } else {
+                    V3Chip(action.title, systemImage: action.symbol, tone: Self.tone(of: action.kind)) {
+                        actions.perform(action)
+                    }
                 }
             }
             if let exit = board.exit {
@@ -338,7 +349,7 @@ struct HomeActionArea: View {
         switch kind {
         case .session, .lesson, .more, .create, .retry: V3Color.iconBlue
         case .cards: V3Color.iconGreen
-        case .first, .unlock: V3Color.iconYellow
+        case .first, .unlock, .write: V3Color.iconYellow
         }
     }
 }

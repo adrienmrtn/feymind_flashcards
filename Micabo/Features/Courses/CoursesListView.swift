@@ -386,8 +386,10 @@ struct CoursesListView: View {
         LessonsEmptyState(
             mood: .wave,
             mikaSize: 190,
-            title: i18n.t("ios.home10.lessons.emptyTitle"),
-            actionTitle: i18n.t("ios.home3.cta.create"),
+            // Lot 13 — la promesse dit ce qu'on donne et ce qu'on reçoit, sans durée inventée.
+            title: i18n.t("ios.core13.lessons.emptyTitle"),
+            message: i18n.t("ios.core13.lessons.emptyBody"),
+            actionTitle: i18n.t("lesson.lessons.new"),
             action: requestImport
         )
         .padding(.horizontal, MicaboSpacing.screen)
