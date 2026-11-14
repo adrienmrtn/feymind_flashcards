@@ -41,8 +41,9 @@ struct FreeTrialIntroStepView: View {
         let mika = model.focusSubject.map {
             L10n.t("ios.onb12.trial.unlock.mika", locale: locale, vars: ["subject": SubjectDisplay.subject($0, locale: locale)])
         } ?? L10n.t("ios.pay12.benefit.mika", locale: locale)
+        // « pour le Bac », pas « pour Bac » : en français, l'examen prend son article.
         let exam = model.examName(locale: locale).map {
-            L10n.t("ios.onb12.trial.unlock.exam", locale: locale, vars: ["exam": $0])
+            L10n.t("ios.onb12.trial.unlock.exam", locale: locale, vars: ["exam": locale == .fr ? PaywallProfile.frenchArticled($0) : $0])
         } ?? L10n.t("ios.pay12.benefit.exams", locale: locale)
         return [
             Unlock(icon: .book, text: lesson),
@@ -107,6 +108,9 @@ struct TrialOfferStepView: View {
 
     /// Pour les rendus : l'état à montrer, sans le demander à iOS.
     var previewPermission: Permission?
+    /// **L'instant d'où partent les dates**, le même que celui du paywall qui suit (les rendus
+    /// posent le leur, celui des rendus du paywall).
+    var now = Date()
 
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -125,7 +129,7 @@ struct TrialOfferStepView: View {
     }
 
     private var promises: Bool {
-        Self.promises(current, trialDays: OnboardingTrial.days)
+        Self.promises(current, trialDays: OnboardingTrial.days, now: now)
     }
 
     var body: some View {
@@ -141,7 +145,7 @@ struct TrialOfferStepView: View {
             )
             .padding(.top, 12)
 
-            OnbTrialTimeline(milestones: TrialTimeline.milestones(locale: i18n.locale, remindersOn: promises))
+            OnbTrialTimeline(milestones: TrialTimeline.milestones(from: now, locale: i18n.locale, remindersOn: promises))
                 .padding(.top, compact ? 14 : 20)
         } footer: {
             switch current {
