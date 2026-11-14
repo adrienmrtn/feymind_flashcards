@@ -282,7 +282,7 @@ final class LessonBuilder {
             themes: titles,
             context: course.contextText,
             subject: course.subject,
-            audience: audience().preparing(Self.examLine(for: course, in: context)),
+            audience: audience().writing(in: course.languageRaw).preparing(Self.examLine(for: course, in: context)),
             points: path?.points ?? [],
             objectives: path?.intro.lines ?? [],
             source: LessonSourceKind(courseSource: course.source).rawValue
@@ -438,7 +438,7 @@ final class LessonBuilder {
             focus: focus,
             avoid: Array(avoid.suffix(80)),
             count: count,
-            audience: audience().preparing(Self.examLine(for: course, in: context))
+            audience: audience().writing(in: course.languageRaw).preparing(Self.examLine(for: course, in: context))
         )
         let generated: [GeneratedQuestion]
         do {
@@ -598,7 +598,7 @@ final class LessonBuilder {
                     needsCards: chapter.cardCount < 3
                 )
             },
-            audience: audience()
+            audience: audience().writing(in: course.languageRaw)
         )
         let conversion: LessonConversion
         do {

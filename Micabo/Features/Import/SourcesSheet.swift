@@ -14,21 +14,41 @@ import SwiftUI
 /// Aucune tuile ne porte de couronne : lire un support se fait sur l'appareil, et la porte du
 /// gratuit vient au moment d'écrire la leçon (`LessonAllowance.locksImport`, `sendRoute`).
 /// Une tuile referme la feuille ; le support s'ouvre ensuite (`HomeView.openPendingImport`).
+///
+/// **Lot 13 — c'est la feuille « Nouvelle leçon »**, l'entrée de la fonction principale : un
+/// sujet qu'on tape (« Écrire ma leçon », le bouton de la feuille), ou un cours qu'on donne
+/// (les tuiles). En tête, ce que la leçon devient : un parcours (thèmes, notes, quiz, cartes,
+/// examen blanc). Les supports les plus courants d'abord : photo, PDF, YouTube, audio.
 struct HomeSourcesSheet: View {
     let isPro: Bool
     var freeLessonLeft = false
     /// Faux quand la barre porte déjà ses cinq supports : seules les flashcards restent ouvertes.
     var enabled = true
+    /// Lot 13 — le sujet déjà tapé, repris s'il n'a pas abouti.
+    var topic = ""
+    /// Lot 13 — « Écrire ma leçon » sur le sujet tapé. `nil` : la feuille n'a pas de champ.
+    var onTopic: ((String) -> Void)?
     let onPick: (LessonComposer.Kind) -> Void
 
     @Environment(\.homeStill) private var still
+    @State private var typed: String?
+    @FocusState private var topicFocused: Bool
 
-    /// Les neuf supports d'une leçon, trois par rangée.
+    /// Les neuf supports d'une leçon, trois par rangée : les plus courants d'abord.
     static let grid: [[LessonComposer.Kind]] = [
-        [.pdf, .slides, .photo],
-        [.handwriting, .web, .youtube],
-        [.lecture, .audio, .text],
+        [.photo, .pdf, .youtube],
+        [.audio, .handwriting, .text],
+        [.slides, .web, .lecture],
     ]
+
+    /// Un sujet d'au moins deux lettres, comme dans la barre (`LessonComposer.canSend`).
+    static func canWrite(_ topic: String) -> Bool {
+        topic.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2
+    }
+
+    private var draft: Binding<String> {
+        Binding(get: { typed ?? topic }, set: { typed = $0 })
+    }
 
     var body: some View {
         Group {
@@ -48,6 +68,15 @@ struct HomeSourcesSheet: View {
     private var content: some View {
         VStack(alignment: .leading, spacing: 18) {
             SourcesHeader(freeLessonLeft: freeLessonLeft)
+            if let onTopic {
+                topicCard(onTopic)
+                Text(L10n.t("ios.core13.new.orSupport", locale: .resolved()))
+                    .font(V3Font.eyebrow)
+                    .foregroundStyle(V3Color.ink3)
+                    .textCase(.uppercase)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.isHeader)
+            }
             VStack(spacing: 10) {
                 ForEach(Array(Self.grid.enumerated()), id: \.offset) { _, row in
                     // Les tuiles d'une rangée ont la hauteur de la plus haute.
@@ -82,7 +111,60 @@ struct HomeSourcesSheet: View {
     }
 }
 
+extension HomeSourcesSheet {
+    /// **Un sujet, et le bouton de la feuille** : « Écrire ma leçon ». Pas de support à lire :
+    /// Mika écrit la leçon d'après le programme de l'élève.
+    @ViewBuilder
+    fileprivate func topicCard(_ onTopic: @escaping (String) -> Void) -> some View {
+        let value = draft.wrappedValue
+        VStack(alignment: .leading, spacing: 12) {
+            Text(L10n.t("ios.core13.new.topicLabel", locale: .resolved()))
+                .font(V3Font.label)
+                .foregroundStyle(V3Color.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            Group {
+                if still {
+                    Text(value.isEmpty ? L10n.t("ios.core13.new.topicPlaceholder", locale: .resolved()) : value)
+                        .foregroundStyle(value.isEmpty ? V3Color.ink3 : V3Color.ink)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    TextField(
+                        text: draft,
+                        prompt: Text(L10n.t("ios.core13.new.topicPlaceholder", locale: .resolved())).foregroundStyle(V3Color.ink3),
+                        axis: .vertical
+                    ) {
+                        Text(L10n.t("ios.core13.new.topicLabel", locale: .resolved()))
+                    }
+                    .lineLimit(1...3)
+                    .foregroundStyle(V3Color.ink)
+                    .tint(V3Color.accent)
+                    .focused($topicFocused)
+                    .submitLabel(.go)
+                    .onSubmit {
+                        if Self.canWrite(draft.wrappedValue) { onTopic(draft.wrappedValue) }
+                    }
+                }
+            }
+            .font(V3Font.text(.body, weight: .medium))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .background(V3Color.soft, in: RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous))
+            V3Button(
+                L10n.t("ios.core13.cta.write", locale: .resolved()),
+                systemImage: "sparkles",
+                isEnabled: Self.canWrite(value)
+            ) {
+                onTopic(draft.wrappedValue)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .v3Card(radius: V3Metric.radiusCard)
+    }
+}
+
 /// L'en-tête : Mika en demi au bas d'une carte claire, ce qu'il attend, et la leçon offerte.
+/// Lot 13 : « Nouvelle leçon », et ce qu'elle devient — un parcours en cinq étapes.
 private struct SourcesHeader: View {
     let freeLessonLeft: Bool
 
@@ -91,14 +173,16 @@ private struct SourcesHeader: View {
             MikaPeek(mood: .happy, width: MikaPeek.card)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 6) {
-                Text(L10n.t("ios.sup.sheet.title", locale: .resolved()))
+                Text(L10n.t("lesson.lessons.new", locale: .resolved()))
                     .font(MicaboFont.ui(23, weight: .black))
                     .foregroundStyle(MicaboColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(L10n.t("ios.sup.sheet.sub", locale: .resolved()))
+                    .accessibilityAddTraits(.isHeader)
+                Text(L10n.t("ios.core13.new.promise", locale: .resolved()))
                     .font(MicaboFont.ui(14, weight: .semibold))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
+                LessonPathSteps()
                 if freeLessonLeft {
                     Label {
                         Text(L10n.t("ios.sup.sheet.free", locale: .resolved()))
@@ -125,6 +209,40 @@ private struct SourcesHeader: View {
         // tuiles, pas une scène bleue pour lui seul.
         .sourceCard()
         .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
+    }
+}
+
+/// **Lot 13 — ce qu'une leçon devient**, en une ligne qui passe à la ligne : thèmes, notes,
+/// quiz, cartes, examen blanc. Ce sont les vrais modes du chemin de la leçon, sous leurs noms
+/// (`MicaboName`).
+struct LessonPathSteps: View {
+    var locale: UiLocale = .resolved()
+
+    static func titles(locale: UiLocale) -> [String] {
+        [
+            L10n.t("ios.core13.path.themes", locale: locale),
+            MicaboName.notes.text(locale: locale),
+            MicaboName.quiz.text(locale: locale),
+            MicaboName.cards.text(locale: locale),
+            MicaboName.mock.text(locale: locale),
+        ]
+    }
+
+    var body: some View {
+        MicaboFlowLayout(spacing: 6, lineSpacing: 6) {
+            ForEach(Array(Self.titles(locale: locale).enumerated()), id: \.offset) { _, title in
+                Text(title)
+                    .font(V3Font.text(.caption, weight: .bold))
+                    .foregroundStyle(V3Color.accentInk)
+                    .lineLimit(1)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 4)
+                    .background(V3Color.accentWash, in: Capsule())
+            }
+        }
+        .padding(.top, 2)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(Self.titles(locale: locale).joined(separator: ", ")))
     }
 }
 

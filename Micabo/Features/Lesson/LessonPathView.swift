@@ -72,6 +72,9 @@ struct LessonPathView: View {
     @State private var focusSetup: FocusPlan?
     @State private var pendingFocus: FocusPlan?
     @State private var focusRun: FocusPlan?
+    /// Lot 13 — l'examen blanc de cette leçon, depuis le menu « ⋯ » : le dernier mode du
+    /// parcours, à portée de la leçon.
+    @State private var mock: MockExamStart?
 
     init(course: Course) {
         self.course = course
@@ -177,6 +180,10 @@ struct LessonPathView: View {
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
+        }
+        .fullScreenCover(item: $mock) { start in
+            MockExamFlow(start: start, lessons: [course])
+                .toolIntro(.mock)
         }
         .fullScreenCover(item: $run) { run in
             switch run {
@@ -298,6 +305,11 @@ struct LessonPathView: View {
                         )
                     } label: {
                         Label(L10n.t("ios.chat11.focus.fromLesson", locale: .resolved()), systemImage: "timer")
+                    }
+                    Button {
+                        mock = MockExamStart(exam: nil, lessonIDs: [course.id])
+                    } label: {
+                        Label(L10n.t("ios.core13.lesson.mock", locale: .resolved()), systemImage: "graduationcap.fill")
                     }
                     Button {
                         newTitle = course.title

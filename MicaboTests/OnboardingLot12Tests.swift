@@ -183,40 +183,92 @@ final class OnboardingLot12Tests: XCTestCase {
         XCTAssertTrue(PaywallStepView.keepsPaywall(shows: true, didShow: false))
     }
 
-    /// **La leçon écrite mène au paywall** (retour testeur du build 179) : le sujet écrit, la
-    /// leçon s'écrit, « Ta leçon est prête », puis le paywall — et la Home l'ouvrira au lieu de
-    /// la réécrire. Une écriture en échec n'arrête personne : le paywall suit, et le sujet
-    /// attend la Home.
-    func testTheWrittenLessonLeadsToThePaywall() throws {
+    /// **Aucune leçon ne s'écrit avant le paywall** (lot 13) : le sujet choisi part à la Home,
+    /// qui le propose en grand ; le parcours passe par l'essai, puis le paywall titré sur le
+    /// plan. Aucune vue du parcours ne lance d'écriture.
+    func testNoLessonIsWrittenBeforeThePaywall() throws {
         let model = try lina()
         model.place(on: .firstLesson)
         model.firstLessonChoice = .topic
         model.firstLessonTopic = "La guerre froide"
         model.confirmFirstLesson()
-        XCTAssertEqual(model.step, .lessonBuilding)
+        XCTAssertEqual(FirstLessonIntent.pending, .topic("La guerre froide"), "La Home le proposera")
+        XCTAssertEqual(model.step, OnboardingTrial.isOffered ? .freeTrialIntro : .paywall)
+        while model.step != .paywall, model.advance() {}
+        XCTAssertEqual(model.step, .paywall)
 
-        let id = UUID()
-        model.lessonWritten(OnboardingWrittenLesson(id: id, title: "La guerre froide", themes: ["Deux blocs"]))
-        XCTAssertEqual(FirstLessonIntent.pending, .lesson(id, topic: "La guerre froide"), "La Home ouvre la leçon, sans la réécrire")
-        XCTAssertEqual(PaywallContext.current().lessonTitle, "La guerre froide", "Le paywall du parcours titre sur la leçon, pas sur le plan")
-        model.advance()
-        XCTAssertEqual(model.step, .lessonReady)
-        model.advance()
-        XCTAssertEqual(model.step, .paywall, "« Voir ma leçon » ouvre le paywall")
+        let steps = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Micabo/Features/Onboarding", isDirectory: true)
+        guard let files = FileManager.default.enumerator(at: steps, includingPropertiesForKeys: nil) else {
+            throw XCTSkip("les sources ne sont pas lisibles depuis ce simulateur")
+        }
+        var read = 0
+        for case let url as URL in files where url.pathExtension == "swift" {
+            guard let text = try? String(contentsOf: url, encoding: .utf8) else { continue }
+            read += 1
+            for call in ["LessonGeneration(", "builder.create(", ".start(composer:"] {
+                XCTAssertFalse(text.contains(call), "\(url.lastPathComponent) écrit une leçon avant le paywall (\(call))")
+            }
+        }
+        guard read > 0 else { throw XCTSkip("les sources ne sont pas lisibles depuis ce simulateur") }
+    }
 
-        let failed = try lina()
-        failed.place(on: .firstLesson)
-        failed.firstLessonChoice = .topic
-        failed.firstLessonTopic = "La photosynthèse"
-        failed.confirmFirstLesson()
-        XCTAssertEqual(failed.step, .lessonBuilding)
-        failed.advance()
-        XCTAssertEqual(failed.step, .paywall, "Sans leçon écrite, pas de « leçon prête » : le paywall")
-        XCTAssertEqual(FirstLessonIntent.pending, .topic("La photosynthèse"), "La Home l'écrira")
+    /// **« On veut que tu essaies Micabo Pro gratuitement »** : trois choses, tirées des
+    /// réponses (sa leçon, sa matière la plus dure, son examen).
+    func testTheTrialUnlocksAreMadeOfTheAnswers() throws {
+        let model = try lina()
+        model.firstLessonChoice = .topic
+        model.firstLessonTopic = "La guerre froide"
+        let unlocks = FreeTrialIntroStepView.unlocks(for: model, locale: .fr)
+        XCTAssertEqual(unlocks.count, 3)
+        XCTAssertTrue(unlocks[0].text.contains("La guerre froide"), unlocks[0].text)
+        XCTAssertTrue(unlocks[1].text.contains("Mathématiques"), unlocks[1].text)
+        for unlock in FreeTrialIntroStepView.unlocks(for: OnboardingModel(), locale: .fr) {
+            XCTAssertFalse(unlock.text.contains("{") || unlock.text.hasPrefix("ios."), unlock.text)
+        }
+        // Le rappel ne se promet qu'avec des notifications permises (ou à demander).
+        XCTAssertTrue(TrialOfferStepView.promises(.ask, trialDays: 3))
+        XCTAssertTrue(TrialOfferStepView.promises(.granted, trialDays: 3))
+        XCTAssertFalse(TrialOfferStepView.promises(.denied, trialDays: 3))
+        XCTAssertFalse(TrialOfferStepView.promises(.granted, trialDays: 1), "Un essai d'un jour n'a pas de veille")
+    }
 
-        let headline = PaywallCopy.lessonHeadline(title: "La guerre froide", locale: .fr)
-        XCTAssertEqual(headline.text, "Débloque ta leçon « La guerre froide »")
-        XCTAssertEqual(headline.highlight, "La guerre froide")
+    /// **Le glissement vers le bas fait exactement comme la croix** (lot 13) : le paywall mène
+    /// à l'offre (ou à la sortie), l'offre à la sortie, l'au revoir à l'app ; la bienvenue ne se
+    /// referme que par son bouton. Un défilement ou un geste de côté ne ferme rien.
+    func testSwipingDownDoesWhatTheCrossDoes() {
+        XCTAssertEqual(PaywallFlowView.close(for: .paywall), .paywall)
+        XCTAssertEqual(PaywallFlowView.close(for: .offer), .offer)
+        XCTAssertEqual(PaywallFlowView.close(for: .farewell), .farewell)
+        XCTAssertEqual(PaywallFlowView.close(for: .welcome), .none)
+        XCTAssertTrue(PaywallFlowView.isDismissSwipe(translation: CGSize(width: 10, height: 180), startY: 120))
+        XCTAssertFalse(PaywallFlowView.isDismissSwipe(translation: CGSize(width: 10, height: 60), startY: 120), "trop court")
+        XCTAssertFalse(PaywallFlowView.isDismissSwipe(translation: CGSize(width: 200, height: 150), startY: 120), "de côté")
+        XCTAssertFalse(PaywallFlowView.isDismissSwipe(translation: CGSize(width: 0, height: -200), startY: 120), "vers le haut")
+        XCTAssertFalse(PaywallFlowView.isDismissSwipe(translation: CGSize(width: 0, height: 200), startY: 600), "un défilement plus bas")
+    }
+
+    /// **Après les refus, la Home propose la première leçon en grand**, avec le sujet choisi,
+    /// et dit simplement qu'elle est offerte tant qu'elle l'est.
+    func testTheHomeProposesTheFirstLesson() {
+        var input = HomeBoardInput(day: HomeDay(hasCourses: false), name: "Lina")
+        input.firstTopic = "La guerre froide"
+        input.firstIsFree = true
+        let board = HomeBoard.resolve(input, locale: .fr)
+        XCTAssertEqual(board.moment, .newcomer)
+        XCTAssertTrue(board.phrase.plain.contains("La guerre froide"), board.phrase.plain)
+        XCTAssertEqual(board.phrase.keyword, "La guerre froide")
+        XCTAssertEqual(board.action?.kind, .first)
+        XCTAssertEqual(board.caption, "Ta première leçon est offerte.")
+
+        input.firstIsFree = false
+        XCTAssertNil(HomeBoard.resolve(input, locale: .fr).caption, "Une leçon gratuite déjà servie ne s'annonce plus")
+
+        input.firstTopic = nil
+        XCTAssertNotEqual(HomeBoard.resolve(input, locale: .fr).action?.title, L10n.t("ios.home13.cta.firstTopic", locale: .fr))
+        XCTAssertNil(LessonAllowance.gate(isPro: false, source: .topic, courses: []), "La première leçon part, sans paywall")
     }
 
     /// **Rien n'annonce le gratuit avant le paywall** : ni « leçon offerte », ni essai, ni
@@ -224,12 +276,12 @@ final class OnboardingLot12Tests: XCTestCase {
     func testNothingAnnouncesFreeBeforeThePaywall() {
         let keys = [
             "ios.onb10.q.lesson", "ios.onb12.say.lesson", "ios.onb10.lesson.topic", "ios.onb10.lesson.import",
-            "ios.onb10.lesson.importHint", "ios.onb12.lesson.buildingTitle", "ios.onb12.lesson.failedTitle",
-            "ios.onb12.lesson.failed", "ios.onb12.lesson.readyTitle", "ios.onb12.lesson.parts", "ios.onb12.lesson.see",
+            "ios.onb10.lesson.importHint", "ios.onb12.trial.unlock.lesson", "ios.onb12.trial.unlock.import",
         ]
         for key in keys {
             let text = L10n.t(key, locale: .fr).lowercased()
-            for word in ["offert", "gratuit", "essai", "limite", "abonn"] {
+            // L'essai, lui, s'annonce (deux écrans) ; la leçon gratuite, jamais avant le paywall.
+            for word in ["offert", "gratuit", "limite", "abonn"] {
                 XCTAssertFalse(text.contains(word), "\(key) : « \(word) »")
             }
         }

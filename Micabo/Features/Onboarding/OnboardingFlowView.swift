@@ -235,8 +235,8 @@ struct OnboardingStepScreen: View {
         case .firstLesson: FirstLessonStepView()
         case .planBuilding: PlanBuildingStepView()
         case .profileSummary: ProfileSummaryStepView()
-        case .lessonBuilding: LessonBuildingStepView()
-        case .lessonReady: LessonReadyStepView()
+        case .freeTrialIntro: FreeTrialIntroStepView()
+        case .trialOffer: TrialOfferStepView()
         case .paywall: PaywallStepView(onFinish: onFinish)
         }
     }

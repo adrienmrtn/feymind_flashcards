@@ -144,6 +144,18 @@ struct LessonAudience: Sendable, Equatable {
         return track.tier
     }
 
+    /// **Lot 13 — la même audience, dans la langue de la leçon.** Une leçon commencée en
+    /// français se termine en français, même si l'app est passée en anglais entre-temps : les
+    /// thèmes écrits ensuite, les nouvelles questions et la conversion suivent la langue
+    /// enregistrée sur la leçon (`Course.languageRaw`). Sans langue connue, celle de l'app.
+    func writing(in lessonLanguage: String?) -> LessonAudience {
+        guard let lessonLanguage = lessonLanguage?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !lessonLanguage.isEmpty else { return self }
+        var copy = self
+        copy.language = lessonLanguage
+        return copy
+    }
+
     /// La même audience, pour une leçon qui prépare un examen daté.
     func preparing(_ exam: String?) -> LessonAudience {
         var copy = self

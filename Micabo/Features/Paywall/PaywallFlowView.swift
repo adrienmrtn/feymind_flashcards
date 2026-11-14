@@ -324,6 +324,15 @@ struct PaywallFlowView: View {
                     .accessibilityHidden(true)
             }
         }
+        // **Le glissement vers le bas fait exactement comme la croix** (lot 13) : le paywall
+        // laisse la place à l'offre, l'offre à la sortie, la sortie à l'app. Jamais un écran
+        // vide, jamais un retour dans le parcours.
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 24).onEnded { drag in
+                guard Self.isDismissSwipe(translation: drag.translation, startY: drag.startLocation.y) else { return }
+                swipedDown()
+            }
+        )
         .task { await loadPrices() }
         .onAppear(perform: opened)
         // **Un achat confirmé après coup mène à la bienvenue.** Un achat en attente (une
@@ -429,6 +438,45 @@ struct PaywallFlowView: View {
             "trigger": .text(trigger?.rawValue ?? "inconnu"),
             "price_display": PriceDisplay.current.analyticsValue,
         ])
+    }
+
+    /// **Ce que fait la croix de chaque temps**, et donc le glissement vers le bas.
+    enum Close: Equatable {
+        /// La croix du paywall : l'offre si elle est due, sinon la sortie.
+        case paywall
+        /// La croix de l'offre : la sortie (au revoir à la fin du parcours), puis l'app.
+        case offer
+        /// « Continuer » de l'au revoir : l'app.
+        case farewell
+        /// La bienvenue après l'achat : son bouton seul la referme.
+        case none
+    }
+
+    static func close(for stage: Stage) -> Close {
+        switch stage {
+        case .paywall: .paywall
+        case .offer: .offer
+        case .farewell: .farewell
+        case .welcome: .none
+        }
+    }
+
+    /// **Un glissement qui ferme** : franchement vers le bas (plus de 120 points, plus vertical
+    /// qu'horizontal), parti du haut de l'écran — un défilement vers le haut dans un paywall
+    /// qui défile (iPhone SE) part plus bas et ne ferme rien.
+    static func isDismissSwipe(translation: CGSize, startY: CGFloat) -> Bool {
+        translation.height > 120 && abs(translation.width) < translation.height && startY < 320
+    }
+
+    /// Le glissement vers le bas : la même chose que la croix du temps en cours.
+    private func swipedDown() {
+        guard !isPurchasing else { return }
+        switch Self.close(for: stage) {
+        case .paywall: closePaywall()
+        case .offer: declineOffer()
+        case .farewell: onDismiss()
+        case .none: break
+        }
     }
 
     /// **La croix du paywall.** Refermé sans achat, il laisse la place à l'offre de réduction

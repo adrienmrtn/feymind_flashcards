@@ -114,6 +114,13 @@ const LANGUAGES: Record<string, string> = {
   ro: "roumain",
   ar: "arabe",
   ru: "russe",
+  nb: "norvégien",
+  no: "norvégien",
+  he: "hébreu",
+  ja: "japonais",
+  lt: "lituanien",
+  lv: "letton",
+  ko: "coréen",
 };
 
 function languageName(code: unknown): string | null {
