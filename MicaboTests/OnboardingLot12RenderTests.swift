@@ -229,6 +229,13 @@ final class OnboardingLot12RenderTests: XCTestCase {
         )
     }
 
+    /// **Le 12 novembre 2026, dix heures : l'instant des rendus du paywall**
+    /// (`Paywall12RenderTests.now`). L'écran du rappel part du même : une planche montre les
+    /// mêmes dates d'un écran à l'autre.
+    private static let now: Date = {
+        Calendar.current.date(from: DateComponents(year: 2026, month: 11, day: 12, hour: 10)) ?? Date()
+    }()
+
     private func id(_ step: OnboardingStep) -> String {
         String(format: "%02d-%@", step.rawValue, step.analyticsName)
     }
@@ -307,12 +314,12 @@ final class OnboardingLot12RenderTests: XCTestCase {
         try render("onb12-\(id(.profileSummary))", .profileSummary, model)
         try render("onb12-\(id(.firstLesson))", .firstLesson, model)
         try render("onb12-\(id(.freeTrialIntro))", .freeTrialIntro, model)
-        try render("onb12-\(id(.trialOffer))", .trialOffer, model) { TrialOfferStepView(previewPermission: .ask) }
+        try render("onb12-\(id(.trialOffer))", .trialOffer, model) { TrialOfferStepView(previewPermission: .ask, now: Self.now) }
         try render("onb12-\(id(.trialOffer))-granted", .trialOffer, model, devices: [.iPhone15Pro]) {
-            TrialOfferStepView(previewPermission: .granted)
+            TrialOfferStepView(previewPermission: .granted, now: Self.now)
         }
         try render("onb12-\(id(.trialOffer))-denied", .trialOffer, model, devices: [.iPhone15Pro]) {
-            TrialOfferStepView(previewPermission: .denied)
+            TrialOfferStepView(previewPermission: .denied, now: Self.now)
         }
     }
 
@@ -326,7 +333,7 @@ final class OnboardingLot12RenderTests: XCTestCase {
             try render("onb12-de-\(id(step))", step, model, devices: pro)
         }
         try render("onb12-de-\(id(.freeTrialIntro))", .freeTrialIntro, model, devices: [.iPhoneSE])
-        try render("onb12-de-\(id(.trialOffer))", .trialOffer, model, devices: [.iPhoneSE]) { TrialOfferStepView(previewPermission: .ask) }
+        try render("onb12-de-\(id(.trialOffer))", .trialOffer, model, devices: [.iPhoneSE]) { TrialOfferStepView(previewPermission: .ask, now: Self.now) }
         try render("onb12-de-\(id(.lessonDemo))", .lessonDemo, model, devices: pro) { LessonDemoStepView(previewPlayed: true) }
         try render("onb12-de-\(id(.cardsDemo))", .cardsDemo, model, devices: [.iPhoneSE]) { CardsDemoStepView(previewFlipped: true, previewKnew: false) }
         try render("onb12-de-\(id(.commitment))", .commitment, model, devices: [.iPhoneSE]) { CommitmentStepView(previewCommitted: true) }
@@ -341,7 +348,7 @@ final class OnboardingLot12RenderTests: XCTestCase {
         }
         try render("onb12-ar-\(id(.lessonDemo))", .lessonDemo, model, devices: pro, rtl: true) { LessonDemoStepView(previewPlayed: true) }
         try render("onb12-ar-\(id(.freeTrialIntro))", .freeTrialIntro, model, devices: pro, rtl: true)
-        try render("onb12-ar-\(id(.trialOffer))", .trialOffer, model, devices: pro, rtl: true) { TrialOfferStepView(previewPermission: .granted) }
+        try render("onb12-ar-\(id(.trialOffer))", .trialOffer, model, devices: pro, rtl: true) { TrialOfferStepView(previewPermission: .granted, now: Self.now) }
         try render("onb12-ar-\(id(.chatDemo))", .chatDemo, model, devices: pro, rtl: true) { ChatDemoStepView(previewAsked: 1) }
         try render("onb12-ar-\(id(.planDemo))", .planDemo, model, devices: pro, rtl: true) { PlanDemoStepView(previewDay: 2) }
         try render("onb12-ar-\(id(.commitment))", .commitment, model, devices: pro, rtl: true) { CommitmentStepView(previewCommitted: true) }

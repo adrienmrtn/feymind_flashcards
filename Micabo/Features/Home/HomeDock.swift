@@ -22,7 +22,7 @@ extension HomeShortcut {
         case .writing: .quill
         case .mock: .diploma
         case .pdf: .pdf
-        case .focus, .importSource, .youtube, .chats: nil
+        case .focus, .importSource, .youtube, .chats, .newLesson: nil
         }
     }
 
@@ -33,6 +33,7 @@ extension HomeShortcut {
         case .importSource: "square.and.arrow.down.fill"
         case .youtube: "play.rectangle.fill"
         case .chats: "bubble.left.and.text.bubble.right.fill"
+        case .newLesson: "plus"
         default: icon?.symbol ?? "square.grid.2x2.fill"
         }
     }
@@ -45,6 +46,7 @@ extension HomeShortcut {
         case .importSource: V3Color.iconLilac
         case .youtube: V3Color.iconRed
         case .chats: V3Color.iconBlue
+        case .newLesson: V3Color.onAccent
         default: nil
         }
     }
@@ -64,11 +66,47 @@ struct HomeShortcutChip: View {
     @ViewBuilder
     private var chip: some View {
         let title = shortcut.title(dueCount: dueCount)
-        if let icon = shortcut.icon {
+        if shortcut == .newLesson {
+            NewLessonChip(title: title, action: action)
+        } else if let icon = shortcut.icon {
             V3Chip(title, icon: icon, tone: shortcut.tone, action: action)
         } else {
             V3Chip(title, systemImage: shortcut.symbol, tone: shortcut.tone, action: action)
         }
+    }
+}
+
+/// **Lot 13 — « + Nouvelle leçon », la première puce** : pleine, dans l'accent, pour qu'on la
+/// distingue d'un coup d'œil des outils qui suivent et de la barre (qui, elle, pose une
+/// question à Mika). Elle a la forme des autres puces : la Home garde une seule action
+/// principale, sa pilule blanche.
+struct NewLessonChip: View {
+    let title: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: "plus")
+                    .font(.system(size: 16, weight: .black))
+                    .accessibilityHidden(true)
+                Text(title)
+                    .font(V3Font.label)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .foregroundStyle(V3Color.onAccent)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .frame(minHeight: V3Metric.chipHeight)
+        }
+        .buttonStyle(
+            V3TileButtonStyle(
+                selected: true,
+                radius: V3Metric.chipHeight / 2,
+                selectedFill: V3Color.accent,
+                feedback: .light
+            )
+        )
     }
 }
 
@@ -221,9 +259,12 @@ struct HomeInputBar: View {
         }
     }
 
+    /// Lot 13 — la barre seule pose une question à Mika (elle ouvre le chat) : elle le dit. Une
+    /// leçon se crée par « Nouvelle leçon » ; avec des supports déposés, la barre ajoute une
+    /// consigne à la leçon.
     private var placeholder: String {
         composer.supports.isEmpty
-            ? L10n.t("ios.home10.bar.placeholder", locale: .resolved())
+            ? L10n.t("ios.core13.bar.ask", locale: .resolved())
             : L10n.t("lesson.home.placeholderWithSupports", locale: .resolved())
     }
 

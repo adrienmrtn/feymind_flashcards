@@ -225,6 +225,7 @@ final class OnboardingLot12Tests: XCTestCase {
         XCTAssertEqual(unlocks.count, 3)
         XCTAssertTrue(unlocks[0].text.contains("La guerre froide"), unlocks[0].text)
         XCTAssertTrue(unlocks[1].text.contains("Mathématiques"), unlocks[1].text)
+        XCTAssertFalse(unlocks[2].text.hasSuffix("pour Bac"), "L'examen prend son article : \(unlocks[2].text)")
         for unlock in FreeTrialIntroStepView.unlocks(for: OnboardingModel(), locale: .fr) {
             XCTAssertFalse(unlock.text.contains("{") || unlock.text.hasPrefix("ios."), unlock.text)
         }
@@ -233,6 +234,26 @@ final class OnboardingLot12Tests: XCTestCase {
         XCTAssertTrue(TrialOfferStepView.promises(.granted, trialDays: 3))
         XCTAssertFalse(TrialOfferStepView.promises(.denied, trialDays: 3))
         XCTAssertFalse(TrialOfferStepView.promises(.granted, trialDays: 1), "Un essai d'un jour n'a pas de veille")
+    }
+
+    /// **L'écran du rappel et le paywall qui le suit montrent les mêmes dates** (lot 13) : même
+    /// instant de départ, même durée d'essai (celle du produit), même calcul, même écriture —
+    /// en Europe comme à l'autre bout du monde, et pour un essai d'une autre durée.
+    func testTheTrialScreenAndThePaywallShowTheSameDates() throws {
+        for zone in ["Europe/Paris", "America/Los_Angeles", "Pacific/Auckland"] {
+            var calendar = Calendar(identifier: .gregorian)
+            calendar.timeZone = try XCTUnwrap(TimeZone(identifier: zone))
+            let now = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 11, day: 12, hour: 23, minute: 30)))
+            for days in [OnboardingTrial.days, 7] {
+                let screen = TrialTimeline.milestones(from: now, calendar: calendar, locale: .fr, trialDays: days)
+                let paywall = PaywallTimeline.steps(trialDays: days, price: "49,99 €", now: now, reminderKept: true, locale: .fr, calendar: calendar)
+                let reminder = try XCTUnwrap(paywall.first { $0.kind == .reminder })
+                let end = try XCTUnwrap(paywall.first { $0.kind == .end })
+                XCTAssertTrue(screen[1].title.hasPrefix(reminder.title), "\(zone) \(days) : \(screen[1].title) / \(reminder.title)")
+                XCTAssertTrue(screen[2].title.hasPrefix(end.title), "\(zone) \(days) : \(screen[2].title) / \(end.title)")
+            }
+        }
+        XCTAssertEqual(OnboardingTrial.days, PaywallCatalog.yearly.trialDays, "La durée vient du produit de la boutique")
     }
 
     /// **Le glissement vers le bas fait exactement comme la croix** (lot 13) : le paywall mène

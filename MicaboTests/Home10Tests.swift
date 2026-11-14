@@ -91,6 +91,9 @@ final class Home10Tests: XCTestCase {
         XCTAssertEqual(board.action?.kind, .first)
         XCTAssertEqual(board.action?.title, "Créer ma première leçon")
         XCTAssertEqual(board.action?.analyticsStep, "create")
+        // Lot 13 : écrire une leçon est le bouton principal, et la Home dit ce qu'on reçoit.
+        XCTAssertTrue(board.action?.isPrimary ?? false)
+        XCTAssertEqual(board.caption, "Ton cours devient un parcours : notes, quiz, cartes, examen blanc.")
     }
 
     func testCardsThenLessonThenDone() {
@@ -239,11 +242,11 @@ final class Home10Tests: XCTestCase {
     func testShortcutsStartWithFocus() {
         XCTAssertEqual(
             HomeShortcut.available(isNewcomer: false, hasLesson: true, dueCount: 8),
-            [.focus, .scan, .quiz, .cards, .importSource, .writing, .mock]
+            [.newLesson, .focus, .scan, .quiz, .cards, .writing, .mock]
         )
         XCTAssertEqual(
             HomeShortcut.available(isNewcomer: false, hasLesson: false, dueCount: 0),
-            [.focus, .scan, .importSource, .writing, .mock]
+            [.newLesson, .focus, .scan, .writing, .mock]
         )
         XCTAssertEqual(
             HomeShortcut.available(isNewcomer: true, hasLesson: false, dueCount: 0),
@@ -263,7 +266,7 @@ final class Home10Tests: XCTestCase {
     func testShortcutAnalyticsNamesAreFixed() {
         XCTAssertEqual(
             HomeShortcut.allCases.map(\.analyticsName),
-            ["focus", "scan", "quiz", "cards", "import", "writing", "mock", "photo", "pdf", "youtube", "chats"]
+            ["focus", "scan", "quiz", "cards", "import", "writing", "mock", "photo", "pdf", "youtube", "chats", "new_lesson"]
         )
         XCTAssertEqual(Set(HomeAction.Kind.allCases.map { HomeAction(kind: $0, title: "", symbol: "").analyticsStep }).count, HomeAction.Kind.allCases.count - 1,
                        "« créer » et « première leçon » partagent le nom historique `create`")
@@ -275,7 +278,7 @@ final class Home10Tests: XCTestCase {
     /// l'import (les puces), le Calendrier (la pastille d'examen), la Concentration (Focus).
     func testWhatLeftHomeStaysOneTapAway() {
         let active = HomeShortcut.available(isNewcomer: false, hasLesson: true, dueCount: 3)
-        for needed in [HomeShortcut.focus, .scan, .quiz, .cards, .importSource, .writing, .mock] {
+        for needed in [HomeShortcut.newLesson, .focus, .scan, .quiz, .cards, .writing, .mock] {
             XCTAssertTrue(active.contains(needed), needed.rawValue)
         }
         // La pastille d'examen existe toujours : elle mène au Calendrier, avec ou sans examen.
