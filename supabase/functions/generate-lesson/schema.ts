@@ -815,6 +815,12 @@ const TRUE_FALSE: Record<string, [string, string]> = {
   bg: ["Вярно", "Невярно"],
   ru: ["Верно", "Неверно"],
   ar: ["صحيح", "خطأ"],
+  nb: ["Sant", "Usant"],
+  he: ["נכון", "לא נכון"],
+  ja: ["正しい", "誤り"],
+  lt: ["Teisinga", "Neteisinga"],
+  lv: ["Pareizi", "Nepareizi"],
+  ko: ["참", "거짓"],
 };
 
 /**
@@ -850,6 +856,12 @@ const FALLBACK_LESSON_TITLES: Record<ContentLanguage, string> = {
   ru: "Мой урок",
   tr: "Dersim",
   ar: "درسي",
+  nb: "Min leksjon",
+  he: "השיעור שלי",
+  ja: "マイレッスン",
+  lt: "Mano pamoka",
+  lv: "Mana nodarbība",
+  ko: "내 레슨",
 };
 
 export function fallbackLessonTitle(language: string | undefined): string {

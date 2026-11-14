@@ -81,6 +81,12 @@ enum L10n {
         case .el: IosI18nCatalogs.el
         case .ru: IosI18nCatalogs.ru
         case .ar: IosI18nCatalogs.ar
+        case .nb: IosI18nCatalogs.nb
+        case .he: IosI18nCatalogs.he
+        case .ja: IosI18nCatalogs.ja
+        case .lt: IosI18nCatalogs.lt
+        case .lv: IosI18nCatalogs.lv
+        case .ko: IosI18nCatalogs.ko
         }
     }
 
@@ -113,6 +119,12 @@ enum L10n {
         case .el: LessonI18nCatalogs.el
         case .ru: LessonI18nCatalogs.ru
         case .ar: LessonI18nCatalogs.ar
+        case .nb: LessonI18nCatalogs.nb
+        case .he: LessonI18nCatalogs.he
+        case .ja: LessonI18nCatalogs.ja
+        case .lt: LessonI18nCatalogs.lt
+        case .lv: LessonI18nCatalogs.lv
+        case .ko: LessonI18nCatalogs.ko
         }
     }
 
@@ -126,44 +138,169 @@ enum L10n {
     }
 
     /// Le français met zéro au singulier (« 0 vue »), l'anglais, l'allemand, l'espagnol et le
-    /// turc au pluriel.
+    /// turc au pluriel. Les pluriels des phrases passent par `pluralCategory`, qui connaît
+    /// toutes les formes de chaque langue ; ceci ne sert plus qu'au test de non-régression.
     static func isSingular(_ count: Int, locale: UiLocale) -> Bool {
         locale == .fr ? (count == 0 || count == 1) : count == 1
     }
 
-    /// L'expression du pluriel, compilée une fois pour toute l'app. Elle se lit depuis
-    /// n'importe quel fil : `NSRegularExpression` ne change plus une fois construite.
-    private static let pluralRegex = try? NSRegularExpression(
-        pattern: #"\{(\w+),\s*plural,\s*one\s*\{([\s\S]*?)\}\s*other\s*\{([\s\S]*?)\}\}"#
-    )
+    /// **La catégorie de pluriel CLDR d'un nombre entier** (lot 13) : `zero`, `one`, `two`,
+    /// `few`, `many` ou `other`, selon les règles de la langue.
+    ///
+    /// Le moteur ne connaissait que `one` et `other`, ce qui suffit à l'anglais mais pas aux
+    /// langues à trois formes et plus : « 5 карточек » n'est pas « 2 карточки », le letton met
+    /// 10 et 11 dans `zero`, le lituanien 2 à 9 dans `few`, le japonais et le coréen n'ont que
+    /// `other`. Une branche absente retombe sur `other` : une phrase écrite `one`/`other` se lit
+    /// toujours comme avant, et le français, l'anglais, l'allemand et l'arabe rendent exactement
+    /// ce qu'ils rendaient (`PerfGuardTests`).
+    static func pluralCategory(_ count: Int, locale: UiLocale) -> String {
+        let n = count.magnitude
+        let mod10 = n % 10
+        let mod100 = n % 100
+        let teen = (11...19).contains(mod100)
+        let fewEnding = (2...4).contains(mod10) && !(12...14).contains(mod100)
+        switch locale {
+        case .ja, .ko:
+            return "other"
+        case .fr:
+            return n <= 1 ? "one" : "other"
+        case .ru:
+            if mod10 == 1 && mod100 != 11 { return "one" }
+            return fewEnding ? "few" : "many"
+        case .hr, .sr:
+            if mod10 == 1 && mod100 != 11 { return "one" }
+            return fewEnding ? "few" : "other"
+        case .pl:
+            if n == 1 { return "one" }
+            return fewEnding ? "few" : "many"
+        case .cs, .sk:
+            if n == 1 { return "one" }
+            return (2...4).contains(n) ? "few" : "other"
+        case .sl:
+            switch mod100 {
+            case 1: return "one"
+            case 2: return "two"
+            case 3, 4: return "few"
+            default: return "other"
+            }
+        case .ro:
+            if n == 1 { return "one" }
+            return n == 0 || (1...19).contains(mod100) ? "few" : "other"
+        case .lt:
+            if teen { return "other" }
+            if mod10 == 1 { return "one" }
+            return mod10 >= 2 ? "few" : "other"
+        case .lv:
+            if mod10 == 0 || teen { return "zero" }
+            return mod10 == 1 ? "one" : "other"
+        case .ar:
+            if n == 0 { return "zero" }
+            if n == 1 { return "one" }
+            if n == 2 { return "two" }
+            if (3...10).contains(mod100) { return "few" }
+            return (11...99).contains(mod100) ? "many" : "other"
+        case .he:
+            if n == 1 { return "one" }
+            return n == 2 ? "two" : "other"
+        default:
+            return n == 1 ? "one" : "other"
+        }
+    }
 
+    /// **Les pluriels d'une phrase** : `{count, plural, one {# carte} other {# cartes}}`, avec
+    /// toutes les catégories CLDR (`zero`, `one`, `two`, `few`, `many`, `other`) et les valeurs
+    /// exactes d'ICU (`=0 {aucune carte}`), qui passent avant la catégorie. `#` devient le
+    /// nombre. Une branche peut porter une variable (`{name}`) : les accolades s'y comptent.
+    /// Un pluriel mal écrit reste tel quel, comme avant.
     private static func replacePlurals(
         in template: String,
         locale: UiLocale,
         vars: [String: String]
     ) -> String {
         // Le mot est dans le motif : sans lui, rien ne peut correspondre.
-        guard template.contains("plural"), let regex = pluralRegex else { return template }
-        let range = NSRange(template.startIndex..., in: template)
-        var result = template
-        let matches = regex.matches(in: template, range: range).reversed()
-        for match in matches {
-            guard match.numberOfRanges == 4,
-                  let keyRange = Range(match.range(at: 1), in: template),
-                  let oneRange = Range(match.range(at: 2), in: template),
-                  let otherRange = Range(match.range(at: 3), in: template),
-                  let allRange = Range(match.range(at: 0), in: result)
-            else { continue }
-            let key = String(template[keyRange])
-            let raw = vars[key] ?? "0"
-            let count = Int(raw) ?? 0
-            let one = String(template[oneRange])
-            let other = String(template[otherRange])
-            let branch = isSingular(count, locale: locale) ? one : other
-            let formatted = raw
-            let replacement = branch.replacingOccurrences(of: "#", with: formatted)
-            result.replaceSubrange(allRange, with: replacement)
+        guard template.contains("plural") else { return template }
+        let characters = Array(template)
+        var result = ""
+        var index = 0
+        while index < characters.count {
+            if characters[index] == "{",
+               let plural = readPlural(characters, from: index) {
+                let raw = vars[plural.name] ?? "0"
+                let count = Int(raw) ?? 0
+                let branch = plural.branches["=\(count)"]
+                    ?? plural.branches[pluralCategory(count, locale: locale)]
+                    ?? plural.branches["other"]
+                    ?? plural.branches.values.first
+                    ?? ""
+                result += branch.replacingOccurrences(of: "#", with: raw)
+                index = plural.end
+                continue
+            }
+            result.append(characters[index])
+            index += 1
         }
         return result
+    }
+
+    private static let pluralSelectors: Set<String> = ["zero", "one", "two", "few", "many", "other"]
+
+    /// Lit `{name, plural, sel {…} sel {…}}` à partir de l'accolade ouvrante ; `nil` si ce n'en
+    /// est pas un.
+    private static func readPlural(
+        _ characters: [Character],
+        from start: Int
+    ) -> (name: String, branches: [String: String], end: Int)? {
+        var index = start + 1
+        func skipSpaces() {
+            while index < characters.count, characters[index].isWhitespace { index += 1 }
+        }
+        func word() -> String {
+            var text = ""
+            while index < characters.count,
+                  characters[index].isLetter || characters[index].isNumber || characters[index] == "_" || characters[index] == "=" {
+                text.append(characters[index])
+                index += 1
+            }
+            return text
+        }
+        skipSpaces()
+        let name = word()
+        guard !name.isEmpty else { return nil }
+        skipSpaces()
+        guard index < characters.count, characters[index] == "," else { return nil }
+        index += 1
+        skipSpaces()
+        guard word() == "plural" else { return nil }
+        skipSpaces()
+        guard index < characters.count, characters[index] == "," else { return nil }
+        index += 1
+        var branches: [String: String] = [:]
+        while true {
+            skipSpaces()
+            guard index < characters.count else { return nil }
+            if characters[index] == "}" {
+                if branches.isEmpty { return nil }
+                return (name: name, branches: branches, end: index + 1)
+            }
+            let selector = word()
+            guard pluralSelectors.contains(selector) || (selector.hasPrefix("=") && Int(selector.dropFirst()) != nil) else { return nil }
+            skipSpaces()
+            guard index < characters.count, characters[index] == "{" else { return nil }
+            index += 1
+            var depth = 1
+            var body = ""
+            while index < characters.count {
+                let character = characters[index]
+                index += 1
+                if character == "{" { depth += 1 }
+                if character == "}" {
+                    depth -= 1
+                    if depth == 0 { break }
+                }
+                body.append(character)
+            }
+            guard depth == 0 else { return nil }
+            branches[selector] = body
+        }
     }
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { isSourceLanguage, languageBrief, languageName, resolveLanguage } from "./language.ts";
+import { CONTENT_LANGUAGES, isSourceLanguage, languageBrief, languageName, resolveLanguage } from "./language.ts";
 
 describe("resolveLanguage", () => {
   it("lit les deux langues connues", () => {
@@ -26,6 +26,30 @@ describe("resolveLanguage", () => {
     assert.equal(resolveLanguage("ar"), "ar");
     assert.equal(resolveLanguage("ru"), "ru");
     assert.ok(languageBrief("pt-BR").includes("BRÉSIL"));
+  });
+
+  it("sert les six langues du lot 13, anciens codes compris", () => {
+    for (const code of ["nb", "he", "ja", "lt", "lv", "ko"]) assert.equal(resolveLanguage(code), code);
+    assert.equal(resolveLanguage("nb-NO"), "nb");
+    assert.equal(resolveLanguage("no"), "nb");
+    assert.equal(resolveLanguage("nn-NO"), "nb");
+    assert.equal(resolveLanguage("iw"), "he");
+    assert.equal(resolveLanguage("he-IL"), "he");
+    assert.equal(resolveLanguage("ja_JP"), "ja");
+    assert.equal(resolveLanguage("ko-KR"), "ko");
+    assert.equal(languageName("lv"), "letton");
+    assert.ok(languageBrief("ja").includes("JAPONAIS (日本語)"));
+    assert.ok(languageBrief("he").includes("HÉBREU (עברית)"));
+    assert.ok(languageBrief("lt").includes("LITUANIEN"));
+    assert.ok(languageBrief("ko").includes("한국어"));
+  });
+
+  it("nomme chaque langue servie, en français et dans la sienne", () => {
+    assert.equal(CONTENT_LANGUAGES.length, 32);
+    for (const code of CONTENT_LANGUAGES) {
+      assert.equal(resolveLanguage(code), code);
+      if (code !== "fr") assert.ok(!languageBrief(code).includes("undefined"), code);
+    }
   });
 
   // Une version de l'application antérieure à la question n'envoie rien : les fiches déjà

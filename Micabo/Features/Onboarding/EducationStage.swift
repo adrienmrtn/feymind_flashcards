@@ -187,6 +187,12 @@ enum ContentLanguage: String, CaseIterable, Identifiable {
     case ru
     case tr
     case ar
+    case nb
+    case he
+    case ja
+    case lt
+    case lv
+    case ko
 
     var id: String { rawValue }
 
@@ -219,6 +225,12 @@ enum ContentLanguage: String, CaseIterable, Identifiable {
         case .ru: "Русский"
         case .tr: "Türkçe"
         case .ar: "العربية"
+        case .nb: "Norsk bokmål"
+        case .he: "עברית"
+        case .ja: "日本語"
+        case .lt: "Lietuvių"
+        case .lv: "Latviešu"
+        case .ko: "한국어"
         }
     }
 }

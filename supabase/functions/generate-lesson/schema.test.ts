@@ -301,7 +301,7 @@ Deno.test("un vrai/faux : la réponse dans toutes les langues, « vrai » toujou
   assertEquals(brazil?.choices, ["Verdadeiro", "Falso"]);
 });
 
-Deno.test("« vrai » et « faux », et le titre de repli, existent dans les vingt-six langues", () => {
+Deno.test("« vrai » et « faux », et le titre de repli, existent dans toutes les langues servies", () => {
   const all = ["choice", "truefalse"] as const;
   for (const language of CONTENT_LANGUAGES) {
     const [yes, no] = trueFalseLabels(language);

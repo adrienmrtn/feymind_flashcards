@@ -87,6 +87,10 @@ struct HomeView: View {
     @State private var editingExam: ExamEditTarget?
     /// Les demandes de nouvelle leçon venues de l'onglet Leçons, déjà servies.
     @State private var handledCreationRequests = 0
+    /// Lot 13 — le sujet tapé dans « Nouvelle leçon », lancé une fois la feuille refermée.
+    @State private var pendingTopic: String?
+    /// Lot 13 — le dernier sujet de leçon tapé : la feuille le reprend s'il n'a pas abouti.
+    @State private var lastTopic = ""
     @FocusState private var focused: Bool
 
     private var isPro: Bool { pro?.isPro ?? true }
@@ -203,7 +207,7 @@ struct HomeView: View {
                     isNewcomer: !day.hasCourses,
                     hasLesson: snapshot.resumeID != nil,
                     dueCount: day.dueCount
-                ),
+                ).filter { $0 != .newLesson || !generation.isBusy },
                 dueCount: day.dueCount,
                 isBusy: generation.isBusy || locked != nil,
                 actions: actions
@@ -223,6 +227,7 @@ struct HomeView: View {
             hasSupports: generation.hasSupports,
             locked: locked,
             hasLesson: snapshot.resumeID != nil,
+            composing: composing,
             firstTopic: proposedFirstTopic,
             firstIsFree: !isPro && !LessonAllowance.hasUsedFreeLesson(courses: courses)
         )
@@ -231,6 +236,14 @@ struct HomeView: View {
     /// Le sujet du parcours, tant que l'élève n'a encore aucun cours à lui.
     private var proposedFirstTopic: String? {
         snapshot.day.hasCourses ? nil : firstTopic
+    }
+
+    /// Lot 13 — des supports dans la barre : Mika les lit, puis propose « Écrire ma leçon ».
+    /// Rien quand une leçon s'écrit ou attend Pro, ni quand tous ont échoué (la barre le dit).
+    private var composing: HomeComposing? {
+        guard !composer.supports.isEmpty, !generation.isBusy, locked == nil else { return nil }
+        if composer.isReading { return .reading }
+        return composer.readySupports.isEmpty ? nil : .ready
     }
 
     private var navigation: some View {
@@ -250,6 +263,7 @@ struct HomeView: View {
                         creating = false
                     } onCancel: {
                         creating = false
+                        forgetLessonTopic()
                     }
                 }
                 .micaboPaywall($paywall, onSubscribed: subscribed)
@@ -270,7 +284,16 @@ struct HomeView: View {
                 }
             }
             .sheet(isPresented: $showsSources, onDismiss: openPendingImport) {
-                HomeSourcesSheet(isPro: isPro, freeLessonLeft: freeLessonLeft, enabled: composer.hasRoom) { kind in
+                HomeSourcesSheet(
+                    isPro: isPro,
+                    freeLessonLeft: freeLessonLeft,
+                    enabled: composer.hasRoom,
+                    topic: lastTopic,
+                    onTopic: { topic in
+                        pendingTopic = topic
+                        showsSources = false
+                    }
+                ) { kind in
                     pendingImport = kind
                     showsSources = false
                 }
@@ -451,12 +474,11 @@ struct HomeView: View {
     /// **« Écrire ma leçon »** : le sujet choisi dans le parcours part à l'écriture, par le
     /// chemin de toutes les leçons (les deux questions, puis l'écriture) ; la porte du gratuit
     /// reste celle de `LessonAllowance`.
+    ///
+    /// Le sujet reste proposé jusqu'à ce que la leçon arrive (`openDelivered`) : une écriture
+    /// abandonnée, refusée ou en panne ne le fait pas disparaître de la Home.
     private func writeFirstTopic(_ topic: String) {
-        firstTopic = nil
-        FirstLessonIntent.pending = nil
-        guard !generation.isBusy else { return }
-        composer.draft = topic
-        createLesson()
+        writeLesson(topic: topic)
     }
 
     // MARK: Les gestes
@@ -509,12 +531,17 @@ struct HomeView: View {
             showsDueReview = true
         case .lesson, .more:
             if let course = resumeCourse { path.append(course) }
-        case .create, .first:
+        case .create:
+            openSources()
+        case .first:
+            // Le sujet choisi au parcours d'accueil part tout de suite ; sinon, la feuille.
             if let topic = proposedFirstTopic {
                 writeFirstTopic(topic)
             } else {
-                showsSources = true
+                openSources()
             }
+        case .write:
+            createLesson()
         case .unlock:
             paywall = .lessonReady
         case .retry:
@@ -527,6 +554,7 @@ struct HomeView: View {
         switch exit.kind {
         case .cancel:
             generation.cancel()
+            forgetLessonTopic()
         case .later:
             // Les supports restent dans la barre : la leçon peut repartir plus tard.
             locked = nil
@@ -550,7 +578,7 @@ struct HomeView: View {
         case .cards:
             showsDueReview = true
         case .importSource:
-            showsSources = true
+            openSources()
         case .writing:
             // Toujours ouvert, comme le scanner : la porte de Mika vient à la demande de
             // relecture (`WritingSession`).
@@ -561,6 +589,8 @@ struct HomeView: View {
             if let kind = shortcut.source { tapImport(kind) }
         case .chats:
             drawerOpen = true
+        case .newLesson:
+            openSources()
         }
     }
 
@@ -611,8 +641,11 @@ struct HomeView: View {
         }
     }
 
+    /// La feuille « Nouvelle leçon ». Pas pendant qu'une leçon s'écrit : la Home le dit déjà, et
+    /// un support déposé maintenant serait effacé à l'arrivée de la leçon (`openDelivered`).
     private func openSources() {
         dismissKeyboard()
+        guard !generation.isBusy else { return }
         showsSources = true
     }
 
@@ -645,8 +678,14 @@ struct HomeView: View {
         importRequest = kind
     }
 
-    /// La feuille du « + » est refermée : la source choisie s'ouvre maintenant.
+    /// La feuille « Nouvelle leçon » est refermée : le sujet tapé part à l'écriture, ou la
+    /// source choisie s'ouvre maintenant.
     private func openPendingImport() {
+        if let topic = pendingTopic {
+            pendingTopic = nil
+            writeLesson(topic: topic)
+            return
+        }
         guard let kind = pendingImport else { return }
         pendingImport = nil
         tapImport(kind)
@@ -666,6 +705,26 @@ struct HomeView: View {
         createLesson()
     }
 
+    /// **Lot 13 — une leçon sur un sujet tapé** (« Nouvelle leçon », ou le sujet du parcours
+    /// d'accueil) : le sujet devient la demande, puis le même chemin que la barre.
+    private func writeLesson(topic: String) {
+        let trimmed = topic.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !generation.isBusy else { return }
+        lastTopic = trimmed
+        composer.draft = trimmed
+        createLesson()
+    }
+
+    /// **Un sujet de leçon ne reste pas dans la barre** quand la leçon est abandonnée : la
+    /// barre seule pose une question à Mika, et l'envoyer ouvrirait le chat. Il reste dans
+    /// « Nouvelle leçon » (`lastTopic`). Avec des supports, le texte est leur consigne : il reste.
+    private func forgetLessonTopic() {
+        guard composer.supports.isEmpty else { return }
+        let typed = composer.draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !typed.isEmpty { lastTopic = typed }
+        composer.draft = ""
+    }
+
     /// Une leçon depuis la barre : le paywall d'un sujet seul s'ouvre tout de suite
     /// (`LessonAllowance.immediatePaywall`) ; sinon les deux questions, puis l'écriture.
     private func createLesson() {
@@ -673,6 +732,8 @@ struct HomeView: View {
         dismissKeyboard()
         if let trigger = LessonAllowance.immediatePaywall(isPro: isPro, source: composer.source, courses: courses) {
             paywall = trigger
+            // Un sujet seul, refusé : il ne reste pas dans la barre, qui l'enverrait au chat.
+            forgetLessonTopic()
             return
         }
         locked = nil
@@ -697,6 +758,10 @@ struct HomeView: View {
     private func openDelivered() {
         guard let course = generation.takeDelivered() else { return }
         composer.reset()
+        lastTopic = ""
+        // Une leçon est écrite : le sujet du parcours d'accueil a servi.
+        if case .topic = FirstLessonIntent.pending { FirstLessonIntent.pending = nil }
+        firstTopic = nil
         refreshPlan()
         path.append(course)
     }

@@ -81,7 +81,13 @@ export type ContentLanguage =
   | "bg"
   | "ru"
   | "tr"
-  | "ar";
+  | "ar"
+  | "nb"
+  | "he"
+  | "ja"
+  | "lt"
+  | "lv"
+  | "ko";
 
 /**
  * Le nom de la langue, écrit dans cette langue : c'est ainsi qu'on choisit une langue. Les
@@ -115,6 +121,12 @@ export const LANGUAGE_LABELS: Record<ContentLanguage, string> = {
   ru: "Русский",
   tr: "Türkçe",
   ar: "العربية",
+  nb: "Norsk bokmål",
+  he: "עברית",
+  ja: "日本語",
+  lt: "Lietuvių",
+  lv: "Latviešu",
+  ko: "한국어",
 };
 
 export interface Country {
