@@ -154,6 +154,12 @@ struct HomeBoardInput: Equatable {
     var locked: HomeLockedLesson?
     /// Une leçon peut s'ouvrir pour « Réviser quand même ».
     var hasLesson = false
+    /// **Le sujet choisi dans le parcours d'accueil** (lot 13), proposé en grand tant que
+    /// l'élève n'a aucun cours : « Écris ta première leçon : La guerre froide ». Il reste sur
+    /// l'appareil.
+    var firstTopic: String? = nil
+    /// Vrai quand la leçon gratuite n'a pas servi : la Home le dit simplement, sous l'action.
+    var firstIsFree = false
 }
 
 /// **La Home, comme une valeur** : le moment, la phrase, et l'action — ou la jauge, pendant
@@ -273,6 +279,14 @@ struct HomeBoard: Equatable {
                     : HomeAction(kind: .create, title: t("lesson.lessons.new"), symbol: "plus")
             )
         case .newcomer:
+            if let topic = input.firstTopic?.nilIfBlank {
+                return HomeBoard(
+                    moment: moment,
+                    phrase: HomePhrase(marked: t("ios.home13.ask.firstTopic", ["topic": clip(topic)]), mood: .write),
+                    action: HomeAction(kind: .first, title: t("ios.home13.cta.firstTopic"), symbol: "sparkles"),
+                    caption: input.firstIsFree ? t("ios.home13.firstFree") : nil
+                )
+            }
             let marked = name.map { t("ios.home10.ask.newcomer", ["name": $0]) } ?? t("ios.home10.ask.newcomerAnon")
             return HomeBoard(
                 moment: moment,
@@ -291,6 +305,8 @@ struct HomeBoard: Equatable {
         case .idle: break
         }
         if input.locked != nil { return .locked }
+        // Le sujet choisi dans le parcours passe devant la journée : c'est la première leçon.
+        if input.firstTopic?.nilIfBlank != nil { return .newcomer }
         switch input.day.proposal {
         case .session: return .session
         case .cards: return .cards
