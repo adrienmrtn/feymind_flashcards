@@ -1,0 +1,6 @@
+/* Les demandes d'accès d'iOS, dans la langue du téléphone (voir en.lproj). */
+
+"NSCameraUsageDescription" = "Micabo는 수업 페이지를 스캔하려고 카메라를 사용해요.";
+"NSPhotoLibraryUsageDescription" = "Micabo는 수업이나 도표를 가져오려고 사진에 접근해요.";
+"NSMicrophoneUsageDescription" = "Micabo는 수업이나 음성 메모를 녹음하고, 소리 내어 말한 답을 듣기 위해 마이크를 사용해요.";
+"NSSpeechRecognitionUsageDescription" = "Micabo는 녹음과 소리 내어 말한 답을 휴대폰 안에서 텍스트로 바꿔요.";

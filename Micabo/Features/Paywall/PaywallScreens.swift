@@ -13,23 +13,13 @@ struct PaywallContext: Equatable {
     var reminderKept: Bool?
     /// Le sujet de la première leçon, choisi dans le parcours (`FirstLessonIntent`).
     var topic: String?
-    /// **La leçon écrite pendant le parcours** (retour testeur du build 179) : le paywall
-    /// s'ouvre au toucher de « Voir ma leçon », et son titre parle d'elle.
-    var lessonTitle: String? = nil
 
     static func current(now: Date = Date()) -> PaywallContext {
         var topic: String?
-        var lessonTitle: String?
-        switch FirstLessonIntent.pending {
-        case .topic(let chosen)?:
+        if case .topic(let chosen)? = FirstLessonIntent.pending {
             topic = chosen
-        case .lesson(_, let chosen)?:
-            topic = chosen
-            lessonTitle = chosen
-        default:
-            break
         }
-        return PaywallContext(profile: .current(now: now), now: now, reminderKept: nil, topic: topic, lessonTitle: lessonTitle)
+        return PaywallContext(profile: .current(now: now), now: now, reminderKept: nil, topic: topic)
     }
 }
 
@@ -136,18 +126,6 @@ enum PaywallCopy {
         return PaywallEmphasis(
             text: L10n.t("ios.pay10.title.planExam", locale: locale, vars: ["exam": exam]),
             highlight: exam
-        )
-    }
-
-    /// **Le grand titre quand la leçon vient d'être écrite** : « Débloque ta leçon « La guerre
-    /// froide » ». Le titre de la leçon est mis en avant.
-    static func lessonHeadline(title: String, locale: UiLocale = .resolved()) -> PaywallEmphasis {
-        let shown = title.count > PaywallTimeline.longestTopic
-            ? String(title.prefix(PaywallTimeline.longestTopic - 1)) + "…"
-            : title
-        return PaywallEmphasis(
-            text: L10n.t("ios.pay12.lesson.title", locale: locale, vars: ["title": shown]),
-            highlight: shown
         )
     }
 
@@ -443,9 +421,6 @@ struct PaywallScreen: View {
     private var heroTitle: PaywallEmphasis {
         if let trigger, !showsTrialHeader {
             return PaywallCopy.hook(for: trigger)
-        }
-        if let lesson = context.lessonTitle?.nilIfBlank {
-            return PaywallCopy.lessonHeadline(title: lesson)
         }
         return PaywallCopy.headline(profile: context.profile)
     }

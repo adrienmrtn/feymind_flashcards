@@ -5,11 +5,21 @@ final class I18nTests: XCTestCase {
     /// Les langues des marchés de Micabo : l'Europe, le Moyen-Orient, le Brésil et
     /// l'Amérique latine, chacun avec la sienne.
     func testEveryMarketHasItsLanguage() {
-        XCTAssertEqual(UiLocale.allCases.map(\.rawValue), ["en", "fr", "de", "es", "es-419", "it", "pt-PT", "pt-BR", "nl", "pl", "ro", "sv", "da", "fi", "et", "cs", "sk", "hu", "hr", "sl", "sr", "bg", "el", "ru", "tr", "ar"])
+        XCTAssertEqual(UiLocale.allCases.map(\.rawValue), ["en", "fr", "de", "es", "es-419", "it", "pt-PT", "pt-BR", "nl", "pl", "ro", "sv", "da", "nb", "fi", "et", "lv", "lt", "cs", "sk", "hu", "hr", "sl", "sr", "bg", "el", "ru", "tr", "ar", "he", "ja", "ko"])
+        XCTAssertEqual(UiLocale.allCases.count, 32)
         XCTAssertTrue(UiLocale.isKnown("de"))
         XCTAssertTrue(UiLocale.isKnown("pt-BR"))
-        XCTAssertFalse(UiLocale.isKnown("ja"))
+        XCTAssertTrue(UiLocale.isKnown("ja"))
+        XCTAssertFalse(UiLocale.isKnown("zh"))
         XCTAssertTrue(UiLocale.ar.isRightToLeft)
+        XCTAssertTrue(UiLocale.he.isRightToLeft)
+        XCTAssertEqual(UiLocale.allCases.filter(\.isRightToLeft), [.ar, .he])
+        // Chaque langue d'interface écrit les cours dans sa langue, et le serveur la reçoit
+        // sous ce code (`supabase/functions/_shared/language.ts`).
+        for locale in [UiLocale.nb, .he, .ja, .lt, .lv, .ko] {
+            XCTAssertEqual(locale.contentLanguage.rawValue, locale.rawValue)
+            XCTAssertEqual(ContentLanguage(rawValue: locale.rawValue), locale.contentLanguage)
+        }
     }
 
     func testEachLocaleHasAFlag() {
@@ -39,7 +49,18 @@ final class I18nTests: XCTestCase {
         XCTAssertEqual(UiLocale.fromPreferredLanguages(["en-US", "en"]), .en)
         XCTAssertEqual(UiLocale.fromPreferredLanguages(["en-GB"]), .en)
         XCTAssertEqual(UiLocale.fromPreferredLanguages(["it-IT", "ja"]), .it)
-        XCTAssertEqual(UiLocale.fromPreferredLanguages(["ja"]), .en)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages(["zh-Hans-CN"]), .en)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages(["zh-Hans-CN", "ja-JP"]), .ja)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages(["ja"]), .ja)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages(["ko-KR"]), .ko)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages(["lt-LT"]), .lt)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages(["lv"]), .lv)
+        // Le norvégien sous ses trois codes, l'hébreu aussi sous son ancien code.
+        XCTAssertEqual(UiLocale.fromPreferredLanguages(["nb-NO"]), .nb)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages(["no"]), .nb)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages(["nn-NO"]), .nb)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages(["he-IL"]), .he)
+        XCTAssertEqual(UiLocale.fromPreferredLanguages(["iw-IL"]), .he)
         XCTAssertEqual(UiLocale.fromPreferredLanguages([]), .en)
     }
 
@@ -273,6 +294,93 @@ final class I18nTests: XCTestCase {
                 XCTAssertFalse(value.contains("\\n"), "\(locale.rawValue) \(key)")
             }
         }
+    }
+
+    /// **Aucune langue ne reste en anglais.**
+    ///
+    /// `testNothingFallsBackToFrench` ne compare que l'anglais au français, et le test des clés
+    /// ne vérifie qu'une présence : une langue dont la table est une copie de l'anglais passe
+    /// les deux. Celui-ci compte, langue par langue, les vraies phrases (trois mots et plus en
+    /// anglais) écrites exactement comme en anglais. Les langues finies en ont moins de quinze
+    /// (des formats chiffrés, une référence) ; une table recopiée, plus de deux mille.
+    ///
+    /// Les six langues du lot 13 sont nées en copie anglaise, branchées pour que l'app compile
+    /// pendant leur traduction : tant que leur fichier lève `xxIsProvisional`, elles ne sont pas
+    /// comptées. Un drapeau resté levé sur une langue finie se voit aussi.
+    func testNoLanguageIsLeftInEnglish() {
+        let ceiling = 20
+        for locale in UiLocale.allCases where locale != .en {
+            var same: [String] = []
+            for (key, value) in IosI18nCatalogs.table(for: locale.rawValue) {
+                guard let english = IosI18nCatalogs.en[key] ?? SharedI18nCatalogs.en[key],
+                      english.split(separator: " ").count > 2, value == english
+                else { continue }
+                same.append(key)
+            }
+            for (key, value) in LessonI18nCatalogs.table(for: locale.rawValue) {
+                guard let english = LessonI18nCatalogs.en[key],
+                      english.split(separator: " ").count > 2, value == english
+                else { continue }
+                same.append(key)
+            }
+            if locale.catalogIsProvisional {
+                XCTAssertGreaterThan(
+                    same.count, ceiling,
+                    "\(locale.rawValue) est traduite : passe `\(locale.rawValue)IsProvisional` à false dans Locales/I18n+\(locale.rawValue).swift"
+                )
+                continue
+            }
+            XCTAssertLessThanOrEqual(
+                same.count, ceiling,
+                "\(locale.rawValue) : \(same.count) phrases encore en anglais — d'abord \(same.sorted().prefix(30))"
+            )
+        }
+    }
+
+    /// Le drapeau « provisoire » n'existe que pour les six langues du lot 13.
+    func testOnlyTheNewLanguagesCanBeProvisional() {
+        let allowed: Set<UiLocale> = [.nb, .he, .ja, .lt, .lv, .ko]
+        for locale in UiLocale.allCases where locale.catalogIsProvisional {
+            XCTAssertTrue(allowed.contains(locale), locale.rawValue)
+        }
+    }
+
+    /// **Les pluriels de chaque langue** (CLDR) : trois formes en russe et en polonais, `zero` en
+    /// letton, `few` de 2 à 9 en lituanien, une seule forme en japonais et en coréen, six en
+    /// arabe. Une branche absente retombe sur `other`.
+    func testPluralCategoriesFollowEachLanguage() {
+        func category(_ n: Int, _ locale: UiLocale) -> String { L10n.pluralCategory(n, locale: locale) }
+        XCTAssertEqual([0, 1, 2].map { category($0, .en) }, ["other", "one", "other"])
+        XCTAssertEqual([0, 1, 2].map { category($0, .fr) }, ["one", "one", "other"])
+        XCTAssertEqual([1, 2, 5, 11, 21, 22, 25].map { category($0, .ru) }, ["one", "few", "many", "many", "one", "few", "many"])
+        XCTAssertEqual([1, 2, 5, 12, 22].map { category($0, .pl) }, ["one", "few", "many", "many", "few"])
+        XCTAssertEqual([1, 2, 9, 10, 11, 19, 21, 22].map { category($0, .lt) }, ["one", "few", "few", "other", "other", "other", "one", "few"])
+        XCTAssertEqual([0, 1, 2, 10, 11, 21, 111].map { category($0, .lv) }, ["zero", "one", "other", "zero", "zero", "one", "zero"])
+        XCTAssertEqual([0, 1, 2, 100].map { category($0, .ja) }, ["other", "other", "other", "other"])
+        XCTAssertEqual([1, 5].map { category($0, .ko) }, ["other", "other"])
+        XCTAssertEqual([1, 2, 3, 10].map { category($0, .he) }, ["one", "two", "other", "other"])
+        XCTAssertEqual([0, 1, 2, 3, 11, 100].map { category($0, .ar) }, ["zero", "one", "two", "few", "many", "other"])
+        XCTAssertEqual([1, 2, 3, 5, 101].map { category($0, .sl) }, ["one", "two", "few", "other", "one"])
+
+        let lithuanian = "{count, plural, one {# kortelė} few {# kortelės} other {# kortelių}}"
+        XCTAssertEqual(L10n.format(lithuanian, locale: .lt, vars: ["count": "1"]), "1 kortelė")
+        XCTAssertEqual(L10n.format(lithuanian, locale: .lt, vars: ["count": "3"]), "3 kortelės")
+        XCTAssertEqual(L10n.format(lithuanian, locale: .lt, vars: ["count": "12"]), "12 kortelių")
+        let latvian = "{count, plural, zero {# kāršu} one {# kārts} other {# kārtis}}"
+        XCTAssertEqual(L10n.format(latvian, locale: .lv, vars: ["count": "10"]), "10 kāršu")
+        XCTAssertEqual(L10n.format(latvian, locale: .lv, vars: ["count": "21"]), "21 kārts")
+        XCTAssertEqual(L10n.format(latvian, locale: .lv, vars: ["count": "3"]), "3 kārtis")
+        // Le japonais n'a qu'une forme ; une phrase qui garde `one` retombe quand même sur `other`.
+        XCTAssertEqual(L10n.format("{count, plural, other {#枚のカード}}", locale: .ja, vars: ["count": "1"]), "1枚のカード")
+        XCTAssertEqual(L10n.format("{count, plural, one {# card} other {#枚}}", locale: .ja, vars: ["count": "1"]), "1枚")
+        // Une valeur exacte passe avant la catégorie, et une branche peut porter une variable.
+        XCTAssertEqual(L10n.format("{n, plural, =0 {Rien pour {name}} one {# carte} other {# cartes}}", locale: .fr, vars: ["n": "0", "name": "Lina"]), "Rien pour Lina")
+        XCTAssertEqual(L10n.format("{n, plural, one {# carte pour {name}} other {# cartes pour {name}}}", locale: .fr, vars: ["n": "3", "name": "Lina"]), "3 cartes pour Lina")
+        // Deux pluriels dans la même phrase, et du texte autour.
+        XCTAssertEqual(
+            L10n.format("{a, plural, one {# leçon} other {# leçons}} et {b, plural, one {# carte} other {# cartes}}.", locale: .fr, vars: ["a": "2", "b": "1"]),
+            "2 leçons et 1 carte."
+        )
     }
 
     func testTokenReplacementAndPlurals() {

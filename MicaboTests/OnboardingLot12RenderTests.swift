@@ -299,29 +299,22 @@ final class OnboardingLot12RenderTests: XCTestCase {
         try render("onb12-\(id(.commitment))-holding", .commitment, model, devices: [.iPhone15Pro]) { CommitmentStepView(previewHold: 0.6) }
     }
 
-    /// Acte 6 : le plan, la première leçon choisie, écrite pour de vrai, prête — puis le
-    /// paywall, au toucher de « Voir ma leçon » (`Paywall12RenderTests`).
-    func testActSixOnDevice() throws {
+    /// Actes 6 et 7 (lot 13) : le plan, le sujet de la première leçon, puis l'essai — voulu
+    /// pour lui, et le rappel promis (à demander, accordé, refusé) — avant le paywall.
+    func testActSixAndSevenOnDevice() throws {
         let model = lina()
         try render("onb12-\(id(.planBuilding))", .planBuilding, model) { PlanBuildingStepView(previewProgress: 0.62) }
         try render("onb12-\(id(.profileSummary))", .profileSummary, model)
         try render("onb12-\(id(.firstLesson))", .firstLesson, model)
-        try render("onb12-\(id(.lessonBuilding))", .lessonBuilding, model) {
-            LessonBuildingStepView(previewStage: .writing, previewProgress: 0.62)
+        try render("onb12-\(id(.freeTrialIntro))", .freeTrialIntro, model)
+        try render("onb12-\(id(.trialOffer))", .trialOffer, model) { TrialOfferStepView(previewPermission: .ask) }
+        try render("onb12-\(id(.trialOffer))-granted", .trialOffer, model, devices: [.iPhone15Pro]) {
+            TrialOfferStepView(previewPermission: .granted)
         }
-        try render("onb12-\(id(.lessonBuilding))-failed", .lessonBuilding, model, devices: [.iPhone15Pro]) {
-            LessonBuildingStepView(previewFailed: true)
+        try render("onb12-\(id(.trialOffer))-denied", .trialOffer, model, devices: [.iPhone15Pro]) {
+            TrialOfferStepView(previewPermission: .denied)
         }
-        model.writtenLesson = Self.coldWar
-        try render("onb12-\(id(.lessonReady))", .lessonReady, model)
     }
-
-    /// La leçon telle que le serveur l'écrit : un titre, ses thèmes.
-    private static let coldWar = OnboardingWrittenLesson(
-        id: UUID(),
-        title: "La guerre froide (1947-1991)",
-        themes: ["Deux blocs face à face", "Les crises de Berlin et de Cuba", "La course aux armements", "La chute du mur"]
-    )
 
     // MARK: - Les langues
 
@@ -332,11 +325,8 @@ final class OnboardingLot12RenderTests: XCTestCase {
         for step in [OnboardingStep.welcome, .exam, .worries, .solutionMap, .notifications, .profileSummary, .firstLesson] {
             try render("onb12-de-\(id(step))", step, model, devices: pro)
         }
-        try render("onb12-de-\(id(.lessonBuilding))", .lessonBuilding, model, devices: [.iPhoneSE]) {
-            LessonBuildingStepView(previewStage: .questions, previewProgress: 0.9)
-        }
-        model.writtenLesson = OnboardingWrittenLesson(id: UUID(), title: "Der Kalte Krieg", themes: ["Zwei Blöcke", "Die Berlin-Krisen", "Das Wettrüsten"])
-        try render("onb12-de-\(id(.lessonReady))", .lessonReady, model, devices: [.iPhoneSE])
+        try render("onb12-de-\(id(.freeTrialIntro))", .freeTrialIntro, model, devices: [.iPhoneSE])
+        try render("onb12-de-\(id(.trialOffer))", .trialOffer, model, devices: [.iPhoneSE]) { TrialOfferStepView(previewPermission: .ask) }
         try render("onb12-de-\(id(.lessonDemo))", .lessonDemo, model, devices: pro) { LessonDemoStepView(previewPlayed: true) }
         try render("onb12-de-\(id(.cardsDemo))", .cardsDemo, model, devices: [.iPhoneSE]) { CardsDemoStepView(previewFlipped: true, previewKnew: false) }
         try render("onb12-de-\(id(.commitment))", .commitment, model, devices: [.iPhoneSE]) { CommitmentStepView(previewCommitted: true) }
@@ -350,8 +340,8 @@ final class OnboardingLot12RenderTests: XCTestCase {
             try render("onb12-ar-\(id(step))", step, model, devices: pro, rtl: true)
         }
         try render("onb12-ar-\(id(.lessonDemo))", .lessonDemo, model, devices: pro, rtl: true) { LessonDemoStepView(previewPlayed: true) }
-        model.writtenLesson = OnboardingWrittenLesson(id: UUID(), title: "الحرب الباردة", themes: ["كتلتان متقابلتان", "أزمات برلين وكوبا", "سباق التسلح"])
-        try render("onb12-ar-\(id(.lessonReady))", .lessonReady, model, devices: pro, rtl: true)
+        try render("onb12-ar-\(id(.freeTrialIntro))", .freeTrialIntro, model, devices: pro, rtl: true)
+        try render("onb12-ar-\(id(.trialOffer))", .trialOffer, model, devices: pro, rtl: true) { TrialOfferStepView(previewPermission: .granted) }
         try render("onb12-ar-\(id(.chatDemo))", .chatDemo, model, devices: pro, rtl: true) { ChatDemoStepView(previewAsked: 1) }
         try render("onb12-ar-\(id(.planDemo))", .planDemo, model, devices: pro, rtl: true) { PlanDemoStepView(previewDay: 2) }
         try render("onb12-ar-\(id(.commitment))", .commitment, model, devices: pro, rtl: true) { CommitmentStepView(previewCommitted: true) }

@@ -42,7 +42,8 @@ enum AudioTranscriber {
             "pt": "pt-PT", "pt-BR": "pt-BR", "cs": "cs-CZ", "sk": "sk-SK", "nl": "nl-NL", "el": "el-GR",
             "hu": "hu-HU", "pl": "pl-PL", "ro": "ro-RO", "sv": "sv-SE", "da": "da-DK", "fi": "fi-FI",
             "et": "et-EE", "hr": "hr-HR", "sl": "sl-SI", "sr": "sr-RS", "bg": "bg-BG", "ru": "ru-RU",
-            "tr": "tr-TR", "ar": "ar-SA",
+            "tr": "tr-TR", "ar": "ar-SA", "nb": "nb-NO", "he": "he-IL", "ja": "ja-JP", "lt": "lt-LT",
+            "lv": "lv-LV", "ko": "ko-KR",
         ]
         return Locale(identifier: identifiers[language.rawValue] ?? language.rawValue)
     }
