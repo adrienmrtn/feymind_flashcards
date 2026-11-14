@@ -32,7 +32,7 @@ enum PaywallStyle {
     static let trialLine = V3Font.text(.subheadline, weight: .bold)
     /// Une carte de formule : son nom, son grand chiffre.
     static let planName = V3Font.text(.footnote, weight: .bold)
-    static let cardPrice = V3Font.heading(24, relativeTo: .title2)
+    static var cardPrice: Font { V3Font.heading(24, relativeTo: .title2) }
     /// Les pastilles de ce que l'élève a déclaré (`PaywallFactsRow`).
     static let fact = V3Font.text(.footnote, weight: .semibold)
     static let factIcon = V3Font.text(.caption, weight: .bold)
@@ -59,9 +59,9 @@ enum PaywallStyle {
     /// Une offre : son nom, sa ligne, son prix et l'unité du prix.
     static let planTitle = V3Font.option
     static let planDetail = V3Font.caption
-    static let price = V3Font.title
+    static var price: Font { V3Font.title }
     /// Le prix de l'offre qui n'est pas recommandée : un cran plus petit.
-    static let priceSecondary = V3Font.heading(19, relativeTo: .headline)
+    static var priceSecondary: Font { V3Font.heading(19, relativeTo: .headline) }
     static let priceUnit = V3Font.caption
     /// La pastille de la remise, à côté du nom de l'offre.
     static let badge = V3Font.text(.caption, weight: .heavy)
@@ -78,17 +78,17 @@ enum PaywallStyle {
     static let momentSize: CGFloat = 40
     static let momentSub = V3Font.body
     /// « −40 % », en géant, et son interlettrage.
-    static let percent = V3Font.display(percentSize)
+    static var percent: Font { V3Font.display(percentSize) }
     static let percentSize: CGFloat = 120
     static let percentTracking: CGFloat = -2
     /// « sur ton année Micabo Pro ».
-    static let offerSub = V3Font.h2
+    static var offerSub: Font { V3Font.h2 }
     /// « Tout Pro : leçons, Mika, examens blancs, entraînements », sous la carte du prix.
     static let offerIncludes = V3Font.support
     /// Le tarif réduit, dans sa carte, et ce qui l'entoure.
-    static let offerPrice = V3Font.display(34)
+    static var offerPrice: Font { V3Font.display(34) }
     static let offerPriceUnit = V3Font.support
-    static let offerEquivalent = V3Font.figure
+    static var offerEquivalent: Font { V3Font.figure }
     /// Le même, sur un écran étroit : il reste à côté du prix au lieu de passer dessous.
     static let offerEquivalentNarrow = V3Font.label
     static let offerEquivalentLead = V3Font.caption

@@ -57,7 +57,15 @@ describe("resolveLanguage", () => {
   it("retombe sur le français quand rien n'est demandé", () => {
     assert.equal(resolveLanguage(undefined), "fr");
     assert.equal(resolveLanguage(""), "fr");
-    assert.equal(resolveLanguage("zz"), "fr");
+    assert.equal(resolveLanguage("   "), "fr");
+  });
+
+  // L'app ouvre en anglais un téléphone dont elle ne parle pas la langue : le serveur aussi.
+  it("retombe sur l'anglais pour une langue demandée mais pas servie", () => {
+    assert.equal(resolveLanguage("zz"), "en");
+    assert.equal(resolveLanguage("zh-Hans"), "en");
+    assert.equal(languageName("vi"), "anglais");
+    assert.ok(languageBrief("zh").includes("ANGLAIS"));
   });
 
   it("reconnaît la demande de rester dans la langue du document", () => {

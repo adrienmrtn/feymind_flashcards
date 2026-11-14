@@ -134,7 +134,19 @@ struct ScanModeMemory {
 /// langue du dernier message de l'élève (sa règle la plus forte), et une consigne en français
 /// qui demanderait de l'anglais ferait répondre en français.
 enum ScanTranslation {
-    static let targets: [UiLocale] = [.fr, .en, .de, .es, .tr, .ar]
+    /// **Toute langue de l'app dont le catalogue écrit vraiment la consigne** (lot 13) : sa
+    /// propre phrase `ios.scan12.prompt.translate`, qui n'est pas la copie anglaise. La liste
+    /// était écrite à la main (fr, en, de, es, tr, ar) ; elle suit désormais les catalogues et
+    /// s'allonge d'elle-même à mesure qu'une langue est traduite — une langue encore en copie
+    /// anglaise demanderait « into English » et ferait traduire vers l'anglais.
+    static let targets: [UiLocale] = UiLocale.allCases.filter(writesItsOwnConsigne)
+
+    static func writesItsOwnConsigne(_ locale: UiLocale) -> Bool {
+        let key = "ios.scan12.prompt.translate"
+        guard let own = L10n.iosTable(locale)[key] else { return false }
+        if locale == .en { return true }
+        return !locale.catalogIsProvisional && own != IosI18nCatalogs.en[key]
+    }
 
     /// La langue de l'app, quand Mika sait y traduire ; l'anglais sinon.
     static func defaultTarget(for appLocale: UiLocale) -> UiLocale {

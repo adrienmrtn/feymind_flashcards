@@ -353,9 +353,14 @@ enum MicaboFont {
     /// Les mêmes deux familles que `V3Font` : la police d'affichage pour un titre (19 points et
     /// plus, en gras), la police système pour le reste — avec son vrai italique.
     static func uiFont(_ size: CGFloat, weight: Font.Weight = .regular, italic: Bool = false) -> UIFont {
-        if !italic, V3LegacyScale.isTitle(size: size, weight: weight),
-           let display = UIFont(name: V3Typeface.displayName(for: V3LegacyScale.titleWeight(weight)), size: size) {
-            return display
+        if !italic, V3LegacyScale.isTitle(size: size, weight: weight) {
+            // L'hébreu, le japonais et le coréen : un titre en police système (`V3Typeface.systemDisplay`).
+            if let system = V3Typeface.systemDisplay(for: .resolved()) {
+                return UIFont.systemFont(ofSize: size * system.scale, weight: V3LegacyScale.titleWeight(weight) == .black ? .heavy : .bold)
+            }
+            if let display = UIFont(name: V3Typeface.displayName(for: V3LegacyScale.titleWeight(weight)), size: size) {
+                return display
+            }
         }
         let system = UIFont.systemFont(ofSize: size, weight: uiWeight(for: weight))
         // L'italique s'ajoute aux traits de la police, il ne les remplace pas : un gras italique
@@ -387,9 +392,9 @@ enum MicaboFont {
     // légende (police système).
 
     /// Titre d'un thème, titre d'une leçon en tête de parcours.
-    static let title = V3Font.h2
+    static var title: Font { V3Font.h2 }
     /// Sous-titre dans les notes, titre d'une page de quiz.
-    static let subtitle = V3Font.title
+    static var subtitle: Font { V3Font.title }
     /// Corps des notes et des puces : le seul texte long de l'app, un cran plus léger que
     /// l'interface.
     static let notes = V3Font.reading
@@ -415,12 +420,12 @@ enum MicaboFont {
     }
 
     /// Grand titre d'écran, posé à même le fond : le h1 de la direction artistique.
-    static let screenTitle = V3Font.h1
+    static var screenTitle: Font { V3Font.h1 }
     /// Titre d'un écran poussé ou d'une feuille : son h2.
-    static let pageTitle = V3Font.h2
+    static var pageTitle: Font { V3Font.h2 }
     /// Titre de section.
-    static let sectionTitle = V3Font.section
-    static let cardTitle = V3Font.cardTitle
+    static var sectionTitle: Font { V3Font.section }
+    static var cardTitle: Font { V3Font.cardTitle }
     static let rowTitle = V3Font.bodyStrong
     static let rowSubtitle = V3Font.support
     static let body = V3Font.body

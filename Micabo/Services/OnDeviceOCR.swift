@@ -56,6 +56,17 @@ enum OnDeviceOCR {
         return kept.isEmpty ? ["en-US"] : kept
     }
 
+    /// **Les langues d'un emploi du temps** : les six langues latines habituelles, et devant
+    /// elles celle de l'élève quand Vision la lit et qu'elle n'en fait pas partie — un emploi du
+    /// temps japonais ou coréen (lot 13) ne se lit pas avec les seules langues latines.
+    static func layoutLanguages(for request: VNRecognizeTextRequest) -> [String] {
+        let usual = ["fr-FR", "en-US", "de-DE", "es-ES", "it-IT", "pt-BR"]
+        guard let own = recognitionLanguages(for: request).first,
+              !usual.contains(where: { $0.prefix(2) == own.prefix(2) })
+        else { return usual }
+        return [own] + usual
+    }
+
     /// La langue des cours en tête, puis l'anglais et le français, sans doublon.
     static func preferredRecognitionLanguages(content: ContentLanguage) -> [String] {
         let first = AudioTranscriber.locale(for: content).identifier.replacingOccurrences(of: "_", with: "-")
@@ -108,7 +119,7 @@ enum OnDeviceOCR {
                 }
                 request.recognitionLevel = .accurate
                 request.usesLanguageCorrection = true
-                request.recognitionLanguages = ["fr-FR", "en-US", "de-DE", "es-ES", "it-IT", "pt-BR"]
+                request.recognitionLanguages = layoutLanguages(for: request)
                 if #available(iOS 16.0, *) {
                     request.automaticallyDetectsLanguage = true
                 }
