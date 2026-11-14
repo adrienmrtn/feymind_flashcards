@@ -108,6 +108,9 @@ struct TrialOfferStepView: View {
 
     /// Pour les rendus : l'état à montrer, sans le demander à iOS.
     var previewPermission: Permission?
+    /// **L'instant d'où partent les dates**, le même que celui du paywall qui suit (les rendus
+    /// posent le leur, celui des rendus du paywall).
+    var now = Date()
 
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -126,7 +129,7 @@ struct TrialOfferStepView: View {
     }
 
     private var promises: Bool {
-        Self.promises(current, trialDays: OnboardingTrial.days)
+        Self.promises(current, trialDays: OnboardingTrial.days, now: now)
     }
 
     var body: some View {
@@ -142,7 +145,7 @@ struct TrialOfferStepView: View {
             )
             .padding(.top, 12)
 
-            OnbTrialTimeline(milestones: TrialTimeline.milestones(locale: i18n.locale, remindersOn: promises))
+            OnbTrialTimeline(milestones: TrialTimeline.milestones(from: now, locale: i18n.locale, remindersOn: promises))
                 .padding(.top, compact ? 14 : 20)
         } footer: {
             switch current {

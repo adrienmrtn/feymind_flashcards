@@ -236,6 +236,26 @@ final class OnboardingLot12Tests: XCTestCase {
         XCTAssertFalse(TrialOfferStepView.promises(.granted, trialDays: 1), "Un essai d'un jour n'a pas de veille")
     }
 
+    /// **L'écran du rappel et le paywall qui le suit montrent les mêmes dates** (lot 13) : même
+    /// instant de départ, même durée d'essai (celle du produit), même calcul, même écriture —
+    /// en Europe comme à l'autre bout du monde, et pour un essai d'une autre durée.
+    func testTheTrialScreenAndThePaywallShowTheSameDates() throws {
+        for zone in ["Europe/Paris", "America/Los_Angeles", "Pacific/Auckland"] {
+            var calendar = Calendar(identifier: .gregorian)
+            calendar.timeZone = try XCTUnwrap(TimeZone(identifier: zone))
+            let now = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 11, day: 12, hour: 23, minute: 30)))
+            for days in [OnboardingTrial.days, 7] {
+                let screen = TrialTimeline.milestones(from: now, calendar: calendar, locale: .fr, trialDays: days)
+                let paywall = PaywallTimeline.steps(trialDays: days, price: "49,99 €", now: now, reminderKept: true, locale: .fr, calendar: calendar)
+                let reminder = try XCTUnwrap(paywall.first { $0.kind == .reminder })
+                let end = try XCTUnwrap(paywall.first { $0.kind == .end })
+                XCTAssertTrue(screen[1].title.hasPrefix(reminder.title), "\(zone) \(days) : \(screen[1].title) / \(reminder.title)")
+                XCTAssertTrue(screen[2].title.hasPrefix(end.title), "\(zone) \(days) : \(screen[2].title) / \(end.title)")
+            }
+        }
+        XCTAssertEqual(OnboardingTrial.days, PaywallCatalog.yearly.trialDays, "La durée vient du produit de la boutique")
+    }
+
     /// **Le glissement vers le bas fait exactement comme la croix** (lot 13) : le paywall mène
     /// à l'offre (ou à la sortie), l'offre à la sortie, l'au revoir à l'app ; la bienvenue ne se
     /// referme que par son bouton. Un défilement ou un geste de côté ne ferme rien.
