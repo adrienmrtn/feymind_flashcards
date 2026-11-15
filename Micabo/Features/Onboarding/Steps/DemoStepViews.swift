@@ -87,10 +87,10 @@ struct LessonDemoStepView: View {
 
     private var isPlayed: Bool { played || previewPlayed }
 
-    /// Le titre : « Ton cours devient une leçon. » La page photographiée est de maths, pour
-    /// se lire dans toutes les langues ; le titre ne promet donc pas sa matière à lui.
+    /// Le titre (lot 14) : « Tes cours deviennent des leçons. » — tous les cours, pas une
+    /// seule photo : le bandeau des sources le dit au-dessus de la page photographiée.
     private var title: String {
-        i18n.t("ios.onb12.lesson.titleAny")
+        i18n.t("ios.onb14.lesson.title")
     }
 
     var body: some View {
@@ -98,20 +98,23 @@ struct LessonDemoStepView: View {
             title: title,
             say: isPlayed
                 ? OnbSay(i18n.t("ios.onb12.lesson.done"), mood: .proud)
-                : OnbSay(i18n.t("ios.onb12.lesson.say"), mood: .write),
+                : OnbSay(i18n.t("ios.onb14.lesson.say"), mood: .write),
             playLabel: i18n.t("ios.onb12.lesson.play"),
             isPlayed: isPlayed,
             onPlay: play
         ) {
-            ZStack {
-                if isPlayed {
-                    lesson.transition(.onbPop)
-                } else {
-                    photo.transition(.opacity)
+            VStack(spacing: compact ? 10 : 16) {
+                OnbSourceStrip(tile: compact ? 40 : 46, highlighted: .photo)
+                ZStack {
+                    if isPlayed {
+                        lesson.transition(.onbPop)
+                    } else {
+                        photo.transition(.opacity)
+                    }
                 }
+                .contentShape(Rectangle())
+                .onTapGesture { play() }
             }
-            .contentShape(Rectangle())
-            .onTapGesture { play() }
         }
     }
 
@@ -124,7 +127,7 @@ struct LessonDemoStepView: View {
     /// **La page de cours prise en photo** (retour testeur du build 179) : une vraie page de
     /// cahier, écrite à la main, dans le cadre de visée de l'appareil photo.
     private var photo: some View {
-        NotebookPhoto(height: compact ? 236 : 300)
+        NotebookPhoto(height: compact ? 190 : 250)
             .padding(.vertical, compact ? 10 : 16)
             .frame(maxWidth: .infinity)
             .overlay {
@@ -157,105 +160,6 @@ struct LessonDemoStepView: View {
         }
         .padding(10)
         .background(V3Color.soft, in: RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous))
-    }
-}
-
-// MARK: - Les cartes
-
-/// **Une carte à retourner** (lot 12), sur sa matière : la question, puis la réponse. L'élève
-/// dit s'il savait ; Mika dit quand il la lui remontrera — juste avant de l'oublier.
-struct CardsDemoStepView: View {
-    /// Pour les rendus : la carte déjà retournée, et la réponse donnée.
-    var previewFlipped = false
-    var previewKnew: Bool?
-
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.onbCompact) private var compact
-
-    @State private var flipped = false
-    @State private var knew: Bool?
-
-    private var isFlipped: Bool { flipped || previewFlipped }
-    private var answer: Bool? { knew ?? previewKnew }
-
-    private var family: SampleCard { OnbDemo.family(for: model) }
-
-    private var say: OnbSay {
-        switch answer {
-        case true?: OnbSay(i18n.t("ios.onb12.cards.knew"), mood: .happy)
-        case false?: OnbSay(i18n.t("ios.onb12.cards.again"), mood: .wink)
-        case nil: OnbSay(i18n.t(isFlipped ? "ios.onb12.cards.rate" : "ios.onb12.cards.say"), mood: isFlipped ? .look : .think)
-        }
-    }
-
-    var body: some View {
-        OnbDemoStage(
-            title: i18n.t("ios.onb12.cards.title"),
-            say: say,
-            playLabel: i18n.t("ios.onb12.cards.play"),
-            isPlayed: isFlipped,
-            onPlay: flip
-        ) {
-            VStack(spacing: 12) {
-                ZStack {
-                    face(back: false)
-                        .opacity(isFlipped ? 0 : 1)
-                    face(back: true)
-                        .opacity(isFlipped ? 1 : 0)
-                        .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
-                }
-                .rotation3DEffect(.degrees(isFlipped && !reduceMotion ? 180 : 0), axis: (x: 0, y: 1, z: 0), perspective: 0.5)
-                .contentShape(Rectangle())
-                .onTapGesture { flip() }
-
-                if isFlipped {
-                    HStack(spacing: 10) {
-                        rate(knew: false)
-                        rate(knew: true)
-                    }
-                    .transition(.onbPop)
-                }
-            }
-        }
-    }
-
-    /// Une face de la carte : la matière et la question, ou la réponse.
-    private func face(back: Bool) -> some View {
-        VStack(spacing: 14) {
-            Spacer(minLength: 0)
-            Text(back ? family.demoCardAnswer(locale: i18n.locale) : family.demoCardQuestion(locale: i18n.locale))
-                .font(V3Font.heading(back ? 34 : 28))
-                .foregroundStyle(back ? V3Color.green : V3Color.ink)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-        }
-        .padding(20)
-        .frame(maxWidth: .infinity, minHeight: compact ? 180 : 290)
-        .v3Card(tone: back ? V3Color.green : nil)
-    }
-
-    private func rate(knew value: Bool) -> some View {
-        Button {
-            guard answer == nil else { return }
-            if value { Haptics.success() } else { Haptics.soft() }
-            onbPlay { knew = value }
-        } label: {
-            Text(i18n.t(value ? "ios.onb12.cards.yes" : "ios.onb12.cards.no"))
-                .font(V3Font.buttonSecondary)
-                .foregroundStyle(value ? V3Color.green : V3Color.ink)
-                .frame(maxWidth: .infinity, minHeight: 52)
-        }
-        .buttonStyle(V3TileButtonStyle(selected: answer == value, tone: value ? V3Color.green : nil, radius: V3Metric.radiusInner, feedback: .none))
-        .opacity(answer != nil && answer != value ? 0.45 : 1)
-    }
-
-    private func flip() {
-        guard !isFlipped else { return }
-        Haptics.soft()
-        withAnimation(MicaboMotion.resolved(MicaboMotion.gentle, reduceMotion: reduceMotion)) { flipped = true }
     }
 }
 
@@ -524,103 +428,6 @@ struct ChatDemoStepView: View {
             .background(V3Color.accent, in: RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous))
             .padding(.leading, 40)
             .frame(maxWidth: .infinity, alignment: .trailing)
-    }
-}
-
-// MARK: - L'examen blanc
-
-/// **« Le jour J, tu l'auras déjà fait. »** (lot 12) Une copie d'examen blanc sur sa matière ;
-/// on la rend, et la correction tombe : ce qui est juste, ce qui est à revoir, un corrigé
-/// pas à pas. Le stress recule quand l'épreuve n'est plus une première fois.
-struct ExamDemoStepView: View {
-    var previewPlayed = false
-
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    @State private var played = false
-
-    private var isPlayed: Bool { played || previewPlayed }
-
-    /// Le corrigé de l'exemple : deux exercices justes sur trois.
-    static let marks = [true, true, false]
-
-    private var sheetTitle: String {
-        let subject = OnbDemo.subject(for: model, locale: i18n.locale) ?? i18n.t("ios.onb12.exam.general")
-        if let exam = model.examName(locale: i18n.locale) {
-            return i18n.t("ios.onb12.exam.sheet", ["exam": exam, "subject": subject])
-        }
-        return i18n.t("ios.onb12.exam.sheetAny", ["subject": subject])
-    }
-
-    var body: some View {
-        OnbDemoStage(
-            title: i18n.t("ios.onb12.exam.title"),
-            say: isPlayed
-                ? OnbSay(i18n.t("ios.onb12.exam.done"), mood: .happy)
-                : OnbSay(i18n.t("ios.onb12.exam.say"), mood: .idle),
-            playLabel: i18n.t("ios.onb12.exam.play"),
-            isPlayed: isPlayed,
-            onPlay: play
-        ) {
-            OnbPanel(padding: 18) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(sheetTitle)
-                        .font(V3Font.heading(22))
-                        .foregroundStyle(V3Color.ink)
-                        .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    Image(systemName: "timer")
-                        .font(V3Font.label)
-                        .foregroundStyle(V3Color.ink3)
-                }
-                ForEach(0 ..< Self.marks.count, id: \.self) { index in
-                    exercise(index)
-                }
-                if isPlayed {
-                    HStack(spacing: 10) {
-                        Text(i18n.t("ios.onb12.exam.score", ["n": "2", "total": "3"]))
-                            .font(V3Font.heading(40))
-                            .foregroundStyle(V3Color.ink)
-                    }
-                    .padding(.top, 4)
-                    .transition(.onbPop)
-                }
-            }
-        }
-    }
-
-    private func play() {
-        guard !isPlayed else { return }
-        Haptics.success()
-        onbPlay { played = true }
-    }
-
-    private func exercise(_ index: Int) -> some View {
-        let right = Self.marks[index]
-        return HStack(spacing: 12) {
-            Text(i18n.t("ios.onb12.exam.ex", ["n": "\(index + 1)"]))
-                .font(V3Font.bodyStrong)
-                .foregroundStyle(V3Color.ink)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            if isPlayed {
-                Label(
-                    i18n.t(right ? "ios.onb12.exam.right" : "ios.onb12.exam.review"),
-                    systemImage: right ? "checkmark.circle.fill" : "arrow.uturn.backward.circle.fill"
-                )
-                .font(V3Font.label)
-                .foregroundStyle(right ? V3Color.green : V3Color.yellowInk)
-                .transition(.onbPop)
-            } else {
-                Capsule()
-                    .fill(V3Color.line)
-                    .frame(width: 70, height: 10)
-            }
-        }
-        .padding(.horizontal, 14)
-        .frame(minHeight: 62)
-        .background(V3Color.soft, in: RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous))
     }
 }
 

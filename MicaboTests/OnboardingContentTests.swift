@@ -146,14 +146,14 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(french("ios.onb10.plan.title", ["name": "Lina"]), "Lina, ton plan est **prêt**")
         XCTAssertEqual(french("ios.onb10.trial.cancel"), "Tu annules en 2 touches, quand tu veux")
         XCTAssertEqual(OnboardingDailyTime.fifteen.title(locale: .fr), "15 min · Sérieux")
-        XCTAssertEqual(DailyTimeStepView.advised, .fifteen, "Quinze minutes est le cran conseillé")
+        XCTAssertEqual(DailyTimeStepView.advised, 15, "Quinze minutes est le cran proposé d'abord")
     }
 
     // MARK: - Vrai partout
 
     /// **Aucun chiffre d'utilisateurs, aucune note, aucun pourcentage, aucune étude** dans les
-    /// phrases du lot : la seule étude du parcours est celle de la question d'essai, et ses
-    /// deux chiffres sont écrits une fois, avec leur source.
+    /// phrases du lot : la seule étude du parcours (lot 14) est celle de Kestin et al., sur son
+    /// écran, avec sa source écrite en clair ; la question d'essai et Karpicke sont partis.
     func testNoStudyAndNoFigureOutsideTheSampleCard() throws {
         let bigNumber = try NSRegularExpression(pattern: #"[0-9]{3,}"#)
         for locale in Self.languages {
@@ -172,11 +172,15 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(SampleCard.retainedByRereading, 36)
         XCTAssertTrue(L10n.t("ios.journey.source", locale: .fr).contains("Karpicke"))
 
-        // La source et la phrase de l'étude ne sont appelées que par la question d'essai.
-        for (path, text) in try Self.onboardingSources() where !path.hasSuffix("SampleCardStepView.swift") {
+        // L'étude de Karpicke n'est plus citée ; celle de Kestin l'est une fois, sur son écran.
+        var citing: [String] = []
+        for (path, text) in try Self.onboardingSources() {
             XCTAssertFalse(text.contains("ios.journey.source"), path)
             XCTAssertFalse(text.contains("ios.onb7.card.proof"), path)
+            if text.contains("\"ios.research.quote\"") { citing.append(path) }
         }
+        XCTAssertEqual(citing.count, 1, "\(citing)")
+        XCTAssertTrue(citing.first?.hasSuffix("ChapterStepViews.swift") == true)
     }
 
     /// **Rien de ce que l'élève tape ne part dans les statistiques** : ni le sujet de sa

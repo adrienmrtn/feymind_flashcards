@@ -56,16 +56,22 @@ final class OnboardingLot11Tests: XCTestCase {
         func after(_ demo: OnboardingStep, _ answer: OnboardingStep) {
             XCTAssertEqual(order.firstIndex(of: demo), order.firstIndex(of: answer).map { $0 + 1 }, "\(demo)")
         }
-        after(.lessonDemo, .solutionMap)
-        after(.cardsDemo, .lessonDemo)
-        after(.scanDemo, .cardsDemo)
+        // Lot 14 : le chapitre de l'aide s'ouvre après « Je t'ai compris », puis Mika dit d'où
+        // il vient, et les démos suivent ; le calendrier suit « je ne suis pas que ton prof ».
+        after(.helpIntro, .solutionMap)
+        after(.origin, .helpIntro)
+        after(.lessonDemo, .origin)
+        after(.scanDemo, .lessonDemo)
         after(.chatDemo, .scanDemo)
-        after(.examDemo, .chatDemo)
-        after(.planDemo, .dailyTime)
+        after(.organizeIntro, .dailyTime)
+        after(.planDemo, .organizeIntro)
         after(.focusDemo, .planDemo)
-        // Les écrans qui amènent au paywall (lot 13) : le plan, le sujet de la première leçon,
-        // l'essai voulu pour lui, le rappel promis.
-        XCTAssertEqual(Array(order.suffix(5)), [.profileSummary, .firstLesson, .freeTrialIntro, .trialOffer, .paywall])
+        // Les écrans qui amènent au paywall (lot 14) : la démo racontée, puis l'essai voulu
+        // pour lui, le rappel promis.
+        XCTAssertEqual(
+            Array(order.suffix(9)),
+            [.storyIntro, .storyCreate, .storyPath, .storyPractice, .storyAsk, .storyClose, .freeTrialIntro, .trialOffer, .paywall]
+        )
         let demos = OnboardingStep.allCases.filter { $0.kind == .demo }
         XCTAssertTrue((demos + [.commitment]).allSatisfy(\.showsChrome))
         XCTAssertTrue((demos + [.commitment]).allSatisfy(\.allowsReturn))

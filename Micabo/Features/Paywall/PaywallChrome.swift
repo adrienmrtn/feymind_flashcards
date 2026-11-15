@@ -59,6 +59,10 @@ enum PaywallStyle {
     /// Une offre : son nom, sa ligne, son prix et l'unité du prix.
     static let planTitle = V3Font.option
     static let planDetail = V3Font.caption
+    /// **La somme réellement facturée**, sous le prix à la semaine (lot 14) : au corps de
+    /// lecture (15 pt), en couleur secondaire contrastée — jamais en gris minuscule (App Store
+    /// 3.1.2 : le montant facturé doit rester clairement lisible).
+    static let planBilled = V3Font.text(.subheadline, weight: .semibold)
     static var price: Font { V3Font.title }
     /// Le prix de l'offre qui n'est pas recommandée : un cran plus petit.
     static var priceSecondary: Font { V3Font.heading(19, relativeTo: .headline) }
@@ -68,7 +72,7 @@ enum PaywallStyle {
     /// « Rien à payer aujourd'hui », au-dessus du bouton.
     static let assurance = V3Font.label
     /// La mention sous le bouton, le message d'un achat qui n'a pas abouti, les liens.
-    static let legal = V3Font.text(.caption, weight: .medium)
+    static let legal = V3Font.text(.footnote, weight: .medium)
     static let notice = V3Font.caption
     static let link = V3Font.text(.caption2, weight: .semibold)
 
@@ -146,7 +150,7 @@ enum PaywallStyle {
     static let trialMika: CGFloat = 64
     static let welcomeMika: CGFloat = 200
     /// Mika en grand, en tête du paywall (lot 12, refonte).
-    static let heroMika: CGFloat = 148
+    static let heroMika: CGFloat = 128
 
     // MARK: Les couleurs
 

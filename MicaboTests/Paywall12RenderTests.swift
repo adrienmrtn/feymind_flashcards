@@ -198,4 +198,23 @@ final class Paywall12RenderTests: XCTestCase {
                 .environment(\.layoutDirection, .rightToLeft)
         )
     }
+
+    // MARK: - Lot 14 : l'anglais et le japonais, le prix à la semaine forcé par défaut
+
+    /// **Le paywall et l'offre en anglais et en japonais** (lot 14), sans variante forcée : le
+    /// prix à la semaine en grand, la somme facturée au corps de lecture.
+    func testEnglishAndJapaneseOnDevice() throws {
+        PriceDisplay.setOverride(nil)
+        use(.en)
+        OnboardingPreferences.displayName = "Emma"
+        let english = context(name: "Emma", exam: ("SAT", "us.sat"), subjects: ["Calculus", "Chemistry"], topic: "The Cold War")
+        try RenderGallery.renderDevice("pay14-en-trial", paywall(context: english))
+        try RenderGallery.renderDevice("pay14-en-offer", offer())
+
+        use(.ja)
+        OnboardingPreferences.displayName = "ユイ"
+        let japanese = context(name: "ユイ", exam: nil, subjects: ["Mathématiques"], topic: nil)
+        try RenderGallery.renderDevice("pay14-ja-trial", devices: [.iPhone15Pro], paywall(context: japanese))
+        try RenderGallery.renderDevice("pay14-ja-offer", devices: [.iPhone15Pro], offer())
+    }
 }

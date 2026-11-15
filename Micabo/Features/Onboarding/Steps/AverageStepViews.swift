@@ -6,12 +6,12 @@ import SwiftUI
 
 // MARK: - La moyenne d'aujourd'hui
 
-/// **« Ta moyenne en ce moment, à peu près ? »**
+/// **« Ta moyenne en ce moment, à peu près ? »** (lot 14 : le curseur à crans.)
 ///
-/// La question ne juge pas : la première valeur de la molette est **en dessous** du barème,
-/// parce qu'une échelle qui commence à la moyenne annonce à celui qui ne l'a pas qu'il n'était
-/// pas prévu. Elle est facultative : « Passer », en haut à droite, saute aussi la moyenne
-/// visée.
+/// La valeur en très grand, dans le barème de son pays ; dessous, la piste du curseur, ses
+/// bornes en clair. Le premier cran est **en dessous** du barème : une échelle qui commence à
+/// la moyenne dit à celui qui ne l'a pas qu'il n'était pas prévu. Facultative : « Passer », en
+/// haut à droite, saute aussi la moyenne visée.
 struct CurrentAverageStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -31,24 +31,21 @@ struct CurrentAverageStepView: View {
             i18n.t("ios.onb12.q.current"),
             say: OnbSay(i18n.t("ios.onb12.say.current"), mood: .wink)
         ) {
-            VStack(spacing: 18) {
-                OnbGradeWheel(
-                    choices: choices,
-                    score: Binding(
-                        get: { model.currentScore },
-                        set: { newValue in
-                            model.currentScore = newValue
-                            // Un objectif plus bas que la nouvelle moyenne n'a plus cours.
-                            if let target = model.targetScore, let newValue, target < newValue {
-                                model.targetScore = nil
-                            }
+            OnbGradeSlider(
+                choices: choices,
+                score: Binding(
+                    get: { model.currentScore },
+                    set: { newValue in
+                        model.currentScore = newValue
+                        // Un objectif plus bas que la nouvelle moyenne n'a plus cours.
+                        if let target = model.targetScore, let newValue, target < newValue {
+                            model.targetScore = nil
                         }
-                    ),
-                    label: OnbPhrase.plain(i18n.t("ios.onb12.q.current")),
-                    caption: model.gradeScale.caption(locale: i18n.locale)
-                )
-            }
-            .frame(maxWidth: .infinity)
+                    }
+                ),
+                label: OnbPhrase.plain(i18n.t("ios.onb12.q.current")),
+                caption: model.gradeScale.caption(locale: i18n.locale)
+            )
         } footer: {
             V3Button(i18n.t("common.continue"), isEnabled: model.currentScore != nil) {
                 model.answerCurrentAverage()
@@ -60,11 +57,8 @@ struct CurrentAverageStepView: View {
 
 // MARK: - La moyenne visée
 
-/// **« Et tu vises combien ? »**
-///
-/// On peut viser sa note d'aujourd'hui (« tenir ») ou n'importe laquelle au-dessus ; les
-/// notes plus basses ne sont pas là. Sous la molette, **la carte change en direct** : l'écart
-/// dans le barème de l'élève, et ce que Mika en pense.
+/// **« Et tu vises combien ? »** On peut viser sa note d'aujourd'hui (« tenir ») ou plus haut ;
+/// Mika dit l'écart en direct, dans le barème de l'élève.
 struct TargetAverageStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -75,21 +69,18 @@ struct TargetAverageStepView: View {
 
     var body: some View {
         OnbQuestion(i18n.t("ios.onb10.q.target"), say: say) {
-            VStack(spacing: 18) {
-                OnbGradeWheel(
-                    choices: choices,
-                    score: Binding(
-                        get: { model.targetScore },
-                        set: { model.targetScore = $0 }
-                    ),
-                    // Le milieu de ce qui reste à viser : ni « tenir », ni le haut du barème.
-                    fallbackIndex: (choices.count - 1) / 2,
-                    label: OnbPhrase.plain(i18n.t("ios.onb10.q.target")),
-                    caption: model.gradeScale.caption(locale: i18n.locale)
-                )
-
-            }
-            .frame(maxWidth: .infinity)
+            OnbGradeSlider(
+                choices: choices,
+                score: Binding(
+                    get: { model.targetScore },
+                    set: { model.targetScore = $0 }
+                ),
+                // Le milieu de ce qui reste à viser : ni « tenir », ni le haut du barème.
+                fallbackIndex: (choices.count - 1) / 2,
+                label: OnbPhrase.plain(i18n.t("ios.onb10.q.target")),
+                caption: model.gradeScale.caption(locale: i18n.locale),
+                tone: V3Color.green
+            )
         } footer: {
             V3Button(i18n.t("common.continue"), isEnabled: model.targetScore != nil) {
                 model.advance()
@@ -97,13 +88,76 @@ struct TargetAverageStepView: View {
         }
     }
 
-    /// **Mika réagit à l'écart, en direct** : l'écart dans le barème de l'élève, et ce qu'il
-    /// vaut (« +4 points : ambitieux, et faisable »). Il change à chaque cran de la molette.
+    /// **Mika réagit à l'écart, en direct** (« +4 points : ambitieux, et faisable »).
     private var say: OnbSay {
         guard let gap = model.gradeGap(locale: i18n.locale) else {
             return OnbSay(i18n.t("ios.onb12.say.target"), mood: .happy)
         }
         return OnbSay(gap.title(locale: i18n.locale), mood: .happy)
+    }
+}
+
+// MARK: - Le curseur d'une note
+
+/// **Une note au curseur** (lot 14) : la note en très grand (« 16 » et « /20 »), la piste à
+/// crans dessous, les bornes du barème aux deux bouts, et le mot du barème quand le chiffre ne
+/// suffit pas (« la meilleure note est 1 »).
+struct OnbGradeSlider: View {
+    let choices: [GradeTick]
+    @Binding var score: Int?
+    /// Le cran de départ, quand rien n'a encore été choisi. Le milieu, sauf avis contraire.
+    var fallbackIndex: Int?
+    let label: String
+    var caption: String?
+    /// La couleur du barème : bleu pour aujourd'hui, vert pour l'objectif.
+    var tone: Color = V3Color.accentBright
+
+    @Environment(\.onbCompact) private var compact
+
+    private var start: Int {
+        min(max(0, fallbackIndex ?? (choices.count - 1) / 2), max(0, choices.count - 1))
+    }
+
+    private var index: Int {
+        guard let score, let found = choices.firstIndex(where: { $0.score == score }) else { return start }
+        return found
+    }
+
+    var body: some View {
+        VStack(spacing: compact ? 18 : 30) {
+            OnbSliderValue(
+                label: choices.indices.contains(index) ? choices[index].label : "",
+                tone: tone
+            )
+            OnbNotchSlider(
+                count: choices.count,
+                index: Binding(
+                    get: { index },
+                    set: { newValue in
+                        guard choices.indices.contains(newValue) else { return }
+                        score = choices[newValue].score
+                    }
+                ),
+                lowerBound: choices.first.map { OnbGradeWheel.parts(of: $0.label).value } ?? "",
+                upperBound: choices.last?.label ?? "",
+                accessibilityLabel: label,
+                valueText: { choices.indices.contains($0) ? choices[$0].label : "" }
+            )
+            if let caption {
+                Text(caption)
+                    .font(V3Font.caption)
+                    .foregroundStyle(V3Color.ink2)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+        .padding(.top, compact ? 8 : 28)
+        .frame(maxWidth: .infinity)
+        .onAppear {
+            // La réponse existe dès l'affichage : une note montrée sans être enregistrée
+            // laisserait le bouton éteint sans dire pourquoi.
+            if score == nil, choices.indices.contains(start) { score = choices[start].score }
+        }
     }
 }
 

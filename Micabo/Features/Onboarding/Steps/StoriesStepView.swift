@@ -22,7 +22,8 @@ enum OnboardingStory: Int, CaseIterable, Identifiable {
 
     var titleKey: String {
         switch self {
-        case .lesson: "ios.onb10.story1"
+        // Lot 14 : tous les cours, pas une seule photo (« dire aussi PDF, micro, YouTube »).
+        case .lesson: "ios.onb14.story1"
         case .quiz: "ios.onb10.story2"
         case .scan: "ios.onb10.story3"
         case .plan: "ios.onb10.story4"
@@ -424,13 +425,15 @@ struct StoryTag: View {
     }
 }
 
-/// **Page 1** : une vraie page de cahier prise en photo (`NotebookPhoto`), puis la leçon qui
-/// en sort, avec ses trois modes (retour testeur du build 179 : « un peu vide »).
+/// **Page 1** : les cinq sources (lot 14), une vraie page de cahier prise en photo
+/// (`NotebookPhoto`), puis la leçon qui en sort, avec ses trois modes.
 private struct StoryLessonPreview: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
-        NotebookPhoto(height: 164)
+        OnbSourceStrip(tile: 40, highlighted: .photo)
+
+        NotebookPhoto(height: 132)
             .frame(maxWidth: .infinity)
             .padding(.bottom, 4)
 

@@ -106,13 +106,14 @@ extension OnboardingLivePage where Content == OnboardingStepScreen {
     }
 }
 
-/// **Le parcours d'accueil du lot 12, écran par écran, sur un vrai iPhone** : chaque écran dans
-/// une fenêtre aux marges de l'iPhone 15 Pro (59/34) et de l'iPhone SE (20/0), encoche et barre
-/// d'accueil dessinées (`RenderGallery.renderDevice`), marine et clair. Les démonstrations sont
-/// rendues jouées (et, sur 15 Pro, avant d'être jouées). L'allemand et l'arabe sur les écrans
-/// qui portent le plus de texte ; le très grand texte sur un iPhone SE.
+/// **Le parcours d'accueil du lot 14, écran par écran, dans l'ordre, sur un vrai iPhone** :
+/// chaque écran dans une fenêtre aux marges de l'iPhone 15 Pro (59/34) et de l'iPhone SE
+/// (20/0), encoche et barre d'accueil dessinées (`RenderGallery.renderDevice`). Le français en
+/// entier sur les deux iPhone ; l'anglais en entier sur le 15 Pro ; l'arabe et le japonais
+/// sur les écrans qui portent le plus de texte ; le très grand texte sur un iPhone SE. Les
+/// démonstrations sont rendues jouées ; quelques-unes aussi avant.
 @MainActor
-final class OnboardingLot12RenderTests: XCTestCase {
+final class OnboardingLot14RenderTests: XCTestCase {
     private var savedLocale: String?
 
     override func setUpWithError() throws {
@@ -171,7 +172,7 @@ final class OnboardingLot12RenderTests: XCTestCase {
         model.studyMethod = .rereading
         model.currentScore = 12
         model.targetScore = 16
-        model.dailyMinutes = 15
+        model.dailyMinutes = 45
         model.studyHour = 18
         model.firstLessonChoice = .topic
         model.firstLessonTopic = topic
@@ -184,9 +185,9 @@ final class OnboardingLot12RenderTests: XCTestCase {
                 hardest: "Mathématiques", topic: "La guerre froide")
     }
 
-    private func mia() -> OnboardingModel {
-        student(name: "Mia", region: "DE", track: "de.gymnasium", year: "de.klasse12",
-                subjects: ["Mathematik", "Deutsch", "Englisch", "Biologie"], hardest: "Mathematik", topic: "Der Kalte Krieg")
+    private func emma() -> OnboardingModel {
+        student(name: "Emma", region: "US", track: "us.high", year: "us.hs12",
+                subjects: ["Calculus", "US History", "Chemistry", "English"], hardest: "Calculus", topic: "The Cold War")
     }
 
     private func noura() -> OnboardingModel {
@@ -196,42 +197,52 @@ final class OnboardingLot12RenderTests: XCTestCase {
 
     // MARK: - Poser une page
 
+    /// La vue d'étape jouée, pour une démonstration ; `nil` : l'écran tel que le parcours le
+    /// pose (`OnboardingStepScreen`).
+    private func played(_ step: OnboardingStep) -> AnyView? {
+        switch step {
+        case .origin: AnyView(OriginStepView(previewTidy: true))
+        case .lessonDemo: AnyView(LessonDemoStepView(previewPlayed: true))
+        case .scanDemo: AnyView(ScanDemoStepView(previewStage: 3))
+        case .chatDemo: AnyView(ChatDemoStepView(previewAsked: 0))
+        case .planDemo: AnyView(PlanDemoStepView(previewDay: 1))
+        case .focusDemo: AnyView(FocusDemoStepView(previewDone: true))
+        case .commitment: AnyView(CommitmentStepView(previewCommitted: true))
+        case .planBuilding: AnyView(PlanBuildingStepView(previewProgress: 0.62))
+        case .trialOffer: AnyView(TrialOfferStepView(previewPermission: .ask, now: Self.now))
+        default: nil
+        }
+    }
+
+    /// Pose l'écran : la vue donnée (elle reçoit la place de la barre du haut), sinon l'écran
+    /// du parcours, joué quand c'est une démonstration.
     private func render(
         _ name: String,
         _ step: OnboardingStep,
         _ model: OnboardingModel,
         devices: [RenderDevice] = [.iPhone15Pro, .iPhoneSE],
-        rtl: Bool = false
-    ) throws {
-        model.place(on: step)
-        try RenderGallery.renderDevice(
-            name,
-            devices: devices,
-            OnboardingLivePage(step: step, model: model)
-                .environment(\.layoutDirection, rtl ? .rightToLeft : .leftToRight)
-        )
-    }
-
-    private func render<V: View>(
-        _ name: String,
-        _ step: OnboardingStep,
-        _ model: OnboardingModel,
-        devices: [RenderDevice] = [.iPhone15Pro, .iPhoneSE],
         rtl: Bool = false,
-        @ViewBuilder _ page: () -> V
+        xxl: Bool = false,
+        view: AnyView? = nil,
+        playsDemo: Bool = true
     ) throws {
         model.place(on: step)
+        let custom = view ?? (playsDemo ? played(step) : nil)
+        let page: AnyView = if let custom {
+            AnyView(OnboardingLivePage(step: step, model: model) { custom })
+        } else {
+            AnyView(OnboardingLivePage(step: step, model: model))
+        }
         try RenderGallery.renderDevice(
             name,
             devices: devices,
-            OnboardingLivePage(step: step, model: model, content: page)
+            page
                 .environment(\.layoutDirection, rtl ? .rightToLeft : .leftToRight)
+                .environment(\.dynamicTypeSize, xxl ? .accessibility2 : .large)
         )
     }
 
-    /// **Le 12 novembre 2026, dix heures : l'instant des rendus du paywall**
-    /// (`Paywall12RenderTests.now`). L'écran du rappel part du même : une planche montre les
-    /// mêmes dates d'un écran à l'autre.
+    /// **Le 12 novembre 2026, dix heures** : l'instant des rendus du paywall.
     private static let now: Date = {
         Calendar.current.date(from: DateComponents(year: 2026, month: 11, day: 12, hour: 10)) ?? Date()
     }()
@@ -240,139 +251,74 @@ final class OnboardingLot12RenderTests: XCTestCase {
         String(format: "%02d-%@", step.rawValue, step.analyticsName)
     }
 
-    // MARK: - Le parcours, acte par acte
-
-    /// Acte 0 et 1 : les stories, Mika qui se présente, puis « toi ».
-    func testActOneOnDevice() throws {
-        let model = lina()
-        for step in [OnboardingStep.hookLogo, .welcome, .country, .schoolType, .year, .exam, .subjects] {
-            try render("onb12-\(id(step))", step, model)
-        }
-        // Le prénom : vide, puis tapé (Mika réagit).
-        let fresh = OnboardingModel()
-        try render("onb12-\(id(.name))-empty", .name, fresh, devices: [.iPhone15Pro])
-        try render("onb12-\(id(.name))", .name, model)
-        // L'examen, avant la réponse.
-        let before = lina()
-        before.examChoice = nil
-        try render("onb12-\(id(.exam))-before", .exam, before, devices: [.iPhone15Pro])
+    /// Les écrans que cet élève voit, dans l'ordre, sans le paywall (rendu à part).
+    private func seen(by model: OnboardingModel) -> [OnboardingStep] {
+        OnboardingStep.allCases.filter { !model.isSkipped($0) && $0 != .paywall }
     }
 
-    /// Acte 2 : ce qui bloque, puis Mika reformule.
-    func testActTwoOnDevice() throws {
+    // MARK: - Le parcours entier
+
+    /// **Le parcours français, dans l'ordre**, sur les deux iPhone.
+    func testFrenchFlowInOrder() throws {
         let model = lina()
-        for step in [OnboardingStep.hardestSubject, .goal, .worries, .studyHours, .studyMethod, .solutionMap] {
-            try render("onb12-\(id(step))", step, model)
+        for step in seen(by: model) {
+            try render("onb14-fr-\(id(step))", step, model)
         }
     }
 
-    /// Acte 3 : les démonstrations, jouées.
-    func testActThreePlayedOnDevice() throws {
-        let model = lina()
-        try render("onb12-\(id(.lessonDemo))", .lessonDemo, model) { LessonDemoStepView(previewPlayed: true) }
-        try render("onb12-\(id(.cardsDemo))", .cardsDemo, model) { CardsDemoStepView(previewFlipped: true, previewKnew: true) }
-        try render("onb12-\(id(.scanDemo))", .scanDemo, model) { ScanDemoStepView(previewStage: 3) }
-        try render("onb12-\(id(.chatDemo))", .chatDemo, model) { ChatDemoStepView(previewAsked: 0) }
-        try render("onb12-\(id(.examDemo))", .examDemo, model) { ExamDemoStepView(previewPlayed: true) }
+    /// **Le parcours anglais, dans l'ordre**, sur le 15 Pro.
+    func testEnglishFlowInOrder() throws {
+        use(.en)
+        let model = emma()
+        for step in seen(by: model) {
+            try render("onb14-en-\(id(step))", step, model, devices: [.iPhone15Pro])
+        }
     }
 
-    /// Acte 3 : les démonstrations, telles qu'on les découvre.
-    func testActThreeBeforeOnDevice() throws {
+    /// **Avant d'être jouées** : les démonstrations, le curseur, le maintien en cours.
+    func testBeforeAndDuring() throws {
         let model = lina()
         let pro = [RenderDevice.iPhone15Pro]
-        try render("onb12-\(id(.lessonDemo))-before", .lessonDemo, model, devices: pro)
-        try render("onb12-\(id(.cardsDemo))-before", .cardsDemo, model, devices: pro)
-        try render("onb12-\(id(.cardsDemo))-flipped", .cardsDemo, model, devices: pro) { CardsDemoStepView(previewFlipped: true) }
-        try render("onb12-\(id(.scanDemo))-before", .scanDemo, model, devices: pro)
-        try render("onb12-\(id(.scanDemo))-step", .scanDemo, model, devices: pro) { ScanDemoStepView(previewStage: 1) }
-        try render("onb12-\(id(.chatDemo))-before", .chatDemo, model, devices: pro)
-        try render("onb12-\(id(.examDemo))-before", .examDemo, model, devices: pro)
+        for step in [OnboardingStep.origin, .lessonDemo, .scanDemo, .chatDemo, .commitment] {
+            try render("onb14-fr-\(id(step))-before", step, model, devices: pro, playsDemo: false)
+        }
+        try render("onb14-fr-\(id(.commitment))-holding", .commitment, model, devices: pro, view: AnyView(CommitmentStepView(previewHold: 0.6)))
+        let short = lina()
+        short.dailyMinutes = 10
+        try render("onb14-fr-\(id(.dailyTime))-10", .dailyTime, short, devices: pro)
+        let long = lina()
+        long.dailyMinutes = 120
+        try render("onb14-fr-\(id(.dailyTime))-120", .dailyTime, long, devices: pro)
     }
 
-    /// Acte 4 et 5 : la vraie question, la projection, l'engagement.
-    func testActFourAndFiveOnDevice() throws {
-        let model = lina()
-        try render("onb12-\(id(.sampleCard))", .sampleCard, model) { SampleCardStepView(previewAnswer: 0) }
-        try render("onb12-\(id(.sampleCard))-before", .sampleCard, model, devices: [.iPhone15Pro])
-        for step in [OnboardingStep.currentAverage, .targetAverage, .startingPoint, .dailyTime] {
-            try render("onb12-\(id(step))", step, model)
-        }
-        try render("onb12-\(id(.planDemo))", .planDemo, model) { PlanDemoStepView(previewDay: 1) }
-        try render("onb12-\(id(.focusDemo))", .focusDemo, model) { FocusDemoStepView(previewDone: true) }
-        try render("onb12-\(id(.focusDemo))-before", .focusDemo, model, devices: [.iPhone15Pro])
-        try render("onb12-\(id(.notifications))", .notifications, model)
-        try render("onb12-\(id(.commitment))-before", .commitment, model)
-        try render("onb12-\(id(.commitment))", .commitment, model) { CommitmentStepView(previewCommitted: true) }
-        try render("onb12-\(id(.commitment))-holding", .commitment, model, devices: [.iPhone15Pro]) { CommitmentStepView(previewHold: 0.6) }
-    }
+    // MARK: - Les écritures
 
-    /// Actes 6 et 7 (lot 13) : le plan, le sujet de la première leçon, puis l'essai — voulu
-    /// pour lui, et le rappel promis (à demander, accordé, refusé) — avant le paywall.
-    func testActSixAndSevenOnDevice() throws {
-        let model = lina()
-        try render("onb12-\(id(.planBuilding))", .planBuilding, model) { PlanBuildingStepView(previewProgress: 0.62) }
-        try render("onb12-\(id(.profileSummary))", .profileSummary, model)
-        try render("onb12-\(id(.firstLesson))", .firstLesson, model)
-        try render("onb12-\(id(.freeTrialIntro))", .freeTrialIntro, model)
-        try render("onb12-\(id(.trialOffer))", .trialOffer, model) { TrialOfferStepView(previewPermission: .ask, now: Self.now) }
-        try render("onb12-\(id(.trialOffer))-granted", .trialOffer, model, devices: [.iPhone15Pro]) {
-            TrialOfferStepView(previewPermission: .granted, now: Self.now)
-        }
-        try render("onb12-\(id(.trialOffer))-denied", .trialOffer, model, devices: [.iPhone15Pro]) {
-            TrialOfferStepView(previewPermission: .denied, now: Self.now)
-        }
-    }
-
-    // MARK: - Les langues
-
-    func testGermanOnDevice() throws {
-        use(.de)
-        let model = mia()
-        let pro = [RenderDevice.iPhone15Pro]
-        for step in [OnboardingStep.welcome, .exam, .worries, .solutionMap, .notifications, .profileSummary, .firstLesson] {
-            try render("onb12-de-\(id(step))", step, model, devices: pro)
-        }
-        try render("onb12-de-\(id(.freeTrialIntro))", .freeTrialIntro, model, devices: [.iPhoneSE])
-        try render("onb12-de-\(id(.trialOffer))", .trialOffer, model, devices: [.iPhoneSE]) { TrialOfferStepView(previewPermission: .ask, now: Self.now) }
-        try render("onb12-de-\(id(.lessonDemo))", .lessonDemo, model, devices: pro) { LessonDemoStepView(previewPlayed: true) }
-        try render("onb12-de-\(id(.cardsDemo))", .cardsDemo, model, devices: [.iPhoneSE]) { CardsDemoStepView(previewFlipped: true, previewKnew: false) }
-        try render("onb12-de-\(id(.commitment))", .commitment, model, devices: [.iPhoneSE]) { CommitmentStepView(previewCommitted: true) }
-    }
-
-    func testArabicOnDevice() throws {
+    /// **L'arabe** (droite à gauche) et **le japonais** (sans la police condensée) sur les écrans
+    /// qui portent le plus de texte.
+    func testArabicAndJapanese() throws {
+        let steps: [OnboardingStep] = [
+            .welcome, .studyIntro, .helpIntro, .origin, .lessonDemo, .notJustChat, .research,
+            .currentAverage, .dailyTime, .organizeIntro, .commitment, .firstLesson,
+            .storyCreate, .storyPath, .storyPractice, .storyAsk, .storyClose, .freeTrialIntro,
+        ]
         use(.ar)
-        let model = noura()
-        let pro = [RenderDevice.iPhone15Pro]
-        for step in [OnboardingStep.welcome, .name, .worries, .solutionMap, .startingPoint, .profileSummary, .firstLesson] {
-            try render("onb12-ar-\(id(step))", step, model, devices: pro, rtl: true)
+        let arabic = noura()
+        for step in steps {
+            try render("onb14-ar-\(id(step))", step, arabic, devices: [.iPhone15Pro], rtl: true)
         }
-        try render("onb12-ar-\(id(.lessonDemo))", .lessonDemo, model, devices: pro, rtl: true) { LessonDemoStepView(previewPlayed: true) }
-        try render("onb12-ar-\(id(.freeTrialIntro))", .freeTrialIntro, model, devices: pro, rtl: true)
-        try render("onb12-ar-\(id(.trialOffer))", .trialOffer, model, devices: pro, rtl: true) { TrialOfferStepView(previewPermission: .granted, now: Self.now) }
-        try render("onb12-ar-\(id(.chatDemo))", .chatDemo, model, devices: pro, rtl: true) { ChatDemoStepView(previewAsked: 1) }
-        try render("onb12-ar-\(id(.planDemo))", .planDemo, model, devices: pro, rtl: true) { PlanDemoStepView(previewDay: 2) }
-        try render("onb12-ar-\(id(.commitment))", .commitment, model, devices: pro, rtl: true) { CommitmentStepView(previewCommitted: true) }
+        use(.ja)
+        let japanese = lina()
+        japanese.displayName = "ユイ"
+        for step in steps {
+            try render("onb14-ja-\(id(step))", step, japanese, devices: [.iPhone15Pro])
+        }
     }
 
-    /// **Très grand texte, sur le plus petit iPhone** : le titre, Mika et les réponses
-    /// passent à la ligne et défilent ; rien ne se coupe.
+    /// **Très grand texte, sur le plus petit iPhone** : rien ne se coupe, le contenu défile.
     func testLargeTextOnSmallPhone() throws {
         let model = lina()
-        for step in [OnboardingStep.worries, .solutionMap, .commitment] {
-            model.place(on: step)
-            try RenderGallery.renderDevice(
-                "onb12-xxl-\(id(step))",
-                devices: [.iPhoneSE],
-                OnboardingLivePage(step: step, model: model)
-                    .environment(\.dynamicTypeSize, .accessibility2)
-            )
+        for step in [OnboardingStep.helpIntro, .notJustChat, .currentAverage, .storyPath, .commitment] {
+            try render("onb14-xxl-\(id(step))", step, model, devices: [.iPhoneSE], xxl: true)
         }
-        model.place(on: .cardsDemo)
-        try RenderGallery.renderDevice(
-            "onb12-xxl-\(id(.cardsDemo))",
-            devices: [.iPhoneSE],
-            OnboardingLivePage(step: .cardsDemo, model: model) { CardsDemoStepView(previewFlipped: true) }
-                .environment(\.dynamicTypeSize, .accessibility2)
-        )
     }
 }

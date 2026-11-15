@@ -132,29 +132,38 @@ struct DiscountOfferScreen: View {
     private var priceCard: some View {
         switch prices {
         case .ready:
-            // Le prix et ce qu'il fait par mois, côte à côte ; sur un écran étroit, le
-            // second s'écrit plus petit pour rester à côté ; en très grand texte, il passe
-            // dessous. Aucun des deux ne se coupe.
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .bottom, spacing: 12) {
-                    priceColumn
-                    Spacer(minLength: 0)
-                    equivalentColumn(.trailing, font: PaywallStyle.offerEquivalent)
+            // **Lot 14 : le prix par semaine en avant** (« 0,58 € / semaine »), et dessous, au
+            // corps de lecture, ce qui est réellement facturé — l'ancien prix barré, puis
+            // « facturé 29,99 € par an ». Le montant facturé reste lisible d'un coup d'œil
+            // (App Store 3.1.2) ; la mention sous le bouton le redit.
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text(plan.priceHeadline(for: .weekly))
+                        .font(PaywallStyle.offerPrice)
+                        .foregroundStyle(V3Color.ink)
+                    Text(plan.priceHeadlineUnit(for: .weekly))
+                        .font(PaywallStyle.offerPriceUnit)
+                        .foregroundStyle(V3Color.ink2)
                 }
-                HStack(alignment: .bottom, spacing: 10) {
-                    priceColumn
-                    Spacer(minLength: 0)
-                    equivalentColumn(.trailing, font: PaywallStyle.offerEquivalentNarrow)
-                }
-                VStack(alignment: .leading, spacing: 10) {
-                    priceColumn
-                    equivalentColumn(.leading, font: PaywallStyle.offerEquivalent)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                ViewThatFits(in: .horizontal) {
+                    billedLine
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(reference.displayPrice)
+                            .foregroundStyle(V3Color.ink3)
+                            .strikethrough(true, color: V3Color.ink3)
+                        Text(plan.caption)
+                            .foregroundStyle(V3Color.ink2)
+                    }
+                    .font(PaywallStyle.planBilled)
                 }
             }
             .padding(.horizontal, 18)
             .padding(.vertical, 16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .v3Card()
+            .accessibilityElement(children: .combine)
         case .loading:
             HStack(alignment: .bottom, spacing: 12) {
                 VStack(alignment: .leading, spacing: 10) {
@@ -183,34 +192,17 @@ struct DiscountOfferScreen: View {
         }
     }
 
-    /// L'annuel plein, barré, et le tarif réduit dessous : la somme en grand, le reste de la
-    /// phrase en petit, dans l'ordre de la langue.
-    private var priceColumn: some View {
-        let phrase = PaywallPriceTemplate.split("ios.pay10.plan.perYear")
-        let old = L10n.t("ios.pay10.plan.perYear", locale: .resolved(), vars: ["price": reference.displayPrice])
-        return VStack(alignment: .leading, spacing: 2) {
-            Text(old)
-                .font(PaywallStyle.offerPriceUnit)
+    /// **Ce qui est facturé, sur une ligne** : l'ancien prix barré, puis « facturé 29,99 € par
+    /// an », au corps de lecture.
+    private var billedLine: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(reference.displayPrice)
                 .foregroundStyle(V3Color.ink3)
                 .strikethrough(true, color: V3Color.ink3)
-            (Text(phrase.before).font(PaywallStyle.offerPriceUnit).foregroundStyle(V3Color.ink2)
-                + Text(plan.displayPrice).font(PaywallStyle.offerPrice).foregroundStyle(V3Color.ink)
-                + Text(phrase.after).font(PaywallStyle.offerPriceUnit).foregroundStyle(V3Color.ink2))
-        }
-        .lineLimit(1)
-        .fixedSize()
-    }
-
-    /// Ce que le tarif fait par mois ou par semaine, selon le test de prix.
-    private func equivalentColumn(_ alignment: HorizontalAlignment, font: Font) -> some View {
-        VStack(alignment: alignment, spacing: 0) {
-            Text(L10n.t("ios.pay10.offer.thatIs", locale: .resolved()))
-                .font(PaywallStyle.offerEquivalentLead)
+            Text(plan.caption)
                 .foregroundStyle(V3Color.ink2)
-            Text("\(plan.priceHeadline(for: .current)) \(plan.priceHeadlineUnit(for: .current))")
-                .font(font)
-                .foregroundStyle(PaywallStyle.keyword)
         }
+        .font(PaywallStyle.planBilled)
         .lineLimit(1)
         .fixedSize()
     }

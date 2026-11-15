@@ -166,7 +166,7 @@ struct SolutionMapStepView: View {
                 text: L10n.t("ios.onb12.recap.hardest", locale: locale, vars: ["subject": SubjectDisplay.subject(subject, locale: locale)])
             ))
         }
-        for worry in model.answeredWorries.prefix(2) {
+        for worry in model.answeredWorries.prefix(1) {
             lines.append(Line(
                 icon: worry.icon,
                 text: L10n.t("ios.onb10.solutions.quote", locale: locale, vars: ["worry": worry.title(locale: locale)])
@@ -181,7 +181,8 @@ struct SolutionMapStepView: View {
         if let method = model.studyMethod {
             lines.append(Line(icon: method.icon, text: method.recap(locale: locale)))
         }
-        return Array(lines.prefix(4))
+        // Lot 14 : trois lignes au plus, sans carte autour — un écran qu'on lit d'un coup d'œil.
+        return Array(lines.prefix(3))
     }
 
     var body: some View {
@@ -208,10 +209,9 @@ struct SolutionMapStepView: View {
                     .accessibilityElement(children: .combine)
                 }
             }
-            .padding(18)
+            .padding(.horizontal, 8)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .v3Card()
-            .padding(.top, 18)
+            .padding(.top, 24)
 
             Spacer(minLength: 4)
                 .layoutPriority(-1)

@@ -63,21 +63,21 @@ final class OnboardingFlowTests: XCTestCase {
 
     // MARK: - L'ordre
 
-    /// **Le parcours de la spécification, écran par écran** : les stories, puis vingt-trois
-    /// étapes. Les noms sont ceux des statistiques : en changer un coupe sa courbe.
+    /// **Le parcours de la spécification, écran par écran** (lot 14, en sept chapitres). Les
+    /// noms sont ceux des statistiques : en changer un coupe sa courbe.
     func testTheFlowIsTheSpecInOrder() {
         XCTAssertEqual(OnboardingStep.allCases.map(\.analyticsName), [
             "hookLogo",
             "welcome", "name", "country", "level", "schoolType", "year", "exam", "subjects",
-            "hardestSubject", "goal", "worries", "studyHours", "studyMethod", "solutionMap",
-            "lessonDemo", "cardsDemo", "scanDemo", "chatDemo", "examDemo",
-            "sampleCard",
-            "currentAverage", "targetAverage", "startingPoint", "dailyTime", "planDemo", "focusDemo",
-            "notifications", "commitment",
+            "studyIntro", "hardestSubject", "goal", "worries", "studyHours", "studyMethod", "solutionMap",
+            "helpIntro", "origin", "lessonDemo", "scanDemo", "chatDemo", "notJustChat", "research",
+            "goalIntro", "currentAverage", "targetAverage", "startingPoint", "dailyTime",
+            "organizeIntro", "planDemo", "focusDemo", "notifications", "commitment",
             "planBuilding", "profileSummary", "firstLesson",
+            "storyIntro", "storyCreate", "storyPath", "storyPractice", "storyAsk", "storyClose",
             "freeTrialIntro", "trialOffer", "paywall",
         ])
-        XCTAssertEqual(OnboardingStep.allCases.count, 35, "Un écran de stories et trente-quatre étapes (lot 13)")
+        XCTAssertEqual(OnboardingStep.allCases.count, 45, "Un écran de stories et quarante-quatre étapes (lot 14)")
         XCTAssertEqual(OnboardingStep.allCases.filter { $0.kind == .stories }, [.hookLogo])
         XCTAssertEqual(OnboardingStep.allCases.last, .paywall)
     }
@@ -134,16 +134,18 @@ final class OnboardingFlowTests: XCTestCase {
         model.subjects = ["Mathématiques", "Philosophie"]
         var expected: [OnboardingStep] = [
             .hookLogo, .welcome, .name, .country, .schoolType, .year, .exam, .subjects,
-            .hardestSubject, .goal, .worries, .studyHours, .studyMethod, .solutionMap,
-            .lessonDemo, .cardsDemo, .scanDemo, .chatDemo, .examDemo, .sampleCard,
-            .currentAverage, .targetAverage, .startingPoint, .dailyTime, .planDemo, .focusDemo,
-            .notifications, .commitment, .planBuilding, .profileSummary, .firstLesson,
+            .studyIntro, .hardestSubject, .goal, .worries, .studyHours, .studyMethod, .solutionMap,
+            .helpIntro, .origin, .lessonDemo, .scanDemo, .chatDemo, .notJustChat, .research,
+            .goalIntro, .currentAverage, .targetAverage, .startingPoint, .dailyTime,
+            .organizeIntro, .planDemo, .focusDemo, .notifications, .commitment,
+            .planBuilding, .profileSummary, .firstLesson,
+            .storyIntro, .storyCreate, .storyPath, .storyPractice, .storyAsk, .storyClose,
         ]
         // Lot 13 : l'essai, en deux écrans, quand la boutique le propose ; puis le paywall.
         if OnboardingTrial.isOffered { expected += [.freeTrialIntro, .trialOffer] }
         expected += [.paywall]
         XCTAssertEqual(walk(model), expected)
-        XCTAssertGreaterThanOrEqual(expected.count, 32, "Un parcours long, mais une action par écran")
+        XCTAssertGreaterThanOrEqual(expected.count, 42, "Un parcours en sept chapitres courts")
     }
 
     /// **La matière la plus dure ne se demande que s'il y a le choix** : une seule matière
@@ -191,20 +193,45 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertFalse(OnboardingPreferences.hasCommitted)
     }
 
-    /// **La jauge, en actes** : sept segments ; chaque écran est dans un acte, l'avancée dans
-    /// l'acte monte, et les actes se suivent dans l'ordre du parcours.
-    func testTheGaugeIsSplitIntoActs() {
-        var lastAct = 0
+    /// **La jauge, en chapitres** : sept segments ; chaque écran est dans un chapitre,
+    /// l'avancée dans le chapitre monte, et les chapitres se suivent dans l'ordre du parcours.
+    func testTheGaugeIsSplitIntoChapters() {
+        var last = 0
         // Les stories et le paywall sont hors jauge.
         for step in OnboardingStep.allCases where step != .hookLogo && step != .paywall {
-            XCTAssertGreaterThanOrEqual(step.act, lastAct, "\(step)")
-            XCTAssertLessThan(step.act, OnboardingStep.actCount)
-            XCTAssertGreaterThan(step.actFraction, 0)
-            XCTAssertLessThan(step.actFraction, 1)
-            lastAct = step.act
+            XCTAssertGreaterThanOrEqual(step.chapter, last, "\(step)")
+            XCTAssertLessThan(step.chapter, OnboardingStep.chapterCount)
+            XCTAssertGreaterThan(step.chapterFraction, 0)
+            XCTAssertLessThan(step.chapterFraction, 1)
+            last = step.chapter
         }
-        XCTAssertEqual(lastAct, OnboardingStep.actCount - 1)
-        XCTAssertLessThan(OnboardingStep.goal.actFraction, OnboardingStep.worries.actFraction)
+        XCTAssertEqual(last, OnboardingStep.chapterCount - 1)
+        XCTAssertLessThan(OnboardingStep.goal.chapterFraction, OnboardingStep.worries.chapterFraction)
+    }
+
+    /// **Chaque chapitre s'ouvre sur Mika** (lot 14) : le premier écran de chaque chapitre est
+    /// un écran où il parle seul, et chaque chapitre a un nom dans toutes les langues.
+    func testEveryChapterOpensWithMika() {
+        for chapter in 0 ..< OnboardingStep.chapterCount {
+            let steps = OnboardingStep.steps(inChapter: chapter)
+            XCTAssertTrue(steps.first?.opensChapter == true, "Chapitre \(chapter + 1) : \(String(describing: steps.first))")
+            for locale in UiLocale.allCases {
+                let name = L10n.t(OnboardingStep.chapterTitleKey(chapter), locale: locale)
+                XCTAssertFalse(name.hasPrefix("ios."), "\(locale.rawValue) chapitre \(chapter + 1)")
+            }
+        }
+        XCTAssertEqual(
+            OnboardingStep.allCases.filter { $0.kind == .chapter },
+            [.welcome, .studyIntro, .helpIntro, .goalIntro, .organizeIntro, .storyIntro]
+        )
+        // Les écrans demandés, à leur place : après « Je t'ai compris », l'ouverture du
+        // chapitre de l'aide ; « Je ne suis pas que ton prof » juste avant le calendrier ;
+        // la recherche juste après « Je ne suis pas juste ChatGPT » ; la démo racontée juste
+        // avant l'essai et le paywall.
+        XCTAssertEqual(OnboardingStep.solutionMap.next, .helpIntro)
+        XCTAssertEqual(OnboardingStep.organizeIntro.next, .planDemo)
+        XCTAssertEqual(OnboardingStep.notJustChat.next, .research)
+        XCTAssertEqual(OnboardingStep.storyClose.next, .freeTrialIntro)
     }
 
     /// **La longueur du parcours, pays par pays** : un écran de moins que la liste (l'autre
@@ -214,7 +241,7 @@ final class OnboardingFlowTests: XCTestCase {
             let model = OnboardingModel()
             model.select(country: country)
             let seen = walk(model)
-            XCTAssertEqual(seen.count, 31 + trialScreens, "\(country) : sans matière cochée, la plus dure ne se demande pas")
+            XCTAssertEqual(seen.count, 41 + trialScreens, "\(country) : sans matière cochée, la plus dure ne se demande pas")
             XCTAssertFalse(seen.contains(.level), "\(country) : la filière et l'année, pas le palier")
             XCTAssertEqual(seen.last, .paywall)
         }
@@ -222,7 +249,7 @@ final class OnboardingFlowTests: XCTestCase {
         let elsewhere = OnboardingModel()
         elsewhere.select(country: .other)
         let seen = walk(elsewhere)
-        XCTAssertEqual(seen.count, 30 + trialScreens)
+        XCTAssertEqual(seen.count, 40 + trialScreens)
         XCTAssertFalse(seen.contains(.schoolType) || seen.contains(.year))
         XCTAssertTrue(seen.contains(.level))
 
@@ -232,7 +259,7 @@ final class OnboardingFlowTests: XCTestCase {
         saudi.select(worldCountry: try XCTUnwrap(WorldCountries.country(code: "SA")))
         XCTAssertEqual(saudi.country, .other)
         XCTAssertEqual(saudi.regionCode, "SA")
-        XCTAssertEqual(walk(saudi).count, 31 + trialScreens)
+        XCTAssertEqual(walk(saudi).count, 41 + trialScreens)
 
         // Un pays de la liste retrouvé par la recherche se range sous son nom de la liste.
         let morocco = OnboardingModel()
@@ -247,35 +274,34 @@ final class OnboardingFlowTests: XCTestCase {
     func testTheQuestionsAreExactlyTheScreensThatAsk() {
         XCTAssertEqual(OnboardingStep.allCases.filter(\.isQuestion), [
             .name, .country, .level, .schoolType, .year, .exam, .subjects, .hardestSubject, .goal,
-            .worries, .studyHours, .studyMethod, .sampleCard, .currentAverage, .targetAverage,
+            .worries, .studyHours, .studyMethod, .currentAverage, .targetAverage,
             .dailyTime, .firstLesson,
         ])
         XCTAssertEqual(
             OnboardingStep.allCases.filter { $0.kind == .moment },
-            [.welcome, .solutionMap, .planBuilding, .profileSummary]
+            [.solutionMap, .planBuilding, .profileSummary, .storyClose]
         )
         XCTAssertEqual(
             OnboardingStep.allCases.filter { $0.kind == .demo },
-            [.lessonDemo, .cardsDemo, .scanDemo, .chatDemo, .examDemo, .planDemo, .focusDemo]
+            [.origin, .lessonDemo, .scanDemo, .chatDemo, .planDemo, .focusDemo]
         )
     }
 
     /// **Un choix unique avance tout seul** : ces écrans n'ont pas de bouton.
     func testASingleChoiceAdvancesOnItsOwn() {
         let advancing = OnboardingStep.allCases.filter(\.advancesOnChoice)
-        XCTAssertEqual(advancing, [.country, .level, .schoolType, .year, .hardestSubject, .goal, .studyHours, .studyMethod, .dailyTime])
+        XCTAssertEqual(advancing, [.country, .level, .schoolType, .year, .hardestSubject, .goal, .studyHours, .studyMethod])
         XCTAssertTrue(advancing.allSatisfy(\.isQuestion))
     }
 
-    /// **Jamais deux écrans passifs de suite** (lot 12) : un écran où l'on ne fait que lire
-    /// (un moment, une page) est toujours suivi d'un écran où l'on agit — sauf le chargement,
-    /// qui avance seul vers sa récompense.
-    func testNoTwoPassiveScreensInARow() {
-        let passive: Set<OnboardingStep> = [.welcome, .solutionMap, .startingPoint, .profileSummary, .freeTrialIntro]
-        let steps = OnboardingStep.allCases
-        for (index, step) in steps.enumerated() where passive.contains(step) {
-            guard index + 1 < steps.count else { continue }
-            XCTAssertFalse(passive.contains(steps[index + 1]), "\(step) puis \(steps[index + 1])")
+    /// **Les questions ne s'enchaînent jamais à plus de six** sans un écran où Mika parle ou
+    /// montre quelque chose (lot 14 : le récit passe par les chapitres ; la démo finale est
+    /// voulue sans interaction).
+    func testQuestionsAreBrokenUpByMika() {
+        var run = 0
+        for step in OnboardingStep.allCases {
+            run = step.isQuestion ? run + 1 : 0
+            XCTAssertLessThanOrEqual(run, 7, "\(step)")
         }
     }
 
@@ -509,7 +535,7 @@ final class OnboardingFlowTests: XCTestCase {
         let kept = [
             "hookLogo", "name", "welcome", "country", "level", "schoolType", "year", "exam",
             "subjects", "goal", "worries", "startingPoint", "currentAverage", "targetAverage",
-            "dailyTime", "sampleCard", "notifications", "planBuilding", "profileSummary",
+            "dailyTime", "notifications", "planBuilding", "profileSummary",
             "freeTrialIntro", "trialOffer", "paywall",
         ]
         for name in kept {
@@ -520,7 +546,11 @@ final class OnboardingFlowTests: XCTestCase {
             [
                 "solutionMap", "firstLesson", "lessonDemo", "scanDemo", "planDemo", "chatDemo",
                 // Lot 12.
-                "hardestSubject", "studyHours", "studyMethod", "cardsDemo", "examDemo", "focusDemo", "commitment",
+                "hardestSubject", "studyHours", "studyMethod", "focusDemo", "commitment",
+                // Lot 14.
+                "studyIntro", "helpIntro", "origin", "notJustChat", "research", "goalIntro",
+                "organizeIntro", "storyIntro", "storyCreate", "storyPath", "storyPractice",
+                "storyAsk", "storyClose",
             ]
         )
         XCTAssertEqual(AnalyticsEvent.onboardingStoryViewed.rawValue, "onboarding_story_viewed")
@@ -537,6 +567,8 @@ final class OnboardingFlowTests: XCTestCase {
             // Lot 13 : la leçon ne s'écrit plus avant le paywall ; « pourquoi maintenant » s'est
             // fondu dans l'essai.
             "whyNow", "lessonBuilding", "lessonReady",
+            // Lot 14 : la carte isolée, le jour J, la question d'essai.
+            "cardsDemo", "examDemo", "sampleCard",
         ]
         for name in retired {
             XCTAssertFalse(names.contains(name), "\(name) devait partir")
@@ -548,7 +580,7 @@ final class OnboardingFlowTests: XCTestCase {
     func testARetiredScreenResumesOnTheNextOneThatExists() {
         XCTAssertEqual(OnboardingStep.replacement(forRetired: "studyTime"), .notifications, "L'heure du rappel se règle là")
         for name in ["building", "featuresIntro", "mikaMission", "mikaSources", "mikaPaths"] {
-            XCTAssertEqual(OnboardingStep.replacement(forRetired: name), .sampleCard, name)
+            XCTAssertEqual(OnboardingStep.replacement(forRetired: name), .currentAverage, name)
         }
         for name in ["mikaDesign", "mikaTutor", "mikaSolution", "mikaRelief", "socialProof"] {
             XCTAssertEqual(OnboardingStep.replacement(forRetired: name), .planBuilding, name)
@@ -557,6 +589,9 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(OnboardingStep.replacement(forRetired: "whyNow"), .paywall)
         XCTAssertEqual(OnboardingStep.replacement(forRetired: "lessonBuilding"), .freeTrialIntro)
         XCTAssertEqual(OnboardingStep.replacement(forRetired: "lessonReady"), .freeTrialIntro)
+        XCTAssertEqual(OnboardingStep.replacement(forRetired: "cardsDemo"), .scanDemo)
+        XCTAssertEqual(OnboardingStep.replacement(forRetired: "examDemo"), .notJustChat)
+        XCTAssertEqual(OnboardingStep.replacement(forRetired: "sampleCard"), .currentAverage)
         XCTAssertNil(OnboardingStep.replacement(forRetired: "trainCards"))
 
         OnboardingPreferences.displayName = "Lina"

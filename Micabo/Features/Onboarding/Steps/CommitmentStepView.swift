@@ -10,9 +10,14 @@ import SwiftUI
 /// explose de joie, des confettis, une vibration de réussite, et la carte des promesses se
 /// signe. Lâché trop tôt : l'anneau redescend en douceur, et un mot encourage à recommencer.
 ///
-/// **Accessible** : avec VoiceOver ou « Réduire les animations », un simple appui (ou l'action
-/// VoiceOver) suffit à s'engager. L'horloge ne tourne que le temps que le doigt est posé : c'est
-/// l'anneau qui suit le doigt, pas une mise en scène.
+/// **Un vrai maintien** (lot 14, retour sur l'appareil : « on a juste appuyé une fois ») : la
+/// logique est `CommitHold`, testée à part — seul un doigt tenu 1,5 s engage ; un appui bref,
+/// ou un geste que le défilement reprend, ne valide jamais. L'état du doigt passe par
+/// `@GestureState`, que SwiftUI remet à faux au lever **et** à l'annulation : l'horloge ne
+/// peut plus tourner seule. L'anneau suit l'horloge de l'écran (`TimelineView(.animation)`).
+///
+/// **Accessible** : avec VoiceOver ou « Réduire les animations », un appui explicite (ou
+/// l'action VoiceOver) suffit à s'engager.
 struct CommitmentStepView: View {
     /// Pour les rendus : l'engagement déjà pris.
     var previewCommitted = false
@@ -25,8 +30,10 @@ struct CommitmentStepView: View {
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
     @Environment(\.onbCompact) private var compact
 
-    /// L'instant où le doigt s'est posé ; `nil` quand il n'y est pas.
-    @State private var pressedAt: Date?
+    /// Le maintien en cours : l'instant où le doigt s'est posé, et si l'engagement est pris.
+    @State private var holdState = CommitHold()
+    /// Le doigt est-il sur le sceau ? Remis à faux au lever comme à l'annulation du geste.
+    @GestureState private var isTouching = false
     /// L'anneau quand le doigt n'est pas posé : il redescend d'ici en douceur.
     @State private var resting: Double = 0
     /// Lâché trop tôt : Mika encourage à recommencer.
@@ -35,9 +42,7 @@ struct CommitmentStepView: View {
     @State private var celebrates = false
 
     /// La durée de l'appui.
-    static let holdSeconds = 1.6
-    /// Le pas de l'anneau sous le doigt : trente images par seconde.
-    private static let tick = 1.0 / 30.0
+    static let holdSeconds = CommitHold.duration
 
     private var isCommitted: Bool { model.hasCommitted || previewCommitted }
 
@@ -68,7 +73,7 @@ struct CommitmentStepView: View {
 
     /// L'avancée de l'appui, de 0 à 1, à un instant.
     static func hold(since start: Date, at now: Date) -> Double {
-        min(1, max(0, now.timeIntervalSince(start) / holdSeconds))
+        CommitHold.progress(since: start, at: now)
     }
 
     var body: some View {
@@ -135,16 +140,16 @@ struct CommitmentStepView: View {
     private var sealArea: some View {
         VStack(spacing: 14) {
             Group {
-                if let start = pressedAt, !isCommitted {
-                    // Le doigt est posé : l'anneau suit le temps, trente fois par seconde.
-                    TimelineView(.periodic(from: start, by: Self.tick)) { context in
+                if let start = holdState.pressedAt, !isCommitted {
+                    // Le doigt est posé : l'anneau suit l'horloge de l'écran, image par image.
+                    TimelineView(.animation) { context in
                         let held = Self.hold(since: start, at: context.date)
                         seal(held, pressing: true)
                             .onChange(of: Int(held * 10)) { _, step in
                                 Haptics.ramp(Double(step) / 10)
                             }
                             .onChange(of: held >= 1) { _, done in
-                                if done { commit() }
+                                if done, holdState.tick(at: context.date) { commit() }
                             }
                     }
                 } else {
@@ -155,9 +160,11 @@ struct CommitmentStepView: View {
             .contentShape(Circle())
             .gesture(
                 DragGesture(minimumDistance: 0)
-                    .onChanged { _ in press() }
-                    .onEnded { _ in release() }
+                    .updating($isTouching) { _, touching, _ in touching = true }
             )
+            .onChange(of: isTouching) { _, touching in
+                if touching { press() } else { release() }
+            }
             .accessibilityElement()
             .accessibilityLabel(Text(i18n.t("ios.onb12.commit.hold")))
             .accessibilityValue(Text(isCommitted ? i18n.t("ios.onb12.commit.signed") : ""))
@@ -175,7 +182,7 @@ struct CommitmentStepView: View {
 
     private var caption: String {
         if isCommitted { return i18n.t("ios.onb12.commit.signed") }
-        if pressedAt != nil || previewHold != nil { return i18n.t("ios.onb12.commit.holding") }
+        if holdState.pressedAt != nil || previewHold != nil { return i18n.t("ios.onb12.commit.holding") }
         if encourages { return i18n.t("ios.onb12.commit.again") }
         return i18n.t(reduceMotion || voiceOver ? "ios.onb12.commit.tap" : "ios.onb12.commit.hold")
     }
@@ -209,7 +216,7 @@ struct CommitmentStepView: View {
 
     /// Le doigt se pose. Avec VoiceOver ou « Réduire les animations », un appui suffit.
     private func press() {
-        guard !isCommitted, pressedAt == nil else { return }
+        guard !isCommitted, holdState.pressedAt == nil else { return }
         if reduceMotion || voiceOver {
             commit()
             return
@@ -217,15 +224,15 @@ struct CommitmentStepView: View {
         encourages = false
         resting = 0
         Haptics.light()
-        pressedAt = Date()
+        holdState.press(at: Date())
     }
 
-    /// Le doigt se lève avant la fin : l'anneau redescend en douceur, Mika encourage.
+    /// Le doigt se lève, ou le geste est repris par le défilement : sans 1,5 s tenues, rien
+    /// n'est signé ; l'anneau redescend en douceur, Mika encourage.
     private func release() {
-        guard let start = pressedAt, !isCommitted else { return }
-        let held = Self.hold(since: start, at: Date())
-        pressedAt = nil
-        guard held < 1 else {
+        guard holdState.pressedAt != nil, !isCommitted else { return }
+        let held = holdState.progress(at: Date())
+        if holdState.release(at: Date()) {
             commit()
             return
         }
@@ -239,7 +246,7 @@ struct CommitmentStepView: View {
 
     private func commit() {
         guard !isCommitted else { return }
-        pressedAt = nil
+        holdState.cancel()
         Haptics.success()
         withAnimation(MicaboMotion.resolved(MicaboMotion.celebrate, reduceMotion: reduceMotion)) {
             model.hasCommitted = true
@@ -247,5 +254,54 @@ struct CommitmentStepView: View {
             encourages = false
         }
         celebrates = true
+    }
+}
+
+// MARK: - Le maintien
+
+/// **La logique du maintien**, sans écran (lot 14) : seul un doigt tenu `duration` secondes
+/// engage. Un appui bref, un geste annulé, ou une horloge qui tourne sans doigt ne valident
+/// jamais.
+struct CommitHold: Equatable {
+    /// La durée à tenir.
+    static let duration: TimeInterval = 1.5
+
+    /// L'instant où le doigt s'est posé ; `nil` quand il n'y est pas.
+    private(set) var pressedAt: Date?
+
+    /// L'avancée d'un maintien commencé à `start`, de 0 à 1.
+    static func progress(since start: Date, at now: Date) -> Double {
+        min(1, max(0, now.timeIntervalSince(start) / duration))
+    }
+
+    /// L'avancée du maintien en cours, 0 sans doigt.
+    func progress(at now: Date) -> Double {
+        pressedAt.map { Self.progress(since: $0, at: now) } ?? 0
+    }
+
+    /// Le doigt se pose. Un second appui pendant le maintien ne le relance pas.
+    mutating func press(at now: Date) {
+        guard pressedAt == nil else { return }
+        pressedAt = now
+    }
+
+    /// **L'horloge avance, le doigt toujours posé** : vrai quand le maintien est complet. Sans
+    /// doigt, jamais.
+    mutating func tick(at now: Date) -> Bool {
+        guard progress(at: now) >= 1 else { return false }
+        pressedAt = nil
+        return true
+    }
+
+    /// **Le doigt se lève** : vrai seulement si le maintien était complet.
+    mutating func release(at now: Date) -> Bool {
+        let complete = progress(at: now) >= 1
+        pressedAt = nil
+        return complete
+    }
+
+    /// Le geste est annulé (le défilement l'a repris) : rien n'est signé.
+    mutating func cancel() {
+        pressedAt = nil
     }
 }

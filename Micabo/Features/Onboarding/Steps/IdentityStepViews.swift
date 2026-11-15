@@ -2,80 +2,23 @@ import SwiftUI
 
 // MARK: - Mika se présente, et pose le cadre
 
-/// **« Salut, moi c'est Mika ! »** Le premier moment : un grand Mika qui fait coucou, son nom,
-/// et le cadre de ce qui suit — quelques questions faciles, puis le plan, puis la première
-/// leçon. Trois jalons, pour que l'élève sache où il va avant de répondre à quoi que ce soit.
+/// **« Salut, moi c'est Mika ! »** L'ouverture du premier chapitre (lot 14) : un grand Mika qui
+/// fait coucou, son nom, et le cadre — quelques questions faciles, puis le plan. Les trois
+/// jalons d'avant sont partis : la jauge en chapitres dit déjà où l'on va.
 struct WelcomeStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
-        OnbScreen {
-            Spacer(minLength: 8)
-                .layoutPriority(-1)
-
-            OnbHeroMika(mood: .wave, max: OnbLayout.heroWelcome)
-
-            VStack(spacing: 10) {
-                OnbTitle(i18n.t("ios.onb12.welcome.title"), size: OnbLayout.display, alignment: .center)
-                Text(i18n.t("ios.onb12.welcome.sub"))
-                    .font(V3Font.body)
-                    .foregroundStyle(V3Color.ink2)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity)
-            }
-            .padding(.top, 16)
-
-            milestones
-                .padding(.top, 22)
-
-            Spacer(minLength: 8)
-                .layoutPriority(-1)
-        } footer: {
-            V3Button(i18n.t("ios.onb10.go")) {
-                model.advance()
-            }
+        OnbChapterOpener(
+            chapter: OnboardingStep.welcome.chapter,
+            text: i18n.t("ios.onb12.welcome.title"),
+            sub: i18n.t("ios.onb12.welcome.sub"),
+            mood: .wave,
+            cta: i18n.t("ios.onb10.go")
+        ) {
+            model.advance()
         }
-    }
-
-    /// Les trois jalons : toi, ton plan, ta première leçon.
-    private var milestones: some View {
-        HStack(alignment: .top, spacing: 0) {
-            milestone(.profile, i18n.t("ios.onb12.welcome.you"), tone: V3Color.iconBlue)
-            arrow
-            milestone(.exam, i18n.t("ios.onb12.welcome.plan"), tone: V3Color.iconYellow)
-            arrow
-            milestone(.book, i18n.t("ios.onb12.welcome.lesson"), tone: V3Color.iconGreen)
-        }
-        .frame(maxWidth: .infinity)
-        .accessibilityElement(children: .combine)
-    }
-
-    private func milestone(_ icon: MicaboIcon, _ label: String, tone: Color) -> some View {
-        VStack(spacing: 8) {
-            MicaboIconView(icon: icon, size: 30 * 1.35, tint: tone)
-                .frame(width: 54, height: 54)
-                .background(V3Color.surface, in: RoundedRectangle(cornerRadius: V3Metric.radiusTile, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: V3Metric.radiusTile, style: .continuous)
-                        .strokeBorder(V3Color.line, lineWidth: V3Metric.border)
-                )
-            Text(label)
-                .font(V3Font.label)
-                .foregroundStyle(V3Color.ink)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private var arrow: some View {
-        Image(systemName: "chevron.forward")
-            .font(.system(size: 14, weight: .black))
-            .foregroundStyle(V3Color.ink3)
-            .padding(.top, 20)
-            .accessibilityHidden(true)
     }
 }
 

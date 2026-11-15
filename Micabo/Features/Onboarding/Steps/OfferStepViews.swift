@@ -60,7 +60,7 @@ struct FreeTrialIntroStepView: View {
             OnbTitle(i18n.t("ios.onb12.trial.wantTitle"), size: OnbLayout.display, alignment: .center)
                 .padding(.top, 8)
 
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: compact ? 14 : 20) {
                 ForEach(Self.unlocks(for: model, locale: i18n.locale)) { unlock in
                     HStack(spacing: 14) {
                         OnbIcon(icon: unlock.icon, size: 28)
@@ -74,10 +74,10 @@ struct FreeTrialIntroStepView: View {
                     .accessibilityElement(children: .combine)
                 }
             }
-            .padding(18)
+            // Lot 14 : sans carte autour — trois lignes, de l'air.
+            .padding(.horizontal, 8)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .v3Card()
-            .padding(.top, compact ? 14 : 22)
+            .padding(.top, compact ? 18 : 28)
         } footer: {
             OnbReassurance(text: i18n.t("ios.pay10.nothingToday"))
             V3Button(i18n.t("common.continue")) {
@@ -243,9 +243,9 @@ struct OnbTrialTimeline: View {
                 }
             }
         }
-        .padding(16)
+        // Lot 14 : la chronologie se lit sans carte autour.
+        .padding(.horizontal, 6)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .v3Card()
     }
 
     private func tint(_ tone: TrialTimeline.Tone) -> Color {

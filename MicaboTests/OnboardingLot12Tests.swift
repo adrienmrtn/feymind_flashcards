@@ -99,12 +99,12 @@ final class OnboardingLot12Tests: XCTestCase {
 
     // MARK: - Mika reformule
 
-    /// **« Je t'ai compris »** : chaque ligne vient d'une réponse, quatre au plus ; une
-    /// réponse absente retire sa ligne.
+    /// **« Je t'ai compris »** : chaque ligne vient d'une réponse, trois au plus (lot 14) ;
+    /// une réponse absente retire sa ligne.
     func testTheRecapIsMadeOfTheAnswers() throws {
         let model = try lina()
         let lines = SolutionMapStepView.lines(for: model, locale: .fr).map(\.text)
-        XCTAssertEqual(lines.count, 4)
+        XCTAssertEqual(lines.count, 3)
         XCTAssertTrue(lines[0].contains("Mathématiques"), lines[0])
         XCTAssertTrue(lines[1].contains(StudyWorry.forgetting.title(locale: .fr)), "Le premier blocage coché d'abord")
 
@@ -150,7 +150,6 @@ final class OnboardingLot12Tests: XCTestCase {
         XCTAssertEqual(OnbDemo.family(for: model), .math)
         XCTAssertEqual(OnbDemo.sessionSubjects(for: model, locale: .fr).first, "Mathématiques")
         XCTAssertNotEqual(SampleCard.math.demoCardQuestion(locale: .fr), L10n.t(SampleCard.math.questionKey, locale: .fr))
-        XCTAssertEqual(ExamDemoStepView.marks.filter { $0 }.count, 2)
     }
 
     // MARK: - Le paywall et l'offre

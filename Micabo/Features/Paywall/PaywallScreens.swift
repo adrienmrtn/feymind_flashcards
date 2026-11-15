@@ -401,13 +401,19 @@ struct PaywallScreen: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 6)
 
-            PaywallBenefits(
+            // **Le gratuit face à Pro, en trois lignes vraies** (lot 14) : la vraie limite gratuite
+            // à gauche, la coche de Pro à droite. Plus de « sans limite » ni « à volonté » : le
+            // serveur plafonne, l'écran ne promet que ce qui est tenu.
+            PaywallFeatureTable(
                 features: PaywallFeature.shown(for: showsTrialHeader ? nil : trigger, count: density.benefits),
-                spacing: density.benefitSpacing
+                highlighted: showsTrialHeader ? nil : trigger?.feature,
+                rowHeight: density.tableRow
             )
             .padding(.top, density.sectionGap)
 
-            if let trialLine {
+            // L'essai en une ligne derrière une porte de l'app ; à la fin du parcours, l'écran
+            // du rappel vient de le dire.
+            if trigger != nil, let trialLine {
                 PaywallTrialLine(text: trialLine)
                     .padding(.top, density.sectionGap)
             }
@@ -488,8 +494,9 @@ struct PaywallBackdrop: View {
     var body: some View {
         ZStack {
             V3Color.bg
+            // Lot 14 : un halo discret — le paywall est la suite du parcours, pas un autre décor.
             LinearGradient(
-                colors: [tone.opacity(0.30), tone.opacity(0.10), tone.opacity(0)],
+                colors: [tone.opacity(0.16), tone.opacity(0.05), tone.opacity(0)],
                 startPoint: .top,
                 endPoint: UnitPoint(x: 0.5, y: 0.55)
             )
@@ -653,13 +660,13 @@ struct PaywallPlanCard: View {
                         .font(PaywallStyle.cardPrice)
                         .foregroundStyle(V3Color.ink)
                     Text(plan.priceHeadlineUnit(for: .current))
-                        .font(PaywallStyle.planDetail)
+                        .font(PaywallStyle.planBilled)
                         .foregroundStyle(V3Color.ink2)
                 }
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 Text(plan.caption)
-                    .font(PaywallStyle.planDetail)
+                    .font(PaywallStyle.planBilled)
                     .foregroundStyle(V3Color.ink2)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
@@ -843,14 +850,22 @@ enum PaywallDensity: CaseIterable {
     /// L'iPhone SE dans une langue longue : Mika petit, l'air au plus juste.
     case tightest
 
-    /// Les bénéfices : trois, jamais plus.
+    /// Les lignes du tableau : trois, jamais plus.
     static let benefitCount = 3
 
-    /// **Les bénéfices montrés** : trois ; deux au dernier serrage (un iPhone SE dans une
-    /// langue longue, ou un titre de leçon sur deux lignes), pour que la ligne de l'essai et
-    /// son rappel restent à l'écran sans défiler.
+    /// **Les lignes montrées** : trois ; deux au dernier serrage (un iPhone SE dans une
+    /// langue longue), pour que tout tienne sans défiler.
     var benefits: Int {
         self == .tightest ? 2 : Self.benefitCount
+    }
+
+    /// La hauteur d'une ligne du tableau.
+    var tableRow: CGFloat {
+        switch self {
+        case .regular, .comfortable: 40
+        case .compact: 36
+        case .tight, .tightest: PaywallStyle.tableRow
+        }
     }
 
     /// Mika, en grand : le visuel fort du héros.

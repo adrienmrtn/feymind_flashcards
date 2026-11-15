@@ -25,14 +25,14 @@ struct FirstLessonStepView: View {
     private var bubble: String {
         switch model.firstLessonChoice {
         case .importSource:
-            return i18n.t("ios.onb10.react.lesson.import")
+            return i18n.t("ios.onb14.lesson.reactImport")
         case .topic:
             if !isTyping, let subject = model.firstLessonSubject {
                 return i18n.t("ios.onb10.react.lesson.topic", ["topic": subject])
             }
-            return i18n.t("ios.onb12.say.lesson")
+            return i18n.t("ios.onb14.lesson.ask")
         case nil:
-            return i18n.t("ios.onb12.say.lesson")
+            return i18n.t("ios.onb14.lesson.ask")
         }
     }
 
@@ -48,19 +48,19 @@ struct FirstLessonStepView: View {
     var body: some View {
         @Bindable var model = model
 
-        OnbQuestion(i18n.t("ios.onb10.q.lesson"), say: OnbSay(bubble, mood: hasReacted ? .happy : .wink)) {
+        OnbQuestion(i18n.t("ios.onb14.lesson.q"), say: OnbSay(bubble, mood: hasReacted ? .happy : .wink)) {
             VStack(spacing: OnbLayout.rowGap) {
                 if model.firstLessonChoice == .topic {
                     topicCard($model.firstLessonTopic)
                 } else {
-                    OnbOption(title: i18n.t("ios.onb10.lesson.topic"), icon: .quill, isSelected: false) {
+                    OnbOption(title: i18n.t("ios.onb14.lesson.topic"), subtitle: example, icon: .quill, isSelected: false) {
                         chooseTopic()
                     }
                 }
 
                 OnbOption(
-                    title: i18n.t("ios.onb10.lesson.import"),
-                    subtitle: i18n.t("ios.onb10.lesson.importHint"),
+                    title: i18n.t("ios.onb14.lesson.import"),
+                    subtitle: i18n.t("ios.onb14.lesson.importHint"),
                     icon: .photo,
                     isSelected: model.firstLessonChoice == .importSource
                 ) {
@@ -75,7 +75,7 @@ struct FirstLessonStepView: View {
                     isTyping = false
                     self.model.confirmFirstLesson()
                 }
-                V3Button(i18n.t("ios.onb10.later"), kind: .ghost) {
+                V3Button(i18n.t("ios.onb14.lesson.later"), kind: .ghost) {
                     isTyping = false
                     self.model.skipFirstLesson()
                 }
@@ -102,7 +102,7 @@ struct FirstLessonStepView: View {
             } label: {
                 HStack(spacing: 14) {
                     OnbIcon(icon: .quill, size: V3Metric.optionIcon)
-                    Text(i18n.t("ios.onb10.lesson.topic"))
+                    Text(i18n.t("ios.onb14.lesson.topic"))
                         .font(V3Font.option)
                         .foregroundStyle(V3Color.ink)
                         .multilineTextAlignment(.leading)
@@ -142,7 +142,7 @@ struct FirstLessonStepView: View {
                     .focused($isTyping)
                     .submitLabel(.done)
                     .onSubmit { isTyping = false }
-                    .accessibilityLabel(Text(i18n.t("ios.onb10.lesson.topic")))
+                    .accessibilityLabel(Text(i18n.t("ios.onb14.lesson.topic")))
                     .onAppear {
                         guard wantsKeyboard else { return }
                         wantsKeyboard = false

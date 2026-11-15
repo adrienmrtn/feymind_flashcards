@@ -158,9 +158,10 @@ struct OnboardingTopBar: View {
                 .buttonStyle(MicaboPressableButtonStyle())
                 .accessibilityLabel(Text(i18n.t("app.common.back")))
             }
-            // **La jauge, en actes** (lot 12) : un segment par acte, celui en cours se remplit.
+            // **La jauge, en chapitres** (lot 14) : un segment par chapitre, celui en cours se
+            // remplit ; le nom du chapitre se lit sur l'écran qui l'ouvre.
             if step.showsProgress {
-                V3ActProgress(acts: OnboardingStep.actCount, act: step.act, fraction: step.actFraction)
+                V3ActProgress(acts: OnboardingStep.chapterCount, act: step.chapter, fraction: step.chapterFraction)
             } else {
                 Spacer(minLength: 0)
             }
@@ -212,18 +213,19 @@ struct OnboardingStepScreen: View {
         case .year: SchoolYearStepView()
         case .exam: ExamStepView()
         case .subjects: SubjectsStepView()
+        case .studyIntro, .helpIntro, .goalIntro, .organizeIntro, .storyIntro: ChapterOpenerStepView(step: step)
         case .hardestSubject: HardestSubjectStepView()
         case .goal: GoalStepView()
         case .worries: WorriesStepView()
         case .studyHours: StudyHoursStepView()
         case .studyMethod: StudyMethodStepView()
         case .solutionMap: SolutionMapStepView()
+        case .origin: OriginStepView()
         case .lessonDemo: LessonDemoStepView()
-        case .cardsDemo: CardsDemoStepView()
         case .scanDemo: ScanDemoStepView()
         case .chatDemo: ChatDemoStepView()
-        case .examDemo: ExamDemoStepView()
-        case .sampleCard: SampleCardStepView()
+        case .notJustChat: NotJustChatStepView()
+        case .research: ResearchStepView()
         case .currentAverage: CurrentAverageStepView()
         case .targetAverage: TargetAverageStepView()
         case .startingPoint: StartingPointStepView()
@@ -235,6 +237,11 @@ struct OnboardingStepScreen: View {
         case .firstLesson: FirstLessonStepView()
         case .planBuilding: PlanBuildingStepView()
         case .profileSummary: ProfileSummaryStepView()
+        case .storyCreate: StoryCreateStepView()
+        case .storyPath: StoryPathStepView()
+        case .storyPractice: StoryPracticeStepView()
+        case .storyAsk: StoryAskStepView()
+        case .storyClose: StoryCloseStepView()
         case .freeTrialIntro: FreeTrialIntroStepView()
         case .trialOffer: TrialOfferStepView()
         case .paywall: PaywallStepView(onFinish: onFinish)
