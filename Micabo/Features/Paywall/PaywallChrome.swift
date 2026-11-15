@@ -14,7 +14,7 @@ import SwiftUI
 /// (`V3Font`, `V3Color`, `V3Metric`). Les écrans ne nomment ni police ni couleur ; changer la
 /// direction artistique du paywall et de l'offre se fait ici — et, pour tout ce que le paywall
 /// partage avec le reste de l'app (le bouton, la bulle de Mika, « PRO »), dans le composant V3.
-/// **Lot 15 (« le texte doit être principal »)** : le tableau au corps du système (17 pt), la
+/// **Lot 15 (« le texte doit être principal »)** : le tableau à 16 pt (une ligne par offre, sur SE aussi), la
 /// somme facturée à 16 pt en couleur principale, les mentions à 15 pt, les liens obligatoires à
 /// 13 pt — plus rien à 11 ou 12 pt. Prix, offres et textes inchangés.
 enum PaywallStyle {
@@ -43,9 +43,9 @@ enum PaywallStyle {
     /// Le tableau Gratuit / PRO (`PaywallFeatureTable`) : son en-tête, ses lignes, la ligne
     /// de la porte, ses valeurs et sa coche.
     static let tableHeader = V3Font.text(.footnote, weight: .bold)
-    static let tableRowTitle = V3Font.text(.body, weight: .semibold)
-    static let tableRowLead = V3Font.text(.body, weight: .bold)
-    static let tableValue = V3Font.text(.body, weight: .bold)
+    static let tableRowTitle = V3Font.text(.callout, weight: .semibold)
+    static let tableRowLead = V3Font.text(.callout, weight: .bold)
+    static let tableValue = V3Font.text(.callout, weight: .bold)
     static let tableCheck: CGFloat = 20
     static let tableGlyph: CGFloat = 18
     static let tableGlyphColumn: CGFloat = 24

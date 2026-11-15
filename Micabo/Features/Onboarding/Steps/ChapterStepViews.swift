@@ -429,7 +429,7 @@ struct ResearchStepView: View {
             HStack(spacing: 12) {
                 GeometryReader { proxy in
                     RoundedRectangle(cornerRadius: 9, style: .continuous)
-                        .fill(strong ? V3Color.accent : V3Color.soft)
+                        .fill(strong ? V3Color.accent : V3Color.ink3)
                         .frame(width: proxy.size.width * share)
                 }
                 .frame(height: 30)

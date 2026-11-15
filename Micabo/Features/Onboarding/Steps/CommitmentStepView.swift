@@ -234,7 +234,7 @@ struct CommitmentStepView: View {
         encourages = false
         Haptics.light()
         let remaining = Self.holdSeconds * (1 - fill)
-        withAnimation(.linear(duration: max(0.05, remaining))) {
+        withAnimation(MicaboMotion.hold(seconds: max(0.05, remaining))) {
             fill = 1
         }
     }
@@ -249,7 +249,7 @@ struct CommitmentStepView: View {
         let held = hold.progress(at: now)
         hold.cancel()
         Haptics.soft()
-        withAnimation(MicaboMotion.resolved(.easeOut(duration: 0.35), reduceMotion: reduceMotion)) {
+        withAnimation(MicaboMotion.resolved(MicaboMotion.gentle, reduceMotion: reduceMotion)) {
             fill = 0
             encourages = held > 0.05
         }
@@ -274,9 +274,9 @@ struct CommitmentStepView: View {
         }
     }
 
-    /// Le ressort de la fête : celui des réussites, assez long pour qu'elle se voie.
+    /// Le ressort de la fête : celui des réussites (`MicaboMotion.celebrate`).
     static func celebration(reduceMotion: Bool) -> Animation {
-        reduceMotion ? MicaboMotion.reduced : .spring(duration: 0.9, bounce: 0.3)
+        MicaboMotion.resolved(MicaboMotion.celebrate, reduceMotion: reduceMotion)
     }
 }
 
