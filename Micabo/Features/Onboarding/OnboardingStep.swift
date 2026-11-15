@@ -10,14 +10,14 @@ import Foundation
 ///    l'examen, les matières.
 /// 2. **Ce qui coince** : la matière la plus dure, l'objectif, les blocages, le temps, la
 ///    méthode, puis « Je t'ai compris » (`solutionMap`).
-/// 3. **Comment je t'aide** : d'où vient Mika, tes cours deviennent des leçons, le scanner, le
-///    chat, « je ne suis pas juste ChatGPT », et ce que dit la recherche.
+/// 3. **Comment Mika t'aide** : d'où vient Mika, tes cours deviennent des leçons, le scanner
+///    (avec une matière scientifique), « pas un simple ChatGPT », et ce que dit la recherche.
 /// 4. **Ton objectif** : les deux moyennes, la courbe, le temps par jour.
 /// 5. **Ton organisation** : la semaine au calendrier, la concentration, le rappel,
 ///    l'engagement.
-/// 6. **Ton plan** : le plan qui se construit, le plan prêt, la première leçon.
-/// 7. **Avant de finir** : un cas concret raconté (la Révolution française), puis l'essai et
-///    le paywall.
+/// 6. **Ton plan** : le plan qui se construit, le plan prêt.
+/// 7. **Ta première leçon** : une leçon racontée du début à la fin (la Révolution française),
+///    puis « Et toi, ta première leçon ? », l'essai et le paywall (lot 15).
 ///
 /// **Les noms sont ceux des statistiques** (`onboarding_step`) : les écrans gardés portent le
 /// nom qu'ils avaient ; le lot 14 en ajoute treize et en retire trois (`cardsDemo`,
@@ -64,10 +64,9 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case origin
     /// **Tes cours deviennent des leçons**, quelle que soit leur source.
     case lessonDemo
-    /// **Démo : le scanner d'exercices**, étape par étape.
+    /// **Démo : le scanner d'exercices**, étape par étape, sur un exercice de maths de sa
+    /// classe. Sautée sans matière scientifique (lot 15).
     case scanDemo
-    /// **Démo : le chat avec Mika**, une question à choisir.
-    case chatDemo
     /// **« Je ne suis pas juste ChatGPT »** : conçu pour sa classe, des leçons construites,
     /// ses habitudes.
     case notJustChat
@@ -101,11 +100,9 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case planBuilding
     /// **Le plan prêt**, comme un objet.
     case profileSummary
-    /// **« Ta première leçon, ce sera quoi ? »** Rien ne s'écrit ici : la Home la proposera.
-    case firstLesson
 
-    // Chapitre 7 : avant de finir.
-    /// **« Avant de finir, je veux te montrer comment je vais t'aider »**.
+    // Chapitre 7 : ta première leçon.
+    /// **« Voyons une leçon, du début à la fin »** : l'exemple annoncé (lot 15).
     case storyIntro
     /// **Imagine : la Révolution française.** Les supports, la question, « Créer la leçon ».
     case storyCreate
@@ -115,8 +112,11 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case storyPractice
     /// **Une question en plus**, de quoi impressionner tes profs.
     case storyAsk
-    /// **« Apprendre devient un jeu »** : Mika conclut.
+    /// **« Mika a été créé pour te faire aimer apprendre »** : la conclusion du récit.
     case storyClose
+    /// **« Et toi, ta première leçon, ce sera quoi ? »** (lot 15 : après l'exemple). Rien ne
+    /// s'écrit ici : la Home la proposera.
+    case firstLesson
     /// **« On veut que tu essaies Micabo Pro gratuitement »**. Sauté sans essai offert.
     case freeTrialIntro
     /// **« On t'enverra un rappel avant la fin de ton essai »**. Sauté sans essai.
@@ -185,6 +185,8 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         case "cardsDemo": .scanDemo
         case "examDemo": .notJustChat
         case "sampleCard": .currentAverage
+        // Retiré au lot 15 : le chat, redit par la question à Mika du récit final.
+        case "chatDemo": .notJustChat
         default: nil
         }
     }
@@ -201,16 +203,16 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
             0
         case .studyIntro, .hardestSubject, .goal, .worries, .studyHours, .studyMethod, .solutionMap:
             1
-        case .helpIntro, .origin, .lessonDemo, .scanDemo, .chatDemo, .notJustChat, .research:
+        case .helpIntro, .origin, .lessonDemo, .scanDemo, .notJustChat, .research:
             2
         case .goalIntro, .currentAverage, .targetAverage, .startingPoint, .dailyTime:
             3
         case .organizeIntro, .planDemo, .focusDemo, .notifications, .commitment:
             4
-        case .planBuilding, .profileSummary, .firstLesson:
+        case .planBuilding, .profileSummary:
             5
         case .storyIntro, .storyCreate, .storyPath, .storyPractice, .storyAsk, .storyClose,
-             .freeTrialIntro, .trialOffer, .paywall:
+             .firstLesson, .freeTrialIntro, .trialOffer, .paywall:
             6
         }
     }
@@ -269,7 +271,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
              .goal, .worries, .studyHours, .studyMethod, .currentAverage, .targetAverage,
              .dailyTime, .firstLesson:
             .question
-        case .origin, .lessonDemo, .scanDemo, .chatDemo, .planDemo, .focusDemo:
+        case .origin, .lessonDemo, .scanDemo, .planDemo, .focusDemo:
             .demo
         case .notJustChat, .research, .startingPoint, .notifications, .commitment, .storyCreate,
              .storyPath, .storyPractice, .storyAsk, .freeTrialIntro, .trialOffer:

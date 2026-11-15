@@ -22,12 +22,14 @@ on:
     paths:
       - "Micabo/**"
       - "MicaboTests/**"
+      - "MicaboUITests/**"
       - "Micabo.xcodeproj/**"
       - ".github/workflows/ios.yml"
   pull_request:
     paths:
       - "Micabo/**"
       - "MicaboTests/**"
+      - "MicaboUITests/**"
       - "Micabo.xcodeproj/**"
       - ".github/workflows/ios.yml"
   workflow_dispatch:
@@ -133,6 +135,20 @@ jobs:
             -maximum-test-execution-time-allowance 180 \
             2>&1 | tee build/test.log | grep -E "error: |Executed [0-9]+ test|\*\* TEST" || true
           grep -q "\*\* TEST EXECUTE SUCCEEDED \*\*" build/test.log
+
+      - name: Test d'interface du maintien
+        # `MicaboUITests` (lot 15) : un vrai geste sur l'écran d'engagement — un appui de 0,3 s
+        # ne signe rien, un maintien de 2 s mène à l'écran suivant. Son verdict est recopié ici
+        # et dans le résumé, lisible sans ouvrir le journal.
+        if: always()
+        run: |
+          [ -f build/test.log ] || exit 0
+          {
+            echo "## Test d'interface : le maintien pour s'engager"
+            echo '```'
+            grep -E "Test Case .*CommitmentHoldUITests|CommitmentHoldUITests.swift:[0-9]+: error" build/test.log || echo "(aucune ligne : le test n'a pas tourné)"
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Fluidité
         # Les mesures du banc d'essai (`PerfBenchTests`) : une ligne `PERF|…` par mesure, écrites

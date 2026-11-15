@@ -62,15 +62,16 @@ final class OnboardingLot11Tests: XCTestCase {
         after(.origin, .helpIntro)
         after(.lessonDemo, .origin)
         after(.scanDemo, .lessonDemo)
-        after(.chatDemo, .scanDemo)
+        // Lot 15 : le chat est parti (redit par la question à Mika du récit final).
+        after(.notJustChat, .scanDemo)
         after(.organizeIntro, .dailyTime)
         after(.planDemo, .organizeIntro)
         after(.focusDemo, .planDemo)
-        // Les écrans qui amènent au paywall (lot 14) : la démo racontée, puis l'essai voulu
-        // pour lui, le rappel promis.
+        // Les écrans qui amènent au paywall (lot 15) : une leçon racontée du début à la fin,
+        // « Et toi, ta première leçon ? », puis l'essai voulu pour lui, le rappel promis.
         XCTAssertEqual(
-            Array(order.suffix(9)),
-            [.storyIntro, .storyCreate, .storyPath, .storyPractice, .storyAsk, .storyClose, .freeTrialIntro, .trialOffer, .paywall]
+            Array(order.suffix(10)),
+            [.storyIntro, .storyCreate, .storyPath, .storyPractice, .storyAsk, .storyClose, .firstLesson, .freeTrialIntro, .trialOffer, .paywall]
         )
         let demos = OnboardingStep.allCases.filter { $0.kind == .demo }
         XCTAssertTrue((demos + [.commitment]).allSatisfy(\.showsChrome))

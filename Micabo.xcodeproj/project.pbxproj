@@ -14,6 +14,7 @@
 /* Begin PBXFileReference section */
 		FE00000000000000000001 /* Micabo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Micabo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FE00000000000000000002 /* MicaboTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MicaboTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FE00000000000000000003 /* MicaboUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MicaboUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -26,6 +27,7 @@
 			sourceTree = "<group>";
 		};
 		FE00000000000000000011 /* MicaboTests */ = {isa = PBXFileSystemSynchronizedRootGroup; path = MicaboTests; sourceTree = "<group>"; };
+		FE00000000000000000013 /* MicaboUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; path = MicaboUITests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -62,6 +64,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FE00000000000000000022 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -70,6 +79,7 @@
 			children = (
 				FE00000000000000000010 /* Micabo */,
 				FE00000000000000000011 /* MicaboTests */,
+				FE00000000000000000013 /* MicaboUITests */,
 				FE00000000000000000031 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -79,6 +89,7 @@
 			children = (
 				FE00000000000000000001 /* Micabo.app */,
 				FE00000000000000000002 /* MicaboTests.xctest */,
+				FE00000000000000000003 /* MicaboUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -133,6 +144,29 @@
 			productReference = FE00000000000000000002 /* MicaboTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		FE00000000000000000042 /* MicaboUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FE00000000000000000053 /* Build configuration list for PBXNativeTarget "MicaboUITests" */;
+			buildPhases = (
+				FE00000000000000000062 /* Sources */,
+				FE00000000000000000022 /* Frameworks */,
+				FE00000000000000000072 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FE00000000000000000082 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				FE00000000000000000013 /* MicaboUITests */,
+			);
+			name = MicaboUITests;
+			packageProductDependencies = (
+			);
+			productName = MicaboUITests;
+			productReference = FE00000000000000000003 /* MicaboUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -152,6 +186,10 @@
 						};
 					};
 					FE00000000000000000041 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = FE00000000000000000040;
+					};
+					FE00000000000000000042 = {
 						CreatedOnToolsVersion = 16.0;
 						TestTargetID = FE00000000000000000040;
 					};
@@ -208,6 +246,7 @@
 			targets = (
 				FE00000000000000000040 /* Micabo */,
 				FE00000000000000000041 /* MicaboTests */,
+				FE00000000000000000042 /* MicaboUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -221,6 +260,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		FE00000000000000000071 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FE00000000000000000072 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -244,6 +290,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FE00000000000000000062 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -252,10 +305,22 @@
 			target = FE00000000000000000040 /* Micabo */;
 			targetProxy = FE00000000000000000081 /* PBXContainerItemProxy */;
 		};
+		FE00000000000000000082 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FE00000000000000000040 /* Micabo */;
+			targetProxy = FE00000000000000000083 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin PBXContainerItemProxy section */
 		FE00000000000000000081 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FE00000000000000000090 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FE00000000000000000040;
+			remoteInfo = Micabo;
+		};
+		FE00000000000000000083 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = FE00000000000000000090 /* Project object */;
 			proxyType = 1;
@@ -500,6 +565,38 @@
 			};
 			name = Release;
 		};
+		FE00000000000000000122 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.micabo.ios.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = Micabo;
+			};
+			name = Debug;
+		};
+		FE00000000000000000123 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.micabo.ios.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = Micabo;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -526,6 +623,15 @@
 			buildConfigurations = (
 				FE00000000000000000120 /* Debug */,
 				FE00000000000000000121 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FE00000000000000000053 /* Build configuration list for PBXNativeTarget "MicaboUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FE00000000000000000122 /* Debug */,
+				FE00000000000000000123 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

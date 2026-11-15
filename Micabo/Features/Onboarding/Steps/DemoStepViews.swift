@@ -1,14 +1,15 @@
 import SwiftUI
 
-// Les démonstrations jouables du parcours (lot 12). Chacune répond à un blocage, sur la
-// matière que l'élève vient de dire la plus dure, et **se joue** : on transforme le cours, on
-// retourne la carte, on prend la photo, on choisit sa question, on rend sa copie, on touche
-// un jour, on lance une séance. Le bouton du pied joue la démonstration tant qu'elle ne l'a pas
-// été, puis devient « Continuer » (`OnbDemoStage`).
+// Les démonstrations jouables du parcours (lot 12, réécrites au lot 15) : la leçon (toutes les
+// sources convergent vers une leçon), le scanner (un exercice de maths de sa classe), sa
+// semaine au calendrier, une séance de concentration. Chacune **se joue** : le bouton du pied
+// joue la démonstration tant qu'elle ne l'a pas été, puis devient « Continuer »
+// (`OnbDemoStage`). Pas de bulle (lot 15) : un titre, le morceau d'app en grand au centre
+// optique, le bouton.
 //
 // Rien n'attend : chaque étape répond à un appui, et l'animation est celle de l'état qui
 // change. Rien n'est inventé : la matière, le sujet, l'examen, le temps viennent des
-// réponses ; les contenus sont des exemples de son niveau, écrits d'avance.
+// réponses ; les contenus sont des exemples de son niveau, écrits d'avance et vérifiés.
 
 // MARK: - Ce que les démos disent de l'élève
 
@@ -34,14 +35,6 @@ enum OnbDemo {
     /// que propose la première leçon.
     static func topic(for model: OnboardingModel, locale: UiLocale) -> String {
         FirstLessonStepView.exampleTopic(for: model, locale: locale)
-    }
-
-    /// Le même sujet au milieu d'une phrase : « les fonctions affines ». Les langues qui ne
-    /// mettent pas de majuscule aux noms communs la retirent.
-    static func topicInSentence(for model: OnboardingModel, locale: UiLocale) -> String {
-        let text = Self.topic(for: model, locale: locale)
-        guard [UiLocale.fr, .es, .en].contains(locale), let first = text.first else { return text }
-        return first.lowercased() + text.dropFirst()
     }
 
     /// Les matières des séances de la semaine : la plus dure d'abord, puis les autres.
@@ -72,9 +65,11 @@ private func onbPlay(_ change: () -> Void) {
 
 // MARK: - La leçon
 
-/// **« Ton cours de {matière} devient une leçon. »** On touche « Transformer » : la photo du
-/// cours se change en leçon de l'app, sur un sujet de son niveau, avec ses trois façons de
-/// travailler.
+/// **« Tes cours deviennent des leçons. »** (lot 15, demande du fondateur : « tout ce que tu as
+/// → une leçon ».) En haut, les cinq façons d'apporter un cours (PDF, cours enregistré, photo,
+/// YouTube, texte) ; « Transformer en leçon » : des traits partent de chacune et convergent
+/// vers **une seule leçon**, sur le sujet du fil (sa matière la plus dure, à son niveau), avec
+/// ce qu'elle contient. Ni question ni chemin : c'est le récit final qui les montre.
 struct LessonDemoStepView: View {
     /// Pour les rendus : la démonstration déjà jouée.
     var previewPlayed = false
@@ -87,34 +82,29 @@ struct LessonDemoStepView: View {
 
     private var isPlayed: Bool { played || previewPlayed }
 
-    /// Le titre (lot 14) : « Tes cours deviennent des leçons. » — tous les cours, pas une
-    /// seule photo : le bandeau des sources le dit au-dessus de la page photographiée.
-    private var title: String {
-        i18n.t("ios.onb14.lesson.title")
-    }
-
     var body: some View {
         OnbDemoStage(
-            title: title,
-            say: isPlayed
-                ? OnbSay(i18n.t("ios.onb12.lesson.done"), mood: .proud)
-                : OnbSay(i18n.t("ios.onb14.lesson.say"), mood: .write),
+            title: i18n.t("ios.onb14.lesson.title"),
             playLabel: i18n.t("ios.onb12.lesson.play"),
             isPlayed: isPlayed,
             onPlay: play
         ) {
-            VStack(spacing: compact ? 10 : 16) {
-                OnbSourceStrip(tile: compact ? 40 : 46, highlighted: .photo)
+            VStack(spacing: 0) {
+                sources
+                OnbFunnel(count: OnbSource.allCases.count, isOn: isPlayed)
+                    .frame(height: compact ? 40 : 60)
+                    .environment(\.layoutDirection, .leftToRight)
+                    .accessibilityHidden(true)
                 ZStack {
                     if isPlayed {
                         lesson.transition(.onbPop)
                     } else {
-                        photo.transition(.opacity)
+                        slot.transition(.opacity)
                     }
                 }
-                .contentShape(Rectangle())
-                .onTapGesture { play() }
             }
+            .contentShape(Rectangle())
+            .onTapGesture { play() }
         }
     }
 
@@ -124,42 +114,105 @@ struct LessonDemoStepView: View {
         onbPlay { played = true }
     }
 
-    /// **La page de cours prise en photo** (retour testeur du build 179) : une vraie page de
-    /// cahier, écrite à la main, dans le cadre de visée de l'appareil photo.
-    private var photo: some View {
-        NotebookPhoto(height: compact ? 190 : 250)
-            .padding(.vertical, compact ? 10 : 16)
-            .frame(maxWidth: .infinity)
-            .overlay {
-                StoryViewfinder()
-                    .stroke(V3Color.pink, style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+    /// Les cinq sources, une tuile et son nom.
+    private var sources: some View {
+        let tile: CGFloat = compact ? 50 : 58
+        return HStack(alignment: .top, spacing: 6) {
+            ForEach(OnbSource.allCases) { source in
+                VStack(spacing: 8) {
+                    MicaboIconView(icon: source.kind.icon, size: tile * 0.58 * 1.35, tint: source.tone)
+                        .frame(width: tile, height: tile)
+                        .background(V3Color.wash(of: source.tone), in: RoundedRectangle(cornerRadius: V3Metric.radiusTile, style: .continuous))
+                    Text(source.title(locale: i18n.locale))
+                        .font(.system(.subheadline, design: .default, weight: .semibold))
+                        .foregroundStyle(V3Color.ink)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.8)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity)
             }
-    }
-
-    /// **La leçon qui en sort**, faite de ce qui est écrit sur la page : la règle, un
-    /// exercice, une carte.
-    private var lesson: some View {
-        NotebookLesson(compact: compact)
-    }
-
-    private func mode(_ icon: MicaboIcon, _ text: String, tone: Color) -> some View {
-        HStack(spacing: 12) {
-            MicaboIconView(icon: icon, size: 26 * 1.35, tint: tone)
-                .frame(width: 40, height: 40)
-                .background(V3Color.wash(of: tone), in: RoundedRectangle(cornerRadius: V3Metric.radiusTile, style: .continuous))
-            Text(text)
-                .font(V3Font.bodyStrong)
-                .foregroundStyle(V3Color.ink)
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            Image(systemName: "chevron.forward")
-                .font(.system(size: 13, weight: .black))
-                .foregroundStyle(V3Color.ink3)
-                .flipsForRightToLeftLayoutDirection(true)
         }
-        .padding(10)
-        .background(V3Color.soft, in: RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous))
+        .environment(\.layoutDirection, .leftToRight)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// La place de la leçon, avant : un cadre en pointillés.
+    private var slot: some View {
+        Image(systemName: "sparkles")
+            .font(.system(size: 34, weight: .bold))
+            .foregroundStyle(V3Color.ink3)
+            .frame(maxWidth: .infinity, minHeight: compact ? 150 : 190)
+            .overlay(
+                RoundedRectangle(cornerRadius: V3Metric.radiusCard, style: .continuous)
+                    .strokeBorder(V3Color.line, style: StrokeStyle(lineWidth: 2, dash: [7, 7]))
+            )
+            .accessibilityHidden(true)
+    }
+
+    /// **La leçon qui en sort** : son sujet, et ce qu'elle contient.
+    private var lesson: some View {
+        let rows: [(MicaboIcon, Color, String)] = [
+            (.notes, V3Color.iconBlue, i18n.t("ios.onb11.lesson.notes")),
+            (.quiz, V3Color.iconGreen, i18n.t("ios.onb11.lesson.quiz")),
+            (.cards, V3Color.iconLilac, i18n.t("ios.onb11.lesson.cards")),
+        ]
+        return VStack(alignment: .leading, spacing: compact ? 10 : 14) {
+            HStack(spacing: 10) {
+                OnbIcon(icon: .book, size: 26)
+                Text(OnbDemo.topic(for: model, locale: i18n.locale))
+                    .font(V3Font.heading(26))
+                    .foregroundStyle(V3Color.ink)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
+            }
+            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                HStack(spacing: 12) {
+                    MicaboIconView(icon: row.0, size: 22 * 1.35, tint: row.1)
+                        .frame(width: 40, height: 40)
+                        .background(V3Color.wash(of: row.1), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    Text(row.2)
+                        .font(OnbType.label)
+                        .foregroundStyle(V3Color.ink)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .v3Card(selected: true)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// **Les traits qui convergent** : de chaque source vers le milieu de la leçon. Pointillés et
+/// discrets avant ; pleins, en bleu, une fois la leçon faite.
+struct OnbFunnel: View {
+    let count: Int
+    let isOn: Bool
+
+    var body: some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let height = proxy.size.height
+            Path { path in
+                for index in 0 ..< count {
+                    let x = width * (CGFloat(index) * 2 + 1) / CGFloat(count * 2)
+                    path.move(to: CGPoint(x: x, y: 4))
+                    path.addQuadCurve(
+                        to: CGPoint(x: width / 2, y: height - 2),
+                        control: CGPoint(x: x, y: height * 0.75)
+                    )
+                }
+            }
+            .stroke(
+                isOn ? V3Color.accent : V3Color.line,
+                style: StrokeStyle(lineWidth: isOn ? 3 : 2, lineCap: .round, dash: isOn ? [] : [3, 6])
+            )
+        }
     }
 }
 
@@ -189,20 +242,80 @@ extension SampleCard {
 
 // MARK: - Le scanner
 
-/// **« Un exo qui bloque ? Une photo, et je te guide. »** On prend la photo : le cadre passe au
-/// vert, l'exercice est reconnu ; puis chaque appui dévoile l'étape suivante, jusqu'au
-/// résultat. On apprend la méthode, pas seulement la réponse.
+/// **L'exercice du scanner, à son niveau** (lot 15) : un vrai exercice de maths, avec les
+/// vraies étapes, calculs vérifiés.
+///
+/// - collège : Pythagore — un triangle rectangle en A, AB = 6, AC = 8 ; BC² = 6² + 8² =
+///   36 + 64 = 100, donc BC = 10 cm ;
+/// - lycée : le second degré — x² − 4x + 3 = 0 ; Δ = 16 − 12 = 4 ; x = (4 ± 2) / 2, donc
+///   x = 1 ou x = 3 ;
+/// - supérieur : une intégrale — ∫₀¹ 2x dx ; une primitive de 2x est x² ; F(1) − F(0) = 1.
+enum OnbScanExercise: CaseIterable {
+    case pythagoras
+    case quadratic
+    case integral
+
+    /// L'exercice d'une hauteur d'exemple (`FirstLessonStepView.band`).
+    static func forBand(_ band: String) -> OnbScanExercise {
+        switch band {
+        case "lower": .pythagoras
+        case "higher": .integral
+        default: .quadratic
+        }
+    }
+
+    /// L'énoncé écrit ; Pythagore se dessine.
+    var problem: String? {
+        switch self {
+        case .pythagoras: nil
+        case .quadratic: "x² − 4x + 3 = 0"
+        case .integral: "∫₀¹ 2x dx"
+        }
+    }
+
+    /// Les deux étapes : leur nom (une clé) et leur calcul.
+    var steps: [(key: String, formula: String)] {
+        switch self {
+        case .pythagoras:
+            [("ios.onb15.scan.pyth.1", "BC² = 6² + 8²"), ("ios.onb15.scan.pyth.2", "BC² = 36 + 64 = 100")]
+        case .quadratic:
+            [("ios.onb15.scan.quad.1", "Δ = 16 − 12 = 4"), ("ios.onb15.scan.quad.2", "x = (4 ± 2) / 2")]
+        case .integral:
+            [("ios.onb15.scan.int.1", "F(x) = x²"), ("ios.onb15.scan.int.2", "F(1) − F(0) = 1 − 0")]
+        }
+    }
+
+    /// Le résultat. « x = 1 ou x = 3 » a son « ou » dans chaque langue.
+    func result(locale: UiLocale) -> String {
+        switch self {
+        case .pythagoras: "BC = 10 cm"
+        case .quadratic: L10n.t("ios.onb10.story.result", locale: locale)
+        case .integral: "∫₀¹ 2x dx = 1"
+        }
+    }
+}
+
+/// **« Un exo qui bloque ? Prends-le en photo. »** On prend la photo : le cadre passe au vert,
+/// l'exercice est reconnu ; puis chaque appui dévoile l'étape suivante, son nom et son calcul,
+/// jusqu'au résultat. On apprend la méthode, pas seulement la réponse.
 struct ScanDemoStepView: View {
     /// Pour les rendus : l'étape à montrer (0 : la visée, 3 : le résultat).
     var previewStage: Int?
+    /// Pour les rendus : l'exercice à montrer, sans passer par la classe.
+    var previewExercise: OnbScanExercise?
 
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.onbCompact) private var compact
 
     @State private var stage = 0
 
     /// 0 : la visée ; 1 : la photo prise, la première étape ; 2 : la deuxième ; 3 : le résultat.
     private var current: Int { previewStage ?? stage }
+
+    private var exercise: OnbScanExercise {
+        previewExercise ?? .forBand(FirstLessonStepView.band(for: model.tier))
+    }
 
     private var playLabel: String {
         switch current {
@@ -212,18 +325,9 @@ struct ScanDemoStepView: View {
         }
     }
 
-    private var say: OnbSay {
-        switch current {
-        case 0: OnbSay(i18n.t("ios.onb12.scan.say"), mood: .look)
-        case 1, 2: OnbSay(i18n.t("ios.onb12.scan.step"), mood: .think)
-        default: OnbSay(i18n.t("ios.onb11.scan.hint"), mood: .proud)
-        }
-    }
-
     var body: some View {
         OnbDemoStage(
-            title: i18n.t("ios.onb12.scan.title"),
-            say: say,
+            title: i18n.t("ios.onb15.scan.title"),
             playLabel: playLabel,
             isPlayed: current >= 3,
             onPlay: next
@@ -247,187 +351,126 @@ struct ScanDemoStepView: View {
 
     private var viewfinder: some View {
         VStack(spacing: 10) {
-            Text(verbatim: "2x² − 8x + 6 = 0")
-                .font(V3Font.display(36))
-                .foregroundStyle(V3Color.ink)
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
-                .environment(\.layoutDirection, .leftToRight)
+            if let problem = exercise.problem {
+                Text(verbatim: problem)
+                    .font(V3Font.display(44))
+                    .foregroundStyle(V3Color.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+            } else {
+                OnbRightTriangle()
+                    .frame(width: 250, height: compact && captured ? 120 : 160)
+            }
             if captured {
                 Label(i18n.t("ios.onb12.scan.recognized"), systemImage: "checkmark.circle.fill")
-                    .font(V3Font.label)
+                    .font(OnbType.label)
                     .foregroundStyle(V3Color.green)
                     .transition(.onbPop)
             }
         }
+        .environment(\.layoutDirection, .leftToRight)
         .frame(maxWidth: .infinity)
-        .padding(.vertical, captured ? 26 : 64)
+        .padding(.vertical, captured ? 22 : (compact ? 44 : 70))
         .padding(.horizontal, 20)
         .overlay {
-            StoryViewfinder(arm: 26, radius: 12)
+            StoryViewfinder(arm: 28, radius: 12)
                 .stroke(captured ? V3Color.green : V3Color.pink, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
-                .padding(8)
+                .padding(10)
         }
         .v3Card()
         .contentShape(Rectangle())
         .onTapGesture { if current == 0 { next() } }
+        .accessibilityElement(children: .combine)
     }
 
     private var steps: some View {
         OnbPanel(padding: 18) {
-            step(1, i18n.t("ios.onb10.story.step1"))
-            if current >= 2 {
-                step(2, i18n.t("ios.onb10.story.step2")).transition(.onbPop)
+            ForEach(Array(exercise.steps.prefix(min(current, 2)).enumerated()), id: \.offset) { index, step in
+                self.step(index + 1, i18n.t(step.key), step.formula)
+                    .transition(.onbPop)
             }
             if current >= 3 {
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(V3Font.title)
+                        .font(.system(size: 30, weight: .bold))
                         .foregroundStyle(V3Color.green)
-                        .frame(width: 28)
-                    Text(i18n.t("ios.onb10.story.result"))
-                        .font(V3Font.heading(26))
+                    Text(exercise.result(locale: i18n.locale))
+                        .font(V3Font.display(34))
                         .foregroundStyle(V3Color.green)
-                        .environment(\.layoutDirection, .leftToRight)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
                 }
+                .environment(\.layoutDirection, .leftToRight)
                 .transition(.onbPop)
             }
         }
     }
 
-    private func step(_ number: Int, _ text: String) -> some View {
-        HStack(spacing: 12) {
+    private func step(_ number: Int, _ label: String, _ formula: String) -> some View {
+        HStack(alignment: .top, spacing: 14) {
             Text(verbatim: "\(number)")
-                .font(V3Font.label)
+                .font(OnbType.label)
                 .monospacedDigit()
                 .foregroundStyle(V3Color.onAccent)
-                .frame(width: 28, height: 28)
+                .frame(width: 30, height: 30)
                 .background(V3Color.accent, in: Circle())
-            Text(text)
-                .font(V3Font.bodyStrong)
-                .foregroundStyle(V3Color.ink)
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .font(OnbType.label)
+                    .foregroundStyle(V3Color.accentBright)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(verbatim: formula)
+                    .font(V3Font.display(30))
+                    .foregroundStyle(V3Color.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                    .environment(\.layoutDirection, .leftToRight)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .accessibilityElement(children: .combine)
     }
 }
 
-// MARK: - Le chat avec Mika
-
-/// **« Un truc pas clair ? Demande-moi, même à 23 h. »** Mika ouvre la conversation sur sa
-/// matière ; l'élève choisit une des trois questions, et Mika répond comme il le fait dans
-/// l'app.
-struct ChatDemoStepView: View {
-    /// Pour les rendus : la question déjà choisie.
-    var previewAsked: Int?
-
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    @State private var asked: Int?
-
-    private var chosen: Int? { asked ?? previewAsked }
-
-    private var topic: String { OnbDemo.topicInSentence(for: model, locale: i18n.locale) }
-
-    private func question(_ index: Int) -> String {
-        switch index {
-        case 0: i18n.t("ios.onb12.chat.q1", ["topic": topic])
-        case 1: i18n.t("ios.onb12.chat.q2")
-        default: i18n.t("ios.onb12.chat.q3", ["topic": topic])
-        }
-    }
-
-    private func answer(_ index: Int) -> String {
-        switch index {
-        case 0: i18n.t("ios.onb12.chat.a1", ["topic": topic])
-        case 1: i18n.t("ios.onb12.chat.a2")
-        default: i18n.t("ios.onb12.chat.a3", ["topic": topic])
-        }
-    }
-
-    private var greeting: String {
-        guard let subject = OnbDemo.subject(for: model, locale: i18n.locale) else { return i18n.t("ios.onb12.chat.helloAny") }
-        return i18n.t("ios.onb12.chat.hello", ["subject": subject])
-    }
-
+/// **Le triangle de l'exercice de Pythagore** : rectangle en A, AB = 6, AC = 8, BC à trouver.
+struct OnbRightTriangle: View {
     var body: some View {
-        OnbDemoStage(
-            title: i18n.t("ios.onb12.chat.title"),
-            say: chosen == nil
-                ? OnbSay(i18n.t("ios.onb12.chat.say"), mood: .wink)
-                : OnbSay(i18n.t("ios.onb12.chat.done"), mood: .happy),
-            playLabel: i18n.t("ios.onb12.chat.play"),
-            isPlayed: chosen != nil,
-            onPlay: { ask(0) }
-        ) {
-            OnbPanel(padding: 16) {
-                mika(greeting)
-                if let chosen {
-                    student(question(chosen))
-                        .transition(.onbPop)
-                    mika(answer(chosen))
-                        .transition(.onbPop)
-                } else {
-                    VStack(alignment: .trailing, spacing: 8) {
-                        ForEach(0 ..< 3, id: \.self) { index in
-                            Button {
-                                ask(index)
-                            } label: {
-                                Text(question(index))
-                                    .font(V3Font.label)
-                                    .foregroundStyle(V3Color.accentBright)
-                                    .multilineTextAlignment(.leading)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 12)
-                                    .background(V3Color.accentWash, in: Capsule())
-                                    .overlay(Capsule().strokeBorder(V3Color.accent.opacity(0.6), lineWidth: V3Metric.border))
-                            }
-                            .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .transition(.opacity)
+        GeometryReader { proxy in
+            let w = proxy.size.width
+            let h = proxy.size.height
+            let a = CGPoint(x: w * 0.14, y: h * 0.82)
+            let b = CGPoint(x: w * 0.14, y: h * 0.12)
+            let c = CGPoint(x: w * 0.86, y: h * 0.82)
+            ZStack {
+                Path { path in
+                    path.move(to: a)
+                    path.addLine(to: b)
+                    path.addLine(to: c)
+                    path.closeSubpath()
                 }
+                .stroke(V3Color.ink, style: StrokeStyle(lineWidth: 4, lineJoin: .round))
+                Path { path in
+                    path.move(to: CGPoint(x: a.x, y: a.y - 18))
+                    path.addLine(to: CGPoint(x: a.x + 18, y: a.y - 18))
+                    path.addLine(to: CGPoint(x: a.x + 18, y: a.y))
+                }
+                .stroke(V3Color.ink2, lineWidth: 2.5)
+                label("A", at: CGPoint(x: a.x - 16, y: a.y + 10), color: V3Color.ink2, size: 20)
+                label("B", at: CGPoint(x: b.x - 16, y: b.y), color: V3Color.ink2, size: 20)
+                label("C", at: CGPoint(x: c.x + 14, y: c.y + 10), color: V3Color.ink2, size: 20)
+                label("6", at: CGPoint(x: a.x - 18, y: (a.y + b.y) / 2), color: V3Color.ink, size: 28)
+                label("8", at: CGPoint(x: (a.x + c.x) / 2, y: a.y + 20), color: V3Color.ink, size: 28)
+                label("?", at: CGPoint(x: (b.x + c.x) / 2 + 14, y: (b.y + c.y) / 2 - 16), color: V3Color.accentBright, size: 32)
             }
         }
+        .accessibilityHidden(true)
     }
 
-    private func ask(_ index: Int) {
-        guard chosen == nil else { return }
-        Haptics.medium()
-        onbPlay { asked = index }
-    }
-
-    private func mika(_ text: String) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            MikaAvatar(size: 32)
-            Text(text)
-                .font(V3Font.body)
-                .foregroundStyle(V3Color.ink)
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(V3Color.soft, in: RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous))
-        }
-        .padding(.trailing, 24)
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private func student(_ text: String) -> some View {
-        Text(text)
-            .font(V3Font.bodyStrong)
-            .foregroundStyle(V3Color.onAccent)
-            .multilineTextAlignment(.leading)
-            .fixedSize(horizontal: false, vertical: true)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(V3Color.accent, in: RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous))
-            .padding(.leading, 40)
-            .frame(maxWidth: .infinity, alignment: .trailing)
+    private func label(_ text: String, at point: CGPoint, color: Color, size: CGFloat) -> some View {
+        Text(verbatim: text)
+            .font(V3Font.display(size))
+            .foregroundStyle(color)
+            .position(point)
     }
 }
 
@@ -449,18 +492,10 @@ struct PlanDemoStepView: View {
     private var selected: Int { day ?? previewDay ?? 0 }
     private var isPlayed: Bool { day != nil || previewDay != nil }
 
-    private var say: OnbSay {
-        guard isPlayed else { return OnbSay(i18n.t("ios.onb12.plan.say"), mood: .idle) }
-        if let exam = model.examName(locale: i18n.locale) {
-            return OnbSay(i18n.t("ios.onb12.plan.done", ["exam": exam]), mood: .happy)
-        }
-        return OnbSay(i18n.t("ios.onb12.plan.doneAny"), mood: .happy)
-    }
-
     var body: some View {
+        // Lot 15 : le titre ne dit plus « je », la démo n'a plus de bulle.
         OnbDemoStage(
-            title: i18n.t("ios.onb11.plan.ask", ["min": "\(model.minutesPerDay)"]),
-            say: say,
+            title: i18n.t("ios.onb15.plan.title", ["min": "\(model.minutesPerDay)"]),
             playLabel: i18n.t("ios.onb12.plan.play"),
             isPlayed: isPlayed,
             onPlay: { pick(1) }
@@ -488,15 +523,16 @@ struct PlanDemoStepView: View {
                 Button {
                     pick(index)
                 } label: {
-                    VStack(spacing: 4) {
+                    VStack(spacing: 6) {
                         Text(item.letter)
-                            .font(V3Font.caption)
-                            .foregroundStyle(index == selected ? V3Color.accentBright : V3Color.ink3)
+                            .font(OnbType.mention)
+                            .foregroundStyle(index == selected ? V3Color.accentBright : V3Color.ink2)
                         Text(verbatim: "\(item.number)")
-                            .font(V3Font.label)
+                            .font(.system(.title3, design: .default, weight: .bold))
                             .monospacedDigit()
+                            .minimumScaleFactor(0.7)
                             .foregroundStyle(index == selected ? V3Color.onAccent : V3Color.ink)
-                            .frame(width: 36, height: 36)
+                            .frame(width: 42, height: 42)
                             .background(index == selected ? V3Color.accent : V3Color.soft, in: Circle())
                         Circle()
                             .fill(item.hasEvent ? V3Color.yellow : V3Color.accentBright)
@@ -526,24 +562,24 @@ struct PlanDemoStepView: View {
             OnbIcon(icon: kind.0, size: 30)
             VStack(alignment: .leading, spacing: 2) {
                 Text(subject)
-                    .font(V3Font.heading(22))
+                    .font(V3Font.heading(26))
                     .foregroundStyle(V3Color.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 Text(kind.1)
-                    .font(V3Font.support)
-                    .foregroundStyle(V3Color.ink2)
+                    .font(OnbType.detail)
+                    .foregroundStyle(V3Color.ink)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Text(i18n.t("ios.quiz.time.short", ["n": "\(model.minutesPerDay)"]))
-                .font(V3Font.label)
+                .font(OnbType.label)
                 .foregroundStyle(V3Color.accentBright)
                 .lineLimit(1)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(V3Color.accentWash, in: Capsule())
         }
-        .padding(14)
+        .padding(16)
         .background(V3Color.soft, in: RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous))
     }
 
@@ -599,9 +635,6 @@ struct FocusDemoStepView: View {
     var body: some View {
         OnbDemoStage(
             title: i18n.t("ios.onb12.focus.title"),
-            say: isDone
-                ? OnbSay(i18n.t("ios.onb12.focus.done"), mood: .celebrate)
-                : OnbSay(i18n.t("ios.onb12.focus.say", ["min": "\(model.minutesPerDay)"]), mood: started ? .think : .idle),
             playLabel: i18n.t("ios.onb12.focus.play"),
             isPlayed: isDone,
             onPlay: start
@@ -616,25 +649,26 @@ struct FocusDemoStepView: View {
                         .rotationEffect(.degrees(-90))
                     VStack(spacing: 4) {
                         Text(verbatim: isDone ? "0:00" : "\(model.minutesPerDay):00")
-                            .font(V3Font.display(46))
+                            .font(V3Font.display(56))
                             .monospacedDigit()
                             .foregroundStyle(V3Color.ink)
                             .contentTransition(.numericText(countsDown: true))
                             .environment(\.layoutDirection, .leftToRight)
                         if let subject = OnbDemo.subject(for: model, locale: i18n.locale) {
                             Text(subject)
-                                .font(V3Font.label)
-                                .foregroundStyle(V3Color.ink2)
+                                .font(OnbType.label)
+                                .foregroundStyle(V3Color.ink)
                                 .lineLimit(1)
+                                .minimumScaleFactor(0.8)
                         }
                     }
                 }
-                .frame(width: compact ? 170 : 210, height: compact ? 170 : 210)
+                .frame(width: compact ? 190 : 240, height: compact ? 190 : 240)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 6)
 
                 Label(i18n.t(isDone ? "ios.onb12.focus.finished" : "ios.onb12.focus.fast"), systemImage: isDone ? "checkmark.circle.fill" : "hare.fill")
-                    .font(V3Font.caption)
+                    .font(OnbType.mention)
                     .foregroundStyle(isDone ? V3Color.green : V3Color.ink3)
                     .frame(maxWidth: .infinity)
             }

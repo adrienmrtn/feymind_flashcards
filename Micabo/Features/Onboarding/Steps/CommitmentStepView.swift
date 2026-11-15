@@ -1,57 +1,69 @@
 import SwiftUI
 
-/// **« On s'engage ensemble ? »** (lot 12) Le temps fort du parcours : un geste qu'on tient.
+/// **« Lina, tu t'engages ? »** (lot 12, réécrit au lot 15) Le temps fort du parcours : un geste
+/// qu'on tient.
 ///
-/// En haut, les deux promesses, écrites avec ses réponses : la sienne (« Moi, Lina, je révise
-/// 15 min par jour, d'ici le 15 juin ») et celle de Mika (« je prépare chaque séance et je te
-/// fais signe à 18 h »). Au centre, **un grand sceau, Mika dedans** : on pose le doigt et on
-/// le tient. L'anneau se remplit sous le doigt et s'épaissit, un halo grandit, la vibration
-/// monte d'un cran à chaque dixième, Mika se concentre. Tenu jusqu'au bout : c'est signé — Mika
-/// explose de joie, des confettis, une vibration de réussite, et la carte des promesses se
-/// signe. Lâché trop tôt : l'anneau redescend en douceur, et un mot encourage à recommencer.
+/// Au centre, sa promesse, écrite avec ses réponses (« Moi, Lina, je révise 45 min par jour,
+/// d'ici le 15 juin. »), et Mika. **Le bouton du pied est le bouton à maintenir**, au même
+/// endroit que sur tous les écrans : on pose le doigt, il se remplit de gauche à droite en
+/// 1,5 s, la vibration monte d'un cran toutes les 0,15 s, le texte guide (« Maintiens pour
+/// t'engager » → « Encore un peu… »). Lâché trop tôt : il se vide en douceur, « Presque ! Tiens
+/// jusqu'au bout ». Tenu jusqu'au bout : vibration de réussite, confettis, Mika fête, « C'est
+/// signé ! », et l'écran suivant arrive tout seul.
 ///
-/// **Un vrai maintien** (lot 14, retour sur l'appareil : « on a juste appuyé une fois ») : la
-/// logique est `CommitHold`, testée à part — seul un doigt tenu 1,5 s engage ; un appui bref,
-/// ou un geste que le défilement reprend, ne valide jamais. L'état du doigt passe par
-/// `@GestureState`, que SwiftUI remet à faux au lever **et** à l'annulation : l'horloge ne
-/// peut plus tourner seule. L'anneau suit le temps soixante fois par seconde, le doigt posé.
+/// **Pourquoi le maintien ne marchait pas (build 182)** : le sceau était un
+/// `Group { if doigt posé { TimelineView { … } } else { … } }` qui portait le geste. Un `Group`
+/// applique ses modificateurs à chacun de ses enfants : au toucher, la branche changeait, la vue
+/// qui portait le geste disparaissait, le geste était annulé, `@GestureState` repassait à faux
+/// et le relâchement était lu à 0 %. Le maintien ne pouvait jamais aller au bout (et le sceau
+/// était en plus dans le défilement de la page).
 ///
-/// **Accessible** : avec VoiceOver ou « Réduire les animations », un appui explicite (ou
-/// l'action VoiceOver) suffit à s'engager.
+/// **Ce qui le rend sûr** : une seule vue, d'identité stable, hors du défilement ;
+/// `onLongPressGesture(minimumDuration:maximumDistance:perform:onPressingChanged:)`, où le
+/// système chronomètre lui-même le maintien : `perform` n'est appelé qu'après 1,5 s de doigt
+/// posé, jamais sur un appui bref. Le remplissage est une animation linéaire de la même durée,
+/// qui redescend au lâcher. Le test d'interface `CommitmentHoldUITests` le vérifie sur un vrai
+/// geste (un appui de 0,3 s ne signe rien ; un maintien de 2 s mène à l'écran suivant).
+///
+/// **Accessible** : avec VoiceOver, l'action du bouton engage directement.
 struct CommitmentStepView: View {
-    /// Pour les rendus : l'engagement déjà pris.
+    /// Pour les rendus : l'engagement déjà pris (le bouton signé, vert).
     var previewCommitted = false
-    /// Pour les rendus : le doigt posé depuis cette part de l'appui (de 0 à 1).
+    /// Pour les rendus : le doigt posé depuis cette part du maintien (de 0 à 1).
     var previewHold: Double?
+    /// Pour les rendus : lâché trop tôt.
+    var previewEarly = false
 
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
     @Environment(\.onbCompact) private var compact
 
-    /// Le maintien en cours : l'instant où le doigt s'est posé, et si l'engagement est pris.
-    @State private var holdState = CommitHold()
-    /// Le doigt est-il sur le sceau ? Remis à faux au lever comme à l'annulation du geste.
-    @GestureState private var isTouching = false
-    /// L'anneau quand le doigt n'est pas posé : il redescend d'ici en douceur.
-    @State private var resting: Double = 0
-    /// Lâché trop tôt : Mika encourage à recommencer.
+    /// La part remplie du bouton, de 0 à 1.
+    @State private var fill: Double = 0
+    /// Le maintien en cours (l'instant où le doigt s'est posé).
+    @State private var hold = CommitHold()
+    /// Lâché trop tôt : le texte encourage à recommencer.
     @State private var encourages = false
-    /// Vrai le temps que l'engagement vienne d'être pris sur cet écran : la fête.
-    @State private var celebrates = false
+    /// Vrai une fois l'engagement pris sur cet écran : la fête, puis l'écran suivant.
+    @State private var signedHere = false
 
-    /// La durée de l'appui.
+    /// La durée du maintien.
     static let holdSeconds = CommitHold.duration
+    /// Un cran de vibration tous les combien, doigt posé.
+    static let rampStep = 0.15
 
     private var isCommitted: Bool { model.hasCommitted || previewCommitted }
+    private var isPressing: Bool { hold.pressedAt != nil || previewHold != nil }
 
     private var title: String {
+        let name = model.displayName.nilIfBlank
         if isCommitted {
-            guard let name = model.displayName.nilIfBlank else { return i18n.t("ios.onb12.commit.doneNoName") }
+            guard let name else { return i18n.t("ios.onb12.commit.doneNoName") }
             return i18n.t("ios.onb12.commit.done", ["name": name])
         }
-        return i18n.t("ios.onb12.commit.title")
+        guard let name else { return i18n.t("ios.onb15.commit.titleNoName") }
+        return i18n.t("ios.onb15.commit.title", ["name": name])
     }
 
     /// La promesse de l'élève, écrite avec ses réponses.
@@ -71,189 +83,200 @@ struct CommitmentStepView: View {
         return L10n.t("ios.onb12.commit.meAnyNoName", locale: locale, vars: ["min": minutes])
     }
 
-    /// L'avancée de l'appui, de 0 à 1, à un instant.
+    /// L'avancée du maintien, de 0 à 1, à un instant.
     static func hold(since start: Date, at now: Date) -> Double {
         CommitHold.progress(since: start, at: now)
     }
 
     var body: some View {
         OnbScreen {
-            OnbTitle(title, size: OnbLayout.questionTitle)
+            OnbTitle(title, size: OnbLayout.questionTitle, keyword: isCommitted ? V3Color.green : V3Color.accentBright)
                 .padding(.top, OnbLayout.titleTop)
                 .contentTransition(.opacity)
 
-            contract
-                .padding(.top, OnbLayout.answersGap)
-
-            sealArea
-                .padding(.top, compact ? 12 : 26)
+            OnbCentered {
+                VStack(spacing: compact ? 14 : 24) {
+                    Text(Self.studentPromise(for: model, locale: i18n.locale))
+                        .font(.system(.title2, design: .default, weight: .medium))
+                        .lineSpacing(OnbType.bodySpacing)
+                        .foregroundStyle(V3Color.ink)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: 330)
+                    MikaMascot(mood: mood, size: compact ? 130 : 180)
+                        .frame(width: compact ? 130 : 180, height: compact ? 130 : 180)
+                        .accessibilityHidden(true)
+                }
                 .frame(maxWidth: .infinity)
+            }
         } footer: {
-            V3Button(i18n.t("common.continue"), isEnabled: isCommitted) {
-                model.advance()
+            if isCommitted && !signedHere && !previewCommitted {
+                // Revenu sur un engagement déjà pris : un simple « Continuer ».
+                V3Button(i18n.t("common.continue")) {
+                    model.advance()
+                }
+            } else {
+                holdButton
             }
         }
         .overlay {
-            OnbConfetti(isOn: celebrates)
+            OnbConfetti(isOn: signedHere)
         }
     }
 
-    // MARK: Les promesses
-
-    private var contract: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            promise(icon: .profile, tone: V3Color.iconBlue, text: Self.studentPromise(for: model, locale: i18n.locale))
-            promise(icon: .mika, tone: V3Color.iconLilac, text: i18n.t("ios.onb12.commit.mika", [
-                "hour": OnbWords.hour(model.reminderHour, locale: i18n.locale),
-            ]))
-            if isCommitted {
-                // La signature : la carte se signe quand l'engagement est pris.
-                Label(i18n.t("ios.onb12.commit.signedOn", ["date": OnbWords.day(Date(), locale: i18n.locale)]), systemImage: "checkmark.seal.fill")
-                    .font(V3Font.label)
-                    .foregroundStyle(V3Color.green)
-                    .transition(.scale(scale: 0.8).combined(with: .opacity))
-            }
-        }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .v3Card(selected: isCommitted, tone: isCommitted ? V3Color.green : nil)
+    private var mood: MikaMood {
+        if isCommitted { return .celebrate }
+        if isPressing { return .think }
+        return encourages || previewEarly ? .wink : .idle
     }
 
-    private func promise(icon: MicaboIcon, tone: Color, text: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            MicaboIconView(icon: icon, size: 24 * 1.35, tint: tone)
-                .frame(width: 30, height: 30)
-            Text(text)
-                .font(V3Font.bodyStrong)
-                .foregroundStyle(V3Color.ink)
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .accessibilityElement(children: .combine)
+    // MARK: Le bouton à maintenir
+
+    /// La part remplie à montrer.
+    private var shownFill: Double {
+        if isCommitted { return 1 }
+        if let previewHold { return previewHold }
+        if previewEarly { return 0.18 }
+        return fill
     }
 
-    // MARK: Le sceau
-
-    private var sealSize: CGFloat { compact ? 172 : 224 }
-
-    private var sealArea: some View {
-        VStack(spacing: 14) {
-            Group {
-                if let start = holdState.pressedAt, !isCommitted {
-                    // Le doigt est posé : l'anneau suit le temps, soixante fois par seconde.
-                    TimelineView(.periodic(from: start, by: 1.0 / 60.0)) { context in
-                        let held = Self.hold(since: start, at: context.date)
-                        seal(held, pressing: true)
-                            .onChange(of: Int(held * 10)) { _, step in
-                                Haptics.ramp(Double(step) / 10)
-                            }
-                            .onChange(of: held >= 1) { _, done in
-                                if done, holdState.tick(at: context.date) { commit() }
-                            }
-                    }
-                } else {
-                    seal(isCommitted ? 1 : (previewHold ?? resting), pressing: previewHold != nil)
-                }
-            }
-            .frame(width: sealSize * 1.25, height: sealSize * 1.25)
-            .contentShape(Circle())
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .updating($isTouching) { _, touching, _ in touching = true }
-            )
-            .onChange(of: isTouching) { _, touching in
-                if touching { press() } else { release() }
-            }
-            .accessibilityElement()
-            .accessibilityLabel(Text(i18n.t("ios.onb12.commit.hold")))
-            .accessibilityValue(Text(isCommitted ? i18n.t("ios.onb12.commit.signed") : ""))
-            .accessibilityAddTraits(.isButton)
-            .accessibilityAction { commit() }
-
-            Text(caption)
-                .font(V3Font.label)
-                .foregroundStyle(isCommitted ? V3Color.green : (encourages ? V3Color.yellowInk : V3Color.ink2))
-                .multilineTextAlignment(.center)
-                .contentTransition(.opacity)
-                .animation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion), value: caption)
-        }
+    private var label: String {
+        if isCommitted { return i18n.t("ios.onb15.commit.signed") }
+        if isPressing { return i18n.t("ios.onb15.commit.holding") }
+        if encourages || previewEarly { return i18n.t("ios.onb15.commit.again") }
+        return i18n.t("ios.onb12.commit.hold")
     }
 
-    private var caption: String {
-        if isCommitted { return i18n.t("ios.onb12.commit.signed") }
-        if holdState.pressedAt != nil || previewHold != nil { return i18n.t("ios.onb12.commit.holding") }
-        if encourages { return i18n.t("ios.onb12.commit.again") }
-        return i18n.t(reduceMotion || voiceOver ? "ios.onb12.commit.tap" : "ios.onb12.commit.hold")
-    }
-
-    /// Le sceau à une avancée donnée : le halo, l'anneau qui s'épaissit, Mika au centre.
-    private func seal(_ progress: Double, pressing: Bool) -> some View {
-        let p = CGFloat(progress)
+    private var holdButton: some View {
         let tone = isCommitted ? V3Color.green : V3Color.accent
-        let mood: MikaMood = isCommitted ? .celebrate : (pressing ? .think : (encourages ? .wink : .idle))
-        return ZStack {
-            Circle()
-                .fill(tone.opacity(0.10 + 0.22 * Double(p)))
-                .frame(width: sealSize * (1 + 0.2 * p), height: sealSize * (1 + 0.2 * p))
-            Circle()
-                .fill(V3Color.surface)
-                .frame(width: sealSize, height: sealSize)
-            Circle()
-                .stroke(V3Color.line, lineWidth: 12)
-                .frame(width: sealSize - 12, height: sealSize - 12)
-            Circle()
-                .trim(from: 0, to: p)
-                .stroke(tone, style: StrokeStyle(lineWidth: 12 + 10 * p, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .frame(width: sealSize - 12, height: sealSize - 12)
-            MikaMascot(mood: mood, size: sealSize * 0.56)
-                .accessibilityHidden(true)
+        return GeometryReader { proxy in
+            let width = proxy.size.width
+            ZStack(alignment: .leading) {
+                // Le fond, et le libellé dans la couleur du bouton principal.
+                Capsule()
+                    .fill(V3Color.ink)
+                holdLabel(color: V3Color.bg)
+                    .frame(width: width)
+                // Le remplissage, et le même libellé en blanc, découpé à sa largeur : le texte
+                // reste lisible des deux côtés du bord.
+                ZStack(alignment: .leading) {
+                    tone
+                    holdLabel(color: .white)
+                        .frame(width: width)
+                }
+                .frame(width: width * shownFill, alignment: .leading)
+                .clipped()
+            }
+            .clipShape(Capsule())
         }
+        .frame(height: 64)
+        .background { hapticRamp }
+        .contentShape(Capsule())
+        .onLongPressGesture(
+            minimumDuration: Self.holdSeconds,
+            maximumDistance: 60,
+            perform: commit,
+            onPressingChanged: pressingChanged
+        )
+        .environment(\.layoutDirection, .leftToRight)
+        .accessibilityElement()
+        .accessibilityLabel(Text(label))
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { commit() }
+        .accessibilityIdentifier("onboarding.commitment.hold")
+    }
+
+    /// **La vibration qui monte**, un cran toutes les 0,15 s, le temps que le doigt est posé.
+    /// L'horloge n'existe que pendant le maintien, et elle ne porte pas le geste : elle peut
+    /// apparaître et disparaître sans rien annuler.
+    @ViewBuilder
+    private var hapticRamp: some View {
+        if let start = hold.pressedAt, !isCommitted {
+            TimelineView(.periodic(from: start, by: Self.rampStep)) { context in
+                let level = min(10, Int(context.date.timeIntervalSince(start) / Self.rampStep))
+                Color.clear
+                    .onChange(of: level) { _, step in
+                        Haptics.ramp(Double(step) / 10)
+                    }
+            }
+            .accessibilityHidden(true)
+        }
+    }
+
+    private func holdLabel(color: Color) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: isCommitted ? "checkmark.seal.fill" : "hand.point.up.left.fill")
+                .font(.system(size: 22, weight: .bold))
+            Text(label)
+                .font(V3Font.button)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .contentTransition(.opacity)
+        }
+        .foregroundStyle(color)
+        .padding(.horizontal, 20)
+        .frame(maxHeight: .infinity)
+        .environment(\.layoutDirection, i18n.locale.isRightToLeft ? .rightToLeft : .leftToRight)
     }
 
     // MARK: Le geste
 
-    /// Le doigt se pose. Avec VoiceOver ou « Réduire les animations », un appui suffit.
-    private func press() {
-        guard !isCommitted, holdState.pressedAt == nil else { return }
-        if reduceMotion || voiceOver {
-            commit()
-            return
-        }
-        encourages = false
-        resting = 0
-        Haptics.light()
-        holdState.press(at: Date())
+    /// Le doigt se pose, ou se lève.
+    private func pressingChanged(_ pressing: Bool) {
+        guard !isCommitted else { return }
+        if pressing { press() } else { release() }
     }
 
-    /// Le doigt se lève, ou le geste est repris par le défilement : sans 1,5 s tenues, rien
-    /// n'est signé ; l'anneau redescend en douceur, Mika encourage.
-    private func release() {
-        guard holdState.pressedAt != nil, !isCommitted else { return }
-        let held = holdState.progress(at: Date())
-        if holdState.release(at: Date()) {
-            commit()
-            return
+    /// Le doigt se pose : le bouton se remplit, au rythme du maintien, et la vibration monte.
+    private func press() {
+        let now = Date()
+        hold.press(at: now)
+        encourages = false
+        Haptics.light()
+        let remaining = Self.holdSeconds * (1 - fill)
+        withAnimation(.linear(duration: max(0.05, remaining))) {
+            fill = 1
         }
-        resting = held
+    }
+
+    /// Le doigt se lève avant la fin : rien n'est signé ; le bouton se vide en douceur.
+    private func release() {
+        let now = Date()
+        // Le maintien complet (1,5 s ou plus) : c'est `commit`, appelé par le geste réussi, qui
+        // conclut — le système peut lever le doigt « logique » juste avant de l'appeler. Lâché
+        // ne serait-ce qu'un instant avant, le bouton se vide.
+        guard hold.progress(at: now) < 1 else { return }
+        let held = hold.progress(at: now)
+        hold.cancel()
         Haptics.soft()
-        withAnimation(MicaboMotion.resolved(MicaboMotion.gentle, reduceMotion: reduceMotion)) {
-            resting = 0
+        withAnimation(MicaboMotion.resolved(.easeOut(duration: 0.35), reduceMotion: reduceMotion)) {
+            fill = 0
             encourages = held > 0.05
         }
     }
 
+    /// **Engagé** : seulement après le maintien complet (ou l'action de VoiceOver).
     private func commit() {
         guard !isCommitted else { return }
-        holdState.cancel()
+        hold.cancel()
         Haptics.success()
-        withAnimation(MicaboMotion.resolved(MicaboMotion.celebrate, reduceMotion: reduceMotion)) {
+        signedHere = true
+        // La fête se joue (Mika, les confettis, le bouton qui passe au vert), puis l'écran
+        // suivant arrive à la fin de son ressort : « à 100 %, célébration et passage à la
+        // suite » (lot 15). Pas de minuterie : c'est la fin de l'animation qui avance.
+        withAnimation(Self.celebration(reduceMotion: reduceMotion), completionCriteria: .logicallyComplete) {
             model.hasCommitted = true
-            resting = 1
+            fill = 1
             encourages = false
+        } completion: {
+            guard model.step == .commitment else { return }
+            model.advance()
         }
-        celebrates = true
+    }
+
+    /// Le ressort de la fête : celui des réussites, assez long pour qu'elle se voie.
+    static func celebration(reduceMotion: Bool) -> Animation {
+        reduceMotion ? MicaboMotion.reduced : .spring(duration: 0.9, bounce: 0.3)
     }
 }
 

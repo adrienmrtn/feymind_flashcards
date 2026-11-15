@@ -1,10 +1,12 @@
 import SwiftUI
 
-// Lot 14 : « Avant de finir, on veut te montrer comment Micabo va t'aider. » Un cas concret,
-// raconté en quatre écrans et une conclusion : réviser la Révolution française. Rien à jouer :
-// chaque écran est un vrai morceau d'app, qui s'anime une fois à son arrivée (pas de délai,
-// pas de cascade), et un bouton « Continuer ». Le même exemple pour tout le monde, dans toutes
-// les langues : c'est un récit, pas une démo sur sa matière.
+// Lot 14, réécrit au lot 15 : « Voyons une leçon, du début à la fin. » Un exemple annoncé comme
+// tel — la Révolution française —, raconté en quatre écrans et une conclusion, puis « Et toi,
+// ta première leçon ? ». Chaque écran : un titre (la voix de l'app, jamais « je »), un vrai
+// morceau d'app en grand au centre optique, le bouton. Pas de bulle : le morceau d'app parle.
+// Le même exemple pour tout le monde, dans toutes les langues : c'est un récit, pas une démo sur
+// sa matière. Faits vérifiés : la Bastille tombe en 1789, la monarchie en août 1792, Louis XVI
+// fuit vers l'est en juin 1791 et il est arrêté à Varennes.
 
 // MARK: - Le gabarit
 
@@ -13,6 +15,9 @@ import SwiftUI
 struct OnbStoryStage<Panel: View>: View {
     let title: String
     var say: OnbSay?
+    /// Le libellé du bouton ; « Continuer » par défaut.
+    var cta: String?
+    var ctaSymbol: String?
     @ViewBuilder let panel: () -> Panel
 
     @Environment(OnboardingModel.self) private var model
@@ -26,12 +31,13 @@ struct OnbStoryStage<Panel: View>: View {
                 OnbMikaRow(say: say, collapsible: true)
                     .padding(.top, OnbLayout.mikaGap)
             }
-            panel()
-                .frame(maxWidth: .infinity)
-                .padding(.top, say == nil ? OnbLayout.titleGap : OnbLayout.answersGap)
-                .dynamicTypeSize(...DynamicTypeSize.xxLarge)
+            OnbCentered {
+                panel()
+                    .frame(maxWidth: .infinity)
+                    .dynamicTypeSize(...DynamicTypeSize.xxLarge)
+            }
         } footer: {
-            V3Button(i18n.t("common.continue")) {
+            V3Button(cta ?? i18n.t("common.continue"), systemImage: ctaSymbol) {
                 model.advance()
             }
         }
@@ -70,8 +76,9 @@ private extension View {
 
 // MARK: - 1. La leçon se crée
 
-/// **« Imagine : tu révises la Révolution française. »** Le compositeur de l'app : deux
-/// supports joints, une question précise, « Créer la leçon ».
+/// **« Tu poses ta question, Mika crée la leçon. »** La barre de création de l'app, en grand :
+/// deux supports joints, une question précise. Le bouton du pied crée la leçon ; l'écran
+/// suivant montre ce qui en sort.
 struct StoryCreateStepView: View {
     var previewArrived = false
 
@@ -84,61 +91,49 @@ struct StoryCreateStepView: View {
 
     var body: some View {
         OnbStoryStage(
-            title: i18n.t("ios.onb14.story.create.title"),
-            say: OnbSay(i18n.t("ios.onb14.story.create.say"), mood: .write)
+            title: i18n.t("ios.onb15.story.create.title"),
+            cta: i18n.t("ios.onb14.story.create.cta"),
+            ctaSymbol: "sparkles"
         ) {
-            OnbPanel(padding: 16) {
+            OnbPanel(padding: 18) {
                 HStack(spacing: 8) {
                     attachment(.pdf)
                     attachment(.photo)
                     Spacer(minLength: 0)
                 }
                 Text(i18n.t("ios.onb14.story.create.question"))
-                    .font(V3Font.bodyStrong)
+                    .font(OnbType.body)
+                    .lineSpacing(OnbType.bodySpacing)
                     .foregroundStyle(V3Color.ink)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 14)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(V3Color.bg, in: RoundedRectangle(cornerRadius: V3Metric.radiusTile, style: .continuous))
+                    .padding(16)
+                    .frame(maxWidth: .infinity, minHeight: 110, alignment: .topLeading)
+                    .background(V3Color.bg, in: RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous))
                     .overlay(
-                        RoundedRectangle(cornerRadius: V3Metric.radiusTile, style: .continuous)
-                            .strokeBorder(V3Color.accent, lineWidth: V3Metric.border)
+                        RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous)
+                            .strokeBorder(V3Color.accent, lineWidth: 2)
                     )
-                HStack(spacing: 8) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 16, weight: .bold))
-                    Text(i18n.t("ios.onb14.story.create.cta"))
-                        .font(V3Font.heading(19))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                }
-                .foregroundStyle(V3Color.onAccent)
-                .frame(maxWidth: .infinity, minHeight: 48)
-                .background(V3Color.accent, in: Capsule())
-                .scaleEffect(shown ? 1 : 0.96)
-                .accessibilityHidden(true)
             }
             .onbStoryArrival($arrived)
         }
     }
 
     private func attachment(_ source: OnbSource) -> some View {
-        HStack(spacing: 6) {
-            MicaboIconView(icon: source.kind.icon, size: 18 * 1.35, tint: source.tone)
-                .frame(width: 22, height: 22)
+        HStack(spacing: 8) {
+            MicaboIconView(icon: source.kind.icon, size: 20 * 1.35, tint: source.tone)
+                .frame(width: 26, height: 26)
             Text(source.title(locale: i18n.locale))
-                .font(V3Font.caption)
+                .font(OnbType.label)
                 .foregroundStyle(V3Color.ink)
                 .lineLimit(1)
-                .fixedSize()
+                .minimumScaleFactor(0.8)
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 14, weight: .bold))
+                .font(.system(size: 16, weight: .bold))
                 .foregroundStyle(V3Color.green)
         }
-        .padding(.horizontal, 10)
-        .frame(height: 36)
+        .padding(.horizontal, 12)
+        .frame(height: 44)
         .background(V3Color.wash(of: source.tone), in: Capsule())
         .scaleEffect(shown ? 1 : 0.85)
         .opacity(shown ? 1 : 0)
@@ -179,18 +174,15 @@ struct StoryPathStepView: View {
         ]
     }
 
-    private var step: CGFloat { compact ? 50 : 56 }
+    private var step: CGFloat { compact ? 56 : 72 }
 
     var body: some View {
-        OnbStoryStage(
-            title: i18n.t("ios.onb14.story.path.title"),
-            say: OnbSay(i18n.t("ios.onb14.story.path.say"), mood: .proud)
-        ) {
-            OnbPanel(padding: 16) {
+        OnbStoryStage(title: i18n.t("ios.onb15.story.path.title")) {
+            OnbPanel(padding: 18) {
                 HStack(spacing: 10) {
-                    OnbIcon(icon: .book, size: 24)
+                    OnbIcon(icon: .book, size: 26)
                     Text(i18n.t("ios.onb14.story.lesson"))
-                        .font(V3Font.heading(21))
+                        .font(V3Font.heading(24))
                         .foregroundStyle(V3Color.ink)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -206,7 +198,7 @@ struct StoryPathStepView: View {
         GeometryReader { proxy in
             let width = proxy.size.width
             let points = nodes.indices.map { index in
-                CGPoint(x: index.isMultiple(of: 2) ? width * 0.24 : width * 0.62, y: CGFloat(index) * step + step / 2)
+                CGPoint(x: index.isMultiple(of: 2) ? width * 0.12 : width * 0.52, y: CGFloat(index) * step + step / 2)
             }
             ZStack(alignment: .topLeading) {
                 Path { line in
@@ -219,19 +211,19 @@ struct StoryPathStepView: View {
                 ForEach(nodes) { node in
                     let point = points[node.id]
                     HStack(spacing: 10) {
-                        MicaboIconView(icon: node.icon, size: 22 * 1.35, tint: node.tone)
-                            .frame(width: 44, height: 44)
+                        MicaboIconView(icon: node.icon, size: 26 * 1.35, tint: node.tone)
+                            .frame(width: 54, height: 54)
                             .background(V3Color.wash(of: node.tone), in: Circle())
-                            .overlay(Circle().strokeBorder(node.tone.opacity(0.7), lineWidth: 2))
+                            .overlay(Circle().strokeBorder(node.tone.opacity(0.7), lineWidth: 2.5))
                         Text(node.text)
-                            .font(V3Font.label)
-                            .foregroundStyle(V3Color.ink)
+                            .font(OnbType.label)
+                            .foregroundStyle(node.id == 4 ? V3Color.yellow : V3Color.ink)
                             .lineLimit(2)
                             .minimumScaleFactor(0.8)
                             .fixedSize(horizontal: false, vertical: true)
-                            .frame(width: width - point.x - 34, alignment: .leading)
+                            .frame(width: width - point.x - 40, alignment: .leading)
                     }
-                    .position(x: point.x + (width - point.x - 34) / 2 + 5, y: point.y)
+                    .position(x: point.x + (width - point.x - 40) / 2 + 8, y: point.y)
                     .opacity(shown ? 1 : (node.id == 0 ? 1 : 0.25))
                 }
             }
@@ -243,10 +235,11 @@ struct StoryPathStepView: View {
     }
 }
 
-// MARK: - 3. Quiz et cartes
+// MARK: - 3. Le quiz
 
-/// **« Tu suis ton parcours : tu connais ta leçon. »** Une question du quiz (la bonne réponse
-/// se colore, l'XP tombe) et une carte de la leçon, retournée sur sa réponse.
+/// **« Tu t'entraînes, et tu retiens. »** Une seule question du quiz de la leçon, en grand : la
+/// bonne réponse se colore, l'XP tombe. (La carte retournée est partie au lot 15 : une chose
+/// par écran.)
 struct StoryPracticeStepView: View {
     var previewArrived = false
 
@@ -259,72 +252,49 @@ struct StoryPracticeStepView: View {
     private var shown: Bool { arrived || previewArrived || settled }
 
     var body: some View {
-        OnbStoryStage(
-            title: i18n.t("ios.onb14.story.practice.title"),
-            say: OnbSay(i18n.t("ios.onb14.story.practice.say"), mood: .happy)
-        ) {
-            VStack(spacing: 12) {
-                quiz
-                card
-            }
-            .onbStoryArrival($arrived)
-        }
-    }
-
-    private var quiz: some View {
-        OnbPanel(padding: 14) {
-            HStack(alignment: .top) {
+        OnbStoryStage(title: i18n.t("ios.onb15.story.practice.title")) {
+            OnbPanel(padding: 20) {
+                HStack(alignment: .center) {
+                    Text(verbatim: "\(i18n.t("lesson.nav.quiz")) · \(i18n.t("ios.onb14.story.lesson"))")
+                        .font(OnbType.mention)
+                        .foregroundStyle(V3Color.ink2)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    OnbXPPill(points: 10)
+                        .scaleEffect(shown ? 1 : 0.6)
+                        .opacity(shown ? 1 : 0)
+                }
                 Text(i18n.t("ios.onb14.story.quiz.q"))
-                    .font(V3Font.heading(20))
+                    .font(V3Font.heading(30))
                     .foregroundStyle(V3Color.ink)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                OnbXPPill(points: 10)
-                    .scaleEffect(shown ? 1 : 0.6)
-                    .opacity(shown ? 1 : 0)
-            }
-            HStack(spacing: 8) {
-                ForEach(["1792", "1789", "1804"], id: \.self) { year in
-                    let right = year == "1789"
-                    HStack(spacing: 6) {
-                        Text(verbatim: year)
-                            .font(V3Font.heading(20))
-                            .monospacedDigit()
-                        if right, shown {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 15, weight: .bold))
+                VStack(spacing: 10) {
+                    ForEach(["1792", "1789", "1804"], id: \.self) { year in
+                        let right = year == "1789"
+                        HStack(spacing: 8) {
+                            Text(verbatim: year)
+                                .font(V3Font.heading(28))
+                                .monospacedDigit()
+                            if right, shown {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 22, weight: .bold))
+                            }
                         }
+                        .foregroundStyle(right && shown ? V3Color.green : V3Color.ink)
+                        .frame(maxWidth: .infinity, minHeight: compact ? 50 : 60)
+                        .background(right && shown ? V3Color.greenWash : V3Color.soft, in: RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous)
+                                .strokeBorder(right && shown ? V3Color.green : .clear, lineWidth: 2)
+                        )
                     }
-                    .foregroundStyle(right && shown ? V3Color.green : V3Color.ink2)
-                    .frame(maxWidth: .infinity, minHeight: compact ? 42 : 48)
-                    .background(right && shown ? V3Color.greenWash : V3Color.soft, in: RoundedRectangle(cornerRadius: V3Metric.radiusTile, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: V3Metric.radiusTile, style: .continuous)
-                            .strokeBorder(right && shown ? V3Color.green : .clear, lineWidth: 2)
-                    )
                 }
+                .environment(\.layoutDirection, .leftToRight)
             }
-            .environment(\.layoutDirection, .leftToRight)
-        }
-    }
-
-    /// La carte, sa question au-dessus, sa réponse qui arrive en fondu.
-    private var card: some View {
-        OnbPanel(padding: 14) {
-            Label(i18n.t("lesson.nav.flashcards"), systemImage: "rectangle.on.rectangle.angled")
-                .font(V3Font.caption)
-                .foregroundStyle(V3Color.lilac)
-            Text(i18n.t("ios.onb14.story.card.q"))
-                .font(V3Font.bodyStrong)
-                .foregroundStyle(V3Color.ink2)
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-            Text(i18n.t("ios.onb14.story.card.a"))
-                .font(V3Font.heading(26))
-                .foregroundStyle(V3Color.lilac)
-                .opacity(shown ? 1 : 0)
-                .offset(y: shown ? 0 : 6)
+            .onbStoryArrival($arrived)
         }
     }
 }
@@ -344,31 +314,33 @@ struct StoryAskStepView: View {
     private var shown: Bool { arrived || previewArrived || settled }
 
     var body: some View {
-        OnbStoryStage(title: i18n.t("ios.onb14.story.ask.title")) {
-            OnbPanel(padding: 16) {
+        OnbStoryStage(title: i18n.t("ios.onb15.story.ask.title")) {
+            VStack(spacing: 14) {
                 Text(i18n.t("ios.onb14.story.ask.q"))
-                    .font(V3Font.bodyStrong)
+                    .font(OnbType.body)
+                    .lineSpacing(OnbType.bodySpacing)
                     .foregroundStyle(V3Color.onAccent)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(V3Color.accent, in: RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous))
-                    .padding(.leading, 40)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 13)
+                    .background(V3Color.accent, in: RoundedRectangle(cornerRadius: V3Metric.radiusBubble, style: .continuous))
+                    .padding(.leading, 44)
                     .frame(maxWidth: .infinity, alignment: .trailing)
 
-                HStack(alignment: .top, spacing: 10) {
-                    MikaAvatar(size: 32)
-                    Text(i18n.t("ios.onb14.story.ask.a"))
-                        .font(V3Font.body)
+                HStack(alignment: .bottom, spacing: 10) {
+                    MikaAvatar(size: 40)
+                    Text(i18n.t("ios.onb15.story.ask.a"))
+                        .font(OnbType.body)
+                        .lineSpacing(OnbType.bodySpacing)
                         .foregroundStyle(V3Color.ink)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                        .background(V3Color.soft, in: RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 14)
+                        .background(V3Color.surface, in: RoundedRectangle(cornerRadius: V3Metric.radiusBubble, style: .continuous))
                 }
-                .padding(.trailing, 16)
+                .padding(.trailing, 8)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .opacity(shown ? 1 : 0)
                 .scaleEffect(shown ? 1 : 0.94, anchor: .topLeading)
@@ -380,34 +352,21 @@ struct StoryAskStepView: View {
 
 // MARK: - La conclusion
 
-/// **« Tu gagnes du temps, et apprendre devient un jeu. »** Mika conclut le récit : « J'espère
-/// te faire aimer apprendre : j'ai été créé pour ça. »
+/// **« Mika a été créé pour te faire aimer apprendre. »** (lot 15, mots du fondateur) Mika
+/// conclut le récit, en grand, dans sa bulle : « Tu gagnes du temps, et apprendre devient un
+/// jeu. » Puis : « Et toi, ta première leçon ? »
 struct StoryCloseStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-    @Environment(\.onbCompact) private var compact
 
     var body: some View {
-        OnbScreen {
-            Spacer(minLength: 8)
-                .layoutPriority(-1)
-            OnbHeroMika(mood: .celebrate, max: compact ? 150 : 210, min: 110)
-            VStack(spacing: 12) {
-                OnbTitle(i18n.t("ios.onb14.story.close.title"), size: compact ? 30 : 34, alignment: .center)
-                Text(i18n.t("ios.onb14.story.close.sub"))
-                    .font(V3Font.body)
-                    .foregroundStyle(V3Color.ink2)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.top, compact ? 14 : 22)
-            Spacer(minLength: 8)
-                .layoutPriority(-1)
-        } footer: {
-            V3Button(i18n.t("common.continue")) {
-                model.advance()
-            }
+        OnbChapterOpener(
+            title: i18n.t("ios.onb15.story.close.title"),
+            say: i18n.t("ios.onb14.story.close.title"),
+            mood: .celebrate,
+            cta: i18n.t("common.continue")
+        ) {
+            model.advance()
         }
     }
 }

@@ -13,8 +13,8 @@ import SwiftUI
 /// dessiné ici, en vectoriel, avec une écriture manuscrite du système (`Noteworthy`), donc
 /// net à toutes les tailles, et sans poids pour l'app.
 ///
-/// La leçon qui en sort (`NotebookLesson`) reprend **ce qui est écrit sur la page** : la
-/// règle, un exercice, une carte.
+/// Elle illustre la première story. (Lot 15 : la démo de la leçon ne la montre plus, elle fait
+/// converger toutes les sources vers une leçon.)
 struct NotebookPhoto: View {
     /// La hauteur de la page ; sa largeur suit (un format de cahier).
     var height: CGFloat = 300
@@ -218,49 +218,5 @@ private struct NotebookScribble: Shape {
             path.addLine(to: CGPoint(x: x, y: y))
         }
         return path
-    }
-}
-
-// MARK: - La leçon qui en sort
-
-/// **La leçon tirée de la page photographiée** : son titre, et ce qui est vraiment écrit sur
-/// la page, devenu une note, une question de quiz et une carte.
-struct NotebookLesson: View {
-    var compact = false
-
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    var body: some View {
-        OnbPanel(padding: compact ? 14 : 18) {
-            Text(i18n.t("ios.onb12.notebook.title"))
-                .font(V3Font.heading(compact ? 22 : 26))
-                .foregroundStyle(V3Color.ink)
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-            row(.notes, label: i18n.t("lesson.nav.notes"), text: i18n.t("ios.onb12.notebook.note"), tone: V3Color.iconBlue)
-            row(.quiz, label: i18n.t("lesson.nav.quiz"), text: i18n.t("ios.onb12.notebook.quiz"), tone: V3Color.iconPink)
-            row(.cards, label: i18n.t("lesson.nav.flashcards"), text: i18n.t("ios.onb12.notebook.card"), tone: V3Color.iconGreen)
-        }
-    }
-
-    private func row(_ icon: MicaboIcon, label: String, text: String, tone: Color) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            MicaboIconView(icon: icon, size: 22 * 1.35, tint: tone)
-                .frame(width: 36, height: 36)
-                .background(V3Color.wash(of: tone), in: RoundedRectangle(cornerRadius: V3Metric.radiusTile, style: .continuous))
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label)
-                    .font(V3Font.caption)
-                    .fontWeight(.bold)
-                    .foregroundStyle(tone)
-                Text(text)
-                    .font(V3Font.support)
-                    .foregroundStyle(V3Color.ink)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .accessibilityElement(children: .combine)
     }
 }

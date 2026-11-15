@@ -10,7 +10,7 @@ import UserNotifications
 
 /// **« On veut que tu essaies Micabo Pro gratuitement »** (lot 13, mots de l'utilisateur).
 ///
-/// Mika en grand, le titre, puis **trois choses que l'essai ouvre, tirées des réponses** : sa
+/// Le titre, puis **trois choses que l'essai ouvre, tirées des réponses** : sa
 /// première leçon (le sujet qu'il vient d'écrire), Mika dans sa matière la plus dure, les
 /// examens blancs de son examen. Au pied, « Rien à payer aujourd'hui », et le bouton.
 struct FreeTrialIntroStepView: View {
@@ -53,31 +53,31 @@ struct FreeTrialIntroStepView: View {
     }
 
     var body: some View {
+        // Lot 15 : la grille de tout le parcours — le titre en haut à gauche, les trois lignes
+        // au centre optique, au corps de lecture (20 pt, couleur principale).
         OnbScreen {
-            OnbHeroMika(mood: .happy, max: compact ? 96 : 150, min: 72)
-                .padding(.top, 4)
+            OnbTitle(i18n.t("ios.onb12.trial.wantTitle"), size: OnbLayout.questionTitle)
+                .padding(.top, OnbLayout.titleTop)
 
-            OnbTitle(i18n.t("ios.onb12.trial.wantTitle"), size: OnbLayout.display, alignment: .center)
-                .padding(.top, 8)
-
-            VStack(alignment: .leading, spacing: compact ? 14 : 20) {
-                ForEach(Self.unlocks(for: model, locale: i18n.locale)) { unlock in
-                    HStack(spacing: 14) {
-                        OnbIcon(icon: unlock.icon, size: 28)
-                        Text(unlock.text)
-                            .font(V3Font.bodyStrong)
-                            .foregroundStyle(V3Color.ink)
-                            .multilineTextAlignment(.leading)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+            OnbCentered {
+                VStack(alignment: .leading, spacing: compact ? 20 : 28) {
+                    ForEach(Self.unlocks(for: model, locale: i18n.locale)) { unlock in
+                        HStack(spacing: 16) {
+                            OnbIcon(icon: unlock.icon, size: 30)
+                                .frame(width: 56, height: 56)
+                                .background(V3Color.surface, in: RoundedRectangle(cornerRadius: V3Metric.radiusTile, style: .continuous))
+                            Text(unlock.text)
+                                .font(OnbType.body)
+                                .lineSpacing(OnbType.bodySpacing)
+                                .foregroundStyle(V3Color.ink)
+                                .multilineTextAlignment(.leading)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .accessibilityElement(children: .combine)
                     }
-                    .accessibilityElement(children: .combine)
                 }
             }
-            // Lot 14 : sans carte autour — trois lignes, de l'air.
-            .padding(.horizontal, 8)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, compact ? 18 : 28)
         } footer: {
             OnbReassurance(text: i18n.t("ios.pay10.nothingToday"))
             V3Button(i18n.t("common.continue")) {
@@ -133,20 +133,18 @@ struct TrialOfferStepView: View {
     }
 
     var body: some View {
+        // Lot 15 : la grille de tout le parcours — le titre en haut à gauche, la frise datée au
+        // centre optique, au corps de lecture.
         OnbScreen {
-            bell
-                .padding(.top, compact ? 4 : 12)
-                .frame(maxWidth: .infinity)
-
             OnbTitle(
                 i18n.t(promises ? "ios.onb12.trial.remindTitle" : "ios.onb12.trialOffer.anytime"),
-                size: OnbLayout.questionTitle,
-                alignment: .center
+                size: OnbLayout.questionTitle
             )
-            .padding(.top, 12)
+            .padding(.top, OnbLayout.titleTop)
 
-            OnbTrialTimeline(milestones: TrialTimeline.milestones(from: now, locale: i18n.locale, remindersOn: promises))
-                .padding(.top, compact ? 14 : 20)
+            OnbCentered {
+                OnbTrialTimeline(milestones: TrialTimeline.milestones(from: now, locale: i18n.locale, remindersOn: promises))
+            }
         } footer: {
             switch current {
             case .granted:
@@ -165,17 +163,6 @@ struct TrialOfferStepView: View {
             guard previewPermission == nil else { return }
             permission = await Self.currentPermission()
         }
-    }
-
-    /// La cloche du rappel, dans le jaune de l'offre.
-    private var bell: some View {
-        Image(systemName: promises ? "bell.badge.fill" : "bell.slash.fill")
-            .font(.system(size: compact ? 34 : 44, weight: .bold))
-            .symbolRenderingMode(.hierarchical)
-            .foregroundStyle(V3Color.yellow)
-            .frame(width: compact ? 76 : 96, height: compact ? 76 : 96)
-            .background(V3Color.wash(of: V3Color.yellow), in: Circle())
-            .accessibilityHidden(true)
     }
 
     /// L'autorisation, telle qu'iOS la donne.
@@ -213,9 +200,9 @@ struct OnbTrialTimeline: View {
                 HStack(alignment: .top, spacing: 14) {
                     VStack(spacing: 0) {
                         Image(systemName: milestone.systemImage)
-                            .font(V3Font.label)
+                            .font(.system(size: 20, weight: .bold))
                             .foregroundStyle(tint(milestone.tone))
-                            .frame(width: 34, height: 34)
+                            .frame(width: 46, height: 46)
                             .background(V3Color.wash(of: tint(milestone.tone)), in: Circle())
                         if index < milestones.count - 1 {
                             Rectangle()
@@ -226,18 +213,20 @@ struct OnbTrialTimeline: View {
                     }
                     .accessibilityHidden(true)
 
-                    VStack(alignment: .leading, spacing: 3) {
+                    // Lot 15 : le titre de l'étape à 20 pt, son détail à 17 pt, en couleur
+                    // principale — c'est ce qu'on lit avant de payer.
+                    VStack(alignment: .leading, spacing: 4) {
                         Text(milestone.title)
-                            .font(V3Font.cardTitle)
+                            .font(.system(.title3, design: .default, weight: .bold))
                             .foregroundStyle(V3Color.ink)
                         Text(milestone.detail)
-                            .font(V3Font.support)
-                            .foregroundStyle(V3Color.ink2)
+                            .font(OnbType.detail)
+                            .foregroundStyle(V3Color.ink)
                     }
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 5)
-                    .padding(.bottom, index < milestones.count - 1 ? 12 : 0)
+                    .padding(.top, 10)
+                    .padding(.bottom, index < milestones.count - 1 ? 22 : 0)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityElement(children: .combine)
                 }

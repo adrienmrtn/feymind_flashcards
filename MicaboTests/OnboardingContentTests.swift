@@ -177,7 +177,8 @@ final class OnboardingContentTests: XCTestCase {
         for (path, text) in try Self.onboardingSources() {
             XCTAssertFalse(text.contains("ios.journey.source"), path)
             XCTAssertFalse(text.contains("ios.onb7.card.proof"), path)
-            if text.contains("\"ios.research.quote\"") { citing.append(path) }
+            // Lot 15 : l'écran de la recherche cite sa source en clair (`ios.onb15.research.source`).
+            if text.contains("\"ios.onb15.research.source\"") { citing.append(path) }
         }
         XCTAssertEqual(citing.count, 1, "\(citing)")
         XCTAssertTrue(citing.first?.hasSuffix("ChapterStepViews.swift") == true)
@@ -278,7 +279,7 @@ final class OnboardingContentTests: XCTestCase {
         ])
         XCTAssertEqual(lina.planSummary(locale: .fr).map(\.id), ["exam", "subjects", "daily", "goal", "lesson"])
         XCTAssertEqual(lina.planSummary(locale: .fr).first { $0.id == "goal" }?.value, "12/20 → 16/20")
-        XCTAssertEqual(FirstLessonStepView.exampleTopic(for: lina, locale: .fr), "Les fonctions affines")
+        XCTAssertEqual(FirstLessonStepView.exampleTopic(for: lina, locale: .fr), "Le second degré", "Lot 15 : le sujet du scanner")
     }
 
     /// **Une plage de notes se lit de gauche à droite, comme une équation**, en arabe aussi :
@@ -324,7 +325,7 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(ines.classLabel, "Licence 1")
         XCTAssertTrue(LearningGoal.offered(for: ines.tier).contains(.passYear))
         XCTAssertEqual(FirstLessonStepView.band(for: ines.tier), "higher")
-        XCTAssertEqual(FirstLessonStepView.exampleTopic(for: ines, locale: .fr), "Les matrices")
+        XCTAssertEqual(FirstLessonStepView.exampleTopic(for: ines, locale: .fr), "Les intégrales", "Lot 15 : le sujet du scanner")
         let reaction = try XCTUnwrap(ExamStepView.reaction(choice: ines.examChoice, date: ines.examDate, now: Self.now, locale: .fr))
         XCTAssertTrue(reaction.hasPrefix("Partiels dans "), reaction)
     }

@@ -136,19 +136,19 @@ struct StudyMethodStepView: View {
 
 // MARK: - Mika reformule
 
-/// **« Je t'ai compris, Lina. »** Le pivot du parcours : de la douleur à l'espoir.
+/// **« Lina, voilà ce qui coince. »** (lot 15) Le pivot du parcours : de la douleur à l'espoir.
 ///
-/// Mika, en grand, reprend ce que l'élève vient de dire, ligne à ligne (sa matière la plus
-/// dure, ses blocages, son temps, sa méthode) — la preuve qu'il a écouté — puis annonce la
-/// suite : « Pour chacun, j'ai une réponse. Je te montre ? ». Une réponse absente retire sa
-/// ligne. Le nom de l'étape reste `solutionMap`.
+/// L'écran reprend ce que l'élève vient de dire, trois lignes au plus (sa matière la plus
+/// dure, un blocage, son temps) — la preuve qu'on a écouté —, puis « Montre-moi ». Sans Mika :
+/// l'écran suivant est à lui. Une réponse absente retire sa ligne. Le nom de l'étape reste
+/// `solutionMap`.
 struct SolutionMapStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     private var title: String {
-        guard let name = model.displayName.nilIfBlank else { return i18n.t("ios.onb12.recap.titleNoName") }
-        return i18n.t("ios.onb12.recap.title", ["name": name])
+        guard let name = model.displayName.nilIfBlank else { return i18n.t("ios.onb15.recap.titleNoName") }
+        return i18n.t("ios.onb15.recap.title", ["name": name])
     }
 
     struct Line: Identifiable {
@@ -186,35 +186,31 @@ struct SolutionMapStepView: View {
     }
 
     var body: some View {
+        // Lot 15 : sans Mika (l'écran suivant est à lui) ; le titre à sa place, les trois
+        // lignes au centre optique, au corps de lecture.
         OnbScreen {
-            Spacer(minLength: 4)
-                .layoutPriority(-1)
+            OnbTitle(title, size: OnbLayout.questionTitle)
+                .padding(.top, OnbLayout.titleTop)
 
-            OnbHeroMika(mood: .proud, max: 150, min: 90)
-
-            OnbTitle(title, size: OnbLayout.display, alignment: .center)
-                .padding(.top, 8)
-
-            VStack(alignment: .leading, spacing: 14) {
-                ForEach(Self.lines(for: model, locale: i18n.locale)) { line in
-                    HStack(alignment: .center, spacing: 12) {
-                        OnbIcon(icon: line.icon, size: 26)
-                        Text(line.text)
-                            .font(V3Font.bodyStrong)
-                            .foregroundStyle(V3Color.ink)
-                            .multilineTextAlignment(.leading)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+            OnbCentered {
+                VStack(alignment: .leading, spacing: 24) {
+                    ForEach(Self.lines(for: model, locale: i18n.locale)) { line in
+                        HStack(alignment: .center, spacing: 16) {
+                            OnbIcon(icon: line.icon, size: 30)
+                                .frame(width: 52, height: 52)
+                                .background(V3Color.surface, in: RoundedRectangle(cornerRadius: V3Metric.radiusTile, style: .continuous))
+                            Text(line.text)
+                                .font(OnbType.body)
+                                .lineSpacing(OnbType.bodySpacing)
+                                .foregroundStyle(V3Color.ink)
+                                .multilineTextAlignment(.leading)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .accessibilityElement(children: .combine)
                     }
-                    .accessibilityElement(children: .combine)
                 }
             }
-            .padding(.horizontal, 8)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, 24)
-
-            Spacer(minLength: 4)
-                .layoutPriority(-1)
         } footer: {
             V3Button(i18n.t("ios.onb12.recap.cta")) {
                 model.advance()

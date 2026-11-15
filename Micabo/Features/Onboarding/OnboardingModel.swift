@@ -176,6 +176,17 @@ final class OnboardingModel {
         return nil
     }
 
+    /// **Une matière scientifique parmi les siennes** (maths, physique, chimie) : le scanner
+    /// d'exercices se montre sur un exercice de maths de sa classe.
+    var hasScienceSubject: Bool {
+        subjects.contains { subject in
+            switch SampleCard.card(forEmoji: SubjectCatalog.emoji(for: subject)) {
+            case .some(.math), .some(.chemistry): true
+            default: false
+            }
+        }
+    }
+
     /// Les matières que la question d'essai et les démonstrations considèrent : la plus dure
     /// d'abord, quand elle a une question ; sinon toutes celles cochées.
     var demoSubjects: Set<String> {
@@ -486,6 +497,9 @@ final class OnboardingModel {
         switch step {
         case .targetAverage: return didSkipAverages
         case .hardestSubject: return subjects.count < 2
+        // Lot 15 : le scanner montre un exercice de maths de sa classe, seulement à qui a une
+        // matière scientifique (le fil des exemples suit ses matières).
+        case .scanDemo: return !hasScienceSubject
         // On ne promet pas des jours qu'Apple ne donnera pas.
         case .freeTrialIntro, .trialOffer: return !OnboardingTrial.isOffered
         default: return false
@@ -645,6 +659,12 @@ extension OnboardingModel {
     ///
     /// `OnboardingModel()` reste un parcours neuf : seule la vue du parcours reprend.
     static func resuming(in context: ModelContext?) -> OnboardingModel {
+        #if DEBUG
+        // Les tests d'interface ouvrent le parcours directement sur une étape (lot 15).
+        if let step = OnboardingDebugLaunch.step {
+            return OnboardingDebugLaunch.model(at: step)
+        }
+        #endif
         let model = OnboardingModel()
         guard let saved = OnboardingPreferences.resumeStep, saved != .hookLogo else { return model }
 
@@ -703,6 +723,38 @@ extension OnboardingModel {
         }
     }
 }
+
+#if DEBUG
+// MARK: - Le lancement des tests d'interface
+
+/// **Ouvrir le parcours sur une étape**, pour les tests d'interface (lot 15) : lancé avec
+/// `-onboardingStep commitment`, le parcours s'ouvre sur l'engagement, avec les réponses de
+/// Lina (France, deux matières, 45 min par jour, rappel à 18 h) et sans engagement pris. Le
+/// test passe aussi `-micabo.onboarding.completed NO`, pour que le parcours s'affiche même si
+/// une autre suite de tests l'a marqué fini sur ce simulateur. Absent des versions publiées.
+enum OnboardingDebugLaunch {
+    /// L'étape demandée, par son nom de statistiques.
+    static var step: OnboardingStep? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let index = arguments.firstIndex(of: "-onboardingStep"), arguments.indices.contains(index + 1) else { return nil }
+        let name = arguments[index + 1]
+        return OnboardingStep.allCases.first { $0.analyticsName == name }
+    }
+
+    static func model(at step: OnboardingStep) -> OnboardingModel {
+        let model = OnboardingModel()
+        model.displayName = "Lina"
+        model.select(country: .fr)
+        model.subjects = ["Mathématiques", "Philosophie"]
+        model.hardestSubject = "Mathématiques"
+        model.dailyMinutes = 45
+        model.studyHour = 18
+        model.hasCommitted = false
+        model.place(on: step)
+        return model
+    }
+}
+#endif
 
 // MARK: - L'essai
 

@@ -2,18 +2,17 @@ import SwiftUI
 
 // MARK: - Mika se présente, et pose le cadre
 
-/// **« Salut, moi c'est Mika ! »** L'ouverture du premier chapitre (lot 14) : un grand Mika qui
-/// fait coucou, son nom, et le cadre — quelques questions faciles, puis le plan. Les trois
-/// jalons d'avant sont partis : la jauge en chapitres dit déjà où l'on va.
+/// **« Faisons connaissance. »** L'ouverture du premier chapitre (lot 15) : la grille de tous
+/// les écrans, et Mika en grand qui fait coucou et se présente dans sa bulle (« Salut, moi
+/// c'est Mika ! … »).
 struct WelcomeStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
         OnbChapterOpener(
-            chapter: OnboardingStep.welcome.chapter,
-            text: i18n.t("ios.onb12.welcome.title"),
-            sub: i18n.t("ios.onb12.welcome.sub"),
+            title: i18n.t("ios.onb15.open.welcome.title"),
+            say: i18n.t("ios.onb15.open.welcome.say"),
             mood: .wave,
             cta: i18n.t("ios.onb10.go")
         ) {
@@ -24,7 +23,7 @@ struct WelcomeStepView: View {
 
 // MARK: - Le prénom
 
-/// **« Comment je t'appelle ? »**
+/// **« Comment tu t'appelles ? »** (lot 15 : le titre ne dit jamais « je »)
 ///
 /// La première question, et elle n'est pas facultative : tout ce qui suit s'adresse à
 /// quelqu'un. Le prénom se tape en très grand ; **Mika réagit dès la première lettre**
@@ -53,7 +52,7 @@ struct NameStepView: View {
     var body: some View {
         @Bindable var model = model
 
-        OnbQuestion(i18n.t("ios.onb12.q.name"), say: say) {
+        OnbQuestion(i18n.t("ios.onb15.q.name"), say: say) {
             VStack(spacing: 0) {
                 field($model.displayName)
                     .padding(.vertical, 18)

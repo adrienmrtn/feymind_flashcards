@@ -47,6 +47,16 @@
                ReferencedContainer = "container:Micabo.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "FE00000000000000000042"
+               BuildableName = "MicaboUITests.xctest"
+               BlueprintName = "MicaboUITests"
+               ReferencedContainer = "container:Micabo.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

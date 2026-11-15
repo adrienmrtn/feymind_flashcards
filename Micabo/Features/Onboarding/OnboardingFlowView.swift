@@ -44,6 +44,9 @@ struct OnboardingFlowView: View {
             ZStack {
                 ForEach([model.step], id: \.self) { step in
                     OnboardingStepScreen(step: step, onFinish: finish)
+                        // Le nom de l'écran, pour les tests d'interface (lot 15).
+                        .accessibilityElement(children: .contain)
+                        .accessibilityIdentifier("onboarding.step.\(step.analyticsName)")
                         .transition(push)
                 }
             }
@@ -223,7 +226,6 @@ struct OnboardingStepScreen: View {
         case .origin: OriginStepView()
         case .lessonDemo: LessonDemoStepView()
         case .scanDemo: ScanDemoStepView()
-        case .chatDemo: ChatDemoStepView()
         case .notJustChat: NotJustChatStepView()
         case .research: ResearchStepView()
         case .currentAverage: CurrentAverageStepView()

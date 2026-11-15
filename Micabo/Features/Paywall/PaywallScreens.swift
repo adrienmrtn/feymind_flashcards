@@ -665,9 +665,10 @@ struct PaywallPlanCard: View {
                 }
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
+                // La somme facturée se lit (lot 15) : couleur principale.
                 Text(plan.caption)
                     .font(PaywallStyle.planBilled)
-                    .foregroundStyle(V3Color.ink2)
+                    .foregroundStyle(V3Color.ink)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)

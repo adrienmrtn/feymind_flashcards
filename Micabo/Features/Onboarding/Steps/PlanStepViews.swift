@@ -55,11 +55,8 @@ struct PlanBuildingStepView: View {
 
             OnbHeroMika(mood: .write, max: 130, min: 80)
 
-            Text(i18n.t("ios.onb10.build.title"))
-                .font(V3Font.h1)
-                .foregroundStyle(V3Color.ink)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
+            // Lot 15 : le titre ne dit plus « je » — « Mika prépare ton plan… ».
+            OnbTitle(i18n.t("ios.onb15.build.title"), size: OnbLayout.questionTitle, alignment: .center)
                 .frame(maxWidth: .infinity)
                 .padding(.top, 8)
                 .accessibilityAddTraits(.isHeader)

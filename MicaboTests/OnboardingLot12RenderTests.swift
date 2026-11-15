@@ -106,7 +106,7 @@ extension OnboardingLivePage where Content == OnboardingStepScreen {
     }
 }
 
-/// **Le parcours d'accueil du lot 14, écran par écran, dans l'ordre, sur un vrai iPhone** :
+/// **Le parcours d'accueil du lot 15 (rendus `onb15-…`), écran par écran, dans l'ordre, sur un vrai iPhone** :
 /// chaque écran dans une fenêtre aux marges de l'iPhone 15 Pro (59/34) et de l'iPhone SE
 /// (20/0), encoche et barre d'accueil dessinées (`RenderGallery.renderDevice`). Le français en
 /// entier sur les deux iPhone ; l'anglais en entier sur le 15 Pro ; l'arabe et le japonais
@@ -206,7 +206,6 @@ final class OnboardingLot14RenderTests: XCTestCase {
         case .origin: AnyView(OriginStepView(previewTidy: true))
         case .lessonDemo: AnyView(LessonDemoStepView(previewPlayed: true))
         case .scanDemo: AnyView(ScanDemoStepView(previewStage: 3))
-        case .chatDemo: AnyView(ChatDemoStepView(previewAsked: 0))
         case .planDemo: AnyView(PlanDemoStepView(previewDay: 1))
         case .focusDemo: AnyView(FocusDemoStepView(previewDone: true))
         case .commitment: AnyView(CommitmentStepView(previewCommitted: true))
@@ -265,7 +264,7 @@ final class OnboardingLot14RenderTests: XCTestCase {
     private func french(chapters: ClosedRange<Int>) throws {
         let model = lina()
         for step in seen(by: model) where chapters.contains(step.chapter) {
-            try render("onb14-fr-\(id(step))", step, model)
+            try render("onb15-fr-\(id(step))", step, model)
         }
     }
 
@@ -279,7 +278,7 @@ final class OnboardingLot14RenderTests: XCTestCase {
         use(.en)
         let model = emma()
         for step in seen(by: model) where chapters.contains(step.chapter) {
-            try render("onb14-en-\(id(step))", step, model, devices: [.iPhone15Pro])
+            try render("onb15-en-\(id(step))", step, model, devices: [.iPhone15Pro])
         }
     }
 
@@ -290,16 +289,22 @@ final class OnboardingLot14RenderTests: XCTestCase {
     func testBeforeAndDuring() throws {
         let model = lina()
         let pro = [RenderDevice.iPhone15Pro]
-        for step in [OnboardingStep.origin, .lessonDemo, .scanDemo, .chatDemo, .commitment] {
-            try render("onb14-fr-\(id(step))-before", step, model, devices: pro, playsDemo: false)
+        for step in [OnboardingStep.origin, .lessonDemo, .scanDemo, .commitment] {
+            try render("onb15-fr-\(id(step))-before", step, model, devices: pro, playsDemo: false)
         }
-        try render("onb14-fr-\(id(.commitment))-holding", .commitment, model, devices: pro, view: AnyView(CommitmentStepView(previewHold: 0.6)))
+        // Lot 15 : le bouton à maintenir, doigt posé à 62 %, puis lâché trop tôt.
+        try render("onb15-fr-\(id(.commitment))-holding", .commitment, model, view: AnyView(CommitmentStepView(previewHold: 0.62)))
+        try render("onb15-fr-\(id(.commitment))-early", .commitment, model, devices: pro, view: AnyView(CommitmentStepView(previewEarly: true)))
+        // Le scanner à chaque niveau : l'étape 2, puis le résultat au collège et après le bac.
+        try render("onb15-fr-\(id(.scanDemo))-step2", .scanDemo, model, devices: pro, view: AnyView(ScanDemoStepView(previewStage: 2)))
+        try render("onb15-fr-\(id(.scanDemo))-college", .scanDemo, model, view: AnyView(ScanDemoStepView(previewStage: 3, previewExercise: .pythagoras)))
+        try render("onb15-fr-\(id(.scanDemo))-sup", .scanDemo, model, devices: pro, view: AnyView(ScanDemoStepView(previewStage: 3, previewExercise: .integral)))
         let short = lina()
         short.dailyMinutes = 10
-        try render("onb14-fr-\(id(.dailyTime))-10", .dailyTime, short, devices: pro)
+        try render("onb15-fr-\(id(.dailyTime))-10", .dailyTime, short, devices: pro)
         let long = lina()
         long.dailyMinutes = 120
-        try render("onb14-fr-\(id(.dailyTime))-120", .dailyTime, long, devices: pro)
+        try render("onb15-fr-\(id(.dailyTime))-120", .dailyTime, long, devices: pro)
     }
 
     // MARK: - Les écritures
@@ -307,16 +312,16 @@ final class OnboardingLot14RenderTests: XCTestCase {
     /// **L'arabe** (droite à gauche) et **le japonais** (sans la police condensée) sur les écrans
     /// qui portent le plus de texte.
     private static let scriptSteps: [OnboardingStep] = [
-        .welcome, .studyIntro, .helpIntro, .origin, .lessonDemo, .notJustChat, .research,
+        .welcome, .studyIntro, .helpIntro, .origin, .lessonDemo, .scanDemo, .notJustChat, .research,
         .currentAverage, .dailyTime, .organizeIntro, .commitment, .firstLesson,
-        .storyCreate, .storyPath, .storyPractice, .storyAsk, .storyClose, .freeTrialIntro,
+        .storyCreate, .storyPath, .storyPractice, .storyAsk, .storyClose, .freeTrialIntro, .trialOffer,
     ]
 
     func testArabic() throws {
         use(.ar)
         let arabic = noura()
         for step in Self.scriptSteps {
-            try render("onb14-ar-\(id(step))", step, arabic, devices: [.iPhone15Pro], rtl: true)
+            try render("onb15-ar-\(id(step))", step, arabic, devices: [.iPhone15Pro], rtl: true)
         }
     }
 
@@ -325,15 +330,15 @@ final class OnboardingLot14RenderTests: XCTestCase {
         let japanese = lina()
         japanese.displayName = "ユイ"
         for step in Self.scriptSteps {
-            try render("onb14-ja-\(id(step))", step, japanese, devices: [.iPhone15Pro])
+            try render("onb15-ja-\(id(step))", step, japanese, devices: [.iPhone15Pro])
         }
     }
 
     /// **Très grand texte, sur le plus petit iPhone** : rien ne se coupe, le contenu défile.
     func testLargeTextOnSmallPhone() throws {
         let model = lina()
-        for step in [OnboardingStep.helpIntro, .notJustChat, .currentAverage, .storyPath, .commitment] {
-            try render("onb14-xxl-\(id(step))", step, model, devices: [.iPhoneSE], xxl: true)
+        for step in [OnboardingStep.helpIntro, .solutionMap, .notJustChat, .research, .scanDemo, .currentAverage, .storyPath, .storyAsk, .commitment, .trialOffer] {
+            try render("onb15-xxl-\(id(step))", step, model, devices: [.iPhoneSE], xxl: true)
         }
     }
 }

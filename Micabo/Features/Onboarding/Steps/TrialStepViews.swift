@@ -63,7 +63,8 @@ enum TrialTimeline {
                 // **Des dates, plus des « jour 2 / jour 3 »** (lot 7) : « Jour 2 » se lisait le
                 // lendemain, alors que le rappel part le surlendemain, la veille de la fin.
                 title: L10n.t("ios.onb7.trial.reminder", locale: locale, vars: ["date": reminderText]),
-                detail: L10n.t(remindersOn ? "ios.onb5.trial.reminderDetail" : "ios.onb5.trial.reminderOff", locale: locale),
+                // Lot 15 : la voix de l'app, plus « je » (« On te prévient… »).
+                detail: L10n.t(remindersOn ? "ios.paywall.step.reminderDetail" : "ios.onb5.trial.reminderOff", locale: locale),
                 systemImage: "bell.fill",
                 tone: .upcoming
             ),

@@ -154,7 +154,7 @@ struct DiscountOfferScreen: View {
                             .foregroundStyle(V3Color.ink3)
                             .strikethrough(true, color: V3Color.ink3)
                         Text(plan.caption)
-                            .foregroundStyle(V3Color.ink2)
+                            .foregroundStyle(V3Color.ink)
                     }
                     .font(PaywallStyle.planBilled)
                 }
@@ -200,7 +200,7 @@ struct DiscountOfferScreen: View {
                 .foregroundStyle(V3Color.ink3)
                 .strikethrough(true, color: V3Color.ink3)
             Text(plan.caption)
-                .foregroundStyle(V3Color.ink2)
+                .foregroundStyle(V3Color.ink)
         }
         .font(PaywallStyle.planBilled)
         .lineLimit(1)

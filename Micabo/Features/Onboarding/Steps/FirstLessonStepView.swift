@@ -48,7 +48,7 @@ struct FirstLessonStepView: View {
     var body: some View {
         @Bindable var model = model
 
-        OnbQuestion(i18n.t("ios.onb14.lesson.q"), say: OnbSay(bubble, mood: hasReacted ? .happy : .wink)) {
+        OnbQuestion(i18n.t("ios.onb15.lesson.q"), say: OnbSay(bubble, mood: hasReacted ? .happy : .wink)) {
             VStack(spacing: OnbLayout.rowGap) {
                 if model.firstLessonChoice == .topic {
                     topicCard($model.firstLessonTopic)
@@ -167,11 +167,24 @@ struct FirstLessonStepView: View {
 
     // MARK: L'exemple
 
-    /// **Un sujet d'exemple**, dans la famille de sa première matière (la même que celle de la
-    /// question d'essai) et à son niveau : collège, lycée, ou après le bac.
+    /// **Le sujet du fil des exemples** (lot 15) : dans la famille de sa matière la plus dure et
+    /// à son niveau (collège, lycée, après le bac). La démo de la leçon le montre, la première
+    /// leçon le propose.
+    ///
+    /// - En maths, **le sujet de l'exercice du scanner** : Pythagore au collège, le second
+    ///   degré au lycée, les intégrales après le bac (`OnbScanExercise`).
+    /// - **Aucune matière reconnue** : le repli unique est la Révolution française, l'exemple
+    ///   du récit final.
     static func exampleTopic(for model: OnboardingModel, locale: UiLocale) -> String {
-        let family = SampleCard.pick(for: model.demoSubjects).card
-        return L10n.t("ios.onb10.lesson.ex.\(family.rawValue).\(band(for: model.tier))", locale: locale)
+        let pick = SampleCard.pick(for: model.demoSubjects)
+        guard model.subjects.contains(pick.subject) else {
+            return L10n.t("ios.onb14.story.lesson", locale: locale)
+        }
+        let band = band(for: model.tier)
+        if pick.card == .math, band != "lower" {
+            return L10n.t("ios.onb15.ex.math.\(band)", locale: locale)
+        }
+        return L10n.t("ios.onb10.lesson.ex.\(pick.card.rawValue).\(band)", locale: locale)
     }
 
     /// Les trois hauteurs d'exemple.

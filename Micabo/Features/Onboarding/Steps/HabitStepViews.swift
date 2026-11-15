@@ -96,7 +96,7 @@ struct NotificationsStepView: View {
 
     var body: some View {
         OnbScreen {
-            OnbTitle(i18n.t("ios.onb10.notif.title", ["hour": hourText]), size: OnbLayout.questionTitle)
+            OnbTitle(i18n.t("ios.onb15.notif.title", ["hour": hourText]), size: OnbLayout.questionTitle)
                 .padding(.top, OnbLayout.titleTop)
 
             OnbMikaRow(say: OnbSay(i18n.t("ios.onb7.notif.one"), mood: .wink))
@@ -160,7 +160,7 @@ struct NotificationsStepView: View {
                         .foregroundStyle(V3Color.ink)
                     Spacer(minLength: 8)
                     Text(hourText)
-                        .font(V3Font.caption)
+                        .font(OnbType.mention)
                         .foregroundStyle(V3Color.ink3)
                 }
                 Text(Self.message(for: model, locale: i18n.locale))

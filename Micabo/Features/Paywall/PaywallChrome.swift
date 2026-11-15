@@ -14,6 +14,9 @@ import SwiftUI
 /// (`V3Font`, `V3Color`, `V3Metric`). Les écrans ne nomment ni police ni couleur ; changer la
 /// direction artistique du paywall et de l'offre se fait ici — et, pour tout ce que le paywall
 /// partage avec le reste de l'app (le bouton, la bulle de Mika, « PRO »), dans le composant V3.
+/// **Lot 15 (« le texte doit être principal »)** : le tableau au corps du système (17 pt), la
+/// somme facturée à 16 pt en couleur principale, les mentions à 15 pt, les liens obligatoires à
+/// 13 pt — plus rien à 11 ou 12 pt. Prix, offres et textes inchangés.
 enum PaywallStyle {
     // MARK: Les polices du paywall
 
@@ -29,52 +32,52 @@ enum PaywallStyle {
     /// **La deuxième taille de l'écran** (lot 12, refonte) : la promesse sous le titre, les
     /// bénéfices, la ligne de l'essai. La troisième est celle des légendes.
     static let heroText = V3Font.text(.body, weight: .semibold)
-    static let trialLine = V3Font.text(.subheadline, weight: .bold)
+    static let trialLine = V3Font.text(.body, weight: .semibold)
     /// Une carte de formule : son nom, son grand chiffre.
-    static let planName = V3Font.text(.footnote, weight: .bold)
+    static let planName = V3Font.text(.subheadline, weight: .bold)
     static var cardPrice: Font { V3Font.heading(24, relativeTo: .title2) }
     /// Les pastilles de ce que l'élève a déclaré (`PaywallFactsRow`).
-    static let fact = V3Font.text(.footnote, weight: .semibold)
+    static let fact = V3Font.text(.subheadline, weight: .semibold)
     static let factIcon = V3Font.text(.caption, weight: .bold)
     static let factHeight: CGFloat = 30
     /// Le tableau Gratuit / PRO (`PaywallFeatureTable`) : son en-tête, ses lignes, la ligne
     /// de la porte, ses valeurs et sa coche.
-    static let tableHeader = V3Font.text(.caption, weight: .bold)
-    static let tableRowTitle = V3Font.text(.subheadline, weight: .semibold)
-    static let tableRowLead = V3Font.text(.subheadline, weight: .bold)
-    static let tableValue = V3Font.text(.subheadline, weight: .bold)
+    static let tableHeader = V3Font.text(.footnote, weight: .bold)
+    static let tableRowTitle = V3Font.text(.body, weight: .semibold)
+    static let tableRowLead = V3Font.text(.body, weight: .bold)
+    static let tableValue = V3Font.text(.body, weight: .bold)
     static let tableCheck: CGFloat = 20
     static let tableGlyph: CGFloat = 18
     static let tableGlyphColumn: CGFloat = 24
     /// La chronologie sur une rangée (`PaywallTimelineStrip`) : la date, sa ligne.
-    static let stepTitle = V3Font.text(.footnote, weight: .bold)
-    static let stepDetail = V3Font.text(.caption, weight: .medium)
-    static let stepDetailTight = V3Font.text(.caption2, weight: .medium)
+    static let stepTitle = V3Font.text(.subheadline, weight: .bold)
+    static let stepDetail = V3Font.text(.subheadline, weight: .medium)
+    static let stepDetailTight = V3Font.text(.footnote, weight: .medium)
     static let stepDot: CGFloat = 26
     /// Une rangée de la chronologie ou d'un bénéfice : son titre, sa ligne.
     static let rowTitle = V3Font.option
     static let rowDetail = V3Font.support
     /// La même ligne, sur un écran serré (`PaywallDensity.tight`).
-    static let rowDetailTight = V3Font.caption
+    static let rowDetailTight = V3Font.text(.subheadline, weight: .medium)
     /// Une offre : son nom, sa ligne, son prix et l'unité du prix.
     static let planTitle = V3Font.option
-    static let planDetail = V3Font.caption
+    static let planDetail = V3Font.text(.subheadline, weight: .medium)
     /// **La somme réellement facturée**, sous le prix à la semaine (lot 14) : au corps de
     /// lecture (15 pt), en couleur secondaire contrastée — jamais en gris minuscule (App Store
     /// 3.1.2 : le montant facturé doit rester clairement lisible).
-    static let planBilled = V3Font.text(.subheadline, weight: .semibold)
+    static let planBilled = V3Font.text(.callout, weight: .medium)
     static var price: Font { V3Font.title }
     /// Le prix de l'offre qui n'est pas recommandée : un cran plus petit.
     static var priceSecondary: Font { V3Font.heading(19, relativeTo: .headline) }
-    static let priceUnit = V3Font.caption
+    static let priceUnit = V3Font.text(.subheadline, weight: .medium)
     /// La pastille de la remise, à côté du nom de l'offre.
-    static let badge = V3Font.text(.caption, weight: .heavy)
+    static let badge = V3Font.text(.footnote, weight: .heavy)
     /// « Rien à payer aujourd'hui », au-dessus du bouton.
     static let assurance = V3Font.label
     /// La mention sous le bouton, le message d'un achat qui n'a pas abouti, les liens.
-    static let legal = V3Font.text(.footnote, weight: .medium)
-    static let notice = V3Font.caption
-    static let link = V3Font.text(.caption2, weight: .semibold)
+    static let legal = V3Font.text(.subheadline, weight: .regular)
+    static let notice = V3Font.text(.footnote, weight: .medium)
+    static let link = V3Font.text(.footnote, weight: .semibold)
 
     // MARK: Les polices de l'offre et de la bienvenue
 
@@ -125,8 +128,8 @@ enum PaywallStyle {
     static let benefitGlyphColumn: CGFloat = 30
     static let planSpacing: CGFloat = 10
     /// Le tableau : ses lignes, son en-tête, ses colonnes, ses rayons.
-    static let tableRow: CGFloat = 32
-    static let tableRowTight: CGFloat = 30
+    static let tableRow: CGFloat = 40
+    static let tableRowTight: CGFloat = 36
     static let tableHeaderHeight: CGFloat = 28
     static let freeColumn: CGFloat = 62
     static let proColumn: CGFloat = 52

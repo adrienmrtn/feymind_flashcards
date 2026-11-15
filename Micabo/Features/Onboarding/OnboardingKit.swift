@@ -14,8 +14,8 @@ enum OnbLayout {
     /// La marge horizontale d'une page composée hors du gabarit (les stories) : celle du
     /// gabarit.
     static let margin: CGFloat = 20
-    /// Le titre d'une question ou d'une démonstration : l'élément dominant de l'écran.
-    static let questionTitle: CGFloat = 36
+    /// Le titre d'un écran (lot 15 : tous les écrans, à la même place) : l'élément dominant.
+    static let questionTitle: CGFloat = 34
     /// Le même titre sur un écran court.
     static let questionTitleCompact: CGFloat = 30
     /// Entre le titre et Mika.
@@ -50,6 +50,85 @@ enum OnbLayout {
     /// barre d'accueil ; 24 pt du bord sur un iPhone à bouton d'accueil, qui n'a pas de marge.
     static func footerGap(safeBottom: CGFloat) -> CGFloat {
         safeBottom > 0 ? 16 : 24
+    }
+}
+
+// MARK: - Le texte du parcours (lot 15)
+
+/// **L'échelle du texte du parcours et du paywall** (lot 15, demande du fondateur : « le texte
+/// doit être principal »). Les titres restent ceux de `OnbTitle` (Sofia Black 34, 30 sur un
+/// écran court) ; tout ce qui se lit est au moins au corps du système, en couleur principale :
+///
+/// - **`body`** (20 pt Medium, style Titre 3) : la bulle de Mika, les lignes d'une liste, le
+///   contenu d'une démo, une promesse ;
+/// - **`detail`** (17 pt Regular) : le détail d'une ligne (la frise de l'essai) ;
+/// - **`label`** (17 pt Semibold) : un libellé dans un visuel ;
+/// - **`mention`** (15 pt Regular, gris secondaire) : une source, « en accéléré », une mention.
+///
+/// Tous suivent « Taille du texte » (ce sont des styles du système).
+enum OnbType {
+    static let body = Font.system(.title3, design: .default, weight: .medium)
+    static let detail = Font.system(.body, design: .default, weight: .regular)
+    static let label = Font.system(.body, design: .default, weight: .semibold)
+    static let mention = Font.system(.subheadline, design: .default, weight: .regular)
+    /// L'interligne du corps : un peu d'air entre deux lignes de 20 pt.
+    static let bodySpacing: CGFloat = 3
+}
+
+/// **Le bloc principal d'un écran, au centre optique** (lot 15) : entre le titre et le bouton,
+/// un peu au-dessus du milieu. Plus de contenu collé en haut et de moitié basse vide. Sur un
+/// écran trop court, les marges tombent à 12 pt et la page défile.
+struct OnbCentered<Content: View>: View {
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer(minLength: 12)
+            content()
+            Spacer(minLength: 12)
+            // Le centre optique : un peu plus d'air dessous que dessus.
+            Color.clear.frame(height: 24)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+/// **Mika qui parle, en grand** (lot 15, l'écran d'ouverture d'un chapitre) : sa bulle,
+/// centrée, sa pointe vers lui, puis Mika.
+struct OnbSpeech: View {
+    let text: String
+
+    var body: some View {
+        let phrase = OnbPhrase(text)
+        Text(v3: phrase.text, highlight: phrase.highlight)
+            .font(OnbType.body)
+            .lineSpacing(OnbType.bodySpacing)
+            .foregroundStyle(V3Color.ink)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 15)
+            .background(V3Color.surface, in: RoundedRectangle(cornerRadius: V3Metric.radiusBubble, style: .continuous))
+            .overlay(alignment: .bottom) {
+                OnbSpeechTail()
+                    .fill(V3Color.surface)
+                    .frame(width: 24, height: 12)
+                    .offset(y: 11)
+            }
+            .padding(.bottom, 12)
+            .accessibilityLabel(Text(phrase.text))
+    }
+}
+
+/// La pointe de la bulle, vers le bas.
+struct OnbSpeechTail: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
+        path.closeSubpath()
+        return path
     }
 }
 
@@ -169,7 +248,7 @@ struct OnbMikaRow: View {
     @Environment(\.onbCompact) private var compact
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private var size: CGFloat { compact ? 80 : 112 }
+    private var size: CGFloat { compact ? 76 : 96 }
     /// Ce que le bloc suivant recouvre de Mika : le bas de ses tentacules.
     private var overlap: CGFloat { (size * 0.17).rounded() }
 
@@ -183,9 +262,11 @@ struct OnbMikaRow: View {
         let phrase = OnbPhrase(say.text)
         let calm = reduceMotion
         return HStack(alignment: .bottom, spacing: 2) {
+            // Lot 15 : la bulle se lit — 20 pt, couleur principale.
             Text(v3: phrase.text, highlight: phrase.highlight)
-                .font(V3Font.bodyStrong)
-                .foregroundStyle(V3Color.ink2)
+                .font(OnbType.body)
+                .lineSpacing(OnbType.bodySpacing)
+                .foregroundStyle(V3Color.ink)
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
                 .contentTransition(.opacity)
@@ -329,9 +410,12 @@ enum OnbPick {
 /// reste. Le bouton du pied **joue la démonstration** tant qu'elle ne l'a pas été (« Retourner
 /// la carte », « Prendre la photo »…), puis devient « Continuer ». Toucher le morceau d'app
 /// joue aussi.
+///
+/// **Lot 15** : une démo n'a plus de bulle (`say` reste possible, il n'est plus utilisé) ; le
+/// morceau d'app se pose au centre optique de la page, en grand.
 struct OnbDemoStage<Panel: View>: View {
     let title: String
-    let say: OnbSay
+    var say: OnbSay?
     /// Le libellé du bouton tant que la démonstration n'est pas jouée ; `nil` : « Continuer ».
     var playLabel: String?
     let isPlayed: Bool
@@ -345,12 +429,15 @@ struct OnbDemoStage<Panel: View>: View {
         OnbScreen {
             OnbTitle(title, size: OnbLayout.questionTitle)
                 .padding(.top, OnbLayout.titleTop)
-            OnbMikaRow(say: say)
-                .padding(.top, OnbLayout.mikaGap)
-            panel()
-                .frame(maxWidth: .infinity)
-                .padding(.top, OnbLayout.answersGap)
-                .dynamicTypeSize(...DynamicTypeSize.xxLarge)
+            if let say {
+                OnbMikaRow(say: say)
+                    .padding(.top, OnbLayout.mikaGap)
+            }
+            OnbCentered {
+                panel()
+                    .frame(maxWidth: .infinity)
+                    .dynamicTypeSize(...DynamicTypeSize.xxLarge)
+            }
         } footer: {
             if isPlayed || playLabel == nil {
                 V3Button(i18n.t("common.continue")) {
