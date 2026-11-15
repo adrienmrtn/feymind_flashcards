@@ -645,7 +645,7 @@ final class OnboardingFlowTests: XCTestCase {
         model.confirmFirstLesson()
 
         XCTAssertEqual(FirstLessonIntent.pending, .topic("La guerre froide"))
-        XCTAssertEqual(model.step, OnboardingTrial.isOffered ? .freeTrialIntro : .paywall, "Rien ne s'écrit avant le paywall")
+        XCTAssertEqual(model.step, OnboardingStep.storyIntro, "Rien ne s'écrit avant le paywall")
         XCTAssertEqual(model.firstLessonLine(locale: .fr), "La guerre froide")
     }
 
@@ -655,7 +655,7 @@ final class OnboardingFlowTests: XCTestCase {
         model.confirmFirstLesson()
 
         XCTAssertEqual(FirstLessonIntent.pending, .importSource)
-        XCTAssertEqual(model.step, OnboardingTrial.isOffered ? .freeTrialIntro : .paywall)
+        XCTAssertEqual(model.step, OnboardingStep.storyIntro)
         XCTAssertEqual(model.firstLessonLine(locale: .fr), "Ton cours à importer")
     }
 
@@ -669,7 +669,7 @@ final class OnboardingFlowTests: XCTestCase {
 
         XCTAssertNil(FirstLessonIntent.pending)
         XCTAssertNil(model.firstLessonChoice)
-        XCTAssertEqual(model.step, OnboardingTrial.isOffered ? .freeTrialIntro : .paywall)
+        XCTAssertEqual(model.step, OnboardingStep.storyIntro)
         XCTAssertNil(model.firstLessonLine(locale: .fr))
         XCTAssertFalse(model.planSummary(locale: .fr).contains { $0.id == "lesson" })
     }
@@ -1236,7 +1236,7 @@ final class OnboardingFlowTests: XCTestCase {
         first.confirmFirstLesson()
 
         let resumed = OnboardingModel.resuming(in: nil)
-        XCTAssertEqual(resumed.step, OnboardingTrial.isOffered ? .freeTrialIntro : .paywall)
+        XCTAssertEqual(resumed.step, OnboardingStep.storyIntro)
         XCTAssertEqual(resumed.firstLessonChoice, .topic)
         XCTAssertEqual(resumed.firstLessonSubject, "La photosynthèse")
     }

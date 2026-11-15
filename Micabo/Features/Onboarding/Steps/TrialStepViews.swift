@@ -54,7 +54,8 @@ enum TrialTimeline {
         return [
             Milestone(
                 title: L10n.t("ios.onb5.trial.today", locale: locale),
-                detail: L10n.t("ios.onb5.trial.todayDetail", locale: locale),
+                // Lot 14 : sans « illimitées » — le serveur plafonne.
+                detail: L10n.t("ios.onb14.trial.today", locale: locale),
                 systemImage: "lock.open.fill",
                 tone: .current
             ),

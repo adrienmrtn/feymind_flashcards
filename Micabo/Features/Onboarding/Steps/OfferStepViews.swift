@@ -32,19 +32,19 @@ struct FreeTrialIntroStepView: View {
         let lesson: String = switch model.firstLessonChoice {
         case .topic:
             model.firstLessonSubject.map { L10n.t("ios.onb12.trial.unlock.lesson", locale: locale, vars: ["topic": $0]) }
-                ?? L10n.t("ios.pay12.benefit.lessons", locale: locale)
+                ?? L10n.t("ios.pay11.row.lessons", locale: locale)
         case .importSource:
             L10n.t("ios.onb12.trial.unlock.import", locale: locale)
         case nil:
-            L10n.t("ios.pay12.benefit.lessons", locale: locale)
+            L10n.t("ios.pay11.row.lessons", locale: locale)
         }
         let mika = model.focusSubject.map {
             L10n.t("ios.onb12.trial.unlock.mika", locale: locale, vars: ["subject": SubjectDisplay.subject($0, locale: locale)])
-        } ?? L10n.t("ios.pay12.benefit.mika", locale: locale)
+        } ?? L10n.t("ios.pay11.row.mika", locale: locale)
         // « pour le Bac », pas « pour Bac » : en français, l'examen prend son article.
         let exam = model.examName(locale: locale).map {
             L10n.t("ios.onb12.trial.unlock.exam", locale: locale, vars: ["exam": locale == .fr ? PaywallProfile.frenchArticled($0) : $0])
-        } ?? L10n.t("ios.pay12.benefit.exams", locale: locale)
+        } ?? L10n.t("ios.pay11.row.exams", locale: locale)
         return [
             Unlock(icon: .book, text: lesson),
             Unlock(icon: .mika, text: mika),
@@ -243,7 +243,8 @@ struct OnbTrialTimeline: View {
                 }
             }
         }
-        // Lot 14 : la chronologie se lit sans carte autour.
+        // Lot 14 : la chronologie se lit sans carte autour, à sa hauteur naturelle.
+        .fixedSize(horizontal: false, vertical: true)
         .padding(.horizontal, 6)
         .frame(maxWidth: .infinity, alignment: .leading)
     }

@@ -64,7 +64,8 @@ struct DailyTimeStepView: View {
                 if model.dailyMinutes == nil { model.dailyMinutes = Self.advised }
             }
         } footer: {
-            V3Button(i18n.t("common.continue"), isEnabled: model.dailyMinutes != nil) {
+            V3Button(i18n.t("common.continue")) {
+                if model.dailyMinutes == nil { model.dailyMinutes = Self.advised }
                 model.advance()
             }
         }

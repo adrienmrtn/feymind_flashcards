@@ -192,7 +192,7 @@ final class OnboardingLot12Tests: XCTestCase {
         model.firstLessonTopic = "La guerre froide"
         model.confirmFirstLesson()
         XCTAssertEqual(FirstLessonIntent.pending, .topic("La guerre froide"), "La Home le proposera")
-        XCTAssertEqual(model.step, OnboardingTrial.isOffered ? .freeTrialIntro : .paywall)
+        XCTAssertEqual(model.step, OnboardingStep.storyIntro)
         while model.step != .paywall, model.advance() {}
         XCTAssertEqual(model.step, .paywall)
 

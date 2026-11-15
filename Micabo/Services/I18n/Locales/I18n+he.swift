@@ -62,6 +62,7 @@ extension IosI18nCatalogs {
         "ios.onb14.story.ask.a": "ביוני 1791 לואי ה־16 מנסה להגיע למזרח המדינה. הוא נעצר בוורן ומאבד את אמון העם.",
         "ios.onb14.story.close.title": "חוסכים זמן, והלמידה הופכת ל**משחק**.",
         "ios.onb14.story.close.sub": "אני מקווה לגרום לכם לאהוב ללמוד: בשביל זה נוצרתי.",
+        "ios.onb14.trial.today": "כל Pro נפתח: שיעורים, Mika, מבחני תרגול.",
         // — Les phrases que le code appelle par leur nom (à traduire d'abord) —
         "ios.scan12.prompt.translate": "תרגם לעברית את הטקסט שבמסמך המצורף, שורה אחר שורה: כל שורה במסמך הופכת לשורה מתורגמת אחת, באותו סדר, כל אחת בפסקה משלה. בלי הקדמה ובלי הערות. אם הטקסט ארוך מדי, תרגם את ההתחלה וציין איפה עצרת.",
         "ios.scan12.label.translate": "לתרגם ל{language}",

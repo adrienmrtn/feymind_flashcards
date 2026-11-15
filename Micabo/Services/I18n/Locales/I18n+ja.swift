@@ -62,6 +62,7 @@ extension IosI18nCatalogs {
         "ios.onb14.story.ask.a": "1791年6月、ルイ16世は国の東部へ向かおうとした。ヴァレンヌで捕まり、民衆の信頼を失った。",
         "ios.onb14.story.close.title": "時間が節約できて、学ぶことが**ゲーム**になる。",
         "ios.onb14.story.close.sub": "きみに学ぶことを好きになってほしい。ぼくはそのために作られたんだ。",
+        "ios.onb14.trial.today": "Proのすべてが使える：レッスン、Mika、模擬試験。",
         // — Les phrases que le code appelle par leur nom (à traduire d'abord) —
         "ios.scan12.prompt.translate": "添付ファイルの文章を、1行ずつ日本語に翻訳してください。原文の各行が翻訳の1行になり、同じ順番で、それぞれ別の段落にしてください。前置きもコメントも不要です。文章が長すぎる場合は、冒頭を翻訳して、どこで止めたかを書いてください。",
         "ios.scan12.label.translate": "{language}に翻訳して",

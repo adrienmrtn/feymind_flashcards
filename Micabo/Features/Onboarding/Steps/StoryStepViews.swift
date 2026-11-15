@@ -129,9 +129,10 @@ struct StoryCreateStepView: View {
             MicaboIconView(icon: source.kind.icon, size: 18 * 1.35, tint: source.tone)
                 .frame(width: 22, height: 22)
             Text(source.title(locale: i18n.locale))
-                .font(V3Font.label)
+                .font(V3Font.caption)
                 .foregroundStyle(V3Color.ink)
                 .lineLimit(1)
+                .fixedSize()
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 14, weight: .bold))
                 .foregroundStyle(V3Color.green)
@@ -178,7 +179,7 @@ struct StoryPathStepView: View {
         ]
     }
 
-    private var step: CGFloat { compact ? 50 : 62 }
+    private var step: CGFloat { compact ? 50 : 56 }
 
     var body: some View {
         OnbStoryStage(

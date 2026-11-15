@@ -60,6 +60,7 @@ extension IosI18nCatalogs {
         "ios.onb14.story.ask.a": "1791 m. birželį Liudvikas XVI bando pasiekti šalies rytus. Sulaikytas Varene, jis praranda tautos pasitikėjimą.",
         "ios.onb14.story.close.title": "Sutaupai laiko, o mokymasis tampa **žaidimu**.",
         "ios.onb14.story.close.sub": "Tikiuosi, kad pamilsi mokytis: tam ir buvau sukurtas.",
+        "ios.onb14.trial.today": "Atsiveria visas Pro: pamokos, Mika, bandomieji egzaminai.",
         // — Les phrases que le code appelle par leur nom (à traduire d'abord) —
         "ios.scan12.prompt.translate": "Išversk pridėto dokumento tekstą į lietuvių kalbą eilutė po eilutės: kiekviena dokumento eilutė tampa viena išversta eilute ta pačia tvarka, kiekviena atskiroje pastraipoje. Jokio įvado ar komentaro. Jei tekstas per ilgas, išversk pradžią ir pasakyk, kur sustojai.",
         "ios.scan12.label.translate": "Išversk į: {language}",

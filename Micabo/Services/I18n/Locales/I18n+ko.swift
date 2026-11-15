@@ -62,6 +62,7 @@ extension IosI18nCatalogs {
         "ios.onb14.story.ask.a": "1791년 6월, 루이 16세는 나라 동쪽으로 가려 했어. 바렌에서 붙잡혀 국민의 신뢰를 잃었지.",
         "ios.onb14.story.close.title": "시간을 아끼고, 배우는 게 **게임**이 돼.",
         "ios.onb14.story.close.sub": "네가 배우는 걸 좋아하게 되면 좋겠어. 나는 그러려고 만들어졌거든.",
+        "ios.onb14.trial.today": "Pro 전체가 열려요: 수업, Mika, 모의고사.",
         // — Les phrases que le code appelle par leur nom (à traduire d'abord) —
         "ios.scan12.prompt.translate": "첨부한 문서의 글을 한 줄씩 한국어로 번역해 줘. 원문의 각 줄이 번역된 한 줄이 되도록, 같은 순서로, 각각 별도의 문단으로. 서론이나 설명은 필요 없어. 글이 너무 길면 앞부분만 번역하고 어디서 멈췄는지 알려 줘.",
         "ios.scan12.label.translate": "{language}(으)로 번역해 줘",

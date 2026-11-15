@@ -29,7 +29,7 @@ enum IosI18nCatalogs {
         "ios.onb14.lesson.ask": "Choisis-la maintenant : je l'écris dès ton arrivée dans l'app.",
         "ios.onb14.lesson.topic": "Je tape un sujet",
         "ios.onb14.lesson.import": "J'importe mon cours",
-        "ios.onb14.lesson.importHint": "PDF, photos, audio, YouTube…",
+        "ios.onb14.lesson.importHint": "PDF, photos, enregistrements, YouTube…",
         "ios.onb14.lesson.later": "Je choisirai plus tard",
         "ios.onb14.lesson.reactImport": "Parfait : tu l'importeras en arrivant dans l'app.",
         "ios.onb14.story.create.title": "Imagine : tu révises **la Révolution française**.",
@@ -52,6 +52,7 @@ enum IosI18nCatalogs {
         "ios.onb14.story.ask.a": "En juin 1791, Louis XVI tente de rejoindre l'est du pays. Arrêté à Varennes, il perd la confiance du peuple.",
         "ios.onb14.story.close.title": "Tu gagnes du temps, et apprendre devient **un jeu**.",
         "ios.onb14.story.close.sub": "J'espère te faire aimer apprendre : j'ai été créé pour ça.",
+        "ios.onb14.trial.today": "Tout Pro s'ouvre : leçons, Mika, examens blancs.",
         // Lot 12 — la caméra à modes, la feuille Outils, le tiroir des conversations.
         "ios.scan12.mode.solve": "Résoudre",
         "ios.scan12.mode.equation": "Équation",
@@ -2740,6 +2741,7 @@ enum IosI18nCatalogs {
         "ios.onb14.story.ask.a": "Im Juni 1791 versucht Ludwig XVI., in den Osten des Landes zu gelangen. In Varennes festgenommen, verliert er das Vertrauen des Volkes.",
         "ios.onb14.story.close.title": "Du sparst Zeit, und Lernen wird **zum Spiel**.",
         "ios.onb14.story.close.sub": "Ich hoffe, dass du Lernen lieben wirst: Genau dafür wurde ich gemacht.",
+        "ios.onb14.trial.today": "Ganz Pro ist offen: Lektionen, Mika, Probeprüfungen.",
         // Lot 12 — la caméra à modes, la feuille Outils, le tiroir des conversations.
         "ios.scan12.mode.solve": "Lösen",
         "ios.scan12.mode.equation": "Gleichung",
@@ -5424,6 +5426,7 @@ enum IosI18nCatalogs {
         "ios.onb14.story.ask.a": "En junio de 1791, Luis XVI intenta llegar al este del país. Detenido en Varennes, pierde la confianza del pueblo.",
         "ios.onb14.story.close.title": "Ganas tiempo, y aprender se vuelve **un juego**.",
         "ios.onb14.story.close.sub": "Espero que te encante aprender: para eso me crearon.",
+        "ios.onb14.trial.today": "Todo Pro se abre: lecciones, Mika, exámenes de prueba.",
         // Lot 12 — la caméra à modes, la feuille Outils, le tiroir des conversations.
         "ios.scan12.mode.solve": "Resolver",
         "ios.scan12.mode.equation": "Ecuación",
@@ -8108,6 +8111,7 @@ enum IosI18nCatalogs {
         "ios.onb14.story.ask.a": "Haziran 1791'de XVI. Louis ülkenin doğusuna ulaşmaya çalışır. Varennes'de yakalanınca halkın güvenini kaybeder.",
         "ios.onb14.story.close.title": "Zaman kazanırsın ve öğrenmek **oyuna** dönüşür.",
         "ios.onb14.story.close.sub": "Umarım öğrenmeyi sevdiririm: bunun için yaratıldım.",
+        "ios.onb14.trial.today": "Pro'nun tamamı açılır: dersler, Mika, deneme sınavları.",
         // Lot 12 — la caméra à modes, la feuille Outils, le tiroir des conversations.
         "ios.scan12.mode.solve": "Çöz",
         "ios.scan12.mode.equation": "Denklem",
@@ -10800,6 +10804,7 @@ enum IosI18nCatalogs {
         "ios.onb14.story.ask.a": "In June 1791, Louis XVI tried to reach the east of the country. Caught at Varennes, he lost the people's trust.",
         "ios.onb14.story.close.title": "You save time, and learning becomes **a game**.",
         "ios.onb14.story.close.sub": "I hope to make you love learning: that's what I was made for.",
+        "ios.onb14.trial.today": "All of Pro opens up: lessons, Mika, mock exams.",
         // Lot 12 — la caméra à modes, la feuille Outils, le tiroir des conversations.
         "ios.scan12.mode.solve": "Solve",
         "ios.scan12.mode.equation": "Equation",

@@ -5,8 +5,22 @@ import XCTest
 /// l'essai et ses dates, et **aucune promesse d'essai à qui n'y a pas droit** — ni dans le
 /// titre, ni sur le bouton, ni dans la mention.
 final class PaywallTests: XCTestCase {
+    /// Les phrases attendues sont françaises : la langue de l'app est posée, puis rendue.
+    private var savedLocale: String?
+
+    override func setUp() {
+        super.setUp()
+        savedLocale = UserDefaults.standard.string(forKey: UiLocale.storageKey)
+        UserDefaults.standard.set(UiLocale.fr.rawValue, forKey: UiLocale.storageKey)
+    }
+
     override func tearDown() {
         PaywallStorePrices.clear()
+        if let savedLocale {
+            UserDefaults.standard.set(savedLocale, forKey: UiLocale.storageKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: UiLocale.storageKey)
+        }
         super.tearDown()
     }
 

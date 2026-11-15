@@ -206,7 +206,7 @@ struct OriginStepView: View {
 
     /// La place d'une feuille dans la pile en vrac : un décalage et un angle, à la main.
     private static let scatter: [(x: CGFloat, y: CGFloat, angle: Double)] = [
-        (-62, -76, -9), (58, -40, 7), (-40, 8, 5), (66, 46, -6), (-18, 86, -3),
+        (-34, -104, -8), (30, -52, 6), (-26, 0, 4), (36, 52, -6), (-14, 104, -3),
     ]
 
     private var rowHeight: CGFloat { compact ? 44 : 50 }

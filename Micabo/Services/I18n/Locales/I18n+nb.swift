@@ -62,6 +62,7 @@ extension IosI18nCatalogs {
         "ios.onb14.story.ask.a": "I juni 1791 prøver Ludvig XVI å komme seg til landets østlige del. Pågrepet i Varennes mister han folkets tillit.",
         "ios.onb14.story.close.title": "Du sparer tid, og læring blir **en lek**.",
         "ios.onb14.story.close.sub": "Jeg håper å få deg til å elske å lære: det er det jeg ble laget for.",
+        "ios.onb14.trial.today": "Hele Pro åpnes: leksjoner, Mika, prøveeksamener.",
         // — Les phrases que le code appelle par leur nom (à traduire d'abord) —
         "ios.scan12.prompt.translate": "Oversett teksten i det vedlagte dokumentet til norsk, linje for linje: hver linje i dokumentet blir én oversatt linje, i samme rekkefølge, hver i sitt eget avsnitt. Ingen innledning og ingen kommentar. Hvis teksten er for lang, oversett begynnelsen og si hvor du stopper.",
         "ios.scan12.label.translate": "Oversett til {language}",

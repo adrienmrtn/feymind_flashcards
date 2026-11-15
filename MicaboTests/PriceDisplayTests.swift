@@ -8,13 +8,23 @@ final class PriceDisplayTests: XCTestCase {
     private var defaults: UserDefaults!
     private let suite = "micabo.tests.priceDisplay"
 
+    /// Les phrases attendues sont françaises : la langue de l'app est posée, puis rendue.
+    private var savedLocale: String?
+
     override func setUp() {
         super.setUp()
         defaults = UserDefaults(suiteName: suite)
         defaults.removePersistentDomain(forName: suite)
+        savedLocale = UserDefaults.standard.string(forKey: UiLocale.storageKey)
+        UserDefaults.standard.set(UiLocale.fr.rawValue, forKey: UiLocale.storageKey)
     }
 
     override func tearDown() {
+        if let savedLocale {
+            UserDefaults.standard.set(savedLocale, forKey: UiLocale.storageKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: UiLocale.storageKey)
+        }
         defaults.removePersistentDomain(forName: suite)
         PaywallStorePrices.clear()
         super.tearDown()

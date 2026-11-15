@@ -118,6 +118,8 @@ final class OnboardingLot14RenderTests: XCTestCase {
 
     override func setUpWithError() throws {
         guard RenderGallery.directory != nil else { throw XCTSkip("MICABO_RENDER_DIR absent : pas de rendu") }
+        // Chaque méthode rend une vingtaine d'écrans : sous le plafond de la CI (180 s).
+        executionTimeAllowance = 170
         savedLocale = UserDefaults.standard.string(forKey: UiLocale.storageKey)
         use(.fr)
         OnboardingPreferences.reset()
@@ -258,22 +260,31 @@ final class OnboardingLot14RenderTests: XCTestCase {
 
     // MARK: - Le parcours entier
 
-    /// **Le parcours français, dans l'ordre**, sur les deux iPhone.
-    func testFrenchFlowInOrder() throws {
+    /// **Le parcours français, dans l'ordre**, sur les deux iPhone, chapitre par chapitre (une
+    /// méthode tient sous le plafond de temps de la CI).
+    private func french(chapters: ClosedRange<Int>) throws {
         let model = lina()
-        for step in seen(by: model) {
+        for step in seen(by: model) where chapters.contains(step.chapter) {
             try render("onb14-fr-\(id(step))", step, model)
         }
     }
 
+    func testFrenchChaptersOneAndTwo() throws { try french(chapters: 0 ... 1) }
+    func testFrenchChapterThree() throws { try french(chapters: 2 ... 2) }
+    func testFrenchChaptersFourAndFive() throws { try french(chapters: 3 ... 4) }
+    func testFrenchChaptersSixAndSeven() throws { try french(chapters: 5 ... 6) }
+
     /// **Le parcours anglais, dans l'ordre**, sur le 15 Pro.
-    func testEnglishFlowInOrder() throws {
+    private func english(chapters: ClosedRange<Int>) throws {
         use(.en)
         let model = emma()
-        for step in seen(by: model) {
+        for step in seen(by: model) where chapters.contains(step.chapter) {
             try render("onb14-en-\(id(step))", step, model, devices: [.iPhone15Pro])
         }
     }
+
+    func testEnglishChaptersOneToThree() throws { try english(chapters: 0 ... 2) }
+    func testEnglishChaptersFourToSeven() throws { try english(chapters: 3 ... 6) }
 
     /// **Avant d'être jouées** : les démonstrations, le curseur, le maintien en cours.
     func testBeforeAndDuring() throws {
@@ -295,21 +306,25 @@ final class OnboardingLot14RenderTests: XCTestCase {
 
     /// **L'arabe** (droite à gauche) et **le japonais** (sans la police condensée) sur les écrans
     /// qui portent le plus de texte.
-    func testArabicAndJapanese() throws {
-        let steps: [OnboardingStep] = [
-            .welcome, .studyIntro, .helpIntro, .origin, .lessonDemo, .notJustChat, .research,
-            .currentAverage, .dailyTime, .organizeIntro, .commitment, .firstLesson,
-            .storyCreate, .storyPath, .storyPractice, .storyAsk, .storyClose, .freeTrialIntro,
-        ]
+    private static let scriptSteps: [OnboardingStep] = [
+        .welcome, .studyIntro, .helpIntro, .origin, .lessonDemo, .notJustChat, .research,
+        .currentAverage, .dailyTime, .organizeIntro, .commitment, .firstLesson,
+        .storyCreate, .storyPath, .storyPractice, .storyAsk, .storyClose, .freeTrialIntro,
+    ]
+
+    func testArabic() throws {
         use(.ar)
         let arabic = noura()
-        for step in steps {
+        for step in Self.scriptSteps {
             try render("onb14-ar-\(id(step))", step, arabic, devices: [.iPhone15Pro], rtl: true)
         }
+    }
+
+    func testJapanese() throws {
         use(.ja)
         let japanese = lina()
         japanese.displayName = "ユイ"
-        for step in steps {
+        for step in Self.scriptSteps {
             try render("onb14-ja-\(id(step))", step, japanese, devices: [.iPhone15Pro])
         }
     }

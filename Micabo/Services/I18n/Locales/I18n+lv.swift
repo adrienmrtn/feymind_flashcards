@@ -60,6 +60,7 @@ extension IosI18nCatalogs {
         "ios.onb14.story.ask.a": "1791. gada jūnijā Luijs XVI mēģina nokļūt valsts austrumos. Aizturēts Varēnā, viņš zaudē tautas uzticību.",
         "ios.onb14.story.close.title": "Tu ietaupi laiku, un mācīšanās kļūst par **spēli**.",
         "ios.onb14.story.close.sub": "Ceru, ka iemīlēsi mācīties: tam mani arī radīja.",
+        "ios.onb14.trial.today": "Atveras viss Pro: nodarbības, Mika, izmēģinājuma eksāmeni.",
         // — Les phrases que le code appelle par leur nom (à traduire d'abord) —
         "ios.scan12.prompt.translate": "Pārtulko pievienotā dokumenta tekstu latviešu valodā rindu pa rindai: katra dokumenta rinda kļūst par vienu tulkotu rindu tajā pašā secībā, katra savā rindkopā. Bez ievada un komentāriem. Ja teksts ir pārāk garš, pārtulko sākumu un pasaki, kur apstājies.",
         "ios.scan12.label.translate": "Pārtulko: {language}",

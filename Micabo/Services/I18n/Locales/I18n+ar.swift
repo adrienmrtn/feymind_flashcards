@@ -54,6 +54,7 @@ extension IosI18nCatalogs {
         "ios.onb14.story.ask.a": "في يونيو 1791، حاول لويس السادس عشر الوصول إلى شرق البلاد. اعتُقل في فارين ففقد ثقة الشعب.",
         "ios.onb14.story.close.title": "توفّر وقتك، ويصبح التعلّم **لعبة**.",
         "ios.onb14.story.close.sub": "أتمنى أن أجعلك تحب التعلّم: لهذا صُنعت.",
+        "ios.onb14.trial.today": "يُفتح كل Pro: الدروس، Mika، الامتحانات التجريبية.",
         // Lot 12 — la caméra à modes, la feuille Outils, le tiroir des conversations.
         "ios.scan12.mode.solve": "حلّ",
         "ios.scan12.mode.equation": "معادلة",

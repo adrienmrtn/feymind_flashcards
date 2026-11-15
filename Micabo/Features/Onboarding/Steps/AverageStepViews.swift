@@ -138,7 +138,7 @@ struct OnbGradeSlider: View {
                         score = choices[newValue].score
                     }
                 ),
-                lowerBound: choices.first.map { OnbGradeWheel.parts(of: $0.label).value } ?? "",
+                lowerBound: choices.first?.label ?? "",
                 upperBound: choices.last?.label ?? "",
                 accessibilityLabel: label,
                 valueText: { choices.indices.contains($0) ? choices[$0].label : "" }

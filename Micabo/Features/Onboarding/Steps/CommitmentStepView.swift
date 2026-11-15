@@ -14,7 +14,7 @@ import SwiftUI
 /// logique est `CommitHold`, testée à part — seul un doigt tenu 1,5 s engage ; un appui bref,
 /// ou un geste que le défilement reprend, ne valide jamais. L'état du doigt passe par
 /// `@GestureState`, que SwiftUI remet à faux au lever **et** à l'annulation : l'horloge ne
-/// peut plus tourner seule. L'anneau suit l'horloge de l'écran (`TimelineView(.animation)`).
+/// peut plus tourner seule. L'anneau suit le temps soixante fois par seconde, le doigt posé.
 ///
 /// **Accessible** : avec VoiceOver ou « Réduire les animations », un appui explicite (ou
 /// l'action VoiceOver) suffit à s'engager.
@@ -141,8 +141,8 @@ struct CommitmentStepView: View {
         VStack(spacing: 14) {
             Group {
                 if let start = holdState.pressedAt, !isCommitted {
-                    // Le doigt est posé : l'anneau suit l'horloge de l'écran, image par image.
-                    TimelineView(.animation) { context in
+                    // Le doigt est posé : l'anneau suit le temps, soixante fois par seconde.
+                    TimelineView(.periodic(from: start, by: 1.0 / 60.0)) { context in
                         let held = Self.hold(since: start, at: context.date)
                         seal(held, pressing: true)
                             .onChange(of: Int(held * 10)) { _, step in
