@@ -6,6 +6,9 @@ import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
@@ -411,14 +414,18 @@ internal fun DiscountSheet(onDismiss: () -> Unit, onSubscribed: () -> Unit) {
         loading = false
     }
 
+    // Sur un petit écran en très grand texte, la feuille est plus haute que l'écran : elle
+    // s'arrête sous la barre d'état et son contenu défile, au lieu d'écraser ses dernières lignes.
     Column(
         Modifier
+            .statusBarsPadding()
             .fillMaxWidth()
             .widthIn(max = 560.dp)
             .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
             .background(offerWash())
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
             .navigationBarsPadding()
+            .verticalScroll(rememberScrollState())
             .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 12.dp)
             .animateContentSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
