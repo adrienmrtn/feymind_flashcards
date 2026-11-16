@@ -1,0 +1,7 @@
+{
+  "_lisezmoi": "Textes à poser sur les fiches App Store par le workflow « Textes App Store » (store/app-store-texts.mjs). Seuls les fiches et champs nommés ici sont écrits. Champs : name (30), subtitle (30), description (4000), keywords (100, sans espace après les virgules), promotionalText (170).",
+  "ja": {
+    "description": "授業の内容が、読み返せる要約と、忘れる直前にMicaboが出題するフラッシュカードになります。\nプリント、黒板の写真、Wordファイル、動画を追加するだけ。Micaboが要約を書き、カードを作り、学習の予定を組みます。試験が近づいたら、その日に向けて計画を絞り込みます。\n\nできること\n- 授業を取り込む（PDF、写真、Word、YouTube、テキスト）\n- 要約を読み、直し、読み返す\n- 間隔反復でカードを復習する\n- 試験日を設定する\n- 授業を友だちと共有する、または自分だけで使う\n\n3つのタブ\n授業：取り込んだすべての授業。\n復習：今日のカードだけ。\nプロフィール：連続記録、合計、友だち。\n\n無料版とPro\nサブスクリプションなし：授業1つ、要約の70%、1回5枚まで。\nMicabo Pro：授業とカードが無制限、要約の全文、試験モード。3日間の無料トライアル付き。\n\n自動更新サブスクリプション：\n- 年額プラン\n- 週額プラン\n価格は国や地域によって異なり、購入前にアプリ内に表示されます。\n\nお支払いはApple Accountに請求されます。現在の期間が終了する24時間前までに解約しない限り、サブスクリプションは自動的に更新されます。管理は「設定」>「Apple Account」>「サブスクリプション」から行えます。\n※アプリの表示言語は英語です。\n利用規約（EULA）：https://www.apple.com/legal/internet-services/itunes/dev/stdeula/",
+    "keywords": "フラッシュカード,単語帳,暗記,勉強,復習,試験,テスト,ノート,要約,クイズ,間隔反復,大学,高校,PDF,AI,学習"
+  }
+}
