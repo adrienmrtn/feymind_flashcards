@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">Nagyon intenzív</string>
     <string name="ios_onb16_welcome_cta">Igen, kezdjük</string>
     <string name="ios_onb16_welcome_say">Szia, Mika vagyok, az új tanulási asszisztensed. Felteszek pár kérdést, hogy előkészítsem a terved. Rendben?</string>
+    <string name="ios_onb17_offer_say">Várj, %1$s! **Jobb árat** adok neked.</string>
+    <string name="ios_onb17_offer_sayAnon">Várj! **Jobb árat** adok neked.</string>
+    <string name="ios_onb17_pay_exams">Kijavított próbavizsgák</string>
+    <string name="ios_onb17_pay_lessons">Mika megírja az összes leckédet</string>
+    <string name="ios_onb17_pay_mika">Elmagyarázza, amit nem értesz</string>
+    <string name="ios_onb17_tl_billing">Elindul az előfizetésed, hacsak előtte le nem mondod. Addig semmit nem vonunk le.</string>
+    <string name="ios_onb17_tl_reminder">Az emlékeztető: holnap lejár a próbaidőd.</string>
+    <string name="ios_onb17_tl_today">A teljes Pro megnyílik: a leckéid, Mika, a próbavizsgák.</string>
+    <string name="ios_onb17_trial_cta">Ki akarom próbálni</string>
+    <string name="ios_onb17_trial_daysSub">ingyen, minden benne van</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">Az első leckéd és az összes további</string>
     <string name="ios_onb5_exam_dateLabel">A vizsga dátuma</string>
     <string name="ios_onb5_exam_finals">A vizsgaidőszakom</string>
     <string name="ios_onb5_exam_finalsName">Vizsgaidőszak</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">A vásárlásod jóváhagyásra vár, például egy szülőtől. A Pro magától megnyílik, amint megérkezik.</string>
     <string name="ios_paywallPendingTitle">Függőben lévő vásárlás</string>
     <string name="ios_paywallRestore">Visszaállítás</string>
-    <string name="ios_paywall_step_reminderDetail">Szólunk, hogy hamarosan lejár a próbaidőszak.</string>
     <string name="ios_pdf_empty">Ebben a PDF-ben nincs se szöveg, se használható oldal.</string>
     <string name="ios_pdf_protected">Ez a PDF jelszóval védett.</string>
     <string name="ios_pdf_unreadable">Nem sikerült megnyitni ezt a PDF-et.</string>

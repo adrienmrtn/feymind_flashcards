@@ -272,7 +272,7 @@ fun StepScreen(step: OnboardingStep, model: OnboardingModel, host: OnboardingHos
         OnboardingStep.storyAsk -> StoryAskStep(model)
         OnboardingStep.storyClose -> StoryCloseStep(model)
         OnboardingStep.firstLesson -> FirstLessonStep(model)
-        OnboardingStep.freeTrialIntro -> FreeTrialIntroStep(model)
+        OnboardingStep.freeTrialIntro -> FreeTrialIntroStep(model, host.trialDays)
         OnboardingStep.trialOffer -> TrialOfferStep(model, host)
         OnboardingStep.paywall -> Box(Modifier.fillMaxSize().background(Micabo.colors.canvas))
     }

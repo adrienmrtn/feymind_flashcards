@@ -25,6 +25,10 @@
         <item quantity="one">+%1$d точка: малка крачка, напълно постижима</item>
         <item quantity="other">+%1$d точки: малка крачка, напълно постижима</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d ден</item>
+        <item quantity="other">%1$d дни</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="one">%1$d ден безплатно, после %2$s на седмица. Откажи се, когато поискаш.</item>
         <item quantity="other">%1$d дни безплатно, после %2$s на седмица. Откажи се, когато поискаш.</item>

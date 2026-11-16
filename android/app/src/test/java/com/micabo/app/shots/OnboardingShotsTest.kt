@@ -10,6 +10,8 @@ import com.micabo.app.ui.onboarding.CommitmentStep
 import com.micabo.app.ui.onboarding.LessonDemoStep
 import com.micabo.app.ui.onboarding.ScanDemoStep
 import com.micabo.app.ui.onboarding.StoriesStep
+import com.micabo.app.ui.onboarding.FreeTrialIntroStep
+import com.micabo.app.ui.onboarding.TrialOfferStep
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -84,6 +86,14 @@ class OnboardingShotsTest(private val device: Device) {
         }
         reports["commitment-maintien"] = shoot(rule, device, "onboarding-etats", "commitment-maintien") {
             Alone { CommitmentStep(linaOn(OnboardingStep.commitment), previewHold = 0.6f) }
+        }
+        // Lot 17 : le cadeau sans sujet tapé (« Ta première leçon, et toutes les suivantes »), et
+        // le rappel une fois les notifications permises.
+        reports["freeTrialIntro-sans-sujet"] = shoot(rule, device, "onboarding-etats", "freeTrialIntro-sans-sujet") {
+            Alone { FreeTrialIntroStep(linaOn(OnboardingStep.freeTrialIntro).apply { firstLessonChoice = null; firstLessonTopic = "" }, 3) }
+        }
+        reports["trialOffer-permis"] = shoot(rule, device, "onboarding-etats", "trialOffer-permis") {
+            Alone { TrialOfferStep(linaOn(OnboardingStep.trialOffer), TestHost, previewPermission = true) }
         }
         for (page in 1..4) {
             reports["histoire-$page"] = shoot(rule, device, "onboarding-etats", "hookLogo-histoire-$page") {

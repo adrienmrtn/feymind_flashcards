@@ -25,6 +25,10 @@
         <item quantity="one">+%1$d point: et lille skridt, helt muligt</item>
         <item quantity="other">+%1$d point: et lille skridt, helt muligt</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d dag</item>
+        <item quantity="other">%1$d dage</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="one">%1$d dag gratis, derefter %2$s om ugen. Opsig når som helst.</item>
         <item quantity="other">%1$d dage gratis, derefter %2$s om ugen. Opsig når som helst.</item>

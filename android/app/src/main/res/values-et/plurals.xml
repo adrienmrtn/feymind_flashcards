@@ -25,6 +25,10 @@
         <item quantity="one">+%1$d punkt: väike samm, täiesti teostatav</item>
         <item quantity="other">+%1$d punkti: väike samm, täiesti teostatav</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d päev</item>
+        <item quantity="other">%1$d päeva</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="one">%1$d päev tasuta, seejärel %2$s nädalas. Tühista millal tahes.</item>
         <item quantity="other">%1$d päeva tasuta, seejärel %2$s nädalas. Tühista millal tahes.</item>

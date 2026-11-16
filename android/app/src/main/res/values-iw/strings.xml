@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">אינטנסיבי מאוד</string>
     <string name="ios_onb16_welcome_cta">כן, יוצאים לדרך</string>
     <string name="ios_onb16_welcome_say">היי, אני Mika, העוזר החדש שלכם ללמידה. אשאל אתכם כמה שאלות כדי להכין את המסלול שלכם. מתאים לכם?</string>
+    <string name="ios_onb17_offer_say">רגע, %1$s! יש לי בשבילכם **מחיר מיוחד**.</string>
+    <string name="ios_onb17_offer_sayAnon">רגע! יש לי בשבילכם **מחיר מיוחד**.</string>
+    <string name="ios_onb17_pay_exams">מבחני תרגול בדוקים</string>
+    <string name="ios_onb17_pay_lessons">Mika כותב את כל השיעורים שלכם</string>
+    <string name="ios_onb17_pay_mika">הוא מסביר את מה שלא מובן לכם</string>
+    <string name="ios_onb17_tl_billing">המינוי מתחיל, אלא אם תבטלו קודם. עד אז לא יחויב דבר.</string>
+    <string name="ios_onb17_tl_reminder">התזכורת: תקופת הניסיון מסתיימת מחר.</string>
+    <string name="ios_onb17_tl_today">כל Pro נפתח: השיעורים שלכם, Mika, מבחני תרגול.</string>
+    <string name="ios_onb17_trial_cta">אני רוצה לנסות</string>
+    <string name="ios_onb17_trial_daysSub">בחינם, הכול כלול</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">השיעור הראשון שלכם, וכל השיעורים הבאים</string>
     <string name="ios_onb5_exam_dateLabel">תאריך הבחינה</string>
     <string name="ios_onb5_exam_finals">מבחני סוף הסמסטר שלי</string>
     <string name="ios_onb5_exam_finalsName">מבחני סוף סמסטר</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">הרכישה שלך ממתינה לאישור, למשל של הורה. Pro ייפתח מעצמו ברגע שהיא תאושר.</string>
     <string name="ios_paywallPendingTitle">הרכישה ממתינה</string>
     <string name="ios_paywallRestore">שחזור</string>
-    <string name="ios_paywall_step_reminderDetail">נודיע לך שתקופת הניסיון עומדת להסתיים.</string>
     <string name="ios_pdf_empty">ב-PDF הזה אין טקסט ואין עמוד שאפשר להשתמש בו.</string>
     <string name="ios_pdf_protected">ה-PDF הזה מוגן בסיסמה.</string>
     <string name="ios_pdf_unreadable">לא הצלחתי לפתוח את ה-PDF הזה.</string>

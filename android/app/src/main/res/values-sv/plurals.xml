@@ -25,6 +25,10 @@
         <item quantity="one">+%1$d poäng: ett litet steg, helt görbart</item>
         <item quantity="other">+%1$d poäng: ett litet steg, helt görbart</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d dag</item>
+        <item quantity="other">%1$d dagar</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="one">%1$d dag gratis, sedan %2$s per vecka. Avsluta när du vill.</item>
         <item quantity="other">%1$d dagar gratis, sedan %2$s per vecka. Avsluta när du vill.</item>

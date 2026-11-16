@@ -19,6 +19,9 @@
     <plurals name="ios_onb10_target_small_points">
         <item quantity="other">+%1$d点：小さな一歩、十分できるよ</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="other">%1$d日間</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="other">%1$d日間無料、その後は週%2$s。いつでも解約できます。</item>
     </plurals>

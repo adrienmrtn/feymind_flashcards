@@ -31,6 +31,11 @@
         <item quantity="one">+%1$d punkts: mazs solītis, pilnīgi izdarāmi</item>
         <item quantity="other">+%1$d punkti: mazs solītis, pilnīgi izdarāmi</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="zero">%1$d dienu</item>
+        <item quantity="one">%1$d diena</item>
+        <item quantity="other">%1$d dienas</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="zero">%1$d dienu bez maksas, pēc tam %2$s nedēļā. Atcel jebkurā laikā.</item>
         <item quantity="one">%1$d diena bez maksas, pēc tam %2$s nedēļā. Atcel jebkurā laikā.</item>

@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">Ļoti intensīvi</string>
     <string name="ios_onb16_welcome_cta">Jā, sākam</string>
     <string name="ios_onb16_welcome_say">Čau, es esmu Mika, tavs jaunais mācību palīgs. Uzdošu tev dažus jautājumus, lai sagatavotu tavu plānu. Labi?</string>
+    <string name="ios_onb17_offer_say">Pagaidi, %1$s! Man tev ir **labāka cena**.</string>
+    <string name="ios_onb17_offer_sayAnon">Pagaidi! Man tev ir **labāka cena**.</string>
+    <string name="ios_onb17_pay_exams">Laboti izmēģinājuma eksāmeni</string>
+    <string name="ios_onb17_pay_lessons">Mika uzraksta visas tavas nodarbības</string>
+    <string name="ios_onb17_pay_mika">Izskaidro to, ko tu nesaproti</string>
+    <string name="ios_onb17_tl_billing">Abonements sākas, ja vien neatcel to agrāk. Līdz tam nekas netiek iekasēts.</string>
+    <string name="ios_onb17_tl_reminder">Atgādinājums: tavs izmēģinājums beidzas rīt.</string>
+    <string name="ios_onb17_tl_today">Atveras viss Pro: tavas nodarbības, Mika, izmēģinājuma eksāmeni.</string>
+    <string name="ios_onb17_trial_cta">Gribu izmēģināt</string>
+    <string name="ios_onb17_trial_daysSub">bez maksas, viss iekļauts</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">Tava pirmā nodarbība un visas nākamās</string>
     <string name="ios_onb5_exam_dateLabel">Eksāmena datums</string>
     <string name="ios_onb5_exam_finals">Mana sesija</string>
     <string name="ios_onb5_exam_finalsName">Sesija</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">Tavs pirkums gaida apstiprinājumu, piemēram, no vecāka. Pro atbloķēsies pats, tiklīdz tas būs apstiprināts.</string>
     <string name="ios_paywallPendingTitle">Pirkums gaida</string>
     <string name="ios_paywallRestore">Atjaunot</string>
-    <string name="ios_paywall_step_reminderDetail">Paziņojam, ka izmēģinājums drīz beigsies.</string>
     <string name="ios_pdf_empty">Šajā PDF nav ne teksta, ne izmantojamas lapas.</string>
     <string name="ios_pdf_protected">Šis PDF ir aizsargāts ar paroli.</string>
     <string name="ios_pdf_unreadable">Šo PDF neizdevās atvērt.</string>

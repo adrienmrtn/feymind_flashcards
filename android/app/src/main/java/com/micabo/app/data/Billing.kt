@@ -239,7 +239,7 @@ class Billing(
      * ou autre chose, avec le code de RevenueCat pour les événements.
      */
     suspend fun loadPlans(): PlanLoad {
-        if (!enabled) return PlanLoad(emptyList(), PlanProblem.OTHER, "disabled")
+        if (!enabled || com.micabo.app.MicaboApplication.underTest) return PlanLoad(emptyList(), PlanProblem.OTHER, "disabled")
         // Configurée au lancement ; une configuration tombée se retente ici, sous un identifiant
         // anonyme : l'achat, lui, passe toujours par `identify`.
         if (!Purchases.isConfigured) withContext(Dispatchers.Main) { start(null) }
@@ -284,7 +284,7 @@ class Billing(
      * quand la boutique ne répond pas.
      */
     suspend fun discountPlan(): StorePlan? {
-        if (!enabled || !Purchases.isConfigured) return null
+        if (!enabled || com.micabo.app.MicaboApplication.underTest || !Purchases.isConfigured) return null
         return suspendCancellableCoroutine { continuation ->
             Purchases.sharedInstance.getOfferingsWith(
                 onError = { if (continuation.isActive) continuation.resume(null) },

@@ -25,6 +25,10 @@
         <item quantity="one">+%1$d pont: kis lépés, teljesen megvalósítható</item>
         <item quantity="other">+%1$d pont: kis lépés, teljesen megvalósítható</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d nap</item>
+        <item quantity="other">%1$d nap</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="one">%1$d nap ingyen, utána heti %2$s. Bármikor lemondhatod.</item>
         <item quantity="other">%1$d nap ingyen, utána heti %2$s. Bármikor lemondhatod.</item>

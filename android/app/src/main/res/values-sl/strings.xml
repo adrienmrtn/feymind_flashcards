@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">Zelo intenzivno</string>
     <string name="ios_onb16_welcome_cta">Ja, gremo</string>
     <string name="ios_onb16_welcome_say">Živjo, jaz sem Mika, tvoj novi pomočnik za učenje. Zastavil ti bom nekaj vprašanj, da pripravim tvoj načrt. Se strinjaš?</string>
+    <string name="ios_onb17_offer_say">Počakaj, %1$s! Imam **boljšo ceno** zate.</string>
+    <string name="ios_onb17_offer_sayAnon">Počakaj! Imam **boljšo ceno** zate.</string>
+    <string name="ios_onb17_pay_exams">Popravljeni poskusni izpiti</string>
+    <string name="ios_onb17_pay_lessons">Mika ti napiše vse lekcije</string>
+    <string name="ios_onb17_pay_mika">Razloži ti, česar ne razumeš</string>
+    <string name="ios_onb17_tl_billing">Naročnina se začne, razen če prej prekličeš. Do takrat se nič ne zaračuna.</string>
+    <string name="ios_onb17_tl_reminder">Opomnik: preizkusno obdobje se ti jutri izteče.</string>
+    <string name="ios_onb17_tl_today">Odpre se ves Pro: tvoje lekcije, Mika, poskusni izpiti.</string>
+    <string name="ios_onb17_trial_cta">Želim preizkusiti</string>
+    <string name="ios_onb17_trial_daysSub">brezplačno, vse vključeno</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">Tvoja prva lekcija in vse naslednje</string>
     <string name="ios_onb5_exam_dateLabel">Datum izpita</string>
     <string name="ios_onb5_exam_finals">Moje izpitno obdobje</string>
     <string name="ios_onb5_exam_finalsName">Izpitno obdobje</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">Tvoj nakup čaka na odobritev, na primer starša. Pro se bo odklenil sam, takoj ko pride.</string>
     <string name="ios_paywallPendingTitle">Nakup na čakanju</string>
     <string name="ios_paywallRestore">Obnovi nakupe</string>
-    <string name="ios_paywall_step_reminderDetail">Opozorimo te, da se preizkus kmalu konča.</string>
     <string name="ios_pdf_empty">Ta PDF nima ne besedila ne uporabne strani.</string>
     <string name="ios_pdf_protected">Ta PDF je zaščiten z geslom.</string>
     <string name="ios_pdf_unreadable">Tega PDF-ja ni bilo mogoče odpreti.</string>

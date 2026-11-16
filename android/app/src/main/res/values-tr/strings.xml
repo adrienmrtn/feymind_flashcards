@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">Çok yoğun</string>
     <string name="ios_onb16_welcome_cta">Evet, başlayalım</string>
     <string name="ios_onb16_welcome_say">Selam, ben Mika, ders çalışmak için yeni asistanın. Yolculuğunu hazırlamak için sana birkaç soru soracağım, olur mu?</string>
+    <string name="ios_onb17_offer_say">Bekle, %1$s! Sana **özel bir fiyatım** var.</string>
+    <string name="ios_onb17_offer_sayAnon">Bekle! Sana **özel bir fiyatım** var.</string>
+    <string name="ios_onb17_pay_exams">Düzeltilmiş deneme sınavları</string>
+    <string name="ios_onb17_pay_lessons">Mika tüm derslerini yazar</string>
+    <string name="ios_onb17_pay_mika">Anlamadığın şeyi sana açıklar</string>
+    <string name="ios_onb17_tl_billing">Önceden iptal etmezsen aboneliğin başlar. O zamana kadar hiçbir ücret alınmaz.</string>
+    <string name="ios_onb17_tl_reminder">Hatırlatma: deneme süren yarın bitiyor.</string>
+    <string name="ios_onb17_tl_today">Pro\'nun tamamı açılır: derslerin, Mika, deneme sınavları.</string>
+    <string name="ios_onb17_trial_cta">Denemek istiyorum</string>
+    <string name="ios_onb17_trial_daysSub">ücretsiz, her şey dahil</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">İlk dersin ve sonraki tüm dersler</string>
     <string name="ios_onb5_exam_dateLabel">Sınav tarihi</string>
     <string name="ios_onb5_exam_finals">Dönem sonu sınavlarım</string>
     <string name="ios_onb5_exam_finalsName">Dönem sonu sınavları</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">Satın alman onay bekliyor, örneğin bir ebeveynin onayı. Onay gelir gelmez Pro kendiliğinden açılır.</string>
     <string name="ios_paywallPendingTitle">Satın alma bekliyor</string>
     <string name="ios_paywallRestore">Geri yükle</string>
-    <string name="ios_paywall_step_reminderDetail">Denemenin bitmek üzere olduğunu haber veririz.</string>
     <string name="ios_pdf_empty">Bu PDF\'te ne metin ne kullanılabilir sayfa var.</string>
     <string name="ios_pdf_protected">Bu PDF parola korumalı.</string>
     <string name="ios_pdf_unreadable">Bu PDF açılamadı.</string>

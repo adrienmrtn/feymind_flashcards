@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">Heel intensief</string>
     <string name="ios_onb16_welcome_cta">Ja, we beginnen</string>
     <string name="ios_onb16_welcome_say">Hoi, ik ben Mika, je nieuwe assistent om te leren. Ik stel je een paar vragen om je traject voor te bereiden. Is dat goed?</string>
+    <string name="ios_onb17_offer_say">Wacht, %1$s! Ik heb een **betere prijs** voor je.</string>
+    <string name="ios_onb17_offer_sayAnon">Wacht! Ik heb een **betere prijs** voor je.</string>
+    <string name="ios_onb17_pay_exams">Nagekeken proefexamens</string>
+    <string name="ios_onb17_pay_lessons">Mika schrijft al je lessen</string>
+    <string name="ios_onb17_pay_mika">Hij legt uit wat je niet snapt</string>
+    <string name="ios_onb17_tl_billing">Je abonnement begint, tenzij je eerder opzegt. Tot dan wordt er niets afgeschreven.</string>
+    <string name="ios_onb17_tl_reminder">De herinnering: je proefperiode eindigt morgen.</string>
+    <string name="ios_onb17_tl_today">Heel Pro gaat open: je lessen, Mika, proefexamens.</string>
+    <string name="ios_onb17_trial_cta">Ik wil het proberen</string>
+    <string name="ios_onb17_trial_daysSub">gratis, alles inbegrepen</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">Je eerste les, en alle volgende</string>
     <string name="ios_onb5_exam_dateLabel">Examendatum</string>
     <string name="ios_onb5_exam_finals">Mijn tentamens</string>
     <string name="ios_onb5_exam_finalsName">Tentamens</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">Je aankoop wacht op goedkeuring, bijvoorbeeld van een ouder. Pro gaat vanzelf open zodra die er is.</string>
     <string name="ios_paywallPendingTitle">Aankoop in behandeling</string>
     <string name="ios_paywallRestore">Herstellen</string>
-    <string name="ios_paywall_step_reminderDetail">We laten je weten dat je proefperiode bijna afloopt.</string>
     <string name="ios_pdf_empty">Deze PDF bevat geen tekst en geen bruikbare pagina.</string>
     <string name="ios_pdf_protected">Deze PDF is beveiligd met een wachtwoord.</string>
     <string name="ios_pdf_unreadable">Deze PDF kon niet worden geopend.</string>

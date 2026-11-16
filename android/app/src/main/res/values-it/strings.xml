@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">Molto intenso</string>
     <string name="ios_onb16_welcome_cta">Sì, andiamo</string>
     <string name="ios_onb16_welcome_say">Ciao, sono Mika, il tuo nuovo assistente per studiare. Ti farò qualche domanda per preparare il tuo percorso, ti va?</string>
+    <string name="ios_onb17_offer_say">Aspetta, %1$s! Ho un **prezzo** speciale per te.</string>
+    <string name="ios_onb17_offer_sayAnon">Aspetta! Ho un **prezzo** speciale per te.</string>
+    <string name="ios_onb17_pay_exams">Simulazioni d\'esame corrette</string>
+    <string name="ios_onb17_pay_lessons">Mika scrive tutte le tue lezioni</string>
+    <string name="ios_onb17_pay_mika">Ti spiega quello che non capisci</string>
+    <string name="ios_onb17_tl_billing">Il tuo abbonamento inizia, a meno che tu non annulli prima. Fino ad allora non paghi nulla.</string>
+    <string name="ios_onb17_tl_reminder">Il promemoria: la prova finisce domani.</string>
+    <string name="ios_onb17_tl_today">Si apre tutto Pro: le tue lezioni, Mika, le simulazioni d\'esame.</string>
+    <string name="ios_onb17_trial_cta">Voglio provarlo</string>
+    <string name="ios_onb17_trial_daysSub">gratis, tutto incluso</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">La tua prima lezione, e tutte le successive</string>
     <string name="ios_onb5_exam_dateLabel">Data dell\'esame</string>
     <string name="ios_onb5_exam_finals">La sessione d\'esami</string>
     <string name="ios_onb5_exam_finalsName">Sessione d\'esami</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">Il tuo acquisto aspetta un\'approvazione, per esempio quella di un genitore. Pro si sbloccherà da solo appena arriva.</string>
     <string name="ios_paywallPendingTitle">Acquisto in attesa</string>
     <string name="ios_paywallRestore">Ripristina</string>
-    <string name="ios_paywall_step_reminderDetail">Ti avvisiamo che la prova sta per finire.</string>
     <string name="ios_pdf_empty">Questo PDF non contiene né testo né pagine utilizzabili.</string>
     <string name="ios_pdf_protected">Questo PDF è protetto da password.</string>
     <string name="ios_pdf_unreadable">Impossibile aprire questo PDF.</string>

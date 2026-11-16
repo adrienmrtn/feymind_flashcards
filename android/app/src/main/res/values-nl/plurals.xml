@@ -25,6 +25,10 @@
         <item quantity="one">+%1$d punt: een kleine stap, prima haalbaar</item>
         <item quantity="other">+%1$d punten: een kleine stap, prima haalbaar</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d dag</item>
+        <item quantity="other">%1$d dagen</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="one">%1$d dag gratis, daarna %2$s per week. Altijd opzegbaar.</item>
         <item quantity="other">%1$d dagen gratis, daarna %2$s per week. Altijd opzegbaar.</item>

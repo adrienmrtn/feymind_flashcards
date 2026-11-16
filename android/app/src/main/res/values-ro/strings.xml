@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">Foarte intens</string>
     <string name="ios_onb16_welcome_cta">Da, hai să începem</string>
     <string name="ios_onb16_welcome_say">Salut, eu sunt Mika, noul tău asistent pentru învățat. Îți pun câteva întrebări ca să-ți pregătesc parcursul. E în regulă?</string>
+    <string name="ios_onb17_offer_say">Stai, %1$s! Am un **preț** mai bun pentru tine.</string>
+    <string name="ios_onb17_offer_sayAnon">Stai! Am un **preț** mai bun pentru tine.</string>
+    <string name="ios_onb17_pay_exams">Simulări de examen corectate</string>
+    <string name="ios_onb17_pay_lessons">Mika îți scrie toate lecțiile</string>
+    <string name="ios_onb17_pay_mika">Îți explică ce nu înțelegi</string>
+    <string name="ios_onb17_tl_billing">Abonamentul tău începe, dacă nu anulezi înainte. Până atunci nu se încasează nimic.</string>
+    <string name="ios_onb17_tl_reminder">Mementoul: perioada ta de probă se termină mâine.</string>
+    <string name="ios_onb17_tl_today">Se deschide tot Pro: lecțiile tale, Mika, simulările de examen.</string>
+    <string name="ios_onb17_trial_cta">Vreau să încerc</string>
+    <string name="ios_onb17_trial_daysSub">gratuit, totul inclus</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">Prima ta lecție și toate cele care urmează</string>
     <string name="ios_onb5_exam_dateLabel">Data examenului</string>
     <string name="ios_onb5_exam_finals">Sesiunea mea de examene</string>
     <string name="ios_onb5_exam_finalsName">Sesiunea de examene</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">Achiziția ta așteaptă o aprobare, de exemplu de la un părinte. Pro se deblochează singur imediat ce vine.</string>
     <string name="ios_paywallPendingTitle">Achiziție în așteptare</string>
     <string name="ios_paywallRestore">Restaurează</string>
-    <string name="ios_paywall_step_reminderDetail">Te anunțăm că perioada de probă se termină curând.</string>
     <string name="ios_pdf_empty">PDF-ul ăsta nu conține nici text, nici o pagină utilizabilă.</string>
     <string name="ios_pdf_protected">PDF-ul ăsta e protejat cu parolă.</string>
     <string name="ios_pdf_unreadable">PDF-ul ăsta n-a putut fi deschis.</string>

@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">Muy intenso</string>
     <string name="ios_onb16_welcome_cta">Sí, vamos</string>
     <string name="ios_onb16_welcome_say">Hola, soy Mika, tu nuevo asistente para estudiar. Te voy a hacer unas preguntas para preparar tu plan, ¿te parece bien?</string>
+    <string name="ios_onb17_offer_say">¡Espera, %1$s! Tengo un **precio especial** para ti.</string>
+    <string name="ios_onb17_offer_sayAnon">¡Espera! Tengo un **precio especial** para ti.</string>
+    <string name="ios_onb17_pay_exams">Exámenes de prueba corregidos</string>
+    <string name="ios_onb17_pay_lessons">Mika escribe todas tus lecciones</string>
+    <string name="ios_onb17_pay_mika">Te explica lo que no entiendes</string>
+    <string name="ios_onb17_tl_billing">Empieza tu suscripción, salvo que canceles antes. No se cobra nada hasta entonces.</string>
+    <string name="ios_onb17_tl_reminder">El recordatorio: tu prueba termina mañana.</string>
+    <string name="ios_onb17_tl_today">Se abre todo Pro: tus lecciones, Mika, los exámenes de prueba.</string>
+    <string name="ios_onb17_trial_cta">Quiero probarlo</string>
+    <string name="ios_onb17_trial_daysSub">gratis, todo incluido</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">Tu primera lección y todas las siguientes</string>
     <string name="ios_onb5_exam_dateLabel">Fecha del examen</string>
     <string name="ios_onb5_exam_finals">Mis exámenes finales</string>
     <string name="ios_onb5_exam_finalsName">Exámenes finales</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">Tu compra espera una aprobación, por ejemplo la de tu padre o tu madre. Pro se activará solo en cuanto llegue.</string>
     <string name="ios_paywallPendingTitle">Compra pendiente</string>
     <string name="ios_paywallRestore">Restaurar</string>
-    <string name="ios_paywall_step_reminderDetail">Te avisamos de que la prueba está a punto de acabar.</string>
     <string name="ios_pdf_empty">Este PDF no tiene ni texto ni una página usable.</string>
     <string name="ios_pdf_protected">Este PDF está protegido por contraseña.</string>
     <string name="ios_pdf_unreadable">Este PDF no se ha podido abrir.</string>

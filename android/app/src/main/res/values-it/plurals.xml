@@ -25,6 +25,10 @@
         <item quantity="one">+%1$d punto: un piccolo passo, assolutamente fattibile</item>
         <item quantity="other">+%1$d punti: un piccolo passo, assolutamente fattibile</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d giorno</item>
+        <item quantity="other">%1$d giorni</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="one">%1$d giorno gratis, poi %2$s a settimana. Annulli quando vuoi.</item>
         <item quantity="other">%1$d giorni gratis, poi %2$s a settimana. Annulli quando vuoi.</item>

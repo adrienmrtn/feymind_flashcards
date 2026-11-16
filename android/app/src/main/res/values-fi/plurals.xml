@@ -25,6 +25,10 @@
         <item quantity="one">+%1$d piste: pieni askel, täysin mahdollinen</item>
         <item quantity="other">+%1$d pistettä: pieni askel, täysin mahdollinen</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d päivä</item>
+        <item quantity="other">%1$d päivää</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="one">%1$d päivä ilmaiseksi, sitten %2$s viikossa. Peru milloin tahansa.</item>
         <item quantity="other">%1$d päivää ilmaiseksi, sitten %2$s viikossa. Peru milloin tahansa.</item>

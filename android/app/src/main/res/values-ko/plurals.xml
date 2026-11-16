@@ -19,6 +19,9 @@
     <plurals name="ios_onb10_target_small_points">
         <item quantity="other">+%1$d점: 작은 한 걸음, 충분히 가능해요</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="other">%1$d일</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="other">%1$d일 무료, 이후 주 %2$s. 언제든 해지할 수 있어요.</item>
     </plurals>

@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">Väga intensiivne</string>
     <string name="ios_onb16_welcome_cta">Jah, alustame</string>
     <string name="ios_onb16_welcome_say">Tere, mina olen Mika, sinu uus õppimisabiline. Esitan sulle paar küsimust, et su plaan ette valmistada. Kas sobib?</string>
+    <string name="ios_onb17_offer_say">Oota, %1$s! Mul on sulle **parem hind**.</string>
+    <string name="ios_onb17_offer_sayAnon">Oota! Mul on sulle **parem hind**.</string>
+    <string name="ios_onb17_pay_exams">Parandatud proovieksamid</string>
+    <string name="ios_onb17_pay_lessons">Mika kirjutab kõik su õppetunnid</string>
+    <string name="ios_onb17_pay_mika">Ta seletab, mida sa ei mõista</string>
+    <string name="ios_onb17_tl_billing">Su tellimus algab, kui sa enne ei tühista. Seni ei võeta midagi.</string>
+    <string name="ios_onb17_tl_reminder">Meeldetuletus: su prooviaeg lõpeb homme.</string>
+    <string name="ios_onb17_tl_today">Kogu Pro avaneb: sinu õppetunnid, Mika, proovieksamid.</string>
+    <string name="ios_onb17_trial_cta">Tahan proovida</string>
+    <string name="ios_onb17_trial_daysSub">tasuta, kõik kaasas</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">Sinu esimene õppetund ja kõik järgmised</string>
     <string name="ios_onb5_exam_dateLabel">Eksami kuupäev</string>
     <string name="ios_onb5_exam_finals">Minu eksamisessioon</string>
     <string name="ios_onb5_exam_finalsName">Eksamisessioon</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">Sinu ost ootab kinnitust, näiteks vanemalt. Pro avaneb ise kohe, kui see saabub.</string>
     <string name="ios_paywallPendingTitle">Ost ootel</string>
     <string name="ios_paywallRestore">Taasta</string>
-    <string name="ios_paywall_step_reminderDetail">Anname sulle teada, et prooviaeg hakkab lõppema.</string>
     <string name="ios_pdf_empty">Selles PDF-is pole ei teksti ega kasutatavat lehte.</string>
     <string name="ios_pdf_protected">See PDF on parooliga kaitstud.</string>
     <string name="ios_pdf_unreadable">Seda PDF-i ei õnnestunud avada.</string>

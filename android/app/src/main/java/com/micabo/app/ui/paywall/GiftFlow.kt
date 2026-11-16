@@ -369,7 +369,7 @@ private fun OfferClose(onClick: () -> Unit) {
  * l'équivalent mensuel, à côté du tarif barré d'où l'on vient.
  */
 @Composable
-private fun DiscountSheet(onDismiss: () -> Unit, onSubscribed: () -> Unit) {
+internal fun DiscountSheet(onDismiss: () -> Unit, onSubscribed: () -> Unit) {
     val app = LocalApp.current
     val colors = Micabo.colors
     val context = LocalContext.current
@@ -431,6 +431,14 @@ private fun DiscountSheet(onDismiss: () -> Unit, onSubscribed: () -> Unit) {
                 .background(colors.inkTertiary.copy(alpha = 0.4f)),
         )
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { OfferClose(onDismiss) }
+        // Lot 17 : Mika le dit dans sa bulle, en une phrase courte, avant le grand pourcentage.
+        val profile by app.prefs.profile.collectAsState()
+        val firstName = profile.name.trim().split(' ').firstOrNull().orEmpty()
+        com.micabo.app.ui.v3.MikaRow(
+            if (firstName.isEmpty()) com.micabo.app.i18n.t("ios.onb17.offer.sayAnon") else com.micabo.app.i18n.t("ios.onb17.offer.say", "name" to firstName),
+            com.micabo.app.ui.components.MikaMood.WINK,
+            Modifier.padding(bottom = 14.dp),
+        )
         DiscountHeadline(percent)
         Spacer(Modifier.height(22.dp))
         PriceCard(percent, discount, reference)

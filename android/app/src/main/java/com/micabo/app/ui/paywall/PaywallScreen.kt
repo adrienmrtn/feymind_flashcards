@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -336,8 +337,13 @@ fun PaywallContent(
         // Texte très agrandi : les deux offres l'une sous l'autre, dans la partie qui défile,
         // pour que le bouton reste en bas sans écraser les prix lettre par lettre.
         val big = LocalDensity.current.fontScale >= 1.5f
-        // Mika ne s'affiche que s'il reste la place : sur un petit téléphone, le tableau passe avant.
+        // Mika ne s'affiche que s'il reste la place : sur un petit téléphone, le reste passe avant.
         val hero = maxHeight >= 720.dp && !big
+        // Lot 17 (variante A) : à la fin du parcours, le paywall ne fait plus que faire choisir —
+        // trois bénéfices d'une ligne, les formules l'une sous l'autre, « Rien à payer
+        // aujourd'hui » collé au bouton. Derrière une porte de l'app, le tableau reste.
+        val endOfOnboarding = trigger == null
+        val plansInBody = big && state == PriceState.READY
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to colors.accent.copy(alpha = 0.16f), 0.55f to Color.Transparent)))
         Column(Modifier.fillMaxSize().statusBarsPadding(), horizontalAlignment = Alignment.CenterHorizontally) {
             Row(Modifier.widthIn(max = 560.dp).fillMaxWidth().heightIn(min = 52.dp).padding(start = 20.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -358,20 +364,17 @@ fun PaywallContent(
                 Spacer(Modifier.height(8.dp))
                 if (hero) {
                     Box(contentAlignment = Alignment.Center) {
-                        val size = if (short) 96.dp else 128.dp
+                        val size = if (endOfOnboarding) 72.dp else if (short) 96.dp else 128.dp
                         Box(Modifier.size(size * 1.35f).background(Brush.radialGradient(listOf(colors.accent.copy(alpha = 0.40f), Color.Transparent)), CircleShape))
                         Mika(if (trigger == null) MikaMood.CELEBRATE else MikaMood.WINK, size)
                     }
                 }
                 Text(marked(title, colors.accentBright), style = display(if (short) 30.sp else 34.sp), color = colors.ink, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 10.dp))
                 Text(promise, style = text(17.sp, FontWeight.SemiBold, 22.sp), color = colors.accentBright, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
-                if (big && state == PriceState.READY) {
-                    Column(Modifier.fillMaxWidth().padding(top = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        weeklyPlan?.let { PlanCard(it, selected = selected == it, savings = null, onClick = { onSelect(false) }, modifier = Modifier.fillMaxWidth()) }
-                        yearlyPlan?.let { PlanCard(it, selected = selected == it, savings = savings(yearlyPlan, weeklyPlan, locale), onClick = { onSelect(true) }, modifier = Modifier.fillMaxWidth()) }
-                    }
-                }
-                if (big) {
+                if (plansInBody) PlanRows(yearlyPlan, weeklyPlan, selected, locale, onSelect, Modifier.padding(top = 14.dp))
+                if (endOfOnboarding) {
+                    PaywallChecks(Modifier.padding(top = if (short) 16.dp else 24.dp))
+                } else if (big) {
                     com.micabo.app.ui.v3.CappedFontScale(1.5f) { FeatureTable(Feature.shown(trigger), Modifier.padding(top = 14.dp)) }
                 } else {
                     FeatureTable(Feature.shown(trigger), Modifier.padding(top = if (short) 14.dp else 22.dp))
@@ -392,15 +395,16 @@ fun PaywallContent(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 when (state) {
-                    PriceState.READY -> if (!big) Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        weeklyPlan?.let { PlanCard(it, selected = selected == it, savings = null, onClick = { onSelect(false) }, modifier = Modifier.weight(1f).fillMaxHeight()) }
-                        yearlyPlan?.let { PlanCard(it, selected = selected == it, savings = savings(yearlyPlan, weeklyPlan, locale), onClick = { onSelect(true) }, modifier = Modifier.weight(1f).fillMaxHeight()) }
-                    }
+                    PriceState.READY -> if (!plansInBody) PlanRows(yearlyPlan, weeklyPlan, selected, locale, onSelect)
                     PriceState.LOADING -> Text(t("ios.pay10.loading"), style = Type.mention, color = colors.inkSecondary, modifier = Modifier.fillMaxWidth().v3Card(radius = 16.dp).padding(vertical = 30.dp), textAlign = TextAlign.Center)
                     PriceState.FAILED -> Text(failure, style = Type.mention, color = colors.inkSecondary, modifier = Modifier.fillMaxWidth().v3Card(radius = 16.dp).padding(16.dp), textAlign = TextAlign.Center)
                     PriceState.UNAVAILABLE -> Text(stringResource(R.string.x_paywall_soonBody), style = Type.mention, color = colors.inkSecondary, textAlign = TextAlign.Center)
                 }
                 message?.let { Text(it, style = text(15.sp, FontWeight.SemiBold), color = colors.redInk, textAlign = TextAlign.Center) }
+                // « ✓ Rien à payer aujourd'hui », collé au bouton, seulement si l'essai est accordé.
+                if (endOfOnboarding && trialDays > 0 && state == PriceState.READY) {
+                    com.micabo.app.ui.v3.Reassurance(t("ios.pay10.nothingToday"))
+                }
                 when (state) {
                     PriceState.READY -> MicaboButton(
                         if (trialDays > 0) t("ios.pay11.cta.trial", "n" to trialDays) else t("ios.pay12.cta.subscribe"),
@@ -450,49 +454,81 @@ private fun legalLine(plan: StorePlan, now: Long, locale: java.util.Locale): Str
     return t(if (plan.yearly) "ios.pay11.legal.year" else "ios.pay11.legal.week", "price" to plan.price)
 }
 
-/** **Une offre** : son nom, le prix à la semaine en grand, la somme facturée lisible dessous. */
+/** Les deux formules, **l'une sous l'autre** (lot 17) : l'annuelle d'abord, avec sa remise. */
 @Composable
-private fun PlanCard(plan: StorePlan, selected: Boolean, savings: String?, onClick: () -> Unit, modifier: Modifier) {
+private fun PlanRows(yearly: StorePlan?, weekly: StorePlan?, selected: StorePlan?, locale: java.util.Locale, onSelect: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        yearly?.let { PlanRow(it, selected = selected == it, savings = savings(yearly, weekly, locale), onClick = { onSelect(true) }) }
+        weekly?.let { PlanRow(it, selected = selected == it, savings = null, onClick = { onSelect(false) }) }
+    }
+}
+
+/**
+ * **Une offre, en ligne pleine largeur** (lot 17) : le rond coché, son nom (et la remise),
+ * dessous **la somme réellement facturée**, au corps de lecture et en couleur principale ; à
+ * droite, le prix ramené à la semaine, en grand. Le prix ne se coupe jamais : il rapetisse.
+ */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun PlanRow(plan: StorePlan, selected: Boolean, savings: String?, onClick: () -> Unit) {
     val colors = Micabo.colors
-    Box(modifier) {
-        Column(
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 66.dp)
+            .v3Card(selected = selected, radius = 16.dp)
+            .clickable(role = Role.RadioButton, onClick = onClick)
+            .semantics { this.selected = selected }
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(
             Modifier
-                .fillMaxSize()
-                .padding(top = if (savings != null) 10.dp else 0.dp)
-                .v3Card(selected = selected, radius = 16.dp)
-                .clickable(role = Role.RadioButton, onClick = onClick)
-                .semantics { this.selected = selected }
-                .padding(start = 12.dp, end = 12.dp, top = 14.dp, bottom = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(3.dp),
+                .size(24.dp)
+                .clip(CircleShape)
+                .background(if (selected) colors.accent else Color.Transparent)
+                .border(2.dp, if (selected) colors.accent else colors.inkTertiary, CircleShape),
+            contentAlignment = Alignment.Center,
         ) {
-            Text(t(if (plan.yearly) "ios.planYearly" else "ios.planWeekly"), style = text(15.sp, FontWeight.Bold), color = if (selected) colors.ink else colors.inkSecondary)
-            // Le prix et « / semaine » dans un seul texte : il passe à la ligne entre les deux,
-            // jamais au milieu d'un mot.
-            val perWeek = t("app.paywall.perWeekSlash")
-            Text(
-                androidx.compose.ui.text.buildAnnotatedString {
-                    append(plan.weekly ?: plan.price)
-                    withStyle(androidx.compose.ui.text.SpanStyle(fontFamily = androidx.compose.ui.text.font.FontFamily.Default, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.inkSecondary)) {
-                        append("\u00A0")
-                        append(perWeek)
-                    }
-                },
-                style = display(24.sp),
-                color = colors.ink,
-            )
+            if (selected) Box(Modifier.size(9.dp).clip(CircleShape).background(Color.White))
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(t(if (plan.yearly) "ios.planYearly" else "ios.planWeekly"), style = text(17.sp, FontWeight.Bold), color = colors.ink)
+                if (savings != null) {
+                    Text(
+                        savings,
+                        style = text(13.sp, FontWeight.Black),
+                        color = colors.onYellow,
+                        modifier = Modifier.align(Alignment.CenterVertically).clip(CircleShape).background(colors.yellow).padding(horizontal = 8.dp, vertical = 2.dp),
+                    )
+                }
+            }
+            // La somme facturée se lit : couleur principale, jamais plus petite que la mention.
             Text(
                 if (plan.yearly) t("ios.billedYearly", "price" to plan.price) else t("ios.billedEach", "unit" to t("ios.unitWeek")),
                 style = text(16.sp, FontWeight.Medium, 21.sp),
                 color = colors.ink,
             )
         }
-        if (savings != null) {
-            Text(
-                savings,
-                style = text(13.sp, FontWeight.Black),
-                color = colors.onYellow,
-                modifier = Modifier.align(Alignment.TopEnd).padding(end = 10.dp).clip(CircleShape).background(colors.yellow).padding(horizontal = 8.dp, vertical = 2.dp),
-            )
+        Column(horizontalAlignment = Alignment.End) {
+            com.micabo.app.ui.v3.FitText(plan.weekly ?: plan.price, display(28.sp), colors.ink, Modifier.widthIn(max = 120.dp), TextAlign.End, minSize = 16)
+            Text(t("app.paywall.perWeekSlash"), style = text(14.sp, FontWeight.Medium), color = colors.inkSecondary, textAlign = TextAlign.End)
+        }
+    }
+}
+
+/** **Trois bénéfices, une ligne chacun** (lot 17) : une coche jaune, le corps de lecture. Sans « illimité ». */
+@Composable
+private fun PaywallChecks(modifier: Modifier = Modifier) {
+    val colors = Micabo.colors
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        listOf("ios.onb17.pay.lessons", "ios.onb17.pay.mika", "ios.onb17.pay.exams").forEach { key ->
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Icon(Icons.Rounded.CheckCircle, null, tint = colors.yellow, modifier = Modifier.size(24.dp))
+                Text(t(key), style = Type.body, color = colors.ink, modifier = Modifier.weight(1f))
+            }
         }
     }
 }

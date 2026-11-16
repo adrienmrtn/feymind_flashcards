@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">Sehr intensiv</string>
     <string name="ios_onb16_welcome_cta">Ja, los geht\'s</string>
     <string name="ios_onb16_welcome_say">Hi, ich bin Mika, dein neuer Lernassistent. Ich stelle dir ein paar Fragen, um deinen Plan vorzubereiten. Bist du einverstanden?</string>
+    <string name="ios_onb17_offer_say">Warte, %1$s! Ich habe einen **besseren Preis** für dich.</string>
+    <string name="ios_onb17_offer_sayAnon">Warte! Ich habe einen **besseren Preis** für dich.</string>
+    <string name="ios_onb17_pay_exams">Korrigierte Probeprüfungen</string>
+    <string name="ios_onb17_pay_lessons">Mika schreibt alle deine Lektionen</string>
+    <string name="ios_onb17_pay_mika">Er erklärt dir, was du nicht verstehst</string>
+    <string name="ios_onb17_tl_billing">Dein Abo beginnt, außer du kündigst vorher. Bis dahin wird nichts abgebucht.</string>
+    <string name="ios_onb17_tl_reminder">Die Erinnerung: Deine Testphase endet morgen.</string>
+    <string name="ios_onb17_tl_today">Ganz Pro ist offen: deine Lektionen, Mika, Probeprüfungen.</string>
+    <string name="ios_onb17_trial_cta">Ich will\'s ausprobieren</string>
+    <string name="ios_onb17_trial_daysSub">gratis, alles inklusive</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">Deine erste Lektion und alle weiteren</string>
     <string name="ios_onb5_exam_dateLabel">Prüfungsdatum</string>
     <string name="ios_onb5_exam_finals">Meine Klausurenphase</string>
     <string name="ios_onb5_exam_finalsName">Klausurenphase</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">Dein Kauf wartet auf eine Bestätigung, zum Beispiel von einem Elternteil. Pro wird automatisch freigeschaltet, sobald sie da ist.</string>
     <string name="ios_paywallPendingTitle">Kauf ausstehend</string>
     <string name="ios_paywallRestore">Wiederherstellen</string>
-    <string name="ios_paywall_step_reminderDetail">Wir sagen dir, dass der Test bald endet.</string>
     <string name="ios_pdf_empty">Dieses PDF enthält weder Text noch eine nutzbare Seite.</string>
     <string name="ios_pdf_protected">Dieses PDF ist passwortgeschützt.</string>
     <string name="ios_pdf_unreadable">Dieses PDF konnte nicht geöffnet werden.</string>

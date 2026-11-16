@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">Vrlo intenzivno</string>
     <string name="ios_onb16_welcome_cta">Da, krenimo</string>
     <string name="ios_onb16_welcome_say">Bok, ja sam Mika, tvoj novi asistent za učenje. Postavit ću ti nekoliko pitanja da pripremim tvoj plan. Može?</string>
+    <string name="ios_onb17_offer_say">Čekaj, %1$s! Imam za tebe **bolju cijenu**.</string>
+    <string name="ios_onb17_offer_sayAnon">Čekaj! Imam za tebe **bolju cijenu**.</string>
+    <string name="ios_onb17_pay_exams">Ispravljeni probni ispiti</string>
+    <string name="ios_onb17_pay_lessons">Mika ti piše sve lekcije</string>
+    <string name="ios_onb17_pay_mika">Objasni ti ono što ne razumiješ</string>
+    <string name="ios_onb17_tl_billing">Pretplata ti počinje, osim ako ne otkažeš prije. Do tada se ništa ne naplaćuje.</string>
+    <string name="ios_onb17_tl_reminder">Podsjetnik: probno razdoblje ti sutra završava.</string>
+    <string name="ios_onb17_tl_today">Otvara se cijeli Pro: tvoje lekcije, Mika, probni ispiti.</string>
+    <string name="ios_onb17_trial_cta">Želim isprobati</string>
+    <string name="ios_onb17_trial_daysSub">besplatno, sve uključeno</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">Tvoja prva lekcija i sve sljedeće</string>
     <string name="ios_onb5_exam_dateLabel">Datum ispita</string>
     <string name="ios_onb5_exam_finals">Moji kolokviji i ispiti</string>
     <string name="ios_onb5_exam_finalsName">Ispitni rok</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">Tvoja kupnja čeka odobrenje, na primjer roditelja. Pro će se sam otključati čim stigne.</string>
     <string name="ios_paywallPendingTitle">Kupnja na čekanju</string>
     <string name="ios_paywallRestore">Vrati kupnje</string>
-    <string name="ios_paywall_step_reminderDetail">Javljamo ti da probno razdoblje uskoro završava.</string>
     <string name="ios_pdf_empty">Ovaj PDF nema ni teksta ni upotrebljive stranice.</string>
     <string name="ios_pdf_protected">Ovaj PDF je zaštićen lozinkom.</string>
     <string name="ios_pdf_unreadable">Ovaj PDF nije bilo moguće otvoriti.</string>

@@ -457,15 +457,20 @@ fun frenchArticled(name: String): String {
     return "le $name"
 }
 
-/** **« On veut que tu essaies Micabo Pro gratuitement »** : ce que l'essai ouvre, pour lui. */
+/**
+ * **« On veut que tu essaies Micabo Pro gratuitement »** : le cadeau, seul, sans prix (lot 17).
+ * Mika content et « 3 jours » en grand, « offerts, tout compris », puis ce que l'essai ouvre,
+ * pour lui. La leçon n'est citée que s'il a tapé un sujet : jamais un titre inventé.
+ */
 @Composable
-fun FreeTrialIntroStep(model: OnboardingModel) {
+fun FreeTrialIntroStep(model: OnboardingModel, trialDays: Int = 3) {
     val compact = LocalCompact.current
+    val colors = Micabo.colors
     val french = currentLocale.language == "fr"
     val lesson = when (model.firstLessonChoice) {
-        FirstLessonChoice.TOPIC -> model.firstLessonSubject?.let { t("ios.onb12.trial.unlock.lesson", "topic" to it) } ?: t("ios.pay11.row.lessons")
+        FirstLessonChoice.TOPIC -> model.firstLessonSubject?.let { t("ios.onb12.trial.unlock.lesson", "topic" to it) } ?: t("ios.onb17.trial.unlock.lessonAny")
         FirstLessonChoice.IMPORT -> t("ios.onb12.trial.unlock.import")
-        null -> t("ios.pay11.row.lessons")
+        null -> t("ios.onb17.trial.unlock.lessonAny")
     }
     val mika = model.focusSubject?.let { t("ios.onb12.trial.unlock.mika", "subject" to SubjectDisplay.subject(it, appLanguageCode)) } ?: t("ios.pay11.row.mika")
     val exam = model.datedExam?.let { examTitle(it.first) }?.let { t("ios.onb12.trial.unlock.exam", "exam" to if (french) frenchArticled(it) else it) } ?: t("ios.pay11.row.exams")
@@ -473,7 +478,19 @@ fun FreeTrialIntroStep(model: OnboardingModel) {
         centered = true,
         header = { V3Title(t("ios.onb12.trial.wantTitle"), Modifier.padding(top = 16.dp)) },
         body = {
-            Column(verticalArrangement = Arrangement.spacedBy(if (compact) 20.dp else 28.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(if (compact) 18.dp else 24.dp)) {
+                // Le cadeau : la durée est celle que la boutique accorde.
+                Row(
+                    Modifier.fillMaxWidth().padding(bottom = if (compact) 4.dp else 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    Mika(MikaMood.HAPPY, if (compact) 72.dp else 100.dp)
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        com.micabo.app.ui.v3.FitText(t("ios.onb17.trial.days", "n" to trialDays), figure(if (compact) 48 else 60), colors.yellow, minSize = 28)
+                        Text(t("ios.onb17.trial.daysSub"), style = Type.body.copy(fontWeight = FontWeight.Bold), color = colors.ink)
+                    }
+                }
                 IconLine(MicaboIcons.book, lesson)
                 IconLine(MicaboIcons.mika, mika)
                 IconLine(MicaboIcons.exam, exam)
@@ -481,7 +498,7 @@ fun FreeTrialIntroStep(model: OnboardingModel) {
         },
         footer = {
             Reassurance(t("ios.pay10.nothingToday"))
-            MicaboButton(t("common.continue"), onClick = { model.advance() }, modifier = Modifier.testTag("cta"))
+            MicaboButton(t("ios.onb17.trial.cta"), onClick = { model.advance() }, modifier = Modifier.testTag("cta"))
         },
     )
 }
@@ -512,9 +529,10 @@ fun TrialOfferStep(model: OnboardingModel, host: OnboardingHost, now: Long = Sys
         body = {
             TrialTimeline(
                 listOf(
-                    Milestone(MicaboIcons.unlock, t("ios.onb5.trial.today"), t("ios.onb14.trial.today"), current = true),
-                    Milestone(MicaboIcons.bell, t("ios.onb7.trial.reminder", "date" to reminder), t(if (promises) "ios.paywall.step.reminderDetail" else "ios.onb5.trial.reminderOff"), current = false),
-                    Milestone(MicaboIcons.star, t("ios.onb7.trial.billing", "date" to end), t("ios.onb7.trial.billingDetail"), current = false),
+                    // Lot 17 : la date seule en titre, ce qui s'y passe dessous.
+                    Milestone(MicaboIcons.unlock, t("ios.onb5.trial.today"), t("ios.onb17.tl.today"), current = true),
+                    Milestone(MicaboIcons.bell, reminder, t(if (promises) "ios.onb17.tl.reminder" else "ios.onb5.trial.reminderOff"), current = false),
+                    Milestone(MicaboIcons.star, end, t("ios.onb17.tl.billing"), current = false),
                 ),
             )
         },
@@ -528,7 +546,14 @@ fun TrialOfferStep(model: OnboardingModel, host: OnboardingHost, now: Long = Sys
                     Reassurance(t("ios.onb12.trial.denied"))
                     MicaboButton(t("common.continue"), onClick = { model.advance() }, modifier = Modifier.testTag("cta"))
                 }
-                null -> MicaboButton(t("ios.onb12.trial.enable"), onClick = ask, modifier = Modifier.testTag("cta"))
+                null -> {
+                    // Lot 17 : une seule ligne pour rassurer, au-dessus du bouton. Sur Android,
+                    // l'abonnement se résilie dans Google Play, pas dans les Réglages : la phrase
+                    // de l'iPhone (« …dans les Réglages ») laisse place à « Annule quand tu veux,
+                    // en 2 touches », déjà traduite dans les 32 langues.
+                    Text(t("ios.onb5.trial.cancel"), style = Type.mention, color = Micabo.colors.inkSecondary, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                    MicaboButton(t("ios.onb12.trial.enable"), onClick = ask, modifier = Modifier.testTag("cta"))
+                }
             }
         },
     )

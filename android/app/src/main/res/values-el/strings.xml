@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">Πολύ έντονο</string>
     <string name="ios_onb16_welcome_cta">Ναι, πάμε</string>
     <string name="ios_onb16_welcome_say">Γεια, είμαι ο Mika, ο νέος σου βοηθός για το διάβασμα. Θα σου κάνω μερικές ερωτήσεις για να ετοιμάσω το πλάνο σου. Εντάξει;</string>
+    <string name="ios_onb17_offer_say">Περίμενε, %1$s! Έχω **καλύτερη τιμή** για σένα.</string>
+    <string name="ios_onb17_offer_sayAnon">Περίμενε! Έχω **καλύτερη τιμή** για σένα.</string>
+    <string name="ios_onb17_pay_exams">Διορθωμένα διαγωνίσματα</string>
+    <string name="ios_onb17_pay_lessons">Ο Mika γράφει όλα τα μαθήματά σου</string>
+    <string name="ios_onb17_pay_mika">Σου εξηγεί ό,τι δεν καταλαβαίνεις</string>
+    <string name="ios_onb17_tl_billing">Η συνδρομή σου ξεκινά, εκτός αν ακυρώσεις πριν. Μέχρι τότε δεν χρεώνεται τίποτα.</string>
+    <string name="ios_onb17_tl_reminder">Η υπενθύμιση: η δοκιμή σου λήγει αύριο.</string>
+    <string name="ios_onb17_tl_today">Ανοίγει όλο το Pro: τα μαθήματά σου, ο Mika, τα διαγωνίσματα.</string>
+    <string name="ios_onb17_trial_cta">Θέλω να το δοκιμάσω</string>
+    <string name="ios_onb17_trial_daysSub">δωρεάν, όλα μέσα</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">Το πρώτο σου μάθημα, και όλα τα επόμενα</string>
     <string name="ios_onb5_exam_dateLabel">Ημερομηνία εξέτασης</string>
     <string name="ios_onb5_exam_finals">Η εξεταστική μου</string>
     <string name="ios_onb5_exam_finalsName">Εξεταστική</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">Η αγορά σου περιμένει έγκριση, για παράδειγμα από γονέα. Το Pro θα ξεκλειδώσει μόνο του μόλις έρθει.</string>
     <string name="ios_paywallPendingTitle">Αγορά σε αναμονή</string>
     <string name="ios_paywallRestore">Επαναφορά</string>
-    <string name="ios_paywall_step_reminderDetail">Σε ειδοποιούμε ότι η δοκιμή λήγει σύντομα.</string>
     <string name="ios_pdf_empty">Αυτό το PDF δεν έχει ούτε κείμενο ούτε αξιοποιήσιμη σελίδα.</string>
     <string name="ios_pdf_protected">Αυτό το PDF προστατεύεται με κωδικό.</string>
     <string name="ios_pdf_unreadable">Αυτό το PDF δεν άνοιξε.</string>

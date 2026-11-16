@@ -29,6 +29,11 @@
         <item quantity="few">+%1$d body: malý krok, úplně zvládnutelný</item>
         <item quantity="other">+%1$d bodů: malý krok, úplně zvládnutelný</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d den</item>
+        <item quantity="few">%1$d dny</item>
+        <item quantity="other">%1$d dní</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="one">%1$d den zdarma, potom %2$s týdně. Zrušit můžeš kdykoli.</item>
         <item quantity="few">%1$d dny zdarma, potom %2$s týdně. Zrušit můžeš kdykoli.</item>

@@ -52,9 +52,9 @@ class AppShotsTest(private val device: Device) {
     )
     private val now = Instant.parse("2026-11-12T10:00:00Z").toEpochMilli()
 
-    private fun paywall(state: PriceState, trigger: String?, exam: String?) = @androidx.compose.runtime.Composable {
+    private fun paywall(state: PriceState, trigger: String?, exam: String?, offers: List<StorePlan> = plans, yearly: Boolean = true) = @androidx.compose.runtime.Composable {
         PaywallContent(
-            state = state, plans = if (state == PriceState.READY) plans else emptyList(), yearlySelected = true, onSelect = {},
+            state = state, plans = if (state == PriceState.READY) offers else emptyList(), yearlySelected = yearly, onSelect = {},
             name = "Lina", examName = exam, examId = if (exam != null) "fr.bac" else "", trigger = trigger, busy = false,
             message = null, failure = "Pas de connexion. Vérifie ton internet et réessaie.", onClose = {}, onRetry = {},
             onRestore = {}, onOpen = {}, onSubscribe = {}, now = now,
@@ -67,6 +67,9 @@ class AppShotsTest(private val device: Device) {
             "paywall-parcours" to shoot(rule, device, "app", "paywall-parcours", content = paywall(PriceState.READY, null, "Bac")),
             "paywall-mika" to shoot(rule, device, "app", "paywall-porte-mika", content = paywall(PriceState.READY, "mika", null)),
             "paywall-chargement" to shoot(rule, device, "app", "paywall-chargement", content = paywall(PriceState.LOADING, null, null)),
+            // Lot 17 : la formule hebdomadaire cochée (la mention suit), et un compte sans essai.
+            "paywall-hebdo" to shoot(rule, device, "app", "paywall-parcours-hebdo", content = paywall(PriceState.READY, null, "Bac", yearly = false)),
+            "paywall-sans-essai" to shoot(rule, device, "app", "paywall-sans-essai", content = paywall(PriceState.READY, null, "Bac", offers = plans.map { it.copy(trialDays = 0) })),
             "chat-vide" to shoot(rule, device, "app", "chat-vide") {
                 ChatContent(Conversation(), "", {}, 0, false, null, {}, {}, {}, {}, {}, {})
             },
@@ -102,6 +105,15 @@ class AppShotsTest(private val device: Device) {
         app.composer.draft = ""
         reports["leçon-en-cours"] = shoot(rule, device, "app", "lecon-en-ecriture", requireCta = false) {
             Generating(LessonRequest(topic = "La photosynthèse", text = ""), CreationStage.WRITING, null, onClose = {}, onRetry = {})
+        }
+        // L'offre −40 % à la fermeture : la phrase de Mika dans sa bulle (les prix ne viennent pas
+        // de la boutique sous les tests : l'écran montre son état sans réseau).
+        reports["offre-40"] = shoot(rule, device, "app", "offre-40", requireCta = false) {
+            CompositionLocalProvider(LocalApp provides app) {
+                Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.BottomCenter) {
+                    com.micabo.app.ui.paywall.DiscountSheet(onDismiss = {}, onSubscribed = {})
+                }
+            }
         }
         FirstLesson.clear(app)
         reports["accueil"] = shoot(rule, device, "app", "accueil") {

@@ -22,6 +22,9 @@
     <plurals name="ios_onb10_target_small_points">
         <item quantity="other">+%1$d puan: küçük bir adım, rahatça yapılır</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="other">%1$d gün</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="other">%1$d gün ücretsiz, sonra haftalık %2$s. İstediğin zaman iptal et.</item>
     </plurals>

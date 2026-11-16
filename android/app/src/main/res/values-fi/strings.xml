@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">Hyvin tehokas</string>
     <string name="ios_onb16_welcome_cta">Kyllä, aloitetaan</string>
     <string name="ios_onb16_welcome_say">Hei, olen Mika, uusi opiskeluavustajasi. Kysyn sinulta muutaman kysymyksen, jotta voin valmistella suunnitelmasi. Sopiiko?</string>
+    <string name="ios_onb17_offer_say">Odota, %1$s! Minulla on sinulle **parempi hinta**.</string>
+    <string name="ios_onb17_offer_sayAnon">Odota! Minulla on sinulle **parempi hinta**.</string>
+    <string name="ios_onb17_pay_exams">Korjatut harjoituskokeet</string>
+    <string name="ios_onb17_pay_lessons">Mika kirjoittaa kaikki oppituntisi</string>
+    <string name="ios_onb17_pay_mika">Hän selittää, mitä et ymmärrä</string>
+    <string name="ios_onb17_tl_billing">Tilauksesi alkaa, ellet peruuta ennen sitä. Siihen asti mitään ei veloiteta.</string>
+    <string name="ios_onb17_tl_reminder">Muistutus: kokeilusi päättyy huomenna.</string>
+    <string name="ios_onb17_tl_today">Koko Pro aukeaa: oppituntisi, Mika, harjoituskokeet.</string>
+    <string name="ios_onb17_trial_cta">Haluan kokeilla</string>
+    <string name="ios_onb17_trial_daysSub">ilmaiseksi, kaikki mukana</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">Ensimmäinen oppituntisi ja kaikki seuraavat</string>
     <string name="ios_onb5_exam_dateLabel">Kokeen päivä</string>
     <string name="ios_onb5_exam_finals">Tenttikausi</string>
     <string name="ios_onb5_exam_finalsName">Tenttikausi</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">Ostoksesi odottaa hyväksyntää, esimerkiksi vanhemmalta. Pro avautuu itsestään heti, kun se tulee.</string>
     <string name="ios_paywallPendingTitle">Osto odottaa</string>
     <string name="ios_paywallRestore">Palauta</string>
-    <string name="ios_paywall_step_reminderDetail">Kerromme sinulle, kun kokeilu on päättymässä.</string>
     <string name="ios_pdf_empty">Tässä PDF:ssä ei ole tekstiä eikä käyttökelpoista sivua.</string>
     <string name="ios_pdf_protected">Tämä PDF on suojattu salasanalla.</string>
     <string name="ios_pdf_unreadable">Tätä PDF:ää ei voitu avata.</string>

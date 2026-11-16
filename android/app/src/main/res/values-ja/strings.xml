@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">とてもハード</string>
     <string name="ios_onb16_welcome_cta">うん、始めよう</string>
     <string name="ios_onb16_welcome_say">やあ、Mikaだよ。きみの新しい勉強アシスタントなんだ。きみのプランを準備するために、いくつか質問させてね。いいかな？</string>
+    <string name="ios_onb17_offer_say">待って、%1$s！**特別価格**があるよ。</string>
+    <string name="ios_onb17_offer_sayAnon">待って！**特別価格**があるよ。</string>
+    <string name="ios_onb17_pay_exams">採点つきの模擬試験</string>
+    <string name="ios_onb17_pay_lessons">Mikaがすべてのレッスンを書く</string>
+    <string name="ios_onb17_pay_mika">わからないところを説明してくれる</string>
+    <string name="ios_onb17_tl_billing">解約しない限り、サブスクリプションが始まります。それまで請求はありません。</string>
+    <string name="ios_onb17_tl_reminder">リマインダー：無料体験は明日終わります。</string>
+    <string name="ios_onb17_tl_today">Proのすべてが使える：レッスン、Mika、模擬試験。</string>
+    <string name="ios_onb17_trial_cta">試してみたい</string>
+    <string name="ios_onb17_trial_daysSub">無料、すべて込み</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">最初のレッスンと、その後のすべて</string>
     <string name="ios_onb5_exam_dateLabel">試験日</string>
     <string name="ios_onb5_exam_finals">期末試験</string>
     <string name="ios_onb5_exam_finalsName">期末試験</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">購入は承認待ちです（保護者の承認など）。承認されると自動でProが使えるようになります。</string>
     <string name="ios_paywallPendingTitle">購入の承認待ち</string>
     <string name="ios_paywallRestore">復元</string>
-    <string name="ios_paywall_step_reminderDetail">お試し期間がもうすぐ終わることをお知らせします。</string>
     <string name="ios_pdf_empty">このPDFには使えるテキストもページもありません。</string>
     <string name="ios_pdf_protected">このPDFはパスワードで保護されています。</string>
     <string name="ios_pdf_unreadable">このPDFを開けませんでした。</string>

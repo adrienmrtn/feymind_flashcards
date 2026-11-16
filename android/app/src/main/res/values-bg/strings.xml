@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">Много интензивно</string>
     <string name="ios_onb16_welcome_cta">Да, започваме</string>
     <string name="ios_onb16_welcome_say">Здравей, аз съм Mika, новият ти помощник за учене. Ще ти задам няколко въпроса, за да подготвя плана ти. Съгласен ли си?</string>
+    <string name="ios_onb17_offer_say">Чакай, %1$s! Имам **по-добра цена** за теб.</string>
+    <string name="ios_onb17_offer_sayAnon">Чакай! Имам **по-добра цена** за теб.</string>
+    <string name="ios_onb17_pay_exams">Проверени пробни изпити</string>
+    <string name="ios_onb17_pay_lessons">Mika пише всичките ти уроци</string>
+    <string name="ios_onb17_pay_mika">Обяснява ти това, което не разбираш</string>
+    <string name="ios_onb17_tl_billing">Абонаментът ти започва, освен ако не го откажеш преди това. Дотогава нищо не се таксува.</string>
+    <string name="ios_onb17_tl_reminder">Напомнянето: пробният ти период свършва утре.</string>
+    <string name="ios_onb17_tl_today">Отваря се целият Pro: уроците ти, Mika, пробните изпити.</string>
+    <string name="ios_onb17_trial_cta">Искам да пробвам</string>
+    <string name="ios_onb17_trial_daysSub">безплатно, всичко включено</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">Първият ти урок и всички следващи</string>
     <string name="ios_onb5_exam_dateLabel">Дата на изпита</string>
     <string name="ios_onb5_exam_finals">Моята сесия</string>
     <string name="ios_onb5_exam_finalsName">Сесия</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">Покупката ти чака одобрение, например от родител. Pro ще се отключи сам веднага щом пристигне.</string>
     <string name="ios_paywallPendingTitle">Покупката чака</string>
     <string name="ios_paywallRestore">Възстанови</string>
-    <string name="ios_paywall_step_reminderDetail">Казваме ти, че пробният период скоро изтича.</string>
     <string name="ios_pdf_empty">Този PDF няма нито текст, нито използваема страница.</string>
     <string name="ios_pdf_protected">Този PDF е защитен с парола.</string>
     <string name="ios_pdf_unreadable">Този PDF не можа да се отвори.</string>

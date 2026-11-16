@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">Veľmi intenzívne</string>
     <string name="ios_onb16_welcome_cta">Áno, ideme na to</string>
     <string name="ios_onb16_welcome_say">Ahoj, ja som Mika, tvoj nový asistent na učenie. Položím ti pár otázok, aby som pripravil tvoj plán. Súhlasíš?</string>
+    <string name="ios_onb17_offer_say">Počkaj, %1$s! Mám pre teba **lepšiu cenu**.</string>
+    <string name="ios_onb17_offer_sayAnon">Počkaj! Mám pre teba **lepšiu cenu**.</string>
+    <string name="ios_onb17_pay_exams">Opravené cvičné skúšky</string>
+    <string name="ios_onb17_pay_lessons">Mika ti napíše všetky lekcie</string>
+    <string name="ios_onb17_pay_mika">Vysvetlí ti, čomu nerozumieš</string>
+    <string name="ios_onb17_tl_billing">Začne ti predplatné, ak ho predtým nezrušíš. Dovtedy sa nič neplatí.</string>
+    <string name="ios_onb17_tl_reminder">Pripomienka: skúšobná doba ti zajtra končí.</string>
+    <string name="ios_onb17_tl_today">Otvorí sa celé Pro: tvoje lekcie, Mika, cvičné skúšky.</string>
+    <string name="ios_onb17_trial_cta">Chcem to skúsiť</string>
+    <string name="ios_onb17_trial_daysSub">zadarmo, všetko v cene</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">Tvoja prvá lekcia a všetky ďalšie</string>
     <string name="ios_onb5_exam_dateLabel">Dátum skúšky</string>
     <string name="ios_onb5_exam_finals">Moje skúškové</string>
     <string name="ios_onb5_exam_finalsName">Skúškové</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">Tvoj nákup čaká na schválenie, napríklad od rodiča. Pro sa odomkne samo, hneď ako príde.</string>
     <string name="ios_paywallPendingTitle">Nákup čaká</string>
     <string name="ios_paywallRestore">Obnoviť</string>
-    <string name="ios_paywall_step_reminderDetail">Dáme ti vedieť, že skúšobná verzia sa čoskoro končí.</string>
     <string name="ios_pdf_empty">Toto PDF neobsahuje text ani použiteľnú stranu.</string>
     <string name="ios_pdf_protected">Toto PDF je chránené heslom.</string>
     <string name="ios_pdf_unreadable">Toto PDF sa nepodarilo otvoriť.</string>

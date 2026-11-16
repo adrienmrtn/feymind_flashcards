@@ -31,6 +31,11 @@
         <item quantity="few">+%1$d puncte: un pas mic, perfect realizabil</item>
         <item quantity="other">+%1$d de puncte: un pas mic, perfect realizabil</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d zi</item>
+        <item quantity="few">%1$d zile</item>
+        <item quantity="other">%1$d de zile</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="one">%1$d zi gratuită, apoi %2$s pe săptămână. Anulezi oricând.</item>
         <item quantity="few">%1$d zile gratuite, apoi %2$s pe săptămână. Anulezi oricând.</item>

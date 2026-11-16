@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">Velmi intenzivně</string>
     <string name="ios_onb16_welcome_cta">Ano, jdeme na to</string>
     <string name="ios_onb16_welcome_say">Ahoj, já jsem Mika, tvůj nový asistent na učení. Položím ti pár otázek, abych připravil tvůj plán. Souhlasíš?</string>
+    <string name="ios_onb17_offer_say">Počkej, %1$s! Mám pro tebe **lepší cenu**.</string>
+    <string name="ios_onb17_offer_sayAnon">Počkej! Mám pro tebe **lepší cenu**.</string>
+    <string name="ios_onb17_pay_exams">Opravené cvičné zkoušky</string>
+    <string name="ios_onb17_pay_lessons">Mika ti napíše všechny lekce</string>
+    <string name="ios_onb17_pay_mika">Vysvětlí ti, čemu nerozumíš</string>
+    <string name="ios_onb17_tl_billing">Začne ti předplatné, pokud ho předtím nezrušíš. Do té doby se nic neplatí.</string>
+    <string name="ios_onb17_tl_reminder">Připomínka: zkušební doba ti zítra končí.</string>
+    <string name="ios_onb17_tl_today">Otevře se celé Pro: tvoje lekce, Mika, cvičné zkoušky.</string>
+    <string name="ios_onb17_trial_cta">Chci to zkusit</string>
+    <string name="ios_onb17_trial_daysSub">zdarma, všechno v ceně</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">Tvoje první lekce a všechny další</string>
     <string name="ios_onb5_exam_dateLabel">Datum zkoušky</string>
     <string name="ios_onb5_exam_finals">Moje zkouškové</string>
     <string name="ios_onb5_exam_finalsName">Zkouškové</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">Tvůj nákup čeká na schválení, třeba od rodiče. Pro se odemkne samo, jakmile přijde.</string>
     <string name="ios_paywallPendingTitle">Nákup čeká</string>
     <string name="ios_paywallRestore">Obnovit</string>
-    <string name="ios_paywall_step_reminderDetail">Dáme ti vědět, že zkušební doba brzy končí.</string>
     <string name="ios_pdf_empty">Tohle PDF neobsahuje text ani použitelnou stránku.</string>
     <string name="ios_pdf_protected">Tohle PDF je chráněné heslem.</string>
     <string name="ios_pdf_unreadable">Tohle PDF se nepodařilo otevřít.</string>

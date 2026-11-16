@@ -31,6 +31,11 @@
         <item quantity="few">+%1$d taškai: mažas žingsnelis, visiškai įmanoma</item>
         <item quantity="other">+%1$d taškų: mažas žingsnelis, visiškai įmanoma</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d diena</item>
+        <item quantity="few">%1$d dienos</item>
+        <item quantity="other">%1$d dienų</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="one">%1$d diena nemokamai, vėliau %2$s per savaitę. Atšauk bet kada.</item>
         <item quantity="few">%1$d dienos nemokamai, vėliau %2$s per savaitę. Atšauk bet kada.</item>

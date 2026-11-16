@@ -705,6 +705,17 @@
     <string name="ios_onb16_time_max">Very intense</string>
     <string name="ios_onb16_welcome_cta">Yes, let\'s go</string>
     <string name="ios_onb16_welcome_say">Hi, I\'m Mika, your new study assistant. I\'ll ask you a few questions to set up your plan. Is that okay?</string>
+    <string name="ios_onb17_offer_say">Wait, %1$s! I\'ve got a **better price** for you.</string>
+    <string name="ios_onb17_offer_sayAnon">Wait! I\'ve got a **better price** for you.</string>
+    <string name="ios_onb17_pay_exams">Graded mock exams</string>
+    <string name="ios_onb17_pay_lessons">Mika writes all your lessons</string>
+    <string name="ios_onb17_pay_mika">Anything you don\'t get, explained</string>
+    <string name="ios_onb17_tl_billing">Your subscription starts, unless you cancel before. Nothing is charged until then.</string>
+    <string name="ios_onb17_tl_reminder">The reminder: your trial ends tomorrow.</string>
+    <string name="ios_onb17_tl_today">All of Pro opens up: your lessons, Mika, mock exams.</string>
+    <string name="ios_onb17_trial_cta">I want to try it</string>
+    <string name="ios_onb17_trial_daysSub">free, everything included</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">Your first lesson, and every one after it</string>
     <string name="ios_onb5_exam_dateLabel">Exam date</string>
     <string name="ios_onb5_exam_finals">My end-of-term exams</string>
     <string name="ios_onb5_exam_finalsName">End-of-term exams</string>
@@ -842,7 +853,6 @@
     <string name="ios_paywallPending">Your purchase is waiting for approval, for example from a parent. Pro will unlock on its own as soon as it\'s approved.</string>
     <string name="ios_paywallPendingTitle">Purchase pending</string>
     <string name="ios_paywallRestore">Restore</string>
-    <string name="ios_paywall_step_reminderDetail">We let you know the trial is about to end.</string>
     <string name="ios_pdf_empty">This PDF holds neither text nor a usable page.</string>
     <string name="ios_pdf_protected">This PDF is password-protected.</string>
     <string name="ios_pdf_unreadable">This PDF couldn\'t be opened.</string>

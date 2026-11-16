@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">Mycket intensivt</string>
     <string name="ios_onb16_welcome_cta">Ja, vi kör</string>
     <string name="ios_onb16_welcome_say">Hej, jag heter Mika och är din nya assistent för att plugga. Jag ställer några frågor för att förbereda din plan. Är det okej?</string>
+    <string name="ios_onb17_offer_say">Vänta, %1$s! Jag har ett **bättre pris** till dig.</string>
+    <string name="ios_onb17_offer_sayAnon">Vänta! Jag har ett **bättre pris** till dig.</string>
+    <string name="ios_onb17_pay_exams">Rättade provtentor</string>
+    <string name="ios_onb17_pay_lessons">Mika skriver alla dina lektioner</string>
+    <string name="ios_onb17_pay_mika">Han förklarar det du inte förstår</string>
+    <string name="ios_onb17_tl_billing">Ditt abonnemang börjar, om du inte säger upp innan. Inget dras förrän dess.</string>
+    <string name="ios_onb17_tl_reminder">Påminnelsen: din provperiod slutar i morgon.</string>
+    <string name="ios_onb17_tl_today">Hela Pro öppnas: dina lektioner, Mika, provtentor.</string>
+    <string name="ios_onb17_trial_cta">Jag vill testa</string>
+    <string name="ios_onb17_trial_daysSub">gratis, allt ingår</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">Din första lektion, och alla som följer</string>
     <string name="ios_onb5_exam_dateLabel">Provdatum</string>
     <string name="ios_onb5_exam_finals">Mina tentor</string>
     <string name="ios_onb5_exam_finalsName">Tentor</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">Ditt köp väntar på godkännande, till exempel från en förälder. Pro låses upp av sig självt så fort det kommer.</string>
     <string name="ios_paywallPendingTitle">Köpet väntar</string>
     <string name="ios_paywallRestore">Återställ</string>
-    <string name="ios_paywall_step_reminderDetail">Vi säger till när gratisperioden snart tar slut.</string>
     <string name="ios_pdf_empty">Den här PDF:en innehåller varken text eller någon användbar sida.</string>
     <string name="ios_pdf_protected">Den här PDF:en är lösenordsskyddad.</string>
     <string name="ios_pdf_unreadable">Den här PDF:en kunde inte öppnas.</string>

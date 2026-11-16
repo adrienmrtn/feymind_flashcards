@@ -21,6 +21,9 @@
     <plurals name="ios_onb10_target_small_points">
         <item quantity="other">+%1$d: خطوة صغيرة، ممكنة تمامًا</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="other">%1$d أيام</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="other">%1$d أيام مجانًا، ثم %2$s أسبوعيًا. ألغِ متى شئت.</item>
     </plurals>

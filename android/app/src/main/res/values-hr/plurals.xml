@@ -30,6 +30,11 @@
         <item quantity="few">+%1$d boda: mali korak, sasvim izvediv</item>
         <item quantity="other">+%1$d bodova: mali korak, sasvim izvediv</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d dan</item>
+        <item quantity="few">%1$d dana</item>
+        <item quantity="other">%1$d dana</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="one">%1$d dan besplatno, zatim %2$s tjedno. Otkaži kad god želiš.</item>
         <item quantity="other">%1$d dana besplatno, zatim %2$s tjedno. Otkaži kad god želiš.</item>

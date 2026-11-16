@@ -37,6 +37,12 @@
         <item quantity="many">+%1$d баллов: маленький шаг, вполне реально</item>
         <item quantity="other">+%1$d балла: маленький шаг, вполне реально</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d день</item>
+        <item quantity="few">%1$d дня</item>
+        <item quantity="many">%1$d дней</item>
+        <item quantity="other">%1$d дня</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="one">%1$d день бесплатно, затем %2$s в неделю. Отменить можно в любой момент.</item>
         <item quantity="few">%1$d дня бесплатно, затем %2$s в неделю. Отменить можно в любой момент.</item>

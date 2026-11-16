@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">아주 강하게</string>
     <string name="ios_onb16_welcome_cta">응, 시작하자</string>
     <string name="ios_onb16_welcome_say">안녕, 나는 Mika야. 공부를 도와줄 새 어시스턴트지. 네 계획을 준비하려고 몇 가지 물어볼게. 괜찮아?</string>
+    <string name="ios_onb17_offer_say">잠깐만요, %1$s! **특별 가격**이 있어요.</string>
+    <string name="ios_onb17_offer_sayAnon">잠깐만요! **특별 가격**이 있어요.</string>
+    <string name="ios_onb17_pay_exams">채점된 모의고사</string>
+    <string name="ios_onb17_pay_lessons">Mika가 모든 레슨을 써 줘요</string>
+    <string name="ios_onb17_pay_mika">모르는 부분을 설명해 줘요</string>
+    <string name="ios_onb17_tl_billing">미리 해지하지 않으면 구독이 시작돼요. 그전까지는 결제되지 않아요.</string>
+    <string name="ios_onb17_tl_reminder">알림: 체험이 내일 끝나요.</string>
+    <string name="ios_onb17_tl_today">Pro 전체가 열려요: 레슨, Mika, 모의고사.</string>
+    <string name="ios_onb17_trial_cta">체험해 볼래</string>
+    <string name="ios_onb17_trial_daysSub">무료, 모두 포함</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">첫 레슨과 그다음 레슨 전부</string>
     <string name="ios_onb5_exam_dateLabel">시험 날짜</string>
     <string name="ios_onb5_exam_finals">기말고사</string>
     <string name="ios_onb5_exam_finalsName">기말고사</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">구매가 승인을 기다리고 있어요(예: 보호자 승인). 승인되면 자동으로 Pro가 열려요.</string>
     <string name="ios_paywallPendingTitle">구매 대기 중</string>
     <string name="ios_paywallRestore">복원</string>
-    <string name="ios_paywall_step_reminderDetail">체험이 곧 끝난다는 걸 알려 드려요.</string>
     <string name="ios_pdf_empty">이 PDF에는 쓸 수 있는 텍스트나 페이지가 없어요.</string>
     <string name="ios_pdf_protected">이 PDF는 비밀번호로 보호돼 있어요.</string>
     <string name="ios_pdf_unreadable">이 PDF를 열 수 없었어요.</string>

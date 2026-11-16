@@ -25,6 +25,11 @@
         <item quantity="one">+%1$d נקודה: צעד קטן, אפשרי לגמרי</item>
         <item quantity="other">+%1$d נקודות: צעד קטן, אפשרי לגמרי</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">יום אחד</item>
+        <item quantity="two">יומיים</item>
+        <item quantity="other">%1$d ימים</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="one">יום אחד בחינם, ואז %2$s לשבוע. אפשר לבטל בכל עת.</item>
         <item quantity="two">יומיים בחינם, ואז %2$s לשבוע. אפשר לבטל בכל עת.</item>

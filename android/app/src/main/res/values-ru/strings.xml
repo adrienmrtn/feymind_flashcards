@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">Очень интенсивно</string>
     <string name="ios_onb16_welcome_cta">Да, поехали</string>
     <string name="ios_onb16_welcome_say">Привет, я Mika, твой новый помощник для учёбы. Я задам тебе несколько вопросов, чтобы подготовить твой план. Хорошо?</string>
+    <string name="ios_onb17_offer_say">Подожди, %1$s! У меня для тебя **цена получше**.</string>
+    <string name="ios_onb17_offer_sayAnon">Подожди! У меня для тебя **цена получше**.</string>
+    <string name="ios_onb17_pay_exams">Проверенные пробные экзамены</string>
+    <string name="ios_onb17_pay_lessons">Mika пишет все твои уроки</string>
+    <string name="ios_onb17_pay_mika">Объясняет то, что тебе непонятно</string>
+    <string name="ios_onb17_tl_billing">Начинается подписка, если ты не отменишь её раньше. До этого ничего не списывается.</string>
+    <string name="ios_onb17_tl_reminder">Напоминание: пробный период заканчивается завтра.</string>
+    <string name="ios_onb17_tl_today">Открывается весь Pro: твои уроки, Mika, пробные экзамены.</string>
+    <string name="ios_onb17_trial_cta">Хочу попробовать</string>
+    <string name="ios_onb17_trial_daysSub">бесплатно, всё включено</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">Твой первый урок и все следующие</string>
     <string name="ios_onb5_exam_dateLabel">Дата экзамена</string>
     <string name="ios_onb5_exam_finals">Моя сессия</string>
     <string name="ios_onb5_exam_finalsName">Сессия</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">Твоя покупка ждёт подтверждения, например от родителя. Pro откроется сам, как только оно придёт.</string>
     <string name="ios_paywallPendingTitle">Покупка ожидает</string>
     <string name="ios_paywallRestore">Восстановить</string>
-    <string name="ios_paywall_step_reminderDetail">Мы предупредим, что пробный период скоро закончится.</string>
     <string name="ios_pdf_empty">В этом PDF нет ни текста, ни пригодной страницы.</string>
     <string name="ios_pdf_protected">Этот PDF защищён паролем.</string>
     <string name="ios_pdf_unreadable">Не удалось открыть этот PDF.</string>

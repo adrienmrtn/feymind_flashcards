@@ -37,6 +37,12 @@
         <item quantity="few">+%1$d točke: majhen korak, povsem izvedljiv</item>
         <item quantity="other">+%1$d točk: majhen korak, povsem izvedljiv</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d dan</item>
+        <item quantity="two">%1$d dneva</item>
+        <item quantity="few">%1$d dni</item>
+        <item quantity="other">%1$d dni</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="one">%1$d dan brezplačno, nato %2$s na teden. Prekličeš lahko kadar koli.</item>
         <item quantity="two">%1$d dneva brezplačno, nato %2$s na teden. Prekličeš lahko kadar koli.</item>

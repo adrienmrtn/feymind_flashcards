@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">Labai intensyviai</string>
     <string name="ios_onb16_welcome_cta">Taip, pradedam</string>
     <string name="ios_onb16_welcome_say">Labas, aš Mika, tavo naujas mokymosi asistentas. Užduosiu tau kelis klausimus, kad paruoščiau tavo planą. Gerai?</string>
+    <string name="ios_onb17_offer_say">Palauk, %1$s! Turiu tau **geresnę kainą**.</string>
+    <string name="ios_onb17_offer_sayAnon">Palauk! Turiu tau **geresnę kainą**.</string>
+    <string name="ios_onb17_pay_exams">Ištaisyti bandomieji egzaminai</string>
+    <string name="ios_onb17_pay_lessons">Mika parašo visas tavo pamokas</string>
+    <string name="ios_onb17_pay_mika">Paaiškina tai, ko nesupranti</string>
+    <string name="ios_onb17_tl_billing">Prenumerata prasideda, nebent atšauksi anksčiau. Iki tol nieko nenuskaitoma.</string>
+    <string name="ios_onb17_tl_reminder">Priminimas: tavo bandomasis laikotarpis baigiasi rytoj.</string>
+    <string name="ios_onb17_tl_today">Atsiveria visas Pro: tavo pamokos, Mika, bandomieji egzaminai.</string>
+    <string name="ios_onb17_trial_cta">Noriu išbandyti</string>
+    <string name="ios_onb17_trial_daysSub">nemokamai, viskas įskaičiuota</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">Tavo pirmoji pamoka ir visos kitos</string>
     <string name="ios_onb5_exam_dateLabel">Egzamino data</string>
     <string name="ios_onb5_exam_finals">Mano sesija</string>
     <string name="ios_onb5_exam_finalsName">Sesija</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">Tavo pirkimas laukia patvirtinimo, pavyzdžiui, iš tėvų. Pro atsirakins pats, kai tik jis bus patvirtintas.</string>
     <string name="ios_paywallPendingTitle">Pirkimas laukia</string>
     <string name="ios_paywallRestore">Atkurti</string>
-    <string name="ios_paywall_step_reminderDetail">Pranešame, kad bandymas netrukus baigsis.</string>
     <string name="ios_pdf_empty">Šiame PDF nėra nei teksto, nei tinkamo puslapio.</string>
     <string name="ios_pdf_protected">Šis PDF apsaugotas slaptažodžiu.</string>
     <string name="ios_pdf_unreadable">Šio PDF nepavyko atidaryti.</string>

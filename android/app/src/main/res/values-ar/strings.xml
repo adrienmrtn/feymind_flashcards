@@ -704,6 +704,17 @@
     <string name="ios_onb16_time_max">مكثّف جدًا</string>
     <string name="ios_onb16_welcome_cta">نعم، لنبدأ</string>
     <string name="ios_onb16_welcome_say">مرحبًا، أنا Mika، مساعدك الجديد للدراسة. سأطرح عليك بعض الأسئلة لأجهّز مسارك، هل توافق؟</string>
+    <string name="ios_onb17_offer_say">انتظر، %1$s! عندي لك **سعر أفضل**.</string>
+    <string name="ios_onb17_offer_sayAnon">انتظر! عندي لك **سعر أفضل**.</string>
+    <string name="ios_onb17_pay_exams">امتحانات تجريبية مصحّحة</string>
+    <string name="ios_onb17_pay_lessons">Mika يكتب كل دروسك</string>
+    <string name="ios_onb17_pay_mika">يشرح لك ما لا تفهمه</string>
+    <string name="ios_onb17_tl_billing">يبدأ اشتراكك ما لم تُلغِه قبل ذلك. لن يُخصم أي مبلغ حتى ذلك الحين.</string>
+    <string name="ios_onb17_tl_reminder">التذكير: تنتهي فترتك التجريبية غدًا.</string>
+    <string name="ios_onb17_tl_today">يُفتح Pro بالكامل: دروسك، Mika، الامتحانات التجريبية.</string>
+    <string name="ios_onb17_trial_cta">أريد أن أجرّب</string>
+    <string name="ios_onb17_trial_daysSub">مجانًا، وكل شيء مشمول</string>
+    <string name="ios_onb17_trial_unlock_lessonAny">درسك الأول وكل الدروس التالية</string>
     <string name="ios_onb5_exam_dateLabel">تاريخ الامتحان</string>
     <string name="ios_onb5_exam_finals">امتحانات نهاية الفصل</string>
     <string name="ios_onb5_exam_finalsName">امتحانات نهاية الفصل</string>
@@ -841,7 +852,6 @@
     <string name="ios_paywallPending">عملية الشراء بانتظار الموافقة، من أحد والديك مثلًا. سيُفتح Pro تلقائيًا فور وصولها.</string>
     <string name="ios_paywallPendingTitle">الشراء قيد الانتظار</string>
     <string name="ios_paywallRestore">استعادة</string>
-    <string name="ios_paywall_step_reminderDetail">نُعلمك بأن التجربة ستنتهي قريبًا.</string>
     <string name="ios_pdf_empty">لا يحتوي ملف PDF هذا على نص ولا على صفحة قابلة للاستخدام.</string>
     <string name="ios_pdf_protected">ملف PDF هذا محمي بكلمة مرور.</string>
     <string name="ios_pdf_unreadable">تعذّر فتح ملف PDF هذا.</string>

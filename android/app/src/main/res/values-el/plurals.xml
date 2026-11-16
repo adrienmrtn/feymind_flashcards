@@ -25,6 +25,10 @@
         <item quantity="one">+%1$d μονάδα: ένα μικρό βήμα, απολύτως εφικτό</item>
         <item quantity="other">+%1$d μονάδες: ένα μικρό βήμα, απολύτως εφικτό</item>
     </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d ημέρα</item>
+        <item quantity="other">%1$d ημέρες</item>
+    </plurals>
     <plurals name="ios_pay10_legal_trialWeek">
         <item quantity="one">%1$d μέρα δωρεάν, μετά %2$s την εβδομάδα. Ακύρωσε όποτε θες.</item>
         <item quantity="other">%1$d μέρες δωρεάν, μετά %2$s την εβδομάδα. Ακύρωσε όποτε θες.</item>
