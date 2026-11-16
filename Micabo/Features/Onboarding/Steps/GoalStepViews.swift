@@ -63,7 +63,7 @@ struct WorriesStepView: View {
     }
 
     var body: some View {
-        OnbQuestion(i18n.t("ios.onb17.q.worries"), say: say) {
+        OnbQuestion(i18n.t("ios.onb16.q.worries"), say: say) {
             VStack(spacing: OnbLayout.rowGap) {
                 ForEach(StudyWorry.allCases) { worry in
                     OnbOption(
@@ -139,8 +139,7 @@ struct StudyMethodStepView: View {
 /// **« Lina, voici ce qui est difficile pour toi. »** (lot 15, mots simples au lot 16) Le pivot du parcours : de la douleur à l'espoir.
 ///
 /// L'écran reprend ce que l'élève vient de dire, trois lignes au plus (sa matière la plus
-/// dure, un blocage, son temps) — la preuve qu'on a écouté —, puis « Voyons ça ». Lot 17 :
-/// le titre en fait une promesse (« Lina, voici ce qu'on va changer. »). Sans Mika :
+/// dure, un blocage, son temps) — la preuve qu'on a écouté —, puis « Montre-moi ». Sans Mika :
 /// l'écran suivant est à lui. Une réponse absente retire sa ligne. Le nom de l'étape reste
 /// `solutionMap`.
 struct SolutionMapStepView: View {
@@ -148,8 +147,8 @@ struct SolutionMapStepView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     private var title: String {
-        guard let name = model.displayName.nilIfBlank else { return i18n.t("ios.onb17.recap.titleNoName") }
-        return i18n.t("ios.onb17.recap.title", ["name": name])
+        guard let name = model.displayName.nilIfBlank else { return i18n.t("ios.onb16.recap.titleNoName") }
+        return i18n.t("ios.onb16.recap.title", ["name": name])
     }
 
     struct Line: Identifiable {
@@ -164,7 +163,7 @@ struct SolutionMapStepView: View {
         if let subject = model.hardestSubject {
             lines.append(Line(
                 icon: MicaboIcon.subjectIcon(subject) ?? .book,
-                text: L10n.t("ios.onb17.recap.hardest", locale: locale, vars: ["subject": SubjectDisplay.subject(subject, locale: locale)])
+                text: L10n.t("ios.onb16.recap.hardest", locale: locale, vars: ["subject": SubjectDisplay.subject(subject, locale: locale)])
             ))
         }
         for worry in model.answeredWorries.prefix(1) {
@@ -213,7 +212,7 @@ struct SolutionMapStepView: View {
                 }
             }
         } footer: {
-            V3Button(i18n.t("ios.onb17.recap.cta")) {
+            V3Button(i18n.t("ios.onb12.recap.cta")) {
                 model.advance()
             }
         }

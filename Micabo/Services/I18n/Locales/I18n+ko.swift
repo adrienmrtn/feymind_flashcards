@@ -12,16 +12,6 @@ extension IosI18nCatalogs {
 
     static let ko: [String: String] = [
         // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
-        "ios.onb17.story.lesson": "노트를 보내기만 해. **Mika가 레슨으로 만들어 줘.**",
-        "ios.onb17.story.quiz": "**제대로 기억에 남는** 퀴즈.",
-        "ios.onb17.q.exam": "**가장 먼저** 뭘 준비해?",
-        "ios.onb17.open.study.say": "어려운 걸 말해 줘. 거기서 제일 많이 도와줄게.",
-        "ios.onb17.q.hardest": "제일 **어려운** 과목은?",
-        "ios.onb17.q.worries": "공부할 때 뭐가 **방해돼**?",
-        "ios.onb17.recap.title": "{name}, **이걸 바꿔 갈 거야**.",
-        "ios.onb17.recap.titleNoName": "**이걸 바꿔 갈 거야**.",
-        "ios.onb17.recap.hardest": "{subject}: 제일 어려운 과목",
-        "ios.onb17.recap.cta": "같이 보자",
         "ios.onb17.trial.days": "{n, plural, other {#일}}",
         "ios.onb17.trial.daysSub": "무료, 모두 포함",
         "ios.onb17.trial.unlock.lessonAny": "첫 레슨과 그다음 레슨 전부",

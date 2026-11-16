@@ -36,7 +36,7 @@ struct ExamStepView: View {
     }
 
     var body: some View {
-        OnbQuestion(i18n.t("ios.onb17.q.exam"), say: say) {
+        OnbQuestion(i18n.t("ios.onb12.q.exam"), say: say) {
             VStack(spacing: OnbLayout.rowGap) {
                 ForEach(model.examChoices, id: \.id) { choice in
                     OnbOption(

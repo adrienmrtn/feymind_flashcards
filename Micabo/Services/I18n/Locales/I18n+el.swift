@@ -4,16 +4,6 @@
 extension IosI18nCatalogs {
     static let el: [String: String] = [
         // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
-        "ios.onb17.story.lesson": "Στείλε τις σημειώσεις σου. **Ο Mika τις κάνει μάθημα.**",
-        "ios.onb17.story.quiz": "Κουίζ που σε βοηθούν να **θυμάσαι πραγματικά**.",
-        "ios.onb17.q.exam": "Για τι προετοιμάζεσαι **πρώτα**;",
-        "ios.onb17.open.study.say": "Πες μου τι σου είναι δύσκολο. Εκεί βοηθάω περισσότερο.",
-        "ios.onb17.q.hardest": "Το πιο **δύσκολο** μάθημά σου;",
-        "ios.onb17.q.worries": "Τι σε **δυσκολεύει** όταν διαβάζεις;",
-        "ios.onb17.recap.title": "{name}, να **τι θα αλλάξουμε**.",
-        "ios.onb17.recap.titleNoName": "Να **τι θα αλλάξουμε**.",
-        "ios.onb17.recap.hardest": "{subject}: το πιο δύσκολο μάθημά σου",
-        "ios.onb17.recap.cta": "Για να δούμε",
         "ios.onb17.trial.days": "{n, plural, one {# ημέρα} other {# ημέρες}}",
         "ios.onb17.trial.daysSub": "δωρεάν, όλα μέσα",
         "ios.onb17.trial.unlock.lessonAny": "Το πρώτο σου μάθημα, και όλα τα επόμενα",

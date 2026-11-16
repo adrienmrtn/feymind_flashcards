@@ -10,16 +10,6 @@ extension IosI18nCatalogs {
 
     static let lt: [String: String] = [
         // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
-        "ios.onb17.story.lesson": "Atsiųsk savo užrašus. **Mika padarys iš jų pamoką.**",
-        "ios.onb17.story.quiz": "Viktorinos, su kuriomis **tikrai įsimeni**.",
-        "ios.onb17.q.exam": "Kam ruošiesi **pirmiausia**?",
-        "ios.onb17.open.study.say": "Pasakyk, kas sunku. Ten padedu labiausiai.",
-        "ios.onb17.q.hardest": "Tavo **sunkiausias** dalykas?",
-        "ios.onb17.q.worries": "Kas tau **trukdo**, kai mokaisi?",
-        "ios.onb17.recap.title": "{name}, štai **ką pakeisime**.",
-        "ios.onb17.recap.titleNoName": "Štai **ką pakeisime**.",
-        "ios.onb17.recap.hardest": "{subject}: tavo sunkiausias dalykas",
-        "ios.onb17.recap.cta": "Pažiūrėkime",
         "ios.onb17.trial.days": "{n, plural, one {# diena} few {# dienos} other {# dienų}}",
         "ios.onb17.trial.daysSub": "nemokamai, viskas įskaičiuota",
         "ios.onb17.trial.unlock.lessonAny": "Tavo pirmoji pamoka ir visos kitos",
