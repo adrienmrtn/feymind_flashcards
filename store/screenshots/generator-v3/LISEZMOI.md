@@ -19,6 +19,13 @@ CHROME=/usr/bin/google-chrome node store/screenshots/generator-v3/render.mjs fr 
 
 Pour voir une langue dans un navigateur : `index.html?lang=de`.
 
+**Google Play.** `PLATFORM=android` fait les mêmes images avec un téléphone Android, sans la
+note App Store, en 1080 × 1920 (Play refuse un côté plus de deux fois plus long que l'autre),
+dans `android/play/screenshots/<langue>/`, pour les langues de
+`android/play/screenshots/locales.json` (qui dit aussi vers quelles fiches Play chacune part).
+Dans un navigateur : `index.html?lang=de&platform=android`. Envoi : Actions → « Captures
+Google Play » (`.github/workflows/play-screenshots.yml`).
+
 Les titres prennent chacun la plus grande taille qui tient sur la largeur ; un titre trop long
 rétrécit, mieux vaut alors le raccourcir dans `i18n.js` (`render.mjs` affiche les tailles).
 

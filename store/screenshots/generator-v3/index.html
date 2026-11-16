@@ -193,6 +193,17 @@
     box-shadow: 0 40px 80px rgba(15,19,36,.18); }
   .say::after { content: ""; position: absolute; left: 90px; bottom: -58px; width: 90px; height: 90px; background: #fff;
     clip-path: polygon(0 0, 100% 0, 10% 100%); }
+  /* ---------- Google Play : téléphone Android, image 1080 × 1920 (9:16) ---------- */
+  html.android, html.android body { height: 2347px; }
+  .android .island { display: none; }
+  .android .punch { position: absolute; top: 14px; left: 50%; width: 22px; height: 22px; margin-left: -11px; border-radius: 50%; background: #000; z-index: 5; box-shadow: 0 0 0 3px #0B0F1C; }
+  .android .device { border-radius: 118px; padding: 10px; }
+  .android .bezel { border-radius: 108px; padding: 10px; }
+  .android .screen { border-radius: 44px; }
+  .android .sb { padding: 8px 26px 0 28px; font-size: 16px; font-weight: 500; }
+  .android .rating { display: none; }
+  .android .chat-input { bottom: 215px !important; }
+  .android .rate-row { display: none !important; }
 </style>
 </head>
 <body>
@@ -212,11 +223,11 @@
 
 <!-- ================= 1 + 2 : Mika en héros ================= -->
 <!-- 1 : Mika se présente -->
-<div class="brand" style="left: 0"><img src="../../../Micabo/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png" alt=""><span>Micabo</span></div>
-<div class="title" style="left: 0; top: 460px !important"><h2><span class="fit" data-t="t1"></span></h2></div>
+<div class="brand" id="hero-brand" style="left: 0"><img src="../../../Micabo/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png" alt=""><span>Micabo</span></div>
+<div class="title" id="hero-title" style="left: 0; top: 460px"><h2><span class="fit" data-t="t1"></span></h2></div>
 <div class="rating" style="left: 0"><span class="stars">★★★★★</span><b data-t="score"></b><span data-t="rating"></span></div>
-<div class="say" style="left: 470px; top: 1330px; transform: rotate(3deg)" data-t="say"></div>
-<div style="position:absolute; z-index:4; left: 40px; top: 1500px" data-mika='{"size":1180,"leftArm":"wave","eyes":"happy","mouth":"open","sticker":4}'></div>
+<div class="say" id="hero-say" style="left: 470px; top: 1330px; transform: rotate(3deg)" data-t="say"></div>
+<div id="hero-mika" style="position:absolute; z-index:4; left: 40px; top: 1500px" data-mika='{"size":1180,"leftArm":"wave","eyes":"happy","mouth":"open","sticker":4}'></div>
 
 <!-- 2 : et hop, une fiche -->
 <div class="title" style="left: var(--S)"><h2><span class="fit" data-t="t2"></span></h2></div>
@@ -237,7 +248,7 @@
   </div>
 </div></div></div>
 <!-- Ce qu'on peut lui envoyer, sorti du téléphone -->
-<div class="pop" style="left: calc(var(--S) / 2.9 + 16px); top: calc(2020px / 2.9); transform: rotate(-3deg)">
+<div class="pop" id="sources-pop" style="left: calc(var(--S) / 2.9 + 16px); top: calc(2020px / 2.9); transform: rotate(-3deg)">
   <div class="card" style="display:flex; gap:12px; padding: 14px 14px 12px; border-radius: 26px; box-shadow: inset 0 0 0 1.5px var(--lip)">
     <div class="src"><span><svg class="ic" viewBox="0 0 24 24" stroke="#60A5FA"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></span><span data-t="pdf"></span></div>
     <div class="src"><span><svg class="ic" viewBox="0 0 24 24" stroke="#F472B6"><path d="M3 8a2 2 0 0 1 2-2h2l2-2.5h6L17 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.6"/></svg></span><span data-t="photo"></span></div>
@@ -300,7 +311,7 @@
   <div style="padding: 50px 22px 0; display:flex; flex-direction:column; gap:34px">
     <div class="bubble-me"><span data-t="ask"></span></div>
   </div>
-  <div style="position:absolute; left:16px; right:16px; bottom:120px; display:flex; align-items:center; gap:10px; padding:10px 10px 10px 20px; border-radius:28px; background:var(--surface); box-shadow: inset 0 0 0 1.5px var(--lip)">
+  <div class="chat-input" style="position:absolute; left:16px; right:16px; bottom:120px; display:flex; align-items:center; gap:10px; padding:10px 10px 10px 20px; border-radius:28px; background:var(--surface); box-shadow: inset 0 0 0 1.5px var(--lip)">
     <span style="flex:1; font-size:18px; font-weight:500" class="faint"><span data-t="input"></span></span>
     <span style="width:44px; height:44px; border-radius:50%; background:var(--accent); display:grid; place-items:center"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" stroke="#fff" stroke-width="2.6"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span>
   </div>
@@ -311,13 +322,13 @@
     <div class="bubble-mika"><span data-t="answer"></span></div>
   </div>
 </div>
-<div style="position:absolute; z-index:5; left: calc(var(--S) * 4 + 790px); top: 2060px; transform: rotate(6deg)" data-mika='{"size":430,"leftArm":"wave","eyes":"open","mouth":"open","sticker":5}'></div>
+<div id="ask-mika" style="position:absolute; z-index:5; left: calc(var(--S) * 4 + 790px); top: 2060px; transform: rotate(6deg)" data-mika='{"size":430,"leftArm":"wave","eyes":"open","mouth":"open","sticker":5}'></div>
 
 <!-- ================= 6 : les flashcards ================= -->
 <div class="title" style="left: calc(var(--S) * 5)"><h2><span class="fit" data-t="t6"></span></h2></div>
 <div class="device right" style="margin-left: calc(var(--S) * 5)"><div class="bezel"><div class="screen" data-sb>
   <div style="padding: 10px 24px 0"><div class="bar"><i style="width:58%"></i></div></div>
-  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; padding: 560px 22px 0">
+  <div class="rate-row" style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; padding: 560px 22px 0">
     <div style="border-radius:16px; padding:18px 6px; text-align:center; font-family:Sofia; font-weight:800; font-size:22px; background:var(--redWash); color:var(--redInk)"><span data-t="again"></span></div>
     <div style="border-radius:16px; padding:18px 6px; text-align:center; font-family:Sofia; font-weight:800; font-size:22px; background:var(--greenWash); color:var(--green)"><span data-t="know"></span></div>
   </div>
@@ -363,6 +374,16 @@
 <script>
   // La langue vient de l'adresse : index.html?lang=de. Par défaut, le français.
   const LANG = new URLSearchParams(location.search).get("lang") || "fr";
+  // La plateforme : ios (par défaut) ou android, pour Google Play.
+  const ANDROID = new URLSearchParams(location.search).get("platform") === "android";
+  if (ANDROID) {
+    document.documentElement.classList.add("android");
+    // Une image plus courte (9:16) : l'ouverture se resserre, le reste se recadre seul.
+    const move = { "hero-brand": "110px", "hero-title": "360px", "hero-say": "950px", "hero-mika": "1120px", "ask-mika": "800px" };
+    document.getElementById("ask-mika").style.left = "calc(var(--S) * 4 + 880px)";
+    for (const [id, top] of Object.entries(move)) document.getElementById(id).style.top = top;
+    document.getElementById("sources-pop").style.top = "calc(1690px / 2.9)";
+  }
   const T = window.I18N[LANG];
   if (!T) throw new Error(`langue inconnue : ${LANG}`);
   document.documentElement.lang = T._lang;
@@ -391,7 +412,13 @@
     }
     svg.innerHTML = g;
   }
-  for (const s of document.querySelectorAll('[data-sb]')) s.insertAdjacentHTML('afterbegin', '<div class="island"></div>' + sbHTML);
+  const sbAndroid = `<div class="sb"><span>9:41</span><span class="r">
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="#F5F6FB"><path d="M8 11.5L.6 3.6a10.6 10.6 0 0 1 14.8 0z"/></svg>
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="#F5F6FB"><path d="M13 0v13H0z"/></svg>
+      <svg width="9" height="15" viewBox="0 0 9 15"><rect x="2.5" y="0" width="4" height="2" rx=".5" fill="#F5F6FB"/><rect x="0" y="1.5" width="9" height="13.5" rx="2" fill="#F5F6FB"/></svg>
+    </span></div>`;
+  for (const s of document.querySelectorAll('[data-sb]'))
+    s.insertAdjacentHTML('afterbegin', ANDROID ? '<div class="punch"></div>' + sbAndroid : '<div class="island"></div>' + sbHTML);
 
   for (const el of document.querySelectorAll('[data-mika]')) {
     const o = JSON.parse(el.dataset.mika);
