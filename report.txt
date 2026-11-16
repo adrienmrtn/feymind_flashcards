@@ -1,0 +1,477 @@
+petit-360x640/app/paywall-parcours : ok
+petit-360x640/app/paywall-porte-mika : ok
+petit-360x640/app/paywall-chargement : ok
+petit-360x640/app/chat-vide : ok
+petit-360x640/app/chat-conversation : ok
+petit-360x640/app/accueil-premiere-lecon : ok
+petit-360x640/app/nouvelle-lecon : ok
+petit-360x640/app/lecon-en-ecriture : ok
+petit-360x640/app/accueil : ok
+pixel8-412x915/app/paywall-parcours : ok
+pixel8-412x915/app/paywall-porte-mika : ok
+pixel8-412x915/app/paywall-chargement : ok
+pixel8-412x915/app/chat-vide : ok
+pixel8-412x915/app/chat-conversation : ok
+pixel8-412x915/app/accueil-premiere-lecon : ok
+pixel8-412x915/app/nouvelle-lecon : ok
+pixel8-412x915/app/lecon-en-ecriture : ok
+pixel8-412x915/app/accueil : ok
+pixel8pro-448x998/app/paywall-parcours : ok
+pixel8pro-448x998/app/paywall-porte-mika : ok
+pixel8pro-448x998/app/paywall-chargement : ok
+pixel8pro-448x998/app/chat-vide : ok
+pixel8pro-448x998/app/chat-conversation : ok
+pixel8pro-448x998/app/accueil-premiere-lecon : ok
+pixel8pro-448x998/app/nouvelle-lecon : ok
+pixel8pro-448x998/app/lecon-en-ecriture : ok
+pixel8pro-448x998/app/accueil : ok
+pliable-deplie-673x841/app/paywall-parcours : ok
+pliable-deplie-673x841/app/paywall-porte-mika : ok
+pliable-deplie-673x841/app/paywall-chargement : ok
+pliable-deplie-673x841/app/chat-vide : ok
+pliable-deplie-673x841/app/chat-conversation : ok
+pliable-deplie-673x841/app/accueil-premiere-lecon : ok
+pliable-deplie-673x841/app/nouvelle-lecon : ok
+pliable-deplie-673x841/app/lecon-en-ecriture : ok
+pliable-deplie-673x841/app/accueil : ok
+tablette-600x960/app/paywall-parcours : ok
+tablette-600x960/app/paywall-porte-mika : ok
+tablette-600x960/app/paywall-chargement : ok
+tablette-600x960/app/chat-vide : ok
+tablette-600x960/app/chat-conversation : ok
+tablette-600x960/app/accueil-premiere-lecon : ok
+tablette-600x960/app/nouvelle-lecon : ok
+tablette-600x960/app/lecon-en-ecriture : ok
+tablette-600x960/app/accueil : ok
+pixel8-texte130/app/paywall-parcours : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/app/paywall-porte-mika : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/app/paywall-chargement : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/app/chat-vide : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/app/chat-conversation : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/app/accueil-premiere-lecon : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/app/nouvelle-lecon : texte coupé « Ton cahier, le tableau, un manuel » (points de suspension) ; texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/app/lecon-en-ecriture : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/app/accueil : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+petit-texte200/app/paywall-parcours : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/app/paywall-porte-mika : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/app/paywall-chargement : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/app/chat-vide : texte coupé « Pose une question à Mika ou passe une page à la caméra : tou » (dépasse de 51 px en hauteur) ; texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/app/chat-conversation : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/app/accueil-premiere-lecon : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/app/nouvelle-lecon : texte coupé « Un cours, un poly, une fiche » (points de suspension) ; texte coupé « Ton cahier, le tableau, un manuel » (points de suspension) ; texte coupé « Une vidéo de cours » (points de suspension) ; texte coupé « 9:41 » (dépasse de 48 px en hauteur) ; bouton principal sous la barre d'état ; bouton principal écrasé
+petit-texte200/app/lecon-en-ecriture : texte coupé « Je découpe les thèmes » (dépasse de 114 px en hauteur) ; texte coupé « J'écris tes notes » (dépasse de 66 px en hauteur) ; texte coupé « Je prépare tes questions » (dépasse de 132 px en hauteur) ; texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/app/accueil : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+pixel8-arabe-rtl/app/paywall-parcours : ok
+pixel8-arabe-rtl/app/paywall-porte-mika : ok
+pixel8-arabe-rtl/app/paywall-chargement : ok
+pixel8-arabe-rtl/app/chat-vide : ok
+pixel8-arabe-rtl/app/chat-conversation : ok
+pixel8-arabe-rtl/app/accueil-premiere-lecon : ok
+pixel8-arabe-rtl/app/nouvelle-lecon : ok
+pixel8-arabe-rtl/app/lecon-en-ecriture : ok
+pixel8-arabe-rtl/app/accueil : ok
+pixel8-theme-clair/app/paywall-parcours : ok
+pixel8-theme-clair/app/paywall-porte-mika : ok
+pixel8-theme-clair/app/paywall-chargement : ok
+pixel8-theme-clair/app/chat-vide : ok
+pixel8-theme-clair/app/chat-conversation : ok
+pixel8-theme-clair/app/accueil-premiere-lecon : ok
+pixel8-theme-clair/app/nouvelle-lecon : ok
+pixel8-theme-clair/app/lecon-en-ecriture : ok
+pixel8-theme-clair/app/accueil : ok
+pixel8-3boutons-encoche/app/paywall-parcours : ok
+pixel8-3boutons-encoche/app/paywall-porte-mika : ok
+pixel8-3boutons-encoche/app/paywall-chargement : ok
+pixel8-3boutons-encoche/app/chat-vide : ok
+pixel8-3boutons-encoche/app/chat-conversation : ok
+pixel8-3boutons-encoche/app/accueil-premiere-lecon : ok
+pixel8-3boutons-encoche/app/nouvelle-lecon : ok
+pixel8-3boutons-encoche/app/lecon-en-ecriture : ok
+pixel8-3boutons-encoche/app/accueil : ok
+pixel8-anglais/app/paywall-parcours : ok
+pixel8-anglais/app/paywall-porte-mika : ok
+pixel8-anglais/app/paywall-chargement : ok
+pixel8-anglais/app/chat-vide : ok
+pixel8-anglais/app/chat-conversation : ok
+pixel8-anglais/app/accueil-premiere-lecon : ok
+pixel8-anglais/app/nouvelle-lecon : ok
+pixel8-anglais/app/lecon-en-ecriture : ok
+pixel8-anglais/app/accueil : ok
+petit-360x640/onboarding/00-hookLogo : texte coupé « Physique » (dépasse de 40 px en hauteur) ; texte coupé « Anglais » (dépasse de 40 px en hauteur)
+petit-360x640/onboarding/01-welcome : ok
+petit-360x640/onboarding/02-name : ok
+petit-360x640/onboarding/03-country : ok
+petit-360x640/onboarding/04-level : ok
+petit-360x640/onboarding/05-schoolType : ok
+petit-360x640/onboarding/06-year : ok
+petit-360x640/onboarding/07-exam : ok
+petit-360x640/onboarding/08-subjects : ok
+petit-360x640/onboarding/09-studyIntro : ok
+petit-360x640/onboarding/10-hardestSubject : ok
+petit-360x640/onboarding/11-goal : ok
+petit-360x640/onboarding/12-worries : ok
+petit-360x640/onboarding/13-studyHours : ok
+petit-360x640/onboarding/14-studyMethod : ok
+petit-360x640/onboarding/15-solutionMap : ok
+petit-360x640/onboarding/16-helpIntro : ok
+petit-360x640/onboarding/17-origin : ok
+petit-360x640/onboarding/18-lessonDemo : ok
+petit-360x640/onboarding/19-scanDemo : ok
+petit-360x640/onboarding/20-research : ok
+petit-360x640/onboarding/21-goalIntro : ok
+petit-360x640/onboarding/22-currentAverage : ok
+petit-360x640/onboarding/23-targetAverage : ok
+petit-360x640/onboarding/24-startingPoint : ok
+petit-360x640/onboarding/25-dailyTime : ok
+petit-360x640/onboarding/26-organizeIntro : ok
+petit-360x640/onboarding/27-planDemo : ok
+petit-360x640/onboarding/28-focusDemo : ok
+petit-360x640/onboarding/29-notifications : ok
+petit-360x640/onboarding/30-commitment : ok
+petit-360x640/onboarding/31-planBuilding : ok
+petit-360x640/onboarding/32-profileSummary : ok
+petit-360x640/onboarding/33-storyIntro : ok
+petit-360x640/onboarding/34-storyCreate : ok
+petit-360x640/onboarding/35-storyPath : ok
+petit-360x640/onboarding/36-storyPractice : ok
+petit-360x640/onboarding/37-storyAsk : ok
+petit-360x640/onboarding/38-storyClose : ok
+petit-360x640/onboarding/39-firstLesson : ok
+petit-360x640/onboarding/40-freeTrialIntro : ok
+petit-360x640/onboarding/41-trialOffer : ok
+petit-360x640/onboarding-etats/lessonDemo-jouee : ok
+petit-360x640/onboarding-etats/scanDemo-resolu : ok
+petit-360x640/onboarding-etats/commitment-maintien : ok
+petit-360x640/onboarding-etats/hookLogo-histoire-1 : texte coupé « Théorème de Pythagore » (dépasse de 53 px en hauteur) ; texte coupé « Notes » (dépasse de 30 px en hauteur) ; texte coupé « Quiz » (dépasse de 30 px en hauteur) ; texte coupé « Flashcards » (dépasse de 30 px en hauteur) ; élément touchable sous la barre d'état (10831)
+petit-360x640/onboarding-etats/hookLogo-histoire-2 : élément touchable sous la barre d'état (10895)
+petit-360x640/onboarding-etats/hookLogo-histoire-3 : texte coupé « 2 » (dépasse de 30 px en hauteur) ; texte coupé « Calculer le discriminant » (dépasse de 40 px en hauteur) ; texte coupé « x = 1 ou x = 3 » (dépasse de 40 px en hauteur) ; élément touchable sous la barre d'état (10937)
+petit-360x640/onboarding-etats/hookLogo-histoire-4 : texte coupé « Focus 25 min » (dépasse de 23 px en hauteur) ; élément touchable sous la barre d'état (10984)
+pixel8-412x915/onboarding/00-hookLogo : ok
+pixel8-412x915/onboarding/01-welcome : ok
+pixel8-412x915/onboarding/02-name : ok
+pixel8-412x915/onboarding/03-country : ok
+pixel8-412x915/onboarding/04-level : ok
+pixel8-412x915/onboarding/05-schoolType : ok
+pixel8-412x915/onboarding/06-year : ok
+pixel8-412x915/onboarding/07-exam : ok
+pixel8-412x915/onboarding/08-subjects : ok
+pixel8-412x915/onboarding/09-studyIntro : ok
+pixel8-412x915/onboarding/10-hardestSubject : ok
+pixel8-412x915/onboarding/11-goal : ok
+pixel8-412x915/onboarding/12-worries : ok
+pixel8-412x915/onboarding/13-studyHours : ok
+pixel8-412x915/onboarding/14-studyMethod : ok
+pixel8-412x915/onboarding/15-solutionMap : ok
+pixel8-412x915/onboarding/16-helpIntro : ok
+pixel8-412x915/onboarding/17-origin : ok
+pixel8-412x915/onboarding/18-lessonDemo : ok
+pixel8-412x915/onboarding/19-scanDemo : ok
+pixel8-412x915/onboarding/20-research : ok
+pixel8-412x915/onboarding/21-goalIntro : ok
+pixel8-412x915/onboarding/22-currentAverage : ok
+pixel8-412x915/onboarding/23-targetAverage : ok
+pixel8-412x915/onboarding/24-startingPoint : ok
+pixel8-412x915/onboarding/25-dailyTime : ok
+pixel8-412x915/onboarding/26-organizeIntro : ok
+pixel8-412x915/onboarding/27-planDemo : ok
+pixel8-412x915/onboarding/28-focusDemo : ok
+pixel8-412x915/onboarding/29-notifications : ok
+pixel8-412x915/onboarding/30-commitment : ok
+pixel8-412x915/onboarding/31-planBuilding : ok
+pixel8-412x915/onboarding/32-profileSummary : ok
+pixel8-412x915/onboarding/33-storyIntro : ok
+pixel8-412x915/onboarding/34-storyCreate : ok
+pixel8-412x915/onboarding/35-storyPath : ok
+pixel8-412x915/onboarding/36-storyPractice : ok
+pixel8-412x915/onboarding/37-storyAsk : ok
+pixel8-412x915/onboarding/38-storyClose : ok
+pixel8-412x915/onboarding/39-firstLesson : ok
+pixel8-412x915/onboarding/40-freeTrialIntro : ok
+pixel8-412x915/onboarding/41-trialOffer : ok
+pixel8-412x915/onboarding-etats/lessonDemo-jouee : ok
+pixel8-412x915/onboarding-etats/scanDemo-resolu : ok
+pixel8-412x915/onboarding-etats/commitment-maintien : ok
+pixel8-412x915/onboarding-etats/hookLogo-histoire-1 : élément touchable sous la barre d'état (14094)
+pixel8-412x915/onboarding-etats/hookLogo-histoire-2 : élément touchable sous la barre d'état (14158)
+pixel8-412x915/onboarding-etats/hookLogo-histoire-3 : élément touchable sous la barre d'état (14200)
+pixel8-412x915/onboarding-etats/hookLogo-histoire-4 : élément touchable sous la barre d'état (14247)
+pixel8pro-448x998/onboarding/00-hookLogo : ok
+pixel8pro-448x998/onboarding/01-welcome : ok
+pixel8pro-448x998/onboarding/02-name : ok
+pixel8pro-448x998/onboarding/08-subjects : ok
+pixel8pro-448x998/onboarding/15-solutionMap : ok
+pixel8pro-448x998/onboarding/17-origin : ok
+pixel8pro-448x998/onboarding/19-scanDemo : ok
+pixel8pro-448x998/onboarding/20-research : ok
+pixel8pro-448x998/onboarding/22-currentAverage : ok
+pixel8pro-448x998/onboarding/25-dailyTime : ok
+pixel8pro-448x998/onboarding/27-planDemo : ok
+pixel8pro-448x998/onboarding/29-notifications : ok
+pixel8pro-448x998/onboarding/30-commitment : ok
+pixel8pro-448x998/onboarding/32-profileSummary : ok
+pixel8pro-448x998/onboarding/35-storyPath : ok
+pixel8pro-448x998/onboarding/36-storyPractice : ok
+pixel8pro-448x998/onboarding/39-firstLesson : ok
+pixel8pro-448x998/onboarding/40-freeTrialIntro : ok
+pixel8pro-448x998/onboarding/41-trialOffer : ok
+pixel8pro-448x998/onboarding-etats/lessonDemo-jouee : ok
+pixel8pro-448x998/onboarding-etats/scanDemo-resolu : ok
+pixel8pro-448x998/onboarding-etats/commitment-maintien : ok
+pixel8pro-448x998/onboarding-etats/hookLogo-histoire-1 : élément touchable sous la barre d'état (15797)
+pixel8pro-448x998/onboarding-etats/hookLogo-histoire-2 : élément touchable sous la barre d'état (15862)
+pixel8pro-448x998/onboarding-etats/hookLogo-histoire-3 : élément touchable sous la barre d'état (15905)
+pixel8pro-448x998/onboarding-etats/hookLogo-histoire-4 : élément touchable sous la barre d'état (15953)
+pliable-deplie-673x841/onboarding/00-hookLogo : ok
+pliable-deplie-673x841/onboarding/01-welcome : ok
+pliable-deplie-673x841/onboarding/02-name : ok
+pliable-deplie-673x841/onboarding/08-subjects : ok
+pliable-deplie-673x841/onboarding/15-solutionMap : ok
+pliable-deplie-673x841/onboarding/17-origin : ok
+pliable-deplie-673x841/onboarding/19-scanDemo : ok
+pliable-deplie-673x841/onboarding/20-research : ok
+pliable-deplie-673x841/onboarding/22-currentAverage : ok
+pliable-deplie-673x841/onboarding/25-dailyTime : ok
+pliable-deplie-673x841/onboarding/27-planDemo : ok
+pliable-deplie-673x841/onboarding/29-notifications : ok
+pliable-deplie-673x841/onboarding/30-commitment : ok
+pliable-deplie-673x841/onboarding/32-profileSummary : ok
+pliable-deplie-673x841/onboarding/35-storyPath : ok
+pliable-deplie-673x841/onboarding/36-storyPractice : ok
+pliable-deplie-673x841/onboarding/39-firstLesson : ok
+pliable-deplie-673x841/onboarding/40-freeTrialIntro : ok
+pliable-deplie-673x841/onboarding/41-trialOffer : ok
+pliable-deplie-673x841/onboarding-etats/lessonDemo-jouee : ok
+pliable-deplie-673x841/onboarding-etats/scanDemo-resolu : ok
+pliable-deplie-673x841/onboarding-etats/commitment-maintien : ok
+pliable-deplie-673x841/onboarding-etats/hookLogo-histoire-1 : élément touchable sous la barre d'état (17482)
+pliable-deplie-673x841/onboarding-etats/hookLogo-histoire-2 : élément touchable sous la barre d'état (17546)
+pliable-deplie-673x841/onboarding-etats/hookLogo-histoire-3 : élément touchable sous la barre d'état (17588)
+pliable-deplie-673x841/onboarding-etats/hookLogo-histoire-4 : élément touchable sous la barre d'état (17635)
+tablette-600x960/onboarding/00-hookLogo : ok
+tablette-600x960/onboarding/01-welcome : ok
+tablette-600x960/onboarding/02-name : ok
+tablette-600x960/onboarding/08-subjects : ok
+tablette-600x960/onboarding/15-solutionMap : ok
+tablette-600x960/onboarding/17-origin : ok
+tablette-600x960/onboarding/19-scanDemo : ok
+tablette-600x960/onboarding/20-research : ok
+tablette-600x960/onboarding/22-currentAverage : ok
+tablette-600x960/onboarding/25-dailyTime : ok
+tablette-600x960/onboarding/27-planDemo : ok
+tablette-600x960/onboarding/29-notifications : ok
+tablette-600x960/onboarding/30-commitment : ok
+tablette-600x960/onboarding/32-profileSummary : ok
+tablette-600x960/onboarding/35-storyPath : ok
+tablette-600x960/onboarding/36-storyPractice : ok
+tablette-600x960/onboarding/39-firstLesson : ok
+tablette-600x960/onboarding/40-freeTrialIntro : ok
+tablette-600x960/onboarding/41-trialOffer : ok
+tablette-600x960/onboarding-etats/lessonDemo-jouee : ok
+tablette-600x960/onboarding-etats/scanDemo-resolu : ok
+tablette-600x960/onboarding-etats/commitment-maintien : ok
+tablette-600x960/onboarding-etats/hookLogo-histoire-1 : élément touchable sous la barre d'état (19163)
+tablette-600x960/onboarding-etats/hookLogo-histoire-2 : élément touchable sous la barre d'état (19227)
+tablette-600x960/onboarding-etats/hookLogo-histoire-3 : élément touchable sous la barre d'état (19269)
+tablette-600x960/onboarding-etats/hookLogo-histoire-4 : élément touchable sous la barre d'état (19316)
+pixel8-texte130/onboarding/00-hookLogo : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding/01-welcome : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding/02-name : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding/08-subjects : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding/15-solutionMap : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding/17-origin : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding/19-scanDemo : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding/20-research : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding/22-currentAverage : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding/25-dailyTime : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding/27-planDemo : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding/29-notifications : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding/30-commitment : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding/32-profileSummary : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding/35-storyPath : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding/36-storyPractice : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding/39-firstLesson : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding/40-freeTrialIntro : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding/41-trialOffer : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding-etats/lessonDemo-jouee : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding-etats/scanDemo-resolu : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding-etats/commitment-maintien : texte coupé « 9:41 » (dépasse de 15 px en hauteur)
+pixel8-texte130/onboarding-etats/hookLogo-histoire-1 : texte coupé « Cours en direct » (lignes en trop) ; texte coupé « 9:41 » (dépasse de 15 px en hauteur) ; élément touchable sous la barre d'état (20844)
+pixel8-texte130/onboarding-etats/hookLogo-histoire-2 : texte coupé « 9:41 » (dépasse de 15 px en hauteur) ; élément touchable sous la barre d'état (20908)
+pixel8-texte130/onboarding-etats/hookLogo-histoire-3 : texte coupé « 9:41 » (dépasse de 15 px en hauteur) ; élément touchable sous la barre d'état (20950)
+pixel8-texte130/onboarding-etats/hookLogo-histoire-4 : texte coupé « 9:41 » (dépasse de 15 px en hauteur) ; élément touchable sous la barre d'état (20997)
+petit-texte200/onboarding/00-hookLogo : texte coupé « Histoire » (dépasse de 40 px en hauteur) ; texte coupé « Physique » (dépasse de 49 px en hauteur) ; texte coupé « Anglais » (dépasse de 49 px en hauteur) ; texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/01-welcome : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/02-name : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/03-country : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/04-level : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/05-schoolType : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/06-year : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/07-exam : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/08-subjects : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/09-studyIntro : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/10-hardestSubject : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/11-goal : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/12-worries : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/13-studyHours : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/14-studyMethod : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/15-solutionMap : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/16-helpIntro : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/17-origin : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/18-lessonDemo : texte coupé « PDF ou Word » (lignes en trop) ; texte coupé « Cours en direct » (lignes en trop) ; texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/19-scanDemo : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/20-research : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/21-goalIntro : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/22-currentAverage : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/23-targetAverage : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/24-startingPoint : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/25-dailyTime : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/26-organizeIntro : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/27-planDemo : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/28-focusDemo : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/29-notifications : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/30-commitment : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/31-planBuilding : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/32-profileSummary : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/33-storyIntro : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/34-storyCreate : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/35-storyPath : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/36-storyPractice : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/37-storyAsk : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/38-storyClose : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/39-firstLesson : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/40-freeTrialIntro : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding/41-trialOffer : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding-etats/lessonDemo-jouee : texte coupé « PDF ou Word » (lignes en trop) ; texte coupé « Cours en direct » (lignes en trop) ; texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding-etats/scanDemo-resolu : texte coupé « 1 » (dépasse de 8 px en hauteur) ; texte coupé « 2 » (dépasse de 8 px en hauteur) ; texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding-etats/commitment-maintien : texte coupé « 9:41 » (dépasse de 48 px en hauteur)
+petit-texte200/onboarding-etats/hookLogo-histoire-1 : texte coupé « PDF ou Word » (lignes en trop) ; texte coupé « Cours en direct » (lignes en trop) ; texte coupé « Théorème de Pythagore » (dépasse de 61 px en hauteur) ; texte coupé « Notes » (dépasse de 40 px en hauteur) ; texte coupé « Quiz » (dépasse de 40 px en hauteur) ; texte coupé « Flashcards » (dépasse de 40 px en hauteur) ; texte coupé « 9:41 » (dépasse de 48 px en hauteur) ; élément touchable sous la barre d'état (24053)
+petit-texte200/onboarding-etats/hookLogo-histoire-2 : texte coupé « 1989 » (dépasse de 5 px en hauteur) ; texte coupé « 1991 » (dépasse de 49 px en hauteur) ; texte coupé « 9:41 » (dépasse de 48 px en hauteur) ; élément touchable sous la barre d'état (24117)
+petit-texte200/onboarding-etats/hookLogo-histoire-3 : texte coupé « 1 » (dépasse de 40 px en hauteur) ; texte coupé « Simplifier l'équation » (dépasse de 49 px en hauteur) ; texte coupé « 2 » (dépasse de 40 px en hauteur) ; texte coupé « Calculer le discriminant » (dépasse de 49 px en hauteur) ; texte coupé « x = 1 ou x = 3 » (dépasse de 49 px en hauteur) ; texte coupé « 9:41 » (dépasse de 48 px en hauteur) ; élément touchable sous la barre d'état (24159)
+petit-texte200/onboarding-etats/hookLogo-histoire-4 : texte coupé « 9 » (dépasse de 53 px en hauteur) ; texte coupé « 10 » (dépasse de 53 px en hauteur) ; texte coupé « 11 » (dépasse de 53 px en hauteur) ; texte coupé « 12 » (dépasse de 53 px en hauteur) ; texte coupé « 13 » (dépasse de 53 px en hauteur) ; texte coupé « 14 » (dépasse de 53 px en hauteur) ; texte coupé « 15 » (dépasse de 53 px en hauteur) ; texte coupé « Focus 25 min » (dépasse de 46 px en hauteur) ; texte coupé « 9:41 » (dépasse de 48 px en hauteur) ; élément touchable sous la barre d'état (24206)
+pixel8-arabe-rtl/onboarding/00-hookLogo : ok
+pixel8-arabe-rtl/onboarding/01-welcome : ok
+pixel8-arabe-rtl/onboarding/02-name : ok
+pixel8-arabe-rtl/onboarding/03-country : ok
+pixel8-arabe-rtl/onboarding/04-level : ok
+pixel8-arabe-rtl/onboarding/05-schoolType : ok
+pixel8-arabe-rtl/onboarding/06-year : ok
+pixel8-arabe-rtl/onboarding/07-exam : ok
+pixel8-arabe-rtl/onboarding/08-subjects : ok
+pixel8-arabe-rtl/onboarding/09-studyIntro : ok
+pixel8-arabe-rtl/onboarding/10-hardestSubject : ok
+pixel8-arabe-rtl/onboarding/11-goal : ok
+pixel8-arabe-rtl/onboarding/12-worries : ok
+pixel8-arabe-rtl/onboarding/13-studyHours : ok
+pixel8-arabe-rtl/onboarding/14-studyMethod : ok
+pixel8-arabe-rtl/onboarding/15-solutionMap : ok
+pixel8-arabe-rtl/onboarding/16-helpIntro : ok
+pixel8-arabe-rtl/onboarding/17-origin : ok
+pixel8-arabe-rtl/onboarding/18-lessonDemo : ok
+pixel8-arabe-rtl/onboarding/19-scanDemo : ok
+pixel8-arabe-rtl/onboarding/20-research : ok
+pixel8-arabe-rtl/onboarding/21-goalIntro : ok
+pixel8-arabe-rtl/onboarding/22-currentAverage : ok
+pixel8-arabe-rtl/onboarding/23-targetAverage : ok
+pixel8-arabe-rtl/onboarding/24-startingPoint : ok
+pixel8-arabe-rtl/onboarding/25-dailyTime : ok
+pixel8-arabe-rtl/onboarding/26-organizeIntro : ok
+pixel8-arabe-rtl/onboarding/27-planDemo : ok
+pixel8-arabe-rtl/onboarding/28-focusDemo : ok
+pixel8-arabe-rtl/onboarding/29-notifications : ok
+pixel8-arabe-rtl/onboarding/30-commitment : ok
+pixel8-arabe-rtl/onboarding/31-planBuilding : ok
+pixel8-arabe-rtl/onboarding/32-profileSummary : ok
+pixel8-arabe-rtl/onboarding/33-storyIntro : ok
+pixel8-arabe-rtl/onboarding/34-storyCreate : ok
+pixel8-arabe-rtl/onboarding/35-storyPath : ok
+pixel8-arabe-rtl/onboarding/36-storyPractice : ok
+pixel8-arabe-rtl/onboarding/37-storyAsk : ok
+pixel8-arabe-rtl/onboarding/38-storyClose : ok
+pixel8-arabe-rtl/onboarding/39-firstLesson : ok
+pixel8-arabe-rtl/onboarding/40-freeTrialIntro : ok
+pixel8-arabe-rtl/onboarding/41-trialOffer : ok
+pixel8-arabe-rtl/onboarding-etats/lessonDemo-jouee : ok
+pixel8-arabe-rtl/onboarding-etats/scanDemo-resolu : ok
+pixel8-arabe-rtl/onboarding-etats/commitment-maintien : ok
+pixel8-arabe-rtl/onboarding-etats/hookLogo-histoire-1 : élément touchable sous la barre d'état (27316)
+pixel8-arabe-rtl/onboarding-etats/hookLogo-histoire-2 : élément touchable sous la barre d'état (27380)
+pixel8-arabe-rtl/onboarding-etats/hookLogo-histoire-3 : élément touchable sous la barre d'état (27422)
+pixel8-arabe-rtl/onboarding-etats/hookLogo-histoire-4 : élément touchable sous la barre d'état (27469)
+pixel8-theme-clair/onboarding/00-hookLogo : ok
+pixel8-theme-clair/onboarding/01-welcome : ok
+pixel8-theme-clair/onboarding/02-name : ok
+pixel8-theme-clair/onboarding/08-subjects : ok
+pixel8-theme-clair/onboarding/15-solutionMap : ok
+pixel8-theme-clair/onboarding/17-origin : ok
+pixel8-theme-clair/onboarding/19-scanDemo : ok
+pixel8-theme-clair/onboarding/20-research : ok
+pixel8-theme-clair/onboarding/22-currentAverage : ok
+pixel8-theme-clair/onboarding/25-dailyTime : ok
+pixel8-theme-clair/onboarding/27-planDemo : ok
+pixel8-theme-clair/onboarding/29-notifications : ok
+pixel8-theme-clair/onboarding/30-commitment : ok
+pixel8-theme-clair/onboarding/32-profileSummary : ok
+pixel8-theme-clair/onboarding/35-storyPath : ok
+pixel8-theme-clair/onboarding/36-storyPractice : ok
+pixel8-theme-clair/onboarding/39-firstLesson : ok
+pixel8-theme-clair/onboarding/40-freeTrialIntro : ok
+pixel8-theme-clair/onboarding/41-trialOffer : ok
+pixel8-theme-clair/onboarding-etats/lessonDemo-jouee : ok
+pixel8-theme-clair/onboarding-etats/scanDemo-resolu : ok
+pixel8-theme-clair/onboarding-etats/commitment-maintien : ok
+pixel8-theme-clair/onboarding-etats/hookLogo-histoire-1 : élément touchable sous la barre d'état (28997)
+pixel8-theme-clair/onboarding-etats/hookLogo-histoire-2 : élément touchable sous la barre d'état (29061)
+pixel8-theme-clair/onboarding-etats/hookLogo-histoire-3 : élément touchable sous la barre d'état (29103)
+pixel8-theme-clair/onboarding-etats/hookLogo-histoire-4 : élément touchable sous la barre d'état (29150)
+pixel8-3boutons-encoche/onboarding/00-hookLogo : ok
+pixel8-3boutons-encoche/onboarding/01-welcome : ok
+pixel8-3boutons-encoche/onboarding/02-name : ok
+pixel8-3boutons-encoche/onboarding/08-subjects : ok
+pixel8-3boutons-encoche/onboarding/15-solutionMap : ok
+pixel8-3boutons-encoche/onboarding/17-origin : ok
+pixel8-3boutons-encoche/onboarding/19-scanDemo : ok
+pixel8-3boutons-encoche/onboarding/20-research : ok
+pixel8-3boutons-encoche/onboarding/22-currentAverage : ok
+pixel8-3boutons-encoche/onboarding/25-dailyTime : ok
+pixel8-3boutons-encoche/onboarding/27-planDemo : ok
+pixel8-3boutons-encoche/onboarding/29-notifications : ok
+pixel8-3boutons-encoche/onboarding/30-commitment : ok
+pixel8-3boutons-encoche/onboarding/32-profileSummary : ok
+pixel8-3boutons-encoche/onboarding/35-storyPath : ok
+pixel8-3boutons-encoche/onboarding/36-storyPractice : ok
+pixel8-3boutons-encoche/onboarding/39-firstLesson : ok
+pixel8-3boutons-encoche/onboarding/40-freeTrialIntro : ok
+pixel8-3boutons-encoche/onboarding/41-trialOffer : ok
+pixel8-3boutons-encoche/onboarding-etats/lessonDemo-jouee : ok
+pixel8-3boutons-encoche/onboarding-etats/scanDemo-resolu : ok
+pixel8-3boutons-encoche/onboarding-etats/commitment-maintien : ok
+pixel8-3boutons-encoche/onboarding-etats/hookLogo-histoire-1 : élément touchable sous la barre d'état (30766)
+pixel8-3boutons-encoche/onboarding-etats/hookLogo-histoire-2 : élément touchable sous la barre d'état (30834)
+pixel8-3boutons-encoche/onboarding-etats/hookLogo-histoire-3 : élément touchable sous la barre d'état (30880)
+pixel8-3boutons-encoche/onboarding-etats/hookLogo-histoire-4 : élément touchable sous la barre d'état (30931)
+pixel8-anglais/onboarding/00-hookLogo : ok
+pixel8-anglais/onboarding/01-welcome : ok
+pixel8-anglais/onboarding/02-name : ok
+pixel8-anglais/onboarding/08-subjects : ok
+pixel8-anglais/onboarding/15-solutionMap : ok
+pixel8-anglais/onboarding/17-origin : ok
+pixel8-anglais/onboarding/19-scanDemo : ok
+pixel8-anglais/onboarding/20-research : ok
+pixel8-anglais/onboarding/22-currentAverage : ok
+pixel8-anglais/onboarding/25-dailyTime : ok
+pixel8-anglais/onboarding/27-planDemo : ok
+pixel8-anglais/onboarding/29-notifications : ok
+pixel8-anglais/onboarding/30-commitment : ok
+pixel8-anglais/onboarding/32-profileSummary : ok
+pixel8-anglais/onboarding/35-storyPath : ok
+pixel8-anglais/onboarding/36-storyPractice : ok
+pixel8-anglais/onboarding/39-firstLesson : ok
+pixel8-anglais/onboarding/40-freeTrialIntro : ok
+pixel8-anglais/onboarding/41-trialOffer : ok
+pixel8-anglais/onboarding-etats/lessonDemo-jouee : ok
+pixel8-anglais/onboarding-etats/scanDemo-resolu : ok
+pixel8-anglais/onboarding-etats/commitment-maintien : ok
+pixel8-anglais/onboarding-etats/hookLogo-histoire-1 : élément touchable sous la barre d'état (32463)
+pixel8-anglais/onboarding-etats/hookLogo-histoire-2 : élément touchable sous la barre d'état (32527)
+pixel8-anglais/onboarding-etats/hookLogo-histoire-3 : élément touchable sous la barre d'état (32569)
+pixel8-anglais/onboarding-etats/hookLogo-histoire-4 : élément touchable sous la barre d'état (32616)
