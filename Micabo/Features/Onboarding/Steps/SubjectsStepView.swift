@@ -21,12 +21,6 @@ struct SubjectsStepView: View {
         Self.classSubjects(for: model)
     }
 
-    /// Le catalogue général, sans ce que la classe propose déjà.
-    private var others: [String] {
-        let known = Set(mine)
-        return SubjectCatalog.allSubjects.filter { !known.contains($0) }
-    }
-
     /// Le catalogue se montre quand la classe n'a pas de liste, quand l'élève le demande, ou
     /// quand une matière déjà cochée s'y trouve (un retour sur l'écran).
     private var showsOthers: Bool {
@@ -68,7 +62,19 @@ struct SubjectsStepView: View {
                         header(i18n.t("ios.onb10.subjects.more"))
                             .padding(.top, 4)
                     }
-                    chips(others)
+                    // Le catalogue (licence, master, pays non décrit) : rangé par domaine —
+                    // sciences, santé, sciences humaines, langues, droit et économie, technique —,
+                    // sous les mêmes petits intitulés, plutôt qu'en une longue liste mêlée.
+                    let known = Set(mine)
+                    ForEach(SubjectCatalog.families) { family in
+                        let subjects = family.subjects.filter { !known.contains($0) }
+                        if !subjects.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                header(SubjectDisplay.family(family.name, locale: i18n.locale))
+                                chips(subjects)
+                            }
+                        }
+                    }
                 } else {
                     V3Chip(i18n.t("ios.onb10.subjects.more"), systemImage: "plus") {
                         withAnimation(MicaboMotion.standard) { showsCatalog = true }
@@ -160,9 +166,47 @@ enum OnbSubjectGroup: Int, CaseIterable, Comparable {
         let tagged = subjects.map { ($0, of($0, country: country)) }
         return allCases.compactMap { group in
             let inside = tagged.filter { $0.1 == group }.map(\.0)
-            return inside.isEmpty ? nil : Entry(group: group, subjects: inside)
+            guard !inside.isEmpty else { return nil }
+            return Entry(group: group, subjects: group == .main ? ordered(inside, country: country) : inside)
         }
     }
+
+    /// **L'ordre des matières principales** (retour du lot 16) : le tronc commun d'abord —
+    /// les maths, la langue du pays, les sciences, l'histoire-géographie, la philosophie —,
+    /// puis les spécialités et options, chaque rang gardant l'ordre de la classe.
+    static func ordered(_ subjects: [String], country: SchoolingCountry) -> [String] {
+        subjects.enumerated()
+            .sorted { lhs, rhs -> Bool in
+                let a = rank(lhs.element, country: country), b = rank(rhs.element, country: country)
+                return a != b ? a < b : lhs.offset < rhs.offset
+            }
+            .map(\.element)
+    }
+
+    /// Le rang d'une matière dans le tronc commun ; 5 pour une spécialité ou une option.
+    static func rank(_ subject: String, country: SchoolingCountry) -> Int {
+        let text = folded(subject)
+        let words = Set(text.split { !$0.isLetter && !$0.isNumber }.map(String.init))
+        if specialtyKeys.contains(where: text.contains) || !words.isDisjoint(with: specialtyWords) { return 5 }
+        if mathKeys.contains(where: text.contains) { return 0 }
+        if isNative(text, country: country) { return 1 }
+        if scienceKeys.contains(where: text.contains) { return 2 }
+        if humanitiesKeys.contains(where: text.contains) { return 3 }
+        if philosophyKeys.contains(where: text.contains) { return 4 }
+        return 5
+    }
+
+    private static let specialtyKeys = [
+        "complement", "expert", "further", "hggsp", "ingenieur", "computer", "informati", "econom", "business",
+        "politi", "government", "psycholog", "sociolog", "droit", "management", "wirtschaft",
+    ]
+    private static let specialtyWords: Set<String> = ["ses", "hlp", "nsi", "llcer"]
+    private static let mathKeys = ["math", "algebr", "geometr", "calcul", "matemat", "wiskunde"]
+    private static let scienceKeys = [
+        "physi", "chimi", "chemi", "svt", "biolog", "scientifi", "science", "naturwiss", "fisica", "quimica",
+    ]
+    private static let humanitiesKeys = ["histoir", "history", "histori", "geschicht", "storia", "geograph", "erdkunde"]
+    private static let philosophyKeys = ["philo", "filosof", "ethik"]
 
     /// Le groupe d'une matière.
     static func of(_ subject: String, country: SchoolingCountry) -> OnbSubjectGroup {
@@ -177,20 +221,58 @@ enum OnbSubjectGroup: Int, CaseIterable, Comparable {
         return .main
     }
 
-    /// L'icône d'une matière : celle de l'app (`MicaboIcon.subjectIcon`), sinon celle de son
-    /// groupe.
+    /// **L'icône d'une matière** (retour du lot 16 : « plus de livre rouge partout ») : toutes
+    /// les langues étrangères portent la même (`.language`), la langue du pays la plume ; puis
+    /// une icône par domaine (santé, économie, informatique, ingénierie, politique et droit,
+    /// astronomie, statistiques…), puis celle de l'app (`MicaboIcon.subjectIcon`), et seulement
+    /// en dernier celle du groupe.
     static func icon(for subject: String, country: SchoolingCountry) -> MicaboIcon {
         let text = folded(subject)
-        if sportKeys.contains(where: text.contains) || Set(text.split { !$0.isLetter }.map(String.init)).contains("eps") {
+        let words = Set(text.split { !$0.isLetter && !$0.isNumber }.map(String.init))
+        if sportKeys.contains(where: text.contains) || words.contains("eps") || words.contains("staps") {
             return .trophy
         }
-        if let icon = MicaboIcon.subjectIcon(subject) { return icon }
-        switch of(subject, country: country) {
+        let group = of(subject, country: country)
+        if group == .languages { return .language }
+        if isNative(text, country: country) { return .quill }
+        for (icon, keys, whole) in domainIcons where keys.contains(where: text.contains) || !words.isDisjoint(with: whole) {
+            return icon
+        }
+        if let icon = MicaboIcon.subjectIcon(subject) { return icon == .book ? .language : icon }
+        if ["scien", "naturwiss", "wissenschaft"].contains(where: text.contains) { return .flask }
+        switch group {
         case .languages: return .language
         case .other: return .star
         case .main: return .book
         }
     }
+
+    /// Les domaines, dans l'ordre : le premier reconnu gagne. La santé passe avant la physique
+    /// (« physiologie »), l'ingénierie avant la mécanique, le politique avant l'économie
+    /// (« Politik und Wirtschaft »), l'informatique avant les sciences.
+    private static let domainIcons: [(MicaboIcon, [String], Set<String>)] = [
+        (.health, ["medecin", "medicin", "medizin", "medic", "pharma", "anatom", "infirmi", "nursing", "kinesi",
+                   "physiother", "nutrition", "dietet", "sante", "health", "gesundheit", "pflege", "enfermer",
+                   "odonto", "dentist", "midwif", "sage-femme", "physiolog", "patholog", "st2s"], []),
+        (.politics, ["hggsp", "geopolit", "politi", "government", "droit", "derecho", "diritto", "civique",
+                     "citizenship", "civic", "sozialkunde", "gemeinschaftskunde", "ciudadania", "cittadinanza"],
+         ["law", "emc", "jura", "recht"]),
+        (.economy, ["econom", "business", "gestion", "management", "finance", "comptab", "accounting", "marketing",
+                    "wirtschaft", "commerce", "ekonomi", "stmg"], ["ses", "bwl", "vwl"]),
+        (.computer, ["informati", "computer", "programm", "algorith", "reseau", "network", "numerique", "coding",
+                     "bilgisayar"], ["nsi", "snt", "ict"]),
+        (.engineering, ["ingenieur", "engineer", "technolog", "technik", "electroni", "mecaniq", "mechanic",
+                        "genie", "architect", "sti2d"], []),
+        (.astronomy, ["astronom", "astrophys"], []),
+        (.statistics, ["statisti"], []),
+        (.globe, ["geolog", "earth science", "environment", "environnement"], []),
+        (.palette, ["musical", "cinema", "film", "theatre", "danse", "dance", "photograph", "drama", "std2a"], []),
+        (.quill, ["humanites", "journal", "linguisti", "redaction", "writing"], ["hlp"]),
+        (.brain, ["pedagog", "religion", "religio", "anthropolog"], []),
+        (.diploma, ["brevet", "grand oral"], ["oral"]),
+        (.lightbulb, ["culture generale", "general knowledge"], []),
+        (.check, ["code de la route"], []),
+    ]
 
     private static func folded(_ text: String) -> String {
         text.lowercased().folding(options: .diacriticInsensitive, locale: nil)

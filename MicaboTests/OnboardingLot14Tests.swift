@@ -115,4 +115,40 @@ final class OnboardingLot14Tests: XCTestCase {
             }
         }
     }
+
+    // MARK: - Lot 16 : l'écran des matières
+
+    /// **Plus de livre générique** sur les matières courantes : une icône par domaine, la même
+    /// pour toutes les langues étrangères, la plume pour la langue du pays.
+    func testEverySubjectHasAMeaningfulIcon() {
+        let cases: [(String, SchoolingCountry, MicaboIcon)] = [
+            ("Médecine", .fr, .health), ("Pharmacie", .fr, .health), ("Kinésithérapie", .fr, .health),
+            ("SES", .fr, .economy), ("Business", .uk, .economy), ("NSI", .fr, .computer),
+            ("Computer Science", .us, .computer), ("Sciences de l'ingénieur", .fr, .engineering),
+            ("Technologie", .fr, .engineering), ("HGGSP", .fr, .politics), ("Government", .us, .politics),
+            ("Politik und Wirtschaft", .de, .politics), ("Astronomie", .fr, .astronomy),
+            ("Statistiques", .fr, .statistics), ("Géologie", .fr, .globe), ("HLP", .fr, .quill),
+            ("Anglais", .fr, .language), ("Französisch", .de, .language), ("LLCER", .fr, .language),
+            ("Français", .fr, .quill), ("Deutsch", .de, .quill), ("Mathématiques", .fr, .calculator),
+        ]
+        for (subject, country, icon) in cases {
+            XCTAssertEqual(OnbSubjectGroup.icon(for: subject, country: country), icon, subject)
+        }
+        for subject in SubjectCatalog.allSubjects {
+            XCTAssertNotEqual(OnbSubjectGroup.icon(for: subject, country: .fr), .book, "\(subject) : livre générique")
+        }
+    }
+
+    /// **Le tronc commun d'abord** : les maths, la langue du pays, les sciences,
+    /// l'histoire-géographie, la philosophie, puis les spécialités.
+    func testMainSubjectsStartWithTheCoreCurriculum() {
+        let terminale = ["Philosophie", "Histoire-Géographie", "Enseignement scientifique", "Mathématiques",
+                         "Maths complémentaires", "Physique-Chimie", "SVT", "SES", "HGGSP", "NSI"]
+        XCTAssertEqual(OnbSubjectGroup.ordered(terminale, country: .fr), [
+            "Mathématiques", "Enseignement scientifique", "Physique-Chimie", "SVT", "Histoire-Géographie",
+            "Philosophie", "Maths complémentaires", "SES", "HGGSP", "NSI",
+        ])
+        XCTAssertEqual(OnbSubjectGroup.ordered(["Geschichte", "Physik", "Deutsch", "Mathematik"], country: .de),
+                       ["Mathematik", "Deutsch", "Physik", "Geschichte"])
+    }
 }

@@ -197,14 +197,16 @@ extension LessonTone {
     /// **La couleur d'une matière**, tirée de son icône : des teintes douces qui se répondent
     /// (bleu pour les maths et l'informatique, lilas pour la physique et la philosophie, menthe
     /// pour le vivant et la Terre, jaune pour l'histoire et l'économie, rose pour les lettres,
-    /// les langues et les arts).
+    /// les langues et les arts). Les domaines du lot 16 suivent la même règle : la santé
+    /// avec le vivant, l'économie et le politique avec l'histoire, l'informatique et les
+    /// statistiques avec les maths, l'ingénierie et l'astronomie avec la physique.
     static func forSubject(_ icon: MicaboIcon) -> LessonTone {
         switch icon {
-        case .calculator, .rocket: .blue
-        case .atom, .brain: .lilac
-        case .flask, .globe: .mint
-        case .scroll, .diploma: .yellow
-        case .quill, .book, .palette: .pink
+        case .calculator, .rocket, .computer, .statistics: .blue
+        case .atom, .brain, .engineering, .astronomy: .lilac
+        case .flask, .globe, .health: .mint
+        case .scroll, .diploma, .economy, .politics: .yellow
+        case .quill, .book, .palette, .language: .pink
         default: .blue
         }
     }
