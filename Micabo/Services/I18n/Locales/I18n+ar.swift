@@ -14,7 +14,7 @@ extension IosI18nCatalogs {
         "ios.onb17.recap.titleNoName": "هذا **ما سنغيّره**.",
         "ios.onb17.recap.hardest": "{subject}: مادتك الأصعب",
         "ios.onb17.recap.cta": "لنرَ",
-        "ios.onb17.trial.days": "{n, plural, zero {# يوم} one {يوم واحد} two {يومان} few {# أيام} many {# يومًا} other {# يوم}}",
+        "ios.onb17.trial.days": "{n} أيام",
         "ios.onb17.trial.daysSub": "مجانًا، وكل شيء مشمول",
         "ios.onb17.trial.unlock.lessonAny": "درسك الأول وكل الدروس التالية",
         "ios.onb17.trial.cta": "أريد أن أجرّب",

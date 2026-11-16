@@ -103,7 +103,8 @@ struct FreeTrialIntroStepView: View {
                     .font(V3Font.display(compact ? 48 : 60))
                     .foregroundStyle(V3Color.yellow)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.6)
+                    // Toute sa taille : « 3 jours », « 3 Tage », « 3 päivää » tiennent à côté de Mika.
+                    .fixedSize()
                 Text(i18n.t("ios.onb17.trial.daysSub"))
                     .font(OnbType.body.weight(.bold))
                     .foregroundStyle(V3Color.ink)
