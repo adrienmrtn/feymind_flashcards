@@ -4,16 +4,6 @@
 extension IosI18nCatalogs {
     static let hu: [String: String] = [
         // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
-        "ios.onb17.story.lesson": "Küldd el a jegyzeteidet. **Mika leckét készít belőlük.**",
-        "ios.onb17.story.quiz": "Kvízek, amelyekkel **tényleg megjegyzed**.",
-        "ios.onb17.q.exam": "Mire készülsz **először**?",
-        "ios.onb17.open.study.say": "Mondd el, mi nehéz. Abban segítek a legtöbbet.",
-        "ios.onb17.q.hardest": "A **legnehezebb** tantárgyad?",
-        "ios.onb17.q.worries": "Mi **zavar** tanulás közben?",
-        "ios.onb17.recap.title": "{name}, ezen **változtatunk**.",
-        "ios.onb17.recap.titleNoName": "Ezen **változtatunk**.",
-        "ios.onb17.recap.hardest": "{subject}: a legnehezebb tantárgyad",
-        "ios.onb17.recap.cta": "Lássuk",
         "ios.onb17.trial.days": "{n, plural, one {# nap} other {# nap}}",
         "ios.onb17.trial.daysSub": "ingyen, minden benne van",
         "ios.onb17.trial.unlock.lessonAny": "Az első leckéd és az összes további",

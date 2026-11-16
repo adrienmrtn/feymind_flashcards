@@ -12,16 +12,6 @@ extension IosI18nCatalogs {
 
     static let ja: [String: String] = [
         // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
-        "ios.onb17.story.lesson": "ノートを送るだけ。**Mikaがレッスンにするよ。**",
-        "ios.onb17.story.quiz": "**ちゃんと覚えられる**クイズ。",
-        "ios.onb17.q.exam": "**最初**に何の準備をする？",
-        "ios.onb17.open.study.say": "難しいことを教えて。そこがいちばん手伝えるところだよ。",
-        "ios.onb17.q.hardest": "いちばん**難しい**科目は？",
-        "ios.onb17.q.worries": "勉強するとき、何が**困る**？",
-        "ios.onb17.recap.title": "{name}、**ここを変えていこう**。",
-        "ios.onb17.recap.titleNoName": "**ここを変えていこう**。",
-        "ios.onb17.recap.hardest": "{subject}：いちばん難しい科目",
-        "ios.onb17.recap.cta": "見てみよう",
         "ios.onb17.trial.days": "{n, plural, other {#日間}}",
         "ios.onb17.trial.daysSub": "無料、すべて込み",
         "ios.onb17.trial.unlock.lessonAny": "最初のレッスンと、その後のすべて",

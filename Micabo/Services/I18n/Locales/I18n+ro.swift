@@ -4,16 +4,6 @@
 extension IosI18nCatalogs {
     static let ro: [String: String] = [
         // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
-        "ios.onb17.story.lesson": "Trimite-ți notițele. **Mika face din ele o lecție.**",
-        "ios.onb17.story.quiz": "Teste care te ajută să **ții minte cu adevărat**.",
-        "ios.onb17.q.exam": "Pentru ce te pregătești **mai întâi**?",
-        "ios.onb17.open.study.say": "Spune-mi ce e greu. Acolo te ajut cel mai mult.",
-        "ios.onb17.q.hardest": "Materia ta cea mai **grea**?",
-        "ios.onb17.q.worries": "Ce te **încurcă** când înveți?",
-        "ios.onb17.recap.title": "{name}, iată **ce vom schimba**.",
-        "ios.onb17.recap.titleNoName": "Iată **ce vom schimba**.",
-        "ios.onb17.recap.hardest": "{subject}: materia ta cea mai grea",
-        "ios.onb17.recap.cta": "Să vedem",
         "ios.onb17.trial.days": "{n, plural, one {# zi} few {# zile} other {# de zile}}",
         "ios.onb17.trial.daysSub": "gratuit, totul inclus",
         "ios.onb17.trial.unlock.lessonAny": "Prima ta lecție și toate cele care urmează",

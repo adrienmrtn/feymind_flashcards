@@ -2,16 +2,6 @@
 enum IosI18nCatalogs {
     static let fr: [String: String] = [
         // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
-        "ios.onb17.story.lesson": "Envoie ton cours. **Mika en fait une leçon.**",
-        "ios.onb17.story.quiz": "Des quiz qui te font **vraiment retenir**.",
-        "ios.onb17.q.exam": "Tu prépares **quoi** en premier ?",
-        "ios.onb17.open.study.say": "Dis-moi ce qui est difficile. C'est là que je t'aide le plus.",
-        "ios.onb17.q.hardest": "Ta matière la plus **difficile** ?",
-        "ios.onb17.q.worries": "Qu'est-ce qui te **gêne** quand tu révises ?",
-        "ios.onb17.recap.title": "{name}, voici **ce qu'on va changer**.",
-        "ios.onb17.recap.titleNoName": "Voici **ce qu'on va changer**.",
-        "ios.onb17.recap.hardest": "{subject} : ta matière la plus difficile",
-        "ios.onb17.recap.cta": "Voyons ça",
         "ios.onb17.trial.days": "{n, plural, one {# jour} other {# jours}}",
         "ios.onb17.trial.daysSub": "offerts, tout compris",
         "ios.onb17.trial.unlock.lessonAny": "Ta première leçon, et toutes les suivantes",
@@ -2865,16 +2855,6 @@ enum IosI18nCatalogs {
 
     static let de: [String: String] = [
         // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
-        "ios.onb17.story.lesson": "Schick deine Unterlagen. **Mika macht daraus eine Lektion.**",
-        "ios.onb17.story.quiz": "Quizze, mit denen du dir alles **wirklich merkst**.",
-        "ios.onb17.q.exam": "Worauf bereitest du dich **zuerst** vor?",
-        "ios.onb17.open.study.say": "Sag mir, was dir schwerfällt. Da helfe ich dir am meisten.",
-        "ios.onb17.q.hardest": "Dein **schwerstes** Fach?",
-        "ios.onb17.q.worries": "Was **stört** dich beim Lernen?",
-        "ios.onb17.recap.title": "{name}, **das ändern wir**.",
-        "ios.onb17.recap.titleNoName": "**Das ändern wir.**",
-        "ios.onb17.recap.hardest": "{subject}: dein schwerstes Fach",
-        "ios.onb17.recap.cta": "Schauen wir mal",
         "ios.onb17.trial.days": "{n, plural, one {# Tag} other {# Tage}}",
         "ios.onb17.trial.daysSub": "gratis, alles inklusive",
         "ios.onb17.trial.unlock.lessonAny": "Deine erste Lektion und alle weiteren",
@@ -5724,16 +5704,6 @@ enum IosI18nCatalogs {
 
     static let es: [String: String] = [
         // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
-        "ios.onb17.story.lesson": "Envía tus apuntes. **Mika los convierte en una lección.**",
-        "ios.onb17.story.quiz": "Tests que te hacen **recordar de verdad**.",
-        "ios.onb17.q.exam": "¿Qué preparas **primero**?",
-        "ios.onb17.open.study.say": "Dime qué te resulta difícil. Ahí es donde más te ayudo.",
-        "ios.onb17.q.hardest": "¿Tu asignatura más **difícil**?",
-        "ios.onb17.q.worries": "¿Qué te **cuesta** más cuando estudias?",
-        "ios.onb17.recap.title": "{name}, esto es **lo que vamos a cambiar**.",
-        "ios.onb17.recap.titleNoName": "Esto es **lo que vamos a cambiar**.",
-        "ios.onb17.recap.hardest": "{subject}: tu asignatura más difícil",
-        "ios.onb17.recap.cta": "Vamos a verlo",
         "ios.onb17.trial.days": "{n, plural, one {# día} other {# días}}",
         "ios.onb17.trial.daysSub": "gratis, todo incluido",
         "ios.onb17.trial.unlock.lessonAny": "Tu primera lección y todas las siguientes",
@@ -8583,16 +8553,6 @@ enum IosI18nCatalogs {
 
     static let tr: [String: String] = [
         // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
-        "ios.onb17.story.lesson": "Notlarını gönder. **Mika onlardan bir ders yapsın.**",
-        "ios.onb17.story.quiz": "**Gerçekten aklında kalmasını** sağlayan testler.",
-        "ios.onb17.q.exam": "**İlk** neye hazırlanıyorsun?",
-        "ios.onb17.open.study.say": "Sana neyin zor geldiğini söyle. En çok orada yardım ederim.",
-        "ios.onb17.q.hardest": "En **zor** dersin?",
-        "ios.onb17.q.worries": "Ders çalışırken seni ne **zorluyor**?",
-        "ios.onb17.recap.title": "{name}, işte **değiştireceğimiz şeyler**.",
-        "ios.onb17.recap.titleNoName": "İşte **değiştireceğimiz şeyler**.",
-        "ios.onb17.recap.hardest": "{subject}: en zor dersin",
-        "ios.onb17.recap.cta": "Bakalım",
         "ios.onb17.trial.days": "{n} gün",
         "ios.onb17.trial.daysSub": "ücretsiz, her şey dahil",
         "ios.onb17.trial.unlock.lessonAny": "İlk dersin ve sonraki tüm dersler",
@@ -11450,16 +11410,6 @@ enum IosI18nCatalogs {
     /// et le test de parité (`testIosCatalogsHaveTheSameKeys`) le garde ainsi.
     static let en: [String: String] = [
         // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
-        "ios.onb17.story.lesson": "Send your notes. **Mika turns them into a lesson.**",
-        "ios.onb17.story.quiz": "Quizzes that help you **really remember**.",
-        "ios.onb17.q.exam": "What are you preparing for **first**?",
-        "ios.onb17.open.study.say": "Tell me what's hard. That's where I help you most.",
-        "ios.onb17.q.hardest": "Your **hardest** subject?",
-        "ios.onb17.q.worries": "What **bothers you** when you study?",
-        "ios.onb17.recap.title": "{name}, here's **what we'll change**.",
-        "ios.onb17.recap.titleNoName": "Here's **what we'll change**.",
-        "ios.onb17.recap.hardest": "{subject}: your hardest subject",
-        "ios.onb17.recap.cta": "Let's see",
         "ios.onb17.trial.days": "{n, plural, one {# day} other {# days}}",
         "ios.onb17.trial.daysSub": "free, everything included",
         "ios.onb17.trial.unlock.lessonAny": "Your first lesson, and every one after it",

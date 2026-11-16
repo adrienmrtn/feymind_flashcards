@@ -4,16 +4,6 @@
 extension IosI18nCatalogs {
     static let ar: [String: String] = [
         // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
-        "ios.onb17.story.lesson": "أرسل ملاحظاتك. **وسيحوّلها Mika إلى درس.**",
-        "ios.onb17.story.quiz": "اختبارات تساعدك على **التذكّر فعلًا**.",
-        "ios.onb17.q.exam": "لأي شيء تستعد **أولًا**؟",
-        "ios.onb17.open.study.say": "قل لي ما الصعب عليك. هناك أساعدك أكثر.",
-        "ios.onb17.q.hardest": "مادتك **الأصعب**؟",
-        "ios.onb17.q.worries": "ما الذي **يزعجك** عندما تدرس؟",
-        "ios.onb17.recap.title": "{name}، هذا **ما سنغيّره**.",
-        "ios.onb17.recap.titleNoName": "هذا **ما سنغيّره**.",
-        "ios.onb17.recap.hardest": "{subject}: مادتك الأصعب",
-        "ios.onb17.recap.cta": "لنرَ",
         "ios.onb17.trial.days": "{n} أيام",
         "ios.onb17.trial.daysSub": "مجانًا، وكل شيء مشمول",
         "ios.onb17.trial.unlock.lessonAny": "درسك الأول وكل الدروس التالية",

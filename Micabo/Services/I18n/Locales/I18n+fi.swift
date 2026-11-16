@@ -4,16 +4,6 @@
 extension IosI18nCatalogs {
     static let fi: [String: String] = [
         // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
-        "ios.onb17.story.lesson": "Lähetä muistiinpanosi. **Mika tekee niistä oppitunnin.**",
-        "ios.onb17.story.quiz": "Visoja, joilla asiat **todella jäävät mieleen**.",
-        "ios.onb17.q.exam": "Mihin valmistaudut **ensimmäisenä**?",
-        "ios.onb17.open.study.say": "Kerro, mikä on vaikeaa. Siinä autan eniten.",
-        "ios.onb17.q.hardest": "**Vaikein** aineesi?",
-        "ios.onb17.q.worries": "Mikä **hankaloittaa** opiskeluasi?",
-        "ios.onb17.recap.title": "{name}, tässä **mitä muutamme**.",
-        "ios.onb17.recap.titleNoName": "Tässä **mitä muutamme**.",
-        "ios.onb17.recap.hardest": "{subject}: vaikein aineesi",
-        "ios.onb17.recap.cta": "Katsotaan",
         "ios.onb17.trial.days": "{n, plural, one {# päivä} other {# päivää}}",
         "ios.onb17.trial.daysSub": "ilmaiseksi, kaikki mukana",
         "ios.onb17.trial.unlock.lessonAny": "Ensimmäinen oppituntisi ja kaikki seuraavat",

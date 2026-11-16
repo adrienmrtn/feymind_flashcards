@@ -4,16 +4,6 @@
 extension IosI18nCatalogs {
     static let et: [String: String] = [
         // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
-        "ios.onb17.story.lesson": "Saada oma konspekt. **Mika teeb sellest õppetunni.**",
-        "ios.onb17.story.quiz": "Viktoriinid, mis aitavad **päriselt meelde jätta**.",
-        "ios.onb17.q.exam": "Milleks sa **kõigepealt** valmistud?",
-        "ios.onb17.open.study.say": "Ütle, mis on raske. Seal aitan ma kõige rohkem.",
-        "ios.onb17.q.hardest": "Sinu **kõige raskem** aine?",
-        "ios.onb17.q.worries": "Mis sind õppimisel **segab**?",
-        "ios.onb17.recap.title": "{name}, siin on see, **mida me muudame**.",
-        "ios.onb17.recap.titleNoName": "Siin on see, **mida me muudame**.",
-        "ios.onb17.recap.hardest": "{subject}: sinu kõige raskem aine",
-        "ios.onb17.recap.cta": "Vaatame",
         "ios.onb17.trial.days": "{n, plural, one {# päev} other {# päeva}}",
         "ios.onb17.trial.daysSub": "tasuta, kõik kaasas",
         "ios.onb17.trial.unlock.lessonAny": "Sinu esimene õppetund ja kõik järgmised",

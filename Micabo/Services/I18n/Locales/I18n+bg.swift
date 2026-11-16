@@ -4,16 +4,6 @@
 extension IosI18nCatalogs {
     static let bg: [String: String] = [
         // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
-        "ios.onb17.story.lesson": "Изпрати записките си. **Mika ще ги превърне в урок.**",
-        "ios.onb17.story.quiz": "Тестове, с които **наистина запомняш**.",
-        "ios.onb17.q.exam": "За какво се подготвяш **първо**?",
-        "ios.onb17.open.study.say": "Кажи ми какво ти е трудно. Там помагам най-много.",
-        "ios.onb17.q.hardest": "**Най-трудният** ти предмет?",
-        "ios.onb17.q.worries": "Какво ти **пречи**, когато учиш?",
-        "ios.onb17.recap.title": "{name}, ето **какво ще променим**.",
-        "ios.onb17.recap.titleNoName": "Ето **какво ще променим**.",
-        "ios.onb17.recap.hardest": "{subject}: най-трудният ти предмет",
-        "ios.onb17.recap.cta": "Да видим",
         "ios.onb17.trial.days": "{n, plural, one {# ден} other {# дни}}",
         "ios.onb17.trial.daysSub": "безплатно, всичко включено",
         "ios.onb17.trial.unlock.lessonAny": "Първият ти урок и всички следващи",

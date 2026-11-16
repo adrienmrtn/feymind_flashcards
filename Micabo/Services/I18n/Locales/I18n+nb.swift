@@ -12,16 +12,6 @@ extension IosI18nCatalogs {
 
     static let nb: [String: String] = [
         // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
-        "ios.onb17.story.lesson": "Send notatene dine. **Mika lager en leksjon av dem.**",
-        "ios.onb17.story.quiz": "Quizer som gjør at du **virkelig husker**.",
-        "ios.onb17.q.exam": "Hva forbereder du deg til **først**?",
-        "ios.onb17.open.study.say": "Fortell meg hva som er vanskelig. Der hjelper jeg deg mest.",
-        "ios.onb17.q.hardest": "Ditt **vanskeligste** fag?",
-        "ios.onb17.q.worries": "Hva **plager deg** når du lærer?",
-        "ios.onb17.recap.title": "{name}, dette **skal vi endre**.",
-        "ios.onb17.recap.titleNoName": "Dette **skal vi endre**.",
-        "ios.onb17.recap.hardest": "{subject}: ditt vanskeligste fag",
-        "ios.onb17.recap.cta": "Vi ser på det",
         "ios.onb17.trial.days": "{n, plural, one {# dag} other {# dager}}",
         "ios.onb17.trial.daysSub": "gratis, alt inkludert",
         "ios.onb17.trial.unlock.lessonAny": "Din første leksjon, og alle de neste",

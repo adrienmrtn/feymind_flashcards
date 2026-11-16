@@ -350,12 +350,9 @@ final class OnboardingLot14RenderTests: XCTestCase {
         }
     }
 
-    /// **Lot 17** : la troisième story (le quiz), et le premier écran d'essai quand l'élève a
-    /// tapé le sujet de sa première leçon (la leçon est alors citée).
-    func testLot17HookAndTrial() throws {
-        let model = lina()
-        let pro = [RenderDevice.iPhone15Pro]
-        try render("onb17-fr-hook-3", .hookLogo, model, devices: pro, view: AnyView(StoriesStepView(previewPage: .quiz)))
+    /// **Lot 17** : le premier écran d'essai quand l'élève a tapé le sujet de sa première
+    /// leçon (la leçon est alors citée).
+    func testLot17TrialWithATypedTopic() throws {
         let typed = lina()
         typed.firstLessonChoice = .topic
         typed.firstLessonTopic = "Le second degré"
