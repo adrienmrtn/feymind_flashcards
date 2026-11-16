@@ -3,6 +3,30 @@
 
 extension IosI18nCatalogs {
     static let es419: [String: String] = [
+        // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
+        "ios.onb17.story.lesson": "Manda tus apuntes. **Mika los convierte en una lección.**",
+        "ios.onb17.story.quiz": "Cuestionarios que te hacen **recordar de verdad**.",
+        "ios.onb17.q.exam": "¿Para qué te preparas **primero**?",
+        "ios.onb17.open.study.say": "Dime qué te resulta difícil. Ahí es donde más te ayudo.",
+        "ios.onb17.q.hardest": "¿Tu materia más **difícil**?",
+        "ios.onb17.q.worries": "¿Qué te **cuesta** más cuando estudias?",
+        "ios.onb17.recap.title": "{name}, esto es **lo que vamos a cambiar**.",
+        "ios.onb17.recap.titleNoName": "Esto es **lo que vamos a cambiar**.",
+        "ios.onb17.recap.hardest": "{subject}: tu materia más difícil",
+        "ios.onb17.recap.cta": "Vamos a verlo",
+        "ios.onb17.trial.days": "{n, plural, one {# día} other {# días}}",
+        "ios.onb17.trial.daysSub": "gratis, todo incluido",
+        "ios.onb17.trial.unlock.lessonAny": "Tu primera lección y todas las que siguen",
+        "ios.onb17.trial.cta": "Quiero probarlo",
+        "ios.onb17.trial.cancel": "Puedes cancelar cuando quieras en Configuración.",
+        "ios.onb17.tl.today": "Se abre todo Pro: tus lecciones, Mika, los exámenes de práctica.",
+        "ios.onb17.tl.reminder": "El recordatorio: tu prueba termina mañana.",
+        "ios.onb17.tl.billing": "Empieza tu suscripción, a menos que canceles antes. No se cobra nada hasta entonces.",
+        "ios.onb17.pay.lessons": "Mika escribe todas tus lecciones",
+        "ios.onb17.pay.mika": "Te explica lo que no entiendes",
+        "ios.onb17.pay.exams": "Exámenes de práctica corregidos",
+        "ios.onb17.offer.say": "¡Espera, {name}! Tengo un **mejor precio** para ti.",
+        "ios.onb17.offer.sayAnon": "¡Espera! Tengo un **mejor precio** para ti.",
         // Lot 16 : retours du build 183 (accueil, matières, récit par pays, séances).
         "ios.onb16.story.intro": "Todas tus materias, **más fáciles**.",
         "ios.onb16.story.intro.say": "Ejemplo: {topic}. ¡Mira!",

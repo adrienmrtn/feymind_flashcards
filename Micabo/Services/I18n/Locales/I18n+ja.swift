@@ -11,6 +11,30 @@ extension IosI18nCatalogs {
     static let jaIsProvisional = false
 
     static let ja: [String: String] = [
+        // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
+        "ios.onb17.story.lesson": "ノートを送るだけ。**Mikaがレッスンにするよ。**",
+        "ios.onb17.story.quiz": "**ちゃんと覚えられる**クイズ。",
+        "ios.onb17.q.exam": "**最初**に何の準備をする？",
+        "ios.onb17.open.study.say": "難しいことを教えて。そこがいちばん手伝えるところだよ。",
+        "ios.onb17.q.hardest": "いちばん**難しい**科目は？",
+        "ios.onb17.q.worries": "勉強するとき、何が**困る**？",
+        "ios.onb17.recap.title": "{name}、**ここを変えていこう**。",
+        "ios.onb17.recap.titleNoName": "**ここを変えていこう**。",
+        "ios.onb17.recap.hardest": "{subject}：いちばん難しい科目",
+        "ios.onb17.recap.cta": "見てみよう",
+        "ios.onb17.trial.days": "{n, plural, other {#日間}}",
+        "ios.onb17.trial.daysSub": "無料、すべて込み",
+        "ios.onb17.trial.unlock.lessonAny": "最初のレッスンと、その後のすべて",
+        "ios.onb17.trial.cta": "試してみたい",
+        "ios.onb17.trial.cancel": "「設定」からいつでも解約できます。",
+        "ios.onb17.tl.today": "Proのすべてが使える：レッスン、Mika、模擬試験。",
+        "ios.onb17.tl.reminder": "リマインダー：無料体験は明日終わります。",
+        "ios.onb17.tl.billing": "解約しない限り、サブスクリプションが始まります。それまで請求はありません。",
+        "ios.onb17.pay.lessons": "Mikaがすべてのレッスンを書く",
+        "ios.onb17.pay.mika": "わからないところを説明してくれる",
+        "ios.onb17.pay.exams": "採点つきの模擬試験",
+        "ios.onb17.offer.say": "待って、{name}！**特別価格**があるよ。",
+        "ios.onb17.offer.sayAnon": "待って！**特別価格**があるよ。",
         // Lot 16 : retours du build 183 (accueil, matières, récit par pays, séances).
         "ios.onb16.story.intro": "きみの授業を、**もっとシンプルに**。",
         "ios.onb16.story.intro.say": "例：{topic}。見てて！",

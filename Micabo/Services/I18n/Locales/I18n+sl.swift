@@ -3,6 +3,30 @@
 
 extension IosI18nCatalogs {
     static let sl: [String: String] = [
+        // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
+        "ios.onb17.story.lesson": "Pošlji svoje zapiske. **Mika iz njih naredi lekcijo.**",
+        "ios.onb17.story.quiz": "Kvizi, s katerimi si **res zapomniš**.",
+        "ios.onb17.q.exam": "Na kaj se pripravljaš **najprej**?",
+        "ios.onb17.open.study.say": "Povej mi, kaj je težko. Tam ti najbolj pomagam.",
+        "ios.onb17.q.hardest": "Tvoj **najtežji** predmet?",
+        "ios.onb17.q.worries": "Kaj te **moti** pri učenju?",
+        "ios.onb17.recap.title": "{name}, tole **bomo spremenili**.",
+        "ios.onb17.recap.titleNoName": "Tole **bomo spremenili**.",
+        "ios.onb17.recap.hardest": "{subject}: tvoj najtežji predmet",
+        "ios.onb17.recap.cta": "Poglejmo",
+        "ios.onb17.trial.days": "{n, plural, one {# dan} two {# dneva} few {# dni} other {# dni}}",
+        "ios.onb17.trial.daysSub": "brezplačno, vse vključeno",
+        "ios.onb17.trial.unlock.lessonAny": "Tvoja prva lekcija in vse naslednje",
+        "ios.onb17.trial.cta": "Želim preizkusiti",
+        "ios.onb17.trial.cancel": "Preklic je mogoč kadar koli v Nastavitvah.",
+        "ios.onb17.tl.today": "Odpre se ves Pro: tvoje lekcije, Mika, poskusni izpiti.",
+        "ios.onb17.tl.reminder": "Opomnik: preizkusno obdobje se ti jutri izteče.",
+        "ios.onb17.tl.billing": "Naročnina se začne, razen če prej prekličeš. Do takrat se nič ne zaračuna.",
+        "ios.onb17.pay.lessons": "Mika ti napiše vse lekcije",
+        "ios.onb17.pay.mika": "Razloži ti, česar ne razumeš",
+        "ios.onb17.pay.exams": "Popravljeni poskusni izpiti",
+        "ios.onb17.offer.say": "Počakaj, {name}! Imam **boljšo ceno** zate.",
+        "ios.onb17.offer.sayAnon": "Počakaj! Imam **boljšo ceno** zate.",
         // Lot 16 : retours du build 183 (accueil, matières, récit par pays, séances).
         "ios.onb16.story.intro": "Vsi tvoji predmeti, **preprosteje**.",
         "ios.onb16.story.intro.say": "Primer: {topic}. Poglej!",

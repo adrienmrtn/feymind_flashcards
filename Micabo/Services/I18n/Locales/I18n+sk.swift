@@ -3,6 +3,30 @@
 
 extension IosI18nCatalogs {
     static let sk: [String: String] = [
+        // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
+        "ios.onb17.story.lesson": "Pošli svoje poznámky. **Mika z nich urobí lekciu.**",
+        "ios.onb17.story.quiz": "Kvízy, vďaka ktorým si to **naozaj zapamätáš**.",
+        "ios.onb17.q.exam": "Na čo sa pripravuješ **najskôr**?",
+        "ios.onb17.open.study.say": "Povedz mi, čo je ťažké. Tam ti pomôžem najviac.",
+        "ios.onb17.q.hardest": "Tvoj **najťažší** predmet?",
+        "ios.onb17.q.worries": "Čo ti pri učení **prekáža**?",
+        "ios.onb17.recap.title": "{name}, toto **zmeníme**.",
+        "ios.onb17.recap.titleNoName": "Toto **zmeníme**.",
+        "ios.onb17.recap.hardest": "{subject}: tvoj najťažší predmet",
+        "ios.onb17.recap.cta": "Poďme na to",
+        "ios.onb17.trial.days": "{n, plural, one {# deň} few {# dni} other {# dní}}",
+        "ios.onb17.trial.daysSub": "zadarmo, všetko v cene",
+        "ios.onb17.trial.unlock.lessonAny": "Tvoja prvá lekcia a všetky ďalšie",
+        "ios.onb17.trial.cta": "Chcem to skúsiť",
+        "ios.onb17.trial.cancel": "Zrušiť môžeš kedykoľvek v Nastaveniach.",
+        "ios.onb17.tl.today": "Otvorí sa celé Pro: tvoje lekcie, Mika, cvičné skúšky.",
+        "ios.onb17.tl.reminder": "Pripomienka: skúšobná doba ti zajtra končí.",
+        "ios.onb17.tl.billing": "Začne ti predplatné, ak ho predtým nezrušíš. Dovtedy sa nič neplatí.",
+        "ios.onb17.pay.lessons": "Mika ti napíše všetky lekcie",
+        "ios.onb17.pay.mika": "Vysvetlí ti, čomu nerozumieš",
+        "ios.onb17.pay.exams": "Opravené cvičné skúšky",
+        "ios.onb17.offer.say": "Počkaj, {name}! Mám pre teba **lepšiu cenu**.",
+        "ios.onb17.offer.sayAnon": "Počkaj! Mám pre teba **lepšiu cenu**.",
         // Lot 16 : retours du build 183 (accueil, matières, récit par pays, séances).
         "ios.onb16.story.intro": "Všetky tvoje predmety, **jednoduchšie**.",
         "ios.onb16.story.intro.say": "Príklad: {topic}. Pozri!",

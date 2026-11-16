@@ -3,6 +3,30 @@
 
 extension IosI18nCatalogs {
     static let fi: [String: String] = [
+        // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
+        "ios.onb17.story.lesson": "Lähetä muistiinpanosi. **Mika tekee niistä oppitunnin.**",
+        "ios.onb17.story.quiz": "Visoja, joilla asiat **todella jäävät mieleen**.",
+        "ios.onb17.q.exam": "Mihin valmistaudut **ensimmäisenä**?",
+        "ios.onb17.open.study.say": "Kerro, mikä on vaikeaa. Siinä autan eniten.",
+        "ios.onb17.q.hardest": "**Vaikein** aineesi?",
+        "ios.onb17.q.worries": "Mikä **hankaloittaa** opiskeluasi?",
+        "ios.onb17.recap.title": "{name}, tässä **mitä muutamme**.",
+        "ios.onb17.recap.titleNoName": "Tässä **mitä muutamme**.",
+        "ios.onb17.recap.hardest": "{subject}: vaikein aineesi",
+        "ios.onb17.recap.cta": "Katsotaan",
+        "ios.onb17.trial.days": "{n, plural, one {# päivä} other {# päivää}}",
+        "ios.onb17.trial.daysSub": "ilmaiseksi, kaikki mukana",
+        "ios.onb17.trial.unlock.lessonAny": "Ensimmäinen oppituntisi ja kaikki seuraavat",
+        "ios.onb17.trial.cta": "Haluan kokeilla",
+        "ios.onb17.trial.cancel": "Voit peruuttaa milloin vain Asetuksissa.",
+        "ios.onb17.tl.today": "Koko Pro aukeaa: oppituntisi, Mika, harjoituskokeet.",
+        "ios.onb17.tl.reminder": "Muistutus: kokeilusi päättyy huomenna.",
+        "ios.onb17.tl.billing": "Tilauksesi alkaa, ellet peruuta ennen sitä. Siihen asti mitään ei veloiteta.",
+        "ios.onb17.pay.lessons": "Mika kirjoittaa kaikki oppituntisi",
+        "ios.onb17.pay.mika": "Hän selittää, mitä et ymmärrä",
+        "ios.onb17.pay.exams": "Korjatut harjoituskokeet",
+        "ios.onb17.offer.say": "Odota, {name}! Minulla on sinulle **parempi hinta**.",
+        "ios.onb17.offer.sayAnon": "Odota! Minulla on sinulle **parempi hinta**.",
         // Lot 16 : retours du build 183 (accueil, matières, récit par pays, séances).
         "ios.onb16.story.intro": "Kaikki aineesi, **helpommin**.",
         "ios.onb16.story.intro.say": "Esimerkki: {topic}. Katso!",

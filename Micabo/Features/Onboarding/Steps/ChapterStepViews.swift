@@ -75,7 +75,7 @@ struct ChapterOpenerStepView: View {
     /// Le titre, la phrase de Mika, et son humeur.
     static func phrase(for step: OnboardingStep) -> (title: String, say: String, mood: MikaMood) {
         switch step {
-        case .studyIntro: ("ios.onb15.open.study.title", "ios.onb16.open.study.say", .look)
+        case .studyIntro: ("ios.onb15.open.study.title", "ios.onb17.open.study.say", .look)
         case .helpIntro: ("ios.onb15.open.help.title", "ios.onb16.open.help.say", .happy)
         case .goalIntro: ("ios.onb15.open.goal.title", "ios.onb16.open.goal.say", .proud)
         case .organizeIntro: ("ios.onb15.open.organize.title", "ios.onb15.open.organize.say", .write)

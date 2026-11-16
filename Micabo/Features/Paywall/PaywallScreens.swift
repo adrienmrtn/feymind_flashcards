@@ -155,6 +155,14 @@ enum PaywallCopy {
     }
 
 
+    /// **Les trois bénéfices du paywall de fin de parcours** (lot 17) : une ligne chacun, sans
+    /// promesse de quantité (le serveur plafonne, lot 14). `count` : deux au dernier serrage.
+    static func checks(count: Int = 3, locale: UiLocale = .resolved()) -> [String] {
+        ["ios.onb17.pay.lessons", "ios.onb17.pay.mika", "ios.onb17.pay.exams"]
+            .prefix(max(0, count))
+            .map { L10n.t($0, locale: locale) }
+    }
+
     /// « Bienvenue dans Micabo Pro, Lina ! », après l'achat.
     static func welcome(name: String?, locale: UiLocale = .resolved()) -> PaywallEmphasis {
         if let name {
@@ -266,12 +274,12 @@ enum PaywallTimeline {
 ///    discrète dans la barre ; une promesse courte en très grand titre (« Ton plan pour le
 ///    Bac est prêt. »), et ce qu'on propose dessous (« Essaie-le 3 jours, gratuitement. »).
 ///    Derrière une porte de l'app, le titre est ce que Mika dit de la porte.
-/// 2. **Ce qu'il gagne** : trois bénéfices, une ligne et un pictogramme chacun, tirés des
-///    vraies limites du gratuit (`PaywallFeature`) — la ligne de la porte en tête. Puis
-///    l'essai en une ligne : « Rien à payer aujourd'hui · je te préviens le 14 novembre ».
-/// 3. **Le pied léger** (`PaywallFooter`), un tiers de l'écran au plus : les deux formules
-///    côte à côte, l'annuelle cochée avec sa remise ; le bouton ; une mention — ce qui sera
-///    prélevé, et quand ; les liens en petit.
+/// 2. **Ce qu'il gagne** : à la fin du parcours (lot 17), trois bénéfices d'une ligne, une
+///    coche chacun (`PaywallChecks`) ; derrière une porte, le tableau gratuit / Pro, la ligne
+///    de la porte en tête, puis l'essai en une ligne.
+/// 3. **Le pied** (`PaywallFooter`) : les deux formules l'une sous l'autre (lot 17),
+///    l'annuelle cochée avec sa remise ; « Rien à payer aujourd'hui » collé au bouton ; le
+///    bouton ; une mention — ce qui sera prélevé, et quand ; les liens en petit.
 ///
 /// **Rien ne se cache, rien ne ment** : la croix est là dès l'ouverture, et l'essai ne
 /// s'annonce — promesse, ligne verte, bouton, mention — que si Apple l'accordera à ce compte
@@ -320,7 +328,8 @@ struct PaywallScreen: View {
         prices: PaywallPriceState = .ready,
         notice: PaywallNotice? = nil,
         onRetry: @escaping () -> Void = {},
-        context: PaywallContext = .current()
+        context: PaywallContext = .current(),
+        initialPlan: PaywallPlan.Kind = PaywallCatalog.recommended.kind
     ) {
         self.trigger = trigger
         self.name = name
@@ -334,6 +343,7 @@ struct PaywallScreen: View {
         self.notice = notice
         self.onRetry = onRetry
         self.context = context
+        _selection = State(initialValue: initialPlan)
     }
 
     private var selectedPlan: PaywallPlan { PaywallCatalog.plan(selection) }
@@ -343,7 +353,8 @@ struct PaywallScreen: View {
     var body: some View {
         PaywallSafeFrame { area in
             VStack(spacing: 0) {
-                PaywallTopBar(isBusy: isPurchasing, onClose: onClose)
+                // Lot 17 : « Micabo PRO, pour Lina » — sans prénom, la marque seule.
+                PaywallTopBar(name: name ?? context.profile.firstName, isBusy: isPurchasing, onClose: onClose)
 
                 ViewThatFits(in: .vertical) {
                     content(.regular)
@@ -371,6 +382,9 @@ struct PaywallScreen: View {
                     prices: prices,
                     isPurchasing: isPurchasing,
                     notice: notice,
+                    // Lot 17 : à la fin du parcours, « Rien à payer aujourd'hui » se colle au
+                    // bouton ; derrière une porte, la ligne de l'essai est déjà dans la page.
+                    nothingToday: trigger == nil && selectedPlan.hasTrial && prices == .ready,
                     bottomGap: area.bottomGap,
                     onSubscribe: { onSubscribe(selectedPlan) },
                     onRetry: onRetry,
@@ -401,15 +415,23 @@ struct PaywallScreen: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 6)
 
-            // **Le gratuit face à Pro, en trois lignes vraies** (lot 14) : la vraie limite gratuite
-            // à gauche, la coche de Pro à droite. Plus de « sans limite » ni « à volonté » : le
-            // serveur plafonne, l'écran ne promet que ce qui est tenu.
-            PaywallFeatureTable(
-                features: PaywallFeature.shown(for: showsTrialHeader ? nil : trigger, count: density.benefits),
-                highlighted: showsTrialHeader ? nil : trigger?.feature,
-                rowHeight: density.tableRow
-            )
-            .padding(.top, density.sectionGap)
+            if showsTrialHeader {
+                // **Lot 17 : trois bénéfices, une ligne chacun**, à la place du tableau : le
+                // paywall ne fait plus que faire choisir (l'essai et sa frise sont sur les deux
+                // écrans d'avant). Toujours sans « illimité » ni « sans limite » (lot 14).
+                PaywallChecks(lines: PaywallCopy.checks(count: density.benefits), spacing: density.benefitSpacing)
+                    .padding(.top, density.sectionGap)
+            } else {
+                // **Le gratuit face à Pro, en trois lignes vraies** (lot 14) : la vraie limite
+                // gratuite à gauche, la coche de Pro à droite. Derrière une porte, la ligne de
+                // la porte en tête.
+                PaywallFeatureTable(
+                    features: PaywallFeature.shown(for: trigger, count: density.benefits),
+                    highlighted: trigger?.feature,
+                    rowHeight: density.tableRow
+                )
+                .padding(.top, density.sectionGap)
+            }
 
             // L'essai en une ligne derrière une porte de l'app ; à la fin du parcours, l'écran
             // du rappel vient de le dire.
@@ -442,15 +464,16 @@ struct PaywallScreen: View {
 
     // MARK: Les formules
 
-    /// Les deux formules, côte à côte ; l'annuelle d'abord, cochée, avec sa remise.
+    /// Les deux formules, **l'une sous l'autre** (lot 17) ; l'annuelle d'abord, cochée, avec
+    /// sa remise.
     @ViewBuilder
     private var plans: some View {
         switch prices {
         case .ready:
-            HStack(alignment: .top, spacing: PaywallStyle.planSpacing) {
+            VStack(spacing: PaywallStyle.planSpacing) {
                 ForEach(PaywallCatalog.all) { plan in
                     let recommended = plan.kind == PaywallCatalog.recommended.kind
-                    PaywallPlanCard(
+                    PaywallPlanRow(
                         plan: plan,
                         isSelected: plan.kind == selection,
                         storeRevision: storeRevision,
@@ -573,6 +596,50 @@ struct PaywallBenefits: View {
     }
 }
 
+/// **Trois bénéfices, une ligne chacun** (lot 17) : une coche jaune, une phrase au corps de
+/// lecture (20 pt, couleur principale). Le bloc est centré, ses lignes alignées à gauche.
+struct PaywallChecks: View {
+    let lines: [String]
+    var spacing: CGFloat = 12
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: spacing) {
+            ForEach(lines, id: \.self) { line in
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(.title3, weight: .bold))
+                        .foregroundStyle(V3Color.yellow)
+                        .accessibilityHidden(true)
+                    Text(line)
+                        .font(OnbType.body)
+                        .foregroundStyle(V3Color.ink)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .accessibilityElement(children: .combine)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+/// **« ✓ Rien à payer aujourd'hui »**, en vert, juste au-dessus du bouton (lot 17).
+struct PaywallNothingToday: View {
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Image(systemName: "checkmark")
+                .accessibilityHidden(true)
+            Text(L10n.t("ios.pay10.nothingToday", locale: .resolved()))
+        }
+        .font(PaywallStyle.trialLine)
+        .foregroundStyle(PaywallStyle.free)
+        .lineLimit(1)
+        .minimumScaleFactor(0.75)
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+    }
+}
+
 /// **L'essai, en une ligne verte** : rien à payer aujourd'hui, et le jour du rappel.
 ///
 /// **Ses deux moitiés l'une sous l'autre** (« Rien à
@@ -632,14 +699,17 @@ struct PaywallQuietLine: View {
 
 // MARK: - Les offres
 
-/// **Une offre, en petite carte** : son nom, le chiffre qu'on compare (dans l'écriture du test
-/// `PriceDisplay`) et ce qui part vraiment du compte. Les deux cartes sont côte à côte ;
-/// cochée, la carte prend le filet et le lavis de l'accent. La remise de l'annuelle est une
-/// pastille jaune posée sur son coin.
-struct PaywallPlanCard: View {
+/// **Une offre, en ligne pleine largeur** (lot 17) : le rond coché, son nom (et la remise de
+/// l'annuelle), dessous **ce qui part vraiment du compte**, en couleur principale ; à droite,
+/// le chiffre qu'on compare (dans l'écriture du test `PriceDisplay`, la semaine). Cochée, la
+/// ligne prend le filet et le lavis de l'accent.
+///
+/// **App Store 3.1.2** : la somme facturée (« facturé 49,99 € par an ») est au corps de lecture,
+/// en couleur principale, juste sous le nom, et la mention sous le bouton la redit.
+struct PaywallPlanRow: View {
     let plan: PaywallPlan
     let isSelected: Bool
-    /// Voir `PaywallScreen.storeRevision` : sans lui, la carte garderait le prix d'avant la
+    /// Voir `PaywallScreen.storeRevision` : sans lui, la ligne garderait le prix d'avant la
     /// réponse de la boutique.
     let storeRevision: Int
     /// « −81 % » ; `nil` pour une offre sans remise à annoncer.
@@ -648,47 +718,59 @@ struct PaywallPlanCard: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(plan.title)
-                    .font(PaywallStyle.planName)
-                    .foregroundStyle(isSelected ? V3Color.ink : V3Color.ink2)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+            HStack(alignment: .center, spacing: 12) {
+                Circle()
+                    .strokeBorder(isSelected ? V3Color.accent : V3Color.ink3, lineWidth: 2)
+                    .background(Circle().fill(isSelected ? V3Color.accent : .clear))
+                    .overlay {
+                        if isSelected {
+                            Circle().fill(Color.white).frame(width: 9, height: 9)
+                        }
+                    }
+                    .frame(width: 24, height: 24)
+                    .accessibilityHidden(true)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 8) {
+                        Text(plan.title)
+                            .font(PaywallStyle.planTitle)
+                            .foregroundStyle(V3Color.ink)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                        if let savings {
+                            PaywallYellowPill(horizontal: 8, vertical: 2) {
+                                Text(savings)
+                                    .font(PaywallStyle.badge)
+                            }
+                            .fixedSize()
+                        }
+                    }
+                    // La somme facturée se lit : couleur principale, corps de lecture.
+                    Text(plan.caption)
+                        .font(PaywallStyle.planBilled)
+                        .foregroundStyle(V3Color.ink)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
                 // **Le prix ne se coupe jamais** : il rapetisse plutôt.
-                HStack(alignment: .firstTextBaseline, spacing: 3) {
+                VStack(alignment: .trailing, spacing: 0) {
                     Text(plan.priceHeadline(for: .current))
                         .font(PaywallStyle.cardPrice)
                         .foregroundStyle(V3Color.ink)
                     Text(plan.priceHeadlineUnit(for: .current))
-                        .font(PaywallStyle.planBilled)
+                        .font(PaywallStyle.priceUnit)
                         .foregroundStyle(V3Color.ink2)
                 }
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
-                // La somme facturée se lit (lot 15) : couleur principale.
-                Text(plan.caption)
-                    .font(PaywallStyle.planBilled)
-                    .foregroundStyle(V3Color.ink)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: 0)
+                .fixedSize(horizontal: true, vertical: false)
             }
-            .padding(.horizontal, 12)
-            .padding(.top, 14)
-            .padding(.bottom, 10)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, minHeight: PaywallStyle.planRowHeight, alignment: .leading)
             .v3Card(selected: isSelected, radius: PaywallStyle.planRadius)
-            .overlay(alignment: .topTrailing) {
-                if let savings {
-                    PaywallYellowPill(horizontal: 8, vertical: 2) {
-                        Text(savings)
-                            .font(PaywallStyle.badge)
-                    }
-                    .fixedSize()
-                    .padding(.trailing, 10)
-                    .alignmentGuide(.top) { $0[VerticalAlignment.center] }
-                }
-            }
             .contentShape(RoundedRectangle(cornerRadius: PaywallStyle.planRadius, style: .continuous))
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
@@ -707,16 +789,19 @@ struct PaywallPlanCard: View {
 /// leur taille. L'écran n'est jamais vide, et rien ne saute quand les prix arrivent.
 private struct PaywallPlanSkeleton: View {
     var body: some View {
-        HStack(spacing: PaywallStyle.planSpacing) {
+        VStack(spacing: PaywallStyle.planSpacing) {
             ForEach(0 ..< PaywallCatalog.all.count, id: \.self) { _ in
-                VStack(alignment: .leading, spacing: 8) {
-                    bar(width: 64, height: 10)
-                    bar(width: 92, height: 18)
-                    bar(width: 110, height: 10)
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        bar(width: 92, height: 12)
+                        bar(width: 130, height: 10)
+                    }
+                    Spacer(minLength: 0)
+                    bar(width: 64, height: 20)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 14)
-                .frame(maxWidth: .infinity, minHeight: PaywallStyle.planCardHeight, alignment: .topLeading)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity, minHeight: PaywallStyle.planRowHeight, alignment: .leading)
                 .v3Card(radius: PaywallStyle.planRadius)
             }
         }
@@ -761,6 +846,9 @@ private struct PaywallFooter<Plans: View>: View {
     let prices: PaywallPriceState
     let isPurchasing: Bool
     let notice: PaywallNotice?
+    /// « Rien à payer aujourd'hui », collé au bouton (lot 17) : seulement quand l'essai est
+    /// réellement offert sur la formule cochée.
+    var nothingToday = false
     var bottomGap: CGFloat
     var onSubscribe: () -> Void
     var onRetry: () -> Void
@@ -771,8 +859,12 @@ private struct PaywallFooter<Plans: View>: View {
     var body: some View {
         VStack(spacing: 10) {
             plans
+            if nothingToday {
+                PaywallNothingToday()
+                    .padding(.top, 2)
+            }
             button
-                .padding(.top, 4)
+                .padding(.top, nothingToday ? 0 : 4)
             if let notice {
                 PaywallNoticeLine(notice: notice)
             }

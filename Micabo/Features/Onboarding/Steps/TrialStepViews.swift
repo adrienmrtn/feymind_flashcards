@@ -55,22 +55,24 @@ enum TrialTimeline {
             Milestone(
                 title: L10n.t("ios.onb5.trial.today", locale: locale),
                 // Lot 14 : sans « illimitées » — le serveur plafonne.
-                detail: L10n.t("ios.onb14.trial.today", locale: locale),
+                detail: L10n.t("ios.onb17.tl.today", locale: locale),
                 systemImage: "lock.open.fill",
                 tone: .current
             ),
             Milestone(
                 // **Des dates, plus des « jour 2 / jour 3 »** (lot 7) : « Jour 2 » se lisait le
                 // lendemain, alors que le rappel part le surlendemain, la veille de la fin.
-                title: L10n.t("ios.onb7.trial.reminder", locale: locale, vars: ["date": reminderText]),
-                // Lot 15 : la voix de l'app, plus « je » (« On te prévient… »).
-                detail: L10n.t(remindersOn ? "ios.paywall.step.reminderDetail" : "ios.onb5.trial.reminderOff", locale: locale),
+                // Lot 17 : la date seule en titre, ce qui s'y passe dessous.
+                title: reminderText,
+                // Le rappel part 24 h avant la fin (`TrialEndReminder.fireDate`) : « demain » est
+                // exact. Sans notifications, l'étape dit comment l'activer.
+                detail: L10n.t(remindersOn ? "ios.onb17.tl.reminder" : "ios.onb5.trial.reminderOff", locale: locale),
                 systemImage: "bell.fill",
                 tone: .upcoming
             ),
             Milestone(
-                title: L10n.t("ios.onb7.trial.billing", locale: locale, vars: ["date": dateText]),
-                detail: L10n.t("ios.onb7.trial.billingDetail", locale: locale),
+                title: dateText,
+                detail: L10n.t("ios.onb17.tl.billing", locale: locale),
                 systemImage: "star.fill",
                 tone: .upcoming
             ),

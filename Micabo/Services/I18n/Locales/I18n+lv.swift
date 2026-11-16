@@ -9,6 +9,30 @@ extension IosI18nCatalogs {
     static let lvIsProvisional = false
 
     static let lv: [String: String] = [
+        // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
+        "ios.onb17.story.lesson": "Nosūti savus pierakstus. **Mika no tiem izveidos nodarbību.**",
+        "ios.onb17.story.quiz": "Viktorīnas, ar kurām **tiešām atceries**.",
+        "ios.onb17.q.exam": "Kam tu gatavojies **vispirms**?",
+        "ios.onb17.open.study.say": "Pastāsti, kas ir grūti. Tur es palīdzu visvairāk.",
+        "ios.onb17.q.hardest": "Tavs **visgrūtākais** priekšmets?",
+        "ios.onb17.q.worries": "Kas tev **traucē**, kad mācies?",
+        "ios.onb17.recap.title": "{name}, lūk, **ko mēs mainīsim**.",
+        "ios.onb17.recap.titleNoName": "Lūk, **ko mēs mainīsim**.",
+        "ios.onb17.recap.hardest": "{subject}: tavs visgrūtākais priekšmets",
+        "ios.onb17.recap.cta": "Paskatīsimies",
+        "ios.onb17.trial.days": "{n, plural, zero {# dienu} one {# diena} other {# dienas}}",
+        "ios.onb17.trial.daysSub": "bez maksas, viss iekļauts",
+        "ios.onb17.trial.unlock.lessonAny": "Tava pirmā nodarbība un visas nākamās",
+        "ios.onb17.trial.cta": "Gribu izmēģināt",
+        "ios.onb17.trial.cancel": "Atcelt vari jebkurā laikā Iestatījumos.",
+        "ios.onb17.tl.today": "Atveras viss Pro: tavas nodarbības, Mika, izmēģinājuma eksāmeni.",
+        "ios.onb17.tl.reminder": "Atgādinājums: tavs izmēģinājums beidzas rīt.",
+        "ios.onb17.tl.billing": "Abonements sākas, ja vien neatcel to agrāk. Līdz tam nekas netiek iekasēts.",
+        "ios.onb17.pay.lessons": "Mika uzraksta visas tavas nodarbības",
+        "ios.onb17.pay.mika": "Izskaidro to, ko tu nesaproti",
+        "ios.onb17.pay.exams": "Laboti izmēģinājuma eksāmeni",
+        "ios.onb17.offer.say": "Pagaidi, {name}! Man tev ir **labāka cena**.",
+        "ios.onb17.offer.sayAnon": "Pagaidi! Man tev ir **labāka cena**.",
         // Lot 16 : retours du build 183 (accueil, matières, récit par pays, séances).
         "ios.onb16.story.intro": "Visi tavi priekšmeti — **vienkāršāk**.",
         "ios.onb16.story.intro.say": "Piemērs: {topic}. Skaties!",

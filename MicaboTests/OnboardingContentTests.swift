@@ -618,8 +618,11 @@ final class OnboardingContentTests: XCTestCase {
         calendar.timeZone = try XCTUnwrap(TimeZone(identifier: "Europe/Paris"))
         let start = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 11, day: 11, hour: 18)))
         let steps = TrialTimeline.milestones(from: start, calendar: calendar, locale: .fr)
-        XCTAssertEqual(steps[1].title, "13 novembre : un rappel", "Le rappel part la veille de la fin, comme TrialEndReminder")
-        XCTAssertEqual(steps[2].title, "14 novembre : ton abonnement commence")
+        // Lot 17 : la date seule en titre ; ce qui s'y passe est dans le détail.
+        XCTAssertEqual(steps[1].title, "13 novembre", "Le rappel part la veille de la fin, comme TrialEndReminder")
+        XCTAssertEqual(steps[1].detail, "Le rappel : ton essai finit demain.")
+        XCTAssertEqual(steps[2].title, "14 novembre")
+        XCTAssertTrue(steps[2].detail.hasPrefix("Ton abonnement commence"), steps[2].detail)
 
         let fire = try XCTUnwrap(TrialEndReminder.fireDate(purchasedAt: start, trialDays: TrialTimeline.freeDays))
         XCTAssertEqual(calendar.component(.day, from: fire), 13, "La date affichée et celle du rappel sont la même")

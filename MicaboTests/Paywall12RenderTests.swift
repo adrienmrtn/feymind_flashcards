@@ -124,6 +124,24 @@ final class Paywall12RenderTests: XCTestCase {
         )
     }
 
+    /// **Lot 17 : la formule hebdomadaire cochée** — la mention suit (« puis 4,99 € par
+    /// semaine »), et un paywall sans prénom ni examen (la marque seule, « Ton plan est prêt. »).
+    func testLot17WeeklyAndPlainOnDevice() throws {
+        use(.fr)
+        try RenderGallery.renderDevice(
+            "pay17-fr-weekly",
+            devices: [.iPhone15Pro],
+            PaywallScreen(name: "Lina", isPurchasing: false, onClose: {}, onSubscribe: { _ in }, onRestore: {},
+                          context: context(), initialPlan: .weekly)
+                .environment(\.mikaStill, true)
+        )
+        try RenderGallery.renderDevice(
+            "pay17-fr-anonymous",
+            devices: [.iPhone15Pro],
+            paywall(context: context(name: nil, exam: nil, subjects: [], reminder: true, topic: nil))
+        )
+    }
+
     /// L'essai déjà pris : ni chronologie, ni « gratuit », un bouton qui dit la somme.
     func testNoTrialOnDevice() throws {
         use(.fr)

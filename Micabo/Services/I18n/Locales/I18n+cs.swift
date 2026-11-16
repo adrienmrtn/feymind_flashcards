@@ -3,6 +3,30 @@
 
 extension IosI18nCatalogs {
     static let cs: [String: String] = [
+        // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
+        "ios.onb17.story.lesson": "Pošli své poznámky. **Mika z nich udělá lekci.**",
+        "ios.onb17.story.quiz": "Kvízy, díky kterým si to **opravdu zapamatuješ**.",
+        "ios.onb17.q.exam": "Na co se připravuješ **nejdřív**?",
+        "ios.onb17.open.study.say": "Řekni mi, co je těžké. Tam ti pomůžu nejvíc.",
+        "ios.onb17.q.hardest": "Tvůj **nejtěžší** předmět?",
+        "ios.onb17.q.worries": "Co ti při učení **vadí**?",
+        "ios.onb17.recap.title": "{name}, tohle **změníme**.",
+        "ios.onb17.recap.titleNoName": "Tohle **změníme**.",
+        "ios.onb17.recap.hardest": "{subject}: tvůj nejtěžší předmět",
+        "ios.onb17.recap.cta": "Pojďme na to",
+        "ios.onb17.trial.days": "{n, plural, one {# den} few {# dny} other {# dní}}",
+        "ios.onb17.trial.daysSub": "zdarma, všechno v ceně",
+        "ios.onb17.trial.unlock.lessonAny": "Tvoje první lekce a všechny další",
+        "ios.onb17.trial.cta": "Chci to zkusit",
+        "ios.onb17.trial.cancel": "Zrušit můžeš kdykoli v Nastavení.",
+        "ios.onb17.tl.today": "Otevře se celé Pro: tvoje lekce, Mika, cvičné zkoušky.",
+        "ios.onb17.tl.reminder": "Připomínka: zkušební doba ti zítra končí.",
+        "ios.onb17.tl.billing": "Začne ti předplatné, pokud ho předtím nezrušíš. Do té doby se nic neplatí.",
+        "ios.onb17.pay.lessons": "Mika ti napíše všechny lekce",
+        "ios.onb17.pay.mika": "Vysvětlí ti, čemu nerozumíš",
+        "ios.onb17.pay.exams": "Opravené cvičné zkoušky",
+        "ios.onb17.offer.say": "Počkej, {name}! Mám pro tebe **lepší cenu**.",
+        "ios.onb17.offer.sayAnon": "Počkej! Mám pro tebe **lepší cenu**.",
         // Lot 16 : retours du build 183 (accueil, matières, récit par pays, séances).
         "ios.onb16.story.intro": "Všechny tvoje předměty, **jednodušeji**.",
         "ios.onb16.story.intro.say": "Příklad: {topic}. Podívej!",

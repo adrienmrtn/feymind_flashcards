@@ -3,6 +3,30 @@
 
 extension IosI18nCatalogs {
     static let ru: [String: String] = [
+        // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
+        "ios.onb17.story.lesson": "Отправь свои конспекты. **Mika сделает из них урок.**",
+        "ios.onb17.story.quiz": "Квизы, с которыми ты **правда запоминаешь**.",
+        "ios.onb17.q.exam": "К чему ты готовишься **в первую очередь**?",
+        "ios.onb17.open.study.say": "Скажи, что тебе трудно. Там я помогаю больше всего.",
+        "ios.onb17.q.hardest": "Твой **самый трудный** предмет?",
+        "ios.onb17.q.worries": "Что тебе **мешает**, когда ты учишься?",
+        "ios.onb17.recap.title": "{name}, вот **что мы изменим**.",
+        "ios.onb17.recap.titleNoName": "Вот **что мы изменим**.",
+        "ios.onb17.recap.hardest": "{subject}: твой самый трудный предмет",
+        "ios.onb17.recap.cta": "Посмотрим",
+        "ios.onb17.trial.days": "{n, plural, one {# день} few {# дня} many {# дней} other {# дня}}",
+        "ios.onb17.trial.daysSub": "бесплатно, всё включено",
+        "ios.onb17.trial.unlock.lessonAny": "Твой первый урок и все следующие",
+        "ios.onb17.trial.cta": "Хочу попробовать",
+        "ios.onb17.trial.cancel": "Отменить можно в любой момент в Настройках.",
+        "ios.onb17.tl.today": "Открывается весь Pro: твои уроки, Mika, пробные экзамены.",
+        "ios.onb17.tl.reminder": "Напоминание: пробный период заканчивается завтра.",
+        "ios.onb17.tl.billing": "Начинается подписка, если ты не отменишь её раньше. До этого ничего не списывается.",
+        "ios.onb17.pay.lessons": "Mika пишет все твои уроки",
+        "ios.onb17.pay.mika": "Объясняет то, что тебе непонятно",
+        "ios.onb17.pay.exams": "Проверенные пробные экзамены",
+        "ios.onb17.offer.say": "Подожди, {name}! У меня для тебя **цена получше**.",
+        "ios.onb17.offer.sayAnon": "Подожди! У меня для тебя **цена получше**.",
         // Lot 16 : retours du build 183 (accueil, matières, récit par pays, séances).
         "ios.onb16.story.intro": "Все твои предметы — **проще**.",
         "ios.onb16.story.intro.say": "Пример: {topic}. Смотри!",

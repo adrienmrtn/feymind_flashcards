@@ -3,6 +3,30 @@
 
 extension IosI18nCatalogs {
     static let sv: [String: String] = [
+        // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
+        "ios.onb17.story.lesson": "Skicka dina anteckningar. **Mika gör en lektion av dem.**",
+        "ios.onb17.story.quiz": "Quiz som får dig att **verkligen komma ihåg**.",
+        "ios.onb17.q.exam": "Vad pluggar du inför **först**?",
+        "ios.onb17.open.study.say": "Berätta vad som är svårt. Där hjälper jag dig mest.",
+        "ios.onb17.q.hardest": "Ditt **svåraste** ämne?",
+        "ios.onb17.q.worries": "Vad är **jobbigt** när du pluggar?",
+        "ios.onb17.recap.title": "{name}, det här **ska vi ändra på**.",
+        "ios.onb17.recap.titleNoName": "Det här **ska vi ändra på**.",
+        "ios.onb17.recap.hardest": "{subject}: ditt svåraste ämne",
+        "ios.onb17.recap.cta": "Vi kollar",
+        "ios.onb17.trial.days": "{n, plural, one {# dag} other {# dagar}}",
+        "ios.onb17.trial.daysSub": "gratis, allt ingår",
+        "ios.onb17.trial.unlock.lessonAny": "Din första lektion, och alla som följer",
+        "ios.onb17.trial.cta": "Jag vill testa",
+        "ios.onb17.trial.cancel": "Du kan säga upp när du vill i Inställningar.",
+        "ios.onb17.tl.today": "Hela Pro öppnas: dina lektioner, Mika, provtentor.",
+        "ios.onb17.tl.reminder": "Påminnelsen: din provperiod slutar i morgon.",
+        "ios.onb17.tl.billing": "Ditt abonnemang börjar, om du inte säger upp innan. Inget dras förrän dess.",
+        "ios.onb17.pay.lessons": "Mika skriver alla dina lektioner",
+        "ios.onb17.pay.mika": "Han förklarar det du inte förstår",
+        "ios.onb17.pay.exams": "Rättade provtentor",
+        "ios.onb17.offer.say": "Vänta, {name}! Jag har ett **bättre pris** till dig.",
+        "ios.onb17.offer.sayAnon": "Vänta! Jag har ett **bättre pris** till dig.",
         // Lot 16 : retours du build 183 (accueil, matières, récit par pays, séances).
         "ios.onb16.story.intro": "Alla dina ämnen, **enklare**.",
         "ios.onb16.story.intro.say": "Exempel: {topic}. Titta!",

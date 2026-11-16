@@ -382,7 +382,7 @@ struct HardestSubjectStepView: View {
 
     var body: some View {
         OnbQuestion(
-            i18n.t("ios.onb16.q.hardest"),
+            i18n.t("ios.onb17.q.hardest"),
             say: OnbSay(i18n.t("ios.onb16.say.hardest"), mood: .wink)
         ) {
             VStack(spacing: OnbLayout.rowGap) {

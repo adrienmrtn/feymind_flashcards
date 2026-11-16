@@ -88,10 +88,11 @@ struct DiscountOfferScreen: View {
     /// **Ce que Mika dit en arrivant** (lot 12) : la suite du paywall qu'on vient de refermer,
     /// sans reproche — il a entendu « pas à ce prix-là », il en propose un autre.
     static func mikaLine(name: String?, locale: UiLocale = .resolved()) -> PaywallEmphasis {
+        // Lot 17 : une phrase courte, dite par Mika dans sa bulle.
         if let name {
-            return PaywallEmphasis(marked: L10n.t("ios.pay12.offer.mika", locale: locale, vars: ["name": name]))
+            return PaywallEmphasis(marked: L10n.t("ios.onb17.offer.say", locale: locale, vars: ["name": name]))
         }
-        return PaywallEmphasis(marked: L10n.t("ios.pay12.offer.mikaAnon", locale: locale))
+        return PaywallEmphasis(marked: L10n.t("ios.onb17.offer.sayAnon", locale: locale))
     }
 
     /// **Trois zones, comme le paywall** (lot 12, refonte) : Mika en grand sur un halo jaune,
@@ -100,8 +101,13 @@ struct DiscountOfferScreen: View {
     /// écran court.
     private func content(mika: CGFloat, percent: CGFloat) -> some View {
         let line = Self.mikaLine(name: PaywallProfile.firstName(OnboardingPreferences.displayName))
+        // Lot 17 : Mika parle dans sa bulle, en haut — comme dans le parcours —, puis le grand
+        // pourcentage et ce sur quoi il porte. Sur un écran court, Mika rapetisse.
+        let marked = line.highlight.map { line.text.replacingOccurrences(of: $0, with: "**\($0)**") } ?? line.text
         return VStack(spacing: 0) {
-            PaywallHeroMika(mood: .wink, size: mika, tone: PaywallStyle.yellow)
+            OnbMikaRow(say: OnbSay(marked, mood: .wink))
+                .environment(\.onbCompact, mika < PaywallStyle.offerMika * 0.7)
+                .padding(.bottom, 18)
 
             DiscountPercent(savings: savings, isSettled: arrived || !animatesArrival, scale: percent)
                 .padding(.top, 6)
@@ -111,13 +117,6 @@ struct DiscountOfferScreen: View {
                 .foregroundStyle(V3Color.ink)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
-
-            Text(v3: line.text, highlight: line.highlight)
-                .font(PaywallStyle.heroText)
-                .foregroundStyle(V3Color.ink2)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 10)
 
             priceCard
                 .padding(.top, 20)

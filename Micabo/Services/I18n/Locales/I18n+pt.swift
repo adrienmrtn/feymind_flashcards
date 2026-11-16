@@ -3,6 +3,30 @@
 
 extension IosI18nCatalogs {
     static let pt: [String: String] = [
+        // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
+        "ios.onb17.story.lesson": "Envia os teus apontamentos. **O Mika faz deles uma lição.**",
+        "ios.onb17.story.quiz": "Testes que te fazem **lembrar a sério**.",
+        "ios.onb17.q.exam": "Para o que te preparas **primeiro**?",
+        "ios.onb17.open.study.say": "Diz-me o que é difícil. É aí que mais te ajudo.",
+        "ios.onb17.q.hardest": "A tua disciplina mais **difícil**?",
+        "ios.onb17.q.worries": "O que te **custa** mais quando estudas?",
+        "ios.onb17.recap.title": "{name}, isto é **o que vamos mudar**.",
+        "ios.onb17.recap.titleNoName": "Isto é **o que vamos mudar**.",
+        "ios.onb17.recap.hardest": "{subject}: a tua disciplina mais difícil",
+        "ios.onb17.recap.cta": "Vamos ver",
+        "ios.onb17.trial.days": "{n, plural, one {# dia} other {# dias}}",
+        "ios.onb17.trial.daysSub": "grátis, tudo incluído",
+        "ios.onb17.trial.unlock.lessonAny": "A tua primeira lição, e todas as seguintes",
+        "ios.onb17.trial.cta": "Quero experimentar",
+        "ios.onb17.trial.cancel": "Podes cancelar quando quiseres nas Definições.",
+        "ios.onb17.tl.today": "Abre-se todo o Pro: as tuas lições, o Mika, os exames simulados.",
+        "ios.onb17.tl.reminder": "O lembrete: o teu período de teste acaba amanhã.",
+        "ios.onb17.tl.billing": "A tua subscrição começa, a menos que canceles antes. Até lá, nada é cobrado.",
+        "ios.onb17.pay.lessons": "O Mika escreve todas as tuas lições",
+        "ios.onb17.pay.mika": "Explica-te o que não percebes",
+        "ios.onb17.pay.exams": "Exames simulados corrigidos",
+        "ios.onb17.offer.say": "Espera, {name}! Tenho um **preço especial** para ti.",
+        "ios.onb17.offer.sayAnon": "Espera! Tenho um **preço especial** para ti.",
         // Lot 16 : retours du build 183 (accueil, matières, récit par pays, séances).
         "ios.onb16.story.intro": "Todas as tuas disciplinas, **simplificadas**.",
         "ios.onb16.story.intro.say": "Exemplo: {topic}. Vê!",

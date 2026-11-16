@@ -3,6 +3,30 @@
 
 extension IosI18nCatalogs {
     static let hu: [String: String] = [
+        // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
+        "ios.onb17.story.lesson": "Küldd el a jegyzeteidet. **Mika leckét készít belőlük.**",
+        "ios.onb17.story.quiz": "Kvízek, amelyekkel **tényleg megjegyzed**.",
+        "ios.onb17.q.exam": "Mire készülsz **először**?",
+        "ios.onb17.open.study.say": "Mondd el, mi nehéz. Abban segítek a legtöbbet.",
+        "ios.onb17.q.hardest": "A **legnehezebb** tantárgyad?",
+        "ios.onb17.q.worries": "Mi **zavar** tanulás közben?",
+        "ios.onb17.recap.title": "{name}, ezen **változtatunk**.",
+        "ios.onb17.recap.titleNoName": "Ezen **változtatunk**.",
+        "ios.onb17.recap.hardest": "{subject}: a legnehezebb tantárgyad",
+        "ios.onb17.recap.cta": "Lássuk",
+        "ios.onb17.trial.days": "{n, plural, one {# nap} other {# nap}}",
+        "ios.onb17.trial.daysSub": "ingyen, minden benne van",
+        "ios.onb17.trial.unlock.lessonAny": "Az első leckéd és az összes további",
+        "ios.onb17.trial.cta": "Ki akarom próbálni",
+        "ios.onb17.trial.cancel": "Bármikor lemondhatod a Beállításokban.",
+        "ios.onb17.tl.today": "A teljes Pro megnyílik: a leckéid, Mika, a próbavizsgák.",
+        "ios.onb17.tl.reminder": "Az emlékeztető: holnap lejár a próbaidőd.",
+        "ios.onb17.tl.billing": "Elindul az előfizetésed, hacsak előtte le nem mondod. Addig semmit nem vonunk le.",
+        "ios.onb17.pay.lessons": "Mika megírja az összes leckédet",
+        "ios.onb17.pay.mika": "Elmagyarázza, amit nem értesz",
+        "ios.onb17.pay.exams": "Kijavított próbavizsgák",
+        "ios.onb17.offer.say": "Várj, {name}! **Jobb árat** adok neked.",
+        "ios.onb17.offer.sayAnon": "Várj! **Jobb árat** adok neked.",
         // Lot 16 : retours du build 183 (accueil, matières, récit par pays, séances).
         "ios.onb16.story.intro": "Minden tantárgyad, **egyszerűbben**.",
         "ios.onb16.story.intro.say": "Példa: {topic}. Nézd!",

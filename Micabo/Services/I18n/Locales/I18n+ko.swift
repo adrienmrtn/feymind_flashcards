@@ -11,6 +11,30 @@ extension IosI18nCatalogs {
     static let koIsProvisional = false
 
     static let ko: [String: String] = [
+        // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
+        "ios.onb17.story.lesson": "노트를 보내기만 해. **Mika가 레슨으로 만들어 줘.**",
+        "ios.onb17.story.quiz": "**제대로 기억에 남는** 퀴즈.",
+        "ios.onb17.q.exam": "**가장 먼저** 뭘 준비해?",
+        "ios.onb17.open.study.say": "어려운 걸 말해 줘. 거기서 제일 많이 도와줄게.",
+        "ios.onb17.q.hardest": "제일 **어려운** 과목은?",
+        "ios.onb17.q.worries": "공부할 때 뭐가 **방해돼**?",
+        "ios.onb17.recap.title": "{name}, **이걸 바꿔 갈 거야**.",
+        "ios.onb17.recap.titleNoName": "**이걸 바꿔 갈 거야**.",
+        "ios.onb17.recap.hardest": "{subject}: 제일 어려운 과목",
+        "ios.onb17.recap.cta": "같이 보자",
+        "ios.onb17.trial.days": "{n, plural, other {#일}}",
+        "ios.onb17.trial.daysSub": "무료, 모두 포함",
+        "ios.onb17.trial.unlock.lessonAny": "첫 레슨과 그다음 레슨 전부",
+        "ios.onb17.trial.cta": "체험해 볼래",
+        "ios.onb17.trial.cancel": "설정에서 언제든 해지할 수 있어요.",
+        "ios.onb17.tl.today": "Pro 전체가 열려요: 레슨, Mika, 모의고사.",
+        "ios.onb17.tl.reminder": "알림: 체험이 내일 끝나요.",
+        "ios.onb17.tl.billing": "미리 해지하지 않으면 구독이 시작돼요. 그전까지는 결제되지 않아요.",
+        "ios.onb17.pay.lessons": "Mika가 모든 레슨을 써 줘요",
+        "ios.onb17.pay.mika": "모르는 부분을 설명해 줘요",
+        "ios.onb17.pay.exams": "채점된 모의고사",
+        "ios.onb17.offer.say": "잠깐만요, {name}! **특별 가격**이 있어요.",
+        "ios.onb17.offer.sayAnon": "잠깐만요! **특별 가격**이 있어요.",
         // Lot 16 : retours du build 183 (accueil, matières, récit par pays, séances).
         "ios.onb16.story.intro": "네 모든 수업을 **더 쉽게**.",
         "ios.onb16.story.intro.say": "예시: {topic}. 봐 봐!",

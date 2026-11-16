@@ -29,8 +29,8 @@ enum OnboardingStory: Int, CaseIterable, Identifiable {
         switch self {
         case .intro: "ios.onb16.story.intro"
         // Lot 14 : tous les cours, pas une seule photo (« dire aussi PDF, micro, YouTube »).
-        case .lesson: "ios.onb14.story1"
-        case .quiz: "ios.onb10.story2"
+        case .lesson: "ios.onb17.story.lesson"
+        case .quiz: "ios.onb17.story.quiz"
         case .scan: "ios.onb16.scan.title"
         case .plan: "ios.onb10.story4"
         }

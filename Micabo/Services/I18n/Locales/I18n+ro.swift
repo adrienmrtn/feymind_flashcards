@@ -3,6 +3,30 @@
 
 extension IosI18nCatalogs {
     static let ro: [String: String] = [
+        // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
+        "ios.onb17.story.lesson": "Trimite-ți notițele. **Mika face din ele o lecție.**",
+        "ios.onb17.story.quiz": "Teste care te ajută să **ții minte cu adevărat**.",
+        "ios.onb17.q.exam": "Pentru ce te pregătești **mai întâi**?",
+        "ios.onb17.open.study.say": "Spune-mi ce e greu. Acolo te ajut cel mai mult.",
+        "ios.onb17.q.hardest": "Materia ta cea mai **grea**?",
+        "ios.onb17.q.worries": "Ce te **încurcă** când înveți?",
+        "ios.onb17.recap.title": "{name}, iată **ce vom schimba**.",
+        "ios.onb17.recap.titleNoName": "Iată **ce vom schimba**.",
+        "ios.onb17.recap.hardest": "{subject}: materia ta cea mai grea",
+        "ios.onb17.recap.cta": "Să vedem",
+        "ios.onb17.trial.days": "{n, plural, one {# zi} few {# zile} other {# de zile}}",
+        "ios.onb17.trial.daysSub": "gratuit, totul inclus",
+        "ios.onb17.trial.unlock.lessonAny": "Prima ta lecție și toate cele care urmează",
+        "ios.onb17.trial.cta": "Vreau să încerc",
+        "ios.onb17.trial.cancel": "Poți anula oricând din Setări.",
+        "ios.onb17.tl.today": "Se deschide tot Pro: lecțiile tale, Mika, simulările de examen.",
+        "ios.onb17.tl.reminder": "Mementoul: perioada ta de probă se termină mâine.",
+        "ios.onb17.tl.billing": "Abonamentul tău începe, dacă nu anulezi înainte. Până atunci nu se încasează nimic.",
+        "ios.onb17.pay.lessons": "Mika îți scrie toate lecțiile",
+        "ios.onb17.pay.mika": "Îți explică ce nu înțelegi",
+        "ios.onb17.pay.exams": "Simulări de examen corectate",
+        "ios.onb17.offer.say": "Stai, {name}! Am un **preț** mai bun pentru tine.",
+        "ios.onb17.offer.sayAnon": "Stai! Am un **preț** mai bun pentru tine.",
         // Lot 16 : retours du build 183 (accueil, matières, récit par pays, séances).
         "ios.onb16.story.intro": "Toate materiile tale, **mai simple**.",
         "ios.onb16.story.intro.say": "Exemplu: {topic}. Uite!",

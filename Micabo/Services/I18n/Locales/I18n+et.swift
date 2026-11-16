@@ -3,6 +3,30 @@
 
 extension IosI18nCatalogs {
     static let et: [String: String] = [
+        // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
+        "ios.onb17.story.lesson": "Saada oma konspekt. **Mika teeb sellest õppetunni.**",
+        "ios.onb17.story.quiz": "Viktoriinid, mis aitavad **päriselt meelde jätta**.",
+        "ios.onb17.q.exam": "Milleks sa **kõigepealt** valmistud?",
+        "ios.onb17.open.study.say": "Ütle, mis on raske. Seal aitan ma kõige rohkem.",
+        "ios.onb17.q.hardest": "Sinu **kõige raskem** aine?",
+        "ios.onb17.q.worries": "Mis sind õppimisel **segab**?",
+        "ios.onb17.recap.title": "{name}, siin on see, **mida me muudame**.",
+        "ios.onb17.recap.titleNoName": "Siin on see, **mida me muudame**.",
+        "ios.onb17.recap.hardest": "{subject}: sinu kõige raskem aine",
+        "ios.onb17.recap.cta": "Vaatame",
+        "ios.onb17.trial.days": "{n, plural, one {# päev} other {# päeva}}",
+        "ios.onb17.trial.daysSub": "tasuta, kõik kaasas",
+        "ios.onb17.trial.unlock.lessonAny": "Sinu esimene õppetund ja kõik järgmised",
+        "ios.onb17.trial.cta": "Tahan proovida",
+        "ios.onb17.trial.cancel": "Saad igal ajal Seadetes tühistada.",
+        "ios.onb17.tl.today": "Kogu Pro avaneb: sinu õppetunnid, Mika, proovieksamid.",
+        "ios.onb17.tl.reminder": "Meeldetuletus: su prooviaeg lõpeb homme.",
+        "ios.onb17.tl.billing": "Su tellimus algab, kui sa enne ei tühista. Seni ei võeta midagi.",
+        "ios.onb17.pay.lessons": "Mika kirjutab kõik su õppetunnid",
+        "ios.onb17.pay.mika": "Ta seletab, mida sa ei mõista",
+        "ios.onb17.pay.exams": "Parandatud proovieksamid",
+        "ios.onb17.offer.say": "Oota, {name}! Mul on sulle **parem hind**.",
+        "ios.onb17.offer.sayAnon": "Oota! Mul on sulle **parem hind**.",
         // Lot 16 : retours du build 183 (accueil, matières, récit par pays, séances).
         "ios.onb16.story.intro": "Kõik su õppeained, **lihtsamalt**.",
         "ios.onb16.story.intro.say": "Näide: {topic}. Vaata!",

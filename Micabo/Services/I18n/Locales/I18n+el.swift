@@ -3,6 +3,30 @@
 
 extension IosI18nCatalogs {
     static let el: [String: String] = [
+        // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
+        "ios.onb17.story.lesson": "Στείλε τις σημειώσεις σου. **Ο Mika τις κάνει μάθημα.**",
+        "ios.onb17.story.quiz": "Κουίζ που σε βοηθούν να **θυμάσαι πραγματικά**.",
+        "ios.onb17.q.exam": "Για τι προετοιμάζεσαι **πρώτα**;",
+        "ios.onb17.open.study.say": "Πες μου τι σου είναι δύσκολο. Εκεί βοηθάω περισσότερο.",
+        "ios.onb17.q.hardest": "Το πιο **δύσκολο** μάθημά σου;",
+        "ios.onb17.q.worries": "Τι σε **δυσκολεύει** όταν διαβάζεις;",
+        "ios.onb17.recap.title": "{name}, να **τι θα αλλάξουμε**.",
+        "ios.onb17.recap.titleNoName": "Να **τι θα αλλάξουμε**.",
+        "ios.onb17.recap.hardest": "{subject}: το πιο δύσκολο μάθημά σου",
+        "ios.onb17.recap.cta": "Για να δούμε",
+        "ios.onb17.trial.days": "{n, plural, one {# ημέρα} other {# ημέρες}}",
+        "ios.onb17.trial.daysSub": "δωρεάν, όλα μέσα",
+        "ios.onb17.trial.unlock.lessonAny": "Το πρώτο σου μάθημα, και όλα τα επόμενα",
+        "ios.onb17.trial.cta": "Θέλω να το δοκιμάσω",
+        "ios.onb17.trial.cancel": "Μπορείς να ακυρώσεις όποτε θέλεις από τις Ρυθμίσεις.",
+        "ios.onb17.tl.today": "Ανοίγει όλο το Pro: τα μαθήματά σου, ο Mika, τα διαγωνίσματα.",
+        "ios.onb17.tl.reminder": "Η υπενθύμιση: η δοκιμή σου λήγει αύριο.",
+        "ios.onb17.tl.billing": "Η συνδρομή σου ξεκινά, εκτός αν ακυρώσεις πριν. Μέχρι τότε δεν χρεώνεται τίποτα.",
+        "ios.onb17.pay.lessons": "Ο Mika γράφει όλα τα μαθήματά σου",
+        "ios.onb17.pay.mika": "Σου εξηγεί ό,τι δεν καταλαβαίνεις",
+        "ios.onb17.pay.exams": "Διορθωμένα διαγωνίσματα",
+        "ios.onb17.offer.say": "Περίμενε, {name}! Έχω **καλύτερη τιμή** για σένα.",
+        "ios.onb17.offer.sayAnon": "Περίμενε! Έχω **καλύτερη τιμή** για σένα.",
         // Lot 16 : retours du build 183 (accueil, matières, récit par pays, séances).
         "ios.onb16.story.intro": "Όλα σου τα μαθήματα, **πιο απλά**.",
         "ios.onb16.story.intro.say": "Παράδειγμα: {topic}. Κοίτα!",

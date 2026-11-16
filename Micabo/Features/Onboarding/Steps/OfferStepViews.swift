@@ -10,9 +10,11 @@ import UserNotifications
 
 /// **« On veut que tu essaies Micabo Pro gratuitement »** (lot 13, mots de l'utilisateur).
 ///
-/// Le titre, puis **trois choses que l'essai ouvre, tirées des réponses** : sa
-/// première leçon (le sujet qu'il vient d'écrire), Mika dans sa matière la plus dure, les
-/// examens blancs de son examen. Au pied, « Rien à payer aujourd'hui », et le bouton.
+/// Lot 17 : **le cadeau, seul, sans prix** (le comment vient à l'écran suivant, le choix au
+/// paywall). Le titre, Mika et « 3 jours offerts » en grand, puis **trois choses que l'essai
+/// ouvre, tirées des réponses** : sa première leçon (citée seulement s'il a tapé un sujet),
+/// Mika dans sa matière la plus dure, les examens blancs de son examen. Au pied, « Rien à
+/// payer aujourd'hui », et « Je veux essayer ».
 struct FreeTrialIntroStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -29,14 +31,16 @@ struct FreeTrialIntroStepView: View {
     /// examen. Une réponse absente prend la phrase de tout le monde (les vraies limites du
     /// gratuit, `PaywallFeature`).
     static func unlocks(for model: OnboardingModel, locale: UiLocale) -> [Unlock] {
+        // Lot 17 : une leçon n'est citée que si l'élève a vraiment tapé son sujet ; sinon,
+        // « Ta première leçon, et toutes les suivantes » — jamais un titre inventé.
         let lesson: String = switch model.firstLessonChoice {
         case .topic:
             model.firstLessonSubject.map { L10n.t("ios.onb12.trial.unlock.lesson", locale: locale, vars: ["topic": $0]) }
-                ?? L10n.t("ios.pay11.row.lessons", locale: locale)
+                ?? L10n.t("ios.onb17.trial.unlock.lessonAny", locale: locale)
         case .importSource:
             L10n.t("ios.onb12.trial.unlock.import", locale: locale)
         case nil:
-            L10n.t("ios.pay11.row.lessons", locale: locale)
+            L10n.t("ios.onb17.trial.unlock.lessonAny", locale: locale)
         }
         let mika = model.focusSubject.map {
             L10n.t("ios.onb12.trial.unlock.mika", locale: locale, vars: ["subject": SubjectDisplay.subject($0, locale: locale)])
@@ -60,7 +64,9 @@ struct FreeTrialIntroStepView: View {
                 .padding(.top, OnbLayout.titleTop)
 
             OnbCentered {
-                VStack(alignment: .leading, spacing: compact ? 20 : 28) {
+                VStack(alignment: .leading, spacing: compact ? 18 : 24) {
+                    gift
+                        .padding(.bottom, compact ? 4 : 10)
                     ForEach(Self.unlocks(for: model, locale: i18n.locale)) { unlock in
                         HStack(spacing: 16) {
                             OnbIcon(icon: unlock.icon, size: 30)
@@ -80,10 +86,32 @@ struct FreeTrialIntroStepView: View {
             }
         } footer: {
             OnbReassurance(text: i18n.t("ios.pay10.nothingToday"))
-            V3Button(i18n.t("common.continue")) {
+            V3Button(i18n.t("ios.onb17.trial.cta")) {
                 model.advance()
             }
         }
+    }
+
+    /// **Le cadeau** (lot 17) : Mika content, « 3 jours » en très grand, « offerts, tout
+    /// compris » dessous. La durée est celle que la boutique accorde (`OnboardingTrial.days`).
+    private var gift: some View {
+        HStack(alignment: .center, spacing: 14) {
+            MikaMascot(mood: .happy, size: compact ? 72 : 100)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(i18n.t("ios.onb17.trial.days", ["n": "\(OnboardingTrial.days)"]))
+                    .font(V3Font.display(compact ? 48 : 60))
+                    .foregroundStyle(V3Color.yellow)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                Text(i18n.t("ios.onb17.trial.daysSub"))
+                    .font(OnbType.body.weight(.bold))
+                    .foregroundStyle(V3Color.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -151,6 +179,13 @@ struct TrialOfferStepView: View {
                 OnbReassurance(text: i18n.t("ios.onb12.trial.granted"))
                 V3Button(i18n.t("common.continue")) { model.advance() }
             case .ask:
+                // Lot 17 : une seule ligne pour rassurer, au-dessus du bouton.
+                Text(i18n.t("ios.onb17.trial.cancel"))
+                    .font(OnbType.mention)
+                    .foregroundStyle(V3Color.ink2)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
                 V3Button(i18n.t("ios.onb12.trial.enable"), isLoading: isAsking) {
                     Task { await ask() }
                 }

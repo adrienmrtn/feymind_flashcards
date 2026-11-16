@@ -235,6 +235,32 @@ final class OnboardingLot12Tests: XCTestCase {
         XCTAssertFalse(TrialOfferStepView.promises(.granted, trialDays: 1), "Un essai d'un jour n'a pas de veille")
     }
 
+    /// **Lot 17 : la leçon n'est citée que si l'élève a tapé son sujet** ; sinon, « Ta première
+    /// leçon, et toutes les suivantes ». Et le paywall ne promet aucune quantité.
+    func testTheTrialCitesOnlyATypedLessonAndThePaywallPromisesNoQuantity() throws {
+        let model = try lina()
+        model.firstLessonChoice = nil
+        XCTAssertEqual(FreeTrialIntroStepView.unlocks(for: model, locale: .fr)[0].text, "Ta première leçon, et toutes les suivantes")
+        model.firstLessonChoice = .topic
+        model.firstLessonTopic = "  "
+        XCTAssertEqual(FreeTrialIntroStepView.unlocks(for: model, locale: .fr)[0].text, "Ta première leçon, et toutes les suivantes")
+        model.firstLessonTopic = "Le second degré"
+        XCTAssertTrue(FreeTrialIntroStepView.unlocks(for: model, locale: .fr)[0].text.contains("Le second degré"))
+
+        XCTAssertEqual(PaywallCopy.checks(locale: .fr).count, 3)
+        XCTAssertEqual(PaywallCopy.checks(count: 2, locale: .fr).count, 2)
+        for locale in Self.languages {
+            for line in PaywallCopy.checks(locale: locale) + [L10n.t("ios.onb17.trial.daysSub", locale: locale)] {
+                let lower = line.lowercased()
+                XCTAssertFalse(lower.hasPrefix("ios."), "\(locale.rawValue) \(line)")
+                for word in ["illimit", "sans limite", "unlimited", "unbegrenzt", "ilimitad"] {
+                    XCTAssertFalse(lower.contains(word), "\(locale.rawValue) : \(line)")
+                }
+            }
+        }
+        XCTAssertEqual(L10n.t("ios.onb17.trial.days", locale: .fr, vars: ["n": "3"]), "3 jours")
+    }
+
     /// **L'écran du rappel et le paywall qui le suit montrent les mêmes dates** (lot 13) : même
     /// instant de départ, même durée d'essai (celle du produit), même calcul, même écriture —
     /// en Europe comme à l'autre bout du monde, et pour un essai d'une autre durée.

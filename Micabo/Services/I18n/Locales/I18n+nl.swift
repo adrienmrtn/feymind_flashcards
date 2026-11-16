@@ -3,6 +3,30 @@
 
 extension IosI18nCatalogs {
     static let nl: [String: String] = [
+        // Lot 17 : copie inspirée de l'étude (stories, questions, récap, essai, paywall, offre).
+        "ios.onb17.story.lesson": "Stuur je aantekeningen. **Mika maakt er een les van.**",
+        "ios.onb17.story.quiz": "Quizzen waarmee je het **echt onthoudt**.",
+        "ios.onb17.q.exam": "Waar bereid je je **eerst** op voor?",
+        "ios.onb17.open.study.say": "Vertel me wat je moeilijk vindt. Daar help ik je het meest.",
+        "ios.onb17.q.hardest": "Je **moeilijkste** vak?",
+        "ios.onb17.q.worries": "Wat vind je **lastig** bij het leren?",
+        "ios.onb17.recap.title": "{name}, dit **gaan we veranderen**.",
+        "ios.onb17.recap.titleNoName": "Dit **gaan we veranderen**.",
+        "ios.onb17.recap.hardest": "{subject}: je moeilijkste vak",
+        "ios.onb17.recap.cta": "Laten we kijken",
+        "ios.onb17.trial.days": "{n, plural, one {# dag} other {# dagen}}",
+        "ios.onb17.trial.daysSub": "gratis, alles inbegrepen",
+        "ios.onb17.trial.unlock.lessonAny": "Je eerste les, en alle volgende",
+        "ios.onb17.trial.cta": "Ik wil het proberen",
+        "ios.onb17.trial.cancel": "Je kunt altijd opzeggen in Instellingen.",
+        "ios.onb17.tl.today": "Heel Pro gaat open: je lessen, Mika, proefexamens.",
+        "ios.onb17.tl.reminder": "De herinnering: je proefperiode eindigt morgen.",
+        "ios.onb17.tl.billing": "Je abonnement begint, tenzij je eerder opzegt. Tot dan wordt er niets afgeschreven.",
+        "ios.onb17.pay.lessons": "Mika schrijft al je lessen",
+        "ios.onb17.pay.mika": "Hij legt uit wat je niet snapt",
+        "ios.onb17.pay.exams": "Nagekeken proefexamens",
+        "ios.onb17.offer.say": "Wacht, {name}! Ik heb een **betere prijs** voor je.",
+        "ios.onb17.offer.sayAnon": "Wacht! Ik heb een **betere prijs** voor je.",
         // Lot 16 : retours du build 183 (accueil, matières, récit par pays, séances).
         "ios.onb16.story.intro": "Al je vakken, **eenvoudiger**.",
         "ios.onb16.story.intro.say": "Voorbeeld: {topic}. Kijk!",

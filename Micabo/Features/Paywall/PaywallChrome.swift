@@ -123,6 +123,8 @@ enum PaywallStyle {
     static let planRadius: CGFloat = V3Metric.radiusInner
     /// La hauteur d'une carte de formule, au moins (le chargement et l'échec la gardent).
     static let planCardHeight: CGFloat = 92
+    /// La hauteur d'une ligne de formule (lot 17), à taille de texte normale.
+    static let planRowHeight: CGFloat = 66
     /// Le pictogramme d'un bénéfice, et sa colonne.
     static let benefitGlyph: CGFloat = 19
     static let benefitGlyphColumn: CGFloat = 30
