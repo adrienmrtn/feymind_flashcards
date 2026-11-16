@@ -405,7 +405,8 @@ private fun OrderBuilder(question: Question, tone: Tone, seed: Long, answered: Q
         if (answered == null) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 pool.filter { it !in placed }.forEach { item ->
-                    Pressable(onClick = { haptics.selection(); placed.add(item) }, haptic = false) {
+                    // Deux appuis rapides ne placent l'élément qu'une fois.
+                    Pressable(onClick = { if (item !in placed && placed.size < question.choices.size) { haptics.selection(); placed.add(item) } }, haptic = false) {
                         RichText(
                             question.choices[item],
                             style = nunito(16.sp, FontWeight.Bold),

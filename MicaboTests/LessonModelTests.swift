@@ -788,3 +788,15 @@ final class LessonAudienceTests: XCTestCase {
         XCTAssertTrue(symbols.allSatisfy(PathSymbol.catalog.contains))
     }
 }
+
+/// **« Remettre dans l'ordre » : deux appuis rapides ne placent un élément qu'une fois.** Placé
+/// deux fois, il faisait dépasser la réponse du nombre de places, et l'app se fermait.
+final class OrderBuilderTests: XCTestCase {
+    func testAnItemIsPlacedOnlyOnce() {
+        XCTAssertTrue(OrderBuilder.canPlace(2, in: [], of: 4))
+        XCTAssertTrue(OrderBuilder.canPlace(2, in: [0, 1], of: 4))
+        XCTAssertFalse(OrderBuilder.canPlace(2, in: [2], of: 4), "Déjà placé")
+        XCTAssertFalse(OrderBuilder.canPlace(3, in: [0, 1, 2, 3], of: 4), "Plus de place")
+        XCTAssertFalse(OrderBuilder.canPlace(4, in: [], of: 4), "Hors des propositions")
+    }
+}
